@@ -54,6 +54,14 @@ This library is an experiment and not intended for use. See the
       and Move methods. Implementation details required.
 1. No use-after-move. All types abort if they are used after a move.
 1. No implicit conversions, ever.
+1. No function overloads. Const is the default.
+    * When there are const and mutable versions of a method, use the `_mut`
+      suffix on the mutable one to distinguish them. The const method gets the
+      shorter name.
+    * Don't use a `get_` prefix on getters. Do use a prefix like `is_` to
+      differentiate from a verb, like `is_empty()`.
+    * Use an appropriate prefix like `set_`, or a clear verb name, to
+      distinguish setters.
 1. Bounds are always checked unless you explicitly ask for them to not be.
 1. Lifetimes are always checked unless you explicitly ask for them to not be.
 1. Small headers. C++ compilation speed is proportional to the amount of input.
