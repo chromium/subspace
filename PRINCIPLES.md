@@ -1,6 +1,7 @@
 # Principles Document
 
-See the [README](README.md) for how this library is meant to be used.
+This library is an experiment and not intended for use. See the
+[README](README.md).
 
 ## High Level
 
