@@ -62,6 +62,7 @@ This library is an experiment and not intended for use. See the
       differentiate from a verb, like `is_empty()`.
     * Use an appropriate prefix like `set_`, or a clear verb name, to
       distinguish setters.
+    * No default parameters, as they are a form of overloading.
 1. Bounds are always checked unless you explicitly ask for them to not be.
 1. Lifetimes are always checked unless you explicitly ask for them to not be.
 1. Small headers. C++ compilation speed is proportional to the amount of input.
