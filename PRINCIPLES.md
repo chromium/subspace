@@ -33,6 +33,12 @@ This library is an experiment and not intended for use. See the
       previously stored object, it must also retrieve any dependent of that
       object that has not yet been retrieved." - Bertrand Meyer: Object-Oriented
       Software Construction
+1. Single-responsibility principle
+    * "Every module, class or function in a computer program should have
+      responsibility over a single part of that program's functionality, and it
+      should encapsulate that part. All of that module, class or function's
+      services should be narrowly aligned with that responsibility." -
+      [Wikipedia](https://en.wikipedia.org/wiki/Single-responsibility_principle)
 1. Use the latest C++ language features to provide the simplest APIs possible.
 1. Accept incompatibility. No attempt is made for backward compatibility with C,
    earlier versions of C++, compatibility with stdlib, etc.
