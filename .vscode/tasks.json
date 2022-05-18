@@ -5,16 +5,17 @@
             "label": "bazel: run tests",
             "type": "shell",
             "command": "bazel test :all",
-            "problemMatcher": [],
             "group": {
                 "kind": "build",
-                "isDefault": true
             }
         },
         {
             "label": "bazel: run tests (debug)",
             "type": "shell",
-            "command": "bazel test -c dbg :all"
+            "command": "bazel test -c dbg :all",
+            "group": {
+                "kind": "build",
+            }
         }
     ]
 }
