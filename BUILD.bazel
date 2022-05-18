@@ -1,0 +1,13 @@
+cc_library(
+    name = "subspace",
+    hdrs = [
+    ],
+)
+
+cc_test(
+    name = "subspace_unittests",
+    deps = [
+        ":subspace",
+        "@gtest//:gtest_main",
+    ],
+)
