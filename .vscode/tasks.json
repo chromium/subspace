@@ -4,7 +4,18 @@
         {
             "label": "bazel: run tests",
             "type": "shell",
-            "command": "bazel test :all",
+            "command": "bazel",
+            "args": [
+                " test",
+                ":all",
+            ],
+            "windows": {
+                "args": [
+                    "test",
+                    ":all",
+                    "--compiler=clang-cl",
+                ],
+            },
             "group": {
                 "kind": "build",
             }
@@ -12,7 +23,22 @@
         {
             "label": "bazel: run tests (debug)",
             "type": "shell",
-            "command": "bazel test -c dbg :all",
+            "command": "bazel",
+            "args": [
+                " test",
+                "-c",
+                "dbg",
+                ":all",
+            ],
+            "windows": {
+                "args": [
+                    "test",
+                    "-c",
+                    "dbg",
+                    ":all",
+                    "--compiler=clang-cl",
+                ],
+            },
             "group": {
                 "kind": "build",
             }

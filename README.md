@@ -29,4 +29,5 @@ limitations under the License.
 
 1. Install [Bazelisk](https://github.com/bazelbuild/bazelisk) to install Bazel,
    and [set it up with your IDE](https://bazel.build/install/ide).
+1. Install [LLVM](https://releases.llvm.org/download.html).
 1. Build and run tests: `bazel test :all`
