@@ -89,7 +89,8 @@ This library is an experiment and not intended for use. See the
     undesirable.
 1. No expensive and implicit copies.
     * Copies should generally be explicit. If we opt into implicit copies, they
-      should be cheap - and [trivial](https://en.cppreference.com/w/cpp/types/is_trivially_copyable).
+      should be cheap - and
+      [trivial](https://en.cppreference.com/w/cpp/types/is_trivially_copyable).
 1. No surprising heap allocations. Types should live on the stack whenever
     possible. They only use internal heap allocations when strictly required:
     for instance, because they have a dynamic size. Instead, the user can choose
