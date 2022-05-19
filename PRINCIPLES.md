@@ -106,6 +106,7 @@ This library is an experiment and not intended for use. See the
       only used as const pointers and references.
     * We will use tooling to enforce this for the library, and it will be
       made available for user code.
+    * Prior art and motivations: https://isocpp.org/files/papers/N4388.html
     * TODO: Maybe there's a more concise way to say this.
 1. No static mutable state.
     * Static mutable state introduces potential thread races, and the complexity
