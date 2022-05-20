@@ -16,6 +16,8 @@ cc_library(
     name = "subspace",
     hdrs = [
         "assertions/builtin.h",
+        "assertions/check.h",
+        "assertions/panic.h",
     ],
 )
 
@@ -24,5 +26,9 @@ cc_test(
     deps = [
         ":subspace",
         "//third_party/googletest:gtest_main",
+    ],
+    srcs = [
+        "assertions/check_unittest.cc",
+        "assertions/panic_unittest.cc",
     ],
 )
