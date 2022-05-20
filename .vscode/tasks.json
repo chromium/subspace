@@ -6,14 +6,13 @@
             "type": "shell",
             "command": "bazel",
             "args": [
-                " test",
+                "test",
                 ":all",
             ],
             "windows": {
                 "args": [
                     "test",
                     ":all",
-                    "--compiler=clang-cl",
                 ],
             },
             "group": {
@@ -36,7 +35,6 @@
                     "-c",
                     "dbg",
                     ":all",
-                    "--compiler=clang-cl",
                 ],
             },
             "group": {
