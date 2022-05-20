@@ -20,7 +20,12 @@ cc_library(
         "assertions/panic.h",
         "assertions/unreachable.h",
         "marker/unsafe.h",
+        "mem/__private/relocate.h",
     ],
+    linkopts = [
+        "-lc",
+        "-lm",
+    ]
 )
 
 cc_test(
@@ -33,5 +38,12 @@ cc_test(
         "assertions/check_unittest.cc",
         "assertions/panic_unittest.cc",
         "assertions/unreachable_unittest.cc",
+        "mem/__private/relocate_unittest.cc",
+    ],
+    copts = [
+        "-fPIE"
+    ],
+    linkopts = [
+        "-lstdc++",
     ],
 )
