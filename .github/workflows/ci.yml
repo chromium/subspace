@@ -11,4 +11,4 @@ jobs:
       with:
         path: "~/.cache/bazel"
         key: bazel
-    - run: bazel test :all
+    - run: bazel test :all --test_output=errors --cxxopt=-std=c++20
