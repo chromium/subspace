@@ -18,6 +18,8 @@ cc_library(
         "assertions/builtin.h",
         "assertions/check.h",
         "assertions/panic.h",
+        "assertions/unreachable.h",
+        "marker/unsafe.h",
     ],
 )
 
@@ -30,5 +32,6 @@ cc_test(
     srcs = [
         "assertions/check_unittest.cc",
         "assertions/panic_unittest.cc",
+        "assertions/unreachable_unittest.cc",
     ],
 )
