@@ -11,9 +11,4 @@ jobs:
       with:
         path: "~/.cache/bazel"
         key: bazel
-    - run:   |
-         sudo apt update
-         sudo apt install clang-11
-      shell: bash
-    - run: bazel test :all --test_output=errors --cxxopt=-std=c++20 \
-       --config=clang_config
+    - run: bazel test :all --test_output=errors --cxxopt=-std=c++20 --config=clang_config

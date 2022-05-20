@@ -52,7 +52,7 @@ def _impl(ctx):
         ctx = ctx,
         cxx_builtin_include_directories = [
           "/usr/include",
-          "/usr/lib/llvm-11/lib/clang/11.1.0/include/",
+          "/usr/lib/llvm-11/lib/clang/",
         ],
         toolchain_identifier = "local",
         host_system_name = "local",
