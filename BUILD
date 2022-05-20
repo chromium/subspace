@@ -23,6 +23,6 @@ cc_test(
     name = "subspace_unittests",
     deps = [
         ":subspace",
-        "@gtest//:gtest_main",
+        "//third_party/googletest:gtest_main",
     ],
 )
