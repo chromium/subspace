@@ -29,16 +29,16 @@ jobs:
               artifact: "Linux-Clang.tar.xz",
               os: ubuntu-latest,
               build_type: "Release",
-              cc: "clang",
-              cxx: "clang++",
+              cc: "clang-12",
+              cxx: "clang++-12",
             }
           - {
               name: "Ubuntu Latest GCC",
               artifact: "Linux-GCC.tar.xz",
               os: ubuntu-latest,
               build_type: "Release",
-              cc: "gcc",
-              cxx: "g++",
+              cc: "gcc-10",
+              cxx: "g++-10",
             }
           - {
               name: "macOS Latest Clang",
