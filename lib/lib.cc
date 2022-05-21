@@ -1,15 +1,3 @@
-# Subspace Library
-
-An experimental take on a safer, simpler C++ standard library.
-
-Please don't use this library. This is an experiment and we don't yet know where
-it will take us. There will be breaking changes without warning, and there is no
-stable version.
-
-# Copyright
-
-All source files must include this header:
-```
 // Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,13 +11,3 @@ All source files must include this header:
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-```
-
-# Getting started
-
-1. Install [LLVM](https://releases.llvm.org/download.html)
-1. Install [CMake](https://cmake.org/install/)
-1. Install [Python](https://www.python.org/downloads/)
-1. `cmake -B out`
-1. `cmake --build out`
-1. `ctest --test-dir out`

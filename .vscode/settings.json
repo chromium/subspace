@@ -3,4 +3,5 @@
     "C_Cpp.default.includePath": [
         "${workspaceRoot}",
     ],
+    "cmake.buildDirectory": "${workspaceFolder}/out",
 }
