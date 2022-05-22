@@ -4,5 +4,7 @@
         "${workspaceRoot}",
         "${workspaceRoot}/third_party/googletest/googletest/include",
     ],
+    "C_Cpp.default.cppStandard": "c++20",
     "cmake.buildDirectory": "${workspaceFolder}/out",
+    "files.eol": "\n",
 }
