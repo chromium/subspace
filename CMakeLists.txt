@@ -17,6 +17,7 @@ add_library(subspace STATIC
     "assertions/unreachable.h"
     "marker/unsafe.h"
     "mem/__private/relocate.h"
+    "mem/addressof.h"
     "lib/lib.cc"
 )
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
@@ -31,6 +32,7 @@ add_executable(subspace_unittests
     "assertions/panic_unittest.cc"
     "assertions/unreachable_unittest.cc"
     "mem/__private/relocate_unittest.cc"
+    "mem/addressof_unittest.cc"
 )
 set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(subspace_unittests
