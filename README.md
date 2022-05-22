@@ -33,3 +33,9 @@ All source files must include this header:
 1. `cmake -B out`
 1. `cmake --build out`
 1. `ctest --test-dir out`
+
+## For Windows/VSCode.
+
+1. Install Visual Studio 2022. Don't bother installing the CMake tools from it, they don't work as well
+1. Set the "Windows SDK Version" in VSCode to `10.0.19041.0` (or the version installed with Visual Studio)
+1. Set the "CMake: Generator" in VSCode to `Visual Studio 17 2022`, or add it to "CMake: Preferred Generators"
