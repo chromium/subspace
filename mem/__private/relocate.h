@@ -21,9 +21,9 @@
 namespace sus::mem::__private {
 
 // Tests if the type T can be relocated with memcpy(). Checking for trivially
-// movable and destructible is not sufficient, as this also honors the
-// [[trivial_abi]] clang attribute, as they are now considered "trivially
-// relocatable" in https://reviews.llvm.org/D114732.
+// movable and destructible is not sufficient - this also honors the
+// [[trivial_abi]] clang attribute, as types annotated with the attribute are
+// now considered "trivially relocatable" in https://reviews.llvm.org/D114732.
 // clang-format off
 template <class T>
 struct relocate_one_by_memcpy
@@ -42,27 +42,31 @@ template <class T>
 inline constexpr bool relocate_one_by_memcpy_v =
     relocate_one_by_memcpy<T>::value;
 
-// Tests if an array of type T can be relocated with memcpy(). Checking for
-// trivially movable and destructible is not sufficient, as this also honors the
-// [[trivial_abi]] clang attribute, as they are now considered "trivially
-// relocatable" in https://reviews.llvm.org/D114732.
+// Tests if an array of type T[] can be relocated with memcpy(). Checking for
+// trivially movable and destructible is not sufficient - this also honors the
+// [[trivial_abi]] clang attribute, as types annotated with the attribute are
+// now considered "trivially relocatable" in https://reviews.llvm.org/D114732.
+//
+// Tests against `std::remove_all_extents_t<T>` so that the same answer is
+// returned for `T` or `T[]` or `T[][][]` etc.
 //
 // Volatile types are excluded, since if we have a range of volatile Foo, then
 // the user is probably expecting us to follow the abstract machine and copy the
 // Foo objects one by one, instead of byte-by-byte (possible tearing). See:
 // https://reviews.llvm.org/D61761?id=198907#inline-548830
+//
 // clang-format off
 template <class T>
 struct relocate_array_by_memcpy
     : public std::integral_constant<
         bool,
 #if __has_extension(trivially_relocatable)
-        __is_trivially_relocatable(T) &&
-        !std::is_volatile_v<T>
+        __is_trivially_relocatable(std::remove_all_extents_t<T>) &&
+        !std::is_volatile_v<std::remove_all_extents_t<T>>
 #else
-        std::is_trivially_move_constructible_v<T> &&
-        std::is_trivially_destructible_v<T> &&
-        !std::is_volatile_v<T>
+        std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>> &&
+        std::is_trivially_destructible_v<std::remove_all_extents_t<T>> &&
+        !std::is_volatile_v<std::remove_all_extents_t<T>>
 #endif
       > {};
 // clang-format on
