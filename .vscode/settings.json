@@ -2,6 +2,7 @@
     "editor.renderFinalNewline": true,
     "C_Cpp.default.includePath": [
         "${workspaceRoot}",
+        "${workspaceRoot}/third_party/googletest/googletest/include",
     ],
     "cmake.buildDirectory": "${workspaceFolder}/out",
 }
