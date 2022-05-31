@@ -6,10 +6,12 @@
     ],
     "C_Cpp.default.cppStandard": "c++20",
     "cmake.buildDirectory": "${workspaceFolder}/out",
+    "clangd.arguments": [
+        "-compile-commands-dir=out"
+    ],
     "cmake.configureSettings": {
         "CMAKE_MAKE_PROGRAM": "ninja"
     },
     "cmake.generator": "Ninja",
-    "cmake.copyCompileCommands": "${workspaceRoot}/compile_commands.json",
     "files.eol": "\n",
 }

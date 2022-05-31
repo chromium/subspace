@@ -24,33 +24,47 @@ jobs:
           #    os: windows-latest,
           #    build_type: "Release", cc: "gcc", cxx: "g++"
           #  }
-          - {
-              name: "Ubuntu Latest Clang",
-              artifact: "Linux-Clang.tar.xz",
-              os: ubuntu-latest,
-              build_type: "Release",
-              cc: "clang-12",
-              cxx: "clang++-12",
-            }
+
+          # Clang doesn't have good enough C++20 support to compile this library
+          # yet.
+          #- {
+          #    name: "Ubuntu Latest Clang",
+          #    artifact: "Linux-Clang.tar.xz",
+          #    os: ubuntu-latest,
+          #    build_type: "Release",
+          #    cc: "clang",
+          #    cxx: "clang++",
+          #  }
+
           - {
               name: "Ubuntu Latest GCC",
               artifact: "Linux-GCC.tar.xz",
-              os: ubuntu-latest,
+              # 22.04 is in public beta, and has GCC 11 which we need for C++20
+              # support. Switch to `ubuntu-latest` when it's out of beta.
+              os: ubuntu-22.04,
               build_type: "Release",
-              cc: "gcc-10",
-              cxx: "g++-10",
+              cc: "gcc-11",
+              cxx: "g++-11",
             }
-          - {
-              name: "macOS Latest Clang",
-              artifact: "macOS.tar.xz",
-              os: macos-latest,
-              build_type: "Release",
-              cc: "clang",
-              cxx: "clang++",
-            }
+
+          # Clang doesn't have good enough C++20 support to compile this library
+          # yet.
+          #- {
+          #    name: "macOS Latest Clang",
+          #    artifact: "macOS.tar.xz",
+          #    os: macos-latest,
+          #    build_type: "Release",
+          #    cc: "clang",
+          #    cxx: "clang++",
+          #  }
 
     steps:
       - uses: actions/checkout@v1
+
+      #- name: Install LLVM and Clang
+      #  uses: KyleMayes/install-llvm-action@v1
+      #  with:
+      #    version: "13.0"
 
       - name: Download Ninja
         id: ninja
