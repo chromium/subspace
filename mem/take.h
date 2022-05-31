@@ -22,8 +22,8 @@
 
 namespace sus::mem {
 
-template <class T,
-          class = std::enable_if_t<std::is_default_constructible_v<T>, void>>
+template <class T>
+requires std::is_default_constructible_v<T>
 inline constexpr T take(T& t) noexcept {
   T taken(static_cast<T&&>(t));
   t.~T();
