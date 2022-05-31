@@ -19,15 +19,15 @@
 namespace sus::mem {
 
 template <class T>
-typename std::enable_if<std::is_object<T>::value, T*>::type addressof(
-    T& arg) noexcept {
+  requires std::is_object_v<T>
+T* addressof(T& arg) noexcept {
   return reinterpret_cast<T*>(
       &const_cast<char&>(reinterpret_cast<const volatile char&>(arg)));
 }
 
 template <class T>
-typename std::enable_if<!std::is_object<T>::value, T*>::type addressof(
-    T& arg) noexcept {
+  requires(!std::is_object_v<T>)
+T* addressof(T& arg) noexcept {
   return &arg;
 }
 
