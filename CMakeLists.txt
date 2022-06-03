@@ -22,6 +22,7 @@ add_library(subspace STATIC
     "mem/swap.h"
     "mem/take.h"
     "mem/addressof.h"
+    "option/option.h"
     "traits/make_default.h"
     "lib/lib.cc"
 )
@@ -41,6 +42,7 @@ add_executable(subspace_unittests
     "mem/replace_unittest.cc"
     "mem/swap_unittest.cc"
     "mem/take_unittest.cc"
+    "option/option_unittest.cc"
     "traits/make_default_unittest.cc"
 )
 set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
