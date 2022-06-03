@@ -23,7 +23,7 @@
 namespace sus::mem {
 
 template <class T>
-requires std::is_default_constructible_v<T>
+  requires std::is_default_constructible_v<T>
 inline constexpr T take(T& t) noexcept {
   T taken(static_cast<T&&>(t));
   t.~T();
