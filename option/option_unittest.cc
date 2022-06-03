@@ -39,7 +39,6 @@ struct WithDefaultConstructible {
     return WithDefaultConstructible(3);
   }
 
- private:
   constexpr WithDefaultConstructible(int i) : i(i) {}
 };
 
@@ -190,6 +189,44 @@ TEST(Option, Take) {
   IS_NONE(x);
   IS_SOME(y);
   EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 404);
+}
+
+TEST(Option, UnwrapOr) {
+  auto x = Option<int>::some(2).unwrap_or(3);
+  EXPECT_EQ(x, 2);
+  auto y = Option<int>::none().unwrap_or(3);
+  EXPECT_EQ(y, 3);
+
+  // Verify constexpr.
+  static_assert(Option<int>::none().unwrap_or(3) == 3, "");
+}
+
+TEST(Option, UnwrapOrElse) {
+  auto x = Option<int>::some(2).unwrap_or_else([]() { return int(3); });
+  EXPECT_EQ(x, 2);
+  auto y = Option<int>::none().unwrap_or_else([]() { return int(3); });
+  EXPECT_EQ(y, 3);
+
+  // Verify constexpr.
+  static_assert(
+      Option<int>::none().unwrap_or_else([]() { return int(3); }) == 3, "");
+}
+
+TEST(Option, UnwrapOrDefault) {
+  auto x = Option<DefaultConstructible>::some(DefaultConstructible{.i = 4})
+               .unwrap_or_default();
+  EXPECT_EQ(x.i, 4);
+  auto y = Option<DefaultConstructible>::none().unwrap_or_default();
+  EXPECT_EQ(y.i, 2);
+
+  auto wx = Option<WithDefaultConstructible>::some(WithDefaultConstructible(4))
+                .unwrap_or_default();
+  EXPECT_EQ(wx.i, 4);
+  auto wy = Option<WithDefaultConstructible>::none().unwrap_or_default();
+  EXPECT_EQ(wy.i, 3);
+
+  // Verify constexpr.
+  static_assert(Option<int>::none().unwrap_or_default() == 0, "");
 }
 
 }  // namespace

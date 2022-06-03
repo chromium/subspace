@@ -48,12 +48,15 @@ class Option {
 
   /// Construct an Option with the default value for the type it contains.
   ///
-  /// The type `T` must be #MakeDefault, and will be constructed through that
-  /// trait.
+  /// The Option's contained type `T` must be #MakeDefault, and will be
+  /// constructed through that trait.
   template <class U = T>
     requires(sus::traits::MakeDefault<U>::has_trait)
-  static inline constexpr Option<U> with_default() noexcept {
-    return Option<U>::some(sus::traits::MakeDefault<U>::make_default());
+  static inline constexpr Option<T> with_default() noexcept {
+    static_assert(std::is_same_v<U, T>,
+                  "with_default() called with incorrect explicit type. Don't "
+                  "specify a template argument to with_default().");
+    return Option<T>::some(sus::traits::MakeDefault<T>::make_default());
   }
 
   /// Destructor for the Option.
@@ -96,7 +99,7 @@ class Option {
   /// ```
   operator State() { return state_; }
 
-  /// Unwraps the contained value inside the Option.
+  /// Returns the contained value inside the Option.
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
@@ -105,7 +108,7 @@ class Option {
     ::sus::check_with_message(state_ == State::Some, *msg);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
-  /// Unwraps the contained value inside the Option.
+  /// Returns the contained value inside the Option.
   ///
   /// The function will panic without a message if the Option's state is
   /// currently `None`.
@@ -113,7 +116,7 @@ class Option {
     ::sus::check(state_ == State::Some);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
-  /// Unwraps the contained value inside the Option.
+  /// Returns the contained value inside the Option.
   ///
   /// # Safety
   ///
@@ -125,6 +128,42 @@ class Option {
       ::sus::marker::UnsafeFnMarker) && noexcept {
     state_ = State::None;
     return static_cast<T&&>(t_);
+  }
+
+  /// Returns the contained value inside the Option, if there is one. Otherwise,
+  /// returns `default_result`.
+  ///
+  /// Note that if it is non-trivial to construct a `default_result`, that
+  /// <unwrap_or_else>() should be used instead, as it will only construct the
+  /// default value if required.
+  constexpr T unwrap_or(T default_result) && noexcept {
+    return (::sus::mem::replace(state_, None) == Some)
+               ? ::sus::mem::take_and_destruct(unsafe_fn, t_)
+               : static_cast<T&&>(default_result);
+  }
+  /// Returns the contained value inside the Option, if there is one. Otherwise,
+  /// returns the result of the given function.
+  template <class Functor>
+    requires std::is_same_v<std::invoke_result_t<Functor>, T>
+  constexpr T unwrap_or_else(Functor f) && noexcept {
+    return (::sus::mem::replace(state_, None) == Some)
+               ? ::sus::mem::take_and_destruct(unsafe_fn, t_)
+               : f();
+  }
+  /// Returns the contained value inside the Option, if there is one. Otherwise,
+  /// constructs a default value for the type and returns that.
+  ///
+  /// The Option's contained type `T` must be #MakeDefault, and will be
+  /// constructed through that trait.
+  template <class U = T>
+    requires(sus::traits::MakeDefault<U>::has_trait)
+  constexpr T unwrap_or_default() && noexcept {
+    static_assert(std::is_same_v<U, T>,
+                  "unwrap_or_default() called with incorrect explicit type. "
+                  "Don't specify a template argument to unwrap_or_default().");
+    return (::sus::mem::replace(state_, None) == Some)
+               ? ::sus::mem::take_and_destruct(unsafe_fn, t_)
+               : sus::traits::MakeDefault<T>::make_default();
   }
 
   /// Returns a new Option containing whatever was inside the current Option.
