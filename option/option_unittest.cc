@@ -189,6 +189,13 @@ TEST(Option, Take) {
   IS_NONE(x);
   IS_SOME(y);
   EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 404);
+
+  auto n = Option<int>::none();
+  IS_NONE(n);
+  auto m = n.take();
+  // The None has moved from `n` to `m`, which is a no-op on `n`.
+  IS_NONE(n);
+  IS_NONE(m);
 }
 
 TEST(Option, UnwrapOr) {
