@@ -251,7 +251,75 @@ class Option {
     }
   }
 
+  /// Consumes this Option and returns an Option with #None if this Option holds
+  /// #None, otherwise returns the given `opt`.
+  template <class U>
+  constexpr Option<U> and_opt(Option<U> opt) && noexcept {
+    return (::sus::mem::replace(state_, None) == Some) ? (t_.~T(), opt)
+                                                       : Option<U>::none();
+  }
+
+  /// Consumes this Option and returns an Option with #None if this Option holds
+  /// #None, otherwise calls `f` with the contained value and returns an Option
+  /// with the result.
+  ///
+  /// Some languages call this operation flatmap.
+  template <class AndFn, int&..., class R = std::invoke_result_t<AndFn, T&&>,
+            class InnerR = IsOptionType<R>::type>
+    requires(IsOptionType<R>::value)
+  constexpr Option<InnerR> and_then(AndFn f) && noexcept {
+    return (::sus::mem::replace(state_, None) == Some)
+               ? f(::sus::mem::take_and_destruct(unsafe_fn, t_))
+               : Option<InnerR>::none();
+  }
+
+  /// Consumes and returns an Option with the same value if this Option contains
+  /// a value, otherwise returns the given `opt`.
+  constexpr Option<T> or_opt(Option<T> opt) && noexcept {
+    return (::sus::mem::replace(state_, None) == Some)
+               ? Option::some(::sus::mem::take_and_destruct(unsafe_fn, t_))
+               : opt;
+  }
+
+  /// Consumes and returns an Option with the same value if this Option contains
+  /// a value, otherwise returns the Option returned by `f`.
+  template <class ElseFn, int&..., class R = std::invoke_result_t<ElseFn>>
+    requires(std::is_same_v<R, Option<T>>)
+  constexpr Option<T> or_else(ElseFn f) && noexcept {
+    return (::sus::mem::replace(state_, None) == Some)
+               ? Option::some(::sus::mem::take_and_destruct(unsafe_fn, t_))
+               : f();
+  }
+
+  /// Consumes this Option and returns an Option, holding the value from either
+  /// this Option `opt`, if exactly one of them holds a value, otherwise returns
+  /// an Option that holds #None.
+  constexpr Option<T> xor_opt(Option<T> opt) && noexcept {
+    State lhs = ::sus::mem::replace(state_, None);
+    State rhs = opt.state_;
+    if (lhs != None) {
+      Option<T> self =
+          Option::some(::sus::mem::take_and_destruct(unsafe_fn, t_));
+      if (rhs == None)
+        return self;
+      else
+        return Option::none();
+    } else if (rhs != None) {
+      return opt;
+    } else {
+      return Option::none();
+    }
+  }
+
  private:
+  template <class U>
+  struct IsOptionType : std::false_type {};
+
+  template <class U>
+  struct IsOptionType<Option<U>> : std::true_type {
+    using type = U;
+  };
+
   /// Constructor for #None.
   constexpr explicit Option() : state_(State::None) {}
   /// Constructor for #Some.
