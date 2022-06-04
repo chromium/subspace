@@ -144,7 +144,7 @@ class Option {
   /// Returns the contained value inside the Option, if there is one. Otherwise,
   /// returns the result of the given function.
   template <class Functor>
-    requires std::is_same_v<std::invoke_result_t<Functor>, T>
+    requires(std::is_same_v<std::invoke_result_t<Functor>, T>)
   constexpr T unwrap_or_else(Functor f) && noexcept {
     return (::sus::mem::replace(state_, None) == Some)
                ? ::sus::mem::take_and_destruct(unsafe_fn, t_)
@@ -176,6 +176,58 @@ class Option {
     return (::sus::mem::replace(state_, State::None) == State::Some)
                ? Option::some(sus::mem::take_and_destruct(unsafe_fn, t_))
                : Option::none();
+  }
+
+  /// Maps the Option's value through a function.
+  ///
+  /// Consumes the Option, passing the value through the map function, and
+  /// returning an `Option<R>` where `R` is the return type of the map function.
+  ///
+  /// Returns an `Option<R>` in state #None if the current Option is in state
+  /// #None.
+  template <class MapFn, int&..., class R = std::invoke_result_t<MapFn, T&&>>
+    requires(!std::is_void_v<R>)
+  constexpr Option<R> map(MapFn m) && noexcept {
+    if (::sus::mem::replace(state_, None) == Some)
+      return Option<R>::some(m(::sus::mem::take_and_destruct(unsafe_fn, t_)));
+    else
+      return Option<R>::none();
+  }
+
+  /// Maps the Option's value through a function, or returns a default value.
+  ///
+  /// Consumes the Option, passing the value through the map function, and
+  /// returning an `Option<R>` where `R` is the return type of the map function.
+  ///
+  /// Returns an `Option<R>` with the `default_result` as its value if the
+  /// current Option's state is #None.
+  template <class MapFn, class D, int&...,
+            class R = std::invoke_result_t<MapFn, T&&>>
+    requires(!std::is_void_v<R> && std::is_same_v<D, R>)
+  constexpr Option<R> map_or(D default_result, MapFn m) && noexcept {
+    if (::sus::mem::replace(state_, None) == Some)
+      return Option<R>::some(m(::sus::mem::take_and_destruct(unsafe_fn, t_)));
+    else
+      return Option<R>::some(static_cast<R&&>(default_result));
+  }
+
+  /// Maps the Option's value through a function, or returns a default value
+  /// constructed from the default function.
+  ///
+  /// Consumes the Option, passing the value through the map function, and
+  /// returning an `Option<R>` where `R` is the return type of the map function.
+  ///
+  /// Returns an `Option<R>` with the result of calling `default_fn` as its
+  /// value if the current Option's state is #None.
+  template <class DefaultFn, class MapFn, int&...,
+            class D = std::invoke_result_t<DefaultFn>,
+            class R = std::invoke_result_t<MapFn, T&&>>
+    requires(!std::is_void_v<R> && std::is_same_v<D, R>)
+  constexpr Option<R> map_or_else(DefaultFn default_fn, MapFn m) && noexcept {
+    if (::sus::mem::replace(state_, None) == Some)
+      return Option<R>::some(m(::sus::mem::take_and_destruct(unsafe_fn, t_)));
+    else
+      return Option<R>::some(default_fn());
   }
 
  private:

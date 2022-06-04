@@ -236,4 +236,65 @@ TEST(Option, UnwrapOrDefault) {
   static_assert(Option<int>::none().unwrap_or_default() == 0, "");
 }
 
+TEST(Option, Map) {
+  auto x = Option<int>::some(2).map(
+      [](int&& i) { return static_cast<unsigned char>(i + 1); });
+  static_assert(std::is_same_v<decltype(x), Option<unsigned char>>, "");
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 3);
+
+  auto y = Option<int>::none().map(
+      [](int&& i) { return static_cast<unsigned char>(i + 1); });
+  static_assert(std::is_same_v<decltype(y), Option<unsigned char>>, "");
+  IS_NONE(y);
+
+  // Verify constexpr.
+  static_assert(
+      Option<int>::some(2)
+              .map([](int&& i) { return static_cast<unsigned char>(i + 1); })
+              .unwrap() == 3,
+      "");
+}
+
+TEST(Option, MapOr) {
+  auto x = Option<int>::some(2).map_or(
+      static_cast<unsigned char>(4),
+      [](int&& i) { return static_cast<unsigned char>(i + 1); });
+  static_assert(std::is_same_v<decltype(x), Option<unsigned char>>, "");
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 3);
+
+  auto y = Option<int>::none().map_or(
+      static_cast<unsigned char>(4),
+      [](int&& i) { return static_cast<unsigned char>(i + 1); });
+  static_assert(std::is_same_v<decltype(y), Option<unsigned char>>, "");
+  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 4);
+
+  // Verify constexpr.
+  static_assert(
+      Option<int>::none().map_or(4, [](int&& i) { return 1; }).unwrap() == 4,
+      "");
+}
+
+TEST(Option, MapOrElse) {
+  auto x = Option<int>::some(2).map_or_else(
+      []() { return static_cast<unsigned char>(4); },
+      [](int&& i) { return static_cast<unsigned char>(i + 1); });
+  static_assert(std::is_same_v<decltype(x), Option<unsigned char>>, "");
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 3);
+
+  auto y = Option<int>::none().map_or_else(
+      []() { return static_cast<unsigned char>(4); },
+      [](int&& i) { return static_cast<unsigned char>(i + 1); });
+  static_assert(std::is_same_v<decltype(y), Option<unsigned char>>, "");
+  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 4);
+
+  // Verify constexpr.
+  static_assert(
+      Option<int>::none()
+              .map_or_else(
+                  []() { return static_cast<unsigned char>(4); },
+                  [](int&& i) { return static_cast<unsigned char>(1); })
+              .unwrap() == 4,
+      "");
+}
+
 }  // namespace
