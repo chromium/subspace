@@ -27,9 +27,8 @@ All source files must include this header:
 
 # Getting started
 
-1. Install [LLVM](https://releases.llvm.org/download.html)
 1. Install [CMake](https://cmake.org/install/)
-1. Install [Python](https://www.python.org/downloads/)
+1. Install [python3](https://www.python.org/downloads/)
 1. `cmake -B out`
 1. `cmake --build out`
 1. `ctest --test-dir out`
