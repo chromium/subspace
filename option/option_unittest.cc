@@ -237,36 +237,40 @@ TEST(Option, UnwrapOrDefault) {
 }
 
 TEST(Option, Map) {
-  auto x = Option<int>::some(2).map(
-      [](int&& i) { return static_cast<unsigned char>(i + 1); });
-  static_assert(std::is_same_v<decltype(x), Option<unsigned char>>, "");
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 3);
+  struct Mapped {
+    int i;
+  };
 
-  auto y = Option<int>::none().map(
-      [](int&& i) { return static_cast<unsigned char>(i + 1); });
-  static_assert(std::is_same_v<decltype(y), Option<unsigned char>>, "");
+  auto x = Option<int>::some(2).map([](int&& i) { return Mapped(i + 1); });
+  static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 3);
+
+  auto y = Option<int>::none().map([](int&& i) { return Mapped(i + 1); });
+  static_assert(std::is_same_v<decltype(y), Option<Mapped>>, "");
   IS_NONE(y);
 
   // Verify constexpr.
-  static_assert(
-      Option<int>::some(2)
-              .map([](int&& i) { return static_cast<unsigned char>(i + 1); })
-              .unwrap() == 3,
-      "");
+  static_assert(Option<int>::some(2)
+                        .map([](int&& i) { return Mapped(i + 1); })
+                        .unwrap()
+                        .i == 3,
+                "");
 }
 
 TEST(Option, MapOr) {
-  auto x = Option<int>::some(2).map_or(
-      static_cast<unsigned char>(4),
-      [](int&& i) { return static_cast<unsigned char>(i + 1); });
-  static_assert(std::is_same_v<decltype(x), Option<unsigned char>>, "");
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 3);
+  struct Mapped {
+    int i;
+  };
 
-  auto y = Option<int>::none().map_or(
-      static_cast<unsigned char>(4),
-      [](int&& i) { return static_cast<unsigned char>(i + 1); });
-  static_assert(std::is_same_v<decltype(y), Option<unsigned char>>, "");
-  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 4);
+  auto x = Option<int>::some(2).map_or(
+      Mapped(4), [](int&& i) { return static_cast<Mapped>(i + 1); });
+  static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 3);
+
+  auto y = Option<int>::none().map_or(Mapped(4),
+                                      [](int&& i) { return Mapped(i + 1); });
+  static_assert(std::is_same_v<decltype(y), Option<Mapped>>, "");
+  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap().i, 4);
 
   // Verify constexpr.
   static_assert(
@@ -275,26 +279,33 @@ TEST(Option, MapOr) {
 }
 
 TEST(Option, MapOrElse) {
+  struct Mapped {
+    int i;
+  };
+
   auto x = Option<int>::some(2).map_or_else(
-      []() { return static_cast<unsigned char>(4); },
-      [](int&& i) { return static_cast<unsigned char>(i + 1); });
-  static_assert(std::is_same_v<decltype(x), Option<unsigned char>>, "");
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 3);
+      []() { return Mapped(4); }, [](int&& i) { return Mapped(i + 1); });
+  static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 3);
 
   auto y = Option<int>::none().map_or_else(
-      []() { return static_cast<unsigned char>(4); },
-      [](int&& i) { return static_cast<unsigned char>(i + 1); });
-  static_assert(std::is_same_v<decltype(y), Option<unsigned char>>, "");
-  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 4);
+      []() { return Mapped(4); }, [](int&& i) { return Mapped(i + 1); });
+  static_assert(std::is_same_v<decltype(y), Option<Mapped>>, "");
+  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap().i, 4);
 
   // Verify constexpr.
-  static_assert(
-      Option<int>::none()
-              .map_or_else(
-                  []() { return static_cast<unsigned char>(4); },
-                  [](int&& i) { return static_cast<unsigned char>(1); })
-              .unwrap() == 4,
-      "");
+  static_assert(Option<int>::none()
+                        .map_or_else([]() { return Mapped(4); },
+                                     [](int&& i) { return Mapped(1); })
+                        .unwrap()
+                        .i == 4,
+                "");
+  static_assert(Option<int>::some(2)
+                        .map_or_else([]() { return Mapped(4); },
+                                     [](int&& i) { return Mapped(1); })
+                        .unwrap()
+                        .i == 1,
+                "");
 }
 
 TEST(Option, Filter) {
