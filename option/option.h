@@ -230,6 +230,21 @@ class Option {
       return Option<R>::some(default_fn());
   }
 
+  template <class Predicate>
+    requires(std::is_same_v<std::invoke_result_t<Predicate, const T&>, bool>)
+  constexpr Option<T> filter(Predicate p) && noexcept {
+    if (::sus::mem::replace(state_, None) == Some) {
+      if (p(const_cast<const T&>(t_)))
+        return Option::some(sus::mem::take_and_destruct(unsafe_fn, t_));
+      else {
+        t_.~T();  // state_ has become None, so we must not keep `t_` alive.
+        return Option::none();
+      }
+    } else {
+      return Option::none();
+    }
+  }
+
  private:
   /// Constructor for #None.
   constexpr explicit Option() : state_(State::None) {}
