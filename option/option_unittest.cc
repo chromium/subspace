@@ -283,15 +283,36 @@ TEST(Option, MapOrElse) {
     int i;
   };
 
+  bool map_called = false;
+  bool else_called = false;
   auto x = Option<int>::some(2).map_or_else(
-      []() { return Mapped(4); }, [](int&& i) { return Mapped(i + 1); });
+      [&]() {
+        else_called = true;
+        return Mapped(4);
+      },
+      [&](int&& i) {
+        map_called = true;
+        return Mapped(i + 1);
+      });
   static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
   EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 3);
+  EXPECT_TRUE(map_called);
+  EXPECT_FALSE(else_called);
 
+  map_called = else_called = false;
   auto y = Option<int>::none().map_or_else(
-      []() { return Mapped(4); }, [](int&& i) { return Mapped(i + 1); });
+      [&]() {
+        else_called = true;
+        return Mapped(4);
+      },
+      [&](int&& i) {
+        map_called = true;
+        return Mapped(i + 1);
+      });
   static_assert(std::is_same_v<decltype(y), Option<Mapped>>, "");
   EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap().i, 4);
+  EXPECT_FALSE(map_called);
+  EXPECT_TRUE(else_called);
 
   // Verify constexpr.
   static_assert(Option<int>::none()
@@ -370,6 +391,130 @@ TEST(Option, Filter) {
     EXPECT_EQ(count, 0);
   }
   EXPECT_EQ(count, 0);
+}
+
+TEST(Option, And) {
+  auto x = Option<int>::some(2).and_opt(Option<int>::some(3)).unwrap();
+  EXPECT_EQ(x, 3);
+
+  auto y = Option<int>::some(2).and_opt(Option<int>::none());
+  IS_NONE(y);
+
+  auto nx = Option<int>::none().and_opt(Option<int>::some(3));
+  IS_NONE(nx);
+
+  auto ny = Option<int>::none().and_opt(Option<int>::none());
+  IS_NONE(ny);
+}
+
+TEST(Option, AndThen) {
+  struct And {
+    int i;
+  };
+
+  bool called = false;
+  auto x = Option<int>::some(2).and_then([&](int&& i) {
+    called = true;
+    return Option<And>::some(And(3));
+  });
+  static_assert(std::is_same_v<decltype(x), Option<And>>, "");
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 3);
+  EXPECT_TRUE(called);
+
+  called = false;
+  auto y = Option<int>::some(2).and_then([&](int&& i) {
+    called = true;
+    return Option<And>::none();
+  });
+  static_assert(std::is_same_v<decltype(y), Option<And>>, "");
+  IS_NONE(y);
+  EXPECT_TRUE(called);
+
+  called = false;
+  auto nx = Option<int>::none().and_then([&](int&& i) {
+    called = true;
+    return Option<And>::some(And(3));
+  });
+  static_assert(std::is_same_v<decltype(nx), Option<And>>, "");
+  IS_NONE(nx);
+  EXPECT_FALSE(called);
+
+  called = false;
+  auto ny = Option<int>::none().and_then([&](int&& i) {
+    called = true;
+    return Option<And>::none();
+  });
+  static_assert(std::is_same_v<decltype(ny), Option<And>>, "");
+  IS_NONE(ny);
+  EXPECT_FALSE(called);
+}
+
+TEST(Option, Or) {
+  auto x = Option<int>::some(2).or_opt(Option<int>::some(3)).unwrap();
+  EXPECT_EQ(x, 2);
+
+  auto y = Option<int>::some(2).or_opt(Option<int>::none()).unwrap();
+  EXPECT_EQ(y, 2);
+
+  auto nx = Option<int>::none().or_opt(Option<int>::some(3)).unwrap();
+  EXPECT_EQ(nx, 3);
+
+  auto ny = Option<int>::none().or_opt(Option<int>::none());
+  IS_NONE(ny);
+}
+
+TEST(Option, OrElse) {
+  bool called = false;
+  auto x = Option<int>::some(2)
+               .or_else([&]() {
+                 called = true;
+                 return Option<int>::some(3);
+               })
+               .unwrap();
+  EXPECT_EQ(x, 2);
+  EXPECT_FALSE(called);
+
+  called = false;
+  auto y = Option<int>::some(2)
+               .or_else([&]() {
+                 called = true;
+                 return Option<int>::none();
+               })
+               .unwrap();
+  EXPECT_EQ(y, 2);
+  EXPECT_FALSE(called);
+
+  called = false;
+  auto nx = Option<int>::none()
+                .or_else([&]() {
+                  called = true;
+                  return Option<int>::some(3);
+                })
+                .unwrap();
+  EXPECT_EQ(nx, 3);
+  EXPECT_TRUE(called);
+
+  called = false;
+  auto ny = Option<int>::none().or_else([&]() {
+    called = true;
+    return Option<int>::none();
+  });
+  IS_NONE(ny);
+  EXPECT_TRUE(called);
+}
+
+TEST(Option, Xor) {
+  auto x = Option<int>::some(2).xor_opt(Option<int>::some(3));
+  IS_NONE(x);
+
+  auto y = Option<int>::some(2).xor_opt(Option<int>::none()).unwrap();
+  EXPECT_EQ(y, 2);
+
+  auto nx = Option<int>::none().xor_opt(Option<int>::some(3)).unwrap();
+  EXPECT_EQ(nx, 3);
+
+  auto ny = Option<int>::none().xor_opt(Option<int>::none());
+  IS_NONE(ny);
 }
 
 }  // namespace
