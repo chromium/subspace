@@ -297,4 +297,68 @@ TEST(Option, MapOrElse) {
       "");
 }
 
+TEST(Option, Filter) {
+  auto x = Option<int>::some(2).filter([](const int& i) { return true; });
+  static_assert(std::is_same_v<decltype(x), Option<int>>, "");
+  IS_SOME(x);
+
+  auto y = Option<int>::some(2).filter([](const int& i) { return false; });
+  static_assert(std::is_same_v<decltype(y), Option<int>>, "");
+  IS_NONE(y);
+
+  auto nx = Option<int>::none().filter([](const int& i) { return true; });
+  static_assert(std::is_same_v<decltype(nx), Option<int>>, "");
+  IS_NONE(nx);
+
+  auto ny = Option<int>::none().filter([](const int& i) { return false; });
+  static_assert(std::is_same_v<decltype(ny), Option<int>>, "");
+  IS_NONE(ny);
+
+  // Verify constexpr.
+  static_assert(
+      Option<int>::some(2).filter([](const int& i) { return true; }).unwrap() ==
+          2,
+      "");
+
+  static int count = 0;
+  struct WatchDestructor {
+    ~WatchDestructor() { ++count; }
+  };
+
+  static int hold_count;
+  {
+    auto a = Option<WatchDestructor>::with_default();
+    count = 0;
+    auto af = static_cast<decltype(a)&&>(a).filter(
+        [](const WatchDestructor& i) { return true; });
+    // The WatchDestructor was moved from `a` to `af` and the temporary's
+    // was destroyed.
+    EXPECT_GE(count, 1);
+    hold_count = count;
+  }
+  // No double destruction in `a`, but there's one in `af`.
+  EXPECT_EQ(count, hold_count + 1);
+
+  {
+    auto b = Option<WatchDestructor>::with_default();
+    count = 0;
+    auto bf = static_cast<decltype(b)&&>(b).filter(
+        [](const WatchDestructor& i) { return false; });
+    // The WatchDestructor in `b` was destroyed.
+    EXPECT_GE(count, 1);
+  }
+  // No double destruction in `b`.
+  EXPECT_GE(count, 1);
+
+  {
+    count = 0;
+    auto c = Option<WatchDestructor>::none();
+    auto cf = static_cast<decltype(c)&&>(c).filter(
+        [](const WatchDestructor& i) { return false; });
+    // Nothing constructed or destructed.
+    EXPECT_EQ(count, 0);
+  }
+  EXPECT_EQ(count, 0);
+}
+
 }  // namespace
