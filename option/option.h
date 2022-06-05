@@ -39,6 +39,15 @@ struct IsOptionType<Option<U>> : std::true_type {
   using type = U;
 };
 
+template <class U>
+struct Storage {
+  U val_;
+};
+template <class U>
+struct Storage<U&> {
+  U* ptr_;
+};
+
 }  // namespace __private
 
 /// The representation of an Option's state, which can either be #None to
@@ -67,21 +76,45 @@ class Option {
   ///
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
-  template <class U = T>
-    requires(::sus::traits::MakeDefault<U>::has_trait && std::is_same_v<U, T>)
-  static inline constexpr Option<T> with_default() noexcept {
+  static inline constexpr Option<T> with_default() noexcept
+    requires(::sus::traits::MakeDefault<T>::has_trait)
+  {
     return Option<T>::some(::sus::traits::MakeDefault<T>::make_default());
   }
+
+  /// If T can be trivially destroyed, we don't need to explicitly destroy it,
+  /// so we can use the default destructor, which allows Option<T> to also be
+  /// trivially destroyed.
+  constexpr ~Option() noexcept
+    requires(std::is_trivially_destructible_v<T>)
+  = default;
 
   /// Destructor for the Option.
   ///
   /// Destroys the value contained within the option, if there is one.
-  constexpr inline ~Option() noexcept {
-    if constexpr (!std::is_reference_v<T>)
-      if (state_ == Some) t_.val_.~T();
+  constexpr inline ~Option() noexcept
+    requires(!std::is_trivially_destructible_v<T>)
+  {
+    // References are trivially destructible so we only get here for values.
+    if (state_ == Some) t_.val_.~T();
   }
 
-  Option(Option&& o) noexcept : state_(o.state_) {
+  /// If T can be trivially copy-constructed, Option<T>
+  /// can also be trivially copy-constructed.
+  constexpr Option(const Option& o)
+    requires(std::is_trivially_copy_constructible_v<T>)
+  = default;
+
+  /// If T can be trivially move-constructed, we don't need to explicitly
+  /// construct it, so we can use the default destructor, which allows Option<T>
+  /// to also be trivially move-constructed.
+  constexpr Option(Option&& o)
+    requires(std::is_trivially_move_constructible_v<T>)
+  = default;
+
+  Option(Option&& o) noexcept
+    requires(!std::is_trivially_move_constructible_v<T>)
+  : state_(o.state_) {
     // If this could be done in a `constexpr` way, methods that receive an
     // Option could also be constexpr.
     if constexpr (!std::is_reference_v<T>) {
@@ -90,7 +123,23 @@ class Option {
       if (state_ == Some) t_.ptr_ = o.t_.ptr_;
     }
   }
-  Option& operator=(Option&& o) noexcept {
+
+  /// If T can be trivially copy-assigned, Option<T>
+  /// can also be trivially copy-assigned.
+  constexpr Option& operator=(const Option& o)
+    requires(std::is_trivially_copy_assignable_v<T>)
+  = default;
+
+  /// If T can be trivially move-assigned, we don't need to explicitly
+  /// construct it, so we can use the default destructor, which allows Option<T>
+  /// to also be trivially move-assigned.
+  constexpr Option& operator=(Option&& o)
+    requires(std::is_trivially_move_assignable_v<T>)
+  = default;
+
+  Option& operator=(Option&& o) noexcept
+    requires(!std::is_trivially_move_assignable_v<T>)
+  {
     if constexpr (!std::is_reference_v<T>) {
       if (state_ == Some) t_.val_.~T();
       if (o.state_ == Some) new (&t_.val_) T(static_cast<T&&>(o.t_.val_));
@@ -267,9 +316,9 @@ class Option {
   ///
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
-  template <class U = T>
-    requires(::sus::traits::MakeDefault<U>::has_trait && std::is_same_v<U, T>)
-  constexpr T unwrap_or_default() && noexcept {
+  constexpr T unwrap_or_default() && noexcept
+    requires(::sus::traits::MakeDefault<T>::has_trait)
+  {
     if (::sus::mem::replace(state_, None) == Some) {
       if constexpr (!std::is_reference_v<T>)
         return ::sus::mem::take_and_destruct(unsafe_fn, t_.val_);
@@ -326,9 +375,9 @@ class Option {
   ///
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
-  template <class U = T>
-    requires(::sus::traits::MakeDefault<U>::has_trait && std::is_same_v<U, T>)
-  T& get_or_insert_default() & noexcept {
+  T& get_or_insert_default() & noexcept
+    requires(::sus::traits::MakeDefault<T>::has_trait)
+  {
     static_assert(!std::is_reference_v<T>, "");  // We require MakeDefault<T>.
     if (::sus::mem::replace(state_, Some) == None)
       new (&t_.val_) T(::sus::traits::MakeDefault<T>::make_default());
@@ -573,8 +622,8 @@ class Option {
     if (state_ == None) {
       return Option<std::remove_reference_t<T>&>::none();
     } else {
-      if constexpr (!std::is_reference_v<T>)
-        return Option<std::remove_reference_t<T>&>::some(t_.val_);
+    if constexpr (!std::is_reference_v<T>)
+        return Option<T&>::some(t_.val_);
       else
         return Option<std::remove_reference_t<T>&>::some(*t_.ptr_);
     }
@@ -585,24 +634,17 @@ class Option {
   constexpr explicit Option() : state_(None) {}
   /// Constructor for #Some.
   constexpr explicit Option(std::remove_reference_t<T>& t)
-      : state_(Some), t_(&t) {}
+    requires(std::is_reference_v<T>)
+  : state_(Some), t_(&t) {}
   /// Constructor for #Some.
-  constexpr explicit Option(std::remove_reference_t<T>&& t)
-      : state_(Some), t_(static_cast<T&&>(t)) {}
-
-  template <class U>
-  struct Storage {
-    U val_;
-  };
-  template <class U>
-  struct Storage<U&> {
-    U* ptr_;
-  };
+  constexpr explicit Option(T&& t)
+    requires(!std::is_reference_v<T>)
+  : state_(Some), t_(static_cast<T&&>(t)) {}
 
   // TODO: determine if we can put the tag into `T` from its type (e.g. sizeof
   // < alignment?), and then do so?
   union {
-    Storage<T> t_;
+    ::sus::option::__private::Storage<T> t_;
   };
 
   State state_;
