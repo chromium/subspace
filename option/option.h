@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// TODO: Overload all && functions with const& version if T is copyable. The
+// latter copies T instead of moving it.
+
 #pragma once
 
 #include <type_traits>
@@ -385,7 +388,7 @@ class Option {
       if (t_.set_state(Some) == None)
         new (&t_.val_) T(static_cast<T&&>(t));
       else
-        t_.val_ = static_cast<T&&>(t);
+        ::sus::mem::replace_and_discard(t_.val_, static_cast<T&&>(t));
       return t_.val_;
     } else {
       t_.ptr_ = &t;
@@ -685,6 +688,17 @@ class Option {
       } else {
         return Option::some(*::sus::mem::replace_ptr(t_.ptr_, &t));
       }
+    }
+  }
+
+  /// Maps an `Option<T&>` to an `Option<T>` by copying the referenced `T`.
+  template <int&..., class R = std::remove_reference_t<T>>
+    requires(std::is_reference_v<T> && std::is_nothrow_copy_constructible_v<R>)
+  constexpr Option<R> copied() && noexcept {
+    if (t_.state() == None) {
+      return Option<R>::none();
+    } else {
+      return Option<R>::some(const_cast<const T&>(*t_.ptr_));
     }
   }
 
