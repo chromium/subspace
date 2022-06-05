@@ -639,4 +639,41 @@ TEST(Option, GetOrInsertWith) {
   EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 18);
 }
 
+TEST(Option, AsRef) {
+  auto x = Option<int>::some(11);
+  auto mx = x.as_ref();
+  static_assert(std::is_same_v<decltype(mx), Option<const int&>>, "");
+  EXPECT_EQ(&x.get_or_insert(0), &static_cast<decltype(mx)&&>(mx).unwrap());
+
+  auto y = Option<int>::some(3);
+  auto& my = y.as_ref().unwrap();
+  static_assert(std::is_same_v<decltype(my), const int&>, "");
+  EXPECT_EQ(my, 3);
+
+  auto n = Option<int>::none();
+  IS_NONE(n.as_ref());
+
+  // Verify constexpr.
+  constexpr auto cn = Option<int>::some(3);
+  static_assert(cn.as_ref().unwrap() == 3, "");
+}
+
+TEST(Option, AsMut) {
+  auto x = Option<int>::some(11);
+  auto mx = x.as_mut();
+  static_assert(std::is_same_v<decltype(mx), Option<int&>>, "");
+  EXPECT_EQ(&x.get_or_insert(0), &static_cast<decltype(mx)&&>(mx).unwrap());
+
+  auto y = Option<int>::some(3);
+  auto& my = y.as_mut().unwrap();
+  static_assert(std::is_same_v<decltype(my), int&>, "");
+  EXPECT_EQ(my, 3);
+  my = 4;
+  auto& my2 = y.as_mut().unwrap();
+  EXPECT_EQ(my2, 4);
+
+  auto n = Option<int>::none();
+  IS_NONE(n.as_mut());
+}
+
 }  // namespace
