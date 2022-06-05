@@ -26,7 +26,7 @@ namespace sus::mem {
 // It would be nice to have an array overload of replace() but functions can't
 // return arrays.
 template <class T>
-  requires(!std::is_array_v<T>)
+  requires(!std::is_array_v<T> && std::is_move_constructible_v<T>)
 constexpr T replace(T& dest, T src) noexcept {
   T old(static_cast<T&&>(dest));
 
