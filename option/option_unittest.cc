@@ -536,6 +536,7 @@ TEST(Option, OrElse) {
   IS_NONE(ny);
   EXPECT_TRUE(called);
 
+  // Verify constexpr.
   constexpr auto cx = Option<int>::some(2)
                           .or_else([&]() { return Option<int>::some(3); })
                           .unwrap();
@@ -554,6 +555,88 @@ TEST(Option, Xor) {
 
   auto ny = Option<int>::none().xor_opt(Option<int>::none());
   IS_NONE(ny);
+}
+
+TEST(Option, Insert) {
+  auto x = Option<int>::none();
+  IS_NONE(x);
+  x.insert(3);
+  IS_SOME(x);
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 3);
+
+  auto y = Option<int>::some(4);
+  IS_SOME(y);
+  y.insert(5);
+  IS_SOME(y);
+  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 5);
+}
+
+TEST(Option, GetOrInsert) {
+  auto x = Option<int>::none();
+  auto& rx = x.get_or_insert(9);
+  static_assert(std::is_same_v<decltype(rx), int&>, "");
+  EXPECT_EQ(rx, 9);
+  rx = 5;
+  IS_SOME(x);
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 5);
+
+  auto y = Option<int>::some(11);
+  auto& ry = y.get_or_insert(7);
+  static_assert(std::is_same_v<decltype(ry), int&>, "");
+  EXPECT_EQ(ry, 11);
+  IS_SOME(y);
+  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 11);
+}
+
+TEST(Option, GetOrInsertDefault) {
+  auto x = Option<DefaultConstructible>::none();
+  auto& rx = x.get_or_insert_default();
+  static_assert(std::is_same_v<decltype(rx), DefaultConstructible&>, "");
+  EXPECT_EQ(rx.i, 2);
+  IS_SOME(x);
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 2);
+
+  auto w = Option<WithDefaultConstructible>::none();
+  auto& rw = w.get_or_insert_default();
+  static_assert(std::is_same_v<decltype(rw), WithDefaultConstructible&>, "");
+  EXPECT_EQ(rw.i, 3);
+  IS_SOME(w);
+  EXPECT_EQ(static_cast<decltype(w)&&>(w).unwrap().i, 3);
+
+  auto y = Option<DefaultConstructible>::some(DefaultConstructible(404));
+  auto& ry = y.get_or_insert_default();
+  static_assert(std::is_same_v<decltype(ry), DefaultConstructible&>, "");
+  EXPECT_EQ(ry.i, 404);
+  IS_SOME(y);
+  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap().i, 404);
+}
+
+TEST(Option, GetOrInsertWith) {
+  bool called = false;
+  auto x = Option<int>::none();
+  auto& rx = x.get_or_insert_with([&]() {
+    called = true;
+    return 9;
+  });
+  static_assert(std::is_same_v<decltype(rx), int&>, "");
+  EXPECT_EQ(rx, 9);
+  rx = 12;
+  EXPECT_TRUE(called);
+  IS_SOME(x);
+  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 12);
+
+  called = false;
+  auto y = Option<int>::some(11);
+  auto& ry = y.get_or_insert_with([&]() {
+    called = true;
+    return 7;
+  });
+  static_assert(std::is_same_v<decltype(ry), int&>, "");
+  EXPECT_EQ(ry, 11);
+  ry = 18;
+  EXPECT_FALSE(called);
+  IS_SOME(y);
+  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 18);
 }
 
 }  // namespace
