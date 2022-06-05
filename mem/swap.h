@@ -24,6 +24,7 @@
 namespace sus::mem {
 
 template <class T>
+  requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
 constexpr void swap(T& lhs, T& rhs) noexcept {
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   if (::sus::mem::__private::relocate_one_by_memcpy_v<T> &&
@@ -40,6 +41,7 @@ constexpr void swap(T& lhs, T& rhs) noexcept {
 }
 
 template <class T, /* TODO: usize */ size_t N>
+  requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
 constexpr void swap(T (&lhs)[N], T (&rhs)[N]) noexcept {
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   if (::sus::mem::__private::relocate_array_by_memcpy_v<T> &&
