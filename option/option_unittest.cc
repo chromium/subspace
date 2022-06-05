@@ -1447,4 +1447,19 @@ TEST(Option, Replace) {
   IS_NONE(izz);
 }
 
+TEST(Option, Copied) {
+  int i = 2;
+  auto x = Option<int&>::none().copied();
+  IS_NONE(x);
+
+  auto y = Option<int&>::some(i).copied();
+  EXPECT_EQ(y.as_ref().unwrap(), 2);
+  EXPECT_NE(&y.as_ref().unwrap(), &i);
+  
+  // Verify constexpr.
+  constexpr int ic = 2;
+  static_assert(Option<int&>::none().copied().is_none(), "");
+  static_assert(Option<const int&>::some(ic).copied().unwrap() == 2, "");
+}
+
 }  // namespace
