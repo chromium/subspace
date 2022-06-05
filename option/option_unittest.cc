@@ -14,11 +14,16 @@
 
 #include "option/option.h"
 
+#include "assertions/builtin.h"
+#include "mem/__private/relocate.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
-using sus::option::None;
-using sus::option::Option;
-using sus::option::Some;
+using ::sus::mem::__private::relocate_array_by_memcpy_v;
+using ::sus::mem::__private::relocate_one_by_memcpy_v;
+using ::sus::option::None;
+using ::sus::option::Option;
+using ::sus::option::Some;
+using ::sus::traits::MakeDefault;
 
 namespace {
 
@@ -41,6 +46,73 @@ struct WithDefaultConstructible {
 
   constexpr WithDefaultConstructible(int i) : i(i) {}
 };
+
+struct TriviallyRelocatable {
+  int i;
+};
+
+struct TriviallyCopyable {
+  TriviallyCopyable(const TriviallyCopyable&) = default;
+  TriviallyCopyable& operator=(const TriviallyCopyable&) = default;
+  ~TriviallyCopyable() = default;
+  int i;
+};
+static_assert(std::is_trivially_copy_constructible_v<TriviallyCopyable>, "");
+static_assert(std::is_trivially_copy_assignable_v<TriviallyCopyable>, "");
+
+struct TriviallyMoveable {
+  TriviallyMoveable(TriviallyMoveable&&) = default;
+  TriviallyMoveable& operator=(TriviallyMoveable&&) = default;
+  ~TriviallyMoveable() = default;
+  int i;
+};
+static_assert(std::is_trivially_move_constructible_v<TriviallyMoveable>, "");
+static_assert(std::is_trivially_move_assignable_v<TriviallyMoveable>, "");
+
+struct TriviallyCopyableNotDestructible {
+  TriviallyCopyableNotDestructible(const TriviallyCopyableNotDestructible&) =
+      default;
+  TriviallyCopyableNotDestructible& operator=(
+      const TriviallyCopyableNotDestructible&) = default;
+  ~TriviallyCopyableNotDestructible() {}
+  int i;
+};
+static_assert(!std::is_trivially_copy_constructible_v<TriviallyCopyableNotDestructible>, "");
+static_assert(std::is_trivially_copy_assignable_v<TriviallyCopyableNotDestructible>, "");
+
+struct TriviallyMoveableNotDestructible {
+  TriviallyMoveableNotDestructible(TriviallyMoveableNotDestructible&&) =
+      default;
+  TriviallyMoveableNotDestructible& operator=(
+      TriviallyMoveableNotDestructible&&) = default;
+  ~TriviallyMoveableNotDestructible(){};
+  int i;
+};
+static_assert(!std::is_trivially_move_constructible_v<TriviallyCopyableNotDestructible>, "");
+static_assert(std::is_trivially_move_assignable_v<TriviallyCopyableNotDestructible>, "");
+
+struct NotTriviallyRelocatableOrMoveable {
+  NotTriviallyRelocatableOrMoveable(NotTriviallyRelocatableOrMoveable&&) {}
+  ~NotTriviallyRelocatableOrMoveable() {}
+  int i;
+};
+static_assert(!std::is_trivially_copy_constructible_v<NotTriviallyRelocatableOrMoveable>, "");
+static_assert(!std::is_trivially_copy_assignable_v<NotTriviallyRelocatableOrMoveable>, "");
+static_assert(!std::is_trivially_move_constructible_v<NotTriviallyRelocatableOrMoveable>, "");
+static_assert(!std::is_trivially_move_assignable_v<NotTriviallyRelocatableOrMoveable>, "");
+
+struct [[clang::trivial_abi]] TrivialAbiRelocatable {
+  TrivialAbiRelocatable(TrivialAbiRelocatable&&) {}
+  ~TrivialAbiRelocatable() {}
+  int i;
+};
+static_assert(!std::is_trivially_copy_constructible_v<TrivialAbiRelocatable>, "");
+static_assert(!std::is_trivially_copy_assignable_v<TrivialAbiRelocatable>, "");
+static_assert(!std::is_trivially_move_constructible_v<TrivialAbiRelocatable>, "");
+static_assert(!std::is_trivially_move_assignable_v<TrivialAbiRelocatable>, "");
+#if __has_extension(trivially_relocatable)
+static_assert(__is_trivially_relocatable(TrivialAbiRelocatable), "");
+#endif
 
 #define IS_SOME(x)             \
   do {                         \
@@ -65,6 +137,168 @@ struct WithDefaultConstructible {
         ADD_FAILURE();         \
     }                          \
   } while (false)
+
+static_assert(!std::is_trivially_constructible_v<Option<int>>, "");
+static_assert(!std::is_trivial_v<Option<int>>, "");
+static_assert(!std::is_aggregate_v<Option<int>>, "");
+static_assert(std::is_standard_layout_v<Option<int>>, "");
+
+static_assert(MakeDefault<Option<DefaultConstructible>>::has_trait, "");
+static_assert(MakeDefault<Option<WithDefaultConstructible>>::has_trait, "");
+static_assert(!MakeDefault<Option<NotDefaultConstructible>>::has_trait, "");
+
+namespace trivially_relocatable {
+using T = TriviallyRelocatable;
+static_assert(std::is_move_constructible_v<Option<T>>, "");
+static_assert(std::is_move_assignable_v<Option<T>>, "");
+static_assert(std::is_trivially_destructible_v<Option<T>>, "");
+static_assert(std::is_trivially_move_constructible_v<Option<T>>, "");
+static_assert(std::is_trivially_move_assignable_v<Option<T>>, "");
+static_assert(std::is_nothrow_swappable_v<Option<T>>, "");
+static_assert(std::is_trivially_copy_constructible_v<Option<T>>, "");
+static_assert(std::is_trivially_copy_assignable_v<Option<T>>, "");
+static_assert(!std::is_constructible_v<Option<T>, T&&>, "");
+static_assert(!std::is_assignable_v<Option<T>, T&&>, "");
+static_assert(!std::is_constructible_v<Option<T>, const T&>, "");
+static_assert(!std::is_assignable_v<Option<T>, const T&>, "");
+static_assert(!std::is_constructible_v<Option<T>, T>, "");
+static_assert(!std::is_assignable_v<Option<T>, T>, "");
+static_assert(std::is_nothrow_destructible_v<Option<T>>, "");
+static_assert(relocate_one_by_memcpy_v<Option<T>>, "");
+static_assert(relocate_array_by_memcpy_v<Option<T>>, "");
+}  // namespace trivially_relocatable
+
+namespace trivially_copyable {
+using T = TriviallyCopyable;
+static_assert(std::is_nothrow_move_constructible_v<Option<T>>, "");
+static_assert(std::is_nothrow_move_assignable_v<Option<T>>, "");
+static_assert(std::is_trivially_destructible_v<Option<T>>, "");
+static_assert(std::is_trivially_move_constructible_v<Option<T>>, "");
+static_assert(std::is_trivially_move_assignable_v<Option<T>>, "");
+static_assert(std::is_nothrow_swappable_v<Option<T>>, "");
+static_assert(std::is_trivially_copy_constructible_v<Option<T>>, "");
+static_assert(std::is_trivially_copy_assignable_v<Option<T>>, "");
+static_assert(!std::is_constructible_v<Option<T>, T&&>, "");
+static_assert(!std::is_assignable_v<Option<T>, T&&>, "");
+static_assert(!std::is_constructible_v<Option<T>, const T&>, "");
+static_assert(!std::is_assignable_v<Option<T>, const T&>, "");
+static_assert(!std::is_constructible_v<Option<T>, T>, "");
+static_assert(!std::is_assignable_v<Option<T>, T>, "");
+static_assert(std::is_nothrow_destructible_v<Option<T>>, "");
+static_assert(relocate_one_by_memcpy_v<Option<T>>, "");
+static_assert(relocate_array_by_memcpy_v<Option<T>>, "");
+}  // namespace trivially_copyable
+
+namespace trivially_moveable {
+using T = TriviallyMoveable;
+static_assert(std::is_nothrow_move_constructible_v<Option<T>>, "");
+static_assert(std::is_nothrow_move_assignable_v<Option<T>>, "");
+static_assert(std::is_trivially_destructible_v<Option<T>>, "");
+static_assert(std::is_trivially_move_constructible_v<Option<T>>, "");
+static_assert(std::is_trivially_move_assignable_v<Option<T>>, "");
+static_assert(std::is_nothrow_swappable_v<Option<T>>, "");
+static_assert(!std::is_copy_constructible_v<Option<T>>, "");
+static_assert(!std::is_copy_assignable_v<Option<T>>, "");
+static_assert(!std::is_constructible_v<Option<T>, T&&>, "");
+static_assert(!std::is_assignable_v<Option<T>, T&&>, "");
+static_assert(!std::is_constructible_v<Option<T>, const T&>, "");
+static_assert(!std::is_assignable_v<Option<T>, const T&>, "");
+static_assert(!std::is_constructible_v<Option<T>, T>, "");
+static_assert(!std::is_assignable_v<Option<T>, T>, "");
+static_assert(std::is_nothrow_destructible_v<Option<T>>, "");
+static_assert(relocate_one_by_memcpy_v<Option<T>>, "");
+static_assert(relocate_array_by_memcpy_v<Option<T>>, "");
+}  // namespace trivially_moveable
+
+namespace trivially_copyable_not_destructible {
+using T = TriviallyCopyableNotDestructible;
+static_assert(std::is_nothrow_move_constructible_v<Option<T>>, "");
+static_assert(std::is_nothrow_move_assignable_v<Option<T>>, "");
+static_assert(!std::is_trivially_destructible_v<Option<T>>, "");
+static_assert(!std::is_trivially_move_constructible_v<Option<T>>, "");
+static_assert(std::is_trivially_move_assignable_v<Option<T>>, "");
+static_assert(std::is_nothrow_swappable_v<Option<T>>, "");
+static_assert(!std::is_trivially_copy_constructible_v<Option<T>>, "");
+static_assert(std::is_trivially_copy_assignable_v<Option<T>>, "");
+static_assert(!std::is_constructible_v<Option<T>, T&&>, "");
+static_assert(!std::is_assignable_v<Option<T>, T&&>, "");
+static_assert(!std::is_constructible_v<Option<T>, const T&>, "");
+static_assert(!std::is_assignable_v<Option<T>, const T&>, "");
+static_assert(!std::is_constructible_v<Option<T>, T>, "");
+static_assert(!std::is_assignable_v<Option<T>, T>, "");
+static_assert(std::is_nothrow_destructible_v<Option<T>>, "");
+static_assert(!relocate_one_by_memcpy_v<Option<T>>, "");
+static_assert(!relocate_array_by_memcpy_v<Option<T>>, "");
+}  // namespace trivially_copyable
+
+namespace trivially_moveable_not_destructible {
+using T = TriviallyMoveableNotDestructible;
+static_assert(std::is_nothrow_move_constructible_v<Option<T>>, "");
+static_assert(std::is_nothrow_move_assignable_v<Option<T>>, "");
+static_assert(!std::is_trivially_destructible_v<Option<T>>, "");
+static_assert(!std::is_trivially_move_constructible_v<Option<T>>, "");
+static_assert(std::is_trivially_move_assignable_v<Option<T>>, "");
+static_assert(std::is_nothrow_swappable_v<Option<T>>, "");
+static_assert(!std::is_copy_constructible_v<Option<T>>, "");
+static_assert(!std::is_copy_assignable_v<Option<T>>, "");
+static_assert(!std::is_constructible_v<Option<T>, T&&>, "");
+static_assert(!std::is_assignable_v<Option<T>, T&&>, "");
+static_assert(!std::is_constructible_v<Option<T>, const T&>, "");
+static_assert(!std::is_assignable_v<Option<T>, const T&>, "");
+static_assert(!std::is_constructible_v<Option<T>, T>, "");
+static_assert(!std::is_assignable_v<Option<T>, T>, "");
+static_assert(std::is_nothrow_destructible_v<Option<T>>, "");
+static_assert(!relocate_one_by_memcpy_v<Option<T>>, "");
+static_assert(!relocate_array_by_memcpy_v<Option<T>>, "");
+}  // namespace trivially_moveable
+
+namespace not_trivially_relocatable_or_moveable {
+using T = NotTriviallyRelocatableOrMoveable;
+static_assert(std::is_nothrow_move_constructible_v<Option<T>>, "");
+static_assert(std::is_nothrow_move_assignable_v<Option<T>>, "");
+static_assert(!std::is_trivially_destructible_v<Option<T>>, "");
+static_assert(!std::is_trivially_move_constructible_v<Option<T>>, "");
+static_assert(!std::is_trivially_move_assignable_v<Option<T>>, "");
+static_assert(std::is_nothrow_swappable_v<Option<T>>, "");
+static_assert(!std::is_copy_constructible_v<Option<T>>, "");
+static_assert(!std::is_copy_assignable_v<Option<T>>, "");
+static_assert(!std::is_constructible_v<Option<T>, T&&>, "");
+static_assert(!std::is_assignable_v<Option<T>, T&&>, "");
+static_assert(!std::is_constructible_v<Option<T>, const T&>, "");
+static_assert(!std::is_assignable_v<Option<T>, const T&>, "");
+static_assert(!std::is_constructible_v<Option<T>, T>, "");
+static_assert(!std::is_assignable_v<Option<T>, T>, "");
+static_assert(std::is_nothrow_destructible_v<Option<T>>, "");
+static_assert(!relocate_one_by_memcpy_v<Option<T>>, "");
+static_assert(!relocate_array_by_memcpy_v<Option<T>>, "");
+}  // namespace not_trivially_relocatable_or_moveable
+
+namespace trivial_abi_relocatable {
+using T = TrivialAbiRelocatable;
+static_assert(std::is_nothrow_move_constructible_v<Option<T>>, "");
+static_assert(std::is_nothrow_move_assignable_v<Option<T>>, "");
+static_assert(!std::is_trivially_destructible_v<Option<T>>, "");
+static_assert(!std::is_trivially_move_constructible_v<Option<T>>, "");
+static_assert(!std::is_trivially_move_assignable_v<Option<T>>, "");
+static_assert(std::is_nothrow_swappable_v<Option<T>>, "");
+static_assert(!std::is_copy_constructible_v<Option<T>>, "");
+static_assert(!std::is_copy_assignable_v<Option<T>>, "");
+static_assert(!std::is_constructible_v<Option<T>, T&&>, "");
+static_assert(!std::is_assignable_v<Option<T>, T&&>, "");
+static_assert(!std::is_constructible_v<Option<T>, const T&>, "");
+static_assert(!std::is_assignable_v<Option<T>, const T&>, "");
+static_assert(!std::is_constructible_v<Option<T>, T>, "");
+static_assert(!std::is_assignable_v<Option<T>, T>, "");
+static_assert(std::is_nothrow_destructible_v<Option<T>>, "");
+#if __has_extension(trivially_relocatable)
+static_assert(relocate_one_by_memcpy_v<Option<T>>, "");
+static_assert(relocate_array_by_memcpy_v<Option<T>>, "");
+#endif
+#if !__has_extension(trivially_relocatable)
+static_assert(!relocate_one_by_memcpy_v<Option<T>>, "");
+static_assert(!relocate_array_by_memcpy_v<Option<T>>, "");
+#endif
+}  // namespace trivial_abi_relocatable
 
 TEST(Option, Move) {
   // This type has a user defined move constructor, which deletes the implicit
@@ -125,11 +359,6 @@ TEST(Option, WithDefault) {
 
   constexpr auto cy(Option<WithDefaultConstructible>::with_default());
   static_assert(cy.is_some(), "");
-
-  using sus::traits::MakeDefault;
-  static_assert(MakeDefault<Option<DefaultConstructible>>::has_trait, "");
-  static_assert(MakeDefault<Option<WithDefaultConstructible>>::has_trait, "");
-  static_assert(!MakeDefault<Option<NotDefaultConstructible>>::has_trait, "");
 
   auto x2 = MakeDefault<Option<DefaultConstructible>>::make_default();
   IS_SOME(x2);
@@ -754,4 +983,24 @@ TEST(OptionDeathTest, ExpectMutNone) {
   EXPECT_DEATH(n.expect_mut("hello world"), "hello world");
 #endif
 }
+
+TEST(Option, Trivial) {
+  auto x =
+      Option<TriviallyRelocatable>::some(TriviallyRelocatable(int(3423782)));
+  auto y = static_cast<decltype(x)&&>(x);  // Move-construct.
+  EXPECT_EQ(y.as_ref().unwrap().i, 3423782);
+
+  y.as_mut().unwrap().i = int(6589043);
+  x = static_cast<decltype(y)&&>(y);  // Move-assign.
+  EXPECT_EQ(x.as_ref().unwrap().i, 6589043);
+
+  x.as_mut().unwrap().i = int(458790);
+  auto z = x;  // Copy-construct.
+  EXPECT_EQ(z.as_ref().unwrap().i, 458790);
+
+  z.as_mut().unwrap().i = int(98563453);
+  y = z; // Copy-assign.
+  EXPECT_EQ(y.as_ref().unwrap().i, 98563453);
+}
+
 }  // namespace
