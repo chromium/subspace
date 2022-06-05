@@ -41,4 +41,32 @@ constexpr T replace(T& dest, T src) noexcept {
   return old;
 }
 
+template <class T>
+constexpr T* replace_ptr(T*& dest, T* src) noexcept {
+  T* old = dest;
+  dest = src;
+  return old;
+}
+
+template <class T>
+constexpr const T* replace_ptr(const T*& dest, const T* src) noexcept {
+  const T* old = dest;
+  dest = src;
+  return old;
+}
+
+template <class T>
+constexpr T* replace_ptr(T*& dest, decltype(nullptr) src) noexcept {
+  T* old = dest;
+  dest = nullptr;
+  return old;
+}
+
+template <class T>
+constexpr const T* replace_ptr(const T*& dest, decltype(nullptr) src) noexcept {
+  const T* old = dest;
+  dest = nullptr;
+  return old;
+}
+
 }  // namespace sus::mem
