@@ -668,6 +668,26 @@ class Option {
     }
   }
 
+  /// Replaces whatever the Option is currently holding with #Some value `t` and
+  /// returns an Option holding what was there previously.
+  Option replace(T t) & noexcept {
+    if constexpr (!std::is_reference_v<T>) {
+      if (t_.set_state(Some) == None) {
+        new (&t_.val_) T(static_cast<T&&>(t));
+        return Option::none();
+      } else {
+        return Option::some(::sus::mem::replace(t_.val_, static_cast<T&&>(t)));
+      }
+    } else {
+      if (t_.state() == None) {
+        t_.ptr_ = &t;
+        return Option::none();
+      } else {
+        return Option::some(*::sus::mem::replace_ptr(t_.ptr_, &t));
+      }
+    }
+  }
+
   /// Returns an Option<const T&> from this Option<T>, that either holds #None
   /// or a reference to the value in this Option.
   constexpr Option<const std::remove_reference_t<T>&> as_ref() const& noexcept {
