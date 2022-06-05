@@ -20,12 +20,14 @@
 #include "mem/__private/relocate.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
-namespace sus::mem {
+using sus::mem::replace;
+using sus::mem::replace_ptr;
+
 namespace {
 
 TEST(Replace, ConstexprTrivialRelocate) {
   using T = int;
-  static_assert(__private::relocate_one_by_memcpy_v<T>, "");
+  static_assert(::sus::mem::__private::relocate_one_by_memcpy_v<T>, "");
 
   auto i = []() constexpr {
     T i(2);
@@ -55,7 +57,7 @@ TEST(Replace, ConstexprTrivialAbi) {
   // This means `S` is only "trivially relocatable" if achieved through
   // [[clang::trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(__private::relocate_one_by_memcpy_v<S> ==
+  static_assert(::sus::mem::__private::relocate_one_by_memcpy_v<S> ==
                     __has_extension(trivially_relocatable),
                 "");
 
@@ -86,7 +88,7 @@ TEST(Replace, ConstexprNonTrivial) {
     int num;
     int assigns = 0;
   };
-  static_assert(!__private::relocate_one_by_memcpy_v<S>, "");
+  static_assert(!::sus::mem::__private::relocate_one_by_memcpy_v<S>, "");
 
   auto i = []() constexpr {
     S i(2);
@@ -106,7 +108,7 @@ TEST(Replace, ConstexprNonTrivial) {
 
 TEST(Replace, TrivialRelocate) {
   using T = int;
-  static_assert(__private::relocate_one_by_memcpy_v<T>, "");
+  static_assert(::sus::mem::__private::relocate_one_by_memcpy_v<T>, "");
 
   T i(2);
   T j(::sus::mem::replace(i, T(5)));
@@ -128,7 +130,7 @@ TEST(Replace, TrivialAbi) {
   // This means `S` is only "trivially relocatable" if achieved through
   // [[clang::trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(__private::relocate_one_by_memcpy_v<S> ==
+  static_assert(::sus::mem::__private::relocate_one_by_memcpy_v<S> ==
                     __has_extension(trivially_relocatable),
                 "");
 
@@ -156,7 +158,7 @@ TEST(Replace, NonTrivial) {
     int num;
     int assigns = 0;
   };
-  static_assert(!__private::relocate_one_by_memcpy_v<S>, "");
+  static_assert(!::sus::mem::__private::relocate_one_by_memcpy_v<S>, "");
 
   S i(2);
   S j(::sus::mem::replace(i, S(5)));
@@ -166,5 +168,32 @@ TEST(Replace, NonTrivial) {
   EXPECT_EQ(1, i.assigns);
 }
 
+TEST(ReplacePtr, Const) {
+  int i1 = 1, i2 = 2;
+  const int* p1 = &i1;
+  const int* p2 = &i2;
+  const int* o = replace_ptr(p1, p2);
+  EXPECT_EQ(o, &i1);
+  EXPECT_EQ(p1, &i2);
+  EXPECT_EQ(p2, &i2);
+
+  o = replace_ptr(p1, nullptr);
+  EXPECT_EQ(o, &i2);
+  EXPECT_EQ(p1, nullptr);
+}
+
+TEST(ReplacePtr, Mut) {
+  int i1 = 1, i2 = 2;
+  int* p1 = &i1;
+  int* p2 = &i2;
+  int* o = replace_ptr(p1, p2);
+  EXPECT_EQ(o, &i1);
+  EXPECT_EQ(p1, &i2);
+  EXPECT_EQ(p2, &i2);
+
+  o = replace_ptr(p1, nullptr);
+  EXPECT_EQ(o, &i2);
+  EXPECT_EQ(p1, nullptr);
+}
+
 }  // namespace
-}  // namespace sus::mem
