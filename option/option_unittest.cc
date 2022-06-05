@@ -66,6 +66,20 @@ struct WithDefaultConstructible {
     }                          \
   } while (false)
 
+TEST(Option, Move) {
+  // This type has a user defined move constructor, which deletes the implicit
+  // move constructor in Option.
+  struct Type {
+    Type() = default;
+    Type(Type&&) = default;
+  };
+  auto x = Option<Type>::some(Type());
+  auto y = static_cast<decltype(x)&&>(x);
+  IS_SOME(y);
+  x = static_cast<decltype(y)&&>(y);
+  IS_SOME(x);
+}
+
 TEST(Option, Some) {
   auto x = Option<DefaultConstructible>::some(DefaultConstructible());
   IS_SOME(x);
@@ -447,20 +461,40 @@ TEST(Option, AndThen) {
   static_assert(std::is_same_v<decltype(ny), Option<And>>, "");
   IS_NONE(ny);
   EXPECT_FALSE(called);
+
+  // Verify constexpr.
+  constexpr auto cx =
+      Option<int>::some(2)
+          .and_then([&](int&& i) { return Option<And>::some(And(3)); })
+          .unwrap();
+  static_assert(cx.i == 3, "");
 }
 
 TEST(Option, Or) {
-  auto x = Option<int>::some(2).or_opt(Option<int>::some(3)).unwrap();
-  EXPECT_EQ(x, 2);
+  static int count = 0;
+  struct Type {
+    Type(int i) : i(i) { ++count; }
+    Type(const Type& t) : i(t.i) { ++count; }
+    Type(Type&& t) : i(t.i) { ++count; }
+    ~Type() { --count; }
 
-  auto y = Option<int>::some(2).or_opt(Option<int>::none()).unwrap();
-  EXPECT_EQ(y, 2);
+    int i;
+  };
 
-  auto nx = Option<int>::none().or_opt(Option<int>::some(3)).unwrap();
-  EXPECT_EQ(nx, 3);
+  {
+    auto x = Option<int>::some(2).or_opt(Option<int>::some(3)).unwrap();
+    EXPECT_EQ(x, 2);
 
-  auto ny = Option<int>::none().or_opt(Option<int>::none());
-  IS_NONE(ny);
+    auto y = Option<int>::some(2).or_opt(Option<int>::none()).unwrap();
+    EXPECT_EQ(y, 2);
+
+    auto nx = Option<int>::none().or_opt(Option<int>::some(3)).unwrap();
+    EXPECT_EQ(nx, 3);
+
+    auto ny = Option<int>::none().or_opt(Option<int>::none());
+    IS_NONE(ny);
+  }
+  EXPECT_EQ(count, 0);
 }
 
 TEST(Option, OrElse) {
@@ -501,6 +535,11 @@ TEST(Option, OrElse) {
   });
   IS_NONE(ny);
   EXPECT_TRUE(called);
+
+  constexpr auto cx = Option<int>::some(2)
+                          .or_else([&]() { return Option<int>::some(3); })
+                          .unwrap();
+  static_assert(cx == 2, "");
 }
 
 TEST(Option, Xor) {

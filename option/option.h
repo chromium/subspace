@@ -24,6 +24,23 @@
 
 namespace sus::option {
 
+template <class T>
+class Option;
+
+namespace __private {
+
+template <class U>
+struct IsOptionType : std::false_type {
+  using type = void;
+};
+
+template <class U>
+struct IsOptionType<Option<U>> : std::true_type {
+  using type = U;
+};
+
+}  // namespace __private
+
 /// The representation of an Option's state, which can either be #None to
 /// represent it has no value, or #Some for when it is holding a value.
 enum class State : bool {
@@ -51,35 +68,47 @@ class Option {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   template <class U = T>
-    requires(sus::traits::MakeDefault<U>::has_trait)
+    requires(::sus::traits::MakeDefault<U>::has_trait)
   static inline constexpr Option<T> with_default() noexcept {
     static_assert(std::is_same_v<U, T>,
                   "with_default() called with incorrect explicit type. Don't "
                   "specify a template argument to with_default().");
-    return Option<T>::some(sus::traits::MakeDefault<T>::make_default());
+    return Option<T>::some(::sus::traits::MakeDefault<T>::make_default());
   }
 
   /// Destructor for the Option.
   ///
   /// Destroys the value contained within the option, if there is one.
   constexpr inline ~Option() noexcept {
-    if (state_ == State::Some) t_.~T();
+    if (state_ == Some) t_.~T();
+  }
+
+  Option(Option&& o) noexcept : state_(o.state_) {
+    // If this could be done in a `constexpr` way, methods that receive an
+    // Option could also be constexpr.
+    if (state_ == Some) new (&t_) T(static_cast<T&&>(o.t_));
+  }
+  Option& operator=(Option&& o) noexcept {
+    if (state_ == Some) t_.~T();
+    if (o.state_ == Some) new (&t_) T(static_cast<T&&>(o.t_));
+    state_ = o.state_;
+    return *this;
   }
 
   /// Drop the current value from the Option, if there is one.
   ///
   /// Afterward the option will unconditionally be #None.
   constexpr void clear() & noexcept {
-    if (::sus::mem::replace(state_, State::None) == State::Some) t_.~T();
+    if (::sus::mem::replace(state_, None) == Some) t_.~T();
   }
 
   /// Returns whether the Option currently contains a value.
   ///
   /// If there is a value present, it can be extracted with <unwrap>() or
   /// <expect>().
-  constexpr bool is_some() const noexcept { return state_ == State::Some; }
+  constexpr bool is_some() const noexcept { return state_ == Some; }
   /// Returns whether the Option is currently empty, containing no value.
-  constexpr bool is_none() const noexcept { return state_ == State::None; }
+  constexpr bool is_none() const noexcept { return state_ == None; }
 
   /// An operator which returns the state of the Option, either #Some or #None.
   ///
@@ -105,7 +134,7 @@ class Option {
   /// currently `None`.
   constexpr T expect(/* TODO: string view type */ const char* msg) && noexcept
       [[nonnull]] {
-    ::sus::check_with_message(state_ == State::Some, *msg);
+    ::sus::check_with_message(state_ == Some, *msg);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
   /// Returns the contained value inside the Option.
@@ -113,7 +142,7 @@ class Option {
   /// The function will panic without a message if the Option's state is
   /// currently `None`.
   constexpr T unwrap() && noexcept {
-    ::sus::check(state_ == State::Some);
+    ::sus::check(state_ == Some);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
   /// Returns the contained value inside the Option.
@@ -126,7 +155,7 @@ class Option {
   /// preferred.
   constexpr inline T unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
-    state_ = State::None;
+    state_ = None;
     return static_cast<T&&>(t_);
   }
 
@@ -137,18 +166,20 @@ class Option {
   /// <unwrap_or_else>() should be used instead, as it will only construct the
   /// default value if required.
   constexpr T unwrap_or(T default_result) && noexcept {
-    return (::sus::mem::replace(state_, None) == Some)
-               ? ::sus::mem::take_and_destruct(unsafe_fn, t_)
-               : static_cast<T&&>(default_result);
+    if (::sus::mem::replace(state_, None) == Some)
+      return ::sus::mem::take_and_destruct(unsafe_fn, t_);
+    else
+      return default_result;
   }
   /// Returns the contained value inside the Option, if there is one. Otherwise,
   /// returns the result of the given function.
   template <class Functor>
     requires(std::is_same_v<std::invoke_result_t<Functor>, T>)
   constexpr T unwrap_or_else(Functor f) && noexcept {
-    return (::sus::mem::replace(state_, None) == Some)
-               ? ::sus::mem::take_and_destruct(unsafe_fn, t_)
-               : f();
+    if (::sus::mem::replace(state_, None) == Some)
+      return ::sus::mem::take_and_destruct(unsafe_fn, t_);
+    else
+      return f();
   }
   /// Returns the contained value inside the Option, if there is one. Otherwise,
   /// constructs a default value for the type and returns that.
@@ -156,14 +187,15 @@ class Option {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   template <class U = T>
-    requires(sus::traits::MakeDefault<U>::has_trait)
+    requires(::sus::traits::MakeDefault<U>::has_trait)
   constexpr T unwrap_or_default() && noexcept {
     static_assert(std::is_same_v<U, T>,
                   "unwrap_or_default() called with incorrect explicit type. "
                   "Don't specify a template argument to unwrap_or_default().");
-    return (::sus::mem::replace(state_, None) == Some)
-               ? ::sus::mem::take_and_destruct(unsafe_fn, t_)
-               : sus::traits::MakeDefault<T>::make_default();
+    if (::sus::mem::replace(state_, None) == Some)
+      return ::sus::mem::take_and_destruct(unsafe_fn, t_);
+    else
+      return ::sus::traits::MakeDefault<T>::make_default();
   }
 
   /// Returns a new Option containing whatever was inside the current Option.
@@ -173,9 +205,10 @@ class Option {
   /// value is moved into the returned Option and this Option will contain
   /// #None afterward.
   constexpr Option take() & noexcept {
-    return (::sus::mem::replace(state_, State::None) == State::Some)
-               ? Option::some(sus::mem::take_and_destruct(unsafe_fn, t_))
-               : Option::none();
+    if (::sus::mem::replace(state_, None) == Some)
+      return Option::some(::sus::mem::take_and_destruct(unsafe_fn, t_));
+    else
+      return Option::none();
   }
 
   /// Maps the Option's value through a function.
@@ -240,10 +273,11 @@ class Option {
     requires(std::is_same_v<std::invoke_result_t<Predicate, const T&>, bool>)
   constexpr Option<T> filter(Predicate p) && noexcept {
     if (::sus::mem::replace(state_, None) == Some) {
-      if (p(const_cast<const T&>(t_)))
-        return Option::some(sus::mem::take_and_destruct(unsafe_fn, t_));
-      else {
-        t_.~T();  // state_ has become None, so we must not keep `t_` alive.
+      if (p(const_cast<const T&>(t_))) {
+        return Option::some(::sus::mem::take_and_destruct(unsafe_fn, t_));
+      } else {
+        // state_ has become None, so we must not keep `t_` alive.
+        t_.~T();
         return Option::none();
       }
     } else {
@@ -254,9 +288,13 @@ class Option {
   /// Consumes this Option and returns an Option with #None if this Option holds
   /// #None, otherwise returns the given `opt`.
   template <class U>
-  constexpr Option<U> and_opt(Option<U> opt) && noexcept {
-    return (::sus::mem::replace(state_, None) == Some) ? (t_.~T(), opt)
-                                                       : Option<U>::none();
+  Option<U> and_opt(Option<U> opt) && noexcept {
+    if (::sus::mem::replace(state_, None) == Some) {
+      t_.~T();
+      return opt;
+    } else {
+      return Option<U>::none();
+    }
   }
 
   /// Consumes this Option and returns an Option with #None if this Option holds
@@ -265,20 +303,22 @@ class Option {
   ///
   /// Some languages call this operation flatmap.
   template <class AndFn, int&..., class R = std::invoke_result_t<AndFn, T&&>,
-            class InnerR = IsOptionType<R>::type>
-    requires(IsOptionType<R>::value)
+            class InnerR = ::sus::option::__private::IsOptionType<R>::type>
+    requires(::sus::option::__private::IsOptionType<R>::value)
   constexpr Option<InnerR> and_then(AndFn f) && noexcept {
-    return (::sus::mem::replace(state_, None) == Some)
-               ? f(::sus::mem::take_and_destruct(unsafe_fn, t_))
-               : Option<InnerR>::none();
+    if (::sus::mem::replace(state_, None) == Some)
+      return f(::sus::mem::take_and_destruct(unsafe_fn, t_));
+    else
+      return Option<InnerR>::none();
   }
 
   /// Consumes and returns an Option with the same value if this Option contains
   /// a value, otherwise returns the given `opt`.
-  constexpr Option<T> or_opt(Option<T> opt) && noexcept {
-    return (::sus::mem::replace(state_, None) == Some)
-               ? Option::some(::sus::mem::take_and_destruct(unsafe_fn, t_))
-               : opt;
+  Option<T> or_opt(Option<T> opt) && noexcept {
+    if (::sus::mem::replace(state_, None) == Some)
+      return Option::some(::sus::mem::take_and_destruct(unsafe_fn, t_));
+    else
+      return opt;
   }
 
   /// Consumes and returns an Option with the same value if this Option contains
@@ -286,15 +326,16 @@ class Option {
   template <class ElseFn, int&..., class R = std::invoke_result_t<ElseFn>>
     requires(std::is_same_v<R, Option<T>>)
   constexpr Option<T> or_else(ElseFn f) && noexcept {
-    return (::sus::mem::replace(state_, None) == Some)
-               ? Option::some(::sus::mem::take_and_destruct(unsafe_fn, t_))
-               : f();
+    if (::sus::mem::replace(state_, None) == Some)
+      return Option::some(::sus::mem::take_and_destruct(unsafe_fn, t_));
+    else
+      return f();
   }
 
   /// Consumes this Option and returns an Option, holding the value from either
   /// this Option `opt`, if exactly one of them holds a value, otherwise returns
   /// an Option that holds #None.
-  constexpr Option<T> xor_opt(Option<T> opt) && noexcept {
+  Option<T> xor_opt(Option<T> opt) && noexcept {
     State lhs = ::sus::mem::replace(state_, None);
     State rhs = opt.state_;
     if (lhs != None) {
@@ -312,19 +353,10 @@ class Option {
   }
 
  private:
-  template <class U>
-  struct IsOptionType : std::false_type {};
-
-  template <class U>
-  struct IsOptionType<Option<U>> : std::true_type {
-    using type = U;
-  };
-
   /// Constructor for #None.
-  constexpr explicit Option() : state_(State::None) {}
+  constexpr explicit Option() : state_(None) {}
   /// Constructor for #Some.
-  constexpr explicit Option(T&& t)
-      : t_(static_cast<T&&>(t)), state_(State::Some) {}
+  constexpr explicit Option(T&& t) : state_(Some), t_(static_cast<T&&>(t)) {}
 
   // TODO: determine if we can put the tag into `T` from its type (e.g. sizeof
   // < alignment?), and then do so?
