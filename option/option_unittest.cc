@@ -645,17 +645,56 @@ TEST(Option, AsRef) {
   static_assert(std::is_same_v<decltype(mx), Option<const int&>>, "");
   EXPECT_EQ(&x.get_or_insert(0), &static_cast<decltype(mx)&&>(mx).unwrap());
 
-  auto y = Option<int>::some(3);
-  auto& my = y.as_ref().unwrap();
-  static_assert(std::is_same_v<decltype(my), const int&>, "");
-  EXPECT_EQ(my, 3);
-
   auto n = Option<int>::none();
   IS_NONE(n.as_ref());
 
   // Verify constexpr.
-  constexpr auto cn = Option<int>::some(3);
-  static_assert(cn.as_ref().unwrap() == 3, "");
+  constexpr auto cx = Option<int>::some(3);
+  static_assert(cx.as_ref().unwrap() == 3, "");
+}
+
+TEST(Option, UnwrapRefSome) {
+  auto x = Option<int>::some(11);
+  auto& mx = x.unwrap_ref();
+  static_assert(std::is_same_v<decltype(mx), const int&>, "");
+  EXPECT_EQ(mx, 11);
+  EXPECT_EQ(&mx, &x.as_ref().unwrap());
+  auto rx = x.as_ref();
+  static_assert(std::is_same_v<decltype(rx), Option<const int&>>, "");
+  EXPECT_EQ(&mx, &rx.unwrap_ref());
+
+  // Verify constexpr.
+  constexpr auto cx = Option<int>::some(3);
+  static_assert(cx.unwrap_ref() == 3, "");
+}
+
+TEST(OptionDeathTest, UnwrapRefNone) {
+  auto n = Option<int>::none();
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(n.unwrap_ref(), "");
+#endif
+}
+
+TEST(Option, ExpectRefSome) {
+  auto x = Option<int>::some(11);
+  auto& mx = x.expect_ref("");
+  static_assert(std::is_same_v<decltype(mx), const int&>, "");
+  EXPECT_EQ(mx, 11);
+  EXPECT_EQ(&mx, &x.as_ref().unwrap());
+  auto rx = x.as_ref();
+  static_assert(std::is_same_v<decltype(rx), Option<const int&>>, "");
+  EXPECT_EQ(&mx, &rx.expect_ref(""));
+
+  // Verify constexpr.
+  constexpr auto cx = Option<int>::some(3);
+  static_assert(cx.expect_ref("") == 3, "");
+}
+
+TEST(OptionDeathTest, ExpectRefNone) {
+  auto n = Option<int>::none();
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(n.expect_ref("hello world"), "hello world");
+#endif
 }
 
 TEST(Option, AsMut) {
@@ -676,4 +715,43 @@ TEST(Option, AsMut) {
   IS_NONE(n.as_mut());
 }
 
+TEST(Option, UnwrapMutSome) {
+  auto x = Option<int>::some(11);
+  auto& mx = x.unwrap_mut();
+  static_assert(std::is_same_v<decltype(mx), int&>, "");
+  EXPECT_EQ(mx, 11);
+  mx = 13;
+  EXPECT_EQ(&mx, &x.as_mut().unwrap());
+  auto rx = x.as_mut();
+  static_assert(std::is_same_v<decltype(rx), Option<int&>>, "");
+  EXPECT_EQ(&mx, &rx.unwrap_mut());
+  EXPECT_EQ(x.unwrap_mut(), 13);
+}
+
+TEST(OptionDeathTest, UnwrapMutNone) {
+  auto n = Option<int>::none();
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(n.unwrap_mut(), "");
+#endif
+}
+
+TEST(Option, ExpectMutSome) {
+  auto x = Option<int>::some(11);
+  auto& mx = x.expect_mut("");
+  static_assert(std::is_same_v<decltype(mx), int&>, "");
+  EXPECT_EQ(mx, 11);
+  mx = 13;
+  EXPECT_EQ(&mx, &x.as_mut().unwrap());
+  auto rx = x.as_mut();
+  static_assert(std::is_same_v<decltype(rx), Option<int&>>, "");
+  EXPECT_EQ(&mx, &rx.expect_mut(""));
+  EXPECT_EQ(x.expect_mut(""), 13);
+}
+
+TEST(OptionDeathTest, ExpectMutNone) {
+  auto n = Option<int>::none();
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(n.expect_mut("hello world"), "hello world");
+#endif
+}
 }  // namespace

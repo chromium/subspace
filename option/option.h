@@ -144,6 +144,39 @@ class Option {
     ::sus::check_with_message(state_ == Some, *msg);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
+
+  /// Returns a const reference to the contained value inside the Option.
+  ///
+  /// This is a shortcut for `option.as_ref().expect()`.
+  ///
+  /// The function will panic with the given message if the Option's state is
+  /// currently `None`.
+  constexpr const std::remove_reference_t<T>& expect_ref(
+      /* TODO: string view type */ const char* msg) const& noexcept
+      [[nonnull]] {
+    ::sus::check_with_message(state_ == Some, *msg);
+    if constexpr (!std::is_reference_v<T>)
+      return t_.val_;
+    else
+      return const_cast<const T>(*t_.ptr_);
+  }
+  std::remove_reference_t<T>& expect_ref() && noexcept = delete;
+
+  /// Returns a mutable reference to the contained value inside the Option.
+  ///
+  /// This is a shortcut for `option.as_mut().expect()`.
+  ///
+  /// The function will panic with the given message if the Option's state is
+  /// currently `None`.
+  constexpr std::remove_reference_t<T>& expect_mut(
+      /* TODO: string view type */ const char* msg) & noexcept [[nonnull]] {
+    ::sus::check_with_message(state_ == Some, *msg);
+    if constexpr (!std::is_reference_v<T>)
+      return t_.val_;
+    else
+      return *t_.ptr_;
+  }
+
   /// Returns the contained value inside the Option.
   ///
   /// The function will panic without a message if the Option's state is
@@ -152,6 +185,7 @@ class Option {
     ::sus::check(state_ == Some);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
+
   /// Returns the contained value inside the Option.
   ///
   /// # Safety
@@ -165,6 +199,35 @@ class Option {
     state_ = None;
     if constexpr (!std::is_reference_v<T>)
       return static_cast<T&&>(t_.val_);
+    else
+      return *t_.ptr_;
+  }
+
+  /// Returns a const reference to the contained value inside the Option.
+  ///
+  /// This is a shortcut for `option.as_ref().unwrap()`.
+  ///
+  /// The function will panic without a message if the Option's state is
+  /// currently `None`.
+  constexpr const std::remove_reference_t<T>& unwrap_ref() const& noexcept {
+    ::sus::check(state_ == Some);
+    if constexpr (!std::is_reference_v<T>)
+      return t_.val_;
+    else
+      return const_cast<const T>(*t_.ptr_);
+  }
+  const std::remove_reference_t<T>& unwrap_ref() && noexcept = delete;
+
+  /// Returns a mutable reference to the contained value inside the Option.
+  ///
+  /// This is a shortcut for `option.as_mut().unwrap()`.
+  ///
+  /// The function will panic without a message if the Option's state is
+  /// currently `None`.
+  constexpr std::remove_reference_t<T>& unwrap_mut() & noexcept {
+    ::sus::check(state_ == Some);
+    if constexpr (!std::is_reference_v<T>)
+      return t_.val_;
     else
       return *t_.ptr_;
   }
