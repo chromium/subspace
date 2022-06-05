@@ -114,12 +114,28 @@ TEST(Replace, TrivialRelocate) {
   T j(::sus::mem::replace(i, T(5)));
   EXPECT_EQ(i, T(5));
   EXPECT_EQ(j, T(2));
+
+  T lvalue(6);
+
+  T k(::sus::mem::replace(i, lvalue));
+  EXPECT_EQ(i, T(6));
+  EXPECT_EQ(k, T(5));
+
+  ::sus::mem::replace_and_discard(i, T(7));
+  EXPECT_EQ(i, T(7));
+
+  ::sus::mem::replace_and_discard(i, lvalue);
+  EXPECT_EQ(i, T(6));
 }
 
 TEST(Replace, TrivialAbi) {
   struct [[clang::trivial_abi]] S {
     constexpr S(int n) : num(n) {}
     constexpr S(S&& other) : num(other.num), assigns(other.assigns) {}
+    constexpr void operator=(const S& other) {
+      num = other.num;
+      assigns = other.assigns + 1;
+    }
     constexpr void operator=(S&& other) {
       num = other.num;
       assigns = other.assigns + 1;
@@ -145,12 +161,52 @@ TEST(Replace, TrivialAbi) {
   // The replace was done by move operations.
   EXPECT_EQ(1, i.assigns);
 #endif
+
+  S lvalue(6);
+
+  i.assigns = 0;
+  S k(::sus::mem::replace(i, lvalue));
+  EXPECT_EQ(i.num, 6);
+  EXPECT_EQ(k.num, 5);
+#if __has_extension(trivially_relocatable)
+  // The replace was done by memcpy.
+  EXPECT_EQ(0, i.assigns);
+#else
+  // The replace was done by move operations.
+  EXPECT_EQ(1, i.assigns);
+#endif
+
+  i.assigns = 0;
+  ::sus::mem::replace_and_discard(i, S(7));
+  EXPECT_EQ(i.num, 7);
+#if __has_extension(trivially_relocatable)
+  // The replace was done by memcpy.
+  EXPECT_EQ(0, i.assigns);
+#else
+  // The replace was done by move operations.
+  EXPECT_EQ(1, i.assigns);
+#endif
+
+  i.assigns = 0;
+  ::sus::mem::replace_and_discard(i, lvalue);
+  EXPECT_EQ(i.num, 6);
+#if __has_extension(trivially_relocatable)
+  // The replace was done by memcpy.
+  EXPECT_EQ(0, i.assigns);
+#else
+  // The replace was done by move operations.
+  EXPECT_EQ(1, i.assigns);
+#endif
 }
 
 TEST(Replace, NonTrivial) {
   struct S {
     constexpr S(int n) : num(n) {}
     constexpr S(S&& other) : num(other.num), assigns(other.assigns) {}
+    constexpr void operator=(const S& other) {
+      num = other.num;
+      assigns = other.assigns + 1;
+    }
     constexpr void operator=(S&& other) {
       num = other.num;
       assigns = other.assigns + 1;
@@ -164,6 +220,27 @@ TEST(Replace, NonTrivial) {
   S j(::sus::mem::replace(i, S(5)));
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
+  // The replace was done by move operations.
+  EXPECT_EQ(1, i.assigns);
+
+  S lvalue(6);
+
+  i.assigns = 0;
+  S k(::sus::mem::replace(i, lvalue));
+  EXPECT_EQ(i.num, 6);
+  EXPECT_EQ(k.num, 5);
+  // The replace was done by move operations.
+  EXPECT_EQ(1, i.assigns);
+
+  i.assigns = 0;
+  ::sus::mem::replace_and_discard(i, S(7));
+  EXPECT_EQ(i.num, 7);
+  // The replace was done by move operations.
+  EXPECT_EQ(1, i.assigns);
+
+  i.assigns = 0;
+  ::sus::mem::replace_and_discard(i, lvalue);
+  EXPECT_EQ(i.num, 6);
   // The replace was done by move operations.
   EXPECT_EQ(1, i.assigns);
 }
