@@ -25,9 +25,10 @@ namespace sus::mem {
 
 // It would be nice to have an array overload of replace() but functions can't
 // return arrays.
+
 template <class T>
-  requires(!std::is_array_v<T> && std::is_move_constructible_v<T>)
-constexpr T replace(T& dest, T src) noexcept {
+  requires(!std::is_array_v<T> && std::is_move_constructible_v<T> && std::is_copy_assignable_v<T>)
+[[nodiscard]] constexpr T replace(T& dest, const T& src) noexcept {
   T old(static_cast<T&&>(dest));
 
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
@@ -35,35 +36,75 @@ constexpr T replace(T& dest, T src) noexcept {
       !std::is_constant_evaluated()) {
     memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), sizeof(T));
   } else {
-    dest = T(static_cast<T&&>(src));
+    dest = src;
   }
 
   return old;
 }
 
 template <class T>
-constexpr T* replace_ptr(T*& dest, T* src) noexcept {
+  requires(!std::is_array_v<T> && std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
+[[nodiscard]] constexpr T replace(T& dest, T&& src) noexcept {
+  T old(static_cast<T&&>(dest));
+
+  // memcpy() is not constexpr so we can't use it in constexpr evaluation.
+  if (::sus::mem::__private::relocate_one_by_memcpy_v<T> &&
+      !std::is_constant_evaluated()) {
+    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), sizeof(T));
+  } else {
+    dest = static_cast<T&&>(src);
+  }
+
+  return old;
+}
+
+template <class T>
+  requires(!std::is_array_v<T> && std::is_copy_assignable_v<T>)
+void replace_and_discard(T& dest, const T& src) noexcept {
+  // memcpy() is not constexpr so we can't use it in constexpr evaluation.
+  if (::sus::mem::__private::relocate_one_by_memcpy_v<T> &&
+      !std::is_constant_evaluated()) {
+    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), sizeof(T));
+  } else {
+    dest = src;
+  }
+}
+
+template <class T>
+  requires(!std::is_array_v<T> && std::is_move_assignable_v<T>)
+void replace_and_discard(T& dest, T&& src) noexcept {
+  // memcpy() is not constexpr so we can't use it in constexpr evaluation.
+  if (::sus::mem::__private::relocate_one_by_memcpy_v<T> &&
+      !std::is_constant_evaluated()) {
+    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), sizeof(T));
+  } else {
+    dest = static_cast<T&&>(src);
+  }
+}
+
+template <class T>
+[[nodiscard]] constexpr T* replace_ptr(T*& dest, T* src) noexcept {
   T* old = dest;
   dest = src;
   return old;
 }
 
 template <class T>
-constexpr const T* replace_ptr(const T*& dest, const T* src) noexcept {
+[[nodiscard]] constexpr const T* replace_ptr(const T*& dest, const T* src) noexcept {
   const T* old = dest;
   dest = src;
   return old;
 }
 
 template <class T>
-constexpr T* replace_ptr(T*& dest, decltype(nullptr) src) noexcept {
+[[nodiscard]] constexpr T* replace_ptr(T*& dest, decltype(nullptr) src) noexcept {
   T* old = dest;
   dest = nullptr;
   return old;
 }
 
 template <class T>
-constexpr const T* replace_ptr(const T*& dest, decltype(nullptr) src) noexcept {
+[[nodiscard]] constexpr const T* replace_ptr(const T*& dest, decltype(nullptr) src) noexcept {
   const T* old = dest;
   dest = nullptr;
   return old;
