@@ -68,11 +68,8 @@ class Option {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   template <class U = T>
-    requires(::sus::traits::MakeDefault<U>::has_trait)
+    requires(::sus::traits::MakeDefault<U>::has_trait && std::is_same_v<U, T>)
   static inline constexpr Option<T> with_default() noexcept {
-    static_assert(std::is_same_v<U, T>,
-                  "with_default() called with incorrect explicit type. Don't "
-                  "specify a template argument to with_default().");
     return Option<T>::some(::sus::traits::MakeDefault<T>::make_default());
   }
 
@@ -187,15 +184,67 @@ class Option {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   template <class U = T>
-    requires(::sus::traits::MakeDefault<U>::has_trait)
+    requires(::sus::traits::MakeDefault<U>::has_trait && std::is_same_v<U, T>)
   constexpr T unwrap_or_default() && noexcept {
-    static_assert(std::is_same_v<U, T>,
-                  "unwrap_or_default() called with incorrect explicit type. "
-                  "Don't specify a template argument to unwrap_or_default().");
     if (::sus::mem::replace(state_, None) == Some)
       return ::sus::mem::take_and_destruct(unsafe_fn, t_);
     else
       return ::sus::traits::MakeDefault<T>::make_default();
+  }
+
+  /// Stores the value `t` inside this Option, replacing any previous value, and
+  /// returns a mutable reference to the new value.
+  T& insert(T t) & noexcept {
+    if (::sus::mem::replace(state_, Some) == None)
+      new (&t_) T(static_cast<T&&>(t));
+    else
+      t_ = static_cast<T&&>(t);
+    return t_;
+  }
+
+  /// If the Option holds a value, returns a mutable reference to it. Otherwise,
+  /// stores `t` inside the Option and returns a mutable reference to the new
+  /// value.
+  ///
+  /// If it is non-trivial to construct `T`, the <get_or_insert_with>() method
+  /// would be preferable, as it only constructs a `T` if needed.
+  T& get_or_insert(T t) & noexcept {
+    if (::sus::mem::replace(state_, Some) == None)
+      new (&t_) T(static_cast<T&&>(t));
+    return t_;
+  }
+
+  /// If the Option holds a value, returns a mutable reference to it. Otherwise,
+  /// constructs a default value `T`, stores it inside the Option and returns a
+  /// mutable reference to the new value.
+  ///
+  /// This method differs from <unwrap_or_default>() in that it does not consume
+  /// the Option, and instead it can not be called on rvalues.
+  ///
+  /// This is a shorthand for
+  /// `Option<T>::get_or_insert_default(MakeDefault<T>::make_default)`.
+  ///
+  /// The Option's contained type `T` must be #MakeDefault, and will be
+  /// constructed through that trait.
+  template <class U = T>
+    requires(::sus::traits::MakeDefault<U>::has_trait && std::is_same_v<U, T>)
+  T& get_or_insert_default() & noexcept {
+    if (::sus::mem::replace(state_, Some) == None)
+      new (&t_) T(::sus::traits::MakeDefault<T>::make_default());
+    return t_;
+  }
+
+  /// If the Option holds a value, returns a mutable reference to it. Otherwise,
+  /// constructs a `T` by calling `f`, stores it inside the Option and returns a
+  /// mutable reference to the new value.
+  ///
+  /// This method differs from <unwrap_or_else>() in that it does not consume
+  /// the Option, and instead it can not be called on rvalues.
+  template <class WithFn>
+    requires(std::is_same_v<std::invoke_result_t<WithFn>, T>)
+  T& get_or_insert_with(WithFn f) & noexcept {
+    if (::sus::mem::replace(state_, Some) == None) new (&t_) T(f());
+    return t_;
   }
 
   /// Returns a new Option containing whatever was inside the current Option.
