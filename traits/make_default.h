@@ -50,4 +50,17 @@ struct MakeDefault {
   }
 };
 
+template <class T>
+struct MakeDefault<T&&> {
+  static constexpr bool has_trait = false;
+};
+template <class T>
+struct MakeDefault<T&> {
+  static constexpr bool has_trait = false;
+};
+template <class T>
+struct MakeDefault<const T&> {
+  static constexpr bool has_trait = false;
+};
+
 }  // namespace sus::traits
