@@ -230,6 +230,12 @@ class Option {
       return Option<R>::some(default_fn());
   }
 
+  /// Consumes the Option and applies a predicate function to the value
+  /// contained in the Option. Returns a new Option with the same value if the
+  /// predicate returns true, otherwise returns an Option with its state set to
+  /// #None.
+  ///
+  /// The predicate function must take `const T&` and return `bool`.
   template <class Predicate>
     requires(std::is_same_v<std::invoke_result_t<Predicate, const T&>, bool>)
   constexpr Option<T> filter(Predicate p) && noexcept {
