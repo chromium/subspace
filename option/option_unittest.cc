@@ -1419,4 +1419,32 @@ TEST(Option, Trivial) {
   EXPECT_EQ(&izz.as_ref().unwrap(), &i);
 }
 
+TEST(Option, Replace) {
+  auto x = Option<int>::some(2);
+  static_assert(std::is_same_v<decltype(x.replace(3)), Option<int>>, "");
+  auto y = x.replace(3);
+  EXPECT_EQ(x.as_ref().unwrap(), 3);
+  EXPECT_EQ(y.as_ref().unwrap(), 2);
+
+  auto z = Option<int>::none();
+  static_assert(std::is_same_v<decltype(z.replace(3)), Option<int>>, "");
+  auto zz = z.replace(3);
+  EXPECT_EQ(z.as_ref().unwrap(), 3);
+  IS_NONE(zz);
+
+  int i2 = 2, i3 = 3;
+
+  auto ix = Option<int&>::some(i2);
+  static_assert(std::is_same_v<decltype(ix.replace(i3)), Option<int&>>, "");
+  auto iy = ix.replace(i3);
+  EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
+  EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
+
+  auto iz = Option<int&>::none();
+  static_assert(std::is_same_v<decltype(iz.replace(i3)), Option<int&>>, "");
+  auto izz = iz.replace(i3);
+  EXPECT_EQ(&iz.as_ref().unwrap(), &i3);
+  IS_NONE(izz);
+}
+
 }  // namespace
