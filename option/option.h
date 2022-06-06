@@ -117,7 +117,7 @@ class Option final {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   static inline constexpr Option<T> with_default() noexcept
-    requires(::sus::concepts::MakeDefault<T>::has_trait)
+    requires(::sus::concepts::MakeDefault<T>::has_concept)
   {
     return Option<T>::some(::sus::concepts::MakeDefault<T>::make_default());
   }
@@ -369,7 +369,7 @@ class Option final {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   constexpr T unwrap_or_default() && noexcept
-    requires(::sus::concepts::MakeDefault<T>::has_trait)
+    requires(::sus::concepts::MakeDefault<T>::has_concept)
   {
     if constexpr (!std::is_reference_v<T>) {
       if (t_.set_state(None) == Some) {
@@ -427,7 +427,7 @@ class Option final {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   T& get_or_insert_default() & noexcept
-    requires(::sus::concepts::MakeDefault<T>::has_trait)
+    requires(::sus::concepts::MakeDefault<T>::has_concept)
   {
     static_assert(!std::is_reference_v<T>, "");  // We require MakeDefault<T>.
     if (t_.set_state(Some) == None)
