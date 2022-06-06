@@ -31,14 +31,18 @@
 #include "mem/replace.h"
 #include "mem/take.h"
 #include "option/__private/is_option_type.h"
-#include "traits/iterator.h"
+
+namespace sus::traits::iter {
+template <class Item>
+class SingleIter;
+}
 
 namespace sus::option {
 
+using sus::traits::iter::SingleIter;
+
 template <class T>
 class Option;
-template <class T>
-class Iter;
 
 /// The representation of an Option's state, which can either be #None to
 /// represent it has no value, or #Some for when it is holding a value.
@@ -748,12 +752,14 @@ class Option final {
     }
   }
 
-  Iter<const T&> iter() const& noexcept { return Iter<const T&>(as_ref()); }
-  Iter<const T&> iter() const&& = delete;
+  SingleIter<const T&> iter() const& noexcept {
+    return SingleIter<const T&>(as_ref());
+  }
+  SingleIter<const T&> iter() const&& = delete;
 
-  Iter<T&> iter_mut() & noexcept { return Iter<T&>(as_mut()); }
+  SingleIter<T&> iter_mut() & noexcept { return SingleIter<T&>(as_mut()); }
 
-  Iter<T> into_iter() && noexcept { return Iter<T>(take()); }
+  SingleIter<T> into_iter() && noexcept { return SingleIter<T>(take()); }
 
  private:
   /// Constructor for #None.
@@ -768,15 +774,6 @@ class Option final {
   : t_(static_cast<T&&>(t)) {}
 
   ::sus::option::__private::Storage<T> t_;
-};
-
-template <class T>
-class Iter final : public ::sus::traits::Iterator<T> {
- public:
-  Iter(Option<T>&& item)
-      : ::sus::traits::Iterator<T>(static_cast<Option<T>&&>(item)) {}
-
-  Option<T> next() final { return Option<T>::none(); }
 };
 
 }  // namespace sus::option
