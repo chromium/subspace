@@ -5,6 +5,7 @@
         "${workspaceRoot}/third_party/googletest/googletest/include",
     ],
     "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.autoAddFileAssociations": false,
     "cmake.buildDirectory": "${workspaceFolder}/out",
     "clangd.arguments": [
         "-compile-commands-dir=out"
