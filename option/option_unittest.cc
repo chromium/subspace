@@ -17,6 +17,7 @@
 #include "assertions/builtin.h"
 #include "mem/__private/relocate.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
+#include "traits/iter/iterator.h"
 
 using ::sus::concepts::MakeDefault;
 using ::sus::mem::__private::relocate_array_by_memcpy_v;
@@ -1546,7 +1547,7 @@ TEST(Option, IntoIter) {
 
   int count = 0;
   auto y = Option<MoveOnly>::some(MoveOnly(2));
-  for (auto m: static_cast<decltype(y)&&>(y).into_iter()) {
+  for (auto m : static_cast<decltype(y)&&>(y).into_iter()) {
     static_assert(std::is_same_v<decltype(m), MoveOnly>, "");
     EXPECT_EQ(m.i, 2);
     ++count;

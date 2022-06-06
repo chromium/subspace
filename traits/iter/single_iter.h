@@ -12,8 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traits/iterator.h"
+#pragma once
 
-namespace sus::traits {
-const IteratorEnd iterator_end;
-}
+#include "traits/iter/iterator_defn.h"
+
+namespace sus::traits::iter {
+
+using ::sus::option::Option;
+using ::sus::traits::iter::Iterator;
+
+/// An Iterator implementation that walks over at most a single Item.
+template <class Item>
+class SingleIter final : public Iterator<Item> {
+ public:
+  SingleIter(Option<Item>&& single)
+      : Iterator<Item>(static_cast<Option<Item>&&>(single)) {}
+
+  Option<Item> next() noexcept final { return Option<Item>::none(); }
+};
+
+}  // namespace sus::traits::iter

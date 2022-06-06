@@ -18,6 +18,7 @@ add_library(subspace STATIC
     "assertions/unreachable.h"
     "containers/array.h"
     "concepts/make_default.h"
+    "containers/array.h"
     "marker/unsafe.h"
     "mem/__private/relocate.h"
     "mem/addressof.h"
@@ -26,8 +27,11 @@ add_library(subspace STATIC
     "mem/take.h"
     "option/__private/is_option_type.h"
     "option/option.h"
-    "traits/iterator.h"
-    "traits/iterator.cc"
+    "traits/iter/iterator.h"
+    "traits/iter/iterator.cc"
+    "traits/iter/iterator_defn.h"
+    "traits/iter/iterator_fns.h"
+    "traits/iter/single_iter.h"
     "lib/lib.cc"
 )
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
@@ -43,12 +47,14 @@ add_executable(subspace_unittests
     "assertions/unreachable_unittest.cc"
     "containers/array_unittest.cc"
     "concepts/make_default_unittest.cc"
+    "containers/array_unittest.cc"
     "mem/__private/relocate_unittest.cc"
     "mem/addressof_unittest.cc"
     "mem/replace_unittest.cc"
     "mem/swap_unittest.cc"
     "mem/take_unittest.cc"
     "option/option_unittest.cc"
+    "traits/iter/iterator_unittest.cc"
 )
 set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(subspace_unittests
