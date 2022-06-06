@@ -18,12 +18,12 @@
 #include "mem/__private/relocate.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
+using ::sus::concepts::MakeDefault;
 using ::sus::mem::__private::relocate_array_by_memcpy_v;
 using ::sus::mem::__private::relocate_one_by_memcpy_v;
 using ::sus::option::None;
 using ::sus::option::Option;
 using ::sus::option::Some;
-using ::sus::concepts::MakeDefault;
 
 namespace {
 
@@ -1495,6 +1495,63 @@ TEST(Option, Flatten) {
   static_assert(
       Option<Option<int>>::some(Option<int>::some(3)).flatten().unwrap() == 3,
       "");
+}
+
+TEST(Option, Iter) {
+  auto x = Option<int>::none();
+  for (auto i : x.iter()) {
+    ADD_FAILURE();
+  }
+
+  int count = 0;
+  auto y = Option<int>::some(2);
+  for (auto& i : y.iter()) {
+    static_assert(std::is_same_v<decltype(i), const int&>, "");
+    EXPECT_EQ(i, 2);
+    ++count;
+  }
+  EXPECT_EQ(count, 1);
+}
+
+TEST(Option, IterMut) {
+  auto x = Option<int>::none();
+  for (auto i : x.iter_mut()) {
+    ADD_FAILURE();
+  }
+
+  int count = 0;
+  auto y = Option<int>::some(2);
+  for (auto& i : y.iter_mut()) {
+    static_assert(std::is_same_v<decltype(i), int&>, "");
+    EXPECT_EQ(i, 2);
+    i += 1;
+    ++count;
+  }
+  EXPECT_EQ(y.as_ref().unwrap(), 3);
+}
+
+TEST(Option, IntoIter) {
+  auto x = Option<int>::none();
+  for (auto i : x.iter_mut()) {
+    ADD_FAILURE();
+  }
+
+  struct MoveOnly {
+    explicit MoveOnly(int i) : i(i) {}
+    MoveOnly(MoveOnly&& o) : i(o.i) {}
+    void operator=(MoveOnly&& o) { i = o.i; }
+
+    int i;
+  };
+
+  int count = 0;
+  auto y = Option<MoveOnly>::some(MoveOnly(2));
+  for (auto m: static_cast<decltype(y)&&>(y).into_iter()) {
+    static_assert(std::is_same_v<decltype(m), MoveOnly>, "");
+    EXPECT_EQ(m.i, 2);
+    ++count;
+  }
+  EXPECT_EQ(count, 1);
 }
 
 }  // namespace

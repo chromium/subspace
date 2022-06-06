@@ -19,22 +19,26 @@
 
 // TODO: Clone integration: cloned().
 
-// TODO: Iterator integration: iter(), iter_mut(), zip().
+// TODO: Pair/tuple integration: zip().
 
 #pragma once
 
 #include <type_traits>
 
 #include "assertions/check.h"
+#include "concepts/make_default.h"
 #include "marker/unsafe.h"
 #include "mem/replace.h"
 #include "mem/take.h"
-#include "concepts/make_default.h"
+#include "option/__private/is_option_type.h"
+#include "traits/iterator.h"
 
 namespace sus::option {
 
 template <class T>
 class Option;
+template <class T>
+class Iter;
 
 /// The representation of an Option's state, which can either be #None to
 /// represent it has no value, or #Some for when it is holding a value.
@@ -49,20 +53,10 @@ using State::Some;
 
 namespace __private {
 
-template <class U>
-struct IsOptionType : std::false_type {
-  using inner_type = void;
-};
-
-template <class U>
-struct IsOptionType<Option<U>> : std::true_type {
-  using inner_type = U;
-};
-
 // TODO: Determine if we can put the State into the storage of `T`. Probably
 // though a user-defined trait for `T`?
 template <class T>
-struct Storage {
+struct Storage final {
   constexpr ~Storage()
     requires(std::is_trivially_destructible_v<T>)
   = default;
@@ -89,7 +83,7 @@ struct Storage {
 };
 
 template <class T>
-struct Storage<T&> {
+struct Storage<T&> final {
   constexpr ~Storage() = default;
   constexpr Storage(const Storage&) = default;
   constexpr Storage& operator=(const Storage&) = default;
@@ -109,7 +103,7 @@ struct Storage<T&> {
 
 /// A type which either holds #Some value of type T, or #None.
 template <class T>
-class Option {
+class Option final {
  public:
   /// Construct an Option that is holding the given value.
   static inline constexpr Option some(T t) noexcept {
@@ -161,7 +155,7 @@ class Option {
 
   Option(Option&& o) noexcept
     requires(!std::is_trivially_move_constructible_v<T>)
-  : t_(o.t_state()) {
+  : t_(o.t_.state()) {
     // If this could be done in a `constexpr` way, methods that receive an
     // Option could also be constexpr.
     if constexpr (!std::is_reference_v<T>) {
@@ -214,6 +208,8 @@ class Option {
   constexpr bool is_some() const noexcept { return t_.state() == Some; }
   /// Returns whether the Option is currently empty, containing no value.
   constexpr bool is_none() const noexcept { return t_.state() == None; }
+
+  constexpr explicit operator bool() const noexcept { return is_some(); }
 
   /// An operator which returns the state of the Option, either #Some or #None.
   ///
@@ -752,6 +748,13 @@ class Option {
     }
   }
 
+  Iter<const T&> iter() const& noexcept { return Iter<const T&>(as_ref()); }
+  Iter<const T&> iter() const&& = delete;
+
+  Iter<T&> iter_mut() & noexcept { return Iter<T&>(as_mut()); }
+
+  Iter<T> into_iter() && noexcept { return Iter<T>(take()); }
+
  private:
   /// Constructor for #None.
   constexpr explicit Option() : t_(None) {}
@@ -765,6 +768,15 @@ class Option {
   : t_(static_cast<T&&>(t)) {}
 
   ::sus::option::__private::Storage<T> t_;
+};
+
+template <class T>
+class Iter final : public ::sus::traits::Iterator<T> {
+ public:
+  Iter(Option<T>&& item)
+      : ::sus::traits::Iterator<T>(static_cast<Option<T>&&>(item)) {}
+
+  Option<T> next() final { return Option<T>::none(); }
 };
 
 }  // namespace sus::option

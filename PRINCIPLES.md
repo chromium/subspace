@@ -127,8 +127,9 @@ This library is an experiment and not intended for use. See the
       value-or-none.
 1. Traits, SFINAE and type tags to define behaviour on data. No inheritance
    unless from an abstract interface. All other classes are marked `final`.
+    * Always use `final` instead of `override`.
     * Inheritance is [no longer
-      needed](https://en.cppreference.com/w/cpp/language/ebo).
+      needed](https://en.cppreference.com/w/cpp/language/ebo) for object sizes.
     * We will provide a public set of traits with defined behaviour and tools or
       guidance to ensure consistent behaviour in implementations of traits.
 1. Tools to use SFINAE for common patterns, such as traits, without having to
