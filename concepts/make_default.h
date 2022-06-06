@@ -36,13 +36,13 @@ static constexpr bool has_with_default(int) {
 
 template <class T>
 struct MakeDefault {
-  static constexpr bool has_trait =
+  static constexpr bool has_concept =
       std::is_default_constructible_v<T> ^ __private::has_with_default<T, T>(0);
 
   static constexpr T make_default() noexcept {
-    static_assert(has_trait,
+    static_assert(has_concept,
                   "MakeDefault trait used when the trait is not present for "
-                  "type T. Verify with MakeDefault<T>::has_trait.");
+                  "type T. Verify with MakeDefault<T>::has_concept.");
     if constexpr (std::is_default_constructible_v<T>)
       return T();
     else
@@ -52,15 +52,15 @@ struct MakeDefault {
 
 template <class T>
 struct MakeDefault<T&&> {
-  static constexpr bool has_trait = false;
+  static constexpr bool has_concept = false;
 };
 template <class T>
 struct MakeDefault<T&> {
-  static constexpr bool has_trait = false;
+  static constexpr bool has_concept = false;
 };
 template <class T>
 struct MakeDefault<const T&> {
-  static constexpr bool has_trait = false;
+  static constexpr bool has_concept = false;
 };
 
 }  // namespace sus::concepts

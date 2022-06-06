@@ -42,7 +42,7 @@ template <class T, size_t N>
 class Array {
  public:
   constexpr static Array with_default()
-    requires(::sus::concepts::MakeDefault<T>::has_trait)
+    requires(::sus::concepts::MakeDefault<T>::has_concept)
   {
     auto a = Array();
     if constexpr (N > 0) {

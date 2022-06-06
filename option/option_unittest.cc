@@ -159,12 +159,12 @@ static_assert(!std::is_trivial_v<Option<int>>, "");
 static_assert(!std::is_aggregate_v<Option<int>>, "");
 static_assert(std::is_standard_layout_v<Option<int>>, "");
 
-static_assert(MakeDefault<Option<DefaultConstructible>>::has_trait, "");
-static_assert(MakeDefault<Option<WithDefaultConstructible>>::has_trait, "");
-static_assert(!MakeDefault<Option<NotDefaultConstructible>>::has_trait, "");
-static_assert(!MakeDefault<Option<DefaultConstructible&>>::has_trait, "");
-static_assert(!MakeDefault<Option<WithDefaultConstructible&>>::has_trait, "");
-static_assert(!MakeDefault<Option<NotDefaultConstructible&>>::has_trait, "");
+static_assert(MakeDefault<Option<DefaultConstructible>>::has_concept, "");
+static_assert(MakeDefault<Option<WithDefaultConstructible>>::has_concept, "");
+static_assert(!MakeDefault<Option<NotDefaultConstructible>>::has_concept, "");
+static_assert(!MakeDefault<Option<DefaultConstructible&>>::has_concept, "");
+static_assert(!MakeDefault<Option<WithDefaultConstructible&>>::has_concept, "");
+static_assert(!MakeDefault<Option<NotDefaultConstructible&>>::has_concept, "");
 
 namespace trivially_relocatable {
 using T = TriviallyRelocatable;

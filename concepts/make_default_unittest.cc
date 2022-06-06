@@ -50,10 +50,10 @@ struct BothConstructible {
   constexpr BothConstructible(int i) noexcept : i(i) {}
 };
 
-static_assert(MakeDefault<DefaultConstructible>::has_trait == true, "");
-static_assert(MakeDefault<NotDefaultConstructible>::has_trait == false, "");
-static_assert(MakeDefault<WithDefaultConstructible>::has_trait == true, "");
-static_assert(MakeDefault<BothConstructible>::has_trait == false, "");
+static_assert(MakeDefault<DefaultConstructible>::has_concept == true, "");
+static_assert(MakeDefault<NotDefaultConstructible>::has_concept == false, "");
+static_assert(MakeDefault<WithDefaultConstructible>::has_concept == true, "");
+static_assert(MakeDefault<BothConstructible>::has_concept == false, "");
 
 // Verify constexpr construction.
 constexpr auto default_constructible =
