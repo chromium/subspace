@@ -29,7 +29,7 @@
 #include "marker/unsafe.h"
 #include "mem/replace.h"
 #include "mem/take.h"
-#include "traits/make_default.h"
+#include "concepts/make_default.h"
 
 namespace sus::option {
 
@@ -123,9 +123,9 @@ class Option {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   static inline constexpr Option<T> with_default() noexcept
-    requires(::sus::traits::MakeDefault<T>::has_trait)
+    requires(::sus::concepts::MakeDefault<T>::has_trait)
   {
-    return Option<T>::some(::sus::traits::MakeDefault<T>::make_default());
+    return Option<T>::some(::sus::concepts::MakeDefault<T>::make_default());
   }
 
   /// If T can be trivially destroyed, we don't need to explicitly destroy it,
@@ -373,7 +373,7 @@ class Option {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   constexpr T unwrap_or_default() && noexcept
-    requires(::sus::traits::MakeDefault<T>::has_trait)
+    requires(::sus::concepts::MakeDefault<T>::has_trait)
   {
     if constexpr (!std::is_reference_v<T>) {
       if (t_.set_state(None) == Some) {
@@ -384,7 +384,7 @@ class Option {
         return *::sus::mem::replace_ptr(t_.ptr_, nullptr);
       }
     }
-    return ::sus::traits::MakeDefault<T>::make_default();
+    return ::sus::concepts::MakeDefault<T>::make_default();
   }
 
   /// Stores the value `t` inside this Option, replacing any previous value, and
@@ -431,11 +431,11 @@ class Option {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   T& get_or_insert_default() & noexcept
-    requires(::sus::traits::MakeDefault<T>::has_trait)
+    requires(::sus::concepts::MakeDefault<T>::has_trait)
   {
     static_assert(!std::is_reference_v<T>, "");  // We require MakeDefault<T>.
     if (t_.set_state(Some) == None)
-      new (&t_.val_) T(::sus::traits::MakeDefault<T>::make_default());
+      new (&t_.val_) T(::sus::concepts::MakeDefault<T>::make_default());
     return t_.val_;
   }
 

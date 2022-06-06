@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-namespace sus::traits {
+namespace sus::concepts {
 
 namespace __private {
 
@@ -63,4 +63,4 @@ struct MakeDefault<const T&> {
   static constexpr bool has_trait = false;
 };
 
-}  // namespace sus::traits
+}  // namespace sus::concepts

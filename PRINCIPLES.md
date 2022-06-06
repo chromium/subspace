@@ -125,8 +125,8 @@ This library is an experiment and not intended for use. See the
       banned.
     * We will provide vocabulary types for returning a success-or-failure and a
       value-or-none.
-1. Traits, SFINAE and type tags to define behaviour on data. No inheritance. All
-   classes are marked `final`.
+1. Traits, SFINAE and type tags to define behaviour on data. No inheritance
+   unless from an abstract interface. All other classes are marked `final`.
     * Inheritance is [no longer
       needed](https://en.cppreference.com/w/cpp/language/ebo).
     * We will provide a public set of traits with defined behaviour and tools or
