@@ -45,12 +45,12 @@ namespace __private {
 
 template <class U>
 struct IsOptionType : std::false_type {
-  using type = void;
+  using inner_type = void;
 };
 
 template <class U>
 struct IsOptionType<Option<U>> : std::true_type {
-  using type = U;
+  using inner_type = U;
 };
 
 // TODO: Determine if we can put the State into the storage of `T`. Probably
@@ -596,8 +596,9 @@ class Option {
   /// with the result.
   ///
   /// Some languages call this operation flatmap.
-  template <class AndFn, int&..., class R = std::invoke_result_t<AndFn, T&&>,
-            class InnerR = ::sus::option::__private::IsOptionType<R>::type>
+  template <
+      class AndFn, int&..., class R = std::invoke_result_t<AndFn, T&&>,
+      class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type>
     requires(::sus::option::__private::IsOptionType<R>::value)
   constexpr Option<InnerR> and_then(AndFn f) && noexcept {
     if constexpr (!std::is_reference_v<T>) {
@@ -699,6 +700,21 @@ class Option {
       return Option<R>::none();
     } else {
       return Option<R>::some(const_cast<const T&>(*t_.ptr_));
+    }
+  }
+
+  /// Maps an `Option<Option<T>>` to an `Option<T>`.
+  ///
+  /// Can only be called when the Option is holding a nested Option by value
+  /// (not by reference).
+  constexpr T flatten() && noexcept
+    requires(::sus::option::__private::IsOptionType<T>::value &&
+             !std::is_reference_v<T>)
+  {
+    if (t_.set_state(None) == Some) {
+      return ::sus::mem::take_and_destruct(unsafe_fn, t_.val_);
+    } else {
+      return T::none();
     }
   }
 

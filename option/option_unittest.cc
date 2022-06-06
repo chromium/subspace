@@ -1455,11 +1455,46 @@ TEST(Option, Copied) {
   auto y = Option<int&>::some(i).copied();
   EXPECT_EQ(y.as_ref().unwrap(), 2);
   EXPECT_NE(&y.as_ref().unwrap(), &i);
-  
+
   // Verify constexpr.
   constexpr int ic = 2;
   static_assert(Option<int&>::none().copied().is_none(), "");
   static_assert(Option<const int&>::some(ic).copied().unwrap() == 2, "");
+}
+
+TEST(Option, Flatten) {
+  static_assert(std::is_same_v<decltype(Option<Option<int>>::none().flatten()),
+                               Option<int>>,
+                "");
+  static_assert(std::is_same_v<decltype(Option<Option<int&>>::none().flatten()),
+                               Option<int&>>,
+                "");
+  static_assert(
+      std::is_same_v<decltype(Option<Option<Option<int>>>::none().flatten()),
+                     Option<Option<int>>>,
+      "");
+
+  EXPECT_TRUE(
+      Option<Option<Option<int>>>::none().flatten().flatten().is_none());
+  EXPECT_EQ(Option<Option<Option<int>>>::some(
+                Option<Option<int>>::some(Option<int>::some(4)))
+                .flatten()
+                .flatten()
+                .unwrap(),
+            4);
+
+  int i = 2;
+  EXPECT_EQ(
+      &Option<Option<int&>>::some(Option<int&>::some(i)).flatten().unwrap(),
+      &i);
+
+  // Verify constexpr.
+  static_assert(Option<Option<int>>::none().flatten().is_none(), "");
+  static_assert(
+      Option<Option<int>>::some(Option<int>::none()).flatten().is_none(), "");
+  static_assert(
+      Option<Option<int>>::some(Option<int>::some(3)).flatten().unwrap() == 3,
+      "");
 }
 
 }  // namespace
