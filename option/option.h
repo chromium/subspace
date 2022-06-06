@@ -15,6 +15,12 @@
 // TODO: Overload all && functions with const& version if T is copyable. The
 // latter copies T instead of moving it.
 
+// TODO: Result integration: ok_or(), ok_or_else(), transpose().
+
+// TODO: Clone integration: cloned().
+
+// TODO: Iterator integration: iter(), iter_mut(), zip().
+
 #pragma once
 
 #include <type_traits>
