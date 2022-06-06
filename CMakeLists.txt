@@ -23,7 +23,10 @@ add_library(subspace STATIC
     "mem/replace.h"
     "mem/swap.h"
     "mem/take.h"
+    "option/__private/is_option_type.h"
     "option/option.h"
+    "traits/iterator.h"
+    "traits/iterator.cc"
     "lib/lib.cc"
 )
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
