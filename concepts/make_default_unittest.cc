@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traits/make_default.h"
+#include "concepts/make_default.h"
 
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
-namespace sus::traits {
+using sus::concepts::MakeDefault;
+
 namespace {
 
 struct DefaultConstructible {
@@ -83,4 +84,3 @@ TEST(MakeDefault, NonConstexprConstruction) {
 }
 
 }  // namespace
-}  // namespace sus::traits

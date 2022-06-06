@@ -23,7 +23,7 @@ using ::sus::mem::__private::relocate_one_by_memcpy_v;
 using ::sus::option::None;
 using ::sus::option::Option;
 using ::sus::option::Some;
-using ::sus::traits::MakeDefault;
+using ::sus::concepts::MakeDefault;
 
 namespace {
 
