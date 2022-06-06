@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "containers/Array.h"
+#include "containers/array.h"
 
 #include <type_traits>
 

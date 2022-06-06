@@ -15,12 +15,25 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>  // TODO: replace std::make_index_sequence.
 
 #include "assertions/check.h"
 #include "concepts/make_default.h"
 #include "marker/unsafe.h"
 
 namespace sus::containers {
+
+namespace __private {
+
+template <class T, size_t N>
+struct Storage {
+  T data_[N];
+};
+
+template <class T>
+struct Storage<T, 0> {};
+
+}  // namespace __private
 
 template <class T, size_t N>
 class Array;
@@ -84,17 +97,10 @@ class Array {
   constexpr Array(WithValue, const T& t, std::index_sequence<Is...>) noexcept
       : storage_{((void)Is, t)...} {}
 
-  template <size_t N>
-  struct Storage {
-    T data_[N];
-  };
-  template <>
-  struct Storage<0> {};
-
   // Using a union ensures that the default constructor doesn't initialize
   // anything.
   union {
-    Storage<N> storage_;
+    ::sus::containers::__private::Storage<T, N> storage_;
   };
 };
 
