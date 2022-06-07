@@ -127,4 +127,37 @@ TEST(IteratorAll, Any) {
     EXPECT_FALSE(it.any([](int i) { return false; }));
   }
 }
+
+TEST(IteratorAll, Count) {
+  {
+    int nums[5] = {1, 2, 3, 4, 5};
+    ArrayIterator<int, 5> it(nums);
+    EXPECT_EQ(it.count(), 5);
+  }
+  {
+    int nums[2] = {4, 5};
+    ArrayIterator<int, 2> it(nums);
+    EXPECT_EQ(it.count(), 2);
+  }
+  {
+    int nums[1] = { 2};
+    ArrayIterator<int, 1> it(nums);
+    EXPECT_EQ(it.count(), 1);
+  }
+
+  // Consumes the whole iterator.
+  {
+    int nums[5] = {1, 2, 3, 4, 5};
+    ArrayIterator<int, 5> it(nums);
+    EXPECT_EQ(it.count(), 5);
+    Option<int> n = it.next();
+    ASSERT_FALSE(n.is_some());
+  }
+
+  {
+    EmptyIterator<int> it;
+    EXPECT_EQ(it.count(), 0);
+  }
+}
+
 }  // namespace

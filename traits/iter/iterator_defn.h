@@ -74,6 +74,17 @@ class Iterator {
   /// Returns `false` if the iterator is empty.
   virtual bool any(std::function<bool(Item)> f) noexcept;
 
+  /// Consumes the iterator, and returns the number of elements that were in it.
+  ///
+  /// The function walks the iterator until it sees an Option holding #None.
+  ///
+  /// # Safety
+  ///
+  /// If the `usize` type does not have trapping arithmetic enabled, and the
+  /// iterator has more than `usize::MAX` elements in it, the value will wrap
+  /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
+  virtual /* TODO: usize */ size_t count() noexcept;
+
   // Adaptors for range-based for loops.
   IteratorStep<Item> begin() & noexcept { return IteratorStep{item_, *this}; }
   IteratorEnd end() & noexcept { return iterator_end; }
