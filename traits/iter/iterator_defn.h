@@ -48,11 +48,31 @@ class Iterator {
 
   // Required methods.
 
+  /// Gets the next element from the iterator, if there is one. Otherwise, it
+  /// returns an Option holding #None.
   virtual Option<Item> next() noexcept = 0;
 
   // Provided methods.
 
+  /// Tests whether all elements of the iterator match a predicate.
+  ///
+  /// If the predicate returns `true` for all elements in the iterator, this
+  /// functions returns `true`, otherwise `false`. The function is
+  /// short-circuiting; it stops iterating on the first `false` returned from
+  /// the predicate.
+  ///
+  /// Returns `true` if the iterator is empty.
   virtual bool all(std::function<bool(Item)> f) noexcept;
+
+  /// Tests whether any elements of the iterator match a predicate.
+  ///
+  /// If the predicate returns `true` for any elements in the iterator, this
+  /// functions returns `true`, otherwise `false`. The function is
+  /// short-circuiting; it stops iterating on the first `true` returned from the
+  /// predicate.
+  ///
+  /// Returns `false` if the iterator is empty.
+  virtual bool any(std::function<bool(Item)> f) noexcept;
 
   // Adaptors for range-based for loops.
   IteratorStep<Item> begin() & noexcept { return IteratorStep{item_, *this}; }

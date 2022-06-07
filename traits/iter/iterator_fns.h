@@ -35,4 +35,15 @@ bool Iterator<Item>::all(std::function<bool(Item)> f) noexcept {
   return true;
 }
 
+template <class Item>
+bool Iterator<Item>::any(std::function<bool(Item)> f) noexcept {
+  while (item_.is_some()) {
+    // Safety: `item_` was checked to hold Some already.
+    Item i = item_.take().unwrap_unchecked(unsafe_fn);
+    if (f(static_cast<decltype(i)&&>(i))) return true;
+    item_ = next();
+  }
+  return false;
+}
+
 }  // namespace sus::traits::iter
