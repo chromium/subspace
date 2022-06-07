@@ -36,6 +36,15 @@ add_library(subspace STATIC
 )
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
 
+add_library(subspace_test_support STATIC
+    "test/behaviour_types.h"
+    "test/behaviour_types_unittest.cc"
+)
+set_target_properties(subspace_test_support PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(subspace_test_support
+    subspace
+)
+
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory("third_party/googletest")
 
@@ -54,11 +63,13 @@ add_executable(subspace_unittests
     "mem/swap_unittest.cc"
     "mem/take_unittest.cc"
     "option/option_unittest.cc"
+    "option/option_types_unittest.cc"
     "traits/iter/iterator_unittest.cc"
 )
 set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(subspace_unittests
     subspace
+    subspace_test_support
     gtest_main
 )
 

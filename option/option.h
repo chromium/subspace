@@ -73,7 +73,12 @@ struct Storage final {
   constexpr Storage& operator=(Storage&&) = default;
 
   constexpr Storage(State s) : state_(s) {}
-  constexpr Storage(T&& t) : val_(static_cast<T&&>(t)), state_(Some) {}
+  constexpr Storage(const T& t)
+    requires(std::is_copy_constructible_v<T>)
+  : val_(t), state_(Some) {}
+  constexpr Storage(T&& t)
+    requires(std::is_move_constructible_v<T>)
+  : val_(static_cast<T&&>(t)), state_(Some) {}
 
   union {
     T val_;
@@ -110,8 +115,11 @@ template <class T>
 class Option final {
  public:
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(T t) noexcept {
-    return Option(static_cast<T&&>(t));
+  template <class U>
+    requires(std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>,
+                            std::remove_cv_t<std::remove_reference_t<U>>>)
+  static inline constexpr Option some(U&& t) noexcept {
+    return Option(static_cast<U&&>(t));
   }
   /// Construct an Option that is holding no value.
   static inline constexpr Option none() noexcept { return Option(); }
@@ -147,52 +155,109 @@ class Option final {
   /// If T can be trivially copy-constructed, Option<T> can also be trivially
   /// copy-constructed.
   constexpr Option(const Option& o)
-    requires(std::is_trivially_copy_constructible_v<T>)
+    requires(std::is_reference_v<T> ||
+             std::is_trivially_copy_constructible_v<T>)
   = default;
+
+  constexpr Option(const Option& o)
+    requires(!std::is_reference_v<T> &&
+             !std::is_trivially_copy_constructible_v<T> &&
+             std::is_copy_constructible_v<T>)
+  : t_(o.t_.state()) {
+    if constexpr (!std::is_reference_v<T>) {
+      // If this could be done in a `constexpr` way, methods that receive an
+      // Option could also be constexpr.
+      if (t_.state() == Some) new (&t_.val_) T(const_cast<const T&>(o.t_.val_));
+    } else {
+      t_.ptr_ = o.t_.ptr_;
+    }
+  }
+
+  constexpr Option(const Option& o)
+    requires(!std::is_reference_v<T> && !std::is_copy_constructible_v<T>)
+  = delete;
 
   /// If T can be trivially move-constructed, we don't need to explicitly
   /// construct it, so we can use the default destructor, which allows Option<T>
   /// to also be trivially move-constructed.
   constexpr Option(Option&& o)
-    requires(std::is_trivially_move_constructible_v<T>)
+    requires(std::is_reference_v<T> ||
+             std::is_trivially_move_constructible_v<T>)
   = default;
 
   Option(Option&& o) noexcept
-    requires(!std::is_trivially_move_constructible_v<T>)
+    requires(!std::is_reference_v<T> &&
+             !std::is_trivially_move_constructible_v<T> &&
+             std::is_move_constructible_v<T>)
   : t_(o.t_.state()) {
-    // If this could be done in a `constexpr` way, methods that receive an
-    // Option could also be constexpr.
+    // TODO: set the other one to None.
     if constexpr (!std::is_reference_v<T>) {
+      // If this could be done in a `constexpr` way, methods that receive an
+      // Option could also be constexpr.
       if (t_.state() == Some) new (&t_.val_) T(static_cast<T&&>(o.t_.val_));
     } else {
       t_.ptr_ = o.t_.ptr_;
     }
   }
 
+  constexpr Option(Option&& o)
+    requires(!std::is_reference_v<T> && !std::is_move_constructible_v<T>)
+  = delete;
+
   /// If T can be trivially copy-assigned, Option<T> can also be trivially
   /// copy-assigned.
   constexpr Option& operator=(const Option& o)
-    requires(std::is_trivially_copy_assignable_v<T>)
+    requires(std::is_reference_v<T> || std::is_trivially_copy_assignable_v<T>)
   = default;
 
-  /// If T can be trivially move-assigned, we don't need to explicitly construct
-  /// it, so we can use the default destructor, which allows Option<T> to also
-  /// be trivially move-assigned.
-  constexpr Option& operator=(Option&& o)
-    requires(std::is_trivially_move_assignable_v<T>)
-  = default;
-
-  Option& operator=(Option&& o) noexcept
-    requires(!std::is_trivially_move_assignable_v<T>)
+  Option& operator=(const Option& o) noexcept
+    requires(!std::is_reference_v<T> &&
+             !std::is_trivially_copy_assignable_v<T> &&
+             std::is_copy_assignable_v<T>)
   {
     if constexpr (!std::is_reference_v<T>) {
-      if (t_.set_state(o.t_.state()) == Some) t_.val_.~T();
-      if (t_.state() == Some) new (&t_.val_) T(static_cast<T&&>(o.t_.val_));
+      if (t_.set_state(o.t_.state()) == Some)
+        ::sus::mem::replace_and_discard(t_.val_,
+                                        const_cast<const T&>(o.t_.val_));
+      else
+        t_.val_.~T();
     } else {
       t_.ptr_ = o.t_.ptr_;
     }
     return *this;
   }
+
+  constexpr Option& operator=(const Option& o)
+    requires(!std::is_reference_v<T> && !std::is_copy_assignable_v<T>)
+  = delete;
+
+  /// If T can be trivially move-assigned, we don't need to explicitly construct
+  /// it, so we can use the default destructor, which allows Option<T> to also
+  /// be trivially move-assigned.
+  constexpr Option& operator=(Option&& o)
+    requires(std::is_reference_v<T> || std::is_trivially_move_assignable_v<T>)
+  = default;
+
+  Option& operator=(Option&& o) noexcept
+    requires(!std::is_reference_v<T> &&
+             !std::is_trivially_move_assignable_v<T> &&
+             std::is_move_assignable_v<T>)
+  {
+    if constexpr (!std::is_reference_v<T>) {
+      if (t_.set_state(o.t_.state()) == Some)
+        ::sus::mem::replace_and_discard(t_.val_, static_cast<T&&>(o.t_.val_));
+      else
+        t_.val_.~T();
+    } else {
+      t_.ptr_ = o.t_.ptr_;
+    }
+    // TODO: set the other one to None.
+    return *this;
+  }
+
+  constexpr Option& operator=(Option&& o)
+    requires(!std::is_reference_v<T> && !std::is_move_assignable_v<T>)
+  = delete;
 
   /// Drop the current value from the Option, if there is one.
   ///
@@ -769,9 +834,10 @@ class Option final {
     requires(std::is_reference_v<T>)
   : t_(&t) {}
   /// Constructor for #Some.
-  constexpr explicit Option(T&& t)
+  template <class U>
+  constexpr explicit Option(U&& t)
     requires(!std::is_reference_v<T>)
-  : t_(static_cast<T&&>(t)) {}
+  : t_(static_cast<U&&>(t)) {}
 
   ::sus::option::__private::Storage<T> t_;
 };
