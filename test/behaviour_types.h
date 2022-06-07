@@ -79,7 +79,8 @@ struct TriviallyMoveableNotDestructible {
 
 struct NotTriviallyRelocatableCopyableOrMoveable {
   NotTriviallyRelocatableCopyableOrMoveable(
-      NotTriviallyRelocatableCopyableOrMoveable&&) {}
+      NotTriviallyRelocatableCopyableOrMoveable&&) noexcept {}
+  void operator=(NotTriviallyRelocatableCopyableOrMoveable&&) noexcept {}
   ~NotTriviallyRelocatableCopyableOrMoveable() {}
   NotTriviallyRelocatableCopyableOrMoveable(int i) : i(i) {}
   int i;
