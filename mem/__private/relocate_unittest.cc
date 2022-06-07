@@ -64,5 +64,21 @@ static_assert(!relocate_one_by_memcpy_v<T>, "");
 static_assert(!relocate_array_by_memcpy_v<T>, "");
 #endif
 
-} // namespace
-} // namespace sus::mem::__private
+struct [[sus_trivial_abi]] G {
+  sus_class_trivial_relocatable_value(unsafe_fn, true);
+  G(G &&) {}
+  ~G() {}
+};
+static_assert(relocate_one_by_memcpy_v<G>, "");
+static_assert(relocate_array_by_memcpy_v<G>, "");
+
+struct [[sus_trivial_abi]] H {
+  sus_class_trivial_relocatable_value(unsafe_fn, false);
+  H(H &&) {}
+  ~H() {}
+};
+static_assert(!relocate_one_by_memcpy_v<H>, "");
+static_assert(!relocate_array_by_memcpy_v<H>, "");
+
+}  // namespace
+}  // namespace sus::mem::__private

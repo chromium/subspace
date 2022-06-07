@@ -20,6 +20,7 @@ add_library(subspace STATIC
     "concepts/make_default.h"
     "containers/array.h"
     "marker/unsafe.h"
+    "mem/__private/relocatable_storage.h"
     "mem/__private/relocate.h"
     "mem/addressof.h"
     "mem/replace.h"
@@ -27,11 +28,13 @@ add_library(subspace STATIC
     "mem/take.h"
     "option/__private/is_option_type.h"
     "option/option.h"
+    "traits/iter/filter.h"
     "traits/iter/iterator.h"
     "traits/iter/iterator.cc"
     "traits/iter/iterator_defn.h"
     "traits/iter/iterator_fns.h"
-    "traits/iter/single_iter.h"
+    "traits/iter/once.h"
+    "traits/iter/sized_iterator.h"
     "lib/lib.cc"
 )
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)

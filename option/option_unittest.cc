@@ -1379,19 +1379,19 @@ TEST(Option, IterMut) {
   EXPECT_EQ(y.as_ref().unwrap(), 3);
 }
 
+struct MoveOnly {
+  explicit MoveOnly(int i) : i(i) {}
+  MoveOnly(MoveOnly&& o) : i(o.i) {}
+  void operator=(MoveOnly&& o) { i = o.i; }
+
+  int i;
+};
+
 TEST(Option, IntoIter) {
   auto x = Option<int>::none();
   for (auto i : x.iter_mut()) {
     ADD_FAILURE();
   }
-
-  struct MoveOnly {
-    explicit MoveOnly(int i) : i(i) {}
-    MoveOnly(MoveOnly&& o) : i(o.i) {}
-    void operator=(MoveOnly&& o) { i = o.i; }
-
-    int i;
-  };
 
   int count = 0;
   auto y = Option<MoveOnly>::some(MoveOnly(2));

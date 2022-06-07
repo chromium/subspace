@@ -17,10 +17,11 @@
 #include <functional>  // TODO: Replace std::function with something.
 
 #include "traits/iter/iterator_defn.h"
+#include "traits/iter/sized_iterator.h"
 
-// Iterator provided functions are implemented in this file, so that they can be
-// easily included by library users, but don't have to be included in every
-// library header that returns an Iterator.
+// IteratorBase provided functions are implemented in this file, so that they
+// can be easily included by library users, but don't have to be included in
+// every library header that returns an IteratorBase.
 
 namespace sus::traits::iter {
 
@@ -28,10 +29,12 @@ struct IteratorEnd {};
 extern const IteratorEnd iterator_end;
 
 /// An adaptor for range-based for loops.
-template <class Item>
+template <class IteratorBase>
 class IteratorLoop {
+  using Item = typename IteratorBase::Item;
+
  public:
-  IteratorLoop(Iterator<Item>& iter) : iter_(iter), item_(iter_.next()) {}
+  IteratorLoop(IteratorBase& iter) : iter_(iter), item_(iter_.next()) {}
 
   inline bool operator==(const IteratorEnd&) const { return item_.is_nome(); }
   inline bool operator!=(const IteratorEnd&) const { return item_.is_some(); }
@@ -39,22 +42,22 @@ class IteratorLoop {
   inline Item operator*() & { return item_.take().unwrap(); }
 
  private:
-  /* TODO: NonNull<Iterator<Item>> */ Iterator<Item>& iter_;
+  /* TODO: NonNull<IteratorBase<Item>> */ IteratorBase& iter_;
   Option<Item> item_;
 };
 
 template <class Item>
-IteratorLoop<Item> Iterator<Item>::begin() & noexcept {
+IteratorLoop<IteratorBase<Item>> IteratorBase<Item>::begin() & noexcept {
   return {*this};
 }
 
 template <class Item>
-IteratorEnd Iterator<Item>::end() & noexcept {
+IteratorEnd IteratorBase<Item>::end() & noexcept {
   return iterator_end;
 }
 
 template <class Item>
-bool Iterator<Item>::all(std::function<bool(Item)> f) noexcept {
+bool IteratorBase<Item>::all(std::function<bool(Item)> f) noexcept {
   Option<Item> item = next();
   while (item.is_some()) {
     // Safety: `item_` was checked to hold Some already.
@@ -66,7 +69,7 @@ bool Iterator<Item>::all(std::function<bool(Item)> f) noexcept {
 }
 
 template <class Item>
-bool Iterator<Item>::any(std::function<bool(Item)> f) noexcept {
+bool IteratorBase<Item>::any(std::function<bool(Item)> f) noexcept {
   Option<Item> item = next();
   while (item.is_some()) {
     // Safety: `item_` was checked to hold Some already.
@@ -78,7 +81,7 @@ bool Iterator<Item>::any(std::function<bool(Item)> f) noexcept {
 }
 
 template <class Item>
-size_t Iterator<Item>::count() noexcept {
+size_t IteratorBase<Item>::count() noexcept {
   size_t c = 0;
   Option<Item> item = next();
   while (item.is_some()) {
@@ -86,6 +89,14 @@ size_t Iterator<Item>::count() noexcept {
     item = next();
   }
   return c;
+}
+
+template <class I>
+Iterator<Filter<typename I::Item, sizeof(I), alignof(I)>> Iterator<I>::filter(
+    std::function<bool(const std::remove_reference_t<typename I::Item>&)>
+        pred) && noexcept {
+  return {static_cast<decltype(pred)&&>(pred),
+          make_sized_iterator(static_cast<I&&>(*this))};
 }
 
 }  // namespace sus::traits::iter
