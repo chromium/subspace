@@ -73,12 +73,10 @@ struct Storage final {
   constexpr Storage& operator=(Storage&&) = default;
 
   constexpr Storage(State s) : state_(s) {}
-  constexpr Storage(const std::remove_const_t<std::remove_reference_t<T>>& t)
-  : val_(t), state_(Some) {}
-  constexpr Storage(std::remove_const_t<std::remove_reference_t<T>>& t)
-  : val_(t), state_(Some) {}
-  constexpr Storage(std::remove_const_t<std::remove_reference_t<T>>&& t)
-  : val_(static_cast<T&&>(t)), state_(Some) {}
+  constexpr Storage(const std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
+  constexpr Storage(std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
+  constexpr Storage(std::remove_cvref_t<T>&& t)
+      : val_(static_cast<T&&>(t)), state_(Some) {}
 
   union {
     T val_;
@@ -115,21 +113,19 @@ template <class T>
 class Option final {
  public:
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(
-      const std::remove_const_t<std::remove_reference_t<T>>& t) noexcept
+  static inline constexpr Option some(const std::remove_cvref_t<T>& t) noexcept
     requires(std::is_copy_constructible_v<T>)
   {
     return Option(t);
   }
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(
-      std::remove_const_t<std::remove_reference_t<T>>& t) noexcept
+  static inline constexpr Option some(std::remove_cvref_t<T>& t) noexcept
     requires(std::is_copy_constructible_v<T>)
   {
     return Option(t);
   }
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(std::remove_reference_t<T>&& t) noexcept
+  static inline constexpr Option some(std::remove_cvref_t<T>&& t) noexcept
     requires(std::is_move_constructible_v<T>)
   {
     return Option(static_cast<T&&>(t));
@@ -847,14 +843,13 @@ class Option final {
     requires(std::is_reference_v<T>)
   : t_(&t) {}
   /// Constructor for #Some.
-  constexpr explicit Option(
-      const std::remove_const_t<std::remove_reference_t<T>>& t)
+  constexpr explicit Option(const std::remove_cvref_t<T>& t)
     requires(!std::is_reference_v<T>)
   : t_(t) {}
-  constexpr explicit Option(std::remove_const_t<std::remove_reference_t<T>>& t)
+  constexpr explicit Option(std::remove_cvref_t<T>& t)
     requires(!std::is_reference_v<T>)
   : t_(t) {}
-  constexpr explicit Option(std::remove_reference_t<T>&& t)
+  constexpr explicit Option(std::remove_cvref_t<T>&& t)
     requires(!std::is_reference_v<T>)
   : t_(static_cast<T&&>(t)) {}
 
