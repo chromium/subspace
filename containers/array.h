@@ -22,6 +22,7 @@
 #include "assertions/check.h"
 #include "concepts/make_default.h"
 #include "marker/unsafe.h"
+#include "mem/__private/relocate.h"
 
 namespace sus::containers {
 
@@ -110,6 +111,9 @@ class Array {
   union {
     ::sus::containers::__private::Storage<T, N> storage_;
   };
+
+  sus_class_trivial_relocatable_value(
+      unsafe_fn, ::sus::mem::__private::relocate_array_by_memcpy_v<T>);
 };
 
 }  // namespace sus::containers

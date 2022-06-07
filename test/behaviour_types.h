@@ -16,6 +16,8 @@
 
 #include <type_traits>
 
+#include "mem/__private/relocate.h"
+
 namespace sus::test {
 
 struct DefaultConstructible {
@@ -87,6 +89,7 @@ struct NotTriviallyRelocatableCopyableOrMoveable {
 };
 
 struct [[sus_trivial_abi]] TrivialAbiRelocatable {
+  sus_class_trivial_relocatable(unsafe_fn);
   TrivialAbiRelocatable(TrivialAbiRelocatable&&) {}
   ~TrivialAbiRelocatable() {}
   TrivialAbiRelocatable(int i) : i(i) {}

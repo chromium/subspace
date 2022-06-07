@@ -17,8 +17,21 @@
 #include <type_traits>
 
 #include "assertions/builtin.h"
+#include "marker/unsafe.h"
 
 namespace sus::mem::__private {
+
+template <class T>
+struct relocatable_tag {
+  static constexpr bool value(...) { return false; }
+
+  static constexpr bool value(int)
+    requires(std::is_same_v<
+             std::remove_cv_t<decltype(T::SusUnsafeTrivialRelocate)>, bool>)
+  {
+    return T::SusUnsafeTrivialRelocate;
+  };
+};
 
 // Tests if the type T can be relocated with memcpy(). Checking for trivially
 // movable and destructible is not sufficient - this also honors the
@@ -32,8 +45,9 @@ struct relocate_one_by_memcpy
 #if __has_extension(trivially_relocatable)
         __is_trivially_relocatable(T)
 #else
-        std::is_trivially_move_constructible_v<T> &&
-        std::is_trivially_destructible_v<T>
+        relocatable_tag<T>::value(0)
+        || (std::is_trivially_move_constructible_v<T> &&
+            std::is_trivially_destructible_v<T>)
 #endif
       > {};
 // clang-format on
@@ -61,12 +75,13 @@ struct relocate_array_by_memcpy
     : public std::integral_constant<
         bool,
 #if __has_extension(trivially_relocatable)
-        __is_trivially_relocatable(std::remove_all_extents_t<T>) &&
-        !std::is_volatile_v<std::remove_all_extents_t<T>>
+        __is_trivially_relocatable(std::remove_all_extents_t<T>)
+        && !std::is_volatile_v<std::remove_all_extents_t<T>>
 #else
-        std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>> &&
-        std::is_trivially_destructible_v<std::remove_all_extents_t<T>> &&
-        !std::is_volatile_v<std::remove_all_extents_t<T>>
+        (relocatable_tag<T>::value(0)
+         || (std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>>
+             && std::is_trivially_destructible_v<std::remove_all_extents_t<T>>))
+        && !std::is_volatile_v<std::remove_all_extents_t<T>>
 #endif
       > {};
 // clang-format on
@@ -75,11 +90,49 @@ template <class T>
 inline constexpr bool relocate_array_by_memcpy_v =
     relocate_array_by_memcpy<T>::value;
 
+}  // namespace sus::mem::__private
+
 #if defined(__clang__)
 #define sus_trivial_abi clang::trivial_abi
 #else
 #define sus_trivial_abi
 #endif
 
+#define sus_class_trivial_relocatable(unsafe_fn)                     \
+  static_assert(std::is_same_v<decltype(unsafe_fn),                  \
+                               const ::sus::marker::UnsafeFnMarker>, \
+                "");                                                 \
+  template <class SusOuterClassTypeForTriviallyReloc>                \
+  friend struct ::sus::mem::__private::relocatable_tag;              \
+  static constexpr bool SusUnsafeTrivialRelocate = true
 
-}  // namespace sus::mem::__private
+#define sus_class_trivial_relocatable_value(unsafe_fn, is_trivially_reloc)  \
+  static_assert(std::is_same_v<decltype(unsafe_fn),                         \
+                               const ::sus::marker::UnsafeFnMarker>,        \
+                "");                                                        \
+  static_assert(                                                            \
+      std::is_same_v<std::remove_cv_t<decltype(is_trivially_reloc)>, bool>, \
+      "");                                                                  \
+  template <class SusOuterClassTypeForTriviallyReloc>                       \
+  friend struct ::sus::mem::__private::relocatable_tag;                     \
+  static constexpr bool SusUnsafeTrivialRelocate = is_trivially_reloc
+
+#define sus_class_maybe_trivial_relocatable_types(unsafe_fn, ...)        \
+  static_assert(std::is_same_v<decltype(unsafe_fn),                      \
+                               const ::sus::marker::UnsafeFnMarker>,     \
+                "");                                                     \
+  template <class SusOuterClassTypeForTriviallyReloc>                    \
+  friend struct ::sus::mem::__private::relocatable_tag;                  \
+  template <class... Types>                                              \
+  struct SusTriviallyRelocExpander {                                     \
+    static constexpr bool value =                                        \
+        (... && ::sus::mem::__private::relocate_one_by_memcpy_v<Types>); \
+  };                                                                     \
+  static constexpr bool SusUnsafeTrivialRelocate =                       \
+      SusTriviallyRelocExpander<__VA_ARGS__>::value
+
+#define sus_class_assert_trivial_relocatable_types(unsafe_fn, ...)   \
+  sus_class_maybe_trivial_relocatable_types(unsafe_fn, __VA_ARGS__); \
+  static_assert(SusUnsafeTrivialRelocate,                            \
+                "Type is not trivially "                             \
+                "relocatable");

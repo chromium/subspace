@@ -17,8 +17,8 @@
 #include "traits/iter/iterator_defn.h"
 #include "traits/iter/iterator_fns.h"
 
-// SingleIter is included here, because there is a cycle between
-// Option->SingleIter->Iterator, so Option can't include SingleIter itself. But
-// as long as the user includes "iterator.h" they should be able to use the
-// iterators on Option.
-#include "traits/iter/single_iter.h"
+// Once is included here, because there is a cycle between
+// Option->Once->IteratorBase, so Option can't include Once itself. But as long as
+// the user includes "iterator.h" they should be able to use the iterators on
+// Option.
+#include "traits/iter/once.h"

@@ -16,22 +16,25 @@
 
 #include <functional>
 
-#include "marker/unsafe.h"
 #include "option/option.h"
 
 namespace sus::traits::iter {
 
+using ::sus::mem::__private::relocate_one_by_memcpy_v;
 using ::sus::option::Option;
 
-template <class Item>
+// TODO: Move forward decls somewhere?
+template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
+class Filter;
+
+template <class IteratorBase>
 class IteratorLoop;
 struct IteratorEnd;
 
-template <class Item>
-class Iterator {
+template <class ItemT>
+class IteratorBase {
  public:
-  Iterator(Iterator&&) = default;
-  Iterator& operator=(Iterator&&) = default;
+  using Item = ItemT;
 
   // Required methods.
 
@@ -40,9 +43,6 @@ class Iterator {
   virtual Option<Item> next() noexcept = 0;
 
   // Provided methods.
-
-  IteratorLoop<Item> begin() & noexcept;
-  IteratorEnd end() & noexcept;
 
   /// Tests whether all elements of the iterator match a predicate.
   ///
@@ -58,13 +58,14 @@ class Iterator {
   ///
   /// If the predicate returns `true` for any elements in the iterator, this
   /// functions returns `true`, otherwise `false`. The function is
-  /// short-circuiting; it stops iterating on the first `true` returned from the
-  /// predicate.
+  /// short-circuiting; it stops iterating on the first `true` returned from
+  /// the predicate.
   ///
   /// Returns `false` if the iterator is empty.
   virtual bool any(std::function<bool(Item)> f) noexcept;
 
-  /// Consumes the iterator, and returns the number of elements that were in it.
+  /// Consumes the iterator, and returns the number of elements that were in
+  /// it.
   ///
   /// The function walks the iterator until it sees an Option holding #None.
   ///
@@ -75,8 +76,42 @@ class Iterator {
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
   virtual /* TODO: usize */ size_t count() noexcept;
 
+  /// Adaptor for use in ranged for loops.
+  IteratorLoop<IteratorBase<Item>> begin() & noexcept;
+  /// Adaptor for use in ranged for loops.
+  IteratorEnd end() & noexcept;
+
  protected:
-  Iterator() = default;
+  IteratorBase() = default;
+};
+
+template <class I>
+class Iterator final : public I {
+ private:
+  friend I;  // I::foo() can construct Iterator<I>.
+
+  template <class J>
+  friend class Iterator;  // Iterator<J>::foo() can construct Iterator<I>.
+
+  // Option can't include Iterator, due to a circular dependency between
+  // Option->Iterator->Option. So it forward declares Iterator, and needs
+  // to use the constructor directly.
+  template <class T>
+  friend class Option;  // Option<T>::foo() can construct Iterator<I>.
+
+  template <class... Args>
+  Iterator(Args&&... args) : I(static_cast<Args&&>(args)...) {
+    // We want to be able to use Iterator<I> and I interchangably, so that if an
+    // `I` gets stored in SizedIterator, it doesn't misbehave.
+    static_assert(sizeof(I) == sizeof(Iterator<I>), "");
+  }
+
+ public:
+  // Adaptor methods.
+
+  Iterator<Filter<typename I::Item, sizeof(I), alignof(I)>> filter(
+      std::function<bool(const std::remove_reference_t<typename I::Item>&)>
+          pred) && noexcept;
 };
 
 }  // namespace sus::traits::iter

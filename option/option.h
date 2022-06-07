@@ -32,14 +32,22 @@
 #include "mem/take.h"
 #include "option/__private/is_option_type.h"
 
+namespace sus::option {
+template <class T>
+class Option;
+}
+
 namespace sus::traits::iter {
 template <class Item>
-class SingleIter;
-}
+class Once;
+template <class I>
+class Iterator;
+}  // namespace sus::traits::iter
 
 namespace sus::option {
 
-using sus::traits::iter::SingleIter;
+using sus::traits::iter::Once;
+using sus::traits::iter::Iterator;
 
 template <class T>
 class Option;
@@ -805,14 +813,21 @@ class Option final {
     }
   }
 
-  SingleIter<const T&> iter() const& noexcept {
-    return SingleIter<const T&>(as_ref());
+  Iterator<Once<const T&>> iter() const& noexcept {
+    return Iterator<Once<const T&>>(as_ref());
   }
-  SingleIter<const T&> iter() const&& = delete;
+  Iterator<Once<const T&>> iter() const&& = delete;
 
-  SingleIter<T&> iter_mut() & noexcept { return SingleIter<T&>(as_mut()); }
+  Iterator<Once<T&>> iter_mut() & noexcept {
+    return Iterator<Once<T&>>(as_mut());
+  }
 
-  SingleIter<T> into_iter() && noexcept { return SingleIter<T>(take()); }
+  Iterator<Once<T>> into_iter() && noexcept {
+    return Iterator<Once<T>>(take());
+  }
+
+  // TODO: Consider adding a for-loop adaptor, with a macro?
+  // - begin() && { return into_iter().begin(); }
 
  private:
   /// Constructor for #None.
@@ -833,6 +848,8 @@ class Option final {
   : t_(static_cast<T&&>(t)) {}
 
   ::sus::option::__private::Storage<T> t_;
+
+  sus_class_maybe_trivial_relocatable_types(unsafe_fn, T);
 };
 
 }  // namespace sus::option

@@ -14,24 +14,36 @@
 
 #pragma once
 
+#include "mem/__private/relocatable_storage.h"
 #include "traits/iter/iterator_defn.h"
 
 namespace sus::traits::iter {
 
+using ::sus::mem::__private::RelocatableStorage;
 using ::sus::option::Option;
-using ::sus::traits::iter::Iterator;
+using ::sus::traits::iter::IteratorBase;
 
-/// An Iterator implementation that walks over at most a single Item.
+/// An IteratorBase implementation that walks over at most a single Item.
 template <class Item>
-class SingleIter final : public Iterator<Item> {
+class [[sus_trivial_abi]] Once : public IteratorBase<Item> {
  public:
-  SingleIter(Option<Item>&& single)
-      : single_(static_cast<decltype(single)&&>(single)) {}
-
   Option<Item> next() noexcept final { return single_.take(); }
 
+ protected:
+  Once(Option<Item>&& single)
+      : single_(static_cast<decltype(single)&&>(single)) {}
+
  private:
-  Option<Item> single_;
+  RelocatableStorage<Item> single_;
+
+  sus_class_maybe_trivial_relocatable_types(unsafe_fn, decltype(single_));
 };
+
+template <class Item>
+inline Once<Item> once(Option<Item>&& single)
+  requires(std::is_move_constructible_v<Item>)
+{
+  return Once(static_cast<decltype(single)&&>(single));
+}
 
 }  // namespace sus::traits::iter

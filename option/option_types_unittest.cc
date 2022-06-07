@@ -297,11 +297,6 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(!std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
 static_assert(!MakeDefault<T>::has_concept, "");
-#if __has_extension(trivially_relocatable)
 static_assert(relocate_one_by_memcpy_v<T>, "");
 static_assert(relocate_array_by_memcpy_v<T>, "");
-#else
-static_assert(!relocate_one_by_memcpy_v<T>, "");
-static_assert(!relocate_array_by_memcpy_v<T>, "");
-#endif
 }  // namespace trivial_abi_relocatable
