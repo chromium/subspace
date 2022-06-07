@@ -173,13 +173,9 @@ class Option final {
              !std::is_trivially_copy_constructible_v<T> &&
              std::is_copy_constructible_v<T>)
   : t_(o.t_.state()) {
-    if constexpr (!std::is_reference_v<T>) {
-      // If this could be done in a `constexpr` way, methods that receive an
-      // Option could also be constexpr.
-      if (t_.state() == Some) new (&t_.val_) T(const_cast<const T&>(o.t_.val_));
-    } else {
-      t_.ptr_ = o.t_.ptr_;
-    }
+    // If this could be done in a `constexpr` way, methods that receive an
+    // Option could also be constexpr.
+    if (t_.state() == Some) new (&t_.val_) T(const_cast<const T&>(o.t_.val_));
   }
 
   constexpr Option(const Option& o)
@@ -198,15 +194,10 @@ class Option final {
     requires(!std::is_reference_v<T> &&
              !std::is_trivially_move_constructible_v<T> &&
              std::is_move_constructible_v<T>)
-  : t_(o.t_.state()) {
-    // TODO: set the other one to None.
-    if constexpr (!std::is_reference_v<T>) {
-      // If this could be done in a `constexpr` way, methods that receive an
-      // Option could also be constexpr.
-      if (t_.state() == Some) new (&t_.val_) T(static_cast<T&&>(o.t_.val_));
-    } else {
-      t_.ptr_ = o.t_.ptr_;
-    }
+  : t_(o.t_.set_state(None)) {
+    // If this could be done in a `constexpr` way, methods that receive an
+    // Option could also be constexpr.
+    if (t_.state() == Some) new (&t_.val_) T(static_cast<T&&>(o.t_.val_));
   }
 
   constexpr Option(Option&& o)
@@ -224,15 +215,10 @@ class Option final {
              !std::is_trivially_copy_assignable_v<T> &&
              std::is_copy_assignable_v<T>)
   {
-    if constexpr (!std::is_reference_v<T>) {
-      if (t_.set_state(o.t_.state()) == Some)
-        ::sus::mem::replace_and_discard(t_.val_,
-                                        const_cast<const T&>(o.t_.val_));
-      else
-        t_.val_.~T();
-    } else {
-      t_.ptr_ = o.t_.ptr_;
-    }
+    if (t_.set_state(o.t_.state()) == Some)
+      ::sus::mem::replace_and_discard(t_.val_, const_cast<const T&>(o.t_.val_));
+    else
+      t_.val_.~T();
     return *this;
   }
 
@@ -252,15 +238,10 @@ class Option final {
              !std::is_trivially_move_assignable_v<T> &&
              std::is_move_assignable_v<T>)
   {
-    if constexpr (!std::is_reference_v<T>) {
-      if (t_.set_state(o.t_.state()) == Some)
-        ::sus::mem::replace_and_discard(t_.val_, static_cast<T&&>(o.t_.val_));
-      else
-        t_.val_.~T();
-    } else {
-      t_.ptr_ = o.t_.ptr_;
-    }
-    // TODO: set the other one to None.
+    if (t_.set_state(o.t_.set_state(None)) == Some)
+      ::sus::mem::replace_and_discard(t_.val_, static_cast<T&&>(o.t_.val_));
+    else
+      t_.val_.~T();
     return *this;
   }
 

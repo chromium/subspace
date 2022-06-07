@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
-
 #include "concepts/make_default.h"
 #include "mem/__private/relocate.h"
 #include "option/option.h"
@@ -258,14 +256,14 @@ static_assert(!std::is_trivially_destructible_v<T>, "");
 static_assert(!std::is_copy_constructible_v<T>, "");
 static_assert(!std::is_copy_assignable_v<T>, "");
 static_assert(std::is_move_constructible_v<T>, "");
-static_assert(!std::is_move_assignable_v<T>, "");
-static_assert(!std::is_nothrow_swappable_v<T>, "");
+static_assert(std::is_move_assignable_v<T>, "");
+static_assert(std::is_nothrow_swappable_v<T>, "");
 static_assert(std::is_constructible_v<T, From&&>, "");
-static_assert(!std::is_assignable_v<T, From&&>, "");
+static_assert(std::is_assignable_v<T, From&&>, "");
 static_assert(!std::is_constructible_v<T, const From&>, "");
 static_assert(!std::is_assignable_v<T, const From&>, "");
 static_assert(std::is_constructible_v<T, From>, "");
-static_assert(!std::is_assignable_v<T, From>, "");
+static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
 static_assert(!MakeDefault<T>::has_concept, "");
 static_assert(!relocate_one_by_memcpy_v<T>, "");

@@ -167,6 +167,29 @@ TEST(Option, Move) {
   EXPECT_EQ(lvalue.i, 0);
 }
 
+// No code should use Option after moving from it; that's what
+// `Option<T>::take()` is for. But bugs can happen and we don't have the static
+// analysis or compiler tools to prevent them yet. So when they do, we should
+// get a defined state. Either Some with a valid value, or None. Never Some with
+// a moved-from value.
+TEST(Option, UseAfterMove) {
+  auto x = Option<TriviallyMoveableAndRelocatable>::some(
+      TriviallyMoveableAndRelocatable(1));
+  auto y = static_cast<decltype(x)&&>(x);
+  IS_SOME(x);  // Trivially relocatable leaves `x` fully in tact.
+  EXPECT_EQ(x.as_ref().unwrap().i, 1);
+  x = static_cast<decltype(y)&&>(y);
+  IS_SOME(y);  // Trivially relocatable leaves `y` fully in tact.
+  EXPECT_EQ(y.as_ref().unwrap().i, 1);
+
+  auto a = Option<NotTriviallyRelocatableCopyableOrMoveable>::some(
+      NotTriviallyRelocatableCopyableOrMoveable(1));
+  auto b = static_cast<decltype(a)&&>(a);
+  IS_NONE(a);  // Not trivially relocatable moves-from the value in `a`.
+  a = static_cast<decltype(b)&&>(b);
+  IS_NONE(b);  // Not trivially relocatable moves-from the value in `b`.
+}
+
 TEST(Option, Some) {
   auto x = Option<DefaultConstructible>::some(DefaultConstructible());
   IS_SOME(x);
