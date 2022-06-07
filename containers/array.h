@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <type_traits>
 #include <utility>  // TODO: replace std::make_index_sequence.
 
@@ -36,9 +38,15 @@ struct Storage<T, 0> {};
 }  // namespace __private
 
 template <class T, size_t N>
+  requires(N <= PTRDIFF_MAX)
 class Array;
 
+/// A container of objects of type T, with a fixed size N.
+///
+/// An Array can not be larger than PTRDIFF_MAX, as subtracting a pointer at a
+/// greater distance results in Undefined Behaviour.
 template <class T, size_t N>
+  requires(N <= PTRDIFF_MAX)
 class Array {
  public:
   constexpr static Array with_default()
