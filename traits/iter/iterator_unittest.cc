@@ -86,13 +86,45 @@ TEST(IteratorAll, All) {
     // 5.
     EXPECT_EQ(n.as_ref().unwrap(), 5);
   }
-}
 
-TEST(IteratorAll, EmptyIsTrue) {
   {
     EmptyIterator<int> it;
     EXPECT_TRUE(it.all([](int i) { return false; }));
   }
 }
 
+TEST(IteratorAll, Any) {
+  {
+    int nums[5] = {1, 2, 3, 4, 5};
+    ArrayIterator<int, 5> it(nums);
+    EXPECT_TRUE(it.any([](int i) { return i == 5; }));
+  }
+  {
+    int nums[5] = {1, 2, 3, 4, 5};
+    ArrayIterator<int, 5> it(nums);
+    EXPECT_FALSE(it.any([](int i) { return i == 6; }));
+  }
+  {
+    int nums[5] = {1, 2, 3, 4, 5};
+    ArrayIterator<int, 5> it(nums);
+    EXPECT_TRUE(it.any([](int i) { return i == 1; }));
+  }
+
+  // Shortcuts at the first success.
+  {
+    int nums[5] = {1, 2, 3, 4, 5};
+    ArrayIterator<int, 5> it(nums);
+    EXPECT_TRUE(it.any([](int i) { return i == 3; }));
+    Option<int> n = it.next();
+    ASSERT_TRUE(n.is_some());
+    // The `any()` function stopped when it consumed 3, so we can still consume
+    // 4.
+    EXPECT_EQ(n.as_ref().unwrap(), 4);
+  }
+
+  {
+    EmptyIterator<int> it;
+    EXPECT_FALSE(it.any([](int i) { return false; }));
+  }
+}
 }  // namespace
