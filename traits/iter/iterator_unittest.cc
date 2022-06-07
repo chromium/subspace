@@ -28,13 +28,10 @@ template <class Item, size_t N>
 class ArrayIterator : public Iterator<Item> {
  public:
   ArrayIterator(Item (&items)[N])
-      : Iterator<Item>(Iterator<Item>::SubclassWillPopulate::FirstItem),
-        items_(Array<Option<Item>, N>::with_initializer(
+      : items_(Array<Option<Item>, N>::with_initializer(
             [&items, i = 0]() mutable -> Option<Item> {
               return Option<Item>::some(items[i++]);
-            })) {
-    Iterator<Item>::PopulateFirstItem(next());
-  }
+            })) {}
 
   Option<Item> next() noexcept final {
     if (++index_ < N) {
@@ -53,10 +50,29 @@ class ArrayIterator : public Iterator<Item> {
 template <class Item>
 class EmptyIterator : public Iterator<Item> {
  public:
-  EmptyIterator() : Iterator<Item>(Option<Item>::none()) {}
+  EmptyIterator() {}
 
-  Option<Item> next() noexcept final { ::sus::unreachable(); }
+  Option<Item> next() noexcept final { return Option<Item>::none(); }
 };
+
+TEST(IteratorAll, ForLoop) {
+  int nums[5] = {1, 2, 3, 4, 5};
+
+  ArrayIterator<int, 5> it_lvalue(nums);
+  int count = 0;
+  for (auto i : it_lvalue) {
+    static_assert(std::is_same_v<decltype(i), int>, "");
+    EXPECT_EQ(i, ++count);
+  }
+  EXPECT_EQ(count, 5);
+
+  count = 0;
+  for (auto i : ArrayIterator<int, 5>(nums)) {
+    static_assert(std::is_same_v<decltype(i), int>, "");
+    EXPECT_EQ(i, ++count);
+  }
+  EXPECT_EQ(count, 5);
+}
 
 TEST(IteratorAll, All) {
   {
@@ -140,7 +156,7 @@ TEST(IteratorAll, Count) {
     EXPECT_EQ(it.count(), 2);
   }
   {
-    int nums[1] = { 2};
+    int nums[1] = {2};
     ArrayIterator<int, 1> it(nums);
     EXPECT_EQ(it.count(), 1);
   }

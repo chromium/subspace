@@ -26,9 +26,12 @@ template <class Item>
 class SingleIter final : public Iterator<Item> {
  public:
   SingleIter(Option<Item>&& single)
-      : Iterator<Item>(static_cast<Option<Item>&&>(single)) {}
+      : single_(static_cast<decltype(single)&&>(single)) {}
 
-  Option<Item> next() noexcept final { return Option<Item>::none(); }
+  Option<Item> next() noexcept final { return single_.take(); }
+
+ private:
+  Option<Item> single_;
 };
 
 }  // namespace sus::traits::iter
