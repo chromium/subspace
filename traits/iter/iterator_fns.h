@@ -24,24 +24,55 @@
 
 namespace sus::traits::iter {
 
+struct IteratorEnd {};
+extern const IteratorEnd iterator_end;
+
+/// An adaptor for range-based for loops.
+template <class Item>
+class IteratorLoop {
+ public:
+  IteratorLoop(Iterator<Item>& iter) : iter_(iter), item_(iter_.next()) {}
+
+  inline bool operator==(const IteratorEnd&) const { return item_.is_nome(); }
+  inline bool operator!=(const IteratorEnd&) const { return item_.is_some(); }
+  inline void operator++() & { item_ = iter_.next(); }
+  inline Item operator*() & { return item_.take().unwrap(); }
+
+ private:
+  /* TODO: NonNull<Iterator<Item>> */ Iterator<Item>& iter_;
+  Option<Item> item_;
+};
+
+template <class Item>
+IteratorLoop<Item> Iterator<Item>::begin() & noexcept {
+  return {*this};
+}
+
+template <class Item>
+IteratorEnd Iterator<Item>::end() & noexcept {
+  return iterator_end;
+}
+
 template <class Item>
 bool Iterator<Item>::all(std::function<bool(Item)> f) noexcept {
-  while (item_.is_some()) {
+  Option<Item> item = next();
+  while (item.is_some()) {
     // Safety: `item_` was checked to hold Some already.
-    Item i = item_.take().unwrap_unchecked(unsafe_fn);
+    Item i = item.take().unwrap_unchecked(unsafe_fn);
     if (!f(static_cast<decltype(i)&&>(i))) return false;
-    item_ = next();
+    item = next();
   }
   return true;
 }
 
 template <class Item>
 bool Iterator<Item>::any(std::function<bool(Item)> f) noexcept {
-  while (item_.is_some()) {
+  Option<Item> item = next();
+  while (item.is_some()) {
     // Safety: `item_` was checked to hold Some already.
-    Item i = item_.take().unwrap_unchecked(unsafe_fn);
+    Item i = item.take().unwrap_unchecked(unsafe_fn);
     if (f(static_cast<decltype(i)&&>(i))) return true;
-    item_ = next();
+    item = next();
   }
   return false;
 }
@@ -49,9 +80,10 @@ bool Iterator<Item>::any(std::function<bool(Item)> f) noexcept {
 template <class Item>
 size_t Iterator<Item>::count() noexcept {
   size_t c = 0;
-  while (item_.is_some()) {
+  Option<Item> item = next();
+  while (item.is_some()) {
     c += 1;
-    item_ = next();
+    item = next();
   }
   return c;
 }

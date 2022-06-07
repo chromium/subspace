@@ -24,21 +24,8 @@ namespace sus::traits::iter {
 using ::sus::option::Option;
 
 template <class Item>
-class Iterator;
-
-struct IteratorEnd {};
-extern const IteratorEnd iterator_end;
-
-template <class Item>
-struct IteratorStep {
-  Option<Item>& item_;
-  Iterator<Item>& iter_;
-
-  inline bool operator==(const IteratorEnd&) const { return item_.is_nome(); }
-  inline bool operator!=(const IteratorEnd&) const { return item_.is_some(); }
-  inline void operator++() & { item_ = iter_.next(); }
-  inline Item operator*() & { return item_.take().unwrap(); }
-};
+class IteratorLoop;
+struct IteratorEnd;
 
 template <class Item>
 class Iterator {
@@ -53,6 +40,9 @@ class Iterator {
   virtual Option<Item> next() noexcept = 0;
 
   // Provided methods.
+
+  IteratorLoop<Item> begin() & noexcept;
+  IteratorEnd end() & noexcept;
 
   /// Tests whether all elements of the iterator match a predicate.
   ///
@@ -85,30 +75,8 @@ class Iterator {
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
   virtual /* TODO: usize */ size_t count() noexcept;
 
-  // Adaptors for range-based for loops.
-  IteratorStep<Item> begin() & noexcept { return IteratorStep{item_, *this}; }
-  IteratorEnd end() & noexcept { return iterator_end; }
-
  protected:
-  /// The usual way for a subclass to initialize an Iterator. It must provide
-  /// the first item when initializing. If it provides a None, the iterator will
-  /// be empty.
-  Iterator(Option<Item>&& first) noexcept
-      : item_(static_cast<decltype(first)&&>(first)) {}
-
-  enum class SubclassWillPopulate { FirstItem };
-  /// The caller of this constructor is responsible for calling
-  /// <PopulateFirstItem>() before using the Iterator, or the Iterator will
-  /// never return anything. It can usually do so by calling
-  /// `Iterator<Item>::PopulateFirstItem(next())`.
-  Iterator(SubclassWillPopulate) : item_(Option<Item>::none()) {}
-
-  void PopulateFirstItem(Option<Item>&& first) {
-    item_ = static_cast<decltype(first)&&>(first);
-  }
-
- private:
-  Option<Item> item_;
+  Iterator() = default;
 };
 
 }  // namespace sus::traits::iter

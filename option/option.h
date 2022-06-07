@@ -268,8 +268,6 @@ class Option final {
   /// Returns whether the Option is currently empty, containing no value.
   constexpr bool is_none() const noexcept { return t_.state() == None; }
 
-  constexpr explicit operator bool() const noexcept { return is_some(); }
-
   /// An operator which returns the state of the Option, either #Some or #None.
   ///
   /// This supports the use of an Option in a `switch()`, allowing it to act as
