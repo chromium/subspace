@@ -63,6 +63,7 @@ struct TriviallyCopyableNotDestructible {
   TriviallyCopyableNotDestructible& operator=(
       TriviallyCopyableNotDestructible&&) = delete;
   ~TriviallyCopyableNotDestructible() {}
+  TriviallyCopyableNotDestructible(int i) : i(i) {}
   int i;
 };
 
@@ -72,6 +73,7 @@ struct TriviallyMoveableNotDestructible {
   TriviallyMoveableNotDestructible& operator=(
       TriviallyMoveableNotDestructible&&) = default;
   ~TriviallyMoveableNotDestructible(){};
+  TriviallyMoveableNotDestructible(int i) : i(i) {}
   int i;
 };
 
@@ -79,12 +81,14 @@ struct NotTriviallyRelocatableCopyableOrMoveable {
   NotTriviallyRelocatableCopyableOrMoveable(
       NotTriviallyRelocatableCopyableOrMoveable&&) {}
   ~NotTriviallyRelocatableCopyableOrMoveable() {}
+  NotTriviallyRelocatableCopyableOrMoveable(int i) : i(i) {}
   int i;
 };
 
 struct [[clang::trivial_abi]] TrivialAbiRelocatable {
   TrivialAbiRelocatable(TrivialAbiRelocatable&&) {}
   ~TrivialAbiRelocatable() {}
+  TrivialAbiRelocatable(int i) : i(i) {}
   int i;
 };
 

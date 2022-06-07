@@ -73,11 +73,11 @@ struct Storage final {
   constexpr Storage& operator=(Storage&&) = default;
 
   constexpr Storage(State s) : state_(s) {}
-  constexpr Storage(const T& t)
-    requires(std::is_copy_constructible_v<T>)
+  constexpr Storage(const std::remove_const_t<std::remove_reference_t<T>>& t)
   : val_(t), state_(Some) {}
-  constexpr Storage(T&& t)
-    requires(std::is_move_constructible_v<T>)
+  constexpr Storage(std::remove_const_t<std::remove_reference_t<T>>& t)
+  : val_(t), state_(Some) {}
+  constexpr Storage(std::remove_const_t<std::remove_reference_t<T>>&& t)
   : val_(static_cast<T&&>(t)), state_(Some) {}
 
   union {
@@ -115,11 +115,24 @@ template <class T>
 class Option final {
  public:
   /// Construct an Option that is holding the given value.
-  template <class U>
-    requires(std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>,
-                            std::remove_cv_t<std::remove_reference_t<U>>>)
-  static inline constexpr Option some(U&& t) noexcept {
-    return Option(static_cast<U&&>(t));
+  static inline constexpr Option some(
+      const std::remove_const_t<std::remove_reference_t<T>>& t) noexcept
+    requires(std::is_copy_constructible_v<T>)
+  {
+    return Option(t);
+  }
+  /// Construct an Option that is holding the given value.
+  static inline constexpr Option some(
+      std::remove_const_t<std::remove_reference_t<T>>& t) noexcept
+    requires(std::is_copy_constructible_v<T>)
+  {
+    return Option(t);
+  }
+  /// Construct an Option that is holding the given value.
+  static inline constexpr Option some(std::remove_reference_t<T>&& t) noexcept
+    requires(std::is_move_constructible_v<T>)
+  {
+    return Option(static_cast<T&&>(t));
   }
   /// Construct an Option that is holding no value.
   static inline constexpr Option none() noexcept { return Option(); }
@@ -834,10 +847,16 @@ class Option final {
     requires(std::is_reference_v<T>)
   : t_(&t) {}
   /// Constructor for #Some.
-  template <class U>
-  constexpr explicit Option(U&& t)
+  constexpr explicit Option(
+      const std::remove_const_t<std::remove_reference_t<T>>& t)
     requires(!std::is_reference_v<T>)
-  : t_(static_cast<U&&>(t)) {}
+  : t_(t) {}
+  constexpr explicit Option(std::remove_const_t<std::remove_reference_t<T>>& t)
+    requires(!std::is_reference_v<T>)
+  : t_(t) {}
+  constexpr explicit Option(std::remove_reference_t<T>&& t)
+    requires(!std::is_reference_v<T>)
+  : t_(static_cast<T&&>(t)) {}
 
   ::sus::option::__private::Storage<T> t_;
 };

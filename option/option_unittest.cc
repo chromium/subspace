@@ -66,6 +66,76 @@ static_assert(sizeof(Option<bool&>) == sizeof(bool*), "");
 static_assert(sizeof(Option<int>) == sizeof(int) + max_sizeof<bool, int>(), "");
 static_assert(sizeof(Option<int&>) == sizeof(int*), "");
 
+TEST(Option, Construct) {
+  {
+    using T = DefaultConstructible;
+    auto x = Option<T>::some(T());
+    auto y = Option<T>::none();
+    auto t = T();
+    auto z = Option<T>::some(t);
+  }
+  {
+    using T = NotDefaultConstructible;
+    auto x = Option<T>::some(T(1));
+    auto y = Option<T>::none();
+    auto t = T(1);
+    auto z = Option<T>::some(t);
+  }
+  {
+    using T = WithDefaultConstructible;
+    auto x = Option<T>::some(T::with_default());
+    auto y = Option<T>::none();
+    auto t = T::with_default();
+    auto z = Option<T>::some(t);
+  }
+  {
+    using T = TriviallyCopyable;
+    auto x = Option<T>::some(T(1));
+    auto y = Option<T>::none();
+    auto t = T(1);
+    auto z = Option<T>::some(t);
+  }
+  {
+    using T = TriviallyMoveableAndRelocatable;
+    auto x = Option<T>::some(T(1));
+    auto y = Option<T>::none();
+    // Not copyable.
+    // auto t = T(1);
+    // auto z = Option<T>::some(t);
+  }
+  {
+    using T = TriviallyCopyableNotDestructible;
+    auto x = Option<T>::some(T(1));
+    auto y = Option<T>::none();
+    auto t = T(1);
+    auto z = Option<T>::some(t);
+  }
+  {
+    using T = TriviallyMoveableNotDestructible;
+    auto x = Option<T>::some(T(1));
+    auto y = Option<T>::none();
+    // Not copyable.
+    // auto t = T(1);
+    // auto z = Option<T>::some(t);
+  }
+  {
+    using T = NotTriviallyRelocatableCopyableOrMoveable;
+    auto x = Option<T>::some(T(1));
+    auto y = Option<T>::none();
+    // Not copyable.
+    // auto t = T(1);
+    // auto z = Option<T>::some(t);
+  }
+  {
+    using T = TrivialAbiRelocatable;
+    auto x = Option<T>::some(T(1));
+    auto y = Option<T>::none();
+    // Not copyable.
+    // auto t = T(1);
+    // auto z = Option<T>::some(t);
+  }
+}
+
 TEST(Option, Move) {
   // This type has a user defined move constructor, which deletes the implicit
   // move constructor in Option.
@@ -91,7 +161,8 @@ TEST(Option, Move) {
   EXPECT_EQ(a.as_ref().unwrap().i, 2);
   EXPECT_EQ(lvalue.i, 2);
 
-  auto b = Option<MoveableLvalue>::some(static_cast<decltype(lvalue)&&>(lvalue));
+  auto b =
+      Option<MoveableLvalue>::some(static_cast<decltype(lvalue)&&>(lvalue));
   EXPECT_EQ(b.as_ref().unwrap().i, 2);
   EXPECT_EQ(lvalue.i, 0);
 }
