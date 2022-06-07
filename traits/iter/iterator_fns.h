@@ -46,4 +46,14 @@ bool Iterator<Item>::any(std::function<bool(Item)> f) noexcept {
   return false;
 }
 
+template <class Item>
+size_t Iterator<Item>::count() noexcept {
+  size_t c = 0;
+  while (item_.is_some()) {
+    c += 1;
+    item_ = next();
+  }
+  return c;
+}
+
 }  // namespace sus::traits::iter
