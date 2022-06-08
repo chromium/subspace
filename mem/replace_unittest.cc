@@ -44,7 +44,7 @@ TEST(Replace, ConstexprTrivialRelocate) {
 }
 
 TEST(Replace, ConstexprTrivialAbi) {
-  struct [[clang::trivial_abi]] S {
+  struct [[sus_trivial_abi]] S {
     constexpr S(int n) : num(n) {}
     constexpr S(S&& other) : num(other.num), assigns(other.assigns) {}
     constexpr void operator=(S&& other) {
@@ -55,7 +55,7 @@ TEST(Replace, ConstexprTrivialAbi) {
     int assigns = 0;
   };
   // This means `S` is only "trivially relocatable" if achieved through
-  // [[clang::trivial_abi]].
+  // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
   static_assert(::sus::mem::__private::relocate_one_by_memcpy_v<S> ==
                     __has_extension(trivially_relocatable),
@@ -129,7 +129,7 @@ TEST(Replace, TrivialRelocate) {
 }
 
 TEST(Replace, TrivialAbi) {
-  struct [[clang::trivial_abi]] S {
+  struct [[sus_trivial_abi]] S {
     constexpr S(int n) : num(n) {}
     constexpr S(S&& other) : num(other.num), assigns(other.assigns) {}
     constexpr void operator=(const S& other) {
@@ -144,7 +144,7 @@ TEST(Replace, TrivialAbi) {
     int assigns = 0;
   };
   // This means `S` is only "trivially relocatable" if achieved through
-  // [[clang::trivial_abi]].
+  // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
   static_assert(::sus::mem::__private::relocate_one_by_memcpy_v<S> ==
                     __has_extension(trivially_relocatable),
