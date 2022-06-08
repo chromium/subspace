@@ -86,7 +86,7 @@ struct NotTriviallyRelocatableCopyableOrMoveable {
   int i;
 };
 
-struct [[clang::trivial_abi]] TrivialAbiRelocatable {
+struct [[sus_trivial_abi]] TrivialAbiRelocatable {
   TrivialAbiRelocatable(TrivialAbiRelocatable&&) {}
   ~TrivialAbiRelocatable() {}
   TrivialAbiRelocatable(int i) : i(i) {}

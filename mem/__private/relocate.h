@@ -75,4 +75,11 @@ template <class T>
 inline constexpr bool relocate_array_by_memcpy_v =
     relocate_array_by_memcpy<T>::value;
 
+#if defined(__clang__)
+#define sus_trivial_abi clang::trivial_abi
+#else
+#define sus_trivial_abi
+#endif
+
+
 }  // namespace sus::mem::__private

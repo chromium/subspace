@@ -52,7 +52,7 @@ struct D {
 static_assert(!relocate_one_by_memcpy_v<D>, "");
 static_assert(!relocate_array_by_memcpy_v<D>, "");
 
-struct [[clang::trivial_abi]] T {
+struct [[sus_trivial_abi]] T {
   T(T &&) {}
   ~T() {}
 };
