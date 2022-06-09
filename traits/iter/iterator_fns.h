@@ -95,6 +95,20 @@ template <class I>
 Iterator<Filter<typename I::Item, sizeof(I), alignof(I)>> Iterator<I>::filter(
     std::function<bool(const std::remove_reference_t<typename I::Item>&)>
         pred) && noexcept {
+  // TODO: make_sized_iterator immediately copies `this` to either the body of
+  // the output iterator or to a heap allocation (if it can't be trivially
+  // relocated). It is plausible to be more lazy here and avoid moving `this`
+  // until it's actually needed, which may not be ever if the resulting iterator
+  // is used before `this` gets destroyed. The problem is `this` could be a
+  // temporary. So to do this, we could build a doubly-linked list along the
+  // chain of iterators. `this` would point to the returned iterator here, and
+  // vice versa. If `this` gets destroyed, then we would have to walk the entire
+  // linked list and move them all up into the outermost iterator immediately.
+  // Doing so dynamically would require a (single) heap allocation at that point
+  // always. It would be elided if the iterator was kept on the stack, or used
+  // inside the temporary expression. But it would require one heap allocation
+  // to use any chain of iterators in a for loop, since temporaies get destroyed
+  // after initialing the loop.
   return {static_cast<decltype(pred)&&>(pred),
           make_sized_iterator(static_cast<I&&>(*this))};
 }
