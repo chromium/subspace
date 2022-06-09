@@ -74,6 +74,11 @@ This library is an experiment and not intended for use. See the
     * Use an appropriate prefix like `set_`, or a clear verb name, to
       distinguish setters.
     * No default parameters, as they are a form of overloading.
+    * Constructors (public copy/move, or private constructors) and assignment
+      operators are the exception for overloads.
+1. Functions that return a reference are lvalue-reference-qualified (with `&` or
+   `const&`. If they are `const&`-qualified, then `=delete` the `&&` override to
+   avoid const rvalues from using the method.
 1. Bounds are always checked unless you explicitly ask for them to not be.
 1. Lifetimes are always checked unless you explicitly ask for them to not be.
 1. Small headers. C++ compilation speed is proportional to the amount of input.
