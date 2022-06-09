@@ -71,6 +71,14 @@ namespace __private {
 
 // TODO: Determine if we can put the State into the storage of `T`. Probably
 // though a user-defined trait for `T`?
+//
+// TODO: If the compiler provided an extension to get the offset of a reference
+// or non-null-annotated pointer inside a type, we could use that to determine a
+// place to "store" the liveness bit inside `T`. When we destroy `T`, we'd write
+// a `null` to that location, and when `T` is constructed, we know it will write
+// a non-`null` there. This is a generalization of what we have done for the
+// `T&` type. Something like `__offset_of_nonnull_field(T)`, which would be
+// possible to determine at compile time for a fully-defined type `T`.
 template <class T>
 struct Storage final {
   constexpr ~Storage()
