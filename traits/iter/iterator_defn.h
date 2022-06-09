@@ -31,6 +31,13 @@ template <class IteratorBase>
 class IteratorLoop;
 struct IteratorEnd;
 
+// TODO: Do we want to be able to pass IteratorBase& as a "generic" iterator?
+// Then it needs access to the adapator methods of Iterator<T>, so make them
+// virtual methods on IteratorBase?
+//
+// TODO: Do we want to be able to pass Iterator by value as a "generic"
+// iterator? Then we need an opaque Iterator type, which can be returned from an
+// adaptor method (and we can have an explicit operator to convert to it)?
 template <class ItemT>
 class IteratorBase {
  public:
