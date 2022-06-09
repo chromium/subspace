@@ -69,6 +69,7 @@ template <class T>
 struct [[sus_trivial_abi]] RelocatableStorage<T> {
   RelocatableStorage(Option<T>&& t) : stack_(static_cast<decltype(t)&&>(t)) {}
 
+  // TODO: Do memcpy instead of take() when not in a constexpr context.
   RelocatableStorage(RelocatableStorage&& o) : stack_(o.stack_.take()) {}
   RelocatableStorage& operator=(RelocatableStorage&& o) {
     stack_ = o.stack_.take();
