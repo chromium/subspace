@@ -32,6 +32,7 @@
 #include "assertions/check.h"
 #include "concepts/make_default.h"
 #include "marker/unsafe.h"
+#include "mem/mref.h"
 #include "mem/replace.h"
 #include "mem/take.h"
 #include "option/__private/is_option_type.h"
@@ -118,7 +119,7 @@ struct Storage<T&> final {
   constexpr Storage& operator=(Storage&&) = default;
 
   constexpr Storage(State s) {}
-  constexpr Storage(T* t) : ptr_(t) {}
+  constexpr Storage(const T& t) : ptr_(const_cast<T*>(&t)) {}
 
   T* ptr_ = nullptr;
 
@@ -139,7 +140,7 @@ class Option final {
     return Option(t);
   }
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(std::remove_cvref_t<T>& t) noexcept
+  static inline constexpr Option some(Mref<std::remove_cvref_t<T>> t) noexcept
     requires(std::is_copy_constructible_v<T>)
   {
     return Option(t);
@@ -543,7 +544,10 @@ class Option final {
       }
     } else {
       if (t_.state() == Some) {
-        return Option::some(*::sus::mem::replace_ptr(t_.ptr_, nullptr));
+        if constexpr (std::is_const_v<T>)
+          return Option::some(*::sus::mem::replace_ptr(t_.ptr_, nullptr));
+        else
+          return Option::some(*::sus::mem::replace_ptr(t_.ptr_, nullptr));
       }
     }
     return Option::none();
@@ -819,7 +823,7 @@ class Option final {
       return Option<std::remove_reference_t<T>&>::none();
     } else {
       if constexpr (!std::is_reference_v<T>)
-        return Option<T&>::some(t_.val_);
+        return Option<T&>::some(mref(t_.val_));
       else
         return Option<std::remove_reference_t<T>&>::some(*t_.ptr_);
     }
@@ -845,9 +849,9 @@ class Option final {
   /// Constructor for #None.
   constexpr explicit Option() : t_(None) {}
   /// Constructor for #Some.
-  constexpr explicit Option(std::remove_reference_t<T>& t)
+  constexpr explicit Option(const std::remove_reference_t<T>& t)
     requires(std::is_reference_v<T>)
-  : t_(&t) {}
+  : t_(t) {}
   /// Constructor for #Some.
   constexpr explicit Option(const std::remove_cvref_t<T>& t)
     requires(!std::is_reference_v<T>)

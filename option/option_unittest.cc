@@ -198,7 +198,7 @@ TEST(Option, Some) {
   IS_SOME(y);
 
   int i = 2;
-  auto ix = Option<int&>::some(i);
+  auto ix = Option<int&>::some(mref(i));
   IS_SOME(ix);
 
   constexpr auto cx(
@@ -265,7 +265,7 @@ TEST(Option, Destructor) {
 
   WatchDestructor w;
   {
-    auto x = Option<WatchDestructor&>::some(w);
+    auto x = Option<WatchDestructor&>::some(mref(w));
     count = 0;
   }
   EXPECT_EQ(0, count);
@@ -287,7 +287,7 @@ TEST(Option, Clear) {
 
   WatchDestructor w;
   {
-    auto x = Option<WatchDestructor&>::some(w);
+    auto x = Option<WatchDestructor&>::some(mref(w));
     count = 0;
     x.clear();
     IS_NONE(x);
@@ -300,7 +300,7 @@ TEST(Option, ExpectSome) {
   EXPECT_EQ(x, 0);
 
   int i;
-  auto& xi = Option<int&>::some(i).expect("hello world");
+  auto& xi = Option<int&>::some(mref(i)).expect("hello world");
   EXPECT_EQ(&xi, &i);
 }
 
@@ -316,7 +316,7 @@ TEST(Option, UnwrapSome) {
   EXPECT_EQ(x, 0);
 
   int i;
-  auto& ix = Option<int&>::some(i).unwrap();
+  auto& ix = Option<int&>::some(mref(i)).unwrap();
   EXPECT_EQ(&ix, &i);
 }
 
@@ -332,7 +332,7 @@ TEST(Option, UnwrapUncheckedSome) {
   EXPECT_EQ(x, 0);
 
   int i;
-  auto& ix = Option<int&>::some(i).unwrap_unchecked(unsafe_fn);
+  auto& ix = Option<int&>::some(mref(i)).unwrap_unchecked(unsafe_fn);
   EXPECT_EQ(&ix, &i);
 }
 
@@ -351,7 +351,7 @@ TEST(Option, Take) {
   IS_NONE(m);
 
   int i;
-  auto ix = Option<int&>::some(i);
+  auto ix = Option<int&>::some(mref(i));
   auto iy = ix.take();
   IS_NONE(ix);
   IS_SOME(iy);
@@ -370,7 +370,7 @@ TEST(Option, UnwrapOr) {
   EXPECT_EQ(y, 3);
 
   int i, i2;
-  auto& ix = Option<int&>::some(i).unwrap_or(i2);
+  auto& ix = Option<int&>::some(mref(i)).unwrap_or(i2);
   EXPECT_EQ(&ix, &i);
 
   auto& iy = Option<int&>::none().unwrap_or(i2);
@@ -389,7 +389,7 @@ TEST(Option, UnwrapOrElse) {
   EXPECT_EQ(y, 3);
 
   int i, i2;
-  auto& ix = Option<int&>::some(i).unwrap_or_else([&]() -> int& { return i2; });
+  auto& ix = Option<int&>::some(mref(i)).unwrap_or_else([&]() -> int& { return i2; });
   EXPECT_EQ(&ix, &i);
 
   auto& iy = Option<int&>::none().unwrap_or_else([&]() -> int& { return i2; });
@@ -447,7 +447,7 @@ TEST(Option, Map) {
 
   called = false;
   int i = 2;
-  auto ix = Option<int&>::some(i).map([&](int& i) {
+  auto ix = Option<int&>::some(mref(i)).map([&](int& i) {
     called = true;
     return Mapped(i + 1);
   });
@@ -494,7 +494,7 @@ TEST(Option, MapOr) {
   EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap().i, 4);
 
   int i = 2;
-  auto ix = Option<int&>::some(i).map_or(
+  auto ix = Option<int&>::some(mref(i)).map_or(
       Mapped(4), [](int& i) { return static_cast<Mapped>(i + 1); });
   static_assert(std::is_same_v<decltype(ix), Option<Mapped>>, "");
   EXPECT_EQ(ix.as_ref().unwrap().i, 3);
@@ -548,7 +548,7 @@ TEST(Option, MapOrElse) {
 
   int i = 2;
   map_called = else_called = false;
-  auto ix = Option<int&>::some(i).map_or_else(
+  auto ix = Option<int&>::some(mref(i)).map_or_else(
       [&]() {
         else_called = true;
         return Mapped(4);
@@ -623,11 +623,11 @@ TEST(Option, Filter) {
   IS_NONE(ny);
 
   int i = 2;
-  auto ix = Option<int&>::some(i).filter([](const int& i) { return true; });
+  auto ix = Option<int&>::some(mref(i)).filter([](const int& i) { return true; });
   static_assert(std::is_same_v<decltype(ix), Option<int&>>, "");
   IS_SOME(ix);
 
-  auto iy = Option<int&>::some(i).filter([](const int& i) { return false; });
+  auto iy = Option<int&>::some(mref(i)).filter([](const int& i) { return false; });
   static_assert(std::is_same_v<decltype(iy), Option<int&>>, "");
   IS_NONE(iy);
 
@@ -693,7 +693,7 @@ TEST(Option, Filter) {
   WatchDestructor w;
   {
     count = 0;
-    auto c = Option<WatchDestructor&>::some(w);
+    auto c = Option<WatchDestructor&>::some(mref(w));
     auto cf = static_cast<decltype(c)&&>(c).filter(
         [](const WatchDestructor& i) { return false; });
     // Nothing constructed or destructed.
@@ -716,13 +716,13 @@ TEST(Option, And) {
   IS_NONE(ny);
 
   int i2 = 2, i3 = 3;
-  auto ix = Option<int&>::some(i2).and_opt(Option<int&>::some(i3)).unwrap();
+  auto ix = Option<int&>::some(mref(i2)).and_opt(Option<int&>::some(mref(i3))).unwrap();
   EXPECT_EQ(ix, 3);
 
-  auto iy = Option<int&>::some(i2).and_opt(Option<int&>::none());
+  auto iy = Option<int&>::some(mref(i2)).and_opt(Option<int&>::none());
   IS_NONE(iy);
 
-  auto inx = Option<int&>::none().and_opt(Option<int&>::some(i3));
+  auto inx = Option<int&>::none().and_opt(Option<int&>::some(mref(i3)));
   IS_NONE(inx);
 
   auto iny = Option<int&>::none().and_opt(Option<int&>::none());
@@ -773,7 +773,7 @@ TEST(Option, AndThen) {
   int i = 2;
 
   called = false;
-  auto ix = Option<int&>::some(i).and_then([&](int& i) {
+  auto ix = Option<int&>::some(mref(i)).and_then([&](int& i) {
     called = true;
     return Option<And>::some(And(3));
   });
@@ -782,7 +782,7 @@ TEST(Option, AndThen) {
   EXPECT_TRUE(called);
 
   called = false;
-  auto iy = Option<int&>::some(i).and_then([&](int& i) {
+  auto iy = Option<int&>::some(mref(i)).and_then([&](int& i) {
     called = true;
     return Option<And>::none();
   });
@@ -837,13 +837,13 @@ TEST(Option, Or) {
 
   int i2 = 2, i3 = 3;
 
-  auto ix = Option<int&>::some(i2).or_opt(Option<int&>::some(i3)).unwrap();
+  auto ix = Option<int&>::some(mref(i2)).or_opt(Option<int&>::some(mref(i3))).unwrap();
   EXPECT_EQ(ix, 2);
 
-  auto iy = Option<int&>::some(i2).or_opt(Option<int&>::none()).unwrap();
+  auto iy = Option<int&>::some(mref(i2)).or_opt(Option<int&>::none()).unwrap();
   EXPECT_EQ(iy, 2);
 
-  auto inx = Option<int&>::none().or_opt(Option<int&>::some(i3)).unwrap();
+  auto inx = Option<int&>::none().or_opt(Option<int&>::some(mref(i3))).unwrap();
   EXPECT_EQ(inx, 3);
 
   auto iny = Option<int&>::none().or_opt(Option<int&>::none());
@@ -892,17 +892,17 @@ TEST(Option, OrElse) {
   int i2 = 2, i3 = 3;
 
   called = false;
-  auto ix = Option<int&>::some(i2)
+  auto ix = Option<int&>::some(mref(i2))
                 .or_else([&]() {
                   called = true;
-                  return Option<int&>::some(i3);
+                  return Option<int&>::some(mref(i3));
                 })
                 .unwrap();
   EXPECT_EQ(ix, 2);
   EXPECT_FALSE(called);
 
   called = false;
-  auto iy = Option<int&>::some(i2)
+  auto iy = Option<int&>::some(mref(i2))
                 .or_else([&]() {
                   called = true;
                   return Option<int&>::none();
@@ -915,7 +915,7 @@ TEST(Option, OrElse) {
   auto inx = Option<int&>::none()
                  .or_else([&]() {
                    called = true;
-                   return Option<int&>::some(i3);
+                   return Option<int&>::some(mref(i3));
                  })
                  .unwrap();
   EXPECT_EQ(inx, 3);
@@ -957,13 +957,13 @@ TEST(Option, Xor) {
 
   int i2 = 2, i3 = 3;
 
-  auto ix = Option<int&>::some(i2).xor_opt(Option<int&>::some(i3));
+  auto ix = Option<int&>::some(mref(i2)).xor_opt(Option<int&>::some(mref(i3)));
   IS_NONE(ix);
 
-  auto iy = Option<int&>::some(i2).xor_opt(Option<int&>::none()).unwrap();
+  auto iy = Option<int&>::some(mref(i2)).xor_opt(Option<int&>::none()).unwrap();
   EXPECT_EQ(iy, 2);
 
-  auto inx = Option<int&>::none().xor_opt(Option<int&>::some(i3)).unwrap();
+  auto inx = Option<int&>::none().xor_opt(Option<int&>::some(mref(i3))).unwrap();
   EXPECT_EQ(inx, 3);
 
   auto iny = Option<int&>::none().xor_opt(Option<int&>::none());
@@ -985,7 +985,7 @@ TEST(Option, Insert) {
   ix.insert(i2);
   EXPECT_EQ(ix.as_ref().unwrap(), 2);
 
-  auto iy = Option<int&>::some(i2);
+  auto iy = Option<int&>::some(mref(i2));
   iy.insert(i3);
   EXPECT_EQ(iy.as_ref().unwrap(), 3);
 }
@@ -1012,7 +1012,7 @@ TEST(Option, GetOrInsert) {
   EXPECT_EQ(&irx, &i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
 
-  auto iy = Option<int&>::some(i2);
+  auto iy = Option<int&>::some(mref(i2));
   auto& iry = iy.get_or_insert(i3);
   static_assert(std::is_same_v<decltype(iry), int&>, "");
   EXPECT_EQ(&iry, &i2);
@@ -1083,7 +1083,7 @@ TEST(Option, GetOrInsertWith) {
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
 
   called = false;
-  auto iy = Option<int&>::some(i2);
+  auto iy = Option<int&>::some(mref(i2));
   auto& iry = iy.get_or_insert_with([&]() -> int& {
     called = true;
     return i3;
@@ -1104,7 +1104,7 @@ TEST(Option, AsRef) {
 
   int i = 2;
 
-  auto ix = Option<int&>::some(i);
+  auto ix = Option<int&>::some(mref(i));
   static_assert(std::is_same_v<decltype(ix.as_ref()), Option<const int&>>, "");
   EXPECT_EQ(&i, &ix.as_ref().unwrap());
 
@@ -1126,7 +1126,7 @@ TEST(Option, UnwrapRefSome) {
 
   int i = 2;
 
-  auto ix = Option<int&>::some(i);
+  auto ix = Option<int&>::some(mref(i));
   static_assert(std::is_same_v<decltype(ix.unwrap_ref()), const int&>, "");
   EXPECT_EQ(&ix.unwrap_ref(), &ix.as_ref().unwrap());
 
@@ -1151,7 +1151,7 @@ TEST(Option, ExpectRefSome) {
 
   int i = 2;
 
-  auto ix = Option<int&>::some(i);
+  auto ix = Option<int&>::some(mref(i));
   static_assert(std::is_same_v<decltype(ix.expect_ref("")), const int&>, "");
   EXPECT_EQ(&ix.expect_ref(""), &ix.as_ref().unwrap());
 
@@ -1180,7 +1180,7 @@ TEST(Option, AsMut) {
 
   int i = 2;
 
-  auto ix = Option<int&>::some(i);
+  auto ix = Option<int&>::some(mref(i));
   static_assert(std::is_same_v<decltype(ix.as_mut()), Option<int&>>, "");
   EXPECT_EQ(&i, &ix.as_mut().unwrap());
 
@@ -1195,7 +1195,7 @@ TEST(Option, UnwrapMutSome) {
 
   int i = 2;
 
-  auto ix = Option<int&>::some(i);
+  auto ix = Option<int&>::some(mref(i));
   static_assert(std::is_same_v<decltype(ix.unwrap_mut()), int&>, "");
   EXPECT_EQ(&ix.unwrap_mut(), &i);
 }
@@ -1216,7 +1216,7 @@ TEST(Option, ExpectMutSome) {
 
   int i = 2;
 
-  auto ix = Option<int&>::some(i);
+  auto ix = Option<int&>::some(mref(i));
   static_assert(std::is_same_v<decltype(ix.expect_mut("")), int&>, "");
   EXPECT_EQ(&ix.expect_mut(""), &i);
 }
@@ -1254,7 +1254,7 @@ TEST(Option, TrivialCopy) {
 
   int i = 2;
 
-  auto ix = Option<int&>::some(i);
+  auto ix = Option<int&>::some(mref(i));
   auto iy = static_cast<decltype(ix)&&>(ix);  // Move-construct.
   EXPECT_EQ(&iy.as_ref().unwrap(), &i);
   ix = static_cast<decltype(iy)&&>(iy);  // Move-assign.
@@ -1283,7 +1283,7 @@ TEST(Option, Replace) {
 
   int i2 = 2, i3 = 3;
 
-  auto ix = Option<int&>::some(i2);
+  auto ix = Option<int&>::some(mref(i2));
   static_assert(std::is_same_v<decltype(ix.replace(i3)), Option<int&>>, "");
   auto iy = ix.replace(i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
@@ -1301,7 +1301,7 @@ TEST(Option, Copied) {
   auto x = Option<int&>::none().copied();
   IS_NONE(x);
 
-  auto y = Option<int&>::some(i).copied();
+  auto y = Option<int&>::some(mref(i)).copied();
   EXPECT_EQ(y.as_ref().unwrap(), 2);
   EXPECT_NE(&y.as_ref().unwrap(), &i);
 
@@ -1334,7 +1334,7 @@ TEST(Option, Flatten) {
 
   int i = 2;
   EXPECT_EQ(
-      &Option<Option<int&>>::some(Option<int&>::some(i)).flatten().unwrap(),
+      &Option<Option<int&>>::some(Option<int&>::some(mref(i))).flatten().unwrap(),
       &i);
 
   // Verify constexpr.
