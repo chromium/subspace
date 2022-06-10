@@ -26,6 +26,10 @@ TEST(AddressOf, Object) {
   S s;
   static_assert(std::is_object_v<decltype(s)>, "");
   EXPECT_EQ(::sus::mem::addressof(s), &s);
+
+  const S cs(0);
+  static_assert(std::is_object_v<decltype(cs)>, "");
+  EXPECT_EQ(::sus::mem::addressof(cs), &cs);
 }
 
 TEST(AddressOf, OperatorOverride) {
@@ -48,6 +52,10 @@ TEST(AddressOf, NonObject) {
   S& r = s;
   static_assert(!std::is_object_v<decltype(r)>, "");
   EXPECT_EQ(::sus::mem::addressof(r), &s);
+
+  const S& cr = s;
+  static_assert(!std::is_object_v<decltype(cr)>, "");
+  EXPECT_EQ(::sus::mem::addressof(cr), &s);
 }
 
 }  // namespace
