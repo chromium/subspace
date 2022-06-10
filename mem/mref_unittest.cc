@@ -39,9 +39,6 @@ static_assert(!std::is_convertible_v<Mref<const int&>,
               "");
 
 void increment(Mref<int&> i) { ++i; }
-void increment(Mref<int, 2> i) {
-  for (int& ii : i.inner()) ++ii;
-}
 
 TEST(Mref, Pass) {
   int i = 0;
@@ -77,30 +74,6 @@ TEST(Mref, AssignRvalueRef) {
   Mref<int&> m = mref(i);
   m = 4;
   EXPECT_EQ(i, 4);
-}
-
-TEST(MrefArray, Pass) {
-  int i[] = {1, 2};
-  increment(mref(i));
-  EXPECT_EQ(i[0], 2);
-  EXPECT_EQ(i[1], 3);
-}
-
-TEST(MrefArray, PassMref) {
-  auto f = [](Mref<int, 2> i) { increment(mref(i)); };
-  int i[] = {1, 2};
-  f(mref(i));
-  EXPECT_EQ(i[0], 2);
-  EXPECT_EQ(i[1], 3);
-}
-
-TEST(MrefArray, Convertible) {
-  int i[] = {3, 4};
-  Mref<int, 2> m = mref(i);
-  int(&j)[] = m;
-  j[1]++;  // Increments `i` too.
-  EXPECT_EQ(i[0], 3);
-  EXPECT_EQ(i[1], 5);
 }
 
 }  // namespace

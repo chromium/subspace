@@ -105,6 +105,10 @@ This library is an experiment and not intended for use. See the
     possible. They only use internal heap allocations when strictly required:
     for instance, because they have a dynamic size. Instead, the user can choose
     what lives on the heap through the use of heap-based smart pointers.
+1. No native arrays. Use an Array type instead.
+    * Native arrays can't be bounds-checked, and decay to pointers, making them
+      a bit invisible. A library type has the same overheads, unless it
+      explicitly chooses to provide more.
 1. Deep constness. Const methods do not mutate state in visible ways.
     * No const methods return non-const pointers or references.
     * No const methods call non-const methods through pointers or references.
