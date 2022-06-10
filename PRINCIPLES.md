@@ -146,6 +146,16 @@ This library is an experiment and not intended for use. See the
 1. Common C++ language behaviours are part of the class' public API. We will
    document _and test_ for being trivially copyable, movable, destructible,
    among others.
+1. Everything comes with tests. Tests are not flaky.
+1. Avoid compiler-specific things whenever possible. Some exceptions:
+    * `[[clang:trivial_abi]]` is a perf benefit, once Clang has C++20 support.
+    * Compiler builtins for implementing things, to avoid including large stdlib
+      headers.
+1. Use method qualifiers extensively for improved safety.
+    * Methods that return references should be lvalue-qualified. If const-ref
+      qualified, `delete` the rvalue-reference overload.
+    * Only omit a qualifier when the method makes sense for both lvalue and
+      rvalue uses.
 
 ## What's included
 
