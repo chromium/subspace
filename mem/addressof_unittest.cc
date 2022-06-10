@@ -16,8 +16,9 @@
 
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
-namespace sus::mem {
 namespace {
+
+using sus::mem::addressof;
 
 TEST(AddressOf, Object) {
   struct S {
@@ -59,4 +60,3 @@ TEST(AddressOf, NonObject) {
 }
 
 }  // namespace
-}  // namespace sus::mem
