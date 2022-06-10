@@ -14,4 +14,8 @@
 
 #pragma once
 
+// This header provides utilities for passing arguments.
+// - mref() and Mref<T>.
+// - TODO: move??? rref???
+
 #include "mem/mref.h"
