@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traits/iter/iterator.h"
+#include "iter/iterator.h"
 
-namespace sus::traits::iter {
+namespace sus::iter {
 const IteratorEnd iterator_end;
 }

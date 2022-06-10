@@ -37,17 +37,17 @@
 #include "mem/take.h"
 #include "option/__private/is_option_type.h"
 
-namespace sus::traits::iter {
+namespace sus::iter {
 template <class Item>
 class Once;
 template <class I>
 class Iterator;
-}  // namespace sus::traits::iter
+}  // namespace sus::iter
 
 namespace sus::option {
 
-using sus::traits::iter::Iterator;
-using sus::traits::iter::Once;
+using sus::iter::Iterator;
+using sus::iter::Once;
 
 template <class T>
 class Option;

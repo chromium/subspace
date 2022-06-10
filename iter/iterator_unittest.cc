@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traits/iter/iterator.h"
+#include "iter/iterator.h"
 
 #include "assertions/unreachable.h"
 #include "containers/array.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
-#include "traits/iter/filter.h"
+#include "iter/filter.h"
 
 using ::sus::containers::Array;
 using ::sus::option::Option;
-using ::sus::traits::iter::Iterator;
-using ::sus::traits::iter::IteratorBase;
+using ::sus::iter::Iterator;
+using ::sus::iter::IteratorBase;
 
 namespace {
 

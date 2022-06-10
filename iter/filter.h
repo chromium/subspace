@@ -18,14 +18,14 @@
 
 #include "mem/__private/relocatable_storage.h"
 #include "mem/__private/relocate.h"
-#include "traits/iter/iterator_defn.h"
-#include "traits/iter/sized_iterator.h"
+#include "iter/iterator_defn.h"
+#include "iter/sized_iterator.h"
 
-namespace sus::traits::iter {
+namespace sus::iter {
 
 using ::sus::mem::__private::RelocatableStorage;
 using ::sus::mem::__private::relocate_one_by_memcpy_v;
-using ::sus::traits::iter::IteratorBase;
+using ::sus::iter::IteratorBase;
 
 template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter : public IteratorBase<Item> {
@@ -68,4 +68,4 @@ class Filter : public IteratorBase<Item> {
   sus_class_maybe_trivial_relocatable_types(unsafe_fn, decltype(data_));
 };
 
-}  // namespace sus::traits::iter
+}  // namespace sus::iter

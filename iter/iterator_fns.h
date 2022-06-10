@@ -16,14 +16,14 @@
 
 #include <functional>  // TODO: Replace std::function with something.
 
-#include "traits/iter/iterator_defn.h"
-#include "traits/iter/sized_iterator.h"
+#include "iter/iterator_defn.h"
+#include "iter/sized_iterator.h"
 
 // IteratorBase provided functions are implemented in this file, so that they
 // can be easily included by library users, but don't have to be included in
 // every library header that returns an IteratorBase.
 
-namespace sus::traits::iter {
+namespace sus::iter {
 
 struct IteratorEnd {};
 extern const IteratorEnd iterator_end;
@@ -113,4 +113,4 @@ Iterator<Filter<typename I::Item, sizeof(I), alignof(I)>> Iterator<I>::filter(
           make_sized_iterator(static_cast<I&&>(*this))};
 }
 
-}  // namespace sus::traits::iter
+}  // namespace sus::iter
