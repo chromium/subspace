@@ -21,6 +21,7 @@
 #include "traits/iter/iterator.h"
 
 using ::sus::concepts::MakeDefault;
+using ::sus::mem::Mref;
 using ::sus::mem::__private::relocate_array_by_memcpy_v;
 using ::sus::mem::__private::relocate_one_by_memcpy_v;
 using ::sus::option::None;
@@ -65,6 +66,46 @@ static_assert(sizeof(Option<bool&>) == sizeof(bool*), "");
 // alignment of T.
 static_assert(sizeof(Option<int>) == sizeof(int) + max_sizeof<bool, int>(), "");
 static_assert(sizeof(Option<int&>) == sizeof(int*), "");
+
+template <class T, class = void, class... Args>
+struct is_some_callable : std::false_type {};
+
+template <class T, class... Args>
+struct is_some_callable<
+    T, std::void_t<decltype(T::some(std::declval<Args>()...))>, Args...>
+    : std::true_type {};
+
+template <class T, class... Args>
+inline constexpr bool is_some_callable_v =
+    is_some_callable<T, void, Args...>::value;
+
+static_assert(is_some_callable_v<Option<int>, int>, "");
+static_assert(is_some_callable_v<Option<int>, const int>, "");
+static_assert(is_some_callable_v<Option<int>, int&>, "");
+static_assert(is_some_callable_v<Option<int>, int&&>, "");
+static_assert(is_some_callable_v<Option<int>, Mref<int>>, "");
+static_assert(is_some_callable_v<Option<int>, const int&>, "");
+
+static_assert(!is_some_callable_v<Option<int&>, int>, "");
+static_assert(!is_some_callable_v<Option<int&>, const int>, "");
+static_assert(!is_some_callable_v<Option<int&>, int&>, "");
+static_assert(!is_some_callable_v<Option<int&>, int&>, "");
+static_assert(is_some_callable_v<Option<int&>, Mref<int>>, "");
+static_assert(!is_some_callable_v<Option<int&>, const int&>, "");
+
+static_assert(is_some_callable_v<Option<const int>, int>, "");
+static_assert(is_some_callable_v<Option<const int>, const int>, "");
+static_assert(is_some_callable_v<Option<const int>, int&>, "");
+static_assert(is_some_callable_v<Option<const int>, int&&>, "");
+static_assert(is_some_callable_v<Option<const int>, Mref<int>>, "");
+static_assert(is_some_callable_v<Option<const int>, const int&>, "");
+
+static_assert(is_some_callable_v<Option<const int&>, int>, "");
+static_assert(is_some_callable_v<Option<const int&>, const int>, "");
+static_assert(is_some_callable_v<Option<const int&>, int&>, "");
+static_assert(is_some_callable_v<Option<const int&>, int&&>, "");
+static_assert(is_some_callable_v<Option<const int&>, Mref<int>>, "");
+static_assert(is_some_callable_v<Option<const int&>, const int&>, "");
 
 TEST(Option, Construct) {
   {
@@ -389,7 +430,8 @@ TEST(Option, UnwrapOrElse) {
   EXPECT_EQ(y, 3);
 
   int i, i2;
-  auto& ix = Option<int&>::some(mref(i)).unwrap_or_else([&]() -> int& { return i2; });
+  auto& ix =
+      Option<int&>::some(mref(i)).unwrap_or_else([&]() -> int& { return i2; });
   EXPECT_EQ(&ix, &i);
 
   auto& iy = Option<int&>::none().unwrap_or_else([&]() -> int& { return i2; });
@@ -623,11 +665,13 @@ TEST(Option, Filter) {
   IS_NONE(ny);
 
   int i = 2;
-  auto ix = Option<int&>::some(mref(i)).filter([](const int& i) { return true; });
+  auto ix =
+      Option<int&>::some(mref(i)).filter([](const int& i) { return true; });
   static_assert(std::is_same_v<decltype(ix), Option<int&>>, "");
   IS_SOME(ix);
 
-  auto iy = Option<int&>::some(mref(i)).filter([](const int& i) { return false; });
+  auto iy =
+      Option<int&>::some(mref(i)).filter([](const int& i) { return false; });
   static_assert(std::is_same_v<decltype(iy), Option<int&>>, "");
   IS_NONE(iy);
 
@@ -716,7 +760,9 @@ TEST(Option, And) {
   IS_NONE(ny);
 
   int i2 = 2, i3 = 3;
-  auto ix = Option<int&>::some(mref(i2)).and_opt(Option<int&>::some(mref(i3))).unwrap();
+  auto ix = Option<int&>::some(mref(i2))
+                .and_opt(Option<int&>::some(mref(i3)))
+                .unwrap();
   EXPECT_EQ(ix, 3);
 
   auto iy = Option<int&>::some(mref(i2)).and_opt(Option<int&>::none());
@@ -837,7 +883,9 @@ TEST(Option, Or) {
 
   int i2 = 2, i3 = 3;
 
-  auto ix = Option<int&>::some(mref(i2)).or_opt(Option<int&>::some(mref(i3))).unwrap();
+  auto ix = Option<int&>::some(mref(i2))
+                .or_opt(Option<int&>::some(mref(i3)))
+                .unwrap();
   EXPECT_EQ(ix, 2);
 
   auto iy = Option<int&>::some(mref(i2)).or_opt(Option<int&>::none()).unwrap();
@@ -963,7 +1011,8 @@ TEST(Option, Xor) {
   auto iy = Option<int&>::some(mref(i2)).xor_opt(Option<int&>::none()).unwrap();
   EXPECT_EQ(iy, 2);
 
-  auto inx = Option<int&>::none().xor_opt(Option<int&>::some(mref(i3))).unwrap();
+  auto inx =
+      Option<int&>::none().xor_opt(Option<int&>::some(mref(i3))).unwrap();
   EXPECT_EQ(inx, 3);
 
   auto iny = Option<int&>::none().xor_opt(Option<int&>::none());
@@ -1333,9 +1382,10 @@ TEST(Option, Flatten) {
             4);
 
   int i = 2;
-  EXPECT_EQ(
-      &Option<Option<int&>>::some(Option<int&>::some(mref(i))).flatten().unwrap(),
-      &i);
+  EXPECT_EQ(&Option<Option<int&>>::some(Option<int&>::some(mref(i)))
+                 .flatten()
+                 .unwrap(),
+            &i);
 
   // Verify constexpr.
   static_assert(Option<Option<int>>::none().flatten().is_none(), "");
