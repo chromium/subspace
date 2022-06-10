@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <type_traits>
+
 namespace sus::mem {
 
 /// A mutable reference receiver.
