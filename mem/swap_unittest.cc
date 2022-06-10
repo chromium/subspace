@@ -30,13 +30,13 @@ TEST(Swap, ConstexprTrivialRelocate) {
   auto i = []() constexpr {
     T i(2);
     T j(5);
-    ::sus::mem::swap(i, j);
+    ::sus::mem::swap(mref(i), mref(j));
     return i;
   };
   auto j = []() constexpr {
     T i(2);
     T j(5);
-    ::sus::mem::swap(i, j);
+    ::sus::mem::swap(mref(i), mref(j));
     return j;
   };
   static_assert(i() == T(5), "");
@@ -82,13 +82,13 @@ TEST(Swap, ConstexprTrivialAbi) {
   auto i = []() constexpr {
     S i(2);
     S j(5);
-    ::sus::mem::swap(i, j);
+    ::sus::mem::swap(mref(i), mref(j));
     return i;
   };
   auto j = []() constexpr {
     S i(2);
     S j(5);
-    ::sus::mem::swap(i, j);
+    ::sus::mem::swap(mref(i), mref(j));
     return j;
   };
   static_assert(i().num == 5, "");
@@ -134,13 +134,13 @@ TEST(Swap, ConstexprNonTrivial) {
   auto i = []() constexpr {
     S i(2);
     S j(5);
-    ::sus::mem::swap(i, j);
+    ::sus::mem::swap(mref(i), mref(j));
     return i;
   };
   auto j = []() constexpr {
     S i(2);
     S j(5);
-    ::sus::mem::swap(i, j);
+    ::sus::mem::swap(mref(i), mref(j));
     return j;
   };
   static_assert(i().num == 5, "");
@@ -179,7 +179,7 @@ TEST(Swap, TrivialRelocate) {
 
   T i(2);
   T j(5);
-  ::sus::mem::swap(i, j);
+  ::sus::mem::swap(mref(i), mref(j));
   EXPECT_EQ(i, T(5));
   EXPECT_EQ(j, T(2));
 
@@ -214,7 +214,7 @@ TEST(Swap, TrivialAbi) {
 
   S i(2);
   S j(5);
-  ::sus::mem::swap(i, j);
+  ::sus::mem::swap(mref(i), mref(j));
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
 #if __has_extension(trivially_relocatable)
@@ -259,7 +259,7 @@ TEST(Swap, NonTrivial) {
 
   S i(2);
   S j(5);
-  ::sus::mem::swap(i, j);
+  ::sus::mem::swap(mref(i), mref(j));
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
   // The swap was done by move operations.

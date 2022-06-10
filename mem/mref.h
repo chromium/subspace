@@ -43,32 +43,34 @@ namespace sus::mem {
 template <class T>
 class Mref {
  public:
-  Mref(Mref&&) noexcept = default;
-  Mref& operator=(Mref&&) noexcept = default;
+  constexpr Mref(Mref&&) noexcept = default;
+  constexpr Mref& operator=(Mref&&) noexcept = default;
 
   // Prevent passing an Mref argument along without writing mref() again.
   Mref(Mref&) = delete;
 
   // Act like a T&. It can convert to a T&.
-  operator T&() & noexcept { return t_; }
+  constexpr operator T&() & noexcept { return t_; }
   // Act like a T&. It can be assigned a const T&.
-  T& operator=(const T& t) noexcept {
+  constexpr T& operator=(const T& t) noexcept {
     t_ = t;
     return *this;
   }
   // Act like a T&. It can be assigned a T&&.
-  T& operator=(T&& t) noexcept {
+  constexpr T& operator=(T&& t) noexcept {
     t_ = static_cast<T&&>(t);
     return *this;
   }
 
+  constexpr T& inner() & { return t_; }
+
  private:
   template <class U>
-  friend Mref<U> mref(U&);
+  friend constexpr Mref<U> mref(U&);
   template <class U>
-  friend Mref<U> mref(Mref<U>&);
+  friend constexpr Mref<U> mref(Mref<U>&);
 
-  Mref(T& t) noexcept : t_(t) {}
+  constexpr Mref(T& t) noexcept : t_(t) {}
 
   T& t_;
 };
@@ -76,13 +78,13 @@ class Mref {
 /// Wrap an lvalue variable with mref() when passing it as a function argument
 /// to pass it as a mutable reference.
 template <class T>
-inline Mref<T> mref(T& t) {
+constexpr inline Mref<T> mref(T& t) {
   return Mref<T>(t);
 }
 
 /// An Mref can be passed along as an Mref.
 template <class T>
-inline Mref<T> mref(Mref<T>& t) {
+constexpr inline Mref<T> mref(Mref<T>& t) {
   return Mref<T>(static_cast<T&>(t));
 }
 

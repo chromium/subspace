@@ -20,22 +20,23 @@
 
 #include "mem/__private/relocate.h"
 #include "mem/addressof.h"
+#include "mem/mref.h"
 
 namespace sus::mem {
 
 template <class T>
   requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
-constexpr void swap(T& lhs, T& rhs) noexcept {
+constexpr void swap(Mref<T> lhs, Mref<T> rhs) noexcept {
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   if (::sus::mem::__private::relocate_one_by_memcpy_v<T> &&
       !std::is_constant_evaluated()) {
     char temp[sizeof(T)];
-    memcpy(temp, ::sus::mem::addressof(lhs), sizeof(T));
-    memcpy(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs), sizeof(T));
-    memcpy(::sus::mem::addressof(rhs), temp, sizeof(T));
+    memcpy(temp, ::sus::mem::addressof(lhs.inner()), sizeof(T));
+    memcpy(::sus::mem::addressof(lhs.inner()), ::sus::mem::addressof(rhs.inner()), sizeof(T));
+    memcpy(::sus::mem::addressof(rhs.inner()), temp, sizeof(T));
   } else {
-    T temp(static_cast<T&&>(lhs));
-    lhs = T(static_cast<T&&>(rhs));
+    T temp(static_cast<T&&>(lhs.inner()));
+    lhs = T(static_cast<T&&>(rhs.inner()));
     rhs = T(static_cast<T&&>(temp));
   }
 }
@@ -58,4 +59,5 @@ constexpr void swap(T (&lhs)[N], T (&rhs)[N]) noexcept {
     }
   }
 }
+
 }  // namespace sus::mem
