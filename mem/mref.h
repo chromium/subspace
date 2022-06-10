@@ -70,13 +70,14 @@ constexpr inline Mref<T, N> mref(Mref<T, N>& t) {
   return Mref<T, N>(t.inner());
 }
 
+/// Implementation of Mref for an array reference with `N elements.
 template <class T, size_t N>
 struct Mref {
  private:
   template <class U>
-  using RefType = std::remove_extent_t<U> (&)[N];
+  using RefType = U (&)[N];
   template <class U>
-  using RvalueRefType = std::remove_extent_t<U> (&&)[N];
+  using RvalueRefType = U (&&)[N];
 
  public:
   constexpr Mref(Mref&&) noexcept = default;
@@ -106,6 +107,8 @@ struct Mref {
   // mref() should only be used to construct Mref, not T&.
   constexpr operator RefType<T>() && = delete;
 
+  /// Get access to the inner type without doing an explicit type conversion to
+  /// `T&`.
   constexpr RefType<T> inner() & { return t_; }
 
  private:
@@ -125,6 +128,7 @@ struct Mref {
   RefType<T> t_;
 };
 
+/// Implementation of Mref for a regular type reference (non-array).
 template <class T>
 struct Mref<T&, 0> {
   constexpr Mref(Mref&&) noexcept = default;
@@ -149,6 +153,8 @@ struct Mref<T&, 0> {
   // mref() should only be used to construct Mref, not T&.
   constexpr inline operator T&() && = delete;
 
+  /// Get access to the inner type without doing an explicit type conversion to
+  /// `T&`.
   constexpr inline T& inner() & { return t_; }
 
  private:
