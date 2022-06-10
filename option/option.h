@@ -391,7 +391,7 @@ class Option final {
   /// default value if required.
   constexpr T unwrap_or(T default_result) && noexcept {
     if (t_.set_state(None) == Some)
-      return ::sus::mem::take_and_destruct(unsafe_fn, t_.val_);
+      return ::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_));
     else
       return default_result;
   }
@@ -402,7 +402,7 @@ class Option final {
     requires(std::is_same_v<std::invoke_result_t<Functor>, T>)
   constexpr T unwrap_or_else(Functor f) && noexcept {
     if (t_.set_state(None) == Some)
-      return ::sus::mem::take_and_destruct(unsafe_fn, t_.val_);
+      return ::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_));
     else
       return f();
   }
@@ -416,7 +416,7 @@ class Option final {
     requires(::sus::concepts::MakeDefault<T>::has_concept)
   {
     if (t_.set_state(None) == Some)
-      return ::sus::mem::take_and_destruct(unsafe_fn, t_.val_);
+      return ::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_));
     else
       return ::sus::concepts::MakeDefault<T>::make_default();
   }
@@ -483,7 +483,7 @@ class Option final {
   /// afterward.
   constexpr Option take() & noexcept {
     if (t_.set_state(None) == Some)
-      return Option(::sus::mem::take_and_destruct(unsafe_fn, t_.val_));
+      return Option(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
     else
       return Option::none();
   }
@@ -498,10 +498,12 @@ class Option final {
   template <class MapFn, int&..., class R = std::invoke_result_t<MapFn, T&&>>
     requires(!std::is_void_v<R>)
   constexpr Option<R> map(MapFn m) && noexcept {
-    if (t_.set_state(None) == Some)
-      return Option<R>(m(::sus::mem::take_and_destruct(unsafe_fn, t_.val_)));
-    else
+    if (t_.set_state(None) == Some) {
+      return Option<R>(
+          m(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_))));
+    } else {
       return Option<R>::none();
+    }
   }
 
   /// Maps the Option's value through a function, or returns a default value.
@@ -515,10 +517,12 @@ class Option final {
             class R = std::invoke_result_t<MapFn, T&&>>
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
   constexpr Option<R> map_or(D default_result, MapFn m) && noexcept {
-    if (t_.set_state(None) == Some)
-      return Option<R>(m(::sus::mem::take_and_destruct(unsafe_fn, t_.val_)));
-    else
+    if (t_.set_state(None) == Some) {
+      return Option<R>(
+          m(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_))));
+    } else {
       return Option<R>(static_cast<R&&>(default_result));
+    }
   }
 
   /// Maps the Option's value through a function, or returns a default value
@@ -534,10 +538,12 @@ class Option final {
             class R = std::invoke_result_t<MapFn, T&&>>
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
   constexpr Option<R> map_or_else(DefaultFn default_fn, MapFn m) && noexcept {
-    if (t_.set_state(None) == Some)
-      return Option<R>(m(::sus::mem::take_and_destruct(unsafe_fn, t_.val_)));
-    else
+    if (t_.set_state(None) == Some) {
+      return Option<R>(
+          m(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_))));
+    } else {
       return Option<R>(default_fn());
+    }
   }
 
   /// Consumes the Option and applies a predicate function to the value
@@ -551,7 +557,7 @@ class Option final {
   constexpr Option<T> filter(Predicate p) && noexcept {
     if (t_.set_state(None) == Some) {
       if (p(const_cast<const T&>(t_.val_))) {
-        return Option(::sus::mem::take_and_destruct(unsafe_fn, t_.val_));
+        return Option(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
       } else {
         // The state has become None, so we must destroy the inner T.
         t_.val_.~T();
@@ -585,7 +591,7 @@ class Option final {
     requires(::sus::option::__private::IsOptionType<R>::value)
   constexpr Option<InnerR> and_then(AndFn f) && noexcept {
     if (t_.set_state(None) == Some)
-      return f(::sus::mem::take_and_destruct(unsafe_fn, t_.val_));
+      return f(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
     else
       return Option<InnerR>::none();
   }
@@ -594,7 +600,7 @@ class Option final {
   /// a value, otherwise returns the given `opt`.
   Option<T> or_opt(Option<T> opt) && noexcept {
     if (t_.set_state(None) == Some)
-      return Option(::sus::mem::take_and_destruct(unsafe_fn, t_.val_));
+      return Option(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
     else
       return opt;
   }
@@ -605,7 +611,7 @@ class Option final {
     requires(std::is_same_v<R, Option<T>>)
   constexpr Option<T> or_else(ElseFn f) && noexcept {
     if (t_.set_state(None) == Some)
-      return Option(::sus::mem::take_and_destruct(unsafe_fn, t_.val_));
+      return Option(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
     else
       return f();
   }
@@ -619,7 +625,7 @@ class Option final {
       // we return what this was holding, otherwise we return None.
       t_.set_state(None);
       if (opt.t_.state() == None) {
-        return Option(::sus::mem::take_and_destruct(unsafe_fn, t_.val_));
+        return Option(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
       } else {
         t_.val_.~T();
       }
