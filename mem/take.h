@@ -19,12 +19,14 @@
 #include "marker/unsafe.h"
 #include "mem/__private/relocate.h"
 #include "mem/addressof.h"
+#include "mem/mref.h"
 
 namespace sus::mem {
 
 template <class T>
   requires std::is_move_constructible_v<T> && std::is_default_constructible_v<T>
-inline constexpr T take(T& t) noexcept {
+inline constexpr T take(Mref<T&> t_ref) noexcept {
+  T& t = t_ref;
   T taken(static_cast<T&&>(t));
   t.~T();
   // TODO: Support classes with a `with_default()` constructor as well.
@@ -36,7 +38,9 @@ inline constexpr T take(T& t) noexcept {
 // not be used (or destructed again) afterward.
 template <class T>
   requires std::is_move_constructible_v<T>
-constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker, T& t) noexcept {
+constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
+                              Mref<T&> t_ref) noexcept {
+  T& t = t_ref;
   T taken(static_cast<T&&>(t));
   t.~T();
   return taken;

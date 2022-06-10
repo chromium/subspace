@@ -38,7 +38,7 @@ TEST(Take, Take) {
   take_destructors = 0;
   S s(404);
   EXPECT_EQ(s.default_constucted, 0);
-  S out(::sus::mem::take(s));
+  S out(::sus::mem::take(mref(s)));
   // `out` was moved from `s`. `s` was taken-from and default-constructed.
   EXPECT_EQ(out.num, 404);
   EXPECT_EQ(s.num, 101);
@@ -63,12 +63,12 @@ TEST(Take, TakeConstexpr) {
 
   auto out = []() constexpr {
     S s(404);
-    S out(::sus::mem::take(s));
+    S out(::sus::mem::take(mref(s)));
     return out.num;
   };
   auto s = []() constexpr {
     S s(404);
-    S out(::sus::mem::take(s));
+    S out(::sus::mem::take(mref(s)));
     return s.num;
   };
   // `out` was moved from `s`. `s` was taken-from and default-constructed.
@@ -100,7 +100,7 @@ TEST(Take, TakeAndDestruct) {
   new (&u.s) S(404);
   EXPECT_EQ(u.s.default_constucted, 0);
   EXPECT_EQ(u.s.num, 404);
-  S out(::sus::mem::take_and_destruct(unsafe_fn, u.s));
+  S out(::sus::mem::take_and_destruct(unsafe_fn, mref(u.s)));
   // `out` was moved from `s`. `s` was taken-from and destroyed but not
   // reconstructed, so we can't test its values, only its destruction.
   EXPECT_EQ(out.num, 404);
@@ -125,7 +125,7 @@ TEST(Take, TakeAndDestructConstexpr) {
 
   auto out = []() constexpr {
     S s(404);
-    S out(::sus::mem::take_and_destruct(unsafe_fn, s));
+    S out(::sus::mem::take_and_destruct(unsafe_fn, mref(s)));
     return out.num;
   };
   // `out` was moved from `s`. `s` was taken-from and destroyed, and we can not
