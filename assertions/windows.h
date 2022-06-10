@@ -14,11 +14,14 @@
 
 #pragma once
 
-#include "iter/iterator_defn.h"
-#include "iter/iterator_impl.h"
+#if defined(_WIN32)
+#define sus_assertions_is_windows() true
+#else
+#define sus_assertions_is_windows() false
+#endif
 
-// Once is included here, because there is a cycle between
-// Option->Once->IteratorBase, so Option can't include Once itself. But as long as
-// the user includes "iterator.h" they should be able to use the iterators on
-// Option.
-#include "iter/once.h"
+namespace sus::assertions {
+
+static constexpr bool is_windows() { return sus_assertions_is_windows(); }
+
+}  // namespace sus::assertions

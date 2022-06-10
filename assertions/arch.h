@@ -14,11 +14,16 @@
 
 #pragma once
 
-#include "iter/iterator_defn.h"
-#include "iter/iterator_impl.h"
+#if defined(__x86_64__) || defined(_M_X64)
+#define sus_assertions_is_64bit() true  // x86_64
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define sus_assertions_is_64bit() true  // aarch64
+#else
+#define sus_assertions_is_64bit() false
+#endif
 
-// Once is included here, because there is a cycle between
-// Option->Once->IteratorBase, so Option can't include Once itself. But as long as
-// the user includes "iterator.h" they should be able to use the iterators on
-// Option.
-#include "iter/once.h"
+namespace sus::assertions {
+
+static constexpr bool is_64bit() { return sus_assertions_is_64bit(); }
+
+}  // namespace sus::assertions

@@ -14,11 +14,17 @@
 
 #pragma once
 
-#include "iter/iterator_defn.h"
-#include "iter/iterator_impl.h"
+#include <type_traits>
 
-// Once is included here, because there is a cycle between
-// Option->Once->IteratorBase, so Option can't include Once itself. But as long as
-// the user includes "iterator.h" they should be able to use the iterators on
-// Option.
-#include "iter/once.h"
+namespace sus::concepts::callable {
+
+template <class F>
+concept FunctionPointer = std::is_pointer_v<decltype(+std::declval<F>())>;
+
+template <class F>
+concept CallableObject = (!FunctionPointer<F>) && requires { &F::operator(); };
+
+template <class F>
+concept Callable = FunctionPointer<F> || CallableObject<F>;
+
+}  // namespace sus::concepts::callable

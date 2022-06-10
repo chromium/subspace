@@ -14,11 +14,20 @@
 
 #pragma once
 
-#include "iter/iterator_defn.h"
-#include "iter/iterator_impl.h"
+/// This helper allows T&& to downgrade to T&, so that when we move out of
+/// storage in call_once(), if the receiver just wants an lvalue reference, that
+/// it will pass them one instead.
+template <class T>
+struct FlexRef;
 
-// Once is included here, because there is a cycle between
-// Option->Once->IteratorBase, so Option can't include Once itself. But as long as
-// the user includes "iterator.h" they should be able to use the iterators on
-// Option.
-#include "iter/once.h"
+template <class T>
+struct FlexRef<T&> {
+  operator T&() { return t; }
+  T&& t;
+};
+
+template <class T>
+struct FlexRef {
+  operator T&&() { return static_cast<T&&>(t); }
+  T&& t;
+};

@@ -14,11 +14,21 @@
 
 #pragma once
 
-#include "iter/iterator_defn.h"
-#include "iter/iterator_impl.h"
+namespace sus::mem {
 
-// Once is included here, because there is a cycle between
-// Option->Once->IteratorBase, so Option can't include Once itself. But as long as
-// the user includes "iterator.h" they should be able to use the iterators on
-// Option.
-#include "iter/once.h"
+template <class T>
+constexpr T&& forward(std::remove_reference_t<T>& t) noexcept {
+  return static_cast<T&&>(t);
+}
+template <class T>
+constexpr T&& forward(std::remove_reference_t<T>&& t) noexcept {
+  static_assert(!std::is_lvalue_reference<T>::value,
+                "Can not forward an rvalue as an lvalue.");
+  return static_cast<T&&>(t);
+}
+
+}  // namespace sus::mem
+
+namespace sus {
+using ::sus::mem::forward;
+}
