@@ -15,6 +15,8 @@
 #pragma once
 
 #include "mem/__private/relocate.h"
+#include "mem/mref.h"
+#include "option/option.h"
 
 namespace sus::mem::__private {
 
@@ -26,7 +28,7 @@ template <class T>
 struct [[sus_trivial_abi]] RelocatableStorage<T> {
   RelocatableStorage(Option<T>&& t)
       : heap_(static_cast<decltype(t)&&>(t).and_then([](T&& t) {
-          return Option<T&>::some(*new T(static_cast<T&&>(t)));
+          return Option<T&>::some(mref(*new T(static_cast<T&&>(t))));
         })) {}
 
   ~RelocatableStorage() {

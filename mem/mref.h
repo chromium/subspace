@@ -62,6 +62,9 @@ class Mref {
     return *this;
   }
 
+  // mref() should only be used to construct Mref, not T&.
+  constexpr operator T&() && = delete;
+
   constexpr T& inner() & { return t_; }
 
  private:
@@ -70,6 +73,14 @@ class Mref {
   template <class U>
   friend constexpr Mref<U> mref(Mref<U>&);
 
+  // TODO: Errors are confusing when you do it wrong:
+  //
+  //   error: ‘constexpr sus::mem::Mref<T>::Mref(T&) [with T =
+  //   {anonymous}::MoveOnly]’ is private within this context
+  //
+  // Could we fix it with an intermediate type. mref() returns MrefPass, and
+  // Mref is constructed form MrefPass. Then we could delete Mref(T&) instead of
+  // making it private. Does it codegen the same though?
   constexpr Mref(T& t) noexcept : t_(t) {}
 
   T& t_;
@@ -81,6 +92,9 @@ template <class T>
 constexpr inline Mref<T> mref(T& t) {
   return Mref<T>(t);
 }
+
+template <class T>
+constexpr inline Mref<T> mref(const T& t) = delete;
 
 /// An Mref can be passed along as an Mref.
 template <class T>
