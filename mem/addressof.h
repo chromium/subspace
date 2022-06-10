@@ -19,7 +19,7 @@
 namespace sus::mem {
 
 template <class T>
-  requires std::is_object_v<T>
+  requires(std::is_object_v<T>)
 T* addressof(T& arg) noexcept {
   return reinterpret_cast<T*>(
       &const_cast<char&>(reinterpret_cast<const volatile char&>(arg)));
@@ -30,5 +30,8 @@ template <class T>
 T* addressof(T& arg) noexcept {
   return &arg;
 }
+
+template <class T>
+T* addressof(T&& arg) = delete;
 
 }  // namespace sus::mem
