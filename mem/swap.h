@@ -26,24 +26,28 @@ namespace sus::mem {
 
 template <class T>
   requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
-constexpr void swap(Mref<T> lhs, Mref<T> rhs) noexcept {
+constexpr void swap(Mref<T&> lhs_ref, Mref<T&> rhs_ref) noexcept {
+  T& lhs = lhs_ref;
+  T& rhs = rhs_ref;
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   if (::sus::mem::__private::relocate_one_by_memcpy_v<T> &&
       !std::is_constant_evaluated()) {
     char temp[sizeof(T)];
-    memcpy(temp, ::sus::mem::addressof(lhs.inner()), sizeof(T));
-    memcpy(::sus::mem::addressof(lhs.inner()), ::sus::mem::addressof(rhs.inner()), sizeof(T));
-    memcpy(::sus::mem::addressof(rhs.inner()), temp, sizeof(T));
+    memcpy(temp, ::sus::mem::addressof(lhs), sizeof(T));
+    memcpy(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs), sizeof(T));
+    memcpy(::sus::mem::addressof(rhs), temp, sizeof(T));
   } else {
-    T temp(static_cast<T&&>(lhs.inner()));
-    lhs = T(static_cast<T&&>(rhs.inner()));
+    T temp(static_cast<T&&>(lhs));
+    lhs = T(static_cast<T&&>(rhs));
     rhs = T(static_cast<T&&>(temp));
   }
 }
 
 template <class T, /* TODO: usize */ size_t N>
   requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
-constexpr void swap(T (&lhs)[N], T (&rhs)[N]) noexcept {
+constexpr void swap(Mref<T, N> lhs_ref, Mref<T, N> rhs_ref) noexcept {
+  T(&lhs)[N] = lhs_ref;
+  T(&rhs)[N] = rhs_ref;
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   if (::sus::mem::__private::relocate_array_by_memcpy_v<T> &&
       !std::is_constant_evaluated()) {

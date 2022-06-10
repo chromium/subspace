@@ -50,13 +50,13 @@ TEST(Swap, ConstexprTrivialRelocate) {
     auto i = []() constexpr {
       T i{2, 2, 3, 4, 2};
       T j{5, 5, 6, 7, 5};
-      ::sus::mem::swap(i, j);
+      ::sus::mem::swap(mref(i), mref(j));
       return i[3];
     };
     auto j = []() constexpr {
       T i{2, 2, 3, 4, 2};
       T j{5, 5, 6, 7, 5};
-      ::sus::mem::swap(i, j);
+      ::sus::mem::swap(mref(i), mref(j));
       return j[3];
     };
     static_assert(i() == 7, "");
@@ -104,13 +104,13 @@ TEST(Swap, ConstexprTrivialAbi) {
     auto i = []() constexpr {
       T i{1, 2};
       T j{4, 5};
-      ::sus::mem::swap(i, j);
+      ::sus::mem::swap(mref(i), mref(j));
       return static_cast<S&&>(i[1]);
     };
     auto j = []() constexpr {
       T i{1, 2};
       T j{4, 5};
-      ::sus::mem::swap(i, j);
+      ::sus::mem::swap(mref(i), mref(j));
       return static_cast<S&&>(j[1]);
     };
     static_assert(i().num == 5, "");
@@ -156,13 +156,13 @@ TEST(Swap, ConstexprNonTrivial) {
     auto i = []() constexpr {
       T i{1, 2};
       T j{4, 5};
-      ::sus::mem::swap(i, j);
+      ::sus::mem::swap(mref(i), mref(j));
       return static_cast<S&&>(i[1]);
     };
     auto j = []() constexpr {
       T i{1, 2};
       T j{4, 5};
-      ::sus::mem::swap(i, j);
+      ::sus::mem::swap(mref(i), mref(j));
       return static_cast<S&&>(j[1]);
     };
     static_assert(i().num == 5, "");
@@ -188,7 +188,7 @@ TEST(Swap, TrivialRelocate) {
     using T = int[2];
     T i{1, 2};
     T j{4, 5};
-    ::sus::mem::swap(i, j);
+    ::sus::mem::swap(mref(i), mref(j));
     EXPECT_EQ(i[1], 5);
     EXPECT_EQ(j[1], 2);
   }
@@ -231,7 +231,7 @@ TEST(Swap, TrivialAbi) {
 
     T i{1, 2};
     T j{4, 5};
-    ::sus::mem::swap(i, j);
+    ::sus::mem::swap(mref(i), mref(j));
     EXPECT_EQ(i[1].num, 5);
     EXPECT_EQ(j[1].num, 2);
 #if __has_extension(trivially_relocatable)
@@ -272,7 +272,7 @@ TEST(Swap, NonTrivial) {
 
     T i{1, 2};
     T j{4, 5};
-    ::sus::mem::swap(i, j);
+    ::sus::mem::swap(mref(i), mref(j));
     EXPECT_EQ(i[1].num, 5);
     EXPECT_EQ(j[1].num, 2);
     // The swap was done by move operations.

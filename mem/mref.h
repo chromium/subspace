@@ -14,7 +14,11 @@
 
 #pragma once
 
+#include <stddef.h>  // Replace with usize?
+
 #include <type_traits>
+
+#include "assertions/check.h"
 
 namespace sus::mem {
 
@@ -40,8 +44,40 @@ namespace sus::mem {
 /// int i;
 /// receive_ref(mref(i));   // Explicitly pass lvalue ref.
 /// ```
+template <class T, size_t N = 0>
+class Mref;
+
+/// Pass a variable to a function as a mutable reference.
 template <class T>
-class Mref {
+constexpr inline Mref<T&, 0> mref(T& t) {
+  return Mref<T&>(t);
+}
+
+/// Pass a variable to a function as a mutable reference.
+template <class T, size_t N>
+constexpr inline Mref<T, N> mref(T (&t)[N]) {
+  return Mref<T, N>(t);
+}
+
+template <class T>
+constexpr inline Mref<T> mref(const T& t) = delete;
+template <class T, size_t N>
+constexpr inline Mref<T, N> mref(const T (&t)[N]) = delete;
+
+/// An Mref can be passed along as an Mref.
+template <class T, size_t N>
+constexpr inline Mref<T, N> mref(Mref<T, N>& t) {
+  return Mref<T, N>(t.inner());
+}
+
+template <class T, size_t N>
+struct Mref {
+ private:
+  template <class U>
+  using RefType = std::remove_extent_t<U> (&)[N];
+  template <class U>
+  using RvalueRefType = std::remove_extent_t<U> (&&)[N];
+
  public:
   constexpr Mref(Mref&&) noexcept = default;
   constexpr Mref& operator=(Mref&&) noexcept = default;
@@ -50,28 +86,31 @@ class Mref {
   Mref(Mref&) = delete;
 
   // Act like a T&. It can convert to a T&.
-  constexpr operator T&() & noexcept { return t_; }
-  // Act like a T&. It can be assigned a const T&.
-  constexpr T& operator=(const T& t) noexcept {
-    t_ = t;
-    return *this;
+  constexpr operator RefType<T>() & noexcept { return t_; }
+  // Act like a T&. Arrays are not assignable.
+  constexpr RefType<T> operator=(const RefType<T> t) = delete;
+  // Act like a T&. Arrays are not assignable.
+  constexpr T& operator=(RvalueRefType<T> t) = delete;
+  // Act like a T&. Arrays can access by operator[].
+  constexpr const T& operator[](size_t i) const& {
+    ::sus::check(i < N);
+    return t_[i];
   }
-  // Act like a T&. It can be assigned a T&&.
-  constexpr T& operator=(T&& t) noexcept {
-    t_ = static_cast<T&&>(t);
-    return *this;
+  constexpr const T& operator[](size_t i) && = delete;
+  // Act like a T&. Arrays can access by operator[].
+  constexpr T& operator[](size_t i) & {
+    ::sus::check(i < N);
+    return t_[i];
   }
 
   // mref() should only be used to construct Mref, not T&.
-  constexpr operator T&() && = delete;
+  constexpr operator RefType<T>() && = delete;
 
-  constexpr T& inner() & { return t_; }
+  constexpr RefType<T> inner() & { return t_; }
 
  private:
-  template <class U>
-  friend constexpr Mref<U> mref(U&);
-  template <class U>
-  friend constexpr Mref<U> mref(Mref<U>&);
+  friend constexpr Mref<T, N> mref<>(RefType<T>);
+  friend constexpr Mref<T, N> mref<>(Mref<T, N>&);
 
   // TODO: Errors are confusing when you do it wrong:
   //
@@ -79,28 +118,55 @@ class Mref {
   //   {anonymous}::MoveOnly]’ is private within this context
   //
   // Could we fix it with an intermediate type. mref() returns MrefPass, and
-  // Mref is constructed form MrefPass. Then we could delete Mref(T&) instead of
-  // making it private. Does it codegen the same though?
-  constexpr Mref(T& t) noexcept : t_(t) {}
+  // Mref is constructed form MrefPass. Then we could delete Mref(T&) instead
+  // of making it private. Does it codegen the same though?
+  constexpr Mref(RefType<T> t) noexcept : t_(t) {}
+
+  RefType<T> t_;
+};
+
+template <class T>
+struct Mref<T&, 0> {
+  constexpr Mref(Mref&&) noexcept = default;
+  constexpr Mref& operator=(Mref&&) noexcept = default;
+
+  // Prevent passing an Mref argument along without writing mref() again.
+  Mref(Mref&) = delete;
+
+  // Act like a T&. It can convert to a T&.
+  constexpr inline operator T&() & noexcept { return t_; }
+  // Act like a T&. It can be assigned a const T&.
+  constexpr inline T& operator=(const T& t) noexcept {
+    t_ = t;
+    return *this;
+  }
+  // Act like a T&. It can be assigned a T&&.
+  constexpr inline T& operator=(T&& t) noexcept {
+    t_ = static_cast<T&&>(t);
+    return *this;
+  }
+
+  // mref() should only be used to construct Mref, not T&.
+  constexpr inline operator T&() && = delete;
+
+  constexpr inline T& inner() & { return t_; }
+
+ private:
+  friend constexpr Mref<T&> mref<>(T&);
+  friend constexpr Mref mref<>(Mref&);
+
+  // TODO: Errors are confusing when you do it wrong:
+  //
+  //   error: ‘constexpr sus::mem::Mref<T>::Mref(T&) [with T =
+  //   {anonymous}::MoveOnly]’ is private within this context
+  //
+  // Could we fix it with an intermediate type. mref() returns MrefPass, and
+  // Mref is constructed form MrefPass. Then we could delete Mref(T&) instead
+  // of making it private. Does it codegen the same though?
+  constexpr inline Mref(T& t) noexcept : t_(t) {}
 
   T& t_;
 };
-
-/// Wrap an lvalue variable with mref() when passing it as a function argument
-/// to pass it as a mutable reference.
-template <class T>
-constexpr inline Mref<T> mref(T& t) {
-  return Mref<T>(t);
-}
-
-template <class T>
-constexpr inline Mref<T> mref(const T& t) = delete;
-
-/// An Mref can be passed along as an Mref.
-template <class T>
-constexpr inline Mref<T> mref(Mref<T>& t) {
-  return Mref<T>(static_cast<T&>(t));
-}
 
 }  // namespace sus::mem
 

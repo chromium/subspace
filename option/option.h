@@ -133,7 +133,6 @@ struct Storage<T&> final {
 template <class T>
 class Option;
 
-/// A type which either holds #Some value of type T, or #None.
 template <class T>
 class Option final {
  public:
@@ -146,7 +145,7 @@ class Option final {
 
   /// Construct an Option that is holding the given value.
   template <class U>
-  static inline constexpr Option some(Mref<U> t) noexcept
+  static inline constexpr Option some(Mref<U&> t) noexcept
     requires(std::is_copy_constructible_v<T>)
   {
     return Option(t);
@@ -714,7 +713,8 @@ class Option<T&> final {
   }
 
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(Mref<std::remove_const_t<T>> t) noexcept {
+  static inline constexpr Option some(
+      Mref<std::remove_const_t<T>&> t) noexcept {
     return Option(t);
   }
 
