@@ -37,11 +37,6 @@
 #include "mem/take.h"
 #include "option/__private/is_option_type.h"
 
-namespace sus::option {
-template <class T>
-class Option;
-}
-
 namespace sus::traits::iter {
 template <class Item>
 class Once;
@@ -133,6 +128,7 @@ struct Storage<T&> final {
 template <class T>
 class Option;
 
+/// Implementation of Option for a value type (non-reference).
 template <class T>
 class Option final {
  public:
@@ -712,6 +708,7 @@ class Option final {
   sus_class_maybe_trivial_relocatable_types(unsafe_fn, T);
 };
 
+/// Implementation of Option for a reference type.
 template <class T>
 class Option<T&> final {
  public:
