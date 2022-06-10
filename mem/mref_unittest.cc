@@ -21,17 +21,27 @@ namespace {
 using sus::Mref;
 
 // Require conversion through mref().
-static_assert(!std::is_convertible_v<Mref<int>, int&>, "");
+static_assert(!std::is_convertible_v<Mref<int&>, int&>, "");
 static_assert(
-    std::is_convertible_v<Mref<int>, decltype(mref(std::declval<int&>()))>, "");
+    std::is_convertible_v<Mref<int&>, decltype(mref(std::declval<int&>()))>,
+    "");
 
 // Require conversion through mref() even if you have an Mref already.
-static_assert(!std::is_convertible_v<Mref<int>, Mref<int>&>, "");
-static_assert(std::is_convertible_v<Mref<int>,
-                                    decltype(mref(std::declval<Mref<int>&>()))>,
+static_assert(!std::is_convertible_v<Mref<int&>, Mref<int&>&>, "");
+static_assert(std::is_convertible_v<
+                  Mref<int&>, decltype(mref(std::declval<Mref<int&>&>()))>,
               "");
 
-void increment(Mref<int> i) { ++i; }
+// Cant construct Mref<const int&>.
+static_assert(!std::is_convertible_v<Mref<const int&>, int&>, "");
+static_assert(!std::is_convertible_v<Mref<const int&>,
+                                     decltype(mref(std::declval<int&>()))>,
+              "");
+
+void increment(Mref<int&> i) { ++i; }
+void increment(Mref<int, 2> i) {
+  for (int& ii : i.inner()) ++ii;
+}
 
 TEST(Mref, Pass) {
   int i = 0;
@@ -40,7 +50,7 @@ TEST(Mref, Pass) {
 }
 
 TEST(Mref, PassMref) {
-  auto f = [](Mref<int> i) { increment(mref(i)); };
+  auto f = [](Mref<int&> i) { increment(mref(i)); };
   int i = 0;
   f(mref(i));
   EXPECT_EQ(i, 1);
@@ -48,7 +58,7 @@ TEST(Mref, PassMref) {
 
 TEST(Mref, Convertible) {
   int i = 3;
-  Mref<int> m = mref(i);
+  Mref<int&> m = mref(i);
   int& j = m;
   j++;  // Increments `i` too.
   EXPECT_EQ(i, 4);
@@ -56,7 +66,7 @@ TEST(Mref, Convertible) {
 
 TEST(Mref, AssignConstRef) {
   int i = 3;
-  Mref<int> m = mref(i);
+  Mref<int&> m = mref(i);
   int j = 4;
   m = j;
   EXPECT_EQ(i, 4);
@@ -64,9 +74,33 @@ TEST(Mref, AssignConstRef) {
 
 TEST(Mref, AssignRvalueRef) {
   int i = 3;
-  Mref<int> m = mref(i);
+  Mref<int&> m = mref(i);
   m = 4;
   EXPECT_EQ(i, 4);
+}
+
+TEST(MrefArray, Pass) {
+  int i[] = {1, 2};
+  increment(mref(i));
+  EXPECT_EQ(i[0], 2);
+  EXPECT_EQ(i[1], 3);
+}
+
+TEST(MrefArray, PassMref) {
+  auto f = [](Mref<int, 2> i) { increment(mref(i)); };
+  int i[] = {1, 2};
+  f(mref(i));
+  EXPECT_EQ(i[0], 2);
+  EXPECT_EQ(i[1], 3);
+}
+
+TEST(MrefArray, Convertible) {
+  int i[] = {3, 4};
+  Mref<int, 2> m = mref(i);
+  int(&j)[] = m;
+  j[1]++;  // Increments `i` too.
+  EXPECT_EQ(i[0], 3);
+  EXPECT_EQ(i[1], 5);
 }
 
 }  // namespace
