@@ -30,13 +30,13 @@ add_library(subspace STATIC
     "mem/take.h"
     "option/__private/is_option_type.h"
     "option/option.h"
-    "traits/iter/filter.h"
-    "traits/iter/iterator.h"
-    "traits/iter/iterator.cc"
-    "traits/iter/iterator_defn.h"
-    "traits/iter/iterator_fns.h"
-    "traits/iter/once.h"
-    "traits/iter/sized_iterator.h"
+    "iter/filter.h"
+    "iter/iterator.h"
+    "iter/iterator.cc"
+    "iter/iterator_defn.h"
+    "iter/iterator_fns.h"
+    "iter/once.h"
+    "iter/sized_iterator.h"
     "lib/lib.cc"
 )
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
@@ -70,7 +70,7 @@ add_executable(subspace_unittests
     "mem/take_unittest.cc"
     "option/option_unittest.cc"
     "option/option_types_unittest.cc"
-    "traits/iter/iterator_unittest.cc"
+    "iter/iterator_unittest.cc"
 )
 set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(subspace_unittests

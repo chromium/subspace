@@ -18,7 +18,7 @@
 #include "mem/__private/relocate.h"
 #include "test/behaviour_types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
-#include "traits/iter/iterator.h"
+#include "iter/iterator.h"
 
 using ::sus::concepts::MakeDefault;
 using ::sus::mem::Mref;

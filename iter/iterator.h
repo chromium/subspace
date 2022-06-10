@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include "traits/iter/iterator_defn.h"
-#include "traits/iter/iterator_fns.h"
+#include "iter/iterator_defn.h"
+#include "iter/iterator_fns.h"
 
 // Once is included here, because there is a cycle between
 // Option->Once->IteratorBase, so Option can't include Once itself. But as long as
 // the user includes "iterator.h" they should be able to use the iterators on
 // Option.
-#include "traits/iter/once.h"
+#include "iter/once.h"

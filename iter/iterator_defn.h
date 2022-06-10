@@ -18,7 +18,7 @@
 
 #include "option/option.h"
 
-namespace sus::traits::iter {
+namespace sus::iter {
 
 using ::sus::mem::__private::relocate_one_by_memcpy_v;
 using ::sus::option::Option;
@@ -127,4 +127,4 @@ class Iterator final : public I {
           pred) && noexcept;
 };
 
-}  // namespace sus::traits::iter
+}  // namespace sus::iter

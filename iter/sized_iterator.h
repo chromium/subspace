@@ -15,9 +15,9 @@
 #pragma once
 
 #include "mem/__private/relocate.h"
-#include "traits/iter/iterator_defn.h"
+#include "iter/iterator_defn.h"
 
-namespace sus::traits::iter {
+namespace sus::iter {
 
 template <class Item, size_t SubclassSize, size_t SubclassAlign>
 struct SizedIterator {
@@ -58,4 +58,4 @@ inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
   return it;
 }
 
-}  // namespace sus::traits::iter
+}  // namespace sus::iter

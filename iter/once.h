@@ -15,13 +15,13 @@
 #pragma once
 
 #include "mem/__private/relocatable_storage.h"
-#include "traits/iter/iterator_defn.h"
+#include "iter/iterator_defn.h"
 
-namespace sus::traits::iter {
+namespace sus::iter {
 
 using ::sus::mem::__private::RelocatableStorage;
 using ::sus::option::Option;
-using ::sus::traits::iter::IteratorBase;
+using ::sus::iter::IteratorBase;
 
 /// An IteratorBase implementation that walks over at most a single Item.
 template <class Item>
@@ -46,4 +46,4 @@ inline Once<Item> once(Option<Item>&& single)
   return Once(static_cast<decltype(single)&&>(single));
 }
 
-}  // namespace sus::traits::iter
+}  // namespace sus::iter
