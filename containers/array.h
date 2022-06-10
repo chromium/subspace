@@ -50,7 +50,7 @@ template <class T, size_t N>
   requires(N <= PTRDIFF_MAX)
 class Array {
  public:
-  constexpr static Array with_default()
+  constexpr static Array with_default() noexcept
     requires(::sus::concepts::MakeDefault<T>::has_concept)
   {
     auto a = Array();
@@ -60,25 +60,26 @@ class Array {
     return a;
   }
 
-  constexpr static Array with_uninitialized(::sus::marker::UnsafeFnMarker)
+  constexpr static Array with_uninitialized(
+      ::sus::marker::UnsafeFnMarker) noexcept
     requires(::std::is_trivially_default_constructible_v<T>)
   {
     return Array();
   }
 
   template <class InitializerFn>
-  constexpr static Array with_initializer(InitializerFn f) {
+  constexpr static Array with_initializer(InitializerFn f) noexcept {
     return Array(kWithInitializer, static_cast<decltype(f)&&>(f),
                  std::make_index_sequence<N>());
   }
 
-  constexpr static Array with_value(const T& t)
+  constexpr static Array with_value(const T& t) noexcept
     requires(std::is_copy_constructible_v<T>)
   {
     return Array(kWithValue, t, std::make_index_sequence<N>());
   }
 
-  constexpr const T& get(size_t i) const&
+  constexpr const T& get(size_t i) const& noexcept
     requires(N > 0)
   {
     ::sus::check(i < N);
@@ -86,8 +87,8 @@ class Array {
   }
   constexpr const T& at(size_t i) && = delete;
 
-  T& get_mut(size_t i) &
-        requires(N > 0)
+  T& get_mut(size_t i) & noexcept
+    requires(N > 0)
   {
     ::sus::check(i < N);
     return storage_.data_[i];
