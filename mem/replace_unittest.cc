@@ -31,12 +31,12 @@ TEST(Replace, ConstexprTrivialRelocate) {
 
   auto i = []() constexpr {
     T i(2);
-    T j(::sus::mem::replace(i, T(5)));
+    T j(::sus::mem::replace(mref(i), T(5)));
     return i;
   };
   auto j = []() constexpr {
     T i(2);
-    T j(::sus::mem::replace(i, T(5)));
+    T j(::sus::mem::replace(mref(i), T(5)));
     return j;
   };
   static_assert(i() == T(5), "");
@@ -63,12 +63,12 @@ TEST(Replace, ConstexprTrivialAbi) {
 
   auto i = []() constexpr {
     S i(2);
-    S j(::sus::mem::replace(i, S(5)));
+    S j(::sus::mem::replace(mref(i), S(5)));
     return i;
   };
   auto j = []() constexpr {
     S i(2);
-    S j(::sus::mem::replace(i, S(5)));
+    S j(::sus::mem::replace(mref(i), S(5)));
     return j;
   };
   static_assert(i().num == 5, "");
@@ -92,12 +92,12 @@ TEST(Replace, ConstexprNonTrivial) {
 
   auto i = []() constexpr {
     S i(2);
-    S j(::sus::mem::replace(i, S(5)));
+    S j(::sus::mem::replace(mref(i), S(5)));
     return i;
   };
   auto j = []() constexpr {
     S i(2);
-    S j(::sus::mem::replace(i, S(5)));
+    S j(::sus::mem::replace(mref(i), S(5)));
     return j;
   };
   static_assert(i().num == 5, "");
@@ -111,20 +111,20 @@ TEST(Replace, TrivialRelocate) {
   static_assert(::sus::mem::__private::relocate_one_by_memcpy_v<T>, "");
 
   T i(2);
-  T j(::sus::mem::replace(i, T(5)));
+  T j(::sus::mem::replace(mref(i), T(5)));
   EXPECT_EQ(i, T(5));
   EXPECT_EQ(j, T(2));
 
   T lvalue(6);
 
-  T k(::sus::mem::replace(i, lvalue));
+  T k(::sus::mem::replace(mref(i), lvalue));
   EXPECT_EQ(i, T(6));
   EXPECT_EQ(k, T(5));
 
-  ::sus::mem::replace_and_discard(i, T(7));
+  ::sus::mem::replace_and_discard(mref(i), T(7));
   EXPECT_EQ(i, T(7));
 
-  ::sus::mem::replace_and_discard(i, lvalue);
+  ::sus::mem::replace_and_discard(mref(i), lvalue);
   EXPECT_EQ(i, T(6));
 }
 
@@ -151,7 +151,7 @@ TEST(Replace, TrivialAbi) {
                 "");
 
   S i(2);
-  S j(::sus::mem::replace(i, S(5)));
+  S j(::sus::mem::replace(mref(i), S(5)));
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
 #if __has_extension(trivially_relocatable)
@@ -165,7 +165,7 @@ TEST(Replace, TrivialAbi) {
   S lvalue(6);
 
   i.assigns = 0;
-  S k(::sus::mem::replace(i, lvalue));
+  S k(::sus::mem::replace(mref(i), lvalue));
   EXPECT_EQ(i.num, 6);
   EXPECT_EQ(k.num, 5);
 #if __has_extension(trivially_relocatable)
@@ -177,7 +177,7 @@ TEST(Replace, TrivialAbi) {
 #endif
 
   i.assigns = 0;
-  ::sus::mem::replace_and_discard(i, S(7));
+  ::sus::mem::replace_and_discard(mref(i), S(7));
   EXPECT_EQ(i.num, 7);
 #if __has_extension(trivially_relocatable)
   // The replace was done by memcpy.
@@ -188,7 +188,7 @@ TEST(Replace, TrivialAbi) {
 #endif
 
   i.assigns = 0;
-  ::sus::mem::replace_and_discard(i, lvalue);
+  ::sus::mem::replace_and_discard(mref(i), lvalue);
   EXPECT_EQ(i.num, 6);
 #if __has_extension(trivially_relocatable)
   // The replace was done by memcpy.
@@ -217,7 +217,7 @@ TEST(Replace, NonTrivial) {
   static_assert(!::sus::mem::__private::relocate_one_by_memcpy_v<S>, "");
 
   S i(2);
-  S j(::sus::mem::replace(i, S(5)));
+  S j(::sus::mem::replace(mref(i), S(5)));
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
   // The replace was done by move operations.
@@ -226,20 +226,20 @@ TEST(Replace, NonTrivial) {
   S lvalue(6);
 
   i.assigns = 0;
-  S k(::sus::mem::replace(i, lvalue));
+  S k(::sus::mem::replace(mref(i), lvalue));
   EXPECT_EQ(i.num, 6);
   EXPECT_EQ(k.num, 5);
   // The replace was done by move operations.
   EXPECT_EQ(1, i.assigns);
 
   i.assigns = 0;
-  ::sus::mem::replace_and_discard(i, S(7));
+  ::sus::mem::replace_and_discard(mref(i), S(7));
   EXPECT_EQ(i.num, 7);
   // The replace was done by move operations.
   EXPECT_EQ(1, i.assigns);
 
   i.assigns = 0;
-  ::sus::mem::replace_and_discard(i, lvalue);
+  ::sus::mem::replace_and_discard(mref(i), lvalue);
   EXPECT_EQ(i.num, 6);
   // The replace was done by move operations.
   EXPECT_EQ(1, i.assigns);
@@ -249,12 +249,12 @@ TEST(ReplacePtr, Const) {
   int i1 = 1, i2 = 2;
   const int* p1 = &i1;
   const int* p2 = &i2;
-  const int* o = replace_ptr(p1, p2);
+  const int* o = replace_ptr(mref(p1), p2);
   EXPECT_EQ(o, &i1);
   EXPECT_EQ(p1, &i2);
   EXPECT_EQ(p2, &i2);
 
-  o = replace_ptr(p1, nullptr);
+  o = replace_ptr(mref(p1), nullptr);
   EXPECT_EQ(o, &i2);
   EXPECT_EQ(p1, nullptr);
 }
@@ -263,12 +263,12 @@ TEST(ReplacePtr, Mut) {
   int i1 = 1, i2 = 2;
   int* p1 = &i1;
   int* p2 = &i2;
-  int* o = replace_ptr(p1, p2);
+  int* o = replace_ptr(mref(p1), p2);
   EXPECT_EQ(o, &i1);
   EXPECT_EQ(p1, &i2);
   EXPECT_EQ(p2, &i2);
 
-  o = replace_ptr(p1, nullptr);
+  o = replace_ptr(mref(p1), nullptr);
   EXPECT_EQ(o, &i2);
   EXPECT_EQ(p1, nullptr);
 }

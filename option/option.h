@@ -105,7 +105,7 @@ struct Storage final {
   State state_ = None;
 
   constexpr inline State set_state(State s) {
-    return ::sus::mem::replace(state_, s);
+    return ::sus::mem::replace(mref(state_), s);
   }
   constexpr inline State state() const { return state_; }
 };
@@ -235,10 +235,12 @@ class Option final {
     requires(!std::is_trivially_copy_assignable_v<T> &&
              std::is_copy_assignable_v<T>)
   {
-    if (t_.set_state(o.t_.state()) == Some)
-      ::sus::mem::replace_and_discard(t_.val_, const_cast<const T&>(o.t_.val_));
-    else
+    if (t_.set_state(o.t_.state()) == Some) {
+      ::sus::mem::replace_and_discard(mref(t_.val_),
+                                      const_cast<const T&>(o.t_.val_));
+    } else {
       t_.val_.~T();
+    }
     return *this;
   }
 
@@ -257,10 +259,12 @@ class Option final {
     requires(!std::is_trivially_move_assignable_v<T> &&
              std::is_move_assignable_v<T>)
   {
-    if (t_.set_state(o.t_.set_state(None)) == Some)
-      ::sus::mem::replace_and_discard(t_.val_, static_cast<T&&>(o.t_.val_));
-    else
+    if (t_.set_state(o.t_.set_state(None)) == Some) {
+      ::sus::mem::replace_and_discard(mref(t_.val_),
+                                      static_cast<T&&>(o.t_.val_));
+    } else {
       t_.val_.~T();
+    }
     return *this;
   }
 
@@ -427,7 +431,7 @@ class Option final {
     if (t_.set_state(Some) == None)
       new (&t_.val_) T(static_cast<T&&>(t));
     else
-      ::sus::mem::replace_and_discard(t_.val_, static_cast<T&&>(t));
+      ::sus::mem::replace_and_discard(mref(t_.val_), static_cast<T&&>(t));
     return t_.val_;
   }
 
@@ -644,7 +648,7 @@ class Option final {
       new (&t_.val_) T(static_cast<T&&>(t));
       return Option::none();
     } else {
-      return Option(::sus::mem::replace(t_.val_, static_cast<T&&>(t)));
+      return Option(::sus::mem::replace(mref(t_.val_), static_cast<T&&>(t)));
     }
   }
 
@@ -825,7 +829,7 @@ class Option<T&> final {
   /// preferred.
   constexpr inline T& unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
-    return *::sus::mem::replace_ptr(t_.ptr_, nullptr);
+    return *::sus::mem::replace_ptr(mref(t_.ptr_), nullptr);
   }
 
   /// Returns a const reference to the contained value inside the Option.
@@ -859,7 +863,7 @@ class Option<T&> final {
   /// default value if required.
   constexpr T& unwrap_or(T& default_result) && noexcept {
     if (t_.state() == Some)
-      return *::sus::mem::replace_ptr(t_.ptr_, nullptr);
+      return *::sus::mem::replace_ptr(mref(t_.ptr_), nullptr);
     else
       return default_result;
   }
@@ -870,7 +874,7 @@ class Option<T&> final {
     requires(std::is_same_v<std::invoke_result_t<Functor>, T&>)
   constexpr T& unwrap_or_else(Functor f) && noexcept {
     if (t_.state() == Some)
-      return *::sus::mem::replace_ptr(t_.ptr_, nullptr);
+      return *::sus::mem::replace_ptr(mref(t_.ptr_), nullptr);
     else
       return f();
   }
@@ -911,7 +915,7 @@ class Option<T&> final {
   /// afterward.
   constexpr Option take() & noexcept {
     if (t_.state() == Some)
-      return Option(*::sus::mem::replace_ptr(t_.ptr_, nullptr));
+      return Option(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr));
     else
       return Option::none();
   }
@@ -927,7 +931,8 @@ class Option<T&> final {
     requires(!std::is_void_v<R>)
   constexpr Option<R> map(MapFn m) && noexcept {
     if (t_.state() == Some)
-      return Option<R>::some(m(*::sus::mem::replace_ptr(t_.ptr_, nullptr)));
+      return Option<R>::some(
+          m(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr)));
     else
       return Option<R>::none();
   }
@@ -944,7 +949,7 @@ class Option<T&> final {
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
   constexpr Option<R> map_or(D default_result, MapFn m) && noexcept {
     if (t_.state() == Some)
-      return Option<R>(m(*::sus::mem::replace_ptr(t_.ptr_, nullptr)));
+      return Option<R>(m(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr)));
     else
       return Option<R>(static_cast<R&&>(default_result));
   }
@@ -963,7 +968,7 @@ class Option<T&> final {
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
   constexpr Option<R> map_or_else(DefaultFn default_fn, MapFn m) && noexcept {
     if (t_.state() == Some)
-      return Option<R>(m(*::sus::mem::replace_ptr(t_.ptr_, nullptr)));
+      return Option<R>(m(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr)));
     else
       return Option<R>(default_fn());
   }
@@ -979,7 +984,7 @@ class Option<T&> final {
   constexpr Option<T&> filter(Predicate p) && noexcept {
     if (t_.state() == Some) {
       // The state must move to None.
-      auto* ptr = ::sus::mem::replace_ptr(t_.ptr_, nullptr);
+      auto* ptr = ::sus::mem::replace_ptr(mref(t_.ptr_), nullptr);
       if (p(const_cast<const T&>(*ptr)))
         return Option(*ptr);
       else
@@ -1012,7 +1017,7 @@ class Option<T&> final {
     requires(::sus::option::__private::IsOptionType<R>::value)
   constexpr Option<InnerR> and_then(AndFn f) && noexcept {
     if (t_.state() == Some)
-      return f(*::sus::mem::replace_ptr(t_.ptr_, nullptr));
+      return f(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr));
     else
       return Option<InnerR>::none();
   }
@@ -1021,7 +1026,7 @@ class Option<T&> final {
   /// a value, otherwise returns the given `opt`.
   Option<T&> or_opt(Option<T&> opt) && noexcept {
     if (t_.state() == Some)
-      return Option(*::sus::mem::replace_ptr(t_.ptr_, nullptr));
+      return Option(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr));
     else
       return opt;
   }
@@ -1032,7 +1037,7 @@ class Option<T&> final {
     requires(std::is_same_v<R, Option<T&>>)
   constexpr Option<T&> or_else(ElseFn f) && noexcept {
     if (t_.state() == Some)
-      return Option(*::sus::mem::replace_ptr(t_.ptr_, nullptr));
+      return Option(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr));
     else
       return f();
   }
@@ -1044,7 +1049,7 @@ class Option<T&> final {
     if (t_.state() == Some) {
       // If `this` holds Some, we change `this` to hold None. If `opt` is None,
       // we return what this was holding, otherwise we return None.
-      auto* ptr = ::sus::mem::replace_ptr(t_.ptr_, nullptr);
+      auto* ptr = ::sus::mem::replace_ptr(mref(t_.ptr_), nullptr);
       if (opt.t_.state() == None)
         return Option(*ptr);
       else
@@ -1063,7 +1068,7 @@ class Option<T&> final {
       t_.ptr_ = &t;
       return Option::none();
     } else {
-      return Option(*::sus::mem::replace_ptr(t_.ptr_, &t));
+      return Option(*::sus::mem::replace_ptr(mref(t_.ptr_), &t));
     }
   }
 
