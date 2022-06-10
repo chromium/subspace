@@ -43,25 +43,4 @@ constexpr void swap(Mref<T&> lhs_ref, Mref<T&> rhs_ref) noexcept {
   }
 }
 
-template <class T, /* TODO: usize */ size_t N>
-  requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
-constexpr void swap(Mref<T, N> lhs_ref, Mref<T, N> rhs_ref) noexcept {
-  T(&lhs)[N] = lhs_ref;
-  T(&rhs)[N] = rhs_ref;
-  // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  if (::sus::mem::__private::relocate_array_by_memcpy_v<T> &&
-      !std::is_constant_evaluated()) {
-    char temp[sizeof(T[N])];
-    memcpy(temp, lhs, sizeof(T[N]));
-    memcpy(lhs, rhs, sizeof(T[N]));
-    memcpy(rhs, temp, sizeof(T[N]));
-  } else {
-    for (/*TODO: usize*/ size_t i = 0; i < N; ++i) {
-      T temp(static_cast<T&&>(lhs[i]));
-      lhs[i] = T(static_cast<T&&>(rhs[i]));
-      rhs[i] = T(static_cast<T&&>(temp));
-    }
-  }
-}
-
 }  // namespace sus::mem

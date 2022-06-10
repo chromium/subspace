@@ -41,27 +41,6 @@ TEST(Swap, ConstexprTrivialRelocate) {
   };
   static_assert(i() == T(5), "");
   static_assert(j() == T(2), "");
-
-  // Array.
-  {
-    using T = int[5];
-    static_assert(__private::relocate_array_by_memcpy_v<T>, "");
-
-    auto i = []() constexpr {
-      T i{2, 2, 3, 4, 2};
-      T j{5, 5, 6, 7, 5};
-      ::sus::mem::swap(mref(i), mref(j));
-      return i[3];
-    };
-    auto j = []() constexpr {
-      T i{2, 2, 3, 4, 2};
-      T j{5, 5, 6, 7, 5};
-      ::sus::mem::swap(mref(i), mref(j));
-      return j[3];
-    };
-    static_assert(i() == 7, "");
-    static_assert(j() == 4, "");
-  }
 }
 
 TEST(Swap, ConstexprTrivialAbi) {
@@ -96,29 +75,6 @@ TEST(Swap, ConstexprTrivialAbi) {
   // The swap was done by move operations, since memcpy is not constexpr.
   static_assert(i().moves == 1, "");
   static_assert(j().moves == 1, "");
-
-  // Array.
-  {
-    using T = S[2];
-
-    auto i = []() constexpr {
-      T i{1, 2};
-      T j{4, 5};
-      ::sus::mem::swap(mref(i), mref(j));
-      return static_cast<S&&>(i[1]);
-    };
-    auto j = []() constexpr {
-      T i{1, 2};
-      T j{4, 5};
-      ::sus::mem::swap(mref(i), mref(j));
-      return static_cast<S&&>(j[1]);
-    };
-    static_assert(i().num == 5, "");
-    static_assert(j().num == 2, "");
-    // The swap was done by move operations, since memcpy is not constexpr.
-    static_assert(i().moves == 1, "");
-    static_assert(j().moves == 1, "");
-  }
 }
 
 TEST(Swap, ConstexprNonTrivial) {
@@ -148,29 +104,6 @@ TEST(Swap, ConstexprNonTrivial) {
   // The swap was done by move operations, since memcpy is not constexpr.
   static_assert(i().moves == 1, "");
   static_assert(j().moves == 1, "");
-
-  // Array.
-  {
-    using T = S[2];
-
-    auto i = []() constexpr {
-      T i{1, 2};
-      T j{4, 5};
-      ::sus::mem::swap(mref(i), mref(j));
-      return static_cast<S&&>(i[1]);
-    };
-    auto j = []() constexpr {
-      T i{1, 2};
-      T j{4, 5};
-      ::sus::mem::swap(mref(i), mref(j));
-      return static_cast<S&&>(j[1]);
-    };
-    static_assert(i().num == 5, "");
-    static_assert(j().num == 2, "");
-    // The swap was done by move operations, since memcpy is not constexpr.
-    static_assert(i().moves == 1, "");
-    static_assert(j().moves == 1, "");
-  }
 }
 
 TEST(Swap, TrivialRelocate) {
@@ -182,16 +115,6 @@ TEST(Swap, TrivialRelocate) {
   ::sus::mem::swap(mref(i), mref(j));
   EXPECT_EQ(i, T(5));
   EXPECT_EQ(j, T(2));
-
-  // Array.
-  {
-    using T = int[2];
-    T i{1, 2};
-    T j{4, 5};
-    ::sus::mem::swap(mref(i), mref(j));
-    EXPECT_EQ(i[1], 5);
-    EXPECT_EQ(j[1], 2);
-  }
 }
 
 TEST(Swap, TrivialAbi) {
@@ -224,24 +147,6 @@ TEST(Swap, TrivialAbi) {
   // The swap was done by move operations.
   EXPECT_GE(i.moves, 2);
 #endif
-
-  // Array.
-  {
-    using T = S[2];
-
-    T i{1, 2};
-    T j{4, 5};
-    ::sus::mem::swap(mref(i), mref(j));
-    EXPECT_EQ(i[1].num, 5);
-    EXPECT_EQ(j[1].num, 2);
-#if __has_extension(trivially_relocatable)
-    // The swap was done by memcpy.
-    EXPECT_EQ(i[1].moves, 0);
-#else
-    // The swap was done by move operations.
-    EXPECT_GE(i[1].moves, 2);
-#endif
-  }
 }
 
 TEST(Swap, NonTrivial) {
@@ -265,20 +170,6 @@ TEST(Swap, NonTrivial) {
   // The swap was done by move operations.
   EXPECT_GE(i.moves, 2);
   EXPECT_GE(j.moves, 2);
-
-  // Array.
-  {
-    using T = S[2];
-
-    T i{1, 2};
-    T j{4, 5};
-    ::sus::mem::swap(mref(i), mref(j));
-    EXPECT_EQ(i[1].num, 5);
-    EXPECT_EQ(j[1].num, 2);
-    // The swap was done by move operations.
-    EXPECT_GE(i[1].moves, 2);
-    EXPECT_GE(j[1].moves, 2);
-  }
 }
 
 }  // namespace
