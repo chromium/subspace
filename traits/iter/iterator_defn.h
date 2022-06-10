@@ -38,6 +38,12 @@ struct IteratorEnd;
 // TODO: Do we want to be able to pass Iterator by value as a "generic"
 // iterator? Then we need an opaque Iterator type, which can be returned from an
 // adaptor method (and we can have an explicit operator to convert to it)?
+//
+// TODO: We need virtual methods because we erase the type in SizedIterator and
+// call the virtual methods there. But when the iterator is being used directly,
+// do we need each call to next() to go through virtual? Could CRTP, so we can
+// call `Subclass::next()`, with the next() method being marked `final` in the
+// subclass, bypass the vtable pointer?
 template <class ItemT>
 class IteratorBase {
  public:
