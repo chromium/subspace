@@ -145,7 +145,7 @@ TEST(Swap, TrivialAbi) {
   EXPECT_EQ(i.moves, 0);
 #else
   // The swap was done by move operations.
-  EXPECT_GE(i.moves, 2);
+  EXPECT_GE(i.moves, 1);
 #endif
 }
 
@@ -168,8 +168,8 @@ TEST(Swap, NonTrivial) {
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
   // The swap was done by move operations.
-  EXPECT_GE(i.moves, 2);
-  EXPECT_GE(j.moves, 2);
+  EXPECT_GE(i.moves, 1);
+  EXPECT_GE(j.moves, 1);
 }
 
 }  // namespace

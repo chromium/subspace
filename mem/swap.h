@@ -38,8 +38,8 @@ constexpr void swap(Mref<T&> lhs_ref, Mref<T&> rhs_ref) noexcept {
     memcpy(::sus::mem::addressof(rhs), temp, sizeof(T));
   } else {
     T temp(static_cast<T&&>(lhs));
-    lhs = T(static_cast<T&&>(rhs));
-    rhs = T(static_cast<T&&>(temp));
+    lhs = static_cast<T&&>(rhs);
+    rhs = static_cast<T&&>(temp);
   }
 }
 
