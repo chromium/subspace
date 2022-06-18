@@ -49,7 +49,7 @@ class Filter : public IteratorBase<Item> {
 
     // TODO: Just call find(pred) on itself?
     Option<Item> item = next_iter.next();
-    while (item.is_some() && !pred.call_mut(item.as_ref().unwrap_unchecked(unsafe_fn))) {
+    while (item.is_some() && !pred(item.as_ref().unwrap_unchecked(unsafe_fn))) {
       item = next_iter.next();
     }
     return item;

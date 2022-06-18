@@ -61,7 +61,7 @@ bool IteratorBase<Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
   while (item.is_some()) {
     // Safety: `item_` was checked to hold Some already.
     Item i = item.take().unwrap_unchecked(unsafe_fn);
-    if (!f.call_mut(static_cast<decltype(i)&&>(i))) return false;
+    if (!f(static_cast<decltype(i)&&>(i))) return false;
     item = next();
   }
   return true;
@@ -73,7 +73,7 @@ bool IteratorBase<Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
   while (item.is_some()) {
     // Safety: `item_` was checked to hold Some already.
     Item i = item.take().unwrap_unchecked(unsafe_fn);
-    if (f.call_mut(static_cast<decltype(i)&&>(i))) return true;
+    if (f(static_cast<decltype(i)&&>(i))) return true;
     item = next();
   }
   return false;
