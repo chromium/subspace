@@ -14,8 +14,7 @@
 
 #pragma once
 
-#include <functional>
-
+#include "fn/fn_defn.h"
 #include "option/option.h"
 
 namespace sus::iter {
@@ -65,7 +64,7 @@ class IteratorBase {
   /// the predicate.
   ///
   /// Returns `true` if the iterator is empty.
-  virtual bool all(std::function<bool(Item)> f) noexcept;
+  virtual bool all(::sus::fn::FnMut<bool(Item)> f) noexcept;
 
   /// Tests whether any elements of the iterator match a predicate.
   ///
@@ -75,7 +74,7 @@ class IteratorBase {
   /// the predicate.
   ///
   /// Returns `false` if the iterator is empty.
-  virtual bool any(std::function<bool(Item)> f) noexcept;
+  virtual bool any(::sus::fn::FnMut<bool(Item)> f) noexcept;
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -123,7 +122,7 @@ class Iterator final : public I {
   // Adaptor methods.
 
   Iterator<Filter<typename I::Item, sizeof(I), alignof(I)>> filter(
-      std::function<bool(const std::remove_reference_t<typename I::Item>&)>
+      ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
           pred) && noexcept;
 };
 

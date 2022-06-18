@@ -14,8 +14,7 @@
 
 #pragma once
 
-#include <functional>  // TODO: Replace std::function with something.
-
+#include "fn/fn.h"
 #include "iter/iterator_defn.h"
 #include "iter/sized_iterator.h"
 
@@ -57,24 +56,24 @@ IteratorEnd IteratorBase<Item>::end() & noexcept {
 }
 
 template <class Item>
-bool IteratorBase<Item>::all(std::function<bool(Item)> f) noexcept {
+bool IteratorBase<Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
   Option<Item> item = next();
   while (item.is_some()) {
     // Safety: `item_` was checked to hold Some already.
     Item i = item.take().unwrap_unchecked(unsafe_fn);
-    if (!f(static_cast<decltype(i)&&>(i))) return false;
+    if (!f.call_mut(static_cast<decltype(i)&&>(i))) return false;
     item = next();
   }
   return true;
 }
 
 template <class Item>
-bool IteratorBase<Item>::any(std::function<bool(Item)> f) noexcept {
+bool IteratorBase<Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
   Option<Item> item = next();
   while (item.is_some()) {
     // Safety: `item_` was checked to hold Some already.
     Item i = item.take().unwrap_unchecked(unsafe_fn);
-    if (f(static_cast<decltype(i)&&>(i))) return true;
+    if (f.call_mut(static_cast<decltype(i)&&>(i))) return true;
     item = next();
   }
   return false;
@@ -93,7 +92,7 @@ size_t IteratorBase<Item>::count() noexcept {
 
 template <class I>
 Iterator<Filter<typename I::Item, sizeof(I), alignof(I)>> Iterator<I>::filter(
-    std::function<bool(const std::remove_reference_t<typename I::Item>&)>
+    ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
         pred) && noexcept {
   // TODO: make_sized_iterator immediately copies `this` to either the body of
   // the output iterator or to a heap allocation (if it can't be trivially

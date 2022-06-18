@@ -14,22 +14,21 @@
 
 #pragma once
 
-#include <functional>  // TODO: Replace this.
-
-#include "mem/__private/relocatable_storage.h"
-#include "mem/__private/relocate.h"
+#include "fn/fn_defn.h"
 #include "iter/iterator_defn.h"
 #include "iter/sized_iterator.h"
+#include "mem/__private/relocatable_storage.h"
+#include "mem/__private/relocate.h"
 
 namespace sus::iter {
 
+using ::sus::iter::IteratorBase;
 using ::sus::mem::__private::RelocatableStorage;
 using ::sus::mem::__private::relocate_one_by_memcpy_v;
-using ::sus::iter::IteratorBase;
 
 template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter : public IteratorBase<Item> {
-  using Pred = std::function<bool(
+  using Pred = ::sus::fn::FnMut<bool(
       // TODO: write a sus::const_ref<T>?
       const std::remove_reference_t<const std::remove_reference_t<Item>&>&)>;
   using InnerSizedIter = SizedIterator<Item, InnerIterSize, InnerIterAlign>;
@@ -50,7 +49,7 @@ class Filter : public IteratorBase<Item> {
 
     // TODO: Just call find(pred) on itself?
     Option<Item> item = next_iter.next();
-    while (item.is_some() && !pred(item.as_ref().unwrap_unchecked(unsafe_fn))) {
+    while (item.is_some() && !pred.call_mut(item.as_ref().unwrap_unchecked(unsafe_fn))) {
       item = next_iter.next();
     }
     return item;
