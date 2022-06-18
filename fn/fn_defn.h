@@ -91,6 +91,11 @@ class FnOnce<R(CallArgs...)> {
   FnOnce(FnOnce&& o);
   FnOnce& operator=(FnOnce&& o);
 
+  inline R operator()(CallArgs&&... args) && {
+    return static_cast<decltype(*this)&&>(*this).call_once(
+        forward<CallArgs>(args)...);
+  }
+
   R call_once(CallArgs&&...) &&;
 
  protected:
@@ -175,7 +180,12 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
   FnMut(FnMut&&) = default;
   FnMut& operator=(FnMut&&) = default;
 
-  R call_mut(CallArgs&&...) &;  // TODO: Move to Fn, the qualifier is enough.
+  inline R operator()(CallArgs&&... args) & {
+    return static_cast<decltype(*this)&&>(*this).call_mut(
+        forward<CallArgs>(args)...);
+  }
+
+  R call_mut(CallArgs&&...) &;
 
  protected:
   template <::sus::concepts::callable::FunctionPointer F>
@@ -225,6 +235,10 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
   Fn(Fn&&) = default;
   Fn& operator=(Fn&&) = default;
 
+  inline R operator()(CallArgs&&... args) const& {
+    return static_cast<decltype(*this)&&>(*this).call(
+        forward<CallArgs>(args)...);
+  }
   R call(CallArgs&&...) const&;
 
  protected:
