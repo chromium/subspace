@@ -106,8 +106,8 @@ Fn<R(CallArgs...)>::Fn(F fn) : FnMut<R(CallArgs...)>(fn) {}
 
 template <class R, class... CallArgs>
 template <::sus::concepts::callable::Callable F, class... StoredArgs>
-Fn<R(CallArgs...)>::Fn(F&& fn, StoredArgs&&... stored)
-    : FnMut<R(CallArgs...)>(__private::StorageConstructionFn, forward<F>(fn),
+Fn<R(CallArgs...)>::Fn(__private::StorageConstructionFnType construction, F&& fn, StoredArgs&&... stored)
+    : FnMut<R(CallArgs...)>(construction, forward<F>(fn),
                             forward<StoredArgs>(stored)...) {}
 
 template <class R, class... CallArgs>
