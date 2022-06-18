@@ -226,7 +226,7 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
     requires(__private::FnCompatible<F, R, const std::decay_t<StoredArgs>&...,
                                      CallArgs...>)
   constexpr static Fn with_storage(F fn, StoredArgs&&... stored) {
-    return Fn(static_cast<decltype(fn)&&>(fn),
+    return Fn(__private::StorageConstructionFn, static_cast<decltype(fn)&&>(fn),
               (forward<StoredArgs>(stored))...);
   }
 
@@ -246,7 +246,7 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
   Fn(F fn);
 
   template <::sus::concepts::callable::Callable F, class... StoredArgs>
-  Fn(F&& fn, StoredArgs&&... args);
+  Fn(__private::StorageConstructionFnType, F&& fn, StoredArgs&&... args);
 
   // This class may only have trivially-destructible storage and must not
   // do anything in its destructor, as `FnOnce` moves from itself, and it
