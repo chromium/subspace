@@ -68,6 +68,8 @@ class FnOnce<R(CallArgs...)> {
  public:
   // TODO: Method pointers, with and without storage.
 
+  /// Makes a FnOnce closure that holds a function pointer inline. No heap
+  /// allocations are performed.
   template <::sus::concepts::callable::FunctionPointer F>
     requires(std::is_same_v<
              decltype(std::declval<F>()(std::declval<CallArgs>()...)), R>)
@@ -75,11 +77,15 @@ class FnOnce<R(CallArgs...)> {
     return FnOnce(static_cast<R (*)(CallArgs...)>(fn));
   }
 
+  /// Makes a FnOnce closure that holds its functor and any stored arguments in
+  /// a heap allocation.
+  ///
+  /// Requires that `F` can receive a reference to, or a moved value, of each
+  /// stored argument.
   template <::sus::concepts::callable::Callable F, class... StoredArgs>
-    requires(__private::CheckFnOnceCompatible<F, R>(
-        __private::runtype_args_for<F, sizeof...(StoredArgs)>(),
-        __private::Pack<std::decay_t<StoredArgs>&&...>(),
-        __private::Pack<CallArgs...>()))
+    requires(__private::FnCompatibleOnce<
+             F, R, __private::Pack<std::decay_t<StoredArgs>...>,
+             __private::Pack<CallArgs...>>)
   constexpr static FnOnce with_storage(F fn, StoredArgs&&... stored) {
     return FnOnce(__private::StorageConstructionFnOnce,
                   static_cast<decltype(fn)&&>(fn),
@@ -91,11 +97,13 @@ class FnOnce<R(CallArgs...)> {
   FnOnce(FnOnce&& o);
   FnOnce& operator=(FnOnce&& o);
 
+  // Runs the closure, moving its storage (if any) into the call.
   inline R operator()(CallArgs&&... args) && {
     return static_cast<decltype(*this)&&>(*this).call_once(
         forward<CallArgs>(args)...);
   }
 
+  // Runs the closure, moving its storage (if any) into the call.
   R call_once(CallArgs&&...) &&;
 
  protected:
@@ -159,6 +167,8 @@ class FnOnce<R(CallArgs...)> {
 template <class R, class... CallArgs>
 class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
  public:
+  /// Makes a FnMut closure that holds a function pointer inline. No heap
+  /// allocations are performed.
   template <::sus::concepts::callable::FunctionPointer F>
     requires(std::is_same_v<
              decltype(std::declval<F>()(std::declval<CallArgs>()...)), R>)
@@ -166,6 +176,11 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
     return FnMut(static_cast<R (*)(CallArgs...)>(fn));
   }
 
+  /// Makes a FnOnce closure that holds its functor and any stored arguments in
+  /// a heap allocation.
+  ///
+  /// Requires that `F` can receive a (const or mutable) reference to each
+  /// stored argument.
   template <::sus::concepts::callable::Callable F, class... StoredArgs>
     requires(__private::FnCompatibleMut<
              F, R, __private::Pack<std::decay_t<StoredArgs>...>,
@@ -181,11 +196,15 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
   FnMut(FnMut&&) = default;
   FnMut& operator=(FnMut&&) = default;
 
+  // Runs the closure, passing mutable references to its storage (if any) into
+  // the call.
   inline R operator()(CallArgs&&... args) & {
     return static_cast<decltype(*this)&&>(*this).call_mut(
         forward<CallArgs>(args)...);
   }
 
+  // Runs the closure, passing mutable references to its storage (if any) into
+  // the call.
   R call_mut(CallArgs&&...) &;
 
  protected:
@@ -216,6 +235,8 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
 template <class R, class... CallArgs>
 class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
  public:
+  /// Makes a Fn closure that holds a function pointer inline. No heap
+  /// allocations are performed.
   template <::sus::concepts::callable::FunctionPointer F>
     requires(std::is_same_v<
              decltype(std::declval<F>()(std::declval<CallArgs>()...)), R>)
@@ -223,6 +244,10 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
     return Fn(static_cast<R (*)(CallArgs...)>(fn));
   }
 
+  /// Makes a Fn closure that holds its functor and any stored arguments in a
+  /// heap allocation.
+  ///
+  /// Requires that `F` can receive a const reference to each stored argument.
   template <::sus::concepts::callable::Callable F, class... StoredArgs>
     requires(__private::FnCompatibleConst<
              F, R, __private::Pack<std::decay_t<StoredArgs>...>,
@@ -237,10 +262,15 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
   Fn(Fn&&) = default;
   Fn& operator=(Fn&&) = default;
 
+  // Runs the closure, passing const references to its storage (if any) into
+  // the call.
   inline R operator()(CallArgs&&... args) const& {
     return static_cast<decltype(*this)&&>(*this).call(
         forward<CallArgs>(args)...);
   }
+
+  // Runs the closure, passing const references to its storage (if any) into
+  // the call.
   R call(CallArgs&&...) const&;
 
  protected:
