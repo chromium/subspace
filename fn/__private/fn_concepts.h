@@ -23,10 +23,61 @@
 namespace sus::fn::__private {
 
 template <class F, class R, class... Args>
-concept FnCompatible = requires(F f, Args&&... args) {
-                         ::sus::concepts::callable::Callable<F>;
-                         { f(forward<Args>(args)...) } -> std::same_as<R>;
-                       };
+concept FnCallableRun = requires(F f, Args&&... args) {
+                          { f(forward<Args>(args)...) } -> std::same_as<R>;
+                        };
+
+template <class F, class R, class StoredArgsPack, class CallArgsPack>
+struct FnCallableWithOnceStorage;
+
+template <class F, class R, class... StoredArgs, class... CallArgs>
+  requires(FnCallableRun<F, R, StoredArgs&&..., CallArgs...>)
+struct FnCallableWithOnceStorage<F, R, Pack<StoredArgs...>,
+                                  Pack<CallArgs...>> {
+  static constexpr bool value = true;
+};
+
+template <class F, class R, class StoredArgsPack, class CallArgsPack>
+concept FnCompatibleOnce =
+    requires {
+      ::sus::concepts::callable::Callable<F>;
+      FnCallableWithConstStorage<F, R, StoredArgsPack, CallArgsPack>::value;
+    };
+
+
+template <class F, class R, class StoredArgsPack, class CallArgsPack>
+struct FnCallableWithMutStorage;
+
+template <class F, class R, class... StoredArgs, class... CallArgs>
+  requires(FnCallableRun<F&, R, StoredArgs&..., CallArgs...>)
+struct FnCallableWithMutStorage<F, R, Pack<StoredArgs...>,
+                                  Pack<CallArgs...>> {
+  static constexpr bool value = true;
+};
+
+template <class F, class R, class StoredArgsPack, class CallArgsPack>
+concept FnCompatibleMut =
+    requires {
+      ::sus::concepts::callable::Callable<F>;
+      FnCallableWithMutStorage<F, R, StoredArgsPack, CallArgsPack>::value;
+    };
+
+template <class F, class R, class StoredArgsPack, class CallArgsPack>
+struct FnCallableWithConstStorage;
+
+template <class F, class R, class... StoredArgs, class... CallArgs>
+  requires(FnCallableRun<const F&, R, const StoredArgs&..., CallArgs...>)
+struct FnCallableWithConstStorage<F, R, Pack<StoredArgs...>,
+                                  Pack<CallArgs...>> {
+  static constexpr bool value = true;
+};
+
+template <class F, class R, class StoredArgsPack, class CallArgsPack>
+concept FnCompatibleConst =
+    requires {
+      ::sus::concepts::callable::Callable<F>;
+      FnCallableWithConstStorage<F, R, StoredArgsPack, CallArgsPack>::value;
+    };
 
 // TODO: Make a nicer error message for:
 // ```

@@ -57,11 +57,12 @@ struct MoveOnly {
 
 template <class Fn, class Functor, class... StoredArgs>
 concept has_with_fn_pointer = requires(Functor f, StoredArgs... args) {
-                                Fn::with_fn_pointer(f, args...);
+                                { Fn::with_fn_pointer(f, args...) };
                               };
 template <class Fn, class Functor, class... StoredArgs>
-concept has_with_storage =
-    requires(Functor f, StoredArgs... args) { Fn::with_storage(f, args...); };
+concept has_with_storage = requires(Functor f, StoredArgs... args) {
+                             { Fn::with_storage(f, args...) };
+                           };
 
 void v_v_function() {}
 using VVFunction = decltype(v_v_function);
@@ -118,7 +119,8 @@ static_assert(has_with_storage<FnMut<void()>, VVLambdaBound>);
 static_assert(has_with_storage<Fn<void()>, VVLambdaBound>);
 static_assert(has_with_storage<FnOnce<void()>, VVLambdaBoundMut>);
 static_assert(has_with_storage<FnMut<void()>, VVLambdaBoundMut>);
-static_assert(has_with_storage<Fn<void()>, VVLambdaBoundMut>);
+// But a mutable lambda can't be stored in a (const) Fn.
+static_assert(!has_with_storage<Fn<void()>, VVLambdaBoundMut>);
 // Stored variables, without call variables. They must match in number.
 static_assert(has_with_storage<FnOnce<void()>, decltype([](int) {}), int>);
 static_assert(has_with_storage<FnOnce<void()>, decltype([](int, int) {}), int, int>);
@@ -223,12 +225,15 @@ static_assert(has_with_storage<Fn<void()>, decltype([](const int) {}), int>);
 // The receiver of the args passed to call/call_mut/call_once must be compatible
 // with the specified type in the Fn/FnMut/FnOnce.
 static_assert(has_with_storage<FnOnce<void(MoveOnly)>, decltype([](MoveOnly) {})>);
+static_assert(has_with_storage<FnOnce<void(MoveOnly)>, decltype([](const MoveOnly&) {})>);
 static_assert(!has_with_storage<FnOnce<void(MoveOnly)>, decltype([](MoveOnly&) {})>);
 static_assert(has_with_storage<FnOnce<void(MoveOnly)>, decltype([](MoveOnly&&) {})>);
 static_assert(has_with_storage<FnMut<void(MoveOnly)>, decltype([](MoveOnly) {})>);
+static_assert(has_with_storage<FnMut<void(MoveOnly)>, decltype([](const MoveOnly&) {})>);
 static_assert(!has_with_storage<FnMut<void(MoveOnly)>, decltype([](MoveOnly&) {})>);
 static_assert(has_with_storage<FnMut<void(MoveOnly)>, decltype([](MoveOnly&&) {})>);
 static_assert(has_with_storage<Fn<void(MoveOnly)>, decltype([](MoveOnly) {})>);
+static_assert(has_with_storage<Fn<void(MoveOnly)>, decltype([](const MoveOnly&) {})>);
 static_assert(!has_with_storage<Fn<void(MoveOnly)>, decltype([](MoveOnly&) {})>);
 static_assert(has_with_storage<Fn<void(MoveOnly)>, decltype([](MoveOnly&&) {})>);
 
@@ -519,6 +524,27 @@ TEST(FnMut, CanBeMovedAsMutOrOnce) {
     fn_once = static_cast<decltype(fn_mut2)&&>(fn_mut2);
     EXPECT_EQ(static_cast<decltype(fn_once)&&>(fn_once).call_once(), 4);
   }
+}
+
+TEST(FnMut, MutableLambda) {
+  auto x = [i = int(1)]() mutable { return ++i;};
+  auto fn = FnMut<int()>::with_storage(x);
+  EXPECT_EQ(fn(), 2);
+  EXPECT_EQ(fn(), 3);
+}
+
+TEST(FnMut, MutableLambdaWithBoundArg) {
+  auto x = [i = int(1)](int j) mutable { return ++i + j;};
+  auto fn = FnMut<int()>::with_storage(x, 3);
+  EXPECT_EQ(fn(), 5);
+  EXPECT_EQ(fn(), 6);
+}
+
+TEST(FnMut, MutableLambdaWithCallArg) {
+  auto x = [i = int(1)](int j) mutable { return ++i + j;};
+  auto fn = FnMut<int(int)>::with_storage(x);
+  EXPECT_EQ(fn(3), 5);
+  EXPECT_EQ(fn(4), 7);
 }
 
 }  // namespace
