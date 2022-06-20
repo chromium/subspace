@@ -44,10 +44,8 @@ template <class ConstructionType, ::sus::concepts::callable::CallableObject F,
 FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction, F&& fn,
                                StoredArgs&&... stored)
     : type_(__private::Storage) {
-  using FnStorage = __private::FnStorage<F, decltype(&F::operator()),
-                                         std::decay_t<StoredArgs>...>;
-  auto* s = new FnStorage(static_cast<F&&>(fn), &F::operator(),
-                          forward<StoredArgs>(stored)...);
+  using FnStorage = __private::FnStorage<F, std::decay_t<StoredArgs>...>;
+  auto* s = new FnStorage(static_cast<F&&>(fn), forward<StoredArgs>(stored)...);
   make_vtable(*s, construction);
   storage_ = s;
 }
@@ -106,7 +104,8 @@ Fn<R(CallArgs...)>::Fn(F fn) : FnMut<R(CallArgs...)>(fn) {}
 
 template <class R, class... CallArgs>
 template <::sus::concepts::callable::Callable F, class... StoredArgs>
-Fn<R(CallArgs...)>::Fn(__private::StorageConstructionFnType construction, F&& fn, StoredArgs&&... stored)
+Fn<R(CallArgs...)>::Fn(__private::StorageConstructionFnType construction,
+                       F&& fn, StoredArgs&&... stored)
     : FnMut<R(CallArgs...)>(construction, forward<F>(fn),
                             forward<StoredArgs>(stored)...) {}
 

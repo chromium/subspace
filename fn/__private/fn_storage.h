@@ -29,6 +29,9 @@ struct StoredArgsStorageBase {};
 template <size_t N, class... T>
 struct StoredArgsStorage;
 
+template <>
+struct StoredArgsStorage<0> {};
+
 template <class T>
 struct StoredArgsStorage<1, T> {
   template <size_t I>
@@ -92,17 +95,19 @@ struct FnStorageVtable : public FnStorageVtableBase {
 
 template <sus::concepts::callable::Callable F, class... StoredArgs>
 class FnStorage : public FnStorageBase {
+  using Storage = StoredArgsStorage<sizeof...(StoredArgs), StoredArgs...>;
+
  public:
   template <class... PassedStoredArgs>
-  constexpr FnStorage(F&& f, PassedStoredArgs&&... args)
-      : functor_(static_cast<F&&>(f)),
+  constexpr FnStorage(F&& callable, PassedStoredArgs&&... args)
+      : callable_(static_cast<F&&>(callable)),
         stored_(forward<PassedStoredArgs>(args)...) {}
 
   template <class R, class... CallArgs>
   static R call(const FnStorageBase& self_base, CallArgs... callargs) {
     const auto& self = static_cast<const FnStorage&>(self_base);
     return CallImpl<CallArgs...>::template call_impl<R>(
-        self.functor_, self.stored_, std::index_sequence_for<StoredArgs...>(),
+        self.callable_, self.stored_, std::index_sequence_for<StoredArgs...>(),
         forward<CallArgs>(callargs)...);
   }
 
@@ -110,7 +115,7 @@ class FnStorage : public FnStorageBase {
   static R call_mut(FnStorageBase& self_base, CallArgs... callargs) {
     auto& self = static_cast<FnStorage&>(self_base);
     return CallImpl<CallArgs...>::template call_mut_impl<R>(
-        self.functor_, self.stored_, std::index_sequence_for<StoredArgs...>(),
+        self.callable_, self.stored_, std::index_sequence_for<StoredArgs...>(),
         forward<CallArgs>(callargs)...);
   }
 
@@ -118,16 +123,13 @@ class FnStorage : public FnStorageBase {
   static R call_once(FnStorageBase&& self_base, CallArgs... callargs) {
     auto&& self = static_cast<FnStorage&&>(self_base);
     return CallImpl<CallArgs...>::template call_once_impl<R>(
-        static_cast<F&&>(self.functor_),
-        static_cast<decltype(self.stored_)&&>(self.stored_),
+        static_cast<F&&>(self.callable_), static_cast<Storage&&>(self.stored_),
         std::index_sequence_for<StoredArgs...>(),
         runtype_args_for<F, sizeof...(StoredArgs)>(),
         forward<CallArgs>(callargs)...);
   }
 
  private:
-  using Storage = StoredArgsStorage<sizeof...(StoredArgs), StoredArgs...>;
-
   // We can only have one variadic argument set per template, so we have to
   // split the `StoredArgs` and `CallArgs` onto separate types, and the
   // `Indices` onto the template function. Thus, we next these functions inside
@@ -135,33 +137,36 @@ class FnStorage : public FnStorageBase {
   template <class... CallArgs>
   struct CallImpl {
     template <class R, size_t... Indicies>
-    static inline R call_impl(const F& fn, const Storage& storage,
+    static inline R call_impl(const F& callable_, const Storage& storage,
                               std::index_sequence<Indicies...>,
                               CallArgs&&... args) {
-      return fn(StorageAccess<Storage, Indicies>::get(storage)...,
-                forward<CallArgs>(args)...);
+      return RunType<F>::call(callable_,
+                              StorageAccess<Storage, Indicies>::get(storage)...,
+                              forward<CallArgs>(args)...);
     }
 
     template <class R, size_t... Indicies>
-    static inline R call_mut_impl(F& fn, Storage& storage,
+    static inline R call_mut_impl(F& callable_, Storage& storage,
                                   std::index_sequence<Indicies...>,
                                   CallArgs&&... args) {
-      return fn(StorageAccess<Storage, Indicies>::get_mut(storage)...,
-                forward<CallArgs>(args)...);
+      return RunType<F>::call(
+          callable_, StorageAccess<Storage, Indicies>::get_mut(storage)...,
+          forward<CallArgs>(args)...);
     }
 
     template <class R, size_t... Indicies, class... ReceiverArgs>
-    static inline R call_once_impl(F&& fn, Storage&& storage,
+    static inline R call_once_impl(F&& callable_, Storage&& storage,
                                    std::index_sequence<Indicies...>,
                                    Pack<ReceiverArgs...>, CallArgs&&... args) {
-      return static_cast<F&&>(fn)(
+      return RunType<F>::call(
+          static_cast<F&&>(callable_),
           FlexRef<ReceiverArgs>(StorageAccess<Storage, Indicies>::get_once(
               static_cast<Storage&&>(storage)))...,
           forward<CallArgs>(args)...);
     }
   };
 
-  F functor_;
+  F callable_;
   [[no_unique_address]] Storage stored_;
 };
 

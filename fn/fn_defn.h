@@ -167,8 +167,9 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
   }
 
   template <::sus::concepts::callable::Callable F, class... StoredArgs>
-    requires(__private::FnCompatible<F, R, std::decay_t<StoredArgs>&...,
-                                     CallArgs...>)
+    requires(__private::FnCompatibleMut<
+             F, R, __private::Pack<std::decay_t<StoredArgs>...>,
+             __private::Pack<CallArgs...>>)
   constexpr static FnMut with_storage(F fn, StoredArgs&&... stored) {
     return FnMut(__private::StorageConstructionFnMut,
                  static_cast<decltype(fn)&&>(fn),
@@ -223,8 +224,9 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
   }
 
   template <::sus::concepts::callable::Callable F, class... StoredArgs>
-    requires(__private::FnCompatible<F, R, const std::decay_t<StoredArgs>&...,
-                                     CallArgs...>)
+    requires(__private::FnCompatibleConst<
+             F, R, __private::Pack<std::decay_t<StoredArgs>...>,
+             __private::Pack<CallArgs...>>)
   constexpr static Fn with_storage(F fn, StoredArgs&&... stored) {
     return Fn(__private::StorageConstructionFn, static_cast<decltype(fn)&&>(fn),
               (forward<StoredArgs>(stored))...);

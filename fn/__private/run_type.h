@@ -25,6 +25,7 @@
 
 namespace sus::fn::__private {
 
+using sus::concepts::callable::Callable;
 using sus::concepts::callable::CallableObject;
 using sus::concepts::callable::FunctionPointer;
 
@@ -35,7 +36,7 @@ struct Pack {
 
 template <class F>
 struct RunType;
-template <bool IsMethod, class F>
+template <class F, class... FnThisPointer>
 struct RunTypeImpl;
 
 template <size_t QueryIndex, size_t CurrentSearchIndex, class Pack>
@@ -67,17 +68,18 @@ struct PackPrefix<Pack<T...>, std::index_sequence<Indicies...>> {
   using Types = Pack<typename AtPackIndex<Indicies, 0, Pack<T...>>::Type...>;
 };
 
-template <bool IsMethod, class R, class... FnArgs>
-struct RunTypeImpl<IsMethod, R(FnArgs...)> {
-  using Args = Pack<FnArgs...>;
-  static constexpr size_t num_args = sizeof...(FnArgs);
-  static constexpr bool is_method = IsMethod;
+template <class R, class... FnArgs, class... FnThisPointer>
+struct RunTypeImpl<R(FnArgs...), FnThisPointer...> {
+  using ArgsWithThisPointer = Pack<FnThisPointer..., FnArgs...>;
+  // 0 or 1 arg, for functions or methods respectively.
+  using ThisPointer = Pack<FnThisPointer...>;
+  using ArgsWithoutThisPointer = Pack<FnArgs...>;
 };
 
 // Provides the first `N` receiver parameter types of a callable `F`. If the
 // callable is a method on an object, the first argument type is a pointer to
 // the receiver itself.
-template <class F, size_t N = sizeof(RunType<F>::NumArgs)>
+template <class F, size_t N = sizeof(RunType<F>::ArgsWithThisPointer::size)>
   requires requires { typename RunType<F>::Args; }
 using runtype_args_for =
     typename PackPrefix<typename RunType<F>::Args,
@@ -85,15 +87,17 @@ using runtype_args_for =
 
 // RunType<F> provides the receiver argument types of a callable `F`.
 
-#define SUS_FUNCTION_POINTER(CallType, Qualifiers)                 \
-  template <class R, class... FnArgs>                              \
-  struct RunType<R(CallType*)(FnArgs...) Qualifiers>               \
-      : RunTypeImpl<false, R(FnArgs...)> {                         \
-    template <class... Args>                                       \
-    static constexpr auto call(R(CallType* f)(Args...) Qualifiers, \
-                               Args&&... args) {                   \
-      return f(forward<Args>(args)...);                            \
-    }                                                              \
+#define SUS_FUNCTION_POINTER(CallType, Qualifiers)                  \
+  template <class R, class... FnArgs>                               \
+  struct RunType<R(CallType*)(FnArgs...) Qualifiers>                \
+      : RunTypeImpl<R(FnArgs...)> {                                 \
+    using Args = RunTypeImpl<R(FnArgs...)>::ArgsWithoutThisPointer; \
+                                                                    \
+    template <class... Args>                                        \
+    static constexpr auto call(R(CallType* f)(Args...) Qualifiers,  \
+                               Args&&... args) {                    \
+      return f(forward<Args>(args)...);                             \
+    }                                                               \
   };
 
 SUS_FUNCTION_POINTER(, )
@@ -109,7 +113,10 @@ SUS_FUNCTION_POINTER(__fastcall, noexcept)
 #define SUS_METHOD_POINTER(CallType, PointerQualifiers, Qualifiers)          \
   template <class R, class C, class... FnArgs>                               \
   struct RunType<R (CallType C::*PointerQualifiers)(FnArgs...) Qualifiers>   \
-      : RunTypeImpl<true, R(C* PointerQualifiers, FnArgs...)> {              \
+      : RunTypeImpl<R(FnArgs...), C * PointerQualifiers> {                   \
+    using Super = RunTypeImpl<R(FnArgs...), C * PointerQualifiers>;          \
+    using Args = Super::ArgsWithThisPointer;                                 \
+                                                                             \
     template <class... Args>                                                 \
     static constexpr auto call(R (CallType C::*PointerQualifiers f)(Args...) \
                                    Qualifiers,                               \
@@ -148,25 +155,13 @@ SUS_METHOD_POINTER(__stdcall, , && noexcept)
 
 #undef SUS_METHOD_POINTER
 
-template <class F>
+template <Callable F>
   requires requires {
-             // A `CallableObject` excludes `FunctionPointer`.
-             requires CallableObject<F>;
              { &F::operator() };
            }
 struct RunType<F> : RunType<decltype(&F::operator())> {
-  template <class Func, class... Args>
-  static constexpr auto call(Func&& f, Args&&... args) {
-    return forward<Func>(f)(forward<Args>(args)...);
-  }
-};
+  using Args = RunType<decltype(&F::operator())>::Super::ArgsWithoutThisPointer;
 
-template <class F>
-  requires requires {
-             requires FunctionPointer<F>;
-             { &F::operator() };
-           }
-struct RunType<F> : RunType<decltype(+std::declval<F>())> {
   template <class Func, class... Args>
   static constexpr auto call(Func&& f, Args&&... args) {
     return forward<Func>(f)(forward<Args>(args)...);
