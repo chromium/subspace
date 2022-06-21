@@ -18,8 +18,6 @@
 #include <type_traits>
 
 #include "concepts/callable.h"
-#include "fn/__private/fn_concepts.h"
-#include "fn/__private/run_type.h"
 #include "mem/forward.h"
 
 namespace sus::fn {
@@ -36,6 +34,11 @@ enum FnType {
   MovedFrom,
   FnPointer,
   Storage,
+};
+
+template <class F>
+struct SusBind {
+  F lambda;
 };
 
 }  // namespace __private
@@ -66,15 +69,19 @@ class Fn;
 template <class R, class... CallArgs>
 class FnOnce<R(CallArgs...)> {
  public:
-  // TODO: Method pointers, with and without storage.
+  /// Makes a FnOnce closure that holds a function pointer inline. No heap
+  /// allocations are performed.
+  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  constexpr static FnOnce with(F fn) noexcept {
+    return FnOnce(static_cast<R (*)(CallArgs...)>(fn));
+  }
 
   /// Makes a FnOnce closure that holds a function pointer inline. No heap
   /// allocations are performed.
-  template <::sus::concepts::callable::FunctionPointer F>
-    requires(std::is_same_v<
-             decltype(std::declval<F>()(std::declval<CallArgs>()...)), R>)
-  constexpr static FnOnce with_fn_pointer(F fn) {
-    return FnOnce(static_cast<R (*)(CallArgs...)>(fn));
+  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  constexpr static FnOnce with(
+      __private::SusBind<F>&& holder) noexcept {
+    return FnOnce(static_cast<R (*)(CallArgs...)>(holder.lambda));
   }
 
   /// Makes a FnOnce closure that holds its functor and any stored arguments in
@@ -82,42 +89,37 @@ class FnOnce<R(CallArgs...)> {
   ///
   /// Requires that `F` can receive a reference to, or a moved value, of each
   /// stored argument.
-  template <::sus::concepts::callable::Callable F, class... StoredArgs>
-    requires(__private::FnCompatibleOnce<
-             F, R, __private::Pack<std::decay_t<StoredArgs>...>,
-             __private::Pack<CallArgs...>>)
-  constexpr static FnOnce with_storage(F fn, StoredArgs&&... stored) {
+  // TODO: Check return type.
+  template <::sus::concepts::callable::CallableObjectOnce<CallArgs...> F>
+  constexpr static FnOnce with(
+      __private::SusBind<F>&& holder) noexcept {
     return FnOnce(__private::StorageConstructionFnOnce,
-                  static_cast<decltype(fn)&&>(fn),
-                  (forward<StoredArgs>(stored))...);
+                  static_cast<F&&>(holder.lambda));
   }
 
-  ~FnOnce();
+  ~FnOnce() noexcept;
 
-  FnOnce(FnOnce&& o);
-  FnOnce& operator=(FnOnce&& o);
+  FnOnce(FnOnce&& o) noexcept;
+  FnOnce& operator=(FnOnce&& o) noexcept;
 
-  // Runs the closure, moving its storage (if any) into the call.
-  inline R operator()(CallArgs&&... args) && {
-    return static_cast<decltype(*this)&&>(*this).call_once(
-        forward<CallArgs>(args)...);
+  FnOnce(const FnOnce&) noexcept = delete;
+  FnOnce& operator=(const FnOnce&) noexcept = delete;
+
+  // Runs and consumes the closure.
+  inline R operator()(CallArgs&&... args) && noexcept {
+    return static_cast<FnOnce&&>(*this).call_once(forward<CallArgs>(args)...);
   }
 
-  // Runs the closure, moving its storage (if any) into the call.
-  R call_once(CallArgs&&...) &&;
+  // Runs and consumes the closure.
+  R call_once(CallArgs&&...) && noexcept;
 
  protected:
   // Function pointer constructor.
-  template <::sus::concepts::callable::FunctionPointer F>
-  FnOnce(F fn);
+  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  FnOnce(F fn) noexcept;
 
-  template <class ConstructionType,
-            ::sus::concepts::callable::FunctionPointer F, class... StoredArgs>
-  FnOnce(ConstructionType, F fn, StoredArgs&&... stored);
-
-  template <class ConstructionType, ::sus::concepts::callable::CallableObject F,
-            class... StoredArgs>
-  FnOnce(ConstructionType, F&& fn, StoredArgs&&... stored);
+  template <class ConstructionType, class F>
+  FnOnce(ConstructionType, F&& lambda) noexcept;
 
   // Functions to construct and return a pointer to a static vtable object for
   // the `__private::FnStorage` being stored in `storage_`.
@@ -129,11 +131,14 @@ class FnOnce<R(CallArgs...)> {
   // trying to compile functions that aren't accessible and thus don't need to
   // be able to compile.
   template <class FnStorage>
-  void make_vtable(FnStorage&, __private::StorageConstructionFnOnceType);
+  static void make_vtable(FnStorage&,
+                          __private::StorageConstructionFnOnceType) noexcept;
   template <class FnStorage>
-  void make_vtable(FnStorage&, __private::StorageConstructionFnMutType);
+  static void make_vtable(FnStorage&,
+                          __private::StorageConstructionFnMutType) noexcept;
   template <class FnStorage>
-  void make_vtable(FnStorage&, __private::StorageConstructionFnType);
+  static void make_vtable(FnStorage&,
+                          __private::StorageConstructionFnType) noexcept;
 
   // TODO: Small size optimization? When can we inline the storage beyond
   // a fn pointer with no bound args?
@@ -169,11 +174,16 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
  public:
   /// Makes a FnMut closure that holds a function pointer inline. No heap
   /// allocations are performed.
-  template <::sus::concepts::callable::FunctionPointer F>
-    requires(std::is_same_v<
-             decltype(std::declval<F>()(std::declval<CallArgs>()...)), R>)
-  constexpr static FnMut with_fn_pointer(F fn) {
+  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  constexpr static FnMut with(F fn) noexcept {
     return FnMut(static_cast<R (*)(CallArgs...)>(fn));
+  }
+
+  /// Makes a FnMut closure that holds a function pointer inline. No heap
+  /// allocations are performed.
+  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  constexpr static FnMut with(__private::SusBind<F>&& holder) noexcept {
+    return FnMut(static_cast<R (*)(CallArgs...)>(holder.lambda));
   }
 
   /// Makes a FnOnce closure that holds its functor and any stored arguments in
@@ -181,39 +191,39 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
   ///
   /// Requires that `F` can receive a (const or mutable) reference to each
   /// stored argument.
-  template <::sus::concepts::callable::Callable F, class... StoredArgs>
-    requires(__private::FnCompatibleMut<
-             F, R, __private::Pack<std::decay_t<StoredArgs>...>,
-             __private::Pack<CallArgs...>>)
-  constexpr static FnMut with_storage(F fn, StoredArgs&&... stored) {
+  template <::sus::concepts::callable::CallableObjectMut<CallArgs...> F>
+  constexpr static FnMut with(__private::SusBind<F>&& holder) noexcept {
     return FnMut(__private::StorageConstructionFnMut,
-                 static_cast<decltype(fn)&&>(fn),
-                 (forward<StoredArgs>(stored))...);
+                 static_cast<F&&>(holder.lambda));
   }
 
-  ~FnMut() = default;
+  ~FnMut() noexcept = default;
 
-  FnMut(FnMut&&) = default;
-  FnMut& operator=(FnMut&&) = default;
+  FnMut(FnMut&&) noexcept = default;
+  FnMut& operator=(FnMut&&) noexcept = default;
 
-  // Runs the closure, passing mutable references to its storage (if any) into
-  // the call.
-  inline R operator()(CallArgs&&... args) & {
-    return static_cast<decltype(*this)&&>(*this).call_mut(
+  FnMut(const FnMut&) noexcept = delete;
+  FnMut& operator=(const FnMut&) noexcept = delete;
+
+  // Runs the closure.
+  inline R operator()(CallArgs&&... args) & noexcept {
+    return call_mut(forward<CallArgs>(args)...);
+  }
+  inline R operator()(CallArgs&&... args) && noexcept {
+    return static_cast<FnOnce<R(CallArgs...)>&&>(*this).call_once(
         forward<CallArgs>(args)...);
   }
 
-  // Runs the closure, passing mutable references to its storage (if any) into
-  // the call.
-  R call_mut(CallArgs&&...) &;
+  // Runs the closure.
+  R call_mut(CallArgs&&...) & noexcept;
 
  protected:
-  template <::sus::concepts::callable::FunctionPointer F>
-  FnMut(F fn);
+  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  FnMut(F fn) noexcept;
 
-  template <class ConstructionType, ::sus::concepts::callable::Callable F,
-            class... StoredArgs>
-  FnMut(ConstructionType, F&& fn, StoredArgs&&... args);
+  template <class ConstructionType,
+            ::sus::concepts::callable::CallableObjectMut<CallArgs...> F>
+  FnMut(ConstructionType, F&& fn) noexcept;
 };
 
 /// A closure that holds a `Callable`, may be called multiple times, and is will
@@ -237,48 +247,50 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
  public:
   /// Makes a Fn closure that holds a function pointer inline. No heap
   /// allocations are performed.
-  template <::sus::concepts::callable::FunctionPointer F>
-    requires(std::is_same_v<
-             decltype(std::declval<F>()(std::declval<CallArgs>()...)), R>)
-  constexpr static Fn with_fn_pointer(F fn) {
+  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  constexpr static Fn with(F fn) noexcept {
     return Fn(static_cast<R (*)(CallArgs...)>(fn));
+  }
+
+  /// Makes a FnMut closure that holds a function pointer inline. No heap
+  /// allocations are performed.
+  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  constexpr static Fn with(__private::SusBind<F>&& holder) noexcept {
+    return Fn(static_cast<R (*)(CallArgs...)>(holder.lambda));
   }
 
   /// Makes a Fn closure that holds its functor and any stored arguments in a
   /// heap allocation.
   ///
   /// Requires that `F` can receive a const reference to each stored argument.
-  template <::sus::concepts::callable::Callable F, class... StoredArgs>
-    requires(__private::FnCompatibleConst<
-             F, R, __private::Pack<std::decay_t<StoredArgs>...>,
-             __private::Pack<CallArgs...>>)
-  constexpr static Fn with_storage(F fn, StoredArgs&&... stored) {
-    return Fn(__private::StorageConstructionFn, static_cast<decltype(fn)&&>(fn),
-              (forward<StoredArgs>(stored))...);
+  template <::sus::concepts::callable::CallableObjectConst<CallArgs...> F>
+  constexpr static Fn with(__private::SusBind<F>&& holder) noexcept {
+    return Fn(__private::StorageConstructionFn,
+              static_cast<F&&>(holder.lambda));
   }
 
-  ~Fn() = default;
+  ~Fn() noexcept = default;
 
-  Fn(Fn&&) = default;
-  Fn& operator=(Fn&&) = default;
+  Fn(Fn&&) noexcept = default;
+  Fn& operator=(Fn&&) noexcept = default;
 
-  // Runs the closure, passing const references to its storage (if any) into
-  // the call.
-  inline R operator()(CallArgs&&... args) const& {
-    return static_cast<decltype(*this)&&>(*this).call(
-        forward<CallArgs>(args)...);
+  Fn(const Fn&) noexcept = delete;
+  Fn& operator=(const Fn&) noexcept = delete;
+
+  // Runs the closure.
+  inline R operator()(CallArgs&&... args) const& noexcept {
+    return call(forward<CallArgs>(args)...);
   }
 
-  // Runs the closure, passing const references to its storage (if any) into
-  // the call.
-  R call(CallArgs&&...) const&;
+  // Runs the closure.
+  R call(CallArgs&&...) const& noexcept;
 
  protected:
-  template <::sus::concepts::callable::FunctionPointer F>
-  Fn(F fn);
+  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  Fn(F fn) noexcept;
 
-  template <::sus::concepts::callable::Callable F, class... StoredArgs>
-  Fn(__private::StorageConstructionFnType, F&& fn, StoredArgs&&... args);
+  template <::sus::concepts::callable::CallableObjectConst<CallArgs...> F>
+  Fn(__private::StorageConstructionFnType, F&& fn) noexcept;
 
   // This class may only have trivially-destructible storage and must not
   // do anything in its destructor, as `FnOnce` moves from itself, and it

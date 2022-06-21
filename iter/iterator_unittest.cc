@@ -92,28 +92,28 @@ TEST(IteratorBase, All) {
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_TRUE(it.all(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return i <= 5; })));
+    EXPECT_TRUE(
+        it.all(::sus::fn::Fn<bool(int)>::with([](int i) { return i <= 5; })));
   }
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_FALSE(it.all(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return i <= 4; })));
+    EXPECT_FALSE(
+        it.all(::sus::fn::Fn<bool(int)>::with([](int i) { return i <= 4; })));
   }
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_FALSE(it.all(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return i <= 0; })));
+    EXPECT_FALSE(
+        it.all(::sus::fn::Fn<bool(int)>::with([](int i) { return i <= 0; })));
   }
 
   // Shortcuts at the first failure.
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_FALSE(it.all(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return i <= 3; })));
+    EXPECT_FALSE(
+        it.all(::sus::fn::Fn<bool(int)>::with([](int i) { return i <= 3; })));
     Option<int> n = it.next();
     ASSERT_TRUE(n.is_some());
     // The `all()` function stopped when it consumed 4, so we can still consume
@@ -123,8 +123,8 @@ TEST(IteratorBase, All) {
 
   {
     auto it = EmptyIterator<int>::with_default();
-    EXPECT_TRUE(it.all(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return false; })));
+    EXPECT_TRUE(
+        it.all(::sus::fn::Fn<bool(int)>::with([](int i) { return false; })));
   }
 }
 
@@ -132,28 +132,28 @@ TEST(IteratorBase, Any) {
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_TRUE(it.any(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return i == 5; })));
+    EXPECT_TRUE(
+        it.any(::sus::fn::Fn<bool(int)>::with([](int i) { return i == 5; })));
   }
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_FALSE(it.any(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return i == 6; })));
+    EXPECT_FALSE(
+        it.any(::sus::fn::Fn<bool(int)>::with([](int i) { return i == 6; })));
   }
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_TRUE(it.any(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return i == 1; })));
+    EXPECT_TRUE(
+        it.any(::sus::fn::Fn<bool(int)>::with([](int i) { return i == 1; })));
   }
 
   // Shortcuts at the first success.
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_TRUE(it.any(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return i == 3; })));
+    EXPECT_TRUE(
+        it.any(::sus::fn::Fn<bool(int)>::with([](int i) { return i == 3; })));
     Option<int> n = it.next();
     ASSERT_TRUE(n.is_some());
     // The `any()` function stopped when it consumed 3, so we can still consume
@@ -163,8 +163,8 @@ TEST(IteratorBase, Any) {
 
   {
     auto it = EmptyIterator<int>::with_default();
-    EXPECT_FALSE(it.any(::sus::fn::Fn<bool(int)>::with_fn_pointer(
-        [](int i) { return false; })));
+    EXPECT_FALSE(
+        it.any(::sus::fn::Fn<bool(int)>::with([](int i) { return false; })));
   }
 }
 
@@ -204,14 +204,14 @@ TEST(IteratorBase, Filter) {
   int nums[5] = {1, 2, 3, 4, 5};
 
   auto fit = ArrayIterator<int, 5>::with_array(nums).filter(
-      ::sus::fn::Fn<bool(const int&)>::with_fn_pointer(
+      ::sus::fn::Fn<bool(const int&)>::with(
           [](const int& i) { return i >= 3; }));
   EXPECT_EQ(fit.count(), 3);
 
   auto fit2 = ArrayIterator<int, 5>::with_array(nums)
-                  .filter(::sus::fn::Fn<bool(const int&)>::with_fn_pointer(
+                  .filter(::sus::fn::Fn<bool(const int&)>::with(
                       [](const int& i) { return i >= 3; }))
-                  .filter(::sus::fn::Fn<bool(const int&)>::with_fn_pointer(
+                  .filter(::sus::fn::Fn<bool(const int&)>::with(
                       [](const int& i) { return i <= 4; }));
   int expect = 3;
   for (int i : fit2) {

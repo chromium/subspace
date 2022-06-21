@@ -22,38 +22,45 @@
 namespace sus::fn {
 
 template <class R, class... CallArgs>
-template <::sus::concepts::callable::FunctionPointer F>
-FnOnce<R(CallArgs...)>::FnOnce(F fn)
+template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+FnOnce<R(CallArgs...)>::FnOnce(F fn) noexcept
     : type_(__private::FnPointer), fn_ptr_(fn) {}
 
 template <class R, class... CallArgs>
-template <class ConstructionType, ::sus::concepts::callable::FunctionPointer F,
-          class... StoredArgs>
-FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction, F fn,
-                               StoredArgs&&... stored)
+template <class ConstructionType, class F>
+FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction,
+                               F&& lambda) noexcept
     : type_(__private::Storage) {
-  using FnStorage = __private::FnStorage<F, std::decay_t<StoredArgs>...>;
-  auto* s = new FnStorage(static_cast<F&&>(fn), forward<StoredArgs>(stored)...);
+  using FnStorage = __private::FnStorage<F>;
+  auto* s = new FnStorage(static_cast<F&&>(lambda));
   make_vtable(*s, construction);
   storage_ = s;
 }
 
 template <class R, class... CallArgs>
-template <class ConstructionType, ::sus::concepts::callable::CallableObject F,
-          class... StoredArgs>
-FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction, F&& fn,
-                               StoredArgs&&... stored)
-    : type_(__private::Storage) {
-  using FnStorage = __private::FnStorage<F, std::decay_t<StoredArgs>...>;
-  auto* s = new FnStorage(static_cast<F&&>(fn), forward<StoredArgs>(stored)...);
-  make_vtable(*s, construction);
-  storage_ = s;
-}
+template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+FnMut<R(CallArgs...)>::FnMut(F fn) noexcept : FnOnce<R(CallArgs...)>(fn) {}
+
+template <class R, class... CallArgs>
+template <class ConstructionType,
+          ::sus::concepts::callable::CallableObjectMut<CallArgs...> F>
+FnMut<R(CallArgs...)>::FnMut(ConstructionType construction, F&& lambda) noexcept
+    : FnOnce<R(CallArgs...)>(construction, forward<F>(lambda)) {}
+
+template <class R, class... CallArgs>
+template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+Fn<R(CallArgs...)>::Fn(F fn) noexcept : FnMut<R(CallArgs...)>(fn) {}
+
+template <class R, class... CallArgs>
+template <::sus::concepts::callable::CallableObjectConst<CallArgs...> F>
+Fn<R(CallArgs...)>::Fn(__private::StorageConstructionFnType construction,
+                       F&& lambda) noexcept
+    : FnMut<R(CallArgs...)>(construction, forward<F>(lambda)) {}
 
 template <class R, class... CallArgs>
 template <class FnStorage>
 void FnOnce<R(CallArgs...)>::make_vtable(
-    FnStorage& storage, __private::StorageConstructionFnOnceType) {
+    FnStorage& storage, __private::StorageConstructionFnOnceType) noexcept {
   static __private::FnStorageVtable<R, CallArgs...> vtable = {
       .call_once = &FnStorage::template call_once<R, CallArgs...>,
       .call_mut = nullptr,
@@ -65,7 +72,7 @@ void FnOnce<R(CallArgs...)>::make_vtable(
 template <class R, class... CallArgs>
 template <class FnStorage>
 void FnOnce<R(CallArgs...)>::make_vtable(
-    FnStorage& storage, __private::StorageConstructionFnMutType) {
+    FnStorage& storage, __private::StorageConstructionFnMutType) noexcept {
   static __private::FnStorageVtable<R, CallArgs...> vtable = {
       .call_once = &FnStorage::template call_once<R, CallArgs...>,
       .call_mut = &FnStorage::template call_mut<R, CallArgs...>,
@@ -76,8 +83,8 @@ void FnOnce<R(CallArgs...)>::make_vtable(
 
 template <class R, class... CallArgs>
 template <class FnStorage>
-void FnOnce<R(CallArgs...)>::make_vtable(FnStorage& storage,
-                                         __private::StorageConstructionFnType) {
+void FnOnce<R(CallArgs...)>::make_vtable(
+    FnStorage& storage, __private::StorageConstructionFnType) noexcept {
   static __private::FnStorageVtable<R, CallArgs...> vtable = {
       .call_once = &FnStorage::template call_once<R, CallArgs...>,
       .call_mut = &FnStorage::template call_mut<R, CallArgs...>,
@@ -87,30 +94,7 @@ void FnOnce<R(CallArgs...)>::make_vtable(FnStorage& storage,
 }
 
 template <class R, class... CallArgs>
-template <::sus::concepts::callable::FunctionPointer F>
-FnMut<R(CallArgs...)>::FnMut(F fn) : FnOnce<R(CallArgs...)>(fn) {}
-
-template <class R, class... CallArgs>
-template <class ConstructionType, ::sus::concepts::callable::Callable F,
-          class... StoredArgs>
-FnMut<R(CallArgs...)>::FnMut(ConstructionType construction, F&& fn,
-                             StoredArgs&&... stored)
-    : FnOnce<R(CallArgs...)>(construction, forward<F>(fn),
-                             forward<StoredArgs>(stored)...) {}
-
-template <class R, class... CallArgs>
-template <::sus::concepts::callable::FunctionPointer F>
-Fn<R(CallArgs...)>::Fn(F fn) : FnMut<R(CallArgs...)>(fn) {}
-
-template <class R, class... CallArgs>
-template <::sus::concepts::callable::Callable F, class... StoredArgs>
-Fn<R(CallArgs...)>::Fn(__private::StorageConstructionFnType construction,
-                       F&& fn, StoredArgs&&... stored)
-    : FnMut<R(CallArgs...)>(construction, forward<F>(fn),
-                            forward<StoredArgs>(stored)...) {}
-
-template <class R, class... CallArgs>
-FnOnce<R(CallArgs...)>::~FnOnce() {
+FnOnce<R(CallArgs...)>::~FnOnce() noexcept {
   switch (type_) {
     case __private::MovedFrom:
       break;
@@ -125,7 +109,7 @@ FnOnce<R(CallArgs...)>::~FnOnce() {
 }
 
 template <class R, class... CallArgs>
-FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) : type_(o.type_) {
+FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) noexcept : type_(o.type_) {
   switch (type_) {
     case __private::MovedFrom:
       ::sus::panic();
@@ -139,7 +123,7 @@ FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) : type_(o.type_) {
 }
 
 template <class R, class... CallArgs>
-FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) {
+FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) noexcept {
   switch (type_) {
     case __private::MovedFrom:
       break;
@@ -164,16 +148,19 @@ FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) {
 }
 
 template <class R, class... CallArgs>
-R FnOnce<R(CallArgs...)>::call_once(CallArgs&&... args) && {
+R FnOnce<R(CallArgs...)>::call_once(CallArgs&&... args) && noexcept {
   switch (type_) {
     case __private::MovedFrom:
       ::sus::panic();
     case __private::FnPointer: {
+      type_ = __private::MovedFrom;
       auto* fn = ::sus::mem::replace_ptr(mref(fn_ptr_.fn_), nullptr);
       return fn(static_cast<CallArgs&&>(args)...);
     }
     case __private::Storage: {
+      type_ = __private::MovedFrom;
       auto* storage = ::sus::mem::replace_ptr(mref(storage_), nullptr);
+      ::sus::check(storage);
       auto& vtable = static_cast<__private::FnStorageVtable<R, CallArgs...>&>(
           storage->vtable.unwrap_mut());
 
@@ -193,7 +180,7 @@ R FnOnce<R(CallArgs...)>::call_once(CallArgs&&... args) && {
 }
 
 template <class R, class... CallArgs>
-R FnMut<R(CallArgs...)>::call_mut(CallArgs&&... args) & {
+R FnMut<R(CallArgs...)>::call_mut(CallArgs&&... args) & noexcept {
   using Super = FnOnce<R(CallArgs...)>;
   switch (Super::type_) {
     case __private::MovedFrom:
@@ -212,7 +199,7 @@ R FnMut<R(CallArgs...)>::call_mut(CallArgs&&... args) & {
 }
 
 template <class R, class... CallArgs>
-R Fn<R(CallArgs...)>::call(CallArgs&&... args) const& {
+R Fn<R(CallArgs...)>::call(CallArgs&&... args) const& noexcept {
   using Super = FnOnce<R(CallArgs...)>;
   switch (Super::type_) {
     case __private::MovedFrom:
