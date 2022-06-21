@@ -5,8 +5,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+if (MSVC)
+    add_compile_options(/Zc:preprocessor /wd5105)
+endif()
+
 set(subspace_include_dirs
-  "${subspace_SOURCE_DIR}"
+    "${subspace_SOURCE_DIR}"
 )
 include_directories(${subspace_include_dirs})
 
@@ -24,11 +28,9 @@ add_library(subspace STATIC
     "concepts/make_default.h"
     "concepts/callable.h"
     "containers/array.h"
-    "fn/__private/flex_ref.h"
-    "fn/__private/fn_concepts.h"
     "fn/__private/fn_storage.h"
-    "fn/__private/run_type.h"
     "fn/fn.h"
+    "fn/fn_bind.h"
     "fn/fn_defn.h"
     "fn/fn_impl.h"
     "iter/filter.h"
@@ -38,6 +40,7 @@ add_library(subspace STATIC
     "iter/iterator_impl.h"
     "iter/once.h"
     "iter/sized_iterator.h"
+    "macros/for_each.h"
     "marker/unsafe.h"
     "mem/__private/relocatable_storage.h"
     "mem/__private/relocate.h"

@@ -14,5 +14,6 @@
 
 #pragma once
 
-#include "fn_defn.h"
-#include "fn_impl.h"
+#include "fn/fn_bind.h"
+#include "fn/fn_defn.h"
+#include "fn/fn_impl.h"

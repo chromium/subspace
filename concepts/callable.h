@@ -14,17 +14,55 @@
 
 #pragma once
 
+#include <concepts>
 #include <type_traits>
+
+#include "mem/forward.h"
 
 namespace sus::concepts::callable {
 
-template <class F>
-concept FunctionPointer = std::is_pointer_v<decltype(+std::declval<F>())>;
+template <class F, class... Args>
+concept FunctionPointer = requires(F f, Args&&... args) {
+                            { (+f)(forward<Args>(args)...) };
+                          };
 
-template <class F>
-concept CallableObject = (!FunctionPointer<F>) && requires { &F::operator(); };
+template <class F, class R, class... Args>
+concept FunctionPointerReturns = (FunctionPointer<F, Args...>) &&
+                                 requires(F f, Args&&... args) {
+                                   {
+                                     (+f)(forward<Args>(args)...)
+                                     } -> std::same_as<R>;
+                                 };
 
-template <class F>
-concept Callable = FunctionPointer<F> || CallableObject<F>;
+template <class F, class... Args>
+concept CallableObjectOnce = (!FunctionPointer<F, Args...>) &&
+                             requires(F f, Args&&... args) {
+                               { static_cast<F&&>(f)(forward<Args>(args)...) };
+                             };
+
+template <class F, class... Args>
+concept CallableOnce = FunctionPointer<F> || CallableObjectOnce<F, Args...>;
+
+template <class F, class... Args>
+concept CallableObjectMut = (!FunctionPointer<F, Args...>) &&
+                            requires(F f, Args&&... args) {
+                              { static_cast<F&>(f)(forward<Args>(args)...) };
+                            };
+
+template <class F, class... Args>
+concept CallableMut = FunctionPointer<F> || CallableObjectMut<F, Args...>;
+
+template <class F, class... Args>
+concept CallableObjectConst = (!FunctionPointer<F, Args...>) &&
+                              requires(F f, Args&&... args) {
+                                {
+                                  static_cast<const F&>(f)(
+                                      forward<Args>(args)...)
+                                };
+                              };
+
+template <class F, class... Args>
+concept CallableConst =
+    FunctionPointer<F, Args...> || CallableObjectConst<F, Args...>;
 
 }  // namespace sus::concepts::callable

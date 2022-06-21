@@ -15,10 +15,10 @@
 #include "option/option.h"
 
 #include "assertions/builtin.h"
+#include "iter/iterator.h"
 #include "mem/__private/relocate.h"
 #include "test/behaviour_types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
-#include "iter/iterator.h"
 
 using ::sus::concepts::MakeDefault;
 using ::sus::mem::Mref;
