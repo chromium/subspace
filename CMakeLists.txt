@@ -76,6 +76,7 @@ add_executable(subspace_unittests
     "assertions/panic_unittest.cc"
     "assertions/unreachable_unittest.cc"
     "containers/array_unittest.cc"
+    "concepts/from_unittest.cc"
     "concepts/into_unittest.cc"
     "concepts/make_default_unittest.cc"
     "containers/array_unittest.cc"

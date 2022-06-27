@@ -21,7 +21,7 @@ namespace sus::concepts::from {
 // clang-format off
 template <class ToType, class FromType>
 concept From = requires (FromType&& from) {
-    { ToType::From(static_cast<FromType&&>(from)) } -> std::same_as<ToType>;
+    { ToType::from(static_cast<FromType&&>(from)) } -> std::same_as<ToType>;
 };
 // clang-format on
 

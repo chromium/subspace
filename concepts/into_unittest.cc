@@ -20,45 +20,104 @@
 
 using sus::concepts::from::From;
 using sus::concepts::into::Into;
+using sus::concepts::into::__private::IntoRef;
 
 namespace {
 
 struct S {
-  S() {}
-  S(S&&) {}
+  int val = 5;
 };
-struct T {
-  T() {}
-  T(T&&) {}
-};
-
-struct FromS {
-  static auto From(S) { return FromS(); }
-};
-
-static_assert(From<FromS, S>);   // S to FromS works.
-static_assert(!From<FromS, T>);  // T to FromS doesn't.
-
-template <class To, class From>
-concept receive_from = requires(From from) {
-                         {
-                           [](To) {}(Into(static_cast<From&&>(from)))
-                         };
-                       };
-
-static_assert(receive_from<FromS, S>);   // Receiving FromS from S works.
-static_assert(!receive_from<FromS, T>);  // Receiving FromS from T doesn't.
 
 struct FromInt {
-  static auto From(int) { return FromInt(); }
+  static auto from(int) { return FromInt(); }
 };
 
-// Receiving FromInt from int works.
-static_assert(receive_from<FromInt, int>);
-// Unfortunately, implicit conversions happen too.
-//
-// TODO: Can we somehow prevent it?
-static_assert(receive_from<FromInt, short>);
-static_assert(receive_from<FromInt, long long>);
+static_assert(Into<int, FromInt>);
+static_assert(!Into<S, FromInt>);
+
+template <class To, class From>
+concept can_into = requires(From&& from) {
+                     {
+                       [](To) {}(sus::into(sus::forward<From>(from)))
+                     };
+                   };
+// into() accepts const or mutable rvalues.
+static_assert(!can_into<FromInt, const int&>);
+static_assert(!can_into<FromInt, int&>);
+static_assert(can_into<FromInt, int&&>);
+static_assert(can_into<FromInt, const int&&>);
+
+template <class To, class From>
+concept can_move_into = requires(From&& from) {
+                          {
+                            [](To) {}(sus::move_into(sus::forward<From>(from)))
+                          };
+                        };
+// move_into() accepts mutable lvalue or rvalue references.
+static_assert(!can_move_into<FromInt, const int&>);
+static_assert(can_move_into<FromInt, int&>);
+static_assert(can_move_into<FromInt, int&&>);
+static_assert(!can_move_into<FromInt, const int&&>);
+
+struct Counter {
+  Counter(int& copies, int& moves) : copies(copies), moves(moves) {}
+  Counter(const Counter& c) : copies(c.copies), moves(c.moves) { copies += 1; }
+  Counter(Counter&& c) : copies(c.copies), moves(c.moves) { moves += 1; }
+
+  static auto from(Counter&& c) -> Counter {
+    return Counter(static_cast<Counter&&>(c));
+  }
+
+  int& copies;
+  int& moves;
+};
+
+TEST(Into, Into) {
+  int copies = 0;
+  int moves = 0;
+
+  [](Counter c) {}(sus::into(Counter(copies, moves)));
+  EXPECT_EQ(copies, 0);
+  EXPECT_EQ(moves, 1);
+
+  auto from = Counter(copies, moves);
+  [](Counter c) {}(sus::into(static_cast<Counter&&>(from)));
+  EXPECT_EQ(copies, 0);
+  EXPECT_EQ(moves, 2);
+}
+
+TEST(Into, MoveInto) {
+  int copies = 0;
+  int moves = 0;
+
+  auto from = Counter(copies, moves);
+  [](Counter c) {}(sus::move_into(from));
+  EXPECT_EQ(copies, 0);
+  EXPECT_EQ(moves, 1);
+
+  auto from2 = Counter(copies, moves);
+  [](Counter c) {}(sus::move_into(static_cast<Counter&&>(from2)));
+  EXPECT_EQ(copies, 0);
+  EXPECT_EQ(moves, 2);
+
+  [](Counter c) {}(sus::move_into(Counter(copies, moves)));
+  EXPECT_EQ(copies, 0);
+  EXPECT_EQ(moves, 3);
+}
+
+struct FromThings {
+  static auto from(int i) { return FromThings(i); }
+  static auto from(S s) { return FromThings(s.val); }
+  int got_value;
+};
+
+TEST(Into, Concept) {
+  // F takes anything that FromThings can be constructed from.
+  auto f = []<Into<FromThings> T>(T&& t) -> FromThings {
+    return sus::move_into(t);
+  };
+  EXPECT_EQ(f(int(2)).got_value, 2);
+  EXPECT_EQ(f(S(3)).got_value, 3);
+}
 
 }  // namespace
