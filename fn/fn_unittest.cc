@@ -85,8 +85,10 @@ static_assert(!has_with<FnOnce<void()>, decltype([i = int(1)]() mutable {++i;})>
 // when there's no captured variables.
 static_assert(has_with<FnOnce<void()>, decltype(sus_bind0([i = int(1)](){}))>);
 // And use sus_bind0_mut for a mutable lambda.
-static_assert(!has_with<FnOnce<void()>, decltype(sus_bind0([i = int(1)]() mutable {++i;}))>);
 static_assert(has_with<FnOnce<void()>, decltype(sus_bind0_mut([i = int(1)]() mutable {++i;}))>);
+// This incorrectly uses sus_bind0 with a mutable lambda, which produces a warning/error.
+#pragma warning(suppress: 4996)
+static_assert(!has_with<FnOnce<void()>, decltype(sus_bind0([i = int(1)]() mutable {++i;}))>);
 
 // clang-format on
 

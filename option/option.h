@@ -30,6 +30,7 @@
 #include <type_traits>
 
 #include "assertions/check.h"
+#include "assertions/nonnull.h"
 #include "concepts/make_default.h"
 #include "marker/unsafe.h"
 #include "mem/mref.h"
@@ -113,7 +114,7 @@ struct Storage<T&> final {
   constexpr Storage(Storage&&) = default;
   constexpr Storage& operator=(Storage&&) = default;
 
-  constexpr Storage(State s) {}
+  constexpr Storage(State) {}
   constexpr Storage(T& t) : ptr_(&t) {}
 
   T* ptr_ = nullptr;
@@ -306,7 +307,7 @@ class Option final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr T expect(/* TODO: string view type */ const char* msg) && noexcept
-      [[nonnull]] {
+      sus_assertions_nonnull {
     ::sus::check_with_message(is_some(), *msg);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
@@ -319,7 +320,7 @@ class Option final {
   /// currently `None`.
   constexpr const T& expect_ref(
       /* TODO: string view type */ const char* msg) const& noexcept
-      [[nonnull]] {
+      sus_assertions_nonnull {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_;
   }
@@ -332,7 +333,8 @@ class Option final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr T& expect_mut(
-      /* TODO: string view type */ const char* msg) & noexcept [[nonnull]] {
+      /* TODO: string view type */ const char* msg) & noexcept
+      sus_assertions_nonnull {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_;
   }
@@ -776,7 +778,7 @@ class Option<T&> final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr T& expect(/* TODO: string view type */ const char* msg) && noexcept
-      [[nonnull]] {
+      sus_assertions_nonnull {
     ::sus::check_with_message(is_some(), *msg);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
@@ -789,7 +791,7 @@ class Option<T&> final {
   /// currently `None`.
   constexpr const T& expect_ref(
       /* TODO: string view type */ const char* msg) const& noexcept
-      [[nonnull]] {
+      sus_assertions_nonnull {
     ::sus::check_with_message(is_some(), *msg);
     return *t_.ptr_;
   }
@@ -802,7 +804,8 @@ class Option<T&> final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr T& expect_mut(
-      /* TODO: string view type */ const char* msg) & noexcept [[nonnull]] {
+      /* TODO: string view type */ const char* msg) & noexcept
+      sus_assertions_nonnull {
     ::sus::check_with_message(is_some(), *msg);
     return *t_.ptr_;
   }

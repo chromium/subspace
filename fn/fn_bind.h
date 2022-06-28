@@ -111,7 +111,7 @@ void verify_unsafe_marker(const M& m) {
 /// definition of it. Thus we use variadic arguments to capture all of the
 /// lambda.
 #define sus_bind(names, lambda, ...)                                          \
-  [&]() {                                                                     \
+  _Pragma("warning(suppress : 5253)")[&]() {                                  \
     sus_for_each(_sus__check_storage, sus_for_each_sep_none,                  \
                  _sus__unpack names);                                         \
     const auto _sus__lambda = lambda __VA_OPT__(, ) __VA_ARGS__;              \
@@ -128,20 +128,19 @@ void verify_unsafe_marker(const M& m) {
       using ::sus::fn::__private::SusBindInvalid;                             \
       return SusBindInvalid::Reason(SusBindInvalid::Mutable::kReason);        \
     }                                                                         \
-  }()
+  }                                                                           \
+  ()
 
 #define sus_bind0(lambda, ...) \
   sus_bind(sus_store(), lambda __VA_OPT__(, ) __VA_ARGS__)
 
-/// Bind a mutable lambda to storage for its bound
-/// arguments.
+/// Bind a mutable lambda to storage for its bound arguments.
 ///
-/// The lambda may arrive in multiple arguments, if
-/// there is a comma in the definition of it. Thus we
-/// use variadic arguments to capture all of the
+/// The lambda may arrive in multiple arguments, if there is a comma in the
+/// definition of it. Thus we use variadic arguments to capture all of the
 /// lambda.
 #define sus_bind_mut(names, lambda, ...)                                     \
-  [&]() {                                                                    \
+  _Pragma("warning(suppress : 5253)")[&]() {                                 \
     sus_for_each(_sus__check_storage, sus_for_each_sep_none,                 \
                  _sus__unpack names) return ::sus::fn::__private::           \
         SusBind([sus_for_each(_sus__declare_storage, sus_for_each_sep_comma, \
@@ -150,7 +149,8 @@ void verify_unsafe_marker(const M& m) {
           auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                        \
           return x(::sus::mem::forward<Args>(args)...);                      \
         });                                                                  \
-  }()
+  }                                                                          \
+  ()
 
 #define sus_bind0_mut(lambda, ...) \
   sus_bind_mut(sus_store(), lambda __VA_OPT__(, ) __VA_ARGS__)

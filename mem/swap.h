@@ -30,8 +30,9 @@ constexpr void swap(Mref<T&> lhs_ref, Mref<T&> rhs_ref) noexcept {
   T& lhs = lhs_ref;
   T& rhs = rhs_ref;
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  if (::sus::mem::__private::relocate_one_by_memcpy_v<T> &&
-      !std::is_constant_evaluated()) {
+  bool can_memcpy = ::sus::mem::__private::relocate_one_by_memcpy_v<T> &&
+                    !std::is_constant_evaluated();
+  if (can_memcpy) {
     char temp[sizeof(T)];
     memcpy(temp, ::sus::mem::addressof(lhs), sizeof(T));
     memcpy(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs), sizeof(T));

@@ -76,12 +76,12 @@ TEST(Into, Into) {
   int copies = 0;
   int moves = 0;
 
-  [](Counter c) {}(sus::into(Counter(copies, moves)));
+  [](Counter) {}(sus::into(Counter(copies, moves)));
   EXPECT_EQ(copies, 0);
   EXPECT_EQ(moves, 1);
 
   auto from = Counter(copies, moves);
-  [](Counter c) {}(sus::into(static_cast<Counter&&>(from)));
+  [](Counter) {}(sus::into(static_cast<Counter&&>(from)));
   EXPECT_EQ(copies, 0);
   EXPECT_EQ(moves, 2);
 }
@@ -91,16 +91,16 @@ TEST(Into, MoveInto) {
   int moves = 0;
 
   auto from = Counter(copies, moves);
-  [](Counter c) {}(sus::move_into(from));
+  [](Counter) {}(sus::move_into(from));
   EXPECT_EQ(copies, 0);
   EXPECT_EQ(moves, 1);
 
   auto from2 = Counter(copies, moves);
-  [](Counter c) {}(sus::move_into(static_cast<Counter&&>(from2)));
+  [](Counter) {}(sus::move_into(static_cast<Counter&&>(from2)));
   EXPECT_EQ(copies, 0);
   EXPECT_EQ(moves, 2);
 
-  [](Counter c) {}(sus::move_into(Counter(copies, moves)));
+  [](Counter) {}(sus::move_into(Counter(copies, moves)));
   EXPECT_EQ(copies, 0);
   EXPECT_EQ(moves, 3);
 }

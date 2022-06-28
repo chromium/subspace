@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 if (MSVC)
     add_compile_options(/Zc:preprocessor /wd5105)
+    add_compile_options(/W4 /WX)
 endif()
 
 set(subspace_include_dirs
@@ -19,6 +20,7 @@ add_library(subspace STATIC
     "assertions/arch.h"
     "assertions/builtin.h"
     "assertions/check.h"
+    "assertions/nonnull.h"
     "assertions/panic.h"
     "assertions/unreachable.h"
     "assertions/windows.h"
