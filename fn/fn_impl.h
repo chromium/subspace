@@ -27,7 +27,8 @@ FnOnce<R(CallArgs...)>::FnOnce(F fn) noexcept
     : type_(__private::FnPointer), fn_ptr_(fn) {}
 
 template <class R, class... CallArgs>
-template <class ConstructionType, class F>
+template <class ConstructionType,
+          ::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
 FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction,
                                F&& lambda) noexcept
     : type_(__private::Storage) {
