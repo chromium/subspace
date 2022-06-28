@@ -345,9 +345,20 @@ TEST(Fn, BindUnsafePointer) {
   int a = 1;
   int* pa = &a;
   int b = 2;
-  auto fn = Fn<int()>(sus_bind(sus_store(sus_unsafe_pointer(pa), b),
-                               [pa, b]() { return *pa * 2 + b; }));
+  auto fn = Fn<int()>(sus_bind(sus_store(sus_unsafe_pointer(pa), b), [pa, b]() {
+    // sus_bind() will store pointers as const.
+    static_assert(std::is_const_v<std::remove_reference_t<decltype(*pa)>>);
+    return *pa * 2 + b;
+  }));
   EXPECT_EQ(fn(), 4);
+
+  auto fnmut = FnMut<int()>(
+      sus_bind_mut(sus_store(sus_unsafe_pointer(pa), b), [pa, b]() {
+        // sus_bind_mut() will store pointers as mutable.
+        static_assert(!std::is_const_v<std::remove_reference_t<decltype(*pa)>>);
+        return (*pa)++ * 2 + b;
+      }));
+  EXPECT_EQ(fnmut(), 4);
 }
 
 TEST(Fn, Into) {
