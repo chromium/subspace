@@ -16,6 +16,7 @@
 
 #include <type_traits>
 
+#include "concepts/callable.h"
 #include "fn/fn_defn.h"
 #include "macros/for_each.h"
 #include "marker/unsafe.h"
@@ -29,7 +30,7 @@ struct UnsafePointer;
 
 template <class T>
 struct UnsafePointer<T*> {
-  [[no_unique_address]]::sus::marker::UnsafeFnMarker marker;
+  [[no_unique_address]] ::sus::marker::UnsafeFnMarker marker;
   T* pointer;
 };
 
@@ -77,8 +78,10 @@ std::false_type can_store_type(...);
 
 }  // namespace sus::fn::__private
 
-template<class M>
-void verify_unsafe_marker(const M& m) { static_assert(std::same_as<::sus::marker::UnsafeFnMarker, M>); }
+template <class M>
+void verify_unsafe_marker(const M& m) {
+  static_assert(std::same_as<::sus::marker::UnsafeFnMarker, M>);
+}
 
 #define sus_store(...) (__VA_ARGS__)
 #define sus_take(x) (x, _sus__bind_move)
@@ -100,30 +103,42 @@ void verify_unsafe_marker(const M& m) { static_assert(std::same_as<::sus::marker
 //
 //  auto fn = Fn<int()>::with(sus_bind0([]() { return 0; });
 
+#define maybe_comma(...) __VA_OPT__(, )
+
 /// Bind a const lambda to storage for its bound arguments.
 ///
 /// The lambda may arrive in multiple arguments, if there is a comma in the
 /// definition of it. Thus we use variadic arguments to capture all of the
 /// lambda.
-#define sus_bind(names, lambda, ...)                                         \
-  [&]() {                                                                    \
-    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                 \
-                 _sus__unpack names) return ::sus::fn::__private::           \
-        SusBind([sus_for_each(_sus__declare_storage, sus_for_each_sep_comma, \
-                              _sus__unpack names)]<class... Args>(           \
-                    Args&&... args) {                                        \
-          return lambda __VA_OPT__(, )                                       \
-              __VA_ARGS__(::sus::forward<Args>(args)...);                    \
-        });                                                                  \
+#define sus_bind(names, lambda, ...)                                          \
+  [&]() {                                                                     \
+    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                  \
+                 _sus__unpack names);                                         \
+    const auto _sus__lambda = lambda __VA_OPT__(, ) __VA_ARGS__;              \
+    if constexpr (::sus::concepts::callable::LambdaConst<                     \
+                      decltype(_sus__lambda)>) {                              \
+      return ::sus::fn::__private::SusBind(                                   \
+          [_sus__lambda = static_cast<decltype(_sus__lambda)&&>(_sus__lambda) \
+               maybe_comma(_sus__unpack names) sus_for_each(                  \
+                   _sus__declare_storage, sus_for_each_sep_comma,             \
+                   _sus__unpack names)]<class... Args>(Args&&... args) {      \
+            return _sus__lambda(::sus::forward<Args>(args)...);               \
+          });                                                                 \
+    } else {                                                                  \
+      using ::sus::fn::__private::SusBindInvalid;                             \
+      return SusBindInvalid::Reason(SusBindInvalid::Mutable::kReason);        \
+    }                                                                         \
   }()
 
 #define sus_bind0(lambda, ...) \
   sus_bind(sus_store(), lambda __VA_OPT__(, ) __VA_ARGS__)
 
-/// Bind a mutable lambda to storage for its bound arguments.
+/// Bind a mutable lambda to storage for its bound
+/// arguments.
 ///
-/// The lambda may arrive in multiple arguments, if there is a comma in the
-/// definition of it. Thus we use variadic arguments to capture all of the
+/// The lambda may arrive in multiple arguments, if
+/// there is a comma in the definition of it. Thus we
+/// use variadic arguments to capture all of the
 /// lambda.
 #define sus_bind_mut(names, lambda, ...)                                     \
   [&]() {                                                                    \
@@ -132,8 +147,8 @@ void verify_unsafe_marker(const M& m) { static_assert(std::same_as<::sus::marker
         SusBind([sus_for_each(_sus__declare_storage, sus_for_each_sep_comma, \
                               _sus__unpack names)]<class... Args>(           \
                     Args&&... args) mutable {                                \
-          return lambda __VA_OPT__(, )                                       \
-              __VA_ARGS__(::sus::mem::forward<Args>(args)...);               \
+          auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                        \
+          return x(::sus::mem::forward<Args>(args)...);                      \
         });                                                                  \
   }()
 
@@ -154,7 +169,8 @@ void verify_unsafe_marker(const M& m) { static_assert(std::same_as<::sus::marker
 
 #define _sus__bind_noop(x) x
 #define _sus__bind_move(x) static_cast<decltype(x)&&>(x)
-#define _sus__bind_pointer(x) ::sus::fn::__private::UnsafePointer(::sus::marker::unsafe_fn, x)
+#define _sus__bind_pointer(x) \
+  ::sus::fn::__private::UnsafePointer(::sus::marker::unsafe_fn, x)
 #define _sus__macro(x, ...) x(__VA_ARGS__)
 
 // TODO: Document how this works.
