@@ -16,12 +16,14 @@
 
 #include <concepts>
 
+#include "concepts/into.h"
 #include "mem/forward.h"
 #include "mem/replace.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {
 
+using sus::concepts::into::Into;
 using sus::fn::Fn;
 using sus::fn::FnMut;
 using sus::fn::FnOnce;
@@ -110,9 +112,6 @@ TEST(Fn, Pointer) {
 }
 
 TEST(Fn, InlineCapture) {
-  static_assert(::sus::concepts::callable::LambdaConst<decltype([a = 1](int b) {
-    return a * 2 + b;
-  })>);
   {
     auto fn =
         FnOnce<int(int)>::with(sus_bind0([a = 1](int b) { return a * 2 + b; }));
@@ -328,6 +327,26 @@ TEST(Fn, BindUnsafePointer) {
   auto fn = Fn<int()>::with(sus_bind(sus_store(sus_unsafe_pointer(pa), b),
                                      [pa, b]() { return *pa * 2 + b; }));
   EXPECT_EQ(fn(), 4);
+}
+
+TEST(Fn, IntoFromFnPointer) {
+  auto into_fnonce = []<Into<FnOnce<int(int)>> F>(F into_f) {
+    FnOnce<int(int)> f = sus::move_into(into_f);
+    return static_cast<decltype(f)&&>(f)(1);
+  };
+  EXPECT_EQ(into_fnonce([](int i) { return i + 1; }), 2);
+
+  auto into_fnmut = []<Into<FnMut<int(int)>> F>(F into_f) {
+    FnMut<int(int)> f = sus::move_into(into_f);
+    return static_cast<decltype(f)&&>(f)(1);
+  };
+  EXPECT_EQ(into_fnmut([](int i) { return i + 1; }), 2);
+
+  auto into_fn = []<Into<Fn<int(int)>> F>(F into_f) {
+    Fn<int(int)> f = sus::move_into(into_f);
+    return static_cast<decltype(f)&&>(f)(1);
+  };
+  EXPECT_EQ(into_fn([](int i) { return i + 1; }), 2);
 }
 
 }  // namespace
