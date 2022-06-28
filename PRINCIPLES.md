@@ -75,7 +75,10 @@ This library is an experiment and not intended for use. See the
         1. since the intent is for use where templates can not be used,
            `Into<FnOnce<...>>` can not be used either.
 1. No use-after-move. All types abort if they are used after a move.
-1. No implicit conversions, ever.
+1. No implicit conversions, unless it's another representation of the _same
+   type_.
+    * Provide `::from(x)` instead, for `sus::concepts::from::From` and
+      `sus::concepts::into::Into`.
 1. No function overloads. Const is the default.
     * When there are const and mutable versions of a method, use the `_mut`
       suffix on the mutable one to distinguish them. The const method gets the
@@ -116,6 +119,10 @@ This library is an experiment and not intended for use. See the
     possible. They only use internal heap allocations when strictly required:
     for instance, because they have a dynamic size. Instead, the user can choose
     what lives on the heap through the use of heap-based smart pointers.
+1. No secret sometimes-heap-allocated-sometimes-not optimizations (e.g. the
+   small string optimization). This leads to performance cliffs, but worse,
+   pointer stability is unpredictable if a type vends a pointer to its storage
+   which is sometimes heap allocated (and stable) and sometimes not.
 1. No native arrays. Use an Array type instead.
     * Native arrays can't be bounds-checked, and decay to pointers, making them
       a bit invisible. A library type has the same overheads, unless it
