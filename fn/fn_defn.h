@@ -95,12 +95,7 @@ class FnOnce<R(CallArgs...)> {
   FnOnce& operator=(const FnOnce&) noexcept = delete;
 
   // Runs and consumes the closure.
-  inline R operator()(CallArgs&&... args) && noexcept {
-    return static_cast<FnOnce&&>(*this).call_once(forward<CallArgs>(args)...);
-  }
-
-  // Runs and consumes the closure.
-  R call_once(CallArgs&&...) && noexcept;
+  inline R operator()(CallArgs&&... args) && noexcept;
 
   // sus::concepts::from::From trait.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
@@ -185,16 +180,11 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
   FnMut& operator=(const FnMut&) noexcept = delete;
 
   // Runs the closure.
-  inline R operator()(CallArgs&&... args) & noexcept {
-    return call_mut(forward<CallArgs>(args)...);
-  }
+  inline R operator()(CallArgs&&... args) & noexcept;
   inline R operator()(CallArgs&&... args) && noexcept {
-    return static_cast<FnOnce<R(CallArgs...)>&&>(*this).call_once(
+    return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
   }
-
-  // Runs the closure.
-  R call_mut(CallArgs&&...) & noexcept;
 
   // sus::concepts::from::From trait.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
@@ -251,12 +241,7 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
   Fn& operator=(const Fn&) noexcept = delete;
 
   // Runs the closure.
-  inline R operator()(CallArgs&&... args) const& noexcept {
-    return call(forward<CallArgs>(args)...);
-  }
-
-  // Runs the closure.
-  R call(CallArgs&&...) const& noexcept;
+  inline R operator()(CallArgs&&... args) const& noexcept;
 
   // sus::concepts::from::From trait.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>

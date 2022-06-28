@@ -149,7 +149,7 @@ FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) noexcept {
 }
 
 template <class R, class... CallArgs>
-R FnOnce<R(CallArgs...)>::call_once(CallArgs&&... args) && noexcept {
+R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
   switch (type_) {
     case __private::MovedFrom:
       ::sus::panic();
@@ -181,7 +181,7 @@ R FnOnce<R(CallArgs...)>::call_once(CallArgs&&... args) && noexcept {
 }
 
 template <class R, class... CallArgs>
-R FnMut<R(CallArgs...)>::call_mut(CallArgs&&... args) & noexcept {
+R FnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
   using Super = FnOnce<R(CallArgs...)>;
   switch (Super::type_) {
     case __private::MovedFrom:
@@ -200,7 +200,7 @@ R FnMut<R(CallArgs...)>::call_mut(CallArgs&&... args) & noexcept {
 }
 
 template <class R, class... CallArgs>
-R Fn<R(CallArgs...)>::call(CallArgs&&... args) const& noexcept {
+R Fn<R(CallArgs...)>::operator()(CallArgs&&... args) const& noexcept {
   using Super = FnOnce<R(CallArgs...)>;
   switch (Super::type_) {
     case __private::MovedFrom:
