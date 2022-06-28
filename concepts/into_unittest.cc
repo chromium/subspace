@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
-
 #include "concepts/into.h"
 
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
