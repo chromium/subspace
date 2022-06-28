@@ -44,7 +44,7 @@ struct IntoRef {
 }  // namespace __private
 
 template<class FromType, class ToType>
-concept Into = From<ToType, FromType>;
+concept Into = ::sus::concepts::from::From<ToType, FromType>;
 
 template <class FromType>
   requires(std::is_rvalue_reference_v<FromType &&>)

@@ -103,32 +103,27 @@ void verify_unsafe_marker(const M& m) {
 //
 //  auto fn = Fn<int()>::with(sus_bind0([]() { return 0; });
 
-#define maybe_comma(...) __VA_OPT__(, )
-
 /// Bind a const lambda to storage for its bound arguments.
 ///
 /// The lambda may arrive in multiple arguments, if there is a comma in the
 /// definition of it. Thus we use variadic arguments to capture all of the
 /// lambda.
-#define sus_bind(names, lambda, ...)                                          \
-  _Pragma("warning(suppress : 5253)")[&]() {                                  \
-    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                  \
-                 _sus__unpack names);                                         \
-    const auto _sus__lambda = lambda __VA_OPT__(, ) __VA_ARGS__;              \
-    if constexpr (::sus::concepts::callable::LambdaConst<                     \
-                      decltype(_sus__lambda)>) {                              \
-      return ::sus::fn::__private::SusBind(                                   \
-          [_sus__lambda = static_cast<decltype(_sus__lambda)&&>(_sus__lambda) \
-               maybe_comma(_sus__unpack names) sus_for_each(                  \
-                   _sus__declare_storage, sus_for_each_sep_comma,             \
-                   _sus__unpack names)]<class... Args>(Args&&... args) {      \
-            return _sus__lambda(::sus::forward<Args>(args)...);               \
-          });                                                                 \
-    } else {                                                                  \
-      using ::sus::fn::__private::SusBindInvalid;                             \
-      return SusBindInvalid::Reason(SusBindInvalid::Mutable::kReason);        \
-    }                                                                         \
-  }                                                                           \
+#define sus_bind(names, lambda, ...)                                         \
+  _Pragma("warning(suppress : 5253)")[&]() {                                 \
+    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                 \
+                 _sus__unpack names);                                        \
+    using ::sus::fn::__private::SusBind;                                     \
+    return SusBind([sus_for_each(                                            \
+                       _sus__declare_storage, sus_for_each_sep_comma,        \
+                       _sus__unpack names)]<class... Args>(Args&&... args) { \
+      const auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                      \
+      if constexpr (!::sus::concepts::callable::LambdaConst<decltype(x)>) {  \
+        return SusBind<int>::Invalid(SusBind<int>::Mutable::kReason);        \
+      } else {                                                               \
+        return x(::sus::forward<Args>(args)...);                             \
+      }                                                                      \
+    });                                                                      \
+  }                                                                          \
   ()
 
 #define sus_bind0(lambda, ...) \
