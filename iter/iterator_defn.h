@@ -19,7 +19,6 @@
 
 namespace sus::iter {
 
-using ::sus::mem::__private::relocate_one_by_memcpy_v;
 using ::sus::option::Option;
 
 // TODO: Move forward decls somewhere?
