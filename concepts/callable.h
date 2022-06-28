@@ -21,48 +21,69 @@
 
 namespace sus::concepts::callable {
 
-template <class F, class... Args>
-concept FunctionPointer = requires(F f, Args&&... args) {
-                            { (+f)(forward<Args>(args)...) };
+template <class T>
+concept FunctionPointer = requires(T t) {
+                            { std::is_pointer_v<decltype(+t)> };
                           };
 
-template <class F, class R, class... Args>
-concept FunctionPointerReturns = (FunctionPointer<F, Args...>) &&
-                                 requires(F f, Args&&... args) {
-                                   {
-                                     (+f)(forward<Args>(args)...)
-                                     } -> std::same_as<R>;
-                                 };
+// clang-format off
+template <class T, class R, class... Args>
+concept FunctionPointerReturns = (
+    FunctionPointer<T> &&
+    requires (T t, Args&&... args) {
+        { t(forward<Args>(args)...) } -> std::same_as<R>;
+    }
+);
+// clang-format on
 
-template <class F, class... Args>
-concept CallableObjectOnce = (!FunctionPointer<F, Args...>) &&
-                             requires(F f, Args&&... args) {
-                               { static_cast<F&&>(f)(forward<Args>(args)...) };
-                             };
+namespace __private {
 
-template <class F, class... Args>
-concept CallableOnce = FunctionPointer<F> || CallableObjectOnce<F, Args...>;
+template <class T, class R, class... Args>
+inline constexpr bool lambda_callable_const(R (T::*)(Args...) const) {
+  return true;
+};
 
-template <class F, class... Args>
-concept CallableObjectMut = (!FunctionPointer<F, Args...>) &&
-                            requires(F f, Args&&... args) {
-                              { static_cast<F&>(f)(forward<Args>(args)...) };
-                            };
+template <class T, class R, class... Args>
+inline constexpr bool lambda_callable_mut(R (T::*)(Args...)) {
+  return true;
+};
 
-template <class F, class... Args>
-concept CallableMut = FunctionPointer<F> || CallableObjectMut<F, Args...>;
+}  // namespace __private
 
-template <class F, class... Args>
-concept CallableObjectConst = (!FunctionPointer<F, Args...>) &&
-                              requires(F f, Args&&... args) {
-                                {
-                                  static_cast<const F&>(f)(
-                                      forward<Args>(args)...)
-                                };
-                              };
+// clang-format off
+template <class T, class R, class... Args>
+concept LambdaReturnsConst = (
+    !FunctionPointerReturns<T, R, Args...> &&
+    requires (const T& t, Args&&... args) {
+        { t(forward<Args>(args)...) } -> std::same_as<R>;
+    }
+);
 
-template <class F, class... Args>
-concept CallableConst =
-    FunctionPointer<F, Args...> || CallableObjectConst<F, Args...>;
+template <class T, class R, class... Args>
+concept LambdaReturnsMut = (
+    !FunctionPointer<T> &&
+    requires (T& t, Args&&... args) {
+        { t(forward<Args>(args)...) } -> std::same_as<R>;
+    }
+);
 
+template <class T, class R, class... Args>
+concept LambdaReturnsOnce = (
+    !FunctionPointer<T> &&
+    requires (T&& t, Args&&... args) {
+        { forward<T>(t)(forward<Args>(args)...) } -> std::same_as<R>;
+    }
+);
+// clang-format on
+
+template <class T, class R, class... Args>
+concept LambdaReturns =
+    LambdaReturnsConst<T, R, Args...> || LambdaReturnsMut<T, R, Args...>;
+
+template <class T>
+concept LambdaConst = __private::lambda_callable_const(&T::operator());
+
+template <class T>
+concept LambdaMut = LambdaConst<T> ||
+                    __private::lambda_callable_mut(&T::operator());
 }  // namespace sus::concepts::callable

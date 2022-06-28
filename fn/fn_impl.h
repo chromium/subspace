@@ -43,7 +43,7 @@ FnMut<R(CallArgs...)>::FnMut(F fn) noexcept : FnOnce<R(CallArgs...)>(fn) {}
 
 template <class R, class... CallArgs>
 template <class ConstructionType,
-          ::sus::concepts::callable::CallableObjectMut<CallArgs...> F>
+          ::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
 FnMut<R(CallArgs...)>::FnMut(ConstructionType construction, F&& lambda) noexcept
     : FnOnce<R(CallArgs...)>(construction, forward<F>(lambda)) {}
 
@@ -52,7 +52,7 @@ template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
 Fn<R(CallArgs...)>::Fn(F fn) noexcept : FnMut<R(CallArgs...)>(fn) {}
 
 template <class R, class... CallArgs>
-template <::sus::concepts::callable::CallableObjectConst<CallArgs...> F>
+template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
 Fn<R(CallArgs...)>::Fn(__private::StorageConstructionFnType construction,
                        F&& lambda) noexcept
     : FnMut<R(CallArgs...)>(construction, forward<F>(lambda)) {}

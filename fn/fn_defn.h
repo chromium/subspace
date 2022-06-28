@@ -41,6 +41,14 @@ struct SusBind {
   F lambda;
 };
 
+struct SusBindInvalid {
+  enum class Mutable { kReason };
+  // clang-format off
+  [[deprecated("Use sus_bind_mut() to bind a mutable lambda")]]
+  static auto Reason(Mutable) { return SusBindInvalid(); }
+  // clang-format on
+};
+
 }  // namespace __private
 
 template <class R, class... Args>
@@ -76,23 +84,14 @@ class FnOnce<R(CallArgs...)> {
     return FnOnce(static_cast<R (*)(CallArgs...)>(fn));
   }
 
-  /// Makes a FnOnce closure that holds a function pointer inline. No heap
-  /// allocations are performed.
-  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
-  constexpr static FnOnce with(
-      __private::SusBind<F>&& holder) noexcept {
-    return FnOnce(static_cast<R (*)(CallArgs...)>(holder.lambda));
-  }
-
   /// Makes a FnOnce closure that holds its functor and any stored arguments in
   /// a heap allocation.
   ///
   /// Requires that `F` can receive a reference to, or a moved value, of each
   /// stored argument.
   // TODO: Check return type.
-  template <::sus::concepts::callable::CallableObjectOnce<CallArgs...> F>
-  constexpr static FnOnce with(
-      __private::SusBind<F>&& holder) noexcept {
+  template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
+  constexpr static FnOnce with(__private::SusBind<F>&& holder) noexcept {
     return FnOnce(__private::StorageConstructionFnOnce,
                   static_cast<F&&>(holder.lambda));
   }
@@ -179,19 +178,12 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
     return FnMut(static_cast<R (*)(CallArgs...)>(fn));
   }
 
-  /// Makes a FnMut closure that holds a function pointer inline. No heap
-  /// allocations are performed.
-  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
-  constexpr static FnMut with(__private::SusBind<F>&& holder) noexcept {
-    return FnMut(static_cast<R (*)(CallArgs...)>(holder.lambda));
-  }
-
   /// Makes a FnOnce closure that holds its functor and any stored arguments in
   /// a heap allocation.
   ///
   /// Requires that `F` can receive a (const or mutable) reference to each
   /// stored argument.
-  template <::sus::concepts::callable::CallableObjectMut<CallArgs...> F>
+  template <::sus::concepts::callable::LambdaReturnsMut<R, CallArgs...> F>
   constexpr static FnMut with(__private::SusBind<F>&& holder) noexcept {
     return FnMut(__private::StorageConstructionFnMut,
                  static_cast<F&&>(holder.lambda));
@@ -222,7 +214,7 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
   FnMut(F fn) noexcept;
 
   template <class ConstructionType,
-            ::sus::concepts::callable::CallableObjectMut<CallArgs...> F>
+            ::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
   FnMut(ConstructionType, F&& fn) noexcept;
 };
 
@@ -263,7 +255,7 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
   /// heap allocation.
   ///
   /// Requires that `F` can receive a const reference to each stored argument.
-  template <::sus::concepts::callable::CallableObjectConst<CallArgs...> F>
+  template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
   constexpr static Fn with(__private::SusBind<F>&& holder) noexcept {
     return Fn(__private::StorageConstructionFn,
               static_cast<F&&>(holder.lambda));
@@ -289,7 +281,7 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
   Fn(F fn) noexcept;
 
-  template <::sus::concepts::callable::CallableObjectConst<CallArgs...> F>
+  template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
   Fn(__private::StorageConstructionFnType, F&& fn) noexcept;
 
   // This class may only have trivially-destructible storage and must not
