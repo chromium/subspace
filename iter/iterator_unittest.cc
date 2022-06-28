@@ -124,7 +124,7 @@ TEST(IteratorBase, All) {
   {
     auto it = EmptyIterator<int>::with_default();
     EXPECT_TRUE(
-        it.all(::sus::fn::Fn<bool(int)>::with([](int i) { return false; })));
+        it.all(::sus::fn::Fn<bool(int)>::with([](int) { return false; })));
   }
 }
 
@@ -164,7 +164,7 @@ TEST(IteratorBase, Any) {
   {
     auto it = EmptyIterator<int>::with_default();
     EXPECT_FALSE(
-        it.any(::sus::fn::Fn<bool(int)>::with([](int i) { return false; })));
+        it.any(::sus::fn::Fn<bool(int)>::with([](int) { return false; })));
   }
 }
 

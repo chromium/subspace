@@ -75,12 +75,12 @@ static_assert(
     "");
 
 TEST(MakeDefault, NonConstexprConstruction) {
-  auto default_constructible =
+  auto default_constructible1 =
       MakeDefault<DefaultConstructible>::make_default();
-  EXPECT_EQ(default_constructible.i, 2);
-  auto with_default_constructible =
+  EXPECT_EQ(default_constructible1.i, 2);
+  auto with_default_constructible1 =
       MakeDefault<WithDefaultConstructible>::make_default();
-  EXPECT_EQ(with_default_constructible.i, 3);
+  EXPECT_EQ(with_default_constructible1.i, 3);
 }
 
 }  // namespace

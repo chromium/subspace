@@ -31,7 +31,7 @@ TEST(Replace, ConstexprTrivialRelocate) {
 
   auto i = []() constexpr {
     T i(2);
-    T j(::sus::mem::replace(mref(i), T(5)));
+    [[maybe_unused]] T j(::sus::mem::replace(mref(i), T(5)));
     return i;
   };
   auto j = []() constexpr {

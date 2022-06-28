@@ -498,7 +498,7 @@ TEST(Option, Map) {
   EXPECT_TRUE(called);
 
   called = false;
-  auto iy = Option<int&>::none().map([&](int& i) {
+  auto iy = Option<int&>::none().map([&](int&) {
     called = true;
     return Mapped(3);
   });
@@ -548,8 +548,7 @@ TEST(Option, MapOr) {
 
   // Verify constexpr.
   static_assert(
-      Option<int>::none().map_or(4, [](int&& i) { return 1; }).unwrap() == 4,
-      "");
+      Option<int>::none().map_or(4, [](int&&) { return 1; }).unwrap() == 4, "");
 }
 
 TEST(Option, MapOrElse) {
@@ -622,20 +621,20 @@ TEST(Option, MapOrElse) {
   // Verify constexpr.
   static_assert(Option<int>::none()
                         .map_or_else([]() { return Mapped(4); },
-                                     [](int&& i) { return Mapped(1); })
+                                     [](int&&) { return Mapped(1); })
                         .unwrap()
                         .i == 4,
                 "");
   static_assert(Option<int>::some(2)
                         .map_or_else([]() { return Mapped(4); },
-                                     [](int&& i) { return Mapped(1); })
+                                     [](int&&) { return Mapped(1); })
                         .unwrap()
                         .i == 1,
                 "");
   constexpr int ci = 2;
   static_assert(Option<const int&>::none()
                         .map_or_else([]() { return Mapped(4); },
-                                     [](const int& i) { return Mapped(1); })
+                                     [](const int&) { return Mapped(1); })
                         .unwrap()
                         .i == 4,
                 "");
@@ -648,49 +647,48 @@ TEST(Option, MapOrElse) {
 }
 
 TEST(Option, Filter) {
-  auto x = Option<int>::some(2).filter([](const int& i) { return true; });
+  auto x = Option<int>::some(2).filter([](const int&) { return true; });
   static_assert(std::is_same_v<decltype(x), Option<int>>, "");
   IS_SOME(x);
 
-  auto y = Option<int>::some(2).filter([](const int& i) { return false; });
+  auto y = Option<int>::some(2).filter([](const int&) { return false; });
   static_assert(std::is_same_v<decltype(y), Option<int>>, "");
   IS_NONE(y);
 
-  auto nx = Option<int>::none().filter([](const int& i) { return true; });
+  auto nx = Option<int>::none().filter([](const int&) { return true; });
   static_assert(std::is_same_v<decltype(nx), Option<int>>, "");
   IS_NONE(nx);
 
-  auto ny = Option<int>::none().filter([](const int& i) { return false; });
+  auto ny = Option<int>::none().filter([](const int&) { return false; });
   static_assert(std::is_same_v<decltype(ny), Option<int>>, "");
   IS_NONE(ny);
 
   int i = 2;
-  auto ix =
-      Option<int&>::some(mref(i)).filter([](const int& i) { return true; });
+  auto ix = Option<int&>::some(mref(i)).filter([](const int&) { return true; });
   static_assert(std::is_same_v<decltype(ix), Option<int&>>, "");
   IS_SOME(ix);
 
   auto iy =
-      Option<int&>::some(mref(i)).filter([](const int& i) { return false; });
+      Option<int&>::some(mref(i)).filter([](const int&) { return false; });
   static_assert(std::is_same_v<decltype(iy), Option<int&>>, "");
   IS_NONE(iy);
 
-  auto inx = Option<int&>::none().filter([](const int& i) { return true; });
+  auto inx = Option<int&>::none().filter([](const int&) { return true; });
   static_assert(std::is_same_v<decltype(inx), Option<int&>>, "");
   IS_NONE(inx);
 
-  auto iny = Option<int&>::none().filter([](const int& i) { return false; });
+  auto iny = Option<int&>::none().filter([](const int&) { return false; });
   static_assert(std::is_same_v<decltype(iny), Option<int&>>, "");
   IS_NONE(iny);
 
   // Verify constexpr.
   static_assert(
-      Option<int>::some(2).filter([](const int& i) { return true; }).unwrap() ==
+      Option<int>::some(2).filter([](const int&) { return true; }).unwrap() ==
           2,
       "");
   constexpr int ci = 2;
   static_assert(Option<const int&>::some(ci)
-                        .filter([](const int& i) { return true; })
+                        .filter([](const int&) { return true; })
                         .unwrap() == 2,
                 "");
 
@@ -704,7 +702,7 @@ TEST(Option, Filter) {
     auto a = Option<WatchDestructor>::with_default();
     count = 0;
     auto af = static_cast<decltype(a)&&>(a).filter(
-        [](const WatchDestructor& i) { return true; });
+        [](const WatchDestructor&) { return true; });
     // The WatchDestructor was moved from `a` to `af` and the temporary's
     // was destroyed.
     EXPECT_GE(count, 1);
@@ -717,7 +715,7 @@ TEST(Option, Filter) {
     auto b = Option<WatchDestructor>::with_default();
     count = 0;
     auto bf = static_cast<decltype(b)&&>(b).filter(
-        [](const WatchDestructor& i) { return false; });
+        [](const WatchDestructor&) { return false; });
     // The WatchDestructor in `b` was destroyed.
     EXPECT_GE(count, 1);
   }
@@ -728,7 +726,7 @@ TEST(Option, Filter) {
     count = 0;
     auto c = Option<WatchDestructor>::none();
     auto cf = static_cast<decltype(c)&&>(c).filter(
-        [](const WatchDestructor& i) { return false; });
+        [](const WatchDestructor&) { return false; });
     // Nothing constructed or destructed.
     EXPECT_EQ(count, 0);
   }
@@ -739,7 +737,7 @@ TEST(Option, Filter) {
     count = 0;
     auto c = Option<WatchDestructor&>::some(mref(w));
     auto cf = static_cast<decltype(c)&&>(c).filter(
-        [](const WatchDestructor& i) { return false; });
+        [](const WatchDestructor&) { return false; });
     // Nothing constructed or destructed.
     EXPECT_EQ(count, 0);
   }
@@ -781,7 +779,7 @@ TEST(Option, AndThen) {
   };
 
   bool called = false;
-  auto x = Option<int>::some(2).and_then([&](int&& i) {
+  auto x = Option<int>::some(2).and_then([&](int&&) {
     called = true;
     return Option<And>::some(And(3));
   });
@@ -790,7 +788,7 @@ TEST(Option, AndThen) {
   EXPECT_TRUE(called);
 
   called = false;
-  auto y = Option<int>::some(2).and_then([&](int&& i) {
+  auto y = Option<int>::some(2).and_then([&](int&&) {
     called = true;
     return Option<And>::none();
   });
@@ -799,7 +797,7 @@ TEST(Option, AndThen) {
   EXPECT_TRUE(called);
 
   called = false;
-  auto nx = Option<int>::none().and_then([&](int&& i) {
+  auto nx = Option<int>::none().and_then([&](int&&) {
     called = true;
     return Option<And>::some(And(3));
   });
@@ -808,7 +806,7 @@ TEST(Option, AndThen) {
   EXPECT_FALSE(called);
 
   called = false;
-  auto ny = Option<int>::none().and_then([&](int&& i) {
+  auto ny = Option<int>::none().and_then([&](int&&) {
     called = true;
     return Option<And>::none();
   });
@@ -819,7 +817,7 @@ TEST(Option, AndThen) {
   int i = 2;
 
   called = false;
-  auto ix = Option<int&>::some(mref(i)).and_then([&](int& i) {
+  auto ix = Option<int&>::some(mref(i)).and_then([&](int&) {
     called = true;
     return Option<And>::some(And(3));
   });
@@ -828,7 +826,7 @@ TEST(Option, AndThen) {
   EXPECT_TRUE(called);
 
   called = false;
-  auto iy = Option<int&>::some(mref(i)).and_then([&](int& i) {
+  auto iy = Option<int&>::some(mref(i)).and_then([&](int&) {
     called = true;
     return Option<And>::none();
   });
@@ -837,7 +835,7 @@ TEST(Option, AndThen) {
   EXPECT_TRUE(called);
 
   called = false;
-  auto inx = Option<int&>::none().and_then([&](int& i) {
+  auto inx = Option<int&>::none().and_then([&](int&) {
     called = true;
     return Option<And>::some(And(3));
   });
@@ -846,7 +844,7 @@ TEST(Option, AndThen) {
   EXPECT_FALSE(called);
 
   called = false;
-  auto iny = Option<int&>::none().and_then([&](int& i) {
+  auto iny = Option<int&>::none().and_then([&](int&) {
     called = true;
     return Option<And>::none();
   });
@@ -857,13 +855,13 @@ TEST(Option, AndThen) {
   // Verify constexpr.
   constexpr auto cx =
       Option<int>::some(2)
-          .and_then([&](int&& i) { return Option<And>::some(And(3)); })
+          .and_then([&](int&&) { return Option<And>::some(And(3)); })
           .unwrap();
   static_assert(cx.i == 3, "");
   constexpr int ci = 2;
   constexpr auto icx =
       Option<const int&>::some(ci)
-          .and_then([&](const int& i) { return Option<And>::some(And(3)); })
+          .and_then([&](const int&) { return Option<And>::some(And(3)); })
           .unwrap();
   static_assert(icx.i == 3, "");
 }
@@ -1398,7 +1396,7 @@ TEST(Option, Flatten) {
 
 TEST(Option, Iter) {
   auto x = Option<int>::none();
-  for (auto i : x.iter()) {
+  for ([[maybe_unused]] auto i : x.iter()) {
     ADD_FAILURE();
   }
 
@@ -1414,7 +1412,7 @@ TEST(Option, Iter) {
 
 TEST(Option, IterMut) {
   auto x = Option<int>::none();
-  for (auto i : x.iter_mut()) {
+  for ([[maybe_unused]] auto i : x.iter_mut()) {
     ADD_FAILURE();
   }
 
@@ -1439,7 +1437,7 @@ struct MoveOnly {
 
 TEST(Option, IntoIter) {
   auto x = Option<int>::none();
-  for (auto i : x.iter_mut()) {
+  for ([[maybe_unused]] auto i : x.iter_mut()) {
     ADD_FAILURE();
   }
 
