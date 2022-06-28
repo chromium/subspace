@@ -100,6 +100,7 @@ class IteratorBase {
 template <class I>
 class Iterator final : public I {
  private:
+  using typename I::Item;
   friend I;  // I::foo() can construct Iterator<I>.
 
   template <class J>
@@ -121,8 +122,8 @@ class Iterator final : public I {
  public:
   // Adaptor methods.
 
-  Iterator<Filter<typename I::Item, sizeof(I), alignof(I)>> filter(
-      ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
+  Iterator<Filter<Item, sizeof(I), alignof(I)>> filter(
+      ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
           pred) && noexcept;
 };
 
