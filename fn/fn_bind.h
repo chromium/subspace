@@ -62,38 +62,33 @@ struct UnsafePointer<T*> {
 template <class T>
 UnsafePointer(::sus::marker::UnsafeFnMarker, T*) -> UnsafePointer<T*>;
 
-// The storage type in sus_bind() for pointers bound through
-// sys_unsafe_pointer(). Can only be constructed from UnsafePointer which is the
-// ouptut of sus_unsafe_pointer().
 template <class T>
-struct UnsafePointerStorage;
+auto make_storage(T&& t) {
+  return std::decay_t<T>(forward<T>(t));
+}
+template <class T>
+auto make_storage(T* t) {
+  static_assert(!std::is_pointer_v<T*>,
+                "Can not store a pointer in sus_bind() except through "
+                "sus_unsafe_pointer().");
+}
+template <class T>
+auto make_storage(UnsafePointer<T*> p) {
+  return static_cast<const T*>(p.pointer);
+}
 
 template <class T>
-struct UnsafePointerStorage<T*> {
-  UnsafePointerStorage(T*) {
-    static_assert(!std::is_pointer_v<T*>,
-                  "Can not store a pointer in sus_bind() except through "
-                  "sus_unsafe_pointer().");
-  }
-  UnsafePointerStorage(UnsafePointer<T*> p) { pointer = p.pointer; }
-  operator T*() const& { return pointer; }
-  T* pointer;
-};
-
+auto make_storage_mut(T&& t) {
+  return std::decay_t<T>(forward<T>(t));
+}
 template <class T>
-struct StorageTypeResolver {
-  using Type = std::decay_t<T>;
-};
-
-// You can not sus_bind() a pointer unless you ask to explicitly, with an
-// `unsafe` marker.
+auto make_storage_mut(T* t) {
+  make_storage(t);
+}
 template <class T>
-struct StorageTypeResolver<T*> {
-  using Type = UnsafePointerStorage<T*>;
-};
-
-template <class T>
-using StorageType = typename StorageTypeResolver<T>::Type;
+auto make_storage_mut(UnsafePointer<T*> p) {
+  return p.pointer;
+}
 
 // Verifies the input is an lvalue (a name), so we can bind it to that same
 // lvalue name in the resuling lambda.
@@ -101,8 +96,15 @@ template <class T>
 std::true_type can_store_type(T&);
 std::false_type can_store_type(...);
 
-template <bool>
-struct CheckLambdaConst;
+/// Helper used when verifying if a lambda is const. The template parameter
+/// represents the constness of the lambda. When false, the output() function
+/// calls a [[deprecated]] function to generate a warning, and produces a type
+/// that Fn/FnMut/FnOnce can't be created from.
+template <bool = true>
+struct CheckLambdaConst {
+  template <class U>
+  static constexpr inline auto output() {}
+};
 
 template <>
 struct CheckLambdaConst<false> {
@@ -110,12 +112,6 @@ struct CheckLambdaConst<false> {
   static constexpr inline auto output() {
     return ::sus::fn::__private::SusBind<U>::InvalidMutableLambda();
   }
-};
-
-template <>
-struct CheckLambdaConst<true> {
-  template <class U>
-  static constexpr inline auto output() {}
 };
 
 }  // namespace sus::fn::__private
@@ -177,12 +173,13 @@ struct CheckLambdaConst<true> {
   [&]() {                                                                    \
     sus_for_each(_sus__check_storage, sus_for_each_sep_none,                 \
                  _sus__unpack names) return ::sus::fn::__private::           \
-        SusBind([sus_for_each(_sus__declare_storage, sus_for_each_sep_comma, \
-                              _sus__unpack names)]<class... Args>(           \
-                    Args&&... args) mutable {                                \
-          auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                        \
-          return x(::sus::mem::forward<Args>(args)...);                      \
-        });                                                                  \
+        SusBind(                                                             \
+            [sus_for_each(_sus__declare_storage_mut, sus_for_each_sep_comma, \
+                          _sus__unpack names)]<class... Args>(               \
+                Args&&... args) mutable {                                    \
+              auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                    \
+              return x(::sus::mem::forward<Args>(args)...);                  \
+            });                                                              \
   }()
 
 #define sus_bind0_mut(lambda, ...) \
@@ -193,7 +190,12 @@ struct CheckLambdaConst<true> {
   _sus__macro(_sus__declare_storage_impl, _sus__remove_parens(x), \
               _sus__bind_noop)
 #define _sus__declare_storage_impl(x, modify, ...) \
-  x = ::sus::fn::__private::StorageType<decltype(x)>(modify(x))
+  x = ::sus::fn::__private::make_storage(modify(x))
+#define _sus__declare_storage_mut(x)                                  \
+  _sus__macro(_sus__declare_storage_impl_mut, _sus__remove_parens(x), \
+              _sus__bind_noop)
+#define _sus__declare_storage_impl_mut(x, modify, ...) \
+  x = ::sus::fn::__private::make_storage_mut(modify(x))
 #define _sus__check_storage(x, ...) \
   _sus__macro(_sus__check_storage_impl, _sus__remove_parens(x), _sus__bind_noop)
 #define _sus__check_storage_impl(x, modify, ...)                          \

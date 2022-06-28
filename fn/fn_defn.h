@@ -373,7 +373,7 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
   Fn(F ptr) noexcept : FnMut<R(CallArgs...)>(static_cast<F&&>(ptr)) {}
 
   /// Construction from the output of `sus_bind()`.
-  template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
+  template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
   Fn(__private::SusBind<F>&& holder) noexcept
       : FnMut<R(CallArgs...)>(__private::StorageConstructionFn,
                               static_cast<F&&>(holder.lambda)) {}
