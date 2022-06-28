@@ -59,6 +59,21 @@ int i_f_function(float) { return 0; }
 
 // clang-format off
 
+// Closures can not be copied, as their storage is uniquely owned.
+static_assert(!std::is_copy_constructible_v<FnOnce<void()>>);
+static_assert(!std::is_copy_assignable_v<FnOnce<void()>>);
+static_assert(!std::is_copy_constructible_v<FnMut<void()>>);
+static_assert(!std::is_copy_assignable_v<FnMut<void()>>);
+static_assert(!std::is_copy_constructible_v<Fn<void()>>);
+static_assert(!std::is_copy_assignable_v<Fn<void()>>);
+// Closures can be moved.
+static_assert(std::is_move_constructible_v<FnOnce<void()>>);
+static_assert(std::is_move_assignable_v<FnOnce<void()>>);
+static_assert(std::is_move_constructible_v<FnMut<void()>>);
+static_assert(std::is_move_assignable_v<FnMut<void()>>);
+static_assert(std::is_move_constructible_v<Fn<void()>>);
+static_assert(std::is_move_assignable_v<Fn<void()>>);
+
 // A function pointer, or convertible lambda, can be bound to FnOnce, FnMut and Fn.
 static_assert(std::is_constructible_v<FnOnce<void()>, decltype([](){})>);
 static_assert(std::is_constructible_v<FnMut<void()>, decltype([](){})>);
@@ -83,9 +98,29 @@ static_assert(!std::is_constructible_v<FnOnce<void()>, decltype([i = int(1)]() m
 static_assert(std::is_constructible_v<FnOnce<void()>, decltype([]() { return sus_bind0([i = int(1)](){}); }())>);
 // And use sus_bind0_mut for a mutable lambda.
 static_assert(std::is_constructible_v<FnOnce<void()>, decltype([]() { return sus_bind0_mut([i = int(1)]() mutable {++i;}); }())>);
-// This incorrectly uses sus_bind0 with a mutable lambda, which produces a warning/error.
-#pragma warning(suppress: 4996)
-static_assert(!std::is_constructible_v<FnOnce<void()>, decltype([]() { return sus_bind0([i = int(1)]() mutable {++i;}); }())>);
+
+// This incorrectly uses sus_bind0 with a mutable lambda, which produces a
+// warning while also being non-constructible. But we build with errors enabled
+// so it fails to compile instead of just failing the assert.
+//
+// TODO: It doesn't seem possible to disable this error selectively here, as the
+// actual call happens in a template elsewhere. So that prevents us from
+// checking the non-constructibility if the warning isn't compiled as an error.
+//
+// It would be nice to be able to produce a nice warning while also failing
+// overload resolution nicely. But with -Werror the warning becomes an error,
+// and we can't explain why overload resolution is failing with extra
+// information in that error message.
+//
+// #pragma GCC diagnostic push
+// #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+// static_assert(!std::is_constructible_v<
+//     FnOnce<void()>,
+//     decltype([]() {
+//       return sus_bind0([i = int(1)]() mutable {++i;});
+//     }())
+// >);
+// #pragma GCC diagnostic pop
 
 // clang-format on
 
@@ -330,6 +365,147 @@ TEST(Fn, Into) {
   };
   EXPECT_EQ(into_fn([](int i) { return i + 1; }), 2);
   EXPECT_EQ(into_fn(sus_bind0([](int i) { return i + 1; })), 2);
+}
+
+TEST(FnDeathTest, CallAfterMoveConstruct) {
+  {
+    auto x = FnOnce<void()>::from([]() {});
+    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
+  {
+    auto x = FnMut<void()>::from([]() {});
+    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(x(), "");
+#endif
+  }
+  {
+    auto x = Fn<void()>::from([]() {});
+    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(x(), "");
+#endif
+  }
+  {
+    auto x = FnOnce<void()>::from(sus_bind0([]() {}));
+    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
+  {
+    auto x = FnMut<void()>::from(sus_bind0([]() {}));
+    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(x(), "");
+#endif
+  }
+  {
+    auto x = Fn<void()>::from(sus_bind0([]() {}));
+    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(x(), "");
+#endif
+  }
+}
+
+TEST(FnDeathTest, CallAfterMoveAssign) {
+  {
+    auto x = FnOnce<void()>::from([]() {});
+    auto y = FnOnce<void()>::from([]() {});
+    y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
+  {
+    auto x = FnMut<void()>::from([]() {});
+    auto y = FnOnce<void()>::from([]() {});
+    y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(x(), "");
+#endif
+  }
+  {
+    auto x = Fn<void()>::from([]() {});
+    auto y = FnOnce<void()>::from([]() {});
+    y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(x(), "");
+#endif
+  }
+  {
+    auto x = FnOnce<void()>::from(sus_bind0([]() {}));
+    auto y = FnOnce<void()>::from([]() {});
+    y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
+  {
+    auto x = FnMut<void()>::from(sus_bind0([]() {}));
+    auto y = FnOnce<void()>::from([]() {});
+    y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(x(), "");
+#endif
+  }
+  {
+    auto x = Fn<void()>::from(sus_bind0([]() {}));
+    auto y = FnOnce<void()>::from([]() {});
+    y = static_cast<decltype(x)&&>(x);
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(x(), "");
+#endif
+  }
+}
+
+TEST(FnDeathTest, CallAfterCall) {
+  {
+    auto x = FnOnce<void()>::from([]() {});
+    static_cast<decltype(x)&&>(x)();
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
+  {
+    auto x = FnMut<void()>::from([]() {});
+    static_cast<decltype(x)&&>(x)();
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
+  {
+    auto x = Fn<void()>::from([]() {});
+    static_cast<decltype(x)&&>(x)();
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
+  {
+    auto x = FnOnce<void()>::from(sus_bind0([]() {}));
+    static_cast<decltype(x)&&>(x)();
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
+  {
+    auto x = FnMut<void()>::from(sus_bind0([]() {}));
+    static_cast<decltype(x)&&>(x)();
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
+  {
+    auto x = Fn<void()>::from(sus_bind0([]() {}));
+    static_cast<decltype(x)&&>(x)();
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+#endif
+  }
 }
 
 }  // namespace

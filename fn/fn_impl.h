@@ -23,8 +23,8 @@ namespace sus::fn {
 
 template <class R, class... CallArgs>
 template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
-FnOnce<R(CallArgs...)>::FnOnce(F fn) noexcept
-    : type_(__private::FnPointer), fn_ptr_(fn) {}
+FnOnce<R(CallArgs...)>::FnOnce(F ptr) noexcept
+    : type_(__private::FnPointer), fn_ptr_(ptr) {}
 
 template <class R, class... CallArgs>
 template <class ConstructionType,
@@ -33,30 +33,12 @@ FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction,
                                F&& lambda) noexcept
     : type_(__private::Storage) {
   using FnStorage = __private::FnStorage<F>;
+  // TODO: Allow overriding the global allocator? Use the allocator in place of
+  // `new` and `delete` directly?
   auto* s = new FnStorage(static_cast<F&&>(lambda));
   make_vtable(*s, construction);
   storage_ = s;
 }
-
-template <class R, class... CallArgs>
-template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
-FnMut<R(CallArgs...)>::FnMut(F fn) noexcept : FnOnce<R(CallArgs...)>(fn) {}
-
-template <class R, class... CallArgs>
-template <class ConstructionType,
-          ::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
-FnMut<R(CallArgs...)>::FnMut(ConstructionType construction, F&& lambda) noexcept
-    : FnOnce<R(CallArgs...)>(construction, forward<F>(lambda)) {}
-
-template <class R, class... CallArgs>
-template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
-Fn<R(CallArgs...)>::Fn(F fn) noexcept : FnMut<R(CallArgs...)>(fn) {}
-
-template <class R, class... CallArgs>
-template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
-Fn<R(CallArgs...)>::Fn(__private::StorageConstructionFnType construction,
-                       F&& lambda) noexcept
-    : FnMut<R(CallArgs...)>(construction, forward<F>(lambda)) {}
 
 template <class R, class... CallArgs>
 template <class FnStorage>
@@ -110,7 +92,8 @@ FnOnce<R(CallArgs...)>::~FnOnce() noexcept {
 }
 
 template <class R, class... CallArgs>
-FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) noexcept : type_(o.type_) {
+FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) noexcept
+    : type_(::sus::mem::replace(mref(o.type_), __private::MovedFrom)) {
   switch (type_) {
     case __private::MovedFrom:
       ::sus::panic();
@@ -134,8 +117,7 @@ FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) noexcept {
       if (auto* s = ::sus::mem::replace_ptr(mref(storage_), nullptr); s)
         delete s;
   }
-  type_ = o.type_;
-  switch (type_) {
+  switch (type_ = ::sus::mem::replace(mref(o.type_), __private::MovedFrom)) {
     case __private::MovedFrom:
       ::sus::panic();
     case __private::FnPointer:
@@ -150,16 +132,14 @@ FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) noexcept {
 
 template <class R, class... CallArgs>
 R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
-  switch (type_) {
+  switch (::sus::mem::replace(mref(type_), __private::MovedFrom)) {
     case __private::MovedFrom:
       ::sus::panic();
     case __private::FnPointer: {
-      type_ = __private::MovedFrom;
       auto* fn = ::sus::mem::replace_ptr(mref(fn_ptr_.fn_), nullptr);
       return fn(static_cast<CallArgs&&>(args)...);
     }
     case __private::Storage: {
-      type_ = __private::MovedFrom;
       auto* storage = ::sus::mem::replace_ptr(mref(storage_), nullptr);
       ::sus::check(storage);
       auto& vtable = static_cast<__private::FnStorageVtable<R, CallArgs...>&>(
