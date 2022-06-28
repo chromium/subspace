@@ -63,6 +63,17 @@ This library is an experiment and not intended for use. See the
       clear and better domain-specific name.
     * Would like to extend this to Copy and Move constructors too, through Clone
       and Move methods. Implementation details required.
+    * Write a `::from(x)` constructing method to implement
+      `sus::concepts::from::From` when the type is constructed from another
+      type.
+    * Exception granted for closure types (Fn, FnMut, FnOnce) because
+        1. the construction does not do work, it stores a pointer, or the output
+        of sus_bind().
+        1. the purpose of the closure types is to type-erase a lambda, for use
+           in places where the type can't be propagated, such a virtual methods
+           which can not be a template.
+        1. since the intent is for use where templates can not be used,
+           `Into<FnOnce<...>>` can not be used either.
 1. No use-after-move. All types abort if they are used after a move.
 1. No implicit conversions, ever.
 1. No function overloads. Const is the default.
