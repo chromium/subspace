@@ -16,6 +16,7 @@
 
 #include "concepts/callable.h"
 #include "mem/forward.h"
+#include "mem/__private/relocate.h"
 
 namespace sus::fn {
 
@@ -121,7 +122,7 @@ class Fn;
 /// useful if converted to a `const FnMut` or `const FnOnce` which are only
 /// callable as mutable objects.
 template <class R, class... CallArgs>
-class FnOnce<R(CallArgs...)> {
+class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
@@ -193,6 +194,9 @@ class FnOnce<R(CallArgs...)> {
     // `sus_bind()`. This is a type-erased pointer to the heap storage.
     __private::FnStorageBase* storage_;
   };
+
+ private:
+  sus_class_trivial_relocatable(unsafe_fn);
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
@@ -251,7 +255,7 @@ class FnOnce<R(CallArgs...)> {
 /// useful if converted to a `const FnMut` or `const FnOnce` which are only
 /// callable as mutable objects.
 template <class R, class... CallArgs>
-class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
+class [[sus_trivial_abi]] FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
@@ -301,6 +305,9 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
             ::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
   FnMut(ConstructionType c, F&& lambda) noexcept
       : FnOnce<R(CallArgs...)>(c, static_cast<F&&>(lambda)) {}
+
+ private:
+  sus_class_trivial_relocatable(unsafe_fn);
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
@@ -359,7 +366,7 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
 /// useful if converted to a `const FnMut` or `const FnOnce` which are only
 /// callable as mutable objects.
 template <class R, class... CallArgs>
-class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
+class [[sus_trivial_abi]] Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
@@ -408,6 +415,9 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
 
   template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
   Fn(__private::StorageConstructionFnType, F&& fn) noexcept;
+
+ private:
+  sus_class_trivial_relocatable(unsafe_fn);
 };
 
 }  // namespace sus::fn
