@@ -93,24 +93,24 @@ TEST(IteratorBase, All) {
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_TRUE(it.all(sus::into([](int i) { return i <= 5; })));
+    EXPECT_TRUE(it.all([](int i) { return i <= 5; }));
   }
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_FALSE(it.all(sus::into([](int i) { return i <= 4; })));
+    EXPECT_FALSE(it.all([](int i) { return i <= 4; }));
   }
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_FALSE(it.all(sus::into([](int i) { return i <= 0; })));
+    EXPECT_FALSE(it.all([](int i) { return i <= 0; }));
   }
 
   // Shortcuts at the first failure.
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_FALSE(it.all(sus::into([](int i) { return i <= 3; })));
+    EXPECT_FALSE(it.all([](int i) { return i <= 3; }));
     Option<int> n = it.next();
     ASSERT_TRUE(n.is_some());
     // The `all()` function stopped when it consumed 4, so we can still consume
@@ -120,7 +120,7 @@ TEST(IteratorBase, All) {
 
   {
     auto it = EmptyIterator<int>::with_default();
-    EXPECT_TRUE(it.all(sus::into([](int) { return false; })));
+    EXPECT_TRUE(it.all([](int) { return false; }));
   }
 }
 
@@ -128,24 +128,24 @@ TEST(IteratorBase, Any) {
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_TRUE(it.any(sus::into([](int i) { return i == 5; })));
+    EXPECT_TRUE(it.any([](int i) { return i == 5; }));
   }
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_FALSE(it.any(sus::into([](int i) { return i == 6; })));
+    EXPECT_FALSE(it.any([](int i) { return i == 6; }));
   }
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_TRUE(it.any(sus::into([](int i) { return i == 1; })));
+    EXPECT_TRUE(it.any([](int i) { return i == 1; }));
   }
 
   // Shortcuts at the first success.
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_TRUE(it.any(sus::into([](int i) { return i == 3; })));
+    EXPECT_TRUE(it.any([](int i) { return i == 3; }));
     Option<int> n = it.next();
     ASSERT_TRUE(n.is_some());
     // The `any()` function stopped when it consumed 3, so we can still consume
@@ -155,7 +155,7 @@ TEST(IteratorBase, Any) {
 
   {
     auto it = EmptyIterator<int>::with_default();
-    EXPECT_FALSE(it.any(sus::into([](int) { return false; })));
+    EXPECT_FALSE(it.any([](int) { return false; }));
   }
 }
 
@@ -195,12 +195,12 @@ TEST(IteratorBase, Filter) {
   int nums[5] = {1, 2, 3, 4, 5};
 
   auto fit = ArrayIterator<int, 5>::with_array(nums).filter(
-      sus::into([](const int& i) { return i >= 3; }));
+      [](const int& i) { return i >= 3; });
   EXPECT_EQ(fit.count(), 3);
 
   auto fit2 = ArrayIterator<int, 5>::with_array(nums)
-                  .filter(sus::into([](const int& i) { return i >= 3; }))
-                  .filter(sus::into([](const int& i) { return i <= 4; }));
+                  .filter([](const int& i) { return i >= 3; })
+                  .filter([](const int& i) { return i <= 4; });
   int expect = 3;
   for (int i : fit2) {
     EXPECT_EQ(expect++, i);
