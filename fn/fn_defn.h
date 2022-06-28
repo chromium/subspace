@@ -14,9 +14,6 @@
 
 #pragma once
 
-#include <concepts>
-#include <type_traits>
-
 #include "concepts/callable.h"
 #include "mem/forward.h"
 
@@ -24,29 +21,39 @@ namespace sus::fn {
 
 namespace __private {
 
+/// The type-erased type (dropping the type of the internal lambda) of the
+/// closure's heap-allocated storage.
 struct FnStorageBase;
 
+/// Helper type returned by sus_bind() and used to construct a closure.
+template <class F>
+struct SusBind;
+
+/// Helper to determine which functions need to be instatiated for the closure,
+/// to be called from FnOnce, FnMut, and/or Fn.
+///
+/// This type indicates the closure can only be called from FnOnce.
 enum StorageConstructionFnOnceType { StorageConstructionFnOnce };
+/// Helper to determine which functions need to be instatiated for the closure,
+/// to be called from FnOnce, FnMut, and/or Fn.
+///
+/// This type indicates the closure can be called from FnMut or FnOnce.
 enum StorageConstructionFnMutType { StorageConstructionFnMut };
+/// Helper to determine which functions need to be instatiated for the closure,
+/// to be called from FnOnce, FnMut, and/or Fn.
+///
+/// This type indicates the closure can be called from Fn, FnMut or FnOnce.
 enum StorageConstructionFnType { StorageConstructionFn };
 
+/// Used to indicate if the closure is holding a function pointer,
+/// heap-allocated storage, or nothing due to being moved-from.
 enum FnType {
+  /// Is moved-from and should not be used in this state unless reinitialized.
   MovedFrom,
+  /// Holds a function pointer or captureless lambda.
   FnPointer,
+  /// Holds the type-erased output of sus_bind() in a heap allocation.
   Storage,
-};
-
-struct SusBindInvalid {};
-
-template <class F>
-struct SusBind {
-  F lambda;
-
-  enum class Mutable { kReason };
-  // clang-format off
-  [[deprecated("Use sus_bind_mut() to bind a mutable lambda")]]
-  static auto Invalid(Mutable) { return SusBindInvalid(); }
-  // clang-format on
 };
 
 }  // namespace __private
@@ -58,29 +65,69 @@ class FnMut;
 template <class R, class... Args>
 class Fn;
 
-/// A closure that holds a `Callable` and may only be called a single time.
+/// A closure that erases the type of the internal callable object (lambda). A
+/// FnOnce may only be called a single time.
 ///
-/// Closures optionally store arguments that will be passed to the `Callable`
-/// when it is run. This closure owns any arguments passed to it for storage,
-/// copying or moving into its storage as needed. A `FnOnce` will move those
-/// stored arguments to the `Callable`, allowing it to receive them by value and
-/// construct them from a move operation. Alternatively the `Callable` can
-/// receive the stored arguments as an rvalue (`&&`) or mutable reference (`&`)
-/// and is allowed to mutate the arguments stored within the `FnOnce`.
+/// Fn can be used as a FnMut, which can be used as a FnOnce.
 ///
-/// Fn and FnMut are convertible to FnOnce.
+/// Lambdas without captures can be converted into a FnOnce, FnMut, or Fn
+/// directly. If the lambda has captured, it must be given to one of:
 ///
-/// # Why can a "const" Fn convert to a mutable FnOnce?
+/// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
+/// captures variables from local state. Variables to be captured in the lambda
+/// must also be named in sus_store(). `sus_bind()` only allows those named
+/// variables to be captured, and ensures they are stored by value instead of by
+/// reference.
 ///
-/// A FnOnce is _allowed_ to mutate but for a Fn converted to a FnOnce, it would
-/// become a FnOnce which chooses not to mutate its storage.
+/// - `sus_bind0(lambda)` to bind a const lambda which has bound variables that
+/// don't capture state from outside the lambda, such as `[i = 2]() { return i;
+/// }`.
+///
+/// - sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
+/// which captures variables from local state.
+///
+/// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound variables
+/// that don't capture state from outside the lambda, such as `[i = 2]() {
+/// return ++i; }`.
+///
+/// Within sus_store(), a varaible name can be wrapped with a helper to capture
+/// in different ways:
+///
+/// - `sus_take(x)` will move `x` into the closure instead of copying it.
+///
+/// - `sus_unsafe_pointer(x)` will allow capturing a pointer. Otherwise it be
+/// disallowed, and it is strongly discouraged as it requires careful present
+/// and future understanding of the pointee's lifetime.
+///
+/// # Example
+///
+/// Moves `a` into the closure's storage, and copies b. The lambda then refers
+/// to the closure's stored values by reference.
+///
+/// ```
+/// int a = 1;
+/// int b = 2;
+/// FnOnce<void()> f = sus_bind_mut(
+///   sus_store(sus_take(a), b), [&a, &b]() mutable { a += b; }
+/// );
+/// ```
+///
+/// # Why can a "const" Fn convert to a mutable FnMut or FnOnce?
+///
+/// A FnMut or FnOnce is _allowed_ to mutate its storage, but a "const" Fn
+/// closure would just choose not to do so.
+///
+/// However, a `const Fn` requires that the storage is not mutated, so it is not
+/// useful if converted to a `const FnMut` or `const FnOnce` which are only
+/// callable as mutable objects.
 template <class R, class... CallArgs>
 class FnOnce<R(CallArgs...)> {
  public:
-  // Function pointer constructor.
+  /// Construction from a function pointer or captureless lambda.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
-  FnOnce(F fn) noexcept;
+  FnOnce(F ptr) noexcept;
 
+  /// Construction from the output of `sus_bind()`.
   template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
   FnOnce(__private::SusBind<F>&& holder) noexcept
       : FnOnce(__private::StorageConstructionFnOnce,
@@ -94,14 +141,17 @@ class FnOnce<R(CallArgs...)> {
   FnOnce(const FnOnce&) noexcept = delete;
   FnOnce& operator=(const FnOnce&) noexcept = delete;
 
-  // Runs and consumes the closure.
+  /// Runs and consumes the closure.
   inline R operator()(CallArgs&&... args) && noexcept;
 
-  // sus::concepts::from::From trait.
+  /// `sus::concepts::from::From` trait implementation for function pointers or
+  /// lambdas without captures.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return FnOnce(static_cast<R (*)(CallArgs...)>(fn));
   }
+  /// `sus::concepts::from::From` trait implementation for the output of
+  /// `sus_bind()`.
   template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
     return FnOnce(static_cast<__private::SusBind<F>&&>(holder));
@@ -131,45 +181,87 @@ class FnOnce<R(CallArgs...)> {
   static void make_vtable(FnStorage&,
                           __private::StorageConstructionFnType) noexcept;
 
-  // TODO: Small size optimization? When can we inline the storage beyond
-  // a fn pointer with no bound args?
   __private::FnType type_;
-
   union {
+    // Used when the closure is a function pointer (or a captureless lambda,
+    // which is converted to a function pointer).
     struct {
       R (*fn_)(CallArgs...);
     } fn_ptr_;
 
+    // Used when the closure is a lambda with storage, generated by
+    // `sus_bind()`. This is a type-erased pointer to the heap storage.
     __private::FnStorageBase* storage_;
   };
 };
 
-/// A closure that holds a `Callable`, may be called multiple times, and is able
-/// to mutate the stored arguments within the `FnMut`.
+/// A closure that erases the type of the internal callable object (lambda). A
+/// FnMut may be called a multiple times, and may mutate its storage.
 ///
-/// Closures optionally store arguments that will be passed to the `Callable`
-/// when it is run. This closure owns any arguments passed to it for storage,
-/// copying or moving into its storage as needed. A `FnMut` will pass a mutable
-/// reference (`&`) to those stored arguments to the `Callable`, allowing it to
-/// receive them by const or mutable reference, or by value if it wants to copy.
-/// The `Callable` is able to mutate the stored arguments within the `FnMut`.
+/// Fn can be used as a FnMut, which can be used as a FnOnce.
 ///
-/// Fn is convertible to FnMut, and FnMut is convertible to FnOnce.
+/// Lambdas without captures can be converted into a FnOnce, FnMut, or Fn
+/// directly. If the lambda has captured, it must be given to one of:
 ///
-/// # Why can a "const" Fn convert to a mutable FnMut?
+/// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
+/// captures variables from local state. Variables to be captured in the lambda
+/// must also be named in sus_store(). `sus_bind()` only allows those named
+/// variables to be captured, and ensures they are stored by value instead of by
+/// reference.
 ///
-/// A FnMut is _allowed_ to mutate but for a Fn converted to a FnMut, it would
-/// become a FnMut which chooses not to mutate its storage.
+/// - `sus_bind0(lambda)` to bind a const lambda which has bound variables that
+/// don't capture state from outside the lambda, such as `[i = 2]() { return i;
+/// }`.
+///
+/// - sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
+/// which captures variables from local state.
+///
+/// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound variables
+/// that don't capture state from outside the lambda, such as `[i = 2]() {
+/// return ++i; }`.
+///
+/// Within sus_store(), a varaible name can be wrapped with a helper to capture
+/// in different ways:
+///
+/// - `sus_take(x)` will move `x` into the closure instead of copying it.
+///
+/// - `sus_unsafe_pointer(x)` will allow capturing a pointer. Otherwise it be
+/// disallowed, and it is strongly discouraged as it requires careful present
+/// and future understanding of the pointee's lifetime.
+///
+/// # Example
+///
+/// Moves `a` into the closure's storage, and copies b. The lambda then refers
+/// to the closure's stored values by reference.
+///
+/// ```
+/// int a = 1;
+/// int b = 2;
+/// FnMut<void()> f = sus_bind_mut(
+///   sus_store(sus_take(a), b), [&a, &b]() mutable { a += b; }
+/// );
+/// ```
+///
+/// # Why can a "const" Fn convert to a mutable FnMut or FnOnce?
+///
+/// A FnMut or FnOnce is _allowed_ to mutate its storage, but a "const" Fn
+/// closure would just choose not to do so.
+///
+/// However, a `const Fn` requires that the storage is not mutated, so it is not
+/// useful if converted to a `const FnMut` or `const FnOnce` which are only
+/// callable as mutable objects.
 template <class R, class... CallArgs>
 class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
  public:
+  /// Construction from a function pointer or captureless lambda.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
-  FnMut(F fn) noexcept;
+  FnMut(F ptr) noexcept : FnOnce<R(CallArgs...)>(static_cast<F&&>(ptr)) {}
 
+  /// Construction from the output of `sus_bind()`.
   template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
   FnMut(__private::SusBind<F>&& holder) noexcept
-      : FnMut(__private::StorageConstructionFnMut,
-              static_cast<F&&>(holder.lambda)) {}
+      : FnOnce<R(CallArgs...)>(__private::StorageConstructionFnMut,
+                               static_cast<F&&>(holder.lambda)) {}
 
   ~FnMut() noexcept = default;
 
@@ -181,16 +273,20 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
 
   // Runs the closure.
   inline R operator()(CallArgs&&... args) & noexcept;
+  // Runs and consumes the closure.
   inline R operator()(CallArgs&&... args) && noexcept {
     return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
   }
 
-  // sus::concepts::from::From trait.
+  /// `sus::concepts::from::From` trait implementation for function pointers or
+  /// lambdas without captures.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return FnMut(static_cast<R (*)(CallArgs...)>(fn));
   }
+  /// `sus::concepts::from::From` trait implementation for the output of
+  /// `sus_bind()`.
   template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
     return FnMut(static_cast<__private::SusBind<F>&&>(holder));
@@ -203,34 +299,77 @@ class FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
 
   template <class ConstructionType,
             ::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
-  FnMut(ConstructionType, F&& fn) noexcept;
+  FnMut(ConstructionType c, F&& lambda) noexcept
+      : FnOnce<R(CallArgs...)>(c, static_cast<F&&>(lambda)) {}
 };
 
-/// A closure that holds a `Callable`, may be called multiple times, and is will
-/// never mutate any arguments held in its storage.
+/// A closure that erases the type of the internal callable object (lambda). A
+/// Fn may be called a multiple times, and will not mutate its storage.
 ///
-/// Closures optionally store arguments that will be passed to the `Callable`
-/// when it is run. This closure owns any arguments passed to it for storage,
-/// copying or moving into its storage as needed. A `Fn` will pass a const
-/// reference (`const&`) to those stored arguments to the `Callable`, allowing
-/// it to receive them by const reference, or by value if it wants to copy. The
-/// `Callable` may not mutate the stored arguments within the `Fn`.
+/// Fn can be used as a FnMut, which can be used as a FnOnce.
 ///
-/// Fn is convertible to FnMut and to FnOnce.
+/// Lambdas without captures can be converted into a FnOnce, FnMut, or Fn
+/// directly. If the lambda has captured, it must be given to one of:
 ///
-/// # Why can a "const" Fn convert to a mutable FnMut?
+/// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
+/// captures variables from local state. Variables to be captured in the lambda
+/// must also be named in sus_store(). `sus_bind()` only allows those named
+/// variables to be captured, and ensures they are stored by value instead of by
+/// reference.
 ///
-/// A FnMut is _allowed_ to mutate but for a Fn converted to a FnMut, it would
-/// become a FnMut which chooses not to mutate its storage.
+/// - `sus_bind0(lambda)` to bind a const lambda which has bound variables that
+/// don't capture state from outside the lambda, such as `[i = 2]() { return i;
+/// }`.
+///
+/// - sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
+/// which captures variables from local state.
+///
+/// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound variables
+/// that don't capture state from outside the lambda, such as `[i = 2]() {
+/// return ++i; }`.
+///
+/// Within sus_store(), a varaible name can be wrapped with a helper to capture
+/// in different ways:
+///
+/// - `sus_take(x)` will move `x` into the closure instead of copying it.
+///
+/// - `sus_unsafe_pointer(x)` will allow capturing a pointer. Otherwise it be
+/// disallowed, and it is strongly discouraged as it requires careful present
+/// and future understanding of the pointee's lifetime.
+///
+/// # Example
+///
+/// Moves `a` into the closure's storage, and copies b. The lambda then refers
+/// to the closure's stored values by reference.
+///
+/// ```
+/// int a = 1;
+/// int b = 2;
+/// Fn<int()> f = sus_bind(
+///   sus_store(sus_take(a), b), [&a, &b]() { return a + b; }
+/// );
+/// ```
+///
+/// # Why can a "const" Fn convert to a mutable FnMut or FnOnce?
+///
+/// A FnMut or FnOnce is _allowed_ to mutate its storage, but a "const" Fn
+/// closure would just choose not to do so.
+///
+/// However, a `const Fn` requires that the storage is not mutated, so it is not
+/// useful if converted to a `const FnMut` or `const FnOnce` which are only
+/// callable as mutable objects.
 template <class R, class... CallArgs>
 class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
  public:
+  /// Construction from a function pointer or captureless lambda.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
-  Fn(F fn) noexcept;
+  Fn(F ptr) noexcept : FnMut<R(CallArgs...)>(static_cast<F&&>(ptr)) {}
 
+  /// Construction from the output of `sus_bind()`.
   template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
   Fn(__private::SusBind<F>&& holder) noexcept
-      : Fn(__private::StorageConstructionFn, static_cast<F&&>(holder.lambda)) {}
+      : FnMut<R(CallArgs...)>(__private::StorageConstructionFn,
+                              static_cast<F&&>(holder.lambda)) {}
 
   ~Fn() noexcept = default;
 
@@ -243,11 +382,20 @@ class Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
   // Runs the closure.
   inline R operator()(CallArgs&&... args) const& noexcept;
 
-  // sus::concepts::from::From trait.
+  // Runs and consumes the closure.
+  inline R operator()(CallArgs&&... args) && noexcept {
+    return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
+        forward<CallArgs>(args)...);
+  }
+
+  /// `sus::concepts::from::From` trait implementation for function pointers or
+  /// lambdas without captures.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return Fn(static_cast<R (*)(CallArgs...)>(fn));
   }
+  /// `sus::concepts::from::From` trait implementation for the output of
+  /// `sus_bind()`.
   template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
     return Fn(static_cast<__private::SusBind<F>&&>(holder));
