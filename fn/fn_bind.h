@@ -23,6 +23,149 @@
 #include "marker/unsafe.h"
 #include "mem/forward.h"
 
+/// Bind a const lambda to storage for its bound arguments. The output can be
+/// used to construct a FnOnce, FnMut, or Fn.
+///
+/// The first argument is a list of variables that will be bound into storage
+/// for access from the lambda, wrapped in sus_store(). If there are no
+/// variables to mention, sus_store() can be empty, or use the sus_bind0() macro
+/// which omits this list.
+///
+/// The second argument is a lambda, which can include captures. Any captures of
+/// variables outside the lambda must be referenced in the sus_store() list.
+///
+/// Use `sus_take(x)` in the sus_store() list to move `x` into storage instead
+/// of copying it.
+///
+/// Use `sus_unsafe_pointer(x)` to store a pointer named `x`. This is dangerous
+/// and discouraged, and using smart pointers is strongly preferred.
+///
+/// # Example
+///
+/// This binds a lambda with 3 captures, the first two being variables from the
+/// outside scope. The second varible is used as a reference to the storage,
+/// rather that copying or moving it into the lambda.
+/// ```
+/// sus_bind(sus_store(a, b), [a, &b, c = 1]() {}))
+/// ```
+///
+/// # Implementation note
+/// The lambda may arrive in multiple arguments, if there is a comma in the
+/// definition of it. Thus we use variadic arguments to capture all of the
+/// lambda.
+#define sus_bind(names, lambda, ...)                                        \
+  [&]() {                                                                   \
+    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                \
+                 _sus__unpack names);                                       \
+    using ::sus::fn::__private::SusBind;                                    \
+    return SusBind(                                                         \
+        [sus_for_each(_sus__declare_storage, sus_for_each_sep_comma,        \
+                      _sus__unpack names)]<class... Args>(Args&&... args) { \
+          const auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                 \
+          const bool is_const =                                             \
+              ::sus::concepts::callable::LambdaConst<decltype(x)>;          \
+          if constexpr (!is_const) {                                        \
+            return ::sus::fn::__private::CheckLambdaConst<                  \
+                is_const>::template output<void>();                         \
+          } else {                                                          \
+            return x(::sus::forward<Args>(args)...);                        \
+          }                                                                 \
+        });                                                                 \
+  }()
+
+/// A variant of `sus_bind()` which only takes a lambda, omitting the
+/// `sus_store()` list.  The output can be used to construct a FnOnce, FnMut, or
+/// Fn.
+///
+/// Because there is no `sus_store()` list, the lambda can not capture variables
+/// from the outside scope, however it can still declare captures contained
+/// entirely inside the lambda.
+///
+/// # Example
+///
+/// This defines a lambda with a capture `a` of type `int`, and binds it so it
+/// can be used to construct a FnOnce, FnMut, or Fn.
+/// ```
+/// sus_bind0([a = int(1)](char, int){})
+/// ```
+#define sus_bind0(lambda, ...) \
+  sus_bind(sus_store(), lambda __VA_OPT__(, ) __VA_ARGS__)
+
+/// Bind a mutable lambda to storage for its bound arguments. The output can be
+/// used to construct a FnOnce or FnMut.
+///
+/// Because the storage is mutable, the lambda may capture references to the
+/// storage and mutate it, and the lambda itself may be marked mutable.
+///
+/// The first argument is a list of variables that will be bound into storage
+/// for access from the lambda, wrapped in sus_store(). If there are no
+/// variables to mention, sus_store() can be empty, or use the sus_bind0() macro
+/// which omits this list.
+///
+/// The second argument is a lambda, which can include captures. Any captures of
+/// variables outside the lambda must be referenced in the sus_store() list.
+///
+/// Use `sus_take(x)` in the sus_store() list to move `x` into storage instead
+/// of copying it.
+///
+/// Use `sus_unsafe_pointer(x)` to store a pointer named `x`. This is dangerous
+/// and discouraged, and using smart pointers is strongly preferred.
+///
+/// # Example
+///
+/// This binds a lambda with 3 captures, the first two being variables from the
+/// outside scope. The second varible is used as a reference to the storage,
+/// rather that copying or moving it into the lambda.
+/// ```
+/// sus_bind_mut(sus_store(a, b), [a, &b, c = 1]() {}))
+/// ```
+///
+/// # Implementation note The lambda may arrive in multiple arguments, if there
+/// is a comma in the definition of it. Thus we use variadic arguments to
+/// capture all of the lambda.
+#define sus_bind_mut(names, lambda, ...)                                     \
+  [&]() {                                                                    \
+    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                 \
+                 _sus__unpack names) return ::sus::fn::__private::           \
+        SusBind(                                                             \
+            [sus_for_each(_sus__declare_storage_mut, sus_for_each_sep_comma, \
+                          _sus__unpack names)]<class... Args>(               \
+                Args&&... args) mutable {                                    \
+              auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                    \
+              return x(::sus::mem::forward<Args>(args)...);                  \
+            });                                                              \
+  }()
+
+/// A variant of `sus_bind_mut()` which only takes a lambda, omitting the
+/// `sus_store()` list.  The output can be used to construct a FnOnce or FnMut.
+///
+/// Because there is no `sus_store()` list, the lambda can not capture variables
+/// from the outside scope, however it can still declare captures contained
+/// entirely inside the lambda.
+///
+/// Can be used with a mutable lambda that can mutate its captures.
+///
+/// # Example
+///
+/// This defines a lambda with a capture `a` of type `int`, and binds it so it
+/// can be used to construct a FnOnce, FnMut, or Fn.
+/// ```
+/// sus_bind0_mut([a = int(1)](char, int){})
+/// ```
+#define sus_bind0_mut(lambda, ...) \
+  sus_bind_mut(sus_store(), lambda __VA_OPT__(, ) __VA_ARGS__)
+
+/// Declares the set of captures from the outside scope in `sus_bind()` or
+/// `sus_bind_mut()`.
+#define sus_store(...) (__VA_ARGS__)
+/// Marks a capture in the `sus_store()` list to be moved from the outside scope
+/// instead of copied.
+#define sus_take(x) (x, _sus__bind_move)
+/// Marks a capture in the `sus_store()` list as a pointer which is being
+/// intentionally and unsafely captured. Otherwise, pointers are not allowed to
+/// be captured.
+#define sus_unsafe_pointer(x) (x, _sus__bind_pointer)
+
 namespace sus::fn::__private {
 
 /// Helper type returned by sus_bind() when its inputs are not valid, to prevent
@@ -117,89 +260,19 @@ struct CheckLambdaConst<false> {
 
 }  // namespace sus::fn::__private
 
-#define sus_store(...) (__VA_ARGS__)
-#define sus_take(x) (x, _sus__bind_move)
-#define sus_unsafe_pointer(x) (x, _sus__bind_pointer)
-
-// TODO: It would be really nice to eliminate the outer (mutable) storage
-// lambda, and just temporarily construct the storage, and ensure the inner
-// lambda copied or moved all its lambda arguments, but I don't know how to
-// prevent it binding a reference, or to make that a compiler error. Example:
-//
-//  auto fn = Fn<int()>::with(sus_bind(sus_store(sus_take(m)), [&m]() {
-//      return m.i; }));
-
-// TODO: Can we avoid requiring Fn::with() when the bound lambda is a
-// function pointer? Currently we have to because of the templated operator().
-// Our concepts probably need to be improved. `+lambda` may not work for a
-// templated lambda, but it does still decay to a pointer, when you instantiate
-// the template. Example:
-//
-//  auto fn = Fn<int()>::with(sus_bind0([]() { return 0; });
-
-/// Bind a const lambda to storage for its bound arguments.
-///
-/// The lambda may arrive in multiple arguments, if there is a comma in the
-/// definition of it. Thus we use variadic arguments to capture all of the
-/// lambda.
-#define sus_bind(names, lambda, ...)                                        \
-  [&]() {                                                                   \
-    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                \
-                 _sus__unpack names);                                       \
-    using ::sus::fn::__private::SusBind;                                    \
-    return SusBind(                                                         \
-        [sus_for_each(_sus__declare_storage, sus_for_each_sep_comma,        \
-                      _sus__unpack names)]<class... Args>(Args&&... args) { \
-          const auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                 \
-          const bool is_const =                                             \
-              ::sus::concepts::callable::LambdaConst<decltype(x)>;          \
-          if constexpr (!is_const) {                                        \
-            return ::sus::fn::__private::CheckLambdaConst<                  \
-                is_const>::template output<void>();                         \
-          } else {                                                          \
-            return x(::sus::forward<Args>(args)...);                        \
-          }                                                                 \
-        });                                                                 \
-  }()
-
-#define sus_bind0(lambda, ...) \
-  sus_bind(sus_store(), lambda __VA_OPT__(, ) __VA_ARGS__)
-
-/// Bind a mutable lambda to storage for its bound arguments.
-///
-/// The lambda may arrive in multiple arguments, if there is a comma in the
-/// definition of it. Thus we use variadic arguments to capture all of the
-/// lambda.
-#define sus_bind_mut(names, lambda, ...)                                     \
-  [&]() {                                                                    \
-    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                 \
-                 _sus__unpack names) return ::sus::fn::__private::           \
-        SusBind(                                                             \
-            [sus_for_each(_sus__declare_storage_mut, sus_for_each_sep_comma, \
-                          _sus__unpack names)]<class... Args>(               \
-                Args&&... args) mutable {                                    \
-              auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                    \
-              return x(::sus::mem::forward<Args>(args)...);                  \
-            });                                                              \
-  }()
-
-#define sus_bind0_mut(lambda, ...) \
-  sus_bind_mut(sus_store(), lambda __VA_OPT__(, ) __VA_ARGS__)
-
 // Private helper.
-#define _sus__declare_storage(x)                                  \
-  _sus__macro(_sus__declare_storage_impl, sus_remove_parens(x), \
-              _sus__bind_noop)
+#define _sus__declare_storage(x) \
+  _sus__macro(_sus__declare_storage_impl, sus_remove_parens(x), _sus__bind_noop)
 #define _sus__declare_storage_impl(x, modify, ...) \
   x = ::sus::fn::__private::make_storage(modify(x))
-#define _sus__declare_storage_mut(x)                                  \
+#define _sus__declare_storage_mut(x)                                \
   _sus__macro(_sus__declare_storage_impl_mut, sus_remove_parens(x), \
               _sus__bind_noop)
 #define _sus__declare_storage_impl_mut(x, modify, ...) \
   x = ::sus::fn::__private::make_storage_mut(modify(x))
 #define _sus__check_storage(x, ...) \
   _sus__macro(_sus__check_storage_impl, sus_remove_parens(x), _sus__bind_noop)
-#define _sus__check_storage_impl(x, modify, ...)                          \
+#define _sus__check_storage_impl(x, modify, ...)                     \
   static_assert(decltype(::sus::fn::__private::is_lvalue(x))::value, \
                 "sus_bind() can only bind to variable names (lvalues).");
 
