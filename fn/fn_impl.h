@@ -25,7 +25,7 @@ namespace sus::fn {
 template <class R, class... CallArgs>
 template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
 FnOnce<R(CallArgs...)>::FnOnce(F ptr) noexcept
-    : type_(__private::FnPointer), fn_ptr_(ptr) {
+    : fn_ptr_(ptr), type_(__private::FnPointer) {
   ::sus::check(ptr);
 }
 
@@ -82,28 +82,25 @@ void FnOnce<R(CallArgs...)>::make_vtable(
 template <class R, class... CallArgs>
 FnOnce<R(CallArgs...)>::~FnOnce() noexcept {
   switch (type_) {
-    case __private::MovedFrom:
-      break;
     case __private::FnPointer:
       break;
     case __private::Storage: {
-      if (auto* p = ::sus::mem::replace_ptr(mref(storage_), nullptr); p)
-        delete p;
+      if (auto* s = ::sus::mem::replace_ptr(mref(storage_), nullptr); s)
+        delete s;
       break;
     }
   }
 }
 
 template <class R, class... CallArgs>
-FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) noexcept
-    : type_(::sus::mem::replace(mref(o.type_), __private::MovedFrom)) {
+FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) noexcept : type_(o.type_) {
   switch (type_) {
-    case __private::MovedFrom:
-      ::sus::panic();
     case __private::FnPointer:
-      fn_ptr_.fn_ = ::sus::mem::replace_ptr(mref(o.fn_ptr_.fn_), nullptr);
+      ::sus::check(o.fn_ptr_);  // Catch use-after-move.
+      fn_ptr_ = ::sus::mem::replace_ptr(mref(o.fn_ptr_), nullptr);
       break;
     case __private::Storage:
+      ::sus::check(o.storage_);  // Catch use-after-move.
       storage_ = ::sus::mem::replace_ptr(mref(o.storage_), nullptr);
       break;
   }
@@ -112,21 +109,19 @@ FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) noexcept
 template <class R, class... CallArgs>
 FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) noexcept {
   switch (type_) {
-    case __private::MovedFrom:
-      break;
     case __private::FnPointer:
       break;
     case __private::Storage:
       if (auto* s = ::sus::mem::replace_ptr(mref(storage_), nullptr); s)
         delete s;
   }
-  switch (type_ = ::sus::mem::replace(mref(o.type_), __private::MovedFrom)) {
-    case __private::MovedFrom:
-      ::sus::panic();
+  switch (type_ = o.type_) {
     case __private::FnPointer:
-      fn_ptr_.fn_ = ::sus::mem::replace_ptr(mref(o.fn_ptr_.fn_), nullptr);
+      ::sus::check(o.fn_ptr_);  // Catch use-after-move.
+      fn_ptr_ = ::sus::mem::replace_ptr(mref(o.fn_ptr_), nullptr);
       break;
     case __private::Storage:
+      ::sus::check(o.storage_);  // Catch use-after-move.
       storage_ = ::sus::mem::replace_ptr(mref(o.storage_), nullptr);
       break;
   }
@@ -135,16 +130,15 @@ FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) noexcept {
 
 template <class R, class... CallArgs>
 R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
-  switch (::sus::mem::replace(mref(type_), __private::MovedFrom)) {
-    case __private::MovedFrom:
-      ::sus::panic();
+  switch (type_) {
     case __private::FnPointer: {
-      auto* fn = ::sus::mem::replace_ptr(mref(fn_ptr_.fn_), nullptr);
+      ::sus::check(fn_ptr_);  // Catch use-after-move.
+      auto* fn = ::sus::mem::replace_ptr(mref(fn_ptr_), nullptr);
       return fn(static_cast<CallArgs&&>(args)...);
     }
     case __private::Storage: {
+      ::sus::check(storage_);  // Catch use-after-move.
       auto* storage = ::sus::mem::replace_ptr(mref(storage_), nullptr);
-      ::sus::check(storage);
       auto& vtable = static_cast<__private::FnStorageVtable<R, CallArgs...>&>(
           storage->vtable.unwrap_mut());
 
@@ -167,11 +161,11 @@ template <class R, class... CallArgs>
 R FnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
   using Super = FnOnce<R(CallArgs...)>;
   switch (Super::type_) {
-    case __private::MovedFrom:
-      ::sus::panic();
     case __private::FnPointer:
-      return Super::fn_ptr_.fn_(static_cast<CallArgs&&>(args)...);
+      ::sus::check(Super::fn_ptr_);  // Catch use-after-move.
+      return Super::fn_ptr_(static_cast<CallArgs&&>(args)...);
     case __private::Storage: {
+      ::sus::check(Super::storage_);  // Catch use-after-move.
       auto& vtable = static_cast<__private::FnStorageVtable<R, CallArgs...>&>(
           Super::storage_->vtable.unwrap_mut());
       return vtable.call_mut(
@@ -186,11 +180,11 @@ template <class R, class... CallArgs>
 R Fn<R(CallArgs...)>::operator()(CallArgs&&... args) const& noexcept {
   using Super = FnOnce<R(CallArgs...)>;
   switch (Super::type_) {
-    case __private::MovedFrom:
-      ::sus::panic();
     case __private::FnPointer:
-      return Super::fn_ptr_.fn_(static_cast<CallArgs&&>(args)...);
+      ::sus::check(Super::fn_ptr_);  // Catch use-after-move.
+      return Super::fn_ptr_(static_cast<CallArgs&&>(args)...);
     case __private::Storage: {
+      ::sus::check(Super::storage_);  // Catch use-after-move.
       auto& vtable = static_cast<__private::FnStorageVtable<R, CallArgs...>&>(
           Super::storage_->vtable.unwrap_mut());
       return vtable.call(
