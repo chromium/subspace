@@ -94,8 +94,8 @@ auto make_storage_mut(UnsafePointer<T*> p) {
 // Verifies the input is an lvalue (a name), so we can bind it to that same
 // lvalue name in the resuling lambda.
 template <class T>
-std::true_type can_store_type(T&);
-std::false_type can_store_type(...);
+std::true_type is_lvalue(T&);
+std::false_type is_lvalue(...);
 
 /// Helper used when verifying if a lambda is const. The template parameter
 /// represents the constness of the lambda. When false, the output() function
@@ -200,7 +200,7 @@ struct CheckLambdaConst<false> {
 #define _sus__check_storage(x, ...) \
   _sus__macro(_sus__check_storage_impl, sus_remove_parens(x), _sus__bind_noop)
 #define _sus__check_storage_impl(x, modify, ...)                          \
-  static_assert(decltype(::sus::fn::__private::can_store_type(x))::value, \
+  static_assert(decltype(::sus::fn::__private::is_lvalue(x))::value, \
                 "sus_bind() can only bind to variable names (lvalues).");
 
 #define _sus__bind_noop(x) x
