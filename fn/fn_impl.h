@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "assertions/check.h"
 #include "assertions/unreachable.h"
 #include "fn/__private/fn_storage.h"
 #include "fn/fn_defn.h"
@@ -24,7 +25,9 @@ namespace sus::fn {
 template <class R, class... CallArgs>
 template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
 FnOnce<R(CallArgs...)>::FnOnce(F ptr) noexcept
-    : type_(__private::FnPointer), fn_ptr_(ptr) {}
+    : type_(__private::FnPointer), fn_ptr_(ptr) {
+  ::sus::check(ptr);
+}
 
 template <class R, class... CallArgs>
 template <class ConstructionType,

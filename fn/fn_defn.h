@@ -15,8 +15,8 @@
 #pragma once
 
 #include "concepts/callable.h"
-#include "mem/forward.h"
 #include "mem/__private/relocate.h"
+#include "mem/forward.h"
 
 namespace sus::fn {
 
@@ -121,6 +121,11 @@ class Fn;
 /// However, a `const Fn` requires that the storage is not mutated, so it is not
 /// useful if converted to a `const FnMut` or `const FnOnce` which are only
 /// callable as mutable objects.
+///
+/// # Null pointers
+///
+/// A null function pointer is not allowed, constructing a FnOnce from a null
+/// pointer will panic.
 template <class R, class... CallArgs>
 class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
  public:
@@ -254,8 +259,14 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 /// However, a `const Fn` requires that the storage is not mutated, so it is not
 /// useful if converted to a `const FnMut` or `const FnOnce` which are only
 /// callable as mutable objects.
+///
+/// # Null pointers
+///
+/// A null function pointer is not allowed, constructing a FnMut from a null
+/// pointer will panic.
 template <class R, class... CallArgs>
-class [[sus_trivial_abi]] FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> {
+class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
+    : public FnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
@@ -365,6 +376,11 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> : public FnOnce<R(CallArgs...)> 
 /// However, a `const Fn` requires that the storage is not mutated, so it is not
 /// useful if converted to a `const FnMut` or `const FnOnce` which are only
 /// callable as mutable objects.
+///
+/// # Null pointers
+///
+/// A null function pointer is not allowed, constructing a Fn from a null
+/// pointer will panic.
 template <class R, class... CallArgs>
 class [[sus_trivial_abi]] Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
  public:

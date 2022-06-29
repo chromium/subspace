@@ -383,6 +383,19 @@ TEST(Fn, Into) {
   EXPECT_EQ(into_fn(sus_bind0([](int i) { return i + 1; })), 2);
 }
 
+TEST(FnDeathTest, NullPointer) {
+  void(*f)() = nullptr;
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(FnOnce<void()>::from(f), "");
+#endif
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(FnMut<void()>::from(f), "");
+#endif
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(Fn<void()>::from(f), "");
+#endif
+}
+
 TEST(FnDeathTest, CallAfterMoveConstruct) {
   {
     auto x = FnOnce<void()>::from([]() {});
