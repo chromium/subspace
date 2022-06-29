@@ -19,6 +19,7 @@
 #include "concepts/callable.h"
 #include "fn/fn_defn.h"
 #include "macros/for_each.h"
+#include "macros/remove_parens.h"
 #include "marker/unsafe.h"
 #include "mem/forward.h"
 
@@ -187,17 +188,17 @@ struct CheckLambdaConst<false> {
 
 // Private helper.
 #define _sus__declare_storage(x)                                  \
-  _sus__macro(_sus__declare_storage_impl, _sus__remove_parens(x), \
+  _sus__macro(_sus__declare_storage_impl, sus_remove_parens(x), \
               _sus__bind_noop)
 #define _sus__declare_storage_impl(x, modify, ...) \
   x = ::sus::fn::__private::make_storage(modify(x))
 #define _sus__declare_storage_mut(x)                                  \
-  _sus__macro(_sus__declare_storage_impl_mut, _sus__remove_parens(x), \
+  _sus__macro(_sus__declare_storage_impl_mut, sus_remove_parens(x), \
               _sus__bind_noop)
 #define _sus__declare_storage_impl_mut(x, modify, ...) \
   x = ::sus::fn::__private::make_storage_mut(modify(x))
 #define _sus__check_storage(x, ...) \
-  _sus__macro(_sus__check_storage_impl, _sus__remove_parens(x), _sus__bind_noop)
+  _sus__macro(_sus__check_storage_impl, sus_remove_parens(x), _sus__bind_noop)
 #define _sus__check_storage_impl(x, modify, ...)                          \
   static_assert(decltype(::sus::fn::__private::can_store_type(x))::value, \
                 "sus_bind() can only bind to variable names (lvalues).");
@@ -207,17 +208,6 @@ struct CheckLambdaConst<false> {
 #define _sus__bind_pointer(x) \
   ::sus::fn::__private::UnsafePointer(::sus::marker::unsafe_fn, x)
 #define _sus__macro(x, ...) x(__VA_ARGS__)
-
-// TODO: Document how this works.
-// https://stackoverflow.com/a/62984543
-#define _sus__remove_parens(x) \
-  _sus__remove_parens_inner_rename(_sus__remove_parens_inner x)
-#define _sus__remove_parens_inner(...) _sus__remove_parens_inner __VA_ARGS__
-#define _sus__remove_parens_inner_rename(...) \
-  _sus__remove_parens_inner_rename_(__VA_ARGS__)
-#define _sus__remove_parens_inner_rename_(...) \
-  _sus__remove_parens_outer##__VA_ARGS__
-#define _sus__remove_parens_outer_sus__remove_parens_inner
 
 // Private helper.
 #define _sus__unpack sus_bind_stored_argumnts_should_be_wrapped_in_sus_store

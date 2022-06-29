@@ -45,6 +45,7 @@ add_library(subspace STATIC
     "iter/once.h"
     "iter/sized_iterator.h"
     "macros/for_each.h"
+    "macros/remove_parens.h"
     "marker/unsafe.h"
     "mem/__private/relocatable_storage.h"
     "mem/__private/relocate.h"
