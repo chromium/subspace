@@ -22,6 +22,6 @@
 
 namespace sus::assertions {
 
-static constexpr bool is_windows() { return sus_assertions_is_windows(); }
+constexpr inline bool is_windows() { return sus_assertions_is_windows(); }
 
 }  // namespace sus::assertions

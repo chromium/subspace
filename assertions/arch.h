@@ -24,6 +24,6 @@
 
 namespace sus::assertions {
 
-static constexpr bool is_64bit() { return sus_assertions_is_64bit(); }
+constexpr inline bool is_64bit() { return sus_assertions_is_64bit(); }
 
 }  // namespace sus::assertions

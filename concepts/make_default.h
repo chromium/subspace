@@ -21,14 +21,14 @@ namespace sus::concepts {
 namespace __private {
 
 template <class T, class Signature>
-static constexpr bool has_with_default(...) {
+constexpr inline bool has_with_default(...) {
   return false;
 }
 
 template <class T, class R, class... Args>
   requires(
       std::is_same_v<decltype(T::with_default(std::declval<Args>()...)), R>)
-static constexpr bool has_with_default(int) {
+constexpr inline bool has_with_default(int) {
   return true;
 }
 
