@@ -1,3 +1,4 @@
+[![CI](https://github.com/chromium/subspace/actions/workflows/ci.yml/badge.svg)](https://github.com/chromium/subspace/actions/workflows/ci.yml)
 # Subspace Library
 
 An experimental take on a safer, simpler C++ standard library.
