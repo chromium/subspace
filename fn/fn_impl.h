@@ -26,7 +26,7 @@ template <class R, class... CallArgs>
 template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
 FnOnce<R(CallArgs...)>::FnOnce(F ptr) noexcept
     : fn_ptr_(ptr), type_(__private::FnPointer) {
-  ::sus::check(ptr);
+  ::sus::check(ptr != nullptr);
 }
 
 template <class R, class... CallArgs>

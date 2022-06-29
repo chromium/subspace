@@ -1,6 +1,11 @@
-name: CI
+name: try
 
-on: [pull_request]
+on:
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+      - '.vscode/**'
 
 jobs:
   build:
