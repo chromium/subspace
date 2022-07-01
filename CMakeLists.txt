@@ -56,6 +56,10 @@ add_library(subspace STATIC
     "mem/replace.h"
     "mem/swap.h"
     "mem/take.h"
+    "num/__private/literals.h"
+    "num/__private/signed_integer_macros.h"
+    "num/i32.h"
+    "num/num_concepts.h"
     "option/__private/is_option_type.h"
     "option/option.h"
     "lib/lib.cc"
@@ -93,6 +97,7 @@ add_executable(subspace_unittests
     "mem/replace_unittest.cc"
     "mem/swap_unittest.cc"
     "mem/take_unittest.cc"
+    "num/i32_unittest.cc"
     "option/option_unittest.cc"
     "option/option_types_unittest.cc"
 )

@@ -31,11 +31,13 @@
 
 #include "assertions/check.h"
 #include "assertions/nonnull.h"
+#include "assertions/unreachable.h"
 #include "concepts/make_default.h"
 #include "marker/unsafe.h"
 #include "mem/mref.h"
 #include "mem/replace.h"
 #include "mem/take.h"
+#include "num/num_concepts.h"
 #include "option/__private/is_option_type.h"
 
 namespace sus::iter {
@@ -300,7 +302,7 @@ class Option final {
   ///   return -1;
   /// }
   /// ```
-  operator State() { return t_.state(); }
+  operator State() const& { return t_.state(); }
 
   /// Returns the contained value inside the Option.
   ///
@@ -771,7 +773,7 @@ class Option<T&> final {
   ///   return -1;
   /// }
   /// ```
-  operator State() { return t_.state(); }
+  operator State() const& { return t_.state(); }
 
   /// Returns the contained value inside the Option.
   ///
@@ -1140,6 +1142,80 @@ class Option<T&> final {
 
   sus_class_maybe_trivial_relocatable_types(unsafe_fn, T&);
 };
+
+/// sus::num::Eq<Option<U>> trait.
+template <class T, class U>
+  requires(::sus::num::Eq<T, U>)
+constexpr inline bool operator==(const Option<T>& l,
+                                 const Option<U>& r) noexcept {
+  switch (l) {
+    case Some:
+      return r.is_some() && l.unwrap_ref() == r.unwrap_ref();
+    case None:
+      return r.is_none();
+  }
+  ::sus::unreachable_unchecked(unsafe_fn);
+}
+
+/// sus::num::Ord<Option<U>> trait.
+template <class T, class U>
+  requires(::sus::num::Ord<T, U>)
+constexpr inline auto operator<=>(const Option<T>& l,
+                                  const Option<U>& r) noexcept {
+  switch (l) {
+    case Some:
+      if (r.is_some())
+        return l.unwrap_ref() <=> r.unwrap_ref();
+      else
+        return std::strong_ordering::greater;
+    case None:
+      if (r.is_some())
+        return std::strong_ordering::less;
+      else
+        return std::strong_ordering::equivalent;
+  }
+  ::sus::unreachable_unchecked(unsafe_fn);
+}
+
+/// sus::num::WeakOrd<Option<U>> trait.
+template <class T, class U>
+  requires(::sus::num::WeakOrd<T, U>)
+constexpr inline auto operator<=>(const Option<T>& l,
+                                  const Option<U>& r) noexcept {
+  switch (l) {
+    case Some:
+      if (r.is_some())
+        return l.unwrap_ref() <=> r.unwrap_ref();
+      else
+        return std::weak_ordering::greater;
+    case None:
+      if (r.is_some())
+        return std::weak_ordering::less;
+      else
+        return std::weak_ordering::equivalent;
+  }
+  ::sus::unreachable_unchecked(unsafe_fn);
+}
+
+/// sus::num::PartialOrd<Option<U>> trait.
+template <class T, class U>
+  requires(::sus::num::PartialOrd<T, U>)
+constexpr inline auto operator<=>(const Option<T>& l,
+                                  const Option<U>& r) noexcept {
+  switch (l) {
+    case Some:
+      if (r.is_some())
+        return l.unwrap_ref() <=> r.unwrap_ref();
+      else
+        return std::partial_ordering::greater;
+    case None:
+      if (r.is_some())
+        return std::partial_ordering::less;
+      else
+        return std::partial_ordering::equivalent;
+  }
+  ::sus::unreachable_unchecked(unsafe_fn);
+}
 
 }  // namespace sus::option
 
