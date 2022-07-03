@@ -139,7 +139,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                                           \
   /** sus::concepts::BitOr<##T##> trait. */                                   \
   friend constexpr inline T operator|(const T& l, const T& r) noexcept {      \
-    return l.primitive_value & r.primitive_value;                             \
+    return l.primitive_value | r.primitive_value;                             \
   }                                                                           \
   /** sus::concepts::BitXor<##T##> trait. */                                  \
   friend constexpr inline T operator^(const T& l, const T& r) noexcept {      \

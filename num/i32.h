@@ -30,7 +30,7 @@ namespace sus::num {
 /// A 32-bit signed integer.
 struct i32 {
  private:
-  /// The underlying pritmitive type.
+  /// The underlying primitive type.
   using primitive_type = int32_t;
 
  public:
