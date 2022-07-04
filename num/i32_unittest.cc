@@ -494,6 +494,12 @@ TEST(i32, Mul) {
   EXPECT_EQ(1_i32 * i32::MAX(), i32::MAX());
   EXPECT_EQ(i32::MIN() * 1_i32, i32::MIN());
   EXPECT_EQ(-1_i32 * i32::MAX(), i32::MIN() + 1_i32);
+
+  auto x = 5_i32;
+  x *= 20_i32;
+  EXPECT_EQ(x, i32(20 * 5));
+  x *= -4_i32;
+  EXPECT_EQ(x, i32(20 * 5 * -4));
 }
 
 TEST(i32DeathTest, MulOverflow) {
@@ -574,6 +580,88 @@ TEST(i32, WrappingNeg) {
   EXPECT_EQ(i32::MAX().wrapping_neg(), i32::MIN() + i32(1));
   EXPECT_EQ((0_i32).wrapping_neg(), i32(0));
   EXPECT_EQ((20_i32).wrapping_neg(), i32(-20));
+}
+
+TEST(i32, Rem) {
+  [[maybe_unused]] constexpr auto a = -1_i32 % 3_i32;
+
+  EXPECT_EQ(0_i32 % 123_i32, 0_i32);
+  EXPECT_EQ(5_i32 % 2_i32, 1_i32);
+  EXPECT_EQ(5_i32 % 1_i32, 0_i32);
+  EXPECT_EQ(-5_i32 % 2_i32, -1_i32);
+  EXPECT_EQ(-5_i32 % 1_i32, 0_i32);
+  EXPECT_EQ(5_i32 % -2_i32, 1_i32);
+  EXPECT_EQ(5_i32 % -1_i32, 0_i32);
+  EXPECT_EQ(6_i32 % -1_i32, 0_i32);
+
+  auto x = 0_i32;
+  x %= 123_i32;
+  EXPECT_EQ(x, 0_i32);
+  x = 5_i32;
+  x %= 2_i32;
+  EXPECT_EQ(x, 1_i32);
+  x = 5_i32;
+  x %= 1_i32;
+  EXPECT_EQ(x, 0_i32);
+  x = -5_i32;
+  x %= 2_i32;
+  EXPECT_EQ(x, -1_i32);
+  x = -5_i32;
+  x %= 1_i32;
+  EXPECT_EQ(x, 0_i32);
+  x = 5_i32;
+  x %= -2_i32;
+  EXPECT_EQ(x, 1_i32);
+  x = 5_i32;
+  x %= -1_i32;
+  EXPECT_EQ(x, 0_i32);
+  x = 6_i32;
+  x %= -1_i32;
+  EXPECT_EQ(x, 0_i32);
+}
+
+TEST(i32DeathTest, RemOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(i32::MAX() % 0_i32, "");
+  EXPECT_DEATH(0_i32 % 0_i32, "");
+  EXPECT_DEATH(1_i32 % 0_i32, "");
+  EXPECT_DEATH(-1_i32 % 0_i32, "");
+  EXPECT_DEATH(i32::MIN() % 0_i32, "");
+  EXPECT_DEATH(i32::MIN() % -1_i32, "");
+#endif
+}
+
+TEST(i32, CheckedRem) {
+  [[maybe_unused]] constexpr auto a = (-1_i32).checked_rem(3_i32);
+
+  EXPECT_EQ((0_i32).checked_rem(123_i32), Option<i32>::some(0_i32));
+  EXPECT_EQ((-2345_i32).checked_rem(5_i32), Option<i32>::some(i32(-2345 % 5)));
+
+  EXPECT_EQ(i32::MAX().checked_rem(0_i32), None);
+  EXPECT_EQ((0_i32).checked_rem(0_i32), None);
+  EXPECT_EQ((1_i32).checked_rem(0_i32), None);
+  EXPECT_EQ((-1_i32).checked_rem(0_i32), None);
+  EXPECT_EQ(i32::MIN().checked_rem(0_i32), None);
+  EXPECT_EQ(i32::MIN().checked_rem(-1_i32), None);
+}
+
+TEST(i32, WrappingRem) {
+  [[maybe_unused]] constexpr auto a = (-1_i32).wrapping_rem(3_i32);
+
+  EXPECT_EQ((0_i32).wrapping_rem(123_i32), i32(0));
+  EXPECT_EQ((-2345_i32).wrapping_rem(5_i32), i32(-2345_i32 % 5));
+
+  EXPECT_EQ(i32::MIN().wrapping_rem(-1_i32), i32(0));
+}
+
+TEST(i32DeathTest, WrappingRemByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(i32::MAX().wrapping_rem(0_i32), "");
+  EXPECT_DEATH((0_i32).wrapping_rem(0_i32), "");
+  EXPECT_DEATH((1_i32).wrapping_rem(0_i32), "");
+  EXPECT_DEATH((-1_i32).wrapping_rem(0_i32), "");
+  EXPECT_DEATH(i32::MIN().wrapping_rem(0_i32), "");
+#endif
 }
 
 }  // namespace

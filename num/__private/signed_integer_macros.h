@@ -82,7 +82,8 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   _sus__signed_add(T);                \
   _sus__signed_div(T);                \
   _sus__signed_mul(T, LargerT);       \
-  _sus__signed_neg(T)
+  _sus__signed_neg(T);                \
+  _sus__signed_rem(T)
 
 #define _sus__signed_integer_comparison(T)                                    \
   /** sus::concepts::Eq<##T##> trait. */                                      \
@@ -479,4 +480,31 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
     else                                                                      \
       return MIN();                                                           \
   }                                                                           \
+  static_assert(true)
+
+#define _sus__signed_rem(T)                                                    \
+  /** Checked integer remainder. Computes self % rhs, returning None if rhs == \
+   * 0 or the division results in overflow.                                          \
+   */                                                                          \
+  constexpr Option<i32> checked_rem(const i32& rhs) const& noexcept {          \
+    if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
+      return Option<i32>::some(i32(primitive_value % rhs.primitive_value));    \
+    else                                                                       \
+      return Option<i32>::none();                                              \
+  }                                                                            \
+                                                                               \
+  /** Wrapping (modular) remainder. Computes self % rhs, wrapping around at    \
+   * the boundary of the type.                                                         \
+   *                                                                           \
+   * Such wrap-around never actually occurs mathematically; implementation     \
+   * artifacts make x % y invalid for MIN() / -1 on a signed type (where MIN() \
+   * is the negative minimal value). In such a case, this function returns 0.  \
+   */                                                                          \
+  constexpr i32 wrapping_rem(const i32& rhs) const& noexcept {                 \
+    ::sus::check(rhs != 0);                                                    \
+    if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
+      return i32(primitive_value % rhs.primitive_value);                       \
+    else                                                                       \
+      return i32(0);                                                           \
+  }                                                                            \
   static_assert(true)

@@ -58,11 +58,23 @@ struct i32 {
   // TODO: overflowing_abs(). Need a tuple type.
   // TODO: overflowing_add(). Need a tuple type.
   // TODO: overflowing_div(). Need a tuple type.
+  // TODO: overflowing_div_euclid(). Need a tuple type.
   // TODO: overflowing_mul(). Need a tuple type.
   // TODO: overflowing_neg(). Need a tuple type.
+  // TODO: overflowing_rem(). Need a tuple type.
+  // TODO: overflowing_rem_euclid(). Need a tuple type.
+  // TODO: wrapping_div_euclid().
+  // TODO: wrapping_rem_euclid().
+  // TODO: checked_div_euclid().
   // TODO: checked_log().
   // TODO: checked_log10().
   // TODO: checked_log2().
+  // TODO: checked_next_multiple_of().
+  // TODO: checked_pow().
+  // TODO: checked_rem_euclid().
+  // TODO: checked_shl().
+  // TODO: checked_shr().
+  // TODO: wrapping_div_euclid().
 
   /// The inner primitive value, in case it needs to be unwrapped from the
   /// type. Avoid using this member except to convert when a consumer
