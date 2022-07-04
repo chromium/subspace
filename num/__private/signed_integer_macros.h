@@ -81,7 +81,8 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   _sus__signed_abs(T);                \
   _sus__signed_add(T);                \
   _sus__signed_div(T);                \
-  _sus__signed_mul(T, LargerT)
+  _sus__signed_mul(T, LargerT);       \
+  _sus__signed_neg(T)
 
 #define _sus__signed_integer_comparison(T)                                    \
   /** sus::concepts::Eq<##T##> trait. */                                      \
@@ -442,4 +443,40 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
       out += LargerT{MAX_PRIMITIVE} - LargerT{MIN_PRIMITIVE} + 1;              \
     return static_cast<primitive_type>(out);                                   \
   }                                                                            \
+  static_assert(true)
+
+#define _sus__signed_neg(T)                                                   \
+  /** Checked negation. Computes -self, returning None if self == MIN.        \
+   */                                                                         \
+  constexpr Option<T> checked_neg() const& noexcept {                         \
+    if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
+      return Option<T>::some(T(-primitive_value));                            \
+    else                                                                      \
+      return Option<T>::none();                                               \
+  }                                                                           \
+                                                                              \
+  /** Saturating integer negation. Computes -self, returning MAX if self ==   \
+   * MIN instead of overflowing.                                              \
+   */                                                                         \
+  constexpr T saturating_neg() const& noexcept {                              \
+    if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
+      return T(-primitive_value);                                             \
+    else                                                                      \
+      return MAX();                                                           \
+  }                                                                           \
+                                                                              \
+  /** Wrapping (modular) negation. Computes -self, wrapping around at the     \
+   * boundary of the type.                                                    \
+   *                                                                          \
+   * The only case where such wrapping can occur is when one negates MIN() on \
+   * a signed type (where MIN() is the negative minimal value for the type);  \
+   * this is a positive value that is too large to represent in the type. In  \
+   * such a case, this function returns MIN() itself.                         \
+   */                                                                         \
+  constexpr T wrapping_neg() const& noexcept {                                \
+    if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
+      return T(-primitive_value);                                             \
+    else                                                                      \
+      return MIN();                                                           \
+  }                                                                           \
   static_assert(true)
