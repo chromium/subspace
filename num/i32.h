@@ -59,6 +59,7 @@ struct i32 {
   // TODO: overflowing_add(). Need a tuple type.
   // TODO: overflowing_div(). Need a tuple type.
   // TODO: overflowing_mul(). Need a tuple type.
+  // TODO: overflowing_neg(). Need a tuple type.
   // TODO: checked_log().
   // TODO: checked_log10().
   // TODO: checked_log2().

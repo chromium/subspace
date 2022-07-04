@@ -533,4 +533,47 @@ TEST(i32, WrappingMul) {
   EXPECT_EQ((123456_i32).wrapping_mul(-23456_i32), 1399183360_i32);
 }
 
+TEST(i32, Neg) {
+  [[maybe_unused]] constexpr auto a = -(1_i32);
+
+  EXPECT_EQ(-(0_i32), i32(0));
+  EXPECT_EQ(-(10_i32), i32(-10));
+  EXPECT_EQ(-(-10_i32), i32(10));
+  EXPECT_EQ(-i32::MAX(), i32::MIN() + i32(1));
+  EXPECT_EQ(-(i32::MIN() + 1_i32), i32::MAX());
+}
+
+TEST(i32DeathTest, NegOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(-i32::MIN(), "");
+#endif
+}
+
+TEST(i32, CheckedNeg) {
+  [[maybe_unused]] constexpr auto a = (123456_i32).checked_neg();
+
+  EXPECT_EQ(i32::MIN().checked_neg(), None);
+  EXPECT_EQ(i32::MAX().checked_neg(), Option<i32>::some(i32::MIN() + i32(1)));
+  EXPECT_EQ((0_i32).checked_neg(), Option<i32>::some(i32(0)));
+  EXPECT_EQ((20_i32).checked_neg(), Option<i32>::some(i32(-20)));
+}
+
+TEST(i32, SaturatingNeg) {
+  [[maybe_unused]] constexpr auto a = (123456_i32).saturating_neg();
+
+  EXPECT_EQ(i32::MIN().saturating_neg(), i32::MAX());
+  EXPECT_EQ(i32::MAX().saturating_neg(), i32::MIN() + i32(1));
+  EXPECT_EQ((0_i32).saturating_neg(), i32(0));
+  EXPECT_EQ((20_i32).saturating_neg(), i32(-20));
+}
+
+TEST(i32, WrappingNeg) {
+  [[maybe_unused]] constexpr auto a = (123456_i32).wrapping_neg();
+
+  EXPECT_EQ(i32::MIN().wrapping_neg(), i32::MIN());
+  EXPECT_EQ(i32::MAX().wrapping_neg(), i32::MIN() + i32(1));
+  EXPECT_EQ((0_i32).wrapping_neg(), i32(0));
+  EXPECT_EQ((20_i32).wrapping_neg(), i32(-20));
+}
+
 }  // namespace
