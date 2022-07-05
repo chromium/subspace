@@ -58,6 +58,7 @@ add_library(subspace STATIC
     "mem/take.h"
     "num/__private/literals.h"
     "num/__private/signed_integer_macros.h"
+    "num/__private/unsigned_integer_macros.h"
     "num/i32.h"
     "num/num_concepts.h"
     "option/__private/is_option_type.h"

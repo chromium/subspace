@@ -73,7 +73,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
 
 #define _sus__signed_impl(T, LargerT, UnsignedT) \
   _sus__signed_integer_comparison(T);            \
-  _sus__signed_unary_ops(T);                     \
+  _sus__signed_unary_ops(T, UnsignedT);          \
   _sus__signed_binary_logic_ops(T);              \
   _sus__signed_binary_bit_ops(T, UnsignedT);     \
   _sus__signed_mutable_logic_ops(T);             \
@@ -85,7 +85,8 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   _sus__signed_neg(T);                           \
   _sus__signed_rem(T);                           \
   _sus__signed_shift(T, UnsignedT);              \
-  _sus__signed_sub(T)
+  _sus__signed_sub(T);                           \
+  _sus__signed_count_bits(T, UnsignedT)
 
 #define _sus__signed_integer_comparison(T)                                    \
   /** sus::concepts::Eq<##T##> trait. */                                      \
@@ -98,14 +99,17 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                                           \
   static_assert(true)
 
-#define _sus__signed_unary_ops(T)                                        \
-  /** sus::concepts::Neg trait. */                                       \
-  constexpr inline T operator-()&& noexcept {                            \
-    ::sus::check(primitive_value != MIN_PRIMITIVE);                      \
-    return -primitive_value;                                             \
-  }                                                                      \
-  /** sus::concepts::BitNot trait. */                                    \
-  constexpr inline T operator~()&& noexcept { return ~primitive_value; } \
+#define _sus__signed_unary_ops(T, UnsignedT)        \
+  /** sus::concepts::Neg trait. */                  \
+  constexpr inline T operator-() const& noexcept {  \
+    ::sus::check(primitive_value != MIN_PRIMITIVE); \
+    return -primitive_value;                        \
+  }                                                 \
+  /** sus::concepts::BitNot trait. */               \
+  constexpr inline T operator~() const& noexcept {  \
+    return static_cast<primitive_type>(             \
+        ~static_cast<UnsignedT>(primitive_value));  \
+  }                                                 \
   static_assert(true)
 
 #define _sus__signed_binary_logic_ops(T)                                 \
@@ -643,5 +647,21 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
       return MIN_PRIMITIVE - rhs.primitive_value + primitive_value -          \
              MAX_PRIMITIVE - 1;                                               \
     }                                                                         \
+  }                                                                           \
+  static_assert(true)
+
+#define _sus__signed_count_bits(T, UnsignedT)                                 \
+  /** Returns the number of ones in the binary representation of the current  \
+   * value.                                                                   \
+   */                                                                         \
+  constexpr /* TODO: u32 */ uint32_t count_ones() const& noexcept {           \
+    return __private::count_ones(static_cast<UnsignedT>(primitive_value));    \
+  }                                                                           \
+                                                                              \
+  /** Returns the number of zeros in the binary representation of the current \
+   * value.                                                                   \
+   */                                                                         \
+  constexpr /* TODO: u32 */ uint32_t count_zeros() const& noexcept {          \
+    return (~(*this)).count_ones();                                           \
   }                                                                           \
   static_assert(true)

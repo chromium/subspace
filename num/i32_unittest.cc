@@ -846,4 +846,26 @@ TEST(i32, WrappingSub) {
   EXPECT_EQ((1_i32).wrapping_sub(-i32::MAX()), i32::MIN());
   EXPECT_EQ(i32::MIN().wrapping_sub(i32::MAX()), 1_i32);
 }
+
+TEST(i32, CountOnes) {
+  EXPECT_EQ([]() constexpr { return (7_i32).count_ones(); }(), 3);
+  EXPECT_EQ([]() constexpr { return (0_i32).count_ones(); }(), 0);
+  EXPECT_EQ([]() constexpr { return (-1_i32).count_ones(); }(), 32);
+
+  EXPECT_EQ((7_i32).count_ones(), 3);
+  EXPECT_EQ((0_i32).count_ones(), 0);
+  EXPECT_EQ((-1_i32).count_ones(), 32);
+}
+
+TEST(i32, CountZeros) {
+  EXPECT_EQ([]() constexpr { return (7_i32).count_zeros(); }(), 32 - 3);
+  EXPECT_EQ([]() constexpr { return (0_i32).count_zeros(); }(), 32);
+  EXPECT_EQ([]() constexpr { return (-1_i32).count_zeros(); }(), 0);
+
+  EXPECT_EQ((7_i32).count_zeros(), 32 - 3);
+  EXPECT_EQ((0_i32).count_zeros(), 32);
+  EXPECT_EQ((-1_i32).count_zeros(), 0);
+}
+
+
 }  // namespace
