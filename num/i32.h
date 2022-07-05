@@ -92,6 +92,14 @@ struct i32 {
   // TODO: from_le_bytes().
   // TODO: from_ne_bytes().
   // TODO: from_str_radix(). Need Result type and Errors.
+  // TODO: to_be().
+  // TODO: to_be_bytes().
+  // TODO: to_le().
+  // TODO: to_le_bytes().
+  // TODO: to_ne_bytes().
+  // TODO: swap_bytes() - use bswap intrinsics.
+  // TODO: trailing_ones() - use intrinsics.
+  // TODO: trailing_zeros() - use intrinsics.
 
   /// The inner primitive value, in case it needs to be unwrapped from the
   /// type. Avoid using this member except to convert when a consumer
