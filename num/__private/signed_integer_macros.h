@@ -86,7 +86,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   _sus__signed_rem(T);                           \
   _sus__signed_shift(T, UnsignedT);              \
   _sus__signed_sub(T);                           \
-  _sus__signed_bits(T, UnsignedT);         \
+  _sus__signed_bits(T, UnsignedT);               \
   _sus__signed_pow(T)
 
 #define _sus__signed_integer_comparison(T)                                     \
@@ -660,43 +660,65 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                                           \
   static_assert(true)
 
-#define _sus__signed_bits(T, UnsignedT)                                       \
-  /** Returns the number of ones in the binary representation of the current  \
-   * value.                                                                   \
-   */                                                                         \
-  constexpr /* TODO: u32 */ uint32_t count_ones() const& noexcept {           \
-    return __private::count_ones(static_cast<UnsignedT>(primitive_value));    \
-  }                                                                           \
-                                                                              \
-  /** Returns the number of zeros in the binary representation of the current \
-   * value.                                                                   \
-   */                                                                         \
-  constexpr /* TODO: u32 */ uint32_t count_zeros() const& noexcept {          \
-    return (~(*this)).count_ones();                                           \
-  }                                                                           \
-                                                                              \
-  /** Returns the number of leading ones in the binary representation of the  \
-   * current value.                                                           \
-   */                                                                         \
-  constexpr /* TODO:u32 */ uint32_t leading_ones() const& noexcept {          \
-    return (~(*this)).leading_zeros();                                        \
-  }                                                                           \
-                                                                              \
-  /** Returns the number of leading zeros in the binary representation of the \
-   * current value.                                                           \
-   */                                                                         \
-  constexpr /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {         \
-    return __private::leading_zeros(static_cast<UnsignedT>(primitive_value)); \
-  }                                                                           \
-                                                                              \
-  /** Reverses the order of bits in the integer. The least significant bit    \
-   * becomes the most significant bit, second least-significant bit becomes   \
-   * second most-significant bit, etc.                                        \
-   */                                                                         \
-  constexpr T reverse_bits() const& noexcept {                                \
-    return static_cast<primitive_type>(                                       \
-        __private::reverse_bits(static_cast<UnsignedT>(primitive_value)));    \
-  }                                                                           \
+#define _sus__signed_bits(T, UnsignedT)                                         \
+  /** Returns the number of ones in the binary representation of the current    \
+   * value.                                                                     \
+   */                                                                           \
+  constexpr /* TODO: u32 */ uint32_t count_ones() const& noexcept {             \
+    return __private::count_ones(static_cast<UnsignedT>(primitive_value));      \
+  }                                                                             \
+                                                                                \
+  /** Returns the number of zeros in the binary representation of the current   \
+   * value.                                                                     \
+   */                                                                           \
+  constexpr /* TODO: u32 */ uint32_t count_zeros() const& noexcept {            \
+    return (~(*this)).count_ones();                                             \
+  }                                                                             \
+                                                                                \
+  /** Returns the number of leading ones in the binary representation of the    \
+   * current value.                                                             \
+   */                                                                           \
+  constexpr /* TODO:u32 */ uint32_t leading_ones() const& noexcept {            \
+    return (~(*this)).leading_zeros();                                          \
+  }                                                                             \
+                                                                                \
+  /** Returns the number of leading zeros in the binary representation of the   \
+   * current value.                                                             \
+   */                                                                           \
+  constexpr /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {           \
+    return __private::leading_zeros(static_cast<UnsignedT>(primitive_value));   \
+  }                                                                             \
+                                                                                \
+  /** Reverses the order of bits in the integer. The least significant bit      \
+   * becomes the most significant bit, second least-significant bit becomes     \
+   * second most-significant bit, etc.                                          \
+   */                                                                           \
+  constexpr T reverse_bits() const& noexcept {                                  \
+    return static_cast<primitive_type>(                                         \
+        __private::reverse_bits(static_cast<UnsignedT>(primitive_value)));      \
+  }                                                                             \
+                                                                                \
+  /** Shifts the bits to the left by a specified amount, `n`, wrapping the      \
+   * truncated bits to the end of the resulting integer.                        \
+   *                                                                            \
+   * Please note this isn’t the same operation as the `<<` shifting operator! \
+   */                                                                           \
+  constexpr T rotate_left(const /* TODO: u32 */ uint32_t& n)                  \
+      const& noexcept {                                                         \
+    return static_cast<primitive_type>(                                         \
+        __private::rotate_left(static_cast<UnsignedT>(primitive_value), n));     \
+  }                                                                             \
+                                                                                \
+  /** Shifts the bits to the right by a specified amount, n, wrapping the       \
+   * truncated bits to the beginning of the resulting integer.                  \
+   *                                                                            \
+   * Please note this isn’t the same operation as the >> shifting operator!   \
+   */                                                                           \
+  constexpr T rotate_right(const /* TODO: u32 */ uint32_t& n)                 \
+      const& noexcept {                                                         \
+    return static_cast<primitive_type>(                                         \
+        __private::rotate_right(static_cast<UnsignedT>(primitive_value), n));    \
+  }                                                                             \
   static_assert(true)
 
 #define _sus__signed_pow(T)                                                    \
