@@ -302,7 +302,7 @@ class Option final {
   ///   return -1;
   /// }
   /// ```
-  operator State() const& { return t_.state(); }
+  constexpr operator State() const& { return t_.state(); }
 
   /// Returns the contained value inside the Option.
   ///
@@ -773,7 +773,7 @@ class Option<T&> final {
   ///   return -1;
   /// }
   /// ```
-  operator State() const& { return t_.state(); }
+  constexpr operator State() const& { return t_.state(); }
 
   /// Returns the contained value inside the Option.
   ///

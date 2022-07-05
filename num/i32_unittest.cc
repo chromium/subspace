@@ -989,8 +989,33 @@ TEST(i32, Pow) {
 
 TEST(i32DeathTest, PowOverflow) {
 #if GTEST_HAS_DEATH_TEST
+  // Crashes on the final acc * base.
   EXPECT_DEATH((2_i32).pow(31), "");
+  // Crashes on base * base.
+  EXPECT_DEATH((i32::MAX()).pow(31), "");
+  // Crashes on acc * base inside the exponent loop.
+  EXPECT_DEATH((2_i32).pow((1 << 30) - 1), "");
 #endif
+}
+
+TEST(i32, CheckedPow) {
+  constexpr auto a = (2_i32).checked_pow(5);
+
+  EXPECT_EQ((2_i32).checked_pow(5), Option<i32>::some(32_i32));
+  EXPECT_EQ((2_i32).checked_pow(0), Option<i32>::some(1_i32));
+  EXPECT_EQ((2_i32).checked_pow(1), Option<i32>::some(2_i32));
+  EXPECT_EQ((2_i32).checked_pow(30), Option<i32>::some(i32(1 << 30)));
+  EXPECT_EQ((1_i32).checked_pow(/* TODO: u32::MAX() */ 1000000),
+            Option<i32>::some(1_i32));
+  EXPECT_EQ((i32::MAX()).checked_pow(1), Option<i32>::some(i32::MAX()));
+  EXPECT_EQ((i32::MAX()).checked_pow(0), Option<i32>::some(1_i32));
+
+  // Fails on the final acc * base.
+  EXPECT_EQ((2_i32).checked_pow(31), None);
+  // Fails on base * base.
+  EXPECT_EQ((i32::MAX()).checked_pow(31), None);
+  // Fails on acc * base inside the exponent loop.
+  EXPECT_EQ((2_i32).checked_pow((1 << 30) - 1), None);
 }
 
 TEST(i32, ReverseBits) {
