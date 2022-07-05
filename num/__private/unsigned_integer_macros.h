@@ -163,4 +163,32 @@ constexpr T rotate_right(T value, uint32_t n) noexcept {
   return (value >> n) | (value << (sizeof(value) * 8 - n));
 }
 
+// TODO: Move to a (constexpr) compiler intrinsics library?
+template <class T>
+  requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
+           std::same_as<T, uint8_t>)
+constexpr T swap_bytes(T value) noexcept {
+#if _MSC_VER
+  if constexpr(sizeof(T) <= sizeof(unsigned short)) {
+    using U = unsigned short;
+    return _byteswap_ushort(U{value});
+  } else if constexpr (sizeof(T) == sizeof(unsigned long)) {
+    using U = unsigned long;
+    return _byteswap_ulong(U{value});
+  } else {
+    static_assert(sizeof(T) == 8);
+    return _byteswap_uint64(value);
+  }
+#else
+  if constexpr (sizeof(T) <= 2) {
+    return __builtin_bswap16(uint16_t{value});
+  } else if constexpr (sizeof(T) == 4) {
+    return __builtin_bswap32(value);
+  } else {
+    static_assert(sizeof(T) == 8);
+    return __builtin_bswap64(value);
+  }
+#endif
+}
+
 }  // namespace sus::num::__private

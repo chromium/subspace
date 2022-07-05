@@ -97,7 +97,6 @@ struct i32 {
   // TODO: to_le().
   // TODO: to_le_bytes().
   // TODO: to_ne_bytes().
-  // TODO: swap_bytes() - use bswap intrinsics.
   // TODO: trailing_ones() - use intrinsics.
   // TODO: trailing_zeros() - use intrinsics.
 

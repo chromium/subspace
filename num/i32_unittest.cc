@@ -1012,4 +1012,15 @@ TEST(i32, Signum) {
   EXPECT_EQ((i32(-7_i32)).signum(), i32(-1));
 }
 
+TEST(i32, SwapBytes) {
+  EXPECT_EQ(
+      []() constexpr { return (i32(0x12345678_i32)).swap_bytes(); }(),
+      0x78563412_i32);
+
+  EXPECT_EQ((0x12345678_i32).swap_bytes(), 0x78563412_i32);
+  EXPECT_EQ((0_i32).swap_bytes(), 0_i32);
+  EXPECT_EQ((-1_i32).swap_bytes(), -1_i32);
+  EXPECT_EQ((i32::MIN()).swap_bytes(), (0x80_i32));
+}
+
 }  // namespace
