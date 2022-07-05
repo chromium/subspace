@@ -686,7 +686,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * current value.                                                           \
    */                                                                         \
   constexpr /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {         \
-    return __private::leading_zeros(static_cast<uint32_t>(primitive_value));  \
+    return __private::leading_zeros(static_cast<UnsignedT>(primitive_value));  \
   }                                                                           \
   static_assert(true)
 

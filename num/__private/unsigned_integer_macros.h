@@ -19,7 +19,7 @@
 #include <concepts>
 #include <type_traits>
 
-#if defined(_MSC_VER)
+#if _MSC_VER
 #include <intrin.h>
 #endif
 
@@ -30,7 +30,7 @@ template <class T>
   requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
            std::same_as<T, uint8_t>)
 constexpr uint32_t count_ones(T value) noexcept {
-#if defined(_MSC_VER)
+#if _MSC_VER
   if (std::is_constant_evaluated()) {
     // The low 2 bits are either:
     // - 0b00, (value + 1) / 2 is number of bits = 0.
@@ -78,7 +78,7 @@ template <class T>
 constexpr uint32_t leading_zeros(T value) noexcept {
   if (value == 0) return sizeof(T) * 8;
 
-#if defined(_MSC_VER)
+#if _MSC_VER
   if constexpr (sizeof(value) == 8) {
 #if 1
     unsigned long index;
@@ -126,4 +126,34 @@ constexpr uint32_t leading_zeros(T value) noexcept {
   }
 #endif
 }
+
+// TODO: Move to a (constexpr) compiler intrinsics library?
+template <class T>
+  requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
+           std::same_as<T, uint8_t>)
+constexpr T reverse_bits(T value) noexcept {
+#if __clang__
+  if constexpr (sizeof(T) == 1) {
+    return __builtin_bitreverse8(value);
+  } else if constexpr (sizeof(T) == 2) {
+    return __builtin_bitreverse16(value);
+  } else if constexpr (sizeof(T) == 4) {
+    return __builtin_bitreverse32(value);
+  } else {
+    static_assert(sizeof(T) == 8);
+    return __builtin_bitreverse64(value);
+  }
+#else
+  // Algorithm from Ken Raeburn:
+  // http://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
+  unsigned int bits = sizeof(value) * 8;
+  auto mask = ~T(0);
+  while ((bits >>= 1) > 0) {
+    mask ^= mask << bits;
+    value = ((value >> bits) & mask) | ((value << bits) & ~mask);
+  }
+  return value;
+#endif
+}
+
 }  // namespace sus::num::__private
