@@ -99,6 +99,21 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    */                                                                          \
   constexpr bool is_positive() const& noexcept { return primitive_value > 0; } \
                                                                                \
+  /** Returns a number representing sign of the current value.                 \
+   *                                                                           \
+   * - 0 if the number is zero                                                 \
+   * - 1 if the number is positive                                             \
+   * - -1 if the number is negative                                            \
+   */                                                                          \
+  constexpr i32 signum() const& noexcept {                                    \
+    if (primitive_value == 0)                                                  \
+      return 0;                                                                \
+    else if (primitive_value > 0)                                              \
+      return 1;                                                                \
+    else                                                                       \
+      return -1;                                                               \
+  }                                                                            \
+                                                                               \
   /** sus::concepts::Eq<##T##> trait. */                                       \
   friend constexpr inline bool operator==(const T& l, const T& r) noexcept {   \
     return (l.primitive_value <=> r.primitive_value) == 0;                     \
@@ -703,10 +718,9 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    *                                                                            \
    * Please note this isn’t the same operation as the `<<` shifting operator! \
    */                                                                           \
-  constexpr T rotate_left(const /* TODO: u32 */ uint32_t& n)                  \
-      const& noexcept {                                                         \
+  constexpr T rotate_left(const /* TODO: u32 */ uint32_t& n) const& noexcept {  \
     return static_cast<primitive_type>(                                         \
-        __private::rotate_left(static_cast<UnsignedT>(primitive_value), n));     \
+        __private::rotate_left(static_cast<UnsignedT>(primitive_value), n));    \
   }                                                                             \
                                                                                 \
   /** Shifts the bits to the right by a specified amount, n, wrapping the       \
@@ -714,10 +728,10 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    *                                                                            \
    * Please note this isn’t the same operation as the >> shifting operator!   \
    */                                                                           \
-  constexpr T rotate_right(const /* TODO: u32 */ uint32_t& n)                 \
+  constexpr T rotate_right(const /* TODO: u32 */ uint32_t& n)                   \
       const& noexcept {                                                         \
     return static_cast<primitive_type>(                                         \
-        __private::rotate_right(static_cast<UnsignedT>(primitive_value), n));    \
+        __private::rotate_right(static_cast<UnsignedT>(primitive_value), n));   \
   }                                                                             \
   static_assert(true)
 

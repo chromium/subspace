@@ -999,4 +999,17 @@ TEST(i32, RotateRight) {
   EXPECT_EQ((1_i32).rotate_right(65), i32::MIN());
 }
 
+TEST(i32, Signum) {
+  EXPECT_EQ(
+      []() constexpr { return (i32(10_i32)).signum(); }(), i32(1));
+  EXPECT_EQ(
+      []() constexpr { return (i32(0_i32)).signum(); }(), i32(0));
+  EXPECT_EQ(
+      []() constexpr { return (i32(-7_i32)).signum(); }(), i32(-1));
+
+  EXPECT_EQ((i32(10_i32)).signum(), i32(1));
+  EXPECT_EQ((i32(0_i32)).signum(), i32(0));
+  EXPECT_EQ((i32(-7_i32)).signum(), i32(-1));
+}
+
 }  // namespace
