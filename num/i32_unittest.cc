@@ -848,9 +848,12 @@ TEST(i32, WrappingSub) {
 }
 
 TEST(i32, CountOnes) {
-  EXPECT_EQ([]() constexpr { return (7_i32).count_ones(); }(), 3);
-  EXPECT_EQ([]() constexpr { return (0_i32).count_ones(); }(), 0);
-  EXPECT_EQ([]() constexpr { return (-1_i32).count_ones(); }(), 32);
+  EXPECT_EQ(
+      []() constexpr { return (7_i32).count_ones(); }(), 3);
+  EXPECT_EQ(
+      []() constexpr { return (0_i32).count_ones(); }(), 0);
+  EXPECT_EQ(
+      []() constexpr { return (-1_i32).count_ones(); }(), 32);
 
   EXPECT_EQ((7_i32).count_ones(), 3);
   EXPECT_EQ((0_i32).count_ones(), 0);
@@ -858,14 +861,42 @@ TEST(i32, CountOnes) {
 }
 
 TEST(i32, CountZeros) {
-  EXPECT_EQ([]() constexpr { return (7_i32).count_zeros(); }(), 32 - 3);
-  EXPECT_EQ([]() constexpr { return (0_i32).count_zeros(); }(), 32);
-  EXPECT_EQ([]() constexpr { return (-1_i32).count_zeros(); }(), 0);
+  EXPECT_EQ(
+      []() constexpr { return (7_i32).count_zeros(); }(), 32 - 3);
+  EXPECT_EQ(
+      []() constexpr { return (0_i32).count_zeros(); }(), 32);
+  EXPECT_EQ(
+      []() constexpr { return (-1_i32).count_zeros(); }(), 0);
 
   EXPECT_EQ((7_i32).count_zeros(), 32 - 3);
   EXPECT_EQ((0_i32).count_zeros(), 32);
   EXPECT_EQ((-1_i32).count_zeros(), 0);
 }
 
+TEST(i32, IsNegative) {
+  EXPECT_EQ(
+      []() constexpr { return (7_i32).is_negative(); }(), false);
+  EXPECT_EQ(
+      []() constexpr { return (0_i32).is_negative(); }(), false);
+  EXPECT_EQ(
+      []() constexpr { return (-1_i32).is_negative(); }(), true);
+
+  EXPECT_EQ((7_i32).is_negative(), false);
+  EXPECT_EQ((0_i32).is_negative(), false);
+  EXPECT_EQ((-1_i32).is_negative(), true);
+}
+
+TEST(i32, IsPositive) {
+  EXPECT_EQ(
+      []() constexpr { return (7_i32).is_positive(); }(), true);
+  EXPECT_EQ(
+      []() constexpr { return (0_i32).is_positive(); }(), false);
+  EXPECT_EQ(
+      []() constexpr { return (-1_i32).is_positive(); }(), false);
+
+  EXPECT_EQ((7_i32).is_positive(), true);
+  EXPECT_EQ((0_i32).is_positive(), false);
+  EXPECT_EQ((-1_i32).is_positive(), false);
+}
 
 }  // namespace
