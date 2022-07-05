@@ -56,6 +56,7 @@ add_library(subspace STATIC
     "mem/replace.h"
     "mem/swap.h"
     "mem/take.h"
+    "num/__private/intrinsics.h"
     "num/__private/literals.h"
     "num/__private/signed_integer_macros.h"
     "num/__private/unsigned_integer_macros.h"
