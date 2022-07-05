@@ -944,7 +944,7 @@ TEST(i32, Pow) {
   EXPECT_EQ((2_i32).pow(0), 1_i32);
   EXPECT_EQ((2_i32).pow(1), 2_i32);
   EXPECT_EQ((2_i32).pow(30), i32(1 << 30));
-  EXPECT_EQ((1_i32).pow(/* TODO: u32::MAX() */1000000), 1_i32);
+  EXPECT_EQ((1_i32).pow(/* TODO: u32::MAX() */ 1000000), 1_i32);
   EXPECT_EQ((i32::MAX()).pow(1), i32::MAX());
   EXPECT_EQ((i32::MAX()).pow(0), 1_i32);
 }
@@ -953,6 +953,27 @@ TEST(i32DeathTest, PowOverflow) {
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH((2_i32).pow(31), "");
 #endif
+}
+
+TEST(i32, ReverseBits) {
+  EXPECT_EQ(
+      []() constexpr { return (0_i32).reverse_bits(); }(), 0_i32);
+  EXPECT_EQ(
+      []() constexpr { return (2_i32).reverse_bits(); }(), i32(1 << 30));
+  EXPECT_EQ(
+      []() constexpr { return (i32(0x00f8f800)).reverse_bits(); }(),
+      i32(0x001f1f00));
+  EXPECT_EQ(
+      []() constexpr { return (i32(-1)).reverse_bits(); }(), i32(-1));
+  EXPECT_EQ(
+      []() constexpr { return (i32(1)).reverse_bits(); }().primitive_value,
+      i32::MIN());
+
+  EXPECT_EQ((0_i32).reverse_bits(), 0_i32);
+  EXPECT_EQ((2_i32).reverse_bits(), i32(1 << 30));
+  EXPECT_EQ((i32(0x00f8f800)).reverse_bits(), i32(0x001f1f00));
+  EXPECT_EQ((i32(-1)).reverse_bits(), i32(-1));
+  EXPECT_EQ((i32(1)).reverse_bits().primitive_value, i32::MIN());
 }
 
 }  // namespace
