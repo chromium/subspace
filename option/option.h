@@ -427,7 +427,7 @@ class Option final {
 
   /// Stores the value `t` inside this Option, replacing any previous value, and
   /// returns a mutable reference to the new value.
-  T& insert(T t) & noexcept {
+  constexpr T& insert(T t) & noexcept {
     if (t_.set_state(Some) == None)
       new (&t_.val_) T(static_cast<T&&>(t));
     else
@@ -441,7 +441,7 @@ class Option final {
   ///
   /// If it is non-trivial to construct `T`, the <get_or_insert_with>() method
   /// would be preferable, as it only constructs a `T` if needed.
-  T& get_or_insert(T t) & noexcept {
+  constexpr T& get_or_insert(T t) & noexcept {
     if (t_.set_state(Some) == None) new (&t_.val_) T(static_cast<T&&>(t));
     return t_.val_;
   }
@@ -458,7 +458,7 @@ class Option final {
   ///
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
-  T& get_or_insert_default() & noexcept
+  constexpr T& get_or_insert_default() & noexcept
     requires(::sus::concepts::MakeDefault<T>::has_concept)
   {
     if (t_.set_state(Some) == None)
@@ -474,7 +474,7 @@ class Option final {
   /// the Option, and instead it can not be called on rvalues.
   template <class WithFn>
     requires(std::is_same_v<std::invoke_result_t<WithFn>, T>)
-  T& get_or_insert_with(WithFn f) & noexcept {
+  constexpr T& get_or_insert_with(WithFn f) & noexcept {
     if (t_.set_state(Some) == None) new (&t_.val_) T(f());
     return t_.val_;
   }
@@ -575,7 +575,7 @@ class Option final {
   /// Consumes this Option and returns an Option with #None if this Option holds
   /// #None, otherwise returns the given `opt`.
   template <class U>
-  Option<U> and_opt(Option<U> opt) && noexcept {
+  constexpr Option<U> and_opt(Option<U> opt) && noexcept {
     if (t_.set_state(None) == Some) {
       t_.val_.~T();
       return opt;
@@ -602,7 +602,7 @@ class Option final {
 
   /// Consumes and returns an Option with the same value if this Option contains
   /// a value, otherwise returns the given `opt`.
-  Option<T> or_opt(Option<T> opt) && noexcept {
+  constexpr Option<T> or_opt(Option<T> opt) && noexcept {
     if (t_.set_state(None) == Some)
       return Option(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
     else
@@ -623,7 +623,7 @@ class Option final {
   /// Consumes this Option and returns an Option, holding the value from either
   /// this Option `opt`, if exactly one of them holds a value, otherwise returns
   /// an Option that holds #None.
-  Option<T> xor_opt(Option<T> opt) && noexcept {
+  constexpr Option<T> xor_opt(Option<T> opt) && noexcept {
     if (t_.state() == Some) {
       // If `this` holds Some, we change `this` to hold None. If `opt` is None,
       // we return what this was holding, otherwise we return None.
@@ -643,7 +643,7 @@ class Option final {
 
   /// Replaces whatever the Option is currently holding with #Some value `t` and
   /// returns an Option holding what was there previously.
-  Option replace(T t) & noexcept {
+  constexpr Option replace(T t) & noexcept {
     if (t_.set_state(Some) == None) {
       new (&t_.val_) T(static_cast<T&&>(t));
       return Option::none();
@@ -674,23 +674,23 @@ class Option final {
 
   /// Returns an Option<T&> from this Option<T>, that either holds #None or a
   /// reference to the value in this Option.
-  Option<T&> as_mut() & noexcept {
+  constexpr Option<T&> as_mut() & noexcept {
     if (t_.state() == None)
       return Option<T&>::none();
     else
       return Option<T&>(t_.val_);
   }
 
-  Iterator<Once<const T&>> iter() const& noexcept {
+  constexpr Iterator<Once<const T&>> iter() const& noexcept {
     return Iterator<Once<const T&>>(as_ref());
   }
   Iterator<Once<const T&>> iter() const&& = delete;
 
-  Iterator<Once<T&>> iter_mut() & noexcept {
+  constexpr Iterator<Once<T&>> iter_mut() & noexcept {
     return Iterator<Once<T&>>(as_mut());
   }
 
-  Iterator<Once<T>> into_iter() && noexcept {
+  constexpr Iterator<Once<T>> into_iter() && noexcept {
     return Iterator<Once<T>>(take());
   }
 
