@@ -105,7 +105,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * - 1 if the number is positive                                             \
    * - -1 if the number is negative                                            \
    */                                                                          \
-  constexpr T signum() const& noexcept {                                     \
+  constexpr T signum() const& noexcept {                                       \
     if (primitive_value == 0)                                                  \
       return 0;                                                                \
     else if (primitive_value > 0)                                              \
@@ -704,6 +704,20 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
     return __private::leading_zeros(static_cast<UnsignedT>(primitive_value));   \
   }                                                                             \
                                                                                 \
+  /** Returns the number of trailing ones in the binary representation of the   \
+   * current value.                                                             \
+   */                                                                           \
+  constexpr /* TODO:u32 */ uint32_t trailing_ones() const& noexcept {           \
+    return (~(*this)).trailing_zeros();                                         \
+  }                                                                             \
+                                                                                \
+  /** Returns the number of trailing zeros in the binary representation of the  \
+   * current value.                                                             \
+   */                                                                           \
+  constexpr /* TODO:u32 */ uint32_t trailing_zeros() const& noexcept {          \
+    return __private::trailing_zeros(static_cast<UnsignedT>(primitive_value));   \
+  }                                                                             \
+                                                                                \
   /** Reverses the order of bits in the integer. The least significant bit      \
    * becomes the most significant bit, second least-significant bit becomes     \
    * second most-significant bit, etc.                                          \
@@ -736,7 +750,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
                                                                                 \
   /** Reverses the byte order of the integer.                                   \
    */                                                                           \
-  constexpr T swap_bytes() const& noexcept {                                  \
+  constexpr T swap_bytes() const& noexcept {                                    \
     return static_cast<primitive_type>(                                         \
         __private::swap_bytes(static_cast<UnsignedT>(primitive_value)));        \
   }                                                                             \

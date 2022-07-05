@@ -937,6 +937,44 @@ TEST(i32, LeadingOnes) {
   EXPECT_EQ((-2_i32).leading_ones(), 31);
 }
 
+TEST(i32, TrailingZeros) {
+  EXPECT_EQ(
+      []() constexpr { return (0_i32).trailing_zeros(); }(), 32);
+  EXPECT_EQ(
+      []() constexpr { return (1_i32).trailing_zeros(); }(), 0);
+  EXPECT_EQ(
+      []() constexpr { return (2_i32).trailing_zeros(); }(), 1);
+  EXPECT_EQ(
+      []() constexpr { return (i32::MIN()).trailing_zeros(); }(), 31);
+  EXPECT_EQ(
+      []() constexpr { return (-1_i32).trailing_zeros(); }(), 0);
+
+  EXPECT_EQ((0_i32).trailing_zeros(), 32);
+  EXPECT_EQ((1_i32).trailing_zeros(), 0);
+  EXPECT_EQ((2_i32).trailing_zeros(), 1);
+  EXPECT_EQ((i32::MIN()).trailing_zeros(), 31);
+  EXPECT_EQ((-1_i32).trailing_zeros(), 0);
+}
+
+TEST(i32, TrailingOnes) {
+  EXPECT_EQ(
+      []() constexpr { return (0_i32).trailing_ones(); }(), 0);
+  EXPECT_EQ(
+      []() constexpr { return (1_i32).trailing_ones(); }(), 1);
+  EXPECT_EQ(
+      []() constexpr { return (3_i32).trailing_ones(); }(), 2);
+  EXPECT_EQ(
+      []() constexpr { return (i32::MAX()).trailing_ones(); }(), 31);
+  EXPECT_EQ(
+      []() constexpr { return (-1_i32).trailing_ones(); }(), 32);
+
+  EXPECT_EQ((0_i32).trailing_ones(), 0);
+  EXPECT_EQ((1_i32).trailing_ones(), 1);
+  EXPECT_EQ((3_i32).trailing_ones(), 2);
+  EXPECT_EQ((i32::MAX()).trailing_ones(), 31);
+  EXPECT_EQ((-1_i32).trailing_ones(), 32);
+}
+
 TEST(i32, Pow) {
   constexpr auto a = (2_i32).pow(5);
 

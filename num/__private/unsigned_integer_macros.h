@@ -65,57 +65,94 @@ template <class T>
   requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
            std::same_as<T, uint8_t>)
 constexpr uint32_t leading_zeros(T value) noexcept {
-  if (value == 0) return sizeof(T) * 8;
+  if (value == 0) return static_cast<uint32_t>(sizeof(T) * 8u);
 
 #if _MSC_VER
-  if constexpr (sizeof(value) == 8) {
+  if constexpr (sizeof(value) == 8u) {
 #if 1
     unsigned long index;
     _BitScanReverse64(&index, value);
-    return index;
+    return static_cast<uint32_t>(63ul ^ index);
 #else
     // TODO: Enable this when target CPU is appropriate:
     // - AMD: Advanced Bit Manipulation (ABM)
     // - Intel: Haswell
-    return __lzcnt64(&count, int64_t{value});
+    // TODO: On Arm ARMv5T architecture and later use `_arm_clz`
+    return static_cast<uint32_t>(__lzcnt64(&count, int64_t{value}));
 #endif
-  } else if constexpr (sizeof(value) == 4) {
+  } else if constexpr (sizeof(value) == 4u) {
 #if 1
     unsigned long index;
     _BitScanReverse(&index, uint32_t{value});
-    return 31 ^ index;
+    return static_cast<uint32_t>(31ul ^ index);
 #else
     // TODO: Enable this when target CPU is appropriate:
     // - AMD: Advanced Bit Manipulation (ABM)
     // - Intel: Haswell
+    // TODO: On Arm ARMv5T architecture and later use `_arm_clz`
     return __lzcnt(&count, uint32_t{value});
 #endif
   } else {
 #if 1
     unsigned long index;
     _BitScanReverse(&index, uint32_t{value});
-    return 31 ^ index;
+    return static_cast<uint32_t>(31ul ^ index);
 #else
     // TODO: Enable this when target CPU is appropriate:
     // - AMD: Advanced Bit Manipulation (ABM)
     // - Intel: Haswell
-    return __lzcnt16(&count, uint16_t{value});
+    // TODO: On Arm ARMv5T architecture and later use `_arm_clz`
+    return static_cast<uint32_t>(__lzcnt16(&count, uint16_t{value}));
 #endif
   }
 #else
   if constexpr (sizeof(value) <= sizeof(unsigned int)) {
     using U = unsigned int;
-    return __builtin_clz(U{value});
+    return static_cast<uint32_t>(__builtin_clz(U{value}));
   } else if constexpr (sizeof(value) <= sizeof(unsigned long)) {
     using U = unsigned long;
-    return __builtin_clzl(U{value});
+    return static_cast<uint32_t>(__builtin_clzl(U{value}));
   } else {
     using U = unsigned long long;
-    return __builtin_clzll(U{value});
+    return static_cast<uint32_t>(__builtin_clzll(U{value}));
   }
 #endif
 }
 
+// TODO: Move to a (constexpr) compiler intrinsics library?
+template <class T>
+  requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
+           std::same_as<T, uint8_t>)
+constexpr uint32_t trailing_zeros(T value) noexcept {
+  if (value == 0) return static_cast<uint32_t>(sizeof(T) * 8u);
+
+#if _MSC_VER
+  if constexpr (sizeof(value) == 8u) {
+    unsigned long index;
+    _BitScanForward64(&index, value);
+    return static_cast<uint32_t>(index);
+  } else if constexpr (sizeof(value) == 4u) {
+    unsigned long index;
+    _BitScanForward(&index, uint32_t{value});
+    return static_cast<uint32_t>(index);
+  } else {
+    unsigned long index;
+    _BitScanForward(&index, uint32_t{value});
+    return static_cast<uint32_t>(index);
+  }
+#else
+  if constexpr (sizeof(value) <= sizeof(unsigned int)) {
+    using U = unsigned int;
+    return static_cast<uint32_t>(__builtin_ctz(U{value}));
+  } else if constexpr (sizeof(value) <= sizeof(unsigned long)) {
+    using U = unsigned long;
+    return static_cast<uint32_t>(__builtin_ctzl(U{value}));
+  } else {
+    using U = unsigned long long;
+    return static_cast<uint32_t>(__builtin_ctzll(U{value}));
+  }
+#endif
+}
 // TODO: Move to a (constexpr) compiler intrinsics library?
 template <class T>
   requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
