@@ -105,7 +105,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * - 1 if the number is positive                                             \
    * - -1 if the number is negative                                            \
    */                                                                          \
-  constexpr i32 signum() const& noexcept {                                    \
+  constexpr T signum() const& noexcept {                                     \
     if (primitive_value == 0)                                                  \
       return 0;                                                                \
     else if (primitive_value > 0)                                              \
@@ -732,6 +732,13 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
       const& noexcept {                                                         \
     return static_cast<primitive_type>(                                         \
         __private::rotate_right(static_cast<UnsignedT>(primitive_value), n));   \
+  }                                                                             \
+                                                                                \
+  /** Reverses the byte order of the integer.                                   \
+   */                                                                           \
+  constexpr T swap_bytes() const& noexcept {                                  \
+    return static_cast<primitive_type>(                                         \
+        __private::swap_bytes(static_cast<UnsignedT>(primitive_value)));        \
   }                                                                             \
   static_assert(true)
 
