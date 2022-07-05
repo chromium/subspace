@@ -71,19 +71,20 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                                  \
   static_assert(true)
 
-#define _sus__signed_impl(T, LargerT) \
-  _sus__signed_integer_comparison(T); \
-  _sus__signed_unary_ops(T);          \
-  _sus__signed_binary_logic_ops(T);   \
-  _sus__signed_binary_bit_ops(T);     \
-  _sus__signed_mutable_logic_ops(T);  \
-  _sus__signed_mutable_bit_ops(T);    \
-  _sus__signed_abs(T);                \
-  _sus__signed_add(T);                \
-  _sus__signed_div(T);                \
-  _sus__signed_mul(T, LargerT);       \
-  _sus__signed_neg(T);                \
-  _sus__signed_rem(T)
+#define _sus__signed_impl(T, LargerT, UnsignedT) \
+  _sus__signed_integer_comparison(T);            \
+  _sus__signed_unary_ops(T);                     \
+  _sus__signed_binary_logic_ops(T);              \
+  _sus__signed_binary_bit_ops(T, UnsignedT);     \
+  _sus__signed_mutable_logic_ops(T);             \
+  _sus__signed_mutable_bit_ops(T, UnsignedT);    \
+  _sus__signed_abs(T, UnsignedT);                \
+  _sus__signed_add(T);                           \
+  _sus__signed_div(T);                           \
+  _sus__signed_mul(T, LargerT);                  \
+  _sus__signed_neg(T);                           \
+  _sus__signed_rem(T);                           \
+  _sus__signed_shift(T, UnsignedT)
 
 #define _sus__signed_integer_comparison(T)                                    \
   /** sus::concepts::Eq<##T##> trait. */                                      \
@@ -134,7 +135,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                                      \
   static_assert(true)
 
-#define _sus__signed_binary_bit_ops(T)                                        \
+#define _sus__signed_binary_bit_ops(T, UnsignedT)                             \
   /** sus::concepts::BitAnd<##T##> trait. */                                  \
   friend constexpr inline T operator&(const T& l, const T& r) noexcept {      \
     return l.primitive_value & r.primitive_value;                             \
@@ -149,15 +150,17 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                                           \
   /** sus::concepts::Shl trait. */                                            \
   friend constexpr inline T operator<<(const T& l,                            \
-                                       /* TODO: u32 */ uint32_t s) noexcept { \
-    ::sus::check(s < T::BITS());                                              \
-    return l.primitive_value << s;                                            \
+                                       /* TODO: u32 */ uint32_t r) noexcept { \
+    ::sus::check(r < BITS());                                                 \
+    return static_cast<primitive_type>(                                       \
+        static_cast<UnsignedT>(l.primitive_value) << r);                      \
   }                                                                           \
   /** sus::concepts::Shr trait. */                                            \
   friend constexpr inline T operator>>(const T& l,                            \
-                                       /* TODO: u32 */ uint32_t s) noexcept { \
-    ::sus::check(s < T::BITS());                                              \
-    return l.primitive_value >> s;                                            \
+                                       /* TODO: u32 */ uint32_t r) noexcept { \
+    ::sus::check(r < BITS());                                                 \
+    return static_cast<primitive_type>(                                       \
+        static_cast<UnsignedT>(l.primitive_value) >> r);                      \
   }                                                                           \
   static_assert(true)
 
@@ -189,7 +192,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                              \
   static_assert(true)
 
-#define _sus__signed_mutable_bit_ops(T)                           \
+#define _sus__signed_mutable_bit_ops(T, UnsignedT)                \
   /** sus::concepts::BitAndAssign<##T##> trait. */                \
   inline void operator&=(T r)& noexcept {                         \
     primitive_value &= r.primitive_value;                         \
@@ -203,18 +206,20 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
     primitive_value ^= r.primitive_value;                         \
   }                                                               \
   /** sus::concepts::ShlAssign trait. */                          \
-  inline void operator<<=(/* TODO: u32 */ uint32_t s)& noexcept { \
-    ::sus::check(s < T::BITS());                                  \
-    primitive_value <<= s;                                        \
+  inline void operator<<=(/* TODO: u32 */ uint32_t r)& noexcept { \
+    ::sus::check(r < BITS());                                     \
+    primitive_value = static_cast<primitive_type>(                \
+        static_cast<UnsignedT>(primitive_value) << r);            \
   }                                                               \
   /** sus::concepts::ShrAssign trait. */                          \
-  inline void operator>>=(/* TODO: u32 */ uint32_t s)& noexcept { \
-    ::sus::check(s < T::BITS());                                  \
-    primitive_value >>= s;                                        \
+  inline void operator>>=(/* TODO: u32 */ uint32_t r)& noexcept { \
+    ::sus::check(r < BITS());                                     \
+    primitive_value = static_cast<primitive_type>(                \
+        static_cast<UnsignedT>(primitive_value) >> r);            \
   }                                                               \
   static_assert(true)
 
-#define _sus__signed_abs(T)                                                    \
+#define _sus__signed_abs(T, UnsignedT)                                         \
   /** Computes the absolute value of itself.                                   \
    *                                                                           \
    * The absolute value of ##T##::MIN() cannot be represented as an ##T##, and \
@@ -250,11 +255,11 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
                                                                                \
   /** Computes the absolute value of self without any wrapping or panicking.   \
    */                                                                          \
-  constexpr /* TODO: u32 */ uint32_t unsigned_abs() const& noexcept {          \
+  constexpr /* TODO: u32 */ UnsignedT unsigned_abs() const& noexcept {         \
     if (primitive_value >= 0)                                                  \
-      return static_cast<uint32_t>(primitive_value);                           \
+      return static_cast<UnsignedT>(primitive_value);                          \
     else                                                                       \
-      return static_cast<uint32_t>(-(primitive_value + 1)) + uint32_t{1};      \
+      return static_cast<UnsignedT>(-(primitive_value + 1)) + uint32_t{1};     \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) absolute value. Computes self.abs(), wrapping around  \
@@ -277,11 +282,11 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * This function always returns the correct answer without overflow or       \
    * panics by returning an unsigned integer.                                  \
    */                                                                          \
-  constexpr /* TODO: u32 */ uint32_t abs_diff(const T& r) const& noexcept {    \
+  constexpr /* TODO: u32 */ UnsignedT abs_diff(const T& r) const& noexcept {   \
     if (primitive_value >= r.primitive_value)                                  \
-      return static_cast<uint32_t>(primitive_value - r.primitive_value);       \
+      return static_cast<UnsignedT>(primitive_value - r.primitive_value);      \
     else                                                                       \
-      return static_cast<uint32_t>(r.primitive_value - primitive_value);       \
+      return static_cast<UnsignedT>(r.primitive_value - primitive_value);      \
   }                                                                            \
   static_assert(true)
 
@@ -484,7 +489,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
 
 #define _sus__signed_rem(T)                                                    \
   /** Checked integer remainder. Computes self % rhs, returning None if rhs == \
-   * 0 or the division results in overflow.                                          \
+   * 0 or the division results in overflow.                                    \
    */                                                                          \
   constexpr Option<i32> checked_rem(const i32& rhs) const& noexcept {          \
     if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
@@ -494,7 +499,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                                            \
                                                                                \
   /** Wrapping (modular) remainder. Computes self % rhs, wrapping around at    \
-   * the boundary of the type.                                                         \
+   * the boundary of the type.                                                 \
    *                                                                           \
    * Such wrap-around never actually occurs mathematically; implementation     \
    * artifacts make x % y invalid for MIN() / -1 on a signed type (where MIN() \
@@ -506,5 +511,89 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
       return i32(primitive_value % rhs.primitive_value);                       \
     else                                                                       \
       return i32(0);                                                           \
+  }                                                                            \
+  static_assert(true)
+
+#define _sus__signed_shift(T, UnsignedT)                                       \
+  /** Checked shift left. Computes self << rhs, returning None if rhs is       \
+   * larger than or equal to the number of bits in self.                       \
+   */                                                                          \
+  constexpr Option<i32> checked_shl(/* TODO: u32 */ uint32_t rhs)              \
+      const& noexcept {                                                        \
+    if (rhs < BITS()) [[likely]] {                                             \
+      return Option<i32>::some(i32(static_cast<primitive_type>(                \
+          static_cast<UnsignedT>(primitive_value) << rhs)));                   \
+    } else {                                                                   \
+      return Option<i32>::none();                                              \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Panic-free bitwise shift-left; yields self << mask(rhs), where mask      \
+   * removes any high-order bits of rhs that would cause the shift to exceed   \
+   * the bitwidth of the type.                                                 \
+   *                                                                           \
+   * Note that this is not the same as a rotate-left; the RHS of a wrapping    \
+   * shift-left is restricted to the range of the type, rather than the bits   \
+   * shifted out of the LHS being returned to the other end. The primitive     \
+   * integer types all implement a rotate_left function, which may be what you \
+   * want instead.                                                             \
+   */                                                                          \
+  constexpr i32 wrapping_shl(/* TODO: u32 */ uint32_t rhs) const& noexcept {   \
+    if (rhs < BITS()) [[likely]] {                                             \
+      return i32(static_cast<primitive_type>(                                  \
+          static_cast<UnsignedT>(primitive_value) << rhs));                    \
+    } else {                                                                   \
+      /* Using `BITS() - 1` as a mask only works if BITS() is a power of two,  \
+      so we look for that for some values here. */                             \
+      static_assert((BITS() >> 3) == 1    /* 8 bits */                         \
+                    || (BITS() >> 4) == 1 /* 16 bits */                        \
+                    || (BITS() >> 5) == 1 /* 32 bits */                        \
+                    || (BITS() >> 6) == 1 /* 64 bits */                        \
+                    || (BITS() >> 7) == 1 /* 128 bits */                       \
+      );                                                                       \
+      return i32(static_cast<primitive_type>(                                  \
+          static_cast<UnsignedT>(primitive_value) << (rhs & (BITS() - 1))));   \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Checked shift right. Computes self >> rhs, returning None if rhs is      \
+   * larger than or equal to the number of bits in self.                       \
+   */                                                                          \
+  constexpr Option<i32> checked_shr(/* TODO: u32 */ uint32_t rhs)              \
+      const& noexcept {                                                        \
+    if (rhs < BITS()) [[likely]] {                                             \
+      return Option<i32>::some(i32(static_cast<primitive_type>(                \
+          static_cast<UnsignedT>(primitive_value) >> rhs)));                   \
+    } else {                                                                   \
+      return Option<i32>::none();                                              \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Panic-free bitwise shift-right; yields self >> mask(rhs), where mask     \
+   * removes any high-order bits of rhs that would cause the shift to exceed   \
+   * the bitwidth of the type.                                                 \
+   *                                                                           \
+   * Note that this is not the same as a rotate-right; the RHS of a wrapping   \
+   * shift-right is restricted to the range of the type, rather than the bits  \
+   * shifted out of the LHS being returned to the other end. The primitive     \
+   * integer types all implement a rotate_right function, which may be what    \
+   * you want instead.                                                         \
+   */                                                                          \
+  constexpr i32 wrapping_shr(/* TODO: u32 */ uint32_t rhs) const& noexcept {   \
+    if (rhs < BITS()) [[likely]] {                                             \
+      return i32(static_cast<primitive_type>(                                  \
+          static_cast<UnsignedT>(primitive_value) >> rhs));                    \
+    } else {                                                                   \
+      /* Using `BITS() - 1` as a mask only works if BITS() is a power of two,  \
+      so we look for that for some values here. */                             \
+      static_assert((BITS() >> 3) == 1    /* 8 bits */                         \
+                    || (BITS() >> 4) == 1 /* 16 bits */                        \
+                    || (BITS() >> 5) == 1 /* 32 bits */                        \
+                    || (BITS() >> 6) == 1 /* 64 bits */                        \
+                    || (BITS() >> 7) == 1 /* 128 bits */                       \
+      );                                                                       \
+      return i32(static_cast<primitive_type>(                                  \
+          static_cast<UnsignedT>(primitive_value) >> (rhs & (BITS() - 1))));   \
+    }                                                                          \
   }                                                                            \
   static_assert(true)

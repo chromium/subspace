@@ -664,4 +664,99 @@ TEST(i32DeathTest, WrappingRemByZero) {
 #endif
 }
 
+TEST(i32, Shl) {
+  [[maybe_unused]] constexpr auto a = (5_i32) << 1;
+
+  EXPECT_EQ(2_i32 << 1, 4_i32);
+  EXPECT_EQ(-2_i32 << 1,
+            i32(static_cast<int32_t>(static_cast<uint32_t>(-2) << 1)));
+  EXPECT_EQ(1_i32 << 31,
+            i32(static_cast<int32_t>(static_cast<uint32_t>(1) << 31)));
+
+  auto x = 2_i32;
+  x <<= 1;
+  EXPECT_EQ(x, 4_i32);
+  x = -2_i32;
+  x <<= 1;
+  EXPECT_EQ(x, i32(static_cast<int32_t>(static_cast<uint32_t>(-2) << 1)));
+}
+
+TEST(i32DeathTest, ShlOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(0_i32 << 32, "");
+  EXPECT_DEATH(1_i32 << 33, "");
+  EXPECT_DEATH(2_i32 << 64, "");
+#endif
+}
+
+TEST(i32, CheckedShl) {
+  [[maybe_unused]] constexpr auto a = (5_i32).checked_shl(1);
+
+  EXPECT_EQ((2_i32).checked_shl(1), Option<i32>::some(4_i32));
+  EXPECT_EQ((-2_i32).checked_shl(1),
+            Option<i32>::some(i32(static_cast<int32_t>(static_cast<uint32_t>(-2) << 1))));
+
+  EXPECT_EQ((0_i32).checked_shl(32), None);
+  EXPECT_EQ((1_i32).checked_shl(33), None);
+  EXPECT_EQ((2_i32).checked_shl(64), None);
+}
+
+TEST(i32, WrappingShl) {
+  [[maybe_unused]] constexpr auto a = (5_i32).wrapping_shl(1);
+
+  EXPECT_EQ((2_i32).wrapping_shl(1), 4_i32);
+  EXPECT_EQ((-2_i32).wrapping_shl(1),
+            i32(static_cast<int32_t>(static_cast<uint32_t>(-2) << 1)));
+
+  EXPECT_EQ((2_i32).wrapping_shl(32), 2_i32);  // Masks out everything.
+  EXPECT_EQ((2_i32).wrapping_shl(33), 4_i32);  // Masks out everything but the 1.
+}
+
+TEST(i32, Shr) {
+  [[maybe_unused]] constexpr auto a = (5_i32) >> 1;
+
+  EXPECT_EQ(4_i32 >> 1, 2_i32);
+  EXPECT_EQ(-4_i32 >> 1,
+            i32(static_cast<int32_t>(static_cast<uint32_t>(-4) >> 1)));
+  EXPECT_EQ(-1_i32 >> 31, 1_i32);
+
+  auto x = 4_i32;
+  x >>= 1;
+  EXPECT_EQ(x, 2_i32);
+  x = -4_i32;
+  x >>= 1;
+  EXPECT_EQ(x, i32(static_cast<int32_t>(static_cast<uint32_t>(-4) >> 1)));
+}
+
+TEST(i32DeathTest, ShrOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(-1_i32 >> 32, "");
+  EXPECT_DEATH(0_i32 >> 33, "");
+  EXPECT_DEATH(1_i32 >> 64, "");
+#endif
+}
+
+TEST(i32, CheckedShr) {
+  [[maybe_unused]] constexpr auto a = (5_i32).checked_shr(1);
+
+  EXPECT_EQ((4_i32).checked_shr(1), Option<i32>::some(2_i32));
+  EXPECT_EQ((-2_i32).checked_shr(1),
+            Option<i32>::some(i32(static_cast<int32_t>(static_cast<uint32_t>(-2) >> 1))));
+
+  EXPECT_EQ((-1_i32).checked_shr(32), None);
+  EXPECT_EQ((0_i32).checked_shr(33), None);
+  EXPECT_EQ((1_i32).checked_shr(64), None);
+}
+
+TEST(i32, WrappingShr) {
+  [[maybe_unused]] constexpr auto a = (5_i32).wrapping_shr(1);
+
+  EXPECT_EQ((4_i32).wrapping_shr(1), 2_i32);
+  EXPECT_EQ((-2_i32).wrapping_shr(1),
+            i32(static_cast<int32_t>(static_cast<uint32_t>(-2) >> 1)));
+
+  EXPECT_EQ((4_i32).wrapping_shr(32), 4_i32);  // Masks out everything.
+  EXPECT_EQ((4_i32).wrapping_shr(33), 2_i32);  // Masks out everything but the 1.
+}
+
 }  // namespace
