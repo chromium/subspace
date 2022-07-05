@@ -899,4 +899,32 @@ TEST(i32, IsPositive) {
   EXPECT_EQ((-1_i32).is_positive(), false);
 }
 
+TEST(i32, LeadingZeros) {
+  EXPECT_EQ([]() constexpr { return (0_i32).leading_zeros(); }(), 32);
+  EXPECT_EQ([]() constexpr { return (1_i32).leading_zeros(); }(), 31);
+  EXPECT_EQ([]() constexpr { return (3_i32).leading_zeros(); }(), 30);
+  EXPECT_EQ([]() constexpr { return (i32::MAX()).leading_zeros(); }(), 1);
+  EXPECT_EQ([]() constexpr { return (-1_i32).leading_zeros(); }(), 0);
+
+  EXPECT_EQ((0_i32).leading_zeros(), 32);
+  EXPECT_EQ((1_i32).leading_zeros(), 31);
+  EXPECT_EQ((3_i32).leading_zeros(), 30);
+  EXPECT_EQ((i32::MAX()).leading_zeros(), 1);
+  EXPECT_EQ((-1_i32).leading_zeros(), 0);
+}
+
+TEST(i32, LeadingOnes) {
+  EXPECT_EQ([]() constexpr { return (0_i32).leading_ones(); }(), 0);
+  EXPECT_EQ([]() constexpr { return (1_i32).leading_ones(); }(), 0);
+  EXPECT_EQ([]() constexpr { return (i32::MAX()).leading_ones(); }(), 0);
+  EXPECT_EQ([]() constexpr { return (-1_i32).leading_ones(); }(), 32);
+  EXPECT_EQ([]() constexpr { return (-2_i32).leading_ones(); }(), 31);
+
+  EXPECT_EQ((0_i32).leading_ones(), 0);
+  EXPECT_EQ((1_i32).leading_ones(), 0);
+  EXPECT_EQ((i32::MAX()).leading_ones(), 0);
+  EXPECT_EQ((-1_i32).leading_ones(), 32);
+  EXPECT_EQ((-2_i32).leading_ones(), 31);
+}
+
 }  // namespace

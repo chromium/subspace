@@ -673,4 +673,18 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   constexpr /* TODO: u32 */ uint32_t count_zeros() const& noexcept {          \
     return (~(*this)).count_ones();                                           \
   }                                                                           \
+                                                                              \
+  /** Returns the number of leading ones in the binary representation of the  \
+   * current value.                                                           \
+   */                                                                         \
+  constexpr /* TODO:u32 */ uint32_t leading_ones() const& noexcept {          \
+    return (~(*this)).leading_zeros();                                        \
+  }                                                                           \
+                                                                              \
+  /** Returns the number of leading zeros in the binary representation of the \
+   * current value.                                                           \
+   */                                                                         \
+  constexpr /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {         \
+    return __private::leading_zeros(static_cast<uint32_t>(primitive_value));  \
+  }                                                                           \
   static_assert(true)
