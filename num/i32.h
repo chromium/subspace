@@ -97,8 +97,6 @@ struct i32 {
   // TODO: to_le().
   // TODO: to_le_bytes().
   // TODO: to_ne_bytes().
-  // TODO: trailing_ones() - use intrinsics.
-  // TODO: trailing_zeros() - use intrinsics.
 
   /// The inner primitive value, in case it needs to be unwrapped from the
   /// type. Avoid using this member except to convert when a consumer
