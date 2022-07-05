@@ -715,7 +715,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * current value.                                                             \
    */                                                                           \
   constexpr /* TODO:u32 */ uint32_t trailing_zeros() const& noexcept {          \
-    return __private::trailing_zeros(static_cast<UnsignedT>(primitive_value));   \
+    return __private::trailing_zeros(static_cast<UnsignedT>(primitive_value));  \
   }                                                                             \
                                                                                 \
   /** Reverses the order of bits in the integer. The least significant bit      \
@@ -760,17 +760,45 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   /**  Raises self to the power of `exp`, using exponentiation by squaring. */ \
   constexpr inline T pow(const /* TODO: u32 */ uint32_t& rhs)                  \
       const& noexcept {                                                        \
-    auto exp =                                                                 \
-        uint32_t{rhs}; /* TODO: With u32, pull out the primitive_value. */     \
+    /* TODO: With u32, pull out the primitive_value. */                        \
+    auto exp = uint32_t{rhs};                                                  \
     if (exp == 0) return T(1);                                                 \
     /* Use ##T## type to catch overflow. */                                    \
     auto base = *this;                                                         \
-    auto acc = T{1};                                                           \
+    auto acc = T(1);                                                           \
     while (exp > 1) {                                                          \
       if (exp & 1) acc *= base;                                                \
       exp /= 2;                                                                \
       base *= base;                                                            \
     }                                                                          \
     return acc * base;                                                         \
+  }                                                                            \
+                                                                               \
+  /** Checked exponentiation. Computes `T::pow(exp)`, returning None if        \
+   * overflow occurred.                                                        \
+   */                                                                          \
+  constexpr Option<T> checked_pow(const /* TODO: u32 */ uint32_t& rhs)         \
+      const& noexcept {                                                        \
+    /* TODO: With u32, pull out the primitive_value. */                        \
+    auto exp = uint32_t{rhs};                                                  \
+    if (exp == 0) return Option<T>::some(T(1));                                \
+    auto base = *this;                                                         \
+    auto acc = T{1};                                                           \
+    while (exp > 1) {                                                          \
+      if (exp & 1) {                                                           \
+        switch (Option<T> o = acc.checked_mul(base)) {                         \
+          case None: return o;                                                 \
+          case Some:                                                           \
+            acc = static_cast<decltype(o)&&>(o).unwrap_unchecked(unsafe_fn);   \
+        }                                                                      \
+      }                                                                        \
+      exp /= 2;                                                                \
+      switch (Option<T> o = base.checked_mul(base)) {                          \
+        case None: return o;                                                   \
+        case Some:                                                             \
+          base = static_cast<decltype(o)&&>(o).unwrap_unchecked(unsafe_fn);    \
+      }                                                                        \
+    }                                                                          \
+    return acc.checked_mul(base);                                              \
   }                                                                            \
   static_assert(true)

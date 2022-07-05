@@ -1,2 +1,3 @@
 BasedOnStyle: Google
 Standard: Latest
+AllowShortCaseLabelsOnASingleLine: true
