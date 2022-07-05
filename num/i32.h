@@ -65,6 +65,8 @@ struct i32 {
   // TODO: overflowing_rem_euclid(). Need a tuple type.
   // TODO: overflowing_shl(). Need a tuple type.
   // TODO: overflowing_shr(). Need a tuple type.
+  // TODO: overflowing_sub(). Need a tuple type.
+  // TODO: overflowing_sub_unsigned(). Need a tuple type.
   // TODO: wrapping_div_euclid().
   // TODO: wrapping_rem_euclid().
   // TODO: checked_div_euclid().

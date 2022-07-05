@@ -84,7 +84,8 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   _sus__signed_mul(T, LargerT);                  \
   _sus__signed_neg(T);                           \
   _sus__signed_rem(T);                           \
-  _sus__signed_shift(T, UnsignedT)
+  _sus__signed_shift(T, UnsignedT);              \
+  _sus__signed_sub(T)
 
 #define _sus__signed_integer_comparison(T)                                    \
   /** sus::concepts::Eq<##T##> trait. */                                      \
@@ -330,9 +331,9 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * boundary of the type.                                                     \
    */                                                                          \
   constexpr T wrapping_add(const T& rhs) const& noexcept {                     \
-    if (__private::can_add_without_overflow(*this, rhs)) [[likely]]            \
+    if (__private::can_add_without_overflow(*this, rhs)) [[likely]] {          \
       return unchecked_add(unsafe_fn, rhs);                                    \
-    if (rhs.primitive_value >= 0) {                                            \
+    } else if (rhs.primitive_value >= 0) {                                     \
       return MIN_PRIMITIVE + rhs.primitive_value + primitive_value -           \
              MAX_PRIMITIVE - 1;                                                \
     } else {                                                                   \
@@ -596,4 +597,51 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
           static_cast<UnsignedT>(primitive_value) >> (rhs & (BITS() - 1))));   \
     }                                                                          \
   }                                                                            \
+  static_assert(true)
+
+#define _sus__signed_sub(T)                                                   \
+  /** Checked integer subtraction. Computes self - rhs, returning None if     \
+   * overflow occurred.                                                       \
+   */                                                                         \
+  constexpr Option<i32> checked_sub(const i32& rhs) const& {                  \
+    if (__private::can_sub_without_overflow(*this, rhs)) [[likely]]           \
+      return Option<i32>::some(unchecked_sub(unsafe_fn, rhs));                \
+    else                                                                      \
+      return Option<i32>::none();                                             \
+  }                                                                           \
+                                                                              \
+  /** Saturating integer subtraction. Computes self - rhs, saturating at the  \
+   * numeric bounds instead of overflowing.                                   \
+   */                                                                         \
+  constexpr i32 saturating_sub(const i32& rhs) const& {                       \
+    if (__private::can_sub_without_overflow(*this, rhs)) [[likely]]           \
+      return unchecked_sub(unsafe_fn, rhs);                                   \
+    else if (rhs.primitive_value >= 0)                                        \
+      return MIN();                                                           \
+    else                                                                      \
+      return MAX();                                                           \
+  }                                                                           \
+                                                                              \
+  /** Unchecked integer subtraction. Computes self - rhs, assuming overflow   \
+   * cannot occur.                                                            \
+   */                                                                         \
+  constexpr i32 unchecked_sub(::sus::marker::UnsafeFnMarker, const i32& rhs)  \
+      const& {                                                                \
+    return primitive_value - rhs.primitive_value;                             \
+  }                                                                           \
+                                                                              \
+  /** Wrapping (modular) subtraction. Computes self - rhs, wrapping around at \
+   * the boundary of the type.                                                \
+   */                                                                         \
+  constexpr i32 wrapping_sub(const i32& rhs) const& {                         \
+    if (__private::can_sub_without_overflow(*this, rhs)) [[likely]] {         \
+      return unchecked_sub(unsafe_fn, rhs);                                   \
+    } else if (rhs.primitive_value >= 0) {                                    \
+      return MAX_PRIMITIVE - rhs.primitive_value + primitive_value -          \
+             MIN_PRIMITIVE + 1;                                               \
+    } else {                                                                  \
+      return MIN_PRIMITIVE - rhs.primitive_value + primitive_value -          \
+             MAX_PRIMITIVE - 1;                                               \
+    }                                                                         \
+  }                                                                           \
   static_assert(true)
