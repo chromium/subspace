@@ -32,24 +32,13 @@ template <class T>
 constexpr uint32_t count_ones(T value) noexcept {
 #if _MSC_VER
   if (std::is_constant_evaluated()) {
-    // The low 2 bits are either:
-    // - 0b00, (value + 1) / 2 is number of bits = 0.
-    // - 0b01, (value + 1) / 2 is number of bits = 1.
-    // - 0b11, value is 3. (value + 1) / 2 is the number of bits = 2.
-    // - 0b10, value is 2. (value + 1) / 2 is the number of bits = 2.
-    // So we can count the ones 2 at a time.
-    uint32_t count = 0;
-    for (uint32_t i = 0; i < sizeof(value); ++i) {
-      count += ((value & 0b11) + 1) / 2;
-      count >>= 2;
-      count += ((value & 0b11) + 1) / 2;
-      count >>= 2;
-      count += ((value & 0b11) + 1) / 2;
-      count >>= 2;
-      count += ((value & 0b11) + 1) / 2;
-      count >>= 2;
-    }
-    return count;
+    // Algorithm to count the number of bits in parallel, up to a 128 bit value.
+    // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+    value = value - (value >> 1) & ~T{0} / T{3};
+    value =
+        (value & ~T{0} / T{15} * T{3}) + ((value >> 2) & ~T{0} / T{15} * T{3});
+    value = (value + (value >> 4)) & ~T{0} / T{255} * T{15};
+    return T{value * (~T{0} / T{255})} >> (sizeof(T) - 1) * 8;
   } else if constexpr (sizeof(value) <= 2) {
     return __popcnt16(uint16_t{value});
   } else if constexpr (sizeof(value) == 8) {
