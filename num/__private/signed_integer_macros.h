@@ -86,7 +86,8 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   _sus__signed_rem(T);                           \
   _sus__signed_shift(T, UnsignedT);              \
   _sus__signed_sub(T);                           \
-  _sus__signed_count_bits(T, UnsignedT)
+  _sus__signed_count_bits(T, UnsignedT);         \
+  _sus__signed_pow(T)
 
 #define _sus__signed_integer_comparison(T)                                     \
   /** Returns true if the current value is positive and false if the number is \
@@ -180,57 +181,57 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
 
 #define _sus__signed_mutable_logic_ops(T)                        \
   /** sus::concepts::AddAssign<##T##> trait. */                  \
-  inline void operator+=(T r)& noexcept {                        \
+  constexpr inline void operator+=(T r)& noexcept {              \
     ::sus::check(__private::can_add_without_overflow(*this, r)); \
     primitive_value += r.primitive_value;                        \
   }                                                              \
   /** sus::concepts::SubAssign<##T##> trait. */                  \
-  inline void operator-=(T r)& noexcept {                        \
+  constexpr inline void operator-=(T r)& noexcept {              \
     ::sus::check(__private::can_sub_without_overflow(*this, r)); \
     primitive_value -= r.primitive_value;                        \
   }                                                              \
   /** sus::concepts::MulAssign<##T##> trait. */                  \
-  inline void operator*=(T r)& noexcept {                        \
+  constexpr inline void operator*=(T r)& noexcept {              \
     ::sus::check(__private::can_mul_without_overflow(*this, r)); \
     primitive_value *= r.primitive_value;                        \
   }                                                              \
   /** sus::concepts::DivAssign<##T##> trait. */                  \
-  inline void operator/=(T r)& noexcept {                        \
+  constexpr inline void operator/=(T r)& noexcept {              \
     ::sus::check(__private::can_div_without_overflow(*this, r)); \
     primitive_value /= r.primitive_value;                        \
   }                                                              \
   /** sus::concepts::RemAssign<##T##> trait. */                  \
-  inline void operator%=(T r)& noexcept {                        \
+  constexpr inline void operator%=(T r)& noexcept {              \
     ::sus::check(__private::can_div_without_overflow(*this, r)); \
     primitive_value %= r.primitive_value;                        \
   }                                                              \
   static_assert(true)
 
-#define _sus__signed_mutable_bit_ops(T, UnsignedT)                \
-  /** sus::concepts::BitAndAssign<##T##> trait. */                \
-  inline void operator&=(T r)& noexcept {                         \
-    primitive_value &= r.primitive_value;                         \
-  }                                                               \
-  /** sus::concepts::BitOrAssign<##T##> trait. */                 \
-  inline void operator|=(T r)& noexcept {                         \
-    primitive_value |= r.primitive_value;                         \
-  }                                                               \
-  /** sus::concepts::BitXorAssign<##T##> trait. */                \
-  inline void operator^=(T r)& noexcept {                         \
-    primitive_value ^= r.primitive_value;                         \
-  }                                                               \
-  /** sus::concepts::ShlAssign trait. */                          \
-  inline void operator<<=(/* TODO: u32 */ uint32_t r)& noexcept { \
-    ::sus::check(r < BITS());                                     \
-    primitive_value = static_cast<primitive_type>(                \
-        static_cast<UnsignedT>(primitive_value) << r);            \
-  }                                                               \
-  /** sus::concepts::ShrAssign trait. */                          \
-  inline void operator>>=(/* TODO: u32 */ uint32_t r)& noexcept { \
-    ::sus::check(r < BITS());                                     \
-    primitive_value = static_cast<primitive_type>(                \
-        static_cast<UnsignedT>(primitive_value) >> r);            \
-  }                                                               \
+#define _sus__signed_mutable_bit_ops(T, UnsignedT)                          \
+  /** sus::concepts::BitAndAssign<##T##> trait. */                          \
+  constexpr inline void operator&=(T r)& noexcept {                         \
+    primitive_value &= r.primitive_value;                                   \
+  }                                                                         \
+  /** sus::concepts::BitOrAssign<##T##> trait. */                           \
+  constexpr inline void operator|=(T r)& noexcept {                         \
+    primitive_value |= r.primitive_value;                                   \
+  }                                                                         \
+  /** sus::concepts::BitXorAssign<##T##> trait. */                          \
+  constexpr inline void operator^=(T r)& noexcept {                         \
+    primitive_value ^= r.primitive_value;                                   \
+  }                                                                         \
+  /** sus::concepts::ShlAssign trait. */                                    \
+  constexpr inline void operator<<=(/* TODO: u32 */ uint32_t r)& noexcept { \
+    ::sus::check(r < BITS());                                               \
+    primitive_value = static_cast<primitive_type>(                          \
+        static_cast<UnsignedT>(primitive_value) << r);                      \
+  }                                                                         \
+  /** sus::concepts::ShrAssign trait. */                                    \
+  constexpr inline void operator>>=(/* TODO: u32 */ uint32_t r)& noexcept { \
+    ::sus::check(r < BITS());                                               \
+    primitive_value = static_cast<primitive_type>(                          \
+        static_cast<UnsignedT>(primitive_value) >> r);                      \
+  }                                                                         \
   static_assert(true)
 
 #define _sus__signed_abs(T, UnsignedT)                                         \
@@ -687,4 +688,23 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   constexpr /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {         \
     return __private::leading_zeros(static_cast<uint32_t>(primitive_value));  \
   }                                                                           \
+  static_assert(true)
+
+#define _sus__signed_pow(T)                                                    \
+  /**  Raises self to the power of `exp`, using exponentiation by squaring. */ \
+  constexpr inline i32 pow(const /* TODO: u32 */ uint32_t& rhs)                \
+      const& noexcept {                                                        \
+    auto exp =                                                                 \
+        uint32_t{rhs}; /* TODO: With u32, pull out the primitive_value. */     \
+    if (exp == 0) return i32(1);                                               \
+    /* Use ##T## type to catch overflow. */                                    \
+    auto base = i32(primitive_value);                                          \
+    auto acc = i32{1};                                                         \
+    while (exp > 1) {                                                          \
+      if (exp & 1) acc *= base;                                                \
+      exp /= 2;                                                                \
+      base *= base;                                                            \
+    }                                                                          \
+    return acc * base;                                                         \
+  }                                                                            \
   static_assert(true)
