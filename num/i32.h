@@ -68,6 +68,7 @@ struct i32 {
   // TODO: overflowing_shr(). Need a tuple type.
   // TODO: overflowing_sub(). Need a tuple type.
   // TODO: overflowing_sub_unsigned(). Need a tuple type.
+  // TODO: div_euclid().
   // TODO: wrapping_div_euclid().
   // TODO: wrapping_rem_euclid().
   // TODO: checked_div_euclid().
@@ -78,7 +79,12 @@ struct i32 {
   // TODO: checked_pow().
   // TODO: checked_rem_euclid().
   // TODO: checked_shr().
-  // TODO: wrapping_div_euclid().
+  // TODO: from_be().
+  // TODO: from_be_bytes().
+  // TODO: from_le().
+  // TODO: from_le_bytes().
+  // TODO: from_ne_bytes().
+  // TODO: from_str_radix(). Need Result type and Errors.
 
   /// The inner primitive value, in case it needs to be unwrapped from the
   /// type. Avoid using this member except to convert when a consumer

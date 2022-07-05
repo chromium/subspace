@@ -88,15 +88,24 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   _sus__signed_sub(T);                           \
   _sus__signed_count_bits(T, UnsignedT)
 
-#define _sus__signed_integer_comparison(T)                                    \
-  /** sus::concepts::Eq<##T##> trait. */                                      \
-  friend constexpr inline bool operator==(const T& l, const T& r) noexcept {  \
-    return (l.primitive_value <=> r.primitive_value) == 0;                    \
-  }                                                                           \
-  /** sus::concepts::Ord<##T##> trait. */                                     \
-  friend constexpr inline auto operator<=>(const T& l, const T& r) noexcept { \
-    return l.primitive_value <=> r.primitive_value;                           \
-  }                                                                           \
+#define _sus__signed_integer_comparison(T)                                     \
+  /** Returns true if the current value is positive and false if the number is \
+   * zero or negative.                                                         \
+   */                                                                          \
+  constexpr bool is_negative() const& noexcept { return primitive_value < 0; } \
+  /** Returns true if the current value is negative and false if the number is \
+   * zero or positive.                                                         \
+   */                                                                          \
+  constexpr bool is_positive() const& noexcept { return primitive_value > 0; } \
+                                                                               \
+  /** sus::concepts::Eq<##T##> trait. */                                       \
+  friend constexpr inline bool operator==(const T& l, const T& r) noexcept {   \
+    return (l.primitive_value <=> r.primitive_value) == 0;                     \
+  }                                                                            \
+  /** sus::concepts::Ord<##T##> trait. */                                      \
+  friend constexpr inline auto operator<=>(const T& l, const T& r) noexcept {  \
+    return l.primitive_value <=> r.primitive_value;                            \
+  }                                                                            \
   static_assert(true)
 
 #define _sus__signed_unary_ops(T, UnsignedT)        \
