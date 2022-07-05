@@ -27,7 +27,8 @@ namespace sus::num::__private {
 
 // TODO: Move to a (constexpr) compiler intrinsics library?
 template <class T>
-  requires(std::same_as<T, uint32_t>)
+  requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
+           std::same_as<T, uint8_t>)
 constexpr uint32_t count_ones(T value) noexcept {
 #if defined(_MSC_VER)
   if (std::is_constant_evaluated()) {
@@ -49,15 +50,80 @@ constexpr uint32_t count_ones(T value) noexcept {
       count >>= 2;
     }
     return count;
+  } else if constexpr (sizeof(value) <= 2) {
+    return __popcnt16(uint16_t{value});
+  } else if constexpr (sizeof(value) == 8) {
+    return __popcnt64(uint64_t{value});
   } else {
-    static_assert(sizeof(value) == 4);  // Use __popcnt16 and __popcnt64.
-    return __popcnt(value);
+    return __popcnt(uint32_t{value});
   }
 #else
-  static_assert(sizeof(value) ==
-                sizeof(unsigned int));  // Use popcountl and popcountll
-  return __builtin_popcount(value);
+  if constexpr (sizeof(value) <= sizeof(unsigned int)) {
+    using U = unsigned int;
+    return __builtin_popcount(U{value});
+  } else if constexpr (sizeof(value) <= sizeof(unsigned long)) {
+    using U = unsigned long;
+    return __builtin_popcountl(U{value});
+  } else {
+    using U = unsigned long long;
+    return __builtin_popcountll(U{value});
+  }
 #endif
 }
 
+// TODO: Move to a (constexpr) compiler intrinsics library?
+template <class T>
+  requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
+           std::same_as<T, uint8_t>)
+constexpr uint32_t leading_zeros(T value) noexcept {
+  if (value == 0) return sizeof(T) * 8;
+
+#if defined(_MSC_VER)
+  if constexpr (sizeof(value) == 8) {
+#if 1
+    unsigned long index;
+    _BitScanReverse64(&index, value);
+    return index;
+#else
+    // TODO: Enable this when target CPU is appropriate:
+    // - AMD: Advanced Bit Manipulation (ABM)
+    // - Intel: Haswell
+    return __lzcnt64(&count, int64_t{value});
+#endif
+  } else if constexpr (sizeof(value) == 4) {
+#if 1
+    unsigned long index;
+    _BitScanReverse(&index, uint32_t{value});
+    return 31 ^ index;
+#else
+    // TODO: Enable this when target CPU is appropriate:
+    // - AMD: Advanced Bit Manipulation (ABM)
+    // - Intel: Haswell
+    return __lzcnt(&count, uint32_t{value});
+#endif
+  } else {
+#if 1
+    unsigned long index;
+    _BitScanReverse(&index, uint32_t{value});
+    return 31 ^ index;
+#else
+    // TODO: Enable this when target CPU is appropriate:
+    // - AMD: Advanced Bit Manipulation (ABM)
+    // - Intel: Haswell
+    return __lzcnt16(&count, uint16_t{value});
+#endif
+  }
+#else
+  if constexpr (sizeof(value) <= sizeof(unsigned int)) {
+    using U = unsigned int;
+    return __builtin_clz(U{value});
+  } else if constexpr (sizeof(value) <= sizeof(unsigned long)) {
+    using U = unsigned long;
+    return __builtin_clzl(U{value});
+  } else {
+    using U = unsigned long long;
+    return __builtin_clzll(U{value});
+  }
+#endif
+}
 }  // namespace sus::num::__private

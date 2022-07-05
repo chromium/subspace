@@ -75,6 +75,9 @@ struct i32 {
   // TODO: checked_log().
   // TODO: checked_log10().
   // TODO: checked_log2().
+  // TODO: log().
+  // TODO: log10().
+  // TODO: log2().
   // TODO: checked_next_multiple_of().
   // TODO: checked_pow().
   // TODO: checked_rem_euclid().
