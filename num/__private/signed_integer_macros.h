@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include "num/__private/intrinsics.h"
+
 namespace sus::num::__private {
 
 template <class T>

@@ -23,7 +23,6 @@
 #include "marker/unsafe.h"
 #include "num/__private/literals.h"
 #include "num/__private/signed_integer_macros.h"
-#include "num/__private/unsigned_integer_macros.h"  // TODO: Remove this, include u32 instead.
 #include "option/option.h"
 
 namespace sus::num {
