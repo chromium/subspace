@@ -53,7 +53,7 @@ struct i32 {
   }
 
   _sus__signed_constants(i32, 0x7FFFFFFF, 32);
-  _sus__signed_impl(i32, int64_t);
+  _sus__signed_impl(i32, /*LargerT=*/int64_t, /*UnsignedT=*/uint32_t);
 
   // TODO: overflowing_abs(). Need a tuple type.
   // TODO: overflowing_add(). Need a tuple type.
@@ -63,6 +63,8 @@ struct i32 {
   // TODO: overflowing_neg(). Need a tuple type.
   // TODO: overflowing_rem(). Need a tuple type.
   // TODO: overflowing_rem_euclid(). Need a tuple type.
+  // TODO: overflowing_shl(). Need a tuple type.
+  // TODO: overflowing_shr(). Need a tuple type.
   // TODO: wrapping_div_euclid().
   // TODO: wrapping_rem_euclid().
   // TODO: checked_div_euclid().
@@ -72,7 +74,6 @@ struct i32 {
   // TODO: checked_next_multiple_of().
   // TODO: checked_pow().
   // TODO: checked_rem_euclid().
-  // TODO: checked_shl().
   // TODO: checked_shr().
   // TODO: wrapping_div_euclid().
 
