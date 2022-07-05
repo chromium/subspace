@@ -90,15 +90,6 @@ struct i32 {
   // TODO: from_ne_bytes().
   // TODO: from_str_radix(). Need Result type and Errors.
 
-  /** Reverses the order of bits in the integer. The least significant bit
-   * becomes the most significant bit, second least-significant bit becomes
-   * second most-significant bit, etc.
-   */
-  constexpr i32 reverse_bits() const& noexcept {
-    return static_cast<primitive_type>(
-        __private::reverse_bits(static_cast<uint32_t>(primitive_value)));
-  }
-
   /// The inner primitive value, in case it needs to be unwrapped from the
   /// type. Avoid using this member except to convert when a consumer
   /// requires it.

@@ -86,7 +86,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   _sus__signed_rem(T);                           \
   _sus__signed_shift(T, UnsignedT);              \
   _sus__signed_sub(T);                           \
-  _sus__signed_count_bits(T, UnsignedT);         \
+  _sus__signed_bits(T, UnsignedT);         \
   _sus__signed_pow(T)
 
 #define _sus__signed_integer_comparison(T)                                     \
@@ -506,11 +506,11 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   /** Checked integer remainder. Computes self % rhs, returning None if rhs == \
    * 0 or the division results in overflow.                                    \
    */                                                                          \
-  constexpr Option<i32> checked_rem(const i32& rhs) const& noexcept {          \
+  constexpr Option<T> checked_rem(const T& rhs) const& noexcept {              \
     if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
-      return Option<i32>::some(i32(primitive_value % rhs.primitive_value));    \
+      return Option<T>::some(T(primitive_value % rhs.primitive_value));        \
     else                                                                       \
-      return Option<i32>::none();                                              \
+      return Option<T>::none();                                                \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) remainder. Computes self % rhs, wrapping around at    \
@@ -520,12 +520,12 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * artifacts make x % y invalid for MIN() / -1 on a signed type (where MIN() \
    * is the negative minimal value). In such a case, this function returns 0.  \
    */                                                                          \
-  constexpr i32 wrapping_rem(const i32& rhs) const& noexcept {                 \
+  constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
     ::sus::check(rhs != 0);                                                    \
     if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
-      return i32(primitive_value % rhs.primitive_value);                       \
+      return primitive_value % rhs.primitive_value;                            \
     else                                                                       \
-      return i32(0);                                                           \
+      return 0;                                                                \
   }                                                                            \
   static_assert(true)
 
@@ -533,13 +533,13 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   /** Checked shift left. Computes self << rhs, returning None if rhs is       \
    * larger than or equal to the number of bits in self.                       \
    */                                                                          \
-  constexpr Option<i32> checked_shl(/* TODO: u32 */ uint32_t rhs)              \
+  constexpr Option<T> checked_shl(/* TODO: u32 */ uint32_t rhs)                \
       const& noexcept {                                                        \
     if (rhs < BITS()) [[likely]] {                                             \
-      return Option<i32>::some(i32(static_cast<primitive_type>(                \
+      return Option<T>::some(T(static_cast<primitive_type>(                    \
           static_cast<UnsignedT>(primitive_value) << rhs)));                   \
     } else {                                                                   \
-      return Option<i32>::none();                                              \
+      return Option<T>::none();                                                \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -553,10 +553,10 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * integer types all implement a rotate_left function, which may be what you \
    * want instead.                                                             \
    */                                                                          \
-  constexpr i32 wrapping_shl(/* TODO: u32 */ uint32_t rhs) const& noexcept {   \
+  constexpr T wrapping_shl(/* TODO: u32 */ uint32_t rhs) const& noexcept {     \
     if (rhs < BITS()) [[likely]] {                                             \
-      return i32(static_cast<primitive_type>(                                  \
-          static_cast<UnsignedT>(primitive_value) << rhs));                    \
+      return static_cast<primitive_type>(                                      \
+          static_cast<UnsignedT>(primitive_value) << rhs);                     \
     } else {                                                                   \
       /* Using `BITS() - 1` as a mask only works if BITS() is a power of two,  \
       so we look for that for some values here. */                             \
@@ -566,21 +566,21 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
                     || (BITS() >> 6) == 1 /* 64 bits */                        \
                     || (BITS() >> 7) == 1 /* 128 bits */                       \
       );                                                                       \
-      return i32(static_cast<primitive_type>(                                  \
-          static_cast<UnsignedT>(primitive_value) << (rhs & (BITS() - 1))));   \
+      return static_cast<primitive_type>(                                      \
+          static_cast<UnsignedT>(primitive_value) << (rhs & (BITS() - 1)));    \
     }                                                                          \
   }                                                                            \
                                                                                \
   /** Checked shift right. Computes self >> rhs, returning None if rhs is      \
    * larger than or equal to the number of bits in self.                       \
    */                                                                          \
-  constexpr Option<i32> checked_shr(/* TODO: u32 */ uint32_t rhs)              \
+  constexpr Option<T> checked_shr(/* TODO: u32 */ uint32_t rhs)                \
       const& noexcept {                                                        \
     if (rhs < BITS()) [[likely]] {                                             \
-      return Option<i32>::some(i32(static_cast<primitive_type>(                \
+      return Option<T>::some(T(static_cast<primitive_type>(                    \
           static_cast<UnsignedT>(primitive_value) >> rhs)));                   \
     } else {                                                                   \
-      return Option<i32>::none();                                              \
+      return Option<T>::none();                                                \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -594,10 +594,10 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * integer types all implement a rotate_right function, which may be what    \
    * you want instead.                                                         \
    */                                                                          \
-  constexpr i32 wrapping_shr(/* TODO: u32 */ uint32_t rhs) const& noexcept {   \
+  constexpr T wrapping_shr(/* TODO: u32 */ uint32_t rhs) const& noexcept {     \
     if (rhs < BITS()) [[likely]] {                                             \
-      return i32(static_cast<primitive_type>(                                  \
-          static_cast<UnsignedT>(primitive_value) >> rhs));                    \
+      return static_cast<primitive_type>(                                      \
+          static_cast<UnsignedT>(primitive_value) >> rhs);                     \
     } else {                                                                   \
       /* Using `BITS() - 1` as a mask only works if BITS() is a power of two,  \
       so we look for that for some values here. */                             \
@@ -607,8 +607,8 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
                     || (BITS() >> 6) == 1 /* 64 bits */                        \
                     || (BITS() >> 7) == 1 /* 128 bits */                       \
       );                                                                       \
-      return i32(static_cast<primitive_type>(                                  \
-          static_cast<UnsignedT>(primitive_value) >> (rhs & (BITS() - 1))));   \
+      return static_cast<primitive_type>(                                      \
+          static_cast<UnsignedT>(primitive_value) >> (rhs & (BITS() - 1)));    \
     }                                                                          \
   }                                                                            \
   static_assert(true)
@@ -617,17 +617,17 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   /** Checked integer subtraction. Computes self - rhs, returning None if     \
    * overflow occurred.                                                       \
    */                                                                         \
-  constexpr Option<i32> checked_sub(const i32& rhs) const& {                  \
+  constexpr Option<T> checked_sub(const T& rhs) const& {                      \
     if (__private::can_sub_without_overflow(*this, rhs)) [[likely]]           \
-      return Option<i32>::some(unchecked_sub(unsafe_fn, rhs));                \
+      return Option<T>::some(unchecked_sub(unsafe_fn, rhs));                  \
     else                                                                      \
-      return Option<i32>::none();                                             \
+      return Option<T>::none();                                               \
   }                                                                           \
                                                                               \
   /** Saturating integer subtraction. Computes self - rhs, saturating at the  \
    * numeric bounds instead of overflowing.                                   \
    */                                                                         \
-  constexpr i32 saturating_sub(const i32& rhs) const& {                       \
+  constexpr T saturating_sub(const T& rhs) const& {                           \
     if (__private::can_sub_without_overflow(*this, rhs)) [[likely]]           \
       return unchecked_sub(unsafe_fn, rhs);                                   \
     else if (rhs.primitive_value >= 0)                                        \
@@ -639,7 +639,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   /** Unchecked integer subtraction. Computes self - rhs, assuming overflow   \
    * cannot occur.                                                            \
    */                                                                         \
-  constexpr i32 unchecked_sub(::sus::marker::UnsafeFnMarker, const i32& rhs)  \
+  constexpr T unchecked_sub(::sus::marker::UnsafeFnMarker, const T& rhs)      \
       const& {                                                                \
     return primitive_value - rhs.primitive_value;                             \
   }                                                                           \
@@ -647,7 +647,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   /** Wrapping (modular) subtraction. Computes self - rhs, wrapping around at \
    * the boundary of the type.                                                \
    */                                                                         \
-  constexpr i32 wrapping_sub(const i32& rhs) const& {                         \
+  constexpr T wrapping_sub(const T& rhs) const& {                             \
     if (__private::can_sub_without_overflow(*this, rhs)) [[likely]] {         \
       return unchecked_sub(unsafe_fn, rhs);                                   \
     } else if (rhs.primitive_value >= 0) {                                    \
@@ -660,7 +660,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                                           \
   static_assert(true)
 
-#define _sus__signed_count_bits(T, UnsignedT)                                 \
+#define _sus__signed_bits(T, UnsignedT)                                       \
   /** Returns the number of ones in the binary representation of the current  \
    * value.                                                                   \
    */                                                                         \
@@ -686,20 +686,29 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * current value.                                                           \
    */                                                                         \
   constexpr /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {         \
-    return __private::leading_zeros(static_cast<UnsignedT>(primitive_value));  \
+    return __private::leading_zeros(static_cast<UnsignedT>(primitive_value)); \
+  }                                                                           \
+                                                                              \
+  /** Reverses the order of bits in the integer. The least significant bit    \
+   * becomes the most significant bit, second least-significant bit becomes   \
+   * second most-significant bit, etc.                                        \
+   */                                                                         \
+  constexpr T reverse_bits() const& noexcept {                                \
+    return static_cast<primitive_type>(                                       \
+        __private::reverse_bits(static_cast<UnsignedT>(primitive_value)));    \
   }                                                                           \
   static_assert(true)
 
 #define _sus__signed_pow(T)                                                    \
   /**  Raises self to the power of `exp`, using exponentiation by squaring. */ \
-  constexpr inline i32 pow(const /* TODO: u32 */ uint32_t& rhs)                \
+  constexpr inline T pow(const /* TODO: u32 */ uint32_t& rhs)                  \
       const& noexcept {                                                        \
     auto exp =                                                                 \
         uint32_t{rhs}; /* TODO: With u32, pull out the primitive_value. */     \
-    if (exp == 0) return i32(1);                                               \
+    if (exp == 0) return T(1);                                                 \
     /* Use ##T## type to catch overflow. */                                    \
-    auto base = i32(primitive_value);                                          \
-    auto acc = i32{1};                                                         \
+    auto base = *this;                                                         \
+    auto acc = T{1};                                                           \
     while (exp > 1) {                                                          \
       if (exp & 1) acc *= base;                                                \
       exp /= 2;                                                                \
