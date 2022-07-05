@@ -145,4 +145,22 @@ constexpr T reverse_bits(T value) noexcept {
 #endif
 }
 
+// TODO: Move to a (constexpr) compiler intrinsics library?
+template <class T>
+  requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
+           std::same_as<T, uint8_t>)
+constexpr T rotate_left(T value, uint32_t n) noexcept {
+  n %= sizeof(value) * 8;
+  return (value << n) | (value >> (sizeof(value) * 8 - n));
+}
+
+// TODO: Move to a (constexpr) compiler intrinsics library?
+template <class T>
+  requires(std::same_as<T, uint32_t> || std::same_as<T, uint16_t> ||
+           std::same_as<T, uint8_t>)
+constexpr T rotate_right(T value, uint32_t n) noexcept {
+  n %= sizeof(value) * 8;
+  return (value >> n) | (value << (sizeof(value) * 8 - n));
+}
+
 }  // namespace sus::num::__private

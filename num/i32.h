@@ -53,6 +53,9 @@ struct i32 {
     primitive_value = v;
   }
 
+  // TODO: Split apart the declarations and the definitions, so they can be in
+  // i32_defn.h and i32_impl.h, allowing most of the library to just use
+  // i32_defn.h which will keep headers smaller.
   _sus__signed_constants(i32, 0x7FFFFFFF, 32);
   _sus__signed_impl(i32, /*LargerT=*/int64_t, /*UnsignedT=*/uint32_t);
 

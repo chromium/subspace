@@ -976,4 +976,27 @@ TEST(i32, ReverseBits) {
   EXPECT_EQ((i32(1)).reverse_bits().primitive_value, i32::MIN());
 }
 
+TEST(i32, RotateLeft) {
+  constexpr auto a = (3_i32).rotate_left(2);
+
+  EXPECT_EQ((1_i32).rotate_left(1), 2_i32);
+  EXPECT_EQ((1_i32).rotate_left(4), 16_i32);
+  EXPECT_EQ((1_i32).rotate_left(31), i32::MIN());
+  EXPECT_EQ((1_i32).rotate_left(32), 1_i32);
+  EXPECT_EQ((1_i32).rotate_left(63), i32::MIN());
+  EXPECT_EQ((1_i32).rotate_left(64), 1_i32);
+}
+
+TEST(i32, RotateRight) {
+  constexpr auto a = (3_i32).rotate_right(2);
+
+  EXPECT_EQ((2_i32).rotate_right(1), 1_i32);
+  EXPECT_EQ((16_i32).rotate_right(4), 1_i32);
+  EXPECT_EQ((1_i32).rotate_right(1), i32::MIN());
+  EXPECT_EQ((1_i32).rotate_right(32), 1_i32);
+  EXPECT_EQ((1_i32).rotate_right(33), i32::MIN());
+  EXPECT_EQ((1_i32).rotate_right(64), 1_i32);
+  EXPECT_EQ((1_i32).rotate_right(65), i32::MIN());
+}
+
 }  // namespace
