@@ -141,4 +141,16 @@ TEST(TupleDeathTest, Moved) {
 #endif
 }
 
+TEST(TupleDeathTest, Eq) {
+    EXPECT_EQ(Tuple<int>::with(1), Tuple<int>::with(1));
+    EXPECT_NE(Tuple<int>::with(1), Tuple<int>::with(2));
+}
+
+TEST(TupleDeathTest, Ord) {
+    EXPECT_LT(Tuple<int>::with(1), Tuple<int>::with(2));
+    EXPECT_GT(Tuple<int>::with(3), Tuple<int>::with(2));
+}
+
+// TODO: Test WeakOrd and PartialOrd. Also do that for Option..
+
 }  // namespace

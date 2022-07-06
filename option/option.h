@@ -1159,7 +1159,7 @@ constexpr inline bool operator==(const Option<T>& l,
 
 /// sus::num::Ord<Option<U>> trait.
 template <class T, class U>
-  requires(::sus::num::Ord<T, U>)
+  requires(::sus::num::ExclusiveOrd<T, U>)
 constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept {
   switch (l) {
@@ -1179,7 +1179,7 @@ constexpr inline auto operator<=>(const Option<T>& l,
 
 /// sus::num::WeakOrd<Option<U>> trait.
 template <class T, class U>
-  requires(::sus::num::WeakOrd<T, U>)
+  requires(::sus::num::ExclusiveWeakOrd<T, U>)
 constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept {
   switch (l) {
@@ -1199,7 +1199,7 @@ constexpr inline auto operator<=>(const Option<T>& l,
 
 /// sus::num::PartialOrd<Option<U>> trait.
 template <class T, class U>
-  requires(::sus::num::PartialOrd<T, U>)
+  requires(::sus::num::ExclusivePartialOrd<T, U>)
 constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept {
   switch (l) {
