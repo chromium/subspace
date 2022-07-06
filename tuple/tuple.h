@@ -14,14 +14,17 @@
 
 #pragma once
 
+#include <compare>
+
 #include "assertions/check.h"
 #include "mem/forward.h"
 #include "mem/replace.h"
+#include "num/num_concepts.h"
 #include "tuple/__private/storage.h"
 
 namespace sus::tuple {
 
-/// A Tuple holds 1 or more values, where each value can be a different type.
+/// A Tuple is a finate sequence of one or more heterogenous values.
 template <class T, class... Ts>
 class Tuple {
  public:
@@ -57,6 +60,56 @@ class Tuple {
   constexpr inline auto unwrap() && noexcept {
     ::sus::check(!set_moved_from());
     return Access<I + 1>::unwrap(static_cast<Storage&&>(storage_));
+  }
+
+  /// sus::num::Eq<Tuple<U...>> trait.
+  template <class U, class... Us>
+    requires(sizeof...(Us) == sizeof...(Ts) &&
+             (::sus::num::Eq<T, U> && ... && ::sus::num::Eq<Ts, Us>))
+  constexpr bool operator==(const Tuple<U, Us...>& r) const& noexcept {
+    ::sus::check(!moved_from());
+    ::sus::check(!r.moved_from());
+    return __private::storage_eq(storage_, r.storage_,
+                                 std::make_index_sequence<1 + sizeof...(Ts)>());
+  }
+
+  /// sus::num::Ord<Tuple<U...>> trait.
+  template <class U, class... Us>
+    requires(sizeof...(Us) == sizeof...(Ts) &&
+             (::sus::num::ExclusiveOrd<T, U> && ... &&
+              ::sus::num::ExclusiveOrd<Ts, Us>))
+  constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
+    ::sus::check(!moved_from());
+    ::sus::check(!r.moved_from());
+    return __private::storage_cmp(
+        std::strong_ordering::equivalent, storage_, r.storage_,
+        std::make_index_sequence<1 + sizeof...(Ts)>());
+  }
+
+  /// sus::num::WeakOrd<Tuple<U...>> trait.
+  template <class U, class... Us>
+    requires(sizeof...(Us) == sizeof...(Ts) &&
+             (::sus::num::ExclusiveWeakOrd<T, U> && ... &&
+              ::sus::num::ExclusiveWeakOrd<Ts, Us>))
+  constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
+    ::sus::check(!moved_from());
+    ::sus::check(!r.moved_from());
+    return __private::storage_cmp(
+        std::strong_ordering::equivalent, storage_, r.storage_,
+        std::make_index_sequence<1 + sizeof...(Ts)>());
+  }
+
+  /// sus::num::PartialOrd<Tuple<U...>> trait.
+  template <class U, class... Us>
+    requires(sizeof...(Us) == sizeof...(Ts) &&
+             (::sus::num::ExclusivePartialOrd<T, U> && ... &&
+              ::sus::num::ExclusivePartialOrd<Ts, Us>))
+  constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
+    ::sus::check(!moved_from());
+    ::sus::check(!r.moved_from());
+    return __private::storage_cmp(
+        std::strong_ordering::equivalent, storage_, r.storage_,
+        std::make_index_sequence<1 + sizeof...(Ts)>());
   }
 
  private:

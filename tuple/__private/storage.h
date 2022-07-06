@@ -15,6 +15,7 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>  // TODO: Replace std::index_sequence to remove this header.
 
 #include "mem/forward.h"
 
@@ -75,6 +76,34 @@ struct TupleAccess<TupleStorage, 0> {
   static inline constexpr auto&& unwrap(TupleStorage&& tuple) noexcept {
     return static_cast<decltype(tuple.t)&&>(tuple.t);
   }
+};
+
+template <size_t I, class S1, class S2>
+constexpr inline auto storage_eq_impl(const S1& l, const S2& r) noexcept {
+  return TupleAccess<S1, I + 1>::get(l) == TupleAccess<S2, I + 1>::get(r);
+};
+
+template <class S1, class S2, size_t... N>
+constexpr inline auto storage_eq(const S1& l, const S2& r,
+                                 std::index_sequence<N...>) noexcept {
+  return (true && ... && (storage_eq_impl<N>(l, r)));
+};
+
+template <size_t I, class O, class S1, class S2>
+constexpr inline bool storage_cmp_impl(O& val, const S1& l,
+                                       const S2& r) noexcept {
+  if (val == O::equivalent)
+    val = TupleAccess<S1, I + 1>::get(l) <=> TupleAccess<S2, I + 1>::get(r);
+  // Short circuit by returning true when we find a difference.
+  return val == O::equivalent;
+};
+
+template <class S1, class S2, size_t... N>
+constexpr inline auto storage_cmp(auto equiv, const S1& l, const S2& r,
+                                         std::index_sequence<N...>) noexcept {
+  auto val = equiv;
+  (true && ... && (storage_cmp_impl<N>(val, l, r)));
+  return val;
 };
 
 }  // namespace sus::tuple::__private
