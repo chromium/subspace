@@ -16,53 +16,6 @@
 
 #include "num/__private/intrinsics.h"
 
-namespace sus::num::__private {
-
-template <class T>
-constexpr inline bool can_add_without_overflow(const T& l, const T& r) {
-  if (r.primitive_value >= 0)
-    return l.primitive_value <= T::MAX_PRIMITIVE - r.primitive_value;
-  else
-    return l.primitive_value >= T::MIN_PRIMITIVE - r.primitive_value;
-}
-
-template <class T>
-constexpr inline bool can_sub_without_overflow(const T& l, const T& r) {
-  if (r.primitive_value <= 0)
-    return l.primitive_value <= T::MAX_PRIMITIVE + r.primitive_value;
-  else
-    return l.primitive_value >= T::MIN_PRIMITIVE + r.primitive_value;
-}
-
-template <class T>
-constexpr inline bool can_mul_without_overflow(const T& l, const T& r) {
-  // TODO: Is this really correct always? False positives?
-  if (l.primitive_value == 0 || r.primitive_value == 0) {
-    return true;
-  } else if (l.primitive_value > 0 && r.primitive_value > 0) {
-    return l.primitive_value <= T::MAX_PRIMITIVE / r.primitive_value;
-  } else if (r.primitive_value > 0) {
-    return l.primitive_value >= T::MIN_PRIMITIVE / r.primitive_value;
-  } else {
-    return r.primitive_value >= T::MIN_PRIMITIVE / l.primitive_value;
-  }
-}
-
-template <class T>
-constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
-  if (r.primitive_value == 0) {
-    // Divide by zero.
-    return false;
-  } else if (r.primitive_value == -1) {
-    // Overflow: MIN / -1 => MAX + 1.
-    return l.primitive_value > T::MIN();
-  } else {
-    return true;
-  }
-}
-
-}  // namespace sus::num::__private
-
 #define _sus__signed_constants(T, Max, Bits)                         \
   static constexpr auto MIN_PRIMITIVE = primitive_type{-Max - 1};    \
   static constexpr auto MAX_PRIMITIVE = primitive_type{Max};         \
@@ -139,32 +92,42 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                 \
   static_assert(true)
 
-#define _sus__signed_binary_logic_ops(T)                                 \
-  /** sus::concepts::Add<##T##> trait. */                                \
-  friend constexpr inline T operator+(const T& l, const T& r) noexcept { \
-    ::sus::check(__private::can_add_without_overflow(l, r));             \
-    return l.primitive_value + r.primitive_value;                        \
-  }                                                                      \
-  /** sus::concepts::Sub<##T##> trait. */                                \
-  friend constexpr inline T operator-(const T& l, const T& r) noexcept { \
-    ::sus::check(__private::can_sub_without_overflow(l, r));             \
-    return l.primitive_value - r.primitive_value;                        \
-  }                                                                      \
-  /** sus::concepts::Mul<##T##> trait. */                                \
-  friend constexpr inline T operator*(const T& l, const T& r) noexcept { \
-    ::sus::check(__private::can_mul_without_overflow(l, r));             \
-    return l.primitive_value * r.primitive_value;                        \
-  }                                                                      \
-  /** sus::concepts::Div<##T##> trait. */                                \
-  friend constexpr inline T operator/(const T& l, const T& r) noexcept { \
-    ::sus::check(__private::can_div_without_overflow(l, r));             \
-    return l.primitive_value / r.primitive_value;                        \
-  }                                                                      \
-  /** sus::concepts::Rem<##T##> trait. */                                \
-  friend constexpr inline T operator%(const T& l, const T& r) noexcept { \
-    ::sus::check(__private::can_div_without_overflow(l, r));             \
-    return l.primitive_value % r.primitive_value;                        \
-  }                                                                      \
+#define _sus__signed_binary_logic_ops(T)                                    \
+  /** sus::concepts::Add<##T##> trait. */                                   \
+  friend constexpr inline T operator+(const T& l, const T& r) noexcept {    \
+    auto out =                                                              \
+        __private::add_with_overflow(l.primitive_value, r.primitive_value); \
+    ::sus::check(!out.overflow);                                            \
+    return out.value;                                                       \
+  }                                                                         \
+  /** sus::concepts::Sub<##T##> trait. */                                   \
+  friend constexpr inline T operator-(const T& l, const T& r) noexcept {    \
+    auto out =                                                              \
+        __private::sub_with_overflow(l.primitive_value, r.primitive_value); \
+    ::sus::check(!out.overflow);                                            \
+    return out.value;                                                       \
+  }                                                                         \
+  /** sus::concepts::Mul<##T##> trait. */                                   \
+  friend constexpr inline T operator*(const T& l, const T& r) noexcept {    \
+    auto out =                                                              \
+        __private::mul_with_overflow(l.primitive_value, r.primitive_value); \
+    ::sus::check(!out.overflow);                                            \
+    return out.value;                                                       \
+  }                                                                         \
+  /** sus::concepts::Div<##T##> trait. */                                   \
+  friend constexpr inline T operator/(const T& l, const T& r) noexcept {    \
+    ::sus::check(r.primitive_value != 0);                                   \
+    ::sus::check(l.primitive_value != MIN_PRIMITIVE ||                      \
+                 r.primitive_value != -1);                                  \
+    return l.primitive_value / r.primitive_value;                           \
+  }                                                                         \
+  /** sus::concepts::Rem<##T##> trait. */                                   \
+  friend constexpr inline T operator%(const T& l, const T& r) noexcept {    \
+    ::sus::check(r.primitive_value != 0);                                   \
+    ::sus::check(l.primitive_value != MIN_PRIMITIVE ||                      \
+                 r.primitive_value != -1);                                  \
+    return l.primitive_value % r.primitive_value;                           \
+  }                                                                         \
   static_assert(true)
 
 #define _sus__signed_binary_bit_ops(T, UnsignedT)                             \
@@ -196,32 +159,40 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
   }                                                                           \
   static_assert(true)
 
-#define _sus__signed_mutable_logic_ops(T)                        \
-  /** sus::concepts::AddAssign<##T##> trait. */                  \
-  constexpr inline void operator+=(T r)& noexcept {              \
-    ::sus::check(__private::can_add_without_overflow(*this, r)); \
-    primitive_value += r.primitive_value;                        \
-  }                                                              \
-  /** sus::concepts::SubAssign<##T##> trait. */                  \
-  constexpr inline void operator-=(T r)& noexcept {              \
-    ::sus::check(__private::can_sub_without_overflow(*this, r)); \
-    primitive_value -= r.primitive_value;                        \
-  }                                                              \
-  /** sus::concepts::MulAssign<##T##> trait. */                  \
-  constexpr inline void operator*=(T r)& noexcept {              \
-    ::sus::check(__private::can_mul_without_overflow(*this, r)); \
-    primitive_value *= r.primitive_value;                        \
-  }                                                              \
-  /** sus::concepts::DivAssign<##T##> trait. */                  \
-  constexpr inline void operator/=(T r)& noexcept {              \
-    ::sus::check(__private::can_div_without_overflow(*this, r)); \
-    primitive_value /= r.primitive_value;                        \
-  }                                                              \
-  /** sus::concepts::RemAssign<##T##> trait. */                  \
-  constexpr inline void operator%=(T r)& noexcept {              \
-    ::sus::check(__private::can_div_without_overflow(*this, r)); \
-    primitive_value %= r.primitive_value;                        \
-  }                                                              \
+#define _sus__signed_mutable_logic_ops(T)                                      \
+  /** sus::concepts::AddAssign<##T##> trait. */                                \
+  constexpr inline void operator+=(T r)& noexcept {                            \
+    auto out =                                                                 \
+        __private::add_with_overflow(primitive_value, r.primitive_value);      \
+    ::sus::check(!out.overflow);                                               \
+    primitive_value = out.value;                                               \
+  }                                                                            \
+  /** sus::concepts::SubAssign<##T##> trait. */                                \
+  constexpr inline void operator-=(T r)& noexcept {                            \
+    auto out =                                                                 \
+        __private::sub_with_overflow(primitive_value, r.primitive_value);      \
+    ::sus::check(!out.overflow);                                               \
+    primitive_value = out.value;                                               \
+  }                                                                            \
+  /** sus::concepts::MulAssign<##T##> trait. */                                \
+  constexpr inline void operator*=(T r)& noexcept {                            \
+    auto out =                                                                 \
+        __private::mul_with_overflow(primitive_value, r.primitive_value);      \
+    ::sus::check(!out.overflow);                                               \
+    primitive_value = out.value;                                               \
+  }                                                                            \
+  /** sus::concepts::DivAssign<##T##> trait. */                                \
+  constexpr inline void operator/=(T r)& noexcept {                            \
+    ::sus::check(r.primitive_value != 0);                                      \
+    ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1); \
+    primitive_value /= r.primitive_value;                                      \
+  }                                                                            \
+  /** sus::concepts::RemAssign<##T##> trait. */                                \
+  constexpr inline void operator%=(T r)& noexcept {                            \
+    ::sus::check(r.primitive_value != 0);                                      \
+    ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1); \
+    primitive_value %= r.primitive_value;                                      \
+  }                                                                            \
   static_assert(true)
 
 #define _sus__signed_mutable_bit_ops(T, UnsignedT)                          \
@@ -327,8 +298,10 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_add(const T& rhs) const& noexcept {              \
-    if (__private::can_add_without_overflow(*this, rhs)) [[likely]]            \
-      return Option<T>::some(unchecked_add(unsafe_fn, rhs));                   \
+    auto out =                                                                 \
+        __private::add_with_overflow(primitive_value, rhs.primitive_value);    \
+    if (!out.overflow) [[likely]]                                              \
+      return Option<T>::some(out.value);                                       \
     else                                                                       \
       return Option<T>::none();                                                \
   }                                                                            \
@@ -337,13 +310,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * numeric bounds instead of overflowing.                                    \
    */                                                                          \
   constexpr T saturating_add(const T& rhs) const& noexcept {                   \
-    if (__private::can_add_without_overflow(*this, rhs)) [[likely]] {          \
-      return unchecked_add(unsafe_fn, rhs);                                    \
-    } else if (rhs.primitive_value >= 0) {                                     \
-      return MAX();                                                            \
-    } else {                                                                   \
-      return MIN();                                                            \
-    }                                                                          \
+    return __private::saturating_add(primitive_value, rhs.primitive_value);    \
   }                                                                            \
                                                                                \
   /** Unchecked integer addition. Computes self + rhs, assuming overflow       \
@@ -362,15 +329,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * boundary of the type.                                                     \
    */                                                                          \
   constexpr T wrapping_add(const T& rhs) const& noexcept {                     \
-    if (__private::can_add_without_overflow(*this, rhs)) [[likely]] {          \
-      return unchecked_add(unsafe_fn, rhs);                                    \
-    } else if (rhs.primitive_value >= 0) {                                     \
-      return MIN_PRIMITIVE + rhs.primitive_value + primitive_value -           \
-             MAX_PRIMITIVE - 1;                                                \
-    } else {                                                                   \
-      return rhs.primitive_value - MIN_PRIMITIVE + primitive_value +           \
-             MAX_PRIMITIVE + 1;                                                \
-    }                                                                          \
+    return __private::wrapping_add(primitive_value, rhs.primitive_value);      \
   }                                                                            \
   static_assert(true)
 
@@ -379,7 +338,8 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * 0 or the division results in overflow.                                    \
    */                                                                          \
   constexpr Option<T> checked_div(const T& rhs) const& noexcept {              \
-    if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
+    if (rhs.primitive_value != 0 && (primitive_value != MIN_PRIMITIVE ||       \
+                                     rhs.primitive_value != -1)) [[likely]]    \
       return Option<T>::some(primitive_value / rhs.primitive_value);           \
     else                                                                       \
       return Option<T>::none();                                                \
@@ -393,11 +353,14 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    */                                                                          \
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
     ::sus::check(rhs != 0);                                                    \
-    if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
+    if ((primitive_value != MIN_PRIMITIVE || rhs.primitive_value != -1))       \
+        [[likely]] {                                                           \
       return primitive_value / rhs.primitive_value;                            \
-    /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,       \
-     saturated to MAX(). */                                                    \
-    return MAX();                                                              \
+    } else {                                                                   \
+      /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
+       saturated to MAX(). */                                                  \
+      return MAX();                                                            \
+    }                                                                          \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) division. Computes self / rhs, wrapping around at the \
@@ -413,11 +376,14 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    */                                                                          \
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
     ::sus::check(rhs != 0);                                                    \
-    if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
+    if ((primitive_value != MIN_PRIMITIVE || rhs.primitive_value != -1))       \
+        [[likely]] {                                                           \
       return primitive_value / rhs.primitive_value;                            \
-    /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,       \
-     that wraps around to MIN(). */                                            \
-    return MIN();                                                              \
+    } else {                                                                   \
+      /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
+       that wraps around to MIN(). */                                          \
+      return MIN();                                                            \
+    }                                                                          \
   }                                                                            \
   static_assert(true)
 
@@ -426,8 +392,10 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_mul(const T& rhs) const& noexcept {              \
-    if (__private::can_mul_without_overflow(*this, rhs)) [[likely]]            \
-      return Option<T>::some(unchecked_mul(unsafe_fn, rhs));                   \
+    auto out =                                                                 \
+        __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
+    if (!out.overflow) [[likely]]                                              \
+      return Option<T>::some(out.value);                                       \
     else                                                                       \
       return Option<T>::none();                                                \
   }                                                                            \
@@ -436,12 +404,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * numeric bounds instead of overflowing.                                    \
    */                                                                          \
   constexpr T saturating_mul(const T& rhs) const& noexcept {                   \
-    if (__private::can_mul_without_overflow(*this, rhs)) [[likely]]            \
-      return unchecked_mul(unsafe_fn, rhs);                                    \
-    else if (primitive_value >= 0 == rhs.primitive_value >= 0)                 \
-      return MAX(); /* Same sign, so the outcome is positive. */               \
-    else                                                                       \
-      return MIN(); /* Different signs, so the outcome is negative. */         \
+    return __private::saturating_mul(primitive_value, rhs.primitive_value);    \
   }                                                                            \
                                                                                \
   /** Unchecked integer multiplication. Computes self * rhs, assuming overflow \
@@ -461,25 +424,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * at the boundary of the type.                                              \
    */                                                                          \
   constexpr T wrapping_mul(const T& rhs) const& noexcept {                     \
-    if (__private::can_mul_without_overflow(*this, rhs)) [[likely]]            \
-      return unchecked_mul(unsafe_fn, rhs);                                    \
-    if constexpr (sizeof(T) == 8) {                                            \
-      /* For i64 GCC/Clang, use __int128:                                      \
-       https://quuxplusone.github.io/blog/2019/02/28/is-int128-integral/       \
-       \                                                                       \
-       For i64 MSVC, use _mult128, but what about constexpr?? If we can't do   \
-       it then make the whole function non-constexpr:                          \
-       https://docs.microsoft.com/en-us/cpp/intrinsics/mul128?view=msvc-170    \
-       */                                                                      \
-    }                                                                          \
-                                                                               \
-    static_assert(sizeof(LargerT) == 2 * sizeof(T));                           \
-    auto out = LargerT{primitive_value} * LargerT{rhs.primitive_value};        \
-    while (out > LargerT{MAX_PRIMITIVE})                                       \
-      out -= LargerT{MAX_PRIMITIVE} - LargerT{MIN_PRIMITIVE} + 1;              \
-    while (out < LargerT{MIN_PRIMITIVE})                                       \
-      out += LargerT{MAX_PRIMITIVE} - LargerT{MIN_PRIMITIVE} + 1;              \
-    return static_cast<primitive_type>(out);                                   \
+    return __private::wrapping_mul(primitive_value, rhs.primitive_value);      \
   }                                                                            \
   static_assert(true)
 
@@ -513,7 +458,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    */                                                                         \
   constexpr T wrapping_neg() const& noexcept {                                \
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
-      return T(-primitive_value);                                             \
+      return -primitive_value;                                                \
     else                                                                      \
       return MIN();                                                           \
   }                                                                           \
@@ -524,8 +469,9 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * 0 or the division results in overflow.                                    \
    */                                                                          \
   constexpr Option<T> checked_rem(const T& rhs) const& noexcept {              \
-    if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
-      return Option<T>::some(T(primitive_value % rhs.primitive_value));        \
+    if (rhs.primitive_value != 0 && (primitive_value != MIN_PRIMITIVE ||       \
+                                     rhs.primitive_value != -1)) [[likely]]    \
+      return Option<T>::some(primitive_value % rhs.primitive_value);           \
     else                                                                       \
       return Option<T>::none();                                                \
   }                                                                            \
@@ -539,10 +485,12 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    */                                                                          \
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
     ::sus::check(rhs != 0);                                                    \
-    if (__private::can_div_without_overflow(*this, rhs)) [[likely]]            \
+    if ((primitive_value != MIN_PRIMITIVE || rhs.primitive_value != -1))       \
+        [[likely]] {                                                           \
       return primitive_value % rhs.primitive_value;                            \
-    else                                                                       \
+    } else {                                                                   \
       return 0;                                                                \
+    }                                                                          \
   }                                                                            \
   static_assert(true)
 
@@ -635,8 +583,10 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * overflow occurred.                                                       \
    */                                                                         \
   constexpr Option<T> checked_sub(const T& rhs) const& {                      \
-    if (__private::can_sub_without_overflow(*this, rhs)) [[likely]]           \
-      return Option<T>::some(unchecked_sub(unsafe_fn, rhs));                  \
+    auto out =                                                                \
+        __private::sub_with_overflow(primitive_value, rhs.primitive_value);   \
+    if (!out.overflow) [[likely]]                                             \
+      return Option<T>::some(out.value);                                      \
     else                                                                      \
       return Option<T>::none();                                               \
   }                                                                           \
@@ -645,12 +595,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * numeric bounds instead of overflowing.                                   \
    */                                                                         \
   constexpr T saturating_sub(const T& rhs) const& {                           \
-    if (__private::can_sub_without_overflow(*this, rhs)) [[likely]]           \
-      return unchecked_sub(unsafe_fn, rhs);                                   \
-    else if (rhs.primitive_value >= 0)                                        \
-      return MIN();                                                           \
-    else                                                                      \
-      return MAX();                                                           \
+    return __private::saturating_sub(primitive_value, rhs.primitive_value);   \
   }                                                                           \
                                                                               \
   /** Unchecked integer subtraction. Computes self - rhs, assuming overflow   \
@@ -665,15 +610,7 @@ constexpr inline bool can_div_without_overflow(const T& l, const T& r) {
    * the boundary of the type.                                                \
    */                                                                         \
   constexpr T wrapping_sub(const T& rhs) const& {                             \
-    if (__private::can_sub_without_overflow(*this, rhs)) [[likely]] {         \
-      return unchecked_sub(unsafe_fn, rhs);                                   \
-    } else if (rhs.primitive_value >= 0) {                                    \
-      return MAX_PRIMITIVE - rhs.primitive_value + primitive_value -          \
-             MIN_PRIMITIVE + 1;                                               \
-    } else {                                                                  \
-      return MIN_PRIMITIVE - rhs.primitive_value + primitive_value -          \
-             MAX_PRIMITIVE - 1;                                               \
-    }                                                                         \
+    return __private::wrapping_sub(primitive_value, rhs.primitive_value);     \
   }                                                                           \
   static_assert(true)
 

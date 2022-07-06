@@ -419,6 +419,19 @@ TEST(i32DeathTest, DivOverflow) {
   EXPECT_DEATH(-1_i32 / 0_i32, "");
   EXPECT_DEATH(i32::MIN() / 0_i32, "");
   EXPECT_DEATH(i32::MIN() / -1_i32, "");
+
+  auto x = i32::MAX();
+  EXPECT_DEATH(x /= 0_i32, "");
+  x = 0_i32;
+  EXPECT_DEATH(x /= 0_i32, "");
+  x = 1_i32;
+  EXPECT_DEATH(x /= 0_i32, "");
+  x = -1_i32;
+  EXPECT_DEATH(x /= 0_i32, "");
+  x = i32::MIN();
+  EXPECT_DEATH(x /= 0_i32, "");
+  x = i32::MIN();
+  EXPECT_DEATH(x /= -1_i32, "");
 #endif
 }
 
@@ -628,6 +641,19 @@ TEST(i32DeathTest, RemOverflow) {
   EXPECT_DEATH(-1_i32 % 0_i32, "");
   EXPECT_DEATH(i32::MIN() % 0_i32, "");
   EXPECT_DEATH(i32::MIN() % -1_i32, "");
+
+  auto x = i32::MAX();
+  EXPECT_DEATH(x %= 0_i32, "");
+  x = 0_i32;
+  EXPECT_DEATH(x %= 0_i32, "");
+  x = 1_i32;
+  EXPECT_DEATH(x %= 0_i32, "");
+  x = -1_i32;
+  EXPECT_DEATH(x %= 0_i32, "");
+  x = i32::MIN();
+  EXPECT_DEATH(x %= 0_i32, "");
+  x = i32::MIN();
+  EXPECT_DEATH(x %= -1_i32, "");
 #endif
 }
 
