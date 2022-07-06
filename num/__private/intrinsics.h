@@ -263,13 +263,13 @@ template <class T>
   requires(sizeof(T) <= 8)
 inline constexpr bool sign_bit(T x) noexcept {
   if constexpr (sizeof(x) == 1)
-    return x & (1 << 7) != 0;
+    return x & (T(1) << 7) != 0;
   else if constexpr (sizeof(x) == 2)
-    return x & (1 << 15) != 0;
+    return x & (T(1) << 15) != 0;
   else if constexpr (sizeof(x) == 4)
-    return x & (1 << 31) != 0;
+    return x & (T(1) << 31) != 0;
   else
-    return x & (1 << 63) != 0;
+    return x & (T(1) << 63) != 0;
 }
 
 template <class T>
