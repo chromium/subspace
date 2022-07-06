@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
-
 #include "tuple/tuple.h"
 
 #include <concepts>
@@ -31,6 +29,12 @@ TEST(Tuple, With) {
 
   [[maybe_unused]] constexpr auto c = Tuple<int, float>::with(2, 3.f);
 }
+
+template <size_t I>
+constexpr auto GetFromTuple() noexcept {
+  constexpr auto t = Tuple<int, float>::with(2, 3.f);
+  return t.get<I>();
+};
 
 TEST(Tuple, Get) {
   auto t1 = Tuple<int>::with(2);
@@ -51,9 +55,8 @@ TEST(Tuple, Get) {
   EXPECT_EQ(t3.get<2>(), 4);
   static_assert(std::same_as<const int&, decltype(t3.get<2>())>);
 
-  constexpr auto c = Tuple<int, float>::with(2, 3.f);
-  [[maybe_unused]] constexpr auto& c0 = c.get<0>();
-  [[maybe_unused]] constexpr auto& c1 = c.get<1>();
+  [[maybe_unused]] constexpr auto c0 = GetFromTuple<0>();
+  [[maybe_unused]] constexpr auto c1 = GetFromTuple<1>();
 }
 
 TEST(Tuple, GetMut) {
@@ -142,13 +145,13 @@ TEST(TupleDeathTest, Moved) {
 }
 
 TEST(TupleDeathTest, Eq) {
-    EXPECT_EQ(Tuple<int>::with(1), Tuple<int>::with(1));
-    EXPECT_NE(Tuple<int>::with(1), Tuple<int>::with(2));
+  EXPECT_EQ(Tuple<int>::with(1), Tuple<int>::with(1));
+  EXPECT_NE(Tuple<int>::with(1), Tuple<int>::with(2));
 }
 
 TEST(TupleDeathTest, Ord) {
-    EXPECT_LT(Tuple<int>::with(1), Tuple<int>::with(2));
-    EXPECT_GT(Tuple<int>::with(3), Tuple<int>::with(2));
+  EXPECT_LT(Tuple<int>::with(1), Tuple<int>::with(2));
+  EXPECT_GT(Tuple<int>::with(3), Tuple<int>::with(2));
 }
 
 // TODO: Test WeakOrd and PartialOrd. Also do that for Option..
