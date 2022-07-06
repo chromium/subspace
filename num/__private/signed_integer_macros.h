@@ -79,17 +79,18 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__signed_unary_ops(T, UnsignedT)        \
-  /** sus::concepts::Neg trait. */                  \
-  constexpr inline T operator-() const& noexcept {  \
-    ::sus::check(primitive_value != MIN_PRIMITIVE); \
-    return -primitive_value;                        \
-  }                                                 \
-  /** sus::concepts::BitNot trait. */               \
-  constexpr inline T operator~() const& noexcept {  \
-    return static_cast<primitive_type>(             \
-        ~static_cast<UnsignedT>(primitive_value));  \
-  }                                                 \
+#define _sus__signed_unary_ops(T, UnsignedT)             \
+  /** sus::concepts::Neg trait. */                       \
+  constexpr inline T operator-() const& noexcept {       \
+    /* TODO: Allow opting out of all overflow checks? */ \
+    ::sus::check(primitive_value != MIN_PRIMITIVE);      \
+    return -primitive_value;                             \
+  }                                                      \
+  /** sus::concepts::BitNot trait. */                    \
+  constexpr inline T operator~() const& noexcept {       \
+    return static_cast<primitive_type>(                  \
+        ~static_cast<UnsignedT>(primitive_value));       \
+  }                                                      \
   static_assert(true)
 
 #define _sus__signed_binary_logic_ops(T)                                    \
@@ -97,6 +98,7 @@
   friend constexpr inline T operator+(const T& l, const T& r) noexcept {    \
     auto out =                                                              \
         __private::add_with_overflow(l.primitive_value, r.primitive_value); \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(!out.overflow);                                            \
     return out.value;                                                       \
   }                                                                         \
@@ -104,6 +106,7 @@
   friend constexpr inline T operator-(const T& l, const T& r) noexcept {    \
     auto out =                                                              \
         __private::sub_with_overflow(l.primitive_value, r.primitive_value); \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(!out.overflow);                                            \
     return out.value;                                                       \
   }                                                                         \
@@ -111,19 +114,24 @@
   friend constexpr inline T operator*(const T& l, const T& r) noexcept {    \
     auto out =                                                              \
         __private::mul_with_overflow(l.primitive_value, r.primitive_value); \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(!out.overflow);                                            \
     return out.value;                                                       \
   }                                                                         \
   /** sus::concepts::Div<##T##> trait. */                                   \
   friend constexpr inline T operator/(const T& l, const T& r) noexcept {    \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0);                                   \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(l.primitive_value != MIN_PRIMITIVE ||                      \
                  r.primitive_value != -1);                                  \
     return l.primitive_value / r.primitive_value;                           \
   }                                                                         \
   /** sus::concepts::Rem<##T##> trait. */                                   \
   friend constexpr inline T operator%(const T& l, const T& r) noexcept {    \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0);                                   \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(l.primitive_value != MIN_PRIMITIVE ||                      \
                  r.primitive_value != -1);                                  \
     return l.primitive_value % r.primitive_value;                           \
@@ -146,6 +154,7 @@
   /** sus::concepts::Shl trait. */                                            \
   friend constexpr inline T operator<<(const T& l,                            \
                                        /* TODO: u32 */ uint32_t r) noexcept { \
+    /* TODO: Allow opting out of all overflow checks? */                      \
     ::sus::check(r < BITS());                                                 \
     return static_cast<primitive_type>(                                       \
         static_cast<UnsignedT>(l.primitive_value) << r);                      \
@@ -153,6 +162,7 @@
   /** sus::concepts::Shr trait. */                                            \
   friend constexpr inline T operator>>(const T& l,                            \
                                        /* TODO: u32 */ uint32_t r) noexcept { \
+    /* TODO: Allow opting out of all overflow checks? */                      \
     ::sus::check(r < BITS());                                                 \
     return static_cast<primitive_type>(                                       \
         static_cast<UnsignedT>(l.primitive_value) >> r);                      \
@@ -164,6 +174,7 @@
   constexpr inline void operator+=(T r)& noexcept {                            \
     auto out =                                                                 \
         __private::add_with_overflow(primitive_value, r.primitive_value);      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(!out.overflow);                                               \
     primitive_value = out.value;                                               \
   }                                                                            \
@@ -171,6 +182,7 @@
   constexpr inline void operator-=(T r)& noexcept {                            \
     auto out =                                                                 \
         __private::sub_with_overflow(primitive_value, r.primitive_value);      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(!out.overflow);                                               \
     primitive_value = out.value;                                               \
   }                                                                            \
@@ -178,18 +190,23 @@
   constexpr inline void operator*=(T r)& noexcept {                            \
     auto out =                                                                 \
         __private::mul_with_overflow(primitive_value, r.primitive_value);      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(!out.overflow);                                               \
     primitive_value = out.value;                                               \
   }                                                                            \
   /** sus::concepts::DivAssign<##T##> trait. */                                \
   constexpr inline void operator/=(T r)& noexcept {                            \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0);                                      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1); \
     primitive_value /= r.primitive_value;                                      \
   }                                                                            \
   /** sus::concepts::RemAssign<##T##> trait. */                                \
   constexpr inline void operator%=(T r)& noexcept {                            \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0);                                      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1); \
     primitive_value %= r.primitive_value;                                      \
   }                                                                            \
@@ -210,12 +227,14 @@
   }                                                                         \
   /** sus::concepts::ShlAssign trait. */                                    \
   constexpr inline void operator<<=(/* TODO: u32 */ uint32_t r)& noexcept { \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS());                                               \
     primitive_value = static_cast<primitive_type>(                          \
         static_cast<UnsignedT>(primitive_value) << r);                      \
   }                                                                         \
   /** sus::concepts::ShrAssign trait. */                                    \
   constexpr inline void operator>>=(/* TODO: u32 */ uint32_t r)& noexcept { \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS());                                               \
     primitive_value = static_cast<primitive_type>(                          \
         static_cast<UnsignedT>(primitive_value) >> r);                      \
@@ -229,6 +248,7 @@
    * attempting to calculate it will panic.                                    \
    */                                                                          \
   constexpr inline T abs() const& noexcept {                                   \
+    /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(primitive_value != MIN_PRIMITIVE);                            \
     if (primitive_value >= 0)                                                  \
       return primitive_value;                                                  \
@@ -352,6 +372,7 @@
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(rhs != 0);                                                    \
     if ((primitive_value != MIN_PRIMITIVE || rhs.primitive_value != -1))       \
         [[likely]] {                                                           \
@@ -375,6 +396,7 @@
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(rhs != 0);                                                    \
     if ((primitive_value != MIN_PRIMITIVE || rhs.primitive_value != -1))       \
         [[likely]] {                                                           \
@@ -484,6 +506,7 @@
    * is the negative minimal value). In such a case, this function returns 0.  \
    */                                                                          \
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
+    /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(rhs != 0);                                                    \
     if ((primitive_value != MIN_PRIMITIVE || rhs.primitive_value != -1))       \
         [[likely]] {                                                           \
