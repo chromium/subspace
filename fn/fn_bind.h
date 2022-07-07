@@ -53,24 +53,24 @@
 /// The lambda may arrive in multiple arguments, if there is a comma in the
 /// definition of it. Thus we use variadic arguments to capture all of the
 /// lambda.
-#define sus_bind(names, lambda, ...)                                        \
-  [&]() {                                                                   \
-    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                \
-                 _sus__unpack names);                                       \
-    using ::sus::fn::__private::SusBind;                                    \
-    return SusBind(                                                         \
-        [sus_for_each(_sus__declare_storage, sus_for_each_sep_comma,        \
-                      _sus__unpack names)]<class... Args>(Args&&... args) { \
-          const auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                 \
-          const bool is_const =                                             \
-              ::sus::concepts::callable::LambdaConst<decltype(x)>;          \
-          if constexpr (!is_const) {                                        \
-            return ::sus::fn::__private::CheckLambdaConst<                  \
-                is_const>::template output<void>();                         \
-          } else {                                                          \
-            return x(::sus::forward<Args>(args)...);                        \
-          }                                                                 \
-        });                                                                 \
+#define sus_bind(names, lambda, ...)                                          \
+  [&]() {                                                                     \
+    [&]() consteval {sus_for_each(_sus__check_storage, sus_for_each_sep_none, \
+                                  _sus__unpack names)}();                     \
+    using ::sus::fn::__private::SusBind;                                      \
+    return SusBind(                                                           \
+        [sus_for_each(_sus__declare_storage, sus_for_each_sep_comma,          \
+                      _sus__unpack names)]<class... Args>(Args&&... args) {   \
+          const auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                   \
+          const bool is_const =                                               \
+              ::sus::concepts::callable::LambdaConst<decltype(x)>;            \
+          if constexpr (!is_const) {                                          \
+            return ::sus::fn::__private::CheckLambdaConst<                    \
+                is_const>::template error<void>();                            \
+          } else {                                                            \
+            return x(::sus::forward<Args>(args)...);                          \
+          }                                                                   \
+        });                                                                   \
   }()
 
 /// A variant of `sus_bind()` which only takes a lambda, omitting the
@@ -123,17 +123,17 @@
 /// # Implementation note The lambda may arrive in multiple arguments, if there
 /// is a comma in the definition of it. Thus we use variadic arguments to
 /// capture all of the lambda.
-#define sus_bind_mut(names, lambda, ...)                                     \
-  [&]() {                                                                    \
-    sus_for_each(_sus__check_storage, sus_for_each_sep_none,                 \
-                 _sus__unpack names) return ::sus::fn::__private::           \
-        SusBind(                                                             \
-            [sus_for_each(_sus__declare_storage_mut, sus_for_each_sep_comma, \
-                          _sus__unpack names)]<class... Args>(               \
-                Args&&... args) mutable {                                    \
-              auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                    \
-              return x(::sus::mem::forward<Args>(args)...);                  \
-            });                                                              \
+#define sus_bind_mut(names, lambda, ...)                                      \
+  [&]() {                                                                     \
+    [&]() consteval {sus_for_each(_sus__check_storage, sus_for_each_sep_none, \
+                                  _sus__unpack names)}();                     \
+    return ::sus::fn::__private::SusBind(                                     \
+        [sus_for_each(_sus__declare_storage_mut, sus_for_each_sep_comma,      \
+                      _sus__unpack names)]<class... Args>(                    \
+            Args&&... args) mutable {                                         \
+          auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                         \
+          return x(::sus::mem::forward<Args>(args)...);                       \
+        });                                                                   \
   }()
 
 /// A variant of `sus_bind_mut()` which only takes a lambda, omitting the
@@ -168,29 +168,12 @@
 
 namespace sus::fn::__private {
 
-/// Helper type returned by sus_bind() when its inputs are not valid, to prevent
-/// overload resolution from succeeding while constructing a closure.
-struct SusBindInvalid {};
-
 /// Helper type returned by sus_bind() and used to construct a closure.
 template <class F>
 struct SusBind {
   /// The lambda generated by sus_bind() which holds the user-provided lambda
   /// and any storage required for it.
   F lambda;
-};
-
-template <>
-struct SusBind<void> {
-  /// Construct the return type of `sus_bind()` and generate a warning when a
-  /// mutable lambda is given to `sus_bind()` instead of to `sus_bind_mut()`.
-  // clang-format off
-  [[deprecated("Use sus_bind_mut() to bind a mutable lambda")]]
-  constexpr static auto
-  InvalidMutableLambda() {
-    return SusBindInvalid();
-  }
-  // clang-format on
 };
 
 // The type generated by sus_unsafe_pointer() for storage in sus_bind().
@@ -241,20 +224,19 @@ std::true_type is_lvalue(T&);
 std::false_type is_lvalue(...);
 
 /// Helper used when verifying if a lambda is const. The template parameter
-/// represents the constness of the lambda. When false, the output() function
-/// calls a [[deprecated]] function to generate a warning, and produces a type
-/// that Fn/FnMut/FnOnce can't be created from.
+/// represents the constness of the lambda. When false, the error() function
+/// generates a compiler error.
 template <bool = true>
 struct CheckLambdaConst {
   template <class U>
-  static constexpr inline auto output() {}
+  static constexpr inline auto error() {}
 };
 
 template <>
 struct CheckLambdaConst<false> {
   template <class U>
-  static constexpr inline auto output() {
-    return ::sus::fn::__private::SusBind<U>::InvalidMutableLambda();
+  static consteval inline auto error() {
+    throw "Use sus_bind_mut() to bind a mutable lambda";
   }
 };
 
