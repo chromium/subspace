@@ -17,23 +17,20 @@
 #include <stdlib.h>
 
 #include "assertions/panic.h"
+#include "macros/always_inline.h"
 
 namespace sus {
 
-constexpr inline void check(bool cond) {
-  // Expect `!cond` to be false.
-  if (!cond) [[unlikely]] {
+constexpr sus_always_inline void check(bool cond) {
+  if (!cond) [[unlikely]]
     ::sus::panic();
-  }
 }
 
-constexpr inline void check_with_message(
+constexpr sus_always_inline void check_with_message(
     bool cond,
-    /* TODO: string view type */ const char& msg) {
-  // Expect `!cond` to be false.
-  if (!cond) [[unlikely]] {
+    /* TODO: string view type, or format + args */ const char& msg) {
+  if (!cond) [[unlikely]]
     ::sus::panic_with_message(msg);
-  }
 }
 
 }  // namespace sus

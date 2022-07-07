@@ -16,13 +16,14 @@
 
 #include "assertions/builtin.h"
 #include "assertions/panic.h"
+#include "macros/always_inline.h"
 #include "marker/unsafe.h"
 
 namespace sus {
 
-[[noreturn]] inline void unreachable() { panic(); }
+[[noreturn]] sus_always_inline void unreachable() { panic(); }
 
-[[noreturn]] inline void unreachable_unchecked(
+[[noreturn]] sus_always_inline void unreachable_unchecked(
     ::sus::marker::UnsafeFnMarker) {
 #if __has_builtin(__builtin_unreachable)
   __builtin_unreachable();
