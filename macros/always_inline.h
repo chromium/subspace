@@ -14,15 +14,8 @@
 
 #pragma once
 
-#include <stdlib.h>
-
-#include "macros/always_inline.h"
-
-namespace sus {
-
-[[noreturn]] sus_always_inline void panic() { ::abort(); }
-
-[[noreturn]] void panic_with_message(
-    /* TODO: string view type, or format + args */ const char& msg);
-
-}  // namespace sus
+#if _MSC_VER
+#define sus_always_inline __forceinline
+#else
+#define sus_always_inline inline __attribute__((__always_inline__))
+#endif

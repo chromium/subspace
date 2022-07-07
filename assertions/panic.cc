@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "assertions/panic.h"
 
-#include <stdlib.h>
-
-#include "macros/always_inline.h"
+#include <stdio.h>
 
 namespace sus {
 
-[[noreturn]] sus_always_inline void panic() { ::abort(); }
-
+// Defined outside the header to avoid inlining, to optimize for code size.
 [[noreturn]] void panic_with_message(
-    /* TODO: string view type, or format + args */ const char& msg);
+    /* TODO: string view type, or format + args */ const char& msg) {
+  // TODO: allow configuring messages away at build time.
+  fprintf(stderr, "PANIC! %s\n", &msg);
+  // TODO: allow configuring this to some other method of aborting.
+  ::abort();
+}
 
 }  // namespace sus
