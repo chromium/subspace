@@ -92,16 +92,17 @@ constexpr inline auto storage_eq(const S1& l, const S2& r,
 template <size_t I, class O, class S1, class S2>
 constexpr inline bool storage_cmp_impl(O& val, const S1& l,
                                        const S2& r) noexcept {
-  if (val == O::equivalent)
-    val = TupleAccess<S1, I + 1>::get(l) <=> TupleAccess<S2, I + 1>::get(r);
+  auto cmp = TupleAccess<S1, I + 1>::get(l) <=> TupleAccess<S2, I + 1>::get(r);
+  // Allow downgrading from equal to equivalent, but not the inverse.
+  if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.
-  return val == O::equivalent;
+  return val == 0;
 };
 
 template <class S1, class S2, size_t... N>
-constexpr inline auto storage_cmp(auto equiv, const S1& l, const S2& r,
-                                         std::index_sequence<N...>) noexcept {
-  auto val = equiv;
+constexpr inline auto storage_cmp(auto equal, const S1& l, const S2& r,
+                                  std::index_sequence<N...>) noexcept {
+  auto val = equal;
   (true && ... && (storage_cmp_impl<N>(val, l, r)));
   return val;
 };

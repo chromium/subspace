@@ -14,6 +14,8 @@
 
 #include "tuple/tuple.h"
 
+#include <math.h>  // TODO: Replace with f32::NAN()
+
 #include <concepts>
 
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -144,14 +146,109 @@ TEST(TupleDeathTest, Moved) {
 #endif
 }
 
-TEST(TupleDeathTest, Eq) {
+TEST(Tuple, Eq) {
   EXPECT_EQ(Tuple<int>::with(1), Tuple<int>::with(1));
   EXPECT_NE(Tuple<int>::with(1), Tuple<int>::with(2));
+  EXPECT_EQ((Tuple<int, int>::with(2, 1)), (Tuple<int, int>::with(2, 1)));
+  EXPECT_NE((Tuple<int, int>::with(2, 1)), (Tuple<int, int>::with(2, 2)));
+
+  int i;
+  EXPECT_EQ(Tuple<int*>::with(&i), Tuple<int*>::with(&i));
+
+  EXPECT_EQ(Tuple<float>::with(1.f), Tuple<float>::with(1.f));
+  EXPECT_EQ(Tuple<float>::with(0.f), Tuple<float>::with(0.f));
+  EXPECT_EQ(Tuple<float>::with(0.f), Tuple<float>::with(-0.f));
+  EXPECT_NE(Tuple<float>::with(/* TODO: f32::NAN() */ NAN),
+            Tuple<float>::with(/* TODO: f32::NAN() */ NAN));
 }
 
-TEST(TupleDeathTest, Ord) {
+TEST(Tuple, Ord) {
   EXPECT_LT(Tuple<int>::with(1), Tuple<int>::with(2));
   EXPECT_GT(Tuple<int>::with(3), Tuple<int>::with(2));
+  EXPECT_GT((Tuple<int, int>::with(3, 4)), (Tuple<int, int>::with(3, 3)));
+  EXPECT_GE((Tuple<int, int>::with(3, 4)), (Tuple<int, int>::with(3, 3)));
+  EXPECT_GE((Tuple<int, int>::with(3, 3)), (Tuple<int, int>::with(3, 3)));
+  EXPECT_GT((Tuple<int, int, int>::with(3, 4, 2)),
+            (Tuple<int, int, int>::with(3, 3, 3)));
+
+  int i;
+  int j;
+  EXPECT_LT(Tuple<int*>::with(&i), Tuple<int*>::with(&j));
+}
+
+TEST(Tuple, StrongOrder) {
+  EXPECT_EQ(std::strong_order(Tuple<int>::with(12), Tuple<int>::with(12)),
+            std::strong_ordering::equal);
+  EXPECT_EQ(std::strong_order(Tuple<int>::with(12), Tuple<int>::with(12)),
+            std::strong_ordering::equivalent);
+  EXPECT_EQ(std::strong_order(Tuple<int>::with(12), Tuple<int>::with(13)),
+            std::strong_ordering::less);
+  EXPECT_EQ(std::strong_order(Tuple<int, int>::with(12, 13),
+                              Tuple<int, int>::with(12, 12)),
+            std::strong_ordering::greater);
+}
+
+struct Weak {
+  auto operator==(Weak const& o) const& { return a == o.a && b == o.b; }
+  auto operator<=>(Weak const& o) const& {
+    if (a == o.a) return std::weak_ordering::equivalent;
+    if (a < o.a) return std::weak_ordering::less;
+    return std::weak_ordering::greater;
+  }
+
+  Weak(int a, int b) : a(a), b(b) {}
+  int a;
+  int b;
+};
+
+TEST(Tuple, WeakOrder) {
+  EXPECT_EQ(std::weak_order(Tuple<Weak>::with(Weak(1, 2)),
+                            Tuple<Weak>::with(Weak(1, 2))),
+            std::weak_ordering::equivalent);
+  EXPECT_EQ(std::weak_order(Tuple<Weak>::with(Weak(1, 2)),
+                            Tuple<Weak>::with(Weak(1, 3))),
+            std::weak_ordering::equivalent);
+  EXPECT_EQ(std::weak_order(Tuple<Weak>::with(Weak(1, 2)),
+                            Tuple<Weak>::with(Weak(2, 3))),
+            std::weak_ordering::less);
+  EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>::with(Weak(1, 2), Weak(1, 3)),
+                            Tuple<Weak, Weak>::with(Weak(1, 1), Weak(1, 4))),
+            std::weak_ordering::equivalent);
+  EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>::with(Weak(1, 2), Weak(2, 3)),
+                            Tuple<Weak, Weak>::with(Weak(1, 1), Weak(1, 4))),
+            std::weak_ordering::greater);
+  EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>::with(Weak(1, 2), Weak(2, 3)),
+                            Tuple<Weak, Weak>::with(Weak(2, 1), Weak(1, 4))),
+            std::weak_ordering::less);
+}
+
+TEST(Tuple, PartialOrder) {
+  EXPECT_EQ(
+      std::partial_order(Tuple<float>::with(12.f), Tuple<float>::with(12.f)),
+      std::partial_ordering::equivalent);
+  EXPECT_EQ(std::partial_order(Tuple<float, float>::with(12.f, 13.f),
+                               Tuple<float, float>::with(12.f, 11.f)),
+            std::partial_ordering::greater);
+  EXPECT_EQ(
+      std::partial_order(Tuple<float>::with(0.f), Tuple<float>::with(-0.f)),
+      std::partial_ordering::equivalent);
+  EXPECT_EQ(
+      std::partial_order(Tuple<float>::with(0.f), Tuple<float>::with(1.f)),
+      std::partial_ordering::less);
+  EXPECT_EQ(std::partial_order(Tuple<float>::with(0.f),
+                               Tuple<float>::with(/* TODO: f32::NAN() */ NAN)),
+            std::partial_ordering::unordered);
+  EXPECT_EQ(std::partial_order(Tuple<float>::with(/* TODO: f32::NAN() */ NAN),
+                               Tuple<float>::with(/* TODO: f32::NAN() */ NAN)),
+            std::partial_ordering::unordered);
+  EXPECT_EQ(std::partial_order(
+                Tuple<float>::with(0.f),
+                Tuple<float>::with(/* TODO: f32::INFINITY() */ HUGE_VALF)),
+            std::partial_ordering::less);
+  EXPECT_EQ(std::partial_order(
+                Tuple<float>::with(0.f),
+                Tuple<float>::with(/* TODO: f32::NEG_INFINITY() */ -HUGE_VALF)),
+            std::partial_ordering::greater);
 }
 
 // TODO: Test WeakOrd and PartialOrd. Also do that for Option..
