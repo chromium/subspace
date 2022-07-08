@@ -66,6 +66,14 @@ struct BuildIntegerImpl<T, radix, max, 0, '0', C...> {
 };
 
 template <class T, unsigned long long radix, unsigned long long max,
+          unsigned long long val, char... C>
+struct BuildIntegerImpl<T, radix, max, val, '\'', C...> {
+  using _builder = BuildIntegerImpl<T, radix, max, val, C...>;
+  using type = _builder::type;
+  static constexpr type value = _builder::value;
+};
+
+template <class T, unsigned long long radix, unsigned long long max,
           unsigned long long val, char c, char... C>
 struct BuildIntegerImpl<T, radix, max, val, c, C...> {
   static constexpr auto digit =
