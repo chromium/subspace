@@ -32,12 +32,6 @@ static_assert(std::is_convertible_v<
                   Mref<int&>, decltype(mref(std::declval<Mref<int&>&>()))>,
               "");
 
-// Cant construct Mref<const int&>.
-static_assert(!std::is_convertible_v<Mref<const int&>, int&>, "");
-static_assert(!std::is_convertible_v<Mref<const int&>,
-                                     decltype(mref(std::declval<int&>()))>,
-              "");
-
 void increment(Mref<int&> i) { ++i; }
 
 TEST(Mref, Pass) {

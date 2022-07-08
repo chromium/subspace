@@ -47,10 +47,25 @@ namespace sus::mem {
 template <class T>
 class Mref;
 
+template <class T>
+  requires(!std::is_reference_v<T>)
+struct Mref<T> {
+  static_assert(
+      std::is_reference_v<T>,
+      "The type parameter for Mref<T> must be a mutable reference: Mref<T&>");
+};
+
+template <class T>
+struct Mref<const T&> {
+  static_assert(
+      std::is_reference_v<T> && !std::is_const_v<std::remove_reference_t<T>>,
+      "The type parameter for Mref<T> must be a mutable reference: Mref<T&>");
+};
+
 /// Pass a variable to a function as a mutable reference.
 template <class T>
 constexpr inline Mref<T&> mref(T& t) {
-  return Mref<T&>(t);
+  return Mref<T&>(Mref<T&>::Construct(t));
 }
 
 template <class T>
@@ -59,7 +74,7 @@ constexpr inline Mref<T&> mref(const T& t) = delete;
 /// An Mref can be passed along as an Mref.
 template <class T>
 constexpr inline Mref<T> mref(Mref<T>& t) {
-  return Mref<T>(t.inner());
+  return Mref<T>(Mref<T>::Construct(t.inner()));
 }
 
 template <class T>
@@ -68,6 +83,8 @@ struct Mref<T&> {
   constexpr Mref(Mref&&) noexcept = default;
   constexpr Mref& operator=(Mref&&) noexcept = default;
 
+  // Prevent constructing an Mref argument without writing mref().
+  Mref(T& t) = delete;
   // Prevent passing an Mref argument along without writing mref() again.
   Mref(Mref&) = delete;
 
@@ -92,18 +109,14 @@ struct Mref<T&> {
   constexpr inline T& inner() & { return t_; }
 
  private:
-  friend constexpr Mref<T&> mref<>(T&);
-  friend constexpr Mref mref<>(Mref&);
+  struct Construct {
+    T& reference;
+  };
 
-  // TODO: Errors are confusing when you do it wrong:
-  //
-  //   error: ‘constexpr sus::mem::Mref<T>::Mref(T&) [with T =
-  //   {anonymous}::MoveOnly]’ is private within this context
-  //
-  // Could we fix it with an intermediate type. mref() returns MrefPass, and
-  // Mref is constructed form MrefPass. Then we could delete Mref(T&) instead
-  // of making it private. Does it codegen the same though?
-  constexpr inline Mref(T& t) noexcept : t_(t) {}
+  friend constexpr Mref<T&> mref<>(T&);
+  friend constexpr Mref<T&> mref<>(Mref&);
+
+  constexpr inline Mref(Construct c) noexcept : t_(c.reference) {}
 
   T& t_;
 };
