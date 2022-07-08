@@ -31,6 +31,31 @@ struct OverflowOut {
 };
 
 template <class T>
+  requires(std::is_integral_v<T>)
+inline constexpr uint32_t num_bits() noexcept {
+  return sizeof(T) * 8;
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
+inline constexpr auto max_value() noexcept {
+  if constexpr (sizeof(T) == 1)
+    return T{0x7f};
+  else if constexpr (sizeof(T) == 2)
+    return T{0x7fff};
+  else if constexpr (sizeof(T) == 4)
+    return T{0x7fffffff};
+  else
+    return T{0x7fffffffffffffff};
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
+inline constexpr auto min_value() noexcept {
+  return -max_value<T>() - 1;
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
 inline constexpr uint32_t count_ones(T value) noexcept {
 #if _MSC_VER
@@ -276,8 +301,19 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 inline constexpr OverflowOut<T> add_with_overflow(T x, T y) noexcept {
   auto out = into_signed(into_unsigned(x) + into_unsigned(y));
-  return OverflowOut{
+  return OverflowOut<T>{
       .overflow = y >= 0 != out >= x,
+      .value = out,
+  };
+}
+
+template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8 &&
+           sizeof(T) == sizeof(U))
+inline constexpr OverflowOut<T> add_with_overflow_unsigned(T x, U y) noexcept {
+  auto out = into_signed(into_unsigned(x) + y);
+  return OverflowOut<T>{
+      .overflow = static_cast<U>(max_value<T>()) - static_cast<U>(x) < y,
       .value = out,
   };
 }
@@ -286,29 +322,21 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 inline constexpr OverflowOut<T> sub_with_overflow(T x, T y) noexcept {
   auto out = into_signed(into_unsigned(x) - into_unsigned(y));
-  return OverflowOut{
+  return OverflowOut<T>{
       .overflow = y >= 0 != out <= x,
       .value = out,
   };
 }
 
-template <class T>
-  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
-inline constexpr auto max_value() noexcept {
-  if constexpr (sizeof(T) == 1)
-    return T{0x7f};
-  else if constexpr (sizeof(T) == 2)
-    return T{0x7fff};
-  else if constexpr (sizeof(T) == 4)
-    return T{0x7fffffff};
-  else
-    return T{0x7fffffffffffffff};
-}
-
-template <class T>
-  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
-inline constexpr auto min_value() noexcept {
-  return -max_value<T>() - 1;
+template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8 &&
+           sizeof(T) == sizeof(U))
+inline constexpr OverflowOut<T> sub_with_overflow_unsigned(T x, U y) noexcept {
+  auto out = into_signed(into_unsigned(x) - y);
+  return OverflowOut<T>{
+      .overflow = static_cast<U>(x) - static_cast<U>(min_value<T>()) < y,
+      .value = out,
+  };
 }
 
 template <class T>
@@ -325,7 +353,7 @@ inline constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
     // TODO: Do we really need to loop here though, we just a signed modulo.
     while (out > Wide{max}) out -= Wide{max} - Wide{min} + 1;
     while (out < Wide{min}) out += Wide{max} - Wide{min} + 1;
-    return OverflowOut{.overflow = true, .value = static_cast<T>(out)};
+    return OverflowOut<T>{.overflow = true, .value = static_cast<T>(out)};
   }
 }
 
@@ -339,6 +367,60 @@ inline constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
   // https://docs.microsoft.com/en-us/cpp/intrinsics/mul128?view=msvc-170
   static_assert(sizeof(T) != 8);
   return OverflowOut<T>(false, T(0));
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
+inline constexpr OverflowOut<T> pow_with_overflow(T base,
+                                                  uint32_t exp) noexcept {
+  if (exp == 0) return OverflowOut<T>{.overflow = false, .value = T{1}};
+  auto acc = T{1};
+  bool overflow = false;
+  while (exp > 1) {
+    if (exp & 1) {
+      auto r = mul_with_overflow(acc, base);
+      overflow |= r.overflow;
+      acc = r.value;
+    }
+    exp /= 2;
+    auto r = mul_with_overflow(base, base);
+    overflow |= r.overflow;
+    base = r.value;
+  }
+  auto r = mul_with_overflow(acc, base);
+  return OverflowOut<T>{.overflow = overflow || r.overflow, .value = r.value};
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> &&
+           (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
+            sizeof(T) == 8))
+inline constexpr OverflowOut<T> shl_with_overflow(T x,
+                                                  uint32_t shift) noexcept {
+  // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
+  // of two, so we verify that sizeof(T) is a power of 2, which implies the
+  // number of bits is as well (since each byte is 2^3 bits).
+  const bool overflow = shift >= num_bits<T>();
+  if (overflow) [[unlikely]]
+    shift = shift & (num_bits<T>() - 1);
+  return OverflowOut<T>{.overflow = overflow,
+                        .value = into_signed(into_unsigned(x) << shift)};
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> &&
+           (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
+            sizeof(T) == 8))
+inline constexpr OverflowOut<T> shr_with_overflow(T x,
+                                                  uint32_t shift) noexcept {
+  // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
+  // of two, so we verify that sizeof(T) is a power of 2, which implies the
+  // number of bits is as well (since each byte is 2^3 bits).
+  const bool overflow = shift >= num_bits<T>();
+  if (overflow) [[unlikely]]
+    shift = shift & (num_bits<T>() - 1);
+  return OverflowOut<T>{.overflow = overflow,
+                        .value = into_signed(into_unsigned(x) >> shift)};
 }
 
 template <class T>
@@ -407,6 +489,13 @@ template <class T>
 inline constexpr T wrapping_mul(T x, T y) noexcept {
   // TODO: Are there cheaper intrinsics?
   return mul_with_overflow(x, y).value;
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
+inline constexpr T wrapping_pow(T base, uint32_t exp) noexcept {
+  // TODO: Are there cheaper intrinsics?
+  return pow_with_overflow(base, exp).value;
 }
 
 }  // namespace sus::num::__private

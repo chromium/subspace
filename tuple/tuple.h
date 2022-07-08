@@ -134,3 +134,8 @@ class Tuple {
 };
 
 }  // namespace sus::tuple
+
+// Promote Tuple into the `sus` namespace.
+namespace sus {
+using ::sus::tuple::Tuple;
+}  // namespace sus
