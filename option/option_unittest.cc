@@ -14,6 +14,8 @@
 
 #include "option/option.h"
 
+#include <math.h>  // TODO: Replace with f32::NAN()
+
 #include "assertions/builtin.h"
 #include "iter/iterator.h"
 #include "mem/__private/relocate.h"
@@ -31,28 +33,24 @@ using namespace ::sus::test;
 
 namespace {
 
-#define IS_SOME(x)             \
-  do {                         \
-    EXPECT_TRUE(x.is_some());  \
-    EXPECT_FALSE(x.is_none()); \
-    switch (x) {               \
-      case Some:               \
-        break;                 \
-      case None:               \
-        ADD_FAILURE();         \
-    }                          \
+#define IS_SOME(x)              \
+  do {                          \
+    EXPECT_TRUE(x.is_some());   \
+    EXPECT_FALSE(x.is_none());  \
+    switch (x) {                \
+      case Some: break;         \
+      case None: ADD_FAILURE(); \
+    }                           \
   } while (false)
 
-#define IS_NONE(x)             \
-  do {                         \
-    EXPECT_TRUE(x.is_none());  \
-    EXPECT_FALSE(x.is_some()); \
-    switch (x) {               \
-      case None:               \
-        break;                 \
-      case Some:               \
-        ADD_FAILURE();         \
-    }                          \
+#define IS_NONE(x)              \
+  do {                          \
+    EXPECT_TRUE(x.is_none());   \
+    EXPECT_FALSE(x.is_some());  \
+    switch (x) {                \
+      case None: break;         \
+      case Some: ADD_FAILURE(); \
+    }                           \
   } while (false)
 
 template <class T, class U>
@@ -1449,6 +1447,104 @@ TEST(Option, IntoIter) {
     ++count;
   }
   EXPECT_EQ(count, 1);
+}
+
+TEST(Option, Eq) {
+  EXPECT_EQ(Option<int>::some(1), Option<int>::some(1));
+  EXPECT_NE(Option<int>::some(1), Option<int>::some(2));
+  EXPECT_NE(Option<int>::none(), Option<int>::some(1));
+  EXPECT_EQ(Option<int>::none(), Option<int>::none());
+  EXPECT_EQ(Option<float>::some(1.f), Option<float>::some(1.f));
+  EXPECT_EQ(Option<float>::some(0.f), Option<float>::some(-0.f));
+  EXPECT_NE(Option<float>::some(/* TODO: f32::NAN() */ NAN),
+            Option<float>::some(/* TODO: f32::NAN() */ NAN));
+}
+
+TEST(Option, Ord) {
+  EXPECT_LT(Option<int>::some(1), Option<int>::some(2));
+  EXPECT_GT(Option<int>::some(3), Option<int>::some(2));
+
+  EXPECT_LT(Option<int>::none(), Option<int>::some(2));
+  EXPECT_GT(Option<int>::some(1), Option<int>::none());
+
+  int i1 = 1, i2 = 2;
+  EXPECT_LT(Option<const int&>::some(i1), Option<const int&>::some(i2));
+}
+
+TEST(Option, StrongOrder) {
+  EXPECT_EQ(std::strong_order(Option<int>::some(12), Option<int>::some(12)),
+            std::strong_ordering::equal);
+  EXPECT_EQ(std::strong_order(Option<int>::some(12), Option<int>::some(13)),
+            std::strong_ordering::less);
+  EXPECT_EQ(std::strong_order(Option<int>::some(12), Option<int>::some(11)),
+            std::strong_ordering::greater);
+  EXPECT_EQ(std::strong_order(Option<int>::some(12), Option<int>::none()),
+            std::strong_ordering::greater);
+  EXPECT_EQ(std::strong_order(Option<int>::none(), Option<int>::none()),
+            std::strong_ordering::equal);
+}
+
+struct Weak {
+  auto operator==(Weak const& o) const& { return a == o.a && b == o.b; }
+  auto operator<=>(Weak const& o) const& {
+    if (a == o.a) return std::weak_ordering::equivalent;
+    if (a < o.a) return std::weak_ordering::less;
+    return std::weak_ordering::greater;
+  }
+
+  Weak(int a, int b) : a(a), b(b) {}
+  int a;
+  int b;
+};
+
+TEST(Option, WeakOrder) {
+  auto x = std::weak_order(Option<Weak>::some(Weak(1, 2)),
+                           Option<Weak>::some(Weak(1, 2)));
+  EXPECT_EQ(x, std::weak_ordering::equivalent);
+  EXPECT_EQ(std::weak_order(Option<Weak>::some(Weak(1, 2)),
+                            Option<Weak>::some(Weak(1, 3))),
+            std::weak_ordering::equivalent);
+  EXPECT_EQ(std::weak_order(Option<Weak>::some(Weak(1, 2)),
+                            Option<Weak>::some(Weak(2, 3))),
+            std::weak_ordering::less);
+  EXPECT_EQ(std::weak_order(Option<Weak>::some(Weak(2, 2)),
+                            Option<Weak>::some(Weak(1, 3))),
+            std::weak_ordering::greater);
+}
+
+TEST(Option, PartialOrder) {
+  EXPECT_EQ(
+      std::partial_order(Option<float>::some(0.f), Option<float>::some(-0.f)),
+      std::partial_ordering::equivalent);
+  EXPECT_EQ(
+      std::partial_order(Option<float>::some(12.f), Option<float>::some(12.f)),
+      std::partial_ordering::equivalent);
+  EXPECT_EQ(
+      std::partial_order(Option<float>::some(13.f), Option<float>::some(12.f)),
+      std::partial_ordering::greater);
+  EXPECT_EQ(
+      std::partial_order(Option<float>::some(11.f), Option<float>::some(12.f)),
+      std::partial_ordering::less);
+  EXPECT_EQ(std::partial_order(Option<float>::some(11.f),
+                               Option<float>::some(/* TODO: f32::NAN() */ NAN)),
+            std::partial_ordering::unordered);
+  EXPECT_EQ(std::partial_order(Option<float>::some(/* TODO: f32::NAN() */ NAN),
+                               Option<float>::some(/* TODO: f32::NAN() */ NAN)),
+            std::partial_ordering::unordered);
+  EXPECT_EQ(std::partial_order(
+                Option<float>::some(0.f),
+                Option<float>::some(/* TODO: f32::INFINITY() */ HUGE_VALF)),
+            std::partial_ordering::less);
+  EXPECT_EQ(std::partial_order(Option<float>::some(0.f),
+                               Option<float>::some(
+                                   /* TODO: f32::NEG_INFINITY() */ -HUGE_VALF)),
+            std::partial_ordering::greater);
+
+  EXPECT_EQ(std::partial_order(Option<float>::some(0.f), Option<float>::none()),
+            std::partial_ordering::greater);
+  EXPECT_EQ(std::partial_order(Option<float>::none(),
+                               Option<float>::some(/* TODO: f32::NAN() */ NAN)),
+            std::partial_ordering::less);
 }
 
 }  // namespace

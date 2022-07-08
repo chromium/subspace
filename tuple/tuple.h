@@ -82,7 +82,7 @@ class Tuple {
     ::sus::check(!moved_from());
     ::sus::check(!r.moved_from());
     return __private::storage_cmp(
-        std::strong_ordering::equivalent, storage_, r.storage_,
+        std::strong_ordering::equal, storage_, r.storage_,
         std::make_index_sequence<1 + sizeof...(Ts)>());
   }
 
@@ -95,7 +95,7 @@ class Tuple {
     ::sus::check(!moved_from());
     ::sus::check(!r.moved_from());
     return __private::storage_cmp(
-        std::strong_ordering::equivalent, storage_, r.storage_,
+        std::weak_ordering::equivalent, storage_, r.storage_,
         std::make_index_sequence<1 + sizeof...(Ts)>());
   }
 
@@ -108,7 +108,7 @@ class Tuple {
     ::sus::check(!moved_from());
     ::sus::check(!r.moved_from());
     return __private::storage_cmp(
-        std::strong_ordering::equivalent, storage_, r.storage_,
+        std::partial_ordering::equivalent, storage_, r.storage_,
         std::make_index_sequence<1 + sizeof...(Ts)>());
   }
 
