@@ -56,25 +56,17 @@ struct i32 {
   // i32_defn.h and i32_impl.h, allowing most of the library to just use
   // i32_defn.h which will keep headers smaller.
   _sus__signed_constants(i32, 0x7FFFFFFF, 32);
-  _sus__signed_impl(i32, /*LargerT=*/int64_t, /*UnsignedT=*/uint32_t);
+  _sus__signed_impl(i32, /*LargerT=*/int64_t,
+                    /*UnsignedT=*//* TODO: u32 */ uint32_t);
 
-  // TODO: overflowing_abs(). Need a tuple type.
-  // TODO: overflowing_add(). Need a tuple type.
-  // TODO: overflowing_div(). Need a tuple type.
-  // TODO: overflowing_div_euclid(). Need a tuple type.
-  // TODO: overflowing_mul(). Need a tuple type.
-  // TODO: overflowing_neg(). Need a tuple type.
-  // TODO: overflowing_rem(). Need a tuple type.
-  // TODO: overflowing_rem_euclid(). Need a tuple type.
-  // TODO: overflowing_shl(). Need a tuple type.
-  // TODO: overflowing_shr(). Need a tuple type.
-  // TODO: overflowing_sub(). Need a tuple type.
-  // TODO: overflowing_sub_unsigned(). Need a tuple type.
+  // TODO: overflowing_div_euclid().
+  // TODO: overflowing_rem_euclid().
   // TODO: div_euclid().
   // TODO: rem_euclid().
   // TODO: wrapping_div_euclid().
   // TODO: wrapping_rem_euclid().
   // TODO: checked_div_euclid().
+  // TODO: checked_rem_euclid().
   // TODO: checked_log().
   // TODO: checked_log10().
   // TODO: checked_log2().
@@ -82,7 +74,6 @@ struct i32 {
   // TODO: log10().
   // TODO: log2().
   // TODO: checked_next_multiple_of().
-  // TODO: checked_rem_euclid().
   // TODO: from_be().
   // TODO: from_be_bytes().
   // TODO: from_le().
