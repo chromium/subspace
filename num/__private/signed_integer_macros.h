@@ -17,14 +17,16 @@
 #include "num/__private/intrinsics.h"
 #include "tuple/tuple.h"
 
-#define _sus__signed_constants(T, Max, Bits)                         \
-  static constexpr auto MIN_PRIMITIVE = primitive_type{-Max - 1};    \
-  static constexpr auto MAX_PRIMITIVE = primitive_type{Max};         \
-  static constexpr inline T MIN() noexcept { return MIN_PRIMITIVE; } \
-  static constexpr inline T MAX() noexcept { return MAX_PRIMITIVE; } \
-  static constexpr inline /* TODO: u32 */ uint32_t BITS() noexcept { \
-    return /* TODO: u32(*/ Bits /*)*/;                               \
-  }                                                                  \
+#define _sus__signed_constants(T, Max, Bits)                            \
+  static constexpr auto MIN_PRIMITIVE =                                 \
+      __private::min_value<primitive_type>();                           \
+  static constexpr auto MAX_PRIMITIVE =                                 \
+      __private::max_value<primitive_type>();                           \
+  static constexpr inline T MIN() noexcept { return MIN_PRIMITIVE; }    \
+  static constexpr inline T MAX() noexcept { return MAX_PRIMITIVE; }    \
+  static constexpr inline /* TODO: u32 */ uint32_t BITS() noexcept {    \
+    return /* TODO: u32(*/ __private::num_bits<primitive_type>() /*)*/; \
+  }                                                                     \
   static_assert(true)
 
 #define _sus__signed_impl(T, LargerT, UnsignedT) \

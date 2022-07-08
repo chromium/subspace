@@ -151,6 +151,18 @@ TEST(i32, Traits) {
   constexpr std::strong_ordering o = 2_i32 <=> 3_i32;
 }
 
+TEST(i32, Constants) {
+  constexpr auto max = i32::MAX();
+  static_assert(std::same_as<decltype(max), const i32>);
+  EXPECT_EQ(max.primitive_value, 0x7fffffff);
+  constexpr auto min = i32::MIN();
+  static_assert(std::same_as<decltype(min), const i32>);
+  EXPECT_EQ(min.primitive_value, -0x7fffffff - 1);
+  constexpr auto bits = i32::BITS();
+  static_assert(std::same_as<decltype(bits), const /* TODO: u32 */ uint32_t>);
+  EXPECT_EQ(bits, 32);
+}
+
 TEST(i32, Abs) {
   [[maybe_unused]] constexpr auto a = i32(-1).abs();
 
@@ -368,12 +380,12 @@ TEST(i32, OverflowingAddUnsigned) {
   EXPECT_EQ(
       (i32::MIN()).overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
       (Tuple<i32, bool>::with(i32::MAX(), false)));
-  EXPECT_EQ(
-      (i32::MIN() + 1_i32).overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-      (Tuple<i32, bool>::with(i32::MIN(), true)));
-  EXPECT_EQ(
-      (i32::MIN() + 1_i32).overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
-      (Tuple<i32, bool>::with(i32::MAX(), false)));
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            (Tuple<i32, bool>::with(i32::MIN(), true)));
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            (Tuple<i32, bool>::with(i32::MAX(), false)));
   EXPECT_EQ((i32::MAX() - 2_i32).overflowing_add_unsigned(3u),
             (Tuple<i32, bool>::with(i32::MIN(), true)));
 }
@@ -1031,12 +1043,12 @@ TEST(i32, OverflowingSubUnsigned) {
   EXPECT_EQ(
       (i32::MAX()).overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
       (Tuple<i32, bool>::with(i32::MIN(), false)));
-  EXPECT_EQ(
-      (i32::MAX() - 1_i32).overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-      (Tuple<i32, bool>::with(i32::MAX(), true)));
-  EXPECT_EQ(
-      (i32::MAX() - 1_i32).overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
-      (Tuple<i32, bool>::with(i32::MIN(), false)));
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            (Tuple<i32, bool>::with(i32::MAX(), true)));
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            (Tuple<i32, bool>::with(i32::MIN(), false)));
   EXPECT_EQ((i32::MIN() + 2_i32).overflowing_sub_unsigned(3u),
             (Tuple<i32, bool>::with(i32::MAX(), true)));
 }
