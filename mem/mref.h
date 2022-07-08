@@ -65,7 +65,8 @@ struct Mref<const T&> {
 /// Pass a variable to a function as a mutable reference.
 template <class T>
 constexpr inline Mref<T&> mref(T& t) {
-  return Mref<T&>(Mref<T&>::Construct(t));
+  using Construct = Mref<T&>::Construct;
+  return Mref<T&>(Construct(t));
 }
 
 template <class T>
@@ -74,7 +75,8 @@ constexpr inline Mref<T&> mref(const T& t) = delete;
 /// An Mref can be passed along as an Mref.
 template <class T>
 constexpr inline Mref<T> mref(Mref<T>& t) {
-  return Mref<T>(Mref<T>::Construct(t.inner()));
+  using Construct = Mref<T&>::Construct;
+  return Mref<T>(Construct(t.inner()));
 }
 
 template <class T>
