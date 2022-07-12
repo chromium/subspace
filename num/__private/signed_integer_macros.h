@@ -14,7 +14,15 @@
 
 #pragma once
 
+#include <stdint.h>
+
+#include <compare>
+
+#include "assertions/check.h"
+#include "marker/unsafe.h"
+#include "num/__private/int_log10.h"
 #include "num/__private/intrinsics.h"
+#include "option/option.h"
 #include "tuple/tuple.h"
 
 #define _sus__signed_constants(T, Max, Bits)                            \
@@ -45,7 +53,8 @@
   _sus__signed_shift(T, UnsignedT);              \
   _sus__signed_sub(T, UnsignedT);                \
   _sus__signed_bits(T, UnsignedT);               \
-  _sus__signed_pow(T)
+  _sus__signed_pow(T);                           \
+  _sus__signed_log(T)
 
 #define _sus__signed_integer_comparison(T)                                     \
   /** Returns true if the current value is positive and false if the number is \
@@ -788,28 +797,32 @@
   /** Returns the number of leading ones in the binary representation of the    \
    * current value.                                                             \
    */                                                                           \
-  constexpr /* TODO:u32 */ uint32_t leading_ones() const& noexcept {            \
+  /* TODO: Can we make this constexpr? */                                       \
+  /* TODO:u32 */ uint32_t leading_ones() const& noexcept {                      \
     return (~(*this)).leading_zeros();                                          \
   }                                                                             \
                                                                                 \
   /** Returns the number of leading zeros in the binary representation of the   \
    * current value.                                                             \
    */                                                                           \
-  constexpr /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {           \
+  /* TODO: Can we make this constexpr? */                                       \
+  /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {                     \
     return __private::leading_zeros(static_cast<UnsignedT>(primitive_value));   \
   }                                                                             \
                                                                                 \
   /** Returns the number of trailing ones in the binary representation of the   \
    * current value.                                                             \
    */                                                                           \
-  constexpr /* TODO:u32 */ uint32_t trailing_ones() const& noexcept {           \
+  /* TODO: Can we make this constexpr? */                                       \
+  /* TODO:u32 */ uint32_t trailing_ones() const& noexcept {                     \
     return (~(*this)).trailing_zeros();                                         \
   }                                                                             \
                                                                                 \
   /** Returns the number of trailing zeros in the binary representation of the  \
    * current value.                                                             \
    */                                                                           \
-  constexpr /* TODO:u32 */ uint32_t trailing_zeros() const& noexcept {          \
+  /* TODO: Can we make this constexpr? */                                       \
+  /* TODO:u32 */ uint32_t trailing_zeros() const& noexcept {                    \
     return __private::trailing_zeros(static_cast<UnsignedT>(primitive_value));  \
   }                                                                             \
                                                                                 \
@@ -893,5 +906,46 @@
   constexpr T wrapping_pow(const /* TODO: u32 */ uint32_t& exp)                \
       const& noexcept {                                                        \
     return __private::wrapping_pow(primitive_value, exp);                      \
+  }                                                                            \
+  static_assert(true)
+
+#define _sus__signed_log(T)                                                    \
+  /** Returns the base 2 logarithm of the number, rounded down.                \
+   *                                                                           \
+   * Returns None if the number is negative or zero.                           \
+   */                                                                          \
+  constexpr Option</* TODO: u32 */ uint32_t> checked_log2() const& {           \
+    if (primitive_value <= 0) [[unlikely]] {                                   \
+      return Option<uint32_t>::none();                                         \
+    } else {                                                                   \
+      /* TODO: Can we make this constexpr? */                                  \
+      uint32_t zeros = __private::leading_zeros_nonzero(                       \
+          unsafe_fn, static_cast<uint32_t>(primitive_value));                  \
+      return Option<uint32_t>::some(BITS() - 1 - zeros);                       \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Returns the base 2 logarithm of the number, rounded down. */             \
+  constexpr /* TODO: u32 */ uint32_t log2() const& {                           \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    return checked_log2().unwrap();                                            \
+  }                                                                            \
+                                                                               \
+  /** Returns the base 10 logarithm of the number, rounded down.               \
+   *                                                                           \
+   * Returns None if the number is negative or zero.                           \
+   */                                                                          \
+  constexpr Option</* TODO: u32 */ uint32_t> checked_log10() const& {          \
+    if (primitive_value <= 0) [[unlikely]] {                                   \
+      return Option<uint32_t>::none();                                         \
+    } else {                                                                   \
+      return Option<uint32_t>::some(__private::int_log10::T(primitive_value)); \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Returns the base 10 logarithm of the number, rounded down. */            \
+  constexpr /* TODO: u32 */ uint32_t log10() const& {                          \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    return checked_log10().unwrap();                                           \
   }                                                                            \
   static_assert(true)

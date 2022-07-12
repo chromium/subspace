@@ -23,6 +23,7 @@
 #endif
 
 #include "macros/always_inline.h"
+#include "marker/unsafe.h"
 
 namespace sus::num::__private {
 
@@ -90,11 +91,11 @@ sus_always_inline constexpr uint32_t count_ones(T value) noexcept {
 #endif
 }
 
+// TODO: Any way to make it constexpr?
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
-sus_always_inline constexpr uint32_t leading_zeros(T value) noexcept {
-  if (value == 0) return static_cast<uint32_t>(sizeof(T) * 8u);
-
+sus_always_inline uint32_t
+    leading_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
 #if _MSC_VER
   if constexpr (sizeof(value) == 8u) {
 #if 1
@@ -148,11 +149,24 @@ sus_always_inline constexpr uint32_t leading_zeros(T value) noexcept {
 #endif
 }
 
+// TODO: Any way to make it constexpr?
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
-sus_always_inline constexpr uint32_t trailing_zeros(T value) noexcept {
+sus_always_inline uint32_t leading_zeros(T value) noexcept {
   if (value == 0) return static_cast<uint32_t>(sizeof(T) * 8u);
+  return leading_zeros_nonzero(unsafe_fn, value);
+}
 
+/** Counts the number of trailing zeros in a non-zero input.
+ *
+ * # Safety
+ * This function produces Undefined Behaviour if passed a zero value.
+ */
+// TODO: Any way to make it constexpr?
+template <class T>
+  requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
+sus_always_inline uint32_t
+    trailing_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
 #if _MSC_VER
   if constexpr (sizeof(value) == 8u) {
     unsigned long index;
@@ -180,6 +194,14 @@ sus_always_inline constexpr uint32_t trailing_zeros(T value) noexcept {
     return static_cast<uint32_t>(__builtin_ctzll(U{value}));
   }
 #endif
+}
+
+// TODO: Any way to make it constexpr?
+template <class T>
+  requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
+sus_always_inline uint32_t trailing_zeros(T value) noexcept {
+  if (value == 0) return static_cast<uint32_t>(sizeof(T) * 8u);
+  return trailing_zeros_nonzero(unsafe_fn, value);
 }
 
 template <class T>
