@@ -16,14 +16,10 @@
 
 #include <stdint.h>
 
-#include <compare>
 #include <concepts>
 
-#include "assertions/check.h"
-#include "marker/unsafe.h"
 #include "num/__private/literals.h"
 #include "num/__private/signed_integer_macros.h"
-#include "option/option.h"
 
 namespace sus::num {
 
@@ -68,11 +64,7 @@ struct i32 {
   // TODO: checked_div_euclid().
   // TODO: checked_rem_euclid().
   // TODO: checked_log().
-  // TODO: checked_log10().
-  // TODO: checked_log2().
   // TODO: log().
-  // TODO: log10().
-  // TODO: log2().
   // TODO: checked_next_multiple_of().
   // TODO: from_be().
   // TODO: from_be_bytes().
