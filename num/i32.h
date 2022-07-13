@@ -63,8 +63,6 @@ struct i32 {
   // TODO: wrapping_rem_euclid().
   // TODO: checked_div_euclid().
   // TODO: checked_rem_euclid().
-  // TODO: checked_log().
-  // TODO: log().
   // TODO: checked_next_multiple_of().
   // TODO: from_be().
   // TODO: from_be_bytes().

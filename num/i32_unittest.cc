@@ -1390,4 +1390,32 @@ TEST(i32, CheckedLog10) {
   EXPECT_EQ((-1_i32).checked_log10(), Option<uint32_t>::none());
 }
 
+TEST(i32, Log) {
+  [[maybe_unused]] constexpr auto a = (2_i32).log(10_i32);
+
+  EXPECT_EQ((2_i32).log(10_i32), 0u);
+  EXPECT_EQ((55555_i32).log(10_i32), 4u);
+  EXPECT_EQ((i32::MAX()).log(10_i32), 9u);
+}
+
+TEST(i32DeathTest, LogNonPositive) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((0_i32).log(10_i32), "");
+  EXPECT_DEATH((-1_i32).log(10_i32), "");
+  EXPECT_DEATH((2_i32).log(-2_i32), "");
+  EXPECT_DEATH((2_i32).log(0_i32), "");
+  EXPECT_DEATH((2_i32).log(1_i32), "");
+#endif
+}
+
+TEST(i32, CheckedLog) {
+  constexpr auto a = (2_i32).checked_log(10_i32);
+
+  EXPECT_EQ((2_i32).checked_log(10_i32), Option<uint32_t>::some(0u));
+  EXPECT_EQ((55555_i32).checked_log(10_i32), Option<uint32_t>::some(4u));
+  EXPECT_EQ((i32::MAX()).checked_log(10_i32), Option<uint32_t>::some(9u));
+  EXPECT_EQ((0_i32).checked_log(10_i32), Option<uint32_t>::none());
+  EXPECT_EQ((-1_i32).checked_log(10_i32), Option<uint32_t>::none());
+}
+
 }  // namespace
