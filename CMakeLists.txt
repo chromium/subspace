@@ -22,6 +22,7 @@ add_library(subspace STATIC
     "assertions/arch.h"
     "assertions/builtin.h"
     "assertions/check.h"
+    "assertions/endian.h"
     "assertions/nonnull.h"
     "assertions/panic.h"
     "assertions/panic.cc"
@@ -89,6 +90,7 @@ enable_testing()
 
 add_executable(subspace_unittests
     "assertions/check_unittest.cc"
+    "assertions/endian_unittest.cc"
     "assertions/panic_unittest.cc"
     "assertions/unreachable_unittest.cc"
     "containers/array_unittest.cc"

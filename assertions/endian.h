@@ -18,12 +18,32 @@
 
 namespace sus::assertions {
 
-constexpr sus_always_inline bool is_windows() noexcept {
-#if defined(_WIN32)
+constexpr sus_always_inline bool is_big_endian() {
+#if _MSC_VER
+
+#if _M_PPC
   return true;
 #else
   return false;
 #endif
+
+#elif defined(__BYTE__ORDER__)
+
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+  return true;
+#else
+  return false;
+#endif
+
+#else
+
+#error "Compiler doesn't specify __BYTE_ORDER__."
+
+#endif
+}
+
+constexpr sus_always_inline bool is_little_endian() noexcept {
+  return !is_big_endian();
 }
 
 }  // namespace sus::assertions
