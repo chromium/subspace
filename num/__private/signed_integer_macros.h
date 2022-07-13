@@ -948,4 +948,44 @@
     /* TODO: Allow opting out of all overflow checks? */                       \
     return checked_log10().unwrap();                                           \
   }                                                                            \
+                                                                               \
+  /** Returns the logarithm of the number with respect to an arbitrary base,   \
+   * rounded down.                                                             \
+   *                                                                           \
+   * Returns None if the number is negative or zero, or if the base is not at  \
+   * least 2.                                                                  \
+   *                                                                           \
+   * This method might not be optimized owing to implementation details;       \
+   * `checked_log2` can produce results more efficiently for base 2, and       \
+   * `checked_log10` can produce results more efficiently for base 10.         \
+   */                                                                          \
+  constexpr Option</* TODO: u32 */ uint32_t> checked_log(const T& base)        \
+      const& noexcept {                                                        \
+    if (primitive_value <= 0 || base <= 1) [[unlikely]] {                      \
+      return Option</* TODO: u32 */ uint32_t>::none();                         \
+    } else {                                                                   \
+      auto n = /* TODO: u32 */ uint32_t{0};                                    \
+      auto r = primitive_value;                                                \
+      const auto b = base.primitive_value;                                     \
+      while (r >= b) {                                                         \
+        r /= b;                                                                \
+        n += 1;                                                                \
+      }                                                                        \
+      return Option<uint32_t>::some(n);                                        \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Returns the logarithm of the number with respect to an arbitrary base,   \
+   * rounded down.                                                             \
+   *                                                                           \
+   * This method might not be optimized owing to implementation details; log2  \
+   * can produce results more efficiently for base 2, and log10 can produce    \
+   * results more efficiently for base 10.                                     \
+   *                                                                           \
+   * # Panics                                                                  \
+   * When the number is negative, zero, or if the base is not at least 2.      \
+   */                                                                          \
+  constexpr /* TODO: u32 */ uint32_t log(const T& base) const& noexcept {      \
+    return checked_log(base).unwrap();                                         \
+  }                                                                            \
   static_assert(true)
