@@ -55,6 +55,14 @@ struct i32 {
   _sus__signed_impl(i32, /*LargerT=*/int64_t,
                     /*UnsignedT=*//* TODO: u32 */ uint32_t);
 
+  /** Converts an integer from big endian to the target’s endianness.
+*
+* On big endian this is a no-op. On little endian the bytes are swapped.
+*/
+  static constexpr i32 from_be(const i32& x) noexcept {
+      return x;
+  }
+
   // TODO: overflowing_div_euclid().
   // TODO: overflowing_rem_euclid().
   // TODO: div_euclid().

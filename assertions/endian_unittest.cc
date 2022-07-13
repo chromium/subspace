@@ -12,18 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "assertions/endian.h"
 
-#include "macros/always_inline.h"
+#include <bit>
 
-namespace sus::assertions {
+namespace {
 
-constexpr sus_always_inline bool is_windows() noexcept {
-#if defined(_WIN32)
-  return true;
-#else
-  return false;
-#endif
-}
+static_assert(sus::assertions::is_big_endian() ==
+              (std::endian::native == std::endian::big));
+static_assert(sus::assertions::is_little_endian() ==
+              (std::endian::native == std::endian::little));
 
-}  // namespace sus::assertions
+}  // namespace
