@@ -27,7 +27,7 @@ constexpr sus_always_inline bool is_big_endian() {
   return false;
 #endif
 
-#elif defined(__BYTE__ORDER__)
+#elif defined(__BYTE_ORDER__)
 
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
   return true;
