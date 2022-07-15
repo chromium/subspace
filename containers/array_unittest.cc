@@ -126,4 +126,55 @@ TEST(Array, WithValue) {
   }
 }
 
+TEST(Array, Get) {
+  {
+    constexpr auto r = []() constexpr {
+      constexpr auto a =
+          Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+      return a.get(2);
+    }
+    ();
+    static_assert(std::same_as<decltype(r), const int>);
+    EXPECT_EQ(3, r);
+  }
+  {
+    auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+    EXPECT_EQ(3, a.get(2));
+  }
+}
+
+TEST(Array, GetMut) {
+  {
+    constexpr auto a = []() constexpr {
+      auto a =
+          Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+      a.get_mut(0) = 101;
+      return a;
+    }
+    ();
+    EXPECT_EQ(a.get(0), 101);
+  }
+  {
+    auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+    a.get_mut(0) = 101;
+    EXPECT_EQ(a.get(0), 101);
+  }
+}
+
+
+TEST(Array, AsPtr) {
+  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  auto r = a.as_ptr();
+  static_assert(std::same_as<decltype(r), const int*>);
+  EXPECT_EQ(3, *(r + 2));
+}
+
+TEST(Array, AsPtrMut) {
+  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  auto r = a.as_ptr_mut();
+  static_assert(std::same_as<decltype(r), int*>);
+  *(r + 2) = 101;
+  EXPECT_EQ(101, *(r + 2));
+}
+
 }  // namespace
