@@ -25,57 +25,57 @@ struct OutOfBounds {
   T t;
 };
 
-template <class T, unsigned long long radix, unsigned long long max,
+template <class T, bool start, unsigned long long radix, unsigned long long max,
           unsigned long long val, char... C>
 struct BuildIntegerImpl;
 
 // Hex: 0x prefix.
 template <class T, unsigned long long radix, unsigned long long max, char... C>
-struct BuildIntegerImpl<T, radix, max, 0, '0', 'x', C...> {
-  using _builder = BuildIntegerImpl<T, 16, max, 0, C...>;
+struct BuildIntegerImpl<T, true, radix, max, 0, '0', 'x', C...> {
+  using _builder = BuildIntegerImpl<T, false, 16, max, 0, C...>;
   using type = _builder::type;
   static constexpr type value = _builder::value;
 };
 template <class T, unsigned long long radix, unsigned long long max, char... C>
-struct BuildIntegerImpl<T, radix, max, 0, '0', 'X', C...> {
-  using _builder = BuildIntegerImpl<T, 16, max, 0, C...>;
+struct BuildIntegerImpl<T, true, radix, max, 0, '0', 'X', C...> {
+  using _builder = BuildIntegerImpl<T, false, 16, max, 0, C...>;
   using type = _builder::type;
   static constexpr type value = _builder::value;
 };
 
 // Binary: 0b prefix.
 template <class T, unsigned long long radix, unsigned long long max, char... C>
-struct BuildIntegerImpl<T, radix, max, 0, '0', 'b', C...> {
-  using _builder = BuildIntegerImpl<T, 2, max, 0, C...>;
+struct BuildIntegerImpl<T, true, radix, max, 0, '0', 'b', C...> {
+  using _builder = BuildIntegerImpl<T, false, 2, max, 0, C...>;
   using type = _builder::type;
   static constexpr type value = _builder::value;
 };
 template <class T, unsigned long long radix, unsigned long long max, char... C>
-struct BuildIntegerImpl<T, radix, max, 0, '0', 'B', C...> {
-  using _builder = BuildIntegerImpl<T, 2, max, 0, C...>;
+struct BuildIntegerImpl<T, true, radix, max, 0, '0', 'B', C...> {
+  using _builder = BuildIntegerImpl<T, false, 2, max, 0, C...>;
   using type = _builder::type;
   static constexpr type value = _builder::value;
 };
 
 // Octal: 0 prefix.
 template <class T, unsigned long long radix, unsigned long long max, char... C>
-struct BuildIntegerImpl<T, radix, max, 0, '0', C...> {
-  using _builder = BuildIntegerImpl<T, 8, max, 0, C...>;
+struct BuildIntegerImpl<T, true, radix, max, 0, '0', C...> {
+  using _builder = BuildIntegerImpl<T, false, 8, max, 0, C...>;
   using type = _builder::type;
   static constexpr type value = _builder::value;
 };
 
 template <class T, unsigned long long radix, unsigned long long max,
           unsigned long long val, char... C>
-struct BuildIntegerImpl<T, radix, max, val, '\'', C...> {
-  using _builder = BuildIntegerImpl<T, radix, max, val, C...>;
+struct BuildIntegerImpl<T, false, radix, max, val, '\'', C...> {
+  using _builder = BuildIntegerImpl<T, false, radix, max, val, C...>;
   using type = _builder::type;
   static constexpr type value = _builder::value;
 };
 
-template <class T, unsigned long long radix, unsigned long long max,
+template <class T, bool start, unsigned long long radix, unsigned long long max,
           unsigned long long val, char c, char... C>
-struct BuildIntegerImpl<T, radix, max, val, c, C...> {
+struct BuildIntegerImpl<T, start, radix, max, val, c, C...> {
   static constexpr auto digit =
       (c >= '0' && c <= '9'
            ? c - '0'
@@ -87,22 +87,22 @@ struct BuildIntegerImpl<T, radix, max, val, c, C...> {
 
   static constexpr bool valid = val * radix + digit <= max;
   using _builder =
-      BuildIntegerImpl<std::conditional_t<valid, T, OutOfBounds<T>>, radix, max,
-                       val * radix + digit, C...>;
+      BuildIntegerImpl<std::conditional_t<valid, T, OutOfBounds<T>>, false,
+                       radix, max, val * radix + digit, C...>;
   using type = _builder::type;
   static constexpr type value = _builder::value;
 };
 
-template <class T, unsigned long long radix, unsigned long long max,
+template <class T, bool start, unsigned long long radix, unsigned long long max,
           unsigned long long val>
-struct BuildIntegerImpl<T, radix, max, val> {
+struct BuildIntegerImpl<T, start, radix, max, val> {
   using type = T;
   static constexpr type value = static_cast<type>(val);
 };
 
 template <class T, unsigned long long max, char... C>
 struct BuildInteger {
-  using _builder = BuildIntegerImpl<T, 10, max, 0, C...>;
+  using _builder = BuildIntegerImpl<T, true, 10, max, 0, C...>;
   using type = _builder::type;
   static constexpr type value = _builder::value;
 };
