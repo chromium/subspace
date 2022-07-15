@@ -40,6 +40,19 @@ sus_always_inline constexpr uint32_t num_bits() noexcept {
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr auto high_bit() noexcept {
+  if constexpr (sizeof(T) == 1)
+    return T{0x80};
+  else if constexpr (sizeof(T) == 2)
+    return T{0x8000};
+  else if constexpr (sizeof(T) == 4)
+    return T{0x80000000};
+  else
+    return T{0x8000000000000000};
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr auto max_value() noexcept {
   if constexpr (sizeof(T) == 1)
@@ -91,11 +104,21 @@ sus_always_inline constexpr uint32_t count_ones(T value) noexcept {
 #endif
 }
 
-// TODO: Any way to make it constexpr?
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
-sus_always_inline uint32_t
+constexpr sus_always_inline uint32_t
     leading_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
+  if (std::is_constant_evaluated()) {
+    uint32_t count = 0;
+    for (size_t i = 0; i < sizeof(T) * 8; ++i) {
+      const bool zero = (value & high_bit<T>()) == 0;
+      if (!zero) break;
+      count += 1;
+      value <<= 1;
+    }
+    return count;
+  }
+
 #if _MSC_VER
   if constexpr (sizeof(value) == 8u) {
 #if 1
@@ -149,10 +172,9 @@ sus_always_inline uint32_t
 #endif
 }
 
-// TODO: Any way to make it constexpr?
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
-sus_always_inline uint32_t leading_zeros(T value) noexcept {
+constexpr sus_always_inline uint32_t leading_zeros(T value) noexcept {
   if (value == 0) return static_cast<uint32_t>(sizeof(T) * 8u);
   return leading_zeros_nonzero(unsafe_fn, value);
 }
@@ -165,8 +187,19 @@ sus_always_inline uint32_t leading_zeros(T value) noexcept {
 // TODO: Any way to make it constexpr?
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
-sus_always_inline uint32_t
+constexpr sus_always_inline uint32_t
     trailing_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
+  if (std::is_constant_evaluated()) {
+    uint32_t count = 0;
+    for (size_t i = 0; i < sizeof(T) * 8; ++i) {
+      const bool zero = (value & 1) == 0;
+      if (!zero) break;
+      count += 1;
+      value >>= 1;
+    }
+    return count;
+  }
+
 #if _MSC_VER
   if constexpr (sizeof(value) == 8u) {
     unsigned long index;
@@ -199,7 +232,7 @@ sus_always_inline uint32_t
 // TODO: Any way to make it constexpr?
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
-sus_always_inline uint32_t trailing_zeros(T value) noexcept {
+constexpr sus_always_inline uint32_t trailing_zeros(T value) noexcept {
   if (value == 0) return static_cast<uint32_t>(sizeof(T) * 8u);
   return trailing_zeros_nonzero(unsafe_fn, value);
 }
@@ -248,6 +281,33 @@ sus_always_inline constexpr T rotate_right(T value, uint32_t n) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr T swap_bytes(T value) noexcept {
+  if (std::is_constant_evaluated()) {
+    if constexpr (sizeof(T) == 1) {
+      return value;
+    } else if constexpr (sizeof(T) == 2) {
+      unsigned char a = (value >> 0) & 0xff;
+      unsigned char b = (value >> 8) & 0xff;
+      return (a << 8) | (b << 0);
+    } else if constexpr (sizeof(T) == 4) {
+      unsigned char a = (value >> 0) & 0xff;
+      unsigned char b = (value >> 8) & 0xff;
+      unsigned char c = (value >> 16) & 0xff;
+      unsigned char d = (value >> 24) & 0xff;
+      return (a << 24) | (b << 16) | (c << 8) | (d << 0);
+    } else if constexpr (sizeof(T) == 8) {
+      unsigned char a = (value >> 0) & 0xff;
+      unsigned char b = (value >> 8) & 0xff;
+      unsigned char c = (value >> 16) & 0xff;
+      unsigned char d = (value >> 24) & 0xff;
+      unsigned char e = (value >> 32) & 0xff;
+      unsigned char f = (value >> 40) & 0xff;
+      unsigned char g = (value >> 48) & 0xff;
+      unsigned char h = (value >> 56) & 0xff;
+      return (a << 24) | (b << 16) | (c << 8) | (d << 0) | (e << 24) |
+             (f << 16) | (g << 8) | (h << 0);
+    }
+  }
+
 #if _MSC_VER
   if constexpr (sizeof(T) <= sizeof(unsigned short)) {
     using U = unsigned short;

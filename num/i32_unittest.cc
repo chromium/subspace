@@ -151,6 +151,28 @@ TEST(i32, Traits) {
   constexpr std::strong_ordering o = 2_i32 <=> 3_i32;
 }
 
+TEST(i32, Literals) {
+  // Hex.
+  static_assert((0x123abC_i32).primitive_value == 0x123abC);
+  static_assert((0X123abC_i32).primitive_value == 0X123abC);
+  static_assert((0X00123abC_i32).primitive_value == 0X123abC);
+  EXPECT_EQ((0x123abC_i32).primitive_value, 0x123abC);
+  EXPECT_EQ((0X123abC_i32).primitive_value, 0X123abC);
+  EXPECT_EQ((0X00123abC_i32).primitive_value, 0X123abC);
+  // Binary.
+  static_assert((0b101_i32).primitive_value == 0b101);
+  static_assert((0B101_i32).primitive_value == 0B101);
+  static_assert((0b00101_i32).primitive_value == 0b101);
+  EXPECT_EQ((0b101_i32).primitive_value, 0b101);
+  EXPECT_EQ((0B101_i32).primitive_value, 0B101);
+  EXPECT_EQ((0b00101_i32).primitive_value, 0b101);
+  // Octal.
+  static_assert((0123_i32).primitive_value == 0123);
+  static_assert((000123_i32).primitive_value == 0123);
+  EXPECT_EQ((0123_i32).primitive_value, 0123);
+  EXPECT_EQ((000123_i32).primitive_value, 0123);
+}
+
 TEST(i32, Constants) {
   constexpr auto max = i32::MAX();
   static_assert(std::same_as<decltype(max), const i32>);
@@ -1095,12 +1117,12 @@ TEST(i32, WrappingSub) {
 }
 
 TEST(i32, CountOnes) {
-  EXPECT_EQ(
-      []() constexpr { return (7_i32).count_ones(); }(), 3);
-  EXPECT_EQ(
-      []() constexpr { return (0_i32).count_ones(); }(), 0);
-  EXPECT_EQ(
-      []() constexpr { return (-1_i32).count_ones(); }(), 32);
+  constexpr auto a1 = (7_i32).count_ones();
+  EXPECT_EQ(a1, 3u);
+  constexpr auto a2 = (0_i32).count_ones();
+  EXPECT_EQ(a2, 0u);
+  constexpr auto a3 = (-1_i32).count_ones();
+  EXPECT_EQ(a3, 32u);
 
   EXPECT_EQ((7_i32).count_ones(), 3);
   EXPECT_EQ((0_i32).count_ones(), 0);
@@ -1108,12 +1130,12 @@ TEST(i32, CountOnes) {
 }
 
 TEST(i32, CountZeros) {
-  EXPECT_EQ(
-      []() constexpr { return (7_i32).count_zeros(); }(), 32 - 3);
-  EXPECT_EQ(
-      []() constexpr { return (0_i32).count_zeros(); }(), 32);
-  EXPECT_EQ(
-      []() constexpr { return (-1_i32).count_zeros(); }(), 0);
+  constexpr auto a1 = (7_i32).count_zeros();
+  EXPECT_EQ(a1, 32u - 3u);
+  constexpr auto a2 = (0_i32).count_zeros();
+  EXPECT_EQ(a2, 32u);
+  constexpr auto a3 = (-1_i32).count_zeros();
+  EXPECT_EQ(a3, 0u);
 
   EXPECT_EQ((7_i32).count_zeros(), 32 - 3);
   EXPECT_EQ((0_i32).count_zeros(), 32);
@@ -1121,12 +1143,12 @@ TEST(i32, CountZeros) {
 }
 
 TEST(i32, IsNegative) {
-  EXPECT_EQ(
-      []() constexpr { return (7_i32).is_negative(); }(), false);
-  EXPECT_EQ(
-      []() constexpr { return (0_i32).is_negative(); }(), false);
-  EXPECT_EQ(
-      []() constexpr { return (-1_i32).is_negative(); }(), true);
+  constexpr auto a1 = (7_i32).is_negative();
+  EXPECT_EQ(a1, false);
+  constexpr auto a2 = (0_i32).is_negative();
+  EXPECT_EQ(a2, false);
+  constexpr auto a3 = (-1_i32).is_negative();
+  EXPECT_EQ(a3, true);
 
   EXPECT_EQ((7_i32).is_negative(), false);
   EXPECT_EQ((0_i32).is_negative(), false);
@@ -1134,12 +1156,12 @@ TEST(i32, IsNegative) {
 }
 
 TEST(i32, IsPositive) {
-  EXPECT_EQ(
-      []() constexpr { return (7_i32).is_positive(); }(), true);
-  EXPECT_EQ(
-      []() constexpr { return (0_i32).is_positive(); }(), false);
-  EXPECT_EQ(
-      []() constexpr { return (-1_i32).is_positive(); }(), false);
+  constexpr auto a1 = (7_i32).is_positive();
+  EXPECT_EQ(a1, true);
+  constexpr auto a2 = (0_i32).is_positive();
+  EXPECT_EQ(a2, false);
+  constexpr auto a3 = (-1_i32).is_positive();
+  EXPECT_EQ(a3, false);
 
   EXPECT_EQ((7_i32).is_positive(), true);
   EXPECT_EQ((0_i32).is_positive(), false);
@@ -1147,12 +1169,16 @@ TEST(i32, IsPositive) {
 }
 
 TEST(i32, LeadingZeros) {
-  // TODO: Can we make this constexpr?
-  // [[maybe_unused]] constexpr auto a1 = (0_i32).leading_zeros();
-  // [[maybe_unused]] constexpr auto a2 = (1_i32).leading_zeros();
-  // [[maybe_unused]] constexpr auto a3 = (3_i32).leading_zeros();
-  // [[maybe_unused]] constexpr auto a4 = (i32::MAX()).leading_zeros();
-  // [[maybe_unused]] constexpr auto a5 = (-1_i32).leading_zeros();
+  constexpr auto a1 = (0_i32).leading_zeros();
+  EXPECT_EQ(a1, 32);
+  constexpr auto a2 = (1_i32).leading_zeros();
+  EXPECT_EQ(a2, 31);
+  constexpr auto a3 = (3_i32).leading_zeros();
+  EXPECT_EQ(a3, 30);
+  constexpr auto a4 = (i32::MAX()).leading_zeros();
+  EXPECT_EQ(a4, 1);
+  constexpr auto a5 = (-1_i32).leading_zeros();
+  EXPECT_EQ(a5, 0);
 
   EXPECT_EQ((0_i32).leading_zeros(), 32);
   EXPECT_EQ((1_i32).leading_zeros(), 31);
@@ -1162,12 +1188,16 @@ TEST(i32, LeadingZeros) {
 }
 
 TEST(i32, LeadingOnes) {
-  // TODO: Can we make this constexpr?
-  // [[maybe_unused]] constexpr auto a1 = (0_i32).leading_ones();
-  // [[maybe_unused]] constexpr auto a2 = (1_i32).leading_ones();
-  // [[maybe_unused]] constexpr auto a3 = (i32::MAX()).leading_ones();
-  // [[maybe_unused]] constexpr auto a4 = (-1_i32).leading_ones();
-  // [[maybe_unused]] constexpr auto a5 = (-2_i32).leading_ones();
+  constexpr auto a1 = (0_i32).leading_ones();
+  EXPECT_EQ(a1, 0);
+  constexpr auto a2 = (1_i32).leading_ones();
+  EXPECT_EQ(a2, 0);
+  constexpr auto a3 = (i32::MAX()).leading_ones();
+  EXPECT_EQ(a3, 0);
+  constexpr auto a4 = (-1_i32).leading_ones();
+  EXPECT_EQ(a4, 32);
+  constexpr auto a5 = (-2_i32).leading_ones();
+  EXPECT_EQ(a5, 31);
 
   EXPECT_EQ((0_i32).leading_ones(), 0);
   EXPECT_EQ((1_i32).leading_ones(), 0);
@@ -1177,12 +1207,16 @@ TEST(i32, LeadingOnes) {
 }
 
 TEST(i32, TrailingZeros) {
-  // TODO: Can we make this constexpr?
-  // [[maybe_unused]] constexpr auto a1 = (0_i32).trailing_zeros();
-  // [[maybe_unused]] constexpr auto a2 = (1_i32).trailing_zeros();
-  // [[maybe_unused]] constexpr auto a3 = (2_i32).trailing_zeros();
-  // [[maybe_unused]] constexpr auto a4 = (i32::MIN()).trailing_zeros();
-  // [[maybe_unused]] constexpr auto a5 = (-1_i32).trailing_zeros();
+  constexpr auto a1 = (0_i32).trailing_zeros();
+  EXPECT_EQ(a1, 32);
+  constexpr auto a2 = (1_i32).trailing_zeros();
+  EXPECT_EQ(a2, 0);
+  constexpr auto a3 = (2_i32).trailing_zeros();
+  EXPECT_EQ(a3, 1);
+  constexpr auto a4 = (i32::MIN()).trailing_zeros();
+  EXPECT_EQ(a4, 31);
+  constexpr auto a5 = (-1_i32).trailing_zeros();
+  EXPECT_EQ(a5, 0);
 
   EXPECT_EQ((0_i32).trailing_zeros(), 32);
   EXPECT_EQ((1_i32).trailing_zeros(), 0);
@@ -1192,12 +1226,16 @@ TEST(i32, TrailingZeros) {
 }
 
 TEST(i32, TrailingOnes) {
-  // TODO: Can we make this constexpr?
-  // [[maybe_unused]] constexpr auto a1 = (0_i32).trailing_ones();
-  // [[maybe_unused]] constexpr auto a2 = (1_i32).trailing_ones();
-  // [[maybe_unused]] constexpr auto a3 = (3_i32).trailing_ones();
-  // [[maybe_unused]] constexpr auto a4 = (i32::MIN()).trailing_ones();
-  // [[maybe_unused]] constexpr auto a5 = (-1_i32).trailing_ones();
+  constexpr auto a1 = (0_i32).trailing_ones();
+  EXPECT_EQ(a1, 0);
+  constexpr auto a2 = (1_i32).trailing_ones();
+  EXPECT_EQ(a2, 1);
+  constexpr auto a3 = (3_i32).trailing_ones();
+  EXPECT_EQ(a3, 2);
+  constexpr auto a4 = (i32::MAX()).trailing_ones();
+  EXPECT_EQ(a4, 31);
+  constexpr auto a5 = (-1_i32).trailing_ones();
+  EXPECT_EQ(a5, 32);
 
   EXPECT_EQ((0_i32).trailing_ones(), 0);
   EXPECT_EQ((1_i32).trailing_ones(), 1);
@@ -1271,22 +1309,20 @@ TEST(i32, WrappingPow) {
 }
 
 TEST(i32, ReverseBits) {
-  EXPECT_EQ(
-      []() constexpr { return (0_i32).reverse_bits(); }(), 0_i32);
-  EXPECT_EQ(
-      []() constexpr { return (2_i32).reverse_bits(); }(), i32(1 << 30));
-  EXPECT_EQ(
-      []() constexpr { return (i32(0x00f8f800)).reverse_bits(); }(),
-      i32(0x001f1f00));
-  EXPECT_EQ(
-      []() constexpr { return (i32(-1)).reverse_bits(); }(), i32(-1));
-  EXPECT_EQ(
-      []() constexpr { return (i32(1)).reverse_bits(); }().primitive_value,
-      i32::MIN());
+  constexpr auto a1 = (0_i32).reverse_bits();
+  EXPECT_EQ(a1, 0_i32);
+  constexpr auto a2 = (2_i32).reverse_bits();
+  EXPECT_EQ(a2, i32(1 << 30));
+  constexpr auto a3 = (0xf8f800_i32).reverse_bits();
+  EXPECT_EQ(a3, 0x1f1f00_i32);
+  constexpr auto a4 = (i32(-1)).reverse_bits();
+  EXPECT_EQ(a4, i32(-1));
+  constexpr auto a5 = i32(1).reverse_bits();
+  EXPECT_EQ(a5, i32::MIN());
 
   EXPECT_EQ((0_i32).reverse_bits(), 0_i32);
   EXPECT_EQ((2_i32).reverse_bits(), i32(1 << 30));
-  EXPECT_EQ((i32(0x00f8f800)).reverse_bits(), i32(0x001f1f00));
+  EXPECT_EQ((0xf8f800_i32).reverse_bits(), 0x1f1f00_i32);
   EXPECT_EQ((i32(-1)).reverse_bits(), i32(-1));
   EXPECT_EQ((i32(1)).reverse_bits().primitive_value, i32::MIN());
 }
@@ -1315,12 +1351,12 @@ TEST(i32, RotateRight) {
 }
 
 TEST(i32, Signum) {
-  EXPECT_EQ(
-      []() constexpr { return (i32(10_i32)).signum(); }(), i32(1));
-  EXPECT_EQ(
-      []() constexpr { return (i32(0_i32)).signum(); }(), i32(0));
-  EXPECT_EQ(
-      []() constexpr { return (i32(-7_i32)).signum(); }(), i32(-1));
+  constexpr auto a1 = (10_i32).signum();
+  EXPECT_EQ(a1, i32(1));
+  constexpr auto a2 = (0_i32).signum();
+  EXPECT_EQ(a2, i32(0));
+  constexpr auto a3 = (-7_i32).signum();
+  EXPECT_EQ(a3, i32(-1));
 
   EXPECT_EQ((i32(10_i32)).signum(), i32(1));
   EXPECT_EQ((i32(0_i32)).signum(), i32(0));
@@ -1328,9 +1364,8 @@ TEST(i32, Signum) {
 }
 
 TEST(i32, SwapBytes) {
-  EXPECT_EQ(
-      []() constexpr { return (i32(0x12345678_i32)).swap_bytes(); }(),
-      0x78563412_i32);
+  constexpr auto a = (0x12345678_i32).swap_bytes();
+  EXPECT_EQ(a, 0x78563412_i32);
 
   EXPECT_EQ((0x12345678_i32).swap_bytes(), 0x78563412_i32);
   EXPECT_EQ((0_i32).swap_bytes(), 0_i32);
@@ -1339,8 +1374,8 @@ TEST(i32, SwapBytes) {
 }
 
 TEST(i32, Log2) {
-  // TODO: Can we make this constexpr?
-  // constexpr auto a = (2_i32).log2();
+  constexpr auto a = (2_i32).log2();
+  EXPECT_EQ(a, 1u);
 
   EXPECT_EQ((2_i32).log2(), 1u);
   EXPECT_EQ((55555_i32).log2(), 15u);
@@ -1355,8 +1390,8 @@ TEST(i32DeathTest, Log2NonPositive) {
 }
 
 TEST(i32, CheckedLog2) {
-  // TODO: Can we make this constexpr?
-  // constexpr auto a = (2_i32).checked_log2();
+  constexpr auto a = (2_i32).checked_log2();
+  EXPECT_EQ(a, Option<uint32_t>::some(1u));
 
   EXPECT_EQ((2_i32).checked_log2(), Option<uint32_t>::some(1u));
   EXPECT_EQ((55555_i32).checked_log2(), Option<uint32_t>::some(15u));
@@ -1366,7 +1401,8 @@ TEST(i32, CheckedLog2) {
 }
 
 TEST(i32, Log10) {
-  [[maybe_unused]] constexpr auto a = (2_i32).log10();
+  constexpr auto a = (55555_i32).log10();
+  EXPECT_EQ(a, 4u);
 
   EXPECT_EQ((2_i32).log10(), 0u);
   EXPECT_EQ((55555_i32).log10(), 4u);
@@ -1381,7 +1417,8 @@ TEST(i32DeathTest, Log10NonPositive) {
 }
 
 TEST(i32, CheckedLog10) {
-  constexpr auto a = (2_i32).checked_log10();
+  constexpr auto a = (55555_i32).checked_log10();
+  EXPECT_EQ(a, Option<uint32_t>::some(4u));
 
   EXPECT_EQ((2_i32).checked_log10(), Option<uint32_t>::some(0u));
   EXPECT_EQ((55555_i32).checked_log10(), Option<uint32_t>::some(4u));
@@ -1391,7 +1428,8 @@ TEST(i32, CheckedLog10) {
 }
 
 TEST(i32, Log) {
-  [[maybe_unused]] constexpr auto a = (2_i32).log(10_i32);
+  constexpr auto a = (55555_i32).log(10_i32);
+  EXPECT_EQ(a, 4u);
 
   EXPECT_EQ((2_i32).log(10_i32), 0u);
   EXPECT_EQ((55555_i32).log(10_i32), 4u);
@@ -1409,13 +1447,178 @@ TEST(i32DeathTest, LogNonPositive) {
 }
 
 TEST(i32, CheckedLog) {
-  constexpr auto a = (2_i32).checked_log(10_i32);
+  constexpr auto a = (55555_i32).checked_log(10_i32);
+  EXPECT_EQ(a, Option<uint32_t>::some(4u));
 
   EXPECT_EQ((2_i32).checked_log(10_i32), Option<uint32_t>::some(0u));
   EXPECT_EQ((55555_i32).checked_log(10_i32), Option<uint32_t>::some(4u));
-  EXPECT_EQ((i32::MAX()).checked_log(10_i32), Option<uint32_t>::some(9u));
+  EXPECT_EQ(i32::MAX().checked_log(10_i32), Option<uint32_t>::some(9u));
   EXPECT_EQ((0_i32).checked_log(10_i32), Option<uint32_t>::none());
   EXPECT_EQ((-1_i32).checked_log(10_i32), Option<uint32_t>::none());
+}
+
+TEST(i32, ToBe) {
+  if constexpr (sus::assertions::is_little_endian()) {
+    constexpr auto a = (0x12345678_i32).to_be();
+    EXPECT_EQ(a, 0x78563412_i32);
+
+    EXPECT_EQ((0x12345678_i32).to_be(), 0x78563412_i32);
+    EXPECT_EQ((0_i32).to_be(), 0_i32);
+    EXPECT_EQ((-1_i32).to_be(), -1_i32);
+    EXPECT_EQ(i32::MIN().to_be(), 0x80_i32);
+  } else {
+    constexpr auto a = (0x12345678_i32).to_be();
+    EXPECT_EQ(a, 0x12345678_i32);
+
+    EXPECT_EQ((0x12345678_i32).to_be(), 0x12345678_i32);
+    EXPECT_EQ((0_i32).to_be(), 0_i32);
+    EXPECT_EQ((-1_i32).to_be(), -1_i32);
+    EXPECT_EQ(i32::MIN().to_be(), i32::MIN());
+  }
+}
+
+TEST(i32, FromBe) {
+  if constexpr (sus::assertions::is_little_endian()) {
+    constexpr auto a = i32::from_be(0x12345678_i32);
+    EXPECT_EQ(a, 0x78563412_i32);
+
+    EXPECT_EQ(i32::from_be(0x12345678_i32), 0x78563412_i32);
+    EXPECT_EQ(i32::from_be(0_i32), 0_i32);
+    EXPECT_EQ(i32::from_be(-1_i32), -1_i32);
+    EXPECT_EQ(i32::from_be(i32::MIN()), 0x80_i32);
+  } else {
+    constexpr auto a = i32::from_be(0x12345678_i32);
+    EXPECT_EQ(a, 0x12345678_i32);
+
+    EXPECT_EQ(i32::from_be(0x12345678_i32), 0x12345678_i32);
+    EXPECT_EQ(i32::from_be(0_i32), 0_i32);
+    EXPECT_EQ(i32::from_be(-1_i32), -1_i32);
+    EXPECT_EQ(i32::from_be(i32::MIN()), i32::MIN());
+  }
+}
+
+TEST(i32, ToLe) {
+  if constexpr (sus::assertions::is_big_endian()) {
+    constexpr auto a = (0x12345678_i32).to_le();
+    EXPECT_EQ(a, 0x78563412_i32);
+
+    EXPECT_EQ((0x12345678_i32).to_le(), 0x78563412_i32);
+    EXPECT_EQ((0_i32).to_le(), 0_i32);
+    EXPECT_EQ((-1_i32).to_le(), -1_i32);
+    EXPECT_EQ(i32::MIN().to_le(), 0x80_i32);
+  } else {
+    constexpr auto a = (0x12345678_i32).to_le();
+    EXPECT_EQ(a, 0x12345678_i32);
+
+    EXPECT_EQ((0x12345678_i32).to_le(), 0x12345678_i32);
+    EXPECT_EQ((0_i32).to_le(), 0_i32);
+    EXPECT_EQ((-1_i32).to_le(), -1_i32);
+    EXPECT_EQ(i32::MIN().to_le(), i32::MIN());
+  }
+}
+
+TEST(i32, FromLe) {
+  if constexpr (sus::assertions::is_big_endian()) {
+    constexpr auto a = i32::from_le(0x12345678_i32);
+    EXPECT_EQ(a, 0x78563412_i32);
+
+    EXPECT_EQ(i32::from_le(0x12345678_i32), 0x78563412_i32);
+    EXPECT_EQ(i32::from_le(0_i32), 0_i32);
+    EXPECT_EQ(i32::from_le(-1_i32), -1_i32);
+    EXPECT_EQ(i32::from_le(i32::MIN()), 0x80_i32);
+  } else {
+    constexpr auto a = i32::from_le(0x12345678_i32);
+    EXPECT_EQ(a, 0x12345678_i32);
+
+    EXPECT_EQ(i32::from_le(0x12345678_i32), 0x12345678_i32);
+    EXPECT_EQ(i32::from_le(0_i32), 0_i32);
+    EXPECT_EQ(i32::from_le(-1_i32), -1_i32);
+    EXPECT_EQ(i32::from_le(i32::MIN()), i32::MIN());
+  }
+}
+
+TEST(i32, ToBeBytes) {
+  if constexpr (sus::assertions::is_little_endian()) {
+    {
+      constexpr auto a = (0x12345678_i32).to_be_bytes();
+      EXPECT_EQ(a.get(0), 0x12);
+      EXPECT_EQ(a.get(1), 0x34);
+      EXPECT_EQ(a.get(2), 0x56);
+      EXPECT_EQ(a.get(3), 0x78);
+    }
+    {
+      auto a = (0x12345678_i32).to_be_bytes();
+      EXPECT_EQ(a.get(0), 0x12);
+      EXPECT_EQ(a.get(1), 0x34);
+      EXPECT_EQ(a.get(2), 0x56);
+      EXPECT_EQ(a.get(3), 0x78);
+    }
+  } else {
+    {
+      constexpr auto a = (0x12345678_i32).to_be_bytes();
+      EXPECT_EQ(a.get(0), 0x12);
+      EXPECT_EQ(a.get(1), 0x34);
+      EXPECT_EQ(a.get(2), 0x56);
+      EXPECT_EQ(a.get(3), 0x78);
+    }
+    {
+      auto a = (0x12345678_i32).to_be_bytes();
+      EXPECT_EQ(a.get(0), 0x12);
+      EXPECT_EQ(a.get(1), 0x34);
+      EXPECT_EQ(a.get(2), 0x56);
+      EXPECT_EQ(a.get(3), 0x78);
+    }
+  }
+}
+
+TEST(i32, ToLeBytes) {
+  if constexpr (sus::assertions::is_big_endian()) {
+    constexpr auto a = (0x12345678_i32).to_le_bytes();
+    EXPECT_EQ(a.get(0), 0x78);
+    EXPECT_EQ(a.get(1), 0x56);
+    EXPECT_EQ(a.get(2), 0x34);
+    EXPECT_EQ(a.get(3), 0x12);
+  } else {
+    auto a = (0x12345678_i32).to_le_bytes();
+    EXPECT_EQ(a.get(0), 0x78);
+    EXPECT_EQ(a.get(1), 0x56);
+    EXPECT_EQ(a.get(2), 0x34);
+    EXPECT_EQ(a.get(3), 0x12);
+  }
+}
+
+TEST(i32, ToNeBytes) {
+  if constexpr (sus::assertions::is_big_endian()) {
+    {
+      constexpr auto a = (0x12345678_i32).to_ne_bytes();
+      EXPECT_EQ(a.get(0), 0x12);
+      EXPECT_EQ(a.get(1), 0x34);
+      EXPECT_EQ(a.get(2), 0x56);
+      EXPECT_EQ(a.get(3), 0x78);
+    }
+    {
+      auto a = (0x12345678_i32).to_ne_bytes();
+      EXPECT_EQ(a.get(0), 0x12);
+      EXPECT_EQ(a.get(1), 0x34);
+      EXPECT_EQ(a.get(2), 0x56);
+      EXPECT_EQ(a.get(3), 0x78);
+    }
+  } else {
+    {
+      constexpr auto a = (0x12345678_i32).to_ne_bytes();
+      EXPECT_EQ(a.get(0), 0x78);
+      EXPECT_EQ(a.get(1), 0x56);
+      EXPECT_EQ(a.get(2), 0x34);
+      EXPECT_EQ(a.get(3), 0x12);
+    }
+    {
+      auto a = (0x12345678_i32).to_ne_bytes();
+      EXPECT_EQ(a.get(0), 0x78);
+      EXPECT_EQ(a.get(1), 0x56);
+      EXPECT_EQ(a.get(2), 0x34);
+      EXPECT_EQ(a.get(3), 0x12);
+    }
+  }
 }
 
 }  // namespace

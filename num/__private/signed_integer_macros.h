@@ -19,6 +19,8 @@
 #include <compare>
 
 #include "assertions/check.h"
+#include "assertions/endian.h"
+#include "containers/array.h"
 #include "marker/unsafe.h"
 #include "num/__private/int_log10.h"
 #include "num/__private/intrinsics.h"
@@ -54,7 +56,8 @@
   _sus__signed_sub(T, UnsignedT);                \
   _sus__signed_bits(T, UnsignedT);               \
   _sus__signed_pow(T);                           \
-  _sus__signed_log(T)
+  _sus__signed_log(T);                           \
+  _sus__signed_endian(T, UnsignedT)
 
 #define _sus__signed_integer_comparison(T)                                     \
   /** Returns true if the current value is positive and false if the number is \
@@ -797,32 +800,28 @@
   /** Returns the number of leading ones in the binary representation of the    \
    * current value.                                                             \
    */                                                                           \
-  /* TODO: Can we make this constexpr? */                                       \
-  /* TODO:u32 */ uint32_t leading_ones() const& noexcept {                      \
+  constexpr /* TODO:u32 */ uint32_t leading_ones() const& noexcept {            \
     return (~(*this)).leading_zeros();                                          \
   }                                                                             \
                                                                                 \
   /** Returns the number of leading zeros in the binary representation of the   \
    * current value.                                                             \
    */                                                                           \
-  /* TODO: Can we make this constexpr? */                                       \
-  /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {                     \
+  constexpr /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {           \
     return __private::leading_zeros(static_cast<UnsignedT>(primitive_value));   \
   }                                                                             \
                                                                                 \
   /** Returns the number of trailing ones in the binary representation of the   \
    * current value.                                                             \
    */                                                                           \
-  /* TODO: Can we make this constexpr? */                                       \
-  /* TODO:u32 */ uint32_t trailing_ones() const& noexcept {                     \
+  constexpr /* TODO:u32 */ uint32_t trailing_ones() const& noexcept {           \
     return (~(*this)).trailing_zeros();                                         \
   }                                                                             \
                                                                                 \
   /** Returns the number of trailing zeros in the binary representation of the  \
    * current value.                                                             \
    */                                                                           \
-  /* TODO: Can we make this constexpr? */                                       \
-  /* TODO:u32 */ uint32_t trailing_zeros() const& noexcept {                    \
+  constexpr /* TODO:u32 */ uint32_t trailing_zeros() const& noexcept {          \
     return __private::trailing_zeros(static_cast<UnsignedT>(primitive_value));  \
   }                                                                             \
                                                                                 \
@@ -918,7 +917,6 @@
     if (primitive_value <= 0) [[unlikely]] {                                   \
       return Option<uint32_t>::none();                                         \
     } else {                                                                   \
-      /* TODO: Can we make this constexpr? */                                  \
       uint32_t zeros = __private::leading_zeros_nonzero(                       \
           unsafe_fn, static_cast<uint32_t>(primitive_value));                  \
       return Option<uint32_t>::some(BITS() - 1 - zeros);                       \
@@ -988,4 +986,128 @@
   constexpr /* TODO: u32 */ uint32_t log(const T& base) const& noexcept {      \
     return checked_log(base).unwrap();                                         \
   }                                                                            \
+  static_assert(true)
+
+#define _sus__signed_endian(T, UnsignedT)                                       \
+  /** Converts an integer from big endian to the target’s endianness.         \
+   *                                                                            \
+   * On big endian this is a no-op. On little endian the bytes are swapped.     \
+   */                                                                           \
+  static constexpr i32 from_be(const i32& x) noexcept {                         \
+    if (::sus::assertions::is_big_endian())                                     \
+      return x;                                                                 \
+    else                                                                        \
+      return x.swap_bytes();                                                    \
+  }                                                                             \
+                                                                                \
+  /** Converts an integer from little endian to the target's endianness.        \
+   *                                                                            \
+   * On little endian this is a no-op. On big endian the bytes are swapped.     \
+   */                                                                           \
+  static constexpr i32 from_le(const i32& x) noexcept {                         \
+    if (::sus::assertions::is_little_endian())                                  \
+      return x;                                                                 \
+    else                                                                        \
+      return x.swap_bytes();                                                    \
+  }                                                                             \
+                                                                                \
+  /** Converts self to big endian from the target’s endianness.               \
+   *                                                                            \
+   * On big endian this is a no-op. On little endian the bytes are swapped.     \
+   */                                                                           \
+  constexpr i32 to_be() const& noexcept {                                       \
+    if (::sus::assertions::is_big_endian())                                     \
+      return *this;                                                             \
+    else                                                                        \
+      return swap_bytes();                                                      \
+  }                                                                             \
+                                                                                \
+  /** Converts self to little endian from the target’s endianness.            \
+   *                                                                            \
+   * On little endian this is a no-op. On big endian the bytes are swapped.     \
+   */                                                                           \
+  constexpr i32 to_le() const& noexcept {                                       \
+    if (::sus::assertions::is_little_endian())                                  \
+      return *this;                                                             \
+    else                                                                        \
+      return swap_bytes();                                                      \
+  }                                                                             \
+                                                                                \
+  /** Return the memory representation of this integer as a byte array in       \
+   * big-endian (network) byte order.                                           \
+   */                                                                           \
+  constexpr ::sus::Array</* TODO: u8 */ uint8_t, 4> to_be_bytes()               \
+      const& noexcept {                                                         \
+    return to_be().to_ne_bytes();                                               \
+  }                                                                             \
+                                                                                \
+  /** Return the memory representation of this integer as a byte array in       \
+   * little-endian byte order.                                                  \
+   */                                                                           \
+  constexpr ::sus::Array</* TODO: u8 */ uint8_t, 4> to_le_bytes()               \
+      const& noexcept {                                                         \
+    return to_le().to_ne_bytes();                                               \
+  }                                                                             \
+                                                                                \
+  /** Return the memory representation of this integer as a byte array in       \
+   * native byte order.                                                         \
+   *                                                                            \
+   * As the target platform’s native endianness is used, portable code should \
+   * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.           \
+   */                                                                           \
+  constexpr ::sus::Array</* TODO: u8 */ uint8_t, 4> to_ne_bytes()               \
+      const& noexcept {                                                         \
+    auto bytes = ::sus::Array</* TODO: u8 */ uint8_t, 4>::with_uninitialized(   \
+        unsafe_fn);                                                             \
+    if (std::is_constant_evaluated()) {                                         \
+      auto uval = static_cast<uint32_t>(primitive_value);                       \
+      for (size_t i = 0; i < sizeof(i32); ++i) {                                \
+        if (sus::assertions::is_little_endian())                                \
+          bytes.get_mut(i) = uval & 0xff;                                       \
+        else                                                                    \
+          bytes.get_mut(sizeof(i32) - 1 - i) = uval & 0xff;                     \
+        uval >>= 8;                                                             \
+      }                                                                         \
+    } else {                                                                    \
+      memcpy(bytes.as_ptr_mut(), &primitive_value, sizeof(i32));                \
+    }                                                                           \
+    return bytes;                                                               \
+  }                                                                             \
+                                                                                \
+  /** Create an integer value from its representation as a byte array in big    \
+   * endian.                                                                    \
+   */                                                                           \
+  static constexpr i32 from_be_bytes(                                           \
+      const ::sus::Array</*TODO: u8*/ uint8_t, 4>& bytes) noexcept {            \
+    return from_be(from_ne_bytes(bytes));                                       \
+  }                                                                             \
+                                                                                \
+  /** Create an integer value from its representation as a byte array in        \
+   * little endian.                                                             \
+   */                                                                           \
+  static constexpr i32 from_le_bytes(                                           \
+      const ::sus::Array</*TODO: u8*/ uint8_t, 4>& bytes) noexcept {            \
+    return from_le(from_ne_bytes(bytes));                                       \
+  }                                                                             \
+                                                                                \
+  /** Create an integer value from its memory representation as a byte array    \
+   * in native endianness.                                                      \
+   *                                                                            \
+   * As the target platform’s native endianness is used, portable code likely \
+   * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate        \
+   * instead.                                                                   \
+   */                                                                           \
+  static constexpr i32 from_ne_bytes(                                           \
+      const ::sus::Array</*TODO: u8*/ uint8_t, 4>& bytes) noexcept {            \
+    uint32_t val;                                                               \
+    if (std::is_constant_evaluated()) {                                         \
+      val = 0;                                                                  \
+      for (size_t i = 0; i < sizeof(i32); ++i) {                                \
+        val |= bytes.get(i) << (sizeof(i32) - 1 - i);                           \
+      }                                                                         \
+    } else {                                                                    \
+      memcpy(&val, bytes.as_ptr(), sizeof(i32));                                \
+    }                                                                           \
+    return static_cast<primitive_type>(val);                                    \
+  }                                                                             \
   static_assert(true)

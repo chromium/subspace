@@ -85,17 +85,30 @@ class Array {
     ::sus::check(i < N);
     return storage_.data_[i];
   }
-  constexpr const T& at(size_t i) && = delete;
+  constexpr const T& get(size_t i) && = delete;
 
-  T& get_mut(size_t i) & noexcept
+  constexpr T& get_mut(size_t i) & noexcept
     requires(N > 0)
   {
     ::sus::check(i < N);
     return storage_.data_[i];
   }
 
+  constexpr const T* as_ptr() const & noexcept
+    requires(N > 0)
+  {
+    return &storage_.data_[0];
+  }
+  const T* as_ptr() && = delete;
+
+  constexpr T* as_ptr_mut() & noexcept
+    requires(N > 0)
+  {
+    return &storage_.data_[0];
+  }
+
  private:
-  Array() {}
+  constexpr Array() {}
 
   enum WithInitializer { kWithInitializer };
   template <class F, size_t... Is>
