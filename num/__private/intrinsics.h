@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <type_traits>
@@ -43,13 +44,19 @@ template <class T>
   requires(std::is_integral_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr auto high_bit() noexcept {
   if constexpr (sizeof(T) == 1)
-    return T{0x80};
+    return static_cast<T>(0x80);
   else if constexpr (sizeof(T) == 2)
-    return T{0x8000};
+    return static_cast<T>(0x8000);
   else if constexpr (sizeof(T) == 4)
-    return T{0x80000000};
+    return static_cast<T>(0x80000000);
   else
-    return T{0x8000000000000000};
+    return static_cast<T>(0x8000000000000000);
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T>)
+sus_always_inline constexpr auto max_value() noexcept {
+  return ~T{0};
 }
 
 template <class T>
@@ -66,9 +73,15 @@ sus_always_inline constexpr auto max_value() noexcept {
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T>)
+sus_always_inline constexpr auto min_value() noexcept {
+  return T{0};
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr auto min_value() noexcept {
-  return -max_value<T>() - 1;
+  return -max_value<T>() - T{1};
 }
 
 template <class T>
@@ -345,6 +358,17 @@ sus_always_inline constexpr auto into_unsigned(T x) noexcept {
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 4)
+sus_always_inline constexpr auto into_widened(T x) noexcept {
+  if constexpr (sizeof(x) == 1)
+    return static_cast<uint16_t>(x);
+  else if constexpr (sizeof(x) == 2)
+    return static_cast<uint32_t>(x);
+  else
+    return static_cast<uint64_t>(x);
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 4)
 sus_always_inline constexpr auto into_widened(T x) noexcept {
   if constexpr (sizeof(x) == 1)
@@ -382,10 +406,20 @@ sus_always_inline constexpr bool sign_bit(T x) noexcept {
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline
+    constexpr OverflowOut<T> add_with_overflow(T x, T y) noexcept {
+  return OverflowOut<T>{
+      .overflow = x > max_value<T>() - y,
+      .value = x + y,
+  };
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline
     constexpr OverflowOut<T> add_with_overflow(T x, T y) noexcept {
-  auto out = into_signed(into_unsigned(x) + into_unsigned(y));
+  const auto out = into_signed(into_unsigned(x) + into_unsigned(y));
   return OverflowOut<T>{
       .overflow = y >= 0 != out >= x,
       .value = out,
@@ -397,7 +431,7 @@ template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
            sizeof(T) == sizeof(U))
 sus_always_inline
     constexpr OverflowOut<T> add_with_overflow_unsigned(T x, U y) noexcept {
-  auto out = into_signed(into_unsigned(x) + y);
+  const auto out = into_signed(into_unsigned(x) + y);
   return OverflowOut<T>{
       .overflow = static_cast<U>(max_value<T>()) - static_cast<U>(x) < y,
       .value = out,
@@ -405,10 +439,20 @@ sus_always_inline
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline
+    constexpr OverflowOut<T> sub_with_overflow(T x, T y) noexcept {
+  return OverflowOut<T>{
+      .overflow = x < min_value<T>() + y,
+      .value = x - y,
+  };
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline
     constexpr OverflowOut<T> sub_with_overflow(T x, T y) noexcept {
-  auto out = into_signed(into_unsigned(x) - into_unsigned(y));
+  const auto out = into_signed(into_unsigned(x) - into_unsigned(y));
   return OverflowOut<T>{
       .overflow = y >= 0 != out <= x,
       .value = out,
@@ -420,7 +464,7 @@ template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
            sizeof(T) == sizeof(U))
 sus_always_inline
     constexpr OverflowOut<T> sub_with_overflow_unsigned(T x, U y) noexcept {
-  auto out = into_signed(into_unsigned(x) - y);
+  const auto out = into_signed(into_unsigned(x) - y);
   return OverflowOut<T>{
       .overflow = static_cast<U>(x) - static_cast<U>(min_value<T>()) < y,
       .value = out,
@@ -428,39 +472,55 @@ sus_always_inline
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 4)
+sus_always_inline
+    constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
+  // TODO: Can we use compiler intrinsics?
+  auto out = into_widened(x) * into_widened(y);
+  using Wide = decltype(out);
+  return OverflowOut{.overflow = out > Wide{max_value<T>()}, .value = static_cast<T>(out)};
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) == 8)
+sus_always_inline
+    constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
+  // TODO: For GCC/Clang, use __uint128_t:
+  // https://quuxplusone.github.io/blog/2019/02/28/is-int128-integral/
+  // For MSVC, use _umul128, but what about constexpr?? If we can't do
+  // it then make the whole function non-constexpr?
+  // https://docs.microsoft.com/en-us/cpp/intrinsics/umul128
+  static_assert(sizeof(T) != 8);
+  return OverflowOut<T>(false, T(0));
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 4)
 sus_always_inline
     constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
-  constexpr auto max = max_value<T>();
-  constexpr auto min = min_value<T>();
-  // TODO: Optimize this. Use compiler intrinsics.
+  // TODO: Can we use compiler intrinsics?
   auto out = into_widened(x) * into_widened(y);
   using Wide = decltype(out);
-  if (out <= max && out >= min) [[likely]] {
-    return OverflowOut{.overflow = false, .value = static_cast<T>(out)};
-  } else {
-    // TODO: Do we really need to loop here though, we just a signed modulo.
-    while (out > Wide{max}) out -= Wide{max} - Wide{min} + 1;
-    while (out < Wide{min}) out += Wide{max} - Wide{min} + 1;
-    return OverflowOut<T>{.overflow = true, .value = static_cast<T>(out)};
-  }
+  return OverflowOut{
+      .overflow = out > Wide{max_value<T>()} || out < Wide{min_value<T>()},
+      .value = static_cast<T>(out)};
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) == 8)
 sus_always_inline
     constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
-  // TODO: For GCC/Clang, use __int128:
+  // TODO: For GCC/Clang, use __int128_t:
   // https://quuxplusone.github.io/blog/2019/02/28/is-int128-integral/
-  // For MSVC, use _mult128, but what about constexpr?? If we can't do
+  // For MSVC, use _mul128, but what about constexpr?? If we can't do
   // it then make the whole function non-constexpr?
-  // https://docs.microsoft.com/en-us/cpp/intrinsics/mul128?view=msvc-170
+  // https://docs.microsoft.com/en-us/cpp/intrinsics/mul128
   static_assert(sizeof(T) != 8);
   return OverflowOut<T>(false, T(0));
 }
 
 template <class T>
-  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
+  requires(std::is_integral_v<T> && sizeof(T) <= 8)
 sus_always_inline
     constexpr OverflowOut<T> pow_with_overflow(T base, uint32_t exp) noexcept {
   if (exp == 0) return OverflowOut<T>{.overflow = false, .value = T{1}};
@@ -482,6 +542,21 @@ sus_always_inline
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
+           (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
+            sizeof(T) == 8))
+sus_always_inline
+    constexpr OverflowOut<T> shl_with_overflow(T x, uint32_t shift) noexcept {
+  // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
+  // of two, so we verify that sizeof(T) is a power of 2, which implies the
+  // number of bits is as well (since each byte is 2^3 bits).
+  const bool overflow = shift >= num_bits<T>();
+  if (overflow) [[unlikely]]
+    shift = shift & (num_bits<T>() - 1);
+  return OverflowOut<T>{.overflow = overflow, .value = x << shift};
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
             sizeof(T) == 8))
@@ -498,6 +573,21 @@ sus_always_inline
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
+           (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
+            sizeof(T) == 8))
+sus_always_inline
+    constexpr OverflowOut<T> shr_with_overflow(T x, uint32_t shift) noexcept {
+  // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
+  // of two, so we verify that sizeof(T) is a power of 2, which implies the
+  // number of bits is as well (since each byte is 2^3 bits).
+  const bool overflow = shift >= num_bits<T>();
+  if (overflow) [[unlikely]]
+    shift = shift & (num_bits<T>() - 1);
+  return OverflowOut<T>{.overflow = overflow, .value = x >> shift};
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
             sizeof(T) == 8))
@@ -511,6 +601,17 @@ sus_always_inline
     shift = shift & (num_bits<T>() - 1);
   return OverflowOut<T>{.overflow = overflow,
                         .value = into_signed(into_unsigned(x) >> shift)};
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr T saturating_add(T x, T y) noexcept {
+  // TODO: Optimize this? Use intrinsics?
+  const auto out = add_with_overflow(x, y);
+  if (!out.overflow) [[likely]]
+    return out.value;
+  else
+    return max_value<T>();
 }
 
 template <class T>
@@ -531,6 +632,17 @@ sus_always_inline constexpr T saturating_add(T x, T y) noexcept {
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr T saturating_sub(T x, T y) noexcept {
+  // TODO: Optimize this? Use intrinsics?
+  const auto out = sub_with_overflow(x, y);
+  if (!out.overflow) [[likely]]
+    return out.value;
+  else
+    return min_value<T>();
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr T saturating_sub(T x, T y) noexcept {
   // TODO: Optimize this? Use intrinsics?
@@ -548,16 +660,33 @@ sus_always_inline constexpr T saturating_sub(T x, T y) noexcept {
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr T saturating_mul(T x, T y) noexcept {
+  // TODO: Optimize this? Use intrinsics?
+  const auto out = mul_with_overflow(x, y);
+  if (!out.overflow) [[likely]]
+    return out.value;
+  else
+    return max_value<T>();
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr T saturating_mul(T x, T y) noexcept {
   // TODO: Optimize this? Use intrinsics?
-  auto out = mul_with_overflow(x, y);
+  const auto out = mul_with_overflow(x, y);
   if (!out.overflow) [[likely]]
     return out.value;
   else if (x > 0 == y > 0)
     return max_value<T>();
   else
     return min_value<T>();
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
+  return x + y;
 }
 
 template <class T>
@@ -568,6 +697,12 @@ sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
+  return x - y;
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
   // TODO: Are there cheaper intrinsics?
@@ -575,10 +710,24 @@ sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
 }
 
 template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr T wrapping_mul(T x, T y) noexcept {
+  return x * y;
+}
+
+template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr T wrapping_mul(T x, T y) noexcept {
   // TODO: Are there cheaper intrinsics?
   return mul_with_overflow(x, y).value;
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr T wrapping_pow(T base, uint32_t exp) noexcept {
+  // TODO: Don't need to track overflow and unsigned wraps by default, so this
+  // can be cheaper.
+  return pow_with_overflow(base, exp).value;
 }
 
 template <class T>
