@@ -94,17 +94,17 @@ class Array {
     return storage_.data_[i];
   }
 
-  constexpr const T* as_ptr() const & noexcept
+  const T* as_ptr() const & noexcept
     requires(N > 0)
   {
-    return &storage_.data_[0];
+    return storage_.data_;
   }
   const T* as_ptr() && = delete;
 
-  constexpr T* as_ptr_mut() & noexcept
+  T* as_ptr_mut() & noexcept
     requires(N > 0)
   {
-    return &storage_.data_[0];
+    return storage_.data_;
   }
 
  private:
