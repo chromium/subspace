@@ -78,11 +78,11 @@ sus_always_inline constexpr uint32_t count_ones(T value) noexcept {
   if (std::is_constant_evaluated()) {
     // Algorithm to count the number of bits in parallel, up to a 128 bit value.
     // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
-    value = value - (value >> 1) & ~T{0} / T{3};
-    value =
-        (value & ~T{0} / T{15} * T{3}) + ((value >> 2) & ~T{0} / T{15} * T{3});
-    value = (value + (value >> 4)) & ~T{0} / T{255} * T{15};
-    return T{value * (~T{0} / T{255})} >> (sizeof(T) - 1) * 8;
+    value = value - ((value >> 1) & (~T{0} / T{3}));
+    value = (value & (~T{0} / T{15} * T{3})) +
+            ((value >> 2) & (~T{0} / T{15} * T{3}));
+    value = (value + (value >> 4)) & (~T{0} / T{255} * T{15});
+    return (value * (~T{0} / T{255})) >> (sizeof(T) - 1) * 8;
   } else if constexpr (sizeof(value) <= 2) {
     return __popcnt16(uint16_t{value});
   } else if constexpr (sizeof(value) == 8) {
