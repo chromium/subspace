@@ -19,27 +19,27 @@
 #include <concepts>
 
 #include "num/__private/literals.h"
-#include "num/__private/signed_integer_macros.h"
+#include "num/__private/unsigned_integer_macros.h"
 
 namespace sus::num {
 
 /// A 32-bit signed integer.
-struct i32 {
+struct u32 {
  private:
   /// The underlying primitive type.
-  using primitive_type = int32_t;
+  using primitive_type = uint32_t;
 
  public:
   /// Default constructor, which sets the integer to 0.
   ///
   /// The trivial copy and move constructors are implicitly declared, as is the
   /// trivial destructor.
-  constexpr inline i32() noexcept = default;
+  constexpr inline u32() noexcept = default;
 
   /// Construction from the underlying primitive type.
   template <class T>
     requires(std::same_as<T, primitive_type>)  // Prevent implicit conversions.
-  constexpr inline i32(T val) noexcept : primitive_value(val) {}
+  constexpr inline u32(T val) noexcept : primitive_value(val) {}
 
   /// Assignment from the underlying primitive type.
   template <class T>
@@ -48,13 +48,19 @@ struct i32 {
     primitive_value = v;
   }
 
+  template <class T>
+    requires(std::same_as<T, size_t>)  // Prevent implicit conversions.
+  static constexpr u32 from(T v) {
+    ::sus::check(v >= T{MIN_PRIMITIVE});
+    ::sus::check(v <= T{MAX_PRIMITIVE});
+    return u32(static_cast<primitive_type>(v));
+  }
+
   // TODO: Split apart the declarations and the definitions, so they can be in
-  // i32_defn.h and i32_impl.h, allowing most of the library to just use
-  // i32_defn.h which will keep headers smaller.
-  _sus__signed_constants(i32, 0x7FFFFFFF);
-  _sus__signed_impl(i32, sizeof(primitive_type), /*LargerT=*/int64_t,
-                    /*UnsignedT=*//* TODO: u32 */ uint32_t,
-                    /*UnsignedSusT=*/u32);
+  // u32_defn.h and u32_impl.h, allowing most of the library to just use
+  // u32_defn.h which will keep headers smaller.
+  _sus__unsigned_constants(u32, 0xFFFFFFFF);
+  _sus__unsigned_impl(u32, sizeof(primitive_type), /*LargerT=*/uint64_t);
 
   // TODO: overflowing_div_euclid().
   // TODO: overflowing_rem_euclid().
@@ -66,6 +72,9 @@ struct i32 {
   // TODO: checked_rem_euclid().
   // TODO: checked_next_multiple_of().
   // TODO: from_str_radix(). Need Result type and Errors.
+  // TODO: next_power_of_two().
+  // TODO: checked_add_signed() and friends?
+  // TODO: casting to i32, and u{8-64}. Maybe i{8-64}?
 
   /// The inner primitive value, in case it needs to be unwrapped from the
   /// type. Avoid using this member except to convert when a consumer
@@ -75,19 +84,19 @@ struct i32 {
 
 }  // namespace sus::num
 
-// Promote i32 into the top-level namespace.
-using sus::num::i32;
+// Promote u32 into the top-level namespace.
+using sus::num::u32;
 
 // clang-format off
 template <char... C>
   requires requires {
     { ::sus::num::__private::BuildInteger<
-        decltype(i32::primitive_value), i32::MAX_PRIMITIVE, C...>::value
-    } -> std::same_as<const decltype(i32::primitive_value)&>;
+        decltype(u32::primitive_value), u32::MAX_PRIMITIVE, C...>::value
+    } -> std::same_as<const decltype(u32::primitive_value)&>;
   }
-i32 inline constexpr operator"" _i32() noexcept {
+u32 inline constexpr operator"" _u32() noexcept {
   using Builder = ::sus::num::__private::BuildInteger<
-    decltype(i32::primitive_value), i32::MAX_PRIMITIVE, C...>;
-  return i32(Builder::value);
+    decltype(u32::primitive_value), u32::MAX_PRIMITIVE, C...>;
+  return u32(Builder::value);
 }
 // clang-format on

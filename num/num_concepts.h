@@ -113,22 +113,22 @@ concept BitXorAssign = requires(Lhs& lhs, const Rhs& rhs) {
 
 template <class Lhs, class Output = Lhs>
 concept Shl = requires(const Lhs& lhs /* TODO: , u32 rhs */) {
-                { lhs << 2 } -> std::same_as<Output>;
+                { lhs << 2u } -> std::same_as<Output>;
               };
 
 template <class Lhs>
 concept ShlAssign = requires(Lhs& lhs /* TODO: , u32 rhs */) {
-                      { lhs <<= 2 } -> std::same_as<void>;
+                      { lhs <<= 2u } -> std::same_as<void>;
                     };
 
 template <class Lhs, class Output = Lhs>
 concept Shr = requires(const Lhs& lhs /* TODO: , u32 rhs */) {
-                { lhs >> 2 } -> std::same_as<Output>;
+                { lhs >> 2u } -> std::same_as<Output>;
               };
 
 template <class Lhs>
 concept ShrAssign = requires(Lhs& lhs /* TODO: , u32 rhs */) {
-                      { lhs >>= 2 } -> std::same_as<void>;
+                      { lhs >>= 2u } -> std::same_as<void>;
                     };
 
 // TODO: Move this out of ::num.
@@ -153,9 +153,11 @@ concept PartialOrd = WeakOrd<Lhs, Rhs> || Ord<Lhs, Rhs> ||
 template <class Lhs, class Rhs>
 concept ExclusiveOrd = Ord<Lhs, Rhs>;
 template <class Lhs, class Rhs>
-concept ExclusiveWeakOrd = !Ord<Lhs, Rhs> && WeakOrd<Lhs, Rhs>;
+concept ExclusiveWeakOrd = !
+Ord<Lhs, Rhs>&& WeakOrd<Lhs, Rhs>;
 template <class Lhs, class Rhs>
-concept ExclusivePartialOrd = !Ord<Lhs, Rhs> && !WeakOrd<Lhs, Rhs> && PartialOrd<Lhs, Rhs>;
+concept ExclusivePartialOrd = !
+Ord<Lhs, Rhs> && !WeakOrd<Lhs, Rhs> && PartialOrd<Lhs, Rhs>;
 
 // TODO: Move this out of ::num.
 //
