@@ -171,9 +171,8 @@ TEST(Tuple, Ord) {
   EXPECT_GT((Tuple<int, int, int>::with(3, 4, 2)),
             (Tuple<int, int, int>::with(3, 3, 3)));
 
-  int i;
-  int j;
-  EXPECT_LT(Tuple<int*>::with(&i), Tuple<int*>::with(&j));
+  int i[2];
+  EXPECT_LT(Tuple<int*>::with(&i[0]), Tuple<int*>::with(&i[1]));
 }
 
 TEST(Tuple, StrongOrder) {
