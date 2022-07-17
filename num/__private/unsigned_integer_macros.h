@@ -36,25 +36,25 @@
   }                                                                  \
   static_assert(true)
 
-#define _sus__unsigned_impl(T, Bytes, LargerT) \
-  _sus__unsigned_from(T);                      \
-  _sus__unsigned_integer_comparison(T);        \
-  _sus__unsigned_unary_ops(T);                 \
-  _sus__unsigned_binary_logic_ops(T);          \
-  _sus__unsigned_binary_bit_ops(T);            \
-  _sus__unsigned_mutable_logic_ops(T);         \
-  _sus__unsigned_mutable_bit_ops(T);           \
-  _sus__unsigned_abs(T);                       \
-  _sus__unsigned_add(T);                       \
-  _sus__unsigned_div(T);                       \
-  _sus__unsigned_mul(T, LargerT);              \
-  _sus__unsigned_neg(T);                       \
-  _sus__unsigned_rem(T);                       \
-  _sus__unsigned_shift(T);                     \
-  _sus__unsigned_sub(T);                       \
-  _sus__unsigned_bits(T);                      \
-  _sus__unsigned_pow(T);                       \
-  _sus__unsigned_log(T);                       \
+#define _sus__unsigned_impl(T, Bytes, SignedT, LargerT) \
+  _sus__unsigned_from(T);                               \
+  _sus__unsigned_integer_comparison(T);                 \
+  _sus__unsigned_unary_ops(T);                          \
+  _sus__unsigned_binary_logic_ops(T);                   \
+  _sus__unsigned_binary_bit_ops(T);                     \
+  _sus__unsigned_mutable_logic_ops(T);                  \
+  _sus__unsigned_mutable_bit_ops(T);                    \
+  _sus__unsigned_abs(T);                                \
+  _sus__unsigned_add(T, SignedT);                       \
+  _sus__unsigned_div(T);                                \
+  _sus__unsigned_mul(T, LargerT);                       \
+  _sus__unsigned_neg(T);                                \
+  _sus__unsigned_rem(T);                                \
+  _sus__unsigned_shift(T);                              \
+  _sus__unsigned_sub(T);                                \
+  _sus__unsigned_bits(T);                               \
+  _sus__unsigned_pow(T);                                \
+  _sus__unsigned_log(T);                                \
   _sus__unsigned_endian(T, Bytes)
 
 #define _sus__unsigned_from(T)                                              \
@@ -248,13 +248,26 @@
   }                                                            \
   static_assert(true)
 
-#define _sus__unsigned_add(T)                                                  \
+#define _sus__unsigned_add(T, SignedT)                                         \
   /** Checked integer addition. Computes self + rhs, returning None if         \
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_add(const T& rhs) const& noexcept {              \
     const auto out =                                                           \
         __private::add_with_overflow(primitive_value, rhs.primitive_value);    \
+    if (!out.overflow) [[likely]]                                              \
+      return Option<T>::some(out.value);                                       \
+    else                                                                       \
+      return Option<T>::none();                                                \
+  }                                                                            \
+                                                                               \
+  /** Checked integer addition with an unsigned rhs. Computes self + rhs,      \
+   * returning None if overflow occurred.                                      \
+   */                                                                          \
+  template <std::same_as<SignedT> S>                                           \
+  constexpr Option<T> checked_add_signed(const S& rhs) const& noexcept {       \
+    const auto out = __private::add_with_overflow_signed(primitive_value,      \
+                                                         rhs.primitive_value); \
     if (!out.overflow) [[likely]]                                              \
       return Option<T>::some(out.value);                                       \
     else                                                                       \
@@ -273,11 +286,44 @@
     return Tuple<T, bool>::with(out.value, out.overflow);                      \
   }                                                                            \
                                                                                \
+  /** Calculates self + rhs with an unsigned rhs                               \
+   *                                                                           \
+   * Returns a tuple of the addition along with a boolean indicating whether   \
+   * an arithmetic overflow would occur. If an overflow would have occurred    \
+   * then the wrapped value is returned.                                       \
+   */                                                                          \
+  template <std::same_as<SignedT> S>                                           \
+  constexpr Tuple<T, bool> overflowing_add_signed(const S& rhs)                \
+      const& noexcept {                                                        \
+    const auto r = __private::add_with_overflow_signed(primitive_value,        \
+                                                       rhs.primitive_value);   \
+    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+  }                                                                            \
+                                                                               \
   /** Saturating integer addition. Computes self + rhs, saturating at the      \
    * numeric bounds instead of overflowing.                                    \
    */                                                                          \
   constexpr T saturating_add(const T& rhs) const& noexcept {                   \
     return __private::saturating_add(primitive_value, rhs.primitive_value);    \
+  }                                                                            \
+                                                                               \
+  /** Saturating integer addition with an unsigned rhs. Computes self + rhs,   \
+   * saturating at the numeric bounds instead of overflowing.                  \
+   */                                                                          \
+  template <std::same_as<SignedT> S>                                           \
+  constexpr T saturating_add_signed(const S& rhs) const& noexcept {            \
+    const auto r = __private::add_with_overflow_signed(primitive_value,        \
+                                                       rhs.primitive_value);   \
+    if (!r.overflow) [[likely]]                                                \
+      return r.value;                                                          \
+    else {                                                                     \
+      /* TODO: Can this be done without a branch? If it's complex or uses      \
+       * compiler stuff, move into intrinsics. */                              \
+      if (rhs.primitive_value >= 0)                                            \
+        return MAX();                                                          \
+      else                                                                     \
+        return MIN();                                                          \
+    }                                                                          \
   }                                                                            \
                                                                                \
   /** Unchecked integer addition. Computes self + rhs, assuming overflow       \
@@ -298,6 +344,16 @@
    */                                                                          \
   constexpr T wrapping_add(const T& rhs) const& noexcept {                     \
     return __private::wrapping_add(primitive_value, rhs.primitive_value);      \
+  }                                                                            \
+                                                                               \
+  /** Wrapping (modular) addition with an unsigned rhs. Computes self + rhs,   \
+   * wrapping around at the boundary of the type.                              \
+   */                                                                          \
+  template <std::same_as<SignedT> S>                                           \
+  constexpr T wrapping_add_signed(const S& rhs) const& noexcept {              \
+    return __private::add_with_overflow_signed(primitive_value,                \
+                                               rhs.primitive_value)            \
+        .value;                                                                \
   }                                                                            \
   static_assert(true)
 

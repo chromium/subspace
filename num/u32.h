@@ -63,7 +63,8 @@ struct u32 {
   // u32_defn.h and u32_impl.h, allowing most of the library to just use
   // u32_defn.h which will keep headers smaller.
   _sus__unsigned_constants(u32, 0xFFFFFFFF);
-  _sus__unsigned_impl(u32, sizeof(primitive_type), /*LargerT=*/uint64_t);
+  _sus__unsigned_impl(u32, sizeof(primitive_type), /*SignedT=*/i32,
+                      /*LargerT=*/uint64_t);
 
   // TODO: overflowing_div_euclid().
   // TODO: overflowing_rem_euclid().
