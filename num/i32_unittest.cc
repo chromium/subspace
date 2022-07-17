@@ -1216,25 +1216,6 @@ TEST(i32, OverflowingSub) {
             (Tuple<i32, bool>::with(i32::MIN(), true)));
 }
 
-// ** Signed only.
-TEST(i32, OverflowingSubUnsigned) {
-  [[maybe_unused]] constexpr auto a = (-1_i32).overflowing_sub_unsigned(3u);
-
-  EXPECT_EQ((1_i32).overflowing_sub_unsigned(2u),
-            (Tuple<i32, bool>::with(-1_i32, false)));
-  EXPECT_EQ(
-      (i32::MAX()).overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-      (Tuple<i32, bool>::with(i32::MIN(), false)));
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-            (Tuple<i32, bool>::with(i32::MAX(), true)));
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
-            (Tuple<i32, bool>::with(i32::MIN(), false)));
-  EXPECT_EQ((i32::MIN() + 2_i32).overflowing_sub_unsigned(3u),
-            (Tuple<i32, bool>::with(i32::MAX(), true)));
-}
-
 TEST(i32, SaturatingSub) {
   constexpr auto a = (5_i32).saturating_sub(3_i32);
   EXPECT_EQ(a, 2_i32);
@@ -1949,6 +1930,78 @@ TEST(i32, WrappingAddUnsigned) {
                 .wrapping_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
             i32::MAX());
   EXPECT_EQ((i32::MAX() - 2_i32).wrapping_add_unsigned(3u), i32::MIN());
+}
+
+// ** Signed only.
+TEST(i32, CheckedSubUnsigned) {
+  constexpr auto a = (1_i32).checked_sub_unsigned(3u);
+  EXPECT_EQ(a, Option<i32>::some(-2_i32));
+
+  EXPECT_EQ((-1_i32).checked_sub_unsigned(2u), Option<i32>::some(-3_i32));
+  EXPECT_EQ((i32::MAX()).checked_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            Option<i32>::some(i32::MIN()));
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .checked_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            None);
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .checked_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            Option<i32>::some(i32::MIN()));
+  EXPECT_EQ((i32::MIN() + 2_i32).checked_sub_unsigned(3u), None);
+}
+
+// ** Signed only.
+TEST(i32, OverflowingSubUnsigned) {
+  constexpr auto a = (1_i32).overflowing_sub_unsigned(3u);
+  EXPECT_EQ(a, (Tuple<i32, bool>::with(-2_i32, false)));
+
+  EXPECT_EQ((-1_i32).overflowing_sub_unsigned(2u),
+            (Tuple<i32, bool>::with(-3_i32, false)));
+  EXPECT_EQ(
+      (i32::MAX()).overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+      (Tuple<i32, bool>::with(i32::MIN(), false)));
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            (Tuple<i32, bool>::with(i32::MAX(), true)));
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            (Tuple<i32, bool>::with(i32::MIN(), false)));
+  EXPECT_EQ((i32::MIN() + 2_i32).overflowing_sub_unsigned(3u),
+            (Tuple<i32, bool>::with(i32::MAX(), true)));
+}
+
+// ** Signed only.
+TEST(i32, SaturatingSubUnsigned) {
+  constexpr auto a = (1_i32).saturating_sub_unsigned(3u);
+  EXPECT_EQ(a, -2_i32);
+
+  EXPECT_EQ((-1_i32).saturating_sub_unsigned(2u), -3_i32);
+  EXPECT_EQ(
+      (i32::MAX()).saturating_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+      i32::MIN());
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .saturating_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            i32::MIN());
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .saturating_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            i32::MIN());
+  EXPECT_EQ((i32::MIN() + 2_i32).saturating_sub_unsigned(3u), i32::MIN());
+}
+
+// ** Signed only.
+TEST(i32, WrappingSubUnsigned) {
+  constexpr auto a = (1_i32).wrapping_sub_unsigned(3u);
+  EXPECT_EQ(a, -2_i32);
+
+  EXPECT_EQ((-1_i32).wrapping_sub_unsigned(2u), -3_i32);
+  EXPECT_EQ((i32::MAX()).wrapping_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            i32::MIN());
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .wrapping_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            i32::MAX());
+  EXPECT_EQ((i32::MAX() - 1_i32)
+                .wrapping_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            i32::MIN());
+  EXPECT_EQ((i32::MIN() + 2_i32).wrapping_sub_unsigned(3u), i32::MAX());
 }
 
 TEST(i32, From) {
