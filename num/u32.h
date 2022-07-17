@@ -18,8 +18,11 @@
 
 #include <concepts>
 
+#include "concepts/from.h"
+#include "concepts/into.h"
 #include "num/__private/literals.h"
 #include "num/__private/unsigned_integer_macros.h"
+#include "num/integer_concepts.h"
 
 namespace sus::num {
 
@@ -74,7 +77,6 @@ struct u32 {
   // TODO: from_str_radix(). Need Result type and Errors.
   // TODO: next_power_of_two().
   // TODO: checked_add_signed() and friends?
-  // TODO: casting to i32, and u{8-64}. Maybe i{8-64}?
 
   /// The inner primitive value, in case it needs to be unwrapped from the
   /// type. Avoid using this member except to convert when a consumer

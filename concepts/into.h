@@ -18,7 +18,6 @@
 #include <type_traits>
 
 #include "concepts/from.h"
-#include "mem/forward.h"
 
 namespace sus::concepts::into {
 
@@ -43,7 +42,7 @@ struct IntoRef {
 
 }  // namespace __private
 
-template<class FromType, class ToType>
+template <class FromType, class ToType>
 concept Into = ::sus::concepts::from::From<ToType, FromType>;
 
 template <class FromType>

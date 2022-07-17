@@ -1507,7 +1507,8 @@ TEST(i32, OverflowingPow) {
 
   EXPECT_EQ((2_i32).overflowing_pow(5_u32),
             (Tuple<i32, bool>::with(32_i32, false)));
-  EXPECT_EQ((2_i32).overflowing_pow(0_u32), (Tuple<i32, bool>::with(1_i32, false)));
+  EXPECT_EQ((2_i32).overflowing_pow(0_u32),
+            (Tuple<i32, bool>::with(1_i32, false)));
   EXPECT_EQ((i32::MAX()).overflowing_pow(1_u32),
             (Tuple<i32, bool>::with(i32::MAX(), false)));
   EXPECT_EQ((i32::MAX()).overflowing_pow(2_u32),
@@ -1522,8 +1523,7 @@ TEST(i32, CheckedPow) {
   EXPECT_EQ((2_i32).checked_pow(0_u32), Option<i32>::some(1_i32));
   EXPECT_EQ((2_i32).checked_pow(1_u32), Option<i32>::some(2_i32));
   EXPECT_EQ((2_i32).checked_pow(30_u32), Option<i32>::some(1_i32 << 30_u32));
-  EXPECT_EQ((1_i32).checked_pow(u32::MAX()),
-            Option<i32>::some(1_i32));
+  EXPECT_EQ((1_i32).checked_pow(u32::MAX()), Option<i32>::some(1_i32));
   EXPECT_EQ((i32::MAX()).checked_pow(1_u32), Option<i32>::some(i32::MAX()));
   EXPECT_EQ((i32::MAX()).checked_pow(0_u32), Option<i32>::some(1_i32));
 
@@ -1897,6 +1897,19 @@ TEST(i32, ToNeBytes) {
       EXPECT_EQ(a.get(3), 0x12);
     }
   }
+}
+
+TEST(i32, From) {
+  static_assert(sus::concepts::from::From<i32, u32>);
+
+  // TODO: Add all the integer types as they exist.
+  EXPECT_EQ(i32::from(2_i32), 2_i32);
+  EXPECT_EQ(i32::from(2_u32), 2_i32);
+}
+
+TEST(i32DeathTest, FromOutOfRange) {
+  // TODO: Add all the integer types as they exist.
+  EXPECT_DEATH(i32::from(u32::MAX()), "");
 }
 
 }  // namespace

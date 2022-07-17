@@ -41,6 +41,7 @@
   static_assert(true)
 
 #define _sus__signed_impl(T, Bytes, LargerT, UnsignedT, UnsignedSusT) \
+  _sus__signed_from(T);                                               \
   _sus__signed_integer_comparison(T);                                 \
   _sus__signed_unary_ops(T, UnsignedT);                               \
   _sus__signed_binary_logic_ops(T);                                   \
@@ -59,6 +60,37 @@
   _sus__signed_pow(T);                                                \
   _sus__signed_log(T, UnsignedT);                                     \
   _sus__signed_endian(T, UnsignedT, Bytes)
+
+#define _sus__signed_from(T)                                                \
+  /** Constructs a ##T## from a signed integer type (i8, i16, i32, etc).    \
+   *                                                                        \
+   * # Panics                                                               \
+   * The function will panic if the input value is out of range for ##T##.  \
+   */                                                                       \
+  template <Signed S>                                                       \
+  static constexpr i32 from(S s) noexcept {                                 \
+    if constexpr (MIN_PRIMITIVE > S::MIN_PRIMITIVE)                         \
+      ::sus::check(s.primitive_value >= MIN_PRIMITIVE);                     \
+    if constexpr (MAX_PRIMITIVE < S::MAX_PRIMITIVE)                         \
+      ::sus::check(s.primitive_value <= MAX_PRIMITIVE);                     \
+    return i32(static_cast<primitive_type>(s.primitive_value));             \
+  }                                                                         \
+                                                                            \
+  /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc). \
+   *                                                                        \
+   * # Panics                                                               \
+   * The function will panic if the input value is out of range for ##T##.  \
+   */                                                                       \
+  template <Unsigned U>                                                     \
+  static constexpr i32 from(U u) noexcept {                                 \
+    constexpr auto umax =                                                   \
+        static_cast<decltype(U::primitive_value)>(MAX_PRIMITIVE);           \
+    if constexpr (umax < U::MAX_PRIMITIVE) {                                \
+      ::sus::check(u.primitive_value <= umax);                              \
+    }                                                                       \
+    return i32(static_cast<primitive_type>(u.primitive_value));             \
+  }                                                                         \
+  static_assert(true)
 
 #define _sus__signed_integer_comparison(T)                                     \
   /** Returns true if the current value is positive and false if the number is \

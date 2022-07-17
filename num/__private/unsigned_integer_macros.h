@@ -37,6 +37,7 @@
   static_assert(true)
 
 #define _sus__unsigned_impl(T, Bytes, LargerT) \
+  _sus__unsigned_from(T);                      \
   _sus__unsigned_integer_comparison(T);        \
   _sus__unsigned_unary_ops(T);                 \
   _sus__unsigned_binary_logic_ops(T);          \
@@ -55,6 +56,37 @@
   _sus__unsigned_pow(T);                       \
   _sus__unsigned_log(T);                       \
   _sus__unsigned_endian(T, Bytes)
+
+#define _sus__unsigned_from(T)                                              \
+  /** Constructs a ##T## from a signed integer type (i8, i16, i32, etc).    \
+   *                                                                        \
+   * # Panics                                                               \
+   * The function will panic if the input value is out of range for ##T##.  \
+   */                                                                       \
+  template <Signed S>                                                       \
+  static constexpr u32 from(S s) noexcept {                                 \
+    ::sus::check(s.primitive_value >= 0);                                   \
+    constexpr auto umax = static_cast<primitive_type>(S::MAX_PRIMITIVE);    \
+    if constexpr (MAX_PRIMITIVE < umax)                                     \
+      ::sus::check(static_cast<primitive_type>(s.primitive_value) <=        \
+                   MAX_PRIMITIVE);                                          \
+    return u32(static_cast<primitive_type>(s.primitive_value));             \
+  }                                                                         \
+                                                                            \
+  /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc). \
+   *                                                                        \
+   * # Panics                                                               \
+   * The function will panic if the input value is out of range for ##T##.  \
+   */                                                                       \
+  template <Unsigned U>                                                     \
+  static constexpr u32 from(U u) noexcept {                                 \
+    if constexpr (MIN_PRIMITIVE > U::MIN_PRIMITIVE)                         \
+      ::sus::check(u.primitive_value >= MIN_PRIMITIVE);                     \
+    if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)                         \
+      ::sus::check(u.primitive_value <= MAX_PRIMITIVE);                     \
+    return u32(static_cast<primitive_type>(u.primitive_value));             \
+  }                                                                         \
+  static_assert(true)
 
 #define _sus__unsigned_integer_comparison(T)                                  \
   /** sus::concepts::Eq<##T##> trait. */                                      \
