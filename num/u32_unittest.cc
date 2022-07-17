@@ -16,8 +16,8 @@
 
 #include <type_traits>
 
-#include "concepts/make_default.h"
 #include "concepts/into.h"
+#include "concepts/make_default.h"
 #include "mem/__private/relocate.h"
 #include "num/num_concepts.h"
 #include "option/option.h"
@@ -253,16 +253,19 @@ TEST(u32, SaturatingAdd) {
 }
 
 TEST(u32, UncheckedAdd) {
-  constexpr auto a = (1_u32).unchecked_add(3_u32);
+  constexpr auto a = (1_u32).unchecked_add(unsafe_fn, 3_u32);
   EXPECT_EQ(a, 4_u32);
 
-  EXPECT_EQ((0_u32).unchecked_add(0_u32), 0_u32);
-  EXPECT_EQ((12345_u32).unchecked_add(1_u32), 12346_u32);
-  EXPECT_EQ(u32::MAX().unchecked_add(0_u32), u32::MAX());
-  EXPECT_EQ(u32::MIN().unchecked_add(0_u32), u32::MIN());
-  EXPECT_EQ(u32::MIN().unchecked_add(1_u32), u32(u32::MIN_PRIMITIVE + 1));
-  EXPECT_EQ(u32::MIN().unchecked_add(u32::MAX()), u32::MIN() + u32::MAX());
-  EXPECT_EQ(u32::MAX().unchecked_add(u32::MIN()), u32::MIN() + u32::MAX());
+  EXPECT_EQ((0_u32).unchecked_add(unsafe_fn, 0_u32), 0_u32);
+  EXPECT_EQ((12345_u32).unchecked_add(unsafe_fn, 1_u32), 12346_u32);
+  EXPECT_EQ(u32::MAX().unchecked_add(unsafe_fn, 0_u32), u32::MAX());
+  EXPECT_EQ(u32::MIN().unchecked_add(unsafe_fn, 0_u32), u32::MIN());
+  EXPECT_EQ(u32::MIN().unchecked_add(unsafe_fn, 1_u32),
+            u32(u32::MIN_PRIMITIVE + 1));
+  EXPECT_EQ(u32::MIN().unchecked_add(unsafe_fn, u32::MAX()),
+            u32::MIN() + u32::MAX());
+  EXPECT_EQ(u32::MAX().unchecked_add(unsafe_fn, u32::MIN()),
+            u32::MIN() + u32::MAX());
 }
 
 TEST(u32, WrappingAdd) {
@@ -438,11 +441,11 @@ TEST(u32, SaturatedMul) {
 }
 
 TEST(u32, UncheckedMul) {
-  constexpr auto a = (1_u32).unchecked_mul(3_u32);
+  constexpr auto a = (1_u32).unchecked_mul(unsafe_fn, 3_u32);
   EXPECT_EQ(a, 3_u32);
 
-  EXPECT_EQ((100_u32).unchecked_mul(21_u32), 2100_u32);
-  EXPECT_EQ((21_u32).unchecked_mul(100_u32), 2100_u32);
+  EXPECT_EQ((100_u32).unchecked_mul(unsafe_fn, 21_u32), 2100_u32);
+  EXPECT_EQ((21_u32).unchecked_mul(unsafe_fn, 100_u32), 2100_u32);
 }
 
 TEST(u32, WrappingMul) {
@@ -577,7 +580,7 @@ TEST(u32, Shl) {
 
   EXPECT_EQ(2_u32 << 1_u32, 4_u32);
   EXPECT_EQ(1_u32 << 31_u32, u32(static_cast<decltype(u32::primitive_value)>(
-                             static_cast<uint32_t>(1u) << 31)));
+                                 static_cast<uint32_t>(1u) << 31)));
 
   auto x = 2_u32;
   x <<= 1_u32;
@@ -595,12 +598,15 @@ TEST(u32DeathTest, ShlOverflow) {
 TEST(u32, OverflowingShl) {
   [[maybe_unused]] constexpr auto a = (5_u32).overflowing_shl(1_u32);
 
-  EXPECT_EQ((2_u32).overflowing_shl(1_u32), (Tuple<u32, bool>::with(4_u32, false)));
+  EXPECT_EQ((2_u32).overflowing_shl(1_u32),
+            (Tuple<u32, bool>::with(4_u32, false)));
 
   // Masks out everything.
-  EXPECT_EQ((2_u32).overflowing_shl(32_u32), (Tuple<u32, bool>::with(2_u32, true)));
+  EXPECT_EQ((2_u32).overflowing_shl(32_u32),
+            (Tuple<u32, bool>::with(2_u32, true)));
   // Masks out everything but the 1.
-  EXPECT_EQ((2_u32).overflowing_shl(33_u32), (Tuple<u32, bool>::with(4_u32, true)));
+  EXPECT_EQ((2_u32).overflowing_shl(33_u32),
+            (Tuple<u32, bool>::with(4_u32, true)));
 }
 
 TEST(u32, CheckedShl) {
@@ -656,12 +662,15 @@ TEST(u32, OverflowingShr) {
   constexpr auto a = (5_u32).overflowing_shr(1_u32);
   EXPECT_EQ(a, (Tuple<u32, bool>::with(2_u32, false)));
 
-  EXPECT_EQ((4_u32).overflowing_shr(1_u32), (Tuple<u32, bool>::with(2_u32, false)));
+  EXPECT_EQ((4_u32).overflowing_shr(1_u32),
+            (Tuple<u32, bool>::with(2_u32, false)));
 
   // Masks out everything.
-  EXPECT_EQ((4_u32).overflowing_shr(32_u32), (Tuple<u32, bool>::with(4_u32, true)));
+  EXPECT_EQ((4_u32).overflowing_shr(32_u32),
+            (Tuple<u32, bool>::with(4_u32, true)));
   // Masks out everything but the 1.
-  EXPECT_EQ((4_u32).overflowing_shr(33_u32), (Tuple<u32, bool>::with(2_u32, true)));
+  EXPECT_EQ((4_u32).overflowing_shr(33_u32),
+            (Tuple<u32, bool>::with(2_u32, true)));
 }
 
 TEST(u32, WrappingShr) {
@@ -742,15 +751,15 @@ TEST(u32, SaturatingSub) {
 }
 
 TEST(u32, UncheckedSub) {
-  constexpr auto a = (5_u32).unchecked_sub(3_u32);
+  constexpr auto a = (5_u32).unchecked_sub(unsafe_fn, 3_u32);
   EXPECT_EQ(a, 2_u32);
 
-  EXPECT_EQ((0_u32).unchecked_sub(0_u32), 0_u32);
-  EXPECT_EQ((12345_u32).unchecked_sub(12345_u32), 0_u32);
-  EXPECT_EQ((12345_u32).unchecked_sub(1_u32), 12344_u32);
-  EXPECT_EQ(u32::MAX().unchecked_sub(u32::MAX()), 0_u32);
-  EXPECT_EQ(u32::MIN().unchecked_sub(u32::MIN()), 0_u32);
-  EXPECT_EQ((0_u32).unchecked_sub(u32::MIN() + 1_u32), u32::MAX());
+  EXPECT_EQ((0_u32).unchecked_sub(unsafe_fn, 0_u32), 0_u32);
+  EXPECT_EQ((12345_u32).unchecked_sub(unsafe_fn, 12345_u32), 0_u32);
+  EXPECT_EQ((12345_u32).unchecked_sub(unsafe_fn, 1_u32), 12344_u32);
+  EXPECT_EQ(u32::MAX().unchecked_sub(unsafe_fn, u32::MAX()), 0_u32);
+  EXPECT_EQ(u32::MIN().unchecked_sub(unsafe_fn, u32::MIN()), 0_u32);
+  EXPECT_EQ((0_u32).unchecked_sub(unsafe_fn, u32::MIN() + 1_u32), u32::MAX());
 }
 
 TEST(u32, WrappingSub) {
@@ -883,7 +892,8 @@ TEST(u32, OverflowingPow) {
 
   EXPECT_EQ((2_u32).overflowing_pow(5_u32),
             (Tuple<u32, bool>::with(32_u32, false)));
-  EXPECT_EQ((2_u32).overflowing_pow(0_u32), (Tuple<u32, bool>::with(1_u32, false)));
+  EXPECT_EQ((2_u32).overflowing_pow(0_u32),
+            (Tuple<u32, bool>::with(1_u32, false)));
   EXPECT_EQ((u32::MAX()).overflowing_pow(1_u32),
             (Tuple<u32, bool>::with(u32::MAX(), false)));
   EXPECT_EQ((u32::MAX()).overflowing_pow(2_u32),
@@ -898,8 +908,7 @@ TEST(u32, CheckedPow) {
   EXPECT_EQ((2_u32).checked_pow(0_u32), Option<u32>::some(1_u32));
   EXPECT_EQ((2_u32).checked_pow(1_u32), Option<u32>::some(2_u32));
   EXPECT_EQ((2_u32).checked_pow(30_u32), Option<u32>::some(1_u32 << 30_u32));
-  EXPECT_EQ((1_u32).checked_pow(u32::MAX()),
-            Option<u32>::some(1_u32));
+  EXPECT_EQ((1_u32).checked_pow(u32::MAX()), Option<u32>::some(1_u32));
   EXPECT_EQ((u32::MAX()).checked_pow(1_u32), Option<u32>::some(u32::MAX()));
   EXPECT_EQ((u32::MAX()).checked_pow(0_u32), Option<u32>::some(1_u32));
 
