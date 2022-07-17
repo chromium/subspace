@@ -805,6 +805,17 @@
       return Option<T>::none();                                               \
   }                                                                           \
                                                                               \
+  /** Checked integer subtraction with an unsigned rhs. Computes self - rhs,  \
+   * returning None if overflow occurred.                                     \
+   */                                                                         \
+  constexpr Option<T> checked_sub_unsigned(const UnsignedT& rhs) const& {     \
+    auto out = __private::sub_with_overflow_unsigned(primitive_value, rhs);   \
+    if (!out.overflow) [[likely]]                                             \
+      return Option<T>::some(out.value);                                      \
+    else                                                                      \
+      return Option<T>::none();                                               \
+  }                                                                           \
+                                                                              \
   /** Calculates self - rhs                                                   \
    *                                                                          \
    * Returns a tuple of the subtraction along with a boolean indicating       \
@@ -817,7 +828,7 @@
     return Tuple<T, bool>::with(r.value, r.overflow);                         \
   }                                                                           \
                                                                               \
-  /** Calculates self - rhs                                                   \
+  /** Calculates self - rhs with an unsigned rhs.                             \
    *                                                                          \
    * Returns a tuple of the subtraction along with a boolean indicating       \
    * whether an arithmetic overflow would occur. If an overflow would have    \
@@ -836,6 +847,17 @@
     return __private::saturating_sub(primitive_value, rhs.primitive_value);   \
   }                                                                           \
                                                                               \
+  /** Saturating integer subtraction with an unsigned rhs. Computes self -    \
+   * rhs, saturating at the numeric bounds instead of overflowing.            \
+   */                                                                         \
+  constexpr T saturating_sub_unsigned(const UnsignedT& rhs) const& {          \
+    auto r = __private::sub_with_overflow_unsigned(primitive_value, rhs);     \
+    if (!r.overflow) [[likely]]                                               \
+      return r.value;                                                         \
+    else                                                                      \
+      return MIN();                                                           \
+  }                                                                           \
+                                                                              \
   /** Unchecked integer subtraction. Computes self - rhs, assuming overflow   \
    * cannot occur.                                                            \
    */                                                                         \
@@ -849,6 +871,13 @@
    */                                                                         \
   constexpr T wrapping_sub(const T& rhs) const& {                             \
     return __private::wrapping_sub(primitive_value, rhs.primitive_value);     \
+  }                                                                           \
+                                                                              \
+  /** Wrapping (modular) subtraction with an unsigned rhs. Computes self -    \
+   * rhs, wrapping around at the boundary of the type.                        \
+   */                                                                         \
+  constexpr T wrapping_sub_unsigned(const UnsignedT& rhs) const& {            \
+    return __private::sub_with_overflow_unsigned(primitive_value, rhs).value; \
   }                                                                           \
   static_assert(true)
 
