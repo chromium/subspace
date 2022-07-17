@@ -77,7 +77,6 @@ struct u32 {
   // TODO: checked_next_multiple_of().
   // TODO: from_str_radix(). Need Result type and Errors.
   // TODO: next_power_of_two().
-  // TODO: checked_add_signed() and friends?
 
   /// The inner primitive value, in case it needs to be unwrapped from the
   /// type. Avoid using this member except to convert when a consumer
