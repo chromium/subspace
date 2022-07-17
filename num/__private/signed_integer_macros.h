@@ -513,8 +513,8 @@
     return Tuple<T, bool>::with(r.value, r.overflow);                          \
   }                                                                            \
                                                                                \
-  /** Saturating integer division. Computes self / rhs, saturating at the      \
-   * numeric bounds instead of overflowing.                                    \
+  /** Saturating integer multiplication. Computes self * rhs, saturating at    \
+   * the numeric bounds instead of overflowing.                                \
    */                                                                          \
   constexpr T saturating_mul(const T& rhs) const& noexcept {                   \
     return __private::saturating_mul(primitive_value, rhs.primitive_value);    \
@@ -878,7 +878,7 @@
     return out.value;                                                          \
   }                                                                            \
                                                                                \
-  /** Checked exponentiation. Computes `T::pow(exp)`, returning None if        \
+  /** Checked exponentiation. Computes `##T##::pow(exp)`, returning None if    \
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_pow(const u32& rhs) const& noexcept {            \
@@ -902,7 +902,7 @@
     return Tuple<T, bool>::with(r.value, r.overflow);                          \
   }                                                                            \
                                                                                \
-  /** Wrapping (modular) exponentiation. Computes `this->pow(exp)`, wrapping   \
+  /** Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping      \
    * around at the boundary of the type.                                       \
    */                                                                          \
   constexpr T wrapping_pow(const u32& exp) const& noexcept {                   \

@@ -252,10 +252,12 @@
    * cannot occur.                                                             \
    *                                                                           \
    * # Safety                                                                  \
-   * This results in undefined behavior when self + rhs > ##T##::MAX() or self \
-   * + rhs < ##T##::MIN(), i.e. when checked_add() would return None.          \
+   * This function is allowed to result in undefined behavior when `self + rhs \
+   * > ##T##::MAX` or `self + rhs < ##T##::MIN`, i.e. when `checked_add()`     \
+   * would return None.                                                        \
    */                                                                          \
-  inline constexpr T unchecked_add(const T& rhs) const& noexcept {             \
+  inline constexpr T unchecked_add(::sus::marker::UnsafeFnMarker,              \
+                                   const T& rhs) const& noexcept {             \
     return primitive_value + rhs.primitive_value;                              \
   }                                                                            \
                                                                                \
@@ -268,8 +270,8 @@
   static_assert(true)
 
 #define _sus__unsigned_div(T)                                                  \
-  /** Checked integer division. Computes self / rhs, returning None if rhs ==  \
-   * 0.                                                                        \
+  /** Checked integer division. Computes self / rhs, returning None if `rhs == \
+   * 0`.                                                                       \
    */                                                                          \
   constexpr Option<T> checked_div(const T& rhs) const& noexcept {              \
     if (rhs.primitive_value != primitive_type{0u}) [[likely]]                  \
@@ -345,8 +347,8 @@
     return Tuple<T, bool>::with(r.value, r.overflow);                          \
   }                                                                            \
                                                                                \
-  /** Saturating integer division. Computes self / rhs, saturating at the      \
-   * numeric bounds instead of overflowing.                                    \
+  /** Saturating integer multiplication. Computes self * rhs, saturating at    \
+   * the numeric bounds instead of overflowing.                                \
    */                                                                          \
   constexpr T saturating_mul(const T& rhs) const& noexcept {                   \
     return __private::saturating_mul(primitive_value, rhs.primitive_value);    \
@@ -356,11 +358,12 @@
    * cannot occur.                                                             \
    *                                                                           \
    * # Safety                                                                  \
-   * This results in undefined behavior when `self * rhs > ##T##::MAX()` or    \
-   * `self                                                                     \
-   * * rhs < ##T##::MIN()`, i.e. when `checked_mul()` would return None.       \
+   * This function is allowed to result in undefined behavior when `self * rhs \
+   * > ##T##::MAX` or `self * rhs < ##T##::MIN`, i.e. when `checked_mul()`     \
+   * would return None.                                                        \
    */                                                                          \
-  constexpr inline T unchecked_mul(const T& rhs) const& noexcept {             \
+  constexpr inline T unchecked_mul(::sus::marker::UnsafeFnMarker,              \
+                                   const T& rhs) const& noexcept {             \
     return primitive_value * rhs.primitive_value;                              \
   }                                                                            \
                                                                                \
@@ -373,7 +376,9 @@
   static_assert(true)
 
 #define _sus__unsigned_neg(T)                                                  \
-  /** Checked negation. Computes -self, returning None if self == MIN.         \
+  /** Checked negation. Computes -self, returning None unless `self == 0`.     \
+   *                                                                           \
+   * Note that negating any positive integer will overflow.                    \
    */                                                                          \
   constexpr Option<T> checked_neg() const& noexcept {                          \
     if (primitive_value == primitive_type{0u})                                 \
@@ -393,7 +398,7 @@
                                 primitive_value != primitive_type{0});         \
   }                                                                            \
                                                                                \
-  /** Wrapping (modular) negation. Computes -self, wrapping around at the      \
+  /** Wrapping (modular) negation. Computes `-self`, wrapping around at the    \
     boundary of the type.                                                      \
    *                                                                           \
    * Since unsigned types do not have negative equivalents all applications of \
@@ -408,42 +413,46 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__unsigned_rem(T)                                                  \
-  /** Checked integer remainder. Computes self % rhs, returning None if rhs == \
-   * 0 or the division results in overflow.                                    \
-   */                                                                          \
-  constexpr Option<T> checked_rem(const T& rhs) const& noexcept {              \
-    if (rhs.primitive_value != primitive_type{0u}) [[likely]]                  \
-      return Option<T>::some(primitive_value % rhs.primitive_value);           \
-    else                                                                       \
-      return Option<T>::none();                                                \
-  }                                                                            \
-                                                                               \
-  /** Calculates the remainder when self is divided by rhs.                    \
-   *                                                                           \
-   * Returns a tuple of the remainder after dividing along with a boolean      \
-   * indicating whether an arithmetic overflow would occur. If an overflow     \
-   * would occur then 0 is returned.                                           \
-   *                                                                           \
-   * # Panics                                                                  \
-   * This function will panic if rhs is 0.                                     \
-   */                                                                          \
-  constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {     \
-    /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0u});                                   \
-    return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false); \
-  }                                                                            \
-                                                                               \
-  /** Wrapping (modular) remainder. Computes self % rhs. Wrapped remainder     \
-   * calculation on unsigned types is just the regular remainder calculation.  \
-   * There's no way wrapping could ever happen. This function exists, so that  \
-   * all operations are accounted for in the wrapping operations.              \
-   */                                                                          \
-  constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
-    /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0u});                                   \
-    return primitive_value % rhs.primitive_value;                              \
-  }                                                                            \
+#define _sus__unsigned_rem(T)                                                   \
+  /** Checked integer remainder. Computes `self % rhs`, returning None if `rhs  \
+   * == 0`.                                                                     \
+   */                                                                           \
+  constexpr Option<T> checked_rem(const T& rhs) const& noexcept {               \
+    if (rhs.primitive_value != primitive_type{0u}) [[likely]]                   \
+      return Option<T>::some(primitive_value % rhs.primitive_value);            \
+    else                                                                        \
+      return Option<T>::none();                                                 \
+  }                                                                             \
+                                                                                \
+  /** Calculates the remainder when self is divided by rhs.                     \
+   *                                                                            \
+   * Returns a tuple of the remainder after dividing along with a boolean       \
+   * indicating whether an arithmetic overflow would occur. Note that for       \
+   * unsigned integers overflow never occurs, so the second value is always     \
+   * false.                                                                     \
+   *                                                                            \
+   * # Panics                                                                   \
+   * This function will panic if rhs is 0.                                      \
+   */                                                                           \
+  constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {      \
+    /* TODO: Allow opting out of all overflow checks? */                        \
+    ::sus::check(rhs != primitive_type{0u});                                    \
+    return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false);  \
+  }                                                                             \
+                                                                                \
+  /** Wrapping (modular) remainder. Computes self % rhs. Wrapped remainder      \
+   * calculation on unsigned types is just the regular remainder calculation.   \
+   * There’s no way wrapping could ever happen. This function exists, so that \
+   * all operations are accounted for in the wrapping operations.               \
+   *                                                                            \
+   * # Panics                                                                   \
+   * This function will panic if rhs is 0.                                      \
+   */                                                                           \
+  constexpr T wrapping_rem(const T& rhs) const& noexcept {                      \
+    /* TODO: Allow opting out of all overflow checks? */                        \
+    ::sus::check(rhs != primitive_type{0u});                                    \
+    return primitive_value % rhs.primitive_value;                               \
+  }                                                                             \
   static_assert(true)
 
 #define _sus__unsigned_shift(T)                                                \
@@ -530,51 +539,57 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__unsigned_sub(T)                                                 \
-  /** Checked integer subtraction. Computes self - rhs, returning None if     \
-   * overflow occurred.                                                       \
-   */                                                                         \
-  constexpr Option<T> checked_sub(const T& rhs) const& {                      \
-    auto out =                                                                \
-        __private::sub_with_overflow(primitive_value, rhs.primitive_value);   \
-    if (!out.overflow) [[likely]]                                             \
-      return Option<T>::some(out.value);                                      \
-    else                                                                      \
-      return Option<T>::none();                                               \
-  }                                                                           \
-                                                                              \
-  /** Calculates self - rhs                                                   \
-   *                                                                          \
-   * Returns a tuple of the subtraction along with a boolean indicating       \
-   * whether an arithmetic overflow would occur. If an overflow would have    \
-   * occurred then the wrapped value is returned.                             \
-   */                                                                         \
-  constexpr Tuple<T, bool> overflowing_sub(const T& rhs) const& noexcept {    \
-    auto r =                                                                  \
-        __private::sub_with_overflow(primitive_value, rhs.primitive_value);   \
-    return Tuple<T, bool>::with(r.value, r.overflow);                         \
-  }                                                                           \
-                                                                              \
-  /** Saturating integer subtraction. Computes self - rhs, saturating at the  \
-   * numeric bounds instead of overflowing.                                   \
-   */                                                                         \
-  constexpr T saturating_sub(const T& rhs) const& {                           \
-    return __private::saturating_sub(primitive_value, rhs.primitive_value);   \
-  }                                                                           \
-                                                                              \
-  /** Unchecked integer subtraction. Computes self - rhs, assuming overflow   \
-   * cannot occur.                                                            \
-   */                                                                         \
-  constexpr T unchecked_sub(const T& rhs) const& {                            \
-    return primitive_value - rhs.primitive_value;                             \
-  }                                                                           \
-                                                                              \
-  /** Wrapping (modular) subtraction. Computes self - rhs, wrapping around at \
-   * the boundary of the type.                                                \
-   */                                                                         \
-  constexpr T wrapping_sub(const T& rhs) const& {                             \
-    return __private::wrapping_sub(primitive_value, rhs.primitive_value);     \
-  }                                                                           \
+#define _sus__unsigned_sub(T)                                                  \
+  /** Checked integer subtraction. Computes self - rhs, returning None if      \
+   * overflow occurred.                                                        \
+   */                                                                          \
+  constexpr Option<T> checked_sub(const T& rhs) const& {                       \
+    auto out =                                                                 \
+        __private::sub_with_overflow(primitive_value, rhs.primitive_value);    \
+    if (!out.overflow) [[likely]]                                              \
+      return Option<T>::some(out.value);                                       \
+    else                                                                       \
+      return Option<T>::none();                                                \
+  }                                                                            \
+                                                                               \
+  /** Calculates self - rhs                                                    \
+   *                                                                           \
+   * Returns a tuple of the subtraction along with a boolean indicating        \
+   * whether an arithmetic overflow would occur. If an overflow would have     \
+   * occurred then the wrapped value is returned.                              \
+   */                                                                          \
+  constexpr Tuple<T, bool> overflowing_sub(const T& rhs) const& noexcept {     \
+    auto r =                                                                   \
+        __private::sub_with_overflow(primitive_value, rhs.primitive_value);    \
+    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+  }                                                                            \
+                                                                               \
+  /** Saturating integer subtraction. Computes self - rhs, saturating at the   \
+   * numeric bounds instead of overflowing.                                    \
+   */                                                                          \
+  constexpr T saturating_sub(const T& rhs) const& {                            \
+    return __private::saturating_sub(primitive_value, rhs.primitive_value);    \
+  }                                                                            \
+                                                                               \
+  /** Unchecked integer subtraction. Computes self - rhs, assuming overflow    \
+   * cannot occur.                                                             \
+   *                                                                           \
+   * # Safety                                                                  \
+   * This function is allowed to result in undefined behavior when `self - rhs \
+   * > ##T##::MAX` or `self - rhs < ##T##::MIN`, i.e. when `checked_sub()`     \
+   * would return None.                                                        \
+   */                                                                          \
+  constexpr T unchecked_sub(::sus::marker::UnsafeFnMarker, const T& rhs)       \
+      const& {                                                                 \
+    return primitive_value - rhs.primitive_value;                              \
+  }                                                                            \
+                                                                               \
+  /** Wrapping (modular) subtraction. Computes self - rhs, wrapping around at  \
+   * the boundary of the type.                                                 \
+   */                                                                          \
+  constexpr T wrapping_sub(const T& rhs) const& {                              \
+    return __private::wrapping_sub(primitive_value, rhs.primitive_value);      \
+  }                                                                            \
   static_assert(true)
 
 #define _sus__unsigned_bits(T)                                                 \
@@ -663,7 +678,7 @@
     return out.value;                                                          \
   }                                                                            \
                                                                                \
-  /** Checked exponentiation. Computes `T::pow(exp)`, returning None if        \
+  /** Checked exponentiation. Computes `##T##::pow(exp)`, returning None if    \
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_pow(const u32& rhs) const& noexcept {            \
@@ -687,7 +702,7 @@
     return Tuple<T, bool>::with(r.value, r.overflow);                          \
   }                                                                            \
                                                                                \
-  /** Wrapping (modular) exponentiation. Computes `this->pow(exp)`, wrapping   \
+  /** Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping      \
    * around at the boundary of the type.                                       \
    */                                                                          \
   constexpr T wrapping_pow(const u32& exp) const& noexcept {                   \
@@ -722,7 +737,7 @@
                                                                               \
   /** Returns the base 10 logarithm of the number, rounded down.              \
    *                                                                          \
-   * Returns None if the number is negative or zero.                          \
+   * Returns None if the number is zero.                                      \
    */                                                                         \
   constexpr Option<u32> checked_log10() const& {                              \
     if (primitive_value == primitive_type{0}) [[unlikely]] {                  \
@@ -735,7 +750,7 @@
   /** Returns the base 10 logarithm of the number, rounded down.              \
    *                                                                          \
    * # Panics                                                                 \
-   * When the number is zero the function will panic. \                       \
+   * When the number is zero the function will panic.                         \
    */                                                                         \
   constexpr u32 log10() const& {                                              \
     /* TODO: Allow opting out of all overflow checks? */                      \
@@ -745,8 +760,7 @@
   /** Returns the logarithm of the number with respect to an arbitrary base,  \
    * rounded down.                                                            \
    *                                                                          \
-   * Returns None if the number is negative or zero, or if the base is not at \
-   * least 2.                                                                 \
+   * Returns None if the number is zero, or if the base is not at least 2.    \
    *                                                                          \
    * This method might not be optimized owing to implementation details;      \
    * `checked_log2` can produce results more efficiently for base 2, and      \
@@ -776,7 +790,8 @@
    * results more efficiently for base 10.                                    \
    *                                                                          \
    * # Panics                                                                 \
-   * When the number is negative, zero, or if the base is not at least 2.     \
+   * When the number is zero, or if the base is not at least 2, the function  \
+   * will panic.                                                              \
    */                                                                         \
   constexpr u32 log(const T& base) const& noexcept {                          \
     return checked_log(base).unwrap();                                        \
