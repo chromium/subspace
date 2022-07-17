@@ -57,20 +57,13 @@ struct i32 {
                     /*UnsignedT=*//* TODO: u32 */ uint32_t,
                     /*UnsignedSusT=*/u32);
 
-  // TODO: overflowing_div_euclid().
-  // TODO: overflowing_rem_euclid().
-  // TODO: div_euclid().
-  // TODO: rem_euclid().
-  // TODO: wrapping_div_euclid().
-  // TODO: wrapping_rem_euclid().
-  // TODO: checked_div_euclid().
-  // TODO: checked_rem_euclid().
-  // TODO: checked_next_multiple_of().
   // TODO: from_str_radix(). Need Result type and Errors.
 
-  /// The inner primitive value, in case it needs to be unwrapped from the
-  /// type. Avoid using this member except to convert when a consumer
-  /// requires it.
+  // TODO: div_ceil() and div_floor()? Lots of discussion still on
+  // https://github.com/rust-lang/rust/issues/88581 for signed types.
+
+  /// The inner primitive value, in case it needs to be unwrapped from the type.
+  /// Avoid using this member except to convert when a consumer requires it.
   primitive_type primitive_value = 0;
 };
 

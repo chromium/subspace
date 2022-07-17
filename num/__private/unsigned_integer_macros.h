@@ -50,6 +50,7 @@
   _sus__unsigned_mul(T, LargerT);                       \
   _sus__unsigned_neg(T);                                \
   _sus__unsigned_rem(T);                                \
+  _sus__unsigned_euclid(T);                             \
   _sus__unsigned_shift(T);                              \
   _sus__unsigned_sub(T);                                \
   _sus__unsigned_bits(T);                               \
@@ -502,44 +503,169 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__unsigned_rem(T)                                                   \
-  /** Checked integer remainder. Computes `self % rhs`, returning None if `rhs  \
-   * == 0`.                                                                     \
-   */                                                                           \
-  constexpr Option<T> checked_rem(const T& rhs) const& noexcept {               \
-    if (rhs.primitive_value != primitive_type{0u}) [[likely]]                   \
-      return Option<T>::some(primitive_value % rhs.primitive_value);            \
-    else                                                                        \
-      return Option<T>::none();                                                 \
-  }                                                                             \
-                                                                                \
-  /** Calculates the remainder when self is divided by rhs.                     \
+#define _sus__unsigned_rem(T)                                                  \
+  /** Checked integer remainder. Computes `self % rhs`, returning None if `rhs \
+   * == 0`.                                                                    \
+   */                                                                          \
+  constexpr Option<T> checked_rem(const T& rhs) const& noexcept {              \
+    if (rhs.primitive_value != primitive_type{0u}) [[likely]]                  \
+      return Option<T>::some(primitive_value % rhs.primitive_value);           \
+    else                                                                       \
+      return Option<T>::none();                                                \
+  }                                                                            \
+                                                                               \
+  /** Calculates the remainder when self is divided by rhs.                    \
+   *                                                                           \
+   * Returns a tuple of the remainder after dividing along with a boolean      \
+   * indicating whether an arithmetic overflow would occur. Note that for      \
+   * unsigned integers overflow never occurs, so the second value is always    \
+   * false.                                                                    \
+   *                                                                           \
+   * # Panics                                                                  \
+   * This function will panic if rhs is 0.                                     \
+   */                                                                          \
+  constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {     \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(rhs != primitive_type{0u});                                   \
+    return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false); \
+  }                                                                            \
+                                                                               \
+  /** Wrapping (modular) remainder. Computes self % rhs. Wrapped remainder     \
+   * calculation on unsigned types is just the regular remainder calculation.  \
+   *                                                                           \
+   * There's no way wrapping could ever happen. This function exists, so that  \
+   * all operations are accounted for in the wrapping operations.              \
+   *                                                                           \
+   * # Panics                                                                  \
+   * This function will panic if rhs is 0.                                     \
+   */                                                                          \
+  constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(rhs != primitive_type{0u});                                   \
+    return primitive_value % rhs.primitive_value;                              \
+  }                                                                            \
+  static_assert(true)
+
+#define _sus__unsigned_euclid(T)                                                \
+  /** Performs Euclidean division.                                              \
    *                                                                            \
-   * Returns a tuple of the remainder after dividing along with a boolean       \
-   * indicating whether an arithmetic overflow would occur. Note that for       \
-   * unsigned integers overflow never occurs, so the second value is always     \
-   * false.                                                                     \
+   * Since, for the positive integers, all common definitions of division are   \
+   * equal, this is exactly equal to self / rhs.                                \
    *                                                                            \
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {      \
+  constexpr T div_euclid(const T& rhs) const& noexcept {                        \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != primitive_type{0u});                                    \
+    ::sus::check(rhs.primitive_value != primitive_type{0});                     \
+    return primitive_value / rhs.primitive_value;                               \
+  }                                                                             \
+                                                                                \
+  /** Checked Euclidean division. Computes self.div_euclid(rhs), returning      \
+   * None if rhs == 0.                                                          \
+   */                                                                           \
+  constexpr Option<T> checked_div_euclid(const T& rhs) const& noexcept {        \
+    if (rhs.primitive_value == primitive_type{0}) [[unlikely]] {                \
+      return Option<T>::none();                                                 \
+    } else {                                                                    \
+      return Option<T>::some(primitive_value / rhs.primitive_value);            \
+    }                                                                           \
+  }                                                                             \
+                                                                                \
+  /** Calculates the quotient of Euclidean division self.div_euclid(rhs).       \
+   *                                                                            \
+   * Returns a tuple of the divisor along with a boolean indicating whether an  \
+   * arithmetic overflow would occur. Note that for unsigned integers overflow  \
+   * never occurs, so the second value is always false. Since, for the          \
+   * positive integers, all common definitions of division are equal, this is   \
+   * exactly equal to self.overflowing_div(rhs).                                \
+   *                                                                            \
+   * # Panics                                                                   \
+   * This function will panic if rhs is 0.                                      \
+   */                                                                           \
+  constexpr Tuple<T, bool> overflowing_div_euclid(const T& rhs)                 \
+      const& noexcept {                                                         \
+    /* TODO: Allow opting out of all overflow checks? */                        \
+    ::sus::check(rhs != primitive_type{0});                                     \
+    return Tuple<T, bool>::with(primitive_value / rhs.primitive_value, false);  \
+  }                                                                             \
+                                                                                \
+  /** Wrapping Euclidean division. Computes self.div_euclid(rhs). Wrapped       \
+   * division on unsigned types is just normal division.                        \
+   *                                                                            \
+   * There's no way wrapping could ever happen. This function exists so that    \
+   * all operations are accounted for in the wrapping operations. Since, for    \
+   * the positive integers, all common definitions of division are equal, this  \
+   * is exactly equal to self.wrapping_div(rhs).                                \
+   *                                                                            \
+   * # Panics                                                                   \
+   * This function will panic if rhs is 0.                                      \
+   */                                                                           \
+  constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {               \
+    /* TODO: Allow opting out of all overflow checks? */                        \
+    ::sus::check(rhs != primitive_type{0});                                     \
+    return primitive_value / rhs.primitive_value;                               \
+  }                                                                             \
+                                                                                \
+  /** Calculates the least remainder of self (mod rhs).                         \
+   *                                                                            \
+   * Since, for the positive integers, all common definitions of division are   \
+   * equal, this is exactly equal to self % rhs. \                              \
+   *                                                                            \
+   * # Panics                                                                   \
+   * This function will panic if rhs is 0.                                      \
+   */                                                                           \
+  constexpr T rem_euclid(const T& rhs) const& noexcept {                        \
+    /* TODO: Allow opting out of all overflow checks? */                        \
+    ::sus::check(rhs.primitive_value != primitive_type{0});                     \
+    return primitive_value % rhs.primitive_value;                               \
+  }                                                                             \
+                                                                                \
+  /** Checked Euclidean modulo. Computes self.rem_euclid(rhs), returning None   \
+   * if rhs == 0.                                                               \
+   */                                                                           \
+  constexpr Option<T> checked_rem_euclid(const T& rhs) const& noexcept {        \
+    if (rhs.primitive_value == primitive_type{0}) [[unlikely]] {                \
+      return Option<T>::none();                                                 \
+    } else {                                                                    \
+      return Option<T>::some(primitive_value % rhs.primitive_value);            \
+    }                                                                           \
+  }                                                                             \
+                                                                                \
+  /** Calculates the remainder self.rem_euclid(rhs) as if by Euclidean          \
+   * division.                                                                  \
+   *                                                                            \
+   * Returns a tuple of the modulo after dividing along with a boolean          \
+   * indicating whether an arithmetic overflow would occur. Note that for       \
+   * unsigned integers overflow never occurs, so the second value is always     \
+   * false. Since, for the positive integers, all common definitions of         \
+   * division are equal, this operation is exactly equal to                     \
+   * self.overflowing_rem(rhs).                                                 \
+   *                                                                            \
+   * # Panics                                                                   \
+   * This function will panic if rhs is 0.                                      \
+   */                                                                           \
+  constexpr Tuple<T, bool> overflowing_rem_euclid(const T& rhs)                 \
+      const& noexcept {                                                         \
+    /* TODO: Allow opting out of all overflow checks? */                        \
+    ::sus::check(rhs != primitive_type{0});                                     \
     return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false);  \
   }                                                                             \
                                                                                 \
-  /** Wrapping (modular) remainder. Computes self % rhs. Wrapped remainder      \
+  /** Wrapping Euclidean modulo. Computes self.rem_euclid(rhs). Wrapped modulo  \
    * calculation on unsigned types is just the regular remainder calculation.   \
+   *                                                                            \
    * There’s no way wrapping could ever happen. This function exists, so that \
-   * all operations are accounted for in the wrapping operations.               \
+   * all operations are accounted for in the wrapping operations. Since, for    \
+   * the positive integers, all common definitions of division are equal, this  \
+   * is exactly equal to self.wrapping_rem(rhs). \                              \
    *                                                                            \
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  constexpr T wrapping_rem(const T& rhs) const& noexcept {                      \
+  constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {               \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != primitive_type{0u});                                    \
+    ::sus::check(rhs != primitive_type{0});                                     \
     return primitive_value % rhs.primitive_value;                               \
   }                                                                             \
   static_assert(true)

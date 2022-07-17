@@ -66,17 +66,7 @@ struct u32 {
   _sus__unsigned_impl(u32, sizeof(primitive_type), /*SignedT=*/i32,
                       /*LargerT=*/uint64_t);
 
-  // TODO: overflowing_div_euclid().
-  // TODO: overflowing_rem_euclid().
-  // TODO: div_euclid().
-  // TODO: rem_euclid().
-  // TODO: wrapping_div_euclid().
-  // TODO: wrapping_rem_euclid().
-  // TODO: checked_div_euclid().
-  // TODO: checked_rem_euclid().
-  // TODO: checked_next_multiple_of().
   // TODO: from_str_radix(). Need Result type and Errors.
-  // TODO: next_power_of_two().
 
   /// The inner primitive value, in case it needs to be unwrapped from the
   /// type. Avoid using this member except to convert when a consumer

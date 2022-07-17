@@ -54,6 +54,7 @@
   _sus__signed_mul(T, LargerT);                                       \
   _sus__signed_neg(T);                                                \
   _sus__signed_rem(T);                                                \
+  _sus__signed_euclid(T);                                             \
   _sus__signed_shift(T);                                              \
   _sus__signed_sub(T, UnsignedT);                                     \
   _sus__signed_bits(T, UnsignedT);                                    \
@@ -68,12 +69,12 @@
    * The function will panic if the input value is out of range for ##T##.  \
    */                                                                       \
   template <Signed S>                                                       \
-  static constexpr i32 from(S s) noexcept {                                 \
+  static constexpr T from(S s) noexcept {                                   \
     if constexpr (MIN_PRIMITIVE > S::MIN_PRIMITIVE)                         \
       ::sus::check(s.primitive_value >= MIN_PRIMITIVE);                     \
     if constexpr (MAX_PRIMITIVE < S::MAX_PRIMITIVE)                         \
       ::sus::check(s.primitive_value <= MAX_PRIMITIVE);                     \
-    return i32(static_cast<primitive_type>(s.primitive_value));             \
+    return T(static_cast<primitive_type>(s.primitive_value));               \
   }                                                                         \
                                                                             \
   /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc). \
@@ -82,13 +83,13 @@
    * The function will panic if the input value is out of range for ##T##.  \
    */                                                                       \
   template <Unsigned U>                                                     \
-  static constexpr i32 from(U u) noexcept {                                 \
+  static constexpr T from(U u) noexcept {                                   \
     constexpr auto umax =                                                   \
         static_cast<decltype(U::primitive_value)>(MAX_PRIMITIVE);           \
     if constexpr (umax < U::MAX_PRIMITIVE) {                                \
       ::sus::check(u.primitive_value <= umax);                              \
     }                                                                       \
-    return i32(static_cast<primitive_type>(u.primitive_value));             \
+    return T(static_cast<primitive_type>(u.primitive_value));               \
   }                                                                         \
   static_assert(true)
 
@@ -479,32 +480,31 @@
    * 0 or the division results in overflow.                                    \
    */                                                                          \
   constexpr Option<T> checked_div(const T& rhs) const& noexcept {              \
-    if (rhs.primitive_value != primitive_type{0} &&                            \
-        (primitive_value != MIN_PRIMITIVE ||                                   \
-         rhs.primitive_value != primitive_type{-1})) [[likely]]                \
-      return Option<T>::some(primitive_value / rhs.primitive_value);           \
-    else                                                                       \
+    if (__private::div_overflows(primitive_value, rhs.primitive_value))        \
+        [[unlikely]]                                                           \
       return Option<T>::none();                                                \
+    else                                                                       \
+      return Option<T>::some(primitive_value / rhs.primitive_value);           \
   }                                                                            \
                                                                                \
   /** Calculates the divisor when self is divided by rhs.                      \
    *                                                                           \
-   *Returns a tuple of the divisor along with a boolean indicating whether an  \
-   *arithmetic overflow would occur. If an overflow would occur then self is   \
-   *returned.                                                                  \
+   * Returns a tuple of the divisor along with a boolean indicating whether an \
+   * arithmetic overflow would occur. If an overflow would occur then self is  \
+   * returned.                                                                 \
    *                                                                           \
    * #Panics                                                                   \
-   *This function will panic if rhs is 0.                                      \
+   * This function will panic if rhs is 0.                                     \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_div(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs != primitive_type{0});                                    \
-    if ((primitive_value != MIN_PRIMITIVE ||                                   \
-         rhs.primitive_value != primitive_type{-1})) [[likely]] {              \
+    if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
+                                         rhs.primitive_value)) [[unlikely]] {  \
+      return Tuple<T, bool>::with(MIN(), true);                                \
+    } else {                                                                   \
       return Tuple<T, bool>::with(primitive_value / rhs.primitive_value,       \
                                   false);                                      \
-    } else {                                                                   \
-      return Tuple<T, bool>::with(MIN(), true);                                \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -517,13 +517,13 @@
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs != primitive_type{0});                                    \
-    if ((primitive_value != MIN_PRIMITIVE ||                                   \
-         rhs.primitive_value != primitive_type{-1})) [[likely]] {              \
-      return primitive_value / rhs.primitive_value;                            \
-    } else {                                                                   \
+    if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
+                                         rhs.primitive_value)) [[unlikely]] {  \
       /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
        saturated to MAX(). */                                                  \
       return MAX();                                                            \
+    } else {                                                                   \
+      return primitive_value / rhs.primitive_value;                            \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -541,13 +541,13 @@
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs != primitive_type{0});                                    \
-    if ((primitive_value != MIN_PRIMITIVE ||                                   \
-         rhs.primitive_value != primitive_type{-1})) [[likely]] {              \
-      return primitive_value / rhs.primitive_value;                            \
-    } else {                                                                   \
+    if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
+                                         rhs.primitive_value)) [[unlikely]] {  \
       /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
        that wraps around to MIN(). */                                          \
       return MIN();                                                            \
+    } else {                                                                   \
+      return primitive_value / rhs.primitive_value;                            \
     }                                                                          \
   }                                                                            \
   static_assert(true)
@@ -660,12 +660,11 @@
    * 0 or the division results in overflow.                                    \
    */                                                                          \
   constexpr Option<T> checked_rem(const T& rhs) const& noexcept {              \
-    if (rhs.primitive_value != primitive_type{0} &&                            \
-        (primitive_value != MIN_PRIMITIVE ||                                   \
-         rhs.primitive_value != primitive_type{-1})) [[likely]]                \
-      return Option<T>::some(primitive_value % rhs.primitive_value);           \
-    else                                                                       \
+    if (__private::div_overflows(primitive_value, rhs.primitive_value))        \
+        [[unlikely]]                                                           \
       return Option<T>::none();                                                \
+    else                                                                       \
+      return Option<T>::some(primitive_value % rhs.primitive_value);           \
   }                                                                            \
                                                                                \
   /** Calculates the remainder when self is divided by rhs.                    \
@@ -680,12 +679,12 @@
   constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs != primitive_type{0});                                    \
-    if ((primitive_value != MIN_PRIMITIVE ||                                   \
-         rhs.primitive_value != primitive_type{-1})) [[likely]] {              \
+    if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
+                                         rhs.primitive_value)) [[unlikely]] {  \
+      return Tuple<T, bool>::with(0, true);                                    \
+    } else {                                                                   \
       return Tuple<T, bool>::with(primitive_value % rhs.primitive_value,       \
                                   false);                                      \
-    } else {                                                                   \
-      return Tuple<T, bool>::with(0, true);                                    \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -699,11 +698,170 @@
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs != primitive_type{0});                                    \
-    if ((primitive_value != MIN_PRIMITIVE ||                                   \
-         rhs.primitive_value != primitive_type{-1})) [[likely]] {              \
-      return primitive_value % rhs.primitive_value;                            \
-    } else {                                                                   \
+    if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
+                                         rhs.primitive_value)) [[likely]] {    \
       return primitive_type{0};                                                \
+    } else {                                                                   \
+      return primitive_value % rhs.primitive_value;                            \
+    }                                                                          \
+  }                                                                            \
+  static_assert(true)
+
+#define _sus__signed_euclid(T)                                                 \
+  /** Calculates the quotient of Euclidean division of self by rhs.            \
+   *                                                                           \
+   * This computes the integer q such that self = q * rhs + r, with r =        \
+   * self.rem_euclid(rhs) and 0 <= r < abs(rhs).                               \
+   *                                                                           \
+   * In other words, the result is self / rhs rounded to the integer q such    \
+   * that self >= q * rhs. If self > 0, this is equal to round towards zero    \
+   * (the default in Rust); if self < 0, this is equal to round towards +/-    \
+   * infinity.                                                                 \
+   *                                                                           \
+   * # Panics                                                                  \
+   * This function will panic if rhs is 0 or the division results in overflow. \
+   */                                                                          \
+  constexpr T div_euclid(const T& rhs) const& noexcept {                       \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(                                                              \
+        !__private::div_overflows(primitive_value, rhs.primitive_value));      \
+    return __private::div_euclid(unsafe_fn, primitive_value,                   \
+                                 rhs.primitive_value);                         \
+  }                                                                            \
+                                                                               \
+  /** Checked Euclidean division. Computes self.div_euclid(rhs), returning     \
+   * None if rhs == 0 or the division results in overflow.                     \
+   */                                                                          \
+  constexpr Option<T> checked_div_euclid(const T& rhs) const& noexcept {       \
+    if (__private::div_overflows(primitive_value, rhs.primitive_value))        \
+        [[unlikely]] {                                                         \
+      return Option<T>::none();                                                \
+    } else {                                                                   \
+      return Option<T>::some(__private::div_euclid(unsafe_fn, primitive_value, \
+                                                   rhs.primitive_value));      \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Calculates the quotient of Euclidean division self.div_euclid(rhs).      \
+   *                                                                           \
+   * Returns a tuple of the divisor along with a boolean indicating whether an \
+   * arithmetic overflow would occur. If an overflow would occur then self is  \
+   * returned.                                                                 \
+   *                                                                           \
+   * # Panics                                                                  \
+   * This function will panic if rhs is 0.                                     \
+   */                                                                          \
+  constexpr Tuple<T, bool> overflowing_div_euclid(const T& rhs)                \
+      const& noexcept {                                                        \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(rhs != primitive_type{0});                                    \
+    if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
+                                         rhs.primitive_value)) [[unlikely]] {  \
+      return Tuple<T, bool>::with(MIN(), true);                                \
+    } else {                                                                   \
+      return Tuple<T, bool>::with(                                             \
+          __private::div_euclid(unsafe_fn, primitive_value,                    \
+                                rhs.primitive_value),                          \
+          false);                                                              \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Wrapping Euclidean division. Computes self.div_euclid(rhs), wrapping     \
+   * around at the boundary of the type.                                       \
+   *                                                                           \
+   * Wrapping will only occur in MIN / -1 on a signed type (where MIN is the   \
+   * negative minimal value for the type). This is equivalent to -MIN, a       \
+   * positive value that is too large to represent in the type. In this case,  \
+   * this method returns MIN itself.                                           \
+   *                                                                           \
+   * # Panics                                                                  \
+   * This function will panic if rhs is 0.                                     \
+   */                                                                          \
+  constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {              \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(rhs != primitive_type{0});                                    \
+    if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
+                                         rhs.primitive_value)) [[unlikely]] {  \
+      return MIN();                                                            \
+    } else {                                                                   \
+      return __private::div_euclid(unsafe_fn, primitive_value,                 \
+                                   rhs.primitive_value);                       \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Calculates the least nonnegative remainder of self (mod rhs).            \
+   *                                                                           \
+   * This is done as if by the Euclidean division algorithm – given r =      \
+   * self.rem_euclid(rhs), self = rhs * self.div_euclid(rhs) + r, and 0 <= r < \
+   * abs(rhs).                                                                 \
+   *                                                                           \
+   * # Panics                                                                  \
+   * This function will panic if rhs is 0 or the division results in overflow. \
+   */                                                                          \
+  constexpr T rem_euclid(const T& rhs) const& noexcept {                       \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(                                                              \
+        !__private::div_overflows(primitive_value, rhs.primitive_value));      \
+    return __private::rem_euclid(unsafe_fn, primitive_value,                   \
+                                 rhs.primitive_value);                         \
+  }                                                                            \
+                                                                               \
+  /** Checked Euclidean remainder. Computes self.rem_euclid(rhs), returning    \
+   * None if rhs == 0 or the division results in overflow.                     \
+   */                                                                          \
+  constexpr Option<T> checked_rem_euclid(const T& rhs) const& noexcept {       \
+    if (__private::div_overflows(primitive_value, rhs.primitive_value))        \
+        [[unlikely]] {                                                         \
+      return Option<T>::none();                                                \
+    } else {                                                                   \
+      return Option<T>::some(__private::rem_euclid(unsafe_fn, primitive_value, \
+                                                   rhs.primitive_value));      \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Overflowing Euclidean remainder. Calculates self.rem_euclid(rhs).        \
+   *                                                                           \
+   * Returns a tuple of the remainder after dividing along with a boolean      \
+   * indicating whether an arithmetic overflow would occur. If an overflow     \
+   * would occur then 0 is returned.                                           \
+   *                                                                           \
+   * # Panics                                                                  \
+   * This function will panic if rhs is 0.                                     \
+   */                                                                          \
+  constexpr Tuple<T, bool> overflowing_rem_euclid(const T& rhs)            \
+      const& noexcept {                                                        \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(rhs != primitive_type{0});                                    \
+    if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
+                                         rhs.primitive_value)) [[unlikely]] {  \
+      return Tuple<T, bool>::with(0, true);                                    \
+    } else {                                                                   \
+      return Tuple<T, bool>::with(                                             \
+          __private::rem_euclid(unsafe_fn, primitive_value,                    \
+                                rhs.primitive_value),                          \
+          false);                                                              \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  /** Wrapping Euclidean remainder. Computes self.rem_euclid(rhs), wrapping    \
+   * around at the boundary of the type.                                       \
+   *                                                                           \
+   * Wrapping will only occur in MIN % -1 on a signed type (where MIN is the   \
+   * negative minimal value for the type). In this case, this method returns   \
+   * 0.                                                                        \
+   *                                                                           \
+   * # Panics                                                                  \
+   * This function will panic if rhs is 0.                                     \
+   */                                                                          \
+  constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {              \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(rhs != primitive_type{0});                                    \
+    if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
+                                         rhs.primitive_value)) [[unlikely]] {  \
+      return primitive_type{0};                                                \
+    } else {                                                                   \
+      return __private::rem_euclid(unsafe_fn, primitive_value,                 \
+                                   rhs.primitive_value);                       \
     }                                                                          \
   }                                                                            \
   static_assert(true)
