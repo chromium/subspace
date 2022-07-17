@@ -750,4 +750,29 @@ sus_always_inline constexpr T wrapping_pow(T base, uint32_t exp) noexcept {
   return pow_with_overflow(base, exp).value;
 }
 
+// Returns one less than next power of two.
+// (For 8u8 next power of two is 8u8 and for 6u8 it is 8u8)
+//
+// 8u8.one_less_than_next_power_of_two() == 7
+// 6u8.one_less_than_next_power_of_two() == 7
+//
+// This method cannot overflow, as in the `next_power_of_two`
+// overflow cases it instead ends up returning the maximum value
+// of the type, and can return 0 for 0.
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr T one_less_than_next_power_of_two(T x) noexcept {
+  if (x <= 1u) {
+    return 0u;
+  } else {
+    const auto p = x - 1;
+    // SAFETY: Because `p > 0`, it cannot consist entirely of leading zeros.
+    // That means the shift is always in-bounds, and some processors (such as
+    // intel pre-haswell) have more efficient ctlz intrinsics when the argument
+    // is non-zero.
+    const auto z = leading_zeros_nonzero(unsafe_fn, p);
+    return max_value<T>() >> z;
+  }
+}
+
 }  // namespace sus::num::__private

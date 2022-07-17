@@ -1252,8 +1252,7 @@ TEST(u32, SaturatingAddSigned) {
   EXPECT_EQ(a, 4_u32);
 
   EXPECT_EQ((1_u32).saturating_add_signed(2_i32), 3_u32);
-  EXPECT_EQ((u32::MIN() + 1_u32).saturating_add_signed(-1_i32),
-            u32::MIN());
+  EXPECT_EQ((u32::MIN() + 1_u32).saturating_add_signed(-1_i32), u32::MIN());
   EXPECT_EQ((u32::MIN()).saturating_add_signed(-1_i32), u32::MIN());
   EXPECT_EQ((u32::MAX() - 2_u32).saturating_add_signed(3_i32), u32::MAX());
 }
@@ -1264,10 +1263,48 @@ TEST(u32, WrappingAddSigned) {
   EXPECT_EQ(a, 4_u32);
 
   EXPECT_EQ((1_u32).wrapping_add_signed(2_i32), 3_u32);
-  EXPECT_EQ((u32::MIN() + 1_u32).wrapping_add_signed(-1_i32),
-            u32::MIN());
+  EXPECT_EQ((u32::MIN() + 1_u32).wrapping_add_signed(-1_i32), u32::MIN());
   EXPECT_EQ((u32::MIN()).wrapping_add_signed(-1_i32), u32::MAX());
   EXPECT_EQ((u32::MAX() - 2_u32).wrapping_add_signed(3_i32), u32::MIN());
+}
+
+TEST(u32, NextPowerOfTwo) {
+  constexpr auto a = (3_u32).next_power_of_two();
+  EXPECT_EQ(a, 4_u32);
+
+  EXPECT_EQ((2_u32).next_power_of_two(), 2_u32);
+  EXPECT_EQ((3_u32).next_power_of_two(), 4_u32);
+  EXPECT_EQ((4_u32).next_power_of_two(), 4_u32);
+  EXPECT_EQ((1000_u32).next_power_of_two(), 1024_u32);
+}
+
+TEST(u32DeathTest, NextPowerOfTwoOutOfBounds) {
+  EXPECT_DEATH((u32::MAX()).next_power_of_two(), "");
+}
+
+TEST(u32, CheckedNextPowerOfTwo) {
+  constexpr auto a = (3_u32).checked_next_power_of_two();
+  EXPECT_EQ(a, Option<u32>::some(4_u32));
+
+  EXPECT_EQ((2_u32).checked_next_power_of_two(), Option<u32>::some(2_u32));
+  EXPECT_EQ((3_u32).checked_next_power_of_two(), Option<u32>::some(4_u32));
+  EXPECT_EQ((4_u32).checked_next_power_of_two(), Option<u32>::some(4_u32));
+  EXPECT_EQ((1000_u32).checked_next_power_of_two(),
+            Option<u32>::some(1024_u32));
+
+  EXPECT_EQ((u32::MAX()).checked_next_power_of_two(), None);
+}
+
+TEST(u32, WrappingNextPowerOfTwo) {
+  constexpr auto a = (3_u32).wrapping_next_power_of_two();
+  EXPECT_EQ(a, 4_u32);
+
+  EXPECT_EQ((2_u32).wrapping_next_power_of_two(), 2_u32);
+  EXPECT_EQ((3_u32).wrapping_next_power_of_two(), 4_u32);
+  EXPECT_EQ((4_u32).wrapping_next_power_of_two(), 4_u32);
+  EXPECT_EQ((1000_u32).wrapping_next_power_of_two(), 1024_u32);
+ 
+  EXPECT_EQ((u32::MAX()).wrapping_next_power_of_two(), 0_u32);
 }
 
 TEST(u32, From) {
