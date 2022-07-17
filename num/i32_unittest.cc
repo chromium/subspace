@@ -413,26 +413,6 @@ TEST(i32, OverflowingAdd) {
             (Tuple<i32, bool>::with(0_i32, true)));
 }
 
-// ** Signed only.
-TEST(i32, OverflowingAddUnsigned) {
-  constexpr auto a = (1_i32).overflowing_add_unsigned(3u);
-  EXPECT_EQ(a, (Tuple<i32, bool>::with(4_i32, false)));
-
-  EXPECT_EQ((-1_i32).overflowing_add_unsigned(2u),
-            (Tuple<i32, bool>::with(1_i32, false)));
-  EXPECT_EQ(
-      (i32::MIN()).overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-      (Tuple<i32, bool>::with(i32::MAX(), false)));
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-            (Tuple<i32, bool>::with(i32::MIN(), true)));
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
-            (Tuple<i32, bool>::with(i32::MAX(), false)));
-  EXPECT_EQ((i32::MAX() - 2_i32).overflowing_add_unsigned(3u),
-            (Tuple<i32, bool>::with(i32::MIN(), true)));
-}
-
 TEST(i32, SaturatingAdd) {
   constexpr auto a = (1_i32).saturating_add(3_i32);
   EXPECT_EQ(a, 4_i32);
@@ -1897,6 +1877,78 @@ TEST(i32, ToNeBytes) {
       EXPECT_EQ(a.get(3), 0x12);
     }
   }
+}
+
+// ** Signed only.
+TEST(i32, CheckedAddUnsigned) {
+  constexpr auto a = (1_i32).checked_add_unsigned(3u);
+  EXPECT_EQ(a, Option<i32>::some(4_i32));
+
+  EXPECT_EQ((-1_i32).checked_add_unsigned(2u), Option<i32>::some(1_i32));
+  EXPECT_EQ((i32::MIN()).checked_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            Option<i32>::some(i32::MAX()));
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .checked_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            None);
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .checked_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            Option<i32>::some(i32::MAX()));
+  EXPECT_EQ((i32::MAX() - 2_i32).checked_add_unsigned(3u), None);
+}
+
+// ** Signed only.
+TEST(i32, OverflowingAddUnsigned) {
+  constexpr auto a = (1_i32).overflowing_add_unsigned(3u);
+  EXPECT_EQ(a, (Tuple<i32, bool>::with(4_i32, false)));
+
+  EXPECT_EQ((-1_i32).overflowing_add_unsigned(2u),
+            (Tuple<i32, bool>::with(1_i32, false)));
+  EXPECT_EQ(
+      (i32::MIN()).overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+      (Tuple<i32, bool>::with(i32::MAX(), false)));
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            (Tuple<i32, bool>::with(i32::MIN(), true)));
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            (Tuple<i32, bool>::with(i32::MAX(), false)));
+  EXPECT_EQ((i32::MAX() - 2_i32).overflowing_add_unsigned(3u),
+            (Tuple<i32, bool>::with(i32::MIN(), true)));
+}
+
+// ** Signed only.
+TEST(i32, SaturatingAddUnsigned) {
+  constexpr auto a = (1_i32).saturating_add_unsigned(3u);
+  EXPECT_EQ(a, 4_i32);
+
+  EXPECT_EQ((-1_i32).saturating_add_unsigned(2u), 1_i32);
+  EXPECT_EQ(
+      (i32::MIN()).saturating_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+      i32::MAX());
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .saturating_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            i32::MAX());
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .saturating_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            i32::MAX());
+  EXPECT_EQ((i32::MAX() - 2_i32).saturating_add_unsigned(3u), i32::MAX());
+}
+
+// ** Signed only.
+TEST(i32, WrappingAddUnsigned) {
+  constexpr auto a = (1_i32).wrapping_add_unsigned(3u);
+  EXPECT_EQ(a, 4_i32);
+
+  EXPECT_EQ((-1_i32).wrapping_add_unsigned(2u), 1_i32);
+  EXPECT_EQ((i32::MIN()).wrapping_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            i32::MAX());
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .wrapping_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+            i32::MIN());
+  EXPECT_EQ((i32::MIN() + 1_i32)
+                .wrapping_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+            i32::MAX());
+  EXPECT_EQ((i32::MAX() - 2_i32).wrapping_add_unsigned(3u), i32::MIN());
 }
 
 TEST(i32, From) {

@@ -390,6 +390,19 @@
       return Option<T>::none();                                                \
   }                                                                            \
                                                                                \
+  /** Checked integer addition with an unsigned rhs. Computes self + rhs,      \
+   * returning None if overflow occurred.                                      \
+   */                                                                          \
+  constexpr Option<T> checked_add_unsigned(const UnsignedT& rhs)               \
+      const& noexcept {                                                        \
+    const auto out =                                                           \
+        __private::add_with_overflow_unsigned(primitive_value, rhs);           \
+    if (!out.overflow) [[likely]]                                              \
+      return Option<T>::some(out.value);                                       \
+    else                                                                       \
+      return Option<T>::none();                                                \
+  }                                                                            \
+                                                                               \
   /** Calculates self + rhs                                                    \
    *                                                                           \
    * Returns a tuple of the addition along with a boolean indicating whether   \
@@ -422,6 +435,18 @@
     return __private::saturating_add(primitive_value, rhs.primitive_value);    \
   }                                                                            \
                                                                                \
+  /** Saturating integer addition with an unsigned rhs. Computes self + rhs,   \
+   * saturating at the numeric bounds instead of overflowing.                  \
+   */                                                                          \
+  constexpr T saturating_add_unsigned(const UnsignedT& rhs) const& noexcept {  \
+    const auto r =                                                             \
+        __private::add_with_overflow_unsigned(primitive_value, rhs);           \
+    if (!r.overflow) [[likely]]                                                \
+      return r.value;                                                          \
+    else                                                                       \
+      return MAX();                                                            \
+  }                                                                            \
+                                                                               \
   /** Unchecked integer addition. Computes self + rhs, assuming overflow       \
    * cannot occur.                                                             \
    *                                                                           \
@@ -439,6 +464,13 @@
    */                                                                          \
   constexpr T wrapping_add(const T& rhs) const& noexcept {                     \
     return __private::wrapping_add(primitive_value, rhs.primitive_value);      \
+  }                                                                            \
+                                                                               \
+  /** Wrapping (modular) addition with an unsigned rhs. Computes self + rhs,   \
+   * wrapping around at the boundary of the type.                              \
+   */                                                                          \
+  constexpr T wrapping_add_unsigned(const UnsignedT& rhs) const& noexcept {    \
+    return __private::add_with_overflow_unsigned(primitive_value, rhs).value;  \
   }                                                                            \
   static_assert(true)
 
