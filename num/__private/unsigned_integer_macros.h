@@ -55,6 +55,7 @@
   _sus__unsigned_bits(T);                               \
   _sus__unsigned_pow(T);                                \
   _sus__unsigned_log(T);                                \
+  _sus__unsigned_power_of_two(T);                       \
   _sus__unsigned_endian(T, Bytes)
 
 #define _sus__unsigned_from(T)                                              \
@@ -883,6 +884,41 @@
    */                                                                         \
   constexpr u32 log(const T& base) const& noexcept {                          \
     return checked_log(base).unwrap();                                        \
+  }                                                                           \
+  static_assert(true)
+
+#define _sus__unsigned_power_of_two(T)                                        \
+  /** Returns the smallest power of two greater than or equal to self.        \
+   *                                                                          \
+   * # Panics                                                                 \
+   * The function panics when the return value overflows (i.e., `self > (1 << \
+   * (N-1))` for type uN). */                                                 \
+  constexpr T next_power_of_two() noexcept {                                  \
+    const primitive_type one_less =                                           \
+        __private::one_less_than_next_power_of_two(primitive_value);          \
+    return T(one_less) + T(1u);                                               \
+  }                                                                           \
+                                                                              \
+  /** Returns the smallest power of two greater than or equal to n.           \
+   *                                                                          \
+   * If the next power of two is greater than the type's maximum value, None  \
+   * is returned, otherwise the power of two is wrapped in Some.              \
+   */                                                                         \
+  constexpr Option<T> checked_next_power_of_two() noexcept {                  \
+    const primitive_type one_less =                                           \
+        __private::one_less_than_next_power_of_two(primitive_value);          \
+    return T(one_less).checked_add(T(1u));                                    \
+  }                                                                           \
+                                                                              \
+  /** Returns the smallest power of two greater than or equal to n.           \
+   *                                                                          \
+   * If the next power of two is greater than the type's maximum value, the   \
+   * return value is wrapped to 0.                                            \
+   */                                                                         \
+  constexpr T wrapping_next_power_of_two() noexcept {                         \
+    const primitive_type one_less =                                           \
+        __private::one_less_than_next_power_of_two(primitive_value);          \
+    return T(one_less).wrapping_add(T(1u));                                   \
   }                                                                           \
   static_assert(true)
 
