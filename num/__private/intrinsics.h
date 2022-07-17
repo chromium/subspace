@@ -775,4 +775,48 @@ sus_always_inline constexpr T one_less_than_next_power_of_two(T x) noexcept {
   }
 }
 
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline constexpr bool div_overflows(T x, T y) noexcept {
+  // Using `&` helps LLVM see that it is the same check made in division.
+  return y == T{0} || ((x == min_value<T>()) & (y == T{-1}));
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
+sus_always_inline
+    constexpr bool div_overflows_nonzero(::sus::marker::UnsafeFnMarker, T x,
+                                         T y) noexcept {
+  // Using `&` helps LLVM see that it is the same check made in division.
+  return ((x == min_value<T>()) & (y == T{-1}));
+}
+
+// SAFETY: Requires that !div_overflows(x, y) or Undefined Behaviour results.
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
+constexpr T div_euclid(::sus::marker::UnsafeFnMarker, T x, T y) noexcept {
+  const auto q = x / y;
+  if (x % y >= 0)
+    return q;
+  else if (y > 0)
+    return q - 1;
+  else
+    return q + 1;
+}
+
+// SAFETY: Requires that !div_overflows(x, y) or Undefined Behaviour results.
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
+constexpr T rem_euclid(::sus::marker::UnsafeFnMarker, T x, T y) noexcept {
+  const auto r = x % y;
+  if (r < 0) {
+    if (y < 0)
+      return r - y;
+    else
+      return r + y;
+  } else {
+    return r;
+  }
+}
+
 }  // namespace sus::num::__private

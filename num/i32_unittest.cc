@@ -180,6 +180,21 @@ TEST(i32, Constants) {
   EXPECT_EQ(bits, 32u);
 }
 
+TEST(i32, From) {
+  static_assert(sus::concepts::from::From<i32, u32>);
+
+  // TODO: Add all the integer types as they exist.
+  EXPECT_EQ(i32::from(2_i32), 2_i32);
+  EXPECT_EQ(i32::from(2_u32), 2_i32);
+}
+
+TEST(i32DeathTest, FromOutOfRange) {
+#if GTEST_HAS_DEATH_TEST
+  // TODO: Add all the integer types as they exist.
+  EXPECT_DEATH(i32::from(u32::MAX()), "");
+#endif
+}
+
 // ** Signed only
 TEST(i32, Abs) {
   [[maybe_unused]] constexpr auto a = i32(-1).abs();
@@ -2004,17 +2019,116 @@ TEST(i32, WrappingSubUnsigned) {
   EXPECT_EQ((i32::MIN() + 2_i32).wrapping_sub_unsigned(3u), i32::MAX());
 }
 
-TEST(i32, From) {
-  static_assert(sus::concepts::from::From<i32, u32>);
+TEST(i32, DivEuclid) {
+  constexpr auto a = (7_i32).div_euclid(4_i32);
+  EXPECT_EQ(a, 1_i32);
 
-  // TODO: Add all the integer types as they exist.
-  EXPECT_EQ(i32::from(2_i32), 2_i32);
-  EXPECT_EQ(i32::from(2_u32), 2_i32);
+  EXPECT_EQ((7_i32).div_euclid(4_i32), 1_i32);    // 7 >= 4 * 1
+  EXPECT_EQ((7_i32).div_euclid(-4_i32), -1_i32);  // 7 >= -4 * -1
+  EXPECT_EQ((-7_i32).div_euclid(4_i32), -2_i32);  // -7 >= 4 * -2
+  EXPECT_EQ((-7_i32).div_euclid(-4_i32), 2_i32);  // -7 >= -4 * 2
 }
 
-TEST(i32DeathTest, FromOutOfRange) {
-  // TODO: Add all the integer types as they exist.
-  EXPECT_DEATH(i32::from(u32::MAX()), "");
+TEST(i32DeathTest, DivEuclidOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_i32).div_euclid(0_i32), "");
+  EXPECT_DEATH((i32::MIN()).div_euclid(-1_i32), "");
+#endif
+}
+
+TEST(i32, CheckedDivEuclid) {
+  constexpr auto a = (7_i32).checked_div_euclid(4_i32);
+  EXPECT_EQ(a, Option<i32>::some(1_i32));
+
+  EXPECT_EQ((7_i32).checked_div_euclid(4_i32), Option<i32>::some(1_i32));
+  EXPECT_EQ((7_i32).checked_div_euclid(0_i32), None);
+  EXPECT_EQ((i32::MIN()).checked_div_euclid(-1_i32), None);
+}
+
+TEST(i32, OverflowingDivEuclid) {
+  constexpr auto a = (7_i32).overflowing_div_euclid(4_i32);
+  EXPECT_EQ(a, (Tuple<i32, bool>::with(1_i32, false)));
+
+  EXPECT_EQ((7_i32).overflowing_div_euclid(4_i32),
+            (Tuple<i32, bool>::with(1_i32, false)));
+  EXPECT_EQ((i32::MIN()).overflowing_div_euclid(-1_i32),
+            (Tuple<i32, bool>::with(i32::MIN(), true)));
+}
+
+TEST(i32DeathTest, OverflowingDivEuclidDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_i32).overflowing_div_euclid(0_i32), "");
+#endif
+}
+
+TEST(i32, WrappingDivEuclid) {
+  constexpr auto a = (7_i32).wrapping_div_euclid(4_i32);
+  EXPECT_EQ(a, 1_i32);
+
+  EXPECT_EQ((7_i32).wrapping_div_euclid(4_i32), 1_i32);
+  EXPECT_EQ((i32::MIN()).wrapping_div_euclid(-1_i32), i32::MIN());
+}
+
+TEST(i32DeathTest, WrappingDivEuclidOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_i32).wrapping_div_euclid(0_i32), "");
+#endif
+}
+
+TEST(i32, RemEuclid) {
+  constexpr auto a = (7_i32).rem_euclid(4_i32);
+  EXPECT_EQ(a, 3_i32);
+
+  EXPECT_EQ((7_i32).rem_euclid(4_i32), 3_i32);
+  EXPECT_EQ((-7_i32).rem_euclid(4_i32), 1_i32);
+  EXPECT_EQ((7_i32).rem_euclid(-4_i32), 3_i32);
+  EXPECT_EQ((-7_i32).rem_euclid(-4_i32), 1_i32);
+}
+
+TEST(i32DeathTest, RemEuclidOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_i32).rem_euclid(0_i32), "");
+  EXPECT_DEATH((i32::MIN()).rem_euclid(-1_i32), "");
+#endif
+}
+
+TEST(i32, CheckedRemEuclid) {
+  constexpr auto a = (7_i32).checked_rem_euclid(4_i32);
+  EXPECT_EQ(a, Option<i32>::some(3_i32));
+
+  EXPECT_EQ((7_i32).checked_rem_euclid(4_i32), Option<i32>::some(3_i32));
+  EXPECT_EQ((7_i32).checked_rem_euclid(0_i32), None);
+  EXPECT_EQ((i32::MIN()).checked_rem_euclid(-1_i32), None);
+}
+
+TEST(i32, OverflowingRemEuclid) {
+  constexpr auto a = (7_i32).overflowing_rem_euclid(4_i32);
+  EXPECT_EQ(a, (Tuple<i32, bool>::with(3_i32, false)));
+
+  EXPECT_EQ((7_i32).overflowing_rem_euclid(4_i32),
+            (Tuple<i32, bool>::with(3_i32, false)));
+  EXPECT_EQ((i32::MIN()).overflowing_rem_euclid(-1_i32),
+            (Tuple<i32, bool>::with(0_i32, true)));
+}
+
+TEST(i32DeathTest, OverflowingRemEuclidDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_i32).overflowing_rem_euclid(0_i32), "");
+#endif
+}
+
+TEST(i32, WrappingRemEuclid) {
+  constexpr auto a = (7_i32).wrapping_rem_euclid(4_i32);
+  EXPECT_EQ(a, 3_i32);
+
+  EXPECT_EQ((7_i32).wrapping_rem_euclid(4_i32), 3_i32);
+  EXPECT_EQ((i32::MIN()).wrapping_rem_euclid(-1_i32), 0_i32);
+}
+
+TEST(i32DeathTest, WrappingRemEuclidOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_i32).wrapping_rem_euclid(0_i32), "");
+#endif
 }
 
 }  // namespace

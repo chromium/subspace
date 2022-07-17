@@ -164,6 +164,21 @@ TEST(u32, Constants) {
   EXPECT_EQ(bits, 32u);
 }
 
+TEST(u32, From) {
+  static_assert(sus::concepts::from::From<u32, i32>);
+
+  // TODO: Add all the integer types as they exist.
+  EXPECT_EQ(u32::from(2_i32), 2_u32);
+  EXPECT_EQ(u32::from(2_u32), 2_u32);
+}
+
+TEST(u32DeathTest, FromOutOfRange) {
+#if GTEST_HAS_DEATH_TEST
+  // TODO: Add all the integer types as they exist.
+  EXPECT_DEATH(u32::from(-1_i32), "");
+#endif
+}
+
 TEST(u32, AbsDiff) {
   [[maybe_unused]] constexpr auto a = (1_u32).abs_diff(10_u32);
 
@@ -1279,7 +1294,9 @@ TEST(u32, NextPowerOfTwo) {
 }
 
 TEST(u32DeathTest, NextPowerOfTwoOutOfBounds) {
+#if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH((u32::MAX()).next_power_of_two(), "");
+#endif
 }
 
 TEST(u32, CheckedNextPowerOfTwo) {
@@ -1303,21 +1320,104 @@ TEST(u32, WrappingNextPowerOfTwo) {
   EXPECT_EQ((3_u32).wrapping_next_power_of_two(), 4_u32);
   EXPECT_EQ((4_u32).wrapping_next_power_of_two(), 4_u32);
   EXPECT_EQ((1000_u32).wrapping_next_power_of_two(), 1024_u32);
- 
+
   EXPECT_EQ((u32::MAX()).wrapping_next_power_of_two(), 0_u32);
 }
 
-TEST(u32, From) {
-  static_assert(sus::concepts::from::From<u32, i32>);
+TEST(u32, DivEuclid) {
+  constexpr auto a = (7_u32).div_euclid(4_u32);
+  EXPECT_EQ(a, 1_u32);
 
-  // TODO: Add all the integer types as they exist.
-  EXPECT_EQ(u32::from(2_i32), 2_u32);
-  EXPECT_EQ(u32::from(2_u32), 2_u32);
+  EXPECT_EQ((7_u32).div_euclid(4_u32), 1_u32);    // 7 >= 4 * 1
 }
 
-TEST(u32DeathTest, FromOutOfRange) {
-  // TODO: Add all the integer types as they exist.
-  EXPECT_DEATH(u32::from(-1_i32), "");
+TEST(u32DeathTest, DivEuclidOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_u32).div_euclid(0_u32), "");
+#endif
+}
+
+TEST(u32, CheckedDivEuclid) {
+  constexpr auto a = (7_u32).checked_div_euclid(4_u32);
+  EXPECT_EQ(a, Option<u32>::some(1_u32));
+
+  EXPECT_EQ((7_u32).checked_div_euclid(4_u32), Option<u32>::some(1_u32));
+  EXPECT_EQ((7_u32).checked_div_euclid(0_u32), None);
+}
+
+TEST(u32, OverflowingDivEuclid) {
+  constexpr auto a = (7_u32).overflowing_div_euclid(4_u32);
+  EXPECT_EQ(a, (Tuple<u32, bool>::with(1_u32, false)));
+
+  EXPECT_EQ((7_u32).overflowing_div_euclid(4_u32),
+            (Tuple<u32, bool>::with(1_u32, false)));
+}
+
+TEST(u32DeathTest, OverflowingDivEuclidDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_u32).overflowing_div_euclid(0_u32), "");
+#endif
+}
+
+TEST(u32, WrappingDivEuclid) {
+  constexpr auto a = (7_u32).wrapping_div_euclid(4_u32);
+  EXPECT_EQ(a, 1_u32);
+
+  EXPECT_EQ((7_u32).wrapping_div_euclid(4_u32), 1_u32);
+}
+
+TEST(u32DeathTest, WrappingDivEuclidOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_u32).wrapping_div_euclid(0_u32), "");
+#endif
+}
+
+TEST(u32, RemEuclid) {
+  constexpr auto a = (7_u32).rem_euclid(4_u32);
+  EXPECT_EQ(a, 3_u32);
+
+  EXPECT_EQ((7_u32).rem_euclid(4_u32), 3_u32);
+}
+
+TEST(u32DeathTest, RemEuclidOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_u32).rem_euclid(0_u32), "");
+#endif
+}
+
+TEST(u32, CheckedRemEuclid) {
+  constexpr auto a = (7_u32).checked_rem_euclid(4_u32);
+  EXPECT_EQ(a, Option<u32>::some(3_u32));
+
+  EXPECT_EQ((7_u32).checked_rem_euclid(4_u32), Option<u32>::some(3_u32));
+  EXPECT_EQ((7_u32).checked_rem_euclid(0_u32), None);
+}
+
+TEST(u32, OverflowingRemEuclid) {
+  constexpr auto a = (7_u32).overflowing_rem_euclid(4_u32);
+  EXPECT_EQ(a, (Tuple<u32, bool>::with(3_u32, false)));
+
+  EXPECT_EQ((7_u32).overflowing_rem_euclid(4_u32),
+            (Tuple<u32, bool>::with(3_u32, false)));
+}
+
+TEST(u32DeathTest, OverflowingRemEuclidDivByZero) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_u32).overflowing_rem_euclid(0_u32), "");
+#endif
+}
+
+TEST(u32, WrappingRemEuclid) {
+  constexpr auto a = (7_u32).wrapping_rem_euclid(4_u32);
+  EXPECT_EQ(a, 3_u32);
+
+  EXPECT_EQ((7_u32).wrapping_rem_euclid(4_u32), 3_u32);
+}
+
+TEST(u32DeathTest, WrappingRemEuclidOverflow) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((7_u32).wrapping_rem_euclid(0_u32), "");
+#endif
 }
 
 }  // namespace
