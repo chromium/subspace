@@ -18,8 +18,8 @@
 
 #include "concepts/into.h"
 #include "concepts/make_default.h"
-#include "num/i32.h"
 #include "mem/__private/relocate.h"
+#include "num/i32.h"
 #include "num/num_concepts.h"
 #include "option/option.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -1217,6 +1217,57 @@ TEST(u32, ToNeBytes) {
       EXPECT_EQ(a.get(3), 0x12);
     }
   }
+}
+
+// ** Unsigned only.
+TEST(u32, CheckedAddSigned) {
+  constexpr auto a = (1_u32).checked_add_signed(3_i32);
+  EXPECT_EQ(a, Option<u32>::some(4_u32));
+
+  EXPECT_EQ((1_u32).checked_add_signed(2_i32), Option<u32>::some(3_u32));
+  EXPECT_EQ((u32::MIN() + 1_u32).checked_add_signed(-1_i32),
+            Option<u32>::some(u32::MIN()));
+  EXPECT_EQ((u32::MIN()).checked_add_signed(-1_i32), None);
+  EXPECT_EQ((u32::MAX() - 2_u32).checked_add_signed(3_i32), None);
+}
+
+// ** Unsigned only.
+TEST(u32, OverflowingAddSigned) {
+  constexpr auto a = (1_u32).overflowing_add_signed(3_i32);
+  EXPECT_EQ(a, (Tuple<u32, bool>::with(4_u32, false)));
+
+  EXPECT_EQ((1_u32).overflowing_add_signed(2_i32),
+            (Tuple<u32, bool>::with(3_u32, false)));
+  EXPECT_EQ((u32::MIN() + 1_u32).overflowing_add_signed(-1_i32),
+            (Tuple<u32, bool>::with(u32::MIN(), false)));
+  EXPECT_EQ((u32::MIN()).overflowing_add_signed(-1_i32),
+            (Tuple<u32, bool>::with(u32::MAX(), true)));
+  EXPECT_EQ((u32::MAX() - 2_u32).overflowing_add_signed(3_i32),
+            (Tuple<u32, bool>::with(u32::MIN(), true)));
+}
+
+// ** Unsigned only.
+TEST(u32, SaturatingAddSigned) {
+  constexpr auto a = (1_u32).saturating_add_signed(3_i32);
+  EXPECT_EQ(a, 4_u32);
+
+  EXPECT_EQ((1_u32).saturating_add_signed(2_i32), 3_u32);
+  EXPECT_EQ((u32::MIN() + 1_u32).saturating_add_signed(-1_i32),
+            u32::MIN());
+  EXPECT_EQ((u32::MIN()).saturating_add_signed(-1_i32), u32::MIN());
+  EXPECT_EQ((u32::MAX() - 2_u32).saturating_add_signed(3_i32), u32::MAX());
+}
+
+// ** Unsigned only.
+TEST(u32, WrappingAddSigned) {
+  constexpr auto a = (1_u32).wrapping_add_signed(3_i32);
+  EXPECT_EQ(a, 4_u32);
+
+  EXPECT_EQ((1_u32).wrapping_add_signed(2_i32), 3_u32);
+  EXPECT_EQ((u32::MIN() + 1_u32).wrapping_add_signed(-1_i32),
+            u32::MIN());
+  EXPECT_EQ((u32::MIN()).wrapping_add_signed(-1_i32), u32::MAX());
+  EXPECT_EQ((u32::MAX() - 2_u32).wrapping_add_signed(3_i32), u32::MIN());
 }
 
 TEST(u32, From) {

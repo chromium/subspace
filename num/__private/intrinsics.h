@@ -426,6 +426,18 @@ sus_always_inline
   };
 }
 
+template <class T, class U = decltype(to_signed(std::declval<T>()))>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8 &&
+           sizeof(T) == sizeof(U))
+sus_always_inline
+    constexpr OverflowOut<T> add_with_overflow_signed(T x, U y) noexcept {
+  return OverflowOut<T>{
+      .overflow = (y >= 0 && into_unsigned(y) > max_value<T>() - x) ||
+                  (y < 0 && into_unsigned(-y) > x),
+      .value = x + into_unsigned(y),
+  };
+}
+
 template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8 &&
            sizeof(T) == sizeof(U))
@@ -478,7 +490,8 @@ sus_always_inline
   // TODO: Can we use compiler intrinsics?
   auto out = into_widened(x) * into_widened(y);
   using Wide = decltype(out);
-  return OverflowOut{.overflow = out > Wide{max_value<T>()}, .value = static_cast<T>(out)};
+  return OverflowOut{.overflow = out > Wide{max_value<T>()},
+                     .value = static_cast<T>(out)};
 }
 
 template <class T>
