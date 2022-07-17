@@ -65,6 +65,7 @@ add_library(subspace STATIC
     "num/__private/signed_integer_macros.h"
     "num/__private/unsigned_integer_macros.h"
     "num/i32.h"
+    "num/integer_concepts.h"
     "num/num_concepts.h"
     "num/u32.h"
     "option/__private/is_option_type.h"

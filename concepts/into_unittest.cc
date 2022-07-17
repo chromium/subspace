@@ -14,6 +14,7 @@
 
 #include "concepts/into.h"
 
+#include "mem/forward.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 using sus::concepts::from::From;

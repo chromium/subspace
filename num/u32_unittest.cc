@@ -18,6 +18,7 @@
 
 #include "concepts/into.h"
 #include "concepts/make_default.h"
+#include "num/i32.h"
 #include "mem/__private/relocate.h"
 #include "num/num_concepts.h"
 #include "option/option.h"
@@ -1216,6 +1217,19 @@ TEST(u32, ToNeBytes) {
       EXPECT_EQ(a.get(3), 0x12);
     }
   }
+}
+
+TEST(u32, From) {
+  static_assert(sus::concepts::from::From<u32, i32>);
+
+  // TODO: Add all the integer types as they exist.
+  EXPECT_EQ(u32::from(2_i32), 2_u32);
+  EXPECT_EQ(u32::from(2_u32), 2_u32);
+}
+
+TEST(u32DeathTest, FromOutOfRange) {
+  // TODO: Add all the integer types as they exist.
+  EXPECT_DEATH(u32::from(-1_i32), "");
 }
 
 }  // namespace

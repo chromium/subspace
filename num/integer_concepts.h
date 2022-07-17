@@ -16,16 +16,20 @@
 
 #include <concepts>
 
-namespace sus::concepts::from {
+namespace sus::num {
 
-/// A concept that indicates ToType can be constructed from a FromType, via
-/// `ToType::from(FromType)`.
-///
-template <class ToType, class FromType>
-// clang-format off
-concept From = requires (FromType&& from) {
-    { ToType::from(static_cast<FromType&&>(from)) } -> std::same_as<ToType>;
-};
-// clang-format on
+struct i32;
+struct u32;
 
-}  // namespace sus::concepts::from
+// TODO: Add all the unsigned types as they exist.
+template <class T>
+concept Unsigned = std::same_as<u32, std::decay_t<T>>;
+
+// TODO: Add all the signed types as they exist.
+template <class T>
+concept Signed = std::same_as<i32, std::decay_t<T>>;
+
+template <class T>
+concept Integer = Unsigned<T> || Signed<T>;
+
+}  // namespace sus::num

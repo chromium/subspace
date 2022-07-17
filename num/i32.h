@@ -20,6 +20,7 @@
 
 #include "num/__private/literals.h"
 #include "num/__private/signed_integer_macros.h"
+#include "num/integer_concepts.h"
 
 namespace sus::num {
 
