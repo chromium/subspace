@@ -26,60 +26,21 @@
 
 namespace sus::num {
 
-/// A 32-bit signed integer.
+// TODO: from_str_radix(). Need Result type and Errors.
+
+/// A 32-bit unsigned integer.
 struct u32 {
- private:
-  /// The underlying primitive type.
-  using primitive_type = uint32_t;
-
- public:
-  /// Default constructor, which sets the integer to 0.
-  ///
-  /// The trivial copy and move constructors are implicitly declared, as is the
-  /// trivial destructor.
-  constexpr inline u32() noexcept = default;
-
-  /// Construction from the underlying primitive type.
-  template <class T>
-    requires(std::same_as<T, primitive_type>)  // Prevent implicit conversions.
-  constexpr inline u32(T val) noexcept : primitive_value(val) {}
-
-  /// Assignment from the underlying primitive type.
-  template <class T>
-    requires(std::same_as<T, primitive_type>)  // Prevent implicit conversions.
-  constexpr inline void operator=(T v) noexcept {
-    primitive_value = v;
-  }
-
-  // TODO: Split apart the declarations and the definitions, so they can be in
+  // TODO: Split apart the declarations and the definitions? Then they can be in
   // u32_defn.h and u32_impl.h, allowing most of the library to just use
-  // u32_defn.h which will keep headers smaller.
-  _sus__unsigned_impl(u32, sizeof(primitive_type), /*SignedT=*/i32,
+  // u32_defn.h which will keep some headers smaller. But then the combined
+  // headers are larger, is that worse?
+  _sus__unsigned_impl(u32, /*PrimitiveT=*/uint32_t, /*SignedT=*/i32,
                       /*LargerT=*/uint64_t);
-
-  // TODO: from_str_radix(). Need Result type and Errors.
-
-  /// The inner primitive value, in case it needs to be unwrapped from the
-  /// type. Avoid using this member except to convert when a consumer
-  /// requires it.
-  primitive_type primitive_value = 0;
 };
 
 }  // namespace sus::num
 
+_sus__unsigned_literal(u32, ::sus::num::u32, /*PrimitiveT=*/uint32_t);
+
 // Promote u32 into the top-level namespace.
 using sus::num::u32;
-
-// clang-format off
-template <char... C>
-  requires requires {
-    { ::sus::num::__private::BuildInteger<
-        decltype(u32::primitive_value), u32::MAX_PRIMITIVE, C...>::value
-    } -> std::same_as<const decltype(u32::primitive_value)&>;
-  }
-u32 inline constexpr operator"" _u32() noexcept {
-  using Builder = ::sus::num::__private::BuildInteger<
-    decltype(u32::primitive_value), u32::MAX_PRIMITIVE, C...>;
-  return u32(Builder::value);
-}
-// clang-format on
