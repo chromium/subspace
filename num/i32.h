@@ -24,62 +24,24 @@
 
 namespace sus::num {
 
+// TODO: from_str_radix(). Need Result type and Errors.
+
+// TODO: div_ceil() and div_floor()? Lots of discussion still on
+// https://github.com/rust-lang/rust/issues/88581 for signed types.
+
 /// A 32-bit signed integer.
 struct i32 {
- private:
-  /// The underlying primitive type.
-  using primitive_type = int32_t;
-
- public:
-  /// Default constructor, which sets the integer to 0.
-  ///
-  /// The trivial copy and move constructors are implicitly declared, as is the
-  /// trivial destructor.
-  constexpr inline i32() noexcept = default;
-
-  /// Construction from the underlying primitive type.
-  template <class T>
-    requires(std::same_as<T, primitive_type>)  // Prevent implicit conversions.
-  constexpr inline i32(T val) noexcept : primitive_value(val) {}
-
-  /// Assignment from the underlying primitive type.
-  template <class T>
-    requires(std::same_as<T, primitive_type>)  // Prevent implicit conversions.
-  constexpr inline void operator=(T v) noexcept {
-    primitive_value = v;
-  }
-
-  // TODO: Split apart the declarations and the definitions, so they can be in
-  // i32_defn.h and i32_impl.h, allowing most of the library to just use
-  // i32_defn.h which will keep headers smaller.
-  _sus__signed_impl(i32, sizeof(primitive_type), 
+  // TODO: Split apart the declarations and the definitions? Then they can be in
+  // u32_defn.h and u32_impl.h, allowing most of the library to just use
+  // u32_defn.h which will keep some headers smaller. But then the combined
+  // headers are larger, is that worse?
+  _sus__signed_impl(i32, int32_t,
                     /*UnsignedT=*/u32, /*LargerT=*/int64_t);
-
-  // TODO: from_str_radix(). Need Result type and Errors.
-
-  // TODO: div_ceil() and div_floor()? Lots of discussion still on
-  // https://github.com/rust-lang/rust/issues/88581 for signed types.
-
-  /// The inner primitive value, in case it needs to be unwrapped from the type.
-  /// Avoid using this member except to convert when a consumer requires it.
-  primitive_type primitive_value = 0;
 };
 
 }  // namespace sus::num
 
+_sus__signed_literal(i32, ::sus::num::i32, /*PrimitiveT=*/int32_t);
+
 // Promote i32 into the top-level namespace.
 using sus::num::i32;
-
-// clang-format off
-template <char... C>
-  requires requires {
-    { ::sus::num::__private::BuildInteger<
-        decltype(i32::primitive_value), i32::MAX_PRIMITIVE, C...>::value
-    } -> std::same_as<const decltype(i32::primitive_value)&>;
-  }
-i32 inline constexpr operator"" _i32() noexcept {
-  using Builder = ::sus::num::__private::BuildInteger<
-    decltype(i32::primitive_value), i32::MAX_PRIMITIVE, C...>;
-  return i32(Builder::value);
-}
-// clang-format on

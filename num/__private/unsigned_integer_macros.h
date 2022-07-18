@@ -24,56 +24,103 @@
 #include "option/option.h"
 #include "tuple/tuple.h"
 
-#define _sus__unsigned_impl(T, Bytes, SignedT, LargerT) \
-  _sus__unsigned_constants(T);                          \
-  _sus__unsigned_from(T);                               \
-  _sus__unsigned_integer_comparison(T);                 \
-  _sus__unsigned_unary_ops(T);                          \
-  _sus__unsigned_binary_logic_ops(T);                   \
-  _sus__unsigned_binary_bit_ops(T);                     \
-  _sus__unsigned_mutable_logic_ops(T);                  \
-  _sus__unsigned_mutable_bit_ops(T);                    \
-  _sus__unsigned_abs(T);                                \
-  _sus__unsigned_add(T, SignedT);                       \
-  _sus__unsigned_div(T);                                \
-  _sus__unsigned_mul(T, LargerT);                       \
-  _sus__unsigned_neg(T);                                \
-  _sus__unsigned_rem(T);                                \
-  _sus__unsigned_euclid(T);                             \
-  _sus__unsigned_shift(T);                              \
-  _sus__unsigned_sub(T);                                \
-  _sus__unsigned_bits(T);                               \
-  _sus__unsigned_pow(T);                                \
-  _sus__unsigned_log(T);                                \
-  _sus__unsigned_power_of_two(T);                       \
-  _sus__unsigned_endian(T, Bytes)
+// clang-format off
+#define _sus__unsigned_literal(Name, T, PrimitiveT) \
+  template <char... C> \
+    requires requires { \
+      { \
+        ::sus::num::__private::BuildInteger< \
+          PrimitiveT, T::MAX_PRIMITIVE, C...>::value \
+      } -> std::same_as<const PrimitiveT&>; \
+    } \
+  T inline constexpr operator"" _##Name() noexcept { \
+    using Builder = ::sus::num::__private::BuildInteger< \
+      PrimitiveT, T::MAX_PRIMITIVE, C...>; \
+    return T(Builder::value); \
+  } \
+  static_assert(true)
+// clang-format on
 
-#define _sus__unsigned_constants(T)                                  \
-  static constexpr auto MIN_PRIMITIVE =                              \
-      __private::min_value<primitive_type>();                        \
-  static constexpr auto MAX_PRIMITIVE =                              \
-      __private::max_value<primitive_type>();                        \
-  static constexpr inline T MIN() noexcept { return MIN_PRIMITIVE; } \
-  static constexpr inline T MAX() noexcept { return MAX_PRIMITIVE; } \
-  static constexpr inline u32 BITS() noexcept {                      \
-    return __private::num_bits<primitive_type>();                    \
-  }                                                                  \
+#define _sus__unsigned_impl(T, PrimitiveT, SignedT, LargerT) \
+  _sus__unsigned_storage(PrimitiveT);                        \
+  _sus__unsigned_constants(T, PrimitiveT);                   \
+  _sus__unsigned_construct(T, PrimitiveT);                   \
+  _sus__unsigned_from(T, PrimitiveT);                        \
+  _sus__unsigned_integer_comparison(T);                      \
+  _sus__unsigned_unary_ops(T);                               \
+  _sus__unsigned_binary_logic_ops(T);                        \
+  _sus__unsigned_binary_bit_ops(T);                          \
+  _sus__unsigned_mutable_logic_ops(T);                       \
+  _sus__unsigned_mutable_bit_ops(T);                         \
+  _sus__unsigned_abs(T);                                     \
+  _sus__unsigned_add(T, SignedT);                            \
+  _sus__unsigned_div(T);                                     \
+  _sus__unsigned_mul(T, LargerT);                            \
+  _sus__unsigned_neg(T);                                     \
+  _sus__unsigned_rem(T);                                     \
+  _sus__unsigned_euclid(T);                                  \
+  _sus__unsigned_shift(T);                                   \
+  _sus__unsigned_sub(T);                                     \
+  _sus__unsigned_bits(T);                                    \
+  _sus__unsigned_pow(T);                                     \
+  _sus__unsigned_log(T);                                     \
+  _sus__unsigned_power_of_two(T);                            \
+  _sus__unsigned_endian(T, PrimitiveT)
+
+#define _sus__unsigned_storage(PrimitiveT)                                    \
+  /** The inner primitive value, in case it needs to be unwrapped from the    \
+   * type. Avoid using this member except to convert when a consumer requires \
+   * it.                                                                      \
+   */                                                                         \
+  PrimitiveT primitive_value { 0u }
+
+#define _sus__unsigned_constants(T, PrimitiveT)                             \
+  static constexpr auto MIN_PRIMITIVE = __private::min_value<PrimitiveT>(); \
+  static constexpr auto MAX_PRIMITIVE = __private::max_value<PrimitiveT>(); \
+  static constexpr inline T MIN() noexcept { return MIN_PRIMITIVE; }        \
+  static constexpr inline T MAX() noexcept { return MAX_PRIMITIVE; }        \
+  static constexpr inline u32 BITS() noexcept {                             \
+    return __private::num_bits<PrimitiveT>();                               \
+  }                                                                         \
   static_assert(true)
 
-#define _sus__unsigned_from(T)                                                 \
+#define _sus__unsigned_construct(T, PrimitiveT)                                \
+  /** Default constructor, which sets the integer to 0.                        \
+   *                                                                           \
+   * The trivial copy and move constructors are implicitly declared, as is the \
+   * trivial destructor.                                                       \
+   */                                                                          \
+  constexpr inline T() noexcept = default;                                     \
+                                                                               \
+  /** Construction from the underlying primitive type.                         \
+   */                                                                          \
+  template <class P>                                                           \
+    requires(std::same_as<P, PrimitiveT>) /* Prevent implicit conversions. */  \
+  constexpr inline T(P val) noexcept : primitive_value(val) {}                 \
+                                                                               \
+  /** Assignment from the underlying primitive type.                           \
+   */                                                                          \
+  template <class P>                                                           \
+    requires(std::same_as<P, PrimitiveT>) /* Prevent implicit conversions. */  \
+  constexpr inline void operator=(P v) noexcept {                              \
+    primitive_value = v;                                                       \
+  }                                                                            \
+  static_assert(true)
+
+#define _sus__unsigned_from(T, PrimitiveT)                                     \
   /** Constructs a ##T## from a signed integer type (i8, i16, i32, etc).       \
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
    */                                                                          \
   template <Signed S>                                                          \
-  static constexpr T from(S s) noexcept {                                      \
+  static constexpr T from(S s) noexcept {                                    \
     ::sus::check(s.primitive_value >= 0);                                      \
     constexpr auto umax = __private::into_unsigned(S::MAX_PRIMITIVE);          \
     if constexpr (MAX_PRIMITIVE < umax)                                        \
       ::sus::check(__private::into_unsigned(s.primitive_value) <=              \
                    MAX_PRIMITIVE);                                             \
-    return T(static_cast<primitive_type>(s.primitive_value));                  \
+    return T(static_cast<PrimitiveT>(s.primitive_value));                      \
   }                                                                            \
                                                                                \
   /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc).    \
@@ -85,7 +132,7 @@
   static constexpr T from(U u) noexcept {                                      \
     if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)                            \
       ::sus::check(u.primitive_value <= MAX_PRIMITIVE);                        \
-    return T(static_cast<primitive_type>(u.primitive_value));                  \
+    return T(static_cast<PrimitiveT>(u.primitive_value));                      \
   }                                                                            \
                                                                                \
   /** Constructs a ##T## from a signed primitive integer type (int, long,      \
@@ -100,7 +147,7 @@
     constexpr auto umax = __private::into_unsigned(__private::max_value<S>()); \
     if constexpr (MAX_PRIMITIVE < umax)                                        \
       ::sus::check(__private::into_unsigned(s) <= MAX_PRIMITIVE);              \
-    return T(static_cast<primitive_type>(s));                                  \
+    return T(static_cast<PrimitiveT>(s));                                      \
   }                                                                            \
                                                                                \
   /** Constructs a ##T## from an unsigned primitive integer type (unsigned     \
@@ -113,7 +160,7 @@
   static constexpr T from(U u) {                                               \
     if constexpr (MAX_PRIMITIVE < __private::max_value<U>())                   \
       ::sus::check(u <= MAX_PRIMITIVE);                                        \
-    return T(static_cast<primitive_type>(u));                                  \
+    return T(static_cast<PrimitiveT>(u));                                      \
   }                                                                            \
   static_assert(true)
 
@@ -1012,12 +1059,12 @@
     if (primitive_value == 0u || base.primitive_value <= 1u) [[unlikely]] {   \
       return Option<u32>::none();                                             \
     } else {                                                                  \
-      auto n = u32(0u);                                                       \
+      auto n = uint32_t{0u};                                                  \
       auto r = primitive_value;                                               \
       const auto b = base.primitive_value;                                    \
       while (r >= b) {                                                        \
         r /= b;                                                               \
-        n += u32(1u);                                                         \
+        n += 1u;                                                              \
       }                                                                       \
       return Option<u32>::some(n);                                            \
     }                                                                         \
@@ -1046,7 +1093,7 @@
    * The function panics when the return value overflows (i.e., `self > (1 << \
    * (N-1))` for type uN). */                                                 \
   constexpr T next_power_of_two() noexcept {                                  \
-    const primitive_type one_less =                                           \
+    const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
     return T(one_less) + T(1u);                                               \
   }                                                                           \
@@ -1057,7 +1104,7 @@
    * is returned, otherwise the power of two is wrapped in Some.              \
    */                                                                         \
   constexpr Option<T> checked_next_power_of_two() noexcept {                  \
-    const primitive_type one_less =                                           \
+    const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
     return T(one_less).checked_add(T(1u));                                    \
   }                                                                           \
@@ -1068,13 +1115,13 @@
    * return value is wrapped to 0.                                            \
    */                                                                         \
   constexpr T wrapping_next_power_of_two() noexcept {                         \
-    const primitive_type one_less =                                           \
+    const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
     return T(one_less).wrapping_add(T(1u));                                   \
   }                                                                           \
   static_assert(true)
 
-#define _sus__unsigned_endian(T, Bytes)                                       \
+#define _sus__unsigned_endian(T, PrimitiveT)                                  \
   /** Converts an integer from big endian to the target's endianness.         \
    *                                                                          \
    * On big endian this is a no-op. On little endian the bytes are swapped.   \
@@ -1122,16 +1169,16 @@
   /** Return the memory representation of this integer as a byte array in     \
    * big-endian (network) byte order.                                         \
    */                                                                         \
-  constexpr ::sus::Array</* TODO: u8 */ uint8_t, Bytes> to_be_bytes()         \
-      const& noexcept {                                                       \
+  constexpr ::sus::Array</* TODO: u8 */ uint8_t, sizeof(PrimitiveT)>          \
+  to_be_bytes() const& noexcept {                                             \
     return to_be().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
   /** Return the memory representation of this integer as a byte array in     \
    * little-endian byte order.                                                \
    */                                                                         \
-  constexpr ::sus::Array</* TODO: u8 */ uint8_t, Bytes> to_le_bytes()         \
-      const& noexcept {                                                       \
+  constexpr ::sus::Array</* TODO: u8 */ uint8_t, sizeof(PrimitiveT)>          \
+  to_le_bytes() const& noexcept {                                             \
     return to_le().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
@@ -1141,8 +1188,8 @@
    * As the target platform's native endianness is used, portable code should \
    * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.         \
    */                                                                         \
-  constexpr ::sus::Array</* TODO: u8 */ uint8_t, Bytes> to_ne_bytes()         \
-      const& noexcept {                                                       \
+  constexpr ::sus::Array</* TODO: u8 */ uint8_t, sizeof(PrimitiveT)>          \
+  to_ne_bytes() const& noexcept {                                             \
     auto bytes =                                                              \
         ::sus::Array</* TODO: u8 */ uint8_t, sizeof(T)>::with_uninitialized(  \
             unsafe_fn);                                                       \
@@ -1165,7 +1212,8 @@
    * endian.                                                                  \
    */                                                                         \
   static constexpr T from_be_bytes(                                           \
-      const ::sus::Array</*TODO: u8*/ uint8_t, Bytes>& bytes) noexcept {      \
+      const ::sus::Array</*TODO: u8*/ uint8_t, sizeof(PrimitiveT)>&           \
+          bytes) noexcept {                                                   \
     return from_be(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
@@ -1173,7 +1221,8 @@
    * little endian.                                                           \
    */                                                                         \
   static constexpr T from_le_bytes(                                           \
-      const ::sus::Array</*TODO: u8*/ uint8_t, Bytes>& bytes) noexcept {      \
+      const ::sus::Array</*TODO: u8*/ uint8_t, sizeof(PrimitiveT)>&           \
+          bytes) noexcept {                                                   \
     return from_le(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
@@ -1185,8 +1234,9 @@
    * instead.                                                                 \
    */                                                                         \
   static constexpr T from_ne_bytes(                                           \
-      const ::sus::Array</*TODO: u8*/ uint8_t, Bytes>& bytes) noexcept {      \
-    primitive_type val;                                                       \
+      const ::sus::Array</*TODO: u8*/ uint8_t, sizeof(PrimitiveT)>&           \
+          bytes) noexcept {                                                   \
+    PrimitiveT val;                                                           \
     if (std::is_constant_evaluated()) {                                       \
       val = 0u;                                                               \
       for (auto i = size_t{0}; i < sizeof(T); ++i) {                          \

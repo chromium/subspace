@@ -28,42 +28,89 @@
 #include "option/option.h"
 #include "tuple/tuple.h"
 
-#define _sus__signed_impl(T, Bytes, UnsignedT, LargerT) \
-  _sus__signed_constants(T);                            \
-  _sus__signed_from(T);                                 \
-  _sus__signed_integer_comparison(T);                   \
-  _sus__signed_unary_ops(T);                            \
-  _sus__signed_binary_logic_ops(T);                     \
-  _sus__signed_binary_bit_ops(T);                       \
-  _sus__signed_mutable_logic_ops(T);                    \
-  _sus__signed_mutable_bit_ops(T);                      \
-  _sus__signed_abs(T, UnsignedT);                       \
-  _sus__signed_add(T, UnsignedT);                       \
-  _sus__signed_div(T);                                  \
-  _sus__signed_mul(T, LargerT);                         \
-  _sus__signed_neg(T);                                  \
-  _sus__signed_rem(T);                                  \
-  _sus__signed_euclid(T);                               \
-  _sus__signed_shift(T);                                \
-  _sus__signed_sub(T, UnsignedT);                       \
-  _sus__signed_bits(T);                                 \
-  _sus__signed_pow(T);                                  \
-  _sus__signed_log(T);                                  \
-  _sus__signed_endian(T, UnsignedT, Bytes)
+// clang-format off
+#define _sus__signed_literal(Name, T, PrimitiveT) \
+  template <char... C> \
+    requires requires { \
+      { \
+        ::sus::num::__private::BuildInteger< \
+          PrimitiveT, T::MAX_PRIMITIVE, C...>::value \
+      } -> std::same_as<const PrimitiveT&>; \
+    } \
+  T inline constexpr operator"" _##Name() noexcept { \
+    using Builder = ::sus::num::__private::BuildInteger< \
+      PrimitiveT, T::MAX_PRIMITIVE, C...>; \
+    return T(Builder::value); \
+  } \
+  static_assert(true)
+// clang-format on
 
-#define _sus__signed_constants(T)                                    \
-  static constexpr auto MIN_PRIMITIVE =                              \
-      __private::min_value<primitive_type>();                        \
-  static constexpr auto MAX_PRIMITIVE =                              \
-      __private::max_value<primitive_type>();                        \
-  static constexpr inline T MIN() noexcept { return MIN_PRIMITIVE; } \
-  static constexpr inline T MAX() noexcept { return MAX_PRIMITIVE; } \
-  static constexpr inline u32 BITS() noexcept {                      \
-    return __private::num_bits<primitive_type>();                    \
-  }                                                                  \
+#define _sus__signed_impl(T, PrimitiveT, UnsignedT, LargerT) \
+  _sus__signed_storage(PrimitiveT);                          \
+  _sus__signed_constants(T, PrimitiveT);                     \
+  _sus__signed_construct(T, PrimitiveT);                     \
+  _sus__signed_from(T, PrimitiveT);                          \
+  _sus__signed_integer_comparison(T, PrimitiveT);            \
+  _sus__signed_unary_ops(T);                                 \
+  _sus__signed_binary_logic_ops(T);                          \
+  _sus__signed_binary_bit_ops(T);                            \
+  _sus__signed_mutable_logic_ops(T);                         \
+  _sus__signed_mutable_bit_ops(T);                           \
+  _sus__signed_abs(T, UnsignedT);                            \
+  _sus__signed_add(T, UnsignedT);                            \
+  _sus__signed_div(T);                                       \
+  _sus__signed_mul(T, LargerT);                              \
+  _sus__signed_neg(T);                                       \
+  _sus__signed_rem(T);                                       \
+  _sus__signed_euclid(T);                                    \
+  _sus__signed_shift(T);                                     \
+  _sus__signed_sub(T, UnsignedT);                            \
+  _sus__signed_bits(T);                                      \
+  _sus__signed_pow(T);                                       \
+  _sus__signed_log(T);                                       \
+  _sus__signed_endian(T, UnsignedT, sizeof(PrimitiveT))
+
+#define _sus__signed_storage(PrimitiveT)                                      \
+  /** The inner primitive value, in case it needs to be unwrapped from the    \
+   * type. Avoid using this member except to convert when a consumer requires \
+   * it.                                                                      \
+   */                                                                         \
+  PrimitiveT primitive_value { 0 }
+
+#define _sus__signed_constants(T, PrimitiveT)                               \
+  static constexpr auto MIN_PRIMITIVE = __private::min_value<PrimitiveT>(); \
+  static constexpr auto MAX_PRIMITIVE = __private::max_value<PrimitiveT>(); \
+  static constexpr inline T MIN() noexcept { return MIN_PRIMITIVE; }        \
+  static constexpr inline T MAX() noexcept { return MAX_PRIMITIVE; }        \
+  static constexpr inline u32 BITS() noexcept {                             \
+    return __private::num_bits<PrimitiveT>();                               \
+  }                                                                         \
   static_assert(true)
 
-#define _sus__signed_from(T)                                                \
+#define _sus__signed_construct(T, PrimitiveT)                                  \
+  /** Default constructor, which sets the integer to 0.                        \
+   *                                                                           \
+   * The trivial copy and move constructors are implicitly declared, as is the \
+   * trivial destructor.                                                       \
+   */                                                                          \
+  constexpr inline T() noexcept = default;                                     \
+                                                                               \
+  /** Construction from the underlying primitive type.                         \
+   */                                                                          \
+  template <class P>                                                           \
+    requires(std::same_as<P, PrimitiveT>) /* Prevent implicit conversions. */  \
+  constexpr inline T(P val) noexcept : primitive_value(val) {}                 \
+                                                                               \
+  /** Assignment from the underlying primitive type.                           \
+   */                                                                          \
+  template <class P>                                                           \
+    requires(std::same_as<P, PrimitiveT>) /* Prevent implicit conversions. */  \
+  constexpr inline void operator=(P v) noexcept {                              \
+    primitive_value = v;                                                       \
+  }                                                                            \
+  static_assert(true)
+
+#define _sus__signed_from(T, PrimitiveT)                                    \
   /** Constructs a ##T## from a signed integer type (i8, i16, i32, etc).    \
    *                                                                        \
    * # Panics                                                               \
@@ -75,7 +122,7 @@
       ::sus::check(s.primitive_value >= MIN_PRIMITIVE);                     \
     if constexpr (MAX_PRIMITIVE < S::MAX_PRIMITIVE)                         \
       ::sus::check(s.primitive_value <= MAX_PRIMITIVE);                     \
-    return T(static_cast<primitive_type>(s.primitive_value));               \
+    return T(static_cast<PrimitiveT>(s.primitive_value));                   \
   }                                                                         \
                                                                             \
   /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc). \
@@ -89,7 +136,7 @@
     if constexpr (umax < U::MAX_PRIMITIVE) {                                \
       ::sus::check(u.primitive_value <= umax);                              \
     }                                                                       \
-    return T(static_cast<primitive_type>(u.primitive_value));               \
+    return T(static_cast<PrimitiveT>(u.primitive_value));                   \
   }                                                                         \
                                                                             \
   /** Constructs a ##T## from a signed primitive integer type (int, long,   \
@@ -104,7 +151,7 @@
       ::sus::check(s >= MIN_PRIMITIVE);                                     \
     if constexpr (MAX_PRIMITIVE < __private::max_value<S>())                \
       ::sus::check(s <= MAX_PRIMITIVE);                                     \
-    return T(static_cast<primitive_type>(s));                               \
+    return T(static_cast<PrimitiveT>(s));                                   \
   }                                                                         \
                                                                             \
   /** Constructs a ##T## from an unsigned primitive integer type (unsigned  \
@@ -119,23 +166,19 @@
     if constexpr (umax < __private::max_value<U>()) {                       \
       ::sus::check(u <= umax);                                              \
     }                                                                       \
-    return T(static_cast<primitive_type>(u));                               \
+    return T(static_cast<PrimitiveT>(u));                                   \
   }                                                                         \
   static_assert(true)
 
-#define _sus__signed_integer_comparison(T)                                     \
+#define _sus__signed_integer_comparison(T, PrimitiveT)                         \
   /** Returns true if the current value is positive and false if the number is \
    * zero or negative.                                                         \
    */                                                                          \
-  constexpr bool is_negative() const& noexcept {                               \
-    return primitive_value < primitive_type{0};                                \
-  }                                                                            \
+  constexpr bool is_negative() const& noexcept { return primitive_value < 0; } \
   /** Returns true if the current value is negative and false if the number is \
    * zero or positive.                                                         \
    */                                                                          \
-  constexpr bool is_positive() const& noexcept {                               \
-    return primitive_value > primitive_type{0};                                \
-  }                                                                            \
+  constexpr bool is_positive() const& noexcept { return primitive_value > 0; } \
                                                                                \
   /** Returns a number representing sign of the current value.                 \
    *                                                                           \
@@ -144,10 +187,10 @@
    * - -1 if the number is negative                                            \
    */                                                                          \
   constexpr T signum() const& noexcept {                                       \
-    if (primitive_value < primitive_type{0})                                   \
-      return primitive_type{-1};                                               \
+    if (primitive_value < 0)                                                   \
+      return -1;                                                               \
     else                                                                       \
-      return primitive_type{primitive_value != primitive_type{0}};             \
+      return PrimitiveT{primitive_value != 0};                                 \
   }                                                                            \
                                                                                \
   /** sus::concepts::Eq<##T##> trait. */                                       \
@@ -160,18 +203,17 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__signed_unary_ops(T)                        \
-  /** sus::concepts::Neg trait. */                       \
-  constexpr inline T operator-() const& noexcept {       \
-    /* TODO: Allow opting out of all overflow checks? */ \
-    ::sus::check(primitive_value != MIN_PRIMITIVE);      \
-    return -primitive_value;                             \
-  }                                                      \
-  /** sus::concepts::BitNot trait. */                    \
-  constexpr inline T operator~() const& noexcept {       \
-    return static_cast<primitive_type>(                  \
-        ~__private::into_unsigned(primitive_value));     \
-  }                                                      \
+#define _sus__signed_unary_ops(T)                                              \
+  /** sus::concepts::Neg trait. */                                             \
+  constexpr inline T operator-() const& noexcept {                             \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(primitive_value != MIN_PRIMITIVE);                            \
+    return -primitive_value;                                                   \
+  }                                                                            \
+  /** sus::concepts::BitNot trait. */                                          \
+  constexpr inline T operator~() const& noexcept {                             \
+    return __private::into_signed(~__private::into_unsigned(primitive_value)); \
+  }                                                                            \
   static_assert(true)
 
 #define _sus__signed_binary_logic_ops(T)                                    \
@@ -202,95 +244,93 @@
   /** sus::concepts::Div<##T##> trait. */                                   \
   friend constexpr inline T operator/(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r.primitive_value != primitive_type{0});                   \
+    ::sus::check(r.primitive_value != 0);                                   \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(l.primitive_value != MIN_PRIMITIVE ||                      \
-                 r.primitive_value != primitive_type{-1});                  \
+                 r.primitive_value != -1);                                  \
     return l.primitive_value / r.primitive_value;                           \
   }                                                                         \
   /** sus::concepts::Rem<##T##> trait. */                                   \
   friend constexpr inline T operator%(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r.primitive_value != primitive_type{0});                   \
+    ::sus::check(r.primitive_value != 0);                                   \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(l.primitive_value != MIN_PRIMITIVE ||                      \
-                 r.primitive_value != primitive_type{-1});                  \
+                 r.primitive_value != -1);                                  \
     return l.primitive_value % r.primitive_value;                           \
   }                                                                         \
   static_assert(true)
 
-#define _sus__signed_binary_bit_ops(T)                                      \
-  /** sus::concepts::BitAnd<##T##> trait. */                                \
-  friend constexpr inline T operator&(const T& l, const T& r) noexcept {    \
-    return l.primitive_value & r.primitive_value;                           \
-  }                                                                         \
-  /** sus::concepts::BitOr<##T##> trait. */                                 \
-  friend constexpr inline T operator|(const T& l, const T& r) noexcept {    \
-    return l.primitive_value | r.primitive_value;                           \
-  }                                                                         \
-  /** sus::concepts::BitXor<##T##> trait. */                                \
-  friend constexpr inline T operator^(const T& l, const T& r) noexcept {    \
-    return l.primitive_value ^ r.primitive_value;                           \
-  }                                                                         \
-  /** sus::concepts::Shl trait. */                                          \
-  friend constexpr inline T operator<<(const T& l, const u32& r) noexcept { \
-    /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS());                                               \
-    return static_cast<primitive_type>(                                     \
-        __private::into_unsigned(l.primitive_value) << r.primitive_value);  \
-  }                                                                         \
-  /** sus::concepts::Shr trait. */                                          \
-  friend constexpr inline T operator>>(const T& l, const u32& r) noexcept { \
-    /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS());                                               \
-    return static_cast<primitive_type>(                                     \
-        __private::into_unsigned(l.primitive_value) >> r.primitive_value);  \
-  }                                                                         \
+#define _sus__signed_binary_bit_ops(T)                                        \
+  /** sus::concepts::BitAnd<##T##> trait. */                                  \
+  friend constexpr inline T operator&(const T& l, const T& r) noexcept {      \
+    return l.primitive_value & r.primitive_value;                             \
+  }                                                                           \
+  /** sus::concepts::BitOr<##T##> trait. */                                   \
+  friend constexpr inline T operator|(const T& l, const T& r) noexcept {      \
+    return l.primitive_value | r.primitive_value;                             \
+  }                                                                           \
+  /** sus::concepts::BitXor<##T##> trait. */                                  \
+  friend constexpr inline T operator^(const T& l, const T& r) noexcept {      \
+    return l.primitive_value ^ r.primitive_value;                             \
+  }                                                                           \
+  /** sus::concepts::Shl trait. */                                            \
+  friend constexpr inline T operator<<(const T& l, const u32& r) noexcept {   \
+    /* TODO: Allow opting out of all overflow checks? */                      \
+    ::sus::check(r < BITS());                                                 \
+    return __private::into_signed(__private::into_unsigned(l.primitive_value) \
+                                  << r.primitive_value);                      \
+  }                                                                           \
+  /** sus::concepts::Shr trait. */                                            \
+  friend constexpr inline T operator>>(const T& l, const u32& r) noexcept {   \
+    /* TODO: Allow opting out of all overflow checks? */                      \
+    ::sus::check(r < BITS());                                                 \
+    return __private::into_signed(                                            \
+        __private::into_unsigned(l.primitive_value) >> r.primitive_value);    \
+  }                                                                           \
   static_assert(true)
 
-#define _sus__signed_mutable_logic_ops(T)                                 \
-  /** sus::concepts::AddAssign<##T##> trait. */                           \
-  constexpr inline void operator+=(T r)& noexcept {                       \
-    auto out =                                                            \
-        __private::add_with_overflow(primitive_value, r.primitive_value); \
-    /* TODO: Allow opting out of all overflow checks? */                  \
-    ::sus::check(!out.overflow);                                          \
-    primitive_value = out.value;                                          \
-  }                                                                       \
-  /** sus::concepts::SubAssign<##T##> trait. */                           \
-  constexpr inline void operator-=(T r)& noexcept {                       \
-    auto out =                                                            \
-        __private::sub_with_overflow(primitive_value, r.primitive_value); \
-    /* TODO: Allow opting out of all overflow checks? */                  \
-    ::sus::check(!out.overflow);                                          \
-    primitive_value = out.value;                                          \
-  }                                                                       \
-  /** sus::concepts::MulAssign<##T##> trait. */                           \
-  constexpr inline void operator*=(T r)& noexcept {                       \
-    auto out =                                                            \
-        __private::mul_with_overflow(primitive_value, r.primitive_value); \
-    /* TODO: Allow opting out of all overflow checks? */                  \
-    ::sus::check(!out.overflow);                                          \
-    primitive_value = out.value;                                          \
-  }                                                                       \
-  /** sus::concepts::DivAssign<##T##> trait. */                           \
-  constexpr inline void operator/=(T r)& noexcept {                       \
-    /* TODO: Allow opting out of all overflow checks? */                  \
-    ::sus::check(r.primitive_value != primitive_type{0});                 \
-    /* TODO: Allow opting out of all overflow checks? */                  \
-    ::sus::check(primitive_value != MIN_PRIMITIVE ||                      \
-                 r.primitive_value != primitive_type{-1});                \
-    primitive_value /= r.primitive_value;                                 \
-  }                                                                       \
-  /** sus::concepts::RemAssign<##T##> trait. */                           \
-  constexpr inline void operator%=(T r)& noexcept {                       \
-    /* TODO: Allow opting out of all overflow checks? */                  \
-    ::sus::check(r.primitive_value != primitive_type{0});                 \
-    /* TODO: Allow opting out of all overflow checks? */                  \
-    ::sus::check(primitive_value != MIN_PRIMITIVE ||                      \
-                 r.primitive_value != primitive_type{-1});                \
-    primitive_value %= r.primitive_value;                                 \
-  }                                                                       \
+#define _sus__signed_mutable_logic_ops(T)                                      \
+  /** sus::concepts::AddAssign<##T##> trait. */                                \
+  constexpr inline void operator+=(T r)& noexcept {                            \
+    auto out =                                                                 \
+        __private::add_with_overflow(primitive_value, r.primitive_value);      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(!out.overflow);                                               \
+    primitive_value = out.value;                                               \
+  }                                                                            \
+  /** sus::concepts::SubAssign<##T##> trait. */                                \
+  constexpr inline void operator-=(T r)& noexcept {                            \
+    auto out =                                                                 \
+        __private::sub_with_overflow(primitive_value, r.primitive_value);      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(!out.overflow);                                               \
+    primitive_value = out.value;                                               \
+  }                                                                            \
+  /** sus::concepts::MulAssign<##T##> trait. */                                \
+  constexpr inline void operator*=(T r)& noexcept {                            \
+    auto out =                                                                 \
+        __private::mul_with_overflow(primitive_value, r.primitive_value);      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(!out.overflow);                                               \
+    primitive_value = out.value;                                               \
+  }                                                                            \
+  /** sus::concepts::DivAssign<##T##> trait. */                                \
+  constexpr inline void operator/=(T r)& noexcept {                            \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(r.primitive_value != 0);                                      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1); \
+    primitive_value /= r.primitive_value;                                      \
+  }                                                                            \
+  /** sus::concepts::RemAssign<##T##> trait. */                                \
+  constexpr inline void operator%=(T r)& noexcept {                            \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(r.primitive_value != 0);                                      \
+    /* TODO: Allow opting out of all overflow checks? */                       \
+    ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1); \
+    primitive_value %= r.primitive_value;                                      \
+  }                                                                            \
   static_assert(true)
 
 #define _sus__signed_mutable_bit_ops(T)                                  \
@@ -310,14 +350,14 @@
   constexpr inline void operator<<=(const u32& r)& noexcept {            \
     /* TODO: Allow opting out of all overflow checks? */                 \
     ::sus::check(r < BITS());                                            \
-    primitive_value = static_cast<primitive_type>(                       \
+    primitive_value = __private::into_signed(                            \
         __private::into_unsigned(primitive_value) << r.primitive_value); \
   }                                                                      \
   /** sus::concepts::ShrAssign trait. */                                 \
   constexpr inline void operator>>=(const u32& r)& noexcept {            \
     /* TODO: Allow opting out of all overflow checks? */                 \
     ::sus::check(r < BITS());                                            \
-    primitive_value = static_cast<primitive_type>(                       \
+    primitive_value = __private::into_signed(                            \
         __private::into_unsigned(primitive_value) >> r.primitive_value); \
   }                                                                      \
   static_assert(true)
@@ -331,7 +371,7 @@
   constexpr inline T abs() const& noexcept {                                   \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(primitive_value != MIN_PRIMITIVE);                            \
-    if (primitive_value >= primitive_type{0})                                  \
+    if (primitive_value >= 0)                                                  \
       return primitive_value;                                                  \
     else                                                                       \
       return -primitive_value;                                                 \
@@ -374,7 +414,7 @@
   /** Computes the absolute value of self without any wrapping or panicking.   \
    */                                                                          \
   constexpr UnsignedT unsigned_abs() const& noexcept {                         \
-    if (primitive_value >= primitive_type{0})                                  \
+    if (primitive_value >= 0)                                                  \
       return __private::into_unsigned(primitive_value);                        \
     else                                                                       \
       return __private::into_unsigned(-(primitive_value + 1)) + 1u;            \
@@ -530,7 +570,7 @@
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_div(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0});                                    \
+    ::sus::check(rhs != 0);                                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       return Tuple<T, bool>::with(MIN(), true);                                \
@@ -548,7 +588,7 @@
    */                                                                          \
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0});                                    \
+    ::sus::check(rhs != 0);                                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
@@ -572,7 +612,7 @@
    */                                                                          \
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0});                                    \
+    ::sus::check(rhs != 0);                                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
@@ -710,7 +750,7 @@
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0});                                    \
+    ::sus::check(rhs != 0);                                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       return Tuple<T, bool>::with(0, true);                                    \
@@ -729,10 +769,10 @@
    */                                                                          \
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0});                                    \
+    ::sus::check(rhs != 0);                                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[likely]] {    \
-      return primitive_type{0};                                                \
+      return 0;                                                                \
     } else {                                                                   \
       return primitive_value % rhs.primitive_value;                            \
     }                                                                          \
@@ -786,7 +826,7 @@
   constexpr Tuple<T, bool> overflowing_div_euclid(const T& rhs)                \
       const& noexcept {                                                        \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0});                                    \
+    ::sus::check(rhs != 0);                                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       return Tuple<T, bool>::with(MIN(), true);                                \
@@ -811,7 +851,7 @@
    */                                                                          \
   constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0});                                    \
+    ::sus::check(rhs != 0);                                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       return MIN();                                                            \
@@ -863,7 +903,7 @@
   constexpr Tuple<T, bool> overflowing_rem_euclid(const T& rhs)                \
       const& noexcept {                                                        \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0});                                    \
+    ::sus::check(rhs != 0);                                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       return Tuple<T, bool>::with(0, true);                                    \
@@ -887,10 +927,10 @@
    */                                                                          \
   constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0});                                    \
+    ::sus::check(rhs != 0);                                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
-      return primitive_type{0};                                                \
+      return 0;                                                                \
     } else {                                                                   \
       return __private::rem_euclid(unsafe_fn, primitive_value,                 \
                                    rhs.primitive_value);                       \
@@ -1126,7 +1166,7 @@
    * second most-significant bit, etc.                                         \
    */                                                                          \
   constexpr T reverse_bits() const& noexcept {                                 \
-    return static_cast<primitive_type>(                                        \
+    return __private::into_signed(                                             \
         __private::reverse_bits(__private::into_unsigned(primitive_value)));   \
   }                                                                            \
                                                                                \
@@ -1136,7 +1176,7 @@
    * Please note this isn't the same operation as the `<<` shifting operator!  \
    */                                                                          \
   constexpr T rotate_left(const u32& n) const& noexcept {                      \
-    return static_cast<primitive_type>(__private::rotate_left(                 \
+    return __private::into_signed(__private::rotate_left(                      \
         __private::into_unsigned(primitive_value), n.primitive_value));        \
   }                                                                            \
                                                                                \
@@ -1146,14 +1186,14 @@
    * Please note this isn't the same operation as the >> shifting operator!    \
    */                                                                          \
   constexpr T rotate_right(const u32& n) const& noexcept {                     \
-    return static_cast<primitive_type>(__private::rotate_right(                \
+    return __private::into_signed(__private::rotate_right(                     \
         __private::into_unsigned(primitive_value), n.primitive_value));        \
   }                                                                            \
                                                                                \
   /** Reverses the byte order of the integer.                                  \
    */                                                                          \
   constexpr T swap_bytes() const& noexcept {                                   \
-    return static_cast<primitive_type>(                                        \
+    return __private::into_signed(                                             \
         __private::swap_bytes(__private::into_unsigned(primitive_value)));     \
   }                                                                            \
   static_assert(true)
@@ -1206,7 +1246,7 @@
    * Returns None if the number is negative or zero.                          \
    */                                                                         \
   constexpr Option<u32> checked_log2() const& {                               \
-    if (primitive_value <= primitive_type{0}) [[unlikely]] {                  \
+    if (primitive_value <= 0) [[unlikely]] {                                  \
       return Option<u32>::none();                                             \
     } else {                                                                  \
       uint32_t zeros = __private::leading_zeros_nonzero(                      \
@@ -1230,7 +1270,7 @@
    * Returns None if the number is negative or zero.                          \
    */                                                                         \
   constexpr Option<u32> checked_log10() const& {                              \
-    if (primitive_value <= primitive_type{0}) [[unlikely]] {                  \
+    if (primitive_value <= 0) [[unlikely]] {                                  \
       return Option<u32>::none();                                             \
     } else {                                                                  \
       return Option<u32>::some(__private::int_log10::T(primitive_value));     \
@@ -1258,16 +1298,15 @@
    * `checked_log10` can produce results more efficiently for base 10.        \
    */                                                                         \
   constexpr Option<u32> checked_log(const T& base) const& noexcept {          \
-    if (primitive_value <= primitive_type{0} ||                               \
-        base.primitive_value <= primitive_type{1}) [[unlikely]] {             \
+    if (primitive_value <= 0 || base.primitive_value <= 1) [[unlikely]] {     \
       return Option<u32>::none();                                             \
     } else {                                                                  \
-      auto n = 0_u32;                                                         \
+      auto n = uint32_t{0};                                                   \
       auto r = primitive_value;                                               \
       const auto b = base.primitive_value;                                    \
       while (r >= b) {                                                        \
         r /= b;                                                               \
-        n += 1_u32;                                                           \
+        n += 1u;                                                              \
       }                                                                       \
       return Option<u32>::some(n);                                            \
     }                                                                         \
@@ -1400,7 +1439,7 @@
    */                                                                         \
   static constexpr T from_ne_bytes(                                           \
       const ::sus::Array</*TODO: u8*/ uint8_t, Bytes>& bytes) noexcept {      \
-    using U = decltype(UnsignedT::primitive_value);                           \
+    using U = decltype(__private::into_unsigned(primitive_value));            \
     U val;                                                                    \
     if (std::is_constant_evaluated()) {                                       \
       val = U{0};                                                             \
@@ -1410,6 +1449,6 @@
     } else {                                                                  \
       memcpy(&val, bytes.as_ptr(), sizeof(T));                                \
     }                                                                         \
-    return static_cast<primitive_type>(val);                                  \
+    return __private::into_signed(val);                                       \
   }                                                                           \
   static_assert(true)
