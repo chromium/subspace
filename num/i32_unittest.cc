@@ -1374,11 +1374,11 @@ TEST(i32, IsPositive) {
 
 TEST(i32, LeadingZeros) {
   constexpr auto a1 = (0_i32).leading_zeros();
-  EXPECT_EQ(a1, 32);
+  EXPECT_EQ(a1, 32_u32);
   constexpr auto a2 = (1_i32).leading_zeros();
-  EXPECT_EQ(a2, 31);
+  EXPECT_EQ(a2, 31_u32);
   constexpr auto a3 = (3_i32).leading_zeros();
-  EXPECT_EQ(a3, 30);
+  EXPECT_EQ(a3, 30_u32);
 
   // ** Unsigned only.
   // constexpr auto a4 = (u32::MAX()).leading_zeros();
@@ -1386,100 +1386,100 @@ TEST(i32, LeadingZeros) {
 
   // ** Signed only.
   constexpr auto a4 = (i32::MAX()).leading_zeros();
-  EXPECT_EQ(a4, 1);
+  EXPECT_EQ(a4, 1_u32);
   constexpr auto a5 = (-1_i32).leading_zeros();
-  EXPECT_EQ(a5, 0);
+  EXPECT_EQ(a5, 0_u32);
 
-  EXPECT_EQ((0_i32).leading_zeros(), 32);
-  EXPECT_EQ((1_i32).leading_zeros(), 31);
-  EXPECT_EQ((3_i32).leading_zeros(), 30);
-  EXPECT_EQ((i32::MAX()).leading_zeros(), 1);
+  EXPECT_EQ((0_i32).leading_zeros(), 32_u32);
+  EXPECT_EQ((1_i32).leading_zeros(), 31_u32);
+  EXPECT_EQ((3_i32).leading_zeros(), 30_u32);
+  EXPECT_EQ((i32::MAX()).leading_zeros(), 1_u32);
 
   // ** Signed only.
-  EXPECT_EQ((-1_i32).leading_zeros(), 0);
+  EXPECT_EQ((-1_i32).leading_zeros(), 0_u32);
 }
 
 TEST(i32, LeadingOnes) {
   constexpr auto a1 = (0_i32).leading_ones();
-  EXPECT_EQ(a1, 0);
+  EXPECT_EQ(a1, 0_u32);
   constexpr auto a2 = (1_i32).leading_ones();
-  EXPECT_EQ(a2, 0);
+  EXPECT_EQ(a2, 0_u32);
 
   // ** Unsigned only.
   // constexpr auto a3 = (u32::MAX()).leading_ones();
-  // EXPECT_EQ(a3, 32);
+  // EXPECT_EQ(a3, 32_u32);
 
   // ** Signed only.
   constexpr auto a3 = (i32::MAX()).leading_ones();
-  EXPECT_EQ(a3, 0);
+  EXPECT_EQ(a3, 0_u32);
   constexpr auto a4 = (-1_i32).leading_ones();
-  EXPECT_EQ(a4, 32);
+  EXPECT_EQ(a4, 32_u32);
   constexpr auto a5 = (-2_i32).leading_ones();
-  EXPECT_EQ(a5, 31);
+  EXPECT_EQ(a5, 31_u32);
 
-  EXPECT_EQ((0_i32).leading_ones(), 0);
-  EXPECT_EQ((1_i32).leading_ones(), 0);
+  EXPECT_EQ((0_i32).leading_ones(), 0_u32);
+  EXPECT_EQ((1_i32).leading_ones(), 0_u32);
 
   // ** Unsigned only.
   // EXPECT_EQ((u32::MAX()).leading_ones(), 32);
 
   // ** Signed only.
-  EXPECT_EQ((i32::MAX()).leading_ones(), 0);
-  EXPECT_EQ((-1_i32).leading_ones(), 32);
-  EXPECT_EQ((-2_i32).leading_ones(), 31);
+  EXPECT_EQ((i32::MAX()).leading_ones(), 0_u32);
+  EXPECT_EQ((-1_i32).leading_ones(), 32_u32);
+  EXPECT_EQ((-2_i32).leading_ones(), 31_u32);
 }
 
 TEST(i32, TrailingZeros) {
   constexpr auto a1 = (0_i32).trailing_zeros();
-  EXPECT_EQ(a1, 32);
+  EXPECT_EQ(a1, 32_u32);
   constexpr auto a2 = (1_i32).trailing_zeros();
-  EXPECT_EQ(a2, 0);
+  EXPECT_EQ(a2, 0_u32);
   constexpr auto a3 = (2_i32).trailing_zeros();
-  EXPECT_EQ(a3, 1);
+  EXPECT_EQ(a3, 1_u32);
 
   // ** Signed only.
   constexpr auto a4 = (i32::MIN()).trailing_zeros();
-  EXPECT_EQ(a4, 31);
+  EXPECT_EQ(a4, 31_u32);
   constexpr auto a5 = (-1_i32).trailing_zeros();
-  EXPECT_EQ(a5, 0);
+  EXPECT_EQ(a5, 0_u32);
 
-  EXPECT_EQ((0_i32).trailing_zeros(), 32);
-  EXPECT_EQ((1_i32).trailing_zeros(), 0);
-  EXPECT_EQ((2_i32).trailing_zeros(), 1);
+  EXPECT_EQ((0_i32).trailing_zeros(), 32_u32);
+  EXPECT_EQ((1_i32).trailing_zeros(), 0_u32);
+  EXPECT_EQ((2_i32).trailing_zeros(), 1_u32);
 
   // ** Signed only.
-  EXPECT_EQ((i32::MIN()).trailing_zeros(), 31);
-  EXPECT_EQ((-1_i32).trailing_zeros(), 0);
+  EXPECT_EQ((i32::MIN()).trailing_zeros(), 31_u32);
+  EXPECT_EQ((-1_i32).trailing_zeros(), 0_u32);
 }
 
 TEST(i32, TrailingOnes) {
   constexpr auto a1 = (0_i32).trailing_ones();
-  EXPECT_EQ(a1, 0);
+  EXPECT_EQ(a1, 0_u32);
   constexpr auto a2 = (1_i32).trailing_ones();
-  EXPECT_EQ(a2, 1);
+  EXPECT_EQ(a2, 1_u32);
   constexpr auto a3 = (3_i32).trailing_ones();
-  EXPECT_EQ(a3, 2);
+  EXPECT_EQ(a3, 2_u32);
 
   // ** Unsigned only.
   // constexpr auto a4 = (i32::MAX()).trailing_ones();
-  // EXPECT_EQ(a4, 32);
+  // EXPECT_EQ(a4, 32_u32);
 
   // ** Signed only.
   constexpr auto a4 = (i32::MAX()).trailing_ones();
-  EXPECT_EQ(a4, 31);
+  EXPECT_EQ(a4, 31_u32);
   constexpr auto a5 = (-1_i32).trailing_ones();
-  EXPECT_EQ(a5, 32);
+  EXPECT_EQ(a5, 32_u32);
 
-  EXPECT_EQ((0_i32).trailing_ones(), 0);
-  EXPECT_EQ((1_i32).trailing_ones(), 1);
-  EXPECT_EQ((3_i32).trailing_ones(), 2);
+  EXPECT_EQ((0_i32).trailing_ones(), 0_u32);
+  EXPECT_EQ((1_i32).trailing_ones(), 1_u32);
+  EXPECT_EQ((3_i32).trailing_ones(), 2_u32);
 
   // ** Unsigned only.
   // EXPECT_EQ((i32::MAX()).trailing_ones(), 32);
 
   // ** Signed only.
-  EXPECT_EQ((i32::MAX()).trailing_ones(), 31);
-  EXPECT_EQ((-1_i32).trailing_ones(), 32);
+  EXPECT_EQ((i32::MAX()).trailing_ones(), 31_u32);
+  EXPECT_EQ((-1_i32).trailing_ones(), 32_u32);
 }
 
 TEST(i32, Pow) {
