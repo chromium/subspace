@@ -24,19 +24,8 @@
 #include "option/option.h"
 #include "tuple/tuple.h"
 
-#define _sus__unsigned_constants(T, Max)                             \
-  static constexpr auto MIN_PRIMITIVE =                              \
-      __private::min_value<primitive_type>();                        \
-  static constexpr auto MAX_PRIMITIVE =                              \
-      __private::max_value<primitive_type>();                        \
-  static constexpr inline T MIN() noexcept { return MIN_PRIMITIVE; } \
-  static constexpr inline T MAX() noexcept { return MAX_PRIMITIVE; } \
-  static constexpr inline u32 BITS() noexcept {                      \
-    return __private::num_bits<primitive_type>();                    \
-  }                                                                  \
-  static_assert(true)
-
 #define _sus__unsigned_impl(T, Bytes, SignedT, LargerT) \
+  _sus__unsigned_constants(T);                          \
   _sus__unsigned_from(T);                               \
   _sus__unsigned_integer_comparison(T);                 \
   _sus__unsigned_unary_ops(T);                          \
@@ -59,35 +48,73 @@
   _sus__unsigned_power_of_two(T);                       \
   _sus__unsigned_endian(T, Bytes)
 
-#define _sus__unsigned_from(T)                                              \
-  /** Constructs a ##T## from a signed integer type (i8, i16, i32, etc).    \
-   *                                                                        \
-   * # Panics                                                               \
-   * The function will panic if the input value is out of range for ##T##.  \
-   */                                                                       \
-  template <Signed S>                                                       \
-  static constexpr u32 from(S s) noexcept {                                 \
-    ::sus::check(s.primitive_value >= 0);                                   \
-    constexpr auto umax = static_cast<primitive_type>(S::MAX_PRIMITIVE);    \
-    if constexpr (MAX_PRIMITIVE < umax)                                     \
-      ::sus::check(static_cast<primitive_type>(s.primitive_value) <=        \
-                   MAX_PRIMITIVE);                                          \
-    return u32(static_cast<primitive_type>(s.primitive_value));             \
-  }                                                                         \
-                                                                            \
-  /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc). \
-   *                                                                        \
-   * # Panics                                                               \
-   * The function will panic if the input value is out of range for ##T##.  \
-   */                                                                       \
-  template <Unsigned U>                                                     \
-  static constexpr u32 from(U u) noexcept {                                 \
-    if constexpr (MIN_PRIMITIVE > U::MIN_PRIMITIVE)                         \
-      ::sus::check(u.primitive_value >= MIN_PRIMITIVE);                     \
-    if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)                         \
-      ::sus::check(u.primitive_value <= MAX_PRIMITIVE);                     \
-    return u32(static_cast<primitive_type>(u.primitive_value));             \
-  }                                                                         \
+#define _sus__unsigned_constants(T)                                  \
+  static constexpr auto MIN_PRIMITIVE =                              \
+      __private::min_value<primitive_type>();                        \
+  static constexpr auto MAX_PRIMITIVE =                              \
+      __private::max_value<primitive_type>();                        \
+  static constexpr inline T MIN() noexcept { return MIN_PRIMITIVE; } \
+  static constexpr inline T MAX() noexcept { return MAX_PRIMITIVE; } \
+  static constexpr inline u32 BITS() noexcept {                      \
+    return __private::num_bits<primitive_type>();                    \
+  }                                                                  \
+  static_assert(true)
+
+#define _sus__unsigned_from(T)                                                 \
+  /** Constructs a ##T## from a signed integer type (i8, i16, i32, etc).       \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   */                                                                          \
+  template <Signed S>                                                          \
+  static constexpr T from(S s) noexcept {                                      \
+    ::sus::check(s.primitive_value >= 0);                                      \
+    constexpr auto umax = __private::into_unsigned(S::MAX_PRIMITIVE);          \
+    if constexpr (MAX_PRIMITIVE < umax)                                        \
+      ::sus::check(__private::into_unsigned(s.primitive_value) <=              \
+                   MAX_PRIMITIVE);                                             \
+    return T(static_cast<primitive_type>(s.primitive_value));                  \
+  }                                                                            \
+                                                                               \
+  /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc).    \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   */                                                                          \
+  template <Unsigned U>                                                        \
+  static constexpr T from(U u) noexcept {                                      \
+    if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)                            \
+      ::sus::check(u.primitive_value <= MAX_PRIMITIVE);                        \
+    return T(static_cast<primitive_type>(u.primitive_value));                  \
+  }                                                                            \
+                                                                               \
+  /** Constructs a ##T## from a signed primitive integer type (int, long,      \
+   * etc).                                                                     \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   */                                                                          \
+  template <SignedPrimitiveInteger S>                                          \
+  static constexpr T from(S s) {                                               \
+    ::sus::check(s >= 0);                                                      \
+    constexpr auto umax = __private::into_unsigned(__private::max_value<S>()); \
+    if constexpr (MAX_PRIMITIVE < umax)                                        \
+      ::sus::check(__private::into_unsigned(s) <= MAX_PRIMITIVE);              \
+    return T(static_cast<primitive_type>(s));                                  \
+  }                                                                            \
+                                                                               \
+  /** Constructs a ##T## from an unsigned primitive integer type (unsigned     \
+   * int, unsigned long, etc).                                                 \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   */                                                                          \
+  template <UnsignedPrimitiveInteger U>                                        \
+  static constexpr T from(U u) {                                               \
+    if constexpr (MAX_PRIMITIVE < __private::max_value<U>())                   \
+      ::sus::check(u <= MAX_PRIMITIVE);                                        \
+    return T(static_cast<primitive_type>(u));                                  \
+  }                                                                            \
   static_assert(true)
 
 #define _sus__unsigned_integer_comparison(T)                                  \
@@ -135,13 +162,13 @@
   /** sus::concepts::Div<##T##> trait. */                                   \
   friend constexpr inline T operator/(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r.primitive_value != primitive_type{0});                   \
+    ::sus::check(r.primitive_value != 0u);                                  \
     return l.primitive_value / r.primitive_value;                           \
   }                                                                         \
   /** sus::concepts::Rem<##T##> trait. */                                   \
   friend constexpr inline T operator%(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r.primitive_value != primitive_type{0});                   \
+    ::sus::check(r.primitive_value != 0u);                                  \
     return l.primitive_value % r.primitive_value;                           \
   }                                                                         \
   static_assert(true)
@@ -201,13 +228,13 @@
   /** sus::concepts::DivAssign<##T##> trait. */                           \
   constexpr inline void operator/=(T r)& noexcept {                       \
     /* TODO: Allow opting out of all overflow checks? */                  \
-    ::sus::check(r.primitive_value != primitive_type{0});                 \
+    ::sus::check(r.primitive_value != 0u);                                \
     primitive_value /= r.primitive_value;                                 \
   }                                                                       \
   /** sus::concepts::RemAssign<##T##> trait. */                           \
   constexpr inline void operator%=(T r)& noexcept {                       \
     /* TODO: Allow opting out of all overflow checks? */                  \
-    ::sus::check(r.primitive_value != primitive_type{0});                 \
+    ::sus::check(r.primitive_value != 0u);                                \
     primitive_value %= r.primitive_value;                                 \
   }                                                                       \
   static_assert(true)
@@ -364,7 +391,7 @@
    * 0`.                                                                       \
    */                                                                          \
   constexpr Option<T> checked_div(const T& rhs) const& noexcept {              \
-    if (rhs.primitive_value != primitive_type{0u}) [[likely]]                  \
+    if (rhs.primitive_value != 0u) [[likely]]                                  \
       return Option<T>::some(primitive_value / rhs.primitive_value);           \
     else                                                                       \
       return Option<T>::none();                                                \
@@ -381,7 +408,7 @@
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_div(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0u});                                   \
+    ::sus::check(rhs != 0u);                                                   \
     return Tuple<T, bool>::with(primitive_value / rhs.primitive_value, false); \
   }                                                                            \
                                                                                \
@@ -393,7 +420,7 @@
    */                                                                          \
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0u});                                   \
+    ::sus::check(rhs != 0u);                                                   \
     return primitive_value / rhs.primitive_value;                              \
   }                                                                            \
                                                                                \
@@ -407,7 +434,7 @@
    */                                                                          \
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0u});                                   \
+    ::sus::check(rhs != 0u);                                                   \
     return primitive_value / rhs.primitive_value;                              \
   }                                                                            \
   static_assert(true)
@@ -471,7 +498,7 @@
    * Note that negating any positive integer will overflow.                    \
    */                                                                          \
   constexpr Option<T> checked_neg() const& noexcept {                          \
-    if (primitive_value == primitive_type{0u})                                 \
+    if (primitive_value == 0u)                                                 \
       return Option<T>::some(T(0u));                                           \
     else                                                                       \
       return Option<T>::none();                                                \
@@ -485,7 +512,7 @@
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_neg() const& noexcept {                 \
     return Tuple<T, bool>::with((~(*this)).wrapping_add(T(1u)),                \
-                                primitive_value != primitive_type{0});         \
+                                primitive_value != 0u);                        \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) negation. Computes `-self`, wrapping around at the    \
@@ -508,7 +535,7 @@
    * == 0`.                                                                    \
    */                                                                          \
   constexpr Option<T> checked_rem(const T& rhs) const& noexcept {              \
-    if (rhs.primitive_value != primitive_type{0u}) [[likely]]                  \
+    if (rhs.primitive_value != 0u) [[likely]]                                  \
       return Option<T>::some(primitive_value % rhs.primitive_value);           \
     else                                                                       \
       return Option<T>::none();                                                \
@@ -526,7 +553,7 @@
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0u});                                   \
+    ::sus::check(rhs != 0u);                                                   \
     return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false); \
   }                                                                            \
                                                                                \
@@ -541,7 +568,7 @@
    */                                                                          \
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != primitive_type{0u});                                   \
+    ::sus::check(rhs != 0u);                                                   \
     return primitive_value % rhs.primitive_value;                              \
   }                                                                            \
   static_assert(true)
@@ -557,7 +584,7 @@
    */                                                                           \
   constexpr T div_euclid(const T& rhs) const& noexcept {                        \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs.primitive_value != primitive_type{0});                     \
+    ::sus::check(rhs.primitive_value != 0u);                                    \
     return primitive_value / rhs.primitive_value;                               \
   }                                                                             \
                                                                                 \
@@ -565,7 +592,7 @@
    * None if rhs == 0.                                                          \
    */                                                                           \
   constexpr Option<T> checked_div_euclid(const T& rhs) const& noexcept {        \
-    if (rhs.primitive_value == primitive_type{0}) [[unlikely]] {                \
+    if (rhs.primitive_value == 0u) [[unlikely]] {                               \
       return Option<T>::none();                                                 \
     } else {                                                                    \
       return Option<T>::some(primitive_value / rhs.primitive_value);            \
@@ -586,7 +613,7 @@
   constexpr Tuple<T, bool> overflowing_div_euclid(const T& rhs)                 \
       const& noexcept {                                                         \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != primitive_type{0});                                     \
+    ::sus::check(rhs != 0u);                                                    \
     return Tuple<T, bool>::with(primitive_value / rhs.primitive_value, false);  \
   }                                                                             \
                                                                                 \
@@ -603,7 +630,7 @@
    */                                                                           \
   constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {               \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != primitive_type{0});                                     \
+    ::sus::check(rhs != 0u);                                                    \
     return primitive_value / rhs.primitive_value;                               \
   }                                                                             \
                                                                                 \
@@ -617,7 +644,7 @@
    */                                                                           \
   constexpr T rem_euclid(const T& rhs) const& noexcept {                        \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs.primitive_value != primitive_type{0});                     \
+    ::sus::check(rhs.primitive_value != 0u);                                    \
     return primitive_value % rhs.primitive_value;                               \
   }                                                                             \
                                                                                 \
@@ -625,7 +652,7 @@
    * if rhs == 0.                                                               \
    */                                                                           \
   constexpr Option<T> checked_rem_euclid(const T& rhs) const& noexcept {        \
-    if (rhs.primitive_value == primitive_type{0}) [[unlikely]] {                \
+    if (rhs.primitive_value == 0u) [[unlikely]] {                               \
       return Option<T>::none();                                                 \
     } else {                                                                    \
       return Option<T>::some(primitive_value % rhs.primitive_value);            \
@@ -648,7 +675,7 @@
   constexpr Tuple<T, bool> overflowing_rem_euclid(const T& rhs)                 \
       const& noexcept {                                                         \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != primitive_type{0});                                     \
+    ::sus::check(rhs != 0u);                                                    \
     return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false);  \
   }                                                                             \
                                                                                 \
@@ -665,7 +692,7 @@
    */                                                                           \
   constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {               \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != primitive_type{0});                                     \
+    ::sus::check(rhs != 0u);                                                    \
     return primitive_value % rhs.primitive_value;                               \
   }                                                                             \
   static_assert(true)
@@ -931,7 +958,7 @@
    * Returns None if the number is zero.                                      \
    */                                                                         \
   constexpr Option<u32> checked_log2() const& {                               \
-    if (primitive_value == primitive_type{0}) [[unlikely]] {                  \
+    if (primitive_value == 0u) [[unlikely]] {                                 \
       return Option<u32>::none();                                             \
     } else {                                                                  \
       uint32_t zeros =                                                        \
@@ -955,7 +982,7 @@
    * Returns None if the number is zero.                                      \
    */                                                                         \
   constexpr Option<u32> checked_log10() const& {                              \
-    if (primitive_value == primitive_type{0}) [[unlikely]] {                  \
+    if (primitive_value == 0u) [[unlikely]] {                                 \
       return Option<u32>::none();                                             \
     } else {                                                                  \
       return Option<u32>::some(__private::int_log10::T(primitive_value));     \
@@ -982,8 +1009,7 @@
    * `checked_log10` can produce results more efficiently for base 10.        \
    */                                                                         \
   constexpr Option<u32> checked_log(const T& base) const& noexcept {          \
-    if (primitive_value == primitive_type{0} ||                               \
-        base.primitive_value <= primitive_type{1}) [[unlikely]] {             \
+    if (primitive_value == 0u || base.primitive_value <= 1u) [[unlikely]] {   \
       return Option<u32>::none();                                             \
     } else {                                                                  \
       auto n = u32(0u);                                                       \
@@ -1162,7 +1188,7 @@
       const ::sus::Array</*TODO: u8*/ uint8_t, Bytes>& bytes) noexcept {      \
     primitive_type val;                                                       \
     if (std::is_constant_evaluated()) {                                       \
-      val = primitive_type{0};                                                \
+      val = 0u;                                                               \
       for (auto i = size_t{0}; i < sizeof(T); ++i) {                          \
         val |= bytes.get(i) << (sizeof(T) - 1 - i);                           \
       }                                                                       \
