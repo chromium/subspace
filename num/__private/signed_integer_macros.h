@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <compare>
@@ -24,6 +25,8 @@
 #include "marker/unsafe.h"
 #include "num/__private/int_log10.h"
 #include "num/__private/intrinsics.h"
+#include "num/__private/literals.h"
+#include "num/integer_concepts.h"
 #include "num/u32.h"
 #include "option/option.h"
 #include "tuple/tuple.h"
@@ -1134,14 +1137,14 @@
   /** Returns the number of leading ones in the binary representation of the   \
    * current value.                                                            \
    */                                                                          \
-  constexpr /* TODO:u32 */ uint32_t leading_ones() const& noexcept {           \
+  constexpr u32 leading_ones() const& noexcept {                               \
     return (~(*this)).leading_zeros();                                         \
   }                                                                            \
                                                                                \
   /** Returns the number of leading zeros in the binary representation of the  \
    * current value.                                                            \
    */                                                                          \
-  constexpr /* TODO:u32 */ uint32_t leading_zeros() const& noexcept {          \
+  constexpr u32 leading_zeros() const& noexcept {                              \
     return __private::leading_zeros(                                           \
         __private::into_unsigned(primitive_value));                            \
   }                                                                            \
@@ -1149,14 +1152,14 @@
   /** Returns the number of trailing ones in the binary representation of the  \
    * current value.                                                            \
    */                                                                          \
-  constexpr /* TODO:u32 */ uint32_t trailing_ones() const& noexcept {          \
+  constexpr u32 trailing_ones() const& noexcept {                              \
     return (~(*this)).trailing_zeros();                                        \
   }                                                                            \
                                                                                \
   /** Returns the number of trailing zeros in the binary representation of the \
    * current value.                                                            \
    */                                                                          \
-  constexpr /* TODO:u32 */ uint32_t trailing_zeros() const& noexcept {         \
+  constexpr u32 trailing_zeros() const& noexcept {                             \
     return __private::trailing_zeros(                                          \
         __private::into_unsigned(primitive_value));                            \
   }                                                                            \

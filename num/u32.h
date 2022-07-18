@@ -16,13 +16,7 @@
 
 #include <stdint.h>
 
-#include <concepts>
-
-#include "concepts/from.h"
-#include "concepts/into.h"
-#include "num/__private/literals.h"
 #include "num/__private/unsigned_integer_macros.h"
-#include "num/integer_concepts.h"
 
 namespace sus::num {
 
