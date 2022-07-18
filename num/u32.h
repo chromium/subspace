@@ -51,18 +51,9 @@ struct u32 {
     primitive_value = v;
   }
 
-  template <class T>
-    requires(std::same_as<T, size_t>)  // Prevent implicit conversions.
-  static constexpr u32 from(T v) {
-    ::sus::check(v >= T{MIN_PRIMITIVE});
-    ::sus::check(v <= T{MAX_PRIMITIVE});
-    return u32(static_cast<primitive_type>(v));
-  }
-
   // TODO: Split apart the declarations and the definitions, so they can be in
   // u32_defn.h and u32_impl.h, allowing most of the library to just use
   // u32_defn.h which will keep headers smaller.
-  _sus__unsigned_constants(u32, 0xFFFFFFFF);
   _sus__unsigned_impl(u32, sizeof(primitive_type), /*SignedT=*/i32,
                       /*LargerT=*/uint64_t);
 

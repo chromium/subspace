@@ -165,7 +165,31 @@ TEST(u32, Constants) {
 }
 
 TEST(u32, From) {
+  static_assert(sus::concepts::from::From<u32, char>);
+  static_assert(sus::concepts::from::From<u32, size_t>);
+  static_assert(sus::concepts::from::From<u32, int8_t>);
+  static_assert(sus::concepts::from::From<u32, int16_t>);
+  static_assert(sus::concepts::from::From<u32, int32_t>);
+  static_assert(sus::concepts::from::From<u32, int64_t>);
+  static_assert(sus::concepts::from::From<u32, uint8_t>);
+  static_assert(sus::concepts::from::From<u32, uint16_t>);
+  static_assert(sus::concepts::from::From<u32, uint32_t>);
+  static_assert(sus::concepts::from::From<u32, uint64_t>);
+
+  EXPECT_EQ(u32::from(char{2}), 2_u32);
+  EXPECT_EQ(u32::from(size_t{2}), 2_u32);
+  EXPECT_EQ(u32::from(int8_t{2}), 2_u32);
+  EXPECT_EQ(u32::from(int16_t{2}), 2_u32);
+  EXPECT_EQ(u32::from(int32_t{2}), 2_u32);
+  EXPECT_EQ(u32::from(int64_t{2}), 2_u32);
+  EXPECT_EQ(u32::from(uint8_t{2}), 2_u32);
+  EXPECT_EQ(u32::from(uint16_t{2}), 2_u32);
+  EXPECT_EQ(u32::from(uint32_t{2}), 2_u32);
+  EXPECT_EQ(u32::from(uint64_t{2}), 2_u32);
+
+  // TODO: Add all the integer types as they exist.
   static_assert(sus::concepts::from::From<u32, i32>);
+  static_assert(sus::concepts::from::From<u32, u32>);
 
   // TODO: Add all the integer types as they exist.
   EXPECT_EQ(u32::from(2_i32), 2_u32);
@@ -174,6 +198,10 @@ TEST(u32, From) {
 
 TEST(u32DeathTest, FromOutOfRange) {
 #if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(u32::from(int64_t{-1}), "");
+  EXPECT_DEATH(u32::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
+  EXPECT_DEATH(u32::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
+
   // TODO: Add all the integer types as they exist.
   EXPECT_DEATH(u32::from(-1_i32), "");
 #endif
@@ -1328,7 +1356,7 @@ TEST(u32, DivEuclid) {
   constexpr auto a = (7_u32).div_euclid(4_u32);
   EXPECT_EQ(a, 1_u32);
 
-  EXPECT_EQ((7_u32).div_euclid(4_u32), 1_u32);    // 7 >= 4 * 1
+  EXPECT_EQ((7_u32).div_euclid(4_u32), 1_u32);  // 7 >= 4 * 1
 }
 
 TEST(u32DeathTest, DivEuclidOverflow) {

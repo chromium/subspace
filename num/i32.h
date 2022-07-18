@@ -52,10 +52,8 @@ struct i32 {
   // TODO: Split apart the declarations and the definitions, so they can be in
   // i32_defn.h and i32_impl.h, allowing most of the library to just use
   // i32_defn.h which will keep headers smaller.
-  _sus__signed_constants(i32, 0x7FFFFFFF);
-  _sus__signed_impl(i32, sizeof(primitive_type), /*LargerT=*/int64_t,
-                    /*UnsignedT=*//* TODO: u32 */ uint32_t,
-                    /*UnsignedSusT=*/u32);
+  _sus__signed_impl(i32, sizeof(primitive_type), 
+                    /*UnsignedT=*/u32, /*LargerT=*/int64_t);
 
   // TODO: from_str_radix(). Need Result type and Errors.
 
