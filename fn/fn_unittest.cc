@@ -51,11 +51,18 @@ struct MoveOnly {
   int i = 0;
 };
 
+struct BaseClass {};
+struct SubClass : public BaseClass {};
+
 static_assert(sizeof(FnOnce<void()>) > sizeof(void (*)()));
 static_assert(sizeof(FnOnce<void()>) <= sizeof(void (*)()) * 2);
 
 void v_v_function() {}
 int i_f_function(float) { return 0; }
+void v_f_function(float) {}
+BaseClass* b_b_function(BaseClass* b) { return b; }
+SubClass* s_b_function(BaseClass* b) { return static_cast<SubClass*>(b); }
+SubClass* s_s_function(SubClass* b) { return b; }
 
 // clang-format off
 
@@ -98,6 +105,26 @@ static_assert(std::is_constructible_v<Fn<int(float)>, decltype(i_f_function)>);
 static_assert(!std::is_constructible_v<FnOnce<void()>, decltype([i = int(1)](){})>);
 static_assert(!std::is_constructible_v<FnOnce<void()>, decltype([i = int(1)]() mutable {++i;})>);
 
+// The return type of the Fn must match that of the lambda. It will not allow
+// converting to void.
+static_assert(std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(s_b_function)>);
+static_assert(!std::is_constructible_v<Fn<void(BaseClass*)>, decltype(b_b_function)>);
+static_assert(!std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(b_b_function)>);
+// Similarly, argument types can't be converted to a different type.
+static_assert(std::is_constructible_v<Fn<SubClass*(SubClass*)>, decltype(s_s_function)>);
+static_assert(!std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(s_s_function)>);
+// But Fn type is compatible with convertible return and argument types in
+// opposite directions.
+// - If the return type Y of a lambda is convertible _to_ X, then Fn<X()> can be
+//   used to store it.
+// - If the argument type Y of a lambda is convertible _from_ X, then Fn<(X)>
+//   can be used to store it.
+//
+// In both cases, the Fn is more strict than the lambda, guaranteeing that the
+// lambda's requirements are met.
+static_assert(std::is_constructible_v<Fn<BaseClass*(BaseClass*)>, decltype(s_b_function)>);
+static_assert(std::is_constructible_v<Fn<SubClass*(SubClass*)>, decltype(s_b_function)>);
+
 // Lambdas with bound args can be passed with sus_bind(). Can use sus_bind0()
 // when there's no captured variables.
 static_assert(std::is_constructible_v<FnOnce<void()>, decltype([]() { return sus_bind0([i = int(1)](){}); }())>);
@@ -127,7 +154,37 @@ static_assert(std::is_constructible_v<FnOnce<void()>, decltype([]() { return sus
 // >);
 // #pragma GCC diagnostic pop
 
+template <class R, class Param, class Arg>
+concept can_run = requires (
+  Arg arg, FnOnce<R(Param)> fnonce, FnMut<R(Param)> fnmut, Fn<R(Param)> fn
+) {
+  { static_cast<FnOnce<R(Param)>&&>(fnonce)(sus::forward<Arg>(arg)) };
+  { static_cast<FnOnce<R(Param)>&&>(fnmut)(sus::forward<Arg>(arg)) };
+  { static_cast<FnOnce<R(Param)>&&>(fn)(sus::forward<Arg>(arg)) };
+};
 // clang-format on
+
+// Receiving by-value means it must be passed as a mutable move. This means no
+// implicit copy will happen.
+static_assert(can_run<void, int, int>);
+static_assert(can_run<void, int, int&&>);
+static_assert(!can_run<void, int, int&>);
+static_assert(!can_run<void, int, const int>);
+static_assert(!can_run<void, int, const int&>);
+static_assert(!can_run<void, int, const int&&>);
+
+// Receiving a mutable reference means it must be passed as a mutable reference.
+static_assert(can_run<void, int&, int&>);
+static_assert(!can_run<void, int&, const int&>);
+static_assert(!can_run<void, int&, int>);
+
+// Receiving a const reference means it must be passed as a reference.
+static_assert(can_run<void, const int&, int&>);
+static_assert(can_run<void, const int&, const int&>);
+static_assert(!can_run<void, int&, int>);
+static_assert(!can_run<void, int&, const int>);
+static_assert(!can_run<void, int&, int&&>);
+static_assert(!can_run<void, int&, const int&&>);
 
 TEST(Fn, Pointer) {
   {
@@ -384,7 +441,7 @@ TEST(Fn, Into) {
 }
 
 TEST(FnDeathTest, NullPointer) {
-  void(*f)() = nullptr;
+  void (*f)() = nullptr;
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(FnOnce<void()>::from(f), "");
 #endif
