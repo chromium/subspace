@@ -5,7 +5,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-if (MSVC)
+if(MSVC)
     add_compile_options(/Zc:preprocessor /wd5105)
     add_compile_options(/W4 /WX)
 else()
@@ -18,7 +18,7 @@ set(subspace_include_dirs
 include_directories(${subspace_include_dirs})
 
 # add the executable
-add_library(subspace STATIC 
+add_library(subspace STATIC
     "assertions/arch.h"
     "assertions/builtin.h"
     "assertions/check.h"
@@ -65,10 +65,10 @@ add_library(subspace STATIC
     "num/__private/ptr_type.h"
     "num/__private/signed_integer_macros.h"
     "num/__private/unsigned_integer_macros.h"
-    "num/i32.h"
+    "num/signed_integer.h"
     "num/integer_concepts.h"
     "num/num_concepts.h"
-    "num/u32.h"
+    "num/unsigned_integer.h"
     "option/__private/is_option_type.h"
     "option/option.h"
     "tuple/__private/storage.h"
@@ -112,6 +112,7 @@ add_executable(subspace_unittests
     "mem/take_unittest.cc"
     "num/i32_unittest.cc"
     "num/u32_unittest.cc"
+    "num/u64_unittest.cc"
     "num/usize_unittest.cc"
     "option/option_unittest.cc"
     "option/option_types_unittest.cc"

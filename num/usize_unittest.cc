@@ -17,9 +17,8 @@
 #include "concepts/into.h"
 #include "concepts/make_default.h"
 #include "mem/__private/relocate.h"
-#include "num/i32.h"
 #include "num/num_concepts.h"
-#include "num/u32.h"
+#include "num/types.h"
 #include "option/option.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
@@ -178,51 +177,174 @@ TEST(usize, Constants) {
     EXPECT_EQ(bits, 64u);
 }
 
-TEST(u32, From) {
-  static_assert(sus::concepts::from::From<u32, char>);
-  static_assert(sus::concepts::from::From<u32, size_t>);
-  static_assert(sus::concepts::from::From<u32, int8_t>);
-  static_assert(sus::concepts::from::From<u32, int16_t>);
-  static_assert(sus::concepts::from::From<u32, int32_t>);
-  static_assert(sus::concepts::from::From<u32, int64_t>);
-  static_assert(sus::concepts::from::From<u32, uint8_t>);
-  static_assert(sus::concepts::from::From<u32, uint16_t>);
-  static_assert(sus::concepts::from::From<u32, uint32_t>);
-  static_assert(sus::concepts::from::From<u32, uint64_t>);
+TEST(usize, From) {
+  static_assert(sus::concepts::from::From<usize, char>);
+  static_assert(sus::concepts::from::From<usize, size_t>);
+  static_assert(sus::concepts::from::From<usize, int8_t>);
+  static_assert(sus::concepts::from::From<usize, int16_t>);
+  static_assert(sus::concepts::from::From<usize, int32_t>);
+  static_assert(sus::concepts::from::From<usize, int64_t>);
+  static_assert(sus::concepts::from::From<usize, uint8_t>);
+  static_assert(sus::concepts::from::From<usize, uint16_t>);
+  static_assert(sus::concepts::from::From<usize, uint32_t>);
+  static_assert(sus::concepts::from::From<usize, uint64_t>);
 
-  EXPECT_EQ(u32::from(char{2}), 2_u32);
-  EXPECT_EQ(u32::from(size_t{2}), 2_u32);
-  EXPECT_EQ(u32::from(int8_t{2}), 2_u32);
-  EXPECT_EQ(u32::from(int16_t{2}), 2_u32);
-  EXPECT_EQ(u32::from(int32_t{2}), 2_u32);
-  EXPECT_EQ(u32::from(int64_t{2}), 2_u32);
-  EXPECT_EQ(u32::from(uint8_t{2}), 2_u32);
-  EXPECT_EQ(u32::from(uint16_t{2}), 2_u32);
-  EXPECT_EQ(u32::from(uint32_t{2}), 2_u32);
-  EXPECT_EQ(u32::from(uint64_t{2}), 2_u32);
+  EXPECT_EQ(usize::from(char{2}), 2_usize);
+  EXPECT_EQ(usize::from(size_t{2}), 2_usize);
+  EXPECT_EQ(usize::from(int8_t{2}), 2_usize);
+  EXPECT_EQ(usize::from(int16_t{2}), 2_usize);
+  EXPECT_EQ(usize::from(int32_t{2}), 2_usize);
+  EXPECT_EQ(usize::from(int64_t{2}), 2_usize);
+  EXPECT_EQ(usize::from(uint8_t{2}), 2_usize);
+  EXPECT_EQ(usize::from(uint16_t{2}), 2_usize);
+  EXPECT_EQ(usize::from(uint32_t{2}), 2_usize);
+  EXPECT_EQ(usize::from(uint64_t{2}), 2_usize);
 
   // TODO: Add all the integer types as they exist.
   static_assert(sus::concepts::from::From<usize, i32>);
   static_assert(sus::concepts::from::From<usize, u32>);
+  static_assert(sus::concepts::from::From<usize, u64>);
   static_assert(sus::concepts::from::From<usize, usize>);
 
   // TODO: Add all the integer types as they exist.
   EXPECT_EQ(usize::from(2_i32), 2_usize);
   EXPECT_EQ(usize::from(2_u32), 2_usize);
+  EXPECT_EQ(usize::from(2_u64), 2_usize);
   EXPECT_EQ(usize::from(2_usize), 2_usize);
 }
 
-TEST(u32DeathTest, FromOutOfRange) {
+TEST(usizeDeathTest, FromOutOfRange) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(u32::from(int64_t{-1}), "");
-  EXPECT_DEATH(u32::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
+  EXPECT_DEATH(usize::from(int64_t{-1}), "");
+  EXPECT_DEATH(usize::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
   if (sizeof(usize) != sizeof(u64)) {
-    EXPECT_DEATH(u32::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
+    EXPECT_DEATH(usize::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
   }
 
   // TODO: Add all the signed integer types as they exist.
-  EXPECT_DEATH(u32::from(-1_i32), "");
+  EXPECT_DEATH(usize::from(-1_i32), "");
 #endif
+}
+
+TEST(usize, InvokeEverything) {
+  auto i = 10_usize, j = 11_usize;
+  auto s = 3_isize;
+  auto a = sus::Array</*TODO: u8*/ uint8_t, sizeof(usize)>::with_default();
+
+  i.abs_diff(j);
+
+  i.checked_add(j);
+  i.checked_add_signed(s);
+  i.overflowing_add(j);
+  i.overflowing_add_signed(s);
+  i.saturating_add(j);
+  i.saturating_add_signed(s);
+  i.unchecked_add(unsafe_fn, j);
+  i.wrapping_add(j);
+  i.wrapping_add_signed(s);
+
+  i.checked_div(j);
+  i.overflowing_div(j);
+  i.saturating_div(j);
+  i.wrapping_div(j);
+
+  i.checked_mul(j);
+  i.overflowing_mul(j);
+  i.saturating_mul(j);
+  i.unchecked_mul(unsafe_fn, j);
+  i.wrapping_mul(j);
+
+  i.checked_neg();
+  i.overflowing_neg();
+  i.wrapping_neg();
+
+  i.checked_rem(j);
+  i.overflowing_rem(j);
+  i.wrapping_rem(j);
+
+  i.div_euclid(j);
+  i.checked_div_euclid(j);
+  i.overflowing_div_euclid(j);
+  i.wrapping_div_euclid(j);
+  i.rem_euclid(j);
+  i.checked_rem_euclid(j);
+  i.overflowing_rem_euclid(j);
+  i.wrapping_rem_euclid(j);
+
+  i.checked_shl(1_u32);
+  i.overflowing_shl(1_u32);
+  i.wrapping_shl(1_u32);
+  i.checked_shr(1_u32);
+  i.overflowing_shr(1_u32);
+  i.wrapping_shr(1_u32);
+
+  i.checked_sub(j);
+  i.overflowing_sub(j);
+  i.saturating_sub(j);
+  i.unchecked_sub(unsafe_fn, j);
+  i.wrapping_sub(j);
+
+  i.count_ones();
+  i.count_zeros();
+  i.leading_ones();
+  i.leading_zeros();
+  i.trailing_ones();
+  i.trailing_zeros();
+  i.reverse_bits();
+  i.rotate_left(1_u32);
+  i.rotate_right(1_u32);
+  i.swap_bytes();
+
+  i.pow(1_u32);
+  i.checked_pow(1_u32);
+  i.overflowing_pow(1_u32);
+  i.wrapping_pow(1_u32);
+
+  i.checked_log2();
+  i.log2();
+  i.checked_log10();
+  i.log10();
+  i.checked_log(j);
+  i.log(j);
+
+  i.next_power_of_two();
+  i.checked_next_power_of_two();
+  i.wrapping_next_power_of_two();
+
+  i.from_be(j);
+  i.from_le(j);
+  i.to_be();
+  i.to_le();
+  i.to_be_bytes();
+  i.to_le_bytes();
+  i.to_ne_bytes();
+  i.from_be_bytes(a);
+  i.from_le_bytes(a);
+  i.from_ne_bytes(a);
+
+  i = ~j;
+
+  i = j + j;
+  i = j - j;
+  i = j * j;
+  i = j / j;
+  i = j % j;
+  i = j & j;
+  i = j | j;
+  i = j ^ j;
+  i = j << 1_u32;
+  i = j >> 1_u32;
+
+  i += j;
+  i -= j;
+  i *= j;
+  i /= j;
+  i %= j;
+  i &= j;
+  i |= j;
+  i ^= j;
+  i <<= 1_u32;
+  i >>= 1_u32;
 }
 
 }  // namespace
