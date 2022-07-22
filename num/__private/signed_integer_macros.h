@@ -48,29 +48,29 @@
   static_assert(true)
 // clang-format on
 
-#define _sus__signed_impl(T, PrimitiveT, UnsignedT, LargerT) \
-  _sus__signed_storage(PrimitiveT);                          \
-  _sus__signed_constants(T, PrimitiveT);                     \
-  _sus__signed_construct(T, PrimitiveT);                     \
-  _sus__signed_from(T, PrimitiveT);                          \
-  _sus__signed_integer_comparison(T, PrimitiveT);            \
-  _sus__signed_unary_ops(T);                                 \
-  _sus__signed_binary_logic_ops(T);                          \
-  _sus__signed_binary_bit_ops(T);                            \
-  _sus__signed_mutable_logic_ops(T);                         \
-  _sus__signed_mutable_bit_ops(T);                           \
-  _sus__signed_abs(T, UnsignedT);                            \
-  _sus__signed_add(T, UnsignedT);                            \
-  _sus__signed_div(T);                                       \
-  _sus__signed_mul(T, LargerT);                              \
-  _sus__signed_neg(T);                                       \
-  _sus__signed_rem(T);                                       \
-  _sus__signed_euclid(T);                                    \
-  _sus__signed_shift(T);                                     \
-  _sus__signed_sub(T, UnsignedT);                            \
-  _sus__signed_bits(T);                                      \
-  _sus__signed_pow(T);                                       \
-  _sus__signed_log(T);                                       \
+#define _sus__signed_impl(T, PrimitiveT, UnsignedT) \
+  _sus__signed_storage(PrimitiveT);                 \
+  _sus__signed_constants(T, PrimitiveT);            \
+  _sus__signed_construct(T, PrimitiveT);            \
+  _sus__signed_from(T, PrimitiveT);                 \
+  _sus__signed_integer_comparison(T, PrimitiveT);   \
+  _sus__signed_unary_ops(T);                        \
+  _sus__signed_binary_logic_ops(T);                 \
+  _sus__signed_binary_bit_ops(T);                   \
+  _sus__signed_mutable_logic_ops(T);                \
+  _sus__signed_mutable_bit_ops(T);                  \
+  _sus__signed_abs(T, UnsignedT);                   \
+  _sus__signed_add(T, UnsignedT);                   \
+  _sus__signed_div(T);                              \
+  _sus__signed_mul(T);                              \
+  _sus__signed_neg(T);                              \
+  _sus__signed_rem(T, PrimitiveT);                  \
+  _sus__signed_euclid(T, PrimitiveT);               \
+  _sus__signed_shift(T);                            \
+  _sus__signed_sub(T, UnsignedT);                   \
+  _sus__signed_bits(T);                             \
+  _sus__signed_pow(T);                              \
+  _sus__signed_log(T);                              \
   _sus__signed_endian(T, UnsignedT, sizeof(PrimitiveT))
 
 #define _sus__signed_storage(PrimitiveT)                                      \
@@ -191,7 +191,7 @@
    */                                                                          \
   constexpr T signum() const& noexcept {                                       \
     if (primitive_value < 0)                                                   \
-      return -1;                                                               \
+      return PrimitiveT{-1};                                                   \
     else                                                                       \
       return PrimitiveT{primitive_value != 0};                                 \
   }                                                                            \
@@ -573,7 +573,7 @@
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_div(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0);                                                    \
+    ::sus::check(rhs.primitive_value != 0);                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       return Tuple<T, bool>::with(MIN(), true);                                \
@@ -591,7 +591,7 @@
    */                                                                          \
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0);                                                    \
+    ::sus::check(rhs.primitive_value != 0);                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
@@ -615,7 +615,7 @@
    */                                                                          \
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0);                                                    \
+    ::sus::check(rhs.primitive_value != 0);                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
@@ -627,7 +627,7 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__signed_mul(T, LargerT)                                           \
+#define _sus__signed_mul(T)                                                    \
   /** Checked integer multiplication. Computes self * rhs, returning None if   \
    * overflow occurred.                                                        \
    */                                                                          \
@@ -730,7 +730,7 @@
   }                                                                           \
   static_assert(true)
 
-#define _sus__signed_rem(T)                                                    \
+#define _sus__signed_rem(T, PrimitiveT)                                        \
   /** Checked integer remainder. Computes self % rhs, returning None if rhs == \
    * 0 or the division results in overflow.                                    \
    */                                                                          \
@@ -753,10 +753,10 @@
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0);                                                    \
+    ::sus::check(rhs.primitive_value != 0);                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
-      return Tuple<T, bool>::with(0, true);                                    \
+      return Tuple<T, bool>::with(PrimitiveT{0}, true);                        \
     } else {                                                                   \
       return Tuple<T, bool>::with(primitive_value % rhs.primitive_value,       \
                                   false);                                      \
@@ -772,17 +772,17 @@
    */                                                                          \
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0);                                                    \
+    ::sus::check(rhs.primitive_value != 0);                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[likely]] {    \
-      return 0;                                                                \
+      return PrimitiveT{0};                                                    \
     } else {                                                                   \
       return primitive_value % rhs.primitive_value;                            \
     }                                                                          \
   }                                                                            \
   static_assert(true)
 
-#define _sus__signed_euclid(T)                                                 \
+#define _sus__signed_euclid(T, PrimitiveT)                                     \
   /** Calculates the quotient of Euclidean division of self by rhs.            \
    *                                                                           \
    * This computes the integer q such that self = q * rhs + r, with r =        \
@@ -829,7 +829,7 @@
   constexpr Tuple<T, bool> overflowing_div_euclid(const T& rhs)                \
       const& noexcept {                                                        \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0);                                                    \
+    ::sus::check(rhs.primitive_value != 0);                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       return Tuple<T, bool>::with(MIN(), true);                                \
@@ -854,7 +854,7 @@
    */                                                                          \
   constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0);                                                    \
+    ::sus::check(rhs.primitive_value != 0);                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
       return MIN();                                                            \
@@ -906,10 +906,10 @@
   constexpr Tuple<T, bool> overflowing_rem_euclid(const T& rhs)                \
       const& noexcept {                                                        \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0);                                                    \
+    ::sus::check(rhs.primitive_value != 0);                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
-      return Tuple<T, bool>::with(0, true);                                    \
+      return Tuple<T, bool>::with(PrimitiveT{0}, true);                        \
     } else {                                                                   \
       return Tuple<T, bool>::with(                                             \
           __private::rem_euclid(unsafe_fn, primitive_value,                    \
@@ -930,10 +930,10 @@
    */                                                                          \
   constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0);                                                    \
+    ::sus::check(rhs.primitive_value != 0);                                    \
     if (__private::div_overflows_nonzero(unsafe_fn, primitive_value,           \
                                          rhs.primitive_value)) [[unlikely]] {  \
-      return 0;                                                                \
+      return PrimitiveT{0};                                                    \
     } else {                                                                   \
       return __private::rem_euclid(unsafe_fn, primitive_value,                 \
                                    rhs.primitive_value);                       \
