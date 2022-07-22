@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "num/u32.h"
-
 #include <type_traits>
 
 #include "concepts/into.h"
 #include "concepts/make_default.h"
 #include "mem/__private/relocate.h"
-#include "num/i32.h"
 #include "num/num_concepts.h"
+#include "num/types.h"
 #include "option/option.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
@@ -190,11 +188,13 @@ TEST(u32, From) {
   // TODO: Add all the integer types as they exist.
   static_assert(sus::concepts::from::From<u32, i32>);
   static_assert(sus::concepts::from::From<u32, u32>);
+  static_assert(sus::concepts::from::From<u32, u64>);
   static_assert(sus::concepts::from::From<u32, usize>);
 
   // TODO: Add all the integer types as they exist.
   EXPECT_EQ(u32::from(2_i32), 2_u32);
   EXPECT_EQ(u32::from(2_u32), 2_u32);
+  EXPECT_EQ(u32::from(2_u64), 2_u32);
   EXPECT_EQ(u32::from(2_usize), 2_u32);
 }
 

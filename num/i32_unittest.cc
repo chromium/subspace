@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "num/i32.h"
-
 #include <type_traits>
 
 #include "concepts/into.h"
 #include "concepts/make_default.h"
 #include "mem/__private/relocate.h"
 #include "num/num_concepts.h"
-#include "num/u32.h"
+#include "num/types.h"
 #include "option/option.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"

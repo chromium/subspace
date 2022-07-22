@@ -27,7 +27,7 @@
 #include "num/__private/intrinsics.h"
 #include "num/__private/literals.h"
 #include "num/integer_concepts.h"
-#include "num/u32.h"
+#include "num/unsigned_integer.h"
 #include "option/option.h"
 #include "tuple/tuple.h"
 
