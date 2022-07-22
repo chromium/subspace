@@ -201,13 +201,27 @@ TEST(i32, From) {
   EXPECT_EQ(i32::from(uint32_t{2}), 2_i32);
   EXPECT_EQ(i32::from(uint64_t{2}), 2_i32);
 
-  // TODO: Add all the integer types as they exist.
+  static_assert(sus::concepts::from::From<i32, i8>);
+  static_assert(sus::concepts::from::From<i32, i16>);
   static_assert(sus::concepts::from::From<i32, i32>);
+  static_assert(sus::concepts::from::From<i32, i64>);
+  static_assert(sus::concepts::from::From<i32, isize>);
+  static_assert(sus::concepts::from::From<i32, u8>);
+  static_assert(sus::concepts::from::From<i32, u16>);
   static_assert(sus::concepts::from::From<i32, u32>);
+  static_assert(sus::concepts::from::From<i32, u64>);
+  static_assert(sus::concepts::from::From<i32, usize>);
 
-  // TODO: Add all the integer types as they exist.
+  EXPECT_EQ(i32::from(2_i8), 2_i32);
+  EXPECT_EQ(i32::from(2_i16), 2_i32);
   EXPECT_EQ(i32::from(2_i32), 2_i32);
+  EXPECT_EQ(i32::from(2_i64), 2_i32);
+  EXPECT_EQ(i32::from(2_isize), 2_i32);
+  EXPECT_EQ(i32::from(2_u8), 2_i32);
+  EXPECT_EQ(i32::from(2_u16), 2_i32);
   EXPECT_EQ(i32::from(2_u32), 2_i32);
+  EXPECT_EQ(i32::from(2_u64), 2_i32);
+  EXPECT_EQ(i32::from(2_usize), 2_i32);
 }
 
 TEST(i32DeathTest, FromOutOfRange) {
@@ -215,8 +229,10 @@ TEST(i32DeathTest, FromOutOfRange) {
   EXPECT_DEATH(i32::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
   EXPECT_DEATH(i32::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
 
-  // TODO: Add all the integer types as they exist.
+  EXPECT_DEATH(i32::from(i64::MAX()), "");
   EXPECT_DEATH(i32::from(u32::MAX()), "");
+  EXPECT_DEATH(i32::from(u64::MAX()), "");
+  EXPECT_DEATH(i32::from(usize::MAX()), "");
 #endif
 }
 

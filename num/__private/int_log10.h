@@ -41,6 +41,11 @@ namespace sus::num::__private::int_log10 {
   return (((val + C1) & (val + C2)) ^ ((val + C3) & (val + C4))) >> 17;
 }
 
+// 0 < val <= u8::MAX
+constexpr sus_always_inline /* TODO: u32 */ uint32_t u8(uint8_t val) {
+  return less_than_5(uint32_t{val});
+}
+
 // 0 < val <= u16::MAX
 constexpr sus_always_inline /* TODO: u32 */ uint32_t u16(uint16_t val) {
   return less_than_5(uint32_t{val});
@@ -76,6 +81,10 @@ constexpr sus_always_inline /* TODO: u32 */ uint32_t usize(uint32_t val) {
 
 constexpr sus_always_inline /* TODO: u32 */ uint32_t usize(uint64_t val) {
   return u64(val);
+}
+
+constexpr sus_always_inline /* TODO: u32 */ uint32_t i8(int32_t val) {
+  return u8(static_cast<uint16_t>(val));
 }
 
 constexpr sus_always_inline /* TODO: u32 */ uint32_t i16(int32_t val) {
