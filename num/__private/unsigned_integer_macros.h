@@ -181,10 +181,12 @@
   }                                                                           \
   static_assert(true)
 
-#define _sus__unsigned_unary_ops(T)                                           \
-  /** sus::concepts::Neg trait intentionally omitted. */                      \
-  /** sus::concepts::BitNot trait. */                                         \
-  constexpr inline T operator~() const& noexcept { return ~primitive_value; } \
+#define _sus__unsigned_unary_ops(T)                      \
+  /** sus::concepts::Neg trait intentionally omitted. */ \
+  /** sus::concepts::BitNot trait. */                    \
+  constexpr inline T operator~() const& noexcept {       \
+    return __private::unchecked_not(primitive_value);    \
+  }                                                      \
   static_assert(true)
 
 #define _sus__unsigned_binary_logic_ops(T)                                  \
@@ -216,40 +218,40 @@
   friend constexpr inline T operator/(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0u);                                  \
-    return l.primitive_value / r.primitive_value;                           \
+    return __private::unchecked_div(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   /** sus::concepts::Rem<##T##> trait. */                                   \
   friend constexpr inline T operator%(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0u);                                  \
-    return l.primitive_value % r.primitive_value;                           \
+    return __private::unchecked_rem(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   static_assert(true)
 
 #define _sus__unsigned_binary_bit_ops(T)                                    \
   /** sus::concepts::BitAnd<##T##> trait. */                                \
   friend constexpr inline T operator&(const T& l, const T& r) noexcept {    \
-    return l.primitive_value & r.primitive_value;                           \
+    return __private::unchecked_and(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   /** sus::concepts::BitOr<##T##> trait. */                                 \
   friend constexpr inline T operator|(const T& l, const T& r) noexcept {    \
-    return l.primitive_value | r.primitive_value;                           \
+    return __private::unchecked_or(l.primitive_value, r.primitive_value);   \
   }                                                                         \
   /** sus::concepts::BitXor<##T##> trait. */                                \
   friend constexpr inline T operator^(const T& l, const T& r) noexcept {    \
-    return l.primitive_value ^ r.primitive_value;                           \
+    return __private::unchecked_xor(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   /** sus::concepts::Shl trait. */                                          \
   friend constexpr inline T operator<<(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS());                                               \
-    return l.primitive_value << r.primitive_value;                          \
+    return __private::unchecked_shl(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   /** sus::concepts::Shr trait. */                                          \
   friend constexpr inline T operator>>(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS());                                               \
-    return l.primitive_value >> r.primitive_value;                          \
+    return __private::unchecked_shr(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   static_assert(true)
 
@@ -319,15 +321,15 @@
   }                                                           \
   static_assert(true)
 
-#define _sus__unsigned_abs(T)                                  \
-  /** Computes the absolute difference between self and other. \
-   */                                                          \
-  constexpr T abs_diff(const T& r) const& noexcept {           \
-    if (primitive_value >= r.primitive_value)                  \
-      return primitive_value - r.primitive_value;              \
-    else                                                       \
-      return r.primitive_value - primitive_value;              \
-  }                                                            \
+#define _sus__unsigned_abs(T)                                              \
+  /** Computes the absolute difference between self and other.             \
+   */                                                                      \
+  constexpr T abs_diff(const T& r) const& noexcept {                       \
+    if (primitive_value >= r.primitive_value)                              \
+      return __private::unchecked_sub(primitive_value, r.primitive_value); \
+    else                                                                   \
+      return __private::unchecked_sub(r.primitive_value, primitive_value); \
+  }                                                                        \
   static_assert(true)
 
 #define _sus__unsigned_add(T, SignedT)                                         \
@@ -418,7 +420,7 @@
    */                                                                          \
   inline constexpr T unchecked_add(::sus::marker::UnsafeFnMarker,              \
                                    const T& rhs) const& noexcept {             \
-    return primitive_value + rhs.primitive_value;                              \
+    return __private::unchecked_add(primitive_value, rhs.primitive_value);     \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) addition. Computes self + rhs, wrapping around at the \
@@ -445,7 +447,8 @@
    */                                                                          \
   constexpr Option<T> checked_div(const T& rhs) const& noexcept {              \
     if (rhs.primitive_value != 0u) [[likely]]                                  \
-      return Option<T>::some(primitive_value / rhs.primitive_value);           \
+      return Option<T>::some(                                                  \
+          __private::unchecked_div(primitive_value, rhs.primitive_value));     \
     else                                                                       \
       return Option<T>::none();                                                \
   }                                                                            \
@@ -462,7 +465,9 @@
   constexpr Tuple<T, bool> overflowing_div(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
-    return Tuple<T, bool>::with(primitive_value / rhs.primitive_value, false); \
+    return Tuple<T, bool>::with(                                               \
+        __private::unchecked_div(primitive_value, rhs.primitive_value),        \
+        false);                                                                \
   }                                                                            \
                                                                                \
   /** Saturating integer division. Computes self / rhs, saturating at the      \
@@ -474,7 +479,7 @@
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
-    return primitive_value / rhs.primitive_value;                              \
+    return __private::unchecked_div(primitive_value, rhs.primitive_value);     \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) division. Computes self / rhs. Wrapped division on    \
@@ -488,7 +493,7 @@
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
-    return primitive_value / rhs.primitive_value;                              \
+    return __private::unchecked_div(primitive_value, rhs.primitive_value);     \
   }                                                                            \
   static_assert(true)
 
@@ -534,7 +539,7 @@
    */                                                                          \
   constexpr inline T unchecked_mul(::sus::marker::UnsafeFnMarker,              \
                                    const T& rhs) const& noexcept {             \
-    return primitive_value * rhs.primitive_value;                              \
+    return __private::unchecked_mul(primitive_value, rhs.primitive_value);     \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) multiplication. Computes self * rhs, wrapping around  \
@@ -589,7 +594,8 @@
    */                                                                          \
   constexpr Option<T> checked_rem(const T& rhs) const& noexcept {              \
     if (rhs.primitive_value != 0u) [[likely]]                                  \
-      return Option<T>::some(primitive_value % rhs.primitive_value);           \
+      return Option<T>::some(                                                  \
+          __private::unchecked_rem(primitive_value, rhs.primitive_value));     \
     else                                                                       \
       return Option<T>::none();                                                \
   }                                                                            \
@@ -607,7 +613,9 @@
   constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
-    return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false); \
+    return Tuple<T, bool>::with(                                               \
+        __private::unchecked_rem(primitive_value, rhs.primitive_value),        \
+        false);                                                                \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) remainder. Computes self % rhs. Wrapped remainder     \
@@ -622,7 +630,7 @@
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
-    return primitive_value % rhs.primitive_value;                              \
+    return __private::unchecked_rem(primitive_value, rhs.primitive_value);     \
   }                                                                            \
   static_assert(true)
 
@@ -638,7 +646,7 @@
   constexpr T div_euclid(const T& rhs) const& noexcept {                        \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
-    return primitive_value / rhs.primitive_value;                               \
+    return __private::unchecked_div(primitive_value, rhs.primitive_value);      \
   }                                                                             \
                                                                                 \
   /** Checked Euclidean division. Computes self.div_euclid(rhs), returning      \
@@ -648,7 +656,8 @@
     if (rhs.primitive_value == 0u) [[unlikely]] {                               \
       return Option<T>::none();                                                 \
     } else {                                                                    \
-      return Option<T>::some(primitive_value / rhs.primitive_value);            \
+      return Option<T>::some(                                                   \
+          __private::unchecked_div(primitive_value, rhs.primitive_value));      \
     }                                                                           \
   }                                                                             \
                                                                                 \
@@ -667,7 +676,9 @@
       const& noexcept {                                                         \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
-    return Tuple<T, bool>::with(primitive_value / rhs.primitive_value, false);  \
+    return Tuple<T, bool>::with(                                                \
+        __private::unchecked_div(primitive_value, rhs.primitive_value),         \
+        false);                                                                 \
   }                                                                             \
                                                                                 \
   /** Wrapping Euclidean division. Computes self.div_euclid(rhs). Wrapped       \
@@ -684,7 +695,7 @@
   constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {               \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
-    return primitive_value / rhs.primitive_value;                               \
+    return __private::unchecked_div(primitive_value, rhs.primitive_value);      \
   }                                                                             \
                                                                                 \
   /** Calculates the least remainder of self (mod rhs).                         \
@@ -698,7 +709,7 @@
   constexpr T rem_euclid(const T& rhs) const& noexcept {                        \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
-    return primitive_value % rhs.primitive_value;                               \
+    return __private::unchecked_rem(primitive_value, rhs.primitive_value);      \
   }                                                                             \
                                                                                 \
   /** Checked Euclidean modulo. Computes self.rem_euclid(rhs), returning None   \
@@ -708,7 +719,8 @@
     if (rhs.primitive_value == 0u) [[unlikely]] {                               \
       return Option<T>::none();                                                 \
     } else {                                                                    \
-      return Option<T>::some(primitive_value % rhs.primitive_value);            \
+      return Option<T>::some(                                                   \
+          __private::unchecked_rem(primitive_value, rhs.primitive_value));      \
     }                                                                           \
   }                                                                             \
                                                                                 \
@@ -729,7 +741,9 @@
       const& noexcept {                                                         \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
-    return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false);  \
+    return Tuple<T, bool>::with(                                                \
+        __private::unchecked_rem(primitive_value, rhs.primitive_value),         \
+        false);                                                                 \
   }                                                                             \
                                                                                 \
   /** Wrapping Euclidean modulo. Computes self.rem_euclid(rhs). Wrapped modulo  \
@@ -746,7 +760,7 @@
   constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {               \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
-    return primitive_value % rhs.primitive_value;                               \
+    return __private::unchecked_rem(primitive_value, rhs.primitive_value);      \
   }                                                                             \
   static_assert(true)
 
@@ -876,7 +890,7 @@
    */                                                                          \
   constexpr T unchecked_sub(::sus::marker::UnsafeFnMarker, const T& rhs)       \
       const& {                                                                 \
-    return primitive_value - rhs.primitive_value;                              \
+    return __private::unchecked_sub(primitive_value, rhs.primitive_value);     \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) subtraction. Computes self - rhs, wrapping around at  \

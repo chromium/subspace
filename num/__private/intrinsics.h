@@ -35,14 +35,92 @@ struct OverflowOut final {
 };
 
 template <class T>
+sus_always_inline constexpr uint32_t unchecked_sizeof() noexcept {
+  static_assert(sizeof(T) <= 0xfffffff);
+  return sizeof(T);
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T>)
+sus_always_inline constexpr T unchecked_neg(T x) noexcept {
+  return static_cast<T>(-x);
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T>)
+sus_always_inline constexpr T unchecked_not(T x) noexcept {
+  return static_cast<T>(~x);
+}
+
+template <class T>
+  requires(std::is_integral_v<T>)
+sus_always_inline constexpr T unchecked_add(T x, T y) noexcept {
+  return static_cast<T>(x + y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T>)
+sus_always_inline constexpr T unchecked_sub(T x, T y) noexcept {
+  return static_cast<T>(x - y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T>)
+sus_always_inline constexpr T unchecked_mul(T x, T y) noexcept {
+  return static_cast<T>(x * y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T>)
+sus_always_inline constexpr T unchecked_div(T x, T y) noexcept {
+  return static_cast<T>(x / y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T>)
+sus_always_inline constexpr T unchecked_rem(T x, T y) noexcept {
+  return static_cast<T>(x % y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T>)
+sus_always_inline constexpr T unchecked_and(T x, T y) noexcept {
+  return static_cast<T>(x & y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T>)
+sus_always_inline constexpr T unchecked_or(T x, T y) noexcept {
+  return static_cast<T>(x | y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T>)
+sus_always_inline constexpr T unchecked_xor(T x, T y) noexcept {
+  return static_cast<T>(x ^ y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T>)
+sus_always_inline constexpr T unchecked_shl(T x, uint32_t y) noexcept {
+  return static_cast<T>(x << y);
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && !std::is_signed_v<T>)
+sus_always_inline constexpr T unchecked_shr(T x, uint32_t y) noexcept {
+  return static_cast<T>(x >> y);
+}
+
+template <class T>
   requires(std::is_integral_v<T>)
 sus_always_inline constexpr uint32_t num_bits() noexcept {
-  return sizeof(T) * 8;
+  return unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
 }
 
 template <class T>
   requires(std::is_integral_v<T> && sizeof(T) <= 8)
-sus_always_inline constexpr auto high_bit() noexcept {
+sus_always_inline constexpr T high_bit() noexcept {
   if constexpr (sizeof(T) == 1)
     return static_cast<T>(0x80);
   else if constexpr (sizeof(T) == 2)
@@ -55,13 +133,13 @@ sus_always_inline constexpr auto high_bit() noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
-sus_always_inline constexpr auto max_value() noexcept {
-  return ~T{0};
+sus_always_inline constexpr T max_value() noexcept {
+  return unchecked_not(T{0});
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
-sus_always_inline constexpr auto max_value() noexcept {
+sus_always_inline constexpr T max_value() noexcept {
   if constexpr (sizeof(T) == 1)
     return T{0x7f};
   else if constexpr (sizeof(T) == 2)
@@ -74,13 +152,13 @@ sus_always_inline constexpr auto max_value() noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
-sus_always_inline constexpr auto min_value() noexcept {
+sus_always_inline constexpr T min_value() noexcept {
   return T{0};
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
-sus_always_inline constexpr auto min_value() noexcept {
+sus_always_inline constexpr T min_value() noexcept {
   return -max_value<T>() - T{1};
 }
 
@@ -95,7 +173,8 @@ sus_always_inline constexpr uint32_t count_ones(T value) noexcept {
     value = (value & (~T{0} / T{15} * T{3})) +
             ((value >> 2) & (~T{0} / T{15} * T{3}));
     value = (value + (value >> 4)) & (~T{0} / T{255} * T{15});
-    return (value * (~T{0} / T{255})) >> (sizeof(T) - 1) * 8;
+    return (value * (~T{0} / T{255})) >>
+           (unchecked_sizeof<T>() - uint32_t{1}) * uint32_t{8};
   } else if constexpr (sizeof(value) <= 2) {
     return __popcnt16(uint16_t{value});
   } else if constexpr (sizeof(value) == 8) {
@@ -123,7 +202,8 @@ constexpr sus_always_inline uint32_t
     leading_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
   if (std::is_constant_evaluated()) {
     uint32_t count = 0;
-    for (size_t i = 0; i < sizeof(T) * 8; ++i) {
+    for (auto i = uint32_t{0};
+         i < unchecked_mul(unchecked_sizeof<T>(), uint32_t{8}); ++i) {
       const bool zero = (value & high_bit<T>()) == 0;
       if (!zero) break;
       count += 1;
@@ -162,19 +242,22 @@ constexpr sus_always_inline uint32_t
 #if 1
     unsigned long index;
     _BitScanReverse(&index, uint32_t{value});
-    return static_cast<uint32_t>(31ul ^ index);
+    return static_cast<uint32_t>((31ul ^ index) -
+                                 ((sizeof(unsigned int) - sizeof(value)) * 8u));
 #else
     // TODO: Enable this when target CPU is appropriate:
     // - AMD: Advanced Bit Manipulation (ABM)
     // - Intel: Haswell
     // TODO: On Arm ARMv5T architecture and later use `_arm_clz`
-    return static_cast<uint32_t>(__lzcnt16(&count, uint16_t{value}));
+    return static_cast<uint32_t>(__lzcnt16(&count, uint16_t{value}) -
+                                 ((sizeof(unsigned int) - sizeof(value)) * 8u));
 #endif
   }
 #else
   if constexpr (sizeof(value) <= sizeof(unsigned int)) {
     using U = unsigned int;
-    return static_cast<uint32_t>(__builtin_clz(U{value}));
+    return static_cast<uint32_t>(__builtin_clz(U{value}) -
+                                 ((sizeof(unsigned int) - sizeof(value)) * 8u));
   } else if constexpr (sizeof(value) <= sizeof(unsigned long)) {
     using U = unsigned long;
     return static_cast<uint32_t>(__builtin_clzl(U{value}));
@@ -188,7 +271,7 @@ constexpr sus_always_inline uint32_t
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
 constexpr sus_always_inline uint32_t leading_zeros(T value) noexcept {
-  if (value == 0) return static_cast<uint32_t>(sizeof(T) * 8u);
+  if (value == 0) return unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
   return leading_zeros_nonzero(unsafe_fn, value);
 }
 
@@ -204,7 +287,8 @@ constexpr sus_always_inline uint32_t
     trailing_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
   if (std::is_constant_evaluated()) {
     uint32_t count = 0;
-    for (size_t i = 0; i < sizeof(T) * 8; ++i) {
+    for (auto i = uint32_t{0};
+         i < unchecked_mul(unchecked_sizeof<T>(), uint32_t{8}); ++i) {
       const bool zero = (value & 1) == 0;
       if (!zero) break;
       count += 1;
@@ -267,11 +351,12 @@ sus_always_inline constexpr T reverse_bits(T value) noexcept {
 #else
   // Algorithm from Ken Raeburn:
   // http://graphics.stanford.edu/~seander/bithacks.html#ReverseParallel
-  unsigned int bits = sizeof(value) * 8;
-  auto mask = ~T(0);
+  uint32_t bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
+  auto mask = unchecked_not(T(0));
   while ((bits >>= 1) > 0) {
-    mask ^= mask << bits;
-    value = ((value >> bits) & mask) | ((value << bits) & ~mask);
+    mask ^= unchecked_shl(mask, bits);
+    value = (unchecked_shr(value, bits) & mask) |
+            (unchecked_shl(value, bits) & ~mask);
   }
   return value;
 #endif
@@ -281,14 +366,18 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T>)
 sus_always_inline constexpr T rotate_left(T value, uint32_t n) noexcept {
   n %= sizeof(value) * 8;
-  return (value << n) | (value >> (sizeof(value) * 8 - n));
+  const auto rshift =
+      unchecked_sub(unchecked_mul(unchecked_sizeof<T>(), uint32_t{8}), n);
+  return unchecked_shl(value, n) | unchecked_shr(value, rshift);
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T>)
 sus_always_inline constexpr T rotate_right(T value, uint32_t n) noexcept {
   n %= sizeof(value) * 8;
-  return (value >> n) | (value << (sizeof(value) * 8 - n));
+  const auto lshift =
+      unchecked_sub(unchecked_mul(unchecked_sizeof<T>(), uint32_t{8}), n);
+  return unchecked_shr(value, n) | unchecked_shl(value, lshift);
 }
 
 template <class T>
@@ -411,7 +500,7 @@ sus_always_inline
     constexpr OverflowOut<T> add_with_overflow(T x, T y) noexcept {
   return OverflowOut<T>{
       .overflow = x > max_value<T>() - y,
-      .value = x + y,
+      .value = unchecked_add(x, y),
   };
 }
 
@@ -419,7 +508,8 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline
     constexpr OverflowOut<T> add_with_overflow(T x, T y) noexcept {
-  const auto out = into_signed(into_unsigned(x) + into_unsigned(y));
+  const auto out =
+      into_signed(unchecked_add(into_unsigned(x), into_unsigned(y)));
   return OverflowOut<T>{
       .overflow = y >= 0 != out >= x,
       .value = out,
@@ -434,7 +524,7 @@ sus_always_inline
   return OverflowOut<T>{
       .overflow = (y >= 0 && into_unsigned(y) > max_value<T>() - x) ||
                   (y < 0 && into_unsigned(-y) > x),
-      .value = x + into_unsigned(y),
+      .value = unchecked_add(x, into_unsigned(y)),
   };
 }
 
@@ -443,7 +533,7 @@ template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
            sizeof(T) == sizeof(U))
 sus_always_inline
     constexpr OverflowOut<T> add_with_overflow_unsigned(T x, U y) noexcept {
-  const auto out = into_signed(into_unsigned(x) + y);
+  const auto out = into_signed(unchecked_add(into_unsigned(x), y));
   return OverflowOut<T>{
       .overflow = static_cast<U>(max_value<T>()) - static_cast<U>(x) < y,
       .value = out,
@@ -455,8 +545,8 @@ template <class T>
 sus_always_inline
     constexpr OverflowOut<T> sub_with_overflow(T x, T y) noexcept {
   return OverflowOut<T>{
-      .overflow = x < min_value<T>() + y,
-      .value = x - y,
+      .overflow = x < unchecked_add(min_value<T>(), y),
+      .value = unchecked_sub(x, y),
   };
 }
 
@@ -464,7 +554,8 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline
     constexpr OverflowOut<T> sub_with_overflow(T x, T y) noexcept {
-  const auto out = into_signed(into_unsigned(x) - into_unsigned(y));
+  const auto out =
+      into_signed(unchecked_sub(into_unsigned(x), into_unsigned(y)));
   return OverflowOut<T>{
       .overflow = y >= 0 != out <= x,
       .value = out,
@@ -476,7 +567,7 @@ template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
            sizeof(T) == sizeof(U))
 sus_always_inline
     constexpr OverflowOut<T> sub_with_overflow_unsigned(T x, U y) noexcept {
-  const auto out = into_signed(into_unsigned(x) - y);
+  const auto out = into_signed(unchecked_sub(into_unsigned(x), y));
   return OverflowOut<T>{
       .overflow = static_cast<U>(x) - static_cast<U>(min_value<T>()) < y,
       .value = out,
@@ -488,7 +579,7 @@ template <class T>
 sus_always_inline
     constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
   // TODO: Can we use compiler intrinsics?
-  auto out = into_widened(x) * into_widened(y);
+  auto out = unchecked_mul(into_widened(x), into_widened(y));
   using Wide = decltype(out);
   return OverflowOut{.overflow = out > Wide{max_value<T>()},
                      .value = static_cast<T>(out)};
@@ -576,8 +667,8 @@ sus_always_inline
   // number of bits is as well (since each byte is 2^3 bits).
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
-    shift = shift & (num_bits<T>() - 1);
-  return OverflowOut<T>{.overflow = overflow, .value = x << shift};
+    shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
+  return OverflowOut<T>{.overflow = overflow, .value = unchecked_shl(x, shift)};
 }
 
 template <class T>
@@ -591,9 +682,10 @@ sus_always_inline
   // number of bits is as well (since each byte is 2^3 bits).
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
-    shift = shift & (num_bits<T>() - 1);
-  return OverflowOut<T>{.overflow = overflow,
-                        .value = into_signed(into_unsigned(x) << shift)};
+    shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
+  return OverflowOut<T>{
+      .overflow = overflow,
+      .value = into_signed(unchecked_shl(into_unsigned(x), shift))};
 }
 
 template <class T>
@@ -607,8 +699,8 @@ sus_always_inline
   // number of bits is as well (since each byte is 2^3 bits).
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
-    shift = shift & (num_bits<T>() - 1);
-  return OverflowOut<T>{.overflow = overflow, .value = x >> shift};
+    shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
+  return OverflowOut<T>{.overflow = overflow, .value = unchecked_shr(x, shift)};
 }
 
 template <class T>
@@ -622,9 +714,10 @@ sus_always_inline
   // number of bits is as well (since each byte is 2^3 bits).
   const bool overflow = shift >= num_bits<T>();
   if (overflow) [[unlikely]]
-    shift = shift & (num_bits<T>() - 1);
-  return OverflowOut<T>{.overflow = overflow,
-                        .value = into_signed(into_unsigned(x) >> shift)};
+    shift = shift & (unchecked_sub(num_bits<T>(), uint32_t{1}));
+  return OverflowOut<T>{
+      .overflow = overflow,
+      .value = into_signed(unchecked_shr(into_unsigned(x), shift))};
 }
 
 template <class T>
@@ -723,7 +816,7 @@ sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
-  return x - y;
+  return unchecked_sub(x, y);
 }
 
 template <class T>
@@ -776,13 +869,13 @@ sus_always_inline constexpr T one_less_than_next_power_of_two(T x) noexcept {
   if (x <= 1u) {
     return 0u;
   } else {
-    const auto p = x - 1;
+    const auto p = unchecked_sub(x, T{1});
     // SAFETY: Because `p > 0`, it cannot consist entirely of leading zeros.
     // That means the shift is always in-bounds, and some processors (such as
     // intel pre-haswell) have more efficient ctlz intrinsics when the argument
     // is non-zero.
     const auto z = leading_zeros_nonzero(unsafe_fn, p);
-    return max_value<T>() >> z;
+    return unchecked_shr(max_value<T>(), z);
   }
 }
 

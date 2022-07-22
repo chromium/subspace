@@ -31,14 +31,12 @@ struct u32;
 struct u64;
 struct usize;
 
-// TODO: Add all the unsigned types as they exist.
 template <class T>
 concept Unsigned =
     std::same_as<u8, std::decay_t<T>> || std::same_as<u16, std::decay_t<T>> ||
     std::same_as<u32, std::decay_t<T>> || std::same_as<u64, std::decay_t<T>> ||
     std::same_as<usize, std::decay_t<T>>;
 
-// TODO: Add all the signed types as they exist.
 template <class T>
 concept Signed =
     std::same_as<i8, std::decay_t<T>> || std::same_as<i16, std::decay_t<T>> ||

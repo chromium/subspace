@@ -15,13 +15,9 @@
 #include <type_traits>
 
 #include "concepts/into.h"
-#include "concepts/make_default.h"
-#include "mem/__private/relocate.h"
 #include "num/num_concepts.h"
 #include "num/types.h"
-#include "option/option.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
-#include "tuple/tuple.h"
 
 namespace {
 
@@ -30,7 +26,7 @@ using sus::Option;
 using sus::Tuple;
 
 static_assert(!std::is_signed_v<decltype(usize::primitive_value)>);
-static_assert(sizeof(decltype(usize::primitive_value)) == sizeof(uintptr_t));
+static_assert(sizeof(decltype(usize::primitive_value)) == sizeof(void*));
 static_assert(sizeof(usize) == sizeof(decltype(usize::primitive_value)));
 
 namespace behaviour {
@@ -200,14 +196,24 @@ TEST(usize, From) {
   EXPECT_EQ(usize::from(uint32_t{2}), 2_usize);
   EXPECT_EQ(usize::from(uint64_t{2}), 2_usize);
 
-  // TODO: Add all the integer types as they exist.
+  static_assert(sus::concepts::from::From<usize, i8>);
+  static_assert(sus::concepts::from::From<usize, i16>);
   static_assert(sus::concepts::from::From<usize, i32>);
+  static_assert(sus::concepts::from::From<usize, i64>);
+  static_assert(sus::concepts::from::From<usize, isize>);
+  static_assert(sus::concepts::from::From<usize, u8>);
+  static_assert(sus::concepts::from::From<usize, u16>);
   static_assert(sus::concepts::from::From<usize, u32>);
   static_assert(sus::concepts::from::From<usize, u64>);
   static_assert(sus::concepts::from::From<usize, usize>);
 
-  // TODO: Add all the integer types as they exist.
+  EXPECT_EQ(usize::from(2_i8), 2_usize);
+  EXPECT_EQ(usize::from(2_i16), 2_usize);
   EXPECT_EQ(usize::from(2_i32), 2_usize);
+  EXPECT_EQ(usize::from(2_i64), 2_usize);
+  EXPECT_EQ(usize::from(2_isize), 2_usize);
+  EXPECT_EQ(usize::from(2_u8), 2_usize);
+  EXPECT_EQ(usize::from(2_u16), 2_usize);
   EXPECT_EQ(usize::from(2_u32), 2_usize);
   EXPECT_EQ(usize::from(2_u64), 2_usize);
   EXPECT_EQ(usize::from(2_usize), 2_usize);
@@ -221,8 +227,11 @@ TEST(usizeDeathTest, FromOutOfRange) {
     EXPECT_DEATH(usize::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
   }
 
-  // TODO: Add all the signed integer types as they exist.
+  EXPECT_DEATH(usize::from(-1_i8), "");
+  EXPECT_DEATH(usize::from(-1_i16), "");
   EXPECT_DEATH(usize::from(-1_i32), "");
+  EXPECT_DEATH(usize::from(-1_i64), "");
+  EXPECT_DEATH(usize::from(-1_isize), "");
 #endif
 }
 
@@ -345,6 +354,9 @@ TEST(usize, InvokeEverything) {
   i ^= j;
   i <<= 1_u32;
   i >>= 1_u32;
+
+  i == j;
+  i >= j;
 }
 
 }  // namespace
