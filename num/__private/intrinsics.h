@@ -498,13 +498,17 @@ template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) == 8)
 sus_always_inline
     constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
-  // TODO: For GCC/Clang, use __uint128_t:
-  // https://quuxplusone.github.io/blog/2019/02/28/is-int128-integral/
+#if _MSC_VER
   // For MSVC, use _umul128, but what about constexpr?? If we can't do
   // it then make the whole function non-constexpr?
   // https://docs.microsoft.com/en-us/cpp/intrinsics/umul128
   static_assert(sizeof(T) != 8);
   return OverflowOut<T>(false, T(0));
+#else
+  auto out = __uint128_t{x} * __uint128_t{y};
+  return OverflowOut{.overflow = out > __uint128_t{max_value<T>()},
+                     .value = static_cast<T>(out)};
+#endif
 }
 
 template <class T>
@@ -523,6 +527,7 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) == 8)
 sus_always_inline
     constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
+#if _MSC_VER
   // TODO: For GCC/Clang, use __int128_t:
   // https://quuxplusone.github.io/blog/2019/02/28/is-int128-integral/
   // For MSVC, use _mul128, but what about constexpr?? If we can't do
@@ -530,6 +535,12 @@ sus_always_inline
   // https://docs.microsoft.com/en-us/cpp/intrinsics/mul128
   static_assert(sizeof(T) != 8);
   return OverflowOut<T>(false, T(0));
+#else
+  auto out = __int128_t{x} * __int128_t{y};
+  return OverflowOut{.overflow = out > __int128_t{max_value<T>()} ||
+                                 out < __int128_t{min_value<T>()},
+                     .value = static_cast<T>(out)};
+#endif
 }
 
 template <class T>

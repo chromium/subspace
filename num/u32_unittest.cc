@@ -190,10 +190,12 @@ TEST(u32, From) {
   // TODO: Add all the integer types as they exist.
   static_assert(sus::concepts::from::From<u32, i32>);
   static_assert(sus::concepts::from::From<u32, u32>);
+  static_assert(sus::concepts::from::From<u32, usize>);
 
   // TODO: Add all the integer types as they exist.
   EXPECT_EQ(u32::from(2_i32), 2_u32);
   EXPECT_EQ(u32::from(2_u32), 2_u32);
+  EXPECT_EQ(u32::from(2_usize), 2_u32);
 }
 
 TEST(u32DeathTest, FromOutOfRange) {

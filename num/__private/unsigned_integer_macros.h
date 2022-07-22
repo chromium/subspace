@@ -25,6 +25,7 @@
 #include "num/__private/int_log10.h"
 #include "num/__private/intrinsics.h"
 #include "num/__private/literals.h"
+#include "num/__private/ptr_type.h"
 #include "num/integer_concepts.h"
 #include "option/option.h"
 #include "tuple/tuple.h"
@@ -46,30 +47,30 @@
   static_assert(true)
 // clang-format on
 
-#define _sus__unsigned_impl(T, PrimitiveT, SignedT, LargerT) \
-  _sus__unsigned_storage(PrimitiveT);                        \
-  _sus__unsigned_constants(T, PrimitiveT);                   \
-  _sus__unsigned_construct(T, PrimitiveT);                   \
-  _sus__unsigned_from(T, PrimitiveT);                        \
-  _sus__unsigned_integer_comparison(T);                      \
-  _sus__unsigned_unary_ops(T);                               \
-  _sus__unsigned_binary_logic_ops(T);                        \
-  _sus__unsigned_binary_bit_ops(T);                          \
-  _sus__unsigned_mutable_logic_ops(T);                       \
-  _sus__unsigned_mutable_bit_ops(T);                         \
-  _sus__unsigned_abs(T);                                     \
-  _sus__unsigned_add(T, SignedT);                            \
-  _sus__unsigned_div(T);                                     \
-  _sus__unsigned_mul(T, LargerT);                            \
-  _sus__unsigned_neg(T);                                     \
-  _sus__unsigned_rem(T);                                     \
-  _sus__unsigned_euclid(T);                                  \
-  _sus__unsigned_shift(T);                                   \
-  _sus__unsigned_sub(T);                                     \
-  _sus__unsigned_bits(T);                                    \
-  _sus__unsigned_pow(T);                                     \
-  _sus__unsigned_log(T);                                     \
-  _sus__unsigned_power_of_two(T);                            \
+#define _sus__unsigned_impl(T, PrimitiveT, SignedT) \
+  _sus__unsigned_storage(PrimitiveT);               \
+  _sus__unsigned_constants(T, PrimitiveT);          \
+  _sus__unsigned_construct(T, PrimitiveT);          \
+  _sus__unsigned_from(T, PrimitiveT);               \
+  _sus__unsigned_integer_comparison(T);             \
+  _sus__unsigned_unary_ops(T);                      \
+  _sus__unsigned_binary_logic_ops(T);               \
+  _sus__unsigned_binary_bit_ops(T);                 \
+  _sus__unsigned_mutable_logic_ops(T);              \
+  _sus__unsigned_mutable_bit_ops(T);                \
+  _sus__unsigned_abs(T);                            \
+  _sus__unsigned_add(T, SignedT);                   \
+  _sus__unsigned_div(T);                            \
+  _sus__unsigned_mul(T);                            \
+  _sus__unsigned_neg(T, PrimitiveT);                \
+  _sus__unsigned_rem(T);                            \
+  _sus__unsigned_euclid(T);                         \
+  _sus__unsigned_shift(T);                          \
+  _sus__unsigned_sub(T);                            \
+  _sus__unsigned_bits(T);                           \
+  _sus__unsigned_pow(T);                            \
+  _sus__unsigned_log(T);                            \
+  _sus__unsigned_power_of_two(T, PrimitiveT);       \
   _sus__unsigned_endian(T, PrimitiveT)
 
 #define _sus__unsigned_storage(PrimitiveT)                                    \
@@ -460,7 +461,7 @@
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_div(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0u);                                                   \
+    ::sus::check(rhs.primitive_value != 0u);                                   \
     return Tuple<T, bool>::with(primitive_value / rhs.primitive_value, false); \
   }                                                                            \
                                                                                \
@@ -472,7 +473,7 @@
    */                                                                          \
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0u);                                                   \
+    ::sus::check(rhs.primitive_value != 0u);                                   \
     return primitive_value / rhs.primitive_value;                              \
   }                                                                            \
                                                                                \
@@ -486,12 +487,12 @@
    */                                                                          \
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0u);                                                   \
+    ::sus::check(rhs.primitive_value != 0u);                                   \
     return primitive_value / rhs.primitive_value;                              \
   }                                                                            \
   static_assert(true)
 
-#define _sus__unsigned_mul(T, LargerT)                                         \
+#define _sus__unsigned_mul(T)                                                  \
   /** Checked integer multiplication. Computes self * rhs, returning None if   \
    * overflow occurred.                                                        \
    */                                                                          \
@@ -544,14 +545,14 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__unsigned_neg(T)                                                  \
+#define _sus__unsigned_neg(T, PrimitiveT)                                      \
   /** Checked negation. Computes -self, returning None unless `self == 0`.     \
    *                                                                           \
    * Note that negating any positive integer will overflow.                    \
    */                                                                          \
   constexpr Option<T> checked_neg() const& noexcept {                          \
     if (primitive_value == 0u)                                                 \
-      return Option<T>::some(T(0u));                                           \
+      return Option<T>::some(T(PrimitiveT{0u}));                               \
     else                                                                       \
       return Option<T>::none();                                                \
   }                                                                            \
@@ -563,7 +564,7 @@
    * unsigned values overflow always occurs, but negating 0 does not overflow. \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_neg() const& noexcept {                 \
-    return Tuple<T, bool>::with((~(*this)).wrapping_add(T(1u)),                \
+    return Tuple<T, bool>::with((~(*this)).wrapping_add(T(PrimitiveT{1u})),    \
                                 primitive_value != 0u);                        \
   }                                                                            \
                                                                                \
@@ -578,7 +579,7 @@
    * maximum.                                                                  \
    */                                                                          \
   constexpr T wrapping_neg() const& noexcept {                                 \
-    return (T(0u)).wrapping_sub(*this);                                        \
+    return (T(PrimitiveT{0u})).wrapping_sub(*this);                            \
   }                                                                            \
   static_assert(true)
 
@@ -605,7 +606,7 @@
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0u);                                                   \
+    ::sus::check(rhs.primitive_value != 0u);                                   \
     return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false); \
   }                                                                            \
                                                                                \
@@ -620,7 +621,7 @@
    */                                                                          \
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(rhs != 0u);                                                   \
+    ::sus::check(rhs.primitive_value != 0u);                                   \
     return primitive_value % rhs.primitive_value;                              \
   }                                                                            \
   static_assert(true)
@@ -665,7 +666,7 @@
   constexpr Tuple<T, bool> overflowing_div_euclid(const T& rhs)                 \
       const& noexcept {                                                         \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != 0u);                                                    \
+    ::sus::check(rhs.primitive_value != 0u);                                    \
     return Tuple<T, bool>::with(primitive_value / rhs.primitive_value, false);  \
   }                                                                             \
                                                                                 \
@@ -682,7 +683,7 @@
    */                                                                           \
   constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {               \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != 0u);                                                    \
+    ::sus::check(rhs.primitive_value != 0u);                                    \
     return primitive_value / rhs.primitive_value;                               \
   }                                                                             \
                                                                                 \
@@ -727,7 +728,7 @@
   constexpr Tuple<T, bool> overflowing_rem_euclid(const T& rhs)                 \
       const& noexcept {                                                         \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != 0u);                                                    \
+    ::sus::check(rhs.primitive_value != 0u);                                    \
     return Tuple<T, bool>::with(primitive_value % rhs.primitive_value, false);  \
   }                                                                             \
                                                                                 \
@@ -744,7 +745,7 @@
    */                                                                           \
   constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {               \
     /* TODO: Allow opting out of all overflow checks? */                        \
-    ::sus::check(rhs != 0u);                                                    \
+    ::sus::check(rhs.primitive_value != 0u);                                    \
     return primitive_value % rhs.primitive_value;                               \
   }                                                                             \
   static_assert(true)
@@ -904,28 +905,28 @@
   /** Returns the number of leading ones in the binary representation of the   \
    * current value.                                                            \
    */                                                                          \
-  constexpr u32 leading_ones() const& noexcept {           \
+  constexpr u32 leading_ones() const& noexcept {                               \
     return (~(*this)).leading_zeros();                                         \
   }                                                                            \
                                                                                \
   /** Returns the number of leading zeros in the binary representation of the  \
    * current value.                                                            \
    */                                                                          \
-  constexpr u32 leading_zeros() const& noexcept {          \
+  constexpr u32 leading_zeros() const& noexcept {                              \
     return __private::leading_zeros(primitive_value);                          \
   }                                                                            \
                                                                                \
   /** Returns the number of trailing ones in the binary representation of the  \
    * current value.                                                            \
    */                                                                          \
-  constexpr u32 trailing_ones() const& noexcept {          \
+  constexpr u32 trailing_ones() const& noexcept {                              \
     return (~(*this)).trailing_zeros();                                        \
   }                                                                            \
                                                                                \
   /** Returns the number of trailing zeros in the binary representation of the \
    * current value.                                                            \
    */                                                                          \
-  constexpr u32 trailing_zeros() const& noexcept {         \
+  constexpr u32 trailing_zeros() const& noexcept {                             \
     return __private::trailing_zeros(primitive_value);                         \
   }                                                                            \
                                                                                \
@@ -1091,7 +1092,7 @@
   }                                                                           \
   static_assert(true)
 
-#define _sus__unsigned_power_of_two(T)                                        \
+#define _sus__unsigned_power_of_two(T, PrimitiveT)                            \
   /** Returns the smallest power of two greater than or equal to self.        \
    *                                                                          \
    * # Panics                                                                 \
@@ -1100,7 +1101,7 @@
   constexpr T next_power_of_two() noexcept {                                  \
     const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
-    return T(one_less) + T(1u);                                               \
+    return T(one_less) + T(PrimitiveT{1u});                                   \
   }                                                                           \
                                                                               \
   /** Returns the smallest power of two greater than or equal to n.           \
@@ -1111,7 +1112,7 @@
   constexpr Option<T> checked_next_power_of_two() noexcept {                  \
     const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
-    return T(one_less).checked_add(T(1u));                                    \
+    return T(one_less).checked_add(T(PrimitiveT{1u}));                        \
   }                                                                           \
                                                                               \
   /** Returns the smallest power of two greater than or equal to n.           \
@@ -1122,7 +1123,7 @@
   constexpr T wrapping_next_power_of_two() noexcept {                         \
     const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
-    return T(one_less).wrapping_add(T(1u));                                   \
+    return T(one_less).wrapping_add(T(PrimitiveT{1u}));                       \
   }                                                                           \
   static_assert(true)
 

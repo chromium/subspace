@@ -58,16 +58,24 @@ constexpr sus_always_inline /* TODO: u32 */ uint32_t u32(uint32_t val) {
 
 // 0 < val <= u64::MAX
 constexpr sus_always_inline /* TODO: u32 */ uint32_t u64(uint64_t val) {
-   auto log = uint32_t{0};
-    if (val >= 10'000'000'000) {
-        val /= 10'000'000'000;
-        log += 10;
-    }
-    if (val >= 100'000) {
-        val /= 100'000;
-        log += 5;
-    }
-    return log + less_than_5(static_cast<uint32_t>(val));
+  auto log = uint32_t{0};
+  if (val >= 10'000'000'000) {
+    val /= 10'000'000'000;
+    log += 10;
+  }
+  if (val >= 100'000) {
+    val /= 100'000;
+    log += 5;
+  }
+  return log + less_than_5(static_cast<uint32_t>(val));
+}
+
+constexpr sus_always_inline /* TODO: u32 */ uint32_t usize(uint32_t val) {
+  return u32(val);
+}
+
+constexpr sus_always_inline /* TODO: u32 */ uint32_t usize(uint64_t val) {
+  return u64(val);
 }
 
 constexpr sus_always_inline /* TODO: u32 */ uint32_t i16(int32_t val) {
@@ -80,6 +88,14 @@ constexpr sus_always_inline /* TODO: u32 */ uint32_t i32(int32_t val) {
 
 constexpr sus_always_inline /* TODO: u32 */ uint32_t i64(int64_t val) {
   return u64(static_cast<uint64_t>(val));
+}
+
+constexpr sus_always_inline /* TODO: u32 */ uint32_t isize(int32_t val) {
+  return usize(static_cast<uint32_t>(val));
+}
+
+constexpr sus_always_inline /* TODO: u32 */ uint32_t isize(int64_t val) {
+  return usize(static_cast<uint64_t>(val));
 }
 
 }  // namespace sus::num::__private::int_log10
