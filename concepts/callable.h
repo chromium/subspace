@@ -31,7 +31,7 @@ template <class T, class R, class... Args>
 concept FunctionPointerReturns = (
     FunctionPointer<T> &&
     requires (T t, Args&&... args) {
-        { t(forward<Args>(args)...) } -> std::same_as<R>;
+        { t(forward<Args>(args)...) } -> std::convertible_to<R>;
     }
 );
 // clang-format on
@@ -55,7 +55,7 @@ template <class T, class R, class... Args>
 concept LambdaReturnsConst = (
     !FunctionPointerReturns<T, R, Args...> &&
     requires (const T& t, Args&&... args) {
-        { t(forward<Args>(args)...) } -> std::same_as<R>;
+        { t(forward<Args>(args)...) } -> std::convertible_to<R>;
     }
 );
 
@@ -63,15 +63,7 @@ template <class T, class R, class... Args>
 concept LambdaReturnsMut = (
     !FunctionPointer<T> &&
     requires (T& t, Args&&... args) {
-        { t(forward<Args>(args)...) } -> std::same_as<R>;
-    }
-);
-
-template <class T, class R, class... Args>
-concept LambdaReturnsOnce = (
-    !FunctionPointer<T> &&
-    requires (T&& t, Args&&... args) {
-        { forward<T>(t)(forward<Args>(args)...) } -> std::same_as<R>;
+        { t(forward<Args>(args)...) } -> std::convertible_to<R>;
     }
 );
 // clang-format on
