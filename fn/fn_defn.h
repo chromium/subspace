@@ -64,6 +64,9 @@ class FnMut;
 template <class R, class... Args>
 class Fn;
 
+// TODO: Consider generic lambdas, it should be possible to bind them into
+// FnOnce/FnMut/Fn?
+
 /// A closure that erases the type of the internal callable object (lambda). A
 /// FnOnce may only be called a single time.
 ///
