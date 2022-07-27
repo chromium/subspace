@@ -48,7 +48,7 @@ class Array;
 /// greater distance results in Undefined Behaviour.
 template <class T, size_t N>
   requires(N <= PTRDIFF_MAX)
-class Array {
+class Array final {
  public:
   constexpr static Array with_default() noexcept
     requires(::sus::concepts::MakeDefault<T>::has_concept)

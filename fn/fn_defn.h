@@ -397,7 +397,8 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
 /// A null function pointer is not allowed, constructing a Fn from a null
 /// pointer will panic.
 template <class R, class... CallArgs>
-class [[sus_trivial_abi]] Fn<R(CallArgs...)> : public FnMut<R(CallArgs...)> {
+class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
+    : public FnMut<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>

@@ -23,7 +23,7 @@ namespace sus::concepts::into {
 
 namespace __private {
 template <class FromType>
-struct IntoRef {
+struct IntoRef final {
   [[nodiscard]] constexpr IntoRef(FromType&& from) noexcept
       : from_(static_cast<FromType&&>(from)) {}
 

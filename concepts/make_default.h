@@ -35,7 +35,7 @@ constexpr inline bool has_with_default(int) {
 }  // namespace __private
 
 template <class T>
-struct MakeDefault {
+struct MakeDefault final {
   static constexpr bool has_concept =
       std::is_default_constructible_v<T> ^ __private::has_with_default<T, T>(0);
 
