@@ -38,9 +38,10 @@ struct relocatable_tag {
 // [[trivial_abi]] clang attribute, as types annotated with the attribute are
 // now considered "trivially relocatable" in https://reviews.llvm.org/D114732.
 //
-// TODO: This must also verify that the type has no padding at the end which can
-// be used by an outer type. If so, either a) You can't memcpy it, or b) You
-// must memcpy without including the padding bytes.
+// TODO: @ssbr has pointed out that this must also verify that the type has no
+// padding at the end which can be used by an outer type. If so, either
+// - You can't memcpy it, or
+// - You must memcpy without including the padding bytes.
 //
 // If type `T` has padding at its end, such as:
 // ```
@@ -73,6 +74,24 @@ struct relocatable_tag {
 // ```
 // In this example, `sizeof(S) == sizeof(T)` because `c` sits inside the
 // trailing padding of `T`.
+//
+// From @ssbr:
+//
+// So the dsizeof(T) algorithm [to determine how much to memcpy safely] is
+// something like:
+//
+// - A: find out how many bytes fit into the padding via inheritance (`struct S
+//   : T { bytes }` for all `bytes` until `sizeof(T) != sizeof(S)`).
+// - B: find out how many bytes fit into the padding via no_unique_address
+//   (struct S { [[no_unique_address]] T x; bytes } for all `bytes` until
+//   `sizeof(T) != sizeof(S)`).
+//
+// ```
+// return sizeof(T) - max(A, B)
+// ```
+//
+// And I think on every known platform, A == B. It might even be guaranteed by
+// the standard, but I wouldn't know how to check
 //
 // clang-format off
 template <class... T>
