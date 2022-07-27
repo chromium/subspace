@@ -37,6 +37,43 @@ struct relocatable_tag {
 // movable and destructible is not sufficient - this also honors the
 // [[trivial_abi]] clang attribute, as types annotated with the attribute are
 // now considered "trivially relocatable" in https://reviews.llvm.org/D114732.
+//
+// TODO: This must also verify that the type has no padding at the end which can
+// be used by an outer type. If so, either a) You can't memcpy it, or b) You
+// must memcpy without including the padding bytes.
+//
+// If type `T` has padding at its end, such as:
+// ```
+// class T { i64 a; i32 b; };
+// ```
+//
+// Then there are two ways for another type to place a field inside the padding
+// adjacent to `b` and inside area allocated for `sizeof(T)`:
+//
+// 1. A subclass of a non-POD type can insert its fields into the padding of the
+//    base class.
+//
+// So a subclass of `T` may have its first field inside the padding adjacent to
+// `b`:
+// ```
+// class S : T { i32 c; };
+// ```
+// In this example, `sizeof(S) == sizeof(T)` because `c` sits inside the
+// trailing padding of `T`.
+//
+// 2. A class with a `[[no_unique_address]]` field may insert other fields below
+//    it into the padding of the `[[no_unique_address]]` field.
+//
+// So a class that contains `T` as a field can insert another field into `T`:
+// ```
+// class S {
+//   [[no_unique_address]] T t;
+//   i32 c;
+// };
+// ```
+// In this example, `sizeof(S) == sizeof(T)` because `c` sits inside the
+// trailing padding of `T`.
+//
 // clang-format off
 template <class... T>
 struct relocate_one_by_memcpy
