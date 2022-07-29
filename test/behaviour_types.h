@@ -20,16 +20,16 @@
 
 namespace sus::test {
 
-struct DefaultConstructible {
+struct DefaultConstructible final {
   int i = 2;
 };
 
-struct NotDefaultConstructible {
+struct NotDefaultConstructible final {
   int i;
   constexpr NotDefaultConstructible(int i) : i(i) {}
 };
 
-struct WithDefaultConstructible {
+struct WithDefaultConstructible final {
   int i;
   static inline constexpr WithDefaultConstructible with_default() {
     return WithDefaultConstructible(3);
@@ -37,7 +37,7 @@ struct WithDefaultConstructible {
   constexpr WithDefaultConstructible(int i) : i(i) {}
 };
 
-struct TriviallyCopyable {
+struct TriviallyCopyable final {
   TriviallyCopyable(const TriviallyCopyable&) = default;
   TriviallyCopyable& operator=(const TriviallyCopyable&) = default;
   TriviallyCopyable(TriviallyCopyable&&) = delete;
@@ -47,7 +47,7 @@ struct TriviallyCopyable {
   int i;
 };
 
-struct TriviallyMoveableAndRelocatable {
+struct TriviallyMoveableAndRelocatable final {
   TriviallyMoveableAndRelocatable(TriviallyMoveableAndRelocatable&&) = default;
   TriviallyMoveableAndRelocatable& operator=(
       TriviallyMoveableAndRelocatable&&) = default;
@@ -56,7 +56,7 @@ struct TriviallyMoveableAndRelocatable {
   int i;
 };
 
-struct TriviallyCopyableNotDestructible {
+struct TriviallyCopyableNotDestructible final {
   TriviallyCopyableNotDestructible(const TriviallyCopyableNotDestructible&) =
       default;
   TriviallyCopyableNotDestructible& operator=(
@@ -69,7 +69,7 @@ struct TriviallyCopyableNotDestructible {
   int i;
 };
 
-struct TriviallyMoveableNotDestructible {
+struct TriviallyMoveableNotDestructible final {
   TriviallyMoveableNotDestructible(TriviallyMoveableNotDestructible&&) =
       default;
   TriviallyMoveableNotDestructible& operator=(
@@ -79,7 +79,7 @@ struct TriviallyMoveableNotDestructible {
   int i;
 };
 
-struct NotTriviallyRelocatableCopyableOrMoveable {
+struct NotTriviallyRelocatableCopyableOrMoveable final {
   NotTriviallyRelocatableCopyableOrMoveable(
       NotTriviallyRelocatableCopyableOrMoveable&&) noexcept {}
   void operator=(NotTriviallyRelocatableCopyableOrMoveable&&) noexcept {}
@@ -88,7 +88,7 @@ struct NotTriviallyRelocatableCopyableOrMoveable {
   int i;
 };
 
-struct [[sus_trivial_abi]] TrivialAbiRelocatable {
+struct [[sus_trivial_abi]] TrivialAbiRelocatable final {
   sus_class_trivial_relocatable(unsafe_fn);
   TrivialAbiRelocatable(TrivialAbiRelocatable&&) {}
   ~TrivialAbiRelocatable() {}

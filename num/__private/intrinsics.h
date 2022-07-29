@@ -29,7 +29,7 @@
 namespace sus::num::__private {
 
 template <class T>
-struct OverflowOut {
+struct OverflowOut final {
   bool overflow;
   T value;
 };

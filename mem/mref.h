@@ -49,14 +49,14 @@ class Mref;
 
 template <class T>
   requires(!std::is_reference_v<T>)
-struct Mref<T> {
+struct Mref<T> final {
   static_assert(
       std::is_reference_v<T>,
       "The type parameter for Mref<T> must be a mutable reference: Mref<T&>");
 };
 
 template <class T>
-struct Mref<const T&> {
+struct Mref<const T&> final {
   static_assert(
       std::is_reference_v<T> && !std::is_const_v<std::remove_reference_t<T>>,
       "The type parameter for Mref<T> must be a mutable reference: Mref<T&>");
@@ -81,7 +81,7 @@ constexpr inline Mref<T> mref(Mref<T>& t) {
 
 template <class T>
   requires(!std::is_array_v<T>)
-struct Mref<T&> {
+struct Mref<T&> final {
   constexpr Mref(Mref&&) noexcept = default;
   constexpr Mref& operator=(Mref&&) noexcept = default;
 
@@ -111,7 +111,7 @@ struct Mref<T&> {
   constexpr inline T& inner() & { return t_; }
 
  private:
-  struct Construct {
+  struct Construct final {
     T& reference;
   };
 

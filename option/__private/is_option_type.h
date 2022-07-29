@@ -22,12 +22,12 @@ class Option;
 namespace sus::option::__private {
 
 template <class U>
-struct IsOptionType : std::false_type {
+struct IsOptionType final : std::false_type {
   using inner_type = void;
 };
 
 template <class U>
-struct IsOptionType<Option<U>> : std::true_type {
+struct IsOptionType<Option<U>> final : std::true_type {
   using inner_type = U;
 };
 

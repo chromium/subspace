@@ -29,7 +29,7 @@ extern const IteratorEnd iterator_end;
 
 /// An adaptor for range-based for loops.
 template <class IteratorBase>
-class IteratorLoop {
+class IteratorLoop final {
   using Item = typename IteratorBase::Item;
 
  public:

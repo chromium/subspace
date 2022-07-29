@@ -117,7 +117,7 @@ TEST(Tuple, Unwrap) {
   }
 
   static int counter = 0;
-  struct MoveCounter {
+  struct MoveCounter final {
     MoveCounter() = default;
     MoveCounter(MoveCounter&&) { counter++; }
   };
@@ -187,7 +187,7 @@ TEST(Tuple, StrongOrder) {
             std::strong_ordering::greater);
 }
 
-struct Weak {
+struct Weak final {
   auto operator==(Weak const& o) const& { return a == o.a && b == o.b; }
   auto operator<=>(Weak const& o) const& {
     if (a == o.a) return std::weak_ordering::equivalent;

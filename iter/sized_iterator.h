@@ -20,7 +20,7 @@
 namespace sus::iter {
 
 template <class Item, size_t SubclassSize, size_t SubclassAlign>
-struct SizedIterator {
+struct SizedIterator final {
   SizedIterator(void (*destroy)(char& sized)) : destroy(destroy) {}
 
   SizedIterator(SizedIterator&& o) : destroy(o.destroy) {

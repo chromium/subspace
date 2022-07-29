@@ -48,7 +48,7 @@ struct TupleStorage<N, T, MoreT...> : TupleStorage<N - 1, MoreT...> {
 };
 
 template <class TupleStorage, size_t I>
-struct TupleAccess {
+struct TupleAccess final {
   static inline constexpr const auto& get(const TupleStorage& tuple) noexcept {
     return TupleAccess<typename TupleStorage::Super, I - 1>::get(tuple);
   }
@@ -64,7 +64,7 @@ struct TupleAccess {
 };
 
 template <class TupleStorage>
-struct TupleAccess<TupleStorage, 0> {
+struct TupleAccess<TupleStorage, 0> final {
   static inline constexpr const auto& get(const TupleStorage& tuple) noexcept {
     return tuple.t;
   }
