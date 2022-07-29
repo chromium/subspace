@@ -29,12 +29,12 @@ namespace sus::containers {
 namespace __private {
 
 template <class T, size_t N>
-struct Storage {
+struct Storage final {
   T data_[N];
 };
 
 template <class T>
-struct Storage<T, 0> {};
+struct Storage<T, 0> final {};
 
 }  // namespace __private
 

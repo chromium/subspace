@@ -25,7 +25,7 @@ struct [[sus_trivial_abi]] RelocatableStorage;
 
 template <class T>
   requires(!::sus::mem::__private::relocate_one_by_memcpy_v<T>)
-struct [[sus_trivial_abi]] RelocatableStorage<T> {
+struct [[sus_trivial_abi]] RelocatableStorage<T> final {
   RelocatableStorage(Option<T>&& t)
       : heap_(static_cast<decltype(t)&&>(t).and_then([](T&& t) {
           return Option<T&>::some(mref(*new T(static_cast<T&&>(t))));
@@ -68,7 +68,7 @@ struct [[sus_trivial_abi]] RelocatableStorage<T> {
 
 template <class T>
   requires(::sus::mem::__private::relocate_one_by_memcpy_v<T>)
-struct [[sus_trivial_abi]] RelocatableStorage<T> {
+struct [[sus_trivial_abi]] RelocatableStorage<T> final {
   RelocatableStorage(Option<T>&& t) : stack_(static_cast<decltype(t)&&>(t)) {}
 
   // TODO: Do memcpy instead of take() when not in a constexpr context.

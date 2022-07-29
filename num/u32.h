@@ -23,7 +23,7 @@ namespace sus::num {
 // TODO: from_str_radix(). Need Result type and Errors.
 
 /// A 32-bit unsigned integer.
-struct u32 {
+struct u32 final {
   // TODO: Split apart the declarations and the definitions? Then they can be in
   // u32_defn.h and u32_impl.h, allowing most of the library to just use
   // u32_defn.h which will keep some headers smaller. But then the combined

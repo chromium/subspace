@@ -26,7 +26,7 @@ namespace sus::tuple {
 
 /// A Tuple is a finate sequence of one or more heterogenous values.
 template <class T, class... Ts>
-class Tuple {
+class Tuple final {
  public:
   /// Construct a Tuple with the given values.
   constexpr inline static Tuple with(T first, Ts... more) noexcept {

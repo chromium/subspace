@@ -22,7 +22,7 @@
 namespace sus::mem::__private {
 
 template <class T>
-struct relocatable_tag {
+struct relocatable_tag final {
   static constexpr bool value(...) { return false; }
 
   static constexpr bool value(int)
@@ -95,7 +95,7 @@ struct relocatable_tag {
 //
 // clang-format off
 template <class... T>
-struct relocate_one_by_memcpy
+struct relocate_one_by_memcpy final
     : public std::integral_constant<
         bool,
 #if __has_extension(trivially_relocatable)
@@ -127,7 +127,7 @@ inline constexpr bool relocate_one_by_memcpy_v =
 //
 // clang-format off
 template <class T>
-struct relocate_array_by_memcpy
+struct relocate_array_by_memcpy final
     : public std::integral_constant<
         bool,
 #if __has_extension(trivially_relocatable)

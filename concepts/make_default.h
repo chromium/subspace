@@ -51,15 +51,15 @@ struct MakeDefault final {
 };
 
 template <class T>
-struct MakeDefault<T&&> {
+struct MakeDefault<T&&> final {
   static constexpr bool has_concept = false;
 };
 template <class T>
-struct MakeDefault<T&> {
+struct MakeDefault<T&> final {
   static constexpr bool has_concept = false;
 };
 template <class T>
-struct MakeDefault<const T&> {
+struct MakeDefault<const T&> final {
   static constexpr bool has_concept = false;
 };
 

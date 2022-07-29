@@ -82,8 +82,7 @@ void FnOnce<R(CallArgs...)>::make_vtable(
 template <class R, class... CallArgs>
 FnOnce<R(CallArgs...)>::~FnOnce() noexcept {
   switch (type_) {
-    case __private::FnPointer:
-      break;
+    case __private::FnPointer: break;
     case __private::Storage: {
       if (auto* s = ::sus::mem::replace_ptr(mref(storage_), nullptr); s)
         delete s;
@@ -109,8 +108,7 @@ FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) noexcept : type_(o.type_) {
 template <class R, class... CallArgs>
 FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) noexcept {
   switch (type_) {
-    case __private::FnPointer:
-      break;
+    case __private::FnPointer: break;
     case __private::Storage:
       if (auto* s = ::sus::mem::replace_ptr(mref(storage_), nullptr); s)
         delete s;
@@ -145,7 +143,7 @@ R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
       // Delete storage, after the call_once() is complete.
       //
       // TODO: `storage` and `storage_` should be owning smart pointers.
-      struct DeleteStorage {
+      struct DeleteStorage final {
         ~DeleteStorage() { delete storage; }
         __private::FnStorageBase* storage;
       } deleter(storage);

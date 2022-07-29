@@ -26,17 +26,16 @@ struct FnStorageBase {
 };
 
 template <class R, class... CallArgs>
-struct FnStorageVtable : public FnStorageVtableBase {
+struct FnStorageVtable final : public FnStorageVtableBase {
   R (*call_once)(__private::FnStorageBase&&, CallArgs...);
   R (*call_mut)(__private::FnStorageBase&, CallArgs...);
   R (*call)(const __private::FnStorageBase&, CallArgs...);
 };
 
 template <class F>
-class FnStorage : public FnStorageBase {
+class FnStorage final : public FnStorageBase {
  public:
-  constexpr FnStorage(F&& callable)
-      : callable_(static_cast<F&&>(callable)) {}
+  constexpr FnStorage(F&& callable) : callable_(static_cast<F&&>(callable)) {}
 
   template <class R, class... CallArgs>
   static R call(const FnStorageBase& self_base, CallArgs... callargs) {

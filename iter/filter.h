@@ -33,7 +33,7 @@ class Filter : public IteratorBase<Item> {
       const std::remove_reference_t<const std::remove_reference_t<Item>&>&)>;
   using InnerSizedIter = SizedIterator<Item, InnerIterSize, InnerIterAlign>;
 
-  struct Data {
+  struct Data final {
     Pred pred_;
     InnerSizedIter next_iter_;
 
