@@ -31,27 +31,27 @@ namespace sus::num {
 // headers are larger, is that worse?
 
 /// A 32-bit signed integer.
-struct i32 {
+struct i32 final {
   _sus__signed_impl(i32, /*PrimitiveT=*/int32_t, /*UnsignedT=*/u32);
 };
 
 /// An 8-bit signed integer.
-struct i8 {
+struct i8 final {
   _sus__signed_impl(i8, /*PrimitiveT=*/int8_t, /*UnsignedT=*/u8);
 };
 
 /// A 16-bit signed integer.
-struct i16 {
+struct i16 final {
   _sus__signed_impl(i16, /*PrimitiveT=*/int16_t, /*UnsignedT=*/u16);
 };
 
 /// A 64-bit signed integer.
-struct i64 {
+struct i64 final {
   _sus__signed_impl(i64, /*PrimitiveT=*/int64_t, /*UnsignedT=*/u64);
 };
 
 /// A pointer-sized signed integer.
-struct isize {
+struct isize final {
   _sus__signed_impl(
       isize,
       /*PrimitiveT=*/::sus::num::__private::ptr_type<>::signed_type,
