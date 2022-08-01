@@ -212,7 +212,7 @@ TEST(u8DeathTest, FromOutOfRange) {
 TEST(u8, InvokeEverything) {
   auto i = 10_u8, j = 11_u8;
   auto s = 3_i8;
-  auto a = sus::Array</*TODO: u8*/ uint8_t, sizeof(u8)>::with_default();
+  auto a = sus::Array<u8, sizeof(u8)>::with_default();
 
   i.abs_diff(j);
 

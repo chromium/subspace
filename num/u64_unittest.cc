@@ -220,7 +220,7 @@ TEST(u64DeathTest, FromOutOfRange) {
 TEST(u64, InvokeEverything) {
   auto i = 10_u64, j = 11_u64;
   auto s = 3_i64;
-  auto a = sus::Array</*TODO: u8*/ uint8_t, sizeof(u64)>::with_default();
+  auto a = sus::Array<u8, sizeof(u64)>::with_default();
 
   i.abs_diff(j);
 
