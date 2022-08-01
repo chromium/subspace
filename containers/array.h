@@ -53,18 +53,17 @@ class Array final {
   constexpr static Array with_default() noexcept
     requires(::sus::concepts::MakeDefault<T>::has_concept)
   {
-    auto a = Array();
+    auto a = Array(kWithUninitialized);
     if constexpr (N > 0) {
-      for (size_t i = 0; i < N; ++i) a.storage_.data_[i] = T();
+      for (size_t i = 0; i < N; ++i)
+        a.storage_.data_[i] = ::sus::concepts::MakeDefault<T>::make_default();
     }
     return a;
   }
 
   constexpr static Array with_uninitialized(
-      ::sus::marker::UnsafeFnMarker) noexcept
-    requires(::std::is_trivially_default_constructible_v<T>)
-  {
-    return Array();
+      ::sus::marker::UnsafeFnMarker) noexcept {
+    return Array(kWithUninitialized);
   }
 
   template <class InitializerFn>
@@ -94,7 +93,7 @@ class Array final {
     return storage_.data_[i];
   }
 
-  const T* as_ptr() const & noexcept
+  const T* as_ptr() const& noexcept
     requires(N > 0)
   {
     return storage_.data_;
@@ -108,8 +107,6 @@ class Array final {
   }
 
  private:
-  constexpr Array() {}
-
   enum WithInitializer { kWithInitializer };
   template <class F, size_t... Is>
   constexpr Array(WithInitializer, F&& f, std::index_sequence<Is...>) noexcept
@@ -119,6 +116,10 @@ class Array final {
   template <size_t... Is>
   constexpr Array(WithValue, const T& t, std::index_sequence<Is...>) noexcept
       : storage_{((void)Is, t)...} {}
+
+  enum WithUninitialized { kWithUninitialized };
+  template <size_t... Is>
+  constexpr Array(WithUninitialized) noexcept {}
 
   // Using a union ensures that the default constructor doesn't initialize
   // anything.
