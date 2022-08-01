@@ -1931,13 +1931,10 @@ TEST(i32, CheckedAddUnsigned) {
   EXPECT_EQ(a, Option<i32>::some(4_i32));
 
   EXPECT_EQ((-1_i32).checked_add_unsigned(2u), Option<i32>::some(1_i32));
-  EXPECT_EQ((i32::MIN()).checked_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+  EXPECT_EQ((i32::MIN()).checked_add_unsigned(u32::MAX()),
             Option<i32>::some(i32::MAX()));
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .checked_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-            None);
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .checked_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+  EXPECT_EQ((i32::MIN() + 1_i32).checked_add_unsigned(u32::MAX()), None);
+  EXPECT_EQ((i32::MIN() + 1_i32).checked_add_unsigned(u32::MAX() - 1_u32),
             Option<i32>::some(i32::MAX()));
   EXPECT_EQ((i32::MAX() - 2_i32).checked_add_unsigned(3u), None);
 }
@@ -1949,14 +1946,11 @@ TEST(i32, OverflowingAddUnsigned) {
 
   EXPECT_EQ((-1_i32).overflowing_add_unsigned(2u),
             (Tuple<i32, bool>::with(1_i32, false)));
-  EXPECT_EQ(
-      (i32::MIN()).overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-      (Tuple<i32, bool>::with(i32::MAX(), false)));
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+  EXPECT_EQ((i32::MIN()).overflowing_add_unsigned(u32::MAX()),
+            (Tuple<i32, bool>::with(i32::MAX(), false)));
+  EXPECT_EQ((i32::MIN() + 1_i32).overflowing_add_unsigned(u32::MAX()),
             (Tuple<i32, bool>::with(i32::MIN(), true)));
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .overflowing_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+  EXPECT_EQ((i32::MIN() + 1_i32).overflowing_add_unsigned(u32::MAX() - 1_u32),
             (Tuple<i32, bool>::with(i32::MAX(), false)));
   EXPECT_EQ((i32::MAX() - 2_i32).overflowing_add_unsigned(3u),
             (Tuple<i32, bool>::with(i32::MIN(), true)));
@@ -1968,14 +1962,10 @@ TEST(i32, SaturatingAddUnsigned) {
   EXPECT_EQ(a, 4_i32);
 
   EXPECT_EQ((-1_i32).saturating_add_unsigned(2u), 1_i32);
-  EXPECT_EQ(
-      (i32::MIN()).saturating_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-      i32::MAX());
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .saturating_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+  EXPECT_EQ((i32::MIN()).saturating_add_unsigned(u32::MAX()), i32::MAX());
+  EXPECT_EQ((i32::MIN() + 1_i32).saturating_add_unsigned(u32::MAX()),
             i32::MAX());
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .saturating_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+  EXPECT_EQ((i32::MIN() + 1_i32).saturating_add_unsigned(u32::MAX() - 1_u32),
             i32::MAX());
   EXPECT_EQ((i32::MAX() - 2_i32).saturating_add_unsigned(3u), i32::MAX());
 }
@@ -1986,13 +1976,9 @@ TEST(i32, WrappingAddUnsigned) {
   EXPECT_EQ(a, 4_i32);
 
   EXPECT_EQ((-1_i32).wrapping_add_unsigned(2u), 1_i32);
-  EXPECT_EQ((i32::MIN()).wrapping_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-            i32::MAX());
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .wrapping_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-            i32::MIN());
-  EXPECT_EQ((i32::MIN() + 1_i32)
-                .wrapping_add_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+  EXPECT_EQ((i32::MIN()).wrapping_add_unsigned(u32::MAX()), i32::MAX());
+  EXPECT_EQ((i32::MIN() + 1_i32).wrapping_add_unsigned(u32::MAX()), i32::MIN());
+  EXPECT_EQ((i32::MIN() + 1_i32).wrapping_add_unsigned(u32::MAX() - 1_u32),
             i32::MAX());
   EXPECT_EQ((i32::MAX() - 2_i32).wrapping_add_unsigned(3u), i32::MIN());
 }
@@ -2003,13 +1989,10 @@ TEST(i32, CheckedSubUnsigned) {
   EXPECT_EQ(a, Option<i32>::some(-2_i32));
 
   EXPECT_EQ((-1_i32).checked_sub_unsigned(2u), Option<i32>::some(-3_i32));
-  EXPECT_EQ((i32::MAX()).checked_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+  EXPECT_EQ((i32::MAX()).checked_sub_unsigned(u32::MAX()),
             Option<i32>::some(i32::MIN()));
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .checked_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-            None);
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .checked_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+  EXPECT_EQ((i32::MAX() - 1_i32).checked_sub_unsigned(u32::MAX()), None);
+  EXPECT_EQ((i32::MAX() - 1_i32).checked_sub_unsigned(u32::MAX() - 1_u32),
             Option<i32>::some(i32::MIN()));
   EXPECT_EQ((i32::MIN() + 2_i32).checked_sub_unsigned(3u), None);
 }
@@ -2021,14 +2004,11 @@ TEST(i32, OverflowingSubUnsigned) {
 
   EXPECT_EQ((-1_i32).overflowing_sub_unsigned(2u),
             (Tuple<i32, bool>::with(-3_i32, false)));
-  EXPECT_EQ(
-      (i32::MAX()).overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-      (Tuple<i32, bool>::with(i32::MIN(), false)));
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+  EXPECT_EQ((i32::MAX()).overflowing_sub_unsigned(u32::MAX()),
+            (Tuple<i32, bool>::with(i32::MIN(), false)));
+  EXPECT_EQ((i32::MAX() - 1_i32).overflowing_sub_unsigned(u32::MAX()),
             (Tuple<i32, bool>::with(i32::MAX(), true)));
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .overflowing_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+  EXPECT_EQ((i32::MAX() - 1_i32).overflowing_sub_unsigned(u32::MAX() - 1_u32),
             (Tuple<i32, bool>::with(i32::MIN(), false)));
   EXPECT_EQ((i32::MIN() + 2_i32).overflowing_sub_unsigned(3u),
             (Tuple<i32, bool>::with(i32::MAX(), true)));
@@ -2040,14 +2020,10 @@ TEST(i32, SaturatingSubUnsigned) {
   EXPECT_EQ(a, -2_i32);
 
   EXPECT_EQ((-1_i32).saturating_sub_unsigned(2u), -3_i32);
-  EXPECT_EQ(
-      (i32::MAX()).saturating_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-      i32::MIN());
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .saturating_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
+  EXPECT_EQ((i32::MAX()).saturating_sub_unsigned(u32::MAX()), i32::MIN());
+  EXPECT_EQ((i32::MAX() - 1_i32).saturating_sub_unsigned(u32::MAX()),
             i32::MIN());
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .saturating_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+  EXPECT_EQ((i32::MAX() - 1_i32).saturating_sub_unsigned(u32::MAX() - 1_u32),
             i32::MIN());
   EXPECT_EQ((i32::MIN() + 2_i32).saturating_sub_unsigned(3u), i32::MIN());
 }
@@ -2058,13 +2034,9 @@ TEST(i32, WrappingSubUnsigned) {
   EXPECT_EQ(a, -2_i32);
 
   EXPECT_EQ((-1_i32).wrapping_sub_unsigned(2u), -3_i32);
-  EXPECT_EQ((i32::MAX()).wrapping_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-            i32::MIN());
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .wrapping_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX),
-            i32::MAX());
-  EXPECT_EQ((i32::MAX() - 1_i32)
-                .wrapping_sub_unsigned(/* TODO: u32::MAX() */ UINT_MAX - 1),
+  EXPECT_EQ((i32::MAX()).wrapping_sub_unsigned(u32::MAX()), i32::MIN());
+  EXPECT_EQ((i32::MAX() - 1_i32).wrapping_sub_unsigned(u32::MAX()), i32::MAX());
+  EXPECT_EQ((i32::MAX() - 1_i32).wrapping_sub_unsigned(u32::MAX() - 1_u32),
             i32::MIN());
   EXPECT_EQ((i32::MIN() + 2_i32).wrapping_sub_unsigned(3u), i32::MAX());
 }
