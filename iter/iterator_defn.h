@@ -16,6 +16,7 @@
 
 #include "fn/fn_defn.h"
 #include "option/option.h"
+#include "num/unsigned_integer.h"
 
 namespace sus::iter {
 
@@ -85,7 +86,7 @@ class IteratorBase {
   /// If the `usize` type does not have trapping arithmetic enabled, and the
   /// iterator has more than `usize::MAX` elements in it, the value will wrap
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
-  virtual /* TODO: usize */ size_t count() noexcept;
+  virtual usize count() noexcept;
 
   /// Adaptor for use in ranged for loops.
   IteratorLoop<IteratorBase<Item>> begin() & noexcept;

@@ -163,31 +163,31 @@ TEST(IteratorBase, Count) {
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_EQ(it.count(), 5);
+    EXPECT_EQ(it.count(), 5_usize);
   }
   {
     int nums[2] = {4, 5};
     auto it = ArrayIterator<int, 2>::with_array(nums);
-    EXPECT_EQ(it.count(), 2);
+    EXPECT_EQ(it.count(), 2_usize);
   }
   {
     int nums[1] = {2};
     auto it = ArrayIterator<int, 1>::with_array(nums);
-    EXPECT_EQ(it.count(), 1);
+    EXPECT_EQ(it.count(), 1_usize);
   }
 
   // Consumes the whole iterator.
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_EQ(it.count(), 5);
+    EXPECT_EQ(it.count(), 5_usize);
     Option<int> n = it.next();
     ASSERT_FALSE(n.is_some());
   }
 
   {
     auto it = EmptyIterator<int>::with_default();
-    EXPECT_EQ(it.count(), 0);
+    EXPECT_EQ(it.count(), 0_usize);
   }
 }
 
@@ -196,7 +196,7 @@ TEST(IteratorBase, Filter) {
 
   auto fit = ArrayIterator<int, 5>::with_array(nums).filter(
       [](const int& i) { return i >= 3; });
-  EXPECT_EQ(fit.count(), 3);
+  EXPECT_EQ(fit.count(), 3_usize);
 
   auto fit2 = ArrayIterator<int, 5>::with_array(nums)
                   .filter([](const int& i) { return i >= 3; })

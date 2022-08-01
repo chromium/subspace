@@ -223,7 +223,8 @@ TEST(usizeDeathTest, FromOutOfRange) {
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(usize::from(int64_t{-1}), "");
   EXPECT_DEATH(usize::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
-  bool not64 = sizeof(usize) != sizeof(u64);  // `if constexpr` breaks death tests.
+  bool not64 =
+      sizeof(usize) != sizeof(u64);  // `if constexpr` breaks death tests.
   if (not64) {
     EXPECT_DEATH(usize::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
   }
@@ -239,7 +240,7 @@ TEST(usizeDeathTest, FromOutOfRange) {
 TEST(usize, InvokeEverything) {
   auto i = 10_usize, j = 11_usize;
   auto s = 3_isize;
-  auto a = sus::Array</*TODO: u8*/ uint8_t, sizeof(usize)>::with_default();
+  auto a = sus::Array<u8, sizeof(usize)>::with_default();
 
   i.abs_diff(j);
 
