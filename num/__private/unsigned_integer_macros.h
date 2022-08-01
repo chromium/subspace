@@ -1194,7 +1194,7 @@ struct u8;
    * big-endian (network) byte order.                                         \
    */                                                                         \
   template <std::same_as<u8> U8 = u8> /* u8 is not defined before u32 */      \
-  constexpr ::sus::Array<u8, sizeof(PrimitiveT)> to_be_bytes()                \
+  constexpr ::sus::Array<U8, sizeof(PrimitiveT)> to_be_bytes()                \
       const& noexcept {                                                       \
     return to_be().to_ne_bytes();                                             \
   }                                                                           \
@@ -1203,7 +1203,7 @@ struct u8;
    * little-endian byte order.                                                \
    */                                                                         \
   template <std::same_as<u8> U8 = u8> /* u8 is not defined before u32 */      \
-  constexpr ::sus::Array<u8, sizeof(PrimitiveT)> to_le_bytes()                \
+  constexpr ::sus::Array<U8, sizeof(PrimitiveT)> to_le_bytes()                \
       const& noexcept {                                                       \
     return to_le().to_ne_bytes();                                             \
   }                                                                           \
