@@ -1845,32 +1845,32 @@ TEST(i32, ToBeBytes) {
   if constexpr (sus::assertions::is_little_endian()) {
     {
       constexpr auto a = (0x12345678_i32).to_be_bytes();
-      EXPECT_EQ(a.get(0), 0x12);
-      EXPECT_EQ(a.get(1), 0x34);
-      EXPECT_EQ(a.get(2), 0x56);
-      EXPECT_EQ(a.get(3), 0x78);
+      EXPECT_EQ(a.get(0), 0x12_u8);
+      EXPECT_EQ(a.get(1), 0x34_u8);
+      EXPECT_EQ(a.get(2), 0x56_u8);
+      EXPECT_EQ(a.get(3), 0x78_u8);
     }
     {
       auto a = (0x12345678_i32).to_be_bytes();
-      EXPECT_EQ(a.get(0), 0x12);
-      EXPECT_EQ(a.get(1), 0x34);
-      EXPECT_EQ(a.get(2), 0x56);
-      EXPECT_EQ(a.get(3), 0x78);
+      EXPECT_EQ(a.get(0), 0x12_u8);
+      EXPECT_EQ(a.get(1), 0x34_u8);
+      EXPECT_EQ(a.get(2), 0x56_u8);
+      EXPECT_EQ(a.get(3), 0x78_u8);
     }
   } else {
     {
       constexpr auto a = (0x12345678_i32).to_be_bytes();
-      EXPECT_EQ(a.get(0), 0x12);
-      EXPECT_EQ(a.get(1), 0x34);
-      EXPECT_EQ(a.get(2), 0x56);
-      EXPECT_EQ(a.get(3), 0x78);
+      EXPECT_EQ(a.get(0), 0x12_u8);
+      EXPECT_EQ(a.get(1), 0x34_u8);
+      EXPECT_EQ(a.get(2), 0x56_u8);
+      EXPECT_EQ(a.get(3), 0x78_u8);
     }
     {
       auto a = (0x12345678_i32).to_be_bytes();
-      EXPECT_EQ(a.get(0), 0x12);
-      EXPECT_EQ(a.get(1), 0x34);
-      EXPECT_EQ(a.get(2), 0x56);
-      EXPECT_EQ(a.get(3), 0x78);
+      EXPECT_EQ(a.get(0), 0x12_u8);
+      EXPECT_EQ(a.get(1), 0x34_u8);
+      EXPECT_EQ(a.get(2), 0x56_u8);
+      EXPECT_EQ(a.get(3), 0x78_u8);
     }
   }
 }
@@ -1878,16 +1878,16 @@ TEST(i32, ToBeBytes) {
 TEST(i32, ToLeBytes) {
   if constexpr (sus::assertions::is_big_endian()) {
     constexpr auto a = (0x12345678_i32).to_le_bytes();
-    EXPECT_EQ(a.get(0), 0x78);
-    EXPECT_EQ(a.get(1), 0x56);
-    EXPECT_EQ(a.get(2), 0x34);
-    EXPECT_EQ(a.get(3), 0x12);
+    EXPECT_EQ(a.get(0), 0x78_u8);
+    EXPECT_EQ(a.get(1), 0x56_u8);
+    EXPECT_EQ(a.get(2), 0x34_u8);
+    EXPECT_EQ(a.get(3), 0x12_u8);
   } else {
     auto a = (0x12345678_i32).to_le_bytes();
-    EXPECT_EQ(a.get(0), 0x78);
-    EXPECT_EQ(a.get(1), 0x56);
-    EXPECT_EQ(a.get(2), 0x34);
-    EXPECT_EQ(a.get(3), 0x12);
+    EXPECT_EQ(a.get(0), 0x78_u8);
+    EXPECT_EQ(a.get(1), 0x56_u8);
+    EXPECT_EQ(a.get(2), 0x34_u8);
+    EXPECT_EQ(a.get(3), 0x12_u8);
   }
 }
 
@@ -1895,32 +1895,32 @@ TEST(i32, ToNeBytes) {
   if constexpr (sus::assertions::is_big_endian()) {
     {
       constexpr auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a.get(0), 0x12);
-      EXPECT_EQ(a.get(1), 0x34);
-      EXPECT_EQ(a.get(2), 0x56);
-      EXPECT_EQ(a.get(3), 0x78);
+      EXPECT_EQ(a.get(0), 0x12_u8);
+      EXPECT_EQ(a.get(1), 0x34_u8);
+      EXPECT_EQ(a.get(2), 0x56_u8);
+      EXPECT_EQ(a.get(3), 0x78_u8);
     }
     {
       auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a.get(0), 0x12);
-      EXPECT_EQ(a.get(1), 0x34);
-      EXPECT_EQ(a.get(2), 0x56);
-      EXPECT_EQ(a.get(3), 0x78);
+      EXPECT_EQ(a.get(0), 0x12_u8);
+      EXPECT_EQ(a.get(1), 0x34_u8);
+      EXPECT_EQ(a.get(2), 0x56_u8);
+      EXPECT_EQ(a.get(3), 0x78_u8);
     }
   } else {
     {
       constexpr auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a.get(0), 0x78);
-      EXPECT_EQ(a.get(1), 0x56);
-      EXPECT_EQ(a.get(2), 0x34);
-      EXPECT_EQ(a.get(3), 0x12);
+      EXPECT_EQ(a.get(0), 0x78_u8);
+      EXPECT_EQ(a.get(1), 0x56_u8);
+      EXPECT_EQ(a.get(2), 0x34_u8);
+      EXPECT_EQ(a.get(3), 0x12_u8);
     }
     {
       auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a.get(0), 0x78);
-      EXPECT_EQ(a.get(1), 0x56);
-      EXPECT_EQ(a.get(2), 0x34);
-      EXPECT_EQ(a.get(3), 0x12);
+      EXPECT_EQ(a.get(0), 0x78_u8);
+      EXPECT_EQ(a.get(1), 0x56_u8);
+      EXPECT_EQ(a.get(2), 0x34_u8);
+      EXPECT_EQ(a.get(3), 0x12_u8);
     }
   }
 }
