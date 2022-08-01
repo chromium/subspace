@@ -29,6 +29,13 @@ using sus::None;
 using sus::Option;
 using sus::Tuple;
 
+// Regression test for MSVC compilation bug:
+// https://developercommunity.visualstudio.com/t/MSVC-Compiler-bug-with:-numeric-literal/10108160
+template <class T>
+void TestOperationInTemplateFunction() {
+  0_u32 + 1_u32;
+}
+
 static_assert(!std::is_signed_v<decltype(u32::primitive_value)>);
 static_assert(sizeof(decltype(u32::primitive_value)) == 4);
 static_assert(sizeof(u32) == sizeof(decltype(u32::primitive_value)));
