@@ -69,17 +69,6 @@ concept MaxInRange = requires {
                      };
 static_assert(MaxInRange<i64>);
 
-// ** Signed only **
-// TODO: How can we get this to build on GCC? Is this not legal?
-#if defined(_MSC_VER)
-// i64::MAX() + 1
-template <class T>
-concept MaxPlusOneInRange = requires {
-                              { 0x80000000'00000000_i64 } -> std::same_as<T>;
-                            };
-static_assert(!MaxPlusOneInRange<i64>);
-#endif
-
 TEST(i64, Traits) {
   // ** Signed only **
   static_assert(sus::num::Neg<i64>);

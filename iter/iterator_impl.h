@@ -81,12 +81,9 @@ bool IteratorBase<Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
 
 template <class Item>
 usize IteratorBase<Item>::count() noexcept {
-  usize c = 0_usize;
-  while (next().is_some()) {
-    // We get MSVC compiler bug errors if we use `1_usize` here.
-    // c += usize(decltype(usize::primitive_value){1u});
+  auto c = 0_usize;
+  while (next().is_some())
     c += 1_usize;
-  }
   return c;
 }
 
