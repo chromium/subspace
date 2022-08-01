@@ -78,13 +78,6 @@ concept MaxPlusOneInRange = requires {
                               { 0x80000000'00000000_i64 } -> std::same_as<T>;
                             };
 static_assert(!MaxPlusOneInRange<i64>);
-template <class T>
-concept MaxPlusOneInRangeConstruct = requires {
-                                       {
-                                         T(0x80000000'00000000)
-                                         } -> std::same_as<T>;
-                                     };
-static_assert(!MaxPlusOneInRangeConstruct<i64>);
 #endif
 
 TEST(i64, Traits) {
@@ -358,6 +351,6 @@ TEST(i64, InvokeEverything) {
   i >>= 1_u32;
 
   i == j;
-  i >= j;
+  [[maybe_unused]] auto z = i >= j;
 }
 }  // namespace

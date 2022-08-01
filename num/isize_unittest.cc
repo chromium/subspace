@@ -90,14 +90,6 @@ concept MaxPlusOneInRange =
         } -> std::same_as<T>;
     };
 static_assert(!MaxPlusOneInRange<isize>);
-template <class T>
-concept MaxPlusOneInRangeConstruct =
-    requires {
-      {
-        T(sizeof(isize) != sizeof(i64) ? 0x80000000 : 0x80000000'00000000)
-        } -> std::same_as<T>;
-    };
-static_assert(!MaxPlusOneInRangeConstruct<isize>);
 #endif
 
 TEST(isize, Traits) {
@@ -176,19 +168,19 @@ TEST(isize, Literals) {
 TEST(isize, Constants) {
   constexpr auto max = isize::MAX();
   static_assert(std::same_as<decltype(max), const isize>);
-  if (sizeof(isize) != sizeof(i64))
+  if constexpr (sizeof(isize) != sizeof(i64))
     EXPECT_EQ(max.primitive_value, 0x7fffffff);
   else
     EXPECT_EQ(max.primitive_value, 0x7fffffff'ffffffff);
   constexpr auto min = isize::MIN();
   static_assert(std::same_as<decltype(min), const isize>);
-  if (sizeof(isize) != sizeof(i64))
+  if constexpr (sizeof(isize) != sizeof(i64))
     EXPECT_EQ(min.primitive_value, -0x7fffffff - 1);
   else
     EXPECT_EQ(min.primitive_value, -0x7fffffff'ffffffff - 1);
   constexpr auto bits = isize::BITS();
   static_assert(std::same_as<decltype(bits), const u32>);
-  if (sizeof(isize) != sizeof(i64))
+  if constexpr (sizeof(isize) != sizeof(i64))
     EXPECT_EQ(bits, 32u);
   else
     EXPECT_EQ(bits, 64u);
@@ -244,7 +236,8 @@ TEST(isizeDeathTest, FromOutOfRange) {
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(isize::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
 
-  if (sizeof(isize) != sizeof(i64)) {
+  bool not64 = sizeof(isize) != sizeof(i64);
+  if (not64) {
     EXPECT_DEATH(isize::from(i64::MAX()), "");
     EXPECT_DEATH(isize::from(u32::MAX()), "");
   }
@@ -385,6 +378,6 @@ TEST(isize, InvokeEverything) {
   i >>= 1_u32;
 
   i == j;
-  i >= j;
+  [[maybe_unused]] auto z = i >= j;
 }
 }  // namespace

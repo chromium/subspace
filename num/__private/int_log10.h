@@ -83,11 +83,11 @@ constexpr sus_always_inline /* TODO: u32 */ uint32_t usize(uint64_t val) {
   return u64(val);
 }
 
-constexpr sus_always_inline /* TODO: u32 */ uint32_t i8(int32_t val) {
-  return u8(static_cast<uint16_t>(val));
+constexpr sus_always_inline /* TODO: u32 */ uint32_t i8(int8_t val) {
+  return u8(static_cast<uint8_t>(val));
 }
 
-constexpr sus_always_inline /* TODO: u32 */ uint32_t i16(int32_t val) {
+constexpr sus_always_inline /* TODO: u32 */ uint32_t i16(int16_t val) {
   return u16(static_cast<uint16_t>(val));
 }
 
