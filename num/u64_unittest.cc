@@ -338,7 +338,7 @@ TEST(u64, InvokeEverything) {
   i >>= 1_u32;
 
   i == j;
-  i >= j;
+  [[maybe_unused]] auto z = i >= j;
 }
 
 }  // namespace

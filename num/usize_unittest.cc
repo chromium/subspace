@@ -158,7 +158,7 @@ TEST(usize, Literals) {
 TEST(usize, Constants) {
   constexpr auto max = usize::MAX();
   static_assert(std::same_as<decltype(max), const usize>);
-  if (sizeof(usize) != sizeof(u64))
+  if constexpr (sizeof(usize) != sizeof(u64))
     EXPECT_EQ(max.primitive_value, 0xffffffffu);
   else
     EXPECT_EQ(max.primitive_value, 0xffffffff'ffffffffu);
@@ -167,7 +167,7 @@ TEST(usize, Constants) {
   EXPECT_EQ(min.primitive_value, 0u);
   constexpr auto bits = usize::BITS();
   static_assert(std::same_as<decltype(bits), const u32>);
-  if (sizeof(usize) != sizeof(u64))
+  if constexpr (sizeof(usize) != sizeof(u64))
     EXPECT_EQ(bits, 32u);
   else
     EXPECT_EQ(bits, 64u);
@@ -223,7 +223,8 @@ TEST(usizeDeathTest, FromOutOfRange) {
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(usize::from(int64_t{-1}), "");
   EXPECT_DEATH(usize::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
-  if (sizeof(usize) != sizeof(u64)) {
+  bool not64 = sizeof(usize) != sizeof(u64);  // `if constexpr` breaks death tests.
+  if (not64) {
     EXPECT_DEATH(usize::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
   }
 
@@ -356,7 +357,7 @@ TEST(usize, InvokeEverything) {
   i >>= 1_u32;
 
   i == j;
-  i >= j;
+  [[maybe_unused]] auto z = i >= j;
 }
 
 }  // namespace

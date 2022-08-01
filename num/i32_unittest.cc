@@ -82,11 +82,6 @@ concept MaxPlusOneInRange = requires {
                               { 0x80000000_i32 } -> std::same_as<T>;
                             };
 static_assert(!MaxPlusOneInRange<i32>);
-template <class T>
-concept MaxPlusOneInRangeConstruct = requires {
-                                       { T(0x80000000) } -> std::same_as<T>;
-                                     };
-static_assert(!MaxPlusOneInRangeConstruct<i32>);
 #endif
 
 TEST(i32, Traits) {
@@ -752,6 +747,20 @@ TEST(i32, OverflowingMul) {
       (Tuple<i32, bool>::with(
           i32(static_cast<decltype(i32::primitive_value)>(123456u * 234567u)),
           true)));
+  constexpr auto b = (-123456_i32).overflowing_mul(234567_i32);
+  EXPECT_EQ(b,
+            (Tuple<i32, bool>::with(
+                i32(static_cast<decltype(i32::primitive_value)>(
+                    static_cast<int32_t>(int64_t{-123456} * int64_t{234567}))),
+                true)));
+  constexpr auto c = (-123456_i32).overflowing_mul(-234567_i32);
+  EXPECT_EQ(c,
+            (Tuple<i32, bool>::with(
+                i32(static_cast<decltype(i32::primitive_value)>(
+                    static_cast<int32_t>(int64_t{-123456} * int64_t{-234567}))),
+                true)));
+  constexpr auto d = (i32::MIN() / 2_i32).overflowing_mul(2);
+  EXPECT_EQ(d, (Tuple<i32, bool>::with(i32::MIN(), false)));
 
   EXPECT_EQ((100_i32).overflowing_mul(21_i32),
             (Tuple<i32, bool>::with(2100_i32, false)));

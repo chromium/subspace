@@ -173,25 +173,26 @@ sus_always_inline constexpr uint32_t count_ones(T value) noexcept {
     value = (value & (~T{0} / T{15} * T{3})) +
             ((value >> 2) & (~T{0} / T{15} * T{3}));
     value = (value + (value >> 4)) & (~T{0} / T{255} * T{15});
-    return (value * (~T{0} / T{255})) >>
-           (unchecked_sizeof<T>() - uint32_t{1}) * uint32_t{8};
+    auto count = (value * (~T{0} / T{255})) >>
+                 (unchecked_sizeof<T>() - uint32_t{1}) * uint32_t{8};
+    return static_cast<uint32_t>(count);
   } else if constexpr (sizeof(value) <= 2) {
-    return __popcnt16(uint16_t{value});
+    return uint32_t{__popcnt16(uint16_t{value})};
   } else if constexpr (sizeof(value) == 8) {
-    return __popcnt64(uint64_t{value});
+    return static_cast<uint32_t>(__popcnt64(uint64_t{value}));
   } else {
-    return __popcnt(uint32_t{value});
+    return uint32_t{__popcnt(uint32_t{value})};
   }
 #else
   if constexpr (sizeof(value) <= sizeof(unsigned int)) {
     using U = unsigned int;
-    return __builtin_popcount(U{value});
+    return static_cast<uint32_t>(__builtin_popcount(U{value}));
   } else if constexpr (sizeof(value) <= sizeof(unsigned long)) {
     using U = unsigned long;
-    return __builtin_popcountl(U{value});
+    return static_cast<uint32_t>(__builtin_popcountl(U{value}));
   } else {
     using U = unsigned long long;
-    return __builtin_popcountll(U{value});
+    return static_cast<uint32_t>(__builtin_popcountll(U{value}));
   }
 #endif
 }
@@ -411,7 +412,9 @@ sus_always_inline constexpr T swap_bytes(T value) noexcept {
   }
 
 #if _MSC_VER
-  if constexpr (sizeof(T) <= sizeof(unsigned short)) {
+  if constexpr (sizeof(T) == 1) {
+    return value;
+  } else if constexpr (sizeof(T) == sizeof(unsigned short)) {
     using U = unsigned short;
     return _byteswap_ushort(U{value});
   } else if constexpr (sizeof(T) == sizeof(unsigned long)) {
@@ -422,7 +425,9 @@ sus_always_inline constexpr T swap_bytes(T value) noexcept {
     return _byteswap_uint64(value);
   }
 #else
-  if constexpr (sizeof(T) <= 2) {
+  if constexpr (sizeof(T) == 1) {
+    return value;
+  } else if constexpr (sizeof(T) == 2) {
     return __builtin_bswap16(uint16_t{value});
   } else if constexpr (sizeof(T) == 4) {
     return __builtin_bswap32(value);
@@ -590,11 +595,17 @@ template <class T>
 sus_always_inline
     constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
 #if _MSC_VER
-  // For MSVC, use _umul128, but what about constexpr?? If we can't do
-  // it then make the whole function non-constexpr?
-  // https://docs.microsoft.com/en-us/cpp/intrinsics/umul128
-  static_assert(sizeof(T) != 8);
-  return OverflowOut<T>(false, T(0));
+  if (std::is_constant_evaluated()) {
+    const bool overflow =
+        x > T{1} && y > T{1} && x > unchecked_div(max_value<T>(), y);
+    return OverflowOut{.overflow = overflow, .value = unchecked_mul(x, y)};
+  } else {
+    // For MSVC, use _umul128, but what about constexpr?? If we can't do
+    // it then make the whole function non-constexpr?
+    uint64_t highbits;
+    auto out = static_cast<T>(_umul128(x, y, &highbits));
+    return OverflowOut{.overflow = highbits != 0, .value = out};
+  }
 #else
   auto out = __uint128_t{x} * __uint128_t{y};
   return OverflowOut{.overflow = out > __uint128_t{max_value<T>()},
@@ -619,13 +630,34 @@ template <class T>
 sus_always_inline
     constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
 #if _MSC_VER
-  // TODO: For GCC/Clang, use __int128_t:
-  // https://quuxplusone.github.io/blog/2019/02/28/is-int128-integral/
-  // For MSVC, use _mul128, but what about constexpr?? If we can't do
-  // it then make the whole function non-constexpr?
-  // https://docs.microsoft.com/en-us/cpp/intrinsics/mul128
-  static_assert(sizeof(T) != 8);
-  return OverflowOut<T>(false, T(0));
+  if (std::is_constant_evaluated()) {
+    if (x == T{0} || y == T{0})
+      return OverflowOut{.overflow = false, .value = T{0}};
+
+    using U = decltype(into_unsigned(x));
+    const auto absx =
+        x >= T{0} ? into_unsigned(x)
+                  : unchecked_add(into_unsigned(unchecked_add(x, T{1})), U{1});
+    const auto absy =
+        y >= T{0} ? into_unsigned(y)
+                  : unchecked_add(into_unsigned(unchecked_add(y, T{1})), U{1});
+    const bool mul_negative = (x ^ y) < 0;
+    const auto mul_max =
+        unchecked_add(into_unsigned(max_value<T>()), U{mul_negative});
+    const bool overflow = absx > unchecked_div(mul_max, absy);
+    const auto mul_val = unchecked_mul(absx, absy);
+    return OverflowOut{
+        .overflow = overflow,
+        .value = mul_negative
+                     ? unchecked_sub(unchecked_neg(static_cast<T>(mul_val - 1)), T{1})
+                     : static_cast<T>(mul_val)};
+  } else {
+    // For MSVC, use _mul128, but what about constexpr?? If we can't do
+    // it then make the whole function non-constexpr?
+    int64_t highbits;
+    auto out = static_cast<T>(_mul128(x, y, &highbits));
+    return OverflowOut{.overflow = highbits != 0, .value = out};
+  }
 #else
   auto out = __int128_t{x} * __int128_t{y};
   return OverflowOut{.overflow = out > __int128_t{max_value<T>()} ||
@@ -899,25 +931,25 @@ sus_always_inline
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 constexpr T div_euclid(::sus::marker::UnsafeFnMarker, T x, T y) noexcept {
-  const auto q = x / y;
+  const auto q = unchecked_div(x, y);
   if (x % y >= 0)
     return q;
   else if (y > 0)
-    return q - 1;
+    return unchecked_sub(q, T{1});
   else
-    return q + 1;
+    return unchecked_add(q, T{1});
 }
 
 // SAFETY: Requires that !div_overflows(x, y) or Undefined Behaviour results.
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 constexpr T rem_euclid(::sus::marker::UnsafeFnMarker, T x, T y) noexcept {
-  const auto r = x % y;
+  const auto r = unchecked_rem(x, y);
   if (r < 0) {
     if (y < 0)
-      return r - y;
+      return unchecked_sub(r, y);
     else
-      return r + y;
+      return unchecked_add(r, y);
   } else {
     return r;
   }
