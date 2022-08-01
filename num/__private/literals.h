@@ -25,13 +25,13 @@
 // that triggers a different MSVC bug when used with any unary/binary operator
 // in a templated function:
 // https://developercommunity.visualstudio.com/t/MSVC-Compiler-bug-with:-numeric-literal/10108160
-#define _sus__integer_literal(Name, T, PrimitiveT)                          \
+#define _sus__integer_literal(Name, T)                                      \
   T inline constexpr operator""_##Name(unsigned long long val) {            \
     ::sus::check(val <= static_cast<unsigned long long>(T::MAX_PRIMITIVE)); \
     return T(static_cast<decltype(T::primitive_value)>(val));               \
   }
 #else
-#define _sus__integer_literal(Name, T, PrimitiveT)               \
+#define _sus__integer_literal(Name, T)                           \
   T inline consteval operator""_##Name(unsigned long long val) { \
     if (val > static_cast<unsigned long long>(T::MAX_PRIMITIVE)) \
       throw "Integer literal out of bounds for ##T##";           \

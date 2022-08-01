@@ -60,13 +60,11 @@ struct isize final {
 
 }  // namespace sus::num
 
-_sus__integer_literal(i8, ::sus::num::i8, /*PrimitiveT=*/int8_t);
-_sus__integer_literal(i16, ::sus::num::i16, /*PrimitiveT=*/int16_t);
-_sus__integer_literal(i32, ::sus::num::i32, /*PrimitiveT=*/int32_t);
-_sus__integer_literal(i64, ::sus::num::i64, /*PrimitiveT=*/int64_t);
-_sus__integer_literal(
-    isize, ::sus::num::isize,
-    /*PrimitiveT=*/::sus::num::__private::ptr_type<>::signed_type);
+_sus__integer_literal(i8, ::sus::num::i8);
+_sus__integer_literal(i16, ::sus::num::i16);
+_sus__integer_literal(i32, ::sus::num::i32);
+_sus__integer_literal(i64, ::sus::num::i64);
+_sus__integer_literal(isize, ::sus::num::isize);
 
 // Promote signed integer types into the top-level namespace.
 using sus::num::i16;
