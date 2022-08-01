@@ -249,7 +249,7 @@ TEST(isizeDeathTest, FromOutOfRange) {
 TEST(isize, InvokeEverything) {
   auto i = 10_isize, j = 11_isize;
   auto s = 3_usize;
-  auto a = sus::Array</*TODO: u8*/ uint8_t, sizeof(isize)>::with_default();
+  auto a = sus::Array<u8, sizeof(isize)>::with_default();
 
   i.is_negative();
   i.is_positive();

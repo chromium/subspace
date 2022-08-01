@@ -222,7 +222,7 @@ TEST(i64DeathTest, FromOutOfRange) {
 TEST(i64, InvokeEverything) {
   auto i = 10_i64, j = 11_i64;
   auto s = 3_u64;
-  auto a = sus::Array</*TODO: u8*/ uint8_t, sizeof(i64)>::with_default();
+  auto a = sus::Array<u8, sizeof(i64)>::with_default();
 
   i.is_negative();
   i.is_positive();

@@ -1392,16 +1392,14 @@
   /** Return the memory representation of this integer as a byte array in     \
    * big-endian (network) byte order.                                         \
    */                                                                         \
-  constexpr ::sus::Array</* TODO: u8 */ uint8_t, Bytes> to_be_bytes()         \
-      const& noexcept {                                                       \
+  constexpr ::sus::Array<u8, Bytes> to_be_bytes() const& noexcept {           \
     return to_be().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
   /** Return the memory representation of this integer as a byte array in     \
    * little-endian byte order.                                                \
    */                                                                         \
-  constexpr ::sus::Array</* TODO: u8 */ uint8_t, Bytes> to_le_bytes()         \
-      const& noexcept {                                                       \
+  constexpr ::sus::Array<u8, Bytes> to_le_bytes() const& noexcept {           \
     return to_le().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
@@ -1411,18 +1409,16 @@
    * As the target platform's native endianness is used, portable code should \
    * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.         \
    */                                                                         \
-  constexpr ::sus::Array</* TODO: u8 */ uint8_t, Bytes> to_ne_bytes()         \
-      const& noexcept {                                                       \
-    auto bytes =                                                              \
-        ::sus::Array</* TODO: u8 */ uint8_t, sizeof(T)>::with_uninitialized(  \
-            unsafe_fn);                                                       \
+  constexpr ::sus::Array<u8, Bytes> to_ne_bytes() const& noexcept {           \
+    auto bytes = ::sus::Array<u8, sizeof(T)>::with_uninitialized(unsafe_fn);  \
     if (std::is_constant_evaluated()) {                                       \
       auto uval = __private::into_unsigned(primitive_value);                  \
       for (auto i = size_t{0}; i < sizeof(T); ++i) {                          \
+        const auto last_byte = static_cast<uint8_t>(uval & 0xff);             \
         if (sus::assertions::is_little_endian())                              \
-          bytes.get_mut(i) = uval & 0xff;                                     \
+          bytes.get_mut(i) = last_byte;                                       \
         else                                                                  \
-          bytes.get_mut(sizeof(T) - 1 - i) = uval & 0xff;                     \
+          bytes.get_mut(sizeof(T) - 1 - i) = last_byte;                       \
         uval >>= 8u;                                                          \
       }                                                                       \
     } else {                                                                  \
@@ -1435,7 +1431,7 @@
    * endian.                                                                  \
    */                                                                         \
   static constexpr T from_be_bytes(                                           \
-      const ::sus::Array</*TODO: u8*/ uint8_t, Bytes>& bytes) noexcept {      \
+      const ::sus::Array<u8, Bytes>& bytes) noexcept {                        \
     return from_be(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
@@ -1443,7 +1439,7 @@
    * little endian.                                                           \
    */                                                                         \
   static constexpr T from_le_bytes(                                           \
-      const ::sus::Array</*TODO: u8*/ uint8_t, Bytes>& bytes) noexcept {      \
+      const ::sus::Array<u8, Bytes>& bytes) noexcept {                        \
     return from_le(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
@@ -1455,13 +1451,13 @@
    * instead.                                                                 \
    */                                                                         \
   static constexpr T from_ne_bytes(                                           \
-      const ::sus::Array</*TODO: u8*/ uint8_t, Bytes>& bytes) noexcept {      \
+      const ::sus::Array<u8, Bytes>& bytes) noexcept {                        \
     using U = decltype(__private::into_unsigned(primitive_value));            \
     U val;                                                                    \
     if (std::is_constant_evaluated()) {                                       \
       val = U{0};                                                             \
       for (auto i = size_t{0}; i < sizeof(T); ++i) {                          \
-        val |= bytes.get(i) << (sizeof(T) - size_t{1} - i);                   \
+        val |= bytes.get(i).primitive_value << (sizeof(T) - size_t{1} - i);   \
       }                                                                       \
     } else {                                                                  \
       memcpy(&val, bytes.as_ptr(), sizeof(T));                                \
