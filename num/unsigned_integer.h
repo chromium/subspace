@@ -58,11 +58,11 @@ struct usize final {
 
 }  // namespace sus::num
 
-_sus__unsigned_literal(u8, ::sus::num::u8, /*PrimitiveT=*/uint8_t);
-_sus__unsigned_literal(u16, ::sus::num::u16, /*PrimitiveT=*/uint16_t);
-_sus__unsigned_literal(u32, ::sus::num::u32, /*PrimitiveT=*/uint32_t);
-_sus__unsigned_literal(u64, ::sus::num::u64, /*PrimitiveT=*/uint64_t);
-_sus__unsigned_literal(
+_sus__integer_literal(u8, ::sus::num::u8, /*PrimitiveT=*/uint8_t);
+_sus__integer_literal(u16, ::sus::num::u16, /*PrimitiveT=*/uint16_t);
+_sus__integer_literal(u32, ::sus::num::u32, /*PrimitiveT=*/uint32_t);
+_sus__integer_literal(u64, ::sus::num::u64, /*PrimitiveT=*/uint64_t);
+_sus__integer_literal(
     usize, ::sus::num::usize,
     /*PrimitiveT=*/::sus::num::__private::ptr_type<>::unsigned_type);
 
