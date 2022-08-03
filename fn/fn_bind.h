@@ -64,9 +64,9 @@
                       _sus__unpack names)]<class... Args>(Args&&... args) {   \
           const auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                   \
           const bool is_const =                                               \
-              ::sus::fn::callable::LambdaConst<decltype(x)>;            \
+              ::sus::fn::callable::CallableObjectConst<decltype(x)>;            \
           if constexpr (!is_const) {                                          \
-            return ::sus::fn::__private::CheckLambdaConst<                    \
+            return ::sus::fn::__private::CheckCallableObjectConst<                    \
                 is_const>::template error<void>();                            \
           } else {                                                            \
             return x(::sus::forward<Args>(args)...);                          \
@@ -228,13 +228,13 @@ std::false_type is_lvalue(...);
 /// represents the constness of the lambda. When false, the error() function
 /// generates a compiler error.
 template <bool = true>
-struct CheckLambdaConst final {
+struct CheckCallableObjectConst final {
   template <class U>
   static constexpr inline auto error() {}
 };
 
 template <>
-struct CheckLambdaConst<false> final {
+struct CheckCallableObjectConst<false> final {
   template <class U>
   static consteval inline auto error() {
     throw "Use sus_bind_mut() to bind a mutable lambda";

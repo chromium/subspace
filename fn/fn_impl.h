@@ -31,7 +31,7 @@ FnOnce<R(CallArgs...)>::FnOnce(F ptr) noexcept
 
 template <class R, class... CallArgs>
 template <class ConstructionType,
-          ::sus::fn::callable::LambdaReturns<R, CallArgs...> F>
+          ::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
 FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction,
                                F&& lambda) noexcept
     : type_(__private::Storage) {
