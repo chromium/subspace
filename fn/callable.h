@@ -39,12 +39,12 @@ concept FunctionPointerReturns = (
 namespace __private {
 
 template <class T, class R, class... Args>
-inline constexpr bool lambda_callable_const(R (T::*)(Args...) const) {
+inline constexpr bool callable_const(R (T::*)(Args...) const) {
   return true;
 };
 
 template <class T, class R, class... Args>
-inline constexpr bool lambda_callable_mut(R (T::*)(Args...)) {
+inline constexpr bool callable_mut(R (T::*)(Args...)) {
   return true;
 };
 
@@ -52,7 +52,7 @@ inline constexpr bool lambda_callable_mut(R (T::*)(Args...)) {
 
 // clang-format off
 template <class T, class R, class... Args>
-concept LambdaReturnsConst = (
+concept CallableObjectReturnsConst = (
     !FunctionPointerReturns<T, R, Args...> &&
     requires (const T& t, Args&&... args) {
         { t(forward<Args>(args)...) } -> std::convertible_to<R>;
@@ -60,7 +60,7 @@ concept LambdaReturnsConst = (
 );
 
 template <class T, class R, class... Args>
-concept LambdaReturnsMut = (
+concept CallableObjectReturnsMut = (
     !FunctionPointer<T> &&
     requires (T& t, Args&&... args) {
         { t(forward<Args>(args)...) } -> std::convertible_to<R>;
@@ -69,14 +69,14 @@ concept LambdaReturnsMut = (
 // clang-format on
 
 template <class T, class R, class... Args>
-concept LambdaReturns =
-    LambdaReturnsConst<T, R, Args...> || LambdaReturnsMut<T, R, Args...>;
+concept CallableObjectReturns = CallableObjectReturnsConst<T, R, Args...> ||
+                                CallableObjectReturnsMut<T, R, Args...>;
 
 template <class T>
-concept LambdaConst = __private::lambda_callable_const(&T::operator());
+concept CallableObjectConst = __private::callable_const(&T::operator());
 
 template <class T>
-concept LambdaMut = LambdaConst<T> ||
-                    __private::lambda_callable_mut(&T::operator());
+concept CallableObjectMut = CallableObjectConst<T> ||
+                            __private::callable_mut(&T::operator());
 
 }  // namespace sus::fn::callable
