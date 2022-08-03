@@ -16,7 +16,7 @@
 
 #include <concepts>
 
-namespace sus::concepts::from {
+namespace sus::construct {
 
 /// A concept that indicates ToType can be constructed from a FromType, via
 /// `ToType::from(FromType)`.
@@ -28,4 +28,4 @@ concept From = requires (FromType&& from) {
 };
 // clang-format on
 
-}  // namespace sus::concepts::from
+}  // namespace sus::construct

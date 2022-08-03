@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include "concepts/callable.h"
-#include "mem/__private/relocate.h"
+#include "fn/callable.h"
+#include "mem/relocate.h"
 #include "mem/forward.h"
 
 namespace sus::fn {
@@ -131,11 +131,11 @@ template <class R, class... CallArgs>
 class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
-  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   FnOnce(F ptr) noexcept;
 
   /// Construction from the output of `sus_bind()`.
-  template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::LambdaReturns<R, CallArgs...> F>
   FnOnce(__private::SusBind<F>&& holder) noexcept
       : FnOnce(__private::StorageConstructionFnOnce,
                static_cast<F&&>(holder.lambda)) {}
@@ -155,22 +155,22 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// accepted here, to prevent an implicit copy from occuring.
   inline R operator()(CallArgs&&... args) && noexcept;
 
-  /// `sus::concepts::from::From` trait implementation for function pointers or
+  /// `sus::construct::From` trait implementation for function pointers or
   /// lambdas without captures.
-  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return FnOnce(static_cast<R (*)(CallArgs...)>(fn));
   }
-  /// `sus::concepts::from::From` trait implementation for the output of
+  /// `sus::construct::From` trait implementation for the output of
   /// `sus_bind()`.
-  template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::LambdaReturns<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
     return FnOnce(static_cast<__private::SusBind<F>&&>(holder));
   }
 
  protected:
   template <class ConstructionType,
-            ::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
+            ::sus::fn::callable::LambdaReturns<R, CallArgs...> F>
   FnOnce(ConstructionType, F&& lambda) noexcept;
 
   // Functions to construct and return a pointer to a static vtable object for
@@ -275,11 +275,11 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
     : public FnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
-  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   FnMut(F ptr) noexcept : FnOnce<R(CallArgs...)>(static_cast<F&&>(ptr)) {}
 
   /// Construction from the output of `sus_bind()`.
-  template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::LambdaReturns<R, CallArgs...> F>
   FnMut(__private::SusBind<F>&& holder) noexcept
       : FnOnce<R(CallArgs...)>(__private::StorageConstructionFnMut,
                                static_cast<F&&>(holder.lambda)) {}
@@ -309,15 +309,15 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
         forward<CallArgs>(args)...);
   }
 
-  /// `sus::concepts::from::From` trait implementation for function pointers or
+  /// `sus::construct::From` trait implementation for function pointers or
   /// lambdas without captures.
-  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return FnMut(static_cast<R (*)(CallArgs...)>(fn));
   }
-  /// `sus::concepts::from::From` trait implementation for the output of
+  /// `sus::construct::From` trait implementation for the output of
   /// `sus_bind()`.
-  template <::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::LambdaReturns<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
     return FnMut(static_cast<__private::SusBind<F>&&>(holder));
   }
@@ -328,7 +328,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
   // would slice that off.
 
   template <class ConstructionType,
-            ::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
+            ::sus::fn::callable::LambdaReturns<R, CallArgs...> F>
   FnMut(ConstructionType c, F&& lambda) noexcept
       : FnOnce<R(CallArgs...)>(c, static_cast<F&&>(lambda)) {}
 
@@ -401,11 +401,11 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
     : public FnMut<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
-  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   Fn(F ptr) noexcept : FnMut<R(CallArgs...)>(static_cast<F&&>(ptr)) {}
 
   /// Construction from the output of `sus_bind()`.
-  template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
+  template <::sus::fn::callable::LambdaReturnsConst<R, CallArgs...> F>
   Fn(__private::SusBind<F>&& holder) noexcept
       : FnMut<R(CallArgs...)>(__private::StorageConstructionFn,
                               static_cast<F&&>(holder.lambda)) {}
@@ -435,15 +435,15 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
         forward<CallArgs>(args)...);
   }
 
-  /// `sus::concepts::from::From` trait implementation for function pointers or
+  /// `sus::construct::From` trait implementation for function pointers or
   /// lambdas without captures.
-  template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return Fn(static_cast<R (*)(CallArgs...)>(fn));
   }
-  /// `sus::concepts::from::From` trait implementation for the output of
+  /// `sus::construct::From` trait implementation for the output of
   /// `sus_bind()`.
-  template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
+  template <::sus::fn::callable::LambdaReturnsConst<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
     return Fn(static_cast<__private::SusBind<F>&&>(holder));
   }
@@ -453,7 +453,7 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
   // do anything in its destructor, as `FnOnce` moves from itself, and it
   // would slice that off.
 
-  template <::sus::concepts::callable::LambdaReturnsConst<R, CallArgs...> F>
+  template <::sus::fn::callable::LambdaReturnsConst<R, CallArgs...> F>
   Fn(__private::StorageConstructionFnType, F&& fn) noexcept;
 
  private:

@@ -17,12 +17,12 @@
 #include <type_traits>
 
 #include "marker/unsafe.h"
-#include "mem/__private/relocate.h"
+#include "mem/relocate.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 using ::sus::containers::Array;
-using ::sus::mem::__private::relocate_array_by_memcpy_v;
-using ::sus::mem::__private::relocate_one_by_memcpy_v;
+using ::sus::mem::relocate_array_by_memcpy;
+using ::sus::mem::relocate_one_by_memcpy;
 
 namespace {
 
@@ -54,8 +54,8 @@ static_assert(!std::is_assignable_v<Array<T, 2>, const T&>, "");
 static_assert(!std::is_constructible_v<Array<T, 2>, T>, "");
 static_assert(!std::is_assignable_v<Array<T, 2>, T>, "");
 static_assert(std::is_nothrow_destructible_v<Array<T, 2>>, "");
-static_assert(relocate_one_by_memcpy_v<Array<T, 2>>, "");
-static_assert(relocate_array_by_memcpy_v<Array<T, 2>>, "");
+static_assert(relocate_one_by_memcpy<Array<T, 2>>, "");
+static_assert(relocate_array_by_memcpy<Array<T, 2>>, "");
 }  // namespace trivially_relocatable
 
 struct NonAggregate {

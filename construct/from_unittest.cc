@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "concepts/from.h"
+#include "construct/from.h"
 
-#include "concepts/into.h"
+#include "construct/into.h"
 
-using sus::concepts::from::From;
+using sus::construct::From;
 
 namespace {
 

@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "concepts/make_default.h"
+#include "construct/make_default.h"
 
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
-using sus::concepts::MakeDefault;
+using sus::construct::make_default;
+using sus::construct::MakeDefault;
 
 namespace {
 
@@ -50,36 +51,30 @@ struct BothConstructible {
   constexpr BothConstructible(int i) noexcept : i(i) {}
 };
 
-static_assert(MakeDefault<DefaultConstructible>::has_concept == true, "");
-static_assert(MakeDefault<NotDefaultConstructible>::has_concept == false, "");
-static_assert(MakeDefault<WithDefaultConstructible>::has_concept == true, "");
-static_assert(MakeDefault<BothConstructible>::has_concept == false, "");
+static_assert(MakeDefault<DefaultConstructible> == true, "");
+static_assert(MakeDefault<NotDefaultConstructible> == false, "");
+static_assert(MakeDefault<WithDefaultConstructible> == true, "");
+static_assert(MakeDefault<BothConstructible> == false, "");
 
 // Verify constexpr construction.
-constexpr auto default_constructible =
-    MakeDefault<DefaultConstructible>::make_default();
+constexpr auto default_constructible = make_default<DefaultConstructible>();
 static_assert(default_constructible.i == 2, "");
 constexpr auto with_default_constructible =
-    MakeDefault<WithDefaultConstructible>::make_default();
+    make_default<WithDefaultConstructible>();
 static_assert(with_default_constructible.i == 3, "");
 
 // Verify no type coersions are happening.
-static_assert(
-    std::is_same_v<decltype(MakeDefault<DefaultConstructible>::make_default()),
-                   DefaultConstructible>,
-    "");
-static_assert(
-    std::is_same_v<
-        decltype(MakeDefault<WithDefaultConstructible>::make_default()),
-        WithDefaultConstructible>,
-    "");
+static_assert(std::is_same_v<decltype(make_default<DefaultConstructible>()),
+                             DefaultConstructible>,
+              "");
+static_assert(std::is_same_v<decltype(make_default<WithDefaultConstructible>()),
+                             WithDefaultConstructible>,
+              "");
 
 TEST(MakeDefault, NonConstexprConstruction) {
-  auto default_constructible1 =
-      MakeDefault<DefaultConstructible>::make_default();
+  auto default_constructible1 = make_default<DefaultConstructible>();
   EXPECT_EQ(default_constructible1.i, 2);
-  auto with_default_constructible1 =
-      MakeDefault<WithDefaultConstructible>::make_default();
+  auto with_default_constructible1 = make_default<WithDefaultConstructible>();
   EXPECT_EQ(with_default_constructible1.i, 3);
 }
 

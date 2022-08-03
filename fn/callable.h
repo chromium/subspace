@@ -19,7 +19,7 @@
 
 #include "mem/forward.h"
 
-namespace sus::concepts::callable {
+namespace sus::fn::callable {
 
 template <class T>
 concept FunctionPointer = requires(T t) {
@@ -78,4 +78,5 @@ concept LambdaConst = __private::lambda_callable_const(&T::operator());
 template <class T>
 concept LambdaMut = LambdaConst<T> ||
                     __private::lambda_callable_mut(&T::operator());
-}  // namespace sus::concepts::callable
+
+}  // namespace sus::fn::callable

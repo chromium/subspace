@@ -16,14 +16,14 @@
 
 #include <concepts>
 
-#include "concepts/into.h"
+#include "construct/into.h"
 #include "mem/forward.h"
 #include "mem/replace.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {
 
-using sus::concepts::into::Into;
+using sus::construct::Into;
 using sus::fn::Fn;
 using sus::fn::FnMut;
 using sus::fn::FnOnce;
@@ -82,9 +82,9 @@ static_assert(std::is_move_constructible_v<Fn<void()>>);
 static_assert(std::is_move_assignable_v<Fn<void()>>);
 
 // Closures are trivially relocatable.
-static_assert(sus::mem::__private::relocate_one_by_memcpy_v<FnOnce<void()>>);
-static_assert(sus::mem::__private::relocate_one_by_memcpy_v<FnMut<void()>>);
-static_assert(sus::mem::__private::relocate_one_by_memcpy_v<Fn<void()>>);
+static_assert(sus::mem::relocate_one_by_memcpy<FnOnce<void()>>);
+static_assert(sus::mem::relocate_one_by_memcpy<FnMut<void()>>);
+static_assert(sus::mem::relocate_one_by_memcpy<Fn<void()>>);
 
 // A function pointer, or convertible lambda, can be bound to FnOnce, FnMut and Fn.
 static_assert(std::is_constructible_v<FnOnce<void()>, decltype([](){})>);

@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "mem/__private/relocate.h"
+#include "mem/relocate.h"
 #include "mem/mref.h"
 #include "option/option.h"
 
@@ -24,7 +24,7 @@ template <class T>
 struct [[sus_trivial_abi]] RelocatableStorage;
 
 template <class T>
-  requires(!::sus::mem::__private::relocate_one_by_memcpy_v<T>)
+  requires(!::sus::mem::relocate_one_by_memcpy<T>)
 struct [[sus_trivial_abi]] RelocatableStorage<T> final {
   RelocatableStorage(Option<T>&& t)
       : heap_(static_cast<decltype(t)&&>(t).and_then([](T&& t) {
@@ -67,7 +67,7 @@ struct [[sus_trivial_abi]] RelocatableStorage<T> final {
 };
 
 template <class T>
-  requires(::sus::mem::__private::relocate_one_by_memcpy_v<T>)
+  requires(::sus::mem::relocate_one_by_memcpy<T>)
 struct [[sus_trivial_abi]] RelocatableStorage<T> final {
   RelocatableStorage(Option<T>&& t) : stack_(static_cast<decltype(t)&&>(t)) {}
 

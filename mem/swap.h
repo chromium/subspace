@@ -18,7 +18,7 @@
 
 #include <type_traits>
 
-#include "mem/__private/relocate.h"
+#include "mem/relocate.h"
 #include "mem/addressof.h"
 #include "mem/mref.h"
 
@@ -30,7 +30,7 @@ constexpr void swap(Mref<T&> lhs_ref, Mref<T&> rhs_ref) noexcept {
   T& lhs = lhs_ref;
   T& rhs = rhs_ref;
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy = ::sus::mem::__private::relocate_one_by_memcpy_v<T> &&
+  bool can_memcpy = ::sus::mem::relocate_one_by_memcpy<T> &&
                     !std::is_constant_evaluated();
   if (can_memcpy) {
     char temp[sizeof(T)];

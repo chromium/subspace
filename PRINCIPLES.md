@@ -64,7 +64,7 @@ This library is an experiment and not intended for use. See the
     * Would like to extend this to Copy and Move constructors too, through Clone
       and Move methods. Implementation details required.
     * Write a `::from(x)` constructing method to implement
-      `sus::concepts::from::From` when the type is constructed from another
+      `sus::construct::From` when the type is constructed from another
       type.
     * Exception granted for closure types (Fn, FnMut, FnOnce) because
         1. the construction does not do work, it stores a pointer, or the output
@@ -77,8 +77,8 @@ This library is an experiment and not intended for use. See the
 1. No use-after-move. All types abort if they are used after a move.
 1. No implicit conversions, unless it's another representation of the _same
    type_.
-    * Provide `::from(x)` instead, for `sus::concepts::from::From` and
-      `sus::concepts::into::Into`.
+    * Provide `::from(x)` instead, for `sus::construct::From` and
+      `sus::construct::Into`.
 1. No function overloads. Const is the default.
     * When there are const and mutable versions of a method, use the `_mut`
       suffix on the mutable one to distinguish them. The const method gets the

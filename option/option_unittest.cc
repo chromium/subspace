@@ -18,14 +18,15 @@
 
 #include "assertions/builtin.h"
 #include "iter/iterator.h"
-#include "mem/__private/relocate.h"
+#include "mem/relocate.h"
 #include "test/behaviour_types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
-using ::sus::concepts::MakeDefault;
+using ::sus::construct::make_default;
+using ::sus::construct::MakeDefault;
 using ::sus::mem::Mref;
-using ::sus::mem::__private::relocate_array_by_memcpy_v;
-using ::sus::mem::__private::relocate_one_by_memcpy_v;
+using ::sus::mem::relocate_array_by_memcpy;
+using ::sus::mem::relocate_one_by_memcpy;
 using ::sus::option::None;
 using ::sus::option::Option;
 using ::sus::option::Some;
@@ -282,11 +283,11 @@ TEST(Option, WithDefault) {
   constexpr auto cy(Option<WithDefaultConstructible>::with_default());
   static_assert(cy.is_some(), "");
 
-  auto x2 = MakeDefault<Option<DefaultConstructible>>::make_default();
+  auto x2 = make_default<Option<DefaultConstructible>>();
   IS_SOME(x2);
   EXPECT_EQ(static_cast<decltype(x2)&&>(x2).unwrap().i, 2);
 
-  auto y2 = MakeDefault<Option<WithDefaultConstructible>>::make_default();
+  auto y2 = make_default<Option<WithDefaultConstructible>>();
   IS_SOME(y2);
   EXPECT_EQ(static_cast<decltype(y2)&&>(y2).unwrap().i, 3);
 }
