@@ -18,6 +18,7 @@
 #include <utility>  // TODO: Replace std::index_sequence to remove this header.
 
 #include "mem/forward.h"
+#include "mem/move.h"
 
 namespace sus::tuple::__private {
 
@@ -74,7 +75,7 @@ struct TupleAccess<TupleStorage, 0> final {
   }
 
   static inline constexpr auto&& unwrap(TupleStorage&& tuple) noexcept {
-    return static_cast<decltype(tuple.t)&&>(tuple.t);
+    return sus::move(tuple.t);
   }
 };
 

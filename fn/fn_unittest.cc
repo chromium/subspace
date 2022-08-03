@@ -18,6 +18,7 @@
 
 #include "construct/into.h"
 #include "mem/forward.h"
+#include "mem/move.h"
 #include "mem/replace.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
@@ -189,7 +190,7 @@ static_assert(!can_run<void, int&, const int&&>);
 TEST(Fn, Pointer) {
   {
     auto fn = FnOnce<int(int, int)>([](int a, int b) { return a * 2 + b; });
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(1, 2), 4);
+    EXPECT_EQ(sus::move(fn)(1, 2), 4);
   }
   {
     auto fn = FnMut<int(int, int)>([](int a, int b) { return a * 2 + b; });
@@ -197,22 +198,22 @@ TEST(Fn, Pointer) {
   }
   {
     auto fn = Fn<int(int, int)>([](int a, int b) { return a * 2 + b; });
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(1, 2), 4);
+    EXPECT_EQ(sus::move(fn)(1, 2), 4);
   }
 }
 
 TEST(Fn, InlineCapture) {
   {
     auto fn = FnOnce<int(int)>(sus_bind0([a = 1](int b) { return a * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
   {
     auto fn = FnMut<int(int)>(sus_bind0([a = 1](int b) { return a * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
   {
     auto fn = Fn<int(int)>(sus_bind0([a = 1](int b) { return a * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
 }
 
@@ -221,17 +222,17 @@ TEST(Fn, OutsideCapture) {
   {
     auto fn = FnOnce<int(int)>(
         sus_bind(sus_store(a), [a](int b) { return a * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
   {
     auto fn = FnMut<int(int)>(
         sus_bind(sus_store(a), [a](int b) { return a * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
   {
     auto fn =
         Fn<int(int)>(sus_bind(sus_store(a), [a](int b) { return a * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
 }
 
@@ -240,17 +241,17 @@ TEST(Fn, BothCapture) {
   {
     auto fn = FnOnce<int()>(
         sus_bind(sus_store(a), [a, b = 2]() { return a * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(), 4);
+    EXPECT_EQ(sus::move(fn)(), 4);
   }
   {
     auto fn = FnMut<int()>(
         sus_bind(sus_store(a), [a, b = 2]() { return a * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(), 4);
+    EXPECT_EQ(sus::move(fn)(), 4);
   }
   {
     auto fn =
         Fn<int()>(sus_bind(sus_store(a), [a, b = 2]() { return a * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(), 4);
+    EXPECT_EQ(sus::move(fn)(), 4);
   }
 }
 
@@ -259,17 +260,17 @@ TEST(Fn, CopyFromCapture) {
   {
     auto fn = FnOnce<int(int)>(
         sus_bind(sus_store(c), [c](int b) { return c.i * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
   {
     auto fn = FnMut<int(int)>(
         sus_bind(sus_store(c), [c](int b) { return c.i * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
   {
     auto fn = Fn<int(int)>(
         sus_bind(sus_store(c), [c](int b) { return c.i * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
 }
 
@@ -279,7 +280,7 @@ TEST(Fn, MoveFromCapture) {
     auto fn = FnOnce<int(int)>(sus_bind_mut(
         sus_store(sus_take(m)),
         [m = static_cast<MoveOnly&&>(m)](int b) { return m.i * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
   {
     auto m = MoveOnly(1);
@@ -290,7 +291,7 @@ TEST(Fn, MoveFromCapture) {
     // The stored value was moved into the run lambda (so `m` holds `-1`).
     EXPECT_EQ(m.i, -1);
     EXPECT_EQ(fn(-2), -4);
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(-2), -4);
+    EXPECT_EQ(sus::move(fn)(-2), -4);
   }
   // Can't hold sus_bind_mut() in Fn.
 }
@@ -300,7 +301,7 @@ TEST(Fn, MoveIntoCapture) {
     auto m = MoveOnly(1);
     auto fn = FnOnce<int(int)>(
         sus_bind(sus_store(sus_take(m)), [&m](int b) { return m.i * 2 + b; }));
-    EXPECT_EQ(static_cast<decltype(fn)&&>(fn)(2), 4);
+    EXPECT_EQ(sus::move(fn)(2), 4);
   }
   {
     auto m = MoveOnly(1);
@@ -329,45 +330,45 @@ TEST(Fn, MoveIntoCapture) {
 TEST(Fn, MoveFn) {
   {
     auto fn = FnOnce<int(int, int)>([](int a, int b) { return a * 2 + b; });
-    auto fn2 = static_cast<decltype(fn)&&>(fn);
-    EXPECT_EQ(static_cast<decltype(fn2)&&>(fn2)(1, 2), 4);
+    auto fn2 = sus::move(fn);
+    EXPECT_EQ(sus::move(fn2)(1, 2), 4);
   }
   {
     auto fn = FnOnce<int(int)>(sus_bind0([a = 1](int b) { return a * 2 + b; }));
-    auto fn2 = static_cast<decltype(fn)&&>(fn);
-    EXPECT_EQ(static_cast<decltype(fn2)&&>(fn2)(2), 4);
+    auto fn2 = sus::move(fn);
+    EXPECT_EQ(sus::move(fn2)(2), 4);
   }
   {
     auto fn = FnMut<int(int, int)>([](int a, int b) { return a * 2 + b; });
-    auto fn2 = static_cast<decltype(fn)&&>(fn);
-    EXPECT_EQ(static_cast<decltype(fn2)&&>(fn2)(1, 2), 4);
+    auto fn2 = sus::move(fn);
+    EXPECT_EQ(sus::move(fn2)(1, 2), 4);
   }
   {
     auto fn = FnMut<int(int)>(sus_bind0([a = 1](int b) { return a * 2 + b; }));
-    auto fn2 = static_cast<decltype(fn)&&>(fn);
-    EXPECT_EQ(static_cast<decltype(fn2)&&>(fn2)(2), 4);
+    auto fn2 = sus::move(fn);
+    EXPECT_EQ(sus::move(fn2)(2), 4);
   }
   {
     auto fn = Fn<int(int, int)>([](int a, int b) { return a * 2 + b; });
-    auto fn2 = static_cast<decltype(fn)&&>(fn);
-    EXPECT_EQ(static_cast<decltype(fn2)&&>(fn2)(1, 2), 4);
+    auto fn2 = sus::move(fn);
+    EXPECT_EQ(sus::move(fn2)(1, 2), 4);
   }
   {
     auto fn = Fn<int(int)>(sus_bind0([a = 1](int b) { return a * 2 + b; }));
-    auto fn2 = static_cast<decltype(fn)&&>(fn);
-    EXPECT_EQ(static_cast<decltype(fn2)&&>(fn2)(2), 4);
+    auto fn2 = sus::move(fn);
+    EXPECT_EQ(sus::move(fn2)(2), 4);
   }
 }
 
 TEST(Fn, FnIsFnMut) {
   {
     auto fn = Fn<int(int, int)>([](int a, int b) { return a * 2 + b; });
-    auto mut = FnMut<int(int, int)>(static_cast<decltype(fn)&&>(fn));
+    auto mut = FnMut<int(int, int)>(sus::move(fn));
     EXPECT_EQ(mut(1, 2), 4);
   }
   {
     auto fn = Fn<int(int)>(sus_bind0([a = 1](int b) { return a * 2 + b; }));
-    auto mut = FnMut<int(int)>(static_cast<decltype(fn)&&>(fn));
+    auto mut = FnMut<int(int)>(sus::move(fn));
     EXPECT_EQ(mut(2), 4);
   }
 }
@@ -375,26 +376,26 @@ TEST(Fn, FnIsFnMut) {
 TEST(Fn, FnIsFnOnce) {
   {
     auto fn = Fn<int(int, int)>([](int a, int b) { return a * 2 + b; });
-    auto once = FnOnce<int(int, int)>(static_cast<decltype(fn)&&>(fn));
-    EXPECT_EQ(static_cast<decltype(once)&&>(once)(1, 2), 4);
+    auto once = FnOnce<int(int, int)>(sus::move(fn));
+    EXPECT_EQ(sus::move(once)(1, 2), 4);
   }
   {
     auto fn = Fn<int(int)>(sus_bind0([a = 1](int b) { return a * 2 + b; }));
-    auto once = FnOnce<int(int)>(static_cast<decltype(fn)&&>(fn));
-    EXPECT_EQ(static_cast<decltype(once)&&>(once)(2), 4);
+    auto once = FnOnce<int(int)>(sus::move(fn));
+    EXPECT_EQ(sus::move(once)(2), 4);
   }
 }
 
 TEST(Fn, FnMutIsFnOnce) {
   {
     auto fn = FnMut<int(int, int)>([](int a, int b) { return a * 2 + b; });
-    auto once = FnOnce<int(int, int)>(static_cast<decltype(fn)&&>(fn));
-    EXPECT_EQ(static_cast<decltype(once)&&>(once)(1, 2), 4);
+    auto once = FnOnce<int(int, int)>(sus::move(fn));
+    EXPECT_EQ(sus::move(once)(1, 2), 4);
   }
   {
     auto fn = FnMut<int(int)>(sus_bind0([a = 1](int b) { return a * 2 + b; }));
-    auto once = FnOnce<int(int)>(static_cast<decltype(fn)&&>(fn));
-    EXPECT_EQ(static_cast<decltype(once)&&>(once)(2), 4);
+    auto once = FnOnce<int(int)>(sus::move(fn));
+    EXPECT_EQ(sus::move(once)(2), 4);
   }
 }
 
@@ -421,7 +422,7 @@ TEST(Fn, BindUnsafePointer) {
 TEST(Fn, Into) {
   auto into_fnonce = []<Into<FnOnce<int(int)>> F>(F into_f) {
     FnOnce<int(int)> f = sus::move_into(into_f);
-    return static_cast<decltype(f)&&>(f)(1);
+    return sus::move(f)(1);
   };
   EXPECT_EQ(into_fnonce([](int i) { return i + 1; }), 2);
   EXPECT_EQ(into_fnonce(sus_bind0([](int i) { return i + 1; })), 2);
@@ -434,7 +435,7 @@ TEST(Fn, Into) {
 
   auto into_fn = []<Into<Fn<int(int)>> F>(F into_f) {
     Fn<int(int)> f = sus::move_into(into_f);
-    return static_cast<decltype(f)&&>(f)(1);
+    return sus::move(f)(1);
   };
   EXPECT_EQ(into_fn([](int i) { return i + 1; }), 2);
   EXPECT_EQ(into_fn(sus_bind0([](int i) { return i + 1; })), 2);
@@ -456,42 +457,42 @@ TEST(FnDeathTest, NullPointer) {
 TEST(FnDeathTest, CallAfterMoveConstruct) {
   {
     auto x = FnOnce<void()>::from([]() {});
-    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+    [[maybe_unused]] auto y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
   {
     auto x = FnMut<void()>::from([]() {});
-    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+    [[maybe_unused]] auto y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
     EXPECT_DEATH(x(), "");
 #endif
   }
   {
     auto x = Fn<void()>::from([]() {});
-    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+    [[maybe_unused]] auto y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
     EXPECT_DEATH(x(), "");
 #endif
   }
   {
     auto x = FnOnce<void()>::from(sus_bind0([]() {}));
-    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+    [[maybe_unused]] auto y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
   {
     auto x = FnMut<void()>::from(sus_bind0([]() {}));
-    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+    [[maybe_unused]] auto y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
     EXPECT_DEATH(x(), "");
 #endif
   }
   {
     auto x = Fn<void()>::from(sus_bind0([]() {}));
-    [[maybe_unused]] auto y = static_cast<decltype(x)&&>(x);
+    [[maybe_unused]] auto y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
     EXPECT_DEATH(x(), "");
 #endif
@@ -502,15 +503,15 @@ TEST(FnDeathTest, CallAfterMoveAssign) {
   {
     auto x = FnOnce<void()>::from([]() {});
     auto y = FnOnce<void()>::from([]() {});
-    y = static_cast<decltype(x)&&>(x);
+    y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
   {
     auto x = FnMut<void()>::from([]() {});
     auto y = FnOnce<void()>::from([]() {});
-    y = static_cast<decltype(x)&&>(x);
+    y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
     EXPECT_DEATH(x(), "");
 #endif
@@ -518,7 +519,7 @@ TEST(FnDeathTest, CallAfterMoveAssign) {
   {
     auto x = Fn<void()>::from([]() {});
     auto y = FnOnce<void()>::from([]() {});
-    y = static_cast<decltype(x)&&>(x);
+    y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
     EXPECT_DEATH(x(), "");
 #endif
@@ -526,15 +527,15 @@ TEST(FnDeathTest, CallAfterMoveAssign) {
   {
     auto x = FnOnce<void()>::from(sus_bind0([]() {}));
     auto y = FnOnce<void()>::from([]() {});
-    y = static_cast<decltype(x)&&>(x);
+    y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
   {
     auto x = FnMut<void()>::from(sus_bind0([]() {}));
     auto y = FnOnce<void()>::from([]() {});
-    y = static_cast<decltype(x)&&>(x);
+    y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
     EXPECT_DEATH(x(), "");
 #endif
@@ -542,7 +543,7 @@ TEST(FnDeathTest, CallAfterMoveAssign) {
   {
     auto x = Fn<void()>::from(sus_bind0([]() {}));
     auto y = FnOnce<void()>::from([]() {});
-    y = static_cast<decltype(x)&&>(x);
+    y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
     EXPECT_DEATH(x(), "");
 #endif
@@ -552,44 +553,44 @@ TEST(FnDeathTest, CallAfterMoveAssign) {
 TEST(FnDeathTest, CallAfterCall) {
   {
     auto x = FnOnce<void()>::from([]() {});
-    static_cast<decltype(x)&&>(x)();
+    sus::move(x)();
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
   {
     auto x = FnMut<void()>::from([]() {});
-    static_cast<decltype(x)&&>(x)();
+    sus::move(x)();
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
   {
     auto x = Fn<void()>::from([]() {});
-    static_cast<decltype(x)&&>(x)();
+    sus::move(x)();
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
   {
     auto x = FnOnce<void()>::from(sus_bind0([]() {}));
-    static_cast<decltype(x)&&>(x)();
+    sus::move(x)();
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
   {
     auto x = FnMut<void()>::from(sus_bind0([]() {}));
-    static_cast<decltype(x)&&>(x)();
+    sus::move(x)();
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
   {
     auto x = Fn<void()>::from(sus_bind0([]() {}));
-    static_cast<decltype(x)&&>(x)();
+    sus::move(x)();
 #if GTEST_HAS_DEATH_TEST
-    EXPECT_DEATH(static_cast<decltype(x)&&>(x)(), "");
+    EXPECT_DEATH(sus::move(x)(), "");
 #endif
   }
 }

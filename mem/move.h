@@ -21,6 +21,14 @@
 namespace sus::mem {
 
 template <class T>
+concept Moveable = (!std::is_const_v<std::remove_reference_t<T>> &&
+                    std::is_move_constructible_v<T>);
+
+template <class T>
+concept MoveableForAssign = (!std::is_const_v<std::remove_reference_t<T>> &&
+                             std::is_move_assignable_v<T>);
+
+template <class T>
   requires(!std::is_const_v<std::remove_reference_t<T>>)
 sus_always_inline constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
   return static_cast<typename std::remove_reference_t<T>&&>(t);
