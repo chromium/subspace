@@ -12,8 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
-
 #include "num/float.h"
-#include "num/signed_integer.h"
-#include "num/unsigned_integer.h"
+#include "third_party/googletest/googletest/include/gtest/gtest.h"
+
+TEST(f64, Literals) {
+  static_assert((0._f64).primitive_value == 0.);
+  static_assert((0.0_f64).primitive_value == 0.);
+  static_assert((1.2345678912345_f64).primitive_value == 1.2345678912345);
+  static_assert((-1.2345678912345_f64).primitive_value == -1.2345678912345);
+
+  // Whole numbers.
+  static_assert((0_f64).primitive_value == 0.);
+  static_assert((1_f64).primitive_value == 1.);
+  static_assert((-5_f64).primitive_value == -5.);
+}
