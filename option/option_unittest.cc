@@ -185,9 +185,9 @@ TEST(Option, Move) {
     Type& operator=(Type&&) = default;
   };
   auto x = Option<Type>::some(Type());
-  auto y = static_cast<decltype(x)&&>(x);
+  auto y = sus::move(x);
   IS_SOME(y);
-  x = static_cast<decltype(y)&&>(y);
+  x = sus::move(y);
   IS_SOME(x);
 
   struct MoveableLvalue {
@@ -201,8 +201,7 @@ TEST(Option, Move) {
   EXPECT_EQ(a.as_ref().unwrap().i, 2);
   EXPECT_EQ(lvalue.i, 2);
 
-  auto b =
-      Option<MoveableLvalue>::some(static_cast<decltype(lvalue)&&>(lvalue));
+  auto b = Option<MoveableLvalue>::some(sus::move(lvalue));
   EXPECT_EQ(b.as_ref().unwrap().i, 2);
   EXPECT_EQ(lvalue.i, 0);
 }
@@ -215,18 +214,18 @@ TEST(Option, Move) {
 TEST(Option, UseAfterMove) {
   auto x = Option<TriviallyMoveableAndRelocatable>::some(
       TriviallyMoveableAndRelocatable(1));
-  auto y = static_cast<decltype(x)&&>(x);
+  auto y = sus::move(x);
   IS_SOME(x);  // Trivially relocatable leaves `x` fully in tact.
   EXPECT_EQ(x.as_ref().unwrap().i, 1);
-  x = static_cast<decltype(y)&&>(y);
+  x = sus::move(y);
   IS_SOME(y);  // Trivially relocatable leaves `y` fully in tact.
   EXPECT_EQ(y.as_ref().unwrap().i, 1);
 
   auto a = Option<NotTriviallyRelocatableCopyableOrMoveable>::some(
       NotTriviallyRelocatableCopyableOrMoveable(1));
-  auto b = static_cast<decltype(a)&&>(a);
+  auto b = sus::move(a);
   IS_NONE(a);  // Not trivially relocatable moves-from the value in `a`.
-  a = static_cast<decltype(b)&&>(b);
+  a = sus::move(b);
   IS_NONE(b);  // Not trivially relocatable moves-from the value in `b`.
 }
 
@@ -271,11 +270,11 @@ TEST(Option, None) {
 TEST(Option, WithDefault) {
   auto x = Option<DefaultConstructible>::with_default();
   IS_SOME(x);
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 2);
+  EXPECT_EQ(sus::move(x).unwrap().i, 2);
 
   auto y = Option<WithDefaultConstructible>::with_default();
   IS_SOME(y);
-  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap().i, 3);
+  EXPECT_EQ(sus::move(y).unwrap().i, 3);
 
   constexpr auto cx(Option<DefaultConstructible>::with_default());
   static_assert(cx.is_some(), "");
@@ -285,11 +284,11 @@ TEST(Option, WithDefault) {
 
   auto x2 = make_default<Option<DefaultConstructible>>();
   IS_SOME(x2);
-  EXPECT_EQ(static_cast<decltype(x2)&&>(x2).unwrap().i, 2);
+  EXPECT_EQ(sus::move(x2).unwrap().i, 2);
 
   auto y2 = make_default<Option<WithDefaultConstructible>>();
   IS_SOME(y2);
-  EXPECT_EQ(static_cast<decltype(y2)&&>(y2).unwrap().i, 3);
+  EXPECT_EQ(sus::move(y2).unwrap().i, 3);
 }
 
 TEST(Option, Destructor) {
@@ -382,7 +381,7 @@ TEST(Option, Take) {
   // The value has moved from `x` to `y`.
   IS_NONE(x);
   IS_SOME(y);
-  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 404);
+  EXPECT_EQ(sus::move(y).unwrap(), 404);
 
   auto n = Option<int>::none();
   auto m = n.take();
@@ -474,7 +473,7 @@ TEST(Option, Map) {
     return Mapped(i + 1);
   });
   static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 3);
+  EXPECT_EQ(sus::move(x).unwrap().i, 3);
   EXPECT_TRUE(called);
 
   called = false;
@@ -527,12 +526,12 @@ TEST(Option, MapOr) {
   auto x = Option<int>::some(2).map_or(
       Mapped(4), [](int&& i) { return static_cast<Mapped>(i + 1); });
   static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 3);
+  EXPECT_EQ(sus::move(x).unwrap().i, 3);
 
   auto y = Option<int>::none().map_or(Mapped(4),
                                       [](int&& i) { return Mapped(i + 1); });
   static_assert(std::is_same_v<decltype(y), Option<Mapped>>, "");
-  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap().i, 4);
+  EXPECT_EQ(sus::move(y).unwrap().i, 4);
 
   int i = 2;
   auto ix = Option<int&>::some(mref(i)).map_or(
@@ -567,7 +566,7 @@ TEST(Option, MapOrElse) {
         return Mapped(i + 1);
       });
   static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 3);
+  EXPECT_EQ(sus::move(x).unwrap().i, 3);
   EXPECT_TRUE(map_called);
   EXPECT_FALSE(else_called);
 
@@ -582,7 +581,7 @@ TEST(Option, MapOrElse) {
         return Mapped(i + 1);
       });
   static_assert(std::is_same_v<decltype(y), Option<Mapped>>, "");
-  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap().i, 4);
+  EXPECT_EQ(sus::move(y).unwrap().i, 4);
   EXPECT_FALSE(map_called);
   EXPECT_TRUE(else_called);
 
@@ -700,7 +699,7 @@ TEST(Option, Filter) {
   {
     auto a = Option<WatchDestructor>::with_default();
     count = 0;
-    auto af = static_cast<decltype(a)&&>(a).filter(
+    auto af = sus::move(a).filter(
         [](const WatchDestructor&) { return true; });
     // The WatchDestructor was moved from `a` to `af` and the temporary's
     // was destroyed.
@@ -713,7 +712,7 @@ TEST(Option, Filter) {
   {
     auto b = Option<WatchDestructor>::with_default();
     count = 0;
-    auto bf = static_cast<decltype(b)&&>(b).filter(
+    auto bf = sus::move(b).filter(
         [](const WatchDestructor&) { return false; });
     // The WatchDestructor in `b` was destroyed.
     EXPECT_GE(count, 1);
@@ -724,7 +723,7 @@ TEST(Option, Filter) {
   {
     count = 0;
     auto c = Option<WatchDestructor>::none();
-    auto cf = static_cast<decltype(c)&&>(c).filter(
+    auto cf = sus::move(c).filter(
         [](const WatchDestructor&) { return false; });
     // Nothing constructed or destructed.
     EXPECT_EQ(count, 0);
@@ -735,7 +734,7 @@ TEST(Option, Filter) {
   {
     count = 0;
     auto c = Option<WatchDestructor&>::some(mref(w));
-    auto cf = static_cast<decltype(c)&&>(c).filter(
+    auto cf = sus::move(c).filter(
         [](const WatchDestructor&) { return false; });
     // Nothing constructed or destructed.
     EXPECT_EQ(count, 0);
@@ -783,7 +782,7 @@ TEST(Option, AndThen) {
     return Option<And>::some(And(3));
   });
   static_assert(std::is_same_v<decltype(x), Option<And>>, "");
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 3);
+  EXPECT_EQ(sus::move(x).unwrap().i, 3);
   EXPECT_TRUE(called);
 
   called = false;
@@ -1042,13 +1041,13 @@ TEST(Option, GetOrInsert) {
   static_assert(std::is_same_v<decltype(rx), int&>, "");
   EXPECT_EQ(rx, 9);
   rx = 5;
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 5);
+  EXPECT_EQ(sus::move(x).unwrap(), 5);
 
   auto y = Option<int>::some(11);
   auto& ry = y.get_or_insert(7);
   static_assert(std::is_same_v<decltype(ry), int&>, "");
   EXPECT_EQ(ry, 11);
-  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 11);
+  EXPECT_EQ(sus::move(y).unwrap(), 11);
 
   int i2 = 2, i3 = 3;
 
@@ -1071,21 +1070,21 @@ TEST(Option, GetOrInsertDefault) {
   static_assert(std::is_same_v<decltype(rx), DefaultConstructible&>, "");
   EXPECT_EQ(rx.i, 2);
   IS_SOME(x);
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap().i, 2);
+  EXPECT_EQ(sus::move(x).unwrap().i, 2);
 
   auto w = Option<WithDefaultConstructible>::none();
   auto& rw = w.get_or_insert_default();
   static_assert(std::is_same_v<decltype(rw), WithDefaultConstructible&>, "");
   EXPECT_EQ(rw.i, 3);
   IS_SOME(w);
-  EXPECT_EQ(static_cast<decltype(w)&&>(w).unwrap().i, 3);
+  EXPECT_EQ(sus::move(w).unwrap().i, 3);
 
   auto y = Option<DefaultConstructible>::some(DefaultConstructible(404));
   auto& ry = y.get_or_insert_default();
   static_assert(std::is_same_v<decltype(ry), DefaultConstructible&>, "");
   EXPECT_EQ(ry.i, 404);
   IS_SOME(y);
-  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap().i, 404);
+  EXPECT_EQ(sus::move(y).unwrap().i, 404);
 }
 
 TEST(Option, GetOrInsertWith) {
@@ -1100,7 +1099,7 @@ TEST(Option, GetOrInsertWith) {
   rx = 12;
   EXPECT_TRUE(called);
   IS_SOME(x);
-  EXPECT_EQ(static_cast<decltype(x)&&>(x).unwrap(), 12);
+  EXPECT_EQ(sus::move(x).unwrap(), 12);
 
   called = false;
   auto y = Option<int>::some(11);
@@ -1113,7 +1112,7 @@ TEST(Option, GetOrInsertWith) {
   ry = 18;
   EXPECT_FALSE(called);
   IS_SOME(y);
-  EXPECT_EQ(static_cast<decltype(y)&&>(y).unwrap(), 18);
+  EXPECT_EQ(sus::move(y).unwrap(), 18);
 
   int i2 = 2, i3 = 3;
 
@@ -1279,11 +1278,11 @@ TEST(OptionDeathTest, ExpectMutNone) {
 TEST(Option, TrivialMove) {
   auto x = Option<sus::test::TriviallyMoveableAndRelocatable>::some(
       sus::test::TriviallyMoveableAndRelocatable(int(3423782)));
-  auto y = static_cast<decltype(x)&&>(x);  // Move-construct.
+  auto y = sus::move(x);  // Move-construct.
   EXPECT_EQ(y.as_ref().unwrap().i, 3423782);
 
   y.as_mut().unwrap().i = int(6589043);
-  x = static_cast<decltype(y)&&>(y);  // Move-assign.
+  x = sus::move(y);  // Move-assign.
   EXPECT_EQ(x.as_ref().unwrap().i, 6589043);
 }
 
@@ -1301,9 +1300,9 @@ TEST(Option, TrivialCopy) {
   int i = 2;
 
   auto ix = Option<int&>::some(mref(i));
-  auto iy = static_cast<decltype(ix)&&>(ix);  // Move-construct.
+  auto iy = sus::move(ix);  // Move-construct.
   EXPECT_EQ(&iy.as_ref().unwrap(), &i);
-  ix = static_cast<decltype(iy)&&>(iy);  // Move-assign.
+  ix = sus::move(iy);  // Move-assign.
   EXPECT_EQ(&ix.as_ref().unwrap(), &i);
   auto iz = ix;  // Copy-construct.
   EXPECT_EQ(&ix.as_ref().unwrap(), &i);
@@ -1442,7 +1441,7 @@ TEST(Option, IntoIter) {
 
   int count = 0;
   auto y = Option<MoveOnly>::some(MoveOnly(2));
-  for (auto m : static_cast<decltype(y)&&>(y).into_iter()) {
+  for (auto m : sus::move(y).into_iter()) {
     static_assert(std::is_same_v<decltype(m), MoveOnly>, "");
     EXPECT_EQ(m.i, 2);
     ++count;

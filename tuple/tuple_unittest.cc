@@ -18,6 +18,7 @@
 
 #include <concepts>
 
+#include "mem/move.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {
@@ -133,16 +134,16 @@ TEST(Tuple, Unwrap) {
 TEST(TupleDeathTest, Moved) {
 #if GTEST_HAS_DEATH_TEST
   auto m1 = Tuple<int>::with(1);
-  static_cast<decltype(m1)&&>(m1).unwrap<0>();
+  sus::move(m1).unwrap<0>();
   EXPECT_DEATH(m1.get<0>(), "");
 
   auto m2 = Tuple<int>::with(1);
-  static_cast<decltype(m2)&&>(m2).unwrap<0>();
+  sus::move(m2).unwrap<0>();
   EXPECT_DEATH(m2.get_mut<0>(), "");
 
   auto m3 = Tuple<int>::with(1);
-  static_cast<decltype(m3)&&>(m3).unwrap<0>();
-  EXPECT_DEATH(static_cast<decltype(m3)&&>(m3).unwrap<0>(), "");
+  sus::move(m3).unwrap<0>();
+  EXPECT_DEATH(sus::move(m3).unwrap<0>(), "");
 #endif
 }
 

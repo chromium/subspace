@@ -19,6 +19,8 @@
 namespace {
 
 using sus::move;
+using sus::mem::Moveable;
+using sus::mem::MoveableForAssign;
 
 template <class T>
 concept can_move = requires(T &&t) {
@@ -31,7 +33,19 @@ static_assert(can_move<int &&>);
 static_assert(!can_move<const int &>);
 static_assert(!can_move<const int &&>);
 
-void bind_rvalue(int&&) {}
+static_assert(Moveable<int>);
+static_assert(Moveable<int &>);
+static_assert(Moveable<int &&>);
+static_assert(!Moveable<const int &>);
+static_assert(!Moveable<const int &&>);
+
+static_assert(MoveableForAssign<int>);
+static_assert(MoveableForAssign<int &>);
+static_assert(MoveableForAssign<int &&>);
+static_assert(!MoveableForAssign<const int &>);
+static_assert(!MoveableForAssign<const int &&>);
+
+void bind_rvalue(int &&) {}
 void bind_value(int) {}
 
 TEST(Move, Binds) {
@@ -44,12 +58,15 @@ TEST(Move, Binds) {
 
 struct MoveOnly {
   MoveOnly() = default;
-  MoveOnly(MoveOnly&&) = default;
+  MoveOnly(MoveOnly &&) = default;
 };
 
-void bind_rvalue(MoveOnly&&) {}
+static_assert(Moveable<MoveOnly>);
+static_assert(!MoveableForAssign<MoveOnly>);
+
+void bind_rvalue(MoveOnly &&) {}
 void bind_value(MoveOnly) {}
-void bind_const(const MoveOnly&) {}
+void bind_const(const MoveOnly &) {}
 
 TEST(Move, MoveOnly) {
   MoveOnly m;
@@ -58,5 +75,14 @@ TEST(Move, MoveOnly) {
   bind_value(move(m));
   bind_value(move(MoveOnly()));
 }
+
+struct MoveOnlyWithAssign {
+  MoveOnlyWithAssign() = default;
+  MoveOnlyWithAssign(MoveOnlyWithAssign &&) = default;
+  MoveOnlyWithAssign& operator=(MoveOnlyWithAssign &&) = default;
+};
+
+static_assert(Moveable<MoveOnlyWithAssign>);
+static_assert(MoveableForAssign<MoveOnlyWithAssign>);
 
 }  // namespace

@@ -17,6 +17,7 @@
 #include "fn/fn.h"
 #include "iter/iterator_defn.h"
 #include "iter/sized_iterator.h"
+#include "mem/move.h"
 
 // IteratorBase provided functions are implemented in this file, so that they
 // can be easily included by library users, but don't have to be included in
@@ -59,9 +60,8 @@ template <class Item>
 bool IteratorBase<Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
   Option<Item> item = next();
   while (item.is_some()) {
-    // Safety: `item_` was checked to hold Some already.
-    Item i = item.take().unwrap_unchecked(unsafe_fn);
-    if (!f(static_cast<decltype(i)&&>(i))) return false;
+    // Safety: `item` was checked to hold Some already.
+    if (!f(item.take().unwrap_unchecked(unsafe_fn))) return false;
     item = next();
   }
   return true;
@@ -71,9 +71,8 @@ template <class Item>
 bool IteratorBase<Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
   Option<Item> item = next();
   while (item.is_some()) {
-    // Safety: `item_` was checked to hold Some already.
-    Item i = item.take().unwrap_unchecked(unsafe_fn);
-    if (f(static_cast<decltype(i)&&>(i))) return true;
+    // Safety: `item` was checked to hold Some already.
+    if (f(item.take().unwrap_unchecked(unsafe_fn))) return true;
     item = next();
   }
   return false;
@@ -82,8 +81,7 @@ bool IteratorBase<Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
 template <class Item>
 usize IteratorBase<Item>::count() noexcept {
   auto c = 0_usize;
-  while (next().is_some())
-    c += 1_usize;
+  while (next().is_some()) c += 1_usize;
   return c;
 }
 
@@ -105,8 +103,7 @@ Iterator<Filter<typename I::Item, sizeof(I), alignof(I)>> Iterator<I>::filter(
   // inside the temporary expression. But it would require one heap allocation
   // to use any chain of iterators in a for loop, since temporaies get destroyed
   // after initialing the loop.
-  return {static_cast<decltype(pred)&&>(pred),
-          make_sized_iterator(static_cast<I&&>(*this))};
+  return {::sus::move(pred), make_sized_iterator(static_cast<I&&>(*this))};
 }
 
 }  // namespace sus::iter

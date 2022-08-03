@@ -22,6 +22,7 @@
 #include "macros/remove_parens.h"
 #include "marker/unsafe.h"
 #include "mem/forward.h"
+#include "mem/move.h"
 
 /// Bind a const lambda to storage for its bound arguments. The output can be
 /// used to construct a FnOnce, FnMut, or Fn.
@@ -259,7 +260,7 @@ struct CheckLambdaConst<false> final {
                 "sus_bind() can only bind to variable names (lvalues).");
 
 #define _sus__bind_noop(x) x
-#define _sus__bind_move(x) static_cast<decltype(x)&&>(x)
+#define _sus__bind_move(x) ::sus::move(x)
 #define _sus__bind_pointer(x) \
   ::sus::fn::__private::UnsafePointer(::sus::marker::unsafe_fn, x)
 #define _sus__macro(x, ...) x(__VA_ARGS__)

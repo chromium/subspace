@@ -22,6 +22,7 @@
 #include "assertions/check.h"
 #include "construct/make_default.h"
 #include "marker/unsafe.h"
+#include "mem/move.h"
 #include "mem/relocate.h"
 
 namespace sus::containers {
@@ -68,7 +69,7 @@ class Array final {
 
   template <class InitializerFn>
   constexpr static Array with_initializer(InitializerFn f) noexcept {
-    return Array(kWithInitializer, static_cast<decltype(f)&&>(f),
+    return Array(kWithInitializer, ::sus::move(f),
                  std::make_index_sequence<N>());
   }
 

@@ -18,13 +18,14 @@
 #include "iter/iterator_defn.h"
 #include "iter/sized_iterator.h"
 #include "mem/__private/relocatable_storage.h"
+#include "mem/move.h"
 #include "mem/relocate.h"
 
 namespace sus::iter {
 
 using ::sus::iter::IteratorBase;
-using ::sus::mem::__private::RelocatableStorage;
 using ::sus::mem::relocate_one_by_memcpy;
+using ::sus::mem::__private::RelocatableStorage;
 
 template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter : public IteratorBase<Item> {
@@ -57,9 +58,8 @@ class Filter : public IteratorBase<Item> {
 
  protected:
   Filter(Pred&& pred, InnerSizedIter&& next_iter)
-      : data_(Option<Data>::some(Data{
-            .pred_ = static_cast<decltype(pred)&&>(pred),
-            .next_iter_ = static_cast<decltype(next_iter)&&>(next_iter)})) {}
+      : data_(Option<Data>::some(Data{.pred_ = ::sus::move(pred),
+                                      .next_iter_ = ::sus::move(next_iter)})) {}
 
  private:
   RelocatableStorage<Data> data_;

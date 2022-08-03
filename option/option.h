@@ -297,7 +297,7 @@ class Option final {
   /// auto x = Option<int>::some(2);
   /// switch (x) {
   ///  case Some:
-  ///   return static_cast<decltype(x)&&>(x).unwrap_unchecked(unsafe_fn);
+  ///   return sus::move(x).unwrap_unchecked(unsafe_fn);
   ///  case None:
   ///   return -1;
   /// }
@@ -768,7 +768,7 @@ class Option<T&> final {
   /// auto x = Option<int>::some(2);
   /// switch (x) {
   ///  case Some:
-  ///   return static_cast<decltype(x)&&>(x).unwrap_unchecked(unsafe_fn);
+  ///   return sus::move(x).unwrap_unchecked(unsafe_fn);
   ///  case None:
   ///   return -1;
   /// }

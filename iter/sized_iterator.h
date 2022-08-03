@@ -41,7 +41,7 @@ struct SizedIterator final {
   void (*destroy)(char& sized);
 };
 
-template <class IteratorSubclass, int&...,
+template <::sus::mem::Moveable IteratorSubclass, int&...,
           class SubclassItem = typename IteratorSubclass::Item,
           class SizedIteratorType =
               SizedIterator<SubclassItem, sizeof(IteratorSubclass),
@@ -51,12 +51,11 @@ inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
   requires(
       std::is_convertible_v<IteratorSubclass&, IteratorBase<SubclassItem>&>)
 {
-  static_assert(
-      ::sus::mem::relocate_one_by_memcpy<IteratorSubclass>);
+  static_assert(::sus::mem::relocate_one_by_memcpy<IteratorSubclass>);
   auto it = SizedIteratorType([](char& sized) {
     reinterpret_cast<IteratorSubclass&>(sized).~IteratorSubclass();
   });
-  new (it.sized) IteratorSubclass(static_cast<decltype(subclass)&&>(subclass));
+  new (it.sized) IteratorSubclass(::sus::move(subclass));
   return it;
 }
 
