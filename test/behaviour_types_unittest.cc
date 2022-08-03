@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "concepts/make_default.h"
-#include "mem/__private/relocate.h"
+#include "construct/make_default.h"
+#include "mem/relocate.h"
 #include "test/behaviour_types.h"
 
-using sus::concepts::MakeDefault;
-using sus::mem::__private::relocate_array_by_memcpy_v;
-using sus::mem::__private::relocate_one_by_memcpy_v;
+using sus::construct::MakeDefault;
+using sus::mem::relocate_array_by_memcpy;
+using sus::mem::relocate_one_by_memcpy;
 
 namespace default_constructible {
 using T = sus::test::DefaultConstructible;
@@ -46,9 +46,9 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(MakeDefault<T>::has_concept, "");
-static_assert(relocate_one_by_memcpy_v<T>, "");
-static_assert(relocate_array_by_memcpy_v<T>, "");
+static_assert(MakeDefault<T>, "");
+static_assert(relocate_one_by_memcpy<T>, "");
+static_assert(relocate_array_by_memcpy<T>, "");
 }  // namespace default_constructible
 
 namespace not_default_constructible {
@@ -77,9 +77,9 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(!MakeDefault<T>::has_concept, "");
-static_assert(relocate_one_by_memcpy_v<T>, "");
-static_assert(relocate_array_by_memcpy_v<T>, "");
+static_assert(!MakeDefault<T>, "");
+static_assert(relocate_one_by_memcpy<T>, "");
+static_assert(relocate_array_by_memcpy<T>, "");
 }  // namespace not_default_constructible
 
 namespace with_default_constructible {
@@ -108,9 +108,9 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(MakeDefault<T>::has_concept, "");
-static_assert(relocate_one_by_memcpy_v<T>, "");
-static_assert(relocate_array_by_memcpy_v<T>, "");
+static_assert(MakeDefault<T>, "");
+static_assert(relocate_one_by_memcpy<T>, "");
+static_assert(relocate_array_by_memcpy<T>, "");
 }  // namespace with_default_constructible
 
 namespace trivially_copyable {
@@ -138,9 +138,9 @@ static_assert(std::is_assignable_v<T, const From&>, "");
 static_assert(!std::is_constructible_v<T, From>, "");
 static_assert(!std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(!MakeDefault<T>::has_concept, "");
-static_assert(!relocate_one_by_memcpy_v<T>, "");
-static_assert(!relocate_array_by_memcpy_v<T>, "");
+static_assert(!MakeDefault<T>, "");
+static_assert(!relocate_one_by_memcpy<T>, "");
+static_assert(!relocate_array_by_memcpy<T>, "");
 }  // namespace trivially_copyable
 
 namespace trivially_moveable_and_relocatable {
@@ -169,9 +169,9 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(!MakeDefault<T>::has_concept, "");
-static_assert(relocate_one_by_memcpy_v<T>, "");
-static_assert(relocate_array_by_memcpy_v<T>, "");
+static_assert(!MakeDefault<T>, "");
+static_assert(relocate_one_by_memcpy<T>, "");
+static_assert(relocate_array_by_memcpy<T>, "");
 }  // namespace trivially_moveable_and_relocatable
 
 namespace trivially_copyable_not_destructible {
@@ -200,9 +200,9 @@ static_assert(!std::is_constructible_v<T, From>, "");
 static_assert(!std::is_trivially_constructible_v<T, From>, "");
 static_assert(!std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(!MakeDefault<T>::has_concept, "");
-static_assert(!relocate_one_by_memcpy_v<T>, "");
-static_assert(!relocate_array_by_memcpy_v<T>, "");
+static_assert(!MakeDefault<T>, "");
+static_assert(!relocate_one_by_memcpy<T>, "");
+static_assert(!relocate_array_by_memcpy<T>, "");
 }  // namespace trivially_copyable_not_destructible
 
 namespace trivially_moveable_not_destructible {
@@ -231,9 +231,9 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(!std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(!MakeDefault<T>::has_concept, "");
-static_assert(!relocate_one_by_memcpy_v<T>, "");
-static_assert(!relocate_array_by_memcpy_v<T>, "");
+static_assert(!MakeDefault<T>, "");
+static_assert(!relocate_one_by_memcpy<T>, "");
+static_assert(!relocate_array_by_memcpy<T>, "");
 }  // namespace trivially_moveable_not_destructible
 
 namespace not_trivially_relocatable_copyable_or_moveable {
@@ -262,9 +262,9 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(!std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(!MakeDefault<T>::has_concept, "");
-static_assert(!relocate_one_by_memcpy_v<T>, "");
-static_assert(!relocate_array_by_memcpy_v<T>, "");
+static_assert(!MakeDefault<T>, "");
+static_assert(!relocate_one_by_memcpy<T>, "");
+static_assert(!relocate_array_by_memcpy<T>, "");
 }  // namespace not_trivially_relocatable_copyable_or_moveable
 
 namespace trivial_abi_relocatable {
@@ -293,7 +293,7 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(!std::is_trivially_constructible_v<T, From>, "");
 static_assert(!std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(!MakeDefault<T>::has_concept, "");
-static_assert(relocate_one_by_memcpy_v<T>, "");
-static_assert(relocate_array_by_memcpy_v<T>, "");
+static_assert(!MakeDefault<T>, "");
+static_assert(relocate_one_by_memcpy<T>, "");
+static_assert(relocate_array_by_memcpy<T>, "");
 }  // namespace trivial_abi_relocatable

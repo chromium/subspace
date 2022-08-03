@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-#include "concepts/callable.h"
+#include "fn/callable.h"
 #include "fn/fn_defn.h"
 #include "macros/for_each.h"
 #include "macros/remove_parens.h"
@@ -63,7 +63,7 @@
                       _sus__unpack names)]<class... Args>(Args&&... args) {   \
           const auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                   \
           const bool is_const =                                               \
-              ::sus::concepts::callable::LambdaConst<decltype(x)>;            \
+              ::sus::fn::callable::LambdaConst<decltype(x)>;            \
           if constexpr (!is_const) {                                          \
             return ::sus::fn::__private::CheckLambdaConst<                    \
                 is_const>::template error<void>();                            \

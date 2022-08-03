@@ -17,9 +17,9 @@
 #include <concepts>
 #include <type_traits>
 
-#include "concepts/from.h"
+#include "construct/from.h"
 
-namespace sus::concepts::into {
+namespace sus::construct {
 
 namespace __private {
 template <class FromType>
@@ -27,7 +27,7 @@ struct IntoRef final {
   [[nodiscard]] constexpr IntoRef(FromType&& from) noexcept
       : from_(static_cast<FromType&&>(from)) {}
 
-  template <::sus::concepts::from::From<FromType> ToType>
+  template <::sus::construct::From<FromType> ToType>
   constexpr operator ToType() && noexcept {
     return ToType::from(static_cast<FromType&&>(from_));
   }
@@ -43,7 +43,7 @@ struct IntoRef final {
 }  // namespace __private
 
 template <class FromType, class ToType>
-concept Into = ::sus::concepts::from::From<ToType, FromType>;
+concept Into = ::sus::construct::From<ToType, FromType>;
 
 template <class FromType>
   requires(std::is_rvalue_reference_v<FromType &&>)
@@ -67,10 +67,10 @@ constexpr inline auto move_into(FromType&& from) noexcept {
       static_cast<std::remove_cv_t<std::remove_reference_t<FromType>>&&>(from));
 }
 
-}  // namespace sus::concepts::into
+}  // namespace sus::convert
 
 // Promote Into and its helper methods into the `sus` namespace.
 namespace sus {
-using ::sus::concepts::into::into;
-using ::sus::concepts::into::move_into;
+using ::sus::construct::into;
+using ::sus::construct::move_into;
 }  // namespace sus

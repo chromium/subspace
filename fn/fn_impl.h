@@ -23,7 +23,7 @@
 namespace sus::fn {
 
 template <class R, class... CallArgs>
-template <::sus::concepts::callable::FunctionPointerReturns<R, CallArgs...> F>
+template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
 FnOnce<R(CallArgs...)>::FnOnce(F ptr) noexcept
     : fn_ptr_(ptr), type_(__private::FnPointer) {
   ::sus::check(ptr != nullptr);
@@ -31,7 +31,7 @@ FnOnce<R(CallArgs...)>::FnOnce(F ptr) noexcept
 
 template <class R, class... CallArgs>
 template <class ConstructionType,
-          ::sus::concepts::callable::LambdaReturns<R, CallArgs...> F>
+          ::sus::fn::callable::LambdaReturns<R, CallArgs...> F>
 FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction,
                                F&& lambda) noexcept
     : type_(__private::Storage) {

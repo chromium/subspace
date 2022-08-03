@@ -17,7 +17,7 @@
 #include <type_traits>
 
 #include "marker/unsafe.h"
-#include "mem/__private/relocate.h"
+#include "mem/relocate.h"
 #include "mem/addressof.h"
 #include "mem/mref.h"
 

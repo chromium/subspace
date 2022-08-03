@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "concepts/into.h"
+#include "construct/into.h"
 
 #include "mem/forward.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
-using sus::concepts::from::From;
-using sus::concepts::into::Into;
-using sus::concepts::into::__private::IntoRef;
+using sus::construct::From;
+using sus::construct::Into;
+using sus::construct::__private::IntoRef;
 
 namespace {
 

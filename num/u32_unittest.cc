@@ -14,9 +14,9 @@
 
 #include <type_traits>
 
-#include "concepts/into.h"
-#include "concepts/make_default.h"
-#include "mem/__private/relocate.h"
+#include "construct/into.h"
+#include "construct/make_default.h"
+#include "mem/relocate.h"
 #include "num/num_concepts.h"
 #include "num/types.h"
 #include "option/option.h"
@@ -59,9 +59,9 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(!std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(sus::concepts::MakeDefault<T>::has_concept, "");
-static_assert(sus::mem::__private::relocate_one_by_memcpy_v<T>, "");
-static_assert(sus::mem::__private::relocate_array_by_memcpy_v<T>, "");
+static_assert(sus::construct::MakeDefault<T>, "");
+static_assert(sus::mem::relocate_one_by_memcpy<T>, "");
+static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 }  // namespace behaviour
 
 // u32::MAX()
@@ -163,16 +163,16 @@ TEST(u32, Constants) {
 }
 
 TEST(u32, From) {
-  static_assert(sus::concepts::from::From<u32, char>);
-  static_assert(sus::concepts::from::From<u32, size_t>);
-  static_assert(sus::concepts::from::From<u32, int8_t>);
-  static_assert(sus::concepts::from::From<u32, int16_t>);
-  static_assert(sus::concepts::from::From<u32, int32_t>);
-  static_assert(sus::concepts::from::From<u32, int64_t>);
-  static_assert(sus::concepts::from::From<u32, uint8_t>);
-  static_assert(sus::concepts::from::From<u32, uint16_t>);
-  static_assert(sus::concepts::from::From<u32, uint32_t>);
-  static_assert(sus::concepts::from::From<u32, uint64_t>);
+  static_assert(sus::construct::From<u32, char>);
+  static_assert(sus::construct::From<u32, size_t>);
+  static_assert(sus::construct::From<u32, int8_t>);
+  static_assert(sus::construct::From<u32, int16_t>);
+  static_assert(sus::construct::From<u32, int32_t>);
+  static_assert(sus::construct::From<u32, int64_t>);
+  static_assert(sus::construct::From<u32, uint8_t>);
+  static_assert(sus::construct::From<u32, uint16_t>);
+  static_assert(sus::construct::From<u32, uint32_t>);
+  static_assert(sus::construct::From<u32, uint64_t>);
 
   EXPECT_EQ(u32::from(char{2}), 2_u32);
   EXPECT_EQ(u32::from(size_t{2}), 2_u32);
@@ -185,16 +185,16 @@ TEST(u32, From) {
   EXPECT_EQ(u32::from(uint32_t{2}), 2_u32);
   EXPECT_EQ(u32::from(uint64_t{2}), 2_u32);
 
-  static_assert(sus::concepts::from::From<u32, i8>);
-  static_assert(sus::concepts::from::From<u32, i16>);
-  static_assert(sus::concepts::from::From<u32, i32>);
-  static_assert(sus::concepts::from::From<u32, i64>);
-  static_assert(sus::concepts::from::From<u32, isize>);
-  static_assert(sus::concepts::from::From<u32, u8>);
-  static_assert(sus::concepts::from::From<u32, u16>);
-  static_assert(sus::concepts::from::From<u32, u32>);
-  static_assert(sus::concepts::from::From<u32, u64>);
-  static_assert(sus::concepts::from::From<u32, usize>);
+  static_assert(sus::construct::From<u32, i8>);
+  static_assert(sus::construct::From<u32, i16>);
+  static_assert(sus::construct::From<u32, i32>);
+  static_assert(sus::construct::From<u32, i64>);
+  static_assert(sus::construct::From<u32, isize>);
+  static_assert(sus::construct::From<u32, u8>);
+  static_assert(sus::construct::From<u32, u16>);
+  static_assert(sus::construct::From<u32, u32>);
+  static_assert(sus::construct::From<u32, u64>);
+  static_assert(sus::construct::From<u32, usize>);
 
   EXPECT_EQ(u32::from(2_i8), 2_u32);
   EXPECT_EQ(u32::from(2_i16), 2_u32);

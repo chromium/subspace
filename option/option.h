@@ -32,7 +32,7 @@
 #include "assertions/check.h"
 #include "assertions/nonnull.h"
 #include "assertions/unreachable.h"
-#include "concepts/make_default.h"
+#include "construct/make_default.h"
 #include "marker/unsafe.h"
 #include "mem/mref.h"
 #include "mem/replace.h"
@@ -164,9 +164,9 @@ class Option final {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   static inline constexpr Option<T> with_default() noexcept
-    requires(::sus::concepts::MakeDefault<T>::has_concept)
+    requires(::sus::construct::MakeDefault<T>)
   {
-    return Option<T>(::sus::concepts::MakeDefault<T>::make_default());
+    return Option<T>(::sus::construct::make_default<T>());
   }
 
   /// If T can be trivially destroyed, we don't need to explicitly destroy it,
@@ -417,12 +417,12 @@ class Option final {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   constexpr T unwrap_or_default() && noexcept
-    requires(::sus::concepts::MakeDefault<T>::has_concept)
+    requires(::sus::construct::MakeDefault<T>)
   {
     if (t_.set_state(None) == Some)
       return ::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_));
     else
-      return ::sus::concepts::MakeDefault<T>::make_default();
+      return ::sus::construct::make_default<T>();
   }
 
   /// Stores the value `t` inside this Option, replacing any previous value, and
@@ -459,10 +459,10 @@ class Option final {
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
   constexpr T& get_or_insert_default() & noexcept
-    requires(::sus::concepts::MakeDefault<T>::has_concept)
+    requires(::sus::construct::MakeDefault<T>)
   {
     if (t_.set_state(Some) == None)
-      new (&t_.val_) T(::sus::concepts::MakeDefault<T>::make_default());
+      new (&t_.val_) T(::sus::construct::make_default<T>());
     return t_.val_;
   }
 

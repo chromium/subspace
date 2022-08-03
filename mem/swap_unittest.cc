@@ -17,7 +17,7 @@
 #include <type_traits>
 
 #include "assertions/builtin.h"
-#include "mem/__private/relocate.h"
+#include "mem/relocate.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace sus::mem {
@@ -25,7 +25,7 @@ namespace {
 
 TEST(Swap, ConstexprTrivialRelocate) {
   using T = int;
-  static_assert(__private::relocate_one_by_memcpy_v<T>, "");
+  static_assert(relocate_one_by_memcpy<T>, "");
 
   auto i = []() constexpr {
     T i(2);
@@ -54,7 +54,7 @@ TEST(Swap, ConstexprTrivialAbi) {
   // This means `S` is only "trivially relocatable" if achieved through
   // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(__private::relocate_one_by_memcpy_v<S> ==
+  static_assert(relocate_one_by_memcpy<S> ==
                     __has_extension(trivially_relocatable),
                 "");
 
@@ -85,7 +85,7 @@ TEST(Swap, ConstexprNonTrivial) {
     int num;
     int moves = 0;
   };
-  static_assert(!__private::relocate_one_by_memcpy_v<S>, "");
+  static_assert(!relocate_one_by_memcpy<S>, "");
 
   auto i = []() constexpr {
     S i(2);
@@ -108,7 +108,7 @@ TEST(Swap, ConstexprNonTrivial) {
 
 TEST(Swap, TrivialRelocate) {
   using T = int;
-  static_assert(__private::relocate_one_by_memcpy_v<T>, "");
+  static_assert(relocate_one_by_memcpy<T>, "");
 
   T i(2);
   T j(5);
@@ -131,7 +131,7 @@ TEST(Swap, TrivialAbi) {
   // This means `S` is only "trivially relocatable" if achieved through
   // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(__private::relocate_one_by_memcpy_v<S> ==
+  static_assert(relocate_one_by_memcpy<S> ==
                     __has_extension(trivially_relocatable),
                 "");
 
@@ -160,7 +160,7 @@ TEST(Swap, NonTrivial) {
     int num;
     int moves = 0;
   };
-  static_assert(!__private::relocate_one_by_memcpy_v<S>, "");
+  static_assert(!relocate_one_by_memcpy<S>, "");
 
   S i(2);
   S j(5);

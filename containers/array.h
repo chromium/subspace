@@ -20,9 +20,9 @@
 #include <utility>  // TODO: replace std::make_index_sequence.
 
 #include "assertions/check.h"
-#include "concepts/make_default.h"
+#include "construct/make_default.h"
 #include "marker/unsafe.h"
-#include "mem/__private/relocate.h"
+#include "mem/relocate.h"
 
 namespace sus::containers {
 
@@ -51,12 +51,12 @@ template <class T, size_t N>
 class Array final {
  public:
   constexpr static Array with_default() noexcept
-    requires(::sus::concepts::MakeDefault<T>::has_concept)
+    requires(::sus::construct::MakeDefault<T>)
   {
     auto a = Array(kWithUninitialized);
     if constexpr (N > 0) {
       for (size_t i = 0; i < N; ++i)
-        a.storage_.data_[i] = ::sus::concepts::MakeDefault<T>::make_default();
+        a.storage_.data_[i] = ::sus::construct::make_default<T>();
     }
     return a;
   }
@@ -128,7 +128,7 @@ class Array final {
   };
 
   sus_class_trivial_relocatable_value(
-      unsafe_fn, ::sus::mem::__private::relocate_array_by_memcpy_v<T>);
+      unsafe_fn, ::sus::mem::relocate_array_by_memcpy<T>);
 };
 
 }  // namespace sus::containers

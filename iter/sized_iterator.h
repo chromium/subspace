@@ -15,7 +15,7 @@
 #pragma once
 
 #include "iter/iterator_defn.h"
-#include "mem/__private/relocate.h"
+#include "mem/relocate.h"
 
 namespace sus::iter {
 
@@ -52,7 +52,7 @@ inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
       std::is_convertible_v<IteratorSubclass&, IteratorBase<SubclassItem>&>)
 {
   static_assert(
-      ::sus::mem::__private::relocate_one_by_memcpy_v<IteratorSubclass>);
+      ::sus::mem::relocate_one_by_memcpy<IteratorSubclass>);
   auto it = SizedIteratorType([](char& sized) {
     reinterpret_cast<IteratorSubclass&>(sized).~IteratorSubclass();
   });

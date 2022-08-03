@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-#include "mem/__private/relocate.h"
+#include "mem/relocate.h"
 
 namespace sus::test {
 
