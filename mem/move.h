@@ -20,16 +20,36 @@
 
 namespace sus::mem {
 
+/// Verify that an object of type `T`, or referred to by `T` if it's a
+/// reference, is non-const.
 template <class T>
-concept Moveable = (!std::is_const_v<std::remove_reference_t<T>> &&
-                    std::is_move_constructible_v<T>);
+concept NonConstObject = (!std::is_const_v<std::remove_reference_t<T>>);
 
+/// Verify that `T` can be moved with `sus::move()` to construct another `T`.
+///
+/// This is similar to `std::is_move_constructible`, however it requires that
+/// `T` is non-const. Otherwise, a copy would occur and `sus::move()` will fail
+/// to compile.
 template <class T>
-concept MoveableForAssign = (!std::is_const_v<std::remove_reference_t<T>> &&
-                             std::is_move_assignable_v<T>);
+concept Moveable = (NonConstObject<T> && std::is_move_constructible_v<T>);
 
+/// Verify that `T` can be moved with `sus::move()` to assign to another `T`.
+///
+/// This is similar to `std::is_move_assignable`, however it requires that
+/// `T` is non-const. Otherwise, a copy would occur and `sus::move()` will fail
+/// to compile.
 template <class T>
-  requires(!std::is_const_v<std::remove_reference_t<T>>)
+concept MoveableForAssign = (NonConstObject<T> && std::is_move_assignable_v<T>);
+
+/// Cast `t` to an r-value reference so that it can be used to construct or be
+/// assigned to another `T`.
+///
+/// `move()` requires that `t` can be moved from, so it requires that `t` is
+/// non-const.
+///
+/// The `move()` call itself does nothing to `t`, as it is just a cast, similar
+/// to `std::move()`. It enables an lvalue object to be used as an rvalue.
+template <NonConstObject T>
 sus_always_inline constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
   return static_cast<typename std::remove_reference_t<T>&&>(t);
 }
