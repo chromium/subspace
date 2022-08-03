@@ -649,7 +649,8 @@ sus_always_inline
     return OverflowOut{
         .overflow = overflow,
         .value = mul_negative
-                     ? unchecked_sub(unchecked_neg(static_cast<T>(mul_val - 1)), T{1})
+                     ? unchecked_sub(unchecked_neg(static_cast<T>(mul_val - 1)),
+                                     T{1})
                      : static_cast<T>(mul_val)};
   } else {
     // For MSVC, use _mul128, but what about constexpr?? If we can't do
@@ -953,6 +954,36 @@ constexpr T rem_euclid(::sus::marker::UnsafeFnMarker, T x, T y) noexcept {
   } else {
     return r;
   }
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) == 4)
+constexpr uint32_t exponent(T x) noexcept {
+  constexpr uint32_t mask = 0b01111111100000000000000000000000;
+  return static_cast<uint32_t>((x & mask) >> 23);
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) == 4)
+constexpr uint32_t mantissa(T x) noexcept {
+  constexpr uint32_t mask = 0b00000000011111111111111111111111;
+  return static_cast<uint32_t>(x & mask);
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) == 8)
+constexpr uint32_t exponent(T x) noexcept {
+  constexpr uint64_t mask =
+      0b0111111111110000000000000000000000000000000000000000000000000000;
+  return static_cast<uint32_t>((x & mask) >> 52);
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) == 8)
+constexpr uint64_t mantissa(T x) noexcept {
+  constexpr uint64_t mask =
+      0b0000000000001111111111111111111111111111111111111111111111111111;
+  return static_cast<uint64_t>(x & mask);
 }
 
 }  // namespace sus::num::__private
