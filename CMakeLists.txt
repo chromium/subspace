@@ -110,6 +110,7 @@ add_executable(subspace_unittests
     "mem/replace_unittest.cc"
     "mem/swap_unittest.cc"
     "mem/take_unittest.cc"
+    "num/__private/literals_unittest.cc"
     "num/i8_unittest.cc"
     "num/i16_unittest.cc"
     "num/i32_unittest.cc"
