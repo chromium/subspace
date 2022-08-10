@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <math.h>  // TODO: Remove this and define nans ourselves.
 #include <stddef.h>
 #include <stdint.h>
 
@@ -160,6 +161,129 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
 sus_always_inline constexpr T min_value() noexcept {
   return -max_value<T>() - T{1};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T epsilon() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return 1.1920929E-7f;
+  else
+    return 2.2204460492503131E-16;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T max_value() noexcept {
+  if constexpr (sizeof(T) == sizeof(float)) {
+    return 3.40282346639e+38f;
+  } else
+    return 1.7976931348623157E+308;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T min_value() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return -3.40282346639e+38f;
+  else
+    return -1.7976931348623157E+308;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T min_positive_value() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return 1.17549435E-38f;
+  else
+    return 0.22250738585072014E-307;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr int32_t min_exp() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return int32_t{-125};
+  else
+    return int32_t{-1021};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr int32_t max_exp() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return int32_t{128};
+  else
+    return int32_t{1024};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr int32_t min_10_exp() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return int32_t{-37};
+  else
+    return int32_t{-307};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr int32_t max_10_exp() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return int32_t{38};
+  else
+    return int32_t{308};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr uint32_t radix() noexcept {
+  return 2;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr uint32_t num_mantissa_digits() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return uint32_t{24};
+  else
+    return uint32_t{53};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr uint32_t num_digits() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return 6;
+  else
+    return 15;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T nan() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return ::nanf("");
+  else
+    return ::nan("");
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T infinity() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return INFINITY;
+  else
+    return double{INFINITY};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T negative_infinity() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return -INFINITY;
+  else
+    return double{-INFINITY};
 }
 
 template <class T>

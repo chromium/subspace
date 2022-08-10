@@ -16,7 +16,8 @@
 
 #include "construct/into.h"
 #include "num/num_concepts.h"
-#include "num/types.h"
+#include "num/signed_integer.h"
+#include "num/unsigned_integer.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {

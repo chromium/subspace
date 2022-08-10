@@ -14,32 +14,17 @@
 
 #pragma once
 
-#include <float.h>
-
+#include "num/__private/float_macros.h"
 #include "num/__private/literals.h"
 
 namespace sus::num {
 
 struct f32 final {
-    static constexpr float MIN_PRIMITIVE = FLT_MIN;
-    static constexpr float MAX_PRIMITIVE = FLT_MAX;
-
-    constexpr inline f32 operator-() const {
-        return f32(-primitive_value);
-    }
-
-    float primitive_value;
+  _sus__float(f32, float)
 };
 
 struct f64 final {
-    static constexpr double MIN_PRIMITIVE = DBL_MIN;
-    static constexpr double MAX_PRIMITIVE = DBL_MAX;
-
-    constexpr inline f64 operator-() const {
-        return f64(-primitive_value);
-    }
-
-    double primitive_value;
+  _sus__float(f64, double)
 };
 
 }  // namespace sus::num
