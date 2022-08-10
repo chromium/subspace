@@ -87,14 +87,12 @@ struct u8;
                                                                                \
   /** Construction from the underlying primitive type.                         \
    */                                                                          \
-  template <class P>                                                           \
-    requires(std::same_as<P, PrimitiveT>) /* Prevent implicit conversions. */  \
+  template <std::same_as<PrimitiveT> P> /* Prevent implicit conversions. */    \
   constexpr inline T(P val) noexcept : primitive_value(val) {}                 \
                                                                                \
   /** Assignment from the underlying primitive type.                           \
    */                                                                          \
-  template <class P>                                                           \
-    requires(std::same_as<P, PrimitiveT>) /* Prevent implicit conversions. */  \
+  template <std::same_as<PrimitiveT> P> /* Prevent implicit conversions. */    \
   constexpr inline void operator=(P v) noexcept {                              \
     primitive_value = v;                                                       \
   }                                                                            \
