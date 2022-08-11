@@ -204,7 +204,7 @@
 #define _sus__signed_binary_logic_ops(T, PrimitiveT)                        \
   /** sus::concepts::Add<##T##> trait. */                                   \
   friend constexpr inline T operator+(const T& l, const T& r) noexcept {    \
-    auto out =                                                              \
+    const auto out =                                                        \
         __private::add_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(!out.overflow);                                            \
@@ -212,7 +212,7 @@
   }                                                                         \
   /** sus::concepts::Sub<##T##> trait. */                                   \
   friend constexpr inline T operator-(const T& l, const T& r) noexcept {    \
-    auto out =                                                              \
+    const auto out =                                                        \
         __private::sub_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(!out.overflow);                                            \
@@ -220,7 +220,7 @@
   }                                                                         \
   /** sus::concepts::Mul<##T##> trait. */                                   \
   friend constexpr inline T operator*(const T& l, const T& r) noexcept {    \
-    auto out =                                                              \
+    const auto out =                                                        \
         __private::mul_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(!out.overflow);                                            \
@@ -278,7 +278,7 @@
 #define _sus__signed_mutable_logic_ops(T)                                      \
   /** sus::concepts::AddAssign<##T##> trait. */                                \
   constexpr inline void operator+=(T r)& noexcept {                            \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::add_with_overflow(primitive_value, r.primitive_value);      \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(!out.overflow);                                               \
@@ -286,7 +286,7 @@
   }                                                                            \
   /** sus::concepts::SubAssign<##T##> trait. */                                \
   constexpr inline void operator-=(T r)& noexcept {                            \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::sub_with_overflow(primitive_value, r.primitive_value);      \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(!out.overflow);                                               \
@@ -294,7 +294,7 @@
   }                                                                            \
   /** sus::concepts::MulAssign<##T##> trait. */                                \
   constexpr inline void operator*=(T r)& noexcept {                            \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, r.primitive_value);      \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(!out.overflow);                                               \
@@ -624,7 +624,7 @@
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_mul(const T& rhs) const& noexcept {              \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
       return Option<T>::some(out.value);                                       \
@@ -639,9 +639,9 @@
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_mul(const T& rhs) const& noexcept {     \
-    auto r =                                                                   \
+    const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple<T, bool>::with(out.value, out.overflow);                      \
   }                                                                            \
                                                                                \
   /** Saturating integer multiplication. Computes self * rhs, saturating at    \
@@ -941,7 +941,7 @@
    * larger than or equal to the number of bits in self.                       \
    */                                                                          \
   constexpr Option<T> checked_shl(const u32& rhs) const& noexcept {            \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::shl_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
       return Option<T>::some(out.value);                                       \
@@ -958,9 +958,9 @@
    * shift.                                                                    \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_shl(const u32& rhs) const& noexcept {   \
-    auto r =                                                                   \
+    const auto out =                                                           \
         __private::shl_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple<T, bool>::with(out.value, out.overflow);                      \
   }                                                                            \
                                                                                \
   /** Panic-free bitwise shift-left; yields `*this << mask(rhs)`, where mask   \
@@ -982,7 +982,7 @@
    * larger than or equal to the number of bits in self.                       \
    */                                                                          \
   constexpr Option<T> checked_shr(const u32& rhs) const& noexcept {            \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::shr_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
       return Option<T>::some(out.value);                                       \
@@ -999,9 +999,9 @@
    * shift.                                                                    \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_shr(const u32& rhs) const& noexcept {   \
-    auto r =                                                                   \
+    const auto out =                                                           \
         __private::shr_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple<T, bool>::with(out.value, out.overflow);                      \
   }                                                                            \
                                                                                \
   /** Panic-free bitwise shift-right; yields `*this >> mask(rhs)`, where mask  \
@@ -1025,7 +1025,7 @@
    * overflow occurred.                                                       \
    */                                                                         \
   constexpr Option<T> checked_sub(const T& rhs) const& {                      \
-    auto out =                                                                \
+    const auto out =                                                          \
         __private::sub_with_overflow(primitive_value, rhs.primitive_value);   \
     if (!out.overflow) [[likely]]                                             \
       return Option<T>::some(out.value);                                      \
@@ -1037,8 +1037,8 @@
    * returning None if overflow occurred.                                     \
    */                                                                         \
   constexpr Option<T> checked_sub_unsigned(const UnsignedT& rhs) const& {     \
-    auto out = __private::sub_with_overflow_unsigned(primitive_value,         \
-                                                     rhs.primitive_value);    \
+    const auto out = __private::sub_with_overflow_unsigned(                   \
+        primitive_value, rhs.primitive_value);                                \
     if (!out.overflow) [[likely]]                                             \
       return Option<T>::some(out.value);                                      \
     else                                                                      \
@@ -1052,9 +1052,9 @@
    * occurred then the wrapped value is returned.                             \
    */                                                                         \
   constexpr Tuple<T, bool> overflowing_sub(const T& rhs) const& noexcept {    \
-    auto r =                                                                  \
+    const auto out =                                                          \
         __private::sub_with_overflow(primitive_value, rhs.primitive_value);   \
-    return Tuple<T, bool>::with(r.value, r.overflow);                         \
+    return Tuple<T, bool>::with(out.value, out.overflow);                     \
   }                                                                           \
                                                                               \
   /** Calculates self - rhs with an unsigned rhs.                             \
@@ -1065,9 +1065,9 @@
    */                                                                         \
   constexpr Tuple<T, bool> overflowing_sub_unsigned(const UnsignedT& rhs)     \
       const& noexcept {                                                       \
-    auto r = __private::sub_with_overflow_unsigned(primitive_value,           \
-                                                   rhs.primitive_value);      \
-    return Tuple<T, bool>::with(r.value, r.overflow);                         \
+    const auto out = __private::sub_with_overflow_unsigned(                   \
+        primitive_value, rhs.primitive_value);                                \
+    return Tuple<T, bool>::with(out.value, out.overflow);                     \
   }                                                                           \
                                                                               \
   /** Saturating integer subtraction. Computes self - rhs, saturating at the  \
@@ -1081,10 +1081,10 @@
    * rhs, saturating at the numeric bounds instead of overflowing.            \
    */                                                                         \
   constexpr T saturating_sub_unsigned(const UnsignedT& rhs) const& {          \
-    auto r = __private::sub_with_overflow_unsigned(primitive_value,           \
-                                                   rhs.primitive_value);      \
-    if (!r.overflow) [[likely]]                                               \
-      return r.value;                                                         \
+    const auto out = __private::sub_with_overflow_unsigned(                   \
+        primitive_value, rhs.primitive_value);                                \
+    if (!out.overflow) [[likely]]                                             \
+      return out.value;                                                       \
     else                                                                      \
       return MIN();                                                           \
   }                                                                           \
@@ -1199,7 +1199,7 @@
 #define _sus__signed_pow(T)                                                    \
   /**  Raises self to the power of `exp`, using exponentiation by squaring. */ \
   constexpr inline T pow(const u32& rhs) const& noexcept {                     \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, rhs.primitive_value);    \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(!out.overflow);                                               \
@@ -1210,7 +1210,7 @@
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_pow(const u32& rhs) const& noexcept {            \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, rhs.primitive_value);    \
     /* TODO: Allow opting out of all overflow checks? */                       \
     if (!out.overflow) [[likely]]                                              \
@@ -1225,9 +1225,9 @@
    * whether an overflow happened.                                             \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_pow(const u32& exp) const& noexcept {   \
-    auto r =                                                                   \
+    const auto out =                                                                   \
         __private::pow_with_overflow(primitive_value, exp.primitive_value);    \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple<T, bool>::with(out.value, out.overflow);                          \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping      \
