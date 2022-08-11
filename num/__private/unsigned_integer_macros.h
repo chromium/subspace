@@ -177,7 +177,7 @@ struct u8;
 #define _sus__unsigned_binary_logic_ops(T)                                  \
   /** sus::concepts::Add<##T##> trait. */                                   \
   friend constexpr inline T operator+(const T& l, const T& r) noexcept {    \
-    auto out =                                                              \
+    const auto out =                                                        \
         __private::add_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(!out.overflow);                                            \
@@ -185,7 +185,7 @@ struct u8;
   }                                                                         \
   /** sus::concepts::Sub<##T##> trait. */                                   \
   friend constexpr inline T operator-(const T& l, const T& r) noexcept {    \
-    auto out =                                                              \
+    const auto out =                                                        \
         __private::sub_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(!out.overflow);                                            \
@@ -193,7 +193,7 @@ struct u8;
   }                                                                         \
   /** sus::concepts::Mul<##T##> trait. */                                   \
   friend constexpr inline T operator*(const T& l, const T& r) noexcept {    \
-    auto out =                                                              \
+    const auto out =                                                        \
         __private::mul_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(!out.overflow);                                            \
@@ -243,7 +243,7 @@ struct u8;
 #define _sus__unsigned_mutable_logic_ops(T)                               \
   /** sus::concepts::AddAssign<##T##> trait. */                           \
   constexpr inline void operator+=(T r)& noexcept {                       \
-    auto out =                                                            \
+    const auto out =                                                      \
         __private::add_with_overflow(primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                  \
     ::sus::check(!out.overflow);                                          \
@@ -251,7 +251,7 @@ struct u8;
   }                                                                       \
   /** sus::concepts::SubAssign<##T##> trait. */                           \
   constexpr inline void operator-=(T r)& noexcept {                       \
-    auto out =                                                            \
+    const auto out =                                                      \
         __private::sub_with_overflow(primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                  \
     ::sus::check(!out.overflow);                                          \
@@ -259,7 +259,7 @@ struct u8;
   }                                                                       \
   /** sus::concepts::MulAssign<##T##> trait. */                           \
   constexpr inline void operator*=(T r)& noexcept {                       \
-    auto out =                                                            \
+    const auto out =                                                      \
         __private::mul_with_overflow(primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                  \
     ::sus::check(!out.overflow);                                          \
@@ -487,7 +487,7 @@ struct u8;
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_mul(const T& rhs) const& noexcept {              \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
       return Option<T>::some(out.value);                                       \
@@ -502,9 +502,9 @@ struct u8;
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_mul(const T& rhs) const& noexcept {     \
-    auto r =                                                                   \
+    const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple<T, bool>::with(out.value, out.overflow);                      \
   }                                                                            \
                                                                                \
   /** Saturating integer multiplication. Computes self * rhs, saturating at    \
@@ -754,7 +754,7 @@ struct u8;
    * larger than or equal to the number of bits in self.                       \
    */                                                                          \
   constexpr Option<T> checked_shl(const u32& rhs) const& noexcept {            \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::shl_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
       return Option<T>::some(out.value);                                       \
@@ -771,9 +771,9 @@ struct u8;
    * shift.                                                                    \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_shl(const u32& rhs) const& noexcept {   \
-    auto r =                                                                   \
+    const auto out =                                                           \
         __private::shl_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple<T, bool>::with(out.value, out.overflow);                      \
   }                                                                            \
                                                                                \
   /** Panic-free bitwise shift-left; yields `*this << mask(rhs)`, where mask   \
@@ -795,7 +795,7 @@ struct u8;
    * larger than or equal to the number of bits in self.                       \
    */                                                                          \
   constexpr Option<T> checked_shr(const u32& rhs) const& noexcept {            \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::shr_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
       return Option<T>::some(out.value);                                       \
@@ -812,9 +812,9 @@ struct u8;
    * shift.                                                                    \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_shr(const u32& rhs) const& noexcept {   \
-    auto r =                                                                   \
+    const auto out =                                                           \
         __private::shr_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple<T, bool>::with(out.value, out.overflow);                      \
   }                                                                            \
                                                                                \
   /** Panic-free bitwise shift-right; yields `*this >> mask(rhs)`, where mask  \
@@ -838,7 +838,7 @@ struct u8;
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_sub(const T& rhs) const& {                       \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::sub_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
       return Option<T>::some(out.value);                                       \
@@ -853,9 +853,9 @@ struct u8;
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_sub(const T& rhs) const& noexcept {     \
-    auto r =                                                                   \
+    const auto out =                                                           \
         __private::sub_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple<T, bool>::with(out.value, out.overflow);                      \
   }                                                                            \
                                                                                \
   /** Saturating integer subtraction. Computes self - rhs, saturating at the   \
@@ -965,7 +965,7 @@ struct u8;
 #define _sus__unsigned_pow(T)                                                  \
   /**  Raises self to the power of `exp`, using exponentiation by squaring. */ \
   constexpr inline T pow(const u32& rhs) const& noexcept {                     \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, rhs.primitive_value);    \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(!out.overflow);                                               \
@@ -976,7 +976,7 @@ struct u8;
    * overflow occurred.                                                        \
    */                                                                          \
   constexpr Option<T> checked_pow(const u32& rhs) const& noexcept {            \
-    auto out =                                                                 \
+    const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, rhs.primitive_value);    \
     /* TODO: Allow opting out of all overflow checks? */                       \
     if (!out.overflow) [[likely]]                                              \
@@ -991,9 +991,9 @@ struct u8;
    * whether an overflow happened.                                             \
    */                                                                          \
   constexpr Tuple<T, bool> overflowing_pow(const u32& exp) const& noexcept {   \
-    auto r =                                                                   \
+    const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, exp.primitive_value);    \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple<T, bool>::with(out.value, out.overflow);                      \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping      \
