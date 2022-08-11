@@ -60,6 +60,7 @@ add_library(subspace STATIC
     "mem/replace.h"
     "mem/swap.h"
     "mem/take.h"
+    "num/__private/float_consts.h"
     "num/__private/float_macros.h"
     "num/__private/intrinsics.h"
     "num/__private/literals.h"
