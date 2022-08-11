@@ -134,11 +134,14 @@
   }                                                                           \
   static_assert(true)
 
-#define _sus__float(T, PrimitiveT)                                     \
-  _sus__float_storage(PrimitiveT);                                     \
-  _sus__float_constants(T, PrimitiveT);                                \
-  _sus__float_construct(T, PrimitiveT);                                \
-  _sus__float_comparison(T);                                           \
-                                                                       \
-  constexpr inline T operator-() const { return T(-primitive_value); } \
-  static_assert(true);
+#define _sus__float_negate(T) \
+  constexpr inline T operator-() const { return T(-primitive_value); }
+
+#define _sus__float(T, PrimitiveT)      \
+  _sus__float_storage(PrimitiveT);      \
+  _sus__float_constants(T, PrimitiveT); \
+  _sus__float_construct(T, PrimitiveT); \
+  _sus__float_comparison(T);            \
+  _sus__float_negate(T);                \
+                                        \
+  static_assert(true)

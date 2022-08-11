@@ -14,17 +14,20 @@
 
 #pragma once
 
+#include "num/__private/float_consts.h"
 #include "num/__private/float_macros.h"
 #include "num/__private/literals.h"
 
 namespace sus::num {
 
 struct f32 final {
-  _sus__float(f32, float)
+  _sus__float_consts(f32, f);
+  _sus__float(f32, float);
 };
 
 struct f64 final {
-  _sus__float(f64, double)
+  _sus__float_consts(f64, );
+  _sus__float(f64, double);
 };
 
 }  // namespace sus::num
