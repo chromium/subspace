@@ -17,6 +17,55 @@
 #include "num/float.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
+#define F64_NEAR(a, b, c) \
+  EXPECT_NEAR(a.primitive_value, b.primitive_value, c.primitive_value);
+
+namespace {
+
+TEST(f64, Traits) {
+  static_assert(sus::num::Neg<f64>);
+  static_assert(sus::num::Add<f64, f64>);
+  static_assert(sus::num::AddAssign<f64, f64>);
+  static_assert(sus::num::Sub<f64, f64>);
+  static_assert(sus::num::SubAssign<f64, f64>);
+  static_assert(sus::num::Mul<f64, f64>);
+  static_assert(sus::num::MulAssign<f64, f64>);
+  static_assert(sus::num::Div<f64, f64>);
+  static_assert(sus::num::DivAssign<f64, f64>);
+  static_assert(sus::num::Rem<f64, f64>);
+  static_assert(sus::num::RemAssign<f64, f64>);
+  static_assert(!sus::num::BitAnd<f64, f64>);
+  static_assert(!sus::num::BitAndAssign<f64, f64>);
+  static_assert(!sus::num::BitOr<f64, f64>);
+  static_assert(!sus::num::BitOrAssign<f64, f64>);
+  static_assert(!sus::num::BitXor<f64, f64>);
+  static_assert(!sus::num::BitXorAssign<f64, f64>);
+  static_assert(!sus::num::BitNot<f64>);
+  static_assert(!sus::num::Shl<f64>);
+  static_assert(!sus::num::ShlAssign<f64>);
+  static_assert(!sus::num::Shr<f64>);
+  static_assert(!sus::num::ShrAssign<f64>);
+
+  static_assert(!sus::num::Ord<f64, f64>);
+  static_assert(!sus::num::WeakOrd<f64, f64>);
+  static_assert(sus::num::PartialOrd<f64, f64>);
+  static_assert(1_f64 >= 1_f64);
+  static_assert(2_f64 > 1_f64);
+  static_assert(1_f64 <= 1_f64);
+  static_assert(1_f64 < 2_f64);
+  static_assert(1_f64 <= f64::TODO_NAN());
+  static_assert(sus::num::Eq<f64, f64>);
+  static_assert(1_f64 == 1_f64);
+  static_assert(!(1_f64 == 2_f64));
+  static_assert(1_f64 != 2_f64);
+  static_assert(!(1_f64 != 1_f64));
+  static_assert(f64::TODO_NAN() != f64::TODO_NAN());
+
+  // Verify constexpr.
+  constexpr f64 c = 1_f64 + 2_f64 - 3_f64 * 4_f64 / 5_f64 % 6_f64;
+  constexpr std::partial_ordering o = 2_f64 <=> 3_f64;
+}
+
 TEST(f64, Consts) {
   {
     constexpr auto min = f64::MIN();
@@ -111,3 +160,63 @@ TEST(f64, AssignPrimitive) {
   a = 1.2;
   EXPECT_EQ(a.primitive_value, 1.2);
 }
+
+TEST(f64, Negate) {
+  constexpr auto a = -(0.345_f64);
+  EXPECT_EQ(a, f64(-0.345));
+
+  auto b = 0.345_f64;
+  EXPECT_EQ(-b, f64(-0.345));
+}
+
+TEST(f64, BinaryOperators) {
+  {
+    constexpr auto a = 1_f64 + 0.345_f64;
+    EXPECT_EQ(a, f64(1.345));
+
+    auto b = 1_f64;
+    b += 0.345_f64;
+    EXPECT_EQ(b, f64(1.345));
+  }
+  {
+    constexpr auto a = 1_f64 - 0.345_f64;
+    EXPECT_EQ(a, f64(0.655));
+
+    auto b = 1_f64;
+    b -= 0.345_f64;
+    EXPECT_EQ(b, f64(0.655));
+  }
+  {
+    constexpr auto a = 2_f64 * 0.345_f64;
+    EXPECT_EQ(a, f64(0.690));
+
+    auto b = 2_f64;
+    b *= 0.345_f64;
+    EXPECT_EQ(b, f64(0.690));
+  }
+  {
+    constexpr auto a = 0.690_f64 / 2_f64;
+    EXPECT_EQ(a, f64(0.345));
+
+    auto b = 0.690_f64;
+    b /= 2_f64;
+    EXPECT_EQ(b, f64(0.345));
+  }
+  {
+    constexpr auto a = 2.345_f64 % 2_f64;
+    F64_NEAR(a, f64(0.345), 0.00001_f64);
+
+    constexpr auto b = 2.4_f64 % 1.1_f64;
+    F64_NEAR(b, f64(0.2), 0.00001_f64);
+
+    auto c = 2.345_f64;
+    c %= 2_f64;
+    F64_NEAR(c, f64(0.345), 0.00001_f64);
+
+    auto d = 2.4_f64;
+    d %= 1.1_f64;
+    F64_NEAR(d, f64(0.2), 0.00001_f64);
+  }
+}
+
+}  // namespace

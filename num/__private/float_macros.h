@@ -128,20 +128,85 @@
   friend constexpr inline bool operator==(const T& l, const T& r) noexcept {  \
     return (l.primitive_value <=> r.primitive_value) == 0;                    \
   }                                                                           \
-  /** sus::concepts::Ord<##T##> trait. */                                     \
+  /** sus::concepts::PartialOrd<##T##> trait. */                              \
   friend constexpr inline auto operator<=>(const T& l, const T& r) noexcept { \
     return l.primitive_value <=> r.primitive_value;                           \
   }                                                                           \
   static_assert(true)
 
-#define _sus__float_negate(T) \
+#define _sus__float_unary_ops(T)     \
+  /** sus::num::Neg<##T##> trait. */ \
   constexpr inline T operator-() const { return T(-primitive_value); }
 
-#define _sus__float(T, PrimitiveT)      \
-  _sus__float_storage(PrimitiveT);      \
-  _sus__float_constants(T, PrimitiveT); \
-  _sus__float_construct(T, PrimitiveT); \
-  _sus__float_comparison(T);            \
-  _sus__float_negate(T);                \
-                                        \
+#define _sus__float_binary_ops(T)                                        \
+  /** sus::concepts::Add<##T##> trait. */                                \
+  friend constexpr inline T operator+(const T& l, const T& r) noexcept { \
+    return l.primitive_value + r.primitive_value;                        \
+  }                                                                      \
+  /** sus::concepts::Sub<##T##> trait. */                                \
+  friend constexpr inline T operator-(const T& l, const T& r) noexcept { \
+    return l.primitive_value - r.primitive_value;                        \
+  }                                                                      \
+  /** sus::concepts::Mul<##T##> trait. */                                \
+  friend constexpr inline T operator*(const T& l, const T& r) noexcept { \
+    return l.primitive_value * r.primitive_value;                        \
+  }                                                                      \
+  /** sus::concepts::Div<##T##> trait. */                                \
+  friend constexpr inline T operator/(const T& l, const T& r) noexcept { \
+    return l.primitive_value / r.primitive_value;                        \
+  }                                                                      \
+  /** sus::concepts::Rem<##T##> trait.                                   \
+   *                                                                     \
+   * The remainder from the division of two floats.                      \
+   *                                                                     \
+   * The remainder has the same sign as the dividend and is computed as: \
+   * `l - (l / r).trunc() * r`.                                          \
+   * */                                                                  \
+  friend constexpr inline T operator%(const T& l, const T& r) noexcept { \
+    const auto x = l.primitive_value;                                    \
+    const auto y = r.primitive_value;                                    \
+    return x - __private::truncate_float(x / y) * y;                     \
+  }                                                                      \
+  static_assert(true)
+
+#define _sus__float_mutable_ops(T)                                       \
+  /** sus::concepts::AddAssign<##T##> trait. */                          \
+  constexpr inline void operator+=(T r)& noexcept {                      \
+    primitive_value += r.primitive_value;                                \
+  }                                                                      \
+  /** sus::concepts::SubAssign<##T##> trait. */                          \
+  constexpr inline void operator-=(T r)& noexcept {                      \
+    primitive_value -= r.primitive_value;                                \
+  }                                                                      \
+  /** sus::concepts::MulAssign<##T##> trait. */                          \
+  constexpr inline void operator*=(T r)& noexcept {                      \
+    primitive_value *= r.primitive_value;                                \
+  }                                                                      \
+  /** sus::concepts::DivAssign<##T##> trait. */                          \
+  constexpr inline void operator/=(T r)& noexcept {                      \
+    primitive_value /= r.primitive_value;                                \
+  }                                                                      \
+  /** sus::concepts::RemAssign<##T##> trait.                             \
+   *                                                                     \
+   * Assigns the remainder from the division of two floats.              \
+   *                                                                     \
+   * The remainder has the same sign as the dividend and is computed as: \
+   * `l - (l / r).trunc() * r`.                                          \
+   */                                                                    \
+  constexpr inline void operator%=(T r)& noexcept {                      \
+    const auto x = primitive_value;                                      \
+    const auto y = r.primitive_value;                                    \
+    primitive_value = x - __private::truncate_float(x / y) * y;          \
+  }                                                                      \
+  static_assert(true)
+
+#define _sus__float(T, PrimitiveT)                     \
+  _sus__float_storage(PrimitiveT);                     \
+  _sus__float_constants(T, PrimitiveT);                \
+  _sus__float_construct(T, PrimitiveT);                \
+  _sus__float_comparison(T);                           \
+  _sus__float_unary_ops(T);                            \
+  _sus__float_binary_ops(T);                           \
+  _sus__float_mutable_ops(T);                          \
+                                                       \
   static_assert(true)

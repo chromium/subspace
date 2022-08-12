@@ -14,10 +14,11 @@
 
 #pragma once
 
-#include <math.h>  // TODO: Remove this and define nans ourselves.
+#include <math.h>  // TODO: Remove this and define nans and truncf ourselves.
 #include <stddef.h>
 #include <stdint.h>
 
+#include <bit>
 #include <type_traits>
 
 #if _MSC_VER
@@ -133,6 +134,18 @@ sus_always_inline constexpr T high_bit() noexcept {
 }
 
 template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) == 4)
+sus_always_inline constexpr uint32_t high_bit() noexcept {
+  return uint32_t{0x80000000};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) == 8)
+sus_always_inline constexpr uint64_t high_bit() noexcept {
+  return uint64_t{0x8000000000000000};
+}
+
+template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
 sus_always_inline constexpr T max_value() noexcept {
   return unchecked_not(T{0});
@@ -188,102 +201,6 @@ sus_always_inline constexpr T min_value() noexcept {
     return -3.40282346639e+38f;
   else
     return -1.7976931348623157E+308;
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr T min_positive_value() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return 1.17549435E-38f;
-  else
-    return 0.22250738585072014E-307;
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr int32_t min_exp() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return int32_t{-125};
-  else
-    return int32_t{-1021};
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr int32_t max_exp() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return int32_t{128};
-  else
-    return int32_t{1024};
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr int32_t min_10_exp() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return int32_t{-37};
-  else
-    return int32_t{-307};
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr int32_t max_10_exp() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return int32_t{38};
-  else
-    return int32_t{308};
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr uint32_t radix() noexcept {
-  return 2;
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr uint32_t num_mantissa_digits() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return uint32_t{24};
-  else
-    return uint32_t{53};
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr uint32_t num_digits() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return 6;
-  else
-    return 15;
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr T nan() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return ::nanf("");
-  else
-    return ::nan("");
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr T infinity() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return INFINITY;
-  else
-    return double{INFINITY};
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T>)
-sus_always_inline constexpr T negative_infinity() noexcept {
-  if constexpr (sizeof(T) == sizeof(float))
-    return -INFINITY;
-  else
-    return double{-INFINITY};
 }
 
 template <class T>
@@ -1081,33 +998,183 @@ constexpr T rem_euclid(::sus::marker::UnsafeFnMarker, T x, T y) noexcept {
 }
 
 template <class T>
-  requires(std::is_floating_point_v<T> && sizeof(T) == 4)
-constexpr uint32_t exponent(T x) noexcept {
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+constexpr auto into_unsigned_integer(T x) noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return std::bit_cast<uint32_t>(x);
+  else
+    return std::bit_cast<uint64_t>(x);
+}
+
+template <class T>
+  requires(std::is_integral_v<T> && sizeof(T) <= 8)
+constexpr auto into_float(T x) noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return std::bit_cast<float>(x);
+  else
+    return std::bit_cast<double>(x);
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T min_positive_value() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return 1.17549435E-38f;
+  else
+    return 0.22250738585072014E-307;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr int32_t min_exp() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return int32_t{-125};
+  else
+    return int32_t{-1021};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr int32_t max_exp() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return int32_t{128};
+  else
+    return int32_t{1024};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr int32_t min_10_exp() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return int32_t{-37};
+  else
+    return int32_t{-307};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr int32_t max_10_exp() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return int32_t{38};
+  else
+    return int32_t{308};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr uint32_t radix() noexcept {
+  return 2;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr uint32_t num_mantissa_digits() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return uint32_t{24};
+  else
+    return uint32_t{53};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr uint32_t num_digits() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return 6;
+  else
+    return 15;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T nan() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return into_float(uint32_t{0x7fffffff});
+  else
+    return into_float(uint64_t{0x7ff0000000000001});
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T infinity() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return into_float(uint32_t{0x7f800000});
+  else
+    return into_float(uint64_t{0x7ff0000000000000});
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T>)
+sus_always_inline constexpr T negative_infinity() noexcept {
+  if constexpr (sizeof(T) == sizeof(float))
+    return into_float(uint32_t{0xff800000});
+  else
+    return into_float(uint64_t{0xfff0000000000000});
+}
+
+constexpr int32_t exponent(float x) noexcept {
   constexpr uint32_t mask = 0b01111111100000000000000000000000;
-  return static_cast<uint32_t>((x & mask) >> 23);
+  return ((into_unsigned_integer(x) & mask) >> 23) - int32_t{127};
 }
 
-template <class T>
-  requires(std::is_floating_point_v<T> && sizeof(T) == 4)
-constexpr uint32_t mantissa(T x) noexcept {
-  constexpr uint32_t mask = 0b00000000011111111111111111111111;
-  return static_cast<uint32_t>(x & mask);
-}
-
-template <class T>
-  requires(std::is_floating_point_v<T> && sizeof(T) == 8)
-constexpr uint32_t exponent(T x) noexcept {
+constexpr int32_t exponent(double x) noexcept {
   constexpr uint64_t mask =
       0b0111111111110000000000000000000000000000000000000000000000000000;
-  return static_cast<uint32_t>((x & mask) >> 52);
+  return ((into_unsigned_integer(x) & mask) >> 52) - int32_t{1023};
+}
+
+constexpr uint32_t mantissa(float x) noexcept {
+  constexpr uint32_t mask = 0b00000000011111111111111111111111;
+  return into_unsigned_integer(x) & mask;
+}
+
+constexpr uint64_t mantissa(double x) noexcept {
+  constexpr uint64_t mask =
+      0b0000000000001111111111111111111111111111111111111111111111111111;
+  return into_unsigned_integer(x) & mask;
 }
 
 template <class T>
-  requires(std::is_floating_point_v<T> && sizeof(T) == 8)
-constexpr uint64_t mantissa(T x) noexcept {
-  constexpr uint64_t mask =
-      0b0000000000001111111111111111111111111111111111111111111111111111;
-  return static_cast<uint64_t>(x & mask);
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+constexpr bool float_is_zero(T x) noexcept {
+  return (into_unsigned_integer(x) & ~high_bit<T>()) == 0;
+}
+
+constexpr bool float_is_inf_or_nan(float x) noexcept {
+  constexpr auto mask = uint32_t{0x7f800000};
+  return (into_unsigned_integer(x) & mask) == mask;
+}
+
+constexpr bool float_is_inf_or_nan(double x) noexcept {
+  constexpr auto mask = uint64_t{0x7ff0000000000000};
+  return (into_unsigned_integer(x) & mask) == mask;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+constexpr T truncate_float(T x) noexcept {
+  constexpr auto mantissa_width =
+      sizeof(T) == sizeof(float) ? uint32_t{23} : uint32_t{52};
+
+  if (float_is_inf_or_nan(x) || float_is_zero(x)) return x;
+
+  const int32_t exp = exponent(x);
+
+  // If the exponent is greater than the most negative mantissa
+  // exponent, then x is already an integer.
+  if (exp >= static_cast<int32_t>(mantissa_width)) return x;
+
+  // If the exponent is such that abs(x) is less than 1, then return 0.
+  if (exp <= -1) {
+    if ((into_unsigned_integer(x) & high_bit<T>()) != 0)
+      return T{-0.0};
+    else
+      return T{0.0};
+  }
+
+  const uint32_t trim_bits = mantissa_width - static_cast<uint32_t>(exp);
+  const auto shr = unchecked_shr(into_unsigned_integer(x), trim_bits);
+  const auto shl = unchecked_shl(shr, trim_bits);
+  return into_float(shl);
 }
 
 }  // namespace sus::num::__private
