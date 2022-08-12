@@ -19,7 +19,7 @@
 #include "assertions/panic.h"
 #include "macros/always_inline.h"
 
-namespace sus {
+namespace sus::assertions {
 
 constexpr sus_always_inline void check(bool cond) {
   if (!cond) [[unlikely]]
@@ -33,4 +33,10 @@ constexpr sus_always_inline void check_with_message(
     ::sus::panic_with_message(msg);
 }
 
-}  // namespace sus
+}  // namespace sus::assertions
+
+// Promote check() and check_with_message() into the `sus` namespace.
+namespace sus {
+using ::sus::assertions::check;
+using ::sus::assertions::check_with_message;
+}

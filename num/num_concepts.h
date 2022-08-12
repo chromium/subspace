@@ -161,7 +161,7 @@ Ord<Lhs, Rhs> && !WeakOrd<Lhs, Rhs> && PartialOrd<Lhs, Rhs>;
 
 // TODO: Move this out of ::num.
 //
-// TODO: How do we do PartialEq? Can we even?
+// TODO: How do we do PartialEq? Can we even? Can we require Ord to be Eq? But then it depends on ::num?
 template <class Lhs, class Rhs>
 concept Eq = requires(const Lhs& lhs, const Rhs& rhs) {
                { lhs == rhs } -> std::same_as<bool>;

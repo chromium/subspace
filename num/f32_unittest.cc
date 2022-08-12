@@ -14,6 +14,10 @@
 
 #include <math.h>
 
+#include <bit>
+#include <limits>
+
+#include "num/__private/intrinsics.h"
 #include "num/float.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
@@ -100,6 +104,13 @@ TEST(f32, Consts) {
   EXPECT_GT(f32::TODO_INFINITY(), 0_f32);
   EXPECT_TRUE(::isinf(f32::NEG_INFINITY().primitive_value));
   EXPECT_LT(f32::NEG_INFINITY(), 0_f32);
+
+  // Verify NaN in a constexpr context is the same as in a non-constexpr
+  // context.
+  constexpr auto n1 = f32::TODO_NAN().primitive_value;
+  const auto n2 = f32::TODO_NAN().primitive_value;
+  EXPECT_EQ(sus::num::__private::into_unsigned_integer(n1),
+            sus::num::__private::into_unsigned_integer(n2));
 
   EXPECT_EQ(f32::consts::E(), 2.71828182845904523536028747135266250_f32);
   EXPECT_EQ(f32::consts::FRAC_1_PI(),
@@ -217,6 +228,255 @@ TEST(f32, BinaryOperators) {
     d %= 1.1_f32;
     F32_NEAR(d, f32(0.2f), 0.00001_f32);
   }
+}
+
+TEST(f32, Abs) {
+  auto a = (-0.345_f32).abs();
+  EXPECT_EQ(a, 0.345_f32);
+
+  auto b = 0.345_f32;
+  EXPECT_EQ(b.abs(), 0.345_f32);
+}
+
+TEST(f32, TotalCmp) {
+  // TODO: Use classify on f32.
+
+  const auto quiet_nan = std::bit_cast<f32>(uint32_t{0x7fc00000});
+  const auto signaling_nan = std::bit_cast<f32>(uint32_t{0x7f800001});
+  EXPECT_EQ(::fpclassify(quiet_nan.primitive_value), FP_NAN);
+  EXPECT_EQ(::fpclassify(signaling_nan.primitive_value), FP_NAN);
+  EXPECT_TRUE(
+      sus::num::__private::float_is_nan_quiet(quiet_nan.primitive_value));
+  EXPECT_FALSE(
+      sus::num::__private::float_is_nan_quiet(signaling_nan.primitive_value));
+
+  const auto quiet_nan2 = std::bit_cast<f32>(uint32_t{0x7fc00001});
+  const auto signaling_nan2 = std::bit_cast<f32>(uint32_t{0x7f800002});
+  EXPECT_EQ(::fpclassify(quiet_nan2.primitive_value), FP_NAN);
+  EXPECT_EQ(::fpclassify(signaling_nan2.primitive_value), FP_NAN);
+  EXPECT_TRUE(
+      sus::num::__private::float_is_nan_quiet(quiet_nan2.primitive_value));
+  EXPECT_FALSE(
+      sus::num::__private::float_is_nan_quiet(signaling_nan2.primitive_value));
+
+  const auto neg_quiet_nan = std::bit_cast<f32>(uint32_t{0xffc00000});
+  const auto neg_signaling_nan = std::bit_cast<f32>(uint32_t{0xff800001});
+  EXPECT_EQ(::fpclassify(neg_quiet_nan.primitive_value), FP_NAN);
+  EXPECT_EQ(::fpclassify(neg_signaling_nan.primitive_value), FP_NAN);
+  EXPECT_TRUE(
+      sus::num::__private::float_is_nan_quiet(neg_quiet_nan.primitive_value));
+  EXPECT_FALSE(sus::num::__private::float_is_nan_quiet(
+      neg_signaling_nan.primitive_value));
+
+  const auto neg_quiet_nan2 = std::bit_cast<f32>(uint32_t{0xffc00001});
+  const auto neg_signaling_nan2 = std::bit_cast<f32>(uint32_t{0xff800002});
+  EXPECT_EQ(::fpclassify(neg_quiet_nan2.primitive_value), FP_NAN);
+  EXPECT_EQ(::fpclassify(neg_signaling_nan2.primitive_value), FP_NAN);
+  EXPECT_TRUE(
+      sus::num::__private::float_is_nan_quiet(neg_quiet_nan2.primitive_value));
+  EXPECT_FALSE(sus::num::__private::float_is_nan_quiet(
+      neg_signaling_nan2.primitive_value));
+
+  const auto inf = f32::TODO_INFINITY();
+  const auto neg_inf = f32::NEG_INFINITY();
+  EXPECT_EQ(::fpclassify(inf.primitive_value), FP_INFINITE);
+  EXPECT_EQ(::fpclassify(neg_inf.primitive_value), FP_INFINITE);
+
+  const auto norm1 = 123_f32;
+  const auto norm2 = 234_f32;
+  EXPECT_EQ(::fpclassify(norm1.primitive_value), FP_NORMAL);
+  EXPECT_EQ(::fpclassify(norm2.primitive_value), FP_NORMAL);
+  constexpr auto neg_norm1 = -123_f32;
+  constexpr auto neg_norm2 = -234_f32;
+  EXPECT_EQ(::fpclassify(neg_norm1.primitive_value), FP_NORMAL);
+  EXPECT_EQ(::fpclassify(neg_norm2.primitive_value), FP_NORMAL);
+
+  const auto subnorm1 =
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min());
+  const auto subnorm2 = subnorm1 * 2_f32;
+  EXPECT_NE(subnorm1.primitive_value, subnorm2.primitive_value);
+  EXPECT_EQ(::fpclassify(subnorm1.primitive_value), FP_SUBNORMAL);
+  EXPECT_EQ(::fpclassify(subnorm2.primitive_value), FP_SUBNORMAL);
+  const auto neg_subnorm1 = -subnorm1;
+  const auto neg_subnorm2 = -subnorm2;
+  EXPECT_EQ(::fpclassify(neg_subnorm1.primitive_value), FP_SUBNORMAL);
+  EXPECT_EQ(::fpclassify(neg_subnorm2.primitive_value), FP_SUBNORMAL);
+
+  const auto zero = 0_f32;
+  const auto neg_zero = -0_f32;
+  EXPECT_EQ(zero, neg_zero);
+
+  EXPECT_EQ(neg_quiet_nan.total_cmp(neg_quiet_nan2),
+            std::strong_ordering::greater);
+
+  EXPECT_EQ(neg_quiet_nan.total_cmp(neg_quiet_nan),
+            std::strong_ordering::equal);
+  EXPECT_EQ(neg_quiet_nan.total_cmp(neg_signaling_nan),
+            std::strong_ordering::less);
+  EXPECT_EQ(neg_quiet_nan.total_cmp(neg_norm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_quiet_nan.total_cmp(neg_subnorm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_quiet_nan.total_cmp(neg_zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_quiet_nan.total_cmp(zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_quiet_nan.total_cmp(subnorm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_quiet_nan.total_cmp(norm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_quiet_nan.total_cmp(signaling_nan), std::strong_ordering::less);
+  EXPECT_EQ(neg_quiet_nan.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(neg_signaling_nan.total_cmp(neg_signaling_nan2),
+            std::strong_ordering::greater);
+
+  EXPECT_EQ(neg_signaling_nan.total_cmp(neg_quiet_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(neg_signaling_nan.total_cmp(neg_signaling_nan),
+            std::strong_ordering::equal);
+  EXPECT_EQ(neg_signaling_nan.total_cmp(neg_norm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_signaling_nan.total_cmp(neg_subnorm1),
+            std::strong_ordering::less);
+  EXPECT_EQ(neg_signaling_nan.total_cmp(neg_zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_signaling_nan.total_cmp(zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_signaling_nan.total_cmp(subnorm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_signaling_nan.total_cmp(norm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_signaling_nan.total_cmp(signaling_nan),
+            std::strong_ordering::less);
+  EXPECT_EQ(neg_signaling_nan.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(neg_inf.total_cmp(neg_quiet_nan), std::strong_ordering::greater);
+  EXPECT_EQ(neg_inf.total_cmp(neg_signaling_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(neg_inf.total_cmp(neg_inf), std::strong_ordering::equal);
+  EXPECT_EQ(neg_inf.total_cmp(neg_norm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_inf.total_cmp(neg_subnorm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_inf.total_cmp(neg_zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_inf.total_cmp(zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_inf.total_cmp(subnorm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_inf.total_cmp(norm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_inf.total_cmp(inf), std::strong_ordering::less);
+  EXPECT_EQ(neg_inf.total_cmp(signaling_nan), std::strong_ordering::less);
+  EXPECT_EQ(neg_inf.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(neg_norm1.total_cmp(neg_norm2), std::strong_ordering::greater);
+
+  EXPECT_EQ(neg_norm1.total_cmp(neg_quiet_nan), std::strong_ordering::greater);
+  EXPECT_EQ(neg_norm1.total_cmp(neg_signaling_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(neg_norm1.total_cmp(neg_inf), std::strong_ordering::greater);
+  EXPECT_EQ(neg_norm1.total_cmp(neg_norm1), std::strong_ordering::equal);
+  EXPECT_EQ(neg_norm1.total_cmp(neg_subnorm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_norm1.total_cmp(neg_zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_norm1.total_cmp(zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_norm1.total_cmp(subnorm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_norm1.total_cmp(norm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_norm1.total_cmp(inf), std::strong_ordering::less);
+  EXPECT_EQ(neg_norm1.total_cmp(signaling_nan), std::strong_ordering::less);
+  EXPECT_EQ(neg_norm1.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(neg_subnorm1.total_cmp(neg_subnorm2),
+            std::strong_ordering::greater);
+
+  EXPECT_EQ(neg_subnorm1.total_cmp(neg_quiet_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(neg_subnorm1.total_cmp(neg_signaling_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(neg_subnorm1.total_cmp(neg_inf), std::strong_ordering::greater);
+  EXPECT_EQ(neg_subnorm1.total_cmp(neg_norm1), std::strong_ordering::greater);
+  EXPECT_EQ(neg_subnorm1.total_cmp(neg_subnorm1), std::strong_ordering::equal);
+  EXPECT_EQ(neg_subnorm1.total_cmp(neg_zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_subnorm1.total_cmp(zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_subnorm1.total_cmp(subnorm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_subnorm1.total_cmp(norm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_subnorm1.total_cmp(inf), std::strong_ordering::less);
+  EXPECT_EQ(neg_subnorm1.total_cmp(signaling_nan), std::strong_ordering::less);
+  EXPECT_EQ(neg_subnorm1.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(neg_zero.total_cmp(neg_quiet_nan), std::strong_ordering::greater);
+  EXPECT_EQ(neg_zero.total_cmp(neg_signaling_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(neg_zero.total_cmp(neg_inf), std::strong_ordering::greater);
+  EXPECT_EQ(neg_zero.total_cmp(neg_norm1), std::strong_ordering::greater);
+  EXPECT_EQ(neg_zero.total_cmp(neg_subnorm1), std::strong_ordering::greater);
+  EXPECT_EQ(neg_zero.total_cmp(neg_zero), std::strong_ordering::equal);
+  EXPECT_EQ(neg_zero.total_cmp(zero), std::strong_ordering::less);
+  EXPECT_EQ(neg_zero.total_cmp(subnorm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_zero.total_cmp(norm1), std::strong_ordering::less);
+  EXPECT_EQ(neg_zero.total_cmp(inf), std::strong_ordering::less);
+  EXPECT_EQ(neg_zero.total_cmp(signaling_nan), std::strong_ordering::less);
+  EXPECT_EQ(neg_zero.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(subnorm1.total_cmp(subnorm2), std::strong_ordering::less);
+
+  EXPECT_EQ(subnorm1.total_cmp(neg_quiet_nan), std::strong_ordering::greater);
+  EXPECT_EQ(subnorm1.total_cmp(neg_signaling_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(subnorm1.total_cmp(neg_inf), std::strong_ordering::greater);
+  EXPECT_EQ(subnorm1.total_cmp(neg_norm1), std::strong_ordering::greater);
+  EXPECT_EQ(subnorm1.total_cmp(neg_subnorm1), std::strong_ordering::greater);
+  EXPECT_EQ(subnorm1.total_cmp(neg_zero), std::strong_ordering::greater);
+  EXPECT_EQ(subnorm1.total_cmp(zero), std::strong_ordering::greater);
+  EXPECT_EQ(subnorm1.total_cmp(subnorm1), std::strong_ordering::equal);
+  EXPECT_EQ(subnorm1.total_cmp(norm1), std::strong_ordering::less);
+  EXPECT_EQ(subnorm1.total_cmp(inf), std::strong_ordering::less);
+  EXPECT_EQ(subnorm1.total_cmp(signaling_nan), std::strong_ordering::less);
+  EXPECT_EQ(subnorm1.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(norm1.total_cmp(norm2), std::strong_ordering::less);
+
+  EXPECT_EQ(norm1.total_cmp(neg_quiet_nan), std::strong_ordering::greater);
+  EXPECT_EQ(norm1.total_cmp(neg_signaling_nan), std::strong_ordering::greater);
+  EXPECT_EQ(norm1.total_cmp(neg_inf), std::strong_ordering::greater);
+  EXPECT_EQ(norm1.total_cmp(neg_norm1), std::strong_ordering::greater);
+  EXPECT_EQ(norm1.total_cmp(neg_subnorm1), std::strong_ordering::greater);
+  EXPECT_EQ(norm1.total_cmp(neg_zero), std::strong_ordering::greater);
+  EXPECT_EQ(norm1.total_cmp(zero), std::strong_ordering::greater);
+  EXPECT_EQ(norm1.total_cmp(subnorm1), std::strong_ordering::greater);
+  EXPECT_EQ(norm1.total_cmp(norm1), std::strong_ordering::equal);
+  EXPECT_EQ(norm1.total_cmp(inf), std::strong_ordering::less);
+  EXPECT_EQ(norm1.total_cmp(signaling_nan), std::strong_ordering::less);
+  EXPECT_EQ(norm1.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(inf.total_cmp(neg_quiet_nan), std::strong_ordering::greater);
+  EXPECT_EQ(inf.total_cmp(neg_signaling_nan), std::strong_ordering::greater);
+  EXPECT_EQ(inf.total_cmp(neg_inf), std::strong_ordering::greater);
+  EXPECT_EQ(inf.total_cmp(neg_norm1), std::strong_ordering::greater);
+  EXPECT_EQ(inf.total_cmp(neg_subnorm1), std::strong_ordering::greater);
+  EXPECT_EQ(inf.total_cmp(neg_zero), std::strong_ordering::greater);
+  EXPECT_EQ(inf.total_cmp(zero), std::strong_ordering::greater);
+  EXPECT_EQ(inf.total_cmp(subnorm1), std::strong_ordering::greater);
+  EXPECT_EQ(inf.total_cmp(norm1), std::strong_ordering::greater);
+  EXPECT_EQ(inf.total_cmp(inf), std::strong_ordering::equal);
+  EXPECT_EQ(inf.total_cmp(signaling_nan), std::strong_ordering::less);
+  EXPECT_EQ(inf.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(signaling_nan.total_cmp(signaling_nan2),
+            std::strong_ordering::less);
+
+  EXPECT_EQ(signaling_nan.total_cmp(neg_quiet_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(signaling_nan.total_cmp(neg_signaling_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(signaling_nan.total_cmp(neg_norm1), std::strong_ordering::greater);
+  EXPECT_EQ(signaling_nan.total_cmp(neg_subnorm1),
+            std::strong_ordering::greater);
+  EXPECT_EQ(signaling_nan.total_cmp(neg_zero), std::strong_ordering::greater);
+  EXPECT_EQ(signaling_nan.total_cmp(zero), std::strong_ordering::greater);
+  EXPECT_EQ(signaling_nan.total_cmp(subnorm1), std::strong_ordering::greater);
+  EXPECT_EQ(signaling_nan.total_cmp(norm1), std::strong_ordering::greater);
+  EXPECT_EQ(signaling_nan.total_cmp(signaling_nan),
+            std::strong_ordering::equal);
+  EXPECT_EQ(signaling_nan.total_cmp(quiet_nan), std::strong_ordering::less);
+
+  EXPECT_EQ(quiet_nan.total_cmp(quiet_nan2), std::strong_ordering::less);
+
+  EXPECT_EQ(quiet_nan.total_cmp(neg_quiet_nan), std::strong_ordering::greater);
+  EXPECT_EQ(quiet_nan.total_cmp(neg_signaling_nan),
+            std::strong_ordering::greater);
+  EXPECT_EQ(quiet_nan.total_cmp(neg_norm1), std::strong_ordering::greater);
+  EXPECT_EQ(quiet_nan.total_cmp(neg_subnorm1), std::strong_ordering::greater);
+  EXPECT_EQ(quiet_nan.total_cmp(neg_zero), std::strong_ordering::greater);
+  EXPECT_EQ(quiet_nan.total_cmp(zero), std::strong_ordering::greater);
+  EXPECT_EQ(quiet_nan.total_cmp(subnorm1), std::strong_ordering::greater);
+  EXPECT_EQ(quiet_nan.total_cmp(norm1), std::strong_ordering::greater);
+  EXPECT_EQ(quiet_nan.total_cmp(signaling_nan), std::strong_ordering::greater);
+  EXPECT_EQ(quiet_nan.total_cmp(quiet_nan), std::strong_ordering::equal);
 }
 
 }  // namespace

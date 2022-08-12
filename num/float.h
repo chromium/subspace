@@ -22,12 +22,12 @@ namespace sus::num {
 
 struct f32 final {
   _sus__float_consts(f32, f);
-  _sus__float(f32, float);
+  _sus__float(f32, float, u32);
 };
 
 struct f64 final {
   _sus__float_consts(f64, );
-  _sus__float(f64, double);
+  _sus__float(f64, double, u64);
 };
 
 }  // namespace sus::num

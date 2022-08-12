@@ -1006,13 +1006,35 @@ constexpr auto into_unsigned_integer(T x) noexcept {
     return std::bit_cast<uint64_t>(x);
 }
 
+// Prefer the non-constexpr `into_float()` to avoid problems where you get a
+// different value in a constexpr context from a runtime context. It's safe to
+// call this function if the argument is not a NaN. Otherwise, you must ensure
+// the NaN is exactly in the form that would be produced in a constexpr context
+// in order to avoid problems.
 template <class T>
   requires(std::is_integral_v<T> && sizeof(T) <= 8)
-constexpr auto into_float(T x) noexcept {
+constexpr auto into_float_constexpr(::sus::marker::UnsafeFnMarker,
+                                    T x) noexcept {
   if constexpr (sizeof(T) == sizeof(float))
     return std::bit_cast<float>(x);
   else
     return std::bit_cast<double>(x);
+}
+
+// This is NOT constexpr because it can produce different results in a constexpr
+// context than in a runtime one. For example.
+//
+// ```
+// constexpr float x = into_float(uint32_t{0x7f800001});
+// const float y = into_float(uint32_t{0x7f800001});
+// ```
+// In this case `x` is `7fc00001` (the quiet bit became set), but `y` is
+// `0x7f800001`.
+template <class T>
+  requires(std::is_integral_v<T> && sizeof(T) <= 8)
+inline auto into_float(T x) noexcept {
+  // SAFETY: Since this isn't a constexpr context, we're okay.
+  return into_float_constexpr(unsafe_fn, x);
 }
 
 template <class T>
@@ -1087,10 +1109,13 @@ sus_always_inline constexpr uint32_t num_digits() noexcept {
 template <class T>
   requires(std::is_floating_point_v<T>)
 sus_always_inline constexpr T nan() noexcept {
+  // SAFETY: We must take care that the value returned here is the same in both
+  // a constexpr and non-constexpr context. The quiet bit is always set in a
+  // constexpr context, so we return a quiet bit here.
   if constexpr (sizeof(T) == sizeof(float))
-    return into_float(uint32_t{0x7fffffff});
+    return into_float_constexpr(unsafe_fn, uint32_t{0x7fc00000});
   else
-    return into_float(uint64_t{0x7ff0000000000001});
+    return into_float_constexpr(unsafe_fn, uint64_t{0x7ff8000000000000});
 }
 
 template <class T>
@@ -1149,6 +1174,32 @@ constexpr bool float_is_inf_or_nan(double x) noexcept {
   return (into_unsigned_integer(x) & mask) == mask;
 }
 
+constexpr bool float_is_nan(float x) noexcept {
+  constexpr auto inf_mask = uint32_t{0x7f800000};
+  constexpr auto nan_mask = uint32_t{0x7fffffff};
+  return (into_unsigned_integer(x) & nan_mask) > inf_mask;
+}
+
+constexpr bool float_is_nan(double x) noexcept {
+  constexpr auto inf_mask = uint64_t{0x7ff0000000000000};
+  constexpr auto nan_mask = uint64_t{0x7fffffffffffffff};
+  return (into_unsigned_integer(x) & nan_mask) > inf_mask;
+}
+
+// Assumes that x is a NaN.
+constexpr bool float_is_nan_quiet(float x) noexcept {
+  // The quiet bit is the highest bit in the mantissa.
+  constexpr auto quiet_mask = uint32_t{uint32_t{1} << (23 - 1)};
+  return (into_unsigned_integer(x) & quiet_mask) != 0;
+}
+
+// Assumes that x is a NaN.
+constexpr bool float_is_nan_quiet(double x) noexcept {
+  // The quiet bit is the highest bit in the mantissa.
+  constexpr auto quiet_mask = uint64_t{uint64_t{1} << (52 - 1)};
+  return (into_unsigned_integer(x) & quiet_mask) != 0;
+}
+
 template <class T>
   requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
 constexpr T truncate_float(T x) noexcept {
@@ -1174,7 +1225,19 @@ constexpr T truncate_float(T x) noexcept {
   const uint32_t trim_bits = mantissa_width - static_cast<uint32_t>(exp);
   const auto shr = unchecked_shr(into_unsigned_integer(x), trim_bits);
   const auto shl = unchecked_shl(shr, trim_bits);
-  return into_float(shl);
+  // SAFETY: The value here is not a NaN, so will give the same value in
+  // constexpr and non-constexpr contexts.
+  return into_float_constexpr(unsafe_fn, shl);
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+constexpr T float_signum(T x) noexcept {
+  // TODO: Can this be done without a branch?
+  if (float_is_nan(x)) [[unlikely]]
+    return x;
+  const auto signbit = unchecked_and(into_unsigned_integer(x), high_bit<T>());
+  return into_float(unchecked_add(into_unsigned_integer(T{1}), signbit));
 }
 
 }  // namespace sus::num::__private
