@@ -53,7 +53,6 @@ TEST(f64, Traits) {
   static_assert(2_f64 > 1_f64);
   static_assert(1_f64 <= 1_f64);
   static_assert(1_f64 < 2_f64);
-  static_assert(1_f64 <= f64::TODO_NAN());
   static_assert(sus::num::Eq<f64, f64>);
   static_assert(1_f64 == 1_f64);
   static_assert(!(1_f64 == 2_f64));

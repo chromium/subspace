@@ -57,7 +57,6 @@ TEST(f32, Traits) {
   static_assert(2_f32 > 1_f32);
   static_assert(1_f32 <= 1_f32);
   static_assert(1_f32 < 2_f32);
-  static_assert(1_f32 <= f32::TODO_NAN());
   static_assert(sus::num::Eq<f32, f32>);
   static_assert(1_f32 == 1_f32);
   static_assert(!(1_f32 == 2_f32));
