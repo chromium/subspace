@@ -62,6 +62,7 @@ add_library(subspace STATIC
     "mem/take.h"
     "num/__private/float_consts.h"
     "num/__private/float_macros.h"
+    "num/__private/float_ordering.h"
     "num/__private/intrinsics.h"
     "num/__private/literals.h"
     "num/__private/ptr_type.h"
