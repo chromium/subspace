@@ -17,6 +17,55 @@
 #include "num/float.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
+#define F32_NEAR(a, b, c) \
+  EXPECT_NEAR(a.primitive_value, b.primitive_value, c.primitive_value);
+
+namespace {
+
+TEST(f32, Traits) {
+  static_assert(sus::num::Neg<f32>);
+  static_assert(sus::num::Add<f32, f32>);
+  static_assert(sus::num::AddAssign<f32, f32>);
+  static_assert(sus::num::Sub<f32, f32>);
+  static_assert(sus::num::SubAssign<f32, f32>);
+  static_assert(sus::num::Mul<f32, f32>);
+  static_assert(sus::num::MulAssign<f32, f32>);
+  static_assert(sus::num::Div<f32, f32>);
+  static_assert(sus::num::DivAssign<f32, f32>);
+  static_assert(sus::num::Rem<f32, f32>);
+  static_assert(sus::num::RemAssign<f32, f32>);
+  static_assert(!sus::num::BitAnd<f32, f32>);
+  static_assert(!sus::num::BitAndAssign<f32, f32>);
+  static_assert(!sus::num::BitOr<f32, f32>);
+  static_assert(!sus::num::BitOrAssign<f32, f32>);
+  static_assert(!sus::num::BitXor<f32, f32>);
+  static_assert(!sus::num::BitXorAssign<f32, f32>);
+  static_assert(!sus::num::BitNot<f32>);
+  static_assert(!sus::num::Shl<f32>);
+  static_assert(!sus::num::ShlAssign<f32>);
+  static_assert(!sus::num::Shr<f32>);
+  static_assert(!sus::num::ShrAssign<f32>);
+
+  static_assert(!sus::num::Ord<f32, f32>);
+  static_assert(!sus::num::WeakOrd<f32, f32>);
+  static_assert(sus::num::PartialOrd<f32, f32>);
+  static_assert(1_f32 >= 1_f32);
+  static_assert(2_f32 > 1_f32);
+  static_assert(1_f32 <= 1_f32);
+  static_assert(1_f32 < 2_f32);
+  static_assert(1_f32 <= f32::TODO_NAN());
+  static_assert(sus::num::Eq<f32, f32>);
+  static_assert(1_f32 == 1_f32);
+  static_assert(!(1_f32 == 2_f32));
+  static_assert(1_f32 != 2_f32);
+  static_assert(!(1_f32 != 1_f32));
+  static_assert(f32::TODO_NAN() != f32::TODO_NAN());
+
+  // Verify constexpr.
+  constexpr f32 c = 1_f32 + 2_f32 - 3_f32 * 4_f32 / 5_f32 % 6_f32;
+  constexpr std::partial_ordering o = 2_f32 <=> 3_f32;
+}
+
 TEST(f32, Consts) {
   {
     constexpr auto min = f32::MIN();
@@ -46,10 +95,10 @@ TEST(f32, Consts) {
   EXPECT_EQ(f32::MAX_EXP(), 128_i32);
   EXPECT_EQ(f32::MIN_10_EXP(), -37_i32);
   EXPECT_EQ(f32::MAX_10_EXP(), 38_i32);
-  EXPECT_TRUE(isnan(f32::TODO_NAN().primitive_value));
-  EXPECT_TRUE(isinf(f32::TODO_INFINITY().primitive_value));
+  EXPECT_TRUE(::isnan(f32::TODO_NAN().primitive_value));
+  EXPECT_TRUE(::isinf(f32::TODO_INFINITY().primitive_value));
   EXPECT_GT(f32::TODO_INFINITY(), 0_f32);
-  EXPECT_TRUE(isinf(f32::NEG_INFINITY().primitive_value));
+  EXPECT_TRUE(::isinf(f32::NEG_INFINITY().primitive_value));
   EXPECT_LT(f32::NEG_INFINITY(), 0_f32);
 
   EXPECT_EQ(f32::consts::E(), 2.71828182845904523536028747135266250_f32);
@@ -111,3 +160,63 @@ TEST(f32, AssignPrimitive) {
   a = 1.2f;
   EXPECT_EQ(a.primitive_value, 1.2f);
 }
+
+TEST(f32, Negate) {
+  constexpr auto a = -(0.345_f32);
+  EXPECT_EQ(a, f32(-0.345f));
+
+  auto b = 0.345_f32;
+  EXPECT_EQ(-b, f32(-0.345f));
+}
+
+TEST(f32, BinaryOperators) {
+  {
+    constexpr auto a = 1_f32 + 0.345_f32;
+    EXPECT_EQ(a, f32(1.345f));
+
+    auto b = 1_f32;
+    b += 0.345_f32;
+    EXPECT_EQ(b, f32(1.345f));
+  }
+  {
+    constexpr auto a = 1_f32 - 0.345_f32;
+    EXPECT_EQ(a, f32(0.655f));
+
+    auto b = 1_f32;
+    b -= 0.345_f32;
+    EXPECT_EQ(b, f32(0.655f));
+  }
+  {
+    constexpr auto a = 2_f32 * 0.345_f32;
+    EXPECT_EQ(a, f32(0.690f));
+
+    auto b = 2_f32;
+    b *= 0.345_f32;
+    EXPECT_EQ(b, f32(0.690f));
+  }
+  {
+    constexpr auto a = 0.690_f32 / 2_f32;
+    EXPECT_EQ(a, f32(0.345f));
+
+    auto b = 0.690_f32;
+    b /= 2_f32;
+    EXPECT_EQ(b, f32(0.345f));
+  }
+  {
+    constexpr auto a = 2.345_f32 % 2_f32;
+    F32_NEAR(a, f32(0.345f), 0.00001_f32);
+
+    constexpr auto b = 2.4_f32 % 1.1_f32;
+    F32_NEAR(b, f32(0.2f), 0.00001_f32);
+
+    auto c = 2.345_f32;
+    c %= 2_f32;
+    F32_NEAR(c, f32(0.345f), 0.00001_f32);
+
+    auto d = 2.4_f32;
+    d %= 1.1_f32;
+    F32_NEAR(d, f32(0.2f), 0.00001_f32);
+  }
+}
+
+}  // namespace
