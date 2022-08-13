@@ -303,9 +303,6 @@
    * Returns NaN if both `self` and `other` are 0.                             \
    */                                                                          \
   inline T atan2(const T& other) const& noexcept {                             \
-    if (primitive_value == PrimitiveT{0} &&                                    \
-        other.primitive_value == PrimitiveT{0}) [[unlikely]]                   \
-      return TODO_NAN();                                                       \
     /* MSVC atan2(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(                                            \
         ::atan2(primitive_value, other.primitive_value));                      \
@@ -465,8 +462,7 @@
    * `0.0`.                                                                    \
    */                                                                          \
   inline T round() const& noexcept {                                           \
-    /* MSVC round(float) is returning a double for some reason. */             \
-    return static_cast<PrimitiveT>(::round(primitive_value));                  \
+    return __private::float_round(primitive_value);                            \
   }                                                                            \
   /** Returns a number that represents the sign of self.                       \
    *                                                                           \
@@ -522,7 +518,7 @@
   /** Returns the integer part of self. This means that non-integer numbers \
    * are always truncated towards zero.                                     \
    */                                                                       \
-  inline T truc() const& noexcept {                                         \
+  inline T trunc() const& noexcept {                                        \
     return __private::truncate_float(primitive_value);                      \
   }                                                                         \
   static_assert(true)
@@ -532,7 +528,8 @@
    */                                                                          \
   inline T to_degrees() const& noexcept {                                      \
     /* Use a constant for better precision. */                                 \
-    constexpr float PIS_IN_180 = 57.2957795130823208767981548141051703f;       \
+    constexpr auto PIS_IN_180 =                                                \
+        PrimitiveT{57.2957795130823208767981548141051703};                     \
     return primitive_value * PIS_IN_180;                                       \
   }                                                                            \
   /** Converts degrees to radians.                                             \
@@ -549,30 +546,33 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__float_bytes(T, UnsignedIntT)                                   \
-  /** Raw transmutation from `##UnsignedIntT##`.                             \
-   *                                                                         \
-   * Note that this function is distinct from Into<##T##>, which attempts to \
-   * preserve the numeric value, and not the bitwise value.                  \
-   *                                                                         \
-   * # Examples                                                              \
-   * ```                                                                     \
-   * auto v = f32::from_bits(0x41480000);                                    \
-   * sus::check!(v, 12.5);                                                   \
-   * ```                                                                     \
-   */                                                                        \
-  static T from_bits(const UnsignedIntT& v) noexcept {                       \
-    return std::bit_cast<T>(v);                                              \
-  }                                                                          \
-  /** Raw transmutation to ##UnsignedT##.                                    \
-   *                                                                         \
-   * Note that this function is distinct from Into<##UnsignedIntT##>, which  \
-   * attempts to preserve the numeric value, and not the bitwise value.      \
-   */                                                                        \
-  constexpr inline UnsignedIntT to_bits() const& noexcept {                  \
-    return std::bit_cast<decltype(UnsignedIntT::primitive_value)>(           \
-        primitive_value);                                                    \
-  }                                                                          \
+#define _sus__float_bytes(T, UnsignedIntT)                                    \
+  /** Raw transmutation from `##UnsignedIntT##`.                              \
+   *                                                                          \
+   * Note that this function is distinct from Into<##T##>, which attempts to  \
+   * preserve the numeric value, and not the bitwise value.                   \
+   *                                                                          \
+   * # Examples                                                               \
+   * ```                                                                      \
+   * auto v = f32::from_bits(0x41480000);                                     \
+   * sus::check!(v, 12.5);                                                    \
+   * ```                                                                      \
+   *                                                                          \
+   * This function is not constexpr, as converting to a float does not always \
+   * preserve the exact bits in a NaN in a constexpr context.                 \
+   */                                                                         \
+  static T from_bits(const UnsignedIntT& v) noexcept {                        \
+    return std::bit_cast<T>(v);                                               \
+  }                                                                           \
+  /** Raw transmutation to ##UnsignedT##.                                     \
+   *                                                                          \
+   * Note that this function is distinct from Into<##UnsignedIntT##>, which   \
+   * attempts to preserve the numeric value, and not the bitwise value.       \
+   */                                                                         \
+  constexpr inline UnsignedIntT to_bits() const& noexcept {                   \
+    return std::bit_cast<decltype(UnsignedIntT::primitive_value)>(            \
+        primitive_value);                                                     \
+  }                                                                           \
   static_assert(true)
 
 // clamp
