@@ -22,7 +22,7 @@
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 #define F32_NEAR(a, b, c) \
-  EXPECT_NEAR(a.primitive_value, b.primitive_value, c.primitive_value);
+  EXPECT_NEAR((a).primitive_value, (b).primitive_value, (c).primitive_value);
 
 namespace {
 
@@ -227,14 +227,6 @@ TEST(f32, BinaryOperators) {
     d %= 1.1_f32;
     F32_NEAR(d, f32(0.2f), 0.00001_f32);
   }
-}
-
-TEST(f32, Abs) {
-  auto a = (-0.345_f32).abs();
-  EXPECT_EQ(a, 0.345_f32);
-
-  auto b = 0.345_f32;
-  EXPECT_EQ(b.abs(), 0.345_f32);
 }
 
 TEST(f32, TotalCmp) {
@@ -476,6 +468,355 @@ TEST(f32, TotalCmp) {
   EXPECT_EQ(quiet_nan.total_cmp(norm1), std::strong_ordering::greater);
   EXPECT_EQ(quiet_nan.total_cmp(signaling_nan), std::strong_ordering::greater);
   EXPECT_EQ(quiet_nan.total_cmp(quiet_nan), std::strong_ordering::equal);
+}
+
+TEST(f32, Abs) {
+  auto a = (-0.345_f32).abs();
+  EXPECT_EQ(a, 0.345_f32);
+
+  auto b = 0.345_f32;
+  EXPECT_EQ(b.abs(), 0.345_f32);
+}
+
+TEST(f32, Acos) {
+  auto a = (0.767_f32).acos();
+  F32_NEAR(a, 0.696643798_f32, 0.0000001_f32);
+  auto b = (1_f32).acos();
+  F32_NEAR(b, 0_f32, 0.0000001_f32);
+  auto c = (1.1_f32).acos();
+  EXPECT_TRUE(::isnan(c.primitive_value));  // TODO: is_nan().
+  auto d = (-1.1_f32).acos();
+  EXPECT_TRUE(::isnan(d.primitive_value));  // TODO: is_nan().
+}
+
+TEST(f32, Acosh) {
+  auto a = (2.5_f32).acosh();
+  F32_NEAR(a, 1.566799236972411_f32, 0.0000001_f32);
+  auto b = (1_f32).acosh();
+  F32_NEAR(b, 0_f32, 0.0000001_f32);
+  auto c = (0.9999999_f32).acosh();
+  EXPECT_TRUE(::isnan(c.primitive_value));  // TODO: is_nan().
+  auto d = (0_f32).acosh();
+  EXPECT_TRUE(::isnan(d.primitive_value));  // TODO: is_nan().
+  auto e = (-0.9999999_f32).acosh();
+  EXPECT_TRUE(::isnan(e.primitive_value));  // TODO: is_nan().
+}
+
+TEST(f32, Asin) {
+  auto a = (0.767_f32).asin();
+  F32_NEAR(a, 0.874152528_f32, 0.0000001_f32);
+  auto b = (0_f32).asin();
+  F32_NEAR(b, 0_f32, 0.0000001_f32);
+  auto c = (1.1_f32).asin();
+  EXPECT_TRUE(::isnan(c.primitive_value));  // TODO: is_nan().
+  auto d = (-1.1_f32).asin();
+  EXPECT_TRUE(::isnan(d.primitive_value));  // TODO: is_nan().
+}
+
+TEST(f32, Asinh) {
+  auto a = (2.5_f32).asinh();
+  F32_NEAR(a, 1.6472311463711_f32, 0.0000001_f32);
+  auto b = (0_f32).asinh();
+  F32_NEAR(b, 0_f32, 0.0000001_f32);
+  auto c = (0.9999999_f32).asinh();
+  F32_NEAR(c, 0.88137351630886_f32, 0.0000001_f32);
+}
+
+TEST(f32, Atan) {
+  auto a = (0.767_f32).atan();
+  F32_NEAR(a, 0.654292628_f32, 0.0000001_f32);
+  auto b = (0_f32).atan();
+  F32_NEAR(b, 0_f32, 0.0000001_f32);
+  auto c = (1.1_f32).atan();
+  F32_NEAR(c, 0.832981267_f32, 0.0000001_f32);
+  auto d = (-1.1_f32).atan();
+  F32_NEAR(d, -0.832981267_f32, 0.0000001_f32);
+}
+
+TEST(f32, Atan2) {
+  auto a = (0_f32).atan2(0_f32);
+  F32_NEAR(a, 0_f32, 0.0000001_f32);
+  auto b = (0.5_f32).atan2(1.2_f32);
+  F32_NEAR(b, 0.39479112_f32, 0.0000001_f32);
+  auto c = (-0.5_f32).atan2(1.2_f32);
+  F32_NEAR(c, -0.39479112_f32, 0.0000001_f32);
+  auto d = (-0.5_f32).atan2(-1.2_f32);
+  F32_NEAR(d, 0.39479112_f32 - f32::consts::PI(), 0.0000001_f32);
+  auto e = (0.5_f32).atan2(-1.2_f32);
+  F32_NEAR(e, -0.39479112_f32 + f32::consts::PI(), 0.0000001_f32);
+}
+
+TEST(f32, Atanh) {
+  auto a = (2.5_f32).atanh();
+  EXPECT_TRUE(::isnan(a.primitive_value));  // TODO: is_nan().
+  auto b = (0_f32).atanh();
+  F32_NEAR(b, 0_f32, 0.0000001_f32);
+  auto c = (0.75_f32).atanh();
+  F32_NEAR(c, 0.97295507452766_f32, 0.0000001_f32);
+  auto d = (1_f32).atanh();
+  EXPECT_TRUE(::isinf(d.primitive_value));  // TODO: is_infinite().
+}
+
+TEST(f32, Cbrt) {
+  auto a = (0.456_f32).cbrt();
+  F32_NEAR(a, 0.76970022625_f32, 0.0000001_f32);
+  auto b = (1_f32).cbrt();
+  F32_NEAR(b, 1_f32, 0.0000001_f32);
+  auto c = (-1_f32).cbrt();
+  F32_NEAR(c, -1_f32, 0.0000001_f32);
+}
+
+TEST(f32, Ceil) {
+  auto a = (0.456_f32).ceil();
+  F32_NEAR(a, 1_f32, 0.0000001_f32);
+  auto b = (-0.456_f32).ceil();
+  EXPECT_EQ(b.total_cmp(-0_f32), std::strong_ordering::equal);
+  auto c = (1.0001_f32).ceil();
+  F32_NEAR(c, 2_f32, 0.0000001_f32);
+}
+
+TEST(f32, Copysign) {
+  auto a = (0.456_f32).copysign(1_f32);
+  EXPECT_EQ(a, 0.456_f32);
+  auto b = (0.456_f32).copysign(-1_f32);
+  EXPECT_EQ(b, -0.456_f32);
+  auto c = f32::TODO_NAN().copysign(-1_f32);
+  EXPECT_TRUE(::isnan(c.primitive_value));    // TODO: is_nan()
+  EXPECT_TRUE(::signbit(c.primitive_value));  // TODO: is_positive()
+  auto d = f32::TODO_NAN().copysign(1_f32);
+  EXPECT_TRUE(::isnan(d.primitive_value));     // TODO: is_nan()
+  EXPECT_TRUE(!::signbit(d.primitive_value));  // TODO: is_positive()
+}
+
+TEST(f32, Cos) {
+  auto a = (0.767_f32).cos();
+  F32_NEAR(a, 0.71999584159_f32, 0.0000001_f32);
+  auto b = (1_f32).cos();
+  F32_NEAR(b, 0.54030230586_f32, 0.0000001_f32);
+  auto c = (4_f32).cos();
+  F32_NEAR(c, -0.65364362086_f32, 0.0000001_f32);
+}
+
+TEST(f32, Cosh) {
+  auto a = (0.767_f32).cosh();
+  F32_NEAR(a, 1.30885042871_f32, 0.0000001_f32);
+  auto b = (1_f32).cosh();
+  F32_NEAR(b, 1.54308063482_f32, 0.0000001_f32);
+  auto c = (4_f32).cosh();
+  F32_NEAR(c, 27.308232836_f32, 0.0000001_f32);
+}
+
+TEST(f32, Exp) {
+  auto a = (1_f32).exp();
+  F32_NEAR(a, f32::consts::E(), 0.0000001_f32);
+  auto b = (2.4_f32).exp();
+  F32_NEAR(b, 11.0231763806_f32, 0.00001_f32);
+}
+
+TEST(f32, Exp2) {
+  auto a = (1_f32).exp2();
+  F32_NEAR(a, 2_f32, 0.0000001_f32);
+  auto b = (2.4_f32).exp2();
+  F32_NEAR(b, 5.27803164309_f32, 0.00001_f32);
+}
+
+TEST(f32, ExpM1) {
+  auto a = (1_f32).exp_m1();
+  F32_NEAR(a, f32::consts::E() - 1_f32, 0.00001_f32);
+  auto b = (2.4_f32).exp_m1();
+  F32_NEAR(b, 10.0231763806_f32, 0.00001_f32);
+}
+
+TEST(f32, Floor) {
+  auto a = (0.456_f32).floor();
+  EXPECT_EQ(a.total_cmp(0_f32), std::strong_ordering::equal);
+  auto b = (-0.456_f32).floor();
+  F32_NEAR(b, -1_f32, 0.0000001_f32);
+  auto c = (1.0001_f32).floor();
+  F32_NEAR(c, 1_f32, 0.0000001_f32);
+}
+
+TEST(f32, Hypot) {
+  auto a = (0.456_f32).hypot(0.567_f32);
+  F32_NEAR(a, 0.72761597013_f32, 0.0000001_f32);
+}
+
+TEST(f32, Ln) {
+  auto a = (0.456_f32).ln();
+  F32_NEAR(a, -0.78526246946_f32, 0.0000001_f32);
+}
+
+TEST(f32, Ln1p) {
+  auto a = (0.456_f32).ln_1p();
+  F32_NEAR(a, 0.37569294977_f32, 0.0000001_f32);
+}
+
+TEST(f32, Log10) {
+  auto a = (0.456_f32).log10();
+  F32_NEAR(a, -0.34103515733_f32, 0.0000001_f32);
+}
+
+TEST(f32, Log2) {
+  auto a = (0.456_f32).log2();
+  F32_NEAR(a, -1.1328942705_f32, 0.0000001_f32);
+}
+
+TEST(f32, Max) {
+  auto a = (0.456_f32).max(-0.456_f32);
+  EXPECT_EQ(a, 0.456_f32);
+  auto b = (0.456_f32).max(0.457_f32);
+  EXPECT_EQ(b, 0.457_f32);
+  auto c = f32::TODO_NAN().max(0.457_f32);
+  EXPECT_EQ(c, 0.457_f32);
+  auto d = (0.456_f32).max(f32::TODO_NAN());
+  EXPECT_EQ(d, 0.456_f32);
+}
+
+TEST(f32, Min) {
+  auto a = (0.456_f32).min(-0.456_f32);
+  EXPECT_EQ(a, -0.456_f32);
+  auto b = (0.456_f32).min(0.457_f32);
+  EXPECT_EQ(b, 0.456_f32);
+  auto c = f32::TODO_NAN().min(0.457_f32);
+  EXPECT_EQ(c, 0.457_f32);
+  auto d = (0.456_f32).min(f32::TODO_NAN());
+  EXPECT_EQ(d, 0.456_f32);
+}
+
+TEST(f32, MulAdd) {
+  auto a = (0.456_f32).mul_add(2_f32, 3.1_f32);
+  F32_NEAR(a, 0.456_f32 * 2_f32 + 3.1_f32, 0.0000001_f32);
+}
+
+TEST(f32, Powf) {
+  auto a = (0.456_f32).powf(4.6_f32);
+  F32_NEAR(a, 0.02699219956_f32, 0.0000001_f32);
+}
+
+TEST(f32, Powi) {
+  auto a = (0.456_f32).powi(5_i32);
+  F32_NEAR(a, 0.01971624532_f32, 0.0000001_f32);
+}
+
+TEST(f32, Recip) {
+  auto a = (0.456_f32).recip();
+  F32_NEAR(a, 2.19298245614_f32, 0.0000001_f32);
+  auto b = f32::TODO_NAN().recip();
+  EXPECT_TRUE(::isnan(b.primitive_value));  // TODO: is_nan()
+}
+
+TEST(f32, Round) {
+  auto a = (0.456_f32).round();
+  EXPECT_EQ(a.total_cmp(0_f32), std::strong_ordering::equal);
+  auto b = (-0.456_f32).round();
+  EXPECT_EQ(a.total_cmp(0_f32), std::strong_ordering::equal);
+  auto c = (1.546_f32).round();
+  F32_NEAR(c, 2_f32, 0.0000001_f32);
+  auto d = (-1.546_f32).round();
+  F32_NEAR(d, -2_f32, 0.0000001_f32);
+}
+
+TEST(f32, Signum) {
+  EXPECT_EQ((0_f32).signum(), 1_f32);
+  EXPECT_EQ((-0_f32).signum(), -1_f32);
+  EXPECT_EQ((123_f32).signum(), 1_f32);
+  EXPECT_EQ((-123_f32).signum(), -1_f32);
+  EXPECT_EQ(f32::TODO_INFINITY().signum(), 1_f32);
+  EXPECT_EQ(f32::NEG_INFINITY().signum(), -1_f32);
+  EXPECT_TRUE(
+      ::isnan(f32::TODO_NAN().signum().primitive_value));  // TODO: is_nan()
+}
+
+TEST(f32, Sin) {
+  auto a = (0.767_f32).sin();
+  F32_NEAR(a, 0.69397837724_f32, 0.0000001_f32);
+  auto b = (1_f32).sin();
+  F32_NEAR(b, 0.8414709848_f32, 0.0000001_f32);
+  auto c = (4_f32).sin();
+  F32_NEAR(c, -0.7568024953_f32, 0.0000001_f32);
+}
+
+TEST(f32, Sinh) {
+  auto a = (0.767_f32).sinh();
+  F32_NEAR(a, 0.84444623555_f32, 0.0000001_f32);
+  auto b = (1_f32).sinh();
+  F32_NEAR(b, 1.17520119364_f32, 0.0000001_f32);
+  auto c = (4_f32).sinh();
+  F32_NEAR(c, 27.2899171971_f32, 0.0000001_f32);
+}
+
+TEST(f32, Sqrt) {
+  auto a = (4.68_f32).sqrt();
+  F32_NEAR(a, 2.16333076528_f32, 0.0000001_f32);
+}
+
+TEST(f32, Tan) {
+  auto a = (0.767_f32).tan();
+  F32_NEAR(a, 0.96386442413_f32, 0.0000001_f32);
+  auto b = (1_f32).tan();
+  F32_NEAR(b, 1.55740772465_f32, 0.0000001_f32);
+  auto c = (4_f32).tan();
+  F32_NEAR(c, 1.15782128235_f32, 0.0000001_f32);
+}
+
+TEST(f32, Tanh) {
+  auto a = (0.767_f32).tanh();
+  F32_NEAR(a, 0.64518161665_f32, 0.0000001_f32);
+  auto b = (1_f32).tanh();
+  F32_NEAR(b, 0.76159415595_f32, 0.0000001_f32);
+  auto c = (4_f32).tanh();
+  F32_NEAR(c, 0.99932929973_f32, 0.0000001_f32);
+}
+
+TEST(f32, Fract) {
+  auto a = (3.767_f32).fract();
+  F32_NEAR(a, 0.767_f32, 0.0000001_f32);
+  auto b = (1_f32).fract();
+  F32_NEAR(b, 0_f32, 0.0000001_f32);
+  auto c = (0.12345_f32).fract();
+  F32_NEAR(c, 0.12345_f32, 0.0000001_f32);
+  auto d = (-3.767_f32).fract();
+  F32_NEAR(d, -0.767_f32, 0.0000001_f32);
+}
+
+TEST(f32, Trunc) {
+  auto a = (3.767_f32).trunc();
+  EXPECT_EQ(a, 3_f32);
+  auto b = (1_f32).trunc();
+  EXPECT_EQ(b, 1_f32);
+  auto c = (0.12345_f32).trunc();
+  EXPECT_EQ(c, 0_f32);
+  auto d = (-3.767_f32).trunc();
+  EXPECT_EQ(d, -3_f32);
+}
+
+TEST(f32, ToDegrees) {
+  auto a = (3.4567_f32).to_degrees();
+  F32_NEAR(a, 198.054321_f32, 0.0000001_f32);
+}
+
+TEST(f32, ToRadians) {
+  auto a = (198.054321_f32).to_radians();
+  F32_NEAR(a, 3.4567_f32, 0.0000001_f32);
+}
+
+TEST(f32, ToIntUnchecked) {
+  auto a = (198.054321_f32).to_int_unchecked<u8>(unsafe_fn);
+  EXPECT_EQ(a, 198_u8);
+  auto b = (198.054321_f32).to_int_unchecked<u32>(unsafe_fn);
+  EXPECT_EQ(b, 198_u32);
+  auto c = (-108.054321_f32).to_int_unchecked<i8>(unsafe_fn);
+  EXPECT_EQ(c, -108_i8);
+}
+
+TEST(f32, FromBits) {
+  auto a = f32::from_bits(0x41480000_u32);
+  EXPECT_EQ(a, 12.5_f32);
+}
+
+TEST(f32, ToBits) {
+  auto a = (12.5_f32).to_bits();
+  EXPECT_EQ(a, 0x41480000_u32);
 }
 
 }  // namespace

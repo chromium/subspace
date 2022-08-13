@@ -1233,11 +1233,23 @@ constexpr T truncate_float(T x) noexcept {
 template <class T>
   requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
 constexpr T float_signum(T x) noexcept {
-  // TODO: Can this be done without a branch?
+  // TODO: Can this be done without a branch? Beware nan values in constexpr
+  // context are rewritten.
   if (float_is_nan(x)) [[unlikely]]
     return x;
   const auto signbit = unchecked_and(into_unsigned_integer(x), high_bit<T>());
   return into_float(unchecked_add(into_unsigned_integer(T{1}), signbit));
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+inline T float_round(T x) noexcept {
+  /* MSVC round(float) is returning a double for some reason. */
+  const auto out = into_unsigned_integer(static_cast<T>(::round(x)));
+  // `round()` doesn't preserve the sign bit, so we need to restore it, for
+  // (-0.5, -0.0].
+  return into_float((out & ~high_bit<T>()) |
+                    (into_unsigned_integer(x) & high_bit<T>()));
 }
 
 }  // namespace sus::num::__private

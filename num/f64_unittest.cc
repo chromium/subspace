@@ -18,7 +18,7 @@
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 #define F64_NEAR(a, b, c) \
-  EXPECT_NEAR(a.primitive_value, b.primitive_value, c.primitive_value);
+  EXPECT_NEAR((a).primitive_value, (b).primitive_value, (c).primitive_value);
 
 namespace {
 
@@ -216,14 +216,6 @@ TEST(f64, BinaryOperators) {
     d %= 1.1_f64;
     F64_NEAR(d, f64(0.2), 0.00001_f64);
   }
-}
-
-TEST(f64, Abs) {
-  auto a = (-0.345_f64).abs();
-  EXPECT_EQ(a, 0.345_f64);
-
-  auto b = 0.345_f64;
-  EXPECT_EQ(b.abs(), 0.345_f64);
 }
 
 TEST(f64, TotalCmp) {
@@ -465,6 +457,355 @@ TEST(f64, TotalCmp) {
   EXPECT_EQ(quiet_nan.total_cmp(norm1), std::strong_ordering::greater);
   EXPECT_EQ(quiet_nan.total_cmp(signaling_nan), std::strong_ordering::greater);
   EXPECT_EQ(quiet_nan.total_cmp(quiet_nan), std::strong_ordering::equal);
+}
+
+TEST(f64, Abs) {
+  auto a = (-0.345_f64).abs();
+  EXPECT_EQ(a, 0.345_f64);
+
+  auto b = 0.345_f64;
+  EXPECT_EQ(b.abs(), 0.345_f64);
+}
+
+TEST(f64, Acos) {
+  auto a = (0.767_f64).acos();
+  F64_NEAR(a, 0.696643798_f64, 0.0000001_f64);
+  auto b = (1_f64).acos();
+  F64_NEAR(b, 0_f64, 0.0000001_f64);
+  auto c = (1.1_f64).acos();
+  EXPECT_TRUE(::isnan(c.primitive_value));  // TODO: is_nan().
+  auto d = (-1.1_f64).acos();
+  EXPECT_TRUE(::isnan(d.primitive_value));  // TODO: is_nan().
+}
+
+TEST(f64, Acosh) {
+  auto a = (2.5_f64).acosh();
+  F64_NEAR(a, 1.566799236972411_f64, 0.0000001_f64);
+  auto b = (1_f64).acosh();
+  F64_NEAR(b, 0_f64, 0.0000001_f64);
+  auto c = (0.9999999_f64).acosh();
+  EXPECT_TRUE(::isnan(c.primitive_value));  // TODO: is_nan().
+  auto d = (0_f64).acosh();
+  EXPECT_TRUE(::isnan(d.primitive_value));  // TODO: is_nan().
+  auto e = (-0.9999999_f64).acosh();
+  EXPECT_TRUE(::isnan(e.primitive_value));  // TODO: is_nan().
+}
+
+TEST(f64, Asin) {
+  auto a = (0.767_f64).asin();
+  F64_NEAR(a, 0.874152528_f64, 0.0000001_f64);
+  auto b = (0_f64).asin();
+  F64_NEAR(b, 0_f64, 0.0000001_f64);
+  auto c = (1.1_f64).asin();
+  EXPECT_TRUE(::isnan(c.primitive_value));  // TODO: is_nan().
+  auto d = (-1.1_f64).asin();
+  EXPECT_TRUE(::isnan(d.primitive_value));  // TODO: is_nan().
+}
+
+TEST(f64, Asinh) {
+  auto a = (2.5_f64).asinh();
+  F64_NEAR(a, 1.6472311463711_f64, 0.0000001_f64);
+  auto b = (0_f64).asinh();
+  F64_NEAR(b, 0_f64, 0.0000001_f64);
+  auto c = (0.9999999_f64).asinh();
+  F64_NEAR(c, 0.88137351630886_f64, 0.0000001_f64);
+}
+
+TEST(f64, Atan) {
+  auto a = (0.767_f64).atan();
+  F64_NEAR(a, 0.654292628_f64, 0.0000001_f64);
+  auto b = (0_f64).atan();
+  F64_NEAR(b, 0_f64, 0.0000001_f64);
+  auto c = (1.1_f64).atan();
+  F64_NEAR(c, 0.832981267_f64, 0.0000001_f64);
+  auto d = (-1.1_f64).atan();
+  F64_NEAR(d, -0.832981267_f64, 0.0000001_f64);
+}
+
+TEST(f64, Atan2) {
+  auto a = (0_f64).atan2(0_f64);
+  F64_NEAR(a, 0_f64, 0.0000001_f64);
+  auto b = (0.5_f64).atan2(1.2_f64);
+  F64_NEAR(b, 0.39479112_f64, 0.0000001_f64);
+  auto c = (-0.5_f64).atan2(1.2_f64);
+  F64_NEAR(c, -0.39479112_f64, 0.0000001_f64);
+  auto d = (-0.5_f64).atan2(-1.2_f64);
+  F64_NEAR(d, 0.39479112_f64 - f64::consts::PI(), 0.0000001_f64);
+  auto e = (0.5_f64).atan2(-1.2_f64);
+  F64_NEAR(e, -0.39479112_f64 + f64::consts::PI(), 0.0000001_f64);
+}
+
+TEST(f64, Atanh) {
+  auto a = (2.5_f64).atanh();
+  EXPECT_TRUE(::isnan(a.primitive_value));  // TODO: is_nan().
+  auto b = (0_f64).atanh();
+  F64_NEAR(b, 0_f64, 0.0000001_f64);
+  auto c = (0.75_f64).atanh();
+  F64_NEAR(c, 0.97295507452766_f64, 0.0000001_f64);
+  auto d = (1_f64).atanh();
+  EXPECT_TRUE(::isinf(d.primitive_value));  // TODO: is_infinite().
+}
+
+TEST(f64, Cbrt) {
+  auto a = (0.456_f64).cbrt();
+  F64_NEAR(a, 0.76970022625_f64, 0.0000001_f64);
+  auto b = (1_f64).cbrt();
+  F64_NEAR(b, 1_f64, 0.0000001_f64);
+  auto c = (-1_f64).cbrt();
+  F64_NEAR(c, -1_f64, 0.0000001_f64);
+}
+
+TEST(f64, Ceil) {
+  auto a = (0.456_f64).ceil();
+  F64_NEAR(a, 1_f64, 0.0000001_f64);
+  auto b = (-0.456_f64).ceil();
+  EXPECT_EQ(b.total_cmp(-0_f64), std::strong_ordering::equal);
+  auto c = (1.0001_f64).ceil();
+  F64_NEAR(c, 2_f64, 0.0000001_f64);
+}
+
+TEST(f64, Copysign) {
+  auto a = (0.456_f64).copysign(1_f64);
+  EXPECT_EQ(a, 0.456_f64);
+  auto b = (0.456_f64).copysign(-1_f64);
+  EXPECT_EQ(b, -0.456_f64);
+  auto c = f64::TODO_NAN().copysign(-1_f64);
+  EXPECT_TRUE(::isnan(c.primitive_value));    // TODO: is_nan()
+  EXPECT_TRUE(::signbit(c.primitive_value));  // TODO: is_positive()
+  auto d = f64::TODO_NAN().copysign(1_f64);
+  EXPECT_TRUE(::isnan(d.primitive_value));     // TODO: is_nan()
+  EXPECT_TRUE(!::signbit(d.primitive_value));  // TODO: is_positive()
+}
+
+TEST(f64, Cos) {
+  auto a = (0.767_f64).cos();
+  F64_NEAR(a, 0.71999584159_f64, 0.0000001_f64);
+  auto b = (1_f64).cos();
+  F64_NEAR(b, 0.54030230586_f64, 0.0000001_f64);
+  auto c = (4_f64).cos();
+  F64_NEAR(c, -0.65364362086_f64, 0.0000001_f64);
+}
+
+TEST(f64, Cosh) {
+  auto a = (0.767_f64).cosh();
+  F64_NEAR(a, 1.30885042871_f64, 0.0000001_f64);
+  auto b = (1_f64).cosh();
+  F64_NEAR(b, 1.54308063482_f64, 0.0000001_f64);
+  auto c = (4_f64).cosh();
+  F64_NEAR(c, 27.308232836_f64, 0.0000001_f64);
+}
+
+TEST(f64, Exp) {
+  auto a = (1_f64).exp();
+  F64_NEAR(a, f64::consts::E(), 0.0000001_f64);
+  auto b = (2.4_f64).exp();
+  F64_NEAR(b, 11.0231763806_f64, 0.00001_f64);
+}
+
+TEST(f64, Exp2) {
+  auto a = (1_f64).exp2();
+  F64_NEAR(a, 2_f64, 0.0000001_f64);
+  auto b = (2.4_f64).exp2();
+  F64_NEAR(b, 5.27803164309_f64, 0.00001_f64);
+}
+
+TEST(f64, ExpM1) {
+  auto a = (1_f64).exp_m1();
+  F64_NEAR(a, f64::consts::E() - 1_f64, 0.00001_f64);
+  auto b = (2.4_f64).exp_m1();
+  F64_NEAR(b, 10.0231763806_f64, 0.00001_f64);
+}
+
+TEST(f64, Floor) {
+  auto a = (0.456_f64).floor();
+  EXPECT_EQ(a.total_cmp(0_f64), std::strong_ordering::equal);
+  auto b = (-0.456_f64).floor();
+  F64_NEAR(b, -1_f64, 0.0000001_f64);
+  auto c = (1.0001_f64).floor();
+  F64_NEAR(c, 1_f64, 0.0000001_f64);
+}
+
+TEST(f64, Hypot) {
+  auto a = (0.456_f64).hypot(0.567_f64);
+  F64_NEAR(a, 0.72761597013_f64, 0.0000001_f64);
+}
+
+TEST(f64, Ln) {
+  auto a = (0.456_f64).ln();
+  F64_NEAR(a, -0.78526246946_f64, 0.0000001_f64);
+}
+
+TEST(f64, Ln1p) {
+  auto a = (0.456_f64).ln_1p();
+  F64_NEAR(a, 0.37569294977_f64, 0.0000001_f64);
+}
+
+TEST(f64, Log10) {
+  auto a = (0.456_f64).log10();
+  F64_NEAR(a, -0.34103515733_f64, 0.0000001_f64);
+}
+
+TEST(f64, Log2) {
+  auto a = (0.456_f64).log2();
+  F64_NEAR(a, -1.1328942705_f64, 0.0000001_f64);
+}
+
+TEST(f64, Max) {
+  auto a = (0.456_f64).max(-0.456_f64);
+  EXPECT_EQ(a, 0.456_f64);
+  auto b = (0.456_f64).max(0.457_f64);
+  EXPECT_EQ(b, 0.457_f64);
+  auto c = f64::TODO_NAN().max(0.457_f64);
+  EXPECT_EQ(c, 0.457_f64);
+  auto d = (0.456_f64).max(f64::TODO_NAN());
+  EXPECT_EQ(d, 0.456_f64);
+}
+
+TEST(f64, Min) {
+  auto a = (0.456_f64).min(-0.456_f64);
+  EXPECT_EQ(a, -0.456_f64);
+  auto b = (0.456_f64).min(0.457_f64);
+  EXPECT_EQ(b, 0.456_f64);
+  auto c = f64::TODO_NAN().min(0.457_f64);
+  EXPECT_EQ(c, 0.457_f64);
+  auto d = (0.456_f64).min(f64::TODO_NAN());
+  EXPECT_EQ(d, 0.456_f64);
+}
+
+TEST(f64, MulAdd) {
+  auto a = (0.456_f64).mul_add(2_f64, 3.1_f64);
+  F64_NEAR(a, 0.456_f64 * 2_f64 + 3.1_f64, 0.0000001_f64);
+}
+
+TEST(f64, Powf) {
+  auto a = (0.456_f64).powf(4.6_f64);
+  F64_NEAR(a, 0.02699219956_f64, 0.0000001_f64);
+}
+
+TEST(f64, Powi) {
+  auto a = (0.456_f64).powi(5_i32);
+  F64_NEAR(a, 0.01971624532_f64, 0.0000001_f64);
+}
+
+TEST(f64, Recip) {
+  auto a = (0.456_f64).recip();
+  F64_NEAR(a, 2.19298245614_f64, 0.0000001_f64);
+  auto b = f64::TODO_NAN().recip();
+  EXPECT_TRUE(::isnan(b.primitive_value));  // TODO: is_nan()
+}
+
+TEST(f64, Round) {
+  auto a = (0.456_f64).round();
+  EXPECT_EQ(a.total_cmp(0_f64), std::strong_ordering::equal);
+  auto b = (-0.456_f64).round();
+  EXPECT_EQ(a.total_cmp(0_f64), std::strong_ordering::equal);
+  auto c = (1.546_f64).round();
+  F64_NEAR(c, 2_f64, 0.0000001_f64);
+  auto d = (-1.546_f64).round();
+  F64_NEAR(d, -2_f64, 0.0000001_f64);
+}
+
+TEST(f64, Signum) {
+  EXPECT_EQ((0_f64).signum(), 1_f64);
+  EXPECT_EQ((-0_f64).signum(), -1_f64);
+  EXPECT_EQ((123_f64).signum(), 1_f64);
+  EXPECT_EQ((-123_f64).signum(), -1_f64);
+  EXPECT_EQ(f64::TODO_INFINITY().signum(), 1_f64);
+  EXPECT_EQ(f64::NEG_INFINITY().signum(), -1_f64);
+  EXPECT_TRUE(
+      ::isnan(f64::TODO_NAN().signum().primitive_value));  // TODO: is_nan()
+}
+
+TEST(f64, Sin) {
+  auto a = (0.767_f64).sin();
+  F64_NEAR(a, 0.69397837724_f64, 0.0000001_f64);
+  auto b = (1_f64).sin();
+  F64_NEAR(b, 0.8414709848_f64, 0.0000001_f64);
+  auto c = (4_f64).sin();
+  F64_NEAR(c, -0.7568024953_f64, 0.0000001_f64);
+}
+
+TEST(f64, Sinh) {
+  auto a = (0.767_f64).sinh();
+  F64_NEAR(a, 0.84444623555_f64, 0.0000001_f64);
+  auto b = (1_f64).sinh();
+  F64_NEAR(b, 1.17520119364_f64, 0.0000001_f64);
+  auto c = (4_f64).sinh();
+  F64_NEAR(c, 27.2899171971_f64, 0.0000001_f64);
+}
+
+TEST(f64, Sqrt) {
+  auto a = (4.68_f64).sqrt();
+  F64_NEAR(a, 2.16333076528_f64, 0.0000001_f64);
+}
+
+TEST(f64, Tan) {
+  auto a = (0.767_f64).tan();
+  F64_NEAR(a, 0.96386442413_f64, 0.0000001_f64);
+  auto b = (1_f64).tan();
+  F64_NEAR(b, 1.55740772465_f64, 0.0000001_f64);
+  auto c = (4_f64).tan();
+  F64_NEAR(c, 1.15782128235_f64, 0.0000001_f64);
+}
+
+TEST(f64, Tanh) {
+  auto a = (0.767_f64).tanh();
+  F64_NEAR(a, 0.64518161665_f64, 0.0000001_f64);
+  auto b = (1_f64).tanh();
+  F64_NEAR(b, 0.76159415595_f64, 0.0000001_f64);
+  auto c = (4_f64).tanh();
+  F64_NEAR(c, 0.99932929973_f64, 0.0000001_f64);
+}
+
+TEST(f64, Fract) {
+  auto a = (3.767_f64).fract();
+  F64_NEAR(a, 0.767_f64, 0.0000001_f64);
+  auto b = (1_f64).fract();
+  F64_NEAR(b, 0_f64, 0.0000001_f64);
+  auto c = (0.12345_f64).fract();
+  F64_NEAR(c, 0.12345_f64, 0.0000001_f64);
+  auto d = (-3.767_f64).fract();
+  F64_NEAR(d, -0.767_f64, 0.0000001_f64);
+}
+
+TEST(f64, Trunc) {
+  auto a = (3.767_f64).trunc();
+  EXPECT_EQ(a, 3_f64);
+  auto b = (1_f64).trunc();
+  EXPECT_EQ(b, 1_f64);
+  auto c = (0.12345_f64).trunc();
+  EXPECT_EQ(c, 0_f64);
+  auto d = (-3.767_f64).trunc();
+  EXPECT_EQ(d, -3_f64);
+}
+
+TEST(f64, ToDegrees) {
+  auto a = (3.4567_f64).to_degrees();
+  F64_NEAR(a, 198.054321_f64, 0.0000001_f64);
+}
+
+TEST(f64, ToRadians) {
+  auto a = (198.054321_f64).to_radians();
+  F64_NEAR(a, 3.4567_f64, 0.0000001_f64);
+}
+
+TEST(f64, ToIntUnchecked) {
+  auto a = (198.054321_f64).to_int_unchecked<u8>(unsafe_fn);
+  EXPECT_EQ(a, 198_u8);
+  auto b = (198.054321_f64).to_int_unchecked<u32>(unsafe_fn);
+  EXPECT_EQ(b, 198_u32);
+  auto c = (-108.054321_f64).to_int_unchecked<i8>(unsafe_fn);
+  EXPECT_EQ(c, -108_i8);
+}
+
+TEST(f64, FromBits) {
+  auto a = f64::from_bits(0x4029000000000000_u64);
+  EXPECT_EQ(a, 12.5_f64);
+}
+
+TEST(f64, ToBits) {
+  auto a = (12.5_f64).to_bits();
+  EXPECT_EQ(a, 0x4029000000000000_u64);
 }
 
 }  // namespace
