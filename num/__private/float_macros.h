@@ -21,6 +21,7 @@
 #include "marker/unsafe.h"
 #include "num/__private/float_ordering.h"
 #include "num/__private/intrinsics.h"
+#include "num/fp_category.h"
 #include "num/integer_concepts.h"
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
@@ -546,33 +547,44 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__float_bytes(T, UnsignedIntT)                                    \
-  /** Raw transmutation from `##UnsignedIntT##`.                              \
-   *                                                                          \
-   * Note that this function is distinct from Into<##T##>, which attempts to  \
-   * preserve the numeric value, and not the bitwise value.                   \
-   *                                                                          \
-   * # Examples                                                               \
-   * ```                                                                      \
-   * auto v = f32::from_bits(0x41480000);                                     \
-   * sus::check!(v, 12.5);                                                    \
-   * ```                                                                      \
-   *                                                                          \
-   * This function is not constexpr, as converting to a float does not always \
-   * preserve the exact bits in a NaN in a constexpr context.                 \
-   */                                                                         \
-  static T from_bits(const UnsignedIntT& v) noexcept {                        \
-    return std::bit_cast<T>(v);                                               \
-  }                                                                           \
-  /** Raw transmutation to ##UnsignedT##.                                     \
-   *                                                                          \
-   * Note that this function is distinct from Into<##UnsignedIntT##>, which   \
-   * attempts to preserve the numeric value, and not the bitwise value.       \
-   */                                                                         \
-  constexpr inline UnsignedIntT to_bits() const& noexcept {                   \
-    return std::bit_cast<decltype(UnsignedIntT::primitive_value)>(            \
-        primitive_value);                                                     \
-  }                                                                           \
+#define _sus__float_bytes(T, UnsignedIntT)                                     \
+  /** Raw transmutation from `##UnsignedIntT##`.                               \
+   *                                                                           \
+   * Note that this function is distinct from Into<##T##>, which attempts to   \
+   * preserve the numeric value, and not the bitwise value.                    \
+   *                                                                           \
+   * # Examples                                                                \
+   * ```                                                                       \
+   * auto v = f32::from_bits(0x41480000);                                      \
+   * sus::check!(v, 12.5);                                                     \
+   * ```                                                                       \
+   *                                                                           \
+   * This function is not constexpr, as converting a NaN does not preserve the \
+   * exact bits in a constexpr context.                                        \
+   */                                                                          \
+  static T from_bits(const UnsignedIntT& v) noexcept {                         \
+    return std::bit_cast<T>(v);                                                \
+  }                                                                            \
+  /** Raw transmutation to ##UnsignedT##.                                      \
+   *                                                                           \
+   * Note that this function is distinct from Into<##UnsignedIntT##>, which    \
+   * attempts to preserve the numeric value, and not the bitwise value.        \
+   */                                                                          \
+  constexpr inline UnsignedIntT to_bits() const& noexcept {                    \
+    return std::bit_cast<decltype(UnsignedIntT::primitive_value)>(             \
+        primitive_value);                                                      \
+  }                                                                            \
+  static_assert(true)
+
+#define _sus__float_category(T)                                                \
+  /** Returns the floating point category of the number.                       \
+   *                                                                           \
+   * If only one property is going to be tested, it is generally faster to use \
+   * the specific predicate instead.                                           \
+   */                                                                          \
+  constexpr inline FpCategory classify() const& noexcept {                     \
+    return __private::float_category(primitive_value);                         \
+  }                                                                            \
   static_assert(true)
 
 // clamp
@@ -596,4 +608,5 @@
   _sus__float_fract_trunc(T);                    \
   _sus__float_convert_to(T, PrimitiveT);         \
   _sus__float_bytes(T, UnsignedIntT);            \
+  _sus__float_category(T);                       \
   static_assert(true)

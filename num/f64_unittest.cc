@@ -22,6 +22,8 @@
 
 namespace {
 
+using sus::num::FpCategory;
+
 TEST(f64, Traits) {
   static_assert(sus::num::Neg<f64>);
   static_assert(sus::num::Add<f64, f64>);
@@ -806,6 +808,36 @@ TEST(f64, FromBits) {
 TEST(f64, ToBits) {
   auto a = (12.5_f64).to_bits();
   EXPECT_EQ(a, 0x4029000000000000_u64);
+}
+
+TEST(f64, Classify) {
+  EXPECT_EQ(f64::TODO_NAN().classify(), FpCategory::Nan);
+  EXPECT_EQ(f64::TODO_INFINITY().classify(), FpCategory::Infinite);
+  EXPECT_EQ(f64::NEG_INFINITY().classify(), FpCategory::Infinite);
+  EXPECT_EQ((0_f64).classify(), FpCategory::Zero);
+  EXPECT_EQ((-0_f64).classify(), FpCategory::Zero);
+  EXPECT_EQ(
+      f64(std::numeric_limits<decltype(f64::primitive_value)>::denorm_min())
+          .classify(),
+      FpCategory::Subnormal);
+  EXPECT_EQ((123_f64).classify(), FpCategory::Normal);
+
+  constexpr auto a = f64::TODO_NAN().classify();
+  EXPECT_EQ(a, FpCategory::Nan);
+  constexpr auto b = f64::TODO_INFINITY().classify();
+  EXPECT_EQ(b, FpCategory::Infinite);
+  constexpr auto c = f64::NEG_INFINITY().classify();
+  EXPECT_EQ(c, FpCategory::Infinite);
+  constexpr auto d = (0_f64).classify();
+  EXPECT_EQ(d, FpCategory::Zero);
+  constexpr auto e = (-0_f64).classify();
+  EXPECT_EQ(e, FpCategory::Zero);
+  constexpr auto f =
+      f64(std::numeric_limits<decltype(f64::primitive_value)>::denorm_min())
+          .classify();
+  EXPECT_EQ(f, FpCategory::Subnormal);
+  constexpr auto g = (123_f64).classify();
+  EXPECT_EQ(g, FpCategory::Normal);
 }
 
 }  // namespace

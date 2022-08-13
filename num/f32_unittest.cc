@@ -26,6 +26,8 @@
 
 namespace {
 
+using sus::num::FpCategory;
+
 TEST(f32, Traits) {
   static_assert(sus::num::Neg<f32>);
   static_assert(sus::num::Add<f32, f32>);
@@ -817,6 +819,36 @@ TEST(f32, FromBits) {
 TEST(f32, ToBits) {
   auto a = (12.5_f32).to_bits();
   EXPECT_EQ(a, 0x41480000_u32);
+}
+
+TEST(f32, Classify) {
+  EXPECT_EQ(f32::TODO_NAN().classify(), FpCategory::Nan);
+  EXPECT_EQ(f32::TODO_INFINITY().classify(), FpCategory::Infinite);
+  EXPECT_EQ(f32::NEG_INFINITY().classify(), FpCategory::Infinite);
+  EXPECT_EQ((0_f32).classify(), FpCategory::Zero);
+  EXPECT_EQ((-0_f32).classify(), FpCategory::Zero);
+  EXPECT_EQ(
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .classify(),
+      FpCategory::Subnormal);
+  EXPECT_EQ((123_f32).classify(), FpCategory::Normal);
+
+  constexpr auto a = f32::TODO_NAN().classify();
+  EXPECT_EQ(a, FpCategory::Nan);
+  constexpr auto b = f32::TODO_INFINITY().classify();
+  EXPECT_EQ(b, FpCategory::Infinite);
+  constexpr auto c = f32::NEG_INFINITY().classify();
+  EXPECT_EQ(c, FpCategory::Infinite);
+  constexpr auto d = (0_f32).classify();
+  EXPECT_EQ(d, FpCategory::Zero);
+  constexpr auto e = (-0_f32).classify();
+  EXPECT_EQ(e, FpCategory::Zero);
+  constexpr auto f =
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .classify();
+  EXPECT_EQ(f, FpCategory::Subnormal);
+  constexpr auto g = (123_f32).classify();
+  EXPECT_EQ(g, FpCategory::Normal);
 }
 
 }  // namespace
