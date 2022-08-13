@@ -851,4 +851,96 @@ TEST(f32, Classify) {
   EXPECT_EQ(g, FpCategory::Normal);
 }
 
+TEST(f32, IsFinite) {
+  EXPECT_FALSE(f32::TODO_INFINITY().is_finite());
+  EXPECT_FALSE(f32::NEG_INFINITY().is_finite());
+  EXPECT_FALSE(f32::TODO_NAN().is_finite());
+  EXPECT_TRUE((0_f32).is_finite());
+  EXPECT_TRUE((-0_f32).is_finite());
+  EXPECT_TRUE(
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .is_finite());
+  EXPECT_TRUE((123_f32).is_finite());
+}
+
+TEST(f32, IsInfinite) {
+  EXPECT_TRUE(f32::TODO_INFINITY().is_infinite());
+  EXPECT_TRUE(f32::NEG_INFINITY().is_infinite());
+  EXPECT_FALSE(f32::TODO_NAN().is_infinite());
+  EXPECT_FALSE((0_f32).is_infinite());
+  EXPECT_FALSE((-0_f32).is_infinite());
+  EXPECT_FALSE(
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .is_infinite());
+  EXPECT_FALSE((123_f32).is_infinite());
+}
+
+TEST(f32, IsNan) {
+  EXPECT_FALSE(f32::TODO_INFINITY().is_nan());
+  EXPECT_FALSE(f32::NEG_INFINITY().is_nan());
+  EXPECT_TRUE(f32::TODO_NAN().is_nan());
+  EXPECT_FALSE((0_f32).is_nan());
+  EXPECT_FALSE((-0_f32).is_nan());
+  EXPECT_FALSE(
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .is_nan());
+  EXPECT_FALSE((123_f32).is_nan());
+}
+
+TEST(f32, IsNormal) {
+  EXPECT_FALSE(f32::TODO_INFINITY().is_normal());
+  EXPECT_FALSE(f32::NEG_INFINITY().is_normal());
+  EXPECT_FALSE(f32::TODO_NAN().is_normal());
+  EXPECT_FALSE((0_f32).is_normal());
+  EXPECT_FALSE((-0_f32).is_normal());
+  EXPECT_FALSE(
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .is_normal());
+  EXPECT_TRUE((123_f32).is_normal());
+}
+
+TEST(f32, IsSignNegative) {
+  EXPECT_FALSE(f32::TODO_INFINITY().is_sign_negative());
+  EXPECT_TRUE(f32::NEG_INFINITY().is_sign_negative());
+  EXPECT_FALSE(f32::TODO_NAN().is_sign_negative());
+  EXPECT_FALSE((0_f32).is_sign_negative());
+  EXPECT_TRUE((-0_f32).is_sign_negative());
+  EXPECT_FALSE(
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .is_sign_negative());
+  EXPECT_TRUE(
+      f32(-std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .is_sign_negative());
+  EXPECT_FALSE((123_f32).is_sign_negative());
+  EXPECT_TRUE((-123_f32).is_sign_negative());
+}
+
+TEST(f32, IsSignPositive) {
+  EXPECT_TRUE(f32::TODO_INFINITY().is_sign_positive());
+  EXPECT_FALSE(f32::NEG_INFINITY().is_sign_positive());
+  EXPECT_TRUE(f32::TODO_NAN().is_sign_positive());
+  EXPECT_TRUE((0_f32).is_sign_positive());
+  EXPECT_FALSE((-0_f32).is_sign_positive());
+  EXPECT_TRUE(
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .is_sign_positive());
+  EXPECT_FALSE(
+      f32(-std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .is_sign_positive());
+  EXPECT_TRUE((123_f32).is_sign_positive());
+  EXPECT_FALSE((-123_f32).is_sign_positive());
+}
+
+TEST(f32, IsSubnormal) {
+  EXPECT_FALSE(f32::TODO_INFINITY().is_subnormal());
+  EXPECT_FALSE(f32::NEG_INFINITY().is_subnormal());
+  EXPECT_FALSE(f32::TODO_NAN().is_subnormal());
+  EXPECT_FALSE((0_f32).is_subnormal());
+  EXPECT_FALSE((-0_f32).is_subnormal());
+  EXPECT_TRUE(
+      f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
+          .is_subnormal());
+  EXPECT_FALSE((123_f32).is_subnormal());
+}
+
 }  // namespace
