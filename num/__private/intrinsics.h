@@ -1,3 +1,4 @@
+#include "assertions/check.h"
 // Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +26,11 @@
 #include <intrin.h>
 #endif
 
+#include "assertions/builtin.h"
+#include "assertions/unreachable.h"
 #include "macros/always_inline.h"
 #include "marker/unsafe.h"
+#include "num/fp_category.h"
 
 namespace sus::num::__private {
 
@@ -1121,30 +1125,44 @@ sus_always_inline constexpr T nan() noexcept {
 template <class T>
   requires(std::is_floating_point_v<T>)
 sus_always_inline constexpr T infinity() noexcept {
+  // SAFETY: The value being constructed is non a NaN so we can do this in a
+  // constexpr way.
   if constexpr (sizeof(T) == sizeof(float))
-    return into_float(uint32_t{0x7f800000});
+    return into_float_constexpr(unsafe_fn, uint32_t{0x7f800000});
   else
-    return into_float(uint64_t{0x7ff0000000000000});
+    return into_float_constexpr(unsafe_fn, uint64_t{0x7ff0000000000000});
 }
 
 template <class T>
   requires(std::is_floating_point_v<T>)
 sus_always_inline constexpr T negative_infinity() noexcept {
+  // SAFETY: The value being constructed is non a NaN so we can do this in a
+  // constexpr way.
   if constexpr (sizeof(T) == sizeof(float))
-    return into_float(uint32_t{0xff800000});
+    return into_float_constexpr(unsafe_fn, uint32_t{0xff800000});
   else
-    return into_float(uint64_t{0xfff0000000000000});
+    return into_float_constexpr(unsafe_fn, uint64_t{0xfff0000000000000});
 }
 
-constexpr int32_t exponent(float x) noexcept {
+constexpr int32_t exponent_bits(float x) noexcept {
   constexpr uint32_t mask = 0b01111111100000000000000000000000;
-  return ((into_unsigned_integer(x) & mask) >> 23) - int32_t{127};
+  return static_cast<int32_t>(
+      unchecked_shr(into_unsigned_integer(x) & mask, 23));
 }
 
-constexpr int32_t exponent(double x) noexcept {
+constexpr int32_t exponent_bits(double x) noexcept {
   constexpr uint64_t mask =
       0b0111111111110000000000000000000000000000000000000000000000000000;
-  return ((into_unsigned_integer(x) & mask) >> 52) - int32_t{1023};
+  return static_cast<int32_t>(
+      unchecked_shr(into_unsigned_integer(x) & mask, 52));
+}
+
+constexpr int32_t exponent_value(float x) noexcept {
+  return exponent_bits(x) - int32_t{127};
+}
+
+constexpr int32_t exponent_value(double x) noexcept {
+  return exponent_bits(x) - int32_t{1023};
 }
 
 constexpr uint32_t mantissa(float x) noexcept {
@@ -1175,15 +1193,23 @@ constexpr bool float_is_inf_or_nan(double x) noexcept {
 }
 
 constexpr bool float_is_nan(float x) noexcept {
+#if __has_builtin(__builtin_isnan)
+  return __builtin_isnan(x);
+#else
   constexpr auto inf_mask = uint32_t{0x7f800000};
   constexpr auto nan_mask = uint32_t{0x7fffffff};
   return (into_unsigned_integer(x) & nan_mask) > inf_mask;
+#endif
 }
 
 constexpr bool float_is_nan(double x) noexcept {
+#if __has_builtin(__builtin_isnan)
+  return __builtin_isnan(x);
+#else
   constexpr auto inf_mask = uint64_t{0x7ff0000000000000};
   constexpr auto nan_mask = uint64_t{0x7fffffffffffffff};
   return (into_unsigned_integer(x) & nan_mask) > inf_mask;
+#endif
 }
 
 // Assumes that x is a NaN.
@@ -1202,27 +1228,33 @@ constexpr bool float_is_nan_quiet(double x) noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+constexpr bool float_is_subnormal(T x) noexcept {
+  return exponent_bits(x) == int32_t{0};
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
 constexpr T truncate_float(T x) noexcept {
   constexpr auto mantissa_width =
       sizeof(T) == sizeof(float) ? uint32_t{23} : uint32_t{52};
 
   if (float_is_inf_or_nan(x) || float_is_zero(x)) return x;
 
-  const int32_t exp = exponent(x);
+  const int32_t exponent = exponent_value(x);
 
   // If the exponent is greater than the most negative mantissa
   // exponent, then x is already an integer.
-  if (exp >= static_cast<int32_t>(mantissa_width)) return x;
+  if (exponent >= static_cast<int32_t>(mantissa_width)) return x;
 
   // If the exponent is such that abs(x) is less than 1, then return 0.
-  if (exp <= -1) {
+  if (exponent <= -1) {
     if ((into_unsigned_integer(x) & high_bit<T>()) != 0)
       return T{-0.0};
     else
       return T{0.0};
   }
 
-  const uint32_t trim_bits = mantissa_width - static_cast<uint32_t>(exp);
+  const uint32_t trim_bits = mantissa_width - static_cast<uint32_t>(exponent);
   const auto shr = unchecked_shr(into_unsigned_integer(x), trim_bits);
   const auto shl = unchecked_shl(shr, trim_bits);
   // SAFETY: The value here is not a NaN, so will give the same value in
@@ -1251,5 +1283,47 @@ inline T float_round(T x) noexcept {
   return into_float((out & ~high_bit<T>()) |
                     (into_unsigned_integer(x) & high_bit<T>()));
 }
+
+#if __has_builtin(__builtin_fpclassify)
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+constexpr inline ::sus::num::FpCategory float_category(T x) noexcept {
+  constexpr auto nan = 1;
+  constexpr auto inf = 2;
+  constexpr auto norm = 3;
+  constexpr auto subnorm = 4;
+  constexpr auto zero = 5;
+  switch (__builtin_fpclassify(nan, inf, norm, subnorm, zero, x)) {
+    case nan: return ::sus::num::FpCategory::Nan;
+    case inf: return ::sus::num::FpCategory::Infinite;
+    case norm: return ::sus::num::FpCategory::Normal;
+    case subnorm: return ::sus::num::FpCategory::Subnormal;
+    case zero: return ::sus::num::FpCategory::Zero;
+    default: ::sus::unreachable_unchecked(unsafe_fn);
+  }
+}
+#else
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+constexpr inline ::sus::num::FpCategory float_category(T x) noexcept {
+  if (std::is_constant_evaluated()) {
+    if (float_is_nan(x)) return ::sus::num::FpCategory::Nan;
+    if (float_is_inf_or_nan(x)) return ::sus::num::FpCategory::Infinite;
+    if (float_is_zero(x)) return ::sus::num::FpCategory::Zero;
+    if (float_is_subnormal(x)) return ::sus::num::FpCategory::Subnormal;
+    return ::sus::num::FpCategory::Normal;
+  } else {
+    // C++23 requires a constexpr way to do this.
+    switch (::fpclassify(x)) {
+      case FP_NAN: return ::sus::num::FpCategory::Nan;
+      case FP_INFINITE: return ::sus::num::FpCategory::Infinite;
+      case FP_NORMAL: return ::sus::num::FpCategory::Normal;
+      case FP_SUBNORMAL: return ::sus::num::FpCategory::Subnormal;
+      case FP_ZERO: return ::sus::num::FpCategory::Zero;
+      default: ::sus::unreachable_unchecked(unsafe_fn);
+    }
+  }
+}
+#endif
 
 }  // namespace sus::num::__private

@@ -69,6 +69,7 @@ add_library(subspace STATIC
     "num/__private/signed_integer_macros.h"
     "num/__private/unsigned_integer_macros.h"
     "num/float.h"
+    "num/fp_category.h"
     "num/signed_integer.h"
     "num/integer_concepts.h"
     "num/num_concepts.h"

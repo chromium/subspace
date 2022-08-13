@@ -20,11 +20,23 @@
 
 namespace sus::num {
 
+/// A 32-bit floating point type (specifically, the “binary32” type defined in
+/// IEEE 754-2008).
+///
+/// This type can represent a wide range of decimal numbers, like 3.5, 27,
+/// -113.75, 0.0078125, 34359738368, 0, -1. So unlike integer types (such as
+/// i32), floating point types can represent non-integer numbers, too.
 struct f32 final {
   _sus__float_consts(f32, f);
   _sus__float(f32, float, u32);
 };
 
+/// A 64-bit floating point type (specifically, the “binary64” type defined in
+/// IEEE 754-2008).
+///
+/// This type is very similar to `f32`, but has increased precision by using
+/// twice as many bits. Please see the documentation for `f32` for more
+/// information.
 struct f64 final {
   _sus__float_consts(f64, );
   _sus__float(f64, double, u64);
