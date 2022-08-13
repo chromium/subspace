@@ -576,20 +576,63 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__float_category(T)                                                \
-  /** Returns the floating point category of the number.                       \
-   *                                                                           \
-   * If only one property is going to be tested, it is generally faster to use \
-   * the specific predicate instead.                                           \
-   */                                                                          \
-  constexpr inline FpCategory classify() const& noexcept {                     \
-    return __private::float_category(primitive_value);                         \
-  }                                                                            \
+#define _sus__float_category(T)                                                 \
+  /** Returns the floating point category of the number.                        \
+   *                                                                            \
+   * If only one property is going to be tested, it is generally faster to use  \
+   * the specific predicate instead.                                            \
+   */                                                                           \
+  constexpr inline FpCategory classify() const& noexcept {                      \
+    return __private::float_category(primitive_value);                          \
+  }                                                                             \
+  /** Returns true if this number is neither infinite nor NaN.                  \
+   */                                                                           \
+  constexpr inline bool is_finite() const& noexcept {                           \
+    return !__private::float_is_inf_or_nan(primitive_value);                    \
+  }                                                                             \
+  /** Returns true if this value is positive infinity or negative infinity,     \
+   * and false otherwise.                                                       \
+   */                                                                           \
+  constexpr inline bool is_infinite() const& noexcept {                         \
+    return __private::float_is_inf(primitive_value);                            \
+  }                                                                             \
+  /** Returns true if this value is NaN.                                        \
+   */                                                                           \
+  constexpr inline bool is_nan() const& noexcept {                              \
+    return __private::float_is_nan(primitive_value);                            \
+  }                                                                             \
+  /** Returns true if the number is neither zero, infinite, subnormal, or NaN.  \
+   */                                                                           \
+  constexpr inline bool is_normal() const& noexcept {                           \
+    return __private::float_is_normal(primitive_value);                         \
+  }                                                                             \
+  /** Returns true if self has a negative sign, including -0.0, NaNs with       \
+   * negative sign bit and negative infinity.                                   \
+   *                                                                            \
+   * Note that IEEE-745 doesn’t assign any meaning to the sign bit in case of \
+   * a NaN                                                                      \
+   */                                                                           \
+  constexpr inline bool is_sign_negative() const& noexcept {                    \
+    return __private::float_signbit(primitive_value);                           \
+  }                                                                             \
+  /** Returns true if self has a positive sign, including +0.0, NaNs with       \
+   * positive sign bit and positive infinity.                                   \
+   *                                                                            \
+   * Note that IEEE-745 doesn’t assign any meaning to the sign bit in case of \
+   * a NaN.                                                                     \
+   */                                                                           \
+  constexpr inline bool is_sign_positive() const& noexcept {                    \
+    return !__private::float_signbit(primitive_value);                          \
+  }                                                                             \
+  /** Returns true if the number is subnormal.                                  \
+   */                                                                           \
+  constexpr inline bool is_subnormal() const& noexcept {                        \
+    return !__private::float_is_zero(primitive_value) &&                        \
+           __private::float_nonzero_is_subnormal(primitive_value);              \
+  }                                                                             \
   static_assert(true)
 
 // clamp
-// classify, is_finite, is_infinite, is_nan, is_normal, is_sign_negative,
-// is_sign_positive, is_subnormal
 // div_euclid, rem_euclid
 // from_be_bytes, from_le_bytes, from_ne_bytes
 // to_be_bytes, to_le_bytes, to_ne_bytes

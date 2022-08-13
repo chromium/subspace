@@ -1182,6 +1182,27 @@ constexpr bool float_is_zero(T x) noexcept {
   return (into_unsigned_integer(x) & ~high_bit<T>()) == 0;
 }
 
+constexpr bool float_is_inf(float x) noexcept {
+#if __has_builtin(__builtin_isinf)
+  return __builtin_isinf(x);
+#else
+  constexpr auto inf = uint32_t{0x7f800000};
+  constexpr auto mask = uint32_t{0x7fffffff};
+  const auto y = into_unsigned_integer(x);
+  return (y & mask) == inf;
+#endif
+}
+
+constexpr bool float_is_inf(double x) noexcept {
+#if __has_builtin(__builtin_isinf)
+  return __builtin_isinf(x);
+#else
+  constexpr auto inf = uint64_t{0x7ff0000000000000};
+  constexpr auto mask = uint64_t{0x7fffffffffffffff};
+  return (into_unsigned_integer(x) & mask) == inf;
+#endif
+}
+
 constexpr bool float_is_inf_or_nan(float x) noexcept {
   constexpr auto mask = uint32_t{0x7f800000};
   return (into_unsigned_integer(x) & mask) == mask;
@@ -1226,10 +1247,25 @@ constexpr bool float_is_nan_quiet(double x) noexcept {
   return (into_unsigned_integer(x) & quiet_mask) != 0;
 }
 
+// This is only valid if the argument is not (positive or negative) zero.
 template <class T>
   requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
-constexpr bool float_is_subnormal(T x) noexcept {
+constexpr bool float_nonzero_is_subnormal(T x) noexcept {
   return exponent_bits(x) == int32_t{0};
+}
+
+constexpr bool float_is_normal(float x) noexcept {
+  // If the exponent is 0, the number is zero or subnormal. If the exponent is
+  // all ones, the number is infinite or NaN.
+  const auto e = exponent_bits(x);
+  return e != 0 && e != int32_t{0b011111111};
+}
+
+constexpr bool float_is_normal(double x) noexcept {
+  // If the exponent is 0, the number is zero or subnormal. If the exponent is
+  // all ones, the number is infinite or NaN.
+  const auto e = exponent_bits(x);
+  return e != 0 && e != int32_t{0b011111111111};
 }
 
 template <class T>
@@ -1264,13 +1300,21 @@ constexpr T truncate_float(T x) noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+constexpr bool float_signbit(T x) noexcept {
+  return unchecked_and(into_unsigned_integer(x), high_bit<T>()) != 0;
+}
+
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
 constexpr T float_signum(T x) noexcept {
   // TODO: Can this be done without a branch? Beware nan values in constexpr
   // context are rewritten.
   if (float_is_nan(x)) [[unlikely]]
     return x;
   const auto signbit = unchecked_and(into_unsigned_integer(x), high_bit<T>());
-  return into_float(unchecked_add(into_unsigned_integer(T{1}), signbit));
+  // SAFETY: The value passed in is constructed here and is not a NaN.
+  return into_float_constexpr(
+      unsafe_fn, unchecked_add(into_unsigned_integer(T{1}), signbit));
 }
 
 template <class T>
@@ -1310,7 +1354,7 @@ constexpr inline ::sus::num::FpCategory float_category(T x) noexcept {
     if (float_is_nan(x)) return ::sus::num::FpCategory::Nan;
     if (float_is_inf_or_nan(x)) return ::sus::num::FpCategory::Infinite;
     if (float_is_zero(x)) return ::sus::num::FpCategory::Zero;
-    if (float_is_subnormal(x)) return ::sus::num::FpCategory::Subnormal;
+    if (float_nonzero_is_subnormal(x)) return ::sus::num::FpCategory::Subnormal;
     return ::sus::num::FpCategory::Normal;
   } else {
     // C++23 requires a constexpr way to do this.
