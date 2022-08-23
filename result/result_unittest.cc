@@ -193,7 +193,7 @@ TEST(Result, CopyAfterTrivialMove) {
 struct NonTrivialCopy {
   NonTrivialCopy() {}
   NonTrivialCopy(const NonTrivialCopy&) {}
-  NonTrivialCopy& operator=(const NonTrivialCopy&) {}
+  NonTrivialCopy& operator=(const NonTrivialCopy&) { return *this; }
 };
 
 TEST(Result, CopyAfterNonTrivialMove) {
@@ -221,7 +221,7 @@ TEST(Result, MoveAfterTrivialMove) {
 struct NonTrivialMove {
   NonTrivialMove() {}
   NonTrivialMove(NonTrivialMove&&) {}
-  NonTrivialMove& operator=(NonTrivialMove&&) {}
+  NonTrivialMove& operator=(NonTrivialMove&&) { return *this; }
 };
 
 TEST(Result, MoveAfterNonTrivialMove) {
