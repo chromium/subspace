@@ -21,8 +21,6 @@
 
 // TODO: Clone integration: cloned().
 
-// TODO: Pair/tuple integration: zip().
-
 #pragma once
 
 #include <type_traits>
@@ -49,6 +47,11 @@ class Iterator;
 namespace sus::result {
 template <class T, class E>
 class Result;
+}
+
+namespace sus::tuple {
+template <class T, class... Ts>
+class Tuple;
 }
 
 namespace sus::option {
@@ -683,6 +686,25 @@ class Option final {
       return Result::with_err(static_cast<ElseFn&&>(f)());
   }
 
+  /// Zips self with another Option.
+  ///
+  /// If self is `Some(s)` and other is `Some(o)`, this method returns `Some((s,
+  /// o))`. Otherwise, `None` is returned.
+  template <class U, int&..., class Tuple = ::sus::tuple::Tuple<T, U>>
+  constexpr inline Option<Tuple> zip(Option<U> o) && noexcept {
+    if (o.is_none()) {
+      if (t_.set_state(None) == Some) t_.val_.~T();
+      return Option<Tuple>::none();
+    } else if (is_none()) {
+      return Option<Tuple>::none();
+    } else {
+      t_.set_state(None);
+      return Option<Tuple>::some(
+          Tuple::with(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)),
+                      static_cast<Option<U>&&>(o).unwrap()));
+    }
+  }
+
   /// Transposes an #Option of a #Result into a #Result of an #Option.
   ///
   /// `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
@@ -1155,6 +1177,24 @@ class Option<T&> final {
       return Result::with(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr));
     else
       return Result::with_err(static_cast<ElseFn&&>(f)());
+  }
+
+  /// Zips self with another Option.
+  ///
+  /// If self is `Some(s)` and other is `Some(o)`, this method returns `Some((s,
+  /// o))`. Otherwise, `None` is returned.
+  template <class U, int&..., class Tuple = ::sus::tuple::Tuple<T&, U>>
+  constexpr inline Option<Tuple> zip(Option<U> o) && noexcept {
+    if (o.is_none()) {
+      t_.ptr_ = nullptr;
+      return Option<Tuple>::none();
+    } else if (is_none()) {
+      return Option<Tuple>::none();
+    } else {
+      return Option<Tuple>::some(
+          Tuple::with(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr),
+                      static_cast<Option<U>&&>(o).unwrap()));
+    }
   }
 
   /// Replaces whatever the Option is currently holding with #Some value `t` and
