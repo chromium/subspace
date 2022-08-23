@@ -19,6 +19,8 @@
 #include "assertions/builtin.h"
 #include "iter/iterator.h"
 #include "mem/relocate.h"
+#include "num/types.h"
+#include "result/result.h"
 #include "test/behaviour_types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
@@ -699,8 +701,7 @@ TEST(Option, Filter) {
   {
     auto a = Option<WatchDestructor>::with_default();
     count = 0;
-    auto af = sus::move(a).filter(
-        [](const WatchDestructor&) { return true; });
+    auto af = sus::move(a).filter([](const WatchDestructor&) { return true; });
     // The WatchDestructor was moved from `a` to `af` and the temporary's
     // was destroyed.
     EXPECT_GE(count, 1);
@@ -712,8 +713,7 @@ TEST(Option, Filter) {
   {
     auto b = Option<WatchDestructor>::with_default();
     count = 0;
-    auto bf = sus::move(b).filter(
-        [](const WatchDestructor&) { return false; });
+    auto bf = sus::move(b).filter([](const WatchDestructor&) { return false; });
     // The WatchDestructor in `b` was destroyed.
     EXPECT_GE(count, 1);
   }
@@ -723,8 +723,7 @@ TEST(Option, Filter) {
   {
     count = 0;
     auto c = Option<WatchDestructor>::none();
-    auto cf = sus::move(c).filter(
-        [](const WatchDestructor&) { return false; });
+    auto cf = sus::move(c).filter([](const WatchDestructor&) { return false; });
     // Nothing constructed or destructed.
     EXPECT_EQ(count, 0);
   }
@@ -734,8 +733,7 @@ TEST(Option, Filter) {
   {
     count = 0;
     auto c = Option<WatchDestructor&>::some(mref(w));
-    auto cf = sus::move(c).filter(
-        [](const WatchDestructor&) { return false; });
+    auto cf = sus::move(c).filter([](const WatchDestructor&) { return false; });
     // Nothing constructed or destructed.
     EXPECT_EQ(count, 0);
   }
@@ -1545,6 +1543,64 @@ TEST(Option, PartialOrder) {
   EXPECT_EQ(std::partial_order(Option<float>::none(),
                                Option<float>::some(/* TODO: f32::NAN() */ NAN)),
             std::partial_ordering::less);
+}
+
+TEST(Option, OkOr) {
+  {
+    auto o = Option<u8>::some(3_u8);
+    auto r = sus::move(o).ok_or(-5_i32);
+    IS_NONE(o);
+    static_assert(std::same_as<sus::result::Result<u8, i32>, decltype(r)>);
+    EXPECT_TRUE(r.is_ok());
+    EXPECT_EQ(sus::move(r).unwrap(), 3_u8);
+  }
+  {
+    auto o = Option<u8>::none();
+    auto r = sus::move(o).ok_or(-5_i32);
+    IS_NONE(o);
+    static_assert(std::same_as<sus::result::Result<u8, i32>, decltype(r)>);
+    EXPECT_TRUE(r.is_err());
+    EXPECT_EQ(sus::move(r).unwrap_err(), -5_i32);
+  }
+}
+
+TEST(Option, OkOrElse) {
+  {
+    auto o = Option<u8>::some(3_u8);
+    auto r = sus::move(o).ok_or_else([]() { return -5_i32; });
+    IS_NONE(o);
+    static_assert(std::same_as<sus::result::Result<u8, i32>, decltype(r)>);
+    EXPECT_TRUE(r.is_ok());
+    EXPECT_EQ(sus::move(r).unwrap(), 3_u8);
+  }
+  {
+    auto o = Option<u8>::none();
+    auto r = sus::move(o).ok_or_else([]() { return -5_i32; });
+    IS_NONE(o);
+    static_assert(std::same_as<sus::result::Result<u8, i32>, decltype(r)>);
+    EXPECT_TRUE(r.is_err());
+    EXPECT_EQ(sus::move(r).unwrap_err(), -5_i32);
+  }
+}
+
+TEST(Option, Transpose) {
+  auto none = Option<sus::result::Result<u8, i32>>::none();
+  auto t1 = sus::move(none).transpose();
+  static_assert(std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t1)>);
+  EXPECT_EQ(t1.is_ok(), true);
+  EXPECT_EQ(sus::move(t1).unwrap(), None);
+
+  auto some_ok = Option<sus::result::Result<u8, i32>>::some(sus::result::Result<u8, i32>::with(5_u8));
+  auto t2 = sus::move(some_ok).transpose();
+  static_assert(std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t2)>);
+  EXPECT_EQ(t2.is_ok(), true);
+  EXPECT_EQ(sus::move(t2).unwrap().unwrap(), 5_u8);
+
+  auto some_err = Option<sus::result::Result<u8, i32>>::some(sus::result::Result<u8, i32>::with_err(-2_i32));
+  auto t3 = sus::move(some_err).transpose();
+  static_assert(std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t3)>);
+  EXPECT_EQ(t3.is_err(), true);
+  EXPECT_EQ(sus::move(t3).unwrap_err(), -2_i32);
 }
 
 }  // namespace

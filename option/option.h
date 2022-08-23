@@ -19,8 +19,6 @@
 // in this library). So it's not clear if this is the right thing to do
 // actually, needs thought.
 
-// TODO: Result integration: ok_or(), ok_or_else(), transpose().
-
 // TODO: Clone integration: cloned().
 
 // TODO: Pair/tuple integration: zip().
@@ -39,6 +37,7 @@
 #include "mem/take.h"
 #include "num/num_concepts.h"
 #include "option/__private/is_option_type.h"
+#include "result/__private/is_result_type.h"
 
 namespace sus::iter {
 template <class Item>
@@ -46,6 +45,11 @@ class Once;
 template <class I>
 class Iterator;
 }  // namespace sus::iter
+
+namespace sus::result {
+template <class T, class E>
+class Result;
+}
 
 namespace sus::option {
 
@@ -628,7 +632,7 @@ class Option final {
     if (t_.set_state(None) == Some)
       return Option(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
     else
-      return f();
+      return static_cast<ElseFn&&>(f)();
   }
 
   /// Consumes this Option and returns an Option, holding the value from either
@@ -649,6 +653,46 @@ class Option final {
       // If `this` holds None, we need to do nothing to `this`. If `opt` is Some
       // we would return its value, and if `opt` is None we should return None.
       return opt;
+    }
+  }
+
+  template <class E, int&..., class Result = ::sus::result::Result<T, E>>
+  constexpr inline Result ok_or(E e) && noexcept {
+    if (t_.set_state(None) == Some)
+      return Result::with(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
+    else
+      return Result::with_err(static_cast<E&&>(e));
+  }
+
+  template <class ElseFn, int&..., class E = std::invoke_result_t<ElseFn>,
+            class Result = ::sus::result::Result<T, E>>
+  constexpr inline Result ok_or_else(ElseFn f) && noexcept {
+    if (t_.set_state(None) == Some)
+      return Result::with(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
+    else
+      return Result::with_err(static_cast<ElseFn&&>(f)());
+  }
+
+  template <int&...,
+            class OkType =
+                typename ::sus::result::__private::IsResultType<T>::ok_type,
+            class ErrType =
+                typename ::sus::result::__private::IsResultType<T>::err_type,
+            class Result = ::sus::result::Result<Option<OkType>, ErrType>>
+    requires(::sus::result::__private::IsResultType<T>::value)
+  constexpr inline Result transpose() && noexcept {
+    if (t_.set_state(None) == None) {
+      return Result::with(Option<OkType>::none());
+    } else {
+      if (t_.val_.is_ok()) {
+        return Result::with(Option<OkType>::some(
+            ::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_))
+                .unwrap_unchecked(unsafe_fn)));
+      } else {
+        return Result::with_err(
+            ::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_))
+                .unwrap_err_unchecked(unsafe_fn));
+      }
     }
   }
 

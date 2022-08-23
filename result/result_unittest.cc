@@ -21,6 +21,7 @@
 
 #include "result/result.h"
 
+#include "mem/move.h"
 #include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
