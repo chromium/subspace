@@ -656,23 +656,37 @@ class Option final {
     }
   }
 
+  /// Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to
+  /// `Ok(v)` and `None` to `Err(e)`.
+  ///
+  /// Arguments passed to #ok_or are eagerly evaluated; if you are passing the
+  /// result of a function call, it is recommended to use ok_or_else, which is
+  /// lazily evaluated.
   template <class E, int&..., class Result = ::sus::result::Result<T, E>>
   constexpr inline Result ok_or(E e) && noexcept {
     if (t_.set_state(None) == Some)
-      return Result::with(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
+      return Result::with(
+          ::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
     else
       return Result::with_err(static_cast<E&&>(e));
   }
 
+  /// Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to
+  /// `Ok(v)` and `None` to `Err(f())`.
   template <class ElseFn, int&..., class E = std::invoke_result_t<ElseFn>,
             class Result = ::sus::result::Result<T, E>>
   constexpr inline Result ok_or_else(ElseFn f) && noexcept {
     if (t_.set_state(None) == Some)
-      return Result::with(::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
+      return Result::with(
+          ::sus::mem::take_and_destruct(unsafe_fn, mref(t_.val_)));
     else
       return Result::with_err(static_cast<ElseFn&&>(f)());
   }
 
+  /// Transposes an #Option of a #Result into a #Result of an #Option.
+  ///
+  /// `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
+  /// be mapped to `Ok(Some(_))` and `Err(_)`.
   template <int&...,
             class OkType =
                 typename ::sus::result::__private::IsResultType<T>::ok_type,
@@ -1116,6 +1130,31 @@ class Option<T&> final {
       // we would return its value, and if `opt` is None we should return None.
       return opt;
     }
+  }
+
+  /// Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to
+  /// `Ok(v)` and `None` to `Err(e)`.
+  ///
+  /// Arguments passed to #ok_or are eagerly evaluated; if you are passing the
+  /// result of a function call, it is recommended to use ok_or_else, which is
+  /// lazily evaluated.
+  template <class E, int&..., class Result = ::sus::result::Result<T&, E>>
+  constexpr inline Result ok_or(E e) && noexcept {
+    if (t_.state() == Some)
+      return Result::with(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr));
+    else
+      return Result::with_err(static_cast<E&&>(e));
+  }
+
+  /// Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to
+  /// `Ok(v)` and `None` to `Err(f())`.
+  template <class ElseFn, int&..., class E = std::invoke_result_t<ElseFn>,
+            class Result = ::sus::result::Result<T&, E>>
+  constexpr inline Result ok_or_else(ElseFn f) && noexcept {
+    if (t_.set_state(None) == Some)
+      return Result::with(*::sus::mem::replace_ptr(mref(t_.ptr_), nullptr));
+    else
+      return Result::with_err(static_cast<ElseFn&&>(f)());
   }
 
   /// Replaces whatever the Option is currently holding with #Some value `t` and
