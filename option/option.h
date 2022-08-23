@@ -86,10 +86,19 @@ struct Storage final {
   constexpr ~Storage()
     requires(!std::is_trivially_destructible_v<T>)
   {}
-  constexpr Storage(const Storage&) = default;
-  constexpr Storage& operator=(const Storage&) = default;
-  constexpr Storage(Storage&&) = default;
-  constexpr Storage& operator=(Storage&&) = default;
+
+  constexpr Storage(const Storage&)
+    requires(std::is_trivially_copy_constructible_v<T>)
+  = default;
+  constexpr Storage& operator=(const Storage&)
+    requires(std::is_trivially_copy_assignable_v<T>)
+  = default;
+  constexpr Storage(Storage&&)
+    requires(std::is_trivially_move_constructible_v<T>)
+  = default;
+  constexpr Storage& operator=(Storage&&)
+    requires(std::is_trivially_move_assignable_v<T>)
+  = default;
 
   constexpr Storage(State s) : state_(s) {}
   constexpr Storage(const std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
@@ -111,6 +120,7 @@ struct Storage final {
 template <class T>
 struct Storage<T&> final {
   constexpr ~Storage() = default;
+
   constexpr Storage(const Storage&) = default;
   constexpr Storage& operator=(const Storage&) = default;
   constexpr Storage(Storage&&) = default;
@@ -169,6 +179,8 @@ class Option final {
     return Option<T>(::sus::construct::make_default<T>());
   }
 
+  /// Destructor for the Option.
+  ///
   /// If T can be trivially destroyed, we don't need to explicitly destroy it,
   /// so we can use the default destructor, which allows Option<T> to also be
   /// trivially destroyed.
@@ -191,7 +203,7 @@ class Option final {
     requires(std::is_trivially_copy_constructible_v<T>)
   = default;
 
-  constexpr Option(const Option& o)
+  constexpr Option(const Option& o) noexcept
     requires(!std::is_trivially_copy_constructible_v<T> &&
              std::is_copy_constructible_v<T>)
   : t_(o.t_.state()) {
@@ -204,9 +216,8 @@ class Option final {
     requires(!std::is_copy_constructible_v<T>)
   = delete;
 
-  /// If T can be trivially move-constructed, we don't need to explicitly
-  /// construct it, so we can use the default destructor, which allows Option<T>
-  /// to also be trivially move-constructed.
+  /// If T can be trivially copy-constructed, Option<T> can also be trivially
+  /// move-constructed.
   constexpr Option(Option&& o)
     requires(std::is_trivially_move_constructible_v<T>)
   = default;
@@ -1149,10 +1160,8 @@ template <class T, class U>
 constexpr inline bool operator==(const Option<T>& l,
                                  const Option<U>& r) noexcept {
   switch (l) {
-    case Some:
-      return r.is_some() && l.unwrap_ref() == r.unwrap_ref();
-    case None:
-      return r.is_none();
+    case Some: return r.is_some() && l.unwrap_ref() == r.unwrap_ref();
+    case None: return r.is_none();
   }
   ::sus::unreachable_unchecked(unsafe_fn);
 }
