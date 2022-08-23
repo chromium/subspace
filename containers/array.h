@@ -90,7 +90,11 @@ class Array final {
     return a;
   }
 
- public:
+  /// Returns the number of elements in the array.
+  constexpr const /* TODO: usize */ size_t len() const& noexcept {
+    return N;
+  }
+
   constexpr const T& get(/* TODO: usize */ size_t i) const& noexcept
     requires(N > 0)
   {
@@ -118,6 +122,8 @@ class Array final {
   {
     return storage_.data_;
   }
+
+  // TODO: Eq and Ord (like Option and Tuple).
 
  private:
   enum WithInitializer { kWithInitializer };

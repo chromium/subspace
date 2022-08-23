@@ -696,37 +696,61 @@
       return r;                                                                \
   }
 
-#define _sus__float_endian(T, PrimitiveT, UnsignedIntT)                         \
-  /** Create a floating point value from its representation as a byte array in  \
-   * big endian.                                                                \
-   *                                                                            \
-   * See `##T##::from_bits()` for why this function is not constexpr.           \
-   */                                                                           \
-  static T from_be_bytes(                                                       \
-      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {             \
-    return T::from_bits(UnsignedIntT::from_be_bytes(bytes));                    \
-  }                                                                             \
-  /** Create a floating point value from its representation as a byte array in  \
-   * big endian.                                                                \
-   *                                                                            \
-   *  See `##T##::from_bits()` for why this function is not constexpr.          \
-   */                                                                           \
-  static T from_le_bytes(                                                       \
-      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {             \
-    return T::from_bits(UnsignedIntT::from_le_bytes(bytes));                    \
-  }                                                                             \
-  /** Create a floating point value from its representation as a byte array in  \
-   * native endian.                                                             \
-   *                                                                            \
-   * As the target platform’s native endianness is used, portable code likely \
-   * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate        \
-   * instead.                                                                   \
-   *                                                                            \
-   *  See `##T##::from_bits()` for why this function is not constexpr.          \
-   */                                                                           \
-  static T from_ne_bytes(                                                       \
-      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {             \
-    return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));                    \
+#define _sus__float_endian(T, PrimitiveT, UnsignedIntT)                        \
+  /** Return the memory representation of this floating point number as a byte \
+   * array in big-endian (network) byte order.                                 \
+   */                                                                          \
+  constexpr ::sus::Array<u8, sizeof(PrimitiveT)> to_be_bytes()                 \
+      const& noexcept {                                                        \
+    return to_bits().to_be_bytes();                                            \
+  }                                                                            \
+  /** Return the memory representation of this floating point number as a byte \
+   * array in little-endian byte order.                                        \
+   */                                                                          \
+  constexpr ::sus::Array<u8, sizeof(PrimitiveT)> to_le_bytes()                 \
+      const& noexcept {                                                        \
+    return to_bits().to_le_bytes();                                            \
+  }                                                                            \
+  /** Return the memory representation of this floating point number as a byte \
+   * array in native byte order.                                               \
+   *                                                                           \
+   * As the target platform's native endianness is used, portable code should  \
+   * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.          \
+   */                                                                          \
+  constexpr ::sus::Array<u8, sizeof(PrimitiveT)> to_ne_bytes()                 \
+      const& noexcept {                                                        \
+    return to_bits().to_ne_bytes();                                            \
+  }                                                                            \
+  /** Create a floating point value from its representation as a byte array in \
+   * big endian.                                                               \
+   *                                                                           \
+   * See `##T##::from_bits()` for why this function is not constexpr.          \
+   */                                                                          \
+  static T from_be_bytes(                                                      \
+      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {            \
+    return T::from_bits(UnsignedIntT::from_be_bytes(bytes));                   \
+  }                                                                            \
+  /** Create a floating point value from its representation as a byte array in \
+   * big endian.                                                               \
+   *                                                                           \
+   *  See `##T##::from_bits()` for why this function is not constexpr.         \
+   */                                                                          \
+  static T from_le_bytes(                                                      \
+      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {            \
+    return T::from_bits(UnsignedIntT::from_le_bytes(bytes));                   \
+  }                                                                            \
+  /** Create a floating point value from its representation as a byte array in \
+   * native endian.                                                            \
+   *                                                                           \
+   * As the target platform's native endianness is used, portable code likely  \
+   * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate       \
+   * instead.                                                                  \
+   *                                                                           \
+   *  See `##T##::from_bits()` for why this function is not constexpr.         \
+   */                                                                          \
+  static T from_ne_bytes(                                                      \
+      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {            \
+    return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));                   \
   }
 
 // to_be_bytes, to_le_bytes, to_ne_bytes
