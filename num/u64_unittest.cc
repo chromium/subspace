@@ -20,6 +20,7 @@
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
+#include "tuple/tuple.h"
 
 namespace {
 
