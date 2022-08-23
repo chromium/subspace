@@ -25,6 +25,7 @@
 #include "marker/unsafe.h"
 #include "mem/move.h"
 #include "mem/relocate.h"
+#include "num/num_concepts.h"
 
 namespace sus::containers {
 
@@ -91,9 +92,7 @@ class Array final {
   }
 
   /// Returns the number of elements in the array.
-  constexpr const /* TODO: usize */ size_t len() const& noexcept {
-    return N;
-  }
+  constexpr const /* TODO: usize */ size_t len() const& noexcept { return N; }
 
   constexpr const T& get(/* TODO: usize */ size_t i) const& noexcept
     requires(N > 0)
@@ -123,7 +122,11 @@ class Array final {
     return storage_.data_;
   }
 
-  // TODO: Eq and Ord (like Option and Tuple).
+  /// sus::num::Eq<Array<U, N>> trait.
+  template <::sus::num::Eq<T> U>
+  constexpr bool operator==(const Array<U, N>& r) const& noexcept {
+    return eq_impl(r, std::make_index_sequence<N>());
+  }
 
  private:
   enum WithInitializer { kWithInitializer };
@@ -150,6 +153,12 @@ class Array final {
     new (a + index) T(move(t1));
   }
 
+  template <class U, size_t... Is>
+  constexpr inline auto eq_impl(const Array<U, N>& r,
+                                std::index_sequence<Is...>) const& noexcept {
+    return (true && ... && (get(Is) == r.get(Is)));
+  };
+
   // Using a union ensures that the default constructor doesn't initialize
   // anything.
   union {
@@ -159,6 +168,56 @@ class Array final {
   sus_class_trivial_relocatable_value(unsafe_fn,
                                       ::sus::mem::relocate_array_by_memcpy<T>);
 };
+
+namespace __private {
+
+template <size_t I, class O, class T, class U, size_t N>
+constexpr inline bool array_cmp_impl(O& val, const Array<T, N>& l,
+                                     const Array<U, N>& r) noexcept {
+  auto cmp = l.get(I) <=> r.get(I);
+  // Allow downgrading from equal to equivalent, but not the inverse.
+  if (cmp != 0) val = cmp;
+  // Short circuit by returning true when we find a difference.
+  return val == 0;
+};
+
+template <class T, class U, size_t N, size_t... Is>
+constexpr inline auto array_cmp(auto equal, const Array<T, N>& l,
+                                const Array<U, N>& r,
+                                std::index_sequence<Is...>) noexcept {
+  auto val = equal;
+  (true && ... && (array_cmp_impl<Is>(val, l, r)));
+  return val;
+};
+
+}  // namespace __private
+
+/// sus::num::Ord<Option<U>> trait.
+template <class T, class U, size_t N>
+  requires(::sus::num::ExclusiveOrd<T, U>)
+constexpr inline auto operator<=>(const Array<T, N>& l,
+                                  const Array<U, N>& r) noexcept {
+  return __private::array_cmp(std::strong_ordering::equivalent, l, r,
+                              std::make_index_sequence<N>());
+}
+
+/// sus::num::Ord<Option<U>> trait.
+template <class T, class U, size_t N>
+  requires(::sus::num::ExclusiveWeakOrd<T, U>)
+constexpr inline auto operator<=>(const Array<T, N>& l,
+                                  const Array<U, N>& r) noexcept {
+  return __private::array_cmp(std::weak_ordering::equivalent, l, r,
+                              std::make_index_sequence<N>());
+}
+
+/// sus::num::Ord<Option<U>> trait.
+template <class T, class U, size_t N>
+  requires(::sus::num::ExclusivePartialOrd<T, U>)
+constexpr inline auto operator<=>(const Array<T, N>& l,
+                                  const Array<U, N>& r) noexcept {
+  return __private::array_cmp(std::partial_ordering::equivalent, l, r,
+                              std::make_index_sequence<N>());
+}
 
 }  // namespace sus::containers
 

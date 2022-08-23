@@ -197,4 +197,58 @@ TEST(Array, AsPtrMut) {
   EXPECT_EQ(101, *(r + 2));
 }
 
+TEST(Array, Eq) {
+  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  EXPECT_EQ(a, b);
+  b.get_mut(3) += 1;
+  EXPECT_NE(a, b);
+}
+
+TEST(Array, Ord) {
+  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  EXPECT_LE(a, b);
+  EXPECT_GE(a, b);
+  b.get_mut(3) += 1;
+  EXPECT_LT(a, b);
+}
+
+TEST(Array, StrongOrder) {
+  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  EXPECT_EQ(std::strong_order(a, b), std::strong_ordering::equal);
+  b.get_mut(3) += 1;
+  EXPECT_EQ(std::strong_order(a, b), std::strong_ordering::less);
+}
+
+struct Weak final {
+  auto operator==(Weak const& o) const& { return a == o.a && b == o.b; }
+  auto operator<=>(Weak const& o) const& {
+    if (a == o.a) return std::weak_ordering::equivalent;
+    if (a < o.a) return std::weak_ordering::less;
+    return std::weak_ordering::greater;
+  }
+
+  Weak(int a, int b) : a(a), b(b) {}
+  int a;
+  int b;
+};
+
+TEST(Array, WeakOrder) {
+  auto a = Array<Weak, 5>::with_initializer([i = 0]() mutable { return Weak(++i, 2); });
+  auto b = Array<Weak, 5>::with_initializer([i = 0]() mutable { return Weak(++i, 2); });
+  EXPECT_EQ(std::weak_order(a, b), std::weak_ordering::equivalent);
+  b.get_mut(3).a += 1;
+  EXPECT_EQ(std::weak_order(a, b), std::weak_ordering::less);
+}
+
+TEST(Array, PartialOrder) {
+  auto a = Array<float, 5>::with_initializer([i = 0.f]() mutable { return ++i; });
+  auto b = Array<float, 5>::with_initializer([i = 0.f]() mutable { return ++i; });
+  EXPECT_EQ(std::partial_order(a, b), std::partial_ordering::equivalent);
+  b.get_mut(3) += 1;
+  EXPECT_EQ(std::partial_order(a, b), std::partial_ordering::less);
+}
+
 }  // namespace

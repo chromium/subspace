@@ -980,24 +980,14 @@ TEST(f32, ToBeBytes) {
   auto array = (12.5_f32).to_be_bytes();
   auto expected =
       sus::Array<u8, 4>::with_values(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8);
-  // TODO: Use Array::operator== via EXPECT_EQ.
-  EXPECT_EQ(array.len(), expected.len());
-  for (size_t i = 0; i < array.len(); i += 1) {
-    SCOPED_TRACE(i);
-    EXPECT_EQ(array.get(i), expected.get(i));
-  }
+  EXPECT_EQ(array, expected);
 }
 
 TEST(f32, ToLeBytes) {
   auto array = (12.5_f32).to_le_bytes();
   auto expected =
       sus::Array<u8, 4>::with_values(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
-  // TODO: Use Array::operator== via EXPECT_EQ.
-  EXPECT_EQ(array.len(), expected.len());
-  for (size_t i = 0; i < array.len(); i += 1) {
-    SCOPED_TRACE(i);
-    EXPECT_EQ(array.get(i), expected.get(i));
-  }
+  EXPECT_EQ(array, expected);
 }
 
 TEST(f32, ToNeBytes) {
@@ -1006,12 +996,7 @@ TEST(f32, ToNeBytes) {
       sus::assertions::is_big_endian()
           ? sus::Array<u8, 4>::with_values(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8)
           : sus::Array<u8, 4>::with_values(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
-  // TODO: Use Array::operator== via EXPECT_EQ.
-  EXPECT_EQ(array.len(), expected.len());
-  for (size_t i = 0; i < array.len(); i += 1) {
-    SCOPED_TRACE(i);
-    EXPECT_EQ(array.get(i), expected.get(i));
-  }
+  EXPECT_EQ(array, expected);
 }
 
 TEST(f32, FromBeBytes) {
