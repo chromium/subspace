@@ -663,6 +663,11 @@ TEST(f32, Log2) {
   F32_NEAR(a, -1.1328942705_f32, 0.0000001_f32);
 }
 
+TEST(f32, Log) {
+  auto a = (25_f32).log(5_f32);
+  F32_NEAR(a, 2_f32, 0.0000001_f32);
+}
+
 TEST(f32, Max) {
   auto a = (0.456_f32).max(-0.456_f32);
   EXPECT_EQ(a, 0.456_f32);
@@ -941,6 +946,33 @@ TEST(f32, IsSubnormal) {
       f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min())
           .is_subnormal());
   EXPECT_FALSE((123_f32).is_subnormal());
+}
+
+TEST(f32, Clamp) {
+  EXPECT_TRUE((-3.0_f32).clamp(-2.0_f32, 1.0_f32) == -2.0_f32);
+  EXPECT_TRUE((0.0_f32).clamp(-2.0_f32, 1.0_f32) == 0.0_f32);
+  EXPECT_TRUE((2.0_f32).clamp(-2.0_f32, 1.0_f32) == 1.0_f32);
+  EXPECT_TRUE((f32::TODO_NAN()).clamp(-2.0_f32, 1.0_f32).is_nan());
+}
+
+TEST(f32, DivEuclid) {
+  auto a = 7_f32;
+  auto b = 4_f32;
+  EXPECT_EQ(a.div_euclid(b), 1_f32);      // 7.0 > 4.0 * 1.0
+  EXPECT_EQ((-a).div_euclid(b), -2_f32);  // -7.0 >= 4.0 * -2.0
+  EXPECT_EQ(a.div_euclid(-b), -1_f32);    // 7.0 >= -4.0 * -1.0
+  EXPECT_EQ((-a).div_euclid(-b), 2_f32);  // -7.0 >= -4.0 * 2.0
+}
+
+TEST(f32, RemEuclid) {
+  auto a = 7_f32;
+  auto b = 4_f32;
+  EXPECT_EQ(a.rem_euclid(b), 3_f32);
+  EXPECT_EQ((-a).rem_euclid(b), 1_f32);
+  EXPECT_EQ(a.rem_euclid(-b), 3_f32);
+  EXPECT_EQ((-a).rem_euclid(-b), 1_f32);
+  // Limitation due to round-off error.
+  EXPECT_NE((-f32::EPSILON()).rem_euclid(3_f32), 0_f32);
 }
 
 }  // namespace
