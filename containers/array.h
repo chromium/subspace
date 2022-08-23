@@ -22,10 +22,12 @@
 
 #include "assertions/check.h"
 #include "construct/make_default.h"
+#include "fn/callable.h"
 #include "marker/unsafe.h"
 #include "mem/move.h"
 #include "mem/relocate.h"
 #include "num/num_concepts.h"
+#include "num/unsigned_integer.h"
 
 namespace sus::containers {
 
@@ -69,14 +71,15 @@ class Array final {
     return Array(kWithUninitialized);
   }
 
-  template <class InitializerFn>
+  template <::sus::fn::callable::CallableReturns<T> InitializerFn>
   constexpr static Array with_initializer(InitializerFn f) noexcept {
     return Array(kWithInitializer, move(f), std::make_index_sequence<N>());
   }
 
-  constexpr static Array with_value(const T& t) noexcept
-    requires(std::is_copy_constructible_v<T>)
-  {
+  // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
+  // sus::construct::Into<T> to avoid implicit conversions.
+  template <std::convertible_to<T> U>
+  constexpr static Array with_value(const U& t) noexcept {
     return Array(kWithValue, t, std::make_index_sequence<N>());
   }
 
@@ -92,21 +95,21 @@ class Array final {
   }
 
   /// Returns the number of elements in the array.
-  constexpr const /* TODO: usize */ size_t len() const& noexcept { return N; }
+  constexpr const usize len() const& noexcept { return N; }
 
-  constexpr const T& get(/* TODO: usize */ size_t i) const& noexcept
+  constexpr const T& get(usize i) const& noexcept
     requires(N > 0)
   {
-    check(i < N);
-    return storage_.data_[i];
+    check(i.primitive_value < N);
+    return storage_.data_[i.primitive_value];
   }
-  constexpr const T& get(/* TODO: usize */ size_t i) && = delete;
+  constexpr const T& get(usize i) && = delete;
 
-  constexpr T& get_mut(/* TODO: usize */ size_t i) & noexcept
+  constexpr T& get_mut(usize i) & noexcept
     requires(N > 0)
   {
-    check(i < N);
-    return storage_.data_[i];
+    check(i.primitive_value < N);
+    return storage_.data_[i.primitive_value];
   }
 
   const T* as_ptr() const& noexcept

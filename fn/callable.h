@@ -79,4 +79,9 @@ template <class T>
 concept CallableObjectMut = CallableObjectConst<T> ||
                             __private::callable_mut(&T::operator());
 
+template <class T, class R, class... Args>
+concept CallableReturns = FunctionPointerReturns<T, R, Args...> ||
+                          CallableObjectReturnsConst<T, R, Args...> ||
+                          CallableObjectReturnsMut<T, R, Args...>;
+
 }  // namespace sus::fn::callable

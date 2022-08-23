@@ -67,7 +67,7 @@ struct NonAggregate {
 TEST(Array, WithDefault) {
   auto a = Array<int, 5>::with_default();
   static_assert(sizeof(a) == sizeof(int[5]));
-  for (size_t i = 0; i < 5; ++i) {
+  for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
     EXPECT_EQ(a.get(i), 0);
   }
 
@@ -87,53 +87,54 @@ TEST(Array, WithUninitialized) {
 }
 
 TEST(Array, WithInitializer) {
-  auto a = Array<int, 5>::with_initializer([i = 1]() mutable { return i++; });
-  static_assert(sizeof(a) == sizeof(int[5]));
-  for (size_t i = 0; i < 5; ++i) {
-    EXPECT_EQ(a.get(i), i + 1);
+  auto a =
+      Array<usize, 5>::with_initializer([i = 1u]() mutable { return i++; });
+  static_assert(sizeof(a) == sizeof(usize[5]));
+  for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
+    EXPECT_EQ(a.get(i), i + 1_usize);
   }
 
   struct NotTriviallyDefaultConstructible {
     NotTriviallyDefaultConstructible() {}
-    NotTriviallyDefaultConstructible(int i) : i(i) {}
-    int i;
+    NotTriviallyDefaultConstructible(usize i) : i(i) {}
+    usize i;
   };
   static_assert(!std::is_trivially_default_constructible_v<
                     NotTriviallyDefaultConstructible>,
                 "");
   auto b = Array<NotTriviallyDefaultConstructible, 5>::with_initializer(
-      [i = 1]() mutable -> NotTriviallyDefaultConstructible { return {i++}; });
+      [i = 1u]() mutable -> NotTriviallyDefaultConstructible { return {i++}; });
   static_assert(sizeof(b) == sizeof(NotTriviallyDefaultConstructible[5]));
-  for (size_t i = 0; i < 5; ++i) {
-    EXPECT_EQ(b.get(i).i, i + 1);
+  for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
+    EXPECT_EQ(b.get(i).i, i + 1_usize);
   }
 
-  auto lvalue = [i = 1]() mutable { return i++; };
-  auto c = Array<int, 5>::with_initializer(lvalue);
-  static_assert(sizeof(c) == sizeof(int[5]));
-  for (size_t i = 0; i < 5; ++i) {
-    EXPECT_EQ(c.get(i), i + 1);
+  auto lvalue = [i = 1u]() mutable { return i++; };
+  auto c = Array<usize, 5>::with_initializer(lvalue);
+  static_assert(sizeof(c) == sizeof(usize[5]));
+  for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
+    EXPECT_EQ(c.get(i), i + 1_usize);
   }
 
-  static_assert(sizeof(Array<int, 5>::with_initializer([]() { return 1; })) ==
-                    sizeof(int[5]),
+  static_assert(sizeof(Array<usize, 5>::with_initializer(
+                    []() { return 1u; })) == sizeof(usize[5]),
                 "");
 }
 
 TEST(Array, WithValue) {
-  auto a = Array<int, 5>::with_value(3);
-  static_assert(sizeof(a) == sizeof(int[5]));
-  for (size_t i = 0; i < 5; ++i) {
-    EXPECT_EQ(a.get(i), 3);
+  auto a = Array<usize, 5>::with_value(3u);
+  static_assert(sizeof(a) == sizeof(usize[5]));
+  for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
+    EXPECT_EQ(a.get(i), 3_usize);
   }
 }
 
 TEST(Array, WithValues) {
   {
-    auto a = Array<int, 5>::with_values(3, 4, 5, 6, 7);
-    static_assert(sizeof(a) == sizeof(int[5]));
-    for (size_t i = 0; i < 5; ++i) {
-      EXPECT_EQ(a.get(i), 3 + i);
+    auto a = Array<usize, 5>::with_values(3u, 4u, 5u, 6u, 7u);
+    static_assert(sizeof(a) == sizeof(usize[5]));
+    for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
+      EXPECT_EQ(a.get(i), 3_usize + i);
     }
   }
   {
@@ -141,8 +142,7 @@ TEST(Array, WithValues) {
                                        sus::into(6), sus::into(7));
     static_assert(sizeof(a) == sizeof(u8[5]));
     for (auto i = 0_u8; i < 5_u8; i += 1_u8) {
-      EXPECT_EQ(a.get(/* TODO: usize */ usize::from(i).primitive_value),
-                3_u8 + i);
+      EXPECT_EQ(a.get(usize::from(i)), 3_u8 + i);
     }
   }
 }
@@ -152,7 +152,7 @@ TEST(Array, Get) {
     constexpr auto r = []() constexpr {
       constexpr auto a =
           Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-      return a.get(2);
+      return a.get(2_usize);
     }
     ();
     static_assert(std::same_as<decltype(r), const int>);
@@ -160,7 +160,7 @@ TEST(Array, Get) {
   }
   {
     auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-    EXPECT_EQ(3, a.get(2));
+    EXPECT_EQ(3, a.get(2_usize));
   }
 }
 
@@ -169,16 +169,16 @@ TEST(Array, GetMut) {
     constexpr auto a = []() constexpr {
       auto a =
           Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-      a.get_mut(0) = 101;
+      a.get_mut(0_usize) = 101;
       return a;
     }
     ();
-    EXPECT_EQ(a.get(0), 101);
+    EXPECT_EQ(a.get(0_usize), 101);
   }
   {
     auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-    a.get_mut(0) = 101;
-    EXPECT_EQ(a.get(0), 101);
+    a.get_mut(0_usize) = 101;
+    EXPECT_EQ(a.get(0_usize), 101);
   }
 }
 
@@ -201,7 +201,7 @@ TEST(Array, Eq) {
   auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
   auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
   EXPECT_EQ(a, b);
-  b.get_mut(3) += 1;
+  b.get_mut(3_usize) += 1;
   EXPECT_NE(a, b);
 }
 
@@ -210,7 +210,7 @@ TEST(Array, Ord) {
   auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
   EXPECT_LE(a, b);
   EXPECT_GE(a, b);
-  b.get_mut(3) += 1;
+  b.get_mut(3_usize) += 1;
   EXPECT_LT(a, b);
 }
 
@@ -218,7 +218,7 @@ TEST(Array, StrongOrder) {
   auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
   auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
   EXPECT_EQ(std::strong_order(a, b), std::strong_ordering::equal);
-  b.get_mut(3) += 1;
+  b.get_mut(3_usize) += 1;
   EXPECT_EQ(std::strong_order(a, b), std::strong_ordering::less);
 }
 
@@ -236,18 +236,22 @@ struct Weak final {
 };
 
 TEST(Array, WeakOrder) {
-  auto a = Array<Weak, 5>::with_initializer([i = 0]() mutable { return Weak(++i, 2); });
-  auto b = Array<Weak, 5>::with_initializer([i = 0]() mutable { return Weak(++i, 2); });
+  auto a = Array<Weak, 5>::with_initializer(
+      [i = 0]() mutable { return Weak(++i, 2); });
+  auto b = Array<Weak, 5>::with_initializer(
+      [i = 0]() mutable { return Weak(++i, 2); });
   EXPECT_EQ(std::weak_order(a, b), std::weak_ordering::equivalent);
-  b.get_mut(3).a += 1;
+  b.get_mut(3_usize).a += 1;
   EXPECT_EQ(std::weak_order(a, b), std::weak_ordering::less);
 }
 
 TEST(Array, PartialOrder) {
-  auto a = Array<float, 5>::with_initializer([i = 0.f]() mutable { return ++i; });
-  auto b = Array<float, 5>::with_initializer([i = 0.f]() mutable { return ++i; });
+  auto a =
+      Array<float, 5>::with_initializer([i = 0.f]() mutable { return ++i; });
+  auto b =
+      Array<float, 5>::with_initializer([i = 0.f]() mutable { return ++i; });
   EXPECT_EQ(std::partial_order(a, b), std::partial_ordering::equivalent);
-  b.get_mut(3) += 1;
+  b.get_mut(3_usize) += 1;
   EXPECT_EQ(std::partial_order(a, b), std::partial_ordering::less);
 }
 
