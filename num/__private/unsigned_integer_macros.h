@@ -27,7 +27,6 @@
 #include "num/__private/ptr_type.h"
 #include "num/integer_concepts.h"
 #include "option/option.h"
-#include "tuple/tuple.h"
 
 namespace sus::containers {
 template <class T, size_t N>
@@ -37,6 +36,11 @@ class Array;
 
 namespace sus::num {
 struct u8;
+}
+
+namespace sus::tuple {
+template <class T, class... Ts>
+class Tuple;
 }
 
 #define _sus__unsigned_impl(T, PrimitiveT, SignedT) \
@@ -354,10 +358,12 @@ struct u8;
    * an arithmetic overflow would occur. If an overflow would have occurred    \
    * then the wrapped value is returned.                                       \
    */                                                                          \
-  constexpr Tuple<T, bool> overflowing_add(const T& rhs) const& noexcept {     \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_add(const T& rhs) const& noexcept {              \
     const auto out =                                                           \
         __private::add_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(out.value, out.overflow);                      \
+    return Tuple::with(out.value, out.overflow);                               \
   }                                                                            \
                                                                                \
   /** Calculates self + rhs with an unsigned rhs                               \
@@ -366,12 +372,13 @@ struct u8;
    * an arithmetic overflow would occur. If an overflow would have occurred    \
    * then the wrapped value is returned.                                       \
    */                                                                          \
-  template <std::same_as<SignedT> S>                                           \
-  constexpr Tuple<T, bool> overflowing_add_signed(const S& rhs)                \
-      const& noexcept {                                                        \
+  template <std::same_as<SignedT> S,                                           \
+            std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_add_signed(const S& rhs) const& noexcept {       \
     const auto r = __private::add_with_overflow_signed(primitive_value,        \
                                                        rhs.primitive_value);   \
-    return Tuple<T, bool>::with(r.value, r.overflow);                          \
+    return Tuple::with(r.value, r.overflow);                                   \
   }                                                                            \
                                                                                \
   /** Saturating integer addition. Computes self + rhs, saturating at the      \
@@ -452,10 +459,12 @@ struct u8;
    * #Panics                                                                   \
    *This function will panic if rhs is 0.                                      \
    */                                                                          \
-  constexpr Tuple<T, bool> overflowing_div(const T& rhs) const& noexcept {     \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_div(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
-    return Tuple<T, bool>::with(                                               \
+    return Tuple::with(                                                        \
         __private::unchecked_div(primitive_value, rhs.primitive_value),        \
         false);                                                                \
   }                                                                            \
@@ -506,10 +515,12 @@ struct u8;
    * whether an arithmetic overflow would occur. If an overflow would have     \
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
-  constexpr Tuple<T, bool> overflowing_mul(const T& rhs) const& noexcept {     \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_mul(const T& rhs) const& noexcept {              \
     const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(out.value, out.overflow);                      \
+    return Tuple::with(out.value, out.overflow);                               \
   }                                                                            \
                                                                                \
   /** Saturating integer multiplication. Computes self * rhs, saturating at    \
@@ -558,9 +569,11 @@ struct u8;
    * represents the negation of this unsigned value. Note that for positive    \
    * unsigned values overflow always occurs, but negating 0 does not overflow. \
    */                                                                          \
-  constexpr Tuple<T, bool> overflowing_neg() const& noexcept {                 \
-    return Tuple<T, bool>::with((~(*this)).wrapping_add(T(PrimitiveT{1u})),    \
-                                primitive_value != 0u);                        \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_neg() const& noexcept {                          \
+    return Tuple::with((~(*this)).wrapping_add(T(PrimitiveT{1u})),             \
+                       primitive_value != 0u);                                 \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) negation. Computes `-self`, wrapping around at the    \
@@ -600,10 +613,12 @@ struct u8;
    * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
-  constexpr Tuple<T, bool> overflowing_rem(const T& rhs) const& noexcept {     \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_rem(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
-    return Tuple<T, bool>::with(                                               \
+    return Tuple::with(                                                        \
         __private::unchecked_rem(primitive_value, rhs.primitive_value),        \
         false);                                                                \
   }                                                                            \
@@ -662,11 +677,12 @@ struct u8;
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  constexpr Tuple<T, bool> overflowing_div_euclid(const T& rhs)                 \
-      const& noexcept {                                                         \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                  \
+                ::sus::tuple::Tuple<T, bool>>                                   \
+  constexpr Tuple overflowing_div_euclid(const T& rhs) const& noexcept {        \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
-    return Tuple<T, bool>::with(                                                \
+    return Tuple::with(                                                         \
         __private::unchecked_div(primitive_value, rhs.primitive_value),         \
         false);                                                                 \
   }                                                                             \
@@ -727,11 +743,12 @@ struct u8;
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  constexpr Tuple<T, bool> overflowing_rem_euclid(const T& rhs)                 \
-      const& noexcept {                                                         \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                  \
+                ::sus::tuple::Tuple<T, bool>>                                   \
+  constexpr Tuple overflowing_rem_euclid(const T& rhs) const& noexcept {        \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
-    return Tuple<T, bool>::with(                                                \
+    return Tuple::with(                                                         \
         __private::unchecked_rem(primitive_value, rhs.primitive_value),         \
         false);                                                                 \
   }                                                                             \
@@ -775,10 +792,12 @@ struct u8;
    * where N is the number of bits, and this value is then used to perform the \
    * shift.                                                                    \
    */                                                                          \
-  constexpr Tuple<T, bool> overflowing_shl(const u32& rhs) const& noexcept {   \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_shl(const u32& rhs) const& noexcept {            \
     const auto out =                                                           \
         __private::shl_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(out.value, out.overflow);                      \
+    return Tuple::with(out.value, out.overflow);                               \
   }                                                                            \
                                                                                \
   /** Panic-free bitwise shift-left; yields `*this << mask(rhs)`, where mask   \
@@ -816,10 +835,12 @@ struct u8;
    * where N is the number of bits, and this value is then used to perform the \
    * shift.                                                                    \
    */                                                                          \
-  constexpr Tuple<T, bool> overflowing_shr(const u32& rhs) const& noexcept {   \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_shr(const u32& rhs) const& noexcept {            \
     const auto out =                                                           \
         __private::shr_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(out.value, out.overflow);                      \
+    return Tuple::with(out.value, out.overflow);                               \
   }                                                                            \
                                                                                \
   /** Panic-free bitwise shift-right; yields `*this >> mask(rhs)`, where mask  \
@@ -857,10 +878,12 @@ struct u8;
    * whether an arithmetic overflow would occur. If an overflow would have     \
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
-  constexpr Tuple<T, bool> overflowing_sub(const T& rhs) const& noexcept {     \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_sub(const T& rhs) const& noexcept {              \
     const auto out =                                                           \
         __private::sub_with_overflow(primitive_value, rhs.primitive_value);    \
-    return Tuple<T, bool>::with(out.value, out.overflow);                      \
+    return Tuple::with(out.value, out.overflow);                               \
   }                                                                            \
                                                                                \
   /** Saturating integer subtraction. Computes self - rhs, saturating at the   \
@@ -995,10 +1018,12 @@ struct u8;
    * Returns a tuple of the exponentiation along with a bool indicating        \
    * whether an overflow happened.                                             \
    */                                                                          \
-  constexpr Tuple<T, bool> overflowing_pow(const u32& exp) const& noexcept {   \
+  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
+                ::sus::tuple::Tuple<T, bool>>                                  \
+  constexpr Tuple overflowing_pow(const u32& exp) const& noexcept {            \
     const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, exp.primitive_value);    \
-    return Tuple<T, bool>::with(out.value, out.overflow);                      \
+    return Tuple::with(out.value, out.overflow);                               \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping      \
