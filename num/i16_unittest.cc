@@ -15,6 +15,7 @@
 #include <type_traits>
 
 #include "construct/into.h"
+#include "containers/array.h"
 #include "num/num_concepts.h"
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"

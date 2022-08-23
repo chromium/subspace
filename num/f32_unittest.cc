@@ -18,6 +18,7 @@
 #include <limits>
 
 #include "construct/into.h"
+#include "containers/array.h"
 #include "num/__private/intrinsics.h"
 #include "num/float.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
