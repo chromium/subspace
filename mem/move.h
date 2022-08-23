@@ -52,7 +52,7 @@ concept MoveableForAssign = (NonConstObject<T> && std::is_move_assignable_v<T>);
 //
 // TODO: Should this be `as_rvalue()`? Kinda technical. `as_...something...()`?
 template <NonConstObject T>
-sus_always_inline constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
+[[nodiscard]] sus_always_inline constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
   return static_cast<typename std::remove_reference_t<T>&&>(t);
 }
 

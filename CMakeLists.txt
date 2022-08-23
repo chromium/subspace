@@ -76,6 +76,7 @@ add_library(subspace STATIC
     "num/unsigned_integer.h"
     "option/__private/is_option_type.h"
     "option/option.h"
+    "result/result.h"
     "tuple/__private/storage.h"
     "tuple/tuple.h"
     "lib/lib.cc"
@@ -129,6 +130,8 @@ add_executable(subspace_unittests
     "num/usize_unittest.cc"
     "option/option_unittest.cc"
     "option/option_types_unittest.cc"
+    "result/result_unittest.cc"
+    "result/result_types_unittest.cc"
     "tuple/tuple_unittest.cc"
 )
 set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
