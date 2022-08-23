@@ -153,15 +153,15 @@ concept PartialOrd = WeakOrd<Lhs, Rhs> || Ord<Lhs, Rhs> ||
 template <class Lhs, class Rhs>
 concept ExclusiveOrd = Ord<Lhs, Rhs>;
 template <class Lhs, class Rhs>
-concept ExclusiveWeakOrd = !
-Ord<Lhs, Rhs>&& WeakOrd<Lhs, Rhs>;
+concept ExclusiveWeakOrd = (!Ord<Lhs, Rhs> && WeakOrd<Lhs, Rhs>);
 template <class Lhs, class Rhs>
-concept ExclusivePartialOrd = !
-Ord<Lhs, Rhs> && !WeakOrd<Lhs, Rhs> && PartialOrd<Lhs, Rhs>;
+concept ExclusivePartialOrd = (!Ord<Lhs, Rhs> && !WeakOrd<Lhs, Rhs> &&
+                               PartialOrd<Lhs, Rhs>);
 
 // TODO: Move this out of ::num.
 //
-// TODO: How do we do PartialEq? Can we even? Can we require Ord to be Eq? But then it depends on ::num?
+// TODO: How do we do PartialEq? Can we even? Can we require Ord to be Eq? But
+// then it depends on ::num?
 template <class Lhs, class Rhs>
 concept Eq = requires(const Lhs& lhs, const Rhs& rhs) {
                { lhs == rhs } -> std::same_as<bool>;
