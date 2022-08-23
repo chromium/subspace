@@ -705,16 +705,14 @@ class Array;
   /** Return the memory representation of this floating point number as a byte \
    * array in big-endian (network) byte order.                                 \
    */                                                                          \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
-                ::sus::containers::Array<u8, Bytes>>                           \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
   constexpr Array to_be_bytes() const& noexcept {                              \
     return to_bits().to_be_bytes();                                            \
   }                                                                            \
   /** Return the memory representation of this floating point number as a byte \
    * array in little-endian byte order.                                        \
    */                                                                          \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
-                ::sus::containers::Array<u8, Bytes>>                           \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
   constexpr Array to_le_bytes() const& noexcept {                              \
     return to_bits().to_le_bytes();                                            \
   }                                                                            \
@@ -724,8 +722,7 @@ class Array;
    * As the target platform's native endianness is used, portable code should  \
    * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.          \
    */                                                                          \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
-                ::sus::containers::Array<u8, Bytes>>                           \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
   constexpr Array to_ne_bytes() const& noexcept {                              \
     return to_bits().to_ne_bytes();                                            \
   }                                                                            \
@@ -734,8 +731,7 @@ class Array;
    *                                                                           \
    * See `##T##::from_bits()` for why this function is not constexpr.          \
    */                                                                          \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
-                ::sus::containers::Array<u8, Bytes>>                           \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
   static T from_be_bytes(const Array& bytes) noexcept {                        \
     return T::from_bits(UnsignedIntT::from_be_bytes(bytes));                   \
   }                                                                            \
@@ -744,8 +740,7 @@ class Array;
    *                                                                           \
    *  See `##T##::from_bits()` for why this function is not constexpr.         \
    */                                                                          \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
-                ::sus::containers::Array<u8, Bytes>>                           \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
   static T from_le_bytes(const Array& bytes) noexcept {                        \
     return T::from_bits(UnsignedIntT::from_le_bytes(bytes));                   \
   }                                                                            \
@@ -758,8 +753,7 @@ class Array;
    *                                                                           \
    *  See `##T##::from_bits()` for why this function is not constexpr.         \
    */                                                                          \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
-                ::sus::containers::Array<u8, Bytes>>                           \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
   static T from_ne_bytes(const Array& bytes) noexcept {                        \
     return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));                   \
   }

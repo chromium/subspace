@@ -30,7 +30,6 @@
 #include "assertions/check.h"
 #include "assertions/unreachable.h"
 #include "marker/unsafe.h"
-#include "mem/move.h"
 #include "mem/mref.h"
 #include "mem/relocate.h"
 #include "mem/replace.h"
@@ -70,7 +69,7 @@ class Result {
   static constexpr inline Result with(T&& t) noexcept
     requires(std::is_move_constructible_v<T>)
   {
-    return Result(WithOk, move(t));
+    return Result(WithOk, static_cast<T&&>(t));
   }
 
   /// Construct an Result that is holding the given error value.
@@ -89,7 +88,7 @@ class Result {
   static constexpr inline Result with_err(E&& e) noexcept
     requires(std::is_move_constructible_v<E>)
   {
-    return Result(WithErr, move(e));
+    return Result(WithErr, static_cast<E&&>(e));
   }
 
   /// Destructor for the Result.
@@ -154,8 +153,8 @@ class Result {
   : state_(replace(mref(rhs.state_), IsMoved)) {
     check(state_ != IsMoved);
     switch (state_) {
-      case IsOk: new (&ok_) T(move(rhs.ok_)); break;
-      case IsErr: new (&err_) E(move(rhs.err_)); break;
+      case IsOk: new (&ok_) T(static_cast<T&&>(rhs.ok_)); break;
+      case IsErr: new (&err_) E(static_cast<E&&>(rhs.err_)); break;
     }
     unreachable_unchecked(unsafe_fn);
   }
@@ -228,28 +227,28 @@ class Result {
     switch (state_) {
       case IsOk:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsOk: mem::replace_and_discard(mref(ok_), move(o.ok_)); break;
+          case IsOk: mem::replace_and_discard(mref(ok_), static_cast<T&&>(o.ok_)); break;
           case IsErr:
             ok_.~T();
-            new (&err_) E(move(o.err_));
+            new (&err_) E(static_cast<E&&>(o.err_));
             break;
           case IsMoved: unreachable();
         }
         break;
       case IsErr:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsErr: mem::replace_and_discard(mref(err_), move(o.err_)); break;
+          case IsErr: mem::replace_and_discard(mref(err_), static_cast<E&&>(o.err_)); break;
           case IsOk:
             err_.~T();
-            new (&ok_) T(move(o.ok_));
+            new (&ok_) T(static_cast<T&&>(o.ok_));
             break;
           case IsMoved: unreachable();
         }
         break;
       case IsMoved:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsErr: new (&err_) T(move(o.err_)); break;
-          case IsOk: new (&ok_) T(move(o.ok_)); break;
+          case IsErr: new (&err_) T(static_cast<E&&>(o.err_)); break;
+          case IsOk: new (&ok_) T(static_cast<T&&>(o.ok_)); break;
           case IsMoved: unreachable();
         }
         break;
@@ -372,12 +371,12 @@ class Result {
   constexpr inline Result(WithOkType, const T& t) noexcept
       : state_(IsOk), ok_(t) {}
   constexpr inline Result(WithOkType, T&& t) noexcept
-      : state_(IsOk), ok_(move(t)) {}
+      : state_(IsOk), ok_(static_cast<T&&>(t)) {}
   enum WithErrType { WithErr };
   constexpr inline Result(WithErrType, const E& e) noexcept
       : state_(IsErr), err_(e) {}
   constexpr inline Result(WithErrType, E&& e) noexcept
-      : state_(IsErr), err_(move(e)) {}
+      : state_(IsErr), err_(static_cast<E&&>(e)) {}
 
   enum FullState { IsErr = 0, IsOk = 1, IsMoved = 2 } state_;
   union {

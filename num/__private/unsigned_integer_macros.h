@@ -353,8 +353,7 @@ class Tuple;
    * an arithmetic overflow would occur. If an overflow would have occurred    \
    * then the wrapped value is returned.                                       \
    */                                                                          \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
   constexpr Tuple overflowing_add(const T& rhs) const& noexcept {              \
     const auto out =                                                           \
         __private::add_with_overflow(primitive_value, rhs.primitive_value);    \
@@ -367,9 +366,8 @@ class Tuple;
    * an arithmetic overflow would occur. If an overflow would have occurred    \
    * then the wrapped value is returned.                                       \
    */                                                                          \
-  template <std::same_as<SignedT> S,                                           \
-            std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <std::same_as<SignedT> S, int&...,                                  \
+            class Tuple = ::sus::tuple::Tuple<T, bool>>                        \
   constexpr Tuple overflowing_add_signed(const S& rhs) const& noexcept {       \
     const auto r = __private::add_with_overflow_signed(primitive_value,        \
                                                        rhs.primitive_value);   \
@@ -454,8 +452,7 @@ class Tuple;
    * #Panics                                                                   \
    *This function will panic if rhs is 0.                                      \
    */                                                                          \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
   constexpr Tuple overflowing_div(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
@@ -510,8 +507,7 @@ class Tuple;
    * whether an arithmetic overflow would occur. If an overflow would have     \
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
   constexpr Tuple overflowing_mul(const T& rhs) const& noexcept {              \
     const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
@@ -564,8 +560,7 @@ class Tuple;
    * represents the negation of this unsigned value. Note that for positive    \
    * unsigned values overflow always occurs, but negating 0 does not overflow. \
    */                                                                          \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
   constexpr Tuple overflowing_neg() const& noexcept {                          \
     return Tuple::with((~(*this)).wrapping_add(T(PrimitiveT{1u})),             \
                        primitive_value != 0u);                                 \
@@ -608,8 +603,7 @@ class Tuple;
    * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
   constexpr Tuple overflowing_rem(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
@@ -672,8 +666,7 @@ class Tuple;
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                  \
-                ::sus::tuple::Tuple<T, bool>>                                   \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>                \
   constexpr Tuple overflowing_div_euclid(const T& rhs) const& noexcept {        \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
@@ -738,8 +731,7 @@ class Tuple;
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                  \
-                ::sus::tuple::Tuple<T, bool>>                                   \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>                \
   constexpr Tuple overflowing_rem_euclid(const T& rhs) const& noexcept {        \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
@@ -787,8 +779,7 @@ class Tuple;
    * where N is the number of bits, and this value is then used to perform the \
    * shift.                                                                    \
    */                                                                          \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
   constexpr Tuple overflowing_shl(const u32& rhs) const& noexcept {            \
     const auto out =                                                           \
         __private::shl_with_overflow(primitive_value, rhs.primitive_value);    \
@@ -830,8 +821,7 @@ class Tuple;
    * where N is the number of bits, and this value is then used to perform the \
    * shift.                                                                    \
    */                                                                          \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
   constexpr Tuple overflowing_shr(const u32& rhs) const& noexcept {            \
     const auto out =                                                           \
         __private::shr_with_overflow(primitive_value, rhs.primitive_value);    \
@@ -873,8 +863,7 @@ class Tuple;
    * whether an arithmetic overflow would occur. If an overflow would have     \
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
   constexpr Tuple overflowing_sub(const T& rhs) const& noexcept {              \
     const auto out =                                                           \
         __private::sub_with_overflow(primitive_value, rhs.primitive_value);    \
@@ -1013,8 +1002,7 @@ class Tuple;
    * Returns a tuple of the exponentiation along with a bool indicating        \
    * whether an overflow happened.                                             \
    */                                                                          \
-  template <std::same_as<::sus::tuple::Tuple<T, bool>> Tuple =                 \
-                ::sus::tuple::Tuple<T, bool>>                                  \
+  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
   constexpr Tuple overflowing_pow(const u32& exp) const& noexcept {            \
     const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, exp.primitive_value);    \
@@ -1199,8 +1187,7 @@ class Tuple;
   /** Return the memory representation of this integer as a byte array in     \
    * big-endian (network) byte order.                                         \
    */                                                                         \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
-                ::sus::containers::Array<u8, Bytes>>                          \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
   constexpr Array to_be_bytes() const& noexcept {                             \
     return to_be().to_ne_bytes();                                             \
   }                                                                           \
@@ -1208,8 +1195,7 @@ class Tuple;
   /** Return the memory representation of this integer as a byte array in     \
    * little-endian byte order.                                                \
    */                                                                         \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
-                ::sus::containers::Array<u8, Bytes>>                          \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
   constexpr Array to_le_bytes() const& noexcept {                             \
     return to_le().to_ne_bytes();                                             \
   }                                                                           \
@@ -1220,8 +1206,7 @@ class Tuple;
    * As the target platform's native endianness is used, portable code should \
    * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.         \
    */                                                                         \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
-                ::sus::containers::Array<u8, Bytes>>                          \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
   constexpr Array to_ne_bytes() const& noexcept {                             \
     auto bytes = Array::with_uninitialized(unsafe_fn);                        \
     if (std::is_constant_evaluated()) {                                       \
@@ -1243,8 +1228,7 @@ class Tuple;
   /** Create an integer value from its representation as a byte array in big  \
    * endian.                                                                  \
    */                                                                         \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
-                ::sus::containers::Array<u8, Bytes>>                          \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
   static constexpr T from_be_bytes(const Array& bytes) noexcept {             \
     return from_be(from_ne_bytes(bytes));                                     \
   }                                                                           \
@@ -1252,8 +1236,7 @@ class Tuple;
   /** Create an integer value from its representation as a byte array in      \
    * little endian.                                                           \
    */                                                                         \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
-                ::sus::containers::Array<u8, Bytes>>                          \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
   static constexpr T from_le_bytes(const Array& bytes) noexcept {             \
     return from_le(from_ne_bytes(bytes));                                     \
   }                                                                           \
@@ -1265,8 +1248,7 @@ class Tuple;
    * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate      \
    * instead.                                                                 \
    */                                                                         \
-  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
-                ::sus::containers::Array<u8, Bytes>>                          \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
   static constexpr T from_ne_bytes(const Array& bytes) noexcept {             \
     PrimitiveT val;                                                           \
     if (std::is_constant_evaluated()) {                                       \
