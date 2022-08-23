@@ -113,6 +113,9 @@ class Tuple final {
   }
 
  private:
+  template <class U, class... Us>
+  friend class Tuple;  // For access to moved_from();
+
   /// Storage for the tuple elements. The first element is the moved-from flag.
   using Storage = __private::TupleStorage<2 + sizeof...(Ts), bool, T, Ts...>;
   /// A helper type used for accessing the `Storage`.

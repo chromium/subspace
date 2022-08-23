@@ -20,6 +20,7 @@
 #include "iter/iterator.h"
 #include "mem/relocate.h"
 #include "num/types.h"
+#include "tuple/tuple.h"
 #include "result/result.h"
 #include "test/behaviour_types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -1601,6 +1602,27 @@ TEST(Option, Transpose) {
   static_assert(std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t3)>);
   EXPECT_EQ(t3.is_err(), true);
   EXPECT_EQ(sus::move(t3).unwrap_err(), -2_i32);
+}
+
+TEST(Option, Zip) {
+  EXPECT_EQ(Option<i32>::none().zip(Option<i32>::none()), None);
+  EXPECT_EQ(Option<i32>::some(1_i32).zip(Option<i32>::none()), None);
+  EXPECT_EQ(Option<i32>::none().zip(Option<i32>::some(1_i32)), None);
+  EXPECT_EQ(Option<i32>::some(2_i32).zip(Option<i32>::some(1_i32)), Some);
+
+  {
+    auto o = Option<i32>::some(-2_i32);
+    EXPECT_EQ(sus::move(o).zip(Option<u8>::some(3_u8)).unwrap(), (sus::Tuple<i32, u8>::with(-2_i32, 3_u8)));
+    EXPECT_EQ(o, None);
+  }
+
+  {
+    auto i = -2_i32;
+    auto u = 3_u8;
+    auto o = Option<const i32&>::some(i);
+    EXPECT_EQ(sus::move(o).zip(Option<const u8&>::some(u)).unwrap(), (sus::Tuple<i32, u8>::with(-2_i32, 3_u8)));
+    EXPECT_EQ(o, None);
+  }
 }
 
 }  // namespace
