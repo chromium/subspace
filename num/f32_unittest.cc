@@ -17,6 +17,7 @@
 #include <bit>
 #include <limits>
 
+#include "construct/into.h"
 #include "num/__private/intrinsics.h"
 #include "num/float.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -973,6 +974,30 @@ TEST(f32, RemEuclid) {
   EXPECT_EQ((-a).rem_euclid(-b), 1_f32);
   // Limitation due to round-off error.
   EXPECT_NE((-f32::EPSILON()).rem_euclid(3_f32), 0_f32);
+}
+
+TEST(f32, FromBeBytes) {
+  auto value = f32::from_be_bytes(
+      sus::Array<u8, 4>::with_values(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8));
+  EXPECT_EQ(value, 12.5_f32);
+}
+
+TEST(f32, FromLeBytes) {
+  auto value = f32::from_le_bytes(
+      sus::Array<u8, 4>::with_values(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8));
+  EXPECT_EQ(value, 12.5_f32);
+}
+
+TEST(f32, FromNeBytes) {
+  if constexpr (sus::assertions::is_big_endian()) {
+    auto value = f32::from_ne_bytes(
+        sus::Array<u8, 4>::with_values(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8));
+    EXPECT_EQ(value, 12.5_f32);
+  } else {
+    auto value = f32::from_ne_bytes(
+        sus::Array<u8, 4>::with_values(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8));
+    EXPECT_EQ(value, 12.5_f32);
+  }
 }
 
 }  // namespace

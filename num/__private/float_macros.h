@@ -18,6 +18,7 @@
 
 #include <concepts>
 
+#include "containers/array.h"
 #include "marker/unsafe.h"
 #include "num/__private/float_ordering.h"
 #include "num/__private/intrinsics.h"
@@ -695,23 +696,56 @@
       return r;                                                                \
   }
 
-// from_be_bytes, from_le_bytes, from_ne_bytes
+#define _sus__float_endian(T, PrimitiveT, UnsignedIntT)                         \
+  /** Create a floating point value from its representation as a byte array in  \
+   * big endian.                                                                \
+   *                                                                            \
+   * See `##T##::from_bits()` for why this function is not constexpr.           \
+   */                                                                           \
+  static T from_be_bytes(                                                       \
+      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {             \
+    return T::from_bits(UnsignedIntT::from_be_bytes(bytes));                    \
+  }                                                                             \
+  /** Create a floating point value from its representation as a byte array in  \
+   * big endian.                                                                \
+   *                                                                            \
+   *  See `##T##::from_bits()` for why this function is not constexpr.          \
+   */                                                                           \
+  static T from_le_bytes(                                                       \
+      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {             \
+    return T::from_bits(UnsignedIntT::from_le_bytes(bytes));                    \
+  }                                                                             \
+  /** Create a floating point value from its representation as a byte array in  \
+   * native endian.                                                             \
+   *                                                                            \
+   * As the target platform’s native endianness is used, portable code likely \
+   * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate        \
+   * instead.                                                                   \
+   *                                                                            \
+   *  See `##T##::from_bits()` for why this function is not constexpr.          \
+   */                                                                           \
+  static T from_ne_bytes(                                                       \
+      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {             \
+    return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));                    \
+  }
+
 // to_be_bytes, to_le_bytes, to_ne_bytes
 
-#define _sus__float(T, PrimitiveT, UnsignedIntT) \
-  _sus__float_storage(PrimitiveT);               \
-  _sus__float_constants(T, PrimitiveT);          \
-  _sus__float_construct(T, PrimitiveT);          \
-  _sus__float_comparison(T);                     \
-  _sus__float_unary_ops(T);                      \
-  _sus__float_binary_ops(T);                     \
-  _sus__float_mutable_ops(T);                    \
-  _sus__float_abs(T, PrimitiveT);                \
-  _sus__float_math(T, PrimitiveT);               \
-  _sus__float_fract_trunc(T);                    \
-  _sus__float_convert_to(T, PrimitiveT);         \
-  _sus__float_bytes(T, UnsignedIntT);            \
-  _sus__float_category(T);                       \
-  _sus__float_clamp(T);                          \
-  _sus__float_euclid(T, PrimitiveT);             \
+#define _sus__float(T, PrimitiveT, UnsignedIntT)   \
+  _sus__float_storage(PrimitiveT);                 \
+  _sus__float_constants(T, PrimitiveT);            \
+  _sus__float_construct(T, PrimitiveT);            \
+  _sus__float_comparison(T);                       \
+  _sus__float_unary_ops(T);                        \
+  _sus__float_binary_ops(T);                       \
+  _sus__float_mutable_ops(T);                      \
+  _sus__float_abs(T, PrimitiveT);                  \
+  _sus__float_math(T, PrimitiveT);                 \
+  _sus__float_fract_trunc(T);                      \
+  _sus__float_convert_to(T, PrimitiveT);           \
+  _sus__float_bytes(T, UnsignedIntT);              \
+  _sus__float_category(T);                         \
+  _sus__float_clamp(T);                            \
+  _sus__float_euclid(T, PrimitiveT);               \
+  _sus__float_endian(T, PrimitiveT, UnsignedIntT); \
   static_assert(true)
