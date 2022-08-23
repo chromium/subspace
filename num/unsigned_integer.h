@@ -30,22 +30,46 @@ namespace sus::num {
 /// A 32-bit unsigned integer.
 struct u32 final {
   _sus__unsigned_impl(u32, /*PrimitiveT=*/uint32_t, /*SignedT=*/i32);
+
+  /** Construction from the underlying primitive type.
+   */
+  template <std::same_as<decltype(primitive_value)>
+                P>  // Prevent implicit conversions.
+  constexpr inline u32(P val) noexcept : primitive_value(val) {}
 };
 
 /// An 8-bit unsigned integer.
 struct u8 final {
   _sus__unsigned_impl(u8, /*PrimitiveT=*/uint8_t, /*SignedT=*/i8);
+
+  /** Construction from the underlying primitive type.
+   */
+  template <std::same_as<decltype(primitive_value)>
+                P>  // Prevent implicit conversions.
+  constexpr inline u8(P val) noexcept : primitive_value(val) {}
 };
 
 /// A 16-bit unsigned integer.
 struct u16 final {
   _sus__unsigned_impl(u16, /*PrimitiveT=*/uint16_t, /*SignedT=*/i16);
+
+  /** Construction from the underlying primitive type.
+   */
+  template <std::same_as<decltype(primitive_value)>
+                P>  // Prevent implicit conversions.
+  constexpr inline u16(P val) noexcept : primitive_value(val) {}
 };
 
 /// A 64-bit unsigned integer.
 struct u64 final {
   _sus__unsigned_impl(u64, /*PrimitiveT=*/uint64_t,
                       /*SignedT=*/i64);
+
+  /** Construction from the underlying primitive type.
+   */
+  template <std::same_as<decltype(primitive_value)>
+                P>  // Prevent implicit conversions.
+  constexpr inline u64(P val) noexcept : primitive_value(val) {}
 };
 
 /// A pointer-sized unsigned integer.

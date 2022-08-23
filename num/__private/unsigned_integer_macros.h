@@ -94,11 +94,6 @@ class Tuple;
    */                                                                          \
   constexpr inline T() noexcept = default;                                     \
                                                                                \
-  /** Construction from the underlying primitive type.                         \
-   */                                                                          \
-  template <std::same_as<PrimitiveT> P> /* Prevent implicit conversions. */    \
-  constexpr inline T(P val) noexcept : primitive_value(val) {}                 \
-                                                                               \
   /** Assignment from the underlying primitive type.                           \
    */                                                                          \
   template <std::same_as<PrimitiveT> P> /* Prevent implicit conversions. */    \
