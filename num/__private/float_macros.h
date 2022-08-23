@@ -18,7 +18,6 @@
 
 #include <concepts>
 
-#include "containers/array.h"
 #include "marker/unsafe.h"
 #include "num/__private/float_ordering.h"
 #include "num/__private/intrinsics.h"
@@ -26,6 +25,12 @@
 #include "num/integer_concepts.h"
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
+
+namespace sus::containers {
+template <class T, size_t N>
+  requires(N <= PTRDIFF_MAX)
+class Array;
+}
 
 #define _sus__float_storage(PrimitiveT)                                       \
   /** The inner primitive value, in case it needs to be unwrapped from the    \
@@ -696,19 +701,21 @@
       return r;                                                                \
   }
 
-#define _sus__float_endian(T, PrimitiveT, UnsignedIntT)                        \
+#define _sus__float_endian(T, Bytes, UnsignedIntT)                             \
   /** Return the memory representation of this floating point number as a byte \
    * array in big-endian (network) byte order.                                 \
    */                                                                          \
-  constexpr ::sus::Array<u8, sizeof(PrimitiveT)> to_be_bytes()                 \
-      const& noexcept {                                                        \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
+                ::sus::containers::Array<u8, Bytes>>                           \
+  constexpr Array to_be_bytes() const& noexcept {                              \
     return to_bits().to_be_bytes();                                            \
   }                                                                            \
   /** Return the memory representation of this floating point number as a byte \
    * array in little-endian byte order.                                        \
    */                                                                          \
-  constexpr ::sus::Array<u8, sizeof(PrimitiveT)> to_le_bytes()                 \
-      const& noexcept {                                                        \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
+                ::sus::containers::Array<u8, Bytes>>                           \
+  constexpr Array to_le_bytes() const& noexcept {                              \
     return to_bits().to_le_bytes();                                            \
   }                                                                            \
   /** Return the memory representation of this floating point number as a byte \
@@ -717,8 +724,9 @@
    * As the target platform's native endianness is used, portable code should  \
    * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.          \
    */                                                                          \
-  constexpr ::sus::Array<u8, sizeof(PrimitiveT)> to_ne_bytes()                 \
-      const& noexcept {                                                        \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
+                ::sus::containers::Array<u8, Bytes>>                           \
+  constexpr Array to_ne_bytes() const& noexcept {                              \
     return to_bits().to_ne_bytes();                                            \
   }                                                                            \
   /** Create a floating point value from its representation as a byte array in \
@@ -726,8 +734,9 @@
    *                                                                           \
    * See `##T##::from_bits()` for why this function is not constexpr.          \
    */                                                                          \
-  static T from_be_bytes(                                                      \
-      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {            \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
+                ::sus::containers::Array<u8, Bytes>>                           \
+  static T from_be_bytes(const Array& bytes) noexcept {                        \
     return T::from_bits(UnsignedIntT::from_be_bytes(bytes));                   \
   }                                                                            \
   /** Create a floating point value from its representation as a byte array in \
@@ -735,8 +744,9 @@
    *                                                                           \
    *  See `##T##::from_bits()` for why this function is not constexpr.         \
    */                                                                          \
-  static T from_le_bytes(                                                      \
-      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {            \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
+                ::sus::containers::Array<u8, Bytes>>                           \
+  static T from_le_bytes(const Array& bytes) noexcept {                        \
     return T::from_bits(UnsignedIntT::from_le_bytes(bytes));                   \
   }                                                                            \
   /** Create a floating point value from its representation as a byte array in \
@@ -748,28 +758,29 @@
    *                                                                           \
    *  See `##T##::from_bits()` for why this function is not constexpr.         \
    */                                                                          \
-  static T from_ne_bytes(                                                      \
-      const ::sus::Array<u8, sizeof(PrimitiveT)>& bytes) noexcept {            \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =          \
+                ::sus::containers::Array<u8, Bytes>>                           \
+  static T from_ne_bytes(const Array& bytes) noexcept {                        \
     return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));                   \
   }
 
 // to_be_bytes, to_le_bytes, to_ne_bytes
 
-#define _sus__float(T, PrimitiveT, UnsignedIntT)   \
-  _sus__float_storage(PrimitiveT);                 \
-  _sus__float_constants(T, PrimitiveT);            \
-  _sus__float_construct(T, PrimitiveT);            \
-  _sus__float_comparison(T);                       \
-  _sus__float_unary_ops(T);                        \
-  _sus__float_binary_ops(T);                       \
-  _sus__float_mutable_ops(T);                      \
-  _sus__float_abs(T, PrimitiveT);                  \
-  _sus__float_math(T, PrimitiveT);                 \
-  _sus__float_fract_trunc(T);                      \
-  _sus__float_convert_to(T, PrimitiveT);           \
-  _sus__float_bytes(T, UnsignedIntT);              \
-  _sus__float_category(T);                         \
-  _sus__float_clamp(T);                            \
-  _sus__float_euclid(T, PrimitiveT);               \
-  _sus__float_endian(T, PrimitiveT, UnsignedIntT); \
+#define _sus__float(T, PrimitiveT, UnsignedIntT)           \
+  _sus__float_storage(PrimitiveT);                         \
+  _sus__float_constants(T, PrimitiveT);                    \
+  _sus__float_construct(T, PrimitiveT);                    \
+  _sus__float_comparison(T);                               \
+  _sus__float_unary_ops(T);                                \
+  _sus__float_binary_ops(T);                               \
+  _sus__float_mutable_ops(T);                              \
+  _sus__float_abs(T, PrimitiveT);                          \
+  _sus__float_math(T, PrimitiveT);                         \
+  _sus__float_fract_trunc(T);                              \
+  _sus__float_convert_to(T, PrimitiveT);                   \
+  _sus__float_bytes(T, UnsignedIntT);                      \
+  _sus__float_category(T);                                 \
+  _sus__float_clamp(T);                                    \
+  _sus__float_euclid(T, PrimitiveT);                       \
+  _sus__float_endian(T, sizeof(PrimitiveT), UnsignedIntT); \
   static_assert(true)

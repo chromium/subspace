@@ -21,7 +21,6 @@
 
 #include "assertions/check.h"
 #include "assertions/endian.h"
-#include "containers/array.h"
 #include "num/__private/int_log10.h"
 #include "num/__private/intrinsics.h"
 #include "num/__private/literals.h"
@@ -29,6 +28,12 @@
 #include "num/integer_concepts.h"
 #include "option/option.h"
 #include "tuple/tuple.h"
+
+namespace sus::containers {
+template <class T, size_t N>
+  requires(N <= PTRDIFF_MAX)
+class Array;
+}
 
 namespace sus::num {
 struct u8;
@@ -58,7 +63,7 @@ struct u8;
   _sus__unsigned_pow(T);                            \
   _sus__unsigned_log(T);                            \
   _sus__unsigned_power_of_two(T, PrimitiveT);       \
-  _sus__unsigned_endian(T, PrimitiveT)
+  _sus__unsigned_endian(T, PrimitiveT, sizeof(PrimitiveT))
 
 #define _sus__unsigned_storage(PrimitiveT)                                    \
   /** The inner primitive value, in case it needs to be unwrapped from the    \
@@ -1126,7 +1131,7 @@ struct u8;
   }                                                                           \
   static_assert(true)
 
-#define _sus__unsigned_endian(T, PrimitiveT)                                  \
+#define _sus__unsigned_endian(T, PrimitiveT, Bytes)                           \
   /** Converts an integer from big endian to the target's endianness.         \
    *                                                                          \
    * On big endian this is a no-op. On little endian the bytes are swapped.   \
@@ -1174,18 +1179,18 @@ struct u8;
   /** Return the memory representation of this integer as a byte array in     \
    * big-endian (network) byte order.                                         \
    */                                                                         \
-  template <std::same_as<u8> U8 = u8> /* u8 is not defined before u32 */      \
-  constexpr ::sus::Array<U8, sizeof(PrimitiveT)> to_be_bytes()                \
-      const& noexcept {                                                       \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
+                ::sus::containers::Array<u8, Bytes>>                          \
+  constexpr Array to_be_bytes() const& noexcept {                             \
     return to_be().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
   /** Return the memory representation of this integer as a byte array in     \
    * little-endian byte order.                                                \
    */                                                                         \
-  template <std::same_as<u8> U8 = u8> /* u8 is not defined before u32 */      \
-  constexpr ::sus::Array<U8, sizeof(PrimitiveT)> to_le_bytes()                \
-      const& noexcept {                                                       \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
+                ::sus::containers::Array<u8, Bytes>>                          \
+  constexpr Array to_le_bytes() const& noexcept {                             \
     return to_le().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
@@ -1195,10 +1200,10 @@ struct u8;
    * As the target platform's native endianness is used, portable code should \
    * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.         \
    */                                                                         \
-  template <std::same_as<u8> U8 = u8> /* u8 is not defined before u32 */      \
-  constexpr ::sus::Array<U8, sizeof(PrimitiveT)> to_ne_bytes()                \
-      const& noexcept {                                                       \
-    auto bytes = ::sus::Array<U8, sizeof(T)>::with_uninitialized(unsafe_fn);  \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
+                ::sus::containers::Array<u8, Bytes>>                          \
+  constexpr Array to_ne_bytes() const& noexcept {                             \
+    auto bytes = Array::with_uninitialized(unsafe_fn);                        \
     if (std::is_constant_evaluated()) {                                       \
       auto uval = primitive_value;                                            \
       for (auto i = size_t{0}; i < sizeof(T); ++i) {                          \
@@ -1218,18 +1223,18 @@ struct u8;
   /** Create an integer value from its representation as a byte array in big  \
    * endian.                                                                  \
    */                                                                         \
-  template <std::same_as<u8> U8 = u8> /* u8 is not defined before u32 */      \
-  static constexpr T from_be_bytes(                                           \
-      const ::sus::Array<U8, sizeof(PrimitiveT)>& bytes) noexcept {           \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
+                ::sus::containers::Array<u8, Bytes>>                          \
+  static constexpr T from_be_bytes(const Array& bytes) noexcept {             \
     return from_be(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
   /** Create an integer value from its representation as a byte array in      \
    * little endian.                                                           \
    */                                                                         \
-  template <std::same_as<u8> U8 = u8> /* u8 is not defined before u32 */      \
-  static constexpr T from_le_bytes(                                           \
-      const ::sus::Array<U8, sizeof(PrimitiveT)>& bytes) noexcept {           \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
+                ::sus::containers::Array<u8, Bytes>>                          \
+  static constexpr T from_le_bytes(const Array& bytes) noexcept {             \
     return from_le(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
@@ -1240,9 +1245,9 @@ struct u8;
    * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate      \
    * instead.                                                                 \
    */                                                                         \
-  template <std::same_as<u8> U8 = u8> /* u8 is not defined before u32 */      \
-  static constexpr T from_ne_bytes(                                           \
-      const ::sus::Array<U8, sizeof(PrimitiveT)>& bytes) noexcept {           \
+  template <std::same_as<::sus::containers::Array<u8, Bytes>> Array =         \
+                ::sus::containers::Array<u8, Bytes>>                          \
+  static constexpr T from_ne_bytes(const Array& bytes) noexcept {             \
     PrimitiveT val;                                                           \
     if (std::is_constant_evaluated()) {                                       \
       val = 0u;                                                               \

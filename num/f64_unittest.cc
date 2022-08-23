@@ -14,6 +14,7 @@
 
 #include <math.h>
 
+#include "containers/array.h"
 #include "num/float.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 

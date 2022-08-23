@@ -16,6 +16,7 @@
 
 #include "construct/into.h"
 #include "construct/make_default.h"
+#include "containers/array.h"
 #include "mem/relocate.h"
 #include "num/num_concepts.h"
 #include "num/signed_integer.h"
