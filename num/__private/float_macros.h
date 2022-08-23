@@ -764,8 +764,6 @@ class Array;
     return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));                   \
   }
 
-// to_be_bytes, to_le_bytes, to_ne_bytes
-
 #define _sus__float(T, PrimitiveT, UnsignedIntT)           \
   _sus__float_storage(PrimitiveT);                         \
   _sus__float_constants(T, PrimitiveT);                    \

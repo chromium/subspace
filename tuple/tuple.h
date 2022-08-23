@@ -38,11 +38,12 @@ class Tuple final {
     requires(I <= sizeof...(Ts))
   constexpr inline const auto& get() const& noexcept {
     ::sus::check(!moved_from());
-    return Access<I + 1>::get(storage_);
+    return Access<I + 1u>::get(storage_);
   }
 
   /// Disallows getting a reference to temporary Tuple.
   template <size_t I>
+    requires(I <= sizeof...(Ts))
   constexpr inline auto get() && =
       delete;  // Don't return reference to temporary.
 
@@ -51,7 +52,7 @@ class Tuple final {
     requires(I <= sizeof...(Ts))
   inline auto& get_mut() & noexcept {
     ::sus::check(!moved_from());
-    return Access<I + 1>::get_mut(storage_);
+    return Access<I + 1u>::get_mut(storage_);
   }
 
   /// Returns the `I`th element in the tuple.
@@ -59,7 +60,7 @@ class Tuple final {
     requires(I <= sizeof...(Ts))
   constexpr inline auto unwrap() && noexcept {
     ::sus::check(!set_moved_from());
-    return Access<I + 1>::unwrap(static_cast<Storage&&>(storage_));
+    return Access<I + 1u>::unwrap(static_cast<Storage&&>(storage_));
   }
 
   /// sus::num::Eq<Tuple<U...>> trait.
@@ -83,7 +84,7 @@ class Tuple final {
     ::sus::check(!r.moved_from());
     return __private::storage_cmp(
         std::strong_ordering::equal, storage_, r.storage_,
-        std::make_index_sequence<1 + sizeof...(Ts)>());
+        std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
   /// sus::num::WeakOrd<Tuple<U...>> trait.
@@ -96,7 +97,7 @@ class Tuple final {
     ::sus::check(!r.moved_from());
     return __private::storage_cmp(
         std::weak_ordering::equivalent, storage_, r.storage_,
-        std::make_index_sequence<1 + sizeof...(Ts)>());
+        std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
   /// sus::num::PartialOrd<Tuple<U...>> trait.
@@ -109,7 +110,7 @@ class Tuple final {
     ::sus::check(!r.moved_from());
     return __private::storage_cmp(
         std::partial_ordering::equivalent, storage_, r.storage_,
-        std::make_index_sequence<1 + sizeof...(Ts)>());
+        std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
  private:
@@ -124,10 +125,10 @@ class Tuple final {
 
   // TODO: Provide a way to opt out of all moved-from checks?
   constexpr inline bool moved_from() const& noexcept {
-    return Access<0>::get(storage_);
+    return Access<0u>::get(storage_);
   }
   constexpr inline bool set_moved_from() & noexcept {
-    return ::sus::mem::replace(mref(Access<0>::get_mut(storage_)), true);
+    return ::sus::mem::replace(mref(Access<0u>::get_mut(storage_)), true);
   }
 
   Storage storage_;
