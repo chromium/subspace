@@ -43,7 +43,6 @@ class Tuple final {
 
   /// Disallows getting a reference to temporary Tuple.
   template <size_t I>
-    requires(I <= sizeof...(Ts))
   constexpr inline auto get() && =
       delete;  // Don't return reference to temporary.
 
