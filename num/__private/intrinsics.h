@@ -1144,33 +1144,33 @@ sus_always_inline constexpr T negative_infinity() noexcept {
     return into_float_constexpr(unsafe_fn, uint64_t{0xfff0000000000000});
 }
 
-constexpr int32_t exponent_bits(float x) noexcept {
+constexpr inline int32_t exponent_bits(float x) noexcept {
   constexpr uint32_t mask = 0b01111111100000000000000000000000;
   return static_cast<int32_t>(
       unchecked_shr(into_unsigned_integer(x) & mask, 23));
 }
 
-constexpr int32_t exponent_bits(double x) noexcept {
+constexpr inline int32_t exponent_bits(double x) noexcept {
   constexpr uint64_t mask =
       0b0111111111110000000000000000000000000000000000000000000000000000;
   return static_cast<int32_t>(
       unchecked_shr(into_unsigned_integer(x) & mask, 52));
 }
 
-constexpr int32_t exponent_value(float x) noexcept {
+constexpr inline int32_t exponent_value(float x) noexcept {
   return exponent_bits(x) - int32_t{127};
 }
 
-constexpr int32_t exponent_value(double x) noexcept {
+constexpr inline int32_t exponent_value(double x) noexcept {
   return exponent_bits(x) - int32_t{1023};
 }
 
-constexpr uint32_t mantissa(float x) noexcept {
+constexpr inline uint32_t mantissa(float x) noexcept {
   constexpr uint32_t mask = 0b00000000011111111111111111111111;
   return into_unsigned_integer(x) & mask;
 }
 
-constexpr uint64_t mantissa(double x) noexcept {
+constexpr inline uint64_t mantissa(double x) noexcept {
   constexpr uint64_t mask =
       0b0000000000001111111111111111111111111111111111111111111111111111;
   return into_unsigned_integer(x) & mask;
@@ -1178,11 +1178,11 @@ constexpr uint64_t mantissa(double x) noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
-constexpr bool float_is_zero(T x) noexcept {
+constexpr inline bool float_is_zero(T x) noexcept {
   return (into_unsigned_integer(x) & ~high_bit<T>()) == 0;
 }
 
-constexpr bool float_is_inf(float x) noexcept {
+constexpr inline bool float_is_inf(float x) noexcept {
 #if __has_builtin(__builtin_isinf)
   return __builtin_isinf(x);
 #else
@@ -1193,7 +1193,7 @@ constexpr bool float_is_inf(float x) noexcept {
 #endif
 }
 
-constexpr bool float_is_inf(double x) noexcept {
+constexpr inline bool float_is_inf(double x) noexcept {
 #if __has_builtin(__builtin_isinf)
   return __builtin_isinf(x);
 #else
@@ -1203,17 +1203,17 @@ constexpr bool float_is_inf(double x) noexcept {
 #endif
 }
 
-constexpr bool float_is_inf_or_nan(float x) noexcept {
+constexpr inline bool float_is_inf_or_nan(float x) noexcept {
   constexpr auto mask = uint32_t{0x7f800000};
   return (into_unsigned_integer(x) & mask) == mask;
 }
 
-constexpr bool float_is_inf_or_nan(double x) noexcept {
+constexpr inline bool float_is_inf_or_nan(double x) noexcept {
   constexpr auto mask = uint64_t{0x7ff0000000000000};
   return (into_unsigned_integer(x) & mask) == mask;
 }
 
-constexpr bool float_is_nan(float x) noexcept {
+constexpr inline bool float_is_nan(float x) noexcept {
 #if __has_builtin(__builtin_isnan)
   return __builtin_isnan(x);
 #else
@@ -1223,7 +1223,7 @@ constexpr bool float_is_nan(float x) noexcept {
 #endif
 }
 
-constexpr bool float_is_nan(double x) noexcept {
+constexpr inline bool float_is_nan(double x) noexcept {
 #if __has_builtin(__builtin_isnan)
   return __builtin_isnan(x);
 #else
@@ -1234,14 +1234,14 @@ constexpr bool float_is_nan(double x) noexcept {
 }
 
 // Assumes that x is a NaN.
-constexpr bool float_is_nan_quiet(float x) noexcept {
+constexpr inline bool float_is_nan_quiet(float x) noexcept {
   // The quiet bit is the highest bit in the mantissa.
   constexpr auto quiet_mask = uint32_t{uint32_t{1} << (23 - 1)};
   return (into_unsigned_integer(x) & quiet_mask) != 0;
 }
 
 // Assumes that x is a NaN.
-constexpr bool float_is_nan_quiet(double x) noexcept {
+constexpr inline bool float_is_nan_quiet(double x) noexcept {
   // The quiet bit is the highest bit in the mantissa.
   constexpr auto quiet_mask = uint64_t{uint64_t{1} << (52 - 1)};
   return (into_unsigned_integer(x) & quiet_mask) != 0;
@@ -1250,18 +1250,18 @@ constexpr bool float_is_nan_quiet(double x) noexcept {
 // This is only valid if the argument is not (positive or negative) zero.
 template <class T>
   requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
-constexpr bool float_nonzero_is_subnormal(T x) noexcept {
+constexpr inline bool float_nonzero_is_subnormal(T x) noexcept {
   return exponent_bits(x) == int32_t{0};
 }
 
-constexpr bool float_is_normal(float x) noexcept {
+constexpr inline bool float_is_normal(float x) noexcept {
   // If the exponent is 0, the number is zero or subnormal. If the exponent is
   // all ones, the number is infinite or NaN.
   const auto e = exponent_bits(x);
   return e != 0 && e != int32_t{0b011111111};
 }
 
-constexpr bool float_is_normal(double x) noexcept {
+constexpr inline bool float_is_normal(double x) noexcept {
   // If the exponent is 0, the number is zero or subnormal. If the exponent is
   // all ones, the number is infinite or NaN.
   const auto e = exponent_bits(x);
@@ -1369,5 +1369,19 @@ constexpr inline ::sus::num::FpCategory float_category(T x) noexcept {
   }
 }
 #endif
+
+// Requires that `min <= max` and that `min` and `max` are not NaN or else this
+// function produces Undefined Behaviour.
+template <class T>
+  requires(std::is_floating_point_v<T> && sizeof(T) <= 8)
+constexpr T float_clamp(marker::UnsafeFnMarker, T x, T min, T max) noexcept {
+  if (float_is_nan(x)) [[unlikely]]
+    return nan<T>();
+  else if (x < min)
+    return min;
+  else if (x > max)
+    return max;
+  return x;
+}
 
 }  // namespace sus::num::__private

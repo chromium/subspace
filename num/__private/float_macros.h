@@ -408,6 +408,13 @@
     /* MSVC log2(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::log2(primitive_value));                   \
   }                                                                            \
+  /** Returns the logarithm of the number with respect to an arbitrary base.   \
+   *                                                                           \
+   * The result might not be correctly rounded owing to implementation         \
+   * details; self.log2() can produce more accurate results for base 2, and    \
+   * self.log10() can produce more accurate results for base 10.               \
+   */                                                                          \
+  inline T log(const T& base) const& noexcept { return ln() / base.ln(); }     \
   /** Returns the maximum of the two numbers, ignoring NaN.                    \
    *                                                                           \
    * If one of the arguments is NaN, then the other argument is returned.      \
@@ -576,67 +583,120 @@
   }                                                                            \
   static_assert(true)
 
-#define _sus__float_category(T)                                                 \
-  /** Returns the floating point category of the number.                        \
-   *                                                                            \
-   * If only one property is going to be tested, it is generally faster to use  \
-   * the specific predicate instead.                                            \
-   */                                                                           \
-  constexpr inline FpCategory classify() const& noexcept {                      \
-    return __private::float_category(primitive_value);                          \
-  }                                                                             \
-  /** Returns true if this number is neither infinite nor NaN.                  \
-   */                                                                           \
-  constexpr inline bool is_finite() const& noexcept {                           \
-    return !__private::float_is_inf_or_nan(primitive_value);                    \
-  }                                                                             \
-  /** Returns true if this value is positive infinity or negative infinity,     \
-   * and false otherwise.                                                       \
-   */                                                                           \
-  constexpr inline bool is_infinite() const& noexcept {                         \
-    return __private::float_is_inf(primitive_value);                            \
-  }                                                                             \
-  /** Returns true if this value is NaN.                                        \
-   */                                                                           \
-  constexpr inline bool is_nan() const& noexcept {                              \
-    return __private::float_is_nan(primitive_value);                            \
-  }                                                                             \
-  /** Returns true if the number is neither zero, infinite, subnormal, or NaN.  \
-   */                                                                           \
-  constexpr inline bool is_normal() const& noexcept {                           \
-    return __private::float_is_normal(primitive_value);                         \
-  }                                                                             \
-  /** Returns true if self has a negative sign, including -0.0, NaNs with       \
-   * negative sign bit and negative infinity.                                   \
-   *                                                                            \
-   * Note that IEEE-745 doesn’t assign any meaning to the sign bit in case of \
-   * a NaN                                                                      \
-   */                                                                           \
-  constexpr inline bool is_sign_negative() const& noexcept {                    \
-    return __private::float_signbit(primitive_value);                           \
-  }                                                                             \
-  /** Returns true if self has a positive sign, including +0.0, NaNs with       \
-   * positive sign bit and positive infinity.                                   \
-   *                                                                            \
-   * Note that IEEE-745 doesn’t assign any meaning to the sign bit in case of \
-   * a NaN.                                                                     \
-   */                                                                           \
-  constexpr inline bool is_sign_positive() const& noexcept {                    \
-    return !__private::float_signbit(primitive_value);                          \
-  }                                                                             \
-  /** Returns true if the number is subnormal.                                  \
-   */                                                                           \
-  constexpr inline bool is_subnormal() const& noexcept {                        \
-    return !__private::float_is_zero(primitive_value) &&                        \
-           __private::float_nonzero_is_subnormal(primitive_value);              \
-  }                                                                             \
+#define _sus__float_category(T)                                                \
+  /** Returns the floating point category of the number.                       \
+   *                                                                           \
+   * If only one property is going to be tested, it is generally faster to use \
+   * the specific predicate instead.                                           \
+   */                                                                          \
+  constexpr inline FpCategory classify() const& noexcept {                     \
+    return __private::float_category(primitive_value);                         \
+  }                                                                            \
+  /** Returns true if this number is neither infinite nor NaN.                 \
+   */                                                                          \
+  constexpr inline bool is_finite() const& noexcept {                          \
+    return !__private::float_is_inf_or_nan(primitive_value);                   \
+  }                                                                            \
+  /** Returns true if this value is positive infinity or negative infinity,    \
+   * and false otherwise.                                                      \
+   */                                                                          \
+  constexpr inline bool is_infinite() const& noexcept {                        \
+    return __private::float_is_inf(primitive_value);                           \
+  }                                                                            \
+  /** Returns true if this value is NaN.                                       \
+   */                                                                          \
+  constexpr inline bool is_nan() const& noexcept {                             \
+    return __private::float_is_nan(primitive_value);                           \
+  }                                                                            \
+  /** Returns true if the number is neither zero, infinite, subnormal, or NaN. \
+   */                                                                          \
+  constexpr inline bool is_normal() const& noexcept {                          \
+    return __private::float_is_normal(primitive_value);                        \
+  }                                                                            \
+  /** Returns true if self has a negative sign, including -0.0, NaNs with      \
+   * negative sign bit and negative infinity.                                  \
+   *                                                                           \
+   * Note that IEEE-745 doesn't assign any meaning to the sign bit in case of  \
+   * a NaN                                                                     \
+   */                                                                          \
+  constexpr inline bool is_sign_negative() const& noexcept {                   \
+    return __private::float_signbit(primitive_value);                          \
+  }                                                                            \
+  /** Returns true if self has a positive sign, including +0.0, NaNs with      \
+   * positive sign bit and positive infinity.                                  \
+   *                                                                           \
+   * Note that IEEE-745 doesn't assign any meaning to the sign bit in case of  \
+   * a NaN.                                                                    \
+   */                                                                          \
+  constexpr inline bool is_sign_positive() const& noexcept {                   \
+    return !__private::float_signbit(primitive_value);                         \
+  }                                                                            \
+  /** Returns true if the number is subnormal.                                 \
+   */                                                                          \
+  constexpr inline bool is_subnormal() const& noexcept {                       \
+    return !__private::float_is_zero(primitive_value) &&                       \
+           __private::float_nonzero_is_subnormal(primitive_value);             \
+  }                                                                            \
   static_assert(true)
 
-// clamp
-// div_euclid, rem_euclid
+#define _sus__float_clamp(T)                                                   \
+  /** Restrict a value to a certain interval unless it is NaN.                 \
+   *                                                                           \
+   * Returns max if self is greater than max, and min if self is less than     \
+   * min. Otherwise this returns self.                                         \
+   *                                                                           \
+   * Note that this function returns NaN if the initial value was NaN as well. \
+   *                                                                           \
+   * # Panics                                                                  \
+   * Panics if min > max, min is NaN, or max is NaN.                           \
+   */                                                                          \
+  constexpr inline T clamp(const T& min, const T& max) const& noexcept {       \
+    check(!min.is_nan() && !max.is_nan() &&                                    \
+          min.primitive_value <= max.primitive_value);                         \
+    /* SAFETY: We have verified that the min and max are not NaN and that      \
+     * `min <= max`. */                                                        \
+    return __private::float_clamp(unsafe_fn, primitive_value,                  \
+                                  min.primitive_value, max.primitive_value);   \
+  }
+
+#define _sus__float_euclid(T, PrimitiveT)                                      \
+  /** Calculates Euclidean division, the matching method for `rem_euclid`.     \
+   *                                                                           \
+   * This computes the integer `n` such that `self = n * rhs +                 \
+   * self.rem_euclid(rhs)`. In other words, the result is `self / rhs` rounded \
+   * to the integer `n` such that `self >= n * rhs`.                           \
+   */                                                                          \
+  T div_euclid(const T& rhs) const& noexcept {                                 \
+    const auto q = (*this / rhs).trunc();                                      \
+    if (*this % rhs < PrimitiveT{0}) {                                         \
+      if (rhs > T{PrimitiveT{0}})                                              \
+        return q - T{PrimitiveT{1}};                                           \
+      else                                                                     \
+        return q + T{PrimitiveT{1}};                                           \
+    }                                                                          \
+    return q;                                                                  \
+  }                                                                            \
+  /** Calculates the least nonnegative remainder of `self (mod rhs)`.          \
+   *                                                                           \
+   * In particular, the return value `r` satisfies `0.0 <= r < rhs.abs()` in   \
+   * most cases. However, due to a floating point round-off error it can       \
+   * result in `r == rhs.abs()`, violating the mathematical definition, if     \
+   * `self` is much smaller than `rhs.abs()` in magnitude and `self < 0.0`.    \
+   * This result is not an element of the function's codomain, but it is the   \
+   * closest floating point number in the real numbers and thus fulfills the   \
+   * property `self == self.div_euclid(rhs) * rhs + self.rem_euclid(rhs)`      \
+   * approximatively.                                                          \
+   */                                                                          \
+  T rem_euclid(const T& rhs) const& noexcept {                                 \
+    const auto r = *this % rhs;                                                \
+    if (r < T{PrimitiveT{0}})                                                  \
+      return r + rhs.abs();                                                    \
+    else                                                                       \
+      return r;                                                                \
+  }
+
 // from_be_bytes, from_le_bytes, from_ne_bytes
 // to_be_bytes, to_le_bytes, to_ne_bytes
-// log
 
 #define _sus__float(T, PrimitiveT, UnsignedIntT) \
   _sus__float_storage(PrimitiveT);               \
@@ -652,4 +712,6 @@
   _sus__float_convert_to(T, PrimitiveT);         \
   _sus__float_bytes(T, UnsignedIntT);            \
   _sus__float_category(T);                       \
+  _sus__float_clamp(T);                          \
+  _sus__float_euclid(T, PrimitiveT);             \
   static_assert(true)
