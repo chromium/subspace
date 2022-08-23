@@ -54,6 +54,26 @@ struct usize final {
       usize,
       /*PrimitiveT=*/::sus::num::__private::ptr_type<>::unsigned_type,
       /*SignedT=*/isize);
+
+  /** Construction from an unsigned literal. */
+  constexpr inline usize(uint8_t val) noexcept
+      : primitive_value(static_cast<decltype(primitive_value)>(val)) {}
+  /** Construction from an unsigned literal. */
+  constexpr inline usize(uint16_t val) noexcept
+      : primitive_value(static_cast<decltype(primitive_value)>(val)) {}
+  /** Construction from an unsigned literal. */
+  constexpr inline usize(uint32_t val) noexcept
+      : primitive_value(static_cast<decltype(primitive_value)>(val)) {}
+  /** Construction from an unsigned literal. */
+  constexpr inline usize(uint64_t val)
+      : primitive_value(static_cast<decltype(primitive_value)>(val)) {
+    if (std::is_constant_evaluated()) {
+      if (val > uint64_t{MAX_PRIMITIVE}) [[unlikely]]
+        throw "usize construction from literal is out of bounds";
+    } else {
+      check(val <= uint64_t{MAX_PRIMITIVE});
+    }
+  }
 };
 
 }  // namespace sus::num

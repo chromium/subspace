@@ -32,35 +32,62 @@ static_assert(!std::is_signed_v<decltype(usize::primitive_value)>);
 static_assert(sizeof(decltype(usize::primitive_value)) == sizeof(void*));
 static_assert(sizeof(usize) == sizeof(decltype(usize::primitive_value)));
 
+// `usize` can be implicitly constructed from any unsigned integer.
+static_assert(std::is_convertible_v<uint8_t, usize>);
+static_assert(std::is_convertible_v<uint16_t, usize>);
+static_assert(std::is_convertible_v<uint32_t, usize>);
+static_assert(std::is_convertible_v<uint64_t, usize>);
+static_assert(!std::is_convertible_v<int8_t, usize>);
+static_assert(!std::is_convertible_v<int16_t, usize>);
+static_assert(!std::is_convertible_v<int32_t, usize>);
+static_assert(!std::is_convertible_v<int64_t, usize>);
+
+TEST(usize, ImplicitConstruct) {
+  {
+    [[maybe_unused]] constexpr usize a = uint8_t{1u};
+    [[maybe_unused]] constexpr usize b = uint16_t{1u};
+    [[maybe_unused]] constexpr usize c = uint32_t{1u};
+    [[maybe_unused]] constexpr usize d = uint64_t{1u};
+    [[maybe_unused]] constexpr usize e = 1u;
+  }
+  {
+    usize a = uint8_t{1u};
+    usize b = uint16_t{1u};
+    usize c = uint32_t{1u};
+    usize d = uint64_t{1u};
+    usize e = 1u;
+  }
+}
+
 namespace behaviour {
 using T = usize;
 using From = decltype(usize::primitive_value);
-static_assert(!std::is_trivial_v<T>, "");
-static_assert(!std::is_aggregate_v<T>, "");
-static_assert(std::is_standard_layout_v<T>, "");
-static_assert(!std::is_trivially_default_constructible_v<T>, "");
-static_assert(std::is_default_constructible_v<T>, "");
-static_assert(std::is_trivially_copy_constructible_v<T>, "");
-static_assert(std::is_trivially_copy_assignable_v<T>, "");
-static_assert(std::is_trivially_move_constructible_v<T>, "");
-static_assert(std::is_trivially_move_assignable_v<T>, "");
-static_assert(std::is_trivially_destructible_v<T>, "");
-static_assert(std::is_copy_constructible_v<T>, "");
-static_assert(std::is_copy_assignable_v<T>, "");
-static_assert(std::is_move_constructible_v<T>, "");
-static_assert(std::is_move_assignable_v<T>, "");
-static_assert(std::is_nothrow_swappable_v<T>, "");
-static_assert(std::is_constructible_v<T, From&&>, "");
-static_assert(std::is_assignable_v<T, From&&>, "");
-static_assert(std::is_constructible_v<T, const From&>, "");
-static_assert(std::is_assignable_v<T, const From&>, "");
-static_assert(std::is_constructible_v<T, From>, "");
-static_assert(!std::is_trivially_constructible_v<T, From>, "");
-static_assert(std::is_assignable_v<T, From>, "");
-static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(sus::construct::MakeDefault<T>, "");
-static_assert(sus::mem::relocate_one_by_memcpy<T>, "");
-static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
+static_assert(!std::is_trivial_v<T>);
+static_assert(!std::is_aggregate_v<T>);
+static_assert(std::is_standard_layout_v<T>);
+static_assert(!std::is_trivially_default_constructible_v<T>);
+static_assert(std::is_default_constructible_v<T>);
+static_assert(std::is_trivially_copy_constructible_v<T>);
+static_assert(std::is_trivially_copy_assignable_v<T>);
+static_assert(std::is_trivially_move_constructible_v<T>);
+static_assert(std::is_trivially_move_assignable_v<T>);
+static_assert(std::is_trivially_destructible_v<T>);
+static_assert(std::is_copy_constructible_v<T>);
+static_assert(std::is_copy_assignable_v<T>);
+static_assert(std::is_move_constructible_v<T>);
+static_assert(std::is_move_assignable_v<T>);
+static_assert(std::is_nothrow_swappable_v<T>);
+static_assert(std::is_constructible_v<T, From&&>);
+static_assert(std::is_assignable_v<T, From&&>);
+static_assert(std::is_constructible_v<T, const From&>);
+static_assert(std::is_assignable_v<T, const From&>);
+static_assert(std::is_constructible_v<T, From>);
+static_assert(!std::is_trivially_constructible_v<T, From>);
+static_assert(std::is_assignable_v<T, From>);
+static_assert(std::is_nothrow_destructible_v<T>);
+static_assert(sus::construct::MakeDefault<T>);
+static_assert(sus::mem::relocate_one_by_memcpy<T>);
+static_assert(sus::mem::relocate_array_by_memcpy<T>);
 }  // namespace behaviour
 
 // usize::MAX()
