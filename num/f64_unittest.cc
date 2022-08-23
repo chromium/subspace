@@ -242,7 +242,8 @@ TEST(f64, TotalCmp) {
       sus::num::__private::float_is_nan_quiet(signaling_nan2.primitive_value));
 
   const auto neg_quiet_nan = std::bit_cast<f64>(uint64_t{0xfff8000000000000});
-  const auto neg_signaling_nan = std::bit_cast<f64>(uint64_t{0xfff0000000000001});
+  const auto neg_signaling_nan =
+      std::bit_cast<f64>(uint64_t{0xfff0000000000001});
   EXPECT_EQ(::fpclassify(neg_quiet_nan.primitive_value), FP_NAN);
   EXPECT_EQ(::fpclassify(neg_signaling_nan.primitive_value), FP_NAN);
   EXPECT_TRUE(
@@ -251,7 +252,8 @@ TEST(f64, TotalCmp) {
       neg_signaling_nan.primitive_value));
 
   const auto neg_quiet_nan2 = std::bit_cast<f64>(uint64_t{0xfff8000000000001});
-  const auto neg_signaling_nan2 = std::bit_cast<f64>(uint64_t{0xfff0000000000002});
+  const auto neg_signaling_nan2 =
+      std::bit_cast<f64>(uint64_t{0xfff0000000000002});
   EXPECT_EQ(::fpclassify(neg_quiet_nan2.primitive_value), FP_NAN);
   EXPECT_EQ(::fpclassify(neg_signaling_nan2.primitive_value), FP_NAN);
   EXPECT_TRUE(
@@ -962,6 +964,32 @@ TEST(f64, RemEuclid) {
   EXPECT_EQ((-a).rem_euclid(-b), 1_f64);
   // Limitation due to round-off error.
   EXPECT_NE((-f64::EPSILON()).rem_euclid(3_f64), 0_f64);
+}
+
+TEST(f64, FromBeBytes) {
+  auto value = f64::from_be_bytes(sus::Array<u8, 8>::with_values(
+      0x40_u8, 0x29_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8));
+  EXPECT_EQ(value, 12.5_f64);
+}
+
+TEST(f64, FromLeBytes) {
+  auto value = f64::from_le_bytes(sus::Array<u8, 8>::with_values(
+      0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x29_u8, 0x40_u8));
+  EXPECT_EQ(value, 12.5_f64);
+}
+
+TEST(f64, FromNeBytes) {
+  if constexpr (sus::assertions::is_big_endian()) {
+    auto value = f64::from_ne_bytes(
+        sus::Array<u8, 8>::with_values(0x40_u8, 0x29_u8, 0x00_u8, 0x00_u8,
+                                       0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8));
+    EXPECT_EQ(value, 12.5_f64);
+  } else {
+    auto value = f64::from_ne_bytes(
+        sus::Array<u8, 8>::with_values(0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8,
+                                       0x00_u8, 0x00_u8, 0x29_u8, 0x40_u8));
+    EXPECT_EQ(value, 12.5_f64);
+  }
 }
 
 }  // namespace
