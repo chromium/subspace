@@ -16,6 +16,7 @@
 
 #include <stdint.h>
 
+#include <concepts>
 #include <type_traits>
 #include <utility>  // TODO: replace std::make_index_sequence.
 
@@ -69,8 +70,7 @@ class Array final {
 
   template <class InitializerFn>
   constexpr static Array with_initializer(InitializerFn f) noexcept {
-    return Array(kWithInitializer, ::sus::move(f),
-                 std::make_index_sequence<N>());
+    return Array(kWithInitializer, move(f), std::make_index_sequence<N>());
   }
 
   constexpr static Array with_value(const T& t) noexcept
@@ -79,18 +79,30 @@ class Array final {
     return Array(kWithValue, t, std::make_index_sequence<N>());
   }
 
-  constexpr const T& get(size_t i) const& noexcept
+  // Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
+  // values. But doesn't use sus::construct::Into<T> to avoid implicit
+  // conversions.
+  template <std::convertible_to<T>... Ts>
+    requires(sizeof...(Ts) == N)
+  constexpr static Array with_values(Ts... ts) noexcept {
+    auto a = Array(kWithUninitialized);
+    init_values(a.as_ptr_mut(), 0, move(ts)...);
+    return a;
+  }
+
+ public:
+  constexpr const T& get(/* TODO: usize */ size_t i) const& noexcept
     requires(N > 0)
   {
-    ::sus::check(i < N);
+    check(i < N);
     return storage_.data_[i];
   }
-  constexpr const T& get(size_t i) && = delete;
+  constexpr const T& get(/* TODO: usize */ size_t i) && = delete;
 
-  constexpr T& get_mut(size_t i) & noexcept
+  constexpr T& get_mut(/* TODO: usize */ size_t i) & noexcept
     requires(N > 0)
   {
-    ::sus::check(i < N);
+    check(i < N);
     return storage_.data_[i];
   }
 
@@ -122,14 +134,24 @@ class Array final {
   template <size_t... Is>
   constexpr Array(WithUninitialized) noexcept {}
 
+  template <std::convertible_to<T> T1, std::convertible_to<T>... Ts>
+  static inline void init_values(T* a, size_t index, T1&& t1, Ts&&... ts) {
+    new (a + index) T(move(t1));
+    init_values(a, index + 1, move(ts)...);
+  }
+  template <std::convertible_to<T> T1>
+  static inline void init_values(T* a, size_t index, T1&& t1) {
+    new (a + index) T(move(t1));
+  }
+
   // Using a union ensures that the default constructor doesn't initialize
   // anything.
   union {
     ::sus::containers::__private::Storage<T, N> storage_;
   };
 
-  sus_class_trivial_relocatable_value(
-      unsafe_fn, ::sus::mem::relocate_array_by_memcpy<T>);
+  sus_class_trivial_relocatable_value(unsafe_fn,
+                                      ::sus::mem::relocate_array_by_memcpy<T>);
 };
 
 }  // namespace sus::containers
