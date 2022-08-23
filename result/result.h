@@ -29,6 +29,7 @@
 
 #include "assertions/check.h"
 #include "assertions/unreachable.h"
+#include "iter/once.h"
 #include "marker/unsafe.h"
 #include "mem/mref.h"
 #include "mem/relocate.h"
@@ -37,6 +38,9 @@
 #include "option/option.h"
 
 namespace sus::result {
+
+using sus::iter::Iterator;
+using sus::iter::Once;
 
 /// The representation of an Result's state, which can either be #Ok to
 /// represent it has a success value, or #Err for when it is holding an error
@@ -227,7 +231,9 @@ class Result {
     switch (state_) {
       case IsOk:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsOk: mem::replace_and_discard(mref(ok_), static_cast<T&&>(o.ok_)); break;
+          case IsOk:
+            mem::replace_and_discard(mref(ok_), static_cast<T&&>(o.ok_));
+            break;
           case IsErr:
             ok_.~T();
             new (&err_) E(static_cast<E&&>(o.err_));
@@ -237,7 +243,9 @@ class Result {
         break;
       case IsErr:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsErr: mem::replace_and_discard(mref(err_), static_cast<E&&>(o.err_)); break;
+          case IsErr:
+            mem::replace_and_discard(mref(err_), static_cast<E&&>(o.err_));
+            break;
           case IsOk:
             err_.~T();
             new (&ok_) T(static_cast<T&&>(o.ok_));
@@ -364,6 +372,34 @@ class Result {
   constexpr inline E unwrap_err_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
     return take_and_destruct(unsafe_fn, mref(err_));
+  }
+
+  constexpr Iterator<Once<const T&>> iter() const& noexcept {
+    check(state_ != IsMoved);
+    if (state_ == IsOk)
+      return sus::iter::once(Option<const T&>::some(ok_));
+    else
+      return sus::iter::once(Option<const T&>::none());
+  }
+  Iterator<Once<const T&>> iter() const&& = delete;
+
+  constexpr Iterator<Once<T&>> iter_mut() & noexcept {
+    check(state_ != IsMoved);
+    if (state_ == IsOk)
+      return sus::iter::once(Option<T&>::some(mref(ok_)));
+    else
+      return sus::iter::once(Option<T&>::none());
+  }
+
+  constexpr Iterator<Once<T>> into_iter() && noexcept {
+    check(state_ != IsMoved);
+    if (replace(mref(state_), IsMoved) == IsOk) {
+      return sus::iter::once(
+          Option<T>::some(take_and_destruct(unsafe_fn, mref(ok_))));
+    } else {
+      err_.~E();
+      return sus::iter::once(Option<T>::none());
+    }
   }
 
  private:

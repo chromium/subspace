@@ -34,16 +34,24 @@ class [[sus_trivial_abi]] Once : public IteratorBase<Item> {
   Once(Option<Item>&& single) : single_(::sus::move(single)) {}
 
  private:
+  template <class U>
+  friend inline Iterator<Once<U>> once(Option<U>&& single) noexcept
+    requires(std::is_move_constructible_v<U>);
+
+  static Iterator<Once> with_option(Option<Item>&& single) {
+    return Iterator<Once>(static_cast<Option<Item>&&>(single));
+  }
+
   RelocatableStorage<Item> single_;
 
-  sus_class_maybe_trivial_relocatable_types(unsafe_fn, decltype(single_));
+  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(single_));
 };
 
 template <class Item>
-inline Once<Item> once(Option<Item>&& single)
+inline Iterator<Once<Item>> once(Option<Item>&& single) noexcept
   requires(std::is_move_constructible_v<Item>)
 {
-  return Once(::sus::move(single));
+  return Once<Item>::with_option(::sus::move(single));
 }
 
 }  // namespace sus::iter

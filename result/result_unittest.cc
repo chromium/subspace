@@ -22,6 +22,8 @@
 #include "result/result.h"
 
 #include "mem/move.h"
+#include "iter/once.h"
+#include "iter/iterator.h"
 #include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
@@ -228,6 +230,63 @@ TEST(Result, MoveAfterNonTrivialMove) {
   auto r = Result<NonTrivialMove, i32>::with(NonTrivialMove());
   sus::move(r).unwrap();
   EXPECT_DEATH([[maybe_unused]] auto r2 = sus::move(r), "");
+}
+
+TEST(Result, Iter) {
+  auto x = Result<i32, u8>::with_err(2_u8);
+  for ([[maybe_unused]] auto i : x.iter()) {
+    ADD_FAILURE();
+  }
+
+  int count = 0;
+  auto y = Result<i32, u8>::with(-4_i32);
+  for (auto& i : y.iter()) {
+    static_assert(std::is_same_v<decltype(i), const i32&>, "");
+    EXPECT_EQ(i, -4_i32);
+    ++count;
+  }
+  EXPECT_EQ(count, 1);
+}
+
+TEST(Result, IterMut) {
+  auto x = Result<i32, u8>::with_err(2_u8);
+  for ([[maybe_unused]] auto i : x.iter_mut()) {
+    ADD_FAILURE();
+  }
+
+  int count = 0;
+  auto y = Result<i32, u8>::with(-3_i32);
+  for (auto& i : y.iter_mut()) {
+    static_assert(std::is_same_v<decltype(i), i32&>, "");
+    EXPECT_EQ(i, -3_i32);
+    i += 1;
+    ++count;
+  }
+  EXPECT_EQ(sus::move(y).unwrap(), -2_i32);
+}
+
+struct MoveOnly {
+  explicit MoveOnly(int i) : i(i) {}
+  MoveOnly(MoveOnly&& o) : i(o.i) {}
+  void operator=(MoveOnly&& o) { i = o.i; }
+
+  int i;
+};
+
+TEST(Result, IntoIter) {
+  auto x = Result<i32, u8>::with_err(2_u8);
+  for ([[maybe_unused]] auto i : x.iter_mut()) {
+    ADD_FAILURE();
+  }
+
+  int count = 0;
+  auto y =  Result<MoveOnly, u8>::with(MoveOnly(-3));
+  for (auto m : sus::move(y).into_iter()) {
+    static_assert(std::is_same_v<decltype(m), MoveOnly>, "");
+    EXPECT_EQ(m.i, -3);
+    ++count;
+  }
+  EXPECT_EQ(count, 1);
 }
 
 }  // namespace
