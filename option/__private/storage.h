@@ -78,7 +78,7 @@ struct Storage<T, false> final {
     state_ = Some;
   }
 
-  [[nodiscard]] constexpr inline void set_some(T&& t) noexcept {
+  constexpr inline void set_some(T&& t) noexcept {
     if (state_ == None)
       construct_from_none(static_cast<T&&>(t));
     else
@@ -141,6 +141,17 @@ struct Storage<T, true> final {
 
   inline void construct_from_none(T&& t) noexcept {
     new (&val_) T(static_cast<T&&>(t));
+  }
+
+  constexpr inline void set_some(T&& t) noexcept {
+    if (state() == None)
+      construct_from_none(static_cast<T&&>(t));
+    else
+      ::sus::mem::replace_and_discard(mref(val_), static_cast<T&&>(t));
+  }
+
+  [[nodiscard]] constexpr inline T replace_some(T&& t) noexcept {
+    return ::sus::mem::replace(mref(val_), static_cast<T&&>(t));
   }
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {

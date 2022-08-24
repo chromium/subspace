@@ -15,8 +15,10 @@
 #pragma once
 
 #include "fn/callable.h"
-#include "mem/relocate.h"
 #include "mem/forward.h"
+#include "mem/layout.h"
+#include "mem/relocate.h"
+#include "num/types.h"
 
 namespace sus::fn {
 
@@ -50,9 +52,9 @@ enum StorageConstructionFnType { StorageConstructionFn };
 /// heap-allocated storage.
 enum FnType {
   /// Holds a function pointer or captureless lambda.
-  FnPointer,
+  FnPointer = 1,
   /// Holds the type-erased output of sus_bind() in a heap allocation.
-  Storage,
+  Storage = 2,
 };
 
 }  // namespace __private
@@ -208,6 +210,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 
  private:
   sus_class_trivial_relocatable(unsafe_fn);
+  sus_class_nonzero_field(unsafe_fn, FnOnce, type_);
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
