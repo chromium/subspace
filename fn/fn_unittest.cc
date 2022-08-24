@@ -20,6 +20,7 @@
 #include "mem/forward.h"
 #include "mem/move.h"
 #include "mem/replace.h"
+#include "option/option.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {
@@ -66,6 +67,13 @@ SubClass* s_b_function(BaseClass* b) { return static_cast<SubClass*>(b); }
 SubClass* s_s_function(SubClass* b) { return b; }
 
 // clang-format off
+
+// Fn types all have a non-zero field.
+static_assert(sus::mem::layout::nonzero_field<FnOnce<void()>>::has_field);
+static_assert(sus::mem::layout::nonzero_field<FnMut<void()>>::has_field);
+static_assert(sus::mem::layout::nonzero_field<Fn<void()>>::has_field);
+// Which allows them to not require a flag in Option.
+static_assert(sizeof(sus::Option<FnOnce<void()>>) == sizeof(FnOnce<void()>));
 
 // Closures can not be copied, as their storage is uniquely owned.
 static_assert(!std::is_copy_constructible_v<FnOnce<void()>>);

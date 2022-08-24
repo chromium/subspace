@@ -20,10 +20,11 @@
 #include "iter/iterator.h"
 #include "mem/relocate.h"
 #include "num/types.h"
-#include "tuple/tuple.h"
 #include "result/result.h"
+#include "tuple/tuple.h"
 #include "test/behaviour_types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
+#include "tuple/tuple.h"
 
 using ::sus::construct::make_default;
 using ::sus::construct::MakeDefault;
@@ -1587,19 +1588,24 @@ TEST(Option, OkOrElse) {
 TEST(Option, Transpose) {
   auto none = Option<sus::result::Result<u8, i32>>::none();
   auto t1 = sus::move(none).transpose();
-  static_assert(std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t1)>);
+  static_assert(
+      std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t1)>);
   EXPECT_EQ(t1.is_ok(), true);
   EXPECT_EQ(sus::move(t1).unwrap(), None);
 
-  auto some_ok = Option<sus::result::Result<u8, i32>>::some(sus::result::Result<u8, i32>::with(5_u8));
+  auto some_ok = Option<sus::result::Result<u8, i32>>::some(
+      sus::result::Result<u8, i32>::with(5_u8));
   auto t2 = sus::move(some_ok).transpose();
-  static_assert(std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t2)>);
+  static_assert(
+      std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t2)>);
   EXPECT_EQ(t2.is_ok(), true);
   EXPECT_EQ(sus::move(t2).unwrap().unwrap(), 5_u8);
 
-  auto some_err = Option<sus::result::Result<u8, i32>>::some(sus::result::Result<u8, i32>::with_err(-2_i32));
+  auto some_err = Option<sus::result::Result<u8, i32>>::some(
+      sus::result::Result<u8, i32>::with_err(-2_i32));
   auto t3 = sus::move(some_err).transpose();
-  static_assert(std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t3)>);
+  static_assert(
+      std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t3)>);
   EXPECT_EQ(t3.is_err(), true);
   EXPECT_EQ(sus::move(t3).unwrap_err(), -2_i32);
 }
@@ -1612,7 +1618,8 @@ TEST(Option, Zip) {
 
   {
     auto o = Option<i32>::some(-2_i32);
-    EXPECT_EQ(sus::move(o).zip(Option<u8>::some(3_u8)).unwrap(), (sus::Tuple<i32, u8>::with(-2_i32, 3_u8)));
+    EXPECT_EQ(sus::move(o).zip(Option<u8>::some(3_u8)).unwrap(),
+              (sus::Tuple<i32, u8>::with(-2_i32, 3_u8)));
     EXPECT_EQ(o, None);
   }
 
@@ -1620,9 +1627,84 @@ TEST(Option, Zip) {
     auto i = -2_i32;
     auto u = 3_u8;
     auto o = Option<const i32&>::some(i);
-    EXPECT_EQ(sus::move(o).zip(Option<const u8&>::some(u)).unwrap(), (sus::Tuple<i32, u8>::with(-2_i32, 3_u8)));
+    EXPECT_EQ(sus::move(o).zip(Option<const u8&>::some(u)).unwrap(),
+              (sus::Tuple<i32, u8>::with(-2_i32, 3_u8)));
     EXPECT_EQ(o, None);
   }
+}
+
+TEST(Option, NonZeroField) {
+  using T = sus::mem::NonNull<int>;
+  static_assert(sizeof(Option<T>) == sizeof(T));
+  int i = 3;
+
+  EXPECT_EQ(Option<T>::none(), None);
+  EXPECT_EQ(Option<T>::some(T::with(i)), Some);
+
+  EXPECT_EQ(Option<T>(static_cast<const Option<T>&>(Option<T>::none())), None);
+  EXPECT_EQ(
+      Option<T>(static_cast<const Option<T>&>(Option<T>::some(T::with(i)))),
+      Some);
+  auto o = Option<T>::none();
+  o = static_cast<const Option<T>&>(Option<T>::some(T::with(i)));
+  EXPECT_EQ(o, Some);
+
+  EXPECT_EQ(Option<T>(Option<T>::none()), None);
+  EXPECT_EQ(Option<T>(Option<T>::some(T::with(i))), Some);
+  o = Option<T>::none();
+  EXPECT_EQ(o, None);
+
+  o.insert(T::with(i));
+  EXPECT_EQ(o, Some);
+
+  o.clear();
+  EXPECT_EQ(o, None);
+
+  EXPECT_EQ(Option<T>::some(T::with(i)).unwrap().as_ref(), 3);
+
+  EXPECT_EQ(o, None);
+  EXPECT_EQ(o.get_or_insert(T::with(i)).as_ref(), 3);
+  EXPECT_EQ(o, Some);
+
+  o.clear();
+  EXPECT_EQ(o, None);
+  EXPECT_EQ(o.get_or_insert_with([&i]() { return T::with(i); }).as_ref(), 3);
+  EXPECT_EQ(o, Some);
+
+  EXPECT_EQ(o.take().unwrap().as_ref(), 3);
+
+  EXPECT_EQ(o, None);
+  EXPECT_EQ(sus::move(o).and_opt(Option<T>::some(T::with(i))), None);
+  EXPECT_EQ(o, None);
+
+  o = Option<T>::some(T::with(i));
+  EXPECT_EQ(sus::move(o).and_opt(Option<T>::some(T::with(i))), Some);
+  EXPECT_EQ(o, None);
+
+  o = Option<T>::some(T::with(i));
+  EXPECT_EQ(sus::move(o).xor_opt(Option<T>::some(T::with(i))), None);
+  EXPECT_EQ(o, None);
+
+  o = Option<T>::some(T::with(i));
+  EXPECT_EQ(sus::move(o).xor_opt(Option<T>::none()), Some);
+  EXPECT_EQ(o, None);
+
+  o = Option<T>::some(T::with(i));
+  EXPECT_EQ(sus::move(o).zip(Option<T>::some(T::with(i))), (Option<sus::Tuple<T, T>>::some(sus::Tuple<T, T>::with(T::with(i), T::with(i)))));
+  EXPECT_EQ(o, None);
+
+  o = Option<T>::some(T::with(i));
+  EXPECT_EQ(sus::move(o).zip(Option<T>::none()), None);
+  EXPECT_EQ(o, None);
+
+  o = Option<T>::none();
+  EXPECT_EQ(sus::move(o).zip(Option<T>::none()), None);
+  EXPECT_EQ(o, None);
+
+  o = Option<T>::some(T::with(i));
+  int j = 4;
+  o.replace(T::with(j));
+  EXPECT_EQ(o.unwrap_ref().as_ptr(), &j);
 }
 
 }  // namespace

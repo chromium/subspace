@@ -46,4 +46,13 @@ constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
   return taken;
 }
 
+template <class T>
+  requires std::is_move_constructible_v<T>
+constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
+                              T& t) noexcept {
+  T taken(static_cast<T&&>(t));
+  t.~T();
+  return taken;
+}
+
 }  // namespace sus::mem

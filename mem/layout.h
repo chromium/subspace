@@ -32,10 +32,14 @@ struct layout_nonzero_tag final {
     return true;
   };
 
-  static constexpr bool is_non_zero(const T* t) {
+  static constexpr bool is_non_zero(const T* t)
+  {
     return t->SusUnsafeNonZeroIsNonZero();
   };
-  static constexpr void set_zero(T* t) { t->SusUnsafeNonZeroSetZero(); };
+  static constexpr void set_zero(T* t)
+  {
+    t->SusUnsafeNonZeroSetZero();
+  };
 };
 
 }  // namespace __private
@@ -46,10 +50,14 @@ struct nonzero_field {
       __private::layout_nonzero_tag<T>::has_field(0);
 
   static constexpr bool is_non_zero(::sus::marker::UnsafeFnMarker,
-                                    const T* t) noexcept {
+                                    const T* t) noexcept
+    requires(has_field)
+  {
     return __private::layout_nonzero_tag<T>::is_non_zero(t);
   }
-  static constexpr void set_zero(::sus::marker::UnsafeFnMarker, T* t) noexcept {
+  static constexpr void set_zero(::sus::marker::UnsafeFnMarker, T* t) noexcept
+    requires(has_field)
+  {
     __private::layout_nonzero_tag<T>::set_zero(t);
   }
 };
