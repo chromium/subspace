@@ -20,14 +20,13 @@ namespace sus::mem {
 
 template <class T>
   requires(std::is_object_v<T>)
-T* addressof(T& arg) noexcept {
-  return reinterpret_cast<T*>(
-      &const_cast<char&>(reinterpret_cast<const volatile char&>(arg)));
+constexpr T* addressof(T& arg) noexcept {
+  return __builtin_addressof(arg);
 }
 
 template <class T>
   requires(!std::is_object_v<T>)
-T* addressof(T& arg) noexcept {
+constexpr T* addressof(T& arg) noexcept {
   return &arg;
 }
 
