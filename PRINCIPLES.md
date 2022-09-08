@@ -146,12 +146,15 @@ This library is an experiment and not intended for use. See the
       of global knowledge. A `static` variable declaration must also be `const`,
       and if it's a pointer, then "deep constness" applies.
 1. No exceptions. Return results instead.
-    * Every function and method is `noexcept`.
-    * No use of `throw`.
+    * Every function and method is `noexcept` and/or `consteval`.
+    * No use of `throw` outside of `consteval` functions, where it is used to
+      provide compiler errors.
     * Calls to functions in another library that can throw exceptions are
       banned.
-    * We will provide vocabulary types for returning a success-or-failure and a
-      value-or-none.
+    * We will provide vocabulary types for returning a
+      [success-or-failure](https://github.com/chromium/subspace/blob/main/result/result.h)
+      and a
+      [value-or-none](https://github.com/chromium/subspace/blob/main/option/option.h).
 1. Traits, SFINAE and type tags to define behaviour on data. No inheritance
    unless from an abstract interface. All other classes are marked `final`.
     * Always use `final` instead of `override`.
@@ -162,12 +165,12 @@ This library is an experiment and not intended for use. See the
 1. Tools to use SFINAE for common patterns, such as traits, without having to
    understand all of the stdlib type_traits.
 1. Use constexpr everywhere it is correct to.
-    * Functions or method that can ever perform non-constexpr actions may not be
-      marked constexpr, with the exception of: abort().
-    * Any other function or method should be marked constexpr.
+    * Functions or method that can be constexpr should be marked constexpr.
+    * Use [std::is_constant_evaluated](https://en.cppreference.com/w/cpp/types/is_constant_evaluated)
+      to provide a (more expensive) constexpr implementation when needed.
 1. Common C++ language behaviours are part of the class' public API. We will
-   document _and test_ for being trivially copyable, movable, destructible,
-   among others.
+   document _and [test](https://github.com/chromium/subspace/blob/main/test/behaviour_types_unittest.cc)_
+   for being trivially copyable, movable, destructible, among others.
 1. Everything comes with tests. Tests are not flaky.
 1. Avoid compiler-specific things whenever possible. Some exceptions:
     * `[[clang:trivial_abi]]` is a perf benefit, once Clang has C++20 support.
@@ -194,12 +197,12 @@ This library is an experiment and not intended for use. See the
 1. Vocabulary types for returning success-or-failure with different embedded
    types, or value-or-none.
 1. Tagged unions.
-1. We will provide a required set of clang warnings to get expected behaviour
+1. We will provide a required set of compiler warnings to get expected behaviour
    from the library when working with user-provided types.
     * We will consider different "levels" of grouped warnings if needed.
 1. We will provide clang static analysis tools and/or compiler plugins as needed
    to ensure expected behaviour from the library when it acts on user-provided
-   types.
+   types (once clang supports C++20 and can compile the library).
 
 ### Less clear ideas
 
