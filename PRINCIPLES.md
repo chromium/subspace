@@ -10,8 +10,11 @@ This library is an experiment and not intended for use. See the
 1. Memory safety should be the default. You don't pay (in bugs and CVEs) for
    premature optimization you didn't need.
     * Leaving this path should require more typing, and a clear signal what is
-      happening. We will use either a naming convention, or a marker argument
-      type, to do so in place of [a language keyword](
+      happening. We will use [a naming convention of "unchecked"](
+      https://github.com/chromium/subspace/blob/9d0ae908aa8a98d11f78e0315470be64b97a0dbe/mem/nonnull.h#L31),
+      and [a marker argument type of `UnsafeFnMarker`](
+      https://github.com/chromium/subspace/blob/main/marker/unsafe.h),
+      to do so in place of [a language keyword](
       https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/unsafe).
 1. KISS Principle
     * "most systems work best if they are kept simple rather than made
