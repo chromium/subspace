@@ -24,17 +24,17 @@ class IteratorLoop final {
   using Item = typename std::remove_reference_t<Iterator>::Item;
 
  public:
-  IteratorLoop(Iterator iter)
+  explicit IteratorLoop(Iterator iter) noexcept
       : iter_(static_cast<Iterator&&>(iter)), item_(iter_.next()) {}
 
-  inline bool operator==(const __private::IteratorEnd&) const {
+  inline bool operator==(const __private::IteratorEnd&) const noexcept {
     return item_.is_nome();
   }
-  inline bool operator!=(const __private::IteratorEnd&) const {
+  inline bool operator!=(const __private::IteratorEnd&) const noexcept {
     return item_.is_some();
   }
-  inline void operator++() & { item_ = iter_.next(); }
-  inline Item operator*() & { return item_.take().unwrap(); }
+  inline void operator++() noexcept & { item_ = iter_.next(); }
+  inline Item operator*() noexcept & { return item_.take().unwrap(); }
 
  private:
   /* TODO: NonNull<IteratorBase<Item>> */ Iterator iter_;
