@@ -15,6 +15,8 @@
 #pragma once
 
 #include "fn/fn.h"
+#include "iter/__private/iterator_end.h"
+#include "iter/__private/iterator_loop.h"
 #include "iter/iterator_defn.h"
 #include "iter/sized_iterator.h"
 #include "mem/move.h"
@@ -25,35 +27,15 @@
 
 namespace sus::iter {
 
-struct IteratorEnd {};
-extern const IteratorEnd iterator_end;
-
-/// An adaptor for range-based for loops.
-template <class IteratorBase>
-class IteratorLoop final {
-  using Item = typename IteratorBase::Item;
-
- public:
-  IteratorLoop(IteratorBase& iter) : iter_(iter), item_(iter_.next()) {}
-
-  inline bool operator==(const IteratorEnd&) const { return item_.is_nome(); }
-  inline bool operator!=(const IteratorEnd&) const { return item_.is_some(); }
-  inline void operator++() & { item_ = iter_.next(); }
-  inline Item operator*() & { return item_.take().unwrap(); }
-
- private:
-  /* TODO: NonNull<IteratorBase<Item>> */ IteratorBase& iter_;
-  Option<Item> item_;
-};
-
 template <class Item>
-IteratorLoop<IteratorBase<Item>> IteratorBase<Item>::begin() & noexcept {
+__private::IteratorLoop<IteratorBase<Item>&>
+IteratorBase<Item>::begin() & noexcept {
   return {*this};
 }
 
 template <class Item>
-IteratorEnd IteratorBase<Item>::end() & noexcept {
-  return iterator_end;
+__private::IteratorEnd IteratorBase<Item>::end() & noexcept {
+  return __private::IteratorEnd();
 }
 
 template <class Item>

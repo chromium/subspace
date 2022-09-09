@@ -22,6 +22,7 @@
 
 #include "assertions/check.h"
 #include "construct/make_default.h"
+#include "containers/array_iter.h"
 #include "fn/callable.h"
 #include "marker/unsafe.h"
 #include "mem/move.h"
@@ -125,6 +126,19 @@ class Array final {
     return storage_.data_;
   }
 
+  ::sus::iter::Iterator<ArrayIter<T, N>> iter() const& {
+    return ArrayIter<T, N>::with(*this);
+  }
+  ::sus::iter::Iterator<ArrayIter<T, N>> iter() && = delete;
+
+  ::sus::iter::Iterator<ArrayIterMut<T, N>> iter_mut() & {
+    return ArrayIterMut<T, N>::with(*this);
+  }
+
+  ::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && {
+    return ArrayIntoIter<T, N>::with(static_cast<Array&&>(*this));
+  }
+
   /// sus::num::Eq<Array<U, N>> trait.
   template <::sus::num::Eq<T> U>
   constexpr bool operator==(const Array<U, N>& r) const& noexcept {
@@ -221,6 +235,10 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
   return __private::array_cmp(std::partial_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
 }
+
+// Implicit for-ranged loop iteration via `Array::iter()`.
+using ::sus::iter::__private::begin;
+using ::sus::iter::__private::end;
 
 }  // namespace sus::containers
 

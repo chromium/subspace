@@ -46,6 +46,12 @@ template <class Item>
 class Once;
 template <class I>
 class Iterator;
+namespace __private {
+template <class T>
+constexpr auto begin(const T& t) noexcept;
+template <class T>
+constexpr auto end(const T& t) noexcept;
+}
 }  // namespace sus::iter
 
 namespace sus::result {
@@ -691,9 +697,6 @@ class Option final {
     return Iterator<Once<T>>(take());
   }
 
-  // TODO: Consider adding a for-loop adaptor, with a macro?
-  // - begin() && { return into_iter().begin(); }
-
  private:
   template <class U>
   friend class Option;
@@ -1171,9 +1174,6 @@ class Option<T&> final {
     return Iterator<Once<T&>>(take());
   }
 
-  // TODO: Consider adding a for-loop adaptor, with a macro?
-  // - begin() && { return into_iter().begin(); }
-
  private:
   template <class U>
   friend class Option;
@@ -1259,6 +1259,10 @@ constexpr inline auto operator<=>(const Option<T>& l,
   }
   ::sus::unreachable_unchecked(unsafe_fn);
 }
+
+// Implicit for-ranged loop iteration via `Array::iter()`.
+using sus::iter::__private::begin;
+using sus::iter::__private::end;
 
 }  // namespace sus::option
 
