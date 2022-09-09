@@ -24,7 +24,7 @@ class IteratorLoop final {
   using Item = typename std::remove_reference_t<Iterator>::Item;
 
  public:
-  explicit IteratorLoop(Iterator iter) noexcept
+  IteratorLoop(Iterator iter) noexcept
       : iter_(static_cast<Iterator&&>(iter)), item_(iter_.next()) {}
 
   inline bool operator==(const __private::IteratorEnd&) const noexcept {
