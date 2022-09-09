@@ -33,8 +33,8 @@ class IteratorLoop final {
   inline bool operator!=(const __private::IteratorEnd&) const noexcept {
     return item_.is_some();
   }
-  inline void operator++() noexcept & { item_ = iter_.next(); }
-  inline Item operator*() noexcept & { return item_.take().unwrap(); }
+  inline void operator++() & noexcept { item_ = iter_.next(); }
+  inline Item operator*() & noexcept { return item_.take().unwrap(); }
 
  private:
   /* TODO: NonNull<IteratorBase<Item>> */ Iterator iter_;
