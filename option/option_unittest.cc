@@ -1449,6 +1449,23 @@ TEST(Option, IntoIter) {
   EXPECT_EQ(count, 1);
 }
 
+TEST(Option, ImplicitIter) {
+  auto x = Option<int>::none();
+  for ([[maybe_unused]] auto i : x.iter_mut()) {
+    ADD_FAILURE();
+  }
+
+  int count = 0;
+  auto y = Option<MoveOnly>::some(MoveOnly(2));
+
+  for (const auto& m : y) {
+    static_assert(std::is_same_v<decltype(m), const MoveOnly&>, "");
+    EXPECT_EQ(m.i, 2);
+    ++count;
+  }
+  EXPECT_EQ(count, 1);
+}
+
 TEST(Option, Eq) {
   EXPECT_EQ(Option<int>::some(1), Option<int>::some(1));
   EXPECT_NE(Option<int>::some(1), Option<int>::some(2));

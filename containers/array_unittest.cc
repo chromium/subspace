@@ -17,7 +17,9 @@
 #include <type_traits>
 
 #include "construct/into.h"
+#include "iter/iterator.h"
 #include "marker/unsafe.h"
+#include "mem/move.h"
 #include "mem/relocate.h"
 #include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -253,6 +255,49 @@ TEST(Array, PartialOrder) {
   EXPECT_EQ(std::partial_order(a, b), std::partial_ordering::equivalent);
   b.get_mut(3_usize) += 1;
   EXPECT_EQ(std::partial_order(a, b), std::partial_ordering::less);
+}
+
+TEST(Array, Iter) {
+  const auto a = Array<usize, 5>::with_value(3u);
+  auto sum = 0_usize;
+  for (const usize& i : a.iter()) {
+    sum += i;
+  }
+  EXPECT_EQ(sum, 15_usize);
+}
+
+TEST(Array, IterMut) {
+  auto a = Array<usize, 5>::with_value(3u);
+  auto sum = 0_usize;
+  for (usize& i : a.iter_mut()) {
+    sum += i;
+    i += 1_usize;
+  }
+  EXPECT_EQ(sum, 15_usize);
+
+  sum = 0_usize;
+  for (const usize& i : a.iter()) {
+    sum += i;
+  }
+  EXPECT_EQ(sum, 20_usize);
+}
+
+TEST(Array, IntoIter) {
+  auto a = Array<usize, 5>::with_value(3u);
+  auto sum = 0_usize;
+  for (usize i : sus::move(a).into_iter()) {
+    sum += i;
+  }
+  EXPECT_EQ(sum, 15_usize);
+}
+
+TEST(Array, ImplicitIter) {
+  const auto a = Array<usize, 5>::with_value(3u);
+  auto sum = 0_usize;
+  for (const usize& i : a) {
+    sum += i;
+  }
+  EXPECT_EQ(sum, 15_usize);
 }
 
 }  // namespace

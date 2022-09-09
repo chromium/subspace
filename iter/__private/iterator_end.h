@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "iter/iterator.h"
+#pragma once
 
-namespace sus::iter {
-const IteratorEnd iterator_end;
-}
+namespace sus::iter::__private {
+
+struct IteratorEnd {};
+
+}  // namespace sus::iter::__private

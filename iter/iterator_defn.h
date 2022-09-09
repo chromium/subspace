@@ -15,8 +15,8 @@
 #pragma once
 
 #include "fn/fn_defn.h"
-#include "option/option.h"
 #include "num/unsigned_integer.h"
+#include "option/option.h"
 
 namespace sus::iter {
 
@@ -26,9 +26,19 @@ using ::sus::option::Option;
 template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter;
 
+namespace __private {
 template <class IteratorBase>
 class IteratorLoop;
+
+template <class Iterator>
+class IteratorImplicitLoop;
 struct IteratorEnd;
+
+template <class T>
+constexpr auto begin(const T& t) noexcept;
+template <class T>
+constexpr auto end(const T& t) noexcept;
+}  // namespace __private
 
 // TODO: Do we want to be able to pass IteratorBase& as a "generic" iterator?
 // Then it needs access to the adapator methods of Iterator<T>, so make them
@@ -89,9 +99,9 @@ class IteratorBase {
   virtual usize count() noexcept;
 
   /// Adaptor for use in ranged for loops.
-  IteratorLoop<IteratorBase<Item>> begin() & noexcept;
+  __private::IteratorLoop<IteratorBase<Item>&> begin() & noexcept;
   /// Adaptor for use in ranged for loops.
-  IteratorEnd end() & noexcept;
+  __private::IteratorEnd end() & noexcept;
 
  protected:
   IteratorBase() = default;
@@ -101,7 +111,9 @@ template <class I>
 class Iterator final : public I {
  private:
   using typename I::Item;
-  friend I;  // I::foo() can construct Iterator<I>.
+  template <class T>
+  friend class __private::IteratorLoop;  // Can see Item.
+  friend I;                              // I::foo() can construct Iterator<I>.
 
   template <class J>
   friend class Iterator;  // Iterator<J>::foo() can construct Iterator<I>.

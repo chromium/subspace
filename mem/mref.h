@@ -86,7 +86,7 @@ struct Mref<T&> final {
   constexpr Mref& operator=(Mref&&) noexcept = default;
 
   // Prevent constructing an Mref argument without writing mref().
-  Mref(T& t) = delete;
+  consteval Mref(T& t) = delete;
   // Prevent passing an Mref argument along without writing mref() again.
   Mref(Mref&) = delete;
 
