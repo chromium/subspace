@@ -8,6 +8,8 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    env:
+      HDOC_PROJECT_API_KEY: ${{ secrets.HDOC_PROJECT_API_KEY }}
     strategy:
       fail-fast: false
       matrix:
@@ -165,11 +167,11 @@ jobs:
           endif()
 
       - name: Documentation
-        if: startsWith(matrix.config.cxx, 'g++')
+        if: ${{ startsWith(matrix.config.cxx, 'g++') && env.HDOC_PROJECT_API_KEY != '' }}
         uses: hdoc/hdoc-github-action@v2
         with:
           compile-commands-path: out/compile_commands.json
-          hdoc-api-key: ${{ secrets.HDOC_PROJECT_API_KEY }}
+          hdoc-api-key: ${{ env.HDOC_PROJECT_API_KEY }}
 
       - name: Install Strip
         run: cmake --install out --prefix instdir --strip
