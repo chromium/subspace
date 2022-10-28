@@ -1,6 +1,8 @@
 name: CI
 
-on: [push]
+on:
+  push:
+    branches: [hdoc]
 
 jobs:
   build:
@@ -114,8 +116,9 @@ jobs:
           execute_process(
             COMMAND cmake
               -S .
-              -B build
+              -B out
               -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
+              -D CMAKE_EXPORT_COMPILE_COMMANDS=1
               -G Ninja
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
             RESULT_VARIABLE result
@@ -139,7 +142,7 @@ jobs:
           endif()
 
           execute_process(
-            COMMAND cmake --build build
+            COMMAND cmake --build out
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
@@ -154,15 +157,22 @@ jobs:
 
           execute_process(
             COMMAND ctest -j ${N} --rerun-failed --output-on-failure
-            WORKING_DIRECTORY build
+            WORKING_DIRECTORY out
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
             message(FATAL_ERROR "Running tests failed!")
           endif()
 
+      - name: Documentation
+        if: startsWith(matrix.config.cxx, 'g++')
+        uses: hdoc/hdoc-github-action@v2
+        with:
+          compile-commands-path: out/compile_commands.json
+          hdoc-api-key: ${{ secrets.HDOC_PROJECT_API_KEY }}
+
       - name: Install Strip
-        run: cmake --install build --prefix instdir --strip
+        run: cmake --install out --prefix instdir --strip
 
       - name: Pack
         working-directory: instdir
