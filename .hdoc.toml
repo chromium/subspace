@@ -1,0 +1,24 @@
+[project]
+name = "subspace"
+version = "0.0.1"
+
+# Optional, adding this will enable direct links from the documentation
+# to your source code.
+git_repo_url = "https://github.com/chromium/subspace/"
+git_default_branch = "main"
+
+[paths]
+compile_commands = "out/compile_commands.json"
+
+[pages]
+#homepage = "README.md"
+paths = [
+    "README.md",
+]
+
+[ignore]
+paths = [
+    "/third_party/",
+    "_unittest.cc",
+    "/__private/",
+]
