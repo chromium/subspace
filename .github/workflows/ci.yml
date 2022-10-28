@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [hdoc]
+    branches: [main]
 
 jobs:
   build:
