@@ -7,6 +7,8 @@ Please don't use this library. This is an experiment and we don't yet know where
 it will take us. There will be breaking changes without warning, and there is no
 stable version.
 
+Documentation: https://docs.hdoc.io/danakj/subspace/
+
 # Copyright
 
 All source files must include this header:
