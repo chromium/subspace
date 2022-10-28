@@ -1,4 +1,5 @@
 [![CI](https://github.com/chromium/subspace/actions/workflows/ci.yml/badge.svg)](https://github.com/chromium/subspace/actions/workflows/ci.yml)
+[![docs](https://github.com/chromium/subspace/actions/workflows/docs.yml/badge.svg)](https://docs.hdoc.io/danakj/subspace/)
 # Subspace Library
 
 An experimental take on a safer, simpler C++ standard library.
@@ -6,8 +7,6 @@ An experimental take on a safer, simpler C++ standard library.
 Please don't use this library. This is an experiment and we don't yet know where
 it will take us. There will be breaking changes without warning, and there is no
 stable version.
-
-Documentation: https://docs.hdoc.io/danakj/subspace/
 
 # Copyright
 
