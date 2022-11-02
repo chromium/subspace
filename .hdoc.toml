@@ -17,6 +17,7 @@ paths = [
 ]
 
 [ignore]
+ignore_private_members = true
 paths = [
     "/third_party/",
     "_unittest.cc",
