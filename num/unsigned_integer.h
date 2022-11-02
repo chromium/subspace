@@ -16,6 +16,7 @@
 
 #include <stdint.h>
 
+#include "marker/unsafe.h"
 #include "num/__private/unsigned_integer_macros.h"
 
 namespace sus::num {
@@ -97,6 +98,19 @@ struct usize final {
     } else {
       check(val <= uint64_t{MAX_PRIMITIVE});
     }
+  }
+
+  // Constructs a `usize` from a pointer type.
+  template <class T>
+  static inline usize from_ptr(::sus::marker::UnsafeFnMarker, T* t) {
+    return reinterpret_cast<decltype(std::declval<usize>().primitive_value)>(t);
+  }
+
+  // Converts a `usize` into a pointer type.
+  template <class T>
+    requires(std::is_pointer_v<T>)
+  inline T to_ptr(::sus::marker::UnsafeFnMarker) const {
+    return reinterpret_cast<T>(primitive_value);
   }
 };
 

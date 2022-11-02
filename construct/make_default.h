@@ -21,23 +21,17 @@ namespace sus::construct {
 namespace __private {
 
 template <class T>
-constexpr inline bool has_with_default(...) {
-  return false;
-}
-
-template <class T, class... Args>
-  requires(std::same_as<decltype(T::with_default(std::declval<Args>()...)), T>)
-constexpr inline bool has_with_default(int) {
-  return true;
-}
+concept HasWithDefault = requires {
+  { T::with_default() } -> std::same_as<T>;
+};
 
 }  // namespace __private
 
 // clang-format off
 template <class T>
 concept MakeDefault = 
-  (std::constructible_from<T> && !__private::has_with_default<T>(0)) ||
-  (!std::constructible_from<T> && __private::has_with_default<T>(0));
+  (std::constructible_from<T> && !__private::HasWithDefault<T>) ||
+  (!std::constructible_from<T> && __private::HasWithDefault<T>);
 // clang-format on
 
 template <MakeDefault T>
@@ -46,6 +40,15 @@ inline constexpr T make_default() noexcept {
     return T();
   else
     return T::with_default();
+}
+
+template <MakeDefault T>
+  requires(std::is_move_constructible_v<T>)
+inline T* alloc_make_default() noexcept {
+  if constexpr (std::constructible_from<T>)
+    return new T();
+  else
+    return new T(T::with_default());
 }
 
 }  // namespace sus::construct

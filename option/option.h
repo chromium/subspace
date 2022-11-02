@@ -107,10 +107,10 @@ class Option final {
   ///
   /// The Option's contained type `T` must be #MakeDefault, and will be
   /// constructed through that trait.
-  static inline constexpr Option<T> with_default() noexcept
+  static inline constexpr Option with_default() noexcept
     requires(::sus::construct::MakeDefault<T>)
   {
-    return Option<T>(::sus::construct::make_default<T>());
+    return Option(::sus::construct::make_default<T>());
   }
 
   /// Destructor for the Option.
