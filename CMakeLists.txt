@@ -57,6 +57,7 @@ add_library(subspace STATIC
     "mem/forward.h"
     "mem/move.h"
     "mem/mref.h"
+    "mem/never_value.h"
     "mem/nonnull.h"
     "mem/pass.h"
     "mem/relocate.h"

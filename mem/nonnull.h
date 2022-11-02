@@ -45,7 +45,7 @@ struct NonNull {
 
   T* ptr_;
 
-  sus_class_nonzero_field(unsafe_fn, NonNull, ptr_);
+  sus_class_never_value_field(unsafe_fn, NonNull, ptr_, nullptr);
 };
 
 }  // namespace sus::mem
