@@ -24,8 +24,8 @@ namespace sus::option::__private {
 using State::None;
 using State::Some;
 
-template <class T, bool HasNonNullField =
-                       sus::mem::never_value_field<T>::has_field>
+template <class T,
+          bool HasNonNullField = sus::mem::never_value_field<T>::has_field>
 struct Storage;
 
 // TODO: Determine if we can put the State into the storage of `T`. Probably
@@ -124,8 +124,7 @@ struct Storage<T, true> final {
   = default;
 
   constexpr Storage() {
-    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn,
-                                                              mref(val_));
+    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, &val_);
   }
   constexpr Storage(const T& t) : val_(t) {}
   constexpr Storage(T&& t) : val_(static_cast<T&&>(t)) {}
@@ -135,8 +134,7 @@ struct Storage<T, true> final {
   };
 
   [[nodiscard]] constexpr inline State state() const noexcept {
-    return ::sus::mem::never_value_field<T>::is_constructed(unsafe_fn,
-                                                                    val_)
+    return ::sus::mem::never_value_field<T>::is_constructed(unsafe_fn, &val_)
                ? Some
                : None;
   }
@@ -158,15 +156,13 @@ struct Storage<T, true> final {
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
     T t = take_and_destruct(unsafe_fn, mref(val_));
-    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn,
-                                                              mref(val_));
+    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, &val_);
     return t;
   }
 
   constexpr inline void set_none() noexcept {
     val_.~T();
-    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn,
-                                                              mref(val_));
+    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, &val_);
   }
 };
 
