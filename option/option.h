@@ -30,7 +30,7 @@
 #include "assertions/unreachable.h"
 #include "construct/make_default.h"
 #include "marker/unsafe.h"
-#include "mem/layout.h"
+#include "mem/never_value.h"
 #include "mem/mref.h"
 #include "mem/nonnull.h"
 #include "mem/replace.h"

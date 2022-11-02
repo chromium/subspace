@@ -16,7 +16,7 @@
 
 #include "fn/callable.h"
 #include "mem/forward.h"
-#include "mem/layout.h"
+#include "mem/never_value.h"
 #include "mem/relocate.h"
 #include "num/types.h"
 
@@ -210,7 +210,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 
  private:
   sus_class_trivial_relocatable(unsafe_fn);
-  sus_class_nonzero_field(unsafe_fn, FnOnce, type_);
+  sus_class_never_value_field(unsafe_fn, FnOnce, type_, static_cast<__private::FnType>(0));
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
