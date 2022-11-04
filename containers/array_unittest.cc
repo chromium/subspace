@@ -300,4 +300,10 @@ TEST(Array, ImplicitIter) {
   EXPECT_EQ(sum, 15_usize);
 }
 
+TEST(Array, Map) {
+  auto a = Array<usize, 3>::with_values(3u, 4u, 5u);
+  auto a2 = sus::move(a).map(+[](usize i) { return u32::from(i + 1_usize); });
+  EXPECT_EQ(a2, (Array<u32, 3>::with_values(4_u32, 5_u32, 6_u32)));
+}
+
 }  // namespace

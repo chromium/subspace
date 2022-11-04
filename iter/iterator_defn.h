@@ -134,6 +134,8 @@ class Iterator final : public I {
  public:
   // Adaptor methods.
 
+  // TODO: map()
+
   Iterator<Filter<Item, sizeof(I), alignof(I)>> filter(
       ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
           pred) && noexcept;
