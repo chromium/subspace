@@ -24,6 +24,7 @@
 #include "construct/make_default.h"
 #include "containers/array_iter.h"
 #include "fn/callable.h"
+#include "fn/fn_defn.h"
 #include "marker/unsafe.h"
 #include "mem/move.h"
 #include "mem/relocate.h"
@@ -77,16 +78,16 @@ class Array final {
     return Array(kWithInitializer, move(f), std::make_index_sequence<N>());
   }
 
-  // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
-  // sus::construct::Into<T> to avoid implicit conversions.
+  /// Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
+  /// sus::construct::Into<T> to avoid implicit conversions.
   template <std::convertible_to<T> U>
   constexpr static Array with_value(const U& t) noexcept {
     return Array(kWithValue, t, std::make_index_sequence<N>());
   }
 
-  // Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
-  // values. But doesn't use sus::construct::Into<T> to avoid implicit
-  // conversions.
+  /// Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
+  /// values. But doesn't use sus::construct::Into<T> to avoid implicit
+  /// conversions.
   template <std::convertible_to<T>... Ts>
     requires(sizeof...(Ts) == N)
   constexpr static Array with_values(Ts... ts) noexcept {
@@ -98,6 +99,7 @@ class Array final {
   /// Returns the number of elements in the array.
   constexpr const usize len() const& noexcept { return N; }
 
+  /// Returns a const reference to the element at index `i`.
   constexpr const T& get(usize i) const& noexcept
     requires(N > 0)
   {
@@ -106,6 +108,7 @@ class Array final {
   }
   constexpr const T& get(usize i) && = delete;
 
+  /// Returns a mutable reference to the element at index `i`.
   constexpr T& get_mut(usize i) & noexcept
     requires(N > 0)
   {
@@ -113,6 +116,7 @@ class Array final {
     return storage_.data_[i.primitive_value];
   }
 
+  /// Returns a const pointer to the first element in the array.
   const T* as_ptr() const& noexcept
     requires(N > 0)
   {
@@ -120,23 +124,46 @@ class Array final {
   }
   const T* as_ptr() && = delete;
 
+  /// Returns a mutable pointer to the first element in the array.
   T* as_ptr_mut() & noexcept
     requires(N > 0)
   {
     return storage_.data_;
   }
 
-  ::sus::iter::Iterator<ArrayIter<T, N>> iter() const& {
+  /// Returns an iterator over all the elements in the array, visited in the
+  /// same order they appear in the array. The iterator gives const access to
+  /// each element.
+  ::sus::iter::Iterator<ArrayIter<T, N>> iter() const& noexcept {
     return ArrayIter<T, N>::with(*this);
   }
   ::sus::iter::Iterator<ArrayIter<T, N>> iter() && = delete;
 
-  ::sus::iter::Iterator<ArrayIterMut<T, N>> iter_mut() & {
+  /// Returns an iterator over all the elements in the array, visited in the
+  /// same order they appear in the array. The iterator gives mutable access to
+  /// each element.
+  ::sus::iter::Iterator<ArrayIterMut<T, N>> iter_mut() & noexcept {
     return ArrayIterMut<T, N>::with(*this);
   }
 
-  ::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && {
+  /// Converts the array into an iterator that consumes the array and returns
+  /// each element in the same order they appear in the array.
+  ::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && noexcept {
     return ArrayIntoIter<T, N>::with(static_cast<Array&&>(*this));
+  }
+
+  /// Consumes the array, and returns a new array, mapping each element of the
+  /// array to a new type with the given function.
+  ///
+  /// To just walk each element and map them, consider using `iter()` and
+  /// `Iterator::map`. This does not require consuming the array.
+  template <::sus::fn::callable::CallableWith<T&&> MapFn, int&...,
+            class R = std::invoke_result_t<MapFn, T&&>>
+    requires(N > 0 && !std::is_void_v<R>)
+  Array<R, N> map(MapFn f) && noexcept {
+    return Array<R, N>::with_initializer([this, &f, i = size_t{0}]() mutable {
+      return f(move(storage_.data_[i++]));
+    });
   }
 
   /// sus::num::Eq<Array<U, N>> trait.

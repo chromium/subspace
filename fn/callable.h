@@ -36,6 +36,16 @@ concept FunctionPointerReturns = (
 );
 // clang-format on
 
+// clang-format off
+template <class T, class... Args>
+concept FunctionPointerWith = (
+    FunctionPointer<T> &&
+    requires (T t, Args&&... args) {
+        t(forward<Args>(args)...);
+    }
+);
+// clang-format on
+
 namespace __private {
 
 template <class T, class R, class... Args>
@@ -53,9 +63,17 @@ inline constexpr bool callable_mut(R (T::*)(Args...)) {
 // clang-format off
 template <class T, class R, class... Args>
 concept CallableObjectReturnsConst = (
-    !FunctionPointerReturns<T, R, Args...> &&
+    !FunctionPointer<T> &&
     requires (const T& t, Args&&... args) {
         { t(forward<Args>(args)...) } -> std::convertible_to<R>;
+    }
+);
+
+template <class T, class... Args>
+concept CallableObjectWithConst = (
+    !FunctionPointer<T> &&
+    requires (const T& t, Args&&... args) {
+     t(forward<Args>(args)...);
     }
 );
 
@@ -66,11 +84,23 @@ concept CallableObjectReturnsMut = (
         { t(forward<Args>(args)...) } -> std::convertible_to<R>;
     }
 );
+
+template <class T, class... Args>
+concept CallableObjectWithMut = (
+    !FunctionPointer<T> &&
+    requires (T& t, Args&&... args) {
+        t(forward<Args>(args)...);
+    }
+);
 // clang-format on
 
 template <class T, class R, class... Args>
 concept CallableObjectReturns = CallableObjectReturnsConst<T, R, Args...> ||
                                 CallableObjectReturnsMut<T, R, Args...>;
+
+template <class T, class... Args>
+concept CallableObjectWith =
+    CallableObjectWithConst<T, Args...> || CallableObjectWithMut<T, Args...>;
 
 template <class T>
 concept CallableObjectConst = __private::callable_const(&T::operator());
@@ -79,9 +109,12 @@ template <class T>
 concept CallableObjectMut = CallableObjectConst<T> ||
                             __private::callable_mut(&T::operator());
 
+template <class T, class... Args>
+concept CallableWith =
+    FunctionPointerWith<T, Args...> || CallableObjectWith<T, Args...>;
+
 template <class T, class R, class... Args>
 concept CallableReturns = FunctionPointerReturns<T, R, Args...> ||
-                          CallableObjectReturnsConst<T, R, Args...> ||
-                          CallableObjectReturnsMut<T, R, Args...>;
+                          CallableObjectReturns<T, R, Args...>;
 
 }  // namespace sus::fn::callable
