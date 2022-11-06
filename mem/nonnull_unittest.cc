@@ -258,7 +258,7 @@ TEST(NonNull, Ord) {
   static_assert(sus::ops::Ord<NonNull<int>, NonNull<int>>);
   // TODO: GCC internal compiler error when Ord fails:
   // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107542
-#if !defined(__clang__) && !defined(__GNUC__)
+#if !(defined(__GNUC__) && !defined(__clang__))
   static_assert(!sus::ops::Ord<NonNull<int>, NonNull<char>>);
 #endif
 
