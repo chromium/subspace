@@ -17,6 +17,8 @@
 #include "construct/into.h"
 #include "mem/forward.h"
 #include "mem/relocate.h"
+#include "ops/eq.h"
+#include "ops/ord.h"
 #include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
@@ -236,6 +238,9 @@ TEST(NonNull, Downcast) {
 }
 
 TEST(NonNull, Eq) {
+  static_assert(sus::ops::Eq<NonNull<int>, NonNull<int>>);
+  static_assert(!sus::ops::Eq<NonNull<int>, NonNull<char>>);
+
   auto a = int();
   auto b = int();
   EXPECT_EQ(NonNull<int>::with(a), NonNull<int>::with(a));
@@ -247,6 +252,21 @@ TEST(NonNull, Eq) {
   auto s2 = Sub();
   EXPECT_EQ(NonNull<Sub>::with(s), NonNull<Base>::with(static_cast<Base&>(s)));
   EXPECT_NE(NonNull<Sub>::with(s), NonNull<Base>::with(static_cast<Base&>(s2)));
+}
+
+TEST(NonNull, Ord) {
+  static_assert(sus::ops::Ord<NonNull<int>, NonNull<int>>);
+  static_assert(!sus::ops::Ord<NonNull<int>, NonNull<char>>);
+
+  int a[] = {1, 2};
+  EXPECT_LE(NonNull<int>::with(a[0]), NonNull<int>::with(a[0]));
+  EXPECT_LT(NonNull<int>::with(a[0]), NonNull<int>::with(a[1]));
+
+  struct Base {};
+  struct Sub : public Base {};
+  Sub s[] = {Sub(), Sub()};
+  EXPECT_LE(NonNull<Sub>::with(s[0]), NonNull<Base>::with(static_cast<Base&>(s[0])));
+  EXPECT_LT(NonNull<Sub>::with(s[0]), NonNull<Base>::with(static_cast<Base&>(s[1])));
 }
 
 }  // namespace

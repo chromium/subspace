@@ -17,10 +17,10 @@
 #include "assertions/check.h"
 #include "macros/nonnull.h"
 #include "marker/unsafe.h"
-#include "ops/eq.h"
 #include "mem/addressof.h"
 #include "mem/never_value.h"
 #include "mem/relocate.h"
+#include "ops/eq.h"
 #include "option/option.h"
 
 namespace sus::mem {
@@ -171,6 +171,14 @@ template <class T, class U>
 constexpr inline bool operator==(const NonNull<T>& l,
                                  const NonNull<U>& r) noexcept {
   return l.as_ptr() == r.as_ptr();
+}
+
+/// sus::ops::Ord<Option<U>> trait.
+template <class T, class U>
+  requires(::sus::ops::Ord<T*, U*>)
+constexpr inline auto operator<=>(const NonNull<T>& l,
+                                  const NonNull<U>& r) noexcept {
+  return l.as_ptr() <=> r.as_ptr();
 }
 
 }  // namespace sus::mem
