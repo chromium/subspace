@@ -15,6 +15,7 @@
 #include <type_traits>
 
 #include "construct/into.h"
+#include "ops/eq.h"
 #include "containers/array.h"
 #include "num/num_concepts.h"
 #include "num/signed_integer.h"
@@ -103,7 +104,7 @@ TEST(i64, Traits) {
   static_assert(2_i64 > 1_i64);
   static_assert(1_i64 <= 1_i64);
   static_assert(1_i64 < 2_i64);
-  static_assert(sus::num::Eq<i64, i64>);
+  static_assert(sus::ops::Eq<i64, i64>);
   static_assert(1_i64 == 1_i64);
   static_assert(!(1_i64 == 2_i64));
   static_assert(1_i64 != 2_i64);

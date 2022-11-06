@@ -15,6 +15,7 @@
 #include <type_traits>
 
 #include "construct/into.h"
+#include "ops/eq.h"
 #include "construct/make_default.h"
 #include "containers/array.h"
 #include "mem/relocate.h"
@@ -106,7 +107,7 @@ TEST(i32, Traits) {
   static_assert(2_i32 > 1_i32);
   static_assert(1_i32 <= 1_i32);
   static_assert(1_i32 < 2_i32);
-  static_assert(sus::num::Eq<i32, i32>);
+  static_assert(sus::ops::Eq<i32, i32>);
   static_assert(1_i32 == 1_i32);
   static_assert(!(1_i32 == 2_i32));
   static_assert(1_i32 != 2_i32);

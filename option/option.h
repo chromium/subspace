@@ -36,6 +36,7 @@
 #include "mem/replace.h"
 #include "mem/take.h"
 #include "num/num_concepts.h"
+#include "ops/eq.h"
 #include "option/__private/is_option_type.h"
 #include "option/__private/storage.h"
 #include "option/state.h"
@@ -1209,9 +1210,9 @@ class Option<T&> final {
   sus_class_maybe_trivial_relocatable_types(unsafe_fn, T&);
 };
 
-/// sus::num::Eq<Option<U>> trait.
+/// sus::ops::Eq<Option<U>> trait.
 template <class T, class U>
-  requires(::sus::num::Eq<T, U>)
+  requires(::sus::ops::Eq<T, U>)
 constexpr inline bool operator==(const Option<T>& l,
                                  const Option<U>& r) noexcept {
   switch (l) {

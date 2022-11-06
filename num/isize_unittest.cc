@@ -19,6 +19,7 @@
 #include "num/num_concepts.h"
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
+#include "ops/eq.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
 
@@ -111,7 +112,7 @@ TEST(isize, Traits) {
   static_assert(2_isize > 1_isize);
   static_assert(1_isize <= 1_isize);
   static_assert(1_isize < 2_isize);
-  static_assert(sus::num::Eq<isize, isize>);
+  static_assert(sus::ops::Eq<isize, isize>);
   static_assert(1_isize == 1_isize);
   static_assert(!(1_isize == 2_isize));
   static_assert(1_isize != 2_isize);
