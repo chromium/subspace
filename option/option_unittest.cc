@@ -16,12 +16,12 @@
 
 #include <math.h>  // TODO: Replace with f32::NAN()
 
-#include "macros/builtin.h"
 #include "iter/iterator.h"
+#include "macros/builtin.h"
+#include "mem/nonnull.h"
 #include "mem/relocate.h"
 #include "num/types.h"
 #include "result/result.h"
-#include "tuple/tuple.h"
 #include "test/behaviour_types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
@@ -1693,7 +1693,9 @@ TEST(Option, NonZeroField) {
   EXPECT_EQ(o, None);
 
   o = Option<T>::some(T::with(i));
-  EXPECT_EQ(sus::move(o).zip(Option<T>::some(T::with(i))), (Option<sus::Tuple<T, T>>::some(sus::Tuple<T, T>::with(T::with(i), T::with(i)))));
+  EXPECT_EQ(sus::move(o).zip(Option<T>::some(T::with(i))),
+            (Option<sus::Tuple<T, T>>::some(
+                sus::Tuple<T, T>::with(T::with(i), T::with(i)))));
   EXPECT_EQ(o, None);
 
   o = Option<T>::some(T::with(i));

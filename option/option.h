@@ -33,7 +33,6 @@
 #include "marker/unsafe.h"
 #include "mem/mref.h"
 #include "mem/never_value.h"
-#include "mem/nonnull.h"
 #include "mem/replace.h"
 #include "mem/take.h"
 #include "num/num_concepts.h"
@@ -71,6 +70,8 @@ using State::None;
 using State::Some;
 using sus::iter::Iterator;
 using sus::iter::Once;
+using sus::option::__private::Storage;
+using sus::option::__private::StoragePointer;
 
 /// A type which either holds #Some value of type T, or #None.
 template <class T>
@@ -714,7 +715,7 @@ class Option final {
   constexpr explicit Option(const T& t) : t_(t) {}
   constexpr explicit Option(T&& t) : t_(static_cast<T&&>(t)) {}
 
-  ::sus::option::__private::Storage<T> t_;
+  Storage<T> t_;
 
   sus_class_maybe_trivial_relocatable_types(unsafe_fn, T);
 };
@@ -898,7 +899,7 @@ class Option<T&> final {
   /// Stores the value `t` inside this Option, replacing any previous value, and
   /// returns a mutable reference to the new value.
   T& insert(T& t) & noexcept {
-    t_.set_some(::sus::mem::NonNull<T>::with(t));
+    t_.set_some(StoragePointer(t));
     return t_.val_.as_mut();
   }
 
@@ -907,7 +908,7 @@ class Option<T&> final {
   /// value.
   T& get_or_insert(T& t) & noexcept {
     if (t_.state() == None)
-      t_.construct_from_none(::sus::mem::NonNull<T>::with(t));
+      t_.construct_from_none(StoragePointer(t));
     return t_.val_.as_mut();
   }
 
@@ -921,7 +922,7 @@ class Option<T&> final {
     requires(std::is_same_v<std::invoke_result_t<WithFn>, T&>)
   T& get_or_insert_with(WithFn f) & noexcept {
     if (t_.state() == None)
-      t_.construct_from_none(::sus::mem::NonNull<T>::with(f()));
+      t_.construct_from_none(StoragePointer(f()));
     return t_.val_.as_mut();
   }
 
@@ -1001,9 +1002,9 @@ class Option<T&> final {
   constexpr Option<T&> filter(Predicate p) && noexcept {
     if (t_.state() == Some) {
       // The state must move to None.
-      ::sus::mem::NonNull<T> nonnull = t_.take_and_set_none();
-      if (p(const_cast<const T&>(nonnull.as_ref())))
-        return Option(get_ref(static_cast<decltype(nonnull)&&>(nonnull)));
+      StoragePointer ptr = t_.take_and_set_none();
+      if (p(const_cast<const T&>(ptr.as_ref())))
+        return Option(get_ref(static_cast<decltype(ptr)&&>(ptr)));
       else
         return Option::none();
     } else {
@@ -1125,11 +1126,11 @@ class Option<T&> final {
   /// returns an Option holding what was there previously.
   Option replace(T& t) & noexcept {
     if (t_.state() == None) {
-      t_.construct_from_none(::sus::mem::NonNull<T>::with(t));
+      t_.construct_from_none(StoragePointer(t));
       return Option::none();
     } else {
       return Option(
-          ::sus::mem::replace(mref(t_.val_), ::sus::mem::NonNull<T>::with(t))
+          ::sus::mem::replace(mref(t_.val_), StoragePointer(t))
               .as_mut());
     }
   }
@@ -1195,18 +1196,18 @@ class Option<T&> final {
   /// Constructor for #None.
   constexpr explicit Option() = default;
   /// Constructor for #Some.
-  constexpr explicit Option(T& t) : t_(::sus::mem::NonNull<T>::with(t)) {}
+  constexpr explicit Option(T& t) : t_(StoragePointer(t)) {}
 
   /// Gets a reference with the same const-ness as the `T` in `Option<T&>`.
   constexpr sus_always_inline static T& get_ref(
-      ::sus::mem::NonNull<T>&& nonnull) noexcept {
+      StoragePointer<T>&& ptr) noexcept {
     if constexpr (std::is_const_v<T>)
-      return nonnull.as_ref();
+      return ptr.as_ref();
     else
-      return nonnull.as_mut();
+      return ptr.as_mut();
   }
 
-  ::sus::option::__private::Storage<::sus::mem::NonNull<T>> t_;
+  Storage<StoragePointer<T>> t_;
 
   sus_class_maybe_trivial_relocatable_types(unsafe_fn, T&);
 };

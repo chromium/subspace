@@ -20,6 +20,7 @@
 #include "mem/addressof.h"
 #include "mem/never_value.h"
 #include "mem/relocate.h"
+#include "option/option.h"
 
 namespace sus::mem {
 
@@ -47,13 +48,16 @@ struct [[sus_trivial_abi]] NonNull {
   /// The method will panic if the pointer `t` is null.
   template <class U>
     requires(std::is_pointer_v<U> && std::is_convertible_v<U, T*>)
-  static constexpr inline NonNull with_ptr(U t) {
-    check(t);
-    return NonNull(t);
+  static constexpr inline ::sus::option::Option<NonNull> with_ptr(U t) {
+    if (t) [[likely]]
+      return ::sus::option::Option<NonNull<T>>::some(NonNull(t));
+    else
+      return ::sus::option::Option<NonNull<T>>::none();
   }
 
   template <class U, size_t N>
-  static constexpr inline NonNull with_ptr(U (&t)[N]) = delete;
+  static constexpr inline ::sus::option::Option<NonNull> with_ptr(U (&t)[N]) =
+      delete;
 
   /// Constructs a `NonNull<T>` from a pointer to `T`.
   ///

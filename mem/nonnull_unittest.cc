@@ -97,9 +97,9 @@ TEST(NonNull, AddressOf) {
 TEST(NonNull, ConstructPtr) {
   int i = 1;
   const int c = 2;
-  auto n1 = NonNull<int>::with_ptr(&i);
-  auto n2 = NonNull<const int>::with_ptr(&i);
-  auto c1 = NonNull<const int>::with_ptr(&c);
+  auto n1 = NonNull<int>::with_ptr(&i).unwrap();
+  auto n2 = NonNull<const int>::with_ptr(&i).unwrap();
+  auto c1 = NonNull<const int>::with_ptr(&c).unwrap();
 
   EXPECT_EQ(&i, &n1.as_ref());
   EXPECT_EQ(&i, &n2.as_ref());
@@ -227,7 +227,7 @@ TEST(NonNull, Cast) {
   struct Sub : public Base {};
   Sub s;
   s.i = 3_i32;
-  auto sn = NonNull<Sub>::with_ptr(&s);
+  auto sn = NonNull<Sub>::with(s);
   auto bn = sn.cast<Base>();
   EXPECT_EQ(bn.as_ref().i, 3_i32);
 }
@@ -239,7 +239,7 @@ TEST(NonNull, Downcast) {
   struct Sub : public Base {};
   Sub s;
   s.i = 3_i32;
-  auto bn = NonNull<Base>::with_ptr(&s);
+  auto bn = NonNull<Base>::with(s);
   auto sn = bn.downcast<Sub>(unsafe_fn);
   EXPECT_EQ(sn.as_ref().i, 3_i32);
 }

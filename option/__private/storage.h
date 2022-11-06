@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include "macros/always_inline.h"
+#include "mem/addressof.h"
 #include "mem/never_value.h"
+#include "mem/relocate.h"
 #include "mem/replace.h"
 #include "mem/take.h"
 #include "option/state.h"
@@ -164,6 +167,24 @@ struct Storage<T, true> final {
     val_.~T();
     ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, &val_);
   }
+};
+
+template <class T>
+struct [[sus_trivial_abi]] StoragePointer {
+  explicit constexpr sus_always_inline StoragePointer(
+      sus_assertions_nonnull_arg T& ref) sus_assertions_nonnull_fn noexcept
+      : ptr_(::sus::mem::addressof(ref)) {}
+
+  constexpr sus_always_inline const T& as_ref() const { return *ptr_; }
+  constexpr sus_always_inline T& as_mut() { return *ptr_; }
+
+ private:
+  T* ptr_;
+
+  // Pointers are trivially relocatable.
+  sus_class_trivial_relocatable(unsafe_fn);
+  // The pointer is never set to null.
+  sus_class_never_value_field(unsafe_fn, StoragePointer, ptr_, nullptr);
 };
 
 }  // namespace sus::option::__private
