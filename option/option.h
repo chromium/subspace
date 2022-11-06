@@ -821,7 +821,7 @@ class Option<T&> final {
     requires(!std::is_const_v<T>)
   sus_assertions_nonnull_fn {
     ::sus::check_with_message(is_some(), *msg);
-    return t_.val_.as_ref_mut();
+    return t_.val_.as_mut();
   }
 
   /// Returns the contained value inside the Option.
@@ -868,7 +868,7 @@ class Option<T&> final {
     requires(!std::is_const_v<T>)
   {
     ::sus::check(is_some());
-    return t_.val_.as_ref_mut();
+    return t_.val_.as_mut();
   }
 
   /// Returns the contained value inside the Option, if there is one. Otherwise,
@@ -899,7 +899,7 @@ class Option<T&> final {
   /// returns a mutable reference to the new value.
   T& insert(T& t) & noexcept {
     t_.set_some(::sus::mem::NonNull<T>::with(t));
-    return t_.val_.as_ref_mut();
+    return t_.val_.as_mut();
   }
 
   /// If the Option holds a value, returns a mutable reference to it. Otherwise,
@@ -908,7 +908,7 @@ class Option<T&> final {
   T& get_or_insert(T& t) & noexcept {
     if (t_.state() == None)
       t_.construct_from_none(::sus::mem::NonNull<T>::with(t));
-    return t_.val_.as_ref_mut();
+    return t_.val_.as_mut();
   }
 
   /// If the Option holds a value, returns a mutable reference to it. Otherwise,
@@ -922,7 +922,7 @@ class Option<T&> final {
   T& get_or_insert_with(WithFn f) & noexcept {
     if (t_.state() == None)
       t_.construct_from_none(::sus::mem::NonNull<T>::with(f()));
-    return t_.val_.as_ref_mut();
+    return t_.val_.as_mut();
   }
 
   /// Returns a new Option containing whatever was inside the current Option.
@@ -1068,7 +1068,7 @@ class Option<T&> final {
       // we return what this was holding, otherwise we return None.
       auto nonnull = t_.take_and_set_none();
       if (opt.t_.state() == None)
-        return Option(nonnull.as_ref_mut());
+        return Option(nonnull.as_mut());
       else
         return Option::none();
     } else {
@@ -1130,7 +1130,7 @@ class Option<T&> final {
     } else {
       return Option(
           ::sus::mem::replace(mref(t_.val_), ::sus::mem::NonNull<T>::with(t))
-              .as_ref_mut());
+              .as_mut());
     }
   }
 
@@ -1170,7 +1170,7 @@ class Option<T&> final {
     if (t_.state() == None)
       return Option<T&>::none();
     else
-      return Option<T&>(t_.val_.as_ref_mut());
+      return Option<T&>(t_.val_.as_mut());
   }
 
   Iterator<Once<const T&>> iter() const& noexcept {
@@ -1203,7 +1203,7 @@ class Option<T&> final {
     if constexpr (std::is_const_v<T>)
       return nonnull.as_ref();
     else
-      return nonnull.as_ref_mut();
+      return nonnull.as_mut();
   }
 
   ::sus::option::__private::Storage<::sus::mem::NonNull<T>> t_;

@@ -25,13 +25,12 @@ struct S {};
 struct WithFromInt {
   static auto from(int) { return WithFromInt(); }
 };
-struct NotFromInt {
-};
+struct NotFromInt {};
 struct WithFromS {
   static auto from(S) { return WithFromS(); }
 };
 struct FromReturnsVoid {
-  static auto from(int) {  }
+  static auto from(int) {}
 };
 struct FromReturnsElse {
   static auto from(int i) { return i; }
