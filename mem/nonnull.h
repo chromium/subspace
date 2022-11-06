@@ -164,4 +164,12 @@ struct [[sus_trivial_abi]] NonNull {
   sus_class_never_value_field(unsafe_fn, NonNull, ptr_, nullptr);
 };
 
+/// sus::num::Eq<Option<U>> trait.
+template <class T, class U>
+  requires(::sus::num::Eq<T*, U*>)
+constexpr inline bool operator==(const NonNull<T>& l,
+                                 const NonNull<U>& r) noexcept {
+  return l.as_ptr() == r.as_ptr();
+}
+
 }  // namespace sus::mem

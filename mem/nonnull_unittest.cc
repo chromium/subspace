@@ -15,8 +15,8 @@
 #include "mem/nonnull.h"
 
 #include "construct/into.h"
-#include "mem/relocate.h"
 #include "mem/forward.h"
+#include "mem/relocate.h"
 #include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
@@ -28,25 +28,16 @@ static_assert(sus::mem::relocate_array_by_memcpy<NonNull<int>>);
 namespace {
 
 template <class T, class From>
-concept CanConstruct = requires (From f) {
-    NonNull<T>::with(f);
-};
+concept CanConstruct = requires(From f) { NonNull<T>::with(f); };
 template <class T, class From>
-concept CanConstructPtr = requires (From f) {
-    NonNull<T>::with_ptr(f);
-};
+concept CanConstructPtr = requires(From f) { NonNull<T>::with_ptr(f); };
 template <class T, class From, size_t N>
-concept CanConstructPtrArray = requires (From(&f)[N]) {
-    NonNull<T>::with_ptr(f);
-};
+concept CanConstructPtrArray =
+    requires(From (&f)[N]) { NonNull<T>::with_ptr(f); };
 template <class T, class From>
-concept CanFrom = requires (From f) {
-    NonNull<T>::from(f);
-};
+concept CanFrom = requires(From f) { NonNull<T>::from(f); };
 template <class T, class From, size_t N>
-concept CanFromArray = requires (From(&f)[N]) {
-    NonNull<T>::from(f);
-};
+concept CanFromArray = requires(From (&f)[N]) { NonNull<T>::from(f); };
 
 // NonNull can be constructed from a reference or pointer.
 static_assert(CanConstruct<int, int&>);
@@ -61,15 +52,15 @@ static_assert(!CanFrom<int, const int&>);
 static_assert(!CanFrom<int, const int*>);
 
 // NonNull can upgrade to const.
-static_assert(CanConstruct<const int,  int&>);
+static_assert(CanConstruct<const int, int&>);
 static_assert(CanConstructPtr<const int, int*>);
 static_assert(CanFrom<const int, int&>);
 static_assert(CanFrom<const int, int*>);
 
 // NonNull can't be constructed from an array directly.
-static_assert(!CanConstruct<int, int(&)[2]>);
-static_assert(!CanConstructPtr<int, int(&)[2]>);
-static_assert(!CanFrom<int, int(&)[2]>);
+static_assert(!CanConstruct<int, int (&)[2]>);
+static_assert(!CanConstructPtr<int, int (&)[2]>);
+static_assert(!CanFrom<int, int (&)[2]>);
 
 TEST(NonNull, ConstructRef) {
   int i = 1;
@@ -242,6 +233,20 @@ TEST(NonNull, Downcast) {
   auto bn = NonNull<Base>::with(s);
   auto sn = bn.downcast<Sub>(unsafe_fn);
   EXPECT_EQ(sn.as_ref().i, 3_i32);
+}
+
+TEST(NonNull, Eq) {
+  auto a = int();
+  auto b = int();
+  EXPECT_EQ(NonNull<int>::with(a), NonNull<int>::with(a));
+  EXPECT_NE(NonNull<int>::with(a), NonNull<int>::with(b));
+
+  struct Base {};
+  struct Sub : public Base {};
+  auto s = Sub();
+  auto s2 = Sub();
+  EXPECT_EQ(NonNull<Sub>::with(s), NonNull<Base>::with(static_cast<Base&>(s)));
+  EXPECT_NE(NonNull<Sub>::with(s), NonNull<Base>::with(static_cast<Base&>(s2)));
 }
 
 }  // namespace
