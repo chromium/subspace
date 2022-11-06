@@ -167,7 +167,7 @@ struct [[sus_trivial_abi]] NonNull {
 
 /// sus::ops::Eq<Option<U>> trait.
 template <class T, class U>
-  requires(::sus::ops::Eq<T*, U*>)
+  requires(::sus::ops::Eq<const T*, const U*>)
 constexpr inline bool operator==(const NonNull<T>& l,
                                  const NonNull<U>& r) noexcept {
   return l.as_ptr() == r.as_ptr();
@@ -175,7 +175,7 @@ constexpr inline bool operator==(const NonNull<T>& l,
 
 /// sus::ops::Ord<Option<U>> trait.
 template <class T, class U>
-  requires(::sus::ops::Ord<T*, U*>)
+  requires(::sus::ops::Ord<const T*, const U*>)
 constexpr inline auto operator<=>(const NonNull<T>& l,
                                   const NonNull<U>& r) noexcept {
   return l.as_ptr() <=> r.as_ptr();
