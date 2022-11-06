@@ -20,6 +20,7 @@
 #include "mem/forward.h"
 #include "mem/replace.h"
 #include "num/num_concepts.h"
+#include "ops/eq.h"
 #include "tuple/__private/storage.h"
 
 namespace sus::tuple {
@@ -62,10 +63,10 @@ class Tuple final {
     return Access<I + 1u>::unwrap(static_cast<Storage&&>(storage_));
   }
 
-  /// sus::num::Eq<Tuple<U...>> trait.
+  /// sus::ops::Eq<Tuple<U...>> trait.
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
-             (::sus::num::Eq<T, U> && ... && ::sus::num::Eq<Ts, Us>))
+             (::sus::ops::Eq<T, U> && ... && ::sus::ops::Eq<Ts, Us>))
   constexpr bool operator==(const Tuple<U, Us...>& r) const& noexcept {
     ::sus::check(!moved_from());
     ::sus::check(!r.moved_from());

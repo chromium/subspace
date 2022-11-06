@@ -16,6 +16,7 @@
 
 #include "containers/array.h"
 #include "num/float.h"
+#include "ops/eq.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 #define F64_NEAR(a, b, c) \
@@ -56,7 +57,7 @@ TEST(f64, Traits) {
   static_assert(2_f64 > 1_f64);
   static_assert(1_f64 <= 1_f64);
   static_assert(1_f64 < 2_f64);
-  static_assert(sus::num::Eq<f64, f64>);
+  static_assert(sus::ops::Eq<f64, f64>);
   static_assert(1_f64 == 1_f64);
   static_assert(!(1_f64 == 2_f64));
   static_assert(1_f64 != 2_f64);

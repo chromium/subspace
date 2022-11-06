@@ -19,6 +19,7 @@
 
 #include "construct/into.h"
 #include "containers/array.h"
+#include "ops/eq.h"
 #include "num/__private/intrinsics.h"
 #include "num/float.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -61,7 +62,7 @@ TEST(f32, Traits) {
   static_assert(2_f32 > 1_f32);
   static_assert(1_f32 <= 1_f32);
   static_assert(1_f32 < 2_f32);
-  static_assert(sus::num::Eq<f32, f32>);
+  static_assert(sus::ops::Eq<f32, f32>);
   static_assert(1_f32 == 1_f32);
   static_assert(!(1_f32 == 2_f32));
   static_assert(1_f32 != 2_f32);

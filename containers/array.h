@@ -26,6 +26,7 @@
 #include "fn/callable.h"
 #include "fn/fn_defn.h"
 #include "marker/unsafe.h"
+#include "ops/eq.h"
 #include "mem/move.h"
 #include "mem/relocate.h"
 #include "num/num_concepts.h"
@@ -166,8 +167,8 @@ class Array final {
     });
   }
 
-  /// sus::num::Eq<Array<U, N>> trait.
-  template <::sus::num::Eq<T> U>
+  /// sus::ops::Eq<Array<U, N>> trait.
+  template <::sus::ops::Eq<T> U>
   constexpr bool operator==(const Array<U, N>& r) const& noexcept {
     return eq_impl(r, std::make_index_sequence<N>());
   }
