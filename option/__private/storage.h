@@ -171,8 +171,8 @@ struct Storage<T, true> final {
 
 template <class T>
 struct [[sus_trivial_abi]] StoragePointer {
-  explicit constexpr sus_always_inline StoragePointer(
-      sus_assertions_nonnull_arg T& ref) sus_assertions_nonnull_fn noexcept
+  explicit constexpr sus_always_inline sus_assertions_nonnull_fn
+  StoragePointer(sus_assertions_nonnull_arg T& ref) noexcept
       : ptr_(::sus::mem::addressof(ref)) {}
 
   constexpr sus_always_inline const T& as_ref() const { return *ptr_; }

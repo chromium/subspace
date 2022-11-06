@@ -69,10 +69,9 @@ struct [[sus_trivial_abi]] NonNull {
   /// results.
   template <class U>
     requires(std::is_pointer_v<U> && std::is_convertible_v<U, T*>)
-  static constexpr inline NonNull
+  static constexpr inline sus_assertions_nonnull_fn NonNull
       with_ptr_unchecked(::sus::marker::UnsafeFnMarker,
-                         sus_assertions_nonnull_arg U t)
-          sus_assertions_nonnull_fn {
+                         sus_assertions_nonnull_arg U t) {
     return NonNull(t);
   }
 
