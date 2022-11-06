@@ -26,7 +26,6 @@ namespace sus::ops {
 template <class Lhs, class Rhs>
 concept Eq = requires(const Lhs& lhs, const Rhs& rhs) {
                { lhs == rhs } -> std::same_as<bool>;
-               { rhs == lhs } -> std::same_as<bool>;
              };
 
 }  // namespace sus::ops
