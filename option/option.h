@@ -256,9 +256,9 @@ class Option final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr T expect(
+  constexpr sus_assertions_nonnull_fn T expect(
       /* TODO: string view type */ sus_assertions_nonnull_arg const char*
-          msg) && noexcept sus_assertions_nonnull_fn {
+          msg) && noexcept {
     ::sus::check_with_message(is_some(), *msg);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
@@ -269,9 +269,9 @@ class Option final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr const T& expect_ref(
+  constexpr sus_assertions_nonnull_fn const T& expect_ref(
       /* TODO: string view type */ sus_assertions_nonnull_arg const char* msg)
-      const& noexcept sus_assertions_nonnull_fn {
+      const& noexcept {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_;
   }
@@ -283,9 +283,9 @@ class Option final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr T& expect_mut(
+  constexpr sus_assertions_nonnull_fn T& expect_mut(
       /* TODO: string view type */ sus_assertions_nonnull_arg const char*
-          msg) & noexcept sus_assertions_nonnull_fn {
+          msg) & noexcept {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_;
   }
@@ -789,9 +789,9 @@ class Option<T&> final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr T& expect(
+  constexpr sus_assertions_nonnull_fn T& expect(
       /* TODO: string view type */ sus_assertions_nonnull_arg const char*
-          msg) && noexcept sus_assertions_nonnull_fn {
+          msg) && noexcept {
     ::sus::check_with_message(is_some(), *msg);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
@@ -802,9 +802,9 @@ class Option<T&> final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr const T& expect_ref(
+  constexpr sus_assertions_nonnull_fn const T& expect_ref(
       /* TODO: string view type */ sus_assertions_nonnull_arg const char* msg)
-      const& noexcept sus_assertions_nonnull_fn {
+      const& noexcept {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_.as_ref();
   }
@@ -816,11 +816,11 @@ class Option<T&> final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr T& expect_mut(
+  constexpr sus_assertions_nonnull_fn T& expect_mut(
       /* TODO: string view type */ sus_assertions_nonnull_arg const char*
           msg) & noexcept
     requires(!std::is_const_v<T>)
-  sus_assertions_nonnull_fn {
+  {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_.as_mut();
   }
@@ -907,8 +907,7 @@ class Option<T&> final {
   /// stores `t` inside the Option and returns a mutable reference to the new
   /// value.
   T& get_or_insert(T& t) & noexcept {
-    if (t_.state() == None)
-      t_.construct_from_none(StoragePointer(t));
+    if (t_.state() == None) t_.construct_from_none(StoragePointer(t));
     return t_.val_.as_mut();
   }
 
@@ -921,8 +920,7 @@ class Option<T&> final {
   template <class WithFn>
     requires(std::is_same_v<std::invoke_result_t<WithFn>, T&>)
   T& get_or_insert_with(WithFn f) & noexcept {
-    if (t_.state() == None)
-      t_.construct_from_none(StoragePointer(f()));
+    if (t_.state() == None) t_.construct_from_none(StoragePointer(f()));
     return t_.val_.as_mut();
   }
 
@@ -1130,8 +1128,7 @@ class Option<T&> final {
       return Option::none();
     } else {
       return Option(
-          ::sus::mem::replace(mref(t_.val_), StoragePointer(t))
-              .as_mut());
+          ::sus::mem::replace(mref(t_.val_), StoragePointer(t)).as_mut());
     }
   }
 
