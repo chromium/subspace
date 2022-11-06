@@ -17,9 +17,9 @@
 #include <type_traits>
 
 #include "marker/unsafe.h"
-#include "mem/relocate.h"
 #include "mem/addressof.h"
 #include "mem/mref.h"
+#include "mem/relocate.h"
 
 namespace sus::mem {
 
@@ -38,8 +38,8 @@ inline constexpr T take(Mref<T&> t_ref) noexcept {
 // not be used (or destructed again) afterward.
 template <class T>
   requires std::is_move_constructible_v<T>
-constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
-                              Mref<T&> t_ref) noexcept {
+inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
+                                     Mref<T&> t_ref) noexcept {
   T& t = t_ref;
   T taken(static_cast<T&&>(t));
   t.~T();
@@ -48,8 +48,8 @@ constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
 
 template <class T>
   requires std::is_move_constructible_v<T>
-constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
-                              T& t) noexcept {
+inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
+                                     T& t) noexcept {
   T taken(static_cast<T&&>(t));
   t.~T();
   return taken;

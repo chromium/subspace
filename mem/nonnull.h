@@ -15,8 +15,10 @@
 #pragma once
 
 #include "assertions/check.h"
+#include "macros/nonnull.h"
 #include "marker/unsafe.h"
 #include "mem/addressof.h"
+#include "mem/never_value.h"
 
 namespace sus::mem {
 
@@ -34,14 +36,25 @@ struct NonNull {
     return NonNull(*t);
   }
 
+  static constexpr inline NonNull from(T* t) { return with_ptr(t); }
+
   constexpr inline const T& as_ref() const { return *ptr_; }
-  constexpr inline T& as_ref_mut() { return *ptr_; }
+  constexpr inline T& as_ref_mut()
+    requires(!std::is_const_v<T>)
+  {
+    return *ptr_;
+  }
 
   constexpr inline const T* as_ptr() const { return ptr_; }
-  constexpr inline T* as_ptr_mut() { return ptr_; }
+  constexpr inline T* as_ptr_mut()
+    requires(!std::is_const_v<T>)
+  {
+    return ptr_;
+  }
 
  private:
-  explicit constexpr inline NonNull(T* t) : ptr_(t) {}
+  explicit constexpr inline NonNull(sus_assertions_nonnull_arg T* t)
+      sus_assertions_nonnull_fn : ptr_(t) {}
 
   T* ptr_;
 

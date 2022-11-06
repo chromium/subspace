@@ -16,8 +16,12 @@
 
 #include "macros/compiler.h"
 
-/// Replace the `inline` keyword on a function declaration with
-/// `sus_always_inline` to force the compiler to inline it regardless of its
-/// heuristics.
-#define sus_always_inline \
-  sus_if_msvc_else(__forceinline, inline __attribute__((__always_inline__)))
+/// Defines an attribute to place at the end of a function definition that
+/// declares all pointer arguments are not null. To actually receive null would
+/// be UB, as the compiler is free to optimize for them never being null.
+#define sus_assertions_nonnull_fn sus_if_msvc_else(, __attribute__((nonnull)))
+
+/// Defines an attribute to place before the type of a pointer-type function
+/// parameter that declares the pointer is not null. To actually receive null
+/// would be UB, as the compiler is free to optimize for it never being null.
+#define sus_assertions_nonnull_arg sus_if_msvc(_Notnull_)

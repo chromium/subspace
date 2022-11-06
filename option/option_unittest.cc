@@ -16,7 +16,7 @@
 
 #include <math.h>  // TODO: Replace with f32::NAN()
 
-#include "assertions/builtin.h"
+#include "macros/builtin.h"
 #include "iter/iterator.h"
 #include "mem/relocate.h"
 #include "num/types.h"
@@ -95,20 +95,6 @@ static_assert(!is_some_callable_v<Option<int&>, int&>, "");
 static_assert(!is_some_callable_v<Option<int&>, int&>, "");
 static_assert(is_some_callable_v<Option<int&>, Mref<int&>>, "");
 static_assert(!is_some_callable_v<Option<int&>, const int&>, "");
-
-static_assert(is_some_callable_v<Option<const int>, int>, "");
-static_assert(is_some_callable_v<Option<const int>, const int>, "");
-static_assert(is_some_callable_v<Option<const int>, int&>, "");
-static_assert(is_some_callable_v<Option<const int>, int&&>, "");
-static_assert(is_some_callable_v<Option<const int>, Mref<int&>>, "");
-static_assert(is_some_callable_v<Option<const int>, const int&>, "");
-
-static_assert(is_some_callable_v<Option<const int&>, int>, "");
-static_assert(is_some_callable_v<Option<const int&>, const int>, "");
-static_assert(is_some_callable_v<Option<const int&>, int&>, "");
-static_assert(is_some_callable_v<Option<const int&>, int&&>, "");
-static_assert(is_some_callable_v<Option<const int&>, Mref<int&>>, "");
-static_assert(is_some_callable_v<Option<const int&>, const int&>, "");
 
 TEST(Option, Construct) {
   {
