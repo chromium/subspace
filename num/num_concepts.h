@@ -16,7 +16,6 @@
 
 #include <stdint.h>
 
-#include <compare>
 #include <concepts>
 
 namespace sus::num {
@@ -130,32 +129,5 @@ template <class Lhs>
 concept ShrAssign = requires(Lhs& lhs /* TODO: , u32 rhs */) {
                       { lhs >>= 2u } -> std::same_as<void>;
                     };
-
-// TODO: Move this out of ::num.
-template <class Lhs, class Rhs>
-concept Ord = requires(const Lhs& lhs, const Rhs& rhs) {
-                { lhs <=> rhs } -> std::same_as<std::strong_ordering>;
-              };
-
-template <class Lhs, class Rhs>
-concept WeakOrd = Ord<Lhs, Rhs> || requires(const Lhs& lhs, const Rhs& rhs) {
-                                     {
-                                       lhs <=> rhs
-                                       } -> std::same_as<std::weak_ordering>;
-                                   };
-
-template <class Lhs, class Rhs>
-concept PartialOrd = WeakOrd<Lhs, Rhs> || Ord<Lhs, Rhs> ||
-                     requires(const Lhs& lhs, const Rhs& rhs) {
-                       { lhs <=> rhs } -> std::same_as<std::partial_ordering>;
-                     };
-
-template <class Lhs, class Rhs>
-concept ExclusiveOrd = Ord<Lhs, Rhs>;
-template <class Lhs, class Rhs>
-concept ExclusiveWeakOrd = (!Ord<Lhs, Rhs> && WeakOrd<Lhs, Rhs>);
-template <class Lhs, class Rhs>
-concept ExclusivePartialOrd = (!Ord<Lhs, Rhs> && !WeakOrd<Lhs, Rhs> &&
-                               PartialOrd<Lhs, Rhs>);
 
 }  // namespace sus::num

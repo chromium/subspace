@@ -29,4 +29,4 @@ concept Eq = requires(const Lhs& lhs, const Rhs& rhs) {
                { rhs == lhs } -> std::same_as<bool>;
              };
 
-}  // namespace sus::ops::Eq
+}  // namespace sus::ops

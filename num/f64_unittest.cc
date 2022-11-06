@@ -17,6 +17,7 @@
 #include "containers/array.h"
 #include "num/float.h"
 #include "ops/eq.h"
+#include "ops/ord.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 #define F64_NEAR(a, b, c) \
@@ -50,9 +51,9 @@ TEST(f64, Traits) {
   static_assert(!sus::num::Shr<f64>);
   static_assert(!sus::num::ShrAssign<f64>);
 
-  static_assert(!sus::num::Ord<f64, f64>);
-  static_assert(!sus::num::WeakOrd<f64, f64>);
-  static_assert(sus::num::PartialOrd<f64, f64>);
+  static_assert(!sus::ops::Ord<f64, f64>);
+  static_assert(!sus::ops::WeakOrd<f64, f64>);
+  static_assert(sus::ops::PartialOrd<f64, f64>);
   static_assert(1_f64 >= 1_f64);
   static_assert(2_f64 > 1_f64);
   static_assert(1_f64 <= 1_f64);

@@ -83,6 +83,7 @@ add_library(subspace STATIC
     "option/option.h"
     "option/state.h"
     "ops/eq.h"
+    "ops/ord.h"
     "result/__private/is_result_type.h"
     "result/result.h"
     "tuple/__private/storage.h"

@@ -15,13 +15,14 @@
 #include <type_traits>
 
 #include "construct/into.h"
-#include "ops/eq.h"
 #include "construct/make_default.h"
 #include "containers/array.h"
 #include "mem/relocate.h"
 #include "num/num_concepts.h"
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
+#include "ops/eq.h"
+#include "ops/ord.h"
 #include "option/option.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
@@ -102,7 +103,7 @@ TEST(i32, Traits) {
   static_assert(sus::num::Shr<i32>);
   static_assert(sus::num::ShrAssign<i32>);
 
-  static_assert(sus::num::Ord<i32, i32>);
+  static_assert(sus::ops::Ord<i32, i32>);
   static_assert(1_i32 >= 1_i32);
   static_assert(2_i32 > 1_i32);
   static_assert(1_i32 <= 1_i32);
