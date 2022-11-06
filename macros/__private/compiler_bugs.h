@@ -16,6 +16,15 @@
 
 #include "macros/compiler.h"
 
+// TODO: https://github.com/llvm/llvm-project/issues/56394
+#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#define sus_clang_bug_56394(...) __VA_ARGS__
+#define sus_clang_bug_56394_else(...)
+#else
+#define sus_clang_bug_56394(...)
+#define sus_clang_bug_56394_else(...) __VA_ARGS__
+#endif
+
 // TODO: https://github.com/llvm/llvm-project/issues/58835
 #if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58835(...) __VA_ARGS__
