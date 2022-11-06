@@ -136,11 +136,11 @@ class Array;
   static_assert(true)
 
 #define _sus__float_comparison(T)                                              \
-  /** sus::concepts::Eq<##T##> trait. */                                       \
+  /** sus::ops::Eq<##T##> trait. */                                            \
   friend constexpr inline bool operator==(const T& l, const T& r) noexcept {   \
     return (l.primitive_value <=> r.primitive_value) == 0;                     \
   }                                                                            \
-  /** sus::concepts::PartialOrd<##T##> trait. */                               \
+  /** sus::ops::PartialOrd<##T##> trait. */                                    \
   friend constexpr inline auto operator<=>(const T& l, const T& r) noexcept {  \
     return l.primitive_value <=> r.primitive_value;                            \
   }                                                                            \

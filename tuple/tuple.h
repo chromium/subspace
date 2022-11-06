@@ -21,6 +21,7 @@
 #include "mem/replace.h"
 #include "num/num_concepts.h"
 #include "ops/eq.h"
+#include "ops/ord.h"
 #include "tuple/__private/storage.h"
 
 namespace sus::tuple {
@@ -74,11 +75,11 @@ class Tuple final {
                                  std::make_index_sequence<1 + sizeof...(Ts)>());
   }
 
-  /// sus::num::Ord<Tuple<U...>> trait.
+  /// sus::ops::Ord<Tuple<U...>> trait.
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
-             (::sus::num::ExclusiveOrd<T, U> && ... &&
-              ::sus::num::ExclusiveOrd<Ts, Us>))
+             (::sus::ops::ExclusiveOrd<T, U> && ... &&
+              ::sus::ops::ExclusiveOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
     ::sus::check(!moved_from());
     ::sus::check(!r.moved_from());
@@ -87,11 +88,11 @@ class Tuple final {
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
-  /// sus::num::WeakOrd<Tuple<U...>> trait.
+  /// sus::ops::WeakOrd<Tuple<U...>> trait.
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
-             (::sus::num::ExclusiveWeakOrd<T, U> && ... &&
-              ::sus::num::ExclusiveWeakOrd<Ts, Us>))
+             (::sus::ops::ExclusiveWeakOrd<T, U> && ... &&
+              ::sus::ops::ExclusiveWeakOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
     ::sus::check(!moved_from());
     ::sus::check(!r.moved_from());
@@ -100,11 +101,11 @@ class Tuple final {
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
-  /// sus::num::PartialOrd<Tuple<U...>> trait.
+  /// sus::ops::PartialOrd<Tuple<U...>> trait.
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
-             (::sus::num::ExclusivePartialOrd<T, U> && ... &&
-              ::sus::num::ExclusivePartialOrd<Ts, Us>))
+             (::sus::ops::ExclusivePartialOrd<T, U> && ... &&
+              ::sus::ops::ExclusivePartialOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
     ::sus::check(!moved_from());
     ::sus::check(!r.moved_from());

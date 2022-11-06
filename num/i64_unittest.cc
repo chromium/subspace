@@ -15,11 +15,12 @@
 #include <type_traits>
 
 #include "construct/into.h"
-#include "ops/eq.h"
 #include "containers/array.h"
 #include "num/num_concepts.h"
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
+#include "ops/eq.h"
+#include "ops/ord.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
 
@@ -99,7 +100,7 @@ TEST(i64, Traits) {
   static_assert(sus::num::Shr<i64>);
   static_assert(sus::num::ShrAssign<i64>);
 
-  static_assert(sus::num::Ord<i64, i64>);
+  static_assert(sus::ops::Ord<i64, i64>);
   static_assert(1_i64 >= 1_i64);
   static_assert(2_i64 > 1_i64);
   static_assert(1_i64 <= 1_i64);

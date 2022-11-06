@@ -37,6 +37,7 @@
 #include "mem/take.h"
 #include "num/num_concepts.h"
 #include "ops/eq.h"
+#include "ops/ord.h"
 #include "option/__private/is_option_type.h"
 #include "option/__private/storage.h"
 #include "option/state.h"
@@ -1222,9 +1223,9 @@ constexpr inline bool operator==(const Option<T>& l,
   ::sus::unreachable_unchecked(unsafe_fn);
 }
 
-/// sus::num::Ord<Option<U>> trait.
+/// sus::ops::Ord<Option<U>> trait.
 template <class T, class U>
-  requires(::sus::num::ExclusiveOrd<T, U>)
+  requires(::sus::ops::ExclusiveOrd<T, U>)
 constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept {
   switch (l) {
@@ -1242,9 +1243,9 @@ constexpr inline auto operator<=>(const Option<T>& l,
   ::sus::unreachable_unchecked(unsafe_fn);
 }
 
-/// sus::num::WeakOrd<Option<U>> trait.
+/// sus::ops::WeakOrd<Option<U>> trait.
 template <class T, class U>
-  requires(::sus::num::ExclusiveWeakOrd<T, U>)
+  requires(::sus::ops::ExclusiveWeakOrd<T, U>)
 constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept {
   switch (l) {
@@ -1262,9 +1263,9 @@ constexpr inline auto operator<=>(const Option<T>& l,
   ::sus::unreachable_unchecked(unsafe_fn);
 }
 
-/// sus::num::PartialOrd<Option<U>> trait.
+/// sus::ops::PartialOrd<Option<U>> trait.
 template <class T, class U>
-  requires(::sus::num::ExclusivePartialOrd<T, U>)
+  requires(::sus::ops::ExclusivePartialOrd<T, U>)
 constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept {
   switch (l) {

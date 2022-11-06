@@ -19,9 +19,10 @@
 
 #include "construct/into.h"
 #include "containers/array.h"
-#include "ops/eq.h"
 #include "num/__private/intrinsics.h"
 #include "num/float.h"
+#include "ops/eq.h"
+#include "ops/ord.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 #define F32_NEAR(a, b, c) \
@@ -55,9 +56,9 @@ TEST(f32, Traits) {
   static_assert(!sus::num::Shr<f32>);
   static_assert(!sus::num::ShrAssign<f32>);
 
-  static_assert(!sus::num::Ord<f32, f32>);
-  static_assert(!sus::num::WeakOrd<f32, f32>);
-  static_assert(sus::num::PartialOrd<f32, f32>);
+  static_assert(!sus::ops::Ord<f32, f32>);
+  static_assert(!sus::ops::WeakOrd<f32, f32>);
+  static_assert(sus::ops::PartialOrd<f32, f32>);
   static_assert(1_f32 >= 1_f32);
   static_assert(2_f32 > 1_f32);
   static_assert(1_f32 <= 1_f32);

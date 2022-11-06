@@ -26,11 +26,12 @@
 #include "fn/callable.h"
 #include "fn/fn_defn.h"
 #include "marker/unsafe.h"
-#include "ops/eq.h"
 #include "mem/move.h"
 #include "mem/relocate.h"
 #include "num/num_concepts.h"
 #include "num/unsigned_integer.h"
+#include "ops/eq.h"
+#include "ops/ord.h"
 
 namespace sus::containers {
 
@@ -237,27 +238,27 @@ constexpr inline auto array_cmp(auto equal, const Array<T, N>& l,
 
 }  // namespace __private
 
-/// sus::num::Ord<Option<U>> trait.
+/// sus::ops::Ord<Option<U>> trait.
 template <class T, class U, size_t N>
-  requires(::sus::num::ExclusiveOrd<T, U>)
+  requires(::sus::ops::ExclusiveOrd<T, U>)
 constexpr inline auto operator<=>(const Array<T, N>& l,
                                   const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::strong_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
 }
 
-/// sus::num::Ord<Option<U>> trait.
+/// sus::ops::Ord<Option<U>> trait.
 template <class T, class U, size_t N>
-  requires(::sus::num::ExclusiveWeakOrd<T, U>)
+  requires(::sus::ops::ExclusiveWeakOrd<T, U>)
 constexpr inline auto operator<=>(const Array<T, N>& l,
                                   const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::weak_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
 }
 
-/// sus::num::Ord<Option<U>> trait.
+/// sus::ops::Ord<Option<U>> trait.
 template <class T, class U, size_t N>
-  requires(::sus::num::ExclusivePartialOrd<T, U>)
+  requires(::sus::ops::ExclusivePartialOrd<T, U>)
 constexpr inline auto operator<=>(const Array<T, N>& l,
                                   const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::partial_ordering::equivalent, l, r,

@@ -251,6 +251,6 @@ TEST(Tuple, PartialOrder) {
             std::partial_ordering::greater);
 }
 
-// TODO: Test WeakOrd and PartialOrd. Also do that for Option..
+// TODO: Test WeakOrd and PartialOrd. Like we do for Option..
 
 }  // namespace

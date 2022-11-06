@@ -20,6 +20,7 @@
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
 #include "ops/eq.h"
+#include "ops/ord.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
 
@@ -99,7 +100,7 @@ TEST(u8, Traits) {
   static_assert(sus::num::Shr<u8>);
   static_assert(sus::num::ShrAssign<u8>);
 
-  static_assert(sus::num::Ord<u8, u8>);
+  static_assert(sus::ops::Ord<u8, u8>);
   static_assert(1_u8 >= 1_u8);
   static_assert(2_u8 > 1_u8);
   static_assert(1_u8 <= 1_u8);
