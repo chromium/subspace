@@ -14,8 +14,14 @@
 
 #pragma once
 
-#if defined(__clang__) || defined(__GNUC__)
-#define sus_assertions_nonnull [[nonnull]]
+#if _MSC_VER
+#define sus_if_msvc(x) x
 #else
-#define sus_assertions_nonnull
+#define sus_if_msvc(x)
+#endif
+
+#if _MSC_VER
+#define sus_if_msvc_else(x, y) x
+#else
+#define sus_if_msvc_else(x, y) y
 #endif

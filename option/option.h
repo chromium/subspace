@@ -26,12 +26,13 @@
 #include <type_traits>
 
 #include "assertions/check.h"
-#include "assertions/nonnull.h"
 #include "assertions/unreachable.h"
 #include "construct/make_default.h"
+#include "macros/always_inline.h"
+#include "macros/nonnull.h"
 #include "marker/unsafe.h"
-#include "mem/never_value.h"
 #include "mem/mref.h"
+#include "mem/never_value.h"
 #include "mem/nonnull.h"
 #include "mem/replace.h"
 #include "mem/take.h"
@@ -51,7 +52,7 @@ template <class T>
 constexpr auto begin(const T& t) noexcept;
 template <class T>
 constexpr auto end(const T& t) noexcept;
-}
+}  // namespace __private
 }  // namespace sus::iter
 
 namespace sus::result {
@@ -76,8 +77,13 @@ template <class T>
 class Option;
 
 /// Implementation of Option for a value type (non-reference).
+///
+/// Option<const T> is disallowed, so that the const-ness of the Option and the
+/// T parts of an Option<T> are always the same.
 template <class T>
 class Option final {
+  static_assert(!std::is_const_v<T>);
+
  public:
   /// Construct an Option that is holding the given value.
   static inline constexpr Option some(const T& t) noexcept
@@ -249,8 +255,9 @@ class Option final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr T expect(/* TODO: string view type */ const char* msg) && noexcept
-      sus_assertions_nonnull {
+  constexpr T expect(
+      /* TODO: string view type */ sus_assertions_nonnull_arg const char*
+          msg) && noexcept sus_assertions_nonnull_fn {
     ::sus::check_with_message(is_some(), *msg);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
@@ -262,8 +269,8 @@ class Option final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr const T& expect_ref(
-      /* TODO: string view type */ const char* msg) const& noexcept
-      sus_assertions_nonnull {
+      /* TODO: string view type */ sus_assertions_nonnull_arg const char* msg)
+      const& noexcept sus_assertions_nonnull_fn {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_;
   }
@@ -276,8 +283,8 @@ class Option final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr T& expect_mut(
-      /* TODO: string view type */ const char* msg) & noexcept
-      sus_assertions_nonnull {
+      /* TODO: string view type */ sus_assertions_nonnull_arg const char*
+          msg) & noexcept sus_assertions_nonnull_fn {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_;
   }
@@ -781,8 +788,9 @@ class Option<T&> final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr T& expect(/* TODO: string view type */ const char* msg) && noexcept
-      sus_assertions_nonnull {
+  constexpr T& expect(
+      /* TODO: string view type */ sus_assertions_nonnull_arg const char*
+          msg) && noexcept sus_assertions_nonnull_fn {
     ::sus::check_with_message(is_some(), *msg);
     return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
   }
@@ -794,8 +802,8 @@ class Option<T&> final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr const T& expect_ref(
-      /* TODO: string view type */ const char* msg) const& noexcept
-      sus_assertions_nonnull {
+      /* TODO: string view type */ sus_assertions_nonnull_arg const char* msg)
+      const& noexcept sus_assertions_nonnull_fn {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_.as_ref();
   }
@@ -808,8 +816,10 @@ class Option<T&> final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr T& expect_mut(
-      /* TODO: string view type */ const char* msg) & noexcept
-      sus_assertions_nonnull {
+      /* TODO: string view type */ sus_assertions_nonnull_arg const char*
+          msg) & noexcept
+    requires(!std::is_const_v<T>)
+  sus_assertions_nonnull_fn {
     ::sus::check_with_message(is_some(), *msg);
     return t_.val_.as_ref_mut();
   }
@@ -833,7 +843,7 @@ class Option<T&> final {
   /// preferred.
   constexpr inline T& unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
-    return t_.take_and_set_none().as_ref_mut();
+    return get_ref(t_.take_and_set_none());
   }
 
   /// Returns a const reference to the contained value inside the Option.
@@ -854,7 +864,9 @@ class Option<T&> final {
   ///
   /// The function will panic without a message if the Option's state is
   /// currently `None`.
-  constexpr T& unwrap_mut() & noexcept {
+  constexpr T& unwrap_mut() & noexcept
+    requires(!std::is_const_v<T>)
+  {
     ::sus::check(is_some());
     return t_.val_.as_ref_mut();
   }
@@ -867,7 +879,7 @@ class Option<T&> final {
   /// default value if required.
   constexpr T& unwrap_or(T& default_result) && noexcept {
     if (t_.state() == Some) {
-      return t_.take_and_set_none().as_ref_mut();
+      return get_ref(t_.take_and_set_none());
     } else
       return default_result;
   }
@@ -878,7 +890,7 @@ class Option<T&> final {
     requires(std::is_same_v<std::invoke_result_t<Functor>, T&>)
   constexpr T& unwrap_or_else(Functor f) && noexcept {
     if (t_.state() == Some)
-      return t_.take_and_set_none().as_ref_mut();
+      return get_ref(t_.take_and_set_none());
     else
       return f();
   }
@@ -921,7 +933,7 @@ class Option<T&> final {
   /// afterward.
   constexpr Option take() & noexcept {
     if (t_.state() == Some)
-      return Option(t_.take_and_set_none().as_ref_mut());
+      return Option(get_ref(t_.take_and_set_none()));
     else
       return Option::none();
   }
@@ -937,7 +949,7 @@ class Option<T&> final {
     requires(!std::is_void_v<R>)
   constexpr Option<R> map(MapFn m) && noexcept {
     if (t_.state() == Some)
-      return Option<R>::some(m(t_.take_and_set_none().as_ref_mut()));
+      return Option<R>::some(m(get_ref(t_.take_and_set_none())));
     else
       return Option<R>::none();
   }
@@ -954,7 +966,7 @@ class Option<T&> final {
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
   constexpr Option<R> map_or(D default_result, MapFn m) && noexcept {
     if (t_.state() == Some)
-      return Option<R>(m(t_.take_and_set_none().as_ref_mut()));
+      return Option<R>(m(get_ref(t_.take_and_set_none())));
     else
       return Option<R>(static_cast<R&&>(default_result));
   }
@@ -973,7 +985,7 @@ class Option<T&> final {
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
   constexpr Option<R> map_or_else(DefaultFn default_fn, MapFn m) && noexcept {
     if (t_.state() == Some)
-      return Option<R>(m(t_.take_and_set_none().as_ref_mut()));
+      return Option<R>(m(get_ref(t_.take_and_set_none())));
     else
       return Option<R>(default_fn());
   }
@@ -989,9 +1001,9 @@ class Option<T&> final {
   constexpr Option<T&> filter(Predicate p) && noexcept {
     if (t_.state() == Some) {
       // The state must move to None.
-      auto nonnull = t_.take_and_set_none();
-      if (p(const_cast<const T&>(nonnull.as_ref_mut())))
-        return Option(nonnull.as_ref_mut());
+      ::sus::mem::NonNull<T> nonnull = t_.take_and_set_none();
+      if (p(const_cast<const T&>(nonnull.as_ref())))
+        return Option(get_ref(static_cast<decltype(nonnull)&&>(nonnull)));
       else
         return Option::none();
     } else {
@@ -1022,7 +1034,7 @@ class Option<T&> final {
     requires(::sus::option::__private::IsOptionType<R>::value)
   constexpr Option<InnerR> and_then(AndFn f) && noexcept {
     if (t_.state() == Some)
-      return f(t_.take_and_set_none().as_ref_mut());
+      return f(get_ref(t_.take_and_set_none()));
     else
       return Option<InnerR>::none();
   }
@@ -1031,7 +1043,7 @@ class Option<T&> final {
   /// a value, otherwise returns the given `opt`.
   Option<T&> or_opt(Option<T&> opt) && noexcept {
     if (t_.state() == Some)
-      return Option(t_.take_and_set_none().as_ref_mut());
+      return Option(get_ref(t_.take_and_set_none()));
     else
       return opt;
   }
@@ -1042,7 +1054,7 @@ class Option<T&> final {
     requires(std::is_same_v<R, Option<T&>>)
   constexpr Option<T&> or_else(ElseFn f) && noexcept {
     if (t_.state() == Some)
-      return Option(t_.take_and_set_none().as_ref_mut());
+      return Option(get_ref(t_.take_and_set_none()));
     else
       return f();
   }
@@ -1075,7 +1087,7 @@ class Option<T&> final {
   template <class E, int&..., class Result = ::sus::result::Result<T&, E>>
   constexpr inline Result ok_or(E e) && noexcept {
     if (t_.state() == Some)
-      return Result::with(t_.take_and_set_none().as_ref_mut());
+      return Result::with(get_ref(t_.take_and_set_none()));
     else
       return Result::with_err(static_cast<E&&>(e));
   }
@@ -1086,7 +1098,7 @@ class Option<T&> final {
             class Result = ::sus::result::Result<T&, E>>
   constexpr inline Result ok_or_else(ElseFn f) && noexcept {
     if (t_.set_state(None) == Some)
-      return Result::with(t_.take_and_set_none().as_ref_mut());
+      return Result::with(get_ref(t_.take_and_set_none()));
     else
       return Result::with_err(static_cast<ElseFn&&>(f)());
   }
@@ -1104,7 +1116,7 @@ class Option<T&> final {
       return Option<Tuple>::none();
     } else {
       return Option<Tuple>::some(
-          Tuple::with(t_.take_and_set_none().as_ref_mut(),
+          Tuple::with(get_ref(t_.take_and_set_none()),
                       static_cast<Option<U>&&>(o).unwrap()));
     }
   }
@@ -1123,13 +1135,13 @@ class Option<T&> final {
   }
 
   /// Maps an `Option<T&>` to an `Option<T>` by copying the referenced `T`.
-  constexpr Option<T> copied() && noexcept
+  constexpr Option<std::remove_const_t<T>> copied() && noexcept
     requires(std::is_nothrow_copy_constructible_v<T>)
   {
     if (t_.state() == None)
-      return Option<T>::none();
+      return Option<std::remove_const_t<T>>::none();
     else
-      return Option<T>(t_.val_.as_ref());
+      return Option<std::remove_const_t<T>>::some(t_.val_.as_ref());
   }
 
   /// Maps an `Option<Option<T>>` to an `Option<T>`.
@@ -1166,7 +1178,9 @@ class Option<T&> final {
   }
   Iterator<Once<const T&>> iter() const&& = delete;
 
-  Iterator<Once<T&>> iter_mut() & noexcept {
+  Iterator<Once<T&>> iter_mut() & noexcept
+    requires(!std::is_const_v<T>)
+  {
     return Iterator<Once<T&>>(as_mut());
   }
 
@@ -1182,6 +1196,15 @@ class Option<T&> final {
   constexpr explicit Option() = default;
   /// Constructor for #Some.
   constexpr explicit Option(T& t) : t_(::sus::mem::NonNull<T>::with(t)) {}
+
+  /// Gets a reference with the same const-ness as the `T` in `Option<T&>`.
+  constexpr sus_always_inline static T& get_ref(
+      ::sus::mem::NonNull<T>&& nonnull) noexcept {
+    if constexpr (std::is_const_v<T>)
+      return nonnull.as_ref();
+    else
+      return nonnull.as_ref_mut();
+  }
 
   ::sus::option::__private::Storage<::sus::mem::NonNull<T>> t_;
 

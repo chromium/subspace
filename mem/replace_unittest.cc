@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-#include "assertions/builtin.h"
+#include "macros/builtin.h"
 #include "mem/relocate.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 

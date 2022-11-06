@@ -26,7 +26,7 @@
 #include <intrin.h>
 #endif
 
-#include "assertions/builtin.h"
+#include "macros/builtin.h"
 #include "assertions/unreachable.h"
 #include "macros/always_inline.h"
 #include "marker/unsafe.h"

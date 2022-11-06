@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "assertions/builtin.h"
+#include "macros/builtin.h"
 #include "assertions/panic.h"
 #include "macros/always_inline.h"
 #include "marker/unsafe.h"
