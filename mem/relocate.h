@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <concepts>
 #include <type_traits>
 
 #include "macros/builtin.h"
@@ -28,8 +29,10 @@ struct relocatable_tag final {
   static constexpr bool value(...) { return false; }
 
   static constexpr bool value(int)
-    requires(std::is_same_v<
-             std::remove_cv_t<decltype(T::SusUnsafeTrivialRelocate)>, bool>)
+    requires requires {
+               requires(std::same_as<decltype(T::SusUnsafeTrivialRelocate),
+                                     const bool>);
+             }
   {
     return T::SusUnsafeTrivialRelocate;
   };
