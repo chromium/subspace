@@ -119,6 +119,7 @@ add_executable(subspace_unittests
     "mem/move_unittest.cc"
     "mem/mref_unittest.cc"
     "mem/nonnull_unittest.cc"
+    "mem/nonnull_types_unittest.cc"
     "mem/relocate_unittest.cc"
     "mem/replace_unittest.cc"
     "mem/swap_unittest.cc"

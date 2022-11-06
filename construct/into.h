@@ -22,6 +22,7 @@
 namespace sus::construct {
 
 namespace __private {
+
 template <class FromType>
 struct IntoRef final {
   [[nodiscard]] constexpr IntoRef(FromType&& from) noexcept
@@ -48,26 +49,38 @@ concept Into = ::sus::construct::From<ToType, FromType>;
 template <class FromType>
   requires(std::is_rvalue_reference_v<FromType &&>)
 constexpr inline auto into(FromType&& from) noexcept {
+  return __private::IntoRef(
+      static_cast<std::remove_reference_t<FromType>&&>(from));
+}
+
+template <class FromType>
+  requires(std::is_trivially_copyable_v<FromType>)
+constexpr inline auto into(const FromType& from) noexcept {
+  return __private::IntoRef<const FromType&>(from);
+}
+
+template <class FromType>
+  requires(std::is_trivially_move_constructible_v<FromType>)
+constexpr inline auto into(FromType& from) noexcept {
   return __private::IntoRef(static_cast<FromType&&>(from));
 }
 
 template <class FromType>
-  requires(std::is_lvalue_reference_v<FromType &&> &&
-           !std::is_const_v<std::remove_reference_t<FromType>>)
-constexpr inline auto move_into(FromType&& from) noexcept {
+  requires(!std::is_const_v<FromType>)
+constexpr inline auto move_into(FromType& from) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_cv_t<std::remove_reference_t<FromType>>&&>(from));
 }
 
 template <class FromType>
   requires(std::is_rvalue_reference_v<FromType &&> &&
-           !std::is_const_v<std::remove_reference_t<FromType>>)
+           !std::is_const_v<FromType>)
 constexpr inline auto move_into(FromType&& from) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_cv_t<std::remove_reference_t<FromType>>&&>(from));
 }
 
-}  // namespace sus::convert
+}  // namespace sus::construct
 
 // Promote Into and its helper methods into the `sus` namespace.
 namespace sus {

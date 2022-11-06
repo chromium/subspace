@@ -15,11 +15,61 @@
 #include "mem/nonnull.h"
 
 #include "construct/into.h"
+#include "mem/relocate.h"
+#include "mem/forward.h"
+#include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
+
+using sus::mem::NonNull;
+
+static_assert(sus::mem::relocate_one_by_memcpy<NonNull<int>>);
+static_assert(sus::mem::relocate_array_by_memcpy<NonNull<int>>);
 
 namespace {
 
-using sus::mem::NonNull;
+template <class T, class From>
+concept CanConstruct = requires (From f) {
+    NonNull<T>::with(f);
+};
+template <class T, class From>
+concept CanConstructPtr = requires (From f) {
+    NonNull<T>::with_ptr(f);
+};
+template <class T, class From, size_t N>
+concept CanConstructPtrArray = requires (From(&f)[N]) {
+    NonNull<T>::with_ptr(f);
+};
+template <class T, class From>
+concept CanFrom = requires (From f) {
+    NonNull<T>::from(f);
+};
+template <class T, class From, size_t N>
+concept CanFromArray = requires (From(&f)[N]) {
+    NonNull<T>::from(f);
+};
+
+// NonNull can be constructed from a reference or pointer.
+static_assert(CanConstruct<int, int&>);
+static_assert(CanConstructPtr<int, int*>);
+static_assert(CanFrom<int, int&>);
+static_assert(CanFrom<int, int*>);
+
+// NonNull does not erase const.
+static_assert(!CanConstruct<int, const int&>);
+static_assert(!CanConstructPtr<int, const int*>);
+static_assert(!CanFrom<int, const int&>);
+static_assert(!CanFrom<int, const int*>);
+
+// NonNull can upgrade to const.
+static_assert(CanConstruct<const int,  int&>);
+static_assert(CanConstructPtr<const int, int*>);
+static_assert(CanFrom<const int, int&>);
+static_assert(CanFrom<const int, int*>);
+
+// NonNull can't be constructed from an array directly.
+static_assert(!CanConstruct<int, int(&)[2]>);
+static_assert(!CanConstructPtr<int, int(&)[2]>);
+static_assert(!CanFrom<int, int(&)[2]>);
 
 TEST(NonNull, ConstructRef) {
   int i = 1;
@@ -56,7 +106,19 @@ TEST(NonNull, ConstructPtr) {
   EXPECT_EQ(&c, &c1.as_ref());
 }
 
-TEST(NonNull, From) {
+TEST(NonNull, ConstructPtrUnchecked) {
+  int i = 1;
+  const int c = 2;
+  auto n1 = NonNull<int>::with_ptr_unchecked(unsafe_fn, &i);
+  auto n2 = NonNull<const int>::with_ptr_unchecked(unsafe_fn, &i);
+  auto c1 = NonNull<const int>::with_ptr_unchecked(unsafe_fn, &c);
+
+  EXPECT_EQ(&i, &n1.as_ref());
+  EXPECT_EQ(&i, &n2.as_ref());
+  EXPECT_EQ(&c, &c1.as_ref());
+}
+
+TEST(NonNull, FromRvalue) {
   int i = 1;
   const int c = 2;
   {
@@ -79,6 +141,31 @@ TEST(NonNull, From) {
   }
 }
 
+TEST(NonNull, FromLvalue) {
+  int i = 1;
+  int* ip = &i;
+  const int c = 2;
+  const int* cp = &c;
+  {
+    auto n1 = NonNull<int>::from(ip);
+    auto n2 = NonNull<const int>::from(ip);
+    auto c1 = NonNull<const int>::from(cp);
+
+    EXPECT_EQ(&i, &n1.as_ref());
+    EXPECT_EQ(&i, &n2.as_ref());
+    EXPECT_EQ(&c, &c1.as_ref());
+  }
+  {
+    NonNull<int> n1 = sus::into(ip);
+    NonNull<const int> n2 = sus::into(ip);
+    NonNull<const int> c1 = sus::into(cp);
+
+    EXPECT_EQ(&i, &n1.as_ref());
+    EXPECT_EQ(&i, &n2.as_ref());
+    EXPECT_EQ(&c, &c1.as_ref());
+  }
+}
+
 TEST(NonNull, AsRef) {
   int i = 1;
 
@@ -92,15 +179,15 @@ TEST(NonNull, AsRef) {
 }
 
 template <class T>
-concept AsRefMutExists = requires(T t) { t.as_ref_mut(); };
+concept AsRefMutExists = requires(T t) { t.as_mut(); };
 
 TEST(NonNull, AsRefMut) {
   int i = 1;
 
   auto n1 = NonNull<int>::with(i);
-  static_assert(std::same_as<decltype(n1.as_ref_mut()), int&>);
+  static_assert(std::same_as<decltype(n1.as_mut()), int&>);
   static_assert(AsRefMutExists<decltype(n1)>);
-  EXPECT_EQ(&i, &n1.as_ref_mut());
+  EXPECT_EQ(&i, &n1.as_mut());
 
   auto n2 = NonNull<const int>::with(i);
   static_assert(!AsRefMutExists<decltype(n2)>);
@@ -131,6 +218,30 @@ TEST(NonNull, AsPtrMut) {
 
   auto n2 = NonNull<const int>::with(i);
   static_assert(!AsPtrMutExists<decltype(n2)>);
+}
+
+TEST(NonNull, Cast) {
+  struct Base {
+    i32 i;
+  };
+  struct Sub : public Base {};
+  Sub s;
+  s.i = 3_i32;
+  auto sn = NonNull<Sub>::with_ptr(&s);
+  auto bn = sn.cast<Base>();
+  EXPECT_EQ(bn.as_ref().i, 3_i32);
+}
+
+TEST(NonNull, Downcast) {
+  struct Base {
+    i32 i;
+  };
+  struct Sub : public Base {};
+  Sub s;
+  s.i = 3_i32;
+  auto bn = NonNull<Base>::with_ptr(&s);
+  auto sn = bn.downcast<Sub>(unsafe_fn);
+  EXPECT_EQ(sn.as_ref().i, 3_i32);
 }
 
 }  // namespace
