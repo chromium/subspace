@@ -367,7 +367,7 @@ TEST(isize, InvokeEverything) {
   i <<= 1_u32;
   i >>= 1_u32;
 
-  i == j;
+  [[maybe_unused]] bool b = i == j;
   [[maybe_unused]] auto z = i >= j;
 }
 }  // namespace

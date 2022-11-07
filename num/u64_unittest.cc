@@ -342,7 +342,7 @@ TEST(u64, InvokeEverything) {
   i <<= 1_u32;
   i >>= 1_u32;
 
-  i == j;
+  [[maybe_unused]] auto b = i == j;
   [[maybe_unused]] auto z = i >= j;
 }
 
