@@ -21,3 +21,7 @@
 #if !defined(__has_extension)
 #define __has_extension(X) false
 #endif
+
+#if !defined(__has_feature)
+#define __has_feature(X) false
+#endif

@@ -454,6 +454,7 @@ TEST(Option, UnwrapOrDefault) {
 
 TEST(Option, Map) {
   struct Mapped {
+    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i) {})
     int i;
   };
 
@@ -510,6 +511,7 @@ TEST(Option, Map) {
 
 TEST(Option, MapOr) {
   struct Mapped {
+    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i) {})
     int i;
   };
 
@@ -541,6 +543,7 @@ TEST(Option, MapOr) {
 
 TEST(Option, MapOrElse) {
   struct Mapped {
+    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i) {})
     int i;
   };
 
@@ -759,6 +762,7 @@ TEST(Option, And) {
 
 TEST(Option, AndThen) {
   struct And {
+    sus_clang_bug_54040(constexpr inline And(int i) : i(i) {})
     int i;
   };
 
@@ -1065,7 +1069,9 @@ TEST(Option, GetOrInsertDefault) {
   IS_SOME(w);
   EXPECT_EQ(sus::move(w).unwrap().i, 3);
 
-  auto y = Option<DefaultConstructible>::some(DefaultConstructible(404));
+  auto y = Option<DefaultConstructible>::some(
+    sus_clang_bug_54040(DefaultConstructible{404})
+    sus_clang_bug_54040_else(DefaultConstructible(404)));
   auto& ry = y.get_or_insert_default();
   static_assert(std::is_same_v<decltype(ry), DefaultConstructible&>, "");
   EXPECT_EQ(ry.i, 404);

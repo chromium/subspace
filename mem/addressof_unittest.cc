@@ -14,6 +14,7 @@
 
 #include "mem/addressof.h"
 
+#include "macros/__private/compiler_bugs.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {
@@ -22,13 +23,14 @@ using sus::mem::addressof;
 
 TEST(AddressOf, Object) {
   struct S {
+    sus_clang_bug_54040(constexpr inline S(int i) : i(i) {})
     int i;
   };
-  S s;
+  auto s = S(0);
   static_assert(std::is_object_v<decltype(s)>, "");
   EXPECT_EQ(::sus::mem::addressof(s), &s);
 
-  const S cs(0);
+  const auto cs = S(0);
   static_assert(std::is_object_v<decltype(cs)>, "");
   EXPECT_EQ(::sus::mem::addressof(cs), &cs);
 }
@@ -49,7 +51,7 @@ TEST(AddressOf, OperatorOverride) {
 
 TEST(AddressOf, NonObject) {
   struct S {};
-  S s;
+  auto s = S();
   S& r = s;
   static_assert(!std::is_object_v<decltype(r)>, "");
   EXPECT_EQ(::sus::mem::addressof(r), &s);

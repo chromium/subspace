@@ -16,6 +16,7 @@
 
 #include <type_traits>
 
+#include "macros/__private/compiler_bugs.h"
 #include "mem/relocate.h"
 
 namespace sus::test {

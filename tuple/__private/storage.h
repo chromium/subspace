@@ -32,6 +32,8 @@ template <class T>
 struct TupleStorage<1, T> {
   template <size_t I>
   using Type = T;
+  sus_clang_bug_54040(constexpr inline TupleStorage(T&& t)
+                      : t(static_cast<T&&>(t)){})
   T t;
 };
 

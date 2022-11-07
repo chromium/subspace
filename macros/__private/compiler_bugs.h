@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "macros/builtin.h"
 #include "macros/compiler.h"
 
 // TODO: https://github.com/llvm/llvm-project/issues/56394
@@ -32,4 +33,13 @@
 #else
 #define sus_clang_bug_58835(...)
 #define sus_clang_bug_58835_else(...) __VA_ARGS__
+#endif
+
+// TODO: https://github.com/llvm/llvm-project/issues/54040
+#if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
+#define sus_clang_bug_54040(...) __VA_ARGS__
+#define sus_clang_bug_54040_else(...)
+#else
+#define sus_clang_bug_54040(...)
+#define sus_clang_bug_54040_else(...) __VA_ARGS__
 #endif
