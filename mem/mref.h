@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "assertions/check.h"
+#include "macros/__private/compiler_bugs.h"
 
 namespace sus::mem {
 
@@ -112,6 +113,8 @@ struct Mref<T&> final {
 
  private:
   struct Construct final {
+    sus_clang_bug_54040(constexpr inline Construct(T& reference)
+                        : reference(reference){})
     T& reference;
   };
 

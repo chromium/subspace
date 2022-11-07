@@ -14,6 +14,7 @@
 
 #include "construct/into.h"
 
+#include "macros/__private/compiler_bugs.h"
 #include "mem/forward.h"
 #include "test/behaviour_types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -26,6 +27,7 @@ using namespace sus::test;
 namespace {
 
 struct S {
+  sus_clang_bug_54040(constexpr inline S(int val) : val(val) {})
   int val = 5;
 };
 
@@ -140,6 +142,7 @@ TEST(Into, MoveInto) {
 }
 
 struct FromThings {
+  sus_clang_bug_54040(constexpr inline FromThings(int i) : got_value(i) {})
   static auto from(int i) { return FromThings(i); }
   static auto from(S s) { return FromThings(s.val); }
   int got_value;
