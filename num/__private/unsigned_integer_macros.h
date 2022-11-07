@@ -1212,8 +1212,8 @@ class Tuple;
   template <sus_clang_bug_58835_else(int&..., ) class Array =                 \
                 ::sus::containers::Array<u8, Bytes>>                          \
   constexpr Array to_ne_bytes() const& noexcept {                             \
-    auto bytes = Array::with_uninitialized(unsafe_fn);                        \
     if (std::is_constant_evaluated()) {                                       \
+      auto bytes = Array::with_value(uint8_t{0});                             \
       auto uval = primitive_value;                                            \
       for (auto i = size_t{0}; i < sizeof(T); ++i) {                          \
         const auto last_byte = static_cast<uint8_t>(uval & 0xff);             \
@@ -1225,10 +1225,12 @@ class Tuple;
            since the loop will not run again. */                              \
         if constexpr (sizeof(T) > 1) uval >>= 8u;                             \
       }                                                                       \
+      return bytes;                                                           \
     } else {                                                                  \
+      auto bytes = Array::with_uninitialized(unsafe_fn);                      \
       memcpy(bytes.as_ptr_mut(), &primitive_value, sizeof(T));                \
+      return bytes;                                                           \
     }                                                                         \
-    return bytes;                                                             \
   }                                                                           \
                                                                               \
   /** Create an integer value from its representation as a byte array in big  \
