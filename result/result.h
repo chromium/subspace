@@ -127,7 +127,9 @@ class Result final {
     switch (state_) {
       case IsOk: new (&ok_) T(rhs.ok_); break;
       case IsErr: new (&err_) E(rhs.err_); break;
+      case IsMoved: break;
     }
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the function.
     unreachable_unchecked(unsafe_fn);
   }
 
@@ -152,7 +154,9 @@ class Result final {
     switch (state_) {
       case IsOk: new (&ok_) T(static_cast<T&&>(rhs.ok_)); break;
       case IsErr: new (&err_) E(static_cast<E&&>(rhs.err_)); break;
+      case IsMoved: break;
     }
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the function.
     unreachable_unchecked(unsafe_fn);
   }
 
@@ -304,7 +308,9 @@ class Result final {
       case IsOk:
         return Option<T>::some(take_and_destruct(unsafe_fn, mref(ok_)));
       case IsErr: err_.~E(); return Option<T>::none();
+      case IsMoved: break;
     }
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the function.
     unreachable_unchecked(unsafe_fn);
   }
 
@@ -318,7 +324,9 @@ class Result final {
       case IsOk: ok_.~T(); return Option<E>::none();
       case IsErr:
         return Option<E>::some(take_and_destruct(unsafe_fn, mref(err_)));
+      case IsMoved: break;
     }
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the function.
     unreachable_unchecked(unsafe_fn);
   }
 
