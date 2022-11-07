@@ -1422,7 +1422,9 @@ class Tuple;
           bytes.get_mut(i) = last_byte;                                       \
         else                                                                  \
           bytes.get_mut(sizeof(T) - 1 - i) = last_byte;                       \
-        uval >>= 8u;                                                          \
+        /* If T is one byte, this shift would be UB. But it's also not needed \
+           since the loop will not run again. */                              \
+        if constexpr (sizeof(T) > 1) uval >>= 8u;                             \
       }                                                                       \
     } else {                                                                  \
       memcpy(bytes.as_ptr_mut(), &primitive_value, sizeof(T));                \
