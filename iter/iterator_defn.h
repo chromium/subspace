@@ -15,6 +15,7 @@
 #pragma once
 
 #include "fn/fn_defn.h"
+#include "macros/__private/compiler_bugs.h"
 #include "num/unsigned_integer.h"
 #include "option/option.h"
 
@@ -122,7 +123,8 @@ class Iterator final : public I {
   // Option->Iterator->Option. So it forward declares Iterator, and needs
   // to use the constructor directly.
   template <class T>
-  friend class Option;  // Option<T>::foo() can construct Iterator<I>.
+  friend class sus_clang_bug_58836(
+      ::sus::option::) Option;  // Option<T>::foo() can construct Iterator<I>.
 
   template <class... Args>
   Iterator(Args&&... args) : I(static_cast<Args&&>(args)...) {
