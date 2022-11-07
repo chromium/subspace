@@ -23,6 +23,7 @@ add_library(subspace STATIC
     "macros/builtin.h"
     "assertions/check.h"
     "macros/compiler.h"
+    "macros/__private/compiler_bugs.h"
     "assertions/endian.h"
     "assertions/panic.h"
     "assertions/panic.cc"

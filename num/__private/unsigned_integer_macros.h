@@ -21,6 +21,7 @@
 
 #include "assertions/check.h"
 #include "assertions/endian.h"
+#include "macros/__private/compiler_bugs.h"
 #include "num/__private/int_log10.h"
 #include "num/__private/intrinsics.h"
 #include "num/__private/literals.h"
@@ -1187,17 +1188,19 @@ class Tuple;
   /** Return the memory representation of this integer as a byte array in     \
    * big-endian (network) byte order.                                         \
    */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
+  template <sus_clang_bug_58835_else(int&..., ) class Array =                 \
+                ::sus::containers::Array<u8, Bytes>>                          \
   constexpr Array to_be_bytes() const& noexcept {                             \
-    return to_be().to_ne_bytes();                                             \
+    return to_be().to_ne_bytes sus_clang_bug_58835(<Array>)();                \
   }                                                                           \
                                                                               \
   /** Return the memory representation of this integer as a byte array in     \
    * little-endian byte order.                                                \
    */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
+  template <sus_clang_bug_58835_else(int&..., ) class Array =                 \
+                ::sus::containers::Array<u8, Bytes>>                          \
   constexpr Array to_le_bytes() const& noexcept {                             \
-    return to_le().to_ne_bytes();                                             \
+    return to_le().to_ne_bytes sus_clang_bug_58835(<Array>)();                \
   }                                                                           \
                                                                               \
   /** Return the memory representation of this integer as a byte array in     \
@@ -1206,7 +1209,8 @@ class Tuple;
    * As the target platform's native endianness is used, portable code should \
    * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.         \
    */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
+  template <sus_clang_bug_58835_else(int&..., ) class Array =                 \
+                ::sus::containers::Array<u8, Bytes>>                          \
   constexpr Array to_ne_bytes() const& noexcept {                             \
     auto bytes = Array::with_uninitialized(unsafe_fn);                        \
     if (std::is_constant_evaluated()) {                                       \
