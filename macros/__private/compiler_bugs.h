@@ -52,3 +52,12 @@
 #define sus_clang_bug_58836(...)
 #define sus_clang_bug_58836_else(...) __VA_ARGS__
 #endif
+
+// TODO: https://github.com/llvm/llvm-project/issues/58837
+#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#define sus_clang_bug_58837(...) __VA_ARGS__
+#define sus_clang_bug_58837_else(...)
+#else
+#define sus_clang_bug_58837(...)
+#define sus_clang_bug_58837_else(...) __VA_ARGS__
+#endif

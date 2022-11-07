@@ -111,7 +111,7 @@ class IteratorBase {
 template <class I>
 class Iterator final : public I {
  private:
-  using typename I::Item;
+  using sus_clang_bug_58837(Item =) typename I::Item;
   template <class T>
   friend class __private::IteratorLoop;  // Can see Item.
   friend I;                              // I::foo() can construct Iterator<I>.
