@@ -18,6 +18,7 @@
 
 #include <concepts>
 
+#include "macros/__private/compiler_bugs.h"
 #include "marker/unsafe.h"
 #include "num/__private/float_ordering.h"
 #include "num/__private/intrinsics.h"
@@ -707,14 +708,14 @@ class Array;
    */                                                                          \
   template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
   constexpr Array to_be_bytes() const& noexcept {                              \
-    return to_bits().to_be_bytes();                                            \
+    return to_bits().to_be_bytes sus_clang_bug_58835(<Array>)();               \
   }                                                                            \
   /** Return the memory representation of this floating point number as a byte \
    * array in little-endian byte order.                                        \
    */                                                                          \
   template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
   constexpr Array to_le_bytes() const& noexcept {                              \
-    return to_bits().to_le_bytes();                                            \
+    return to_bits().to_le_bytes sus_clang_bug_58835(<Array>)();               \
   }                                                                            \
   /** Return the memory representation of this floating point number as a byte \
    * array in native byte order.                                               \
@@ -724,7 +725,7 @@ class Array;
    */                                                                          \
   template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
   constexpr Array to_ne_bytes() const& noexcept {                              \
-    return to_bits().to_ne_bytes();                                            \
+    return to_bits().to_ne_bytes sus_clang_bug_58835(<Array>)();               \
   }                                                                            \
   /** Create a floating point value from its representation as a byte array in \
    * big endian.                                                               \
