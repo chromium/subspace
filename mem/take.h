@@ -23,8 +23,12 @@
 
 namespace sus::mem {
 
+/// Calling take() on a base class could lead to Undefined Behaviour, unless the
+/// object was accessed through std::launder thereafter, as replacing a subclass
+/// with the base class would change the underlying storage.
 template <class T>
-  requires std::is_move_constructible_v<T> && std::is_default_constructible_v<T>
+  requires(std::is_move_constructible_v<T> &&
+           std::is_default_constructible_v<T> && std::is_final_v<T>)
 inline constexpr T take(Mref<T&> t_ref) noexcept {
   T& t = t_ref;
   T taken(static_cast<T&&>(t));

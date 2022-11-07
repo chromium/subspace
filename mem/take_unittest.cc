@@ -25,7 +25,7 @@ namespace {
 TEST(Take, Take) {
   static i32 take_destructors;
 
-  struct S {
+  struct S final {
     S() { default_constucted += 1_i32; }
     S(i32 i) : num(i) {}
     S(S&& other) : num(other.num), moved(other.moved + 1_i32) {}
@@ -52,7 +52,7 @@ TEST(Take, Take) {
 }
 
 TEST(Take, TakeConstexpr) {
-  struct S {
+  struct S final {
     constexpr S() { default_constucted += 1_i32; }
     constexpr S(i32 i) : num(i) {}
     constexpr S(S&& other) : num(other.num), moved(other.moved + 1_i32) {}
