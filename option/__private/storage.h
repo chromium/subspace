@@ -27,8 +27,11 @@ namespace sus::option::__private {
 using State::None;
 using State::Some;
 
-template <class T,
-          bool HasNonNullField = sus::mem::never_value_field<T>::has_field>
+template <class T>
+constexpr inline bool UseNeverValueFieldOptimization =
+    std::is_standard_layout_v<T> && sus::mem::never_value_field<T>::has_field;
+
+template <class T, bool = UseNeverValueFieldOptimization<T>>
 struct Storage;
 
 // TODO: Determine if we can put the State into the storage of `T`. Probably
@@ -74,7 +77,7 @@ struct Storage<T, false> final {
   };
   State state_ = None;
 
-  [[nodiscard]] constexpr inline State state() const { return state_; }
+  [[nodiscard]] constexpr inline State state() const noexcept { return state_; }
 
   constexpr inline void construct_from_none(T&& t) noexcept {
     new (&val_) T(static_cast<T&&>(t));
@@ -126,20 +129,30 @@ struct Storage<T, true> final {
     requires(std::is_trivially_move_assignable_v<T>)
   = default;
 
-  constexpr Storage() {
-    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, &val_);
+  constexpr Storage() : overlay_() {
+    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, overlay_);
   }
   constexpr Storage(const T& t) : val_(t) {}
   constexpr Storage(T&& t) : val_(static_cast<T&&>(t)) {}
 
   union {
+    typename ::sus::mem::never_value_field<T>::OverlayType overlay_;
     T val_;
   };
+  // If both `bytes_` and `val_` are standard layout, and the same size, then we
+  // can access the memory of one through the other in a well-defined way:
+  // https://en.cppreference.com/w/cpp/language/union
+  static_assert(std::is_standard_layout_v<typename ::sus::mem::never_value_field<T>::OverlayType>);
+  static_assert(std::is_standard_layout_v<T>);
 
-  [[nodiscard]] constexpr inline State state() const noexcept {
-    return ::sus::mem::never_value_field<T>::is_constructed(unsafe_fn, &val_)
-               ? Some
-               : None;
+  // Not constexpr because in a constant-evalation context, the compiler will
+  // produce an error if the Option is #Some, since we're reading the union's
+  // inactive field in that case. When using the never-value field optimization,
+  // it's not possible to query the state of the Option, without already knowing
+  // the correct state and thus the correct union field to read, given the
+  // current limitations of constexpr in C++20.
+  [[nodiscard]] inline State state() const noexcept {
+    return ::sus::mem::never_value_field<T>::is_constructed(unsafe_fn, overlay_) ? Some : None;
   }
 
   inline void construct_from_none(T&& t) noexcept {
@@ -159,13 +172,13 @@ struct Storage<T, true> final {
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
     T t = take_and_destruct(unsafe_fn, mref(val_));
-    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, &val_);
+    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, overlay_);
     return t;
   }
 
   constexpr inline void set_none() noexcept {
     val_.~T();
-    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, &val_);
+    ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, overlay_);
   }
 };
 
@@ -186,5 +199,9 @@ struct [[sus_trivial_abi]] StoragePointer {
   // The pointer is never set to null.
   sus_class_never_value_field(unsafe_fn, StoragePointer, ptr_, nullptr);
 };
+
+// This must be true in order for StoragePointer to be useful with the
+// never-value field optimization.
+static_assert(std::is_standard_layout_v<StoragePointer<int>>);
 
 }  // namespace sus::option::__private
