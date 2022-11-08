@@ -96,12 +96,6 @@ class Option;
 template <class T>
 class Option final {
   static_assert(!std::is_const_v<T>);
-  /// It is invalid to query the state of the Option from a constant-evaluation
-  /// context when using the never-value field optimization. This is due to the
-  /// optimization relying on a union, but querying the state and guessing wrong
-  /// will read the wrong field which is not allowed in a constant expression.
-  constexpr static bool can_query_constexpr_state =
-      !__private::UseNeverValueFieldOptimization<T>;
 
  public:
   /// Construct an Option that is holding the given value.
