@@ -250,11 +250,15 @@ TEST(Option, None) {
   auto ix = Option<int&>::none();
   IS_NONE(ix);
 
-  constexpr auto cx(Option<DefaultConstructible>::none());
-  static_assert(cx.is_none(), "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // constexpr auto cx(Option<DefaultConstructible>::none());
+  // static_assert(cx.is_none(), "");
 
-  constexpr auto cy(Option<NotDefaultConstructible>::none());
-  static_assert(cy.is_none(), "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // constexpr auto cy(Option<NotDefaultConstructible>::none());
+  // static_assert(cy.is_none(), "");
 }
 
 TEST(Option, WithDefault) {
@@ -266,11 +270,15 @@ TEST(Option, WithDefault) {
   IS_SOME(y);
   EXPECT_EQ(sus::move(y).unwrap().i, 3);
 
-  constexpr auto cx(Option<DefaultConstructible>::with_default());
-  static_assert(cx.is_some(), "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // constexpr auto cx(Option<DefaultConstructible>::with_default());
+  // static_assert(cx.is_some(), "");
 
-  constexpr auto cy(Option<WithDefaultConstructible>::with_default());
-  static_assert(cy.is_some(), "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // constexpr auto cy(Option<WithDefaultConstructible>::with_default());
+  // static_assert(cy.is_some(), "");
 
   auto x2 = make_default<Option<DefaultConstructible>>();
   IS_SOME(x2);
@@ -405,10 +413,11 @@ TEST(Option, UnwrapOr) {
   auto& iy = Option<int&>::none().unwrap_or(i2);
   EXPECT_EQ(&iy, &i2);
 
-  // Verify constexpr.
-  static_assert(Option<int>::none().unwrap_or(3) == 3, "");
-  constexpr int ci = 2;
-  static_assert(Option<const int&>::none().unwrap_or(ci) == 2, "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // static_assert(Option<int>::none().unwrap_or(3) == 3, "");
+  // constexpr int ci = 2;
+  // static_assert(Option<const int&>::none().unwrap_or(ci) == 2, "");
 }
 
 TEST(Option, UnwrapOrElse) {
@@ -425,10 +434,12 @@ TEST(Option, UnwrapOrElse) {
   auto& iy = Option<int&>::none().unwrap_or_else([&]() -> int& { return i2; });
   EXPECT_EQ(&iy, &i2);
 
-  // Verify constexpr.
-  static_assert(
-      Option<int>::none().unwrap_or_else([]() { return int(3); }) == 3, "");
-  // TODO: Why does this not work?
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // static_assert(
+  //     Option<int>::none().unwrap_or_else([]() { return int(3); }) == 3, "");
+  // TODO: Why does this not work? (Well, now we have disabled constexpr so it
+  // won't work.)
   // static constexpr int ci = 2;
   // static_assert(Option<const int&>::none().unwrap_or_else(
   //                   []() ->const int& { return ci; }) == 2,
@@ -448,14 +459,14 @@ TEST(Option, UnwrapOrDefault) {
   auto wy = Option<WithDefaultConstructible>::none().unwrap_or_default();
   EXPECT_EQ(wy.i, 3);
 
-  // Verify constexpr.
-  static_assert(Option<int>::none().unwrap_or_default() == 0, "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // static_assert(Option<int>::none().unwrap_or_default() == 0, "");
 }
 
 TEST(Option, Map) {
   struct Mapped {
-    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i) {})
-    int i;
+    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i){}) int i;
   };
 
   bool called = false;
@@ -495,24 +506,24 @@ TEST(Option, Map) {
   IS_NONE(iy);
   EXPECT_FALSE(called);
 
-  // Verify constexpr.
-  static_assert(Option<int>::some(2)
-                        .map([](int&& i) { return Mapped(i + 1); })
-                        .unwrap()
-                        .i == 3,
-                "");
-  constexpr int ci = 2;
-  static_assert(Option<const int&>::some(ci)
-                        .map([](const int& i) { return Mapped(i + 1); })
-                        .unwrap()
-                        .i == 3,
-                "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // static_assert(Option<int>::some(2)
+  //                       .map([](int&& i) { return Mapped(i + 1); })
+  //                       .unwrap()
+  //                       .i == 3,
+  //               "");
+  // constexpr int ci = 2;
+  // static_assert(Option<const int&>::some(ci)
+  //                       .map([](const int& i) { return Mapped(i + 1); })
+  //                       .unwrap()
+  //                       .i == 3,
+  //               "");
 }
 
 TEST(Option, MapOr) {
   struct Mapped {
-    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i) {})
-    int i;
+    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i){}) int i;
   };
 
   auto x = Option<int>::some(2).map_or(
@@ -536,15 +547,16 @@ TEST(Option, MapOr) {
   static_assert(std::is_same_v<decltype(ix), Option<Mapped>>, "");
   EXPECT_EQ(iy.as_ref().unwrap().i, 4);
 
-  // Verify constexpr.
-  static_assert(
-      Option<int>::none().map_or(4, [](int&&) { return 1; }).unwrap() == 4, "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // static_assert(
+  //     Option<int>::none().map_or(4, [](int&&) { return 1; }).unwrap() == 4,
+  //     "");
 }
 
 TEST(Option, MapOrElse) {
   struct Mapped {
-    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i) {})
-    int i;
+    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i){}) int i;
   };
 
   bool map_called = false;
@@ -609,32 +621,34 @@ TEST(Option, MapOrElse) {
   EXPECT_FALSE(map_called);
   EXPECT_TRUE(else_called);
 
-  // Verify constexpr.
-  static_assert(Option<int>::none()
-                        .map_or_else([]() { return Mapped(4); },
-                                     [](int&&) { return Mapped(1); })
-                        .unwrap()
-                        .i == 4,
-                "");
-  static_assert(Option<int>::some(2)
-                        .map_or_else([]() { return Mapped(4); },
-                                     [](int&&) { return Mapped(1); })
-                        .unwrap()
-                        .i == 1,
-                "");
-  constexpr int ci = 2;
-  static_assert(Option<const int&>::none()
-                        .map_or_else([]() { return Mapped(4); },
-                                     [](const int&) { return Mapped(1); })
-                        .unwrap()
-                        .i == 4,
-                "");
-  static_assert(Option<const int&>::some(ci)
-                        .map_or_else([]() { return Mapped(4); },
-                                     [](const int& i) { return Mapped(i + 1); })
-                        .unwrap()
-                        .i == 3,
-                "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // static_assert(Option<int>::none()
+  //                       .map_or_else([]() { return Mapped(4); },
+  //                                    [](int&&) { return Mapped(1); })
+  //                       .unwrap()
+  //                       .i == 4,
+  //               "");
+  // static_assert(Option<int>::some(2)
+  //                       .map_or_else([]() { return Mapped(4); },
+  //                                    [](int&&) { return Mapped(1); })
+  //                       .unwrap()
+  //                       .i == 1,
+  //               "");
+  // constexpr int ci = 2;
+  // static_assert(Option<const int&>::none()
+  //                       .map_or_else([]() { return Mapped(4); },
+  //                                    [](const int&) { return Mapped(1); })
+  //                       .unwrap()
+  //                       .i == 4,
+  //               "");
+  // static_assert(Option<const int&>::some(ci)
+  //                       .map_or_else([]() { return Mapped(4); },
+  //                                    [](const int& i) { return Mapped(i + 1);
+  //                                    })
+  //                       .unwrap()
+  //                       .i == 3,
+  //               "");
 }
 
 TEST(Option, Filter) {
@@ -672,16 +686,18 @@ TEST(Option, Filter) {
   static_assert(std::is_same_v<decltype(iny), Option<int&>>, "");
   IS_NONE(iny);
 
-  // Verify constexpr.
-  static_assert(
-      Option<int>::some(2).filter([](const int&) { return true; }).unwrap() ==
-          2,
-      "");
-  constexpr int ci = 2;
-  static_assert(Option<const int&>::some(ci)
-                        .filter([](const int&) { return true; })
-                        .unwrap() == 2,
-                "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // static_assert(
+  //     Option<int>::some(2).filter([](const int&) { return true; }).unwrap()
+  //     ==
+  //         2,
+  //     "");
+  // constexpr int ci = 2;
+  // static_assert(Option<const int&>::some(ci)
+  //                       .filter([](const int&) { return true; })
+  //                       .unwrap() == 2,
+  //               "");
 
   static int count = 0;
   struct WatchDestructor {
@@ -762,8 +778,7 @@ TEST(Option, And) {
 
 TEST(Option, AndThen) {
   struct And {
-    sus_clang_bug_54040(constexpr inline And(int i) : i(i) {})
-    int i;
+    sus_clang_bug_54040(constexpr inline And(int i) : i(i){}) int i;
   };
 
   bool called = false;
@@ -840,18 +855,19 @@ TEST(Option, AndThen) {
   IS_NONE(iny);
   EXPECT_FALSE(called);
 
-  // Verify constexpr.
-  constexpr auto cx =
-      Option<int>::some(2)
-          .and_then([&](int&&) { return Option<And>::some(And(3)); })
-          .unwrap();
-  static_assert(cx.i == 3, "");
-  constexpr int ci = 2;
-  constexpr auto icx =
-      Option<const int&>::some(ci)
-          .and_then([&](const int&) { return Option<And>::some(And(3)); })
-          .unwrap();
-  static_assert(icx.i == 3, "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // constexpr auto cx =
+  //     Option<int>::some(2)
+  //         .and_then([&](int&&) { return Option<And>::some(And(3)); })
+  //         .unwrap();
+  // static_assert(cx.i == 3, "");
+  // constexpr int ci = 2;
+  // constexpr auto icx =
+  //     Option<const int&>::some(ci)
+  //         .and_then([&](const int&) { return Option<And>::some(And(3)); })
+  //         .unwrap();
+  // static_assert(icx.i == 3, "");
 }
 
 TEST(Option, Or) {
@@ -963,12 +979,14 @@ TEST(Option, OrElse) {
   IS_NONE(iny);
   EXPECT_TRUE(called);
 
-  // Verify constexpr.
-  constexpr auto cx = Option<int>::some(2)
-                          .or_else([&]() { return Option<int>::some(3); })
-                          .unwrap();
-  static_assert(cx == 2, "");
-  // TODO: Why does this not work?
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // constexpr auto cx = Option<int>::some(2)
+  //                         .or_else([&]() { return Option<int>::some(3); })
+  //                         .unwrap();
+  // static_assert(cx == 2, "");
+  // TODO: Why does this not work? (Well, now we have disabled constexpr so it
+  // won't work.)
   // constexpr int ci2 = 2, ci3 = 3;
   // constexpr auto icx = Option<const int&>::some(ci2)
   //                         .or_else([&]() { return Option<const
@@ -1070,8 +1088,8 @@ TEST(Option, GetOrInsertDefault) {
   EXPECT_EQ(sus::move(w).unwrap().i, 3);
 
   auto y = Option<DefaultConstructible>::some(
-    sus_clang_bug_54040(DefaultConstructible{404})
-    sus_clang_bug_54040_else(DefaultConstructible(404)));
+      sus_clang_bug_54040(DefaultConstructible{404})
+          sus_clang_bug_54040_else(DefaultConstructible(404)));
   auto& ry = y.get_or_insert_default();
   static_assert(std::is_same_v<decltype(ry), DefaultConstructible&>, "");
   EXPECT_EQ(ry.i, 404);
@@ -1148,12 +1166,13 @@ TEST(Option, AsRef) {
   auto in = Option<int&>::none();
   IS_NONE(in.as_ref());
 
-  // Verify constexpr.
-  constexpr auto cx = Option<int>::some(3);
-  static_assert(cx.as_ref().unwrap() == 3, "");
-  constexpr int ci = 2;
-  constexpr auto icx = Option<int>::some(ci);
-  static_assert(icx.as_ref().unwrap() == 2, "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // constexpr auto cx = Option<int>::some(3);
+  // static_assert(cx.as_ref().unwrap() == 3, "");
+  // constexpr int ci = 2;
+  // constexpr auto icx = Option<int>::some(ci);
+  // static_assert(icx.as_ref().unwrap() == 2, "");
 }
 
 TEST(Option, UnwrapRefSome) {
@@ -1342,10 +1361,11 @@ TEST(Option, Copied) {
   EXPECT_EQ(y.as_ref().unwrap(), 2);
   EXPECT_NE(&y.as_ref().unwrap(), &i);
 
-  // Verify constexpr.
-  constexpr int ic = 2;
-  static_assert(Option<int&>::none().copied().is_none(), "");
-  static_assert(Option<const int&>::some(ic).copied().unwrap() == 2, "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // constexpr int ic = 2;
+  // static_assert(Option<int&>::none().copied().is_none(), "");
+  // static_assert(Option<const int&>::some(ic).copied().unwrap() == 2, "");
 }
 
 TEST(Option, Flatten) {
@@ -1375,13 +1395,14 @@ TEST(Option, Flatten) {
                  .unwrap(),
             &i);
 
-  // Verify constexpr.
-  static_assert(Option<Option<int>>::none().flatten().is_none(), "");
-  static_assert(
-      Option<Option<int>>::some(Option<int>::none()).flatten().is_none(), "");
-  static_assert(
-      Option<Option<int>>::some(Option<int>::some(3)).flatten().unwrap() == 3,
-      "");
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // static_assert(Option<Option<int>>::none().flatten().is_none(), "");
+  // static_assert(
+  //     Option<Option<int>>::some(Option<int>::none()).flatten().is_none(), "");
+  // static_assert(
+  //     Option<Option<int>>::some(Option<int>::some(3)).flatten().unwrap() == 3,
+  //     "");
 }
 
 TEST(Option, Iter) {
