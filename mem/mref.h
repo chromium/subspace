@@ -18,10 +18,32 @@
 
 #include <type_traits>
 
+#include "mem/relocate.h"
 #include "assertions/check.h"
 #include "macros/__private/compiler_bugs.h"
 
 namespace sus::mem {
+
+template <class T>
+  requires(!std::is_reference_v<T> && !std::is_array_v<T>)
+struct Mref;
+
+/// Pass a variable to a function as a mutable reference.
+template <class T>
+constexpr inline Mref<T> mref(T& t) {
+  using Construct = Mref<T>::Construct;
+  return Mref<T>(Construct(t));
+}
+
+template <class T>
+constexpr inline Mref<T> mref(const T& t) = delete;
+
+/// An Mref can be passed along as an Mref.
+template <class T>
+constexpr inline Mref<T> mref(Mref<T>& t) {
+  using Construct = Mref<T>::Construct;
+  return Mref<T>(Construct(t.inner()));
+}
 
 /// A mutable reference receiver.
 ///
@@ -46,43 +68,8 @@ namespace sus::mem {
 /// receive_ref(mref(i));   // Explicitly pass lvalue ref.
 /// ```
 template <class T>
-class Mref;
-
-template <class T>
-  requires(!std::is_reference_v<T>)
-struct Mref<T> final {
-  static_assert(
-      std::is_reference_v<T>,
-      "The type parameter for Mref<T> must be a mutable reference: Mref<T&>");
-};
-
-template <class T>
-struct Mref<const T&> final {
-  static_assert(
-      std::is_reference_v<T> && !std::is_const_v<std::remove_reference_t<T>>,
-      "The type parameter for Mref<T> must be a mutable reference: Mref<T&>");
-};
-
-/// Pass a variable to a function as a mutable reference.
-template <class T>
-constexpr inline Mref<T&> mref(T& t) {
-  using Construct = Mref<T&>::Construct;
-  return Mref<T&>(Construct(t));
-}
-
-template <class T>
-constexpr inline Mref<T&> mref(const T& t) = delete;
-
-/// An Mref can be passed along as an Mref.
-template <class T>
-constexpr inline Mref<T> mref(Mref<T>& t) {
-  using Construct = Mref<T&>::Construct;
-  return Mref<T>(Construct(t.inner()));
-}
-
-template <class T>
-  requires(!std::is_array_v<T>)
-struct Mref<T&> final {
+  requires(!std::is_reference_v<T> && !std::is_array_v<T>)
+struct [[sus_trivial_abi]] Mref final {
   constexpr Mref(Mref&&) noexcept = default;
   constexpr Mref& operator=(Mref&&) noexcept = default;
 
@@ -114,16 +101,17 @@ struct Mref<T&> final {
  private:
   struct Construct final {
     sus_clang_bug_54040(constexpr inline Construct(T& reference)
-                        : reference(reference){})
-    T& reference;
+                        : reference(reference){}) T& reference;
   };
 
-  friend constexpr Mref<T&> mref<>(T&);
-  friend constexpr Mref<T&> mref<>(Mref&);
+  friend constexpr Mref<T> mref<>(T&);
+  friend constexpr Mref<T> mref<>(Mref&);
 
   constexpr inline Mref(Construct c) noexcept : t_(c.reference) {}
 
   T& t_;
+
+  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(t_));
 };
 
 }  // namespace sus::mem

@@ -29,7 +29,7 @@ namespace sus::mem {
 template <class T>
   requires(std::is_move_constructible_v<T> &&
            std::is_default_constructible_v<T> && std::is_final_v<T>)
-inline constexpr T take(Mref<T&> t_ref) noexcept {
+inline constexpr T take(Mref<T> t_ref) noexcept {
   T& t = t_ref;
   T taken(static_cast<T&&>(t));
   t.~T();
@@ -43,7 +43,7 @@ inline constexpr T take(Mref<T&> t_ref) noexcept {
 template <class T>
   requires std::is_move_constructible_v<T>
 inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
-                                     Mref<T&> t_ref) noexcept {
+                                     Mref<T> t_ref) noexcept {
   T& t = t_ref;
   T taken(static_cast<T&&>(t));
   t.~T();

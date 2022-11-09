@@ -21,18 +21,18 @@ namespace {
 using sus::Mref;
 
 // Require conversion through mref().
-static_assert(!std::is_convertible_v<Mref<int&>, int&>, "");
+static_assert(!std::is_convertible_v<Mref<int>, int&>, "");
 static_assert(
-    std::is_convertible_v<Mref<int&>, decltype(mref(std::declval<int&>()))>,
+    std::is_convertible_v<Mref<int>, decltype(mref(std::declval<int&>()))>,
     "");
 
 // Require conversion through mref() even if you have an Mref already.
-static_assert(!std::is_convertible_v<Mref<int&>, Mref<int&>&>, "");
+static_assert(!std::is_convertible_v<Mref<int>, Mref<int>&>, "");
 static_assert(std::is_convertible_v<
-                  Mref<int&>, decltype(mref(std::declval<Mref<int&>&>()))>,
+                  Mref<int>, decltype(mref(std::declval<Mref<int>&>()))>,
               "");
 
-void increment(Mref<int&> i) { ++i; }
+void increment(Mref<int> i) { ++i; }
 
 TEST(Mref, Pass) {
   int i = 0;
@@ -41,7 +41,7 @@ TEST(Mref, Pass) {
 }
 
 TEST(Mref, PassMref) {
-  auto f = [](Mref<int&> i) { increment(mref(i)); };
+  auto f = [](Mref<int> i) { increment(mref(i)); };
   int i = 0;
   f(mref(i));
   EXPECT_EQ(i, 1);
@@ -49,7 +49,7 @@ TEST(Mref, PassMref) {
 
 TEST(Mref, Convertible) {
   int i = 3;
-  Mref<int&> m = mref(i);
+  Mref<int> m = mref(i);
   int& j = m;
   j++;  // Increments `i` too.
   EXPECT_EQ(i, 4);
@@ -57,7 +57,7 @@ TEST(Mref, Convertible) {
 
 TEST(Mref, AssignConstRef) {
   int i = 3;
-  Mref<int&> m = mref(i);
+  Mref<int> m = mref(i);
   int j = 4;
   m = j;
   EXPECT_EQ(i, 4);
@@ -65,7 +65,7 @@ TEST(Mref, AssignConstRef) {
 
 TEST(Mref, AssignRvalueRef) {
   int i = 3;
-  Mref<int&> m = mref(i);
+  Mref<int> m = mref(i);
   m = 4;
   EXPECT_EQ(i, 4);
 }
