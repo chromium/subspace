@@ -266,8 +266,8 @@ class Option final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr sus_assertions_nonnull_fn T expect(
-      /* TODO: string view type */ sus_assertions_nonnull_arg const char*
+  constexpr sus_nonnull_fn T expect(
+      /* TODO: string view type */ sus_nonnull_arg const char*
           msg) && noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
@@ -280,8 +280,8 @@ class Option final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr sus_assertions_nonnull_fn const T& expect_ref(
-      /* TODO: string view type */ sus_assertions_nonnull_arg const char* msg)
+  constexpr sus_nonnull_fn const T& expect_ref(
+      /* TODO: string view type */ sus_nonnull_arg const char* msg)
       const& noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
@@ -295,8 +295,8 @@ class Option final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr sus_assertions_nonnull_fn T& expect_mut(
-      /* TODO: string view type */ sus_assertions_nonnull_arg const char*
+  constexpr sus_nonnull_fn T& expect_mut(
+      /* TODO: string view type */ sus_nonnull_arg const char*
           msg) & noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
@@ -802,8 +802,8 @@ class Option<T&> final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr sus_assertions_nonnull_fn T& expect(
-      /* TODO: string view type */ sus_assertions_nonnull_arg const char*
+  constexpr sus_nonnull_fn T& expect(
+      /* TODO: string view type */ sus_nonnull_arg const char*
           msg) && noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
@@ -816,8 +816,8 @@ class Option<T&> final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr sus_assertions_nonnull_fn const T& expect_ref(
-      /* TODO: string view type */ sus_assertions_nonnull_arg const char* msg)
+  constexpr sus_nonnull_fn const T& expect_ref(
+      /* TODO: string view type */ sus_nonnull_arg const char* msg)
       const& noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
@@ -831,8 +831,8 @@ class Option<T&> final {
   ///
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
-  constexpr sus_assertions_nonnull_fn T& expect_mut(
-      /* TODO: string view type */ sus_assertions_nonnull_arg const char*
+  constexpr sus_nonnull_fn T& expect_mut(
+      /* TODO: string view type */ sus_nonnull_arg const char*
           msg) & noexcept
     requires(!std::is_const_v<T>)
   {

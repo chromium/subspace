@@ -59,7 +59,7 @@ TEST(Mref, AssignConstRef) {
   int i = 3;
   Mref<int> m = mref(i);
   int j = 4;
-  m = j;
+  m.inner() = j;
   EXPECT_EQ(i, 4);
 }
 
@@ -67,6 +67,13 @@ TEST(Mref, AssignRvalueRef) {
   int i = 3;
   Mref<int> m = mref(i);
   m = 4;
+  EXPECT_EQ(i, 4);
+}
+
+TEST(Mref, Inner) {
+  int i = 3;
+  Mref<int> m = mref(i);
+  m.inner() = 4;
   EXPECT_EQ(i, 4);
 }
 

@@ -20,7 +20,6 @@
 
 #include "macros/always_inline.h"
 #include "marker/unsafe.h"
-#include "mem/mref.h"
 
 namespace sus::mem {
 

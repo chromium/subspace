@@ -19,9 +19,9 @@
 /// Defines an attribute to place at the end of a function definition that
 /// declares all pointer arguments are not null. To actually receive null would
 /// be UB, as the compiler is free to optimize for them never being null.
-#define sus_assertions_nonnull_fn sus_if_msvc_else(, __attribute__((nonnull)))
+#define sus_nonnull_fn sus_if_msvc_else(, __attribute__((nonnull)))
 
 /// Defines an attribute to place before the type of a pointer-type function
 /// parameter that declares the pointer is not null. To actually receive null
 /// would be UB, as the compiler is free to optimize for it never being null.
-#define sus_assertions_nonnull_arg sus_if_msvc(_Notnull_)
+#define sus_nonnull_arg sus_if_msvc(_Notnull_)
