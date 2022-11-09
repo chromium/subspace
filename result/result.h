@@ -57,7 +57,7 @@ class Result final {
     return Result(WithOk, t);
   }
   /// Construct an Result that is holding the given success value.
-  static constexpr inline Result with(Mref<T&> t) noexcept
+  static constexpr inline Result with(Mref<T> t) noexcept
     requires(std::is_copy_constructible_v<T>)
   {
     return Result(WithOk, t);
@@ -76,7 +76,7 @@ class Result final {
     return Result(WithErr, e);
   }
   /// Construct an Result that is holding the given error value.
-  static constexpr inline Result with_err(Mref<E&> e) noexcept
+  static constexpr inline Result with_err(Mref<E> e) noexcept
     requires(std::is_copy_constructible_v<E>)
   {
     return Result(WithErr, e);

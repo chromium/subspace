@@ -30,7 +30,7 @@ namespace sus::mem {
 template <class T>
   requires(!std::is_array_v<T> && std::is_move_constructible_v<T> &&
            std::is_copy_assignable_v<T>)
-[[nodiscard]] constexpr T replace(Mref<T&> dest_ref, const T& src) noexcept {
+[[nodiscard]] constexpr T replace(Mref<T> dest_ref, const T& src) noexcept {
   T& dest = dest_ref;
   T old(static_cast<T&&>(dest));
 
@@ -49,7 +49,7 @@ template <class T>
 template <class T>
   requires(!std::is_array_v<T> && std::is_move_constructible_v<T> &&
            std::is_move_assignable_v<T>)
-[[nodiscard]] constexpr T replace(Mref<T&> dest_ref, T&& src) noexcept {
+[[nodiscard]] constexpr T replace(Mref<T> dest_ref, T&& src) noexcept {
   T& dest = dest_ref;
   T old(static_cast<T&&>(dest));
 
@@ -67,7 +67,7 @@ template <class T>
 
 template <class T>
   requires(!std::is_array_v<T> && std::is_copy_assignable_v<T>)
-void replace_and_discard(Mref<T&> dest_ref, const T& src) noexcept {
+void replace_and_discard(Mref<T> dest_ref, const T& src) noexcept {
   T& dest = dest_ref;
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy = ::sus::mem::relocate_one_by_memcpy<T> &&
@@ -81,7 +81,7 @@ void replace_and_discard(Mref<T&> dest_ref, const T& src) noexcept {
 
 template <class T>
   requires(!std::is_array_v<T> && std::is_move_assignable_v<T>)
-void replace_and_discard(Mref<T&> dest_ref, T&& src) noexcept {
+void replace_and_discard(Mref<T> dest_ref, T&& src) noexcept {
   T& dest = dest_ref;
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy = ::sus::mem::relocate_one_by_memcpy<T> &&
@@ -94,14 +94,14 @@ void replace_and_discard(Mref<T&> dest_ref, T&& src) noexcept {
 }
 
 template <class T>
-[[nodiscard]] constexpr T* replace_ptr(Mref<T*&> dest, T* src) noexcept {
+[[nodiscard]] constexpr T* replace_ptr(Mref<T*> dest, T* src) noexcept {
   T* old = dest;
   dest = src;
   return old;
 }
 
 template <class T>
-[[nodiscard]] constexpr const T* replace_ptr(Mref<const T*&> dest,
+[[nodiscard]] constexpr const T* replace_ptr(Mref<const T*> dest,
                                              const T* src) noexcept {
   const T* old = dest;
   dest = src;
@@ -109,7 +109,7 @@ template <class T>
 }
 
 template <class T>
-[[nodiscard]] constexpr T* replace_ptr(Mref<T*&> dest,
+[[nodiscard]] constexpr T* replace_ptr(Mref<T*> dest,
                                        decltype(nullptr)) noexcept {
   T* old = dest;
   dest = nullptr;
@@ -117,7 +117,7 @@ template <class T>
 }
 
 template <class T>
-[[nodiscard]] constexpr const T* replace_ptr(Mref<const T*&> dest,
+[[nodiscard]] constexpr const T* replace_ptr(Mref<const T*> dest,
                                              decltype(nullptr)) noexcept {
   const T* old = dest;
   dest = nullptr;

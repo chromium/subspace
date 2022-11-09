@@ -86,14 +86,14 @@ static_assert(is_some_callable_v<Option<int>, int>, "");
 static_assert(is_some_callable_v<Option<int>, const int>, "");
 static_assert(is_some_callable_v<Option<int>, int&>, "");
 static_assert(is_some_callable_v<Option<int>, int&&>, "");
-static_assert(is_some_callable_v<Option<int>, Mref<int&>>, "");
+static_assert(is_some_callable_v<Option<int>, Mref<int>>, "");
 static_assert(is_some_callable_v<Option<int>, const int&>, "");
 
 static_assert(!is_some_callable_v<Option<int&>, int>, "");
 static_assert(!is_some_callable_v<Option<int&>, const int>, "");
 static_assert(!is_some_callable_v<Option<int&>, int&>, "");
 static_assert(!is_some_callable_v<Option<int&>, int&>, "");
-static_assert(is_some_callable_v<Option<int&>, Mref<int&>>, "");
+static_assert(is_some_callable_v<Option<int&>, Mref<int>>, "");
 static_assert(!is_some_callable_v<Option<int&>, const int&>, "");
 
 TEST(Option, Construct) {
