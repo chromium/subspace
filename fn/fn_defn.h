@@ -69,6 +69,11 @@ class Fn;
 // TODO: Consider generic lambdas, it should be possible to bind them into
 // FnOnce/FnMut/Fn?
 
+// TODO: There's no way to capture an rvalue right now. Need something like
+// sus_take() but like sus_make(i, 2) to bind `i = 2`.
+
+// TODO: There's no way to capture a reference right now, sus_unsafe_ref()?
+
 /// A closure that erases the type of the internal callable object (lambda). A
 /// FnOnce may only be called a single time.
 ///
