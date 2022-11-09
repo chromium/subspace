@@ -94,7 +94,7 @@ class Fn;
 /// that don't capture state from outside the lambda, such as `[i = 2]() {
 /// return ++i; }`.
 ///
-/// Within sus_store(), a varaible name can be wrapped with a helper to capture
+/// Within sus_store(), a variable name can be wrapped with a helper to capture
 /// in different ways:
 ///
 /// - `sus_take(x)` will move `x` into the closure instead of copying it.
