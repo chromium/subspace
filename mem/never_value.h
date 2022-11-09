@@ -139,10 +139,11 @@ struct never_value_field {
 /// constructor has run and bef ore the destructor has completed. This allows
 /// querying if a class is constructed in a memory location, since the class is
 /// constructed iff the value of the field is not the never-value.
-#define sus_class_never_value_field(unsafe_fn, T, name, never_value)           \
+#define sus_class_never_value_field(unsafe_fn, T, field_name, never_value)     \
   static_assert(                                                               \
       std::same_as<decltype(unsafe_fn), const ::sus::marker::UnsafeFnMarker>); \
-  static_assert(std::is_assignable_v<decltype(name)&, decltype(never_value)>); \
+  static_assert(                                                               \
+      std::is_assignable_v<decltype(field_name)&, decltype(never_value)>);     \
   template <class>                                                             \
   friend struct ::sus::mem::never_value_field;                                 \
   template <class, bool>                                                       \
@@ -151,8 +152,8 @@ struct never_value_field {
  public:                                                                       \
   struct SusUnsafeNeverValueOverlay {                                          \
     using type = ::sus::mem::__private::SusUnsafeNeverValueOverlayImpl<        \
-        decltype(never_value), never_value, decltype(name),                    \
-        offsetof(T, name)>;                                                    \
+        decltype(never_value), never_value, decltype(field_name),              \
+        offsetof(T, field_name)>;                                              \
     static constexpr bool exists = true;                                       \
   };                                                                           \
   static_assert(true)

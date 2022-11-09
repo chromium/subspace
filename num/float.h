@@ -47,5 +47,6 @@ struct f64 final {
 _sus__float_literal(f32, ::sus::num::f32);
 _sus__float_literal(f64, ::sus::num::f64);
 
+// Promote floating point types into the top-level namespace.
 using sus::num::f32;
 using sus::num::f64;

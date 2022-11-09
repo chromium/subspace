@@ -33,12 +33,30 @@ struct IntoRef final {
     return ToType::from(static_cast<FromType&&>(from_));
   }
 
-  // Doesn't copy or move. `Into` should only be used as a temporary.
+  // Doesn't copy or move. `IntoRef` should only be used as a temporary.
   IntoRef(const IntoRef&) = delete;
   IntoRef& operator=(const IntoRef&) = delete;
 
  private:
   FromType&& from_;
+};
+
+template <class FromType, size_t N>
+struct IntoRefArray final {
+  [[nodiscard]] constexpr IntoRefArray(FromType (&from)[N]) noexcept
+      : from_(from) {}
+
+  template <::sus::construct::From<FromType (&)[N]> ToType>
+  constexpr operator ToType() && noexcept {
+    return ToType::from<N>(from_);
+  }
+
+  // Doesn't copy or move. `IntoRefArray` should only be used as a temporary.
+  IntoRefArray(const IntoRefArray&) = delete;
+  IntoRefArray& operator=(const IntoRefArray&) = delete;
+
+ private:
+  FromType (&from_)[N];
 };
 
 }  // namespace __private
@@ -63,6 +81,11 @@ template <class FromType>
   requires(std::is_trivially_move_constructible_v<FromType>)
 constexpr inline auto into(FromType& from) noexcept {
   return __private::IntoRef(static_cast<FromType&&>(from));
+}
+
+template <class FromType, size_t N>
+constexpr inline auto into(FromType (&from)[N]) noexcept {
+  return __private::IntoRefArray<FromType, N>(from);
 }
 
 template <class FromType>
