@@ -27,16 +27,14 @@ jobs:
           #    build_type: "Release", cc: "gcc", cxx: "g++"
           #  }
 
-          # Clang doesn't have good enough C++20 support to compile this library
-          # yet.
-          #- {
-          #    name: "Ubuntu Latest Clang",
-          #    artifact: "Linux-Clang.tar.xz",
-          #    os: ubuntu-latest,
-          #    build_type: "Release",
-          #    cc: "clang",
-          #    cxx: "clang++",
-          #  }
+          - {
+              name: "Ubuntu Nightly Clang",
+              artifact: "Linux-Clang.tar.xz",
+              os: ubuntu-22.04,
+              build_type: "Release",
+              cc: "clang-16",
+              cxx: "clang++-16",
+            }
 
           - {
               name: "Ubuntu Latest GCC",
@@ -63,10 +61,12 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      #- name: Install LLVM and Clang
-      #  uses: KyleMayes/install-llvm-action@v1
-      #  with:
-      #    version: "13.0"
+      - name: Install Clang
+        if: matrix.config.name == 'Ubuntu Nightly Clang'
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 16
 
       - name: Download Ninja
         id: ninja
