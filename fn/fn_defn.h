@@ -70,7 +70,7 @@ class Fn;
 // FnOnce/FnMut/Fn?
 
 // TODO: There's no way to capture an rvalue right now. Need something like
-// sus_take() but like sus_make(i, 2) to bind `i = 2`.
+// sus_take() but like sus_make(i, x.foo()) to bind `i = x.foo()`.
 
 // TODO: There's no way to capture a reference right now, sus_unsafe_ref()?
 
@@ -118,6 +118,26 @@ class Fn;
 /// int b = 2;
 /// FnOnce<void()> f = sus_bind_mut(
 ///   sus_store(sus_take(a), b), [&a, &b]() mutable { a += b; }
+/// );
+/// ```
+///
+/// Copies `a` into the closure's storage and defines a `b` from an rvalue.
+/// Since `b` isn't referred to outside the Fn it does not need to be bound.
+///
+/// ```
+/// int a = 1;
+/// FnOnce<void()> f = sus_bind_mut(
+///   sus_store(a), [&a, b = 2]() mutable { a += b; }
+/// );
+/// ```
+///
+/// TODO: There's no way to do this currently, since it won't know what to name
+/// the `x.foo()` value.
+///
+/// ```
+/// struct { int foo() { return 2; } } x;
+/// FnOnce<void()> f = sus_bind_mut(
+///   sus_store(x.foo()), [&a]() mutable { a += 1; }
 /// );
 /// ```
 ///
@@ -215,7 +235,8 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 
  private:
   sus_class_trivial_relocatable(unsafe_fn);
-  sus_class_never_value_field(unsafe_fn, FnOnce, type_, static_cast<__private::FnType>(0));
+  sus_class_never_value_field(unsafe_fn, FnOnce, type_,
+                              static_cast<__private::FnType>(0));
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
