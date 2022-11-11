@@ -50,7 +50,7 @@ struct IntoRefArray final {
 
   template <::sus::construct::From<FromType (&)[N]> ToType>
   constexpr operator ToType() && noexcept {
-    return ToType::from<N>(from_);
+    return ToType::template from<N>(from_);
   }
 
   // Doesn't copy or move. `IntoRefArray` should only be used as a temporary.

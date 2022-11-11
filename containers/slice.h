@@ -113,7 +113,7 @@ class Slice {
 
   /// Returns a const pointer to the first element in the slice.
   constexpr inline const T* as_ptr() const& noexcept {
-    check(len > 0);
+    check(len_ > 0_usize);
     return data_;
   }
   const T* as_ptr() && = delete;
@@ -122,7 +122,7 @@ class Slice {
   constexpr inline T* as_ptr_mut() & noexcept
     requires(!std::is_const_v<T>)
   {
-    check(len > 0);
+    check(len_ > 0_usize);
     return data_;
   }
 
