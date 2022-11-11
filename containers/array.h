@@ -101,9 +101,6 @@ class Array final {
   /// Returns the number of elements in the array.
   constexpr usize len() const& noexcept { return N; }
 
-  // TODO: Add index operators like slice.
-  // TODO: Make get/get_mut return Option.
-
   /// Returns a const reference to the element at index `i`.
   constexpr Option<const T&> get(usize i) const& noexcept
     requires(N > 0)
