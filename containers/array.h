@@ -112,7 +112,7 @@ class Array final {
     check(i.primitive_value < N);
     return storage_.data_[i.primitive_value];
   }
-  constexpr const T& get(usize i) && = delete;
+  constexpr Option<const T&> get(usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
   constexpr T& get_mut(usize i) & noexcept

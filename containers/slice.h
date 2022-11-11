@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <concepts>
 
 #include "assertions/check.h"
@@ -37,11 +39,13 @@ template <class T>
 class Slice {
  public:
   static constexpr inline Slice from_raw_parts(T* data, usize len) noexcept {
+    check(len <= PTRDIFF_MAX);
     return Slice(data, len);
   }
 
   // sus::construct::Into<Slice<T>, T[]> trait.
   template <size_t N>
+    requires(N <= PTRDIFF_MAX)
   static constexpr inline Slice from(T (&data)[N]) {
     return Slice(data, N);
   }
