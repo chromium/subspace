@@ -84,13 +84,17 @@ class Slice {
   }
 
   /// Returns a const pointer to the first element in the slice.
-  constexpr inline const T* as_ptr() const& noexcept { return data_; }
+  constexpr inline const T* as_ptr() const& noexcept {
+    check(len > 0);
+    return data_;
+  }
   const T* as_ptr() && = delete;
 
   /// Returns a mutable pointer to the first element in the slice.
   constexpr inline T* as_ptr_mut() & noexcept
     requires(!std::is_const_v<T>)
   {
+    check(len > 0);
     return data_;
   }
 
