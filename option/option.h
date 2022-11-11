@@ -1165,8 +1165,8 @@ class Option<T&> final {
       return T::none();
   }
 
-  /// Returns an Option<const T&> from this Option<T>, that either holds #None
-  /// or a reference to the value in this Option.
+  /// Returns an Option<const T&> from this Option<const T&> or Option<T&>, that
+  /// either holds #None or a const reference to the reference in this Option.
   Option<const T&> as_ref() const& noexcept {
     if (t_.state() == None)
       return Option<const T&>::none();
@@ -1174,9 +1174,10 @@ class Option<T&> final {
       return Option<const T&>(t_.val_.as_ref());
   }
 
-  /// Returns an Option<T&> from this Option<T>, that either holds #None or a
-  /// reference to the value in this Option.
-  Option<T&> as_mut() noexcept {
+  /// Returns an Option<T&> that is a copy of this Option<T&>.
+  Option<T&> as_mut() noexcept
+    requires(!std::is_const_v<T>)
+  {
     if (t_.state() == None)
       return Option<T&>::none();
     else
