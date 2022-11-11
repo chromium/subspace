@@ -37,7 +37,7 @@ class ArrayIterator : public IteratorBase<Item> {
 
   Option<Item> next() noexcept final {
     if (++(index_) < N) {
-      return items_.get_mut(index_).take();
+      return items_[index_].take();
     } else {
       --(index_);
       return Option<Item>::none();

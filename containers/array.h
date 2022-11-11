@@ -104,20 +104,22 @@ class Array final {
   // TODO: Make get/get_mut return Option.
 
   /// Returns a const reference to the element at index `i`.
-  constexpr const T& get(usize i) const& noexcept
+  constexpr Option<const T&> get(usize i) const& noexcept
     requires(N > 0)
   {
-    check(i.primitive_value < N);
-    return storage_.data_[i.primitive_value];
+    if (i.primitive_value >= N) [[unlikely]]
+      return Option<const T&>::none();
+    return Option<const T&>::some(storage_.data_[i.primitive_value]);
   }
-  constexpr const T& get(usize i) && = delete;
+  constexpr Option<const T&> get(usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
-  constexpr T& get_mut(usize i) & noexcept
+  constexpr Option<T&> get_mut(usize i) & noexcept
     requires(N > 0)
   {
-    check(i.primitive_value < N);
-    return storage_.data_[i.primitive_value];
+    if (i.primitive_value >= N) [[unlikely]]
+      return Option<T&>::none();
+    return Option<T&>::some(mref(storage_.data_[i.primitive_value]));
   }
 
   /// Returns a const reference to the element at index `i`.
