@@ -1215,20 +1215,20 @@ class Tuple;
     if (std::is_constant_evaluated()) {                                       \
       auto bytes = Array::with_value(uint8_t{0});                             \
       auto uval = primitive_value;                                            \
-      for (auto i = size_t{0}; i < sizeof(T); ++i) {                          \
+      for (auto i = size_t{0}; i < Bytes; ++i) {                          \
         const auto last_byte = static_cast<uint8_t>(uval & 0xff);             \
         if (sus::assertions::is_little_endian())                              \
-          bytes.get_mut(i) = last_byte;                                       \
+          bytes[i] = last_byte;                                       \
         else                                                                  \
-          bytes.get_mut(sizeof(T) - 1 - i) = last_byte;                       \
+          bytes[Bytes - 1 - i] = last_byte;                       \
         /* If T is one byte, this shift would be UB. But it's also not needed \
            since the loop will not run again. */                              \
-        if constexpr (sizeof(T) > 1) uval >>= 8u;                             \
+        if constexpr (Bytes > 1) uval >>= 8u;                             \
       }                                                                       \
       return bytes;                                                           \
     } else {                                                                  \
       auto bytes = Array::with_uninitialized(unsafe_fn);                      \
-      memcpy(bytes.as_ptr_mut(), &primitive_value, sizeof(T));                \
+      memcpy(bytes.as_ptr_mut(), &primitive_value, Bytes);                \
       return bytes;                                                           \
     }                                                                         \
   }                                                                           \
@@ -1261,11 +1261,11 @@ class Tuple;
     PrimitiveT val;                                                           \
     if (std::is_constant_evaluated()) {                                       \
       val = 0u;                                                               \
-      for (auto i = size_t{0}; i < sizeof(T); ++i) {                          \
-        val |= bytes.get(i).primitive_value << (sizeof(T) - 1 - i);           \
+      for (auto i = size_t{0}; i < Bytes; ++i) {                          \
+        val |= bytes[i].primitive_value << (Bytes - 1 - i);           \
       }                                                                       \
     } else {                                                                  \
-      memcpy(&val, bytes.as_ptr(), sizeof(T));                                \
+      memcpy(&val, bytes.as_ptr(), Bytes);                                \
     }                                                                         \
     return val;                                                               \
   }                                                                           \

@@ -40,8 +40,17 @@ struct ArrayIntoIter : public ::sus::iter::IteratorBase<Item> {
   Option<Item> next() noexcept final {
     if (next_index_.primitive_value == N) [[unlikely]]
       return Option<Item>::none();
-    return Option<Item>::some(move(array_.get_mut(
-        ::sus::mem::replace(mref(next_index_), next_index_ + 1_usize))));
+    // SAFETY: The array has a fixed size. The next_index_ is encapsulated and
+    // only changed in this class/method. The next_index_ stops incrementing
+    // when it reaches N and starts at 0, and N >= 0, so when we get here we
+    // know next_index_ is in range of the array. We use get_unchecked_mut()
+    // here because it's difficult for the compiler to make the same
+    // observations we have here, as next_index_ is a field and changes across
+    // multiple method calls.
+    Item& item = array_.get_unchecked_mut(
+        unsafe_fn,
+        ::sus::mem::replace(mref(next_index_), next_index_ + 1_usize));
+    return Option<Item>::some(move(item));
   }
 
  protected:
