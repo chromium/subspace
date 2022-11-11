@@ -152,4 +152,14 @@ TEST(Slice, IntoIter) {
   }
 }
 
+TEST(Slice, ImplicitIter) {
+  const usize ar[] = {1u, 2u, 3u};
+  auto slice = Slice<const usize>::from(ar);
+  auto sum = 0_usize;
+  for (const usize& i : slice) {
+    sum += i;
+  }
+  EXPECT_EQ(sum, 6_usize);
+}
+
 }  // namespace
