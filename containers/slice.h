@@ -78,12 +78,12 @@ class Slice {
   /// The index `i` must be inside the bounds of the slice or Undefined
   /// Behaviour results. The size of the slice must therefore also be larger
   /// than 0.
-  constexpr const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                   usize i) const& noexcept {
+  constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
+                                          usize i) const& noexcept {
     return data_[i.primitive_value];
   }
-  constexpr const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                   usize i) && = delete;
+  constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
+                                          usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
   ///
@@ -91,18 +91,18 @@ class Slice {
   /// The index `i` must be inside the bounds of the slice or Undefined
   /// Behaviour results. The size of the slice must therefore also be larger
   /// than 0.
-  constexpr T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
-                                 usize i) & noexcept
+  constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
+                                        usize i) & noexcept
     requires(!std::is_const_v<T>)
   {
     return data_[i.primitive_value];
   }
 
-  constexpr const T& operator[](usize i) const& noexcept {
+  constexpr inline const T& operator[](usize i) const& noexcept {
     check(i < len_);
     return data_[i.primitive_value];
   }
-  constexpr const T& operator[](usize i) && = delete;
+  constexpr inline const T& operator[](usize i) && = delete;
 
   constexpr T& operator[](usize i) & noexcept
     requires(!std::is_const_v<T>)
@@ -112,14 +112,14 @@ class Slice {
   }
 
   /// Returns a const pointer to the first element in the slice.
-  constexpr inline const T* as_ptr() const& noexcept {
+  inline const T* as_ptr() const& noexcept {
     check(len_ > 0_usize);
     return data_;
   }
-  const T* as_ptr() && = delete;
+  inline const T* as_ptr() && = delete;
 
   /// Returns a mutable pointer to the first element in the slice.
-  constexpr inline T* as_mut_ptr() & noexcept
+  inline T* as_mut_ptr() & noexcept
     requires(!std::is_const_v<T>)
   {
     check(len_ > 0_usize);
@@ -129,14 +129,14 @@ class Slice {
   /// Returns an iterator over all the elements in the slice, visited in the
   /// same order they appear in the slice. The iterator gives const access to
   /// each element.
-  ::sus::iter::Iterator<SliceIter<T>> iter() const& noexcept {
+  constexpr ::sus::iter::Iterator<SliceIter<T>> iter() const& noexcept {
     return SliceIter<T>::with(data_, len_);
   }
 
   /// Returns an iterator over all the elements in the slice, visited in the
   /// same order they appear in the slice. The iterator gives mutable access to
   /// each element.
-  ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() noexcept
+  constexpr ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() noexcept
     requires(!std::is_const_v<T>)
   {
     return SliceIterMut<T>::with(data_, len_);
@@ -147,12 +147,12 @@ class Slice {
   ///
   /// For a Slice<const T> the iterator will return `const T&`. For a Slice<T>
   /// the iterator will return `T&`.
-  ::sus::iter::Iterator<SliceIter<T>> into_iter() && noexcept
+  constexpr ::sus::iter::Iterator<SliceIter<T>> into_iter() && noexcept
     requires(std::is_const_v<T>)
   {
     return SliceIter<T>::with(data_, len_);
   }
-  ::sus::iter::Iterator<SliceIterMut<T>> into_iter() && noexcept
+  constexpr ::sus::iter::Iterator<SliceIterMut<T>> into_iter() && noexcept
     requires(!std::is_const_v<T>)
   {
     return SliceIterMut<T>::with(data_, len_);
