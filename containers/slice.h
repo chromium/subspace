@@ -173,6 +173,7 @@ using ::sus::iter::__private::end;
 
 }  // namespace sus::containers
 
+// Promote Slice into the `sus` namespace.
 namespace sus {
 using ::sus::containers::Slice;
 }

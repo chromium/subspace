@@ -376,4 +376,18 @@ TEST(ArrayDeathTest, Index) {
 #endif
 }
 
+TEST(Array, AsRef) {
+  auto x = [](sus::Slice<const i32>) {};
+  const auto ac = Array<i32, 3>::with_value(2);
+  auto am = Array<i32, 3>::with_value(2);
+  x(ac.as_ref());
+  x(am.as_ref());
+}
+
+TEST(Array, AsMut) {
+  auto x = [](sus::Slice<i32>) {};
+  auto am = Array<i32, 3>::with_value(2);
+  x(am.as_mut());
+}
+
 }  // namespace

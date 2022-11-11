@@ -23,6 +23,7 @@
 #include "assertions/check.h"
 #include "construct/make_default.h"
 #include "containers/array_iter.h"
+#include "containers/slice.h"
 #include "containers/slice_iter.h"
 #include "fn/callable.h"
 #include "fn/fn_defn.h"
@@ -174,6 +175,17 @@ class Array final {
     return storage_.data_;
   }
 
+  // Returns a slice that references all the elements of the array as const
+  // references.
+  Slice<const T> as_ref() const& noexcept {
+    return Slice<const T>::from(storage_.data_);
+  }
+  Slice<const T> as_ref() && = delete;
+
+  // Returns a slice that references all the elements of the array as mutable
+  // references.
+  Slice<T> as_mut() & noexcept { return Slice<T>::from(storage_.data_); }
+
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
@@ -312,6 +324,7 @@ using ::sus::iter::__private::end;
 
 }  // namespace sus::containers
 
+// Promote Array into the `sus` namespace.
 namespace sus {
-using containers::Array;
+using ::sus::containers::Array;
 }
