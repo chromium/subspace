@@ -166,6 +166,23 @@ TEST(Array, Get) {
   }
 }
 
+TEST(Array, GetUnchecked) {
+  {
+    constexpr auto r = []() constexpr {
+      constexpr auto a =
+          Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+      return a.get_unchecked(unsafe_fn, 2_usize);
+    }
+    ();
+    static_assert(std::same_as<decltype(r), const int>);
+    EXPECT_EQ(3, r);
+  }
+  {
+    auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+    EXPECT_EQ(3, a.get_unchecked(unsafe_fn, 2_usize));
+  }
+}
+
 TEST(Array, GetMut) {
   {
     constexpr auto a = []() constexpr {
@@ -180,6 +197,24 @@ TEST(Array, GetMut) {
   {
     auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
     a.get_mut(0_usize) = 101;
+    EXPECT_EQ(a.get(0_usize), 101);
+  }
+}
+
+TEST(Array, GetUncheckedMut) {
+  {
+    constexpr auto a = []() constexpr {
+      auto a =
+          Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+      a.get_unchecked_mut(unsafe_fn, 0_usize) = 101;
+      return a;
+    }
+    ();
+    EXPECT_EQ(a.get(0_usize), 101);
+  }
+  {
+    auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+    a.get_unchecked_mut(unsafe_fn, 0_usize) = 101;
     EXPECT_EQ(a.get(0_usize), 101);
   }
 }
