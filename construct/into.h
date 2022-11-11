@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 #include <concepts>
 #include <type_traits>
 
