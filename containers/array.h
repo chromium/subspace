@@ -23,6 +23,7 @@
 #include "assertions/check.h"
 #include "construct/make_default.h"
 #include "containers/array_iter.h"
+#include "containers/slice_iter.h"
 #include "fn/callable.h"
 #include "fn/fn_defn.h"
 #include "marker/unsafe.h"
@@ -139,16 +140,16 @@ class Array final {
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
-  ::sus::iter::Iterator<ArrayIter<T, N>> iter() const& noexcept {
-    return ArrayIter<T, N>::with(*this);
+  ::sus::iter::Iterator<SliceIter<T>> iter() const& noexcept {
+    return SliceIter<T>::with(storage_.data_, N);
   }
-  ::sus::iter::Iterator<ArrayIter<T, N>> iter() && = delete;
+  ::sus::iter::Iterator<SliceIter<T>> iter() && = delete;
 
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives mutable access to
   /// each element.
-  ::sus::iter::Iterator<ArrayIterMut<T, N>> iter_mut() & noexcept {
-    return ArrayIterMut<T, N>::with(*this);
+  ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() & noexcept {
+    return SliceIterMut<T>::with(storage_.data_, N);
   }
 
   /// Converts the array into an iterator that consumes the array and returns

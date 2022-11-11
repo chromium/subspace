@@ -33,8 +33,8 @@ class Slice;
 template <class Item>
 struct SliceIter : public ::sus::iter::IteratorBase<const Item&> {
  public:
-  static constexpr auto with(const Slice<Item>& slice) noexcept {
-    return ::sus::iter::Iterator<SliceIter>(slice);
+  static constexpr auto with(const Item* start, usize len) noexcept {
+    return ::sus::iter::Iterator<SliceIter>(start, len);
   }
 
   Option<const Item&> next() noexcept final {
@@ -47,8 +47,8 @@ struct SliceIter : public ::sus::iter::IteratorBase<const Item&> {
   }
 
  protected:
-  constexpr SliceIter(const Slice<Item>& slice) noexcept
-      : ptr_(slice.as_ptr()), end_(ptr_ + slice.len()) {
+  constexpr SliceIter(const Item* start, usize len) noexcept
+      : ptr_(start), end_(start + len) {
     check(end_ > ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
@@ -60,8 +60,8 @@ struct SliceIter : public ::sus::iter::IteratorBase<const Item&> {
 template <class Item>
 struct SliceIterMut : public ::sus::iter::IteratorBase<Item&> {
  public:
-  static constexpr auto with(Slice<Item>& slice) noexcept {
-    return ::sus::iter::Iterator<SliceIterMut>(slice);
+  static constexpr auto with(Item* start, usize len) noexcept {
+    return ::sus::iter::Iterator<SliceIterMut>(start, len);
   }
 
   Option<Item&> next() noexcept final {
@@ -73,8 +73,8 @@ struct SliceIterMut : public ::sus::iter::IteratorBase<Item&> {
   }
 
  protected:
-  constexpr SliceIterMut(Slice<Item>& slice) noexcept
-      : ptr_(slice.as_ptr_mut()), end_(ptr_ + slice.len()) {
+  constexpr SliceIterMut(Item* start, usize len) noexcept
+      : ptr_(start), end_(start + len) {
     check(end_ > ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 

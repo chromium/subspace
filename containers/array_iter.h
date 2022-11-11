@@ -30,50 +30,6 @@ template <class T, size_t N>
 class Array;
 
 template <class Item, size_t N>
-struct ArrayIter : public ::sus::iter::IteratorBase<const Item&> {
- public:
-  static constexpr auto with(const Array<Item, N>& array) noexcept {
-    return ::sus::iter::Iterator<ArrayIter>(array);
-  }
-
-  Option<const Item&> next() noexcept final {
-    if (next_index_.primitive_value == N) [[unlikely]]
-      return Option<const Item&>::none();
-    return Option<const Item&>::some(array_.get(
-        ::sus::mem::replace(mref(next_index_), next_index_ + 1_usize)));
-  }
-
- protected:
-  ArrayIter(const Array<Item, N>& array) noexcept : array_(array) {}
-
- private:
-  usize next_index_ = 0_usize;
-  const Array<Item, N>& array_;
-};
-
-template <class Item, size_t N>
-struct ArrayIterMut : public ::sus::iter::IteratorBase<Item&> {
- public:
-  static constexpr auto with(Array<Item, N>& array) noexcept {
-    return ::sus::iter::Iterator<ArrayIterMut>(array);
-  }
-
-  Option<Item&> next() noexcept final {
-    if (next_index_.primitive_value == N) [[unlikely]]
-      return Option<Item&>::none();
-    return Option<Item&>::some(mref(array_.get_mut(
-        ::sus::mem::replace(mref(next_index_), next_index_ + 1_usize))));
-  }
-
- protected:
-  ArrayIterMut(Array<Item, N>& array) noexcept : array_(array) {}
-
- private:
-  usize next_index_ = 0_usize;
-  Array<Item, N>& array_;
-};
-
-template <class Item, size_t N>
   requires(std::is_move_constructible_v<Item>)
 struct ArrayIntoIter : public ::sus::iter::IteratorBase<Item> {
  public:

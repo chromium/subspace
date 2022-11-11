@@ -94,17 +94,16 @@ class Slice {
   /// same order they appear in the slice. The iterator gives const access to
   /// each element.
   ::sus::iter::Iterator<SliceIter<T>> iter() const& noexcept {
-    return SliceIter<T>::with(*this);
+    return SliceIter<T>::with(data_, len_);
   }
-  ::sus::iter::Iterator<SliceIter<T>> iter() && = delete;
 
   /// Returns an iterator over all the elements in the slice, visited in the
   /// same order they appear in the slice. The iterator gives mutable access to
   /// each element.
-  ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() & noexcept
+  ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() noexcept
     requires(!std::is_const_v<T>)
   {
-    return SliceIterMut<T>::with(*this);
+    return SliceIterMut<T>::with(data_, len_);
   }
 
   /// Converts the slice into an iterator that consumes the slice and returns
@@ -115,12 +114,12 @@ class Slice {
   ::sus::iter::Iterator<SliceIter<T>> into_iter() && noexcept
     requires(std::is_const_v<T>)
   {
-    return SliceIter<T>::with(*this);
+    return SliceIter<T>::with(data_, len_);
   }
   ::sus::iter::Iterator<SliceIterMut<T>> into_iter() && noexcept
     requires(!std::is_const_v<T>)
   {
-    return SliceIterMut<T>::with(*this);
+    return SliceIterMut<T>::with(data_, len_);
   }
 
   /// Converts the slice into an iterator that consumes the slice and returns
