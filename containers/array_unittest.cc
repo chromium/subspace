@@ -306,4 +306,24 @@ TEST(Array, Map) {
   EXPECT_EQ(a2, (Array<u32, 3>::with_values(4_u32, 5_u32, 6_u32)));
 }
 
+TEST(Array, Index) {
+  const auto ac = Array<i32, 3>::with_values(1, 2, 3);
+  auto am = Array<i32, 3>::with_values(1, 2, 3);
+
+  EXPECT_EQ(ac[0_usize], 1_i32);
+  EXPECT_EQ(ac[2_usize], 3_i32);
+  EXPECT_EQ(am[0_usize], 1_i32);
+  EXPECT_EQ(am[2_usize], 3_i32);
+}
+
+TEST(ArrayDeathTest, Index) {
+  const auto ac = Array<i32, 3>::with_values(1, 2, 3);
+  auto am = Array<i32, 3>::with_values(1, 2, 3);
+
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(ac[3_usize], "");
+  EXPECT_DEATH(am[3_usize], "");
+#endif
+}
+
 }  // namespace
