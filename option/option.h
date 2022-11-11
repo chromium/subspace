@@ -296,8 +296,7 @@ class Option final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr sus_nonnull_fn T& expect_mut(
-      /* TODO: string view type */ sus_nonnull_arg const char*
-          msg) & noexcept {
+      /* TODO: string view type */ sus_nonnull_arg const char* msg) & noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
     return t_.val_;
@@ -745,8 +744,7 @@ class Option<T&> final {
   }
 
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(
-      Mref<std::remove_const_t<T>> t) noexcept {
+  static inline constexpr Option some(Mref<std::remove_const_t<T>> t) noexcept {
     return Option(t);
   }
 
@@ -831,8 +829,7 @@ class Option<T&> final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr sus_nonnull_fn T& expect_mut(
-      /* TODO: string view type */ sus_nonnull_arg const char*
-          msg) noexcept
+      /* TODO: string view type */ sus_nonnull_arg const char* msg) noexcept
     requires(!std::is_const_v<T>)
   {
     if (!std::is_constant_evaluated())
