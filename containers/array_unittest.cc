@@ -183,6 +183,13 @@ TEST(Array, GetUnchecked) {
   }
 }
 
+template <class T, class U>
+concept HasGetMut = requires(T t, U u) { t.get_mut(u); };
+
+// get_mut() is only available for mutable arrays.
+static_assert(!HasGetMut<const Array<i32, 3>, usize>);
+static_assert(HasGetMut<Array<i32, 3>, usize>);
+
 TEST(Array, GetMut) {
   {
     constexpr auto a = []() constexpr {
@@ -200,6 +207,14 @@ TEST(Array, GetMut) {
     EXPECT_EQ(a[0_usize], 101);
   }
 }
+
+template <class T, class U>
+concept HasGetUncheckedMut =
+    requires(T t, U u) { t.get_unchecked_mut(unsafe_fn, u); };
+
+// get_unchecked_mut() is only available for mutable arrays.
+static_assert(!HasGetUncheckedMut<const Array<i32, 3>, usize>);
+static_assert(HasGetUncheckedMut<Array<i32, 3>, usize>);
 
 TEST(Array, GetUncheckedMut) {
   {

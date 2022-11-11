@@ -45,18 +45,50 @@ TEST(Slice, Get) {
 template <class T, class U>
 concept HasGetMut = requires(T t, U u) { t.get_mut(u); };
 
+// get_mut() is only available for mutable slices of mutable types.
+static_assert(!HasGetMut<Slice<const i32>, usize>);
+static_assert(HasGetMut<Slice<i32>, usize>);
+static_assert(!HasGetMut<const Slice<const i32>, usize>);
+static_assert(!HasGetMut<const Slice<i32>, usize>);
+
 TEST(Slice, GetMut) {
   i32 a[] = {1, 2, 3};
   auto sc = Slice<const i32>::from_raw_parts(a, 3_usize);
   auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
 
-  // get_mut() is only available for slices of mutable types.
-  static_assert(!HasGetMut<decltype(sc), usize>);
-  static_assert(HasGetMut<decltype(sm), usize>);
-
   EXPECT_EQ(sm.get_mut(1_usize).unwrap(), 2_i32);
   EXPECT_EQ(sm.get_mut(2_usize).unwrap(), 3_i32);
   EXPECT_EQ(sm.get_mut(3_usize), sus::None);
+}
+
+TEST(Slice, GetUnchecked) {
+  i32 a[] = {1, 2, 3};
+  auto s = Slice<const i32>::from_raw_parts(a, 3_usize);
+  EXPECT_EQ(s.get_unchecked(unsafe_fn, 1_usize), 2_i32);
+  EXPECT_EQ(s.get_unchecked(unsafe_fn, 2_usize), 3_i32);
+
+  auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
+  EXPECT_EQ(sm.get_unchecked(unsafe_fn, 1_usize), 2_i32);
+  EXPECT_EQ(sm.get_unchecked(unsafe_fn, 2_usize), 3_i32);
+}
+
+template <class T, class U>
+concept HasGetUncheckedMut =
+    requires(T t, U u) { t.get_unchecked_mut(unsafe_fn, u); };
+
+// get_unchecked_mut() is only available for mutable slices of mutable types.
+static_assert(!HasGetUncheckedMut<Slice<const i32>, usize>);
+static_assert(HasGetUncheckedMut<Slice<i32>, usize>);
+static_assert(!HasGetUncheckedMut<const Slice<const i32>, usize>);
+static_assert(!HasGetUncheckedMut<const Slice<i32>, usize>);
+
+TEST(Slice, GetMutUnchecked) {
+  i32 a[] = {1, 2, 3};
+  auto sc = Slice<const i32>::from_raw_parts(a, 3_usize);
+  auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
+
+  EXPECT_EQ(sm.get_unchecked_mut(unsafe_fn, 1_usize), 2_i32);
+  EXPECT_EQ(sm.get_unchecked_mut(unsafe_fn, 2_usize), 3_i32);
 }
 
 TEST(Slice, Into) {

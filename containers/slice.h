@@ -72,13 +72,41 @@ class Slice {
       return Option<T&>::none();
   }
 
+  /// Returns a const reference to the element at index `i`.
+  ///
+  /// # Safety
+  /// The index `i` must be inside the bounds of the slice or Undefined
+  /// Behaviour results. The size of the slice must therefore also be larger
+  /// than 0.
+  constexpr const T& get_unchecked(::sus::marker::UnsafeFnMarker,
+                                   usize i) const& noexcept {
+    return data_[i.primitive_value];
+  }
+  constexpr const T& get_unchecked(::sus::marker::UnsafeFnMarker,
+                                   usize i) && = delete;
+
+  /// Returns a mutable reference to the element at index `i`.
+  ///
+  /// # Safety
+  /// The index `i` must be inside the bounds of the slice or Undefined
+  /// Behaviour results. The size of the slice must therefore also be larger
+  /// than 0.
+  constexpr T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
+                                 usize i) & noexcept
+    requires(!std::is_const_v<T>)
+  {
+    return data_[i.primitive_value];
+  }
+
   constexpr const T& operator[](usize i) const& noexcept {
     check(i < len_);
     return data_[i.primitive_value];
   }
   constexpr const T& operator[](usize i) && = delete;
 
-  constexpr T& operator[](usize i) & noexcept {
+  constexpr T& operator[](usize i) & noexcept
+    requires(!std::is_const_v<T>)
+  {
     check(i < len_);
     return data_[i.primitive_value];
   }
@@ -129,12 +157,6 @@ class Slice {
   {
     return SliceIterMut<T>::with(data_, len_);
   }
-
-  /// Converts the slice into an iterator that consumes the slice and returns
-  /// each element in the same order they appear in the slice.
-  //::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && noexcept {
-  //  return ArrayIntoIter<T, N>::with(static_cast<Array&&>(*this));
-  //}
 
  private:
   constexpr Slice(T* data, usize len) noexcept : data_(data), len_(len) {}

@@ -123,6 +123,10 @@ class Array final {
   }
 
   /// Returns a const reference to the element at index `i`.
+  ///
+  /// # Safety
+  /// The index `i` must be inside the bounds of the array or Undefined
+  /// Behaviour results.
   constexpr const T& get_unchecked(::sus::marker::UnsafeFnMarker,
                                    usize i) const& noexcept
     requires(N > 0)
@@ -133,6 +137,10 @@ class Array final {
                                    usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
+  ///
+  /// # Safety
+  /// The index `i` must be inside the bounds of the array or Undefined
+  /// Behaviour results.
   constexpr T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
                                  usize i) & noexcept
     requires(N > 0)
