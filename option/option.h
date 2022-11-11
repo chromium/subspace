@@ -823,7 +823,6 @@ class Option<T&> final {
       ::sus::check_with_message(t_.state() == Some, *msg);
     return t_.val_.as_ref();
   }
-  const T& expect_ref() && noexcept = delete;
 
   /// Returns a mutable reference to the contained value inside the Option.
   ///
@@ -833,7 +832,7 @@ class Option<T&> final {
   /// currently `None`.
   constexpr sus_nonnull_fn T& expect_mut(
       /* TODO: string view type */ sus_nonnull_arg const char*
-          msg) & noexcept
+          msg) noexcept
     requires(!std::is_const_v<T>)
   {
     if (!std::is_constant_evaluated())
@@ -873,7 +872,6 @@ class Option<T&> final {
     if (!std::is_constant_evaluated()) ::sus::check(t_.state() == Some);
     return t_.val_.as_ref();
   }
-  const T& unwrap_ref() && noexcept = delete;
 
   /// Returns a mutable reference to the contained value inside the Option.
   ///
@@ -881,7 +879,7 @@ class Option<T&> final {
   ///
   /// The function will panic without a message if the Option's state is
   /// currently `None`.
-  constexpr T& unwrap_mut() & noexcept
+  constexpr T& unwrap_mut() noexcept
     requires(!std::is_const_v<T>)
   {
     if (!std::is_constant_evaluated()) ::sus::check(t_.state() == Some);
@@ -916,7 +914,7 @@ class Option<T&> final {
 
   /// Stores the value `t` inside this Option, replacing any previous value, and
   /// returns a mutable reference to the new value.
-  T& insert(T& t) & noexcept {
+  T& insert(T& t) noexcept {
     t_.set_some(StoragePointer(t));
     return t_.val_.as_mut();
   }
@@ -924,7 +922,7 @@ class Option<T&> final {
   /// If the Option holds a value, returns a mutable reference to it. Otherwise,
   /// stores `t` inside the Option and returns a mutable reference to the new
   /// value.
-  T& get_or_insert(T& t) & noexcept {
+  T& get_or_insert(T& t) noexcept {
     if (t_.state() == None) t_.construct_from_none(StoragePointer(t));
     return t_.val_.as_mut();
   }
@@ -937,7 +935,7 @@ class Option<T&> final {
   /// the Option, and instead it can not be called on rvalues.
   template <class WithFn>
     requires(std::is_same_v<std::invoke_result_t<WithFn>, T&>)
-  T& get_or_insert_with(WithFn f) & noexcept {
+  T& get_or_insert_with(WithFn f) noexcept {
     if (t_.state() == None) t_.construct_from_none(StoragePointer(f()));
     return t_.val_.as_mut();
   }
@@ -948,7 +946,7 @@ class Option<T&> final {
   /// Option containing #None. If this Option contains #Some with a value, the
   /// value is moved into the returned Option and this Option will contain #None
   /// afterward.
-  Option take() & noexcept {
+  Option take() noexcept {
     if (t_.state() == Some)
       return Option(get_ref(t_.take_and_set_none()));
     else
@@ -1140,7 +1138,7 @@ class Option<T&> final {
 
   /// Replaces whatever the Option is currently holding with #Some value `t` and
   /// returns an Option holding what was there previously.
-  Option replace(T& t) & noexcept {
+  Option replace(T& t) noexcept {
     if (t_.state() == None) {
       t_.construct_from_none(StoragePointer(t));
       return Option::none();
@@ -1178,11 +1176,10 @@ class Option<T&> final {
     else
       return Option<const T&>(t_.val_.as_ref());
   }
-  Option<const T&> as_ref() && noexcept = delete;
 
   /// Returns an Option<T&> from this Option<T>, that either holds #None or a
   /// reference to the value in this Option.
-  Option<T&> as_mut() & noexcept {
+  Option<T&> as_mut() noexcept {
     if (t_.state() == None)
       return Option<T&>::none();
     else
@@ -1192,9 +1189,8 @@ class Option<T&> final {
   Iterator<Once<const T&>> iter() const& noexcept {
     return Iterator<Once<const T&>>(as_ref());
   }
-  Iterator<Once<const T&>> iter() const&& = delete;
 
-  Iterator<Once<T&>> iter_mut() & noexcept
+  Iterator<Once<T&>> iter_mut() noexcept
     requires(!std::is_const_v<T>)
   {
     return Iterator<Once<T&>>(as_mut());

@@ -93,9 +93,24 @@ This library is an experiment and not intended for use. See the
     * No default parameters, as they are a form of overloading.
     * Constructors (public copy/move, or private constructors) and assignment
       operators are the exception for overloads.
-1. Functions that return a reference are lvalue-reference-qualified (with `&` or
-   `const&`). If they are `const&`-qualified, then `=delete` the `&&` override
-   to avoid const rvalues from using the method.
+1. There are two types of Objects (or methods on a mixed-type Object). Owning
+   types, which give access to data they own and reference types that share the
+   reference they hold.
+    * For Owning types: Methods that return a reference are
+      lvalue-reference-qualified (with `&` or `const&`). If they are
+      `const&`-qualified, then `=delete` the `&&` override to avoid rvalues
+      returning references to what they own.
+    * For Owning types: When the inner type is a template variable, disallow
+      const on the inner type. The const on the Owning type will apply
+      transitively to the owned inner type.
+    * For Reference types: Methods that return a `const&` are `const&` qualified
+      without deleting the `&&` override. Mutable methods, including those that
+      return a `&` are unqualified or `&&-qualified` (non-const, but not
+      `&`-qualified in order to allow rvalues).
+    * For Reference types: When the inner type is a template variable, allow
+      const on the inner type. The const on the Owning type is unable to be
+      transferred to the inner type, i.e. a const ref<T> can be copied or moved
+      to a non-const ref<T>.
 1. Bounds are always checked unless you explicitly ask for them to not be.
 1. Lifetimes are always checked unless you explicitly ask for them to not be.
 1. Small headers. C++ compilation speed is proportional to the amount of input.
