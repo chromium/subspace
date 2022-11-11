@@ -48,10 +48,6 @@ struct Storage<T, 0> final {};
 
 }  // namespace __private
 
-template <class T, size_t N>
-  requires(N <= PTRDIFF_MAX)
-class Array;
-
 /// A container of objects of type T, with a fixed size N.
 ///
 /// An Array can not be larger than PTRDIFF_MAX, as subtracting a pointer at a
@@ -59,6 +55,8 @@ class Array;
 template <class T, size_t N>
   requires(N <= PTRDIFF_MAX)
 class Array final {
+  static_assert(!std::is_const_v<T>);
+
  public:
   constexpr static Array with_default() noexcept
     requires(::sus::construct::MakeDefault<T>)
@@ -112,13 +110,42 @@ class Array final {
     check(i.primitive_value < N);
     return storage_.data_[i.primitive_value];
   }
-  constexpr Option<const T&> get(usize i) && = delete;
+  constexpr const T& get(usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
   constexpr T& get_mut(usize i) & noexcept
     requires(N > 0)
   {
     check(i.primitive_value < N);
+    return storage_.data_[i.primitive_value];
+  }
+
+  /// Returns a const reference to the element at index `i`.
+  constexpr const T& get_unchecked(::sus::marker::UnsafeFnMarker,
+                                   usize i) const& noexcept
+    requires(N > 0)
+  {
+    return storage_.data_[i.primitive_value];
+  }
+  constexpr const T& get_unchecked(::sus::marker::UnsafeFnMarker,
+                                   usize i) && = delete;
+
+  /// Returns a mutable reference to the element at index `i`.
+  constexpr T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
+                                 usize i) & noexcept
+    requires(N > 0)
+  {
+    return storage_.data_[i.primitive_value];
+  }
+
+  constexpr const T& operator[](usize i) const& noexcept {
+    check(i < usize{N});
+    return storage_.data_[i.primitive_value];
+  }
+  constexpr const T& operator[](usize i) && = delete;
+
+  constexpr T& operator[](usize i) & noexcept {
+    check(i < usize{N});
     return storage_.data_[i.primitive_value];
   }
 
