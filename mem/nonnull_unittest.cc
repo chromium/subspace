@@ -199,15 +199,15 @@ TEST(NonNull, AsPtr) {
 }
 
 template <class T>
-concept AsPtrMutExists = requires(T t) { t.as_ptr_mut(); };
+concept AsPtrMutExists = requires(T t) { t.as_mut_ptr(); };
 
 TEST(NonNull, AsPtrMut) {
   int i = 1;
 
   auto n1 = NonNull<int>::with(i);
-  static_assert(std::same_as<decltype(n1.as_ptr_mut()), int*>);
+  static_assert(std::same_as<decltype(n1.as_mut_ptr()), int*>);
   static_assert(AsPtrMutExists<decltype(n1)>);
-  EXPECT_EQ(&i, n1.as_ptr_mut());
+  EXPECT_EQ(&i, n1.as_mut_ptr());
 
   auto n2 = NonNull<const int>::with(i);
   static_assert(!AsPtrMutExists<decltype(n2)>);

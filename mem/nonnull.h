@@ -124,7 +124,7 @@ struct [[sus_trivial_abi]] NonNull {
   /// Returns a mutable pointer to the pointee.
   ///
   /// This method is only callable when the pointer is not const.
-  constexpr inline T* as_ptr_mut()
+  constexpr inline T* as_mut_ptr()
     requires(!std::is_const_v<T>)
   {
     return ptr_;

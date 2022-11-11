@@ -243,7 +243,7 @@ TEST(Array, AsPtr) {
 
 TEST(Array, AsPtrMut) {
   auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-  auto r = a.as_ptr_mut();
+  auto r = a.as_mut_ptr();
   static_assert(std::same_as<decltype(r), int*>);
   *(r + 2) = 101;
   EXPECT_EQ(101, *(r + 2));

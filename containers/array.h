@@ -94,7 +94,7 @@ class Array final {
     requires(sizeof...(Ts) == N)
   constexpr static Array with_values(Ts... ts) noexcept {
     auto a = Array(kWithUninitialized);
-    init_values(a.as_ptr_mut(), 0, move(ts)...);
+    init_values(a.as_mut_ptr(), 0, move(ts)...);
     return a;
   }
 
@@ -166,7 +166,7 @@ class Array final {
   const T* as_ptr() && = delete;
 
   /// Returns a mutable pointer to the first element in the array.
-  T* as_ptr_mut() & noexcept
+  T* as_mut_ptr() & noexcept
     requires(N > 0)
   {
     return storage_.data_;
