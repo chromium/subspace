@@ -158,7 +158,7 @@ class Array final {
   }
 
   /// Returns a const pointer to the first element in the array.
-  const T* as_ptr() const& noexcept
+   inline const T* as_ptr() const& noexcept
     requires(N > 0)
   {
     return storage_.data_;
@@ -166,7 +166,7 @@ class Array final {
   const T* as_ptr() && = delete;
 
   /// Returns a mutable pointer to the first element in the array.
-  T* as_mut_ptr() & noexcept
+  inline T* as_mut_ptr() & noexcept
     requires(N > 0)
   {
     return storage_.data_;
@@ -174,33 +174,33 @@ class Array final {
 
   // Returns a slice that references all the elements of the array as const
   // references.
-  Slice<const T> as_ref() const& noexcept {
+  constexpr Slice<const T> as_ref() const& noexcept {
     return Slice<const T>::from(storage_.data_);
   }
-  Slice<const T> as_ref() && = delete;
+  constexpr Slice<const T> as_ref() && = delete;
 
   // Returns a slice that references all the elements of the array as mutable
   // references.
-  Slice<T> as_mut() & noexcept { return Slice<T>::from(storage_.data_); }
+  constexpr Slice<T> as_mut() & noexcept { return Slice<T>::from(storage_.data_); }
 
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
-  ::sus::iter::Iterator<SliceIter<T>> iter() const& noexcept {
+  constexpr ::sus::iter::Iterator<SliceIter<T>> iter() const& noexcept {
     return SliceIter<T>::with(storage_.data_, N);
   }
-  ::sus::iter::Iterator<SliceIter<T>> iter() && = delete;
+  constexpr ::sus::iter::Iterator<SliceIter<T>> iter() && = delete;
 
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives mutable access to
   /// each element.
-  ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() & noexcept {
+  constexpr ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() & noexcept {
     return SliceIterMut<T>::with(storage_.data_, N);
   }
 
   /// Converts the array into an iterator that consumes the array and returns
   /// each element in the same order they appear in the array.
-  ::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && noexcept {
+  constexpr ::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && noexcept {
     return ArrayIntoIter<T, N>::with(static_cast<Array&&>(*this));
   }
 
