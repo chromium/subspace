@@ -236,7 +236,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
  private:
   sus_class_trivial_relocatable(unsafe_fn);
   sus_class_never_value_field(unsafe_fn, FnOnce, type_,
-                              std::underlying_type_t<__private::FnType>(0));
+                              static_cast<__private::FnType>(0));
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A

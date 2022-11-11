@@ -57,11 +57,10 @@ struct never_value_field_helper<T, true> {
 template <class NeverType, NeverType never_value, class FieldType, size_t N>
 struct SusUnsafeNeverValueOverlayImpl;
 
-#pragma pack(push, 1)
 template <class NeverType, NeverType never_value, class FieldType, size_t N>
 struct SusUnsafeNeverValueOverlayImpl {
   char padding[N];
-  alignas(FieldType) NeverType never_value_field;
+  FieldType never_value_field;
   constexpr inline void SusUnsafeNeverValueSetNeverValue() noexcept {
     never_value_field = never_value;
   }
@@ -69,11 +68,10 @@ struct SusUnsafeNeverValueOverlayImpl {
     return never_value_field != never_value;
   }
 };
-#pragma pack(pop)
 
 template <class NeverType, NeverType never_value, class FieldType>
 struct SusUnsafeNeverValueOverlayImpl<NeverType, never_value, FieldType, 0> {
-  alignas(FieldType) NeverType never_value_field;
+  FieldType never_value_field;
   constexpr inline void SusUnsafeNeverValueSetNeverValue() noexcept {
     never_value_field = never_value;
   }
@@ -144,12 +142,9 @@ struct never_value_field {
 #define sus_class_never_value_field(unsafe_fn, T, field_name, never_value)     \
   static_assert(                                                               \
       std::same_as<decltype(unsafe_fn), const ::sus::marker::UnsafeFnMarker>); \
-  static_assert(sizeof(never_value) == sizeof(field_name),                     \
-                "Size of the `never_value` must be the same as the field");    \
   static_assert(                                                               \
-      alignof(decltype(never_value)) <= alignof(decltype(never_value)),        \
-      "Alignment of the `never_value` must be at most the same as the "        \
-      "field");                                                                \
+      std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,      \
+      "The `never_value` must be able to be assigned to the named field.");    \
   template <class>                                                             \
   friend struct ::sus::mem::never_value_field;                                 \
   template <class, bool>                                                       \
@@ -165,8 +160,9 @@ struct never_value_field {
     the Option's internal union, after the destruction of the type T, would    \
     require placement new of the Overlay type which is not a constant          \
     expression. */                                                             \
-    static_assert(std::is_trivially_constructible_v<type>,                     \
-                  "The `never_value` must be trivially constructible or "      \
-                  "else Option<T> couldn't be constexpr.");                    \
+    static_assert(                                                             \
+        std::is_trivially_constructible_v<type>,                               \
+        "The `never_value` field must be trivially constructible or "          \
+        "else Option<T> couldn't be constexpr.");                              \
   };                                                                           \
   static_assert(true)

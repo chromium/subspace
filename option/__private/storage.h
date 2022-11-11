@@ -135,14 +135,16 @@ struct Storage<T, true> final {
   constexpr Storage(const T& t) : val_(t) {}
   constexpr Storage(T&& t) : val_(static_cast<T&&>(t)) {}
 
+  using Overlay = typename ::sus::mem::never_value_field<T>::OverlayType;
+
   union {
-    typename ::sus::mem::never_value_field<T>::OverlayType overlay_;
+    Overlay overlay_;
     T val_;
   };
   // If both `bytes_` and `val_` are standard layout, and the same size, then we
   // can access the memory of one through the other in a well-defined way:
   // https://en.cppreference.com/w/cpp/language/union
-  static_assert(std::is_standard_layout_v<typename ::sus::mem::never_value_field<T>::OverlayType>);
+  static_assert(std::is_standard_layout_v<Overlay>);
   static_assert(std::is_standard_layout_v<T>);
 
   // Not constexpr because in a constant-evalation context, the compiler will
@@ -172,12 +174,16 @@ struct Storage<T, true> final {
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
     T t = take_and_destruct(unsafe_fn, mref(val_));
+    // Make the overlay_ field active.
+    overlay_ = Overlay();
     ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, overlay_);
     return t;
   }
 
   constexpr inline void set_none() noexcept {
     val_.~T();
+    // Make the overlay_ field active.
+    overlay_ = Overlay();
     ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, overlay_);
   }
 };
