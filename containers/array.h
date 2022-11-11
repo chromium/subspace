@@ -99,7 +99,7 @@ class Array final {
   }
 
   /// Returns the number of elements in the array.
-  constexpr const usize len() const& noexcept { return N; }
+  constexpr usize len() const& noexcept { return N; }
 
   // TODO: Add index operators like slice.
   // TODO: Make get/get_mut return Option.

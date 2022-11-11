@@ -15,6 +15,7 @@
 #include "containers/slice.h"
 
 #include "construct/into.h"
+#include "iter/iterator.h"
 #include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
@@ -91,4 +92,64 @@ TEST(SliceDeathTest, Index) {
   EXPECT_DEATH(sm[3_usize], "");
 #endif
 }
+
+TEST(Slice, Iter) {
+  {
+    usize ar[] = {1u, 2u, 3u};
+    const auto slice = Slice<const usize>::from(ar);
+    auto sum = 0_usize;
+    for (const usize& i : slice.iter()) {
+      sum += i;
+    }
+    EXPECT_EQ(sum, 6_usize);
+  }
+  {
+    usize ar[] = {1u, 2u, 3u};
+    const auto mslice = Slice<usize>::from(ar);
+    auto sum = 0_usize;
+    for (const usize& i : mslice.iter()) {
+      sum += i;
+    }
+    EXPECT_EQ(sum, 6_usize);
+  }
+}
+
+TEST(Slice, IterMut) {
+  usize ar[] = {1u, 2u, 3u};
+  auto slice = Slice<usize>::from(ar);
+  auto sum = 0_usize;
+  for (usize& i : slice.iter_mut()) {
+    sum += i;
+    i += 1_usize;
+  }
+  EXPECT_EQ(sum, 6_usize);
+
+  sum = 0_usize;
+  for (const usize& i : slice.iter()) {
+    sum += i;
+  }
+  EXPECT_EQ(sum, 9_usize);
+}
+
+TEST(Slice, IntoIter) {
+  {
+    const usize ar[] = {1u, 2u, 3u};
+    auto slice = Slice<const usize>::from(ar);
+    auto sum = 0_usize;
+    for (const usize& i : sus::move(slice).into_iter()) {
+      sum += i;
+    }
+    EXPECT_EQ(sum, 6_usize);
+  }
+  {
+    usize ar[] = {1u, 2u, 3u};
+    auto slice = Slice<usize>::from(ar);
+    auto sum = 0_usize;
+    for (usize& i : sus::move(slice).into_iter()) {
+      sum += i;
+    }
+    EXPECT_EQ(sum, 6_usize);
+  }
+}
+
 }  // namespace

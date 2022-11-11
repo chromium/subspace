@@ -105,9 +105,7 @@ struct [[sus_trivial_abi]] Mref final {
   friend constexpr Mref<T> mref<>(Mref&);
 
   enum Construct { kConstruct };
-
-  constexpr inline Mref(Construct, T& reference) noexcept
-      : t_(reference) {}
+  constexpr inline Mref(Construct, T& reference) noexcept : t_(reference) {}
 
   T& t_;
 

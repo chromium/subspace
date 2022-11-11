@@ -98,6 +98,10 @@ struct usize final {
       check(val <= uint64_t{MAX_PRIMITIVE});
     }
   }
+
+  /** Converts to its primitive value implicitly, just as it can convert from a
+   * primitive value. */
+  constexpr operator decltype(primitive_value)() { return primitive_value; }
 };
 
 }  // namespace sus::num
