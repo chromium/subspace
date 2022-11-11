@@ -18,6 +18,7 @@
 
 #include "assertions/check.h"
 #include "construct/into.h"
+#include "containers/slice_iter.h"
 #include "iter/iterator_defn.h"
 #include "mem/never_value.h"
 #include "num/unsigned_integer.h"
@@ -46,7 +47,7 @@ class Slice {
   }
 
   /// Returns the number of elements in the slice.
-  constexpr inline const usize len() const& noexcept { return len_; }
+  constexpr inline usize len() const& noexcept { return len_; }
 
   /// Returns a const reference to the element at index `i`.
   constexpr Option<const T&> get(usize i) const& noexcept {
@@ -88,6 +89,45 @@ class Slice {
   {
     return data_;
   }
+
+  /// Returns an iterator over all the elements in the slice, visited in the
+  /// same order they appear in the slice. The iterator gives const access to
+  /// each element.
+  ::sus::iter::Iterator<SliceIter<T>> iter() const& noexcept {
+    return SliceIter<T>::with(*this);
+  }
+  ::sus::iter::Iterator<SliceIter<T>> iter() && = delete;
+
+  /// Returns an iterator over all the elements in the slice, visited in the
+  /// same order they appear in the slice. The iterator gives mutable access to
+  /// each element.
+  ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() & noexcept
+    requires(!std::is_const_v<T>)
+  {
+    return SliceIterMut<T>::with(*this);
+  }
+
+  /// Converts the slice into an iterator that consumes the slice and returns
+  /// each element in the same order they appear in the array.
+  ///
+  /// For a Slice<const T> the iterator will return `const T&`. For a Slice<T>
+  /// the iterator will return `T&`.
+  ::sus::iter::Iterator<SliceIter<T>> into_iter() && noexcept
+    requires(std::is_const_v<T>)
+  {
+    return SliceIter<T>::with(*this);
+  }
+  ::sus::iter::Iterator<SliceIterMut<T>> into_iter() && noexcept
+    requires(!std::is_const_v<T>)
+  {
+    return SliceIterMut<T>::with(*this);
+  }
+
+  /// Converts the slice into an iterator that consumes the slice and returns
+  /// each element in the same order they appear in the slice.
+  //::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && noexcept {
+  //  return ArrayIntoIter<T, N>::with(static_cast<Array&&>(*this));
+  //}
 
  private:
   constexpr Slice(T* data, usize len) noexcept : data_(data), len_(len) {}

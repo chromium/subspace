@@ -22,6 +22,7 @@
 #include "mem/move.h"
 #include "mem/mref.h"
 #include "mem/nonnull.h"
+#include "mem/replace.h"
 #include "num/unsigned_integer.h"
 
 namespace sus::containers {
@@ -42,7 +43,7 @@ struct SliceIter : public ::sus::iter::IteratorBase<const Item&> {
     // SAFETY: Since end_ > ptr_, which is checked in the constructor, ptr_ + 1
     // will never be null.
     return Option<const Item&>::some(
-        *::sus::mem::replace(mref(ptr_), ptr_ + 1_usize));
+        *::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1_usize));
   }
 
  protected:
@@ -52,12 +53,12 @@ struct SliceIter : public ::sus::iter::IteratorBase<const Item&> {
   }
 
  private:
-  const T* ptr_;
-  const T* end_;
+  const Item* ptr_;
+  const Item* end_;
 };
 
 template <class Item>
-struct SliceIterMut : public ::sus::iter::IteratorBase<const Item&> {
+struct SliceIterMut : public ::sus::iter::IteratorBase<Item&> {
  public:
   static constexpr auto with(Slice<Item>& slice) noexcept {
     return ::sus::iter::Iterator<SliceIterMut>(slice);
@@ -68,19 +69,18 @@ struct SliceIterMut : public ::sus::iter::IteratorBase<const Item&> {
       return Option<Item&>::none();
     // SAFETY: Since end_ > ptr_, which is checked in the constructor, ptr_ + 1
     // will never be null.
-    return Option<Item&>::some(
-        *::sus::mem::replace(mref(ptr_), ptr_ + 1_usize));
+    return Option<Item&>::some(mref(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1_usize)));
   }
 
  protected:
   constexpr SliceIterMut(Slice<Item>& slice) noexcept
-      : ptr_(slice.as_ptr_ptr()), end_(ptr_ + slice.len()) {
+      : ptr_(slice.as_ptr_mut()), end_(ptr_ + slice.len()) {
     check(end_ > ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
  private:
-  T* ptr_;
-  T* end_;
+  Item* ptr_;
+  Item* end_;
 };
 
 }  // namespace sus::containers
