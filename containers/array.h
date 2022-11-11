@@ -150,13 +150,13 @@ class Array final {
   }
 
   constexpr const T& operator[](usize i) const& noexcept {
-    check(i < usize{N});
+    check(i < usize::from(N));
     return storage_.data_[i.primitive_value];
   }
   constexpr const T& operator[](usize i) && = delete;
 
   constexpr T& operator[](usize i) & noexcept {
-    check(i < usize{N});
+    check(i < usize::from(N));
     return storage_.data_[i.primitive_value];
   }
 

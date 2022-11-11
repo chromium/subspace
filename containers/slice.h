@@ -39,7 +39,7 @@ template <class T>
 class Slice {
  public:
   static constexpr inline Slice from_raw_parts(T* data, usize len) noexcept {
-    check(len <= PTRDIFF_MAX);
+    check(len <= usize::from(PTRDIFF_MAX));
     return Slice(data, len);
   }
 
