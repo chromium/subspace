@@ -119,7 +119,7 @@ class Slice {
   const T* as_ptr() && = delete;
 
   /// Returns a mutable pointer to the first element in the slice.
-  constexpr inline T* as_ptr_mut() & noexcept
+  constexpr inline T* as_mut_ptr() & noexcept
     requires(!std::is_const_v<T>)
   {
     check(len_ > 0_usize);

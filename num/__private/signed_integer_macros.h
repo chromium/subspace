@@ -1429,7 +1429,7 @@ class Tuple;
       return bytes;                                                           \
     } else {                                                                  \
       auto bytes = Array::with_uninitialized(unsafe_fn);                      \
-      memcpy(bytes.as_ptr_mut(), &primitive_value, Bytes);                    \
+      memcpy(bytes.as_mut_ptr(), &primitive_value, Bytes);                    \
       return bytes;                                                           \
     }                                                                         \
   }                                                                           \
