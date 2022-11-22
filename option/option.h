@@ -160,7 +160,7 @@ class Option final {
     requires(!std::is_trivially_copy_constructible_v<T> &&
              std::is_copy_constructible_v<T>)
   {
-    if (o.t_.state() == Some) t_.set_some(o.t_.val_);
+    if (o.t_.state() == Some) t_.construct_from_none(o.t_.val_);
   }
 
   constexpr Option(const Option& o)
@@ -179,7 +179,7 @@ class Option final {
     requires(!std::is_trivially_move_constructible_v<T> &&
              std::is_move_constructible_v<T>)
   {
-    if (o.t_.state() == Some) t_.set_some(o.t_.take_and_set_none());
+    if (o.t_.state() == Some) t_.construct_from_none(o.t_.take_and_set_none());
   }
 
   constexpr Option(Option&& o)
