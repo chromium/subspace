@@ -22,3 +22,5 @@
 // as the user includes "iterator.h" they should be able to use the iterators on
 // Option.
 #include "iter/once.h"
+
+#include "iter/filter.h"

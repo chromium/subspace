@@ -48,7 +48,7 @@ class ArrayIterator : public IteratorBase<Item> {
   ArrayIterator(Item (&items)[N])
       : items_(Array<Option<Item>, N>::with_initializer(
             [&items, i = 0]() mutable -> Option<Item> {
-              return Option<Item>::some(items[i++]);
+              return Option<Item>::some(::sus::move(items[i++]));
             })) {}
 
  private:
@@ -206,6 +206,23 @@ TEST(IteratorBase, Filter) {
     EXPECT_EQ(expect++, i);
   }
   EXPECT_EQ(expect, 5);
+}
+
+struct Filtering {
+  Filtering(int i) : i(i) {}
+  Filtering(Filtering&& f) : i(f.i) {}
+  ~Filtering() {}
+  int i;
+};
+static_assert(!::sus::mem::relocate_one_by_memcpy<Filtering>);
+
+TEST(IteratorBase, FilterNonTriviallyRelocatable) {
+  Filtering nums[5] = {Filtering(1), Filtering(2), Filtering(3), Filtering(4),
+                       Filtering(5)};
+
+  auto fit = ArrayIterator<Filtering, 5>::with_array(nums).filter(
+      [](const Filtering& f) { return f.i >= 3; });
+  EXPECT_EQ(fit.count(), 3_usize);
 }
 
 }  // namespace
