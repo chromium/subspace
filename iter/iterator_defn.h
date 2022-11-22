@@ -24,7 +24,8 @@ namespace sus::iter {
 using ::sus::option::Option;
 
 // TODO: Move forward decls somewhere?
-template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
+template <class Item, size_t InnerIterSize, size_t InnerIterAlign,
+          bool InnerIterInlineStorage>
 class Filter;
 
 namespace __private {
@@ -138,9 +139,10 @@ class Iterator final : public I {
 
   // TODO: map()
 
-  Iterator<Filter<Item, sizeof(I), alignof(I)>> filter(
-      ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
-          pred) && noexcept;
+  Iterator<Filter<Item, sizeof(I), alignof(I),
+                  ::sus::mem::relocate_one_by_memcpy<I>>>
+  filter(::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
+             pred) && noexcept;
 };
 
 }  // namespace sus::iter

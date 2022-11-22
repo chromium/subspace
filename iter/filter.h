@@ -17,7 +17,6 @@
 #include "fn/fn_defn.h"
 #include "iter/iterator_defn.h"
 #include "iter/sized_iterator.h"
-#include "mem/__private/relocatable_storage.h"
 #include "mem/move.h"
 #include "mem/relocate.h"
 
@@ -25,28 +24,22 @@ namespace sus::iter {
 
 using ::sus::iter::IteratorBase;
 using ::sus::mem::relocate_one_by_memcpy;
-using ::sus::mem::__private::RelocatableStorage;
 
-template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
+template <class Item, size_t InnerIterSize, size_t InnerIterAlign,
+          bool InnerIterInlineStorage>
 class Filter : public IteratorBase<Item> {
   using Pred = ::sus::fn::FnMut<bool(
       // TODO: write a sus::const_ref<T>?
       const std::remove_reference_t<const std::remove_reference_t<Item>&>&)>;
-  using InnerSizedIter = SizedIterator<Item, InnerIterSize, InnerIterAlign>;
+  using InnerSizedIter = SizedIterator<Item, InnerIterSize, InnerIterAlign,
+                                       InnerIterInlineStorage>;
 
-  struct Data final {
-    Pred pred_;
-    InnerSizedIter next_iter_;
-
-    sus_class_maybe_trivial_relocatable_types(unsafe_fn, decltype(pred_),
-                                              decltype(next_iter_));
-  };
+  struct Data final {};
 
  public:
   Option<Item> next() noexcept final {
-    IteratorBase<Item>& next_iter =
-        data_.storage_mut().next_iter_.iterator_mut();
-    Pred& pred = data_.storage_mut().pred_;
+    IteratorBase<Item>& next_iter = next_iter_.iterator_mut();
+    Pred& pred = pred_;
 
     // TODO: Just call find(pred) on itself?
     Option<Item> item = next_iter.next();
@@ -58,13 +51,18 @@ class Filter : public IteratorBase<Item> {
 
  protected:
   Filter(Pred&& pred, InnerSizedIter&& next_iter)
-      : data_(Option<Data>::some(Data{.pred_ = ::sus::move(pred),
-                                      .next_iter_ = ::sus::move(next_iter)})) {}
+      : pred_(::sus::move(pred)), next_iter_(::sus::move(next_iter)) {}
 
  private:
-  RelocatableStorage<Data> data_;
+  Pred pred_;
+  InnerSizedIter next_iter_;
 
-  sus_class_maybe_trivial_relocatable_types(unsafe_fn, decltype(data_));
+  // The InnerSizedIter is already known to be trivially relocatable, by
+  // pushing the inner Iterator onto the heap if needed. Likewise, the
+  // predicate is known to be trivially relocatable because the FnMut will
+  // either be a function pointer or a heap allocation itself.
+  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(pred_),
+                                             decltype(next_iter_));
 };
 
 }  // namespace sus::iter

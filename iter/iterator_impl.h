@@ -68,7 +68,7 @@ usize IteratorBase<Item>::count() noexcept {
 }
 
 template <class I>
-Iterator<Filter<typename I::Item, sizeof(I), alignof(I)>> Iterator<I>::filter(
+Iterator<Filter<typename I::Item, sizeof(I), alignof(I), ::sus::mem::relocate_one_by_memcpy<I>>> Iterator<I>::filter(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
         pred) && noexcept {
   // TODO: make_sized_iterator immediately copies `this` to either the body of
