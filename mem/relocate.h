@@ -212,8 +212,10 @@ concept relocate_one_by_memcpy =
 ///
 /// To additionally allow the class to be passed in registers, the class can be
 /// marked with the `sus_trivial_abi` attribute.
-#define sus_class_assert_trivial_relocatable_types(unsafe_fn, ...)   \
-  sus_class_maybe_trivial_relocatable_types(unsafe_fn, __VA_ARGS__); \
-  static_assert(SusUnsafeTrivialRelocate,                            \
-                "Type is not trivially "                             \
+#define sus_class_assert_trivial_relocatable_types(unsafe_fn, ...)    \
+  static_assert(std::is_same_v<decltype(unsafe_fn),                   \
+                               const ::sus::marker::UnsafeFnMarker>); \
+  sus_class_maybe_trivial_relocatable_types(unsafe_fn, __VA_ARGS__);  \
+  static_assert(SusUnsafeTrivialRelocate,                             \
+                "Type is not trivially "                              \
                 "relocatable");
