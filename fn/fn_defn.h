@@ -71,8 +71,8 @@ class Fn;
 // Example:
 // ```
 //    auto even = [](const auto& i) { return i % 2 == 0; };
-//    auto r0 = sus::Array<int, 11>::with_values(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-//    auto result = r0.iter().filter(even);
+//    auto r0 = sus::Array<int, 11>::with_values(0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+//    10); auto result = r0.iter().filter(even);
 // ```
 
 // TODO: There's no way to capture an rvalue right now. Need something like
@@ -240,7 +240,9 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   __private::FnType type_;
 
  private:
-  sus_class_trivial_relocatable(unsafe_fn);
+  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(fn_ptr_),
+                                             decltype(storage_),
+                                             decltype(type_));
   sus_class_never_value_field(unsafe_fn, FnOnce, type_,
                               static_cast<__private::FnType>(0));
 };
