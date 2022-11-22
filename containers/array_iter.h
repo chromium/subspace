@@ -59,6 +59,9 @@ struct ArrayIntoIter : public ::sus::iter::IteratorBase<Item> {
  private:
   usize next_index_ = 0_usize;
   Array<Item, N> array_;
+
+  sus_class_maybe_trivial_relocatable_types(unsafe_fn, decltype(next_index_),
+                                            decltype(array_));
 };
 
 }  // namespace sus::containers
