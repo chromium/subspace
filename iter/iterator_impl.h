@@ -40,24 +40,22 @@ __private::IteratorEnd IteratorBase<Item>::end() & noexcept {
 
 template <class Item>
 bool IteratorBase<Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
-  Option<Item> item = next();
-  while (item.is_some()) {
+  while (true) {
+    Option<Item> item = next();
+    if (item.is_none()) return true;
     // Safety: `item` was checked to hold Some already.
     if (!f(item.take().unwrap_unchecked(unsafe_fn))) return false;
-    item = next();
   }
-  return true;
 }
 
 template <class Item>
 bool IteratorBase<Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
-  Option<Item> item = next();
-  while (item.is_some()) {
+  while (true) {
+    Option<Item> item = next();
+    if (item.is_none()) return false;
     // Safety: `item` was checked to hold Some already.
     if (f(item.take().unwrap_unchecked(unsafe_fn))) return true;
-    item = next();
   }
-  return false;
 }
 
 template <class Item>
@@ -68,7 +66,9 @@ usize IteratorBase<Item>::count() noexcept {
 }
 
 template <class I>
-Iterator<Filter<typename I::Item, sizeof(I), alignof(I), ::sus::mem::relocate_one_by_memcpy<I>>> Iterator<I>::filter(
+Iterator<Filter<typename I::Item, sizeof(I), alignof(I),
+                ::sus::mem::relocate_one_by_memcpy<I>>>
+Iterator<I>::filter(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
         pred) && noexcept {
   // TODO: make_sized_iterator immediately copies `this` to either the body of

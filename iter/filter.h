@@ -42,11 +42,11 @@ class Filter : public IteratorBase<Item> {
     Pred& pred = pred_;
 
     // TODO: Just call find(pred) on itself?
-    Option<Item> item = next_iter.next();
-    while (item.is_some() && !pred(item.as_ref().unwrap_unchecked(unsafe_fn))) {
-      item = next_iter.next();
+    while (true) {
+      Option<Item> item = next_iter.next();
+      if (item.is_none() || pred(item.as_ref().unwrap_unchecked(unsafe_fn)))
+        return item;
     }
-    return item;
   }
 
  protected:
