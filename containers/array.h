@@ -98,6 +98,55 @@ class Array final {
     return a;
   }
 
+  Array(const Array&)
+    requires(std::is_trivially_copy_constructible_v<T>)
+  = default;
+  Array(const Array& o)
+    requires(!std::is_trivially_copy_constructible_v<T>)
+  : Array(kWithUninitialized) {
+    for (auto i = size_t{0}; i < N; ++i)
+      new (as_mut_ptr() + i) T(o.storage_.data_[i]);
+  }
+
+  Array& operator=(const Array&)
+    requires(std::is_trivially_copy_assignable_v<T>)
+  = default;
+  Array& operator=(const Array& o)
+    requires(!std::is_trivially_copy_assignable_v<T>)
+  {
+    for (auto i = size_t{0}; i < N; ++i)
+      storage_.data_[i] = o.storage_.data_[i];
+  }
+
+  Array(Array&&)
+    requires(std::is_trivially_move_constructible_v<T>)
+  = default;
+  Array(Array&& o)
+    requires(!std::is_trivially_move_constructible_v<T>)
+  : Array(kWithUninitialized) {
+    for (auto i = size_t{0}; i < N; ++i)
+      new (as_mut_ptr() + i) T(::sus::move(o.storage_.data_[i]));
+  }
+
+  Array& operator=(Array&&)
+    requires(std::is_trivially_move_assignable_v<T>)
+  = default;
+  Array& operator=(Array&& o)
+    requires(!std::is_trivially_move_assignable_v<T>)
+  {
+    for (auto i = size_t{0}; i < N; ++i)
+      storage_.data_[i] = ::sus::mem::take(mref(o.storage_.data_[i]));
+  }
+
+  ~Array()
+    requires(std::is_trivially_destructible_v<T>)
+  = default;
+  ~Array()
+    requires(!std::is_trivially_destructible_v<T>)
+  {
+    for (auto i = size_t{0}; i < N; ++i) storage_.data_[i].~T();
+  }
+
   /// Returns the number of elements in the array.
   constexpr usize len() const& noexcept { return N; }
 
