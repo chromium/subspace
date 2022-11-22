@@ -125,40 +125,40 @@ class Array final {
   /// # Safety
   /// The index `i` must be inside the bounds of the array or Undefined
   /// Behaviour results.
-  constexpr const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                   usize i) const& noexcept
+  constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
+                                          usize i) const& noexcept
     requires(N > 0)
   {
     return storage_.data_[i.primitive_value];
   }
-  constexpr const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                   usize i) && = delete;
+  constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
+                                          usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
   ///
   /// # Safety
   /// The index `i` must be inside the bounds of the array or Undefined
   /// Behaviour results.
-  constexpr T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
-                                 usize i) & noexcept
+  constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
+                                        usize i) & noexcept
     requires(N > 0)
   {
     return storage_.data_[i.primitive_value];
   }
 
-  constexpr const T& operator[](usize i) const& noexcept {
+  constexpr inline const T& operator[](usize i) const& noexcept {
     check(i.primitive_value < N);
     return storage_.data_[i.primitive_value];
   }
-  constexpr const T& operator[](usize i) && = delete;
+  constexpr inline const T& operator[](usize i) && = delete;
 
-  constexpr T& operator[](usize i) & noexcept {
+  constexpr inline T& operator[](usize i) & noexcept {
     check(i.primitive_value < N);
     return storage_.data_[i.primitive_value];
   }
 
   /// Returns a const pointer to the first element in the array.
-   inline const T* as_ptr() const& noexcept
+  inline const T* as_ptr() const& noexcept
     requires(N > 0)
   {
     return storage_.data_;
@@ -181,7 +181,9 @@ class Array final {
 
   // Returns a slice that references all the elements of the array as mutable
   // references.
-  constexpr Slice<T> as_mut() & noexcept { return Slice<T>::from(storage_.data_); }
+  constexpr Slice<T> as_mut() & noexcept {
+    return Slice<T>::from(storage_.data_);
+  }
 
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives const access to
@@ -261,8 +263,10 @@ class Array final {
     ::sus::containers::__private::Storage<T, N> storage_;
   };
 
-  sus_class_trivial_relocatable_value(unsafe_fn,
-                                      ::sus::mem::relocate_array_by_memcpy<T>);
+  sus_class_trivial_relocatable_value(
+      unsafe_fn, (N >= 2 && ::sus::mem::relocate_array_by_memcpy<T>) ||
+                     (N == 1 && ::sus::mem::relocate_one_by_memcpy<T>) ||
+                     N == 0);
 };
 
 namespace __private {
