@@ -28,6 +28,7 @@
 #include "assertions/check.h"
 #include "assertions/unreachable.h"
 #include "construct/make_default.h"
+#include "iter/from_iterator.h"
 #include "macros/always_inline.h"
 #include "macros/nonnull.h"
 #include "marker/unsafe.h"
@@ -45,6 +46,8 @@
 namespace sus::iter {
 template <class Item>
 class Once;
+template <class ItemT>
+class IteratorBase;
 template <class I>
 class Iterator;
 namespace __private {
@@ -130,6 +133,36 @@ class Option final {
     requires(::sus::construct::MakeDefault<T>)
   {
     return Option<T>(::sus::construct::make_default<T>());
+  }
+
+  /// Takes each z in the Iterator: if it is None, no further elements are
+  /// taken, and the None is returned. Should no None occur, a container of type
+  /// T containing the values of type U from each Option<U> is returned.
+  template <class U>
+  static constexpr Option from_iter(::sus::iter::IteratorBase<Option<U>>&& iter)
+    requires(::sus::iter::FromIterator<T, U>)
+  {
+    struct Iter : public ::sus::iter::IteratorBase<U> {
+      Iter(::sus::iter::IteratorBase<Option<U>>&& iter, Mref<bool> found_none)
+          : iter(iter), found_none(found_none) {}
+
+      Option<U> next() noexcept final {
+        Option<Option<U>> item = iter.next();
+        if (found_none || item.is_none()) return Option<U>::none();
+        found_none = item.unwrap_ref().is_none();
+        return ::sus::move(item).flatten();
+      }
+
+      ::sus::iter::IteratorBase<Option<U>>& iter;
+      bool& found_none;
+    };
+
+    bool found_none = false;
+    auto collected = T::from_iter(Iter(::sus::move(iter), mref(found_none)));
+    if (found_none)
+      return Option::none();
+    else
+      return Option::some(::sus::move(collected));
   }
 
   /// Destructor for the Option.
