@@ -22,6 +22,8 @@
 
 #include "assertions/check.h"
 #include "assertions/unreachable.h"
+#include "iter/__private/adaptors.h"
+#include "iter/iterator_defn.h"
 #include "iter/once.h"
 #include "marker/unsafe.h"
 #include "mem/mref.h"
@@ -50,6 +52,9 @@ using State::Ok;
 template <class T, class E>
 class Result final {
  public:
+  using OkType = T;
+  using ErrType = E;
+
   /// Construct an Result that is holding the given success value.
   static constexpr inline Result with(const T& t) noexcept
     requires(std::is_copy_constructible_v<T>)
@@ -86,6 +91,20 @@ class Result final {
     requires(std::is_move_constructible_v<E>)
   {
     return Result(WithErr, static_cast<E&&>(e));
+  }
+
+  template <class U>
+  static constexpr Result from_iter(
+      ::sus::iter::IteratorBase<Result<U, E>>&& iter)
+    requires(::sus::iter::FromIterator<T, U>)
+  {
+    auto err = Option<E>::none();
+    auto success_out =
+        Result::with(T::from_iter(::sus::iter::__private::Unwrapper(
+            ::sus::move(iter), mref(err), [](Result<U, E>&& r) { return r; })));
+    return ::sus::move(err).map_or_else(
+        [&]() { return ::sus::move(success_out); },
+        [](E e) { return Result::with_err(e); });
   }
 
   /// Destructor for the Result.
@@ -129,7 +148,8 @@ class Result final {
       case IsErr: new (&err_) E(rhs.err_); break;
       case IsMoved: break;
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the function.
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the
+    // function.
     unreachable_unchecked(unsafe_fn);
   }
 
@@ -156,7 +176,8 @@ class Result final {
       case IsErr: new (&err_) E(static_cast<E&&>(rhs.err_)); break;
       case IsMoved: break;
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the function.
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the
+    // function.
     unreachable_unchecked(unsafe_fn);
   }
 
@@ -310,7 +331,8 @@ class Result final {
       case IsErr: err_.~E(); return Option<T>::none();
       case IsMoved: break;
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the function.
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the
+    // function.
     unreachable_unchecked(unsafe_fn);
   }
 
@@ -326,7 +348,8 @@ class Result final {
         return Option<E>::some(take_and_destruct(unsafe_fn, mref(err_)));
       case IsMoved: break;
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the function.
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the
+    // function.
     unreachable_unchecked(unsafe_fn);
   }
 

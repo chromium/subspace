@@ -191,7 +191,7 @@ TEST(IteratorBase, Count) {
   }
 }
 
-TEST(IteratorBase, Filter) {
+TEST(Iterator, Filter) {
   int nums[5] = {1, 2, 3, 4, 5};
 
   auto fit = ArrayIterator<int, 5>::with_array(nums).filter(
@@ -216,13 +216,31 @@ struct Filtering {
 };
 static_assert(!::sus::mem::relocate_one_by_memcpy<Filtering>);
 
-TEST(IteratorBase, FilterNonTriviallyRelocatable) {
+TEST(Iterator, FilterNonTriviallyRelocatable) {
   Filtering nums[5] = {Filtering(1), Filtering(2), Filtering(3), Filtering(4),
                        Filtering(5)};
 
   auto fit = ArrayIterator<Filtering, 5>::with_array(nums).filter(
       [](const Filtering& f) { return f.i >= 3; });
   EXPECT_EQ(fit.count(), 3_usize);
+}
+
+template <class T>
+struct CollectSum {
+  static constexpr CollectSum from_iter(IteratorBase<T>&& iter) noexcept {
+    T sum = T();
+    for (const T& t : iter) sum += t;
+    return CollectSum(sum);
+  }
+
+  T sum;
+};
+
+TEST(Iterator, Collect) {
+  int nums[5] = {1, 2, 3, 4, 5};
+
+  auto collected = ArrayIterator<int, 5>::with_array(nums).collect<CollectSum<int>>();
+  EXPECT_EQ(collected.sum, 1 + 2 + 3 + 4 + 5);
 }
 
 }  // namespace
