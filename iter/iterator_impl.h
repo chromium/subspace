@@ -88,4 +88,10 @@ Iterator<I>::filter(
   return {::sus::move(pred), make_sized_iterator(static_cast<I&&>(*this))};
 }
 
+template <class I>
+template <::sus::iter::FromIterator<typename I::Item> C>
+C Iterator<I>::collect() && noexcept {
+  return C::from_iter(::sus::move(*this));
+}
+
 }  // namespace sus::iter

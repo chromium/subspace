@@ -15,6 +15,7 @@
 #pragma once
 
 #include "fn/fn_defn.h"
+#include "iter/from_iterator.h"
 #include "macros/__private/compiler_bugs.h"
 #include "num/unsigned_integer.h"
 #include "option/option.h"
@@ -143,6 +144,9 @@ class Iterator final : public I {
                   ::sus::mem::relocate_one_by_memcpy<I>>>
   filter(::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
              pred) && noexcept;
+
+  template <::sus::iter::FromIterator<typename I::Item> C>
+  C collect() && noexcept;
 };
 
 }  // namespace sus::iter

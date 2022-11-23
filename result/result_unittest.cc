@@ -14,9 +14,10 @@
 
 #include "result/result.h"
 
-#include "mem/move.h"
-#include "iter/once.h"
+#include "containers/array.h"
 #include "iter/iterator.h"
+#include "iter/once.h"
+#include "mem/move.h"
 #include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
@@ -273,13 +274,69 @@ TEST(Result, IntoIter) {
   }
 
   int count = 0;
-  auto y =  Result<MoveOnly, u8>::with(MoveOnly(-3));
+  auto y = Result<MoveOnly, u8>::with(MoveOnly(-3));
   for (auto m : sus::move(y).into_iter()) {
     static_assert(std::is_same_v<decltype(m), MoveOnly>, "");
     EXPECT_EQ(m.i, -3);
     ++count;
   }
   EXPECT_EQ(count, 1);
+}
+
+template <class T>
+struct CollectSum {
+  static constexpr CollectSum from_iter(
+      ::sus::iter::IteratorBase<T>&& iter) noexcept {
+    T sum = T();
+    for (const T& t : iter) sum += t;
+    return CollectSum(sum);
+  }
+
+  T sum;
+};
+
+TEST(Result, FromIter) {
+  enum class Error {
+    OneError,
+    TwoError,
+  };
+
+  auto no_errors =
+      ::sus::Array<Result<usize, Error>, 5>::with_values(
+          Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
+          Result<usize, Error>::with(3u), Result<usize, Error>::with(4u),
+          Result<usize, Error>::with(5u))
+          .into_iter();
+
+  auto no_errors_out =
+      sus::move(no_errors).collect<Result<CollectSum<usize>, Error>>();
+  EXPECT_EQ(no_errors_out, sus::result::Ok);
+  EXPECT_EQ(sus::move(no_errors_out).unwrap().sum, 1u + 2u + 3u + 4u + 5u);
+
+  auto with_error =
+      ::sus::Array<Result<usize, Error>, 5>::with_values(
+          Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
+          Result<usize, Error>::with_err(Error::OneError),
+          Result<usize, Error>::with(4u), Result<usize, Error>::with(5u))
+          .into_iter();
+
+  auto with_error_out =
+      sus::move(with_error).collect<Result<CollectSum<usize>, Error>>();
+  EXPECT_EQ(with_error_out, sus::result::Err);
+  EXPECT_EQ(sus::move(with_error_out).unwrap_err(), Error::OneError);
+
+  auto with_errors =
+      ::sus::Array<Result<usize, Error>, 5>::with_values(
+          Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
+          Result<usize, Error>::with_err(Error::OneError),
+          Result<usize, Error>::with(4u),
+          Result<usize, Error>::with_err(Error::TwoError))
+          .into_iter();
+
+  auto with_errors_out =
+      sus::move(with_errors).collect<Result<CollectSum<usize>, Error>>();
+  EXPECT_EQ(with_errors_out, sus::result::Err);
+  EXPECT_EQ(sus::move(with_errors_out).unwrap_err(), Error::OneError);
 }
 
 }  // namespace
