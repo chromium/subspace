@@ -135,7 +135,7 @@ class Option final {
     return Option<T>(::sus::construct::make_default<T>());
   }
 
-  /// Takes each z in the Iterator: if it is None, no further elements are
+  /// Takes each item in the Iterator: if it is None, no further elements are
   /// taken, and the None is returned. Should no None occur, a container of type
   /// T containing the values of type U from each Option<U> is returned.
   template <class U>

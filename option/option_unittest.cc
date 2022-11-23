@@ -18,9 +18,9 @@
 
 #include "containers/array.h"
 #include "iter/iterator.h"
+#include "macros/__private/compiler_bugs.h"
 #include "macros/builtin.h"
 #include "mem/nonnull.h"
-#include "macros/__private/compiler_bugs.h"
 #include "mem/relocate.h"
 #include "num/types.h"
 #include "result/result.h"
@@ -1770,6 +1770,43 @@ TEST(Option, FromIter) {
                       Option<usize>::some(3u))
                       .into_iter()
                       .collect<Option<CollectSum<usize>>>();
+  EXPECT_EQ(one_none, None);
+}
+
+template <class T>
+struct CollectSumRefs {
+  sus_clang_bug_54040(CollectSumRefs(T sum) : sum(sum){});
+
+  static constexpr CollectSumRefs from_iter(
+      ::sus::iter::IteratorBase<const T&>&& iter) noexcept {
+    T sum = T();
+    for (const T& t : iter) sum += t;
+    return CollectSumRefs(sum);
+  }
+
+  T sum;
+};
+
+TEST(Option, FromIterWithRefs) {
+  auto u1 = 1_usize;
+  auto u2 = 2_usize;
+  auto u3 = 3_usize;
+
+  auto all_some =
+      ::sus::Array<Option<const usize&>, 3>::with_values(
+          Option<const usize&>::some(u1), Option<const usize&>::some(u2),
+          Option<const usize&>::some(u3))
+          .into_iter()
+          .collect<Option<CollectSumRefs<usize>>>();
+  EXPECT_EQ(all_some, Some);
+  EXPECT_EQ(all_some.unwrap_ref().sum, 1u + 2u + 3u);
+
+  auto one_none =
+      ::sus::Array<Option<const usize&>, 3>::with_values(
+          Option<const usize&>::some(1u), Option<const usize&>::none(),
+          Option<const usize&>::some(3u))
+          .into_iter()
+          .collect<Option<CollectSumRefs<usize>>>();
   EXPECT_EQ(one_none, None);
 }
 
