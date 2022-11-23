@@ -140,11 +140,36 @@ class Iterator final : public I {
 
   // TODO: map()
 
+  /// Creates an iterator which uses a closure to determine if an element should
+  /// be yielded.
+  ///
+  /// Given an element the closure must return true or false. The returned
+  /// iterator will yield only the elements for which the closure returns true.
   Iterator<Filter<Item, sizeof(I), alignof(I),
                   ::sus::mem::relocate_one_by_memcpy<I>>>
   filter(::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
              pred) && noexcept;
 
+  /// Transforms an iterator into a collection.
+  ///
+  /// collect() can turn anything iterable into a relevant collection. If this
+  /// is used anything like in Rust, it would be one of the more powerful
+  /// methods in the subspace library, used in a variety of contexts.
+  ///
+  /// The most basic pattern in which collect() is used is to turn one
+  /// collection into another. You take a collection, call iter on it, do a
+  /// bunch of transformations, and then collect() at the end.
+  ///
+  /// collect() can also create instances of types that are not typical
+  /// collections. For example, (TODO: a String can be built from chars, and) an
+  /// iterator of Result<T, E> items can be collected into Result<Collection<T>,
+  /// E>. Or an iterator of Option<T> can be collected into
+  /// Option<Collection<T>>.
+  ///
+  /// Because collect() is so general, and C++ lacks strong type inference,
+  /// collect() doesn't know the type of collection that you want to produce, so
+  /// you will always need to pass it a type argument, such as: ```cpp
+  /// sus::move(iter).collect<MyContainer<i32>>() ```
   template <::sus::iter::FromIterator<typename I::Item> C>
   C collect() && noexcept;
 };
