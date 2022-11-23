@@ -17,6 +17,7 @@
 #include "containers/array.h"
 #include "iter/iterator.h"
 #include "iter/once.h"
+#include "macros/__private/compiler_bugs.h"
 #include "mem/move.h"
 #include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -285,6 +286,8 @@ TEST(Result, IntoIter) {
 
 template <class T>
 struct CollectSum {
+  sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
+
   static constexpr CollectSum from_iter(
       ::sus::iter::IteratorBase<T>&& iter) noexcept {
     T sum = T();
