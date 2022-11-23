@@ -479,11 +479,11 @@ class Option final {
   template <class MapFn, class D, int&...,
             class R = std::invoke_result_t<MapFn, T&&>>
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
-  Option<R> map_or(D default_result, MapFn m) && noexcept {
+  R map_or(D default_result, MapFn m) && noexcept {
     if (t_.state() == Some) {
-      return Option<R>(m(t_.take_and_set_none()));
+      return m(t_.take_and_set_none());
     } else {
-      return Option<R>(static_cast<R&&>(default_result));
+      return default_result;
     }
   }
 
@@ -499,11 +499,11 @@ class Option final {
             class D = std::invoke_result_t<DefaultFn>,
             class R = std::invoke_result_t<MapFn, T&&>>
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
-  Option<R> map_or_else(DefaultFn default_fn, MapFn m) && noexcept {
+  R map_or_else(DefaultFn default_fn, MapFn m) && noexcept {
     if (t_.state() == Some) {
-      return Option<R>(m(t_.take_and_set_none()));
+      return m(t_.take_and_set_none());
     } else {
-      return Option<R>(default_fn());
+      return default_fn();
     }
   }
 
@@ -976,11 +976,11 @@ class Option<T&> final {
   template <class MapFn, class D, int&...,
             class R = std::invoke_result_t<MapFn, T&>>
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
-  Option<R> map_or(D default_result, MapFn m) && noexcept {
+  R map_or(D default_result, MapFn m) && noexcept {
     if (t_.state() == Some)
-      return Option<R>(m(get_ref(t_.take_and_set_none())));
+      return m(get_ref(t_.take_and_set_none()));
     else
-      return Option<R>(static_cast<R&&>(default_result));
+      return default_result;
   }
 
   /// Maps the Option's value through a function, or returns a default value
@@ -995,11 +995,11 @@ class Option<T&> final {
             class D = std::invoke_result_t<DefaultFn>,
             class R = std::invoke_result_t<MapFn, T&>>
     requires(!std::is_void_v<R> && std::is_same_v<D, R>)
-  Option<R> map_or_else(DefaultFn default_fn, MapFn m) && noexcept {
+  R map_or_else(DefaultFn default_fn, MapFn m) && noexcept {
     if (t_.state() == Some)
-      return Option<R>(m(get_ref(t_.take_and_set_none())));
+      return m(get_ref(t_.take_and_set_none()));
     else
-      return Option<R>(default_fn());
+      return default_fn();
   }
 
   /// Consumes the Option and applies a predicate function to the value

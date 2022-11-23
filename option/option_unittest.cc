@@ -63,12 +63,12 @@ constexpr size_t max_sizeof() {
   return sizeof(T) > sizeof(U) ? sizeof(T) : sizeof(U);
 }
 
-static_assert(sizeof(Option<bool>) == sizeof(bool) + sizeof(bool), "");
-static_assert(sizeof(Option<bool&>) == sizeof(bool*), "");
+static_assert(sizeof(Option<bool>) == sizeof(bool) + sizeof(bool));
+static_assert(sizeof(Option<bool&>) == sizeof(bool*));
 // An Option has space for T plus a bool, but it's size is rounded up to the
 // alignment of T.
-static_assert(sizeof(Option<int>) == sizeof(int) + max_sizeof<bool, int>(), "");
-static_assert(sizeof(Option<int&>) == sizeof(int*), "");
+static_assert(sizeof(Option<int>) == sizeof(int) + max_sizeof<bool, int>());
+static_assert(sizeof(Option<int&>) == sizeof(int*));
 
 template <class T, class = void, class... Args>
 struct is_some_callable : std::false_type {};
@@ -82,19 +82,19 @@ template <class T, class... Args>
 inline constexpr bool is_some_callable_v =
     is_some_callable<T, void, Args...>::value;
 
-static_assert(is_some_callable_v<Option<int>, int>, "");
-static_assert(is_some_callable_v<Option<int>, const int>, "");
-static_assert(is_some_callable_v<Option<int>, int&>, "");
-static_assert(is_some_callable_v<Option<int>, int&&>, "");
-static_assert(is_some_callable_v<Option<int>, Mref<int>>, "");
-static_assert(is_some_callable_v<Option<int>, const int&>, "");
+static_assert(is_some_callable_v<Option<int>, int>);
+static_assert(is_some_callable_v<Option<int>, const int>);
+static_assert(is_some_callable_v<Option<int>, int&>);
+static_assert(is_some_callable_v<Option<int>, int&&>);
+static_assert(is_some_callable_v<Option<int>, Mref<int>>);
+static_assert(is_some_callable_v<Option<int>, const int&>);
 
-static_assert(!is_some_callable_v<Option<int&>, int>, "");
-static_assert(!is_some_callable_v<Option<int&>, const int>, "");
-static_assert(!is_some_callable_v<Option<int&>, int&>, "");
-static_assert(!is_some_callable_v<Option<int&>, int&>, "");
-static_assert(is_some_callable_v<Option<int&>, Mref<int>>, "");
-static_assert(!is_some_callable_v<Option<int&>, const int&>, "");
+static_assert(!is_some_callable_v<Option<int&>, int>);
+static_assert(!is_some_callable_v<Option<int&>, const int>);
+static_assert(!is_some_callable_v<Option<int&>, int&>);
+static_assert(!is_some_callable_v<Option<int&>, int&>);
+static_assert(is_some_callable_v<Option<int&>, Mref<int>>);
+static_assert(!is_some_callable_v<Option<int&>, const int&>);
 
 TEST(Option, Construct) {
   {
@@ -232,12 +232,12 @@ TEST(Option, Some) {
 
   constexpr auto cx(
       Option<DefaultConstructible>::some(DefaultConstructible()).unwrap());
-  static_assert(cx.i == 2, "");
+  static_assert(cx.i == 2);
 
   constexpr auto cy(
       Option<NotDefaultConstructible>::some(NotDefaultConstructible(3))
           .unwrap());
-  static_assert(cy.i == 3, "");
+  static_assert(cy.i == 3);
 }
 
 TEST(Option, None) {
@@ -253,12 +253,12 @@ TEST(Option, None) {
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
   // constexpr auto cx(Option<DefaultConstructible>::none());
-  // static_assert(cx.is_none(), "");
+  // static_assert(cx.is_none());
 
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
   // constexpr auto cy(Option<NotDefaultConstructible>::none());
-  // static_assert(cy.is_none(), "");
+  // static_assert(cy.is_none());
 }
 
 TEST(Option, WithDefault) {
@@ -273,12 +273,12 @@ TEST(Option, WithDefault) {
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
   // constexpr auto cx(Option<DefaultConstructible>::with_default());
-  // static_assert(cx.is_some(), "");
+  // static_assert(cx.is_some());
 
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
   // constexpr auto cy(Option<WithDefaultConstructible>::with_default());
-  // static_assert(cy.is_some(), "");
+  // static_assert(cy.is_some());
 
   auto x2 = make_default<Option<DefaultConstructible>>();
   IS_SOME(x2);
@@ -415,9 +415,9 @@ TEST(Option, UnwrapOr) {
 
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
-  // static_assert(Option<int>::none().unwrap_or(3) == 3, "");
+  // static_assert(Option<int>::none().unwrap_or(3) == 3);
   // constexpr int ci = 2;
-  // static_assert(Option<const int&>::none().unwrap_or(ci) == 2, "");
+  // static_assert(Option<const int&>::none().unwrap_or(ci) == 2);
 }
 
 TEST(Option, UnwrapOrElse) {
@@ -437,7 +437,7 @@ TEST(Option, UnwrapOrElse) {
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
   // static_assert(
-  //     Option<int>::none().unwrap_or_else([]() { return int(3); }) == 3, "");
+  //     Option<int>::none().unwrap_or_else([]() { return int(3); }) == 3);
   // TODO: Why does this not work? (Well, now we have disabled constexpr so it
   // won't work.)
   // static constexpr int ci = 2;
@@ -461,7 +461,7 @@ TEST(Option, UnwrapOrDefault) {
 
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
-  // static_assert(Option<int>::none().unwrap_or_default() == 0, "");
+  // static_assert(Option<int>::none().unwrap_or_default() == 0);
 }
 
 TEST(Option, Map) {
@@ -474,7 +474,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(i + 1);
   });
-  static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
+  static_assert(std::is_same_v<decltype(x), Option<Mapped>>);
   EXPECT_EQ(sus::move(x).unwrap().i, 3);
   EXPECT_TRUE(called);
 
@@ -483,7 +483,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(i + 1);
   });
-  static_assert(std::is_same_v<decltype(y), Option<Mapped>>, "");
+  static_assert(std::is_same_v<decltype(y), Option<Mapped>>);
   IS_NONE(y);
   EXPECT_FALSE(called);
 
@@ -493,7 +493,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(i + 1);
   });
-  static_assert(std::is_same_v<decltype(ix), Option<Mapped>>, "");
+  static_assert(std::is_same_v<decltype(ix), Option<Mapped>>);
   EXPECT_EQ(ix.as_ref().unwrap().i, 3);
   EXPECT_TRUE(called);
 
@@ -502,7 +502,7 @@ TEST(Option, Map) {
     called = true;
     return Mapped(3);
   });
-  static_assert(std::is_same_v<decltype(iy), Option<Mapped>>, "");
+  static_assert(std::is_same_v<decltype(iy), Option<Mapped>>);
   IS_NONE(iy);
   EXPECT_FALSE(called);
 
@@ -528,24 +528,24 @@ TEST(Option, MapOr) {
 
   auto x = Option<int>::some(2).map_or(
       Mapped(4), [](int&& i) { return static_cast<Mapped>(i + 1); });
-  static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
-  EXPECT_EQ(sus::move(x).unwrap().i, 3);
+  static_assert(std::is_same_v<decltype(x), Mapped>);
+  EXPECT_EQ(x.i, 3);
 
   auto y = Option<int>::none().map_or(Mapped(4),
                                       [](int&& i) { return Mapped(i + 1); });
-  static_assert(std::is_same_v<decltype(y), Option<Mapped>>, "");
-  EXPECT_EQ(sus::move(y).unwrap().i, 4);
+  static_assert(std::is_same_v<decltype(y), Mapped>);
+  EXPECT_EQ(y.i, 4);
 
   int i = 2;
   auto ix = Option<int&>::some(mref(i)).map_or(
       Mapped(4), [](int& i) { return static_cast<Mapped>(i + 1); });
-  static_assert(std::is_same_v<decltype(ix), Option<Mapped>>, "");
-  EXPECT_EQ(ix.as_ref().unwrap().i, 3);
+  static_assert(std::is_same_v<decltype(ix), Mapped>);
+  EXPECT_EQ(ix.i, 3);
 
   auto iy = Option<int&>::none().map_or(
       Mapped(4), [](int& i) { return static_cast<Mapped>(i + 1); });
-  static_assert(std::is_same_v<decltype(ix), Option<Mapped>>, "");
-  EXPECT_EQ(iy.as_ref().unwrap().i, 4);
+  static_assert(std::is_same_v<decltype(ix), Mapped>);
+  EXPECT_EQ(iy.i, 4);
 
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
@@ -570,8 +570,8 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(i + 1);
       });
-  static_assert(std::is_same_v<decltype(x), Option<Mapped>>, "");
-  EXPECT_EQ(sus::move(x).unwrap().i, 3);
+  static_assert(std::is_same_v<decltype(x), Mapped>);
+  EXPECT_EQ(x.i, 3);
   EXPECT_TRUE(map_called);
   EXPECT_FALSE(else_called);
 
@@ -585,8 +585,8 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(i + 1);
       });
-  static_assert(std::is_same_v<decltype(y), Option<Mapped>>, "");
-  EXPECT_EQ(sus::move(y).unwrap().i, 4);
+  static_assert(std::is_same_v<decltype(y), Mapped>);
+  EXPECT_EQ(y.i, 4);
   EXPECT_FALSE(map_called);
   EXPECT_TRUE(else_called);
 
@@ -601,8 +601,8 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(i + 1);
       });
-  static_assert(std::is_same_v<decltype(ix), Option<Mapped>>, "");
-  EXPECT_EQ(ix.as_ref().unwrap().i, 3);
+  static_assert(std::is_same_v<decltype(ix), Mapped>);
+  EXPECT_EQ(ix.i, 3);
   EXPECT_TRUE(map_called);
   EXPECT_FALSE(else_called);
 
@@ -616,8 +616,8 @@ TEST(Option, MapOrElse) {
         map_called = true;
         return Mapped(i + 1);
       });
-  static_assert(std::is_same_v<decltype(iy), Option<Mapped>>, "");
-  EXPECT_EQ(iy.as_ref().unwrap().i, 4);
+  static_assert(std::is_same_v<decltype(iy), Mapped>);
+  EXPECT_EQ(iy.i, 4);
   EXPECT_FALSE(map_called);
   EXPECT_TRUE(else_called);
 
@@ -653,37 +653,37 @@ TEST(Option, MapOrElse) {
 
 TEST(Option, Filter) {
   auto x = Option<int>::some(2).filter([](const int&) { return true; });
-  static_assert(std::is_same_v<decltype(x), Option<int>>, "");
+  static_assert(std::is_same_v<decltype(x), Option<int>>);
   IS_SOME(x);
 
   auto y = Option<int>::some(2).filter([](const int&) { return false; });
-  static_assert(std::is_same_v<decltype(y), Option<int>>, "");
+  static_assert(std::is_same_v<decltype(y), Option<int>>);
   IS_NONE(y);
 
   auto nx = Option<int>::none().filter([](const int&) { return true; });
-  static_assert(std::is_same_v<decltype(nx), Option<int>>, "");
+  static_assert(std::is_same_v<decltype(nx), Option<int>>);
   IS_NONE(nx);
 
   auto ny = Option<int>::none().filter([](const int&) { return false; });
-  static_assert(std::is_same_v<decltype(ny), Option<int>>, "");
+  static_assert(std::is_same_v<decltype(ny), Option<int>>);
   IS_NONE(ny);
 
   int i = 2;
   auto ix = Option<int&>::some(mref(i)).filter([](const int&) { return true; });
-  static_assert(std::is_same_v<decltype(ix), Option<int&>>, "");
+  static_assert(std::is_same_v<decltype(ix), Option<int&>>);
   IS_SOME(ix);
 
   auto iy =
       Option<int&>::some(mref(i)).filter([](const int&) { return false; });
-  static_assert(std::is_same_v<decltype(iy), Option<int&>>, "");
+  static_assert(std::is_same_v<decltype(iy), Option<int&>>);
   IS_NONE(iy);
 
   auto inx = Option<int&>::none().filter([](const int&) { return true; });
-  static_assert(std::is_same_v<decltype(inx), Option<int&>>, "");
+  static_assert(std::is_same_v<decltype(inx), Option<int&>>);
   IS_NONE(inx);
 
   auto iny = Option<int&>::none().filter([](const int&) { return false; });
-  static_assert(std::is_same_v<decltype(iny), Option<int&>>, "");
+  static_assert(std::is_same_v<decltype(iny), Option<int&>>);
   IS_NONE(iny);
 
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
@@ -786,7 +786,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>::some(And(3));
   });
-  static_assert(std::is_same_v<decltype(x), Option<And>>, "");
+  static_assert(std::is_same_v<decltype(x), Option<And>>);
   EXPECT_EQ(sus::move(x).unwrap().i, 3);
   EXPECT_TRUE(called);
 
@@ -795,7 +795,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>::none();
   });
-  static_assert(std::is_same_v<decltype(y), Option<And>>, "");
+  static_assert(std::is_same_v<decltype(y), Option<And>>);
   IS_NONE(y);
   EXPECT_TRUE(called);
 
@@ -804,7 +804,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>::some(And(3));
   });
-  static_assert(std::is_same_v<decltype(nx), Option<And>>, "");
+  static_assert(std::is_same_v<decltype(nx), Option<And>>);
   IS_NONE(nx);
   EXPECT_FALSE(called);
 
@@ -813,7 +813,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>::none();
   });
-  static_assert(std::is_same_v<decltype(ny), Option<And>>, "");
+  static_assert(std::is_same_v<decltype(ny), Option<And>>);
   IS_NONE(ny);
   EXPECT_FALSE(called);
 
@@ -824,7 +824,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>::some(And(3));
   });
-  static_assert(std::is_same_v<decltype(ix), Option<And>>, "");
+  static_assert(std::is_same_v<decltype(ix), Option<And>>);
   EXPECT_EQ(ix.as_ref().unwrap().i, 3);
   EXPECT_TRUE(called);
 
@@ -833,7 +833,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>::none();
   });
-  static_assert(std::is_same_v<decltype(iy), Option<And>>, "");
+  static_assert(std::is_same_v<decltype(iy), Option<And>>);
   IS_NONE(iy);
   EXPECT_TRUE(called);
 
@@ -842,7 +842,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>::some(And(3));
   });
-  static_assert(std::is_same_v<decltype(inx), Option<And>>, "");
+  static_assert(std::is_same_v<decltype(inx), Option<And>>);
   IS_NONE(inx);
   EXPECT_FALSE(called);
 
@@ -851,7 +851,7 @@ TEST(Option, AndThen) {
     called = true;
     return Option<And>::none();
   });
-  static_assert(std::is_same_v<decltype(iny), Option<And>>, "");
+  static_assert(std::is_same_v<decltype(iny), Option<And>>);
   IS_NONE(iny);
   EXPECT_FALSE(called);
 
@@ -861,13 +861,13 @@ TEST(Option, AndThen) {
   //     Option<int>::some(2)
   //         .and_then([&](int&&) { return Option<And>::some(And(3)); })
   //         .unwrap();
-  // static_assert(cx.i == 3, "");
+  // static_assert(cx.i == 3);
   // constexpr int ci = 2;
   // constexpr auto icx =
   //     Option<const int&>::some(ci)
   //         .and_then([&](const int&) { return Option<And>::some(And(3)); })
   //         .unwrap();
-  // static_assert(icx.i == 3, "");
+  // static_assert(icx.i == 3);
 }
 
 TEST(Option, Or) {
@@ -984,14 +984,14 @@ TEST(Option, OrElse) {
   // constexpr auto cx = Option<int>::some(2)
   //                         .or_else([&]() { return Option<int>::some(3); })
   //                         .unwrap();
-  // static_assert(cx == 2, "");
+  // static_assert(cx == 2);
   // TODO: Why does this not work? (Well, now we have disabled constexpr so it
   // won't work.)
   // constexpr int ci2 = 2, ci3 = 3;
   // constexpr auto icx = Option<const int&>::some(ci2)
   //                         .or_else([&]() { return Option<const
   //                         int&>::some(ci3); }) .unwrap();
-  // static_assert(icx == 2, "");
+  // static_assert(icx == 2);
 }
 
 TEST(Option, Xor) {
@@ -1046,14 +1046,14 @@ TEST(Option, Insert) {
 TEST(Option, GetOrInsert) {
   auto x = Option<int>::none();
   auto& rx = x.get_or_insert(9);
-  static_assert(std::is_same_v<decltype(rx), int&>, "");
+  static_assert(std::is_same_v<decltype(rx), int&>);
   EXPECT_EQ(rx, 9);
   rx = 5;
   EXPECT_EQ(sus::move(x).unwrap(), 5);
 
   auto y = Option<int>::some(11);
   auto& ry = y.get_or_insert(7);
-  static_assert(std::is_same_v<decltype(ry), int&>, "");
+  static_assert(std::is_same_v<decltype(ry), int&>);
   EXPECT_EQ(ry, 11);
   EXPECT_EQ(sus::move(y).unwrap(), 11);
 
@@ -1061,13 +1061,13 @@ TEST(Option, GetOrInsert) {
 
   auto ix = Option<int&>::none();
   auto& irx = ix.get_or_insert(i3);
-  static_assert(std::is_same_v<decltype(irx), int&>, "");
+  static_assert(std::is_same_v<decltype(irx), int&>);
   EXPECT_EQ(&irx, &i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
 
   auto iy = Option<int&>::some(mref(i2));
   auto& iry = iy.get_or_insert(i3);
-  static_assert(std::is_same_v<decltype(iry), int&>, "");
+  static_assert(std::is_same_v<decltype(iry), int&>);
   EXPECT_EQ(&iry, &i2);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
 }
@@ -1075,14 +1075,14 @@ TEST(Option, GetOrInsert) {
 TEST(Option, GetOrInsertDefault) {
   auto x = Option<DefaultConstructible>::none();
   auto& rx = x.get_or_insert_default();
-  static_assert(std::is_same_v<decltype(rx), DefaultConstructible&>, "");
+  static_assert(std::is_same_v<decltype(rx), DefaultConstructible&>);
   EXPECT_EQ(rx.i, 2);
   IS_SOME(x);
   EXPECT_EQ(sus::move(x).unwrap().i, 2);
 
   auto w = Option<WithDefaultConstructible>::none();
   auto& rw = w.get_or_insert_default();
-  static_assert(std::is_same_v<decltype(rw), WithDefaultConstructible&>, "");
+  static_assert(std::is_same_v<decltype(rw), WithDefaultConstructible&>);
   EXPECT_EQ(rw.i, 3);
   IS_SOME(w);
   EXPECT_EQ(sus::move(w).unwrap().i, 3);
@@ -1091,7 +1091,7 @@ TEST(Option, GetOrInsertDefault) {
       sus_clang_bug_54040(DefaultConstructible{404})
           sus_clang_bug_54040_else(DefaultConstructible(404)));
   auto& ry = y.get_or_insert_default();
-  static_assert(std::is_same_v<decltype(ry), DefaultConstructible&>, "");
+  static_assert(std::is_same_v<decltype(ry), DefaultConstructible&>);
   EXPECT_EQ(ry.i, 404);
   IS_SOME(y);
   EXPECT_EQ(sus::move(y).unwrap().i, 404);
@@ -1104,7 +1104,7 @@ TEST(Option, GetOrInsertWith) {
     called = true;
     return 9;
   });
-  static_assert(std::is_same_v<decltype(rx), int&>, "");
+  static_assert(std::is_same_v<decltype(rx), int&>);
   EXPECT_EQ(rx, 9);
   rx = 12;
   EXPECT_TRUE(called);
@@ -1117,7 +1117,7 @@ TEST(Option, GetOrInsertWith) {
     called = true;
     return 7;
   });
-  static_assert(std::is_same_v<decltype(ry), int&>, "");
+  static_assert(std::is_same_v<decltype(ry), int&>);
   EXPECT_EQ(ry, 11);
   ry = 18;
   EXPECT_FALSE(called);
@@ -1132,7 +1132,7 @@ TEST(Option, GetOrInsertWith) {
     called = true;
     return i3;
   });
-  static_assert(std::is_same_v<decltype(irx), int&>, "");
+  static_assert(std::is_same_v<decltype(irx), int&>);
   EXPECT_TRUE(called);
   EXPECT_EQ(&irx, &i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
@@ -1143,7 +1143,7 @@ TEST(Option, GetOrInsertWith) {
     called = true;
     return i3;
   });
-  static_assert(std::is_same_v<decltype(iry), int&>, "");
+  static_assert(std::is_same_v<decltype(iry), int&>);
   EXPECT_FALSE(called);
   EXPECT_EQ(&iry, &i2);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
@@ -1151,7 +1151,7 @@ TEST(Option, GetOrInsertWith) {
 
 TEST(Option, AsRef) {
   auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.as_ref()), Option<const int&>>, "");
+  static_assert(std::is_same_v<decltype(x.as_ref()), Option<const int&>>);
   EXPECT_EQ(&x.get_or_insert(0), &x.as_ref().unwrap());
 
   auto n = Option<int>::none();
@@ -1160,7 +1160,7 @@ TEST(Option, AsRef) {
   int i = 2;
 
   auto ix = Option<int&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.as_ref()), Option<const int&>>, "");
+  static_assert(std::is_same_v<decltype(ix.as_ref()), Option<const int&>>);
   EXPECT_EQ(&i, &ix.as_ref().unwrap());
 
   auto in = Option<int&>::none();
@@ -1169,26 +1169,26 @@ TEST(Option, AsRef) {
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
   // constexpr auto cx = Option<int>::some(3);
-  // static_assert(cx.as_ref().unwrap() == 3, "");
+  // static_assert(cx.as_ref().unwrap() == 3);
   // constexpr int ci = 2;
   // constexpr auto icx = Option<int>::some(ci);
-  // static_assert(icx.as_ref().unwrap() == 2, "");
+  // static_assert(icx.as_ref().unwrap() == 2);
 }
 
 TEST(Option, UnwrapRefSome) {
   auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.unwrap_ref()), const int&>, "");
+  static_assert(std::is_same_v<decltype(x.unwrap_ref()), const int&>);
   EXPECT_EQ(&x.unwrap_ref(), &x.as_ref().unwrap());
 
   int i = 2;
 
   auto ix = Option<int&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.unwrap_ref()), const int&>, "");
+  static_assert(std::is_same_v<decltype(ix.unwrap_ref()), const int&>);
   EXPECT_EQ(&ix.unwrap_ref(), &ix.as_ref().unwrap());
 
   // Verify constexpr.
   constexpr auto cx = Option<int>::some(3);
-  static_assert(cx.unwrap_ref() == 3, "");
+  static_assert(cx.unwrap_ref() == 3);
 }
 
 TEST(OptionDeathTest, UnwrapRefNone) {
@@ -1202,19 +1202,19 @@ TEST(OptionDeathTest, UnwrapRefNone) {
 
 TEST(Option, ExpectRefSome) {
   auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.expect_ref("")), const int&>, "");
+  static_assert(std::is_same_v<decltype(x.expect_ref("")), const int&>);
   EXPECT_EQ(&x.expect_ref(""), &x.as_ref().unwrap());
 
   int i = 2;
 
   auto ix = Option<int&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.expect_ref("")), const int&>, "");
+  static_assert(std::is_same_v<decltype(ix.expect_ref("")), const int&>);
   EXPECT_EQ(&ix.expect_ref(""), &ix.as_ref().unwrap());
 
   // Verify constexpr.
-  static_assert(Option<int>::some(3).expect_ref("") == 3, "");
+  static_assert(Option<int>::some(3).expect_ref("") == 3);
   constexpr int ci = 2;
-  static_assert(Option<const int&>::some(ci).expect_ref("") == 2, "");
+  static_assert(Option<const int&>::some(ci).expect_ref("") == 2);
 }
 
 TEST(OptionDeathTest, ExpectRefNone) {
@@ -1228,7 +1228,7 @@ TEST(OptionDeathTest, ExpectRefNone) {
 
 TEST(Option, AsMut) {
   auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.as_mut()), Option<int&>>, "");
+  static_assert(std::is_same_v<decltype(x.as_mut()), Option<int&>>);
   EXPECT_EQ(&x.get_or_insert(0), &x.as_mut().unwrap());
 
   auto n = Option<int>::none();
@@ -1237,7 +1237,7 @@ TEST(Option, AsMut) {
   int i = 2;
 
   auto ix = Option<int&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.as_mut()), Option<int&>>, "");
+  static_assert(std::is_same_v<decltype(ix.as_mut()), Option<int&>>);
   EXPECT_EQ(&i, &ix.as_mut().unwrap());
 
   auto in = Option<int&>::none();
@@ -1246,13 +1246,13 @@ TEST(Option, AsMut) {
 
 TEST(Option, UnwrapMutSome) {
   auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.unwrap_mut()), int&>, "");
+  static_assert(std::is_same_v<decltype(x.unwrap_mut()), int&>);
   EXPECT_EQ(&x.unwrap_mut(), &x.as_mut().unwrap());
 
   int i = 2;
 
   auto ix = Option<int&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.unwrap_mut()), int&>, "");
+  static_assert(std::is_same_v<decltype(ix.unwrap_mut()), int&>);
   EXPECT_EQ(&ix.unwrap_mut(), &i);
 }
 
@@ -1267,13 +1267,13 @@ TEST(OptionDeathTest, UnwrapMutNone) {
 
 TEST(Option, ExpectMutSome) {
   auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.expect_mut("")), int&>, "");
+  static_assert(std::is_same_v<decltype(x.expect_mut("")), int&>);
   EXPECT_EQ(&x.expect_mut(""), &x.as_mut().unwrap());
 
   int i = 2;
 
   auto ix = Option<int&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.expect_mut("")), int&>, "");
+  static_assert(std::is_same_v<decltype(ix.expect_mut("")), int&>);
   EXPECT_EQ(&ix.expect_mut(""), &i);
 }
 
@@ -1326,13 +1326,13 @@ TEST(Option, TrivialCopy) {
 
 TEST(Option, Replace) {
   auto x = Option<int>::some(2);
-  static_assert(std::is_same_v<decltype(x.replace(3)), Option<int>>, "");
+  static_assert(std::is_same_v<decltype(x.replace(3)), Option<int>>);
   auto y = x.replace(3);
   EXPECT_EQ(x.as_ref().unwrap(), 3);
   EXPECT_EQ(y.as_ref().unwrap(), 2);
 
   auto z = Option<int>::none();
-  static_assert(std::is_same_v<decltype(z.replace(3)), Option<int>>, "");
+  static_assert(std::is_same_v<decltype(z.replace(3)), Option<int>>);
   auto zz = z.replace(3);
   EXPECT_EQ(z.as_ref().unwrap(), 3);
   IS_NONE(zz);
@@ -1340,13 +1340,13 @@ TEST(Option, Replace) {
   int i2 = 2, i3 = 3;
 
   auto ix = Option<int&>::some(mref(i2));
-  static_assert(std::is_same_v<decltype(ix.replace(i3)), Option<int&>>, "");
+  static_assert(std::is_same_v<decltype(ix.replace(i3)), Option<int&>>);
   auto iy = ix.replace(i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
 
   auto iz = Option<int&>::none();
-  static_assert(std::is_same_v<decltype(iz.replace(i3)), Option<int&>>, "");
+  static_assert(std::is_same_v<decltype(iz.replace(i3)), Option<int&>>);
   auto izz = iz.replace(i3);
   EXPECT_EQ(&iz.as_ref().unwrap(), &i3);
   IS_NONE(izz);
@@ -1364,8 +1364,8 @@ TEST(Option, Copied) {
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
   // constexpr int ic = 2;
-  // static_assert(Option<int&>::none().copied().is_none(), "");
-  // static_assert(Option<const int&>::some(ic).copied().unwrap() == 2, "");
+  // static_assert(Option<int&>::none().copied().is_none());
+  // static_assert(Option<const int&>::some(ic).copied().unwrap() == 2);
 }
 
 TEST(Option, Flatten) {
@@ -1397,9 +1397,9 @@ TEST(Option, Flatten) {
 
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
-  // static_assert(Option<Option<int>>::none().flatten().is_none(), "");
+  // static_assert(Option<Option<int>>::none().flatten().is_none());
   // static_assert(
-  //     Option<Option<int>>::some(Option<int>::none()).flatten().is_none(), "");
+  //     Option<Option<int>>::some(Option<int>::none()).flatten().is_none());
   // static_assert(
   //     Option<Option<int>>::some(Option<int>::some(3)).flatten().unwrap() == 3,
   //     "");
@@ -1414,7 +1414,7 @@ TEST(Option, Iter) {
   int count = 0;
   auto y = Option<int>::some(2);
   for (auto& i : y.iter()) {
-    static_assert(std::is_same_v<decltype(i), const int&>, "");
+    static_assert(std::is_same_v<decltype(i), const int&>);
     EXPECT_EQ(i, 2);
     ++count;
   }
@@ -1430,7 +1430,7 @@ TEST(Option, IterMut) {
   int count = 0;
   auto y = Option<int>::some(2);
   for (auto& i : y.iter_mut()) {
-    static_assert(std::is_same_v<decltype(i), int&>, "");
+    static_assert(std::is_same_v<decltype(i), int&>);
     EXPECT_EQ(i, 2);
     i += 1;
     ++count;
@@ -1455,7 +1455,7 @@ TEST(Option, IntoIter) {
   int count = 0;
   auto y = Option<MoveOnly>::some(MoveOnly(2));
   for (auto m : sus::move(y).into_iter()) {
-    static_assert(std::is_same_v<decltype(m), MoveOnly>, "");
+    static_assert(std::is_same_v<decltype(m), MoveOnly>);
     EXPECT_EQ(m.i, 2);
     ++count;
   }
@@ -1472,7 +1472,7 @@ TEST(Option, ImplicitIter) {
   auto y = Option<MoveOnly>::some(MoveOnly(2));
 
   for (const auto& m : y) {
-    static_assert(std::is_same_v<decltype(m), const MoveOnly&>, "");
+    static_assert(std::is_same_v<decltype(m), const MoveOnly&>);
     EXPECT_EQ(m.i, 2);
     ++count;
   }
