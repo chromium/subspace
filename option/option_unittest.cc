@@ -16,6 +16,7 @@
 
 #include <math.h>  // TODO: Replace with f32::NAN()
 
+#include "containers/array.h"
 #include "iter/iterator.h"
 #include "macros/builtin.h"
 #include "mem/nonnull.h"
@@ -1401,7 +1402,8 @@ TEST(Option, Flatten) {
   // static_assert(
   //     Option<Option<int>>::some(Option<int>::none()).flatten().is_none());
   // static_assert(
-  //     Option<Option<int>>::some(Option<int>::some(3)).flatten().unwrap() == 3,
+  //     Option<Option<int>>::some(Option<int>::some(3)).flatten().unwrap() ==
+  //     3,
   //     "");
 }
 
@@ -1737,6 +1739,35 @@ TEST(Option, NonZeroField) {
   int j = 4;
   o.replace(T::with(j));
   EXPECT_EQ(o.unwrap_ref().as_ptr(), &j);
+}
+
+template <class T>
+struct CollectSum {
+  static constexpr CollectSum from_iter(
+      ::sus::iter::IteratorBase<T>&& iter) noexcept {
+    T sum = T();
+    for (const T& t : iter) sum += t;
+    return CollectSum(sum);
+  }
+
+  T sum;
+};
+
+TEST(Option, FromIter) {
+  auto all_some = ::sus::Array<Option<usize>, 3>::with_values(
+                      Option<usize>::some(1u), Option<usize>::some(2u),
+                      Option<usize>::some(3u))
+                      .into_iter()
+                      .collect<Option<CollectSum<usize>>>();
+  EXPECT_EQ(all_some, Some);
+  EXPECT_EQ(all_some.unwrap_ref().sum, 1u + 2u + 3u);
+
+  auto one_none = ::sus::Array<Option<usize>, 3>::with_values(
+                      Option<usize>::some(1u), Option<usize>::none(),
+                      Option<usize>::some(3u))
+                      .into_iter()
+                      .collect<Option<CollectSum<usize>>>();
+  EXPECT_EQ(one_none, None);
 }
 
 }  // namespace
