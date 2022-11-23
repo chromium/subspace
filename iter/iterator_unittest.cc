@@ -18,6 +18,7 @@
 #include "construct/into.h"
 #include "containers/array.h"
 #include "iter/filter.h"
+#include "macros/__private/compiler_bugs.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 using ::sus::containers::Array;
@@ -227,6 +228,8 @@ TEST(Iterator, FilterNonTriviallyRelocatable) {
 
 template <class T>
 struct CollectSum {
+  sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
+
   static constexpr CollectSum from_iter(IteratorBase<T>&& iter) noexcept {
     T sum = T();
     for (const T& t : iter) sum += t;
@@ -239,7 +242,8 @@ struct CollectSum {
 TEST(Iterator, Collect) {
   int nums[5] = {1, 2, 3, 4, 5};
 
-  auto collected = ArrayIterator<int, 5>::with_array(nums).collect<CollectSum<int>>();
+  auto collected =
+      ArrayIterator<int, 5>::with_array(nums).collect<CollectSum<int>>();
   EXPECT_EQ(collected.sum, 1 + 2 + 3 + 4 + 5);
 }
 

@@ -20,6 +20,7 @@
 #include "iter/iterator.h"
 #include "macros/builtin.h"
 #include "mem/nonnull.h"
+#include "macros/__private/compiler_bugs.h"
 #include "mem/relocate.h"
 #include "num/types.h"
 #include "result/result.h"
@@ -1743,6 +1744,8 @@ TEST(Option, NonZeroField) {
 
 template <class T>
 struct CollectSum {
+  sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
+
   static constexpr CollectSum from_iter(
       ::sus::iter::IteratorBase<T>&& iter) noexcept {
     T sum = T();
