@@ -93,6 +93,11 @@ class Result final {
     return Result(WithErr, static_cast<E&&>(e));
   }
 
+  /// Takes each element in the Iterator: if it is an Err, no further elements
+  /// are taken, and the Err is returned. Should no Err occur, a container with
+  /// the values of each Result is returned.
+  ///
+  /// sus::iter::FromIterator trait.
   template <class U>
   static constexpr Result from_iter(
       ::sus::iter::IteratorBase<Result<U, E>>&& iter)

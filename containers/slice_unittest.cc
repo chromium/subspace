@@ -125,6 +125,27 @@ TEST(SliceDeathTest, Index) {
 #endif
 }
 
+TEST(Slice, RangedForIter) {
+  {
+    usize ar[] = {1u, 2u, 3u};
+    const auto slice = Slice<const usize>::from(ar);
+    auto sum = 0_usize;
+    for (const usize& i : slice) {
+      sum += i;
+    }
+    EXPECT_EQ(sum, 6_usize);
+  }
+  {
+    usize ar[] = {1u, 2u, 3u};
+    const auto mslice = Slice<usize>::from(ar);
+    auto sum = 0_usize;
+    for (const usize& i : mslice) {
+      sum += i;
+    }
+    EXPECT_EQ(sum, 6_usize);
+  }
+}
+
 TEST(Slice, Iter) {
   {
     usize ar[] = {1u, 2u, 3u};

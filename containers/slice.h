@@ -20,7 +20,7 @@
 
 #include "assertions/check.h"
 #include "construct/into.h"
-#include "containers/slice_iter.h"
+#include "containers/__private/slice_iter.h"
 #include "iter/iterator_defn.h"
 #include "mem/never_value.h"
 #include "num/unsigned_integer.h"

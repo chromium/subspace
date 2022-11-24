@@ -45,12 +45,12 @@ struct [[sus_trivial_abi]] SliceIter
     // SAFETY: Since end_ > ptr_, which is checked in the constructor, ptr_ + 1
     // will never be null.
     return Option<const Item&>::some(
-        *::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1_usize));
+        *::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u));
   }
 
  protected:
   constexpr SliceIter(const Item* start, usize len) noexcept
-      : ptr_(start), end_(start + len) {
+      : ptr_(start), end_(start + len.primitive_value) {
     check(end_ > ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
@@ -58,7 +58,8 @@ struct [[sus_trivial_abi]] SliceIter
   const Item* ptr_;
   const Item* end_;
 
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(ptr_), decltype(end_));
+  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(ptr_),
+                                             decltype(end_));
 };
 
 template <class Item>
@@ -75,12 +76,12 @@ struct [[sus_trivial_abi]] SliceIterMut
     // SAFETY: Since end_ > ptr_, which is checked in the constructor, ptr_ + 1
     // will never be null.
     return Option<Item&>::some(
-        mref(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1_usize)));
+        mref(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u)));
   }
 
  protected:
   constexpr SliceIterMut(Item* start, usize len) noexcept
-      : ptr_(start), end_(start + len) {
+      : ptr_(start), end_(start + len.primitive_value) {
     check(end_ > ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
@@ -88,7 +89,8 @@ struct [[sus_trivial_abi]] SliceIterMut
   Item* ptr_;
   Item* end_;
 
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(ptr_), decltype(end_));
+  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(ptr_),
+                                             decltype(end_));
 };
 
 }  // namespace sus::containers

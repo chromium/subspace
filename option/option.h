@@ -137,6 +137,8 @@ class Option final {
   /// Takes each item in the Iterator: if it is None, no further elements are
   /// taken, and the None is returned. Should no None occur, a container of type
   /// T containing the values of type U from each Option<U> is returned.
+  ///
+  /// sus::iter::FromIterator trait.
   template <class U>
   static constexpr Option from_iter(::sus::iter::IteratorBase<Option<U>>&& iter)
     requires(::sus::iter::FromIterator<T, U>)
