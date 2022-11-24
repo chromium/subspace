@@ -106,7 +106,8 @@ class Result final {
     auto err = Option<E>::none();
     auto success_out =
         Result::with(T::from_iter(::sus::iter::__private::Unwrapper(
-            ::sus::move(iter), mref(err), [](Result<U, E>&& r) { return r; })));
+            ::sus::move(iter), mref(err),
+            [](Result<U, E>&& r) { return static_cast<Result<U, E>&&>(r); })));
     return ::sus::move(err).map_or_else(
         [&]() { return ::sus::move(success_out); },
         [](E e) { return Result::with_err(e); });
