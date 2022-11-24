@@ -303,4 +303,24 @@ TEST(Vec, GrowToExact) {
   }
 }
 
+TEST(Vec, Collect) {
+  auto v = Vec<i32>::with_default();
+  v.push(1_i32);
+  v.push(2_i32);
+  v.push(3_i32);
+  auto v2 = sus::move(v).into_iter().collect<Vec<i32>>();
+  EXPECT_EQ(v2.len(), 3_usize);
+
+  auto vc = Vec<i32>::with_default();
+  vc.push(1_i32);
+  vc.push(2_i32);
+  vc.push(3_i32);
+  // TODO: This won't work because we have const refs to i32 which can't be
+  // moved into vc2. We need to call `iter().cloned().collect<Vec<i32>>` when
+  // cloned() exists.
+  //
+  // auto vc2 = v.iter().collect<Vec<i32>>();
+  // EXPECT_EQ(vc2.len(), 3_usize);
+}
+
 }  // namespace

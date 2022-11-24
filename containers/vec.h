@@ -22,6 +22,7 @@
 #include "assertions/check.h"
 #include "containers/__private/vec_iter.h"
 #include "containers/slice.h"
+#include "iter/from_iterator.h"
 #include "mem/never_value.h"
 #include "mem/relocate.h"
 #include "mem/replace.h"
@@ -32,6 +33,10 @@
 namespace sus::containers {
 
 // TODO: Invalidate/drain iterators in every mutable method.
+
+// TODO: Use after move of Vec is NOT allowed. Should we rely on clang-tidy
+// and/or compiler warnings to check for misuse? Or should we add checks(). And
+// then allow them to be disabled when you are using warnings?
 
 template <::sus::mem::Moveable T>
 class Vec {
@@ -45,6 +50,16 @@ class Vec {
 
   // sus::construct::MakeDefault trait.
   static inline constexpr Vec with_default() noexcept { return Vec(); }
+
+  /// Constructs a vector by taking all the elements from the iterator.
+  ///
+  /// sus::iter::FromIterator trait.
+  static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) {
+    // TODO: Use iter.size_hint() when it exists.
+    auto v = Vec::with_capacity(0_usize);
+    for (T t : iter) v.push(static_cast<T&&>(t));
+    return v;
+  }
 
   ~Vec() {
     if (is_alloced()) free(storage_);
