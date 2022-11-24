@@ -214,6 +214,57 @@ TEST(Vec, Growth) {
   EXPECT_EQ(v.capacity(), (2_usize + 1_usize) * 3_usize);
 }
 
+template <bool trivial>
+struct TrivialLies {
+  TrivialLies(usize& moves, usize& destructs)
+      : moves(moves), destructs(destructs) {}
+  TrivialLies(TrivialLies&& o)
+      : moves(o.moves), destructs(o.destructs), i(o.i + 1_i32) {
+    moves += 1_usize;
+  }
+  void operator=(TrivialLies&&) { sus::check(false); }
+  ~TrivialLies() { destructs += 1_usize; }
+
+  usize& moves;
+  usize& destructs;
+  i32 i = 0_i32;
+
+  // The move constructor and destructor mean this type is NOT trivially
+  // relocatable.. but we can lie here to see that the move constuctor and
+  // destructor are elided when the type says it's triviall relocatable.
+  sus_class_trivial_relocatable_value(unsafe_fn, trivial);
+};
+
+TEST(Vec, GrowthTriviallyRelocatable) {
+  static auto moves = 0_usize;
+  static auto destructs = 0_usize;
+  auto v = Vec<TrivialLies<true>>::with_capacity(1_usize);
+  v.push(TrivialLies<true>(moves, destructs));
+
+  moves = destructs = 0_usize;
+  v.reserve(2_usize);
+  // TrivialLies was memcpy'd, instead of being moved and destroyed.
+  EXPECT_EQ(moves, 0_usize);
+  EXPECT_EQ(destructs, 0_usize);
+}
+
+TEST(Vec, GrowthNonTriviallyRelocatable) {
+  static auto moves = 0_usize;
+  static auto destructs = 0_usize;
+  auto v = Vec<TrivialLies<false>>::with_capacity(1_usize);
+  v.push(TrivialLies<false>(moves, destructs));
+  v[0u].i = 42_i32;
+
+  moves = destructs = 0_usize;
+  v.reserve(2_usize);
+  // TrivialLies was moved and destroyed, not just memcpy'd.
+  EXPECT_EQ(moves, 1_usize);
+  EXPECT_EQ(destructs, 1_usize);
+
+  // Moving S incremented it.
+  EXPECT_EQ(v[0u].i, 43_i32);
+}
+
 TEST(Vec, Reserve) {
   {
     auto v = Vec<i32>::with_capacity(2_usize);
@@ -321,6 +372,53 @@ TEST(Vec, Collect) {
   //
   // auto vc2 = v.iter().collect<Vec<i32>>();
   // EXPECT_EQ(vc2.len(), 3_usize);
+}
+
+TEST(Vec, Destroy) {
+  static auto moves = 0_usize;
+  static auto destructs = 0_usize;
+  auto o = sus::Option<Vec<TrivialLies<false>>>::none();
+  o.insert(Vec<TrivialLies<false>>::with_capacity(1_usize));
+  o.unwrap_mut().push(TrivialLies<false>(moves, destructs));
+  o.unwrap_mut().push(TrivialLies<false>(moves, destructs));
+
+  moves = destructs = 0_usize;
+  o.clear();  // Destroys the Vec, and both objects inside it.
+  EXPECT_EQ(destructs, 2_usize);
+}
+
+TEST(Vec, Clear) {
+  static auto moves = 0_usize;
+  static auto destructs = 0_usize;
+  auto v = Vec<TrivialLies<false>>::with_capacity(1_usize);
+  v.push(TrivialLies<false>(moves, destructs));
+  v.push(TrivialLies<false>(moves, destructs));
+
+  moves = destructs = 0_usize;
+  EXPECT_EQ(v.len(), 2_usize);
+  EXPECT_GE(v.capacity(), 2_usize);
+  auto cap_before = v.capacity();
+  v.clear();  // Clears the Vec, destroying both objects inside it.
+  EXPECT_EQ(destructs, 2_usize);
+  EXPECT_EQ(v.len(), 0_usize);
+  EXPECT_EQ(v.capacity(), cap_before);
+}
+
+TEST(Vec, Move) {
+  static auto moves = 0_usize;
+  static auto destructs = 0_usize;
+  auto v = Vec<TrivialLies<false>>::with_capacity(1_usize);
+  v.push(TrivialLies<false>(moves, destructs));
+  v.push(TrivialLies<false>(moves, destructs));
+
+  auto v2 = Vec<TrivialLies<false>>::with_capacity(1_usize);
+  v2.push(TrivialLies<false>(moves, destructs));
+  v2.push(TrivialLies<false>(moves, destructs));
+
+  moves = destructs = 0_usize;
+  v = sus::move(v2);  // Destroys the objects in `v`.
+  EXPECT_EQ(moves, 0_usize);
+  EXPECT_EQ(destructs, 2_usize);
 }
 
 }  // namespace
