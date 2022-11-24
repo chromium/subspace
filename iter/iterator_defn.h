@@ -172,6 +172,8 @@ class Iterator final : public I {
   /// sus::move(iter).collect<MyContainer<i32>>() ```
   template <::sus::iter::FromIterator<typename I::Item> C>
   C collect() && noexcept;
+
+  // TODO: cloned().
 };
 
 }  // namespace sus::iter
