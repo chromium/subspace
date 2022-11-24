@@ -34,6 +34,11 @@ static_assert(std::is_signed_v<decltype(isize::primitive_value)>);
 static_assert(sizeof(decltype(isize::primitive_value)) == sizeof(void*));
 static_assert(sizeof(isize) == sizeof(decltype(isize::primitive_value)));
 
+// `isize` can be explicitly converted to an unsigned int of the same size.
+static_assert(sizeof(isize) != sizeof(uint16_t) || std::is_constructible_v<int16_t, isize>);
+static_assert(sizeof(isize) != sizeof(uint32_t) || std::is_constructible_v<int32_t, isize>);
+static_assert(sizeof(isize) != sizeof(uint64_t) || std::is_constructible_v<int64_t, isize>);
+
 namespace behaviour {
 using T = isize;
 using From = decltype(isize::primitive_value);

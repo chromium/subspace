@@ -22,9 +22,9 @@
 
 #include "assertions/check.h"
 #include "construct/make_default.h"
-#include "containers/array_iter.h"
+#include "containers/__private/array_iter.h"
 #include "containers/slice.h"
-#include "containers/slice_iter.h"
+#include "containers/__private/slice_iter.h"
 #include "fn/callable.h"
 #include "fn/fn_defn.h"
 #include "marker/unsafe.h"
@@ -80,16 +80,16 @@ class Array final {
     return Array(kWithInitializer, move(f), std::make_index_sequence<N>());
   }
 
-  /// Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
-  /// sus::construct::Into<T> to avoid implicit conversions.
+  // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
+  // sus::construct::Into<T> to avoid implicit conversions.
   template <std::convertible_to<T> U>
   constexpr static Array with_value(const U& t) noexcept {
     return Array(kWithValue, t, std::make_index_sequence<N>());
   }
 
-  /// Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
-  /// values. But doesn't use sus::construct::Into<T> to avoid implicit
-  /// conversions.
+  // Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
+  // values. But doesn't use sus::construct::Into<T> to avoid implicit
+  // conversions.
   template <std::convertible_to<T>... Ts>
     requires(sizeof...(Ts) == N)
   constexpr static Array with_values(Ts... ts) noexcept {

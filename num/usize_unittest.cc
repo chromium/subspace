@@ -39,10 +39,17 @@ static_assert(std::is_convertible_v<uint8_t, usize>);
 static_assert(std::is_convertible_v<uint16_t, usize>);
 static_assert(std::is_convertible_v<uint32_t, usize>);
 static_assert(std::is_convertible_v<uint64_t, usize>);
+static_assert(std::is_convertible_v<size_t, usize>);
 static_assert(!std::is_convertible_v<int8_t, usize>);
 static_assert(!std::is_convertible_v<int16_t, usize>);
 static_assert(!std::is_convertible_v<int32_t, usize>);
 static_assert(!std::is_convertible_v<int64_t, usize>);
+
+// `usize` can be explicitly converted to size_t and an unsigned int of the same size.
+static_assert(std::is_constructible_v<size_t, usize>);
+static_assert(sizeof(size_t) != sizeof(uint16_t) || std::is_constructible_v<uint16_t, usize>);
+static_assert(sizeof(size_t) != sizeof(uint32_t) || std::is_constructible_v<uint32_t, usize>);
+static_assert(sizeof(size_t) != sizeof(uint64_t) || std::is_constructible_v<uint64_t, usize>);
 
 TEST(usize, ImplicitConstruct) {
   {

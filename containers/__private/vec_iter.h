@@ -25,20 +25,18 @@
 
 namespace sus::containers {
 
-template <class T, size_t N>
-  requires(N <= PTRDIFF_MAX)
-class Array;
+template <::sus::mem::Moveable T>
+class Vec;
 
-template <class Item, size_t N>
-  requires(std::is_move_constructible_v<Item>)
-struct ArrayIntoIter : public ::sus::iter::IteratorBase<Item> {
+template <::sus::mem::Moveable Item>
+struct VecIntoIter : public ::sus::iter::IteratorBase<Item> {
  public:
-  static constexpr auto with(Array<Item, N>&& array) noexcept {
-    return ::sus::iter::Iterator<ArrayIntoIter>(::sus::move(array));
+  static constexpr auto with(Vec<Item>&& vec) noexcept {
+    return ::sus::iter::Iterator<VecIntoIter>(::sus::move(vec));
   }
 
   Option<Item> next() noexcept final {
-    if (next_index_.primitive_value == N) [[unlikely]]
+    if (next_index_.primitive_value == vec_.len()) [[unlikely]]
       return Option<Item>::none();
     // SAFETY: The array has a fixed size. The next_index_ is encapsulated and
     // only changed in this class/method. The next_index_ stops incrementing
@@ -47,21 +45,21 @@ struct ArrayIntoIter : public ::sus::iter::IteratorBase<Item> {
     // here because it's difficult for the compiler to make the same
     // observations we have here, as next_index_ is a field and changes across
     // multiple method calls.
-    Item& item = array_.get_unchecked_mut(
+    Item& item = vec_.get_unchecked_mut(
         unsafe_fn,
         ::sus::mem::replace(mref(next_index_), next_index_ + 1_usize));
     return Option<Item>::some(move(item));
   }
 
  protected:
-  ArrayIntoIter(Array<Item, N>&& array) noexcept : array_(::sus::move(array)) {}
+  VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
 
  private:
   usize next_index_ = 0_usize;
-  Array<Item, N> array_;
+  Vec<Item> vec_;
 
   sus_class_maybe_trivial_relocatable_types(unsafe_fn, decltype(next_index_),
-                                            decltype(array_));
+                                            decltype(vec_));
 };
 
 }  // namespace sus::containers
