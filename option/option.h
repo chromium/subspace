@@ -109,8 +109,7 @@ class Option final {
   }
 
   /// Construct an Option that is holding the given value.
-  template <class U>
-  static inline constexpr Option some(Mref<U> t) noexcept
+  static inline constexpr Option some(Mref<T> t) noexcept
     requires(std::is_copy_constructible_v<T>)
   {
     return Option(t);
