@@ -424,7 +424,9 @@ class Option final {
 
   /// Stores the value `t` inside this Option, replacing any previous value, and
   /// returns a mutable reference to the new value.
-  constexpr T& insert(T t) & noexcept {
+  constexpr T& insert(T t) & noexcept
+    requires(sus::mem::MoveableForAssign<T>)
+  {
     t_.set_some(static_cast<T&&>(t));
     return t_.val_;
   }

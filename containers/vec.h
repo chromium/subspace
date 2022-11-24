@@ -62,7 +62,7 @@ class Vec {
   }
 
   ~Vec() {
-    if (is_alloced()) free(storage_);
+    if (is_alloced()) free_storage();
   }
 
   Vec(Vec&& o) noexcept
@@ -73,19 +73,20 @@ class Vec {
   Vec& operator=(Vec&& o) noexcept
     requires(sus::mem::MoveableForAssign<T>)
   {
-    if (is_alloced()) free(storage_);
+    if (is_alloced()) free_storage();
     storage_ = ::sus::mem::replace_ptr(mref(o.storage_), nullish());
     len_ = ::sus::mem::replace(mref(o.len_), 0_usize);
     capacity_ = ::sus::mem::replace(mref(o.capacity_), 0_usize);
     return *this;
   }
 
+  /// Clears the vector, removing all values.
+  ///
+  /// Note that this method has no effect on the allocated capacity of the
+  /// vector.
   void clear() noexcept {
-    if (is_alloced()) {
-      free(storage_);
-      len_ = 0_usize;
-      capacity_ = 0_usize;
-    }
+    destroy_storage_objects();
+    len_ = 0_usize;
   }
 
   /// Reserves capacity for at least `additional` more elements to be inserted
@@ -135,10 +136,26 @@ class Vec {
     const auto bytes = ::sus::mem::size_of<T>() * cap;
     check(bytes <= usize(size_t{PTRDIFF_MAX}));
     static_assert(sizeof(size_t) == sizeof(usize));
-    if (!is_alloced())
+    if (!is_alloced()) {
       storage_ = static_cast<char*>(malloc(bytes.primitive_value));
-    else
-      storage_ = static_cast<char*>(realloc(storage_, bytes.primitive_value));
+    } else {
+      if constexpr (::sus::mem::relocate_array_by_memcpy<T>) {
+        storage_ = static_cast<char*>(realloc(storage_, bytes.primitive_value));
+      } else {
+        auto* const new_storage =
+            static_cast<char*>(malloc(bytes.primitive_value));
+        auto* old_t = reinterpret_cast<T*>(storage_);
+        auto* new_t = reinterpret_cast<T*>(new_storage);
+        const size_t len = len_.primitive_value;
+        for (auto i = size_t{0}; i < len; ++i) {
+          new (new_t) T(static_cast<T&&>(*old_t));
+          old_t->~T();
+          ++old_t;
+          ++new_t;
+        }
+        storage_ = new_storage;
+      }
+    }
     capacity_ = cap;
   }
 
@@ -157,12 +174,10 @@ class Vec {
   ///
   /// # Panics
   /// Panics if the new capacity exceeds isize::MAX bytes.
-  ///
-  // Templated with a univeral reference to avoid temporaries. Uses
-  // convertible_to<T> to accept `sus::into()` values. But doesn't use
-  // sus::construct::Into<T> to avoid implicit conversions.
-  template <std::convertible_to<T> U>
-  void push(U&& t) noexcept {
+  void push(T t) noexcept {
+    // Avoids use of a reference, and receives by value, to sidestep the whole
+    // issue of the reference being to something inside the vector which
+    // reserve() then invalidates.
     reserve(1_usize);
     new (as_mut_ptr() + len_.primitive_value) T(static_cast<T&&>(t));
     len_ += 1_usize;
@@ -292,6 +307,19 @@ class Vec {
       check(bytes <= usize(size_t{PTRDIFF_MAX}));
     }
     return cap;
+  }
+
+  inline void destroy_storage_objects() {
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+      const size_t len = len_.primitive_value;
+      for (auto i = size_t{0}; i < len; ++i)
+        reinterpret_cast<T*>(storage_)[i].~T();
+    }
+  }
+
+  inline void free_storage() {
+    destroy_storage_objects();
+    free(storage_);
   }
 
   // The fields are used to encode extra data as follows:
