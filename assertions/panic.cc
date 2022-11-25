@@ -16,15 +16,11 @@
 
 #include <stdio.h>
 
-namespace sus {
+namespace sus::__private {
 
-// Defined outside the header to avoid inlining, to optimize for code size.
-[[noreturn]] void panic_with_message(
-    /* TODO: string view type, or format + args */ const char& msg) {
-  // TODO: allow configuring messages away at build time.
+// Defined outside the header to avoid fprintf in the header.
+void print_panic_message(const char& msg) {
   fprintf(stderr, "PANIC! %s\n", &msg);
-  // TODO: allow configuring this to some other method of aborting.
-  ::abort();
 }
 
-}  // namespace sus
+}  // namespace sus::__private

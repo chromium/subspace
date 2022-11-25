@@ -30,7 +30,7 @@ TEST(Check, CheckFails) {
 #endif
 }
 
-TEST(Panic, WithMessage) {
+TEST(Check, WithMessage) {
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(check_with_message(false, *"hello world"), "hello world");
 #endif
