@@ -38,65 +38,21 @@ struct relocatable_tag final {
   };
 };
 
-// Tests if the type T can be relocated with memcpy(). Checking for trivially
-// movable and destructible is not sufficient - this also honors the
-// [[trivial_abi]] clang attribute, as types annotated with the attribute are
-// now considered "trivially relocatable" in https://reviews.llvm.org/D114732.
-//
-// TODO: @ssbr has pointed out that this must also verify that the type has no
-// padding at the end which can be used by an outer type. If so, either
-// - You can't memcpy it, or
-// - You must memcpy without including the padding bytes.
-//
-// If type `T` has padding at its end, such as:
-// ```
-// class T { i64 a; i32 b; };
-// ```
-//
-// Then there are two ways for another type to place a field inside the padding
-// adjacent to `b` and inside area allocated for `sizeof(T)`:
-//
-// 1. A subclass of a non-POD type can insert its fields into the padding of the
-//    base class.
-//
-// So a subclass of `T` may have its first field inside the padding adjacent to
-// `b`:
-// ```
-// class S : T { i32 c; };
-// ```
-// In this example, `sizeof(S) == sizeof(T)` because `c` sits inside the
-// trailing padding of `T`.
-//
-// 2. A class with a `[[no_unique_address]]` field may insert other fields below
-//    it into the padding of the `[[no_unique_address]]` field.
-//
-// So a class that contains `T` as a field can insert another field into `T`:
-// ```
-// class S {
-//   [[no_unique_address]] T t;
-//   i32 c;
-// };
-// ```
-// In this example, `sizeof(S) == sizeof(T)` because `c` sits inside the
-// trailing padding of `T`.
-//
-// From @ssbr:
-//
-// So the dsizeof(T) algorithm [to determine how much to memcpy safely] is
-// something like:
-//
-// - A: find out how many bytes fit into the padding via inheritance (`struct S
-//   : T { bytes }` for all `bytes` until `sizeof(T) != sizeof(S)`).
-// - B: find out how many bytes fit into the padding via no_unique_address
-//   (struct S { [[no_unique_address]] T x; bytes } for all `bytes` until
-//   `sizeof(T) != sizeof(S)`).
-//
-// ```
-// return sizeof(T) - max(A, B)
-// ```
-//
-// And I think on every known platform, A == B. It might even be guaranteed by
-// the standard, but I wouldn't know how to check
+/// Tests if the type T can be relocated with memcpy(). Checking for trivially
+/// movable and destructible is not sufficient - this also honors the
+/// [[trivial_abi]] clang attribute, as types annotated with the attribute are
+/// now considered "trivially relocatable" in https://reviews.llvm.org/D114732.
+///
+/// IMPORTANT: If a class satisfies this trait, only `sus::data_size_of<T>()`
+/// bytes should be memcpy'd or Undefine Behaviour can result, due to the
+/// possibility of overwriting data stored in the padding bytes of `T`.
+///
+/// As @ssbr has pointed out, if a type has any padding at the end which can be
+/// used by an outer type, then either:
+/// - You can't memcpy it, or
+/// - You must memcpy without including the padding bytes (i.e.
+///   `data_size_of<T>()` bytes).
+///
 //
 // clang-format off
 template <class... T>
@@ -116,18 +72,18 @@ struct relocate_one_by_memcpy_helper final
       > {};
 // clang-format on
 
-// Tests if an array of type T[] can be relocated with memcpy(). Checking for
-// trivially movable and destructible is not sufficient - this also honors the
-// [[trivial_abi]] clang attribute, as types annotated with the attribute are
-// now considered "trivially relocatable" in https://reviews.llvm.org/D114732.
-//
-// Tests against `std::remove_all_extents_t<T>` so that the same answer is
-// returned for `T` or `T[]` or `T[][][]` etc.
-//
-// Volatile types are excluded, since if we have a range of volatile Foo, then
-// the user is probably expecting us to follow the abstract machine and copy the
-// Foo objects one by one, instead of byte-by-byte (possible tearing). See:
-// https://reviews.llvm.org/D61761?id=198907#inline-548830
+/// Tests if an array of type T[] can be relocated with memcpy(). Checking for
+/// trivially movable and destructible is not sufficient - this also honors the
+/// [[trivial_abi]] clang attribute, as types annotated with the attribute are
+/// now considered "trivially relocatable" in https://reviews.llvm.org/D114732.
+///
+/// Tests against `std::remove_all_extents_t<T>` so that the same answer is
+/// returned for `T` or `T[]` or `T[][][]` etc.
+///
+/// Volatile types are excluded, since if we have a range of volatile Foo, then
+/// the user is probably expecting us to follow the abstract machine and copy
+/// the Foo objects one by one, instead of byte-by-byte (possible tearing). See:
+/// https://reviews.llvm.org/D61761?id=198907#inline-548830
 //
 // clang-format off
 template <class T>
