@@ -19,6 +19,7 @@
 
 #include "macros/builtin.h"
 #include "marker/unsafe.h"
+#include "mem/size_of.h"
 
 namespace sus::mem {
 
@@ -59,14 +60,16 @@ template <class... T>
 struct relocate_one_by_memcpy_helper final
     : public std::integral_constant<
         bool,
-        (... && 
-         (relocatable_tag<T>::value(0)
+        (... &&
+         (sus::mem::data_size_of<T>()
+          && (relocatable_tag<T>::value(0)
 #if __has_extension(trivially_relocatable)
-          || __is_trivially_relocatable(T)
+              || __is_trivially_relocatable(T)
 #else
-          || (std::is_trivially_move_constructible_v<T> &&
-              std::is_trivially_destructible_v<T>)
+              || (std::is_trivially_move_constructible_v<T> &&
+                  std::is_trivially_destructible_v<T>)
 #endif
+             )
          )
         )
       > {};
@@ -90,7 +93,9 @@ template <class T>
 struct relocate_array_by_memcpy_helper final
     : public std::integral_constant<
         bool,
+        sus::mem::data_size_of<T>() &&
         (relocatable_tag<T>::value(0)
+
 #if __has_extension(trivially_relocatable)
          || __is_trivially_relocatable(std::remove_all_extents_t<T>)
 #else
