@@ -20,7 +20,7 @@
 namespace sus::mem {
 
 template <class T>
-constexpr sus_always_inline usize size_of() noexcept {
+consteval sus_always_inline usize size_of() noexcept {
   return usize(sizeof(T));
 }
 
