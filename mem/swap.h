@@ -18,9 +18,10 @@
 
 #include <type_traits>
 
-#include "mem/relocate.h"
 #include "mem/addressof.h"
 #include "mem/mref.h"
+#include "mem/relocate.h"
+#include "mem/size_of.h"
 
 namespace sus::mem {
 
@@ -30,13 +31,13 @@ constexpr void swap(Mref<T> lhs_ref, Mref<T> rhs_ref) noexcept {
   T& lhs = lhs_ref;
   T& rhs = rhs_ref;
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy = ::sus::mem::relocate_one_by_memcpy<T> &&
-                    !std::is_constant_evaluated();
+  bool can_memcpy =
+      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
-    char temp[sizeof(T)];
-    memcpy(temp, ::sus::mem::addressof(lhs), sizeof(T));
-    memcpy(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs), sizeof(T));
-    memcpy(::sus::mem::addressof(rhs), temp, sizeof(T));
+    char temp[::sus::mem::data_size_of<T>()];
+    memcpy(temp, ::sus::mem::addressof(lhs), ::sus::mem::data_size_of<T>());
+    memcpy(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs), ::sus::mem::data_size_of<T>());
+    memcpy(::sus::mem::addressof(rhs), temp, ::sus::mem::data_size_of<T>());
   } else {
     T temp(static_cast<T&&>(lhs));
     lhs = static_cast<T&&>(rhs);
