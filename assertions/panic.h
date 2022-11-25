@@ -35,7 +35,7 @@ void print_panic_message(const char& msg);
 /// # Safety
 /// If `SUS_PROVIDE_PANIC_HANDLER()` is defined, the macro _must_ not return of
 /// Undefined Behaviour will result.
-[[noreturn]] sus_always_inline void panic() {
+[[noreturn]] sus_always_inline void panic() noexcept {
 #if defined(SUS_PROVIDE_PANIC_HANDLER)
   SUS_PROVIDE_PANIC_HANDLER();
 #elif __has_builtin(__builtin_trap)
@@ -53,7 +53,7 @@ void print_panic_message(const char& msg);
 ///
 /// After printing the message, the function will `panic()`.
 [[noreturn]] sus_always_inline void panic_with_message(
-    /* TODO: string view type, or format + args */ const char& msg) {
+    /* TODO: string view type, or format + args */ const char& msg) noexcept {
 #if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
   SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(msg);
 #else
