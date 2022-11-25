@@ -37,8 +37,6 @@ void print_panic_message(const char& msg);
 [[noreturn]] sus_always_inline void panic() noexcept {
 #if defined(SUS_PROVIDE_PANIC_HANDLER)
   SUS_PROVIDE_PANIC_HANDLER();
-#elif __has_builtin(__builtin_trap)
-  __builtin_trap();
 #else
   abort();
 #endif
