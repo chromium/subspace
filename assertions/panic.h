@@ -18,7 +18,6 @@
 
 #include "macros/always_inline.h"
 #include "macros/builtin.h"
-#include "macros/compiler.h"
 
 namespace sus {
 
