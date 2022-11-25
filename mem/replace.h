@@ -18,9 +18,10 @@
 
 #include <type_traits>
 
-#include "mem/relocate.h"
 #include "mem/addressof.h"
 #include "mem/mref.h"
+#include "mem/relocate.h"
+#include "mem/size_of.h"
 
 namespace sus::mem {
 
@@ -35,10 +36,10 @@ template <class T>
   T old(static_cast<T&&>(dest));
 
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy = ::sus::mem::relocate_one_by_memcpy<T> &&
-                    !std::is_constant_evaluated();
+  bool can_memcpy =
+      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
-    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), sizeof(T));
+    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), ::sus::mem::data_size_of<T>());
   } else {
     dest = src;
   }
@@ -54,10 +55,11 @@ template <class T>
   T old(static_cast<T&&>(dest));
 
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy = ::sus::mem::relocate_one_by_memcpy<T> &&
-                    !std::is_constant_evaluated();
+  bool can_memcpy =
+      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
-    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), sizeof(T));
+    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
+           ::sus::mem::data_size_of<T>());
   } else {
     dest = static_cast<T&&>(src);
   }
@@ -70,10 +72,11 @@ template <class T>
 void replace_and_discard(Mref<T> dest_ref, const T& src) noexcept {
   T& dest = dest_ref;
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy = ::sus::mem::relocate_one_by_memcpy<T> &&
-                    !std::is_constant_evaluated();
+  bool can_memcpy =
+      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
-    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), sizeof(T));
+    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
+           ::sus::mem::data_size_of<T>());
   } else {
     dest = src;
   }
@@ -84,10 +87,11 @@ template <class T>
 void replace_and_discard(Mref<T> dest_ref, T&& src) noexcept {
   T& dest = dest_ref;
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy = ::sus::mem::relocate_one_by_memcpy<T> &&
-                    !std::is_constant_evaluated();
+  bool can_memcpy =
+      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
-    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), sizeof(T));
+    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
+           ::sus::mem::data_size_of<T>());
   } else {
     dest = static_cast<T&&>(src);
   }
