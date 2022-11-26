@@ -1826,9 +1826,11 @@ TEST(Option, Clone) {
 
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
+  static_assert(!::sus::mem::CloneFrom<Copy>);
   static_assert(!::sus::mem::Move<Copy>);
   static_assert(::sus::mem::Copy<Option<Copy>>);
   static_assert(::sus::mem::Clone<Option<Copy>>);
+  static_assert(::sus::mem::CloneFrom<Option<Copy>>);
   static_assert(!::sus::mem::Move<Option<Copy>>);
 
   {
@@ -1864,9 +1866,11 @@ TEST(Option, Clone) {
 
   static_assert(!::sus::mem::Copy<Clone>);
   static_assert(::sus::mem::Clone<Clone>);
+  static_assert(!::sus::mem::CloneFrom<Clone>);
   static_assert(::sus::mem::Move<Clone>);
   static_assert(!::sus::mem::Copy<Option<Clone>>);
   static_assert(::sus::mem::Clone<Option<Clone>>);
+  static_assert(::sus::mem::CloneFrom<Option<Clone>>);
   static_assert(::sus::mem::Move<Option<Clone>>);
 
   {

@@ -400,11 +400,13 @@ TEST(Array, Clone) {
 
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
+  static_assert(!::sus::mem::CloneFrom<Copy>);
   static_assert(::sus::mem::Move<Copy>);
   // Array is always Clone (if T is Clone), but never Copy since it's expensive
   // to copy.
   static_assert(!::sus::mem::Copy<Array<Copy, 1>>);
   static_assert(::sus::mem::Clone<Array<Copy, 1>>);
+  static_assert(::sus::mem::CloneFrom<Array<Copy, 1>>);
   static_assert(::sus::mem::Move<Array<Copy, 1>>);
 
   {
@@ -446,9 +448,11 @@ TEST(Array, Clone) {
 
   static_assert(!::sus::mem::Copy<Clone>);
   static_assert(::sus::mem::Clone<Clone>);
+  static_assert(::sus::mem::CloneFrom<Clone>);
   static_assert(::sus::mem::Move<Clone>);
   static_assert(!::sus::mem::Copy<Array<Clone, 1>>);
   static_assert(::sus::mem::Clone<Array<Clone, 1>>);
+  static_assert(::sus::mem::CloneFrom<Array<Clone, 1>>);
   static_assert(::sus::mem::Move<Array<Clone, 1>>);
 
   {

@@ -324,9 +324,11 @@ TEST(Result, Clone) {
 
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
+  static_assert(!::sus::mem::CloneFrom<Copy>);
   static_assert(::sus::mem::Move<Copy>);
   static_assert(!::sus::mem::Copy<Result<Copy, i32>>);
   static_assert(::sus::mem::Clone<Result<Copy, i32>>);
+  static_assert(::sus::mem::CloneFrom<Result<Copy, i32>>);
   static_assert(::sus::mem::Move<Result<Copy, i32>>);
 
   {
@@ -359,9 +361,11 @@ TEST(Result, Clone) {
 
   static_assert(!::sus::mem::Copy<Clone>);
   static_assert(::sus::mem::Clone<Clone>);
+  static_assert(!::sus::mem::CloneFrom<Clone>);
   static_assert(::sus::mem::Move<Clone>);
   static_assert(!::sus::mem::Copy<Result<Clone, i32>>);
   static_assert(::sus::mem::Clone<Result<Clone, i32>>);
+  static_assert(::sus::mem::CloneFrom<Result<Clone, i32>>);
   static_assert(::sus::mem::Move<Result<Clone, i32>>);
 
   {

@@ -60,6 +60,14 @@ concept Clone =
   && !(__private::HasCloneMethod<T> && Copy<T>);
 // clang-format on
 
+/// A concept to verify that a Clone type has a specialization of `clone_from()`
+/// in order to optimize `::sus::clone_into()`. Mostly for testing types to
+/// ensure they're doing what you think they're doing.
+///
+/// TODO: Should we make this into/from name consistent...??
+template <class T>
+concept CloneFrom = Clone<T> && __private::HasCloneFromMethod<T>;
+
 template <Clone T>
 inline constexpr T clone(const T& source) noexcept {
   if constexpr (Copy<T>) {
