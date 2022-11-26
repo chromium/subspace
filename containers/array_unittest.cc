@@ -415,6 +415,14 @@ TEST(Array, Clone) {
     EXPECT_GT(s2[0u].i, i);
   }
 
+  {
+    auto s = Array<Copy, 1>::with_values(Copy());
+    s[0u].i = 1000_i32;
+    auto s2 = Array<Copy, 1>::with_values(Copy());
+    ::sus::clone_into(mref(s2), s);
+    EXPECT_EQ(s2[0u].i, 1000);
+  }
+
   struct Clone {
     Clone() {}
 
@@ -424,11 +432,17 @@ TEST(Array, Clone) {
       return c;
     }
 
+    void clone_from(const Clone& o) & noexcept {
+      i = o.i + 200_i32;
+    }
+
     Clone(Clone&&) = default;
     Clone& operator=(Clone&&) = default;
 
     i32 i = 1_i32;
   };
+
+  static_assert(sus::mem::__private::HasCloneFromMethod<Clone>);
 
   static_assert(!::sus::mem::Copy<Clone>);
   static_assert(::sus::mem::Clone<Clone>);
@@ -443,6 +457,14 @@ TEST(Array, Clone) {
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Array<Clone, 1>>);
     EXPECT_GT(s2[0u].i, i);
+  }
+
+  {
+    auto s = Array<Clone, 1>::with_values(Clone());
+    s[0u].i = 1000_i32;
+    auto s2 = Array<Clone, 1>::with_values(Clone());
+    ::sus::clone_into(mref(s2), s);
+    EXPECT_EQ(s2[0u].i.primitive_value, (1200_i32).primitive_value);
   }
 }
 

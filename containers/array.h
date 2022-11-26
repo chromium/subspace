@@ -139,6 +139,15 @@ class Array final {
     return ar;
   }
 
+  constexpr void clone_from(const Array& other) & noexcept
+    requires(::sus::mem::Clone<T>)
+  {
+    for (auto i = size_t{0}; i < N; ++i) {
+      ::sus::clone_into(mref(get_unchecked_mut(unsafe_fn, i)),
+                        other.get_unchecked(unsafe_fn, i));
+    }
+  }
+
   ~Array()
     requires(std::is_trivially_destructible_v<T>)
   = default;

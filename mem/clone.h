@@ -79,12 +79,13 @@ inline constexpr T clone(const T& source) noexcept {
 /// will be preferred over calling `source.clone()`.
 template <Clone T>
 inline constexpr void clone_into(Mref<T> self, const T& source) noexcept {
-  if constexpr (Copy<T>)
+  if constexpr (Copy<T>) {
     self = source;
-  else if constexpr (__private::HasCloneFromMethod<T>)
+  } else if constexpr (__private::HasCloneFromMethod<T>) {
     self.inner().clone_from(source);
-  else
+  } else {
     self = source.clone();
+  }
 }
 
 }  // namespace sus::mem
