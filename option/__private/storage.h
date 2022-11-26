@@ -79,6 +79,10 @@ struct Storage<T, false> final {
 
   [[nodiscard]] constexpr inline State state() const noexcept { return state_; }
 
+  constexpr inline void construct_from_none(const T& t) noexcept {
+    new (&val_) T(t);
+    state_ = Some;
+  }
   constexpr inline void construct_from_none(T&& t) noexcept {
     new (&val_) T(static_cast<T&&>(t));
     state_ = Some;
@@ -157,6 +161,9 @@ struct Storage<T, true> final {
     return ::sus::mem::never_value_field<T>::is_constructed(unsafe_fn, overlay_) ? Some : None;
   }
 
+  inline void construct_from_none(const T& t) noexcept {
+    new (&val_) T(t);
+  }
   inline void construct_from_none(T&& t) noexcept {
     new (&val_) T(static_cast<T&&>(t));
   }

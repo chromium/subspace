@@ -49,7 +49,9 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 /// order to reuse its resources and avoid allocations.
 ///
 /// It is not valid to be `Copy` and also have a `clone()` method, as it becomes
-/// amgiuous.
+/// amgiuous. One outcome of this is a container type should only implement a
+/// clone() method if the type within is (Clone && !Copy), and should implement
+/// copy constructors if the type within is Copy.
 //
 // clang-format off
 template <class T>
@@ -61,7 +63,7 @@ concept Clone =
 template <Clone T>
 inline constexpr T clone(const T& source) noexcept {
   if constexpr (Copy<T>)
-    return T(source);
+    return source;
   else
     return source.clone();
 }

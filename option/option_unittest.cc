@@ -88,7 +88,6 @@ static_assert(is_some_callable_v<Option<int>, int>);
 static_assert(is_some_callable_v<Option<int>, const int>);
 static_assert(is_some_callable_v<Option<int>, int&>);
 static_assert(is_some_callable_v<Option<int>, int&&>);
-static_assert(is_some_callable_v<Option<int>, Mref<int>>);
 static_assert(is_some_callable_v<Option<int>, const int&>);
 
 static_assert(!is_some_callable_v<Option<int&>, int>);
@@ -185,7 +184,12 @@ TEST(Option, Move) {
   struct MoveableLvalue {
     MoveableLvalue(int i) : i(i) {}
     MoveableLvalue(const MoveableLvalue& m) : i(m.i) {}
+    void operator=(const MoveableLvalue& m) { i = m.i; }
     MoveableLvalue(MoveableLvalue&& m) : i(m.i) { m.i = 0; }
+    void operator=(MoveableLvalue&& m) {
+      i = m.i;
+      m.i = 0;
+    }
     int i;
   };
   MoveableLvalue lvalue(2);
@@ -1808,6 +1812,56 @@ TEST(Option, FromIterWithRefs) {
           .into_iter()
           .collect<Option<CollectSumRefs<usize>>>();
   EXPECT_EQ(one_none, None);
+}
+
+TEST(Option, Clone) {
+  struct Copy {
+    Copy() {}
+    Copy(const Copy& o) : i(o.i + 1_i32) {}
+    Copy& operator=(const Copy&) = default;
+    Copy(Copy&&) = delete;
+    Copy& operator=(Copy&&) = delete;
+    i32 i = 1_i32;
+  };
+  static_assert(::sus::mem::Copy<Copy>);
+  static_assert(::sus::mem::Clone<Copy>);
+  static_assert(!::sus::mem::Move<Copy>);
+
+  static_assert(::sus::mem::Copy<Option<Copy>>);
+  static_assert(::sus::mem::Clone<Option<Copy>>);
+  static_assert(!::sus::mem::Move<Option<Copy>>);
+
+  {
+    const auto s = Option<Copy>::some(Copy());
+    i32 i = s.unwrap_ref().i;
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Option<Copy>>);
+    EXPECT_EQ(s2.unwrap_ref().i, i + 1_i32);
+  }
+
+  struct Clone {
+    Clone() {}
+    Clone clone() const {
+      auto c = Clone();
+      c.i = i + 1_i32;
+      return c;
+    }
+
+    Clone(Clone&&) = default;
+    Clone& operator=(Clone&&) = default;
+
+    i32 i = 1_i32;
+  };
+  static_assert(!::sus::mem::Copy<Clone>);
+  static_assert(::sus::mem::Clone<Clone>);
+  static_assert(::sus::mem::Move<Clone>);
+
+  {
+    const auto s = Option<Clone>::some(Clone());
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Option<Clone>>);
+    EXPECT_EQ(s2.unwrap_ref().i, 2_i32);
+  }
 }
 
 }  // namespace
