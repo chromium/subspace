@@ -17,11 +17,18 @@
 #include "construct/into.h"
 #include "iter/iterator.h"
 #include "num/types.h"
+#include "mem/copy.h"
+#include "mem/clone.h"
+#include "mem/move.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 using sus::containers::Slice;
 
 namespace {
+
+static_assert(sus::mem::Copy<Slice<i32>>);
+static_assert(sus::mem::Clone<Slice<i32>>);
+static_assert(sus::mem::Move<Slice<i32>>);
 
 TEST(Slice, FromRawParts) {
   i32 a[] = {1, 2, 3};
