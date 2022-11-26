@@ -25,10 +25,10 @@
 
 namespace sus::containers {
 
-template <::sus::mem::Moveable T>
+template <::sus::mem::Move T>
 class Vec;
 
-template <::sus::mem::Moveable Item>
+template <::sus::mem::Move Item>
 struct VecIntoIter : public ::sus::iter::IteratorBase<Item> {
  public:
   static constexpr auto with(Vec<Item>&& vec) noexcept {

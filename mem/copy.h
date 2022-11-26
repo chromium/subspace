@@ -18,7 +18,27 @@
 
 namespace sus::mem {
 
+/// A `Copy` type can be copied to construct a new object and can assigned to by
+/// copy.
+///
+/// Satisfying `Copy` also implies that the type satisfies `Clone`.
+///
+/// Typically types should only be `Copy` when performing a copy is very cheap,
+/// and thus unlikely to cause performance problems. For types that are larger
+/// or more complex to copy, it is better to make them satisfy `Clone` instead
+/// so that copies are always explicit.
+///
+/// # Example
+/// ```
+/// struct S {
+///   S() = default;
+///   S(const S&) = default;
+///   S& operator=(const S&) = default;
+/// };
+/// static_assert(sus::mem::Copy<S>);
+/// static_assert(sus::mem::Clone<S>);
+/// ```
 template <class T>
 concept Copy = std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>;
 
-}  // namespace sus::construct
+}  // namespace sus::mem

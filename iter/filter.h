@@ -34,8 +34,6 @@ class Filter : public IteratorBase<Item> {
   using InnerSizedIter = SizedIterator<Item, InnerIterSize, InnerIterAlign,
                                        InnerIterInlineStorage>;
 
-  struct Data final {};
-
  public:
   Option<Item> next() noexcept final {
     IteratorBase<Item>& next_iter = next_iter_.iterator_mut();

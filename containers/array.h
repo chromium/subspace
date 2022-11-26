@@ -23,8 +23,8 @@
 #include "assertions/check.h"
 #include "construct/make_default.h"
 #include "containers/__private/array_iter.h"
-#include "containers/slice.h"
 #include "containers/__private/slice_iter.h"
+#include "containers/slice.h"
 #include "fn/callable.h"
 #include "fn/fn_defn.h"
 #include "marker/unsafe.h"
@@ -251,7 +251,9 @@ class Array final {
 
   /// Converts the array into an iterator that consumes the array and returns
   /// each element in the same order they appear in the array.
-  constexpr ::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && noexcept {
+  constexpr ::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && noexcept
+    requires(::sus::mem::Move<T>)
+  {
     return ArrayIntoIter<T, N>::with(static_cast<Array&&>(*this));
   }
 
