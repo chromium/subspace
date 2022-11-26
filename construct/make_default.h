@@ -21,25 +21,25 @@ namespace sus::construct {
 namespace __private {
 
 template <class T>
-constexpr inline bool has_with_default(...) {
-  return false;
-}
-
-template <class T, class... Args>
-  requires(std::same_as<decltype(T::with_default(std::declval<Args>()...)), T>)
-constexpr inline bool has_with_default(int) {
-  return true;
-}
+concept HasWithDefault = requires {
+                           { T::with_default() } -> std::same_as<T>;
+                         };
 
 }  // namespace __private
 
+/// MakeDefault types are able to be constructed with a default value.
+///
+/// A type `T` satisfies MakeDefault if it has a default constructor or it has a
+/// static constructor method named `T::with_default()` that returns a `T`.
+//
 // clang-format off
 template <class T>
 concept MakeDefault = 
-  (std::constructible_from<T> && !__private::has_with_default<T>(0)) ||
-  (!std::constructible_from<T> && __private::has_with_default<T>(0));
+  (std::constructible_from<T> && !__private::HasWithDefault<T>) ||
+  (!std::constructible_from<T> && __private::HasWithDefault<T>);
 // clang-format on
 
+/// Constructs `T` with its default value.
 template <MakeDefault T>
 inline constexpr T make_default() noexcept {
   if constexpr (std::constructible_from<T>)
@@ -49,3 +49,8 @@ inline constexpr T make_default() noexcept {
 }
 
 }  // namespace sus::construct
+
+// Promote `make_default()` into the `sus` namespace.
+namespace sus {
+using ::sus::construct::make_default;
+}
