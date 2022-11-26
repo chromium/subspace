@@ -342,4 +342,55 @@ TEST(Result, FromIter) {
   EXPECT_EQ(sus::move(with_errors_out).unwrap_err(), Error::OneError);
 }
 
+TEST(Option, Clone) {
+  struct Copy {
+    Copy() {}
+    Copy(const Copy& o) : i(o.i + 1_i32) {}
+    Copy& operator=(const Copy&) = default;
+    Copy(Copy&&) = delete;
+    Copy& operator=(Copy&&) = delete;
+    i32 i = 1_i32;
+  };
+  static_assert(::sus::mem::Copy<Copy>);
+  static_assert(::sus::mem::Clone<Copy>);
+  static_assert(!::sus::mem::Move<Copy>);
+
+  static_assert(::sus::mem::Copy<Result<Copy, i32>>);
+  static_assert(::sus::mem::Clone<Result<Copy, i32>>);
+  static_assert(!::sus::mem::Move<Result<Copy, i32>>);
+
+  {
+    const auto s = Result<Copy, i32>::with(Copy());
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Result<Copy, i32>>);
+    EXPECT_EQ(s2, sus::result::Ok);
+  }
+
+  struct Clone {
+    Clone() {}
+    Clone clone() const {
+      auto c = Clone();
+      c.i = i + 1_i32;
+      return c;
+    }
+
+    Clone(Clone&&) = default;
+    Clone& operator=(Clone&&) = default;
+
+    i32 i = 1_i32;
+  };
+  static_assert(!::sus::mem::Copy<Clone>);
+  static_assert(::sus::mem::Clone<Clone>);
+  static_assert(::sus::mem::Move<Clone>);
+
+  {
+    const auto s = Result<Clone, i32>::with(Clone());
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Result<Clone, i32>>);
+    EXPECT_EQ(s2, sus::result::Ok);
+    EXPECT_EQ(sus::move(s2).unwrap().i, 2_i32);
+  }
+}
+
+
 }  // namespace

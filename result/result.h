@@ -26,6 +26,9 @@
 #include "iter/iterator_defn.h"
 #include "iter/once.h"
 #include "marker/unsafe.h"
+#include "mem/clone.h"
+#include "mem/copy.h"
+#include "mem/move.h"
 #include "mem/mref.h"
 #include "mem/relocate.h"
 #include "mem/replace.h"
@@ -57,40 +60,40 @@ class Result final {
 
   /// Construct an Result that is holding the given success value.
   static constexpr inline Result with(const T& t) noexcept
-    requires(std::is_copy_constructible_v<T>)
+    requires(::sus::mem::Clone<T>)
   {
-    return Result(WithOk, t);
+    return Result(WithOk, ::sus::clone(t));
   }
   /// Construct an Result that is holding the given success value.
   static constexpr inline Result with(Mref<T> t) noexcept
-    requires(std::is_copy_constructible_v<T>)
+    requires(::sus::mem::Clone<T>)
   {
-    return Result(WithOk, t);
+    return Result(WithOk, ::sus::clone(t.inner()));
   }
   /// Construct an Result that is holding the given success value.
   static constexpr inline Result with(T&& t) noexcept
-    requires(std::is_move_constructible_v<T>)
+    requires(::sus::mem::Move<T>)
   {
-    return Result(WithOk, static_cast<T&&>(t));
+    return Result(WithOk, ::sus::move(t));
   }
 
   /// Construct an Result that is holding the given error value.
   static constexpr inline Result with_err(const E& e) noexcept
-    requires(std::is_copy_constructible_v<E>)
+    requires(::sus::mem::Clone<E>)
   {
-    return Result(WithErr, e);
+    return Result(WithErr, ::sus::clone(e));
   }
   /// Construct an Result that is holding the given error value.
   static constexpr inline Result with_err(Mref<E> e) noexcept
-    requires(std::is_copy_constructible_v<E>)
+    requires(::sus::mem::Clone<E>)
   {
-    return Result(WithErr, e);
+    return Result(WithErr, ::sus::clone(e.inner()));
   }
   /// Construct an Result that is holding the given error value.
   static constexpr inline Result with_err(E&& e) noexcept
-    requires(std::is_move_constructible_v<E>)
+    requires(::sus::mem::Move<E>)
   {
-    return Result(WithErr, static_cast<E&&>(e));
+    return Result(WithErr, ::sus::move(e));
   }
 
   /// Takes each element in the Iterator: if it is an Err, no further elements
@@ -140,13 +143,14 @@ class Result final {
   /// If T and E can be trivially copy-constructed, Result<T, E> can also be
   /// trivially copy-constructed.
   constexpr Result(const Result&)
-    requires(std::is_trivially_copy_constructible_v<T> &&
+    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
+             std::is_trivially_copy_constructible_v<T> &&
              std::is_trivially_copy_constructible_v<E>)
   = default;
   inline Result(const Result& rhs) noexcept
-    requires((!std::is_trivially_copy_constructible_v<T> ||
-              !std::is_trivially_copy_constructible_v<E>) &&
-             std::is_copy_constructible_v<T> && std::is_copy_constructible_v<E>)
+    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
+             (!std::is_trivially_copy_constructible_v<T> ||
+              !std::is_trivially_copy_constructible_v<E>))
   : state_(rhs.state_) {
     check(state_ != IsMoved);
     switch (state_) {
@@ -160,21 +164,21 @@ class Result final {
   }
 
   constexpr Result(const Result&)
-    requires(!std::is_copy_constructible_v<T> ||
-             !std::is_copy_constructible_v<E>)
+    requires(!::sus::mem::Copy<T> || !::sus::mem::Copy<E>)
   = delete;
 
   /// If T and E can be trivially move-constructed, Result<T, E> can also be
   /// trivially
   /// move-constructed.
   constexpr Result(Result&&)
-    requires(std::is_trivially_move_constructible_v<T> &&
+    requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
+             std::is_trivially_move_constructible_v<T> &&
              std::is_trivially_move_constructible_v<E>)
   = default;
   inline Result(Result&& rhs) noexcept
-    requires((!std::is_trivially_move_constructible_v<T> ||
-              !std::is_trivially_move_constructible_v<E>) &&
-             std::is_move_constructible_v<T> && std::is_move_constructible_v<E>)
+    requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
+             (!std::is_trivially_move_constructible_v<T> ||
+              !std::is_trivially_move_constructible_v<E>))
   : state_(replace(mref(rhs.state_), IsMoved)) {
     check(state_ != IsMoved);
     switch (state_) {
@@ -188,21 +192,21 @@ class Result final {
   }
 
   constexpr Result(Result&&)
-    requires(!std::is_move_constructible_v<T> ||
-             !std::is_move_constructible_v<E>)
+    requires(!::sus::mem::Move<T> || !::sus::mem::Move<E>)
   = delete;
 
   /// If T and E can be trivially copy-assigned, Result<T, E> can also be
   /// trivially copy-assigned.
   constexpr Result& operator=(const Result& o)
-    requires(std::is_trivially_copy_assignable_v<T> &&
+    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
+             std::is_trivially_copy_assignable_v<T> &&
              std::is_trivially_copy_assignable_v<E>)
   = default;
 
   Result& operator=(const Result& o) noexcept
-    requires((!std::is_trivially_copy_assignable_v<T> ||
-              !std::is_trivially_copy_assignable_v<E>) &&
-             std::is_copy_assignable_v<T> && std::is_copy_assignable_v<E>)
+    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
+             (!std::is_trivially_copy_assignable_v<T> ||
+              !std::is_trivially_copy_assignable_v<E>))
   {
     switch (state_) {
       case IsOk:
@@ -237,20 +241,21 @@ class Result final {
   }
 
   constexpr Result& operator=(const Result& o)
-    requires(!std::is_copy_assignable_v<T> || !std::is_copy_assignable_v<E>)
+    requires(!::sus::mem::Copy<T> || !::sus::mem::Copy<E>)
   = delete;
 
   /// If T and E can be trivially move-assigned, Result<T, E> can also be
   /// trivially move-assigned.
   constexpr Result& operator=(Result&& o)
-    requires(std::is_trivially_move_assignable_v<T> &&
+    requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
+             std::is_trivially_move_assignable_v<T> &&
              std::is_trivially_move_assignable_v<E>)
   = default;
 
   Result& operator=(Result&& o) noexcept
-    requires((!std::is_trivially_move_assignable_v<T> ||
-              !std::is_trivially_move_assignable_v<E>) &&
-             std::is_move_assignable_v<T> && std::is_move_assignable_v<E>)
+    requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
+             (!std::is_trivially_move_assignable_v<T> ||
+              !std::is_trivially_move_assignable_v<E>))
   {
     switch (state_) {
       case IsOk:
@@ -289,8 +294,22 @@ class Result final {
   }
 
   constexpr Result& operator=(Result&& o)
-    requires(!std::is_move_assignable_v<T> || !std::is_move_assignable_v<E>)
+    requires(!::sus::mem::Move<T> || !::sus::mem::Move<E>)
   = delete;
+
+  constexpr Result clone() const& noexcept
+    requires(::sus::mem::Clone<T> && !::sus::mem::Copy<T>)
+  {
+    check(state_ != IsMoved);
+    switch (state_) {
+      case IsOk: return Result::with(::sus::clone(ok_));
+      case IsErr: return Result::with_err(::sus::clone(err_));
+      case IsMoved: break;
+    }
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the
+    // function.
+    unreachable_unchecked(unsafe_fn);
+  }
 
   /// Returns true if the result is `Ok`.
   constexpr inline bool is_ok() const& noexcept {
@@ -437,12 +456,14 @@ class Result final {
   constexpr inline Result(WithOkType, const T& t) noexcept
       : state_(IsOk), ok_(t) {}
   constexpr inline Result(WithOkType, T&& t) noexcept
-      : state_(IsOk), ok_(static_cast<T&&>(t)) {}
+    requires(::sus::mem::Move<T>)
+  : state_(IsOk), ok_(static_cast<T&&>(t)) {}
   enum WithErrType { WithErr };
   constexpr inline Result(WithErrType, const E& e) noexcept
       : state_(IsErr), err_(e) {}
   constexpr inline Result(WithErrType, E&& e) noexcept
-      : state_(IsErr), err_(static_cast<E&&>(e)) {}
+    requires(::sus::mem::Move<E>)
+  : state_(IsErr), err_(static_cast<E&&>(e)) {}
 
   enum FullState { IsErr = 0, IsOk = 1, IsMoved = 2 } state_;
   union {
