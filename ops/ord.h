@@ -17,6 +17,12 @@
 #include <compare>
 #include <concepts>
 
+#include "assertions/check.h"
+
+// TODO: PartialOrd comes with: lt, le, ge, gt.
+// TODO: Eq comes with eq, ne.
+// TODO: Where to put these functions??
+
 namespace sus::ops {
 
 /// Determines if the types `Lhs` and `Rhs` have a total ordering (aka
@@ -68,5 +74,24 @@ concept ExclusiveWeakOrd = (!Ord<Lhs, Rhs> && WeakOrd<Lhs, Rhs>);
 template <class Lhs, class Rhs>
 concept ExclusivePartialOrd = (!Ord<Lhs, Rhs> && !WeakOrd<Lhs, Rhs> &&
                                PartialOrd<Lhs, Rhs>);
+
+template <class T>
+  requires(Ord<T, T>)
+constexpr const T& min(const T& a, const T& b) noexcept {
+  return a < b ? a : b;
+}
+
+template <class T>
+  requires(Ord<T, T>)
+constexpr const T& max(const T& a, const T& b) noexcept {
+  return a > b ? a : b;
+}
+
+template <class T>
+  requires(Ord<T, T>)
+constexpr const T& clamp(const T& a, const T& min, const T& max) noexcept {
+  ::sus::check(min <= max);
+  return a < min ? min : (a > max ? max : a);
+}
 
 }  // namespace sus::ops
