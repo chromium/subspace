@@ -26,6 +26,11 @@ namespace sus::mem {
 /// A type satisfies `Move` by implementing a move constructor and assignment
 /// operator.
 ///
+/// A type that is `Copy` is also `Move`. However the type can opt out by
+/// explicitly deleteing the move constructor and assignment operator. This is
+/// not recommended, unless deleting the copy operations too, as it tends to
+/// break things that want to move-or-fallback-to-copy.
+///
 /// As a special case, types that can not be assigned to at all, by copy or
 /// move, can still satisfy Move by being able to construct by move. This is
 /// requires for types like lambdas.
@@ -64,4 +69,4 @@ template <Move T>
 
 namespace sus {
 using ::sus::mem::move;
-}
+}  // namespace sus

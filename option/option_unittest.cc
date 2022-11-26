@@ -1823,10 +1823,10 @@ TEST(Option, Clone) {
     Copy& operator=(Copy&&) = delete;
     i32 i = 1_i32;
   };
+
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
   static_assert(!::sus::mem::Move<Copy>);
-
   static_assert(::sus::mem::Copy<Option<Copy>>);
   static_assert(::sus::mem::Clone<Option<Copy>>);
   static_assert(!::sus::mem::Move<Option<Copy>>);
@@ -1852,9 +1852,13 @@ TEST(Option, Clone) {
 
     i32 i = 1_i32;
   };
+
   static_assert(!::sus::mem::Copy<Clone>);
   static_assert(::sus::mem::Clone<Clone>);
   static_assert(::sus::mem::Move<Clone>);
+  static_assert(!::sus::mem::Copy<Option<Clone>>);
+  static_assert(::sus::mem::Clone<Option<Clone>>);
+  static_assert(::sus::mem::Move<Option<Clone>>);
 
   {
     const auto s = Option<Clone>::some(Clone());
