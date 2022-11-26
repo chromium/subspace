@@ -32,6 +32,9 @@
 #include "macros/always_inline.h"
 #include "macros/nonnull.h"
 #include "marker/unsafe.h"
+#include "mem/clone.h"
+#include "mem/copy.h"
+#include "mem/move.h"
 #include "mem/mref.h"
 #include "mem/replace.h"
 #include "mem/take.h"
@@ -103,23 +106,16 @@ class Option final {
  public:
   /// Construct an Option that is holding the given value.
   static inline constexpr Option some(const T& t) noexcept
-    requires(std::is_copy_constructible_v<T>)
+    requires(::sus::mem::Clone<T>)
   {
-    return Option(t);
-  }
-
-  /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(Mref<T> t) noexcept
-    requires(std::is_copy_constructible_v<T>)
-  {
-    return Option(t);
+    return Option(::sus::clone(t));
   }
 
   /// Construct an Option that is holding the given value.
   static inline constexpr Option some(T&& t) noexcept
-    requires(std::is_move_constructible_v<T>)
+    requires(::sus::mem::Move<T>)
   {
-    return Option(static_cast<T&&>(t));
+    return Option(::sus::move(t));
   }
   /// Construct an Option that is holding no value.
   static inline constexpr Option none() noexcept { return Option(); }
@@ -187,48 +183,45 @@ class Option final {
   /// If T can be trivially copy-constructed, Option<T> can also be trivially
   /// copy-constructed.
   constexpr Option(const Option& o)
-    requires(std::is_trivially_copy_constructible_v<T>)
+    requires(::sus::mem::Copy<T> && std::is_trivially_copy_constructible_v<T>)
   = default;
 
   Option(const Option& o) noexcept
-    requires(!std::is_trivially_copy_constructible_v<T> &&
-             std::is_copy_constructible_v<T>)
+    requires(::sus::mem::Copy<T> && !std::is_trivially_copy_constructible_v<T>)
   {
     if (o.t_.state() == Some) t_.construct_from_none(o.t_.val_);
   }
 
   constexpr Option(const Option& o)
-    requires(!std::is_copy_constructible_v<T>)
+    requires(!::sus::mem::Copy<T>)
   = delete;
 
   /// If T can be trivially copy-constructed, Option<T> can also be trivially
   /// move-constructed.
   constexpr Option(Option&& o)
-    requires(std::is_trivially_move_constructible_v<T>)
+    requires(::sus::mem::Move<T> && std::is_trivially_move_constructible_v<T>)
   = default;
 
   // TODO: If this could be done in a `constexpr` way, methods that receive an
   // Option could also be constexpr.
   Option(Option&& o) noexcept
-    requires(!std::is_trivially_move_constructible_v<T> &&
-             std::is_move_constructible_v<T>)
+    requires(::sus::mem::Move<T> && !std::is_trivially_move_constructible_v<T>)
   {
     if (o.t_.state() == Some) t_.construct_from_none(o.t_.take_and_set_none());
   }
 
   constexpr Option(Option&& o)
-    requires(!std::is_move_constructible_v<T>)
+    requires(!::sus::mem::Move<T>)
   = delete;
 
   /// If T can be trivially copy-assigned, Option<T> can also be trivially
   /// copy-assigned.
   constexpr Option& operator=(const Option& o)
-    requires(std::is_trivially_copy_assignable_v<T>)
+    requires(::sus::mem::Copy<T> && std::is_trivially_copy_assignable_v<T>)
   = default;
 
   Option& operator=(const Option& o) noexcept
-    requires(!std::is_trivially_copy_assignable_v<T> &&
-             std::is_copy_assignable_v<T>)
+    requires(::sus::mem::Copy<T> && !std::is_trivially_copy_assignable_v<T>)
   {
     if (o.t_.state() == Some)
       t_.set_some(o.t_.val_);
@@ -238,19 +231,18 @@ class Option final {
   }
 
   constexpr Option& operator=(const Option& o)
-    requires(!std::is_copy_assignable_v<T>)
+    requires(!::sus::mem::Copy<T>)
   = delete;
 
   /// If T can be trivially move-assigned, we don't need to explicitly construct
   /// it, so we can use the default destructor, which allows Option<T> to also
   /// be trivially move-assigned.
   constexpr Option& operator=(Option&& o)
-    requires(std::is_trivially_move_assignable_v<T>)
+    requires(::sus::mem::Move<T> && std::is_trivially_move_assignable_v<T>)
   = default;
 
   Option& operator=(Option&& o) noexcept
-    requires(!std::is_trivially_move_assignable_v<T> &&
-             std::is_move_assignable_v<T>)
+    requires(::sus::mem::Move<T> && !std::is_trivially_move_assignable_v<T>)
   {
     if (o.t_.state() == Some)
       t_.set_some(o.t_.take_and_set_none());
@@ -260,8 +252,17 @@ class Option final {
   }
 
   constexpr Option& operator=(Option&& o)
-    requires(!std::is_move_assignable_v<T>)
+    requires(!::sus::mem::Move<T>)
   = delete;
+
+  constexpr Option clone() const& noexcept
+    requires(::sus::mem::Clone<T> && !::sus::mem::Copy<T>)
+  {
+    if (t_.state() == Some)
+      return Option(::sus::clone(t_.val_));
+    else
+      return Option::none();
+  }
 
   /// Drop the current value from the Option, if there is one.
   ///
@@ -761,7 +762,9 @@ class Option final {
   constexpr explicit Option() = default;
   /// Constructor for #Some.
   constexpr explicit Option(const T& t) : t_(t) {}
-  constexpr explicit Option(T&& t) : t_(static_cast<T&&>(t)) {}
+  constexpr explicit Option(T&& t)
+    requires(::sus::mem::Move<T>)
+  : t_(static_cast<T&&>(t)) {}
 
   Storage<T> t_;
 
@@ -798,6 +801,15 @@ class Option<T&> final {
   constexpr Option(Option&& o) = default;
   constexpr Option& operator=(const Option& o) = default;
   constexpr Option& operator=(Option&& o) = default;
+
+  Option clone() const&
+    requires(::sus::mem::Clone<T>)
+  {
+    if (t_.state() == Some)
+      return Option(t_.val_.as_ref());
+    else
+      return Option::none();
+  }
 
   /// Drop the current value from the Option, if there is one.
   ///
