@@ -20,39 +20,43 @@
 
 namespace sus::mem {
 
-/// Verify that an object of type `T`, or referred to by `T` if it's a
-/// reference, is non-const.
-template <class T>
-concept NonConstObject = (!std::is_const_v<std::remove_reference_t<T>>);
-
-/// Verify that `T` can be moved with `sus::move()` to construct another `T`.
+/// A `Move` type can be moved-from to construct a new object and can be
+/// assigned to by move.
 ///
-/// This is similar to `std::is_move_constructible`, however it requires that
-/// `T` is non-const. Otherwise, a copy would occur and `sus::move()` will fail
-/// to compile.
-template <class T>
-concept Moveable = (NonConstObject<T> && std::is_move_constructible_v<T>);
-
-/// Verify that `T` can be moved with `sus::move()` to assign to another `T`.
+/// A type satisfies `Move` by implementing a move constructor and assignment
+/// operator.
 ///
-/// This is similar to `std::is_move_assignable`, however it requires that
-/// `T` is non-const. Otherwise, a copy would occur and `sus::move()` will fail
-/// to compile.
+/// As a special case, types that can not be assigned to at all, by copy or
+/// move, can still satisfy Move by being able to construct by move. This is
+/// requires for types like lambdas.
+///
+/// # Example
+/// ```
+/// struct S {
+///   S() = default;
+///   S(S&&) = default;
+///   S& operator=(S&&) = default;
+/// };
+/// static_assert(sus::mem::Move<S>);
 template <class T>
-concept MoveableForAssign = (NonConstObject<T> && std::is_move_assignable_v<T>);
+concept Move = std::is_move_constructible_v<T> &&
+               (std::is_move_assignable_v<T> || !std::is_copy_assignable_v<T>);
 
 /// Cast `t` to an r-value reference so that it can be used to construct or be
 /// assigned to another `T`.
 ///
 /// `move()` requires that `t` can be moved from, so it requires that `t` is
-/// non-const.
+/// non-const. This differs from `std::move()`.
 ///
 /// The `move()` call itself does nothing to `t`, as it is just a cast, similar
-/// to `std::move()`. It enables an lvalue object to be used as an rvalue.
+/// to `std::move()`. It enables an lvalue (a named object) to be used as an
+/// rvalue.
 //
 // TODO: Should this be `as_rvalue()`? Kinda technical. `as_...something...()`?
-template <NonConstObject T>
-[[nodiscard]] sus_always_inline constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
+template <Move T>
+  requires(!std::is_const_v<std::remove_reference_t<T>>)
+[[nodiscard]] sus_always_inline
+    constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
   return static_cast<typename std::remove_reference_t<T>&&>(t);
 }
 

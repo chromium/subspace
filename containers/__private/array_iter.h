@@ -29,7 +29,7 @@ template <class T, size_t N>
   requires(N <= PTRDIFF_MAX)
 class Array;
 
-template <::sus::mem::Moveable Item, size_t N>
+template <::sus::mem::Move Item, size_t N>
 struct ArrayIntoIter : public ::sus::iter::IteratorBase<Item> {
  public:
   static constexpr auto with(Array<Item, N>&& array) noexcept {

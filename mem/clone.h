@@ -54,7 +54,7 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 // clang-format off
 template <class T>
 concept Clone =
-  (Copy<T> || (__private::HasCloneMethod<T> && MoveableForAssign<T>))
+  (Copy<T> || (__private::HasCloneMethod<T> && Move<T>))
   && !(__private::HasCloneMethod<T> && Copy<T>);
 // clang-format on
 

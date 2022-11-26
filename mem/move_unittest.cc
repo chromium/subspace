@@ -19,8 +19,7 @@
 namespace {
 
 using sus::move;
-using sus::mem::Moveable;
-using sus::mem::MoveableForAssign;
+using sus::mem::Move;
 
 template <class T>
 concept can_move = requires(T &&t) {
@@ -32,18 +31,6 @@ static_assert(can_move<int &>);
 static_assert(can_move<int &&>);
 static_assert(!can_move<const int &>);
 static_assert(!can_move<const int &&>);
-
-static_assert(Moveable<int>);
-static_assert(Moveable<int &>);
-static_assert(Moveable<int &&>);
-static_assert(!Moveable<const int &>);
-static_assert(!Moveable<const int &&>);
-
-static_assert(MoveableForAssign<int>);
-static_assert(MoveableForAssign<int &>);
-static_assert(MoveableForAssign<int &&>);
-static_assert(!MoveableForAssign<const int &>);
-static_assert(!MoveableForAssign<const int &&>);
 
 void bind_rvalue(int &&) {}
 void bind_value(int) {}
@@ -59,10 +46,32 @@ TEST(Move, Binds) {
 struct MoveOnly {
   MoveOnly() = default;
   MoveOnly(MoveOnly &&) = default;
+  MoveOnly& operator=(MoveOnly &&) = default;
 };
 
-static_assert(Moveable<MoveOnly>);
-static_assert(!MoveableForAssign<MoveOnly>);
+struct MoveConsOnly {
+  MoveConsOnly() = default;
+  MoveConsOnly(MoveConsOnly &&) = default;
+  MoveConsOnly&operator=(MoveConsOnly&&) = delete;
+};
+
+struct MoveAssignOnly {
+  MoveAssignOnly() = default;
+  MoveAssignOnly& operator=(MoveAssignOnly &&) = default;
+};
+
+struct MoveConsWithCopy {
+  MoveConsWithCopy() = default;
+  MoveConsWithCopy(MoveConsWithCopy &&) = default;
+  MoveConsWithCopy& operator=(MoveConsWithCopy&&) = delete;
+
+  MoveConsWithCopy& operator=(const MoveConsWithCopy&) = default;
+};
+
+static_assert(Move<MoveOnly>);
+static_assert(Move<MoveConsOnly>);
+static_assert(!Move<MoveAssignOnly>);
+static_assert(!Move<MoveConsWithCopy>);
 
 void bind_rvalue(MoveOnly &&) {}
 void bind_value(MoveOnly) {}
@@ -75,14 +84,5 @@ TEST(Move, MoveOnly) {
   bind_value(move(m));
   bind_value(move(MoveOnly()));
 }
-
-struct MoveOnlyWithAssign {
-  MoveOnlyWithAssign() = default;
-  MoveOnlyWithAssign(MoveOnlyWithAssign &&) = default;
-  MoveOnlyWithAssign& operator=(MoveOnlyWithAssign &&) = default;
-};
-
-static_assert(Moveable<MoveOnlyWithAssign>);
-static_assert(MoveableForAssign<MoveOnlyWithAssign>);
 
 }  // namespace

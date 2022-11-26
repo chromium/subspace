@@ -80,13 +80,12 @@ struct [[sus_trivial_abi]] SizedIterator<Item, SubclassSize, SubclassAlign,
 /// This overload is used when the IteratorSubclass can be trivially relocated.
 /// It stores the SubclassIterator directly into the SizedIterator, avoiding a
 /// heap allocation, since the SizedIterator can then be trivially relocated.
-template <::sus::mem::Moveable IteratorSubclass, int&...,
+template <::sus::mem::Move IteratorSubclass, int&...,
           class SubclassItem = typename IteratorSubclass::Item,
           class SizedIteratorType =
               SizedIterator<SubclassItem, sizeof(IteratorSubclass),
                             alignof(IteratorSubclass)>>
 inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
-    // TODO: write a sus::is_subclass?
   requires(
       std::is_convertible_v<IteratorSubclass&, IteratorBase<SubclassItem>&> &&
       ::sus::mem::relocate_one_by_memcpy<IteratorSubclass>)
@@ -104,13 +103,12 @@ inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
 /// relocated. Therefore it heap allocates and moves the IteratorSubclass onto
 /// the heap. That way the IteratorSubclass does not need to be moved again, but
 /// the pointer and the SizedIterator can be trivially relocated.
-template <::sus::mem::Moveable IteratorSubclass, int&...,
+template <::sus::mem::Move IteratorSubclass, int&...,
           class SubclassItem = typename IteratorSubclass::Item,
           class SizedIteratorType =
               SizedIterator<SubclassItem, sizeof(IteratorSubclass),
                             alignof(IteratorSubclass), /*InlineStorage=*/false>>
 inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
-    // TODO: write a sus::is_subclass?
   requires(
       std::is_convertible_v<IteratorSubclass&, IteratorBase<SubclassItem>&> &&
       !::sus::mem::relocate_one_by_memcpy<IteratorSubclass>)

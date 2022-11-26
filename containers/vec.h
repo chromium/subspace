@@ -38,7 +38,7 @@ namespace sus::containers {
 // and/or compiler warnings to check for misuse? Or should we add checks(). And
 // then allow them to be disabled when you are using warnings?
 
-template <::sus::mem::Moveable T>
+template <::sus::mem::Move T>
 class Vec {
   static_assert(!std::is_const_v<T>);
 
@@ -66,13 +66,10 @@ class Vec {
   }
 
   Vec(Vec&& o) noexcept
-    requires(sus::mem::Moveable<T>)
-  : storage_(::sus::mem::replace_ptr(mref(o.storage_), nullish())),
-    len_(::sus::mem::replace(mref(o.len_), 0_usize)),
-    capacity_(::sus::mem::replace(mref(o.capacity_), 0_usize)) {}
-  Vec& operator=(Vec&& o) noexcept
-    requires(sus::mem::MoveableForAssign<T>)
-  {
+      : storage_(::sus::mem::replace_ptr(mref(o.storage_), nullish())),
+        len_(::sus::mem::replace(mref(o.len_), 0_usize)),
+        capacity_(::sus::mem::replace(mref(o.capacity_), 0_usize)) {}
+  Vec& operator=(Vec&& o) noexcept {
     if (is_alloced()) free_storage();
     storage_ = ::sus::mem::replace_ptr(mref(o.storage_), nullish());
     len_ = ::sus::mem::replace(mref(o.len_), 0_usize);
