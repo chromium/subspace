@@ -51,17 +51,17 @@ struct BothConstructible {
   constexpr BothConstructible(int i) noexcept : i(i) {}
 };
 
-static_assert(MakeDefault<DefaultConstructible> == true, "");
-static_assert(MakeDefault<NotDefaultConstructible> == false, "");
-static_assert(MakeDefault<WithDefaultConstructible> == true, "");
-static_assert(MakeDefault<BothConstructible> == false, "");
+static_assert(MakeDefault<DefaultConstructible> == true);
+static_assert(MakeDefault<NotDefaultConstructible> == false);
+static_assert(MakeDefault<WithDefaultConstructible> == true);
+static_assert(MakeDefault<BothConstructible> == false);
 
 // Verify constexpr construction.
 constexpr auto default_constructible = make_default<DefaultConstructible>();
-static_assert(default_constructible.i == 2, "");
+static_assert(default_constructible.i == 2);
 constexpr auto with_default_constructible =
     make_default<WithDefaultConstructible>();
-static_assert(with_default_constructible.i == 3, "");
+static_assert(with_default_constructible.i == 3);
 
 // Verify no type coersions are happening.
 static_assert(std::is_same_v<decltype(make_default<DefaultConstructible>()),
