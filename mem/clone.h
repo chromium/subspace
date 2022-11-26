@@ -62,10 +62,11 @@ concept Clone =
 
 template <Clone T>
 inline constexpr T clone(const T& source) noexcept {
-  if constexpr (Copy<T>)
+  if constexpr (Copy<T>) {
     return source;
-  else
+  } else {
     return source.clone();
+  }
 }
 
 /// Performs copy-assignment from `source`.
@@ -81,7 +82,7 @@ inline constexpr void clone_into(Mref<T> self, const T& source) noexcept {
   if constexpr (Copy<T>)
     self = source;
   else if constexpr (__private::HasCloneFromMethod<T>)
-    self.clone_from(source);
+    self.inner().clone_from(source);
   else
     self = source.clone();
 }

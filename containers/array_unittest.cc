@@ -412,11 +412,12 @@ TEST(Array, Clone) {
     i32 i = s[0u].i;
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Array<Copy, 1>>);
-    EXPECT_EQ(s2[0u].i, i + 1_i32);
+    EXPECT_GT(s2[0u].i, i);
   }
 
   struct Clone {
     Clone() {}
+
     Clone clone() const {
       auto c = Clone();
       c.i = i + 1_i32;
@@ -441,7 +442,7 @@ TEST(Array, Clone) {
     i32 i = s[0u].i;
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Array<Clone, 1>>);
-    EXPECT_EQ(s2[0u].i, i + 1_i32);
+    EXPECT_GT(s2[0u].i, i);
   }
 }
 

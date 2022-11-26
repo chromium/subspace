@@ -171,34 +171,6 @@ TEST(ResultDeathTest, UnwrapErrWithOk) {
 #endif
 }
 
-TEST(Result, Copy) {
-  auto r = Result<i32, i32>::with(1_i32);
-  auto r2 = r;
-  EXPECT_EQ(sus::move(r2).unwrap(), 1_i32);
-  r2 = r;
-  EXPECT_EQ(sus::move(r2).unwrap(), 1_i32);
-}
-
-TEST(Result, CopyAfterTrivialMove) {
-  // Trivial copy won't catch use-after-move.
-  auto r = Result<i32, i32>::with(1_i32);
-  auto r3 = sus::move(r);
-  auto r2 = r;
-  EXPECT_EQ(sus::move(r2).unwrap(), 1_i32);
-}
-
-struct NonTrivialCopy {
-  NonTrivialCopy() {}
-  NonTrivialCopy(const NonTrivialCopy&) {}
-  NonTrivialCopy& operator=(const NonTrivialCopy&) { return *this; }
-};
-
-TEST(Result, CopyAfterNonTrivialMove) {
-  auto r = Result<NonTrivialCopy, i32>::with(NonTrivialCopy());
-  sus::move(r).unwrap();
-  EXPECT_DEATH([[maybe_unused]] auto r2 = r, "");
-}
-
 TEST(Result, Move) {
   auto r = Result<i32, i32>::with(1_i32);
   auto r2 = sus::move(r);
@@ -342,28 +314,33 @@ TEST(Result, FromIter) {
   EXPECT_EQ(sus::move(with_errors_out).unwrap_err(), Error::OneError);
 }
 
-TEST(Option, Clone) {
+TEST(Result, Clone) {
   struct Copy {
     Copy() {}
     Copy(const Copy& o) : i(o.i + 1_i32) {}
     Copy& operator=(const Copy&) = default;
-    Copy(Copy&&) = delete;
-    Copy& operator=(Copy&&) = delete;
     i32 i = 1_i32;
   };
 
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
-  static_assert(!::sus::mem::Move<Copy>);
-  static_assert(::sus::mem::Copy<Result<Copy, i32>>);
+  static_assert(::sus::mem::Move<Copy>);
+  static_assert(!::sus::mem::Copy<Result<Copy, i32>>);
   static_assert(::sus::mem::Clone<Result<Copy, i32>>);
-  static_assert(!::sus::mem::Move<Result<Copy, i32>>);
+  static_assert(::sus::mem::Move<Result<Copy, i32>>);
 
   {
     const auto s = Result<Copy, i32>::with(Copy());
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Result<Copy, i32>>);
     EXPECT_EQ(s2, sus::result::Ok);
+  }
+
+  {
+    const auto s = Result<Copy, i32>::with_err(2_i32);
+    auto s2 = Result<Copy, i32>::with(Copy());
+    sus::clone_into(mref(s2), s);
+    EXPECT_EQ(s2, sus::result::Err);
   }
 
   struct Clone {
@@ -393,6 +370,13 @@ TEST(Option, Clone) {
     static_assert(std::same_as<decltype(s2), Result<Clone, i32>>);
     EXPECT_EQ(s2, sus::result::Ok);
     EXPECT_EQ(sus::move(s2).unwrap().i, 2_i32);
+  }
+
+  {
+    const auto s = Result<Clone, i32>::with_err(2_i32);
+    auto s2 = Result<Clone, i32>::with(Clone());
+    sus::clone_into(mref(s2), s);
+    EXPECT_EQ(s2, sus::result::Err);
   }
 }
 

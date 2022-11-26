@@ -1839,6 +1839,15 @@ TEST(Option, Clone) {
     EXPECT_EQ(s2.unwrap_ref().i, i + 1_i32);
   }
 
+  {
+    const auto s = Option<Copy>::some(Copy());
+    i32 i = s.unwrap_ref().i;
+    auto s2 = Option<Copy>::some(Copy());
+    s2.unwrap_mut().i = 1000_i32;
+    sus::clone_into(mref(s2), s);
+    EXPECT_EQ(s2.unwrap_ref().i, i);
+  }
+
   struct Clone {
     Clone() {}
     Clone clone() const {
@@ -1864,6 +1873,14 @@ TEST(Option, Clone) {
     const auto s = Option<Clone>::some(Clone());
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Option<Clone>>);
+    EXPECT_EQ(s2.unwrap_ref().i, 2_i32);
+  }
+
+  {
+    const auto s = Option<Clone>::some(Clone());
+    auto s2 = Option<Clone>::some(Clone());
+    s2.unwrap_mut().i = 1000_i32;
+    sus::clone_into(mref(s2), s);
     EXPECT_EQ(s2.unwrap_ref().i, 2_i32);
   }
 }
