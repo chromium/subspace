@@ -351,10 +351,10 @@ TEST(Option, Clone) {
     Copy& operator=(Copy&&) = delete;
     i32 i = 1_i32;
   };
+
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
   static_assert(!::sus::mem::Move<Copy>);
-
   static_assert(::sus::mem::Copy<Result<Copy, i32>>);
   static_assert(::sus::mem::Clone<Result<Copy, i32>>);
   static_assert(!::sus::mem::Move<Result<Copy, i32>>);
@@ -379,9 +379,13 @@ TEST(Option, Clone) {
 
     i32 i = 1_i32;
   };
+
   static_assert(!::sus::mem::Copy<Clone>);
   static_assert(::sus::mem::Clone<Clone>);
   static_assert(::sus::mem::Move<Clone>);
+  static_assert(!::sus::mem::Copy<Result<Clone, i32>>);
+  static_assert(::sus::mem::Clone<Result<Clone, i32>>);
+  static_assert(::sus::mem::Move<Result<Clone, i32>>);
 
   {
     const auto s = Result<Clone, i32>::with(Clone());
@@ -391,6 +395,5 @@ TEST(Option, Clone) {
     EXPECT_EQ(sus::move(s2).unwrap().i, 2_i32);
   }
 }
-
 
 }  // namespace

@@ -28,6 +28,8 @@
 #include "fn/callable.h"
 #include "fn/fn_defn.h"
 #include "marker/unsafe.h"
+#include "mem/clone.h"
+#include "mem/copy.h"
 #include "mem/move.h"
 #include "mem/relocate.h"
 #include "num/num_concepts.h"
@@ -65,7 +67,7 @@ class Array final {
     auto a = Array(kWithUninitialized);
     if constexpr (N > 0) {
       for (size_t i = 0; i < N; ++i)
-        a.storage_.data_[i] = ::sus::construct::make_default<T>();
+        new (a.as_mut_ptr() + i) T(::sus::construct::make_default<T>());
     }
     return a;
   }
@@ -82,7 +84,7 @@ class Array final {
 
   // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
   // sus::construct::Into<T> to avoid implicit conversions.
-  template <std::convertible_to<T> U>
+  template <std::convertible_to<T&&> U>
   constexpr static Array with_value(const U& t) noexcept {
     return Array(kWithValue, t, std::make_index_sequence<N>());
   }
@@ -90,52 +92,50 @@ class Array final {
   // Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
   // values. But doesn't use sus::construct::Into<T> to avoid implicit
   // conversions.
-  template <std::convertible_to<T>... Ts>
+  template <std::convertible_to<T&&>... Ts>
     requires(sizeof...(Ts) == N)
-  constexpr static Array with_values(Ts... ts) noexcept {
+  constexpr static Array with_values(Ts&&... ts) noexcept {
     auto a = Array(kWithUninitialized);
-    init_values(a.as_mut_ptr(), 0, move(ts)...);
+    init_values(a.as_mut_ptr(), 0, ::sus::move(ts)...);
     return a;
   }
 
-  Array(const Array&)
-    requires(std::is_trivially_copy_constructible_v<T>)
-  = default;
-  Array(const Array& o)
-    requires(!std::is_trivially_copy_constructible_v<T>)
-  : Array(kWithUninitialized) {
-    for (auto i = size_t{0}; i < N; ++i)
-      new (as_mut_ptr() + i) T(o.storage_.data_[i]);
-  }
-
-  Array& operator=(const Array&)
-    requires(std::is_trivially_copy_assignable_v<T>)
-  = default;
-  Array& operator=(const Array& o)
-    requires(!std::is_trivially_copy_assignable_v<T>)
-  {
-    for (auto i = size_t{0}; i < N; ++i)
-      storage_.data_[i] = o.storage_.data_[i];
-  }
-
   Array(Array&&)
-    requires(std::is_trivially_move_constructible_v<T>)
+      // TODO: Make a TrivialMove<T>.
+    requires(::sus::mem::Move<T> && std::is_trivially_move_constructible_v<T>)
   = default;
   Array(Array&& o)
-    requires(!std::is_trivially_move_constructible_v<T>)
+      // TODO: Make a NonTrivialMove<T>.
+    requires(::sus::mem::Move<T> && !std::is_trivially_move_constructible_v<T>)
   : Array(kWithUninitialized) {
     for (auto i = size_t{0}; i < N; ++i)
       new (as_mut_ptr() + i) T(::sus::move(o.storage_.data_[i]));
   }
+  Array(Array&&)
+    requires(!::sus::mem::Move<T>)
+  = delete;
 
   Array& operator=(Array&&)
-    requires(std::is_trivially_move_assignable_v<T>)
+    requires(::sus::mem::Move<T> && std::is_trivially_move_assignable_v<T>)
   = default;
   Array& operator=(Array&& o)
-    requires(!std::is_trivially_move_assignable_v<T>)
+    requires(::sus::mem::Move<T> && !std::is_trivially_move_assignable_v<T>)
   {
     for (auto i = size_t{0}; i < N; ++i)
       storage_.data_[i] = ::sus::mem::take(mref(o.storage_.data_[i]));
+  }
+  Array& operator=(Array&&)
+    requires(!::sus::mem::Move<T>)
+  = delete;
+
+  // sus::mem::Clone trait.
+  constexpr Array clone() const& noexcept
+    requires(::sus::mem::Clone<T>)
+  {
+    auto ar = Array::with_uninitialized(unsafe_fn);
+    for (auto i = size_t{0}; i < N; ++i)
+      new (ar.as_mut_ptr() + i) T(::sus::clone(storage_.data_[i]));
+    return ar;
   }
 
   ~Array()
@@ -251,10 +251,11 @@ class Array final {
 
   /// Converts the array into an iterator that consumes the array and returns
   /// each element in the same order they appear in the array.
-  constexpr ::sus::iter::Iterator<ArrayIntoIter<T, N>> into_iter() && noexcept
+  template <int&..., class U = T>
+  constexpr ::sus::iter::Iterator<ArrayIntoIter<U, N>> into_iter() && noexcept
     requires(::sus::mem::Move<T>)
   {
-    return ArrayIntoIter<T, N>::with(static_cast<Array&&>(*this));
+    return ArrayIntoIter<T, N>::with(::sus::move(*this));
   }
 
   /// Consumes the array, and returns a new array, mapping each element of the
@@ -292,12 +293,12 @@ class Array final {
   template <size_t... Is>
   constexpr Array(WithUninitialized) noexcept {}
 
-  template <std::convertible_to<T> T1, std::convertible_to<T>... Ts>
+  template <std::convertible_to<T&&> T1, std::convertible_to<T&&>... Ts>
   static inline void init_values(T* a, size_t index, T1&& t1, Ts&&... ts) {
     new (a + index) T(move(t1));
     init_values(a, index + 1, move(ts)...);
   }
-  template <std::convertible_to<T> T1>
+  template <std::convertible_to<T&&> T1>
   static inline void init_values(T* a, size_t index, T1&& t1) {
     new (a + index) T(move(t1));
   }

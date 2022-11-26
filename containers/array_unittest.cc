@@ -49,8 +49,8 @@ static_assert(std::is_trivially_destructible_v<Array<T, 2>>);
 static_assert(std::is_trivially_move_constructible_v<Array<T, 2>>);
 static_assert(std::is_trivially_move_assignable_v<Array<T, 2>>);
 static_assert(std::is_nothrow_swappable_v<Array<T, 2>>);
-static_assert(std::is_trivially_copy_constructible_v<Array<T, 2>>);
-static_assert(std::is_trivially_copy_assignable_v<Array<T, 2>>);
+static_assert(!std::is_trivially_copy_constructible_v<Array<T, 2>>);
+static_assert(!std::is_trivially_copy_assignable_v<Array<T, 2>>);
 static_assert(!std::is_constructible_v<Array<T, 2>, T&&>);
 static_assert(!std::is_assignable_v<Array<T, 2>, T&&>);
 static_assert(!std::is_constructible_v<Array<T, 2>, const T&>);
@@ -388,6 +388,61 @@ TEST(Array, AsMut) {
   auto x = [](sus::Slice<i32>) {};
   auto am = Array<i32, 3>::with_value(2);
   x(am.as_mut());
+}
+
+TEST(Array, Clone) {
+  struct Copy {
+    Copy() {}
+    Copy(const Copy& o) : i(o.i + 1_i32) {}
+    Copy& operator=(const Copy&) = default;
+    i32 i = 1_i32;
+  };
+
+  static_assert(::sus::mem::Copy<Copy>);
+  static_assert(::sus::mem::Clone<Copy>);
+  static_assert(::sus::mem::Move<Copy>);
+  // Array is always Clone (if T is Clone), but never Copy since it's expensive
+  // to copy.
+  static_assert(!::sus::mem::Copy<Array<Copy, 1>>);
+  static_assert(::sus::mem::Clone<Array<Copy, 1>>);
+  static_assert(::sus::mem::Move<Array<Copy, 1>>);
+
+  {
+    const auto s = Array<Copy, 1>::with_values(Copy());
+    i32 i = s[0u].i;
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Array<Copy, 1>>);
+    EXPECT_EQ(s2[0u].i, i + 1_i32);
+  }
+
+  struct Clone {
+    Clone() {}
+    Clone clone() const {
+      auto c = Clone();
+      c.i = i + 1_i32;
+      return c;
+    }
+
+    Clone(Clone&&) = default;
+    Clone& operator=(Clone&&) = default;
+
+    i32 i = 1_i32;
+  };
+
+  static_assert(!::sus::mem::Copy<Clone>);
+  static_assert(::sus::mem::Clone<Clone>);
+  static_assert(::sus::mem::Move<Clone>);
+  static_assert(!::sus::mem::Copy<Array<Clone, 1>>);
+  static_assert(::sus::mem::Clone<Array<Clone, 1>>);
+  static_assert(::sus::mem::Move<Array<Clone, 1>>);
+
+  {
+    const auto s = Array<Clone, 1>::with_values(Clone());
+    i32 i = s[0u].i;
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Array<Clone, 1>>);
+    EXPECT_EQ(s2[0u].i, i + 1_i32);
+  }
 }
 
 }  // namespace
