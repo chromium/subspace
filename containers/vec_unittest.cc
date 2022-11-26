@@ -1,3 +1,4 @@
+#include <stdio.h>
 // Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -419,6 +420,123 @@ TEST(Vec, Move) {
   v = sus::move(v2);  // Destroys the objects in `v`.
   EXPECT_EQ(moves, 0_usize);
   EXPECT_EQ(destructs, 2_usize);
+}
+
+TEST(Vec, Clone) {
+  struct Copy {
+    Copy() {}
+    Copy(const Copy& o) : i(o.i + 1_i32) {}
+    Copy& operator=(const Copy&) = default;
+    i32 i = 1_i32;
+  };
+
+  static_assert(::sus::mem::Copy<Copy>);
+  static_assert(::sus::mem::Clone<Copy>);
+  static_assert(::sus::mem::Move<Copy>);
+  // Array is always Clone (if T is Clone), but never Copy since it's expensive
+  // to copy.
+  static_assert(!::sus::mem::Copy<Vec<Copy>>);
+  static_assert(::sus::mem::Clone<Vec<Copy>>);
+  static_assert(::sus::mem::Move<Vec<Copy>>);
+
+  {
+    auto s = Vec<Copy>::with_default();
+    s.push(Copy());
+    i32 i = s[0u].i;
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Vec<Copy>>);
+    EXPECT_EQ(s2.capacity(), s.capacity());
+    EXPECT_EQ(s2.len(), s.len());
+    EXPECT_GT(s2[0u].i, i);
+  }
+
+  {
+    auto s = Vec<Copy>::with_default();
+    s.push(Copy());
+    i32 i = s[0u].i;
+    auto s2 = Vec<Copy>::with_default();
+    sus::clone_into(mref(s2), s);
+    EXPECT_EQ(s2.capacity(), s.capacity());
+    EXPECT_EQ(s2.len(), s.len());
+    EXPECT_GT(s2[0u].i, i);
+  }
+
+  struct Clone {
+    Clone() {}
+
+    Clone clone() const {
+      auto c = Clone();
+      c.i = i + 1_i32;
+      return c;
+    }
+
+    Clone(Clone&&) = default;
+    Clone& operator=(Clone&&) = default;
+
+    i32 i = 1_i32;
+  };
+
+  static_assert(!::sus::mem::Copy<Clone>);
+  static_assert(::sus::mem::Clone<Clone>);
+  static_assert(::sus::mem::Move<Clone>);
+  static_assert(!::sus::mem::Copy<Vec<Clone>>);
+  static_assert(::sus::mem::Clone<Vec<Clone>>);
+  static_assert(::sus::mem::Move<Vec<Clone>>);
+
+  {
+    auto s = Vec<Clone>::with_default();
+    s.push(Clone());
+    i32 i = s[0u].i;
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Vec<Clone>>);
+    EXPECT_EQ(s2.capacity(), s.capacity());
+    EXPECT_EQ(s2.len(), s.len());
+    EXPECT_GT(s2[0u].i, i);
+  }
+}
+
+TEST(Vec, CloneInto) {
+  static auto count = 0_usize;
+  struct S {
+    S() { count += 1u; }
+    S(const S&) { count += 1u; }
+    ~S() { count -= 1u; }
+  };
+
+  auto v1 = Vec<S>::with_default();
+  auto v2 = Vec<S>::with_default();
+
+  // Case 1: Clone from larger vector.
+  v1.push(S());
+  v2.push(S());
+  v2.push(S());
+  ::sus::clone_into(mref(v1), v2);
+  v1.clear();
+  v2.clear();
+  EXPECT_EQ(count, 0_usize);
+  EXPECT_EQ(v1.len(), v2.len());
+  EXPECT_EQ(v1.capacity(), v2.capacity());
+
+  // Case 2: Clone from same size vector.
+  v1.push(S());
+  v2.push(S());
+  ::sus::clone_into(mref(v1), v2);
+  v1.clear();
+  v2.clear();
+  EXPECT_EQ(count, 0_usize);
+  EXPECT_EQ(v1.len(), v2.len());
+  EXPECT_EQ(v1.capacity(), v2.capacity());
+
+  // Case 3: Clone from smaller vector.
+  v1.push(S());
+  v1.push(S());
+  v2.push(S());
+  ::sus::clone_into(mref(v1), v2);
+  v1.clear();
+  v2.clear();
+  EXPECT_EQ(count, 0_usize);
+  EXPECT_EQ(v1.len(), v2.len());
+  EXPECT_EQ(v1.capacity(), v2.capacity());
 }
 
 }  // namespace

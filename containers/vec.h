@@ -26,6 +26,7 @@
 #include "mem/never_value.h"
 #include "mem/relocate.h"
 #include "mem/replace.h"
+#include "ops/ord.h"
 #include "mem/size_of.h"
 #include "num/unsigned_integer.h"
 #include "option/option.h"
@@ -75,6 +76,43 @@ class Vec {
     len_ = ::sus::mem::replace(mref(o.len_), 0_usize);
     capacity_ = ::sus::mem::replace(mref(o.capacity_), 0_usize);
     return *this;
+  }
+
+  Vec clone() const& noexcept
+    requires(::sus::mem::Clone<T>)
+  {
+    auto v = Vec::with_capacity(capacity_);
+    for (auto i = size_t{0}; i < len_; ++i) {
+      new (v.as_mut_ptr() + i) T(::sus::clone(get_unchecked(unsafe_fn, i)));
+    }
+    v.len_ = len_;
+    return v;
+  }
+
+  void clone_from(const Vec& source) & noexcept
+    requires(::sus::mem::Clone<T>)
+  {
+    if (source.capacity_ == 0_usize) {
+      destroy_storage_objects();
+      free_storage();
+      storage_ = nullish();
+      len_ = 0_usize;
+      capacity_ = 0_usize;
+    } else {
+      grow_to_exact(source.capacity_);
+      const size_t in_place_count = sus::ops::min(len_, source.len_).primitive_value;
+      for (auto i = size_t{0}; i < in_place_count; ++i) {
+        ::sus::clone_into(mref(get_unchecked_mut(unsafe_fn, i)), source.get_unchecked(unsafe_fn, i));
+      }
+      for (auto i = in_place_count; i < len_; ++i) {
+        get_unchecked_mut(unsafe_fn, i).~T();
+      }
+      for (auto i = in_place_count; i < source.len_; ++i) {
+        new (as_mut_ptr() + i)
+            T(::sus::clone(source.get_unchecked(unsafe_fn, i)));
+      }
+      len_ = source.len_;
+    }
   }
 
   /// Clears the vector, removing all values.

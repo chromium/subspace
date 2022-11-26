@@ -264,6 +264,16 @@ class Option final {
       return Option::none();
   }
 
+  void clone_from(const Option& source) &
+    requires(::sus::mem::Clone<T>)
+  {
+    if (t_.state() == Some && source.t_.state() == Some) {
+      ::sus::clone_into(mref(t_.val_), source.t_.val_);
+    } else {
+      *this = source.clone();
+    }
+  }
+
   /// Drop the current value from the Option, if there is one.
   ///
   /// Afterward the option will unconditionally be #None.
@@ -796,20 +806,9 @@ class Option<T&> final {
   constexpr ~Option() noexcept = default;
 
   // References can be trivially copied and moved, so we use the default
-  // constructors and operators.
+  // constructors and operators. This also implies Clone and Move.
   constexpr Option(const Option& o) = default;
-  constexpr Option(Option&& o) = default;
   constexpr Option& operator=(const Option& o) = default;
-  constexpr Option& operator=(Option&& o) = default;
-
-  Option clone() const&
-    requires(::sus::mem::Clone<T>)
-  {
-    if (t_.state() == Some)
-      return Option(t_.val_.as_ref());
-    else
-      return Option::none();
-  }
 
   /// Drop the current value from the Option, if there is one.
   ///

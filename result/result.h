@@ -140,108 +140,32 @@ class Result final {
     }
   }
 
-  /// If T and E can be trivially copy-constructed, Result<T, E> can also be
-  /// trivially copy-constructed.
-  constexpr Result(const Result&)
-    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
-             std::is_trivially_copy_constructible_v<T> &&
-             std::is_trivially_copy_constructible_v<E>)
-  = default;
-  inline Result(const Result& rhs) noexcept
-    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
-             (!std::is_trivially_copy_constructible_v<T> ||
-              !std::is_trivially_copy_constructible_v<E>))
-  : state_(rhs.state_) {
-    check(state_ != IsMoved);
-    switch (state_) {
-      case IsOk: new (&ok_) T(rhs.ok_); break;
-      case IsErr: new (&err_) E(rhs.err_); break;
-      case IsMoved: break;
-    }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the
-    // function.
-    unreachable_unchecked(unsafe_fn);
-  }
-
-  constexpr Result(const Result&)
-    requires(!::sus::mem::Copy<T> || !::sus::mem::Copy<E>)
-  = delete;
-
   /// If T and E can be trivially move-constructed, Result<T, E> can also be
-  /// trivially
-  /// move-constructed.
+  /// trivially move-constructed.
   constexpr Result(Result&&)
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
              std::is_trivially_move_constructible_v<T> &&
              std::is_trivially_move_constructible_v<E>)
   = default;
-  inline Result(Result&& rhs) noexcept
+
+  Result(Result&& rhs) noexcept
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
              (!std::is_trivially_move_constructible_v<T> ||
               !std::is_trivially_move_constructible_v<E>))
   : state_(replace(mref(rhs.state_), IsMoved)) {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     switch (state_) {
       case IsOk: new (&ok_) T(static_cast<T&&>(rhs.ok_)); break;
       case IsErr: new (&err_) E(static_cast<E&&>(rhs.err_)); break;
-      case IsMoved: break;
+      case IsMoved:
+        // SAFETY: The state_ is verified to be Ok or Err at the top of the
+        // function.
+        ::sus::unreachable_unchecked(unsafe_fn);
     }
-    // SAFETY: The state_ is verified to be Ok or Err at the top of the
-    // function.
-    unreachable_unchecked(unsafe_fn);
   }
 
   constexpr Result(Result&&)
     requires(!::sus::mem::Move<T> || !::sus::mem::Move<E>)
-  = delete;
-
-  /// If T and E can be trivially copy-assigned, Result<T, E> can also be
-  /// trivially copy-assigned.
-  constexpr Result& operator=(const Result& o)
-    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
-             std::is_trivially_copy_assignable_v<T> &&
-             std::is_trivially_copy_assignable_v<E>)
-  = default;
-
-  Result& operator=(const Result& o) noexcept
-    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
-             (!std::is_trivially_copy_assignable_v<T> ||
-              !std::is_trivially_copy_assignable_v<E>))
-  {
-    switch (state_) {
-      case IsOk:
-        switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsOk: mem::replace_and_discard(mref(ok_), o.ok_); break;
-          case IsErr:
-            ok_.~T();
-            new (&err_) E(o.err_);
-            break;
-          case IsMoved: unreachable();
-        }
-        break;
-      case IsErr:
-        switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsErr: mem::replace_and_discard(mref(err_), o.err_); break;
-          case IsOk:
-            err_.~T();
-            new (&ok_) T(o.ok_);
-            break;
-          case IsMoved: unreachable();
-        }
-        break;
-      case IsMoved:
-        switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsErr: new (&err_) T(o.err_); break;
-          case IsOk: new (&ok_) T(o.ok_); break;
-          case IsMoved: unreachable();
-        }
-        break;
-    }
-    return *this;
-  }
-
-  constexpr Result& operator=(const Result& o)
-    requires(!::sus::mem::Copy<T> || !::sus::mem::Copy<E>)
   = delete;
 
   /// If T and E can be trivially move-assigned, Result<T, E> can also be
@@ -298,9 +222,9 @@ class Result final {
   = delete;
 
   constexpr Result clone() const& noexcept
-    requires(::sus::mem::Clone<T> && !::sus::mem::Copy<T>)
+    requires(::sus::mem::Clone<T> && ::sus::mem::Clone<E>)
   {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     switch (state_) {
       case IsOk: return Result::with(::sus::clone(ok_));
       case IsErr: return Result::with_err(::sus::clone(err_));
@@ -308,18 +232,33 @@ class Result final {
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
-    unreachable_unchecked(unsafe_fn);
+    ::sus::unreachable_unchecked(unsafe_fn);
+  }
+
+  void clone_from(const Result& source) &
+        requires(::sus::mem::Clone<T> && ::sus::mem::Clone<E>)
+  {
+    ::sus::check(source.state_ != IsMoved);
+    if (state_ == source.state_) {
+      switch (state_) {
+        case IsOk: ::sus::clone_into(mref(ok_), source.ok_); break;
+        case IsErr: ::sus::clone_into(mref(err_), source.err_); break;
+        case IsMoved: ::sus::unreachable_unchecked(unsafe_fn);
+      }
+    } else {
+      *this = source.clone();
+    }
   }
 
   /// Returns true if the result is `Ok`.
   constexpr inline bool is_ok() const& noexcept {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     return state_ == IsOk;
   }
 
   /// Returns true if the result is `Err`.
   constexpr inline bool is_err() const& noexcept {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     return state_ == IsErr;
   }
 
@@ -340,7 +279,7 @@ class Result final {
   /// }
   /// ```
   constexpr inline operator State() const& noexcept {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     return static_cast<State>(state_);
   }
 
@@ -349,7 +288,7 @@ class Result final {
   /// Converts self into an `Option<T>`, consuming self, and discarding the
   /// error, if any.
   constexpr inline Option<T> ok() && noexcept {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     switch (replace(mref(state_), IsMoved)) {
       case IsOk:
         return Option<T>::some(take_and_destruct(unsafe_fn, mref(ok_)));
@@ -358,7 +297,7 @@ class Result final {
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
-    unreachable_unchecked(unsafe_fn);
+    ::sus::unreachable_unchecked(unsafe_fn);
   }
 
   /// Converts from `Result<T, E>` to `Option<E>`.
@@ -366,7 +305,7 @@ class Result final {
   /// Converts self into an `Option<E>`, consuming self, and discarding the
   /// success value, if any.
   constexpr inline Option<E> err() && noexcept {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     switch (replace(mref(state_), IsMoved)) {
       case IsOk: ok_.~T(); return Option<E>::none();
       case IsErr:
@@ -375,7 +314,7 @@ class Result final {
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
-    unreachable_unchecked(unsafe_fn);
+    ::sus::unreachable_unchecked(unsafe_fn);
   }
 
   /// Returns the contained `Ok` value, consuming the self value.
@@ -424,7 +363,7 @@ class Result final {
   }
 
   constexpr Iterator<Once<const T&>> iter() const& noexcept {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     if (state_ == IsOk)
       return sus::iter::once(Option<const T&>::some(ok_));
     else
@@ -433,7 +372,7 @@ class Result final {
   Iterator<Once<const T&>> iter() const&& = delete;
 
   constexpr Iterator<Once<T&>> iter_mut() & noexcept {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     if (state_ == IsOk)
       return sus::iter::once(Option<T&>::some(mref(ok_)));
     else
@@ -441,7 +380,7 @@ class Result final {
   }
 
   constexpr Iterator<Once<T>> into_iter() && noexcept {
-    check(state_ != IsMoved);
+    ::sus::check(state_ != IsMoved);
     if (replace(mref(state_), IsMoved) == IsOk) {
       return sus::iter::once(
           Option<T>::some(take_and_destruct(unsafe_fn, mref(ok_))));

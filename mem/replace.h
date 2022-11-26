@@ -18,6 +18,7 @@
 
 #include <type_traits>
 
+#include "marker/unsafe.h"
 #include "mem/addressof.h"
 #include "mem/mref.h"
 #include "mem/relocate.h"
@@ -39,7 +40,8 @@ template <class T>
   bool can_memcpy =
       ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
-    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src), ::sus::mem::data_size_of<T>());
+    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
+           ::sus::mem::data_size_of<T>());
   } else {
     dest = src;
   }

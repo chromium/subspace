@@ -133,8 +133,9 @@ class Array final {
     requires(::sus::mem::Clone<T>)
   {
     auto ar = Array::with_uninitialized(unsafe_fn);
-    for (auto i = size_t{0}; i < N; ++i)
+    for (auto i = size_t{0}; i < N; ++i) {
       new (ar.as_mut_ptr() + i) T(::sus::clone(storage_.data_[i]));
+    }
     return ar;
   }
 
