@@ -28,22 +28,12 @@ static_assert(
 
 // Require conversion through mref() even if you have an Mref already.
 static_assert(!std::is_convertible_v<Mref<int>, Mref<int>&>, "");
-static_assert(std::is_convertible_v<
-                  Mref<int>, decltype(mref(std::declval<Mref<int>&>()))>,
-              "");
 
 void increment(Mref<int> i) { ++i; }
 
 TEST(Mref, Pass) {
   int i = 0;
   increment(mref(i));
-  EXPECT_EQ(i, 1);
-}
-
-TEST(Mref, PassMref) {
-  auto f = [](Mref<int> i) { increment(mref(i)); };
-  int i = 0;
-  f(mref(i));
   EXPECT_EQ(i, 1);
 }
 

@@ -24,12 +24,12 @@ namespace sus::mem::__private {
 template <class T>
 struct [[sus_trivial_abi]] RelocatableStorage;
 
-template <class T>
+template <::sus::mem::Move T>
   requires(!::sus::mem::relocate_one_by_memcpy<T>)
 struct [[sus_trivial_abi]] RelocatableStorage<T> final {
   RelocatableStorage(Option<T>&& t)
       : heap_(::sus::move(t).and_then([](T&& t) {
-          return Option<T&>::some(mref(*new T(static_cast<T&&>(t))));
+          return Option<T&>::some(mref(*new T(::sus::move(t))));
         })) {}
 
   ~RelocatableStorage() {
@@ -56,7 +56,7 @@ struct [[sus_trivial_abi]] RelocatableStorage<T> final {
 
   Option<T> take() & {
     return heap_.take().map([](T& t) {
-      T take = static_cast<T&&>(t);
+      T take = ::sus::move(t);
       delete &t;
       return take;
     });
