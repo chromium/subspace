@@ -39,14 +39,14 @@ TEST(Slice, FromRawParts) {
 TEST(Slice, Get) {
   i32 a[] = {1, 2, 3};
   auto s = Slice<const i32>::from_raw_parts(a, 3_usize);
-  EXPECT_EQ(s.get(1_usize).unwrap(), 2_i32);
-  EXPECT_EQ(s.get(2_usize).unwrap(), 3_i32);
-  EXPECT_EQ(s.get(3_usize), sus::None);
+  EXPECT_EQ(s.get_ref(1_usize).unwrap(), 2_i32);
+  EXPECT_EQ(s.get_ref(2_usize).unwrap(), 3_i32);
+  EXPECT_EQ(s.get_ref(3_usize), sus::None);
 
   auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
-  EXPECT_EQ(sm.get(1_usize).unwrap(), 2_i32);
-  EXPECT_EQ(sm.get(2_usize).unwrap(), 3_i32);
-  EXPECT_EQ(sm.get(3_usize), sus::None);
+  EXPECT_EQ(sm.get_ref(1_usize).unwrap(), 2_i32);
+  EXPECT_EQ(sm.get_ref(2_usize).unwrap(), 3_i32);
+  EXPECT_EQ(sm.get_ref(3_usize), sus::None);
 }
 
 template <class T, class U>
