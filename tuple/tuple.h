@@ -38,15 +38,14 @@ class Tuple final {
   /// Gets a const reference to the `I`th element in the tuple.
   template <size_t I>
     requires(I <= sizeof...(Ts))
-  constexpr inline const auto& get() const& noexcept {
+  constexpr inline const auto& get_ref() const& noexcept {
     ::sus::check(!moved_from());
     return Access<I + 1u>::get(storage_);
   }
 
   /// Disallows getting a reference to temporary Tuple.
   template <size_t I>
-  constexpr inline auto get() && =
-      delete;  // Don't return reference to temporary.
+  constexpr inline const auto& get_ref() && = delete;
 
   /// Gets a mutable reference to the `I`th element in the tuple.
   template <size_t I>
@@ -138,7 +137,34 @@ class Tuple final {
   Storage storage_;
 };
 
+// Support for structured binding.
+template <size_t I, class... Ts>
+const auto& get(const Tuple<Ts...>& t) noexcept {
+  return t.get_ref<I>();
+}
+template <size_t I, class... Ts>
+auto& get(Tuple<Ts...>& t) noexcept {
+  return t.get_mut<I>();
+}
+template <size_t I, class... Ts>
+auto get(Tuple<Ts...>&& t) noexcept {
+  return ::sus::move(t).unwrap<I>();
+}
+
 }  // namespace sus::tuple
+
+namespace std {
+template <class... Types>
+struct tuple_size<::sus::tuple::Tuple<Types...>>
+    : std::integral_constant<std::size_t, sizeof...(Types)> {};
+
+template <std::size_t I, class... Types>
+struct tuple_element<I, ::sus::tuple::Tuple<Types...>> {
+  using type =
+      decltype(std::declval<::sus::tuple::Tuple<Types...>>().unwrap<I>());
+};
+
+}  // namespace std
 
 // Promote Tuple into the `sus` namespace.
 namespace sus {

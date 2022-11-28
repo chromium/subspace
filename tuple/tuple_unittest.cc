@@ -17,6 +17,8 @@
 #include <math.h>  // TODO: Replace with f32::NAN()
 
 #include <concepts>
+#include <utility>  // std::tuple_size.
+#include <tuple>
 
 #include "mem/move.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -36,27 +38,27 @@ TEST(Tuple, With) {
 template <size_t I>
 constexpr auto GetFromTuple() noexcept {
   constexpr auto t = Tuple<int, float>::with(2, 3.f);
-  return t.get<I>();
+  return t.get_ref<I>();
 };
 
-TEST(Tuple, Get) {
+TEST(Tuple, GetRef) {
   auto t1 = Tuple<int>::with(2);
-  EXPECT_EQ(t1.get<0>(), 2);
-  static_assert(std::same_as<const int&, decltype(t1.get<0>())>);
+  EXPECT_EQ(t1.get_ref<0>(), 2);
+  static_assert(std::same_as<const int&, decltype(t1.get_ref<0>())>);
 
   const auto t2 = Tuple<int, float>::with(2, 3.f);
-  EXPECT_EQ(t2.get<0>(), 2);
-  static_assert(std::same_as<const int&, decltype(t2.get<0>())>);
-  EXPECT_EQ(t2.get<1>(), 3.f);
-  static_assert(std::same_as<const float&, decltype(t2.get<1>())>);
+  EXPECT_EQ(t2.get_ref<0>(), 2);
+  static_assert(std::same_as<const int&, decltype(t2.get_ref<0>())>);
+  EXPECT_EQ(t2.get_ref<1>(), 3.f);
+  static_assert(std::same_as<const float&, decltype(t2.get_ref<1>())>);
 
   auto t3 = Tuple<int, float, int>::with(2, 3.f, 4);
-  EXPECT_EQ(t3.get<0>(), 2);
-  static_assert(std::same_as<const int&, decltype(t3.get<0>())>);
-  EXPECT_EQ(t3.get<1>(), 3.f);
-  static_assert(std::same_as<const float&, decltype(t3.get<1>())>);
-  EXPECT_EQ(t3.get<2>(), 4);
-  static_assert(std::same_as<const int&, decltype(t3.get<2>())>);
+  EXPECT_EQ(t3.get_ref<0>(), 2);
+  static_assert(std::same_as<const int&, decltype(t3.get_ref<0>())>);
+  EXPECT_EQ(t3.get_ref<1>(), 3.f);
+  static_assert(std::same_as<const float&, decltype(t3.get_ref<1>())>);
+  EXPECT_EQ(t3.get_ref<2>(), 4);
+  static_assert(std::same_as<const int&, decltype(t3.get_ref<2>())>);
 
   [[maybe_unused]] constexpr auto c0 = GetFromTuple<0>();
   [[maybe_unused]] constexpr auto c1 = GetFromTuple<1>();
@@ -135,7 +137,7 @@ TEST(TupleDeathTest, Moved) {
 #if GTEST_HAS_DEATH_TEST
   auto m1 = Tuple<int>::with(1);
   sus::move(m1).unwrap<0>();
-  EXPECT_DEATH(m1.get<0>(), "");
+  EXPECT_DEATH(m1.get_ref<0>(), "");
 
   auto m2 = Tuple<int>::with(1);
   sus::move(m2).unwrap<0>();
@@ -251,6 +253,18 @@ TEST(Tuple, PartialOrder) {
             std::partial_ordering::greater);
 }
 
-// TODO: Test WeakOrd and PartialOrd. Like we do for Option..
+TEST(Tuple, StructuredBinding) {
+  auto t3 = Tuple<int, float, char>::with(2, 3.f, 'c');
+  auto& [a, b, c] = t3;
+  static_assert(std::same_as<decltype(a), int>);
+  static_assert(std::same_as<decltype(b), float>);
+  static_assert(std::same_as<decltype(c), char>);
+
+  t3.get_mut<0>() += 1;
+  t3.get_mut<1>() += 2.f;
+  t3.get_mut<2>() += 3;
+
+  EXPECT_EQ(t3, (Tuple<int, float, char>::with(3, 5.f, 'f')));
+}
 
 }  // namespace
