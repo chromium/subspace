@@ -263,8 +263,19 @@ TEST(Tuple, StructuredBinding) {
   t3.get_mut<0>() += 1;
   t3.get_mut<1>() += 2.f;
   t3.get_mut<2>() += 3;
-
   EXPECT_EQ(t3, (Tuple<int, float, char>::with(3, 5.f, 'f')));
+
+  const auto& [d, e, f] = t3;
+  static_assert(std::same_as<decltype(d), const int>);
+  static_assert(std::same_as<decltype(e), const float>);
+  static_assert(std::same_as<decltype(f), const char>);
+  EXPECT_EQ((Tuple<int, float, char>::with(d, e, f)), (Tuple<int, float, char>::with(3, 5.f, 'f')));
+
+  auto [g, h, i] = sus::move(t3);
+  static_assert(std::same_as<decltype(g), int>);
+  static_assert(std::same_as<decltype(h), float>);
+  static_assert(std::same_as<decltype(i), char>);
+  EXPECT_EQ((Tuple<int, float, char>::with(d, e, f)), (Tuple<int, float, char>::with(3, 5.f, 'f')));
 }
 
 }  // namespace

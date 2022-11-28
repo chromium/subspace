@@ -52,8 +52,8 @@ struct TupleStorage<N, T, MoreT...> : TupleStorage<N - 1, MoreT...> {
 
 template <class TupleStorage, size_t I>
 struct TupleAccess final {
-  static inline constexpr const auto& get(const TupleStorage& tuple) noexcept {
-    return TupleAccess<typename TupleStorage::Super, I - 1>::get(tuple);
+  static inline constexpr const auto& get_ref(const TupleStorage& tuple) noexcept {
+    return TupleAccess<typename TupleStorage::Super, I - 1>::get_ref(tuple);
   }
 
   static inline constexpr auto& get_mut(TupleStorage& tuple) noexcept {
@@ -68,7 +68,7 @@ struct TupleAccess final {
 
 template <class TupleStorage>
 struct TupleAccess<TupleStorage, 0> final {
-  static inline constexpr const auto& get(const TupleStorage& tuple) noexcept {
+  static inline constexpr const auto& get_ref(const TupleStorage& tuple) noexcept {
     return tuple.t;
   }
 
@@ -83,19 +83,19 @@ struct TupleAccess<TupleStorage, 0> final {
 
 template <size_t I, class S1, class S2>
 constexpr inline auto storage_eq_impl(const S1& l, const S2& r) noexcept {
-  return TupleAccess<S1, I + 1>::get(l) == TupleAccess<S2, I + 1>::get(r);
+  return TupleAccess<S1, I + 1>::get_ref(l) == TupleAccess<S2, I + 1>::get_ref(r);
 };
 
 template <class S1, class S2, size_t... N>
 constexpr inline auto storage_eq(const S1& l, const S2& r,
                                  std::index_sequence<N...>) noexcept {
-  return (true && ... && (storage_eq_impl<N>(l, r)));
+  return (... && (storage_eq_impl<N>(l, r)));
 };
 
 template <size_t I, class O, class S1, class S2>
 constexpr inline bool storage_cmp_impl(O& val, const S1& l,
                                        const S2& r) noexcept {
-  auto cmp = TupleAccess<S1, I + 1>::get(l) <=> TupleAccess<S2, I + 1>::get(r);
+  auto cmp = TupleAccess<S1, I + 1>::get_ref(l) <=> TupleAccess<S2, I + 1>::get_ref(r);
   // Allow downgrading from equal to equivalent, but not the inverse.
   if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.
@@ -106,7 +106,7 @@ template <class S1, class S2, size_t... N>
 constexpr inline auto storage_cmp(auto equal, const S1& l, const S2& r,
                                   std::index_sequence<N...>) noexcept {
   auto val = equal;
-  (true && ... && (storage_cmp_impl<N>(val, l, r)));
+  (... && (storage_cmp_impl<N>(val, l, r)));
   return val;
 };
 
