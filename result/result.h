@@ -155,8 +155,8 @@ class Result final {
   : state_(replace(mref(rhs.state_), IsMoved)) {
     ::sus::check(state_ != IsMoved);
     switch (state_) {
-      case IsOk: new (&ok_) T(static_cast<T&&>(rhs.ok_)); break;
-      case IsErr: new (&err_) E(static_cast<E&&>(rhs.err_)); break;
+      case IsOk: new (&ok_) T(::sus::move(rhs.ok_)); break;
+      case IsErr: new (&err_) E(::sus::move(rhs.err_)); break;
       case IsMoved:
         // SAFETY: The state_ is verified to be Ok or Err at the top of the
         // function.
@@ -185,11 +185,11 @@ class Result final {
       case IsOk:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
           case IsOk:
-            mem::replace_and_discard(mref(ok_), static_cast<T&&>(o.ok_));
+            mem::replace_and_discard(mref(ok_), ::sus::move(o.ok_));
             break;
           case IsErr:
             ok_.~T();
-            new (&err_) E(static_cast<E&&>(o.err_));
+            new (&err_) E(::sus::move(o.err_));
             break;
           case IsMoved: unreachable();
         }
@@ -201,15 +201,15 @@ class Result final {
             break;
           case IsOk:
             err_.~T();
-            new (&ok_) T(static_cast<T&&>(o.ok_));
+            new (&ok_) T(::sus::move(o.ok_));
             break;
           case IsMoved: unreachable();
         }
         break;
       case IsMoved:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsErr: new (&err_) T(static_cast<E&&>(o.err_)); break;
-          case IsOk: new (&ok_) T(static_cast<T&&>(o.ok_)); break;
+          case IsErr: new (&err_) T(::sus::move(o.err_)); break;
+          case IsOk: new (&ok_) T(::sus::move(o.ok_)); break;
           case IsMoved: unreachable();
         }
         break;
@@ -396,7 +396,7 @@ class Result final {
       : state_(IsOk), ok_(t) {}
   constexpr inline Result(WithOkType, T&& t) noexcept
     requires(::sus::mem::Move<T>)
-  : state_(IsOk), ok_(static_cast<T&&>(t)) {}
+  : state_(IsOk), ok_(::sus::move(t)) {}
   enum WithErrType { WithErr };
   constexpr inline Result(WithErrType, const E& e) noexcept
       : state_(IsErr), err_(e) {}

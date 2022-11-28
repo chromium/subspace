@@ -15,6 +15,7 @@
 #pragma once
 
 #include <compare>
+#include <concepts>
 
 #include "assertions/check.h"
 #include "mem/forward.h"
@@ -31,8 +32,10 @@ template <class T, class... Ts>
 class Tuple final {
  public:
   /// Construct a Tuple with the given values.
-  constexpr inline static Tuple with(T first, Ts... more) noexcept {
-    return Tuple(static_cast<T&&>(first), static_cast<Ts>(more)...);
+  template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
+    requires(sizeof...(Us) == sizeof...(Ts))
+  constexpr inline static Tuple with(U&& first, Us&&... more) noexcept {
+    return Tuple(::sus::forward<U>(first), ::sus::forward<Us>(more)...);
   }
 
   /// Gets a const reference to the `I`th element in the tuple.
@@ -60,7 +63,8 @@ class Tuple final {
     requires(I <= sizeof...(Ts))
   constexpr inline auto unwrap() && noexcept {
     ::sus::check(!set_moved_from(I));
-    return Access<I + 1u>::unwrap(static_cast<Storage&&>(storage_));
+    set_moved_from(I);
+    return Access<I + 1u>::unwrap(::sus::move(storage_));
   }
 
   /// sus::ops::Eq<Tuple<U...>> trait.
@@ -125,9 +129,10 @@ class Tuple final {
   template <size_t I>
   using Access = __private::TupleAccess<Storage, I>;
 
-  constexpr inline Tuple(T&& first, Ts&&... more) noexcept
-      : storage_(__private::UseAfterMoveMarker(), forward<T>(first),
-                 forward<Ts>(more)...) {}
+  template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
+  constexpr inline Tuple(U&& first, Us&&... more) noexcept
+      : storage_(__private::UseAfterMoveMarker(), ::sus::forward<U>(first),
+                 ::sus::forward<Us>(more)...) {}
 
   // TODO: Provide a way to opt out of all moved-from checks?
   constexpr inline bool any_moved_from() const& noexcept {

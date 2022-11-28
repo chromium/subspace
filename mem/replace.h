@@ -21,6 +21,7 @@
 #include "marker/unsafe.h"
 #include "mem/addressof.h"
 #include "mem/mref.h"
+#include "mem/move.h"
 #include "mem/relocate.h"
 #include "mem/size_of.h"
 
@@ -34,7 +35,7 @@ template <class T>
            std::is_copy_assignable_v<T>)
 [[nodiscard]] constexpr T replace(Mref<T> dest_ref, const T& src) noexcept {
   T& dest = dest_ref;
-  T old(static_cast<T&&>(dest));
+  auto old = T(::sus::move(dest));
 
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
@@ -54,7 +55,7 @@ template <class T>
            std::is_move_assignable_v<T>)
 [[nodiscard]] constexpr T replace(Mref<T> dest_ref, T&& src) noexcept {
   T& dest = dest_ref;
-  T old(static_cast<T&&>(dest));
+  auto old = T(::sus::move(dest));
 
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
@@ -63,7 +64,7 @@ template <class T>
     memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
            ::sus::mem::data_size_of<T>());
   } else {
-    dest = static_cast<T&&>(src);
+    dest = ::sus::move(src);
   }
 
   return old;
@@ -95,7 +96,7 @@ void replace_and_discard(Mref<T> dest_ref, T&& src) noexcept {
     memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
            ::sus::mem::data_size_of<T>());
   } else {
-    dest = static_cast<T&&>(src);
+    dest = ::sus::move(src);
   }
 }
 

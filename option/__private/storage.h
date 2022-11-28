@@ -16,6 +16,8 @@
 
 #include "macros/always_inline.h"
 #include "mem/addressof.h"
+#include "mem/move.h"
+#include "mem/mref.h"
 #include "mem/never_value.h"
 #include "mem/relocate.h"
 #include "mem/replace.h"
@@ -70,7 +72,7 @@ struct Storage<T, false> final {
   constexpr Storage(const std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
   constexpr Storage(std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
   constexpr Storage(std::remove_cvref_t<T>&& t)
-      : val_(static_cast<T&&>(t)), state_(Some) {}
+      : val_(::sus::move(t)), state_(Some) {}
 
   union {
     T val_;
@@ -84,25 +86,25 @@ struct Storage<T, false> final {
     state_ = Some;
   }
   constexpr inline void construct_from_none(T&& t) noexcept {
-    new (&val_) T(static_cast<T&&>(t));
+    new (&val_) T(::sus::move(t));
     state_ = Some;
   }
 
   constexpr inline void set_some(T&& t) noexcept {
     if (state_ == None)
-      construct_from_none(static_cast<T&&>(t));
+      construct_from_none(::sus::move(t));
     else
-      ::sus::mem::replace_and_discard(mref(val_), static_cast<T&&>(t));
+      ::sus::mem::replace_and_discard(mref(val_), ::sus::move(t));
     state_ = Some;
   }
 
   [[nodiscard]] constexpr inline T replace_some(T&& t) noexcept {
-    return ::sus::mem::replace(mref(val_), static_cast<T&&>(t));
+    return ::sus::mem::replace(mref(val_), ::sus::move(t));
   }
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
     state_ = None;
-    return ::sus::mem::take_and_destruct(unsafe_fn, val_);
+    return ::sus::mem::take_and_destruct(unsafe_fn, mref(val_));
   }
 
   constexpr inline void set_none() noexcept {
@@ -137,7 +139,7 @@ struct Storage<T, true> final {
     ::sus::mem::never_value_field<T>::set_never_value(unsafe_fn, overlay_);
   }
   constexpr Storage(const T& t) : val_(t) {}
-  constexpr Storage(T&& t) : val_(static_cast<T&&>(t)) {}
+  constexpr Storage(T&& t) : val_(::sus::move(t)) {}
 
   using Overlay = typename ::sus::mem::never_value_field<T>::OverlayType;
 
@@ -158,25 +160,25 @@ struct Storage<T, true> final {
   // the correct state and thus the correct union field to read, given the
   // current limitations of constexpr in C++20.
   [[nodiscard]] inline State state() const noexcept {
-    return ::sus::mem::never_value_field<T>::is_constructed(unsafe_fn, overlay_) ? Some : None;
+    return ::sus::mem::never_value_field<T>::is_constructed(unsafe_fn, overlay_)
+               ? Some
+               : None;
   }
 
-  inline void construct_from_none(const T& t) noexcept {
-    new (&val_) T(t);
-  }
+  inline void construct_from_none(const T& t) noexcept { new (&val_) T(t); }
   inline void construct_from_none(T&& t) noexcept {
-    new (&val_) T(static_cast<T&&>(t));
+    new (&val_) T(::sus::move(t));
   }
 
   constexpr inline void set_some(T&& t) noexcept {
     if (state() == None)
-      construct_from_none(static_cast<T&&>(t));
+      construct_from_none(::sus::move(t));
     else
-      ::sus::mem::replace_and_discard(mref(val_), static_cast<T&&>(t));
+      ::sus::mem::replace_and_discard(mref(val_), ::sus::move(t));
   }
 
   [[nodiscard]] constexpr inline T replace_some(T&& t) noexcept {
-    return ::sus::mem::replace(mref(val_), static_cast<T&&>(t));
+    return ::sus::mem::replace(mref(val_), ::sus::move(t));
   }
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {

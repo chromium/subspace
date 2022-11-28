@@ -21,6 +21,7 @@
 #include "assertions/check.h"
 #include "macros/__private/compiler_bugs.h"
 #include "marker/unsafe.h"
+#include "mem/move.h"
 #include "mem/relocate.h"
 
 namespace sus::mem {
@@ -31,18 +32,12 @@ struct Mref;
 
 /// Pass a variable to a function as a mutable reference.
 template <class T>
-constexpr inline Mref<T> mref(T& t) {
+constexpr inline Mref<T> mref(T& t) noexcept {
   return Mref<T>(Mref<T>::kConstruct, t);
 }
 
 template <class T>
 constexpr inline Mref<T> mref(const T& t) = delete;
-
-/// An Mref can be passed along as an Mref.
-template <class T>
-constexpr inline Mref<T> mref(Mref<T>& t) {
-  return Mref<T>(Mref<T>::kConstruct, t.inner());
-}
 
 /// A mutable reference receiver.
 ///
@@ -81,28 +76,27 @@ struct [[sus_trivial_abi]] Mref final {
   Mref(Mref&) = delete;
 
   /// Returns the reference held by the Mref.
-  constexpr inline T& inner() & { return t_; }
+  constexpr inline T& inner() & noexcept { return t_; }
 
   /// Act like a T&. It can convert to a T&.
   constexpr inline operator T&() & noexcept { return t_; }
   /// Act like a T&. It can be assigned a new T.
-  constexpr inline Mref& operator=(const T& t)
+  constexpr inline Mref& operator=(const T& t) noexcept
     requires(std::is_copy_assignable_v<T>)
   {
     t_ = t;
     return *this;
   }
   /// Act like a T&. It can be assigned a new T.
-  constexpr inline Mref& operator=(T&& t)
+  constexpr inline Mref& operator=(T&& t) noexcept
     requires(std::is_move_assignable_v<T>)
   {
-    t_ = static_cast<T&&>(t);
+    t_ = ::sus::move(t);
     return *this;
   }
 
  private:
-  friend constexpr Mref<T> mref<>(T&);
-  friend constexpr Mref<T> mref<>(Mref&);
+  friend constexpr Mref<T> mref<>(T&) noexcept;
 
   enum Construct { kConstruct };
   constexpr inline Mref(Construct, T& reference) noexcept : t_(reference) {}

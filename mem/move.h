@@ -60,8 +60,7 @@ concept Move = std::is_move_constructible_v<T> &&
 // TODO: Should this be `as_rvalue()`? Kinda technical. `as_...something...()`?
 template <Move T>
   requires(!std::is_const_v<std::remove_reference_t<T>>)
-[[nodiscard]] sus_always_inline
-    constexpr std::remove_reference_t<T>&& move(T&& t) noexcept {
+[[nodiscard]] sus_always_inline constexpr auto&& move(T&& t) noexcept {
   return static_cast<typename std::remove_reference_t<T>&&>(t);
 }
 

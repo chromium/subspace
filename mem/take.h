@@ -18,6 +18,7 @@
 
 #include "marker/unsafe.h"
 #include "mem/addressof.h"
+#include "mem/move.h"
 #include "mem/mref.h"
 #include "mem/relocate.h"
 
@@ -29,33 +30,27 @@ namespace sus::mem {
 template <class T>
   requires(std::is_move_constructible_v<T> &&
            std::is_default_constructible_v<T> && std::is_final_v<T>)
-inline constexpr T take(Mref<T> t_ref) noexcept {
-  T& t = t_ref;
-  T taken(static_cast<T&&>(t));
-  t.~T();
+inline constexpr T take(Mref<T> t) noexcept {
+  auto taken = T(::sus::move(t.inner()));
+  t.inner().~T();
   // TODO: Support classes with a `with_default()` constructor as well.
-  new (&t) T();
+  new (&t.inner()) T();
   return taken;
 }
 
-// SAFETY: This does *not* re-construct the object pointed to by `t`. It must
-// not be used (or destructed again) afterward.
+/// SAFETY: This does *not* re-construct the object pointed to by `t`. It must
+/// not be used (or destructed again) afterward.
 template <class T>
   requires std::is_move_constructible_v<T>
 inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
-                                     Mref<T> t_ref) noexcept {
-  T& t = t_ref;
-  T taken(static_cast<T&&>(t));
-  t.~T();
-  return taken;
-}
-
-template <class T>
-  requires std::is_move_constructible_v<T>
-inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
-                                     T& t) noexcept {
-  T taken(static_cast<T&&>(t));
-  t.~T();
+                                     Mref<T> t) noexcept {
+  T& inner = t;
+  // NOTE: MSVC fails to compile if we use move() here, which is not really
+  // explainable beyond it being a compiler bug. It claims there is use of an
+  // uninitialized symbol if we static_cast though a method. So we manually
+  // static_cast here.
+  auto taken = T(static_cast<T&&>(inner));
+  inner.~T();
   return taken;
 }
 

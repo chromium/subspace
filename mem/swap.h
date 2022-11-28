@@ -20,6 +20,7 @@
 
 #include "mem/addressof.h"
 #include "mem/mref.h"
+#include "mem/move.h"
 #include "mem/relocate.h"
 #include "mem/size_of.h"
 
@@ -39,9 +40,9 @@ constexpr void swap(Mref<T> lhs_ref, Mref<T> rhs_ref) noexcept {
     memcpy(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs), ::sus::mem::data_size_of<T>());
     memcpy(::sus::mem::addressof(rhs), temp, ::sus::mem::data_size_of<T>());
   } else {
-    T temp(static_cast<T&&>(lhs));
-    lhs = static_cast<T&&>(rhs);
-    rhs = static_cast<T&&>(temp);
+    T temp(::sus::move(lhs));
+    lhs = ::sus::move(rhs);
+    rhs = ::sus::move(temp);
   }
 }
 
