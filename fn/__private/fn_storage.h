@@ -35,7 +35,7 @@ struct FnStorageVtable final : public FnStorageVtableBase {
 template <class F>
 class FnStorage final : public FnStorageBase {
  public:
-  constexpr FnStorage(F&& callable) : callable_(static_cast<F&&>(callable)) {}
+  constexpr FnStorage(F&& callable) : callable_(::sus::move(callable)) {}
 
   template <class R, class... CallArgs>
   static R call(const FnStorageBase& self_base, CallArgs... callargs) {
@@ -52,7 +52,7 @@ class FnStorage final : public FnStorageBase {
   template <class R, class... CallArgs>
   static R call_once(FnStorageBase&& self_base, CallArgs... callargs) {
     auto&& self = static_cast<FnStorage&&>(self_base);
-    return static_cast<F&&>(self.callable_)(forward<CallArgs>(callargs)...);
+    return ::sus::move(self.callable_)(forward<CallArgs>(callargs)...);
   }
 
   F callable_;

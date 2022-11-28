@@ -39,7 +39,7 @@ FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction,
   using FnStorage = __private::FnStorage<F>;
   // TODO: Allow overriding the global allocator? Use the allocator in place of
   // `new` and `delete` directly?
-  auto* s = new FnStorage(static_cast<F&&>(lambda));
+  auto* s = new FnStorage(::sus::move(lambda));
   make_vtable(*s, construction);
   storage_ = s;
 }
