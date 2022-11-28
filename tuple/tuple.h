@@ -39,8 +39,8 @@ class Tuple final {
   template <size_t I>
     requires(I <= sizeof...(Ts))
   constexpr inline const auto& get_ref() const& noexcept {
-    ::sus::check(!moved_from());
-    return Access<I + 1u>::get(storage_);
+    ::sus::check(!moved_from(I));
+    return Access<I + 1u>::get_ref(storage_);
   }
 
   /// Disallows getting a reference to temporary Tuple.
@@ -51,7 +51,7 @@ class Tuple final {
   template <size_t I>
     requires(I <= sizeof...(Ts))
   inline auto& get_mut() & noexcept {
-    ::sus::check(!moved_from());
+    ::sus::check(!moved_from(I));
     return Access<I + 1u>::get_mut(storage_);
   }
 
@@ -59,7 +59,7 @@ class Tuple final {
   template <size_t I>
     requires(I <= sizeof...(Ts))
   constexpr inline auto unwrap() && noexcept {
-    ::sus::check(!set_moved_from());
+    ::sus::check(!set_moved_from(I));
     return Access<I + 1u>::unwrap(static_cast<Storage&&>(storage_));
   }
 
@@ -68,8 +68,8 @@ class Tuple final {
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::ops::Eq<T, U> && ... && ::sus::ops::Eq<Ts, Us>))
   constexpr bool operator==(const Tuple<U, Us...>& r) const& noexcept {
-    ::sus::check(!moved_from());
-    ::sus::check(!r.moved_from());
+    ::sus::check(!any_moved_from());
+    ::sus::check(!r.any_moved_from());
     return __private::storage_eq(storage_, r.storage_,
                                  std::make_index_sequence<1 + sizeof...(Ts)>());
   }
@@ -80,8 +80,8 @@ class Tuple final {
              (::sus::ops::ExclusiveOrd<T, U> && ... &&
               ::sus::ops::ExclusiveOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
-    ::sus::check(!moved_from());
-    ::sus::check(!r.moved_from());
+    ::sus::check(!any_moved_from());
+    ::sus::check(!r.any_moved_from());
     return __private::storage_cmp(
         std::strong_ordering::equal, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
@@ -93,8 +93,8 @@ class Tuple final {
              (::sus::ops::ExclusiveWeakOrd<T, U> && ... &&
               ::sus::ops::ExclusiveWeakOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
-    ::sus::check(!moved_from());
-    ::sus::check(!r.moved_from());
+    ::sus::check(!any_moved_from());
+    ::sus::check(!r.any_moved_from());
     return __private::storage_cmp(
         std::weak_ordering::equivalent, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
@@ -106,8 +106,8 @@ class Tuple final {
              (::sus::ops::ExclusivePartialOrd<T, U> && ... &&
               ::sus::ops::ExclusivePartialOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
-    ::sus::check(!moved_from());
-    ::sus::check(!r.moved_from());
+    ::sus::check(!any_moved_from());
+    ::sus::check(!r.any_moved_from());
     return __private::storage_cmp(
         std::partial_ordering::equivalent, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
@@ -118,20 +118,34 @@ class Tuple final {
   friend class Tuple;  // For access to moved_from();
 
   /// Storage for the tuple elements. The first element is the moved-from flag.
-  using Storage = __private::TupleStorage<2 + sizeof...(Ts), bool, T, Ts...>;
+  using Storage =
+      __private::TupleStorage<2 + sizeof...(Ts), uint64_t, T, Ts...>;
   /// A helper type used for accessing the `Storage`.
   template <size_t I>
   using Access = __private::TupleAccess<Storage, I>;
 
   constexpr inline Tuple(T&& first, Ts&&... more) noexcept
-      : storage_(false, forward<T>(first), forward<Ts>(more)...) {}
+      : storage_(/*moved-from bitmap=*/uint64_t{0}, forward<T>(first),
+                 forward<Ts>(more)...) {}
 
   // TODO: Provide a way to opt out of all moved-from checks?
-  constexpr inline bool moved_from() const& noexcept {
-    return Access<0u>::get(storage_);
+  constexpr inline bool any_moved_from() const& noexcept {
+    return Access<0u>::get_ref(storage_) != uint64_t{0u};
   }
-  constexpr inline bool set_moved_from() & noexcept {
-    return ::sus::mem::replace(mref(Access<0u>::get_mut(storage_)), true);
+  constexpr inline bool moved_from(size_t i) const& noexcept {
+    return Access<0u>::get_ref(storage_) & (uint64_t{1} << i);
+  }
+  // Sets one element as moved from and returns it was already moved from.
+  constexpr inline bool set_moved_from(size_t i) & noexcept {
+    auto moved_from = Access<0u>::get_ref(storage_);
+    return ::sus::mem::replace(mref(Access<0u>::get_mut(storage_)),
+                               moved_from | uint64_t{1} << i) &
+           (uint64_t{1} << i);
+  }
+  // Sets all elements as moved from and returns if any were already moved from.
+  constexpr inline bool set_all_moved_from(size_t i) & noexcept {
+    return ::sus::mem::replace(mref(Access<0u>::get_mut(storage_)),
+                               uint64_t{0xffffffffffffffff}) != uint64_t{0};
   }
 
   Storage storage_;
@@ -140,15 +154,15 @@ class Tuple final {
 // Support for structured binding.
 template <size_t I, class... Ts>
 const auto& get(const Tuple<Ts...>& t) noexcept {
-  return t.get_ref<I>();
+  return t.template get_ref<I>();
 }
 template <size_t I, class... Ts>
 auto& get(Tuple<Ts...>& t) noexcept {
-  return t.get_mut<I>();
+  return t.template get_mut<I>();
 }
 template <size_t I, class... Ts>
 auto get(Tuple<Ts...>&& t) noexcept {
-  return ::sus::move(t).unwrap<I>();
+  return ::sus::move(t).template unwrap<I>();
 }
 
 }  // namespace sus::tuple
@@ -161,7 +175,7 @@ struct tuple_size<::sus::tuple::Tuple<Types...>>
 template <std::size_t I, class... Types>
 struct tuple_element<I, ::sus::tuple::Tuple<Types...>> {
   using type =
-      decltype(std::declval<::sus::tuple::Tuple<Types...>>().unwrap<I>());
+      decltype(std::declval<::sus::tuple::Tuple<Types...>>().template unwrap<I>());
 };
 
 }  // namespace std
