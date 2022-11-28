@@ -265,7 +265,7 @@ class Option final {
   }
 
   void clone_from(const Option& source) &
-    requires(::sus::mem::Clone<T>)
+        requires(::sus::mem::Clone<T>)
   {
     if (t_.state() == Some && source.t_.state() == Some) {
       ::sus::clone_into(mref(t_.val_), source.t_.val_);
@@ -316,7 +316,7 @@ class Option final {
           msg) && noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
-    return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
+    return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
   }
 
   /// Returns a const reference to the contained value inside the Option.
@@ -353,7 +353,7 @@ class Option final {
   /// currently `None`.
   constexpr T unwrap() && noexcept {
     if (!std::is_constant_evaluated()) ::sus::check(t_.state() == Some);
-    return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
+    return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
   }
 
   /// Returns the contained value inside the Option.
@@ -438,7 +438,7 @@ class Option final {
   constexpr T& insert(T t) & noexcept
     requires(sus::mem::Move<T>)
   {
-    t_.set_some(static_cast<T&&>(t));
+    t_.set_some(::sus::move(t));
     return t_.val_;
   }
 
@@ -449,7 +449,7 @@ class Option final {
   /// If it is non-trivial to construct `T`, the <get_or_insert_with>() method
   /// would be preferable, as it only constructs a `T` if needed.
   T& get_or_insert(T t) & noexcept {
-    if (t_.state() == None) t_.construct_from_none(static_cast<T&&>(t));
+    if (t_.state() == None) t_.construct_from_none(::sus::move(t));
     return t_.val_;
   }
 
@@ -621,7 +621,7 @@ class Option final {
     if (t_.state() == Some)
       return Option(t_.take_and_set_none());
     else
-      return static_cast<ElseFn&&>(f)();
+      return ::sus::move(f)();
   }
 
   /// Consumes this Option and returns an Option, holding the value from either
@@ -655,7 +655,7 @@ class Option final {
     if (t_.state() == Some)
       return Result::with(t_.take_and_set_none());
     else
-      return Result::with_err(static_cast<E&&>(e));
+      return Result::with_err(::sus::move(e));
   }
 
   /// Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to
@@ -666,7 +666,7 @@ class Option final {
     if (t_.state() == Some)
       return Result::with(t_.take_and_set_none());
     else
-      return Result::with_err(static_cast<ElseFn&&>(f)());
+      return Result::with_err(::sus::move(f)());
   }
 
   /// Zips self with another Option.
@@ -681,8 +681,8 @@ class Option final {
     } else if (t_.state() == None) {
       return Option<Tuple>::none();
     } else {
-      return Option<Tuple>::some(Tuple::with(
-          t_.take_and_set_none(), static_cast<Option<U>&&>(o).unwrap()));
+      return Option<Tuple>::some(
+          Tuple::with(t_.take_and_set_none(), ::sus::move(o).unwrap()));
     }
   }
 
@@ -715,10 +715,10 @@ class Option final {
   /// returns an Option holding what was there previously.
   Option replace(T t) & noexcept {
     if (t_.state() == None) {
-      t_.construct_from_none(static_cast<T&&>(t));
+      t_.construct_from_none(::sus::move(t));
       return Option::none();
     } else {
-      return Option(t_.replace_some(static_cast<T&&>(t)));
+      return Option(t_.replace_some(::sus::move(t)));
     }
   }
 
@@ -727,7 +727,7 @@ class Option final {
     requires(::sus::option::__private::IsOptionType<T>::value)
   {
     if (t_.state() == Some)
-      return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
+      return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
     else
       return T::none();
   }
@@ -774,7 +774,7 @@ class Option final {
   constexpr explicit Option(const T& t) : t_(t) {}
   constexpr explicit Option(T&& t)
     requires(::sus::mem::Move<T>)
-  : t_(static_cast<T&&>(t)) {}
+  : t_(::sus::move(t)) {}
 
   Storage<T> t_;
 
@@ -852,7 +852,7 @@ class Option<T&> final {
           msg) && noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
-    return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
+    return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
   }
 
   /// Returns a const reference to the contained value inside the Option.
@@ -890,7 +890,7 @@ class Option<T&> final {
   /// currently `None`.
   constexpr T& unwrap() && noexcept {
     if (!std::is_constant_evaluated()) ::sus::check(t_.state() == Some);
-    return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
+    return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
   }
 
   /// Returns the contained value inside the Option.
@@ -1061,8 +1061,8 @@ class Option<T&> final {
     if (t_.state() == Some) {
       // The state must move to None.
       StoragePointer ptr = t_.take_and_set_none();
-      if (p(const_cast<const T&>(ptr.as_ref())))
-        return Option(get_ref(static_cast<decltype(ptr)&&>(ptr)));
+      if (p(ptr.as_ref()))
+        return Option(get_ref(::sus::move(ptr)));
       else
         return Option::none();
     } else {
@@ -1148,7 +1148,7 @@ class Option<T&> final {
     if (t_.state() == Some)
       return Result::with(get_ref(t_.take_and_set_none()));
     else
-      return Result::with_err(static_cast<E&&>(e));
+      return Result::with_err(::sus::move(e));
   }
 
   /// Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to
@@ -1159,7 +1159,7 @@ class Option<T&> final {
     if (t_.set_state(None) == Some)
       return Result::with(get_ref(t_.take_and_set_none()));
     else
-      return Result::with_err(static_cast<ElseFn&&>(f)());
+      return Result::with_err(::sus::move(f)());
   }
 
   /// Zips self with another Option.
@@ -1174,9 +1174,8 @@ class Option<T&> final {
     } else if (t_.state() == None) {
       return Option<Tuple>::none();
     } else {
-      return Option<Tuple>::some(
-          Tuple::with(get_ref(t_.take_and_set_none()),
-                      static_cast<Option<U>&&>(o).unwrap()));
+      return Option<Tuple>::some(Tuple::with(get_ref(t_.take_and_set_none()),
+                                             ::sus::move(o).unwrap()));
     }
   }
 
@@ -1207,7 +1206,7 @@ class Option<T&> final {
     requires(::sus::option::__private::IsOptionType<T>::value)
   {
     if (t_.state() == Some)
-      return static_cast<Option&&>(*this).unwrap_unchecked(unsafe_fn);
+      return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
     else
       return T::none();
   }
