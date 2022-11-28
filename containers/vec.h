@@ -23,12 +23,13 @@
 #include "containers/__private/vec_iter.h"
 #include "containers/slice.h"
 #include "iter/from_iterator.h"
+#include "mem/move.h"
 #include "mem/never_value.h"
 #include "mem/relocate.h"
 #include "mem/replace.h"
-#include "ops/ord.h"
 #include "mem/size_of.h"
 #include "num/unsigned_integer.h"
+#include "ops/ord.h"
 #include "option/option.h"
 
 namespace sus::containers {
@@ -58,7 +59,7 @@ class Vec {
   static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) {
     // TODO: Use iter.size_hint() when it exists.
     auto v = Vec::with_capacity(0_usize);
-    for (T t : iter) v.push(static_cast<T&&>(t));
+    for (T t : iter) v.push(::sus::move(t));
     return v;
   }
 
@@ -100,9 +101,11 @@ class Vec {
       capacity_ = 0_usize;
     } else {
       grow_to_exact(source.capacity_);
-      const size_t in_place_count = sus::ops::min(len_, source.len_).primitive_value;
+      const size_t in_place_count =
+          sus::ops::min(len_, source.len_).primitive_value;
       for (auto i = size_t{0}; i < in_place_count; ++i) {
-        ::sus::clone_into(mref(get_unchecked_mut(unsafe_fn, i)), source.get_unchecked(unsafe_fn, i));
+        ::sus::clone_into(mref(get_unchecked_mut(unsafe_fn, i)),
+                          source.get_unchecked(unsafe_fn, i));
       }
       for (auto i = in_place_count; i < len_; ++i) {
         get_unchecked_mut(unsafe_fn, i).~T();
@@ -183,7 +186,7 @@ class Vec {
         auto* new_t = reinterpret_cast<T*>(new_storage);
         const size_t len = len_.primitive_value;
         for (auto i = size_t{0}; i < len; ++i) {
-          new (new_t) T(static_cast<T&&>(*old_t));
+          new (new_t) T(::sus::move(*old_t));
           old_t->~T();
           ++old_t;
           ++new_t;
@@ -214,7 +217,7 @@ class Vec {
     // issue of the reference being to something inside the vector which
     // reserve() then invalidates.
     reserve(1_usize);
-    new (as_mut_ptr() + len_.primitive_value) T(static_cast<T&&>(t));
+    new (as_mut_ptr() + len_.primitive_value) T(::sus::move(t));
     len_ += 1_usize;
   }
 
@@ -317,7 +320,7 @@ class Vec {
   /// Converts the array into an iterator that consumes the array and returns
   /// each element in the same order they appear in the array.
   constexpr ::sus::iter::Iterator<VecIntoIter<T>> into_iter() && noexcept {
-    return VecIntoIter<T>::with(static_cast<Vec&&>(*this));
+    return VecIntoIter<T>::with(::sus::move(*this));
   }
 
  private:
