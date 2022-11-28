@@ -54,13 +54,13 @@ class Slice {
   constexpr inline usize len() const& noexcept { return len_; }
 
   /// Returns a const reference to the element at index `i`.
-  constexpr Option<const T&> get(usize i) const& noexcept {
+  constexpr Option<const T&> get_ref(usize i) const& noexcept {
     if (i < len_) [[likely]]
       return Option<const T&>::some(data_[i.primitive_value]);
     else
       return Option<const T&>::none();
   }
-  constexpr Option<const T&> get(usize i) && = delete;
+  constexpr Option<const T&> get_ref(usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
   constexpr Option<T&> get_mut(usize i) & noexcept
