@@ -22,6 +22,47 @@
 
 namespace sus::tuple::__private {
 
+struct UseAfterMoveMarker {
+  constexpr inline UseAfterMoveMarker() noexcept : value(0u) {}
+  constexpr inline UseAfterMoveMarker(const UseAfterMoveMarker& o) noexcept
+      : value(o.value) {
+    ::sus::check(!any_moved_from());
+  }
+  constexpr inline UseAfterMoveMarker& operator=(
+      const UseAfterMoveMarker& o) noexcept {
+    // Verify that the other Tuple has no moved-from items.
+    value = o.value;
+    ::sus::check(!any_moved_from());
+    return *this;
+  }
+  constexpr inline UseAfterMoveMarker(UseAfterMoveMarker&& o) noexcept
+      : value(o.set_all_moved_from()) {
+    ::sus::check(!any_moved_from());
+  }
+  constexpr inline UseAfterMoveMarker& operator=(
+      UseAfterMoveMarker&& o) noexcept {
+    value = o.set_all_moved_from();
+    ::sus::check(!any_moved_from());
+    return *this;
+  }
+
+  constexpr inline bool any_moved_from() const noexcept { return value != 0u; }
+  constexpr inline bool moved_from(size_t i) const noexcept {
+    return (value & (uint64_t{1} << i)) != 0u;
+  }
+  // Sets one element as moved from and returns it was already moved from.
+  constexpr inline bool set_moved_from(size_t i) noexcept {
+    return (::sus::mem::replace(mref(value), value | uint64_t{1} << i) &
+            (uint64_t{1} << i)) != 0u;
+  }
+  // Sets all elements as moved from and returns the old value.
+  constexpr inline bool set_all_moved_from() noexcept {
+    return ::sus::mem::replace(mref(value), uint64_t{0xffffffffffffffff});
+  }
+
+  uint64_t value;
+};
+
 template <size_t N, class... T>
 struct TupleStorage;
 
@@ -33,8 +74,7 @@ struct TupleStorage<1, T> {
   template <size_t I>
   using Type = T;
   sus_clang_bug_54040(constexpr inline TupleStorage(T&& t)
-                      : t(static_cast<T&&>(t)){})
-  T t;
+                      : t(static_cast<T&&>(t)){}) T t;
 };
 
 template <size_t N, class T, class... MoreT>
@@ -52,7 +92,8 @@ struct TupleStorage<N, T, MoreT...> : TupleStorage<N - 1, MoreT...> {
 
 template <class TupleStorage, size_t I>
 struct TupleAccess final {
-  static inline constexpr const auto& get_ref(const TupleStorage& tuple) noexcept {
+  static inline constexpr const auto& get_ref(
+      const TupleStorage& tuple) noexcept {
     return TupleAccess<typename TupleStorage::Super, I - 1>::get_ref(tuple);
   }
 
@@ -68,7 +109,8 @@ struct TupleAccess final {
 
 template <class TupleStorage>
 struct TupleAccess<TupleStorage, 0> final {
-  static inline constexpr const auto& get_ref(const TupleStorage& tuple) noexcept {
+  static inline constexpr const auto& get_ref(
+      const TupleStorage& tuple) noexcept {
     return tuple.t;
   }
 
@@ -83,7 +125,8 @@ struct TupleAccess<TupleStorage, 0> final {
 
 template <size_t I, class S1, class S2>
 constexpr inline auto storage_eq_impl(const S1& l, const S2& r) noexcept {
-  return TupleAccess<S1, I + 1>::get_ref(l) == TupleAccess<S2, I + 1>::get_ref(r);
+  return TupleAccess<S1, I + 1>::get_ref(l) ==
+         TupleAccess<S2, I + 1>::get_ref(r);
 };
 
 template <class S1, class S2, size_t... N>
@@ -95,7 +138,8 @@ constexpr inline auto storage_eq(const S1& l, const S2& r,
 template <size_t I, class O, class S1, class S2>
 constexpr inline bool storage_cmp_impl(O& val, const S1& l,
                                        const S2& r) noexcept {
-  auto cmp = TupleAccess<S1, I + 1>::get_ref(l) <=> TupleAccess<S2, I + 1>::get_ref(r);
+  auto cmp =
+      TupleAccess<S1, I + 1>::get_ref(l) <=> TupleAccess<S2, I + 1>::get_ref(r);
   // Allow downgrading from equal to equivalent, but not the inverse.
   if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.
