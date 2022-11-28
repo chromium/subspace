@@ -161,14 +161,14 @@ class Array final {
   constexpr usize len() const& noexcept { return N; }
 
   /// Returns a const reference to the element at index `i`.
-  constexpr Option<const T&> get(usize i) const& noexcept
+  constexpr Option<const T&> get_ref(usize i) const& noexcept
     requires(N > 0)
   {
     if (i.primitive_value >= N) [[unlikely]]
       return Option<const T&>::none();
     return Option<const T&>::some(storage_.data_[i.primitive_value]);
   }
-  constexpr Option<const T&> get(usize i) && = delete;
+  constexpr Option<const T&> get_ref(usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
   constexpr Option<T&> get_mut(usize i) & noexcept
@@ -316,7 +316,7 @@ class Array final {
   template <class U, size_t... Is>
   constexpr inline auto eq_impl(const Array<U, N>& r,
                                 std::index_sequence<Is...>) const& noexcept {
-    return (true && ... && (get(Is) == r.get(Is)));
+    return (... && (get_ref(Is) == r.get_ref(Is)));
   };
 
   // Using a union ensures that the default constructor doesn't initialize
@@ -336,7 +336,7 @@ namespace __private {
 template <size_t I, class O, class T, class U, size_t N>
 constexpr inline bool array_cmp_impl(O& val, const Array<T, N>& l,
                                      const Array<U, N>& r) noexcept {
-  auto cmp = l.get(I) <=> r.get(I);
+  auto cmp = l.get_ref(I) <=> r.get_ref(I);
   // Allow downgrading from equal to equivalent, but not the inverse.
   if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.
