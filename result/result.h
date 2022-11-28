@@ -197,7 +197,7 @@ class Result final {
       case IsErr:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
           case IsErr:
-            mem::replace_and_discard(mref(err_), static_cast<E&&>(o.err_));
+            mem::replace_and_discard(mref(err_), ::sus::move(o.err_));
             break;
           case IsOk:
             err_.~T();
@@ -402,7 +402,7 @@ class Result final {
       : state_(IsErr), err_(e) {}
   constexpr inline Result(WithErrType, E&& e) noexcept
     requires(::sus::mem::Move<E>)
-  : state_(IsErr), err_(static_cast<E&&>(e)) {}
+  : state_(IsErr), err_(::sus::move(e)) {}
 
   enum FullState { IsErr = 0, IsOk = 1, IsMoved = 2 } state_;
   union {

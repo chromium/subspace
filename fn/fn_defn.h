@@ -16,6 +16,7 @@
 
 #include "fn/callable.h"
 #include "mem/forward.h"
+#include "mem/move.h"
 #include "mem/never_value.h"
 #include "mem/relocate.h"
 #include "num/types.h"
@@ -171,7 +172,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   FnOnce(__private::SusBind<F>&& holder) noexcept
       : FnOnce(__private::StorageConstructionFnOnce,
-               static_cast<F&&>(holder.lambda)) {}
+               ::sus::move(holder.lambda)) {}
 
   ~FnOnce() noexcept;
 
@@ -313,13 +314,13 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
  public:
   /// Construction from a function pointer or captureless lambda.
   template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
-  FnMut(F ptr) noexcept : FnOnce<R(CallArgs...)>(static_cast<F&&>(ptr)) {}
+  FnMut(F ptr) noexcept : FnOnce<R(CallArgs...)>(::sus::move(ptr)) {}
 
   /// Construction from the output of `sus_bind()`.
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   FnMut(__private::SusBind<F>&& holder) noexcept
       : FnOnce<R(CallArgs...)>(__private::StorageConstructionFnMut,
-                               static_cast<F&&>(holder.lambda)) {}
+                               ::sus::move(holder.lambda)) {}
 
   ~FnMut() noexcept = default;
 
@@ -367,7 +368,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
   template <class ConstructionType,
             ::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   FnMut(ConstructionType c, F&& lambda) noexcept
-      : FnOnce<R(CallArgs...)>(c, static_cast<F&&>(lambda)) {}
+      : FnOnce<R(CallArgs...)>(c, ::sus::move(lambda)) {}
 
  private:
   sus_class_trivial_relocatable(unsafe_fn);
@@ -439,13 +440,13 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
  public:
   /// Construction from a function pointer or captureless lambda.
   template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
-  Fn(F ptr) noexcept : FnMut<R(CallArgs...)>(static_cast<F&&>(ptr)) {}
+  Fn(F ptr) noexcept : FnMut<R(CallArgs...)>(ptr) {}
 
   /// Construction from the output of `sus_bind()`.
   template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
   Fn(__private::SusBind<F>&& holder) noexcept
       : FnMut<R(CallArgs...)>(__private::StorageConstructionFn,
-                              static_cast<F&&>(holder.lambda)) {}
+                              ::sus::forward<F>(holder.lambda)) {}
 
   ~Fn() noexcept = default;
 

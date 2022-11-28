@@ -436,7 +436,7 @@ TEST(Fn, Into) {
   EXPECT_EQ(into_fnonce(sus_bind0([](int i) { return i + 1; })), 2);
 
   auto into_fnmut = []<Into<FnMut<int(int)>> F>(F into_f) {
-    return FnMut<int(int)>::from(static_cast<F&&>(into_f))(1);
+    return FnMut<int(int)>::from(::sus::move(into_f))(1);
   };
   EXPECT_EQ(into_fnmut([](int i) { return i + 1; }), 2);
   EXPECT_EQ(into_fnmut(sus_bind0([](int i) { return i + 1; })), 2);
