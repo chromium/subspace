@@ -20,6 +20,8 @@
 #include <utility>  // std::tuple_size.
 #include <tuple>
 
+#include "mem/copy.h"
+#include "mem/clone.h"
 #include "mem/move.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
@@ -27,12 +29,23 @@ namespace {
 
 using sus::tuple::Tuple;
 
+static_assert(sus::mem::Copy<Tuple<int>>);
+static_assert(sus::mem::Clone<Tuple<int>>);
+static_assert(sus::mem::Move<Tuple<int>>);
+
 TEST(Tuple, With) {
   auto t1 = Tuple<int>::with(2);
   auto t2 = Tuple<int, float>::with(2, 3.f);
   auto t3 = Tuple<int, float, int>::with(2, 3.f, 4);
 
   [[maybe_unused]] constexpr auto c = Tuple<int, float>::with(2, 3.f);
+}
+
+TEST(TupleDeathTest, Move) {
+  auto t1 = Tuple<int>::with(2);
+  auto t2 = sus::move(t1);
+  EXPECT_EQ(t2.get_ref<0>(), 2);
+  EXPECT_DEATH(t1.get_ref<0>(), "");
 }
 
 template <size_t I>

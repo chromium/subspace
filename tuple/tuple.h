@@ -119,33 +119,30 @@ class Tuple final {
 
   /// Storage for the tuple elements. The first element is the moved-from flag.
   using Storage =
-      __private::TupleStorage<2 + sizeof...(Ts), uint64_t, T, Ts...>;
+      __private::TupleStorage<2 + sizeof...(Ts), __private::UseAfterMoveMarker,
+                              T, Ts...>;
   /// A helper type used for accessing the `Storage`.
   template <size_t I>
   using Access = __private::TupleAccess<Storage, I>;
 
   constexpr inline Tuple(T&& first, Ts&&... more) noexcept
-      : storage_(/*moved-from bitmap=*/uint64_t{0}, forward<T>(first),
+      : storage_(__private::UseAfterMoveMarker(), forward<T>(first),
                  forward<Ts>(more)...) {}
 
   // TODO: Provide a way to opt out of all moved-from checks?
   constexpr inline bool any_moved_from() const& noexcept {
-    return Access<0u>::get_ref(storage_) != uint64_t{0u};
+    return Access<0u>::get_ref(storage_).any_moved_from();
   }
   constexpr inline bool moved_from(size_t i) const& noexcept {
-    return Access<0u>::get_ref(storage_) & (uint64_t{1} << i);
+    return Access<0u>::get_ref(storage_).moved_from(i);
   }
   // Sets one element as moved from and returns it was already moved from.
   constexpr inline bool set_moved_from(size_t i) & noexcept {
-    auto moved_from = Access<0u>::get_ref(storage_);
-    return ::sus::mem::replace(mref(Access<0u>::get_mut(storage_)),
-                               moved_from | uint64_t{1} << i) &
-           (uint64_t{1} << i);
+    return Access<0u>::get_mut(storage_).set_moved_from(i);
   }
   // Sets all elements as moved from and returns if any were already moved from.
-  constexpr inline bool set_all_moved_from(size_t i) & noexcept {
-    return ::sus::mem::replace(mref(Access<0u>::get_mut(storage_)),
-                               uint64_t{0xffffffffffffffff}) != uint64_t{0};
+  constexpr inline bool set_all_moved_from() & noexcept {
+    return Access<0u>::get_mut(storage_).set_all_moved_from();
   }
 
   Storage storage_;
@@ -174,8 +171,8 @@ struct tuple_size<::sus::tuple::Tuple<Types...>>
 
 template <std::size_t I, class... Types>
 struct tuple_element<I, ::sus::tuple::Tuple<Types...>> {
-  using type =
-      decltype(std::declval<::sus::tuple::Tuple<Types...>>().template unwrap<I>());
+  using type = decltype(std::declval<::sus::tuple::Tuple<Types...>>()
+                            .template unwrap<I>());
 };
 
 }  // namespace std
