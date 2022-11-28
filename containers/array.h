@@ -30,6 +30,7 @@
 #include "marker/unsafe.h"
 #include "mem/clone.h"
 #include "mem/copy.h"
+#include "mem/forward.h"
 #include "mem/move.h"
 #include "mem/relocate.h"
 #include "num/num_concepts.h"
@@ -84,19 +85,20 @@ class Array final {
 
   // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
   // sus::construct::Into<T> to avoid implicit conversions.
-  template <std::convertible_to<T&&> U>
-  constexpr static Array with_value(const U& t) noexcept {
-    return Array(kWithValue, t, std::make_index_sequence<N>());
+  template <std::convertible_to<T> U>
+  constexpr static Array with_value(U&& t) noexcept {
+    return Array(kWithValue, ::sus::forward<U>(t),
+                 std::make_index_sequence<N>());
   }
 
   // Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
   // values. But doesn't use sus::construct::Into<T> to avoid implicit
   // conversions.
-  template <std::convertible_to<T&&>... Ts>
+  template <std::convertible_to<T>... Ts>
     requires(sizeof...(Ts) == N)
   constexpr static Array with_values(Ts&&... ts) noexcept {
     auto a = Array(kWithUninitialized);
-    init_values(a.as_mut_ptr(), 0, ::sus::move(ts)...);
+    init_values(a.as_mut_ptr(), 0, ::sus::forward<Ts>(ts)...);
     return a;
   }
 
@@ -303,14 +305,14 @@ class Array final {
   template <size_t... Is>
   constexpr Array(WithUninitialized) noexcept {}
 
-  template <std::convertible_to<T&&> T1, std::convertible_to<T&&>... Ts>
+  template <std::convertible_to<T> T1, std::convertible_to<T>... Ts>
   static inline void init_values(T* a, size_t index, T1&& t1, Ts&&... ts) {
-    new (a + index) T(move(t1));
-    init_values(a, index + 1, move(ts)...);
+    new (a + index) T(::sus::forward<T1>(t1));
+    init_values(a, index + 1, ::sus::forward<T1>(ts)...);
   }
-  template <std::convertible_to<T&&> T1>
+  template <std::convertible_to<T> T1>
   static inline void init_values(T* a, size_t index, T1&& t1) {
-    new (a + index) T(move(t1));
+    new (a + index) T(::sus::forward<T1>(t1));
   }
 
   template <class U, size_t... Is>
@@ -385,7 +387,33 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
 using ::sus::iter::__private::begin;
 using ::sus::iter::__private::end;
 
+// Support for structured binding.
+template <size_t I, class T, size_t N>
+const auto& get(const Array<T, N>& a) noexcept {
+  return a.get_unchecked(unsafe_fn, I);
+}
+template <size_t I, class T, size_t N>
+auto& get(Array<T, N>& a) noexcept {
+  return a.get_unchecked_mut(unsafe_fn, I);
+}
+template <size_t I, class T, size_t N>
+auto get(Array<T, N>&& a) noexcept {
+  return ::sus::move(a.get_unchecked_mut(unsafe_fn, I));
+}
+
 }  // namespace sus::containers
+
+namespace std {
+template <class T, size_t N>
+struct tuple_size<::sus::containers::Array<T, N>>
+    : std::integral_constant<std::size_t, N> {};
+
+template <std::size_t I, class T, size_t N>
+struct tuple_element<I, ::sus::containers::Array<T, N>> {
+  using type = T;
+};
+
+}  // namespace std
 
 // Promote Array into the `sus` namespace.
 namespace sus {

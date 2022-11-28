@@ -434,9 +434,7 @@ TEST(Array, Clone) {
       return c;
     }
 
-    void clone_from(const Clone& o) & noexcept {
-      i = o.i + 200_i32;
-    }
+    void clone_from(const Clone& o) & noexcept { i = o.i + 200_i32; }
 
     Clone(Clone&&) = default;
     Clone& operator=(Clone&&) = default;
@@ -470,6 +468,33 @@ TEST(Array, Clone) {
     ::sus::clone_into(mref(s2), s);
     EXPECT_EQ(s2[0u].i.primitive_value, (1200_i32).primitive_value);
   }
+}
+
+TEST(Array, StructuredBinding) {
+  auto a3 = Array<i32, 3>::with_values(1, 2, 3);
+  auto& [a, b, c] = a3;
+  static_assert(std::same_as<decltype(a), i32>);
+  static_assert(std::same_as<decltype(b), i32>);
+  static_assert(std::same_as<decltype(c), i32>);
+
+  a3.get_mut(0u).unwrap() += 1;
+  a3.get_mut(1u).unwrap() += 2;
+  a3.get_mut(2u).unwrap() += 3;
+  EXPECT_EQ(a3, (Array<i32, 3>::with_values(2, 4, 6)));
+
+  const auto& [d, e, f] = a3;
+  static_assert(std::same_as<decltype(d), const i32>);
+  static_assert(std::same_as<decltype(e), const i32>);
+  static_assert(std::same_as<decltype(f), const i32>);
+  EXPECT_EQ((Array<i32, 3>::with_values(d, e, f)),
+            (Array<i32, 3>::with_values(2, 4, 6)));
+
+  auto [g, h, i] = sus::move(a3);
+  static_assert(std::same_as<decltype(g), i32>);
+  static_assert(std::same_as<decltype(h), i32>);
+  static_assert(std::same_as<decltype(i), i32>);
+  EXPECT_EQ((Array<i32, 3>::with_values(g, h, i)),
+            (Array<i32, 3>::with_values(2, 4, 6)));
 }
 
 }  // namespace
