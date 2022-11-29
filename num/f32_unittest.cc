@@ -56,14 +56,14 @@ TEST(f32, Traits) {
   static_assert(!sus::num::Shr<f32>);
   static_assert(!sus::num::ShrAssign<f32>);
 
-  static_assert(!sus::ops::Ord<f32, f32>);
-  static_assert(!sus::ops::WeakOrd<f32, f32>);
-  static_assert(sus::ops::PartialOrd<f32, f32>);
+  static_assert(!sus::ops::Ord<f32>);
+  static_assert(!sus::ops::WeakOrd<f32>);
+  static_assert(sus::ops::PartialOrd<f32>);
   static_assert(1_f32 >= 1_f32);
   static_assert(2_f32 > 1_f32);
   static_assert(1_f32 <= 1_f32);
   static_assert(1_f32 < 2_f32);
-  static_assert(sus::ops::Eq<f32, f32>);
+  static_assert(sus::ops::Eq<f32>);
   static_assert(1_f32 == 1_f32);
   static_assert(!(1_f32 == 2_f32));
   static_assert(1_f32 != 2_f32);

@@ -21,6 +21,7 @@
 #include "mem/never_value.h"
 #include "mem/relocate.h"
 #include "ops/eq.h"
+#include "ops/ord.h"
 #include "option/option.h"
 
 namespace sus::mem {
@@ -165,7 +166,7 @@ struct [[sus_trivial_abi]] NonNull {
   sus_class_never_value_field(unsafe_fn, NonNull, ptr_, nullptr);
 };
 
-/// sus::ops::Eq<Option<U>> trait.
+/// sus::ops::Eq<NonNull<T>> trait.
 template <class T, class U>
   requires(::sus::ops::Eq<const T*, const U*>)
 constexpr inline bool operator==(const NonNull<T>& l,
@@ -173,7 +174,7 @@ constexpr inline bool operator==(const NonNull<T>& l,
   return l.as_ptr() == r.as_ptr();
 }
 
-/// sus::ops::Ord<Option<U>> trait.
+/// sus::ops::Ord<NonNull<T>> trait.
 template <class T, class U>
   requires(::sus::ops::Ord<const T*, const U*>)
 constexpr inline auto operator<=>(const NonNull<T>& l,

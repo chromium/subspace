@@ -155,6 +155,7 @@ add_executable(subspace_unittests
     "option/option_unittest.cc"
     "option/option_types_unittest.cc"
     "ops/eq_unittest.cc"
+    "ops/ord_unittest.cc"
     "result/result_unittest.cc"
     "result/result_types_unittest.cc"
     "tuple/tuple_unittest.cc"

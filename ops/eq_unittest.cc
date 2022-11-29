@@ -14,20 +14,28 @@
 
 #include "ops/eq.h"
 
-#include <type_traits>
-
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {
 
 using sus::ops::Eq;
 
+struct CComp {};
+struct C {
+  friend bool operator==(const C&, const C&) { return true; }
+  friend bool operator==(const C&, const CComp&) { return true; }
+};
+
 // These types are comparable.
-static_assert(Eq<int, int>);
-static_assert(Eq<int, char>);
-static_assert(Eq<char, int>);
+static_assert(Eq<int>);
+static_assert(Eq<char>);
+static_assert(Eq<C>);
+static_assert(Eq<C, C>);
+static_assert(Eq<C, CComp>);
+
+struct S {};  // No operator==.
 
 // These types are not comparable.
-static_assert(!Eq<int, char*>);
+static_assert(!Eq<S>);
 
-}
+}  // namespace
