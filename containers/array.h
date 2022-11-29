@@ -284,9 +284,12 @@ class Array final {
     });
   }
 
-  /// sus::ops::Eq<Array<U, N>> trait.
-  template <::sus::ops::Eq<T> U>
-  constexpr bool operator==(const Array<U, N>& r) const& noexcept {
+  /// sus::ops::Eq<Array<T, N>, Array<U, N>> trait.
+  template <class U>
+    requires(::sus::ops::Eq<T, U>)
+  constexpr bool operator==(const Array<U, N>& r) const& noexcept
+    requires(::sus::ops::Eq<T>)
+  {
     return eq_impl(r, std::make_index_sequence<N>());
   }
 
@@ -356,7 +359,7 @@ constexpr inline auto array_cmp(auto equal, const Array<T, N>& l,
 
 }  // namespace __private
 
-/// sus::ops::Ord<Option<U>> trait.
+/// sus::ops::Ord<Array<T, N>, Array<U, N>> trait.
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusiveOrd<T, U>)
 constexpr inline auto operator<=>(const Array<T, N>& l,
@@ -365,7 +368,7 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
                               std::make_index_sequence<N>());
 }
 
-/// sus::ops::Ord<Option<U>> trait.
+/// sus::ops::WeakOrd<Array<T>> trait.
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusiveWeakOrd<T, U>)
 constexpr inline auto operator<=>(const Array<T, N>& l,
@@ -374,7 +377,7 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
                               std::make_index_sequence<N>());
 }
 
-/// sus::ops::Ord<Option<U>> trait.
+/// sus::ops::PartialOrd<Array<T>> trait.
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusivePartialOrd<T, U>)
 constexpr inline auto operator<=>(const Array<T, N>& l,

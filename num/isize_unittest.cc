@@ -113,12 +113,12 @@ TEST(isize, Traits) {
   static_assert(sus::num::Shr<isize>);
   static_assert(sus::num::ShrAssign<isize>);
 
-  static_assert(sus::ops::Ord<isize, isize>);
+  static_assert(sus::ops::Ord<isize>);
   static_assert(1_isize >= 1_isize);
   static_assert(2_isize > 1_isize);
   static_assert(1_isize <= 1_isize);
   static_assert(1_isize < 2_isize);
-  static_assert(sus::ops::Eq<isize, isize>);
+  static_assert(sus::ops::Eq<isize>);
   static_assert(1_isize == 1_isize);
   static_assert(!(1_isize == 2_isize));
   static_assert(1_isize != 2_isize);

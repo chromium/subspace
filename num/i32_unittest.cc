@@ -103,12 +103,12 @@ TEST(i32, Traits) {
   static_assert(sus::num::Shr<i32>);
   static_assert(sus::num::ShrAssign<i32>);
 
-  static_assert(sus::ops::Ord<i32, i32>);
+  static_assert(sus::ops::Ord<i32>);
   static_assert(1_i32 >= 1_i32);
   static_assert(2_i32 > 1_i32);
   static_assert(1_i32 <= 1_i32);
   static_assert(1_i32 < 2_i32);
-  static_assert(sus::ops::Eq<i32, i32>);
+  static_assert(sus::ops::Eq<i32>);
   static_assert(1_i32 == 1_i32);
   static_assert(!(1_i32 == 2_i32));
   static_assert(1_i32 != 2_i32);

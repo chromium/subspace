@@ -100,12 +100,12 @@ TEST(u16, Traits) {
   static_assert(sus::num::Shr<u16>);
   static_assert(sus::num::ShrAssign<u16>);
 
-  static_assert(sus::ops::Ord<u16, u16>);
+  static_assert(sus::ops::Ord<u16>);
   static_assert(1_u16 >= 1_u16);
   static_assert(2_u16 > 1_u16);
   static_assert(1_u16 <= 1_u16);
   static_assert(1_u16 < 2_u16);
-  static_assert(sus::ops::Eq<u16, u16>);
+  static_assert(sus::ops::Eq<u16>);
   static_assert(1_u16 == 1_u16);
   static_assert(!(1_u16 == 2_u16));
   static_assert(1_u16 != 2_u16);

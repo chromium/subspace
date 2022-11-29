@@ -238,8 +238,7 @@ TEST(NonNull, Downcast) {
 }
 
 TEST(NonNull, Eq) {
-  static_assert(sus::ops::Eq<NonNull<int>, NonNull<int>>);
-  static_assert(!sus::ops::Eq<NonNull<int>, NonNull<char>>);
+  static_assert(sus::ops::Eq<NonNull<int>>);
 
   auto a = int();
   auto b = int();
@@ -255,12 +254,7 @@ TEST(NonNull, Eq) {
 }
 
 TEST(NonNull, Ord) {
-  static_assert(sus::ops::Ord<NonNull<int>, NonNull<int>>);
-  // TODO: GCC internal compiler error when Ord fails:
-  // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107542
-#if !(defined(__GNUC__) && !defined(__clang__))
-  static_assert(!sus::ops::Ord<NonNull<int>, NonNull<char>>);
-#endif
+  static_assert(sus::ops::Ord<NonNull<int>>);
 
   int a[] = {1, 2};
   EXPECT_LE(NonNull<int>::with(a[0]), NonNull<int>::with(a[0]));

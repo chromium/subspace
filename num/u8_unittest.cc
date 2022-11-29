@@ -100,12 +100,12 @@ TEST(u8, Traits) {
   static_assert(sus::num::Shr<u8>);
   static_assert(sus::num::ShrAssign<u8>);
 
-  static_assert(sus::ops::Ord<u8, u8>);
+  static_assert(sus::ops::Ord<u8>);
   static_assert(1_u8 >= 1_u8);
   static_assert(2_u8 > 1_u8);
   static_assert(1_u8 <= 1_u8);
   static_assert(1_u8 < 2_u8);
-  static_assert(sus::ops::Eq<u8, u8>);
+  static_assert(sus::ops::Eq<u8>);
   static_assert(1_u8 == 1_u8);
   static_assert(!(1_u8 == 2_u8));
   static_assert(1_u8 != 2_u8);

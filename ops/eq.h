@@ -18,14 +18,27 @@
 
 namespace sus::ops {
 
-// Type `A` and `B` are `Eq<A, B>` if an object of each type can be compared for
-// equality with the `==` operator.
-//
-// TODO: How do we do PartialEq? Can we even? Can we require Ord to be Eq? But
-// then it depends on ::num?
-template <class Lhs, class Rhs>
-concept Eq = requires(const Lhs& lhs, const Rhs& rhs) {
+/// Concept for types that can be compared for equality with the `==` and `!=`
+/// operators.
+///
+/// Implementations must ensure that eq and ne are consistent with each other:
+///
+/// * a != b if and only if !(a == b).
+///
+/// The default implementation of the `!=` operator provides this consistency
+/// and is almost always sufficient. It should not be overridden without very
+/// good reason.
+///
+/// This concept allows for partial equality, for types that do not have a full
+/// equivalence relation. For example, in floating point numbers NaN != NaN, but
+/// they can still be compared with `==` and `!=`. Unlike Rust, C++ does not
+/// understand partial equivalence so we are unable to differentiate.
+///
+/// TODO: How do we do PartialEq? Can we even? Should we require Ord to be Eq?
+template <class T, class U = T>
+concept Eq = requires(const T& lhs, const U& rhs) {
                { lhs == rhs } -> std::same_as<bool>;
+               { lhs != rhs } -> std::same_as<bool>;
              };
 
 }  // namespace sus::ops
