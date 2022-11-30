@@ -57,12 +57,12 @@ struct SubNonTrivial : public NonTrivial {
 };
 
 struct HoldNonStandard {
-  [[sus_if_msvc(msvc::)no_unique_address]] NonStandard x;
+  [[sus_if_msvc(msvc::) no_unique_address]] NonStandard x;
   i32 c;
 };
 
 struct HoldNonTrivial {
-  [[sus_if_msvc(msvc::)no_unique_address]] NonTrivial x;
+  [[sus_if_msvc(msvc::) no_unique_address]] NonTrivial x;
   i32 c;
 };
 
@@ -74,6 +74,10 @@ TEST(DataSizeOf, NonEmptyClass) {
     EXPECT_GT(sizeof(SubNonTrivial), sizeof(NonTrivial));
     // And the class Z with a [[no_unique_address]] field does not use the
     // padding at the end of that field.
+    //
+    // This is confusing because supposedly [[msvc::no_unique_address]] opts
+    // into this attribute actually doing something, but it doesn't appear to
+    // actually do so.
     EXPECT_GT(sizeof(HoldNonStandard), sizeof(NonStandard));
     EXPECT_GT(sizeof(HoldNonTrivial), sizeof(NonTrivial));
     // As a result, the data_size_of<X>() includes the padding too, as other
@@ -98,7 +102,9 @@ TEST(DataSizeOf, NonEmptyClass) {
 }
 
 struct Empty {};
-struct SubEmpty { char c; };
+struct SubEmpty {
+  char c;
+};
 
 // A subclass of an empty class will reuse its single byte on all compilers.
 static_assert(sizeof(SubEmpty) == sizeof(Empty));
