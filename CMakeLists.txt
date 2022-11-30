@@ -20,10 +20,7 @@ include_directories(${subspace_include_dirs})
 # add the executable
 add_library(subspace STATIC
     "assertions/arch.h"
-    "macros/builtin.h"
     "assertions/check.h"
-    "macros/compiler.h"
-    "macros/__private/compiler_bugs.h"
     "assertions/endian.h"
     "assertions/panic.h"
     "assertions/panic.cc"
@@ -54,6 +51,8 @@ add_library(subspace STATIC
     "iter/sized_iterator.h"
     "macros/__private/compiler_bugs.h"
     "macros/always_inline.h"
+    "macros/builtin.h"
+    "macros/compiler.h"
     "macros/eval_macro.h"
     "macros/for_each.h"
     "macros/no_unique_address.h"
@@ -100,6 +99,10 @@ add_library(subspace STATIC
     "result/__private/is_result_type.h"
     "result/__private/storage.h"
     "result/result.h"
+    "union/__private/tag_type.h"
+    "union/__private/type_list.h"
+    "union/union.h"
+    "union/value_types.h"
     "tuple/__private/storage.h"
     "tuple/tuple.h"
     "lib/lib.cc"
@@ -163,6 +166,7 @@ add_executable(subspace_unittests
     "ops/ord_unittest.cc"
     "result/result_unittest.cc"
     "result/result_types_unittest.cc"
+    "union/union_unittest.cc"
     "tuple/tuple_unittest.cc"
 )
 set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
