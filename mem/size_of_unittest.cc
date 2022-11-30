@@ -57,12 +57,12 @@ struct SubNonTrivial : public NonTrivial {
 };
 
 struct HoldNonStandard {
-  [[no_unique_address]] NonStandard x;
+  [[sus_if_msvc(msvc::)no_unique_address]] NonStandard x;
   i32 c;
 };
 
 struct HoldNonTrivial {
-  [[no_unique_address]] NonTrivial x;
+  [[sus_if_msvc(msvc::)no_unique_address]] NonTrivial x;
   i32 c;
 };
 
