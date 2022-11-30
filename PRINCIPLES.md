@@ -95,21 +95,22 @@ This library is an experiment and not intended for use. See the
 1. There are two types of Objects (or methods on a mixed-type Object). Owning
    types, which give access to data they own and reference types that share the
    reference they hold.
-    * For Owning types: Methods that return a reference are
-      lvalue-reference-qualified (with `&` or `const&`). If they are
-      `const&`-qualified, then `=delete` the `&&` override to avoid rvalues
-      returning references to what they own.
-    * For Owning types: When the inner type is a template variable, disallow
-      const on the inner type. The const on the Owning type will apply
-      transitively to the owned inner type.
-    * For Reference types: Methods that return a `const&` are `const&` qualified
-      without deleting the `&&` override. Mutable methods, including those that
-      return a `&` are unqualified or `&&-qualified` (non-const, but not
-      `&`-qualified in order to allow rvalues).
-    * For Reference types: When the inner type is a template variable, allow
-      const on the inner type. The const on the Owning type is unable to be
-      transferred to the inner type, i.e. a const ref<T> can be copied or moved
-      to a non-const ref<T>.
+    * For Owning types:
+       * Methods that return a reference are lvalue-reference-qualified (with
+         `&` or `const&`). If they are `const&`-qualified, then `=delete` the
+         `&&` override to avoid rvalues returning references to what they own.
+       * When the inner type is a **single** template variable, disallow const
+         on the inner type. The const on the Owning type will apply transitively
+         to the owned inner type.
+    * For Reference types:
+       * Methods that return a `const&` are `const&` qualified without deleting
+         the `&&` override. Mutable methods, including those that return a `&`
+         are unqualified or `&&-qualified` (non-const, but not `&`-qualified in
+         order to allow rvalues).
+       * When the inner type is a template variable, allow const on the inner
+         type. The const on the Owning type is unable to be transferred to the
+         inner type, i.e. a const ref<T> can be copied or moved to a non-const
+         ref<T>.
 1. Class members which have tail padding, or can have based on templates, should
    be marked as [[sus_no_unique_address]] when there are other fields that can
    be packed into the tail padding, if it exists and is usable by the compiler
