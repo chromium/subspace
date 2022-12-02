@@ -17,21 +17,33 @@
 #include <math.h>  // TODO: Replace with f32::NAN()
 
 #include <concepts>
-#include <utility>  // std::tuple_size.
 #include <tuple>
+#include <utility>  // std::tuple_size.
 
-#include "mem/copy.h"
 #include "mem/clone.h"
+#include "mem/copy.h"
 #include "mem/move.h"
+#include "num/types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {
 
 using sus::tuple::Tuple;
 
-static_assert(sus::mem::Copy<Tuple<int>>);
-static_assert(sus::mem::Clone<Tuple<int>>);
-static_assert(sus::mem::Move<Tuple<int>>);
+static_assert(sus::mem::Copy<Tuple<i32>>);
+static_assert(sus::mem::Clone<Tuple<i32>>);
+static_assert(sus::mem::Move<Tuple<i32>>);
+
+// Tuple packs stuff efficiently. However sus::Tuple has extra space taken right
+// now by the use-after-move flags. If we could borrow check at compile time
+// then we could drop use-after-move checking.
+using PackedTuple = Tuple<i32, i8, i64>;
+// static_assert(sizeof(PackedTuple) == sizeof(i64) * 2u);
+static_assert(sizeof(PackedTuple) == sizeof(i64) * 3u);
+
+// The std::tuple doesn't have use-after-move checks.
+using PackedStdTuple = std::tuple<i32, i8, i64>;
+static_assert(sizeof(PackedStdTuple) == sizeof(i64) * 2u);
 
 TEST(Tuple, With) {
   auto t1 = Tuple<int>::with(2);
@@ -282,13 +294,15 @@ TEST(Tuple, StructuredBinding) {
   static_assert(std::same_as<decltype(d), const int>);
   static_assert(std::same_as<decltype(e), const float>);
   static_assert(std::same_as<decltype(f), const char>);
-  EXPECT_EQ((Tuple<int, float, char>::with(d, e, f)), (Tuple<int, float, char>::with(3, 5.f, 'f')));
+  EXPECT_EQ((Tuple<int, float, char>::with(d, e, f)),
+            (Tuple<int, float, char>::with(3, 5.f, 'f')));
 
   auto [g, h, i] = sus::move(t3);
   static_assert(std::same_as<decltype(g), int>);
   static_assert(std::same_as<decltype(h), float>);
   static_assert(std::same_as<decltype(i), char>);
-  EXPECT_EQ((Tuple<int, float, char>::with(d, e, f)), (Tuple<int, float, char>::with(3, 5.f, 'f')));
+  EXPECT_EQ((Tuple<int, float, char>::with(d, e, f)),
+            (Tuple<int, float, char>::with(3, 5.f, 'f')));
 }
 
 }  // namespace

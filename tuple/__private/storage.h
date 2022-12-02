@@ -63,6 +63,11 @@ struct UseAfterMoveMarker {
   uint64_t value;
 };
 
+// TODO: Consider having TupleStorage inherit from each type (if it's final then
+// it has to compose it), or just inherit from N things that each hold a T, as
+// libc++ does for std::tuple, using `:public Holds<Index..., T...>`. Then to
+// get from the Storage to the base class you can static_cast the Storage
+// pointer to it.
 template <size_t N, class... T>
 struct TupleStorage;
 

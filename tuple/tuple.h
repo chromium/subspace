@@ -25,6 +25,8 @@
 #include "ops/ord.h"
 #include "tuple/__private/storage.h"
 
+#define TUPLE_USE_AFTER_MOVE 1
+
 namespace sus::tuple {
 
 /// A Tuple is a finate sequence of one or more heterogenous values.
@@ -43,7 +45,7 @@ class Tuple final {
     requires(I <= sizeof...(Ts))
   constexpr inline const auto& get_ref() const& noexcept {
     ::sus::check(!moved_from(I));
-    return Access<I + 1u>::get_ref(storage_);
+    return Access<I + TUPLE_USE_AFTER_MOVE>::get_ref(storage_);
   }
 
   /// Disallows getting a reference to temporary Tuple.
@@ -55,7 +57,7 @@ class Tuple final {
     requires(I <= sizeof...(Ts))
   inline auto& get_mut() & noexcept {
     ::sus::check(!moved_from(I));
-    return Access<I + 1u>::get_mut(storage_);
+    return Access<I + TUPLE_USE_AFTER_MOVE>::get_mut(storage_);
   }
 
   /// Returns the `I`th element in the tuple.
@@ -64,7 +66,7 @@ class Tuple final {
   constexpr inline auto unwrap() && noexcept {
     ::sus::check(!set_moved_from(I));
     set_moved_from(I);
-    return Access<I + 1u>::unwrap(::sus::move(storage_));
+    return Access<I + TUPLE_USE_AFTER_MOVE>::unwrap(::sus::move(storage_));
   }
 
   /// sus::ops::Eq<Tuple<U...>> trait.
@@ -74,8 +76,9 @@ class Tuple final {
   constexpr bool operator==(const Tuple<U, Us...>& r) const& noexcept {
     ::sus::check(!any_moved_from());
     ::sus::check(!r.any_moved_from());
-    return __private::storage_eq(storage_, r.storage_,
-                                 std::make_index_sequence<1 + sizeof...(Ts)>());
+    return __private::storage_eq(
+        storage_, r.storage_,
+        std::make_index_sequence<TUPLE_USE_AFTER_MOVE + sizeof...(Ts)>());
   }
 
   /// sus::ops::Ord<Tuple<U...>> trait.
@@ -88,7 +91,7 @@ class Tuple final {
     ::sus::check(!r.any_moved_from());
     return __private::storage_cmp(
         std::strong_ordering::equal, storage_, r.storage_,
-        std::make_index_sequence<1u + sizeof...(Ts)>());
+        std::make_index_sequence<TUPLE_USE_AFTER_MOVE + sizeof...(Ts)>());
   }
 
   /// sus::ops::WeakOrd<Tuple<U...>> trait.
@@ -101,7 +104,7 @@ class Tuple final {
     ::sus::check(!r.any_moved_from());
     return __private::storage_cmp(
         std::weak_ordering::equivalent, storage_, r.storage_,
-        std::make_index_sequence<1u + sizeof...(Ts)>());
+        std::make_index_sequence<TUPLE_USE_AFTER_MOVE + sizeof...(Ts)>());
   }
 
   /// sus::ops::PartialOrd<Tuple<U...>> trait.
@@ -114,40 +117,66 @@ class Tuple final {
     ::sus::check(!r.any_moved_from());
     return __private::storage_cmp(
         std::partial_ordering::equivalent, storage_, r.storage_,
-        std::make_index_sequence<1u + sizeof...(Ts)>());
+        std::make_index_sequence<TUPLE_USE_AFTER_MOVE + sizeof...(Ts)>());
   }
 
  private:
   template <class U, class... Us>
   friend class Tuple;  // For access to moved_from();
 
-  /// Storage for the tuple elements. The first element is the moved-from flag.
+/// Storage for the tuple elements. The first element is the moved-from flag.
+#if TUPLE_USE_AFTER_MOVE
   using Storage =
-      __private::TupleStorage<2 + sizeof...(Ts), __private::UseAfterMoveMarker,
+      __private::TupleStorage<2u + sizeof...(Ts), __private::UseAfterMoveMarker,
                               T, Ts...>;
+#else
+  using Storage = __private::TupleStorage<1u + sizeof...(Ts), T, Ts...>;
+#endif
   /// A helper type used for accessing the `Storage`.
   template <size_t I>
   using Access = __private::TupleAccess<Storage, I>;
 
+#if TUPLE_USE_AFTER_MOVE
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
   constexpr inline Tuple(U&& first, Us&&... more) noexcept
       : storage_(__private::UseAfterMoveMarker(), ::sus::forward<U>(first),
                  ::sus::forward<Us>(more)...) {}
+#else
+  template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
+  constexpr inline Tuple(U&& first, Us&&... more) noexcept
+      : storage_(::sus::forward<U>(first), ::sus::forward<Us>(more)...) {}
+#endif
 
   // TODO: Provide a way to opt out of all moved-from checks?
   constexpr inline bool any_moved_from() const& noexcept {
+#if TUPLE_USE_AFTER_MOVE
     return Access<0u>::get_ref(storage_).any_moved_from();
+#else
+    return false;
+#endif
   }
   constexpr inline bool moved_from(size_t i) const& noexcept {
+#if TUPLE_USE_AFTER_MOVE
     return Access<0u>::get_ref(storage_).moved_from(i);
+#else
+    return false;
+#endif
   }
   // Sets one element as moved from and returns it was already moved from.
   constexpr inline bool set_moved_from(size_t i) & noexcept {
+#if TUPLE_USE_AFTER_MOVE
     return Access<0u>::get_mut(storage_).set_moved_from(i);
+#else
+    return false;
+#endif
   }
   // Sets all elements as moved from and returns if any were already moved from.
   constexpr inline bool set_all_moved_from() & noexcept {
+#if TUPLE_USE_AFTER_MOVE
     return Access<0u>::get_mut(storage_).set_all_moved_from();
+#else
+    return false;
+#endif
   }
 
   Storage storage_;
@@ -186,3 +215,5 @@ struct tuple_element<I, ::sus::tuple::Tuple<Types...>> {
 namespace sus {
 using ::sus::tuple::Tuple;
 }  // namespace sus
+
+#undef TUPLE_USE_AFTER_MOVE
