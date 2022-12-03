@@ -34,16 +34,19 @@ static_assert(sus::mem::Copy<Tuple<i32>>);
 static_assert(sus::mem::Clone<Tuple<i32>>);
 static_assert(sus::mem::Move<Tuple<i32>>);
 
+static_assert(std::is_standard_layout_v<Tuple<i32>>);
+static_assert(std::is_standard_layout_v<Tuple<i32, i32>>);
+
 // Tuple packs stuff efficiently. However sus::Tuple has extra space taken right
 // now by the use-after-move flags. If we could borrow check at compile time
 // then we could drop use-after-move checking.
 using PackedTuple = Tuple<i32, i8, i64>;
 // static_assert(sizeof(PackedTuple) == sizeof(i64) * 2u);
-static_assert(sizeof(PackedTuple) == sizeof(i64) * 3u);
+static_assert(sizeof(PackedTuple) == sizeof(i64) * sus_if_msvc_else(4u, 3u));
 
 // The std::tuple doesn't have use-after-move checks.
 using PackedStdTuple = std::tuple<i32, i8, i64>;
-static_assert(sizeof(PackedStdTuple) == sizeof(i64) * 2u);
+static_assert(sizeof(PackedStdTuple) == sizeof(i64) * sus_if_msvc_else(3u, 2u));
 
 TEST(Tuple, With) {
   auto t1 = Tuple<int>::with(2);

@@ -84,49 +84,46 @@ struct TupleStorage<1, T> {
   T t;
 };
 
-template <size_t N, class T, class... MoreT>
-struct TupleStorage<N, T, MoreT...> : TupleStorage<N - 1, MoreT...> {
-  using Super = TupleStorage<N - 1, MoreT...>;
+template <size_t N, class T, class... Ts>
+struct TupleStorage<N, T, Ts...> {
+  using Next = TupleStorage<N - 1, Ts...>;
   template <size_t I>
   using Type =
-      std::conditional_t<I == 0, T, typename Super::template Type<I - 1>>;
+      std::conditional_t<I == 0, T, typename Next::template Type<I - 1>>;
 
-  template <class U, class... MoreU>
-  constexpr inline TupleStorage(U&& t, MoreU&&... more) noexcept
-      : Super(forward<MoreU>(more)...), t(forward<U>(t)) {}
+  template <class U, class... Us>
+  constexpr inline TupleStorage(U&& t, Us&&... more) noexcept
+      : t(forward<U>(t)), next(forward<Us>(more)...) {}
   T t;
+  Next next;
 };
 
-template <class TupleStorage, size_t I>
+template <class S, size_t I>
 struct TupleAccess final {
-  static inline constexpr const auto& get_ref(
-      const TupleStorage& tuple) noexcept {
-    return TupleAccess<typename TupleStorage::Super, I - 1>::get_ref(tuple);
+  static inline constexpr const auto& get_ref(const S& tuple) noexcept {
+    return TupleAccess<typename S::Next, I - 1>::get_ref(tuple.next);
   }
 
-  static inline constexpr auto& get_mut(TupleStorage& tuple) noexcept {
-    return TupleAccess<typename TupleStorage::Super, I - 1>::get_mut(tuple);
+  static inline constexpr auto& get_mut(S& tuple) noexcept {
+    return TupleAccess<typename S::Next, I - 1>::get_mut(tuple.next);
   }
 
-  static inline constexpr auto&& unwrap(TupleStorage&& tuple) noexcept {
-    return TupleAccess<typename TupleStorage::Super, I - 1>::unwrap(
-        static_cast<TupleStorage&&>(tuple));
+  static inline constexpr decltype(auto) unwrap(S&& tuple) noexcept {
+    return TupleAccess<typename S::Next, I - 1>::unwrap(
+        ::sus::move(tuple.next));
   }
 };
 
-template <class TupleStorage>
-struct TupleAccess<TupleStorage, 0> final {
-  static inline constexpr const auto& get_ref(
-      const TupleStorage& tuple) noexcept {
+template <class S>
+struct TupleAccess<S, 0> final {
+  static inline constexpr const auto& get_ref(const S& tuple) noexcept {
     return tuple.t;
   }
 
-  static inline constexpr auto& get_mut(TupleStorage& tuple) noexcept {
-    return tuple.t;
-  }
+  static inline constexpr auto& get_mut(S& tuple) noexcept { return tuple.t; }
 
-  static inline constexpr auto&& unwrap(TupleStorage&& tuple) noexcept {
-    return sus::move(tuple.t);
+  static inline constexpr decltype(auto) unwrap(S&& tuple) noexcept {
+    return ::sus::move(tuple.t);
   }
 };
 
