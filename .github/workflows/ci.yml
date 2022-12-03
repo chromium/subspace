@@ -72,7 +72,7 @@ jobs:
         id: ninja
         shell: cmake -P {0}
         run: |
-          set(ninja_version "1.9.0")
+          set(ninja_version "1.11.1")
 
           if ("${{ runner.os }}" STREQUAL "Windows")
             set(ninja_suffix "win.zip")
