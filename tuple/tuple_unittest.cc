@@ -34,6 +34,15 @@ static_assert(sus::mem::Copy<Tuple<i32>>);
 static_assert(sus::mem::Clone<Tuple<i32>>);
 static_assert(sus::mem::Move<Tuple<i32>>);
 
+// Tuple is standard layout for one element.
+static_assert(std::is_standard_layout_v<Tuple<i32>>);
+// TODO: It would be nice to be standard layout for more! Then you can do fun
+// stuff with tuples in unions, and we could optimize Union more
+// (https://patshaughnessy.net/2018/3/15/how-rust-implements-tagged-unions). But
+// we'd need to not use inheritence and [[no_unique_address]] does not pack as
+// well.
+static_assert(!std::is_standard_layout_v<Tuple<i32, i32>>);
+
 static_assert(
     std::same_as<i32, std::tuple_element_t<0, Tuple<i32, i32&, const i32&>>>);
 static_assert(
@@ -46,8 +55,10 @@ static_assert(
 // space taken right now by the use-after-move flags. If we could borrow check
 // at compile time then we could drop use-after-move checking.
 using PackedTuple = Tuple<i32, i8, i64>;
-// static_assert(sizeof(PackedTuple) == sizeof(i64) * sus_if_msvc_else(3u, 2u));
-static_assert(sizeof(PackedTuple) == sizeof(i64) * sus_if_msvc_else(4u, 3u));
+static_assert(PackedTuple::protects_uam ||
+              sizeof(PackedTuple) == sizeof(i64) * sus_if_msvc_else(3u, 2u));
+static_assert(!PackedTuple::protects_uam ||
+              sizeof(PackedTuple) == sizeof(i64) * sus_if_msvc_else(4u, 3u));
 
 // The std::tuple doesn't have use-after-move checks.
 using PackedStdTuple = std::tuple<i32, i8, i64>;
@@ -133,23 +144,23 @@ TEST(Tuple, Unwrap) {
   {
     auto make = []() { return Tuple<int>::with(2); };
     EXPECT_EQ(make().unwrap<0>(), 2);
-    static_assert(std::same_as<int, decltype(make().unwrap<0>())>);
+    static_assert(std::same_as<int&&, decltype(make().unwrap<0>())>);
   }
   {
     auto make = []() { return Tuple<int, float>::with(2, 3.f); };
     EXPECT_EQ(make().unwrap<0>(), 2);
-    static_assert(std::same_as<int, decltype(make().unwrap<0>())>);
+    static_assert(std::same_as<int&&, decltype(make().unwrap<0>())>);
     EXPECT_EQ(make().unwrap<1>(), 3.f);
-    static_assert(std::same_as<float, decltype(make().unwrap<1>())>);
+    static_assert(std::same_as<float&&, decltype(make().unwrap<1>())>);
   }
   {
     auto make = []() { return Tuple<int, float, int>::with(2, 3.f, 4); };
     EXPECT_EQ(make().unwrap<0>(), 2);
-    static_assert(std::same_as<int, decltype(make().unwrap<0>())>);
+    static_assert(std::same_as<int&&, decltype(make().unwrap<0>())>);
     EXPECT_EQ(make().unwrap<1>(), 3.f);
-    static_assert(std::same_as<float, decltype(make().unwrap<1>())>);
+    static_assert(std::same_as<float&&, decltype(make().unwrap<1>())>);
     EXPECT_EQ(make().unwrap<2>(), 4);
-    static_assert(std::same_as<int, decltype(make().unwrap<2>())>);
+    static_assert(std::same_as<int&&, decltype(make().unwrap<2>())>);
   }
 
   static int counter = 0;
@@ -315,7 +326,7 @@ TEST(Tuple, StructuredBinding) {
 
 TEST(Tuple, References) {
   i32 i = 1, j = 2;
-  auto t = Tuple<i32&, const i32&>::with(i, j);
+  auto t = Tuple<i32&, const i32&, i32>::with(i, j, 3);
   EXPECT_EQ(t.get_ref<0>(), 1);
   EXPECT_EQ(t.get_ref<1>(), 2);
   static_assert(std::same_as<const i32&, decltype(t.get_ref<0>())>);
@@ -324,7 +335,10 @@ TEST(Tuple, References) {
   EXPECT_EQ(t.get_mut<0>(), 1);
   static_assert(std::same_as<i32&, decltype(t.get_mut<0>())>);
 
-  static_assert(std::same_as<const i32&, std::tuple_element_t<1, decltype(t)>>);
+  static_assert(std::same_as<i32&, decltype(sus::move(t).unwrap<0>())>);
+  static_assert(std::same_as<const i32&, decltype(sus::move(t).unwrap<1>())>);
+  static_assert(std::same_as<i32&&, decltype(sus::move(t).unwrap<2>())>);
+  EXPECT_EQ(std::move(t).unwrap<0>(), 1);
 }
 
 template <class T, size_t I>
@@ -335,5 +349,21 @@ concept HasGetMut = requires(T t) {
 static_assert(HasGetMut<Tuple<i32, i32&, const i32&>, 0>);
 static_assert(HasGetMut<Tuple<i32, i32&, const i32&>, 1>);
 static_assert(!HasGetMut<Tuple<i32, i32&, const i32&>, 2>);
+
+TEST(Tuple, Destroy) {
+  static usize destroy = 0u;
+  struct S {
+    S(usize i) : i(i) {}
+    ~S() { destroy = (destroy + i) * i; }
+    usize i;
+  };
+
+  {
+    auto t = Tuple<S, S, S>::with(S(1u), S(2u), S(3u));
+    destroy = 0u;
+  }
+  // Tuple elements are destroyed from first to last.
+  EXPECT_EQ(destroy.primitive_value, (((0u + 1u) * 1u + 2u) * 2u + 3u) * 3u);
+}
 
 }  // namespace

@@ -89,43 +89,50 @@ struct TupleStorage<T, T2, MoreT...> : TupleStorage<T2, MoreT...> {
   T t;
 };
 
-template <class TupleStorage, size_t I>
-struct TupleAccess final {
+template <size_t I, class... Ts>
+struct TupleAccess;
+
+template <size_t I, class T, class... Ts>
+struct TupleAccess<I, TupleStorage<T, Ts...>> final {
+  using NextTupleAccess = TupleAccess<I - 1, TupleStorage<Ts...>>;
+
   static inline constexpr const auto& get_ref(
-      const TupleStorage& tuple) noexcept {
-    return TupleAccess<typename TupleStorage::Super, I - 1>::get_ref(tuple);
+      const TupleStorage<T, Ts...>& tuple) noexcept {
+    return NextTupleAccess::get_ref(tuple);
   }
 
-  static inline constexpr auto& get_mut(TupleStorage& tuple) noexcept {
-    return TupleAccess<typename TupleStorage::Super, I - 1>::get_mut(tuple);
+  static inline constexpr auto& get_mut(
+      TupleStorage<T, Ts...>& tuple) noexcept {
+    return NextTupleAccess ::get_mut(tuple);
   }
 
-  static inline constexpr auto&& unwrap(TupleStorage&& tuple) noexcept {
-    return TupleAccess<typename TupleStorage::Super, I - 1>::unwrap(
-        static_cast<TupleStorage&&>(tuple));
+  static inline constexpr decltype(auto) unwrap(
+      TupleStorage<T, Ts...>&& tuple) noexcept {
+    return NextTupleAccess::unwrap(::sus::move(tuple));
   }
 };
 
-template <class TupleStorage>
-struct TupleAccess<TupleStorage, 0> final {
+template <class T, class... Ts>
+struct TupleAccess<0, TupleStorage<T, Ts...>> final {
   static inline constexpr const auto& get_ref(
-      const TupleStorage& tuple) noexcept {
+      const TupleStorage<T, Ts...>& tuple) noexcept {
     return tuple.t;
   }
 
-  static inline constexpr auto& get_mut(TupleStorage& tuple) noexcept {
+  static inline constexpr auto& get_mut(
+      TupleStorage<T, Ts...>& tuple) noexcept {
     return tuple.t;
   }
 
-  static inline constexpr auto&& unwrap(TupleStorage&& tuple) noexcept {
-    return ::sus::forward<decltype(tuple.t)>(tuple.t);
+  static inline constexpr decltype(auto) unwrap(
+      TupleStorage<T, Ts...>&& tuple) noexcept {
+    return static_cast<T&&>(tuple.t);
   }
 };
 
 template <size_t I, class S1, class S2>
 constexpr inline auto storage_eq_impl(const S1& l, const S2& r) noexcept {
-  return TupleAccess<S1, I + 1>::get_ref(l) ==
-         TupleAccess<S2, I + 1>::get_ref(r);
+  return TupleAccess<I, S1>::get_ref(l) == TupleAccess<I, S2>::get_ref(r);
 };
 
 template <class S1, class S2, size_t... N>
@@ -137,8 +144,7 @@ constexpr inline auto storage_eq(const S1& l, const S2& r,
 template <size_t I, class O, class S1, class S2>
 constexpr inline bool storage_cmp_impl(O& val, const S1& l,
                                        const S2& r) noexcept {
-  auto cmp =
-      TupleAccess<S1, I + 1>::get_ref(l) <=> TupleAccess<S2, I + 1>::get_ref(r);
+  auto cmp = TupleAccess<I, S1>::get_ref(l) <=> TupleAccess<I, S2>::get_ref(r);
   // Allow downgrading from equal to equivalent, but not the inverse.
   if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.
