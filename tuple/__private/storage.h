@@ -74,9 +74,9 @@ struct TupleStorage;
 template <class T>
 struct TupleStorage<T> {
   sus_clang_bug_54040(template <std::convertible_to<T> U>
-                      constexpr inline TupleStorage(U&& t)
-                      : t(::sus::forward<U>(t)){});
-  T t;
+                      constexpr inline TupleStorage(U&& value)
+                      : value(::sus::forward<U>(value)){});
+  T value;
 };
 
 template <class T, class T2, class... MoreT>
@@ -84,55 +84,56 @@ struct TupleStorage<T, T2, MoreT...> : TupleStorage<T2, MoreT...> {
   using Super = TupleStorage<T2, MoreT...>;
 
   template <class U, class... MoreU>
-  constexpr inline TupleStorage(U&& t, MoreU&&... more) noexcept
-      : Super(forward<MoreU>(more)...), t(forward<U>(t)) {}
-  T t;
+  constexpr inline TupleStorage(U&& value, MoreU&&... more) noexcept
+      : Super(::sus::forward<MoreU>(more)...),
+        value(::sus::forward<U>(value)) {}
+  T value;
 };
 
-template <size_t I, class... Ts>
-struct TupleAccess;
-
-template <size_t I, class T, class... Ts>
-struct TupleAccess<I, TupleStorage<T, Ts...>> final {
-  using NextTupleAccess = TupleAccess<I - 1, TupleStorage<Ts...>>;
-
-  static inline constexpr const auto& get_ref(
-      const TupleStorage<T, Ts...>& tuple) noexcept {
-    return NextTupleAccess::get_ref(tuple);
-  }
-
-  static inline constexpr auto& get_mut(
-      TupleStorage<T, Ts...>& tuple) noexcept {
-    return NextTupleAccess ::get_mut(tuple);
-  }
-
-  static inline constexpr decltype(auto) unwrap(
-      TupleStorage<T, Ts...>&& tuple) noexcept {
-    return NextTupleAccess::unwrap(::sus::move(tuple));
-  }
+template <std::size_t I>
+struct in_place_index_t {
+  explicit in_place_index_t() = default;
 };
 
-template <class T, class... Ts>
-struct TupleAccess<0, TupleStorage<T, Ts...>> final {
-  static inline constexpr const auto& get_ref(
-      const TupleStorage<T, Ts...>& tuple) noexcept {
-    return tuple.t;
-  }
+template <std::size_t I>
+inline constexpr in_place_index_t<I> in_place_index{};
 
-  static inline constexpr auto& get_mut(
-      TupleStorage<T, Ts...>& tuple) noexcept {
-    return tuple.t;
-  }
+template <size_t I, class S>
+static constexpr const auto& find_storage(const S& storage) {
+  return find_storage(storage, in_place_index<I>);
+}
 
-  static inline constexpr decltype(auto) unwrap(
-      TupleStorage<T, Ts...>&& tuple) noexcept {
-    return static_cast<T&&>(tuple.t);
-  }
-};
+template <size_t I, class S>
+static constexpr const auto& find_storage(const S& storage,
+                                          in_place_index_t<I>) {
+  return find_storage(static_cast<const S::Super&>(storage),
+                      in_place_index<I - 1>);
+}
+
+template <class S>
+static constexpr const S& find_storage(const S& storage, in_place_index_t<0>) {
+  return storage;
+}
+
+template <size_t I, class S>
+static constexpr auto& find_storage_mut(S& storage) {
+  return find_storage_mut(storage, in_place_index<I>);
+}
+
+template <size_t I, class S>
+static constexpr auto& find_storage_mut(S& storage, in_place_index_t<I>) {
+  return find_storage_mut(static_cast<S::Super&>(storage),
+                          in_place_index<I - 1>);
+}
+
+template <class S>
+static constexpr S& find_storage_mut(S& storage, in_place_index_t<0>) {
+  return storage;
+}
 
 template <size_t I, class S1, class S2>
 constexpr inline auto storage_eq_impl(const S1& l, const S2& r) noexcept {
-  return TupleAccess<I, S1>::get_ref(l) == TupleAccess<I, S2>::get_ref(r);
+  return find_storage<I>(l).value == find_storage<I>(r).value;
 };
 
 template <class S1, class S2, size_t... N>
@@ -144,7 +145,7 @@ constexpr inline auto storage_eq(const S1& l, const S2& r,
 template <size_t I, class O, class S1, class S2>
 constexpr inline bool storage_cmp_impl(O& val, const S1& l,
                                        const S2& r) noexcept {
-  auto cmp = TupleAccess<I, S1>::get_ref(l) <=> TupleAccess<I, S2>::get_ref(r);
+  auto cmp = find_storage<I>(l).value <=> find_storage<I>(r).value;
   // Allow downgrading from equal to equivalent, but not the inverse.
   if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.

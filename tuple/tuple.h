@@ -64,7 +64,7 @@ class Tuple final {
     requires(I <= sizeof...(Ts))
   constexpr inline const auto& get_ref() const& noexcept {
     ::sus::check(!moved_from(I));
-    return Access<I>::get_ref(storage_);
+    return __private::find_storage<I>(storage_).value;
   }
 
   /// Disallows getting a reference to temporary Tuple.
@@ -76,7 +76,7 @@ class Tuple final {
     requires(I <= sizeof...(Ts) && !IsConst<I>)
   inline auto& get_mut() & noexcept {
     ::sus::check(!moved_from(I));
-    return Access<I>::get_mut(storage_);
+    return __private::find_storage_mut<I>(storage_).value;
   }
 
   /// sus::ops::Eq<Tuple<U...>> trait.
@@ -86,8 +86,8 @@ class Tuple final {
   constexpr bool operator==(const Tuple<U, Us...>& r) const& noexcept {
     ::sus::check(!any_moved_from());
     ::sus::check(!r.any_moved_from());
-    return __private::storage_eq(storage_, r.storage_,
-                                 std::make_index_sequence<1u + sizeof...(Ts)>());
+    return __private::storage_eq(
+        storage_, r.storage_, std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
   /// sus::ops::Ord<Tuple<U...>> trait.
@@ -98,9 +98,9 @@ class Tuple final {
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
     ::sus::check(!any_moved_from());
     ::sus::check(!r.any_moved_from());
-    return __private::storage_cmp(std::strong_ordering::equal, storage_,
-                                  r.storage_,
-                                  std::make_index_sequence<1u + sizeof...(Ts)>());
+    return __private::storage_cmp(
+        std::strong_ordering::equal, storage_, r.storage_,
+        std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
   /// sus::ops::WeakOrd<Tuple<U...>> trait.
@@ -111,9 +111,9 @@ class Tuple final {
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
     ::sus::check(!any_moved_from());
     ::sus::check(!r.any_moved_from());
-    return __private::storage_cmp(std::weak_ordering::equivalent, storage_,
-                                  r.storage_,
-                                  std::make_index_sequence<1u + sizeof...(Ts)>());
+    return __private::storage_cmp(
+        std::weak_ordering::equivalent, storage_, r.storage_,
+        std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
   /// sus::ops::PartialOrd<Tuple<U...>> trait.
@@ -124,9 +124,9 @@ class Tuple final {
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
     ::sus::check(!any_moved_from());
     ::sus::check(!r.any_moved_from());
-    return __private::storage_cmp(std::partial_ordering::equivalent, storage_,
-                                  r.storage_,
-                                  std::make_index_sequence<1u + sizeof...(Ts)>());
+    return __private::storage_cmp(
+        std::partial_ordering::equivalent, storage_, r.storage_,
+        std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
  private:
@@ -135,9 +135,6 @@ class Tuple final {
 
   /// Storage for the tuple elements. The first element is the moved-from flag.
   using Storage = __private::TupleStorage<T, Ts...>;
-  /// A helper type used for accessing the `Storage`.
-  template <size_t I>
-  using Access = __private::TupleAccess<I, Storage>;
 
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
   constexpr inline Tuple(U&& first, Us&&... more) noexcept
