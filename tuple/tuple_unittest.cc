@@ -34,16 +34,24 @@ static_assert(sus::mem::Copy<Tuple<i32>>);
 static_assert(sus::mem::Clone<Tuple<i32>>);
 static_assert(sus::mem::Move<Tuple<i32>>);
 
-// Tuple packs stuff efficiently. However sus::Tuple has extra space taken right
-// now by the use-after-move flags. If we could borrow check at compile time
-// then we could drop use-after-move checking.
+static_assert(
+    std::same_as<i32, std::tuple_element_t<0, Tuple<i32, i32&, const i32&>>>);
+static_assert(
+    std::same_as<i32&, std::tuple_element_t<1, Tuple<i32, i32&, const i32&>>>);
+static_assert(
+    std::same_as<const i32&,
+                 std::tuple_element_t<2, Tuple<i32, i32&, const i32&>>>);
+
+// Tuple packs stuff efficiently (except in MSVC). However sus::Tuple has extra
+// space taken right now by the use-after-move flags. If we could borrow check
+// at compile time then we could drop use-after-move checking.
 using PackedTuple = Tuple<i32, i8, i64>;
-// static_assert(sizeof(PackedTuple) == sizeof(i64) * 2u);
-static_assert(sizeof(PackedTuple) == sizeof(i64) * 3u);
+// static_assert(sizeof(PackedTuple) == sizeof(i64) * sus_if_msvc_else(3u, 2u));
+static_assert(sizeof(PackedTuple) == sizeof(i64) * sus_if_msvc_else(4u, 3u));
 
 // The std::tuple doesn't have use-after-move checks.
 using PackedStdTuple = std::tuple<i32, i8, i64>;
-static_assert(sizeof(PackedStdTuple) == sizeof(i64) * 2u);
+static_assert(sizeof(PackedStdTuple) == sizeof(i64) * sus_if_msvc_else(3u, 2u));
 
 TEST(Tuple, With) {
   auto t1 = Tuple<int>::with(2);
@@ -304,5 +312,28 @@ TEST(Tuple, StructuredBinding) {
   EXPECT_EQ((Tuple<int, float, char>::with(d, e, f)),
             (Tuple<int, float, char>::with(3, 5.f, 'f')));
 }
+
+TEST(Tuple, References) {
+  i32 i = 1, j = 2;
+  auto t = Tuple<i32&, const i32&>::with(i, j);
+  EXPECT_EQ(t.get_ref<0>(), 1);
+  EXPECT_EQ(t.get_ref<1>(), 2);
+  static_assert(std::same_as<const i32&, decltype(t.get_ref<0>())>);
+  static_assert(std::same_as<const i32&, decltype(t.get_ref<1>())>);
+
+  EXPECT_EQ(t.get_mut<0>(), 1);
+  static_assert(std::same_as<i32&, decltype(t.get_mut<0>())>);
+
+  static_assert(std::same_as<const i32&, std::tuple_element_t<1, decltype(t)>>);
+}
+
+template <class T, size_t I>
+concept HasGetMut = requires(T t) {
+                      { t.template get_mut<I>() };
+                    };
+
+static_assert(HasGetMut<Tuple<i32, i32&, const i32&>, 0>);
+static_assert(HasGetMut<Tuple<i32, i32&, const i32&>, 1>);
+static_assert(!HasGetMut<Tuple<i32, i32&, const i32&>, 2>);
 
 }  // namespace

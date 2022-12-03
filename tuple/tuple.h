@@ -32,6 +32,10 @@ namespace sus::tuple {
 /// A Tuple is a finate sequence of one or more heterogenous values.
 template <class T, class... Ts>
 class Tuple final {
+  template <size_t I>
+  static constexpr bool IsConst =
+      std::is_const_v<std::remove_reference_t<std::tuple_element_t<I, Tuple>>>;
+
  public:
   /// Construct a Tuple with the given values.
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
@@ -54,7 +58,7 @@ class Tuple final {
 
   /// Gets a mutable reference to the `I`th element in the tuple.
   template <size_t I>
-    requires(I <= sizeof...(Ts))
+    requires(I <= sizeof...(Ts) && !IsConst<I>)
   inline auto& get_mut() & noexcept {
     ::sus::check(!moved_from(I));
     return Access<I + TUPLE_USE_AFTER_MOVE>::get_mut(storage_);
@@ -127,10 +131,9 @@ class Tuple final {
 /// Storage for the tuple elements. The first element is the moved-from flag.
 #if TUPLE_USE_AFTER_MOVE
   using Storage =
-      __private::TupleStorage<2u + sizeof...(Ts), __private::UseAfterMoveMarker,
-                              T, Ts...>;
+      __private::TupleStorage<__private::UseAfterMoveMarker, T, Ts...>;
 #else
-  using Storage = __private::TupleStorage<1u + sizeof...(Ts), T, Ts...>;
+  using Storage = __private::TupleStorage<T, Ts...>;
 #endif
   /// A helper type used for accessing the `Storage`.
   template <size_t I>
@@ -203,10 +206,14 @@ template <class... Types>
 struct tuple_size<::sus::tuple::Tuple<Types...>>
     : std::integral_constant<std::size_t, sizeof...(Types)> {};
 
-template <std::size_t I, class... Types>
-struct tuple_element<I, ::sus::tuple::Tuple<Types...>> {
-  using type = decltype(std::declval<::sus::tuple::Tuple<Types...>>()
-                            .template unwrap<I>());
+template <std::size_t I, class T, class... Types>
+struct tuple_element<I, ::sus::tuple::Tuple<T, Types...>> {
+  using type = tuple_element<I - 1, ::sus::tuple::Tuple<Types...>>::type;
+};
+
+template <class T, class... Types>
+struct tuple_element<0, ::sus::tuple::Tuple<T, Types...>> {
+  using type = T;
 };
 
 }  // namespace std
