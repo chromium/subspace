@@ -123,7 +123,7 @@ struct TupleAccess<S, 0> final {
   static inline constexpr auto& get_mut(S& tuple) noexcept { return tuple.t; }
 
   static inline constexpr decltype(auto) unwrap(S&& tuple) noexcept {
-    return ::sus::move(tuple.t);
+    return ::sus::forward<decltype(tuple.t)>(tuple.t);
   }
 };
 
