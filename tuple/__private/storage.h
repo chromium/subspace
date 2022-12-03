@@ -68,28 +68,20 @@ struct UseAfterMoveMarker {
 // libc++ does for std::tuple, using `:public Holds<Index..., T...>`. Then to
 // get from the Storage to the base class you can static_cast the Storage
 // pointer to it.
-template <size_t N, class... T>
+template <class... T>
 struct TupleStorage;
 
-template <>
-struct TupleStorage<0> {};
-
 template <class T>
-struct TupleStorage<1, T> {
-  template <size_t I>
-  using Type = T;
+struct TupleStorage<T> {
   sus_clang_bug_54040(template <std::convertible_to<T> U>
                       constexpr inline TupleStorage(U&& t)
                       : t(::sus::forward<U>(t)){});
   T t;
 };
 
-template <size_t N, class T, class... MoreT>
-struct TupleStorage<N, T, MoreT...> : TupleStorage<N - 1, MoreT...> {
-  using Super = TupleStorage<N - 1, MoreT...>;
-  template <size_t I>
-  using Type =
-      std::conditional_t<I == 0, T, typename Super::template Type<I - 1>>;
+template <class T, class T2, class... MoreT>
+struct TupleStorage<T, T2, MoreT...> : TupleStorage<T2, MoreT...> {
+  using Super = TupleStorage<T2, MoreT...>;
 
   template <class U, class... MoreU>
   constexpr inline TupleStorage(U&& t, MoreU&&... more) noexcept
@@ -126,7 +118,7 @@ struct TupleAccess<TupleStorage, 0> final {
   }
 
   static inline constexpr auto&& unwrap(TupleStorage&& tuple) noexcept {
-    return sus::move(tuple.t);
+    return ::sus::forward<decltype(tuple.t)>(tuple.t);
   }
 };
 
