@@ -29,7 +29,7 @@
 
 namespace sus::tuple {
 
-/// A Tuple is a finate sequence of one or more heterogenous values.
+/// A Tuple is a finate sequence of one or more heterogeneous values.
 template <class T, class... Ts>
 class Tuple final {
   template <size_t I>
