@@ -86,8 +86,9 @@ using sus::option::__private::StoragePointer;
 /// owns the `T` in that case and it ensures the `Option` and the `T` are both
 /// accessed with the same const-ness.
 ///
-/// If a type provides a never-value field (see mem/never_value.h), then
-/// Option<T> will have the same size as T.
+/// If a type provides a never-value field (see mem/never_value.h), and is a
+/// [standard-layout type](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType),
+/// then Option<T> will have the same size as T.
 ///
 /// However the never-value field places some limitations on what can be
 /// constexpr in the Option type. Because it is not possible to query the state
