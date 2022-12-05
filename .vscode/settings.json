@@ -5,6 +5,9 @@
         "${workspaceRoot}/third_party/googletest/googletest/include",
     ],
     "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.codeAnalysis.clangTidy.args": [
+        "--std=c++20"
+    ],
     "C_Cpp.autoAddFileAssociations": false,
     "cmake.buildDirectory": "${workspaceFolder}/out",
     "clangd.arguments": [
@@ -15,4 +18,5 @@
     },
     "cmake.generator": "Ninja",
     "files.eol": "\n",
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
 }
