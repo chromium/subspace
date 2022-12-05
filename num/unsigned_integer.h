@@ -110,21 +110,6 @@ struct usize final {
     requires(sizeof(T) == sizeof(uint64_t) &&
              !std::same_as<T, decltype(primitive_value)>)
   : usize(uint64_t{val}) {}
-
-  /** Converts to its primitive value explicitly. */
-  constexpr inline explicit operator decltype(
-      primitive_value)() const noexcept {
-    return primitive_value;
-  }
-  /** Converts to size_t explicitly, which can differ from sized integer types.
-   */
-  template <std::same_as<size_t> T>
-  constexpr inline explicit operator T() const noexcept
-    requires(sizeof(size_t) >= sizeof(uint64_t) &&
-             !std::same_as<size_t, decltype(primitive_value)>)
-  {
-    return size_t{primitive_value};
-  }
 };
 
 }  // namespace sus::num

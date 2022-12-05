@@ -35,9 +35,12 @@ static_assert(sizeof(decltype(isize::primitive_value)) == sizeof(void*));
 static_assert(sizeof(isize) == sizeof(decltype(isize::primitive_value)));
 
 // `isize` can be explicitly converted to an unsigned int of the same size.
-static_assert(sizeof(isize) != sizeof(uint16_t) || std::is_constructible_v<int16_t, isize>);
-static_assert(sizeof(isize) != sizeof(uint32_t) || std::is_constructible_v<int32_t, isize>);
-static_assert(sizeof(isize) != sizeof(uint64_t) || std::is_constructible_v<int64_t, isize>);
+static_assert(sizeof(isize) != sizeof(uint16_t) ||
+              std::is_constructible_v<int16_t, isize>);
+static_assert(sizeof(isize) != sizeof(uint32_t) ||
+              std::is_constructible_v<int32_t, isize>);
+static_assert(sizeof(isize) != sizeof(uint64_t) ||
+              std::is_constructible_v<int64_t, isize>);
 
 namespace behaviour {
 using T = isize;
@@ -179,6 +182,33 @@ TEST(isize, Constants) {
     EXPECT_EQ(bits, 32u);
   else
     EXPECT_EQ(bits, 64u);
+}
+
+template <class From, class To>
+concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
+                                   !std::is_convertible_v<From, To>);
+template <class From, class To>
+concept NotConvertible = (!std::constructible_from<To, From> &&
+                          !std::is_convertible_v<From, To>);
+
+TEST(isize, ToPrimitive) {
+  static_assert(sizeof(isize) > sizeof(int8_t)
+                    ? NotConvertible<i64, int8_t>
+                    : IsExplicitlyConvertible<i64, int8_t>);
+  static_assert(sizeof(isize) > sizeof(int16_t)
+                    ? NotConvertible<i64, int16_t>
+                    : IsExplicitlyConvertible<i64, int16_t>);
+  static_assert(sizeof(isize) > sizeof(int32_t)
+                    ? NotConvertible<i64, int32_t>
+                    : IsExplicitlyConvertible<i64, int32_t>);
+  static_assert(sizeof(isize) > sizeof(int64_t)
+                    ? NotConvertible<i64, int64_t>
+                    : IsExplicitlyConvertible<i64, int64_t>);
+  static_assert(NotConvertible<i64, uint8_t>);
+  static_assert(NotConvertible<i64, uint16_t>);
+  static_assert(NotConvertible<i8, uint32_t>);
+  static_assert(NotConvertible<i64, uint64_t>);
+  static_assert(NotConvertible<i64, size_t>);
 }
 
 TEST(isize, From) {

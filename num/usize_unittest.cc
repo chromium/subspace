@@ -45,12 +45,6 @@ static_assert(!std::is_convertible_v<int16_t, usize>);
 static_assert(!std::is_convertible_v<int32_t, usize>);
 static_assert(!std::is_convertible_v<int64_t, usize>);
 
-// `usize` can be explicitly converted to size_t and an unsigned int of the same size.
-static_assert(std::is_constructible_v<size_t, usize>);
-static_assert(sizeof(size_t) != sizeof(uint16_t) || std::is_constructible_v<uint16_t, usize>);
-static_assert(sizeof(size_t) != sizeof(uint32_t) || std::is_constructible_v<uint32_t, usize>);
-static_assert(sizeof(size_t) != sizeof(uint64_t) || std::is_constructible_v<uint64_t, usize>);
-
 TEST(usize, ImplicitConstruct) {
   {
     [[maybe_unused]] constexpr usize a = uint8_t{1u};
@@ -210,6 +204,29 @@ TEST(usize, Constants) {
     EXPECT_EQ(bits, 32u);
   else
     EXPECT_EQ(bits, 64u);
+}
+
+template <class From, class To>
+concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
+                                   !std::is_convertible_v<From, To>);
+template <class From, class To>
+concept NotConvertible = (!std::constructible_from<To, From> &&
+                          !std::is_convertible_v<From, To>);
+
+TEST(usize, ToPrimitive) {
+  static_assert(NotConvertible<usize, int8_t>);
+  static_assert(NotConvertible<usize, int16_t>);
+  static_assert(NotConvertible<usize, int32_t>);
+  static_assert(NotConvertible<usize, int64_t>);
+  static_assert(NotConvertible<usize, uint8_t>);
+  static_assert(NotConvertible<usize, uint16_t>);
+  static_assert(sizeof(usize) <= sizeof(uint32_t)
+                    ? IsExplicitlyConvertible<usize, uint32_t>
+                    : NotConvertible<usize, uint32_t>);
+  static_assert(sizeof(usize) <= sizeof(uint64_t)
+                    ? IsExplicitlyConvertible<usize, uint64_t>
+                    : NotConvertible<usize, uint64_t>);
+  static_assert(IsExplicitlyConvertible<usize, size_t>);
 }
 
 TEST(usize, From) {

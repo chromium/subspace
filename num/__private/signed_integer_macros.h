@@ -45,6 +45,7 @@ class Tuple;
   _sus__signed_constants(T, PrimitiveT);            \
   _sus__signed_construct(T, PrimitiveT);            \
   _sus__signed_from(T, PrimitiveT);                 \
+  _sus__signed_to_primitive(T, PrimitiveT);         \
   _sus__signed_integer_comparison(T, PrimitiveT);   \
   _sus__signed_unary_ops(T);                        \
   _sus__signed_binary_logic_ops(T, PrimitiveT);     \
@@ -161,6 +162,14 @@ class Tuple;
     }                                                                       \
     return T(static_cast<PrimitiveT>(u));                                   \
   }                                                                         \
+  static_assert(true)
+
+#define _sus__signed_to_primitive(T, PrimitiveT) \
+  template <SignedPrimitiveInteger U>            \
+    requires(sizeof(U) >= sizeof(PrimitiveT))    \
+  constexpr inline explicit operator U() const { \
+    return primitive_value;                      \
+  }                                              \
   static_assert(true)
 
 #define _sus__signed_integer_comparison(T, PrimitiveT)                         \
