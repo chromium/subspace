@@ -14,6 +14,7 @@
 
 #include "mem/relocate.h"
 
+#include "prelude.h"
 #include "num/types.h"
 
 namespace {

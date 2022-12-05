@@ -156,7 +156,8 @@ class Option final {
     };
 
     bool found_none = false;
-    auto collected = T::from_iter(Iter(::sus::move(iter), mref(found_none)));
+    auto collected =
+        T::from_iter(Iter(::sus::move(iter), ::sus::mref(found_none)));
     if (found_none)
       return Option::none();
     else

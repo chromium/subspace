@@ -23,6 +23,7 @@
 #include "mem/nonnull.h"
 #include "mem/relocate.h"
 #include "num/types.h"
+#include "prelude.h"
 #include "result/result.h"
 #include "test/behaviour_types.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"

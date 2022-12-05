@@ -21,6 +21,7 @@
 #include "num/unsigned_integer.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
+#include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
 

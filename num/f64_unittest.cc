@@ -18,6 +18,7 @@
 #include "num/float.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
+#include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 #define F64_NEAR(a, b, c) \

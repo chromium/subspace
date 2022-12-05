@@ -389,7 +389,3 @@ class Vec {
 namespace sus {
 using ::sus::containers::Vec;
 }
-
-// Promote Vec into the top-level namespace.
-// TODO: Make a compile-time option for this.
-using ::sus::containers::Vec;

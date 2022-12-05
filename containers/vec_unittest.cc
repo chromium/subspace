@@ -14,9 +14,9 @@
 // limitations under the License.
 
 #include "containers/vec.h"
-
 #include "iter/iterator.h"
 #include "mem/move.h"
+#include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {

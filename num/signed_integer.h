@@ -71,9 +71,11 @@ _sus__integer_literal(i32, ::sus::num::i32);
 _sus__integer_literal(i64, ::sus::num::i64);
 _sus__integer_literal(isize, ::sus::num::isize);
 
-// Promote signed integer types into the top-level namespace.
+// Promote signed integer types into the `sus` namespace.
+namespace sus {
 using sus::num::i16;
 using sus::num::i32;
 using sus::num::i64;
 using sus::num::i8;
 using sus::num::isize;
+}  // namespace sus

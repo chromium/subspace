@@ -21,6 +21,7 @@
 #include "mem/move.h"
 #include "mem/replace.h"
 #include "option/option.h"
+#include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {

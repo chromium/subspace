@@ -99,7 +99,7 @@ class IteratorBase {
   /// If the `usize` type does not have trapping arithmetic enabled, and the
   /// iterator has more than `usize::MAX` elements in it, the value will wrap
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
-  virtual usize count() noexcept;
+  virtual ::sus::usize count() noexcept;
 
   /// Adaptor for use in ranged for loops.
   __private::IteratorLoop<IteratorBase<Item>&> begin() & noexcept;

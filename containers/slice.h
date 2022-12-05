@@ -38,7 +38,7 @@ namespace sus::containers {
 template <class T>
 class Slice {
  public:
-  static constexpr inline Slice from_raw_parts(T* data, usize len) noexcept {
+  static constexpr inline Slice from_raw_parts(T* data, ::sus::usize len) noexcept {
     check(len.primitive_value <= PTRDIFF_MAX);
     return Slice(data, len);
   }
@@ -162,7 +162,7 @@ class Slice {
   constexpr Slice(T* data, usize len) noexcept : data_(data), len_(len) {}
 
   T* data_;
-  usize len_;
+  ::sus::usize len_;
 
   sus_class_never_value_field(unsafe_fn, Slice, data_, nullptr);
 };

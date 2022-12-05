@@ -14,6 +14,7 @@
 
 #include "mem/mref.h"
 
+#include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {
@@ -23,8 +24,7 @@ using sus::Mref;
 // Require conversion through mref().
 static_assert(!std::is_convertible_v<Mref<int>, int&>, "");
 static_assert(
-    std::is_convertible_v<Mref<int>, decltype(mref(std::declval<int&>()))>,
-    "");
+    std::is_convertible_v<Mref<int>, decltype(mref(std::declval<int&>()))>, "");
 
 // Require conversion through mref() even if you have an Mref already.
 static_assert(!std::is_convertible_v<Mref<int>, Mref<int>&>, "");
