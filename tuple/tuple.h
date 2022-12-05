@@ -18,6 +18,7 @@
 #include <concepts>
 
 #include "assertions/check.h"
+#include "construct/make_default.h"
 #include "mem/forward.h"
 #include "mem/replace.h"
 #include "num/num_concepts.h"
@@ -46,6 +47,18 @@ class Tuple final {
     return Tuple(::sus::forward<U>(first), ::sus::forward<Us>(more)...);
   }
 
+  /// Construct a Tuple with the default value for the types it contains.
+  ///
+  /// The Tuple's contained types must all be #MakeDefault, and will be
+  /// constructed through that trait.
+  static inline constexpr Tuple with_default() noexcept
+    requires((::sus::construct::MakeDefault<T> && ... &&
+              ::sus::construct::MakeDefault<Ts>))
+  {
+    return Tuple(::sus::construct::make_default<T>(),
+                 ::sus::construct::make_default<Ts>()...);
+  }
+
   /// Gets a const reference to the `I`th element in the tuple.
   template <size_t I>
     requires(I <= sizeof...(Ts))
@@ -64,15 +77,6 @@ class Tuple final {
   inline auto& get_mut() & noexcept {
     ::sus::check(!moved_from(I));
     return Access<I>::get_mut(storage_);
-  }
-
-  /// Returns the `I`th element in the tuple.
-  template <size_t I>
-    requires(I <= sizeof...(Ts))
-  constexpr inline decltype(auto) unwrap() && noexcept {
-    ::sus::check(!set_moved_from(I));
-    set_moved_from(I);
-    return Access<I>::unwrap(::sus::move(storage_));
   }
 
   /// sus::ops::Eq<Tuple<U...>> trait.
@@ -190,7 +194,7 @@ auto& get(Tuple<Ts...>& t) noexcept {
 }
 template <size_t I, class... Ts>
 decltype(auto) get(Tuple<Ts...>&& t) noexcept {
-  return ::sus::move(t).template unwrap<I>();
+  return ::sus::mem::move_or_copy_ref(t.template get_mut<I>());
 }
 
 }  // namespace sus::tuple
