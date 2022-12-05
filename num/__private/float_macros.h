@@ -123,16 +123,19 @@ class Array;
    */                                                                          \
   constexpr inline T() noexcept = default;                                     \
                                                                                \
-  /** Construction from the underlying primitive type.                         \
+  /** Construction from primitive types where no bits are lost.                \
    */                                                                          \
-  template <std::same_as<PrimitiveT> P> /* Prevent implicit conversions. */    \
+  template <PrimitiveFloat P>                                                  \
+    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
   constexpr inline T(P v) : primitive_value(v) {}                              \
                                                                                \
-  /** Assignment from the underlying primitive type.                           \
+  /** Assignment from primitive types where no bits are lost.                  \
    */                                                                          \
-  template <std::same_as<PrimitiveT> P> /* Prevent implicit conversions. */    \
-  constexpr inline void operator=(P v) noexcept {                              \
+  template <PrimitiveFloat P>                                                  \
+    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+  constexpr inline T& operator=(P v) noexcept {                                \
     primitive_value = v;                                                       \
+    return *this;                                                              \
   }                                                                            \
   static_assert(true)
 
