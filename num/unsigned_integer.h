@@ -64,9 +64,11 @@ _sus__integer_literal(u32, ::sus::num::u32);
 _sus__integer_literal(u64, ::sus::num::u64);
 _sus__integer_literal(usize, ::sus::num::usize);
 
-// Promote unsigned integer types into the top-level namespace.
+// Promote unsigned integer types into the `sus` namespace.
+namespace sus {
 using sus::num::u16;
 using sus::num::u32;
 using sus::num::u64;
 using sus::num::u8;
 using sus::num::usize;
+}

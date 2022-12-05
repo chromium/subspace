@@ -20,6 +20,7 @@
 #include "num/types.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
+#include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 using sus::mem::NonNull;

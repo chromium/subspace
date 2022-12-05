@@ -18,6 +18,7 @@
 
 #include "macros/builtin.h"
 #include "mem/relocate.h"
+#include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 using sus::mem::replace;

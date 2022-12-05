@@ -111,8 +111,5 @@ struct [[sus_trivial_abi]] Mref final {
 // Promote Mref into the `sus` namespace.
 namespace sus {
 using ::sus::mem::Mref;
-}  // namespace sus
-
-// Promote mref() into the top level namespace.
-// TODO: Provide an option to do this or not.
 using ::sus::mem::mref;
+}  // namespace sus
