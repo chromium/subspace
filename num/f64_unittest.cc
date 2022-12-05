@@ -166,11 +166,34 @@ TEST(f64, AssignPrimitive) {
 }
 
 template <class From, class To>
+concept IsImplicitlyConvertible = (std::is_convertible_v<From, To> &&
+                                   std::is_assignable_v<To, From>);
+template <class From, class To>
 concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
-                                   !std::is_convertible_v<From, To>);
+                                   !std::is_convertible_v<From, To> &&
+                                   !std::is_assignable_v<To, From>);
 template <class From, class To>
 concept NotConvertible = (!std::constructible_from<To, From> &&
-                          !std::is_convertible_v<From, To>);
+                          !std::is_convertible_v<From, To> &&
+                          !std::is_assignable_v<To, From>);
+
+TEST(f64, FromPrimitive) {
+  static_assert(IsImplicitlyConvertible<float, f64>);
+  static_assert(IsImplicitlyConvertible<double, f64>);
+  static_assert(sizeof(long double) > sizeof(double)
+                    ? NotConvertible<long double, f64>
+                    : IsImplicitlyConvertible<long double, f64>);
+
+  static_assert(NotConvertible<int8_t, f64>);
+  static_assert(NotConvertible<int16_t, f64>);
+  static_assert(NotConvertible<int32_t, f64>);
+  static_assert(NotConvertible<int64_t, f64>);
+  static_assert(NotConvertible<uint8_t, f64>);
+  static_assert(NotConvertible<uint16_t, f64>);
+  static_assert(NotConvertible<uint32_t, f64>);
+  static_assert(NotConvertible<uint64_t, f64>);
+  static_assert(NotConvertible<size_t, f64>);
+}
 
 TEST(f64, ToPrimitive) {
   static_assert(NotConvertible<f64, float>);
