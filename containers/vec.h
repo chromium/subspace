@@ -42,7 +42,9 @@ namespace sus::containers {
 
 template <::sus::mem::Move T>
 class Vec {
-  static_assert(!std::is_const_v<T>);
+  static_assert(!std::is_const_v<T>,
+                "`Vec<const T>` should be written `const Vec<T>`, as const "
+                "applies transitively.");
 
   // The documentation in this class assumes isize::MAX == PTRDIFF_MAX.
   static_assert(isize::MAX() == isize(PTRDIFF_MAX));

@@ -59,7 +59,9 @@ struct Storage<T, 0> final {};
 template <class T, size_t N>
   requires(N <= PTRDIFF_MAX)
 class Array final {
-  static_assert(!std::is_const_v<T>);
+  static_assert(!std::is_const_v<T>,
+                "`Array<const T, N>` should be written `const Array<T, N>`, as "
+                "const applies transitively.");
 
  public:
   constexpr static Array with_default() noexcept
@@ -408,10 +410,11 @@ auto get(Array<T, N>&& a) noexcept {
 
 namespace std {
 template <class T, size_t N>
-struct tuple_size<::sus::containers::Array<T, N>>
-    : std::integral_constant<std::size_t, N> {};
+struct tuple_size<::sus::containers::Array<T, N>> {
+  static constexpr size_t value = N;
+};
 
-template <std::size_t I, class T, size_t N>
+template <size_t I, class T, size_t N>
 struct tuple_element<I, ::sus::containers::Array<T, N>> {
   using type = T;
 };

@@ -102,7 +102,9 @@ class Option;
 /// Implementation of Option for a value type (non-reference).
 template <class T>
 class Option final {
-  static_assert(!std::is_const_v<T>);
+  static_assert(!std::is_const_v<T>,
+                "`Option<const T>` should be written `const Option<T>`, as "
+                "const applies transitively.");
 
  public:
   /// Construct an Option that is holding the given value.
