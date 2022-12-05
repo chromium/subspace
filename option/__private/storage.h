@@ -15,6 +15,7 @@
 #pragma once
 
 #include "macros/always_inline.h"
+#include "macros/nonnull.h"
 #include "mem/addressof.h"
 #include "mem/move.h"
 #include "mem/mref.h"
