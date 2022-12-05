@@ -58,7 +58,9 @@ struct isize final {
       /*UnsignedT=*/usize);
 
   /** Converts to its primitive value explicitly. */
-  constexpr inline explicit operator decltype(primitive_value)() noexcept { return primitive_value; }
+  constexpr inline explicit operator decltype(primitive_value)() noexcept {
+    return primitive_value;
+  }
 };
 
 }  // namespace sus::num

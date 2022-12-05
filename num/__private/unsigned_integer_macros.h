@@ -49,6 +49,7 @@ class Tuple;
   _sus__unsigned_constants(T, PrimitiveT);          \
   _sus__unsigned_construct(T, PrimitiveT);          \
   _sus__unsigned_from(T, PrimitiveT);               \
+  _sus__unsigned_to_primitive(T, PrimitiveT);         \
   _sus__unsigned_integer_comparison(T);             \
   _sus__unsigned_unary_ops(T);                      \
   _sus__unsigned_binary_logic_ops(T);               \
@@ -158,6 +159,19 @@ class Tuple;
       ::sus::check(u <= MAX_PRIMITIVE);                                        \
     return T(static_cast<PrimitiveT>(u));                                      \
   }                                                                            \
+  static_assert(true)
+
+#define _sus__unsigned_to_primitive(T, PrimitiveT) \
+  template <UnsignedPrimitiveInteger U>            \
+    requires(sizeof(U) >= sizeof(PrimitiveT))    \
+  constexpr inline explicit operator U() const { \
+    return primitive_value;                      \
+  }                                              \
+  template <SignedPrimitiveInteger U>            \
+    requires(sizeof(U) > sizeof(PrimitiveT))    \
+  constexpr inline explicit operator U() const { \
+    return primitive_value;                      \
+  }                                              \
   static_assert(true)
 
 #define _sus__unsigned_integer_comparison(T)                                  \
@@ -1215,20 +1229,20 @@ class Tuple;
     if (std::is_constant_evaluated()) {                                       \
       auto bytes = Array::with_value(uint8_t{0});                             \
       auto uval = primitive_value;                                            \
-      for (auto i = size_t{0}; i < Bytes; ++i) {                          \
+      for (auto i = size_t{0}; i < Bytes; ++i) {                              \
         const auto last_byte = static_cast<uint8_t>(uval & 0xff);             \
         if (sus::assertions::is_little_endian())                              \
-          bytes[i] = last_byte;                                       \
+          bytes[i] = last_byte;                                               \
         else                                                                  \
-          bytes[Bytes - 1 - i] = last_byte;                       \
+          bytes[Bytes - 1 - i] = last_byte;                                   \
         /* If T is one byte, this shift would be UB. But it's also not needed \
            since the loop will not run again. */                              \
-        if constexpr (Bytes > 1) uval >>= 8u;                             \
+        if constexpr (Bytes > 1) uval >>= 8u;                                 \
       }                                                                       \
       return bytes;                                                           \
     } else {                                                                  \
       auto bytes = Array::with_uninitialized(unsafe_fn);                      \
-      memcpy(bytes.as_mut_ptr(), &primitive_value, Bytes);                \
+      memcpy(bytes.as_mut_ptr(), &primitive_value, Bytes);                    \
       return bytes;                                                           \
     }                                                                         \
   }                                                                           \
@@ -1261,11 +1275,11 @@ class Tuple;
     PrimitiveT val;                                                           \
     if (std::is_constant_evaluated()) {                                       \
       val = 0u;                                                               \
-      for (auto i = size_t{0}; i < Bytes; ++i) {                          \
-        val |= bytes[i].primitive_value << (Bytes - 1 - i);           \
+      for (auto i = size_t{0}; i < Bytes; ++i) {                              \
+        val |= bytes[i].primitive_value << (Bytes - 1 - i);                   \
       }                                                                       \
     } else {                                                                  \
-      memcpy(&val, bytes.as_ptr(), Bytes);                                \
+      memcpy(&val, bytes.as_ptr(), Bytes);                                    \
     }                                                                         \
     return val;                                                               \
   }                                                                           \

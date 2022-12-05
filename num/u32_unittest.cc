@@ -166,6 +166,26 @@ TEST(u32, Constants) {
   EXPECT_EQ(bits, 32u);
 }
 
+template <class From, class To>
+concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
+                                   !std::is_convertible_v<From, To>);
+template <class From, class To>
+concept NotConvertible = (!std::constructible_from<To, From> &&
+                          !std::is_convertible_v<From, To>);
+
+TEST(u32, ToPrimitive) {
+  static_assert(NotConvertible<u32, int8_t>);
+  static_assert(NotConvertible<u32, int16_t>);
+  static_assert(NotConvertible<u32, int32_t>);
+  static_assert(IsExplicitlyConvertible<u32, int64_t>);
+  static_assert(NotConvertible<u32, uint8_t>);
+  static_assert(NotConvertible<u32, uint16_t>);
+  static_assert(IsExplicitlyConvertible<u32, uint32_t>);
+  static_assert(IsExplicitlyConvertible<u32, uint64_t>);
+  static_assert(IsExplicitlyConvertible<u32, size_t>);
+  static_assert(sizeof(u32) <= sizeof(size_t));
+}
+
 TEST(u32, From) {
   static_assert(sus::construct::From<u32, char>);
   static_assert(sus::construct::From<u32, size_t>);
