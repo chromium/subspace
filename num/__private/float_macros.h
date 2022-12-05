@@ -22,8 +22,8 @@
 #include "marker/unsafe.h"
 #include "num/__private/float_ordering.h"
 #include "num/__private/intrinsics.h"
+#include "num/float_concepts.h"
 #include "num/fp_category.h"
-#include "num/integer_concepts.h"
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
 
@@ -134,6 +134,14 @@ class Array;
   constexpr inline void operator=(P v) noexcept {                              \
     primitive_value = v;                                                       \
   }                                                                            \
+  static_assert(true)
+
+#define _sus__float_to_primitive(T, PrimitiveT)  \
+  template <PrimitiveFloat U>                    \
+    requires(sizeof(U) >= sizeof(PrimitiveT))    \
+  constexpr inline explicit operator U() const { \
+    return primitive_value;                      \
+  }                                              \
   static_assert(true)
 
 #define _sus__float_comparison(T)                                              \
@@ -763,6 +771,7 @@ class Array;
   _sus__float_storage(PrimitiveT);                         \
   _sus__float_constants(T, PrimitiveT);                    \
   _sus__float_construct(T, PrimitiveT);                    \
+  _sus__float_to_primitive(T, PrimitiveT);                 \
   _sus__float_comparison(T);                               \
   _sus__float_unary_ops(T);                                \
   _sus__float_binary_ops(T);                               \
