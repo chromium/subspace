@@ -20,11 +20,18 @@ namespace {
 
 using sus::move;
 using sus::mem::Move;
+using sus::mem::move_or_copy_ref;
 
+// clang-format off
 template <class T>
-concept can_move = requires(T &&t) {
-                     { move(t) };
-                   };
+concept can_move = requires(T t) {
+  { move(t) };
+};
+template <class T>
+concept can_move_or_copy_ref = requires(T t) {
+  { move_or_copy_ref(t) };
+};
+// clang-format on
 
 static_assert(can_move<int>);
 static_assert(can_move<int &>);
@@ -32,11 +39,17 @@ static_assert(can_move<int &&>);
 static_assert(!can_move<const int &>);
 static_assert(!can_move<const int &&>);
 
+static_assert(can_move_or_copy_ref<int>);
+static_assert(can_move_or_copy_ref<int &>);
+static_assert(can_move_or_copy_ref<int &&>);
+static_assert(can_move_or_copy_ref<const int &>);
+static_assert(can_move_or_copy_ref<const int &&>);
+
 void bind_rvalue(int &&) {}
 void bind_value(int) {}
 
 TEST(Move, Binds) {
-  int i;
+  int i = 1;
   bind_rvalue(move(i));
   bind_rvalue(move(1));
   bind_value(move(i));
@@ -46,26 +59,26 @@ TEST(Move, Binds) {
 struct MoveOnly {
   MoveOnly() = default;
   MoveOnly(MoveOnly &&) = default;
-  MoveOnly& operator=(MoveOnly &&) = default;
+  MoveOnly &operator=(MoveOnly &&) = default;
 };
 
 struct MoveConsOnly {
   MoveConsOnly() = default;
   MoveConsOnly(MoveConsOnly &&) = default;
-  MoveConsOnly&operator=(MoveConsOnly&&) = delete;
+  MoveConsOnly &operator=(MoveConsOnly &&) = delete;
 };
 
 struct MoveAssignOnly {
   MoveAssignOnly() = default;
-  MoveAssignOnly& operator=(MoveAssignOnly &&) = default;
+  MoveAssignOnly &operator=(MoveAssignOnly &&) = default;
 };
 
 struct MoveConsWithCopy {
   MoveConsWithCopy() = default;
   MoveConsWithCopy(MoveConsWithCopy &&) = default;
-  MoveConsWithCopy& operator=(MoveConsWithCopy&&) = delete;
+  MoveConsWithCopy &operator=(MoveConsWithCopy &&) = delete;
 
-  MoveConsWithCopy& operator=(const MoveConsWithCopy&) = default;
+  MoveConsWithCopy &operator=(const MoveConsWithCopy &) = default;
 };
 
 static_assert(Move<MoveOnly>);
@@ -83,6 +96,21 @@ TEST(Move, MoveOnly) {
   bind_rvalue(move(MoveOnly()));
   bind_value(move(m));
   bind_value(move(MoveOnly()));
+  bind_const(move(m));
+  bind_const(move(MoveOnly()));
+}
+
+TEST(Move, MoveOrCopyRef) {
+  MoveOnly m;
+  bind_rvalue(move_or_copy_ref(m));
+  bind_rvalue(move_or_copy_ref(MoveOnly()));
+  bind_value(move_or_copy_ref(m));
+  bind_value(move_or_copy_ref(MoveOnly()));
+  bind_const(move_or_copy_ref(m));
+  bind_const(move_or_copy_ref(MoveOnly()));
+
+  const MoveOnly &r = m;
+  bind_const(move_or_copy_ref(r));
 }
 
 }  // namespace

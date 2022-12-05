@@ -64,6 +64,18 @@ template <Move T>
   return static_cast<typename std::remove_reference_t<T>&&>(t);
 }
 
+/// Like move(), but if the object being moved is a reference, the reference
+/// will be copied, even if it is const.
+///
+/// A copy of `T` does not occur in either case. Either `T` is moved, or a
+/// reference-to-`T` is copied.
+template <class T>
+  requires(std::is_reference_v<T> || (Move<T> && !std::is_const_v<T>))
+[[nodiscard]] sus_always_inline
+    constexpr auto&& move_or_copy_ref(T&& t) noexcept {
+  return static_cast<typename std::remove_reference_t<T>&&>(t);
+}
+
 }  // namespace sus::mem
 
 namespace sus {
