@@ -141,59 +141,6 @@ TEST(Tuple, GetMut) {
   static_assert(std::same_as<int&, decltype(t3.get_mut<2>())>);
 }
 
-TEST(Tuple, Unwrap) {
-  {
-    auto make = []() { return Tuple<int>::with(2); };
-    EXPECT_EQ(make().unwrap<0>(), 2);
-    static_assert(std::same_as<int&&, decltype(make().unwrap<0>())>);
-  }
-  {
-    auto make = []() { return Tuple<int, float>::with(2, 3.f); };
-    EXPECT_EQ(make().unwrap<0>(), 2);
-    static_assert(std::same_as<int&&, decltype(make().unwrap<0>())>);
-    EXPECT_EQ(make().unwrap<1>(), 3.f);
-    static_assert(std::same_as<float&&, decltype(make().unwrap<1>())>);
-  }
-  {
-    auto make = []() { return Tuple<int, float, int>::with(2, 3.f, 4); };
-    EXPECT_EQ(make().unwrap<0>(), 2);
-    static_assert(std::same_as<int&&, decltype(make().unwrap<0>())>);
-    EXPECT_EQ(make().unwrap<1>(), 3.f);
-    static_assert(std::same_as<float&&, decltype(make().unwrap<1>())>);
-    EXPECT_EQ(make().unwrap<2>(), 4);
-    static_assert(std::same_as<int&&, decltype(make().unwrap<2>())>);
-  }
-
-  static int counter = 0;
-  struct MoveCounter final {
-    MoveCounter() = default;
-    MoveCounter(MoveCounter&&) { counter++; }
-  };
-  auto m = Tuple<MoveCounter>::with(MoveCounter()).unwrap<0>();
-  EXPECT_EQ(counter, 2);  // One move into the Tuple, and one move out.
-
-  [[maybe_unused]] constexpr auto c0 =
-      Tuple<int, float>::with(2, 3.f).unwrap<0>();
-  [[maybe_unused]] constexpr auto c1 =
-      Tuple<int, float>::with(2, 3.f).unwrap<1>();
-}
-
-TEST(TupleDeathTest, Moved) {
-#if GTEST_HAS_DEATH_TEST
-  auto m1 = Tuple<int>::with(1);
-  sus::move(m1).unwrap<0>();
-  EXPECT_DEATH(m1.get_ref<0>(), "");
-
-  auto m2 = Tuple<int>::with(1);
-  sus::move(m2).unwrap<0>();
-  EXPECT_DEATH(m2.get_mut<0>(), "");
-
-  auto m3 = Tuple<int>::with(1);
-  sus::move(m3).unwrap<0>();
-  EXPECT_DEATH(sus::move(m3).unwrap<0>(), "");
-#endif
-}
-
 TEST(Tuple, Eq) {
   EXPECT_EQ(Tuple<int>::with(1), Tuple<int>::with(1));
   EXPECT_NE(Tuple<int>::with(1), Tuple<int>::with(2));
@@ -325,6 +272,18 @@ TEST(Tuple, StructuredBinding) {
             (Tuple<int, float, char>::with(3, 5.f, 'f')));
 }
 
+TEST(Tuple, StructuredBindingMoves) {
+  static usize moves = 0u;
+  struct Moves {
+    Moves() {}
+    Moves(Moves&&) { moves += 1u; }
+  };
+  auto t = Tuple<Moves, Moves, Moves>::with_default();
+  moves = 0u;
+  auto [a, b, c] = sus::move(t);
+  EXPECT_EQ(moves, 3u);
+}
+
 TEST(Tuple, References) {
   i32 i = 1, j = 2;
   auto t = Tuple<i32&, const i32&, i32>::with(i, j, 3);
@@ -335,11 +294,6 @@ TEST(Tuple, References) {
 
   EXPECT_EQ(t.get_mut<0>(), 1);
   static_assert(std::same_as<i32&, decltype(t.get_mut<0>())>);
-
-  static_assert(std::same_as<i32&, decltype(sus::move(t).unwrap<0>())>);
-  static_assert(std::same_as<const i32&, decltype(sus::move(t).unwrap<1>())>);
-  static_assert(std::same_as<i32&&, decltype(sus::move(t).unwrap<2>())>);
-  EXPECT_EQ(std::move(t).unwrap<0>(), 1);
 }
 
 template <class T, size_t I>
