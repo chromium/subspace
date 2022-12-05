@@ -177,6 +177,29 @@ TEST(f32, AssignPrimitive) {
   EXPECT_EQ(a.primitive_value, 1.2f);
 }
 
+template <class From, class To>
+concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
+                                   !std::is_convertible_v<From, To>);
+template <class From, class To>
+concept NotConvertible = (!std::constructible_from<To, From> &&
+                          !std::is_convertible_v<From, To>);
+
+TEST(f32, ToPrimitive) {
+  static_assert(IsExplicitlyConvertible<f32, float>);
+  static_assert(IsExplicitlyConvertible<f32, double>);
+  static_assert(IsExplicitlyConvertible<f32, long double>);
+
+  static_assert(NotConvertible<f32, int8_t>);
+  static_assert(NotConvertible<f32, int16_t>);
+  static_assert(NotConvertible<f32, int32_t>);
+  static_assert(NotConvertible<f32, int64_t>);
+  static_assert(NotConvertible<f32, uint8_t>);
+  static_assert(NotConvertible<f32, uint16_t>);
+  static_assert(NotConvertible<f32, uint32_t>);
+  static_assert(NotConvertible<f32, uint64_t>);
+  static_assert(NotConvertible<f32, size_t>);
+}
+
 TEST(f32, Negate) {
   constexpr auto a = -(0.345_f32);
   EXPECT_EQ(a, f32(-0.345f));
