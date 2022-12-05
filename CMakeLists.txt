@@ -54,6 +54,7 @@ add_library(subspace STATIC
     "iter/sized_iterator.h"
     "macros/always_inline.h"
     "macros/for_each.h"
+    "macros/no_unique_address.h"
     "macros/nonnull.h"
     "macros/remove_parens.h"
     "marker/unsafe.h"

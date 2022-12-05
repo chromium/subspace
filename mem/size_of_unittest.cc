@@ -17,6 +17,7 @@
 #include <type_traits>
 
 #include "macros/compiler.h"
+#include "macros/no_unique_address.h"
 #include "num/types.h"
 #include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
@@ -58,12 +59,12 @@ struct SubNonTrivial : public NonTrivial {
 };
 
 struct HoldNonStandard {
-  [[sus_if_msvc(msvc::) no_unique_address]] NonStandard x;
+  [[sus_no_unique_address]] NonStandard x;
   i32 c;
 };
 
 struct HoldNonTrivial {
-  [[sus_if_msvc(msvc::) no_unique_address]] NonTrivial x;
+  [[sus_no_unique_address]] NonTrivial x;
   i32 c;
 };
 
