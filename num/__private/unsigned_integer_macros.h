@@ -49,7 +49,7 @@ class Tuple;
   _sus__unsigned_constants(T, PrimitiveT);          \
   _sus__unsigned_construct(T, PrimitiveT);          \
   _sus__unsigned_from(T, PrimitiveT);               \
-  _sus__unsigned_to_primitive(T, PrimitiveT);         \
+  _sus__unsigned_to_primitive(T, PrimitiveT);       \
   _sus__unsigned_integer_comparison(T);             \
   _sus__unsigned_unary_ops(T);                      \
   _sus__unsigned_binary_logic_ops(T);               \
@@ -96,11 +96,19 @@ class Tuple;
    */                                                                          \
   constexpr inline T() noexcept = default;                                     \
                                                                                \
-  /** Assignment from the underlying primitive type.                           \
+  /** Construction from unsigned primitive types where no bits are lost.       \
    */                                                                          \
-  template <std::same_as<PrimitiveT> P> /* Prevent implicit conversions. */    \
-  constexpr inline void operator=(P v) noexcept {                              \
+  template <UnsignedPrimitiveInteger P>                                        \
+    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+  constexpr inline T(P v) : primitive_value(v) {}                              \
+                                                                               \
+  /** Assignment from unsigned primitive types where no bits are lost.         \
+   */                                                                          \
+  template <UnsignedPrimitiveInteger P>                                        \
+    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+  constexpr inline T& operator=(P v) noexcept {                                \
     primitive_value = v;                                                       \
+    return *this;                                                              \
   }                                                                            \
   static_assert(true)
 
@@ -163,15 +171,15 @@ class Tuple;
 
 #define _sus__unsigned_to_primitive(T, PrimitiveT) \
   template <UnsignedPrimitiveInteger U>            \
-    requires(sizeof(U) >= sizeof(PrimitiveT))    \
-  constexpr inline explicit operator U() const { \
-    return primitive_value;                      \
-  }                                              \
-  template <SignedPrimitiveInteger U>            \
-    requires(sizeof(U) > sizeof(PrimitiveT))    \
-  constexpr inline explicit operator U() const { \
-    return primitive_value;                      \
-  }                                              \
+    requires(sizeof(U) >= sizeof(PrimitiveT))      \
+  constexpr inline explicit operator U() const {   \
+    return primitive_value;                        \
+  }                                                \
+  template <SignedPrimitiveInteger U>              \
+    requires(sizeof(U) > sizeof(PrimitiveT))       \
+  constexpr inline explicit operator U() const {   \
+    return primitive_value;                        \
+  }                                                \
   static_assert(true)
 
 #define _sus__unsigned_integer_comparison(T)                                  \
