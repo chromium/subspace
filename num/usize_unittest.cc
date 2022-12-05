@@ -34,34 +34,6 @@ static_assert(!std::is_signed_v<decltype(usize::primitive_value)>);
 static_assert(sizeof(decltype(usize::primitive_value)) == sizeof(void*));
 static_assert(sizeof(usize) == sizeof(decltype(usize::primitive_value)));
 
-// `usize` can be implicitly constructed from any unsigned integer.
-static_assert(std::is_convertible_v<uint8_t, usize>);
-static_assert(std::is_convertible_v<uint16_t, usize>);
-static_assert(std::is_convertible_v<uint32_t, usize>);
-static_assert(std::is_convertible_v<uint64_t, usize>);
-static_assert(std::is_convertible_v<size_t, usize>);
-static_assert(!std::is_convertible_v<int8_t, usize>);
-static_assert(!std::is_convertible_v<int16_t, usize>);
-static_assert(!std::is_convertible_v<int32_t, usize>);
-static_assert(!std::is_convertible_v<int64_t, usize>);
-
-TEST(usize, ImplicitConstruct) {
-  {
-    [[maybe_unused]] constexpr usize a = uint8_t{1u};
-    [[maybe_unused]] constexpr usize b = uint16_t{1u};
-    [[maybe_unused]] constexpr usize c = uint32_t{1u};
-    [[maybe_unused]] constexpr usize d = uint64_t{1u};
-    [[maybe_unused]] constexpr usize e = 1u;
-  }
-  {
-    usize a = uint8_t{1u};
-    usize b = uint16_t{1u};
-    usize c = uint32_t{1u};
-    usize d = uint64_t{1u};
-    usize e = 1u;
-  }
-}
-
 namespace behaviour {
 using T = usize;
 using From = decltype(usize::primitive_value);
@@ -207,11 +179,31 @@ TEST(usize, Constants) {
 }
 
 template <class From, class To>
+concept IsImplicitlyConvertible = (std::is_convertible_v<From, To> &&
+                                   std::is_assignable_v<To, From>);
+template <class From, class To>
 concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
-                                   !std::is_convertible_v<From, To>);
+                                   !std::is_convertible_v<From, To> &&
+                                   !std::is_assignable_v<To, From>);
 template <class From, class To>
 concept NotConvertible = (!std::constructible_from<To, From> &&
-                          !std::is_convertible_v<From, To>);
+                          !std::is_convertible_v<From, To> &&
+                          !std::is_assignable_v<To, From>);
+
+TEST(usize, FromPrimitive) {
+  static_assert(NotConvertible<int8_t, usize>);
+  static_assert(NotConvertible<int16_t, usize>);
+  static_assert(NotConvertible<int32_t, usize>);
+  static_assert(NotConvertible<int64_t, usize>);
+  static_assert(IsImplicitlyConvertible<uint8_t, usize>);
+  static_assert(IsImplicitlyConvertible<uint16_t, usize>);
+  static_assert(IsImplicitlyConvertible<uint32_t, usize>);
+  static_assert(sizeof(uint64_t) > sizeof(usize)
+                    ? NotConvertible<uint64_t, usize>
+                    : IsImplicitlyConvertible<uint64_t, usize>);
+  static_assert(IsImplicitlyConvertible<size_t, usize>);
+  static_assert(sizeof(uint32_t) <= sizeof(usize));
+}
 
 TEST(usize, ToPrimitive) {
   static_assert(NotConvertible<usize, int8_t>);

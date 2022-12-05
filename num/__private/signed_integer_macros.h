@@ -91,16 +91,34 @@ class Tuple;
    */                                                                          \
   constexpr inline T() noexcept = default;                                     \
                                                                                \
-  /** Construction from the underlying primitive type.                         \
+  /** Construction from signed primitive types where no bits are lost.         \
    */                                                                          \
-  template <std::same_as<PrimitiveT> P> /* Prevent implicit conversions. */    \
-  constexpr inline T(P val) noexcept : primitive_value(val) {}                 \
+  template <SignedPrimitiveInteger P>                                          \
+    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+  constexpr inline T(P v) : primitive_value(v) {}                              \
                                                                                \
-  /** Assignment from the underlying primitive type.                           \
+  /** Construction from unsigned primitive types where no bits are lost.       \
    */                                                                          \
-  template <std::same_as<PrimitiveT> P> /* Prevent implicit conversions. */    \
-  constexpr inline void operator=(P v) noexcept {                              \
+  template <UnsignedPrimitiveInteger P>                                        \
+    requires(sizeof(P) < sizeof(PrimitiveT))                                   \
+  constexpr inline T(P v) : primitive_value(v) {}                              \
+                                                                               \
+  /** Assignment from signed primitive types where no bits are lost.           \
+   */                                                                          \
+  template <SignedPrimitiveInteger P>                                          \
+    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+  constexpr inline T& operator=(P v) noexcept {                                \
     primitive_value = v;                                                       \
+    return *this;                                                              \
+  }                                                                            \
+                                                                               \
+  /** Assignment from unsigned primitive types where no bits are lost.         \
+   */                                                                          \
+  template <UnsignedPrimitiveInteger P>                                        \
+    requires(sizeof(P) < sizeof(PrimitiveT))                                   \
+  constexpr inline T& operator=(P v) noexcept {                                \
+    primitive_value = v;                                                       \
+    return *this;                                                              \
   }                                                                            \
   static_assert(true)
 
