@@ -33,10 +33,6 @@ namespace sus::tuple {
 /// A Tuple is a finate sequence of one or more heterogeneous values.
 template <class T, class... Ts>
 class Tuple final {
-  template <size_t I>
-  static constexpr bool IsConst =
-      std::is_const_v<std::remove_reference_t<std::tuple_element_t<I, Tuple>>>;
-
  public:
   static constexpr auto protects_uam = SUS_CONFIG_TUPLE_USE_AFTER_MOVE;
 
@@ -73,7 +69,7 @@ class Tuple final {
 
   /// Gets a mutable reference to the `I`th element in the tuple.
   template <size_t I>
-    requires(I <= sizeof...(Ts) && !IsConst<I>)
+    requires(I <= sizeof...(Ts))
   inline auto& get_mut() & noexcept {
     ::sus::check(!moved_from(I));
     return __private::find_storage_mut<I>(storage_).value;
@@ -198,10 +194,11 @@ decltype(auto) get(Tuple<Ts...>&& t) noexcept {
 
 namespace std {
 template <class... Types>
-struct tuple_size<::sus::tuple::Tuple<Types...>>
-    : std::integral_constant<std::size_t, sizeof...(Types)> {};
+struct tuple_size<::sus::tuple::Tuple<Types...>> {
+  static constexpr size_t value = sizeof...(Types);
+};
 
-template <std::size_t I, class T, class... Types>
+template <size_t I, class T, class... Types>
 struct tuple_element<I, ::sus::tuple::Tuple<T, Types...>> {
   using type = tuple_element<I - 1, ::sus::tuple::Tuple<Types...>>::type;
 };

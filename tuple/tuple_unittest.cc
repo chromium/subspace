@@ -296,15 +296,6 @@ TEST(Tuple, References) {
   static_assert(std::same_as<i32&, decltype(t.get_mut<0>())>);
 }
 
-template <class T, size_t I>
-concept HasGetMut = requires(T t) {
-                      { t.template get_mut<I>() };
-                    };
-
-static_assert(HasGetMut<Tuple<i32, i32&, const i32&>, 0>);
-static_assert(HasGetMut<Tuple<i32, i32&, const i32&>, 1>);
-static_assert(!HasGetMut<Tuple<i32, i32&, const i32&>, 2>);
-
 TEST(Tuple, Destroy) {
   static usize destroy = 0u;
   struct S {
