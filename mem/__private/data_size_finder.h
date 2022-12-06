@@ -18,6 +18,7 @@
 #include <type_traits>
 
 #include "macros/compiler.h"
+#include "macros/no_unique_address.h"
 
 namespace sus::mem::__private {
 
@@ -25,7 +26,7 @@ constexpr inline size_t min(size_t a, size_t b) { return a < b ? a : b; }
 
 template <class T, size_t bytes>
 struct NoUnique {
-  [[sus_if_msvc(msvc::)no_unique_address]] T x;
+  [[sus_no_unique_address]] T x;
   char c[bytes];
 };
 
