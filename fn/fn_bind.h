@@ -19,6 +19,7 @@
 #include "fn/callable.h"
 #include "fn/fn_defn.h"
 #include "macros/__private/compiler_bugs.h"
+#include "macros/eval_macro.h"
 #include "macros/for_each.h"
 #include "macros/remove_parens.h"
 #include "marker/unsafe.h"
@@ -249,17 +250,19 @@ struct CheckCallableObjectConst<false> final {
 }  // namespace sus::fn::__private
 
 // Private helper.
-#define _sus__declare_storage(x) \
-  _sus__macro(_sus__declare_storage_impl, sus_remove_parens(x), _sus__bind_noop)
+#define _sus__declare_storage(x)                                   \
+  sus_eval_macro(_sus__declare_storage_impl, sus_remove_parens(x), \
+                 _sus__bind_noop)
 #define _sus__declare_storage_impl(x, modify, ...) \
   x = ::sus::fn::__private::make_storage(modify(x))
-#define _sus__declare_storage_mut(x)                                \
-  _sus__macro(_sus__declare_storage_impl_mut, sus_remove_parens(x), \
-              _sus__bind_noop)
+#define _sus__declare_storage_mut(x)                                   \
+  sus_eval_macro(_sus__declare_storage_impl_mut, sus_remove_parens(x), \
+                 _sus__bind_noop)
 #define _sus__declare_storage_impl_mut(x, modify, ...) \
   x = ::sus::fn::__private::make_storage_mut(modify(x))
-#define _sus__check_storage(x, ...) \
-  _sus__macro(_sus__check_storage_impl, sus_remove_parens(x), _sus__bind_noop)
+#define _sus__check_storage(x, ...)                              \
+  sus_eval_macro(_sus__check_storage_impl, sus_remove_parens(x), \
+                 _sus__bind_noop)
 #define _sus__check_storage_impl(x, modify, ...)                     \
   static_assert(decltype(::sus::fn::__private::is_lvalue(x))::value, \
                 "sus_bind() can only bind to variable names (lvalues).");
@@ -268,7 +271,6 @@ struct CheckCallableObjectConst<false> final {
 #define _sus__bind_move(x) ::sus::move(x)
 #define _sus__bind_pointer(x) \
   ::sus::fn::__private::UnsafePointer(::sus::marker::unsafe_fn, x)
-#define _sus__macro(x, ...) x(__VA_ARGS__)
 
 // Private helper.
 #define _sus__unpack sus_bind_stored_argumnts_should_be_wrapped_in_sus_store
