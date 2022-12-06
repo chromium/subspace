@@ -19,6 +19,7 @@
 
 #include "assertions/check.h"
 #include "construct/make_default.h"
+#include "macros/no_unique_address.h"
 #include "mem/forward.h"
 #include "mem/replace.h"
 #include "num/num_concepts.h"
@@ -31,6 +32,39 @@
 namespace sus::tuple {
 
 /// A Tuple is a finate sequence of one or more heterogeneous values.
+///
+/// # Tail padding
+/// The Tuple's tail padding may be reused when the Tuple is marked as
+/// `[[no_unique_address]]`. The Tuple will have tail padding if the first
+/// type has a size that is not a multiple of the Tuple's alignment. For
+/// example if it's smaller than the alignment, such as `Tuple<u8, u64>` which
+/// has `(alignof(u64) == sizeof(u64)) - sizeof(u8)` or 7 bytes of tail padding.
+///
+/// ```
+/// struct S {
+///   [[no_unique_address]] Tuple<u32, u64> tuple;  // 16 bytes.
+///   u32 val;  // 4 bytes.
+/// };  // 16 bytes, since `val` is stored inside `tuple`.
+/// ```
+///
+/// However note that this behaviour is compiler-dependent, and MSVC does not
+/// use the `[[no_unique_address]]` hint.
+///
+/// Use `sus::data_size_of<T>()` to determine the size of T excluding its tail
+/// padding (so `sus::size_of<T>() - sus::data_size_of<T>()` is the tail
+/// padding), which can be useful to ensure you have the expected behaviour from
+/// your types.
+///
+/// Generally tail padding in Tuple is optimized by ordering types from smallest
+/// to largest for simple types such as integers. Elements in a Tuple are stored
+/// internally in reverse of the order they are specified, which is why the size
+/// of the *first* element matters for tail padding.
+///
+/// # Use after move
+/// Tuples optionally compile in checks against use-after-move to protect
+/// against using their internal values after they are moved. It is on by
+/// default and behind the `SUS_CONFIG_TUPLE_USE_AFTER_MOVE` define which can be
+/// true or false. When on, all Tuples are an extra 8 bytes larger.
 template <class T, class... Ts>
 class Tuple final {
  public:
@@ -173,7 +207,11 @@ class Tuple final {
 #if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
   __private::UseAfterMoveMarker marker;
 #endif
-  Storage storage_;
+  // The use of `[[no_unique_address]]` allows the tail padding of of the
+  // `storage_` to be used in structs that request to do so by putting
+  // `[[no_unique_address]]` on the Tuple. Union does this to put its
+  // tag inside the Tuple storage when possible.
+  [[sus_no_unique_address]] Storage storage_;
 };
 
 // Support for structured binding.
