@@ -79,14 +79,16 @@ struct TupleStorage<T> {
   T value;
 };
 
-template <class T, class T2, class... MoreT>
-struct TupleStorage<T, T2, MoreT...> : TupleStorage<T2, MoreT...> {
-  using Super = TupleStorage<T2, MoreT...>;
+template <class T, class... Ts>
+  requires(sizeof...(Ts) > 0)
+struct TupleStorage<T, Ts...> : TupleStorage<Ts...> {
+  using Super = TupleStorage<Ts...>;
 
-  template <class U, class... MoreU>
-  constexpr inline TupleStorage(U&& value, MoreU&&... more) noexcept
-      : Super(::sus::forward<MoreU>(more)...),
+  template <class U, class... Us>
+  constexpr inline TupleStorage(U&& value, Us&&... more) noexcept
+      : Super(::sus::forward<Us>(more)...),
         value(::sus::forward<U>(value)) {}
+
   T value;
 };
 
