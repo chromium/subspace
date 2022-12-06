@@ -80,5 +80,4 @@ template <class T>
 
 namespace sus {
 using ::sus::mem::move;
-using ::sus::mem::move;
 }  // namespace sus
