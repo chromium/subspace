@@ -90,44 +90,39 @@ struct TupleStorage<T, T2, MoreT...> : TupleStorage<T2, MoreT...> {
   T value;
 };
 
-template <std::size_t I>
-struct in_place_index_t {
-  explicit in_place_index_t() = default;
-};
-
-template <std::size_t I>
-inline constexpr in_place_index_t<I> in_place_index{};
-
 template <size_t I, class S>
 static constexpr const auto& find_storage(const S& storage) {
-  return find_storage(storage, in_place_index<I>);
+  return find_storage(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>
 static constexpr const auto& find_storage(const S& storage,
-                                          in_place_index_t<I>) {
+                                          std::integral_constant<size_t, I>) {
   return find_storage(static_cast<const S::Super&>(storage),
-                      in_place_index<I - 1>);
+                      std::integral_constant<size_t, I - 1>());
 }
 
 template <class S>
-static constexpr const S& find_storage(const S& storage, in_place_index_t<0>) {
+static constexpr const S& find_storage(const S& storage,
+                                       std::integral_constant<size_t, 0>) {
   return storage;
 }
 
 template <size_t I, class S>
 static constexpr auto& find_storage_mut(S& storage) {
-  return find_storage_mut(storage, in_place_index<I>);
+  return find_storage_mut(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>
-static constexpr auto& find_storage_mut(S& storage, in_place_index_t<I>) {
+static constexpr auto& find_storage_mut(S& storage,
+                                        std::integral_constant<size_t, I>) {
   return find_storage_mut(static_cast<S::Super&>(storage),
-                          in_place_index<I - 1>);
+                          std::integral_constant<size_t, I - 1>());
 }
 
 template <class S>
-static constexpr S& find_storage_mut(S& storage, in_place_index_t<0>) {
+static constexpr S& find_storage_mut(S& storage,
+                                     std::integral_constant<size_t, 0>) {
   return storage;
 }
 
