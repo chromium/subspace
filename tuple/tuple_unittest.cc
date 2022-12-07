@@ -35,6 +35,17 @@ static_assert(sus::mem::Copy<Tuple<i32>>);
 static_assert(sus::mem::Clone<Tuple<i32>>);
 static_assert(sus::mem::Move<Tuple<i32>>);
 
+struct Cloneable {
+  Cloneable();
+  Cloneable(Cloneable&&);
+  void operator=(Cloneable&&);
+  Cloneable clone() const;
+};
+
+static_assert(!sus::mem::Copy<Tuple<Cloneable>>);
+static_assert(sus::mem::Clone<Tuple<Cloneable>>);
+static_assert(sus::mem::Move<Tuple<Cloneable>>);
+
 static_assert(
     std::same_as<i32, std::tuple_element_t<0, Tuple<i32, i32&, const i32&>>>);
 static_assert(
@@ -81,6 +92,34 @@ TEST(Tuple, With) {
   auto t3 = Tuple<int, float, int>::with(2, 3.f, 4);
 
   [[maybe_unused]] constexpr auto c = Tuple<int, float>::with(2, 3.f);
+}
+
+TEST(Tuple, Copy) {
+  auto t1 = Tuple<int>::with(2);
+  auto t2 = t1;
+  EXPECT_EQ(t1, t2);
+}
+
+TEST(Tuple, CloneCopy) {
+  auto t1 = Tuple<int>::with(2);
+  auto t2 = ::sus::clone(t1);
+  EXPECT_EQ(t1, t2);
+}
+
+TEST(Tuple, Clone) {
+  struct Cloneable {
+    Cloneable(i32 i) : i(i) {}
+    Cloneable(Cloneable&&) = default;
+    Cloneable& operator=(Cloneable&&) = default;
+
+    Cloneable clone() const { return Cloneable(i + 1_i32); }
+
+    i32 i = 2_i32;
+  };
+
+  auto t1 = Tuple<Cloneable>::with(2_i32);
+  auto t2 = ::sus::clone(t1);
+  EXPECT_EQ(t1.get_ref<0>().i + 1_i32, t2.get_ref<0>().i);
 }
 
 TEST(TupleDeathTest, Move) {

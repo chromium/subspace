@@ -20,6 +20,8 @@
 #include "assertions/check.h"
 #include "construct/make_default.h"
 #include "macros/no_unique_address.h"
+#include "mem/clone.h"
+#include "mem/copy.h"
 #include "mem/forward.h"
 #include "mem/replace.h"
 #include "num/num_concepts.h"
@@ -109,6 +111,16 @@ class Tuple final {
     return __private::find_storage_mut<I>(storage_).value;
   }
 
+  constexpr Tuple clone() const& noexcept
+    requires((::sus::mem::Clone<T> && ... && ::sus::mem::Clone<Ts>) &&
+             (!::sus::mem::Copy<T> || ... || !::sus::mem::Copy<Ts>))
+  {
+    auto f = [this]<size_t... Is>(std::index_sequence<Is...>) {
+      return Tuple::with(::sus::clone(get_ref<Is>())...);
+    };
+    return f(std::make_index_sequence<1u + sizeof...(Ts)>());
+  }
+
   /// sus::ops::Eq<Tuple<U...>> trait.
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
@@ -183,23 +195,6 @@ class Tuple final {
     return marker.moved_from(i);
 #else
     (void)i;
-    return false;
-#endif
-  }
-  // Sets one element as moved from and returns it was already moved from.
-  constexpr inline bool set_moved_from(size_t i) & noexcept {
-#if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
-    return marker.set_moved_from(i);
-#else
-    (void)i;
-    return false;
-#endif
-  }
-  // Sets all elements as moved from and returns if any were already moved from.
-  constexpr inline bool set_all_moved_from() & noexcept {
-#if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
-    return marker.set_all_moved_from();
-#else
     return false;
 #endif
   }
