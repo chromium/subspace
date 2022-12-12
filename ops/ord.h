@@ -78,8 +78,7 @@ concept ExclusiveWeakOrd = (!Ord<T, U> && WeakOrd<T, U>);
 /// `std::partial_ordering`), and that this is the strongest ordering that
 /// exists between the types.
 template <class T, class U>
-concept ExclusivePartialOrd = (!Ord<T, U> && !WeakOrd<T, U> &&
-                               PartialOrd<T, U>);
+concept ExclusivePartialOrd = (!WeakOrd<T, U> && PartialOrd<T, U>);
 
 /// Compares and returns the minimum of two values.
 ///
