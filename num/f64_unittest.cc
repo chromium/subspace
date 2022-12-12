@@ -64,7 +64,7 @@ TEST(f64, Traits) {
   static_assert(!(1_f64 == 2_f64));
   static_assert(1_f64 != 2_f64);
   static_assert(!(1_f64 != 1_f64));
-  static_assert(f64::TODO_NAN() != f64::TODO_NAN());
+  EXPECT_NE(f64::TODO_NAN(), f64::TODO_NAN());
 
   // Verify constexpr.
   constexpr f64 c = 1_f64 + 2_f64 - 3_f64 * 4_f64 / 5_f64 % 6_f64;
@@ -879,7 +879,7 @@ TEST(f64, Classify) {
       FpCategory::Subnormal);
   EXPECT_EQ((123_f64).classify(), FpCategory::Normal);
 
-  constexpr auto a = f64::TODO_NAN().classify();
+  auto a = f64::TODO_NAN().classify();
   EXPECT_EQ(a, FpCategory::Nan);
   constexpr auto b = f64::TODO_INFINITY().classify();
   EXPECT_EQ(b, FpCategory::Infinite);

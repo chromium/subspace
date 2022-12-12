@@ -69,7 +69,7 @@ TEST(f32, Traits) {
   static_assert(!(1_f32 == 2_f32));
   static_assert(1_f32 != 2_f32);
   static_assert(!(1_f32 != 1_f32));
-  static_assert(f32::TODO_NAN() != f32::TODO_NAN());
+  EXPECT_NE(f32::TODO_NAN(), f32::TODO_NAN());
 
   // Verify constexpr.
   constexpr f32 c = 1_f32 + 2_f32 - 3_f32 * 4_f32 / 5_f32 % 6_f32;
@@ -110,13 +110,6 @@ TEST(f32, Consts) {
   EXPECT_GT(f32::TODO_INFINITY(), 0_f32);
   EXPECT_TRUE(::isinf(f32::NEG_INFINITY().primitive_value));
   EXPECT_LT(f32::NEG_INFINITY(), 0_f32);
-
-  // Verify NaN in a constexpr context is the same as in a non-constexpr
-  // context.
-  constexpr auto n1 = f32::TODO_NAN().primitive_value;
-  const auto n2 = f32::TODO_NAN().primitive_value;
-  EXPECT_EQ(sus::num::__private::into_unsigned_integer(n1),
-            sus::num::__private::into_unsigned_integer(n2));
 
   EXPECT_EQ(f32::consts::E(), 2.71828182845904523536028747135266250_f32);
   EXPECT_EQ(f32::consts::FRAC_1_PI(),
@@ -887,7 +880,7 @@ TEST(f32, Classify) {
       FpCategory::Subnormal);
   EXPECT_EQ((123_f32).classify(), FpCategory::Normal);
 
-  constexpr auto a = f32::TODO_NAN().classify();
+  auto a = f32::TODO_NAN().classify();
   EXPECT_EQ(a, FpCategory::Nan);
   constexpr auto b = f32::TODO_INFINITY().classify();
   EXPECT_EQ(b, FpCategory::Infinite);

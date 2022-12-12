@@ -100,10 +100,11 @@ class Array;
    * isn't guaranteed to equal to any specific NaN bitpattern, and the         \
    * stability of its representation over Subspace versions and target         \
    * platforms isn't guaranteed.                                               \
+   *                                                                           \
+   * This method is not constexpr because the value can differ in a constexpr  \
+   * evaluation context from a runtime context, leading to bugs.                \
    */                                                                          \
-  static constexpr T TODO_NAN() noexcept {                                     \
-    return __private::nan<PrimitiveT>();                                       \
-  }                                                                            \
+  static T TODO_NAN() noexcept { return __private::nan<PrimitiveT>(); }        \
   /** Infinity. */                                                             \
   static constexpr T TODO_INFINITY() noexcept {                                \
     return __private::infinity<PrimitiveT>();                                  \
