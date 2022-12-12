@@ -276,8 +276,8 @@ TEST(Array, StrongOrder) {
 }
 
 struct Weak final {
-  auto operator==(Weak const& o) const& { return a == o.a && b == o.b; }
-  auto operator<=>(Weak const& o) const& {
+  auto operator==(const Weak& o) const& { return a == o.a && b == o.b; }
+  auto operator<=>(const Weak& o) const& {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
     return std::weak_ordering::greater;

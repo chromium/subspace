@@ -1,3 +1,4 @@
+#include <iostream>
 // Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "union/union.h"
-
 #include <variant>
 
 #include "macros/__private/compiler_bugs.h"
 #include "num/types.h"
 #include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
+#include "union/union.h"
 
 namespace {
 
@@ -145,8 +145,20 @@ TEST(Union, Clone) {
 }
 
 TEST(Union, Eq) {
-  auto u1 = Union<sus_value_types((Order::First, u32),
-                                  (Order::Second, u8))>::with<Order::First>(4u);
+  struct NotEq {};
+  constexpr static NotEq not_eq_v;
+  static_assert(!sus::ops::Eq<NotEq>);
+
+  static_assert(
+      sus::ops::Eq<Union<sus_value_types((1_i32, i32), (2_i32, i32))>>);
+  static_assert(!sus::ops::Eq<Union<sus_value_types((1, NotEq), (2, NotEq))>>);
+  static_assert(
+      !sus::ops::Eq<Union<sus_value_types((not_eq_v, i32), (not_eq_v, i32))>>);
+
+  using OrderUnion =
+      Union<sus_value_types((Order::First, u32), (Order::Second, u8))>;
+
+  auto u1 = OrderUnion::with<Order::First>(4u);
   EXPECT_EQ(u1, u1);
   auto u2 = Union<sus_value_types(
       (Order::First, u32), (Order::Second, u8))>::with<Order::Second>(4_u8);
@@ -160,8 +172,135 @@ TEST(Union, Eq) {
   EXPECT_EQ(u1, u2);
 }
 
+TEST(Union, Ord) {
+  using OrderUnion =
+      Union<sus_value_types((Order::First, u32), (Order::Second, u8))>;
+  auto u1 = OrderUnion::with<Order::First>(4u);
+  auto u2 = OrderUnion::with<Order::First>(5u);
+  EXPECT_EQ(u1, u1);
+  EXPECT_LT(u1, u2);
+  auto u3 = OrderUnion::with<Order::Second>(4_u8);
+  EXPECT_LT(u1, u3);
+}
+
+TEST(Union, StrongOrder) {
+  using OrderUnion =
+      Union<sus_value_types((Order::First, u32), (Order::Second, u8))>;
+  using RevOrderUnion =
+      Union<sus_value_types((Order::Second, u8), (Order::First, u32))>;
+
+  auto u1 = OrderUnion::with<Order::First>(4u);
+  // Same enum value and inner value.
+  EXPECT_EQ(std::strong_order(u1, u1), std::strong_ordering::equivalent);
+  auto u2 = OrderUnion::with<Order::First>(5u);
+  // Same enum value and different inner value.
+  EXPECT_EQ(std::strong_order(u1, u2), std::strong_ordering::less);
+
+  // Different enum value, compare the enum values.
+  auto u3 = OrderUnion::with<Order::Second>(1_u8);
+  EXPECT_EQ(std::strong_order(u1, u3), std::strong_ordering::less);
+
+  // The higher enum value comes first. Different enum values, the enum values
+  // are compared (as opposed to the position of the enum value in the union
+  // defn).
+  auto r1 = RevOrderUnion::with<Order::First>(1_u32);
+  auto r2 = RevOrderUnion::with<Order::Second>(1_u8);
+  EXPECT_EQ(std::strong_order(r1, r2), std::strong_ordering::less);
+}
+
+struct Weak {
+  constexpr auto operator==(const Weak& o) const& {
+    return a == o.a && b == o.b;
+  }
+  constexpr auto operator<=>(const Weak& o) const& {
+    if (a == o.a) return std::weak_ordering::equivalent;
+    if (a < o.a) return std::weak_ordering::less;
+    return std::weak_ordering::greater;
+  }
+
+  constexpr Weak(i32 a, i32 b) : a(a), b(b) {}
+  i32 a;
+  i32 b;
+};
+
+TEST(Union, WeakOrder) {
+  using UnionWeak =
+      Union<sus_value_types((Order::First, Weak), (Order::Second, Weak))>;
+  static_assert(!sus::ops::Ord<UnionWeak>);
+  static_assert(sus::ops::WeakOrd<UnionWeak>);
+
+  // Same enum value and inner value.
+  auto u1 = UnionWeak::with<Order::First>(Weak(1, 1));
+  EXPECT_EQ(std::weak_order(u1, u1), std::weak_ordering::equivalent);
+
+  // Different inner values, but weak equivalence.
+  auto u2 = UnionWeak::with<Order::First>(Weak(1, 2));
+  EXPECT_EQ(std::weak_order(u1, u2), std::weak_ordering::equivalent);
+
+  // Different inner values.
+  auto u3 = UnionWeak::with<Order::First>(Weak(2, 1));
+  EXPECT_EQ(std::weak_order(u1, u3), std::weak_ordering::less);
+
+  // Weak order tags, the requirement is that they are Eq.
+  constexpr Weak a(1, 2);
+  constexpr Weak b(2, 3);
+  static_assert(::sus::ops::Eq<Weak>);
+  EXPECT_EQ(
+      (std::weak_order(Union<sus_value_types((a, i32), (b, i32))>::with<a>(1),
+                       Union<sus_value_types((a, i32), (b, i32))>::with<b>(2))),
+      std::weak_ordering::less);
+}
+
+TEST(Union, PartialOrder) {
+  using UnionFloatFloat =
+      Union<sus_value_types((Order::First, f32), (Order::Second, i32))>;
+
+  // Different values.
+  auto u1 = UnionFloatFloat::with<Order::First>(1.f);
+  auto u2 = UnionFloatFloat::with<Order::First>(2.f);
+  EXPECT_EQ(std::partial_order(u1, u2), std::partial_ordering::less);
+
+  // NaN is unordered.
+  auto u3 = UnionFloatFloat::with<Order::First>(f32::TODO_NAN());
+  EXPECT_EQ(std::partial_order(u1, u3), std::partial_ordering::unordered);
+
+  // 0 == -0.
+  EXPECT_EQ((std::partial_order(UnionFloatFloat::with<Order::First>(0.f),
+                                UnionFloatFloat::with<Order::First>(-0.f))),
+            std::partial_ordering::equivalent);
+
+  // Different tags.
+  EXPECT_EQ((std::partial_order(UnionFloatFloat::with<Order::First>(0.f),
+                                UnionFloatFloat::with<Order::Second>(3_i32))),
+            std::partial_ordering::less);
+
+  // Partial order tags, the requirement is that they are Eq.
+  constexpr f32 a = 0.f;
+  constexpr f32 b = 1.f;
+  static_assert(::sus::ops::Eq<f32>);
+  EXPECT_EQ((std::partial_order(
+                Union<sus_value_types((a, i32), (b, i32))>::with<a>(1),
+                Union<sus_value_types((a, i32), (b, i32))>::with<b>(2))),
+            std::partial_ordering::less);
+}
+
+struct NotCmp {};
+static_assert(!sus::ops::PartialOrd<NotCmp>);
+
+static_assert(::sus::ops::Ord<Union<sus_value_types((1, int))>,
+                              Union<sus_value_types((1, int))>>);
+static_assert(!::sus::ops::Ord<Union<sus_value_types((1, Weak))>,
+                               Union<sus_value_types((1, Weak))>>);
+static_assert(::sus::ops::WeakOrd<Union<sus_value_types((1, Weak))>,
+                                  Union<sus_value_types((1, Weak))>>);
+static_assert(!::sus::ops::WeakOrd<Union<sus_value_types((1, float))>,
+                                   Union<sus_value_types((1, float))>>);
+static_assert(::sus::ops::PartialOrd<Union<sus_value_types((1, float))>,
+                                     Union<sus_value_types((1, float))>>);
+static_assert(!::sus::ops::PartialOrd<Union<sus_value_types((1, NotCmp))>,
+                                      Union<sus_value_types((1, NotCmp))>>);
+
 // TODO: Test cloneable tag.
 // TODO: Test moveonly tag.
-// TODO: Test different but comparable tag for Eq.
 
 }  // namespace
