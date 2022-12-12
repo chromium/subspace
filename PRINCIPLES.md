@@ -112,9 +112,9 @@ This library is an experiment and not intended for use. See the
       transferred to the inner type, i.e. a const ref<T> can be copied or moved
       to a non-const ref<T>.
 1. Class members which have tail padding, or can have based on templates, should
-   be marked as [[sus_no_unique_address]]. However avoid marking methods that
-   are user-provided types, as this could conceivable cause bugs in clients. For
-   example: `sus::Tuple::storage_`.
+   be marked as [[sus_no_unique_address]]. However avoid causing user-provided
+   types to overlap each other, as this could conceivably cause bugs in clients.
+   For example: `sus::Tuple::storage_`.
 1. Bounds are always checked unless you explicitly ask for them to not be.
 1. Lifetimes are always checked unless you explicitly ask for them to not be.
 1. Small headers. C++ compilation speed is proportional to the amount of input.

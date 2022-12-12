@@ -97,6 +97,7 @@ add_library(subspace STATIC
     "ops/eq.h"
     "ops/ord.h"
     "result/__private/is_result_type.h"
+    "result/__private/storage.h"
     "result/result.h"
     "tuple/__private/storage.h"
     "tuple/tuple.h"

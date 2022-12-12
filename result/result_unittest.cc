@@ -27,6 +27,15 @@ namespace {
 
 using sus::result::Result;
 
+struct TailPadding {
+  i64 i;
+  i32 j;
+  // 4 bytes of tail padding, which the Result can use for its own state.
+};
+// MSVC doesn't take advantage of `[[no_unique_address]]`.
+static_assert(sizeof(Result<i32, TailPadding>) ==
+              sizeof(TailPadding) + sus_if_msvc_else(8, 0));
+
 struct Error {};
 
 TEST(Result, With) {
