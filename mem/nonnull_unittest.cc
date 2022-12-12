@@ -15,6 +15,7 @@
 #include "mem/nonnull.h"
 
 #include "construct/into.h"
+#include "macros/__private/compiler_bugs.h"
 #include "mem/forward.h"
 #include "mem/relocate.h"
 #include "num/types.h"
@@ -259,7 +260,8 @@ TEST(NonNull, Eq) {
 TEST(NonNull, Ord) {
   struct NotCmp {};
   static_assert(sus::ops::Ord<NonNull<int>>);
-  static_assert(!sus::ops::Ord<NonNull<int>, NonNull<NotCmp>>);
+  sus_gcc_bug_107542_else(
+      static_assert(!sus::ops::Ord<NonNull<int>, NonNull<NotCmp>>));
 
   int a[] = {1, 2};
   EXPECT_LE(NonNull<int>::with(a[0]), NonNull<int>::with(a[0]));
