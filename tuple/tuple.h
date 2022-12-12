@@ -57,10 +57,16 @@ namespace sus::tuple {
 /// padding), which can be useful to ensure you have the expected behaviour from
 /// your types.
 ///
-/// Generally tail padding in Tuple is optimized by ordering types from smallest
-/// to largest for simple types such as integers. Elements in a Tuple are stored
-/// internally in reverse of the order they are specified, which is why the size
-/// of the *first* element matters for tail padding.
+/// Additionally types within the tuple may be placed inside the tail padding of
+/// other types in the tuple, should such padding exist.
+///
+/// Generally, but not always, use of tail padding in Tuple is optimized by
+/// ordering types (left-to-right in the template variables) from smallest-to-
+/// largest for simple types such as integers (which have no tail padding
+/// themselves), or in least-to-most tail-padding for more complex types.
+/// Elements in a Tuple are stored internally in reverse of the order they are
+/// specified, which is why the size of the *first* element matters for the
+/// Tuple's externally usable tail padding.
 ///
 /// # Use after move
 /// Tuples optionally compile in checks against use-after-move to protect
@@ -204,8 +210,8 @@ class Tuple final {
 #endif
   // The use of `[[no_unique_address]]` allows the tail padding of of the
   // `storage_` to be used in structs that request to do so by putting
-  // `[[no_unique_address]]` on the Tuple. Union does this to put its
-  // tag inside the Tuple storage when possible.
+  // `[[no_unique_address]]` on the Tuple. For example, Union does this with its
+  // internal Tuples to put its tag inside the Tuples' storage when possible.
   [[sus_no_unique_address]] Storage storage_;
 };
 

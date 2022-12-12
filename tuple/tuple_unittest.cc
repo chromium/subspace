@@ -58,33 +58,66 @@ static_assert(
 // bytes.
 inline constexpr size_t UamBytes = Tuple<i32>::protects_uam ? 8 : 0;
 
-// Tuple packs stuff efficiently (except in MSVC). However sus::Tuple has extra
-// space taken right now by the use-after-move flags. If we could borrow check
-// at compile time then we could drop use-after-move checking.
-using PackedTuple = Tuple<i8, i32, i64>;
-static_assert(sizeof(PackedTuple) ==
-              (sizeof(i64) * sus_if_msvc_else(3u, 2u)) + UamBytes);
+TEST(Tuple, TailPadding) {
+  // Tuple packs stuff efficiently (except in MSVC). However sus::Tuple has
+  // extra space taken right now by the use-after-move flags. If we could borrow
+  // check at compile time then we could drop use-after-move checking.
+  using PackedTuple = Tuple<i8, i32, i64>;
+  static_assert(sizeof(PackedTuple) ==
+                (sizeof(i64) * sus_if_msvc_else(3u, 2u)) + UamBytes);
 
-// The std::tuple doesn't have use-after-move checks.
-using PackedStdTuple = std::tuple<i32, i8, i64>;
-static_assert(sizeof(PackedStdTuple) == sizeof(i64) * sus_if_msvc_else(3u, 2u));
+  // The std::tuple doesn't have use-after-move checks.
+  using PackedStdTuple = std::tuple<i32, i8, i64>;
+  static_assert(sizeof(PackedStdTuple) ==
+                sizeof(i64) * sus_if_msvc_else(3u, 2u));
 
-// The Tuple type, if it has tail padding, allows types to make use of that tail
-// padding.
-struct WithTuple {
-  [[sus_no_unique_address]] PackedTuple t;
-  char c;  // Is stored in the padding of `t` (except on MSVC).
-};
-static_assert(sizeof(WithTuple) == sizeof(std::declval<WithTuple&>().t) +
-                                       sus_if_msvc_else(sizeof(i64), 0));
+  // Tuple packs stuff inside each inner type's tail padding as well (except in
+  // MSVC).
+  struct TailPadding {
+    u64 i;
 
-// The example from the Tuple docs.
-struct ExampleFromDocs {
-  [[sus_no_unique_address]] Tuple<u32, u64> tuple;  // 16 bytes.
-  u32 val;                                          // 4 bytes.
-};  // 16 bytes, since `val` is stored inside `tuple`.
-static_assert(sizeof(ExampleFromDocs) ==
-              (16 + UamBytes) + sus_if_msvc_else(8, 0));
+   private:  // Not standard-layout so can use the tail padding.
+    u32 j;
+  };
+  using PackedTupleMore = Tuple<i8, TailPadding>;
+  static_assert(sizeof(PackedTupleMore) ==
+                (sizeof(u64) * sus_if_msvc_else(3u, 2u)) + UamBytes);
+
+  // Test the same (tuple packing inside inner types' tail padding) with more
+  // than one type collapsing (except in MSVC).
+  struct TailPaddingLarge {
+    u64 i;
+
+   private:  // Not standard-layout so can use the tail padding.
+    u8 j;
+  };
+  struct TailPaddingSmall {
+    u16 i;
+
+   private:  // Not standard-layout so can use the tail padding.
+    u8 j;
+  };
+  using PackedTupleTwiceMore = Tuple<i8, TailPaddingSmall, TailPaddingLarge>;
+  static_assert(sizeof(PackedTupleTwiceMore) ==
+                (sizeof(i64) * sus_if_msvc_else(4u, 2u)) + UamBytes);
+
+  // The Tuple type, if it has tail padding, allows types to make use of that
+  // tail padding.
+  struct WithTuple {
+    [[sus_no_unique_address]] PackedTuple t;
+    char c;  // Is stored in the padding of `t` (except on MSVC).
+  };
+  static_assert(sizeof(WithTuple) == sizeof(std::declval<WithTuple&>().t) +
+                                         sus_if_msvc_else(sizeof(i64), 0));
+
+  // The example from the Tuple docs.
+  struct ExampleFromDocs {
+    [[sus_no_unique_address]] Tuple<u32, u64> tuple;  // 16 bytes.
+    u32 val;                                          // 4 bytes.
+  };  // 16 bytes, since `val` is stored inside `tuple`.
+  static_assert(sizeof(ExampleFromDocs) ==
+                (16 + UamBytes) + sus_if_msvc_else(8, 0));
+}
 
 TEST(Tuple, With) {
   auto t1 = Tuple<int>::with(2);
