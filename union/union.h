@@ -106,7 +106,7 @@ struct CheckUnique<V, V2, Vs...> {
 };
 
 template <auto... Vs>
-static constexpr bool AllValuesAreUnique = CheckUnique<Vs...>::value;
+concept AllValuesAreUnique = CheckUnique<Vs...>::value;
 
 template <class T, class... Ts>
 struct ValuesTypeHelper {
@@ -118,24 +118,101 @@ struct ValuesTypeHelper {
 template <class... Ts>
 using ValuesType = typename ValuesTypeHelper<Ts...>::type;
 
-template <class Ts, class Us>
-struct AllEqHelper;
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+struct UnionIsEqHelper;
 
-template <class T, class... Ts, class U, class... Us>
-  requires(sizeof...(Ts) > 0)
-struct AllEqHelper<TypeList<T, Ts...>, TypeList<U, Us...>> {
+template <class ValueType1, class... Types1, class ValueType2, class... Types2>
+struct UnionIsEqHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                       TypeList<Types2...>> {
+  static constexpr bool value = (::sus::ops::Eq<ValueType1, ValueType2> &&
+                                 ... && ::sus::ops::Eq<Types1, Types2>);
+};
+
+// Out of line from the requires clause, in a struct, to work around
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+concept UnionIsEq =
+    UnionIsEqHelper<ValueType1, Types1, ValueType2, Types2>::value;
+
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+struct UnionIsOrdHelper;
+
+template <class ValueType1, class... Types1, class ValueType2, class... Types2>
+struct UnionIsOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                        TypeList<Types2...>> {
+  static constexpr bool value = (::sus::ops::Ord<ValueType1, ValueType2> &&
+                                 ... && ::sus::ops::Ord<Types1, Types2>);
+};
+
+// Out of line from the requires clause, in a struct, to work around
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+concept UnionIsOrd =
+    UnionIsOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+struct UnionIsWeakOrdHelper;
+
+template <class ValueType1, class... Types1, class ValueType2, class... Types2>
+struct UnionIsWeakOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                            TypeList<Types2...>> {
+  // clang-format off
   static constexpr bool value =
-      ::sus::ops::Eq<T, U> &&
-      AllEqHelper<TypeList<Ts...>, TypeList<Us...>>::value;
+      ((!::sus::ops::Ord<ValueType1, ValueType2> || ... ||
+        !::sus::ops::Ord<Types1, Types2>)
+        &&
+       (::sus::ops::WeakOrd<ValueType1, ValueType2> && ... &&
+        ::sus::ops::WeakOrd<Types1, Types2>));
+  // clang-format on
 };
 
-template <class T, class U>
-struct AllEqHelper<TypeList<T>, TypeList<U>> {
-  static constexpr bool value = ::sus::ops::Eq<T, U>;
+// Out of line from the requires clause, in a struct, to work around
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+concept UnionIsWeakOrd =
+    UnionIsWeakOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+struct UnionIsPartialOrdHelper;
+
+template <class ValueType1, class... Types1, class ValueType2, class... Types2>
+struct UnionIsPartialOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                               TypeList<Types2...>> {
+  // clang-format off
+  static constexpr bool value =
+      (!::sus::ops::WeakOrd<ValueType1, ValueType2> || ... ||
+       !::sus::ops::WeakOrd<Types1, Types2>)
+      &&
+      (::sus::ops::PartialOrd<ValueType1, ValueType2> && ... &&
+       ::sus::ops::PartialOrd<Types1, Types2>);
+  // clang-format on
 };
 
-template <class Ts, class Us>
-concept AllEq = AllEqHelper<Ts, Us>::value;
+// Out of line from the requires clause, in a struct, to work around
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+concept UnionIsPartialOrd =
+    UnionIsPartialOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+struct UnionIsAnyOrdHelper;
+
+template <class ValueType1, class... Types1, class ValueType2, class... Types2>
+struct UnionIsAnyOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                           TypeList<Types2...>> {
+  // clang-format off
+  static constexpr bool value =
+      (::sus::ops::PartialOrd<ValueType1, ValueType2> && ... &&
+       ::sus::ops::PartialOrd<Types1, Types2>);
+  // clang-format on
+};
+
+// Out of line from the requires clause, in a struct, to work around
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
+template <class ValueType1, class Types1, class ValueType2, class Types2>
+concept UnionIsAnyOrd =
+    UnionIsAnyOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+
 template <class... Ts>
 concept AllMove = (... && ::sus::mem::Move<Ts>);
 template <class... Ts>
@@ -222,6 +299,30 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
       return more_.eq(tag, other.more_);
     }
   }
+  inline constexpr std::strong_ordering ord(auto tag,
+                                            const Storage& other) const& {
+    if (tag == I) {
+      return std::strong_order(tuple_, other.tuple_);
+    } else {
+      return more_.ord(tag, other.more_);
+    }
+  }
+  inline constexpr std::weak_ordering weak_ord(auto tag,
+                                               const Storage& other) const& {
+    if (tag == I) {
+      return std::weak_order(tuple_, other.tuple_);
+    } else {
+      return more_.weak_ord(tag, other.more_);
+    }
+  }
+  inline constexpr std::partial_ordering partial_ord(
+      auto tag, const Storage& other) const& {
+    if (tag == I) {
+      return std::partial_order(tuple_, other.tuple_);
+    } else {
+      return more_.partial_ord(tag, other.more_);
+    }
+  }
 
   constexpr auto get_ref() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
@@ -260,7 +361,9 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
   inline void construct(T&& value) {
     new (&tuple_) Type(Type::with(::sus::move(value)));
   }
-  inline constexpr void set(T&& value) { tuple_ = Type::with(::sus::move(value)); }
+  inline constexpr void set(T&& value) {
+    tuple_ = Type::with(::sus::move(value));
+  }
   inline void move_construct(auto tag, Storage&& from) {
     if (tag == I) {
       new (&tuple_) Type(::sus::move(from.tuple_));
@@ -309,6 +412,27 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
       return tuple_ == other.tuple_;
     } else {
       return more_.eq(tag, other.more_);
+    }
+  }
+  inline constexpr auto ord(auto tag, const Storage& other) const& {
+    if (tag == I) {
+      return std::strong_order(tuple_, other.tuple_);
+    } else {
+      return more_.ord(tag, other.more_);
+    }
+  }
+  inline constexpr auto weak_ord(auto tag, const Storage& other) const& {
+    if (tag == I) {
+      return std::weak_order(tuple_, other.tuple_);
+    } else {
+      return more_.weak_ord(tag, other.more_);
+    }
+  }
+  inline constexpr auto partial_ord(auto tag, const Storage& other) const& {
+    if (tag == I) {
+      return std::partial_order(tuple_, other.tuple_);
+    } else {
+      return more_.partial_ord(tag, other.more_);
     }
   }
 
@@ -375,6 +499,18 @@ union Storage<I, ::sus::Tuple<Ts...>> {
     ::sus::check(tag == I);
     return tuple_ == other.tuple_;
   }
+  inline constexpr auto ord(auto tag, const Storage& other) const& {
+    ::sus::check(tag == I);
+    return std::strong_order(tuple_, other.tuple_);
+  }
+  inline constexpr auto weak_ord(auto tag, const Storage& other) const& {
+    ::sus::check(tag == I);
+    return std::weak_order(tuple_, other.tuple_);
+  }
+  inline constexpr auto partial_ord(auto tag, const Storage& other) const& {
+    ::sus::check(tag == I);
+    return std::partial_order(tuple_, other.tuple_);
+  }
 
   constexpr auto get_ref() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
@@ -410,7 +546,9 @@ union Storage<I, ::sus::Tuple<T>> {
   inline void construct(T&& value) {
     new (&tuple_)::sus::Tuple<T>(::sus::Tuple<T>::with(::sus::move(value)));
   }
-  inline constexpr void set(T&& value) { tuple_ = Type::with(::sus::move(value)); }
+  inline constexpr void set(T&& value) {
+    tuple_ = Type::with(::sus::move(value));
+  }
   inline void move_construct(auto tag, Storage&& from) {
     ::sus::check(tag == I);
     new (&tuple_) Type(::sus::move(from.tuple_));
@@ -438,6 +576,18 @@ union Storage<I, ::sus::Tuple<T>> {
   inline constexpr bool eq(auto tag, const Storage& other) const& {
     ::sus::check(tag == I);
     return tuple_ == other.tuple_;
+  }
+  inline constexpr auto ord(auto tag, const Storage& other) const& {
+    ::sus::check(tag == I);
+    return std::strong_order(tuple_, other.tuple_);
+  }
+  inline constexpr auto weak_ord(auto tag, const Storage& other) const& {
+    ::sus::check(tag == I);
+    return std::weak_order(tuple_, other.tuple_);
+  }
+  inline constexpr auto partial_ord(auto tag, const Storage& other) const& {
+    ::sus::check(tag == I);
+    return std::partial_order(tuple_, other.tuple_);
   }
 
   inline constexpr decltype(auto) get_ref() const& {
@@ -503,9 +653,13 @@ class Union;
 
 template <class... Ts, auto... Values>
   requires(sizeof...(Ts) > 0 && __private::AllSameType<decltype(Values)...> &&
+           ::sus::ops::Eq<__private::ValuesType<decltype(Values)...>> &&
            __private::AllValuesAreUnique<Values...>)
 class Union<__private::TypeList<Ts...>, Values...> {
-  static_assert(sizeof...(Ts) == sizeof...(Values));
+  static_assert(
+      sizeof...(Ts) == sizeof...(Values),
+      "The number of types and values in the union don't match. Use "
+      "`sus_value_types()` to define the Union's value-type pairings.");
 
   using TagType = __private::TagType<sizeof...(Values)>;
   // The tag holds an index, but never the number of possible values so it is in
@@ -629,7 +783,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
 
   // sus::mem::Clone<Union<Ts...>> trait.
   constexpr Union clone() const& noexcept
-  // requires(__private::AllClone<Ts...> && !__private::AllCopy<Ts...>)
+    requires(__private::AllClone<Ts...> && !__private::AllCopy<Ts...>)
   {
     auto u = Union(::sus::clone(tag_));
     u.storage_.clone_construct(tag_, storage_);
@@ -725,76 +879,73 @@ class Union<__private::TypeList<Ts...>, Values...> {
 
   /// sus::ops::Eq<Union<Ts...>, Union<Us...>> trait.
   template <class... Us, auto V, auto... Vs>
-    requires(::sus::ops::Eq<ValuesType, decltype(V)> &&
-             __private::AllEq<__private::TypeList<Ts...>,
-                              __private::TypeList<Us...>>)
+    requires(__private::UnionIsEq<ValuesType, __private::TypeList<Ts...>,
+                                  decltype(V), __private::TypeList<Us...>>)
   friend inline constexpr bool operator==(
       const Union& l,
       const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     return l.tag_ == r.tag_ && l.storage_.eq(l.tag_, r.storage_);
   }
 
-#if 0
-  /// sus::ops::Ord<Option<U>> trait.
-  template <class T, class U>
-    requires(::sus::ops::ExclusiveOrd<T, U>)
-  inline constexpr auto operator<=>(const Option<T>& l,
-                                    const Option<U>& r) noexcept {
-    switch (l) {
-      case Some:
-        if (r.is_some())
-          return l.unwrap_ref() <=> r.unwrap_ref();
-        else
-          return std::strong_ordering::greater;
-      case None:
-        if (r.is_some())
-          return std::strong_ordering::less;
-        else
-          return std::strong_ordering::equivalent;
+  template <class... Us, auto V, auto... Vs>
+    requires(!__private::UnionIsEq<ValuesType, __private::TypeList<Ts...>,
+                                   decltype(V), __private::TypeList<Us...>>)
+  friend inline constexpr bool operator==(
+      const Union& l,
+      const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept = delete;
+
+  /// sus::ops::Ord<Union<Ts...>, Union<Us...>> trait.
+  template <class... Us, auto V, auto... Vs>
+    requires(__private::UnionIsOrd<ValuesType, __private::TypeList<Ts...>,
+                                   decltype(V), __private::TypeList<Us...>>)
+  friend inline constexpr auto operator<=>(
+      const Union& l,
+      const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+    const auto value_order = std::strong_order(l.which(), r.which());
+    if (value_order != std::strong_ordering::equivalent) {
+      return value_order;
+    } else {
+      return l.storage_.ord(l.tag_, r.storage_);
     }
-    ::sus::unreachable_unchecked(unsafe_fn);
   }
 
-  /// sus::ops::WeakOrd<Option<U>> trait.
-  template <class T, class U>
-    requires(::sus::ops::ExclusiveWeakOrd<T, U>)
-  inline constexpr auto operator<=>(const Option<T>& l,
-                                    const Option<U>& r) noexcept {
-    switch (l) {
-      case Some:
-        if (r.is_some())
-          return l.unwrap_ref() <=> r.unwrap_ref();
-        else
-          return std::weak_ordering::greater;
-      case None:
-        if (r.is_some())
-          return std::weak_ordering::less;
-        else
-          return std::weak_ordering::equivalent;
+  /// sus::ops::WeakOrd<Union<Ts...>, Union<Us...>> trait.
+  template <class... Us, auto V, auto... Vs>
+    requires(__private::UnionIsWeakOrd<ValuesType, __private::TypeList<Ts...>,
+                                       decltype(V), __private::TypeList<Us...>>)
+  friend inline constexpr auto operator<=>(
+      const Union& l,
+      const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+    const auto value_order = std::weak_order(l.which(), r.which());
+    if (value_order != std::weak_ordering::equivalent) {
+      return value_order;
+    } else {
+      return l.storage_.weak_ord(l.tag_, r.storage_);
     }
-    ::sus::unreachable_unchecked(unsafe_fn);
   }
 
-  /// sus::ops::PartialOrd<Option<U>> trait.
-  template <class T, class U>
-    requires(::sus::ops::ExclusivePartialOrd<T, U>)
-  inline constexpr auto operator<=>(const Option<T>& l,
-                                    const Option<U>& r) noexcept {
-    switch (l) {
-      case Some:
-        if (r.is_some())
-          return l.unwrap_ref() <=> r.unwrap_ref();
-        else
-          return std::partial_ordering::greater;
-      case None:
-        if (r.is_some())
-          return std::partial_ordering::less;
-        else
-          return std::partial_ordering::equivalent;
+  /// sus::ops::PartialOrd<Union<Ts...>, Union<Us...>> trait.
+  template <class... Us, auto V, auto... Vs>
+    requires(
+        __private::UnionIsPartialOrd<ValuesType, __private::TypeList<Ts...>,
+                                     decltype(V), __private::TypeList<Us...>>)
+  friend inline constexpr auto operator<=>(
+      const Union& l,
+      const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+    const auto value_order = std::partial_order(l.which(), r.which());
+    if (value_order != std::partial_ordering::equivalent) {
+      return value_order;
+    } else {
+      return l.storage_.partial_ord(l.tag_, r.storage_);
     }
-    ::sus::unreachable_unchecked(unsafe_fn);
   }
-#endif
+
+  template <class... Us, auto V, auto... Vs>
+    requires(!__private::UnionIsAnyOrd<ValuesType, __private::TypeList<Ts...>,
+                                       decltype(V), __private::TypeList<Us...>>)
+  friend inline constexpr auto operator<=>(
+      const Union<__private::TypeList<Ts...>, Values...>& l,
+      const Union<__private::TypeList<Us...>, V, Vs...>& r) = delete;
 
  private:
   Union(TagType tag) : tag_(tag) {}

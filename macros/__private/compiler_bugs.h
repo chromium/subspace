@@ -70,3 +70,23 @@
 #define sus_clang_bug_58859(...)
 #define sus_clang_bug_58859_else(...) __VA_ARGS__
 #endif
+
+// TODO: https://github.com/llvm/llvm-project/issues/56394
+#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#define sus_clang_bug_56394(...) __VA_ARGS__
+#define sus_clang_bug_56394_else(...)
+#else
+#define sus_clang_bug_56394(...)
+#define sus_clang_bug_56394_else(...) __VA_ARGS__
+#endif
+
+// GCC internal compiler error when Ord fails.
+// TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107542
+#if defined(__GNUC__) && \
+    __GNUC__ < 13  // TODO: Update if the bug fix is backported.
+#define sus_gcc_bug_107542(...) __VA_ARGS__
+#define sus_gcc_bug_107542_else(...)
+#else
+#define sus_gcc_bug_107542(...)
+#define sus_gcc_bug_107542_else(...) __VA_ARGS__
+#endif
