@@ -239,7 +239,9 @@ TEST(NonNull, Downcast) {
 }
 
 TEST(NonNull, Eq) {
+  struct NotEq {};
   static_assert(sus::ops::Eq<NonNull<int>>);
+  static_assert(!sus::ops::Eq<NonNull<int>, NonNull<NotEq>>);
 
   auto a = int();
   auto b = int();
@@ -255,7 +257,9 @@ TEST(NonNull, Eq) {
 }
 
 TEST(NonNull, Ord) {
+  struct NotCmp {};
   static_assert(sus::ops::Ord<NonNull<int>>);
+  static_assert(!sus::ops::Ord<NonNull<int>, NonNull<NotCmp>>);
 
   int a[] = {1, 2};
   EXPECT_LE(NonNull<int>::with(a[0]), NonNull<int>::with(a[0]));

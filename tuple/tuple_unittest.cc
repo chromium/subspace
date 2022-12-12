@@ -224,6 +224,11 @@ TEST(Tuple, GetMut) {
 }
 
 TEST(Tuple, Eq) {
+  struct NotEq {};
+  static_assert(!sus::ops::Eq<NotEq>);
+  static_assert(sus::ops::Eq<Tuple<int>>);
+  static_assert(!sus::ops::Eq<Tuple<NotEq>>);
+
   EXPECT_EQ(Tuple<int>::with(1), Tuple<int>::with(1));
   EXPECT_NE(Tuple<int>::with(1), Tuple<int>::with(2));
   EXPECT_EQ((Tuple<int, int>::with(2, 1)), (Tuple<int, int>::with(2, 1)));
@@ -326,6 +331,16 @@ TEST(Tuple, PartialOrder) {
                 Tuple<float>::with(/* TODO: f32::NEG_INFINITY() */ -HUGE_VALF)),
             std::partial_ordering::greater);
 }
+
+struct NotCmp {};
+static_assert(!sus::ops::PartialOrd<NotCmp>);
+
+static_assert(sus::ops::Ord<Tuple<int>>);
+static_assert(!sus::ops::Ord<Tuple<Weak>>);
+static_assert(sus::ops::WeakOrd<Tuple<Weak>>);
+static_assert(!sus::ops::WeakOrd<Tuple<float>>);
+static_assert(!sus::ops::WeakOrd<Tuple<float>>);
+static_assert(!sus::ops::PartialOrd<Tuple<NotCmp>>);
 
 TEST(Tuple, StructuredBinding) {
   auto t3 = Tuple<int, float, char>::with(2, 3.f, 'c');
