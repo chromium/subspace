@@ -87,8 +87,9 @@ using sus::option::__private::StoragePointer;
 /// accessed with the same const-ness.
 ///
 /// If a type provides a never-value field (see mem/never_value.h), and is a
-/// [standard-layout type](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType),
-/// then Option<T> will have the same size as T.
+/// [standard-layout
+/// type](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType), then
+/// Option<T> will have the same size as T.
 ///
 /// However the never-value field places some limitations on what can be
 /// constexpr in the Option type. Because it is not possible to query the state
@@ -1283,6 +1284,11 @@ constexpr inline bool operator==(const Option<T>& l,
   ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
+template <class T, class U>
+  requires(!::sus::ops::Eq<T, U>)
+constexpr inline bool operator==(const Option<T>& l,
+                                 const Option<U>& r) = delete;
+
 /// sus::ops::Ord<Option<U>> trait.
 template <class T, class U>
   requires(::sus::ops::ExclusiveOrd<T, U>)
@@ -1342,6 +1348,11 @@ constexpr inline auto operator<=>(const Option<T>& l,
   }
   ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
+
+template <class T, class U>
+  requires(!::sus::ops::PartialOrd<T, U>)
+constexpr inline auto operator<=>(const Option<T>& l,
+                                  const Option<U>& r) noexcept = delete;
 
 // Implicit for-ranged loop iteration via `Array::iter()`.
 using sus::iter::__private::begin;
