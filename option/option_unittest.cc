@@ -1488,14 +1488,19 @@ TEST(Option, ImplicitIter) {
 }
 
 TEST(Option, Eq) {
+  struct NotEq {};
+  static_assert(!sus::ops::Eq<NotEq>);
+
+  static_assert(::sus::ops::Eq<Option<int>, Option<int>>);
+  static_assert(!::sus::ops::Eq<Option<NotEq>, Option<NotEq>>);
+
   EXPECT_EQ(Option<int>::some(1), Option<int>::some(1));
   EXPECT_NE(Option<int>::some(1), Option<int>::some(2));
   EXPECT_NE(Option<int>::none(), Option<int>::some(1));
   EXPECT_EQ(Option<int>::none(), Option<int>::none());
-  EXPECT_EQ(Option<float>::some(1.f), Option<float>::some(1.f));
-  EXPECT_EQ(Option<float>::some(0.f), Option<float>::some(-0.f));
-  EXPECT_NE(Option<float>::some(/* TODO: f32::NAN() */ NAN),
-            Option<float>::some(/* TODO: f32::NAN() */ NAN));
+  EXPECT_EQ(Option<f32>::some(1.f), Option<f32>::some(1.f));
+  EXPECT_EQ(Option<f32>::some(0.f), Option<f32>::some(-0.f));
+  EXPECT_NE(Option<f32>::some(f32::TODO_NAN()), Option<f32>::some(f32::TODO_NAN()));
 }
 
 TEST(Option, Ord) {
@@ -1523,8 +1528,8 @@ TEST(Option, StrongOrder) {
 }
 
 struct Weak {
-  auto operator==(Weak const& o) const& { return a == o.a && b == o.b; }
-  auto operator<=>(Weak const& o) const& {
+  auto operator==(const Weak& o) const& { return a == o.a && b == o.b; }
+  auto operator<=>(const Weak& o) const& {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
     return std::weak_ordering::greater;
@@ -1563,27 +1568,37 @@ TEST(Option, PartialOrder) {
   EXPECT_EQ(
       std::partial_order(Option<float>::some(11.f), Option<float>::some(12.f)),
       std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Option<float>::some(11.f),
-                               Option<float>::some(/* TODO: f32::NAN() */ NAN)),
+  EXPECT_EQ(std::partial_order(Option<f32>::some(11.f),
+                               Option<f32>::some(f32::TODO_NAN())),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Option<float>::some(/* TODO: f32::NAN() */ NAN),
-                               Option<float>::some(/* TODO: f32::NAN() */ NAN)),
+  EXPECT_EQ(std::partial_order(Option<f32>::some(f32::TODO_NAN()),
+                               Option<f32>::some(f32::TODO_NAN())),
             std::partial_ordering::unordered);
   EXPECT_EQ(std::partial_order(
-                Option<float>::some(0.f),
-                Option<float>::some(/* TODO: f32::INFINITY() */ HUGE_VALF)),
+                Option<f32>::some(0.f),
+                Option<f32>::some(/* TODO: f32::INFINITY() */ HUGE_VALF)),
             std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Option<float>::some(0.f),
-                               Option<float>::some(
+  EXPECT_EQ(std::partial_order(Option<f32>::some(0.f),
+                               Option<f32>::some(
                                    /* TODO: f32::NEG_INFINITY() */ -HUGE_VALF)),
             std::partial_ordering::greater);
 
-  EXPECT_EQ(std::partial_order(Option<float>::some(0.f), Option<float>::none()),
+  EXPECT_EQ(std::partial_order(Option<f32>::some(0.f), Option<f32>::none()),
             std::partial_ordering::greater);
-  EXPECT_EQ(std::partial_order(Option<float>::none(),
-                               Option<float>::some(/* TODO: f32::NAN() */ NAN)),
+  EXPECT_EQ(std::partial_order(Option<f32>::none(),
+                               Option<f32>::some(f32::TODO_NAN())),
             std::partial_ordering::less);
 }
+
+struct NotCmp {};
+static_assert(!sus::ops::PartialOrd<NotCmp>);
+
+static_assert(::sus::ops::Ord<Option<int>, Option<int>>);
+static_assert(!::sus::ops::Ord<Option<Weak>, Option<Weak>>);
+static_assert(::sus::ops::WeakOrd<Option<Weak>, Option<Weak>>);
+static_assert(!::sus::ops::WeakOrd<Option<float>, Option<float>>);
+static_assert(::sus::ops::PartialOrd<Option<float>, Option<float>>);
+static_assert(!::sus::ops::PartialOrd<Option<NotCmp>, Option<NotCmp>>);
 
 TEST(Option, OkOr) {
   {
