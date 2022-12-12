@@ -251,6 +251,13 @@ TEST(Array, AsPtrMut) {
 }
 
 TEST(Array, Eq) {
+  struct NotEq {};
+  static_assert(!sus::ops::Eq<NotEq>);
+
+  static_assert(sus::ops::Eq<Array<int, 3>>);
+  static_assert(!sus::ops::Eq<Array<int, 3>, Array<int, 4>>);
+  static_assert(!sus::ops::Eq<Array<NotEq, 3>>);
+
   auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
   auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
   EXPECT_EQ(a, b);
@@ -307,6 +314,20 @@ TEST(Array, PartialOrder) {
   b[3_usize] += 1;
   EXPECT_EQ(std::partial_order(a, b), std::partial_ordering::less);
 }
+
+struct NotCmp {};
+static_assert(!sus::ops::PartialOrd<NotCmp>);
+
+static_assert(!sus::ops::Ord<Array<int, 3>, Array<int, 4>>);
+static_assert(!sus::ops::WeakOrd<Array<int, 3>, Array<int, 4>>);
+static_assert(!sus::ops::PartialOrd<Array<int, 3>, Array<int, 4>>);
+
+static_assert(sus::ops::Ord<Array<int, 3>>);
+static_assert(!sus::ops::Ord<Array<Weak, 3>>);
+static_assert(sus::ops::WeakOrd<Array<Weak, 3>>);
+static_assert(!sus::ops::WeakOrd<Array<float, 3>>);
+static_assert(!sus::ops::WeakOrd<Array<float, 3>>);
+static_assert(!sus::ops::PartialOrd<Array<NotCmp, 3>>);
 
 TEST(Array, Iter) {
   const auto a = Array<usize, 5>::with_value(3u);
