@@ -19,9 +19,8 @@ This library is an experiment and not intended for use. See the
 1. KISS Principle
     * "most systems work best if they are kept simple rather than made
       complicated; therefore, simplicity should be a key goal in design, and
-      unnecessary complexity should be avoided" - most systems work best if they
-      are kept simple rather than made complicated; therefore, simplicity should
-      be a key goal in design, and unnecessary complexity should be avoided
+      unnecessary complexity should be avoided" - [Kelly Johnson](
+        https://en.wikipedia.org/wiki/KISS_principle)
     * Consider inherent vs accidental complexity and avoid the latter.
 1. Principle of Least Astonishment
     * A component of a system should behave in a way that most users will expect
