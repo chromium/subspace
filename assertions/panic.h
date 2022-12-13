@@ -18,12 +18,27 @@
 
 #include "macros/always_inline.h"
 #include "macros/builtin.h"
+#include "macros/compiler.h"
+
+#if __has_attribute(not_tail_called)
+#define _sus__not_tail_called __attribute__((not_tail_called))
+#else
+#define _sus__not_tail_called
+#endif
+
+#if __has_attribute(nomerge)
+#define _sus__nomerge __attribute__((nomerge))
+#else
+#define _sus__nomerge
+#endif
+
+#define _sus__crash_attributes _sus__not_tail_called _sus__nomerge
 
 namespace sus {
 
 namespace __private {
 void print_panic_message(const char& msg);
-}
+}  // namespace __private
 
 /// Terminate the program.
 ///
@@ -34,7 +49,7 @@ void print_panic_message(const char& msg);
 /// # Safety
 /// If `SUS_PROVIDE_PANIC_HANDLER()` is defined, the macro _must_ not return of
 /// Undefined Behaviour will result.
-[[noreturn]] sus_always_inline void panic() noexcept {
+[[noreturn]] _sus__crash_attributes inline void panic() noexcept {
 #if defined(SUS_PROVIDE_PANIC_HANDLER)
   SUS_PROVIDE_PANIC_HANDLER();
 #else
@@ -49,7 +64,7 @@ void print_panic_message(const char& msg);
 /// SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER() macro when compiling the library.
 ///
 /// After printing the message, the function will `panic()`.
-[[noreturn]] sus_always_inline void panic_with_message(
+[[noreturn]] _sus__crash_attributes inline void panic_with_message(
     /* TODO: string view type, or format + args */ const char& msg) noexcept {
 #if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
   SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(msg);
@@ -60,3 +75,6 @@ void print_panic_message(const char& msg);
 }
 
 }  // namespace sus
+
+#undef _sus__not_tail_called
+#undef _sus__nomerge
