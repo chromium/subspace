@@ -183,12 +183,24 @@ class Tuple;
   static_assert(true)
 
 #define _sus__unsigned_integer_comparison(T)                                  \
-  /** sus::concepts::Eq<##T##> trait. */                                      \
-  friend constexpr inline bool operator==(const T& l, const T& r) noexcept {  \
-    return (l.primitive_value <=> r.primitive_value) == 0;                    \
+  /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait. */            \
+  template <UnsignedPrimitiveInteger P>                                       \
+  friend constexpr inline bool operator==(const T& l, const P& r) noexcept {  \
+    return l.primitive_value == r;                                            \
   }                                                                           \
-  /** sus::concepts::Ord<##T##> trait. */                                     \
-  friend constexpr inline auto operator<=>(const T& l, const T& r) noexcept { \
+  /** sus::concepts::Eq<##T##, Unsigned> trait. */                            \
+  template <Unsigned P>                                                       \
+  friend constexpr inline bool operator==(const T& l, const P& r) noexcept {  \
+    return l.primitive_value == r.primitive_value;                            \
+  }                                                                           \
+  /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait. */           \
+  template <UnsignedPrimitiveInteger P>                                       \
+  friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept { \
+    return l.primitive_value <=> r;                                           \
+  }                                                                           \
+  /** sus::concepts::Ord<##T##, Unsigned> trait. */                           \
+  template <Unsigned P>                                                       \
+  friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept { \
     return l.primitive_value <=> r.primitive_value;                           \
   }                                                                           \
   static_assert(true)

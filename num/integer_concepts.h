@@ -33,15 +33,13 @@ struct usize;
 
 template <class T>
 concept Unsigned =
-    std::same_as<u8, std::decay_t<T>> || std::same_as<u16, std::decay_t<T>> ||
-    std::same_as<u32, std::decay_t<T>> || std::same_as<u64, std::decay_t<T>> ||
-    std::same_as<usize, std::decay_t<T>>;
+    std::same_as<u8, T> || std::same_as<u16, T> || std::same_as<u32, T> ||
+    std::same_as<u64, T> || std::same_as<usize, T>;
 
 template <class T>
 concept Signed =
-    std::same_as<i8, std::decay_t<T>> || std::same_as<i16, std::decay_t<T>> ||
-    std::same_as<i32, std::decay_t<T>> || std::same_as<i64, std::decay_t<T>> ||
-    std::same_as<isize, std::decay_t<T>>;
+    std::same_as<i8, T> || std::same_as<i16, T> || std::same_as<i32, T> ||
+    std::same_as<i64, T> || std::same_as<isize, T>;
 
 template <class T>
 concept Integer = Unsigned<T> || Signed<T>;
