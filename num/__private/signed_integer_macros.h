@@ -213,12 +213,24 @@ class Tuple;
       return PrimitiveT{primitive_value != 0};                                 \
   }                                                                            \
                                                                                \
-  /** sus::concepts::Eq<##T##> trait. */                                       \
-  friend constexpr inline bool operator==(const T& l, const T& r) noexcept {   \
-    return (l.primitive_value <=> r.primitive_value) == 0;                     \
+  /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait. */             \
+  template <SignedPrimitiveInteger P>                                          \
+  friend constexpr inline bool operator==(const T& l, const P& r) noexcept {   \
+    return l.primitive_value == r;                                             \
   }                                                                            \
-  /** sus::concepts::Ord<##T##> trait. */                                      \
-  friend constexpr inline auto operator<=>(const T& l, const T& r) noexcept {  \
+  /** sus::concepts::Eq<##T##, Unsigned> trait. */                             \
+  template <Signed S>                                                          \
+  friend constexpr inline bool operator==(const T& l, const S& r) noexcept {   \
+    return l.primitive_value == r.primitive_value;                             \
+  }                                                                            \
+  /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait. */            \
+  template <SignedPrimitiveInteger P>                                          \
+  friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept {  \
+    return l.primitive_value <=> r;                                            \
+  }                                                                            \
+  /** sus::concepts::Ord<##T##, Unsigned> trait. */                            \
+  template <Signed S>                                                          \
+  friend constexpr inline auto operator<=>(const T& l, const S& r) noexcept {  \
     return l.primitive_value <=> r.primitive_value;                            \
   }                                                                            \
   static_assert(true)

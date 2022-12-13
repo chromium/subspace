@@ -189,8 +189,8 @@ class Tuple;
     return l.primitive_value == r;                                            \
   }                                                                           \
   /** sus::concepts::Eq<##T##, Unsigned> trait. */                            \
-  template <Unsigned P>                                                       \
-  friend constexpr inline bool operator==(const T& l, const P& r) noexcept {  \
+  template <Unsigned U>                                                       \
+  friend constexpr inline bool operator==(const T& l, const U& r) noexcept {  \
     return l.primitive_value == r.primitive_value;                            \
   }                                                                           \
   /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait. */           \
@@ -199,8 +199,8 @@ class Tuple;
     return l.primitive_value <=> r;                                           \
   }                                                                           \
   /** sus::concepts::Ord<##T##, Unsigned> trait. */                           \
-  template <Unsigned P>                                                       \
-  friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept { \
+  template <Unsigned U>                                                       \
+  friend constexpr inline auto operator<=>(const T& l, const U& r) noexcept { \
     return l.primitive_value <=> r.primitive_value;                           \
   }                                                                           \
   static_assert(true)
