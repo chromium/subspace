@@ -42,7 +42,7 @@ struct never_value_field_helper<T, false> {
 template <class T>
 struct never_value_field_helper<T, true> {
   static constexpr bool has_field = true;
-  using OverlayType = T::SusUnsafeNeverValueOverlay::type;
+  using OverlayType = T::template SusUnsafeNeverValueOverlay<T>::type;
 
   static sus_always_inline constexpr bool is_constructed(
       const OverlayType& t) noexcept {
@@ -93,7 +93,7 @@ template <class T>
 struct never_value_field {
   /// Whether the type `T` has a never-value field.
   static constexpr bool has_field =
-      requires { T::SusUnsafeNeverValueOverlay::exists; };
+      requires { T::template SusUnsafeNeverValueOverlay<T>::exists; };
 
   /// A type with a common initial sequence with `T` up to and including the
   /// never-value field, so that it can be used to read and write the
@@ -140,29 +140,46 @@ struct never_value_field {
 /// querying if a class is constructed in a memory location, since the class is
 /// constructed iff the value of the field is not the never-value.
 #define sus_class_never_value_field(unsafe_fn, T, field_name, never_value)     \
+ private:                                                                      \
   static_assert(                                                               \
       std::same_as<decltype(unsafe_fn), const ::sus::marker::UnsafeFnMarker>); \
   static_assert(                                                               \
       std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,      \
       "The `never_value` must be able to be assigned to the named field.");    \
+                                                                               \
+  /* For the inclined, this is because otherwise using the Overlay type in     \
+  the Option's internal union, after the destruction of the type T, would      \
+  require placement new of the Overlay type which is not a constant            \
+  expression. */                                                               \
+  static_assert(std::is_trivially_constructible_v<decltype(field_name)>,       \
+                "The `never_value` field must be trivially constructible or "  \
+                "else Option<T> couldn't be constexpr.");                      \
+                                                                               \
   template <class>                                                             \
   friend struct ::sus::mem::never_value_field;                                 \
   template <class, bool>                                                       \
   friend struct ::sus::mem::__private::never_value_field_helper;               \
                                                                                \
- public:                                                                       \
-  struct SusUnsafeNeverValueOverlay {                                          \
+  template <class SusUnsafeNeverValueOuter,                                    \
+            bool SusUnsafeNeverValueStandardLayout =                           \
+                std::is_standard_layout_v<SusUnsafeNeverValueOuter>>           \
+  struct SusUnsafeNeverValueOverlay;                                           \
+                                                                               \
+  template <class SusUnsafeNeverValueOuter>                                    \
+  struct SusUnsafeNeverValueOverlay<SusUnsafeNeverValueOuter, false> {};       \
+                                                                               \
+  /* The NeverValue trait is only provided when `##T##` is a standard-layout   \
+   * type, since:                                                              \
+   * - offsetof() is only valid in a standard-layout type.                     \
+   * - Option can only access the never-value field outside the lifetime of    \
+   *   `##T##` if `##T##` is a standard-layout type.                           \
+   */                                                                          \
+  template <class SusUnsafeNeverValueOuter>                                    \
+  struct SusUnsafeNeverValueOverlay<SusUnsafeNeverValueOuter, true> {          \
+    static constexpr bool exists = true;                                       \
+                                                                               \
     using type = ::sus::mem::__private::SusUnsafeNeverValueOverlayImpl<        \
         decltype(never_value), never_value, decltype(field_name),              \
-        offsetof(T, field_name)>;                                              \
-    static constexpr bool exists = true;                                       \
-    /* For the inclined, this is because otherwise using the Overlay type in   \
-    the Option's internal union, after the destruction of the type T, would    \
-    require placement new of the Overlay type which is not a constant          \
-    expression. */                                                             \
-    static_assert(                                                             \
-        std::is_trivially_constructible_v<type>,                               \
-        "The `never_value` field must be trivially constructible or "          \
-        "else Option<T> couldn't be constexpr.");                              \
+        offsetof(SusUnsafeNeverValueOuter, field_name)>;                       \
   };                                                                           \
   static_assert(true)

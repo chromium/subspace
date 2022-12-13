@@ -22,6 +22,7 @@
 #include "mem/clone.h"
 #include "mem/copy.h"
 #include "mem/move.h"
+#include "mem/never_value.h"
 #include "mem/replace.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
@@ -37,23 +38,23 @@ namespace __private {
 template <class T, class... Ts>
 static constexpr bool AllSameType = (... && std::same_as<T, Ts>);
 
-template <auto SearchValue, size_t I, auto... Vs>
+template <class TagType, auto SearchValue, TagType I, auto... Vs>
 struct FindValue;
 
-template <auto SearchValue, size_t I, auto V, auto... Vs>
-struct FindValue<SearchValue, I, V, Vs...> {
-  using index =
-      std::conditional_t<SearchValue == V, std::integral_constant<size_t, I>,
-                         typename FindValue<SearchValue, I + 1, Vs...>::index>;
+template <class TagType, auto SearchValue, TagType I, auto V, auto... Vs>
+struct FindValue<TagType, SearchValue, I, V, Vs...> {
+  using index = std::conditional_t<
+      SearchValue == V, std::integral_constant<TagType, I>,
+      typename FindValue<TagType, SearchValue, I + 1u, Vs...>::index>;
 };
 
-template <auto SearchValue, size_t I>
-struct FindValue<SearchValue, I> {
+template <class TagType, auto SearchValue, TagType I>
+struct FindValue<TagType, SearchValue, I> {
   using index = void;  // We didn't find the value, it's not part of the Union.
 };
 
-template <auto SearchValue, auto... Vs>
-using ValueToIndex = FindValue<SearchValue, 0, Vs...>::index;
+template <class TagType, auto SearchValue, auto... Vs>
+using ValueToIndex = FindValue<TagType, SearchValue, 0u, Vs...>::index;
 
 template <size_t I, class... Ts>
 struct FindTypeTuple;
@@ -342,12 +343,6 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
 
   Type tuple_;
   Storage<I + 1, Elements...> more_;
-
-  // `private` makes this type non-standard layout, which allows any tail
-  // padding to be reused if the `*this` object is marked as
-  // `[[no_unique_address]]`.
- private:
-  char c;
 };
 
 template <size_t I, class T, class... Elements>
@@ -451,12 +446,6 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
   // use-after-move checks there.
   [[sus_no_unique_address]] Type tuple_;
   [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
-
-  // `private` makes this type non-standard layout, which allows any tail
-  // padding to be reused if the `*this` object is marked as
-  // `[[no_unique_address]]`.
- private:
-  char c;
 };
 
 template <size_t I, class... Ts>
@@ -528,12 +517,6 @@ union Storage<I, ::sus::Tuple<Ts...>> {
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
 
   [[sus_no_unique_address]] Type tuple_;
-
-  // `private` makes this type non-standard layout, which allows any tail
-  // padding to be reused if the `*this` object is marked as
-  // `[[no_unique_address]]`.
- private:
-  char c;
 };
 
 template <size_t I, class T>
@@ -603,17 +586,11 @@ union Storage<I, ::sus::Tuple<T>> {
   // TODO: Switch away from Tuple for 1 object when we don't need to use the
   // use-after-move checks there.
   [[sus_no_unique_address]] ::sus::Tuple<T> tuple_;
-
-  // `private` makes this type non-standard layout, which allows any tail
-  // padding to be reused if the `*this` object is marked as
-  // `[[no_unique_address]]`.
- private:
-  char c;
 };
 
-template <size_t I, class S>
+template <auto I, class S>
 static constexpr const auto& find_storage(const S& storage) {
-  return find_storage(storage, std::integral_constant<size_t, I>());
+  return find_storage(storage, std::integral_constant<size_t, size_t{I}>());
 }
 
 template <size_t I, class S>
@@ -628,9 +605,9 @@ static constexpr const auto& find_storage(const S& storage,
   return storage;
 }
 
-template <size_t I, class S>
+template <auto I, class S>
 static constexpr auto& find_storage_mut(S& storage) {
-  return find_storage_mut(storage, std::integral_constant<size_t, I>());
+  return find_storage_mut(storage, std::integral_constant<size_t, size_t{I}>());
 }
 
 template <size_t I, class S>
@@ -652,7 +629,7 @@ template <class Types, auto... Values>
 class Union;
 
 template <class... Ts, auto... Values>
-  requires(sizeof...(Ts) > 0 && __private::AllSameType<decltype(Values)...> &&
+  requires(sizeof...(Ts) > 0u && __private::AllSameType<decltype(Values)...> &&
            ::sus::ops::Eq<__private::ValuesType<decltype(Values)...>> &&
            __private::AllValuesAreUnique<Values...>)
 class Union<__private::TypeList<Ts...>, Values...> {
@@ -662,25 +639,38 @@ class Union<__private::TypeList<Ts...>, Values...> {
       "`sus_value_types()` to define the Union's value-type pairings.");
 
   using TagType = __private::TagType<sizeof...(Values)>;
+  static constexpr TagType kNeverValue =
+      ::sus::num::__private::unchecked_not(TagType{0u});
+  static constexpr TagType kUseAfterMove = ::sus::num::__private::unchecked_sub(
+      ::sus::num::__private::unchecked_not(TagType{0u}), TagType{1u});
   // The tag holds an index, but never the number of possible values so it is in
   // 0...{NumValues-1}.
-  static_assert(sizeof...(Values) - 1u <= ~TagType{0});
+  //
+  // The ~0 value (all bits are 1) is reserved for using the tag as a
+  // never-value field, so the tag must be large enough to hold all values
+  // without using that bit sequence.
+  //
+  // The (~0 - 1) values (all bits are 1 except the lowest order bit) is
+  // reserved to mark the type as moved-from. Any use of the type afterward will
+  // panic due to the tag being outside the range of acceptable values.
+  static_assert(sizeof...(Values) <= kNeverValue);
+
   using Storage = __private::Storage<0, Ts...>;
   using ValuesType = __private::ValuesType<decltype(Values)...>;
 
   template <ValuesType V>
-  static constexpr size_t get_index() {
-    using Index = __private::ValueToIndex<V, Values...>;
+  static constexpr TagType get_index() {
+    using Index = __private::ValueToIndex<TagType, V, Values...>;
     static_assert(!std::is_void_v<Index>,
                   "The value V is not part of the Union.");
     return Index::value;
   }
 
   template <ValuesType V>
-  static constexpr size_t index = get_index<V>();
+  static constexpr TagType index = get_index<V>();
 
   template <ValuesType V>
-  using TypesFromValue = __private::IndexToTypes<index<V>, Ts...>;
+  using TypesFromValue = __private::IndexToTypes<size_t{index<V>}, Ts...>;
 
  public:
   // TODO: Can we construct Tuples of trivially constructible things (or some
@@ -699,7 +689,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   ~Union()
     requires(!__private::AllTriviallyDestructible<ValuesType, Ts...>)
   {
-    storage_.destroy(tag_);
+    if (tag_ != kUseAfterMove) storage_.destroy(tag_);
   }
 
   Union(Union&& o)
@@ -713,10 +703,11 @@ class Union<__private::TypeList<Ts...>, Values...> {
   Union(Union&& o)
     requires(__private::AllMove<ValuesType, Ts...> &&
              !__private::AllTriviallyMoveConstructible<ValuesType, Ts...>)
-  : tag_(::sus::mem::replace(
-        ::sus::mref(o.tag_),
-        static_cast<TagType>(~TagType{0})))  // Attempt to catch use-after-move.
-  {
+  : tag_(::sus::mem::replace(::sus::mref(o.tag_),
+                             // Attempt to catch use-after-move by setting the
+                             // tag to an unused value.
+                             kUseAfterMove)) {
+    check(tag_ != kUseAfterMove);
     storage_.move_construct(tag_, ::sus::move(o.storage_));
   }
 
@@ -732,15 +723,15 @@ class Union<__private::TypeList<Ts...>, Values...> {
     requires(__private::AllMove<ValuesType, Ts...> &&
              !__private::AllTriviallyMoveAssignable<ValuesType, Ts...>)
   {
+    check(o.tag_ != kUseAfterMove);
     if (tag_ == o.tag_) {
       storage_.move_assign(tag_, ::sus::move(o.storage_));
     } else {
-      storage_.destroy(tag_);
+      if (tag_ != kUseAfterMove) storage_.destroy(tag_);
       tag_ = ::sus::move(o.tag_);
       storage_.move_construct(tag_, ::sus::move(o.storage_));
     }
-    o.tag_ =
-        static_cast<TagType>(~TagType{0});  // Attempt to catch use-after-move.
+    o.tag_ = kUseAfterMove;
     return *this;
   }
 
@@ -756,6 +747,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
     requires(__private::AllCopy<ValuesType, Ts...> &&
              !__private::AllTriviallyCopyConstructible<ValuesType, Ts...>)
   : tag_(o.tag_) {
+    check(o.tag_ != kUseAfterMove);
     storage_.copy_construct(tag_, o.storage_);
   }
 
@@ -771,10 +763,11 @@ class Union<__private::TypeList<Ts...>, Values...> {
     requires(__private::AllCopy<ValuesType, Ts...> &&
              !__private::AllTriviallyCopyAssignable<ValuesType, Ts...>)
   {
+    check(o.tag_ != kUseAfterMove);
     if (tag_ == o.tag_) {
       storage_.copy_assign(tag_, o.storage_);
     } else {
-      storage_.destroy(tag_);
+      if (tag_ != kUseAfterMove) storage_.destroy(tag_);
       tag_ = o.tag_;
       storage_.copy_construct(tag_, o.storage_);
     }
@@ -785,6 +778,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   constexpr Union clone() const& noexcept
     requires(__private::AllClone<Ts...> && !__private::AllCopy<Ts...>)
   {
+    check(tag_ != kUseAfterMove);
     auto u = Union(::sus::clone(tag_));
     u.storage_.clone_construct(tag_, storage_);
     return u;
@@ -842,8 +836,9 @@ class Union<__private::TypeList<Ts...>, Values...> {
   ///                           ██  ██          ▓▓▓▓▓▓▓▓▓▓▒▒
   ///                             ████
   ValuesType which() const& {
+    check(tag_ != kUseAfterMove);
     constexpr ValuesType values[] = {Values...};
-    return values[tag_];
+    return values[size_t{tag_}];
   }
 
   template <ValuesType V>
@@ -871,7 +866,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
     if (tag_ == index<V>) {
       find_storage_mut<index<V>>(storage_).set(::sus::move(values));
     } else {
-      storage_.destroy(tag_);
+      if (tag_ != kUseAfterMove) storage_.destroy(tag_);
       tag_ = index<V>;
       find_storage_mut<index<V>>(storage_).construct(::sus::move(values));
     }
@@ -884,6 +879,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   friend inline constexpr bool operator==(
       const Union& l,
       const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+    check(l.tag_ != kUseAfterMove && r.tag_ != kUseAfterMove);
     return l.tag_ == r.tag_ && l.storage_.eq(l.tag_, r.storage_);
   }
 
@@ -901,6 +897,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   friend inline constexpr auto operator<=>(
       const Union& l,
       const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+    check(l.tag_ != kUseAfterMove && r.tag_ != kUseAfterMove);
     const auto value_order = std::strong_order(l.which(), r.which());
     if (value_order != std::strong_ordering::equivalent) {
       return value_order;
@@ -916,6 +913,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   friend inline constexpr auto operator<=>(
       const Union& l,
       const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+    check(l.tag_ != kUseAfterMove && r.tag_ != kUseAfterMove);
     const auto value_order = std::weak_order(l.which(), r.which());
     if (value_order != std::weak_ordering::equivalent) {
       return value_order;
@@ -932,6 +930,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   friend inline constexpr auto operator<=>(
       const Union& l,
       const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+    check(l.tag_ != kUseAfterMove && r.tag_ != kUseAfterMove);
     const auto value_order = std::partial_order(l.which(), r.which());
     if (value_order != std::partial_ordering::equivalent) {
       return value_order;
@@ -952,6 +951,8 @@ class Union<__private::TypeList<Ts...>, Values...> {
 
   [[sus_no_unique_address]] Storage storage_;
   TagType tag_;
+
+  sus_class_never_value_field(unsafe_fn, Union, tag_, kNeverValue);
 };
 
 }  // namespace sus::union_type
