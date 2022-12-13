@@ -25,3 +25,7 @@
 #if !defined(__has_feature)
 #define __has_feature(X) false
 #endif
+
+#if !defined(__has_attribute)
+#define __has_attribute(X) false
+#endif
