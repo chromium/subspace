@@ -17,6 +17,7 @@
 
 #include "macros/__private/compiler_bugs.h"
 #include "num/types.h"
+#include "option/option.h"
 #include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "union/union.h"
@@ -37,6 +38,19 @@ inline constexpr size_t UamBytes = sus::Tuple<i32>::protects_uam ? 8 : 0;
 // on MSVC.
 static_assert(sizeof(Union<sus_value_types((Order::First, i32, u64))>) ==
               2 * sizeof(u64) + UamBytes + sus_if_msvc_else(sizeof(u64), 0));
+
+TEST(Union, NeverValue) {
+  using One = Union<sus_value_types((Order::First, u64), (Order::Second, u32))>;
+  static_assert(std::is_standard_layout_v<One>);
+  static_assert(sizeof(sus::Option<One>) == sizeof(One));
+
+  // Two values in a Tuple isn't standard layout at this time. This allows the
+  // Tuple to pack better but, also means we can't use the never-value field
+  // optimization in Option.
+  using Two = Union<sus_value_types((Order::First, u64, u64))>;
+  static_assert(!std::is_standard_layout_v<Two>);
+  static_assert(sizeof(sus::Option<Two>) > sizeof(Two));
+}
 
 TEST(Union, GetTypes) {
   // Single value first, double last.

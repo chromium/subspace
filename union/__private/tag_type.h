@@ -14,14 +14,20 @@
 
 #pragma once
 
+#include "num/unsigned_integer.h"
+
 namespace sus::union_type::__private {
 
+/// Defines the type of the tag. The tag must have room for `count` many values
+/// plus one, as we avoid ever using 0 in order to define the Union's tag as a
+/// never-value field for optimized storage in an Option.
+///
 // clang-format off
 template <size_t count>
 using TagType =
-  std::conditional_t<count - 1u <= size_t{0xff}, uint8_t,
-  std::conditional_t<count - 1u <= size_t{0xffff}, uint16_t,
-  std::conditional_t<count - 1u <= size_t{0xffffffff}, uint32_t,
+  std::conditional_t<count <= size_t{0xff}, uint8_t,
+  std::conditional_t<count <= size_t{0xffff}, uint16_t,
+  std::conditional_t<count <= size_t{0xffffffff}, uint32_t,
   uint64_t>>>;
 // clang-format on
 

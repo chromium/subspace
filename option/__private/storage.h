@@ -30,11 +30,7 @@ namespace sus::option::__private {
 using State::None;
 using State::Some;
 
-template <class T>
-constexpr inline bool UseNeverValueFieldOptimization =
-    std::is_standard_layout_v<T> && sus::mem::never_value_field<T>::has_field;
-
-template <class T, bool = UseNeverValueFieldOptimization<T>>
+template <class T, bool = sus::mem::never_value_field<T>::has_field>
 struct Storage;
 
 // TODO: Determine if we can put the State into the storage of `T`. Probably
