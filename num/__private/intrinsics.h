@@ -39,6 +39,15 @@ struct OverflowOut final {
   T value;
 };
 
+// The correct type to perform math operations on given values of type `T`. This
+// may be a larger type than `T` to avoid promotion to `int` which involves sign
+// conversion!
+template <class T>
+  requires(std::is_integral_v<T>)
+using MathType = std::conditional_t<
+    sizeof(T) >= sizeof(int), T,
+    std::conditional_t<std::is_signed_v<T>, int, unsigned int>>;
+
 template <class T>
 sus_always_inline constexpr uint32_t unchecked_sizeof() noexcept {
   static_assert(sizeof(T) <= 0xfffffff);
@@ -48,73 +57,73 @@ sus_always_inline constexpr uint32_t unchecked_sizeof() noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T>)
 sus_always_inline constexpr T unchecked_neg(T x) noexcept {
-  return static_cast<T>(-x);
+  return static_cast<T>(-MathType<T>{x});
 }
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
 sus_always_inline constexpr T unchecked_not(T x) noexcept {
-  return static_cast<T>(~x);
+  return static_cast<T>(~MathType<T>{x});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
 sus_always_inline constexpr T unchecked_add(T x, T y) noexcept {
-  return static_cast<T>(x + y);
+  return static_cast<T>(MathType<T>{x} + MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
 sus_always_inline constexpr T unchecked_sub(T x, T y) noexcept {
-  return static_cast<T>(x - y);
+  return static_cast<T>(MathType<T>{x} - MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
 sus_always_inline constexpr T unchecked_mul(T x, T y) noexcept {
-  return static_cast<T>(x * y);
+  return static_cast<T>(MathType<T>{x} * MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
 sus_always_inline constexpr T unchecked_div(T x, T y) noexcept {
-  return static_cast<T>(x / y);
+  return static_cast<T>(MathType<T>{x} / MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
 sus_always_inline constexpr T unchecked_rem(T x, T y) noexcept {
-  return static_cast<T>(x % y);
+  return static_cast<T>(MathType<T>{x} % MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
 sus_always_inline constexpr T unchecked_and(T x, T y) noexcept {
-  return static_cast<T>(x & y);
+  return static_cast<T>(MathType<T>{x} & MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
 sus_always_inline constexpr T unchecked_or(T x, T y) noexcept {
-  return static_cast<T>(x | y);
+  return static_cast<T>(MathType<T>{x} | MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
 sus_always_inline constexpr T unchecked_xor(T x, T y) noexcept {
-  return static_cast<T>(x ^ y);
+  return static_cast<T>(MathType<T>{x} ^ MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
 sus_always_inline constexpr T unchecked_shl(T x, uint32_t y) noexcept {
-  return static_cast<T>(x << y);
+  return static_cast<T>(MathType<T>{x} << y);
 }
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
 sus_always_inline constexpr T unchecked_shr(T x, uint32_t y) noexcept {
-  return static_cast<T>(x >> y);
+  return static_cast<T>(MathType<T>{x} >> y);
 }
 
 template <class T>
@@ -211,13 +220,15 @@ template <class T>
 sus_always_inline constexpr uint32_t count_ones(T value) noexcept {
 #if _MSC_VER
   if (std::is_constant_evaluated()) {
+    using M = MathType<T>;
+    auto mvalue = M{value};
     // Algorithm to count the number of bits in parallel, up to a 128 bit value.
     // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
-    value = value - ((value >> 1) & (~T{0} / T{3}));
-    value = (value & (~T{0} / T{15} * T{3})) +
-            ((value >> 2) & (~T{0} / T{15} * T{3}));
-    value = (value + (value >> 4)) & (~T{0} / T{255} * T{15});
-    auto count = (value * (~T{0} / T{255})) >>
+    mvalue = mvalue - ((mvalue >> 1) & (~M{0} / M{3}));
+    mvalue = (mvalue & (~M{0} / M{15} * M{3})) +
+             ((mvalue >> 2) & (~M{0} / M{15} * M{3}));
+    mvalue = (mvalue + (mvalue >> 4)) & (~M{0} / M{255} * M{15});
+    auto count = (mvalue * (~T{0} / T{255})) >>
                  (unchecked_sizeof<T>() - uint32_t{1}) * uint32_t{8};
     return static_cast<uint32_t>(count);
   } else if constexpr (sizeof(value) <= 2) {
@@ -244,7 +255,7 @@ sus_always_inline constexpr uint32_t count_ones(T value) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
 constexpr sus_always_inline uint32_t
-    leading_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
+leading_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
   if (std::is_constant_evaluated()) {
     uint32_t count = 0;
     for (auto i = uint32_t{0};
@@ -329,7 +340,7 @@ constexpr sus_always_inline uint32_t leading_zeros(T value) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
 constexpr sus_always_inline uint32_t
-    trailing_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
+trailing_zeros_nonzero(::sus::marker::UnsafeFnMarker, T value) noexcept {
   if (std::is_constant_evaluated()) {
     uint32_t count = 0;
     for (auto i = uint32_t{0};
@@ -545,8 +556,8 @@ sus_always_inline constexpr bool sign_bit(T x) noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
-sus_always_inline
-    constexpr OverflowOut<T> add_with_overflow(T x, T y) noexcept {
+sus_always_inline constexpr OverflowOut<T> add_with_overflow(T x,
+                                                             T y) noexcept {
   return OverflowOut sus_clang_bug_56394(<T>){
       .overflow = x > max_value<T>() - y,
       .value = unchecked_add(x, y),
@@ -555,8 +566,8 @@ sus_always_inline
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
-sus_always_inline
-    constexpr OverflowOut<T> add_with_overflow(T x, T y) noexcept {
+sus_always_inline constexpr OverflowOut<T> add_with_overflow(T x,
+                                                             T y) noexcept {
   const auto out =
       into_signed(unchecked_add(into_unsigned(x), into_unsigned(y)));
   return OverflowOut sus_clang_bug_56394(<T>){
@@ -568,8 +579,8 @@ sus_always_inline
 template <class T, class U = decltype(to_signed(std::declval<T>()))>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8 &&
            sizeof(T) == sizeof(U))
-sus_always_inline
-    constexpr OverflowOut<T> add_with_overflow_signed(T x, U y) noexcept {
+sus_always_inline constexpr OverflowOut<T> add_with_overflow_signed(
+    T x, U y) noexcept {
   return OverflowOut sus_clang_bug_56394(<T>){
       .overflow = (y >= 0 && into_unsigned(y) > max_value<T>() - x) ||
                   (y < 0 && into_unsigned(-y) > x),
@@ -580,8 +591,8 @@ sus_always_inline
 template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8 &&
            sizeof(T) == sizeof(U))
-sus_always_inline
-    constexpr OverflowOut<T> add_with_overflow_unsigned(T x, U y) noexcept {
+sus_always_inline constexpr OverflowOut<T> add_with_overflow_unsigned(
+    T x, U y) noexcept {
   const auto out = into_signed(unchecked_add(into_unsigned(x), y));
   return OverflowOut sus_clang_bug_56394(<T>){
       .overflow = static_cast<U>(max_value<T>()) - static_cast<U>(x) < y,
@@ -591,8 +602,8 @@ sus_always_inline
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 8)
-sus_always_inline
-    constexpr OverflowOut<T> sub_with_overflow(T x, T y) noexcept {
+sus_always_inline constexpr OverflowOut<T> sub_with_overflow(T x,
+                                                             T y) noexcept {
   return OverflowOut sus_clang_bug_56394(<T>){
       .overflow = x < unchecked_add(min_value<T>(), y),
       .value = unchecked_sub(x, y),
@@ -601,8 +612,8 @@ sus_always_inline
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
-sus_always_inline
-    constexpr OverflowOut<T> sub_with_overflow(T x, T y) noexcept {
+sus_always_inline constexpr OverflowOut<T> sub_with_overflow(T x,
+                                                             T y) noexcept {
   const auto out =
       into_signed(unchecked_sub(into_unsigned(x), into_unsigned(y)));
   return OverflowOut sus_clang_bug_56394(<T>){
@@ -614,8 +625,8 @@ sus_always_inline
 template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8 &&
            sizeof(T) == sizeof(U))
-sus_always_inline
-    constexpr OverflowOut<T> sub_with_overflow_unsigned(T x, U y) noexcept {
+sus_always_inline constexpr OverflowOut<T> sub_with_overflow_unsigned(
+    T x, U y) noexcept {
   const auto out = into_signed(unchecked_sub(into_unsigned(x), y));
   return OverflowOut sus_clang_bug_56394(<T>){
       .overflow = static_cast<U>(x) - static_cast<U>(min_value<T>()) < y,
@@ -625,8 +636,8 @@ sus_always_inline
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) <= 4)
-sus_always_inline
-    constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
+sus_always_inline constexpr OverflowOut<T> mul_with_overflow(T x,
+                                                             T y) noexcept {
   // TODO: Can we use compiler intrinsics?
   auto out = unchecked_mul(into_widened(x), into_widened(y));
   using Wide = decltype(out);
@@ -636,8 +647,8 @@ sus_always_inline
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> && sizeof(T) == 8)
-sus_always_inline
-    constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
+sus_always_inline constexpr OverflowOut<T> mul_with_overflow(T x,
+                                                             T y) noexcept {
 #if _MSC_VER
   if (std::is_constant_evaluated()) {
     const bool overflow =
@@ -662,8 +673,8 @@ sus_always_inline
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 4)
-sus_always_inline
-    constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
+sus_always_inline constexpr OverflowOut<T> mul_with_overflow(T x,
+                                                             T y) noexcept {
   // TODO: Can we use compiler intrinsics?
   auto out = into_widened(x) * into_widened(y);
   using Wide = decltype(out);
@@ -674,8 +685,8 @@ sus_always_inline
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) == 8)
-sus_always_inline
-    constexpr OverflowOut<T> mul_with_overflow(T x, T y) noexcept {
+sus_always_inline constexpr OverflowOut<T> mul_with_overflow(T x,
+                                                             T y) noexcept {
 #if _MSC_VER
   if (std::is_constant_evaluated()) {
     if (x == T{0} || y == T{0})
@@ -719,8 +730,8 @@ sus_always_inline
 
 template <class T>
   requires(std::is_integral_v<T> && sizeof(T) <= 8)
-sus_always_inline
-    constexpr OverflowOut<T> pow_with_overflow(T base, uint32_t exp) noexcept {
+sus_always_inline constexpr OverflowOut<T> pow_with_overflow(
+    T base, uint32_t exp) noexcept {
   if (exp == 0)
     return OverflowOut sus_clang_bug_56394(<T>){.overflow = false,
                                                 .value = T{1}};
@@ -746,8 +757,8 @@ template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
             sizeof(T) == 8))
-sus_always_inline
-    constexpr OverflowOut<T> shl_with_overflow(T x, uint32_t shift) noexcept {
+sus_always_inline constexpr OverflowOut<T> shl_with_overflow(
+    T x, uint32_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that sizeof(T) is a power of 2, which implies the
   // number of bits is as well (since each byte is 2^3 bits).
@@ -762,8 +773,8 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
             sizeof(T) == 8))
-sus_always_inline
-    constexpr OverflowOut<T> shl_with_overflow(T x, uint32_t shift) noexcept {
+sus_always_inline constexpr OverflowOut<T> shl_with_overflow(
+    T x, uint32_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that sizeof(T) is a power of 2, which implies the
   // number of bits is as well (since each byte is 2^3 bits).
@@ -779,8 +790,8 @@ template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
             sizeof(T) == 8))
-sus_always_inline
-    constexpr OverflowOut<T> shr_with_overflow(T x, uint32_t shift) noexcept {
+sus_always_inline constexpr OverflowOut<T> shr_with_overflow(
+    T x, uint32_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that sizeof(T) is a power of 2, which implies the
   // number of bits is as well (since each byte is 2^3 bits).
@@ -795,8 +806,8 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            (sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
             sizeof(T) == 8))
-sus_always_inline
-    constexpr OverflowOut<T> shr_with_overflow(T x, uint32_t shift) noexcept {
+sus_always_inline constexpr OverflowOut<T> shr_with_overflow(
+    T x, uint32_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that sizeof(T) is a power of 2, which implies the
   // number of bits is as well (since each byte is 2^3 bits).
@@ -976,9 +987,8 @@ sus_always_inline constexpr bool div_overflows(T x, T y) noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> && sizeof(T) <= 8)
-sus_always_inline
-    constexpr bool div_overflows_nonzero(::sus::marker::UnsafeFnMarker, T x,
-                                         T y) noexcept {
+sus_always_inline constexpr bool div_overflows_nonzero(
+    ::sus::marker::UnsafeFnMarker, T x, T y) noexcept {
   // Using `&` helps LLVM see that it is the same check made in division.
   return ((x == min_value<T>()) & (y == T{-1}));
 }
