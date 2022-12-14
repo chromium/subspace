@@ -60,10 +60,10 @@ struct FindValue<TagType, SearchValue, I> {
 template <class TagType, auto SearchValue, auto... Vs>
 using ValueToIndex = FindValue<TagType, SearchValue, 0u, Vs...>::index;
 
-template <uint64_t I, class... Ts>
+template <size_t I, class... Ts>
 struct FindTypeTuple;
 
-template <uint64_t I, class T, class... Ts>
+template <size_t I, class T, class... Ts>
 struct FindTypeTuple<I, T, Ts...> {
   using type = FindTypeTuple<I - 1, Ts...>::type;
 };
@@ -87,7 +87,7 @@ struct UnwrapTuple<::sus::Tuple<Ts...>> {
   using type = ::sus::Tuple<Ts...>;
 };
 
-template <uint64_t I, class... Ts>
+template <size_t I, class... Ts>
 using IndexToTypes = UnwrapTuple<typename FindTypeTuple<I, Ts...>::type>::type;
 
 template <auto... Vs>
@@ -240,10 +240,10 @@ template <class... Ts>
 concept AllTriviallyCopyAssignable = (... &&
                                       std::is_trivially_move_assignable_v<Ts>);
 
-template <uint64_t I, class... Elements>
+template <size_t I, class... Elements>
 union Storage;
 
-template <uint64_t I, class... Ts, class... Elements>
+template <size_t I, class... Ts, class... Elements>
   requires(sizeof...(Ts) > 0 && sizeof...(Elements) > 0)
 union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   Storage() {}
@@ -330,14 +330,14 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   }
 
   constexpr auto get_ref() const& {
-    return [this]<uint64_t... Is>(std::index_sequence<Is...>) {
+    return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
           tuple_.template get_ref<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr decltype(auto) get_ref() && = delete;
   constexpr auto get_mut() & {
-    return [this]<uint64_t... Is>(std::index_sequence<Is...>) {
+    return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
@@ -347,7 +347,7 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   Storage<I + 1, Elements...> more_;
 };
 
-template <uint64_t I, class T, class... Elements>
+template <size_t I, class T, class... Elements>
   requires(sizeof...(Elements) > 0)
 union Storage<I, ::sus::Tuple<T>, Elements...> {
   Storage() {}
@@ -450,7 +450,7 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
   [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
 };
 
-template <uint64_t I, class... Ts>
+template <size_t I, class... Ts>
   requires(sizeof...(Ts) > 0)
 union Storage<I, ::sus::Tuple<Ts...>> {
   Storage() {}
@@ -504,13 +504,13 @@ union Storage<I, ::sus::Tuple<Ts...>> {
   }
 
   constexpr auto get_ref() const& {
-    return [this]<uint64_t... Is>(std::index_sequence<Is...>) {
+    return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
           tuple_.template get_ref<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr auto get_mut() & {
-    return [this]<uint64_t... Is>(std::index_sequence<Is...>) {
+    return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
@@ -519,7 +519,7 @@ union Storage<I, ::sus::Tuple<Ts...>> {
   [[sus_no_unique_address]] Type tuple_;
 };
 
-template <uint64_t I, class T>
+template <size_t I, class T>
 union Storage<I, ::sus::Tuple<T>> {
   Storage() {}
   ~Storage() {}
@@ -590,40 +590,39 @@ union Storage<I, ::sus::Tuple<T>> {
 
 template <auto I, class S>
 static constexpr const auto& find_storage(const S& storage) {
-  return find_storage(storage, std::integral_constant<uint64_t, uint64_t{I}>());
+  return find_storage(storage, std::integral_constant<size_t, size_t{I}>());
 }
 
-template <uint64_t I, class S>
+template <size_t I, class S>
 static constexpr const auto& find_storage(const S& storage,
-                                          std::integral_constant<uint64_t, I>) {
+                                          std::integral_constant<size_t, I>) {
   return find_storage(
       storage.more_,
-      std::integral_constant<uint64_t, unchecked_sub(I, uint64_t{1})>());
+      std::integral_constant<size_t, unchecked_sub(I, size_t{1})>());
 }
 
 template <class S>
 static constexpr const auto& find_storage(const S& storage,
-                                          std::integral_constant<uint64_t, 0>) {
+                                          std::integral_constant<size_t, 0>) {
   return storage;
 }
 
 template <auto I, class S>
 static constexpr auto& find_storage_mut(S& storage) {
-  return find_storage_mut(storage,
-                          std::integral_constant<uint64_t, uint64_t{I}>());
+  return find_storage_mut(storage, std::integral_constant<size_t, size_t{I}>());
 }
 
-template <uint64_t I, class S>
+template <size_t I, class S>
 static constexpr auto& find_storage_mut(S& storage,
-                                        std::integral_constant<uint64_t, I>) {
+                                        std::integral_constant<size_t, I>) {
   return find_storage_mut(
       storage.more_,
-      std::integral_constant<uint64_t, unchecked_sub(I, uint64_t{1})>());
+      std::integral_constant<size_t, unchecked_sub(I, size_t{1})>());
 }
 
 template <class S>
 static constexpr auto& find_storage_mut(S& storage,
-                                        std::integral_constant<uint64_t, 0>) {
+                                        std::integral_constant<size_t, 0>) {
   return storage;
 }
 
@@ -642,7 +641,10 @@ class Union<__private::TypeList<Ts...>, Values...> {
       "The number of types and values in the union don't match. Use "
       "`sus_value_types()` to define the Union's value-type pairings.");
 
-  using TagType = __private::TagType<sizeof...(Values)>;
+  using TagType = __private::TagType<sizeof...(Values) + 2u>;
+  static_assert(!std::is_void_v<TagType>,
+                "A union can only hold a number of members representable in "
+                "size_t (minus two).");
   static constexpr TagType kNeverValue =
       ::sus::num::__private::unchecked_not(TagType{0u});
   static constexpr TagType kUseAfterMove = ::sus::num::__private::unchecked_sub(
@@ -674,7 +676,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   static constexpr TagType index = get_index<V>();
 
   template <ValuesType V>
-  using TypesFromValue = __private::IndexToTypes<uint64_t{index<V>}, Ts...>;
+  using TypesFromValue = __private::IndexToTypes<size_t{index<V>}, Ts...>;
 
  public:
   // TODO: Can we construct Tuples of trivially constructible things (or some
@@ -842,7 +844,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   ValuesType which() const& {
     check(tag_ != kUseAfterMove);
     constexpr ValuesType values[] = {Values...};
-    return values[uint64_t{tag_}];
+    return values[size_t{tag_}];
   }
 
   template <ValuesType V>
