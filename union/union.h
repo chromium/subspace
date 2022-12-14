@@ -35,6 +35,9 @@ namespace sus::union_type {
 
 namespace __private {
 
+using ::sus::num::__private::unchecked_add;
+using ::sus::num::__private::unchecked_sub;
+
 template <class T, class... Ts>
 static constexpr bool AllSameType = (... && std::same_as<T, Ts>);
 
@@ -45,7 +48,8 @@ template <class TagType, auto SearchValue, TagType I, auto V, auto... Vs>
 struct FindValue<TagType, SearchValue, I, V, Vs...> {
   using index = std::conditional_t<
       SearchValue == V, std::integral_constant<TagType, I>,
-      typename FindValue<TagType, SearchValue, I + 1u, Vs...>::index>;
+      typename FindValue<TagType, SearchValue, unchecked_add(I, TagType{1u}),
+                         Vs...>::index>;
 };
 
 template <class TagType, auto SearchValue, TagType I>
@@ -56,10 +60,10 @@ struct FindValue<TagType, SearchValue, I> {
 template <class TagType, auto SearchValue, auto... Vs>
 using ValueToIndex = FindValue<TagType, SearchValue, 0u, Vs...>::index;
 
-template <size_t I, class... Ts>
+template <uint64_t I, class... Ts>
 struct FindTypeTuple;
 
-template <size_t I, class T, class... Ts>
+template <uint64_t I, class T, class... Ts>
 struct FindTypeTuple<I, T, Ts...> {
   using type = FindTypeTuple<I - 1, Ts...>::type;
 };
@@ -83,7 +87,7 @@ struct UnwrapTuple<::sus::Tuple<Ts...>> {
   using type = ::sus::Tuple<Ts...>;
 };
 
-template <size_t I, class... Ts>
+template <uint64_t I, class... Ts>
 using IndexToTypes = UnwrapTuple<typename FindTypeTuple<I, Ts...>::type>::type;
 
 template <auto... Vs>
@@ -236,10 +240,10 @@ template <class... Ts>
 concept AllTriviallyCopyAssignable = (... &&
                                       std::is_trivially_move_assignable_v<Ts>);
 
-template <size_t I, class... Elements>
+template <uint64_t I, class... Elements>
 union Storage;
 
-template <size_t I, class... Ts, class... Elements>
+template <uint64_t I, class... Ts, class... Elements>
   requires(sizeof...(Ts) > 0 && sizeof...(Elements) > 0)
 union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   Storage() {}
@@ -326,18 +330,16 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   }
 
   constexpr auto get_ref() const& {
-    return [this]<size_t... Is>(std::index_sequence<Is...>) {
+    return [this]<uint64_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
           tuple_.template get_ref<Is>()...);
-    }
-    (std::make_index_sequence<sizeof...(Ts)>());
+    }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr decltype(auto) get_ref() && = delete;
   constexpr auto get_mut() & {
-    return [this]<size_t... Is>(std::index_sequence<Is...>) {
+    return [this]<uint64_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
-    }
-    (std::make_index_sequence<sizeof...(Ts)>());
+    }(std::make_index_sequence<sizeof...(Ts)>());
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
 
@@ -345,7 +347,7 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   Storage<I + 1, Elements...> more_;
 };
 
-template <size_t I, class T, class... Elements>
+template <uint64_t I, class T, class... Elements>
   requires(sizeof...(Elements) > 0)
 union Storage<I, ::sus::Tuple<T>, Elements...> {
   Storage() {}
@@ -448,7 +450,7 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
   [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
 };
 
-template <size_t I, class... Ts>
+template <uint64_t I, class... Ts>
   requires(sizeof...(Ts) > 0)
 union Storage<I, ::sus::Tuple<Ts...>> {
   Storage() {}
@@ -502,24 +504,22 @@ union Storage<I, ::sus::Tuple<Ts...>> {
   }
 
   constexpr auto get_ref() const& {
-    return [this]<size_t... Is>(std::index_sequence<Is...>) {
+    return [this]<uint64_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
           tuple_.template get_ref<Is>()...);
-    }
-    (std::make_index_sequence<sizeof...(Ts)>());
+    }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr auto get_mut() & {
-    return [this]<size_t... Is>(std::index_sequence<Is...>) {
+    return [this]<uint64_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
-    }
-    (std::make_index_sequence<sizeof...(Ts)>());
+    }(std::make_index_sequence<sizeof...(Ts)>());
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
 
   [[sus_no_unique_address]] Type tuple_;
 };
 
-template <size_t I, class T>
+template <uint64_t I, class T>
 union Storage<I, ::sus::Tuple<T>> {
   Storage() {}
   ~Storage() {}
@@ -590,36 +590,40 @@ union Storage<I, ::sus::Tuple<T>> {
 
 template <auto I, class S>
 static constexpr const auto& find_storage(const S& storage) {
-  return find_storage(storage, std::integral_constant<size_t, size_t{I}>());
+  return find_storage(storage, std::integral_constant<uint64_t, uint64_t{I}>());
 }
 
-template <size_t I, class S>
+template <uint64_t I, class S>
 static constexpr const auto& find_storage(const S& storage,
-                                          std::integral_constant<size_t, I>) {
-  return find_storage(storage.more_, std::integral_constant<size_t, I - 1>());
+                                          std::integral_constant<uint64_t, I>) {
+  return find_storage(
+      storage.more_,
+      std::integral_constant<uint64_t, unchecked_sub(I, uint64_t{1})>());
 }
 
 template <class S>
 static constexpr const auto& find_storage(const S& storage,
-                                          std::integral_constant<size_t, 0>) {
+                                          std::integral_constant<uint64_t, 0>) {
   return storage;
 }
 
 template <auto I, class S>
 static constexpr auto& find_storage_mut(S& storage) {
-  return find_storage_mut(storage, std::integral_constant<size_t, size_t{I}>());
+  return find_storage_mut(storage,
+                          std::integral_constant<uint64_t, uint64_t{I}>());
 }
 
-template <size_t I, class S>
+template <uint64_t I, class S>
 static constexpr auto& find_storage_mut(S& storage,
-                                        std::integral_constant<size_t, I>) {
-  return find_storage_mut(storage.more_,
-                          std::integral_constant<size_t, I - 1>());
+                                        std::integral_constant<uint64_t, I>) {
+  return find_storage_mut(
+      storage.more_,
+      std::integral_constant<uint64_t, unchecked_sub(I, uint64_t{1})>());
 }
 
 template <class S>
 static constexpr auto& find_storage_mut(S& storage,
-                                        std::integral_constant<size_t, 0>) {
+                                        std::integral_constant<uint64_t, 0>) {
   return storage;
 }
 
@@ -670,7 +674,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   static constexpr TagType index = get_index<V>();
 
   template <ValuesType V>
-  using TypesFromValue = __private::IndexToTypes<size_t{index<V>}, Ts...>;
+  using TypesFromValue = __private::IndexToTypes<uint64_t{index<V>}, Ts...>;
 
  public:
   // TODO: Can we construct Tuples of trivially constructible things (or some
@@ -703,10 +707,10 @@ class Union<__private::TypeList<Ts...>, Values...> {
   Union(Union&& o)
     requires(__private::AllMove<ValuesType, Ts...> &&
              !__private::AllTriviallyMoveConstructible<ValuesType, Ts...>)
-  : tag_(::sus::mem::replace(::sus::mref(o.tag_),
-                             // Attempt to catch use-after-move by setting the
-                             // tag to an unused value.
-                             kUseAfterMove)) {
+      : tag_(::sus::mem::replace(::sus::mref(o.tag_),
+                                 // Attempt to catch use-after-move by setting
+                                 // the tag to an unused value.
+                                 kUseAfterMove)) {
     check(tag_ != kUseAfterMove);
     storage_.move_construct(tag_, ::sus::move(o.storage_));
   }
@@ -746,7 +750,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   Union(const Union& o)
     requires(__private::AllCopy<ValuesType, Ts...> &&
              !__private::AllTriviallyCopyConstructible<ValuesType, Ts...>)
-  : tag_(o.tag_) {
+      : tag_(o.tag_) {
     check(o.tag_ != kUseAfterMove);
     storage_.copy_construct(tag_, o.storage_);
   }
@@ -838,7 +842,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   ValuesType which() const& {
     check(tag_ != kUseAfterMove);
     constexpr ValuesType values[] = {Values...};
-    return values[size_t{tag_}];
+    return values[uint64_t{tag_}];
   }
 
   template <ValuesType V>
