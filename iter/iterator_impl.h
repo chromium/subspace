@@ -44,7 +44,7 @@ bool IteratorBase<Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
     Option<Item> item = next();
     if (item.is_none()) return true;
     // Safety: `item` was checked to hold Some already.
-    if (!f(item.take().unwrap_unchecked(unsafe_fn))) return false;
+    if (!f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return false;
   }
 }
 
@@ -54,7 +54,7 @@ bool IteratorBase<Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
     Option<Item> item = next();
     if (item.is_none()) return false;
     // Safety: `item` was checked to hold Some already.
-    if (f(item.take().unwrap_unchecked(unsafe_fn))) return true;
+    if (f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return true;
   }
 }
 

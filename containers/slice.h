@@ -164,7 +164,7 @@ class Slice {
   T* data_;
   ::sus::usize len_;
 
-  sus_class_never_value_field(unsafe_fn, Slice, data_, nullptr);
+  sus_class_never_value_field(::sus::marker::unsafe_fn, Slice, data_, nullptr);
 };
 
 // Implicit for-ranged loop iteration via `Slice::iter()`.

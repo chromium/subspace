@@ -17,6 +17,7 @@
 #include <type_traits>
 
 #include "macros/__private/compiler_bugs.h"
+#include "marker/unsafe.h"
 #include "mem/relocate.h"
 
 namespace sus::test {
@@ -90,7 +91,7 @@ struct NotTriviallyRelocatableCopyableOrMoveable final {
 };
 
 struct [[sus_trivial_abi]] TrivialAbiRelocatable final {
-  sus_class_trivial_relocatable(unsafe_fn);
+  sus_class_trivial_relocatable(::sus::marker::unsafe_fn);
   TrivialAbiRelocatable(TrivialAbiRelocatable&&) noexcept = default;
   TrivialAbiRelocatable& operator=(TrivialAbiRelocatable&&) noexcept = default;
   ~TrivialAbiRelocatable() {}

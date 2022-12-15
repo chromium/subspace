@@ -139,7 +139,7 @@ struct [[sus_trivial_abi]] NonNull {
   template <class U>
     requires(std::is_convertible_v<T*, U*>)
   NonNull<U> cast() const {
-    return NonNull<U>::with_ptr_unchecked(unsafe_fn, static_cast<U*>(ptr_));
+    return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn, static_cast<U*>(ptr_));
   }
 
   /// Cast the pointer of type `T` in NonNull<T> to a pointer of type `U` and
@@ -149,7 +149,7 @@ struct [[sus_trivial_abi]] NonNull {
   /// The pointee must be a `U*` or this results in Undefined Behaviour.
   template <class U>
   NonNull<U> downcast(::sus::marker::UnsafeFnMarker) const {
-    return NonNull<U>::with_ptr_unchecked(unsafe_fn, static_cast<U*>(ptr_));
+    return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn, static_cast<U*>(ptr_));
   }
 
  private:
@@ -160,10 +160,10 @@ struct [[sus_trivial_abi]] NonNull {
 
   // Declare that this type can always be trivially relocated for library
   // optimizations.
-  sus_class_trivial_relocatable(unsafe_fn);
+  sus_class_trivial_relocatable(::sus::marker::unsafe_fn);
   // Declare that the `ptr_` field is never set to `nullptr` for library
   // optimizations.
-  sus_class_never_value_field(unsafe_fn, NonNull, ptr_, nullptr);
+  sus_class_never_value_field(::sus::marker::unsafe_fn, NonNull, ptr_, nullptr);
 };
 
 /// sus::ops::Eq<NonNull<T>> trait.

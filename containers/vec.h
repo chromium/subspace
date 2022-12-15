@@ -86,7 +86,7 @@ class Vec {
   {
     auto v = Vec::with_capacity(capacity_);
     for (auto i = size_t{0}; i < len_; ++i) {
-      new (v.as_mut_ptr() + i) T(::sus::clone(get_unchecked(unsafe_fn, i)));
+      new (v.as_mut_ptr() + i) T(::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
     }
     v.len_ = len_;
     return v;
@@ -106,15 +106,15 @@ class Vec {
       const size_t in_place_count =
           sus::ops::min(len_, source.len_).primitive_value;
       for (auto i = size_t{0}; i < in_place_count; ++i) {
-        ::sus::clone_into(mref(get_unchecked_mut(unsafe_fn, i)),
-                          source.get_unchecked(unsafe_fn, i));
+        ::sus::clone_into(mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)),
+                          source.get_unchecked(::sus::marker::unsafe_fn, i));
       }
       for (auto i = in_place_count; i < len_; ++i) {
-        get_unchecked_mut(unsafe_fn, i).~T();
+        get_unchecked_mut(::sus::marker::unsafe_fn, i).~T();
       }
       for (auto i = in_place_count; i < source.len_; ++i) {
         new (as_mut_ptr() + i)
-            T(::sus::clone(source.get_unchecked(unsafe_fn, i)));
+            T(::sus::clone(source.get_unchecked(::sus::marker::unsafe_fn, i)));
       }
       len_ = source.len_;
     }
@@ -227,7 +227,7 @@ class Vec {
   constexpr Option<const T&> get_ref(usize i) const& noexcept {
     if (i >= len_) [[unlikely]]
       return Option<const T&>::none();
-    return Option<const T&>::some(get_unchecked(unsafe_fn, i));
+    return Option<const T&>::some(get_unchecked(::sus::marker::unsafe_fn, i));
   }
   constexpr Option<const T&> get(usize i) && = delete;
 
@@ -235,7 +235,7 @@ class Vec {
   constexpr Option<T&> get_mut(usize i) & noexcept {
     if (i >= len_) [[unlikely]]
       return Option<T&>::none();
-    return Option<T&>::some(mref(get_unchecked_mut(unsafe_fn, i)));
+    return Option<T&>::some(mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)));
   }
 
   /// Returns a const reference to the element at index `i`.
@@ -262,13 +262,13 @@ class Vec {
 
   constexpr inline const T& operator[](usize i) const& noexcept {
     check(i < len_);
-    return get_unchecked(unsafe_fn, i);
+    return get_unchecked(::sus::marker::unsafe_fn, i);
   }
   constexpr inline const T& operator[](usize i) && = delete;
 
   constexpr inline T& operator[](usize i) & noexcept {
     check(i < len_);
-    return get_unchecked_mut(unsafe_fn, i);
+    return get_unchecked_mut(::sus::marker::unsafe_fn, i);
   }
 
   /// Returns a const pointer to the first element in the vector.
@@ -380,8 +380,8 @@ class Vec {
   usize len_;
   usize capacity_;
 
-  sus_class_never_value_field(unsafe_fn, Vec, storage_, nullptr);
-  sus_class_trivial_relocatable_value(unsafe_fn,
+  sus_class_never_value_field(::sus::marker::unsafe_fn, Vec, storage_, nullptr);
+  sus_class_trivial_relocatable_value(::sus::marker::unsafe_fn,
                                       sus::mem::relocate_array_by_memcpy<T>);
 };
 

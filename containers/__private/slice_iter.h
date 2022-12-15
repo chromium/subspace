@@ -58,7 +58,7 @@ struct [[sus_trivial_abi]] SliceIter
   const Item* ptr_;
   const Item* end_;
 
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(ptr_),
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(ptr_),
                                              decltype(end_));
 };
 
@@ -89,7 +89,7 @@ struct [[sus_trivial_abi]] SliceIterMut
   Item* ptr_;
   Item* end_;
 
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(ptr_),
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(ptr_),
                                              decltype(end_));
 };
 

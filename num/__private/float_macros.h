@@ -673,7 +673,7 @@ class Array;
           min.primitive_value <= max.primitive_value);                         \
     /* SAFETY: We have verified that the min and max are not NaN and that      \
      * `min <= max`. */                                                        \
-    return __private::float_clamp(unsafe_fn, primitive_value,                  \
+    return __private::float_clamp(::sus::marker::unsafe_fn, primitive_value, \
                                   min.primitive_value, max.primitive_value);   \
   }
 

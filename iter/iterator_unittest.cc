@@ -19,6 +19,7 @@
 #include "containers/array.h"
 #include "iter/filter.h"
 #include "macros/__private/compiler_bugs.h"
+#include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 using ::sus::containers::Array;

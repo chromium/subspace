@@ -154,7 +154,7 @@ R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
                               forward<CallArgs>(args)...);
     }
   }
-  ::sus::unreachable_unchecked(unsafe_fn);
+  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
 template <class R, class... CallArgs>
@@ -173,7 +173,7 @@ R FnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
           forward<CallArgs>(args)...);
     }
   }
-  ::sus::unreachable_unchecked(unsafe_fn);
+  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
 template <class R, class... CallArgs>
@@ -192,7 +192,7 @@ R Fn<R(CallArgs...)>::operator()(CallArgs&&... args) const& noexcept {
           forward<CallArgs>(args)...);
     }
   }
-  ::sus::unreachable_unchecked(unsafe_fn);
+  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
 }  // namespace sus::fn

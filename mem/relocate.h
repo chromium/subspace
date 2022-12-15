@@ -31,9 +31,8 @@ struct relocatable_tag final {
 
   static constexpr bool value(int)
     requires requires {
-               requires(std::same_as<decltype(T::SusUnsafeTrivialRelocate),
-                                     const bool>);
-             }
+      requires(std::same_as<decltype(T::SusUnsafeTrivialRelocate), const bool>);
+    }
   {
     return T::SusUnsafeTrivialRelocate;
   };
@@ -141,16 +140,17 @@ concept relocate_one_by_memcpy =
 ///
 /// To additionally allow the class to be passed in registers, the class can be
 /// marked with the `sus_trivial_abi` attribute.
-#define sus_class_trivial_relocatable(unsafe_fn)                      \
-  static_assert(std::is_same_v<decltype(unsafe_fn),                   \
+#define sus_class_trivial_relocatable(unsafe_fn)       \
+  static_assert(std::is_same_v<decltype(unsafe_fn),    \
                                const ::sus::marker::UnsafeFnMarker>); \
   template <class SusOuterClassTypeForTriviallyReloc>                 \
   friend struct ::sus::mem::__private::relocatable_tag;               \
   static constexpr bool SusUnsafeTrivialRelocate = true
 
 /// Mark a class as trivially relocatable based on a compile-time condition.
-#define sus_class_trivial_relocatable_value(unsafe_fn, is_trivially_reloc)   \
-  static_assert(std::is_same_v<decltype(unsafe_fn),                          \
+#define sus_class_trivial_relocatable_value(unsafe_fn,        \
+                                            is_trivially_reloc)              \
+  static_assert(std::is_same_v<decltype(unsafe_fn),           \
                                const ::sus::marker::UnsafeFnMarker>);        \
   static_assert(                                                             \
       std::is_same_v<std::remove_cv_t<decltype(is_trivially_reloc)>, bool>); \
@@ -160,12 +160,13 @@ concept relocate_one_by_memcpy =
 
 /// Mark a class as trivially relocatable if all of the types passed as
 /// arguments are also marked as such.
-#define sus_class_maybe_trivial_relocatable_types(unsafe_fn, ...)     \
-  static_assert(std::is_same_v<decltype(unsafe_fn),                   \
-                               const ::sus::marker::UnsafeFnMarker>); \
-  template <class SusOuterClassTypeForTriviallyReloc>                 \
-  friend struct ::sus::mem::__private::relocatable_tag;               \
-  static constexpr bool SusUnsafeTrivialRelocate =                    \
+#define sus_class_maybe_trivial_relocatable_types(unsafe_fn, \
+                                                  ...)                      \
+  static_assert(std::is_same_v<decltype(unsafe_fn),          \
+                               const ::sus::marker::UnsafeFnMarker>);       \
+  template <class SusOuterClassTypeForTriviallyReloc>                       \
+  friend struct ::sus::mem::__private::relocatable_tag;                     \
+  static constexpr bool SusUnsafeTrivialRelocate =                          \
       ::sus::mem::relocate_one_by_memcpy<__VA_ARGS__>
 
 /// Mark a class as unconditionally trivially relocatable while also asserting
@@ -173,10 +174,12 @@ concept relocate_one_by_memcpy =
 ///
 /// To additionally allow the class to be passed in registers, the class can be
 /// marked with the `sus_trivial_abi` attribute.
-#define sus_class_assert_trivial_relocatable_types(unsafe_fn, ...)    \
-  static_assert(std::is_same_v<decltype(unsafe_fn),                   \
-                               const ::sus::marker::UnsafeFnMarker>); \
-  sus_class_maybe_trivial_relocatable_types(unsafe_fn, __VA_ARGS__);  \
-  static_assert(SusUnsafeTrivialRelocate,                             \
-                "Type is not trivially "                              \
+#define sus_class_assert_trivial_relocatable_types(unsafe_fn, \
+                                                   ...)                      \
+  static_assert(std::is_same_v<decltype(unsafe_fn),           \
+                               const ::sus::marker::UnsafeFnMarker>);        \
+  sus_class_maybe_trivial_relocatable_types(unsafe_fn,        \
+                                            __VA_ARGS__);                    \
+  static_assert(SusUnsafeTrivialRelocate,                                    \
+                "Type is not trivially "                                     \
                 "relocatable");

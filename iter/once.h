@@ -63,7 +63,7 @@ class [[sus_trivial_abi]] Once : public IteratorBase<Item> {
 
   RelocatableStorage<Item> single_;
 
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(single_));
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(single_));
 };
 
 template <class Item>

@@ -304,7 +304,7 @@ class Option final {
   /// auto x = Option<int>::some(2);
   /// switch (x) {
   ///  case Some:
-  ///   return sus::move(x).unwrap_unchecked(unsafe_fn);
+  ///   return sus::move(x).unwrap_unchecked(::sus::marker::unsafe_fn);
   ///  case None:
   ///   return -1;
   /// }
@@ -320,7 +320,7 @@ class Option final {
           msg) && noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
-    return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
+    return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Returns a const reference to the contained value inside the Option.
@@ -357,7 +357,7 @@ class Option final {
   /// currently `None`.
   constexpr T unwrap() && noexcept {
     if (!std::is_constant_evaluated()) ::sus::check(t_.state() == Some);
-    return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
+    return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Returns the contained value inside the Option.
@@ -707,10 +707,10 @@ class Option final {
     } else {
       if (t_.val_.is_ok()) {
         return Result::with(Option<OkType>::some(
-            t_.take_and_set_none().unwrap_unchecked(unsafe_fn)));
+            t_.take_and_set_none().unwrap_unchecked(::sus::marker::unsafe_fn)));
       } else {
         return Result::with_err(
-            t_.take_and_set_none().unwrap_err_unchecked(unsafe_fn));
+            t_.take_and_set_none().unwrap_err_unchecked(::sus::marker::unsafe_fn));
       }
     }
   }
@@ -731,7 +731,7 @@ class Option final {
     requires(::sus::option::__private::IsOptionType<T>::value)
   {
     if (t_.state() == Some)
-      return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
+      return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
     else
       return T::none();
   }
@@ -782,7 +782,7 @@ class Option final {
 
   Storage<T> t_;
 
-  sus_class_maybe_trivial_relocatable_types(unsafe_fn, T);
+  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn, T);
 };
 
 /// Implementation of Option for a reference type.
@@ -840,7 +840,7 @@ class Option<T&> final {
   /// auto x = Option<int>::some(2);
   /// switch (x) {
   ///  case Some:
-  ///   return sus::move(x).unwrap_unchecked(unsafe_fn);
+  ///   return sus::move(x).unwrap_unchecked(::sus::marker::unsafe_fn);
   ///  case None:
   ///   return -1;
   /// }
@@ -856,7 +856,7 @@ class Option<T&> final {
           msg) && noexcept {
     if (!std::is_constant_evaluated())
       ::sus::check_with_message(t_.state() == Some, *msg);
-    return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
+    return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Returns a const reference to the contained value inside the Option.
@@ -894,7 +894,7 @@ class Option<T&> final {
   /// currently `None`.
   constexpr T& unwrap() && noexcept {
     if (!std::is_constant_evaluated()) ::sus::check(t_.state() == Some);
-    return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
+    return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Returns the contained value inside the Option.
@@ -1210,7 +1210,7 @@ class Option<T&> final {
     requires(::sus::option::__private::IsOptionType<T>::value)
   {
     if (t_.state() == Some)
-      return ::sus::move(*this).unwrap_unchecked(unsafe_fn);
+      return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
     else
       return T::none();
   }
@@ -1268,7 +1268,7 @@ class Option<T&> final {
 
   Storage<StoragePointer<T>> t_;
 
-  sus_class_maybe_trivial_relocatable_types(unsafe_fn, T&);
+  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn, T&);
 };
 
 /// sus::ops::Eq<Option<U>> trait.
@@ -1280,7 +1280,7 @@ constexpr inline bool operator==(const Option<T>& l,
     case Some: return r.is_some() && l.unwrap_ref() == r.unwrap_ref();
     case None: return r.is_none();
   }
-  ::sus::unreachable_unchecked(unsafe_fn);
+  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
 /// sus::ops::Ord<Option<U>> trait.
@@ -1300,7 +1300,7 @@ constexpr inline auto operator<=>(const Option<T>& l,
       else
         return std::strong_ordering::equivalent;
   }
-  ::sus::unreachable_unchecked(unsafe_fn);
+  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
 /// sus::ops::WeakOrd<Option<U>> trait.
@@ -1320,7 +1320,7 @@ constexpr inline auto operator<=>(const Option<T>& l,
       else
         return std::weak_ordering::equivalent;
   }
-  ::sus::unreachable_unchecked(unsafe_fn);
+  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
 /// sus::ops::PartialOrd<Option<U>> trait.
@@ -1340,7 +1340,7 @@ constexpr inline auto operator<=>(const Option<T>& l,
       else
         return std::partial_ordering::equivalent;
   }
-  ::sus::unreachable_unchecked(unsafe_fn);
+  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
 // Implicit for-ranged loop iteration via `Array::iter()`.

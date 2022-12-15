@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "marker/unsafe.h"
 #include "mem/move.h"
 #include "mem/mref.h"
 #include "mem/relocate.h"
@@ -64,7 +65,8 @@ struct [[sus_trivial_abi]] RelocatableStorage<T> final {
 
   Option<T&> heap_;
 
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(heap_));
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn,
+                                             decltype(heap_));
 };
 
 template <class T>
@@ -87,7 +89,8 @@ struct [[sus_trivial_abi]] RelocatableStorage<T> final {
   // needed.
   Option<T> stack_;
 
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(stack_));
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn,
+                                             decltype(stack_));
 };
 
 }  // namespace sus::mem::__private

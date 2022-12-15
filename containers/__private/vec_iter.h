@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "iter/iterator_defn.h"
+#include "marker/unsafe.h"
 #include "mem/move.h"
 #include "mem/mref.h"
 #include "num/unsigned_integer.h"
@@ -46,7 +47,7 @@ struct VecIntoIter : public ::sus::iter::IteratorBase<Item> {
     // observations we have here, as next_index_ is a field and changes across
     // multiple method calls.
     Item& item = vec_.get_unchecked_mut(
-        unsafe_fn,
+        ::sus::marker::unsafe_fn,
         ::sus::mem::replace(mref(next_index_), next_index_ + 1_usize));
     return Option<Item>::some(move(item));
   }
@@ -58,7 +59,8 @@ struct VecIntoIter : public ::sus::iter::IteratorBase<Item> {
   usize next_index_ = 0_usize;
   Vec<Item> vec_;
 
-  sus_class_maybe_trivial_relocatable_types(unsafe_fn, decltype(next_index_),
+  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+                                            decltype(next_index_),
                                             decltype(vec_));
 };
 

@@ -42,7 +42,7 @@ class Filter : public IteratorBase<Item> {
     // TODO: Just call find(pred) on itself?
     while (true) {
       Option<Item> item = next_iter.next();
-      if (item.is_none() || pred(item.as_ref().unwrap_unchecked(unsafe_fn)))
+      if (item.is_none() || pred(item.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn)))
         return item;
     }
   }
@@ -59,7 +59,7 @@ class Filter : public IteratorBase<Item> {
   // pushing the inner Iterator onto the heap if needed. Likewise, the
   // predicate is known to be trivially relocatable because the FnMut will
   // either be a function pointer or a heap allocation itself.
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(pred_),
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(pred_),
                                              decltype(next_iter_));
 };
 

@@ -103,7 +103,7 @@ struct [[sus_trivial_abi]] Mref final {
 
   T& t_;
 
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(t_));
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(t_));
 };
 
 }  // namespace sus::mem

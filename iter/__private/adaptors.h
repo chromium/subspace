@@ -23,10 +23,10 @@ struct Unwrapper : public ::sus::iter::IteratorBase<U> {
     Option<Item> try_item = iter.next();
     if (try_item.is_none()) return Option<U>::none();
     Result<U, E> result =
-        make_result(::sus::move(try_item).unwrap_unchecked(unsafe_fn));
+        make_result(::sus::move(try_item).unwrap_unchecked(::sus::marker::unsafe_fn));
     if (result.is_ok())
-      return Option<U>::some(::sus::move(result).unwrap_unchecked(unsafe_fn));
-    err.insert(::sus::move(result).unwrap_err_unchecked(unsafe_fn));
+      return Option<U>::some(::sus::move(result).unwrap_unchecked(::sus::marker::unsafe_fn));
+    err.insert(::sus::move(result).unwrap_err_unchecked(::sus::marker::unsafe_fn));
     return Option<U>::none();
   }
 
