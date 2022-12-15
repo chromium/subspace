@@ -55,7 +55,7 @@ using State::Err;
 using State::Ok;
 
 template <class T, class E>
-class Result final {
+class [[nodiscard]] Result final {
  public:
   using OkType = T;
   using ErrType = E;
