@@ -14,6 +14,7 @@
 
 #include "assertions/unreachable.h"
 
+#include "prelude.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace sus {
@@ -27,14 +28,13 @@ TEST(Unreachable, Unreachable) {
 
 TEST(Unreachable, Unchecked) {
   switch (0) {
-  case 0:
-    break;
-  case 1:
-    // We can't actually land here or we'd introduce UB, but the confirms we can
-    // write it and it compiles.
-    unreachable_unchecked(unsafe_fn);
+    case 0: break;
+    case 1:
+      // We can't actually land here or we'd introduce UB, but the confirms we
+      // can write it and it compiles.
+      unreachable_unchecked(unsafe_fn);
   }
 }
 
-} // namespace
-} // namespace sus
+}  // namespace
+}  // namespace sus

@@ -1061,8 +1061,8 @@ class Tuple;
     if (primitive_value == 0u) [[unlikely]] {                                 \
       return Option<u32>::none();                                             \
     } else {                                                                  \
-      uint32_t zeros =                                                        \
-          __private::leading_zeros_nonzero(unsafe_fn, primitive_value);       \
+      uint32_t zeros = __private::leading_zeros_nonzero(                      \
+          ::sus::marker::unsafe_fn, primitive_value);                         \
       return Option<u32>::some(BITS() - u32(1u) - u32(zeros));                \
     }                                                                         \
   }                                                                           \
@@ -1261,7 +1261,7 @@ class Tuple;
       }                                                                       \
       return bytes;                                                           \
     } else {                                                                  \
-      auto bytes = Array::with_uninitialized(unsafe_fn);                      \
+      auto bytes = Array::with_uninitialized(::sus::marker::unsafe_fn);       \
       memcpy(bytes.as_mut_ptr(), &primitive_value, Bytes);                    \
       return bytes;                                                           \
     }                                                                         \

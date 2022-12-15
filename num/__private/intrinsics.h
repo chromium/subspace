@@ -328,7 +328,7 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
 constexpr sus_always_inline uint32_t leading_zeros(T value) noexcept {
   if (value == 0) return unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
-  return leading_zeros_nonzero(unsafe_fn, value);
+  return leading_zeros_nonzero(::sus::marker::unsafe_fn, value);
 }
 
 /** Counts the number of trailing zeros in a non-zero input.
@@ -387,7 +387,7 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> && sizeof(T) <= 8)
 constexpr sus_always_inline uint32_t trailing_zeros(T value) noexcept {
   if (value == 0) return static_cast<uint32_t>(sizeof(T) * 8u);
-  return trailing_zeros_nonzero(unsafe_fn, value);
+  return trailing_zeros_nonzero(::sus::marker::unsafe_fn, value);
 }
 
 template <class T>
@@ -973,7 +973,7 @@ sus_always_inline constexpr T one_less_than_next_power_of_two(T x) noexcept {
     // That means the shift is always in-bounds, and some processors (such as
     // intel pre-haswell) have more efficient ctlz intrinsics when the argument
     // is non-zero.
-    const auto z = leading_zeros_nonzero(unsafe_fn, p);
+    const auto z = leading_zeros_nonzero(::sus::marker::unsafe_fn, p);
     return unchecked_shr(max_value<T>(), z);
   }
 }
@@ -1058,7 +1058,7 @@ template <class T>
   requires(std::is_integral_v<T> && sizeof(T) <= 8)
 inline auto into_float(T x) noexcept {
   // SAFETY: Since this isn't a constexpr context, we're okay.
-  return into_float_constexpr(unsafe_fn, x);
+  return into_float_constexpr(::sus::marker::unsafe_fn, x);
 }
 
 template <class T>
@@ -1137,9 +1137,10 @@ sus_always_inline constexpr T nan() noexcept {
   // a constexpr and non-constexpr context. The quiet bit is always set in a
   // constexpr context, so we return a quiet bit here.
   if constexpr (sizeof(T) == sizeof(float))
-    return into_float_constexpr(unsafe_fn, uint32_t{0x7fc00000});
+    return into_float_constexpr(::sus::marker::unsafe_fn, uint32_t{0x7fc00000});
   else
-    return into_float_constexpr(unsafe_fn, uint64_t{0x7ff8000000000000});
+    return into_float_constexpr(::sus::marker::unsafe_fn,
+                                uint64_t{0x7ff8000000000000});
 }
 
 template <class T>
@@ -1148,9 +1149,10 @@ sus_always_inline constexpr T infinity() noexcept {
   // SAFETY: The value being constructed is non a NaN so we can do this in a
   // constexpr way.
   if constexpr (sizeof(T) == sizeof(float))
-    return into_float_constexpr(unsafe_fn, uint32_t{0x7f800000});
+    return into_float_constexpr(::sus::marker::unsafe_fn, uint32_t{0x7f800000});
   else
-    return into_float_constexpr(unsafe_fn, uint64_t{0x7ff0000000000000});
+    return into_float_constexpr(::sus::marker::unsafe_fn,
+                                uint64_t{0x7ff0000000000000});
 }
 
 template <class T>
@@ -1159,9 +1161,10 @@ sus_always_inline constexpr T negative_infinity() noexcept {
   // SAFETY: The value being constructed is non a NaN so we can do this in a
   // constexpr way.
   if constexpr (sizeof(T) == sizeof(float))
-    return into_float_constexpr(unsafe_fn, uint32_t{0xff800000});
+    return into_float_constexpr(::sus::marker::unsafe_fn, uint32_t{0xff800000});
   else
-    return into_float_constexpr(unsafe_fn, uint64_t{0xfff0000000000000});
+    return into_float_constexpr(::sus::marker::unsafe_fn,
+                                uint64_t{0xfff0000000000000});
 }
 
 constexpr inline int32_t exponent_bits(float x) noexcept {
@@ -1315,7 +1318,7 @@ constexpr T truncate_float(T x) noexcept {
   const auto shl = unchecked_shl(shr, trim_bits);
   // SAFETY: The value here is not a NaN, so will give the same value in
   // constexpr and non-constexpr contexts.
-  return into_float_constexpr(unsafe_fn, shl);
+  return into_float_constexpr(::sus::marker::unsafe_fn, shl);
 }
 
 template <class T>
@@ -1334,7 +1337,8 @@ constexpr T float_signum(T x) noexcept {
   const auto signbit = unchecked_and(into_unsigned_integer(x), high_bit<T>());
   // SAFETY: The value passed in is constructed here and is not a NaN.
   return into_float_constexpr(
-      unsafe_fn, unchecked_add(into_unsigned_integer(T{1}), signbit));
+      ::sus::marker::unsafe_fn,
+      unchecked_add(into_unsigned_integer(T{1}), signbit));
 }
 
 template <class T>
@@ -1363,7 +1367,7 @@ constexpr inline ::sus::num::FpCategory float_category(T x) noexcept {
     case norm: return ::sus::num::FpCategory::Normal;
     case subnorm: return ::sus::num::FpCategory::Subnormal;
     case zero: return ::sus::num::FpCategory::Zero;
-    default: ::sus::unreachable_unchecked(unsafe_fn);
+    default: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 }
 #else
@@ -1384,7 +1388,7 @@ constexpr inline ::sus::num::FpCategory float_category(T x) noexcept {
       case FP_NORMAL: return ::sus::num::FpCategory::Normal;
       case FP_SUBNORMAL: return ::sus::num::FpCategory::Subnormal;
       case FP_ZERO: return ::sus::num::FpCategory::Zero;
-      default: ::sus::unreachable_unchecked(unsafe_fn);
+      default: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
     }
   }
 }

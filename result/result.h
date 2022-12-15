@@ -156,7 +156,7 @@ class [[nodiscard]] Result final {
       case IsMoved:
         // SAFETY: The state_ is verified to be Ok or Err at the top of the
         // function.
-        ::sus::unreachable_unchecked(unsafe_fn);
+        ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
     }
   }
 
@@ -226,7 +226,7 @@ class [[nodiscard]] Result final {
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
-    ::sus::unreachable_unchecked(unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   void clone_from(const Result& source) &
@@ -237,7 +237,7 @@ class [[nodiscard]] Result final {
       switch (state_) {
         case IsOk: ::sus::clone_into(mref(storage_.ok_), source.storage_.ok_); break;
         case IsErr: ::sus::clone_into(mref(storage_.err_), source.storage_.err_); break;
-        case IsMoved: ::sus::unreachable_unchecked(unsafe_fn);
+        case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
       }
     } else {
       *this = source.clone();
@@ -267,7 +267,7 @@ class [[nodiscard]] Result final {
   /// auto x = Result<int, char>::with(2);
   /// switch (x) {
   ///  case Ok:
-  ///   return sus::move(x).unwrap_unchecked(unsafe_fn);
+  ///   return sus::move(x).unwrap_unchecked(::sus::marker::unsafe_fn);
   ///  case Err:
   ///   return -1;
   /// }
@@ -284,13 +284,13 @@ class [[nodiscard]] Result final {
   constexpr inline Option<T> ok() && noexcept {
     ::sus::check(state_ != IsMoved);
     switch (replace(mref(state_), IsMoved)) {
-      case IsOk: return Option<T>::some(take_and_destruct(unsafe_fn, mref(storage_.ok_)));
+      case IsOk: return Option<T>::some(take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_)));
       case IsErr: storage_.err_.~E(); return Option<T>::none();
       case IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
-    ::sus::unreachable_unchecked(unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Converts from `Result<T, E>` to `Option<E>`.
@@ -301,12 +301,12 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != IsMoved);
     switch (replace(mref(state_), IsMoved)) {
       case IsOk: storage_.ok_.~T(); return Option<E>::none();
-      case IsErr: return Option<E>::some(take_and_destruct(unsafe_fn, mref(storage_.err_)));
+      case IsErr: return Option<E>::some(take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.err_)));
       case IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
-    ::sus::unreachable_unchecked(unsafe_fn);
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Returns the contained `Ok` value, consuming the self value.
@@ -321,7 +321,7 @@ class [[nodiscard]] Result final {
   constexpr inline T unwrap() && noexcept {
     check_with_message(replace(mref(state_), IsMoved) == IsOk,
                        *"called `Result::unwrap()` on an `Err` value");
-    return take_and_destruct(unsafe_fn, mref(storage_.ok_));
+    return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_));
   }
 
   /// Returns the contained `Ok` value, consuming the self value, without
@@ -330,7 +330,7 @@ class [[nodiscard]] Result final {
   /// # Safety
   /// Calling this method on an `Err` is Undefined Behavior.
   constexpr inline T unwrap_unchecked(::sus::marker::UnsafeFnMarker) && noexcept {
-    return take_and_destruct(unsafe_fn, mref(storage_.ok_));
+    return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_));
   }
 
   /// Returns the contained `Err` value, consuming the self value.
@@ -340,7 +340,7 @@ class [[nodiscard]] Result final {
   constexpr inline E unwrap_err() && noexcept {
     check_with_message(replace(mref(state_), IsMoved) == IsErr,
                        *"called `Result::unwrap_err()` on an `Ok` value");
-    return take_and_destruct(unsafe_fn, mref(storage_.err_));
+    return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.err_));
   }
 
   /// Returns the contained `Err` value, consuming the self value, without
@@ -349,7 +349,7 @@ class [[nodiscard]] Result final {
   /// # Safety
   /// Calling this method on an `Ok` is Undefined Behavior.
   constexpr inline E unwrap_err_unchecked(::sus::marker::UnsafeFnMarker) && noexcept {
-    return take_and_destruct(unsafe_fn, mref(storage_.err_));
+    return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.err_));
   }
 
   constexpr Iterator<Once<const T&>> iter() const& noexcept {
@@ -372,7 +372,7 @@ class [[nodiscard]] Result final {
   constexpr Iterator<Once<T>> into_iter() && noexcept {
     ::sus::check(state_ != IsMoved);
     if (replace(mref(state_), IsMoved) == IsOk) {
-      return sus::iter::once(Option<T>::some(take_and_destruct(unsafe_fn, mref(storage_.ok_))));
+      return sus::iter::once(Option<T>::some(take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_))));
     } else {
       storage_.err_.~E();
       return sus::iter::once(Option<T>::none());
@@ -396,7 +396,7 @@ class [[nodiscard]] Result final {
   [[sus_no_unique_address]] __private::Storage<T, E> storage_;
   enum FullState { IsErr = 0, IsOk = 1, IsMoved = 2 } state_;
 
-  sus_class_maybe_trivial_relocatable_types(unsafe_fn, T, E);
+  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn, T, E);
 };
 
 }  // namespace sus::result

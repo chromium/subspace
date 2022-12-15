@@ -15,6 +15,7 @@
 #pragma once
 
 #include "containers/vec.h"
+#include "marker/unsafe.h"
 #include "mem/mref.h"
 #include "num/types.h"
 
@@ -22,6 +23,7 @@
 // TODO: Make a compile-time option for this.
 
 using ::sus::containers::Vec;
+using sus::marker::unsafe_fn;
 using ::sus::mem::mref;
 using sus::num::f32;
 using sus::num::f64;

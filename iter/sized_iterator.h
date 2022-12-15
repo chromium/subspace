@@ -44,7 +44,7 @@ struct [[sus_trivial_abi]] SizedIterator final {
   void (*destroy)(char& sized);
 
  private:
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(sized[0]),
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(sized[0]),
                                              decltype(destroy));
 };
 
@@ -71,7 +71,7 @@ struct [[sus_trivial_abi]] SizedIterator<Item, SubclassSize, SubclassAlign,
   void (*destroy)(IteratorBase<Item>& sized);
 
  private:
-  sus_class_assert_trivial_relocatable_types(unsafe_fn, decltype(iter),
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(iter),
                                              decltype(destroy));
 };
 

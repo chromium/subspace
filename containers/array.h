@@ -111,7 +111,7 @@ class Array final {
   Array(Array&& o)
       // TODO: Make a NonTrivialMove<T>.
     requires(::sus::mem::Move<T> && !std::is_trivially_move_constructible_v<T>)
-  : Array(kWithUninitialized) {
+      : Array(kWithUninitialized) {
     for (auto i = size_t{0}; i < N; ++i)
       new (as_mut_ptr() + i) T(::sus::move(o.storage_.data_[i]));
   }
@@ -136,7 +136,7 @@ class Array final {
   constexpr Array clone() const& noexcept
     requires(::sus::mem::Clone<T>)
   {
-    auto ar = Array::with_uninitialized(unsafe_fn);
+    auto ar = Array::with_uninitialized(::sus::marker::unsafe_fn);
     for (auto i = size_t{0}; i < N; ++i) {
       new (ar.as_mut_ptr() + i) T(::sus::clone(storage_.data_[i]));
     }
@@ -147,8 +147,8 @@ class Array final {
     requires(::sus::mem::Clone<T>)
   {
     for (auto i = size_t{0}; i < N; ++i) {
-      ::sus::clone_into(mref(get_unchecked_mut(unsafe_fn, i)),
-                        other.get_unchecked(unsafe_fn, i));
+      ::sus::clone_into(mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)),
+                        other.get_unchecked(::sus::marker::unsafe_fn, i));
     }
   }
 
@@ -333,9 +333,9 @@ class Array final {
   };
 
   sus_class_trivial_relocatable_value(
-      unsafe_fn, (N >= 2 && ::sus::mem::relocate_array_by_memcpy<T>) ||
-                     (N == 1 && ::sus::mem::relocate_one_by_memcpy<T>) ||
-                     N == 0);
+      ::sus::marker::unsafe_fn,
+      (N >= 2 && ::sus::mem::relocate_array_by_memcpy<T>) ||
+          (N == 1 && ::sus::mem::relocate_one_by_memcpy<T>) || N == 0);
 };
 
 namespace __private {
@@ -395,15 +395,15 @@ using ::sus::iter::__private::end;
 // Support for structured binding.
 template <size_t I, class T, size_t N>
 const auto& get(const Array<T, N>& a) noexcept {
-  return a.get_unchecked(unsafe_fn, I);
+  return a.get_unchecked(::sus::marker::unsafe_fn, I);
 }
 template <size_t I, class T, size_t N>
 auto& get(Array<T, N>& a) noexcept {
-  return a.get_unchecked_mut(unsafe_fn, I);
+  return a.get_unchecked_mut(::sus::marker::unsafe_fn, I);
 }
 template <size_t I, class T, size_t N>
 auto get(Array<T, N>&& a) noexcept {
-  return ::sus::move(a.get_unchecked_mut(unsafe_fn, I));
+  return ::sus::move(a.get_unchecked_mut(::sus::marker::unsafe_fn, I));
 }
 
 }  // namespace sus::containers
