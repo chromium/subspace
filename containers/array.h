@@ -81,6 +81,7 @@ class Array final {
   }
 
   template <::sus::fn::callable::CallableReturns<T> InitializerFn>
+    requires(::sus::mem::Move<T>)
   constexpr static Array with_initializer(InitializerFn f) noexcept {
     return Array(kWithInitializer, move(f), std::make_index_sequence<N>());
   }
@@ -88,16 +89,16 @@ class Array final {
   // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
   // sus::construct::Into<T> to avoid implicit conversions.
   template <std::convertible_to<T> U>
+    requires(::sus::mem::Copy<T>)
   constexpr static Array with_value(U&& t) noexcept {
-    return Array(kWithValue, ::sus::forward<U>(t),
-                 std::make_index_sequence<N>());
+    return Array(kWithValue, t, std::make_index_sequence<N>());
   }
 
   // Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
   // values. But doesn't use sus::construct::Into<T> to avoid implicit
   // conversions.
   template <std::convertible_to<T>... Ts>
-    requires(sizeof...(Ts) == N)
+    requires(sizeof...(Ts) == N && ::sus::mem::Move<T>)
   constexpr static Array with_values(Ts&&... ts) noexcept {
     auto a = Array(kWithUninitialized);
     init_values(a.as_mut_ptr(), 0, ::sus::forward<Ts>(ts)...);
