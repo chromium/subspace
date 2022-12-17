@@ -850,19 +850,19 @@ class Union<__private::TypeList<Ts...>, Values...> {
   template <ValuesType V>
   decltype(auto) get_ref() const& {
     ::sus::check(tag_ == index<V>);
-    return find_storage<index<V>>(storage_).get_ref();
+    return __private::find_storage<index<V>>(storage_).get_ref();
   }
 
   template <ValuesType V>
   decltype(auto) get_mut() & {
     ::sus::check(tag_ == index<V>);
-    return find_storage_mut<index<V>>(storage_).get_mut();
+    return __private::find_storage_mut<index<V>>(storage_).get_mut();
   }
 
   template <ValuesType V>
   decltype(auto) into_inner() && {
     ::sus::check(tag_ == index<V>);
-    return ::sus::mem::move_or_copy_ref(find_storage_mut<index<V>>(storage_))
+    return ::sus::mem::move_or_copy_ref(__private::find_storage_mut<index<V>>(storage_))
         .into_inner();
   }
 
@@ -870,11 +870,11 @@ class Union<__private::TypeList<Ts...>, Values...> {
     requires(std::convertible_to<U, Arg>)
   void set(U values) {
     if (tag_ == index<V>) {
-      find_storage_mut<index<V>>(storage_).set(::sus::move(values));
+      __private::find_storage_mut<index<V>>(storage_).set(::sus::move(values));
     } else {
       if (tag_ != kUseAfterMove) storage_.destroy(tag_);
       tag_ = index<V>;
-      find_storage_mut<index<V>>(storage_).construct(::sus::move(values));
+      __private::find_storage_mut<index<V>>(storage_).construct(::sus::move(values));
     }
   }
 
