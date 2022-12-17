@@ -223,6 +223,13 @@ TEST(Tuple, GetMut) {
   static_assert(std::same_as<int&, decltype(t3.get_mut<2>())>);
 }
 
+TEST(Tuple, IntoInner) {
+  auto t1 = Tuple<i32, u32>::with(2, 3u);
+  static_assert(std::same_as<decltype(sus::move(t1).into_inner<0>()), i32&&>);
+  static_assert(std::same_as<decltype(sus::move(t1).into_inner<1>()), u32&&>);
+  EXPECT_EQ(sus::move(t1).into_inner<0>(), 2_i32);
+}
+
 TEST(Tuple, Eq) {
   struct NotEq {};
   static_assert(!sus::ops::Eq<NotEq>);
