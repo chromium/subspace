@@ -14,24 +14,33 @@
 
 #pragma once
 
-#include "num/unsigned_integer.h"
-
 namespace sus::union_type::__private {
 
-/// Defines the type of the tag. The tag must have room for `count` many values.
-///
-/// Tags > sizeof(size_t) bits are not allowed because it would introduce UB, as
-/// we use sizeof...() on the members of the union, and it can only handle
-/// size_t many things.
-///
-// clang-format off
-template <size_t count>
-using TagType =
-  std::conditional_t<count + 1 <= size_t{0xff}, uint8_t,
-  std::conditional_t<count + 1 <= size_t{0xffff}, uint16_t,
-  std::conditional_t<count + 1 <= size_t{0xffffffff}, uint32_t,
-  std::conditional_t<sizeof(size_t) == sizeof(uint64_t), uint64_t,
-  void>>>>;
-// clang-format on
+template <class... Ts>
+struct PackFirstHelper;
+
+template <class T, class... Ts>
+struct PackFirstHelper<T, Ts...> {
+  using type = T;
+};
+
+template <class... Ts>
+using PackFirst = PackFirstHelper<Ts...>::type;
+
+template <size_t I, class... Ts>
+struct PackIthHelper;
+
+template <size_t I, class T, class... Ts>
+struct PackIthHelper<I, T, Ts...> {
+  using type = PackIthHelper<I - 1, Ts...>::type;
+};
+
+template <class T, class... Ts>
+struct PackIthHelper<0, T, Ts...> {
+  using type = T;
+};
+
+template <size_t I, class... Ts>
+using PackIth = PackIthHelper<I, Ts...>::type;
 
 }  // namespace sus::union_type::__private

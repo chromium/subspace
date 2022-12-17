@@ -17,8 +17,6 @@
 namespace sus::union_type::__private {
 
 template <class T, class... Ts>
-struct TypeList {
-  using first = T;
-};
+struct TypeList {};
 
 }  // namespace sus::union_type::__private

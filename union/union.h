@@ -24,631 +24,57 @@
 #include "mem/move.h"
 #include "mem/never_value.h"
 #include "mem/replace.h"
+#include "num/__private/intrinsics.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
 #include "tuple/tuple.h"
-#include "union/__private/tag_type.h"
+#include "union/__private/all_values_are_unique.h"
+#include "union/__private/index_of_value.h"
+#include "union/__private/index_type.h"
+#include "union/__private/ops_concepts.h"
+#include "union/__private/pack_index.h"
+#include "union/__private/storage.h"
 #include "union/__private/type_list.h"
 #include "union/value_types.h"
 
 namespace sus::union_type {
 
-namespace __private {
-
-using ::sus::num::__private::unchecked_add;
-using ::sus::num::__private::unchecked_sub;
-
-template <class T, class... Ts>
-static constexpr bool AllSameType = (... && std::same_as<T, Ts>);
-
-template <class TagType, auto SearchValue, TagType I, auto... Vs>
-struct FindValue;
-
-template <class TagType, auto SearchValue, TagType I, auto V, auto... Vs>
-struct FindValue<TagType, SearchValue, I, V, Vs...> {
-  using index = std::conditional_t<
-      SearchValue == V, std::integral_constant<TagType, I>,
-      typename FindValue<TagType, SearchValue, unchecked_add(I, TagType{1u}),
-                         Vs...>::index>;
-};
-
-template <class TagType, auto SearchValue, TagType I>
-struct FindValue<TagType, SearchValue, I> {
-  using index = void;  // We didn't find the value, it's not part of the Union.
-};
-
-template <class TagType, auto SearchValue, auto... Vs>
-using ValueToIndex = FindValue<TagType, SearchValue, 0u, Vs...>::index;
-
-template <size_t I, class... Ts>
-struct FindTypeTuple;
-
-template <size_t I, class T, class... Ts>
-struct FindTypeTuple<I, T, Ts...> {
-  using type = FindTypeTuple<I - 1, Ts...>::type;
-};
-
-template <class T, class... Ts>
-struct FindTypeTuple<0, T, Ts...> {
-  using type = T;
-};
-
-template <class... Ts>
-struct UnwrapTuple;
-
-template <class T>
-struct UnwrapTuple<::sus::Tuple<T>> {
-  using type = T;
-};
-
-template <class... Ts>
-  requires(sizeof...(Ts) > 1)
-struct UnwrapTuple<::sus::Tuple<Ts...>> {
-  using type = ::sus::Tuple<Ts...>;
-};
-
-template <size_t I, class... Ts>
-using IndexToTypes = UnwrapTuple<typename FindTypeTuple<I, Ts...>::type>::type;
-
-template <auto... Vs>
-struct CheckUnique;
-
-template <auto V>
-struct CheckUnique<V> {
-  static constexpr bool value = true;
-};
-
-template <auto V, auto V2>
-struct CheckUnique<V, V2> {
-  static constexpr bool value = V != V2;
-};
-
-template <auto V, auto V2, auto... Vs>
-  requires(sizeof...(Vs) > 0)
-struct CheckUnique<V, V2, Vs...> {
-  static constexpr bool value =
-      V != V2 && CheckUnique<V, Vs...>::value && CheckUnique<V2, Vs...>::value;
-};
-
-template <auto... Vs>
-concept AllValuesAreUnique = CheckUnique<Vs...>::value;
-
-template <class T, class... Ts>
-struct ValuesTypeHelper {
-  using type = T;
-};
-
-// Compiler won't allow spliting the argument pack with a template alias, so we
-// need to defer to a struct.
-template <class... Ts>
-using ValuesType = typename ValuesTypeHelper<Ts...>::type;
-
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsEqHelper;
-
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsEqHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                       TypeList<Types2...>> {
-  static constexpr bool value = (::sus::ops::Eq<ValueType1, ValueType2> &&
-                                 ... && ::sus::ops::Eq<Types1, Types2>);
-};
-
-// Out of line from the requires clause, in a struct, to work around
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsEq =
-    UnionIsEqHelper<ValueType1, Types1, ValueType2, Types2>::value;
-
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsOrdHelper;
-
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                        TypeList<Types2...>> {
-  static constexpr bool value = (::sus::ops::Ord<ValueType1, ValueType2> &&
-                                 ... && ::sus::ops::Ord<Types1, Types2>);
-};
-
-// Out of line from the requires clause, in a struct, to work around
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsOrd =
-    UnionIsOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
-
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsWeakOrdHelper;
-
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsWeakOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                            TypeList<Types2...>> {
-  // clang-format off
-  static constexpr bool value =
-      ((!::sus::ops::Ord<ValueType1, ValueType2> || ... ||
-        !::sus::ops::Ord<Types1, Types2>)
-        &&
-       (::sus::ops::WeakOrd<ValueType1, ValueType2> && ... &&
-        ::sus::ops::WeakOrd<Types1, Types2>));
-  // clang-format on
-};
-
-// Out of line from the requires clause, in a struct, to work around
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsWeakOrd =
-    UnionIsWeakOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
-
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsPartialOrdHelper;
-
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsPartialOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                               TypeList<Types2...>> {
-  // clang-format off
-  static constexpr bool value =
-      (!::sus::ops::WeakOrd<ValueType1, ValueType2> || ... ||
-       !::sus::ops::WeakOrd<Types1, Types2>)
-      &&
-      (::sus::ops::PartialOrd<ValueType1, ValueType2> && ... &&
-       ::sus::ops::PartialOrd<Types1, Types2>);
-  // clang-format on
-};
-
-// Out of line from the requires clause, in a struct, to work around
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsPartialOrd =
-    UnionIsPartialOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
-
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsAnyOrdHelper;
-
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsAnyOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                           TypeList<Types2...>> {
-  // clang-format off
-  static constexpr bool value =
-      (::sus::ops::PartialOrd<ValueType1, ValueType2> && ... &&
-       ::sus::ops::PartialOrd<Types1, Types2>);
-  // clang-format on
-};
-
-// Out of line from the requires clause, in a struct, to work around
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsAnyOrd =
-    UnionIsAnyOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
-
-template <class... Ts>
-concept AllMove = (... && ::sus::mem::Move<Ts>);
-template <class... Ts>
-concept AllCopy = (... && ::sus::mem::Copy<Ts>);
-template <class... Ts>
-concept AllClone = (... && ::sus::mem::Clone<Ts>);
-template <class... Ts>
-concept AllTriviallyDestructible = (... &&
-                                    std::is_trivially_destructible_v<Ts>);
-template <class... Ts>
-concept AllTriviallyMoveConstructible =
-    (... && std::is_trivially_move_constructible_v<Ts>);
-template <class... Ts>
-concept AllTriviallyMoveAssignable = (... &&
-                                      std::is_trivially_move_assignable_v<Ts>);
-template <class... Ts>
-concept AllTriviallyCopyConstructible =
-    (... && std::is_trivially_copy_constructible_v<Ts>);
-template <class... Ts>
-concept AllTriviallyCopyAssignable = (... &&
-                                      std::is_trivially_move_assignable_v<Ts>);
-
-template <size_t I, class... Elements>
-union Storage;
-
-template <size_t I, class... Ts, class... Elements>
-  requires(sizeof...(Ts) > 0 && sizeof...(Elements) > 0)
-union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
-  Storage() {}
-  ~Storage() {}
-
-  using Type = ::sus::Tuple<Ts...>;
-
-  inline void construct(Type&& tuple) {
-    new (&tuple_) Type(::sus::move(tuple));
-  }
-  inline constexpr void set(Type&& tuple) { tuple_ = ::sus::move(tuple); }
-  inline void move_construct(auto tag, Storage&& from) {
-    if (tag == I) {
-      new (&tuple_) Type(::sus::move(from.tuple_));
-    } else {
-      more_.move_construct(tag, ::sus::move(from.more_));
-    }
-  }
-  inline constexpr void move_assign(auto tag, Storage&& from) {
-    if (tag == I) {
-      tuple_ = ::sus::move(from.tuple_);
-    } else {
-      more_.move_assign(tag, ::sus::move(from.more_));
-    }
-  }
-  inline void copy_construct(auto tag, const Storage& from) {
-    if (tag == I) {
-      new (&tuple_) Type(from.tuple_);
-    } else {
-      more_.copy_construct(tag, from.more_);
-    }
-  }
-  inline constexpr void copy_assign(auto tag, const Storage& from) {
-    if (tag == I) {
-      tuple_ = from.tuple_;
-    } else {
-      more_.copy_assign(tag, from.more_);
-    }
-  }
-  inline void clone_construct(auto tag, const Storage& from) {
-    if (tag == I) {
-      new (&tuple_) Type(::sus::clone(from.tuple_));
-    } else {
-      more_.clone_construct(tag, from.more_);
-    }
-  }
-  inline constexpr void destroy(auto tag) {
-    if (tag == I) {
-      tuple_.~Type();
-    } else {
-      more_.destroy(tag);
-    }
-  }
-  inline constexpr bool eq(auto tag, const Storage& other) const& {
-    if (tag == I) {
-      return tuple_ == other.tuple_;
-    } else {
-      return more_.eq(tag, other.more_);
-    }
-  }
-  inline constexpr std::strong_ordering ord(auto tag,
-                                            const Storage& other) const& {
-    if (tag == I) {
-      return std::strong_order(tuple_, other.tuple_);
-    } else {
-      return more_.ord(tag, other.more_);
-    }
-  }
-  inline constexpr std::weak_ordering weak_ord(auto tag,
-                                               const Storage& other) const& {
-    if (tag == I) {
-      return std::weak_order(tuple_, other.tuple_);
-    } else {
-      return more_.weak_ord(tag, other.more_);
-    }
-  }
-  inline constexpr std::partial_ordering partial_ord(
-      auto tag, const Storage& other) const& {
-    if (tag == I) {
-      return std::partial_order(tuple_, other.tuple_);
-    } else {
-      return more_.partial_ord(tag, other.more_);
-    }
-  }
-
-  constexpr auto get_ref() const& {
-    return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
-          tuple_.template get_ref<Is>()...);
-    }(std::make_index_sequence<sizeof...(Ts)>());
-  }
-  constexpr decltype(auto) get_ref() && = delete;
-  constexpr auto get_mut() & {
-    return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
-    }(std::make_index_sequence<sizeof...(Ts)>());
-  }
-  inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
-
-  Type tuple_;
-  Storage<I + 1, Elements...> more_;
-};
-
-template <size_t I, class T, class... Elements>
-  requires(sizeof...(Elements) > 0)
-union Storage<I, ::sus::Tuple<T>, Elements...> {
-  Storage() {}
-  ~Storage() {}
-
-  using Type = ::sus::Tuple<T>;
-
-  inline void construct(T&& value) {
-    new (&tuple_) Type(Type::with(::sus::move(value)));
-  }
-  inline constexpr void set(T&& value) {
-    tuple_ = Type::with(::sus::move(value));
-  }
-  inline void move_construct(auto tag, Storage&& from) {
-    if (tag == I) {
-      new (&tuple_) Type(::sus::move(from.tuple_));
-    } else {
-      more_.move_construct(tag, ::sus::move(from.more_));
-    }
-  }
-  inline constexpr void move_assign(auto tag, Storage&& from) {
-    if (tag == I) {
-      tuple_ = ::sus::move(from.tuple_);
-    } else {
-      more_.move_assign(tag, ::sus::move(from.more_));
-    }
-  }
-  inline void copy_construct(auto tag, const Storage& from) {
-    if (tag == I) {
-      new (&tuple_) Type(from.tuple_);
-    } else {
-      more_.copy_construct(tag, from.more_);
-    }
-  }
-  inline constexpr void copy_assign(auto tag, const Storage& from) {
-    if (tag == I) {
-      tuple_ = from.tuple_;
-    } else {
-      more_.copy_assign(tag, from.more_);
-    }
-  }
-  inline void clone_construct(auto tag, const Storage& from) {
-    if (tag == I) {
-      auto x = ::sus::clone(from.tuple_);
-      new (&tuple_) Type(sus::move(x));
-    } else {
-      more_.clone_construct(tag, from.more_);
-    }
-  }
-  inline constexpr void destroy(auto tag) {
-    if (tag == I) {
-      tuple_.~Type();
-    } else {
-      more_.destroy(tag);
-    }
-  }
-  inline constexpr bool eq(auto tag, const Storage& other) const& {
-    if (tag == I) {
-      return tuple_ == other.tuple_;
-    } else {
-      return more_.eq(tag, other.more_);
-    }
-  }
-  inline constexpr auto ord(auto tag, const Storage& other) const& {
-    if (tag == I) {
-      return std::strong_order(tuple_, other.tuple_);
-    } else {
-      return more_.ord(tag, other.more_);
-    }
-  }
-  inline constexpr auto weak_ord(auto tag, const Storage& other) const& {
-    if (tag == I) {
-      return std::weak_order(tuple_, other.tuple_);
-    } else {
-      return more_.weak_ord(tag, other.more_);
-    }
-  }
-  inline constexpr auto partial_ord(auto tag, const Storage& other) const& {
-    if (tag == I) {
-      return std::partial_order(tuple_, other.tuple_);
-    } else {
-      return more_.partial_ord(tag, other.more_);
-    }
-  }
-
-  inline constexpr decltype(auto) get_ref() const& {
-    return tuple_.template get_ref<0>();
-  }
-  constexpr decltype(auto) get_ref() && = delete;
-  inline constexpr decltype(auto) get_mut() & {
-    return tuple_.template get_mut<0>();
-  }
-  inline constexpr decltype(auto) into_inner() && {
-    return ::sus::mem::move_or_copy_ref(tuple_.template get_mut<0>());
-  }
-
-  // TODO: Switch away from Tuple for 1 object when we don't need to use the
-  // use-after-move checks there.
-  [[sus_no_unique_address]] Type tuple_;
-  [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
-};
-
-template <size_t I, class... Ts>
-  requires(sizeof...(Ts) > 0)
-union Storage<I, ::sus::Tuple<Ts...>> {
-  Storage() {}
-  ~Storage() {}
-
-  using Type = ::sus::Tuple<Ts...>;
-
-  inline void construct(Type&& tuple) {
-    new (&tuple_) Type(::sus::move(tuple));
-  }
-  inline constexpr void set(Type&& tuple) { tuple_ = ::sus::move(tuple); }
-  inline void move_construct(auto tag, Storage&& from) {
-    ::sus::check(tag == I);
-    new (&tuple_) Type(::sus::move(from.tuple_));
-  }
-  inline constexpr void move_assign(auto tag, Storage&& from) {
-    ::sus::check(tag == I);
-    tuple_ = ::sus::move(from.tuple_);
-  }
-  inline void copy_construct(auto tag, const Storage& from) {
-    ::sus::check(tag == I);
-    new (&tuple_) Type(from.tuple_);
-  }
-  inline constexpr void copy_assign(auto tag, const Storage& from) {
-    ::sus::check(tag == I);
-    tuple_ = from.tuple_;
-  }
-  inline void clone_construct(auto tag, const Storage& from) {
-    ::sus::check(tag == I);
-    new (&tuple_) Type(::sus::clone(from.tuple_));
-  }
-  inline constexpr void destroy(auto tag) {
-    ::sus::check(tag == I);
-    tuple_.~Type();
-  }
-  inline constexpr bool eq(auto tag, const Storage& other) const& {
-    ::sus::check(tag == I);
-    return tuple_ == other.tuple_;
-  }
-  inline constexpr auto ord(auto tag, const Storage& other) const& {
-    ::sus::check(tag == I);
-    return std::strong_order(tuple_, other.tuple_);
-  }
-  inline constexpr auto weak_ord(auto tag, const Storage& other) const& {
-    ::sus::check(tag == I);
-    return std::weak_order(tuple_, other.tuple_);
-  }
-  inline constexpr auto partial_ord(auto tag, const Storage& other) const& {
-    ::sus::check(tag == I);
-    return std::partial_order(tuple_, other.tuple_);
-  }
-
-  constexpr auto get_ref() const& {
-    return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
-          tuple_.template get_ref<Is>()...);
-    }(std::make_index_sequence<sizeof...(Ts)>());
-  }
-  constexpr auto get_mut() & {
-    return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
-    }(std::make_index_sequence<sizeof...(Ts)>());
-  }
-  inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
-
-  [[sus_no_unique_address]] Type tuple_;
-};
-
-template <size_t I, class T>
-union Storage<I, ::sus::Tuple<T>> {
-  Storage() {}
-  ~Storage() {}
-
-  using Type = ::sus::Tuple<T>;
-
-  inline void construct(T&& value) {
-    new (&tuple_)::sus::Tuple<T>(::sus::Tuple<T>::with(::sus::move(value)));
-  }
-  inline constexpr void set(T&& value) {
-    tuple_ = Type::with(::sus::move(value));
-  }
-  inline void move_construct(auto tag, Storage&& from) {
-    ::sus::check(tag == I);
-    new (&tuple_) Type(::sus::move(from.tuple_));
-  }
-  inline constexpr void move_assign(auto tag, Storage&& from) {
-    ::sus::check(tag == I);
-    tuple_ = ::sus::move(from.tuple_);
-  }
-  inline void copy_construct(auto tag, const Storage& from) {
-    ::sus::check(tag == I);
-    new (&tuple_) Type(from.tuple_);
-  }
-  inline constexpr void copy_assign(auto tag, const Storage& from) {
-    ::sus::check(tag == I);
-    tuple_ = from.tuple_;
-  }
-  inline void clone_construct(auto tag, const Storage& from) {
-    ::sus::check(tag == I);
-    new (&tuple_) Type(::sus::clone(from.tuple_));
-  }
-  inline constexpr void destroy(auto tag) {
-    ::sus::check(tag == I);
-    tuple_.~Type();
-  }
-  inline constexpr bool eq(auto tag, const Storage& other) const& {
-    ::sus::check(tag == I);
-    return tuple_ == other.tuple_;
-  }
-  inline constexpr auto ord(auto tag, const Storage& other) const& {
-    ::sus::check(tag == I);
-    return std::strong_order(tuple_, other.tuple_);
-  }
-  inline constexpr auto weak_ord(auto tag, const Storage& other) const& {
-    ::sus::check(tag == I);
-    return std::weak_order(tuple_, other.tuple_);
-  }
-  inline constexpr auto partial_ord(auto tag, const Storage& other) const& {
-    ::sus::check(tag == I);
-    return std::partial_order(tuple_, other.tuple_);
-  }
-
-  inline constexpr decltype(auto) get_ref() const& {
-    return tuple_.template get_ref<0>();
-  }
-  inline constexpr decltype(auto) get_mut() & {
-    return tuple_.template get_mut<0>();
-  }
-  inline constexpr decltype(auto) into_inner() && {
-    return ::sus::mem::move_or_copy_ref(tuple_.template get_mut<0>());
-  }
-
-  // TODO: Switch away from Tuple for 1 object when we don't need to use the
-  // use-after-move checks there.
-  [[sus_no_unique_address]] ::sus::Tuple<T> tuple_;
-};
-
-template <auto I, class S>
-static constexpr const auto& find_storage(const S& storage) {
-  return find_storage(storage, std::integral_constant<size_t, size_t{I}>());
-}
-
-template <size_t I, class S>
-static constexpr const auto& find_storage(const S& storage,
-                                          std::integral_constant<size_t, I>) {
-  return find_storage(
-      storage.more_,
-      std::integral_constant<size_t, unchecked_sub(I, size_t{1})>());
-}
-
-template <class S>
-static constexpr const auto& find_storage(const S& storage,
-                                          std::integral_constant<size_t, 0>) {
-  return storage;
-}
-
-template <auto I, class S>
-static constexpr auto& find_storage_mut(S& storage) {
-  return find_storage_mut(storage, std::integral_constant<size_t, size_t{I}>());
-}
-
-template <size_t I, class S>
-static constexpr auto& find_storage_mut(S& storage,
-                                        std::integral_constant<size_t, I>) {
-  return find_storage_mut(
-      storage.more_,
-      std::integral_constant<size_t, unchecked_sub(I, size_t{1})>());
-}
-
-template <class S>
-static constexpr auto& find_storage_mut(S& storage,
-                                        std::integral_constant<size_t, 0>) {
-  return storage;
-}
-
-}  // namespace __private
-
-template <class Types, auto... Values>
+template <class TypeListOfMemberTypes, auto... Values>
 class Union;
 
 template <class... Ts, auto... Values>
-  requires(sizeof...(Ts) > 0u && __private::AllSameType<decltype(Values)...> &&
-           ::sus::ops::Eq<__private::ValuesType<decltype(Values)...>> &&
-           __private::AllValuesAreUnique<Values...>)
 class Union<__private::TypeList<Ts...>, Values...> {
+  static_assert(sizeof...(Ts) > 0,
+                "A Union must have at least one value-type pairs.");
   static_assert(
       sizeof...(Ts) == sizeof...(Values),
-      "The number of types and values in the union don't match. Use "
+      "The number of types and values in the Union don't match. Use "
       "`sus_value_types()` to define the Union's value-type pairings.");
 
-  using TagType = __private::TagType<sizeof...(Values) + 2u>;
-  static_assert(!std::is_void_v<TagType>,
+  using Storage = __private::Storage<0, Ts...>;
+  using ValuesType = __private::PackFirst<decltype(Values)...>;
+
+  static_assert((... && std::same_as<ValuesType, decltype(Values)>),
+                "All tag values must be the same type.");
+  static_assert(::sus::ops::Eq<ValuesType>,
+                "The tag values must be Eq in order to find the storage from a "
+                "tag value.");
+  static_assert(
+      __private::AllValuesAreUnique<Values...>,
+      "All tag values must be unique or some of them would be inaccessible.");
+
+  using IndexType =
+      __private::IndexType<sizeof...(Values) + 2u, ::sus::size_of<Storage>(),
+                           ::sus::data_size_of<Storage>()>;
+  static_assert(!std::is_void_v<IndexType>,
                 "A union can only hold a number of members representable in "
                 "size_t (minus two).");
-  static constexpr TagType kNeverValue =
-      ::sus::num::__private::unchecked_not(TagType{0u});
-  static constexpr TagType kUseAfterMove = ::sus::num::__private::unchecked_sub(
-      ::sus::num::__private::unchecked_not(TagType{0u}), TagType{1u});
+  static constexpr IndexType kNeverValue =
+      ::sus::num::__private::unchecked_not(IndexType{0u});
+  static constexpr IndexType kUseAfterMove =
+      ::sus::num::__private::unchecked_sub(
+          ::sus::num::__private::unchecked_not(IndexType{0u}), IndexType{1u});
+
   // The tag holds an index, but never the number of possible values so it is in
   // 0...{NumValues-1}.
   //
@@ -661,27 +87,27 @@ class Union<__private::TypeList<Ts...>, Values...> {
   // panic due to the tag being outside the range of acceptable values.
   static_assert(sizeof...(Values) <= kNeverValue);
 
-  using Storage = __private::Storage<0, Ts...>;
-  using ValuesType = __private::ValuesType<decltype(Values)...>;
-
   template <ValuesType V>
-  static constexpr TagType get_index() {
-    using Index = __private::ValueToIndex<TagType, V, Values...>;
+  static constexpr IndexType get_index_for_value() {
+    using Index = __private::IndexOfValue<V, Values...>;
     static_assert(!std::is_void_v<Index>,
                   "The value V is not part of the Union.");
-    return Index::value;
+    // SAFETY: We know `I` fits inside `IndexType` because `I` is the index of a
+    // union member, and `IndexType` is chosen specifically to be large enough
+    // to hold the index of all union members.
+    return static_cast<IndexType>(Index::value);
   }
 
   template <ValuesType V>
-  static constexpr TagType index = get_index<V>();
+  static constexpr IndexType index = get_index_for_value<V>();
 
   template <ValuesType V>
-  using TypesFromValue = __private::IndexToTypes<size_t{index<V>}, Ts...>;
+  using StorageTypeOfTag = __private::StorageTypeOfTag<size_t{index<V>}, Ts...>;
 
  public:
   // TODO: Can we construct Tuples of trivially constructible things (or some
   // set of things) without placement new and thus make this constexpr?
-  template <ValuesType V, class U, int&..., class Arg = TypesFromValue<V>>
+  template <ValuesType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U, Arg>)
   static Union with(U values) {
     auto u = Union(index<V>);
@@ -690,103 +116,114 @@ class Union<__private::TypeList<Ts...>, Values...> {
   }
 
   ~Union()
-    requires(__private::AllTriviallyDestructible<ValuesType, Ts...>)
+    requires((std::is_trivially_destructible_v<ValuesType> && ... &&
+              std::is_trivially_destructible_v<Ts>))
   = default;
   ~Union()
-    requires(!__private::AllTriviallyDestructible<ValuesType, Ts...>)
+    requires(!(std::is_trivially_destructible_v<ValuesType> && ... &&
+               std::is_trivially_destructible_v<Ts>))
   {
-    if (tag_ != kUseAfterMove) storage_.destroy(tag_);
+    if (tag_ != kUseAfterMove) storage_.destroy(size_t{tag_});
   }
 
   Union(Union&& o)
-    requires(__private::AllMove<ValuesType, Ts...> &&
-             __private::AllTriviallyMoveConstructible<ValuesType, Ts...>)
+    requires((::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>) &&
+             (std::is_trivially_move_constructible_v<ValuesType> && ... &&
+              std::is_trivially_move_constructible_v<Ts>))
   = default;
   Union(Union&& o)
-    requires(!__private::AllMove<ValuesType, Ts...>)
+    requires(!(::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>))
   = delete;
 
   Union(Union&& o)
-    requires(__private::AllMove<ValuesType, Ts...> &&
-             !__private::AllTriviallyMoveConstructible<ValuesType, Ts...>)
+    requires((::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>) &&
+             !(std::is_trivially_move_constructible_v<ValuesType> && ... &&
+               std::is_trivially_move_constructible_v<Ts>))
       : tag_(::sus::mem::replace(::sus::mref(o.tag_),
                                  // Attempt to catch use-after-move by setting
                                  // the tag to an unused value.
                                  kUseAfterMove)) {
     check(tag_ != kUseAfterMove);
-    storage_.move_construct(tag_, ::sus::move(o.storage_));
+    storage_.move_construct(size_t{tag_}, ::sus::move(o.storage_));
   }
 
   Union& operator=(Union&& o)
-    requires(__private::AllMove<ValuesType, Ts...> &&
-             __private::AllTriviallyMoveAssignable<ValuesType, Ts...>)
+    requires((::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>) &&
+             (std::is_trivially_move_assignable_v<ValuesType> && ... &&
+              std::is_trivially_move_assignable_v<Ts>))
   = default;
   Union& operator=(Union&& o)
-    requires(!__private::AllMove<ValuesType, Ts...>)
+    requires(!(::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>))
   = delete;
 
   Union& operator=(Union&& o)
-    requires(__private::AllMove<ValuesType, Ts...> &&
-             !__private::AllTriviallyMoveAssignable<ValuesType, Ts...>)
+    requires((::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>) &&
+             !(std::is_trivially_move_assignable_v<ValuesType> && ... &&
+               std::is_trivially_move_assignable_v<Ts>))
   {
     check(o.tag_ != kUseAfterMove);
     if (tag_ == o.tag_) {
-      storage_.move_assign(tag_, ::sus::move(o.storage_));
+      storage_.move_assign(size_t{tag_}, ::sus::move(o.storage_));
     } else {
-      if (tag_ != kUseAfterMove) storage_.destroy(tag_);
+      if (tag_ != kUseAfterMove) storage_.destroy(size_t{tag_});
       tag_ = ::sus::move(o.tag_);
-      storage_.move_construct(tag_, ::sus::move(o.storage_));
+      storage_.move_construct(size_t{tag_}, ::sus::move(o.storage_));
     }
     o.tag_ = kUseAfterMove;
     return *this;
   }
 
   Union(const Union& o)
-    requires(__private::AllCopy<ValuesType, Ts...> &&
-             __private::AllTriviallyCopyConstructible<ValuesType, Ts...>)
+    requires((::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>) &&
+             (std::is_trivially_copy_constructible_v<ValuesType> && ... &&
+              std::is_trivially_copy_constructible_v<Ts>))
   = default;
   Union(const Union& o)
-    requires(!__private::AllCopy<ValuesType, Ts...>)
+    requires(!(::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>))
   = delete;
 
   Union(const Union& o)
-    requires(__private::AllCopy<ValuesType, Ts...> &&
-             !__private::AllTriviallyCopyConstructible<ValuesType, Ts...>)
+    requires((::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>) &&
+             !(std::is_trivially_copy_constructible_v<ValuesType> && ... &&
+               std::is_trivially_copy_constructible_v<Ts>))
       : tag_(o.tag_) {
     check(o.tag_ != kUseAfterMove);
-    storage_.copy_construct(tag_, o.storage_);
+    storage_.copy_construct(size_t{tag_}, o.storage_);
   }
 
   Union& operator=(const Union& o)
-    requires(__private::AllCopy<ValuesType, Ts...> &&
-             __private::AllTriviallyCopyAssignable<ValuesType, Ts...>)
+    requires((::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>) &&
+             (std::is_trivially_copy_assignable_v<ValuesType> && ... &&
+              std::is_trivially_copy_assignable_v<Ts>))
   = default;
   Union& operator=(const Union& o)
-    requires(!__private::AllCopy<ValuesType, Ts...>)
+    requires(!(::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>))
   = delete;
 
   Union& operator=(const Union& o)
-    requires(__private::AllCopy<ValuesType, Ts...> &&
-             !__private::AllTriviallyCopyAssignable<ValuesType, Ts...>)
+    requires((::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>) &&
+             !(std::is_trivially_copy_assignable_v<ValuesType> && ... &&
+               std::is_trivially_copy_assignable_v<Ts>))
   {
     check(o.tag_ != kUseAfterMove);
     if (tag_ == o.tag_) {
-      storage_.copy_assign(tag_, o.storage_);
+      storage_.copy_assign(size_t{tag_}, o.storage_);
     } else {
-      if (tag_ != kUseAfterMove) storage_.destroy(tag_);
+      if (tag_ != kUseAfterMove) storage_.destroy(size_t{tag_});
       tag_ = o.tag_;
-      storage_.copy_construct(tag_, o.storage_);
+      storage_.copy_construct(size_t{tag_}, o.storage_);
     }
     return *this;
   }
 
   // sus::mem::Clone<Union<Ts...>> trait.
   constexpr Union clone() const& noexcept
-    requires(__private::AllClone<Ts...> && !__private::AllCopy<Ts...>)
+    requires((::sus::mem::Clone<ValuesType> && ... && ::sus::mem::Clone<Ts>) &&
+             !(::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>))
   {
     check(tag_ != kUseAfterMove);
     auto u = Union(::sus::clone(tag_));
-    u.storage_.clone_construct(tag_, storage_);
+    u.storage_.clone_construct(size_t{tag_}, storage_);
     return u;
   }
 
@@ -862,19 +299,21 @@ class Union<__private::TypeList<Ts...>, Values...> {
   template <ValuesType V>
   decltype(auto) into_inner() && {
     ::sus::check(tag_ == index<V>);
-    return ::sus::mem::move_or_copy_ref(__private::find_storage_mut<index<V>>(storage_))
+    return ::sus::mem::move_or_copy_ref(
+               __private::find_storage_mut<index<V>>(storage_))
         .into_inner();
   }
 
-  template <ValuesType V, class U, int&..., class Arg = TypesFromValue<V>>
+  template <ValuesType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U, Arg>)
   void set(U values) {
     if (tag_ == index<V>) {
       __private::find_storage_mut<index<V>>(storage_).set(::sus::move(values));
     } else {
-      if (tag_ != kUseAfterMove) storage_.destroy(tag_);
+      if (tag_ != kUseAfterMove) storage_.destroy(size_t{tag_});
       tag_ = index<V>;
-      __private::find_storage_mut<index<V>>(storage_).construct(::sus::move(values));
+      __private::find_storage_mut<index<V>>(storage_).construct(
+          ::sus::move(values));
     }
   }
 
@@ -886,7 +325,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
       const Union& l,
       const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.tag_ != kUseAfterMove && r.tag_ != kUseAfterMove);
-    return l.tag_ == r.tag_ && l.storage_.eq(l.tag_, r.storage_);
+    return l.tag_ == r.tag_ && l.storage_.eq(size_t{l.tag_}, r.storage_);
   }
 
   template <class... Us, auto V, auto... Vs>
@@ -908,7 +347,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
     if (value_order != std::strong_ordering::equivalent) {
       return value_order;
     } else {
-      return l.storage_.ord(l.tag_, r.storage_);
+      return l.storage_.ord(size_t{l.tag_}, r.storage_);
     }
   }
 
@@ -924,7 +363,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
     if (value_order != std::weak_ordering::equivalent) {
       return value_order;
     } else {
-      return l.storage_.weak_ord(l.tag_, r.storage_);
+      return l.storage_.weak_ord(size_t{l.tag_}, r.storage_);
     }
   }
 
@@ -941,7 +380,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
     if (value_order != std::partial_ordering::equivalent) {
       return value_order;
     } else {
-      return l.storage_.partial_ord(l.tag_, r.storage_);
+      return l.storage_.partial_ord(size_t{l.tag_}, r.storage_);
     }
   }
 
@@ -953,10 +392,10 @@ class Union<__private::TypeList<Ts...>, Values...> {
       const Union<__private::TypeList<Us...>, V, Vs...>& r) = delete;
 
  private:
-  Union(TagType tag) : tag_(tag) {}
+  Union(IndexType tag) : tag_(tag) {}
 
   [[sus_no_unique_address]] Storage storage_;
-  TagType tag_;
+  IndexType tag_;
 
   sus_class_never_value_field(unsafe_fn, Union, tag_, kNeverValue);
 };

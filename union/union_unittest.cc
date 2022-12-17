@@ -26,6 +26,16 @@ namespace {
 
 using sus::Union;
 
+static_assert(::sus::union_type::__private::AllValuesAreUnique<1>);
+static_assert(::sus::union_type::__private::AllValuesAreUnique<1, 2>);
+static_assert(::sus::union_type::__private::AllValuesAreUnique<1, 2, 3>);
+static_assert(!::sus::union_type::__private::AllValuesAreUnique<1, 2, 1>);
+static_assert(!::sus::union_type::__private::AllValuesAreUnique<2, 2, 1>);
+static_assert(!::sus::union_type::__private::AllValuesAreUnique<1, 2, 2>);
+static_assert(!::sus::union_type::__private::AllValuesAreUnique<1, 2, 3, 1>);
+static_assert(!::sus::union_type::__private::AllValuesAreUnique<1, 2, 1, 3>);
+static_assert(!::sus::union_type::__private::AllValuesAreUnique<1, 2, 3, 2>);
+
 enum class Order {
   First,
   Second,
@@ -170,8 +180,6 @@ TEST(Union, Eq) {
   static_assert(
       sus::ops::Eq<Union<sus_value_types((1_i32, i32), (2_i32, i32))>>);
   static_assert(!sus::ops::Eq<Union<sus_value_types((1, NotEq), (2, NotEq))>>);
-  static_assert(
-      !sus::ops::Eq<Union<sus_value_types((not_eq_v, i32), (not_eq_v, i32))>>);
 
   using OrderUnion =
       Union<sus_value_types((Order::First, u32), (Order::Second, u8))>;

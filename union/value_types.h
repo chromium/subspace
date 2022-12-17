@@ -24,8 +24,7 @@
 ///
 /// The input takes the format: `(Value1, Type1A, Type1B), (Value2, Type2), ...`
 /// The output is the sequence `TypeList<Tuple<Type1A, Type1B>, Tuple<Type2>,
-/// ...>, Value1, Value2, ...`.
-///
+/// ...>, Value1, Value2, ...`.///
 /// Use `sus::macros::value_types::TypeAt<I, Types<...>>` to extract each tuple
 /// type from the returned set of types.
 ///
