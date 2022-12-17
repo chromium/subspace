@@ -125,6 +125,10 @@ TEST(Union, Which) {
   auto u = Union<sus_value_types((Order::First, u32),
                                  (Order::Second, u8))>::with<Order::First>(4u);
   EXPECT_EQ(u.which(), Order::First);
+
+  auto v = Union<sus_value_types((Order::First, u32),
+                                 (Order::Second, u8))>::with<Order::Second>(4_u8);
+  EXPECT_EQ(v.which(), Order::Second);
 }
 
 TEST(Union, Copy) {
