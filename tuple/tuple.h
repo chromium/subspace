@@ -117,6 +117,17 @@ class Tuple final {
     return __private::find_storage_mut<I>(storage_).value;
   }
 
+  /// Removes the `I`th element from the tuple, leaving the Tuple in a
+  /// moved-from state where it should no longer be used.
+  template <size_t I>
+    requires(I <= sizeof...(Ts))
+  inline decltype(auto) into_inner() && noexcept {
+    ::sus::check(!moved_from(I));
+    set_all_moved_from();
+    return ::sus::mem::move_or_copy_ref(
+        __private::find_storage_mut<I>(storage_).value);
+  }
+
   constexpr Tuple clone() const& noexcept
     requires((::sus::mem::Clone<T> && ... && ::sus::mem::Clone<Ts>) &&
              (!::sus::mem::Copy<T> || ... || !::sus::mem::Copy<Ts>))
@@ -189,19 +200,25 @@ class Tuple final {
       : storage_(::sus::forward<U>(first), ::sus::forward<Us>(more)...) {}
 
   // TODO: Provide a way to opt out of all moved-from checks?
-  constexpr inline bool any_moved_from() const& noexcept {
+  constexpr inline bool any_moved_from() const noexcept {
 #if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
     return marker.any_moved_from();
 #else
     return false;
 #endif
   }
-  constexpr inline bool moved_from(size_t i) const& noexcept {
+  constexpr inline bool moved_from(size_t i) const noexcept {
 #if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
     return marker.moved_from(i);
 #else
     (void)i;
     return false;
+#endif
+  }
+  // TODO: Provide a way to opt out of all moved-from checks?
+  constexpr inline void set_all_moved_from() noexcept {
+#if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
+    marker.set_all_moved_from();
 #endif
   }
 
@@ -226,6 +243,9 @@ auto& get(Tuple<Ts...>& t) noexcept {
 }
 template <size_t I, class... Ts>
 decltype(auto) get(Tuple<Ts...>&& t) noexcept {
+  // We explicitly don't move-from `t` to call `t.into_inner()` as this `get()`
+  // function will be called for each member of `t` when making structured
+  // bindings from an rvalue Tuple.
   return ::sus::mem::move_or_copy_ref(t.template get_mut<I>());
 }
 
