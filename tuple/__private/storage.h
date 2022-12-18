@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <utility>  // TODO: Replace std::index_sequence to remove this header.
 
+#include "macros/__private/compiler_bugs.h"
 #include "macros/no_unique_address.h"
 #include "mem/forward.h"
 #include "mem/move.h"
@@ -74,7 +75,7 @@ struct TupleStorage;
 
 template <class T>
 struct TupleStorage<T> {
-  sus_clang_bug_54040(template <std::convertible_to<T> U>
+  sus_clang_bug_54050(template <std::convertible_to<T> U>
                       constexpr inline TupleStorage(U&& value)
                       : value(::sus::forward<U>(value)){});
 

@@ -229,8 +229,6 @@ TEST(Iterator, FilterNonTriviallyRelocatable) {
 
 template <class T>
 struct CollectSum {
-  sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
-
   static constexpr CollectSum from_iter(IteratorBase<T>&& iter) noexcept {
     T sum = T();
     for (const T& t : iter) sum += t;

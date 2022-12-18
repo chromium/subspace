@@ -36,12 +36,26 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/54040
-#if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
+// Aggregate initialization in Clang doesn't work when:
+// * A destructor is present in the aggregate.
+// * A member of the aggregate has a concept-defined conversion operator.
+#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_54040(...) __VA_ARGS__
 #define sus_clang_bug_54040_else(...)
 #else
 #define sus_clang_bug_54040(...)
 #define sus_clang_bug_54040_else(...) __VA_ARGS__
+#endif
+
+// TODO: https://github.com/llvm/llvm-project/issues/54040
+// Aggregate initialization fails on template classes due to lack of CTAD for
+// aggregates.
+#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#define sus_clang_bug_54050(...) __VA_ARGS__
+#define sus_clang_bug_54050_else(...)
+#else
+#define sus_clang_bug_54050(...)
+#define sus_clang_bug_54050_else(...) __VA_ARGS__
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58836

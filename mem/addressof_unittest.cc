@@ -23,7 +23,6 @@ using sus::mem::addressof;
 
 TEST(AddressOf, Object) {
   struct S {
-    sus_clang_bug_54040(constexpr inline S(int i) : i(i) {})
     int i;
   };
   auto s = S(0);

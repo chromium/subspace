@@ -52,6 +52,7 @@ add_library(subspace STATIC
     "iter/iterator_impl.h"
     "iter/once.h"
     "iter/sized_iterator.h"
+    "macros/__private/compiler_bugs.h"
     "macros/always_inline.h"
     "macros/eval_macro.h"
     "macros/for_each.h"

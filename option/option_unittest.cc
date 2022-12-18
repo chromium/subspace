@@ -473,7 +473,7 @@ TEST(Option, UnwrapOrDefault) {
 
 TEST(Option, Map) {
   struct Mapped {
-    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i){}) int i;
+    int i;
   };
 
   bool called = false;
@@ -530,7 +530,7 @@ TEST(Option, Map) {
 
 TEST(Option, MapOr) {
   struct Mapped {
-    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i){}) int i;
+    int i;
   };
 
   auto x = Option<int>::some(2).map_or(
@@ -563,7 +563,7 @@ TEST(Option, MapOr) {
 
 TEST(Option, MapOrElse) {
   struct Mapped {
-    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i){}) int i;
+    int i;
   };
 
   bool map_called = false;
@@ -785,7 +785,7 @@ TEST(Option, And) {
 
 TEST(Option, AndThen) {
   struct And {
-    sus_clang_bug_54040(constexpr inline And(int i) : i(i){}) int i;
+    int i;
   };
 
   bool called = false;
@@ -1094,9 +1094,7 @@ TEST(Option, GetOrInsertDefault) {
   IS_SOME(w);
   EXPECT_EQ(sus::move(w).unwrap().i, 3);
 
-  auto y = Option<DefaultConstructible>::some(
-      sus_clang_bug_54040(DefaultConstructible{404})
-          sus_clang_bug_54040_else(DefaultConstructible(404)));
+  auto y = Option<DefaultConstructible>::some(DefaultConstructible(404));
   auto& ry = y.get_or_insert_default();
   static_assert(std::is_same_v<decltype(ry), DefaultConstructible&>);
   EXPECT_EQ(ry.i, 404);
@@ -1749,7 +1747,7 @@ TEST(Option, NonZeroField) {
 
 template <class T>
 struct CollectSum {
-  sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
+  sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
 
   static constexpr CollectSum from_iter(
       ::sus::iter::IteratorBase<T>&& iter) noexcept {
@@ -1780,7 +1778,7 @@ TEST(Option, FromIter) {
 
 template <class T>
 struct CollectSumRefs {
-  sus_clang_bug_54040(CollectSumRefs(T sum) : sum(sum){});
+  sus_clang_bug_54050(CollectSumRefs(T sum) : sum(sum){});
 
   static constexpr CollectSumRefs from_iter(
       ::sus::iter::IteratorBase<const T&>&& iter) noexcept {

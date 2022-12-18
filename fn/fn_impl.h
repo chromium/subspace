@@ -145,7 +145,9 @@ R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
       //
       // TODO: `storage` and `storage_` should be owning smart pointers.
       struct DeleteStorage final {
-        sus_clang_bug_54040(constexpr inline DeleteStorage(__private::FnStorageBase* storage) : storage(storage) {})
+        sus_clang_bug_54040(
+            constexpr inline DeleteStorage(__private::FnStorageBase* storage)
+            : storage(storage){});
         ~DeleteStorage() { delete storage; }
         __private::FnStorageBase* storage;
       } deleter(storage);
