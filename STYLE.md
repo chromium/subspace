@@ -20,10 +20,10 @@ footguns, crashes, bugs, and UB.
 1. Use concepts or `requires` to prevent compilation errors inside a function.
 1. Use `sus` concepts where possible.
     * If you `requires` a concept, then use that concept to do the intended
-   action instead of rolling it yourself. For example if `T` was required to be
-   `MakeDefault` then construct `T` via `make_default()`.
-1. Use `()` around the `requires` expression always, since clang-format does bad
-   things without it.
+      action instead of rolling it yourself. For example if `T` was required to
+      be `MakeDefault` then construct `T` via `make_default()`.
+    * On types, it often makes sense to static assert instead to give a nice
+      compiler error, since they are not used in overloads like functions.
 1. Use `usize`, `u32`, `i32`, etc in all public APIs, except:
     * Use `size_t` for template parameters instead of `usize`. Since it may
       require forward declarations (sometimes from places that also must

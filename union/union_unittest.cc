@@ -102,9 +102,10 @@ TEST(Union, GetTypes) {
   // With const refs.
   {
     auto i = 3_u32;
+    auto& r = i;
     auto u =
         Union<sus_value_types((Order::First, i8&, const u64&),
-                              (Order::Second, u32))>::with<Order::Second>(i);
+                              (Order::Second, u32&))>::with<Order::Second>(r);
     static_assert(std::same_as<decltype(u.get_ref<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(
@@ -116,8 +117,12 @@ TEST(Union, GetTypes) {
         std::same_as<decltype(sus::move(u).into_inner<Order::First>()),
                      sus::Tuple<i8&, const u64&>>);
     static_assert(
-        std::same_as<decltype(sus::move(u).into_inner<Order::Second>()),
-                     u32&&>);
+        std::same_as<decltype(sus::move(u).into_inner<Order::Second>()), u32&>);
+
+    // Verify storing a reference in the first-of-N slot builds.
+    auto u2 = Union<sus_value_types(
+        (Order::First, u32&),
+        (Order::Second, i8&, const u64&))>::with<Order::First>(r);
   }
 }
 
@@ -136,8 +141,8 @@ TEST(Union, Which) {
                                  (Order::Second, u8))>::with<Order::First>(4u);
   EXPECT_EQ(u.which(), Order::First);
 
-  auto v = Union<sus_value_types((Order::First, u32),
-                                 (Order::Second, u8))>::with<Order::Second>(4_u8);
+  auto v = Union<sus_value_types(
+      (Order::First, u32), (Order::Second, u8))>::with<Order::Second>(4_u8);
   EXPECT_EQ(v.which(), Order::Second);
 }
 

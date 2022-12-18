@@ -17,10 +17,10 @@
 #include "option/option.h"
 #include "test/behaviour_types.h"
 
-using sus::option::Option;
 using sus::construct::MakeDefault;
 using sus::mem::relocate_array_by_memcpy;
 using sus::mem::relocate_one_by_memcpy;
+using sus::option::Option;
 
 namespace default_constructible {
 using T = Option<sus::test::DefaultConstructible>;

@@ -39,6 +39,22 @@ constexpr inline Mref<T> mref(T& t) noexcept {
 template <class T>
 constexpr inline Mref<T> mref(const T& t) = delete;
 
+/// Convert mutable lvalue references to Mref, and do nothing to other types.
+///
+/// For templated code.
+template <class T>
+  requires(std::is_reference_v<T> ||
+           !std::is_const_v<std::remove_reference_t<T>>)
+[[nodiscard]] sus_always_inline constexpr decltype(auto) forward_mref(
+    T&& t) noexcept {
+  if constexpr (std::is_lvalue_reference_v<T&&> &&
+                !std::is_const_v<std::remove_reference_t<T>>) {
+    return mref(t);
+  } else {
+    return static_cast<T&&>(t);
+  }
+}
+
 /// A mutable reference receiver.
 ///
 /// Mref should only be used as a function parameter. It receives a mutable

@@ -80,6 +80,10 @@ struct TupleStorage<T> {
                       : value(::sus::forward<U>(value)){});
 
   [[sus_no_unique_address]] T value;
+
+  decltype(auto) into_inner() && noexcept {
+    return sus_move_preserve_ref(value);
+  }
 };
 
 template <class T, class... Ts>
@@ -92,6 +96,10 @@ struct TupleStorage<T, Ts...> : TupleStorage<Ts...> {
       : Super(::sus::forward<Us>(more)...), value(::sus::forward<U>(value)) {}
 
   [[sus_no_unique_address]] T value;
+
+  decltype(auto) into_inner() && noexcept {
+    return sus_move_preserve_ref(value);
+  }
 };
 
 template <size_t I, class S>

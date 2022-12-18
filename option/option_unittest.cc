@@ -29,15 +29,16 @@
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
 
-using ::sus::construct::make_default;
-using ::sus::construct::MakeDefault;
-using ::sus::mem::Mref;
-using ::sus::mem::relocate_array_by_memcpy;
-using ::sus::mem::relocate_one_by_memcpy;
-using ::sus::option::None;
-using ::sus::option::Option;
-using ::sus::option::Some;
-using namespace ::sus::test;
+using sus::construct::make_default;
+using sus::construct::MakeDefault;
+using sus::mem::Mref;
+using sus::mem::relocate_array_by_memcpy;
+using sus::mem::relocate_one_by_memcpy;
+using sus::option::None;
+using sus::option::Option;
+using sus::option::Some;
+using sus::tuple::Tuple;
+using namespace sus::test;
 
 namespace {
 
@@ -93,7 +94,6 @@ static_assert(is_some_callable_v<Option<int>, const int&>);
 
 static_assert(!is_some_callable_v<Option<int&>, int>);
 static_assert(!is_some_callable_v<Option<int&>, const int>);
-static_assert(!is_some_callable_v<Option<int&>, int&>);
 static_assert(!is_some_callable_v<Option<int&>, int&>);
 static_assert(is_some_callable_v<Option<int&>, Mref<int>>);
 static_assert(!is_some_callable_v<Option<int&>, const int&>);
@@ -1498,7 +1498,8 @@ TEST(Option, Eq) {
   EXPECT_EQ(Option<int>::none(), Option<int>::none());
   EXPECT_EQ(Option<f32>::some(1.f), Option<f32>::some(1.f));
   EXPECT_EQ(Option<f32>::some(0.f), Option<f32>::some(-0.f));
-  EXPECT_NE(Option<f32>::some(f32::TODO_NAN()), Option<f32>::some(f32::TODO_NAN()));
+  EXPECT_NE(Option<f32>::some(f32::TODO_NAN()),
+            Option<f32>::some(f32::TODO_NAN()));
 }
 
 TEST(Option, Ord) {
@@ -1661,6 +1662,49 @@ TEST(Option, Transpose) {
   EXPECT_EQ(sus::move(t3).unwrap_err(), -2_i32);
 }
 
+TEST(Option, Unzip) {
+  {
+    auto s =
+        Option<Tuple<i32, u32>>::some(Tuple<i32, u32>::with(-2_i32, 4_u32));
+    auto sr = sus::move(s).unzip();
+    static_assert(std::same_as<decltype(sr), Tuple<Option<i32>, Option<u32>>>);
+    EXPECT_EQ(sr, (Tuple<Option<i32>, Option<u32>>::with(
+                      Option<i32>::some(-2_i32), Option<u32>::some(4_u32))));
+    auto n = Option<Tuple<i32, u32>>::none();
+    auto nr = sus::move(n).unzip();
+    static_assert(std::same_as<decltype(nr), Tuple<Option<i32>, Option<u32>>>);
+    EXPECT_EQ(nr, (Tuple<Option<i32>, Option<u32>>::with(Option<i32>::none(),
+                                                         Option<u32>::none())));
+  }
+  {
+    auto i = -2_i32;
+    auto u = 4_u32;
+    auto s = Option<Tuple<i32&, u32&>>::some(Tuple<i32&, u32&>::with(i, u));
+    auto sr = sus::move(s).unzip();
+    static_assert(
+        std::same_as<decltype(sr), Tuple<Option<i32&>, Option<u32&>>>);
+    EXPECT_EQ(sr,
+              (Tuple<Option<i32&>, Option<u32&>>::with(
+                  Option<i32&>::some(mref(i)), Option<u32&>::some(mref(u)))));
+
+    auto ci = -2_i32;
+    auto cu = 4_u32;
+
+    auto sc = Option<Tuple<const i32&, const u32&>>::some(
+        Tuple<const i32&, const u32&>::with(ci, cu));
+    auto scr = sus::move(sc).unzip();
+    static_assert(std::same_as<decltype(scr),
+                               Tuple<Option<const i32&>, Option<const u32&>>>);
+
+    auto n = Option<Tuple<i32&, u32&>>::none();
+    auto nr = sus::move(n).unzip();
+    static_assert(
+        std::same_as<decltype(nr), Tuple<Option<i32&>, Option<u32&>>>);
+    EXPECT_EQ(nr, (Tuple<Option<i32&>, Option<u32&>>::with(
+                      Option<i32&>::none(), Option<u32&>::none())));
+  }
+}
+
 TEST(Option, Zip) {
   EXPECT_EQ(Option<i32>::none().zip(Option<i32>::none()), None);
   EXPECT_EQ(Option<i32>::some(1_i32).zip(Option<i32>::none()), None);
@@ -1670,7 +1714,7 @@ TEST(Option, Zip) {
   {
     auto o = Option<i32>::some(-2_i32);
     EXPECT_EQ(sus::move(o).zip(Option<u8>::some(3_u8)).unwrap(),
-              (sus::Tuple<i32, u8>::with(-2_i32, 3_u8)));
+              (Tuple<i32, u8>::with(-2_i32, 3_u8)));
     EXPECT_EQ(o, None);
   }
 
@@ -1679,7 +1723,7 @@ TEST(Option, Zip) {
     auto u = 3_u8;
     auto o = Option<const i32&>::some(i);
     EXPECT_EQ(sus::move(o).zip(Option<const u8&>::some(u)).unwrap(),
-              (sus::Tuple<i32, u8>::with(-2_i32, 3_u8)));
+              (Tuple<i32, u8>::with(-2_i32, 3_u8)));
     EXPECT_EQ(o, None);
   }
 }
@@ -1741,9 +1785,9 @@ TEST(Option, NonZeroField) {
   EXPECT_EQ(o, None);
 
   o = Option<T>::some(T::with(i));
-  EXPECT_EQ(sus::move(o).zip(Option<T>::some(T::with(i))),
-            (Option<sus::Tuple<T, T>>::some(
-                sus::Tuple<T, T>::with(T::with(i), T::with(i)))));
+  EXPECT_EQ(
+      sus::move(o).zip(Option<T>::some(T::with(i))),
+      (Option<Tuple<T, T>>::some(Tuple<T, T>::with(T::with(i), T::with(i)))));
   EXPECT_EQ(o, None);
 
   o = Option<T>::some(T::with(i));
@@ -1765,7 +1809,7 @@ struct CollectSum {
   sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
 
   static constexpr CollectSum from_iter(
-      ::sus::iter::IteratorBase<T>&& iter) noexcept {
+      sus::iter::IteratorBase<T>&& iter) noexcept {
     T sum = T();
     for (const T& t : iter) sum += t;
     return CollectSum(sum);
@@ -1775,7 +1819,7 @@ struct CollectSum {
 };
 
 TEST(Option, FromIter) {
-  auto all_some = ::sus::Array<Option<usize>, 3>::with_values(
+  auto all_some = sus::Array<Option<usize>, 3>::with_values(
                       Option<usize>::some(1u), Option<usize>::some(2u),
                       Option<usize>::some(3u))
                       .into_iter()
@@ -1783,7 +1827,7 @@ TEST(Option, FromIter) {
   EXPECT_EQ(all_some, Some);
   EXPECT_EQ(all_some.unwrap_ref().sum, 1u + 2u + 3u);
 
-  auto one_none = ::sus::Array<Option<usize>, 3>::with_values(
+  auto one_none = sus::Array<Option<usize>, 3>::with_values(
                       Option<usize>::some(1u), Option<usize>::none(),
                       Option<usize>::some(3u))
                       .into_iter()
@@ -1796,7 +1840,7 @@ struct CollectSumRefs {
   sus_clang_bug_54050(CollectSumRefs(T sum) : sum(sum){});
 
   static constexpr CollectSumRefs from_iter(
-      ::sus::iter::IteratorBase<const T&>&& iter) noexcept {
+      sus::iter::IteratorBase<const T&>&& iter) noexcept {
     T sum = T();
     for (const T& t : iter) sum += t;
     return CollectSumRefs(sum);
@@ -1811,7 +1855,7 @@ TEST(Option, FromIterWithRefs) {
   auto u3 = 3_usize;
 
   auto all_some =
-      ::sus::Array<Option<const usize&>, 3>::with_values(
+      sus::Array<Option<const usize&>, 3>::with_values(
           Option<const usize&>::some(u1), Option<const usize&>::some(u2),
           Option<const usize&>::some(u3))
           .into_iter()
@@ -1820,7 +1864,7 @@ TEST(Option, FromIterWithRefs) {
   EXPECT_EQ(all_some.unwrap_ref().sum, 1u + 2u + 3u);
 
   auto one_none =
-      ::sus::Array<Option<const usize&>, 3>::with_values(
+      sus::Array<Option<const usize&>, 3>::with_values(
           Option<const usize&>::some(1u), Option<const usize&>::none(),
           Option<const usize&>::some(3u))
           .into_iter()
@@ -1838,14 +1882,14 @@ TEST(Option, Clone) {
     i32 i = 1_i32;
   };
 
-  static_assert(::sus::mem::Copy<Copy>);
-  static_assert(::sus::mem::Clone<Copy>);
-  static_assert(!::sus::mem::CloneFrom<Copy>);
-  static_assert(!::sus::mem::Move<Copy>);
-  static_assert(::sus::mem::Copy<Option<Copy>>);
-  static_assert(::sus::mem::Clone<Option<Copy>>);
-  static_assert(::sus::mem::CloneFrom<Option<Copy>>);
-  static_assert(!::sus::mem::Move<Option<Copy>>);
+  static_assert(sus::mem::Copy<Copy>);
+  static_assert(sus::mem::Clone<Copy>);
+  static_assert(!sus::mem::CloneFrom<Copy>);
+  static_assert(!sus::mem::Move<Copy>);
+  static_assert(sus::mem::Copy<Option<Copy>>);
+  static_assert(sus::mem::Clone<Option<Copy>>);
+  static_assert(sus::mem::CloneFrom<Option<Copy>>);
+  static_assert(!sus::mem::Move<Option<Copy>>);
 
   {
     const auto s = Option<Copy>::some(Copy());
@@ -1878,14 +1922,14 @@ TEST(Option, Clone) {
     i32 i = 1_i32;
   };
 
-  static_assert(!::sus::mem::Copy<Clone>);
-  static_assert(::sus::mem::Clone<Clone>);
-  static_assert(!::sus::mem::CloneFrom<Clone>);
-  static_assert(::sus::mem::Move<Clone>);
-  static_assert(!::sus::mem::Copy<Option<Clone>>);
-  static_assert(::sus::mem::Clone<Option<Clone>>);
-  static_assert(::sus::mem::CloneFrom<Option<Clone>>);
-  static_assert(::sus::mem::Move<Option<Clone>>);
+  static_assert(!sus::mem::Copy<Clone>);
+  static_assert(sus::mem::Clone<Clone>);
+  static_assert(!sus::mem::CloneFrom<Clone>);
+  static_assert(sus::mem::Move<Clone>);
+  static_assert(!sus::mem::Copy<Option<Clone>>);
+  static_assert(sus::mem::Clone<Option<Clone>>);
+  static_assert(sus::mem::CloneFrom<Option<Clone>>);
+  static_assert(sus::mem::Move<Option<Clone>>);
 
   {
     const auto s = Option<Clone>::some(Clone());

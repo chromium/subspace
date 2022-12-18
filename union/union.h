@@ -108,10 +108,10 @@ class Union<__private::TypeList<Ts...>, Values...> {
   // TODO: Can we construct Tuples of trivially constructible things (or some
   // set of things) without placement new and thus make this constexpr?
   template <ValuesType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
-    requires(std::convertible_to<U, Arg>)
-  static Union with(U values) {
+    requires(std::convertible_to<U&&, Arg>)
+  static Union with(U&& values) {
     auto u = Union(index<V>);
-    find_storage_mut<index<V>>(u.storage_).construct(::sus::move(values));
+    find_storage_mut<index<V>>(u.storage_).construct(::sus::forward<U>(values));
     return u;
   }
 
@@ -299,9 +299,8 @@ class Union<__private::TypeList<Ts...>, Values...> {
   template <ValuesType V>
   decltype(auto) into_inner() && {
     ::sus::check(tag_ == index<V>);
-    return ::sus::mem::move_or_copy_ref(
-               __private::find_storage_mut<index<V>>(storage_))
-        .into_inner();
+    auto& s = __private::find_storage_mut<index<V>>(storage_);
+    return ::sus::move(s).into_inner();
   }
 
   template <ValuesType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
