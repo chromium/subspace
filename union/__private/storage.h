@@ -163,8 +163,9 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
 
   using Type = ::sus::Tuple<T>;
 
-  inline void construct(T&& value) {
-    new (&tuple_) Type(Type::with(::sus::move(value)));
+  template<class U>
+  inline void construct(U&& value) {
+    new (&tuple_)::sus::Tuple<T>(::sus::Tuple<T>::with(::sus::forward<U>(value)));
   }
   inline constexpr void set(T&& value) {
     tuple_ = Type::with(::sus::move(value));
@@ -249,7 +250,7 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
     return tuple_.template get_mut<0>();
   }
   inline constexpr decltype(auto) into_inner() && {
-    return ::sus::mem::move_or_copy_ref(tuple_.template get_mut<0>());
+    return ::sus::move(tuple_).template into_inner<0>();
   }
 
   // TODO: Switch away from Tuple for 1 object when we don't need to use the
@@ -336,8 +337,9 @@ union Storage<I, ::sus::Tuple<T>> {
 
   using Type = ::sus::Tuple<T>;
 
-  inline void construct(T&& value) {
-    new (&tuple_)::sus::Tuple<T>(::sus::Tuple<T>::with(::sus::move(value)));
+  template<class U>
+  inline void construct(U&& value) {
+    new (&tuple_)::sus::Tuple<T>(::sus::Tuple<T>::with(::sus::forward<U>(value)));
   }
   inline constexpr void set(T&& value) {
     tuple_ = Type::with(::sus::move(value));
@@ -390,7 +392,7 @@ union Storage<I, ::sus::Tuple<T>> {
     return tuple_.template get_mut<0>();
   }
   inline constexpr decltype(auto) into_inner() && {
-    return ::sus::mem::move_or_copy_ref(tuple_.template get_mut<0>());
+    return ::sus::move(tuple_).template into_inner<0>();
   }
 
   // TODO: Switch away from Tuple for 1 object when we don't need to use the

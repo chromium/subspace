@@ -391,13 +391,19 @@ TEST(Tuple, StructuredBindingMoves) {
 TEST(Tuple, References) {
   i32 i = 1, j = 2;
   auto t = Tuple<i32&, const i32&, i32>::with(i, j, 3);
-  EXPECT_EQ(t.get_ref<0>(), 1);
-  EXPECT_EQ(t.get_ref<1>(), 2);
+
   static_assert(std::same_as<const i32&, decltype(t.get_ref<0>())>);
   static_assert(std::same_as<const i32&, decltype(t.get_ref<1>())>);
+  EXPECT_EQ(&t.get_ref<0>(), &i);
+  EXPECT_EQ(&t.get_ref<1>(), &j);
 
-  EXPECT_EQ(t.get_mut<0>(), 1);
   static_assert(std::same_as<i32&, decltype(t.get_mut<0>())>);
+  EXPECT_EQ(&t.get_mut<0>(), &i);
+
+  static_assert(std::same_as<i32&, decltype(sus::move(t).into_inner<0>())>);
+  static_assert(
+      std::same_as<const i32&, decltype(sus::move(t).into_inner<1>())>);
+  EXPECT_EQ(&sus::move(t).into_inner<0>(), &i);
 }
 
 TEST(Tuple, Destroy) {

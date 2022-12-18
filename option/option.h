@@ -42,6 +42,7 @@
 #include "ops/eq.h"
 #include "ops/ord.h"
 #include "option/__private/is_option_type.h"
+#include "option/__private/is_tuple_type.h"
 #include "option/__private/storage.h"
 #include "option/state.h"
 #include "result/__private/is_result_type.h"
@@ -691,6 +692,35 @@ class Option final {
     }
   }
 
+  /// Unzips an Option holding a Tuple of two values into a Tuple of two
+  /// Options.
+  ///
+  /// `Option<Tuple<i32, u32>>` is unzipped to `Tuple<Option<i32>,
+  /// Option<u32>>`.
+  ///
+  /// If self is Some, the result is a Tuple with both Options holding the
+  /// values from self. Otherwise, the result is a Tuple of two Options set to
+  /// None.
+  inline auto unzip() && noexcept
+    requires __private::IsTupleOfSizeTwo<T>::value
+  {
+    using U = __private::IsTupleOfSizeTwo<T>::first_type;
+    using V = __private::IsTupleOfSizeTwo<T>::second_type;
+    using TupleOptUV = ::sus::tuple::Tuple<Option<U>, Option<V>>;
+    if (is_some()) {
+      auto make_options = [](::sus::tuple::Tuple<U, V> t) noexcept {
+        auto&& [u, v] = ::sus::move(t);
+        return TupleOptUV::with(
+            Option<U>::some(::sus::mem::forward_mref(sus_move_preserve_ref(u))),
+            Option<V>::some(
+                ::sus::mem::forward_mref(sus_move_preserve_ref(v))));
+      };
+      return make_options(t_.take_and_set_none());
+    } else {
+      return TupleOptUV::with(Option<U>::none(), Option<V>::none());
+    }
+  }
+
   /// Transposes an #Option of a #Result into a #Result of an #Option.
   ///
   /// `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
@@ -779,7 +809,7 @@ class Option final {
   constexpr explicit Option(const T& t) : t_(t) {}
   constexpr explicit Option(T&& t)
     requires(::sus::mem::Move<T>)
-  : t_(::sus::move(t)) {}
+      : t_(::sus::move(t)) {}
 
   Storage<T> t_;
 

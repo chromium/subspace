@@ -61,20 +61,34 @@ concept Move = std::is_move_constructible_v<T> &&
 template <Move T>
   requires(!std::is_const_v<std::remove_reference_t<T>>)
 [[nodiscard]] sus_always_inline constexpr auto&& move(T&& t) noexcept {
-  return static_cast<typename std::remove_reference_t<T>&&>(t);
+  return static_cast<std::remove_reference_t<T>&&>(t);
 }
 
-/// Like move(), but if the object being moved is a reference, the reference
-/// will be copied, even if it is const.
+/// Moves-from x if x is a non-reference type, and copies the reference if x is
+/// a reference type.
 ///
-/// A copy of `T` does not occur in either case. Either `T` is moved, or a
-/// reference-to-`T` is copied.
-template <class T>
-  requires(std::is_reference_v<T> || (Move<T> && !std::is_const_v<T>))
-[[nodiscard]] sus_always_inline
-    constexpr auto&& move_or_copy_ref(T&& t) noexcept {
-  return static_cast<typename std::remove_reference_t<T>&&>(t);
-}
+/// Like move(), this function may not be called with a const non-reference
+/// value.
+///
+/// This requires a macro to implement as we need to determine the type of the
+/// expression itself, not a function parameter at which point an lvalue becomes
+/// an lvalue-reference.
+///
+/// NOTE: An expression of type `structure.field` will be a reference even if
+/// the `field` is not a reference. To avoid this and actually get the type of
+/// the field, you would require a method on structure that returns
+/// `sus_move_preserve_ref(field)` with a return type of `decltype(auto)`. See
+/// Tuple::into_inner() for an example, where it calls a method instead of
+/// directly returning the field.
+//
+// Implemented with a lambda in order to static_assert things inside an
+// expression.
+#define sus_move_preserve_ref(x)                                 \
+  []<class Y>(Y&& y) -> decltype(auto) {                         \
+    static_assert(std::is_reference_v<Y> ||                      \
+                  !std::is_const_v<std::remove_reference_t<Y>>); \
+    return static_cast<Y&&>(y);                                  \
+  }(static_cast<decltype(x)&&>(x))
 
 }  // namespace sus::mem
 

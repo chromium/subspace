@@ -112,7 +112,7 @@ class Tuple final {
   /// Gets a mutable reference to the `I`th element in the tuple.
   template <size_t I>
     requires(I <= sizeof...(Ts))
-  inline auto& get_mut() & noexcept {
+  constexpr inline auto& get_mut() & noexcept {
     ::sus::check(!moved_from(I));
     return __private::find_storage_mut<I>(storage_).value;
   }
@@ -121,11 +121,10 @@ class Tuple final {
   /// moved-from state where it should no longer be used.
   template <size_t I>
     requires(I <= sizeof...(Ts))
-  inline decltype(auto) into_inner() && noexcept {
+  constexpr inline decltype(auto) into_inner() && noexcept {
     ::sus::check(!moved_from(I));
     set_all_moved_from();
-    return ::sus::mem::move_or_copy_ref(
-        __private::find_storage_mut<I>(storage_).value);
+    return ::sus::move(__private::find_storage_mut<I>(storage_)).into_inner();
   }
 
   constexpr Tuple clone() const& noexcept
@@ -234,11 +233,11 @@ class Tuple final {
 
 // Support for structured binding.
 template <size_t I, class... Ts>
-const auto& get(const Tuple<Ts...>& t) noexcept {
+decltype(auto) get(const Tuple<Ts...>& t) noexcept {
   return t.template get_ref<I>();
 }
 template <size_t I, class... Ts>
-auto& get(Tuple<Ts...>& t) noexcept {
+decltype(auto) get(Tuple<Ts...>& t) noexcept {
   return t.template get_mut<I>();
 }
 template <size_t I, class... Ts>
@@ -246,7 +245,8 @@ decltype(auto) get(Tuple<Ts...>&& t) noexcept {
   // We explicitly don't move-from `t` to call `t.into_inner()` as this `get()`
   // function will be called for each member of `t` when making structured
   // bindings from an rvalue Tuple.
-  return ::sus::mem::move_or_copy_ref(t.template get_mut<I>());
+  return static_cast<decltype(::sus::move(t).template into_inner<I>())>(
+      t.template get_mut<I>());
 }
 
 }  // namespace sus::tuple
