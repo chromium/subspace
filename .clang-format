@@ -1,3 +1,14 @@
 BasedOnStyle: Google
 Standard: Latest
 AllowShortCaseLabelsOnASingleLine: true
+
+# This would be nice but it also changes requires() and not wrapping requires clauses with () introduces clang-tidy bugs like:
+#```
+#  template <size_t I>
+#    requires I <= sizeof
+#  ...(Ts) constexpr inline const auto& get_ref() const& noexcept {
+#    ::sus::check(!moved_from(I));
+#    return __private::find_storage<I>(storage_).value;
+#  }
+#```
+#AlignAfterOpenBracket: BlockIndent
