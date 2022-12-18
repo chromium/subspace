@@ -268,7 +268,7 @@ TEST(Result, IntoIter) {
 
 template <class T>
 struct CollectSum {
-  sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
+  sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
 
   static constexpr CollectSum from_iter(
       ::sus::iter::IteratorBase<T>&& iter) noexcept {

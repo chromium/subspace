@@ -27,7 +27,6 @@ using namespace sus::test;
 namespace {
 
 struct S {
-  sus_clang_bug_54040(constexpr inline S(int val) : val(val) {})
   int val = 5;
 };
 
@@ -50,10 +49,10 @@ static_assert(Into<S, FromStuff>);
 
 template <class To, class From>
 concept CanInto = requires(From&& from) {
-                     {
-                       [](To) {}(sus::into(sus::forward<From>(from)))
-                     };
-                   };
+  {
+    [](To) {}(sus::into(sus::forward<From>(from)))
+  };
+};
 
 // into() for a primitive type can accept const or mutable lvalues, they would
 // be copied.
@@ -63,19 +62,22 @@ static_assert(CanInto<FromInt, int&>);
 static_assert(CanInto<FromInt, int&&>);
 static_assert(CanInto<FromInt, const int&&>);
 
-// into() for a trivially copyable type will be copied if not being moved (this type disallows move).
+// into() for a trivially copyable type will be copied if not being moved (this
+// type disallows move).
 static_assert(CanInto<FromStuff, const TriviallyCopyable&>);
 static_assert(CanInto<FromStuff, TriviallyCopyable&>);
 static_assert(!CanInto<FromStuff, TriviallyCopyable&&>);
 static_assert(CanInto<FromStuff, const TriviallyCopyable&&>);
 
-// into() for a trivially movable type will be moved if not const (this type disallows copy).
+// into() for a trivially movable type will be moved if not const (this type
+// disallows copy).
 static_assert(!CanInto<FromStuff, const TriviallyMoveableAndRelocatable&>);
 static_assert(CanInto<FromStuff, TriviallyMoveableAndRelocatable&>);
 static_assert(CanInto<FromStuff, TriviallyMoveableAndRelocatable&&>);
 static_assert(!CanInto<FromStuff, const TriviallyMoveableAndRelocatable&&>);
 
-// into() for a trivially copyable and movable type will be copied or moved as appropriate.
+// into() for a trivially copyable and movable type will be copied or moved as
+// appropriate.
 static_assert(CanInto<FromStuff, const S&>);
 static_assert(CanInto<FromStuff, S&>);
 static_assert(CanInto<FromStuff, S&&>);
@@ -85,10 +87,10 @@ TEST(F, F) { FromStuff f = sus::into(TriviallyMoveableNotDestructible(2)); }
 
 template <class To, class From>
 concept CanMoveInto = requires(From&& from) {
-                          {
-                            [](To) {}(sus::move_into(sus::forward<From>(from)))
-                          };
-                        };
+  {
+    [](To) {}(sus::move_into(sus::forward<From>(from)))
+  };
+};
 // move_into() accepts mutable lvalue or rvalue references.
 static_assert(!CanMoveInto<FromInt, const int&>);
 static_assert(CanMoveInto<FromInt, int&>);
@@ -142,7 +144,6 @@ TEST(Into, MoveInto) {
 }
 
 struct FromThings {
-  sus_clang_bug_54040(constexpr inline FromThings(int i) : got_value(i) {})
   static auto from(int i) { return FromThings(i); }
   static auto from(S s) { return FromThings(s.val); }
   int got_value;
