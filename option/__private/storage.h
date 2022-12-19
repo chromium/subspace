@@ -30,7 +30,7 @@ namespace sus::option::__private {
 using State::None;
 using State::Some;
 
-template <class T, bool = sus::mem::never_value_field<T>::has_field>
+template <class T, bool = sus::mem::NeverValueField<T>>
 struct Storage;
 
 // TODO: Determine if we can put the State into the storage of `T`. Probably
@@ -133,12 +133,12 @@ struct Storage<T, true> final {
   = default;
 
   constexpr Storage() : overlay_() {
-    ::sus::mem::never_value_field<T>::set_never_value(::sus::marker::unsafe_fn, overlay_);
+    ::sus::mem::never_value_access<T>::set_never_value(::sus::marker::unsafe_fn, overlay_);
   }
   constexpr Storage(const T& t) : val_(t) {}
   constexpr Storage(T&& t) : val_(::sus::move(t)) {}
 
-  using Overlay = typename ::sus::mem::never_value_field<T>::OverlayType;
+  using Overlay = typename ::sus::mem::never_value_access<T>::OverlayType;
 
   union {
     Overlay overlay_;
@@ -157,7 +157,7 @@ struct Storage<T, true> final {
   // the correct state and thus the correct union field to read, given the
   // current limitations of constexpr in C++20.
   [[nodiscard]] inline State state() const noexcept {
-    return ::sus::mem::never_value_field<T>::is_constructed(::sus::marker::unsafe_fn, overlay_)
+    return ::sus::mem::never_value_access<T>::is_constructed(::sus::marker::unsafe_fn, overlay_)
                ? Some
                : None;
   }
@@ -182,7 +182,7 @@ struct Storage<T, true> final {
     T t = take_and_destruct(::sus::marker::unsafe_fn, mref(val_));
     // Make the overlay_ field active.
     overlay_ = Overlay();
-    ::sus::mem::never_value_field<T>::set_never_value(::sus::marker::unsafe_fn, overlay_);
+    ::sus::mem::never_value_access<T>::set_never_value(::sus::marker::unsafe_fn, overlay_);
     return t;
   }
 
@@ -190,7 +190,7 @@ struct Storage<T, true> final {
     val_.~T();
     // Make the overlay_ field active.
     overlay_ = Overlay();
-    ::sus::mem::never_value_field<T>::set_never_value(::sus::marker::unsafe_fn, overlay_);
+    ::sus::mem::never_value_access<T>::set_never_value(::sus::marker::unsafe_fn, overlay_);
   }
 };
 
