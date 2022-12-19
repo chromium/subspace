@@ -47,7 +47,7 @@
 #define sus_clang_bug_54040_else(...) __VA_ARGS__
 #endif
 
-// TODO: https://github.com/llvm/llvm-project/issues/54040
+// TODO: https://github.com/llvm/llvm-project/issues/54050
 // Aggregate initialization fails on template classes due to lack of CTAD for
 // aggregates.
 #if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
