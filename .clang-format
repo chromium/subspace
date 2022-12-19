@@ -12,3 +12,12 @@ AllowShortCaseLabelsOnASingleLine: true
 #  }
 #```
 #AlignAfterOpenBracket: BlockIndent
+
+# TODO: Turn these one and reformat everything.
+#BreakBeforeBinaryOperators: true
+#BreakBeforeConceptDeclarations: Always
+#RequiresClausePosition: OwnLine
+#IndentRequiresClause: true
+#RequiresExpressionIndentation: OuterScope
+#QualifierOrder: ['inline', 'static', 'const', 'volatile', 'constexpr', 'type' ]
+#SortUsingDeclarations: true
