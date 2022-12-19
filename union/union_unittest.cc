@@ -80,7 +80,7 @@ TEST(Union, GetTypes) {
         std::same_as<decltype(sus::move(u).into_inner<Order::Second>()),
                      sus::Tuple<i8, u64>>);
   }
-  // Double value first, singke last.
+  // Double value first, single last.
   {
     auto u =
         Union<sus_value_types((Order::First, i8, u64), (Order::Second, u32))>::
@@ -175,6 +175,7 @@ TEST(Union, Clone) {
   auto v = sus::clone(u);
   EXPECT_EQ(u.which(), v.which());
   EXPECT_EQ(u.get_ref<Order::First>(), v.get_ref<Order::First>());
+  EXPECT_NE(&u.get_ref<Order::First>(), &v.get_ref<Order::First>());
 }
 
 TEST(Union, Eq) {
@@ -330,8 +331,5 @@ static_assert(::sus::ops::PartialOrd<Union<sus_value_types((1, float))>,
                                      Union<sus_value_types((1, float))>>);
 static_assert(!::sus::ops::PartialOrd<Union<sus_value_types((1, NotCmp))>,
                                       Union<sus_value_types((1, NotCmp))>>);
-
-// TODO: Test cloneable tag.
-// TODO: Test moveonly tag.
 
 }  // namespace
