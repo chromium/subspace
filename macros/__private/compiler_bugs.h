@@ -18,7 +18,7 @@
 #include "macros/compiler.h"
 
 // TODO: https://github.com/llvm/llvm-project/issues/56394
-#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_56394(...) __VA_ARGS__
 #define sus_clang_bug_56394_else(...)
 #else
@@ -27,7 +27,7 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58835
-#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58835(...) __VA_ARGS__
 #define sus_clang_bug_58835_else(...)
 #else
@@ -59,7 +59,7 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58836
-#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58836(...) __VA_ARGS__
 #define sus_clang_bug_58836_else(...)
 #else
@@ -68,7 +68,7 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58837
-#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58837(...) __VA_ARGS__
 #define sus_clang_bug_58837_else(...)
 #else
@@ -77,7 +77,7 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58859
-#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58859(...) __VA_ARGS__
 #define sus_clang_bug_58859_else(...)
 #else
@@ -86,7 +86,7 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/56394
-#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_56394(...) __VA_ARGS__
 #define sus_clang_bug_56394_else(...)
 #else
@@ -103,4 +103,14 @@
 #else
 #define sus_gcc_bug_107542(...)
 #define sus_gcc_bug_107542_else(...) __VA_ARGS__
+#endif
+
+// TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108169
+// GCC considers class-type template parameters as const.
+#if defined(__GNUC__) && __GNUC__ > 0  // TODO: Update when the bug is fixed.
+#define sus_gcc_bug_108169(...) __VA_ARGS__
+#define sus_gcc_bug_108169_else(...)
+#else
+#define sus_gcc_bug_108169(...)
+#define sus_gcc_bug_108169_else(...) __VA_ARGS__
 #endif
