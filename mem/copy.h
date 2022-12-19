@@ -23,6 +23,10 @@ namespace sus::mem {
 ///
 /// Satisfying `Copy` also implies that the type satisfies `Clone`.
 ///
+/// Const (non-reference) types are not `Copy` as they can't be assigned to.
+/// References are always `Copy`, even if const, as a reference can always be
+/// constructed from a reference.
+///
 /// Typically types should only be `Copy` when performing a copy is very cheap,
 /// and thus unlikely to cause performance problems. For types that are larger
 /// or more complex to copy, it is better to make them satisfy `Clone` instead

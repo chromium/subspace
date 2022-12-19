@@ -20,11 +20,15 @@
 
 namespace sus::mem {
 
-/// A `Move` type can be moved-from to construct a new object and can be
-/// assigned to by move.
+/// A `Move` type can be moved-from to construct a new object of the same type
+/// and can be assigned to by move.
 ///
 /// A type satisfies `Move` by implementing a move constructor and assignment
 /// operator.
+///
+/// Const (non-reference) types are not `Move` as they can't be assigned to.
+/// References are always `Move`, even if const, as a reference can always be
+/// constructed from a reference.
 ///
 /// A type that is `Copy` is also `Move`. However the type can opt out by
 /// explicitly deleteing the move constructor and assignment operator. This is
