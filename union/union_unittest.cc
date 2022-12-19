@@ -1,4 +1,3 @@
-#include <iostream>
 // Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -171,12 +170,21 @@ TEST(Union, Clone) {
 
   auto u = Union<sus_value_types(
       (Order::First, S), (Order::Second, S))>::with<Order::First>(S(4u));
+  static_assert(!sus::mem::Copy<decltype(u)>);
   static_assert(sus::mem::Clone<decltype(u)>);
   auto v = sus::clone(u);
   EXPECT_EQ(u.which(), v.which());
   EXPECT_EQ(u.get_ref<Order::First>(), v.get_ref<Order::First>());
   EXPECT_NE(&u.get_ref<Order::First>(), &v.get_ref<Order::First>());
 }
+
+template <class T, auto Tag>
+concept CanGetRef = requires(T t) { t.template get_ref<Tag>(); };
+template <class T, auto Tag>
+concept CanGetMut = requires(T t) { t.template get_mut<Tag>(); };
+template <class T, auto Tag>
+concept CanIntoInner =
+    requires(T t) { sus::move(t).template into_inner<Tag>(); };
 
 TEST(Union, Eq) {
   struct NotEq {};
@@ -331,5 +339,57 @@ static_assert(::sus::ops::PartialOrd<Union<sus_value_types((1, float))>,
                                      Union<sus_value_types((1, float))>>);
 static_assert(!::sus::ops::PartialOrd<Union<sus_value_types((1, NotCmp))>,
                                       Union<sus_value_types((1, NotCmp))>>);
+
+TEST(Union, VoidValues) {
+  auto u1 = Union<sus_value_types(
+      (Order::First, u32), (Order::Second, void))>::with<Order::First>(4u);
+  auto u2 = Union<sus_value_types(
+      (Order::First, u32), (Order::Second, void))>::with<Order::Second>();
+  auto u3 = Union<sus_value_types((Order::First, void),
+                                  (Order::Second, u32))>::with<Order::First>();
+  auto u4 = Union<sus_value_types(
+      (Order::First, void), (Order::Second, u32))>::with<Order::Second>(4u);
+
+  static_assert(sus::mem::Copy<decltype(u1)>);
+  static_assert(sus::mem::Copy<decltype(u3)>);
+  static_assert(sus::ops::Eq<decltype(u1)>);
+  static_assert(sus::ops::Eq<decltype(u3)>);
+  static_assert(sus::ops::Ord<decltype(u1)>);
+  static_assert(sus::ops::Ord<decltype(u3)>);
+
+  static_assert(CanGetRef<decltype(u1), Order::First>);
+  static_assert(!CanGetRef<decltype(u1), Order::Second>);
+  static_assert(!CanGetRef<decltype(u3), Order::First>);
+  static_assert(CanGetRef<decltype(u3), Order::Second>);
+  static_assert(CanGetMut<decltype(u1), Order::First>);
+  static_assert(!CanGetMut<decltype(u1), Order::Second>);
+  static_assert(!CanGetMut<decltype(u3), Order::First>);
+  static_assert(CanGetMut<decltype(u3), Order::Second>);
+  static_assert(CanIntoInner<decltype(u1), Order::First>);
+  static_assert(!CanIntoInner<decltype(u1), Order::Second>);
+  static_assert(!CanIntoInner<decltype(u3), Order::First>);
+  static_assert(CanIntoInner<decltype(u3), Order::Second>);
+
+  u2 = sus::move(u1);       // Move assign with void value.
+  u4 = u3;                  // Copy assign with void value.
+  auto u5 = sus::move(u2);  // Move construct with void value.
+  auto u6 = u4;             // Copy construct with void value.
+
+  EXPECT_EQ(u4.which(), u6.which());
+
+  u5.set<Order::Second>();
+  u5.set<Order::Second>();
+  u5.set<Order::First>(3u);
+  u5.set<Order::First>(3u);
+
+  u6.set<Order::First>();
+  u6.set<Order::First>();
+  u6.set<Order::Second>(3u);
+  u6.set<Order::Second>(3u);
+
+  EXPECT_NE(u4, u6);
+  EXPECT_EQ(u6, u6);
+  EXPECT_LT(u4, u6);
+}
 
 }  // namespace
