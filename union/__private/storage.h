@@ -19,21 +19,43 @@
 
 #include "mem/move.h"
 #include "tuple/tuple.h"
+#include "union/__private/nothing.h"
 #include "union/__private/pack_index.h"
 
 namespace sus::union_type::__private {
 
+template <class StorageType>
+concept ValueIsVoid = std::same_as<Nothing, StorageType>;
+
+template <class StorageType>
+concept ValueIsNotVoid = !ValueIsVoid<StorageType>;
+
 template <class... Ts>
-struct UnwrapSingleTuple;
+struct MakeStorageType {
+  using type = ::sus::Tuple<Ts...>;
+};
+
+template <>
+struct MakeStorageType<void> {
+  using type = Nothing;
+};
+
+template <class... Ts>
+struct StorageTypeOfTagHelper;
+
+template <>
+struct StorageTypeOfTagHelper<Nothing> {
+  using type = Nothing;
+};
 
 template <class T>
-struct UnwrapSingleTuple<::sus::Tuple<T>> {
+struct StorageTypeOfTagHelper<::sus::Tuple<T>> {
   using type = T;
 };
 
 template <class... Ts>
   requires(sizeof...(Ts) > 1)
-struct UnwrapSingleTuple<::sus::Tuple<Ts...>> {
+struct StorageTypeOfTagHelper<::sus::Tuple<Ts...>> {
   using type = ::sus::Tuple<Ts...>;
 };
 
@@ -44,7 +66,7 @@ struct UnwrapSingleTuple<::sus::Tuple<Ts...>> {
 /// * Storage of `Tuple<i32, u32>` will be `Tuple<i32, u32>`.
 /// * Storage of `Tuple<i32>` will be just `i32`.
 template <size_t I, class... Ts>
-using StorageTypeOfTag = UnwrapSingleTuple<PackIth<I, Ts...>>::type;
+using StorageTypeOfTag = StorageTypeOfTagHelper<PackIth<I, Ts...>>::type;
 
 template <size_t I, class... Elements>
 union Storage;
@@ -139,19 +161,85 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
           tuple_.template get_ref<Is>()...);
-    }
-    (std::make_index_sequence<sizeof...(Ts)>());
+    }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr decltype(auto) get_ref() && = delete;
   constexpr auto get_mut() & {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
-    }
-    (std::make_index_sequence<sizeof...(Ts)>());
+    }(std::make_index_sequence<sizeof...(Ts)>());
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
 
   Type tuple_;
+  Storage<I + 1, Elements...> more_;
+};
+
+template <size_t I, class... Elements>
+  requires(sizeof...(Elements) > 0)
+union Storage<I, Nothing, Elements...> {
+  Storage() {}
+  ~Storage() {}
+
+  inline void move_construct(size_t tag, Storage&& from) {
+    if (tag != I) {
+      more_.move_construct(tag, ::sus::move(from.more_));
+    }
+  }
+  inline constexpr void move_assign(size_t tag, Storage&& from) {
+    if (tag != I) {
+      more_.move_assign(tag, ::sus::move(from.more_));
+    }
+  }
+  inline void copy_construct(size_t tag, const Storage& from) {
+    if (tag != I) {
+      more_.copy_construct(tag, from.more_);
+    }
+  }
+  inline constexpr void copy_assign(size_t tag, const Storage& from) {
+    if (tag != I) {
+      more_.copy_assign(tag, from.more_);
+    }
+  }
+  inline void clone_construct(size_t tag, const Storage& from) {
+    if (tag != I) {
+      more_.clone_construct(tag, from.more_);
+    }
+  }
+  inline constexpr void destroy(size_t tag) {
+    if (tag != I) {
+      more_.destroy(tag);
+    }
+  }
+  inline constexpr bool eq(size_t tag, const Storage& other) const& {
+    if (tag == I) {
+      return true;
+    } else {
+      return more_.eq(tag, other.more_);
+    }
+  }
+  inline constexpr auto ord(size_t tag, const Storage& other) const& {
+    if (tag == I) {
+      return std::strong_ordering::equivalent;
+    } else {
+      return more_.ord(tag, other.more_);
+    }
+  }
+  inline constexpr auto weak_ord(size_t tag, const Storage& other) const& {
+    if (tag == I) {
+      return std::weak_ordering::equivalent;
+    } else {
+      return more_.weak_ord(tag, other.more_);
+    }
+  }
+  inline constexpr auto partial_ord(size_t tag, const Storage& other) const& {
+    if (tag == I) {
+      return std::partial_ordering::equivalent;
+    } else {
+      return more_.partial_ord(tag, other.more_);
+    }
+  }
+
   Storage<I + 1, Elements...> more_;
 };
 
@@ -163,9 +251,10 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
 
   using Type = ::sus::Tuple<T>;
 
-  template<class U>
+  template <class U>
   inline void construct(U&& value) {
-    new (&tuple_)::sus::Tuple<T>(::sus::Tuple<T>::with(::sus::forward<U>(value)));
+    new (&tuple_)::sus::Tuple<T>(
+        ::sus::Tuple<T>::with(::sus::forward<U>(value)));
   }
   inline constexpr void set(T&& value) {
     tuple_ = Type::with(::sus::move(value));
@@ -316,18 +405,53 @@ union Storage<I, ::sus::Tuple<Ts...>> {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
           tuple_.template get_ref<Is>()...);
-    }
-    (std::make_index_sequence<sizeof...(Ts)>());
+    }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr auto get_mut() & {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
-    }
-    (std::make_index_sequence<sizeof...(Ts)>());
+    }(std::make_index_sequence<sizeof...(Ts)>());
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
 
   [[sus_no_unique_address]] Type tuple_;
+};
+
+template <size_t I>
+union Storage<I, Nothing> {
+  Storage() {}
+  ~Storage() {}
+
+  inline void move_construct(size_t tag, Storage&&) { ::sus::check(tag == I); }
+  inline constexpr void move_assign(size_t tag, Storage&&) {
+    ::sus::check(tag == I);
+  }
+  inline void copy_construct(size_t tag, const Storage&) {
+    ::sus::check(tag == I);
+  }
+  inline constexpr void copy_assign(size_t tag, const Storage&) {
+    ::sus::check(tag == I);
+  }
+  inline void clone_construct(size_t tag, const Storage&) {
+    ::sus::check(tag == I);
+  }
+  inline constexpr void destroy(size_t tag) { ::sus::check(tag == I); }
+  inline constexpr bool eq(size_t tag, const Storage&) const& {
+    ::sus::check(tag == I);
+    return true;
+  }
+  inline constexpr auto ord(size_t tag, const Storage&) const& {
+    ::sus::check(tag == I);
+    return std::strong_ordering::equivalent;
+  }
+  inline constexpr auto weak_ord(size_t tag, const Storage&) const& {
+    ::sus::check(tag == I);
+    return std::weak_ordering::equivalent;
+  }
+  inline constexpr auto partial_ord(size_t tag, const Storage&) const& {
+    ::sus::check(tag == I);
+    return std::partial_ordering::equivalent;
+  }
 };
 
 template <size_t I, class T>
@@ -337,9 +461,10 @@ union Storage<I, ::sus::Tuple<T>> {
 
   using Type = ::sus::Tuple<T>;
 
-  template<class U>
+  template <class U>
   inline void construct(U&& value) {
-    new (&tuple_)::sus::Tuple<T>(::sus::Tuple<T>::with(::sus::forward<U>(value)));
+    new (&tuple_)::sus::Tuple<T>(
+        ::sus::Tuple<T>::with(::sus::forward<U>(value)));
   }
   inline constexpr void set(T&& value) {
     tuple_ = Type::with(::sus::move(value));

@@ -103,6 +103,7 @@ add_library(subspace STATIC
     "union/__private/all_values_are_unique.h"
     "union/__private/index_of_value.h"
     "union/__private/index_type.h"
+    "union/__private/nothing.h"
     "union/__private/ops_concepts.h"
     "union/__private/pack_index.h"
     "union/__private/storage.h"

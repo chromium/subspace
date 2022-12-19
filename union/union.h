@@ -110,12 +110,19 @@ class Union<__private::TypeList<Ts...>, Values...> {
  public:
   // TODO: Can we construct Tuples of trivially constructible things (or some
   // set of things) without placement new and thus make this constexpr?
-  template <ValuesType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
+  template <ValuesType V, class U, int&...,
+            __private::ValueIsNotVoid Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U &&, Arg>)
   static Union with(U&& values) {
     auto u = Union(index<V>);
     find_storage_mut<index<V>>(u.storage_).construct(::sus::forward<U>(values));
     return u;
+  }
+
+  template <ValuesType V, int&...,
+            __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
+  static Union with() {
+    return Union(index<V>);
   }
 
   ~Union()
@@ -286,28 +293,34 @@ class Union<__private::TypeList<Ts...>, Values...> {
     return values[size_t{tag_}];
   }
 
+  // clang-format off
   template <ValuesType V>
+    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   decltype(auto) get_ref() const& {
     ::sus::check(tag_ == index<V>);
     return __private::find_storage<index<V>>(storage_).get_ref();
   }
 
   template <ValuesType V>
+    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   decltype(auto) get_mut() & {
     ::sus::check(tag_ == index<V>);
     return __private::find_storage_mut<index<V>>(storage_).get_mut();
   }
 
   template <ValuesType V>
+    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   decltype(auto) into_inner() && {
     ::sus::check(tag_ == index<V>);
     auto& s = __private::find_storage_mut<index<V>>(storage_);
     return ::sus::move(s).into_inner();
   }
+  // clang-format on
 
   template <ValuesType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
-    requires(std::convertible_to<U, Arg>)
-  void set(U values) {
+    requires(std::convertible_to<U &&, Arg> &&
+             __private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+  void set(U&& values) {
     if (tag_ == index<V>) {
       __private::find_storage_mut<index<V>>(storage_).set(::sus::move(values));
     } else {
@@ -316,6 +329,12 @@ class Union<__private::TypeList<Ts...>, Values...> {
       __private::find_storage_mut<index<V>>(storage_).construct(
           ::sus::move(values));
     }
+  }
+
+  template <ValuesType V, int&...,
+            __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
+  void set() {
+    tag_ = index<V>;
   }
 
   /// sus::ops::Eq<Union<Ts...>, Union<Us...>> trait.

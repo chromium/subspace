@@ -17,6 +17,7 @@
 #include "macros/for_each.h"
 #include "macros/remove_parens.h"
 #include "tuple/tuple.h"
+#include "union/__private/storage.h"
 #include "union/__private/type_list.h"
 
 /// Construct a set of associated value and types pairings. The type of the
@@ -48,7 +49,7 @@
 // clang-format off
 #define sus_value_types(...) \
     sus::union_type::__private::TypeList< \
-        sus_for_each(_sus__make_inner_tuple, sus_for_each_sep_comma, \
+        sus_for_each(_sus__make_union_storage_type, sus_for_each_sep_comma, \
                      sus_for_each(_sus__value_types_types, sus_for_each_sep_comma, \
                                   __VA_ARGS__))>, \
     sus_for_each(_sus__value_types_value, sus_for_each_sep_comma, \
@@ -56,7 +57,8 @@
 
 // clang-format on
 
-#define _sus__make_inner_tuple(types) sus::Tuple<sus_remove_parens(types)>
+#define _sus__make_union_storage_type(types) \
+  ::sus::union_type::__private::MakeStorageType<sus_remove_parens(types)>::type
 
 #define _sus__first(a, ...) a
 #define _sus__second_plus(a, ...) __VA_ARGS__
