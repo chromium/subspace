@@ -83,77 +83,77 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
     new (&tuple_) Type(::sus::move(tuple));
   }
   inline constexpr void set(Type&& tuple) { tuple_ = ::sus::move(tuple); }
-  inline void move_construct(size_t tag, Storage&& from) {
-    if (tag == I) {
+  inline void move_construct(size_t index, Storage&& from) {
+    if (index == I) {
       new (&tuple_) Type(::sus::move(from.tuple_));
     } else {
-      more_.move_construct(tag, ::sus::move(from.more_));
+      more_.move_construct(index, ::sus::move(from.more_));
     }
   }
-  inline constexpr void move_assign(size_t tag, Storage&& from) {
-    if (tag == I) {
+  inline constexpr void move_assign(size_t index, Storage&& from) {
+    if (index == I) {
       tuple_ = ::sus::move(from.tuple_);
     } else {
-      more_.move_assign(tag, ::sus::move(from.more_));
+      more_.move_assign(index, ::sus::move(from.more_));
     }
   }
-  inline void copy_construct(size_t tag, const Storage& from) {
-    if (tag == I) {
+  inline void copy_construct(size_t index, const Storage& from) {
+    if (index == I) {
       new (&tuple_) Type(from.tuple_);
     } else {
-      more_.copy_construct(tag, from.more_);
+      more_.copy_construct(index, from.more_);
     }
   }
-  inline constexpr void copy_assign(size_t tag, const Storage& from) {
-    if (tag == I) {
+  inline constexpr void copy_assign(size_t index, const Storage& from) {
+    if (index == I) {
       tuple_ = from.tuple_;
     } else {
-      more_.copy_assign(tag, from.more_);
+      more_.copy_assign(index, from.more_);
     }
   }
-  inline void clone_construct(size_t tag, const Storage& from) {
-    if (tag == I) {
+  inline void clone_construct(size_t index, const Storage& from) {
+    if (index == I) {
       new (&tuple_) Type(::sus::clone(from.tuple_));
     } else {
-      more_.clone_construct(tag, from.more_);
+      more_.clone_construct(index, from.more_);
     }
   }
-  inline constexpr void destroy(size_t tag) {
-    if (tag == I) {
+  inline constexpr void destroy(size_t index) {
+    if (index == I) {
       tuple_.~Type();
     } else {
-      more_.destroy(tag);
+      more_.destroy(index);
     }
   }
-  inline constexpr bool eq(size_t tag, const Storage& other) const& {
-    if (tag == I) {
+  inline constexpr bool eq(size_t index, const Storage& other) const& {
+    if (index == I) {
       return tuple_ == other.tuple_;
     } else {
-      return more_.eq(tag, other.more_);
+      return more_.eq(index, other.more_);
     }
   }
-  inline constexpr std::strong_ordering ord(size_t tag,
+  inline constexpr std::strong_ordering ord(size_t index,
                                             const Storage& other) const& {
-    if (tag == I) {
+    if (index == I) {
       return std::strong_order(tuple_, other.tuple_);
     } else {
-      return more_.ord(tag, other.more_);
+      return more_.ord(index, other.more_);
     }
   }
-  inline constexpr std::weak_ordering weak_ord(size_t tag,
+  inline constexpr std::weak_ordering weak_ord(size_t index,
                                                const Storage& other) const& {
-    if (tag == I) {
+    if (index == I) {
       return std::weak_order(tuple_, other.tuple_);
     } else {
-      return more_.weak_ord(tag, other.more_);
+      return more_.weak_ord(index, other.more_);
     }
   }
   inline constexpr std::partial_ordering partial_ord(
-      size_t tag, const Storage& other) const& {
-    if (tag == I) {
+      size_t index, const Storage& other) const& {
+    if (index == I) {
       return std::partial_order(tuple_, other.tuple_);
     } else {
-      return more_.partial_ord(tag, other.more_);
+      return more_.partial_ord(index, other.more_);
     }
   }
 
@@ -181,62 +181,62 @@ union Storage<I, Nothing, Elements...> {
   Storage() {}
   ~Storage() {}
 
-  inline void move_construct(size_t tag, Storage&& from) {
-    if (tag != I) {
-      more_.move_construct(tag, ::sus::move(from.more_));
+  inline void move_construct(size_t index, Storage&& from) {
+    if (index != I) {
+      more_.move_construct(index, ::sus::move(from.more_));
     }
   }
-  inline constexpr void move_assign(size_t tag, Storage&& from) {
-    if (tag != I) {
-      more_.move_assign(tag, ::sus::move(from.more_));
+  inline constexpr void move_assign(size_t index, Storage&& from) {
+    if (index != I) {
+      more_.move_assign(index, ::sus::move(from.more_));
     }
   }
-  inline void copy_construct(size_t tag, const Storage& from) {
-    if (tag != I) {
-      more_.copy_construct(tag, from.more_);
+  inline void copy_construct(size_t index, const Storage& from) {
+    if (index != I) {
+      more_.copy_construct(index, from.more_);
     }
   }
-  inline constexpr void copy_assign(size_t tag, const Storage& from) {
-    if (tag != I) {
-      more_.copy_assign(tag, from.more_);
+  inline constexpr void copy_assign(size_t index, const Storage& from) {
+    if (index != I) {
+      more_.copy_assign(index, from.more_);
     }
   }
-  inline void clone_construct(size_t tag, const Storage& from) {
-    if (tag != I) {
-      more_.clone_construct(tag, from.more_);
+  inline void clone_construct(size_t index, const Storage& from) {
+    if (index != I) {
+      more_.clone_construct(index, from.more_);
     }
   }
-  inline constexpr void destroy(size_t tag) {
-    if (tag != I) {
-      more_.destroy(tag);
+  inline constexpr void destroy(size_t index) {
+    if (index != I) {
+      more_.destroy(index);
     }
   }
-  inline constexpr bool eq(size_t tag, const Storage& other) const& {
-    if (tag == I) {
+  inline constexpr bool eq(size_t index, const Storage& other) const& {
+    if (index == I) {
       return true;
     } else {
-      return more_.eq(tag, other.more_);
+      return more_.eq(index, other.more_);
     }
   }
-  inline constexpr auto ord(size_t tag, const Storage& other) const& {
-    if (tag == I) {
+  inline constexpr auto ord(size_t index, const Storage& other) const& {
+    if (index == I) {
       return std::strong_ordering::equivalent;
     } else {
-      return more_.ord(tag, other.more_);
+      return more_.ord(index, other.more_);
     }
   }
-  inline constexpr auto weak_ord(size_t tag, const Storage& other) const& {
-    if (tag == I) {
+  inline constexpr auto weak_ord(size_t index, const Storage& other) const& {
+    if (index == I) {
       return std::weak_ordering::equivalent;
     } else {
-      return more_.weak_ord(tag, other.more_);
+      return more_.weak_ord(index, other.more_);
     }
   }
-  inline constexpr auto partial_ord(size_t tag, const Storage& other) const& {
-    if (tag == I) {
+  inline constexpr auto partial_ord(size_t index, const Storage& other) const& {
+    if (index == I) {
       return std::partial_ordering::equivalent;
     } else {
-      return more_.partial_ord(tag, other.more_);
+      return more_.partial_ord(index, other.more_);
     }
   }
 
@@ -259,75 +259,75 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
   inline constexpr void set(T&& value) {
     tuple_ = Type::with(::sus::move(value));
   }
-  inline void move_construct(size_t tag, Storage&& from) {
-    if (tag == I) {
+  inline void move_construct(size_t index, Storage&& from) {
+    if (index == I) {
       new (&tuple_) Type(::sus::move(from.tuple_));
     } else {
-      more_.move_construct(tag, ::sus::move(from.more_));
+      more_.move_construct(index, ::sus::move(from.more_));
     }
   }
-  inline constexpr void move_assign(size_t tag, Storage&& from) {
-    if (tag == I) {
+  inline constexpr void move_assign(size_t index, Storage&& from) {
+    if (index == I) {
       tuple_ = ::sus::move(from.tuple_);
     } else {
-      more_.move_assign(tag, ::sus::move(from.more_));
+      more_.move_assign(index, ::sus::move(from.more_));
     }
   }
-  inline void copy_construct(size_t tag, const Storage& from) {
-    if (tag == I) {
+  inline void copy_construct(size_t index, const Storage& from) {
+    if (index == I) {
       new (&tuple_) Type(from.tuple_);
     } else {
-      more_.copy_construct(tag, from.more_);
+      more_.copy_construct(index, from.more_);
     }
   }
-  inline constexpr void copy_assign(size_t tag, const Storage& from) {
-    if (tag == I) {
+  inline constexpr void copy_assign(size_t index, const Storage& from) {
+    if (index == I) {
       tuple_ = from.tuple_;
     } else {
-      more_.copy_assign(tag, from.more_);
+      more_.copy_assign(index, from.more_);
     }
   }
-  inline void clone_construct(size_t tag, const Storage& from) {
-    if (tag == I) {
+  inline void clone_construct(size_t index, const Storage& from) {
+    if (index == I) {
       auto x = ::sus::clone(from.tuple_);
       new (&tuple_) Type(sus::move(x));
     } else {
-      more_.clone_construct(tag, from.more_);
+      more_.clone_construct(index, from.more_);
     }
   }
-  inline constexpr void destroy(size_t tag) {
-    if (tag == I) {
+  inline constexpr void destroy(size_t index) {
+    if (index == I) {
       tuple_.~Type();
     } else {
-      more_.destroy(tag);
+      more_.destroy(index);
     }
   }
-  inline constexpr bool eq(size_t tag, const Storage& other) const& {
-    if (tag == I) {
+  inline constexpr bool eq(size_t index, const Storage& other) const& {
+    if (index == I) {
       return tuple_ == other.tuple_;
     } else {
-      return more_.eq(tag, other.more_);
+      return more_.eq(index, other.more_);
     }
   }
-  inline constexpr auto ord(size_t tag, const Storage& other) const& {
-    if (tag == I) {
+  inline constexpr auto ord(size_t index, const Storage& other) const& {
+    if (index == I) {
       return std::strong_order(tuple_, other.tuple_);
     } else {
-      return more_.ord(tag, other.more_);
+      return more_.ord(index, other.more_);
     }
   }
-  inline constexpr auto weak_ord(size_t tag, const Storage& other) const& {
-    if (tag == I) {
+  inline constexpr auto weak_ord(size_t index, const Storage& other) const& {
+    if (index == I) {
       return std::weak_order(tuple_, other.tuple_);
     } else {
-      return more_.weak_ord(tag, other.more_);
+      return more_.weak_ord(index, other.more_);
     }
   }
-  inline constexpr auto partial_ord(size_t tag, const Storage& other) const& {
-    if (tag == I) {
+  inline constexpr auto partial_ord(size_t index, const Storage& other) const& {
+    if (index == I) {
       return std::partial_order(tuple_, other.tuple_);
     } else {
-      return more_.partial_ord(tag, other.more_);
+      return more_.partial_ord(index, other.more_);
     }
   }
 
@@ -360,44 +360,44 @@ union Storage<I, ::sus::Tuple<Ts...>> {
     new (&tuple_) Type(::sus::move(tuple));
   }
   inline constexpr void set(Type&& tuple) { tuple_ = ::sus::move(tuple); }
-  inline void move_construct(size_t tag, Storage&& from) {
-    ::sus::check(tag == I);
+  inline void move_construct(size_t index, Storage&& from) {
+    ::sus::check(index == I);
     new (&tuple_) Type(::sus::move(from.tuple_));
   }
-  inline constexpr void move_assign(size_t tag, Storage&& from) {
-    ::sus::check(tag == I);
+  inline constexpr void move_assign(size_t index, Storage&& from) {
+    ::sus::check(index == I);
     tuple_ = ::sus::move(from.tuple_);
   }
-  inline void copy_construct(size_t tag, const Storage& from) {
-    ::sus::check(tag == I);
+  inline void copy_construct(size_t index, const Storage& from) {
+    ::sus::check(index == I);
     new (&tuple_) Type(from.tuple_);
   }
-  inline constexpr void copy_assign(size_t tag, const Storage& from) {
-    ::sus::check(tag == I);
+  inline constexpr void copy_assign(size_t index, const Storage& from) {
+    ::sus::check(index == I);
     tuple_ = from.tuple_;
   }
-  inline void clone_construct(size_t tag, const Storage& from) {
-    ::sus::check(tag == I);
+  inline void clone_construct(size_t index, const Storage& from) {
+    ::sus::check(index == I);
     new (&tuple_) Type(::sus::clone(from.tuple_));
   }
-  inline constexpr void destroy(size_t tag) {
-    ::sus::check(tag == I);
+  inline constexpr void destroy(size_t index) {
+    ::sus::check(index == I);
     tuple_.~Type();
   }
-  inline constexpr bool eq(size_t tag, const Storage& other) const& {
-    ::sus::check(tag == I);
+  inline constexpr bool eq(size_t index, const Storage& other) const& {
+    ::sus::check(index == I);
     return tuple_ == other.tuple_;
   }
-  inline constexpr auto ord(size_t tag, const Storage& other) const& {
-    ::sus::check(tag == I);
+  inline constexpr auto ord(size_t index, const Storage& other) const& {
+    ::sus::check(index == I);
     return std::strong_order(tuple_, other.tuple_);
   }
-  inline constexpr auto weak_ord(size_t tag, const Storage& other) const& {
-    ::sus::check(tag == I);
+  inline constexpr auto weak_ord(size_t index, const Storage& other) const& {
+    ::sus::check(index == I);
     return std::weak_order(tuple_, other.tuple_);
   }
-  inline constexpr auto partial_ord(size_t tag, const Storage& other) const& {
-    ::sus::check(tag == I);
+  inline constexpr auto partial_ord(size_t index, const Storage& other) const& {
+    ::sus::check(index == I);
     return std::partial_order(tuple_, other.tuple_);
   }
 
@@ -422,34 +422,36 @@ union Storage<I, Nothing> {
   Storage() {}
   ~Storage() {}
 
-  inline void move_construct(size_t tag, Storage&&) { ::sus::check(tag == I); }
-  inline constexpr void move_assign(size_t tag, Storage&&) {
-    ::sus::check(tag == I);
+  inline void move_construct(size_t index, Storage&&) {
+    ::sus::check(index == I);
   }
-  inline void copy_construct(size_t tag, const Storage&) {
-    ::sus::check(tag == I);
+  inline constexpr void move_assign(size_t index, Storage&&) {
+    ::sus::check(index == I);
   }
-  inline constexpr void copy_assign(size_t tag, const Storage&) {
-    ::sus::check(tag == I);
+  inline void copy_construct(size_t index, const Storage&) {
+    ::sus::check(index == I);
   }
-  inline void clone_construct(size_t tag, const Storage&) {
-    ::sus::check(tag == I);
+  inline constexpr void copy_assign(size_t index, const Storage&) {
+    ::sus::check(index == I);
   }
-  inline constexpr void destroy(size_t tag) { ::sus::check(tag == I); }
-  inline constexpr bool eq(size_t tag, const Storage&) const& {
-    ::sus::check(tag == I);
+  inline void clone_construct(size_t index, const Storage&) {
+    ::sus::check(index == I);
+  }
+  inline constexpr void destroy(size_t index) { ::sus::check(index == I); }
+  inline constexpr bool eq(size_t index, const Storage&) const& {
+    ::sus::check(index == I);
     return true;
   }
-  inline constexpr auto ord(size_t tag, const Storage&) const& {
-    ::sus::check(tag == I);
+  inline constexpr auto ord(size_t index, const Storage&) const& {
+    ::sus::check(index == I);
     return std::strong_ordering::equivalent;
   }
-  inline constexpr auto weak_ord(size_t tag, const Storage&) const& {
-    ::sus::check(tag == I);
+  inline constexpr auto weak_ord(size_t index, const Storage&) const& {
+    ::sus::check(index == I);
     return std::weak_ordering::equivalent;
   }
-  inline constexpr auto partial_ord(size_t tag, const Storage&) const& {
-    ::sus::check(tag == I);
+  inline constexpr auto partial_ord(size_t index, const Storage&) const& {
+    ::sus::check(index == I);
     return std::partial_ordering::equivalent;
   }
 };
@@ -469,44 +471,44 @@ union Storage<I, ::sus::Tuple<T>> {
   inline constexpr void set(T&& value) {
     tuple_ = Type::with(::sus::move(value));
   }
-  inline void move_construct(size_t tag, Storage&& from) {
-    ::sus::check(tag == I);
+  inline void move_construct(size_t index, Storage&& from) {
+    ::sus::check(index == I);
     new (&tuple_) Type(::sus::move(from.tuple_));
   }
-  inline constexpr void move_assign(size_t tag, Storage&& from) {
-    ::sus::check(tag == I);
+  inline constexpr void move_assign(size_t index, Storage&& from) {
+    ::sus::check(index == I);
     tuple_ = ::sus::move(from.tuple_);
   }
-  inline void copy_construct(size_t tag, const Storage& from) {
-    ::sus::check(tag == I);
+  inline void copy_construct(size_t index, const Storage& from) {
+    ::sus::check(index == I);
     new (&tuple_) Type(from.tuple_);
   }
-  inline constexpr void copy_assign(size_t tag, const Storage& from) {
-    ::sus::check(tag == I);
+  inline constexpr void copy_assign(size_t index, const Storage& from) {
+    ::sus::check(index == I);
     tuple_ = from.tuple_;
   }
-  inline void clone_construct(size_t tag, const Storage& from) {
-    ::sus::check(tag == I);
+  inline void clone_construct(size_t index, const Storage& from) {
+    ::sus::check(index == I);
     new (&tuple_) Type(::sus::clone(from.tuple_));
   }
-  inline constexpr void destroy(size_t tag) {
-    ::sus::check(tag == I);
+  inline constexpr void destroy(size_t index) {
+    ::sus::check(index == I);
     tuple_.~Type();
   }
-  inline constexpr bool eq(size_t tag, const Storage& other) const& {
-    ::sus::check(tag == I);
+  inline constexpr bool eq(size_t index, const Storage& other) const& {
+    ::sus::check(index == I);
     return tuple_ == other.tuple_;
   }
-  inline constexpr auto ord(size_t tag, const Storage& other) const& {
-    ::sus::check(tag == I);
+  inline constexpr auto ord(size_t index, const Storage& other) const& {
+    ::sus::check(index == I);
     return std::strong_order(tuple_, other.tuple_);
   }
-  inline constexpr auto weak_ord(size_t tag, const Storage& other) const& {
-    ::sus::check(tag == I);
+  inline constexpr auto weak_ord(size_t index, const Storage& other) const& {
+    ::sus::check(index == I);
     return std::weak_order(tuple_, other.tuple_);
   }
-  inline constexpr auto partial_ord(size_t tag, const Storage& other) const& {
-    ::sus::check(tag == I);
+  inline constexpr auto partial_ord(size_t index, const Storage& other) const& {
+    ::sus::check(index == I);
     return std::partial_order(tuple_, other.tuple_);
   }
 
