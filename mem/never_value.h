@@ -26,10 +26,10 @@ namespace sus::mem {
 namespace __private {
 
 template <class T, bool HasField>
-struct never_value_field_helper;
+struct never_value_access_helper;
 
 template <class T>
-struct never_value_field_helper<T, false> {
+struct never_value_access_helper<T, false> {
   static constexpr bool has_field = false;
   using OverlayType = char;
 
@@ -40,7 +40,7 @@ struct never_value_field_helper<T, false> {
 };
 
 template <class T>
-struct never_value_field_helper<T, true> {
+struct never_value_access_helper<T, true> {
   static constexpr bool has_field = true;
   using OverlayType = T::template SusUnsafeNeverValueOverlay<T>::type;
 
@@ -90,7 +90,7 @@ struct SusUnsafeNeverValueOverlayImpl<NeverType, never_value, FieldType, 0> {
 /// This allows a flag to check for a class being constructed without an
 /// additional boolean flag.
 template <class T>
-struct never_value_field {
+struct never_value_access {
   /// Whether the type `T` has a never-value field.
   static constexpr bool has_field =
       requires { T::template SusUnsafeNeverValueOverlay<T>::exists; };
@@ -100,7 +100,7 @@ struct never_value_field {
   /// never-value field in a union (though reading an inactive union field is
   /// invalid in a constant expression in C++20).
   using OverlayType =
-      typename __private::never_value_field_helper<T, has_field>::OverlayType;
+      typename __private::never_value_access_helper<T, has_field>::OverlayType;
 
   /// Returns whether there is a type `T` constructed at the memory location
   /// `t`, where the OverlayType `t` has the same address as a type `T` in a
@@ -114,7 +114,8 @@ struct never_value_field {
       ::sus::marker::UnsafeFnMarker, const OverlayType& t) noexcept
     requires(has_field)
   {
-    return __private::never_value_field_helper<T, has_field>::is_constructed(t);
+    return __private::never_value_access_helper<T, has_field>::is_constructed(
+        t);
   }
   /// Sets a field in the memory location `t` to a value that is never set
   /// during the lifetime of `T`, where the OverlayType `t` has the same address
@@ -128,10 +129,19 @@ struct never_value_field {
       ::sus::marker::UnsafeFnMarker, OverlayType& t) noexcept
     requires(has_field)
   {
-    return __private::never_value_field_helper<T, has_field>::set_never_value(
+    return __private::never_value_access_helper<T, has_field>::set_never_value(
         t);
   }
 };
+
+/// A `NeverValueField` type has a field with a never-value.
+///
+/// When not constructed, that field in a `NeverValueField` object can be set to
+/// the never-value in order to see if/when the object is constructed, as the
+/// never-value would be changed by construction, and would never occur during
+/// the lifetime of the object.
+template <class T>
+concept NeverValueField = never_value_access<T>::has_field;
 
 }  // namespace sus::mem
 
@@ -139,6 +149,9 @@ struct never_value_field {
 /// constructor has run and bef ore the destructor has completed. This allows
 /// querying if a class is constructed in a memory location, since the class is
 /// constructed iff the value of the field is not the never-value.
+///
+/// The macro includes `private:` which changes the class definition visiblity
+/// to private.
 #define sus_class_never_value_field(unsafe_fn, T, field_name, never_value)     \
  private:                                                                      \
   static_assert(                                                               \
@@ -156,9 +169,9 @@ struct never_value_field {
                 "else Option<T> couldn't be constexpr.");                      \
                                                                                \
   template <class>                                                             \
-  friend struct ::sus::mem::never_value_field;                                 \
+  friend struct ::sus::mem::never_value_access;                                \
   template <class, bool>                                                       \
-  friend struct ::sus::mem::__private::never_value_field_helper;               \
+  friend struct ::sus::mem::__private::never_value_access_helper;              \
                                                                                \
   template <class SusUnsafeNeverValueOuter,                                    \
             bool SusUnsafeNeverValueStandardLayout =                           \

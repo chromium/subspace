@@ -70,9 +70,9 @@ SubClass* s_s_function(SubClass* b) { return b; }
 // clang-format off
 
 // Fn types all have a never-value field.
-static_assert(sus::mem::never_value_field<FnOnce<void()>>::has_field);
-static_assert(sus::mem::never_value_field<FnMut<void()>>::has_field);
-static_assert(sus::mem::never_value_field<Fn<void()>>::has_field);
+static_assert(sus::mem::NeverValueField<FnOnce<void()>>);
+static_assert(sus::mem::NeverValueField<FnMut<void()>>);
+static_assert(sus::mem::NeverValueField<Fn<void()>>);
 // Which allows them to not require a flag in Option.
 static_assert(sizeof(sus::Option<FnOnce<void()>>) == sizeof(FnOnce<void()>));
 
