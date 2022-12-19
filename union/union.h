@@ -56,6 +56,9 @@ class Union<__private::TypeList<Ts...>, Values...> {
 
   static_assert((... && std::same_as<ValuesType, decltype(Values)>),
                 "All tag values must be the same type.");
+  // This is required in order for the implementation of `which()` to not be a
+  // performance cliff of expensive clones.
+  static_assert(::sus::mem::Copy<ValuesType>, "The tag values must be Copy.");
   static_assert(::sus::ops::Eq<ValuesType>,
                 "The tag values must be Eq in order to find the storage from a "
                 "tag value.");
@@ -108,7 +111,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
   // TODO: Can we construct Tuples of trivially constructible things (or some
   // set of things) without placement new and thus make this constexpr?
   template <ValuesType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
-    requires(std::convertible_to<U&&, Arg>)
+    requires(std::convertible_to<U &&, Arg>)
   static Union with(U&& values) {
     auto u = Union(index<V>);
     find_storage_mut<index<V>>(u.storage_).construct(::sus::forward<U>(values));
@@ -127,16 +130,16 @@ class Union<__private::TypeList<Ts...>, Values...> {
   }
 
   Union(Union&& o)
-    requires((::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>) &&
+    requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_constructible_v<ValuesType> && ... &&
               std::is_trivially_move_constructible_v<Ts>))
   = default;
   Union(Union&& o)
-    requires(!(::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>))
+    requires(!(... && ::sus::mem::Move<Ts>))
   = delete;
 
   Union(Union&& o)
-    requires((::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>) &&
+    requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_constructible_v<ValuesType> && ... &&
                std::is_trivially_move_constructible_v<Ts>))
       : tag_(::sus::mem::replace(::sus::mref(o.tag_),
@@ -148,16 +151,16 @@ class Union<__private::TypeList<Ts...>, Values...> {
   }
 
   Union& operator=(Union&& o)
-    requires((::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>) &&
+    requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_assignable_v<ValuesType> && ... &&
               std::is_trivially_move_assignable_v<Ts>))
   = default;
   Union& operator=(Union&& o)
-    requires(!(::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>))
+    requires(!(... && ::sus::mem::Move<Ts>))
   = delete;
 
   Union& operator=(Union&& o)
-    requires((::sus::mem::Move<ValuesType> && ... && ::sus::mem::Move<Ts>) &&
+    requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_assignable_v<ValuesType> && ... &&
                std::is_trivially_move_assignable_v<Ts>))
   {
@@ -174,16 +177,16 @@ class Union<__private::TypeList<Ts...>, Values...> {
   }
 
   Union(const Union& o)
-    requires((::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>) &&
+    requires((... && ::sus::mem::Copy<Ts>) &&
              (std::is_trivially_copy_constructible_v<ValuesType> && ... &&
               std::is_trivially_copy_constructible_v<Ts>))
   = default;
   Union(const Union& o)
-    requires(!(::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>))
+    requires(!(... && ::sus::mem::Copy<Ts>))
   = delete;
 
   Union(const Union& o)
-    requires((::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>) &&
+    requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_constructible_v<ValuesType> && ... &&
                std::is_trivially_copy_constructible_v<Ts>))
       : tag_(o.tag_) {
@@ -192,16 +195,16 @@ class Union<__private::TypeList<Ts...>, Values...> {
   }
 
   Union& operator=(const Union& o)
-    requires((::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>) &&
+    requires((... && ::sus::mem::Copy<Ts>) &&
              (std::is_trivially_copy_assignable_v<ValuesType> && ... &&
               std::is_trivially_copy_assignable_v<Ts>))
   = default;
   Union& operator=(const Union& o)
-    requires(!(::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>))
+    requires(!(... && ::sus::mem::Copy<Ts>))
   = delete;
 
   Union& operator=(const Union& o)
-    requires((::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>) &&
+    requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_assignable_v<ValuesType> && ... &&
                std::is_trivially_copy_assignable_v<Ts>))
   {
@@ -218,8 +221,7 @@ class Union<__private::TypeList<Ts...>, Values...> {
 
   // sus::mem::Clone<Union<Ts...>> trait.
   constexpr Union clone() const& noexcept
-    requires((::sus::mem::Clone<ValuesType> && ... && ::sus::mem::Clone<Ts>) &&
-             !(::sus::mem::Copy<ValuesType> && ... && ::sus::mem::Copy<Ts>))
+    requires((... && ::sus::mem::Clone<Ts>) && !(... && ::sus::mem::Copy<Ts>))
   {
     check(tag_ != kUseAfterMove);
     auto u = Union(::sus::clone(tag_));
