@@ -258,7 +258,6 @@ struct Weak {
     return std::weak_ordering::greater;
   }
 
-  constexpr Weak(i32 a, i32 b) : a(a), b(b) {}
   i32 a;
   i32 b;
 };

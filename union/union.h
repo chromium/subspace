@@ -56,9 +56,20 @@ class Union<__private::TypeList<Ts...>, Tags...> {
 
   static_assert((... && std::same_as<TagsType, decltype(Tags)>),
                 "All tag values must be the same type.");
+
+  // As of GCC 13, it makes class-type template parameters be const
+  // (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108169) which means they will
+  // not be Copy, as you can't copy into a const type. So we have to strip the
+  // const.
+  // clang-format off
+  template <class T>
+  using GccBug = sus_gcc_bug_108169(std::remove_const_t <) T sus_gcc_bug_108169(>);
+  // clang-format on
+
   // This is required in order for the implementation of `which()` to not be a
-  // performance cliff of expensive clones.
-  static_assert(::sus::mem::Copy<TagsType>, "The tag values must be Copy.");
+  // performance cliff of potentially-expensive `clone()`s.
+  static_assert(::sus::mem::Copy<GccBug<TagsType>>,
+                "The tag values must be Copy.");
   static_assert(::sus::ops::Eq<TagsType>,
                 "The tag values must be Eq in order to find the storage from a "
                 "tag value.");
