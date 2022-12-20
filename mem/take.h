@@ -24,17 +24,18 @@
 
 namespace sus::mem {
 
-/// Calling take() on a base class could lead to Undefined Behaviour, unless the
-/// object was accessed through std::launder thereafter, as replacing a subclass
-/// with the base class would change the underlying storage.
+/// Requires that the type is `final` because calling take() on a base class
+/// could lead to Undefined Behaviour, unless the object was accessed through
+/// std::launder thereafter, as replacing a subclass with the base class would
+/// change the underlying storage.
 template <class T>
   requires(std::is_move_constructible_v<T> &&
            std::is_default_constructible_v<T> && std::is_final_v<T>)
-inline constexpr T take(Mref<T> t) noexcept {
-  auto taken = T(::sus::move(t.inner()));
-  t.inner().~T();
+inline constexpr T take(T& t) noexcept {
+  auto taken = T(::sus::move(t));
+  t.~T();
   // TODO: Support classes with a `with_default()` constructor as well.
-  new (&t.inner()) T();
+  new (&t) T();
   return taken;
 }
 
@@ -43,14 +44,13 @@ inline constexpr T take(Mref<T> t) noexcept {
 template <class T>
   requires std::is_move_constructible_v<T>
 inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
-                                     Mref<T> t) noexcept {
-  T& inner = t;
+                                     T& t) noexcept {
   // NOTE: MSVC fails to compile if we use move() here, which is not really
   // explainable beyond it being a compiler bug. It claims there is use of an
   // uninitialized symbol if we static_cast though a method. So we manually
   // static_cast here.
-  auto taken = T(static_cast<T&&>(inner));
-  inner.~T();
+  auto taken = T(static_cast<T&&>(t));
+  t.~T();
   return taken;
 }
 

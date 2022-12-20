@@ -22,7 +22,7 @@ namespace sus::iter {
 template <class Item, size_t SubclassSize, size_t SubclassAlign,
           bool InlineStorage = true>
 struct [[sus_trivial_abi]] SizedIterator final {
-  SizedIterator(void (*destroy)(char& sized)) : destroy(destroy) {}
+  constexpr SizedIterator(void (*destroy)(char& sized)) : destroy(destroy) {}
 
   SizedIterator(SizedIterator&& o)
       : destroy(::sus::mem::replace_ptr(mref(o.destroy), nullptr)) {
