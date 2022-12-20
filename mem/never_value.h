@@ -150,6 +150,10 @@ concept NeverValueField = never_value_access<T>::has_field;
 /// querying if a class is constructed in a memory location, since the class is
 /// constructed iff the value of the field is not the never-value.
 ///
+/// This has no effect if the type `T` is not a standard-layout type, as the
+/// field is only accessible in that case. Therefore it is advised to verify
+/// `NeverValueField<T>` where you expect it to be true.
+///
 /// The macro includes `private:` which changes the class definition visiblity
 /// to private.
 #define sus_class_never_value_field(unsafe_fn, T, field_name, never_value)     \
