@@ -43,7 +43,7 @@ template <class TypeListOfMemberTypes, auto... Tags>
 class Union;
 
 template <class... Ts, auto... Tags>
-class Union<__private::TypeList<Ts...>, Tags...> {
+class Union<__private::TypeList<Ts...>, Tags...> final {
   static_assert(sizeof...(Ts) > 0,
                 "A Union must have at least one value-type pairs.");
   static_assert(
@@ -99,7 +99,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
           ::sus::num::__private::unchecked_not(IndexType{0u}), IndexType{1u});
 
   template <TagsType V>
-  static constexpr IndexType get_index_for_value() {
+  static constexpr IndexType get_index_for_value() noexcept {
     using Index = __private::IndexOfValue<V, Tags...>;
     static_assert(!std::is_void_v<Index>,
                   "The value V is not part of the Union.");
@@ -121,7 +121,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
   template <TagsType V, class U, int&...,
             __private::ValueIsNotVoid Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U &&, Arg>)
-  static Union with(U&& values) {
+  static Union with(U&& values) noexcept {
     auto u = Union(index<V>);
     find_storage_mut<index<V>>(u.storage_).construct(::sus::forward<U>(values));
     return u;
@@ -129,22 +129,22 @@ class Union<__private::TypeList<Ts...>, Tags...> {
 
   template <TagsType V, int&...,
             __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
-  static Union with() {
+  static Union with() noexcept {
     return Union(index<V>);
   }
 
-  ~Union()
+  constexpr ~Union()
     requires((std::is_trivially_destructible_v<TagsType> && ... &&
               std::is_trivially_destructible_v<Ts>))
   = default;
-  ~Union()
+  ~Union() noexcept
     requires(!(std::is_trivially_destructible_v<TagsType> && ... &&
                std::is_trivially_destructible_v<Ts>))
   {
     if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
   }
 
-  Union(Union&& o)
+  constexpr Union(Union&& o)
     requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_constructible_v<TagsType> && ... &&
               std::is_trivially_move_constructible_v<Ts>))
@@ -153,7 +153,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
     requires(!(... && ::sus::mem::Move<Ts>))
   = delete;
 
-  Union(Union&& o)
+  Union(Union&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_constructible_v<TagsType> && ... &&
                std::is_trivially_move_constructible_v<Ts>))
@@ -165,7 +165,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
     storage_.move_construct(size_t{index_}, ::sus::move(o.storage_));
   }
 
-  Union& operator=(Union&& o)
+  constexpr Union& operator=(Union&& o)
     requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_assignable_v<TagsType> && ... &&
               std::is_trivially_move_assignable_v<Ts>))
@@ -174,7 +174,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
     requires(!(... && ::sus::mem::Move<Ts>))
   = delete;
 
-  Union& operator=(Union&& o)
+  Union& operator=(Union&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_assignable_v<TagsType> && ... &&
                std::is_trivially_move_assignable_v<Ts>))
@@ -191,7 +191,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
     return *this;
   }
 
-  Union(const Union& o)
+  constexpr Union(const Union& o)
     requires((... && ::sus::mem::Copy<Ts>) &&
              (std::is_trivially_copy_constructible_v<TagsType> && ... &&
               std::is_trivially_copy_constructible_v<Ts>))
@@ -200,7 +200,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
     requires(!(... && ::sus::mem::Copy<Ts>))
   = delete;
 
-  Union(const Union& o)
+  Union(const Union& o) noexcept
     requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_constructible_v<TagsType> && ... &&
                std::is_trivially_copy_constructible_v<Ts>))
@@ -209,7 +209,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
     storage_.copy_construct(size_t{index_}, o.storage_);
   }
 
-  Union& operator=(const Union& o)
+  constexpr Union& operator=(const Union& o)
     requires((... && ::sus::mem::Copy<Ts>) &&
              (std::is_trivially_copy_assignable_v<TagsType> && ... &&
               std::is_trivially_copy_assignable_v<Ts>))
@@ -218,7 +218,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
     requires(!(... && ::sus::mem::Copy<Ts>))
   = delete;
 
-  Union& operator=(const Union& o)
+  Union& operator=(const Union& o) noexcept
     requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_assignable_v<TagsType> && ... &&
                std::is_trivially_copy_assignable_v<Ts>))
@@ -245,7 +245,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
   }
 
   /// Support for using Union in a `switch()` statment.
-  inline operator TagsType() const& { return which(); }
+  constexpr inline operator TagsType() const& noexcept { return which(); }
 
   /// Returns which is the active member of the Union.
   ///
@@ -295,7 +295,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
   ///                         ██  ██          ▓▓░░░░░░░░░░░░
   ///                           ██  ██          ▓▓▓▓▓▓▓▓▓▓▒▒
   ///                             ████
-  TagsType which() const& {
+  constexpr inline TagsType which() const& noexcept {
     check(index_ != kUseAfterMove);
     constexpr TagsType tags[] = {Tags...};
     return tags[size_t{index_}];
@@ -304,21 +304,21 @@ class Union<__private::TypeList<Ts...>, Tags...> {
   // clang-format off
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  decltype(auto) get_ref() const& {
+  inline decltype(auto) get_ref() const& noexcept{
     ::sus::check(index_ == index<V>);
     return __private::find_storage<index<V>>(storage_).get_ref();
   }
 
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  decltype(auto) get_mut() & {
+  inline decltype(auto) get_mut() &noexcept {
     ::sus::check(index_ == index<V>);
     return __private::find_storage_mut<index<V>>(storage_).get_mut();
   }
 
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  decltype(auto) into_inner() && {
+  inline decltype(auto) into_inner() && noexcept{
     ::sus::check(index_ == index<V>);
     auto& s = __private::find_storage_mut<index<V>>(storage_);
     return ::sus::move(s).into_inner();
@@ -328,9 +328,10 @@ class Union<__private::TypeList<Ts...>, Tags...> {
   template <TagsType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U &&, Arg> &&
              __private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  void set(U&& values) {
+  void set(U&& values) noexcept {
     if (index_ == index<V>) {
-      __private::find_storage_mut<index<V>>(storage_).assign(::sus::move(values));
+      __private::find_storage_mut<index<V>>(storage_).assign(
+          ::sus::move(values));
     } else {
       if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
       index_ = index<V>;
@@ -341,8 +342,11 @@ class Union<__private::TypeList<Ts...>, Tags...> {
 
   template <TagsType V, int&...,
             __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
-  void set() {
-    index_ = index<V>;
+  void set() noexcept {
+    if (index_ != index<V>) {
+      if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
+      index_ = index<V>;
+    }
   }
 
   /// sus::ops::Eq<Union<Ts...>, Union<Us...>> trait.
@@ -422,7 +426,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
       delete;
 
  private:
-  Union(IndexType i) : index_(i) {}
+  constexpr inline Union(IndexType i) noexcept : index_(i) {}
 
   [[sus_no_unique_address]] Storage storage_;
   IndexType index_;
