@@ -53,12 +53,9 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 /// clone() method if the type within is (Clone && !Copy), and should implement
 /// copy constructors if the type within is Copy.
 //
-// clang-format off
 template <class T>
-concept Clone =
-  (Copy<T> || (__private::HasCloneMethod<T> && Move<T>))
-  && !(__private::HasCloneMethod<T> && Copy<T>);
-// clang-format on
+concept Clone = (Copy<T> || (__private::HasCloneMethod<T> && Move<T>)) &&
+                !(__private::HasCloneMethod<T> && Copy<T>);
 
 /// A concept to verify that a Clone type has a specialization of `clone_from()`
 /// in order to optimize `::sus::clone_into()`. Mostly for testing types to
@@ -69,7 +66,7 @@ template <class T>
 concept CloneFrom = Clone<T> && __private::HasCloneFromMethod<T>;
 
 template <Clone T>
-inline constexpr T clone(const T& source) noexcept {
+inline constexpr auto clone(const T& source) noexcept {
   if constexpr (Copy<T>) {
     return source;
   } else {

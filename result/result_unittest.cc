@@ -48,7 +48,7 @@ TEST(Result, With) {
     auto j = 4_i32;
     auto a = Result<i32, Error>::with(3_i32);
     auto b = Result<i32, Error>::with(i);
-    auto c = Result<i32, Error>::with(mref(j));
+    auto c = Result<i32, Error>::with(j);
   }
 }
 

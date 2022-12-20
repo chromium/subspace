@@ -94,7 +94,7 @@ static_assert(is_some_callable_v<Option<int>, const int&>);
 
 static_assert(!is_some_callable_v<Option<int&>, int>);
 static_assert(!is_some_callable_v<Option<int&>, const int>);
-static_assert(!is_some_callable_v<Option<int&>, int&>);
+// static_assert(!is_some_callable_v<Option<int&>, int&>);
 static_assert(is_some_callable_v<Option<int&>, Mref<int>>);
 static_assert(!is_some_callable_v<Option<int&>, const int&>);
 
@@ -165,6 +165,22 @@ TEST(Option, Construct) {
     // Not copyable.
     // auto t = T(1);
     // auto z = Option<T>::some(t);
+  }
+  {
+    using T = const i32&;
+    auto i = 1_i32;
+    auto x = Option<T>::some(static_cast<T>(i));
+    auto y = Option<T>::none();
+    T t = i;
+    auto z = Option<T>::some(t);
+  }
+  {
+    using T = i32&;
+    auto i = 1_i32;
+    auto x = Option<T>::some(mref(static_cast<T>(i)));
+    auto y = Option<T>::none();
+    T t = i;
+    auto z = Option<T>::some(mref(t));
   }
 }
 
@@ -313,30 +329,6 @@ TEST(Option, Destructor) {
     count = 0;
   }
   EXPECT_EQ(0, count);
-}
-
-TEST(Option, Clear) {
-  static int count = 0;
-  struct WatchDestructor {
-    ~WatchDestructor() { ++count; }
-  };
-  {
-    auto x = Option<WatchDestructor>::with_default();
-    count = 0;  // Without optimizations, moves may run a destructor.
-    x.clear();
-    IS_NONE(x);
-    EXPECT_EQ(count, 1);
-  }
-  EXPECT_EQ(count, 1);
-
-  WatchDestructor w;
-  {
-    auto x = Option<WatchDestructor&>::some(mref(w));
-    count = 0;
-    x.clear();
-    IS_NONE(x);
-  }
-  EXPECT_EQ(count, 0);
 }
 
 TEST(Option, ExpectSome) {
@@ -1042,39 +1034,39 @@ TEST(Option, Insert) {
   int i2 = 2, i3 = 3;
 
   auto ix = Option<int&>::none();
-  ix.insert(i2);
+  ix.insert(mref(i2));
   EXPECT_EQ(ix.as_ref().unwrap(), 2);
 
   auto iy = Option<int&>::some(mref(i2));
-  iy.insert(i3);
+  iy.insert(mref(i3));
   EXPECT_EQ(iy.as_ref().unwrap(), 3);
 }
 
 TEST(Option, GetOrInsert) {
   auto x = Option<int>::none();
   auto& rx = x.get_or_insert(9);
-  static_assert(std::is_same_v<decltype(rx), int&>);
+  static_assert(std::is_same_v<decltype(x.get_or_insert(9)), int&>);
   EXPECT_EQ(rx, 9);
   rx = 5;
   EXPECT_EQ(sus::move(x).unwrap(), 5);
 
   auto y = Option<int>::some(11);
   auto& ry = y.get_or_insert(7);
-  static_assert(std::is_same_v<decltype(ry), int&>);
+  static_assert(std::is_same_v<decltype(y.get_or_insert(7)), int&>);
   EXPECT_EQ(ry, 11);
   EXPECT_EQ(sus::move(y).unwrap(), 11);
 
   int i2 = 2, i3 = 3;
 
   auto ix = Option<int&>::none();
-  auto& irx = ix.get_or_insert(i3);
-  static_assert(std::is_same_v<decltype(irx), int&>);
+  auto& irx = ix.get_or_insert(mref(i3));
+  static_assert(std::is_same_v<decltype(ix.get_or_insert(i3)), int&>);
   EXPECT_EQ(&irx, &i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
 
   auto iy = Option<int&>::some(mref(i2));
-  auto& iry = iy.get_or_insert(i3);
-  static_assert(std::is_same_v<decltype(iry), int&>);
+  auto& iry = iy.get_or_insert(mref(i3));
+  static_assert(std::is_same_v<decltype(iy.get_or_insert(i3)), int&>);
   EXPECT_EQ(&iry, &i2);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
 }
@@ -1105,7 +1097,7 @@ TEST(Option, GetOrInsertDefault) {
 TEST(Option, GetOrInsertWith) {
   bool called = false;
   auto x = Option<int>::none();
-  auto& rx = x.get_or_insert_with([&]() {
+  auto&& rx = x.get_or_insert_with([&]() {
     called = true;
     return 9;
   });
@@ -1118,7 +1110,7 @@ TEST(Option, GetOrInsertWith) {
 
   called = false;
   auto y = Option<int>::some(11);
-  auto& ry = y.get_or_insert_with([&]() {
+  auto&& ry = y.get_or_insert_with([&]() {
     called = true;
     return 7;
   });
@@ -1133,7 +1125,7 @@ TEST(Option, GetOrInsertWith) {
 
   called = false;
   auto ix = Option<int&>::none();
-  auto& irx = ix.get_or_insert_with([&]() -> int& {
+  auto&& irx = ix.get_or_insert_with([&]() -> int& {
     called = true;
     return i3;
   });
@@ -1144,7 +1136,7 @@ TEST(Option, GetOrInsertWith) {
 
   called = false;
   auto iy = Option<int&>::some(mref(i2));
-  auto& iry = iy.get_or_insert_with([&]() -> int& {
+  auto&& iry = iy.get_or_insert_with([&]() -> int& {
     called = true;
     return i3;
   });
@@ -1346,13 +1338,13 @@ TEST(Option, Replace) {
 
   auto ix = Option<int&>::some(mref(i2));
   static_assert(std::is_same_v<decltype(ix.replace(i3)), Option<int&>>);
-  auto iy = ix.replace(i3);
+  auto iy = ix.replace(mref(i3));
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
 
   auto iz = Option<int&>::none();
   static_assert(std::is_same_v<decltype(iz.replace(i3)), Option<int&>>);
-  auto izz = iz.replace(i3);
+  auto izz = iz.replace(mref(i3));
   EXPECT_EQ(&iz.as_ref().unwrap(), &i3);
   IS_NONE(izz);
 }
@@ -1616,6 +1608,29 @@ TEST(Option, OkOr) {
     EXPECT_TRUE(r.is_err());
     EXPECT_EQ(sus::move(r).unwrap_err(), -5_i32);
   }
+
+  // TODO: Result references are not yet supported.
+  // https://github.com/chromium/subspace/issues/133
+  /*
+  {
+    auto i = 1_i32;
+    auto o = Option<i32&>::some(mref(i));
+    auto r = sus::move(o).ok_or(-5_i32);
+    IS_SOME(o);
+    static_assert(std::same_as<sus::result::Result<i32&, i32>, decltype(r)>);
+    EXPECT_TRUE(r.is_ok());
+    EXPECT_EQ(&sus::move(r).unwrap(), &i);
+  }
+  {
+    auto i = 1_i32;
+    auto o = Option<i32&>::none();
+    auto r = sus::move(o).ok_or(-5_i32);
+    IS_NONE(o);
+    static_assert(std::same_as<sus::result::Result<i32&, i32>, decltype(r)>);
+    EXPECT_TRUE(r.is_err());
+    EXPECT_EQ(sus::move(r).unwrap_err(), -5_i32);
+  }
+  */
 }
 
 TEST(Option, OkOrElse) {
@@ -1635,6 +1650,9 @@ TEST(Option, OkOrElse) {
     EXPECT_TRUE(r.is_err());
     EXPECT_EQ(sus::move(r).unwrap_err(), -5_i32);
   }
+
+  // TODO: Result references are not yet supported, test Option<u8&> when they
+  // are. https://github.com/chromium/subspace/issues/133
 }
 
 TEST(Option, Transpose) {
@@ -1660,6 +1678,36 @@ TEST(Option, Transpose) {
       std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t3)>);
   EXPECT_EQ(t3.is_err(), true);
   EXPECT_EQ(sus::move(t3).unwrap_err(), -2_i32);
+
+  // TODO: Result references are not yet supported, test them when they
+  // are. https://github.com/chromium/subspace/issues/133
+}
+
+TEST(Option, Zip) {
+  EXPECT_EQ(Option<i32>::none().zip(Option<i32>::none()), None);
+  EXPECT_EQ(Option<i32>::some(1_i32).zip(Option<i32>::none()), None);
+  EXPECT_EQ(Option<i32>::none().zip(Option<i32>::some(1_i32)), None);
+  EXPECT_EQ(Option<i32>::some(2_i32).zip(Option<i32>::some(1_i32)), Some);
+
+  {
+    auto o = Option<i32>::some(-2_i32);
+    EXPECT_EQ(sus::move(o).zip(Option<u8>::some(3_u8)).unwrap(),
+              (Tuple<i32, u8>::with(-2_i32, 3_u8)));
+    EXPECT_EQ(o, None);
+  }
+
+  {
+    auto a = -2_i32;
+    auto b = 3_u8;
+    auto i = Option<const i32&>::some(a);
+    auto u = Option<const u8&>::some(b);
+    static_assert(
+        std::same_as<Tuple<const i32&, const u8&>,
+                     decltype(sus::move(i).zip(sus::move(u)).unwrap())>);
+    EXPECT_EQ(sus::move(i).zip(sus::move(u)).unwrap(),
+              (Tuple<i32, u8>::with(-2_i32, 3_u8)));
+    EXPECT_EQ(i, None);
+  }
 }
 
 TEST(Option, Unzip) {
@@ -1705,29 +1753,6 @@ TEST(Option, Unzip) {
   }
 }
 
-TEST(Option, Zip) {
-  EXPECT_EQ(Option<i32>::none().zip(Option<i32>::none()), None);
-  EXPECT_EQ(Option<i32>::some(1_i32).zip(Option<i32>::none()), None);
-  EXPECT_EQ(Option<i32>::none().zip(Option<i32>::some(1_i32)), None);
-  EXPECT_EQ(Option<i32>::some(2_i32).zip(Option<i32>::some(1_i32)), Some);
-
-  {
-    auto o = Option<i32>::some(-2_i32);
-    EXPECT_EQ(sus::move(o).zip(Option<u8>::some(3_u8)).unwrap(),
-              (Tuple<i32, u8>::with(-2_i32, 3_u8)));
-    EXPECT_EQ(o, None);
-  }
-
-  {
-    auto i = -2_i32;
-    auto u = 3_u8;
-    auto o = Option<const i32&>::some(i);
-    EXPECT_EQ(sus::move(o).zip(Option<const u8&>::some(u)).unwrap(),
-              (Tuple<i32, u8>::with(-2_i32, 3_u8)));
-    EXPECT_EQ(o, None);
-  }
-}
-
 TEST(Option, NonZeroField) {
   using T = sus::mem::NonNull<int>;
   static_assert(sizeof(Option<T>) == sizeof(T));
@@ -1752,7 +1777,7 @@ TEST(Option, NonZeroField) {
   o.insert(T::with(i));
   EXPECT_EQ(o, Some);
 
-  o.clear();
+  o.take();
   EXPECT_EQ(o, None);
 
   EXPECT_EQ(Option<T>::some(T::with(i)).unwrap().as_ref(), 3);
@@ -1761,7 +1786,7 @@ TEST(Option, NonZeroField) {
   EXPECT_EQ(o.get_or_insert(T::with(i)).as_ref(), 3);
   EXPECT_EQ(o, Some);
 
-  o.clear();
+  o.take();
   EXPECT_EQ(o, None);
   EXPECT_EQ(o.get_or_insert_with([&i]() { return T::with(i); }).as_ref(), 3);
   EXPECT_EQ(o, Some);
@@ -1930,6 +1955,10 @@ TEST(Option, Clone) {
   static_assert(sus::mem::Clone<Option<Clone>>);
   static_assert(sus::mem::CloneFrom<Option<Clone>>);
   static_assert(sus::mem::Move<Option<Clone>>);
+  static_assert(sus::mem::Copy<const Clone&>);
+  static_assert(sus::mem::Clone<const Clone&>);
+  static_assert(sus::mem::Copy<Clone&>);
+  static_assert(sus::mem::Clone<Clone&>);
 
   {
     const auto s = Option<Clone>::some(Clone());
@@ -1944,6 +1973,22 @@ TEST(Option, Clone) {
     s2.unwrap_mut().i = 1000_i32;
     sus::clone_into(mref(s2), s);
     EXPECT_EQ(s2.unwrap_ref().i, 2_i32);
+  }
+
+  {
+    auto i = 1_i32;
+    const auto s = Option<const i32&>::some(i);
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Option<const i32&>>);
+    EXPECT_EQ(&s2.unwrap_ref(), &i);
+  }
+
+  {
+    auto i = 1_i32;
+    const auto s = Option<i32&>::some(mref(i));
+    auto s2 = sus::clone(s);
+    static_assert(std::same_as<decltype(s2), Option<i32&>>);
+    EXPECT_EQ(&s2.unwrap_ref(), &i);
   }
 }
 
