@@ -48,11 +48,13 @@ namespace sus::mem {
 /// };
 /// static_assert(sus::mem::Move<S>);
 template <class T>
-concept Move = std::is_move_constructible_v<T> &&
-               (std::is_move_assignable_v<T> || !std::is_copy_assignable_v<T>);
+concept Move = (std::is_move_constructible_v<T> &&
+                (std::is_move_assignable_v<T> ||
+                 !std::is_copy_assignable_v<T>)) ||
+               std::is_reference_v<T>;
 
 /// Cast `t` to an r-value reference so that it can be used to construct or be
-/// assigned to another `T`.
+/// assigned to a (non-reference) object of type `T`.
 ///
 /// `move()` requires that `t` can be moved from, so it requires that `t` is
 /// non-const. This differs from `std::move()`.
@@ -60,6 +62,11 @@ concept Move = std::is_move_constructible_v<T> &&
 /// The `move()` call itself does nothing to `t`, as it is just a cast, similar
 /// to `std::move()`. It enables an lvalue (a named object) to be used as an
 /// rvalue.
+///
+/// For a universal reference (`T&&`) that may be a reference, use
+/// `sus::mem::forward<T>()` instead. To move an lvalue object that may be
+/// a reference, without moving from behind the reference, use
+/// `sus_move_preserve_ref()`.
 //
 // TODO: Should this be `as_rvalue()`? Kinda technical. `as_...something...()`?
 template <Move T>
