@@ -16,12 +16,11 @@
 
 #include "iter/iterator_defn.h"
 #include "macros/__private/compiler_bugs.h"
-#include "mem/__private/relocatable_storage.h"
 #include "mem/move.h"
+#include "mem/relocate.h"
 
 namespace sus::iter {
 
-using ::sus::mem::__private::RelocatableStorage;
 using ::sus::option::Option;
 
 // clang-format off
@@ -39,7 +38,7 @@ sus_clang_bug_58859(
 
 /// An IteratorBase implementation that walks over at most a single Item.
 template <class Item>
-class [[sus_trivial_abi]] Once : public IteratorBase<Item> {
+class Once : public IteratorBase<Item> {
  public:
   Option<Item> next() noexcept final { return single_.take(); }
 
@@ -58,12 +57,13 @@ class [[sus_trivial_abi]] Once : public IteratorBase<Item> {
   // clang-format on
 
   static Iterator<Once> with_option(Option<Item>&& single) {
-    return Iterator<Once>(static_cast<Option<Item>&&>(single));
+    return Iterator<Once>(::sus::move(single));
   }
 
-  RelocatableStorage<Item> single_;
+  Option<Item> single_;
 
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(single_));
+  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+                                            decltype(single_));
 };
 
 template <class Item>
