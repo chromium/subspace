@@ -56,6 +56,11 @@ using State::Ok;
 
 template <class T, class E>
 class [[nodiscard]] Result final {
+  static_assert(!std::is_reference_v<T>,
+                "References in Result are not yet supported.");
+  static_assert(!std::is_reference_v<E>,
+                "References in Result are not yet supported.");
+
  public:
   using OkType = T;
   using ErrType = E;
@@ -65,12 +70,6 @@ class [[nodiscard]] Result final {
     requires(::sus::mem::Clone<T>)
   {
     return Result(WithOk, ::sus::clone(t));
-  }
-  /// Construct an Result that is holding the given success value.
-  static constexpr inline Result with(Mref<T> t) noexcept
-    requires(::sus::mem::Clone<T>)
-  {
-    return Result(WithOk, ::sus::clone(t.inner()));
   }
   /// Construct an Result that is holding the given success value.
   static constexpr inline Result with(T&& t) noexcept
@@ -104,15 +103,18 @@ class [[nodiscard]] Result final {
   ///
   /// sus::iter::FromIterator trait.
   template <class U>
-  static constexpr Result from_iter(::sus::iter::IteratorBase<Result<U, E>>&& iter)
+  static constexpr Result from_iter(
+      ::sus::iter::IteratorBase<Result<U, E>>&& iter)
     requires(::sus::iter::FromIterator<T, U>)
   {
     auto err = Option<E>::none();
-    auto success_out = Result::with(T::from_iter(::sus::iter::__private::Unwrapper(
-        ::sus::move(iter), mref(err),
-        [](Result<U, E>&& r) { return static_cast<Result<U, E>&&>(r); })));
-    return ::sus::move(err).map_or_else([&]() { return ::sus::move(success_out); },
-                                        [](E e) { return Result::with_err(e); });
+    auto success_out =
+        Result::with(T::from_iter(::sus::iter::__private::Unwrapper(
+            ::sus::move(iter), mref(err),
+            [](Result<U, E>&& r) { return static_cast<Result<U, E>&&>(r); })));
+    return ::sus::move(err).map_or_else(
+        [&]() { return ::sus::move(success_out); },
+        [](E e) { return Result::with_err(e); });
   }
 
   /// Destructor for the Result.
@@ -121,14 +123,16 @@ class [[nodiscard]] Result final {
   /// them, so we can use the default destructor, which allows Result<T, E> to
   /// also be trivially destroyed.
   constexpr ~Result()
-    requires(std::is_trivially_destructible_v<T> && std::is_trivially_destructible_v<E>)
+    requires(std::is_trivially_destructible_v<T> &&
+             std::is_trivially_destructible_v<E>)
   = default;
 
   /// Destructor for the Result.
   ///
   /// Destroys the Ok or Err value contained within the Result.
   constexpr inline ~Result() noexcept
-    requires(!std::is_trivially_destructible_v<T> || !std::is_trivially_destructible_v<E>)
+    requires(!std::is_trivially_destructible_v<T> ||
+             !std::is_trivially_destructible_v<E>)
   {
     switch (state_) {
       case IsMoved: break;
@@ -141,14 +145,15 @@ class [[nodiscard]] Result final {
   /// trivially move-constructed.
   constexpr Result(Result&&)
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
-             std::is_trivially_move_constructible_v<T> && std::is_trivially_move_constructible_v<E>)
+             std::is_trivially_move_constructible_v<T> &&
+             std::is_trivially_move_constructible_v<E>)
   = default;
 
   Result(Result&& rhs) noexcept
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
              !(std::is_trivially_move_constructible_v<T> &&
                std::is_trivially_move_constructible_v<E>))
-  : state_(replace(mref(rhs.state_), IsMoved)) {
+      : state_(replace(mref(rhs.state_), IsMoved)) {
     ::sus::check(state_ != IsMoved);
     switch (state_) {
       case IsOk: new (&storage_.ok_) T(::sus::move(rhs.storage_.ok_)); break;
@@ -167,19 +172,22 @@ class [[nodiscard]] Result final {
   /// If T and E can be trivially move-assigned, Result<T, E> can also be
   /// trivially move-assigned.
   constexpr Result& operator=(Result&& o)
-    requires(::sus::mem::Move<T> && ::sus::mem::Move<E> && std::is_trivially_move_assignable_v<T> &&
+    requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
+             std::is_trivially_move_assignable_v<T> &&
              std::is_trivially_move_assignable_v<E>)
   = default;
 
   Result& operator=(Result&& o) noexcept
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
-             !(std::is_trivially_move_assignable_v<T> && std::is_trivially_move_assignable_v<E>))
+             !(std::is_trivially_move_assignable_v<T> &&
+               std::is_trivially_move_assignable_v<E>))
   {
     switch (state_) {
       case IsOk:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
           case IsOk:
-            mem::replace_and_discard(mref(storage_.ok_), ::sus::move(o.storage_.ok_));
+            mem::replace_and_discard(mref(storage_.ok_),
+                                     ::sus::move(o.storage_.ok_));
             break;
           case IsErr:
             storage_.ok_.~T();
@@ -191,7 +199,8 @@ class [[nodiscard]] Result final {
       case IsErr:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
           case IsErr:
-            mem::replace_and_discard(mref(storage_.err_), ::sus::move(o.storage_.err_));
+            mem::replace_and_discard(mref(storage_.err_),
+                                     ::sus::move(o.storage_.err_));
             break;
           case IsOk:
             storage_.err_.~T();
@@ -202,7 +211,9 @@ class [[nodiscard]] Result final {
         break;
       case IsMoved:
         switch (state_ = replace(mref(o.state_), IsMoved)) {
-          case IsErr: new (&storage_.err_) T(::sus::move(o.storage_.err_)); break;
+          case IsErr:
+            new (&storage_.err_) T(::sus::move(o.storage_.err_));
+            break;
           case IsOk: new (&storage_.ok_) T(::sus::move(o.storage_.ok_)); break;
           case IsMoved: unreachable();
         }
@@ -235,8 +246,12 @@ class [[nodiscard]] Result final {
     ::sus::check(source.state_ != IsMoved);
     if (state_ == source.state_) {
       switch (state_) {
-        case IsOk: ::sus::clone_into(mref(storage_.ok_), source.storage_.ok_); break;
-        case IsErr: ::sus::clone_into(mref(storage_.err_), source.storage_.err_); break;
+        case IsOk:
+          ::sus::clone_into(mref(storage_.ok_), source.storage_.ok_);
+          break;
+        case IsErr:
+          ::sus::clone_into(mref(storage_.err_), source.storage_.err_);
+          break;
         case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
       }
     } else {
@@ -284,7 +299,9 @@ class [[nodiscard]] Result final {
   constexpr inline Option<T> ok() && noexcept {
     ::sus::check(state_ != IsMoved);
     switch (replace(mref(state_), IsMoved)) {
-      case IsOk: return Option<T>::some(take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_)));
+      case IsOk:
+        return Option<T>::some(
+            take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_)));
       case IsErr: storage_.err_.~E(); return Option<T>::none();
       case IsMoved: break;
     }
@@ -301,7 +318,9 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != IsMoved);
     switch (replace(mref(state_), IsMoved)) {
       case IsOk: storage_.ok_.~T(); return Option<E>::none();
-      case IsErr: return Option<E>::some(take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.err_)));
+      case IsErr:
+        return Option<E>::some(
+            take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.err_)));
       case IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
@@ -329,7 +348,8 @@ class [[nodiscard]] Result final {
   ///
   /// # Safety
   /// Calling this method on an `Err` is Undefined Behavior.
-  constexpr inline T unwrap_unchecked(::sus::marker::UnsafeFnMarker) && noexcept {
+  constexpr inline T unwrap_unchecked(
+      ::sus::marker::UnsafeFnMarker) && noexcept {
     return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_));
   }
 
@@ -348,7 +368,8 @@ class [[nodiscard]] Result final {
   ///
   /// # Safety
   /// Calling this method on an `Ok` is Undefined Behavior.
-  constexpr inline E unwrap_err_unchecked(::sus::marker::UnsafeFnMarker) && noexcept {
+  constexpr inline E unwrap_err_unchecked(
+      ::sus::marker::UnsafeFnMarker) && noexcept {
     return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.err_));
   }
 
@@ -372,7 +393,8 @@ class [[nodiscard]] Result final {
   constexpr Iterator<Once<T>> into_iter() && noexcept {
     ::sus::check(state_ != IsMoved);
     if (replace(mref(state_), IsMoved) == IsOk) {
-      return sus::iter::once(Option<T>::some(take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_))));
+      return sus::iter::once(Option<T>::some(
+          take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_))));
     } else {
       storage_.err_.~E();
       return sus::iter::once(Option<T>::none());
@@ -385,13 +407,13 @@ class [[nodiscard]] Result final {
       : state_(IsOk), storage_(__private::kWithT, t) {}
   constexpr inline Result(WithOkType, T&& t) noexcept
     requires(::sus::mem::Move<T>)
-  : state_(IsOk), storage_(__private::kWithT, ::sus::move(t)) {}
+      : state_(IsOk), storage_(__private::kWithT, ::sus::move(t)) {}
   enum WithErrType { WithErr };
   constexpr inline Result(WithErrType, const E& e) noexcept
       : state_(IsErr), storage_(__private::kWithE, e) {}
   constexpr inline Result(WithErrType, E&& e) noexcept
     requires(::sus::mem::Move<E>)
-  : state_(IsErr), storage_(__private::kWithE, ::sus::move(e)) {}
+      : state_(IsErr), storage_(__private::kWithE, ::sus::move(e)) {}
 
   [[sus_no_unique_address]] __private::Storage<T, E> storage_;
   enum FullState { IsErr = 0, IsOk = 1, IsMoved = 2 } state_;

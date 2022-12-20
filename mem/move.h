@@ -69,10 +69,10 @@ concept Move = (std::is_move_constructible_v<T> &&
 /// `sus_move_preserve_ref()`.
 //
 // TODO: Should this be `as_rvalue()`? Kinda technical. `as_...something...()`?
-template <Move T>
+template <Move T, class Out = std::remove_reference_t<T>>
   requires(!std::is_const_v<std::remove_reference_t<T>>)
-[[nodiscard]] sus_always_inline constexpr auto&& move(T&& t) noexcept {
-  return static_cast<std::remove_reference_t<T>&&>(t);
+[[nodiscard]] sus_always_inline constexpr Out&& move(T&& t) noexcept {
+  return static_cast<Out&&>(t);
 }
 
 /// Moves-from x if x is a non-reference type, and copies the reference if x is

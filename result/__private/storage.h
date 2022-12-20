@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <type_traits>
+
 #include "macros/no_unique_address.h"
 
 #pragma once

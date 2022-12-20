@@ -384,7 +384,7 @@ TEST(Vec, Destroy) {
   o.unwrap_mut().push(TrivialLies<false>(moves, destructs));
 
   moves = destructs = 0_usize;
-  o.clear();  // Destroys the Vec, and both objects inside it.
+  o.take();  // Destroys the Vec, and both objects inside it.
   EXPECT_EQ(destructs, 2_usize);
 }
 
