@@ -43,6 +43,8 @@ namespace sus::mem {
 /// static_assert(sus::mem::Clone<S>);
 /// ```
 template <class T>
-concept Copy = std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>;
+concept Copy = (std::is_copy_constructible_v<T> &&
+                std::is_copy_assignable_v<T>) ||
+               std::is_reference_v<T>;
 
 }  // namespace sus::mem
