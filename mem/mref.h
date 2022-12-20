@@ -83,11 +83,15 @@ struct [[sus_trivial_abi]] Mref final {
   /// Mref can be trivially moved, so this is the move constructor.
   constexpr Mref(Mref&&) noexcept = default;
   /// Mref can be trivially moved, but is only meant for a function argument, so
-  /// no need for assignment.
+  /// no need for assignment. This does mean Mref is not `Move`.
   constexpr Mref& operator=(Mref&&) noexcept = delete;
 
   /// Prevent constructing an Mref argument without writing mref().
-  Mref(T& t) = delete;
+  template <std::same_as<T> U>
+  Mref(U& t) : t_(t) {
+    static_assert(!std::same_as<T, U>,
+                  "Pass mutable reference argument with `mref()`.");
+  }
   /// Prevent passing an Mref argument along without writing mref() again.
   Mref(Mref&) = delete;
 
@@ -119,7 +123,8 @@ struct [[sus_trivial_abi]] Mref final {
 
   T& t_;
 
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(t_));
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn,
+                                             decltype(t_));
 };
 
 }  // namespace sus::mem
