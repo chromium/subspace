@@ -328,7 +328,7 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
   template <TagsType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U &&, Arg> &&
              __private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  void set(U&& values) noexcept {
+  void set(U&& values) & noexcept {
     if (index_ == index<V>) {
       __private::find_storage_mut<index<V>>(storage_).assign(
           ::sus::move(values));
@@ -342,7 +342,7 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
 
   template <TagsType V, int&...,
             __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
-  void set() noexcept {
+  void set() & noexcept {
     if (index_ != index<V>) {
       if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
       index_ = index<V>;
