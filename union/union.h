@@ -330,7 +330,7 @@ class Union<__private::TypeList<Ts...>, Tags...> {
              __private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   void set(U&& values) {
     if (index_ == index<V>) {
-      __private::find_storage_mut<index<V>>(storage_).set(::sus::move(values));
+      __private::find_storage_mut<index<V>>(storage_).assign(::sus::move(values));
     } else {
       if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
       index_ = index<V>;

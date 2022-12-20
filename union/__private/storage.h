@@ -82,11 +82,12 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   inline void construct(Type&& tuple) {
     new (&tuple_) Type(::sus::move(tuple));
   }
-  inline constexpr void set(Type&& tuple) { tuple_ = ::sus::move(tuple); }
+  inline constexpr void assign(Type&& tuple) { tuple_ = ::sus::move(tuple); }
   inline void move_construct(size_t index, Storage&& from) {
     if (index == I) {
       new (&tuple_) Type(::sus::move(from.tuple_));
     } else {
+      new (&more_) decltype(more_)();  // Make the more_ member active.
       more_.move_construct(index, ::sus::move(from.more_));
     }
   }
@@ -101,6 +102,7 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
     if (index == I) {
       new (&tuple_) Type(from.tuple_);
     } else {
+      new (&more_) decltype(more_)();  // Make the more_ member active.
       more_.copy_construct(index, from.more_);
     }
   }
@@ -115,6 +117,7 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
     if (index == I) {
       new (&tuple_) Type(::sus::clone(from.tuple_));
     } else {
+      new (&more_) decltype(more_)();  // Make the more_ member active.
       more_.clone_construct(index, from.more_);
     }
   }
@@ -123,6 +126,7 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
       tuple_.~Type();
     } else {
       more_.destroy(index);
+      more_.~Storage<I + 1, Elements...>();
     }
   }
   inline constexpr bool eq(size_t index, const Storage& other) const& {
@@ -183,6 +187,7 @@ union Storage<I, Nothing, Elements...> {
 
   inline void move_construct(size_t index, Storage&& from) {
     if (index != I) {
+      new (&more_) decltype(more_)();  // Make the more_ member active.
       more_.move_construct(index, ::sus::move(from.more_));
     }
   }
@@ -193,6 +198,7 @@ union Storage<I, Nothing, Elements...> {
   }
   inline void copy_construct(size_t index, const Storage& from) {
     if (index != I) {
+      new (&more_) decltype(more_)();  // Make the more_ member active.
       more_.copy_construct(index, from.more_);
     }
   }
@@ -209,6 +215,7 @@ union Storage<I, Nothing, Elements...> {
   inline constexpr void destroy(size_t index) {
     if (index != I) {
       more_.destroy(index);
+      more_.~Storage<I + 1, Elements...>();
     }
   }
   inline constexpr bool eq(size_t index, const Storage& other) const& {
@@ -256,13 +263,14 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
     new (&tuple_)::sus::Tuple<T>(
         ::sus::Tuple<T>::with(::sus::forward<U>(value)));
   }
-  inline constexpr void set(T&& value) {
+  inline constexpr void assign(T&& value) {
     tuple_ = Type::with(::sus::move(value));
   }
   inline void move_construct(size_t index, Storage&& from) {
     if (index == I) {
       new (&tuple_) Type(::sus::move(from.tuple_));
     } else {
+      new (&more_) decltype(more_)();  // Make the more_ member active.
       more_.move_construct(index, ::sus::move(from.more_));
     }
   }
@@ -277,6 +285,7 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
     if (index == I) {
       new (&tuple_) Type(from.tuple_);
     } else {
+      new (&more_) decltype(more_)();  // Make the more_ member active.
       more_.copy_construct(index, from.more_);
     }
   }
@@ -292,6 +301,7 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
       auto x = ::sus::clone(from.tuple_);
       new (&tuple_) Type(sus::move(x));
     } else {
+      new (&more_) decltype(more_)();  // Make the more_ member active.
       more_.clone_construct(index, from.more_);
     }
   }
@@ -300,6 +310,7 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
       tuple_.~Type();
     } else {
       more_.destroy(index);
+      more_.~Storage<I + 1, Elements...>();
     }
   }
   inline constexpr bool eq(size_t index, const Storage& other) const& {
@@ -359,7 +370,7 @@ union Storage<I, ::sus::Tuple<Ts...>> {
   inline void construct(Type&& tuple) {
     new (&tuple_) Type(::sus::move(tuple));
   }
-  inline constexpr void set(Type&& tuple) { tuple_ = ::sus::move(tuple); }
+  inline constexpr void assign(Type&& tuple) { tuple_ = ::sus::move(tuple); }
   inline void move_construct(size_t index, Storage&& from) {
     ::sus::check(index == I);
     new (&tuple_) Type(::sus::move(from.tuple_));
@@ -468,7 +479,7 @@ union Storage<I, ::sus::Tuple<T>> {
     new (&tuple_)::sus::Tuple<T>(
         ::sus::Tuple<T>::with(::sus::forward<U>(value)));
   }
-  inline constexpr void set(T&& value) {
+  inline constexpr void assign(T&& value) {
     tuple_ = Type::with(::sus::move(value));
   }
   inline void move_construct(size_t index, Storage&& from) {
