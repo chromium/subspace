@@ -17,8 +17,8 @@
 #include <compare>
 #include <type_traits>
 
-#include "mem/move.h"
 #include "macros/no_unique_address.h"
+#include "mem/move.h"
 #include "tuple/tuple.h"
 #include "union/__private/nothing.h"
 #include "union/__private/pack_index.h"
