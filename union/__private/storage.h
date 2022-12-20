@@ -18,6 +18,7 @@
 #include <type_traits>
 
 #include "mem/move.h"
+#include "macros/no_unique_address.h"
 #include "tuple/tuple.h"
 #include "union/__private/nothing.h"
 #include "union/__private/pack_index.h"
@@ -175,8 +176,8 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
 
-  Type tuple_;
-  Storage<I + 1, Elements...> more_;
+  [[sus_no_unique_address]] Type tuple_;
+  [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
 };
 
 template <size_t I, class... Elements>
@@ -247,7 +248,7 @@ union Storage<I, Nothing, Elements...> {
     }
   }
 
-  Storage<I + 1, Elements...> more_;
+  [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
 };
 
 template <size_t I, class T, class... Elements>
