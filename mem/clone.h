@@ -77,19 +77,19 @@ inline constexpr auto clone(const T& source) noexcept {
 /// Performs copy-assignment from `source`.
 ///
 /// Will perform a copy assignment if T is `Copy`. Otherwise will perform the
-/// equivalent of `self = source.clone()`.
+/// equivalent of `dest = source.clone()`.
 ///
 /// The `Clone` type may provide an implementation of `clone_from(const T&
 /// source)` to reuse its resources and avoid unnecessary allocations, which
 /// will be preferred over calling `source.clone()`.
 template <Clone T>
-inline constexpr void clone_into(Mref<T> self, const T& source) noexcept {
+inline constexpr void clone_into(T& dest, const T& source) noexcept {
   if constexpr (Copy<T>) {
-    self = source;
+    dest = source;
   } else if constexpr (__private::HasCloneFromMethod<T>) {
-    self.inner().clone_from(source);
+    dest.clone_from(source);
   } else {
-    self = source.clone();
+    dest = source.clone();
   }
 }
 

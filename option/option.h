@@ -95,7 +95,6 @@ using sus::option::__private::StoragePointer;
 /// of the Option in a constant evaluation context, state-querying methods can
 /// not be constexpr, nor any method that branches based on the current state,
 /// such as `unwrap_or()`.
-///
 template <class T>
 class Option final {
   // Note that `const T&` is allowed (so we don't `std::remove_reference_t<T>`)
@@ -107,37 +106,20 @@ class Option final {
 
  public:
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(const T& t) noexcept
-    requires(!std::is_reference_v<T> && ::sus::mem::Clone<T>)
-  {
-    return Option(::sus::clone(t));
+  static inline constexpr Option some(T t) noexcept {
+    if constexpr (::sus::mem::Move<T>) {
+      return Option(move_to_storage(t));
+    } else {
+      static_assert(::sus::mem::Copy<T>, "All types should be Copy or Move.");
+      return Option(t);
+    }
   }
 
   /// Construct an Option that is holding the given value.
-  ///
-  /// For reference types, disallow a mutable reference, as it must be passed by
-  /// Mref.
-  static inline constexpr Option some(T&& t) noexcept
-    requires(!std::is_reference_v<T> && ::sus::mem::Move<T>)
+  static inline constexpr Option some(T t) noexcept
+    requires(!::sus::mem::Move<T> && ::sus::mem::Copy<T>)
   {
-    return Option(::sus::move(t));
-  }
-
-  /// Construct an Option that is holding a const reference.
-  static inline constexpr Option some(T& t) noexcept
-    requires(std::is_reference_v<T> &&
-             std::is_const_v<std::remove_reference_t<T>>)
-  {
-    return Option(t);
-  }
-
-  /// Construct an Option that is holding a mutable reference.
-  static inline constexpr Option some(
-      Mref<std::remove_reference_t<T>> t) noexcept
-    requires(std::is_reference_v<T> &&
-             !std::is_const_v<std::remove_reference_t<T>>)
-  {
-    return Option(t);
+    return Option(move_to_storage(t));
   }
 
   /// Construct an Option that is holding no value.
@@ -163,7 +145,7 @@ class Option final {
     requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>)
   {
     struct Iter : public ::sus::iter::IteratorBase<U> {
-      Iter(::sus::iter::IteratorBase<Option<U>>&& iter, Mref<bool> found_none)
+      Iter(::sus::iter::IteratorBase<Option<U>>&& iter, bool& found_none)
           : iter(iter), found_none(found_none) {}
 
       Option<U> next() noexcept final {
@@ -453,17 +435,7 @@ class Option final {
   /// Stores the value `t` inside this Option, replacing any previous value, and
   /// returns a mutable reference to the new value.
   constexpr T& insert(T t) & noexcept
-    requires(sus::mem::Move<T> &&
-             !(std::is_reference_v<T> &&
-               !std::is_const_v<std::remove_reference_t<T>>))
-  {
-    t_.set_some(move_to_storage(t));
-    return t_.val_;
-  }
-
-  constexpr T& insert(Mref<std::remove_reference_t<T>> t) & noexcept
-    requires(std::is_reference_v<T> &&
-             !std::is_const_v<std::remove_reference_t<T>>)
+    requires(sus::mem::Move<T>)
   {
     t_.set_some(move_to_storage(t));
     return t_.val_;
@@ -476,19 +448,7 @@ class Option final {
   /// If it is non-trivial to construct `T`, the <get_or_insert_with>() method
   /// would be preferable, as it only constructs a `T` if needed.
   T& get_or_insert(T t) & noexcept
-    requires(sus::mem::Move<T> &&
-             !(std::is_reference_v<T> &&
-               !std::is_const_v<std::remove_reference_t<T>>))
-  {
-    if (t_.state() == None) {
-      t_.construct_from_none(move_to_storage(t));
-    }
-    return t_.val_;
-  }
-
-  T& get_or_insert(Mref<std::remove_reference_t<T>> t) & noexcept
-    requires(std::is_reference_v<T> &&
-             !std::is_const_v<std::remove_reference_t<T>>)
+    requires(sus::mem::Move<T>)
   {
     if (t_.state() == None) {
       t_.construct_from_none(move_to_storage(t));
@@ -780,10 +740,8 @@ class Option final {
     if (is_some()) {
       auto make_options = [](::sus::tuple::Tuple<U, V> tuple) noexcept {
         auto&& [u, v] = ::sus::move(tuple);
-        return TupleOptUV::with(
-            Option<U>::some(::sus::mem::forward_mref(sus_move_preserve_ref(u))),
-            Option<V>::some(
-                ::sus::mem::forward_mref(sus_move_preserve_ref(v))));
+        return TupleOptUV::with(Option<U>::some(sus_move_preserve_ref(u)),
+                                Option<V>::some(sus_move_preserve_ref(v)));
       };
       return make_options(t_.take_and_set_none());
     } else {
@@ -794,21 +752,7 @@ class Option final {
   /// Replaces whatever the Option is currently holding with #Some value `t` and
   /// returns an Option holding what was there previously.
   Option replace(T t) & noexcept
-    requires(sus::mem::Move<T> &&
-             !(std::is_reference_v<T> &&
-               !std::is_const_v<std::remove_reference_t<T>>))
-  {
-    if (t_.state() == None) {
-      t_.construct_from_none(move_to_storage(t));
-      return Option::none();
-    } else {
-      return Option(t_.replace_some(move_to_storage(t)));
-    }
-  }
-
-  Option replace(Mref<std::remove_reference_t<T>> t) & noexcept
-    requires(std::is_reference_v<T> &&
-             !std::is_const_v<std::remove_reference_t<T>>)
+    requires(sus::mem::Move<T>)
   {
     if (t_.state() == None) {
       t_.construct_from_none(move_to_storage(t));
@@ -880,7 +824,7 @@ class Option final {
   // Since `T` may be a reference or a value type, this constructs the correct
   // storage from a `T` object or a `T&&` (which is received as `T&`).
   template <class U>
-  decltype(auto) move_to_storage(U&& t) {
+  static constexpr inline decltype(auto) move_to_storage(U&& t) {
     if constexpr (std::is_reference_v<T>)
       return StoragePointer<T&>(t);
     else

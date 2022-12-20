@@ -85,12 +85,6 @@ class [[nodiscard]] Result final {
     return Result(WithErr, ::sus::clone(e));
   }
   /// Construct an Result that is holding the given error value.
-  static constexpr inline Result with_err(Mref<E> e) noexcept
-    requires(::sus::mem::Clone<E>)
-  {
-    return Result(WithErr, ::sus::clone(e.inner()));
-  }
-  /// Construct an Result that is holding the given error value.
   static constexpr inline Result with_err(E&& e) noexcept
     requires(::sus::mem::Move<E>)
   {
@@ -153,7 +147,7 @@ class [[nodiscard]] Result final {
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
              !(std::is_trivially_move_constructible_v<T> &&
                std::is_trivially_move_constructible_v<E>))
-      : state_(replace(mref(rhs.state_), IsMoved)) {
+      : state_(::sus::mem::replace(mref(rhs.state_), IsMoved)) {
     ::sus::check(state_ != IsMoved);
     switch (state_) {
       case IsOk: new (&storage_.ok_) T(::sus::move(rhs.storage_.ok_)); break;
@@ -298,10 +292,10 @@ class [[nodiscard]] Result final {
   /// error, if any.
   constexpr inline Option<T> ok() && noexcept {
     ::sus::check(state_ != IsMoved);
-    switch (replace(mref(state_), IsMoved)) {
+    switch (::sus::mem::replace(mref(state_), IsMoved)) {
       case IsOk:
-        return Option<T>::some(
-            take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_)));
+        return Option<T>::some(::sus::mem::take_and_destruct(
+            ::sus::marker::unsafe_fn, mref(storage_.ok_)));
       case IsErr: storage_.err_.~E(); return Option<T>::none();
       case IsMoved: break;
     }
@@ -316,11 +310,11 @@ class [[nodiscard]] Result final {
   /// success value, if any.
   constexpr inline Option<E> err() && noexcept {
     ::sus::check(state_ != IsMoved);
-    switch (replace(mref(state_), IsMoved)) {
+    switch (::sus::mem::replace(mref(state_), IsMoved)) {
       case IsOk: storage_.ok_.~T(); return Option<E>::none();
       case IsErr:
-        return Option<E>::some(
-            take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.err_)));
+        return Option<E>::some(::sus::mem::take_and_destruct(
+            ::sus::marker::unsafe_fn, mref(storage_.err_)));
       case IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
@@ -338,9 +332,10 @@ class [[nodiscard]] Result final {
   /// # Panics
   /// Panics if the value is an `Err`.
   constexpr inline T unwrap() && noexcept {
-    check_with_message(replace(mref(state_), IsMoved) == IsOk,
+    check_with_message(::sus::mem::replace(mref(state_), IsMoved) == IsOk,
                        *"called `Result::unwrap()` on an `Err` value");
-    return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_));
+    return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                         mref(storage_.ok_));
   }
 
   /// Returns the contained `Ok` value, consuming the self value, without
@@ -350,7 +345,8 @@ class [[nodiscard]] Result final {
   /// Calling this method on an `Err` is Undefined Behavior.
   constexpr inline T unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
-    return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_));
+    return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                         mref(storage_.ok_));
   }
 
   /// Returns the contained `Err` value, consuming the self value.
@@ -358,9 +354,10 @@ class [[nodiscard]] Result final {
   /// # Panics
   /// Panics if the value is an `Ok`.
   constexpr inline E unwrap_err() && noexcept {
-    check_with_message(replace(mref(state_), IsMoved) == IsErr,
+    check_with_message(::sus::mem::replace(mref(state_), IsMoved) == IsErr,
                        *"called `Result::unwrap_err()` on an `Ok` value");
-    return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.err_));
+    return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                         mref(storage_.err_));
   }
 
   /// Returns the contained `Err` value, consuming the self value, without
@@ -370,7 +367,8 @@ class [[nodiscard]] Result final {
   /// Calling this method on an `Ok` is Undefined Behavior.
   constexpr inline E unwrap_err_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
-    return take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.err_));
+    return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                         mref(storage_.err_));
   }
 
   constexpr Iterator<Once<const T&>> iter() const& noexcept {
@@ -392,9 +390,9 @@ class [[nodiscard]] Result final {
 
   constexpr Iterator<Once<T>> into_iter() && noexcept {
     ::sus::check(state_ != IsMoved);
-    if (replace(mref(state_), IsMoved) == IsOk) {
-      return sus::iter::once(Option<T>::some(
-          take_and_destruct(::sus::marker::unsafe_fn, mref(storage_.ok_))));
+    if (::sus::mem::replace(mref(state_), IsMoved) == IsOk) {
+      return sus::iter::once(Option<T>::some(::sus::mem::take_and_destruct(
+          ::sus::marker::unsafe_fn, mref(storage_.ok_))));
     } else {
       storage_.err_.~E();
       return sus::iter::once(Option<T>::none());

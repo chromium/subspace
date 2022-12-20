@@ -28,9 +28,7 @@ namespace sus::mem {
 
 template <class T>
   requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
-constexpr void swap(Mref<T> lhs_ref, Mref<T> rhs_ref) noexcept {
-  T& lhs = lhs_ref;
-  T& rhs = rhs_ref;
+constexpr void swap(T& lhs, T& rhs) noexcept {
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
       ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();

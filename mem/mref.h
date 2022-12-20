@@ -26,111 +26,16 @@
 
 namespace sus::mem {
 
+/// Annotate an lvalue usage, for static analysis.
 template <class T>
-  requires(!std::is_reference_v<T> && !std::is_array_v<T>)
-struct Mref;
-
-/// Pass a variable to a function as a mutable reference.
-template <class T>
-constexpr inline Mref<T> mref(T& t) noexcept {
-  return Mref<T>(Mref<T>::kConstruct, t);
+  requires(!std::is_reference_v<T>)
+inline constexpr T& mref(T& t) noexcept {
+  return t;
 }
-
-template <class T>
-constexpr inline Mref<T> mref(const T& t) = delete;
-
-/// Convert mutable lvalue references to Mref, and do nothing to other types.
-///
-/// For templated code.
-template <class T>
-  requires(std::is_reference_v<T> ||
-           !std::is_const_v<std::remove_reference_t<T>>)
-[[nodiscard]] sus_always_inline constexpr decltype(auto) forward_mref(
-    T&& t) noexcept {
-  if constexpr (std::is_lvalue_reference_v<T&&> &&
-                !std::is_const_v<std::remove_reference_t<T>>) {
-    return mref(t);
-  } else {
-    return static_cast<T&&>(t);
-  }
-}
-
-/// A mutable reference receiver.
-///
-/// Mref should only be used as a function parameter. It receives a mutable
-/// (lvalue) reference, and requires the caller to pass it explicitly with
-/// mref().
-///
-/// This ensures that passing a variable as mutable is visible at the callsite.
-/// It generates the same code as a bare reference:
-/// https://godbolt.org/z/9xPaqhvfq
-///
-/// # Example
-///
-/// ```
-/// // Without Mref:
-/// void receive_ref(int& i) { i++; }
-///
-/// // With Mref:
-/// void receive_ref(Mref<int> i) { i++; }
-///
-/// int i;
-/// receive_ref(mref(i));   // Explicitly pass lvalue ref.
-/// ```
-template <class T>
-  requires(!std::is_reference_v<T> && !std::is_array_v<T>)
-struct [[sus_trivial_abi]] Mref final {
-  /// Mref can be trivially moved, so this is the move constructor.
-  constexpr Mref(Mref&&) noexcept = default;
-  /// Mref can be trivially moved, but is only meant for a function argument, so
-  /// no need for assignment. This does mean Mref is not `Move`.
-  constexpr Mref& operator=(Mref&&) noexcept = delete;
-
-  /// Prevent constructing an Mref argument without writing mref().
-  template <std::same_as<T> U>
-  Mref(U& t) : t_(t) {
-    static_assert(!std::same_as<T, U>,
-                  "Pass mutable reference argument with `mref()`.");
-  }
-  /// Prevent passing an Mref argument along without writing mref() again.
-  Mref(Mref&) = delete;
-
-  /// Returns the reference held by the Mref.
-  constexpr inline T& inner() & noexcept { return t_; }
-
-  /// Act like a T&. It can convert to a T&.
-  constexpr inline operator T&() & noexcept { return t_; }
-  /// Act like a T&. It can be assigned a new T.
-  constexpr inline Mref& operator=(const T& t) noexcept
-    requires(std::is_copy_assignable_v<T>)
-  {
-    t_ = t;
-    return *this;
-  }
-  /// Act like a T&. It can be assigned a new T.
-  constexpr inline Mref& operator=(T&& t) noexcept
-    requires(std::is_move_assignable_v<T>)
-  {
-    t_ = ::sus::move(t);
-    return *this;
-  }
-
- private:
-  friend constexpr Mref<T> mref<>(T&) noexcept;
-
-  enum Construct { kConstruct };
-  constexpr inline Mref(Construct, T& reference) noexcept : t_(reference) {}
-
-  T& t_;
-
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn,
-                                             decltype(t_));
-};
 
 }  // namespace sus::mem
 
-// Promote Mref into the `sus` namespace.
+// Promote mref() into the `sus` namespace.
 namespace sus {
-using ::sus::mem::Mref;
 using ::sus::mem::mref;
 }  // namespace sus

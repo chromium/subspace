@@ -170,7 +170,7 @@ struct Storage<T, true> final {
   }
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
-    T t = take_and_destruct(::sus::marker::unsafe_fn, mref(val_));
+    T t = ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn, mref(val_));
     // Make the overlay_ field active.
     overlay_ = Overlay();
     ::sus::mem::never_value_access<T>::set_never_value(::sus::marker::unsafe_fn,
