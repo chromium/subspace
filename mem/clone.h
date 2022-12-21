@@ -46,16 +46,17 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 ///
 /// A `Clone` type may also provide a `clone_from(const T& source)` method
 /// to have `sus::mem::clone_into()` perform copy-assignment from `source`, in
-/// order to reuse its resources and avoid allocations.
+/// order to reuse its resources and avoid allocations. In this case the type is
+/// also `CloneInto`.
 ///
 /// It is not valid to be `Copy` and also have a `clone()` method, as it becomes
 /// amgiuous. One outcome of this is a container type should only implement a
 /// clone() method if the type within is (Clone && !Copy), and should implement
 /// copy constructors if the type within is Copy.
-//
 template <class T>
-concept Clone = (Copy<T> || (__private::HasCloneMethod<T> && Move<T>)) &&
-                !(__private::HasCloneMethod<T> && Copy<T>);
+concept Clone = (Copy<T> && !__private::HasCloneMethod<std::decay_t<T>>) ||
+                (!Copy<T> && Move<T> &&
+                 __private::HasCloneMethod<std::decay_t<T>>);
 
 /// A concept to verify that a Clone type has a specialization of `clone_from()`
 /// in order to optimize `::sus::clone_into()`. Mostly for testing types to

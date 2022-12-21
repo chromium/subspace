@@ -1978,10 +1978,6 @@ TEST(Option, Clone) {
   static_assert(sus::mem::Clone<Option<Clone>>);
   static_assert(sus::mem::CloneInto<Option<Clone>>);
   static_assert(sus::mem::Move<Option<Clone>>);
-  static_assert(sus::mem::Copy<const Clone&>);
-  static_assert(sus::mem::Clone<const Clone&>);
-  static_assert(sus::mem::Copy<Clone&>);
-  static_assert(sus::mem::Clone<Clone&>);
 
   {
     const auto s = Option<Clone>::some(Clone());

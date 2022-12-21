@@ -48,10 +48,20 @@ namespace sus::mem {
 /// };
 /// static_assert(sus::mem::Move<S>);
 template <class T>
-concept Move = (std::is_move_constructible_v<T> &&
-                (std::is_move_assignable_v<T> ||
-                 !std::is_copy_assignable_v<T>)) ||
-               std::is_reference_v<T>;
+concept Move = std::is_move_constructible_v<std::decay_t<T>> &&
+               (std::is_move_assignable_v<std::decay_t<T>> ||
+                !std::is_copy_assignable_v<std::decay_t<T>>);
+
+/// A `MoveOrRef` object or reference of type `T` can be moved to construct a
+/// new `T`.
+///
+/// This concept is used for templates that want to be generic over references,
+/// that is templates that want to allow their template parameter to be a
+/// reference and work with that reference as if it were an object itself. This
+/// is uncommon outside of library implementations, and its usage should
+/// typically be encapsuated inside a type that is `Move`.
+template <class T>
+concept MoveOrRef = Move<T> || std::is_reference_v<T>;
 
 /// Cast `t` to an r-value reference so that it can be used to construct or be
 /// assigned to a (non-reference) object of type `T`.
@@ -61,18 +71,14 @@ concept Move = (std::is_move_constructible_v<T> &&
 ///
 /// The `move()` call itself does nothing to `t`, as it is just a cast, similar
 /// to `std::move()`. It enables an lvalue (a named object) to be used as an
-/// rvalue.
-///
-/// For a universal reference (`T&&`) that may be a reference, use
-/// `sus::mem::forward<T>()` instead. To move an lvalue object that may be
-/// a reference, without moving from behind the reference, use
-/// `sus_move_preserve_ref()`.
+/// rvalue. The function does not require `T` to be `Move`, in order to call
+/// rvalue-qualified methods on `T` even if it is not `Move`.
 //
 // TODO: Should this be `as_rvalue()`? Kinda technical. `as_...something...()`?
-template <Move T, class Out = std::remove_reference_t<T>>
+template <class T>
   requires(!std::is_const_v<std::remove_reference_t<T>>)
-[[nodiscard]] sus_always_inline constexpr Out&& move(T&& t) noexcept {
-  return static_cast<Out&&>(t);
+[[nodiscard]] sus_always_inline constexpr decltype(auto) move(T&& t) noexcept {
+  return static_cast<std::decay_t<T>&&>(t);
 }
 
 /// Moves-from x if x is a non-reference type, and copies the reference if x is
@@ -94,11 +100,12 @@ template <Move T, class Out = std::remove_reference_t<T>>
 //
 // Implemented with a lambda in order to static_assert things inside an
 // expression.
-#define sus_move_preserve_ref(x)                                 \
-  []<class Y>(Y&& y) -> decltype(auto) {                         \
-    static_assert(std::is_reference_v<Y> ||                      \
-                  !std::is_const_v<std::remove_reference_t<Y>>); \
-    return static_cast<Y&&>(y);                                  \
+#define sus_move_preserve_ref(x)                                     \
+  []<class Y>(Y&& y) -> decltype(auto) {                             \
+    /*static_assert(MoveOrRef<Y>);                                */ \
+    static_assert(std::is_reference_v<Y> ||                          \
+                  !std::is_const_v<std::remove_reference_t<Y>>);     \
+    return static_cast<Y&&>(y);                                      \
   }(static_cast<decltype(x)&&>(x))
 
 }  // namespace sus::mem
