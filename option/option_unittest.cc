@@ -1363,6 +1363,31 @@ TEST(Option, Copied) {
   // static_assert(Option<const int&>::some(ic).copied().unwrap() == 2);
 }
 
+TEST(Option, Cloned) {
+  struct Cloneable {
+    Cloneable() = default;
+    Cloneable(Cloneable&&) = default;
+    Cloneable& operator=(Cloneable&&) = default;
+
+    Cloneable clone() const { return Cloneable(); }
+  };
+  static_assert(!::sus::mem::Copy<Cloneable>);
+  static_assert(::sus::mem::Clone<Cloneable>);
+  
+  auto c = Cloneable();
+  auto x = Option<Cloneable&>::none().cloned();
+  IS_NONE(x);
+
+  auto y = Option<Cloneable&>::some(mref(c)).cloned();
+  EXPECT_NE(&y.as_ref().unwrap(), &c);
+
+  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
+  // optimization.
+  // constexpr auto cc = Cloneable();
+  // static_assert(Option<Cloneable&>::none().copied().is_none());
+  // static_assert(&Option<const Cloneable&>::some(cc).cloned().unwrap() == &cc);
+}
+
 TEST(Option, Flatten) {
   static_assert(std::is_same_v<decltype(Option<Option<int>>::none().flatten()),
                                Option<int>>,
@@ -1907,11 +1932,11 @@ TEST(Option, Clone) {
 
   static_assert(sus::mem::Copy<Copy>);
   static_assert(sus::mem::Clone<Copy>);
-  static_assert(!sus::mem::CloneFrom<Copy>);
+  static_assert(!sus::mem::CloneInto<Copy>);
   static_assert(!sus::mem::Move<Copy>);
   static_assert(sus::mem::Copy<Option<Copy>>);
   static_assert(sus::mem::Clone<Option<Copy>>);
-  static_assert(sus::mem::CloneFrom<Option<Copy>>);
+  static_assert(sus::mem::CloneInto<Option<Copy>>);
   static_assert(!sus::mem::Move<Option<Copy>>);
 
   {
@@ -1947,11 +1972,11 @@ TEST(Option, Clone) {
 
   static_assert(!sus::mem::Copy<Clone>);
   static_assert(sus::mem::Clone<Clone>);
-  static_assert(!sus::mem::CloneFrom<Clone>);
+  static_assert(!sus::mem::CloneInto<Clone>);
   static_assert(sus::mem::Move<Clone>);
   static_assert(!sus::mem::Copy<Option<Clone>>);
   static_assert(sus::mem::Clone<Option<Clone>>);
-  static_assert(sus::mem::CloneFrom<Option<Clone>>);
+  static_assert(sus::mem::CloneInto<Option<Clone>>);
   static_assert(sus::mem::Move<Option<Clone>>);
   static_assert(sus::mem::Copy<const Clone&>);
   static_assert(sus::mem::Clone<const Clone&>);
