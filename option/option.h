@@ -261,6 +261,7 @@ class Option final {
     requires(!::sus::mem::Move<T>)
   = delete;
 
+  // sus::mem::Clone trait.
   constexpr Option clone() const& noexcept
     requires(::sus::mem::Clone<T> && !::sus::mem::Copy<T>)
   {
@@ -270,6 +271,7 @@ class Option final {
       return Option::none();
   }
 
+  // sus::mem::CloneInto trait.
   void clone_from(const Option& source) &
         requires(::sus::mem::Clone<T>)
   {
@@ -772,6 +774,22 @@ class Option final {
       return Option<std::decay_t<T>>::none();
     else
       return Option<std::decay_t<T>>::some(t_.val_);
+  }
+
+  /// Maps an `Option<T&>` to an `Option<T>` by cloning the referenced `T`.
+  Option<std::decay_t<T>> cloned() && noexcept
+      // TODO: Remove decay_t when Clone does it for us.
+      // https://github.com/chromium/subspace/issues/134
+    requires(std::is_reference_v<T> && ::sus::mem::Clone<std::decay_t<T>>)
+  {
+    if (t_.state() == None) {
+      return Option<std::decay_t<T>>::none();
+    } else {
+      // TODO: Remove the decay when Clone does it for us.
+      // https://github.com/chromium/subspace/issues/134
+      return Option<std::decay_t<T>>::some(
+          ::sus::clone<std::decay_t<T>>(t_.val_));
+    }
   }
 
   /// Maps an `Option<Option<T>>` to an `Option<T>`.

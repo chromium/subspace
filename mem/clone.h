@@ -63,7 +63,7 @@ concept Clone = (Copy<T> || (__private::HasCloneMethod<T> && Move<T>)) &&
 ///
 /// TODO: Should we make this into/from name consistent...??
 template <class T>
-concept CloneFrom = Clone<T> && __private::HasCloneFromMethod<T>;
+concept CloneInto = Clone<T> && __private::HasCloneFromMethod<T>;
 
 template <Clone T>
 inline constexpr auto clone(const T& source) noexcept {
@@ -82,6 +82,8 @@ inline constexpr auto clone(const T& source) noexcept {
 /// The `Clone` type may provide an implementation of `clone_from(const T&
 /// source)` to reuse its resources and avoid unnecessary allocations, which
 /// will be preferred over calling `source.clone()`.
+//
+// TODO: Provide a concept to verify that this method exists.
 template <Clone T>
 inline constexpr void clone_into(T& dest, const T& source) noexcept {
   if constexpr (Copy<T>) {
