@@ -118,6 +118,7 @@ set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
 add_library(subspace_test_support STATIC
     "test/behaviour_types.h"
     "test/behaviour_types_unittest.cc"
+    "test/no_copy_move.h"
 )
 set_target_properties(subspace_test_support PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(subspace_test_support

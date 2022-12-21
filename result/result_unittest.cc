@@ -334,8 +334,9 @@ TEST(Result, Clone) {
 
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
-  static_assert(!::sus::mem::CloneInto<Copy>);
+  static_assert(::sus::mem::CloneInto<Copy>);
   static_assert(::sus::mem::Move<Copy>);
+  // Result is never Copy, but it is Clone if T is Clone.
   static_assert(!::sus::mem::Copy<Result<Copy, i32>>);
   static_assert(::sus::mem::Clone<Result<Copy, i32>>);
   static_assert(::sus::mem::CloneInto<Result<Copy, i32>>);

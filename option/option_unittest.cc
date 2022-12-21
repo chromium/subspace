@@ -1932,7 +1932,7 @@ TEST(Option, Clone) {
 
   static_assert(sus::mem::Copy<Copy>);
   static_assert(sus::mem::Clone<Copy>);
-  static_assert(!sus::mem::CloneInto<Copy>);
+  static_assert(sus::mem::CloneInto<Copy>);
   static_assert(!sus::mem::Move<Copy>);
   static_assert(sus::mem::Copy<Option<Copy>>);
   static_assert(sus::mem::Clone<Option<Copy>>);

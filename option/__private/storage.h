@@ -195,8 +195,8 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
   explicit constexpr sus_always_inline StoragePointer(T& ref) noexcept
       : ptr_(::sus::mem::addressof(ref)) {}
 
-  constexpr operator const T&() const { return *ptr_; }
-  constexpr operator T&() { return *ptr_; }
+  inline constexpr operator const T&() const { return *ptr_; }
+  inline constexpr operator T&() { return *ptr_; }
 
  private:
   T* ptr_;

@@ -432,9 +432,9 @@ TEST(Vec, Clone) {
 
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
-  static_assert(!::sus::mem::CloneInto<Copy>);
+  static_assert(::sus::mem::CloneInto<Copy>);
   static_assert(::sus::mem::Move<Copy>);
-  // Array is always Clone (if T is Clone), but never Copy since it's expensive
+  // Vec is always Clone (if T is Clone), but never Copy since it's expensive
   // to copy.
   static_assert(!::sus::mem::Copy<Vec<Copy>>);
   static_assert(::sus::mem::Clone<Vec<Copy>>);
