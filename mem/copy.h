@@ -23,9 +23,8 @@ namespace sus::mem {
 ///
 /// Satisfying `Copy` also implies that the type satisfies `Clone`.
 ///
-/// Const (non-reference) types are not `Copy` as they can't be assigned to.
-/// References are always `Copy`, even if const, as a reference can always be
-/// constructed from a reference.
+/// This concept decays `T` before testing it in order to give the result of the
+/// object type of `T`, not a qualified type or a reference type.
 ///
 /// Typically types should only be `Copy` when performing a copy is very cheap,
 /// and thus unlikely to cause performance problems. For types that are larger
@@ -43,8 +42,20 @@ namespace sus::mem {
 /// static_assert(sus::mem::Clone<S>);
 /// ```
 template <class T>
-concept Copy = (std::is_copy_constructible_v<T> &&
-                std::is_copy_assignable_v<T>) ||
-               std::is_reference_v<T>;
+concept Copy = std::is_copy_constructible_v<std::decay_t<T>> &&
+               std::is_copy_assignable_v<std::decay_t<T>>;
+
+/// A `CopyOrRef` object or reference of type `T` can be copied to construct a
+/// new `T`.
+///
+/// Satisfying `CopyOrRef` also implies that the type satisfies `CloneOrRef`.
+///
+/// This concept is used for templates that want to be generic over references,
+/// that is templates that want to allow their template parameter to be a
+/// reference and work with that reference as if it were an object itself. This
+/// is uncommon outside of library implementations, and its usage should
+/// typically be encapsuated inside a type that is `Copy`.
+template <class T>
+concept CopyOrRef = Copy<T> || std::is_reference_v<T>;
 
 }  // namespace sus::mem
