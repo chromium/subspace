@@ -25,10 +25,12 @@
 #include "mem/move.h"
 #include "num/types.h"
 #include "prelude.h"
+#include "test/no_copy_move.h"
 #include "third_party/googletest/googletest/include/gtest/gtest.h"
 
 namespace {
 
+using sus::test::NoCopyMove;
 using sus::tuple::Tuple;
 
 static_assert(sus::mem::Copy<Tuple<i32>>);
@@ -45,6 +47,9 @@ struct Cloneable {
 static_assert(!sus::mem::Copy<Tuple<Cloneable>>);
 static_assert(sus::mem::Clone<Tuple<Cloneable>>);
 static_assert(sus::mem::Move<Tuple<Cloneable>>);
+static_assert(sus::mem::Copy<Tuple<Cloneable&>>);
+static_assert(sus::mem::Clone<Tuple<Cloneable&>>);
+static_assert(sus::mem::Move<Tuple<Cloneable&>>);
 
 static_assert(
     std::same_as<i32, std::tuple_element_t<0, Tuple<i32, i32&, const i32&>>>);
@@ -120,23 +125,41 @@ TEST(Tuple, TailPadding) {
 }
 
 TEST(Tuple, With) {
-  auto t1 = Tuple<int>::with(2);
-  auto t2 = Tuple<int, float>::with(2, 3.f);
-  auto t3 = Tuple<int, float, int>::with(2, 3.f, 4);
+  auto t1 = Tuple<i32>::with(2);
+  auto t2 = Tuple<i32, f32>::with(2, 3.f);
+  auto t3 = Tuple<i32, f32, i32>::with(2, 3.f, 4);
 
-  [[maybe_unused]] constexpr auto c = Tuple<int, float>::with(2, 3.f);
+  [[maybe_unused]] constexpr auto c = Tuple<i32, f32>::with(2, 3.f);
 }
 
 TEST(Tuple, Copy) {
-  auto t1 = Tuple<int>::with(2);
-  auto t2 = t1;
-  EXPECT_EQ(t1, t2);
+  {
+    auto t1 = Tuple<i32>::with(2);
+    auto t2 = t1;
+    EXPECT_EQ(t1, t2);
+  }
+
+  {
+    auto n = NoCopyMove();
+    auto t1 = Tuple<NoCopyMove&>::with(mref(n));
+    auto t2 = t1;
+    EXPECT_EQ(t1, t2);
+  }
 }
 
 TEST(Tuple, CloneCopy) {
-  auto t1 = Tuple<int>::with(2);
-  auto t2 = ::sus::clone(t1);
-  EXPECT_EQ(t1, t2);
+  {
+    auto t1 = Tuple<i32>::with(2);
+    auto t2 = sus::clone(t1);
+    EXPECT_EQ(t1, t2);
+  }
+
+  {
+    auto n = NoCopyMove();
+    auto t1 = Tuple<NoCopyMove&>::with(mref(n));
+    auto t2 = sus::clone(t1);
+    EXPECT_EQ(t1, t2);
+  }
 }
 
 TEST(Tuple, Clone) {
@@ -156,17 +179,21 @@ TEST(Tuple, Clone) {
 }
 
 TEST(TupleDeathTest, Move) {
-  auto t1 = Tuple<int>::with(2);
-  auto t2 = sus::move(t1);
-  EXPECT_EQ(t2.get_ref<0>(), 2);
-  EXPECT_DEATH(t1.get_ref<0>(), "");
-}
+  {
+    auto t1 = Tuple<int>::with(2);
+    auto t2 = sus::move(t1);
+    EXPECT_EQ(t2.get_ref<0>(), 2);
+    EXPECT_DEATH(t1.get_ref<0>(), "");
+  }
 
-template <size_t I>
-constexpr auto GetFromTuple() noexcept {
-  constexpr auto t = Tuple<int, float>::with(2, 3.f);
-  return t.get_ref<I>();
-};
+  {
+    auto n = NoCopyMove();
+    auto t1 = Tuple<NoCopyMove&>::with(mref(n));
+    auto t2 = sus::move(t1);
+    EXPECT_EQ(t2.get_ref<0>(), n);
+    EXPECT_DEATH(t1.get_ref<0>(), "");
+  }
+}
 
 TEST(Tuple, GetRef) {
   auto t1 = Tuple<int>::with(2);
@@ -187,8 +214,19 @@ TEST(Tuple, GetRef) {
   EXPECT_EQ(t3.get_ref<2>(), 4);
   static_assert(std::same_as<const int&, decltype(t3.get_ref<2>())>);
 
-  [[maybe_unused]] constexpr auto c0 = GetFromTuple<0>();
-  [[maybe_unused]] constexpr auto c1 = GetFromTuple<1>();
+  auto n = NoCopyMove();
+  auto tn = Tuple<NoCopyMove&>::with(mref(n));
+  static_assert(std::same_as<const NoCopyMove&, decltype(tn.get_ref<0>())>);
+  EXPECT_EQ(tn.get_ref<0>(), n);
+
+  [[maybe_unused]] constexpr auto c0 = []() {
+    constexpr auto t = Tuple<int, float>::with(2, 3.f);
+    return t.get_ref<0>();
+  }();
+  [[maybe_unused]] constexpr auto c1 = []() {
+    constexpr auto t = Tuple<int, float>::with(2, 3.f);
+    return t.get_ref<1>();
+  }();
 }
 
 TEST(Tuple, GetMut) {
@@ -221,6 +259,11 @@ TEST(Tuple, GetMut) {
   t3.get_mut<2>() += 1;
   EXPECT_EQ(t3.get_mut<2>(), 5);
   static_assert(std::same_as<int&, decltype(t3.get_mut<2>())>);
+
+  auto n = NoCopyMove();
+  auto tn = Tuple<NoCopyMove&>::with(mref(n));
+  static_assert(std::same_as<NoCopyMove&, decltype(tn.get_mut<0>())>);
+  EXPECT_EQ(tn.get_mut<0>(), n);
 }
 
 TEST(Tuple, IntoInner) {
@@ -228,6 +271,11 @@ TEST(Tuple, IntoInner) {
   static_assert(std::same_as<decltype(sus::move(t1).into_inner<0>()), i32&&>);
   static_assert(std::same_as<decltype(sus::move(t1).into_inner<1>()), u32&&>);
   EXPECT_EQ(sus::move(t1).into_inner<0>(), 2_i32);
+
+  auto n = NoCopyMove();
+  auto tn = Tuple<NoCopyMove&>::with(mref(n));
+  static_assert(std::same_as<NoCopyMove&, decltype(sus::move(tn).into_inner<0>())>);
+  EXPECT_EQ(sus::move(tn).into_inner<0>(), n);
 }
 
 TEST(Tuple, Eq) {
@@ -249,6 +297,13 @@ TEST(Tuple, Eq) {
   EXPECT_EQ(Tuple<float>::with(0.f), Tuple<float>::with(-0.f));
   EXPECT_NE(Tuple<float>::with(/* TODO: f32::NAN() */ NAN),
             Tuple<float>::with(/* TODO: f32::NAN() */ NAN));
+
+  auto n1 = NoCopyMove();
+  auto tn1 = Tuple<NoCopyMove&>::with(mref(n1));
+  auto n2 = NoCopyMove();
+  auto tn2 = Tuple<NoCopyMove&>::with(mref(n2));
+  EXPECT_EQ(tn1, tn1);
+  EXPECT_NE(tn1, tn2);
 }
 
 TEST(Tuple, Ord) {
@@ -262,6 +317,12 @@ TEST(Tuple, Ord) {
 
   int i[2];
   EXPECT_LT(Tuple<int*>::with(&i[0]), Tuple<int*>::with(&i[1]));
+
+  NoCopyMove ns[] = {NoCopyMove(), NoCopyMove()};
+  auto tn1 = Tuple<NoCopyMove&>::with(mref(ns[0]));
+  auto tn2 = Tuple<NoCopyMove&>::with(mref(ns[1]));
+  EXPECT_GE(tn1, tn1);
+  EXPECT_LT(tn1, tn2);
 }
 
 TEST(Tuple, StrongOrder) {
@@ -386,24 +447,6 @@ TEST(Tuple, StructuredBindingMoves) {
   moves = 0u;
   auto [a, b, c] = sus::move(t);
   EXPECT_EQ(moves, 3u);
-}
-
-TEST(Tuple, References) {
-  i32 i = 1, j = 2;
-  auto t = Tuple<i32&, const i32&, i32>::with(i, j, 3);
-
-  static_assert(std::same_as<const i32&, decltype(t.get_ref<0>())>);
-  static_assert(std::same_as<const i32&, decltype(t.get_ref<1>())>);
-  EXPECT_EQ(&t.get_ref<0>(), &i);
-  EXPECT_EQ(&t.get_ref<1>(), &j);
-
-  static_assert(std::same_as<i32&, decltype(t.get_mut<0>())>);
-  EXPECT_EQ(&t.get_mut<0>(), &i);
-
-  static_assert(std::same_as<i32&, decltype(sus::move(t).into_inner<0>())>);
-  static_assert(
-      std::same_as<const i32&, decltype(sus::move(t).into_inner<1>())>);
-  EXPECT_EQ(&sus::move(t).into_inner<0>(), &i);
 }
 
 TEST(Tuple, Destroy) {

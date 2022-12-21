@@ -422,7 +422,7 @@ TEST(Array, Clone) {
 
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
-  static_assert(!::sus::mem::CloneInto<Copy>);
+  static_assert(::sus::mem::CloneInto<Copy>);
   static_assert(::sus::mem::Move<Copy>);
   // Array is always Clone (if T is Clone), but never Copy since it's expensive
   // to copy.

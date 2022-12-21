@@ -19,6 +19,7 @@
 
 #include "macros/__private/compiler_bugs.h"
 #include "macros/no_unique_address.h"
+#include "mem/addressof.h"
 #include "mem/forward.h"
 #include "mem/move.h"
 
@@ -75,15 +76,29 @@ struct TupleStorage;
 
 template <class T>
 struct TupleStorage<T> {
-  sus_clang_bug_54050(template <std::convertible_to<T> U>
-                      constexpr inline TupleStorage(U&& value)
-                      : value(::sus::forward<U>(value)){});
+  template <class U>
+  constexpr inline explicit TupleStorage(U&& value)
+      : value(::sus::forward<U>(value)) {}
 
+  inline constexpr const T& get_ref() const& noexcept { return value; }
+  inline constexpr T& get_mut() & noexcept { return value; }
+  inline constexpr T&& into_inner() && noexcept { return ::sus::move(value); }
+
+ private:
   [[sus_no_unique_address]] T value;
+};
 
-  decltype(auto) into_inner() && noexcept {
-    return sus_move_preserve_ref(value);
-  }
+template <class T>
+struct TupleStorage<T&> {
+  constexpr inline explicit TupleStorage(T& value)
+      : value(::sus::mem::addressof(value)) {}
+
+  inline constexpr const T& get_ref() const& noexcept { return *value; }
+  inline constexpr T& get_mut() & noexcept { return *value; }
+  inline constexpr T& into_inner() && noexcept { return *value; }
+
+ private:
+  T* value;
 };
 
 template <class T, class... Ts>
@@ -95,11 +110,30 @@ struct TupleStorage<T, Ts...> : TupleStorage<Ts...> {
   constexpr inline TupleStorage(U&& value, Us&&... more) noexcept
       : Super(::sus::forward<Us>(more)...), value(::sus::forward<U>(value)) {}
 
-  [[sus_no_unique_address]] T value;
+  inline constexpr const T& get_ref() const& noexcept { return value; }
+  inline constexpr T& get_mut() & noexcept { return value; }
+  inline constexpr T&& into_inner() && noexcept { return ::sus::move(value); }
 
-  decltype(auto) into_inner() && noexcept {
-    return sus_move_preserve_ref(value);
-  }
+ private:
+  [[sus_no_unique_address]] T value;
+};
+
+template <class T, class... Ts>
+  requires(sizeof...(Ts) > 0)
+struct TupleStorage<T&, Ts...> : TupleStorage<Ts...> {
+  using Super = TupleStorage<Ts...>;
+
+  template <class... Us>
+  constexpr inline TupleStorage(T& value, Us&&... more) noexcept
+      : Super(::sus::forward<Us>(more)...),
+        value(::sus::mem::addressof(value)) {}
+
+  inline constexpr const T& get_ref() const& noexcept { return *value; }
+  inline constexpr T& get_mut() & noexcept { return *value; }
+  inline constexpr T& into_inner() && noexcept { return *value; }
+
+ private:
+  T* value;
 };
 
 template <size_t I, class S>
@@ -140,7 +174,7 @@ static constexpr S& find_storage_mut(S& storage,
 
 template <size_t I, class S1, class S2>
 constexpr inline auto storage_eq_impl(const S1& l, const S2& r) noexcept {
-  return find_storage<I>(l).value == find_storage<I>(r).value;
+  return find_storage<I>(l).get_ref() == find_storage<I>(r).get_ref();
 };
 
 template <class S1, class S2, size_t... N>
@@ -152,7 +186,7 @@ constexpr inline auto storage_eq(const S1& l, const S2& r,
 template <size_t I, class O, class S1, class S2>
 constexpr inline bool storage_cmp_impl(O& val, const S1& l,
                                        const S2& r) noexcept {
-  auto cmp = find_storage<I>(l).value <=> find_storage<I>(r).value;
+  auto cmp = find_storage<I>(l).get_ref() <=> find_storage<I>(r).get_ref();
   // Allow downgrading from equal to equivalent, but not the inverse.
   if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.

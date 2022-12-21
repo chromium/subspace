@@ -32,6 +32,7 @@
 #include "marker/unsafe.h"
 #include "mem/clone.h"
 #include "mem/copy.h"
+#include "mem/forward.h"
 #include "mem/move.h"
 #include "mem/mref.h"
 #include "mem/replace.h"
@@ -106,18 +107,28 @@ class Option final {
 
  public:
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(T t) noexcept {
-    if constexpr (::sus::mem::Move<T>) {
+  static inline constexpr Option some(const T& t) noexcept
+    requires(!std::is_reference_v<T> && ::sus::mem::CopyOrRef<T>)
+  {
+    return Option(t);
+  }
+
+  /// Construct an Option that is holding the given value.
+  static inline constexpr Option some(T&& t) noexcept
+    requires(!std::is_reference_v<T>)
+  {
+    if constexpr (::sus::mem::MoveOrRef<T>) {
       return Option(move_to_storage(t));
     } else {
-      static_assert(::sus::mem::Copy<T>, "All types should be Copy or Move.");
+      static_assert(::sus::mem::CopyOrRef<T>,
+                    "All types should be Copy or Move.");
       return Option(t);
     }
   }
 
   /// Construct an Option that is holding the given value.
   static inline constexpr Option some(T t) noexcept
-    requires(!::sus::mem::Move<T> && ::sus::mem::Copy<T>)
+    requires(std::is_reference_v<T>)
   {
     return Option(move_to_storage(t));
   }
@@ -189,45 +200,50 @@ class Option final {
   /// If T can be trivially copy-constructed, Option<T> can also be trivially
   /// copy-constructed.
   constexpr Option(const Option& o)
-    requires(::sus::mem::Copy<T> && std::is_trivially_copy_constructible_v<T>)
+    requires(::sus::mem::CopyOrRef<T> &&
+             std::is_trivially_copy_constructible_v<T>)
   = default;
 
   Option(const Option& o) noexcept
-    requires(::sus::mem::Copy<T> && !std::is_trivially_copy_constructible_v<T>)
+    requires(::sus::mem::CopyOrRef<T> &&
+             !std::is_trivially_copy_constructible_v<T>)
   {
     if (o.t_.state() == Some) t_.construct_from_none(o.t_.val_);
   }
 
   constexpr Option(const Option& o)
-    requires(!::sus::mem::Copy<T>)
+    requires(!::sus::mem::CopyOrRef<T>)
   = delete;
 
   /// If T can be trivially copy-constructed, Option<T> can also be trivially
   /// move-constructed.
   constexpr Option(Option&& o)
-    requires(::sus::mem::Move<T> && std::is_trivially_move_constructible_v<T>)
+    requires(::sus::mem::MoveOrRef<T> &&
+             std::is_trivially_move_constructible_v<T>)
   = default;
 
   // TODO: If this could be done in a `constexpr` way, methods that receive an
   // Option could also be constexpr.
   Option(Option&& o) noexcept
-    requires(::sus::mem::Move<T> && !std::is_trivially_move_constructible_v<T>)
+    requires(::sus::mem::MoveOrRef<T> &&
+             !std::is_trivially_move_constructible_v<T>)
   {
     if (o.t_.state() == Some) t_.construct_from_none(o.t_.take_and_set_none());
   }
 
   constexpr Option(Option&& o)
-    requires(!::sus::mem::Move<T>)
+    requires(!::sus::mem::MoveOrRef<T>)
   = delete;
 
   /// If T can be trivially copy-assigned, Option<T> can also be trivially
   /// copy-assigned.
   constexpr Option& operator=(const Option& o)
-    requires(::sus::mem::Copy<T> && std::is_trivially_copy_assignable_v<T>)
+    requires(::sus::mem::CopyOrRef<T> && std::is_trivially_copy_assignable_v<T>)
   = default;
 
   Option& operator=(const Option& o) noexcept
-    requires(::sus::mem::Copy<T> && !std::is_trivially_copy_assignable_v<T>)
+    requires(::sus::mem::CopyOrRef<T> &&
+             !std::is_trivially_copy_assignable_v<T>)
   {
     if (o.t_.state() == Some)
       t_.set_some(o.t_.val_);
@@ -237,18 +253,19 @@ class Option final {
   }
 
   constexpr Option& operator=(const Option& o)
-    requires(!::sus::mem::Copy<T>)
+    requires(!::sus::mem::CopyOrRef<T>)
   = delete;
 
   /// If T can be trivially move-assigned, we don't need to explicitly construct
   /// it, so we can use the default destructor, which allows Option<T> to also
   /// be trivially move-assigned.
   constexpr Option& operator=(Option&& o)
-    requires(::sus::mem::Move<T> && std::is_trivially_move_assignable_v<T>)
+    requires(::sus::mem::MoveOrRef<T> && std::is_trivially_move_assignable_v<T>)
   = default;
 
   Option& operator=(Option&& o) noexcept
-    requires(::sus::mem::Move<T> && !std::is_trivially_move_assignable_v<T>)
+    requires(::sus::mem::MoveOrRef<T> &&
+             !std::is_trivially_move_assignable_v<T>)
   {
     if (o.t_.state() == Some)
       t_.set_some(o.t_.take_and_set_none());
@@ -258,12 +275,12 @@ class Option final {
   }
 
   constexpr Option& operator=(Option&& o)
-    requires(!::sus::mem::Move<T>)
+    requires(!::sus::mem::MoveOrRef<T>)
   = delete;
 
-  // sus::mem::Clone trait.
+  /// sus::mem::Clone trait.
   constexpr Option clone() const& noexcept
-    requires(::sus::mem::Clone<T> && !::sus::mem::Copy<T>)
+    requires(::sus::mem::Clone<T> && !::sus::mem::CopyOrRef<T>)
   {
     if (t_.state() == Some)
       return Option(::sus::clone(t_.val_));
@@ -271,9 +288,9 @@ class Option final {
       return Option::none();
   }
 
-  // sus::mem::CloneInto trait.
-  void clone_from(const Option& source) &
-        requires(::sus::mem::Clone<T>)
+  /// sus::mem::CloneInto trait.
+  void clone_from(const Option& source) & noexcept
+    requires(::sus::mem::Clone<T> && !::sus::mem::CopyOrRef<T>)
   {
     if (t_.state() == Some && source.t_.state() == Some) {
       ::sus::clone_into(mref(t_.val_), source.t_.val_);
@@ -437,7 +454,7 @@ class Option final {
   /// Stores the value `t` inside this Option, replacing any previous value, and
   /// returns a mutable reference to the new value.
   constexpr T& insert(T t) & noexcept
-    requires(sus::mem::Move<T>)
+    requires(sus::mem::MoveOrRef<T>)
   {
     t_.set_some(move_to_storage(t));
     return t_.val_;
@@ -450,7 +467,7 @@ class Option final {
   /// If it is non-trivial to construct `T`, the <get_or_insert_with>() method
   /// would be preferable, as it only constructs a `T` if needed.
   T& get_or_insert(T t) & noexcept
-    requires(sus::mem::Move<T>)
+    requires(sus::mem::MoveOrRef<T>)
   {
     if (t_.state() == None) {
       t_.construct_from_none(move_to_storage(t));
@@ -738,23 +755,21 @@ class Option final {
   {
     using U = __private::IsTupleOfSizeTwo<T>::first_type;
     using V = __private::IsTupleOfSizeTwo<T>::second_type;
-    using TupleOptUV = ::sus::tuple::Tuple<Option<U>, Option<V>>;
     if (is_some()) {
-      auto make_options = [](::sus::tuple::Tuple<U, V> tuple) noexcept {
-        auto&& [u, v] = ::sus::move(tuple);
-        return TupleOptUV::with(Option<U>::some(sus_move_preserve_ref(u)),
-                                Option<V>::some(sus_move_preserve_ref(v)));
-      };
-      return make_options(t_.take_and_set_none());
+      auto&& [u, v] = t_.take_and_set_none();
+      return ::sus::tuple::Tuple<Option<U>, Option<V>>::with(
+          Option<U>::some(::sus::forward<U>(u)),
+          Option<V>::some(::sus::forward<V>(v)));
     } else {
-      return TupleOptUV::with(Option<U>::none(), Option<V>::none());
+      return ::sus::tuple::Tuple<Option<U>, Option<V>>::with(Option<U>::none(),
+                                                             Option<V>::none());
     }
   }
 
   /// Replaces whatever the Option is currently holding with #Some value `t` and
   /// returns an Option holding what was there previously.
   Option replace(T t) & noexcept
-    requires(sus::mem::Move<T>)
+    requires(sus::mem::MoveOrRef<T>)
   {
     if (t_.state() == None) {
       t_.construct_from_none(move_to_storage(t));
@@ -765,30 +780,26 @@ class Option final {
   }
 
   /// Maps an `Option<T&>` to an `Option<T>` by copying the referenced `T`.
-  Option<std::decay_t<T>> copied() && noexcept
-      // TODO: Remove decay_t when Copy does it for us.
-      // https://github.com/chromium/subspace/issues/134
-    requires(std::is_reference_v<T> && ::sus::mem::Copy<std::decay_t<T>>)
+  Option<std::remove_reference_t<T>> copied() && noexcept
+    requires(std::is_reference_v<T> && ::sus::mem::Copy<T>)
   {
     if (t_.state() == None)
-      return Option<std::decay_t<T>>::none();
+      return Option<std::remove_reference_t<T>>::none();
     else
-      return Option<std::decay_t<T>>::some(t_.val_);
+      return Option<std::remove_reference_t<T>>::some(t_.val_);
   }
 
   /// Maps an `Option<T&>` to an `Option<T>` by cloning the referenced `T`.
-  Option<std::decay_t<T>> cloned() && noexcept
-      // TODO: Remove decay_t when Clone does it for us.
-      // https://github.com/chromium/subspace/issues/134
-    requires(std::is_reference_v<T> && ::sus::mem::Clone<std::decay_t<T>>)
+  Option<std::remove_reference_t<T>> cloned() && noexcept
+    requires(std::is_reference_v<T> && ::sus::mem::Clone<T>)
   {
     if (t_.state() == None) {
-      return Option<std::decay_t<T>>::none();
+      return Option<std::remove_reference_t<T>>::none();
     } else {
-      // TODO: Remove the decay when Clone does it for us.
-      // https://github.com/chromium/subspace/issues/134
-      return Option<std::decay_t<T>>::some(
-          ::sus::clone<std::decay_t<T>>(t_.val_));
+      // Specify the type `T` for clone() as `t_.val_` may be a
+      // `StoragePointer<T>` when the Option is holding a reference, and we want
+      // to clone the `T` object, not the `StoragePointer<T>`.
+      return Option<std::remove_reference_t<T>>::some(::sus::clone<T>(t_.val_));
     }
   }
 
@@ -859,7 +870,7 @@ class Option final {
     requires(!std::is_reference_v<T>)
       : t_(t) {}
   constexpr explicit Option(T&& t)
-    requires(!std::is_reference_v<T> && ::sus::mem::Move<T>)
+    requires(!std::is_reference_v<T> && ::sus::mem::MoveOrRef<T>)
       : t_(::sus::move(t)) {}
 
   template <class U>

@@ -16,9 +16,9 @@
 
 #include <concepts>
 
+#include "macros/always_inline.h"
 #include "mem/copy.h"
 #include "mem/move.h"
-#include "mem/mref.h"
 
 namespace sus::mem {
 
@@ -44,6 +44,9 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 /// * Is `Copy`. Meaning it has a copy constructor and assignment.
 /// * Has a `clone() const -> T` method, and is `Move`.
 ///
+/// This concept tests the object type of `T`, not a reference type `T&` or
+/// `const T&`.
+///
 /// A `Clone` type may also provide a `clone_from(const T& source)` method
 /// to have `sus::mem::clone_into()` perform copy-assignment from `source`, in
 /// order to reuse its resources and avoid allocations. In this case the type is
@@ -54,24 +57,62 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 /// clone() method if the type within is (Clone && !Copy), and should implement
 /// copy constructors if the type within is Copy.
 template <class T>
-concept Clone = (Copy<T> && !__private::HasCloneMethod<std::decay_t<T>>) ||
+concept Clone = (Copy<T> &&
+                 !__private::HasCloneMethod<std::remove_reference_t<T>>) ||
                 (!Copy<T> && Move<T> &&
-                 __private::HasCloneMethod<std::decay_t<T>>);
+                 __private::HasCloneMethod<std::remove_reference_t<T>>);
+
+/// A `CloneOrRef` object or reference of type `T` can be cloned to construct a
+/// new `T`.
+///
+/// This concept is used for templates that want to be generic over references,
+/// that is templates that want to allow their template parameter to be a
+/// reference and work with that reference as if it were an object itself. This
+/// is uncommon outside of library implementations, and its usage should
+/// typically be encapsuated inside a type that is `Clone`.
+template <class T>
+concept CloneOrRef = Clone<T> || std::is_reference_v<T>;
 
 /// A concept to verify that a Clone type has a specialization of `clone_from()`
 /// in order to optimize `::sus::clone_into()`. Mostly for testing types to
 /// ensure they're doing what you think they're doing.
 ///
+/// Evaluates to true if the type is `Copy` but it is not valid to be `Copy` and
+/// also have a `clone_from()` method, as it becomes amgiuous.
+///
 /// TODO: Should we make this into/from name consistent...??
 template <class T>
-concept CloneInto = Clone<T> && __private::HasCloneFromMethod<T>;
+concept CloneInto =
+    Clone<T> && (Copy<T> &&
+                 !__private::HasCloneFromMethod<std::remove_reference_t<T>>) ||
+    (!Copy<T> && __private::HasCloneFromMethod<std::remove_reference_t<T>>);
 
+/// Clones the input either by copying or cloning. Returns a new object of type
+/// `T`.
+///
+/// If `T` is a reference type, it will clone the underlying object.
 template <Clone T>
-inline constexpr auto clone(const T& source) noexcept {
+[[nodiscard]] sus_always_inline constexpr std::decay_t<T> clone(
+    const T& source) noexcept {
   if constexpr (Copy<T>) {
     return source;
   } else {
     return source.clone();
+  }
+}
+
+/// Clones the input either by copying or cloning, producing an object of type
+/// T.
+///
+/// If `T` is a reference type, it copies and returns the reference instead of
+/// the underlying object.
+template <CloneOrRef T>
+[[nodiscard]] sus_always_inline constexpr T clone_or_forward(
+    const std::remove_reference_t<T>& source) noexcept {
+  if constexpr (std::is_reference_v<T>) {
+    return source;
+  } else {
+    return ::sus::mem::clone(source);
   }
 }
 
@@ -86,7 +127,7 @@ inline constexpr auto clone(const T& source) noexcept {
 //
 // TODO: Provide a concept to verify that this method exists.
 template <Clone T>
-inline constexpr void clone_into(T& dest, const T& source) noexcept {
+sus_always_inline constexpr void clone_into(T& dest, const T& source) noexcept {
   if constexpr (Copy<T>) {
     dest = source;
   } else if constexpr (__private::HasCloneFromMethod<T>) {

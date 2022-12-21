@@ -26,9 +26,8 @@ namespace sus::mem {
 /// A type satisfies `Move` by implementing a move constructor and assignment
 /// operator.
 ///
-/// Const (non-reference) types are not `Move` as they can't be assigned to.
-/// References are always `Move`, even if const, as a reference can always be
-/// constructed from a reference.
+/// This concept tests the object type of `T`, not a reference type `T&` or
+/// `const T&`.
 ///
 /// A type that is `Copy` is also `Move`. However the type can opt out by
 /// explicitly deleteing the move constructor and assignment operator. This is
@@ -48,9 +47,9 @@ namespace sus::mem {
 /// };
 /// static_assert(sus::mem::Move<S>);
 template <class T>
-concept Move = std::is_move_constructible_v<std::decay_t<T>> &&
-               (std::is_move_assignable_v<std::decay_t<T>> ||
-                !std::is_copy_assignable_v<std::decay_t<T>>);
+concept Move = std::is_move_constructible_v<std::remove_reference_t<T>> &&
+               (std::is_move_assignable_v<std::remove_reference_t<T>> ||
+                !std::is_copy_assignable_v<std::remove_reference_t<T>>);
 
 /// A `MoveOrRef` object or reference of type `T` can be moved to construct a
 /// new `T`.
@@ -77,36 +76,9 @@ concept MoveOrRef = Move<T> || std::is_reference_v<T>;
 // TODO: Should this be `as_rvalue()`? Kinda technical. `as_...something...()`?
 template <class T>
   requires(!std::is_const_v<std::remove_reference_t<T>>)
-[[nodiscard]] sus_always_inline constexpr decltype(auto) move(T&& t) noexcept {
-  return static_cast<std::decay_t<T>&&>(t);
+[[nodiscard]] sus_always_inline constexpr auto&& move(T&& t) noexcept {
+  return static_cast<std::remove_reference_t<T>&&>(t);
 }
-
-/// Moves-from x if x is a non-reference type, and copies the reference if x is
-/// a reference type.
-///
-/// Like move(), this function may not be called with a const non-reference
-/// value.
-///
-/// This requires a macro to implement as we need to determine the type of the
-/// expression itself, not a function parameter at which point an lvalue becomes
-/// an lvalue-reference.
-///
-/// NOTE: An expression of type `structure.field` will be a reference even if
-/// the `field` is not a reference. To avoid this and actually get the type of
-/// the field, you would require a method on structure that returns
-/// `sus_move_preserve_ref(field)` with a return type of `decltype(auto)`. See
-/// Tuple::into_inner() for an example, where it calls a method instead of
-/// directly returning the field.
-//
-// Implemented with a lambda in order to static_assert things inside an
-// expression.
-#define sus_move_preserve_ref(x)                                     \
-  []<class Y>(Y&& y) -> decltype(auto) {                             \
-    /*static_assert(MoveOrRef<Y>);                                */ \
-    static_assert(std::is_reference_v<Y> ||                          \
-                  !std::is_const_v<std::remove_reference_t<Y>>);     \
-    return static_cast<Y&&>(y);                                      \
-  }(static_cast<decltype(x)&&>(x))
 
 }  // namespace sus::mem
 

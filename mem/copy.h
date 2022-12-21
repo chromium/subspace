@@ -23,8 +23,7 @@ namespace sus::mem {
 ///
 /// Satisfying `Copy` also implies that the type satisfies `Clone`.
 ///
-/// This concept decays `T` before testing it in order to give the result of the
-/// object type of `T`, not a qualified type or a reference type.
+/// This concept tests the object type of `T`, not a reference type `T&` or `const T&`.
 ///
 /// Typically types should only be `Copy` when performing a copy is very cheap,
 /// and thus unlikely to cause performance problems. For types that are larger
@@ -42,8 +41,8 @@ namespace sus::mem {
 /// static_assert(sus::mem::Clone<S>);
 /// ```
 template <class T>
-concept Copy = std::is_copy_constructible_v<std::decay_t<T>> &&
-               std::is_copy_assignable_v<std::decay_t<T>>;
+concept Copy = std::is_copy_constructible_v<std::remove_reference_t<T>> &&
+               std::is_copy_assignable_v<std::remove_reference_t<T>>;
 
 /// A `CopyOrRef` object or reference of type `T` can be copied to construct a
 /// new `T`.
