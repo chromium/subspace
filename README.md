@@ -64,3 +64,30 @@ it from the Chromium project:
 1. Install Visual Studio 2022. Don't bother installing the CMake tools from it, they don't work as well
 1. Set the "Windows SDK Version" in VSCode to `10.0.19041.0` (or the version installed with Visual Studio)
 1. Set the "CMake: Generator" in VSCode to `Visual Studio 17 2022`, or add it to "CMake: Preferred Generators"
+
+# Building CIR
+
+CIR is a midlevel representaion of C++ built on Clang in the spirit of [Rust's
+MIR](https://kanishkarj.github.io/rust-internals-mir).
+
+CIR requires an installation of LLVM from Git HEAD, including the LLVM/Clang headers and libraries.
+
+By default it looks for llvm in `../llvm/build/install`, but you can change this
+by setting the `LLVM_INSTALL_DIR` environment variable.
+
+To build LLVM from VSCode, the following can be put in `.vscode/settings.json`:
+```json
+{
+    "cmake.configureOnOpen": false,
+    "cmake.sourceDirectory": "${workspaceFolder}/llvm",
+    "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}/${variant:platform}",
+    "cmake.installPrefix": "${workspaceFolder}/build/install",
+    "cmake.generator": "Ninja",
+    "cmake.configureArgs": [
+        "-DLLVM_ENABLE_PROJECTS=clang",
+    ],
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}
+```
+Then use VSCode to choose a build configuration and run the "CMake: Build" and
+"CMake: Install" tasks.

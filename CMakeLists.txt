@@ -7,9 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 if(MSVC)
     add_compile_options(/Zc:preprocessor /wd5105)
-    add_compile_options(/W4 /WX)
-else()
-    add_compile_options(-Werror)
 endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -20,3 +17,4 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(third_party/googletest)
 
 add_subdirectory(subspace)
+add_subdirectory(cir)

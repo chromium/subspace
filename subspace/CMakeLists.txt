@@ -146,15 +146,18 @@ add_executable(subspace_unittests
     "tuple/tuple_unittest.cc"
 )
 
+# Subspace library
 target_include_directories(subspace PUBLIC .)
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
 
+# Subspace test support
 target_include_directories(subspace_test_support PUBLIC .)
 set_target_properties(subspace_test_support PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(subspace_test_support
     subspace
 )
 
+# Subspace unittests
 target_include_directories(subspace_unittests PUBLIC .)
 target_include_directories(subspace_unittests PUBLIC ../third_party/googletest)
 set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
@@ -163,6 +166,14 @@ target_link_libraries(subspace_unittests
     subspace_test_support
     gtest_main
 )
+
+# -Werror when building unittests to verify no warnings in the subspace
+# library.
+if(MSVC)
+    target_compile_options(subspace_unittests PUBLIC /W4 /WX)
+else()
+    target_compile_options(subspace_unittests PUBLIC -Werror)
+endif()
 
 include(GoogleTest)
 gtest_discover_tests(
