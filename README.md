@@ -91,3 +91,8 @@ To build LLVM from VSCode, the following can be put in `.vscode/settings.json`:
 ```
 Then use VSCode to choose a build configuration and run the "CMake: Build" and
 "CMake: Install" tasks.
+
+## Windows
+
+On windows, set the envionment variable `LLVM_DEBUG=1` if the LLVM build was a
+debug build in order for CIR to link the appropriate runtime.

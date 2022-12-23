@@ -32,7 +32,12 @@ target_link_libraries(cir subspace)
 
 # Clang/LLVM config.
 if(MSVC)
-    target_compile_options(cir PUBLIC /MD)
+    # This depends on if the LLVM build was debug or release:
+    if($ENV{LLVM_DEBUG})
+        set_property(TARGET cir PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
+    else()
+        set_property(TARGET cir PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+    endif()
 endif()
 target_link_libraries(cir
     clangAnalysis.lib
