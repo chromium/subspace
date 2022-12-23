@@ -1,0 +1,10 @@
+fn f@0() -> void {
+    let _1: S
+    let _2: *S
+
+    bb0:
+        _2 = &_1;
+        call S::S(inout _2 -> _3)
+        call S::~S(_3)
+        return
+}
