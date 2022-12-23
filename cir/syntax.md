@@ -80,14 +80,6 @@ writep(p, v)
  - The types must match.
 
 ```c
-v = fieldof(p, n)
-```
- - Gets the address of a field with name `n` from the class pointed to by the
-   pointer `p`.
- - The `name` in textual representation is the full class name (incl namespace)
-   + field name.
-
-```c
 p = &o
 ```
 - Take the address of an object `o` and store it as a pointer in `p`.
@@ -255,13 +247,16 @@ bbN: {
  - Primitive (arithmetic) types
  - Structs (no classes)
  - Unions
- - Enums (are integers in MIR?)
+ - Enums (are integers in CIR?)
  - Pointers, but no references (replaced by pointers)
     - Pointer symbols come first: **int instead of int**
     - Modifiers go to the right of each part of the pointer:
       - `*const * int` instead of int * const*.
       - `*const * int const` instead of `const int * const*`.
- - No pointers-to-members: replaced by the function fieldof()
-    - Instead, field-name is a type, which is the full class name (incl namespace) + field name.
-    - Internally it can be represented more efficiently.
+ - No pointers-to-members: replaced by a generated function for each type+field.
+    - The function takes the type pointer, and returns the field pointer:
+    - `fn access_type::field@id(* type) -> * field type`
+    - Note that `:` and `<>` are a regular characters in CIR that can be part of identifiers,
+      So the function may be named like
+      `access_std::vector<int>::private_data_@fg7e(* std::vector<int>) -> * int`
  - All template parameters are substituted; uninstantiated templates are not represented
