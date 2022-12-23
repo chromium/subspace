@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <unordered_set>
+
+#include "subspace/prelude.h"
+
 #pragma warning(push)
 #pragma warning(disable : 4624)
 #include "clang/Tooling/CommonOptionsParser.h"
+#include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/WithColor.h"
 #pragma warning(pop)
-
-#include "subspace/prelude.h"
 
 int main(int argc, const char** argv) {
   llvm::InitLLVM init(argc, argv);
@@ -38,5 +41,22 @@ int main(int argc, const char** argv) {
     return 1;
   }
 
-  llvm::outs() << "hello world";
+  auto& compdb = options_parser->getCompilations();
+
+  std::vector<std::string> paths = options_parser->getSourcePathList();
+  for (const auto& input_path : paths) {
+    bool found = false;
+    for (auto s : compdb.getAllFiles()) {
+      if (s.find(input_path) == std::string::npos) {
+        continue;
+      }
+      llvm::outs() << s << " :\n";
+      clang::tooling::CompileCommand command = compdb.getCompileCommands(s)[0];
+      for (const auto& i : command.CommandLine) llvm::outs() << i << " ";
+      found = true;
+    }
+    if (!found) {
+      llvm::outs() << "Unknown file, not in compiledb: " << input_path << "\n";
+    }
+  }
 }
