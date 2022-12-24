@@ -16,6 +16,10 @@
     "cmake.configureSettings": {
         "CMAKE_MAKE_PROGRAM": "ninja"
     },
+    "cmake.environment": {
+        "LLVM_DIR": "../../llvm/build/install/lib/cmake/llvm",
+        "Clang_DIR": "../../llvm/build/install/lib/cmake/clang",
+    },
     "cmake.generator": "Ninja",
     "files.eol": "\n",
     "C_Cpp.intelliSenseEngine": "Tag Parser",

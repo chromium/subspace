@@ -70,12 +70,21 @@ it from the Chromium project:
 CIR is a midlevel representaion of C++ built on Clang in the spirit of [Rust's
 MIR](https://kanishkarj.github.io/rust-internals-mir).
 
-CIR requires an installation of LLVM from Git HEAD, including the LLVM/Clang headers and libraries.
+CIR requires an installation of LLVM from Git HEAD, including the LLVM/Clang
+headers and libraries.
 
-By default it looks for llvm in `../llvm/build/install`, but you can change this
-by setting the `LLVM_INSTALL_DIR` environment variable.
+By default, in VSCode it looks for llvm and clang in the following places, from
+Subspace's `.vscode/settings.json`, but you will need to set these environment
+variables if building in another way.
+```json
+    "cmake.environment": {
+        "LLVM_DIR": "../../llvm/build/install/lib/cmake/llvm",
+        "CLANG_DIR": "../../llvm/build/install/lib/cmake/clang",
+    },
+```
 
-To build LLVM from VSCode, the following can be put in `.vscode/settings.json`:
+To build LLVM from VSCode, the following can be put in LLVM's
+`.vscode/settings.json`:
 ```json
 {
     "cmake.configureOnOpen": false,
