@@ -13,8 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
-      - name: Install Clang
-        if: matrix.config.name == 'Ubuntu Nightly Clang'
+      - name: Install LLVM+Clang
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
