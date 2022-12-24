@@ -25,13 +25,15 @@ let x: T
  - Arguments are represented as objects in this form.
 
 ```c
-call x@id(p, a, b) -> c
+call x@id(p, a const, b nullable) -> c
 ```
  - Calls function/method with the given id. The `id` used to avoid overload
    resolution in CIR.
  - If x is a method, p is a pointer to the Object that will be in `this`.
  - The objects `p`, `a`, and `b` are passed as arguments to the function, and
    the return value is stored in the object `c`.
+ - For each pointer argument, the pointer can be annotated by qualifiers if it
+   will be received with additional qualifiers attached to it: const, nullable.
  - The types of all objects must match the function signature of `x@id()`.
  - Note: The id is useful for humans, but can be internally represented
    through a pointer instead.
