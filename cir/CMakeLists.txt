@@ -1,6 +1,8 @@
 add_library(cir_lib STATIC
-    "lib/tool.cc"
-    #"lib/tool.h"
+    "lib/run.cc"
+    "lib/run.h"
+    "lib/visit.cc"
+    "lib/visit.h"
 )
 
 add_executable(cir
