@@ -1,41 +1,44 @@
+add_library(cir_lib STATIC
+    "lib/tool.cc"
+    #"lib/tool.h"
+)
+
 add_executable(cir
     "main.cc"
 )
 
-if($ENV{LLVM_SRC_DIR})
-    target_include_directories(cir PUBLIC
+set_target_properties(cir PROPERTIES LINKER_LANGUAGE CXX)
+
+# Subspace config.
+target_include_directories(cir_lib PUBLIC ..)
+target_link_libraries(cir_lib subspace)
+target_include_directories(cir PUBLIC ..)
+target_link_libraries(cir subspace cir_lib)
+
+# Clang/LLVM config.
+if($ENV{LLVM_INSTALL_DIR})
+    target_include_directories(cir_lib PUBLIC
         $ENV{LLVM_INSTALL_DIR}/include
     )
-else()
-    target_include_directories(cir PUBLIC
-        ../../llvm/build/install/include
-    )
-endif()
-
-if($ENV{LLVM_INSTALL_DIR})
-    set(llvm_dir $ENV{LLVM_INSTALL_DIR})
     target_link_directories(cir PRIVATE
         $ENV{LLVM_INSTALL_DIR}/lib
     )
 else()
-    set(llvm_dir ../../llvm/build/install)
+    target_include_directories(cir_lib PUBLIC
+        ../../llvm/build/install/include
+    )
     target_link_directories(cir PRIVATE
         ../../llvm/build/install/lib
     )
 endif()
 
-set_target_properties(cir PROPERTIES LINKER_LANGUAGE CXX)
-
-# Subspace config.
-target_include_directories(cir PUBLIC ..)
-target_link_libraries(cir subspace)
-
-# Clang/LLVM config.
 if(MSVC)
     # This depends on if the LLVM build was debug or release:
     if($ENV{LLVM_DEBUG})
+        set_property(TARGET cir_lib PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
         set_property(TARGET cir PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
     else()
+        set_property(TARGET cir_lib PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
         set_property(TARGET cir PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
     endif()
 endif()

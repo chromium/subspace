@@ -14,6 +14,7 @@
 
 #include <unordered_set>
 
+#include "lib/tool.h"
 #include "subspace/prelude.h"
 
 #pragma warning(push)
@@ -43,20 +44,23 @@ int main(int argc, const char** argv) {
 
   auto& compdb = options_parser->getCompilations();
 
-  std::vector<std::string> paths = options_parser->getSourcePathList();
-  for (const auto& input_path : paths) {
+  std::vector<std::string> run_against_files;
+
+  for (const auto& input_path : options_parser->getSourcePathList()) {
     bool found = false;
     for (auto s : compdb.getAllFiles()) {
       if (s.find(input_path) == std::string::npos) {
         continue;
       }
       llvm::outs() << s << " :\n";
-      clang::tooling::CompileCommand command = compdb.getCompileCommands(s)[0];
-      for (const auto& i : command.CommandLine) llvm::outs() << i << " ";
+      run_against_files.push_back(s);
       found = true;
     }
     if (!found) {
       llvm::outs() << "Unknown file, not in compiledb: " << input_path << "\n";
     }
   }
+
+  auto fs = llvm::vfs::getRealFileSystem();
+  return cir::tool::run_files(run_against_files, *fs);
 }
