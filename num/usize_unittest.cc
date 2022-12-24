@@ -71,16 +71,14 @@ static_assert(sizeof(usize) != sizeof(u64)
                   ? usize::MAX().primitive_value == 0xffffffff
                   : usize::MAX().primitive_value == 0xffffffff'ffffffff);
 template <class T>
-concept MaxInRange =
-    requires {
-      {
-        sizeof(usize) != sizeof(u64) ? 0xffffffff_usize
-                                     : 0xffffffff'ffffffff_usize
-        } -> std::same_as<T>;
-      {
-        usize(sizeof(usize) != sizeof(u64) ? 0xffffffff : 0xffffffff'ffffffff)
-        } -> std::same_as<T>;
-    };
+concept MaxInRange = requires {
+  {
+    sizeof(usize) != sizeof(u64) ? 0xffffffff_usize : 0xffffffff'ffffffff_usize
+  } -> std::same_as<T>;
+  {
+    usize(sizeof(usize) != sizeof(u64) ? 0xffffffff : 0xffffffff'ffffffff)
+  } -> std::same_as<T>;
+};
 static_assert(MaxInRange<usize>);
 
 TEST(usize, Traits) {
@@ -139,10 +137,10 @@ TEST(usize, Traits) {
   static_assert(!(1_usize != 1_usize));
 
   // Verify constexpr.
-  constexpr usize c =
+  [[maybe_unused]] constexpr usize c =
       1_usize + 2_usize - 3_usize * 4_usize / 5_usize % 6_usize & 7_usize |
       8_usize ^ 9_usize;
-  constexpr std::strong_ordering o = 2_usize <=> 3_usize;
+  [[maybe_unused]] constexpr std::strong_ordering o = 2_usize <=> 3_usize;
 }
 
 TEST(usize, Literals) {
@@ -150,21 +148,21 @@ TEST(usize, Literals) {
   static_assert((0x123abC_usize).primitive_value == 0x123abC);
   static_assert((0X123abC_usize).primitive_value == 0X123abC);
   static_assert((0X00123abC_usize).primitive_value == 0X123abC);
-  EXPECT_EQ((0x123abC_usize).primitive_value, 0x123abC);
-  EXPECT_EQ((0X123abC_usize).primitive_value, 0X123abC);
-  EXPECT_EQ((0X00123abC_usize).primitive_value, 0X123abC);
+  EXPECT_EQ((0x123abC_usize).primitive_value, 0x123abCu);
+  EXPECT_EQ((0X123abC_usize).primitive_value, 0X123abCu);
+  EXPECT_EQ((0X00123abC_usize).primitive_value, 0X123abCu);
   // Binary.
   static_assert((0b101_usize).primitive_value == 0b101);
   static_assert((0B101_usize).primitive_value == 0B101);
   static_assert((0b00101_usize).primitive_value == 0b101);
-  EXPECT_EQ((0b101_usize).primitive_value, 0b101);
-  EXPECT_EQ((0B101_usize).primitive_value, 0B101);
-  EXPECT_EQ((0b00101_usize).primitive_value, 0b101);
+  EXPECT_EQ((0b101_usize).primitive_value, 0b101u);
+  EXPECT_EQ((0B101_usize).primitive_value, 0B101u);
+  EXPECT_EQ((0b00101_usize).primitive_value, 0b101u);
   // Octal.
   static_assert((0123_usize).primitive_value == 0123);
   static_assert((000123_usize).primitive_value == 0123);
-  EXPECT_EQ((0123_usize).primitive_value, 0123);
-  EXPECT_EQ((000123_usize).primitive_value, 0123);
+  EXPECT_EQ((0123_usize).primitive_value, 0123u);
+  EXPECT_EQ((000123_usize).primitive_value, 0123u);
   // Decimal.
   static_assert((0_usize).primitive_value == 0);
   static_assert((1_usize).primitive_value == 1);

@@ -73,9 +73,9 @@ static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 static_assert(i32::MAX().primitive_value == 0x7fffffff);
 template <class T>
 concept MaxInRange = requires {
-                       { 0x7fffffff_i32 } -> std::same_as<T>;
-                       { i32(0x7fffffff) } -> std::same_as<T>;
-                     };
+  { 0x7fffffff_i32 } -> std::same_as<T>;
+  { i32(0x7fffffff) } -> std::same_as<T>;
+};
 static_assert(MaxInRange<i32>);
 
 TEST(i32, Traits) {
@@ -132,9 +132,9 @@ TEST(i32, Traits) {
   static_assert(!(1_i32 != 1_i32));
 
   // Verify constexpr.
-  constexpr i32 c =
+  [[maybe_unused]] constexpr i32 c =
       1_i32 + 2_i32 - 3_i32 * 4_i32 / 5_i32 % 6_i32 & 7_i32 | 8_i32 ^ -9_i32;
-  constexpr std::strong_ordering o = 2_i32 <=> 3_i32;
+  [[maybe_unused]] constexpr std::strong_ordering o = 2_i32 <=> 3_i32;
 }
 
 TEST(i32, Literals) {
@@ -655,7 +655,7 @@ TEST(i32DeathTest, DivOverflow) {
 }
 
 TEST(i32, CheckedDiv) {
-  constexpr auto a = (4_i32).checked_div(2_i32);
+  [[maybe_unused]] constexpr auto a = (4_i32).checked_div(2_i32);
 
   EXPECT_EQ((0_i32).checked_div(123_i32), Option<i32>::some(0_i32));
   EXPECT_EQ((2345_i32).checked_div(1_i32), Option<i32>::some(2345_i32));
@@ -1553,7 +1553,7 @@ TEST(i32, TrailingOnes) {
 }
 
 TEST(i32, Pow) {
-  constexpr auto a = (2_i32).pow(5_u32);
+  [[maybe_unused]] constexpr auto a = (2_i32).pow(5_u32);
 
   EXPECT_EQ((2_i32).pow(5_u32), 32_i32);
   EXPECT_EQ((2_i32).pow(0_u32), 1_i32);
@@ -1576,7 +1576,7 @@ TEST(i32DeathTest, PowOverflow) {
 }
 
 TEST(i32, OverflowingPow) {
-  constexpr auto a = (2_i32).overflowing_pow(5_u32);
+  [[maybe_unused]] constexpr auto a = (2_i32).overflowing_pow(5_u32);
 
   EXPECT_EQ((2_i32).overflowing_pow(5_u32),
             (Tuple<i32, bool>::with(32_i32, false)));

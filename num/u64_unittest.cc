@@ -131,9 +131,9 @@ TEST(u64, Traits) {
   static_assert(!(1_u64 != 1_u64));
 
   // Verify constexpr.
-  constexpr u64 c =
+  [[maybe_unused]] constexpr u64 c =
       1_u64 + 2_u64 - 3_u64 * 4_u64 / 5_u64 % 6_u64 & 7_u64 | 8_u64 ^ 9_u64;
-  constexpr std::strong_ordering o = 2_u64 <=> 3_u64;
+  [[maybe_unused]] constexpr std::strong_ordering o = 2_u64 <=> 3_u64;
 }
 
 TEST(u64, Literals) {
