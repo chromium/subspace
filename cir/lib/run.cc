@@ -62,6 +62,12 @@ int run_files(const clang::tooling::CompilationDatabase& compdb,
     // Clang-cl doesn't understand this argument, but it may appear in the
     // command-line for MSVC in C++20 codebases (like subspace).
     std::erase(args, "/Zc:preprocessor");
+
+    // TODO: https://github.com/llvm/llvm-project/issues/59689 clang-cl requires
+    // this define in order to use offsetof() from constant expressions, which
+    // subspace uses for the never-value optimization.
+    args.push_back("/D_CRT_USE_BUILTIN_OFFSETOF");
+
     return std::move(args);
   };
   tool.appendArgumentsAdjuster(adj);

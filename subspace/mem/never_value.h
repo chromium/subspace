@@ -179,8 +179,7 @@ concept NeverValueField = never_value_access<T>::has_field;
                                                                                \
   template <class SusUnsafeNeverValueOuter,                                    \
             bool SusUnsafeNeverValueStandardLayout =                           \
-                sus_clang_bug_59689(false) sus_clang_bug_59689_else(           \
-                    std::is_standard_layout_v<SusUnsafeNeverValueOuter>)>      \
+                std::is_standard_layout_v<SusUnsafeNeverValueOuter>>           \
   struct SusUnsafeNeverValueOverlay;                                           \
                                                                                \
   template <class SusUnsafeNeverValueOuter>                                    \

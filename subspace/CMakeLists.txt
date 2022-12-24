@@ -150,6 +150,14 @@ add_executable(subspace_unittests
 target_include_directories(subspace PUBLIC .)
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
+   CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
+    # TODO: https://github.com/llvm/llvm-project/issues/59689
+    # clang-cl requires this define in order to use offsetof() from constant
+    # expressions, which is needed for the never-value optimization.
+    target_compile_options(subspace PUBLIC /D_CRT_USE_BUILTIN_OFFSETOF)
+endif()
+
 # Subspace test support
 target_include_directories(subspace_test_support PUBLIC .)
 set_target_properties(subspace_test_support PROPERTIES LINKER_LANGUAGE CXX)
