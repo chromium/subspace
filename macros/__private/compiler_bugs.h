@@ -114,3 +114,14 @@
 #define sus_gcc_bug_108169(...)
 #define sus_gcc_bug_108169_else(...) __VA_ARGS__
 #endif
+
+
+// TODO: https://github.com/llvm/llvm-project/issues/49358
+// Clang-cl doesn't support either [[no_unique_address]] nor [[msvc::no_unique_address]]
+#if _MSC_VER && __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#define sus_clang_bug_49358(...) __VA_ARGS__
+#define sus_clang_bug_49358_else(...)
+#else
+#define sus_clang_bug_49358(...)
+#define sus_clang_bug_49358_else(...) __VA_ARGS__
+#endif
