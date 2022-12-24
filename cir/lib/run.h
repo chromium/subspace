@@ -26,7 +26,7 @@
 
 namespace cir {
 
-int run_test(std::string content) noexcept;
+int run_test(std::string content, std::vector<std::string> args) noexcept;
 
 int run_files(const clang::tooling::CompilationDatabase& compdb,
               std::vector<std::string> paths,
