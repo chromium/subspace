@@ -83,9 +83,9 @@ concept CloneOrRef = Clone<T> || std::is_reference_v<T>;
 /// TODO: Should we make this into/from name consistent...??
 template <class T>
 concept CloneInto =
-    Clone<T> && (Copy<T> &&
-                 !__private::HasCloneFromMethod<std::remove_reference_t<T>>) ||
-    (!Copy<T> && __private::HasCloneFromMethod<std::remove_reference_t<T>>);
+    Clone<T> &&
+    ((Copy<T> && !__private::HasCloneFromMethod<std::remove_reference_t<T>>) ||
+     (!Copy<T> && __private::HasCloneFromMethod<std::remove_reference_t<T>>));
 
 /// Clones the input either by copying or cloning. Returns a new object of type
 /// `T`.
