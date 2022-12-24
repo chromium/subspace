@@ -58,6 +58,14 @@ int run_files(const clang::tooling::CompilationDatabase& compdb,
       compdb, paths, std::make_shared<clang::PCHContainerOperations>(),
       std::move(fs));
 
+  auto adj = [](auto args, llvm::StringRef Filename) {
+    // Clang-cl doesn't understand this argument, but it may appear in the
+    // command-line for MSVC in C++20 codebases (like subspace).
+    std::erase(args, "/Zc:preprocessor");
+    return std::move(args);
+  };
+  tool.appendArgumentsAdjuster(adj);
+
   std::vector<std::unique_ptr<clang::ASTUnit>> asts;
   int ret = tool.buildASTs(asts);
   if (ret == 0) {
