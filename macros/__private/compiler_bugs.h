@@ -125,3 +125,13 @@
 #define sus_clang_bug_49358(...)
 #define sus_clang_bug_49358_else(...) __VA_ARGS__
 #endif
+
+// TODO: https://github.com/llvm/llvm-project/issues/59689
+// offsetof() is not constant evaluable in clang-cl.
+#if _MSC_VER && __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#define sus_clang_bug_59689(...) __VA_ARGS__
+#define sus_clang_bug_59689_else(...)
+#else
+#define sus_clang_bug_59689(...)
+#define sus_clang_bug_59689_else(...) __VA_ARGS__
+#endif
