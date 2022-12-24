@@ -19,13 +19,17 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4624)
+#include "clang/Tooling/CompilationDatabase.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #pragma warning(pop)
 
-namespace cir::tool {
+namespace cir {
 
-int run_test(std::string content);
+int run_test(std::string content) noexcept;
 
-int run_files(std::vector<std::string> paths, const llvm::vfs::FileSystem& fs);
+int run_files(const clang::tooling::CompilationDatabase& compdb,
+              std::vector<std::string> paths,
+              llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept;
 
-}  // namespace cir::tool
+}  // namespace cir

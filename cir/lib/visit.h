@@ -12,32 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cir/lib/tool.h"
-
-#include <memory>
-#include <utility>
-
-#include "subspace/prelude.h"
+#pragma once
 
 #pragma warning(push)
 #pragma warning(disable : 4624)
-#pragma warning(disable : 4291)
-#include "clang/Tooling/Tooling.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "clang/AST/DeclBase.h"
 #pragma warning(pop)
 
-namespace cir::tool {
+namespace cir {
 
-int run_test(std::string content) {
-  auto vfs = llvm::vfs::InMemoryFileSystem();
-  vfs.addFile("test.cc", 0, llvm::MemoryBuffer::getMemBuffer(content));
+void visit_decl(const clang::Decl& decl) noexcept;
 
-  return run_files({"test.cc"}, vfs);
-}
-
-int run_files(std::vector<std::string> paths, const llvm::vfs::FileSystem& fs) {
-  llvm::outs() << "hi\n";
-  return 1;
-}
-
-}  // namespace cir::tool
+}  // namespace cir

@@ -14,7 +14,7 @@
 
 #include <unordered_set>
 
-#include "lib/tool.h"
+#include "lib/run.h"
 #include "subspace/prelude.h"
 
 #pragma warning(push)
@@ -62,5 +62,9 @@ int main(int argc, const char** argv) {
   }
 
   auto fs = llvm::vfs::getRealFileSystem();
-  return cir::tool::run_files(run_against_files, *fs);
+  auto ret = cir::run_files(compdb, run_against_files, std::move(fs));
+  if (ret) {
+    llvm::outs() << "Error occured\n";
+  }
+  return ret;
 }
