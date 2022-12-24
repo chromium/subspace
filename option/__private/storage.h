@@ -211,6 +211,10 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
 
 // This must be true in order for StoragePointer to be useful with the
 // never-value field optimization.
-static_assert(::sus::mem::NeverValueField<StoragePointer<int&>>);
+// clang-format off
+sus_clang_bug_59689_else(
+  static_assert(::sus::mem::NeverValueField<StoragePointer<int&>>);
+)
+// clang-format on
 
 }  // namespace sus::option::__private
