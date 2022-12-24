@@ -79,16 +79,14 @@ static_assert(sizeof(isize) != sizeof(i64)
                   ? isize::MAX().primitive_value == 0x7fffffff
                   : isize::MAX().primitive_value == 0x7fffffff'ffffffff);
 template <class T>
-concept MaxInRange =
-    requires {
-      {
-        sizeof(isize) != sizeof(i64) ? 0x7fffffff_isize
-                                     : 0x7fffffff'ffffffff_isize
-        } -> std::same_as<T>;
-      {
-        isize(sizeof(isize) != sizeof(i64) ? 0x7fffffff : 0x7fffffff'ffffffff)
-        } -> std::same_as<T>;
-    };
+concept MaxInRange = requires {
+  {
+    sizeof(isize) != sizeof(i64) ? 0x7fffffff_isize : 0x7fffffff'ffffffff_isize
+  } -> std::same_as<T>;
+  {
+    isize(sizeof(isize) != sizeof(i64) ? 0x7fffffff : 0x7fffffff'ffffffff)
+  } -> std::same_as<T>;
+};
 static_assert(MaxInRange<isize>);
 
 TEST(isize, Traits) {
@@ -145,10 +143,10 @@ TEST(isize, Traits) {
   static_assert(!(1_isize != 1_isize));
 
   // Verify constexpr.
-  constexpr isize c =
+  [[maybe_unused]] constexpr isize c =
       1_isize + 2_isize - 3_isize * 4_isize / 5_isize % 6_isize & 7_isize |
       8_isize ^ -9_isize;
-  constexpr std::strong_ordering o = 2_isize <=> 3_isize;
+  [[maybe_unused]] constexpr std::strong_ordering o = 2_isize <=> 3_isize;
 }
 
 TEST(isize, Literals) {

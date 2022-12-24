@@ -70,9 +70,9 @@ static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 static_assert(u8::MAX().primitive_value == 0xff);
 template <class T>
 concept MaxInRange = requires {
-                       { 0xff_u8 } -> std::same_as<T>;
-                       { u8(uint8_t{0xff}) } -> std::same_as<T>;
-                     };
+  { 0xff_u8 } -> std::same_as<T>;
+  { u8(uint8_t{0xff}) } -> std::same_as<T>;
+};
 static_assert(MaxInRange<u8>);
 
 TEST(u8, Traits) {
@@ -131,8 +131,9 @@ TEST(u8, Traits) {
   static_assert(!(1_u8 != 1_u8));
 
   // Verify constexpr.
-  constexpr u8 c = 1_u8 + 2_u8 - 3_u8 * 4_u8 / 5_u8 % 6_u8 & 7_u8 | 8_u8 ^ 9_u8;
-  constexpr std::strong_ordering o = 2_u8 <=> 3_u8;
+  [[maybe_unused]] constexpr u8 c =
+      1_u8 + 2_u8 - 3_u8 * 4_u8 / 5_u8 % 6_u8 & 7_u8 | 8_u8 ^ 9_u8;
+  [[maybe_unused]] constexpr std::strong_ordering o = 2_u8 <=> 3_u8;
 }
 
 TEST(u8, Literals) {

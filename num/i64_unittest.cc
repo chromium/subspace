@@ -70,9 +70,9 @@ static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 static_assert(i64::MAX().primitive_value == 0x7fffffff'ffffffff);
 template <class T>
 concept MaxInRange = requires {
-                       { 0x7fffffff'ffffffff_i64 } -> std::same_as<T>;
-                       { i64(0x7fffffff'ffffffff) } -> std::same_as<T>;
-                     };
+  { 0x7fffffff'ffffffff_i64 } -> std::same_as<T>;
+  { i64(0x7fffffff'ffffffff) } -> std::same_as<T>;
+};
 static_assert(MaxInRange<i64>);
 
 TEST(i64, Traits) {
@@ -129,9 +129,9 @@ TEST(i64, Traits) {
   static_assert(!(1_i64 != 1_i64));
 
   // Verify constexpr.
-  constexpr i64 c =
+  [[maybe_unused]] constexpr i64 c =
       1_i64 + 2_i64 - 3_i64 * 4_i64 / 5_i64 % 6_i64 & 7_i64 | 8_i64 ^ -9_i64;
-  constexpr std::strong_ordering o = 2_i64 <=> 3_i64;
+  [[maybe_unused]] constexpr std::strong_ordering o = 2_i64 <=> 3_i64;
 }
 
 TEST(i64, Literals) {
@@ -196,7 +196,9 @@ TEST(i64, FromPrimitive) {
   static_assert(IsImplicitlyConvertible<uint16_t, i64>);
   static_assert(IsImplicitlyConvertible<uint32_t, i64>);
   static_assert(NotConvertible<uint64_t, i64>);
-  static_assert(sizeof(size_t) >= sizeof(i64) ? NotConvertible<size_t, i64> : IsImplicitlyConvertible<size_t, i64>);
+  static_assert(sizeof(size_t) >= sizeof(i64)
+                    ? NotConvertible<size_t, i64>
+                    : IsImplicitlyConvertible<size_t, i64>);
 }
 
 TEST(i64, ToPrimitive) {

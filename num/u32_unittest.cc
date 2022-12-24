@@ -134,9 +134,9 @@ TEST(u32, Traits) {
   static_assert(!(1_u32 != 1_u32));
 
   // Verify constexpr.
-  constexpr u32 c =
+  [[maybe_unused]] constexpr u32 c =
       1_u32 + 2_u32 - 3_u32 * 4_u32 / 5_u32 % 6_u32 & 7_u32 | 8_u32 ^ 9_u32;
-  constexpr std::strong_ordering o = 2_u32 <=> 3_u32;
+  [[maybe_unused]] constexpr std::strong_ordering o = 2_u32 <=> 3_u32;
 }
 
 TEST(u32, Literals) {
@@ -986,7 +986,7 @@ TEST(u32, TrailingOnes) {
 }
 
 TEST(u32, Pow) {
-  constexpr auto a = (2_u32).pow(5_u32);
+  [[maybe_unused]] constexpr auto a = (2_u32).pow(5_u32);
 
   EXPECT_EQ((2_u32).pow(5_u32), 32_u32);
   EXPECT_EQ((2_u32).pow(0_u32), 1_u32);
@@ -1009,7 +1009,7 @@ TEST(u32DeathTest, PowOverflow) {
 }
 
 TEST(u32, OverflowingPow) {
-  constexpr auto a = (2_u32).overflowing_pow(5_u32);
+  [[maybe_unused]] constexpr auto a = (2_u32).overflowing_pow(5_u32);
 
   EXPECT_EQ((2_u32).overflowing_pow(5_u32),
             (Tuple<u32, bool>::with(32_u32, false)));
