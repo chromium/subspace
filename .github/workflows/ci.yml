@@ -66,7 +66,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 16
+          sudo ./llvm.sh 16 all
 
       - name: Download Ninja
         id: ninja
@@ -97,6 +97,15 @@ jobs:
         run: |
           set(ENV{CC} ${{ matrix.config.cc }})
           set(ENV{CXX} ${{ matrix.config.cxx }})
+
+          if (NOT "${{ runner.os }}" STREQUAL "Windows")
+            # Path to LLVM+Clang nightly that we have installed.
+            set(ENV{LLVM_DIR} "/usr/lib/llvm-16/lib/cmake/llvm")
+            set(ENV{Clang_DIR} "/usr/lib/llvm-16/lib/cmake/clang")
+          else()
+            # We don't have a copy of LLVM+Clang on the Windows bot.
+            set(ENV{SUBSPACE_NO_BUILD_CIR} "1")
+          endif()
 
           if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
             execute_process(

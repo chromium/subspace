@@ -17,4 +17,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(third_party/googletest)
 
 add_subdirectory(subspace)
-add_subdirectory(cir)
+
+if (NOT DEFINED ENV{SUBSPACE_NO_BUILD_CIR})
+    add_subdirectory(cir)
+endif()
