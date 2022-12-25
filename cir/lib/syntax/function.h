@@ -14,25 +14,18 @@
 
 #pragma once
 
-#include "cir/lib/output.h"
+#include <string>
+
 #include "cir/llvm.h"
 #include "subspace/prelude.h"
+#include "cir/lib/source_span.h"
 
-namespace cir {
+namespace cir::syntax {
 
-class VisitCtx {
- public:
-  u32 make_function_id() noexcept {
-    u32 id = next_function_id_;
-    next_function_id_ += 1u;
-    return id;
-  }
-
- private:
-  u32 next_function_id_ = 1u;
+struct Function {
+  u32 id;
+  std::string name;
+  SourceSpan span;
 };
 
-void visit_decl(VisitCtx& ctx, const clang::Decl& decl,
-                Output& output) noexcept;
-
-}  // namespace cir
+}  // namespace cir::syntax

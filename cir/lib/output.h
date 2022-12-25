@@ -14,25 +14,8 @@
 
 #pragma once
 
-#include "cir/lib/output.h"
-#include "cir/llvm.h"
-#include "subspace/prelude.h"
-
 namespace cir {
 
-class VisitCtx {
- public:
-  u32 make_function_id() noexcept {
-    u32 id = next_function_id_;
-    next_function_id_ += 1u;
-    return id;
-  }
-
- private:
-  u32 next_function_id_ = 1u;
-};
-
-void visit_decl(VisitCtx& ctx, const clang::Decl& decl,
-                Output& output) noexcept;
+struct Output {};
 
 }  // namespace cir

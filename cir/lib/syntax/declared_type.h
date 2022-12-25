@@ -14,25 +14,30 @@
 
 #pragma once
 
-#include "cir/lib/output.h"
 #include "cir/llvm.h"
 #include "subspace/prelude.h"
+#include "subspace/union/union.h"
+#include "cir/lib/source_span.h"
 
-namespace cir {
+namespace cir::syntax {
 
-class VisitCtx {
- public:
-  u32 make_function_id() noexcept {
-    u32 id = next_function_id_;
-    next_function_id_ += 1u;
-    return id;
-  }
-
- private:
-  u32 next_function_id_ = 1u;
+enum class DeclaredTypeDetailTag {
+  Enum,
+  Class,
+  Union,
 };
 
-void visit_decl(VisitCtx& ctx, const clang::Decl& decl,
-                Output& output) noexcept;
+// clang-format off
+using DeclaredTypeDetail = sus::Union<sus_value_types(
+    (DeclaredTypeDetailTag::Enum, clang::TagDecl&),
+    (DeclaredTypeDetailTag::Class, clang::CXXRecordDecl&),
+    (DeclaredTypeDetailTag::Union, clang::CXXRecordDecl&)
+)>;
+// clang-format on
 
-}  // namespace cir
+struct DeclaredType {
+  DeclaredTypeDetail detail;
+  SourceSpan span;
+};
+
+}  // namespace cir::syntax

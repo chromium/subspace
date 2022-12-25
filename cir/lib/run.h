@@ -17,14 +17,13 @@
 #include <string>
 #include <vector>
 
+#include "cir/lib/output.h"
 #include "cir/llvm.h"
 #include "subspace/containers/vec.h"
 #include "subspace/prelude.h"
 #include "subspace/result/result.h"
 
 namespace cir {
-
-struct Output {};
 
 sus::result::Result<Output, i32> run_test(std::string content,
                                           sus::Vec<std::string> args) noexcept;

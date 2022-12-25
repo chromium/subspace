@@ -32,7 +32,9 @@
 #pragma warning(disable : 4616)
 #pragma warning(disable : 4624)
 
-#include "clang/AST/DeclBase.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclTemplate.h"
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Serialization/PCHContainerOperations.h"
 #include "clang/Tooling/CompilationDatabase.h"
