@@ -15,9 +15,13 @@
 #include "cir/tests/cir_test.h"
 
 TEST_F(CirTest, Smoke) {
-  auto r = run_code(
-      "void f() {"
-      "  int i = 2;"
-      "}");
+  auto r = run_code(R"(
+    enum E {};
+    struct S{};
+    template <class T> class C {};
+    template <class T> void t() {}
+    void f() {
+      int i = 2;
+    })");
   EXPECT_TRUE(r.is_ok());
 }

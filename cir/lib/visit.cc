@@ -14,11 +14,44 @@
 
 #include "cir/lib/visit.h"
 
+#include "cir/lib/syntax/declared_type.h"
+#include "cir/lib/syntax/function.h"
+#include "cir/lib/syntax/let.h"
+#include "cir/lib/syntax/type_reference.h"
+#include "subspace/assertions/unreachable.h"
+
 namespace cir {
 
-void visit_decl(const clang::Decl& decl) noexcept {
-  //
+void visit_decl(VisitCtx& ctx, const clang::Decl& decl,
+                Output& output) noexcept {
+  if (auto* fn_decl = clang::dyn_cast<clang::FunctionDecl>(&decl); fn_decl) {
+    // TODO: visit everything inside.
+    auto f = syntax::Function{
+        .id = ctx.make_function_id(),
+        .name = fn_decl->getNameAsString(),
+        .span = SourceSpan::from_decl(*fn_decl),
+    };
+    f.span.dump();
+    return;
+  }
+  if (auto* rec_decl = clang::dyn_cast<clang::CXXRecordDecl>(&decl); rec_decl) {
+    return;
+  }
+  if (auto* enum_decl = clang::dyn_cast<clang::EnumDecl>(&decl); enum_decl) {
+    return;
+  }
+  if (auto* class_tmpl_decl = clang::dyn_cast<clang::ClassTemplateDecl>(&decl);
+      class_tmpl_decl) {
+    return;
+  }
+  if (auto* fn_tmpl_decl = clang::dyn_cast<clang::FunctionTemplateDecl>(&decl);
+      fn_tmpl_decl) {
+    return;
+  }
+
+  llvm::errs() << "Unknown top level Decl:\n";
   decl.dumpColor();
+  sus::unreachable();
 }
 
 }  // namespace cir

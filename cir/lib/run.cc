@@ -53,7 +53,8 @@ Result<Output, i32> run_files(
       compdb, paths, std::make_shared<clang::PCHContainerOperations>(),
       std::move(fs));
 
-  auto adj = [](clang::tooling::CommandLineArguments args, llvm::StringRef Filename) {
+  auto adj = [](clang::tooling::CommandLineArguments args,
+                llvm::StringRef Filename) {
     // Clang-cl doesn't understand this argument, but it may appear in the
     // command-line for MSVC in C++20 codebases (like subspace).
     std::erase(args, "/Zc:preprocessor");
@@ -75,9 +76,12 @@ Result<Output, i32> run_files(
     return Result<Output, i32>::with_err(ret);
   }
 
+  auto ctx = VisitCtx();
+  auto output = Output();
+
   for (auto& ast : asts) {
     for (auto it = ast->top_level_begin(); it != ast->top_level_end(); it++) {
-      cir::visit_decl(**it);
+      cir::visit_decl(mref(ctx), **it, mref(output));
     }
   }
   return Result<Output, i32>::with(Output());

@@ -1,4 +1,5 @@
 add_library(cir_lib STATIC
+    "lib/syntax/let.h"
     "lib/run.cc"
     "lib/run.h"
     "lib/visit.cc"

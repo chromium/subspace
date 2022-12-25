@@ -86,7 +86,8 @@ class Vec {
   {
     auto v = Vec::with_capacity(capacity_);
     for (auto i = size_t{0}; i < len_; ++i) {
-      new (v.as_mut_ptr() + i) T(::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
+      new (v.as_mut_ptr() + i)
+          T(::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
     }
     v.len_ = len_;
     return v;
@@ -235,7 +236,8 @@ class Vec {
   constexpr Option<T&> get_mut(usize i) & noexcept {
     if (i >= len_) [[unlikely]]
       return Option<T&>::none();
-    return Option<T&>::some(mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)));
+    return Option<T&>::some(
+        mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)));
   }
 
   /// Returns a const reference to the element at index `i`.
