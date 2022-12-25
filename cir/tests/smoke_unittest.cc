@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cir/tests/cir_test.h"
 
-#include "cir/llvm.h"
-
-namespace cir {
-
-void visit_decl(const clang::Decl& decl) noexcept;
-
-}  // namespace cir
+TEST_F(CirTest, Smoke) {
+  auto r = run_code(
+      "void f() {"
+      "  int i = 2;"
+      "}");
+  EXPECT_TRUE(r.is_ok());
+}

@@ -9,34 +9,23 @@ add_executable(cir
     "cir_main.cc"
 )
 
-set_target_properties(cir PROPERTIES LINKER_LANGUAGE CXX)
+add_executable(cir_unittests
+    "tests/cir_test.h"
+    "tests/smoke_unittest.cc"
+)
 
-# Subspace config.
+# cir_lib
+set_target_properties(cir_lib PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(cir_lib PUBLIC ..)
-target_link_libraries(cir_lib subspace)
-target_link_libraries(cir cir_lib)
 
-# Clang/LLVM config.
 find_package(LLVM REQUIRED)
 find_package(Clang REQUIRED)
-
+llvm_config(cir_lib)
 target_include_directories(cir_lib PUBLIC ${LLVM_INCLUDE_DIRS})
 target_link_directories(cir_lib PUBLIC ${LLVM_LIBRARY_DIRS})
 
-if(MSVC)
-    # This depends on if the LLVM build was debug or release:
-    if($ENV{LLVM_DEBUG})
-        set_property(TARGET cir_lib PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
-        set_property(TARGET cir PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")
-    else()
-        set_property(TARGET cir_lib PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
-        set_property(TARGET cir PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
-    endif()
-endif()
-
-llvm_config(cir)
-
-target_link_libraries(cir
+target_link_libraries(cir_lib
+    subspace
     clangAnalysis
     clangAnalysisFlowSensitive
     clangAnalysisFlowSensitiveModels
@@ -80,3 +69,28 @@ target_link_libraries(cir
     clangToolingSyntax
     clangTransformer
 )
+
+# cir_unittests
+set_target_properties(cir_unittests PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(cir_unittests PUBLIC
+    ..
+    ../third_party/googletest
+)
+target_link_libraries(cir_unittests
+    cir_lib
+    gtest_main
+)
+
+if(MSVC)
+    target_compile_options(cir_unittests PUBLIC /W4 /WX)
+else()
+    target_compile_options(cir_unittests PUBLIC -Werror)
+endif()
+
+gtest_discover_tests(
+    cir_unittests
+)
+
+# cir binary
+set_target_properties(cir PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(cir cir_lib)

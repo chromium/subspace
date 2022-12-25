@@ -17,19 +17,21 @@
 #include <string>
 #include <vector>
 
-#pragma warning(push)
-#pragma warning(disable : 4624)
-#include "clang/Tooling/CompilationDatabase.h"
-#include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/Support/VirtualFileSystem.h"
-#pragma warning(pop)
+#include "cir/llvm.h"
+#include "subspace/containers/vec.h"
+#include "subspace/prelude.h"
+#include "subspace/result/result.h"
 
 namespace cir {
 
-int run_test(std::string content, std::vector<std::string> args) noexcept;
+struct Output {};
 
-int run_files(const clang::tooling::CompilationDatabase& compdb,
-              std::vector<std::string> paths,
-              llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept;
+sus::result::Result<Output, i32> run_test(std::string content,
+                                          sus::Vec<std::string> args) noexcept;
+
+sus::result::Result<Output, i32> run_files(
+    const clang::tooling::CompilationDatabase& compdb,
+    std::vector<std::string> paths,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept;
 
 }  // namespace cir
