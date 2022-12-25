@@ -18,31 +18,25 @@
 #include <utility>
 
 #include "cir/lib/visit.h"
-#include "subspace/prelude.h"
+#include "subspace/iter/iterator.h"
 
-#pragma warning(push)
-#pragma warning(disable : 4624)
-#pragma warning(disable : 4291)
-#include "clang/Frontend/ASTUnit.h"
-#include "clang/Serialization/PCHContainerOperations.h"
-#include "clang/Tooling/Tooling.h"
-#include "llvm/Support/MemoryBuffer.h"
-#pragma warning(pop)
+using sus::result::Result;
 
 namespace cir {
 
-int run_test(std::string content, std::vector<std::string> args) noexcept {
-  std::string join_args;
-  for (const auto& a : args) {
+Result<Output, i32> run_test(std::string content,
+                             sus::Vec<std::string> args) noexcept {
+  auto join_args = std::string();
+  for (const auto& a : sus::move(args).into_iter()) {
     join_args += a + "\n";
   }
 
-  std::string err;
+  auto err = std::string();
   auto compdb = clang::tooling::FixedCompilationDatabase::loadFromBuffer(
       ".", join_args, err);
   if (!err.empty()) {
     llvm::outs() << "error making compdb for tests: " << err << "\n";
-    return 1;
+    return Result<Output, i32>::with_err(1);
   }
 
   auto vfs = llvm::IntrusiveRefCntPtr(new llvm::vfs::InMemoryFileSystem());
@@ -51,37 +45,42 @@ int run_test(std::string content, std::vector<std::string> args) noexcept {
   return run_files(*compdb, {"test.cc"}, std::move(vfs));
 }
 
-int run_files(const clang::tooling::CompilationDatabase& compdb,
-              std::vector<std::string> paths,
-              llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept {
+Result<Output, i32> run_files(
+    const clang::tooling::CompilationDatabase& compdb,
+    std::vector<std::string> paths,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept {
   auto tool = clang::tooling::ClangTool(
       compdb, paths, std::make_shared<clang::PCHContainerOperations>(),
       std::move(fs));
 
-  auto adj = [](auto args, llvm::StringRef Filename) {
+  auto adj = [](clang::tooling::CommandLineArguments args, llvm::StringRef Filename) {
     // Clang-cl doesn't understand this argument, but it may appear in the
     // command-line for MSVC in C++20 codebases (like subspace).
     std::erase(args, "/Zc:preprocessor");
 
-    // TODO: https://github.com/llvm/llvm-project/issues/59689 clang-cl requires
-    // this define in order to use offsetof() from constant expressions, which
-    // subspace uses for the never-value optimization.
-    args.push_back("/D_CRT_USE_BUILTIN_OFFSETOF");
+    const std::string& tool = args[0];
+    if (tool.find("cl.exe") != std::string::npos) {
+      // TODO: https://github.com/llvm/llvm-project/issues/59689 clang-cl
+      // requires this define in order to use offsetof() from constant
+      // expressions, which subspace uses for the never-value optimization.
+      args.push_back("/D_CRT_USE_BUILTIN_OFFSETOF");
+    }
 
     return std::move(args);
   };
   tool.appendArgumentsAdjuster(adj);
 
-  std::vector<std::unique_ptr<clang::ASTUnit>> asts;
-  int ret = tool.buildASTs(asts);
-  if (ret == 0) {
-    for (auto& ast : asts) {
-      for (auto it = ast->top_level_begin(); it != ast->top_level_end(); it++) {
-        cir::visit_decl(**it);
-      }
+  auto asts = std::vector<std::unique_ptr<clang::ASTUnit>>();
+  if (i32 ret = tool.buildASTs(asts); ret != 0) {
+    return Result<Output, i32>::with_err(ret);
+  }
+
+  for (auto& ast : asts) {
+    for (auto it = ast->top_level_begin(); it != ast->top_level_end(); it++) {
+      cir::visit_decl(**it);
     }
   }
-  return ret;
+  return Result<Output, i32>::with(Output());
 }
 
 }  // namespace cir
