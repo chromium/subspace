@@ -6,7 +6,7 @@ add_library(cir_lib STATIC
 )
 
 add_executable(cir
-    "main.cc"
+    "cir_main.cc"
 )
 
 set_target_properties(cir PROPERTIES LINKER_LANGUAGE CXX)

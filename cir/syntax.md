@@ -34,6 +34,14 @@ call x@id(p, a const, b nullable) -> c
    the return value is stored in the object `c`.
  - For each pointer argument, the pointer can be annotated by qualifiers if it
    will be received with additional qualifiers attached to it: const, nullable.
+   - For pointer types, if they are not const-annotated, then the analysis
+     should assume the function will overwrite data (including any pointers)
+     accessible from them.
+   - NOTE: A const pointer to a mutable pointer is possible in C++, and we need
+     to assume [const-transitivity](../borrowck/DESIGN.md#const-contract) for an
+     analysis to ignore pointers received-as-const. Otherwise it would need to
+     look at the type and treat mutable pointers inside as if they've been
+     modified as well.
  - The types of all objects must match the function signature of `x@id()`.
  - Note: The id is useful for humans, but can be internally represented
    through a pointer instead.
