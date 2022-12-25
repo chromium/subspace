@@ -147,8 +147,8 @@ add_executable(subspace_unittests
 )
 
 # Subspace library
-target_include_directories(subspace PUBLIC .)
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(subspace PUBLIC .)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
    CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
@@ -159,16 +159,17 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
 endif()
 
 # Subspace test support
-target_include_directories(subspace_test_support PUBLIC .)
 set_target_properties(subspace_test_support PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(subspace_test_support PRIVATE .)
 target_link_libraries(subspace_test_support
     subspace
 )
 
 # Subspace unittests
-target_include_directories(subspace_unittests PUBLIC .)
-target_include_directories(subspace_unittests PUBLIC ../third_party/googletest)
 set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(subspace_unittests PRIVATE
+    .
+    ../third_party/googletest)
 target_link_libraries(subspace_unittests
     subspace
     subspace_test_support
@@ -183,7 +184,6 @@ else()
     target_compile_options(subspace_unittests PUBLIC -Werror)
 endif()
 
-include(GoogleTest)
 gtest_discover_tests(
     subspace_unittests
 )

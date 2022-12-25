@@ -11,10 +11,10 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-enable_testing()
-
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(third_party/googletest)
+include(GoogleTest)
+enable_testing()
 
 add_subdirectory(subspace)
 
