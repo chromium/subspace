@@ -16,6 +16,8 @@
 
 #include "containers/vec.h"
 #include "marker/unsafe.h"
+#include "mem/copy.h"
+#include "mem/move.h"
 #include "mem/mref.h"
 #include "num/types.h"
 
