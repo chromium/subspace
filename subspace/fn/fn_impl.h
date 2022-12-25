@@ -172,7 +172,7 @@ R FnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
           Super::storage_->vtable.unwrap_mut());
       return vtable.call_mut(
           static_cast<__private::FnStorageBase&>(*Super::storage_),
-          forward<CallArgs>(args)...);
+          ::sus::forward<CallArgs>(args)...);
     }
   }
   ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
@@ -191,7 +191,7 @@ R Fn<R(CallArgs...)>::operator()(CallArgs&&... args) const& noexcept {
           Super::storage_->vtable.unwrap_mut());
       return vtable.call(
           static_cast<const __private::FnStorageBase&>(*Super::storage_),
-          forward<CallArgs>(args)...);
+          ::sus::forward<CallArgs>(args)...);
     }
   }
   ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
