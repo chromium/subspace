@@ -14,24 +14,36 @@
 
 #pragma once
 
+#include "cir/lib/source_span.h"
 #include "cir/lib/syntax/type_reference.h"
 #include "cir/llvm.h"
 #include "subspace/prelude.h"
-#include "cir/lib/source_span.h"
+#include "subspace/union/union.h"
 
 namespace cir::syntax {
 
+enum LetClangTypeTag {
+  Return,
+  Variable,
+};
+using LetClangType =
+    sus::Union<sus_value_types((LetClangTypeTag::Return, clang::QualType),
+                               (LetClangTypeTag::Variable, clang::VarDecl&))>;
+
 struct Let {
-  u32 name;
+  Let(u32 id, TypeReference type, SourceSpan span, LetClangType clang_type)
+      : id(id), type(type), span(span), clang_type(clang_type) {}
+
+  u32 id;
   TypeReference type;
   SourceSpan span;
 
-  clang::VarDecl& decl;
+  LetClangType clang_type;
 
   std::string to_string() const& noexcept {
     // TODO: Use fmt library (or add such to subspace).
     std::ostringstream s;
-    s << "let _" << name.primitive_value << ": " << type.to_string() << ";";
+    s << "let _" << id.primitive_value << ": " << type.to_string() << ";";
     return s.str();
   }
 };

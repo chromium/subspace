@@ -17,6 +17,7 @@
 #include <math.h>  // TODO: Replace with f32::NAN()
 
 #include "containers/array.h"
+#include "googletest/include/gtest/gtest.h"
 #include "iter/iterator.h"
 #include "macros/__private/compiler_bugs.h"
 #include "macros/builtin.h"
@@ -26,7 +27,6 @@
 #include "prelude.h"
 #include "result/result.h"
 #include "test/behaviour_types.h"
-#include "googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
 
 using sus::construct::make_default;
@@ -180,6 +180,26 @@ TEST(Option, Construct) {
     T t = i;
     auto z = Option<T>::some(mref(t));
   }
+}
+
+TEST(Option, SomeNoneHelpers) {
+  auto a = Option<i32>::some(2_i32);
+  auto a2 = sus::some(2_i32);
+  static_assert(std::same_as<decltype(a), decltype(a2)>);
+  EXPECT_EQ(a, a2);
+
+  auto b = Option<i32>::none();
+  Option<i32> b2 = sus::none();
+  static_assert(std::same_as<decltype(b), decltype(b2)>);
+  EXPECT_EQ(b, b2);
+
+  auto i = 2_i32;
+  auto c = Option<i32&>::some(i);
+  auto c2 = sus::some(i);
+  // The some() helper doesn't infer a reference type.
+  static_assert(!std::same_as<decltype(c), decltype(c2)>);
+  static_assert(std::same_as<Option<i32>, decltype(c2)>);
+  EXPECT_EQ(c, c2);
 }
 
 TEST(Option, Move) {
@@ -1373,7 +1393,7 @@ TEST(Option, Cloned) {
   };
   static_assert(!::sus::mem::Copy<Cloneable>);
   static_assert(::sus::mem::Clone<Cloneable>);
-  
+
   auto c = Cloneable();
   auto x = Option<Cloneable&>::none().cloned();
   IS_NONE(x);
@@ -1385,7 +1405,8 @@ TEST(Option, Cloned) {
   // optimization.
   // constexpr auto cc = Cloneable();
   // static_assert(Option<Cloneable&>::none().copied().is_none());
-  // static_assert(&Option<const Cloneable&>::some(cc).cloned().unwrap() == &cc);
+  // static_assert(&Option<const Cloneable&>::some(cc).cloned().unwrap() ==
+  // &cc);
 }
 
 TEST(Option, Flatten) {

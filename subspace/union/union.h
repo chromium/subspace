@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "macros/no_unique_address.h"
+#include "marker/unsafe.h"
 #include "mem/clone.h"
 #include "mem/copy.h"
 #include "mem/move.h"
@@ -116,6 +117,8 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
   using StorageTypeOfTag = __private::StorageTypeOfTag<size_t{index<V>}, Ts...>;
 
  public:
+  using Tag = TagsType;
+
   // TODO: Can we construct Tuples of trivially constructible things (or some
   // set of things) without placement new and thus make this constexpr?
   template <TagsType V, class U, int&...,
@@ -431,7 +434,8 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
   [[sus_no_unique_address]] Storage storage_;
   IndexType index_;
 
-  sus_class_never_value_field(unsafe_fn, Union, index_, kNeverValue);
+  sus_class_never_value_field(::sus::marker::unsafe_fn, Union, index_,
+                              kNeverValue);
 };
 
 }  // namespace sus::union_type

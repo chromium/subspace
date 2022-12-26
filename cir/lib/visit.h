@@ -28,9 +28,9 @@ struct VisitCtx {
     return id;
   }
 
-  u32 make_local_varname() noexcept {
-    u32 id = next_local_varname;
-    next_local_varname += 1u;
+  u32 make_local_var_id() noexcept {
+    u32 id = next_local_var_id;
+    next_local_var_id += 1u;
     return id;
   }
 
@@ -39,7 +39,7 @@ struct VisitCtx {
 
 private:
   u32 next_function_id = 0u;
-  u32 next_local_varname = 0u;
+  u32 next_local_var_id = 0u;
 };
 
 void visit_decl(VisitCtx& ctx, clang::Decl& decl, Output& output) noexcept;
