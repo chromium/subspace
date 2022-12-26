@@ -33,9 +33,6 @@ using LetClangType =
                                (LetClangTypeTag::Variable, clang::VarDecl&))>;
 
 struct Let {
-  Let(u32 id, TypeReference type, SourceSpan span, LetClangType clang_type)
-      : id(id), type(type), span(span), clang_type(clang_type) {}
-
   u32 id;
   TypeReference type;
   SourceSpan span;
