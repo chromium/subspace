@@ -31,7 +31,7 @@ void visit_decl(VisitCtx& ctx, const clang::Decl& decl,
         .name = fn_decl->getNameAsString(),
         .span = SourceSpan::from_decl(*fn_decl),
     };
-    f.span.dump();
+    output.functions.push(sus::move(f));
     return;
   }
   if (auto* rec_decl = clang::dyn_cast<clang::CXXRecordDecl>(&decl); rec_decl) {

@@ -20,11 +20,9 @@
 #include "cir/lib/visit.h"
 #include "subspace/iter/iterator.h"
 
-using sus::result::Result;
-
 namespace cir {
 
-Result<Output, i32> run_test(std::string content,
+sus::Option<Output> run_test(std::string content,
                              sus::Vec<std::string> args) noexcept {
   auto join_args = std::string();
   for (const auto& a : sus::move(args).into_iter()) {
@@ -36,22 +34,28 @@ Result<Output, i32> run_test(std::string content,
       ".", join_args, err);
   if (!err.empty()) {
     llvm::outs() << "error making compdb for tests: " << err << "\n";
-    return Result<Output, i32>::with_err(1);
+    return sus::Option<Output>::none();
   }
 
   auto vfs = llvm::IntrusiveRefCntPtr(new llvm::vfs::InMemoryFileSystem());
   vfs->addFile("test.cc", 0, llvm::MemoryBuffer::getMemBuffer(content));
 
-  return run_files(*compdb, {"test.cc"}, std::move(vfs));
+  return run_file(*compdb, "test.cc", std::move(vfs));
 }
 
-Result<Output, i32> run_files(
-    const clang::tooling::CompilationDatabase& compdb,
-    std::vector<std::string> paths,
+sus::Option<Output> run_file(
+    const clang::tooling::CompilationDatabase& compdb, std::string path,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept {
+  // Clang DiagnoticsConsumer that prints out the full error and context, which
+  // is what the default one does, but by making it we have a pointer from which
+  // we can see if an error occured.
+  auto diags = std::make_unique<clang::TextDiagnosticPrinter>(
+      llvm::errs(), new clang::DiagnosticOptions());
+
   auto tool = clang::tooling::ClangTool(
-      compdb, paths, std::make_shared<clang::PCHContainerOperations>(),
+      compdb, {path}, std::make_shared<clang::PCHContainerOperations>(),
       std::move(fs));
+  tool.setDiagnosticConsumer(&*diags);
 
   auto adj = [](clang::tooling::CommandLineArguments args,
                 llvm::StringRef Filename) {
@@ -73,7 +77,10 @@ Result<Output, i32> run_files(
 
   auto asts = std::vector<std::unique_ptr<clang::ASTUnit>>();
   if (i32 ret = tool.buildASTs(asts); ret != 0) {
-    return Result<Output, i32>::with_err(ret);
+    return sus::Option<Output>::none();
+  }
+  if (diags->getNumErrors() > 0) {
+    return sus::Option<Output>::none();
   }
 
   auto ctx = VisitCtx();
@@ -84,7 +91,7 @@ Result<Output, i32> run_files(
       cir::visit_decl(mref(ctx), **it, mref(output));
     }
   }
-  return Result<Output, i32>::with(Output());
+  return sus::Option<Output>::some(sus::move(output));
 }
 
 }  // namespace cir

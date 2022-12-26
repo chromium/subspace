@@ -15,22 +15,20 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 #include "cir/lib/output.h"
 #include "cir/llvm.h"
 #include "subspace/containers/vec.h"
+#include "subspace/option/option.h"
 #include "subspace/prelude.h"
-#include "subspace/result/result.h"
 
 namespace cir {
 
-sus::result::Result<Output, i32> run_test(std::string content,
-                                          sus::Vec<std::string> args) noexcept;
+sus::Option<Output> run_test(std::string content,
+                             sus::Vec<std::string> args) noexcept;
 
-sus::result::Result<Output, i32> run_files(
-    const clang::tooling::CompilationDatabase& compdb,
-    std::vector<std::string> paths,
+sus::Option<Output> run_file(
+    const clang::tooling::CompilationDatabase& compdb, std::string path,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept;
 
 }  // namespace cir

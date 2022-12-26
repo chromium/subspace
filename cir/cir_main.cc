@@ -62,12 +62,16 @@ int main(int argc, const char** argv) {
   }
 
   auto fs = llvm::vfs::getRealFileSystem();
-  sus::result::Result<cir::Output, i32> ret =
-      cir::run_files(compdb, run_against_files, std::move(fs));
-  switch (ret) {
-    case sus::result::Ok: return 0;
-    case sus::result::Err:
+
+  for (const auto& file : run_against_files) {
+    sus::Option<cir::Output> output =
+        cir::run_file(compdb, file, std::move(fs));
+    if (output.is_none()) {
       llvm::outs() << "Error occured\n";
-      return int{sus::move(ret).unwrap_err()};
+      return 1;
+    }
+
+    llvm::outs() << sus::move(output).unwrap().to_string() << "\n";
   }
+  return 0;
 }

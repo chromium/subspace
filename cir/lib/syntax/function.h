@@ -15,10 +15,11 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 
+#include "cir/lib/source_span.h"
 #include "cir/llvm.h"
 #include "subspace/prelude.h"
-#include "cir/lib/source_span.h"
 
 namespace cir::syntax {
 
@@ -26,6 +27,17 @@ struct Function {
   u32 id;
   std::string name;
   SourceSpan span;
+
+  std::string to_string() const& noexcept {
+    // TODO: Use fmt library (or add such to subspace).
+    std::ostringstream s;
+    s << "fn " << name << "@" << id.primitive_value << " (";
+    // TODO: args
+    s << ") {\n";
+    // TODO: body
+    s << "}";
+    return s.str();
+  }
 };
 
 }  // namespace cir::syntax

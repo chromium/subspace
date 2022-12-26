@@ -15,6 +15,7 @@
 #pragma once
 
 #include "cir/llvm.h"
+#include "subspace/prelude.h"
 
 namespace cir {
 
