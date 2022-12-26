@@ -42,6 +42,11 @@ enum class BuiltInTypes {
   Float,
   Double,
   LongDouble,
+  Pointer,
+  /// A pointer to a function or method.
+  ///
+  /// These include method pointers, which just include the class in their name.
+  FnPointer,
 };
 
 enum class TypeRefKindTag {
