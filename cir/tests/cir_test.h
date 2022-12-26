@@ -22,6 +22,7 @@
 #include "subspace/assertions/unreachable.h"
 #include "subspace/containers/vec.h"
 #include "subspace/macros/compiler.h"
+#include "subspace/option/option.h"
 #include "subspace/prelude.h"
 #include "subspace/result/result.h"
 
@@ -38,11 +39,15 @@ std::string_view cpp_version_flag(CirCppVersion v) noexcept {
 
 class CirTest : public testing::Test {
  public:
-  sus::result::Result<cir::Output, i32> run_code(std::string content) noexcept {
+  sus::Option<cir::Output> run_code(std::string content) noexcept {
     auto args = sus::Vec<std::string>::with_default();
     args.push(std::string(cpp_version_flag(cpp_version_)));
 
-    return cir::run_test(sus::move(content), sus::move(args));
+    auto a = cir::run_test(sus::move(content), sus::move(args));
+    return sus::move(a).or_else([]() {
+      ADD_FAILURE() << "Compilation failed.";
+      return sus::Option<cir::Output>::none();
+    });
   }
 
  private:

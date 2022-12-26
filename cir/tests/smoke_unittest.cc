@@ -15,13 +15,11 @@
 #include "cir/tests/cir_test.h"
 
 TEST_F(CirTest, Smoke) {
-  auto r = run_code(R"(
-    enum E {};
-    struct S{};
-    template <class T> class C {};
-    template <class T> void t() {}
+  auto output = run_code(R"(
     void f() {
       int i = 2;
     })");
-  EXPECT_TRUE(r.is_ok());
+  if (output.is_none()) return;
+
+  llvm::errs() << sus::move(output).unwrap().to_string() << "\n";
 }

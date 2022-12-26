@@ -14,8 +14,29 @@
 
 #pragma once
 
+#include <sstream>
+
+#include "cir/lib/syntax/function.h"
+#include "subspace/containers/vec.h"
+#include "subspace/iter/iterator.h"
+
 namespace cir {
 
-struct Output {};
+struct Output {
+  sus::Vec<syntax::Function> functions =
+      sus::Vec<syntax::Function>::with_default();
+
+  std::string to_string() const& noexcept {
+    // TODO: Use fmt library (or add such to subspace).
+    std::ostringstream s;
+    bool saw_fn = false;
+    for (const auto& f : functions.iter()) {
+      if (saw_fn) s << "\n\n";
+      saw_fn = true;
+      s << f.to_string();
+    }
+    return s.str();
+  }
+};
 
 }  // namespace cir

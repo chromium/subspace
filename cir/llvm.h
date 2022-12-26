@@ -34,8 +34,10 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Serialization/PCHContainerOperations.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
