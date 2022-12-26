@@ -53,6 +53,11 @@ void print_panic_message(const char& msg);
 #if defined(SUS_PROVIDE_PANIC_HANDLER)
   SUS_PROVIDE_PANIC_HANDLER();
 #else
+#if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
+  SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(*"");
+#else
+  __private::print_panic_message(*"");
+#endif
   abort();
 #endif
 }
