@@ -56,25 +56,6 @@ enum class BuiltinType {
   ObjCId,
 };
 
-enum class TypeRefKindTag {
-  Builtin,
-  Declared,
-  Pointer,
-  /// A pointer to a function or method.
-  ///
-  /// These include method pointers, which just include the class in their name.
-  FnPointer,
-};
-
-// clang-format off
-using TypeRefKind = Union<sus_value_types(
-    (TypeRefKindTag::Builtin, BuiltinType),
-    (TypeRefKindTag::Declared, DeclaredType),
-    (TypeRefKindTag::Pointer, PointerAnnotations), // TODO: Store the pointee(s) types.
-    (TypeRefKindTag::FnPointer, /* function id */ u32),
-)>;
-// clang-format on
-
 inline Option<BuiltinType> builtin_type(const clang::QualType& q) noexcept {
   auto* b = clang::dyn_cast<clang::BuiltinType>(&*q.getCanonicalType());
   if (b == nullptr) return sus::none();
@@ -106,8 +87,8 @@ inline Option<BuiltinType> builtin_type(const clang::QualType& q) noexcept {
     case clang::BuiltinType::LongDouble:
       return sus::some(BuiltinType::LongDouble);
     case clang::BuiltinType::ObjCId: return sus::some(BuiltinType::ObjCId);
+    default: return sus::none();
   }
-  return sus::none();
 }
 
 inline std::string builtin_type_to_string(BuiltinType b) noexcept {
@@ -138,6 +119,25 @@ inline std::string builtin_type_to_string(BuiltinType b) noexcept {
   }
   sus::unreachable();
 }
+
+enum class TypeRefKindTag {
+  Builtin,
+  Declared,
+  Pointer,
+  /// A pointer to a function or method.
+  ///
+  /// These include method pointers, which just include the class in their name.
+  FnPointer,
+};
+
+// clang-format off
+using TypeRefKind = Union<sus_value_types(
+    (TypeRefKindTag::Builtin, BuiltinType),
+    (TypeRefKindTag::Declared, DeclaredType),
+    (TypeRefKindTag::Pointer, PointerAnnotations), // TODO: Store the pointee(s) types.
+    (TypeRefKindTag::FnPointer, /* function id */ u32),
+)>;
+// clang-format on
 
 struct TypeReference {
   static TypeReference with_return_type(clang::QualType q, bool nullable,
@@ -175,24 +175,33 @@ struct TypeReference {
 
   TypeRefKind kind;
   SourceSpan span;
-
-  std::string to_string() const& noexcept {
-    switch (kind) {
-      case TypeRefKind::Tag::Builtin:
-        return builtin_type_to_string(
-            kind.get_ref<TypeRefKind::Tag::Builtin>());
-      case TypeRefKind::Tag::Declared: return "(TODO: declared type name)";
-      case TypeRefKind::Tag::Pointer: return "(pointer, TODO: pointee types)";
-      case TypeRefKind::Tag::FnPointer: {
-        std::ostringstream s;
-        s << "fn pointer(";
-        s << kind.get_ref<TypeRefKind::Tag::FnPointer>().primitive_value;
-        s << ")";
-        return s.str();
-      }
-    }
-    sus::unreachable();
-  }
 };
 
 }  // namespace cir::syntax
+
+namespace cir {
+
+inline std::string to_string(const syntax::TypeReference& typeref) noexcept {
+  using enum syntax::TypeRefKind::Tag;
+  switch (typeref.kind) {
+    case Builtin:
+      return builtin_type_to_string(typeref.kind.get_ref<Builtin>());
+    case Declared: return "(TODO: declared type name)";
+    case Pointer: {
+      std::ostringstream s;
+      s << "pointer(TODO: pointee types) ";
+      s << cir::to_string(typeref.kind.get_ref<Pointer>());
+      return s.str();
+    }
+    case FnPointer: {
+      std::ostringstream s;
+      s << "fn pointer(";
+      s << typeref.kind.get_ref<FnPointer>().primitive_value;
+      s << ")";
+      return s.str();
+    }
+  }
+  sus::unreachable();
+}
+
+}  // namespace cir

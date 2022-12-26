@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "cir/lib/source_span.h"
 #include "cir/lib/syntax/type_reference.h"
 #include "cir/llvm.h"
@@ -39,13 +41,17 @@ struct Let {
   SourceSpan span;
 
   LetClangType clang_type;
-
-  std::string to_string() const& noexcept {
-    // TODO: Use fmt library (or add such to subspace).
-    std::ostringstream s;
-    s << "let _" << id.primitive_value << ": " << type.to_string() << ";";
-    return s.str();
-  }
 };
 
 }  // namespace cir::syntax
+
+namespace cir {
+
+inline std::string to_string(const syntax::Let& let) noexcept {
+  // TODO: Use fmt library (or add such to subspace).
+  std::ostringstream s;
+  s << "let _" << let.id.primitive_value << ": " << cir::to_string(let.type) << ";";
+  return s.str();
+}
+
+}  // namespace cir
