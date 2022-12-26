@@ -14,10 +14,11 @@
 
 #pragma once
 
+#include "cir/lib/source_span.h"
 #include "cir/llvm.h"
+#include "subspace/assertions/unreachable.h"
 #include "subspace/prelude.h"
 #include "subspace/union/union.h"
-#include "cir/lib/source_span.h"
 
 namespace cir::syntax {
 
@@ -36,6 +37,32 @@ using DeclaredTypeDetail = sus::Union<sus_value_types(
 // clang-format on
 
 struct DeclaredType {
+  static DeclaredType with_qual_type(clang::QualType q,
+                                     SourceSpan span) noexcept {
+    if (q->isEnumeralType()) {
+      return DeclaredType{
+          .detail = DeclaredTypeDetail::with<DeclaredTypeDetail::Tag::Enum>(
+              *q->getAsTagDecl()),
+          .span = span,
+      };
+    }
+    if (q->isClassType()) {
+      return DeclaredType{
+          .detail = DeclaredTypeDetail::with<DeclaredTypeDetail::Tag::Class>(
+              *q->getAsCXXRecordDecl()),
+          .span = span,
+      };
+    }
+    if (q->isUnionType()) {
+      return DeclaredType{
+          .detail = DeclaredTypeDetail::with<DeclaredTypeDetail::Tag::Union>(
+              *q->getAsCXXRecordDecl()),
+          .span = span,
+      };
+    }
+    sus::unreachable();
+  }
+
   DeclaredTypeDetail detail;
   SourceSpan span;
 };

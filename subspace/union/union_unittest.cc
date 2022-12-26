@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "union/union.h"
+
 #include <variant>
 
+#include "googletest/include/gtest/gtest.h"
 #include "macros/__private/compiler_bugs.h"
 #include "num/types.h"
 #include "option/option.h"
 #include "prelude.h"
-#include "googletest/include/gtest/gtest.h"
-#include "union/union.h"
 
 namespace {
 
@@ -47,6 +48,12 @@ inline constexpr size_t UamBytes = sus::Tuple<i32>::protects_uam ? 8 : 0;
 // on MSVC.
 static_assert(sizeof(Union<sus_value_types((Order::First, i32, u64))>) ==
               2 * sizeof(u64) + UamBytes + sus_if_msvc_else(sizeof(u64), 0));
+
+TEST(Union, Tag) {
+  using One = Union<sus_value_types((Order::First, u64), (Order::Second, u32))>;
+  // `Tag` is an alias for the tag type.
+  auto u = One::with<One::Tag::First>(1u);
+}
 
 TEST(Union, NeverValue) {
   using One = Union<sus_value_types((Order::First, u64), (Order::Second, u32))>;

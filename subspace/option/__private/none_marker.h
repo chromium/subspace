@@ -12,15 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cir/tests/cir_test.h"
+#pragma once
 
-TEST_F(CirTest, Smoke) {
-  auto output = run_code(R"(
-    int f() {
-      int i = 2;
-      return i;
-    })");
-  if (output.is_none()) return;
+namespace sus::option::__private {
 
-  llvm::errs() << sus::move(output).unwrap().to_string() << "\n";
-}
+struct NoneMarker {};
+
+}  // namespace sus::option::__private

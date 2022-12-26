@@ -16,9 +16,8 @@
 
 namespace cir::syntax {
 
-struct TypeReferenceAnnotations {
+struct PointerAnnotations {
   bool is_const;
-  bool is_volatile;
   bool is_nullable;
   // TODO: lifetimes.
 };

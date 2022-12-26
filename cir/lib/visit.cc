@@ -20,6 +20,8 @@
 #include "cir/lib/syntax/type_reference.h"
 #include "subspace/assertions/unreachable.h"
 
+using sus::Option;
+
 namespace cir {
 
 enum class FunctionType {
@@ -33,18 +35,34 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool shouldVisitTemplateInstantiations() const { return true; }
 
   bool VisitFunctionDecl(clang::FunctionDecl* decl) {
-    auto f = syntax::Function{
-        .id = ctx_.make_function_id(),  
-        .name = decl->getNameAsString(),
-        .span = SourceSpan::from_decl(*decl),
-        .decl = *decl,
-    };
+    auto return_var = Option<syntax::Let>::none();
+    if (!decl->getReturnType()->isVoidType()) {
+      // TODO: If it's a pointer, the function may be nonnull-annotated.
+      auto type_ref = syntax::TypeReference::with_return_type(
+          decl->getReturnType(), /*nullable=*/true,
+          SourceSpan::from_decl(*decl));
 
+      return_var.insert(syntax::Let(
+          ctx_.make_local_var_id(), sus::move(type_ref),
+          SourceSpan::from_decl(*decl),
+          syntax::LetClangType::with<syntax::LetClangTypeTag::Return>(
+              decl->getReturnType())));
+    }
+
+    auto this_param = Option<syntax::Let>::none();
     if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
       // TODO: `this` is the first parameter.
     }
 
     // TODO: The function's parameters and return type.
+
+    auto f = syntax::Function{
+        .id = ctx_.make_function_id(),
+        .name = decl->getNameAsString(),
+        .span = SourceSpan::from_decl(*decl),
+        .return_var = sus::move(return_var),
+        .decl = *decl,
+    };
 
     // Recurse so we can tell when we leave the function, and store the
     // syntax::Function in Output when we're done.

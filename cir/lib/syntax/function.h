@@ -14,10 +14,11 @@
 
 #pragma once
 
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "cir/lib/source_span.h"
+#include "cir/lib/syntax/statements/let.h"
 #include "cir/llvm.h"
 #include "subspace/prelude.h"
 
@@ -27,15 +28,20 @@ struct Function {
   u32 id;
   std::string name;
   SourceSpan span;
+  Option<syntax::Let> return_var;
 
   const clang::FunctionDecl& decl;
 
   std::string to_string() const& noexcept {
     // TODO: Use fmt library (or add such to subspace).
     std::ostringstream s;
-    s << "fn " << name << "@" << id.primitive_value << " (";
+    s << "fn " << name << "@" << id.primitive_value << "(";
     // TODO: args
-    s << ") {\n";
+    s << ") ";
+    if (return_var.is_some()) {
+      s << "-> " << return_var.unwrap_ref().type.to_string() << " ";
+    }
+    s << "{\n";
     // TODO: body
     s << "}";
     return s.str();
