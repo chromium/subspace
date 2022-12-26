@@ -177,6 +177,10 @@ TEST(Vec, Iter) {
   auto sum = 0_i32;
   for (const i32& i : v.iter()) sum += i;
   EXPECT_EQ(sum, 6);
+
+  auto e = Vec<i32>::with_default();
+  for (const i32& i : e.iter()) sum += i;
+  EXPECT_EQ(sum, 6);
 }
 
 TEST(Vec, IterMut) {
@@ -187,11 +191,17 @@ TEST(Vec, IterMut) {
 
   auto sum = 0_i32;
   for (i32& i : v.iter_mut()) {
+    sum += i;
     i += 1_i32;
   }
   EXPECT_EQ(v[0u], 2_i32);
   EXPECT_EQ(v[1u], 3_i32);
   EXPECT_EQ(v[2u], 4_i32);
+  EXPECT_EQ(sum, 6);
+
+  auto e = Vec<i32>::with_default();
+  for (const i32& i : e.iter_mut()) sum += i;
+  EXPECT_EQ(sum, 6);
 }
 
 TEST(Vec, IntoIter) {

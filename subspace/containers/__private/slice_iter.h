@@ -51,7 +51,7 @@ struct [[sus_trivial_abi]] SliceIter
  protected:
   constexpr SliceIter(const Item* start, usize len) noexcept
       : ptr_(start), end_(start + len.primitive_value) {
-    check(end_ > ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
+    check(end_ >= ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
  private:
@@ -82,7 +82,7 @@ struct [[sus_trivial_abi]] SliceIterMut
  protected:
   constexpr SliceIterMut(Item* start, usize len) noexcept
       : ptr_(start), end_(start + len.primitive_value) {
-    check(end_ > ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
+    check(end_ >= ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
  private:
