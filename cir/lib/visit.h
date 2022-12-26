@@ -20,19 +20,28 @@
 
 namespace cir {
 
-class VisitCtx {
+struct VisitCtx {
  public:
   u32 make_function_id() noexcept {
-    u32 id = next_function_id_;
-    next_function_id_ += 1u;
+    u32 id = next_function_id;
+    next_function_id += 1u;
     return id;
   }
 
- private:
-  u32 next_function_id_ = 1u;
+  u32 make_local_varname() noexcept {
+    u32 id = next_local_varname;
+    next_local_varname += 1u;
+    return id;
+  }
+
+  // The back of this Vec is the function whose body is being parsed.
+  Vec<syntax::Function> in_functions = Vec<syntax::Function>::with_default();
+
+private:
+  u32 next_function_id = 0u;
+  u32 next_local_varname = 0u;
 };
 
-void visit_decl(VisitCtx& ctx, const clang::Decl& decl,
-                Output& output) noexcept;
+void visit_decl(VisitCtx& ctx, clang::Decl& decl, Output& output) noexcept;
 
 }  // namespace cir

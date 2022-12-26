@@ -28,6 +28,8 @@ struct Function {
   std::string name;
   SourceSpan span;
 
+  const clang::FunctionDecl& decl;
+
   std::string to_string() const& noexcept {
     // TODO: Use fmt library (or add such to subspace).
     std::ostringstream s;

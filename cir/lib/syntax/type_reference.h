@@ -65,6 +65,10 @@ struct TypeReference {
   TypeRefKind kind;
   TypeReferenceAnnotations annotations;
   SourceSpan span;
+
+  std::string to_string() const& noexcept {
+    return "(TODO: TypeReference)";
+  }
 };
 
 }  // namespace cir::syntax
