@@ -211,6 +211,20 @@ class Vec {
   /// by `len()`.
   constexpr inline usize capacity() const& noexcept { return capacity_; }
 
+  /// Removes the last element from a vector and returns it, or None if it is
+  /// empty.
+  Option<T> pop() noexcept {
+    if (len_ > 0u) {
+      auto o = Option<T>::some(
+          sus::move(get_unchecked_mut(::sus::marker::unsafe_fn, len_ - 1u)));
+      get_unchecked_mut(::sus::marker::unsafe_fn, len_ - 1u).~T();
+      len_ -= 1u;
+      return o;
+    } else {
+      return Option<T>::none();
+    }
+  }
+
   /// Appends an element to the back of the vector.
   ///
   /// # Panics
