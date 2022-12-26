@@ -33,7 +33,7 @@ struct Output {
     for (const auto& f : functions.iter()) {
       if (saw_fn) s << "\n\n";
       saw_fn = true;
-      s << f.to_string();
+      s << cir::to_string(f);
     }
     return s.str();
   }

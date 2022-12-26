@@ -31,21 +31,25 @@ struct Function {
   Option<syntax::Let> return_var;
 
   const clang::FunctionDecl& decl;
-
-  std::string to_string() const& noexcept {
-    // TODO: Use fmt library (or add such to subspace).
-    std::ostringstream s;
-    s << "fn " << name << "@" << id.primitive_value << "(";
-    // TODO: args
-    s << ") ";
-    if (return_var.is_some()) {
-      s << "-> " << return_var.unwrap_ref().type.to_string() << " ";
-    }
-    s << "{\n";
-    // TODO: body
-    s << "}";
-    return s.str();
-  }
 };
 
 }  // namespace cir::syntax
+
+namespace cir {
+
+inline std::string to_string(const syntax::Function& fn) noexcept {
+  // TODO: Use fmt library (or add such to subspace).
+  std::ostringstream s;
+  s << "fn " << fn.name << "@" << fn.id.primitive_value << "(";
+  // TODO: args
+  s << ") ";
+  if (fn.return_var.is_some()) {
+    s << "-> " << cir::to_string(fn.return_var.unwrap_ref().type) << " ";
+  }
+  s << "{\n";
+  // TODO: body
+  s << "}";
+  return s.str();
+}
+
+}  // namespace cir

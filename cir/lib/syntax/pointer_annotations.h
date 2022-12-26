@@ -23,3 +23,24 @@ struct PointerAnnotations {
 };
 
 }  // namespace cir::syntax
+
+namespace cir {
+
+inline std::string to_string(const syntax::PointerAnnotations& anno) noexcept {
+  // TODO: Use fmt library (or add such to subspace).
+  std::ostringstream s;
+  bool space = false;
+  if (anno.is_const) {
+    if (space) s << " ";
+    s << "const";
+    space = true;
+  }
+  if (anno.is_nullable) {
+    if (space) s << " ";
+    s << "nullable";
+    space = true;
+  }
+  return s.str();
+}
+
+}  // namespace cir
