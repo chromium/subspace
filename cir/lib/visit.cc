@@ -42,11 +42,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           decl->getReturnType(), /*nullable=*/true,
           SourceSpan::from_decl(*decl));
 
-      return_var.insert(syntax::Let(
-          ctx_.make_local_var_id(), sus::move(type_ref),
-          SourceSpan::from_decl(*decl),
-          syntax::LetClangType::with<syntax::LetClangTypeTag::Return>(
-              decl->getReturnType())));
+      return_var.insert(syntax::Let{
+          .id = ctx_.make_local_var_id(),
+          .type = sus::move(type_ref),
+          .span = SourceSpan::from_decl(*decl),
+          .clang_type =
+              syntax::LetClangType::with<syntax::LetClangTypeTag::Return>(
+                  decl->getReturnType()),
+      });
     }
 
     auto this_param = Option<syntax::Let>::none();
