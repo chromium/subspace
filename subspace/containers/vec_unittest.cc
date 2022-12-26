@@ -62,6 +62,16 @@ TEST(Vec, Push) {
   EXPECT_EQ(v.len(), 1_usize);
 }
 
+TEST(Vec, Pop) {
+  auto v = Vec<i32>::with_default();
+  EXPECT_EQ(v.pop(), sus::None);
+  v.push(2_i32);
+  EXPECT_EQ(v.pop().unwrap(), 2_i32);
+  EXPECT_EQ(v.pop(), sus::None);
+  EXPECT_GT(v.capacity(), 0_usize);
+  EXPECT_EQ(v.len(), 0_usize);
+}
+
 TEST(Vec, Get) {
   auto v = Vec<i32>::with_default();
   EXPECT_EQ(v.get_ref(0u), sus::None);
