@@ -16,42 +16,51 @@
 
 #include "cir/lib/syntax/declared_type.h"
 #include "cir/lib/syntax/function.h"
-#include "cir/lib/syntax/let.h"
+#include "cir/lib/syntax/statements/let.h"
 #include "cir/lib/syntax/type_reference.h"
 #include "subspace/assertions/unreachable.h"
 
 namespace cir {
 
-void visit_decl(VisitCtx& ctx, const clang::Decl& decl,
-                Output& output) noexcept {
-  if (auto* fn_decl = clang::dyn_cast<clang::FunctionDecl>(&decl); fn_decl) {
-    // TODO: visit everything inside.
+enum class FunctionType {
+  Function,
+  Method,
+};
+
+class Visitor : public clang::RecursiveASTVisitor<Visitor> {
+ public:
+  Visitor(VisitCtx& ctx, Output& output) : ctx_(ctx), output_(output) {}
+  bool shouldVisitTemplateInstantiations() const { return true; }
+
+  bool VisitFunctionDecl(clang::FunctionDecl* decl) {
     auto f = syntax::Function{
-        .id = ctx.make_function_id(),
-        .name = fn_decl->getNameAsString(),
-        .span = SourceSpan::from_decl(*fn_decl),
+        .id = ctx_.make_function_id(),  
+        .name = decl->getNameAsString(),
+        .span = SourceSpan::from_decl(*decl),
+        .decl = *decl,
     };
-    output.functions.push(sus::move(f));
-    return;
-  }
-  if (auto* rec_decl = clang::dyn_cast<clang::CXXRecordDecl>(&decl); rec_decl) {
-    return;
-  }
-  if (auto* enum_decl = clang::dyn_cast<clang::EnumDecl>(&decl); enum_decl) {
-    return;
-  }
-  if (auto* class_tmpl_decl = clang::dyn_cast<clang::ClassTemplateDecl>(&decl);
-      class_tmpl_decl) {
-    return;
-  }
-  if (auto* fn_tmpl_decl = clang::dyn_cast<clang::FunctionTemplateDecl>(&decl);
-      fn_tmpl_decl) {
-    return;
+
+    if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
+      // TODO: `this` is the first parameter.
+    }
+
+    // TODO: The function's parameters and return type.
+
+    // Recurse so we can tell when we leave the function, and store the
+    // syntax::Function in Output when we're done.
+    ctx_.in_functions.push(sus::move(f));
+    bool b = Visitor(ctx_, output_).TraverseStmt(decl->getBody());
+    output_.functions.push(ctx_.in_functions.pop().unwrap());
+    return b;
   }
 
-  llvm::errs() << "Unknown top level Decl:\n";
-  decl.dumpColor();
-  sus::unreachable();
+ private:
+  VisitCtx& ctx_;
+  Output& output_;
+};
+
+void visit_decl(VisitCtx& ctx, clang::Decl& decl, Output& output) noexcept {
+  Visitor(ctx, output).TraverseDecl(&decl);
 }
 
 }  // namespace cir

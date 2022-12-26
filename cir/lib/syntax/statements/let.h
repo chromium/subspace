@@ -25,6 +25,15 @@ struct Let {
   u32 name;
   TypeReference type;
   SourceSpan span;
+
+  clang::VarDecl& decl;
+
+  std::string to_string() const& noexcept {
+    // TODO: Use fmt library (or add such to subspace).
+    std::ostringstream s;
+    s << "let _" << name.primitive_value << ": " << type.to_string() << ";";
+    return s.str();
+  }
 };
 
 }  // namespace cir::syntax
