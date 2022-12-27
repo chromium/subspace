@@ -76,7 +76,7 @@ class IteratorBase {
 };
 
 template <class I>
-[[nodiscard]] class Iterator final : public I {
+class [[nodiscard]] Iterator final : public I {
  private:
   using sus_clang_bug_58837(Item =) typename I::Item;
   template <class T>
