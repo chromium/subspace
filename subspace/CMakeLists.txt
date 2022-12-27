@@ -71,6 +71,7 @@ add_library(subspace STATIC
     "num/unsigned_integer.h"
     "option/__private/is_option_type.h"
     "option/__private/is_tuple_type.h"
+    "option/__private/marker.h"
     "option/__private/storage.h"
     "option/option.h"
     "option/state.h"

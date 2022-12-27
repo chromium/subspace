@@ -184,22 +184,17 @@ TEST(Option, Construct) {
 
 TEST(Option, SomeNoneHelpers) {
   auto a = Option<i32>::some(2_i32);
-  auto a2 = sus::some(2_i32);
-  static_assert(std::same_as<decltype(a), decltype(a2)>);
+  Option<i32> a2 = sus::some(2_i32);
   EXPECT_EQ(a, a2);
 
   auto b = Option<i32>::none();
   Option<i32> b2 = sus::none();
-  static_assert(std::same_as<decltype(b), decltype(b2)>);
   EXPECT_EQ(b, b2);
 
   auto i = 2_i32;
   auto c = Option<i32&>::some(i);
-  auto c2 = sus::some(i);
-  // The some() helper doesn't infer a reference type.
-  static_assert(!std::same_as<decltype(c), decltype(c2)>);
-  static_assert(std::same_as<Option<i32>, decltype(c2)>);
-  EXPECT_EQ(c, c2);
+  Option<i32&> c2 = sus::some(i);
+  EXPECT_EQ(&c.unwrap_ref(), &c2.unwrap_ref());
 }
 
 TEST(Option, Move) {
