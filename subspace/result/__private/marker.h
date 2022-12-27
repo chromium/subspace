@@ -21,9 +21,9 @@ struct OkMarker {
   T&& value;
 };
 
-template <class T>
+template <class E>
 struct ErrMarker {
-  T&& value;
+  E&& value;
 };
 
 }  // namespace sus::result::__private

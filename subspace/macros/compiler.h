@@ -25,3 +25,15 @@
 #else
 #define sus_if_msvc_else(x, y) y
 #endif
+
+#if defined(__clang__)
+#define sus_if_clang(x) x
+#else
+#define sus_if_clang(x)
+#endif
+
+#if defined(__clang__)
+#define sus_if_clang_else(x, y) x
+#else
+#define sus_if_clane_else(x, y) y
+#endif

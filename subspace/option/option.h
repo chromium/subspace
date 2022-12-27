@@ -28,6 +28,7 @@
 #include "construct/make_default.h"
 #include "iter/from_iterator.h"
 #include "macros/always_inline.h"
+#include "macros/compiler.h"
 #include "macros/nonnull.h"
 #include "marker/unsafe.h"
 #include "mem/clone.h"
@@ -991,7 +992,8 @@ using sus::iter::__private::end;
 /// construct Option<T>. This is to allow constructing an Option<T> or
 /// Option<T&> correctly.
 template <class T>
-inline constexpr auto some(T&& t) noexcept {
+inline constexpr auto some(
+    T&& t sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::SomeMarker<T&&>(::sus::forward<T>(t));
 }
 
