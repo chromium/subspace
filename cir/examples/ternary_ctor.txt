@@ -1,0 +1,34 @@
+// void f() {
+//   S s = rand() ? S(1) : S(2);
+// }
+
+fn f():
+
+// Return type.
+let _0: ()
+// `rand()` returns
+let _1: int
+_1 = call rand()
+
+// `rand() ? x : y` ternary evaluates to S
+let _2: bool
+let _3: S
+convert(_2, _1)  // Assign not ctor since it's arithmetic
+if(_2, goto bb1, goto bb2)
+
+bb1:
+  let _4: int  // Or whatever type S() takes
+  convert(_4, 1)
+  call S(_3, _4)
+  goto bb3:
+
+bb2:
+  let _5: int  // Or whatever type S() takes
+  _5 = convert(2)
+  call S(_3, _5)
+  goto bb3:
+
+bb3:
+  call ~S(_3)
+  Deinit(_3)
+  return
