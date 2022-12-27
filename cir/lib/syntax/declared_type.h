@@ -29,7 +29,7 @@ enum class DeclaredTypeDetailTag {
 };
 
 // clang-format off
-using DeclaredTypeDetail = sus::Union<sus_value_types(
+using DeclaredTypeDetail = sus::Union<sus_union_types(
     (DeclaredTypeDetailTag::Enum, clang::TagDecl&),
     (DeclaredTypeDetailTag::Class, clang::CXXRecordDecl&),
     (DeclaredTypeDetailTag::Union, clang::CXXRecordDecl&)

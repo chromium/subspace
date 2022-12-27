@@ -46,24 +46,24 @@ inline constexpr size_t UamBytes = sus::Tuple<i32>::protects_uam ? 8 : 0;
 
 // The Union's tag can get stashed inside the Tuple, though this doesn't happen
 // on MSVC.
-static_assert(sizeof(Union<sus_value_types((Order::First, i32, u64))>) ==
+static_assert(sizeof(Union<sus_union_types((Order::First, i32, u64))>) ==
               2 * sizeof(u64) + UamBytes + sus_if_msvc_else(sizeof(u64), 0));
 
 TEST(Union, Tag) {
-  using One = Union<sus_value_types((Order::First, u64), (Order::Second, u32))>;
+  using One = Union<sus_union_types((Order::First, u64), (Order::Second, u32))>;
   // `Tag` is an alias for the tag type.
   auto u = One::with<One::Tag::First>(1u);
 }
 
 TEST(Union, NeverValue) {
-  using One = Union<sus_value_types((Order::First, u64), (Order::Second, u32))>;
+  using One = Union<sus_union_types((Order::First, u64), (Order::Second, u32))>;
   static_assert(std::is_standard_layout_v<One>);
   static_assert(sizeof(sus::Option<One>) == sizeof(One));
 
   // Two values in a Tuple isn't standard layout at this time. This allows the
   // Tuple to pack better but, also means we can't use the never-value field
   // optimization in Option.
-  using Two = Union<sus_value_types((Order::First, u64, u64))>;
+  using Two = Union<sus_union_types((Order::First, u64, u64))>;
   static_assert(!std::is_standard_layout_v<Two>);
   static_assert(sizeof(sus::Option<Two>) > sizeof(Two));
 }
@@ -71,7 +71,7 @@ TEST(Union, NeverValue) {
 TEST(Union, GetTypes) {
   // Single value first, double last.
   {
-    auto u = Union<sus_value_types(
+    auto u = Union<sus_union_types(
         (Order::First, u32), (Order::Second, i8, u64))>::with<Order::First>(3u);
     static_assert(
         std::same_as<decltype(u.get_ref<Order::First>()), const u32&>);
@@ -89,7 +89,7 @@ TEST(Union, GetTypes) {
   // Double value first, single last.
   {
     auto u =
-        Union<sus_value_types((Order::First, i8, u64), (Order::Second, u32))>::
+        Union<sus_union_types((Order::First, i8, u64), (Order::Second, u32))>::
             with<Order::First>(sus::Tuple<i8, u64>::with(1_i8, 2_u64));
     static_assert(std::same_as<decltype(u.get_ref<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
@@ -110,7 +110,7 @@ TEST(Union, GetTypes) {
     auto i = 3_u32;
     auto& r = i;
     auto u =
-        Union<sus_value_types((Order::First, i8&, const u64&),
+        Union<sus_union_types((Order::First, i8&, const u64&),
                               (Order::Second, u32&))>::with<Order::Second>(r);
     static_assert(std::same_as<decltype(u.get_ref<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
@@ -126,14 +126,14 @@ TEST(Union, GetTypes) {
         std::same_as<decltype(sus::move(u).into_inner<Order::Second>()), u32&>);
 
     // Verify storing a reference in the first-of-N slot builds.
-    auto u2 = Union<sus_value_types(
+    auto u2 = Union<sus_union_types(
         (Order::First, u32&),
         (Order::Second, i8&, const u64&))>::with<Order::First>(r);
   }
 }
 
 TEST(Union, Switch) {
-  auto u = Union<sus_value_types((Order::First, u32),
+  auto u = Union<sus_union_types((Order::First, u32),
                                  (Order::Second, u8))>::with<Order::First>(4u);
   switch (u) {
     case Order::First: break;
@@ -143,17 +143,17 @@ TEST(Union, Switch) {
 }
 
 TEST(Union, Which) {
-  auto u = Union<sus_value_types((Order::First, u32),
+  auto u = Union<sus_union_types((Order::First, u32),
                                  (Order::Second, u8))>::with<Order::First>(4u);
   EXPECT_EQ(u.which(), Order::First);
 
-  auto v = Union<sus_value_types(
+  auto v = Union<sus_union_types(
       (Order::First, u32), (Order::Second, u8))>::with<Order::Second>(4_u8);
   EXPECT_EQ(v.which(), Order::Second);
 }
 
 TEST(Union, Copy) {
-  auto u = Union<sus_value_types((Order::First, u32),
+  auto u = Union<sus_union_types((Order::First, u32),
                                  (Order::Second, u8))>::with<Order::First>(4u);
   static_assert(sus::mem::Copy<decltype(u)>);
   auto v = u;
@@ -175,7 +175,7 @@ TEST(Union, Clone) {
   };
   static_assert(::sus::mem::Clone<S>);
 
-  auto u = Union<sus_value_types(
+  auto u = Union<sus_union_types(
       (Order::First, S), (Order::Second, S))>::with<Order::First>(S(4u));
   static_assert(!sus::mem::Copy<decltype(u)>);
   static_assert(sus::mem::Clone<decltype(u)>);
@@ -199,15 +199,15 @@ TEST(Union, Eq) {
   static_assert(!sus::ops::Eq<NotEq>);
 
   static_assert(
-      sus::ops::Eq<Union<sus_value_types((1_i32, i32), (2_i32, i32))>>);
-  static_assert(!sus::ops::Eq<Union<sus_value_types((1, NotEq), (2, NotEq))>>);
+      sus::ops::Eq<Union<sus_union_types((1_i32, i32), (2_i32, i32))>>);
+  static_assert(!sus::ops::Eq<Union<sus_union_types((1, NotEq), (2, NotEq))>>);
 
   using OrderUnion =
-      Union<sus_value_types((Order::First, u32), (Order::Second, u8))>;
+      Union<sus_union_types((Order::First, u32), (Order::Second, u8))>;
 
   auto u1 = OrderUnion::with<Order::First>(4u);
   EXPECT_EQ(u1, u1);
-  auto u2 = Union<sus_value_types(
+  auto u2 = Union<sus_union_types(
       (Order::First, u32), (Order::Second, u8))>::with<Order::Second>(4_u8);
   EXPECT_EQ(u2, u2);
   EXPECT_NE(u1, u2);
@@ -221,7 +221,7 @@ TEST(Union, Eq) {
 
 TEST(Union, Ord) {
   using OrderUnion =
-      Union<sus_value_types((Order::First, u32), (Order::Second, u8))>;
+      Union<sus_union_types((Order::First, u32), (Order::Second, u8))>;
   auto u1 = OrderUnion::with<Order::First>(4u);
   auto u2 = OrderUnion::with<Order::First>(5u);
   EXPECT_EQ(u1, u1);
@@ -232,9 +232,9 @@ TEST(Union, Ord) {
 
 TEST(Union, StrongOrder) {
   using OrderUnion =
-      Union<sus_value_types((Order::First, u32), (Order::Second, u8))>;
+      Union<sus_union_types((Order::First, u32), (Order::Second, u8))>;
   using RevOrderUnion =
-      Union<sus_value_types((Order::Second, u8), (Order::First, u32))>;
+      Union<sus_union_types((Order::Second, u8), (Order::First, u32))>;
 
   auto u1 = OrderUnion::with<Order::First>(4u);
   // Same enum value and inner value.
@@ -271,7 +271,7 @@ struct Weak {
 
 TEST(Union, WeakOrder) {
   using UnionWeak =
-      Union<sus_value_types((Order::First, Weak), (Order::Second, Weak))>;
+      Union<sus_union_types((Order::First, Weak), (Order::Second, Weak))>;
   static_assert(!sus::ops::Ord<UnionWeak>);
   static_assert(sus::ops::WeakOrd<UnionWeak>);
 
@@ -292,14 +292,14 @@ TEST(Union, WeakOrder) {
   constexpr Weak b(2, 3);
   static_assert(::sus::ops::Eq<Weak>);
   EXPECT_EQ(
-      (std::weak_order(Union<sus_value_types((a, i32), (b, i32))>::with<a>(1),
-                       Union<sus_value_types((a, i32), (b, i32))>::with<b>(2))),
+      (std::weak_order(Union<sus_union_types((a, i32), (b, i32))>::with<a>(1),
+                       Union<sus_union_types((a, i32), (b, i32))>::with<b>(2))),
       std::weak_ordering::less);
 }
 
 TEST(Union, PartialOrder) {
   using UnionFloatFloat =
-      Union<sus_value_types((Order::First, f32), (Order::Second, i32))>;
+      Union<sus_union_types((Order::First, f32), (Order::Second, i32))>;
 
   // Different values.
   auto u1 = UnionFloatFloat::with<Order::First>(1.f);
@@ -325,35 +325,35 @@ TEST(Union, PartialOrder) {
   constexpr f32 b = 1.f;
   static_assert(::sus::ops::Eq<f32>);
   EXPECT_EQ((std::partial_order(
-                Union<sus_value_types((a, i32), (b, i32))>::with<a>(1),
-                Union<sus_value_types((a, i32), (b, i32))>::with<b>(2))),
+                Union<sus_union_types((a, i32), (b, i32))>::with<a>(1),
+                Union<sus_union_types((a, i32), (b, i32))>::with<b>(2))),
             std::partial_ordering::less);
 }
 
 struct NotCmp {};
 static_assert(!sus::ops::PartialOrd<NotCmp>);
 
-static_assert(::sus::ops::Ord<Union<sus_value_types((1, int))>,
-                              Union<sus_value_types((1, int))>>);
-static_assert(!::sus::ops::Ord<Union<sus_value_types((1, Weak))>,
-                               Union<sus_value_types((1, Weak))>>);
-static_assert(::sus::ops::WeakOrd<Union<sus_value_types((1, Weak))>,
-                                  Union<sus_value_types((1, Weak))>>);
-static_assert(!::sus::ops::WeakOrd<Union<sus_value_types((1, float))>,
-                                   Union<sus_value_types((1, float))>>);
-static_assert(::sus::ops::PartialOrd<Union<sus_value_types((1, float))>,
-                                     Union<sus_value_types((1, float))>>);
-static_assert(!::sus::ops::PartialOrd<Union<sus_value_types((1, NotCmp))>,
-                                      Union<sus_value_types((1, NotCmp))>>);
+static_assert(::sus::ops::Ord<Union<sus_union_types((1, int))>,
+                              Union<sus_union_types((1, int))>>);
+static_assert(!::sus::ops::Ord<Union<sus_union_types((1, Weak))>,
+                               Union<sus_union_types((1, Weak))>>);
+static_assert(::sus::ops::WeakOrd<Union<sus_union_types((1, Weak))>,
+                                  Union<sus_union_types((1, Weak))>>);
+static_assert(!::sus::ops::WeakOrd<Union<sus_union_types((1, float))>,
+                                   Union<sus_union_types((1, float))>>);
+static_assert(::sus::ops::PartialOrd<Union<sus_union_types((1, float))>,
+                                     Union<sus_union_types((1, float))>>);
+static_assert(!::sus::ops::PartialOrd<Union<sus_union_types((1, NotCmp))>,
+                                      Union<sus_union_types((1, NotCmp))>>);
 
 TEST(Union, VoidValues) {
-  auto u1 = Union<sus_value_types(
+  auto u1 = Union<sus_union_types(
       (Order::First, u32), (Order::Second, void))>::with<Order::First>(4u);
-  auto u2 = Union<sus_value_types(
+  auto u2 = Union<sus_union_types(
       (Order::First, u32), (Order::Second, void))>::with<Order::Second>();
-  auto u3 = Union<sus_value_types((Order::First, void),
+  auto u3 = Union<sus_union_types((Order::First, void),
                                   (Order::Second, u32))>::with<Order::First>();
-  auto u4 = Union<sus_value_types(
+  auto u4 = Union<sus_union_types(
       (Order::First, void), (Order::Second, u32))>::with<Order::Second>(4u);
 
   static_assert(sus::mem::Copy<decltype(u1)>);
