@@ -19,7 +19,9 @@ TEST_F(CirTest, Smoke) {
     void f() {
       int i = 2;
     })");
-  if (output.is_none()) return;
-
-  llvm::errs() << cir::to_string(output.unwrap_ref()) << "\n";
+  bool eq = cir_eq(sus::move(output), R"(
+    fn f@0() {
+      (TODO: body)
+    })");
+  EXPECT_TRUE(eq);
 }
