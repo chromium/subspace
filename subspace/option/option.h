@@ -42,7 +42,7 @@
 #include "ops/ord.h"
 #include "option/__private/is_option_type.h"
 #include "option/__private/is_tuple_type.h"
-#include "option/__private/none_marker.h"
+#include "option/__private/marker.h"
 #include "option/__private/storage.h"
 #include "option/state.h"
 #include "result/__private/is_result_type.h"
@@ -136,6 +136,11 @@ class Option final {
 
   /// Construct an Option that is holding no value.
   static inline constexpr Option none() noexcept { return Option(); }
+
+  /// Construct an Option that is holding the given value, from the output of
+  /// `sus::option::some()`.
+  inline constexpr Option(__private::SomeMarker<T&&> m) noexcept
+      : Option(move_to_storage(::sus::move(m).value)) {}
 
   /// Construct an Option that is holding no value, from the output of
   /// `sus::option::none()`.
@@ -975,7 +980,7 @@ using sus::iter::__private::end;
 
 template <class T>
 inline constexpr auto some(T&& t) {
-  return Option<std::decay_t<T>>::some(::sus::forward<T>(t));
+  return __private::SomeMarker<T&&>(::sus::forward<T>(t));
 }
 
 inline constexpr auto none() { return __private::NoneMarker(); }

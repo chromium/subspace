@@ -16,6 +16,11 @@
 
 namespace sus::option::__private {
 
+template <class T>
+struct SomeMarker {
+  T value;
+};
+
 struct NoneMarker {};
 
 }  // namespace sus::option::__private
