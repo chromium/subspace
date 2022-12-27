@@ -15,7 +15,6 @@
 #pragma once
 
 #include "iter/iterator_defn.h"
-#include "iter/iterator_impl.h"
 
 // Once is included here, because there is a cycle between
 // Option->Once->IteratorBase, so Option can't include Once itself. But as long

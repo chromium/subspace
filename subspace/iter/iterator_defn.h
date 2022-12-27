@@ -14,9 +14,14 @@
 
 #pragma once
 
-#include "fn/fn_defn.h"
+#include "fn/fn.h"
+#include "iter/__private/iterator_end.h"
+#include "iter/__private/iterator_loop.h"
 #include "iter/from_iterator.h"
+#include "iter/iterator_defn.h"
+#include "iter/sized_iterator.h"
 #include "macros/__private/compiler_bugs.h"
+#include "mem/move.h"
 #include "mem/size_of.h"
 #include "num/unsigned_integer.h"
 #include "option/option.h"
@@ -29,20 +34,6 @@ using ::sus::option::Option;
 template <class Item, size_t InnerIterSize, size_t InnerIterAlign,
           bool InnerIterInlineStorage>
 class Filter;
-
-namespace __private {
-template <class IteratorBase>
-class IteratorLoop;
-
-template <class Iterator>
-class IteratorImplicitLoop;
-struct IteratorEnd;
-
-template <class T>
-constexpr auto begin(const T& t) noexcept;
-template <class T>
-constexpr auto end(const T& t) noexcept;
-}  // namespace __private
 
 // TODO: Do we want to be able to pass IteratorBase& as a "generic" iterator?
 // Then it needs access to the adapator methods of Iterator<T>, so make them
@@ -68,6 +59,49 @@ class IteratorBase {
   /// returns an Option holding #None.
   virtual Option<Item> next() noexcept = 0;
 
+  // Adaptors for ranged for loops.
+  //
+  // They are in the base class for use in FromIterator implementations which
+  // see the base class type only.
+
+  /// Adaptor for use in ranged for loops.
+  auto begin() & noexcept {
+    return __private::IteratorLoop<IteratorBase<Item>&>(*this);
+  }
+  /// Adaptor for use in ranged for loops.
+  auto end() & noexcept { return __private::IteratorEnd(); }
+
+ protected:
+  IteratorBase() = default;
+};
+
+template <class I>
+[[nodiscard]] class Iterator final : public I {
+ private:
+  using sus_clang_bug_58837(Item =) typename I::Item;
+  template <class T>
+  friend class __private::IteratorLoop;  // Can see Item.
+  friend I;                              // I::foo() can construct Iterator<I>.
+
+  template <class J>
+  friend class Iterator;  // Iterator<J>::foo() can construct Iterator<I>.
+
+  // Option can't include Iterator, due to a circular dependency between
+  // Option->Iterator->Option. So it forward declares Iterator, and needs
+  // to use the constructor directly.
+  template <class T>
+  friend class sus_clang_bug_58836(
+      ::sus::option::) Option;  // Option<T>::foo() can construct Iterator<I>.
+
+  template <class... Args>
+  Iterator(Args&&... args) : I(static_cast<Args&&>(args)...) {
+    // We want to be able to use Iterator<I> and I interchangably, so that if an
+    // `I` gets stored in SizedIterator, it doesn't misbehave.
+    static_assert(::sus::mem::size_of<I>() ==
+                  ::sus::mem::size_of<Iterator<I>>());
+  }
+
+ public:
   // Provided methods.
 
   /// Tests whether all elements of the iterator match a predicate.
@@ -101,44 +135,6 @@ class IteratorBase {
   /// iterator has more than `usize::MAX` elements in it, the value will wrap
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
   virtual ::sus::usize count() noexcept;
-
-  /// Adaptor for use in ranged for loops.
-  __private::IteratorLoop<IteratorBase<Item>&> begin() & noexcept;
-  /// Adaptor for use in ranged for loops.
-  __private::IteratorEnd end() & noexcept;
-
- protected:
-  IteratorBase() = default;
-};
-
-template <class I>
-[[nodiscard]] class Iterator final : public I {
- private:
-  using sus_clang_bug_58837(Item =) typename I::Item;
-  template <class T>
-  friend class __private::IteratorLoop;  // Can see Item.
-  friend I;                              // I::foo() can construct Iterator<I>.
-
-  template <class J>
-  friend class Iterator;  // Iterator<J>::foo() can construct Iterator<I>.
-
-  // Option can't include Iterator, due to a circular dependency between
-  // Option->Iterator->Option. So it forward declares Iterator, and needs
-  // to use the constructor directly.
-  template <class T>
-  friend class sus_clang_bug_58836(
-      ::sus::option::) Option;  // Option<T>::foo() can construct Iterator<I>.
-
-  template <class... Args>
-  Iterator(Args&&... args) : I(static_cast<Args&&>(args)...) {
-    // We want to be able to use Iterator<I> and I interchangably, so that if an
-    // `I` gets stored in SizedIterator, it doesn't misbehave.
-    static_assert(::sus::mem::size_of<I>() ==
-                  ::sus::mem::size_of<Iterator<I>>());
-  }
-
- public:
-  // Adaptor methods.
 
   // TODO: map()
 
@@ -177,5 +173,62 @@ template <class I>
 
   // TODO: cloned().
 };
+
+template <class I>
+bool Iterator<I>::all(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
+  while (true) {
+    Option<typename I::Item> item = this->next();
+    if (item.is_none()) return true;
+    // Safety: `item` was checked to hold Some already.
+    if (!f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn)))
+      return false;
+  }
+}
+
+template <class I>
+bool Iterator<I>::any(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
+  while (true) {
+    Option<typename I::Item> item = this->next();
+    if (item.is_none()) return false;
+    // Safety: `item` was checked to hold Some already.
+    if (f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return true;
+  }
+}
+
+template <class I>
+usize Iterator<I>::count() noexcept {
+  auto c = 0_usize;
+  while (this->next().is_some()) c += 1_usize;
+  return c;
+}
+
+template <class I>
+Iterator<Filter<typename I::Item, ::sus::mem::size_of<I>(), alignof(I),
+                ::sus::mem::relocate_one_by_memcpy<I>>>
+Iterator<I>::filter(
+    ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
+        pred) && noexcept {
+  // TODO: make_sized_iterator immediately copies `this` to either the body of
+  // the output iterator or to a heap allocation (if it can't be trivially
+  // relocated). It is plausible to be more lazy here and avoid moving `this`
+  // until it's actually needed, which may not be ever if the resulting iterator
+  // is used before `this` gets destroyed. The problem is `this` could be a
+  // temporary. So to do this, we could build a doubly-linked list along the
+  // chain of iterators. `this` would point to the returned iterator here, and
+  // vice versa. If `this` gets destroyed, then we would have to walk the entire
+  // linked list and move them all up into the outermost iterator immediately.
+  // Doing so dynamically would require a (single) heap allocation at that point
+  // always. It would be elided if the iterator was kept on the stack, or used
+  // inside the temporary expression. But it would require one heap allocation
+  // to use any chain of iterators in a for loop, since temporaies get destroyed
+  // after initialing the loop.
+  return {::sus::move(pred), make_sized_iterator(static_cast<I&&>(*this))};
+}
+
+template <class I>
+template <::sus::iter::FromIterator<typename I::Item> C>
+C Iterator<I>::collect() && noexcept {
+  return C::from_iter(::sus::move(*this));
+}
 
 }  // namespace sus::iter

@@ -26,7 +26,6 @@ add_library(subspace STATIC
     "iter/from_iterator.h"
     "iter/iterator.h"
     "iter/iterator_defn.h"
-    "iter/iterator_impl.h"
     "iter/once.h"
     "iter/sized_iterator.h"
     "macros/__private/compiler_bugs.h"
