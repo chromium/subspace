@@ -1527,8 +1527,8 @@ class Tuple;
 #define _sus__signed_hash_equal_to(Type)                                   \
   template <>                                                              \
   struct hash<Type> {                                                      \
-    auto operator()(const Type& u) const {                                 \
-      return std::hash<decltype(u.primitive_value)>()(u.primitive_value);  \
+    size_t operator()(const Type& u) const {                                 \
+      return u.primitive_value;  \
     }                                                                      \
   };                                                                       \
   template <>                                                              \

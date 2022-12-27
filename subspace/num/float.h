@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <functional>  // TODO: remove this but we need to hash things > size_t.
+
 #include "num/__private/float_consts.h"
 #include "num/__private/float_macros.h"
 #include "num/__private/literals.h"
@@ -56,4 +58,4 @@ _sus__float_literal(f64, ::sus::num::f64);
 namespace sus {
 using sus::num::f32;
 using sus::num::f64;
-}
+}  // namespace sus
