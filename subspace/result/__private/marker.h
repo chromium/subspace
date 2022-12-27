@@ -14,13 +14,16 @@
 
 #pragma once
 
-namespace sus::option::__private {
+namespace sus::result::__private {
 
 template <class T>
-struct SomeMarker {
+struct OkMarker {
   T&& value;
 };
 
-struct NoneMarker {};
+template <class T>
+struct ErrMarker {
+  T&& value;
+};
 
-}  // namespace sus::option::__private
+}  // namespace sus::result::__private

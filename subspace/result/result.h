@@ -35,6 +35,7 @@
 #include "mem/replace.h"
 #include "mem/take.h"
 #include "option/option.h"
+#include "result/__private/marker.h"
 #include "result/__private/storage.h"
 
 namespace sus::result {
@@ -67,9 +68,9 @@ class [[nodiscard]] Result final {
 
   /// Construct an Result that is holding the given success value.
   static constexpr inline Result with(const T& t) noexcept
-    requires(::sus::mem::Clone<T>)
+    requires(::sus::mem::Copy<T>)
   {
-    return Result(WithOk, ::sus::clone(t));
+    return Result(WithOk, t);
   }
   /// Construct an Result that is holding the given success value.
   static constexpr inline Result with(T&& t) noexcept
@@ -80,9 +81,9 @@ class [[nodiscard]] Result final {
 
   /// Construct an Result that is holding the given error value.
   static constexpr inline Result with_err(const E& e) noexcept
-    requires(::sus::mem::Clone<E>)
+    requires(::sus::mem::Copy<E>)
   {
-    return Result(WithErr, ::sus::clone(e));
+    return Result(WithErr, e);
   }
   /// Construct an Result that is holding the given error value.
   static constexpr inline Result with_err(E&& e) noexcept
@@ -90,6 +91,26 @@ class [[nodiscard]] Result final {
   {
     return Result(WithErr, ::sus::move(e));
   }
+
+  // Construction from sus::result::ok() and sus::result::err().
+  constexpr inline Result(__private::OkMarker<const T&> t) noexcept
+    requires(::sus::mem::Copy<T>)
+      : Result(WithOk, t.value) {}
+  constexpr inline Result(__private::OkMarker<T&> t) noexcept
+    requires(::sus::mem::Copy<T>)
+      : Result(WithOk, t.value) {}
+  constexpr inline Result(__private::OkMarker<T&&> t) noexcept
+    requires(::sus::mem::Move<T>)
+      : Result(WithOk, ::sus::move(::sus::move(t).value)) {}
+  constexpr inline Result(__private::ErrMarker<const E&> e) noexcept
+    requires(::sus::mem::Copy<E>)
+      : Result(WithErr, e.value) {}
+  constexpr inline Result(__private::ErrMarker<E&> e) noexcept
+    requires(::sus::mem::Copy<E>)
+      : Result(WithErr, e.value) {}
+  constexpr inline Result(__private::ErrMarker<E&&> e) noexcept
+    requires(::sus::mem::Move<E>)
+      : Result(WithErr, ::sus::move(::sus::move(e).value)) {}
 
   /// Takes each element in the Iterator: if it is an Err, no further elements
   /// are taken, and the Err is returned. Should no Err occur, a container with
@@ -418,5 +439,15 @@ class [[nodiscard]] Result final {
 
   sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn, T, E);
 };
+
+template <class T>
+inline constexpr auto ok(T&& t) noexcept {
+  return __private::OkMarker<T&&>(::sus::forward<T>(t));
+}
+
+template <class T>
+inline constexpr auto err(T&& t) noexcept {
+  return __private::ErrMarker<T&&>(::sus::forward<T>(t));
+}
 
 }  // namespace sus::result

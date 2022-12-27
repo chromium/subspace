@@ -137,13 +137,20 @@ class Option final {
   /// Construct an Option that is holding no value.
   static inline constexpr Option none() noexcept { return Option(); }
 
-  /// Construct an Option that is holding the given value, from the output of
-  /// `sus::option::some()`.
-  inline constexpr Option(__private::SomeMarker<T&&> m) noexcept
+  // Construction from sus::option::some() and sus::option::none().
+  inline constexpr Option(
+      __private::SomeMarker<
+          const std::remove_const_t<std::remove_reference_t<T>>&>
+          m) noexcept
+      : Option(::sus::move(m).value) {}
+  inline constexpr Option(
+      __private::SomeMarker<std::remove_const_t<std::remove_reference_t<T>>&>
+          m) noexcept
+      : Option(::sus::move(m).value) {}
+  inline constexpr Option(
+      __private::SomeMarker<std::remove_const_t<std::remove_reference_t<T>>&&>
+          m) noexcept
       : Option(move_to_storage(::sus::move(m).value)) {}
-
-  /// Construct an Option that is holding no value, from the output of
-  /// `sus::option::none()`.
   inline constexpr Option(__private::NoneMarker) noexcept : Option() {}
 
   /// Construct an Option with the default value for the type it contains.
@@ -978,12 +985,22 @@ constexpr inline auto operator<=>(const Option<T>& l,
 using sus::iter::__private::begin;
 using sus::iter::__private::end;
 
+/// Used to construct an Option<T> with a Some(t) value.
+///
+/// Calling some() produces a hint to make an Option<T> but does not actually
+/// construct Option<T>. This is to allow constructing an Option<T> or
+/// Option<T&> correctly.
 template <class T>
-inline constexpr auto some(T&& t) {
+inline constexpr auto some(T&& t) noexcept {
   return __private::SomeMarker<T&&>(::sus::forward<T>(t));
 }
 
-inline constexpr auto none() { return __private::NoneMarker(); }
+/// Used to construct an Option<T> with a None value.
+///
+/// Calling none() produces a hint to make an Option<T> but does not actually
+/// construct Option<T>. This is because the type `T` is not known until the
+/// construction is explicitly requested.
+inline constexpr auto none() noexcept { return __private::NoneMarker(); }
 
 }  // namespace sus::option
 

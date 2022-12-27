@@ -78,6 +78,7 @@ add_library(subspace STATIC
     "ops/eq.h"
     "ops/ord.h"
     "result/__private/is_result_type.h"
+    "result/__private/marker.h"
     "result/__private/storage.h"
     "result/result.h"
     "union/__private/all_values_are_unique.h"

@@ -30,3 +30,5 @@ footguns, crashes, bugs, and UB.
       forward-declare the `usize` type), and template args are always statically
       determined, `usize` doesn't provide the same value in this context, and
       can get in the way.
+1. Do not clone() inside constructor methods. The clone should happen at the
+   call site. Only allow Copy to happen inside the library type.

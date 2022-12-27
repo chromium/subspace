@@ -29,7 +29,7 @@ union Storage {
 
   constexpr Storage(WithT, const T& t) noexcept : ok_(t) {}
   constexpr Storage(WithT, T&& t) noexcept : ok_(::sus::move(t)) {}
-  constexpr Storage(WithE, const E&& e) noexcept : err_(e) {}
+  constexpr Storage(WithE, const E& e) noexcept : err_(e) {}
   constexpr Storage(WithE, E&& e) noexcept : err_(::sus::move(e)) {}
 
   constexpr ~Storage()
