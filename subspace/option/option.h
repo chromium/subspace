@@ -36,8 +36,8 @@
 #include "mem/forward.h"
 #include "mem/move.h"
 #include "mem/mref.h"
-#include "mem/replace.h"
 #include "mem/relocate.h"
+#include "mem/replace.h"
 #include "mem/take.h"
 #include "num/num_concepts.h"
 #include "ops/eq.h"
@@ -994,7 +994,7 @@ using sus::iter::__private::end;
 /// construct Option<T>. This is to allow constructing an Option<T> or
 /// Option<T&> correctly.
 template <class T>
-inline constexpr auto some(
+[[nodiscard]] inline constexpr auto some(
     T&& t sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::SomeMarker<T&&>(::sus::forward<T>(t));
 }
@@ -1004,7 +1004,9 @@ inline constexpr auto some(
 /// Calling none() produces a hint to make an Option<T> but does not actually
 /// construct Option<T>. This is because the type `T` is not known until the
 /// construction is explicitly requested.
-inline constexpr auto none() noexcept { return __private::NoneMarker(); }
+[[nodiscard]] inline constexpr auto none() noexcept {
+  return __private::NoneMarker();
+}
 
 }  // namespace sus::option
 
