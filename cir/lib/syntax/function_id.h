@@ -14,33 +14,43 @@
 
 #pragma once
 
+#include <sstream>
+#include <string>
+
+#include "cir/llvm.h"
+#include "subspace/prelude.h"
+
 namespace cir::syntax {
 
-struct PointerAnnotations {
-  bool is_const;
-  bool is_nullable;
-  // TODO: lifetimes.
+struct FunctionId {
+  u32 num;
 };
 
 }  // namespace cir::syntax
 
 namespace cir {
 
-inline std::string to_string(const syntax::PointerAnnotations& anno) noexcept {
-  // TODO: Use fmt library (or add such to subspace).
+inline std::string to_string(const syntax::FunctionId& id) noexcept {
   std::ostringstream s;
-  if (anno.is_const) {
-    s << "const";
-  } else {
-    s << "mut";
-  }
-  s << " ";
-  if (anno.is_nullable) {
-    s << "nullable";
-  } else {
-    s << "nonnull";
-  }
+  s << id.num.primitive_value;
   return s.str();
 }
 
 }  // namespace cir
+
+namespace std {
+template <>
+struct hash<cir::syntax::FunctionId> {
+  auto operator()(const cir::syntax::FunctionId& i) const {
+    return std::hash<decltype(i.num)>()(i.num);
+  }
+};
+template <>
+struct equal_to<cir::syntax::FunctionId> {
+  auto operator()(const cir::syntax::FunctionId& l,
+                  const cir::syntax::FunctionId& r) const {
+    return l.num == r.num;
+  }
+};
+
+}  // namespace std

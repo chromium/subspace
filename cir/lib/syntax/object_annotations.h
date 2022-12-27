@@ -16,29 +16,21 @@
 
 namespace cir::syntax {
 
-struct PointerAnnotations {
+struct ObjectAnnotations {
   bool is_const;
-  bool is_nullable;
-  // TODO: lifetimes.
 };
 
 }  // namespace cir::syntax
 
 namespace cir {
 
-inline std::string to_string(const syntax::PointerAnnotations& anno) noexcept {
+inline std::string to_string(const syntax::ObjectAnnotations& anno) noexcept {
   // TODO: Use fmt library (or add such to subspace).
   std::ostringstream s;
   if (anno.is_const) {
     s << "const";
   } else {
     s << "mut";
-  }
-  s << " ";
-  if (anno.is_nullable) {
-    s << "nullable";
-  } else {
-    s << "nonnull";
   }
   return s.str();
 }

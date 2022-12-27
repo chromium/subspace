@@ -16,9 +16,8 @@
 
 TEST_F(CirTest, Smoke) {
   auto output = run_code(R"(
-    int f() {
+    void f() {
       int i = 2;
-      return i;
     })");
   if (output.is_none()) return;
 
