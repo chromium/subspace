@@ -75,6 +75,10 @@ concept MaxInRange = requires {
 };
 static_assert(MaxInRange<i16>);
 
+// std hashing
+static_assert(std::same_as<decltype(std::hash<i16>()(0_i16)), size_t>);
+static_assert(std::same_as<decltype(std::equal_to<i16>()(0_i16, 1_i16)), bool>);
+
 TEST(i16, Traits) {
   // ** Signed only **
   static_assert(sus::num::Neg<i16>);

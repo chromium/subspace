@@ -617,8 +617,9 @@ class Tuple;
   constexpr Tuple overflowing_div(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
-    if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn, primitive_value,           \
-                                         rhs.primitive_value)) [[unlikely]] {  \
+    if (__private::div_overflows_nonzero(                                      \
+            ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
+        [[unlikely]] {                                                         \
       return Tuple::with(MIN(), true);                                         \
     } else {                                                                   \
       return Tuple::with(                                                      \
@@ -636,8 +637,9 @@ class Tuple;
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
-    if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn, primitive_value,           \
-                                         rhs.primitive_value)) [[unlikely]] {  \
+    if (__private::div_overflows_nonzero(                                      \
+            ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
+        [[unlikely]] {                                                         \
       /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
        saturated to MAX(). */                                                  \
       return MAX();                                                            \
@@ -660,8 +662,9 @@ class Tuple;
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
-    if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn, primitive_value,           \
-                                         rhs.primitive_value)) [[unlikely]] {  \
+    if (__private::div_overflows_nonzero(                                      \
+            ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
+        [[unlikely]] {                                                         \
       /* Only overflows in the case of -MIN() / -1, which gives MAX() + 1,     \
        that wraps around to MIN(). */                                          \
       return MIN();                                                            \
@@ -802,8 +805,9 @@ class Tuple;
   constexpr Tuple overflowing_rem(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
-    if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn, primitive_value,           \
-                                         rhs.primitive_value)) [[unlikely]] {  \
+    if (__private::div_overflows_nonzero(                                      \
+            ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
+        [[unlikely]] {                                                         \
       return Tuple::with(PrimitiveT{0}, true);                                 \
     } else {                                                                   \
       return Tuple::with(                                                      \
@@ -822,8 +826,9 @@ class Tuple;
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
-    if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn, primitive_value,           \
-                                         rhs.primitive_value)) [[likely]] {    \
+    if (__private::div_overflows_nonzero(                                      \
+            ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
+        [[likely]] {                                                           \
       return PrimitiveT{0};                                                    \
     } else {                                                                   \
       return static_cast<PrimitiveT>(primitive_value % rhs.primitive_value);   \
@@ -849,7 +854,7 @@ class Tuple;
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(                                                              \
         !__private::div_overflows(primitive_value, rhs.primitive_value));      \
-    return __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,                   \
+    return __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,    \
                                  rhs.primitive_value);                         \
   }                                                                            \
                                                                                \
@@ -861,8 +866,8 @@ class Tuple;
         [[unlikely]] {                                                         \
       return Option<T>::none();                                                \
     } else {                                                                   \
-      return Option<T>::some(__private::div_euclid(::sus::marker::unsafe_fn, primitive_value, \
-                                                   rhs.primitive_value));      \
+      return Option<T>::some(__private::div_euclid(                            \
+          ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value));    \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -879,13 +884,15 @@ class Tuple;
   constexpr Tuple overflowing_div_euclid(const T& rhs) const& noexcept {       \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
-    if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn, primitive_value,           \
-                                         rhs.primitive_value)) [[unlikely]] {  \
+    if (__private::div_overflows_nonzero(                                      \
+            ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
+        [[unlikely]] {                                                         \
       return Tuple::with(MIN(), true);                                         \
     } else {                                                                   \
-      return Tuple::with(__private::div_euclid(::sus::marker::unsafe_fn, primitive_value,     \
-                                               rhs.primitive_value),           \
-                         false);                                               \
+      return Tuple::with(                                                      \
+          __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,     \
+                                rhs.primitive_value),                          \
+          false);                                                              \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -903,11 +910,12 @@ class Tuple;
   constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
-    if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn, primitive_value,           \
-                                         rhs.primitive_value)) [[unlikely]] {  \
+    if (__private::div_overflows_nonzero(                                      \
+            ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
+        [[unlikely]] {                                                         \
       return MIN();                                                            \
     } else {                                                                   \
-      return __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,                 \
+      return __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,  \
                                    rhs.primitive_value);                       \
     }                                                                          \
   }                                                                            \
@@ -925,7 +933,7 @@ class Tuple;
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(                                                              \
         !__private::div_overflows(primitive_value, rhs.primitive_value));      \
-    return __private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,                   \
+    return __private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,    \
                                  rhs.primitive_value);                         \
   }                                                                            \
                                                                                \
@@ -937,8 +945,8 @@ class Tuple;
         [[unlikely]] {                                                         \
       return Option<T>::none();                                                \
     } else {                                                                   \
-      return Option<T>::some(__private::rem_euclid(::sus::marker::unsafe_fn, primitive_value, \
-                                                   rhs.primitive_value));      \
+      return Option<T>::some(__private::rem_euclid(                            \
+          ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value));    \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -955,13 +963,15 @@ class Tuple;
   constexpr Tuple overflowing_rem_euclid(const T& rhs) const& noexcept {       \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
-    if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn, primitive_value,           \
-                                         rhs.primitive_value)) [[unlikely]] {  \
+    if (__private::div_overflows_nonzero(                                      \
+            ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
+        [[unlikely]] {                                                         \
       return Tuple::with(PrimitiveT{0}, true);                                 \
     } else {                                                                   \
-      return Tuple::with(__private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,     \
-                                               rhs.primitive_value),           \
-                         false);                                               \
+      return Tuple::with(                                                      \
+          __private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,     \
+                                rhs.primitive_value),                          \
+          false);                                                              \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -978,11 +988,12 @@ class Tuple;
   constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
-    if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn, primitive_value,           \
-                                         rhs.primitive_value)) [[unlikely]] {  \
+    if (__private::div_overflows_nonzero(                                      \
+            ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
+        [[unlikely]] {                                                         \
       return PrimitiveT{0};                                                    \
     } else {                                                                   \
-      return __private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,                 \
+      return __private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,  \
                                    rhs.primitive_value);                       \
     }                                                                          \
   }                                                                            \
@@ -1305,7 +1316,8 @@ class Tuple;
       return Option<u32>::none();                                             \
     } else {                                                                  \
       uint32_t zeros = __private::leading_zeros_nonzero(                      \
-          ::sus::marker::unsafe_fn, __private::into_unsigned(primitive_value));              \
+          ::sus::marker::unsafe_fn,                                           \
+          __private::into_unsigned(primitive_value));                         \
       return Option<u32>::some(BITS() - 1_u32 - u32(zeros));                  \
     }                                                                         \
   }                                                                           \
@@ -1510,4 +1522,17 @@ class Tuple;
     }                                                                         \
     return __private::into_signed(val);                                       \
   }                                                                           \
+  static_assert(true)
+
+#define _sus__signed_hash_equal_to(Type)                                   \
+  template <>                                                              \
+  struct hash<Type> {                                                      \
+    auto operator()(const Type& u) const {                                 \
+      return std::hash<decltype(u.primitive_value)>()(u.primitive_value);  \
+    }                                                                      \
+  };                                                                       \
+  template <>                                                              \
+  struct equal_to<Type> {                                                  \
+    auto operator()(const Type& l, const Type& r) const { return l == r; } \
+  };                                                                       \
   static_assert(true)

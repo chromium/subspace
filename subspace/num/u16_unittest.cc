@@ -16,13 +16,13 @@
 
 #include "construct/into.h"
 #include "containers/array.h"
+#include "googletest/include/gtest/gtest.h"
 #include "num/num_concepts.h"
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
 #include "prelude.h"
-#include "googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
 
 namespace {
@@ -74,6 +74,10 @@ concept MaxInRange = requires {
   { u16(uint16_t{0xffff}) } -> std::same_as<T>;
 };
 static_assert(MaxInRange<u16>);
+
+// std hashing
+static_assert(std::same_as<decltype(std::hash<u16>()(0_u16)), size_t>);
+static_assert(std::same_as<decltype(std::equal_to<u16>()(0_u16, 1_u16)), bool>);
 
 TEST(u16, Traits) {
   // ** Unsigned only

@@ -1304,3 +1304,16 @@ class Tuple;
     return val;                                                               \
   }                                                                           \
   static_assert(true)
+
+#define _sus__unsigned_hash_equal_to(Type)                                 \
+  template <>                                                              \
+  struct hash<Type> {                                                      \
+    auto operator()(const Type& u) const {                                 \
+      return std::hash<decltype(u.primitive_value)>()(u.primitive_value);  \
+    }                                                                      \
+  };                                                                       \
+  template <>                                                              \
+  struct equal_to<Type> {                                                  \
+    auto operator()(const Type& l, const Type& r) const { return l == r; } \
+  };                                                                       \
+  static_assert(true)

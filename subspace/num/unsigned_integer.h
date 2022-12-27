@@ -58,6 +58,14 @@ struct usize final {
 
 }  // namespace sus::num
 
+namespace std {
+_sus__unsigned_hash_equal_to(::sus::num::u8);
+_sus__unsigned_hash_equal_to(::sus::num::u16);
+_sus__unsigned_hash_equal_to(::sus::num::u32);
+_sus__unsigned_hash_equal_to(::sus::num::u64);
+_sus__unsigned_hash_equal_to(::sus::num::usize);
+}  // namespace std
+
 _sus__integer_literal(u8, ::sus::num::u8);
 _sus__integer_literal(u16, ::sus::num::u16);
 _sus__integer_literal(u32, ::sus::num::u32);
@@ -71,4 +79,4 @@ using sus::num::u32;
 using sus::num::u64;
 using sus::num::u8;
 using sus::num::usize;
-}
+}  // namespace sus
