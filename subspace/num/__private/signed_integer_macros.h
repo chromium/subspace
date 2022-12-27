@@ -22,6 +22,7 @@
 #include "assertions/check.h"
 #include "assertions/endian.h"
 #include "marker/unsafe.h"
+#include "mem/size_of.h"
 #include "num/__private/int_log10.h"
 #include "num/__private/intrinsics.h"
 #include "num/__private/literals.h"
@@ -64,7 +65,7 @@ class Tuple;
   _sus__signed_bits(T);                             \
   _sus__signed_pow(T);                              \
   _sus__signed_log(T);                              \
-  _sus__signed_endian(T, UnsignedT, sizeof(PrimitiveT))
+  _sus__signed_endian(T, UnsignedT, ::sus::mem::size_of<PrimitiveT>())
 
 #define _sus__signed_storage(PrimitiveT)                                      \
   /** The inner primitive value, in case it needs to be unwrapped from the    \
@@ -94,19 +95,19 @@ class Tuple;
   /** Construction from signed primitive types where no bits are lost.         \
    */                                                                          \
   template <SignedPrimitiveInteger P>                                          \
-    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
   constexpr inline T(P v) : primitive_value(v) {}                              \
                                                                                \
   /** Construction from unsigned primitive types where no bits are lost.       \
    */                                                                          \
   template <UnsignedPrimitiveInteger P>                                        \
-    requires(sizeof(P) < sizeof(PrimitiveT))                                   \
+    requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<PrimitiveT>())     \
   constexpr inline T(P v) : primitive_value(v) {}                              \
                                                                                \
   /** Assignment from signed primitive types where no bits are lost.           \
    */                                                                          \
   template <SignedPrimitiveInteger P>                                          \
-    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
   constexpr inline T& operator=(P v) noexcept {                                \
     primitive_value = v;                                                       \
     return *this;                                                              \
@@ -115,7 +116,7 @@ class Tuple;
   /** Assignment from unsigned primitive types where no bits are lost.         \
    */                                                                          \
   template <UnsignedPrimitiveInteger P>                                        \
-    requires(sizeof(P) < sizeof(PrimitiveT))                                   \
+    requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<PrimitiveT>())     \
   constexpr inline T& operator=(P v) noexcept {                                \
     primitive_value = v;                                                       \
     return *this;                                                              \
@@ -182,12 +183,12 @@ class Tuple;
   }                                                                         \
   static_assert(true)
 
-#define _sus__signed_to_primitive(T, PrimitiveT) \
-  template <SignedPrimitiveInteger U>            \
-    requires(sizeof(U) >= sizeof(PrimitiveT))    \
-  constexpr inline explicit operator U() const { \
-    return primitive_value;                      \
-  }                                              \
+#define _sus__signed_to_primitive(T, PrimitiveT)                            \
+  template <SignedPrimitiveInteger U>                                       \
+    requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<PrimitiveT>()) \
+  constexpr inline explicit operator U() const {                            \
+    return primitive_value;                                                 \
+  }                                                                         \
   static_assert(true)
 
 #define _sus__signed_integer_comparison(T, PrimitiveT)                         \
@@ -1527,9 +1528,7 @@ class Tuple;
 #define _sus__signed_hash_equal_to(Type)                                   \
   template <>                                                              \
   struct hash<Type> {                                                      \
-    size_t operator()(const Type& u) const {                                 \
-      return u.primitive_value;  \
-    }                                                                      \
+    size_t operator()(const Type& u) const { return u.primitive_value; }   \
   };                                                                       \
   template <>                                                              \
   struct equal_to<Type> {                                                  \

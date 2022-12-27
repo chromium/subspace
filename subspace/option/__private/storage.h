@@ -15,6 +15,7 @@
 #pragma once
 
 #include "macros/always_inline.h"
+#include "marker/unsafe.h"
 #include "mem/addressof.h"
 #include "mem/move.h"
 #include "mem/mref.h"
@@ -53,6 +54,30 @@ struct Storage<T, false> final {
   constexpr Storage& operator=(Storage&&)
     requires(std::is_trivially_move_assignable_v<T>)
   = default;
+
+  // Make the Storage have the same non-trivial copy/move characteristics, for
+  // Option to query. But these aren't used by Option, since it copies/moves the
+  // stored value itself.
+  constexpr Storage(const Storage&)
+    requires(!std::is_trivially_copy_constructible_v<T>)
+  {
+    sus::unreachable();
+  }
+  constexpr Storage& operator=(const Storage&)
+    requires(!std::is_trivially_copy_assignable_v<T>)
+  {
+    sus::unreachable();
+  }
+  constexpr Storage(Storage&&)
+    requires(!std::is_trivially_move_constructible_v<T>)
+  {
+    sus::unreachable();
+  }
+  constexpr Storage& operator=(Storage&&)
+    requires(!std::is_trivially_move_assignable_v<T>)
+  {
+    sus::unreachable();
+  }
 
   constexpr Storage() {}
   constexpr Storage(const std::remove_cvref_t<T>& t) : val_(t), state_(Some) {}
@@ -97,6 +122,9 @@ struct Storage<T, false> final {
     state_ = None;
     val_.~T();
   }
+
+  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+                                            decltype(val_));
 };
 
 template <class T>
@@ -120,6 +148,30 @@ struct Storage<T, true> final {
   constexpr Storage& operator=(Storage&&)
     requires(std::is_trivially_move_assignable_v<T>)
   = default;
+
+  // Make the Storage have the same non-trivial copy/move characteristics, for
+  // Option to query. But these aren't used by Option, since it copies/moves the
+  // stored value itself.
+  constexpr Storage(const Storage&)
+    requires(!std::is_trivially_copy_constructible_v<T>)
+  {
+    sus::unreachable();
+  }
+  constexpr Storage& operator=(const Storage&)
+    requires(!std::is_trivially_copy_assignable_v<T>)
+  {
+    sus::unreachable();
+  }
+  constexpr Storage(Storage&&)
+    requires(!std::is_trivially_move_constructible_v<T>)
+  {
+    sus::unreachable();
+  }
+  constexpr Storage& operator=(Storage&&)
+    requires(!std::is_trivially_move_assignable_v<T>)
+  {
+    sus::unreachable();
+  }
 
   constexpr Storage() : overlay_() {
     ::sus::mem::never_value_access<T>::set_never_value(::sus::marker::unsafe_fn,
@@ -185,6 +237,9 @@ struct Storage<T, true> final {
     ::sus::mem::never_value_access<T>::set_never_value(::sus::marker::unsafe_fn,
                                                        overlay_);
   }
+
+  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+                                            decltype(val_));
 };
 
 template <class T>

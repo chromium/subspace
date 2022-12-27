@@ -20,6 +20,7 @@
 #include "iter/iterator_defn.h"
 #include "iter/sized_iterator.h"
 #include "mem/move.h"
+#include "mem/size_of.h"
 
 // IteratorBase provided functions are implemented in this file, so that they
 // can be easily included by library users, but don't have to be included in
@@ -44,7 +45,8 @@ bool IteratorBase<Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
     Option<Item> item = next();
     if (item.is_none()) return true;
     // Safety: `item` was checked to hold Some already.
-    if (!f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return false;
+    if (!f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn)))
+      return false;
   }
 }
 
@@ -66,7 +68,7 @@ usize IteratorBase<Item>::count() noexcept {
 }
 
 template <class I>
-Iterator<Filter<typename I::Item, sizeof(I), alignof(I),
+Iterator<Filter<typename I::Item, ::sus::mem::size_of<I>(), alignof(I),
                 ::sus::mem::relocate_one_by_memcpy<I>>>
 Iterator<I>::filter(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>

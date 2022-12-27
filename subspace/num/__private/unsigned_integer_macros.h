@@ -21,6 +21,7 @@
 
 #include "assertions/check.h"
 #include "assertions/endian.h"
+#include "mem/size_of.h"
 #include "macros/__private/compiler_bugs.h"
 #include "num/__private/int_log10.h"
 #include "num/__private/intrinsics.h"
@@ -69,7 +70,7 @@ class Tuple;
   _sus__unsigned_pow(T);                            \
   _sus__unsigned_log(T);                            \
   _sus__unsigned_power_of_two(T, PrimitiveT);       \
-  _sus__unsigned_endian(T, PrimitiveT, sizeof(PrimitiveT))
+  _sus__unsigned_endian(T, PrimitiveT, ::sus::mem::size_of<PrimitiveT>())
 
 #define _sus__unsigned_storage(PrimitiveT)                                    \
   /** The inner primitive value, in case it needs to be unwrapped from the    \
@@ -99,13 +100,13 @@ class Tuple;
   /** Construction from unsigned primitive types where no bits are lost.       \
    */                                                                          \
   template <UnsignedPrimitiveInteger P>                                        \
-    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())                                  \
   constexpr inline T(P v) : primitive_value(v) {}                              \
                                                                                \
   /** Assignment from unsigned primitive types where no bits are lost.         \
    */                                                                          \
   template <UnsignedPrimitiveInteger P>                                        \
-    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())                                  \
   constexpr inline T& operator=(P v) noexcept {                                \
     primitive_value = v;                                                       \
     return *this;                                                              \
@@ -171,12 +172,12 @@ class Tuple;
 
 #define _sus__unsigned_to_primitive(T, PrimitiveT) \
   template <UnsignedPrimitiveInteger U>            \
-    requires(sizeof(U) >= sizeof(PrimitiveT))      \
+    requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<PrimitiveT>())      \
   constexpr inline explicit operator U() const {   \
     return primitive_value;                        \
   }                                                \
   template <SignedPrimitiveInteger U>              \
-    requires(sizeof(U) > sizeof(PrimitiveT))       \
+    requires(::sus::mem::size_of<U>() > ::sus::mem::size_of<PrimitiveT>())       \
   constexpr inline explicit operator U() const {   \
     return primitive_value;                        \
   }                                                \

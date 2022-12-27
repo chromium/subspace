@@ -23,7 +23,11 @@ namespace sus::mem {
 ///
 /// This is the number of bytes that will be allocated for a type T, and
 /// includes any tail padding.
+///
+/// Disallows calls with a reference type, since C++ does a surprising thing,
+/// where `sizeof(T&) == sizeof(T)`.
 template <class T>
+  requires(!std::is_reference_v<T>)
 constexpr sus_always_inline size_t size_of() noexcept {
   return sizeof(T);
 }
@@ -92,7 +96,11 @@ constexpr sus_always_inline size_t size_of() noexcept {
 /// In general, [[no_unique_address]] doesn't appear to do anything on MSVC, and
 /// subclasses also do not use padding bytes of the base class, with the
 /// exception of the base class being empty.
+///
+/// Disallows calls with a reference type, since C++ does a surprising thing,
+/// where `sizeof(T&) == sizeof(T)`.
 template <class T>
+  requires(!std::is_reference_v<T>)
 constexpr sus_always_inline size_t data_size_of() noexcept {
   return __private::data_size_finder<T>;
 }

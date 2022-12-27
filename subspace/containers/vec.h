@@ -176,7 +176,6 @@ class Vec {
     if (cap <= capacity_) return;  // Nothing to do.
     const auto bytes = ::sus::mem::size_of<T>() * cap;
     check(bytes <= usize(size_t{PTRDIFF_MAX}));
-    static_assert(sizeof(size_t) == sizeof(usize));
     if (!is_alloced()) {
       storage_ = static_cast<char*>(malloc(bytes.primitive_value));
     } else {

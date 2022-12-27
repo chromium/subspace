@@ -37,6 +37,7 @@
 #include "mem/move.h"
 #include "mem/mref.h"
 #include "mem/replace.h"
+#include "mem/relocate.h"
 #include "mem/take.h"
 #include "num/num_concepts.h"
 #include "ops/eq.h"
@@ -897,7 +898,8 @@ class Option final {
                          Storage<U>>;
   StorageType<T> t_;
 
-  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn, T);
+  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+                                            StorageType<T>);
 };
 
 /// sus::ops::Eq<Option<U>> trait.
