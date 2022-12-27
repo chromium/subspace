@@ -195,6 +195,14 @@ TEST(Option, SomeNoneHelpers) {
   auto c = Option<i32&>::some(i);
   Option<i32&> c2 = sus::some(i);
   EXPECT_EQ(&c.unwrap_ref(), &c2.unwrap_ref());
+
+  const auto ci = 2_i32;
+  const auto cc = Option<const i32&>::some(ci);
+  Option<const i32&> cc2 = sus::some(ci);
+  EXPECT_EQ(&cc.unwrap_ref(), &cc2.unwrap_ref());
+
+  Option<const i32&> mut_to_const = sus::some(i);
+  EXPECT_EQ(&i, &mut_to_const.unwrap_ref());
 }
 
 TEST(Option, Move) {

@@ -66,6 +66,38 @@ TEST(Result, WithErr) {
   }
 }
 
+TEST(Option, OkHelpers) {
+  auto a = Result<i32, u32>::with(2_i32);
+  Result<i32, u32> a2 = sus::result::ok(2_i32);
+  EXPECT_EQ(a, a2);
+
+  auto i = 2_i32;
+  auto c = Result<i32, u32>::with(i);
+  Result<i32, u32> c2 = sus::result::ok(i);
+  EXPECT_EQ(c, c2);
+
+  const auto ci = 2_i32;
+  const auto cc = Result<i32, u32>::with(ci);
+  Result<i32, u32> cc2 = sus::result::ok(ci);
+  EXPECT_EQ(cc, cc2);
+}
+
+TEST(Option, ErrHelpers) {
+  auto a = Result<u32, i32>::with_err(2_i32);
+  Result<u32, i32> a2 = sus::result::err(2_i32);
+  EXPECT_EQ(a, a2);
+
+  auto i = 2_i32;
+  auto c = Result<u32, i32>::with_err(i);
+  Result<u32, i32> c2 = sus::result::err(i);
+  EXPECT_EQ(c, c2);
+
+  const auto ci = 2_i32;
+  const auto cc = Result<u32, i32>::with_err(ci);
+  Result<u32, i32> cc2 = sus::result::err(ci);
+  EXPECT_EQ(cc, cc2);
+}
+
 TEST(Result, IsOk) {
   constexpr bool a = Result<i32, Error>::with(3_i32).is_ok();
   EXPECT_TRUE(a);
