@@ -17,9 +17,9 @@
 #include "fn/fn_defn.h"
 #include "iter/from_iterator.h"
 #include "macros/__private/compiler_bugs.h"
+#include "mem/size_of.h"
 #include "num/unsigned_integer.h"
 #include "option/option.h"
-#include "mem/size_of.h"
 
 namespace sus::iter {
 
@@ -112,7 +112,7 @@ class IteratorBase {
 };
 
 template <class I>
-class Iterator final : public I {
+[[nodiscard]] class Iterator final : public I {
  private:
   using sus_clang_bug_58837(Item =) typename I::Item;
   template <class T>
