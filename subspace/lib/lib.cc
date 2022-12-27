@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stddef.h>
 #include <limits.h>
+#include <stddef.h>
+
+#include "mem/size_of.h"
 
 // Architectural assumptions we make throughout the implementation of Subspace.
 static_assert(CHAR_BIT == 8);
-static_assert(sizeof(int) == 4);
-static_assert(sizeof(size_t) >= 4);
-static_assert(sizeof(size_t) <= 8);
+static_assert(::sus::mem::size_of<int>() == 4);
+static_assert(::sus::mem::size_of<size_t>() >= 4);
+static_assert(::sus::mem::size_of<size_t>() <= 8);
 
 // TODO: Consider if we should only support little endian? We probably make this
 // assumption. Support for endian *conversion* is still important for network

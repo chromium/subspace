@@ -16,6 +16,7 @@
 
 #include "iter/iterator_defn.h"
 #include "mem/relocate.h"
+#include "mem/size_of.h"
 
 namespace sus::iter {
 
@@ -44,8 +45,12 @@ struct [[sus_trivial_abi]] SizedIterator final {
   void (*destroy)(char& sized);
 
  private:
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(sized[0]),
-                                             decltype(destroy));
+  // clang-format off
+  sus_class_trivial_relocatable_value(
+      ::sus::marker::unsafe_fn,
+      ::sus::mem::relocate_array_by_memcpy<char> &&
+      ::sus::mem::relocate_one_by_memcpy<decltype(destroy)>);
+  // clang-format on
 };
 
 template <class Item, size_t SubclassSize, size_t SubclassAlign>
@@ -71,8 +76,8 @@ struct [[sus_trivial_abi]] SizedIterator<Item, SubclassSize, SubclassAlign,
   void (*destroy)(IteratorBase<Item>& sized);
 
  private:
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(iter),
-                                             decltype(destroy));
+  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn,
+                                             decltype(iter), decltype(destroy));
 };
 
 /// Make a SizedIterator.
@@ -82,9 +87,9 @@ struct [[sus_trivial_abi]] SizedIterator<Item, SubclassSize, SubclassAlign,
 /// heap allocation, since the SizedIterator can then be trivially relocated.
 template <::sus::mem::Move IteratorSubclass, int&...,
           class SubclassItem = typename IteratorSubclass::Item,
-          class SizedIteratorType =
-              SizedIterator<SubclassItem, sizeof(IteratorSubclass),
-                            alignof(IteratorSubclass)>>
+          class SizedIteratorType = SizedIterator<
+              SubclassItem, ::sus::mem::size_of<IteratorSubclass>(),
+              alignof(IteratorSubclass)>>
 inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
   requires(
       std::is_convertible_v<IteratorSubclass&, IteratorBase<SubclassItem>&> &&
@@ -105,9 +110,9 @@ inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
 /// the pointer and the SizedIterator can be trivially relocated.
 template <::sus::mem::Move IteratorSubclass, int&...,
           class SubclassItem = typename IteratorSubclass::Item,
-          class SizedIteratorType =
-              SizedIterator<SubclassItem, sizeof(IteratorSubclass),
-                            alignof(IteratorSubclass), /*InlineStorage=*/false>>
+          class SizedIteratorType = SizedIterator<
+              SubclassItem, ::sus::mem::size_of<IteratorSubclass>(),
+              alignof(IteratorSubclass), /*InlineStorage=*/false>>
 inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
   requires(
       std::is_convertible_v<IteratorSubclass&, IteratorBase<SubclassItem>&> &&

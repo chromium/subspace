@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "mem/size_of.h"
 #include "num/unsigned_integer.h"
 
 namespace sus::union_type::__private {
@@ -49,7 +50,7 @@ using IndexType =
   std::conditional_t<
       index_size<count, size_of_union, data_size_of_union>() == 32, uint32_t,
   std::conditional_t<
-      sizeof(size_t) == sizeof(uint64_t), uint64_t,
+      ::sus::mem::size_of<size_t>() == ::sus::mem::size_of<uint64_t>(), uint64_t,
   void>>>>;
 // clang-format on
 

@@ -20,6 +20,7 @@
 
 #include "macros/__private/compiler_bugs.h"
 #include "marker/unsafe.h"
+#include "mem/size_of.h"
 #include "num/__private/float_ordering.h"
 #include "num/__private/intrinsics.h"
 #include "num/float_concepts.h"
@@ -102,7 +103,7 @@ class Array;
    * platforms isn't guaranteed.                                               \
    *                                                                           \
    * This method is not constexpr because the value can differ in a constexpr  \
-   * evaluation context from a runtime context, leading to bugs.                \
+   * evaluation context from a runtime context, leading to bugs.               \
    */                                                                          \
   static T TODO_NAN() noexcept { return __private::nan<PrimitiveT>(); }        \
   /** Infinity. */                                                             \
@@ -127,25 +128,25 @@ class Array;
   /** Construction from primitive types where no bits are lost.                \
    */                                                                          \
   template <PrimitiveFloat P>                                                  \
-    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
   constexpr inline T(P v) : primitive_value(v) {}                              \
                                                                                \
   /** Assignment from primitive types where no bits are lost.                  \
    */                                                                          \
   template <PrimitiveFloat P>                                                  \
-    requires(sizeof(P) <= sizeof(PrimitiveT))                                  \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
   constexpr inline T& operator=(P v) noexcept {                                \
     primitive_value = v;                                                       \
     return *this;                                                              \
   }                                                                            \
   static_assert(true)
 
-#define _sus__float_to_primitive(T, PrimitiveT)  \
-  template <PrimitiveFloat U>                    \
-    requires(sizeof(U) >= sizeof(PrimitiveT))    \
-  constexpr inline explicit operator U() const { \
-    return primitive_value;                      \
-  }                                              \
+#define _sus__float_to_primitive(T, PrimitiveT)                             \
+  template <PrimitiveFloat U>                                               \
+    requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<PrimitiveT>()) \
+  constexpr inline explicit operator U() const {                            \
+    return primitive_value;                                                 \
+  }                                                                         \
   static_assert(true)
 
 #define _sus__float_comparison(T)                                              \
@@ -674,7 +675,7 @@ class Array;
           min.primitive_value <= max.primitive_value);                         \
     /* SAFETY: We have verified that the min and max are not NaN and that      \
      * `min <= max`. */                                                        \
-    return __private::float_clamp(::sus::marker::unsafe_fn, primitive_value, \
+    return __private::float_clamp(::sus::marker::unsafe_fn, primitive_value,   \
                                   min.primitive_value, max.primitive_value);   \
   }
 
@@ -771,27 +772,27 @@ class Array;
     return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));                   \
   }
 
-#define _sus__float(T, PrimitiveT, UnsignedIntT)           \
-  _sus__float_storage(PrimitiveT);                         \
-  _sus__float_constants(T, PrimitiveT);                    \
-  _sus__float_construct(T, PrimitiveT);                    \
-  _sus__float_to_primitive(T, PrimitiveT);                 \
-  _sus__float_comparison(T);                               \
-  _sus__float_unary_ops(T);                                \
-  _sus__float_binary_ops(T);                               \
-  _sus__float_mutable_ops(T);                              \
-  _sus__float_abs(T, PrimitiveT);                          \
-  _sus__float_math(T, PrimitiveT);                         \
-  _sus__float_fract_trunc(T);                              \
-  _sus__float_convert_to(T, PrimitiveT);                   \
-  _sus__float_bytes(T, UnsignedIntT);                      \
-  _sus__float_category(T);                                 \
-  _sus__float_clamp(T);                                    \
-  _sus__float_euclid(T, PrimitiveT);                       \
-  _sus__float_endian(T, sizeof(PrimitiveT), UnsignedIntT); \
+#define _sus__float(T, PrimitiveT, UnsignedIntT)                          \
+  _sus__float_storage(PrimitiveT);                                        \
+  _sus__float_constants(T, PrimitiveT);                                   \
+  _sus__float_construct(T, PrimitiveT);                                   \
+  _sus__float_to_primitive(T, PrimitiveT);                                \
+  _sus__float_comparison(T);                                              \
+  _sus__float_unary_ops(T);                                               \
+  _sus__float_binary_ops(T);                                              \
+  _sus__float_mutable_ops(T);                                             \
+  _sus__float_abs(T, PrimitiveT);                                         \
+  _sus__float_math(T, PrimitiveT);                                        \
+  _sus__float_fract_trunc(T);                                             \
+  _sus__float_convert_to(T, PrimitiveT);                                  \
+  _sus__float_bytes(T, UnsignedIntT);                                     \
+  _sus__float_category(T);                                                \
+  _sus__float_clamp(T);                                                   \
+  _sus__float_euclid(T, PrimitiveT);                                      \
+  _sus__float_endian(T, ::sus::mem::size_of<PrimitiveT>(), UnsignedIntT); \
   static_assert(true)
 
-#define _sus__float_hash_equal_to(Type)                                   \
+#define _sus__float_hash_equal_to(Type)                                    \
   template <>                                                              \
   struct hash<Type> {                                                      \
     auto operator()(const Type& u) const {                                 \

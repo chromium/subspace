@@ -19,6 +19,7 @@
 #include "macros/__private/compiler_bugs.h"
 #include "num/unsigned_integer.h"
 #include "option/option.h"
+#include "mem/size_of.h"
 
 namespace sus::iter {
 
@@ -132,7 +133,8 @@ class Iterator final : public I {
   Iterator(Args&&... args) : I(static_cast<Args&&>(args)...) {
     // We want to be able to use Iterator<I> and I interchangably, so that if an
     // `I` gets stored in SizedIterator, it doesn't misbehave.
-    static_assert(sizeof(I) == sizeof(Iterator<I>), "");
+    static_assert(::sus::mem::size_of<I>() ==
+                  ::sus::mem::size_of<Iterator<I>>());
   }
 
  public:
@@ -145,7 +147,7 @@ class Iterator final : public I {
   ///
   /// Given an element the closure must return true or false. The returned
   /// iterator will yield only the elements for which the closure returns true.
-  Iterator<Filter<Item, sizeof(I), alignof(I),
+  Iterator<Filter<Item, ::sus::mem::size_of<I>(), alignof(I),
                   ::sus::mem::relocate_one_by_memcpy<I>>>
   filter(::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
              pred) && noexcept;

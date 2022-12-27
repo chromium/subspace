@@ -14,9 +14,10 @@
 
 #pragma once
 
+#include "mem/size_of.h"
 
 namespace sus::num::__private {
-template <unsigned int bytes = sizeof(void*)>
+template <unsigned int bytes = ::sus::mem::size_of<void*>()>
 struct ptr_type;
 
 template <>
