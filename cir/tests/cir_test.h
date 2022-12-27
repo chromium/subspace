@@ -50,6 +50,42 @@ class CirTest : public testing::Test {
     });
   }
 
+  static bool cir_eq(sus::Option<cir::Output> output,
+                     std::string expected) noexcept {
+    if (output.is_none()) return false;
+    auto output_string = cir::to_string(sus::move(output).unwrap());
+    auto output_no_whitespace = strip_whitespace(output_string);
+    auto expected_no_whitespace = strip_whitespace(expected);
+    if (output_no_whitespace != expected_no_whitespace) {
+      ADD_FAILURE();
+      llvm::errs() << "\nFound unexpected CIR output:\n"
+                   << output_string << "\n";
+      llvm::errs() << "\nExpected:\n" << strip_empty_lines(expected) << "\n";
+      return false;
+    }
+    return true;
+  }
+
  private:
+  static std::string strip_whitespace(const std::string& s) noexcept {
+    std::string out;
+    out.reserve(s.size());
+    for (char c : s) {
+      if (c != ' ' && c != '\r' && c != '\n' && c != '\t') out.push_back(c);
+    }
+    return out;
+  }
+  static std::string strip_empty_lines(const std::string& s) noexcept {
+    std::string out;
+    out.reserve(s.size());
+    char last = '\n';
+    for (char c : s) {
+      if (c == '\n' && last == '\n') continue;
+      last = c;
+      out.push_back(c);
+    }
+    return out;
+  }
+
   CirCppVersion cpp_version_ = CirCppVersion::Cpp20;
 };
