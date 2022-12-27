@@ -89,7 +89,7 @@ add_library(subspace STATIC
     "union/__private/storage.h"
     "union/__private/type_list.h"
     "union/union.h"
-    "union/value_types.h"
+    "union/union_types.h"
     "tuple/__private/storage.h"
     "tuple/tuple.h"
     "lib/lib.cc"

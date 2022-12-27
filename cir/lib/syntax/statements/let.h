@@ -29,7 +29,7 @@ enum LetClangTypeTag {
   Variable,
 };
 using LetClangType =
-    sus::Union<sus_value_types((LetClangTypeTag::Return, clang::QualType),
+    sus::Union<sus_union_types((LetClangTypeTag::Return, clang::QualType),
                                (LetClangTypeTag::Variable, clang::VarDecl&))>;
 
 struct Let {

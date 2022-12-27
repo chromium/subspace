@@ -133,7 +133,7 @@ enum class TypeRefKindTag {
 };
 
 // clang-format off
-using TypeRefKind = Union<sus_value_types(
+using TypeRefKind = Union<sus_union_types(
     (TypeRefKindTag::Builtin, BuiltinType, ObjectAnnotations),
     (TypeRefKindTag::Declared, DeclaredType, ObjectAnnotations),
     (TypeRefKindTag::Pointer, PointerAnnotations, ObjectAnnotations), // TODO: Store the pointee(s) types.

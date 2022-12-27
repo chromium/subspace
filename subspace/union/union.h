@@ -36,7 +36,7 @@
 #include "union/__private/pack_index.h"
 #include "union/__private/storage.h"
 #include "union/__private/type_list.h"
-#include "union/value_types.h"
+#include "union/union_types.h"
 
 namespace sus::union_type {
 
@@ -50,7 +50,7 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
   static_assert(
       sizeof...(Ts) == sizeof...(Tags),
       "The number of types and values in the Union don't match. Use "
-      "`sus_value_types()` to define the Union's value-type pairings.");
+      "`sus_union_types()` to define the Union's value-type pairings.");
 
   using Storage = __private::Storage<0, Ts...>;
   using TagsType = __private::PackFirst<decltype(Tags)...>;
