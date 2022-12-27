@@ -198,34 +198,9 @@ struct TypeReference {
 
 namespace cir {
 
-inline std::string to_string(const syntax::TypeReference& typeref) noexcept {
-  using enum syntax::TypeRefKind::Tag;
-  switch (typeref.kind) {
-    case Builtin: {
-      const auto& [builtin, obj_anno] = typeref.kind.get_ref<Builtin>();
-      return builtin_type_to_string(builtin);
-    }
-    case Declared: {
-      const auto& [declared, obj_anno] = typeref.kind.get_ref<Declared>();
-      return "(TODO: declared type name)";
-    }
-    case Pointer: {
-      const auto& [pointer, obj_anno] = typeref.kind.get_ref<Pointer>();
-      std::ostringstream s;
-      s << "pointer(TODO: pointee types) ";
-      s << cir::to_string(pointer);
-      return s.str();
-    }
-    case FnPointer: {
-      const auto& [function_id, obj_anno] = typeref.kind.get_ref<FnPointer>();
-      std::ostringstream s;
-      s << "fn pointer(";
-      s << cir::to_string(function_id);
-      s << ")";
-      return s.str();
-    }
-  }
-  sus::unreachable();
-}
+struct Output;
+
+std::string to_string(const syntax::TypeReference& typeref,
+                      const Output& output) noexcept;
 
 }  // namespace cir

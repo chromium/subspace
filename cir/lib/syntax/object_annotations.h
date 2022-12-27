@@ -24,7 +24,10 @@ struct ObjectAnnotations {
 
 namespace cir {
 
-inline std::string to_string(const syntax::ObjectAnnotations& anno) noexcept {
+struct Output;
+
+inline std::string to_string(const syntax::ObjectAnnotations& anno,
+                             const Output&) noexcept {
   // TODO: Use fmt library (or add such to subspace).
   std::ostringstream s;
   if (anno.is_const) {

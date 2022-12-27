@@ -38,14 +38,18 @@ struct Function {
 
 namespace cir {
 
-inline std::string to_string(const syntax::Function& fn) noexcept {
+struct Output;
+
+inline std::string to_string(const syntax::Function& fn,
+                             const Output& output) noexcept {
   // TODO: Use fmt library (or add such to subspace).
   std::ostringstream s;
-  s << "fn " << fn.name << "@" << cir::to_string(fn.id) << "(";
+  s << "fn " << fn.name << "@" << cir::to_string(fn.id, output) << "(";
   // TODO: args
   s << ") ";
   if (fn.return_var.is_some()) {
-    s << "-> " << cir::to_string(fn.return_var.unwrap_ref().type) << " ";
+    s << "-> " << cir::to_string(fn.return_var.unwrap_ref().type, output)
+      << " ";
   }
   s << "{\n";
   s << "  (TODO: body)\n";

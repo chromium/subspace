@@ -1,7 +1,16 @@
 add_library(cir_lib STATIC
     "lib/syntax/statements/let.h"
+    "lib/syntax/declared_type.h"
+    "lib/syntax/function_id.h"
+    "lib/syntax/function.h"
+    "lib/syntax/object_annotations.h"
+    "lib/syntax/pointer_annotations.h"
+    "lib/syntax/type_reference.cc"
+    "lib/syntax/type_reference.h"
+    "lib/output.h"
     "lib/run.cc"
     "lib/run.h"
+    "lib/source_span.h"
     "lib/visit.cc"
     "lib/visit.h"
 )
