@@ -15,6 +15,7 @@
 #pragma once
 
 #include "cir/lib/output.h"
+#include "cir/lib/syntax/function.h"
 #include "cir/llvm.h"
 #include "subspace/prelude.h"
 
@@ -22,10 +23,12 @@ namespace cir {
 
 struct VisitCtx {
  public:
-  u32 make_function_id() noexcept {
+  syntax::FunctionId make_function_id() noexcept {
     u32 id = next_function_id;
     next_function_id += 1u;
-    return id;
+    return syntax::FunctionId{
+        .num = id,
+    };
   }
 
   u32 make_local_var_id() noexcept {
@@ -35,9 +38,10 @@ struct VisitCtx {
   }
 
   // The back of this Vec is the function whose body is being parsed.
-  Vec<syntax::Function> in_functions = Vec<syntax::Function>::with_default();
+  Vec<syntax::FunctionId> in_functions =
+      Vec<syntax::FunctionId>::with_default();
 
-private:
+ private:
   u32 next_function_id = 0u;
   u32 next_local_var_id = 0u;
 };

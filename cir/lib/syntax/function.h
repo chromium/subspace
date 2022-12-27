@@ -24,8 +24,12 @@
 
 namespace cir::syntax {
 
+struct FunctionId {
+  u32 num;
+};
+
 struct Function {
-  u32 id;
+  FunctionId id;
   std::string name;
   SourceSpan span;
   Option<syntax::Let> return_var;
@@ -37,10 +41,16 @@ struct Function {
 
 namespace cir {
 
+inline std::string to_string(const syntax::FunctionId& id) noexcept {
+  std::ostringstream s;
+  s << id.num.primitive_value;
+  return s.str();
+}
+
 inline std::string to_string(const syntax::Function& fn) noexcept {
   // TODO: Use fmt library (or add such to subspace).
   std::ostringstream s;
-  s << "fn " << fn.name << "@" << fn.id.primitive_value << "(";
+  s << "fn " << fn.name << "@" << cir::to_string(fn.id) << "(";
   // TODO: args
   s << ") ";
   if (fn.return_var.is_some()) {
@@ -53,3 +63,20 @@ inline std::string to_string(const syntax::Function& fn) noexcept {
 }
 
 }  // namespace cir
+
+namespace std {
+template <>
+struct hash<cir::syntax::FunctionId> {
+  auto operator()(const cir::syntax::FunctionId& i) const {
+    return std::hash<decltype(i.num)>()(i.num);
+  }
+};
+template <>
+struct equal_to<cir::syntax::FunctionId> {
+  auto operator()(const cir::syntax::FunctionId& l,
+                  const cir::syntax::FunctionId& r) const {
+    return l.num == r.num;
+  }
+};
+
+}  // namespace std
