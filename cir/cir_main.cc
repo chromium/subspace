@@ -71,7 +71,7 @@ int main(int argc, const char** argv) {
       return 1;
     }
 
-    llvm::outs() << sus::move(output).unwrap().to_string() << "\n";
+    llvm::outs() << cir::to_string(output.unwrap_ref()) << "\n";
   }
   return 0;
 }
