@@ -30,7 +30,10 @@ struct FunctionId {
 
 namespace cir {
 
-inline std::string to_string(const syntax::FunctionId& id) noexcept {
+struct Output;
+
+inline std::string to_string(const syntax::FunctionId& id,
+                             const Output&) noexcept {
   std::ostringstream s;
   s << id.num.primitive_value;
   return s.str();

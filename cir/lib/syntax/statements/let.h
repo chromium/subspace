@@ -44,10 +44,14 @@ struct Let {
 
 namespace cir {
 
-inline std::string to_string(const syntax::Let& let) noexcept {
+struct Output;
+
+inline std::string to_string(const syntax::Let& let,
+                             const Output& output) noexcept {
   // TODO: Use fmt library (or add such to subspace).
   std::ostringstream s;
-  s << "let _" << let.id.primitive_value << ": " << cir::to_string(let.type) << ";";
+  s << "let _" << let.id.primitive_value << ": "
+    << cir::to_string(let.type, output) << ";";
   return s.str();
 }
 

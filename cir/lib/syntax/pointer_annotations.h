@@ -26,7 +26,10 @@ struct PointerAnnotations {
 
 namespace cir {
 
-inline std::string to_string(const syntax::PointerAnnotations& anno) noexcept {
+struct Output;
+
+inline std::string to_string(const syntax::PointerAnnotations& anno,
+                             const Output&) noexcept {
   // TODO: Use fmt library (or add such to subspace).
   std::ostringstream s;
   if (anno.is_const) {

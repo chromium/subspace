@@ -33,7 +33,7 @@ inline std::string to_string(const Output& out) noexcept {
   for (const auto& [id, f] : out.functions) {
     if (saw_fn) s << "\n\n";
     saw_fn = true;
-    s << cir::to_string(f);
+    s << cir::to_string(f, out);
   }
   return s.str();
 }
