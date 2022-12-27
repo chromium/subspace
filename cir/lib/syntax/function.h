@@ -18,15 +18,12 @@
 #include <string>
 
 #include "cir/lib/source_span.h"
+#include "cir/lib/syntax/function_id.h"
 #include "cir/lib/syntax/statements/let.h"
 #include "cir/llvm.h"
 #include "subspace/prelude.h"
 
 namespace cir::syntax {
-
-struct FunctionId {
-  u32 num;
-};
 
 struct Function {
   FunctionId id;
@@ -41,12 +38,6 @@ struct Function {
 
 namespace cir {
 
-inline std::string to_string(const syntax::FunctionId& id) noexcept {
-  std::ostringstream s;
-  s << id.num.primitive_value;
-  return s.str();
-}
-
 inline std::string to_string(const syntax::Function& fn) noexcept {
   // TODO: Use fmt library (or add such to subspace).
   std::ostringstream s;
@@ -57,26 +48,9 @@ inline std::string to_string(const syntax::Function& fn) noexcept {
     s << "-> " << cir::to_string(fn.return_var.unwrap_ref().type) << " ";
   }
   s << "{\n";
-  // TODO: body
+  s << "  (TODO: body)\n";
   s << "}";
   return s.str();
 }
 
 }  // namespace cir
-
-namespace std {
-template <>
-struct hash<cir::syntax::FunctionId> {
-  auto operator()(const cir::syntax::FunctionId& i) const {
-    return std::hash<decltype(i.num)>()(i.num);
-  }
-};
-template <>
-struct equal_to<cir::syntax::FunctionId> {
-  auto operator()(const cir::syntax::FunctionId& l,
-                  const cir::syntax::FunctionId& r) const {
-    return l.num == r.num;
-  }
-};
-
-}  // namespace std

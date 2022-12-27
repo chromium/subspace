@@ -19,6 +19,8 @@
 
 #include "cir/lib/source_span.h"
 #include "cir/lib/syntax/declared_type.h"
+#include "cir/lib/syntax/function_id.h"
+#include "cir/lib/syntax/object_annotations.h"
 #include "cir/lib/syntax/pointer_annotations.h"
 #include "cir/llvm.h"
 #include "subspace/option/option.h"
@@ -132,10 +134,10 @@ enum class TypeRefKindTag {
 
 // clang-format off
 using TypeRefKind = Union<sus_value_types(
-    (TypeRefKindTag::Builtin, BuiltinType),
-    (TypeRefKindTag::Declared, DeclaredType),
-    (TypeRefKindTag::Pointer, PointerAnnotations), // TODO: Store the pointee(s) types.
-    (TypeRefKindTag::FnPointer, /* function id */ u32),
+    (TypeRefKindTag::Builtin, BuiltinType, ObjectAnnotations),
+    (TypeRefKindTag::Declared, DeclaredType, ObjectAnnotations),
+    (TypeRefKindTag::Pointer, PointerAnnotations, ObjectAnnotations), // TODO: Store the pointee(s) types.
+    (TypeRefKindTag::FnPointer, FunctionId, ObjectAnnotations),
 )>;
 // clang-format on
 
@@ -146,25 +148,40 @@ struct TypeReference {
       Option<BuiltinType> b = builtin_type(q);
       if (b.is_some()) {
         return TypeRefKind::with<TypeRefKind::Tag::Builtin>(
-            sus::move(b).unwrap());
+            sus::Tuple<BuiltinType, ObjectAnnotations>::with(
+                sus::move(b).unwrap(), ObjectAnnotations{
+                                           .is_const = q.isConstQualified(),
+                                       }));
       }
 
       if (q->isPointerType() || q->isReferenceType() ||
           q->isMemberDataPointerType())
-        return TypeRefKind::with<TypeRefKind::Tag::Pointer>(PointerAnnotations{
-            .is_const = q->getPointeeType().isConstQualified(),
-            .is_nullable = nullable && !q->isReferenceType(),
-            // TODO: lifetimes
-        });
+        return TypeRefKind::with<TypeRefKind::Tag::Pointer>(
+            sus::Tuple<PointerAnnotations, ObjectAnnotations>::with(
+                PointerAnnotations{
+                    .is_const = q->getPointeeType().isConstQualified(),
+                    .is_nullable = nullable && !q->isReferenceType(),
+                    // TODO: lifetimes
+                },
+                ObjectAnnotations{
+                    .is_const = q.isConstQualified(),
+                }));
 
       if (q->isFunctionPointerType() || q->isFunctionReferenceType() ||
           q->isMemberFunctionPointerType() || q->isReferenceType())
         return TypeRefKind::with<TypeRefKind::Tag::FnPointer>(
-            // TODO: get the ID from ctx_.
-            0_u32);
+            sus::Tuple<FunctionId, ObjectAnnotations>::with(
+                // TODO: get the ID from the clang::FunctionDecl + cir::Output.
+                FunctionId(0_u32), ObjectAnnotations{
+                                       .is_const = q.isConstQualified(),
+                                   }));
 
       return TypeRefKind::with<TypeRefKind::Tag::Declared>(
-          syntax::DeclaredType::with_qual_type(q, span));
+          sus::Tuple<DeclaredType, ObjectAnnotations>::with(
+              DeclaredType::with_qual_type(q, span),
+              ObjectAnnotations{
+                  .is_const = q.isConstQualified(),
+              }));
     }();
 
     return TypeReference{
@@ -184,19 +201,26 @@ namespace cir {
 inline std::string to_string(const syntax::TypeReference& typeref) noexcept {
   using enum syntax::TypeRefKind::Tag;
   switch (typeref.kind) {
-    case Builtin:
-      return builtin_type_to_string(typeref.kind.get_ref<Builtin>());
-    case Declared: return "(TODO: declared type name)";
+    case Builtin: {
+      const auto& [builtin, obj_anno] = typeref.kind.get_ref<Builtin>();
+      return builtin_type_to_string(builtin);
+    }
+    case Declared: {
+      const auto& [declared, obj_anno] = typeref.kind.get_ref<Declared>();
+      return "(TODO: declared type name)";
+    }
     case Pointer: {
+      const auto& [pointer, obj_anno] = typeref.kind.get_ref<Pointer>();
       std::ostringstream s;
       s << "pointer(TODO: pointee types) ";
-      s << cir::to_string(typeref.kind.get_ref<Pointer>());
+      s << cir::to_string(pointer);
       return s.str();
     }
     case FnPointer: {
+      const auto& [function_id, obj_anno] = typeref.kind.get_ref<FnPointer>();
       std::ostringstream s;
       s << "fn pointer(";
-      s << typeref.kind.get_ref<FnPointer>().primitive_value;
+      s << cir::to_string(function_id);
       s << ")";
       return s.str();
     }
