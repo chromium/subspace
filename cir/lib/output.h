@@ -23,14 +23,13 @@
 namespace cir {
 
 struct Output {
-  sus::Vec<syntax::Function> functions =
-      sus::Vec<syntax::Function>::with_default();
+  std::unordered_map<syntax::FunctionId, syntax::Function> functions;
 
   std::string to_string() const& noexcept {
     // TODO: Use fmt library (or add such to subspace).
     std::ostringstream s;
     bool saw_fn = false;
-    for (const auto& f : functions.iter()) {
+    for (const auto& [id, f] : functions) {
       if (saw_fn) s << "\n\n";
       saw_fn = true;
       s << cir::to_string(f);

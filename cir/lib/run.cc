@@ -91,6 +91,7 @@ sus::Option<Output> run_file(
       cir::visit_decl(mref(ctx), **it, mref(output));
     }
   }
+
   return sus::Option<Output>::some(sus::move(output));
 }
 

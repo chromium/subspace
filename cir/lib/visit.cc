@@ -59,19 +59,22 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     // TODO: The function's parameters and return type.
 
+    auto id = ctx_.make_function_id();
     auto f = syntax::Function{
-        .id = ctx_.make_function_id(),
+        .id = id,
         .name = decl->getNameAsString(),
         .span = SourceSpan::from_decl(*decl),
         .return_var = sus::move(return_var),
         .decl = *decl,
     };
 
+    output_.functions.emplace(id, sus::move(f));
+
     // Recurse so we can tell when we leave the function, and store the
     // syntax::Function in Output when we're done.
-    ctx_.in_functions.push(sus::move(f));
+    ctx_.in_functions.push(id);
     bool b = Visitor(ctx_, output_).TraverseStmt(decl->getBody());
-    output_.functions.push(ctx_.in_functions.pop().unwrap());
+    ctx_.in_functions.pop();
     return b;
   }
 
