@@ -20,6 +20,7 @@
 #include <type_traits>
 
 #include "construct/from.h"
+#include "macros/compiler.h"
 
 namespace sus::construct {
 
@@ -68,31 +69,36 @@ concept Into = ::sus::construct::From<ToType, FromType>;
 
 template <class FromType>
   requires(std::is_rvalue_reference_v<FromType &&>)
-constexpr inline auto into(FromType&& from) noexcept {
+constexpr inline auto into(
+    FromType&& from sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_reference_t<FromType>&&>(from));
 }
 
 template <class FromType>
   requires(std::is_trivially_copyable_v<FromType>)
-constexpr inline auto into(const FromType& from) noexcept {
+constexpr inline auto into(
+    const FromType& from sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::IntoRef<const FromType&>(from);
 }
 
 template <class FromType>
   requires(std::is_trivially_move_constructible_v<FromType>)
-constexpr inline auto into(FromType& from) noexcept {
+constexpr inline auto into(
+    FromType& from sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::IntoRef(static_cast<FromType&&>(from));
 }
 
 template <class FromType, size_t N>
-constexpr inline auto into(FromType (&from)[N]) noexcept {
+constexpr inline auto into(
+    FromType (&from)[N] sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::IntoRefArray<FromType, N>(from);
 }
 
 template <class FromType>
   requires(!std::is_const_v<FromType>)
-constexpr inline auto move_into(FromType& from) noexcept {
+constexpr inline auto move_into(
+    FromType& from sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_cv_t<std::remove_reference_t<FromType>>&&>(from));
 }
@@ -100,7 +106,8 @@ constexpr inline auto move_into(FromType& from) noexcept {
 template <class FromType>
   requires(std::is_rvalue_reference_v<FromType &&> &&
            !std::is_const_v<FromType>)
-constexpr inline auto move_into(FromType&& from) noexcept {
+constexpr inline auto move_into(
+    FromType&& from sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_cv_t<std::remove_reference_t<FromType>>&&>(from));
 }

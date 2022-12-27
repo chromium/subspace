@@ -441,13 +441,15 @@ class [[nodiscard]] Result final {
 };
 
 template <class T>
-inline constexpr auto ok(T&& t) noexcept {
+inline constexpr auto ok(
+    T&& t sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::OkMarker<T&&>(::sus::forward<T>(t));
 }
 
-template <class T>
-inline constexpr auto err(T&& t) noexcept {
-  return __private::ErrMarker<T&&>(::sus::forward<T>(t));
+template <class E>
+inline constexpr auto err(
+    E&& e sus_if_clang([[clang::lifetimebound]])) noexcept {
+  return __private::ErrMarker<E&&>(::sus::forward<E>(e));
 }
 
 }  // namespace sus::result
