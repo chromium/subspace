@@ -24,18 +24,18 @@ namespace cir {
 
 struct Output {
   std::unordered_map<syntax::FunctionId, syntax::Function> functions;
-
-  std::string to_string() const& noexcept {
-    // TODO: Use fmt library (or add such to subspace).
-    std::ostringstream s;
-    bool saw_fn = false;
-    for (const auto& [id, f] : functions) {
-      if (saw_fn) s << "\n\n";
-      saw_fn = true;
-      s << cir::to_string(f);
-    }
-    return s.str();
-  }
 };
+
+inline std::string to_string(const Output& out) noexcept {
+  // TODO: Use fmt library (or add such to subspace).
+  std::ostringstream s;
+  bool saw_fn = false;
+  for (const auto& [id, f] : out.functions) {
+    if (saw_fn) s << "\n\n";
+    saw_fn = true;
+    s << cir::to_string(f);
+  }
+  return s.str();
+}
 
 }  // namespace cir

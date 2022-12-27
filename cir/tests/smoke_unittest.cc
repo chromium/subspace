@@ -22,5 +22,5 @@ TEST_F(CirTest, Smoke) {
     })");
   if (output.is_none()) return;
 
-  llvm::errs() << sus::move(output).unwrap().to_string() << "\n";
+  llvm::errs() << cir::to_string(output.unwrap_ref()) << "\n";
 }
