@@ -17,6 +17,7 @@
 #include "construct/into.h"
 #include "construct/make_default.h"
 #include "containers/array.h"
+#include "googletest/include/gtest/gtest.h"
 #include "mem/relocate.h"
 #include "num/num_concepts.h"
 #include "num/signed_integer.h"
@@ -25,7 +26,6 @@
 #include "ops/ord.h"
 #include "option/option.h"
 #include "prelude.h"
-#include "googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
 
 namespace {
@@ -73,10 +73,14 @@ static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 static_assert(u32::MAX().primitive_value == 0xffffffff);
 template <class T>
 concept MaxInRange = requires {
-                       { 0xffffffff_u32 } -> std::same_as<T>;
-                       { u32(0xffffffff) } -> std::same_as<T>;
-                     };
+  { 0xffffffff_u32 } -> std::same_as<T>;
+  { u32(0xffffffff) } -> std::same_as<T>;
+};
 static_assert(MaxInRange<u32>);
+
+// std hashing
+static_assert(std::same_as<decltype(std::hash<u32>()(0_u32)), size_t>);
+static_assert(std::same_as<decltype(std::equal_to<u32>()(0_u32, 1_u32)), bool>);
 
 TEST(u32, Traits) {
   // ** Unsigned only

@@ -65,6 +65,14 @@ struct isize final {
 
 }  // namespace sus::num
 
+namespace std {
+_sus__signed_hash_equal_to(::sus::num::i8);
+_sus__signed_hash_equal_to(::sus::num::i16);
+_sus__signed_hash_equal_to(::sus::num::i32);
+_sus__signed_hash_equal_to(::sus::num::i64);
+_sus__signed_hash_equal_to(::sus::num::isize);
+}  // namespace std
+
 _sus__integer_literal(i8, ::sus::num::i8);
 _sus__integer_literal(i16, ::sus::num::i16);
 _sus__integer_literal(i32, ::sus::num::i32);

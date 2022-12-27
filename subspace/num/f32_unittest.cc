@@ -29,6 +29,10 @@
 #define F32_NEAR(a, b, c) \
   EXPECT_NEAR((a).primitive_value, (b).primitive_value, (c).primitive_value);
 
+// std hashing
+static_assert(std::same_as<decltype(std::hash<f32>()(0_f32)), size_t>);
+static_assert(std::same_as<decltype(std::equal_to<f32>()(0_f32, 1_f32)), bool>);
+
 namespace {
 
 using sus::num::FpCategory;

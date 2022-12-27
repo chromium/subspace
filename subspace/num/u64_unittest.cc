@@ -16,13 +16,13 @@
 
 #include "construct/into.h"
 #include "containers/array.h"
+#include "googletest/include/gtest/gtest.h"
 #include "num/num_concepts.h"
 #include "num/signed_integer.h"
 #include "num/unsigned_integer.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
 #include "prelude.h"
-#include "googletest/include/gtest/gtest.h"
 #include "tuple/tuple.h"
 
 namespace {
@@ -70,10 +70,14 @@ static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 static_assert(u64::MAX().primitive_value == 0xffffffff'ffffffff);
 template <class T>
 concept MaxInRange = requires {
-                       { 0xffffffff'ffffffff_u64 } -> std::same_as<T>;
-                       { u64(0xffffffff'ffffffff) } -> std::same_as<T>;
-                     };
+  { 0xffffffff'ffffffff_u64 } -> std::same_as<T>;
+  { u64(0xffffffff'ffffffff) } -> std::same_as<T>;
+};
 static_assert(MaxInRange<u64>);
+
+// std hashing
+static_assert(std::same_as<decltype(std::hash<u64>()(0_u64)), size_t>);
+static_assert(std::same_as<decltype(std::equal_to<u64>()(0_u64, 1_u64)), bool>);
 
 TEST(u64, Traits) {
   // ** Unsigned only

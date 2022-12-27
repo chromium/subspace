@@ -44,6 +44,11 @@ struct f64 final {
 
 }  // namespace sus::num
 
+namespace std {
+_sus__float_hash_equal_to(::sus::num::f32);
+_sus__float_hash_equal_to(::sus::num::f64);
+}  // namespace std
+
 _sus__float_literal(f32, ::sus::num::f32);
 _sus__float_literal(f64, ::sus::num::f64);
 
