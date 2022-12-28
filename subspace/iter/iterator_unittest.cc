@@ -64,7 +64,7 @@ class ArrayIterator : public IteratorBase<Item> {
 template <class Item>
 class EmptyIterator : public IteratorBase<Item> {
  public:
-  static auto with_default() { return Iterator<EmptyIterator<Item>>(); }
+  static auto construct() { return Iterator<EmptyIterator<Item>>(); }
 
   Option<Item> next() noexcept final { return Option<Item>::none(); }
 
@@ -121,7 +121,7 @@ TEST(IteratorBase, All) {
   }
 
   {
-    auto it = EmptyIterator<int>::with_default();
+    auto it = EmptyIterator<int>::construct();
     EXPECT_TRUE(it.all([](int) { return false; }));
   }
 }
@@ -156,7 +156,7 @@ TEST(IteratorBase, Any) {
   }
 
   {
-    auto it = EmptyIterator<int>::with_default();
+    auto it = EmptyIterator<int>::construct();
     EXPECT_FALSE(it.any([](int) { return false; }));
   }
 }
@@ -188,7 +188,7 @@ TEST(IteratorBase, Count) {
   }
 
   {
-    auto it = EmptyIterator<int>::with_default();
+    auto it = EmptyIterator<int>::construct();
     EXPECT_EQ(it.count(), 0_usize);
   }
 }

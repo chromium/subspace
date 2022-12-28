@@ -67,20 +67,20 @@ struct NonAggregate {
   ~NonAggregate() {}
 };
 
-TEST(Array, WithDefault) {
-  auto a = Array<int, 5>::with_default();
+TEST(Array, Default) {
+  auto a = Array<int, 5>();
   static_assert(sizeof(a) == sizeof(int[5]));
   for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
     EXPECT_EQ(a[i], 0);
   }
 
-  static_assert(sizeof(Array<int, 5>::with_default()) == sizeof(int[5]));
+  static_assert(sizeof(Array<int, 5>) == sizeof(int[5]));
 }
 
 TEST(Array, Zero) {
-  auto a = Array<int, 0>::with_default();
+  auto a = Array<int, 0>();
   static_assert(sizeof(a) == 1);
-  static_assert(sizeof(Array<int, 0>::with_default()) == 1);
+  static_assert(sizeof(Array<int, 0>) == 1);
 }
 
 TEST(Array, WithUninitialized) {

@@ -25,7 +25,7 @@
 
 #include "assertions/check.h"
 #include "assertions/unreachable.h"
-#include "construct/make_default.h"
+#include "construct/default.h"
 #include "iter/from_iterator.h"
 #include "macros/always_inline.h"
 #include "macros/compiler.h"
@@ -109,6 +109,11 @@ class Option final {
                 "const applies transitively.");
 
  public:
+  /// Default-construct an Option that is holding no value.
+  ///
+  /// The Option's contained type `T` must be #Default.
+  inline constexpr Option() noexcept = default;
+
   /// Construct an Option that is holding the given value.
   static inline constexpr Option some(const T& t) noexcept
     requires(!std::is_reference_v<T> && ::sus::mem::CopyOrRef<T>)
@@ -154,16 +159,6 @@ class Option final {
           m) noexcept
       : Option(move_to_storage(::sus::move(m).value)) {}
   inline constexpr Option(__private::NoneMarker) noexcept : Option() {}
-
-  /// Construct an Option with the default value for the type it contains.
-  ///
-  /// The Option's contained type `T` must be #MakeDefault, and will be
-  /// constructed through that trait.
-  static inline constexpr Option<T> with_default() noexcept
-    requires(::sus::construct::MakeDefault<T>)
-  {
-    return Option<T>(::sus::construct::make_default<T>());
-  }
 
   /// Takes each item in the Iterator: if it is None, no further elements are
   /// taken, and the None is returned. Should no None occur, a container of type
@@ -458,15 +453,15 @@ class Option final {
   /// Returns the contained value inside the Option, if there is one.
   /// Otherwise, constructs a default value for the type and returns that.
   ///
-  /// The Option's contained type `T` must be #MakeDefault, and will be
+  /// The Option's contained type `T` must be #Default, and will be
   /// constructed through that trait.
   T unwrap_or_default() && noexcept
-    requires(!std::is_reference_v<T> && ::sus::construct::MakeDefault<T>)
+    requires(!std::is_reference_v<T> && ::sus::construct::Default<T>)
   {
     if (t_.state() == Some) {
       return t_.take_and_set_none();
     } else {
-      return ::sus::construct::make_default<T>();
+      return T();
     }
   }
 
@@ -502,15 +497,14 @@ class Option final {
   /// the Option, and instead it can not be called on rvalues.
   ///
   /// This is a shorthand for
-  /// `Option<T>::get_or_insert_default(MakeDefault<T>::make_default)`.
+  /// `Option<T>::get_or_insert_default(Default<T>::make_default)`.
   ///
-  /// The Option's contained type `T` must be #MakeDefault, and will be
+  /// The Option's contained type `T` must be #Default, and will be
   /// constructed through that trait.
   T& get_or_insert_default() & noexcept
-    requires(::sus::construct::MakeDefault<T>)
+    requires(::sus::construct::Default<T>)
   {
-    if (t_.state() == None)
-      t_.construct_from_none(::sus::construct::make_default<T>());
+    if (t_.state() == None) t_.construct_from_none(T());
     return t_.val_;
   }
 
@@ -888,8 +882,6 @@ class Option final {
       return ::sus::move(t);
   }
 
-  /// Constructor for #None.
-  constexpr explicit Option() = default;
   /// Constructors for #Some.
   constexpr explicit Option(T t)
     requires(std::is_reference_v<T>)

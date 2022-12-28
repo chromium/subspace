@@ -38,8 +38,7 @@ struct VisitCtx {
   }
 
   // The back of this Vec is the function whose body is being parsed.
-  Vec<syntax::FunctionId> in_functions =
-      Vec<syntax::FunctionId>::with_default();
+  Vec<syntax::FunctionId> in_functions;
 
  private:
   u32 next_function_id = 0u;

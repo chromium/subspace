@@ -24,8 +24,7 @@ namespace {
 using sus::containers::Vec;
 
 TEST(Vec, Default) {
-  auto v = sus::construct::make_default<Vec<i32>>();
-  static_assert(std::same_as<decltype(v), Vec<i32>>);
+  auto v = Vec<i32>();
   EXPECT_EQ(v.capacity(), 0_usize);
   EXPECT_EQ(v.len(), 0_usize);
 }
@@ -54,7 +53,7 @@ TEST(Vec, WithCapacity) {
 }
 
 TEST(Vec, Push) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   EXPECT_EQ(v.capacity(), 0_usize);
   EXPECT_EQ(v.len(), 0_usize);
   v.push(2_i32);
@@ -63,7 +62,7 @@ TEST(Vec, Push) {
 }
 
 TEST(Vec, Pop) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   EXPECT_EQ(v.pop(), sus::None);
   v.push(2_i32);
   EXPECT_EQ(v.pop().unwrap(), 2_i32);
@@ -73,7 +72,7 @@ TEST(Vec, Pop) {
 }
 
 TEST(Vec, Get) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   EXPECT_EQ(v.get_ref(0u), sus::None);
   v.push(2_i32);
   EXPECT_EQ(v.get_ref(0u).unwrap(), 2_i32);
@@ -81,7 +80,7 @@ TEST(Vec, Get) {
 }
 
 TEST(Vec, GetMut) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   EXPECT_EQ(v.get_mut(0u), sus::None);
   v.push(2_i32);
   // get_mut() gives a mutable reference into the vector.
@@ -91,13 +90,13 @@ TEST(Vec, GetMut) {
 }
 
 TEST(Vec, GetUnchecked) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(2_i32);
   EXPECT_EQ(v.get_unchecked(unsafe_fn, 0u), 2_i32);
 }
 
 TEST(Vec, GetUncheckedMut) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(2_i32);
   // get_unchecked_mut() gives a mutable reference into the vector.
   v.get_unchecked_mut(unsafe_fn, 0u) += 1_i32;
@@ -105,14 +104,14 @@ TEST(Vec, GetUncheckedMut) {
 }
 
 TEST(Vec, OperatorIndex) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(2_i32);
   const auto& r = v;
   EXPECT_EQ(r[0u], 2_i32);
 }
 
 TEST(Vec, OperatorIndexMut) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(2_i32);
   // operator[] gives a mutable reference into the vector.
   v[0u] += 1_i32;
@@ -120,35 +119,35 @@ TEST(Vec, OperatorIndexMut) {
 }
 
 TEST(VecDeathTest, AsPtr) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(v.as_ptr(), "");
 #endif
 }
 
 TEST(VecDeathTest, AsMutPtr) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(v.as_mut_ptr(), "");
 #endif
 }
 
 TEST(Vec, AsPtr) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(2_i32);
   EXPECT_EQ(v.as_ptr(), &v[0u]);
   static_assert(std::same_as<const i32*, decltype(v.as_ptr())>);
 }
 
 TEST(Vec, AsMutPtr) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(2_i32);
   EXPECT_EQ(v.as_mut_ptr(), &v[0u]);
   static_assert(std::same_as<i32*, decltype(v.as_mut_ptr())>);
 }
 
 TEST(Vec, AsRef) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   EXPECT_EQ(v.as_ref().len(), 0_usize);
   v.push(2_i32);
   auto s = v.as_ref();
@@ -158,7 +157,7 @@ TEST(Vec, AsRef) {
 }
 
 TEST(Vec, AsMut) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   EXPECT_EQ(v.as_mut().len(), 0_usize);
   v.push(2_i32);
   auto s = v.as_mut();
@@ -168,7 +167,7 @@ TEST(Vec, AsMut) {
 }
 
 TEST(Vec, RangedForIter) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(1_i32);
   v.push(2_i32);
   v.push(3_i32);
@@ -179,7 +178,7 @@ TEST(Vec, RangedForIter) {
 }
 
 TEST(Vec, Iter) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(1_i32);
   v.push(2_i32);
   v.push(3_i32);
@@ -188,13 +187,13 @@ TEST(Vec, Iter) {
   for (const i32& i : v.iter()) sum += i;
   EXPECT_EQ(sum, 6);
 
-  auto e = Vec<i32>::with_default();
+  auto e = Vec<i32>();
   for (const i32& i : e.iter()) sum += i;
   EXPECT_EQ(sum, 6);
 }
 
 TEST(Vec, IterMut) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(1_i32);
   v.push(2_i32);
   v.push(3_i32);
@@ -209,13 +208,13 @@ TEST(Vec, IterMut) {
   EXPECT_EQ(v[2u], 4_i32);
   EXPECT_EQ(sum, 6);
 
-  auto e = Vec<i32>::with_default();
+  auto e = Vec<i32>();
   for (const i32& i : e.iter_mut()) sum += i;
   EXPECT_EQ(sum, 6);
 }
 
 TEST(Vec, IntoIter) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(1_i32);
   v.push(2_i32);
   v.push(3_i32);
@@ -376,14 +375,14 @@ TEST(Vec, GrowToExact) {
 }
 
 TEST(Vec, Collect) {
-  auto v = Vec<i32>::with_default();
+  auto v = Vec<i32>();
   v.push(1_i32);
   v.push(2_i32);
   v.push(3_i32);
   auto v2 = sus::move(v).into_iter().collect<Vec<i32>>();
   EXPECT_EQ(v2.len(), 3_usize);
 
-  auto vc = Vec<i32>::with_default();
+  auto vc = Vec<i32>();
   vc.push(1_i32);
   vc.push(2_i32);
   vc.push(3_i32);
@@ -462,7 +461,7 @@ TEST(Vec, Clone) {
   static_assert(::sus::mem::Move<Vec<Copy>>);
 
   {
-    auto s = Vec<Copy>::with_default();
+    auto s = Vec<Copy>();
     s.push(Copy());
     i32 i = s[0u].i;
     auto s2 = sus::clone(s);
@@ -473,10 +472,10 @@ TEST(Vec, Clone) {
   }
 
   {
-    auto s = Vec<Copy>::with_default();
+    auto s = Vec<Copy>();
     s.push(Copy());
     i32 i = s[0u].i;
-    auto s2 = Vec<Copy>::with_default();
+    auto s2 = Vec<Copy>();
     sus::clone_into(mref(s2), s);
     EXPECT_EQ(s2.capacity(), s.capacity());
     EXPECT_EQ(s2.len(), s.len());
@@ -508,7 +507,7 @@ TEST(Vec, Clone) {
   static_assert(::sus::mem::Move<Vec<Clone>>);
 
   {
-    auto s = Vec<Clone>::with_default();
+    auto s = Vec<Clone>();
     s.push(Clone());
     i32 i = s[0u].i;
     auto s2 = sus::clone(s);
@@ -527,8 +526,8 @@ TEST(Vec, CloneInto) {
     ~S() { count -= 1u; }
   };
 
-  auto v1 = Vec<S>::with_default();
-  auto v2 = Vec<S>::with_default();
+  auto v1 = Vec<S>();
+  auto v2 = Vec<S>();
 
   // Case 1: Clone from larger vector.
   v1.push(S());

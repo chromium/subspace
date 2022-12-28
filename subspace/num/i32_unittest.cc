@@ -15,7 +15,7 @@
 #include <type_traits>
 
 #include "construct/into.h"
-#include "construct/make_default.h"
+#include "construct/default.h"
 #include "containers/array.h"
 #include "mem/relocate.h"
 #include "num/num_concepts.h"
@@ -64,7 +64,7 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(!std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(sus::construct::MakeDefault<T>, "");
+static_assert(sus::construct::Default<T>, "");
 static_assert(sus::mem::relocate_one_by_memcpy<T>, "");
 static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 }  // namespace behaviour

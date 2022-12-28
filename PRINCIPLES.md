@@ -59,8 +59,6 @@ This library is an experiment and not intended for use. See the
 
 1. No public constructors, except for the default constructor. All other
    construction is through (named) static methods.
-    * Avoid a default constructor when other constructors are present. Instead,
-      name it `with_default()`.
     * Non-default constructors are prefixed with `with_()` unless there's a
       clear and better domain-specific name.
     * Would like to extend this to Copy and Move constructors too, through Clone

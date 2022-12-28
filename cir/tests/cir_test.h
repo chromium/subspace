@@ -40,7 +40,7 @@ std::string_view cpp_version_flag(CirCppVersion v) noexcept {
 class CirTest : public testing::Test {
  public:
   sus::Option<cir::Output> run_code(std::string content) noexcept {
-    auto args = sus::Vec<std::string>::with_default();
+    auto args = sus::Vec<std::string>();
     args.push(std::string(cpp_version_flag(cpp_version_)));
 
     auto a = cir::run_test(sus::move(content), sus::move(args));

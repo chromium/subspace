@@ -31,14 +31,6 @@ struct NotDefaultConstructible final {
   constexpr NotDefaultConstructible(int i) : i(i) {}
 };
 
-struct WithDefaultConstructible final {
-  int i;
-  static inline constexpr WithDefaultConstructible with_default() {
-    return WithDefaultConstructible(3);
-  }
-  constexpr WithDefaultConstructible(int i) : i(i) {}
-};
-
 struct TriviallyCopyable final {
   TriviallyCopyable(const TriviallyCopyable&) = default;
   TriviallyCopyable& operator=(const TriviallyCopyable&) = default;
