@@ -45,7 +45,6 @@ static_assert(!std::is_trivial_v<T>, "");
 static_assert(!std::is_aggregate_v<T>, "");
 static_assert(std::is_standard_layout_v<T>, "");
 static_assert(!std::is_trivially_default_constructible_v<T>, "");
-static_assert(std::is_default_constructible_v<T>, "");
 static_assert(std::is_trivially_copy_constructible_v<T>, "");
 static_assert(std::is_trivially_copy_assignable_v<T>, "");
 static_assert(std::is_trivially_move_constructible_v<T>, "");
