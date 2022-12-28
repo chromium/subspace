@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cast/subclass.h"
+#include "convert/subclass.h"
 
 #include "googletest/include/gtest/gtest.h"
 
 namespace {
 
-using sus::cast::SameOrSubclassOf;
+using sus::convert::SameOrSubclassOf;
 
 struct Base {};
 struct Sub : public Base {};

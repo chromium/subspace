@@ -15,7 +15,7 @@
 #pragma once
 
 #include "assertions/check.h"
-#include "cast/subclass.h"
+#include "convert/subclass.h"
 #include "macros/nonnull.h"
 #include "marker/unsafe.h"
 #include "mem/addressof.h"
@@ -49,7 +49,7 @@ struct [[sus_trivial_abi]] NonNull {
   ///
   /// # Panics
   /// The method will panic if the pointer `t` is null.
-  template <::sus::cast::SameOrSubclassOf<T*> U>
+  template <::sus::convert::SameOrSubclassOf<T*> U>
   static constexpr inline ::sus::option::Option<NonNull> with_ptr(U t) {
     if (t) [[likely]]
       return ::sus::option::Option<NonNull<T>>::some(NonNull(t));
@@ -69,7 +69,7 @@ struct [[sus_trivial_abi]] NonNull {
   /// # Safety
   /// This method must not be called with a null pointer, or Undefined Behaviour
   /// results.
-  template <::sus::cast::SameOrSubclassOf<T*> U>
+  template <::sus::convert::SameOrSubclassOf<T*> U>
   static constexpr inline sus_nonnull_fn NonNull
   with_ptr_unchecked(::sus::marker::UnsafeFnMarker, sus_nonnull_arg U t) {
     return NonNull(t);
@@ -90,7 +90,7 @@ struct [[sus_trivial_abi]] NonNull {
   ///
   /// # Panics
   /// The method will panic if the pointer `t` is null.
-  template <::sus::cast::SameOrSubclassOf<T*> U>
+  template <::sus::convert::SameOrSubclassOf<T*> U>
   static constexpr inline NonNull from(U t) {
     check(t);
     return NonNull(t);
@@ -134,7 +134,7 @@ struct [[sus_trivial_abi]] NonNull {
   /// This requires that `T*` is a subclass of `U*`. To perform a
   /// downcast, like static_cast<U*> allows, use `downcast()`.
   template <class U>
-    requires ::sus::cast::SameOrSubclassOf<T*, U*>
+    requires ::sus::convert::SameOrSubclassOf<T*, U*>
   NonNull<U> cast() const {
     return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn,
                                           static_cast<U*>(ptr_));

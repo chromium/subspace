@@ -27,6 +27,19 @@ namespace sus::construct {
 /// When a type is `From<T, O>`, it is also `Into<O, T>`. Then a variable `o` of
 /// type `O` can be explicitly converted to `T`, with type deduction, via
 /// `sus::into(o)`.
+///
+/// # Arrays
+/// It's possible to convert from an array, in which case `From<T, O(&)[]>` is
+/// satisfied. To do so, implement `from()` as a templated method,
+/// with a `size_t` template parameter for the size of the incoming array. For
+/// example:
+/// ```
+/// // sus::construct::From<Slice<T>, O[]> trait.
+/// template <size_t N>
+/// static constexpr inline Slice from(T (&data)[N]) {
+///   return Slice(data, N);
+/// }
+/// ```
 template <class ToType, class FromType>
 // clang-format off
 concept From = requires (FromType&& from) {

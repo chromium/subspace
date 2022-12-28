@@ -43,7 +43,7 @@ class Slice {
     return Slice(data, len);
   }
 
-  // sus::construct::Into<Slice<T>, T[]> trait.
+  // sus::construct::From<Slice<T>, T[]> trait.
   template <size_t N>
     requires(N <= PTRDIFF_MAX)
   static constexpr inline Slice from(T (&data)[N]) {
