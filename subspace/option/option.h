@@ -144,22 +144,6 @@ class Option final {
   /// Construct an Option that is holding no value.
   static inline constexpr Option none() noexcept { return Option(); }
 
-  // Construction from sus::option::some() and sus::option::none().
-  inline constexpr Option(
-      __private::SomeMarker<
-          const std::remove_const_t<std::remove_reference_t<T>>&>
-          m) noexcept
-      : Option(::sus::move(m).value) {}
-  inline constexpr Option(
-      __private::SomeMarker<std::remove_const_t<std::remove_reference_t<T>>&>
-          m) noexcept
-      : Option(::sus::move(m).value) {}
-  inline constexpr Option(
-      __private::SomeMarker<std::remove_const_t<std::remove_reference_t<T>>&&>
-          m) noexcept
-      : Option(move_to_storage(::sus::move(m).value)) {}
-  inline constexpr Option(__private::NoneMarker) noexcept : Option() {}
-
   /// Takes each item in the Iterator: if it is None, no further elements are
   /// taken, and the None is returned. Should no None occur, a container of type
   /// T containing the values of type U from each Option<U> is returned.

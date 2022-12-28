@@ -14,16 +14,71 @@
 
 #pragma once
 
+#include "mem/move.h"
+#include "mem/mref.h"
+
 namespace sus::result::__private {
 
 template <class T>
 struct OkMarker {
-  T&& value;
+  T &&value;
+
+  template <class U, class E>
+  inline constexpr operator Result<U, E>() &&noexcept
+      // `value` is a const reference.
+    requires(std::is_const_v<std::remove_reference_t<T>>)
+  {
+    return Result<U, E>::with(value);
+  }
+
+  template <class U, class E>
+  inline constexpr operator Result<U, E>() &&noexcept
+      // `value` is a mutable lvalue reference.
+    requires(
+        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &>)
+  {
+    return Result<U, E>::with(mref(value));
+  }
+
+  template <class U, class E>
+  inline constexpr operator Result<U, E>() &&noexcept
+      // `value` is an rvalue reference.
+    requires(
+        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &&>)
+  {
+    return Result<U, E>::with(::sus::move(value));
+  }
 };
 
-template <class E>
+template <class T>
 struct ErrMarker {
-  E&& value;
+  T &&value;
+
+  template <class U, class E>
+  inline constexpr operator Result<U, E>() &&noexcept
+      // `value` is a const reference.
+    requires(std::is_const_v<std::remove_reference_t<T>>)
+  {
+    return Result<U, E>::with_err(value);
+  }
+
+  template <class U, class E>
+  inline constexpr operator Result<U, E>() &&noexcept
+      // `value` is a mutable lvalue reference.
+    requires(
+        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &>)
+  {
+    return Result<U, E>::with_err(mref(value));
+  }
+
+  template <class U, class E>
+  inline constexpr operator Result<U, E>() &&noexcept
+      // `value` is an rvalue reference.
+    requires(
+        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &&>)
+  {
+    return Result<U, E>::with_err(::sus::move(value));
+  }
 };
 
 }  // namespace sus::result::__private
