@@ -15,13 +15,13 @@
 #include "containers/slice.h"
 
 #include "construct/into.h"
+#include "googletest/include/gtest/gtest.h"
 #include "iter/iterator.h"
 #include "mem/clone.h"
 #include "mem/copy.h"
 #include "mem/move.h"
 #include "num/types.h"
 #include "prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 using sus::containers::Slice;
 
@@ -101,8 +101,10 @@ TEST(Slice, GetMutUnchecked) {
 
 TEST(Slice, Into) {
   i32 a[] = {1, 2, 3};
-  Slice<const i32> s = sus::into(a);
-  Slice<i32> sm = sus::into(a);
+  Slice<const i32> s = sus::array_into(a);
+  EXPECT_EQ(s.len(), 3u);
+  Slice<i32> sm = sus::array_into(a);
+  EXPECT_EQ(sm.len(), 3u);
 }
 
 TEST(Slice, From) {

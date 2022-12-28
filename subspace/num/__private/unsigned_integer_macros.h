@@ -21,8 +21,8 @@
 
 #include "assertions/check.h"
 #include "assertions/endian.h"
-#include "mem/size_of.h"
 #include "macros/__private/compiler_bugs.h"
+#include "mem/size_of.h"
 #include "num/__private/int_log10.h"
 #include "num/__private/intrinsics.h"
 #include "num/__private/literals.h"
@@ -100,13 +100,13 @@ class Tuple;
   /** Construction from unsigned primitive types where no bits are lost.       \
    */                                                                          \
   template <UnsignedPrimitiveInteger P>                                        \
-    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())                                  \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
   constexpr inline T(P v) : primitive_value(v) {}                              \
                                                                                \
   /** Assignment from unsigned primitive types where no bits are lost.         \
    */                                                                          \
   template <UnsignedPrimitiveInteger P>                                        \
-    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())                                  \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
   constexpr inline T& operator=(P v) noexcept {                                \
     primitive_value = v;                                                       \
     return *this;                                                              \
@@ -170,17 +170,17 @@ class Tuple;
   }                                                                            \
   static_assert(true)
 
-#define _sus__unsigned_to_primitive(T, PrimitiveT) \
-  template <UnsignedPrimitiveInteger U>            \
-    requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<PrimitiveT>())      \
-  constexpr inline explicit operator U() const {   \
-    return primitive_value;                        \
-  }                                                \
-  template <SignedPrimitiveInteger U>              \
-    requires(::sus::mem::size_of<U>() > ::sus::mem::size_of<PrimitiveT>())       \
-  constexpr inline explicit operator U() const {   \
-    return primitive_value;                        \
-  }                                                \
+#define _sus__unsigned_to_primitive(T, PrimitiveT)                          \
+  template <UnsignedPrimitiveInteger U>                                     \
+    requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<PrimitiveT>()) \
+  constexpr inline explicit operator U() const {                            \
+    return primitive_value;                                                 \
+  }                                                                         \
+  template <SignedPrimitiveInteger U>                                       \
+    requires(::sus::mem::size_of<U>() > ::sus::mem::size_of<PrimitiveT>())  \
+  constexpr inline explicit operator U() const {                            \
+    return primitive_value;                                                 \
+  }                                                                         \
   static_assert(true)
 
 #define _sus__unsigned_integer_comparison(T)                                  \
@@ -373,7 +373,7 @@ class Tuple;
   /** Checked integer addition with an unsigned rhs. Computes self + rhs,      \
    * returning None if overflow occurred.                                      \
    */                                                                          \
-  template <std::same_as<SignedT> S>                                           \
+  template <std::convertible_to<SignedT> S>                                    \
   constexpr Option<T> checked_add_signed(const S& rhs) const& noexcept {       \
     const auto out = __private::add_with_overflow_signed(primitive_value,      \
                                                          rhs.primitive_value); \
@@ -402,7 +402,7 @@ class Tuple;
    * an arithmetic overflow would occur. If an overflow would have occurred    \
    * then the wrapped value is returned.                                       \
    */                                                                          \
-  template <std::same_as<SignedT> S, int&...,                                  \
+  template <std::convertible_to<SignedT> S, int&...,                           \
             class Tuple = ::sus::tuple::Tuple<T, bool>>                        \
   constexpr Tuple overflowing_add_signed(const S& rhs) const& noexcept {       \
     const auto r = __private::add_with_overflow_signed(primitive_value,        \
@@ -420,7 +420,7 @@ class Tuple;
   /** Saturating integer addition with an unsigned rhs. Computes self + rhs,   \
    * saturating at the numeric bounds instead of overflowing.                  \
    */                                                                          \
-  template <std::same_as<SignedT> S>                                           \
+  template <std::convertible_to<SignedT> S>                                    \
   constexpr T saturating_add_signed(const S& rhs) const& noexcept {            \
     const auto r = __private::add_with_overflow_signed(primitive_value,        \
                                                        rhs.primitive_value);   \
@@ -459,7 +459,7 @@ class Tuple;
   /** Wrapping (modular) addition with an unsigned rhs. Computes self + rhs,   \
    * wrapping around at the boundary of the type.                              \
    */                                                                          \
-  template <std::same_as<SignedT> S>                                           \
+  template <std::convertible_to<SignedT> S>                                    \
   constexpr T wrapping_add_signed(const S& rhs) const& noexcept {              \
     return __private::add_with_overflow_signed(primitive_value,                \
                                                rhs.primitive_value)            \
@@ -1271,16 +1271,18 @@ class Tuple;
   /** Create an integer value from its representation as a byte array in big  \
    * endian.                                                                  \
    */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
-  static constexpr T from_be_bytes(const Array& bytes) noexcept {             \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>,       \
+            std::convertible_to<Array> U>                                     \
+  static constexpr T from_be_bytes(const U& bytes) noexcept {                 \
     return from_be(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
   /** Create an integer value from its representation as a byte array in      \
    * little endian.                                                           \
    */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
-  static constexpr T from_le_bytes(const Array& bytes) noexcept {             \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>,       \
+            std::convertible_to<Array> U>                                     \
+  static constexpr T from_le_bytes(const U& bytes) noexcept {                 \
     return from_le(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
@@ -1291,8 +1293,9 @@ class Tuple;
    * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate      \
    * instead.                                                                 \
    */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
-  static constexpr T from_ne_bytes(const Array& bytes) noexcept {             \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>,       \
+            std::convertible_to<Array> U>                                     \
+  static constexpr T from_ne_bytes(const U& bytes) noexcept {                 \
     PrimitiveT val;                                                           \
     if (std::is_constant_evaluated()) {                                       \
       val = 0u;                                                               \

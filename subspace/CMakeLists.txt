@@ -5,7 +5,8 @@ add_library(subspace STATIC
     "assertions/panic.h"
     "assertions/panic.cc"
     "assertions/unreachable.h"
-    "cast/subclass.h"
+    "convert/subclass.h"
+    "construct/__private/into_ref.h"
     "construct/from.h"
     "construct/into.h"
     "construct/default.h"
@@ -97,6 +98,7 @@ add_library(subspace STATIC
 )
 
 add_library(subspace_test_support STATIC
+    "test/from_i32.h"
     "test/behaviour_types.h"
     "test/behaviour_types_unittest.cc"
     "test/no_copy_move.h"
@@ -107,7 +109,7 @@ add_executable(subspace_unittests
     "assertions/endian_unittest.cc"
     "assertions/panic_unittest.cc"
     "assertions/unreachable_unittest.cc"
-    "cast/subclass_unittest.cc"
+    "convert/subclass_unittest.cc"
     "containers/array_unittest.cc"
     "containers/slice_unittest.cc"
     "containers/vec_unittest.cc"

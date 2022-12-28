@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "cast/subclass.h"
+#include "convert/subclass.h"
 #include "iter/iterator_defn.h"
 #include "mem/relocate.h"
 #include "mem/size_of.h"
@@ -92,7 +92,7 @@ template <::sus::mem::Move IteratorSubclass, int&...,
               SubclassItem, ::sus::mem::size_of<IteratorSubclass>(),
               alignof(IteratorSubclass)>>
 inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
-  requires(::sus::cast::SameOrSubclassOf<IteratorSubclass*,
+  requires(::sus::convert::SameOrSubclassOf<IteratorSubclass*,
                                          IteratorBase<SubclassItem>*> &&
            ::sus::mem::relocate_one_by_memcpy<IteratorSubclass>)
 {
@@ -116,7 +116,7 @@ template <::sus::mem::Move IteratorSubclass, int&...,
               alignof(IteratorSubclass), /*InlineStorage=*/false>>
 inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
   requires(
-      ::sus::cast::SameOrSubclassOf<IteratorSubclass*, IteratorBase<SubclassItem>*> &&
+      ::sus::convert::SameOrSubclassOf<IteratorSubclass*, IteratorBase<SubclassItem>*> &&
       !::sus::mem::relocate_one_by_memcpy<IteratorSubclass>)
 {
   return SizedIteratorType(*new IteratorSubclass(::sus::move(subclass)),

@@ -27,6 +27,7 @@
 #include "prelude.h"
 #include "result/result.h"
 #include "test/behaviour_types.h"
+#include "test/from_i32.h"
 #include "test/no_copy_move.h"
 #include "tuple/tuple.h"
 

@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-namespace sus::cast {
+namespace sus::convert {
 
 /// `SameOrSubclassOf<T*, U*>` is true if `T` is the same type as `U` or
 /// inherits from `U`.
@@ -36,4 +36,4 @@ concept SameOrSubclassOf =
     std::is_convertible_v<T, U>;
 // clang-format on
 
-}  // namespace sus::cast
+}  // namespace sus::convert

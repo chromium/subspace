@@ -1489,16 +1489,18 @@ class Tuple;
   /** Create an integer value from its representation as a byte array in big  \
    * endian.                                                                  \
    */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
-  static constexpr T from_be_bytes(const Array& bytes) noexcept {             \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>,       \
+            std::convertible_to<Array> U>                                     \
+  static constexpr T from_be_bytes(const U& bytes) noexcept {                 \
     return from_be(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
   /** Create an integer value from its representation as a byte array in      \
    * little endian.                                                           \
    */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
-  static constexpr T from_le_bytes(const Array& bytes) noexcept {             \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>,       \
+            std::convertible_to<Array> U>                                     \
+  static constexpr T from_le_bytes(const U& bytes) noexcept {                 \
     return from_le(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
@@ -1509,12 +1511,13 @@ class Tuple;
    * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate      \
    * instead.                                                                 \
    */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
-  static constexpr T from_ne_bytes(const Array& bytes) noexcept {             \
-    using U = decltype(__private::into_unsigned(primitive_value));            \
-    U val;                                                                    \
+  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>,       \
+            std::convertible_to<Array> U>                                     \
+  static constexpr T from_ne_bytes(const U& bytes) noexcept {                 \
+    using Unsigned = decltype(__private::into_unsigned(primitive_value));     \
+    Unsigned val;                                                             \
     if (std::is_constant_evaluated()) {                                       \
-      val = U{0};                                                             \
+      val = Unsigned{0};                                                      \
       for (auto i = size_t{0}; i < Bytes; ++i) {                              \
         val |= bytes[i].primitive_value << (Bytes - size_t{1} - i);           \
       }                                                                       \
