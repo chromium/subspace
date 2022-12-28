@@ -14,13 +14,47 @@
 
 #pragma once
 
+#include "mem/move.h"
+#include "mem/mref.h"
+
 namespace sus::option::__private {
 
 template <class T>
 struct SomeMarker {
-  T&& value;
+  T &&value;
+
+  template <class U>
+  inline constexpr operator Option<U>() &&noexcept
+      // `value` is a const reference.
+    requires(std::is_const_v<std::remove_reference_t<T>>)
+  {
+    return Option<U>::some(value);
+  }
+
+  template <class U>
+  inline constexpr operator Option<U>() &&noexcept
+      // `value` is a mutable lvalue reference.
+    requires(
+        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &>)
+  {
+    return Option<U>::some(mref(value));
+  }
+
+  template <class U>
+  inline constexpr operator Option<U>() &&noexcept
+      // `value` is an rvalue reference.
+    requires(
+        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &&>)
+  {
+    return Option<U>::some(sus::move(value));
+  }
 };
 
-struct NoneMarker {};
+struct NoneMarker {
+  template <class U>
+  inline constexpr operator Option<U>() &&noexcept {
+    return Option<U>::none();
+  }
+};
 
 }  // namespace sus::option::__private

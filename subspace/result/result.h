@@ -92,26 +92,6 @@ class [[nodiscard]] Result final {
     return Result(WithErr, ::sus::move(e));
   }
 
-  // Construction from sus::result::ok() and sus::result::err().
-  constexpr inline Result(__private::OkMarker<const T&> t) noexcept
-    requires(::sus::mem::Copy<T>)
-      : Result(WithOk, t.value) {}
-  constexpr inline Result(__private::OkMarker<T&> t) noexcept
-    requires(::sus::mem::Copy<T>)
-      : Result(WithOk, t.value) {}
-  constexpr inline Result(__private::OkMarker<T&&> t) noexcept
-    requires(::sus::mem::Move<T>)
-      : Result(WithOk, ::sus::move(::sus::move(t).value)) {}
-  constexpr inline Result(__private::ErrMarker<const E&> e) noexcept
-    requires(::sus::mem::Copy<E>)
-      : Result(WithErr, e.value) {}
-  constexpr inline Result(__private::ErrMarker<E&> e) noexcept
-    requires(::sus::mem::Copy<E>)
-      : Result(WithErr, e.value) {}
-  constexpr inline Result(__private::ErrMarker<E&&> e) noexcept
-    requires(::sus::mem::Move<E>)
-      : Result(WithErr, ::sus::move(::sus::move(e).value)) {}
-
   /// Takes each element in the Iterator: if it is an Err, no further elements
   /// are taken, and the Err is returned. Should no Err occur, a container with
   /// the values of each Result is returned.

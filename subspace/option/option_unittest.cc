@@ -185,6 +185,12 @@ TEST(Option, SomeNoneHelpers) {
   auto a = Option<i32>::some(2_i32);
   Option<i32> a2 = sus::some(2_i32);
   EXPECT_EQ(a, a2);
+  auto mv = 2_i32;
+  a2 = sus::some(mref(mv));
+  EXPECT_EQ(a, a2);
+  const auto cv = 2_i32;
+  a2 = sus::some(cv);
+  EXPECT_EQ(a, a2);
 
   auto b = Option<i32>::none();
   Option<i32> b2 = sus::none();
