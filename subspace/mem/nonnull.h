@@ -15,6 +15,7 @@
 #pragma once
 
 #include "assertions/check.h"
+#include "cast/subclass.h"
 #include "macros/nonnull.h"
 #include "marker/unsafe.h"
 #include "mem/addressof.h"
@@ -43,13 +44,12 @@ struct [[sus_trivial_abi]] NonNull {
 
   /// Constructs a `NonNull<T>` from a pointer to `T`.
   ///
-  /// Does not implicitly convert from an array. Explicitly convert it to a
-  /// pointer to throw away the length of the array.
+  /// Does not implicitly convert from an array. The caller must explicitly
+  /// convert it to a pointer to throw away the length of the array.
   ///
   /// # Panics
   /// The method will panic if the pointer `t` is null.
-  template <class U>
-    requires(std::is_pointer_v<U> && std::is_convertible_v<U, T*>)
+  template <::sus::cast::SameOrSubclassOf<T*> U>
   static constexpr inline ::sus::option::Option<NonNull> with_ptr(U t) {
     if (t) [[likely]]
       return ::sus::option::Option<NonNull<T>>::some(NonNull(t));
@@ -63,17 +63,15 @@ struct [[sus_trivial_abi]] NonNull {
 
   /// Constructs a `NonNull<T>` from a pointer to `T`.
   ///
-  /// Does not implicitly convert from an array. Explicitly convert it to a
-  /// pointer to throw away the length of the array.
+  /// Does not implicitly convert from an array. The caller must explicitly
+  /// convert it to a pointer to throw away the length of the array.
   ///
   /// # Safety
   /// This method must not be called with a null pointer, or Undefined Behaviour
   /// results.
-  template <class U>
-    requires(std::is_pointer_v<U> && std::is_convertible_v<U, T*>)
+  template <::sus::cast::SameOrSubclassOf<T*> U>
   static constexpr inline sus_nonnull_fn NonNull
-      with_ptr_unchecked(::sus::marker::UnsafeFnMarker,
-                         sus_nonnull_arg U t) {
+  with_ptr_unchecked(::sus::marker::UnsafeFnMarker, sus_nonnull_arg U t) {
     return NonNull(t);
   }
 
@@ -92,8 +90,7 @@ struct [[sus_trivial_abi]] NonNull {
   ///
   /// # Panics
   /// The method will panic if the pointer `t` is null.
-  template <class U>
-    requires(std::is_pointer_v<U> && std::is_convertible_v<U, T*>)
+  template <::sus::cast::SameOrSubclassOf<T*> U>
   static constexpr inline NonNull from(U t) {
     check(t);
     return NonNull(t);
@@ -134,12 +131,13 @@ struct [[sus_trivial_abi]] NonNull {
   /// Cast the pointer of type `T` in NonNull<T> to a pointer of type `U` and
   /// return a `NonNull<U>`.
   ///
-  /// This requires that `T*` is implicitly convertible to `U*`. To perform a
-  /// static_cast<U*>, use `downcast()`.
+  /// This requires that `T*` is a subclass of `U*`. To perform a
+  /// downcast, like static_cast<U*> allows, use `downcast()`.
   template <class U>
-    requires(std::is_convertible_v<T*, U*>)
+    requires ::sus::cast::SameOrSubclassOf<T*, U*>
   NonNull<U> cast() const {
-    return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn, static_cast<U*>(ptr_));
+    return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn,
+                                          static_cast<U*>(ptr_));
   }
 
   /// Cast the pointer of type `T` in NonNull<T> to a pointer of type `U` and
@@ -149,12 +147,13 @@ struct [[sus_trivial_abi]] NonNull {
   /// The pointee must be a `U*` or this results in Undefined Behaviour.
   template <class U>
   NonNull<U> downcast(::sus::marker::UnsafeFnMarker) const {
-    return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn, static_cast<U*>(ptr_));
+    return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn,
+                                          static_cast<U*>(ptr_));
   }
 
  private:
-  explicit constexpr inline NonNull(sus_nonnull_arg T* t)
-      sus_nonnull_fn : ptr_(t) {}
+  explicit constexpr inline NonNull(sus_nonnull_arg T* t) sus_nonnull_fn
+      : ptr_(t) {}
 
   T* ptr_;
 
