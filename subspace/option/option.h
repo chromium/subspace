@@ -265,7 +265,7 @@ class Option final {
              !std::is_trivially_copy_assignable_v<T>)
   {
     if (o.t_.state() == Some)
-      t_.set_some(o.t_.val_);
+      t_.set_some(copy_to_storage(o.t_.val_));
     else if (t_.state() == Some)
       t_.set_none();
     return *this;
@@ -869,6 +869,15 @@ class Option final {
   template <class U>
   friend class Option;
 
+  // Since `T` may be a reference or a value type, this constructs the correct
+  // storage from a `T` object or a `T&&` (which is received as `T&`).
+  template <class U>
+  static constexpr inline decltype(auto) copy_to_storage(const U& t) {
+    if constexpr (std::is_reference_v<T>)
+      return StoragePointer<T&>(t);
+    else
+      return t;
+  }
   // Since `T` may be a reference or a value type, this constructs the correct
   // storage from a `T` object or a `T&&` (which is received as `T&`).
   template <class U>

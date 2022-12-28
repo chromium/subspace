@@ -15,19 +15,24 @@
 #include "mem/nonnull.h"
 
 #include "construct/into.h"
+#include "googletest/include/gtest/gtest.h"
 #include "macros/__private/compiler_bugs.h"
 #include "mem/forward.h"
+#include "mem/never_value.h"
 #include "mem/relocate.h"
 #include "num/types.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
+#include "option/option.h"
 #include "prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 using sus::mem::NonNull;
 
 static_assert(sus::mem::relocate_one_by_memcpy<NonNull<int>>);
 static_assert(sus::mem::relocate_array_by_memcpy<NonNull<int>>);
+
+static_assert(sus::mem::NeverValueField<NonNull<int>>);
+static_assert(sizeof(sus::Option<NonNull<int>>) == sizeof(int*));
 
 namespace {
 
