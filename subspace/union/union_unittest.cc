@@ -20,11 +20,13 @@
 #include "macros/__private/compiler_bugs.h"
 #include "num/types.h"
 #include "option/option.h"
+#include "test/no_copy_move.h"
 #include "prelude.h"
 
 namespace {
 
 using sus::Union;
+using sus::test::NoCopyMove;
 
 static_assert(::sus::union_type::__private::AllValuesAreUnique<1>);
 static_assert(::sus::union_type::__private::AllValuesAreUnique<1, 2>);
@@ -105,30 +107,30 @@ TEST(Union, GetTypes) {
         std::same_as<decltype(sus::move(u).into_inner<Order::Second>()),
                      u32&&>);
   }
-  // With const refs.
+  // With refs.
   {
-    auto i = 3_u32;
-    auto& r = i;
+    auto i = NoCopyMove();
     auto u =
         Union<sus_union_types((Order::First, i8&, const u64&),
-                              (Order::Second, u32&))>::with<Order::Second>(r);
+                              (Order::Second, NoCopyMove&))>::with<Order::Second>(i);
     static_assert(std::same_as<decltype(u.get_ref<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(
-        std::same_as<decltype(u.get_ref<Order::Second>()), const u32&>);
+        std::same_as<decltype(u.get_ref<Order::Second>()), const NoCopyMove&>);
     static_assert(std::same_as<decltype(u.get_mut<Order::First>()),
                                sus::Tuple<i8&, const u64&>>);
-    static_assert(std::same_as<decltype(u.get_mut<Order::Second>()), u32&>);
+    static_assert(std::same_as<decltype(u.get_mut<Order::Second>()), NoCopyMove&>);
     static_assert(
         std::same_as<decltype(sus::move(u).into_inner<Order::First>()),
                      sus::Tuple<i8&, const u64&>>);
     static_assert(
-        std::same_as<decltype(sus::move(u).into_inner<Order::Second>()), u32&>);
+        std::same_as<decltype(sus::move(u).into_inner<Order::Second>()), NoCopyMove&>);
+    EXPECT_EQ(&u.get_ref<Order::Second>(), &i);
 
     // Verify storing a reference in the first-of-N slot builds.
     auto u2 = Union<sus_union_types(
-        (Order::First, u32&),
-        (Order::Second, i8&, const u64&))>::with<Order::First>(r);
+        (Order::First, NoCopyMove&),
+        (Order::Second, i8&, const u64&))>::with<Order::First>(i);
   }
 }
 
