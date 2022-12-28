@@ -16,9 +16,9 @@
 
 #include <type_traits>
 
-#include "prelude.h"
-#include "num/types.h"
 #include "googletest/include/gtest/gtest.h"
+#include "num/types.h"
+#include "prelude.h"
 
 namespace sus::mem {
 namespace {
@@ -81,7 +81,7 @@ TEST(Take, TakeConstexpr) {
 TEST(Take, TakeAndDestruct) {
   static i32 take_destructors;
 
-  struct S {
+  struct S final {
     S() { default_constucted += 1_i32; }
     S(i32 i) : num(i) {}
     S(S&& other) : num(other.num), moved(other.moved + 1_i32) {}
@@ -92,7 +92,7 @@ TEST(Take, TakeAndDestruct) {
     i32 moved = 0_i32;
   };
 
-  union U {
+  union U final {
     U() {}
     ~U() {}
     S s;

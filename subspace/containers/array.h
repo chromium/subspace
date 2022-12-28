@@ -21,7 +21,7 @@
 #include <utility>  // TODO: replace std::make_index_sequence.
 
 #include "assertions/check.h"
-#include "construct/make_default.h"
+#include "construct/default.h"
 #include "containers/__private/array_iter.h"
 #include "containers/__private/slice_iter.h"
 #include "containers/slice.h"
@@ -64,15 +64,14 @@ class Array final {
                 "const applies transitively.");
 
  public:
-  constexpr static Array with_default() noexcept
-    requires(::sus::construct::MakeDefault<T>)
-  {
-    auto a = Array(kWithUninitialized);
+  constexpr Array() noexcept
+    requires(::sus::construct::Default<T>)
+      : Array(kWithUninitialized) {
     if constexpr (N > 0) {
-      for (size_t i = 0; i < N; ++i)
-        new (a.as_mut_ptr() + i) T(::sus::construct::make_default<T>());
+      for (size_t i = 0; i < N; ++i) {
+        new (as_mut_ptr() + i) T();
+      }
     }
-    return a;
   }
 
   constexpr static Array with_uninitialized(

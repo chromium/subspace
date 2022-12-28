@@ -21,7 +21,7 @@ footguns, crashes, bugs, and UB.
 1. Use `sus` concepts where possible.
     * If you `requires` a concept, then use that concept to do the intended
       action instead of rolling it yourself. For example if `T` was required to
-      be `MakeDefault` then construct `T` via `make_default()`.
+      be `Default` then construct `T` via `make_default()`.
     * On types, it often makes sense to static assert instead to give a nice
       compiler error, since they are not used in overloads like functions.
 1. Use `usize`, `u32`, `i32`, etc in all public APIs, except:

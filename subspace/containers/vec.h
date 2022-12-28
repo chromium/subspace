@@ -50,10 +50,14 @@ class Vec {
   static_assert(isize::MAX() == isize(PTRDIFF_MAX));
 
  public:
-  static inline Vec with_capacity(usize cap) noexcept { return Vec(cap); }
+  // sus::construct::Default trait.
+  inline constexpr Vec() noexcept
+    requires(::sus::construct::Default<T>)
+      : Vec(kDefault) {}
 
-  // sus::construct::MakeDefault trait.
-  static inline constexpr Vec with_default() noexcept { return Vec(); }
+  static inline Vec with_capacity(usize cap) noexcept {
+    return Vec(kWithCap, cap);
+  }
 
   /// Constructs a vector by taking all the elements from the iterator.
   ///
@@ -341,9 +345,12 @@ class Vec {
   }
 
  private:
-  Vec() : storage_(nullish()), len_(0_usize), capacity_(0_usize) {}
+  enum Default { kDefault };
+  inline constexpr Vec(Default)
+      : storage_(nullish()), len_(0_usize), capacity_(0_usize) {}
 
-  Vec(usize cap)
+  enum WithCap { kWithCap };
+  Vec(WithCap, usize cap)
       : storage_(cap > 0_usize ? static_cast<char*>(malloc(
                                      size_t{::sus::mem::size_of<T>() * cap}))
                                : nullish()),

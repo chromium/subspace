@@ -443,7 +443,7 @@ TEST(Tuple, StructuredBindingMoves) {
     Moves() {}
     Moves(Moves&&) { moves += 1u; }
   };
-  auto t = Tuple<Moves, Moves, Moves>::with_default();
+  auto t = Tuple<Moves, Moves, Moves>();
   moves = 0u;
   auto [a, b, c] = sus::move(t);
   EXPECT_EQ(moves, 3u);

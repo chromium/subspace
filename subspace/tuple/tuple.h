@@ -18,7 +18,7 @@
 #include <concepts>
 
 #include "assertions/check.h"
-#include "construct/make_default.h"
+#include "construct/default.h"
 #include "macros/no_unique_address.h"
 #include "mem/clone.h"
 #include "mem/copy.h"
@@ -78,23 +78,20 @@ class Tuple final {
  public:
   static constexpr auto protects_uam = SUS_CONFIG_TUPLE_USE_AFTER_MOVE;
 
+  /// Construct a Tuple with the default value for the types it contains.
+  ///
+  /// The Tuple's contained types must all be #Default, and will be
+  /// constructed through that trait.
+  inline constexpr Tuple() noexcept
+    requires((::sus::construct::Default<T> && ... &&
+              ::sus::construct::Default<Ts>))
+      : Tuple(T(), Ts()...) {}
+
   /// Construct a Tuple with the given values.
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
     requires(sizeof...(Us) == sizeof...(Ts))
   constexpr inline static Tuple with(U&& first, Us&&... more) noexcept {
     return Tuple(::sus::forward<U>(first), ::sus::forward<Us>(more)...);
-  }
-
-  /// Construct a Tuple with the default value for the types it contains.
-  ///
-  /// The Tuple's contained types must all be #MakeDefault, and will be
-  /// constructed through that trait.
-  static inline constexpr Tuple with_default() noexcept
-    requires((::sus::construct::MakeDefault<T> && ... &&
-              ::sus::construct::MakeDefault<Ts>))
-  {
-    return Tuple(::sus::construct::make_default<T>(),
-                 ::sus::construct::make_default<Ts>()...);
   }
 
   /// sus::mem::Clone trait.

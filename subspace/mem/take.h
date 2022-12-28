@@ -16,6 +16,7 @@
 
 #include <type_traits>
 
+#include "construct/default.h"
 #include "marker/unsafe.h"
 #include "mem/addressof.h"
 #include "mem/move.h"
@@ -24,25 +25,29 @@
 
 namespace sus::mem {
 
+/// Moves from `t` and constructs a new `T` in its place. Returns the old value
+/// of `t`.
+///
 /// Requires that the type is `final` because calling take() on a base class
-/// could lead to Undefined Behaviour, unless the object was accessed through
-/// std::launder thereafter, as replacing a subclass with the base class would
-/// change the underlying storage.
+/// could lead to Undefined Behaviour if the now-reconstructed object is
+/// accessed without std::launder thereafter, as replacing a subclass with the
+/// base class would change the underlying storage.
 template <class T>
-  requires(std::is_move_constructible_v<T> &&
-           std::is_default_constructible_v<T> && std::is_final_v<T>)
+  requires(::sus::mem::Move<T> && ::sus::construct::Default<T> &&
+           std::is_final_v<T>)
 inline constexpr T take(T& t) noexcept {
   auto taken = T(::sus::move(t));
   t.~T();
-  // TODO: Support classes with a `with_default()` constructor as well.
   new (&t) T();
   return taken;
 }
 
+/// Moves from `t` and destroys the object at `t`. Returns the old value of `t`.
+///
 /// SAFETY: This does *not* re-construct the object pointed to by `t`. It must
 /// not be used (or destructed again) afterward.
 template <class T>
-  requires std::is_move_constructible_v<T>
+  requires ::sus::mem::Move<T>
 inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
                                      T& t) noexcept {
   // NOTE: MSVC fails to compile if we use move() here, which is not really

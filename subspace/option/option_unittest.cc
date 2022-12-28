@@ -30,8 +30,7 @@
 #include "test/no_copy_move.h"
 #include "tuple/tuple.h"
 
-using sus::construct::make_default;
-using sus::construct::MakeDefault;
+using sus::construct::Default;
 using sus::mem::relocate_array_by_memcpy;
 using sus::mem::relocate_one_by_memcpy;
 using sus::option::None;
@@ -115,13 +114,6 @@ TEST(Option, Construct) {
     auto x = Option<T>::some(T(1));
     auto y = Option<T>::none();
     auto t = T(1);
-    auto z = Option<T>::some(t);
-  }
-  {
-    using T = WithDefaultConstructible;
-    auto x = Option<T>::some(T::with_default());
-    auto y = Option<T>::none();
-    auto t = T::with_default();
     auto z = Option<T>::some(t);
   }
   {
@@ -311,32 +303,9 @@ TEST(Option, None) {
   // static_assert(cy.is_none());
 }
 
-TEST(Option, WithDefault) {
-  auto x = Option<DefaultConstructible>::with_default();
-  IS_SOME(x);
-  EXPECT_EQ(sus::move(x).unwrap().i, 2);
-
-  auto y = Option<WithDefaultConstructible>::with_default();
-  IS_SOME(y);
-  EXPECT_EQ(sus::move(y).unwrap().i, 3);
-
-  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
-  // optimization.
-  // constexpr auto cx(Option<DefaultConstructible>::with_default());
-  // static_assert(cx.is_some());
-
-  // TODO: Reading the Option's state can't be constexpr due to NeverValue field
-  // optimization.
-  // constexpr auto cy(Option<WithDefaultConstructible>::with_default());
-  // static_assert(cy.is_some());
-
-  auto x2 = make_default<Option<DefaultConstructible>>();
-  IS_SOME(x2);
-  EXPECT_EQ(sus::move(x2).unwrap().i, 2);
-
-  auto y2 = make_default<Option<WithDefaultConstructible>>();
-  IS_SOME(y2);
-  EXPECT_EQ(sus::move(y2).unwrap().i, 3);
+TEST(Option, Default) {
+  auto x = Option<DefaultConstructible>();
+  IS_NONE(x);
 }
 
 TEST(Option, Destructor) {
@@ -345,8 +314,8 @@ TEST(Option, Destructor) {
     ~WatchDestructor() { ++count; }
   };
   {
-    auto x = Option<WatchDestructor>::with_default();
-    count = 0;  // Without optimizations, moves may run a destructor.
+    auto x = Option<WatchDestructor>::some(WatchDestructor());
+    count = 0;  // Init moves may cause destructor to run without optimizations.
   }
   EXPECT_EQ(1, count);
 
@@ -359,7 +328,7 @@ TEST(Option, Destructor) {
 }
 
 TEST(Option, ExpectSome) {
-  auto x = Option<int>::with_default().expect("hello world");
+  auto x = Option<int>::some(0).expect("hello world");
   EXPECT_EQ(x, 0);
 
   auto i = NoCopyMove();
@@ -376,7 +345,7 @@ TEST(OptionDeathTest, ExpectNone) {
 }
 
 TEST(Option, UnwrapSome) {
-  auto x = Option<int>::with_default().unwrap();
+  auto x = Option<int>::some(0).unwrap();
   EXPECT_EQ(x, 0);
 
   auto i = NoCopyMove();
@@ -392,7 +361,7 @@ TEST(OptionDeathTest, UnwrapNone) {
 }
 
 TEST(Option, UnwrapUncheckedSome) {
-  auto x = Option<int>::with_default().unwrap_unchecked(unsafe_fn);
+  auto x = Option<int>::some(0).unwrap_unchecked(unsafe_fn);
   EXPECT_EQ(x, 0);
 
   auto i = NoCopyMove();
@@ -480,12 +449,6 @@ TEST(Option, UnwrapOrDefault) {
   EXPECT_EQ(x.i, 4);
   auto y = Option<DefaultConstructible>::none().unwrap_or_default();
   EXPECT_EQ(y.i, 2);
-
-  auto wx = Option<WithDefaultConstructible>::some(WithDefaultConstructible(4))
-                .unwrap_or_default();
-  EXPECT_EQ(wx.i, 4);
-  auto wy = Option<WithDefaultConstructible>::none().unwrap_or_default();
-  EXPECT_EQ(wy.i, 3);
 
   // TODO: Reading the Option's state can't be constexpr due to NeverValue field
   // optimization.
@@ -737,7 +700,7 @@ TEST(Option, Filter) {
 
   static int hold_count;
   {
-    auto a = Option<WatchDestructor>::with_default();
+    auto a = Option<WatchDestructor>::some(WatchDestructor());
     count = 0;
     auto af = sus::move(a).filter([](const WatchDestructor&) { return true; });
     // The WatchDestructor was moved from `a` to `af` and the temporary's
@@ -749,7 +712,7 @@ TEST(Option, Filter) {
   EXPECT_EQ(count, hold_count + 1);
 
   {
-    auto b = Option<WatchDestructor>::with_default();
+    auto b = Option<WatchDestructor>::some(WatchDestructor());
     count = 0;
     auto bf = sus::move(b).filter([](const WatchDestructor&) { return false; });
     // The WatchDestructor in `b` was destroyed.
@@ -1120,13 +1083,6 @@ TEST(Option, GetOrInsertDefault) {
   EXPECT_EQ(rx.i, 2);
   IS_SOME(x);
   EXPECT_EQ(sus::move(x).unwrap().i, 2);
-
-  auto w = Option<WithDefaultConstructible>::none();
-  auto& rw = w.get_or_insert_default();
-  static_assert(std::is_same_v<decltype(rw), WithDefaultConstructible&>);
-  EXPECT_EQ(rw.i, 3);
-  IS_SOME(w);
-  EXPECT_EQ(sus::move(w).unwrap().i, 3);
 
   auto y = Option<DefaultConstructible>::some(DefaultConstructible(404));
   auto& ry = y.get_or_insert_default();
@@ -1997,12 +1953,12 @@ struct CollectRefs {
 
   static CollectRefs from_iter(
       sus::iter::IteratorBase<const NoCopyMove&>&& iter) noexcept {
-    auto v = sus::Vec<const NoCopyMove*>::with_default();
+    auto v = sus::Vec<const NoCopyMove*>();
     for (const NoCopyMove& t : iter) v.push(&t);
     return CollectRefs(sus::move(v));
   }
 
-  sus::Vec<const NoCopyMove*> vec = sus::Vec<const NoCopyMove*>::with_default();
+  sus::Vec<const NoCopyMove*> vec;
 };
 
 TEST(Option, FromIterWithRefs) {

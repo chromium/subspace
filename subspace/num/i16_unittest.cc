@@ -61,7 +61,7 @@ static_assert(std::is_constructible_v<T, From>, "");
 static_assert(!std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
-static_assert(sus::construct::MakeDefault<T>, "");
+static_assert(sus::construct::Default<T>, "");
 static_assert(sus::mem::relocate_one_by_memcpy<T>, "");
 static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 }  // namespace behaviour
@@ -279,7 +279,7 @@ TEST(i16DeathTest, FromOutOfRange) {
 TEST(i16, InvokeEverything) {
   auto i = 10_i16, j = 11_i16;
   auto s = 3_u16;
-  auto a = sus::Array<u8, sizeof(i16)>::with_default();
+  auto a = sus::Array<u8, sizeof(i16)>();
 
   i.is_negative();
   i.is_positive();
