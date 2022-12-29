@@ -16,10 +16,10 @@
 
 #include <type_traits>
 
+#include "googletest/include/gtest/gtest.h"
 #include "macros/builtin.h"
 #include "mem/relocate.h"
 #include "prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 using sus::mem::replace;
 using sus::mem::replace_ptr;
@@ -132,6 +132,7 @@ TEST(Replace, TrivialRelocate) {
 TEST(Replace, TrivialAbi) {
   struct [[sus_trivial_abi]] S {
     constexpr S(int n) : num(n) {}
+    constexpr S(const S&) : num(999), assigns(999) {}
     constexpr S(S&& other) : num(other.num), assigns(other.assigns) {}
     constexpr void operator=(const S& other) {
       num = other.num;
@@ -203,14 +204,17 @@ TEST(Replace, TrivialAbi) {
 TEST(Replace, NonTrivial) {
   struct S {
     constexpr S(int n) : num(n) {}
+    constexpr S(const S&) : num(999), assigns(999) {}
     constexpr S(S&& other) : num(other.num), assigns(other.assigns) {}
-    constexpr void operator=(const S& other) {
+    constexpr S& operator=(const S& other) {
       num = other.num;
       assigns = other.assigns + 1;
+      return *this;
     }
-    constexpr void operator=(S&& other) {
+    constexpr S& operator=(S&& other) {
       num = other.num;
       assigns = other.assigns + 1;
+      return *this;
     }
     int num;
     int assigns = 0;

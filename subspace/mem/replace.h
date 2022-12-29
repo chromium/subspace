@@ -20,6 +20,7 @@
 
 #include "marker/unsafe.h"
 #include "mem/addressof.h"
+#include "mem/copy.h"
 #include "mem/move.h"
 #include "mem/mref.h"
 #include "mem/relocate.h"
@@ -31,8 +32,7 @@ namespace sus::mem {
 // return arrays.
 
 template <class T>
-  requires(!std::is_array_v<T> && std::is_move_constructible_v<T> &&
-           std::is_copy_assignable_v<T>)
+  requires(!std::is_array_v<T> && ::sus::mem::Move<T> && ::sus::mem::Copy<T>)
 [[nodiscard]] inline constexpr T replace(T& dest, const T& src) noexcept {
   auto old = T(::sus::move(dest));
 
@@ -50,8 +50,7 @@ template <class T>
 }
 
 template <class T>
-  requires(!std::is_array_v<T> && std::is_move_constructible_v<T> &&
-           std::is_move_assignable_v<T>)
+  requires(!std::is_array_v<T> && ::sus::mem::Move<T>)
 [[nodiscard]] inline constexpr T replace(T& dest, T&& src) noexcept {
   auto old = T(::sus::move(dest));
 
@@ -69,7 +68,7 @@ template <class T>
 }
 
 template <class T>
-  requires(!std::is_array_v<T> && std::is_copy_assignable_v<T>)
+  requires(!std::is_array_v<T> && sus::mem::Copy<T>)
 inline void replace_and_discard(T& dest, const T& src) noexcept {
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
@@ -83,7 +82,7 @@ inline void replace_and_discard(T& dest, const T& src) noexcept {
 }
 
 template <class T>
-  requires(!std::is_array_v<T> && std::is_move_assignable_v<T>)
+  requires(!std::is_array_v<T> && sus::mem::Move<T>)
 inline void replace_and_discard(T& dest, T&& src) noexcept {
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
@@ -105,11 +104,10 @@ template <class T>
 
 template <class T>
 [[nodiscard]] inline constexpr T* replace_ptr(T*& dest,
-                                              decltype(nullptr)) noexcept {
+                                              std::nullptr_t) noexcept {
   T* old = dest;
   dest = nullptr;
   return old;
 }
-
 
 }  // namespace sus::mem
