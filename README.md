@@ -79,7 +79,7 @@ variables if building in another way.
 ```json
     "cmake.environment": {
         "LLVM_DIR": "../../llvm/build/install/lib/cmake/llvm",
-        "CLANG_DIR": "../../llvm/build/install/lib/cmake/clang",
+        "Clang_DIR": "../../llvm/build/install/lib/cmake/clang",
     },
 ```
 
