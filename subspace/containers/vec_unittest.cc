@@ -52,6 +52,60 @@ TEST(Vec, WithCapacity) {
   }
 }
 
+TEST(Vec, ConstructorFunction) {
+  {
+    // All parameters match the vec type.
+    Vec<u32> a = sus::vec(1_u32, 2_u32, 3_u32);
+    EXPECT_EQ(a.len(), 3_usize);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // Some parameters convert to u32.
+    Vec<u32> a = sus::vec(1_u32, 2u, 3_u32);
+    EXPECT_EQ(a.len(), 3_usize);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // All parameters convert to u32.
+    Vec<u32> a = sus::vec(1u, 2u, 3u);
+    EXPECT_EQ(a.len(), 3_usize);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // into() as an input to the vec.
+    Vec<u32> a = sus::vec(1_u32, sus::into(2), 3_u32);
+    EXPECT_EQ(a.len(), 3_usize);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // Copies the lvalue and const lvalue.
+    auto i = 1_u32;
+    const auto j = 2_u32;
+    Vec<u32> a = sus::vec(i, j, 3_u32);
+    EXPECT_EQ(a.len(), 3_usize);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // Copies the rvalue reference.
+    auto i = 1_u32;
+    Vec<u32> a = sus::vec(sus::move(i), 2_u32, 3_u32);
+    EXPECT_EQ(a.len(), 3_usize);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+}
+
 TEST(Vec, Push) {
   auto v = Vec<i32>();
   EXPECT_EQ(v.capacity(), 0_usize);
