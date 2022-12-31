@@ -11,6 +11,7 @@ add_library(subspace STATIC
     "construct/into.h"
     "construct/default.h"
     "containers/__private/array_iter.h"
+    "containers/__private/array_marker.h"
     "containers/__private/slice_iter.h"
     "containers/__private/vec_iter.h"
     "containers/array.h"

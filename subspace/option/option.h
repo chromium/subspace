@@ -1000,6 +1000,6 @@ namespace sus {
 using ::sus::option::none;
 using ::sus::option::None;
 using ::sus::option::Option;
-using ::sus::option::Some;
 using ::sus::option::some;
+using ::sus::option::Some;
 }  // namespace sus

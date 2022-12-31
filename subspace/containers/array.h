@@ -23,10 +23,12 @@
 #include "assertions/check.h"
 #include "construct/default.h"
 #include "containers/__private/array_iter.h"
+#include "containers/__private/array_marker.h"
 #include "containers/__private/slice_iter.h"
 #include "containers/slice.h"
 #include "fn/callable.h"
 #include "fn/fn_defn.h"
+#include "macros/compiler.h"
 #include "marker/unsafe.h"
 #include "mem/clone.h"
 #include "mem/copy.h"
@@ -37,6 +39,7 @@
 #include "num/unsigned_integer.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
+#include "tuple/tuple.h"
 
 namespace sus::containers {
 
@@ -406,6 +409,22 @@ auto get(Array<T, N>&& a) noexcept {
   return ::sus::move(a.get_unchecked_mut(::sus::marker::unsafe_fn, I));
 }
 
+/// Used to construct an Array<T, N> with the parameters as its values.
+///
+/// Calling array() produces a hint to make an Array<T, N> but does not actually
+/// construct Array<T, N>, as the type `T` is not known here.
+//
+// Note: A marker type is used instead of explicitly constructing an array
+// immediately in order to avoid redundantly having to specify `T` when using
+// the result of `sus::array()` as a function argument or return value.
+template <class... Ts>
+  requires(sizeof...(Ts) > 0)
+[[nodiscard]] inline constexpr auto array(
+    Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
+  return __private::ArrayMarker<Ts...>(
+      ::sus::tuple::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+}
+
 }  // namespace sus::containers
 
 namespace std {
@@ -423,5 +442,6 @@ struct tuple_element<I, ::sus::containers::Array<T, N>> {
 
 // Promote Array into the `sus` namespace.
 namespace sus {
+using ::sus::containers::array;
 using ::sus::containers::Array;
-}
+}  // namespace sus
