@@ -150,6 +150,54 @@ TEST(Array, WithValues) {
   }
 }
 
+TEST(Array, ConstructorFunction) {
+  {
+    // All parameters match the array type.
+    Array<u32, 3> a = sus::array(1_u32, 2_u32, 3_u32);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // Some parameters convert to u32.
+    Array<u32, 3> a = sus::array(1_u32, 2u, 3_u32);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // All parameters convert to u32.
+    Array<u32, 3> a = sus::array(1u, 2u, 3u);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // into() as an input to the array.
+    Array<u32, 3> a = sus::array(1_u32, sus::into(2), 3_u32);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // Copies the lvalue and const lvalue.
+    auto i = 1_u32;
+    const auto j = 2_u32;
+    Array<u32, 3> a = sus::array(i, j, 3_u32);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+  {
+    // Copies the rvalue reference.
+    auto i = 1_u32;
+    Array<u32, 3> a = sus::array(sus::move(i), 2_u32, 3_u32);
+    EXPECT_EQ(a[0u], 1_u32);
+    EXPECT_EQ(a[1u], 2_u32);
+    EXPECT_EQ(a[2u], 3_u32);
+  }
+}
+
 TEST(Array, Get) {
   {
     constexpr auto r = []() constexpr {
