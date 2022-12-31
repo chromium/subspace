@@ -80,6 +80,25 @@ TEST(Option, OkHelpers) {
   const auto cc = Result<i32, u32>::with(ci);
   Result<i32, u32> cc2 = sus::result::ok(ci);
   EXPECT_EQ(cc, cc2);
+
+  // Verify no copies happen in the marker.
+  {
+    static i32 copies;
+    struct S {
+      S() {}
+      S(const S&) { copies += 1; }
+      S& operator=(const S&) {
+        copies += 1;
+        return *this;
+      }
+    };
+    copies = 0;
+    S s;
+    auto marker = sus::result::ok(s);
+    EXPECT_EQ(copies, 0);
+    Result<S, u32> r = sus::move(marker);
+    EXPECT_GE(copies, 1);
+  }
 }
 
 TEST(Option, ErrHelpers) {
@@ -96,6 +115,25 @@ TEST(Option, ErrHelpers) {
   const auto cc = Result<u32, i32>::with_err(ci);
   Result<u32, i32> cc2 = sus::result::err(ci);
   EXPECT_EQ(cc, cc2);
+
+  // Verify no copies happen in the marker.
+  {
+    static i32 copies;
+    struct S {
+      S() {}
+      S(const S&) { copies += 1; }
+      S& operator=(const S&) {
+        copies += 1;
+        return *this;
+      }
+    };
+    copies = 0;
+    S s;
+    auto marker = sus::result::err(s);
+    EXPECT_EQ(copies, 0);
+    Result<u32, S> r = sus::move(marker);
+    EXPECT_GE(copies, 1);
+  }
 }
 
 TEST(Result, IsOk) {
