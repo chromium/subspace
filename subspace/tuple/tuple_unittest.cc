@@ -132,6 +132,54 @@ TEST(Tuple, With) {
   [[maybe_unused]] constexpr auto c = Tuple<i32, f32>::with(2, 3.f);
 }
 
+TEST(Tuple, ConstructorFunction) {
+  {
+    // All parameters match the tuple type.
+    Tuple<u32, u32, u32> a = sus::tuple(1_u32, 2_u32, 3_u32);
+    EXPECT_EQ(a.get_ref<0>(), 1_u32);
+    EXPECT_EQ(a.get_ref<1>(), 2_u32);
+    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+  }
+  {
+    // Some parameters convert to u32.
+    Tuple<u32, u32, u32> a = sus::tuple(1_u32, 2u, 3_u32);
+    EXPECT_EQ(a.get_ref<0>(), 1_u32);
+    EXPECT_EQ(a.get_ref<1>(), 2_u32);
+    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+  }
+  {
+    // All parameters convert to u32.
+    Tuple<u32, u32, u32> a = sus::tuple(1u, 2u, 3u);
+    EXPECT_EQ(a.get_ref<0>(), 1_u32);
+    EXPECT_EQ(a.get_ref<1>(), 2_u32);
+    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+  }
+  {
+    // into() as an input to the tuple.
+    Tuple<u32, u32, u32> a = sus::tuple(1_u32, sus::into(2), 3_u32);
+    EXPECT_EQ(a.get_ref<0>(), 1_u32);
+    EXPECT_EQ(a.get_ref<1>(), 2_u32);
+    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+  }
+  {
+    // Copies the lvalue and const lvalue.
+    auto i = 1_u32;
+    const auto j = 2_u32;
+    Tuple<u32, u32, u32> a = sus::tuple(i, j, 3_u32);
+    EXPECT_EQ(a.get_ref<0>(), 1_u32);
+    EXPECT_EQ(a.get_ref<1>(), 2_u32);
+    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+  }
+  {
+    // Copies the rvalue reference.
+    auto i = 1_u32;
+    Tuple<u32, u32, u32> a = sus::tuple(sus::move(i), 2_u32, 3_u32);
+    EXPECT_EQ(a.get_ref<0>(), 1_u32);
+    EXPECT_EQ(a.get_ref<1>(), 2_u32);
+    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+  }
+}
+
 TEST(Tuple, Copy) {
   {
     auto t1 = Tuple<i32>::with(2);
