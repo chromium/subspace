@@ -21,8 +21,10 @@
 
 #include "assertions/check.h"
 #include "containers/__private/vec_iter.h"
+#include "containers/__private/vec_marker.h"
 #include "containers/slice.h"
 #include "iter/from_iterator.h"
+#include "macros/compiler.h"
 #include "mem/move.h"
 #include "mem/never_value.h"
 #include "mem/relocate.h"
@@ -31,6 +33,7 @@
 #include "num/unsigned_integer.h"
 #include "ops/ord.h"
 #include "option/option.h"
+#include "tuple/tuple.h"
 
 namespace sus::containers {
 
@@ -407,9 +410,26 @@ class Vec {
                                       sus::mem::relocate_array_by_memcpy<T>);
 };
 
+/// Used to construct a Vec<T> with the parameters as its values.
+///
+/// Calling vec() produces a hint to make a Vec<T> but does not actually
+/// construct Vec<T>, as the type `T` is not known here.
+//
+// Note: A marker type is used instead of explicitly constructing a vec
+// immediately in order to avoid redundantly having to specify `T` when using
+// the result of `sus::vec()` as a function argument or return value.
+template <class... Ts>
+  requires(sizeof...(Ts) > 0)
+[[nodiscard]] inline constexpr auto vec(
+    Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
+  return __private::VecMarker<Ts...>(
+      ::sus::tuple::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+}
+
 }  // namespace sus::containers
 
 // Promote Vec into the `sus` namespace.
 namespace sus {
 using ::sus::containers::Vec;
-}
+using ::sus::containers::vec;
+}  // namespace sus
