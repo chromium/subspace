@@ -20,18 +20,18 @@
 #include <tuple>
 #include <utility>  // std::tuple_size.
 
+#include "googletest/include/gtest/gtest.h"
 #include "mem/clone.h"
 #include "mem/copy.h"
 #include "mem/move.h"
 #include "num/types.h"
 #include "prelude.h"
 #include "test/no_copy_move.h"
-#include "googletest/include/gtest/gtest.h"
 
 namespace {
 
+using sus::Tuple;
 using sus::test::NoCopyMove;
-using sus::tuple::Tuple;
 
 static_assert(sus::mem::Copy<Tuple<i32>>);
 static_assert(sus::mem::Clone<Tuple<i32>>);
@@ -274,7 +274,8 @@ TEST(Tuple, IntoInner) {
 
   auto n = NoCopyMove();
   auto tn = Tuple<NoCopyMove&>::with(mref(n));
-  static_assert(std::same_as<NoCopyMove&, decltype(sus::move(tn).into_inner<0>())>);
+  static_assert(
+      std::same_as<NoCopyMove&, decltype(sus::move(tn).into_inner<0>())>);
   EXPECT_EQ(sus::move(tn).into_inner<0>(), n);
 }
 

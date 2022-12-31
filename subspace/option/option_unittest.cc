@@ -31,13 +31,13 @@
 #include "test/no_copy_move.h"
 #include "tuple/tuple.h"
 
+using sus::None;
+using sus::Option;
+using sus::Some;
+using sus::Tuple;
 using sus::construct::Default;
 using sus::mem::relocate_array_by_memcpy;
 using sus::mem::relocate_one_by_memcpy;
-using sus::option::None;
-using sus::option::Option;
-using sus::option::Some;
-using sus::tuple::Tuple;
 using namespace sus::test;
 
 namespace {

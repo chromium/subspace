@@ -69,7 +69,7 @@ template <class T, class E>
 class Result;
 }
 
-namespace sus::tuple {
+namespace sus::tuple_type {
 template <class T, class... Ts>
 class Tuple;
 }
@@ -725,7 +725,7 @@ class Option final {
   ///
   /// If self is `Some(s)` and other is `Some(o)`, this method returns
   /// `Some((s, o))`. Otherwise, `None` is returned.
-  template <class U, int&..., class Tuple = ::sus::tuple::Tuple<T, U>>
+  template <class U, int&..., class Tuple = ::sus::tuple_type::Tuple<T, U>>
   inline Option<Tuple> zip(Option<U> o) && noexcept {
     if (o.t_.state() == None) {
       if (t_.state() == Some) t_.set_none();
@@ -754,11 +754,11 @@ class Option final {
     using V = __private::IsTupleOfSizeTwo<T>::second_type;
     if (is_some()) {
       auto&& [u, v] = t_.take_and_set_none();
-      return ::sus::tuple::Tuple<Option<U>, Option<V>>::with(
+      return ::sus::tuple_type::Tuple<Option<U>, Option<V>>::with(
           Option<U>::some(::sus::forward<U>(u)),
           Option<V>::some(::sus::forward<V>(v)));
     } else {
-      return ::sus::tuple::Tuple<Option<U>, Option<V>>::with(Option<U>::none(),
+      return ::sus::tuple_type::Tuple<Option<U>, Option<V>>::with(Option<U>::none(),
                                                              Option<V>::none());
     }
   }

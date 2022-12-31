@@ -36,7 +36,7 @@ template <class T, size_t N>
 class Array;
 }
 
-namespace sus::tuple {
+namespace sus::tuple_type {
 template <class T, class... Ts>
 class Tuple;
 }
@@ -428,7 +428,7 @@ class Tuple;
    * (e.g., ##T##::MIN for values of type ##T##), then the minimum value will  \
    * be returned again and true will be returned for an overflow happening.    \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_abs() const& noexcept {                          \
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                           \
       return Tuple::with(abs(), false);                                        \
@@ -523,7 +523,7 @@ class Tuple;
    * an arithmetic overflow would occur. If an overflow would have occurred    \
    * then the wrapped value is returned.                                       \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_add(const T& rhs) const& noexcept {              \
     const auto r =                                                             \
         __private::add_with_overflow(primitive_value, rhs.primitive_value);    \
@@ -536,7 +536,7 @@ class Tuple;
    * an arithmetic overflow would occur. If an overflow would have occurred    \
    * then the wrapped value is returned.                                       \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_add_unsigned(const UnsignedT& rhs)               \
       const& noexcept {                                                        \
     const auto r = __private::add_with_overflow_unsigned(primitive_value,      \
@@ -614,7 +614,7 @@ class Tuple;
    * #Panics                                                                   \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_div(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
@@ -694,7 +694,7 @@ class Tuple;
    * whether an arithmetic overflow would occur. If an overflow would have     \
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_mul(const T& rhs) const& noexcept {              \
     const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
@@ -746,7 +746,7 @@ class Tuple;
    * (e.g., ##T##::MIN for values of type ##T##), then the minimum value will \
    * be returned again and true will be returned for an overflow happening.   \
    */                                                                         \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>              \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>              \
   constexpr Tuple overflowing_neg() const& noexcept {                         \
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
       return Tuple::with(__private::unchecked_neg(primitive_value), false);   \
@@ -802,7 +802,7 @@ class Tuple;
    * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_rem(const T& rhs) const& noexcept {              \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
@@ -881,7 +881,7 @@ class Tuple;
    * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_div_euclid(const T& rhs) const& noexcept {       \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
@@ -960,7 +960,7 @@ class Tuple;
    * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_rem_euclid(const T& rhs) const& noexcept {       \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0);                                    \
@@ -1021,7 +1021,7 @@ class Tuple;
    * where N is the number of bits, and this value is then used to perform the \
    * shift.                                                                    \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_shl(const u32& rhs) const& noexcept {            \
     const auto out =                                                           \
         __private::shl_with_overflow(primitive_value, rhs.primitive_value);    \
@@ -1063,7 +1063,7 @@ class Tuple;
    * where N is the number of bits, and this value is then used to perform the \
    * shift.                                                                    \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_shr(const u32& rhs) const& noexcept {            \
     const auto out =                                                           \
         __private::shr_with_overflow(primitive_value, rhs.primitive_value);    \
@@ -1117,7 +1117,7 @@ class Tuple;
    * whether an arithmetic overflow would occur. If an overflow would have    \
    * occurred then the wrapped value is returned.                             \
    */                                                                         \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>              \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>              \
   constexpr Tuple overflowing_sub(const T& rhs) const& noexcept {             \
     const auto out =                                                          \
         __private::sub_with_overflow(primitive_value, rhs.primitive_value);   \
@@ -1130,7 +1130,7 @@ class Tuple;
    * whether an arithmetic overflow would occur. If an overflow would have    \
    * occurred then the wrapped value is returned.                             \
    */                                                                         \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>              \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>              \
   constexpr Tuple overflowing_sub_unsigned(const UnsignedT& rhs)              \
       const& noexcept {                                                       \
     const auto out = __private::sub_with_overflow_unsigned(                   \
@@ -1292,7 +1292,7 @@ class Tuple;
    * Returns a tuple of the exponentiation along with a bool indicating        \
    * whether an overflow happened.                                             \
    */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple::Tuple<T, bool>>               \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>               \
   constexpr Tuple overflowing_pow(const u32& exp) const& noexcept {            \
     const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, exp.primitive_value);    \

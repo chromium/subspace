@@ -14,7 +14,7 @@
 
 #pragma once
 
-namespace sus::tuple {
+namespace sus::tuple_type {
 template <class T, class... Ts>
 class Tuple;
 }
@@ -29,7 +29,7 @@ struct IsTupleOfSizeTwo final {
 };
 
 template <class U, class V>
-struct IsTupleOfSizeTwo<::sus::tuple::Tuple<U, V>> final {
+struct IsTupleOfSizeTwo<::sus::tuple_type::Tuple<U, V>> final {
   static constexpr bool value = true;
   using first_type = U;
   using second_type = V;

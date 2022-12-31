@@ -24,7 +24,7 @@ namespace sus::containers::__private {
 
 template <class... Ts>
 struct ArrayMarker {
-  ::sus::tuple::Tuple<Ts &&...> values;
+  ::sus::tuple_type::Tuple<Ts &&...> values;
 
   template <class U>
   inline constexpr operator Array<U, sizeof...(Ts)>() &&noexcept {

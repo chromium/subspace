@@ -31,7 +31,7 @@
 
 #define SUS_CONFIG_TUPLE_USE_AFTER_MOVE true
 
-namespace sus::tuple {
+namespace sus::tuple_type {
 
 /// A Tuple is a finate sequence of one or more heterogeneous values.
 ///
@@ -249,21 +249,21 @@ decltype(auto) get(Tuple<Ts...>&& t) noexcept {
       t.template get_mut<I>());
 }
 
-}  // namespace sus::tuple
+}  // namespace sus::tuple_type
 
 namespace std {
 template <class... Types>
-struct tuple_size<::sus::tuple::Tuple<Types...>> {
+struct tuple_size<::sus::tuple_type::Tuple<Types...>> {
   static constexpr size_t value = sizeof...(Types);
 };
 
 template <size_t I, class T, class... Types>
-struct tuple_element<I, ::sus::tuple::Tuple<T, Types...>> {
-  using type = tuple_element<I - 1, ::sus::tuple::Tuple<Types...>>::type;
+struct tuple_element<I, ::sus::tuple_type::Tuple<T, Types...>> {
+  using type = tuple_element<I - 1, ::sus::tuple_type::Tuple<Types...>>::type;
 };
 
 template <class T, class... Types>
-struct tuple_element<0, ::sus::tuple::Tuple<T, Types...>> {
+struct tuple_element<0, ::sus::tuple_type::Tuple<T, Types...>> {
   using type = T;
 };
 
@@ -271,7 +271,7 @@ struct tuple_element<0, ::sus::tuple::Tuple<T, Types...>> {
 
 // Promote Tuple into the `sus` namespace.
 namespace sus {
-using ::sus::tuple::Tuple;
+using ::sus::tuple_type::Tuple;
 }  // namespace sus
 
 #undef SUS_CONFIG_TUPLE_USE_AFTER_MOVE
