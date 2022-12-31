@@ -16,17 +16,12 @@
 
 namespace sus::marker {
 
-namespace __private {
-enum class UnsafeFnMarkerConstructor { F };
-}
-
 struct UnsafeFnMarker {
-  // Prevent `{}` or `{any values...}` from being used to construct an
-  // `UnsafeFnMarker`, the marker should only be used as `unsafe_fn`.
-  consteval UnsafeFnMarker(__private::UnsafeFnMarkerConstructor) {}
+  // `explicit` prevents `{}` or `{any values...}` from being used to construct
+  // an `UnsafeFnMarker`. The marker should only be used as `unsafe_fn`.
+  explicit consteval UnsafeFnMarker() {}
 };
 
-constexpr inline auto unsafe_fn =
-    UnsafeFnMarker(::sus::marker::__private::UnsafeFnMarkerConstructor::F);
+constexpr inline auto unsafe_fn = UnsafeFnMarker();
 
 }  // namespace sus::marker
