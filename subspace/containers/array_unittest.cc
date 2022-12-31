@@ -196,6 +196,24 @@ TEST(Array, ConstructorFunction) {
     EXPECT_EQ(a[1u], 2_u32);
     EXPECT_EQ(a[2u], 3_u32);
   }
+  // Verify no copies happen in the marker.
+  {
+    static i32 copies;
+    struct S {
+      S() {}
+      S(const S&) { copies += 1; }
+      S& operator=(const S&) {
+        copies += 1;
+        return *this;
+      }
+    };
+    copies = 0;
+    S s;
+    auto marker = sus::array(s);
+    EXPECT_EQ(copies, 0);
+    Array<S, 1> a = sus::move(marker);
+    EXPECT_GE(copies, 1);
+  }
 }
 
 TEST(Array, Get) {

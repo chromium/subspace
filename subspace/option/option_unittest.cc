@@ -208,6 +208,25 @@ TEST(Option, SomeNoneHelpers) {
 
   Option<const NoCopyMove&> mut_to_const = sus::some(i);
   EXPECT_EQ(&i, &mut_to_const.unwrap_ref());
+
+  // Verify no copies happen in the marker.
+  {
+    static i32 copies;
+    struct S {
+      S() {}
+      S(const S&) { copies += 1; }
+      S& operator=(const S&) {
+        copies += 1;
+        return *this;
+      }
+    };
+    copies = 0;
+    S s;
+    auto marker = sus::some(s);
+    EXPECT_EQ(copies, 0);
+    Option<S> o = sus::move(marker);
+    EXPECT_GE(copies, 1);
+  }
 }
 
 TEST(Option, Move) {
