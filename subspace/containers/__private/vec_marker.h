@@ -24,7 +24,7 @@ namespace sus::containers::__private {
 
 template <class... Ts>
 struct VecMarker {
-  ::sus::tuple::Tuple<Ts &&...> values;
+  ::sus::tuple_type::Tuple<Ts &&...> values;
 
   template <class U>
   inline constexpr operator Vec<U>() &&noexcept {

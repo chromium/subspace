@@ -23,7 +23,7 @@
 #include "mem/forward.h"
 #include "mem/move.h"
 
-namespace sus::tuple::__private {
+namespace sus::tuple_type::__private {
 
 struct UseAfterMoveMarker {
   constexpr inline UseAfterMoveMarker() noexcept : value(0u) {}

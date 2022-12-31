@@ -422,7 +422,7 @@ template <class... Ts>
 [[nodiscard]] inline constexpr auto array(
     Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::ArrayMarker<Ts...>(
-      ::sus::tuple::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+      ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
 }
 
 }  // namespace sus::containers
