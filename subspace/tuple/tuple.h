@@ -249,6 +249,40 @@ decltype(auto) get(Tuple<Ts...>&& t) noexcept {
       t.template get_mut<I>());
 }
 
+namespace __private {
+template <class... Ts>
+struct TupleMarker {
+  Tuple<Ts&&...> values;
+
+  template <class... Us>
+  inline constexpr operator Tuple<Us...>() && noexcept {
+    auto make_tuple =
+        [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
+          return Tuple<Us...>::with(
+              ::sus::forward<Ts>(values.template get_mut<Is>())...);
+        };
+    return make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>());
+  }
+};
+
+}  // namespace __private
+
+/// Used to construct a Tuple<Ts...> with the parameters as its values.
+///
+/// Calling tuple() produces a hint to make a Tuple<Ts...> but does not actually
+/// construct Tuple<Ts...>, as the types in `Ts...` are not known here.
+//
+// Note: A marker type is used instead of explicitly constructing a tuple
+// immediately in order to avoid redundantly having to specify `Ts...` when
+// using the result of `sus::tuple()` as a function argument or return value.
+template <class... Ts>
+  requires(sizeof...(Ts) > 0)
+[[nodiscard]] inline constexpr auto tuple(
+    Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
+  return __private::TupleMarker<Ts...>(
+      ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+}
+
 }  // namespace sus::tuple_type
 
 namespace std {
@@ -272,6 +306,7 @@ struct tuple_element<0, ::sus::tuple_type::Tuple<T, Types...>> {
 // Promote Tuple into the `sus` namespace.
 namespace sus {
 using ::sus::tuple_type::Tuple;
+using ::sus::tuple_type::tuple;
 }  // namespace sus
 
 #undef SUS_CONFIG_TUPLE_USE_AFTER_MOVE
