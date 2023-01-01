@@ -145,42 +145,32 @@ struct TypeReference {
                                         SourceSpan span) {
     TypeRefKind kind = [&]() {
       Option<BuiltinType> b = builtin_type(q);
+      auto anno = ObjectAnnotations{
+          .is_const = q.isConstQualified(),
+      };
       if (b.is_some()) {
         return TypeRefKind::with<TypeRefKind::Tag::Builtin>(
-            sus::Tuple<BuiltinType, ObjectAnnotations>::with(
-                sus::move(b).unwrap(), ObjectAnnotations{
-                                           .is_const = q.isConstQualified(),
-                                       }));
+            sus::tuple(sus::move(b).unwrap(), sus::move(anno)));
       }
 
       if (q->isPointerType() || q->isReferenceType() ||
           q->isMemberDataPointerType())
-        return TypeRefKind::with<TypeRefKind::Tag::Pointer>(
-            sus::Tuple<PointerAnnotations, ObjectAnnotations>::with(
-                PointerAnnotations{
-                    .is_const = q->getPointeeType().isConstQualified(),
-                    .is_nullable = nullable && !q->isReferenceType(),
-                    // TODO: lifetimes
-                },
-                ObjectAnnotations{
-                    .is_const = q.isConstQualified(),
-                }));
+        return TypeRefKind::with<TypeRefKind::Tag::Pointer>(sus::tuple(
+            PointerAnnotations{
+                .is_const = q->getPointeeType().isConstQualified(),
+                .is_nullable = nullable && !q->isReferenceType(),
+                // TODO: lifetimes
+            },
+            sus::move(anno)));
 
       if (q->isFunctionPointerType() || q->isFunctionReferenceType() ||
           q->isMemberFunctionPointerType() || q->isReferenceType())
-        return TypeRefKind::with<TypeRefKind::Tag::FnPointer>(
-            sus::Tuple<FunctionId, ObjectAnnotations>::with(
-                // TODO: get the ID from the clang::FunctionDecl + cir::Output.
-                FunctionId(0_u32), ObjectAnnotations{
-                                       .is_const = q.isConstQualified(),
-                                   }));
+        return TypeRefKind::with<TypeRefKind::Tag::FnPointer>(sus::tuple(
+            // TODO: get the ID from the clang::FunctionDecl + cir::Output.
+            FunctionId(0_u32), sus::move(anno)));
 
       return TypeRefKind::with<TypeRefKind::Tag::Declared>(
-          sus::Tuple<DeclaredType, ObjectAnnotations>::with(
-              DeclaredType::with_qual_type(q, span),
-              ObjectAnnotations{
-                  .is_const = q.isConstQualified(),
-              }));
+          sus::tuple(DeclaredType::with_qual_type(q, span), sus::move(anno)));
     }();
 
     return TypeReference{

@@ -44,9 +44,9 @@ class CirTest : public testing::Test {
     args.push(std::string(cpp_version_flag(cpp_version_)));
 
     auto a = cir::run_test(sus::move(content), sus::move(args));
-    return sus::move(a).or_else([]() {
+    return sus::move(a).or_else([]() -> sus::Option<cir::Output> {
       ADD_FAILURE() << "Compilation failed.";
-      return sus::Option<cir::Output>::none();
+      return sus::none();
     });
   }
 
