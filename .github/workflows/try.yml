@@ -31,7 +31,7 @@ jobs:
 
           - {
               name: "Ubuntu Nightly Clang",
-              os: ubuntu-22.04,
+              os: ubuntu-latest,
               build_type: "Release",
               cc: "clang-16",
               cxx: "clang++-16",
@@ -39,7 +39,7 @@ jobs:
 
           - {
               name: "Ubuntu Nightly UBSan",
-              os: ubuntu-22.04,
+              os: ubuntu-latest,
               build_type: "Release",
               cc: "clang-16",
               cxx: "clang++-16",
@@ -47,12 +47,10 @@ jobs:
 
           - {
               name: "Ubuntu Latest GCC",
-              # 22.04 is in public beta, and has GCC 11 which we need for C++20
-              # support. Switch to `ubuntu-latest` when it's out of beta.
-              os: ubuntu-22.04,
+              os: ubuntu-latest,
               build_type: "Release",
-              cc: "gcc-11",
-              cxx: "g++-11",
+              cc: "gcc-12",
+              cxx: "g++-12",
             }
 
           # Clang doesn't have good enough C++20 support to compile this library
