@@ -32,6 +32,7 @@
 #include "union/__private/all_values_are_unique.h"
 #include "union/__private/index_of_value.h"
 #include "union/__private/index_type.h"
+#include "union/__private/marker.h"
 #include "union/__private/ops_concepts.h"
 #include "union/__private/pack_index.h"
 #include "union/__private/storage.h"
@@ -438,9 +439,28 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
                               kNeverValue);
 };
 
+/// Used to construct a Union with the tag and parameters as its values.
+///
+/// Calling make_union() produces a hint to make a Union but does not actually
+/// construct the Union, as the full type of the Union include all its member
+/// types is not known here.
+template <auto Tag, class... Ts>
+[[nodiscard]] inline constexpr auto make_union(
+    Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
+  if constexpr (sizeof...(Ts) == 0) {
+    return __private::UnionMarkerVoid<Tag>();
+  } else if constexpr (sizeof...(Ts) == 1) {
+    return __private::UnionMarker<Tag, Ts...>(::sus::forward<Ts>(vs)...);
+  } else {
+    return __private::UnionMarker<Tag, Ts...>(
+        ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+  }
+}
+
 }  // namespace sus::union_type
 
 // Promote Union into the `sus` namespace.
 namespace sus {
 using ::sus::union_type::Union;
+using ::sus::union_type::make_union;
 }
