@@ -99,7 +99,7 @@ class [[nodiscard]] Result final {
   /// sus::iter::FromIterator trait.
   template <class U>
   static constexpr Result from_iter(
-      ::sus::iter::IteratorBase<Result<U, E>>&& iter)
+      ::sus::iter::IteratorBase<Result<U, E>>&& iter) noexcept
     requires(::sus::iter::FromIterator<T, U>)
   {
     auto err = Option<E>::none();

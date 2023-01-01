@@ -150,7 +150,7 @@ class Option final {
   ///
   /// sus::iter::FromIterator trait.
   template <class U>
-  static constexpr Option from_iter(::sus::iter::IteratorBase<Option<U>>&& iter)
+  static constexpr Option from_iter(::sus::iter::IteratorBase<Option<U>>&& iter) noexcept
     requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>)
   {
     struct Iter : public ::sus::iter::IteratorBase<U> {

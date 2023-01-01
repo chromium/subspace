@@ -26,7 +26,7 @@
 
 namespace sus::containers {
 
-template <::sus::mem::Move T>
+template <class T>
 class Vec;
 
 template <::sus::mem::Move Item>

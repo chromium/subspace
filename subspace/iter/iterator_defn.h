@@ -26,6 +26,11 @@
 #include "num/unsigned_integer.h"
 #include "option/option.h"
 
+namespace sus::containers {
+template <class T>
+class Vec;
+}
+
 namespace sus::iter {
 
 using ::sus::option::Option;
@@ -171,6 +176,17 @@ class [[nodiscard]] Iterator final : public I {
   template <::sus::iter::FromIterator<typename I::Item> C>
   C collect() && noexcept;
 
+  /// Transforms an iterator into a Vec.
+  ///
+  /// This function is a shorthand for `it.collect<Vec<Item>>()` in order to
+  /// avoid the need for specifying a template argument.
+  ///
+  /// See `collect()` for more details.
+  template <int&..., class Vec = ::sus::containers::Vec<typename I::Item>>
+    // Vec requires Move for its items.
+    requires(::sus::mem::Move<typename I::Item>)
+  Vec collect_vec() && noexcept;
+
   // TODO: cloned().
 };
 
@@ -229,6 +245,13 @@ template <class I>
 template <::sus::iter::FromIterator<typename I::Item> C>
 C Iterator<I>::collect() && noexcept {
   return C::from_iter(::sus::move(*this));
+}
+
+template <class I>
+template <int&..., class Vec>
+  requires(::sus::mem::Move<typename I::Item>)
+Vec Iterator<I>::collect_vec() && noexcept {
+  return Vec::from_iter(::sus::move(*this));
 }
 
 }  // namespace sus::iter
