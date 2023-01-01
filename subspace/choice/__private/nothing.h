@@ -16,7 +16,7 @@
 
 #include <compare>
 
-namespace sus::union_type::__private {
+namespace sus::choice_type::__private {
 
 struct Nothing {};
 constexpr auto nothing = Nothing();
@@ -26,4 +26,4 @@ constexpr auto operator<=>(const Nothing&, const Nothing&) {
   return std::strong_ordering::equivalent;
 }
 
-}  // namespace sus::union_type::__private
+}  // namespace sus::choice_type::__private

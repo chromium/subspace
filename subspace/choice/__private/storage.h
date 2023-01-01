@@ -17,13 +17,13 @@
 #include <compare>
 #include <type_traits>
 
+#include "choice/__private/nothing.h"
+#include "choice/__private/pack_index.h"
 #include "macros/no_unique_address.h"
 #include "mem/move.h"
 #include "tuple/tuple.h"
-#include "union/__private/nothing.h"
-#include "union/__private/pack_index.h"
 
-namespace sus::union_type::__private {
+namespace sus::choice_type::__private {
 
 template <class StorageType>
 concept ValueIsVoid = std::same_as<Nothing, StorageType>;
@@ -574,4 +574,4 @@ static constexpr auto& find_storage_mut(S& storage,
   return storage;
 }
 
-}  // namespace sus::union_type::__private
+}  // namespace sus::choice_type::__private

@@ -14,9 +14,9 @@
 
 #pragma once
 
-namespace sus::union_type::__private {
+namespace sus::choice_type::__private {
 
 template <class T, class... Ts>
 struct TypeList {};
 
-}  // namespace sus::union_type::__private
+}  // namespace sus::choice_type::__private

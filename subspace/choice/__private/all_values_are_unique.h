@@ -14,7 +14,7 @@
 
 #pragma once
 
-namespace sus::union_type::__private {
+namespace sus::choice_type::__private {
 
 template <auto... Vs>
 struct AllValuesAreUniqueHelper;
@@ -43,4 +43,4 @@ struct AllValuesAreUniqueHelper<V, V2, Vs...> {
 template <auto... Vs>
 concept AllValuesAreUnique = AllValuesAreUniqueHelper<Vs...>::value;
 
-}  // namespace sus::union_type::__private
+}  // namespace sus::choice_type::__private

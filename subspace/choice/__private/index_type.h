@@ -17,7 +17,7 @@
 #include "mem/size_of.h"
 #include "num/unsigned_integer.h"
 
-namespace sus::union_type::__private {
+namespace sus::choice_type::__private {
 
 /// Determines the number of bytes to use in the index.
 ///
@@ -54,4 +54,4 @@ using IndexType =
   void>>>>;
 // clang-format on
 
-}  // namespace sus::union_type::__private
+}  // namespace sus::choice_type::__private

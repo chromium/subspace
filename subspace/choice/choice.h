@@ -18,6 +18,15 @@
 
 #include <type_traits>
 
+#include "choice/__private/all_values_are_unique.h"
+#include "choice/__private/index_of_value.h"
+#include "choice/__private/index_type.h"
+#include "choice/__private/marker.h"
+#include "choice/__private/ops_concepts.h"
+#include "choice/__private/pack_index.h"
+#include "choice/__private/storage.h"
+#include "choice/__private/type_list.h"
+#include "choice/choice_types.h"
 #include "macros/no_unique_address.h"
 #include "marker/unsafe.h"
 #include "mem/clone.h"
@@ -29,29 +38,20 @@
 #include "ops/eq.h"
 #include "ops/ord.h"
 #include "tuple/tuple.h"
-#include "union/__private/all_values_are_unique.h"
-#include "union/__private/index_of_value.h"
-#include "union/__private/index_type.h"
-#include "union/__private/marker.h"
-#include "union/__private/ops_concepts.h"
-#include "union/__private/pack_index.h"
-#include "union/__private/storage.h"
-#include "union/__private/type_list.h"
-#include "union/union_types.h"
 
-namespace sus::union_type {
+namespace sus::choice_type {
 
 template <class TypeListOfMemberTypes, auto... Tags>
-class Union;
+class Choice;
 
 template <class... Ts, auto... Tags>
-class Union<__private::TypeList<Ts...>, Tags...> final {
+class Choice<__private::TypeList<Ts...>, Tags...> final {
   static_assert(sizeof...(Ts) > 0,
-                "A Union must have at least one value-type pairs.");
+                "A Choice must have at least one value-type pairs.");
   static_assert(
       sizeof...(Ts) == sizeof...(Tags),
-      "The number of types and values in the Union don't match. Use "
-      "`sus_union_types()` to define the Union's value-type pairings.");
+      "The number of types and values in the Choice don't match. Use "
+      "`sus_choice_types()` to define the Choice's value-type pairings.");
 
   using Storage = __private::Storage<0, Ts...>;
   using TagsType = __private::PackFirst<decltype(Tags)...>;
@@ -104,7 +104,7 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
   static constexpr IndexType get_index_for_value() noexcept {
     using Index = __private::IndexOfValue<V, Tags...>;
     static_assert(!std::is_void_v<Index>,
-                  "The value V is not part of the Union.");
+                  "The value V is not part of the Choice.");
     // SAFETY: We know `I` fits inside `IndexType` because `I` is the index of a
     // union member, and `IndexType` is chosen specifically to be large enough
     // to hold the index of all union members.
@@ -125,39 +125,39 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
   template <TagsType V, class U, int&...,
             __private::ValueIsNotVoid Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U &&, Arg>)
-  static Union with(U&& values) noexcept {
-    auto u = Union(index<V>);
+  static Choice with(U&& values) noexcept {
+    auto u = Choice(index<V>);
     find_storage_mut<index<V>>(u.storage_).construct(::sus::forward<U>(values));
     return u;
   }
 
   template <TagsType V, int&...,
             __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
-  static Union with() noexcept {
-    return Union(index<V>);
+  static Choice with() noexcept {
+    return Choice(index<V>);
   }
 
-  constexpr ~Union()
+  constexpr ~Choice()
     requires((std::is_trivially_destructible_v<TagsType> && ... &&
               std::is_trivially_destructible_v<Ts>))
   = default;
-  ~Union() noexcept
+  ~Choice() noexcept
     requires(!(std::is_trivially_destructible_v<TagsType> && ... &&
                std::is_trivially_destructible_v<Ts>))
   {
     if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
   }
 
-  constexpr Union(Union&& o)
+  constexpr Choice(Choice&& o)
     requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_constructible_v<TagsType> && ... &&
               std::is_trivially_move_constructible_v<Ts>))
   = default;
-  Union(Union&& o)
+  Choice(Choice&& o)
     requires(!(... && ::sus::mem::Move<Ts>))
   = delete;
 
-  Union(Union&& o) noexcept
+  Choice(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_constructible_v<TagsType> && ... &&
                std::is_trivially_move_constructible_v<Ts>))
@@ -169,16 +169,16 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
     storage_.move_construct(size_t{index_}, ::sus::move(o.storage_));
   }
 
-  constexpr Union& operator=(Union&& o)
+  constexpr Choice& operator=(Choice&& o)
     requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_assignable_v<TagsType> && ... &&
               std::is_trivially_move_assignable_v<Ts>))
   = default;
-  Union& operator=(Union&& o)
+  Choice& operator=(Choice&& o)
     requires(!(... && ::sus::mem::Move<Ts>))
   = delete;
 
-  Union& operator=(Union&& o) noexcept
+  Choice& operator=(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_assignable_v<TagsType> && ... &&
                std::is_trivially_move_assignable_v<Ts>))
@@ -195,16 +195,16 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
     return *this;
   }
 
-  constexpr Union(const Union& o)
+  constexpr Choice(const Choice& o)
     requires((... && ::sus::mem::Copy<Ts>) &&
              (std::is_trivially_copy_constructible_v<TagsType> && ... &&
               std::is_trivially_copy_constructible_v<Ts>))
   = default;
-  Union(const Union& o)
+  Choice(const Choice& o)
     requires(!(... && ::sus::mem::Copy<Ts>))
   = delete;
 
-  Union(const Union& o) noexcept
+  Choice(const Choice& o) noexcept
     requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_constructible_v<TagsType> && ... &&
                std::is_trivially_copy_constructible_v<Ts>))
@@ -213,16 +213,16 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
     storage_.copy_construct(size_t{index_}, o.storage_);
   }
 
-  constexpr Union& operator=(const Union& o)
+  constexpr Choice& operator=(const Choice& o)
     requires((... && ::sus::mem::Copy<Ts>) &&
              (std::is_trivially_copy_assignable_v<TagsType> && ... &&
               std::is_trivially_copy_assignable_v<Ts>))
   = default;
-  Union& operator=(const Union& o)
+  Choice& operator=(const Choice& o)
     requires(!(... && ::sus::mem::Copy<Ts>))
   = delete;
 
-  Union& operator=(const Union& o) noexcept
+  Choice& operator=(const Choice& o) noexcept
     requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_assignable_v<TagsType> && ... &&
                std::is_trivially_copy_assignable_v<Ts>))
@@ -238,22 +238,22 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
     return *this;
   }
 
-  // sus::mem::Clone<Union<Ts...>> trait.
-  constexpr Union clone() const& noexcept
+  // sus::mem::Clone<Choice<Ts...>> trait.
+  constexpr Choice clone() const& noexcept
     requires((... && ::sus::mem::Clone<Ts>) && !(... && ::sus::mem::Copy<Ts>))
   {
     check(index_ != kUseAfterMove);
-    auto u = Union(::sus::clone(index_));
+    auto u = Choice(::sus::clone(index_));
     u.storage_.clone_construct(size_t{index_}, storage_);
     return u;
   }
 
-  /// Support for using Union in a `switch()` statment.
+  /// Support for using Choice in a `switch()` statment.
   constexpr inline operator TagsType() const& noexcept { return which(); }
 
-  /// Returns which is the active member of the Union.
+  /// Returns which is the active member of the Choice.
   ///
-  /// Typically to access the data in the Union, a switch statement would be
+  /// Typically to access the data in the Choice, a switch statement would be
   /// used, so as to call the getter or setter methods with the right value
   /// specified as a template parameter. When used in a switch statement, the
   /// which() method can be omitted.
@@ -353,31 +353,31 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
     }
   }
 
-  /// sus::ops::Eq<Union<Ts...>, Union<Us...>> trait.
+  /// sus::ops::Eq<Choice<Ts...>, Choice<Us...>> trait.
   template <class... Us, auto V, auto... Vs>
-    requires(__private::UnionIsEq<TagsType, __private::TypeList<Ts...>,
-                                  decltype(V), __private::TypeList<Us...>>)
+    requires(__private::ChoiceIsEq<TagsType, __private::TypeList<Ts...>,
+                                   decltype(V), __private::TypeList<Us...>>)
   friend inline constexpr bool operator==(
-      const Union& l,
-      const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+      const Choice& l,
+      const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     return l.index_ == r.index_ && l.storage_.eq(size_t{l.index_}, r.storage_);
   }
 
   template <class... Us, auto V, auto... Vs>
-    requires(!__private::UnionIsEq<TagsType, __private::TypeList<Ts...>,
-                                   decltype(V), __private::TypeList<Us...>>)
+    requires(!__private::ChoiceIsEq<TagsType, __private::TypeList<Ts...>,
+                                    decltype(V), __private::TypeList<Us...>>)
   friend inline constexpr bool operator==(
-      const Union& l,
-      const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept = delete;
+      const Choice& l,
+      const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept = delete;
 
-  /// sus::ops::Ord<Union<Ts...>, Union<Us...>> trait.
+  /// sus::ops::Ord<Choice<Ts...>, Choice<Us...>> trait.
   template <class... Us, auto V, auto... Vs>
-    requires(__private::UnionIsOrd<TagsType, __private::TypeList<Ts...>,
-                                   decltype(V), __private::TypeList<Us...>>)
+    requires(__private::ChoiceIsOrd<TagsType, __private::TypeList<Ts...>,
+                                    decltype(V), __private::TypeList<Us...>>)
   friend inline constexpr auto operator<=>(
-      const Union& l,
-      const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+      const Choice& l,
+      const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     const auto value_order = std::strong_order(l.which(), r.which());
     if (value_order != std::strong_ordering::equivalent) {
@@ -387,13 +387,14 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
     }
   }
 
-  /// sus::ops::WeakOrd<Union<Ts...>, Union<Us...>> trait.
+  /// sus::ops::WeakOrd<Choice<Ts...>, Choice<Us...>> trait.
   template <class... Us, auto V, auto... Vs>
-    requires(__private::UnionIsWeakOrd<TagsType, __private::TypeList<Ts...>,
-                                       decltype(V), __private::TypeList<Us...>>)
+    requires(
+        __private::ChoiceIsWeakOrd<TagsType, __private::TypeList<Ts...>,
+                                   decltype(V), __private::TypeList<Us...>>)
   friend inline constexpr auto operator<=>(
-      const Union& l,
-      const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+      const Choice& l,
+      const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     const auto value_order = std::weak_order(l.which(), r.which());
     if (value_order != std::weak_ordering::equivalent) {
@@ -403,14 +404,14 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
     }
   }
 
-  /// sus::ops::PartialOrd<Union<Ts...>, Union<Us...>> trait.
+  /// sus::ops::PartialOrd<Choice<Ts...>, Choice<Us...>> trait.
   template <class... Us, auto V, auto... Vs>
     requires(
-        __private::UnionIsPartialOrd<TagsType, __private::TypeList<Ts...>,
-                                     decltype(V), __private::TypeList<Us...>>)
+        __private::ChoiceIsPartialOrd<TagsType, __private::TypeList<Ts...>,
+                                      decltype(V), __private::TypeList<Us...>>)
   friend inline constexpr auto operator<=>(
-      const Union& l,
-      const Union<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
+      const Choice& l,
+      const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
     const auto value_order = std::partial_order(l.which(), r.which());
     if (value_order != std::partial_ordering::equivalent) {
@@ -421,46 +422,46 @@ class Union<__private::TypeList<Ts...>, Tags...> final {
   }
 
   template <class... RhsTs, auto RhsTag, auto... RhsTags>
-    requires(!__private::UnionIsAnyOrd<TagsType, __private::TypeList<Ts...>,
-                                       decltype(RhsTag),
-                                       __private::TypeList<RhsTs...>>)
+    requires(!__private::ChoiceIsAnyOrd<TagsType, __private::TypeList<Ts...>,
+                                        decltype(RhsTag),
+                                        __private::TypeList<RhsTs...>>)
   friend inline constexpr auto operator<=>(
-      const Union<__private::TypeList<Ts...>, Tags...>& l,
-      const Union<__private::TypeList<RhsTs...>, RhsTag, RhsTags...>& r) =
+      const Choice<__private::TypeList<Ts...>, Tags...>& l,
+      const Choice<__private::TypeList<RhsTs...>, RhsTag, RhsTags...>& r) =
       delete;
 
  private:
-  constexpr inline Union(IndexType i) noexcept : index_(i) {}
+  constexpr inline Choice(IndexType i) noexcept : index_(i) {}
 
   [[sus_no_unique_address]] Storage storage_;
   IndexType index_;
 
-  sus_class_never_value_field(::sus::marker::unsafe_fn, Union, index_,
+  sus_class_never_value_field(::sus::marker::unsafe_fn, Choice, index_,
                               kNeverValue);
 };
 
-/// Used to construct a Union with the tag and parameters as its values.
+/// Used to construct a Choice with the tag and parameters as its values.
 ///
-/// Calling make_union() produces a hint to make a Union but does not actually
-/// construct the Union, as the full type of the Union include all its member
+/// Calling make_union() produces a hint to make a Choice but does not actually
+/// construct the Choice, as the full type of the Choice include all its member
 /// types is not known here.
 template <auto Tag, class... Ts>
-[[nodiscard]] inline constexpr auto make_union(
+[[nodiscard]] inline constexpr auto choice(
     Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
   if constexpr (sizeof...(Ts) == 0) {
-    return __private::UnionMarkerVoid<Tag>();
+    return __private::ChoiceMarkerVoid<Tag>();
   } else if constexpr (sizeof...(Ts) == 1) {
-    return __private::UnionMarker<Tag, Ts...>(::sus::forward<Ts>(vs)...);
+    return __private::ChoiceMarker<Tag, Ts...>(::sus::forward<Ts>(vs)...);
   } else {
-    return __private::UnionMarker<Tag, Ts...>(
+    return __private::ChoiceMarker<Tag, Ts...>(
         ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
   }
 }
 
-}  // namespace sus::union_type
+}  // namespace sus::choice_type
 
-// Promote Union into the `sus` namespace.
+// Promote Choice into the `sus` namespace.
 namespace sus {
-using ::sus::union_type::Union;
-using ::sus::union_type::make_union;
-}
+using ::sus::choice_type::Choice;
+using ::sus::choice_type::choice;
+}  // namespace sus
