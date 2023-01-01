@@ -65,10 +65,10 @@ static_assert(sus::mem::relocate_one_by_memcpy<T>);
 static_assert(sus::mem::relocate_array_by_memcpy<T>);
 }  // namespace behaviour
 
-// usize::MAX()
+// usize::MAX
 static_assert(sizeof(usize) != sizeof(u64)
-                  ? usize::MAX().primitive_value == 0xffffffff
-                  : usize::MAX().primitive_value == 0xffffffff'ffffffff);
+                  ? usize::MAX.primitive_value == 0xffffffff
+                  : usize::MAX.primitive_value == 0xffffffff'ffffffff);
 template <class T>
 concept MaxInRange = requires {
   {
@@ -182,16 +182,16 @@ TEST(usize, Literals) {
 }
 
 TEST(usize, Constants) {
-  constexpr auto max = usize::MAX();
+  constexpr auto max = usize::MAX;
   static_assert(std::same_as<decltype(max), const usize>);
   if constexpr (sizeof(usize) != sizeof(u64))
     EXPECT_EQ(max.primitive_value, 0xffffffffu);
   else
     EXPECT_EQ(max.primitive_value, 0xffffffff'ffffffffu);
-  constexpr auto min = usize::MIN();
+  constexpr auto min = usize::MIN;
   static_assert(std::same_as<decltype(min), const usize>);
   EXPECT_EQ(min.primitive_value, 0u);
-  constexpr auto bits = usize::BITS();
+  constexpr auto bits = usize::BITS;
   static_assert(std::same_as<decltype(bits), const u32>);
   if constexpr (sizeof(usize) != sizeof(u64))
     EXPECT_EQ(bits, 32u);

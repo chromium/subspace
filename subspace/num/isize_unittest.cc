@@ -73,10 +73,10 @@ static_assert(sus::mem::relocate_one_by_memcpy<T>);
 static_assert(sus::mem::relocate_array_by_memcpy<T>);
 }  // namespace behaviour
 
-// isize::MAX()
+// isize::MAX
 static_assert(sizeof(isize) != sizeof(i64)
-                  ? isize::MAX().primitive_value == 0x7fffffff
-                  : isize::MAX().primitive_value == 0x7fffffff'ffffffff);
+                  ? isize::MAX.primitive_value == 0x7fffffff
+                  : isize::MAX.primitive_value == 0x7fffffff'ffffffff);
 template <class T>
 concept MaxInRange = requires {
   {
@@ -183,19 +183,19 @@ TEST(isize, Literals) {
 }
 
 TEST(isize, Constants) {
-  constexpr auto max = isize::MAX();
+  constexpr auto max = isize::MAX;
   static_assert(std::same_as<decltype(max), const isize>);
   if constexpr (sizeof(isize) != sizeof(i64))
     EXPECT_EQ(max.primitive_value, 0x7fffffff);
   else
     EXPECT_EQ(max.primitive_value, 0x7fffffff'ffffffff);
-  constexpr auto min = isize::MIN();
+  constexpr auto min = isize::MIN;
   static_assert(std::same_as<decltype(min), const isize>);
   if constexpr (sizeof(isize) != sizeof(i64))
     EXPECT_EQ(min.primitive_value, -0x7fffffff - 1);
   else
     EXPECT_EQ(min.primitive_value, -0x7fffffff'ffffffff - 1);
-  constexpr auto bits = isize::BITS();
+  constexpr auto bits = isize::BITS;
   static_assert(std::same_as<decltype(bits), const u32>);
   if constexpr (sizeof(isize) != sizeof(i64))
     EXPECT_EQ(bits, 32u);
@@ -309,11 +309,11 @@ TEST(isizeDeathTest, FromOutOfRange) {
 
   bool not64 = sizeof(isize) != sizeof(i64);
   if (not64) {
-    EXPECT_DEATH(isize::from(i64::MAX()), "");
-    EXPECT_DEATH(isize::from(u32::MAX()), "");
+    EXPECT_DEATH(isize::from(i64::MAX), "");
+    EXPECT_DEATH(isize::from(u32::MAX), "");
   }
-  EXPECT_DEATH(isize::from(u64::MAX()), "");
-  EXPECT_DEATH(isize::from(usize::MAX()), "");
+  EXPECT_DEATH(isize::from(u64::MAX), "");
+  EXPECT_DEATH(isize::from(usize::MAX), "");
 #endif
 }
 

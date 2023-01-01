@@ -65,8 +65,8 @@ static_assert(sus::mem::relocate_one_by_memcpy<T>, "");
 static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 }  // namespace behaviour
 
-// i8::MAX()
-static_assert(i8::MAX().primitive_value == 0x7f);
+// i8::MAX
+static_assert(i8::MAX.primitive_value == 0x7f);
 template <class T>
 concept MaxInRange = requires {
   { 0x7f_i8 } -> std::same_as<T>;
@@ -165,13 +165,13 @@ TEST(i8, Literals) {
 }
 
 TEST(i8, Constants) {
-  constexpr auto max = i8::MAX();
+  constexpr auto max = i8::MAX;
   static_assert(std::same_as<decltype(max), const i8>);
   EXPECT_EQ(max.primitive_value, 0x7f);
-  constexpr auto min = i8::MIN();
+  constexpr auto min = i8::MIN;
   static_assert(std::same_as<decltype(min), const i8>);
   EXPECT_EQ(min.primitive_value, -0x7f - 1);
-  constexpr auto bits = i8::BITS();
+  constexpr auto bits = i8::BITS;
   static_assert(std::same_as<decltype(bits), const u32>);
   EXPECT_EQ(bits, 8u);
 }
@@ -264,14 +264,14 @@ TEST(i8DeathTest, FromOutOfRange) {
   EXPECT_DEATH(i8::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
   EXPECT_DEATH(i8::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
 
-  EXPECT_DEATH(i8::from(i16::MAX()), "");
-  EXPECT_DEATH(i8::from(i32::MAX()), "");
-  EXPECT_DEATH(i8::from(i64::MAX()), "");
-  EXPECT_DEATH(i8::from(u8::MAX()), "");
-  EXPECT_DEATH(i8::from(u16::MAX()), "");
-  EXPECT_DEATH(i8::from(u32::MAX()), "");
-  EXPECT_DEATH(i8::from(u64::MAX()), "");
-  EXPECT_DEATH(i8::from(usize::MAX()), "");
+  EXPECT_DEATH(i8::from(i16::MAX), "");
+  EXPECT_DEATH(i8::from(i32::MAX), "");
+  EXPECT_DEATH(i8::from(i64::MAX), "");
+  EXPECT_DEATH(i8::from(u8::MAX), "");
+  EXPECT_DEATH(i8::from(u16::MAX), "");
+  EXPECT_DEATH(i8::from(u32::MAX), "");
+  EXPECT_DEATH(i8::from(u64::MAX), "");
+  EXPECT_DEATH(i8::from(usize::MAX), "");
 #endif
 }
 

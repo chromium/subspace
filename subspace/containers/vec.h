@@ -55,7 +55,7 @@ class Vec {
                 "applies transitively.");
 
   // The documentation in this class assumes isize::MAX == PTRDIFF_MAX.
-  static_assert(isize::MAX() == isize(PTRDIFF_MAX));
+  static_assert(isize::MAX == isize(PTRDIFF_MAX));
 
  public:
   // sus::construct::Default trait.

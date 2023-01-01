@@ -65,8 +65,8 @@ static_assert(sus::mem::relocate_one_by_memcpy<T>, "");
 static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 }  // namespace behaviour
 
-// i16::MAX()
-static_assert(i16::MAX().primitive_value == 0x7fff);
+// i16::MAX
+static_assert(i16::MAX.primitive_value == 0x7fff);
 template <class T>
 concept MaxInRange = requires {
   { 0x7fff_i16 } -> std::same_as<T>;
@@ -167,13 +167,13 @@ TEST(i16, Literals) {
 }
 
 TEST(i16, Constants) {
-  constexpr auto max = i16::MAX();
+  constexpr auto max = i16::MAX;
   static_assert(std::same_as<decltype(max), const i16>);
   EXPECT_EQ(max.primitive_value, 0x7fff);
-  constexpr auto min = i16::MIN();
+  constexpr auto min = i16::MIN;
   static_assert(std::same_as<decltype(min), const i16>);
   EXPECT_EQ(min.primitive_value, -0x7fff - 1);
-  constexpr auto bits = i16::BITS();
+  constexpr auto bits = i16::BITS;
   static_assert(std::same_as<decltype(bits), const u32>);
   EXPECT_EQ(bits, 16u);
 }
@@ -266,12 +266,12 @@ TEST(i16DeathTest, FromOutOfRange) {
   EXPECT_DEATH(i16::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
   EXPECT_DEATH(i16::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
 
-  EXPECT_DEATH(i16::from(i32::MAX()), "");
-  EXPECT_DEATH(i16::from(i64::MAX()), "");
-  EXPECT_DEATH(i16::from(u16::MAX()), "");
-  EXPECT_DEATH(i16::from(u32::MAX()), "");
-  EXPECT_DEATH(i16::from(u64::MAX()), "");
-  EXPECT_DEATH(i16::from(usize::MAX()), "");
+  EXPECT_DEATH(i16::from(i32::MAX), "");
+  EXPECT_DEATH(i16::from(i64::MAX), "");
+  EXPECT_DEATH(i16::from(u16::MAX), "");
+  EXPECT_DEATH(i16::from(u32::MAX), "");
+  EXPECT_DEATH(i16::from(u64::MAX), "");
+  EXPECT_DEATH(i16::from(usize::MAX), "");
 #endif
 }
 
