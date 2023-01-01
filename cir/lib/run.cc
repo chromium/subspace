@@ -34,7 +34,7 @@ sus::Option<Output> run_test(std::string content,
       ".", join_args, err);
   if (!err.empty()) {
     llvm::outs() << "error making compdb for tests: " << err << "\n";
-    return sus::Option<Output>::none();
+    return sus::none();
   }
 
   auto vfs = llvm::IntrusiveRefCntPtr(new llvm::vfs::InMemoryFileSystem());
@@ -77,10 +77,10 @@ sus::Option<Output> run_file(
 
   auto asts = std::vector<std::unique_ptr<clang::ASTUnit>>();
   if (i32 ret = tool.buildASTs(asts); ret != 0) {
-    return sus::Option<Output>::none();
+    return sus::none();
   }
   if (diags->getNumErrors() > 0) {
-    return sus::Option<Output>::none();
+    return sus::none();
   }
 
   auto ctx = VisitCtx();
@@ -92,7 +92,7 @@ sus::Option<Output> run_file(
     }
   }
 
-  return sus::Option<Output>::some(sus::move(output));
+  return sus::some(sus::move(output));
 }
 
 }  // namespace cir
