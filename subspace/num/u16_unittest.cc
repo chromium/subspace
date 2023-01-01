@@ -65,8 +65,8 @@ static_assert(sus::mem::relocate_one_by_memcpy<T>, "");
 static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
 }  // namespace behaviour
 
-// u16::MAX()
-static_assert(u16::MAX().primitive_value == 0xffff);
+// u16::MAX
+static_assert(u16::MAX.primitive_value == 0xffff);
 template <class T>
 concept MaxInRange = requires {
   { 0xffff_u16 } -> std::same_as<T>;
@@ -169,13 +169,13 @@ TEST(u16, Literals) {
 }
 
 TEST(u16, Constants) {
-  constexpr auto max = u16::MAX();
+  constexpr auto max = u16::MAX;
   static_assert(std::same_as<decltype(max), const u16>);
   EXPECT_EQ(max.primitive_value, 0xffffu);
-  constexpr auto min = u16::MIN();
+  constexpr auto min = u16::MIN;
   static_assert(std::same_as<decltype(min), const u16>);
   EXPECT_EQ(min.primitive_value, 0u);
-  constexpr auto bits = u16::BITS();
+  constexpr auto bits = u16::BITS;
   static_assert(std::same_as<decltype(bits), const u32>);
   EXPECT_EQ(bits, 16u);
 }

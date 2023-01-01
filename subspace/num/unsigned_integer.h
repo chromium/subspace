@@ -33,22 +33,26 @@ namespace sus::num {
 struct u32 final {
   _sus__unsigned_impl(u32, /*PrimitiveT=*/uint32_t, /*SignedT=*/i32);
 };
+_sus__unsigned_constants_decl(u32, /*PrimitiveT=*/uint32_t);
 
 /// An 8-bit unsigned integer.
 struct u8 final {
   _sus__unsigned_impl(u8, /*PrimitiveT=*/uint8_t, /*SignedT=*/i8);
 };
+_sus__unsigned_constants_decl(u8, /*PrimitiveT=*/uint8_t);
 
 /// A 16-bit unsigned integer.
 struct u16 final {
   _sus__unsigned_impl(u16, /*PrimitiveT=*/uint16_t, /*SignedT=*/i16);
 };
+_sus__unsigned_constants_decl(u16, /*PrimitiveT=*/uint16_t);
 
 /// A 64-bit unsigned integer.
 struct u64 final {
   _sus__unsigned_impl(u64, /*PrimitiveT=*/uint64_t,
                       /*SignedT=*/i64);
 };
+_sus__unsigned_constants_decl(u64, /*PrimitiveT=*/uint64_t);
 
 /// A pointer-sized unsigned integer.
 struct usize final {
@@ -57,6 +61,8 @@ struct usize final {
       /*PrimitiveT=*/::sus::num::__private::ptr_type<>::unsigned_type,
       /*SignedT=*/isize);
 };
+_sus__unsigned_constants_decl(
+    usize, /*PrimitiveT=*/::sus::num::__private::ptr_type<>::unsigned_type);
 
 }  // namespace sus::num
 

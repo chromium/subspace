@@ -36,21 +36,25 @@ namespace sus::num {
 struct i32 final {
   _sus__signed_impl(i32, /*PrimitiveT=*/int32_t, /*UnsignedT=*/u32);
 };
+_sus__signed_constants_decl(i32, /*PrimitiveT=*/int32_t);
 
 /// An 8-bit signed integer.
 struct i8 final {
   _sus__signed_impl(i8, /*PrimitiveT=*/int8_t, /*UnsignedT=*/u8);
 };
+_sus__signed_constants_decl(i8, /*PrimitiveT=*/int8_t);
 
 /// A 16-bit signed integer.
 struct i16 final {
   _sus__signed_impl(i16, /*PrimitiveT=*/int16_t, /*UnsignedT=*/u16);
 };
+_sus__signed_constants_decl(i16, /*PrimitiveT=*/int16_t);
 
 /// A 64-bit signed integer.
 struct i64 final {
   _sus__signed_impl(i64, /*PrimitiveT=*/int64_t, /*UnsignedT=*/u64);
 };
+_sus__signed_constants_decl(i64, /*PrimitiveT=*/int64_t);
 
 /// A pointer-sized signed integer.
 struct isize final {
@@ -64,6 +68,8 @@ struct isize final {
     return primitive_value;
   }
 };
+_sus__signed_constants_decl(
+    isize, /*PrimitiveT=*/::sus::num::__private::ptr_type<>::signed_type);
 
 }  // namespace sus::num
 
