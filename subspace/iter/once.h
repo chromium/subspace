@@ -48,7 +48,7 @@ class Once : public IteratorBase<Item> {
  private:
   template <class U>
   friend inline Iterator<Once<U>> once(Option<U>&& single) noexcept
-    requires(std::is_move_constructible_v<U>);
+    requires(sus::mem::Move<U>);
   // clang-format off
   sus_clang_bug_58859(
     template <class U>
@@ -68,7 +68,7 @@ class Once : public IteratorBase<Item> {
 
 template <class Item>
 inline Iterator<Once<Item>> once(Option<Item>&& single) noexcept
-  requires(std::is_move_constructible_v<Item>)
+  requires(sus::mem::Move<Item>)
 {
   sus_clang_bug_58859(return __private::once(::sus::move(single)));
   sus_clang_bug_58859_else(return Once<Item>::with_option(::sus::move(single)));
