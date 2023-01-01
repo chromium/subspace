@@ -186,13 +186,16 @@ jobs:
           endif()
 
       - name: Install Strip
+        if: matrix.config.artifact != ""
         run: cmake --install out --prefix instdir --strip
 
       - name: Pack
         working-directory: instdir
+        if: matrix.config.artifact != ""
         run: cmake -E tar cJfv ../${{ matrix.config.artifact }} .
 
       - name: Upload
+        if: matrix.config.artifact != ""
         uses: actions/upload-artifact@v1
         with:
           path: ./${{ matrix.config.artifact }}
