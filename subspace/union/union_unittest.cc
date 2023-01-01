@@ -20,8 +20,8 @@
 #include "macros/__private/compiler_bugs.h"
 #include "num/types.h"
 #include "option/option.h"
-#include "test/no_copy_move.h"
 #include "prelude.h"
+#include "test/no_copy_move.h"
 
 namespace {
 
@@ -70,6 +70,135 @@ TEST(Union, NeverValue) {
   static_assert(sizeof(sus::Option<Two>) > sizeof(Two));
 }
 
+TEST(Union, ConstructorFunctionNoValue) {
+  using U =
+      Union<sus_union_types((Order::First, u32), (Order::Second, void))>;
+  {
+    U u = sus::make_union<Order::Second>();
+    EXPECT_EQ(u.which(), Order::Second);
+  }
+}
+
+TEST(Union, ConstructorFunction1Value) {
+  using U =
+      Union<sus_union_types((Order::First, u32), (Order::Second, void))>;
+  {
+    // All parameters match the tuple type.
+    U u = sus::make_union<Order::First>(1_u32);
+    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+  }
+  {
+    // All parameters convert to u32.
+    U u = sus::make_union<Order::First>(1u);
+    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+  }
+  {
+    // into() as an input to the tuple.
+    U u = sus::make_union<Order::First>(sus::into(1));
+    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+  }
+  {
+    // Copies the lvalue.
+    auto i = 1_u32;
+    U u = sus::make_union<Order::First>(i);
+    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+  }
+  {
+    // Copies the const lvalue.
+    const auto i = 1_u32;
+    U u = sus::make_union<Order::First>(i);
+    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+  }
+  {
+    // Copies the rvalue reference.
+    auto i = 1_u32;
+    U u = sus::make_union<Order::First>(sus::move(i));
+    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+  }
+  // Verify no copies happen in the marker.
+  {
+    static i32 copies;
+    struct S {
+      S() {}
+      S(const S&) { copies += 1; }
+      S& operator=(const S&) {
+        copies += 1;
+        return *this;
+      }
+    };
+    copies = 0;
+    S s;
+    auto marker = sus::make_union<Order::First>(s);
+    EXPECT_EQ(copies, 0);
+    Union<sus_union_types((Order::First, S), (Order::Second, void))> u =
+        sus::move(marker);
+    EXPECT_GE(copies, 1);
+  }
+}
+
+TEST(Union, ConstructorFunctionMoreThan1Value) {
+  using U =
+      Union<sus_union_types((Order::First, u32, u32), (Order::Second, void))>;
+  {
+    // All parameters match the tuple type.
+    U u = sus::make_union<Order::First>(1_u32, 2_u32);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+  }
+  {
+    // Some parameters convert to u32.
+    U u = sus::make_union<Order::First>(1_u32, 2u);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+  }
+  {
+    // All parameters convert to u32.
+    U u = sus::make_union<Order::First>(1u, 2u);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+  }
+  {
+    // into() as an input to the tuple.
+    U u = sus::make_union<Order::First>(1u, sus::into(2));
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+  }
+  {
+    // Copies the lvalue and const lvalue.
+    auto i = 1_u32;
+    const auto j = 2_u32;
+    U u = sus::make_union<Order::First>(i, j);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+  }
+  {
+    // Copies the rvalue reference.
+    auto i = 1_u32;
+    U u = sus::make_union<Order::First>(sus::move(i), 2_u32);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+  }
+  // Verify no copies happen in the marker.
+  {
+    static i32 copies;
+    struct S {
+      S() {}
+      S(const S&) { copies += 1; }
+      S& operator=(const S&) {
+        copies += 1;
+        return *this;
+      }
+    };
+    copies = 0;
+    S s;
+    auto marker = sus::make_union<Order::First>(s, 2_u32);
+    EXPECT_EQ(copies, 0);
+    Union<sus_union_types((Order::First, S, u32), (Order::Second, void))> u =
+        sus::move(marker);
+    EXPECT_GE(copies, 1);
+  }
+}
+
 TEST(Union, GetTypes) {
   // Single value first, double last.
   {
@@ -110,21 +239,23 @@ TEST(Union, GetTypes) {
   // With refs.
   {
     auto i = NoCopyMove();
-    auto u =
-        Union<sus_union_types((Order::First, i8&, const u64&),
-                              (Order::Second, NoCopyMove&))>::with<Order::Second>(i);
+    auto u = Union<sus_union_types(
+        (Order::First, i8&, const u64&),
+        (Order::Second, NoCopyMove&))>::with<Order::Second>(i);
     static_assert(std::same_as<decltype(u.get_ref<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(
         std::same_as<decltype(u.get_ref<Order::Second>()), const NoCopyMove&>);
     static_assert(std::same_as<decltype(u.get_mut<Order::First>()),
                                sus::Tuple<i8&, const u64&>>);
-    static_assert(std::same_as<decltype(u.get_mut<Order::Second>()), NoCopyMove&>);
+    static_assert(
+        std::same_as<decltype(u.get_mut<Order::Second>()), NoCopyMove&>);
     static_assert(
         std::same_as<decltype(sus::move(u).into_inner<Order::First>()),
                      sus::Tuple<i8&, const u64&>>);
     static_assert(
-        std::same_as<decltype(sus::move(u).into_inner<Order::Second>()), NoCopyMove&>);
+        std::same_as<decltype(sus::move(u).into_inner<Order::Second>()),
+                     NoCopyMove&>);
     EXPECT_EQ(&u.get_ref<Order::Second>(), &i);
 
     // Verify storing a reference in the first-of-N slot builds.
