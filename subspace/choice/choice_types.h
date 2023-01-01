@@ -14,11 +14,11 @@
 
 #pragma once
 
+#include "choice/__private/storage.h"
+#include "choice/__private/type_list.h"
 #include "macros/for_each.h"
 #include "macros/remove_parens.h"
 #include "tuple/tuple.h"
-#include "union/__private/storage.h"
-#include "union/__private/type_list.h"
 
 /// Construct a set of associated value and types pairings. The type of the
 /// values need have no relationship to the specified types.
@@ -30,7 +30,7 @@
 /// type from the returned set of types.
 ///
 /// The number of values that follow will always be the same as the number of
-/// types in the set. This is the primary value of the `sus_union_types()`
+/// types in the set. This is the primary value of the `sus_choice_types()`
 /// construct.
 ///
 /// # Example
@@ -41,14 +41,14 @@
 ///   static constexpr auto first_value = FirstValue;
 /// };
 ///
-/// using E = Example<sus_union_types(('h', i32), ('w', f32))>;
+/// using E = Example<sus_choice_types(('h', i32), ('w', f32))>;
 /// // `E::first_value` will be `'h'` of type `char`.
 /// // `E::first_type` will be `Tuple<i32>`.
 /// ```
 //
 // clang-format off
-#define sus_union_types(...) \
-    sus::union_type::__private::TypeList< \
+#define sus_choice_types(...) \
+    sus::choice_type::__private::TypeList< \
         sus_for_each(_sus__make_union_storage_type, sus_for_each_sep_comma, \
                      sus_for_each(_sus__value_types_types, sus_for_each_sep_comma, \
                                   __VA_ARGS__))>, \
@@ -58,7 +58,7 @@
 // clang-format on
 
 #define _sus__make_union_storage_type(types) \
-  ::sus::union_type::__private::MakeStorageType<sus_remove_parens(types)>::type
+  ::sus::choice_type::__private::MakeStorageType<sus_remove_parens(types)>::type
 
 #define _sus__first(a, ...) a
 #define _sus__second_plus(a, ...) __VA_ARGS__

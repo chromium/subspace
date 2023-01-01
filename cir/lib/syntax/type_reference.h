@@ -23,12 +23,11 @@
 #include "cir/lib/syntax/object_annotations.h"
 #include "cir/lib/syntax/pointer_annotations.h"
 #include "cir/llvm.h"
+#include "subspace/choice/choice.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
-#include "subspace/union/union.h"
 
 using sus::option::Option;
-using sus::union_type::Union;
 
 namespace cir::syntax {
 
@@ -133,7 +132,7 @@ enum class TypeRefKindTag {
 };
 
 // clang-format off
-using TypeRefKind = Union<sus_union_types(
+using TypeRefKind = sus::Choice<sus_choice_types(
     (TypeRefKindTag::Builtin, BuiltinType, ObjectAnnotations),
     (TypeRefKindTag::Declared, DeclaredType, ObjectAnnotations),
     (TypeRefKindTag::Pointer, PointerAnnotations, ObjectAnnotations), // TODO: Store the pointee(s) types.

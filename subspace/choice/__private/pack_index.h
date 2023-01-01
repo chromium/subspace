@@ -14,7 +14,7 @@
 
 #pragma once
 
-namespace sus::union_type::__private {
+namespace sus::choice_type::__private {
 
 template <class... Ts>
 struct PackFirstHelper;
@@ -43,4 +43,4 @@ struct PackIthHelper<0, T, Ts...> {
 template <size_t I, class... Ts>
 using PackIth = PackIthHelper<I, Ts...>::type;
 
-}  // namespace sus::union_type::__private
+}  // namespace sus::choice_type::__private

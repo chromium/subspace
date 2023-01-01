@@ -17,8 +17,8 @@
 #include "cir/lib/source_span.h"
 #include "cir/llvm.h"
 #include "subspace/assertions/unreachable.h"
+#include "subspace/choice/choice.h"
 #include "subspace/prelude.h"
-#include "subspace/union/union.h"
 
 namespace cir::syntax {
 
@@ -29,7 +29,7 @@ enum class DeclaredTypeDetailTag {
 };
 
 // clang-format off
-using DeclaredTypeDetail = sus::Union<sus_union_types(
+using DeclaredTypeDetail = sus::Choice<sus_choice_types(
     (DeclaredTypeDetailTag::Enum, clang::TagDecl&),
     (DeclaredTypeDetailTag::Class, clang::CXXRecordDecl&),
     (DeclaredTypeDetailTag::Union, clang::CXXRecordDecl&)

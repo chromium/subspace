@@ -20,53 +20,53 @@
 
 #include "tuple/tuple.h"
 
-namespace sus::union_type {
+namespace sus::choice_type {
 template <class TypeListOfMemberTypes, auto... Tags>
-class Union;
+class Choice;
 }
 
-namespace sus::union_type::__private {
+namespace sus::choice_type::__private {
 
 template <auto Tag, class... Ts>
-struct UnionMarker;
+struct ChoiceMarker;
 
 template <auto Tag>
-struct UnionMarkerVoid {
+struct ChoiceMarkerVoid {
   template <class TypeListOfMemberTypes, auto... Vs>
-  inline constexpr operator Union<TypeListOfMemberTypes, Vs...>() &&noexcept {
-    return Union<TypeListOfMemberTypes, Vs...>::template with<Tag>();
+  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() &&noexcept {
+    return Choice<TypeListOfMemberTypes, Vs...>::template with<Tag>();
   }
 };
 
 template <auto Tag, class T>
-struct UnionMarker<Tag, T> {
+struct ChoiceMarker<Tag, T> {
   T &&value;
 
   template <class TypeListOfMemberTypes, auto... Vs>
-  inline constexpr operator Union<TypeListOfMemberTypes, Vs...>() &&noexcept {
-    return Union<TypeListOfMemberTypes, Vs...>::with<Tag>(
+  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() &&noexcept {
+    return Choice<TypeListOfMemberTypes, Vs...>::with<Tag>(
         ::sus::forward<T>(value));
   }
 };
 
 template <auto Tag, class... Ts>
   requires(sizeof...(Ts) > 1)
-struct UnionMarker<Tag, Ts...> {
+struct ChoiceMarker<Tag, Ts...> {
   ::sus::tuple_type::Tuple<Ts &&...> values;
 
   template <class TypeListOfMemberTypes, auto... Vs>
-  inline constexpr operator Union<TypeListOfMemberTypes, Vs...>() &&noexcept {
+  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() &&noexcept {
     using TupleType =
-        decltype(std::declval<Union<TypeListOfMemberTypes, Vs...>&&>()
+        decltype(std::declval<Choice<TypeListOfMemberTypes, Vs...> &&>()
                      .into_inner<Tag>());
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
           return TupleType::with(
               ::sus::forward<Ts>(values.template get_mut<Is>())...);
         };
-    return Union<TypeListOfMemberTypes, Vs...>::with<Tag>(
+    return Choice<TypeListOfMemberTypes, Vs...>::with<Tag>(
         make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>()));
   }
 };
 
-}  // namespace sus::union_type::__private
+}  // namespace sus::choice_type::__private

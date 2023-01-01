@@ -14,18 +14,18 @@
 
 #pragma once
 
+#include "choice/__private/type_list.h"
 #include "ops/eq.h"
 #include "ops/ord.h"
-#include "union/__private/type_list.h"
 
-namespace sus::union_type::__private {
+namespace sus::choice_type::__private {
 
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsEqHelper;
+struct ChoiceIsEqHelper;
 
 template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsEqHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                       TypeList<Types2...>> {
+struct ChoiceIsEqHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                        TypeList<Types2...>> {
   static constexpr bool value = (::sus::ops::Eq<ValueType1, ValueType2> &&
                                  ... && ::sus::ops::Eq<Types1, Types2>);
 };
@@ -33,15 +33,15 @@ struct UnionIsEqHelper<ValueType1, TypeList<Types1...>, ValueType2,
 // Out of line from the requires clause, and in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsEq =
-    UnionIsEqHelper<ValueType1, Types1, ValueType2, Types2>::value;
+concept ChoiceIsEq =
+    ChoiceIsEqHelper<ValueType1, Types1, ValueType2, Types2>::value;
 
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsOrdHelper;
+struct ChoiceIsOrdHelper;
 
 template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                        TypeList<Types2...>> {
+struct ChoiceIsOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                         TypeList<Types2...>> {
   static constexpr bool value = (::sus::ops::Ord<ValueType1, ValueType2> &&
                                  ... && ::sus::ops::Ord<Types1, Types2>);
 };
@@ -49,15 +49,15 @@ struct UnionIsOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
 // Out of line from the requires clause, and in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsOrd =
-    UnionIsOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+concept ChoiceIsOrd =
+    ChoiceIsOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
 
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsWeakOrdHelper;
+struct ChoiceIsWeakOrdHelper;
 
 template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsWeakOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                            TypeList<Types2...>> {
+struct ChoiceIsWeakOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                             TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
       ((!::sus::ops::Ord<ValueType1, ValueType2> || ... ||
@@ -71,15 +71,15 @@ struct UnionIsWeakOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
 // Out of line from the requires clause, in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsWeakOrd =
-    UnionIsWeakOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+concept ChoiceIsWeakOrd =
+    ChoiceIsWeakOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
 
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsPartialOrdHelper;
+struct ChoiceIsPartialOrdHelper;
 
 template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsPartialOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                               TypeList<Types2...>> {
+struct ChoiceIsPartialOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                                TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
       (!::sus::ops::WeakOrd<ValueType1, ValueType2> || ... ||
@@ -93,15 +93,15 @@ struct UnionIsPartialOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
 // Out of line from the requires clause, in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsPartialOrd =
-    UnionIsPartialOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+concept ChoiceIsPartialOrd =
+    ChoiceIsPartialOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
 
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-struct UnionIsAnyOrdHelper;
+struct ChoiceIsAnyOrdHelper;
 
 template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct UnionIsAnyOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
-                           TypeList<Types2...>> {
+struct ChoiceIsAnyOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+                            TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
       (::sus::ops::PartialOrd<ValueType1, ValueType2> && ... &&
@@ -112,7 +112,7 @@ struct UnionIsAnyOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
 // Out of line from the requires clause, in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
 template <class ValueType1, class Types1, class ValueType2, class Types2>
-concept UnionIsAnyOrd =
-    UnionIsAnyOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+concept ChoiceIsAnyOrd =
+    ChoiceIsAnyOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
 
-}  // namespace sus::union_type::__private
+}  // namespace sus::choice_type::__private

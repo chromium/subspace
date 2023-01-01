@@ -226,8 +226,9 @@ class Tuple final {
 #endif
   // The use of `[[no_unique_address]]` allows the tail padding of of the
   // `storage_` to be used in structs that request to do so by putting
-  // `[[no_unique_address]]` on the Tuple. For example, Union does this with its
-  // internal Tuples to put its tag inside the Tuples' storage when possible.
+  // `[[no_unique_address]]` on the Tuple. For example, Choice does this with
+  // its internal Tuples to put its tag inside the Tuples' storage when
+  // possible.
   [[sus_no_unique_address]] Storage storage_;
 };
 

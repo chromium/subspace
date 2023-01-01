@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <stddef.h>
+
 #include <type_traits>
 
-namespace sus::union_type::__private {
+namespace sus::choice_type::__private {
 
 template <auto SearchValue, size_t I, auto... Vs>
 struct IndexOfValueHelper;
@@ -36,10 +38,10 @@ struct IndexOfValueHelper<SearchValue, I, V, Vs...> {
 template <auto SearchValue, size_t I>
 struct IndexOfValueHelper<SearchValue, I> {
   using index =
-      void;  // We didn't find the SearchValue, it's not part of the Union.
+      void;  // We didn't find the SearchValue, it's not part of the Choice.
 };
 
 template <auto SearchValue, auto... Vs>
 using IndexOfValue = IndexOfValueHelper<SearchValue, 0u, Vs...>::index;
 
-}  // namespace sus::union_type::__private
+}  // namespace sus::choice_type::__private

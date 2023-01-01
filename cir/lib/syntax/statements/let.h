@@ -19,8 +19,8 @@
 #include "cir/lib/source_span.h"
 #include "cir/lib/syntax/type_reference.h"
 #include "cir/llvm.h"
+#include "subspace/choice/choice.h"
 #include "subspace/prelude.h"
-#include "subspace/union/union.h"
 
 namespace cir::syntax {
 
@@ -29,8 +29,8 @@ enum LetClangTypeTag {
   Variable,
 };
 using LetClangType =
-    sus::Union<sus_union_types((LetClangTypeTag::Return, clang::QualType),
-                               (LetClangTypeTag::Variable, clang::VarDecl&))>;
+    sus::Choice<sus_choice_types((LetClangTypeTag::Return, clang::QualType),
+                                 (LetClangTypeTag::Variable, clang::VarDecl&))>;
 
 struct Let {
   u32 id;
