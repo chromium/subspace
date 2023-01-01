@@ -43,7 +43,12 @@ namespace sus::containers {
 // and/or compiler warnings to check for misuse? Or should we add checks(). And
 // then allow them to be disabled when you are using warnings?
 
-template <::sus::mem::Move T>
+/// A resizeable contiguous buffer of type `T`.
+///
+/// Vec requires Move for its items:
+/// - They can't be references as a pointer to reference is not valid.
+/// - On realloc, items need to be moved between allocations.
+template <class T>
 class Vec {
   static_assert(!std::is_const_v<T>,
                 "`Vec<const T>` should be written `const Vec<T>`, as const "
@@ -65,7 +70,9 @@ class Vec {
   /// Constructs a vector by taking all the elements from the iterator.
   ///
   /// sus::iter::FromIterator trait.
-  static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) {
+  static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) noexcept
+    requires(::sus::mem::Move<T>)
+  {
     // TODO: Use iter.size_hint() when it exists.
     auto v = Vec::with_capacity(0_usize);
     for (T t : iter) v.push(::sus::move(t));
@@ -235,7 +242,9 @@ class Vec {
   ///
   /// # Panics
   /// Panics if the new capacity exceeds isize::MAX bytes.
-  void push(T t) noexcept {
+  void push(T t) noexcept
+    requires(::sus::mem::Move<T>)
+  {
     // Avoids use of a reference, and receives by value, to sidestep the whole
     // issue of the reference being to something inside the vector which
     // reserve() then invalidates.

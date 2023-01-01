@@ -17,10 +17,11 @@
 #include "assertions/unreachable.h"
 #include "construct/into.h"
 #include "containers/array.h"
+#include "containers/vec.h"
+#include "googletest/include/gtest/gtest.h"
 #include "iter/filter.h"
 #include "macros/__private/compiler_bugs.h"
 #include "prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 using ::sus::containers::Array;
 using ::sus::fn::Fn;
@@ -239,11 +240,22 @@ struct CollectSum {
 };
 
 TEST(Iterator, Collect) {
-  int nums[5] = {1, 2, 3, 4, 5};
+  i32 nums[5] = {1, 2, 3, 4, 5};
 
   auto collected =
-      ArrayIterator<int, 5>::with_array(nums).collect<CollectSum<int>>();
+      ArrayIterator<i32, 5>::with_array(nums).collect<CollectSum<i32>>();
   EXPECT_EQ(collected.sum, 1 + 2 + 3 + 4 + 5);
+}
+
+TEST(Iterator, CollectVec) {
+  i32 nums[5] = {1, 2, 3, 4, 5};
+
+  auto collected = ArrayIterator<i32, 5>::with_array(nums).collect_vec();
+  static_assert(std::same_as<decltype(collected), Vec<i32>>);
+  EXPECT_EQ(collected.len(), 5u);
+  EXPECT_EQ(collected[0u], 1);
+  EXPECT_EQ(collected[2u], 3);
+  EXPECT_EQ(collected[4u], 5);
 }
 
 }  // namespace
