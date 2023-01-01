@@ -193,7 +193,8 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
     };
     copies = 0;
     S s;
-    auto marker = sus::choice<Order::First>(s, 2_u32);
+    auto i = 2_u32;
+    auto marker = sus::choice<Order::First>(s, i);
     EXPECT_EQ(copies, 0);
     Choice<sus_choice_types((Order::First, S, u32), (Order::Second, void))> u =
         sus::move(marker);
