@@ -29,10 +29,11 @@ namespace sus::num {
 /// -113.75, 0.0078125, 34359738368, 0, -1. So unlike integer types (such as
 /// i32), floating point types can represent non-integer numbers, too.
 struct f32 final {
-  _sus__float_consts(f32, f);
+  _sus__float_consts_defn(f32);
   _sus__float(f32, float, u32);
 };
 _sus__float_constants_decl(f32, float);
+_sus__float_consts_decl(f32, f);
 
 /// A 64-bit floating point type (specifically, the “binary64” type defined in
 /// IEEE 754-2008).
@@ -41,10 +42,11 @@ _sus__float_constants_decl(f32, float);
 /// twice as many bits. Please see the documentation for `f32` for more
 /// information.
 struct f64 final {
-  _sus__float_consts(f64, );
+  _sus__float_consts_defn(f64);
   _sus__float(f64, double, u64);
 };
 _sus__float_constants_decl(f64, double);
+_sus__float_consts_decl(f64, );
 
 }  // namespace sus::num
 
