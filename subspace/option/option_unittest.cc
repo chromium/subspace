@@ -1600,8 +1600,7 @@ TEST(Option, Eq) {
   EXPECT_EQ(Option<int>::none(), Option<int>::none());
   EXPECT_EQ(Option<f32>::some(1.f), Option<f32>::some(1.f));
   EXPECT_EQ(Option<f32>::some(0.f), Option<f32>::some(-0.f));
-  EXPECT_NE(Option<f32>::some(f32::TODO_NAN()),
-            Option<f32>::some(f32::TODO_NAN()));
+  EXPECT_NE(Option<f32>::some(f32::TODO_NAN), Option<f32>::some(f32::TODO_NAN));
 }
 
 TEST(Option, Ord) {
@@ -1670,25 +1669,23 @@ TEST(Option, PartialOrder) {
       std::partial_order(Option<float>::some(11.f), Option<float>::some(12.f)),
       std::partial_ordering::less);
   EXPECT_EQ(std::partial_order(Option<f32>::some(11.f),
-                               Option<f32>::some(f32::TODO_NAN())),
+                               Option<f32>::some(f32::TODO_NAN)),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Option<f32>::some(f32::TODO_NAN()),
-                               Option<f32>::some(f32::TODO_NAN())),
+  EXPECT_EQ(std::partial_order(Option<f32>::some(f32::TODO_NAN),
+                               Option<f32>::some(f32::TODO_NAN)),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(
-                Option<f32>::some(0.f),
-                Option<f32>::some(/* TODO: f32::INFINITY() */ HUGE_VALF)),
+  EXPECT_EQ(std::partial_order(Option<f32>::some(0.f),
+                               Option<f32>::some(f32::TODO_INFINITY)),
             std::partial_ordering::less);
   EXPECT_EQ(std::partial_order(Option<f32>::some(0.f),
-                               Option<f32>::some(
-                                   /* TODO: f32::NEG_INFINITY() */ -HUGE_VALF)),
+                               Option<f32>::some(f32::NEG_INFINITY)),
             std::partial_ordering::greater);
 
   EXPECT_EQ(std::partial_order(Option<f32>::some(0.f), Option<f32>::none()),
             std::partial_ordering::greater);
-  EXPECT_EQ(std::partial_order(Option<f32>::none(),
-                               Option<f32>::some(f32::TODO_NAN())),
-            std::partial_ordering::less);
+  EXPECT_EQ(
+      std::partial_order(Option<f32>::none(), Option<f32>::some(f32::TODO_NAN)),
+      std::partial_ordering::less);
 }
 
 struct NotCmp {};
