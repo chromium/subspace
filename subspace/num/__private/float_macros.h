@@ -553,7 +553,7 @@ class Array;
   /** Converts degrees to radians.                                             \
    */                                                                          \
   inline T to_radians() const& noexcept {                                      \
-    return primitive_value * (consts::PI().primitive_value / PrimitiveT{180}); \
+    return primitive_value * (consts::PI.primitive_value / PrimitiveT{180}); \
   }                                                                            \
   /** Rounds toward zero and converts to any primitive integer type, assuming  \
    * that the value is finite and fits in that type.                           \
