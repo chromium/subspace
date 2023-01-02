@@ -111,13 +111,22 @@ class [[nodiscard]] Iterator final : public I {
 
   /// Wraps the iterator in a new iterator that is trivially relocatable.
   ///
-  /// This is required to chain the iterator, if it's not already trivially
-  /// relocatable. It does this by moving the allocator into heap storage, which
+  /// Being trivially relocatable is required to chain the iterator, though
+  /// methods such as `filter()`. This method converts the iterator to be
+  /// trivially relocatable by moving the iterator into heap storage, which
   /// implies this does a heap allocation, which is slow compared to working on
   /// the stack.
+  ///
+  /// When possible, favour making the iterator be trivially relocatable by
+  /// having it iterate over types which are themselves trivially relocatable,
+  /// instead of using `box()`. This will give much better performance.
+  ///
+  /// It's only possible to call this in cases where it would do something
+  /// useful, that is when the Iterator type is not trivially relocatable.
   Iterator<
       BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
-  box() && noexcept;
+  box() && noexcept
+    requires(!::sus::mem::relocate_one_by_memcpy<I>);
 
   /// Tests whether all elements of the iterator match a predicate.
   ///
@@ -233,7 +242,9 @@ usize Iterator<I>::count() noexcept {
 
 template <class I>
 Iterator<BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
-Iterator<I>::box() && noexcept {
+Iterator<I>::box() && noexcept
+  requires(!::sus::mem::relocate_one_by_memcpy<I>)
+{
   return make_boxed_iterator(static_cast<I&&>(*this));
 }
 
