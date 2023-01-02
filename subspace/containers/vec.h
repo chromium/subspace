@@ -53,6 +53,8 @@ class Vec {
   static_assert(!std::is_const_v<T>,
                 "`Vec<const T>` should be written `const Vec<T>`, as const "
                 "applies transitively.");
+  static_assert(::sus::mem::Move<T>,
+                "Vec<T> requires that `T` is `sus::mem::Move`.");
 
   // The documentation in this class assumes isize::MAX == PTRDIFF_MAX.
   static_assert(isize::MAX == isize(PTRDIFF_MAX));
@@ -70,9 +72,7 @@ class Vec {
   /// Constructs a vector by taking all the elements from the iterator.
   ///
   /// sus::iter::FromIterator trait.
-  static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) noexcept
-    requires(::sus::mem::Move<T>)
-  {
+  static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) noexcept {
     // TODO: Use iter.size_hint() when it exists.
     auto v = Vec::with_capacity(0_usize);
     for (T t : iter) v.push(::sus::move(t));
@@ -242,9 +242,7 @@ class Vec {
   ///
   /// # Panics
   /// Panics if the new capacity exceeds isize::MAX bytes.
-  void push(T t) noexcept
-    requires(::sus::mem::Move<T>)
-  {
+  void push(T t) noexcept {
     // Avoids use of a reference, and receives by value, to sidestep the whole
     // issue of the reference being to something inside the vector which
     // reserve() then invalidates.
