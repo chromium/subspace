@@ -32,6 +32,7 @@ struct f32 final {
   _sus__float_consts(f32, f);
   _sus__float(f32, float, u32);
 };
+_sus__float_constants_decl(f32, float);
 
 /// A 64-bit floating point type (specifically, the “binary64” type defined in
 /// IEEE 754-2008).
@@ -43,6 +44,7 @@ struct f64 final {
   _sus__float_consts(f64, );
   _sus__float(f64, double, u64);
 };
+_sus__float_constants_decl(f64, double);
 
 }  // namespace sus::num
 

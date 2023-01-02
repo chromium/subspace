@@ -42,56 +42,39 @@ class Array;
   PrimitiveT primitive_value = PrimitiveT{0.0};                               \
   static_assert(true)
 
-#define _sus__float_constants(T, PrimitiveT)                                   \
+#define _sus__float_constants_defn(T, PrimitiveT)                              \
   /** Smallest finite primitive value. */                                      \
   static constexpr auto MIN_PRIMITIVE = __private::min_value<PrimitiveT>();    \
   /** Largest finite primitive value. */                                       \
   static constexpr auto MAX_PRIMITIVE = __private::max_value<PrimitiveT>();    \
   /** Smallest finite `##T##`. */                                              \
-  static constexpr T MIN() noexcept { return MIN_PRIMITIVE; }                  \
+  static const T MIN;                                                          \
   /** Largest finite `##T##`. */                                               \
-  static constexpr T MAX() noexcept { return MAX_PRIMITIVE; }                  \
+  static const T MAX;                                                          \
   /** The radix or base of the internal representation of `##T##`. */          \
-  static constexpr u32 RADIX() noexcept {                                      \
-    return __private::radix<PrimitiveT>();                                     \
-  }                                                                            \
+  static constexpr u32 RADIX = __private::radix<PrimitiveT>();                 \
   /** Approximate number of significant digits in base 2. */                   \
-  static constexpr u32 MANTISSA_DIGITS() noexcept {                            \
-    return __private::num_mantissa_digits<PrimitiveT>();                       \
-  }                                                                            \
+  static constexpr u32 MANTISSA_DIGITS =                                       \
+      __private::num_mantissa_digits<PrimitiveT>();                            \
   /** Approximate number of significant digits in base 10. */                  \
-  static constexpr u32 DIGITS() noexcept {                                     \
-    return __private::num_digits<PrimitiveT>();                                \
-  }                                                                            \
+  static constexpr u32 DIGITS = __private::num_digits<PrimitiveT>();           \
   /** Machine epsilon value for `##T##`.                                       \
    *                                                                           \
    * This is the difference between `1.0` and the next larger representable    \
    * number.                                                                   \
    */                                                                          \
-  static constexpr T EPSILON() noexcept {                                      \
-    return __private::epsilon<PrimitiveT>();                                   \
-  }                                                                            \
+  static const T EPSILON;                                                      \
   /** Smallest positive normal `##T##` value. */                               \
-  static constexpr T MIN_POSITIVE() noexcept {                                 \
-    return __private::min_positive_value<PrimitiveT>();                        \
-  }                                                                            \
+  static const T MIN_POSITIVE;                                                 \
   /** One greater than the minimum possible normal power of 2 exponent. */     \
-  static constexpr i32 MIN_EXP() noexcept {                                    \
-    return __private::min_exp<PrimitiveT>();                                   \
-  }                                                                            \
+  static constexpr i32 MIN_EXP = __private::min_exp<PrimitiveT>();             \
   /** Maximum possible power of 2 exponent.                                    \
    */                                                                          \
-  static constexpr i32 MAX_EXP() noexcept {                                    \
-    return __private::max_exp<PrimitiveT>();                                   \
-  }                                                                            \
+  static constexpr i32 MAX_EXP = __private::max_exp<PrimitiveT>();             \
   /** Minimum possible normal power of 10 exponent. */                         \
-  static constexpr i32 MIN_10_EXP() noexcept {                                 \
-    return __private::min_10_exp<PrimitiveT>();                                \
-  }                                                                            \
+  static constexpr i32 MIN_10_EXP = __private::min_10_exp<PrimitiveT>();       \
   /** Maximum possible power of 10 exponent. */                                \
-  static constexpr i32 MAX_10_EXP() noexcept {                                 \
-    return __private::max_10_exp<PrimitiveT>();                                \
-  }                                                                            \
+  static constexpr i32 MAX_10_EXP = __private::max_10_exp<PrimitiveT>();       \
   /** Not a Number (NaN).                                                      \
    *                                                                           \
    * Note that IEEE-745 doesn't define just a single NaN value; a plethora of  \
@@ -102,19 +85,26 @@ class Array;
    * stability of its representation over Subspace versions and target         \
    * platforms isn't guaranteed.                                               \
    *                                                                           \
-   * This method is not constexpr because the value can differ in a constexpr  \
+   * This value is not constexpr because the value can differ in a constexpr   \
    * evaluation context from a runtime context, leading to bugs.               \
    */                                                                          \
-  static T TODO_NAN() noexcept { return __private::nan<PrimitiveT>(); }        \
+  static const T TODO_NAN;                                                     \
   /** Infinity. */                                                             \
-  static constexpr T TODO_INFINITY() noexcept {                                \
-    return __private::infinity<PrimitiveT>();                                  \
-  }                                                                            \
+  static const T TODO_INFINITY;                                                \
   /** Negative infinity. */                                                    \
-  static constexpr T NEG_INFINITY() noexcept {                                 \
-    return __private::negative_infinity<PrimitiveT>();                         \
-  }                                                                            \
-                                                                               \
+  static const T NEG_INFINITY;                                                 \
+  static_assert(true)
+
+#define _sus__float_constants_decl(T, PrimitiveT)                             \
+  inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                            \
+  inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                            \
+  inline constexpr T T::EPSILON = T(__private::epsilon<PrimitiveT>());        \
+  inline constexpr T T::MIN_POSITIVE =                                        \
+      T(__private::min_positive_value<PrimitiveT>());                         \
+  inline const T T::TODO_NAN = T(__private::nan<PrimitiveT>());               \
+  inline constexpr T T::TODO_INFINITY = T(__private::infinity<PrimitiveT>()); \
+  inline constexpr T T::NEG_INFINITY =                                        \
+      T(__private::negative_infinity<PrimitiveT>());                          \
   static_assert(true)
 
 #define _sus__float_construct(T, PrimitiveT)                                   \
@@ -275,7 +265,7 @@ class Array;
   inline T acos() const& noexcept {                                            \
     if (primitive_value < PrimitiveT{-1} || primitive_value > PrimitiveT{1})   \
         [[unlikely]]                                                           \
-      return TODO_NAN();                                                       \
+      return TODO_NAN;                                                         \
     /* MSVC acos(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::acos(primitive_value));                   \
   }                                                                            \
@@ -284,7 +274,7 @@ class Array;
    */                                                                          \
   inline T acosh() const& noexcept {                                           \
     if (primitive_value < PrimitiveT{-1}) [[unlikely]]                         \
-      return TODO_NAN();                                                       \
+      return TODO_NAN;                                                         \
     /* MSVC acosh(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::acosh(primitive_value));                  \
   }                                                                            \
@@ -294,7 +284,7 @@ class Array;
   inline T asin() const& noexcept {                                            \
     if (primitive_value < PrimitiveT{-1} || primitive_value > PrimitiveT{1})   \
         [[unlikely]]                                                           \
-      return TODO_NAN();                                                       \
+      return TODO_NAN;                                                         \
     /* MSVC asin(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::asin(primitive_value));                   \
   }                                                                            \
@@ -302,7 +292,7 @@ class Array;
    */                                                                          \
   inline T asinh() const& noexcept {                                           \
     if (primitive_value < PrimitiveT{-1}) [[unlikely]]                         \
-      return TODO_NAN();                                                       \
+      return TODO_NAN;                                                         \
     /* MSVC asinh(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::asinh(primitive_value));                  \
   }                                                                            \
@@ -519,7 +509,7 @@ class Array;
    */                                                                          \
   inline T sqrt() const& noexcept {                                            \
     if (primitive_value < -PrimitiveT{0}) [[unlikely]]                         \
-      return TODO_NAN();                                                       \
+      return TODO_NAN;                                                         \
     /* MSVC sqrt(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::sqrt(primitive_value));                   \
   }                                                                            \
@@ -774,7 +764,7 @@ class Array;
 
 #define _sus__float(T, PrimitiveT, UnsignedIntT)                          \
   _sus__float_storage(PrimitiveT);                                        \
-  _sus__float_constants(T, PrimitiveT);                                   \
+  _sus__float_constants_defn(T, PrimitiveT);                              \
   _sus__float_construct(T, PrimitiveT);                                   \
   _sus__float_to_primitive(T, PrimitiveT);                                \
   _sus__float_comparison(T);                                              \
