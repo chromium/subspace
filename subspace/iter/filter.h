@@ -25,14 +25,12 @@ namespace sus::iter {
 using ::sus::iter::IteratorBase;
 using ::sus::mem::relocate_one_by_memcpy;
 
-template <class Item, size_t InnerIterSize, size_t InnerIterAlign,
-          bool InnerIterInlineStorage>
+template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter : public IteratorBase<Item> {
   using Pred = ::sus::fn::FnMut<bool(
       // TODO: write a sus::const_ref<T>?
       const std::remove_reference_t<const std::remove_reference_t<Item>&>&)>;
-  using InnerSizedIter = SizedIterator<Item, InnerIterSize, InnerIterAlign,
-                                       InnerIterInlineStorage>;
+  using InnerSizedIter = SizedIterator<Item, InnerIterSize, InnerIterAlign>;
 
  public:
   Option<Item> next() noexcept final {

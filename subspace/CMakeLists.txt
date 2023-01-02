@@ -37,6 +37,7 @@ add_library(subspace STATIC
     "fn/fn_impl.h"
     "iter/__private/iterator_end.h"
     "iter/__private/iterator_loop.h"
+    "iter/boxed_iterator.h"
     "iter/filter.h"
     "iter/from_iterator.h"
     "iter/iterator.h"
