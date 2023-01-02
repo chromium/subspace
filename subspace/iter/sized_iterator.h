@@ -15,14 +15,13 @@
 #pragma once
 
 #include "convert/subclass.h"
-#include "iter/iterator_defn.h"
 #include "mem/relocate.h"
 #include "mem/size_of.h"
+// Doesn't include iterator_defn.h because it's included from there.
 
 namespace sus::iter {
 
-template <class Item, size_t SubclassSize, size_t SubclassAlign,
-          bool InlineStorage = true>
+template <class Item, size_t SubclassSize, size_t SubclassAlign>
 struct [[sus_trivial_abi]] SizedIterator final {
   constexpr SizedIterator(void (*destroy)(char& sized)) : destroy(destroy) {}
 
@@ -42,43 +41,16 @@ struct [[sus_trivial_abi]] SizedIterator final {
     return *reinterpret_cast<IteratorBase<Item>*>(sized);
   }
 
+ private:
   alignas(SubclassAlign) char sized[SubclassSize];
   void (*destroy)(char& sized);
 
- private:
   // clang-format off
   sus_class_trivial_relocatable_value(
       ::sus::marker::unsafe_fn,
       ::sus::mem::relocate_array_by_memcpy<char> &&
       ::sus::mem::relocate_one_by_memcpy<decltype(destroy)>);
   // clang-format on
-};
-
-template <class Item, size_t SubclassSize, size_t SubclassAlign>
-struct [[sus_trivial_abi]] SizedIterator<Item, SubclassSize, SubclassAlign,
-                                         /*InlineStorage=*/false>
-    final {
-  SizedIterator(IteratorBase<Item>& iter,
-                void (*destroy)(IteratorBase<Item>& sized))
-      : iter(&iter), destroy(destroy) {}
-
-  SizedIterator(SizedIterator&& o)
-      : iter(::sus::mem::replace_ptr(mref(o.iter), nullptr)),
-        destroy(::sus::mem::replace_ptr(mref(o.destroy), nullptr)) {}
-  SizedIterator& operator=(SizedIterator&& o) = delete;
-
-  ~SizedIterator() {
-    if (destroy) destroy(*iter);
-  }
-
-  IteratorBase<Item>& iterator_mut() { return *iter; }
-
-  IteratorBase<Item>* iter;
-  void (*destroy)(IteratorBase<Item>& sized);
-
- private:
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn,
-                                             decltype(iter), decltype(destroy));
 };
 
 /// Make a SizedIterator.
@@ -93,36 +65,14 @@ template <::sus::mem::Move IteratorSubclass, int&...,
               alignof(IteratorSubclass)>>
 inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
   requires(::sus::convert::SameOrSubclassOf<IteratorSubclass*,
-                                         IteratorBase<SubclassItem>*> &&
+                                            IteratorBase<SubclassItem>*> &&
            ::sus::mem::relocate_one_by_memcpy<IteratorSubclass>)
 {
   auto it = SizedIteratorType([](char& sized) {
     reinterpret_cast<IteratorSubclass&>(sized).~IteratorSubclass();
   });
-  new (it.sized) IteratorSubclass(::sus::move(subclass));
+  new (&it.iterator_mut()) IteratorSubclass(::sus::move(subclass));
   return it;
-}
-
-/// Make a SizedIterator.
-///
-/// This overload is used when the IteratorSubclass can not be trivially
-/// relocated. Therefore it heap allocates and moves the IteratorSubclass onto
-/// the heap. That way the IteratorSubclass does not need to be moved again, but
-/// the pointer and the SizedIterator can be trivially relocated.
-template <::sus::mem::Move IteratorSubclass, int&...,
-          class SubclassItem = typename IteratorSubclass::Item,
-          class SizedIteratorType = SizedIterator<
-              SubclassItem, ::sus::mem::size_of<IteratorSubclass>(),
-              alignof(IteratorSubclass), /*InlineStorage=*/false>>
-inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
-  requires(
-      ::sus::convert::SameOrSubclassOf<IteratorSubclass*, IteratorBase<SubclassItem>*> &&
-      !::sus::mem::relocate_one_by_memcpy<IteratorSubclass>)
-{
-  return SizedIteratorType(*new IteratorSubclass(::sus::move(subclass)),
-                           [](IteratorBase<SubclassItem>& iter) {
-                             delete reinterpret_cast<IteratorSubclass*>(&iter);
-                           });
 }
 
 }  // namespace sus::iter

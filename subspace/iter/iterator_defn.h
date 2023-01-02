@@ -17,6 +17,7 @@
 #include "fn/fn.h"
 #include "iter/__private/iterator_end.h"
 #include "iter/__private/iterator_loop.h"
+#include "iter/boxed_iterator.h"
 #include "iter/from_iterator.h"
 #include "iter/iterator_defn.h"
 #include "iter/sized_iterator.h"
@@ -36,8 +37,7 @@ namespace sus::iter {
 using ::sus::option::Option;
 
 // TODO: Move forward decls somewhere?
-template <class Item, size_t InnerIterSize, size_t InnerIterAlign,
-          bool InnerIterInlineStorage>
+template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter;
 
 // TODO: Do we want to be able to pass IteratorBase& as a "generic" iterator?
@@ -109,15 +109,25 @@ class [[nodiscard]] Iterator final : public I {
  public:
   // Provided methods.
 
+  /// Wraps the iterator in a new iterator that is trivially relocatable.
+  ///
+  /// This is required to chain the iterator, if it's not already trivially
+  /// relocatable. It does this by moving the allocator into heap storage, which
+  /// implies this does a heap allocation, which is slow compared to working on
+  /// the stack.
+  Iterator<
+      BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
+  box() && noexcept;
+
   /// Tests whether all elements of the iterator match a predicate.
   ///
   /// If the predicate returns `true` for all elements in the iterator, this
   /// functions returns `true`, otherwise `false`. The function is
-  /// short-circuiting; it stops iterating on the first `false` returned from
-  /// the predicate.
+  /// short-circuiting; it stops iterating on the first `false` returned
+  /// from the predicate.
   ///
   /// Returns `true` if the iterator is empty.
-  virtual bool all(::sus::fn::FnMut<bool(Item)> f) noexcept;
+  bool all(::sus::fn::FnMut<bool(Item)> f) noexcept;
 
   /// Tests whether any elements of the iterator match a predicate.
   ///
@@ -127,7 +137,7 @@ class [[nodiscard]] Iterator final : public I {
   /// the predicate.
   ///
   /// Returns `false` if the iterator is empty.
-  virtual bool any(::sus::fn::FnMut<bool(Item)> f) noexcept;
+  bool any(::sus::fn::FnMut<bool(Item)> f) noexcept;
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -139,7 +149,7 @@ class [[nodiscard]] Iterator final : public I {
   /// If the `usize` type does not have trapping arithmetic enabled, and the
   /// iterator has more than `usize::MAX` elements in it, the value will wrap
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
-  virtual ::sus::usize count() noexcept;
+  ::sus::usize count() noexcept;
 
   // TODO: map()
 
@@ -148,10 +158,10 @@ class [[nodiscard]] Iterator final : public I {
   ///
   /// Given an element the closure must return true or false. The returned
   /// iterator will yield only the elements for which the closure returns true.
-  Iterator<Filter<Item, ::sus::mem::size_of<I>(), alignof(I),
-                  ::sus::mem::relocate_one_by_memcpy<I>>>
-  filter(::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
-             pred) && noexcept;
+  Iterator<Filter<Item, ::sus::mem::size_of<I>(), alignof(I)>> filter(
+      ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
+          pred) && noexcept
+    requires(::sus::mem::relocate_one_by_memcpy<I>);
 
   /// Transforms an iterator into a collection.
   ///
@@ -183,7 +193,7 @@ class [[nodiscard]] Iterator final : public I {
   ///
   /// See `collect()` for more details.
   template <int&..., class Vec = ::sus::containers::Vec<typename I::Item>>
-    // Vec requires Move for its items.
+  // Vec requires Move for its items.
     requires(::sus::mem::Move<typename I::Item>)
   Vec collect_vec() && noexcept;
 
@@ -192,6 +202,7 @@ class [[nodiscard]] Iterator final : public I {
 
 template <class I>
 bool Iterator<I>::all(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
+  // TODO: If constexpr(I::all() exists) then call that instead.
   while (true) {
     Option<typename I::Item> item = this->next();
     if (item.is_none()) return true;
@@ -203,6 +214,7 @@ bool Iterator<I>::all(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
 
 template <class I>
 bool Iterator<I>::any(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
+  // TODO: If constexpr(I::any() exists) then call that instead.
   while (true) {
     Option<typename I::Item> item = this->next();
     if (item.is_none()) return false;
@@ -213,17 +225,25 @@ bool Iterator<I>::any(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
 
 template <class I>
 usize Iterator<I>::count() noexcept {
+  // TODO: If constexpr(I::count() exists) then call that instead.
   auto c = 0_usize;
   while (this->next().is_some()) c += 1_usize;
   return c;
 }
 
 template <class I>
-Iterator<Filter<typename I::Item, ::sus::mem::size_of<I>(), alignof(I),
-                ::sus::mem::relocate_one_by_memcpy<I>>>
+Iterator<BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
+Iterator<I>::box() && noexcept {
+  return make_boxed_iterator(static_cast<I&&>(*this));
+}
+
+template <class I>
+Iterator<Filter<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
 Iterator<I>::filter(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
-        pred) && noexcept {
+        pred) && noexcept
+  requires(::sus::mem::relocate_one_by_memcpy<I>)
+{
   // TODO: make_sized_iterator immediately copies `this` to either the body of
   // the output iterator or to a heap allocation (if it can't be trivially
   // relocated). It is plausible to be more lazy here and avoid moving `this`
