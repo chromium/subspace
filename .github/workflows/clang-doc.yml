@@ -57,10 +57,11 @@ jobs:
 
       - name: Deploy
         run: |
+          SHA=`git rev-parse-head`
           cd docs
           git config user.email "noreply@chromium.org"
           git config user.name "Subspace clang-doc generator"
           git add .
-          git commit -m "Update docs"
+          git commit -m "Update docs: $SHA"
           git push origin
 
