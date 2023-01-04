@@ -39,10 +39,11 @@ jobs:
       - name: Generate
         run: |
           # Work around https://github.com/llvm/llvm-project/issues/59815 as the
-          # default stylesheet is not included in the debian package, which leads
-          # to an error when running the tool.
+          # default stylesheet and index.js are not included in the debian
+          # package, which leads to an error when running the tool.
           sudo mkdir -p /usr/lib/llvm-16/share/clang/
           sudo cp tools/clang-doc/clang-doc-default-stylesheet.css /usr/lib/llvm-16/share/clang/
+          sudo cp tools/clang-doc/index.js /usr/lib/llvm-16/share/clang/
 
           clang-doc-16 \
             --executor=all-TUs \
