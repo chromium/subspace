@@ -38,7 +38,7 @@ jobs:
 
       - name: Generate
         run: |
-          clang-doc \
+          clang-doc-16 \
             --executor=all-TUs \
             --format=html \
             --public \
