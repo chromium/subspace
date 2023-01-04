@@ -1,4 +1,4 @@
-name: docs
+name: hdoc
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   docs:
-    name: Generate documentation
+    name: Generate documentation with hdoc
     if: github.repository == 'chromium/subspace'
     runs-on: ubuntu-latest
 
@@ -28,7 +28,7 @@ jobs:
           sudo apt install build-essential cmake ninja-build
           cmake -G Ninja -B out -D CMAKE_EXPORT_COMPILE_COMMANDS=1
       
-      - name: Documentation
+      - name: Generate
         uses: hdoc/hdoc-github-action@v2
         with:
           compile-commands-path: out/compile_commands.json
