@@ -24,6 +24,10 @@ jobs:
           sudo ./llvm.sh 16 all
 
       - name: Configure
+        env:
+          # Skip building documentation for Cir, which ends up building docs for all of
+          # Clang and LLVM too.
+          SUBSPACE_NO_BUILD_CIR: 1
         run: |
           # Path to LLVM+Clang nightly that we have installed.
           export LLVM_DIR="/usr/lib/llvm-16/lib/cmake/llvm"
