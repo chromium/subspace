@@ -38,6 +38,11 @@ jobs:
 
       - name: Generate
         run: |
+          # Work around https://github.com/llvm/llvm-project/issues/59815 as the
+          # default stylesheet is not included in the debian package, which leads
+          # to an error when running the tool.
+          cp tools/clang-doc/clang-doc-default-stylesheet.css /usr/lib/llvm-15/share
+
           clang-doc-16 \
             --executor=all-TUs \
             --format=html \
