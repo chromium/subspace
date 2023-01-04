@@ -42,7 +42,7 @@ jobs:
             --executor=all-TUs \
             --format=html \
             --public \
-            --extra-arg=-Wno-error --extra-arg=--comments-in-macros \
+            --extra-arg=-Wno-error \
             --project-name=Subspace \
             --repository=https://github.com/chromium/subspace/blob/main \
             --output=docs \
