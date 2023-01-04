@@ -82,8 +82,10 @@ class IteratorBase {
 
 template <class I>
 class [[nodiscard]] Iterator final : public I {
- private:
+ public:
   using sus_clang_bug_58837(Item =) typename I::Item;
+
+ private:
   template <class T>
   friend class __private::IteratorLoop;  // Can see Item.
   friend I;                              // I::foo() can construct Iterator<I>.
@@ -245,7 +247,7 @@ Iterator<BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
 Iterator<I>::box() && noexcept
   requires(!::sus::mem::relocate_one_by_memcpy<I>)
 {
-  return make_boxed_iterator(static_cast<I&&>(*this));
+  return make_boxed_iterator(::sus::move(*this));
 }
 
 template <class I>
@@ -269,7 +271,7 @@ Iterator<I>::filter(
   // inside the temporary expression. But it would require one heap allocation
   // to use any chain of iterators in a for loop, since temporaies get destroyed
   // after initialing the loop.
-  return {::sus::move(pred), make_sized_iterator(static_cast<I&&>(*this))};
+  return {::sus::move(pred), make_sized_iterator(::sus::move(*this))};
 }
 
 template <class I>
