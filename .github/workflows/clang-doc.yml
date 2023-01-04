@@ -57,7 +57,7 @@ jobs:
 
       - name: Deploy
         run: |
-          SHA=`git rev-parse-head`
+          SHA=`git rev-parse HEAD`
           cd docs
           git config user.email "noreply@chromium.org"
           git config user.name "Subspace clang-doc generator"
