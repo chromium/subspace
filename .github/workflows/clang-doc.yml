@@ -56,7 +56,7 @@ jobs:
       - name: Deploy
         run: |
           cd docs
-          git add docs
-          git commit docs -m "Update docs"
+          git add .
+          git commit -m "Update docs"
           git push origin
 
