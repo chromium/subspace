@@ -34,7 +34,7 @@
 
 #define _sus__crash_attributes _sus__not_tail_called _sus__nomerge
 
-namespace sus {
+namespace sus::assertions {
 
 namespace __private {
 void print_panic_message(const char& msg);
@@ -79,7 +79,12 @@ void print_panic_message(const char& msg);
   panic();
 }
 
-}  // namespace sus
+}  // namespace sus::assertions
 
 #undef _sus__not_tail_called
 #undef _sus__nomerge
+
+namespace sus {
+using ::sus::assertions::panic;
+using ::sus::assertions::panic_with_message;
+}

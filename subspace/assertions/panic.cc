@@ -16,11 +16,11 @@
 
 #include <stdio.h>
 
-namespace sus::__private {
+namespace sus::assertions::__private {
 
 // Defined outside the header to avoid fprintf in the header.
 void print_panic_message(const char& msg) {
   fprintf(stderr, "PANIC! %s\n", &msg);
 }
 
-}  // namespace sus::__private
+}  // namespace sus::assertions::__private

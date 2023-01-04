@@ -14,12 +14,12 @@
 
 #pragma once
 
-#include "macros/builtin.h"
 #include "assertions/panic.h"
 #include "macros/always_inline.h"
+#include "macros/builtin.h"
 #include "marker/unsafe.h"
 
-namespace sus {
+namespace sus::assertions {
 
 [[noreturn]] sus_always_inline void unreachable() { panic(); }
 
@@ -32,4 +32,9 @@ namespace sus {
 #endif
 }
 
+}  // namespace sus::assertions
+
+namespace sus {
+using sus::assertions::unreachable;
+using sus::assertions::unreachable_unchecked;
 }  // namespace sus
