@@ -110,14 +110,14 @@ jobs:
           set(ENV{CC} ${{ matrix.config.cc }})
           set(ENV{CXX} ${{ matrix.config.cxx }})
 
-          build_cir="ON"
+          set(BUILD_CIR ON)
           if (NOT "${{ runner.os }}" STREQUAL "Windows")
             # Path to LLVM+Clang nightly that we have installed.
             set(ENV{LLVM_DIR} "/usr/lib/llvm-16/lib/cmake/llvm")
             set(ENV{Clang_DIR} "/usr/lib/llvm-16/lib/cmake/clang")
           else()
             # We don't have a copy of LLVM+Clang on the Windows bot.
-            build_cir="OFF"
+            set(BUILD_CIR OFF)
           endif()
 
           if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
@@ -142,7 +142,7 @@ jobs:
               -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
               -G Ninja
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
-              -D SUBSPACE_BUILD_CIR=${build_cir}
+              -D SUBSPACE_BUILD_CIR=${BUILD_CIR}
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
