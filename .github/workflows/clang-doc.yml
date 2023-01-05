@@ -31,6 +31,7 @@ jobs:
 
           sudo apt install build-essential cmake ninja-build
           # Skip building documentation for Cir, which ends up building docs for all of
+          # Clang and LLVM too.
           cmake -G Ninja -B out -D CMAKE_EXPORT_COMPILE_COMMANDS=1 -D SUBSPACE_BUILD_CIR=OFF
 
       - name: Checkout docs
