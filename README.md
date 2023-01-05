@@ -36,6 +36,11 @@ All source files must include this header:
 1. `cmake --build out`
 1. `ctest --test-dir out`
 
+## CMake options
+The CMake files define the following options:
+
+* `SUBSPACE_BUILD_CIR`, defaults to `ON`, set to `OFF` to disable CIR build
+
 ## Clang format
 
 The latest LLVM release does not have sufficient C++20 support to format the
@@ -52,7 +57,7 @@ it from the Chromium project:
 1. Download the [sha1
    file](https://source.chromium.org/search?q=clang-format.*%5C.sha1&sq=&ss=chromium%2Fchromium%2Fsrc:buildtools%2F)
    for your platform and put it in that directory.
-1. From in that same directory, in a terminal, run download_from_google_storage
+1. From in that same directory, in a terminal, run `download_from_google_storage`
    to pull down the clang-format binary.
     * On Windows: `python ..\depot_tools\download_from_google_storage.py --no_resume --no_auth --bucket chromium-clang-format -s clang-format.exe.sha1`
     * Elsewhere: `python ..\depot_tools\download_from_google_storage.py
@@ -68,13 +73,13 @@ it from the Chromium project:
 
 # Building CIR
 
-CIR is a midlevel representaion of C++ built on Clang in the spirit of [Rust's
+CIR is a midlevel representation of C++ built on Clang in the spirit of [Rust's
 MIR](https://kanishkarj.github.io/rust-internals-mir).
 
 CIR requires an installation of LLVM from Git HEAD, including the LLVM/Clang
 headers and libraries.
 
-By default, in VSCode it looks for llvm and clang in the following places, from
+By default, in VSCode it looks for LLVM and clang in the following places, from
 Subspace's `.vscode/settings.json`, but you will need to set these environment
 variables if building in another way.
 ```json
@@ -104,5 +109,6 @@ Then use VSCode to choose a build configuration and run the "CMake: Build" and
 
 ## Windows
 
-On windows, set the envionment variable `LLVM_DEBUG=1` if the LLVM build was a
+On windows, set the environment variable `LLVM_DEBUG=1` if the LLVM build was a
 debug build in order for CIR to link the appropriate runtime.
+
