@@ -22,7 +22,7 @@ namespace sus::choice_type::__private {
 /// Determines the number of bytes to use in the index.
 ///
 /// The index must have room for `count` many values. And we should use a 32-bit
-/// value when there's not a reason not to. So we use something smaller only if
+/// value unless there's a reason not to. So we use something smaller only if
 /// it fits into the inner union's tail padding.
 template <size_t count, size_t size_of_union, size_t data_size_of_union>
 consteval size_t index_size() noexcept {

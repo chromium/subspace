@@ -64,9 +64,11 @@ constexpr sus_always_inline size_t size_of() noexcept {
 /// below it into the padding of the `[[no_unique_address]]` field.
 ///
 /// So a class that contains `T` as a field can insert another field into `T`:
-/// ``` class S { [[no_unique_address]] T t; i32 c; }; ``` In this example,
-/// `sizeof(S) == sizeof(T)` because `c` sits inside the trailing padding of
-/// `T`.
+/// ```
+/// class S { [[no_unique_address]] T t; i32 c; };
+/// ```
+/// In this example, `sizeof(S) == sizeof(T)` because `c` sits inside the
+/// trailing padding of `T`.
 ///
 /// From @ssbr:
 ///
@@ -79,7 +81,9 @@ constexpr sus_always_inline size_t size_of() noexcept {
 /// [[no_unique_address]] T x; bytes } for all `bytes` until `sizeof(T) !=
 /// sizeof(S)`).
 ///
-/// ``` return sizeof(T) - max(A, B) ```
+/// ```
+/// return sizeof(T) - max(A, B)
+/// ```
 ///
 /// And I think on every known platform, A == B. It might even be guaranteed by
 /// the standard, but I wouldn't know how to check.

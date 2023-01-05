@@ -33,17 +33,17 @@ struct FnStorageBase;
 template <class F>
 struct SusBind;
 
-/// Helper to determine which functions need to be instatiated for the closure,
+/// Helper to determine which functions need to be instantiated for the closure,
 /// to be called from FnOnce, FnMut, and/or Fn.
 ///
 /// This type indicates the closure can only be called from FnOnce.
 enum StorageConstructionFnOnceType { StorageConstructionFnOnce };
-/// Helper to determine which functions need to be instatiated for the closure,
+/// Helper to determine which functions need to be instantiated for the closure,
 /// to be called from FnOnce, FnMut, and/or Fn.
 ///
 /// This type indicates the closure can be called from FnMut or FnOnce.
 enum StorageConstructionFnMutType { StorageConstructionFnMut };
-/// Helper to determine which functions need to be instatiated for the closure,
+/// Helper to determine which functions need to be instantiated for the closure,
 /// to be called from FnOnce, FnMut, and/or Fn.
 ///
 /// This type indicates the closure can be called from Fn, FnMut or FnOnce.
@@ -186,7 +186,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   ///
   /// Arguments passed by value to the underlying callable object are always
   /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occuring.
+  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) && noexcept;
 
   /// `sus::construct::From` trait implementation for function pointers or
@@ -273,7 +273,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 /// that don't capture state from outside the lambda, such as `[i = 2]() {
 /// return ++i; }`.
 ///
-/// Within sus_store(), a varaible name can be wrapped with a helper to capture
+/// Within sus_store(), a variable name can be wrapped with a helper to capture
 /// in different ways:
 ///
 /// - `sus_take(x)` will move `x` into the closure instead of copying it.
@@ -334,14 +334,14 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
   ///
   /// Arguments passed by value to the underlying callable object are always
   /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occuring.
+  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) & noexcept;
 
   // Runs and consumes the closure.
   ///
   /// Arguments passed by value to the underlying callable object are always
   /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occuring.
+  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) && noexcept {
     return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
@@ -399,7 +399,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
 /// that don't capture state from outside the lambda, such as `[i = 2]() {
 /// return ++i; }`.
 ///
-/// Within sus_store(), a varaible name can be wrapped with a helper to capture
+/// Within sus_store(), a variable name can be wrapped with a helper to capture
 /// in different ways:
 ///
 /// - `sus_take(x)` will move `x` into the closure instead of copying it.
@@ -460,14 +460,14 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
   ///
   /// Arguments passed by value to the underlying callable object are always
   /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occuring.
+  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) const& noexcept;
 
   // Runs and consumes the closure.
   ///
   /// Arguments passed by value to the underlying callable object are always
   /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occuring.
+  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) && noexcept {
     return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);

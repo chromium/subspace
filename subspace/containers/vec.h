@@ -160,7 +160,7 @@ class Vec {
     grow_to_exact(apply_growth_function(additional));
   }
 
-  /// Reserves the minimum capacity for at least additional more elements to be
+  /// Reserves the minimum capacity for at least `additional` more elements to be
   /// inserted in the given Vec<T>. Unlike reserve, this will not deliberately
   /// over-allocate to speculatively avoid frequent allocations. After calling
   /// reserve_exact, capacity will be greater than or equal to self.len() +

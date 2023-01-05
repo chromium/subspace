@@ -3,32 +3,14 @@
 [![clang-doc](https://github.com/chromium/subspace/actions/workflows/clang-doc.yml/badge.svg)](https://danakj.github.io/subspace-docs/sus/#Namespaces)
 # Subspace Library
 
-An [experimental take](https://danakj.github.io/2022/12/31/why-subspace.html) on a safer, simpler C++ standard library.
+An [experimental take](https://danakj.github.io/2022/12/31/why-subspace.html)
+on a safer, simpler C++ standard library.
 
 Please don't use this library. This is an experiment and we don't yet know where
 it will take us. There will be breaking changes without warning, and there is no
 stable version.
 
-# Copyright
-
-All source files must include this header:
-```
-// Copyright 2023 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     https://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-```
-
-# Getting started
+## Getting started
 
 1. Install [CMake](https://cmake.org/install/)
 1. Install [python3](https://www.python.org/downloads/)
@@ -73,7 +55,7 @@ it from the Chromium project:
 
 # Building CIR
 
-CIR is a midlevel representation of C++ built on Clang in the spirit of [Rust's
+CIR is a mid-level representation of C++ built on Clang in the spirit of [Rust's
 MIR](https://kanishkarj.github.io/rust-internals-mir).
 
 CIR requires an installation of LLVM from Git HEAD, including the LLVM/Clang
@@ -83,10 +65,10 @@ By default, in VSCode it looks for LLVM and clang in the following places, from
 Subspace's `.vscode/settings.json`, but you will need to set these environment
 variables if building in another way.
 ```json
-    "cmake.environment": {
-        "LLVM_DIR": "../../llvm/build/install/lib/cmake/llvm",
-        "Clang_DIR": "../../llvm/build/install/lib/cmake/clang",
-    },
+"cmake.environment": {
+    "LLVM_DIR": "../../llvm/build/install/lib/cmake/llvm",
+    "Clang_DIR": "../../llvm/build/install/lib/cmake/clang",
+},
 ```
 
 To build LLVM from VSCode, the following can be put in LLVM's
@@ -112,3 +94,21 @@ Then use VSCode to choose a build configuration and run the "CMake: Build" and
 On windows, set the environment variable `LLVM_DEBUG=1` if the LLVM build was a
 debug build in order for CIR to link the appropriate runtime.
 
+# Copyright
+
+All source files must include this header:
+```
+// Copyright 2023 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+```

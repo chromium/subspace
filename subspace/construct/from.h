@@ -18,7 +18,7 @@
 
 namespace sus::construct {
 
-/// A concept that indicates ToType can be constructed from a FromType, via
+/// A concept that indicates `ToType` can be constructed from a `FromType`, via
 /// `ToType::from(FromType)`.
 ///
 /// This concept is rarely used directly, instead prefer to use the

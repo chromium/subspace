@@ -30,13 +30,13 @@ namespace sus::mem {
 /// `const T&`.
 ///
 /// A type that is `Copy` is also `Move`. However the type can opt out by
-/// explicitly deleteing the move constructor and assignment operator. This is
+/// explicitly deleting the move constructor and assignment operator. This is
 /// not recommended, unless deleting the copy operations too, as it tends to
 /// break things that want to move-or-fallback-to-copy.
 ///
 /// As a special case, types that can not be assigned to at all, by copy or
 /// move, can still satisfy Move by being able to construct by move. This is
-/// requires for types like lambdas.
+/// required for types like lambdas.
 ///
 /// # Example
 /// ```
@@ -58,7 +58,7 @@ concept Move = std::is_move_constructible_v<std::remove_reference_t<T>> &&
 /// that is templates that want to allow their template parameter to be a
 /// reference and work with that reference as if it were an object itself. This
 /// is uncommon outside of library implementations, and its usage should
-/// typically be encapsuated inside a type that is `Move`.
+/// typically be encapsulated inside a type that is `Move`.
 template <class T>
 concept MoveOrRef = Move<T> || std::is_reference_v<T>;
 

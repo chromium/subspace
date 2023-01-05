@@ -18,8 +18,8 @@
 
 namespace sus::mem {
 
-/// A `Copy` type can be copied to construct a new object and can assigned to by
-/// copy.
+/// A `Copy` type can be copied to construct a new object and can be assigned to
+/// by copy.
 ///
 /// Satisfying `Copy` also implies that the type satisfies `Clone`.
 ///
@@ -53,7 +53,7 @@ concept Copy = std::is_copy_constructible_v<std::remove_reference_t<T>> &&
 /// that is templates that want to allow their template parameter to be a
 /// reference and work with that reference as if it were an object itself. This
 /// is uncommon outside of library implementations, and its usage should
-/// typically be encapsuated inside a type that is `Copy`.
+/// typically be encapsulated inside a type that is `Copy`.
 template <class T>
 concept CopyOrRef = Copy<T> || std::is_reference_v<T>;
 

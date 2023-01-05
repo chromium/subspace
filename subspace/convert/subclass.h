@@ -25,7 +25,7 @@ namespace sus::convert {
 /// pointers.
 ///
 /// The inputs must be pointer types, which helps avoid accidental conversions
-/// from arrays, as they are not pointers. And helps prevent the decay from the
+/// from arrays, as they are not pointers. Also helps prevent the decay from the
 /// array to a pointer before the concept is called.
 //
 // clang-format off

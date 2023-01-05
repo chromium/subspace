@@ -448,7 +448,7 @@ class Array;
    *                                                                           \
    * Using mul_add may be more performant than an unfused multiply-add if the  \
    * target architecture has a dedicated fma CPU instruction. However, this is \
-   * not always true, and will be heavily dependant on designing algorithms    \
+   * not always true, and will be heavily dependent on designing algorithms    \
    * with specific target hardware in mind.                                    \
    */                                                                          \
   inline T mul_add(const T& a, const T& b) const& noexcept {                   \
@@ -695,7 +695,7 @@ class Array;
    * This result is not an element of the function's codomain, but it is the   \
    * closest floating point number in the real numbers and thus fulfills the   \
    * property `self == self.div_euclid(rhs) * rhs + self.rem_euclid(rhs)`      \
-   * approximatively.                                                          \
+   * approximately.                                                            \
    */                                                                          \
   T rem_euclid(const T& rhs) const& noexcept {                                 \
     const auto r = *this % rhs;                                                \

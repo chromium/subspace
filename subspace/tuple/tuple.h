@@ -33,7 +33,7 @@
 
 namespace sus::tuple_type {
 
-/// A Tuple is a finate sequence of one or more heterogeneous values.
+/// A Tuple is a finite sequence of one or more heterogeneous values.
 ///
 /// # Tail padding
 /// The Tuple's tail padding may be reused when the Tuple is marked as

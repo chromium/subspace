@@ -34,4 +34,4 @@ constexpr T&& forward(std::remove_reference_t<T>&& t) noexcept {
 
 namespace sus {
 using ::sus::mem::forward;
-}
+}  // namespace sus

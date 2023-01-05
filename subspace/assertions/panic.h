@@ -47,7 +47,7 @@ void print_panic_message(const char& msg);
 /// when compiling the library.
 ///
 /// # Safety
-/// If `SUS_PROVIDE_PANIC_HANDLER()` is defined, the macro _must_ not return of
+/// If `SUS_PROVIDE_PANIC_HANDLER()` is defined, the macro _must_ not return or
 /// Undefined Behaviour will result.
 [[noreturn]] _sus__crash_attributes inline void panic() noexcept {
 #if defined(SUS_PROVIDE_PANIC_HANDLER)
@@ -66,7 +66,7 @@ void print_panic_message(const char& msg);
 ///
 /// The default behaviour of this function is to print the message to stderr.
 /// The behaviour of this function can be overridden by defining a
-/// SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER() macro when compiling the library.
+/// `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()` macro when compiling the library.
 ///
 /// After printing the message, the function will `panic()`.
 [[noreturn]] _sus__crash_attributes inline void panic_with_message(
@@ -87,4 +87,4 @@ void print_panic_message(const char& msg);
 namespace sus {
 using ::sus::assertions::panic;
 using ::sus::assertions::panic_with_message;
-}
+}  // namespace sus

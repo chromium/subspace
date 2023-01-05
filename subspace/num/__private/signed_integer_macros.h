@@ -82,10 +82,10 @@ class Tuple;
   static const u32 BITS;                                                    \
   static_assert(true)
 
-#define _sus__signed_constants_decl(T, PrimitiveT)                \
+#define _sus__signed_constants_decl(T, PrimitiveT)                          \
   inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                          \
   inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                          \
-  inline constexpr u32 T::BITS = u32(__private::num_bits<PrimitiveT>()); \
+  inline constexpr u32 T::BITS = u32(__private::num_bits<PrimitiveT>());    \
   static_assert(true)
 
 #define _sus__signed_construct(T, PrimitiveT)                                  \
@@ -315,14 +315,14 @@ class Tuple;
   /** sus::concepts::Shl trait. */                                          \
   friend constexpr inline T operator<<(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS);                                               \
+    ::sus::check(r < BITS);                                                 \
     return __private::into_signed(__private::unchecked_shl(                 \
         __private::into_unsigned(l.primitive_value), r.primitive_value));   \
   }                                                                         \
   /** sus::concepts::Shr trait. */                                          \
   friend constexpr inline T operator>>(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS);                                               \
+    ::sus::check(r < BITS);                                                 \
     return __private::into_signed(__private::unchecked_shr(                 \
         __private::into_unsigned(l.primitive_value), r.primitive_value));   \
   }                                                                         \
@@ -387,14 +387,14 @@ class Tuple;
   /** sus::concepts::ShlAssign trait. */                                \
   constexpr inline void operator<<=(const u32& r)& noexcept {           \
     /* TODO: Allow opting out of all overflow checks? */                \
-    ::sus::check(r < BITS);                                           \
+    ::sus::check(r < BITS);                                             \
     primitive_value = __private::into_signed(__private::unchecked_shl(  \
         __private::into_unsigned(primitive_value), r.primitive_value)); \
   }                                                                     \
   /** sus::concepts::ShrAssign trait. */                                \
   constexpr inline void operator>>=(const u32& r)& noexcept {           \
     /* TODO: Allow opting out of all overflow checks? */                \
-    ::sus::check(r < BITS);                                           \
+    ::sus::check(r < BITS);                                             \
     primitive_value = __private::into_signed(__private::unchecked_shr(  \
         __private::into_unsigned(primitive_value), r.primitive_value)); \
   }                                                                     \
@@ -416,7 +416,7 @@ class Tuple;
   }                                                                            \
                                                                                \
   /** Checked absolute value. Computes `abs()`, returning None if the current  \
-   * value is MIN.                                                           \
+   * value is MIN.                                                             \
    */                                                                          \
   constexpr Option<T> checked_abs() const& noexcept {                          \
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                           \
@@ -437,17 +437,17 @@ class Tuple;
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                           \
       return Tuple::with(abs(), false);                                        \
     else                                                                       \
-      return Tuple::with(MIN, true);                                         \
+      return Tuple::with(MIN, true);                                           \
   }                                                                            \
                                                                                \
   /** Saturating absolute value. Computes `abs()`, returning MAX if the        \
-   *  current value is MIN instead of overflowing.                           \
+   *  current value is MIN instead of overflowing.                             \
    */                                                                          \
   constexpr T saturating_abs() const& noexcept {                               \
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                           \
       return abs();                                                            \
     else                                                                       \
-      return MAX;                                                            \
+      return MAX;                                                              \
   }                                                                            \
                                                                                \
   /** Computes the absolute value of self without any wrapping or panicking.   \
@@ -477,7 +477,7 @@ class Tuple;
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                           \
       return abs();                                                            \
     else                                                                       \
-      return MIN;                                                            \
+      return MIN;                                                              \
   }                                                                            \
                                                                                \
   /** Computes the absolute difference between self and other.                 \
@@ -564,15 +564,15 @@ class Tuple;
     if (!r.overflow) [[likely]]                                                \
       return r.value;                                                          \
     else                                                                       \
-      return MAX;                                                            \
+      return MAX;                                                              \
   }                                                                            \
                                                                                \
   /** Unchecked integer addition. Computes self + rhs, assuming overflow       \
    * cannot occur.                                                             \
    *                                                                           \
    * # Safety                                                                  \
-   * This results in undefined behavior when self + rhs > ##T##::MAX or self \
-   * + rhs < ##T##::MIN, i.e. when checked_add() would return None.          \
+   * This results in undefined behavior when self + rhs > ##T##::MAX or self   \
+   * + rhs < ##T##::MIN, i.e. when checked_add() would return None.            \
    */                                                                          \
   inline constexpr T unchecked_add(::sus::marker::UnsafeFnMarker,              \
                                    const T& rhs) const& noexcept {             \
@@ -625,7 +625,7 @@ class Tuple;
     if (__private::div_overflows_nonzero(                                      \
             ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
         [[unlikely]] {                                                         \
-      return Tuple::with(MIN, true);                                         \
+      return Tuple::with(MIN, true);                                           \
     } else {                                                                   \
       return Tuple::with(                                                      \
           __private::unchecked_div(primitive_value, rhs.primitive_value),      \
@@ -645,9 +645,9 @@ class Tuple;
     if (__private::div_overflows_nonzero(                                      \
             ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
         [[unlikely]] {                                                         \
-      /* Only overflows in the case of -MIN / -1, which gives MAX + 1,     \
-       saturated to MAX. */                                                  \
-      return MAX;                                                            \
+      /* Only overflows in the case of -MIN / -1, which gives MAX + 1,         \
+       saturated to MAX. */                                                    \
+      return MAX;                                                              \
     } else {                                                                   \
       return __private::unchecked_div(primitive_value, rhs.primitive_value);   \
     }                                                                          \
@@ -670,9 +670,9 @@ class Tuple;
     if (__private::div_overflows_nonzero(                                      \
             ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
         [[unlikely]] {                                                         \
-      /* Only overflows in the case of -MIN / -1, which gives MAX + 1,     \
-       that wraps around to MIN. */                                          \
-      return MIN;                                                            \
+      /* Only overflows in the case of -MIN / -1, which gives MAX + 1,         \
+       that wraps around to MIN. */                                            \
+      return MIN;                                                              \
     } else {                                                                   \
       return __private::unchecked_div(primitive_value, rhs.primitive_value);   \
     }                                                                          \
@@ -716,9 +716,9 @@ class Tuple;
    * cannot occur.                                                             \
    *                                                                           \
    * # Safety                                                                  \
-   * This results in undefined behavior when `self * rhs > ##T##::MAX` or    \
+   * This results in undefined behavior when `self * rhs > ##T##::MAX` or      \
    * `self                                                                     \
-   * * rhs < ##T##::MIN`, i.e. when `checked_mul()` would return None.       \
+   * * rhs < ##T##::MIN`, i.e. when `checked_mul()` would return None.         \
    */                                                                          \
   constexpr inline T unchecked_mul(::sus::marker::UnsafeFnMarker,              \
                                    const T& rhs) const& noexcept {             \
@@ -755,7 +755,7 @@ class Tuple;
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
       return Tuple::with(__private::unchecked_neg(primitive_value), false);   \
     else                                                                      \
-      return Tuple::with(MIN, true);                                        \
+      return Tuple::with(MIN, true);                                          \
   }                                                                           \
                                                                               \
   /** Saturating integer negation. Computes -self, returning MAX if self ==   \
@@ -765,22 +765,22 @@ class Tuple;
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
       return __private::unchecked_neg(primitive_value);                       \
     else                                                                      \
-      return MAX;                                                           \
+      return MAX;                                                             \
   }                                                                           \
                                                                               \
   /** Wrapping (modular) negation. Computes -self, wrapping around at the     \
    * boundary of the type.                                                    \
    *                                                                          \
-   * The only case where such wrapping can occur is when one negates MIN on \
-   * a signed type (where MIN is the negative minimal value for the type);  \
+   * The only case where such wrapping can occur is when one negates MIN on   \
+   * a signed type (where MIN is the negative minimal value for the type);    \
    * this is a positive value that is too large to represent in the type. In  \
-   * such a case, this function returns MIN itself.                         \
+   * such a case, this function returns MIN itself.                           \
    */                                                                         \
   constexpr T wrapping_neg() const& noexcept {                                \
     if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
       return __private::unchecked_neg(primitive_value);                       \
     else                                                                      \
-      return MIN;                                                           \
+      return MIN;                                                             \
   }                                                                           \
   static_assert(true)
 
@@ -892,7 +892,7 @@ class Tuple;
     if (__private::div_overflows_nonzero(                                      \
             ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
         [[unlikely]] {                                                         \
-      return Tuple::with(MIN, true);                                         \
+      return Tuple::with(MIN, true);                                           \
     } else {                                                                   \
       return Tuple::with(                                                      \
           __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,     \
@@ -918,7 +918,7 @@ class Tuple;
     if (__private::div_overflows_nonzero(                                      \
             ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value))   \
         [[unlikely]] {                                                         \
-      return MIN;                                                            \
+      return MIN;                                                              \
     } else {                                                                   \
       return __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,  \
                                    rhs.primitive_value);                       \
@@ -927,7 +927,7 @@ class Tuple;
                                                                                \
   /** Calculates the least nonnegative remainder of self (mod rhs).            \
    *                                                                           \
-   * This is done as if by the Euclidean division algorithm – given r =      \
+   * This is done as if by the Euclidean division algorithm – given r =        \
    * self.rem_euclid(rhs), self = rhs * self.div_euclid(rhs) + r, and 0 <= r < \
    * abs(rhs).                                                                 \
    *                                                                           \
@@ -1158,7 +1158,7 @@ class Tuple;
     if (!out.overflow) [[likely]]                                             \
       return out.value;                                                       \
     else                                                                      \
-      return MIN;                                                           \
+      return MIN;                                                             \
   }                                                                           \
                                                                               \
   /** Unchecked integer subtraction. Computes self - rhs, assuming overflow   \
@@ -1323,15 +1323,15 @@ class Tuple;
       uint32_t zeros = __private::leading_zeros_nonzero(                      \
           ::sus::marker::unsafe_fn,                                           \
           __private::into_unsigned(primitive_value));                         \
-      return Option<u32>::some(BITS - 1_u32 - u32(zeros));                  \
+      return Option<u32>::some(BITS - 1_u32 - u32(zeros));                    \
     }                                                                         \
   }                                                                           \
                                                                               \
   /** Returns the base 2 logarithm of the number, rounded down.               \
    *                                                                          \
    * # Panics                                                                 \
-   * When the number is zero or negative the function will panic. \           \
-   *  */                                                                      \
+   * When the number is zero or negative the function will panic.             \
+   */                                                                         \
   constexpr u32 log2() const& {                                               \
     /* TODO: Allow opting out of all overflow checks? */                      \
     return checked_log2().unwrap();                                           \

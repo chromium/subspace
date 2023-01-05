@@ -2,7 +2,7 @@
 - Crubit [lifetime annotations](https://github.com/google/crubit/blob/main/docs/lifetime_annotations_cpp.md)
 - We also need to infer [elided
   lifetimes](https://github.com/google/crubit/blob/main/docs/lifetime_annotations_cpp.md#lifetime-elision-lifetime-elision)
-  where there are no anotations.
+  where there are no annotations.
 
 # Exclusive mutability
 - To enforce exclusive mutability, any type with a mutable pointer inside

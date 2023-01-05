@@ -67,7 +67,7 @@ int main(int argc, const char** argv) {
     sus::Option<cir::Output> output =
         cir::run_file(compdb, file, std::move(fs));
     if (output.is_none()) {
-      llvm::outs() << "Error occured\n";
+      llvm::outs() << "Error occurred\n";
       return 1;
     }
 

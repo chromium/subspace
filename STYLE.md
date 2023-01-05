@@ -8,8 +8,8 @@ footguns, crashes, bugs, and UB.
    or they expose floating point NaNs (since constexpr NaNs change their bit
    values).
     * Consider `panic()`/`check()` as constexpr for these purposes, they will
-      correctly prevent compile if the condition fails.
-1. If you override on `const&`, then explicity provide or delete the `&&`
+      correctly prevent compiling if the condition fails.
+1. If you override on `const&`, then explicitly provide or delete the `&&`
    override.
     * If the function should only act on lvalues, provide `const&`- and
       `&`-qualified overrides, and delete the `&&`-qualified override.
@@ -30,5 +30,5 @@ footguns, crashes, bugs, and UB.
       forward-declare the `usize` type), and template args are always statically
       determined, `usize` doesn't provide the same value in this context, and
       can get in the way.
-1. Do not clone() inside constructor methods. The clone should happen at the
+1. Do not `clone()` inside constructor methods. The clone should happen at the
    call site. Only allow Copy to happen inside the library type.
