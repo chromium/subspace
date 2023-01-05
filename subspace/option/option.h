@@ -67,12 +67,12 @@ constexpr auto end(const T& t) noexcept;
 namespace sus::result {
 template <class T, class E>
 class Result;
-}
+}  // namespace sus::result
 
 namespace sus::tuple_type {
 template <class T, class... Ts>
 class Tuple;
-}
+}  // namespace sus::tuple_type
 
 namespace sus::option {
 

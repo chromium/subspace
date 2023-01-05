@@ -17,30 +17,30 @@ This library is an experiment and not intended for use. See the
       to do so in place of [a language keyword](
       https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/unsafe).
 1. KISS Principle
-    * "most systems work best if they are kept simple rather than made
-      complicated; therefore, simplicity should be a key goal in design, and
-      unnecessary complexity should be avoided" - [Kelly Johnson](
-        https://en.wikipedia.org/wiki/KISS_principle)
+    * > most systems work best if they are kept simple rather than made
+      > complicated; therefore, simplicity should be a key goal in design, and
+      > unnecessary complexity should be avoided
+      >  - [Kelly Johnson](https://en.wikipedia.org/wiki/KISS_principle)
     * Consider inherent vs accidental complexity and avoid the latter.
 1. Principle of Least Astonishment
     * A component of a system should behave in a way that most users will expect
       it to behave. The behavior should not astonish or surprise users.
 1. Single-choice
-    * "Whenever a software system must support a set of alternatives, one and
-      only one module in the system should know their exhaustive list." -
-      Bertrand Meyer: Object-Oriented Software Construction
+    * > Whenever a software system must support a set of alternatives, one and
+      > only one module in the system should know their exhaustive list.
+      >  - Bertrand Meyer: Object-Oriented Software Construction
 1. Persistence-Closure
-    * "Whenever a storage mechanism stores an object, it must store with it the
-      dependents of that object. Whenever a retrieval mechanism retrieves a
-      previously stored object, it must also retrieve any dependent of that
-      object that has not yet been retrieved." - Bertrand Meyer: Object-Oriented
-      Software Construction
+    * > Whenever a storage mechanism stores an object, it must store with it the
+      > dependents of that object. Whenever a retrieval mechanism retrieves a
+      > previously stored object, it must also retrieve any dependent of that
+      > object that has not yet been retrieved.
+      >  - Bertrand Meyer: Object-Oriented Software Construction
 1. Single-responsibility principle
-    * "Every module, class or function in a computer program should have
-      responsibility over a single part of that program's functionality, and it
-      should encapsulate that part. All of that module, class or function's
-      services should be narrowly aligned with that responsibility." -
-      [Wikipedia](https://en.wikipedia.org/wiki/Single-responsibility_principle)
+    * > Every module, class or function in a computer program should have
+      > responsibility over a single part of that program's functionality, and it
+      > should encapsulate that part. All of that module, class or function's
+      > services should be narrowly aligned with that responsibility.
+      >  - [Wikipedia](https://en.wikipedia.org/wiki/Single-responsibility_principle)
 1. Use the latest C++ language features to provide the simplest APIs possible.
 1. Accept incompatibility. No attempt is made for backward compatibility with C,
    earlier versions of C++, compatibility with stdlib, etc.
@@ -61,14 +61,13 @@ This library is an experiment and not intended for use. See the
    construction is through (named) static methods.
     * Non-default constructors are prefixed with `with_()` unless there's a
       clear and better domain-specific name.
-    * Would like to extend this to Copy and Move constructors too, through Clone
-      and Move methods. Implementation details required.
+    * Would like to extend this to Copy and Move constructors too, through `Clone`
+      and `Move` methods. Implementation details required.
     * Write a `::from(x)` constructing method to implement
-      `sus::construct::From` when the type is constructed from another
-      type.
+      `sus::construct::From` when the type is constructed from another type.
     * Exception granted for closure types (Fn, FnMut, FnOnce) because
         1. the construction does not do work, it stores a pointer, or the output
-        of sus_bind().
+           of sus_bind().
         1. the purpose of the closure types is to type-erase a lambda, for use
            in places where the type can't be propagated, such a virtual methods
            which can not be a template.
@@ -83,8 +82,8 @@ This library is an experiment and not intended for use. See the
     * When there are const and mutable versions of a method, use the `_mut`
       suffix on the mutable one to distinguish them. The const method gets the
       shorter name.
-    * Don't use a `get_` prefix on getters. Do use a prefix like `is_` to
-      differentiate from a verb, like `is_empty()`.
+    * Don't use a `get_` prefix on getters.
+    * Do use a prefix like `is_` to differentiate from a verb, like `is_empty()`.
     * Use an appropriate prefix like `set_`, or a clear verb name, to
       distinguish setters.
     * No default parameters, as they are a form of overloading.
@@ -107,8 +106,8 @@ This library is an experiment and not intended for use. See the
          order to allow rvalues).
        * When the inner type is a template variable, allow const on the inner
          type. The const on the Owning type is unable to be transferred to the
-         inner type, i.e. a const ref<T> can be copied or moved to a non-const
-         ref<T>.
+         inner type, i.e. a const `ref<T>` can be copied or moved to a non-const
+         `ref<T>`.
 1. Class members which have tail padding, or can have based on templates, should
    be marked as [[sus_no_unique_address]] when there are other fields that can
    be packed into the tail padding, if it exists and is usable by the compiler
@@ -116,29 +115,29 @@ This library is an experiment and not intended for use. See the
 1. Bounds are always checked unless you explicitly ask for them to not be.
 1. Lifetimes are always checked unless you explicitly ask for them to not be.
 1. Small headers. C++ compilation speed is proportional to the amount of input.
-    * We will split types into separate headers as much as possible. tokens.
+    * We will split types into separate headers as much as possible.
     * We may provide headers which group together smaller headers for simplicity
       in smaller projects.
     * We will move implementations out of headers, and out of templates, to
       reduce header sizes where possible and where it does not have strong
       performance implications.
-1. We will use doxygen to document all types, functions, and public methods.
+1. We will document all types, functions, and public methods.
     * Documentation will include examples where use is non-trivial.
-    * All functions that can abort() will document under what conditions they do
-      so, with the exception of: use-after-move.
+    * All functions that can `abort()` will document under what conditions they
+      do so, with the exception of: use-after-move.
 1. No null pointers. Smart pointers have no null state. Functions never return
-    null pointers.
+   null pointers.
 1. No raw pointers by default. Raw pointers throw away all lifetime information,
-    can produce memory safety bugs. And raw pointers can be null, which is
-    undesirable.
+   can produce memory safety bugs. And raw pointers can be null, which is
+   undesirable.
 1. No expensive and implicit copies.
     * Copies should generally be explicit. If we opt into implicit copies, they
       should be cheap - and
       [trivial](https://en.cppreference.com/w/cpp/types/is_trivially_copyable).
 1. No surprising heap allocations. Types should live on the stack whenever
-    possible. They only use internal heap allocations when strictly required:
-    for instance, because they have a dynamic size. Instead, the user can choose
-    what lives on the heap through the use of heap-based smart pointers.
+   possible. They only use internal heap allocations when strictly required:
+   for instance, because they have a dynamic size. Instead, the user can choose
+   what lives on the heap through the use of heap-based smart pointers.
 1. No secret sometimes-heap-allocated-sometimes-not optimizations (e.g. the
    small string optimization). This leads to performance cliffs, but worse,
    pointer stability is unpredictable if a type vends a pointer to its storage
@@ -150,7 +149,7 @@ This library is an experiment and not intended for use. See the
 1. Deep constness. Const methods do not mutate state in visible ways.
     * No const methods return non-const pointers or references.
     * No const methods call non-const methods through pointers or references.
-    * No const_cast usage.
+    * No `const_cast` usage.
     * State in members marked `mutable` does not escape the class from const
       methods.
     * No mutable pointers or references constructed from fields, or reachable
@@ -184,7 +183,7 @@ This library is an experiment and not intended for use. See the
       guidance to ensure consistent behaviour in implementations of traits.
 1. Tools to use SFINAE for common patterns, such as traits, without having to
    understand all of the stdlib type_traits.
-1. Use constexpr everywhere it is correct to.
+1. Use constexpr everywhere it is correct to do so.
     * Functions or method that can be constexpr should be marked constexpr.
     * Use [std::is_constant_evaluated](https://en.cppreference.com/w/cpp/types/is_constant_evaluated)
       to provide a (more expensive) constexpr implementation when needed.

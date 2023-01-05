@@ -46,7 +46,7 @@
 /// # Example
 ///
 /// This binds a lambda with 3 captures, the first two being variables from the
-/// outside scope. The second varible is used as a reference to the storage,
+/// outside scope. The second variable is used as a reference to the storage,
 /// rather that copying or moving it into the lambda.
 /// ```
 /// sus_bind(sus_store(a, b), [a, &b, c = 1]() {}))
@@ -117,7 +117,7 @@
 /// # Example
 ///
 /// This binds a lambda with 3 captures, the first two being variables from the
-/// outside scope. The second varible is used as a reference to the storage,
+/// outside scope. The second variable is used as a reference to the storage,
 /// rather that copying or moving it into the lambda.
 /// ```
 /// sus_bind_mut(sus_store(a, b), [a, &b, c = 1]() {}))
@@ -225,7 +225,7 @@ auto make_storage_mut(UnsafePointer<T*> p) {
 }
 
 // Verifies the input is an lvalue (a name), so we can bind it to that same
-// lvalue name in the resuling lambda.
+// lvalue name in the resulting lambda.
 template <class T>
 std::true_type is_lvalue(T&);
 std::false_type is_lvalue(...);

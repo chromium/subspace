@@ -87,7 +87,7 @@ class Tuple;
   static const u32 BITS;                                                    \
   static_assert(true)
 
-#define _sus__unsigned_constants_decl(T, PrimitiveT)                          \
+#define _sus__unsigned_constants_decl(T, PrimitiveT)                     \
   inline constexpr T T::MIN = T(MIN_PRIMITIVE);                          \
   inline constexpr T T::MAX = T(MAX_PRIMITIVE);                          \
   inline constexpr u32 T::BITS = u32(__private::num_bits<PrimitiveT>()); \
@@ -273,13 +273,13 @@ class Tuple;
   /** sus::concepts::Shl trait. */                                          \
   friend constexpr inline T operator<<(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS);                                               \
+    ::sus::check(r < BITS);                                                 \
     return __private::unchecked_shl(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   /** sus::concepts::Shr trait. */                                          \
   friend constexpr inline T operator>>(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS);                                               \
+    ::sus::check(r < BITS);                                                 \
     return __private::unchecked_shr(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   static_assert(true)
@@ -339,13 +339,13 @@ class Tuple;
   /** sus::concepts::ShlAssign trait. */                      \
   constexpr inline void operator<<=(const u32& r)& noexcept { \
     /* TODO: Allow opting out of all overflow checks? */      \
-    ::sus::check(r < BITS);                                 \
+    ::sus::check(r < BITS);                                   \
     primitive_value <<= r.primitive_value;                    \
   }                                                           \
   /** sus::concepts::ShrAssign trait. */                      \
   constexpr inline void operator>>=(const u32& r)& noexcept { \
     /* TODO: Allow opting out of all overflow checks? */      \
-    ::sus::check(r < BITS);                                 \
+    ::sus::check(r < BITS);                                   \
     primitive_value >>= r.primitive_value;                    \
   }                                                           \
   static_assert(true)
@@ -434,9 +434,9 @@ class Tuple;
       /* TODO: Can this be done without a branch? If it's complex or uses      \
        * compiler stuff, move into intrinsics. */                              \
       if (rhs.primitive_value >= 0)                                            \
-        return MAX;                                                          \
+        return MAX;                                                            \
       else                                                                     \
-        return MIN;                                                          \
+        return MIN;                                                            \
     }                                                                          \
   }                                                                            \
                                                                                \
@@ -486,11 +486,11 @@ class Tuple;
   /** Calculates the divisor when self is divided by rhs.                      \
    *                                                                           \
    * Returns a tuple of the divisor along with a boolean indicating whether an \
-   *arithmetic overflow would occur. Note that for unsigned integers overflow  \
-   *never occurs, so the second value is always false.                         \
+   * arithmetic overflow would occur. Note that for unsigned integers overflow \
+   * never occurs, so the second value is always false.                        \
    *                                                                           \
    * #Panics                                                                   \
-   *This function will panic if rhs is 0.                                      \
+   * This function will panic if rhs is 0.                                     \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
   constexpr Tuple overflowing_div(const T& rhs) const& noexcept {              \
@@ -502,7 +502,7 @@ class Tuple;
   }                                                                            \
                                                                                \
   /** Saturating integer division. Computes self / rhs, saturating at the      \
-   numeric bounds instead of overflowing.                                      \
+   *  numeric bounds instead of overflowing.                                   \
    *                                                                           \
    * #Panics                                                                   \
    * This function will panic if rhs is 0.                                     \
@@ -1068,7 +1068,7 @@ class Tuple;
     } else {                                                                  \
       uint32_t zeros = __private::leading_zeros_nonzero(                      \
           ::sus::marker::unsafe_fn, primitive_value);                         \
-      return Option<u32>::some(BITS - u32(1u) - u32(zeros));                \
+      return Option<u32>::some(BITS - u32(1u) - u32(zeros));                  \
     }                                                                         \
   }                                                                           \
                                                                               \
@@ -1150,7 +1150,7 @@ class Tuple;
    * # Panics                                                                 \
    * The function panics when the return value overflows (i.e., `self > (1 << \
    * (N-1))` for type uN). */                                                 \
-  constexpr T next_power_of_two() const& noexcept {                                  \
+  constexpr T next_power_of_two() const& noexcept {                           \
     const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
     return T(one_less) + T(PrimitiveT{1u});                                   \
@@ -1161,7 +1161,7 @@ class Tuple;
    * If the next power of two is greater than the type's maximum value, None  \
    * is returned, otherwise the power of two is wrapped in Some.              \
    */                                                                         \
-  constexpr Option<T> checked_next_power_of_two() const& noexcept {                  \
+  constexpr Option<T> checked_next_power_of_two() const& noexcept {           \
     const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
     return T(one_less).checked_add(T(PrimitiveT{1u}));                        \
@@ -1172,7 +1172,7 @@ class Tuple;
    * If the next power of two is greater than the type's maximum value, the   \
    * return value is wrapped to 0.                                            \
    */                                                                         \
-  constexpr T wrapping_next_power_of_two() const& noexcept {                         \
+  constexpr T wrapping_next_power_of_two() const& noexcept {                  \
     const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
     return T(one_less).wrapping_add(T(PrimitiveT{1u}));                       \

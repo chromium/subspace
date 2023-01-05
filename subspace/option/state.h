@@ -25,4 +25,4 @@ enum class State : bool {
   Some,
 };
 
-}
+}  // namespace sus::option

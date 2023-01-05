@@ -6,7 +6,7 @@ fn name@id(args) -> out {
 }
 ```
  - Denotes the function that the CIR is representing the body of a function
-   named `name. The CIR appears at `X`.
+   named `name`. The CIR appears at `X`.
  - Use `void` for no return type.
 
 ```c
@@ -21,7 +21,7 @@ let x: T
    `name` includes the full type name (incl namespace), e.g `S<int>::operator=`.
  - Pointer symbols come before the type of the pointee. Annotations come after
    the thing they annotate: e.g. `*const int const`
- - _0 is the return type.
+ - `_0` is the return type.
  - Arguments are represented as objects in this form.
 
 ```c
@@ -238,9 +238,9 @@ unreachable
 
 ```c
 return
+```
  - Terminator. Exits the current function, returning the value of the first
    variable defined.
-```
 
 ```c
 bbN: {
@@ -251,17 +251,15 @@ bbN: {
    is used from terminators of other control flow blocks to jump to this one.
 
 
-
-
 ## Type representation
  - Primitive (arithmetic) types
  - Structs (no classes)
  - Unions
  - Enums (are integers in CIR?)
  - Pointers, but no references (replaced by pointers)
-    - Pointer symbols come first: **int instead of int**
+    - Pointer symbols come first: `**int` instead of `int**`
     - Modifiers go to the right of each part of the pointer:
-      - `*const * int` instead of int * const*.
+      - `*const * int` instead of `int * const*`.
       - `*const * int const` instead of `const int * const*`.
  - No pointers-to-members: replaced by a generated function for each type+field.
     - The function takes the type pointer, and returns the field pointer:

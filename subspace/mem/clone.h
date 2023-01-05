@@ -53,7 +53,7 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 /// also `CloneInto`.
 ///
 /// It is not valid to be `Copy` and also have a `clone()` method, as it becomes
-/// amgiuous. One outcome of this is a container type should only implement a
+/// ambiguous. One outcome of this is a container type should only implement a
 /// clone() method if the type within is (Clone && !Copy), and should implement
 /// copy constructors if the type within is Copy.
 template <class T>
@@ -69,7 +69,7 @@ concept Clone = (Copy<T> &&
 /// that is templates that want to allow their template parameter to be a
 /// reference and work with that reference as if it were an object itself. This
 /// is uncommon outside of library implementations, and its usage should
-/// typically be encapsuated inside a type that is `Clone`.
+/// typically be encapsulated inside a type that is `Clone`.
 template <class T>
 concept CloneOrRef = Clone<T> || std::is_reference_v<T>;
 
@@ -78,7 +78,7 @@ concept CloneOrRef = Clone<T> || std::is_reference_v<T>;
 /// ensure they're doing what you think they're doing.
 ///
 /// Evaluates to true if the type is `Copy` but it is not valid to be `Copy` and
-/// also have a `clone_from()` method, as it becomes amgiuous.
+/// also have a `clone_from()` method, as it becomes ambiguous.
 ///
 /// TODO: Should we make this into/from name consistent...??
 template <class T>

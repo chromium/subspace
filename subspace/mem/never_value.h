@@ -117,6 +117,7 @@ struct never_value_access {
     return __private::never_value_access_helper<T, has_field>::is_constructed(
         t);
   }
+
   /// Sets a field in the memory location `t` to a value that is never set
   /// during the lifetime of `T`, where the OverlayType `t` has the same address
   /// as a type `T` in a union.
@@ -146,7 +147,7 @@ concept NeverValueField = never_value_access<T>::has_field;
 }  // namespace sus::mem
 
 /// Mark a class field as never being a specific value, often a zero, after a
-/// constructor has run and bef ore the destructor has completed. This allows
+/// constructor has run and before the destructor has completed. This allows
 /// querying if a class is constructed in a memory location, since the class is
 /// constructed iff the value of the field is not the never-value.
 ///
@@ -154,7 +155,7 @@ concept NeverValueField = never_value_access<T>::has_field;
 /// field is only accessible in that case. Therefore it is advised to verify
 /// `NeverValueField<T>` where you expect it to be true.
 ///
-/// The macro includes `private:` which changes the class definition visiblity
+/// The macro includes `private:` which changes the class definition visibility
 /// to private.
 #define sus_class_never_value_field(unsafe_fn, T, field_name, never_value)     \
  private:                                                                      \

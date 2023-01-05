@@ -41,12 +41,12 @@ namespace sus::construct {
 /// To receive `sus::into()` correctly for a templated function argument:
 /// - Avoid std::same_as<T>, use std::convertible_to<T> instead, as this will
 ///   accept the output of sus::into().
-/// - If the argument is a fixe dependent type, like the following:
+/// - If the argument is a fixed dependent type, like the following:
 ///   ```
 ///   template <class T, class In = Foo<T>>
 ///   void f(In i) {}
 ///   ```
-///   Insert a an extra template parameter that uses std::convertible_to and the
+///   Insert an extra template parameter that uses std::convertible_to and the
 ///   template type, such as:
 ///   ```
 ///   template <class T, class Exact = Foo<T>, std::convertible_to<Exact> In>

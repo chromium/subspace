@@ -41,7 +41,7 @@ template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter;
 
 // TODO: Do we want to be able to pass IteratorBase& as a "generic" iterator?
-// Then it needs access to the adapator methods of Iterator<T>, so make them
+// Then it needs access to the adaptor methods of Iterator<T>, so make them
 // virtual methods on IteratorBase?
 //
 // TODO: Do we want to be able to pass Iterator by value as a "generic"
@@ -102,7 +102,7 @@ class [[nodiscard]] Iterator final : public I {
 
   template <class... Args>
   Iterator(Args&&... args) : I(static_cast<Args&&>(args)...) {
-    // We want to be able to use Iterator<I> and I interchangably, so that if an
+    // We want to be able to use Iterator<I> and I interchangeably, so that if an
     // `I` gets stored in SizedIterator, it doesn't misbehave.
     static_assert(::sus::mem::size_of<I>() ==
                   ::sus::mem::size_of<Iterator<I>>());
@@ -192,8 +192,10 @@ class [[nodiscard]] Iterator final : public I {
   ///
   /// Because collect() is so general, and C++ lacks strong type inference,
   /// collect() doesn't know the type of collection that you want to produce, so
-  /// you will always need to pass it a type argument, such as: ```cpp
-  /// sus::move(iter).collect<MyContainer<i32>>() ```
+  /// you will always need to pass it a type argument, such as:
+  /// ```cpp
+  /// sus::move(iter).collect<MyContainer<i32>>()
+  /// ```
   template <::sus::iter::FromIterator<typename I::Item> C>
   C collect() && noexcept;
 
@@ -269,7 +271,7 @@ Iterator<I>::filter(
   // Doing so dynamically would require a (single) heap allocation at that point
   // always. It would be elided if the iterator was kept on the stack, or used
   // inside the temporary expression. But it would require one heap allocation
-  // to use any chain of iterators in a for loop, since temporaies get destroyed
+  // to use any chain of iterators in a for loop, since temporaries get destroyed
   // after initialing the loop.
   return {::sus::move(pred), make_sized_iterator(::sus::move(*this))};
 }

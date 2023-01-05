@@ -22,4 +22,4 @@ namespace sus::num {
 /// `f64::classify()`. See their documentation for more.
 enum class FpCategory { Nan, Infinite, Zero, Subnormal, Normal };
 
-}
+}  // namespace sus::num

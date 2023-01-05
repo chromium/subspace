@@ -39,4 +39,4 @@ constexpr sus_always_inline void check_with_message(
 namespace sus {
 using ::sus::assertions::check;
 using ::sus::assertions::check_with_message;
-}
+}  // namespace sus
