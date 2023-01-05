@@ -123,7 +123,7 @@ This library is an experiment and not intended for use. See the
       performance implications.
 1. We will document all types, functions, and public methods.
     * Documentation will include examples where use is non-trivial.
-    * All functions that can a`bort()` will document under what conditions they
+    * All functions that can `abort()` will document under what conditions they
       do so, with the exception of: use-after-move.
 1. No null pointers. Smart pointers have no null state. Functions never return
    null pointers.
