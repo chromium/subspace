@@ -37,7 +37,13 @@ function(subspace_default_compile_options TARGET)
             -Wextra
             -Wpedantic
 
+            # Temporary disables in order to enable all warnings.
             -Wno-reorder-ctor
+            -Wno-redundant-move
+
+            # Disabled, no plans to enable.
+            -Wno-unused-parameter
+            -Wno-unknown-pragmas
         )
     endif()
 
