@@ -30,7 +30,7 @@ enum class SubDocCppVersion {
   Cpp20,
 };
 
-std::string_view cpp_version_flag(SubDocCppVersion v) noexcept {
+inline std::string_view cpp_version_flag(SubDocCppVersion v) noexcept {
   switch (v) {
     case SubDocCppVersion::Cpp20: return "-std=c++20";
   }
