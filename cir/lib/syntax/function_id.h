@@ -23,6 +23,10 @@
 namespace cir::syntax {
 
 struct FunctionId {
+#if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
+  FunctionId(u32 num) : num(num) {}
+#endif
+
   u32 num;
 };
 

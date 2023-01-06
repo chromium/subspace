@@ -21,10 +21,13 @@ namespace sus::result::__private {
 
 template <class T>
 struct OkMarker {
-  T &&value;
+  sus_clang_bug_54040(constexpr inline OkMarker(T&& value)
+                      : value(::sus::forward<T>(value)){});
+
+  T&& value;
 
   template <class U, class E>
-  inline constexpr operator Result<U, E>() &&noexcept
+  inline constexpr operator Result<U, E>() && noexcept
       // `value` is a const reference.
     requires(std::is_const_v<std::remove_reference_t<T>>)
   {
@@ -32,16 +35,16 @@ struct OkMarker {
   }
 
   template <class U, class E>
-  inline constexpr operator Result<U, E>() &&noexcept
+  inline constexpr operator Result<U, E>() && noexcept
       // `value` is a mutable lvalue reference.
     requires(
-        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &>)
+        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>>&>)
   {
     return Result<U, E>::with(mref(value));
   }
 
   template <class U, class E>
-  inline constexpr operator Result<U, E>() &&noexcept
+  inline constexpr operator Result<U, E>() && noexcept
       // `value` is an rvalue reference.
     requires(
         std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &&>)
@@ -52,10 +55,13 @@ struct OkMarker {
 
 template <class T>
 struct ErrMarker {
-  T &&value;
+  sus_clang_bug_54040(constexpr inline ErrMarker(T&& value)
+                      : value(::sus::forward<T>(value)){});
+
+  T&& value;
 
   template <class U, class E>
-  inline constexpr operator Result<U, E>() &&noexcept
+  inline constexpr operator Result<U, E>() && noexcept
       // `value` is a const reference.
     requires(std::is_const_v<std::remove_reference_t<T>>)
   {
@@ -63,16 +69,16 @@ struct ErrMarker {
   }
 
   template <class U, class E>
-  inline constexpr operator Result<U, E>() &&noexcept
+  inline constexpr operator Result<U, E>() && noexcept
       // `value` is a mutable lvalue reference.
     requires(
-        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &>)
+        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>>&>)
   {
     return Result<U, E>::with_err(mref(value));
   }
 
   template <class U, class E>
-  inline constexpr operator Result<U, E>() &&noexcept
+  inline constexpr operator Result<U, E>() && noexcept
       // `value` is an rvalue reference.
     requires(
         std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &&>)

@@ -18,16 +18,22 @@
 
 #include <utility>  // TODO: Replace with our own integer_sequence.
 
+#include "macros/__private/compiler_bugs.h"
+#include "mem/move.h"
 #include "tuple/tuple.h"
 
 namespace sus::containers::__private {
 
 template <class... Ts>
 struct VecMarker {
-  ::sus::tuple_type::Tuple<Ts &&...> values;
+  sus_clang_bug_54040(
+      constexpr inline VecMarker(::sus::tuple_type::Tuple<Ts&&...>&& values)
+      : values(::sus::move(values)){});
+
+  ::sus::tuple_type::Tuple<Ts&&...> values;
 
   template <class U>
-  inline constexpr operator Vec<U>() &&noexcept {
+  inline constexpr operator Vec<U>() && noexcept {
     auto v = Vec<U>::with_capacity(sizeof...(Ts));
 
     auto push_elements =

@@ -15,6 +15,7 @@
 #pragma once
 
 #include "cir/llvm.h"
+#include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/prelude.h"
 
 namespace cir {
@@ -24,6 +25,11 @@ struct SourceSpan {
     return SourceSpan(decl.getASTContext().getFullLoc(decl.getBeginLoc()),
                       decl.getASTContext().getFullLoc(decl.getEndLoc()));
   }
+
+#if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
+  SourceSpan(clang::FullSourceLoc begin, clang::FullSourceLoc end)
+      : begin(begin), end(end) {}
+#endif
 
   clang::FullSourceLoc begin;
   clang::FullSourceLoc end;

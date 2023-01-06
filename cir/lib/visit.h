@@ -23,12 +23,14 @@ namespace cir {
 
 struct VisitCtx {
  public:
+#if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
+  VisitCtx() {}
+#endif
+
   syntax::FunctionId make_function_id() noexcept {
     u32 id = next_function_id;
     next_function_id += 1u;
-    return syntax::FunctionId{
-        .num = id,
-    };
+    return syntax::FunctionId(id);
   }
 
   u32 make_local_var_id() noexcept {

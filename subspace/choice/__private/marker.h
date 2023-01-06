@@ -57,9 +57,9 @@ struct ChoiceMarker<Tag, T> {
 template <auto Tag, class... Ts>
   requires(sizeof...(Ts) > 1)
 struct ChoiceMarker<Tag, Ts...> {
-  sus_clang_bug_54040(constexpr inline ChoiceMarker(Ts&&... value)
-                      : values(::sus::tuple_type::Tuple<Ts&&...>::with(
-                          ::sus::forward<Ts>(value)...)){});
+  sus_clang_bug_54040(
+      constexpr inline ChoiceMarker(::sus::tuple_type::Tuple<Ts&&...>&& values)
+      : values(::sus::move(values)){});
 
   ::sus::tuple_type::Tuple<Ts&&...> values;
 
