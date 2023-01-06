@@ -35,20 +35,20 @@ struct ChoiceMarker;
 template <auto Tag>
 struct ChoiceMarkerVoid {
   template <class TypeListOfMemberTypes, auto... Vs>
-  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() &&noexcept {
+  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() && noexcept {
     return Choice<TypeListOfMemberTypes, Vs...>::template with<Tag>();
   }
 };
 
 template <auto Tag, class T>
 struct ChoiceMarker<Tag, T> {
-  sus_clang_bug_54040(constexpr inline ChoiceMarker(T &&value)
+  sus_clang_bug_54040(constexpr inline ChoiceMarker(T&& value)
                       : value(::sus::forward<T>(value)){});
 
-  T &&value;
+  T&& value;
 
   template <class TypeListOfMemberTypes, auto... Vs>
-  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() &&noexcept {
+  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() && noexcept {
     return Choice<TypeListOfMemberTypes, Vs...>::template with<Tag>(
         ::sus::forward<T>(value));
   }
@@ -57,16 +57,16 @@ struct ChoiceMarker<Tag, T> {
 template <auto Tag, class... Ts>
   requires(sizeof...(Ts) > 1)
 struct ChoiceMarker<Tag, Ts...> {
-  sus_clang_bug_54040(constexpr inline ChoiceMarker(Ts &&...value)
-                      : values(::sus::tuple_type::Tuple<Ts &&...>::with(
+  sus_clang_bug_54040(constexpr inline ChoiceMarker(Ts&&... value)
+                      : values(::sus::tuple_type::Tuple<Ts&&...>::with(
                           ::sus::forward<Ts>(value)...)){});
 
-  ::sus::tuple_type::Tuple<Ts &&...> values;
+  ::sus::tuple_type::Tuple<Ts&&...> values;
 
   template <class TypeListOfMemberTypes, auto... Vs>
-  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() &&noexcept {
+  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() && noexcept {
     using TupleType =
-        decltype(std::declval<Choice<TypeListOfMemberTypes, Vs...> &&>()
+        decltype(std::declval<Choice<TypeListOfMemberTypes, Vs...>&&>()
                      .template into_inner<Tag>());
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
