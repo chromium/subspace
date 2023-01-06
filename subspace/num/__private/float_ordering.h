@@ -16,8 +16,8 @@
 
 #include <compare>
 
-#include "num/__private/intrinsics.h"
-#include "mem/size_of.h"
+#include "subspace/num/__private/intrinsics.h"
+#include "subspace/mem/size_of.h"
 
 namespace sus::num::__private {
 

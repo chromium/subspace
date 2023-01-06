@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "construct/from.h"
+#include "subspace/construct/from.h"
 
-#include "construct/into.h"
+#include "subspace/construct/into.h"
 
 using sus::construct::From;
 

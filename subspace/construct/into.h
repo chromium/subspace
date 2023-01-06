@@ -19,9 +19,9 @@
 #include <concepts>
 #include <type_traits>
 
-#include "construct/__private/into_ref.h"
-#include "construct/from.h"
-#include "macros/compiler.h"
+#include "subspace/construct/__private/into_ref.h"
+#include "subspace/construct/from.h"
+#include "subspace/macros/compiler.h"
 
 namespace sus::construct {
 

@@ -14,10 +14,10 @@
 
 #pragma once
 
-#include "iter/iterator_defn.h"
-#include "macros/__private/compiler_bugs.h"
-#include "mem/move.h"
-#include "mem/relocate.h"
+#include "subspace/iter/iterator_defn.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/relocate.h"
 
 namespace sus::iter {
 

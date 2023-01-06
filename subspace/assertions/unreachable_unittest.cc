@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "assertions/unreachable.h"
+#include "subspace/assertions/unreachable.h"
 
-#include "prelude.h"
+#include "subspace/prelude.h"
 #include "googletest/include/gtest/gtest.h"
 
 namespace sus {

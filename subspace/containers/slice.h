@@ -18,13 +18,13 @@
 
 #include <concepts>
 
-#include "assertions/check.h"
-#include "construct/into.h"
-#include "containers/__private/slice_iter.h"
-#include "iter/iterator_defn.h"
-#include "mem/never_value.h"
-#include "num/unsigned_integer.h"
-#include "option/option.h"
+#include "subspace/assertions/check.h"
+#include "subspace/construct/into.h"
+#include "subspace/containers/__private/slice_iter.h"
+#include "subspace/iter/iterator_defn.h"
+#include "subspace/mem/never_value.h"
+#include "subspace/num/unsigned_integer.h"
+#include "subspace/option/option.h"
 
 namespace sus::containers {
 

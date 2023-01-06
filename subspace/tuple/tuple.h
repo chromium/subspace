@@ -17,19 +17,19 @@
 #include <compare>
 #include <concepts>
 
-#include "assertions/check.h"
-#include "construct/default.h"
-#include "macros/__private/compiler_bugs.h"
-#include "macros/no_unique_address.h"
-#include "mem/clone.h"
-#include "mem/copy.h"
-#include "mem/forward.h"
-#include "mem/move.h"
-#include "mem/replace.h"
-#include "num/num_concepts.h"
-#include "ops/eq.h"
-#include "ops/ord.h"
-#include "tuple/__private/storage.h"
+#include "subspace/assertions/check.h"
+#include "subspace/construct/default.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/macros/no_unique_address.h"
+#include "subspace/mem/clone.h"
+#include "subspace/mem/copy.h"
+#include "subspace/mem/forward.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/replace.h"
+#include "subspace/num/num_concepts.h"
+#include "subspace/ops/eq.h"
+#include "subspace/ops/ord.h"
+#include "subspace/tuple/__private/storage.h"
 
 #define SUS_CONFIG_TUPLE_USE_AFTER_MOVE true
 

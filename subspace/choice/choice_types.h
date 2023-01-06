@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include "choice/__private/storage.h"
-#include "choice/__private/type_list.h"
-#include "macros/for_each.h"
-#include "macros/remove_parens.h"
-#include "tuple/tuple.h"
+#include "subspace/choice/__private/storage.h"
+#include "subspace/choice/__private/type_list.h"
+#include "subspace/macros/for_each.h"
+#include "subspace/macros/remove_parens.h"
+#include "subspace/tuple/tuple.h"
 
 /// Construct a set of associated value and types pairings. The type of the
 /// values need have no relationship to the specified types.

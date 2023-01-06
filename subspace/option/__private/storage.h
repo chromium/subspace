@@ -14,16 +14,16 @@
 
 #pragma once
 
-#include "macros/always_inline.h"
-#include "marker/unsafe.h"
-#include "mem/addressof.h"
-#include "mem/move.h"
-#include "mem/mref.h"
-#include "mem/never_value.h"
-#include "mem/relocate.h"
-#include "mem/replace.h"
-#include "mem/take.h"
-#include "option/state.h"
+#include "subspace/macros/always_inline.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/addressof.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
+#include "subspace/mem/never_value.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/mem/replace.h"
+#include "subspace/mem/take.h"
+#include "subspace/option/state.h"
 
 namespace sus::option::__private {
 

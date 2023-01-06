@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "containers/slice.h"
+#include "subspace/containers/slice.h"
 
-#include "construct/into.h"
+#include "subspace/construct/into.h"
 #include "googletest/include/gtest/gtest.h"
-#include "iter/iterator.h"
-#include "mem/clone.h"
-#include "mem/copy.h"
-#include "mem/move.h"
-#include "num/types.h"
-#include "prelude.h"
+#include "subspace/iter/iterator.h"
+#include "subspace/mem/clone.h"
+#include "subspace/mem/copy.h"
+#include "subspace/mem/move.h"
+#include "subspace/num/types.h"
+#include "subspace/prelude.h"
 
 using sus::containers::Slice;
 

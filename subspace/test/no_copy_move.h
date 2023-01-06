@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include "mem/clone.h"
-#include "mem/copy.h"
-#include "mem/move.h"
+#include "subspace/mem/clone.h"
+#include "subspace/mem/copy.h"
+#include "subspace/mem/move.h"
 
 namespace sus::test {
 

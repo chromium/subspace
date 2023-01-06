@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include "macros/always_inline.h"
-#include "mem/__private/data_size_finder.h"
+#include "subspace/macros/always_inline.h"
+#include "subspace/mem/__private/data_size_finder.h"
 
 namespace sus::mem {
 

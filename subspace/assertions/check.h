@@ -16,8 +16,8 @@
 
 #include <stdlib.h>
 
-#include "assertions/panic.h"
-#include "macros/always_inline.h"
+#include "subspace/assertions/panic.h"
+#include "subspace/macros/always_inline.h"
 
 namespace sus::assertions {
 

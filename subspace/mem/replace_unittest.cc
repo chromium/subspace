@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mem/replace.h"
+#include "subspace/mem/replace.h"
 
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
-#include "macros/builtin.h"
-#include "mem/relocate.h"
-#include "prelude.h"
+#include "subspace/macros/builtin.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/prelude.h"
 
 using sus::mem::replace;
 using sus::mem::replace_ptr;

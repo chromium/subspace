@@ -171,7 +171,7 @@ add_executable(subspace_unittests
 
 # Subspace library
 set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(subspace PUBLIC .)
+target_include_directories(subspace PUBLIC ..)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
    CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")

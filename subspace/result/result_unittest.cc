@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "result/result.h"
+#include "subspace/result/result.h"
 
-#include "containers/array.h"
-#include "iter/iterator.h"
-#include "iter/once.h"
-#include "macros/__private/compiler_bugs.h"
-#include "mem/move.h"
-#include "num/types.h"
-#include "prelude.h"
+#include "subspace/containers/array.h"
+#include "subspace/iter/iterator.h"
+#include "subspace/iter/once.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/move.h"
+#include "subspace/num/types.h"
+#include "subspace/prelude.h"
 #include "googletest/include/gtest/gtest.h"
 
 namespace {

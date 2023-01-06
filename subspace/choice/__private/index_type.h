@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include "mem/size_of.h"
-#include "num/unsigned_integer.h"
+#include "subspace/mem/size_of.h"
+#include "subspace/num/unsigned_integer.h"
 
 namespace sus::choice_type::__private {
 

@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include "choice/__private/type_list.h"
-#include "ops/eq.h"
-#include "ops/ord.h"
+#include "subspace/choice/__private/type_list.h"
+#include "subspace/ops/eq.h"
+#include "subspace/ops/ord.h"
 
 namespace sus::choice_type::__private {
 

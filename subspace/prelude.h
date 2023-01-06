@@ -14,12 +14,12 @@
 
 #pragma once
 
-#include "containers/vec.h"
-#include "marker/unsafe.h"
-#include "mem/copy.h"
-#include "mem/move.h"
-#include "mem/mref.h"
-#include "num/types.h"
+#include "subspace/containers/vec.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/copy.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
+#include "subspace/num/types.h"
 
 // Imports all the things that are pulled into the top-level namespace.
 // TODO: Make a compile-time option for this.

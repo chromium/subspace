@@ -16,9 +16,9 @@
 
 #include <functional>  // TODO: remove this but we need to hash things > size_t.
 
-#include "num/__private/float_consts.h"
-#include "num/__private/float_macros.h"
-#include "num/__private/literals.h"
+#include "subspace/num/__private/float_consts.h"
+#include "subspace/num/__private/float_macros.h"
+#include "subspace/num/__private/literals.h"
 
 namespace sus::num {
 

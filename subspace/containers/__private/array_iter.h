@@ -18,11 +18,11 @@
 
 #include <type_traits>
 
-#include "iter/iterator_defn.h"
-#include "marker/unsafe.h"
-#include "mem/move.h"
-#include "mem/mref.h"
-#include "num/unsigned_integer.h"
+#include "subspace/iter/iterator_defn.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
+#include "subspace/num/unsigned_integer.h"
 
 namespace sus::containers {
 

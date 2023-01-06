@@ -14,7 +14,7 @@
 
 #include <type_traits>
 
-#include "num/types.h"
+#include "subspace/num/types.h"
 
 // Regression test for MSVC compilation bug:
 // https://developercommunity.visualstudio.com/t/MSVC-Compiler-bug-with:-numeric-literal/10108160

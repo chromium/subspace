@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "construct/default.h"
-#include "mem/relocate.h"
-#include "result/result.h"
-#include "test/behaviour_types.h"
+#include "subspace/construct/default.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/result/result.h"
+#include "subspace/test/behaviour_types.h"
 
 using sus::result::Result;
 using sus::construct::Default;

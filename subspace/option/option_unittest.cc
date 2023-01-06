@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "option/option.h"
+#include "subspace/option/option.h"
 
 #include <math.h>  // TODO: Replace with f32::NAN()
 
-#include "containers/array.h"
+#include "subspace/containers/array.h"
 #include "googletest/include/gtest/gtest.h"
-#include "iter/iterator.h"
-#include "macros/__private/compiler_bugs.h"
-#include "macros/builtin.h"
-#include "mem/nonnull.h"
-#include "mem/relocate.h"
-#include "num/types.h"
-#include "prelude.h"
-#include "result/result.h"
-#include "test/behaviour_types.h"
-#include "test/from_i32.h"
-#include "test/no_copy_move.h"
-#include "tuple/tuple.h"
+#include "subspace/iter/iterator.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/macros/builtin.h"
+#include "subspace/mem/nonnull.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/num/types.h"
+#include "subspace/prelude.h"
+#include "subspace/result/result.h"
+#include "subspace/test/behaviour_types.h"
+#include "subspace/test/from_i32.h"
+#include "subspace/test/no_copy_move.h"
+#include "subspace/tuple/tuple.h"
 
 using sus::None;
 using sus::Option;

@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "macros/eval_macro.h"
+#include "subspace/macros/eval_macro.h"
 
 /// Remove parentheses around one or more arguments, if they are present.
 ///

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "construct/into.h"
+#include "subspace/construct/into.h"
 
 #include "googletest/include/gtest/gtest.h"
-#include "macros/__private/compiler_bugs.h"
-#include "mem/forward.h"
-#include "test/behaviour_types.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/forward.h"
+#include "subspace/test/behaviour_types.h"
 
 using sus::construct::From;
 using sus::construct::Into;

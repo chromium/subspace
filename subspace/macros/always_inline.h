@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "macros/compiler.h"
+#include "subspace/macros/compiler.h"
 
 /// Replace the `inline` keyword on a function declaration with
 /// `sus_always_inline` to force the compiler to inline it regardless of its

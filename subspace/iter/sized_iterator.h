@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include "convert/subclass.h"
-#include "mem/relocate.h"
-#include "mem/size_of.h"
+#include "subspace/convert/subclass.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/mem/size_of.h"
 // Doesn't include iterator_defn.h because it's included from there.
 
 namespace sus::iter {

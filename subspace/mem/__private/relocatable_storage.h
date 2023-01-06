@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include "marker/unsafe.h"
-#include "mem/move.h"
-#include "mem/mref.h"
-#include "mem/relocate.h"
-#include "option/option.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/option/option.h"
 
 namespace sus::mem::__private {
 

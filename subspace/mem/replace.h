@@ -18,13 +18,13 @@
 
 #include <type_traits>
 
-#include "marker/unsafe.h"
-#include "mem/addressof.h"
-#include "mem/copy.h"
-#include "mem/move.h"
-#include "mem/mref.h"
-#include "mem/relocate.h"
-#include "mem/size_of.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/addressof.h"
+#include "subspace/mem/copy.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/mem/size_of.h"
 
 namespace sus::mem {
 

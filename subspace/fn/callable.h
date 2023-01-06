@@ -17,7 +17,7 @@
 #include <concepts>
 #include <type_traits>
 
-#include "mem/forward.h"
+#include "subspace/mem/forward.h"
 
 namespace sus::fn::callable {
 

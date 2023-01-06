@@ -18,9 +18,9 @@
 
 #include <utility>  // TODO: Replace with our own integer_sequence.
 
-#include "macros/__private/compiler_bugs.h"
-#include "mem/forward.h"
-#include "tuple/tuple.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/forward.h"
+#include "subspace/tuple/tuple.h"
 
 namespace sus::choice_type {
 template <class TypeListOfMemberTypes, auto... Tags>

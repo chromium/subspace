@@ -16,9 +16,9 @@
 
 #include <type_traits>
 
-#include "macros/__private/compiler_bugs.h"
-#include "marker/unsafe.h"
-#include "mem/relocate.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/relocate.h"
 
 namespace sus::test {
 

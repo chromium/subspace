@@ -23,30 +23,30 @@
 
 #include <type_traits>
 
-#include "assertions/check.h"
-#include "assertions/unreachable.h"
-#include "construct/default.h"
-#include "iter/from_iterator.h"
-#include "macros/always_inline.h"
-#include "macros/compiler.h"
-#include "macros/nonnull.h"
-#include "marker/unsafe.h"
-#include "mem/clone.h"
-#include "mem/copy.h"
-#include "mem/forward.h"
-#include "mem/move.h"
-#include "mem/mref.h"
-#include "mem/relocate.h"
-#include "mem/replace.h"
-#include "mem/take.h"
-#include "ops/eq.h"
-#include "ops/ord.h"
-#include "option/__private/is_option_type.h"
-#include "option/__private/is_tuple_type.h"
-#include "option/__private/marker.h"
-#include "option/__private/storage.h"
-#include "option/state.h"
-#include "result/__private/is_result_type.h"
+#include "subspace/assertions/check.h"
+#include "subspace/assertions/unreachable.h"
+#include "subspace/construct/default.h"
+#include "subspace/iter/from_iterator.h"
+#include "subspace/macros/always_inline.h"
+#include "subspace/macros/compiler.h"
+#include "subspace/macros/nonnull.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/clone.h"
+#include "subspace/mem/copy.h"
+#include "subspace/mem/forward.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/mem/replace.h"
+#include "subspace/mem/take.h"
+#include "subspace/ops/eq.h"
+#include "subspace/ops/ord.h"
+#include "subspace/option/__private/is_option_type.h"
+#include "subspace/option/__private/is_tuple_type.h"
+#include "subspace/option/__private/marker.h"
+#include "subspace/option/__private/storage.h"
+#include "subspace/option/state.h"
+#include "subspace/result/__private/is_result_type.h"
 
 namespace sus::iter {
 template <class Item>
@@ -149,7 +149,8 @@ class Option final {
   ///
   /// sus::iter::FromIterator trait.
   template <class U>
-  static constexpr Option from_iter(::sus::iter::IteratorBase<Option<U>>&& iter) noexcept
+  static constexpr Option from_iter(
+      ::sus::iter::IteratorBase<Option<U>>&& iter) noexcept
     requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>)
   {
     struct Iter : public ::sus::iter::IteratorBase<U> {
@@ -757,8 +758,8 @@ class Option final {
           Option<U>::some(::sus::forward<U>(u)),
           Option<V>::some(::sus::forward<V>(v)));
     } else {
-      return ::sus::tuple_type::Tuple<Option<U>, Option<V>>::with(Option<U>::none(),
-                                                             Option<V>::none());
+      return ::sus::tuple_type::Tuple<Option<U>, Option<V>>::with(
+          Option<U>::none(), Option<V>::none());
     }
   }
 

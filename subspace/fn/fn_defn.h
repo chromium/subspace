@@ -14,12 +14,12 @@
 
 #pragma once
 
-#include "fn/callable.h"
-#include "mem/forward.h"
-#include "mem/move.h"
-#include "mem/never_value.h"
-#include "mem/relocate.h"
-#include "num/types.h"
+#include "subspace/fn/callable.h"
+#include "subspace/mem/forward.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/never_value.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/num/types.h"
 
 namespace sus::fn {
 

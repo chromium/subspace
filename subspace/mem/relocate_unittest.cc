@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mem/relocate.h"
+#include "subspace/mem/relocate.h"
 
-#include "prelude.h"
-#include "num/types.h"
+#include "subspace/prelude.h"
+#include "subspace/num/types.h"
 
 namespace {
 

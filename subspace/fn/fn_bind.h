@@ -16,15 +16,15 @@
 
 #include <type_traits>
 
-#include "fn/callable.h"
-#include "fn/fn_defn.h"
-#include "macros/__private/compiler_bugs.h"
-#include "macros/eval_macro.h"
-#include "macros/for_each.h"
-#include "macros/remove_parens.h"
-#include "marker/unsafe.h"
-#include "mem/forward.h"
-#include "mem/move.h"
+#include "subspace/fn/callable.h"
+#include "subspace/fn/fn_defn.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/macros/eval_macro.h"
+#include "subspace/macros/for_each.h"
+#include "subspace/macros/remove_parens.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/forward.h"
+#include "subspace/mem/move.h"
 
 /// Bind a const lambda to storage for its bound arguments. The output can be
 /// used to construct a FnOnce, FnMut, or Fn.

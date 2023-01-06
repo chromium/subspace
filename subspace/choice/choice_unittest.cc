@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "choice/choice.h"
+#include "subspace/choice/choice.h"
 
 #include <variant>
 
 #include "googletest/include/gtest/gtest.h"
-#include "num/types.h"
-#include "option/option.h"
-#include "prelude.h"
-#include "test/no_copy_move.h"
+#include "subspace/num/types.h"
+#include "subspace/option/option.h"
+#include "subspace/prelude.h"
+#include "subspace/test/no_copy_move.h"
 
 namespace {
 

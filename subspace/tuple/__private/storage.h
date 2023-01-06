@@ -17,10 +17,10 @@
 #include <type_traits>
 #include <utility>  // TODO: Replace std::index_sequence to remove this header.
 
-#include "macros/no_unique_address.h"
-#include "mem/addressof.h"
-#include "mem/forward.h"
-#include "mem/move.h"
+#include "subspace/macros/no_unique_address.h"
+#include "subspace/mem/addressof.h"
+#include "subspace/mem/forward.h"
+#include "subspace/mem/move.h"
 
 namespace sus::tuple_type::__private {
 

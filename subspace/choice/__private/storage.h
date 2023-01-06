@@ -17,11 +17,11 @@
 #include <compare>
 #include <type_traits>
 
-#include "choice/__private/nothing.h"
-#include "choice/__private/pack_index.h"
-#include "macros/no_unique_address.h"
-#include "mem/move.h"
-#include "tuple/tuple.h"
+#include "subspace/choice/__private/nothing.h"
+#include "subspace/choice/__private/pack_index.h"
+#include "subspace/macros/no_unique_address.h"
+#include "subspace/mem/move.h"
+#include "subspace/tuple/tuple.h"
 
 namespace sus::choice_type::__private {
 

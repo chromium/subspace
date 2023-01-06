@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mem/move.h"
+#include "subspace/mem/move.h"
 
 #include "googletest/include/gtest/gtest.h"
 

@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-#include "macros/always_inline.h"
+#include "subspace/macros/always_inline.h"
 
 namespace sus::mem {
 

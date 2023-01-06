@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "construct/from.h"
+#include "subspace/construct/from.h"
 
 namespace sus::construct ::__private {
 

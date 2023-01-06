@@ -14,16 +14,16 @@
 
 #pragma once
 
-#include "assertions/check.h"
-#include "convert/subclass.h"
-#include "macros/nonnull.h"
-#include "marker/unsafe.h"
-#include "mem/addressof.h"
-#include "mem/never_value.h"
-#include "mem/relocate.h"
-#include "ops/eq.h"
-#include "ops/ord.h"
-#include "option/option.h"
+#include "subspace/assertions/check.h"
+#include "subspace/convert/subclass.h"
+#include "subspace/macros/nonnull.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/addressof.h"
+#include "subspace/mem/never_value.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/ops/eq.h"
+#include "subspace/ops/ord.h"
+#include "subspace/option/option.h"
 
 namespace sus::mem {
 

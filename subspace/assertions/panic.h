@@ -16,9 +16,9 @@
 
 #include <stdlib.h>
 
-#include "macros/always_inline.h"
-#include "macros/builtin.h"
-#include "macros/compiler.h"
+#include "subspace/macros/always_inline.h"
+#include "subspace/macros/builtin.h"
+#include "subspace/macros/compiler.h"
 
 #if __has_attribute(not_tail_called)
 #define _sus__not_tail_called __attribute__((not_tail_called))

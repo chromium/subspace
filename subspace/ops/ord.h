@@ -17,8 +17,8 @@
 #include <compare>
 #include <concepts>
 
-#include "assertions/check.h"
-#include "fn/callable.h"
+#include "subspace/assertions/check.h"
+#include "subspace/fn/callable.h"
 
 // TODO: PartialOrd comes with: lt, le, ge, gt.
 // TODO: Eq comes with eq, ne.

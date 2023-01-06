@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mem/clone.h"
+#include "subspace/mem/clone.h"
 
-#include "macros/__private/compiler_bugs.h"
-#include "num/types.h"
-#include "prelude.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/num/types.h"
+#include "subspace/prelude.h"
 #include "googletest/include/gtest/gtest.h"
 
 using sus::mem::Clone;

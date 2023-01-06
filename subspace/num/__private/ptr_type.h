@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "mem/size_of.h"
+#include "subspace/mem/size_of.h"
 
 namespace sus::num::__private {
 template <unsigned int bytes = ::sus::mem::size_of<void*>()>

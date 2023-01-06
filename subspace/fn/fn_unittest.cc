@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "fn/fn.h"
+#include "subspace/fn/fn.h"
 
 #include <concepts>
 
-#include "construct/into.h"
-#include "mem/forward.h"
-#include "mem/move.h"
-#include "mem/replace.h"
-#include "option/option.h"
-#include "prelude.h"
+#include "subspace/construct/into.h"
+#include "subspace/mem/forward.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/replace.h"
+#include "subspace/option/option.h"
+#include "subspace/prelude.h"
 #include "googletest/include/gtest/gtest.h"
 
 namespace {
