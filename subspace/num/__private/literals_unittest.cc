@@ -22,4 +22,3 @@ template <class T>
 void TestOperationInTemplateFunction() {
   0_u32 + 1_u32;
 }
-

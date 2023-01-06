@@ -14,8 +14,9 @@
 
 #include <type_traits>
 
-#include "subspace/construct/into.h"
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/default.h"
+#include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/num/num_concepts.h"
@@ -25,7 +26,6 @@
 #include "subspace/ops/ord.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
-#include "googletest/include/gtest/gtest.h"
 #include "subspace/tuple/tuple.h"
 
 namespace {
@@ -541,10 +541,8 @@ TEST(i32, UncheckedAdd) {
   EXPECT_EQ(i32::MIN.unchecked_add(unsafe_fn, 0_i32), i32::MIN);
   EXPECT_EQ(i32::MIN.unchecked_add(unsafe_fn, 1_i32),
             i32(i32::MIN_PRIMITIVE + 1));
-  EXPECT_EQ(i32::MIN.unchecked_add(unsafe_fn, i32::MAX),
-            i32::MIN + i32::MAX);
-  EXPECT_EQ(i32::MAX.unchecked_add(unsafe_fn, i32::MIN),
-            i32::MIN + i32::MAX);
+  EXPECT_EQ(i32::MIN.unchecked_add(unsafe_fn, i32::MAX), i32::MIN + i32::MAX);
+  EXPECT_EQ(i32::MAX.unchecked_add(unsafe_fn, i32::MIN), i32::MIN + i32::MAX);
 
   // ** Signed only.
   EXPECT_EQ((-12345_i32).unchecked_add(unsafe_fn, 12345_i32), 0_i32);
@@ -563,8 +561,7 @@ TEST(i32, WrappingAdd) {
   EXPECT_EQ(i32::MAX.wrapping_add(1_i32), i32::MIN);
   EXPECT_EQ(i32::MAX.wrapping_add(2_i32), i32::MIN + 1_i32);
   EXPECT_EQ((2_i32).wrapping_add(i32::MAX), i32::MIN + 1_i32);
-  EXPECT_EQ(i32::MAX.wrapping_add(i32::MAX),
-            i32::MIN + i32::MAX - 1_i32);
+  EXPECT_EQ(i32::MAX.wrapping_add(i32::MAX), i32::MIN + i32::MAX - 1_i32);
 
   // ** Signed only.
   EXPECT_EQ((-12345_i32).wrapping_add(12345_i32), 0_i32);
@@ -1981,8 +1978,7 @@ TEST(i32, SaturatingAddUnsigned) {
 
   EXPECT_EQ((-1_i32).saturating_add_unsigned(2u), 1_i32);
   EXPECT_EQ((i32::MIN).saturating_add_unsigned(u32::MAX), i32::MAX);
-  EXPECT_EQ((i32::MIN + 1_i32).saturating_add_unsigned(u32::MAX),
-            i32::MAX);
+  EXPECT_EQ((i32::MIN + 1_i32).saturating_add_unsigned(u32::MAX), i32::MAX);
   EXPECT_EQ((i32::MIN + 1_i32).saturating_add_unsigned(u32::MAX - 1_u32),
             i32::MAX);
   EXPECT_EQ((i32::MAX - 2_i32).saturating_add_unsigned(3u), i32::MAX);
@@ -2039,8 +2035,7 @@ TEST(i32, SaturatingSubUnsigned) {
 
   EXPECT_EQ((-1_i32).saturating_sub_unsigned(2u), -3_i32);
   EXPECT_EQ((i32::MAX).saturating_sub_unsigned(u32::MAX), i32::MIN);
-  EXPECT_EQ((i32::MAX - 1_i32).saturating_sub_unsigned(u32::MAX),
-            i32::MIN);
+  EXPECT_EQ((i32::MAX - 1_i32).saturating_sub_unsigned(u32::MAX), i32::MIN);
   EXPECT_EQ((i32::MAX - 1_i32).saturating_sub_unsigned(u32::MAX - 1_u32),
             i32::MIN);
   EXPECT_EQ((i32::MIN + 2_i32).saturating_sub_unsigned(3u), i32::MIN);

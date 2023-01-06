@@ -14,8 +14,8 @@
 
 #include "subspace/assertions/unreachable.h"
 
-#include "subspace/prelude.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/prelude.h"
 
 namespace sus {
 namespace {

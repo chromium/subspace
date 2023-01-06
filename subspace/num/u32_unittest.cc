@@ -14,10 +14,10 @@
 
 #include <type_traits>
 
-#include "subspace/construct/into.h"
-#include "subspace/construct/default.h"
-#include "subspace/containers/array.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/construct/default.h"
+#include "subspace/construct/into.h"
+#include "subspace/containers/array.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/num/num_concepts.h"
 #include "subspace/num/signed_integer.h"
@@ -386,10 +386,8 @@ TEST(u32, UncheckedAdd) {
   EXPECT_EQ(u32::MIN.unchecked_add(unsafe_fn, 0_u32), u32::MIN);
   EXPECT_EQ(u32::MIN.unchecked_add(unsafe_fn, 1_u32),
             u32(u32::MIN_PRIMITIVE + 1));
-  EXPECT_EQ(u32::MIN.unchecked_add(unsafe_fn, u32::MAX),
-            u32::MIN + u32::MAX);
-  EXPECT_EQ(u32::MAX.unchecked_add(unsafe_fn, u32::MIN),
-            u32::MIN + u32::MAX);
+  EXPECT_EQ(u32::MIN.unchecked_add(unsafe_fn, u32::MAX), u32::MIN + u32::MAX);
+  EXPECT_EQ(u32::MAX.unchecked_add(unsafe_fn, u32::MIN), u32::MIN + u32::MAX);
 }
 
 TEST(u32, WrappingAdd) {
@@ -401,8 +399,7 @@ TEST(u32, WrappingAdd) {
   EXPECT_EQ(u32::MAX.wrapping_add(1_u32), u32::MIN);
   EXPECT_EQ(u32::MAX.wrapping_add(2_u32), u32::MIN + 1_u32);
   EXPECT_EQ((2_u32).wrapping_add(u32::MAX), u32::MIN + 1_u32);
-  EXPECT_EQ(u32::MAX.wrapping_add(u32::MAX),
-            u32::MIN + u32::MAX - 1_u32);
+  EXPECT_EQ(u32::MAX.wrapping_add(u32::MAX), u32::MIN + u32::MAX - 1_u32);
 }
 
 TEST(u32, Div) {

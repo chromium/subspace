@@ -14,6 +14,7 @@
 
 #include "subspace/result/result.h"
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/containers/array.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/iter/once.h"
@@ -21,7 +22,6 @@
 #include "subspace/mem/move.h"
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 namespace {
 

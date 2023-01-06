@@ -14,9 +14,9 @@
 
 #include <type_traits>
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
-#include "googletest/include/gtest/gtest.h"
 #include "subspace/num/num_concepts.h"
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"

@@ -14,8 +14,6 @@
 
 #include "subspace/construct/default.h"
 
-#include "googletest/include/gtest/gtest.h"
-
 using sus::construct::Default;
 
 namespace {

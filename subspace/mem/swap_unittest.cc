@@ -16,9 +16,9 @@
 
 #include <type_traits>
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/macros/builtin.h"
 #include "subspace/mem/relocate.h"
-#include "googletest/include/gtest/gtest.h"
 
 namespace sus::mem {
 namespace {
@@ -54,9 +54,8 @@ TEST(Swap, ConstexprTrivialAbi) {
   // This means `S` is only "trivially relocatable" if achieved through
   // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(relocate_one_by_memcpy<S> ==
-                    __has_extension(trivially_relocatable),
-                "");
+  static_assert(
+      relocate_one_by_memcpy<S> == __has_extension(trivially_relocatable), "");
 
   auto i = []() constexpr {
     S i(2);
@@ -131,9 +130,8 @@ TEST(Swap, TrivialAbi) {
   // This means `S` is only "trivially relocatable" if achieved through
   // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(relocate_one_by_memcpy<S> ==
-                    __has_extension(trivially_relocatable),
-                "");
+  static_assert(
+      relocate_one_by_memcpy<S> == __has_extension(trivially_relocatable), "");
 
   S i(2);
   S j(5);

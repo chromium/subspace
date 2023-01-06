@@ -41,10 +41,13 @@ namespace sus::construct {
 /// }
 /// ```
 template <class ToType, class FromType>
-// clang-format off
-concept From = requires (FromType&& from) {
-    { ToType::from(static_cast<FromType&&>(from)) } -> std::same_as<ToType>;
+concept From = requires(FromType&& from) {
+  { ToType::from(static_cast<FromType&&>(from)) } -> std::same_as<ToType>;
 };
-// clang-format on
+
+template <class ToType, class FromType>
+concept TryFrom = requires(FromType&& from) {
+  { ToType::try_from(static_cast<FromType&&>(from)) } -> std::same_as<ToType>;
+};
 
 }  // namespace sus::construct

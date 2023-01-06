@@ -14,8 +14,8 @@
 
 #include "subspace/containers/slice.h"
 
-#include "subspace/construct/into.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/construct/into.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/copy.h"

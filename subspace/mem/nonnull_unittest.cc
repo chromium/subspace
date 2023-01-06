@@ -14,8 +14,8 @@
 
 #include "subspace/mem/nonnull.h"
 
-#include "subspace/construct/into.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/construct/into.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/never_value.h"

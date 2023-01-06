@@ -16,13 +16,13 @@
 
 #include <concepts>
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/replace.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 namespace {
 

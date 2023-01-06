@@ -29,12 +29,12 @@ concept can_move = requires(T t) {
 // clang-format on
 
 static_assert(can_move<int>);
-static_assert(can_move<int &>);
-static_assert(can_move<int &&>);
-static_assert(!can_move<const int &>);
-static_assert(!can_move<const int &&>);
+static_assert(can_move<int&>);
+static_assert(can_move<int&&>);
+static_assert(!can_move<const int&>);
+static_assert(!can_move<const int&&>);
 
-void bind_rvalue(int &&) {}
+void bind_rvalue(int&&) {}
 void bind_value(int) {}
 
 TEST(Move, Binds) {
@@ -47,27 +47,27 @@ TEST(Move, Binds) {
 
 struct MoveOnly {
   MoveOnly() = default;
-  MoveOnly(MoveOnly &&) = default;
-  MoveOnly &operator=(MoveOnly &&) = default;
+  MoveOnly(MoveOnly&&) = default;
+  MoveOnly& operator=(MoveOnly&&) = default;
 };
 
 struct MoveConsOnly {
   MoveConsOnly() = default;
-  MoveConsOnly(MoveConsOnly &&) = default;
-  MoveConsOnly &operator=(MoveConsOnly &&) = delete;
+  MoveConsOnly(MoveConsOnly&&) = default;
+  MoveConsOnly& operator=(MoveConsOnly&&) = delete;
 };
 
 struct MoveAssignOnly {
   MoveAssignOnly() = default;
-  MoveAssignOnly &operator=(MoveAssignOnly &&) = default;
+  MoveAssignOnly& operator=(MoveAssignOnly&&) = default;
 };
 
 struct MoveConsWithCopy {
   MoveConsWithCopy() = default;
-  MoveConsWithCopy(MoveConsWithCopy &&) = default;
-  MoveConsWithCopy &operator=(MoveConsWithCopy &&) = delete;
+  MoveConsWithCopy(MoveConsWithCopy&&) = default;
+  MoveConsWithCopy& operator=(MoveConsWithCopy&&) = delete;
 
-  MoveConsWithCopy &operator=(const MoveConsWithCopy &) = default;
+  MoveConsWithCopy& operator=(const MoveConsWithCopy&) = default;
 };
 
 static_assert(Move<MoveOnly>);
@@ -75,9 +75,9 @@ static_assert(Move<MoveConsOnly>);
 static_assert(!Move<MoveAssignOnly>);
 static_assert(!Move<MoveConsWithCopy>);
 
-void bind_rvalue(MoveOnly &&) {}
+void bind_rvalue(MoveOnly&&) {}
 void bind_value(MoveOnly) {}
-void bind_const(const MoveOnly &) {}
+void bind_const(const MoveOnly&) {}
 
 TEST(Move, MoveOnly) {
   MoveOnly m;

@@ -14,10 +14,10 @@
 
 #include "subspace/mem/clone.h"
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 using sus::mem::Clone;
 using sus::mem::clone;
