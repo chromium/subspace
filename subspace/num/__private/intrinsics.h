@@ -1209,7 +1209,7 @@ sus_always_inline constexpr T nan() noexcept {
 template <class T>
   requires(std::is_floating_point_v<T>)
 sus_always_inline constexpr T infinity() noexcept {
-  // SAFETY: The value being constructed is non a NaN so we can do this in a
+  // SAFETY: The value being constructed is not a NaN so we can do this in a
   // constexpr way.
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return into_float_constexpr(::sus::marker::unsafe_fn, uint32_t{0x7f800000});
