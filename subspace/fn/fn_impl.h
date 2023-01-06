@@ -138,8 +138,9 @@ R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
     case __private::Storage: {
       ::sus::check(storage_);  // Catch use-after-move.
       auto* storage = ::sus::mem::replace_ptr(mref(storage_), nullptr);
-      auto& vtable = static_cast<const __private::FnStorageVtable<R, CallArgs...>&>(
-          storage->vtable.unwrap_mut());
+      auto& vtable =
+          static_cast<const __private::FnStorageVtable<R, CallArgs...>&>(
+              storage->vtable.unwrap_mut());
 
       // Delete storage, after the call_once() is complete.
       //
@@ -168,8 +169,9 @@ R FnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
       return Super::fn_ptr_(static_cast<CallArgs&&>(args)...);
     case __private::Storage: {
       ::sus::check(Super::storage_);  // Catch use-after-move.
-      auto& vtable = static_cast<const __private::FnStorageVtable<R, CallArgs...>&>(
-          Super::storage_->vtable.unwrap_mut());
+      auto& vtable =
+          static_cast<const __private::FnStorageVtable<R, CallArgs...>&>(
+              Super::storage_->vtable.unwrap_mut());
       return vtable.call_mut(
           static_cast<__private::FnStorageBase&>(*Super::storage_),
           ::sus::forward<CallArgs>(args)...);
@@ -187,8 +189,9 @@ R Fn<R(CallArgs...)>::operator()(CallArgs&&... args) const& noexcept {
       return Super::fn_ptr_(static_cast<CallArgs&&>(args)...);
     case __private::Storage: {
       ::sus::check(Super::storage_);  // Catch use-after-move.
-      auto& vtable = static_cast<const __private::FnStorageVtable<R, CallArgs...>&>(
-          Super::storage_->vtable.unwrap_mut());
+      auto& vtable =
+          static_cast<const __private::FnStorageVtable<R, CallArgs...>&>(
+              Super::storage_->vtable.unwrap_mut());
       return vtable.call(
           static_cast<const __private::FnStorageBase&>(*Super::storage_),
           ::sus::forward<CallArgs>(args)...);

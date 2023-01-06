@@ -17,7 +17,6 @@
 #include <variant>
 
 #include "googletest/include/gtest/gtest.h"
-#include "macros/__private/compiler_bugs.h"
 #include "num/types.h"
 #include "option/option.h"
 #include "prelude.h"

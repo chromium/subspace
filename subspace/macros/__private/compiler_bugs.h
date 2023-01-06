@@ -36,10 +36,13 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/54040
-// Aggregate initialization in Clang doesn't work when:
+// Aggregate initialization via () paren syntax.
+//
+// Support for this landed and was reverted in clang 16. The first time it
+// landed it still did not work when:
 // * A destructor is present in the aggregate.
 // * A member of the aggregate has a concept-defined conversion operator.
-#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
 #define sus_clang_bug_54040(...) __VA_ARGS__
 #define sus_clang_bug_54040_else(...)
 #else
@@ -115,9 +118,9 @@
 #define sus_gcc_bug_108169_else(...) __VA_ARGS__
 #endif
 
-
 // TODO: https://github.com/llvm/llvm-project/issues/49358
-// Clang-cl doesn't support either [[no_unique_address]] nor [[msvc::no_unique_address]]
+// Clang-cl doesn't support either [[no_unique_address]] nor
+// [[msvc::no_unique_address]]
 #if _MSC_VER && __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_49358(...) __VA_ARGS__
 #define sus_clang_bug_49358_else(...)

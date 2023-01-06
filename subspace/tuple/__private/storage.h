@@ -17,7 +17,6 @@
 #include <type_traits>
 #include <utility>  // TODO: Replace std::index_sequence to remove this header.
 
-#include "macros/__private/compiler_bugs.h"
 #include "macros/no_unique_address.h"
 #include "mem/addressof.h"
 #include "mem/forward.h"

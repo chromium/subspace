@@ -30,6 +30,8 @@ using sus::ops::min_by;
 using sus::ops::min_by_key;
 
 struct Strong {
+  sus_clang_bug_54040(Strong(i32 i, i32 id) : i(i), id(id){});
+
   i32 i;
   i32 id;
 
@@ -40,6 +42,8 @@ struct Strong {
 static_assert(sus::ops::Ord<Strong>);
 
 struct NoCmp {
+  sus_clang_bug_54040(NoCmp(i32 i, i32 id) : i(i), id(id){});
+
   i32 i;
   i32 id;
 };
