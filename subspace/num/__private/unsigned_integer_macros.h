@@ -28,7 +28,9 @@
 #include "subspace/num/__private/literals.h"
 #include "subspace/num/__private/ptr_type.h"
 #include "subspace/num/integer_concepts.h"
+#include "subspace/num/try_from_int_error.h"
 #include "subspace/option/option.h"
+#include "subspace/result/result.h"
 
 namespace sus::containers {
 template <class T, size_t N>
@@ -133,6 +135,29 @@ class Tuple;
     return T(static_cast<PrimitiveT>(s.primitive_value));                      \
   }                                                                            \
                                                                                \
+  /** Tries to construct a ##T## from a signed integer type (i8, i16, i32,     \
+   * etc).                                                                     \
+   *                                                                           \
+   * Returns an error if the source value is outside of the range of ##T##.    \
+   */                                                                          \
+  template <Signed S>                                                          \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(S s) noexcept {                                                     \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    if (s.primitive_value < 0) {                                               \
+      return R::with_err(::sus::num::TryFromIntError(                          \
+          ::sus::num::TryFromIntError::Kind::OutOfBounds));                    \
+    }                                                                          \
+    constexpr auto umax = __private::into_unsigned(S::MAX_PRIMITIVE);          \
+    if constexpr (MAX_PRIMITIVE < umax) {                                      \
+      if (__private::into_unsigned(s.primitive_value) > MAX_PRIMITIVE) {       \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(s.primitive_value)));             \
+  }                                                                            \
+                                                                               \
   /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc).    \
    *                                                                           \
    * # Panics                                                                  \
@@ -143,6 +168,24 @@ class Tuple;
     if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)                            \
       ::sus::check(u.primitive_value <= MAX_PRIMITIVE);                        \
     return T(static_cast<PrimitiveT>(u.primitive_value));                      \
+  }                                                                            \
+                                                                               \
+  /** Tries to construct a ##T## from an unsigned integer type (u8, u16, u32,  \
+   * etc).                                                                     \
+   *                                                                           \
+   * Returns an error if the source value is outside of the range of ##T##.    \
+   */                                                                          \
+  template <Unsigned U>                                                        \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(U u) noexcept {                                                     \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE) {                          \
+      if (u.primitive_value > MAX_PRIMITIVE) {                                 \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(u.primitive_value)));             \
   }                                                                            \
                                                                                \
   /** Constructs a ##T## from a signed primitive integer type (int, long,      \
@@ -160,6 +203,29 @@ class Tuple;
     return T(static_cast<PrimitiveT>(s));                                      \
   }                                                                            \
                                                                                \
+  /** Tries to construct a ##T## from a signed primitive integer type (int,    \
+   * long, etc).                                                               \
+   *                                                                           \
+   * Returns an error if the source value is outside of the range of ##T##.    \
+   */                                                                          \
+  template <SignedPrimitiveInteger S>                                          \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(S s) {                                                              \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    if (s < 0) {                                                               \
+      return R::with_err(::sus::num::TryFromIntError(                          \
+          ::sus::num::TryFromIntError::Kind::OutOfBounds));                    \
+    }                                                                          \
+    constexpr auto umax = __private::into_unsigned(__private::max_value<S>()); \
+    if constexpr (MAX_PRIMITIVE < umax) {                                      \
+      if (__private::into_unsigned(s) > MAX_PRIMITIVE) {                       \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(s)));                             \
+  }                                                                            \
+                                                                               \
   /** Constructs a ##T## from an unsigned primitive integer type (unsigned     \
    * int, unsigned long, etc).                                                 \
    *                                                                           \
@@ -171,6 +237,24 @@ class Tuple;
     if constexpr (MAX_PRIMITIVE < __private::max_value<U>())                   \
       ::sus::check(u <= MAX_PRIMITIVE);                                        \
     return T(static_cast<PrimitiveT>(u));                                      \
+  }                                                                            \
+                                                                               \
+  /** Tries to construct a ##T## from an unsigned primitive integer type       \
+   * (unsigned int, unsigned long, etc).                                       \
+   *                                                                           \
+   * Returns an error if the source value is outside of the range of ##T##.    \
+   */                                                                          \
+  template <UnsignedPrimitiveInteger U>                                        \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(U u) {                                                              \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {                 \
+      if (u > MAX_PRIMITIVE) {                                                 \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(u)));                             \
   }                                                                            \
   static_assert(true)
 

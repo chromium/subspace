@@ -19,7 +19,6 @@
 #include "subspace/mem/move.h"
 #include "subspace/mem/never_value.h"
 #include "subspace/mem/relocate.h"
-#include "subspace/num/types.h"
 
 namespace sus::fn {
 

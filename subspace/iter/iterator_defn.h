@@ -32,6 +32,11 @@ template <class T>
 class Vec;
 }
 
+namespace sus::result {
+template <class T, class E>
+class Result;
+}
+
 namespace sus::iter {
 
 using ::sus::option::Option;
@@ -94,16 +99,21 @@ class [[nodiscard]] Iterator final : public I {
   friend class Iterator;  // Iterator<J>::foo() can construct Iterator<I>.
 
   // Option can't include Iterator, due to a circular dependency between
-  // Option->Iterator->Option. So it forward declares Iterator, and needs
-  // to use the constructor directly.
+  // Option->Once->IteratorBase->Option. So it forward declares Iterator, and
+  // needs to use the constructor directly.
   template <class T>
-  friend class sus_clang_bug_58836(
-      ::sus::option::) Option;  // Option<T>::foo() can construct Iterator<I>.
+  friend class ::sus::option::Option;
+
+  // Result can't include Iterator, due to a circular dependency between
+  // Result->Iterator->usize->Result. So it forward declares Iterator, and needs
+  // to use the constructor directly.
+  template <class T, class E>
+  friend class ::sus::result::Result;
 
   template <class... Args>
   Iterator(Args&&... args) : I(static_cast<Args&&>(args)...) {
-    // We want to be able to use Iterator<I> and I interchangeably, so that if an
-    // `I` gets stored in SizedIterator, it doesn't misbehave.
+    // We want to be able to use Iterator<I> and I interchangeably, so that if
+    // an `I` gets stored in SizedIterator, it doesn't misbehave.
     static_assert(::sus::mem::size_of<I>() ==
                   ::sus::mem::size_of<Iterator<I>>());
   }
@@ -160,7 +170,7 @@ class [[nodiscard]] Iterator final : public I {
   /// If the `usize` type does not have trapping arithmetic enabled, and the
   /// iterator has more than `usize::MAX` elements in it, the value will wrap
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
-  ::sus::usize count() noexcept;
+  ::sus::num::usize count() noexcept;
 
   // TODO: map()
 
@@ -237,7 +247,7 @@ bool Iterator<I>::any(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
 }
 
 template <class I>
-usize Iterator<I>::count() noexcept {
+::sus::num::usize Iterator<I>::count() noexcept {
   // TODO: If constexpr(I::count() exists) then call that instead.
   auto c = 0_usize;
   while (this->next().is_some()) c += 1_usize;
@@ -271,8 +281,8 @@ Iterator<I>::filter(
   // Doing so dynamically would require a (single) heap allocation at that point
   // always. It would be elided if the iterator was kept on the stack, or used
   // inside the temporary expression. But it would require one heap allocation
-  // to use any chain of iterators in a for loop, since temporaries get destroyed
-  // after initialing the loop.
+  // to use any chain of iterators in a for loop, since temporaries get
+  // destroyed after initialing the loop.
   return {::sus::move(pred), make_sized_iterator(::sus::move(*this))};
 }
 

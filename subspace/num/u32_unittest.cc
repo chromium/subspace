@@ -238,6 +238,16 @@ TEST(u32, From) {
   static_assert(sus::construct::From<u32, uint16_t>);
   static_assert(sus::construct::From<u32, uint32_t>);
   static_assert(sus::construct::From<u32, uint64_t>);
+  static_assert(sus::construct::TryFrom<u32, char>);
+  static_assert(sus::construct::TryFrom<u32, size_t>);
+  static_assert(sus::construct::TryFrom<u32, int8_t>);
+  static_assert(sus::construct::TryFrom<u32, int16_t>);
+  static_assert(sus::construct::TryFrom<u32, int32_t>);
+  static_assert(sus::construct::TryFrom<u32, int64_t>);
+  static_assert(sus::construct::TryFrom<u32, uint8_t>);
+  static_assert(sus::construct::TryFrom<u32, uint16_t>);
+  static_assert(sus::construct::TryFrom<u32, uint32_t>);
+  static_assert(sus::construct::TryFrom<u32, uint64_t>);
 
   EXPECT_EQ(u32::from(char{2}), 2_u32);
   EXPECT_EQ(u32::from(size_t{2}), 2_u32);
@@ -250,6 +260,23 @@ TEST(u32, From) {
   EXPECT_EQ(u32::from(uint32_t{2}), 2_u32);
   EXPECT_EQ(u32::from(uint64_t{2}), 2_u32);
 
+  EXPECT_EQ(u32::try_from(char{2}).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(size_t{2}).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(int8_t{2}).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(int16_t{2}).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(int32_t{2}).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(int64_t{2}).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(uint8_t{2}).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(uint16_t{2}).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(uint32_t{2}).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(uint64_t{2}).unwrap(), 2_u32);
+
+  EXPECT_TRUE(u32::try_from(int32_t{i32::MIN}).is_err());
+  EXPECT_TRUE(u32::try_from(int32_t{i32::MAX}).is_ok());
+  EXPECT_TRUE(u32::try_from(int64_t{i64::MIN}).is_err());
+  EXPECT_TRUE(u32::try_from(int64_t{i64::MAX}).is_err());
+  EXPECT_TRUE(u32::try_from(uint64_t{u64::MAX}).is_err());
+
   static_assert(sus::construct::From<u32, i8>);
   static_assert(sus::construct::From<u32, i16>);
   static_assert(sus::construct::From<u32, i32>);
@@ -260,6 +287,16 @@ TEST(u32, From) {
   static_assert(sus::construct::From<u32, u32>);
   static_assert(sus::construct::From<u32, u64>);
   static_assert(sus::construct::From<u32, usize>);
+  static_assert(sus::construct::TryFrom<u32, i8>);
+  static_assert(sus::construct::TryFrom<u32, i16>);
+  static_assert(sus::construct::TryFrom<u32, i32>);
+  static_assert(sus::construct::TryFrom<u32, i64>);
+  static_assert(sus::construct::TryFrom<u32, isize>);
+  static_assert(sus::construct::TryFrom<u32, u8>);
+  static_assert(sus::construct::TryFrom<u32, u16>);
+  static_assert(sus::construct::TryFrom<u32, u32>);
+  static_assert(sus::construct::TryFrom<u32, u64>);
+  static_assert(sus::construct::TryFrom<u32, usize>);
 
   EXPECT_EQ(u32::from(2_i8), 2_u32);
   EXPECT_EQ(u32::from(2_i16), 2_u32);
@@ -271,6 +308,23 @@ TEST(u32, From) {
   EXPECT_EQ(u32::from(2_u32), 2_u32);
   EXPECT_EQ(u32::from(2_u64), 2_u32);
   EXPECT_EQ(u32::from(2_usize), 2_u32);
+
+  EXPECT_EQ(u32::try_from(2_i8).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(2_i16).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(2_i32).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(2_i64).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(2_isize).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(2_u8).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(2_u16).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(2_u32).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(2_u64).unwrap(), 2_u32);
+  EXPECT_EQ(u32::try_from(2_usize).unwrap(), 2_u32);
+
+  EXPECT_TRUE(u32::try_from(i32::MIN).is_err());
+  EXPECT_TRUE(u32::try_from(i32::MAX).is_ok());
+  EXPECT_TRUE(u32::try_from(i64::MIN).is_err());
+  EXPECT_TRUE(u32::try_from(i64::MAX).is_err());
+  EXPECT_TRUE(u32::try_from(u64::MAX).is_err());
 }
 
 TEST(u32DeathTest, FromOutOfRange) {
@@ -285,6 +339,28 @@ TEST(u32DeathTest, FromOutOfRange) {
   EXPECT_DEATH(u32::from(-1_i64), "");
   EXPECT_DEATH(u32::from(-1_isize), "");
 #endif
+}
+
+TEST(u32, TryFromBoundaries) {
+  // Signed primitives.
+  EXPECT_TRUE(u32::try_from(int64_t{i64::from(u32::MAX)}).is_ok());
+  EXPECT_TRUE(u32::try_from(int64_t{i64::from(u32::MAX) + 1}).is_err());
+  EXPECT_TRUE(u32::try_from(int64_t{0}).is_ok());
+  EXPECT_TRUE(u32::try_from(int64_t{-1}).is_err());
+
+  // Signed integers.
+  EXPECT_TRUE(u32::try_from(i64::from(u32::MAX)).is_ok());
+  EXPECT_TRUE(u32::try_from(i64::from(u32::MAX) + 1).is_err());
+  EXPECT_TRUE(u32::try_from(0_i32).is_ok());
+  EXPECT_TRUE(u32::try_from(-1_i32).is_err());
+
+  // Unsigned primitives.
+  EXPECT_TRUE(u32::try_from(uint64_t{u64::from(u32::MAX)}).is_ok());
+  EXPECT_TRUE(u32::try_from(uint64_t{u64::from(u32::MAX) + 1u}).is_err());
+
+  // Unsigned integers.
+  EXPECT_TRUE(u32::try_from(u64::from(u32::MAX)).is_ok());
+  EXPECT_TRUE(u32::try_from(u64::from(u32::MAX) + 1u).is_err());
 }
 
 TEST(u32, AbsDiff) {

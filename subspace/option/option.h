@@ -969,7 +969,7 @@ template <class T, class U>
 constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept = delete;
 
-// Implicit for-ranged loop iteration via `Array::iter()`.
+// Implicit for-ranged loop iteration via `Option::iter()`.
 using sus::iter::__private::begin;
 using sus::iter::__private::end;
 

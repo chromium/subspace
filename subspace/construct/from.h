@@ -16,6 +16,8 @@
 
 #include <concepts>
 
+#include "subspace/result/__private/is_result_type.h"
+
 namespace sus::construct {
 
 /// A concept that indicates `ToType` can be constructed from a `FromType`, via
@@ -45,9 +47,19 @@ concept From = requires(FromType&& from) {
   { ToType::from(static_cast<FromType&&>(from)) } -> std::same_as<ToType>;
 };
 
+/// A concept that indicates `ToType` can be (sometimes) constructed from a
+/// `FromType`, via `ToType::try_from(FromType)`.
+///
+/// Unlike `sus::construct::From`, using the `try_from()` method gives the
+/// opportunity to catch failures since the return type is a
+/// `sus::result::Result`.
 template <class ToType, class FromType>
 concept TryFrom = requires(FromType&& from) {
-  { ToType::try_from(static_cast<FromType&&>(from)) } -> std::same_as<ToType>;
+  { ToType::try_from(static_cast<FromType&&>(from)) };
+  requires std::same_as<
+      typename ::sus::result::__private::IsResultType<decltype(ToType::try_from(
+          static_cast<FromType&&>(from)))>::ok_type,
+      ToType>;
 };
 
 }  // namespace sus::construct

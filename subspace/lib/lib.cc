@@ -16,13 +16,18 @@
 #include <stddef.h>
 
 #include "subspace/mem/size_of.h"
+#include "subspace/num/signed_integer.h"
 
 // Architectural assumptions we make throughout the implementation of Subspace.
 static_assert(CHAR_BIT == 8);
-static_assert(::sus::mem::size_of<int>() == 4);
-static_assert(::sus::mem::size_of<size_t>() >= 4);
-static_assert(::sus::mem::size_of<size_t>() <= 8);
+static_assert(sus::mem::size_of<int>() == 4);
+static_assert(sus::mem::size_of<size_t>() >= 4);
+static_assert(sus::mem::size_of<size_t>() <= 8);
 
 // TODO: Consider if we should only support little endian? We probably make this
 // assumption. Support for endian *conversion* is still important for network
 // byte order etc.
+
+// The Vec class, along with any other class with pointer arithmetic, assumes
+// isize::MAX == PTRDIFF_MAX.
+static_assert(sus::isize::MAX == PTRDIFF_MAX);
