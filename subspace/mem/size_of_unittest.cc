@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mem/size_of.h"
+#include "subspace/mem/size_of.h"
 
 #include <type_traits>
 
-#include "macros/compiler.h"
-#include "macros/no_unique_address.h"
-#include "num/types.h"
-#include "prelude.h"
+#include "subspace/macros/compiler.h"
+#include "subspace/macros/no_unique_address.h"
+#include "subspace/num/types.h"
+#include "subspace/prelude.h"
 #include "googletest/include/gtest/gtest.h"
 
 namespace {

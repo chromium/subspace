@@ -16,12 +16,12 @@
 
 #include <type_traits>
 
-#include "construct/default.h"
-#include "marker/unsafe.h"
-#include "mem/addressof.h"
-#include "mem/move.h"
-#include "mem/mref.h"
-#include "mem/relocate.h"
+#include "subspace/construct/default.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/addressof.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
+#include "subspace/mem/relocate.h"
 
 namespace sus::mem {
 

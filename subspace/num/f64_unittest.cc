@@ -14,12 +14,12 @@
 
 #include <math.h>
 
-#include "containers/array.h"
+#include "subspace/containers/array.h"
 #include "googletest/include/gtest/gtest.h"
-#include "num/float.h"
-#include "ops/eq.h"
-#include "ops/ord.h"
-#include "prelude.h"
+#include "subspace/num/float.h"
+#include "subspace/ops/eq.h"
+#include "subspace/ops/ord.h"
+#include "subspace/prelude.h"
 
 #define F64_NEAR(a, b, c) \
   EXPECT_NEAR((a).primitive_value, (b).primitive_value, (c).primitive_value);

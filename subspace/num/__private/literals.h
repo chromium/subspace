@@ -15,7 +15,7 @@
 #pragma once
 
 #if _MSC_VER
-#include "assertions/check.h"
+#include "subspace/assertions/check.h"
 #endif
 
 #if _MSC_VER

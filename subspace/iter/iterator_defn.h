@@ -14,18 +14,18 @@
 
 #pragma once
 
-#include "fn/fn.h"
-#include "iter/__private/iterator_end.h"
-#include "iter/__private/iterator_loop.h"
-#include "iter/boxed_iterator.h"
-#include "iter/from_iterator.h"
-#include "iter/iterator_defn.h"
-#include "iter/sized_iterator.h"
-#include "macros/__private/compiler_bugs.h"
-#include "mem/move.h"
-#include "mem/size_of.h"
-#include "num/unsigned_integer.h"
-#include "option/option.h"
+#include "subspace/fn/fn.h"
+#include "subspace/iter/__private/iterator_end.h"
+#include "subspace/iter/__private/iterator_loop.h"
+#include "subspace/iter/boxed_iterator.h"
+#include "subspace/iter/from_iterator.h"
+#include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/sized_iterator.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/size_of.h"
+#include "subspace/num/unsigned_integer.h"
+#include "subspace/option/option.h"
 
 namespace sus::containers {
 template <class T>

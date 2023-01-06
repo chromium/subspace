@@ -1,7 +1,7 @@
 #pragma once
 
-#include "iter/iterator_defn.h"
-#include "option/option.h"
+#include "subspace/iter/iterator_defn.h"
+#include "subspace/option/option.h"
 
 namespace sus::result {
 template <class T, class E>

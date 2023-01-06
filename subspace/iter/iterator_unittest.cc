@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "iter/iterator.h"
+#include "subspace/iter/iterator.h"
 
-#include "assertions/unreachable.h"
-#include "construct/into.h"
-#include "containers/array.h"
-#include "containers/vec.h"
+#include "subspace/assertions/unreachable.h"
+#include "subspace/construct/into.h"
+#include "subspace/containers/array.h"
+#include "subspace/containers/vec.h"
 #include "googletest/include/gtest/gtest.h"
-#include "iter/filter.h"
-#include "macros/__private/compiler_bugs.h"
-#include "prelude.h"
+#include "subspace/iter/filter.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/prelude.h"
 
 using ::sus::containers::Array;
 using ::sus::fn::Fn;

@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mem/nonnull.h"
+#include "subspace/mem/nonnull.h"
 
-#include "construct/into.h"
+#include "subspace/construct/into.h"
 #include "googletest/include/gtest/gtest.h"
-#include "macros/__private/compiler_bugs.h"
-#include "mem/forward.h"
-#include "mem/never_value.h"
-#include "mem/relocate.h"
-#include "num/types.h"
-#include "ops/eq.h"
-#include "ops/ord.h"
-#include "option/option.h"
-#include "prelude.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/forward.h"
+#include "subspace/mem/never_value.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/num/types.h"
+#include "subspace/ops/eq.h"
+#include "subspace/ops/ord.h"
+#include "subspace/option/option.h"
+#include "subspace/prelude.h"
 
 using sus::mem::NonNull;
 

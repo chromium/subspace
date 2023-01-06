@@ -17,9 +17,9 @@
 #include <concepts>
 #include <type_traits>
 
-#include "macros/builtin.h"
-#include "marker/unsafe.h"
-#include "mem/size_of.h"
+#include "subspace/macros/builtin.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/size_of.h"
 
 namespace sus::mem {
 

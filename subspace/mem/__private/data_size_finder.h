@@ -17,8 +17,8 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "macros/compiler.h"
-#include "macros/no_unique_address.h"
+#include "subspace/macros/compiler.h"
+#include "subspace/macros/no_unique_address.h"
 
 namespace sus::mem::__private {
 

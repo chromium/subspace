@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 
-#include "macros/always_inline.h"
+#include "subspace/macros/always_inline.h"
 
 // Based on https://doc.rust-lang.org/nightly/src/core/num/int_log10.rs.html
 namespace sus::num::__private::int_log10 {

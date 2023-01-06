@@ -18,7 +18,7 @@
 
 #include <functional>  // TODO: remove this but we need to hash things > size_t.
 
-#include "num/__private/unsigned_integer_macros.h"
+#include "subspace/num/__private/unsigned_integer_macros.h"
 
 namespace sus::num {
 

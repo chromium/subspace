@@ -19,16 +19,16 @@
 
 #include <compare>
 
-#include "assertions/check.h"
-#include "assertions/endian.h"
-#include "macros/__private/compiler_bugs.h"
-#include "mem/size_of.h"
-#include "num/__private/int_log10.h"
-#include "num/__private/intrinsics.h"
-#include "num/__private/literals.h"
-#include "num/__private/ptr_type.h"
-#include "num/integer_concepts.h"
-#include "option/option.h"
+#include "subspace/assertions/check.h"
+#include "subspace/assertions/endian.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/size_of.h"
+#include "subspace/num/__private/int_log10.h"
+#include "subspace/num/__private/intrinsics.h"
+#include "subspace/num/__private/literals.h"
+#include "subspace/num/__private/ptr_type.h"
+#include "subspace/num/integer_concepts.h"
+#include "subspace/option/option.h"
 
 namespace sus::containers {
 template <class T, size_t N>

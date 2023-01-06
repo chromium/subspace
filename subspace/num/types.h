@@ -14,6 +14,6 @@
 
 #pragma once
 
-#include "num/float.h"
-#include "num/signed_integer.h"
-#include "num/unsigned_integer.h"
+#include "subspace/num/float.h"
+#include "subspace/num/signed_integer.h"
+#include "subspace/num/unsigned_integer.h"

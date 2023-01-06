@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tuple/tuple.h"
+#include "subspace/tuple/tuple.h"
 
 #include <math.h>  // TODO: Replace with f32::NAN()
 
@@ -21,12 +21,12 @@
 #include <utility>  // std::tuple_size.
 
 #include "googletest/include/gtest/gtest.h"
-#include "mem/clone.h"
-#include "mem/copy.h"
-#include "mem/move.h"
-#include "num/types.h"
-#include "prelude.h"
-#include "test/no_copy_move.h"
+#include "subspace/mem/clone.h"
+#include "subspace/mem/copy.h"
+#include "subspace/mem/move.h"
+#include "subspace/num/types.h"
+#include "subspace/prelude.h"
+#include "subspace/test/no_copy_move.h"
 
 namespace {
 

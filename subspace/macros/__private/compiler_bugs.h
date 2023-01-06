@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include "macros/builtin.h"
-#include "macros/compiler.h"
+#include "subspace/macros/builtin.h"
+#include "subspace/macros/compiler.h"
 
 // TODO: https://github.com/llvm/llvm-project/issues/56394
 #if __clang_major__ > 0  // TODO: Update when the bug is fixed.

@@ -18,8 +18,8 @@
 
 #include <concepts>
 
-#include "macros/always_inline.h"
-#include "marker/unsafe.h"
+#include "subspace/macros/always_inline.h"
+#include "subspace/marker/unsafe.h"
 
 namespace sus::mem {
 

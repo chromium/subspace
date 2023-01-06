@@ -14,12 +14,12 @@
 
 #pragma once
 
-#include "assertions/check.h"
-#include "assertions/unreachable.h"
-#include "fn/__private/fn_storage.h"
-#include "fn/fn_defn.h"
-#include "macros/__private/compiler_bugs.h"
-#include "mem/replace.h"
+#include "subspace/assertions/check.h"
+#include "subspace/assertions/unreachable.h"
+#include "subspace/fn/__private/fn_storage.h"
+#include "subspace/fn/fn_defn.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/replace.h"
 
 namespace sus::fn {
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "convert/subclass.h"
+#include "subspace/convert/subclass.h"
 
 #include "googletest/include/gtest/gtest.h"
 

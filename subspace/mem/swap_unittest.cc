@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mem/swap.h"
+#include "subspace/mem/swap.h"
 
 #include <type_traits>
 
-#include "macros/builtin.h"
-#include "mem/relocate.h"
+#include "subspace/macros/builtin.h"
+#include "subspace/mem/relocate.h"
 #include "googletest/include/gtest/gtest.h"
 
 namespace sus::mem {

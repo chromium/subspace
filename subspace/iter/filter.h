@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include "fn/fn_defn.h"
-#include "iter/iterator_defn.h"
-#include "iter/sized_iterator.h"
-#include "mem/move.h"
-#include "mem/relocate.h"
+#include "subspace/fn/fn_defn.h"
+#include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/sized_iterator.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/relocate.h"
 
 namespace sus::iter {
 

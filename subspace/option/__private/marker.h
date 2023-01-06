@@ -14,10 +14,10 @@
 
 #pragma once
 
-#include "macros/__private/compiler_bugs.h"
-#include "mem/move.h"
-#include "mem/forward.h"
-#include "mem/mref.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/forward.h"
+#include "subspace/mem/mref.h"
 
 namespace sus::option::__private {
 

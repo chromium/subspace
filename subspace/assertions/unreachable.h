@@ -14,10 +14,10 @@
 
 #pragma once
 
-#include "assertions/panic.h"
-#include "macros/always_inline.h"
-#include "macros/builtin.h"
-#include "marker/unsafe.h"
+#include "subspace/assertions/panic.h"
+#include "subspace/macros/always_inline.h"
+#include "subspace/macros/builtin.h"
+#include "subspace/marker/unsafe.h"
 
 namespace sus::assertions {
 

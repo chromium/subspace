@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "num/types.h"
+#include "subspace/num/types.h"
 
 namespace sus::test {
 

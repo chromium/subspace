@@ -18,13 +18,13 @@
 
 #include <type_traits>
 
-#include "iter/iterator_defn.h"
-#include "mem/move.h"
-#include "mem/mref.h"
-#include "mem/nonnull.h"
-#include "mem/relocate.h"
-#include "mem/replace.h"
-#include "num/unsigned_integer.h"
+#include "subspace/iter/iterator_defn.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
+#include "subspace/mem/nonnull.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/mem/replace.h"
+#include "subspace/num/unsigned_integer.h"
 
 namespace sus::containers {
 

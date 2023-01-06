@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "construct/default.h"
+#include "subspace/construct/default.h"
 
 #include "googletest/include/gtest/gtest.h"
 

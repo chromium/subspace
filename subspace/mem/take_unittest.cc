@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mem/take.h"
+#include "subspace/mem/take.h"
 
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
-#include "num/types.h"
-#include "prelude.h"
+#include "subspace/num/types.h"
+#include "subspace/prelude.h"
 
 namespace sus::mem {
 namespace {

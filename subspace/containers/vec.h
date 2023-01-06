@@ -19,21 +19,21 @@
 
 #include <concepts>
 
-#include "assertions/check.h"
-#include "containers/__private/vec_iter.h"
-#include "containers/__private/vec_marker.h"
-#include "containers/slice.h"
-#include "iter/from_iterator.h"
-#include "macros/compiler.h"
-#include "mem/move.h"
-#include "mem/never_value.h"
-#include "mem/relocate.h"
-#include "mem/replace.h"
-#include "mem/size_of.h"
-#include "num/unsigned_integer.h"
-#include "ops/ord.h"
-#include "option/option.h"
-#include "tuple/tuple.h"
+#include "subspace/assertions/check.h"
+#include "subspace/containers/__private/vec_iter.h"
+#include "subspace/containers/__private/vec_marker.h"
+#include "subspace/containers/slice.h"
+#include "subspace/iter/from_iterator.h"
+#include "subspace/macros/compiler.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/never_value.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/mem/replace.h"
+#include "subspace/mem/size_of.h"
+#include "subspace/num/unsigned_integer.h"
+#include "subspace/ops/ord.h"
+#include "subspace/option/option.h"
+#include "subspace/tuple/tuple.h"
 
 namespace sus::containers {
 

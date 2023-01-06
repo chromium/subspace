@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ops/eq.h"
+#include "subspace/ops/eq.h"
 
 #include "googletest/include/gtest/gtest.h"
 

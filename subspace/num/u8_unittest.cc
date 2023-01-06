@@ -14,16 +14,16 @@
 
 #include <type_traits>
 
-#include "construct/into.h"
-#include "containers/array.h"
-#include "num/num_concepts.h"
-#include "num/signed_integer.h"
-#include "num/unsigned_integer.h"
-#include "ops/eq.h"
-#include "ops/ord.h"
-#include "prelude.h"
+#include "subspace/construct/into.h"
+#include "subspace/containers/array.h"
+#include "subspace/num/num_concepts.h"
+#include "subspace/num/signed_integer.h"
+#include "subspace/num/unsigned_integer.h"
+#include "subspace/ops/eq.h"
+#include "subspace/ops/ord.h"
+#include "subspace/prelude.h"
 #include "googletest/include/gtest/gtest.h"
-#include "tuple/tuple.h"
+#include "subspace/tuple/tuple.h"
 
 namespace {
 

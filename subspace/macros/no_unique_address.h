@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include "macros/__private/compiler_bugs.h"
-#include "macros/compiler.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/macros/compiler.h"
 
 /// A macro to provide a platform-agnostic `no_unique_address` attribute name.
 ///

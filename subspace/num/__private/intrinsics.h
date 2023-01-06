@@ -25,12 +25,12 @@
 #include <intrin.h>
 #endif
 
-#include "assertions/unreachable.h"
-#include "macros/always_inline.h"
-#include "macros/builtin.h"
-#include "marker/unsafe.h"
-#include "mem/size_of.h"
-#include "num/fp_category.h"
+#include "subspace/assertions/unreachable.h"
+#include "subspace/macros/always_inline.h"
+#include "subspace/macros/builtin.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/size_of.h"
+#include "subspace/num/fp_category.h"
 
 namespace sus::num::__private {
 

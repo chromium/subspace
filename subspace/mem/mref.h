@@ -18,11 +18,11 @@
 
 #include <type_traits>
 
-#include "assertions/check.h"
-#include "macros/__private/compiler_bugs.h"
-#include "marker/unsafe.h"
-#include "mem/move.h"
-#include "mem/relocate.h"
+#include "subspace/assertions/check.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/relocate.h"
 
 namespace sus::mem {
 

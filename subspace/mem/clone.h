@@ -16,9 +16,9 @@
 
 #include <concepts>
 
-#include "macros/always_inline.h"
-#include "mem/copy.h"
-#include "mem/move.h"
+#include "subspace/macros/always_inline.h"
+#include "subspace/mem/copy.h"
+#include "subspace/mem/move.h"
 
 namespace sus::mem {
 

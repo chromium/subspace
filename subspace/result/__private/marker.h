@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include "mem/move.h"
-#include "mem/mref.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
 
 namespace sus::result::__private {
 

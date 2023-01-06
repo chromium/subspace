@@ -18,15 +18,15 @@
 
 #include <concepts>
 
-#include "macros/__private/compiler_bugs.h"
-#include "marker/unsafe.h"
-#include "mem/size_of.h"
-#include "num/__private/float_ordering.h"
-#include "num/__private/intrinsics.h"
-#include "num/float_concepts.h"
-#include "num/fp_category.h"
-#include "num/signed_integer.h"
-#include "num/unsigned_integer.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/size_of.h"
+#include "subspace/num/__private/float_ordering.h"
+#include "subspace/num/__private/intrinsics.h"
+#include "subspace/num/float_concepts.h"
+#include "subspace/num/fp_category.h"
+#include "subspace/num/signed_integer.h"
+#include "subspace/num/unsigned_integer.h"
 
 namespace sus::containers {
 template <class T, size_t N>

@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "containers/array.h"
+#include "subspace/containers/array.h"
 
 #include <type_traits>
 
-#include "construct/into.h"
-#include "iter/iterator.h"
-#include "marker/unsafe.h"
-#include "mem/move.h"
-#include "mem/relocate.h"
-#include "num/types.h"
-#include "prelude.h"
+#include "subspace/construct/into.h"
+#include "subspace/iter/iterator.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/move.h"
+#include "subspace/mem/relocate.h"
+#include "subspace/num/types.h"
+#include "subspace/prelude.h"
 #include "googletest/include/gtest/gtest.h"
 
 using ::sus::containers::Array;

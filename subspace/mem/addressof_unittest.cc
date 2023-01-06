@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mem/addressof.h"
+#include "subspace/mem/addressof.h"
 
-#include "macros/__private/compiler_bugs.h"
+#include "subspace/macros/__private/compiler_bugs.h"
 #include "googletest/include/gtest/gtest.h"
 
 namespace {

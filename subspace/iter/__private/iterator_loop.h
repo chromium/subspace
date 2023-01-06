@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include "iter/__private/iterator_end.h"
-#include "option/option.h"
+#include "subspace/iter/__private/iterator_end.h"
+#include "subspace/option/option.h"
 
 namespace sus::iter::__private {
 
