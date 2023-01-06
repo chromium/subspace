@@ -41,7 +41,7 @@ function(subspace_default_test_options TARGET)
     subspace_default_compile_options(${TARGET})
 
     target_include_directories(${TARGET} PRIVATE
-        ${PROJECT_SOURCE_DIR}/subspace
+        ${PROJECT_SOURCE_DIR}/
         ${PROJECT_SOURCE_DIR}/third_party/googletest
     )
 
