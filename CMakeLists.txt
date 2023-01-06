@@ -20,6 +20,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/tools/cmake")
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 include(OptionIf)
 
@@ -27,11 +28,31 @@ option_if_not_defined(SUBSPACE_BUILD_CIR "Build CIR (requires LLVM)" ON)
 
 message(STATUS "Build CIR: ${SUBSPACE_BUILD_CIR}")
 
-if(MSVC)
-    add_compile_options(/Zc:preprocessor /wd5105)
-endif()
+function(subspace_default_compile_options TARGET)
+    if(MSVC)
+        target_compile_options(${TARGET} /Zc:preprocessor /wd5105)
+    endif()
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+    set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)
+    target_include_directories(${TARGET} PUBLIC ${PROJECT_SOURCE_DIR})
+endfunction()
+
+function(subspace_default_test_options TARGET)
+    subspace_default_compile_options(${TARGET})
+
+    target_include_directories(${TARGET} PRIVATE
+        ${PROJECT_SOURCE_DIR}/subspace
+        ${PROJECT_SOURCE_DIR}/third_party/googletest
+    )
+
+    if(MSVC)
+        target_compile_options(${TARGET} PUBLIC /W4 /WX)
+    else()
+        target_compile_options(${TARGET} PUBLIC -Werror)
+    endif()
+
+    target_link_libraries(${TARGET} gtest_main)
+endfunction()
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory(third_party/googletest)

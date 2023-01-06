@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(cir_lib STATIC
+add_library(cir_lib STATIC "")
+add_library(cir::lib ALIAS cir_lib)
+target_sources(cir_lib PUBLIC
     "lib/syntax/statements/let.h"
     "lib/syntax/declared_type.h"
     "lib/syntax/function_id.h"
@@ -39,8 +41,7 @@ add_executable(cir_unittests
 )
 
 # cir_lib
-set_target_properties(cir_lib PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(cir_lib PUBLIC ..)
+subspace_default_compile_options(cir_lib)
 
 find_package(LLVM REQUIRED)
 find_package(Clang REQUIRED)
@@ -49,7 +50,7 @@ target_include_directories(cir_lib PUBLIC ${LLVM_INCLUDE_DIRS})
 target_link_directories(cir_lib PUBLIC ${LLVM_LIBRARY_DIRS})
 
 target_link_libraries(cir_lib
-    subspace
+    subspace::lib
     clangAnalysis
     clangAnalysisFlowSensitive
     clangAnalysisFlowSensitiveModels
@@ -95,26 +96,12 @@ target_link_libraries(cir_lib
 )
 
 # cir_unittests
-set_target_properties(cir_unittests PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(cir_unittests PUBLIC
-    ..
-    ../third_party/googletest
-)
-target_link_libraries(cir_unittests
-    cir_lib
-    gtest_main
-)
+subspace_default_test_options(cir_unittests)
+target_link_libraries(cir_unittests cir::lib)
 
-if(MSVC)
-    target_compile_options(cir_unittests PUBLIC /W4 /WX)
-else()
-    target_compile_options(cir_unittests PUBLIC -Werror)
-endif()
-
-gtest_discover_tests(
-    cir_unittests
-)
+gtest_discover_tests(cir_unittests)
 
 # cir binary
-set_target_properties(cir PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(cir cir_lib)
+subspace_default_compile_options(cir)
+target_link_libraries(cir cir::lib)
+

@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(subspace STATIC
+add_library(subspace STATIC "")
+add_library(subspace::lib ALIAS subspace)
+target_sources(subspace PUBLIC
     "assertions/arch.h"
     "assertions/check.h"
     "assertions/endian.h"
@@ -116,7 +118,9 @@ add_library(subspace STATIC
     "lib/lib.cc"
 )
 
-add_library(subspace_test_support STATIC
+add_library(subspace_test_support STATIC "")
+add_library(subspace::test_support ALIAS subspace_test_support)
+target_sources(subspace_test_support PUBLIC
     "test/from_i32.h"
     "test/behaviour_types.h"
     "test/behaviour_types_unittest.cc"
@@ -172,8 +176,7 @@ add_executable(subspace_unittests
 )
 
 # Subspace library
-set_target_properties(subspace PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(subspace PUBLIC ..)
+subspace_default_compile_options(subspace)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
    CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
@@ -184,31 +187,14 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
 endif()
 
 # Subspace test support
-set_target_properties(subspace_test_support PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(subspace_test_support PRIVATE .)
-target_link_libraries(subspace_test_support
-    subspace
-)
+subspace_default_test_options(subspace_test_support)
+target_link_libraries(subspace_test_support subspace::lib)
 
 # Subspace unittests
-set_target_properties(subspace_unittests PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(subspace_unittests PRIVATE
-    .
-    ../third_party/googletest)
+subspace_default_test_options(subspace_unittests)
 target_link_libraries(subspace_unittests
-    subspace
-    subspace_test_support
-    gtest_main
+    subspace::lib
+    subspace::test_support
 )
 
-# -Werror when building unittests to verify no warnings in the subspace
-# library.
-if(MSVC)
-    target_compile_options(subspace_unittests PUBLIC /W4 /WX)
-else()
-    target_compile_options(subspace_unittests PUBLIC -Werror)
-endif()
-
-gtest_discover_tests(
-    subspace_unittests
-)
+gtest_discover_tests(subspace_unittests)
