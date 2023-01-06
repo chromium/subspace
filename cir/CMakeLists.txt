@@ -96,7 +96,7 @@ target_link_libraries(cir_lib
 )
 
 # cir_unittests
-subspace_default_test_options(cir_unittests)
+subspace_test_default_compile_options(cir_unittests)
 target_link_libraries(cir_unittests cir::lib)
 
 gtest_discover_tests(cir_unittests)

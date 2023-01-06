@@ -187,11 +187,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
 endif()
 
 # Subspace test support
-subspace_default_test_options(subspace_test_support)
+subspace_test_default_compile_options(subspace_test_support)
 target_link_libraries(subspace_test_support subspace::lib)
 
 # Subspace unittests
-subspace_default_test_options(subspace_unittests)
+subspace_test_default_compile_options(subspace_unittests)
 target_link_libraries(subspace_unittests
     subspace::lib
     subspace::test_support

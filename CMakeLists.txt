@@ -37,11 +37,10 @@ function(subspace_default_compile_options TARGET)
     target_include_directories(${TARGET} PUBLIC ${PROJECT_SOURCE_DIR})
 endfunction()
 
-function(subspace_default_test_options TARGET)
+function(subspace_test_default_compile_options TARGET)
     subspace_default_compile_options(${TARGET})
 
     target_include_directories(${TARGET} PRIVATE
-        ${PROJECT_SOURCE_DIR}/
         ${PROJECT_SOURCE_DIR}/third_party/googletest
     )
 
