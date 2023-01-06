@@ -62,7 +62,6 @@ class Vec {
  public:
   // sus::construct::Default trait.
   inline constexpr Vec() noexcept
-    requires(::sus::construct::Default<T>)
       : Vec(kDefault) {}
 
   static inline Vec with_capacity(usize cap) noexcept {
