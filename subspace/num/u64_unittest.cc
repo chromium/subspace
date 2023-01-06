@@ -144,21 +144,21 @@ TEST(u64, Literals) {
   static_assert((0x123abC_u64).primitive_value == 0x123abC);
   static_assert((0X123abC_u64).primitive_value == 0X123abC);
   static_assert((0X00123abC_u64).primitive_value == 0X123abC);
-  EXPECT_EQ((0x123abC_u64).primitive_value, 0x123abC);
-  EXPECT_EQ((0X123abC_u64).primitive_value, 0X123abC);
-  EXPECT_EQ((0X00123abC_u64).primitive_value, 0X123abC);
+  EXPECT_EQ((0x123abC_u64).primitive_value, 0x123abCull);
+  EXPECT_EQ((0X123abC_u64).primitive_value, 0X123abCull);
+  EXPECT_EQ((0X00123abC_u64).primitive_value, 0X123abCull);
   // Binary.
   static_assert((0b101_u64).primitive_value == 0b101);
   static_assert((0B101_u64).primitive_value == 0B101);
   static_assert((0b00101_u64).primitive_value == 0b101);
-  EXPECT_EQ((0b101_u64).primitive_value, 0b101);
-  EXPECT_EQ((0B101_u64).primitive_value, 0B101);
-  EXPECT_EQ((0b00101_u64).primitive_value, 0b101);
+  EXPECT_EQ((0b101_u64).primitive_value, 0b101ull);
+  EXPECT_EQ((0B101_u64).primitive_value, 0B101ull);
+  EXPECT_EQ((0b00101_u64).primitive_value, 0b101ull);
   // Octal.
   static_assert((0123_u64).primitive_value == 0123);
   static_assert((000123_u64).primitive_value == 0123);
-  EXPECT_EQ((0123_u64).primitive_value, 0123);
-  EXPECT_EQ((000123_u64).primitive_value, 0123);
+  EXPECT_EQ((0123_u64).primitive_value, 0123ull);
+  EXPECT_EQ((000123_u64).primitive_value, 0123ull);
   // Decimal.
   static_assert((0_u64).primitive_value == 0);
   static_assert((1_u64).primitive_value == 1);

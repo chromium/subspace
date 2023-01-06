@@ -31,6 +31,14 @@ message(STATUS "Build CIR: ${SUBSPACE_BUILD_CIR}")
 function(subspace_default_compile_options TARGET)
     if(MSVC)
         target_compile_options(${TARGET} /Zc:preprocessor /wd5105)
+    else()
+        target_compile_options(${TARGET} PRIVATE
+            -Wall
+            -Wextra
+            -Wpedantic
+
+            -Wno-reorder-ctor
+        )
     endif()
 
     set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)
@@ -47,7 +55,14 @@ function(subspace_test_default_compile_options TARGET)
     if(MSVC)
         target_compile_options(${TARGET} PUBLIC /W4 /WX)
     else()
-        target_compile_options(${TARGET} PUBLIC -Werror)
+        target_compile_options(${TARGET} PUBLIC
+            -Werror
+            -Wno-unneeded-internal-declaration
+            -Wno-unused-but-set-variable
+            -Wno-unused-function
+            -Wno-unused-lambda-capture
+            -Wno-unused-variable  # Used in various tests
+        )
     endif()
 
     target_link_libraries(${TARGET} gtest_main)

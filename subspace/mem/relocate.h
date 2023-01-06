@@ -182,4 +182,4 @@ concept relocate_one_by_memcpy =
                                             __VA_ARGS__);                    \
   static_assert(SusUnsafeTrivialRelocate,                                    \
                 "Type is not trivially "                                     \
-                "relocatable");
+                "relocatable")
