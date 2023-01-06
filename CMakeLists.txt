@@ -23,12 +23,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/tools/cm
 
 include(OptionIf)
 
-set(SUBSPACE_BUILD_CIR_DEFAULT ON)
-if (DEFINED ENV{SUBSPACE_NO_BUILD_CIR})
-  set(SUBSPACE_BUILD_CIR_DEFAULT OFF)
-endif()
-
-option_if_not_defined(SUBSPACE_BUILD_CIR "Build CIR (requires LLVM)" ${SUBSPACE_BUILD_CIR_DEFAULT})
+option_if_not_defined(SUBSPACE_BUILD_CIR "Build CIR (requires LLVM)" ON)
 
 message(STATUS "Build CIR: ${SUBSPACE_BUILD_CIR}")
 

@@ -24,17 +24,15 @@ jobs:
           sudo ./llvm.sh 16 all
 
       - name: Configure
-        env:
-          # Skip building documentation for Cir, which ends up building docs for all of
-          # Clang and LLVM too.
-          SUBSPACE_NO_BUILD_CIR: 1
         run: |
           # Path to LLVM+Clang nightly that we have installed.
           export LLVM_DIR="/usr/lib/llvm-16/lib/cmake/llvm"
           export Clang_DIR="/usr/lib/llvm-16/lib/cmake/clang"
 
           sudo apt install build-essential cmake ninja-build
-          cmake -G Ninja -B out -D CMAKE_EXPORT_COMPILE_COMMANDS=1
+          # Skip building documentation for Cir, which ends up building docs for all of
+          # Clang and LLVM too.
+          cmake -G Ninja -B out -D CMAKE_EXPORT_COMPILE_COMMANDS=1 -D SUBSPACE_BUILD_CIR=OFF
 
       - name: Checkout docs
         run: |
