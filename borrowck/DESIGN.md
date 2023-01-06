@@ -36,3 +36,13 @@
     applies to methods of the const object as well, which can be verified by
     applying the same to const methods.
   - Mutable pointers in a const object can be used in a mutable way.
+
+# Use after move
+- Must be completely banned.
+- No move from fields allowed unless `this` is an rvalue already.
+
+## Problems with std smart pointers
+1. operator->()&& does not return a T&&, it gives you a pointer. Then the fields
+   on the resulting T are not rvalues, they are lvalues, even though the smart
+   pointer was moved from. Where as operator.()&& gives you an rvalue field.
+   1. How do we fix that though? 
