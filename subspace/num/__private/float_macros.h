@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <math.h>
-
 #include <concepts>
 
 #include "subspace/macros/__private/compiler_bugs.h"
@@ -23,6 +21,7 @@
 #include "subspace/mem/size_of.h"
 #include "subspace/num/__private/float_ordering.h"
 #include "subspace/num/__private/intrinsics.h"
+#include "subspace/num/cmath_macros.h"
 #include "subspace/num/float_concepts.h"
 #include "subspace/num/fp_category.h"
 #include "subspace/num/signed_integer.h"
@@ -88,23 +87,23 @@ class Array;
    * This value is not constexpr because the value can differ in a constexpr   \
    * evaluation context from a runtime context, leading to bugs.               \
    */                                                                          \
-  static const T TODO_NAN;                                                     \
+  static const T NAN;                                                     \
   /** Infinity. */                                                             \
-  static const T TODO_INFINITY;                                                \
+  static const T INFINITY;                                                 \
   /** Negative infinity. */                                                    \
   static const T NEG_INFINITY;                                                 \
   static_assert(true)
 
-#define _sus__float_constants_decl(T, PrimitiveT)                             \
-  inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                            \
-  inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                            \
-  inline constexpr T T::EPSILON = T(__private::epsilon<PrimitiveT>());        \
-  inline constexpr T T::MIN_POSITIVE =                                        \
-      T(__private::min_positive_value<PrimitiveT>());                         \
-  inline const T T::TODO_NAN = T(__private::nan<PrimitiveT>());               \
-  inline constexpr T T::TODO_INFINITY = T(__private::infinity<PrimitiveT>()); \
-  inline constexpr T T::NEG_INFINITY =                                        \
-      T(__private::negative_infinity<PrimitiveT>());                          \
+#define _sus__float_constants_decl(T, PrimitiveT)                            \
+  inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                           \
+  inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                           \
+  inline constexpr T T::EPSILON = T(__private::epsilon<PrimitiveT>());       \
+  inline constexpr T T::MIN_POSITIVE =                                       \
+      T(__private::min_positive_value<PrimitiveT>());                        \
+  inline const T T::NAN = T(__private::nan<PrimitiveT>());              \
+  inline constexpr T T::INFINITY = T(__private::infinity<PrimitiveT>()); \
+  inline constexpr T T::NEG_INFINITY =                                       \
+      T(__private::negative_infinity<PrimitiveT>());                         \
   static_assert(true)
 
 #define _sus__float_construct(T, PrimitiveT)                                   \
@@ -265,7 +264,7 @@ class Array;
   inline T acos() const& noexcept {                                            \
     if (primitive_value < PrimitiveT{-1} || primitive_value > PrimitiveT{1})   \
         [[unlikely]]                                                           \
-      return TODO_NAN;                                                         \
+      return NAN;                                                         \
     /* MSVC acos(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::acos(primitive_value));                   \
   }                                                                            \
@@ -274,7 +273,7 @@ class Array;
    */                                                                          \
   inline T acosh() const& noexcept {                                           \
     if (primitive_value < PrimitiveT{-1}) [[unlikely]]                         \
-      return TODO_NAN;                                                         \
+      return NAN;                                                         \
     /* MSVC acosh(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::acosh(primitive_value));                  \
   }                                                                            \
@@ -284,7 +283,7 @@ class Array;
   inline T asin() const& noexcept {                                            \
     if (primitive_value < PrimitiveT{-1} || primitive_value > PrimitiveT{1})   \
         [[unlikely]]                                                           \
-      return TODO_NAN;                                                         \
+      return NAN;                                                         \
     /* MSVC asin(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::asin(primitive_value));                   \
   }                                                                            \
@@ -292,7 +291,7 @@ class Array;
    */                                                                          \
   inline T asinh() const& noexcept {                                           \
     if (primitive_value < PrimitiveT{-1}) [[unlikely]]                         \
-      return TODO_NAN;                                                         \
+      return NAN;                                                         \
     /* MSVC asinh(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::asinh(primitive_value));                  \
   }                                                                            \
@@ -509,7 +508,7 @@ class Array;
    */                                                                          \
   inline T sqrt() const& noexcept {                                            \
     if (primitive_value < -PrimitiveT{0}) [[unlikely]]                         \
-      return TODO_NAN;                                                         \
+      return NAN;                                                         \
     /* MSVC sqrt(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::sqrt(primitive_value));                   \
   }                                                                            \
@@ -541,27 +540,27 @@ class Array;
   }                                                                         \
   static_assert(true)
 
-#define _sus__float_convert_to(T, PrimitiveT)                                  \
-  /** Converts radians to degrees.                                             \
-   */                                                                          \
-  inline T to_degrees() const& noexcept {                                      \
-    /* Use a constant for better precision. */                                 \
-    constexpr auto PIS_IN_180 =                                                \
-        PrimitiveT{57.2957795130823208767981548141051703};                     \
-    return primitive_value * PIS_IN_180;                                       \
-  }                                                                            \
-  /** Converts degrees to radians.                                             \
-   */                                                                          \
-  inline T to_radians() const& noexcept {                                      \
-    return primitive_value * (consts::PI.primitive_value / PrimitiveT{180}); \
-  }                                                                            \
-  /** Rounds toward zero and converts to any primitive integer type, assuming  \
-   * that the value is finite and fits in that type.                           \
-   */                                                                          \
-  template <Integer I>                                                         \
-  inline I to_int_unchecked(::sus::marker::UnsafeFnMarker) const& noexcept {   \
-    return static_cast<decltype(I::primitive_value)>(primitive_value);         \
-  }                                                                            \
+#define _sus__float_convert_to(T, PrimitiveT)                                 \
+  /** Converts radians to degrees.                                            \
+   */                                                                         \
+  inline T to_degrees() const& noexcept {                                     \
+    /* Use a constant for better precision. */                                \
+    constexpr auto PIS_IN_180 =                                               \
+        PrimitiveT{57.2957795130823208767981548141051703};                    \
+    return primitive_value * PIS_IN_180;                                      \
+  }                                                                           \
+  /** Converts degrees to radians.                                            \
+   */                                                                         \
+  inline T to_radians() const& noexcept {                                     \
+    return primitive_value * (consts::PI.primitive_value / PrimitiveT{180});  \
+  }                                                                           \
+  /** Rounds toward zero and converts to any primitive integer type, assuming \
+   * that the value is finite and fits in that type.                          \
+   */                                                                         \
+  template <Integer I>                                                        \
+  inline I to_int_unchecked(::sus::marker::UnsafeFnMarker) const& noexcept {  \
+    return static_cast<decltype(I::primitive_value)>(primitive_value);        \
+  }                                                                           \
   static_assert(true)
 
 #define _sus__float_bytes(T, UnsignedIntT)                                     \

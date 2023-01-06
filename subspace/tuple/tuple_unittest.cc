@@ -362,7 +362,7 @@ TEST(Tuple, Eq) {
   EXPECT_EQ(Tuple<f32>::with(1.f), Tuple<f32>::with(1.f));
   EXPECT_EQ(Tuple<f32>::with(0.f), Tuple<f32>::with(0.f));
   EXPECT_EQ(Tuple<f32>::with(0.f), Tuple<f32>::with(-0.f));
-  EXPECT_NE(Tuple<f32>::with(f32::TODO_NAN), Tuple<f32>::with(f32::TODO_NAN));
+  EXPECT_NE(Tuple<f32>::with(f32::NAN), Tuple<f32>::with(f32::NAN));
 
   auto n1 = NoCopyMove();
   auto tn1 = Tuple<NoCopyMove&>::with(mref(n1));
@@ -448,13 +448,13 @@ TEST(Tuple, PartialOrder) {
   EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f), Tuple<f32>::with(1.f)),
             std::partial_ordering::less);
   EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f),
-                               Tuple<f32>::with(f32::TODO_NAN)),
+                               Tuple<f32>::with(f32::NAN)),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Tuple<f32>::with(f32::TODO_NAN),
-                               Tuple<f32>::with(f32::TODO_NAN)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>::with(f32::NAN),
+                               Tuple<f32>::with(f32::NAN)),
             std::partial_ordering::unordered);
   EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f),
-                               Tuple<f32>::with(f32::TODO_INFINITY)),
+                               Tuple<f32>::with(f32::INFINITY)),
             std::partial_ordering::less);
   EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f),
                                Tuple<f32>::with(f32::NEG_INFINITY)),
