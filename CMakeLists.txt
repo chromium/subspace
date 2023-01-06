@@ -30,8 +30,10 @@ endif()
 include(OptionIf)
 
 option_if_not_defined(SUBSPACE_BUILD_CIR "Build CIR (requires LLVM)" ON)
+option_if_not_defined(SUBSPACE_BUILD_SUBDOC "Build subdoc (requires LLVM)" ON)
 
 message(STATUS "Build CIR: ${SUBSPACE_BUILD_CIR}")
+message(STATUS "Build subdoc: ${SUBSPACE_BUILD_SUBDOC}")
 
 function(subspace_default_compile_options TARGET)
     if(MSVC)
@@ -70,4 +72,8 @@ add_subdirectory(subspace)
 
 if(${SUBSPACE_BUILD_CIR})
     add_subdirectory(cir)
+endif()
+
+if (${SUBSPACE_BUILD_SUBDOC})
+    add_subdirectory(subdoc)
 endif()

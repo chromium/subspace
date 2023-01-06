@@ -8,7 +8,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug subspace_unittests",
-            "program": "${workspaceFolder}/out/subspace_unittests",
+            "program": "${workspaceFolder}/out/subspace/subspace_unittests",
             "args": [],
             "cwd": "${workspaceFolder}"
         },
@@ -17,6 +17,14 @@
             "request": "launch",
             "name": "Debug cir_unittests",
             "program": "${workspaceFolder}/out/cir/cir_unittests",
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug subdoc_unittests",
+            "program": "${workspaceFolder}/out/subdoc/subdoc_unittests",
             "args": [],
             "cwd": "${workspaceFolder}"
         }
