@@ -483,6 +483,7 @@ TEST(Option, UnwrapOrDefault) {
 
 TEST(Option, Map) {
   struct Mapped {
+    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i){});
     int i;
   };
 
@@ -540,6 +541,7 @@ TEST(Option, Map) {
 
 TEST(Option, MapOr) {
   struct Mapped {
+    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i){});
     int i;
   };
 
@@ -573,6 +575,7 @@ TEST(Option, MapOr) {
 
 TEST(Option, MapOrElse) {
   struct Mapped {
+    sus_clang_bug_54040(constexpr inline Mapped(int i) : i(i){});
     int i;
   };
 
@@ -800,6 +803,7 @@ TEST(Option, And) {
 
 TEST(Option, AndThen) {
   struct And {
+    sus_clang_bug_54040(constexpr inline And(int i) : i(i){});
     int i;
   };
 
@@ -1944,7 +1948,7 @@ struct CollectSum {
   sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
 
   static constexpr CollectSum from_iter(
-      sus::iter::IteratorBase<T>&& iter) noexcept {
+      ::sus::iter::IteratorBase<T>&& iter) noexcept {
     T sum = T();
     for (const T& t : iter) sum += t;
     return CollectSum(sum);

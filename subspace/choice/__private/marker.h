@@ -18,6 +18,8 @@
 
 #include <utility>  // TODO: Replace with our own integer_sequence.
 
+#include "macros/__private/compiler_bugs.h"
+#include "mem/forward.h"
 #include "tuple/tuple.h"
 
 namespace sus::choice_type {
@@ -40,6 +42,9 @@ struct ChoiceMarkerVoid {
 
 template <auto Tag, class T>
 struct ChoiceMarker<Tag, T> {
+  sus_clang_bug_54040(constexpr inline ChoiceMarker(T &&value)
+                      : value(::sus::forward<T>(value)){});
+
   T &&value;
 
   template <class TypeListOfMemberTypes, auto... Vs>
@@ -52,6 +57,10 @@ struct ChoiceMarker<Tag, T> {
 template <auto Tag, class... Ts>
   requires(sizeof...(Ts) > 1)
 struct ChoiceMarker<Tag, Ts...> {
+  sus_clang_bug_54040(constexpr inline ChoiceMarker(Ts &&...value)
+                      : values(::sus::tuple_type::Tuple<Ts &&...>::with(
+                          ::sus::forward<Ts>(value)...)){});
+
   ::sus::tuple_type::Tuple<Ts &&...> values;
 
   template <class TypeListOfMemberTypes, auto... Vs>
