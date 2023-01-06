@@ -14,6 +14,7 @@
 
 #include <type_traits>
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
 #include "subspace/num/num_concepts.h"
@@ -22,7 +23,6 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/prelude.h"
-#include "googletest/include/gtest/gtest.h"
 #include "subspace/tuple/tuple.h"
 
 namespace {

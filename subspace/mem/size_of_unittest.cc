@@ -16,11 +16,11 @@
 
 #include <type_traits>
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 namespace {
 

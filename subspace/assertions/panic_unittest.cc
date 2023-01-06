@@ -31,5 +31,5 @@ TEST(Panic, WithMessage) {
 #endif
 }
 
-} // namespace
-} // namespace sus
+}  // namespace
+}  // namespace sus

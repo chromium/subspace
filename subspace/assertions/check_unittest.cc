@@ -36,5 +36,5 @@ TEST(Check, WithMessage) {
 #endif
 }
 
-} // namespace
-} // namespace sus
+}  // namespace
+}  // namespace sus

@@ -16,8 +16,8 @@
 
 #include <math.h>  // TODO: Replace with f32::NAN()
 
-#include "subspace/containers/array.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/containers/array.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/builtin.h"

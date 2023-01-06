@@ -14,11 +14,11 @@
 
 #include "subspace/iter/iterator.h"
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
 #include "subspace/containers/vec.h"
-#include "googletest/include/gtest/gtest.h"
 #include "subspace/iter/filter.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/prelude.h"
@@ -224,7 +224,8 @@ TEST(Iterator, FilterNonTriviallyRelocatable) {
                        Filtering(5)};
 
   auto non_relocatable_it = ArrayIterator<Filtering, 5>::with_array(nums);
-  static_assert(!sus::mem::relocate_one_by_memcpy<decltype(non_relocatable_it)>);
+  static_assert(
+      !sus::mem::relocate_one_by_memcpy<decltype(non_relocatable_it)>);
 
   auto fit = sus::move(non_relocatable_it).box().filter([](const Filtering& f) {
     return f.i >= 3;

@@ -17,10 +17,10 @@
 #include "subspace/result/result.h"
 #include "subspace/test/behaviour_types.h"
 
-using sus::result::Result;
 using sus::construct::Default;
 using sus::mem::relocate_array_by_memcpy;
 using sus::mem::relocate_one_by_memcpy;
+using sus::result::Result;
 
 namespace default_constructible {
 using T = Result<sus::test::DefaultConstructible, int>;

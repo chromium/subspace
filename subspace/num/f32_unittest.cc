@@ -17,9 +17,9 @@
 #include <bit>
 #include <limits>
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
-#include "googletest/include/gtest/gtest.h"
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/float.h"
 #include "subspace/ops/eq.h"

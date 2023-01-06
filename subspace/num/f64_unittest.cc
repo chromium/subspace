@@ -14,8 +14,8 @@
 
 #include <math.h>
 
-#include "subspace/containers/array.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/containers/array.h"
 #include "subspace/num/float.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"

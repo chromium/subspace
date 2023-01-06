@@ -14,8 +14,8 @@
 
 #include "subspace/mem/addressof.h"
 
-#include "subspace/macros/__private/compiler_bugs.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/macros/__private/compiler_bugs.h"
 
 namespace {
 
@@ -23,8 +23,7 @@ using sus::mem::addressof;
 
 TEST(AddressOf, Object) {
   struct S {
-    sus_clang_bug_54040(constexpr inline S(int i) : i(i) {})
-    int i;
+    sus_clang_bug_54040(constexpr inline S(int i) : i(i){}) int i;
   };
   auto s = S(0);
   static_assert(std::is_object_v<decltype(s)>, "");

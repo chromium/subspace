@@ -16,6 +16,7 @@
 
 #include <type_traits>
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/marker/unsafe.h"
@@ -23,7 +24,6 @@
 #include "subspace/mem/relocate.h"
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
-#include "googletest/include/gtest/gtest.h"
 
 using ::sus::containers::Array;
 using ::sus::mem::relocate_array_by_memcpy;
@@ -222,8 +222,7 @@ TEST(Array, Get) {
       constexpr auto a =
           Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
       return a.get_ref(2_usize).unwrap();
-    }
-    ();
+    }();
     static_assert(std::same_as<decltype(r), const int>);
     EXPECT_EQ(3, r);
   }
@@ -239,8 +238,7 @@ TEST(Array, GetUnchecked) {
       constexpr auto a =
           Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
       return a.get_unchecked(unsafe_fn, 2_usize);
-    }
-    ();
+    }();
     static_assert(std::same_as<decltype(r), const int>);
     EXPECT_EQ(3, r);
   }
@@ -264,8 +262,7 @@ TEST(Array, GetMut) {
           Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
       a.get_mut(0_usize).unwrap() = 101;
       return a;
-    }
-    ();
+    }();
     EXPECT_EQ(a[0_usize], 101);
   }
   {
@@ -290,8 +287,7 @@ TEST(Array, GetUncheckedMut) {
           Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
       a.get_unchecked_mut(unsafe_fn, 0_usize) = 101;
       return a;
-    }
-    ();
+    }();
     EXPECT_EQ(a[0_usize], 101);
   }
   {

@@ -14,8 +14,8 @@
 
 #include "subspace/mem/relocate.h"
 
-#include "subspace/prelude.h"
 #include "subspace/num/types.h"
+#include "subspace/prelude.h"
 
 namespace {
 
@@ -39,7 +39,7 @@ static_assert(!relocate_one_by_memcpy<volatile A>);
 static_assert(!relocate_array_by_memcpy<volatile A>);
 
 struct B {
-  B(B &&) = default;
+  B(B&&) = default;
   ~B() = default;
   i32 i;
 };
@@ -47,7 +47,7 @@ static_assert(relocate_one_by_memcpy<B>);
 static_assert(relocate_array_by_memcpy<B>);
 
 struct C {
-  C(C &&) = default;
+  C(C&&) = default;
   ~C() {}
   i32 i;
 };
@@ -55,7 +55,7 @@ static_assert(!relocate_one_by_memcpy<C>);
 static_assert(!relocate_array_by_memcpy<C>);
 
 struct D {
-  D(D &&) {}
+  D(D&&) {}
   ~D() = default;
   i32 i;
 };
@@ -63,7 +63,7 @@ static_assert(!relocate_one_by_memcpy<D>);
 static_assert(!relocate_array_by_memcpy<D>);
 
 struct [[sus_trivial_abi]] T {
-  T(T &&) {}
+  T(T&&) {}
   ~T() {}
   i32 i;
 };
@@ -77,7 +77,7 @@ static_assert(!relocate_array_by_memcpy<T>);
 
 struct [[sus_trivial_abi]] G {
   sus_class_trivial_relocatable_value(unsafe_fn, true);
-  G(G &&) {}
+  G(G&&) {}
   ~G() {}
   i32 i;
 };
@@ -86,7 +86,7 @@ static_assert(relocate_array_by_memcpy<G>);
 
 struct [[sus_trivial_abi]] H {
   sus_class_trivial_relocatable_value(unsafe_fn, false);
-  H(H &&) {}
+  H(H&&) {}
   ~H() {}
   i32 i;
 };
