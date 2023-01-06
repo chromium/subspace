@@ -27,8 +27,11 @@ add_executable(subdoc
 )
 
 add_executable(subdoc_unittests
+    "tests/classes_unittest.cc"
+    "tests/functions_unittest.cc"
+    "tests/methods_unittest.cc"
+    "tests/styles_unittest.cc"
     "tests/subdoc_test.h"
-    "tests/smoke_unittest.cc"
 )
 
 # subdoc_lib
