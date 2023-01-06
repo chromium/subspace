@@ -29,6 +29,7 @@
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
 #include "subspace/mem/size_of.h"
+#include "subspace/num/integer_concepts.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/ord.h"
 #include "subspace/option/option.h"
@@ -314,6 +315,11 @@ class Vec {
                                         usize i) & noexcept {
     return reinterpret_cast<T*>(storage_)[i.primitive_value];
   }
+
+  /// Present a nicer error when trying to use operator[] with an `int`,
+  /// since it can't convert to `usize` implicitly.
+  template <::sus::num::SignedPrimitiveInteger I>
+  constexpr inline const T& operator[](I) const = delete;
 
   constexpr inline const T& operator[](usize i) const& noexcept {
     check(!is_moved_from());
