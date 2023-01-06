@@ -16,10 +16,15 @@
 
 #include "subspace/iter/iterator_defn.h"
 
-// Once is included here, because there is a cycle between
-// Option->Once->IteratorBase, so Option can't include Once itself. But as long
+// Once is included here, because there is a cycle between:
+// * Option->Once->IteratorBase->Option
+// * Result->Iterator->usize->Result
+// So Option and Result can't include Once or Iterator directly. But as long
 // as the user includes "iterator.h" they should be able to use the iterators on
 // Option.
 #include "subspace/iter/once.h"
 
+// Headers that define iterators that Iterator can construct and return. They
+// are forward declared in iterator_defn.h so that transitive includes don't get
+// them all every time.
 #include "subspace/iter/filter.h"

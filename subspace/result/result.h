@@ -23,8 +23,6 @@
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/iter/__private/adaptors.h"
-#include "subspace/iter/iterator_defn.h"
-#include "subspace/iter/once.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
@@ -37,6 +35,15 @@
 #include "subspace/option/option.h"
 #include "subspace/result/__private/marker.h"
 #include "subspace/result/__private/storage.h"
+
+namespace sus::iter {
+template <class Item>
+class Once;
+template <class ItemT>
+class IteratorBase;
+template <class I>
+class Iterator;
+}  // namespace sus::iter
 
 namespace sus::result {
 
@@ -375,28 +382,28 @@ class [[nodiscard]] Result final {
   constexpr Iterator<Once<const T&>> iter() const& noexcept {
     ::sus::check(state_ != IsMoved);
     if (state_ == IsOk)
-      return sus::iter::once(Option<const T&>::some(storage_.ok_));
+      return Iterator<Once<const T&>>(Option<const T&>::some(storage_.ok_));
     else
-      return sus::iter::once(Option<const T&>::none());
+      return Iterator<Once<const T&>>(Option<const T&>::none());
   }
   Iterator<Once<const T&>> iter() const&& = delete;
 
   constexpr Iterator<Once<T&>> iter_mut() & noexcept {
     ::sus::check(state_ != IsMoved);
     if (state_ == IsOk)
-      return sus::iter::once(Option<T&>::some(mref(storage_.ok_)));
+      return Iterator<Once<T&>>(Option<T&>::some(mref(storage_.ok_)));
     else
-      return sus::iter::once(Option<T&>::none());
+      return Iterator<Once<T&>>(Option<T&>::none());
   }
 
   constexpr Iterator<Once<T>> into_iter() && noexcept {
     ::sus::check(state_ != IsMoved);
     if (::sus::mem::replace(mref(state_), IsMoved) == IsOk) {
-      return sus::iter::once(Option<T>::some(::sus::mem::take_and_destruct(
+      return Iterator<Once<T>>(Option<T>::some(::sus::mem::take_and_destruct(
           ::sus::marker::unsafe_fn, mref(storage_.ok_))));
     } else {
       storage_.err_.~E();
-      return sus::iter::once(Option<T>::none());
+      return Iterator<Once<T>>(Option<T>::none());
     }
   }
 

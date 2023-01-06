@@ -14,6 +14,7 @@
 
 #include <type_traits>
 
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
 #include "subspace/num/num_concepts.h"
@@ -22,7 +23,6 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/prelude.h"
-#include "googletest/include/gtest/gtest.h"
 #include "subspace/tuple/tuple.h"
 
 namespace {
@@ -224,6 +224,16 @@ TEST(i8, From) {
   static_assert(sus::construct::From<i8, uint16_t>);
   static_assert(sus::construct::From<i8, uint32_t>);
   static_assert(sus::construct::From<i8, uint64_t>);
+  static_assert(sus::construct::TryFrom<i8, char>);
+  static_assert(sus::construct::TryFrom<i8, size_t>);
+  static_assert(sus::construct::TryFrom<i8, int8_t>);
+  static_assert(sus::construct::TryFrom<i8, int16_t>);
+  static_assert(sus::construct::TryFrom<i8, int32_t>);
+  static_assert(sus::construct::TryFrom<i8, int64_t>);
+  static_assert(sus::construct::TryFrom<i8, uint8_t>);
+  static_assert(sus::construct::TryFrom<i8, uint16_t>);
+  static_assert(sus::construct::TryFrom<i8, uint32_t>);
+  static_assert(sus::construct::TryFrom<i8, uint64_t>);
 
   EXPECT_EQ(i8::from(char{2}), 2_i8);
   EXPECT_EQ(i8::from(size_t{2}), 2_i8);
@@ -236,6 +246,22 @@ TEST(i8, From) {
   EXPECT_EQ(i8::from(uint32_t{2}), 2_i8);
   EXPECT_EQ(i8::from(uint64_t{2}), 2_i8);
 
+  EXPECT_EQ(i8::try_from(char{2}).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(size_t{2}).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(int8_t{2}).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(int16_t{2}).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(int32_t{2}).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(int64_t{2}).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(uint8_t{2}).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(uint16_t{2}).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(uint32_t{2}).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(uint64_t{2}).unwrap(), 2_i8);
+
+  EXPECT_TRUE(i8::try_from(int16_t{i16::MIN}).is_err());
+  EXPECT_TRUE(i8::try_from(int16_t{i16::MAX}).is_err());
+  EXPECT_TRUE(i8::try_from(uint8_t{u8::MAX}).is_err());
+  EXPECT_TRUE(i8::try_from(uint16_t{u16::MAX}).is_err());
+
   static_assert(sus::construct::From<i8, i8>);
   static_assert(sus::construct::From<i8, i16>);
   static_assert(sus::construct::From<i8, i32>);
@@ -246,6 +272,16 @@ TEST(i8, From) {
   static_assert(sus::construct::From<i8, u32>);
   static_assert(sus::construct::From<i8, u64>);
   static_assert(sus::construct::From<i8, usize>);
+  static_assert(sus::construct::TryFrom<i8, i8>);
+  static_assert(sus::construct::TryFrom<i8, i16>);
+  static_assert(sus::construct::TryFrom<i8, i32>);
+  static_assert(sus::construct::TryFrom<i8, i64>);
+  static_assert(sus::construct::TryFrom<i8, isize>);
+  static_assert(sus::construct::TryFrom<i8, u8>);
+  static_assert(sus::construct::TryFrom<i8, u16>);
+  static_assert(sus::construct::TryFrom<i8, u32>);
+  static_assert(sus::construct::TryFrom<i8, u64>);
+  static_assert(sus::construct::TryFrom<i8, usize>);
 
   EXPECT_EQ(i8::from(2_i8), 2_i8);
   EXPECT_EQ(i8::from(2_i16), 2_i8);
@@ -257,6 +293,22 @@ TEST(i8, From) {
   EXPECT_EQ(i8::from(2_u32), 2_i8);
   EXPECT_EQ(i8::from(2_u64), 2_i8);
   EXPECT_EQ(i8::from(2_usize), 2_i8);
+
+  EXPECT_EQ(i8::try_from(2_i8).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(2_i16).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(2_i32).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(2_i64).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(2_isize).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(2_u8).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(2_u16).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(2_u32).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(2_u64).unwrap(), 2_i8);
+  EXPECT_EQ(i8::try_from(2_usize).unwrap(), 2_i8);
+
+  EXPECT_TRUE(i8::try_from(i16::MIN).is_err());
+  EXPECT_TRUE(i8::try_from(i16::MAX).is_err());
+  EXPECT_TRUE(i8::try_from(u8::MAX).is_err());
+  EXPECT_TRUE(i8::try_from(u16::MAX).is_err());
 }
 
 TEST(i8DeathTest, FromOutOfRange) {

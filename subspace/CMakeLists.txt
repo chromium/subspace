@@ -96,6 +96,7 @@ add_library(subspace STATIC
     "num/fp_category.h"
     "num/integer_concepts.h"
     "num/signed_integer.h"
+    "num/try_from_int_error.h"
     "num/num_concepts.h"
     "num/unsigned_integer.h"
     "option/__private/is_option_type.h"

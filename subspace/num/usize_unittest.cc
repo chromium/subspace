@@ -253,6 +253,16 @@ TEST(usize, From) {
   static_assert(sus::construct::From<usize, uint16_t>);
   static_assert(sus::construct::From<usize, uint32_t>);
   static_assert(sus::construct::From<usize, uint64_t>);
+  static_assert(sus::construct::TryFrom<usize, char>);
+  static_assert(sus::construct::TryFrom<usize, size_t>);
+  static_assert(sus::construct::TryFrom<usize, int8_t>);
+  static_assert(sus::construct::TryFrom<usize, int16_t>);
+  static_assert(sus::construct::TryFrom<usize, int32_t>);
+  static_assert(sus::construct::TryFrom<usize, int64_t>);
+  static_assert(sus::construct::TryFrom<usize, uint8_t>);
+  static_assert(sus::construct::TryFrom<usize, uint16_t>);
+  static_assert(sus::construct::TryFrom<usize, uint32_t>);
+  static_assert(sus::construct::TryFrom<usize, uint64_t>);
 
   EXPECT_EQ(usize::from(char{2}), 2_usize);
   EXPECT_EQ(usize::from(size_t{2}), 2_usize);
@@ -265,6 +275,24 @@ TEST(usize, From) {
   EXPECT_EQ(usize::from(uint32_t{2}), 2_usize);
   EXPECT_EQ(usize::from(uint64_t{2}), 2_usize);
 
+  EXPECT_EQ(usize::try_from(char{2}).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(size_t{2}).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(int8_t{2}).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(int16_t{2}).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(int32_t{2}).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(int64_t{2}).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(uint8_t{2}).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(uint16_t{2}).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(uint32_t{2}).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(uint64_t{2}).unwrap(), 2_usize);
+
+  if constexpr (sizeof(usize) == sizeof(u32)) {
+    EXPECT_TRUE(usize::try_from(uint32_t{u32::MAX}).is_ok());
+    EXPECT_TRUE(usize::try_from(uint64_t{u64::MAX}).is_err());
+  }
+  EXPECT_TRUE(usize::try_from(int64_t{i64::MIN}).is_err());
+  EXPECT_TRUE(usize::try_from(int64_t{i64::MAX}).is_ok());
+
   static_assert(sus::construct::From<usize, i8>);
   static_assert(sus::construct::From<usize, i16>);
   static_assert(sus::construct::From<usize, i32>);
@@ -275,6 +303,16 @@ TEST(usize, From) {
   static_assert(sus::construct::From<usize, u32>);
   static_assert(sus::construct::From<usize, u64>);
   static_assert(sus::construct::From<usize, usize>);
+  static_assert(sus::construct::TryFrom<usize, i8>);
+  static_assert(sus::construct::TryFrom<usize, i16>);
+  static_assert(sus::construct::TryFrom<usize, i32>);
+  static_assert(sus::construct::TryFrom<usize, i64>);
+  static_assert(sus::construct::TryFrom<usize, isize>);
+  static_assert(sus::construct::TryFrom<usize, u8>);
+  static_assert(sus::construct::TryFrom<usize, u16>);
+  static_assert(sus::construct::TryFrom<usize, u32>);
+  static_assert(sus::construct::TryFrom<usize, u64>);
+  static_assert(sus::construct::TryFrom<usize, usize>);
 
   EXPECT_EQ(usize::from(2_i8), 2_usize);
   EXPECT_EQ(usize::from(2_i16), 2_usize);
@@ -286,6 +324,24 @@ TEST(usize, From) {
   EXPECT_EQ(usize::from(2_u32), 2_usize);
   EXPECT_EQ(usize::from(2_u64), 2_usize);
   EXPECT_EQ(usize::from(2_usize), 2_usize);
+
+  EXPECT_EQ(usize::try_from(2_i8).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(2_i16).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(2_i32).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(2_i64).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(2_isize).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(2_u8).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(2_u16).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(2_u32).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(2_u64).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(2_usize).unwrap(), 2_usize);
+
+  if constexpr (sizeof(usize) == sizeof(u32)) {
+    EXPECT_TRUE(usize::try_from(u32::MAX).is_ok());
+    EXPECT_TRUE(usize::try_from(u64::MAX).is_err());
+  }
+  EXPECT_TRUE(usize::try_from(i64::MIN).is_err());
+  EXPECT_TRUE(usize::try_from(i64::MAX).is_ok());
 }
 
 TEST(usizeDeathTest, FromOutOfRange) {

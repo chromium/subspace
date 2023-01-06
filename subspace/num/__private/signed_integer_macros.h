@@ -27,8 +27,10 @@
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/__private/literals.h"
 #include "subspace/num/integer_concepts.h"
+#include "subspace/num/try_from_int_error.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/option/option.h"
+#include "subspace/result/result.h"
 
 namespace sus::containers {
 template <class T, size_t N>
@@ -82,10 +84,10 @@ class Tuple;
   static const u32 BITS;                                                    \
   static_assert(true)
 
-#define _sus__signed_constants_decl(T, PrimitiveT)                          \
-  inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                          \
-  inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                          \
-  inline constexpr u32 T::BITS = u32(__private::num_bits<PrimitiveT>());    \
+#define _sus__signed_constants_decl(T, PrimitiveT)                       \
+  inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                       \
+  inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                       \
+  inline constexpr u32 T::BITS = u32(__private::num_bits<PrimitiveT>()); \
   static_assert(true)
 
 #define _sus__signed_construct(T, PrimitiveT)                                  \
@@ -127,64 +129,150 @@ class Tuple;
   }                                                                            \
   static_assert(true)
 
-#define _sus__signed_from(T, PrimitiveT)                                    \
-  /** Constructs a ##T## from a signed integer type (i8, i16, i32, etc).    \
-   *                                                                        \
-   * # Panics                                                               \
-   * The function will panic if the input value is out of range for ##T##.  \
-   */                                                                       \
-  template <Signed S>                                                       \
-  static constexpr T from(S s) noexcept {                                   \
-    if constexpr (MIN_PRIMITIVE > S::MIN_PRIMITIVE)                         \
-      ::sus::check(s.primitive_value >= MIN_PRIMITIVE);                     \
-    if constexpr (MAX_PRIMITIVE < S::MAX_PRIMITIVE)                         \
-      ::sus::check(s.primitive_value <= MAX_PRIMITIVE);                     \
-    return T(static_cast<PrimitiveT>(s.primitive_value));                   \
-  }                                                                         \
-                                                                            \
-  /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc). \
-   *                                                                        \
-   * # Panics                                                               \
-   * The function will panic if the input value is out of range for ##T##.  \
-   */                                                                       \
-  template <Unsigned U>                                                     \
-  static constexpr T from(U u) noexcept {                                   \
-    constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);          \
-    if constexpr (umax < U::MAX_PRIMITIVE) {                                \
-      ::sus::check(u.primitive_value <= umax);                              \
-    }                                                                       \
-    return T(static_cast<PrimitiveT>(u.primitive_value));                   \
-  }                                                                         \
-                                                                            \
-  /** Constructs a ##T## from a signed primitive integer type (int, long,   \
-   * etc).                                                                  \
-   *                                                                        \
-   * # Panics                                                               \
-   * The function will panic if the input value is out of range for ##T##.  \
-   */                                                                       \
-  template <SignedPrimitiveInteger S>                                       \
-  static constexpr T from(S s) {                                            \
-    if constexpr (MIN_PRIMITIVE > __private::min_value<S>())                \
-      ::sus::check(s >= MIN_PRIMITIVE);                                     \
-    if constexpr (MAX_PRIMITIVE < __private::max_value<S>())                \
-      ::sus::check(s <= MAX_PRIMITIVE);                                     \
-    return T(static_cast<PrimitiveT>(s));                                   \
-  }                                                                         \
-                                                                            \
-  /** Constructs a ##T## from an unsigned primitive integer type (unsigned  \
-   * int, unsigned long, etc).                                              \
-   *                                                                        \
-   * # Panics                                                               \
-   * The function will panic if the input value is out of range for ##T##.  \
-   */                                                                       \
-  template <UnsignedPrimitiveInteger U>                                     \
-  static constexpr T from(U u) {                                            \
-    constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);          \
-    if constexpr (umax < __private::max_value<U>()) {                       \
-      ::sus::check(u <= umax);                                              \
-    }                                                                       \
-    return T(static_cast<PrimitiveT>(u));                                   \
-  }                                                                         \
+#define _sus__signed_from(T, PrimitiveT)                                       \
+  /** Constructs a ##T## from a signed integer type (i8, i16, i32, etc).       \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   */                                                                          \
+  template <Signed S>                                                          \
+  static constexpr T from(S s) noexcept {                                      \
+    if constexpr (MIN_PRIMITIVE > S::MIN_PRIMITIVE)                            \
+      ::sus::check(s.primitive_value >= MIN_PRIMITIVE);                        \
+    if constexpr (MAX_PRIMITIVE < S::MAX_PRIMITIVE)                            \
+      ::sus::check(s.primitive_value <= MAX_PRIMITIVE);                        \
+    return T(static_cast<PrimitiveT>(s.primitive_value));                      \
+  }                                                                            \
+                                                                               \
+  /** Try to construct a ##T## from a signed integer type (i8, i16, i32, etc). \
+   *                                                                           \
+   * Returns an error if the source value is outside of the range of ##T##.    \
+   */                                                                          \
+  template <Signed S>                                                          \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(S s) noexcept {                                                     \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    if constexpr (MIN_PRIMITIVE > S::MIN_PRIMITIVE) {                          \
+      if (s.primitive_value < MIN_PRIMITIVE) {                                 \
+        return R::with_err(::sus::num::TryFromIntError(                 \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    if constexpr (MAX_PRIMITIVE < S::MAX_PRIMITIVE) {                          \
+      if (s.primitive_value > MAX_PRIMITIVE) {                                 \
+        return R::with_err(::sus::num::TryFromIntError(                 \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(s.primitive_value)));   \
+  }                                                                            \
+                                                                               \
+  /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc).    \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   */                                                                          \
+  template <Unsigned U>                                                        \
+  static constexpr T from(U u) noexcept {                                      \
+    constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);             \
+    if constexpr (umax < U::MAX_PRIMITIVE) {                                   \
+      ::sus::check(u.primitive_value <= umax);                                 \
+    }                                                                          \
+    return T(static_cast<PrimitiveT>(u.primitive_value));                      \
+  }                                                                            \
+                                                                               \
+  /** Try to construct a ##T## from an unsigned integer type (u8, u16, u32,    \
+   * etc).                                                                     \
+   *                                                                           \
+   * Returns an error if the source value is outside of the range of ##T##.    \
+   */                                                                          \
+  template <Unsigned U>                                                        \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(U u) noexcept {                                                     \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);             \
+    if constexpr (umax < U::MAX_PRIMITIVE) {                                   \
+      if (u.primitive_value > umax) {                                          \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(u.primitive_value)));             \
+  }                                                                            \
+                                                                               \
+  /** Constructs a ##T## from a signed primitive integer type (int, long,      \
+   * etc).                                                                     \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   */                                                                          \
+  template <SignedPrimitiveInteger S>                                          \
+  static constexpr T from(S s) {                                               \
+    if constexpr (MIN_PRIMITIVE > __private::min_value<S>())                   \
+      ::sus::check(s >= MIN_PRIMITIVE);                                        \
+    if constexpr (MAX_PRIMITIVE < __private::max_value<S>())                   \
+      ::sus::check(s <= MAX_PRIMITIVE);                                        \
+    return T(static_cast<PrimitiveT>(s));                                      \
+  }                                                                            \
+                                                                               \
+  /** Tries to construct a ##T## from a signed primitive integer type (int,    \
+   * long, etc).                                                               \
+   *                                                                           \
+   * Returns an error if the source value is outside of the range of ##T##.    \
+   */                                                                          \
+  template <SignedPrimitiveInteger S>                                          \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(S s) {                                                              \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    if constexpr (MIN_PRIMITIVE > __private::min_value<S>()) {                 \
+      if (s < MIN_PRIMITIVE) {                                                 \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    if constexpr (MAX_PRIMITIVE < __private::max_value<S>()) {                 \
+      if (s > MAX_PRIMITIVE) {                                                 \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(s)));                             \
+  }                                                                            \
+                                                                               \
+  /** Constructs a ##T## from an unsigned primitive integer type (unsigned     \
+   * int, unsigned long, etc).                                                 \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   */                                                                          \
+  template <UnsignedPrimitiveInteger U>                                        \
+  static constexpr T from(U u) {                                               \
+    constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);             \
+    if constexpr (umax < __private::max_value<U>()) {                          \
+      ::sus::check(u <= umax);                                                 \
+    }                                                                          \
+    return T(static_cast<PrimitiveT>(u));                                      \
+  }                                                                            \
+                                                                               \
+  /** Constructs a ##T## from an unsigned primitive integer type (unsigned     \
+   * int, unsigned long, etc).                                                 \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   */                                                                          \
+  template <UnsignedPrimitiveInteger U>                                        \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(U u) {                                                              \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);             \
+    if constexpr (umax < __private::max_value<U>()) {                          \
+      if (u > umax) {                                                          \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(u)));                             \
+  }                                                                            \
   static_assert(true)
 
 #define _sus__signed_to_primitive(T, PrimitiveT)                            \
@@ -400,99 +488,99 @@ class Tuple;
   }                                                                     \
   static_assert(true)
 
-#define _sus__signed_abs(T, PrimitiveT, UnsignedT)                             \
-  /** Computes the absolute value of itself.                                   \
-   *                                                                           \
-   * The absolute value of ##T##::MIN cannot be represented as an ##T##, and \
-   * attempting to calculate it will panic.                                    \
-   */                                                                          \
-  constexpr inline T abs() const& noexcept {                                   \
-    /* TODO: Allow opting out of all overflow checks? */                       \
-    ::sus::check(primitive_value != MIN_PRIMITIVE);                            \
-    if (primitive_value >= 0)                                                  \
-      return primitive_value;                                                  \
-    else                                                                       \
-      return __private::unchecked_neg(primitive_value);                        \
-  }                                                                            \
-                                                                               \
-  /** Checked absolute value. Computes `abs()`, returning None if the current  \
-   * value is MIN.                                                             \
-   */                                                                          \
-  constexpr Option<T> checked_abs() const& noexcept {                          \
-    if (primitive_value != MIN_PRIMITIVE) [[likely]]                           \
-      return Option<T>::some(abs());                                           \
-    else                                                                       \
-      return Option<T>::none();                                                \
-  }                                                                            \
-                                                                               \
-  /** Computes the absolute value of self.                                     \
-   *                                                                           \
-   * Returns a tuple of the absolute version of self along with a boolean      \
-   * indicating whether an overflow happened. If self is the minimum value     \
-   * (e.g., ##T##::MIN for values of type ##T##), then the minimum value will  \
-   * be returned again and true will be returned for an overflow happening.    \
-   */                                                                          \
-  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_abs() const& noexcept {                          \
-    if (primitive_value != MIN_PRIMITIVE) [[likely]]                           \
-      return Tuple::with(abs(), false);                                        \
-    else                                                                       \
-      return Tuple::with(MIN, true);                                           \
-  }                                                                            \
-                                                                               \
-  /** Saturating absolute value. Computes `abs()`, returning MAX if the        \
-   *  current value is MIN instead of overflowing.                             \
-   */                                                                          \
-  constexpr T saturating_abs() const& noexcept {                               \
-    if (primitive_value != MIN_PRIMITIVE) [[likely]]                           \
-      return abs();                                                            \
-    else                                                                       \
-      return MAX;                                                              \
-  }                                                                            \
-                                                                               \
-  /** Computes the absolute value of self without any wrapping or panicking.   \
-   */                                                                          \
-  constexpr UnsignedT unsigned_abs() const& noexcept {                         \
-    if (primitive_value >= 0) {                                                \
-      return __private::into_unsigned(primitive_value);                        \
-    } else {                                                                   \
-      const auto neg_plus_one =                                                \
-          __private::unchecked_add(primitive_value, PrimitiveT{1});            \
-      const auto pos_minus_one =                                               \
-          __private::into_unsigned(__private::unchecked_neg(neg_plus_one));    \
-      return __private::unchecked_add(pos_minus_one,                           \
-                                      decltype(pos_minus_one){1});             \
-    }                                                                          \
-  }                                                                            \
-                                                                               \
-  /** Wrapping (modular) absolute value. Computes `this->abs()`, wrapping      \
-   * around at the boundary of the type.                                       \
-   *                                                                           \
-   * The only case where such wrapping can occur is when one takes the         \
-   * absolute value of the negative minimal value for the type; this is a      \
-   * positive value that is too large to represent in the type. In such a      \
-   * case, this function returns MIN itself.                                   \
-   */                                                                          \
-  constexpr T wrapping_abs() const& noexcept {                                 \
-    if (primitive_value != MIN_PRIMITIVE) [[likely]]                           \
-      return abs();                                                            \
-    else                                                                       \
-      return MIN;                                                              \
-  }                                                                            \
-                                                                               \
-  /** Computes the absolute difference between self and other.                 \
-   *                                                                           \
-   * This function always returns the correct answer without overflow or       \
-   * panics by returning an unsigned integer.                                  \
-   */                                                                          \
-  constexpr UnsignedT abs_diff(const T& r) const& noexcept {                   \
-    if (primitive_value >= r.primitive_value)                                  \
-      return __private::into_unsigned(                                         \
-          __private::unchecked_sub(primitive_value, r.primitive_value));       \
-    else                                                                       \
-      return __private::into_unsigned(                                         \
-          __private::unchecked_sub(r.primitive_value, primitive_value));       \
-  }                                                                            \
+#define _sus__signed_abs(T, PrimitiveT, UnsignedT)                            \
+  /** Computes the absolute value of itself.                                  \
+   *                                                                          \
+   * The absolute value of ##T##::MIN cannot be represented as an ##T##, and  \
+   * attempting to calculate it will panic.                                   \
+   */                                                                         \
+  constexpr inline T abs() const& noexcept {                                  \
+    /* TODO: Allow opting out of all overflow checks? */                      \
+    ::sus::check(primitive_value != MIN_PRIMITIVE);                           \
+    if (primitive_value >= 0)                                                 \
+      return primitive_value;                                                 \
+    else                                                                      \
+      return __private::unchecked_neg(primitive_value);                       \
+  }                                                                           \
+                                                                              \
+  /** Checked absolute value. Computes `abs()`, returning None if the current \
+   * value is MIN.                                                            \
+   */                                                                         \
+  constexpr Option<T> checked_abs() const& noexcept {                         \
+    if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
+      return Option<T>::some(abs());                                          \
+    else                                                                      \
+      return Option<T>::none();                                               \
+  }                                                                           \
+                                                                              \
+  /** Computes the absolute value of self.                                    \
+   *                                                                          \
+   * Returns a tuple of the absolute version of self along with a boolean     \
+   * indicating whether an overflow happened. If self is the minimum value    \
+   * (e.g., ##T##::MIN for values of type ##T##), then the minimum value will \
+   * be returned again and true will be returned for an overflow happening.   \
+   */                                                                         \
+  template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>         \
+  constexpr Tuple overflowing_abs() const& noexcept {                         \
+    if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
+      return Tuple::with(abs(), false);                                       \
+    else                                                                      \
+      return Tuple::with(MIN, true);                                          \
+  }                                                                           \
+                                                                              \
+  /** Saturating absolute value. Computes `abs()`, returning MAX if the       \
+   *  current value is MIN instead of overflowing.                            \
+   */                                                                         \
+  constexpr T saturating_abs() const& noexcept {                              \
+    if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
+      return abs();                                                           \
+    else                                                                      \
+      return MAX;                                                             \
+  }                                                                           \
+                                                                              \
+  /** Computes the absolute value of self without any wrapping or panicking.  \
+   */                                                                         \
+  constexpr UnsignedT unsigned_abs() const& noexcept {                        \
+    if (primitive_value >= 0) {                                               \
+      return __private::into_unsigned(primitive_value);                       \
+    } else {                                                                  \
+      const auto neg_plus_one =                                               \
+          __private::unchecked_add(primitive_value, PrimitiveT{1});           \
+      const auto pos_minus_one =                                              \
+          __private::into_unsigned(__private::unchecked_neg(neg_plus_one));   \
+      return __private::unchecked_add(pos_minus_one,                          \
+                                      decltype(pos_minus_one){1});            \
+    }                                                                         \
+  }                                                                           \
+                                                                              \
+  /** Wrapping (modular) absolute value. Computes `this->abs()`, wrapping     \
+   * around at the boundary of the type.                                      \
+   *                                                                          \
+   * The only case where such wrapping can occur is when one takes the        \
+   * absolute value of the negative minimal value for the type; this is a     \
+   * positive value that is too large to represent in the type. In such a     \
+   * case, this function returns MIN itself.                                  \
+   */                                                                         \
+  constexpr T wrapping_abs() const& noexcept {                                \
+    if (primitive_value != MIN_PRIMITIVE) [[likely]]                          \
+      return abs();                                                           \
+    else                                                                      \
+      return MIN;                                                             \
+  }                                                                           \
+                                                                              \
+  /** Computes the absolute difference between self and other.                \
+   *                                                                          \
+   * This function always returns the correct answer without overflow or      \
+   * panics by returning an unsigned integer.                                 \
+   */                                                                         \
+  constexpr UnsignedT abs_diff(const T& r) const& noexcept {                  \
+    if (primitive_value >= r.primitive_value)                                 \
+      return __private::into_unsigned(                                        \
+          __private::unchecked_sub(primitive_value, r.primitive_value));      \
+    else                                                                      \
+      return __private::into_unsigned(                                        \
+          __private::unchecked_sub(r.primitive_value, primitive_value));      \
+  }                                                                           \
   static_assert(true)
 
 #define _sus__signed_add(T, UnsignedT)                                         \
@@ -825,7 +913,7 @@ class Tuple;
    * the boundary of the type.                                                 \
    *                                                                           \
    * Such wrap-around never actually occurs mathematically; implementation     \
-   * artifacts make x % y invalid for MIN / -1 on a signed type (where MIN \
+   * artifacts make x % y invalid for MIN / -1 on a signed type (where MIN     \
    * is the negative minimal value). In such a case, this function returns 0.  \
    */                                                                          \
   constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
@@ -927,7 +1015,7 @@ class Tuple;
                                                                                \
   /** Calculates the least nonnegative remainder of self (mod rhs).            \
    *                                                                           \
-   * This is done as if by the Euclidean division algorithm – given r =        \
+   * This is done as if by the Euclidean division algorithm – given r =      \
    * self.rem_euclid(rhs), self = rhs * self.div_euclid(rhs) + r, and 0 <= r < \
    * abs(rhs).                                                                 \
    *                                                                           \

@@ -1,12 +1,26 @@
 #pragma once
 
-#include "subspace/iter/iterator_defn.h"
 #include "subspace/option/option.h"
 
 namespace sus::result {
 template <class T, class E>
 class Result;
 }
+
+namespace sus::iter {
+template <class Item>
+class Once;
+template <class ItemT>
+class IteratorBase;
+template <class I>
+class Iterator;
+namespace __private {
+template <class T>
+constexpr auto begin(const T& t) noexcept;
+template <class T>
+constexpr auto end(const T& t) noexcept;
+}  // namespace __private
+}  // namespace sus::iter
 
 namespace sus::iter::__private {
 
