@@ -1114,7 +1114,9 @@ TEST(Option, GetOrInsertDefault) {
   IS_SOME(x);
   EXPECT_EQ(sus::move(x).unwrap().i, 2);
 
-  auto y = Option<DefaultConstructible>::some(DefaultConstructible(404));
+  auto y = Option<DefaultConstructible>::some(
+      sus_clang_bug_54040(DefaultConstructible{404})
+          sus_clang_bug_54040_else(DefaultConstructible(404)));
   auto& ry = y.get_or_insert_default();
   static_assert(std::is_same_v<decltype(ry), DefaultConstructible&>);
   EXPECT_EQ(ry.i, 404);

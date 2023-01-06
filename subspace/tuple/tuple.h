@@ -19,10 +19,12 @@
 
 #include "assertions/check.h"
 #include "construct/default.h"
+#include "macros/__private/compiler_bugs.h"
 #include "macros/no_unique_address.h"
 #include "mem/clone.h"
 #include "mem/copy.h"
 #include "mem/forward.h"
+#include "mem/move.h"
 #include "mem/replace.h"
 #include "num/num_concepts.h"
 #include "ops/eq.h"
@@ -253,6 +255,9 @@ decltype(auto) get(Tuple<Ts...>&& t) noexcept {
 namespace __private {
 template <class... Ts>
 struct TupleMarker {
+  sus_clang_bug_54040(constexpr inline TupleMarker(Tuple<Ts&&...>&& values)
+                      : values(::sus::move(values)){});
+
   Tuple<Ts&&...> values;
 
   template <class... Us>

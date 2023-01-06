@@ -14,17 +14,22 @@
 
 #pragma once
 
+#include "macros/__private/compiler_bugs.h"
 #include "mem/move.h"
+#include "mem/forward.h"
 #include "mem/mref.h"
 
 namespace sus::option::__private {
 
 template <class T>
 struct SomeMarker {
-  T &&value;
+  sus_clang_bug_54040(constexpr inline SomeMarker(T&& value)
+                      : value(::sus::forward<T>(value)){});
+
+  T&& value;
 
   template <class U>
-  inline constexpr operator Option<U>() &&noexcept
+  inline constexpr operator Option<U>() && noexcept
       // `value` is a const reference.
     requires(std::is_const_v<std::remove_reference_t<T>>)
   {
@@ -32,16 +37,16 @@ struct SomeMarker {
   }
 
   template <class U>
-  inline constexpr operator Option<U>() &&noexcept
+  inline constexpr operator Option<U>() && noexcept
       // `value` is a mutable lvalue reference.
     requires(
-        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &>)
+        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>>&>)
   {
     return Option<U>::some(mref(value));
   }
 
   template <class U>
-  inline constexpr operator Option<U>() &&noexcept
+  inline constexpr operator Option<U>() && noexcept
       // `value` is an rvalue reference.
     requires(
         std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &&>)
@@ -52,7 +57,7 @@ struct SomeMarker {
 
 struct NoneMarker {
   template <class U>
-  inline constexpr operator Option<U>() &&noexcept {
+  inline constexpr operator Option<U>() && noexcept {
     return Option<U>::none();
   }
 };

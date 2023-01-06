@@ -38,10 +38,7 @@
 // TODO: https://github.com/llvm/llvm-project/issues/54040
 // Aggregate initialization via () paren syntax.
 //
-// Support for this landed and was reverted in clang 16. The first time it
-// landed it still did not work when:
-// * A destructor is present in the aggregate.
-// * A member of the aggregate has a concept-defined conversion operator.
+// Support for this landed and was reverted in clang 16.
 #if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
 #define sus_clang_bug_54040(...) __VA_ARGS__
 #define sus_clang_bug_54040_else(...)
