@@ -63,13 +63,14 @@ int main(int argc, const char** argv) {
 
   auto fs = llvm::vfs::getRealFileSystem();
 
-  sus::Option<subdoc::Database> docs_db =
+  auto result =
       subdoc::run_files(comp_db, sus::move(run_against_files), sus::move(fs));
-  if (docs_db.is_none()) {
-    llvm::outs() << "Error occurred\n";
+  if (result.is_err()) {
+    llvm::outs() << "Error occurred. Exiting.\n";
     return 1;
   }
 
+  subdoc::Database docs_db = sus::move(result).unwrap();
   // TODO: Generate docs.
   return 0;
 }

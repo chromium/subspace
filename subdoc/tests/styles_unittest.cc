@@ -20,7 +20,7 @@ TEST_F(SubDocTest, Mixed) {
     // Implementation details.
     struct S {};
     )");
-  EXPECT_TRUE(db.is_some());
+  EXPECT_TRUE(db.is_ok());
 }
 
 TEST_F(SubDocTest, CppStyle) {
@@ -28,7 +28,7 @@ TEST_F(SubDocTest, CppStyle) {
     // Implementation details.
     struct S {};
     )");
-  EXPECT_TRUE(db.is_some());
+  EXPECT_TRUE(db.is_ok());
 }
 
 TEST_F(SubDocTest, JavaDocStyle) {
@@ -36,7 +36,7 @@ TEST_F(SubDocTest, JavaDocStyle) {
     /** Comment headline */
     struct S {};
     )");
-  EXPECT_TRUE(db.is_some());
+  EXPECT_TRUE(db.is_ok());
 }
 
 TEST_F(SubDocTest, JavaDocStyleBody) {
@@ -47,5 +47,5 @@ TEST_F(SubDocTest, JavaDocStyleBody) {
     */
     struct S {};
     )");
-  EXPECT_TRUE(db.is_some());
+  EXPECT_TRUE(db.is_ok());
 }

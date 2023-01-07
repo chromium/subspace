@@ -22,8 +22,8 @@
 
 namespace subdoc {
 
-sus::Option<Database> run_test(std::string content,
-                               sus::Vec<std::string> args) noexcept {
+sus::result::Result<Database, DiagnosticResults> run_test(
+    std::string content, sus::Vec<std::string> args) noexcept {
   auto join_args = std::string();
   for (const auto& a : sus::move(args).into_iter()) {
     join_args += a + "\n";
@@ -33,8 +33,8 @@ sus::Option<Database> run_test(std::string content,
   auto comp_db = clang::tooling::FixedCompilationDatabase::loadFromBuffer(
       ".", join_args, err);
   if (!err.empty()) {
-    llvm::outs() << "error making comp_db for tests: " << err << "\n";
-    return sus::none();
+    llvm::errs() << "error making comp_db for tests: " << err << "\n";
+    return sus::result::err(DiagnosticResults());
   }
 
   auto vfs = llvm::IntrusiveRefCntPtr(new llvm::vfs::InMemoryFileSystem());
@@ -43,22 +43,36 @@ sus::Option<Database> run_test(std::string content,
   return run_files(*comp_db, sus::vec("test.cc"), std::move(vfs));
 }
 
-sus::Option<Database> run_files(
+struct DiagnosticTracker : public clang::TextDiagnosticPrinter {
+  explicit DiagnosticTracker(clang::raw_ostream& os,
+                             clang::DiagnosticOptions* diags)
+      : clang::TextDiagnosticPrinter(os, diags) {}
+
+  void HandleDiagnostic(clang::DiagnosticsEngine::Level level,
+                        const clang::Diagnostic& diag) override {
+    auto& source_manager = diag.getSourceManager();
+    results.locations.push(diag.getLocation().printToString(source_manager));
+    clang::TextDiagnosticPrinter::HandleDiagnostic(level, diag);
+  }
+
+  DiagnosticResults results;
+};
+
+sus::result::Result<Database, DiagnosticResults> run_files(
     const clang::tooling::CompilationDatabase& comp_db,
     sus::Vec<std::string> paths,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept {
   // Clang DiagnoticsConsumer that prints out the full error and context, which
   // is what the default one does, but by making it we have a pointer from which
   // we can see if an error occured.
-  auto diags = std::make_unique<clang::TextDiagnosticPrinter>(
+  auto diags = std::make_unique<DiagnosticTracker>(
       llvm::errs(), new clang::DiagnosticOptions());
 
   // TODO: Implement this efficiently in subspace.
   auto to_std_vec = []<class T>(sus::Vec<T> v) {
     std::vector<T> s;
     s.reserve(size_t{v.len()});
-    for (auto&& e : sus::move(v).into_iter())
-      s.push_back(sus::move(e));
+    for (auto&& e : sus::move(v).into_iter()) s.push_back(sus::move(e));
     return s;
   };
 
@@ -88,13 +102,13 @@ sus::Option<Database> run_files(
   auto cx = VisitCx();
   auto docs_db = Database();
   auto visitor_factory = VisitorFactory(cx, docs_db);
-  if (tool.run(&visitor_factory) == 1) {
-    return sus::none();
+if (tool.run(&visitor_factory) == 1) {
+    return sus::result::err(sus::move(sus::move(diags)->results));
   }
   if (diags->getNumErrors() > 0) {
-    return sus::none();
+    return sus::result::err(sus::move(sus::move(diags)->results));
   }
-  return sus::some(sus::move(docs_db));
+  return sus::result::ok(sus::move(docs_db));
 }
 
 }  // namespace subdoc
