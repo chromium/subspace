@@ -81,8 +81,7 @@ sus::result::Result<Database, DiagnosticResults> run_files(
       std::make_shared<clang::PCHContainerOperations>(), std::move(fs));
   tool.setDiagnosticConsumer(&*diags);
 
-  auto adj = [](clang::tooling::CommandLineArguments args,
-                llvm::StringRef Filename) {
+  auto adj = [](clang::tooling::CommandLineArguments args, llvm::StringRef) {
     // Clang-cl doesn't understand this argument, but it may appear in the
     // command-line for MSVC in C++20 codebases (like subspace).
     std::erase(args, "/Zc:preprocessor");
@@ -102,7 +101,7 @@ sus::result::Result<Database, DiagnosticResults> run_files(
   auto cx = VisitCx();
   auto docs_db = Database();
   auto visitor_factory = VisitorFactory(cx, docs_db);
-if (tool.run(&visitor_factory) == 1) {
+  if (tool.run(&visitor_factory) == 1) {
     return sus::result::err(sus::move(sus::move(diags)->results));
   }
   if (diags->getNumErrors() > 0) {

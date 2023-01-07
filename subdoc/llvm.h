@@ -27,10 +27,12 @@
 #pragma warning(disable : 4291)
 #pragma warning(disable : 4324)
 #pragma warning(disable : 4389)
+#pragma warning(disable : 4456)
 #pragma warning(disable : 4458)
 #pragma warning(disable : 4459)
 #pragma warning(disable : 4616)
 #pragma warning(disable : 4624)
+#pragma warning(disable : 4702)
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
