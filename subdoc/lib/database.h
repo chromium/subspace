@@ -43,16 +43,41 @@ struct CommentElement {
 };
 
 struct ClassElement : public CommentElement {
-  explicit ClassElement(sus::Vec<Namespace> namespaces, Comment comment)
-      : CommentElement(sus::move(namespaces), sus::move(comment)) {}
+  explicit ClassElement(sus::Vec<Namespace> namespaces, Comment comment,
+                        std::string name)
+      : CommentElement(sus::move(namespaces), sus::move(comment)),
+        name(sus::move(name)) {}
+
+  // TODO: Template parameters and requires clause.
+  std::string name;
 };
 struct UnionElement : public CommentElement {
-  explicit UnionElement(sus::Vec<Namespace> namespaces, Comment comment)
-      : CommentElement(sus::move(namespaces), sus::move(comment)) {}
+  explicit UnionElement(sus::Vec<Namespace> namespaces, Comment comment,
+                        std::string name)
+      : CommentElement(sus::move(namespaces), sus::move(comment)),
+        name(sus::move(name)) {}
+
+  // TODO: Template parameters and requires clause.
+  std::string name;
 };
 struct FunctionElement : public CommentElement {
-  explicit FunctionElement(sus::Vec<Namespace> namespaces, Comment comment)
-      : CommentElement(sus::move(namespaces), sus::move(comment)) {}
+  explicit FunctionElement(sus::Vec<Namespace> namespaces, Comment comment,
+                           std::string signature)
+      : CommentElement(sus::move(namespaces), sus::move(comment)),
+        signature(sus::move(signature)) {}
+
+  std::string signature;
+};
+struct FieldElement : public CommentElement {
+  explicit FieldElement(sus::Vec<Namespace> namespaces, Comment comment,
+                        bool is_static, std::string name)
+      : CommentElement(sus::move(namespaces), sus::move(comment)),
+        is_static(is_static),
+        name(sus::move(name)) {}
+
+  bool is_static;
+  // TODO: clang::Qualifiers.
+  std::string name;
 };
 
 struct Database {
@@ -64,6 +89,7 @@ struct Database {
   std::unordered_map<UniqueSymbol, FunctionElement> dtors;
   std::unordered_map<UniqueSymbol, FunctionElement> conversions;
   std::unordered_map<UniqueSymbol, FunctionElement> methods;
+  std::unordered_map<UniqueSymbol, FieldElement> fields;
 };
 
 static_assert(sus::mem::Move<Database>);
