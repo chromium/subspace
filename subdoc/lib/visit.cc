@@ -14,6 +14,7 @@
 
 #include "subdoc/lib/visit.h"
 
+#include "subdoc/lib/database.h"
 #include "subdoc/lib/namespace.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subspace/assertions/unreachable.h"
@@ -52,15 +53,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RawComment* raw_comment = get_raw_comment(*decl);
     if (!raw_comment) return true;
     if (decl->isUnion()) {
-      return add_comment_to_db(
-          decl, raw_comment,
-          sus::choice<AttachedType::Union>(collect_namespaces(decl)),
-          mref(docs_db_.unions));
+      auto ue = UnionElement(collect_namespaces(decl),
+                             to_db_comment(*decl, *raw_comment));
+      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ue),
+                               mref(docs_db_.unions));
     } else {
-      return add_comment_to_db(
-          decl, raw_comment,
-          sus::choice<AttachedType::Class>(collect_namespaces(decl)),
-          mref(docs_db_.classes));
+      auto ce = ClassElement(collect_namespaces(decl),
+                             to_db_comment(*decl, *raw_comment));
+      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ce),
+                               mref(docs_db_.classes));
     }
     return true;
   }
@@ -86,67 +87,65 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RawComment* raw_comment = get_raw_comment(*decl);
     if (!raw_comment) return true;
 
+    auto fe = FunctionElement(collect_namespaces(decl),
+                              to_db_comment(*decl, *raw_comment));
+
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
-      return add_comment_to_db(
-          decl, raw_comment,
-          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
-          mref(docs_db_.ctors));
+      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
+                               mref(docs_db_.ctors));
     } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
-      return add_comment_to_db(
-          decl, raw_comment,
-          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
-          mref(docs_db_.dtors));
+      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
+
+                               mref(docs_db_.dtors));
     } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
-      return add_comment_to_db(
-          decl, raw_comment,
-          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
-          mref(docs_db_.conversions));
+      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
+
+                               mref(docs_db_.conversions));
     } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
-      return add_comment_to_db(
-          decl, raw_comment,
-          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
-          mref(docs_db_.methods));
+      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
+
+                               mref(docs_db_.methods));
     } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
-      return add_comment_to_db(
-          decl, raw_comment,
-          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
-          mref(docs_db_.deductions));
+      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
+
+                               mref(docs_db_.deductions));
     } else {
-      return add_comment_to_db(
-          decl, raw_comment,
-          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
-          mref(docs_db_.functions));
+      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
+
+                               mref(docs_db_.functions));
     }
 
     return true;
   }
 
  private:
-  bool add_comment_to_db(clang::Decl* decl, clang::RawComment* raw_comment,
-                         Attached attached_to,
-                         NamedCommentMap& db_map) noexcept {
+  template <class ElementT, class MapT>
+    requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
+  bool add_comment_to_db(clang::Decl* decl, clang::SourceLocation loc,
+                         ElementT comment_element, MapT& db_map) noexcept {
     auto& ast_cx = decl->getASTContext();
-    auto& src_manager = ast_cx.getSourceManager();
 
-    auto comment_str = std::string(raw_comment->getRawText(src_manager));
-    auto comment_loc_str =
-        raw_comment->getBeginLoc().printToString(src_manager);
-
-    auto [old, added] = db_map.emplace(
-        unique_from_decl(decl),
-        Comment(sus::move(comment_str), sus::move(comment_loc_str),
-                sus::move(attached_to)));
+    auto [old, added] =
+        db_map.emplace(unique_from_decl(decl), sus::move(comment_element));
     if (!added) {
       auto& diagnostics_engine = ast_cx.getDiagnostics();
-      diagnostics_engine
-          .Report(raw_comment->getBeginLoc(), diag_ids_.superceded_comment)
-          .AddString(old->second.begin_loc);
+      const ElementT& old_element = old->second;
+      diagnostics_engine.Report(loc, diag_ids_.superceded_comment)
+          .AddString(old_element.comment.begin_loc);
     }
     return true;
   }
 
-  clang::RawComment* get_raw_comment(clang::Decl& decl) const {
+  static clang::RawComment* get_raw_comment(clang::Decl& decl) {
     return decl.getASTContext().getRawCommentForDeclNoCache(&decl);
+  }
+
+  static Comment to_db_comment(const clang::Decl& decl,
+                               clang::RawComment& raw) noexcept {
+    auto& ast_cx = decl.getASTContext();
+    auto& src_manager = ast_cx.getSourceManager();
+    return Comment(std::string(raw.getRawText(src_manager)),
+                   raw.getBeginLoc().printToString(src_manager));
   }
 
   VisitCx& cx_;
