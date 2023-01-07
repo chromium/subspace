@@ -29,6 +29,7 @@ add_executable(subdoc
 )
 
 add_executable(subdoc_unittests
+    "tests/fields_unittest.cc"
     "tests/functions_unittest.cc"
     "tests/methods_unittest.cc"
     "tests/records_unittest.cc"

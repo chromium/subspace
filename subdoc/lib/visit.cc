@@ -54,12 +54,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (!raw_comment) return true;
     if (decl->isUnion()) {
       auto ue = UnionElement(collect_namespaces(decl),
-                             to_db_comment(*decl, *raw_comment));
+                             to_db_comment(*decl, *raw_comment),
+                             decl->getQualifiedNameAsString());
       return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ue),
                                mref(docs_db_.unions));
     } else {
       auto ce = ClassElement(collect_namespaces(decl),
-                             to_db_comment(*decl, *raw_comment));
+                             to_db_comment(*decl, *raw_comment),
+                             decl->getQualifiedNameAsString());
       return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ce),
                                mref(docs_db_.classes));
     }
@@ -87,8 +89,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RawComment* raw_comment = get_raw_comment(*decl);
     if (!raw_comment) return true;
 
+    // TODO: The signature string should include the whole signature not just
+    // the name.
     auto fe = FunctionElement(collect_namespaces(decl),
-                              to_db_comment(*decl, *raw_comment));
+                              to_db_comment(*decl, *raw_comment),
+                              decl->getQualifiedNameAsString());
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
       return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),

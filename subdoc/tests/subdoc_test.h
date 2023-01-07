@@ -48,7 +48,7 @@ class SubDocTest : public testing::Test {
   }
 
   /// Returns if a class was found whose comment location ends with
-  /// `comment_loc` and whos comment begins with `comment_start`.
+  /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_class_comment(const subdoc::Database& db,
                          std::string_view comment_loc,
                          std::string_view comment_start) {
@@ -56,10 +56,17 @@ class SubDocTest : public testing::Test {
   }
 
   /// Returns if a function was found whose comment location ends with
-  /// `comment_loc` and whos comment begins with `comment_start`.
+  /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_fn_comment(const subdoc::Database& db, std::string_view comment_loc,
                       std::string_view comment_start) {
     return find_comment(db.functions, comment_loc, comment_start);
+  }
+
+  /// Returns if a field was found whose comment location ends with
+  /// `comment_loc` and whose comment begins with `comment_start`.
+  bool has_field_comment(const subdoc::Database& db, std::string_view comment_loc,
+                      std::string_view comment_start) {
+    return find_comment(db.fields, comment_loc, comment_start);
   }
 
  private:
