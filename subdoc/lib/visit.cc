@@ -14,14 +14,28 @@
 
 #include "subdoc/lib/visit.h"
 
+#include "subdoc/lib/names.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/prelude.h"
 
 namespace subdoc {
 
+struct DiagnosticIds {
+  static DiagnosticIds with(clang::ASTContext& ast_cx) noexcept {
+    return DiagnosticIds{
+        .superceded_comment = ast_cx.getDiagnostics().getCustomDiagID(
+            clang::DiagnosticsEngine::Error,
+            "ignored API comment, superceded by comment at %0"),
+    };
+  }
+
+  const unsigned int superceded_comment;
+};
+
 class Visitor : public clang::RecursiveASTVisitor<Visitor> {
  public:
-  Visitor(VisitCx& cx, Database& docs_db) : cx_(cx), docs_db_(docs_db) {}
+  Visitor(VisitCx& cx, Database& docs_db, DiagnosticIds ids)
+      : cx_(cx), docs_db_(docs_db), diag_ids_(sus::move(ids)) {}
   bool shouldVisitLambdaBody() const { return false; }
 
   bool VisitStaticAssertDecl(clang::StaticAssertDecl*) noexcept {
@@ -61,6 +75,36 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RawComment* raw_comment = get_raw_comment(*decl);
     if (!raw_comment) return true;
     llvm::errs() << "FunctionDecl " << raw_comment->getKind() << "\n";
+
+    auto& ast_cx = decl->getASTContext();
+    auto& diagnostics_engine = ast_cx.getDiagnostics();
+    auto& src_manager = ast_cx.getSourceManager();
+    auto loc_str = raw_comment->getBeginLoc().printToString(src_manager);
+    auto comment_str = std::string(raw_comment->getRawText(src_manager));
+    auto name = unique_name_for_function(*decl);
+    auto comment = Comment(comment_str, loc_str);
+
+    llvm::errs() << name << "\n";
+
+    if (clang::isa<clang::CXXConstructorDecl>(decl)) {
+      docs_db_.ctors.emplace("ctor", sus::move(comment));
+    } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
+      docs_db_.dtors.emplace("dtor", sus::move(comment));
+    } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
+      docs_db_.conversions.emplace("cver", sus::move(comment));
+    } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
+      docs_db_.methods.emplace("method", sus::move(comment));
+    } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
+      docs_db_.deductions.emplace("deduction", sus::move(comment));
+    } else {
+      auto [old, added] = docs_db_.functions.emplace(name, sus::move(comment));
+      if (!added) {
+        diagnostics_engine
+            .Report(raw_comment->getBeginLoc(), diag_ids_.superceded_comment)
+            .AddString(old->second.begin_loc);
+      }
+    }
+
     return true;
   }
 
@@ -71,6 +115,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
   VisitCx& cx_;
   Database& docs_db_;
+  DiagnosticIds diag_ids_;
 };
 
 class AstConsumer : public clang::ASTConsumer {
@@ -79,7 +124,9 @@ class AstConsumer : public clang::ASTConsumer {
 
   bool HandleTopLevelDecl(clang::DeclGroupRef group_ref) noexcept override {
     for (clang::Decl* decl : group_ref) {
-      if (!Visitor(cx_, docs_db_).TraverseDecl(decl)) return false;
+      if (!Visitor(cx_, docs_db_, DiagnosticIds::with(decl->getASTContext()))
+               .TraverseDecl(decl))
+        return false;
     }
     return true;
   }

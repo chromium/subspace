@@ -39,15 +39,14 @@ inline std::string_view cpp_version_flag(SubDocCppVersion v) noexcept {
 
 class SubDocTest : public testing::Test {
  public:
-  sus::Option<subdoc::Database> run_code(std::string content) noexcept {
+  auto run_code(std::string content) noexcept {
     auto args = sus::Vec<std::string>();
     args.push(std::string(cpp_version_flag(cpp_version_)));
 
-    auto a = subdoc::run_test(sus::move(content), sus::move(args));
-    return sus::move(a).or_else([]() -> sus::Option<subdoc::Database> {
+    auto result = subdoc::run_test(sus::move(content), sus::move(args));
+    if (result.is_err())
       ADD_FAILURE() << "Compilation failed.";
-      return sus::none();
-    });
+    return result;
   }
 
  private:

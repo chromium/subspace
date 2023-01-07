@@ -21,7 +21,7 @@ TEST_F(SubDocTest, Method) {
       void f() {}
     };
     )");
-  EXPECT_TRUE(db.is_some());
+  EXPECT_TRUE(db.is_ok());
 }
 
 TEST_F(SubDocTest, MethodOverload) {
@@ -33,5 +33,5 @@ TEST_F(SubDocTest, MethodOverload) {
       void f(int) {}
     };
     )");
-  EXPECT_TRUE(db.is_some());
+  EXPECT_TRUE(db.is_ok());
 }

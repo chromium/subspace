@@ -19,16 +19,22 @@
 #include "subdoc/lib/database.h"
 #include "subdoc/llvm.h"
 #include "subspace/containers/vec.h"
-#include "subspace/option/option.h"
 #include "subspace/prelude.h"
+#include "subspace/result/result.h"
 
 namespace subdoc {
 
-sus::Option<Database> run_test(std::string content,
-                             sus::Vec<std::string> args) noexcept;
+struct DiagnosticResults {
+  sus::Vec<std::string> locations;
+};
+static_assert(sus::mem::Move<DiagnosticResults>);
 
-sus::Option<Database> run_files(
-    const clang::tooling::CompilationDatabase& compdb, sus::Vec<std::string> paths,
+sus::result::Result<Database, DiagnosticResults> run_test(
+    std::string content, sus::Vec<std::string> args) noexcept;
+
+sus::result::Result<Database, DiagnosticResults> run_files(
+    const clang::tooling::CompilationDatabase& compdb,
+    sus::Vec<std::string> paths,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept;
 
 }  // namespace subdoc

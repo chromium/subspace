@@ -19,7 +19,7 @@ TEST_F(SubDocTest, Class) {
     /// Comment headline
     struct S {};
     )");
-  EXPECT_TRUE(db.is_some());
+  EXPECT_TRUE(db.is_ok());
 }
 
 TEST_F(SubDocTest, TemplateClass) {
@@ -28,7 +28,7 @@ TEST_F(SubDocTest, TemplateClass) {
     template <class T>
     struct S {};
     )");
-  EXPECT_TRUE(db.is_some());
+  EXPECT_TRUE(db.is_ok());
 }
 
 TEST_F(SubDocTest, TemplateClassSpecialization) {
@@ -40,5 +40,5 @@ TEST_F(SubDocTest, TemplateClassSpecialization) {
     template <>
     struct S<void> {};
     )");
-  EXPECT_TRUE(db.is_some());
+  EXPECT_TRUE(db.is_ok());
 }
