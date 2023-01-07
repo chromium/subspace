@@ -30,7 +30,7 @@ message(STATUS "Build CIR: ${SUBSPACE_BUILD_CIR}")
 
 function(subspace_default_compile_options TARGET)
     if(MSVC)
-        target_compile_options(${TARGET} /Zc:preprocessor /wd5105)
+        target_compile_options(${TARGET} PUBLIC /Zc:preprocessor /wd5105)
     endif()
 
     set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)
