@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(subdoc_lib STATIC
+add_library(subdoc_lib STATIC "")
+add_library(subdoc::lib ALIAS subdoc_lib)
+target_sources(subdoc_lib PUBLIC
     "lib/database.h"
     "lib/run.cc"
     "lib/run.h"
@@ -30,8 +32,7 @@ add_executable(subdoc_unittests
 )
 
 # subdoc_lib
-set_target_properties(subdoc_lib PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(subdoc_lib PUBLIC ..)
+subspace_default_compile_options(subdoc_lib)
 
 find_package(LLVM REQUIRED)
 find_package(Clang REQUIRED)
@@ -40,7 +41,7 @@ target_include_directories(subdoc_lib PUBLIC ${LLVM_INCLUDE_DIRS})
 target_link_directories(subdoc_lib PUBLIC ${LLVM_LIBRARY_DIRS})
 
 target_link_libraries(subdoc_lib
-    subspace
+    subspace::lib
     clangAnalysis
     clangAnalysisFlowSensitive
     clangAnalysisFlowSensitiveModels
@@ -86,26 +87,11 @@ target_link_libraries(subdoc_lib
 )
 
 # subdoc_unittests
-set_target_properties(subdoc_unittests PROPERTIES LINKER_LANGUAGE CXX)
-target_include_directories(subdoc_unittests PUBLIC
-    ..
-    ../third_party/googletest
-)
-target_link_libraries(subdoc_unittests
-    subdoc_lib
-    gtest_main
-)
+subspace_test_default_compile_options(subdoc_unittests)
+target_link_libraries(subdoc_unittests subdoc::lib)
 
-if(MSVC)
-    target_compile_options(subdoc_unittests PUBLIC /W4 /WX)
-else()
-    target_compile_options(subdoc_unittests PUBLIC -Werror)
-endif()
-
-gtest_discover_tests(
-    subdoc_unittests
-)
+gtest_discover_tests(subdoc_unittests)
 
 # subdoc binary
-set_target_properties(subdoc PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(subdoc subdoc_lib)
+subspace_default_compile_options(subdoc)
+target_link_libraries(subdoc subdoc::lib)

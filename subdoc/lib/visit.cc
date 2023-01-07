@@ -24,7 +24,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   Visitor(VisitCx& cx, Database& docs_db) : cx_(cx), docs_db_(docs_db) {}
   bool shouldVisitLambdaBody() const { return false; }
 
-  bool VisitStaticAssertDecl(clang::StaticAssertDecl* decl) noexcept {
+  bool VisitStaticAssertDecl(clang::StaticAssertDecl*) noexcept {
     llvm::errs() << "StaticAssertDecl\n";
     return true;
   }
@@ -94,7 +94,7 @@ std::unique_ptr<clang::FrontendAction> VisitorFactory::create() noexcept {
 }
 
 std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
-    clang::CompilerInstance& compiler, llvm::StringRef file) noexcept {
+    clang::CompilerInstance&, llvm::StringRef) noexcept {
   // set preprocessor options?
   return std::make_unique<AstConsumer>(cx, docs_db);
 }

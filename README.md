@@ -47,13 +47,12 @@ MIR](https://kanishkarj.github.io/rust-internals-mir).
 CIR requires an installation of LLVM from Git HEAD, including the LLVM/Clang
 headers and libraries.
 
-By default, in VSCode it looks for LLVM and clang in the following places, from
-Subspace's `.vscode/settings.json`, but you will need to set these environment
-variables if building in another way.
+By default, in VSCode it looks for LLVM and clang in your system paths, but you can override
+this to point to your own installation from your VSCode user settings:
 ```json
 "cmake.environment": {
-    "LLVM_DIR": "../../llvm/build/install/lib/cmake/llvm",
-    "Clang_DIR": "../../llvm/build/install/lib/cmake/clang",
+    "LLVM_DIR": "path/to/llvm/install/lib/cmake/llvm",
+    "Clang_DIR": "path/to/llvm/install/lib/cmake/clang",
 },
 ```
 
