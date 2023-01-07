@@ -540,36 +540,36 @@ union Storage<I, ::sus::Tuple<T>> {
 };
 
 template <auto I, class S>
-static constexpr const auto& find_storage(const S& storage) {
-  return find_storage(storage, std::integral_constant<size_t, size_t{I}>());
+static constexpr const auto& find_choice_storage(const S& storage) {
+  return find_choice_storage(storage, std::integral_constant<size_t, size_t{I}>());
 }
 
 template <size_t I, class S>
-static constexpr const auto& find_storage(const S& storage,
+static constexpr const auto& find_choice_storage(const S& storage,
                                           std::integral_constant<size_t, I>) {
-  return find_storage(storage.more_, std::integral_constant<size_t, I - 1u>());
+  return find_choice_storage(storage.more_, std::integral_constant<size_t, I - 1u>());
 }
 
 template <class S>
-static constexpr const auto& find_storage(const S& storage,
+static constexpr const auto& find_choice_storage(const S& storage,
                                           std::integral_constant<size_t, 0>) {
   return storage;
 }
 
 template <auto I, class S>
-static constexpr auto& find_storage_mut(S& storage) {
-  return find_storage_mut(storage, std::integral_constant<size_t, size_t{I}>());
+static constexpr auto& find_choice_storage_mut(S& storage) {
+  return find_choice_storage_mut(storage, std::integral_constant<size_t, size_t{I}>());
 }
 
 template <size_t I, class S>
-static constexpr auto& find_storage_mut(S& storage,
+static constexpr auto& find_choice_storage_mut(S& storage,
                                         std::integral_constant<size_t, I>) {
-  return find_storage_mut(storage.more_,
+  return find_choice_storage_mut(storage.more_,
                           std::integral_constant<size_t, I - 1u>());
 }
 
 template <class S>
-static constexpr auto& find_storage_mut(S& storage,
+static constexpr auto& find_choice_storage_mut(S& storage,
                                         std::integral_constant<size_t, 0>) {
   return storage;
 }

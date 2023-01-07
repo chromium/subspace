@@ -104,7 +104,7 @@ class Tuple final {
     ::sus::check(!any_moved_from());
     auto f = [this]<size_t... Is>(std::index_sequence<Is...>) {
       return Tuple::with(::sus::mem::clone_or_forward<T>(
-          __private::find_storage<Is>(storage_).get_ref())...);
+          __private::find_tuple_storage<Is>(storage_).get_ref())...);
     };
     return f(std::make_index_sequence<1u + sizeof...(Ts)>());
   }
@@ -114,7 +114,7 @@ class Tuple final {
     requires(I <= sizeof...(Ts))
   constexpr inline const auto& get_ref() const& noexcept {
     ::sus::check(!moved_from(I));
-    return __private::find_storage<I>(storage_).get_ref();
+    return __private::find_tuple_storage<I>(storage_).get_ref();
   }
 
   /// Disallows getting a reference to temporary Tuple.
@@ -126,7 +126,7 @@ class Tuple final {
     requires(I <= sizeof...(Ts))
   constexpr inline auto& get_mut() & noexcept {
     ::sus::check(!moved_from(I));
-    return __private::find_storage_mut<I>(storage_).get_mut();
+    return __private::find_tuple_storage_mut<I>(storage_).get_mut();
   }
 
   /// Removes the `I`th element from the tuple, leaving the Tuple in a
@@ -136,7 +136,7 @@ class Tuple final {
   constexpr inline decltype(auto) into_inner() && noexcept {
     ::sus::check(!moved_from(I));
     set_all_moved_from();
-    return ::sus::move(__private::find_storage_mut<I>(storage_)).into_inner();
+    return ::sus::move(__private::find_tuple_storage_mut<I>(storage_)).into_inner();
   }
 
   /// sus::ops::Eq<Tuple<U...>> trait.
