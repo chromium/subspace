@@ -24,45 +24,46 @@
 
 namespace subdoc {
 
-enum class AttachedType {
-  Function,
-  Class,
-  Union,
-};
-// clang-format off
-using Attached = sus::Choice<sus_choice_types(
-  (AttachedType::Function, sus::Vec<Namespace>),
-  (AttachedType::Class, sus::Vec<Namespace>),
-  (AttachedType::Union, sus::Vec<Namespace>),
-)>;
-// clang-format on
-
 struct Comment {
 #if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
-  Comment(std::string raw_text, clang::SourceRange source_range,
-          Attached attached_to)
-      : raw_text(raw_text),
-        source_range(source_range),
-        attached_to(sus::move(attached_to)) {}
+  Comment(std::string raw_text, clang::SourceRange source_range)
+      : raw_text(raw_text), source_range(source_range) {}
 #endif
 
   std::string raw_text;
   std::string begin_loc;
-
-  Attached attached_to;
 };
 
-using NamedCommentMap = std::unordered_map<UniqueSymbol, Comment>;
+struct CommentElement {
+  explicit CommentElement(sus::Vec<Namespace> namespaces, Comment comment)
+      : namespaces(sus::move(namespaces)), comment(sus::move(comment)) {}
+
+  sus::Vec<Namespace> namespaces;
+  Comment comment;
+};
+
+struct ClassElement : public CommentElement {
+  explicit ClassElement(sus::Vec<Namespace> namespaces, Comment comment)
+      : CommentElement(sus::move(namespaces), sus::move(comment)) {}
+};
+struct UnionElement : public CommentElement {
+  explicit UnionElement(sus::Vec<Namespace> namespaces, Comment comment)
+      : CommentElement(sus::move(namespaces), sus::move(comment)) {}
+};
+struct FunctionElement : public CommentElement {
+  explicit FunctionElement(sus::Vec<Namespace> namespaces, Comment comment)
+      : CommentElement(sus::move(namespaces), sus::move(comment)) {}
+};
 
 struct Database {
-  NamedCommentMap classes;
-  NamedCommentMap unions;
-  NamedCommentMap functions;
-  NamedCommentMap deductions;
-  NamedCommentMap ctors;
-  NamedCommentMap dtors;
-  NamedCommentMap conversions;
-  NamedCommentMap methods;
+  std::unordered_map<UniqueSymbol, ClassElement> classes;
+  std::unordered_map<UniqueSymbol, UnionElement> unions;
+  std::unordered_map<UniqueSymbol, FunctionElement> functions;
+  std::unordered_map<UniqueSymbol, FunctionElement> deductions;
+  std::unordered_map<UniqueSymbol, FunctionElement> ctors;
+  std::unordered_map<UniqueSymbol, FunctionElement> dtors;
+  std::unordered_map<UniqueSymbol, FunctionElement> conversions;
+  std::unordered_map<UniqueSymbol, FunctionElement> methods;
 };
 
 static_assert(sus::mem::Move<Database>);

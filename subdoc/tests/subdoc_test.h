@@ -63,17 +63,17 @@ class SubDocTest : public testing::Test {
   }
 
  private:
-  bool find_comment(const subdoc::NamedCommentMap& map,
-                    std::string_view comment_loc,
+  template <class MapT>
+  bool find_comment(const MapT& map, std::string_view comment_loc,
                     std::string_view comment_start) {
-    for (const auto& [f, c] : map) {
-      if (c.begin_loc.ends_with(comment_loc))
-        return c.raw_text.starts_with(comment_start);
+    for (const auto& [k, element] : map) {
+      if (element.comment.begin_loc.ends_with(comment_loc))
+        return element.comment.raw_text.starts_with(comment_start);
     }
     ADD_FAILURE() << "Comment location " << comment_loc
                   << " not found. Valid locations:";
-    for (const auto& [f, c] : map)
-      llvm::errs() << "  " << c.begin_loc << "\n";
+    for (const auto& [k, element] : map)
+      llvm::errs() << "  " << element.comment.begin_loc << "\n";
     return false;
   }
 
