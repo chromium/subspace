@@ -127,7 +127,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(std::convertible_to<U &&, Arg>)
   static Choice with(U&& values) noexcept {
     auto u = Choice(index<V>);
-    find_storage_mut<index<V>>(u.storage_).construct(::sus::forward<U>(values));
+    find_choice_storage_mut<index<V>>(u.storage_)
+        .construct(::sus::forward<U>(values));
     return u;
   }
 
@@ -311,21 +312,21 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   inline decltype(auto) get_ref() const& noexcept{
     ::sus::check(index_ == index<V>);
-    return __private::find_storage<index<V>>(storage_).get_ref();
+    return __private::find_choice_storage<index<V>>(storage_).get_ref();
   }
 
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   inline decltype(auto) get_mut() &noexcept {
     ::sus::check(index_ == index<V>);
-    return __private::find_storage_mut<index<V>>(storage_).get_mut();
+    return __private::find_choice_storage_mut<index<V>>(storage_).get_mut();
   }
 
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   inline decltype(auto) into_inner() && noexcept{
     ::sus::check(index_ == index<V>);
-    auto& s = __private::find_storage_mut<index<V>>(storage_);
+    auto& s = __private::find_choice_storage_mut<index<V>>(storage_);
     return ::sus::move(s).into_inner();
   }
   // clang-format on
@@ -335,12 +336,12 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
              __private::ValueIsNotVoid<StorageTypeOfTag<V>>)
   void set(U&& values) & noexcept {
     if (index_ == index<V>) {
-      __private::find_storage_mut<index<V>>(storage_).assign(
+      __private::find_choice_storage_mut<index<V>>(storage_).assign(
           ::sus::move(values));
     } else {
       if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
       index_ = index<V>;
-      __private::find_storage_mut<index<V>>(storage_).construct(
+      __private::find_choice_storage_mut<index<V>>(storage_).construct(
           ::sus::move(values));
     }
   }
