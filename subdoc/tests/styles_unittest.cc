@@ -15,37 +15,46 @@
 #include "subdoc/tests/subdoc_test.h"
 
 TEST_F(SubDocTest, Mixed) {
-  auto db = run_code(R"(
-    /// Comment headline 2
+  auto result = run_code(R"(
+    /// Comment headline
     // Implementation details.
     struct S {};
     )");
-  EXPECT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_class_comment(db, "2:5", "/// Comment headline"));
 }
 
 TEST_F(SubDocTest, CppStyle) {
-  auto db = run_code(R"(
+  auto result = run_code(R"(
     // Implementation details.
     struct S {};
     )");
-  EXPECT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  // No comment found.
+  EXPECT_EQ(db.classes.size(), 0u);
 }
 
 TEST_F(SubDocTest, JavaDocStyle) {
-  auto db = run_code(R"(
+  auto result = run_code(R"(
     /** Comment headline */
     struct S {};
     )");
-  EXPECT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_class_comment(db, "2:5", "/** Comment headline */"));
 }
 
 TEST_F(SubDocTest, JavaDocStyleBody) {
-  auto db = run_code(R"(
+  auto result = run_code(R"(
     /** Comment headline
      * 
      * Comment body.
     */
     struct S {};
     )");
-  EXPECT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_class_comment(db, "2:5", "/** Comment headline\n"));
 }

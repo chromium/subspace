@@ -15,39 +15,19 @@
 #include "subdoc/tests/subdoc_test.h"
 
 TEST_F(SubDocTest, Function) {
-  auto db = run_code(R"(
+  auto result = run_code(R"(
     namespace n {
     /// Comment headline
     void f() {}
     }
     )");
-  ASSERT_TRUE(db.is_ok());
-  for (const auto& [k, v] : sus::move(db).unwrap().functions) {
-    llvm::errs() << k << "\n";
-    llvm::errs() << v.raw_text << "\n";
-    llvm::errs() << v.begin_loc << "\n";
-  }
-}
-
-TEST_F(SubDocTest, FunctionDefnDecl) {
-  auto db = run_code(R"(
-    namespace n {
-    /// Comment headline 1
-    void f();  // Forward decl.
-    /// Comment headline 2
-    void f(int) {}  // Defn.
-    }
-    )");
-  ASSERT_TRUE(db.is_err());
-  auto results = sus::move(db).unwrap_err();
-  ASSERT_EQ(results.locations.len(), 1u);
-  // The 2nd comment on the same function causes an error as the comments become
-  // ambiguous.
-  EXPECT_EQ(results.locations[0u], "test.cc:5:5");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_fn_comment(db, "3:5", "/// Comment headline"));
 }
 
 TEST_F(SubDocTest, FunctionOverloads) {
-  auto db = run_code(R"(
+  auto result = run_code(R"(
     namespace n {
     /// Comment headline 1
     void f(char) {}
@@ -55,19 +35,71 @@ TEST_F(SubDocTest, FunctionOverloads) {
     void f(int) {}
     }
     )");
-  ASSERT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_fn_comment(db, "3:5", "/// Comment headline 1"));
+  EXPECT_TRUE(has_fn_comment(db, "5:5", "/// Comment headline 2"));
 }
 
 TEST_F(SubDocTest, FunctionOverloadsRequires) {
-  auto db = run_code(R"(
+  auto result = run_code(R"(
+    template <class A, class B>
+    concept C = true;
+
     namespace n {
     /// Comment headline 1
     template <class T>
-    void f(T) requires(std::same_as<T, char>) {}
+    void f(T) requires(C<T, char>) {}
     /// Comment headline 2
     template <class T>
-    void f(T) requires(std::same_as<T, int>) {}
+    void f(T) requires(C<T, int>) {}
     }
     )");
-  ASSERT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_fn_comment(db, "6:5", "/// Comment headline 1"));
+  EXPECT_TRUE(has_fn_comment(db, "9:5", "/// Comment headline 2"));
+}
+
+TEST_F(SubDocTest, ForwardDeclDuplicate) {
+  auto result = run_code(R"(
+    namespace n {
+    /// Comment headline 1
+    void f();  // Forward decl.
+    /// Comment headline 2
+    void f() {}  // Defn.
+    }
+    )");
+  ASSERT_TRUE(result.is_err());
+  auto diags = sus::move(result).unwrap_err();
+  ASSERT_EQ(diags.locations.len(), 1u);
+  // The 2nd comment on the same function causes an error as the comments become
+  // ambiguous.
+  EXPECT_EQ(diags.locations[0u], "test.cc:5:5");
+}
+
+TEST_F(SubDocTest, ForwardDeclDocumented) {
+  auto result = run_code(R"(
+    namespace n {
+    /// Comment headline
+    void f();
+    void f() {}
+    }
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_fn_comment(db, "3:5", "/// Comment headline"));
+}
+
+TEST_F(SubDocTest, ForwardDeclUndocumented) {
+  auto result = run_code(R"(
+    namespace n {
+    void f();
+    /// Comment headline
+    void f() {}
+    }
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_fn_comment(db, "4:5", "/// Comment headline"));
 }

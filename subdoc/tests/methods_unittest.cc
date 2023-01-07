@@ -15,17 +15,17 @@
 #include "subdoc/tests/subdoc_test.h"
 
 TEST_F(SubDocTest, Method) {
-  auto db = run_code(R"(
+  auto result = run_code(R"(
     struct S {
       /// Comment headline
       void f() {}
     };
     )");
-  EXPECT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
 }
 
 TEST_F(SubDocTest, MethodOverload) {
-  auto db = run_code(R"(
+  auto result = run_code(R"(
     struct S {
       /// Comment headline 1
       void f(char) {}
@@ -33,5 +33,5 @@ TEST_F(SubDocTest, MethodOverload) {
       void f(int) {}
     };
     )");
-  EXPECT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
 }

@@ -14,25 +14,29 @@
 
 #include "subdoc/tests/subdoc_test.h"
 
-TEST_F(SubDocTest, Class) {
-  auto db = run_code(R"(
+TEST_F(SubDocTest, Struct) {
+  auto result = run_code(R"(
     /// Comment headline
     struct S {};
     )");
-  EXPECT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_class_comment(db, "2:5", "/// Comment headline"));
 }
 
-TEST_F(SubDocTest, TemplateClass) {
-  auto db = run_code(R"(
+TEST_F(SubDocTest, TemplateStruct) {
+  auto result = run_code(R"(
     /// Comment headline
     template <class T>
     struct S {};
     )");
-  EXPECT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_class_comment(db, "2:5", "/// Comment headline"));
 }
 
-TEST_F(SubDocTest, TemplateClassSpecialization) {
-  auto db = run_code(R"(
+TEST_F(SubDocTest, TemplateStructSpecialization) {
+  auto result = run_code(R"(
     /// Comment headline 1
     template <class T>
     struct S {};
@@ -40,5 +44,8 @@ TEST_F(SubDocTest, TemplateClassSpecialization) {
     template <>
     struct S<void> {};
     )");
-  EXPECT_TRUE(db.is_ok());
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_class_comment(db, "2:5", "/// Comment headline 1"));
+  EXPECT_TRUE(has_class_comment(db, "5:5", "/// Comment headline 2"));
 }

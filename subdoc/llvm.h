@@ -42,11 +42,14 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Index/USRGeneration.h"
 #include "clang/Serialization/PCHContainerOperations.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SHA1.h"
 #include "llvm/Support/VirtualFileSystem.h"
 
 #pragma warning(pop)
