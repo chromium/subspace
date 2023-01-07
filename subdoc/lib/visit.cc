@@ -14,7 +14,8 @@
 
 #include "subdoc/lib/visit.h"
 
-#include "subdoc/lib/names.h"
+#include "subdoc/lib/namespace.h"
+#include "subdoc/lib/unique_symbol.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/prelude.h"
 
@@ -50,7 +51,17 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool VisitRecordDecl(clang::RecordDecl* decl) noexcept {
     clang::RawComment* raw_comment = get_raw_comment(*decl);
     if (!raw_comment) return true;
-    llvm::errs() << "RecordDecl " << raw_comment->getKind() << "\n";
+    if (decl->isUnion()) {
+      return add_comment_to_db(
+          decl, raw_comment,
+          sus::choice<AttachedType::Union>(collect_namespaces(decl)),
+          mref(docs_db_.unions));
+    } else {
+      return add_comment_to_db(
+          decl, raw_comment,
+          sus::choice<AttachedType::Class>(collect_namespaces(decl)),
+          mref(docs_db_.classes));
+    }
     return true;
   }
   bool VisitEnumDecl(clang::EnumDecl* decl) noexcept {
@@ -74,41 +85,66 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
     clang::RawComment* raw_comment = get_raw_comment(*decl);
     if (!raw_comment) return true;
-    llvm::errs() << "FunctionDecl " << raw_comment->getKind() << "\n";
-
-    auto& ast_cx = decl->getASTContext();
-    auto& diagnostics_engine = ast_cx.getDiagnostics();
-    auto& src_manager = ast_cx.getSourceManager();
-    auto loc_str = raw_comment->getBeginLoc().printToString(src_manager);
-    auto comment_str = std::string(raw_comment->getRawText(src_manager));
-    auto name = unique_name_for_function(*decl);
-    auto comment = Comment(comment_str, loc_str);
-
-    llvm::errs() << name << "\n";
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
-      docs_db_.ctors.emplace("ctor", sus::move(comment));
+      return add_comment_to_db(
+          decl, raw_comment,
+          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
+          mref(docs_db_.ctors));
     } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
-      docs_db_.dtors.emplace("dtor", sus::move(comment));
+      return add_comment_to_db(
+          decl, raw_comment,
+          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
+          mref(docs_db_.dtors));
     } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
-      docs_db_.conversions.emplace("cver", sus::move(comment));
+      return add_comment_to_db(
+          decl, raw_comment,
+          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
+          mref(docs_db_.conversions));
     } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
-      docs_db_.methods.emplace("method", sus::move(comment));
+      return add_comment_to_db(
+          decl, raw_comment,
+          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
+          mref(docs_db_.methods));
     } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
-      docs_db_.deductions.emplace("deduction", sus::move(comment));
+      return add_comment_to_db(
+          decl, raw_comment,
+          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
+          mref(docs_db_.deductions));
     } else {
-      auto [old, added] = docs_db_.functions.emplace(name, sus::move(comment));
-      if (!added) {
-        diagnostics_engine
-            .Report(raw_comment->getBeginLoc(), diag_ids_.superceded_comment)
-            .AddString(old->second.begin_loc);
-      }
+      return add_comment_to_db(
+          decl, raw_comment,
+          sus::choice<AttachedType::Function>(collect_namespaces(decl)),
+          mref(docs_db_.functions));
     }
 
     return true;
   }
 
  private:
+  bool add_comment_to_db(clang::Decl* decl, clang::RawComment* raw_comment,
+                         Attached attached_to,
+                         NamedCommentMap& db_map) noexcept {
+    auto& ast_cx = decl->getASTContext();
+    auto& src_manager = ast_cx.getSourceManager();
+
+    auto comment_str = std::string(raw_comment->getRawText(src_manager));
+    auto comment_loc_str =
+        raw_comment->getBeginLoc().printToString(src_manager);
+
+    auto [old, added] = db_map.emplace(
+        unique_from_decl(decl),
+        Comment(sus::move(comment_str), sus::move(comment_loc_str),
+                sus::move(attached_to)));
+    if (!added) {
+      auto& diagnostics_engine = ast_cx.getDiagnostics();
+      diagnostics_engine
+          .Report(raw_comment->getBeginLoc(), diag_ids_.superceded_comment)
+          .AddString(old->second.begin_loc);
+    }
+    return true;
+  }
+
   clang::RawComment* get_raw_comment(clang::Decl& decl) const {
     return decl.getASTContext().getRawCommentForDeclNoCache(&decl);
   }

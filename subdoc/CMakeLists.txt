@@ -16,9 +16,10 @@ add_library(subdoc_lib STATIC "")
 add_library(subdoc::lib ALIAS subdoc_lib)
 target_sources(subdoc_lib PUBLIC
     "lib/database.h"
-    "lib/names.h"
+    "lib/namespace.h"
     "lib/run.cc"
     "lib/run.h"
+    "lib/unique_symbol.h"
     "lib/visit.cc"
     "lib/visit.h"
 )
@@ -28,9 +29,9 @@ add_executable(subdoc
 )
 
 add_executable(subdoc_unittests
-    "tests/classes_unittest.cc"
     "tests/functions_unittest.cc"
     "tests/methods_unittest.cc"
+    "tests/records_unittest.cc"
     "tests/styles_unittest.cc"
     "tests/subdoc_test.h"
 )

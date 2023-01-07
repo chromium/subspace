@@ -16,31 +16,53 @@
 
 #include <unordered_map>
 
+#include "subdoc/lib/namespace.h"
+#include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
+#include "subspace/choice/choice.h"
 #include "subspace/prelude.h"
 
 namespace subdoc {
 
+enum class AttachedType {
+  Function,
+  Class,
+  Union,
+};
+// clang-format off
+using Attached = sus::Choice<sus_choice_types(
+  (AttachedType::Function, sus::Vec<Namespace>),
+  (AttachedType::Class, sus::Vec<Namespace>),
+  (AttachedType::Union, sus::Vec<Namespace>),
+)>;
+// clang-format on
+
 struct Comment {
 #if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
-  Comment(std::string raw_text, clang::SourceRange source_range)
-      : raw_text(raw_text), source_range(source_range) {}
+  Comment(std::string raw_text, clang::SourceRange source_range,
+          Attached attached_to)
+      : raw_text(raw_text),
+        source_range(source_range),
+        attached_to(sus::move(attached_to)) {}
 #endif
 
   std::string raw_text;
   std::string begin_loc;
+
+  Attached attached_to;
 };
 
-using NamedComment =
-    std::unordered_map<std::string /* fully qualified name */, Comment>;
+using NamedCommentMap = std::unordered_map<UniqueSymbol, Comment>;
 
 struct Database {
-  NamedComment functions;
-  NamedComment deductions;
-  NamedComment ctors;
-  NamedComment dtors;
-  NamedComment conversions;
-  NamedComment methods;
+  NamedCommentMap classes;
+  NamedCommentMap unions;
+  NamedCommentMap functions;
+  NamedCommentMap deductions;
+  NamedCommentMap ctors;
+  NamedCommentMap dtors;
+  NamedCommentMap conversions;
+  NamedCommentMap methods;
 };
 
 static_assert(sus::mem::Move<Database>);

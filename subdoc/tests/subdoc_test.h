@@ -17,10 +17,12 @@
 #include <string>
 #include <string_view>
 
-#include "subdoc/lib/run.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subdoc/lib/database.h"
+#include "subdoc/lib/run.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/containers/vec.h"
+#include "subspace/convert/subclass.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
@@ -42,13 +44,38 @@ class SubDocTest : public testing::Test {
   auto run_code(std::string content) noexcept {
     auto args = sus::Vec<std::string>();
     args.push(std::string(cpp_version_flag(cpp_version_)));
+    return subdoc::run_test(sus::move(content), sus::move(args));
+  }
 
-    auto result = subdoc::run_test(sus::move(content), sus::move(args));
-    if (result.is_err())
-      ADD_FAILURE() << "Compilation failed.";
-    return result;
+  /// Returns if a class was found whose comment location ends with
+  /// `comment_loc` and whos comment begins with `comment_start`.
+  bool has_class_comment(const subdoc::Database& db,
+                         std::string_view comment_loc,
+                         std::string_view comment_start) {
+    return find_comment(db.classes, comment_loc, comment_start);
+  }
+
+  /// Returns if a function was found whose comment location ends with
+  /// `comment_loc` and whos comment begins with `comment_start`.
+  bool has_fn_comment(const subdoc::Database& db, std::string_view comment_loc,
+                      std::string_view comment_start) {
+    return find_comment(db.functions, comment_loc, comment_start);
   }
 
  private:
+  bool find_comment(const subdoc::NamedCommentMap& map,
+                    std::string_view comment_loc,
+                    std::string_view comment_start) {
+    for (const auto& [f, c] : map) {
+      if (c.begin_loc.ends_with(comment_loc))
+        return c.raw_text.starts_with(comment_start);
+    }
+    ADD_FAILURE() << "Comment location " << comment_loc
+                  << " not found. Valid locations:";
+    for (const auto& [f, c] : map)
+      llvm::errs() << "  " << c.begin_loc << "\n";
+    return false;
+  }
+
   SubDocCppVersion cpp_version_ = SubDocCppVersion::Cpp20;
 };
