@@ -87,3 +87,30 @@ TEST_F(SubDocTest, StructInAnonymousAndNamedNamespace) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(db.is_empty());
 }
+
+TEST_F(SubDocTest, NestedStruct) {
+  auto result = run_code(R"(
+    /// Comment headline 1
+    struct S {
+      /// Comment headline 2
+      struct R {};
+    };
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_class_comment(db, "2:5", "/// Comment headline 1"));
+  EXPECT_TRUE(has_class_comment(db, "4:7", "/// Comment headline 2"));
+}
+
+TEST_F(SubDocTest, PrivateStruct) {
+  auto result = run_code(R"(
+    struct S {
+    private:
+      /// Comment headline
+      struct R {};
+    };
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(db.is_empty());
+}

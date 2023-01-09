@@ -84,6 +84,13 @@ inline bool path_is_private(clang::NamedDecl* decl) noexcept {
     return true;
   }
 
+  // Checks if the declaration itself is private.
+  clang::AccessSpecifier access = decl->getAccess();
+  if (access == clang::AccessSpecifier::AS_private) {
+    return true;
+  }
+
+  // Look at parent scopes for private access as well.
   clang::DeclContext* cx = decl->getDeclContext();
   while (cx) {
     if (auto* tdecl = clang::dyn_cast<clang::TagDecl>(cx)) {
