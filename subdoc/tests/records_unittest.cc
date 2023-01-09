@@ -49,3 +49,41 @@ TEST_F(SubDocTest, TemplateStructSpecialization) {
   EXPECT_TRUE(has_class_comment(db, "2:5", "/// Comment headline 1"));
   EXPECT_TRUE(has_class_comment(db, "5:5", "/// Comment headline 2"));
 }
+
+TEST_F(SubDocTest, StructInNamedNamespace) {
+  auto result = run_code(R"(
+    namespace n {
+    /// Comment headline
+    struct S {};
+    }
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_class_comment(db, "3:5", "/// Comment headline"));
+}
+
+TEST_F(SubDocTest, StructInAnonymousNamespace) {
+  auto result = run_code(R"(
+    namespace {
+    /// Comment headline
+    struct S {};
+    }
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_no_class_comments(db));
+}
+
+TEST_F(SubDocTest, StructInAnonymousAndNamedNamespace) {
+  auto result = run_code(R"(
+    namespace {
+    namespace n {
+    /// Comment headline
+    struct S {};
+    }
+    }
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_no_class_comments(db));
+}

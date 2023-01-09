@@ -14,46 +14,52 @@
 
 #include "subdoc/tests/subdoc_test.h"
 
-TEST_F(SubDocTest, Mixed) {
+TEST_F(SubDocTest, Field) {
   auto result = run_code(R"(
-    /// Comment headline
-    // Implementation details.
-    struct S {};
+    struct S {
+      /// Comment headline
+      int f = 1;
+    };
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_class_comment(db, "2:5", "/// Comment headline"));
+  EXPECT_TRUE(has_field_comment(db, "3:7", "/// Comment headline"));
 }
 
-TEST_F(SubDocTest, CppStyle) {
+TEST_F(SubDocTest, StaticField) {
   auto result = run_code(R"(
-    // Implementation details.
-    struct S {};
+    struct S {
+      /// Comment headline
+      constexpr static int f = 1;
+    };
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_field_comment(db, "3:7", "/// Comment headline"));
+}
+
+TEST_F(SubDocTest, PrivateField) {
+  auto result = run_code(R"(
+    struct S {
+     private:
+      /// Comment headline
+      int f = 1;
+    };
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_no_class_comments(db));
 }
 
-TEST_F(SubDocTest, JavaDocStyle) {
+TEST_F(SubDocTest, PrivateStaticField) {
   auto result = run_code(R"(
-    /** Comment headline */
-    struct S {};
+    struct S {
+     private:
+      /// Comment headline
+      constexpr static int f = 1;
+    };
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_class_comment(db, "2:5", "/** Comment headline */"));
-}
-
-TEST_F(SubDocTest, JavaDocStyleBody) {
-  auto result = run_code(R"(
-    /** Comment headline
-     * 
-     * Comment body.
-    */
-    struct S {};
-    )");
-  ASSERT_TRUE(result.is_ok());
-  subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_class_comment(db, "2:5", "/** Comment headline\n"));
+  EXPECT_TRUE(has_no_class_comments(db));
 }
