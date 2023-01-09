@@ -90,6 +90,12 @@ struct Database {
   std::unordered_map<UniqueSymbol, FunctionElement> conversions;
   std::unordered_map<UniqueSymbol, FunctionElement> methods;
   std::unordered_map<UniqueSymbol, FieldElement> fields;
+
+  bool is_empty() const noexcept {
+    return classes.empty() && unions.empty() && functions.empty() &&
+           deductions.empty() && ctors.empty() && dtors.empty() &&
+           conversions.empty() && methods.empty() && fields.empty();
+  }
 };
 
 static_assert(sus::mem::Move<Database>);
