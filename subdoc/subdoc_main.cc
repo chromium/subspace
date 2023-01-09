@@ -16,16 +16,7 @@
 
 #include "lib/run.h"
 #include "subspace/prelude.h"
-
-#pragma warning(push)
-#pragma warning(disable : 4624)
-#include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/Tooling/CompilationDatabase.h"
-#include "llvm/Support/Error.h"
-#include "llvm/Support/InitLLVM.h"
-#include "llvm/Support/TargetSelect.h"
-#include "llvm/Support/WithColor.h"
-#pragma warning(pop)
+#include "subdoc/llvm.h"
 
 int main(int argc, const char** argv) {
   llvm::InitLLVM init(argc, argv);
