@@ -55,11 +55,20 @@ class SubDocTest : public testing::Test {
     return find_comment(db.classes, comment_loc, comment_start);
   }
 
-  /// Returns if a function was found whose comment location ends with
-  /// `comment_loc` and whose comment begins with `comment_start`.
+  /// Returns if a comment was found with a location that ends with the
+  /// `comment_loc` suffix, and for which the comment's text begins with
+  /// `comment_start` prefix.
   bool has_fn_comment(const subdoc::Database& db, std::string_view comment_loc,
                       std::string_view comment_start) noexcept {
     return find_comment(db.functions, comment_loc, comment_start);
+  }
+
+  /// Returns if a method was found whose comment location ends with
+  /// `comment_loc` and whose comment begins with `comment_start`.
+  bool has_method_comment(const subdoc::Database& db,
+                          std::string_view comment_loc,
+                          std::string_view comment_start) noexcept {
+    return find_comment(db.methods, comment_loc, comment_start);
   }
 
   /// Returns if a field was found whose comment location ends with
