@@ -113,7 +113,7 @@ TEST_F(SubDocTest, FunctionInAnonymousNamespace) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_no_fn_comments(db));
+  EXPECT_TRUE(db.is_empty());
 }
 
 TEST_F(SubDocTest, FunctionInAnonymousAndNamedNamespace) {
@@ -127,5 +127,5 @@ TEST_F(SubDocTest, FunctionInAnonymousAndNamedNamespace) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_no_fn_comments(db));
+  EXPECT_TRUE(db.is_empty());
 }

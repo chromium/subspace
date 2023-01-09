@@ -48,7 +48,7 @@ TEST_F(SubDocTest, PrivateField) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_no_class_comments(db));
+  EXPECT_TRUE(db.is_empty());
 }
 
 TEST_F(SubDocTest, PrivateStaticField) {
@@ -61,5 +61,5 @@ TEST_F(SubDocTest, PrivateStaticField) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_no_class_comments(db));
+  EXPECT_TRUE(db.is_empty());
 }
