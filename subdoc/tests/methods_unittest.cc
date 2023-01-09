@@ -22,6 +22,8 @@ TEST_F(SubDocTest, Method) {
     };
     )");
   ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_field_comment(db, "3:7", "/// Comment headline"));
 }
 
 TEST_F(SubDocTest, MethodOverload) {
@@ -34,4 +36,46 @@ TEST_F(SubDocTest, MethodOverload) {
     };
     )");
   ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_field_comment(db, "3:7", "/// Comment headline 1"));
+  EXPECT_TRUE(has_field_comment(db, "5:7", "/// Comment headline 2"));
+}
+
+TEST_F(SubDocTest, MethodOverloadRequires) {
+  auto result = run_code(R"(
+    template <class A>
+    concept C = true;
+
+    template <class T>
+    struct S {
+      /// Comment headline 1
+      void f() requires(C<T>) {}
+      /// Comment headline 2
+      void f() requires(!C<T>) {}
+    };
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_field_comment(db, "7:7", "/// Comment headline 1"));
+  EXPECT_TRUE(has_field_comment(db, "9:9", "/// Comment headline 2"));
+}
+
+TEST_F(SubDocTest, MethodTemplateOverloadRequires) {
+  auto result = run_code(R"(
+    template <class A>
+    concept C = true;
+
+    struct S {
+      /// Comment headline 1
+      template <class D>
+      void f() requires(C<D>) {}
+      /// Comment headline 2
+      template <class D>
+      void f() requires(!C<D>) {}
+    };
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_field_comment(db, "6:7", "/// Comment headline 1"));
+  EXPECT_TRUE(has_field_comment(db, "9:9", "/// Comment headline 2"));
 }

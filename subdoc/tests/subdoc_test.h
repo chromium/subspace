@@ -78,10 +78,15 @@ class SubDocTest : public testing::Test {
       if (element.comment.begin_loc.ends_with(comment_loc))
         return element.comment.raw_text.starts_with(comment_start);
     }
-    ADD_FAILURE() << "Comment location " << comment_loc
-                  << " not found. Valid locations:";
-    for (const auto& [k, element] : map)
-      llvm::errs() << "  " << element.comment.begin_loc << "\n";
+    if (map.empty()) {
+      ADD_FAILURE() << "Comment location " << comment_loc
+                    << " not found. No comments found in the parsed code.";
+    } else {
+      ADD_FAILURE() << "Comment location " << comment_loc
+                    << " not found. Valid locations:";
+      for (const auto& [k, element] : map)
+        llvm::errs() << "  " << element.comment.begin_loc << "\n";
+    }
     return false;
   }
 
