@@ -16,7 +16,7 @@ add_library(subdoc_lib STATIC "")
 add_library(subdoc::lib ALIAS subdoc_lib)
 target_sources(subdoc_lib PUBLIC
     "lib/database.h"
-    "lib/namespace.h"
+    "lib/path.h"
     "lib/run.cc"
     "lib/run.h"
     "lib/unique_symbol.h"

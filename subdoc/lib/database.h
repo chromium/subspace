@@ -16,7 +16,7 @@
 
 #include <unordered_map>
 
-#include "subdoc/lib/namespace.h"
+#include "subdoc/lib/path.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
 #include "subspace/choice/choice.h"

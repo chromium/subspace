@@ -15,7 +15,7 @@
 #include "subdoc/lib/visit.h"
 
 #include "subdoc/lib/database.h"
-#include "subdoc/lib/namespace.h"
+#include "subdoc/lib/path.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/prelude.h"
@@ -34,6 +34,38 @@ struct DiagnosticIds {
   const unsigned int superceded_comment;
 };
 
+static bool should_skip_decl(clang::Decl* decl) {
+  auto* ndecl = clang::dyn_cast<clang::NamedDecl>(decl);
+  if (!ndecl) return true;
+
+  // TODO: These could be configurable. As well as user-defined namespaces to
+  // skip.
+  if (path_contains_namespace(ndecl,
+                              sus::choice<Namespace::Tag::Anonymous>())) {
+    return true;
+  }
+  if (path_contains_namespace(
+          ndecl, sus::choice<Namespace::Tag::Named>("__private"))) {
+    return true;
+  }
+  if (path_is_private(ndecl)) {
+    return true;
+  }
+  return false;
+}
+
+static clang::RawComment* get_raw_comment(clang::Decl* decl) {
+  return decl->getASTContext().getRawCommentForDeclNoCache(decl);
+}
+
+static Comment to_db_comment(clang::Decl* decl,
+                             clang::RawComment& raw) noexcept {
+  auto& ast_cx = decl->getASTContext();
+  auto& src_manager = ast_cx.getSourceManager();
+  return Comment(std::string(raw.getRawText(src_manager)),
+                 raw.getBeginLoc().printToString(src_manager));
+}
+
 class Visitor : public clang::RecursiveASTVisitor<Visitor> {
  public:
   Visitor(VisitCx& cx, Database& docs_db, DiagnosticIds ids)
@@ -45,22 +77,24 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     return true;
   }
   bool VisitNamespaceDecl(clang::NamespaceDecl* decl) noexcept {
-    clang::RawComment* raw_comment = get_raw_comment(*decl);
+    if (should_skip_decl(decl)) return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
     if (!raw_comment) return true;
     return true;
   }
   bool VisitRecordDecl(clang::RecordDecl* decl) noexcept {
-    clang::RawComment* raw_comment = get_raw_comment(*decl);
+    if (should_skip_decl(decl)) return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
     if (!raw_comment) return true;
     if (decl->isUnion()) {
-      auto ue = UnionElement(collect_namespaces(decl),
-                             to_db_comment(*decl, *raw_comment),
+      auto ue = UnionElement(collect_namespace_path(decl),
+                             to_db_comment(decl, *raw_comment),
                              decl->getQualifiedNameAsString());
       return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ue),
                                mref(docs_db_.unions));
     } else {
-      auto ce = ClassElement(collect_namespaces(decl),
-                             to_db_comment(*decl, *raw_comment),
+      auto ce = ClassElement(collect_namespace_path(decl),
+                             to_db_comment(decl, *raw_comment),
                              decl->getQualifiedNameAsString());
       return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ce),
                                mref(docs_db_.classes));
@@ -68,31 +102,35 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     return true;
   }
   bool VisitEnumDecl(clang::EnumDecl* decl) noexcept {
-    clang::RawComment* raw_comment = get_raw_comment(*decl);
+    if (should_skip_decl(decl)) return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
     if (!raw_comment) return true;
     return true;
     llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
   }
   bool VisitTypedefDecl(clang::TypedefDecl* decl) noexcept {
-    clang::RawComment* raw_comment = get_raw_comment(*decl);
+    if (should_skip_decl(decl)) return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
     if (!raw_comment) return true;
     return true;
     llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
   }
   bool VisitTypeAliasDecl(clang::TypeAliasDecl* decl) noexcept {
-    clang::RawComment* raw_comment = get_raw_comment(*decl);
+    if (should_skip_decl(decl)) return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
     if (!raw_comment) return true;
     return true;
     llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
   }
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
-    clang::RawComment* raw_comment = get_raw_comment(*decl);
+    if (should_skip_decl(decl)) return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
     if (!raw_comment) return true;
 
     // TODO: The signature string should include the whole signature not just
     // the name.
-    auto fe = FunctionElement(collect_namespaces(decl),
-                              to_db_comment(*decl, *raw_comment),
+    auto fe = FunctionElement(collect_namespace_path(decl),
+                              to_db_comment(decl, *raw_comment),
                               decl->getQualifiedNameAsString());
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
@@ -139,18 +177,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           .AddString(old_element.comment.begin_loc);
     }
     return true;
-  }
-
-  static clang::RawComment* get_raw_comment(clang::Decl& decl) {
-    return decl.getASTContext().getRawCommentForDeclNoCache(&decl);
-  }
-
-  static Comment to_db_comment(const clang::Decl& decl,
-                               clang::RawComment& raw) noexcept {
-    auto& ast_cx = decl.getASTContext();
-    auto& src_manager = ast_cx.getSourceManager();
-    return Comment(std::string(raw.getRawText(src_manager)),
-                   raw.getBeginLoc().printToString(src_manager));
   }
 
   VisitCx& cx_;
