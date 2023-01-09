@@ -76,12 +76,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     llvm::errs() << "StaticAssertDecl\n";
     return true;
   }
+
   bool VisitNamespaceDecl(clang::NamespaceDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
     if (!raw_comment) return true;
     return true;
   }
+
   bool VisitRecordDecl(clang::RecordDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
@@ -101,6 +103,41 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
     return true;
   }
+
+  bool VisitFieldDecl(clang::FieldDecl* decl) noexcept {
+    if (should_skip_decl(decl)) return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
+    if (!raw_comment) return true;
+
+    auto fe = FieldElement(collect_namespace_path(decl),
+                           to_db_comment(decl, *raw_comment),
+                           decl->getQualifiedNameAsString(),
+                           collect_record_path(decl->getParent()),
+                           // Static data members are found in VisitVarDecl.
+                           FieldElement::NonStatic);
+    return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
+                             mref(docs_db_.fields));
+  }
+
+  bool VisitVarDecl(clang::VarDecl* decl) noexcept {
+    // Static data members are represented as VarDecl, not FieldDecl. So we
+    // visit VarDecls but only for them.
+    if (!decl->isStaticDataMember()) return true;
+
+    if (should_skip_decl(decl)) return true;
+    clang::RawComment* raw_comment = get_raw_comment(decl);
+    if (!raw_comment) return true;
+
+    auto* parent = clang::cast<clang::RecordDecl>(decl->getDeclContext());
+    auto fe = FieldElement(
+        collect_namespace_path(decl), to_db_comment(decl, *raw_comment),
+        decl->getQualifiedNameAsString(), collect_record_path(parent),
+        // NonStatic data members are found in VisitFieldDecl.
+        FieldElement::Static);
+    return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
+                             mref(docs_db_.fields));
+  }
+
   bool VisitEnumDecl(clang::EnumDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
@@ -108,6 +145,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     return true;
     llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
   }
+
   bool VisitTypedefDecl(clang::TypedefDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
@@ -115,6 +153,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     return true;
     llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
   }
+
   bool VisitTypeAliasDecl(clang::TypeAliasDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
@@ -122,6 +161,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     return true;
     llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
   }
+
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
@@ -129,9 +169,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     // TODO: The signature string should include the whole signature not just
     // the name.
-    auto fe = FunctionElement(collect_namespace_path(decl),
-                              to_db_comment(decl, *raw_comment),
-                              decl->getQualifiedNameAsString());
+    auto signature = decl->getQualifiedNameAsString();
+    auto fe = FunctionElement(
+        collect_namespace_path(decl), to_db_comment(decl, *raw_comment),
+        decl->getQualifiedNameAsString(), sus::move(signature));
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
       return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),

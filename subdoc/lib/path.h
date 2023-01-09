@@ -45,6 +45,19 @@ inline clang::NamespaceDecl* find_nearest_namespace(
   return nullptr;
 }
 
+inline sus::Vec<std::string> collect_record_path(
+    clang::RecordDecl* decl) noexcept {
+  auto v = sus::Vec<std::string>();
+  v.push(decl->getNameAsString());
+
+  clang::DeclContext* cx = decl->getDeclContext();
+  while (decl = clang::dyn_cast<clang::RecordDecl>(cx)) {
+    v.push(decl->getNameAsString());
+    cx = cx->getParent();
+  }
+  return v;
+}
+
 inline sus::Vec<Namespace> collect_namespace_path(clang::Decl* decl) noexcept {
   clang::NamespaceDecl* ndecl = find_nearest_namespace(decl);
 
