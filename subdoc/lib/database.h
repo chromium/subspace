@@ -35,49 +35,59 @@ struct Comment {
 };
 
 struct CommentElement {
-  explicit CommentElement(sus::Vec<Namespace> namespaces, Comment comment)
-      : namespaces(sus::move(namespaces)), comment(sus::move(comment)) {}
+  explicit CommentElement(sus::Vec<Namespace> namespace_path, Comment comment,
+                          std::string name)
+      : namespace_path(sus::move(namespace_path)),
+        comment(sus::move(comment)),
+        name(sus::move(name)) {}
 
-  sus::Vec<Namespace> namespaces;
+  sus::Vec<Namespace> namespace_path;
   Comment comment;
+  std::string name;
 };
 
 struct ClassElement : public CommentElement {
   explicit ClassElement(sus::Vec<Namespace> namespaces, Comment comment,
                         std::string name)
-      : CommentElement(sus::move(namespaces), sus::move(comment)),
-        name(sus::move(name)) {}
+      : CommentElement(sus::move(namespaces), sus::move(comment),
+                       sus::move(name)) {}
 
   // TODO: Template parameters and requires clause.
-  std::string name;
 };
 struct UnionElement : public CommentElement {
   explicit UnionElement(sus::Vec<Namespace> namespaces, Comment comment,
                         std::string name)
-      : CommentElement(sus::move(namespaces), sus::move(comment)),
-        name(sus::move(name)) {}
+      : CommentElement(sus::move(namespaces), sus::move(comment),
+                       sus::move(name)) {}
 
   // TODO: Template parameters and requires clause.
-  std::string name;
 };
 struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> namespaces, Comment comment,
-                           std::string signature)
-      : CommentElement(sus::move(namespaces), sus::move(comment)),
+                           std::string name, std::string signature)
+      : CommentElement(sus::move(namespaces), sus::move(comment),
+                       sus::move(name)),
         signature(sus::move(signature)) {}
 
   std::string signature;
 };
 struct FieldElement : public CommentElement {
-  explicit FieldElement(sus::Vec<Namespace> namespaces, Comment comment,
-                        bool is_static, std::string name)
-      : CommentElement(sus::move(namespaces), sus::move(comment)),
-        is_static(is_static),
-        name(sus::move(name)) {}
+  enum StaticType {
+    Static,
+    NonStatic,
+  };
 
-  bool is_static;
+  explicit FieldElement(sus::Vec<Namespace> namespaces, Comment comment,
+                        std::string name, sus::Vec<std::string> record_path,
+                        StaticType is_static)
+      : CommentElement(sus::move(namespaces), sus::move(comment),
+                       sus::move(name)),
+        record_path(sus::move(record_path)),
+        is_static(is_static) {}
+
+  sus::Vec<std::string> record_path;
   // TODO: clang::Qualifiers.
-  std::string name;
+  StaticType is_static;
 };
 
 struct Database {
