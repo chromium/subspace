@@ -32,7 +32,7 @@ TEST_F(SubDocTest, CppStyle) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(db.is_empty());
+  EXPECT_FALSE(db.has_any_comments());
 }
 
 TEST_F(SubDocTest, JavaDocStyle) {

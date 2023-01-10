@@ -10,7 +10,7 @@
             "name": "Debug subspace_unittests",
             "program": "${workspaceFolder}/out/subspace/subspace_unittests",
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/out/subspace"
         },
         {
             "type": "lldb",
@@ -18,15 +18,17 @@
             "name": "Debug cir_unittests",
             "program": "${workspaceFolder}/out/cir/cir_unittests",
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/out/cir"
         }
         {
             "type": "lldb",
             "request": "launch",
             "name": "Debug subdoc_unittests",
             "program": "${workspaceFolder}/out/subdoc/subdoc_unittests",
-            "args": [],
-            "cwd": "${workspaceFolder}"
+            "args": [
+                "--gtest_filter=SubDocTest.Field"
+            ],
+            "cwd": "${workspaceFolder}/out/subdoc"
         }
     ]
 }

@@ -58,12 +58,25 @@ static clang::RawComment* get_raw_comment(clang::Decl* decl) {
   return decl->getASTContext().getRawCommentForDeclNoCache(decl);
 }
 
-static Comment to_db_comment(clang::Decl* decl,
-                             clang::RawComment& raw) noexcept {
+static Comment make_db_comment(clang::Decl* decl,
+                               clang::RawComment* raw) noexcept {
   auto& ast_cx = decl->getASTContext();
   auto& src_manager = ast_cx.getSourceManager();
-  return Comment(std::string(raw.getRawText(src_manager)),
-                 raw.getBeginLoc().printToString(src_manager));
+  if (raw) {
+    return Comment(std::string(raw->getRawText(src_manager)),
+                   raw->getBeginLoc().printToString(src_manager));
+  } else {
+    return Comment();
+  }
+}
+
+static clang::SourceLocation raw_comment_loc(
+    const clang::RawComment* raw) noexcept {
+  if (raw) {
+    return raw->getBeginLoc();
+  } else {
+    return clang::SourceLocation();
+  }
 }
 
 class Visitor : public clang::RecursiveASTVisitor<Visitor> {
@@ -79,15 +92,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
   bool VisitNamespaceDecl(clang::NamespaceDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
-    clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (!raw_comment) return true;
+    // clang::RawComment* raw_comment = get_raw_comment(decl);
     return true;
   }
 
   bool VisitRecordDecl(clang::RecordDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (!raw_comment) return true;
 
     RecordElement::RecordType type = [&]() {
       if (decl->isStruct()) return RecordElement::Struct;
@@ -95,27 +106,45 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       return RecordElement::Class;
     }();
 
-    auto ce = RecordElement(collect_namespace_path(decl),
-                            to_db_comment(decl, *raw_comment),
-                            decl->getQualifiedNameAsString(), type);
-    return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ce),
-                             mref(docs_db_.records));
-    return true;
+    // TODO: collect_record_path() too.
+    auto ce = RecordElement(
+        collect_namespace_path(decl), make_db_comment(decl, raw_comment),
+        decl->getQualifiedNameAsString(), collect_record_path(decl), type);
+
+    if (clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+      NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr);
+      return add_comment_to_db(decl, raw_comment_loc(raw_comment),
+                               sus::move(ce), mref(parent.records));
+    } else if (clang::isa<clang::NamespaceDecl>(decl->getDeclContext())) {
+      NamespaceElement& parent = docs_db_.find_namespace_mut(
+          clang::cast<clang::NamespaceDecl>(decl->getDeclContext()));
+      return add_comment_to_db(decl, raw_comment_loc(raw_comment),
+                               sus::move(ce), mref(parent.records));
+    } else {
+      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      RecordElement& parent = docs_db_.find_record_mut(
+          clang::cast<clang::RecordDecl>(decl->getDeclContext()));
+      return add_comment_to_db(decl, raw_comment_loc(raw_comment),
+                               sus::move(ce), mref(parent.records));
+    }
   }
 
   bool VisitFieldDecl(clang::FieldDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (!raw_comment) return true;
 
     auto fe = FieldElement(collect_namespace_path(decl),
-                           to_db_comment(decl, *raw_comment),
+                           make_db_comment(decl, raw_comment),
                            decl->getQualifiedNameAsString(),
                            collect_record_path(decl->getParent()),
                            // Static data members are found in VisitVarDecl.
                            FieldElement::NonStatic);
-    return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
-                             mref(docs_db_.fields));
+
+    assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+    RecordElement& parent = docs_db_.find_record_mut(
+        clang::cast<clang::RecordDecl>(decl->getDeclContext()));
+    return add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
+                             mref(parent.fields));
   }
 
   bool VisitVarDecl(clang::VarDecl* decl) noexcept {
@@ -125,77 +154,90 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (!raw_comment) return true;
 
-    auto* parent = clang::cast<clang::RecordDecl>(decl->getDeclContext());
+    auto* record = clang::cast<clang::RecordDecl>(decl->getDeclContext());
     auto fe = FieldElement(
-        collect_namespace_path(decl), to_db_comment(decl, *raw_comment),
-        decl->getQualifiedNameAsString(), collect_record_path(parent),
+        collect_namespace_path(decl), make_db_comment(decl, raw_comment),
+        decl->getQualifiedNameAsString(), collect_record_path(record),
         // NonStatic data members are found in VisitFieldDecl.
         FieldElement::Static);
-    return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
-                             mref(docs_db_.fields));
+
+    RecordElement& parent = docs_db_.find_record_mut(
+        clang::cast<clang::RecordDecl>(decl->getDeclContext()));
+    return add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
+                             mref(parent.fields));
   }
 
   bool VisitEnumDecl(clang::EnumDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (!raw_comment) return true;
-    return true;
     llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
+    return true;
   }
 
   bool VisitTypedefDecl(clang::TypedefDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (!raw_comment) return true;
-    return true;
     llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
+    return true;
   }
 
   bool VisitTypeAliasDecl(clang::TypeAliasDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (!raw_comment) return true;
-    return true;
     llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
+    return true;
   }
 
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (!raw_comment) return true;
 
     // TODO: The signature string should include the whole signature not just
     // the name.
     auto signature = decl->getQualifiedNameAsString();
     auto fe = FunctionElement(
-        collect_namespace_path(decl), to_db_comment(decl, *raw_comment),
+        collect_namespace_path(decl), make_db_comment(decl, raw_comment),
         decl->getQualifiedNameAsString(), sus::move(signature));
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
-      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
-                               mref(docs_db_.ctors));
+      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      RecordElement& parent = docs_db_.find_record_mut(
+          clang::cast<clang::RecordDecl>(decl->getDeclContext()));
+      return add_comment_to_db(decl, raw_comment_loc(raw_comment),
+                               sus::move(fe), mref(parent.ctors));
     } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
-      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
-
-                               mref(docs_db_.dtors));
+      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      RecordElement& parent = docs_db_.find_record_mut(
+          clang::cast<clang::RecordDecl>(decl->getDeclContext()));
+      return add_comment_to_db(decl, raw_comment_loc(raw_comment),
+                               sus::move(fe), mref(parent.dtors));
     } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
-      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
-
-                               mref(docs_db_.conversions));
+      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      RecordElement& parent = docs_db_.find_record_mut(
+          clang::cast<clang::RecordDecl>(decl->getDeclContext()));
+      return add_comment_to_db(decl, raw_comment_loc(raw_comment),
+                               sus::move(fe), mref(parent.conversions));
     } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
-      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
-
-                               mref(docs_db_.methods));
+      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      RecordElement& parent = docs_db_.find_record_mut(
+          clang::cast<clang::RecordDecl>(decl->getDeclContext()));
+      return add_comment_to_db(decl, raw_comment_loc(raw_comment),
+                               sus::move(fe), mref(parent.methods));
     } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
-      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
-
-                               mref(docs_db_.deductions));
+      // TODO: How do we get from here to the class that the deduction guide is
+      // for reliably? getCorrespondingConstructor() would work if it's
+      // generated only. Will the getDeclContext find it?
+      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      RecordElement& parent = docs_db_.find_record_mut(
+          clang::cast<clang::RecordDecl>(decl->getDeclContext()));
+      return add_comment_to_db(decl, raw_comment_loc(raw_comment),
+                               sus::move(fe), mref(parent.deductions));
     } else {
-      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(fe),
-
-                               mref(docs_db_.functions));
+      NamespaceElement& parent =
+          docs_db_.find_namespace_mut(find_nearest_namespace(decl));
+      return add_comment_to_db(decl, raw_comment_loc(raw_comment),
+                               sus::move(fe), mref(parent.functions));
     }
 
     return true;
@@ -205,14 +247,20 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   template <class ElementT, class MapT>
     requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
   bool add_comment_to_db(clang::Decl* decl, clang::SourceLocation loc,
-                         ElementT comment_element, MapT& db_map) noexcept {
-    auto& ast_cx = decl->getASTContext();
-
-    auto [old, added] =
-        db_map.emplace(unique_from_decl(decl), sus::move(comment_element));
-    if (!added) {
+                         ElementT db_element, MapT& db_map) noexcept {
+    UniqueSymbol uniq = unique_from_decl(decl);
+    auto it = db_map.find(uniq);
+    if (it == db_map.end()) {
+      db_map.emplace(uniq, std::move(db_element));
+    } else if (!it->second.has_comment()) {
+      db_map.erase(it);
+      db_map.emplace(uniq, std::move(db_element));
+    } else if (!db_element.has_comment()) {
+      // Leave the existing comment in place, do nothing.
+    } else {
+      auto& ast_cx = decl->getASTContext();
       auto& diagnostics_engine = ast_cx.getDiagnostics();
-      const ElementT& old_element = old->second;
+      const ElementT& old_element = it->second;
       diagnostics_engine.Report(loc, diag_ids_.superceded_comment)
           .AddString(old_element.comment.begin_loc);
     }

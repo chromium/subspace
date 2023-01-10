@@ -71,7 +71,7 @@ TEST_F(SubDocTest, StructInAnonymousNamespace) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(db.is_empty());
+  EXPECT_FALSE(db.has_any_comments());
 }
 
 TEST_F(SubDocTest, StructInAnonymousAndNamedNamespace) {
@@ -85,7 +85,7 @@ TEST_F(SubDocTest, StructInAnonymousAndNamedNamespace) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(db.is_empty());
+  EXPECT_FALSE(db.has_any_comments());
 }
 
 TEST_F(SubDocTest, NestedStruct) {
@@ -112,5 +112,5 @@ TEST_F(SubDocTest, PrivateStruct) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(db.is_empty());
+  EXPECT_FALSE(db.has_any_comments());
 }
