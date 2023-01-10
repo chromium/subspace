@@ -41,7 +41,7 @@ struct CommentElement {
         comment(sus::move(comment)),
         name(sus::move(name)) {
     // All elements have the Global namespace in their path.
-    assert(namespace_path.len() > 0);
+    assert(this->namespace_path.len() > 0u);
   }
 
   sus::Vec<Namespace> namespace_path;
