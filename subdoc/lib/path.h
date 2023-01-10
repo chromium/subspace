@@ -24,12 +24,14 @@
 namespace subdoc {
 
 enum class NamespaceType {
+  Global,
   Anonymous,
   Named,
 };
 
 // clang-format off
 using Namespace = sus::Choice<sus_choice_types(
+    (NamespaceType::Global, void),
     (NamespaceType::Anonymous, void),
     (NamespaceType::Named, std::string)
 )>;
@@ -70,6 +72,7 @@ inline sus::Vec<Namespace> collect_namespace_path(clang::Decl* decl) noexcept {
       v.push(sus::choice<NamespaceType::Named>(ndecl->getNameAsString()));
     ndecl = clang::dyn_cast<clang::NamespaceDecl>(ndecl->getParent());
   }
+  v.push(sus::choice<NamespaceType::Global>());
   return v;
 }
 
@@ -78,6 +81,7 @@ inline bool path_contains_namespace(clang::Decl* decl, Namespace n) noexcept {
 
   while (ndecl) {
     switch (n) {
+      case Namespace::Tag::Global: return true;
       case Namespace::Tag::Anonymous:
         if (ndecl->isAnonymousNamespace()) return true;
         break;

@@ -14,10 +14,12 @@
 
 #pragma once
 
+#include <filesystem>
+
 namespace subdoc::gen {
 
 struct Options {
-  std::string output_root;  // TODO: sus::Path type would be real nice.
+  std::filesystem::path output_root;  // TODO: sus::Path type would be real nice.
 };
 
 }  // namespace subdoc::gen

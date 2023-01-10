@@ -14,21 +14,27 @@
 
 #pragma once
 
+#include <filesystem>
 #include <fstream>
+#include <sstream>
+
+#include "subspace/iter/iterator.h"
 
 namespace subdoc::gen {
 
-inline bool write_file(std::string_view path,
-                       std::string_view content) noexcept {
+inline sus::Option<std::ofstream> open_file_for_writing(
+    std::filesystem::path path) noexcept {
+  sus::Option<std::ofstream> out;
+
   std::ofstream file;
-  file.open(path.data());
-  if (!file.is_open()) {
-    llvm::errs() << "Unable to open file " << path << " for writing";
-    return false;
+  file.open(path.c_str());
+  if (file.is_open()) {
+    out.insert(sus::move(file));
+  } else {
+    llvm::errs() << "Unable to open file " << path.string() << " for writing\n";
   }
-  file << content;
-  file.close();
-  return true;
+
+  return out;
 }
 
 }  // namespace subdoc::gen
