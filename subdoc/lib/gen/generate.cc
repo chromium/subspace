@@ -39,7 +39,7 @@ struct InsideNamespace {};
 void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
   std::filesystem::remove_all(options.output_root);
 
-  for (const auto& [u, c] : db.records) {
+  for (const auto& [u, c] : db.global.records) {
     std::filesystem::path path = options.output_root;
     path.append([&]() {
       std::string fname;

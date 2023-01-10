@@ -39,53 +39,55 @@ class SubDocTest : public testing::Test {
   /// Returns if a record was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_record_comment(const subdoc::Database& db,
-                         std::string_view comment_loc,
-                         std::string_view comment_start) noexcept {
-    return find_comment(db.records, comment_loc, comment_start);
+                          std::string_view comment_loc,
+                          std::string_view comment_start) const noexcept {
+    return verify_comment(db.find_record_comment(comment_loc), comment_loc,
+                          comment_start);
   }
 
   /// Returns if a comment was found with a location that ends with the
   /// `comment_loc` suffix, and for which the comment's text begins with
   /// `comment_start` prefix.
   bool has_fn_comment(const subdoc::Database& db, std::string_view comment_loc,
-                      std::string_view comment_start) noexcept {
-    return find_comment(db.functions, comment_loc, comment_start);
+                      std::string_view comment_start) const noexcept {
+    return verify_comment(db.find_function_comment(comment_loc), comment_loc,
+                          comment_start);
   }
 
   /// Returns if a method was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_method_comment(const subdoc::Database& db,
                           std::string_view comment_loc,
-                          std::string_view comment_start) noexcept {
-    return find_comment(db.methods, comment_loc, comment_start);
+                          std::string_view comment_start) const noexcept {
+    return verify_comment(db.find_method_comment(comment_loc), comment_loc,
+                          comment_start);
   }
 
   /// Returns if a field was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_field_comment(const subdoc::Database& db,
                          std::string_view comment_loc,
-                         std::string_view comment_start) noexcept {
-    return find_comment(db.fields, comment_loc, comment_start);
+                         std::string_view comment_start) const noexcept {
+    return verify_comment(db.find_field_comment(comment_loc), comment_loc,
+                          comment_start);
   }
 
  private:
-  template <class MapT>
-  bool find_comment(const MapT& map, std::string_view comment_loc,
-                    std::string_view comment_start) noexcept {
-    for (const auto& [k, element] : map) {
-      if (element.comment.begin_loc.ends_with(comment_loc))
-        return element.comment.raw_text.starts_with(comment_start);
+  bool verify_comment(sus::Option<const subdoc::CommentElement&> element,
+                      std::string_view comment_loc,
+                      std::string_view comment_start) const noexcept {
+    if (element.is_none()) {
+      ADD_FAILURE() << "Unable to find record comment at " << comment_loc
+                    << "\n";
+      return false;
     }
-    if (map.empty()) {
-      ADD_FAILURE() << "Comment location " << comment_loc
-                    << " not found. No comments found in the parsed code.";
-    } else {
-      ADD_FAILURE() << "Comment location " << comment_loc
-                    << " not found. Valid locations:";
-      for (const auto& [k, element] : map)
-        llvm::errs() << "  " << element.comment.begin_loc << "\n";
+    if (!sus::move(element).unwrap().comment.raw_text.starts_with(
+            comment_start)) {
+      ADD_FAILURE() << "Record comment at " << comment_loc
+                    << " does not match text.\n";
+      return false;
     }
-    return false;
+    return true;
   }
 
   subdoc::tests::SubDocCppVersion cpp_version_ =
