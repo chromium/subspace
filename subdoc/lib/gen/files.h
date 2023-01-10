@@ -18,7 +18,7 @@
 
 namespace subdoc::gen {
 
-static bool write_file(std::string_view path,
+inline bool write_file(std::string_view path,
                        std::string_view content) noexcept {
   std::ofstream file;
   file.open(path.data());

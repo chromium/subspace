@@ -20,7 +20,7 @@ namespace subdoc::gen {
 
 struct InsideNamespace {};
 
-void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
+void generate(const subdoc::Database& /*db*/, const subdoc::gen::Options& /*options*/) {
   std::map<std::string, InsideNamespace> map;
 
 }
