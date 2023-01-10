@@ -51,7 +51,8 @@ inline sus::Vec<std::string> collect_record_path(
   v.push(decl->getNameAsString());
 
   clang::DeclContext* cx = decl->getDeclContext();
-  while (decl = clang::dyn_cast<clang::RecordDecl>(cx)) {
+  while (clang::isa<clang::RecordDecl>(cx)) {
+    decl = clang::dyn_cast<clang::RecordDecl>(cx);
     v.push(decl->getNameAsString());
     cx = cx->getParent();
   }
@@ -98,8 +99,7 @@ inline bool path_is_private(clang::NamedDecl* decl) noexcept {
   }
 
   // Checks if the declaration itself is private.
-  clang::AccessSpecifier access = decl->getAccess();
-  if (access == clang::AccessSpecifier::AS_private) {
+  if (decl->getAccess() == clang::AccessSpecifier::AS_private) {
     return true;
   }
 
@@ -110,8 +110,7 @@ inline bool path_is_private(clang::NamedDecl* decl) noexcept {
       // TODO: getAccess() can assert if it's not determined yet due to template
       // instatiation being incomplete..? clang-doc uses getAccessUnsafe() which
       // can give the wrong answer.
-      clang::AccessSpecifier access = tdecl->getAccess();
-      if (access == clang::AccessSpecifier::AS_private) {
+      if (tdecl->getAccess() == clang::AccessSpecifier::AS_private) {
         return true;
       }
     }
