@@ -88,20 +88,18 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
     if (!raw_comment) return true;
-    if (decl->isUnion()) {
-      auto ue = UnionElement(collect_namespace_path(decl),
-                             to_db_comment(decl, *raw_comment),
-                             decl->getQualifiedNameAsString());
-      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ue),
-                               mref(docs_db_.unions));
-    } else {
-      auto ce = ClassElement(
-          collect_namespace_path(decl), to_db_comment(decl, *raw_comment),
-          decl->getQualifiedNameAsString(),
-          decl->isStruct() ? ClassElement::Struct : ClassElement::Class);
-      return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ce),
-                               mref(docs_db_.classes));
-    }
+
+    RecordElement::RecordType type = [&]() {
+      if (decl->isStruct()) return RecordElement::Struct;
+      if (decl->isUnion()) return RecordElement::Union;
+      return RecordElement::Class;
+    }();
+
+    auto ce = RecordElement(collect_namespace_path(decl),
+                            to_db_comment(decl, *raw_comment),
+                            decl->getQualifiedNameAsString(), type);
+    return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ce),
+                             mref(docs_db_.records));
     return true;
   }
 

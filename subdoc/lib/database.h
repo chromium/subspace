@@ -60,12 +60,12 @@ struct NamespaceElement : public CommentElement {
 
   Namespace namespace_name;
 };
-struct ClassElement : public CommentElement {
-  enum ClassOrStruct { Class, Struct };
+struct RecordElement : public CommentElement {
+  enum RecordType { Class, Struct, Union };
 
-  explicit ClassElement(sus::Vec<Namespace> containing_namespaces,
-                        Comment comment, std::string name,
-                        ClassOrStruct record_type)
+  explicit RecordElement(sus::Vec<Namespace> containing_namespaces,
+                         Comment comment, std::string name,
+                         RecordType record_type)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name)),
         record_type(record_type) {}
@@ -80,15 +80,7 @@ struct ClassElement : public CommentElement {
   /// ```
   sus::Vec<std::string> class_path;
 
-  ClassOrStruct record_type;
-};
-struct UnionElement : public CommentElement {
-  explicit UnionElement(sus::Vec<Namespace> containing_namespaces,
-                        Comment comment, std::string name)
-      : CommentElement(sus::move(containing_namespaces), sus::move(comment),
-                       sus::move(name)) {}
-
-  // TODO: Template parameters and requires clause.
+  RecordType record_type;
 };
 struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
@@ -121,8 +113,7 @@ struct FieldElement : public CommentElement {
 
 struct Database {
   std::unordered_map<UniqueSymbol, NamespaceElement> namespaces;
-  std::unordered_map<UniqueSymbol, ClassElement> classes;
-  std::unordered_map<UniqueSymbol, UnionElement> unions;
+  std::unordered_map<UniqueSymbol, RecordElement> records;
   std::unordered_map<UniqueSymbol, FunctionElement> functions;
   std::unordered_map<UniqueSymbol, FunctionElement> deductions;
   std::unordered_map<UniqueSymbol, FunctionElement> ctors;
@@ -132,9 +123,9 @@ struct Database {
   std::unordered_map<UniqueSymbol, FieldElement> fields;
 
   bool is_empty() const noexcept {
-    return classes.empty() && unions.empty() && functions.empty() &&
-           deductions.empty() && ctors.empty() && dtors.empty() &&
-           conversions.empty() && methods.empty() && fields.empty();
+    return records.empty() && functions.empty() && deductions.empty() &&
+           ctors.empty() && dtors.empty() && conversions.empty() &&
+           methods.empty() && fields.empty();
   }
 };
 

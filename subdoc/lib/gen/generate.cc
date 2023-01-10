@@ -39,7 +39,7 @@ struct InsideNamespace {};
 void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
   std::filesystem::remove_all(options.output_root);
 
-  for (const auto& [u, c] : db.classes) {
+  for (const auto& [u, c] : db.records) {
     std::filesystem::path path = options.output_root;
     path.append([&]() {
       std::string fname;
@@ -74,17 +74,26 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
       auto type_div = body.open_div();
       type_div.add_class("type");
       switch (c.record_type) {
-        case ClassElement::Class: {
+        case RecordElement::Class: {
           auto class_span = type_div.open_span();
           class_span.add_class("type");
           class_span.add_class("class");
           class_span.write_text("class");
+          break;
         }
-        case ClassElement::Struct: {
+        case RecordElement::Struct: {
           auto struct_span = type_div.open_span();
           struct_span.add_class("type");
           struct_span.add_class("struct");
           struct_span.write_text("struct");
+          break;
+        }
+        case RecordElement::Union: {
+          auto struct_span = type_div.open_span();
+          struct_span.add_class("type");
+          struct_span.add_class("union");
+          struct_span.write_text("union");
+          break;
         }
       }
       {
