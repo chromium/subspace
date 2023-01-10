@@ -36,12 +36,12 @@ class SubDocTest : public testing::Test {
     return subdoc::run_test(sus::move(content), sus::move(args));
   }
 
-  /// Returns if a class was found whose comment location ends with
+  /// Returns if a record was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
-  bool has_class_comment(const subdoc::Database& db,
+  bool has_record_comment(const subdoc::Database& db,
                          std::string_view comment_loc,
                          std::string_view comment_start) noexcept {
-    return find_comment(db.classes, comment_loc, comment_start);
+    return find_comment(db.records, comment_loc, comment_start);
   }
 
   /// Returns if a comment was found with a location that ends with the
