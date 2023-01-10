@@ -95,9 +95,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ue),
                                mref(docs_db_.unions));
     } else {
-      auto ce = ClassElement(collect_namespace_path(decl),
-                             to_db_comment(decl, *raw_comment),
-                             decl->getQualifiedNameAsString());
+      auto ce = ClassElement(
+          collect_namespace_path(decl), to_db_comment(decl, *raw_comment),
+          decl->getQualifiedNameAsString(),
+          decl->isStruct() ? ClassElement::Struct : ClassElement::Class);
       return add_comment_to_db(decl, raw_comment->getBeginLoc(), sus::move(ce),
                                mref(docs_db_.classes));
     }

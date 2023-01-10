@@ -1,4 +1,3 @@
+/// Comment headline S
 struct S {
-  /// Comment headline
-  int f = 1;
 };

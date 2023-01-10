@@ -39,33 +39,62 @@ struct CommentElement {
                           std::string name)
       : namespace_path(sus::move(namespace_path)),
         comment(sus::move(comment)),
-        name(sus::move(name)) {}
+        name(sus::move(name)) {
+    // All elements have the Global namespace in their path.
+    assert(namespace_path.len() > 0);
+  }
 
   sus::Vec<Namespace> namespace_path;
   Comment comment;
   std::string name;
 };
 
+struct NamespaceElement : public CommentElement {
+  explicit NamespaceElement(sus::Vec<Namespace> containing_namespaces,
+                            Comment comment, std::string name)
+      : CommentElement(sus::move(containing_namespaces), sus::move(comment),
+                       sus::move(name)),
+        // The front of `namespace_path` will be this NamespaceElement's
+        // identity.
+        namespace_name(namespace_path[0u]) {}
+
+  Namespace namespace_name;
+};
 struct ClassElement : public CommentElement {
-  explicit ClassElement(sus::Vec<Namespace> namespaces, Comment comment,
-                        std::string name)
-      : CommentElement(sus::move(namespaces), sus::move(comment),
-                       sus::move(name)) {}
+  enum ClassOrStruct { Class, Struct };
+
+  explicit ClassElement(sus::Vec<Namespace> containing_namespaces,
+                        Comment comment, std::string name,
+                        ClassOrStruct record_type)
+      : CommentElement(sus::move(containing_namespaces), sus::move(comment),
+                       sus::move(name)),
+        record_type(record_type) {}
 
   // TODO: Template parameters and requires clause.
+
+  /// The classes in which this class is nested.
+  ///
+  /// In this example, the class_path would be {S, R}.
+  /// ```
+  ///   struct R { struct S { struct T{}; }; };
+  /// ```
+  sus::Vec<std::string> class_path;
+
+  ClassOrStruct record_type;
 };
 struct UnionElement : public CommentElement {
-  explicit UnionElement(sus::Vec<Namespace> namespaces, Comment comment,
-                        std::string name)
-      : CommentElement(sus::move(namespaces), sus::move(comment),
+  explicit UnionElement(sus::Vec<Namespace> containing_namespaces,
+                        Comment comment, std::string name)
+      : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name)) {}
 
   // TODO: Template parameters and requires clause.
 };
 struct FunctionElement : public CommentElement {
-  explicit FunctionElement(sus::Vec<Namespace> namespaces, Comment comment,
-                           std::string name, std::string signature)
-      : CommentElement(sus::move(namespaces), sus::move(comment),
+  explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
+                           Comment comment, std::string name,
+                           std::string signature)
+      : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name)),
         signature(sus::move(signature)) {}
 
@@ -77,10 +106,10 @@ struct FieldElement : public CommentElement {
     NonStatic,
   };
 
-  explicit FieldElement(sus::Vec<Namespace> namespaces, Comment comment,
-                        std::string name, sus::Vec<std::string> record_path,
-                        StaticType is_static)
-      : CommentElement(sus::move(namespaces), sus::move(comment),
+  explicit FieldElement(sus::Vec<Namespace> containing_namespaces,
+                        Comment comment, std::string name,
+                        sus::Vec<std::string> record_path, StaticType is_static)
+      : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name)),
         record_path(sus::move(record_path)),
         is_static(is_static) {}
@@ -91,6 +120,7 @@ struct FieldElement : public CommentElement {
 };
 
 struct Database {
+  std::unordered_map<UniqueSymbol, NamespaceElement> namespaces;
   std::unordered_map<UniqueSymbol, ClassElement> classes;
   std::unordered_map<UniqueSymbol, UnionElement> unions;
   std::unordered_map<UniqueSymbol, FunctionElement> functions;
