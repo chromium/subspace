@@ -14,9 +14,10 @@
 
 #include <unordered_set>
 
+#include "lib/gen/generate.h"
 #include "lib/run.h"
-#include "subspace/prelude.h"
 #include "subdoc/llvm.h"
+#include "subspace/prelude.h"
 
 int main(int argc, const char** argv) {
   llvm::InitLLVM init(argc, argv);
@@ -62,6 +63,10 @@ int main(int argc, const char** argv) {
   }
 
   subdoc::Database docs_db = sus::move(result).unwrap();
-  // TODO: Generate docs.
+  auto options = subdoc::gen::Options{
+      // TODO: Make this configurable.
+      .output_root = ".",
+  };
+  subdoc::gen::generate(docs_db, options);
   return 0;
 }
