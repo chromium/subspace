@@ -20,7 +20,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/run.h"
-#include "subspace/assertions/unreachable.h"
+#include "subdoc/tests/cpp_version.h"
 #include "subspace/containers/vec.h"
 #include "subspace/convert/subclass.h"
 #include "subspace/macros/compiler.h"
@@ -28,22 +28,11 @@
 #include "subspace/prelude.h"
 #include "subspace/result/result.h"
 
-enum class SubDocCppVersion {
-  Cpp20,
-};
-
-inline std::string_view cpp_version_flag(SubDocCppVersion v) noexcept {
-  switch (v) {
-    case SubDocCppVersion::Cpp20: return "-std=c++20";
-  }
-  sus::unreachable();
-}
-
 class SubDocTest : public testing::Test {
  public:
   auto run_code(std::string content) noexcept {
     auto args = sus::Vec<std::string>();
-    args.push(std::string(cpp_version_flag(cpp_version_)));
+    args.push(std::string(subdoc::tests::cpp_version_flag(cpp_version_)));
     return subdoc::run_test(sus::move(content), sus::move(args));
   }
 
@@ -99,5 +88,6 @@ class SubDocTest : public testing::Test {
     return false;
   }
 
-  SubDocCppVersion cpp_version_ = SubDocCppVersion::Cpp20;
+  subdoc::tests::SubDocCppVersion cpp_version_ =
+      subdoc::tests::SubDocCppVersion::Cpp20;
 };

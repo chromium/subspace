@@ -15,6 +15,10 @@
 add_library(subdoc_lib STATIC "")
 add_library(subdoc::lib ALIAS subdoc_lib)
 target_sources(subdoc_lib PUBLIC
+    "lib/gen/files.h"
+    "lib/gen/generate.cc"
+    "lib/gen/generate.h"
+    "lib/gen/options.h"
     "lib/database.h"
     "lib/path.h"
     "lib/run.cc"
@@ -29,6 +33,7 @@ add_executable(subdoc
 )
 
 add_executable(subdoc_unittests
+    "gen_tests/gen_tests.cc"
     "tests/fields_unittest.cc"
     "tests/functions_unittest.cc"
     "tests/methods_unittest.cc"
