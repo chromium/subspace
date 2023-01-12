@@ -42,7 +42,6 @@ function(subspace_default_compile_options TARGET)
             -Wno-redundant-move
 
             # Disabled, no plans to enable.
-            -Wno-unused-parameter
             -Wno-unknown-pragmas
         )
     endif()
