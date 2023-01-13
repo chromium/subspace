@@ -141,7 +141,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     auto fe = FieldElement(collect_namespace_path(decl),
                            make_db_comment(decl, raw_comment),
-                           decl->getQualifiedNameAsString(),
+                           std::string(decl->getName()),
                            collect_record_path(decl->getParent()),
                            // Static data members are found in VisitVarDecl.
                            FieldElement::NonStatic);

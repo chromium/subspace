@@ -14,4 +14,10 @@
 
 #include "subdoc/tests/subdoc_gen_test.h"
 
-TEST_F(SubDocGenTest, Struct) { EXPECT_TRUE(run_gen_test("struct")); }
+TEST_F(SubDocGenTest, StructBasic) {
+  EXPECT_TRUE(run_gen_test("struct-basic"));
+}
+
+TEST_F(SubDocGenTest, StructComplex) {
+  EXPECT_TRUE(run_gen_test("struct-complex"));
+}
