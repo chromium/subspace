@@ -286,26 +286,32 @@ struct Database {
 
   bool has_any_comments() const noexcept { return global.has_any_comments(); }
 
-  NamespaceElement& find_namespace_mut(clang::NamespaceDecl* ndecl) & noexcept {
-    if (!ndecl) return global;
+  sus::Option<NamespaceElement&> find_namespace_mut(
+      clang::NamespaceDecl* ndecl) & noexcept {
+    if (!ndecl) return sus::some(global);
 
     if (auto* parent =
             clang::dyn_cast<clang::NamespaceDecl>(ndecl->getParent())) {
-      NamespaceElement& parent_element = find_namespace_mut(parent);
-      auto it = parent_element.namespaces.find(unique_from_decl(ndecl));
-      if (it == parent_element.namespaces.end()) {
-        llvm::errs() << "Error: Missing parent namespace in database.\n";
-        ndecl->dump();
-        assert(false);
+      sus::Option<NamespaceElement&> opt_parent_element =
+          find_namespace_mut(parent);
+      if (opt_parent_element.is_none()) return sus::none();
+      NamespaceElement& parent_element = sus::move(opt_parent_element).unwrap();
+      if (auto it = parent_element.namespaces.find(unique_from_decl(ndecl));
+          it != parent_element.namespaces.end()) {
+        return sus::some(it->second);
+      } else {
+        return sus::none();
       }
-      return it->second;
     } else {
-      return global;
+      return sus::some(global);
     }
   }
-  RecordElement& find_record_mut(clang::RecordDecl* rdecl) & noexcept {
-    NamespaceElement& ne = find_namespace_mut(find_nearest_namespace(rdecl));
-    return find_record_mut_impl(rdecl, ne);
+  sus::Option<RecordElement&> find_record_mut(
+      clang::RecordDecl* rdecl) & noexcept {
+    sus::Option<NamespaceElement&> ne =
+        find_namespace_mut(find_nearest_namespace(rdecl));
+    return sus::move(ne).and_then(
+        [&](NamespaceElement& e) { return find_record_mut_impl(rdecl, e); });
   }
 
   /// Finds a comment whose location ends with the `comment_loc` suffix.
@@ -362,19 +368,25 @@ struct Database {
       std::string_view comment_loc) && = delete;
 
  private:
-  RecordElement& find_record_mut_impl(clang::RecordDecl* rdecl,
-                                      NamespaceElement& ne) & {
+  sus::Option<RecordElement&> find_record_mut_impl(clang::RecordDecl* rdecl,
+                                                   NamespaceElement& ne) & {
     if (auto* parent = clang::dyn_cast<clang::RecordDecl>(rdecl->getParent())) {
-      RecordElement& parent_element = find_record_mut_impl(parent, ne);
-      return parent_element.records.at(unique_from_decl(rdecl));
-    } else {
-      auto it = ne.records.find(unique_from_decl(rdecl));
-      if (it == ne.records.end()) {
-        llvm::errs() << "Error: Missing parent record in database.\n";
-        rdecl->dump();
-        assert(false);
+      if (sus::Option<RecordElement&> parent_element =
+              find_record_mut_impl(parent, ne);
+          parent_element.is_some()) {
+        return sus::some(sus::move(parent_element)
+                             .unwrap()
+                             .records.at(unique_from_decl(rdecl)));
+      } else {
+        return sus::none();
       }
-      return it->second;
+    } else {
+      if (auto it = ne.records.find(unique_from_decl(rdecl));
+          it != ne.records.end()) {
+        return sus::some(it->second);
+      } else {
+        return sus::none();
+      }
     }
   }
 };
