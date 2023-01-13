@@ -62,6 +62,20 @@ TEST_F(SubDocTest, StructInNamedNamespace) {
   EXPECT_TRUE(has_record_comment(db, "3:5", "/// Comment headline"));
 }
 
+TEST_F(SubDocTest, StructInPrivateNamespace) {
+  auto result = run_code(R"(
+    namespace __private {
+    struct S {
+      /// Comment headline
+      int i;
+    };
+    }
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_FALSE(db.has_any_comments());
+}
+
 TEST_F(SubDocTest, StructInAnonymousNamespace) {
   auto result = run_code(R"(
     namespace {
