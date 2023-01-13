@@ -107,7 +107,90 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
         desc_div.write_text(c.comment.raw_text);
       }
 
-      {
+      // TODO: List fields, methods, concepts, etc.
+
+      // TODO: Add sorting to Vec.
+      sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> sorted_static_fields;
+      sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> sorted_fields;
+      for (const auto& [field_symbol, field_element] : c.fields) {
+        switch (field_element.is_static) {
+          case FieldElement::Static:
+            sorted_static_fields.push(
+                sus::tuple(field_element.name, field_symbol));
+            break;
+          case FieldElement::NonStatic:
+            sorted_fields.push(sus::tuple(field_element.name, field_symbol));
+            break;
+        }
+      }
+      if (sorted_static_fields.len() > 0u) {
+        std::sort(sorted_static_fields.as_mut_ptr(),
+                  sorted_static_fields.as_mut_ptr() +
+                      sorted_static_fields.len().primitive_value,
+                  [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
+                     const sus::Tuple<std::string_view, UniqueSymbol>& b) {
+                    return a.get_ref<0>() < b.get_ref<0>();
+                  });
+      }
+      if (sorted_fields.len() > 0u) {
+        std::sort(
+            sorted_fields.as_mut_ptr(),
+            sorted_fields.as_mut_ptr() + sorted_fields.len().primitive_value,
+            [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
+               const sus::Tuple<std::string_view, UniqueSymbol>& b) {
+              return a.get_ref<0>() < b.get_ref<0>();
+            });
+      }
+
+      if (sorted_static_fields.len() > 0u) {
+        auto section_div = type_div.open_div();
+        section_div.add_class("section");
+        {
+          auto fields_header_div = section_div.open_div();
+          fields_header_div.add_class("header");
+          fields_header_div.add_class("fields");
+          fields_header_div.write_text("Static Data Members");
+        }
+        {
+          auto fields_div = section_div.open_div();
+          fields_div.add_class("list");
+          fields_div.add_class("fields");
+          fields_div.add_class("static");
+          for (auto&& [name, field_symbol] : sorted_static_fields) {
+            const FieldElement& fe = c.fields.at(field_symbol);
+            {
+              auto field_type_span = fields_div.open_span();
+              field_type_span.add_class("static");
+              field_type_span.write_text("static");
+            }
+            if (/* const? */ false) {
+              auto field_type_span = fields_div.open_span();
+              field_type_span.add_class("const");
+              field_type_span.write_text("const");
+            }
+            {
+              auto field_type_span = fields_div.open_span();
+              field_type_span.add_class("type");
+              field_type_span.write_text("???");
+            }
+            {
+              auto field_type_span = fields_div.open_span();
+              field_type_span.add_class("field");
+              field_type_span.add_class("name");
+              field_type_span.write_text(fe.name);
+            }
+            {
+              auto desc_div = fields_div.open_div();
+              desc_div.add_class("description");
+              if (fe.has_comment()) {
+                desc_div.write_text(fe.comment.raw_text);
+              }
+            }
+          }
+        }
+      }
+
+      if (sorted_fields.len() > 0u) {
         auto section_div = type_div.open_div();
         section_div.add_class("section");
         {
@@ -120,24 +203,33 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
           auto fields_div = section_div.open_div();
           fields_div.add_class("list");
           fields_div.add_class("fields");
-          // TODO: List fields, methods, concepts, etc.
-          /*
-          {
-            auto field_type_span = fields_div.open_span();
-            field_type_span.add_class("type");
-            field_type_span.write_text("int");
+          fields_div.add_class("nonstatic");
+          for (auto&& [name, field_symbol] : sorted_fields) {
+            const FieldElement& fe = c.fields.at(field_symbol);
+            if (/* const? */ false) {
+              auto field_type_span = fields_div.open_span();
+              field_type_span.add_class("const");
+              field_type_span.write_text("const");
+            }
+            {
+              auto field_type_span = fields_div.open_span();
+              field_type_span.add_class("type");
+              field_type_span.write_text("???");
+            }
+            {
+              auto field_type_span = fields_div.open_span();
+              field_type_span.add_class("field");
+              field_type_span.add_class("name");
+              field_type_span.write_text(fe.name);
+            }
+            {
+              auto desc_div = fields_div.open_div();
+              desc_div.add_class("description");
+              if (fe.has_comment()) {
+                desc_div.write_text(fe.comment.raw_text);
+              }
+            }
           }
-          {
-            auto field_name_span = fields_div.open_span();
-            field_name_span.add_class("fieldname");
-            field_name_span.write_text("f");
-          }
-          {
-            auto desc_div = fields_div.open_div();
-            desc_div.add_class("description");
-            desc_div.write_text("/// Comment headline f");
-          }
-          */
         }
       }
     }
