@@ -79,14 +79,20 @@ struct FieldElement : public CommentElement {
 
   explicit FieldElement(sus::Vec<Namespace> containing_namespaces,
                         Comment comment, std::string name,
+                        clang::QualType qual_type,
                         sus::Vec<std::string> record_path, StaticType is_static)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name)),
         record_path(sus::move(record_path)),
+        type_name(qual_type.getUnqualifiedType().getAsString()),
+        is_const(qual_type.getQualifiers().hasConst()),
+        is_volatile(qual_type.getQualifiers().hasVolatile()),
         is_static(is_static) {}
 
   sus::Vec<std::string> record_path;
-  // TODO: clang::Qualifiers.
+  std::string type_name;
+  bool is_const;
+  bool is_volatile;
   StaticType is_static;
 
   bool has_any_comments() const noexcept { return has_comment(); }
