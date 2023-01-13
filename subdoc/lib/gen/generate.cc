@@ -163,15 +163,20 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
               field_type_span.add_class("static");
               field_type_span.write_text("static");
             }
-            if (/* const? */ false) {
+            if (fe.is_const) {
               auto field_type_span = fields_div.open_span();
               field_type_span.add_class("const");
               field_type_span.write_text("const");
             }
+            if (fe.is_volatile) {
+              auto field_type_span = fields_div.open_span();
+              field_type_span.add_class("volatile");
+              field_type_span.write_text("volatile");
+            }
             {
               auto field_type_span = fields_div.open_span();
               field_type_span.add_class("type");
-              field_type_span.write_text("???");
+              field_type_span.write_text(fe.type_name);
             }
             {
               auto field_type_span = fields_div.open_span();
@@ -206,15 +211,20 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
           fields_div.add_class("nonstatic");
           for (auto&& [name, field_symbol] : sorted_fields) {
             const FieldElement& fe = c.fields.at(field_symbol);
-            if (/* const? */ false) {
+            if (fe.is_const) {
               auto field_type_span = fields_div.open_span();
               field_type_span.add_class("const");
               field_type_span.write_text("const");
             }
+            if (fe.is_volatile) {
+              auto field_type_span = fields_div.open_span();
+              field_type_span.add_class("volatile");
+              field_type_span.write_text("volatile");
+            }
             {
               auto field_type_span = fields_div.open_span();
               field_type_span.add_class("type");
-              field_type_span.write_text("???");
+              field_type_span.write_text(fe.type_name);
             }
             {
               auto field_type_span = fields_div.open_span();

@@ -129,7 +129,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ce),
-                          mref(sus::move(parent).unwrap().records));
+                          mref(parent->records));
       }
     }
     return true;
@@ -141,7 +141,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     auto fe = FieldElement(collect_namespace_path(decl),
                            make_db_comment(decl, raw_comment),
-                           std::string(decl->getName()),
+                           std::string(decl->getName()), decl->getType(),
                            collect_record_path(decl->getParent()),
                            // Static data members are found in VisitVarDecl.
                            FieldElement::NonStatic);
@@ -151,7 +151,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             clang::cast<clang::RecordDecl>(decl->getDeclContext()));
         parent.is_some()) {
       add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                        mref(sus::move(parent).unwrap().fields));
+                        mref(parent->fields));
     }
     return true;
   }
@@ -167,7 +167,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto* record = clang::cast<clang::RecordDecl>(decl->getDeclContext());
     auto fe = FieldElement(
         collect_namespace_path(decl), make_db_comment(decl, raw_comment),
-        decl->getQualifiedNameAsString(), collect_record_path(record),
+        std::string(decl->getName()), decl->getType(),
+        collect_record_path(record),
         // NonStatic data members are found in VisitFieldDecl.
         FieldElement::Static);
 
@@ -175,7 +176,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             clang::cast<clang::RecordDecl>(decl->getDeclContext()));
         parent.is_some()) {
       add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                        mref(sus::move(parent).unwrap().fields));
+                        mref(parent->fields));
     }
     return true;
   }
@@ -218,7 +219,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(sus::move(parent).unwrap().ctors));
+                          mref(parent->ctors));
       }
     } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
@@ -226,7 +227,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(sus::move(parent).unwrap().dtors));
+                          mref(parent->dtors));
       }
     } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
@@ -234,7 +235,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(sus::move(parent).unwrap().conversions));
+                          mref(parent->conversions));
       }
     } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
@@ -242,7 +243,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(sus::move(parent).unwrap().methods));
+                          mref(parent->methods));
       }
     } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
       // TODO: How do we get from here to the class that the deduction guide is
@@ -253,14 +254,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(sus::move(parent).unwrap().deductions));
+                          mref(parent->deductions));
       }
     } else {
       if (sus::Option<NamespaceElement&> parent =
               docs_db_.find_namespace_mut(find_nearest_namespace(decl));
           parent.is_some()) {
         add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(sus::move(parent).unwrap().functions));
+                          mref(parent->functions));
       }
     }
 
