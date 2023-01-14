@@ -39,6 +39,11 @@ constexpr sus_always_inline size_t size_of() noexcept {
 /// potentially overwriting other objects. This is due to the fact that other
 /// objects can be placed inside tail padding of an object in some scenarios.
 ///
+/// Returns 0 for types where the tail padding can not be determined. In
+/// particular this is the case for union types unless and until compilers
+/// provide additional support to determine the maximum data size of all
+/// union members.
+///
 /// From @ssbr:
 ///
 /// If type `T` has padding at its end, such as:
@@ -73,11 +78,12 @@ constexpr sus_always_inline size_t size_of() noexcept {
 /// So the dsizeof(T) algorithm [to determine how much to memcpy safely] is
 /// something like:
 ///
-/// * A: find out how many bytes fit into the padding via inheritance (`struct S
-/// : T { bytes }` for all `bytes` until `sizeof(T) != sizeof(S)`).
-/// * B: find out how many bytes fit into the padding via no_unique_address (`struct S {
-/// [[no_unique_address]] T x; bytes }` for all `bytes` until `sizeof(T) !=
-/// sizeof(S)`).
+/// * A: find out how many bytes fit into the padding via inheritance
+///   (`struct S : T { bytes }` for all `bytes` until
+///   `sizeof(T) != sizeof(S)`).
+/// * B: find out how many bytes fit into the padding via no_unique_address
+///   (`struct S { [[no_unique_address]] T x; bytes }` for all `bytes` until
+///   `sizeof(T) != sizeof(S)`).
 ///
 /// ```
 /// return sizeof(T) - max(A, B)
@@ -90,17 +96,15 @@ constexpr sus_always_inline size_t size_of() noexcept {
 ///
 /// On MSVC 19, an empty class has size 1, but with the above formula:
 /// * A = 1, as the 1 byte gets reused by a subclass.
-/// * B = 0, as [[no_unique_address]] does not reuse the one byte of the empty class.
+/// * B = 0, as [[no_unique_address]] does not reuse the one byte of the empty
+///   class.
 ///
 /// The result is that the data_size_of<T> should be 0, since the 1 byte _can_
 /// be reused.
 ///
-/// In general, [[no_unique_address]] doesn't appear to do anything on MSVC, and
-/// subclasses also do not use padding bytes of the base class, with the
-/// exception of the base class being empty.
-///
-/// Disallows calls with a reference type, since C++ does a surprising thing,
-/// where `sizeof(T&) == sizeof(T)`.
+/// In general, [[no_unique_address]] and [[msvc::no_unique_address]] doesn't
+/// appear do anything on MSVC 19, and subclasses also do not use padding
+/// bytes of the base class, with the exception of the base class being empty.
 template <class T>
   requires(!std::is_reference_v<T>)
 constexpr sus_always_inline size_t data_size_of() noexcept {
