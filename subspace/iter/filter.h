@@ -23,7 +23,7 @@
 namespace sus::iter {
 
 using ::sus::iter::IteratorBase;
-using ::sus::mem::relocate_one_by_memcpy;
+using ::sus::mem::relocate_by_memcpy;
 
 template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter : public IteratorBase<Item> {

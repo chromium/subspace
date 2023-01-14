@@ -217,7 +217,7 @@ struct Filtering {
   ~Filtering() {}
   int i;
 };
-static_assert(!::sus::mem::relocate_one_by_memcpy<Filtering>);
+static_assert(!::sus::mem::relocate_by_memcpy<Filtering>);
 
 TEST(Iterator, FilterNonTriviallyRelocatable) {
   Filtering nums[5] = {Filtering(1), Filtering(2), Filtering(3), Filtering(4),
@@ -225,7 +225,7 @@ TEST(Iterator, FilterNonTriviallyRelocatable) {
 
   auto non_relocatable_it = ArrayIterator<Filtering, 5>::with_array(nums);
   static_assert(
-      !sus::mem::relocate_one_by_memcpy<decltype(non_relocatable_it)>);
+      !sus::mem::relocate_by_memcpy<decltype(non_relocatable_it)>);
 
   auto fit = sus::move(non_relocatable_it).box().filter([](const Filtering& f) {
     return f.i >= 3;

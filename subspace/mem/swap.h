@@ -31,7 +31,7 @@ template <class T>
 constexpr void swap(T& lhs, T& rhs) noexcept {
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
-      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
+      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
     char temp[::sus::mem::data_size_of<T>()];
     memcpy(temp, ::sus::mem::addressof(lhs), ::sus::mem::data_size_of<T>());

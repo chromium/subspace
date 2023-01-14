@@ -28,8 +28,7 @@
 
 using sus::mem::NonNull;
 
-static_assert(sus::mem::relocate_one_by_memcpy<NonNull<int>>);
-static_assert(sus::mem::relocate_array_by_memcpy<NonNull<int>>);
+static_assert(sus::mem::relocate_by_memcpy<NonNull<int>>);
 
 static_assert(sus::mem::NeverValueField<NonNull<int>>);
 static_assert(sizeof(sus::Option<NonNull<int>>) == sizeof(int*));

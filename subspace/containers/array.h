@@ -337,8 +337,7 @@ class Array final {
 
   sus_class_trivial_relocatable_value(
       ::sus::marker::unsafe_fn,
-      (N >= 2 && ::sus::mem::relocate_array_by_memcpy<T>) ||
-          (N == 1 && ::sus::mem::relocate_one_by_memcpy<T>) || N == 0);
+      N == 0 || ::sus::mem::relocate_by_memcpy<T>);
 };
 
 namespace __private {

@@ -48,8 +48,8 @@ struct [[sus_trivial_abi]] SizedIterator final {
   // clang-format off
   sus_class_trivial_relocatable_value(
       ::sus::marker::unsafe_fn,
-      ::sus::mem::relocate_array_by_memcpy<char> &&
-      ::sus::mem::relocate_one_by_memcpy<decltype(destroy)>);
+      ::sus::mem::relocate_by_memcpy<decltype(sized)> &&
+      ::sus::mem::relocate_by_memcpy<decltype(destroy)>);
   // clang-format on
 };
 
@@ -66,7 +66,7 @@ template <::sus::mem::Move IteratorSubclass, int&...,
 inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
   requires(::sus::convert::SameOrSubclassOf<IteratorSubclass*,
                                             IteratorBase<SubclassItem>*> &&
-           ::sus::mem::relocate_one_by_memcpy<IteratorSubclass>)
+           ::sus::mem::relocate_by_memcpy<IteratorSubclass>)
 {
   auto it = SizedIteratorType([](char& sized) {
     reinterpret_cast<IteratorSubclass&>(sized).~IteratorSubclass();

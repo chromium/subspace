@@ -38,7 +38,7 @@ template <class T>
 
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
-      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
+      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
     memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
            ::sus::mem::data_size_of<T>());
@@ -56,7 +56,7 @@ template <class T>
 
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
-      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
+      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
     memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
            ::sus::mem::data_size_of<T>());
@@ -72,7 +72,7 @@ template <class T>
 inline void replace_and_discard(T& dest, const T& src) noexcept {
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
-      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
+      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
     memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
            ::sus::mem::data_size_of<T>());
@@ -86,7 +86,7 @@ template <class T>
 inline void replace_and_discard(T& dest, T&& src) noexcept {
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
-      ::sus::mem::relocate_one_by_memcpy<T> && !std::is_constant_evaluated();
+      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
     memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
            ::sus::mem::data_size_of<T>());

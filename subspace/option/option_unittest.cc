@@ -36,8 +36,7 @@ using sus::Option;
 using sus::Some;
 using sus::Tuple;
 using sus::construct::Default;
-using sus::mem::relocate_array_by_memcpy;
-using sus::mem::relocate_one_by_memcpy;
+using sus::mem::relocate_by_memcpy;
 using namespace sus::test;
 
 namespace {

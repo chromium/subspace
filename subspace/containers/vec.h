@@ -189,7 +189,7 @@ class Vec {
     if (!is_alloced()) {
       storage_ = static_cast<char*>(malloc(bytes.primitive_value));
     } else {
-      if constexpr (::sus::mem::relocate_array_by_memcpy<T>) {
+      if constexpr (::sus::mem::relocate_by_memcpy<T>) {
         storage_ = static_cast<char*>(realloc(storage_, bytes.primitive_value));
       } else {
         auto* const new_storage =
@@ -410,7 +410,7 @@ class Vec {
 
   sus_class_never_value_field(::sus::marker::unsafe_fn, Vec, storage_, nullptr);
   sus_class_trivial_relocatable_value(::sus::marker::unsafe_fn,
-                                      sus::mem::relocate_array_by_memcpy<T>);
+                                      sus::mem::relocate_by_memcpy<T>);
 };
 
 /// Used to construct a Vec<T> with the parameters as its values.
