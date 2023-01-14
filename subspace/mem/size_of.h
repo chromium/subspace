@@ -70,15 +70,13 @@ constexpr sus_always_inline size_t size_of() noexcept {
 /// In this example, `sizeof(S) == sizeof(T)` because `c` sits inside the
 /// trailing padding of `T`.
 ///
-/// From @ssbr:
-///
 /// So the dsizeof(T) algorithm [to determine how much to memcpy safely] is
 /// something like:
 ///
-/// - A: find out how many bytes fit into the padding via inheritance (`struct S
-/// : T { bytes }` for all `bytes` until `sizeof(T) != sizeof(S)`). - B: find
-/// out how many bytes fit into the padding via no_unique_address (struct S {
-/// [[no_unique_address]] T x; bytes } for all `bytes` until `sizeof(T) !=
+/// * A: find out how many bytes fit into the padding via inheritance (`struct S
+/// : T { bytes }` for all `bytes` until `sizeof(T) != sizeof(S)`).
+/// * B: find out how many bytes fit into the padding via no_unique_address (`struct S {
+/// [[no_unique_address]] T x; bytes }` for all `bytes` until `sizeof(T) !=
 /// sizeof(S)`).
 ///
 /// ```
@@ -90,9 +88,9 @@ constexpr sus_always_inline size_t size_of() noexcept {
 ///
 /// From @danakj:
 ///
-/// On MSVC 19, an empty class has size 1, but with the above formula: * A = 1,
-/// as the 1 byte gets reused by a subclass. * B = 0, as [[no_unique_address]]
-/// does not reuse the one byte of the empty class.
+/// On MSVC 19, an empty class has size 1, but with the above formula:
+/// * A = 1, as the 1 byte gets reused by a subclass.
+/// * B = 0, as [[no_unique_address]] does not reuse the one byte of the empty class.
 ///
 /// The result is that the data_size_of<T> should be 0, since the 1 byte _can_
 /// be reused.
