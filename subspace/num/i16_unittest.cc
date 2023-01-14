@@ -61,8 +61,7 @@ static_assert(!std::is_trivially_constructible_v<T, From>, "");
 static_assert(std::is_assignable_v<T, From>, "");
 static_assert(std::is_nothrow_destructible_v<T>, "");
 static_assert(sus::construct::Default<T>, "");
-static_assert(sus::mem::relocate_one_by_memcpy<T>, "");
-static_assert(sus::mem::relocate_array_by_memcpy<T>, "");
+static_assert(sus::mem::relocate_by_memcpy<T>, "");
 }  // namespace behaviour
 
 // i16::MAX

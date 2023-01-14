@@ -26,7 +26,7 @@ template <class T>
 struct [[sus_trivial_abi]] RelocatableStorage;
 
 template <::sus::mem::Move T>
-  requires(!::sus::mem::relocate_one_by_memcpy<T>)
+  requires(!::sus::mem::relocate_by_memcpy<T>)
 struct [[sus_trivial_abi]] RelocatableStorage<T> final {
   RelocatableStorage(Option<T>&& t)
       : heap_(::sus::move(t).and_then([](T&& t) {
@@ -70,7 +70,7 @@ struct [[sus_trivial_abi]] RelocatableStorage<T> final {
 };
 
 template <class T>
-  requires(::sus::mem::relocate_one_by_memcpy<T>)
+  requires(::sus::mem::relocate_by_memcpy<T>)
 struct [[sus_trivial_abi]] RelocatableStorage<T> final {
   RelocatableStorage(Option<T>&& t) : stack_(::sus::move(t)) {}
 

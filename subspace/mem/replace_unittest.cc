@@ -28,7 +28,7 @@ namespace {
 
 TEST(Replace, ConstexprTrivialRelocate) {
   using T = int;
-  static_assert(::sus::mem::relocate_one_by_memcpy<T>, "");
+  static_assert(::sus::mem::relocate_by_memcpy<T>, "");
 
   auto i = []() constexpr {
     T i(2);
@@ -58,7 +58,7 @@ TEST(Replace, ConstexprTrivialAbi) {
   // This means `S` is only "trivially relocatable" if achieved through
   // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(::sus::mem::relocate_one_by_memcpy<S> ==
+  static_assert(::sus::mem::relocate_by_memcpy<S> ==
                     __has_extension(trivially_relocatable),
                 "");
 
@@ -89,7 +89,7 @@ TEST(Replace, ConstexprNonTrivial) {
     int num;
     int assigns = 0;
   };
-  static_assert(!::sus::mem::relocate_one_by_memcpy<S>, "");
+  static_assert(!::sus::mem::relocate_by_memcpy<S>, "");
 
   auto i = []() constexpr {
     S i(2);
@@ -109,7 +109,7 @@ TEST(Replace, ConstexprNonTrivial) {
 
 TEST(Replace, TrivialRelocate) {
   using T = int;
-  static_assert(::sus::mem::relocate_one_by_memcpy<T>, "");
+  static_assert(::sus::mem::relocate_by_memcpy<T>, "");
 
   T i(2);
   T j(::sus::mem::replace(mref(i), T(5)));
@@ -148,7 +148,7 @@ TEST(Replace, TrivialAbi) {
   // This means `S` is only "trivially relocatable" if achieved through
   // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(::sus::mem::relocate_one_by_memcpy<S> ==
+  static_assert(::sus::mem::relocate_by_memcpy<S> ==
                     __has_extension(trivially_relocatable),
                 "");
 
@@ -219,7 +219,7 @@ TEST(Replace, NonTrivial) {
     int num;
     int assigns = 0;
   };
-  static_assert(!::sus::mem::relocate_one_by_memcpy<S>, "");
+  static_assert(!::sus::mem::relocate_by_memcpy<S>, "");
 
   S i(2);
   S j(::sus::mem::replace(mref(i), S(5)));

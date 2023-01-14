@@ -63,7 +63,7 @@ template <::sus::mem::Move IteratorSubclass, int&...,
 inline BoxedIteratorType make_boxed_iterator(IteratorSubclass&& subclass)
   requires(::sus::convert::SameOrSubclassOf<IteratorSubclass*,
                                             IteratorBase<SubclassItem>*> &&
-           !::sus::mem::relocate_one_by_memcpy<IteratorSubclass>)
+           !::sus::mem::relocate_by_memcpy<IteratorSubclass>)
 {
   return BoxedIteratorType(*new IteratorSubclass(::sus::move(subclass)),
                            [](IteratorBase<SubclassItem>& iter) {

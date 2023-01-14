@@ -26,8 +26,7 @@
 #include "subspace/prelude.h"
 
 using ::sus::containers::Array;
-using ::sus::mem::relocate_array_by_memcpy;
-using ::sus::mem::relocate_one_by_memcpy;
+using ::sus::mem::relocate_by_memcpy;
 
 namespace {
 
@@ -59,8 +58,7 @@ static_assert(!std::is_assignable_v<Array<T, 2>, const T&>);
 static_assert(!std::is_constructible_v<Array<T, 2>, T>);
 static_assert(!std::is_assignable_v<Array<T, 2>, T>);
 static_assert(std::is_nothrow_destructible_v<Array<T, 2>>);
-static_assert(relocate_one_by_memcpy<Array<T, 2>>);
-static_assert(relocate_array_by_memcpy<Array<T, 2>>);
+static_assert(relocate_by_memcpy<Array<T, 2>>);
 }  // namespace trivially_relocatable
 
 struct NonAggregate {

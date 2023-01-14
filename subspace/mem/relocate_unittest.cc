@@ -19,48 +19,40 @@
 
 namespace {
 
-using sus::mem::relocate_array_by_memcpy;
-using sus::mem::relocate_one_by_memcpy;
+using sus::mem::relocate_by_memcpy;
 
-static_assert(relocate_one_by_memcpy<int>);
-static_assert(relocate_array_by_memcpy<int>);
-static_assert(relocate_one_by_memcpy<char>);
-static_assert(relocate_array_by_memcpy<char>);
+static_assert(relocate_by_memcpy<int>);
+static_assert(relocate_by_memcpy<char>);
 
 struct A {
   i32 i;
 };
-static_assert(relocate_one_by_memcpy<A>);
-static_assert(relocate_array_by_memcpy<A>);
+static_assert(relocate_by_memcpy<A>);
 
-// TODO: why it it false here? will it stay false when we can use
-// __is_trivially_relocatable()?
-static_assert(!relocate_one_by_memcpy<volatile A>);
-static_assert(!relocate_array_by_memcpy<volatile A>);
+// Volatile types are not trivially relocatable:
+// https://quuxplusone.github.io/blog/2018/07/13/trivially-copyable-corner-cases/
+static_assert(!relocate_by_memcpy<volatile A>);
 
 struct B {
   B(B&&) = default;
   ~B() = default;
   i32 i;
 };
-static_assert(relocate_one_by_memcpy<B>);
-static_assert(relocate_array_by_memcpy<B>);
+static_assert(relocate_by_memcpy<B>);
 
 struct C {
   C(C&&) = default;
   ~C() {}
   i32 i;
 };
-static_assert(!relocate_one_by_memcpy<C>);
-static_assert(!relocate_array_by_memcpy<C>);
+static_assert(!relocate_by_memcpy<C>);
 
 struct D {
   D(D&&) {}
   ~D() = default;
   i32 i;
 };
-static_assert(!relocate_one_by_memcpy<D>);
-static_assert(!relocate_array_by_memcpy<D>);
+static_assert(!relocate_by_memcpy<D>);
 
 struct [[sus_trivial_abi]] T {
   T(T&&) {}
@@ -68,11 +60,9 @@ struct [[sus_trivial_abi]] T {
   i32 i;
 };
 #if __has_extension(trivially_relocatable)
-static_assert(relocate_one_by_memcpy<T>);
-static_assert(relocate_array_by_memcpy<T>);
+static_assert(relocate_by_memcpy<T>);
 #else
-static_assert(!relocate_one_by_memcpy<T>);
-static_assert(!relocate_array_by_memcpy<T>);
+static_assert(!relocate_by_memcpy<T>);
 #endif
 
 struct [[sus_trivial_abi]] G {
@@ -81,8 +71,7 @@ struct [[sus_trivial_abi]] G {
   ~G() {}
   i32 i;
 };
-static_assert(relocate_one_by_memcpy<G>);
-static_assert(relocate_array_by_memcpy<G>);
+static_assert(relocate_by_memcpy<G>);
 
 struct [[sus_trivial_abi]] H {
   sus_class_trivial_relocatable_value(unsafe_fn, false);
@@ -90,13 +79,12 @@ struct [[sus_trivial_abi]] H {
   ~H() {}
   i32 i;
 };
-static_assert(!relocate_one_by_memcpy<H>);
-static_assert(!relocate_array_by_memcpy<H>);
+static_assert(!relocate_by_memcpy<H>);
 
 // A mixture of explicit relocatable tag and trivial move + destroy.
-static_assert(relocate_one_by_memcpy<G, int>);
-static_assert(relocate_one_by_memcpy<int, G>);
-static_assert(relocate_one_by_memcpy<int, G, int>);
+static_assert(relocate_by_memcpy<G, int>);
+static_assert(relocate_by_memcpy<int, G>);
+static_assert(relocate_by_memcpy<int, G, int>);
 
 union U {
   i32 i;
@@ -106,7 +94,6 @@ union U {
 // A union has unknown types with padding inside, so can't be considered
 // trivially relocatable without knowing more. The author would need to verify
 // all fields are trivially relocatable *and have the same data-size*.
-static_assert(!relocate_one_by_memcpy<U>);
-static_assert(!relocate_array_by_memcpy<U>);
+static_assert(!relocate_by_memcpy<U>);
 
 }  // namespace

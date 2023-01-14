@@ -138,7 +138,7 @@ class [[nodiscard]] Iterator final : public I {
   Iterator<
       BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
   box() && noexcept
-    requires(!::sus::mem::relocate_one_by_memcpy<I>);
+    requires(!::sus::mem::relocate_by_memcpy<I>);
 
   /// Tests whether all elements of the iterator match a predicate.
   ///
@@ -182,7 +182,7 @@ class [[nodiscard]] Iterator final : public I {
   Iterator<Filter<Item, ::sus::mem::size_of<I>(), alignof(I)>> filter(
       ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
           pred) && noexcept
-    requires(::sus::mem::relocate_one_by_memcpy<I>);
+    requires(::sus::mem::relocate_by_memcpy<I>);
 
   /// Transforms an iterator into a collection.
   ///
@@ -257,7 +257,7 @@ template <class I>
 template <class I>
 Iterator<BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
 Iterator<I>::box() && noexcept
-  requires(!::sus::mem::relocate_one_by_memcpy<I>)
+  requires(!::sus::mem::relocate_by_memcpy<I>)
 {
   return make_boxed_iterator(::sus::move(*this));
 }
@@ -267,7 +267,7 @@ Iterator<Filter<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
 Iterator<I>::filter(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
         pred) && noexcept
-  requires(::sus::mem::relocate_one_by_memcpy<I>)
+  requires(::sus::mem::relocate_by_memcpy<I>)
 {
   // TODO: make_sized_iterator immediately copies `this` to either the body of
   // the output iterator or to a heap allocation (if it can't be trivially

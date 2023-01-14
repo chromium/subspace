@@ -92,9 +92,9 @@ static_assert(std::is_move_constructible_v<Fn<void()>>);
 static_assert(std::is_move_assignable_v<Fn<void()>>);
 
 // Closures are trivially relocatable.
-static_assert(sus::mem::relocate_one_by_memcpy<FnOnce<void()>>);
-static_assert(sus::mem::relocate_one_by_memcpy<FnMut<void()>>);
-static_assert(sus::mem::relocate_one_by_memcpy<Fn<void()>>);
+static_assert(sus::mem::relocate_by_memcpy<FnOnce<void()>>);
+static_assert(sus::mem::relocate_by_memcpy<FnMut<void()>>);
+static_assert(sus::mem::relocate_by_memcpy<Fn<void()>>);
 
 // A function pointer, or convertible lambda, can be bound to FnOnce, FnMut and Fn.
 static_assert(std::is_constructible_v<FnOnce<void()>, decltype([](){})>);
