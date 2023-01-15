@@ -471,8 +471,8 @@ TEST(Vec, Destroy) {
   static auto destructs = 0_usize;
   auto o = sus::Option<Vec<TrivialLies<false>>>::none();
   o.insert(Vec<TrivialLies<false>>::with_capacity(1_usize));
-  o.unwrap_mut().push(TrivialLies<false>(moves, destructs));
-  o.unwrap_mut().push(TrivialLies<false>(moves, destructs));
+  o->push(TrivialLies<false>(moves, destructs));
+  o->push(TrivialLies<false>(moves, destructs));
 
   moves = destructs = 0_usize;
   o.take();  // Destroys the Vec, and both objects inside it.

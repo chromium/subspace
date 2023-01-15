@@ -160,7 +160,7 @@ class Option final {
       Option<U> next() noexcept final {
         Option<Option<U>> item = iter.next();
         if (found_none || item.is_none()) return Option<U>::none();
-        found_none = item.unwrap_ref().is_none();
+        found_none = item->is_none();
         return ::sus::move(item).flatten();
       }
 
@@ -335,34 +335,6 @@ class Option final {
     return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
-  /// Returns a const reference to the contained value inside the Option.
-  ///
-  /// This is a shortcut for `option.as_ref().expect()`.
-  ///
-  /// The function will panic with the given message if the Option's state is
-  /// currently `None`.
-  constexpr sus_nonnull_fn const std::remove_reference_t<T>& expect_ref(
-      /* TODO: string view type */ sus_nonnull_arg const char* msg)
-      const& noexcept {
-    if (!std::is_constant_evaluated())
-      ::sus::check_with_message(t_.state() == Some, *msg);
-    return t_.val_;
-  }
-  const T& expect_ref() && noexcept = delete;
-
-  /// Returns a mutable reference to the contained value inside the Option.
-  ///
-  /// This is a shortcut for `option.as_mut().expect()`.
-  ///
-  /// The function will panic with the given message if the Option's state is
-  /// currently `None`.
-  constexpr sus_nonnull_fn T& expect_mut(
-      /* TODO: string view type */ sus_nonnull_arg const char* msg) & noexcept {
-    if (!std::is_constant_evaluated())
-      ::sus::check_with_message(t_.state() == Some, *msg);
-    return t_.val_;
-  }
-
   /// Returns the contained value inside the Option.
   ///
   /// The function will panic without a message if the Option's state is
@@ -385,27 +357,74 @@ class Option final {
     return t_.take_and_set_none();
   }
 
-  /// Returns a const reference to the contained value inside the Option.
+  /// Returns a reference to the contained value inside the Option.
   ///
-  /// This is a shortcut for `option.as_ref().unwrap()`.
+  /// The reference is const if the Option is const, and is mutable otherwise.
+  /// This method allows calling methods directly on the type inside the Option
+  /// without unwrapping.
+  ///
+  /// # Panic
   ///
   /// The function will panic without a message if the Option's state is
   /// currently `None`.
-  constexpr const std::remove_reference_t<T>& unwrap_ref() const& noexcept {
+  ///
+  /// # Implementation Notes
+  //
+  /// Implementation note: We don't allow calling this method on rvalue types,
+  /// it would allow a reference to the inner object to escape from an rvalue in
+  /// an unbounded way. When passing an rvalue as a function argument,
+  /// `Option::unwrap()` does the right thing already and will convert to a
+  /// reference implicitly.
+  ///
+  /// Implementation note: This method is added in addition to the Rust Option
+  /// API because:
+  /// * C++ moving is verbose, making unwrap() on lvalues loud.
+  /// * Unwrapping requires a new lvalue name since C++ doesn't allow name
+  ///   reuse, making variable names bad.
+  /// * It's expected due to std::optional and general container-of-one things
+  ///   to provide access through operator* and operator->.
+  constexpr const std::remove_reference_t<T>& operator*() const& noexcept {
     if (!std::is_constant_evaluated()) ::sus::check(t_.state() == Some);
-    return t_.val_;
+    return static_cast<const std::remove_reference_t<T>&>(t_.val_);
   }
-  const std::remove_reference_t<T>& unwrap_ref() && noexcept = delete;
+  const std::remove_reference_t<T>* operator*() && noexcept = delete;
+  constexpr std::remove_reference_t<T>& operator*() & noexcept {
+    if (!std::is_constant_evaluated()) ::sus::check(t_.state() == Some);
+    return static_cast<std::remove_reference_t<T>&>(t_.val_);
+  }
 
-  /// Returns a mutable reference to the contained value inside the Option.
+  /// Returns a pointer to the contained value inside the Option.
   ///
-  /// This is a shortcut for `option.as_mut().unwrap()`.
+  /// The pointer is const if the Option is const, and is mutable otherwise.
+  /// This method allows calling methods directly on the type inside the Option
+  /// without unwrapping.
+  ///
+  /// # Panic
   ///
   /// The function will panic without a message if the Option's state is
   /// currently `None`.
-  constexpr T& unwrap_mut() & noexcept {
+  ///
+  /// # Implementation Notes
+  ///
+  /// Implementation note: We don't allow calling this method on rvalue types,
+  /// it would allow a pointer to the inner object to escape from an rvalue.
+  /// When using an rvalue, `Option::unwrap()` does the right thing already and
+  /// will give access to the fields and methods of the inner type.
+  ///
+  /// Implementation note: This method is added in addition to the Rust Option
+  /// API because:
+  /// * C++ moving is verbose, making unwrap() on lvalues loud.
+  /// * Unwrapping requires a new lvalue name since C++ doesn't allow name
+  ///   reuse, making variable names bad.
+  /// * It's expected due to std::optional and general container-of-one things
+  ///   to provide access through operator* and operator->.
+  constexpr const std::remove_reference_t<T>* operator->() const noexcept {
+    return ::sus::mem::addressof(**this);
+  }
+  constexpr std::remove_reference_t<T>* operator->() noexcept {
     if (!std::is_constant_evaluated()) ::sus::check(t_.state() == Some);
-    return t_.val_;
+    return ::sus::mem::addressof(
+        static_cast<std::remove_reference_t<T>&>(t_.val_));
   }
 
   /// Returns the contained value inside the Option, if there is one. Otherwise,
@@ -812,16 +831,32 @@ class Option final {
 
   /// Returns an Option<const T&> from this Option<T>, that either holds #None
   /// or a reference to the value in this Option.
+  ///
+  /// When not holding a `sus::mem::NeverValueField` type, the method can be
+  /// evaluated in a constant expression.
+  //
+  // Not constexpr as it needs to read the state of the value which can't be
+  // done if `T` is `NeverValueField`.
   Option<const std::remove_reference_t<T>&> as_ref() const& noexcept {
     if (t_.state() == None)
       return Option<const std::remove_reference_t<T>&>::none();
     else
       return Option<const std::remove_reference_t<T>&>(t_.val_);
   }
-  Option<const std::remove_reference_t<T>&> as_ref() && noexcept = delete;
+  // Calling as_ref() on an rvalue is not returning a reference to the inner
+  // value if the inner value is already a reference, so we allow calling it on
+  // an rvalue Option in that case.
+  Option<const std::remove_reference_t<T>&> as_ref() && noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return as_ref();
+  }
 
   /// Returns an Option<T&> from this Option<T>, that either holds #None or a
   /// reference to the value in this Option.
+  //
+  // Not constexpr as it needs to read the state of the value which can't be
+  // done if `T` is `NeverValueField`.
   Option<T&> as_mut() & noexcept {
     if (t_.state() == None)
       return Option<T&>::none();
@@ -884,7 +919,7 @@ class Option final {
   StorageType<T> t_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                            StorageType<T>);
+                                           StorageType<T>);
 };
 
 /// sus::ops::Eq<Option<U>> trait.
@@ -893,7 +928,10 @@ template <class T, class U>
 constexpr inline bool operator==(const Option<T>& l,
                                  const Option<U>& r) noexcept {
   switch (l) {
-    case Some: return r.is_some() && l.unwrap_ref() == r.unwrap_ref();
+    case Some:
+      return r.is_some() &&
+             (l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) ==
+              r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn));
     case None: return r.is_none();
   }
   ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
@@ -911,10 +949,12 @@ constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept {
   switch (l) {
     case Some:
-      if (r.is_some())
-        return l.unwrap_ref() <=> r.unwrap_ref();
-      else
+      if (r.is_some()) {
+        return l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) <=>
+               r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn);
+      } else {
         return std::strong_ordering::greater;
+      }
     case None:
       if (r.is_some())
         return std::strong_ordering::less;
@@ -931,10 +971,12 @@ constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept {
   switch (l) {
     case Some:
-      if (r.is_some())
-        return l.unwrap_ref() <=> r.unwrap_ref();
-      else
+      if (r.is_some()) {
+        return l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) <=>
+               r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn);
+      } else {
         return std::weak_ordering::greater;
+      }
     case None:
       if (r.is_some())
         return std::weak_ordering::less;
@@ -951,10 +993,12 @@ constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept {
   switch (l) {
     case Some:
-      if (r.is_some())
-        return l.unwrap_ref() <=> r.unwrap_ref();
-      else
+      if (r.is_some()) {
+        return l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) <=>
+               r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn);
+      } else {
         return std::partial_ordering::greater;
+      }
     case None:
       if (r.is_some())
         return std::partial_ordering::less;
