@@ -71,7 +71,6 @@ target_sources(subspace PUBLIC
     "macros/remove_parens.h"
     "marker/unsafe.h"
     "mem/__private/data_size_finder.h"
-    "mem/__private/relocatable_storage.h"
     "mem/addressof.h"
     "mem/clone.h"
     "mem/copy.h"
