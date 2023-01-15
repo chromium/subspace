@@ -58,7 +58,7 @@ class ArrayIterator : public IteratorBase<Item> {
   size_t index_ = static_cast<size_t>(-1);
   Array<Option<Item>, N> items_;
 
-  sus_class_maybe_trivial_relocatable_types(unsafe_fn, decltype(index_),
+  sus_class_trivially_relocatable_if_types(unsafe_fn, decltype(index_),
                                             decltype(items_));
 };
 

@@ -57,7 +57,7 @@ class Filter : public IteratorBase<Item> {
   // pushing the inner Iterator onto the heap if needed. Likewise, the
   // predicate is known to be trivially relocatable because the FnMut will
   // either be a function pointer or a heap allocation itself.
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(pred_),
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(pred_),
                                              decltype(next_iter_));
 };
 

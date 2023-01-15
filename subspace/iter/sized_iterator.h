@@ -45,12 +45,8 @@ struct [[sus_trivial_abi]] SizedIterator final {
   alignas(SubclassAlign) char sized[SubclassSize];
   void (*destroy)(char& sized);
 
-  // clang-format off
-  sus_class_trivial_relocatable_value(
-      ::sus::marker::unsafe_fn,
-      ::sus::mem::relocate_by_memcpy<decltype(sized)> &&
-      ::sus::mem::relocate_by_memcpy<decltype(destroy)>);
-  // clang-format on
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(sized), decltype(destroy));
 };
 
 /// Make a SizedIterator.

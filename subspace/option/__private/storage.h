@@ -123,7 +123,7 @@ struct Storage<T, false> final {
     val_.~T();
   }
 
-  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                             decltype(val_));
 };
 
@@ -238,7 +238,7 @@ struct Storage<T, true> final {
                                                        overlay_);
   }
 
-  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                             decltype(val_));
 };
 
@@ -257,7 +257,7 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
   T* ptr_;
 
   // Pointers are trivially relocatable.
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn,
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
                                              decltype(ptr_));
   // The pointer is never set to null.
   sus_class_never_value_field(::sus::marker::unsafe_fn, StoragePointer, ptr_,

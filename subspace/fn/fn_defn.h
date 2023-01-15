@@ -240,7 +240,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   __private::FnType type_;
 
  private:
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn, decltype(fn_ptr_),
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(fn_ptr_),
                                              decltype(storage_),
                                              decltype(type_));
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnOnce, type_,
@@ -370,7 +370,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
       : FnOnce<R(CallArgs...)>(c, ::sus::move(lambda)) {}
 
  private:
-  sus_class_trivial_relocatable(::sus::marker::unsafe_fn);
+  sus_class_trivially_relocatable_unchecked(::sus::marker::unsafe_fn);
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
@@ -494,7 +494,7 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
   Fn(__private::StorageConstructionFnType, F&& fn) noexcept;
 
  private:
-  sus_class_trivial_relocatable(::sus::marker::unsafe_fn);
+  sus_class_trivially_relocatable_unchecked(::sus::marker::unsafe_fn);
 };
 
 }  // namespace sus::fn

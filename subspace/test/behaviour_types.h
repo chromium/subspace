@@ -83,7 +83,7 @@ struct NotTriviallyRelocatableCopyableOrMoveable final {
 };
 
 struct [[sus_trivial_abi]] TrivialAbiRelocatable final {
-  sus_class_trivial_relocatable(::sus::marker::unsafe_fn);
+  sus_class_trivially_relocatable_unchecked(::sus::marker::unsafe_fn);
   TrivialAbiRelocatable(TrivialAbiRelocatable&&) noexcept = default;
   TrivialAbiRelocatable& operator=(TrivialAbiRelocatable&&) noexcept = default;
   ~TrivialAbiRelocatable() {}

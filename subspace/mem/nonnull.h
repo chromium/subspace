@@ -159,7 +159,7 @@ struct [[sus_trivial_abi]] NonNull {
 
   // Declare that this type can always be trivially relocated for library
   // optimizations.
-  sus_class_trivial_relocatable(::sus::marker::unsafe_fn);
+  sus_class_trivially_relocatable_unchecked(::sus::marker::unsafe_fn);
   // Declare that the `ptr_` field is never set to `nullptr` for library
   // optimizations.
   sus_class_never_value_field(::sus::marker::unsafe_fn, NonNull, ptr_, nullptr);

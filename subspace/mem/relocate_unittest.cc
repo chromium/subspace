@@ -87,7 +87,7 @@ static_assert(!relocate_by_memcpy<F>);
 #endif
 
 struct [[sus_trivial_abi]] G {
-  sus_class_trivial_relocatable_value(unsafe_fn, true);
+  sus_class_trivially_relocatable_if(unsafe_fn, true);
   G(G&&) {}
   ~G() {}
   i32 i;
@@ -95,7 +95,7 @@ struct [[sus_trivial_abi]] G {
 static_assert(relocate_by_memcpy<G>);
 
 struct [[sus_trivial_abi]] H {
-  sus_class_trivial_relocatable_value(unsafe_fn, false);
+  sus_class_trivially_relocatable_if(unsafe_fn, false);
   H(H&&) {}
   ~H() {}
   i32 i;

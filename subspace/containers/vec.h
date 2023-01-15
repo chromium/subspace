@@ -58,8 +58,7 @@ class Vec {
 
  public:
   // sus::construct::Default trait.
-  inline constexpr Vec() noexcept
-      : Vec(kDefault) {}
+  inline constexpr Vec() noexcept : Vec(kDefault) {}
 
   static inline Vec with_capacity(usize cap) noexcept {
     return Vec(kWithCap, cap);
@@ -156,11 +155,12 @@ class Vec {
     grow_to_exact(apply_growth_function(additional));
   }
 
-  /// Reserves the minimum capacity for at least `additional` more elements to be
-  /// inserted in the given Vec<T>. Unlike reserve, this will not deliberately
-  /// over-allocate to speculatively avoid frequent allocations. After calling
-  /// reserve_exact, capacity will be greater than or equal to self.len() +
-  /// additional. Does nothing if the capacity is already sufficient.
+  /// Reserves the minimum capacity for at least `additional` more elements to
+  /// be inserted in the given Vec<T>. Unlike reserve, this will not
+  /// deliberately over-allocate to speculatively avoid frequent allocations.
+  /// After calling reserve_exact, capacity will be greater than or equal to
+  /// self.len() + additional. Does nothing if the capacity is already
+  /// sufficient.
   ///
   /// Note that the allocator may give the collection more space than it
   /// requests. Therefore, capacity can not be relied upon to be precisely
@@ -409,8 +409,9 @@ class Vec {
   usize capacity_;
 
   sus_class_never_value_field(::sus::marker::unsafe_fn, Vec, storage_, nullptr);
-  sus_class_trivial_relocatable_value(::sus::marker::unsafe_fn,
-                                      sus::mem::relocate_by_memcpy<T>);
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T,
+                                           decltype(storage_), decltype(len_),
+                                           decltype(capacity_));
 };
 
 /// Used to construct a Vec<T> with the parameters as its values.
