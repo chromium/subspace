@@ -335,9 +335,9 @@ class Array final {
     ::sus::containers::__private::Storage<T, N> storage_;
   };
 
-  sus_class_trivial_relocatable_value(
-      ::sus::marker::unsafe_fn,
-      N == 0 || ::sus::mem::relocate_by_memcpy<T>);
+  sus_class_trivial_relocatable_value(::sus::marker::unsafe_fn,
+                                      (N == 0 ||
+                                       ::sus::mem::relocate_by_memcpy<T>));
 };
 
 namespace __private {
