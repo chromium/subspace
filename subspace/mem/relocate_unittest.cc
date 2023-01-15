@@ -33,36 +33,57 @@ static_assert(relocate_by_memcpy<A>);
 // https://quuxplusone.github.io/blog/2018/07/13/trivially-copyable-corner-cases/
 static_assert(!relocate_by_memcpy<volatile A>);
 
+// User defined default move operations and destructor for a trivially
+// relocatable field means the outer type is also trivially relocatable.
 struct B {
   B(B&&) = default;
+  B& operator=(B&&) = default;
   ~B() = default;
   i32 i;
 };
 static_assert(relocate_by_memcpy<B>);
 
+// A non-default assignment operator means the type needs to opt into being
+// trivially relocatable, as it needs to be trivially relocatable for
+// construction and assignment.
 struct C {
   C(C&&) = default;
-  ~C() {}
+  C& operator=(C&&) { return *this; }
+  ~C() = default;
   i32 i;
 };
 static_assert(!relocate_by_memcpy<C>);
 
+// A non-default constructor means the type needs to opt into being trivially
+// relocatable, as it needs to be trivially relocatable for construction and
+// assignment.
 struct D {
   D(D&&) {}
+  D& operator=(D&&) = default;
   ~D() = default;
   i32 i;
 };
 static_assert(!relocate_by_memcpy<D>);
 
-struct [[sus_trivial_abi]] T {
-  T(T&&) {}
-  ~T() {}
+// A non-default destructor means the type needs to opt into being trivially
+// relocatable.
+struct E {
+  E(E&&) = default;
+  E& operator=(E&&) = default;
+  ~E() {}
   i32 i;
 };
-#if __has_extension(trivially_relocatable)
-static_assert(relocate_by_memcpy<T>);
+static_assert(!relocate_by_memcpy<E>);
+
+struct [[sus_trivial_abi]] F {
+  F(F&&) {}
+  ~F() {}
+  i32 i;
+};
+#if defined(__clang__) && __has_extension(trivially_relocatable)
+static_assert(relocate_by_memcpy<F>);
 #else
-static_assert(!relocate_by_memcpy<T>);
+static_assert(!relocate_by_memcpy<F>);
 #endif
 
 struct [[sus_trivial_abi]] G {
