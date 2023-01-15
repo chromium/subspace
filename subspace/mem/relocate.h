@@ -26,6 +26,11 @@ namespace sus::mem {
 
 namespace __private {
 
+/// Detects the presence and value of the static const member
+/// `T::SusUnsafeTrivialRelocate`.
+///
+/// The static member is created by `sus_class_trivially_relocatable()` and
+/// similar macros.
 template <class T>
 struct relocatable_tag final {
   static constexpr bool value(...) { return false; }
@@ -38,6 +43,8 @@ struct relocatable_tag final {
     return T::SusUnsafeTrivialRelocate;
   };
 };
+
+}  // namespace __private
 
 /// Tests if the type T can be relocated with memcpy(). Checking for trivially
 /// movable and destructible is not sufficient - this also honors the
@@ -62,29 +69,21 @@ struct relocatable_tag final {
 //
 // clang-format off
 template <class... T>
-struct relocate_by_memcpy_helper final
-    : public std::integral_constant<
-        bool,
-        (... &&
-         (!std::is_volatile_v<std::remove_all_extents_t<T>>
-          && sus::mem::data_size_of<std::remove_all_extents_t<T>>()
-          && (relocatable_tag<std::remove_all_extents_t<T>>::value(0)
-              || (std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>> &&
-                  std::is_trivially_move_assignable_v<std::remove_all_extents_t<T>> &&
-                  std::is_trivially_destructible_v<std::remove_all_extents_t<T>>)
-#if __has_extension(trivially_relocatable)
-              || __is_trivially_relocatable(std::remove_all_extents_t<T>)
-#endif
-             )
-         )
+concept relocate_by_memcpy =
+  (... &&
+    (!std::is_volatile_v<std::remove_all_extents_t<T>>
+    && sus::mem::data_size_of<std::remove_all_extents_t<T>>() != 0u
+    && (__private::relocatable_tag<std::remove_all_extents_t<T>>::value(0)
+        || (std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>> &&
+            std::is_trivially_move_assignable_v<std::remove_all_extents_t<T>> &&
+            std::is_trivially_destructible_v<std::remove_all_extents_t<T>>)
+  #if __has_extension(trivially_relocatable)
+        || __is_trivially_relocatable(std::remove_all_extents_t<T>)
+  #endif
         )
-      > {};
+    )
+  );
 // clang-format on
-
-}  // namespace __private
-
-template <class... T>
-concept relocate_by_memcpy = __private::relocate_by_memcpy_helper<T...>::value;
 
 }  // namespace sus::mem
 
