@@ -192,12 +192,24 @@ struct Storage<T, true> final {
   static_assert(std::is_standard_layout_v<Overlay>);
   static_assert(std::is_standard_layout_v<T>);
 
-  // Not constexpr because in a constant-evalation context, the compiler will
-  // produce an error if the Option is #Some, since we're reading the union's
-  // inactive field in that case. When using the never-value field optimization,
-  // it's not possible to query the state of the Option, without already knowing
-  // the correct state and thus the correct union field to read, given the
-  // current limitations of constexpr in C++20.
+  // Not constexpr because in a constant expression we can't read from the
+  // common initial sequence of an inactive field. That means we have to know
+  // what's in the union before we can read from it.
+  //
+  // From https://en.cppreference.com/w/cpp/language/constant_expression:
+  // A core constant expression is any expression whose evaluation would not
+  // evaluate any one of the following:
+  // ...
+  // - an lvalue-to-rvalue implicit conversion or modification applied to a
+  // non-active member of a union or its subobject (even if it shares a common
+  // initial sequence with the active member)
+  // ...
+  //
+  // Reading the value out of the union necessarily requires an lvalue-to-rvalue
+  // conversion, so we can't do it.
+  //
+  // Hopefully this improves and we can read from it in the future, but not in
+  // C++20.
   [[nodiscard]] inline State state() const noexcept {
     return ::sus::mem::never_value_access<T>::is_constructed(
                ::sus::marker::unsafe_fn, overlay_)

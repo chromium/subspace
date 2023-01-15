@@ -198,15 +198,15 @@ TEST(Option, SomeNoneHelpers) {
   auto i = NoCopyMove();
   auto c = Option<NoCopyMove&>::some(i);
   Option<NoCopyMove&> c2 = sus::some(i);
-  EXPECT_EQ(&c.unwrap_ref(), &c2.unwrap_ref());
+  EXPECT_EQ(&c.as_ref().unwrap(), &c2.as_ref().unwrap());
 
   const auto ci = NoCopyMove();
   const auto cc = Option<const NoCopyMove&>::some(ci);
   Option<const NoCopyMove&> cc2 = sus::some(ci);
-  EXPECT_EQ(&cc.unwrap_ref(), &cc2.unwrap_ref());
+  EXPECT_EQ(&cc.as_ref().unwrap(), &cc2.as_ref().unwrap());
 
   Option<const NoCopyMove&> mut_to_const = sus::some(i);
-  EXPECT_EQ(&i, &mut_to_const.unwrap_ref());
+  EXPECT_EQ(&i, &mut_to_const.as_ref().unwrap());
 
   // Verify no copies happen in the marker.
   {
@@ -1069,11 +1069,11 @@ TEST(Option, Insert) {
 
   auto ix = Option<NoCopyMove&>::none();
   ix.insert(mref(i2));
-  EXPECT_EQ(&ix.unwrap_ref(), &i2);
+  EXPECT_EQ(&ix.as_ref().unwrap(), &i2);
 
   auto iy = Option<NoCopyMove&>::some(mref(i2));
   iy.insert(mref(i3));
-  EXPECT_EQ(&iy.unwrap_ref(), &i3);
+  EXPECT_EQ(&iy.as_ref().unwrap(), &i3);
 }
 
 TEST(Option, GetOrInsert) {
@@ -1202,54 +1202,65 @@ TEST(Option, AsRef) {
   // static_assert(icx.as_ref().unwrap() == 2);
 }
 
-TEST(Option, UnwrapRefSome) {
+TEST(Option, OperatorStarSome) {
+  const auto cx = Option<int>::some(11);
   auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.unwrap_ref()), const int&>);
-  EXPECT_EQ(&x.unwrap_ref(), &x.as_ref().unwrap());
+  static_assert(std::is_same_v<decltype(*cx), const int&>);
+  static_assert(std::is_same_v<decltype(*x), int&>);
+  EXPECT_EQ(&*x, &x.as_ref().unwrap());
 
   auto i = NoCopyMove();
 
+  const auto cix = Option<NoCopyMove&>::some(mref(i));
   auto ix = Option<NoCopyMove&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.unwrap_ref()), const NoCopyMove&>);
-  EXPECT_EQ(&ix.unwrap_ref(), &ix.as_ref().unwrap());
+  static_assert(std::is_same_v<decltype(*cix), const NoCopyMove&>);
+  static_assert(std::is_same_v<decltype(*ix), NoCopyMove&>);
+  EXPECT_EQ(&*ix, &i);
 
   // Verify constexpr.
-  constexpr auto cx = Option<int>::some(3);
-  static_assert(cx.unwrap_ref() == 3);
+  constexpr auto cy = Option<int>::some(3);
+  static_assert(*cy == 3);
 }
 
-TEST(OptionDeathTest, UnwrapRefNone) {
+TEST(OptionDeathTest, OperatorStarNone) {
   auto n = Option<int>::none();
   auto in = Option<NoCopyMove&>::none();
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(n.unwrap_ref(), "");
-  EXPECT_DEATH(in.unwrap_ref(), "");
+  EXPECT_DEATH(*n, "");
+  EXPECT_DEATH(*in, "");
 #endif
 }
 
-TEST(Option, ExpectRefSome) {
+TEST(Option, OperatorArrowSome) {
+  const auto cx = Option<int>::some(11);
   auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.expect_ref("")), const int&>);
-  EXPECT_EQ(&x.expect_ref(""), &x.as_ref().unwrap());
+  static_assert(std::is_same_v<decltype(cx.operator->()), const int*>);
+  static_assert(std::is_same_v<decltype(x.operator->()), int*>);
+  EXPECT_EQ(x.operator->(), &x.as_ref().unwrap());
 
   auto i = NoCopyMove();
 
+  const auto cix = Option<NoCopyMove&>::some(mref(i));
   auto ix = Option<NoCopyMove&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.expect_ref("")), const NoCopyMove&>);
-  EXPECT_EQ(&ix.expect_ref(""), &ix.as_ref().unwrap());
+  static_assert(std::is_same_v<decltype(cix.operator->()), const NoCopyMove*>);
+  static_assert(std::is_same_v<decltype(ix.operator->()), NoCopyMove*>);
+  EXPECT_EQ(ix.operator->(), &ix.as_ref().unwrap());
 
   // Verify constexpr.
-  static_assert(Option<int>::some(3).expect_ref("") == 3);
+  struct WithInt {
+    i32 i;
+  };
+  static_assert(Option<WithInt>::some(WithInt{3})->i == 3);
   constexpr auto ci = NoCopyMove();
-  static_assert(&Option<const NoCopyMove&>::some(ci).expect_ref("") == &ci);
+  static_assert(Option<const NoCopyMove&>::some(ci).operator->() == &ci);
 }
 
-TEST(OptionDeathTest, ExpectRefNone) {
+TEST(OptionDeathTest, OperatorArrowNone) {
   auto n = Option<int>::none();
   auto in = Option<NoCopyMove&>::none();
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(n.expect_ref("hello world"), "hello world");
-  EXPECT_DEATH(in.expect_ref("hello world"), "hello world");
+  EXPECT_DEATH(n.operator->(), "");
+  EXPECT_DEATH(in.operator->(), "");
 #endif
 }
 
@@ -1269,48 +1280,6 @@ TEST(Option, AsMut) {
 
   auto in = Option<NoCopyMove&>::none();
   IS_NONE(in.as_mut());
-}
-
-TEST(Option, UnwrapMutSome) {
-  auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.unwrap_mut()), int&>);
-  EXPECT_EQ(&x.unwrap_mut(), &x.as_mut().unwrap());
-
-  auto i = NoCopyMove();
-
-  auto ix = Option<NoCopyMove&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.unwrap_mut()), NoCopyMove&>);
-  EXPECT_EQ(&ix.unwrap_mut(), &i);
-}
-
-TEST(OptionDeathTest, UnwrapMutNone) {
-  auto n = Option<int>::none();
-  auto in = Option<NoCopyMove&>::none();
-#if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(n.unwrap_mut(), "");
-  EXPECT_DEATH(in.unwrap_mut(), "");
-#endif
-}
-
-TEST(Option, ExpectMutSome) {
-  auto x = Option<int>::some(11);
-  static_assert(std::is_same_v<decltype(x.expect_mut("")), int&>);
-  EXPECT_EQ(&x.expect_mut(""), &x.as_mut().unwrap());
-
-  auto i = NoCopyMove();
-
-  auto ix = Option<NoCopyMove&>::some(mref(i));
-  static_assert(std::is_same_v<decltype(ix.expect_mut("")), NoCopyMove&>);
-  EXPECT_EQ(&ix.expect_mut(""), &i);
-}
-
-TEST(OptionDeathTest, ExpectMutNone) {
-  auto n = Option<int>::none();
-  auto in = Option<NoCopyMove&>::none();
-#if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(n.expect_mut("hello world"), "hello world");
-  EXPECT_DEATH(in.expect_mut("hello world"), "hello world");
-#endif
 }
 
 TEST(Option, TrivialMove) {
@@ -1673,9 +1642,9 @@ TEST(Option, PartialOrder) {
   EXPECT_EQ(
       std::partial_order(Option<float>::some(11.f), Option<float>::some(12.f)),
       std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Option<f32>::some(11.f),
-                               Option<f32>::some(f32::NAN)),
-            std::partial_ordering::unordered);
+  EXPECT_EQ(
+      std::partial_order(Option<f32>::some(11.f), Option<f32>::some(f32::NAN)),
+      std::partial_ordering::unordered);
   EXPECT_EQ(std::partial_order(Option<f32>::some(f32::NAN),
                                Option<f32>::some(f32::NAN)),
             std::partial_ordering::unordered);
@@ -1941,7 +1910,7 @@ TEST(Option, NonZeroField) {
   o = Option<T>::some(T::with(i));
   int j = 4;
   o.replace(T::with(j));
-  EXPECT_EQ(o.unwrap_ref().as_ptr(), &j);
+  EXPECT_EQ(o.as_ref().unwrap().as_ptr(), &j);
 }
 
 template <class T>
@@ -1965,7 +1934,7 @@ TEST(Option, FromIter) {
                       .into_iter()
                       .collect<Option<CollectSum<usize>>>();
   EXPECT_EQ(all_some, Some);
-  EXPECT_EQ(all_some.unwrap_ref().sum, 1u + 2u + 3u);
+  EXPECT_EQ(all_some.as_ref().unwrap().sum, 1u + 2u + 3u);
 
   auto one_none = sus::Array<Option<usize>, 3>::with_values(
                       Option<usize>::some(1u), Option<usize>::none(),
@@ -1999,9 +1968,9 @@ TEST(Option, FromIterWithRefs) {
                       .into_iter()
                       .collect<Option<CollectRefs>>();
   EXPECT_EQ(all_some, Some);
-  EXPECT_EQ(all_some.unwrap_ref().vec[0u], &u1);
-  EXPECT_EQ(all_some.unwrap_ref().vec[1u], &u2);
-  EXPECT_EQ(all_some.unwrap_ref().vec[2u], &u3);
+  EXPECT_EQ(all_some.as_ref().unwrap().vec[0u], &u1);
+  EXPECT_EQ(all_some.as_ref().unwrap().vec[1u], &u2);
+  EXPECT_EQ(all_some.as_ref().unwrap().vec[2u], &u3);
 
   auto one_none = sus::Array<Option<const NoCopyMove&>, 3>::with_values(
                       sus::some(u1), sus::none(), sus::some(u3))
@@ -2031,19 +2000,19 @@ TEST(Option, Clone) {
 
   {
     const auto s = Option<Copy>::some(Copy());
-    i32 i = s.unwrap_ref().i;
+    i32 i = s.as_ref().unwrap().i;
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Option<Copy>>);
-    EXPECT_EQ(s2.unwrap_ref().i, i + 1_i32);
+    EXPECT_EQ(s2.as_ref().unwrap().i, i + 1_i32);
   }
 
   {
     const auto s = Option<Copy>::some(Copy());
-    i32 i = s.unwrap_ref().i;
+    i32 i = s.as_ref().unwrap().i;
     auto s2 = Option<Copy>::some(Copy());
-    s2.unwrap_mut().i = 1000_i32;
+    s2.as_mut().unwrap().i = 1000_i32;
     sus::clone_into(mref(s2), s);
-    EXPECT_EQ(s2.unwrap_ref().i, i);
+    EXPECT_EQ(s2.as_ref().unwrap().i, i);
   }
 
   struct Clone {
@@ -2073,15 +2042,15 @@ TEST(Option, Clone) {
     const auto s = Option<Clone>::some(Clone());
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Option<Clone>>);
-    EXPECT_EQ(s2.unwrap_ref().i, 2_i32);
+    EXPECT_EQ(s2.as_ref().unwrap().i, 2_i32);
   }
 
   {
     const auto s = Option<Clone>::some(Clone());
     auto s2 = Option<Clone>::some(Clone());
-    s2.unwrap_mut().i = 1000_i32;
+    s2.as_mut().unwrap().i = 1000_i32;
     sus::clone_into(mref(s2), s);
-    EXPECT_EQ(s2.unwrap_ref().i, 2_i32);
+    EXPECT_EQ(s2.as_ref().unwrap().i, 2_i32);
   }
 
   {
@@ -2089,7 +2058,7 @@ TEST(Option, Clone) {
     const auto s = Option<const i32&>::some(i);
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Option<const i32&>>);
-    EXPECT_EQ(&s2.unwrap_ref(), &i);
+    EXPECT_EQ(&s2.as_ref().unwrap(), &i);
   }
 
   {
@@ -2097,7 +2066,7 @@ TEST(Option, Clone) {
     const auto s = Option<i32&>::some(mref(i));
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Option<i32&>>);
-    EXPECT_EQ(&s2.unwrap_ref(), &i);
+    EXPECT_EQ(&s2.as_ref().unwrap(), &i);
   }
 }
 

@@ -48,7 +48,7 @@ inline std::string to_string(const syntax::Function& fn,
   // TODO: args
   s << ") ";
   if (fn.return_var.is_some()) {
-    s << "-> " << cir::to_string(fn.return_var.unwrap_ref().type, output)
+    s << "-> " << cir::to_string(fn.return_var->type, output)
       << " ";
   }
   s << "{\n";
