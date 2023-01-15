@@ -883,7 +883,7 @@ class Option final {
                          Storage<U>>;
   StorageType<T> t_;
 
-  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                             StorageType<T>);
 };
 

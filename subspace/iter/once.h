@@ -62,7 +62,7 @@ class Once : public IteratorBase<Item> {
 
   Option<Item> single_;
 
-  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                             decltype(single_));
 };
 

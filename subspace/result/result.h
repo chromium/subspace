@@ -424,7 +424,7 @@ class [[nodiscard]] Result final {
   [[sus_no_unique_address]] __private::Storage<T, E> storage_;
   enum FullState { IsErr = 0, IsOk = 1, IsMoved = 2 } state_;
 
-  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn, T, E);
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T, E);
 };
 
 template <class T>

@@ -323,8 +323,8 @@ struct TrivialLies {
 
   // The move constructor and destructor mean this type is NOT trivially
   // relocatable.. but we can lie here to see that the move constuctor and
-  // destructor are elided when the type says it's triviall relocatable.
-  sus_class_trivial_relocatable_value(unsafe_fn, trivial);
+  // destructor are elided when the type says it's trivially relocatable.
+  sus_class_trivially_relocatable_if(unsafe_fn, trivial);
 };
 
 TEST(Vec, GrowthTriviallyRelocatable) {

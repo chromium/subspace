@@ -60,7 +60,7 @@ struct ArrayIntoIter : public ::sus::iter::IteratorBase<Item> {
   usize next_index_ = 0_usize;
   Array<Item, N> array_;
 
-  sus_class_maybe_trivial_relocatable_types(::sus::marker::unsafe_fn,
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                             decltype(next_index_),
                                             decltype(array_));
 };

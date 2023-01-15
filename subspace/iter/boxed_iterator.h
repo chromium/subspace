@@ -46,7 +46,7 @@ struct [[sus_trivial_abi]] BoxedIterator : public IteratorBase<Item> {
   IteratorBase<Item>* iter_;
   void (*destroy_)(IteratorBase<Item>& boxed);
 
-  sus_class_assert_trivial_relocatable_types(::sus::marker::unsafe_fn,
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
                                              decltype(iter_),
                                              decltype(destroy_));
 };
