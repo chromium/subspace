@@ -19,8 +19,8 @@
 #include <type_traits>
 
 #include "subspace/mem/addressof.h"
-#include "subspace/mem/mref.h"
 #include "subspace/mem/move.h"
+#include "subspace/mem/mref.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
 
@@ -29,19 +29,20 @@ namespace sus::mem {
 template <class T>
   requires(sus::mem::Move<T>)
 constexpr void swap(T& lhs, T& rhs) noexcept {
-  // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy =
-      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
-  if (can_memcpy) {
-    char temp[::sus::mem::data_size_of<T>()];
-    memcpy(temp, ::sus::mem::addressof(lhs), ::sus::mem::data_size_of<T>());
-    memcpy(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs), ::sus::mem::data_size_of<T>());
-    memcpy(::sus::mem::addressof(rhs), temp, ::sus::mem::data_size_of<T>());
-  } else {
-    T temp(::sus::move(lhs));
-    lhs = ::sus::move(rhs);
-    rhs = ::sus::move(temp);
+  if constexpr (::sus::mem::relocate_by_memcpy<T>) {
+    // memcpy() is not constexpr so we can't use it in constexpr evaluation.
+    if (!std::is_constant_evaluated()) {
+      char temp[::sus::mem::data_size_of<T>()];
+      memcpy(temp, ::sus::mem::addressof(lhs), ::sus::mem::data_size_of<T>());
+      memcpy(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs),
+             ::sus::mem::data_size_of<T>());
+      memcpy(::sus::mem::addressof(rhs), temp, ::sus::mem::data_size_of<T>());
+      return;
+    }
   }
+  T temp(::sus::move(lhs));
+  lhs = ::sus::move(rhs);
+  rhs = ::sus::move(temp);
 }
 
 }  // namespace sus::mem
