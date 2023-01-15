@@ -58,7 +58,7 @@ sus::Option<Output> run_file(
   tool.setDiagnosticConsumer(&*diags);
 
   auto adj = [](clang::tooling::CommandLineArguments args,
-                llvm::StringRef Filename) {
+                llvm::StringRef /*Filename*/) {
     // Clang-cl doesn't understand this argument, but it may appear in the
     // command-line for MSVC in C++20 codebases (like subspace).
     std::erase(args, "/Zc:preprocessor");
