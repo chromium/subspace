@@ -18,6 +18,7 @@
 #include <type_traits>
 
 #include "subspace/macros/builtin.h"
+#include "subspace/macros/compiler.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/size_of.h"
 
@@ -82,28 +83,17 @@ struct relocate_by_memcpy_helper final
 }  // namespace __private
 
 template <class... T>
-concept relocate_by_memcpy =
-    __private::relocate_by_memcpy_helper<T...>::value;
+concept relocate_by_memcpy = __private::relocate_by_memcpy_helper<T...>::value;
 
 }  // namespace sus::mem
 
-#if defined(__clang__)
 /// An attribute to allow a class to be passed in registers.
 ///
 /// This should only be used when the class is also marked as unconditionally
 /// relocatable with `sus_class_trivial_relocatable()`.
 ///
 /// This also enables trivial relocation in libc++ if compiled with clang.
-#define sus_trivial_abi clang::trivial_abi
-#else
-/// An attribute to allow a class to be passed in registers.
-///
-/// This should only be used when the class is also marked as unconditionally
-/// relocatable with `sus_class_trivial_relocatable()`.
-///
-/// This also enables trivial relocation in libc++ if compiled with clang.
-#define sus_trivial_abi
-#endif
+#define sus_trivial_abi sus_if_clang(clang::trivial_abi)
 
 /// Mark a class as trivially relocatable.
 ///
