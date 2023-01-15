@@ -70,6 +70,7 @@ struct relocate_by_memcpy_helper final
           && sus::mem::data_size_of<std::remove_all_extents_t<T>>()
           && (relocatable_tag<std::remove_all_extents_t<T>>::value(0)
               || (std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>> &&
+                  std::is_trivially_move_assignable_v<std::remove_all_extents_t<T>> &&
                   std::is_trivially_destructible_v<std::remove_all_extents_t<T>>)
 #if __has_extension(trivially_relocatable)
               || __is_trivially_relocatable(std::remove_all_extents_t<T>)
@@ -90,7 +91,8 @@ concept relocate_by_memcpy = __private::relocate_by_memcpy_helper<T...>::value;
 /// An attribute to allow a class to be passed in registers.
 ///
 /// This should only be used when the class is also marked as unconditionally
-/// relocatable with `sus_class_trivial_relocatable()`.
+/// relocatable with `sus_class_assert_trivial_relocatable_types()` or
+/// `sus_class_trivial_relocatable()`.
 ///
 /// This also enables trivial relocation in libc++ if compiled with clang.
 #define sus_trivial_abi sus_if_clang(clang::trivial_abi)
