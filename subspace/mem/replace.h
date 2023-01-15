@@ -38,7 +38,7 @@ template <class T>
 
   // memcpy() is not constexpr so we can't use it in constexpr evaluation.
   bool can_memcpy =
-      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
+      std::is_trivially_copy_assignable_v<T> && !std::is_constant_evaluated();
   if (can_memcpy) {
     memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
            ::sus::mem::data_size_of<T>());
@@ -54,45 +54,43 @@ template <class T>
 [[nodiscard]] inline constexpr T replace(T& dest, T&& src) noexcept {
   auto old = T(::sus::move(dest));
 
-  // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy =
-      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
-  if (can_memcpy) {
-    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
-           ::sus::mem::data_size_of<T>());
-  } else {
-    dest = ::sus::move(src);
+  if constexpr (std::is_trivially_move_assignable_v<T>) {
+    if (!std::is_constant_evaluated()) {
+      memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
+             ::sus::mem::data_size_of<T>());
+      return old;
+    }
   }
 
+  dest = ::sus::move(src);
   return old;
 }
 
 template <class T>
   requires(!std::is_array_v<T> && sus::mem::Copy<T>)
 inline void replace_and_discard(T& dest, const T& src) noexcept {
-  // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy =
-      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
-  if (can_memcpy) {
-    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
-           ::sus::mem::data_size_of<T>());
-  } else {
-    dest = src;
+  if constexpr (std::is_trivially_copy_assignable_v<T>) {
+    if (!std::is_constant_evaluated()) {
+      memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
+             ::sus::mem::data_size_of<T>());
+      return;
+    }
   }
+
+  dest = src;
 }
 
 template <class T>
   requires(!std::is_array_v<T> && sus::mem::Move<T>)
 inline void replace_and_discard(T& dest, T&& src) noexcept {
-  // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-  bool can_memcpy =
-      ::sus::mem::relocate_by_memcpy<T> && !std::is_constant_evaluated();
-  if (can_memcpy) {
-    memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
-           ::sus::mem::data_size_of<T>());
-  } else {
-    dest = ::sus::move(src);
+  if constexpr (std::is_trivially_move_assignable_v<T>) {
+    if (!std::is_constant_evaluated()) {
+      memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
+             ::sus::mem::data_size_of<T>());
+    }
   }
+
+  dest = ::sus::move(src);
 }
 
 template <class T>

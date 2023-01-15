@@ -26,9 +26,9 @@ using sus::mem::replace_ptr;
 
 namespace {
 
-TEST(Replace, ConstexprTrivialRelocate) {
+TEST(Replace, ConstexprTrivialCopy) {
   using T = int;
-  static_assert(::sus::mem::relocate_by_memcpy<T>, "");
+  static_assert(std::is_trivially_copyable_v<T>, "");
 
   auto i = []() constexpr {
     T i(2);
@@ -44,40 +44,6 @@ TEST(Replace, ConstexprTrivialRelocate) {
   static_assert(j() == T(2), "");
 }
 
-TEST(Replace, ConstexprTrivialAbi) {
-  struct [[sus_trivial_abi]] S {
-    constexpr S(int n) : num(n) {}
-    constexpr S(S&& other) : num(other.num), assigns(other.assigns) {}
-    constexpr void operator=(S&& other) {
-      num = other.num;
-      assigns = other.assigns + 1;
-    }
-    int num;
-    int assigns = 0;
-  };
-  // This means `S` is only "trivially relocatable" if achieved through
-  // [[sus_trivial_abi]].
-  static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(::sus::mem::relocate_by_memcpy<S> ==
-                    __has_extension(trivially_relocatable),
-                "");
-
-  auto i = []() constexpr {
-    S i(2);
-    S j(::sus::mem::replace(mref(i), S(5)));
-    return i;
-  };
-  auto j = []() constexpr {
-    S i(2);
-    S j(::sus::mem::replace(mref(i), S(5)));
-    return j;
-  };
-  static_assert(i().num == 5, "");
-  static_assert(j().num == 2, "");
-  // The replace was done by move operations, since memcpy is not constexpr.
-  static_assert(i().assigns == 1, "");
-}
-
 TEST(Replace, ConstexprNonTrivial) {
   struct S {
     constexpr S(int n) : num(n) {}
@@ -89,7 +55,7 @@ TEST(Replace, ConstexprNonTrivial) {
     int num;
     int assigns = 0;
   };
-  static_assert(!::sus::mem::relocate_by_memcpy<S>, "");
+  static_assert(!std::is_trivially_copyable_v<S>, "");
 
   auto i = []() constexpr {
     S i(2);
@@ -107,9 +73,9 @@ TEST(Replace, ConstexprNonTrivial) {
   static_assert(i().assigns == 1, "");
 }
 
-TEST(Replace, TrivialRelocate) {
+TEST(Replace, TrivialCopy) {
   using T = int;
-  static_assert(::sus::mem::relocate_by_memcpy<T>, "");
+  static_assert(std::is_trivially_copyable_v<T>, "");
 
   T i(2);
   T j(::sus::mem::replace(mref(i), T(5)));
@@ -127,78 +93,6 @@ TEST(Replace, TrivialRelocate) {
 
   ::sus::mem::replace_and_discard(mref(i), lvalue);
   EXPECT_EQ(i, T(6));
-}
-
-TEST(Replace, TrivialAbi) {
-  struct [[sus_trivial_abi]] S {
-    constexpr S(int n) : num(n) {}
-    constexpr S(const S&) : num(999), assigns(999) {}
-    constexpr S(S&& other) : num(other.num), assigns(other.assigns) {}
-    constexpr void operator=(const S& other) {
-      num = other.num;
-      assigns = other.assigns + 1;
-    }
-    constexpr void operator=(S&& other) {
-      num = other.num;
-      assigns = other.assigns + 1;
-    }
-    int num;
-    int assigns = 0;
-  };
-  // This means `S` is only "trivially relocatable" if achieved through
-  // [[sus_trivial_abi]].
-  static_assert(!std::is_trivially_move_constructible_v<S>, "");
-  static_assert(::sus::mem::relocate_by_memcpy<S> ==
-                    __has_extension(trivially_relocatable),
-                "");
-
-  S i(2);
-  S j(::sus::mem::replace(mref(i), S(5)));
-  EXPECT_EQ(i.num, 5);
-  EXPECT_EQ(j.num, 2);
-#if __has_extension(trivially_relocatable)
-  // The replace was done by memcpy.
-  EXPECT_EQ(0, i.assigns);
-#else
-  // The replace was done by move operations.
-  EXPECT_EQ(1, i.assigns);
-#endif
-
-  S lvalue(6);
-
-  i.assigns = 0;
-  S k(::sus::mem::replace(mref(i), lvalue));
-  EXPECT_EQ(i.num, 6);
-  EXPECT_EQ(k.num, 5);
-#if __has_extension(trivially_relocatable)
-  // The replace was done by memcpy.
-  EXPECT_EQ(0, i.assigns);
-#else
-  // The replace was done by move operations.
-  EXPECT_EQ(1, i.assigns);
-#endif
-
-  i.assigns = 0;
-  ::sus::mem::replace_and_discard(mref(i), S(7));
-  EXPECT_EQ(i.num, 7);
-#if __has_extension(trivially_relocatable)
-  // The replace was done by memcpy.
-  EXPECT_EQ(0, i.assigns);
-#else
-  // The replace was done by move operations.
-  EXPECT_EQ(1, i.assigns);
-#endif
-
-  i.assigns = 0;
-  ::sus::mem::replace_and_discard(mref(i), lvalue);
-  EXPECT_EQ(i.num, 6);
-#if __has_extension(trivially_relocatable)
-  // The replace was done by memcpy.
-  EXPECT_EQ(0, i.assigns);
-#else
-  // The replace was done by move operations.
-  EXPECT_EQ(1, i.assigns);
-#endif
 }
 
 TEST(Replace, NonTrivial) {
@@ -219,7 +113,7 @@ TEST(Replace, NonTrivial) {
     int num;
     int assigns = 0;
   };
-  static_assert(!::sus::mem::relocate_by_memcpy<S>, "");
+  static_assert(!std::is_trivially_copyable_v<S>, "");
 
   S i(2);
   S j(::sus::mem::replace(mref(i), S(5)));
