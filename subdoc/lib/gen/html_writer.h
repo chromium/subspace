@@ -48,6 +48,10 @@ class HtmlWriter {
       write_open();
       return writer_.open_span();
     }
+    auto open_a() noexcept {
+      write_open();
+      return writer_.open_a();
+    }
 
    protected:
     Html(HtmlWriter& writer) noexcept : writer_(writer) {}
@@ -57,6 +61,40 @@ class HtmlWriter {
     HtmlWriter& writer_;
     sus::Vec<std::string> classes_;
     bool wrote_open_ = false;
+  };
+
+  class [[nodiscard]] OpenA : public Html<OpenA> {
+   public:
+    ~OpenA() noexcept {
+      write_open();
+      writer_.write_close("a");
+    }
+
+    void add_href(std::string_view href) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("href"),
+          .value = std::string(href),
+      });
+    }
+    void add_name(std::string_view name) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("name"),
+          .value = std::string(name),
+      });
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenA(HtmlWriter& writer) noexcept : Html(writer) {}
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("a", classes_.iter(), attributes_.iter());
+        wrote_open_ = true;
+      }
+    }
+
+    sus::Vec<HtmlAttribute> attributes_;
   };
 
   class [[nodiscard]] OpenDiv : public Html<OpenDiv> {
@@ -79,7 +117,7 @@ class HtmlWriter {
     }
   };
 
-  class [[nodiscard]] OpenSpan : public Html<OpenDiv> {
+  class [[nodiscard]] OpenSpan : public Html<OpenSpan> {
    public:
     ~OpenSpan() noexcept {
       write_open();
@@ -217,6 +255,7 @@ class HtmlWriter {
 
   OpenDiv open_div() noexcept { return OpenDiv(*this); }
   OpenSpan open_span() noexcept { return OpenSpan(*this); }
+  OpenA open_a() noexcept { return OpenA(*this); }
   OpenTitle open_title() noexcept { return OpenTitle(*this); }
   OpenLink open_link() noexcept { return OpenLink(*this); }
 
@@ -248,9 +287,7 @@ class HtmlWriter {
     stream_ << ">\n";
     indent_ += 2u;
   }
-  void skip_close() noexcept {
-    indent_ -= 2u;
-  }
+  void skip_close() noexcept { indent_ -= 2u; }
   void write_close(std::string_view type) noexcept {
     indent_ -= 2u;
     write_indent();

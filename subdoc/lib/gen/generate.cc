@@ -203,9 +203,12 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
               field_type_span.write_text(fe.type_name);
             }
             {
-              auto field_type_span = field_div.open_span();
-              field_type_span.add_class("field-name");
-              field_type_span.write_text(fe.name);
+              auto field_name_anchor = field_div.open_a();
+              std::string anchor = std::string("field.static.") + fe.name;
+              field_name_anchor.add_name(anchor);
+              field_name_anchor.add_href(std::string("#") + anchor);
+              field_name_anchor.add_class("field-name");
+              field_name_anchor.write_text(fe.name);
             }
             {
               auto desc_div = field_div.open_div();
@@ -252,9 +255,12 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
               field_type_span.write_text(fe.type_name);
             }
             {
-              auto field_type_span = field_div.open_span();
-              field_type_span.add_class("field-name");
-              field_type_span.write_text(fe.name);
+              auto field_name_anchor = field_div.open_a();
+              std::string anchor = std::string("field.") + fe.name;
+              field_name_anchor.add_name(anchor);
+              field_name_anchor.add_href(std::string("#") + anchor);
+              field_name_anchor.add_class("field-name");
+              field_name_anchor.write_text(fe.name);
             }
             {
               auto desc_div = field_div.open_div();
