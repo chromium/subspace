@@ -1,4 +1,5 @@
 body {
+    font-size: 12pt;
     color: white;
     background-color: rgb(59, 59, 59);
     margin: 1.2em;
@@ -18,27 +19,27 @@ pre {
     border-bottom: 1px solid;
 }
 
-.type .section-header.overview .type-name {
+.type .overview .section-header .type-name {
     color: rgb(166, 240, 176);
 }
 
-.type .type-signature {
+.type .overview .type-signature {
     background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5em;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
 }
 
-.type .type-signature .struct {
+.type .overview .type-signature .struct {
     color: rgb(130, 169, 243);
 }
-.type .type-signature .class {
+.type .overview .type-signature .class {
     color: rgb(125, 231, 235);
 }
-.type .type-signature .union {
+.type .overview .type-signature .union {
     color: rgb(132, 229, 173);
 }
-.type .type-signature .type-name {
+.type .overview .type-signature .type-name {
     color: rgb(130, 221, 135);
 }
 
@@ -46,29 +47,27 @@ pre {
     margin-top: 0.75em;
 }
 
-.type .section-item.fields .static {
+.type .section:is(.fields, .methods) .static {
     color: rgb(240, 147, 147);
 }
-.type .section-item.fields .struct {
-    color: orange;
-}
-.type .section-item.fields .class {
-    color: orangered;
-}
-.type .section-item.fields .union {
-    color: rgb(255, 230, 0);
-}
-.type .section-item.fields .type-name {
+.type .section:is(.fields, .methods) .type-name {
     color: rgb(105, 223, 105);
 }
-.type .section-item.fields .volatile {
+.type .section:is(.fields, .methods) .volatile {
     color: yellow;
 }
-.type .section-item.fields .const {
+.type .section:is(.fields, .methods) .const {
     color: yellowgreen;
 }
-.type .section-item.fields .field-name {
+.type .section:is(.fields, .methods) :is(.field-name, .method-name) {
     color: rgb(191, 142, 236);
+}
+
+.type .overload {
+    font-size: 0;  /* Hides the space between `method_name` and `()`. */
+}
+.type .overload :is(div, span, a) {
+    font-size: 12pt;
 }
 
 .description {

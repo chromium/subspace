@@ -20,6 +20,7 @@
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subspace/assertions/unreachable.h"
+#include "subspace/mem/swap.h"
 #include "subspace/prelude.h"
 
 namespace subdoc {
@@ -219,45 +220,80 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    // TODO: The signature string should include the whole signature not just
-    // the name.
     auto signature = decl->getQualifiedNameAsString();
-    auto fe =
-        FunctionElement(collect_namespace_path(decl),
-                        make_db_comment(diag_ids_, decl, raw_comment),
-                        decl->getQualifiedNameAsString(), sus::move(signature));
+    // TODO: Add parameters.
+    if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
+      signature += " ";
+      signature += mdecl->getMethodQualifiers().getAsString();
+      switch (mdecl->getRefQualifier()) {
+        case clang::RQ_None: break;
+        case clang::RQ_LValue: signature += "&"; break;
+        case clang::RQ_RValue: signature += "&&"; break;
+      }
+    }
+    auto fe = FunctionElement(collect_namespace_path(decl),
+                              make_db_comment(diag_ids_, decl, raw_comment),
+                              decl->getNameAsString(), sus::move(signature),
+                              decl->getReturnType());
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(parent->ctors));
+        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
+                                    sus::move(fe), mref(parent->ctors));
       }
     } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(parent->dtors));
+        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
+                                    sus::move(fe), mref(parent->dtors));
       }
     } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(parent->conversions));
+        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
+                                    sus::move(fe), mref(parent->conversions));
       }
     } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(parent->methods));
+        auto* mdecl = clang::cast<clang::CXXMethodDecl>(decl);
+        fe.overloads[0u].method = sus::some(MethodSpecific{
+            .is_static = mdecl->isStatic(),
+            .is_volatile = mdecl->isVolatile(),
+            .is_virtual = mdecl->isVirtual(),
+            .qualifier =
+                [mdecl]() {
+                  switch (mdecl->getRefQualifier()) {
+                    case clang::RQ_None:
+                      if (mdecl->isConst())
+                        return MethodQualifier::Const;
+                      else
+                        return MethodQualifier::Mutable;
+                    case clang::RQ_LValue:
+                      if (mdecl->isConst())
+                        return MethodQualifier::ConstLValue;
+                      else
+                        return MethodQualifier::MutableLValue;
+                    case clang::RQ_RValue:
+                      if (mdecl->isConst())
+                        return MethodQualifier::ConstRValue;
+                      else
+                        return MethodQualifier::MutableRValue;
+                  }
+                  sus::unreachable();
+                }(),
+        });
+        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
+                                    sus::move(fe), mref(parent->methods));
       }
     } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
       // TODO: How do we get from here to the class that the deduction guide is
@@ -267,15 +303,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(parent->deductions));
+        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
+                                    sus::move(fe), mref(parent->deductions));
       }
     } else {
       if (sus::Option<NamespaceElement&> parent =
               docs_db_.find_namespace_mut(find_nearest_namespace(decl));
           parent.is_some()) {
-        add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
-                          mref(parent->functions));
+        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
+                                    sus::move(fe), mref(parent->functions));
       }
     }
 
@@ -283,6 +319,45 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
  private:
+  template <class ElementT, class MapT>
+    requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
+  void add_function_overload_to_db(clang::FunctionDecl* decl,
+                                   clang::SourceLocation loc,
+                                   ElementT db_element, MapT& db_map) noexcept {
+    FunctionId id = [&]() {
+      if (clang::isa<clang::CXXMethodDecl>(decl)) {
+        return FunctionId(decl->getNameAsString(),
+                          clang::cast<clang::CXXMethodDecl>(decl)->isStatic());
+      } else {
+        return FunctionId(decl->getNameAsString(), false);
+      }
+    }();
+    bool add_overload = true;
+    auto it = db_map.find(id);
+    if (it == db_map.end()) {
+      db_map.emplace(id, std::move(db_element));
+      add_overload = false;
+    } else if (!it->second.has_comment()) {
+      // Steal the comment.
+      sus::mem::swap(db_map.at(id).comment, db_element.comment);
+    } else if (!db_element.has_comment()) {
+      // Leave the existing comment in place.
+    } else {
+      auto& ast_cx = decl->getASTContext();
+      const ElementT& old_element = it->second;
+      ast_cx.getDiagnostics()
+          .Report(loc, diag_ids_.superceded_comment)
+          .AddString(old_element.comment.begin_loc);
+    }
+
+    if (add_overload) {
+      ::sus::check_with_message(
+          db_element.overloads.len() == 1u,
+          *"Expected to add FunctionElement with 1 overload");
+      db_map.at(id).overloads.push(sus::move(db_element.overloads[0u]));
+    }
+  }
+
   template <class ElementT, class MapT>
     requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
   void add_comment_to_db(clang::Decl* decl, clang::SourceLocation loc,
