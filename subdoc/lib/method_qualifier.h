@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "subdoc/tests/subdoc_gen_test.h"
+#pragma once
 
-TEST_F(SubDocGenTest, StructBasic) {
-  EXPECT_TRUE(run_gen_test("struct-basic"));
-}
+namespace subdoc {
 
-TEST_F(SubDocGenTest, StructComplex) {
-  EXPECT_TRUE(run_gen_test("struct-complex"));
-}
+enum class MethodQualifier {
+  Const,
+  ConstLValue,
+  ConstRValue,
+  Mutable,
+  MutableLValue,
+  MutableRValue,
+};
 
-TEST_F(SubDocGenTest, FunctionOverloads) {
-  EXPECT_TRUE(run_gen_test("function-overloads"));
 }

@@ -160,8 +160,8 @@ void generate_record_methods(
                                                  : "Methods");
   }
   {
-    for (auto&& [name, method_id] : methods) {
-      const FunctionElement& fe = element.methods.at(method_id);
+    for (auto&& [name, function_id] : methods) {
+      const FunctionElement& fe = element.methods.at(function_id);
 
       auto method_div = section_div.open_div();
       method_div.add_class("section-item");
@@ -188,12 +188,12 @@ void generate_record_methods(
           anchor << fe.name;
           method_name_anchor.add_name(anchor.str());
           method_name_anchor.add_href(std::string("#") + anchor.str());
-          method_name_anchor.add_class("method-name");
+          method_name_anchor.add_class("function-name");
           method_name_anchor.write_text(fe.name);
         }
         {
           auto params_span = overload_div.open_span();
-          params_span.add_class("method-params");
+          params_span.add_class("function-params");
           // TODO: Write params.
           params_span.write_text("()");
         }

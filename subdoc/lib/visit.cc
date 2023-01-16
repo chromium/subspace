@@ -104,7 +104,23 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
   bool VisitNamespaceDecl(clang::NamespaceDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
-    // clang::RawComment* raw_comment = get_raw_comment(decl);
+    clang::RawComment* raw_comment = get_raw_comment(decl);
+
+    auto ne = NamespaceElement(collect_namespace_path(decl),
+                               make_db_comment(diag_ids_, decl, raw_comment),
+                               decl->getNameAsString());
+    NamespaceElement& parent = [&]() -> NamespaceElement& {
+      if (clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+        return docs_db_.find_namespace_mut(nullptr).unwrap();
+      } else {
+        return docs_db_
+            .find_namespace_mut(
+                clang::cast<clang::NamespaceDecl>(decl->getDeclContext()))
+            .unwrap();
+      }
+    }();
+    add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ne),
+                      mref(parent.namespaces));
     return true;
   }
 
@@ -119,10 +135,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }();
 
     // TODO: collect_record_path() too.
-    auto ce = RecordElement(collect_namespace_path(decl),
-                            make_db_comment(diag_ids_, decl, raw_comment),
-                            decl->getQualifiedNameAsString(),
-                            collect_record_path(decl), type);
+    auto ce =
+        RecordElement(collect_namespace_path(decl),
+                      make_db_comment(diag_ids_, decl, raw_comment),
+                      decl->getNameAsString(), collect_record_path(decl), type);
 
     if (clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();

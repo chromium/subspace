@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "subdoc/tests/subdoc_gen_test.h"
+#pragma once
 
-TEST_F(SubDocGenTest, StructBasic) {
-  EXPECT_TRUE(run_gen_test("struct-basic"));
-}
+#include "subdoc/lib/database.h"
+#include "subdoc/lib/gen/options.h"
 
-TEST_F(SubDocGenTest, StructComplex) {
-  EXPECT_TRUE(run_gen_test("struct-complex"));
-}
+namespace subdoc::gen {
 
-TEST_F(SubDocGenTest, FunctionOverloads) {
-  EXPECT_TRUE(run_gen_test("function-overloads"));
+void generate_namespace(const NamespaceElement& element,
+                        const Options& options) noexcept;
+
 }

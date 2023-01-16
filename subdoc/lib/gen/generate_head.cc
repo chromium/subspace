@@ -12,31 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "subdoc/lib/gen/generate.h"
-
-#include <map>
-#include <set>
-
-#include "subdoc/lib/gen/files.h"
-#include "subdoc/lib/gen/generate_namespace.h"
-#include "subdoc/lib/gen/generate_record.h"
-#include "subdoc/lib/gen/html_writer.h"
-#include "subspace/ops/eq.h"
-#include "subspace/ops/ord.h"
-#include "subspace/prelude.h"
+#include "subdoc/lib/gen/generate_head.h"
 
 namespace subdoc::gen {
 
-void generate(const Database& db, const Options& options) {
-  std::filesystem::remove_all(options.output_root);
-
-  for (const auto& [u, element] : db.global.namespaces) {
-    generate_namespace(element, options);
+void generate_head(HtmlWriter& html, std::string_view title_string,
+                   const Options& options) noexcept {
+  {
+    auto head = html.open_head();
+    {
+      auto title = head.open_title();
+      title.write_text(title_string);
+    }
+    {
+      auto default_stylesheet_link = head.open_link();
+      default_stylesheet_link.add_rel("stylesheet");
+      default_stylesheet_link.add_href(options.default_stylesheet_path);
+    }
   }
-
-  for (const auto& [u, element] : db.global.records) {
-    generate_record(element, options);
-  }
+  html.write_empty_line();
 }
 
 }  // namespace subdoc::gen

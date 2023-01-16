@@ -59,7 +59,7 @@ pre {
 .type .section:is(.fields, .methods) .const {
     color: yellowgreen;
 }
-.type .section:is(.fields, .methods) :is(.field-name, .method-name) {
+.type .section:is(.fields, .methods) :is(.field-name, .function-name) {
     color: rgb(191, 142, 236);
 }
 

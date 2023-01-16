@@ -348,4 +348,11 @@ TEST(Slice, SortUnstableBy) {
   }
 }
 
+static_assert(sus::construct::Default<Slice<i32>>);
+
+TEST(Slice, Default) {
+  Slice<i32> s;
+  EXPECT_TRUE(s.is_empty());
+}
+
 }  // namespace
