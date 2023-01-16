@@ -25,27 +25,31 @@ pre {
     margin-bottom: 0.5em;
 }
 
-.type .struct {
+.type .section-item.fields .static {
+    color: rgb(240, 147, 147);
+}
+
+.type .section-item.fields .struct {
     color: orange;
 }
 
-.type .class {
+.type .section-item.fields .class {
     color: orangered;
 }
 
-.type .type-name {
+.type .section-item.fields .type-name {
     color: rgb(105, 223, 105);
 }
 
-.type .fields .volatile {
+.type .section-item.fields .volatile {
     color: yellow;
 }
 
-.type .fields .const {
+.type .section-item.fields .const {
     color: yellowgreen;
 }
 
-.field.name {
+.type .section-item.fields .field-name {
     color: rgb(191, 142, 236);
 }
 
