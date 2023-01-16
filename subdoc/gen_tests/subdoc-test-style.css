@@ -18,6 +18,10 @@ pre {
     border-bottom: 1px solid;
 }
 
+.type .section-header.type .type-name {
+    color: rgb(166, 240, 176);
+}
+
 .type .type-signature {
     background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5em;
@@ -35,7 +39,7 @@ pre {
     color: rgb(132, 229, 173);
 }
 .type .type-signature .type-name {
-    color: rgb(216, 59, 95);
+    color: rgb(130, 221, 135);
 }
 
 .section-item {

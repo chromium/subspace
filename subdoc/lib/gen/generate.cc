@@ -97,9 +97,10 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
               friendly_record_type_name(c.record_type, true));
         }
         {
-          auto name_span = record_header_div.open_span();
-          name_span.add_class("type-name");
-          name_span.write_text(c.name);
+          auto name_anchor = record_header_div.open_a();
+          name_anchor.add_href("#");
+          name_anchor.add_class("type-name");
+          name_anchor.write_text(c.name);
         }
       }
       {
