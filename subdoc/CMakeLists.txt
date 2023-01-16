@@ -20,6 +20,7 @@ target_sources(subdoc_lib PUBLIC
     "lib/gen/generate.h"
     "lib/gen/options.h"
     "lib/database.h"
+    "lib/friendly_names.h"
     "lib/path.h"
     "lib/run.cc"
     "lib/run.h"

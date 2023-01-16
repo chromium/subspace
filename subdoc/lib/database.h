@@ -16,6 +16,7 @@
 
 #include <unordered_map>
 
+#include "subdoc/lib/friendly_names.h"
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
@@ -84,7 +85,7 @@ struct FieldElement : public CommentElement {
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name)),
         record_path(sus::move(record_path)),
-        type_name(qual_type.getUnqualifiedType().getAsString()),
+        type_name(friendly_type_name(qual_type)),
         is_const(qual_type.getQualifiers().hasConst()),
         is_volatile(qual_type.getQualifiers().hasVolatile()),
         is_static(is_static) {}

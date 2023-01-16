@@ -149,43 +149,45 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
           auto fields_header_div = section_div.open_div();
           fields_header_div.add_class("header");
           fields_header_div.add_class("fields");
+          fields_header_div.add_class("static");
           fields_header_div.write_text("Static Data Members");
         }
         {
-          auto fields_div = section_div.open_div();
-          fields_div.add_class("list");
-          fields_div.add_class("fields");
-          fields_div.add_class("static");
           for (auto&& [name, field_symbol] : sorted_static_fields) {
+            auto field_div = section_div.open_div();
+            field_div.add_class("section-item");
+            field_div.add_class("fields");
+            field_div.add_class("static");
+
             const FieldElement& fe = c.fields.at(field_symbol);
             {
-              auto field_type_span = fields_div.open_span();
+              auto field_type_span = field_div.open_span();
               field_type_span.add_class("static");
               field_type_span.write_text("static");
             }
             if (fe.is_const) {
-              auto field_type_span = fields_div.open_span();
+              auto field_type_span = field_div.open_span();
               field_type_span.add_class("const");
               field_type_span.write_text("const");
             }
             if (fe.is_volatile) {
-              auto field_type_span = fields_div.open_span();
+              auto field_type_span = field_div.open_span();
               field_type_span.add_class("volatile");
               field_type_span.write_text("volatile");
             }
             {
-              auto field_type_span = fields_div.open_span();
+              auto field_type_span = field_div.open_span();
               field_type_span.add_class("type");
               field_type_span.write_text(fe.type_name);
             }
             {
-              auto field_type_span = fields_div.open_span();
+              auto field_type_span = field_div.open_span();
               field_type_span.add_class("field");
               field_type_span.add_class("name");
               field_type_span.write_text(fe.name);
             }
             {
-              auto desc_div = fields_div.open_div();
+              auto desc_div = field_div.open_div();
               desc_div.add_class("description");
               if (fe.has_comment()) {
                 desc_div.write_text(fe.comment.raw_text);
@@ -202,38 +204,40 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
           auto fields_header_div = section_div.open_div();
           fields_header_div.add_class("header");
           fields_header_div.add_class("fields");
+          fields_header_div.add_class("nonstatic");
           fields_header_div.write_text("Data Members");
         }
         {
-          auto fields_div = section_div.open_div();
-          fields_div.add_class("list");
-          fields_div.add_class("fields");
-          fields_div.add_class("nonstatic");
           for (auto&& [name, field_symbol] : sorted_fields) {
+            auto field_div = section_div.open_div();
+            field_div.add_class("section-item");
+            field_div.add_class("fields");
+            field_div.add_class("nonstatic");
+
             const FieldElement& fe = c.fields.at(field_symbol);
             if (fe.is_const) {
-              auto field_type_span = fields_div.open_span();
+              auto field_type_span = field_div.open_span();
               field_type_span.add_class("const");
               field_type_span.write_text("const");
             }
             if (fe.is_volatile) {
-              auto field_type_span = fields_div.open_span();
+              auto field_type_span = field_div.open_span();
               field_type_span.add_class("volatile");
               field_type_span.write_text("volatile");
             }
             {
-              auto field_type_span = fields_div.open_span();
+              auto field_type_span = field_div.open_span();
               field_type_span.add_class("type");
               field_type_span.write_text(fe.type_name);
             }
             {
-              auto field_type_span = fields_div.open_span();
+              auto field_type_span = field_div.open_span();
               field_type_span.add_class("field");
               field_type_span.add_class("name");
               field_type_span.write_text(fe.name);
             }
             {
-              auto desc_div = fields_div.open_div();
+              auto desc_div = field_div.open_div();
               desc_div.add_class("description");
               if (fe.has_comment()) {
                 desc_div.write_text(fe.comment.raw_text);
