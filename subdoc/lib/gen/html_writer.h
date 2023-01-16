@@ -249,6 +249,8 @@ class HtmlWriter {
   OpenBody open_body() noexcept { return OpenBody(*this); }
   OpenHead open_head() noexcept { return OpenHead(*this); }
 
+  void write_empty_line() noexcept { stream_ << "\n"; }
+
  private:
   friend class OpenDiv;
   friend class OpenSpan;
