@@ -225,4 +225,22 @@ TEST(Slice, ImplicitIter) {
   EXPECT_EQ(sum, 6_usize);
 }
 
+TEST(Slice, Len) {
+  i32 a[] = {1, 2, 3};
+  auto s = Slice<i32>::from_raw_parts(a, 3_usize);
+  EXPECT_EQ(s.len(), 3u);
+
+  auto se = Slice<i32>::from_raw_parts(a, 0_usize);
+  EXPECT_EQ(se.len(), 0u);
+}
+
+TEST(Slice, IsEmpty) {
+  i32 a[] = {1, 2, 3};
+  auto s = Slice<i32>::from_raw_parts(a, 3_usize);
+  EXPECT_FALSE(s.is_empty());
+
+  auto se = Slice<i32>::from_raw_parts(a, 0_usize);
+  EXPECT_TRUE(se.is_empty());
+}
+
 }  // namespace
