@@ -25,36 +25,46 @@ pre {
     margin-bottom: 0.5em;
 }
 
-.type .section-item.fields .static {
-    color: rgb(240, 147, 147);
+.type .type-signature .struct {
+    color: rgb(130, 169, 243);
 }
-
-.type .section-item.fields .struct {
-    color: orange;
+.type .type-signature .class {
+    color: rgb(125, 231, 235);
 }
-
-.type .section-item.fields .class {
-    color: orangered;
+.type .type-signature .union {
+    color: rgb(132, 229, 173);
 }
-
-.type .section-item.fields .type-name {
-    color: rgb(105, 223, 105);
-}
-
-.type .section-item.fields .volatile {
-    color: yellow;
-}
-
-.type .section-item.fields .const {
-    color: yellowgreen;
-}
-
-.type .section-item.fields .field-name {
-    color: rgb(191, 142, 236);
+.type .type-signature .type-name {
+    color: rgb(216, 59, 95);
 }
 
 .section-item {
     margin-top: 0.75em;
+}
+
+.type .section-item.fields .static {
+    color: rgb(240, 147, 147);
+}
+.type .section-item.fields .struct {
+    color: orange;
+}
+.type .section-item.fields .class {
+    color: orangered;
+}
+.type .section-item.fields .union {
+    color: rgb(255, 230, 0);
+}
+.type .section-item.fields .type-name {
+    color: rgb(105, 223, 105);
+}
+.type .section-item.fields .volatile {
+    color: yellow;
+}
+.type .section-item.fields .const {
+    color: yellowgreen;
+}
+.type .section-item.fields .field-name {
+    color: rgb(191, 142, 236);
 }
 
 .description {
