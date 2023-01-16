@@ -87,8 +87,9 @@ This library is an experiment and not intended for use. See the
     * Use an appropriate prefix like `set_`, or a clear verb name, to
       distinguish setters.
     * No default parameters, as they are a form of overloading.
-    * Constructors (public copy/move, or private constructors) and assignment
-      operators are the exception for overloads.
+    * Constructors (public copy/move, or private constructors) and operators
+      (including operator=, operator*, operator->) can not be fully spelt
+      (const/mutable) without overloads, so they are the exception.
 1. There are two types of Objects (or methods on a mixed-type Object). Owning
    types, which give access to data they own and reference types that share the
    reference they hold.
