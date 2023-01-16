@@ -30,7 +30,7 @@ sus_clang_bug_58859(
   template <class Item>
   inline Iterator<Once<Item>> once(Option<Item>&& single) noexcept {
     return Once<Item>::with_option(::sus::move(single));
-  }  // namespace sus::iter
+  }
 
   }
 )
@@ -63,7 +63,7 @@ class Once : public IteratorBase<Item> {
   Option<Item> single_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                            decltype(single_));
+                                           decltype(single_));
 };
 
 template <class Item>
