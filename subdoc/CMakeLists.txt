@@ -16,6 +16,8 @@ add_library(subdoc_lib STATIC "")
 add_library(subdoc::lib ALIAS subdoc_lib)
 target_sources(subdoc_lib PUBLIC
     "lib/gen/files.h"
+    "lib/gen/generate_head.cc"
+    "lib/gen/generate_head.h"
     "lib/gen/generate_record.cc"
     "lib/gen/generate_record.h"
     "lib/gen/generate.cc"
