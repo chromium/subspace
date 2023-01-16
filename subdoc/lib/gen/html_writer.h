@@ -16,11 +16,15 @@
 
 #include <fstream>
 
+#include "subspace/iter/empty.h"
 #include "subspace/prelude.h"
 
 namespace subdoc::gen {
 
-class HtmlWriter;
+struct HtmlAttribute {
+  std::string name;
+  std::string value;
+};
 
 class HtmlWriter {
  public:
@@ -28,7 +32,6 @@ class HtmlWriter {
   class [[nodiscard]] Html {
    public:
     void add_class(std::string_view c) noexcept {
-      // TODO: Add Vec::back() and use it.
       classes_.push(std::string(c));
     }
 
@@ -69,7 +72,8 @@ class HtmlWriter {
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("div", classes_.iter());
+        writer_.write_open("div", classes_.iter(),
+                           sus::iter::empty<const HtmlAttribute&>());
         wrote_open_ = true;
       }
     }
@@ -88,7 +92,8 @@ class HtmlWriter {
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("span", classes_.iter());
+        writer_.write_open("span", classes_.iter(),
+                           sus::iter::empty<const HtmlAttribute&>());
         wrote_open_ = true;
       }
     }
@@ -107,7 +112,93 @@ class HtmlWriter {
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("body", classes_.iter());
+        writer_.write_open("body", classes_.iter(),
+                           sus::iter::empty<const HtmlAttribute&>());
+        wrote_open_ = true;
+      }
+    }
+  };
+
+  class [[nodiscard]] OpenTitle : public Html<OpenTitle> {
+   public:
+    ~OpenTitle() noexcept {
+      write_open();
+      writer_.write_close("title");
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenTitle(HtmlWriter& writer) noexcept : Html(writer) {}
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("title", classes_.iter(),
+                           sus::iter::empty<const HtmlAttribute&>());
+        wrote_open_ = true;
+      }
+    }
+  };
+
+  class [[nodiscard]] OpenLink : public Html<OpenLink> {
+   public:
+    ~OpenLink() noexcept {
+      write_open();
+      // There's no closing tag for a <link> since it is empty.
+      writer_.skip_close();
+    }
+
+    void add_rel(std::string_view rel) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("rel"),
+          .value = std::string(rel),
+      });
+    }
+
+    void add_href(std::string_view href) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("href"),
+          .value = std::string(href),
+      });
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenLink(HtmlWriter& writer) noexcept : Html(writer) {}
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("link", classes_.iter(), attributes_.iter());
+        wrote_open_ = true;
+      }
+    }
+
+    sus::Vec<HtmlAttribute> attributes_;
+  };
+
+  class [[nodiscard]] OpenHead : public Html<OpenHead> {
+   public:
+    ~OpenHead() noexcept {
+      write_open();
+      writer_.write_close("head");
+    }
+
+    auto open_title() noexcept {
+      write_open();
+      return writer_.open_title();
+    }
+    auto open_link() noexcept {
+      write_open();
+      return writer_.open_link();
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenHead(HtmlWriter& writer) noexcept : Html(writer) {}
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("head", classes_.iter(),
+                           sus::iter::empty<const HtmlAttribute&>());
         wrote_open_ = true;
       }
     }
@@ -118,6 +209,7 @@ class HtmlWriter {
   ~HtmlWriter() noexcept { stream_.close(); }
 
   OpenBody open_body() noexcept { return OpenBody(*this); }
+  OpenHead open_head() noexcept { return OpenHead(*this); }
 
  private:
   friend class OpenDiv;
@@ -125,15 +217,21 @@ class HtmlWriter {
 
   OpenDiv open_div() noexcept { return OpenDiv(*this); }
   OpenSpan open_span() noexcept { return OpenSpan(*this); }
+  OpenTitle open_title() noexcept { return OpenTitle(*this); }
+  OpenLink open_link() noexcept { return OpenLink(*this); }
 
   void write_text(std::string_view text) noexcept {
     write_indent();
     stream_ << text << "\n";
   }
 
-  // TODO: Add an Iterator<T> concept and use that to know what T is here.
-  template <class Iter>
-  void write_open(std::string_view type, Iter classes_iter) noexcept {
+  // TODO: Add an Iterator<T> concept and use that to know what Item is here.
+  template <template <class Item> class ClassIter,
+            template <class Item> class AttrIter>
+  void write_open(
+      std::string_view type,
+      sus::iter::Iterator<ClassIter<const std::string&>> classes_iter,
+      sus::iter::Iterator<AttrIter<const HtmlAttribute&>> attr_iter) noexcept {
     write_indent();
     stream_ << "<" << type;
     if (sus::Option<const std::string&> first_class = classes_iter.next();
@@ -144,8 +242,14 @@ class HtmlWriter {
       }
       stream_ << "\"";
     }
+    for (const HtmlAttribute& attr : attr_iter) {
+      stream_ << " " << attr.name << "=\"" << attr.value << "\"";
+    }
     stream_ << ">\n";
     indent_ += 2u;
+  }
+  void skip_close() noexcept {
+    indent_ -= 2u;
   }
   void write_close(std::string_view type) noexcept {
     indent_ -= 2u;

@@ -69,6 +69,18 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
     std::filesystem::create_directories(path.parent_path());
     std::ofstream out = open_file_for_writing(path).unwrap();
     auto html = HtmlWriter(sus::move(out));
+    {
+      auto head = html.open_head();
+      {
+        auto title = head.open_title();
+        title.write_text(c.name);
+      }
+      {
+        auto default_stylesheet_link = head.open_link();
+        default_stylesheet_link.add_rel("stylesheet");
+        default_stylesheet_link.add_href(options.default_stylesheet_path);
+      }
+    }
     auto body = html.open_body();
     {
       auto type_div = body.open_div();
