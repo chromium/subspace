@@ -16,6 +16,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
+#include "subspace/containers/array.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/copy.h"
@@ -243,11 +244,108 @@ TEST(Slice, IsEmpty) {
   EXPECT_TRUE(se.is_empty());
 }
 
-static_assert(sus::construct::Default<Slice<i32>>);
+struct Sortable {
+  Sortable(i32 value, i32 unique) : value(value), unique(unique) {}
 
-TEST(Slice, Default) {
-  Slice<i32> s;
-  EXPECT_TRUE(s.is_empty());
+  i32 value;
+  i32 unique;
+
+  friend bool operator==(const Sortable& a, const Sortable& b) noexcept {
+    return a.value == b.value && a.unique == b.unique;
+  }
+  friend auto operator<=>(const Sortable& a, const Sortable& b) noexcept {
+    return a.value <=> b.value;
+  }
+};
+
+TEST(Slice, Sort) {
+  // clang-format off
+  sus::Array<Sortable, 9> unsorted = sus::array(
+    Sortable(3, 0),
+    Sortable(3, 1),
+    Sortable(4, 0),
+    Sortable(2, 0),
+    Sortable(2, 1),
+    Sortable(1, 0),
+    Sortable(3, 2),
+    Sortable(6, 0),
+    Sortable(5, 0)
+  );
+  sus::Array<Sortable, 9> sorted = sus::array(
+    Sortable(1, 0),
+    Sortable(2, 0),
+    Sortable(2, 1),
+    Sortable(3, 0),
+    Sortable(3, 1),
+    Sortable(3, 2),
+    Sortable(4, 0),
+    Sortable(5, 0),
+    Sortable(6, 0)
+  );
+  // clang-format on
+
+  Slice<Sortable> s = unsorted.as_mut();
+  s.sort();
+  for (usize i = 0u; i < s.len(); i += 1u) {
+    EXPECT_EQ(sorted[i], s[i]);
+  }
+}
+
+TEST(Slice, SortBy) {
+  // clang-format off
+  sus::Array<Sortable, 9> unsorted = sus::array(
+    Sortable(3, 0),
+    Sortable(3, 1),
+    Sortable(4, 0),
+    Sortable(2, 0),
+    Sortable(2, 1),
+    Sortable(1, 0),
+    Sortable(3, 2),
+    Sortable(6, 0),
+    Sortable(5, 0)
+  );
+  sus::Array<Sortable, 9> sorted = sus::array(
+    Sortable(6, 0),
+    Sortable(5, 0),
+    Sortable(4, 0),
+    Sortable(3, 0),
+    Sortable(3, 1),
+    Sortable(3, 2),
+    Sortable(2, 0),
+    Sortable(2, 1),
+    Sortable(1, 0)
+  );
+  // clang-format on
+
+  Slice<Sortable> s = unsorted.as_mut();
+  // Sorts backward.
+  s.sort_by([](const auto& a, const auto& b) { return b <=> a; });
+  for (usize i = 0u; i < s.len(); i += 1u) {
+    EXPECT_EQ(sorted[i], s[i]);
+  }
+}
+
+TEST(Slice, SortUnstable) {
+  sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
+  sus::Array<i32, 6> sorted = sus::array(1, 2, 3, 4, 5, 6);
+
+  Slice<i32> s = unsorted.as_mut();
+  s.sort_unstable();
+  for (usize i = 0u; i < s.len(); i += 1u) {
+    EXPECT_EQ(sorted[i], s[i]);
+  }
+}
+
+TEST(Slice, SortUnstableBy) {
+  sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
+  sus::Array<i32, 6> sorted = sus::array(6, 5, 4, 3, 2, 1);
+
+  Slice<i32> s = unsorted.as_mut();
+  // Sorts backward.
+  s.sort_unstable_by([](const auto& a, const auto& b) { return b <=> a; });
+  for (usize i = 0u; i < s.len(); i += 1u) {
+    EXPECT_EQ(sorted[i], s[i]);
+  }
 }
 
 }  // namespace
