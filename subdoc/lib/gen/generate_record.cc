@@ -171,24 +171,16 @@ void generate_record(const RecordElement& element,
         break;
     }
   }
-  // TODO: Add sorting to Vec.
-  if (sorted_static_fields.len() > 0u) {
-    std::sort(sorted_static_fields.as_mut_ptr(),
-              sorted_static_fields.as_mut_ptr() +
-                  sorted_static_fields.len().primitive_value,
-              [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
-                 const sus::Tuple<std::string_view, UniqueSymbol>& b) {
-                return a.get_ref<0>() < b.get_ref<0>();
-              });
-  }
-  if (sorted_fields.len() > 0u) {
-    std::sort(sorted_fields.as_mut_ptr(),
-              sorted_fields.as_mut_ptr() + sorted_fields.len().primitive_value,
-              [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
-                 const sus::Tuple<std::string_view, UniqueSymbol>& b) {
-                return a.get_ref<0>() < b.get_ref<0>();
-              });
-  }
+  sorted_static_fields.sort_unstable_by(
+      [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
+         const sus::Tuple<std::string_view, UniqueSymbol>& b) {
+        return a.get_ref<0>() <=> b.get_ref<0>();
+      });
+  sorted_fields.sort_unstable_by(
+      [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
+         const sus::Tuple<std::string_view, UniqueSymbol>& b) {
+        return a.get_ref<0>() <=> b.get_ref<0>();
+      });
 
   generate_record_fields(mref(record_div), element, true,
                          sorted_static_fields.as_ref());
