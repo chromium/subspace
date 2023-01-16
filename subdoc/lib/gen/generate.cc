@@ -118,9 +118,9 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
           name_span.write_text(c.name);
         }
         {
-          auto name_span = type_sig_div.open_span();
-          name_span.add_class("record-body");
-          name_span.write_text("{<br />}");
+          auto record_body_div = type_sig_div.open_div();
+          record_body_div.add_class("record-body");
+          record_body_div.write_text("{ /* body omitted */ }");
         }
       }
       {
@@ -204,8 +204,7 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
             }
             {
               auto field_type_span = field_div.open_span();
-              field_type_span.add_class("field");
-              field_type_span.add_class("name");
+              field_type_span.add_class("field-name");
               field_type_span.write_text(fe.name);
             }
             {
@@ -254,8 +253,7 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
             }
             {
               auto field_type_span = field_div.open_span();
-              field_type_span.add_class("field");
-              field_type_span.add_class("name");
+              field_type_span.add_class("field-name");
               field_type_span.write_text(fe.name);
             }
             {
