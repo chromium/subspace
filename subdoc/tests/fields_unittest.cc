@@ -23,7 +23,7 @@ TEST_F(SubDocTest, Field) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_field_comment(db, "3:7", "/// Comment headline"));
+  EXPECT_TRUE(has_field_comment(db, "3:7", "Comment headline"));
 }
 
 TEST_F(SubDocTest, StaticField) {
@@ -35,7 +35,7 @@ TEST_F(SubDocTest, StaticField) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_field_comment(db, "3:7", "/// Comment headline"));
+  EXPECT_TRUE(has_field_comment(db, "3:7", "Comment headline"));
 }
 
 TEST_F(SubDocTest, PrivateField) {

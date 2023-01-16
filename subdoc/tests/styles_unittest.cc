@@ -22,7 +22,7 @@ TEST_F(SubDocTest, Mixed) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "/// Comment headline"));
+  EXPECT_TRUE(has_record_comment(db, "2:5", "Comment headline"));
 }
 
 TEST_F(SubDocTest, CppStyle) {
@@ -42,7 +42,7 @@ TEST_F(SubDocTest, JavaDocStyle) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "/** Comment headline */"));
+  EXPECT_TRUE(has_record_comment(db, "2:5", "Comment headline"));
 }
 
 TEST_F(SubDocTest, JavaDocStyleBody) {
@@ -55,5 +55,5 @@ TEST_F(SubDocTest, JavaDocStyleBody) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "/** Comment headline\n"));
+  EXPECT_TRUE(has_record_comment(db, "2:5", "Comment headline"));
 }

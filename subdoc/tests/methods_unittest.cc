@@ -23,7 +23,7 @@ TEST_F(SubDocTest, Method) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_method_comment(db, "3:7", "/// Comment headline"));
+  EXPECT_TRUE(has_method_comment(db, "3:7", "Comment headline"));
 }
 
 TEST_F(SubDocTest, MethodOverload) {
@@ -37,8 +37,8 @@ TEST_F(SubDocTest, MethodOverload) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_method_comment(db, "3:7", "/// Comment headline 1"));
-  EXPECT_TRUE(has_method_comment(db, "5:7", "/// Comment headline 2"));
+  EXPECT_TRUE(has_method_comment(db, "3:7", "Comment headline 1"));
+  EXPECT_TRUE(has_method_comment(db, "5:7", "Comment headline 2"));
 }
 
 TEST_F(SubDocTest, MethodOverloadRequires) {
@@ -56,8 +56,8 @@ TEST_F(SubDocTest, MethodOverloadRequires) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_method_comment(db, "7:7", "/// Comment headline 1"));
-  EXPECT_TRUE(has_method_comment(db, "9:7", "/// Comment headline 2"));
+  EXPECT_TRUE(has_method_comment(db, "7:7", "Comment headline 1"));
+  EXPECT_TRUE(has_method_comment(db, "9:7", "Comment headline 2"));
 }
 
 TEST_F(SubDocTest, MethodTemplateOverloadRequires) {
@@ -76,6 +76,6 @@ TEST_F(SubDocTest, MethodTemplateOverloadRequires) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_method_comment(db, "6:7", "/// Comment headline 1"));
-  EXPECT_TRUE(has_method_comment(db, "9:7", "/// Comment headline 2"));
+  EXPECT_TRUE(has_method_comment(db, "6:7", "Comment headline 1"));
+  EXPECT_TRUE(has_method_comment(db, "9:7", "Comment headline 2"));
 }

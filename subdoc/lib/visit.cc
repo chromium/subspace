@@ -64,14 +64,14 @@ static clang::RawComment* get_raw_comment(clang::Decl* decl) {
 }
 
 static Comment make_db_comment(const DiagnosticIds& diag_ids, clang::Decl* decl,
-                               clang::RawComment* raw) noexcept {
+                               const clang::RawComment* raw) noexcept {
   auto& ast_cx = decl->getASTContext();
   auto& src_manager = ast_cx.getSourceManager();
   if (raw) {
-    sus::result::Result<llvm::StringRef, ParseCommentError> comment_result =
-        parse_comment(ast_cx, raw);
+    sus::result::Result<std::string, ParseCommentError> comment_result =
+        parse_comment(ast_cx, *raw);
     if (comment_result.is_ok()) {
-      return Comment(std::string(sus::move(comment_result).unwrap()),
+      return Comment(sus::move(comment_result).unwrap(),
                      raw->getBeginLoc().printToString(src_manager));
     }
     ast_cx.getDiagnostics()
