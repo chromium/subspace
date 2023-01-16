@@ -54,6 +54,9 @@ class Slice {
   /// Returns the number of elements in the slice.
   constexpr inline usize len() const& noexcept { return len_; }
 
+  /// Returns true if the slice has a length of 0.
+  constexpr inline bool is_empty() const& noexcept { return len_ == 0u; }
+
   /// Returns a const reference to the element at index `i`.
   constexpr Option<const T&> get_ref(usize i) const& noexcept {
     if (i < len_) [[likely]]
