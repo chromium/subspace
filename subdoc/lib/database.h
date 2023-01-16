@@ -18,6 +18,7 @@
 
 #include "subdoc/lib/friendly_names.h"
 #include "subdoc/lib/path.h"
+#include "subdoc/lib/record_type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
 #include "subspace/choice/choice.h"
@@ -108,8 +109,6 @@ struct FieldElement : public CommentElement {
 };
 
 struct RecordElement : public CommentElement {
-  enum RecordType { Class, Struct, Union };
-
   explicit RecordElement(sus::Vec<Namespace> containing_namespaces,
                          Comment comment, std::string name,
                          sus::Vec<std::string> record_path,

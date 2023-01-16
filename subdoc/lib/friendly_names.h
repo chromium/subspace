@@ -17,11 +17,14 @@
 #include <sstream>
 #include <string>
 
+#include "subdoc/lib/record_type.h"
 #include "subdoc/llvm.h"
+#include "subspace/assertions/unreachable.h"
+#include "subspace/prelude.h"
 
 namespace subdoc {
 
-inline std::string friendly_function_name(clang::FunctionDecl& decl) {
+inline std::string friendly_function_name(clang::FunctionDecl& decl) noexcept {
   std::ostringstream s;
   if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(&decl)) {
     s << mdecl->getThisType().getCanonicalType().getAsString();
@@ -56,11 +59,21 @@ inline std::string friendly_function_name(clang::FunctionDecl& decl) {
   return s.str();
 }
 
-inline std::string friendly_type_name(const clang::QualType& type) {
+inline std::string friendly_type_name(const clang::QualType& type) noexcept {
   clang::QualType unqualified = type.getUnqualifiedType();
   // Clang writes booleans as "_Bool".
   if (unqualified->isBooleanType()) return "bool";
   return unqualified.getAsString();
+}
+
+inline std::string friendly_record_type_name(RecordType t,
+                                             bool capitalize) noexcept {
+  switch (t) {
+    case RecordType::Class: return capitalize ? "Class" : "class";
+    case RecordType::Struct: return capitalize ? "Struct" : "struct";
+    case RecordType::Union: return capitalize ? "Union" : "union";
+  }
+  sus::unreachable_unchecked(unsafe_fn);
 }
 
 }  // namespace subdoc

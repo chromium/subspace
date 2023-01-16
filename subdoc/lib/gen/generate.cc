@@ -40,8 +40,9 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
   std::filesystem::remove_all(options.output_root);
 
   for (const auto& [u, c] : db.global.records) {
-    std::filesystem::path path = options.output_root;
-    path.append([&]() {
+    const std::filesystem::path path = [&]() {
+      std::filesystem::path p = options.output_root;
+
       std::string fname;
       // TODO: Add Iterator::reverse.
       for (const auto& n : c.namespace_path.iter() /*.reverse()*/) {
@@ -63,8 +64,9 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
       }
       fname += c.name;
       fname += ".html";
-      return fname;
-    }());
+      p.append(sus::move(fname));
+      return p;
+    }();
 
     std::filesystem::create_directories(path.parent_path());
     std::ofstream out = open_file_for_writing(path).unwrap();
@@ -85,33 +87,41 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
     {
       auto type_div = body.open_div();
       type_div.add_class("type");
-      switch (c.record_type) {
-        case RecordElement::Class: {
-          auto class_span = type_div.open_span();
-          class_span.add_class("type");
-          class_span.add_class("class");
-          class_span.write_text("class");
-          break;
+      {
+        auto record_header_div = type_div.open_div();
+        record_header_div.add_class("section-header");
+        record_header_div.add_class("type");
+        {
+          auto record_type_span = record_header_div.open_span();
+          record_type_span.write_text(
+              friendly_record_type_name(c.record_type, true));
         }
-        case RecordElement::Struct: {
-          auto struct_span = type_div.open_span();
-          struct_span.add_class("type");
-          struct_span.add_class("struct");
-          struct_span.write_text("struct");
-          break;
-        }
-        case RecordElement::Union: {
-          auto struct_span = type_div.open_span();
-          struct_span.add_class("type");
-          struct_span.add_class("union");
-          struct_span.write_text("union");
-          break;
+        {
+          auto name_span = record_header_div.open_span();
+          name_span.add_class("type-name");
+          name_span.write_text(c.name);
         }
       }
       {
-        auto name_span = type_div.open_span();
-        name_span.add_class("typename");
-        name_span.write_text(c.name);
+        auto type_sig_div = type_div.open_div();
+        type_sig_div.add_class("type-signature");
+        {
+          auto record_type_span = type_sig_div.open_span();
+          std::string record_type_name =
+              friendly_record_type_name(c.record_type, false);
+          record_type_span.add_class(record_type_name);
+          record_type_span.write_text(record_type_name);
+        }
+        {
+          auto name_span = type_sig_div.open_span();
+          name_span.add_class("type-name");
+          name_span.write_text(c.name);
+        }
+        {
+          auto name_span = type_sig_div.open_span();
+          name_span.add_class("record-body");
+          name_span.write_text("{<br />}");
+        }
       }
       {
         auto desc_div = type_div.open_div();
@@ -159,7 +169,7 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
         section_div.add_class("section");
         {
           auto fields_header_div = section_div.open_div();
-          fields_header_div.add_class("header");
+          fields_header_div.add_class("section-header");
           fields_header_div.add_class("fields");
           fields_header_div.add_class("static");
           fields_header_div.write_text("Static Data Members");
@@ -189,7 +199,7 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
             }
             {
               auto field_type_span = field_div.open_span();
-              field_type_span.add_class("type");
+              field_type_span.add_class("type-name");
               field_type_span.write_text(fe.type_name);
             }
             {
@@ -214,7 +224,7 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
         section_div.add_class("section");
         {
           auto fields_header_div = section_div.open_div();
-          fields_header_div.add_class("header");
+          fields_header_div.add_class("section-header");
           fields_header_div.add_class("fields");
           fields_header_div.add_class("nonstatic");
           fields_header_div.write_text("Data Members");
@@ -239,7 +249,7 @@ void generate(const subdoc::Database& db, const subdoc::gen::Options& options) {
             }
             {
               auto field_type_span = field_div.open_span();
-              field_type_span.add_class("type");
+              field_type_span.add_class("type-name");
               field_type_span.write_text(fe.type_name);
             }
             {
