@@ -15,7 +15,9 @@
 #include "subdoc/lib/visit.h"
 
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/path.h"
+#include "subdoc/lib/record_type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/prelude.h"
@@ -28,10 +30,13 @@ struct DiagnosticIds {
         .superceded_comment = ast_cx.getDiagnostics().getCustomDiagID(
             clang::DiagnosticsEngine::Error,
             "ignored API comment, superceded by comment at %0"),
+        .malformed_comment = ast_cx.getDiagnostics().getCustomDiagID(
+            clang::DiagnosticsEngine::Error, "malformed API comment: %0"),
     };
   }
 
   const unsigned int superceded_comment;
+  const unsigned int malformed_comment;
 };
 
 static bool should_skip_decl(clang::Decl* decl) {
@@ -58,16 +63,22 @@ static clang::RawComment* get_raw_comment(clang::Decl* decl) {
   return decl->getASTContext().getRawCommentForDeclNoCache(decl);
 }
 
-static Comment make_db_comment(clang::Decl* decl,
+static Comment make_db_comment(const DiagnosticIds& diag_ids, clang::Decl* decl,
                                clang::RawComment* raw) noexcept {
   auto& ast_cx = decl->getASTContext();
   auto& src_manager = ast_cx.getSourceManager();
   if (raw) {
-    return Comment(std::string(raw->getRawText(src_manager)),
-                   raw->getBeginLoc().printToString(src_manager));
-  } else {
-    return Comment();
+    sus::result::Result<llvm::StringRef, ParseCommentError> comment_result =
+        parse_comment(ast_cx, raw);
+    if (comment_result.is_ok()) {
+      return Comment(std::string(sus::move(comment_result).unwrap()),
+                     raw->getBeginLoc().printToString(src_manager));
+    }
+    ast_cx.getDiagnostics()
+        .Report(raw->getBeginLoc(), diag_ids.malformed_comment)
+        .AddString(sus::move(comment_result).unwrap_err().message);
   }
+  return Comment();
 }
 
 static clang::SourceLocation raw_comment_loc(
@@ -100,16 +111,17 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    RecordElement::RecordType type = [&]() {
-      if (decl->isStruct()) return RecordElement::Struct;
-      if (decl->isUnion()) return RecordElement::Union;
-      return RecordElement::Class;
+    RecordType type = [&]() {
+      if (decl->isStruct()) return RecordType::Struct;
+      if (decl->isUnion()) return RecordType::Union;
+      return RecordType::Class;
     }();
 
     // TODO: collect_record_path() too.
-    auto ce = RecordElement(
-        collect_namespace_path(decl), make_db_comment(decl, raw_comment),
-        decl->getQualifiedNameAsString(), collect_record_path(decl), type);
+    auto ce = RecordElement(collect_namespace_path(decl),
+                            make_db_comment(diag_ids_, decl, raw_comment),
+                            decl->getQualifiedNameAsString(),
+                            collect_record_path(decl), type);
 
     if (clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
@@ -140,7 +152,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
     auto fe = FieldElement(collect_namespace_path(decl),
-                           make_db_comment(decl, raw_comment),
+                           make_db_comment(diag_ids_, decl, raw_comment),
                            std::string(decl->getName()), decl->getType(),
                            collect_record_path(decl->getParent()),
                            // Static data members are found in VisitVarDecl.
@@ -165,12 +177,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
     auto* record = clang::cast<clang::RecordDecl>(decl->getDeclContext());
-    auto fe = FieldElement(
-        collect_namespace_path(decl), make_db_comment(decl, raw_comment),
-        std::string(decl->getName()), decl->getType(),
-        collect_record_path(record),
-        // NonStatic data members are found in VisitFieldDecl.
-        FieldElement::Static);
+    auto fe =
+        FieldElement(collect_namespace_path(decl),
+                     make_db_comment(diag_ids_, decl, raw_comment),
+                     std::string(decl->getName()), decl->getType(),
+                     collect_record_path(record),
+                     // NonStatic data members are found in VisitFieldDecl.
+                     FieldElement::Static);
 
     if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
             clang::cast<clang::RecordDecl>(decl->getDeclContext()));
@@ -209,9 +222,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // TODO: The signature string should include the whole signature not just
     // the name.
     auto signature = decl->getQualifiedNameAsString();
-    auto fe = FunctionElement(
-        collect_namespace_path(decl), make_db_comment(decl, raw_comment),
-        decl->getQualifiedNameAsString(), sus::move(signature));
+    auto fe =
+        FunctionElement(collect_namespace_path(decl),
+                        make_db_comment(diag_ids_, decl, raw_comment),
+                        decl->getQualifiedNameAsString(), sus::move(signature));
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
@@ -284,9 +298,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       // Leave the existing comment in place, do nothing.
     } else {
       auto& ast_cx = decl->getASTContext();
-      auto& diagnostics_engine = ast_cx.getDiagnostics();
       const ElementT& old_element = it->second;
-      diagnostics_engine.Report(loc, diag_ids_.superceded_comment)
+      ast_cx.getDiagnostics()
+          .Report(loc, diag_ids_.superceded_comment)
           .AddString(old_element.comment.begin_loc);
     }
   }
