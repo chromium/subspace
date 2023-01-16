@@ -32,65 +32,75 @@ template <class T>
 class Slice;
 
 template <class Item>
-struct [[sus_trivial_abi]] SliceIter
-    : public ::sus::iter::IteratorBase<const Item&> {
+struct [[sus_trivial_abi]] SliceIter : public ::sus::iter::IteratorBase<Item> {
+  // `Item` is a `const T&`.
+  static_assert(std::is_reference_v<Item>);
+  static_assert(std::is_const_v<std::remove_reference_t<Item>>);
+  // `RawItem` is a `T`.
+  using RawItem = std::remove_const_t<std::remove_reference_t<Item>>;
+
  public:
-  static constexpr auto with(const Item* start, usize len) noexcept {
+  static constexpr auto with(const RawItem* start, usize len) noexcept {
     return ::sus::iter::Iterator<SliceIter>(start, len);
   }
 
-  Option<const Item&> next() noexcept final {
+  Option<Item> next() noexcept final {
     if (ptr_ == end_) [[unlikely]]
-      return Option<const Item&>::none();
+      return Option<Item>::none();
     // SAFETY: Since end_ > ptr_, which is checked in the constructor, ptr_ + 1
     // will never be null.
-    return Option<const Item&>::some(
-        *::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u));
+    return Option<Item>::some(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u));
   }
 
  protected:
-  constexpr SliceIter(const Item* start, usize len) noexcept
+  constexpr SliceIter(const RawItem* start, usize len) noexcept
       : ptr_(start), end_(start + len.primitive_value) {
     check(end_ >= ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
  private:
-  const Item* ptr_;
-  const Item* end_;
+  const RawItem* ptr_;
+  const RawItem* end_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ptr_),
-                                             decltype(end_));
+                                  decltype(end_));
 };
 
 template <class Item>
 struct [[sus_trivial_abi]] SliceIterMut
-    : public ::sus::iter::IteratorBase<Item&> {
+    : public ::sus::iter::IteratorBase<Item> {
+  // `Item` is a `const T&`.
+  static_assert(std::is_reference_v<Item>);
+  static_assert(!std::is_const_v<std::remove_reference_t<Item>>);
+  // `RawItem` is a `T`.
+  using RawItem = std::remove_reference_t<Item>;
+
  public:
-  static constexpr auto with(Item* start, usize len) noexcept {
+  static constexpr auto with(RawItem* start, usize len) noexcept {
     return ::sus::iter::Iterator<SliceIterMut>(start, len);
   }
 
-  Option<Item&> next() noexcept final {
+  Option<Item> next() noexcept final {
     if (ptr_ == end_) [[unlikely]]
-      return Option<Item&>::none();
+      return Option<Item>::none();
     // SAFETY: Since end_ > ptr_, which is checked in the constructor, ptr_ + 1
     // will never be null.
-    return Option<Item&>::some(
+    return Option<Item>::some(
         mref(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u)));
   }
 
  protected:
-  constexpr SliceIterMut(Item* start, usize len) noexcept
+  constexpr SliceIterMut(RawItem* start, usize len) noexcept
       : ptr_(start), end_(start + len.primitive_value) {
     check(end_ >= ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
  private:
-  Item* ptr_;
-  Item* end_;
+  RawItem* ptr_;
+  RawItem* end_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ptr_),
-                                             decltype(end_));
+                                  decltype(end_));
 };
 
 }  // namespace sus::containers

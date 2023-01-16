@@ -374,18 +374,19 @@ class Vec {
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
-  constexpr ::sus::iter::Iterator<SliceIter<T>> iter() const& noexcept {
+  constexpr ::sus::iter::Iterator<SliceIter<const T&>> iter() const& noexcept {
     check(!is_moved_from());
-    return SliceIter<T>::with(reinterpret_cast<const T*>(storage_), len_);
+    return SliceIter<const T&>::with(reinterpret_cast<const T*>(storage_),
+                                     len_);
   }
-  constexpr ::sus::iter::Iterator<SliceIter<T>> iter() && = delete;
+  constexpr ::sus::iter::Iterator<SliceIter<const T&>> iter() && = delete;
 
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives mutable access to
   /// each element.
-  constexpr ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() & noexcept {
+  constexpr ::sus::iter::Iterator<SliceIterMut<T&>> iter_mut() & noexcept {
     check(!is_moved_from());
-    return SliceIterMut<T>::with(reinterpret_cast<T*>(storage_), len_);
+    return SliceIterMut<T&>::with(reinterpret_cast<T*>(storage_), len_);
   }
 
   /// Converts the array into an iterator that consumes the array and returns
