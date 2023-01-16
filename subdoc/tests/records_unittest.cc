@@ -21,7 +21,7 @@ TEST_F(SubDocTest, Struct) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "/// Comment headline"));
+  EXPECT_TRUE(has_record_comment(db, "2:5", "Comment headline"));
 }
 
 TEST_F(SubDocTest, TemplateStruct) {
@@ -32,7 +32,7 @@ TEST_F(SubDocTest, TemplateStruct) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "/// Comment headline"));
+  EXPECT_TRUE(has_record_comment(db, "2:5", "Comment headline"));
 }
 
 TEST_F(SubDocTest, TemplateStructSpecialization) {
@@ -46,8 +46,8 @@ TEST_F(SubDocTest, TemplateStructSpecialization) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "/// Comment headline 1"));
-  EXPECT_TRUE(has_record_comment(db, "5:5", "/// Comment headline 2"));
+  EXPECT_TRUE(has_record_comment(db, "2:5", "Comment headline 1"));
+  EXPECT_TRUE(has_record_comment(db, "5:5", "Comment headline 2"));
 }
 
 TEST_F(SubDocTest, StructInNamedNamespace) {
@@ -59,7 +59,7 @@ TEST_F(SubDocTest, StructInNamedNamespace) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "3:5", "/// Comment headline"));
+  EXPECT_TRUE(has_record_comment(db, "3:5", "Comment headline"));
 }
 
 TEST_F(SubDocTest, StructInPrivateNamespace) {
@@ -112,8 +112,8 @@ TEST_F(SubDocTest, NestedStruct) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "/// Comment headline 1"));
-  EXPECT_TRUE(has_record_comment(db, "4:7", "/// Comment headline 2"));
+  EXPECT_TRUE(has_record_comment(db, "2:5", "Comment headline 1"));
+  EXPECT_TRUE(has_record_comment(db, "4:7", "Comment headline 2"));
 }
 
 TEST_F(SubDocTest, PrivateStruct) {
