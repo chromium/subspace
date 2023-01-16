@@ -19,6 +19,7 @@
 
 namespace subdoc::gen {
 
-void generate(const Database& db, const Options& options);
+void generate_record(const RecordElement& element,
+                     const Options& options) noexcept;
 
-}  // namespace subdoc::gen
+}
