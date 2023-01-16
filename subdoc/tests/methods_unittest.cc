@@ -31,8 +31,26 @@ TEST_F(SubDocTest, MethodOverload) {
     struct S {
       /// Comment headline 1
       void f(char) {}
-      /// Comment headline 2
       void f(int) {}
+
+      void g(char) {}
+      /// Comment headline 2
+      void g(int) {}
+    };
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_method_comment(db, "3:7", "Comment headline 1"));
+  EXPECT_TRUE(has_method_comment(db, "8:7", "Comment headline 2"));
+}
+
+TEST_F(SubDocTest, MethodOverloadWithStatic) {
+  auto result = run_code(R"(
+    struct S {
+      /// Comment headline 1
+      void f(char) {}
+      /// Comment headline 2
+      static void f(int) {}
     };
     )");
   ASSERT_TRUE(result.is_ok());
@@ -41,7 +59,46 @@ TEST_F(SubDocTest, MethodOverload) {
   EXPECT_TRUE(has_method_comment(db, "5:7", "Comment headline 2"));
 }
 
+TEST_F(SubDocTest, MethodOverloadDuplicate) {
+  auto result = run_code(R"(
+    struct S {
+      /// Comment headline 1
+      void f(char) {}
+      /// Comment headline 2
+      void f(int) {}
+    };
+    )");
+  ASSERT_TRUE(result.is_err());
+  auto diags = sus::move(result).unwrap_err();
+  ASSERT_EQ(diags.locations.len(), 1u);
+  // The 2nd comment on the same function causes an error we group overloads
+  // under a single comment and having two is ambiguous.
+  EXPECT_EQ(diags.locations[0u], "test.cc:5:7");
+}
+
 TEST_F(SubDocTest, MethodOverloadRequires) {
+  auto result = run_code(R"(
+    template <class A>
+    concept C = true;
+
+    template <class T>
+    struct S {
+      /// Comment headline 1
+      void f() requires(C<T>) {}
+      void f() requires(!C<T>) {}
+
+      void g() requires(C<T>) {}
+      /// Comment headline 2
+      void g() requires(!C<T>) {}
+    };
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_method_comment(db, "7:7", "Comment headline 1"));
+  EXPECT_TRUE(has_method_comment(db, "12:7", "Comment headline 2"));
+}
+
+TEST_F(SubDocTest, MethodOverloadRequiresDuplicate) {
   auto result = run_code(R"(
     template <class A>
     concept C = true;
@@ -54,13 +111,40 @@ TEST_F(SubDocTest, MethodOverloadRequires) {
       void f() requires(!C<T>) {}
     };
     )");
-  ASSERT_TRUE(result.is_ok());
-  subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_method_comment(db, "7:7", "Comment headline 1"));
-  EXPECT_TRUE(has_method_comment(db, "9:7", "Comment headline 2"));
+  ASSERT_TRUE(result.is_err());
+  auto diags = sus::move(result).unwrap_err();
+  ASSERT_EQ(diags.locations.len(), 1u);
+  // The 2nd comment on the same function causes an error we group overloads
+  // under a single comment and having two is ambiguous.
+  EXPECT_EQ(diags.locations[0u], "test.cc:9:7");
 }
 
 TEST_F(SubDocTest, MethodTemplateOverloadRequires) {
+  auto result = run_code(R"(
+    template <class A>
+    concept C = true;
+
+    struct S {
+      /// Comment headline 1
+      template <class D>
+      void f() requires(C<D>) {}
+      template <class D>
+      void f() requires(!C<D>) {}
+
+      template <class D>
+      void g() requires(C<D>) {}
+      /// Comment headline 2
+      template <class D>
+      void g() requires(!C<D>) {}
+    };
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_method_comment(db, "6:7", "Comment headline 1"));
+  EXPECT_TRUE(has_method_comment(db, "14:7", "Comment headline 2"));
+}
+
+TEST_F(SubDocTest, MethodTemplateOverloadRequiresDuplicate) {
   auto result = run_code(R"(
     template <class A>
     concept C = true;
@@ -74,8 +158,10 @@ TEST_F(SubDocTest, MethodTemplateOverloadRequires) {
       void f() requires(!C<D>) {}
     };
     )");
-  ASSERT_TRUE(result.is_ok());
-  subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_method_comment(db, "6:7", "Comment headline 1"));
-  EXPECT_TRUE(has_method_comment(db, "9:7", "Comment headline 2"));
+  ASSERT_TRUE(result.is_err());
+  auto diags = sus::move(result).unwrap_err();
+  ASSERT_EQ(diags.locations.len(), 1u);
+  // The 2nd comment on the same function causes an error we group overloads
+  // under a single comment and having two is ambiguous.
+  EXPECT_EQ(diags.locations[0u], "test.cc:9:7");
 }

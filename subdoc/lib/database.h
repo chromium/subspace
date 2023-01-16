@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 #include "subdoc/lib/friendly_names.h"
+#include "subdoc/lib/method_qualifier.h"
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/unique_symbol.h"
@@ -52,15 +53,41 @@ struct CommentElement {
   bool has_comment() const { return !comment.raw_text.empty(); }
 };
 
+struct MethodSpecific {
+  bool is_static;
+  bool is_volatile;
+  bool is_virtual;
+
+  // TODO: Find the Database element of the root ancestor virtual method,
+  // when this one is virtual, and link to it.
+
+  MethodQualifier qualifier;
+};
+
+struct FunctionOverload {
+  std::string signature;
+  sus::Option<MethodSpecific> method;
+
+  // TODO: `noexcept` stuff from FunctionDecl::getExceptionSpecType().
+};
+
 struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
                            Comment comment, std::string name,
-                           std::string signature)
+                           std::string signature,
+                           clang::QualType return_qual_type)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name)),
-        signature(sus::move(signature)) {}
+        return_type_name(friendly_type_name(return_qual_type)) {
+    overloads.push(FunctionOverload{
+        .signature = sus::move(signature),
+        .method = sus::none(),
+    });
+  }
 
-  std::string signature;
+  std::string return_type_name;
+
+  sus::Vec<FunctionOverload> overloads;
 
   bool has_any_comments() const noexcept { return has_comment(); }
 
@@ -108,6 +135,22 @@ struct FieldElement : public CommentElement {
   }
 };
 
+struct FunctionId {
+  FunctionId(std::string name, bool is_static)
+      : name(sus::move(name)), is_static(is_static) {}
+
+  std::string name;
+  bool is_static;
+
+  bool operator==(const FunctionId&) const = default;
+
+  struct Hash {
+    std::size_t operator()(const FunctionId& k) const {
+      return std::hash<std::string>()(k.name) ^ std::hash<bool>()(k.is_static);
+    }
+  };
+};
+
 struct RecordElement : public CommentElement {
   explicit RecordElement(sus::Vec<Namespace> containing_namespaces,
                          Comment comment, std::string name,
@@ -120,6 +163,8 @@ struct RecordElement : public CommentElement {
 
   // TODO: Template parameters and requires clause.
 
+  // TODO: Link to all base classes.
+
   /// The classes in which this class is nested.
   ///
   /// In this example, the class_path would be {S, R}.
@@ -129,13 +174,14 @@ struct RecordElement : public CommentElement {
   sus::Vec<std::string> class_path;
   sus::Vec<std::string> record_path;
   RecordType record_type;
+
   std::unordered_map<UniqueSymbol, RecordElement> records;
   std::unordered_map<UniqueSymbol, FieldElement> fields;
-  std::unordered_map<UniqueSymbol, FunctionElement> deductions;
-  std::unordered_map<UniqueSymbol, FunctionElement> ctors;
-  std::unordered_map<UniqueSymbol, FunctionElement> dtors;
-  std::unordered_map<UniqueSymbol, FunctionElement> conversions;
-  std::unordered_map<UniqueSymbol, FunctionElement> methods;
+  std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> deductions;
+  std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> ctors;
+  std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> dtors;
+  std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> conversions;
+  std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> methods;
 
   bool has_any_comments() const noexcept {
     if (has_comment()) return true;
@@ -210,7 +256,7 @@ struct NamespaceElement : public CommentElement {
   Namespace namespace_name;
   std::unordered_map<UniqueSymbol, NamespaceElement> namespaces;
   std::unordered_map<UniqueSymbol, RecordElement> records;
-  std::unordered_map<UniqueSymbol, FunctionElement> functions;
+  std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> functions;
 
   bool has_any_comments() const noexcept {
     if (has_comment()) return true;

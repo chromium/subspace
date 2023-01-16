@@ -17,6 +17,7 @@
 #include <sstream>
 #include <string>
 
+#include "subdoc/lib/method_qualifier.h"
 #include "subdoc/lib/record_type.h"
 #include "subdoc/llvm.h"
 #include "subspace/assertions/unreachable.h"

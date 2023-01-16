@@ -14,6 +14,8 @@
 
 #include "subdoc/lib/gen/generate_record.h"
 
+#include <sstream>
+
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/files.h"
 #include "subdoc/lib/gen/generate_head.h"
@@ -64,7 +66,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
     {
       auto record_body_div = type_sig_div.open_div();
       record_body_div.add_class("record-body");
-      record_body_div.write_text("{ /* body omitted */ }");
+      record_body_div.write_text("{ ... };");
     }
   }
   {
@@ -120,16 +122,130 @@ void generate_record_fields(
       }
       {
         auto field_name_anchor = field_div.open_a();
-        std::string anchor =
-            std::string("field.") +
-            (static_fields ? std::string("static.") : std::string()) + fe.name;
-        field_name_anchor.add_name(anchor);
-        field_name_anchor.add_href(std::string("#") + anchor);
+        std::ostringstream anchor;
+        anchor << "field.";
+        anchor << (static_fields ? "static." : "");
+        anchor << fe.name;
+        field_name_anchor.add_name(anchor.str());
+        field_name_anchor.add_href(std::string("#") + anchor.str());
         field_name_anchor.add_class("field-name");
         field_name_anchor.write_text(fe.name);
       }
       {
         auto desc_div = field_div.open_div();
+        desc_div.add_class("description");
+        if (fe.has_comment()) {
+          desc_div.write_text(fe.comment.raw_text);
+        }
+      }
+    }
+  }
+}
+
+void generate_record_methods(
+    HtmlWriter::OpenDiv& record_div, const RecordElement& element,
+    bool static_methods,
+    sus::Slice<const sus::Tuple<std::string_view, const FunctionId&>> methods) {
+  if (methods.is_empty()) return;
+
+  auto section_div = record_div.open_div();
+  section_div.add_class("section");
+  section_div.add_class("methods");
+  section_div.add_class(static_methods ? "static" : "nonstatic");
+
+  {
+    auto methods_header_div = section_div.open_div();
+    methods_header_div.add_class("section-header");
+    methods_header_div.write_text(static_methods ? "Static Methods"
+                                                 : "Methods");
+  }
+  {
+    for (auto&& [name, method_id] : methods) {
+      const FunctionElement& fe = element.methods.at(method_id);
+
+      auto method_div = section_div.open_div();
+      method_div.add_class("section-item");
+
+      for (const FunctionOverload& overload : fe.overloads) {
+        auto overload_div = method_div.open_div();
+        overload_div.add_class("overload");
+
+        if (static_methods) {
+          auto static_span = overload_div.open_span();
+          static_span.add_class("static");
+          static_span.write_text("static");
+        }
+        {
+          auto return_type_span = overload_div.open_span();
+          return_type_span.add_class("type-name");
+          return_type_span.write_text(fe.return_type_name);
+        }
+        {
+          auto method_name_anchor = overload_div.open_a();
+          std::ostringstream anchor;
+          anchor << "method.";
+          anchor << (static_methods ? "static." : "");
+          anchor << fe.name;
+          method_name_anchor.add_name(anchor.str());
+          method_name_anchor.add_href(std::string("#") + anchor.str());
+          method_name_anchor.add_class("method-name");
+          method_name_anchor.write_text(fe.name);
+        }
+        {
+          auto params_span = overload_div.open_span();
+          params_span.add_class("method-params");
+          // TODO: Write params.
+          params_span.write_text("()");
+        }
+        if (overload.method->is_volatile) {
+          auto volatile_span = overload_div.open_span();
+          volatile_span.add_class("volatile");
+          volatile_span.write_text("volatile");
+        }
+        {
+          switch (overload.method->qualifier) {
+            case MethodQualifier::Const: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("const");
+              qualifier_span.write_text("const");
+              break;
+            }
+            case MethodQualifier::ConstLValue: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("const");
+              qualifier_span.add_class("ref");
+              qualifier_span.write_text("const&");
+              break;
+            }
+            case MethodQualifier::ConstRValue: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("const");
+              qualifier_span.add_class("rref");
+              qualifier_span.write_text("const&&");
+              break;
+            }
+            case MethodQualifier::Mutable: {
+              break;
+            }
+            case MethodQualifier::MutableLValue: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("mutable");
+              qualifier_span.add_class("ref");
+              qualifier_span.write_text("&");
+              break;
+            }
+            case MethodQualifier::MutableRValue: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("mutable");
+              qualifier_span.add_class("rref");
+              qualifier_span.write_text("&&");
+              break;
+            }
+          }
+        }
+      }
+      {
+        auto desc_div = method_div.open_div();
         desc_div.add_class("description");
         if (fe.has_comment()) {
           desc_div.write_text(fe.comment.raw_text);
@@ -161,13 +277,13 @@ void generate_record(const RecordElement& element,
 
   sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> sorted_static_fields;
   sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> sorted_fields;
-  for (const auto& [field_symbol, field_element] : element.fields) {
+  for (const auto& [symbol, field_element] : element.fields) {
     switch (field_element.is_static) {
       case FieldElement::Static:
-        sorted_static_fields.push(sus::tuple(field_element.name, field_symbol));
+        sorted_static_fields.push(sus::tuple(field_element.name, symbol));
         break;
       case FieldElement::NonStatic:
-        sorted_fields.push(sus::tuple(field_element.name, field_symbol));
+        sorted_fields.push(sus::tuple(field_element.name, symbol));
         break;
     }
   }
@@ -186,6 +302,31 @@ void generate_record(const RecordElement& element,
                          sorted_static_fields.as_ref());
   generate_record_fields(mref(record_div), element, false,
                          sorted_fields.as_ref());
+
+  sus::Vec<sus::Tuple<std::string_view, const FunctionId&>> sorted_static_methods;
+  sus::Vec<sus::Tuple<std::string_view, const FunctionId&>> sorted_methods;
+  for (const auto& [method_id, method_element] : element.methods) {
+    if (method_id.is_static) {
+      sorted_static_methods.push(sus::tuple(method_element.name, method_id));
+    } else {
+      sorted_methods.push(sus::tuple(method_element.name, method_id));
+    }
+  }
+  sorted_static_methods.sort_unstable_by(
+      [](const sus::Tuple<std::string_view, const FunctionId&>& a,
+         const sus::Tuple<std::string_view, const FunctionId&>& b) {
+        return a.get_ref<0>() <=> b.get_ref<0>();
+      });
+  sorted_methods.sort_unstable_by(
+      [](const sus::Tuple<std::string_view, const FunctionId&>& a,
+         const sus::Tuple<std::string_view, const FunctionId&>& b) {
+        return a.get_ref<0>() <=> b.get_ref<0>();
+      });
+
+  generate_record_methods(mref(record_div), element, true,
+                          sorted_static_methods.as_ref());
+  generate_record_methods(mref(record_div), element, false,
+                          sorted_methods.as_ref());
 }
 
 }  // namespace subdoc::gen

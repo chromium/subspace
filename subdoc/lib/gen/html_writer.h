@@ -28,7 +28,6 @@ struct HtmlAttribute {
 
 class HtmlWriter {
  public:
-  template <class T>
   class [[nodiscard]] Html {
    public:
     void add_class(std::string_view c) noexcept {
@@ -37,7 +36,7 @@ class HtmlWriter {
 
     void write_text(std::string_view text) noexcept {
       write_open();
-      writer_.write_text(text);
+      writer_.write_text(text, /*has_newlines=*/has_newlines_);
     }
 
     auto open_div() noexcept {
@@ -61,13 +60,14 @@ class HtmlWriter {
     HtmlWriter& writer_;
     sus::Vec<std::string> classes_;
     bool wrote_open_ = false;
+    bool has_newlines_ = true;
   };
 
-  class [[nodiscard]] OpenA : public Html<OpenA> {
+  class [[nodiscard]] OpenA : public Html {
    public:
     ~OpenA() noexcept {
       write_open();
-      writer_.write_close("a");
+      writer_.write_close("a", /*has_newlines=*/false);
     }
 
     void add_href(std::string_view href) {
@@ -85,11 +85,12 @@ class HtmlWriter {
 
    private:
     friend HtmlWriter;
-    OpenA(HtmlWriter& writer) noexcept : Html(writer) {}
+    OpenA(HtmlWriter& writer) noexcept : Html(writer) { has_newlines_ = false; }
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("a", classes_.iter(), attributes_.iter());
+        writer_.write_open("a", classes_.iter(), attributes_.iter(),
+                           /*has_newlines=*/false);
         wrote_open_ = true;
       }
     }
@@ -97,7 +98,7 @@ class HtmlWriter {
     sus::Vec<HtmlAttribute> attributes_;
   };
 
-  class [[nodiscard]] OpenDiv : public Html<OpenDiv> {
+  class [[nodiscard]] OpenDiv : public Html {
    public:
     ~OpenDiv() noexcept {
       write_open();
@@ -117,7 +118,7 @@ class HtmlWriter {
     }
   };
 
-  class [[nodiscard]] OpenSpan : public Html<OpenSpan> {
+  class [[nodiscard]] OpenSpan : public Html {
    public:
     ~OpenSpan() noexcept {
       write_open();
@@ -137,7 +138,7 @@ class HtmlWriter {
     }
   };
 
-  class [[nodiscard]] OpenBody : public Html<OpenBody> {
+  class [[nodiscard]] OpenBody : public Html {
    public:
     ~OpenBody() noexcept {
       write_open();
@@ -157,7 +158,7 @@ class HtmlWriter {
     }
   };
 
-  class [[nodiscard]] OpenTitle : public Html<OpenTitle> {
+  class [[nodiscard]] OpenTitle : public Html {
    public:
     ~OpenTitle() noexcept {
       write_open();
@@ -177,7 +178,7 @@ class HtmlWriter {
     }
   };
 
-  class [[nodiscard]] OpenLink : public Html<OpenLink> {
+  class [[nodiscard]] OpenLink : public Html {
    public:
     ~OpenLink() noexcept {
       write_open();
@@ -213,7 +214,7 @@ class HtmlWriter {
     sus::Vec<HtmlAttribute> attributes_;
   };
 
-  class [[nodiscard]] OpenHead : public Html<OpenHead> {
+  class [[nodiscard]] OpenHead : public Html {
    public:
     ~OpenHead() noexcept {
       write_open();
@@ -261,9 +262,10 @@ class HtmlWriter {
   OpenTitle open_title() noexcept { return OpenTitle(*this); }
   OpenLink open_link() noexcept { return OpenLink(*this); }
 
-  void write_text(std::string_view text) noexcept {
-    write_indent();
-    stream_ << text << "\n";
+  void write_text(std::string_view text, bool has_newlines = true) noexcept {
+    if (has_newlines) write_indent();
+    stream_ << text;
+    if (has_newlines) stream_ << "\n";
   }
 
   // TODO: Add an Iterator<T> concept and use that to know what Item is here.
@@ -272,7 +274,8 @@ class HtmlWriter {
   void write_open(
       std::string_view type,
       sus::iter::Iterator<ClassIter<const std::string&>> classes_iter,
-      sus::iter::Iterator<AttrIter<const HtmlAttribute&>> attr_iter) noexcept {
+      sus::iter::Iterator<AttrIter<const HtmlAttribute&>> attr_iter,
+      bool has_newlines = true) noexcept {
     write_indent();
     stream_ << "<" << type;
     if (sus::Option<const std::string&> first_class = classes_iter.next();
@@ -286,13 +289,14 @@ class HtmlWriter {
     for (const HtmlAttribute& attr : attr_iter) {
       stream_ << " " << attr.name << "=\"" << attr.value << "\"";
     }
-    stream_ << ">\n";
+    stream_ << ">";
+    if (has_newlines) stream_ << "\n";
     indent_ += 2u;
   }
   void skip_close() noexcept { indent_ -= 2u; }
-  void write_close(std::string_view type) noexcept {
+  void write_close(std::string_view type, bool has_newlines = true) noexcept {
     indent_ -= 2u;
-    write_indent();
+    if (has_newlines) write_indent();
     stream_ << "</" << type << ">\n";
   }
   void write_indent() noexcept {
