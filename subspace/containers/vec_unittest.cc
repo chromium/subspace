@@ -656,4 +656,104 @@ TEST(Vec, CloneInto) {
   EXPECT_EQ(v1.capacity(), v2.capacity());
 }
 
+struct Sortable {
+  Sortable(i32 value, i32 unique) : value(value), unique(unique) {}
+
+  i32 value;
+  i32 unique;
+
+  friend bool operator==(const Sortable& a, const Sortable& b) noexcept {
+    return a.value == b.value && a.unique == b.unique;
+  }
+  friend auto operator<=>(const Sortable& a, const Sortable& b) noexcept {
+    return a.value <=> b.value;
+  }
+};
+
+TEST(Vec, Sort) {
+  // clang-format off
+  sus::Vec<Sortable> unsorted = sus::vec(
+    Sortable(3, 0),
+    Sortable(3, 1),
+    Sortable(4, 0),
+    Sortable(2, 0),
+    Sortable(2, 1),
+    Sortable(1, 0),
+    Sortable(3, 2),
+    Sortable(6, 0),
+    Sortable(5, 0)
+  );
+  sus::Vec<Sortable> sorted = sus::vec(
+    Sortable(1, 0),
+    Sortable(2, 0),
+    Sortable(2, 1),
+    Sortable(3, 0),
+    Sortable(3, 1),
+    Sortable(3, 2),
+    Sortable(4, 0),
+    Sortable(5, 0),
+    Sortable(6, 0)
+  );
+  // clang-format on
+
+  unsorted.sort();
+  for (usize i = 0u; i < unsorted.len(); i += 1u) {
+    EXPECT_EQ(sorted[i], unsorted[i]);
+  }
+}
+
+TEST(Vec, SortBy) {
+  // clang-format off
+  sus::Vec<Sortable> unsorted = sus::vec(
+    Sortable(3, 0),
+    Sortable(3, 1),
+    Sortable(4, 0),
+    Sortable(2, 0),
+    Sortable(2, 1),
+    Sortable(1, 0),
+    Sortable(3, 2),
+    Sortable(6, 0),
+    Sortable(5, 0)
+  );
+  sus::Vec<Sortable> sorted = sus::vec(
+    Sortable(6, 0),
+    Sortable(5, 0),
+    Sortable(4, 0),
+    Sortable(3, 0),
+    Sortable(3, 1),
+    Sortable(3, 2),
+    Sortable(2, 0),
+    Sortable(2, 1),
+    Sortable(1, 0)
+  );
+  // clang-format on
+
+  // Sorts backward.
+  unsorted.sort_by([](const auto& a, const auto& b) { return b <=> a; });
+  for (usize i = 0u; i < unsorted.len(); i += 1u) {
+    EXPECT_EQ(sorted[i], unsorted[i]);
+  }
+}
+
+TEST(Vec, SortUnstable) {
+  sus::Vec<i32> unsorted = sus::vec(3, 4, 2, 1, 6, 5);
+  sus::Vec<i32> sorted = sus::vec(1, 2, 3, 4, 5, 6);
+
+  unsorted.sort_unstable();
+  for (usize i = 0u; i < unsorted.len(); i += 1u) {
+    EXPECT_EQ(sorted[i], unsorted[i]);
+  }
+}
+
+TEST(Vec, SortUnstableBy) {
+  sus::Vec<i32> unsorted = sus::vec(3, 4, 2, 1, 6, 5);
+  sus::Vec<i32> sorted = sus::vec(6, 5, 4, 3, 2, 1);
+
+  // Sorts backward.
+  unsorted.sort_unstable_by(
+      [](const auto& a, const auto& b) { return b <=> a; });
+  for (usize i = 0u; i < unsorted.len(); i += 1u) {
+    EXPECT_EQ(sorted[i], unsorted[i]);
+  }
+}
 }  // namespace

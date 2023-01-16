@@ -35,6 +35,10 @@
 #include "subspace/option/option.h"
 #include "subspace/tuple/tuple.h"
 
+// TODO: sort_by_key()
+// TODO: sort_by_cached_key()
+// TODO: sort_unstable_by_key()
+
 namespace sus::containers {
 
 // TODO: Invalidate/drain iterators in every mutable method.
@@ -332,6 +336,28 @@ class Vec {
     check(!is_moved_from());
     check(i < len_);
     return get_unchecked_mut(::sus::marker::unsafe_fn, i);
+  }
+
+  /// #[doc.forward=Slice::sort]
+  void sort() { as_mut().sort(); }
+
+  /// #[doc.forward=Slice::sort_by]
+  template <class F, int&...,
+            class R = std::invoke_result_t<F, const T&, const T&>>
+    requires(::sus::ops::Ordering<R>)
+  void sort_by(F compare) {
+    as_mut().sort_by(sus::move(compare));
+  }
+
+  /// #[doc.forward=Slice::sort]
+  void sort_unstable() { as_mut().sort(); }
+
+  /// #[doc.forward=Slice::sort_by]
+  template <class F, int&...,
+            class R = std::invoke_result_t<F, const T&, const T&>>
+    requires(::sus::ops::Ordering<R>)
+  void sort_unstable_by(F compare) {
+    as_mut().sort_by(sus::move(compare));
   }
 
   /// Returns a const pointer to the first element in the vector.

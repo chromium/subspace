@@ -16,14 +16,21 @@
 
 #include <stdint.h>
 
+#include <algorithm>  // Replace std::sort.
 #include <concepts>
 
 #include "subspace/assertions/check.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/__private/slice_iter.h"
+#include "subspace/fn/callable.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/num/unsigned_integer.h"
+#include "subspace/ops/ord.h"
 #include "subspace/option/option.h"
+
+// TODO: sort_by_key()
+// TODO: sort_by_cached_key()
+// TODO: sort_unstable_by_key()
 
 namespace sus::containers {
 
@@ -114,6 +121,81 @@ class Slice {
   {
     check(i < len_);
     return data_[i.primitive_value];
+  }
+
+  /// Sorts the slice.
+  ///
+  /// This sort is stable (i.e., does not reorder equal elements) and O(n *
+  /// log(n)^2) worst-case.
+  ///
+  /// When applicable, unstable sorting is preferred because it is generally
+  /// faster than stable sorting and it doesn’t allocate auxiliary memory. See
+  /// `sort_unstable()`.
+  //
+  // TODO: Rust's stable sort is O(n * log(n)), so this can be improved.
+  void sort() noexcept
+    requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
+  {
+    if (len_ > 0_usize) {
+      std::stable_sort(data_, data_ + size_t{len_});
+    }
+  }
+
+  /// Sorts the slice with a comparator function.
+  ///
+  /// This sort is stable (i.e., does not reorder equal elements) and O(n *
+  /// log(n)^2) worst-case.
+  ///
+  /// The comparator function must define a total ordering for the elements in
+  /// the slice. If the ordering is not total, the order of the elements is
+  /// unspecified.
+  //
+  // TODO: Rust's stable sort is O(n * log(n)), so this can be improved.
+  template <class F, int&...,
+            class R = std::invoke_result_t<F, const T&, const T&>>
+    requires(::sus::ops::Ordering<R>)
+  void sort_by(F compare) noexcept
+    requires(!std::is_const_v<T>)
+  {
+    if (len_ > 0_usize) {
+      std::stable_sort(
+          data_, data_ + size_t{len_},
+          [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
+    }
+  }
+
+  /// Sorts the slice, but might not preserve the order of equal elements.
+  ///
+  /// This sort is unstable (i.e., may reorder equal elements), in-place (i.e.,
+  /// does not allocate), and O(n * log(n)) worst-case.
+  void sort_unstable() noexcept
+    requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
+  {
+    if (len_ > 0_usize) {
+      std::sort(data_, data_ + size_t{len_});
+    }
+  }
+
+  /// Sorts the slice with a comparator function, but might not preserve the
+  /// order of equal elements.
+  ///
+  /// This sort is unstable (i.e., may reorder equal elements), in-place (i.e.,
+  /// does not allocate), and O(n * log(n)) worst-case.
+  ///
+  /// The comparator function must define a total ordering for the elements in
+  /// the slice. If the ordering is not total, the order of the elements is
+  /// unspecified.
+  template <class F, int&...,
+            class R = std::invoke_result_t<F, const T&, const T&>>
+    requires(::sus::ops::Ordering<R>)
+  void sort_unstable_by(F compare) noexcept
+    requires(!std::is_const_v<T>)
+  {
+    if (len_ > 0_usize) {
+      std::sort(
+          data_, data_ + size_t{len_},
+          [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
+    }
   }
 
   /// Returns a const pointer to the first element in the slice.
