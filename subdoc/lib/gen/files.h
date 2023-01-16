@@ -18,6 +18,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "subspace/containers/slice.h"
 #include "subspace/iter/iterator.h"
 
 namespace subdoc::gen {
@@ -35,6 +36,36 @@ inline sus::Option<std::ofstream> open_file_for_writing(
   }
 
   return out;
+}
+
+inline std::filesystem::path construct_html_file_path(
+    std::filesystem::path root, sus::Slice<const Namespace> namespace_path,
+    sus::Slice<const std::string> class_path, std::string_view name) noexcept {
+  std::filesystem::path p = sus::move(root);
+
+  std::ostringstream fname;
+  // TODO: Add Iterator::reverse.
+  for (const auto& n : namespace_path.iter() /*.reverse()*/) {
+    switch (n) {
+      case Namespace::Tag::Global: break;
+      case Namespace::Tag::Anonymous:
+        fname << "anonymous";
+        fname << "-";
+        break;
+      case Namespace::Tag::Named:
+        fname << n.get_ref<Namespace::Tag::Named>();
+        fname << "-";
+        break;
+    }
+  }
+  // TODO: Add Iterator::reverse.
+  for (const auto& n : class_path.iter() /*.reverse()*/) {
+    fname << n + "-";
+  }
+  fname << name;
+  fname << ".html";
+  p.append(sus::move(fname).str());
+  return p;
 }
 
 }  // namespace subdoc::gen
