@@ -19,7 +19,9 @@
 namespace subdoc::gen {
 
 struct Options {
-  std::filesystem::path output_root;  // TODO: sus::Path type would be real nice.
+  // TODO: sus::Path type would be real nice.
+  std::filesystem::path output_root;
+  std::string default_stylesheet_path;
 };
 
 }  // namespace subdoc::gen

@@ -66,6 +66,7 @@ int main(int argc, const char** argv) {
   auto options = subdoc::gen::Options{
       // TODO: Make this configurable.
       .output_root = ".",
+      .default_stylesheet_path = "subdoc-default-style.css",
   };
   subdoc::gen::generate(docs_db, options);
   return 0;
