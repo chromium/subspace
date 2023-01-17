@@ -98,7 +98,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool shouldVisitLambdaBody() const { return false; }
 
   bool VisitStaticAssertDecl(clang::StaticAssertDecl*) noexcept {
-    //llvm::errs() << "StaticAssertDecl\n";
+    // llvm::errs() << "StaticAssertDecl\n";
     return true;
   }
 
@@ -126,6 +126,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ne),
                       mref(parent.namespaces));
     return true;
+  }
+
+  bool VisitClassTemplateDecl(clang::ClassTemplateDecl* tdecl) noexcept {
+    return VisitRecordDecl(tdecl->getTemplatedDecl());
   }
 
   bool VisitRecordDecl(clang::RecordDecl* decl) noexcept {
@@ -262,6 +266,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                               make_db_comment(diag_ids_, decl, raw_comment),
                               decl->getNameAsString(), sus::move(signature),
                               decl->getReturnType());
+
+    // TODO: Allow constructors to overload with different commments.
+    // Specifically, default cons, other cons, copy cons, move cons.
+
+    // TODO: It's possible to overload a method in a base class. What should we
+    // show then?
+
+    // TODO: Store what base class methods comes from so we can denote them
+    // as being inherited.
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));

@@ -428,9 +428,7 @@ struct Database {
       if (sus::Option<RecordElement&> parent_element =
               find_record_mut_impl(parent, ne);
           parent_element.is_some()) {
-        return sus::some(sus::move(parent_element)
-                             .unwrap()
-                             .records.at(unique_from_decl(rdecl)));
+        return sus::some(parent_element->records.at(unique_from_decl(rdecl)));
       } else {
         return sus::none();
       }
