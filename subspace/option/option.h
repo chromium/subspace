@@ -120,7 +120,6 @@ class Option final {
     return Option(t);
   }
 
-  /// Construct an Option that is holding the given value.
   static inline constexpr Option some(T&& t) noexcept
     requires(!std::is_reference_v<T>)
   {
@@ -133,7 +132,6 @@ class Option final {
     }
   }
 
-  /// Construct an Option that is holding the given value.
   static inline constexpr Option some(T t) noexcept
     requires(std::is_reference_v<T>)
   {
@@ -179,6 +177,8 @@ class Option final {
 
   /// Destructor for the Option.
   ///
+  /// Destroys the value contained within the option, if there is one.
+  ///
   /// If T can be trivially destroyed, we don't need to explicitly destroy it,
   /// so we can use the default destructor, which allows Option<T> to also be
   /// trivially destroyed.
@@ -186,9 +186,6 @@ class Option final {
     requires(std::is_trivially_destructible_v<T>)
   = default;
 
-  /// Destructor for the Option.
-  ///
-  /// Destroys the value contained within the option, if there is one.
   constexpr inline ~Option() noexcept
     requires(!std::is_trivially_destructible_v<T>)
   {
@@ -949,7 +946,15 @@ template <class T, class U>
 constexpr inline bool operator==(const Option<T>& l,
                                  const Option<U>& r) = delete;
 
-/// sus::ops::Ord<Option<U>> trait.
+/// Compares two options.
+///
+/// Satisfies sus::ops::Ord<Option<U>> if sus::ops::Ord<U>.
+/// Satisfies sus::ops::WeakOrd<Option<U>> if sus::ops::WeakOrd<U>.
+/// Satisfies sus::ops::PartialOrd<Option<U>> if sus::ops::PartialOrd<U>.
+//
+// sus::ops::Ord<Option<U>> trait.
+// sus::ops::WeakOrd<Option<U>> trait.
+// sus::ops::PartialOrd<Option<U>> trait.
 template <class T, class U>
   requires(::sus::ops::ExclusiveOrd<T, U>)
 constexpr inline auto operator<=>(const Option<T>& l,
@@ -971,7 +976,7 @@ constexpr inline auto operator<=>(const Option<T>& l,
   ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
-/// sus::ops::WeakOrd<Option<U>> trait.
+// sus::ops::WeakOrd<Option<U>> trait.
 template <class T, class U>
   requires(::sus::ops::ExclusiveWeakOrd<T, U>)
 constexpr inline auto operator<=>(const Option<T>& l,
@@ -993,7 +998,7 @@ constexpr inline auto operator<=>(const Option<T>& l,
   ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
 }
 
-/// sus::ops::PartialOrd<Option<U>> trait.
+// sus::ops::PartialOrd<Option<U>> trait.
 template <class T, class U>
   requires(::sus::ops::ExclusivePartialOrd<T, U>)
 constexpr inline auto operator<=>(const Option<T>& l,

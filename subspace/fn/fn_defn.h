@@ -332,7 +332,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
   FnMut(const FnMut&) noexcept = delete;
   FnMut& operator=(const FnMut&) noexcept = delete;
 
-  // Runs the closure.
+  /// Runs the closure.
   ///
   /// Arguments passed by value to the underlying callable object are always
   /// moved. Thus, a const reference, or a mutable lvalue reference will not be
@@ -458,18 +458,13 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
   Fn(const Fn&) noexcept = delete;
   Fn& operator=(const Fn&) noexcept = delete;
 
-  // Runs the closure.
+  /// Runs the closure.
   ///
   /// Arguments passed by value to the underlying callable object are always
   /// moved. Thus, a const reference, or a mutable lvalue reference will not be
   /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) const& noexcept;
 
-  // Runs and consumes the closure.
-  ///
-  /// Arguments passed by value to the underlying callable object are always
-  /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) && noexcept {
     return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
