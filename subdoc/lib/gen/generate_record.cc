@@ -70,7 +70,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
       record_body_div.write_text("{ ... };");
     }
   }
-  {
+  if (element.has_comment()) {
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.write_text(element.comment.raw_text);
@@ -132,12 +132,10 @@ void generate_record_fields(
         field_name_anchor.add_class("field-name");
         field_name_anchor.write_text(fe.name);
       }
-      {
+      if (fe.has_comment()) {
         auto desc_div = field_div.open_div();
         desc_div.add_class("description");
-        if (fe.has_comment()) {
-          desc_div.write_text(fe.comment.raw_text);
-        }
+        desc_div.write_text(fe.comment.raw_text);
       }
     }
   }

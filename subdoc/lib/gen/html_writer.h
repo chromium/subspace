@@ -263,9 +263,11 @@ class HtmlWriter {
   OpenLink open_link() noexcept { return OpenLink(*this); }
 
   void write_text(std::string_view text, bool has_newlines = true) noexcept {
-    if (has_newlines) write_indent();
-    stream_ << text;
-    if (has_newlines) stream_ << "\n";
+    if (!text.empty()) {
+      if (has_newlines) write_indent();
+      stream_ << text;
+      if (has_newlines) stream_ << "\n";
+    }
   }
 
   // TODO: Add an Iterator<T> concept and use that to know what Item is here.

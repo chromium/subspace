@@ -18,6 +18,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "subdoc/lib/database.h"
 #include "subspace/containers/slice.h"
 #include "subspace/iter/iterator.h"
 
@@ -66,6 +67,30 @@ inline std::filesystem::path construct_html_file_path(
   fname << ".html";
   p.append(sus::move(fname).str());
   return p;
+}
+
+inline std::filesystem::path construct_html_file_path_for_namespace(
+    std::filesystem::path root, const NamespaceElement& element) noexcept {
+  // The namespace path includes the namespace element itself, so drop
+  // that one.
+  sus::Slice<const Namespace> short_namespace_path =
+      element.namespace_path.as_ref()[{1u, element.namespace_path.len() - 1u}];
+
+  std::string file_name = [&]() {
+    if (element.namespace_name.which() == Namespace::Tag::Global) {
+      // We're generating the global namespace, which will go in
+      // `global-ns.html`. Namespaces can't be named `namespace` so this can't
+      // collide with a real namespace `global::namespace`.
+      return std::string("global-namespace");
+    } else {
+      // Otherwise, just use the local name of the namespace.
+      return element.name;
+    }
+  }();
+
+  return construct_html_file_path(root, short_namespace_path,
+                                  sus::Slice<const std::string>(),
+                                  sus::move(file_name));
 }
 
 }  // namespace subdoc::gen
