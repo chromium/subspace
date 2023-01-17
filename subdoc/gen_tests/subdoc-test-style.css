@@ -83,3 +83,6 @@ pre {
 .namespace .function-name {
     color: rgb(191, 142, 236);
 }
+.namespace .namespace-name {
+    color: rgb(142, 214, 236);
+}
