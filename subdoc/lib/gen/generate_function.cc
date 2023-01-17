@@ -44,7 +44,7 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
       return_type_span.write_text(element.return_type_name);
     }
     {
-      auto name_anchor = overload_div.open_a();
+      auto name_anchor = overload_div.open_a(HtmlWriter::SingleLine);
       std::ostringstream anchor;
       if (overload.method.is_some())
         anchor << "method.";

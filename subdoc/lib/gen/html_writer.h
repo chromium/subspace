@@ -28,6 +28,11 @@ struct HtmlAttribute {
 
 class HtmlWriter {
  public:
+  enum OptionalMultiLine {
+    SingleLine,
+    MultiLine,
+  };
+
   class [[nodiscard]] Html {
    public:
     void add_class(std::string_view c) noexcept {
@@ -47,9 +52,9 @@ class HtmlWriter {
       write_open();
       return writer_.open_span();
     }
-    auto open_a() noexcept {
+    auto open_a(OptionalMultiLine lines) noexcept {
       write_open();
-      return writer_.open_a();
+      return writer_.open_a(lines);
     }
 
    protected:
@@ -67,7 +72,7 @@ class HtmlWriter {
    public:
     ~OpenA() noexcept {
       write_open();
-      writer_.write_close("a", /*has_newlines=*/false);
+      writer_.write_close("a", has_newlines_);
     }
 
     void add_href(std::string_view href) {
@@ -85,12 +90,14 @@ class HtmlWriter {
 
    private:
     friend HtmlWriter;
-    OpenA(HtmlWriter& writer) noexcept : Html(writer) { has_newlines_ = false; }
+    OpenA(HtmlWriter& writer, OptionalMultiLine lines) noexcept : Html(writer) {
+      has_newlines_ = lines == MultiLine;
+    }
 
     void write_open() noexcept override {
       if (!wrote_open_) {
         writer_.write_open("a", classes_.iter(), attributes_.iter(),
-                           /*has_newlines=*/false);
+                           has_newlines_);
         wrote_open_ = true;
       }
     }
@@ -258,7 +265,9 @@ class HtmlWriter {
 
   OpenDiv open_div() noexcept { return OpenDiv(*this); }
   OpenSpan open_span() noexcept { return OpenSpan(*this); }
-  OpenA open_a() noexcept { return OpenA(*this); }
+  OpenA open_a(OptionalMultiLine lines) noexcept {
+    return OpenA(*this, lines);
+  }
   OpenTitle open_title() noexcept { return OpenTitle(*this); }
   OpenLink open_link() noexcept { return OpenLink(*this); }
 

@@ -43,7 +43,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
           friendly_record_type_name(element.record_type, true));
     }
     {
-      auto name_anchor = record_header_div.open_a();
+      auto name_anchor = record_header_div.open_a(HtmlWriter::SingleLine);
       name_anchor.add_href("#");
       name_anchor.add_class("type-name");
       name_anchor.write_text(element.name);
@@ -122,7 +122,7 @@ void generate_record_fields(
         field_type_span.write_text(fe.type_name);
       }
       {
-        auto field_name_anchor = field_div.open_a();
+        auto field_name_anchor = field_div.open_a(HtmlWriter::SingleLine);
         std::ostringstream anchor;
         anchor << "field.";
         anchor << (static_fields ? "static." : "");
@@ -239,6 +239,38 @@ void generate_record(const RecordElement& element,
                           sorted_static_methods.as_ref());
   generate_record_methods(mref(record_div), element, false,
                           sorted_methods.as_ref());
+}
+
+void generate_record_reference(HtmlWriter::OpenDiv& section_div,
+                               const RecordElement& element) noexcept {
+  auto item_div = section_div.open_div();
+  item_div.add_class("section-item");
+
+  {
+    auto type_sig_div = item_div.open_div();
+    type_sig_div.add_class("type-signature");
+
+    {
+      auto record_type_span = type_sig_div.open_span();
+      std::string record_type_name =
+          friendly_record_type_name(element.record_type, false);
+      record_type_span.add_class(record_type_name);
+      record_type_span.write_text(record_type_name);
+    }
+    {
+      auto name_link = type_sig_div.open_a(HtmlWriter::SingleLine);
+      name_link.add_href(std::string(construct_html_file_path(
+          std::filesystem::path(), element.namespace_path.as_ref(),
+          element.class_path.as_ref(), element.name)));
+      name_link.add_class("type-name");
+      name_link.write_text(element.name);
+    }
+  }
+  if (element.has_comment()) {
+    auto desc_div = item_div.open_div();
+    desc_div.add_class("description");
+    desc_div.write_text(element.comment.summary());
+  }
 }
 
 }  // namespace subdoc::gen

@@ -14,7 +14,7 @@ pre {
     margin-top: 1em;
     margin-bottom: 1em;
 }
-.section-header.fields {
+:is(.fields, .functions, .methods, .records, .namespaces) .section-header {
     padding-bottom: 0.2em;
     border-bottom: 1px solid;
 }
@@ -85,4 +85,7 @@ pre {
 }
 .namespace .namespace-name {
     color: rgb(142, 214, 236);
+}
+.namespace .type-name {
+    color: rgb(105, 223, 105);
 }
