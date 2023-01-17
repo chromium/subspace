@@ -279,6 +279,10 @@ struct NamespaceElement : public CommentElement {
       out = e.find_record_comment(comment_loc);
       if (out.is_some()) return out;
     }
+    for (const auto& [u, e] : namespaces) {
+      out = e.find_record_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
     return out;
   }
 

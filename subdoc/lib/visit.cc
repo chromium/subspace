@@ -135,10 +135,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }();
 
     // TODO: collect_record_path() too.
-    auto ce = RecordElement(
-        collect_namespace_path(decl),
-        make_db_comment(diag_ids_, decl, raw_comment), decl->getNameAsString(),
-        collect_record_path(decl), type);
+    auto ce =
+        RecordElement(collect_namespace_path(decl),
+                      make_db_comment(diag_ids_, decl, raw_comment),
+                      decl->getNameAsString(), collect_record_path(decl), type);
 
     if (clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
@@ -170,8 +170,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     auto fe = FieldElement(collect_namespace_path(decl),
                            make_db_comment(diag_ids_, decl, raw_comment),
-                           std::string(decl->getName()),
-                            decl->getType(),
+                           std::string(decl->getName()), decl->getType(),
                            collect_record_path(decl->getParent()),
                            // Static data members are found in VisitVarDecl.
                            FieldElement::NonStatic);
@@ -250,8 +249,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
     auto fe = FunctionElement(collect_namespace_path(decl),
                               make_db_comment(diag_ids_, decl, raw_comment),
-                              decl->getNameAsString(),
-                              sus::move(signature), decl->getReturnType());
+                              decl->getNameAsString(), sus::move(signature),
+                              decl->getReturnType());
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
@@ -327,7 +326,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       if (sus::Option<NamespaceElement&> parent =
               docs_db_.find_namespace_mut(find_nearest_namespace(decl));
           parent.is_some()) {
-        llvm::errs() << "Add fn to namespace " << parent->name << "\n";
         add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
                                     sus::move(fe), mref(parent->functions));
       }
@@ -385,8 +383,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (it == db_map.end()) {
       db_map.emplace(uniq, std::move(db_element));
     } else if (!it->second.has_comment()) {
-      db_map.erase(it);
-      db_map.emplace(uniq, std::move(db_element));
+      // Steal the comment.
+      sus::mem::swap(db_map.at(uniq).comment, db_element.comment);
     } else if (!db_element.has_comment()) {
       // Leave the existing comment in place, do nothing.
     } else {
