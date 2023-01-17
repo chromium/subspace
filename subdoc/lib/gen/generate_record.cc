@@ -18,6 +18,7 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/files.h"
+#include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
@@ -161,96 +162,8 @@ void generate_record_methods(
   }
   {
     for (auto&& [name, function_id] : methods) {
-      const FunctionElement& fe = element.methods.at(function_id);
-
-      auto method_div = section_div.open_div();
-      method_div.add_class("section-item");
-
-      for (const FunctionOverload& overload : fe.overloads) {
-        auto overload_div = method_div.open_div();
-        overload_div.add_class("overload");
-
-        if (static_methods) {
-          auto static_span = overload_div.open_span();
-          static_span.add_class("static");
-          static_span.write_text("static");
-        }
-        {
-          auto return_type_span = overload_div.open_span();
-          return_type_span.add_class("type-name");
-          return_type_span.write_text(fe.return_type_name);
-        }
-        {
-          auto method_name_anchor = overload_div.open_a();
-          std::ostringstream anchor;
-          anchor << "method.";
-          anchor << (static_methods ? "static." : "");
-          anchor << fe.name;
-          method_name_anchor.add_name(anchor.str());
-          method_name_anchor.add_href(std::string("#") + anchor.str());
-          method_name_anchor.add_class("function-name");
-          method_name_anchor.write_text(fe.name);
-        }
-        {
-          auto params_span = overload_div.open_span();
-          params_span.add_class("function-params");
-          // TODO: Write params.
-          params_span.write_text("()");
-        }
-        if (overload.method->is_volatile) {
-          auto volatile_span = overload_div.open_span();
-          volatile_span.add_class("volatile");
-          volatile_span.write_text("volatile");
-        }
-        {
-          switch (overload.method->qualifier) {
-            case MethodQualifier::Const: {
-              auto qualifier_span = overload_div.open_span();
-              qualifier_span.add_class("const");
-              qualifier_span.write_text("const");
-              break;
-            }
-            case MethodQualifier::ConstLValue: {
-              auto qualifier_span = overload_div.open_span();
-              qualifier_span.add_class("const");
-              qualifier_span.add_class("ref");
-              qualifier_span.write_text("const&");
-              break;
-            }
-            case MethodQualifier::ConstRValue: {
-              auto qualifier_span = overload_div.open_span();
-              qualifier_span.add_class("const");
-              qualifier_span.add_class("rref");
-              qualifier_span.write_text("const&&");
-              break;
-            }
-            case MethodQualifier::Mutable: {
-              break;
-            }
-            case MethodQualifier::MutableLValue: {
-              auto qualifier_span = overload_div.open_span();
-              qualifier_span.add_class("mutable");
-              qualifier_span.add_class("ref");
-              qualifier_span.write_text("&");
-              break;
-            }
-            case MethodQualifier::MutableRValue: {
-              auto qualifier_span = overload_div.open_span();
-              qualifier_span.add_class("mutable");
-              qualifier_span.add_class("rref");
-              qualifier_span.write_text("&&");
-              break;
-            }
-          }
-        }
-      }
-      {
-        auto desc_div = method_div.open_div();
-        desc_div.add_class("description");
-        if (fe.has_comment()) {
-          desc_div.write_text(fe.comment.raw_text);
-        }
-      }
+      generate_function(section_div, element.methods.at(function_id),
+                        static_methods);
     }
   }
 }
@@ -303,7 +216,8 @@ void generate_record(const RecordElement& element,
   generate_record_fields(mref(record_div), element, false,
                          sorted_fields.as_ref());
 
-  sus::Vec<sus::Tuple<std::string_view, const FunctionId&>> sorted_static_methods;
+  sus::Vec<sus::Tuple<std::string_view, const FunctionId&>>
+      sorted_static_methods;
   sus::Vec<sus::Tuple<std::string_view, const FunctionId&>> sorted_methods;
   for (const auto& [method_id, method_element] : element.methods) {
     if (method_id.is_static) {

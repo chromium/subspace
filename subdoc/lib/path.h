@@ -37,8 +37,44 @@ using Namespace = sus::Choice<sus_choice_types(
 )>;
 // clang-format on
 
+inline std::string namespace_with_path_to_string(
+    sus::Slice<const Namespace> path, const Namespace& tail) noexcept {
+  std::ostringstream s;
+  bool add_colons = false;
+
+  // TODO: Add Iterator::reverse() and use that here.
+  for (usize i = path.len(); i > 0u; i -= 1u) {
+    if (add_colons) s << "::";
+    const Namespace& n = path[i - 1u];
+    switch (n) {
+      case Namespace::Tag::Global: break;
+      case Namespace::Tag::Anonymous:
+        s << "(anonymous)";
+        add_colons = true;
+        break;
+      case Namespace::Tag::Named:
+        s << n.get_ref<Namespace::Tag::Named>();
+        add_colons = true;
+        break;
+    }
+  }
+
+  if (add_colons) s << "::";
+  switch (tail) {
+    case Namespace::Tag::Global: s << "Global namespace"; break;
+    case Namespace::Tag::Anonymous: s << "(anonymous)"; break;
+    case Namespace::Tag::Named:
+      s << tail.get_ref<Namespace::Tag::Named>();
+      break;
+  }
+
+  return s.str();
+}
+
 inline clang::NamespaceDecl* find_nearest_namespace(
     clang::Decl* decl) noexcept {
+  if (auto* ndecl = clang::dyn_cast<clang::NamespaceDecl>(decl)) return ndecl;
+
   clang::DeclContext* cx = decl->getDeclContext();
   while (cx) {
     if (auto* ndecl = clang::dyn_cast<clang::NamespaceDecl>(cx)) return ndecl;
@@ -111,9 +147,9 @@ inline bool path_is_private(clang::NamedDecl* decl) noexcept {
   clang::DeclContext* cx = decl->getDeclContext();
   while (cx) {
     if (auto* tdecl = clang::dyn_cast<clang::TagDecl>(cx)) {
-      // TODO: getAccess() can assert if it's not determined yet due to template
-      // instatiation being incomplete..? clang-doc uses getAccessUnsafe() which
-      // can give the wrong answer.
+      // TODO: getAccess() can assert if it's not determined yet due to
+      // template instatiation being incomplete..? clang-doc uses
+      // getAccessUnsafe() which can give the wrong answer.
       if (tdecl->getAccess() == clang::AccessSpecifier::AS_private) {
         return true;
       }

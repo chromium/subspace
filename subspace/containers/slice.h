@@ -123,6 +123,29 @@ class Slice {
     return data_[i.primitive_value];
   }
 
+  struct Range {
+    usize start;
+    usize len;
+  };
+  constexpr inline Slice<T> operator[](Range range) const noexcept {
+    return get_range(range.start, range.len).unwrap();
+  }
+
+  /// Returns a subslice which contains `len` many elements starting at `start`.
+  ///
+  /// The `start` is the index of the first element to be returned in the
+  /// subslice, and `len` is the number of elements in the output Slice.
+  /// As such, `r.get_range(0u, r.len())` simply returns a copy of
+  /// `r`.
+  ///
+  /// Returns None if the `start` or `end` are out of bounds.
+  constexpr Option<Slice<T>> get_range(usize start, usize len) const noexcept {
+    if (len > len_) return sus::none();  // Avoid underflow below.
+    // We allow start == len_ && end == len_, which returns an empty slice.
+    if (start > len_ || start > len_ - len) return sus::none();
+    return sus::some(Slice(data_ + size_t{start}, len));
+  }
+
   /// Sorts the slice.
   ///
   /// This sort is stable (i.e., does not reorder equal elements) and O(n *

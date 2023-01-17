@@ -1,10 +1,8 @@
 namespace n {
 
-struct S {};
-
 /// Function with overloads
 void multiple();
 void multiple(int);
-void multiple(S);
+void multiple(float);
 
 }  // namespace n

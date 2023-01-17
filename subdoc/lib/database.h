@@ -342,20 +342,15 @@ struct Database {
       clang::NamespaceDecl* ndecl) & noexcept {
     if (!ndecl) return sus::some(global);
 
-    if (auto* parent =
-            clang::dyn_cast<clang::NamespaceDecl>(ndecl->getParent())) {
-      sus::Option<NamespaceElement&> opt_parent_element =
-          find_namespace_mut(parent);
-      if (opt_parent_element.is_none()) return sus::none();
-      NamespaceElement& parent_element = sus::move(opt_parent_element).unwrap();
-      if (auto it = parent_element.namespaces.find(unique_from_decl(ndecl));
-          it != parent_element.namespaces.end()) {
-        return sus::some(it->second);
-      } else {
-        return sus::none();
-      }
+    sus::Option<NamespaceElement&> opt_parent_element = find_namespace_mut(
+        clang::dyn_cast<clang::NamespaceDecl>(ndecl->getParent()));
+    if (opt_parent_element.is_none()) return sus::none();
+    NamespaceElement& parent_element = sus::move(opt_parent_element).unwrap();
+    if (auto it = parent_element.namespaces.find(unique_from_decl(ndecl));
+        it != parent_element.namespaces.end()) {
+      return sus::some(it->second);
     } else {
-      return sus::some(global);
+      return sus::none();
     }
   }
   sus::Option<RecordElement&> find_record_mut(
