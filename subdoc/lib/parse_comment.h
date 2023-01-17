@@ -34,7 +34,17 @@ inline sus::result::Result<std::string, ParseCommentError> parse_comment(
 
   std::ostringstream parsed;
 
-  switch (raw.getKind()) {
+  clang::RawComment::CommentKind kind = raw.getKind();
+  if (kind == clang::RawComment::CommentKind::RCK_Merged) {
+    // We get RCK_Merged in a lot of cases though the comment is all `///`
+    // format (RCK_BCPLSlash).
+    if (text.starts_with("/// "))
+      kind = clang::RawComment::CommentKind::RCK_BCPLSlash;
+    if (text.starts_with("/** "))
+      kind = clang::RawComment::CommentKind::RCK_JavaDoc;
+  }
+
+  switch (kind) {
     case clang::RawComment::CommentKind::RCK_BCPLSlash:  // `/// Foo`
       [[fallthrough]];
     case clang::RawComment::CommentKind::RCK_JavaDoc: {  // `/** Foo`
@@ -54,10 +64,6 @@ inline sus::result::Result<std::string, ParseCommentError> parse_comment(
     case clang::RawComment::CommentKind::RCK_OrdinaryC:  // `/* Foo`
       // TODO: Conditionally collect these?
       break;
-    case clang::RawComment::CommentKind::RCK_Merged:  // More than one.
-      return sus::result::err(
-          ParseCommentError{.message = "Merged comment format?"});
-      break;
     case clang::RawComment::CommentKind::RCK_Qt:  // `/*! Foo`
       return sus::result::err(
           ParseCommentError{.message = "Invalid comment format `/*!`"});
@@ -68,6 +74,10 @@ inline sus::result::Result<std::string, ParseCommentError> parse_comment(
     case clang::RawComment::CommentKind::RCK_Invalid:  // `/* Foo`
       return sus::result::err(ParseCommentError{
           .message = "Invalid comment format, unable to parse"});
+    case clang::RawComment::CommentKind::RCK_Merged:  // More than one.
+      return sus::result::err(
+          ParseCommentError{.message = "Merged comment format?"});
+      break;
   }
 
   return sus::result::ok(parsed.str());

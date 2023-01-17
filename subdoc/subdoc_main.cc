@@ -65,7 +65,7 @@ int main(int argc, const char** argv) {
   subdoc::Database docs_db = sus::move(result).unwrap();
   auto options = subdoc::gen::Options{
       // TODO: Make this configurable.
-      .output_root = ".",
+      .output_root = "docs",
       .default_stylesheet_path = "subdoc-default-style.css",
   };
   subdoc::gen::generate(docs_db, options);
