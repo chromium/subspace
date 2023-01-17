@@ -201,7 +201,7 @@ auto make_storage(T&& t) {
   return std::decay_t<T>(forward<T>(t));
 }
 template <class T>
-auto make_storage(T* t) {
+auto make_storage(T*) {
   static_assert(!std::is_pointer_v<T*>,
                 "Can not store a pointer in sus_bind() except through "
                 "sus_unsafe_pointer().");
