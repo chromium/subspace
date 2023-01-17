@@ -19,17 +19,32 @@ pre {
     border-bottom: 1px solid;
 }
 
+.section-item {
+    margin-top: 0.75em;
+}
+
+.overload {
+    font-size: 0;  /* Hides the space between `method_name` and `()`. */
+}
+.overload>:is(div, span, a) {
+    font-size: 12pt;
+}
+
+.description {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    margin-left: 1em;
+}
+
 .type .overview .section-header .type-name {
     color: rgb(166, 240, 176);
 }
-
 .type .overview .type-signature {
     background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5em;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
 }
-
 .type .overview .type-signature .struct {
     color: rgb(130, 169, 243);
 }
@@ -41,10 +56,6 @@ pre {
 }
 .type .overview .type-signature .type-name {
     color: rgb(130, 221, 135);
-}
-
-.section-item {
-    margin-top: 0.75em;
 }
 
 .type .section:is(.fields, .methods) .static {
@@ -63,15 +74,12 @@ pre {
     color: rgb(191, 142, 236);
 }
 
-.type .overload {
-    font-size: 0;  /* Hides the space between `method_name` and `()`. */
+.namespace .overview .namespace-name {
+    color: rgb(130, 221, 135);
 }
-.type .overload :is(div, span, a) {
-    font-size: 12pt;
+.namespace .overview .namespace-name {
+    color: rgb(130, 221, 135);
 }
-
-.description {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-    margin-left: 1em;
+.namespace .function-name {
+    color: rgb(191, 142, 236);
 }

@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "subdoc/lib/gen/generate.h"
+#pragma once
 
-#include <filesystem>
-
-#include "subdoc/lib/gen/generate_namespace.h"
+#include "subdoc/lib/database.h"
+#include "subdoc/lib/gen/html_writer.h"
 
 namespace subdoc::gen {
 
-void generate(const Database& db, const Options& options) {
-  std::filesystem::remove_all(options.output_root);
-  generate_namespace(db.global, options);
-}
+void generate_function(HtmlWriter::OpenDiv& section_div,
+                       const FunctionElement& e, bool is_static) noexcept;
 
-}  // namespace subdoc::gen
+}
