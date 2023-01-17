@@ -15,6 +15,7 @@
 #pragma once
 
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
 
 namespace subdoc::gen {
@@ -22,4 +23,7 @@ namespace subdoc::gen {
 void generate_namespace(const NamespaceElement& element,
                         const Options& options) noexcept;
 
-}
+void generate_namespace_reference(HtmlWriter::OpenDiv& section_div,
+                                  const NamespaceElement& element) noexcept;
+
+}  // namespace subdoc::gen

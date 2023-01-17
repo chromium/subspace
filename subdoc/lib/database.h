@@ -34,6 +34,9 @@ struct Comment {
 
   std::string raw_text;
   std::string begin_loc;
+
+  std::string_view summary() const& { return raw_text; }
+  std::string_view summary() && = delete;
 };
 
 struct CommentElement {
