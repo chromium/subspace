@@ -98,7 +98,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool shouldVisitLambdaBody() const { return false; }
 
   bool VisitStaticAssertDecl(clang::StaticAssertDecl*) noexcept {
-    llvm::errs() << "StaticAssertDecl\n";
+    //llvm::errs() << "StaticAssertDecl\n";
     return true;
   }
 
@@ -110,12 +110,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                                make_db_comment(diag_ids_, decl, raw_comment),
                                decl->getNameAsString());
     NamespaceElement& parent = [&]() -> NamespaceElement& {
-      if (clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+      clang::DeclContext* context = decl->getDeclContext();
+      // TODO: Save the linkage spec (`extern "C"`) so we can show it.
+      while (clang::isa<clang::LinkageSpecDecl>(context))
+        context = context->getParent();
+
+      if (clang::isa<clang::TranslationUnitDecl>(context)) {
         return docs_db_.find_namespace_mut(nullptr).unwrap();
       } else {
         return docs_db_
-            .find_namespace_mut(
-                clang::cast<clang::NamespaceDecl>(decl->getDeclContext()))
+            .find_namespace_mut(clang::cast<clang::NamespaceDecl>(context))
             .unwrap();
       }
     }();
@@ -140,22 +144,26 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                       make_db_comment(diag_ids_, decl, raw_comment),
                       decl->getNameAsString(), collect_record_path(decl), type);
 
-    if (clang::isa<clang::TranslationUnitDecl>(decl->getDeclContext())) {
+    clang::DeclContext* context = decl->getDeclContext();
+    // TODO: Save the linkage spec (`extern "C"`) so we can show it.
+    while (clang::isa<clang::LinkageSpecDecl>(context))
+      context = context->getParent();
+
+    if (clang::isa<clang::TranslationUnitDecl>(context)) {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
       add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ce),
                         mref(parent.records));
-    } else if (clang::isa<clang::NamespaceDecl>(decl->getDeclContext())) {
+    } else if (clang::isa<clang::NamespaceDecl>(context)) {
       NamespaceElement& parent =
           docs_db_
-              .find_namespace_mut(
-                  clang::cast<clang::NamespaceDecl>(decl->getDeclContext()))
+              .find_namespace_mut(clang::cast<clang::NamespaceDecl>(context))
               .unwrap();
       add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ce),
                         mref(parent.records));
     } else {
-      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
-      if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-              clang::cast<clang::RecordDecl>(decl->getDeclContext()));
+      assert(clang::isa<clang::RecordDecl>(context));
+      if (sus::Option<RecordElement&> parent =
+              docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
         add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ce),
                           mref(parent->records));
@@ -214,21 +222,24 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool VisitEnumDecl(clang::EnumDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
+    if (raw_comment)
+      llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
     return true;
   }
 
   bool VisitTypedefDecl(clang::TypedefDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
+    if (raw_comment)
+      llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
     return true;
   }
 
   bool VisitTypeAliasDecl(clang::TypeAliasDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
+    if (raw_comment)
+      llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
     return true;
   }
 
@@ -312,16 +323,23 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                                     sus::move(fe), mref(parent->methods));
       }
     } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
+      clang::DeclContext* context = decl->getDeclContext();
+      // TODO: Save the linkage spec (`extern "C"`) so we can show it.
+      while (clang::isa<clang::LinkageSpecDecl>(context))
+        context = context->getParent();
+
       // TODO: How do we get from here to the class that the deduction guide is
       // for reliably? getCorrespondingConstructor() would work if it's
       // generated only. Will the getDeclContext find it?
-      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      assert(clang::isa<clang::NamespaceDecl>(decl->getDeclContext()));
+      /* TODO:
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
                                     sus::move(fe), mref(parent->deductions));
       }
+      */
     } else {
       if (sus::Option<NamespaceElement&> parent =
               docs_db_.find_namespace_mut(find_nearest_namespace(decl));
