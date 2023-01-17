@@ -80,7 +80,6 @@ class [[nodiscard]] Result final {
   {
     return Result(WithOk, t);
   }
-  /// Construct an Result that is holding the given success value.
   static constexpr inline Result with(T&& t) noexcept
     requires(::sus::mem::Move<T>)
   {
@@ -93,7 +92,6 @@ class [[nodiscard]] Result final {
   {
     return Result(WithErr, e);
   }
-  /// Construct an Result that is holding the given error value.
   static constexpr inline Result with_err(E&& e) noexcept
     requires(::sus::mem::Move<E>)
   {
@@ -122,6 +120,8 @@ class [[nodiscard]] Result final {
 
   /// Destructor for the Result.
   ///
+  /// Destroys the Ok or Err value contained within the Result.
+  ///
   /// If T and E can be trivially destroyed, we don't need to explicitly destroy
   /// them, so we can use the default destructor, which allows Result<T, E> to
   /// also be trivially destroyed.
@@ -130,9 +130,6 @@ class [[nodiscard]] Result final {
              std::is_trivially_destructible_v<E>)
   = default;
 
-  /// Destructor for the Result.
-  ///
-  /// Destroys the Ok or Err value contained within the Result.
   constexpr inline ~Result() noexcept
     requires(!std::is_trivially_destructible_v<T> ||
              !std::is_trivially_destructible_v<E>)
