@@ -159,8 +159,8 @@ void generate_namespace(const NamespaceElement& element,
 
   {
     sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> sorted;
-    for (const auto& [uniq, element] : element.namespaces) {
-      sorted.push(sus::tuple(element.name, uniq));
+    for (const auto& [uniq, sub_element] : element.namespaces) {
+      sorted.push(sus::tuple(sub_element.name, uniq));
     }
     sorted.sort_unstable_by(
         [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
@@ -175,14 +175,14 @@ void generate_namespace(const NamespaceElement& element,
   {
     sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> classes;
     sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> unions;
-    for (const auto& [uniq, element] : element.records) {
-      switch (element.record_type) {
+    for (const auto& [uniq, sub_element] : element.records) {
+      switch (sub_element.record_type) {
         case RecordType::Class: [[fallthrough]];
         case RecordType::Struct:
-          classes.push(sus::tuple(element.name, uniq));
+          classes.push(sus::tuple(sub_element.name, uniq));
           break;
         case RecordType::Union:
-          unions.push(sus::tuple(element.name, uniq));
+          unions.push(sus::tuple(sub_element.name, uniq));
           break;
       }
     }
@@ -205,8 +205,8 @@ void generate_namespace(const NamespaceElement& element,
 
   {
     sus::Vec<sus::Tuple<std::string_view, const FunctionId&>> sorted;
-    for (const auto& [function_id, element] : element.functions) {
-      sorted.push(sus::tuple(element.name, function_id));
+    for (const auto& [function_id, sub_element] : element.functions) {
+      sorted.push(sus::tuple(sub_element.name, function_id));
     }
     sorted.sort_unstable_by(
         [](const sus::Tuple<std::string_view, const FunctionId&>& a,
@@ -218,11 +218,11 @@ void generate_namespace(const NamespaceElement& element,
   }
 
   // Recurse into namespaces and records.
-  for (const auto& [u, element] : element.namespaces) {
-    generate_namespace(element, options);
+  for (const auto& [u, sub_element] : element.namespaces) {
+    generate_namespace(sub_element, options);
   }
-  for (const auto& [u, element] : element.records) {
-    generate_record(element, options);
+  for (const auto& [u, sub_element] : element.records) {
+    generate_record(sub_element, options);
   }
 }
 
