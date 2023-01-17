@@ -259,9 +259,11 @@ void generate_record_reference(HtmlWriter::OpenDiv& section_div,
     }
     {
       auto name_link = type_sig_div.open_a(HtmlWriter::SingleLine);
-      name_link.add_href(std::string(construct_html_file_path(
-          std::filesystem::path(), element.namespace_path.as_ref(),
-          element.class_path.as_ref(), element.name)));
+      name_link.add_href(
+          construct_html_file_path(std::filesystem::path(),
+                                   element.namespace_path.as_ref(),
+                                   element.class_path.as_ref(), element.name)
+              .string());
       name_link.add_class("type-name");
       name_link.write_text(element.name);
     }
