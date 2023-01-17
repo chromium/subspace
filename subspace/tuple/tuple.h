@@ -116,8 +116,7 @@ class Tuple final {
     ::sus::check(!moved_from(I));
     return __private::find_tuple_storage<I>(storage_).get_ref();
   }
-
-  /// Disallows getting a reference to temporary Tuple.
+  // Disallows getting a reference to temporary Tuple.
   template <size_t I>
   constexpr inline const auto& get_ref() && = delete;
 
@@ -136,7 +135,8 @@ class Tuple final {
   constexpr inline decltype(auto) into_inner() && noexcept {
     ::sus::check(!moved_from(I));
     set_all_moved_from();
-    return ::sus::move(__private::find_tuple_storage_mut<I>(storage_)).into_inner();
+    return ::sus::move(__private::find_tuple_storage_mut<I>(storage_))
+        .into_inner();
   }
 
   /// sus::ops::Eq<Tuple<U...>> trait.
@@ -150,7 +150,13 @@ class Tuple final {
         storage_, r.storage_, std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
-  /// sus::ops::Ord<Tuple<U...>> trait.
+  /// Compares two Tuples.
+  ///
+  /// Satisfies sus::ops::Ord<Tuple<...>> if sus::ops::Ord<...>.
+  /// Satisfies sus::ops::WeakOrd<Option<...>> if sus::ops::WeakOrd<...>.
+  /// Satisfies sus::ops::PartialOrd<Option<...>> if sus::ops::PartialOrd<...>.
+  //
+  // sus::ops::Ord<Tuple<U...>> trait.
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::ops::ExclusiveOrd<T, U> && ... &&
@@ -163,7 +169,7 @@ class Tuple final {
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
-  /// sus::ops::WeakOrd<Tuple<U...>> trait.
+  // sus::ops::WeakOrd<Tuple<U...>> trait.
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::ops::ExclusiveWeakOrd<T, U> && ... &&
@@ -176,7 +182,7 @@ class Tuple final {
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
-  /// sus::ops::PartialOrd<Tuple<U...>> trait.
+  // sus::ops::PartialOrd<Tuple<U...>> trait.
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::ops::ExclusivePartialOrd<T, U> && ... &&

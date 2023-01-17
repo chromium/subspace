@@ -192,8 +192,8 @@ class Option final {
     if (t_.state() == Some) t_.destroy();
   }
 
-  /// If T can be trivially copy-constructed, Option<T> can also be trivially
-  /// copy-constructed.
+  // If T can be trivially copy-constructed, Option<T> can also be trivially
+  // copy-constructed.
   constexpr Option(const Option& o)
     requires(::sus::mem::CopyOrRef<T> &&
              std::is_trivially_copy_constructible_v<T>)
@@ -210,8 +210,8 @@ class Option final {
     requires(!::sus::mem::CopyOrRef<T>)
   = delete;
 
-  /// If T can be trivially copy-constructed, Option<T> can also be trivially
-  /// move-constructed.
+  // If T can be trivially move-constructed, Option<T> can also be trivially
+  // move-constructed.
   constexpr Option(Option&& o)
     requires(::sus::mem::MoveOrRef<T> &&
              std::is_trivially_move_constructible_v<T>)
@@ -228,8 +228,8 @@ class Option final {
     requires(!::sus::mem::MoveOrRef<T>)
   = delete;
 
-  /// If T can be trivially copy-assigned, Option<T> can also be trivially
-  /// copy-assigned.
+  // If T can be trivially copy-assigned, Option<T> can also be trivially
+  // copy-assigned.
   constexpr Option& operator=(const Option& o)
     requires(::sus::mem::CopyOrRef<T> && std::is_trivially_copy_assignable_v<T>)
   = default;
@@ -249,9 +249,9 @@ class Option final {
     requires(!::sus::mem::CopyOrRef<T>)
   = delete;
 
-  /// If T can be trivially move-assigned, we don't need to explicitly construct
-  /// it, so we can use the default destructor, which allows Option<T> to also
-  /// be trivially move-assigned.
+  // If T can be trivially move-assigned, we don't need to explicitly construct
+  // it, so we can use the default destructor, which allows Option<T> to also
+  // be trivially move-assigned.
   constexpr Option& operator=(Option&& o)
     requires(::sus::mem::MoveOrRef<T> && std::is_trivially_move_assignable_v<T>)
   = default;
@@ -946,7 +946,7 @@ template <class T, class U>
 constexpr inline bool operator==(const Option<T>& l,
                                  const Option<U>& r) = delete;
 
-/// Compares two options.
+/// Compares two Options.
 ///
 /// Satisfies sus::ops::Ord<Option<U>> if sus::ops::Ord<U>.
 /// Satisfies sus::ops::WeakOrd<Option<U>> if sus::ops::WeakOrd<U>.

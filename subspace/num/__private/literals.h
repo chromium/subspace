@@ -18,7 +18,7 @@
 #include "subspace/assertions/check.h"
 #endif
 
-#if _MSC_VER
+#if _MSC_VER && !defined(__clang__)
 /// Literal integer value.
 #define _sus__integer_literal(Name, T)                                                               \
   /* A `constexpr` workaround for MSVC bug that doesn't constant-evaluate                            \
