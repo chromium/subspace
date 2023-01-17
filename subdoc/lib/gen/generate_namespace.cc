@@ -234,8 +234,9 @@ void generate_namespace_reference(HtmlWriter::OpenDiv& section_div,
   {
     auto name_link = item_div.open_a(HtmlWriter::SingleLine);
     name_link.add_class("namespace-name");
-    name_link.add_href(std::string(construct_html_file_path_for_namespace(
-        std::filesystem::path(), element)));
+    name_link.add_href(
+        construct_html_file_path_for_namespace(std::filesystem::path(), element)
+            .string());
     name_link.write_text(element.name);
   }
   if (element.has_comment()) {
