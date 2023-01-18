@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,6 +31,9 @@ message(STATUS "Build CIR: ${SUBSPACE_BUILD_CIR}")
 function(subspace_default_compile_options TARGET)
     if(MSVC)
         target_compile_options(${TARGET} PUBLIC /Zc:preprocessor /wd5105)
+    else()
+        # LLVM is built without RTTI by default, and we need to match it.
+        target_compile_options(${TARGET} PUBLIC -fno-rtti)
     endif()
 
     set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)
@@ -60,6 +63,6 @@ enable_testing()
 
 add_subdirectory(subspace)
 
-if (${SUBSPACE_BUILD_CIR})
+if(${SUBSPACE_BUILD_CIR})
     add_subdirectory(cir)
 endif()
