@@ -22,7 +22,6 @@
 #include "subspace/construct/into.h"
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/iter/iterator_defn.h"
-#include "subspace/mem/never_value.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/option/option.h"
 
@@ -38,6 +37,8 @@ namespace sus::containers {
 template <class T>
 class Slice {
  public:
+  Slice() : Slice(nullptr, 0_usize) {}
+
   static constexpr inline Slice from_raw_parts(T* data,
                                                ::sus::usize len) noexcept {
     check(len.primitive_value <= PTRDIFF_MAX);
@@ -167,10 +168,6 @@ class Slice {
 
   T* data_;
   ::sus::usize len_;
-
-  sus_class_never_value_field(::sus::marker::unsafe_fn, Slice, data_, nullptr,
-                              nullptr);
-  constexpr Slice() = default;  // For the NeverValueField.
 };
 
 // Implicit for-ranged loop iteration via `Slice::iter()`.
