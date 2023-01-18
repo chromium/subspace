@@ -128,13 +128,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     return true;
   }
 
-  bool VisitClassTemplateDecl(clang::ClassTemplateDecl* tdecl) noexcept {
-    return VisitRecordDecl(tdecl->getTemplatedDecl());
-  }
-
   bool VisitRecordDecl(clang::RecordDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
+
+    if (auto* cxxdecl = clang::dyn_cast<clang::CXXRecordDecl>(decl)) {
+      // It's a C++ class. So it may have a template decl which has the template
+      // parameters. And it may be a specialization.
+      llvm::errs() << "Visiting CXX class with template, specialization kind:"
+                   << cxxdecl->getTemplateSpecializationKind() << "\n";
+    }
 
     RecordType type = [&]() {
       if (decl->isStruct()) return RecordType::Struct;
