@@ -277,6 +277,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // as being inherited.
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
+      static int i = 0;
+      i += 1;
+      llvm::errs() << i << "\n";
+      if (i == 5771) clang::cast<clang::Decl>(decl->getDeclContext())->dump();
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
