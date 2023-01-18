@@ -241,10 +241,13 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 
  private:
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(fn_ptr_),
-                                             decltype(storage_),
-                                             decltype(type_));
+                                  decltype(storage_), decltype(type_));
+  // Set the never value field to FnPointer to perform a no-op destruction as
+  // there is nothing cleaned up when holding a function pointer.
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnOnce, type_,
-                              static_cast<__private::FnType>(0));
+                              static_cast<__private::FnType>(0),
+                              __private::FnType::FnPointer);
+  constexpr FnOnce() = default;  // For the NeverValueField.
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A

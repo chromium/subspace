@@ -83,6 +83,8 @@ void FnOnce<R(CallArgs...)>::make_vtable(
 template <class R, class... CallArgs>
 FnOnce<R(CallArgs...)>::~FnOnce() noexcept {
   switch (type_) {
+    // Note that the FnPointer state is set when destroying from the never value
+    // state.
     case __private::FnPointer: break;
     case __private::Storage: {
       if (auto* s = ::sus::mem::replace_ptr(mref(storage_), nullptr); s)

@@ -236,15 +236,15 @@ class Tuple final {
 
 // Support for structured binding.
 template <size_t I, class... Ts>
-decltype(auto) get(const Tuple<Ts...>& t) noexcept {
+constexpr decltype(auto) get(const Tuple<Ts...>& t) noexcept {
   return t.template get_ref<I>();
 }
 template <size_t I, class... Ts>
-decltype(auto) get(Tuple<Ts...>& t) noexcept {
+constexpr decltype(auto) get(Tuple<Ts...>& t) noexcept {
   return t.template get_mut<I>();
 }
 template <size_t I, class... Ts>
-decltype(auto) get(Tuple<Ts...>&& t) noexcept {
+constexpr decltype(auto) get(Tuple<Ts...>&& t) noexcept {
   // We explicitly don't move-from `t` to call `t.into_inner()` as this `get()`
   // function will be called for each member of `t` when making structured
   // bindings from an rvalue Tuple.

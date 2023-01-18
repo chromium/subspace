@@ -47,9 +47,12 @@ namespace sus::mem {
 /// };
 /// static_assert(sus::mem::Move<S>);
 template <class T>
-concept Move = std::is_move_constructible_v<std::remove_reference_t<T>> &&
-               (std::is_move_assignable_v<std::remove_reference_t<T>> ||
-                !std::is_copy_assignable_v<std::remove_reference_t<T>>);
+concept Move = std::is_move_constructible_v<
+                   std::remove_const_t<std::remove_reference_t<T>>> &&
+               (std::is_move_assignable_v<
+                    std::remove_const_t<std::remove_reference_t<T>>> ||
+                !std::is_copy_assignable_v<
+                    std::remove_const_t<std::remove_reference_t<T>>>);
 
 /// A `MoveOrRef` object or reference of type `T` can be moved to construct a
 /// new `T`.

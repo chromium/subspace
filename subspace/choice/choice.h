@@ -145,7 +145,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(!(std::is_trivially_destructible_v<TagsType> && ... &&
                std::is_trivially_destructible_v<Ts>))
   {
-    if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
+    if (index_ != kUseAfterMove && index_ != kNeverValue)
+      storage_.destroy(size_t{index_});
   }
 
   constexpr Choice(Choice&& o)
@@ -437,7 +438,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   IndexType index_;
 
   sus_class_never_value_field(::sus::marker::unsafe_fn, Choice, index_,
-                              kNeverValue);
+                              kNeverValue, kNeverValue);
+  constexpr Choice() = default;  // For the NeverValueField.
 };
 
 /// Used to construct a Choice with the tag and parameters as its values.
