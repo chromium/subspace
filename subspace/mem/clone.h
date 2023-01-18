@@ -58,9 +58,11 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 /// copy constructors if the type within is Copy.
 template <class T>
 concept Clone = (Copy<T> &&
-                 !__private::HasCloneMethod<std::remove_reference_t<T>>) ||
+                 !__private::HasCloneMethod<
+                     std::remove_const_t<std::remove_reference_t<T>>>) ||
                 (!Copy<T> && Move<T> &&
-                 __private::HasCloneMethod<std::remove_reference_t<T>>);
+                 __private::HasCloneMethod<
+                     std::remove_const_t<std::remove_reference_t<T>>>);
 
 /// A `CloneOrRef` object or reference of type `T` can be cloned to construct a
 /// new `T`.
@@ -84,8 +86,10 @@ concept CloneOrRef = Clone<T> || std::is_reference_v<T>;
 template <class T>
 concept CloneInto =
     Clone<T> &&
-    ((Copy<T> && !__private::HasCloneFromMethod<std::remove_reference_t<T>>) ||
-     (!Copy<T> && __private::HasCloneFromMethod<std::remove_reference_t<T>>));
+    ((Copy<T> && !__private::HasCloneFromMethod<
+                     std::remove_const_t<std::remove_reference_t<T>>>) ||
+     (!Copy<T> && __private::HasCloneFromMethod<
+                      std::remove_const_t<std::remove_reference_t<T>>>));
 
 /// Clones the input either by copying or cloning. Returns a new object of type
 /// `T`.

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "subspace/construct/default.h"
+#include "subspace/macros/compiler.h"
 #include "subspace/mem/nonnull.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/test/behaviour_types.h"
@@ -24,7 +25,8 @@ using sus::mem::relocate_by_memcpy;
 namespace default_constructible {
 using T = NonNull<sus::test::DefaultConstructible>;
 using From = T;
-static_assert(!std::is_trivial_v<T>);
+// MSVC does not see private constructors, Clang and GCC do.
+static_assert(sus_if_msvc_else(!std::is_trivial_v<T>, std::is_trivial_v<T>));
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
@@ -53,7 +55,8 @@ static_assert(relocate_by_memcpy<T>);
 namespace not_default_constructible {
 using T = NonNull<sus::test::NotDefaultConstructible>;
 using From = T;
-static_assert(!std::is_trivial_v<T>);
+// MSVC does not see private constructors, Clang and GCC do.
+static_assert(sus_if_msvc_else(!std::is_trivial_v<T>, std::is_trivial_v<T>));
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
@@ -82,7 +85,8 @@ static_assert(relocate_by_memcpy<T>);
 namespace trivially_copyable {
 using T = NonNull<sus::test::TriviallyCopyable>;
 using From = T;
-static_assert(!std::is_trivial_v<T>);
+// MSVC does not see private constructors, Clang and GCC do.
+static_assert(sus_if_msvc_else(!std::is_trivial_v<T>, std::is_trivial_v<T>));
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
@@ -110,7 +114,8 @@ static_assert(relocate_by_memcpy<T>);
 namespace trivially_moveable_and_relocatable {
 using T = NonNull<sus::test::TriviallyMoveableAndRelocatable>;
 using From = T;
-static_assert(!std::is_trivial_v<T>);
+// MSVC does not see private constructors, Clang and GCC do.
+static_assert(sus_if_msvc_else(!std::is_trivial_v<T>, std::is_trivial_v<T>));
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
@@ -139,7 +144,8 @@ static_assert(relocate_by_memcpy<T>);
 namespace trivially_copyable_not_destructible {
 using T = NonNull<sus::test::TriviallyCopyableNotDestructible>;
 using From = T;
-static_assert(!std::is_trivial_v<T>);
+// MSVC does not see private constructors, Clang and GCC do.
+static_assert(sus_if_msvc_else(!std::is_trivial_v<T>, std::is_trivial_v<T>));
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
@@ -168,7 +174,8 @@ static_assert(relocate_by_memcpy<T>);
 namespace trivially_moveable_not_destructible {
 using T = NonNull<sus::test::TriviallyMoveableNotDestructible>;
 using From = T;
-static_assert(!std::is_trivial_v<T>);
+// MSVC does not see private constructors, Clang and GCC do.
+static_assert(sus_if_msvc_else(!std::is_trivial_v<T>, std::is_trivial_v<T>));
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
@@ -197,7 +204,8 @@ static_assert(relocate_by_memcpy<T>);
 namespace not_trivially_relocatable_copyable_or_moveable {
 using T = NonNull<sus::test::NotTriviallyRelocatableCopyableOrMoveable>;
 using From = T;
-static_assert(!std::is_trivial_v<T>);
+// MSVC does not see private constructors, Clang and GCC do.
+static_assert(sus_if_msvc_else(!std::is_trivial_v<T>, std::is_trivial_v<T>));
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
@@ -226,7 +234,8 @@ static_assert(relocate_by_memcpy<T>);
 namespace trivial_abi_relocatable {
 using T = NonNull<sus::test::TrivialAbiRelocatable>;
 using From = T;
-static_assert(!std::is_trivial_v<T>);
+// MSVC does not see private constructors, Clang and GCC do.
+static_assert(sus_if_msvc_else(!std::is_trivial_v<T>, std::is_trivial_v<T>));
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);

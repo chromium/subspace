@@ -20,129 +20,93 @@
 
 #include "subspace/macros/always_inline.h"
 #include "subspace/marker/unsafe.h"
+#include "subspace/mem/forward.h"
+#include "subspace/ops/eq.h"
 
 namespace sus::mem {
 
 namespace __private {
 
-template <class T, bool HasField>
-struct never_value_access_helper;
-
+/// A helper class that constructs and holds a NeverValueField type T.
+///
+/// Default-constructing NeverValueAccess will trivially default construct T.
+/// The caller should then set the never-value with `set_never_value()`.
+///
+/// The other constructors allow constructing the T from a parameter (typically
+/// a const T& or T&&).
+///
+/// Provides methods to see if the T is in the never-value state or not, and to
+/// set the never-value field to:
+/// * the never-value, after trivial default construction.
+/// * the destroy-value before destroying it from the never-value state.
+///
+/// # Why trivial default construction?
+///
+/// NeverValueAccess requires that `T` is trivially default constructible
+/// because the spec requires this for initializing a union member through
+/// assignment (some discussion here:
+/// https://github.com/llvm/llvm-project/issues/50604).
+///
+/// We use assignment to initialize a union member with a NeverValueAccess to
+/// implement changing to a never-value state without placement new, which is
+/// not possible in a constant expression.
 template <class T>
-struct never_value_access_helper<T, false> {
-  static constexpr bool has_field = false;
-  using OverlayType = char;
+struct NeverValueAccess {
+  /// Whether the type `T` has a never-value field.
+  static constexpr bool has_field =
+      requires { std::declval<T&>().Sus_Unsafe_NeverValueSetNeverValue(); };
 
-  static constexpr bool is_constructed(const OverlayType&) noexcept {
-    return false;
-  }
-  static constexpr void set_never_value(OverlayType&) noexcept {}
-};
+  constexpr NeverValueAccess() = default;
 
-template <class T>
-struct never_value_access_helper<T, true> {
-  static constexpr bool has_field = true;
-  using OverlayType = T::template SusUnsafeNeverValueOverlay<T>::type;
+  template <class... U>
+  constexpr NeverValueAccess(U&&... v) : t_(::sus::forward<U>(v)...) {}
 
-  static sus_always_inline constexpr bool is_constructed(
-      const OverlayType& t) noexcept {
-    return t.SusUnsafeNeverValueIsConstructed();
+  /// Checks if the never-value field is set to the never-value, returning false
+  /// if it is.
+  constexpr sus_always_inline bool is_constructed() const noexcept
+    requires(has_field)
+  {
+    return t_.Sus_Unsafe_NeverValueIsConstructed();
   }
-  static sus_always_inline constexpr void set_never_value(
-      OverlayType& t) noexcept {
-    t.SusUnsafeNeverValueSetNeverValue();
-  }
-};
 
-template <class NeverType, NeverType never_value, class FieldType, size_t N>
-struct SusUnsafeNeverValueOverlayImpl;
+  /// Sets the never-value field to the never-value.
+  constexpr sus_always_inline void set_never_value(
+      ::sus::marker::UnsafeFnMarker) noexcept
+    requires(has_field)
+  {
+    t_.Sus_Unsafe_NeverValueSetNeverValue();
+  }
 
-template <class NeverType, NeverType never_value, class FieldType, size_t N>
-struct SusUnsafeNeverValueOverlayImpl {
-  char padding[N];
-  FieldType never_value_field;
-  constexpr inline void SusUnsafeNeverValueSetNeverValue() noexcept {
-    never_value_field = never_value;
+  /// Sets the never-value field to the destroy-value.
+  constexpr sus_always_inline void set_destroy_value(
+      ::sus::marker::UnsafeFnMarker) noexcept
+    requires(has_field)
+  {
+    t_.Sus_Unsafe_NeverValueSetDestroyValue();
   }
-  constexpr inline bool SusUnsafeNeverValueIsConstructed() const noexcept {
-    return never_value_field != never_value;
-  }
-};
 
-template <class NeverType, NeverType never_value, class FieldType>
-struct SusUnsafeNeverValueOverlayImpl<NeverType, never_value, FieldType, 0> {
-  FieldType never_value_field;
-  constexpr inline void SusUnsafeNeverValueSetNeverValue() noexcept {
-    never_value_field = never_value;
-  }
-  constexpr inline bool SusUnsafeNeverValueIsConstructed() const noexcept {
-    return never_value_field != never_value;
-  }
+  constexpr sus_always_inline const T& as_inner() const { return t_; }
+  constexpr sus_always_inline T& as_inner_mut() { return t_; }
+
+ private:
+  T t_;
 };
 
 }  // namespace __private
 
-/// A trait to inspect if a type `T` has a field with a never-value. For such a
-/// type, it is possible to tell if the type is constructed in a memory
-/// location, by storing the never-value through `set_never_value()` in the
-/// memory location before it is constructed and/or after it is destroyed.
-///
-/// This allows a flag to check for a class being constructed without an
-/// additional boolean flag.
-template <class T>
-struct never_value_access {
-  /// Whether the type `T` has a never-value field.
-  static constexpr bool has_field =
-      requires { T::template SusUnsafeNeverValueOverlay<T>::exists; };
-
-  /// A type with a common initial sequence with `T` up to and including the
-  /// never-value field, so that it can be used to read and write the
-  /// never-value field in a union (though reading an inactive union field is
-  /// invalid in a constant expression in C++20).
-  using OverlayType =
-      typename __private::never_value_access_helper<T, has_field>::OverlayType;
-
-  /// Returns whether there is a type `T` constructed at the memory location
-  /// `t`, where the OverlayType `t` has the same address as a type `T` in a
-  /// union.
-  ///
-  /// # Safety
-  /// This will only produce a correct answer if the memory was previous set to
-  /// the never-value through `set_never_value()` before construction of the
-  /// type `T`.
-  static constexpr sus_always_inline bool is_constructed(
-      ::sus::marker::UnsafeFnMarker, const OverlayType& t) noexcept
-    requires(has_field)
-  {
-    return __private::never_value_access_helper<T, has_field>::is_constructed(
-        t);
-  }
-
-  /// Sets a field in the memory location `t` to a value that is never set
-  /// during the lifetime of `T`, where the OverlayType `t` has the same address
-  /// as a type `T` in a union.
-  ///
-  /// # Safety
-  /// This must never be called while there is an object of type `T` constructed
-  /// at the given memory location. It must be called only before a constructor
-  /// is run, or after a destructor is run.
-  static constexpr sus_always_inline void set_never_value(
-      ::sus::marker::UnsafeFnMarker, OverlayType& t) noexcept
-    requires(has_field)
-  {
-    return __private::never_value_access_helper<T, has_field>::set_never_value(
-        t);
-  }
-};
-
 /// A `NeverValueField` type has a field with a never-value.
 ///
-/// When not constructed, that field in a `NeverValueField` object can be set to
-/// the never-value in order to see if/when the object is constructed, as the
-/// never-value would be changed by construction, and would never occur during
-/// the lifetime of the object.
+/// Under normal use, that field in a `NeverValueField` object will never be
+/// set to the never-value, which allows inspecting it to determine if the
+/// object is "constructed".
+///
+/// Such types allow separate abnormal construction through the NeverValueField
+/// machinery, where the never-value field is set to its never-value. The
+/// object will not be used in that state except for calling the destructor, and
+/// the field will be set to a special destroy-value before the destructor is
+/// called.
 template <class T>
-concept NeverValueField = never_value_access<T>::has_field;
+concept NeverValueField = __private::NeverValueAccess<T>::has_field;
 
 }  // namespace sus::mem
 
@@ -151,53 +115,38 @@ concept NeverValueField = never_value_access<T>::has_field;
 /// querying if a class is constructed in a memory location, since the class is
 /// constructed iff the value of the field is not the never-value.
 ///
-/// This has no effect if the type `T` is not a standard-layout type, as the
-/// field is only accessible in that case. Therefore it is advised to verify
-/// `NeverValueField<T>` where you expect it to be true.
+/// The `never_value` will be placed in the named field after construction, and
+/// the `destroy_value` will be placed in the named field just prior to
+/// destruction. The latter is meant to help the destructor be a no-op when the
+/// type is in a never-value state, if the never-value would be read in the
+/// destructor.
 ///
 /// The macro includes `private:` which changes the class definition visibility
 /// to private.
-#define sus_class_never_value_field(unsafe_fn, T, field_name, never_value)     \
+#define sus_class_never_value_field(unsafe_fn, T, field_name, never_value,     \
+                                    destroy_value)                             \
  private:                                                                      \
   static_assert(                                                               \
       std::same_as<decltype(unsafe_fn), const ::sus::marker::UnsafeFnMarker>); \
   static_assert(                                                               \
       std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,      \
       "The `never_value` must be able to be assigned to the named field.");    \
-                                                                               \
-  /* For the inclined, this is because otherwise using the Overlay type in     \
-  the Option's internal union, after the destruction of the type T, would      \
-  require placement new of the Overlay type which is not a constant            \
-  expression. */                                                               \
-  static_assert(std::is_trivially_constructible_v<decltype(field_name)>,       \
-                "The `never_value` field must be trivially constructible or "  \
-                "else Option<T> couldn't be constexpr.");                      \
+  static_assert(                                                               \
+      std::is_assignable_v<decltype(field_name)&, decltype(destroy_value)>,    \
+      "The `destroy_value` must be able to be assigned to the named field.");  \
+  static_assert(::sus::ops::Eq<decltype(field_name), decltype(never_value)>,   \
+                "The `never_value` must be comparable to the named field.");   \
                                                                                \
   template <class>                                                             \
-  friend struct ::sus::mem::never_value_access;                                \
-  template <class, bool>                                                       \
-  friend struct ::sus::mem::__private::never_value_access_helper;              \
+  friend struct ::sus::mem::__private::NeverValueAccess;                       \
                                                                                \
-  template <class SusUnsafeNeverValueOuter,                                    \
-            bool SusUnsafeNeverValueStandardLayout =                           \
-                std::is_standard_layout_v<SusUnsafeNeverValueOuter>>           \
-  struct SusUnsafeNeverValueOverlay;                                           \
-                                                                               \
-  template <class SusUnsafeNeverValueOuter>                                    \
-  struct SusUnsafeNeverValueOverlay<SusUnsafeNeverValueOuter, false> {};       \
-                                                                               \
-  /* The NeverValue trait is only provided when `##T##` is a standard-layout   \
-   * type, since:                                                              \
-   * - offsetof() is only valid in a standard-layout type.                     \
-   * - Option can only access the never-value field outside the lifetime of    \
-   *   `##T##` if `##T##` is a standard-layout type.                           \
-   */                                                                          \
-  template <class SusUnsafeNeverValueOuter>                                    \
-  struct SusUnsafeNeverValueOverlay<SusUnsafeNeverValueOuter, true> {          \
-    static constexpr bool exists = true;                                       \
-                                                                               \
-    using type = ::sus::mem::__private::SusUnsafeNeverValueOverlayImpl<        \
-        decltype(never_value), never_value, decltype(field_name),              \
-        offsetof(SusUnsafeNeverValueOuter, field_name)>;                       \
-  };                                                                           \
+  constexpr bool Sus_Unsafe_NeverValueIsConstructed() const noexcept {         \
+    return field_name != never_value;                                          \
+  }                                                                            \
+  constexpr void Sus_Unsafe_NeverValueSetNeverValue() noexcept {               \
+    field_name = never_value;                                                  \
+  }                                                                            \
+  constexpr void Sus_Unsafe_NeverValueSetDestroyValue() noexcept {             \
+    field_name = destroy_value;                                                \
+  }                                                                            \
   static_assert(true)

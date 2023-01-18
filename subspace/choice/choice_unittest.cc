@@ -63,12 +63,11 @@ TEST(Choice, NeverValue) {
   static_assert(std::is_standard_layout_v<One>);
   static_assert(sizeof(sus::Option<One>) == sizeof(One));
 
-  // Two values in a Tuple isn't standard layout at this time. This allows the
-  // Tuple to pack better but, also means we can't use the never-value field
-  // optimization in Option.
+  // It used to be that Option<T> did not support the NeverValueField
+  // optimization for non-Standard-Layout types, but it does now.
   using Two = Choice<sus_choice_types((Order::First, u64, u64))>;
   static_assert(!std::is_standard_layout_v<Two>);
-  static_assert(sizeof(sus::Option<Two>) > sizeof(Two));
+  static_assert(sizeof(sus::Option<Two>) == sizeof(Two));
 }
 
 TEST(Choice, ConstructorFunctionNoValue) {

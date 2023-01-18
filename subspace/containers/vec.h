@@ -75,16 +75,18 @@ class Vec {
   }
 
   ~Vec() {
+    // Note that storage_ may be null (the never value), but we won't touch
+    // it since `is_alloced()` would be false when in never-value state.
     if (is_alloced()) free_storage();
   }
 
   Vec(Vec&& o) noexcept
-      : storage_(::sus::mem::replace_ptr(mref(o.storage_), nullish())),
+      : storage_(::sus::mem::replace_ptr(mref(o.storage_), nullptr)),
         len_(::sus::mem::replace(mref(o.len_), 0_usize)),
         capacity_(::sus::mem::replace(mref(o.capacity_), 0_usize)) {}
   Vec& operator=(Vec&& o) noexcept {
     if (is_alloced()) free_storage();
-    storage_ = ::sus::mem::replace_ptr(mref(o.storage_), nullish());
+    storage_ = ::sus::mem::replace_ptr(mref(o.storage_), nullptr);
     len_ = ::sus::mem::replace(mref(o.len_), 0_usize);
     capacity_ = ::sus::mem::replace(mref(o.capacity_), 0_usize);
     return *this;
@@ -108,7 +110,7 @@ class Vec {
     if (source.capacity_ == 0_usize) {
       destroy_storage_objects();
       free_storage();
-      storage_ = nullish();
+      storage_ = nullptr;
       len_ = 0_usize;
       capacity_ = 0_usize;
     } else {
@@ -353,13 +355,13 @@ class Vec {
  private:
   enum Default { kDefault };
   inline constexpr Vec(Default)
-      : storage_(nullish()), len_(0_usize), capacity_(0_usize) {}
+      : storage_(nullptr), len_(0_usize), capacity_(0_usize) {}
 
   enum WithCap { kWithCap };
   Vec(WithCap, usize cap)
       : storage_(cap > 0_usize ? static_cast<char*>(malloc(
                                      size_t{::sus::mem::size_of<T>() * cap}))
-                               : nullish()),
+                               : nullptr),
         len_(0_usize),
         capacity_(cap) {
     check(::sus::mem::size_of<T>() * cap <= usize(size_t{PTRDIFF_MAX}));
@@ -390,15 +392,6 @@ class Vec {
     free(storage_);
   }
 
-  // The fields are used to encode extra data as follows:
-  //
-  // * `storage_` == 0: Never occurs while inside the Vec's lifetime. Instead, a
-  //   nullish value that is well-aligned for T is used, but is never read
-  //   outside of UB.
-  static inline char* nullish() noexcept {
-    return reinterpret_cast<char*>(alignof(T));
-  }
-
   // Checks if Vec has storage allocated.
   constexpr inline bool is_alloced() const noexcept {
     return capacity_ > 0_usize;
@@ -408,7 +401,6 @@ class Vec {
   usize len_;
   usize capacity_;
 
-  sus_class_never_value_field(::sus::marker::unsafe_fn, Vec, storage_, nullptr);
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T,
                                            decltype(storage_), decltype(len_),
                                            decltype(capacity_));

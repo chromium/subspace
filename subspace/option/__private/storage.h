@@ -85,10 +85,8 @@ struct Storage<T, false> final {
   constexpr Storage(std::remove_cvref_t<T>&& t)
       : val_(::sus::move(t)), state_(Some) {}
 
-  union {
-    T val_;
-  };
-  State state_ = None;
+  constexpr const T& val() const { return val_; };
+  constexpr T& val_mut() { return val_; };
 
   [[nodiscard]] constexpr inline State state() const noexcept { return state_; }
 
@@ -122,6 +120,14 @@ struct Storage<T, false> final {
     state_ = None;
     val_.~T();
   }
+
+  constexpr inline void destroy() noexcept { val_.~T(); }
+
+ private:
+  union {
+    T val_;
+  };
+  State state_ = None;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(val_));
@@ -173,89 +179,70 @@ struct Storage<T, true> final {
     sus::unreachable();
   }
 
-  constexpr Storage() : overlay_() {
-    ::sus::mem::never_value_access<T>::set_never_value(::sus::marker::unsafe_fn,
-                                                       overlay_);
+  constexpr Storage() : access_() {
+    access_.set_never_value(::sus::marker::unsafe_fn);
   }
-  constexpr Storage(const T& t) : val_(t) {}
-  constexpr Storage(T&& t) : val_(::sus::move(t)) {}
+  constexpr Storage(const T& t) : access_(t) {}
+  constexpr Storage(T&& t) : access_(::sus::move(t)) {}
 
-  using Overlay = typename ::sus::mem::never_value_access<T>::OverlayType;
+  constexpr const T& val() const { return access_.as_inner(); };
+  constexpr T& val_mut() { return access_.as_inner_mut(); };
 
-  union {
-    Overlay overlay_;
-    T val_;
-  };
-  // If both `bytes_` and `val_` are standard layout, and the same size, then we
-  // can access the memory of one through the other in a well-defined way:
-  // https://en.cppreference.com/w/cpp/language/union
-  static_assert(std::is_standard_layout_v<Overlay>);
-  static_assert(std::is_standard_layout_v<T>);
-
-  // Not constexpr because in a constant expression we can't read from the
-  // common initial sequence of an inactive field. That means we have to know
-  // what's in the union before we can read from it.
-  //
-  // From https://en.cppreference.com/w/cpp/language/constant_expression:
-  // A core constant expression is any expression whose evaluation would not
-  // evaluate any one of the following:
-  // ...
-  // - an lvalue-to-rvalue implicit conversion or modification applied to a
-  // non-active member of a union or its subobject (even if it shares a common
-  // initial sequence with the active member)
-  // ...
-  //
-  // Reading the value out of the union necessarily requires an lvalue-to-rvalue
-  // conversion, so we can't do it.
-  //
-  // Hopefully this improves and we can read from it in the future, but not in
-  // C++20.
-  [[nodiscard]] inline State state() const noexcept {
-    return ::sus::mem::never_value_access<T>::is_constructed(
-               ::sus::marker::unsafe_fn, overlay_)
-               ? Some
-               : None;
+  [[nodiscard]] constexpr inline State state() const noexcept {
+    return access_.is_constructed() ? Some : None;
   }
 
-  inline void construct_from_none(const T& t) noexcept { new (&val_) T(t); }
+  inline void construct_from_none(const T& t) noexcept {
+    access_.set_destroy_value(::sus::marker::unsafe_fn);
+    access_.~NeverValueAccess();
+    new (&access_) NeverValueAccess(t);
+  }
   inline void construct_from_none(T&& t) noexcept {
-    new (&val_) T(::sus::move(t));
+    access_.set_destroy_value(::sus::marker::unsafe_fn);
+    access_.~NeverValueAccess();
+    new (&access_) NeverValueAccess(::sus::move(t));
   }
 
   constexpr inline void set_some(T&& t) noexcept {
     if (state() == None)
       construct_from_none(::sus::move(t));
     else
-      ::sus::mem::replace_and_discard(mref(val_), ::sus::move(t));
+      ::sus::mem::replace_and_discard(access_.as_inner_mut(), ::sus::move(t));
   }
 
   [[nodiscard]] constexpr inline T replace_some(T&& t) noexcept {
-    return ::sus::mem::replace(mref(val_), ::sus::move(t));
+    return ::sus::mem::replace(access_.as_inner_mut(), ::sus::move(t));
   }
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
-    T t = ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn, mref(val_));
-    // Make the overlay_ field active.
-    overlay_ = Overlay();
-    ::sus::mem::never_value_access<T>::set_never_value(::sus::marker::unsafe_fn,
-                                                       overlay_);
+    auto t = T(::sus::move(access_.as_inner_mut()));
+    access_.~NeverValueAccess();
+    access_ = NeverValueAccess();
+    access_.set_never_value(::sus::marker::unsafe_fn);
     return t;
   }
 
   constexpr inline void set_none() noexcept {
-    val_.~T();
-    // Make the overlay_ field active.
-    overlay_ = Overlay();
-    ::sus::mem::never_value_access<T>::set_never_value(::sus::marker::unsafe_fn,
-                                                       overlay_);
+    access_.~NeverValueAccess();
+    access_ = NeverValueAccess();
+    access_.set_never_value(::sus::marker::unsafe_fn);
   }
 
+  constexpr inline void destroy() noexcept { access_.~NeverValueAccess(); }
+
+ private:
+  using NeverValueAccess = ::sus::mem::__private::NeverValueAccess<T>;
+
+  union {
+    NeverValueAccess access_;
+  };
+
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                           decltype(val_));
+                                           decltype(access_));
 };
 
 template <class T>
-struct StoragePointer;
+struct StoragePointer {};
 
 template <class T>
 struct [[sus_trivial_abi]] StoragePointer<T&> {
@@ -270,9 +257,10 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
 
   // Pointers are trivially relocatable.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ptr_));
-  // The pointer is never set to null.
+  // The pointer is never set to null in public usage.
   sus_class_never_value_field(::sus::marker::unsafe_fn, StoragePointer, ptr_,
-                              nullptr);
+                              nullptr, nullptr);
+  constexpr StoragePointer() = default;  // For the NeverValueField.
 };
 
 // This must be true in order for StoragePointer to be useful with the
