@@ -26,7 +26,6 @@
 #include "subspace/iter/from_iterator.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/mem/move.h"
-#include "subspace/mem/never_value.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
 #include "subspace/mem/size_of.h"
@@ -75,18 +74,20 @@ class Vec {
   }
 
   ~Vec() {
-    // Note that storage_ may be null (the never value), but we won't touch
-    // it since `is_alloced()` would be false when in never-value state.
+    // `is_alloced()` is false when Vec is moved-from.
     if (is_alloced()) free_storage();
   }
 
   Vec(Vec&& o) noexcept
-      : storage_(::sus::mem::replace_ptr(mref(o.storage_), nullptr)),
+      : storage_(::sus::mem::replace_ptr(mref(o.storage_), moved_from_value())),
         len_(::sus::mem::replace(mref(o.len_), 0_usize)),
-        capacity_(::sus::mem::replace(mref(o.capacity_), 0_usize)) {}
+        capacity_(::sus::mem::replace(mref(o.capacity_), 0_usize)) {
+    check(!is_moved_from());
+  }
   Vec& operator=(Vec&& o) noexcept {
+    check(!o.is_moved_from());
     if (is_alloced()) free_storage();
-    storage_ = ::sus::mem::replace_ptr(mref(o.storage_), nullptr);
+    storage_ = ::sus::mem::replace_ptr(mref(o.storage_), moved_from_value());
     len_ = ::sus::mem::replace(mref(o.len_), 0_usize);
     capacity_ = ::sus::mem::replace(mref(o.capacity_), 0_usize);
     return *this;
@@ -95,6 +96,7 @@ class Vec {
   Vec clone() const& noexcept
     requires(::sus::mem::Clone<T>)
   {
+    check(!is_moved_from());
     auto v = Vec::with_capacity(capacity_);
     for (auto i = size_t{0}; i < len_; ++i) {
       new (v.as_mut_ptr() + i)
@@ -107,6 +109,8 @@ class Vec {
   void clone_from(const Vec& source) & noexcept
     requires(::sus::mem::Clone<T>)
   {
+    check(!is_moved_from());
+    check(!source.is_moved_from());
     if (source.capacity_ == 0_usize) {
       destroy_storage_objects();
       free_storage();
@@ -137,6 +141,7 @@ class Vec {
   /// Note that this method has no effect on the allocated capacity of the
   /// vector.
   void clear() noexcept {
+    check(!is_moved_from());
     destroy_storage_objects();
     len_ = 0_usize;
   }
@@ -153,6 +158,7 @@ class Vec {
   /// # Panics
   /// Panics if the new capacity exceeds isize::MAX() bytes.
   void reserve(usize additional) noexcept {
+    check(!is_moved_from());
     if (len_ + additional <= capacity_) return;  // Nothing to do.
     grow_to_exact(apply_growth_function(additional));
   }
@@ -171,6 +177,7 @@ class Vec {
   /// # Panics
   /// Panics if the new capacity exceeds isize::MAX bytes.
   void reserve_exact(usize additional) noexcept {
+    check(!is_moved_from());
     const usize cap = len_ + additional;
     if (cap <= capacity_) return;  // Nothing to do.
     grow_to_exact(cap);
@@ -185,6 +192,7 @@ class Vec {
   /// # Panics
   /// Panics if the new capacity exceeds isize::MAX() bytes.
   void grow_to_exact(usize cap) noexcept {
+    check(!is_moved_from());
     if (cap <= capacity_) return;  // Nothing to do.
     const auto bytes = ::sus::mem::size_of<T>() * cap;
     check(bytes <= usize(size_t{PTRDIFF_MAX}));
@@ -214,17 +222,24 @@ class Vec {
   // TODO: Clone.
 
   /// Returns the number of elements in the vector.
-  constexpr inline usize len() const& noexcept { return len_; }
+  constexpr inline usize len() const& noexcept {
+    check(!is_moved_from());
+    return len_;
+  }
 
   /// Returns the number of elements there is space allocated for in the vector.
   ///
   /// This may be larger than the number of elements present, which is returned
   /// by `len()`.
-  constexpr inline usize capacity() const& noexcept { return capacity_; }
+  constexpr inline usize capacity() const& noexcept {
+    check(!is_moved_from());
+    return capacity_;
+  }
 
   /// Removes the last element from a vector and returns it, or None if it is
   /// empty.
   Option<T> pop() noexcept {
+    check(!is_moved_from());
     if (len_ > 0u) {
       auto o = Option<T>::some(
           sus::move(get_unchecked_mut(::sus::marker::unsafe_fn, len_ - 1u)));
@@ -241,6 +256,7 @@ class Vec {
   /// # Panics
   /// Panics if the new capacity exceeds isize::MAX bytes.
   void push(T t) noexcept {
+    check(!is_moved_from());
     // Avoids use of a reference, and receives by value, to sidestep the whole
     // issue of the reference being to something inside the vector which
     // reserve() then invalidates.
@@ -251,6 +267,7 @@ class Vec {
 
   /// Returns a const reference to the element at index `i`.
   constexpr Option<const T&> get_ref(usize i) const& noexcept {
+    check(!is_moved_from());
     if (i >= len_) [[unlikely]]
       return Option<const T&>::none();
     return Option<const T&>::some(get_unchecked(::sus::marker::unsafe_fn, i));
@@ -259,6 +276,7 @@ class Vec {
 
   /// Returns a mutable reference to the element at index `i`.
   constexpr Option<T&> get_mut(usize i) & noexcept {
+    check(!is_moved_from());
     if (i >= len_) [[unlikely]]
       return Option<T&>::none();
     return Option<T&>::some(
@@ -268,8 +286,12 @@ class Vec {
   /// Returns a const reference to the element at index `i`.
   ///
   /// # Safety
+  ///
   /// The index `i` must be inside the bounds of the array or Undefined
   /// Behaviour results.
+  ///
+  /// Additionally, the Vec must not be in a moved-from state or the pointer
+  /// will be invalid and Undefined Behaviour results.
   constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
                                           usize i) const& noexcept {
     return reinterpret_cast<T*>(storage_)[i.primitive_value];
@@ -288,12 +310,14 @@ class Vec {
   }
 
   constexpr inline const T& operator[](usize i) const& noexcept {
+    check(!is_moved_from());
     check(i < len_);
     return get_unchecked(::sus::marker::unsafe_fn, i);
   }
   constexpr inline const T& operator[](usize i) && = delete;
 
   constexpr inline T& operator[](usize i) & noexcept {
+    check(!is_moved_from());
     check(i < len_);
     return get_unchecked_mut(::sus::marker::unsafe_fn, i);
   }
@@ -303,6 +327,7 @@ class Vec {
   /// # Panics
   /// Panics if the vector's capacity is zero.
   inline const T* as_ptr() const& noexcept {
+    check(!is_moved_from());
     check(is_alloced());
     return reinterpret_cast<T*>(storage_);
   }
@@ -313,6 +338,7 @@ class Vec {
   /// # Panics
   /// Panics if the vector's capacity is zero.
   inline T* as_mut_ptr() & noexcept {
+    check(!is_moved_from());
     check(is_alloced());
     return reinterpret_cast<T*>(storage_);
   }
@@ -320,6 +346,7 @@ class Vec {
   // Returns a slice that references all the elements of the vector as const
   // references.
   constexpr Slice<const T> as_ref() const& noexcept {
+    check(!is_moved_from());
     return Slice<const T>::from_raw_parts(reinterpret_cast<const T*>(storage_),
                                           len_);
   }
@@ -328,6 +355,7 @@ class Vec {
   // Returns a slice that references all the elements of the vector as mutable
   // references.
   constexpr Slice<T> as_mut() & noexcept {
+    check(!is_moved_from());
     return Slice<T>::from_raw_parts(reinterpret_cast<T*>(storage_), len_);
   }
 
@@ -335,6 +363,7 @@ class Vec {
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
   constexpr ::sus::iter::Iterator<SliceIter<T>> iter() const& noexcept {
+    check(!is_moved_from());
     return SliceIter<T>::with(reinterpret_cast<const T*>(storage_), len_);
   }
   constexpr ::sus::iter::Iterator<SliceIter<T>> iter() && = delete;
@@ -343,12 +372,14 @@ class Vec {
   /// same order they appear in the array. The iterator gives mutable access to
   /// each element.
   constexpr ::sus::iter::Iterator<SliceIterMut<T>> iter_mut() & noexcept {
+    check(!is_moved_from());
     return SliceIterMut<T>::with(reinterpret_cast<T*>(storage_), len_);
   }
 
   /// Converts the array into an iterator that consumes the array and returns
   /// each element in the same order they appear in the array.
   constexpr ::sus::iter::Iterator<VecIntoIter<T>> into_iter() && noexcept {
+    check(!is_moved_from());
     return VecIntoIter<T>::with(::sus::move(*this));
   }
 
@@ -395,6 +426,15 @@ class Vec {
   // Checks if Vec has storage allocated.
   constexpr inline bool is_alloced() const noexcept {
     return capacity_ > 0_usize;
+  }
+
+  // Checks if Vec has been moved from.
+  constexpr inline bool is_moved_from() const noexcept {
+    return storage_ == moved_from_value();
+  }
+  // The value used in storage_ to indicate moved-from.
+  constexpr static char* moved_from_value() noexcept {
+    return static_cast<char*>(nullptr) + alignof(T);
   }
 
   alignas(T*) char* storage_;
