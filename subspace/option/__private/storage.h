@@ -99,6 +99,13 @@ struct Storage<T, false> final {
     state_ = Some;
   }
 
+  constexpr inline void set_some(const T& t) noexcept {
+    if (state_ == None)
+      construct_from_none(t);
+    else
+      ::sus::mem::replace_and_discard(mref(val_), t);
+    state_ = Some;
+  }
   constexpr inline void set_some(T&& t) noexcept {
     if (state_ == None)
       construct_from_none(::sus::move(t));
@@ -113,7 +120,12 @@ struct Storage<T, false> final {
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
     state_ = None;
-    return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn, mref(val_));
+    if constexpr (::sus::mem::Move<T>) {
+      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                           mref(val_));
+    } else {
+      return ::sus::mem::take_copy_and_destruct(::sus::marker::unsafe_fn, val_);
+    }
   }
 
   constexpr inline void set_none() noexcept {
@@ -203,6 +215,12 @@ struct Storage<T, true> final {
     new (&access_) NeverValueAccess(::sus::move(t));
   }
 
+  constexpr inline void set_some(const T& t) noexcept {
+    if (state() == None)
+      construct_from_none(t);
+    else
+      ::sus::mem::replace_and_discard(access_.as_inner_mut(), t);
+  }
   constexpr inline void set_some(T&& t) noexcept {
     if (state() == None)
       construct_from_none(::sus::move(t));

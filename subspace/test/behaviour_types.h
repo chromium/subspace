@@ -34,8 +34,6 @@ struct NotDefaultConstructible final {
 struct TriviallyCopyable final {
   TriviallyCopyable(const TriviallyCopyable&) = default;
   TriviallyCopyable& operator=(const TriviallyCopyable&) = default;
-  TriviallyCopyable(TriviallyCopyable&&) = delete;
-  TriviallyCopyable& operator=(TriviallyCopyable&&) = delete;
   ~TriviallyCopyable() = default;
   TriviallyCopyable(int i) : i(i) {}
   int i;
@@ -75,8 +73,17 @@ struct TriviallyMoveableNotDestructible final {
 
 struct NotTriviallyRelocatableCopyableOrMoveable final {
   NotTriviallyRelocatableCopyableOrMoveable(
-      NotTriviallyRelocatableCopyableOrMoveable&&) noexcept {}
-  void operator=(NotTriviallyRelocatableCopyableOrMoveable&&) noexcept {}
+      NotTriviallyRelocatableCopyableOrMoveable&& o) noexcept
+      : i(o.i) {}
+  void operator=(NotTriviallyRelocatableCopyableOrMoveable&& o) noexcept {
+    i = o.i;
+  }
+  NotTriviallyRelocatableCopyableOrMoveable(
+      const NotTriviallyRelocatableCopyableOrMoveable& o) noexcept
+      : i(o.i) {}
+  void operator=(const NotTriviallyRelocatableCopyableOrMoveable& o) noexcept {
+    i = o.i;
+  }
   ~NotTriviallyRelocatableCopyableOrMoveable() {}
   NotTriviallyRelocatableCopyableOrMoveable(int i) : i(i) {}
   int i;

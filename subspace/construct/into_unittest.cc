@@ -63,11 +63,10 @@ static_assert(CanInto<FromInt, int&>);
 static_assert(CanInto<FromInt, int&&>);
 static_assert(CanInto<FromInt, const int&&>);
 
-// into() for a trivially copyable type will be copied if not being moved (this
-// type disallows move).
+// into() for a trivially copyable type will be copied if it can't be moved.
 static_assert(CanInto<FromStuff, const TriviallyCopyable&>);
 static_assert(CanInto<FromStuff, TriviallyCopyable&>);
-static_assert(!CanInto<FromStuff, TriviallyCopyable&&>);
+static_assert(CanInto<FromStuff, TriviallyCopyable&&>);
 static_assert(CanInto<FromStuff, const TriviallyCopyable&&>);
 
 // into() for a trivially movable type will be moved if not const (this type
