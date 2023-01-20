@@ -286,6 +286,48 @@ TEST(Option, UseAfterMove) {
   IS_NONE(b);  // Not trivially relocatable moves-from the value in `b`.
 }
 
+TEST(Option, MoveSelfAssign) {
+  auto x = sus::Option<TriviallyMoveableAndRelocatable>::some(
+      TriviallyMoveableAndRelocatable(2));
+  x = sus::move(x);
+  IS_SOME(x);
+  EXPECT_EQ(sus::move(x).unwrap().i, 2);
+
+  auto y = Option<NotTriviallyRelocatableCopyableOrMoveable>::some(
+      NotTriviallyRelocatableCopyableOrMoveable(2));
+  y = sus::move(y);
+  IS_SOME(y);
+  EXPECT_EQ(sus::move(y).unwrap().i, 2);
+}
+
+TEST(Option, CopySelfAssign) {
+  auto x = sus::Option<TriviallyCopyable>::some(
+      TriviallyCopyable(2));
+  x = x;
+  IS_SOME(x);
+  EXPECT_EQ(sus::move(x).unwrap().i, 2);
+
+  auto y = Option<NotTriviallyRelocatableCopyableOrMoveable>::some(
+      NotTriviallyRelocatableCopyableOrMoveable(2));
+  y = y;
+  IS_SOME(y);
+  EXPECT_EQ(sus::move(y).unwrap().i, 2);
+}
+
+TEST(Option, CloneIntoSelfAssign) {
+  auto x = sus::Option<TriviallyCopyable>::some(
+      TriviallyCopyable(2));
+  sus::clone_into(x, x);
+  IS_SOME(x);
+  EXPECT_EQ(sus::move(x).unwrap().i, 2);
+
+  auto y = Option<NotTriviallyRelocatableCopyableOrMoveable>::some(
+      NotTriviallyRelocatableCopyableOrMoveable(2));
+  sus::clone_into(y, y);
+  IS_SOME(y);
+  EXPECT_EQ(sus::move(y).unwrap().i, 2);
+}
+
 TEST(Option, Some) {
   auto x = Option<DefaultConstructible>::some(DefaultConstructible());
   IS_SOME(x);

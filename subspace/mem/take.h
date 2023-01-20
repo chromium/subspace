@@ -19,6 +19,7 @@
 #include "subspace/construct/default.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/addressof.h"
+#include "subspace/mem/copy.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
 #include "subspace/mem/relocate.h"
@@ -47,7 +48,7 @@ inline constexpr T take(T& t) noexcept {
 /// SAFETY: This does *not* re-construct the object pointed to by `t`. It must
 /// not be used (or destructed again) afterward.
 template <class T>
-  requires ::sus::mem::Move<T>
+  requires(::sus::mem::Move<T>)
 inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
                                      T& t) noexcept {
   // NOTE: MSVC fails to compile if we use move() here, which is not really
@@ -55,6 +56,24 @@ inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
   // uninitialized symbol if we static_cast though a method. So we manually
   // static_cast here.
   auto taken = T(static_cast<T&&>(t));
+  t.~T();
+  return taken;
+}
+
+/// Copies from `t` and destroys the object at `t`. Returns the old value of
+/// `t`.
+///
+/// SAFETY: This does *not* re-construct the object pointed to by `t`. It must
+/// not be used (or destructed again) afterward.
+template <class T>
+  requires(::sus::mem::Copy<T>)
+inline constexpr T take_copy_and_destruct(::sus::marker::UnsafeFnMarker,
+                                          const T& t) noexcept {
+  // NOTE: MSVC fails to compile if we use move() here, which is not really
+  // explainable beyond it being a compiler bug. It claims there is use of an
+  // uninitialized symbol if we static_cast though a method. So we manually
+  // static_cast here.
+  auto taken = T(t);
   t.~T();
   return taken;
 }
