@@ -143,6 +143,89 @@ class [[nodiscard]] Result final {
     }
   }
 
+  /// If T and E can be trivially copy-constructed, Result<T, E> can also be
+  /// trivially copy-constructed.
+  constexpr Result(const Result&)
+    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
+             std::is_trivially_copy_constructible_v<T> &&
+             std::is_trivially_copy_constructible_v<E>)
+  = default;
+
+  Result(const Result& rhs) noexcept
+    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
+             !(std::is_trivially_copy_constructible_v<T> &&
+               std::is_trivially_copy_constructible_v<E>))
+      : state_(rhs.state_) {
+    ::sus::check(state_ != IsMoved);
+    switch (state_) {
+      case IsOk: new (&storage_.ok_) T(rhs.storage_.ok_); break;
+      case IsErr: new (&storage_.err_) E(rhs.storage_.err_); break;
+      case IsMoved:
+        // SAFETY: The state_ is verified to be Ok or Err at the top of the
+        // function.
+        ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+    }
+  }
+
+  constexpr Result(const Result&)
+    requires(!::sus::mem::Copy<T> || !::sus::mem::Copy<E>)
+  = delete;
+
+  /// If T and E can be trivially move-assigned, Result<T, E> can also be
+  /// trivially move-assigned.
+  constexpr Result& operator=(const Result& o)
+    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
+             std::is_trivially_copy_assignable_v<T> &&
+             std::is_trivially_copy_assignable_v<E>)
+  = default;
+
+  Result& operator=(const Result& o) noexcept
+    requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
+             !(std::is_trivially_copy_assignable_v<T> &&
+               std::is_trivially_copy_assignable_v<E>))
+  {
+    check(o.state_ != IsMoved);
+    switch (state_) {
+      case IsOk:
+        switch (state_ = o.state_) {
+          case IsOk:
+            mem::replace_and_discard(mref(storage_.ok_), o.storage_.ok_);
+            break;
+          case IsErr:
+            storage_.ok_.~T();
+            new (&storage_.err_) E(o.storage_.err_);
+            break;
+          // SAFETY: This condition is check()'d at the top of the function.
+          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+        }
+        break;
+      case IsErr:
+        switch (state_ = o.state_) {
+          case IsErr:
+            mem::replace_and_discard(mref(storage_.err_), o.storage_.err_);
+            break;
+          case IsOk:
+            storage_.err_.~E();
+            new (&storage_.ok_) T(o.storage_.ok_);
+            break;
+          // SAFETY: This condition is check()'d at the top of the function.
+          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+        }
+        break;
+      case IsMoved:
+        switch (state_ = o.state_) {
+          case IsErr: new (&storage_.err_) E(o.storage_.err_); break;
+          case IsOk:
+            new (&storage_.ok_) T(o.storage_.ok_);
+            break;
+            // SAFETY: This condition is check()'d at the top of the function.
+          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+        }
+        break;
+    }
+    return *this;
+  }
+
   /// If T and E can be trivially move-constructed, Result<T, E> can also be
   /// trivially move-constructed.
   constexpr Result(Result&&)
@@ -184,9 +267,10 @@ class [[nodiscard]] Result final {
              !(std::is_trivially_move_assignable_v<T> &&
                std::is_trivially_move_assignable_v<E>))
   {
+    check(o.state_ != IsMoved);
     switch (state_) {
       case IsOk:
-        switch (state_ = replace(mref(o.state_), IsMoved)) {
+        switch (state_ = ::sus::mem::replace(mref(o.state_), IsMoved)) {
           case IsOk:
             mem::replace_and_discard(mref(storage_.ok_),
                                      ::sus::move(o.storage_.ok_));
@@ -195,29 +279,34 @@ class [[nodiscard]] Result final {
             storage_.ok_.~T();
             new (&storage_.err_) E(::sus::move(o.storage_.err_));
             break;
-          case IsMoved: unreachable();
+          // SAFETY: This condition is check()'d at the top of the function.
+          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
         }
         break;
       case IsErr:
-        switch (state_ = replace(mref(o.state_), IsMoved)) {
+        switch (state_ = ::sus::mem::replace(mref(o.state_), IsMoved)) {
           case IsErr:
             mem::replace_and_discard(mref(storage_.err_),
                                      ::sus::move(o.storage_.err_));
             break;
           case IsOk:
-            storage_.err_.~T();
+            storage_.err_.~E();
             new (&storage_.ok_) T(::sus::move(o.storage_.ok_));
             break;
-          case IsMoved: unreachable();
+          // SAFETY: This condition is check()'d at the top of the function.
+          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
         }
         break;
       case IsMoved:
-        switch (state_ = replace(mref(o.state_), IsMoved)) {
+        switch (state_ = ::sus::mem::replace(mref(o.state_), IsMoved)) {
           case IsErr:
-            new (&storage_.err_) T(::sus::move(o.storage_.err_));
+            new (&storage_.err_) E(::sus::move(o.storage_.err_));
             break;
-          case IsOk: new (&storage_.ok_) T(::sus::move(o.storage_.ok_)); break;
-          case IsMoved: unreachable();
+          case IsOk:
+            new (&storage_.ok_) T(::sus::move(o.storage_.ok_));
+            break;
+            // SAFETY: This condition is check()'d at the top of the function.
+          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
         }
         break;
     }
@@ -229,7 +318,8 @@ class [[nodiscard]] Result final {
   = delete;
 
   constexpr Result clone() const& noexcept
-    requires(::sus::mem::Clone<T> && ::sus::mem::Clone<E>)
+    requires(::sus::mem::Clone<T> && ::sus::mem::Clone<E> &&
+             !(::sus::mem::Copy<T> && ::sus::mem::Copy<E>))
   {
     ::sus::check(state_ != IsMoved);
     switch (state_) {
@@ -243,7 +333,8 @@ class [[nodiscard]] Result final {
   }
 
   void clone_from(const Result& source) &
-        requires(::sus::mem::Clone<T> && ::sus::mem::Clone<E>)
+    requires(::sus::mem::Clone<T> && ::sus::mem::Clone<E> &&
+             !(::sus::mem::Copy<T> && ::sus::mem::Copy<E>))
   {
     ::sus::check(source.state_ != IsMoved);
     if (state_ == source.state_) {
@@ -424,7 +515,8 @@ class [[nodiscard]] Result final {
   [[sus_no_unique_address]] __private::Storage<T, E> storage_;
   enum FullState { IsErr = 0, IsOk = 1, IsMoved = 2 } state_;
 
-  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T, E);
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T, E,
+                                           decltype(state_));
 };
 
 template <class T>

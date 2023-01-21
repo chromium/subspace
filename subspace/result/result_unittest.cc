@@ -22,10 +22,14 @@
 #include "subspace/mem/move.h"
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
+#include "subspace/test/behaviour_types.h"
 
 namespace {
 
 using sus::result::Result;
+using sus::test::NotTriviallyRelocatableCopyableOrMoveable;
+using sus::test::TriviallyCopyable;
+using sus::test::TriviallyMoveableAndRelocatable;
 
 struct TailPadding {
   i64 i;
@@ -37,6 +41,20 @@ static_assert(sizeof(Result<i32, TailPadding>) ==
               sizeof(TailPadding) + sus_if_msvc_else(8, 0));
 
 struct Error {};
+
+static_assert(::sus::mem::Copy<Result<int, int>>);
+static_assert(::sus::mem::Move<Result<int, int>>);
+static_assert(sus::mem::Copy<Result<i32, i32>>);
+static_assert(sus::mem::Move<Result<i32, i32>>);
+static_assert(sus::mem::Clone<Result<i32, i32>>);
+
+static_assert(!sus::mem::Copy<Result<i32, TriviallyMoveableAndRelocatable>>);
+static_assert(sus::mem::Move<Result<i32, TriviallyMoveableAndRelocatable>>);
+static_assert(!sus::mem::Clone<Result<i32, TriviallyMoveableAndRelocatable>>);
+
+static_assert(!sus::mem::Copy<Result<TriviallyMoveableAndRelocatable, i32>>);
+static_assert(sus::mem::Move<Result<TriviallyMoveableAndRelocatable, i32>>);
+static_assert(!sus::mem::Clone<Result<TriviallyMoveableAndRelocatable, i32>>);
 
 TEST(Result, With) {
   constexpr auto i = 4_i32;
@@ -267,16 +285,96 @@ TEST(Result, MoveAfterTrivialMove) {
   EXPECT_EQ(sus::move(r2).unwrap(), 1_i32);
 }
 
+TEST(Result, AssignAfterTrivialMove) {
+  // Trivial move won't catch use-after-move.
+  auto r = Result<i32, i32>::with(1_i32);
+  auto r3 = sus::move(r);
+  r = sus::move(r3);
+  EXPECT_EQ(sus::move(r).unwrap(), 1_i32);
+}
+
 struct NonTrivialMove {
-  NonTrivialMove() {}
-  NonTrivialMove(NonTrivialMove&&) {}
-  NonTrivialMove& operator=(NonTrivialMove&&) { return *this; }
+  NonTrivialMove(i32 i) : i(i) {}
+  NonTrivialMove(NonTrivialMove&& o) : i(o.i) {}
+  NonTrivialMove& operator=(NonTrivialMove&& o) {
+    i = o.i;
+    return *this;
+  }
+
+  i32 i;
 };
 
-TEST(Result, MoveAfterNonTrivialMove) {
-  auto r = Result<NonTrivialMove, i32>::with(NonTrivialMove());
+TEST(ResultDeathTest, MoveAfterNonTrivialMove) {
+  auto r = Result<NonTrivialMove, i32>::with(NonTrivialMove(1));
   sus::move(r).unwrap();
   EXPECT_DEATH([[maybe_unused]] auto r2 = sus::move(r), "");
+}
+
+TEST(Result, AssignAfterNonTrivialMove) {
+  auto r = Result<NonTrivialMove, i32>::with(NonTrivialMove(1));
+  auto r3 = sus::move(r);
+  r = sus::move(r3);
+  EXPECT_EQ(sus::move(r).unwrap().i, 1_i32);
+}
+
+TEST(Result, MoveSelfAssign) {
+  auto r = Result<TriviallyCopyable, i32>::with(TriviallyCopyable(1));
+  r = sus::move(r);
+  EXPECT_EQ(sus::move(r).unwrap().i, 1);
+
+  auto s = Result<NotTriviallyRelocatableCopyableOrMoveable, i32>::with(
+      NotTriviallyRelocatableCopyableOrMoveable(1));
+  s = sus::move(s);
+  EXPECT_EQ(sus::move(s).unwrap().i, 1);
+
+  auto e = Result<i32, TriviallyCopyable>::with_err(TriviallyCopyable(1));
+  e = sus::move(e);
+  EXPECT_EQ(sus::move(e).unwrap_err().i, 1);
+
+  auto f = Result<i32, NotTriviallyRelocatableCopyableOrMoveable>::with_err(
+      NotTriviallyRelocatableCopyableOrMoveable(1));
+  f = sus::move(f);
+  EXPECT_EQ(sus::move(f).unwrap_err().i, 1);
+}
+
+TEST(Result, CopySelfAssign) {
+  auto r = Result<TriviallyCopyable, i32>::with(TriviallyCopyable(1));
+  r = r;
+  EXPECT_EQ(sus::move(r).unwrap().i, 1);
+
+  auto s = Result<NotTriviallyRelocatableCopyableOrMoveable, i32>::with(
+      NotTriviallyRelocatableCopyableOrMoveable(1));
+  s = s;
+  EXPECT_EQ(sus::move(s).unwrap().i, 1);
+
+  auto e = Result<i32, TriviallyCopyable>::with_err(TriviallyCopyable(1));
+  e = e;
+  EXPECT_EQ(sus::move(e).unwrap_err().i, 1);
+
+  auto f = Result<i32, NotTriviallyRelocatableCopyableOrMoveable>::with_err(
+      NotTriviallyRelocatableCopyableOrMoveable(1));
+  f = f;
+  EXPECT_EQ(sus::move(f).unwrap_err().i, 1);
+}
+
+TEST(Result, CloneIntoSelfAssign) {
+  auto r = Result<TriviallyCopyable, i32>::with(TriviallyCopyable(1));
+  r = r;
+  EXPECT_EQ(sus::move(r).unwrap().i, 1);
+
+  auto s = Result<NotTriviallyRelocatableCopyableOrMoveable, i32>::with(
+      NotTriviallyRelocatableCopyableOrMoveable(1));
+  s = s;
+  EXPECT_EQ(sus::move(s).unwrap().i, 1);
+
+  auto e = Result<i32, TriviallyCopyable>::with_err(TriviallyCopyable(1));
+  e = e;
+  EXPECT_EQ(sus::move(e).unwrap_err().i, 1);
+
+  auto f = Result<i32, NotTriviallyRelocatableCopyableOrMoveable>::with_err(
+      NotTriviallyRelocatableCopyableOrMoveable(1));
+  f = f;
+  EXPECT_EQ(sus::move(f).unwrap_err().i, 1);
 }
 
 TEST(Result, Iter) {
@@ -406,8 +504,7 @@ TEST(Result, Clone) {
   static_assert(::sus::mem::Clone<Copy>);
   static_assert(::sus::mem::CloneInto<Copy>);
   static_assert(::sus::mem::Move<Copy>);
-  // Result is never Copy, but it is Clone if T is Clone.
-  static_assert(!::sus::mem::Copy<Result<Copy, i32>>);
+  static_assert(::sus::mem::Copy<Result<Copy, i32>>);
   static_assert(::sus::mem::Clone<Result<Copy, i32>>);
   static_assert(::sus::mem::CloneInto<Result<Copy, i32>>);
   static_assert(::sus::mem::Move<Result<Copy, i32>>);
