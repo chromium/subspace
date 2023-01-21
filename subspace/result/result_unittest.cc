@@ -589,4 +589,117 @@ TEST(Result, Eq) {
   EXPECT_NE((Result<i32, f32>::with_err(f32::NAN)),
             (Result<i32, f32>::with_err(f32::NAN)));
 }
+
+TEST(Result, Ord) {
+  static_assert(::sus::ops::Ord<Result<i32, i32>>);
+
+  static_assert(Result<i32, i32>::with(1) < Result<i32, i32>::with(2));
+  static_assert(Result<i32, i32>::with(3) > Result<i32, i32>::with(2));
+  static_assert(Result<i32, i32>::with_err(1) < Result<i32, i32>::with_err(2));
+  static_assert(Result<i32, i32>::with_err(3) > Result<i32, i32>::with_err(2));
+
+  static_assert(Result<i32, i32>::with(1) > Result<i32, i32>::with_err(2));
+  static_assert(Result<i32, i32>::with_err(1) < Result<i32, i32>::with(2));
+}
+
+TEST(Result, StrongOrder) {
+  static_assert(std::strong_order(Result<i32, i32>::with(12),
+                                  Result<i32, i32>::with(12)) ==
+                std::strong_ordering::equal);
+  static_assert(std::strong_order(Result<i32, i32>::with(12),
+                                  Result<i32, i32>::with(13)) ==
+                std::strong_ordering::less);
+  static_assert(std::strong_order(Result<i32, i32>::with(12),
+                                  Result<i32, i32>::with(11)) ==
+                std::strong_ordering::greater);
+
+  static_assert(std::strong_order(Result<i32, i32>::with_err(12),
+                                  Result<i32, i32>::with_err(12)) ==
+                std::strong_ordering::equal);
+  static_assert(std::strong_order(Result<i32, i32>::with_err(12),
+                                  Result<i32, i32>::with_err(13)) ==
+                std::strong_ordering::less);
+  static_assert(std::strong_order(Result<i32, i32>::with_err(12),
+                                  Result<i32, i32>::with_err(11)) ==
+                std::strong_ordering::greater);
+
+  static_assert(std::strong_order(Result<i32, i32>::with(12),
+                                  Result<i32, i32>::with_err(12)) ==
+                std::strong_ordering::greater);
+  static_assert(std::strong_order(Result<i32, i32>::with_err(12),
+                                  Result<i32, i32>::with(12)) ==
+                std::strong_ordering::less);
+}
+
+struct Weak {
+  constexpr auto operator==(const Weak& o) const& {
+    return a == o.a && b == o.b;
+  }
+  constexpr auto operator<=>(const Weak& o) const& {
+    if (a == o.a) return std::weak_ordering::equivalent;
+    if (a < o.a) return std::weak_ordering::less;
+    return std::weak_ordering::greater;
+  }
+
+  constexpr Weak(int a, int b) : a(a), b(b) {}
+  int a;
+  int b;
+};
+
+TEST(Option, WeakOrder) {
+  static_assert(!::sus::ops::Ord<Result<Weak, i32>>);
+  static_assert(!::sus::ops::Ord<Result<i32, Weak>>);
+  static_assert(!::sus::ops::Ord<Result<Weak, Weak>>);
+
+  static_assert(::sus::ops::WeakOrd<Result<Weak, i32>>);
+  static_assert(::sus::ops::WeakOrd<Result<i32, Weak>>);
+  static_assert(::sus::ops::WeakOrd<Result<Weak, Weak>>);
+
+  static_assert(std::weak_order(Result<Weak, i32>::with(Weak(1, 2)),
+                                Result<Weak, i32>::with(Weak(1, 2))) ==
+                std::weak_ordering::equivalent);
+  static_assert(std::weak_order(Result<Weak, i32>::with(Weak(1, 2)),
+                                Result<Weak, i32>::with(Weak(1, 3))) ==
+                std::weak_ordering::equivalent);
+  static_assert(std::weak_order(Result<Weak, i32>::with(Weak(1, 2)),
+                                Result<Weak, i32>::with(Weak(2, 3))) ==
+                std::weak_ordering::less);
+  static_assert(std::weak_order(Result<Weak, i32>::with(Weak(2, 2)),
+                                Result<Weak, i32>::with(Weak(1, 3))) ==
+                std::weak_ordering::greater);
+}
+
+TEST(Option, PartialOrder) {
+  static_assert(!::sus::ops::Ord<Result<f32, i8>>);
+  static_assert(!::sus::ops::Ord<Result<i8, f32>>);
+  static_assert(!::sus::ops::Ord<Result<f32, f32>>);
+
+  static_assert(!::sus::ops::WeakOrd<Result<f32, i8>>);
+  static_assert(!::sus::ops::WeakOrd<Result<i8, f32>>);
+  static_assert(!::sus::ops::WeakOrd<Result<f32, f32>>);
+
+  static_assert(::sus::ops::PartialOrd<Result<f32, i8>>);
+  static_assert(::sus::ops::PartialOrd<Result<i8, f32>>);
+  static_assert(::sus::ops::PartialOrd<Result<f32, f32>>);
+
+  static_assert(std::partial_order(Result<f32, i8>::with(0.0f),
+                                   Result<f32, i8>::with(-0.0f)) ==
+                std::partial_ordering::equivalent);
+  static_assert(std::partial_order(Result<f32, i8>::with(1.0f),
+                                   Result<f32, i8>::with(-0.0f)) ==
+                std::partial_ordering::greater);
+  static_assert(std::partial_order(Result<f32, i8>::with(0.0f),
+                                   Result<f32, i8>::with(1.0f)) ==
+                std::partial_ordering::less);
+  EXPECT_EQ(std::partial_order(Result<f32, i8>::with(f32::NAN),
+                               Result<f32, i8>::with(f32::NAN)),
+            std::partial_ordering::unordered);
+}
+
+TEST(Option, NoOrder) {
+  struct NotCmp {};
+  static_assert(!::sus::ops::PartialOrd<NotCmp>);
+  static_assert(!::sus::ops::PartialOrd<Result<NotCmp, i8>>);
+}
+
 }  // namespace
