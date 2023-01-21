@@ -1,3 +1,9 @@
 out
 .cache
 .vscode/c_cpp_properties.json
+.gclient
+.gclient_previous_sync_commits
+.gclient_entries
+buildtools/
+third_party/googletest
+third_party/llvm

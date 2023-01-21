@@ -22,6 +22,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/tools/cmake")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+    message(STATUS "No build type selected, default to Debug")
+    set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
 include(OptionIf)
 
 option_if_not_defined(SUBSPACE_BUILD_CIR "Build CIR (requires LLVM)" ON)
