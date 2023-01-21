@@ -16,18 +16,29 @@
 
 #include "googletest/include/gtest/gtest.h"
 
+// Incredibly, on Posix we can use [0-9] but on Windows we can't. Yet on Windows
+// we can use `\d` and on Posix we can't (or it doesn't match).
+#if GTEST_USES_SIMPLE_RE
+#define DIGIT "\\d"
+#else
+#define DIGIT "[0-9]"
+#endif
+
 namespace sus {
 namespace {
 
-TEST(Panic, Panic) {
+TEST(PanicDeathTest, Panic) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(panic(), "");
+  EXPECT_DEATH(panic(),
+               "^PANIC! at .*panic_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 }
 
-TEST(Panic, WithMessage) {
+TEST(PanicDeathTest, WithMessage) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(panic_with_message(*"hello world"), "hello world");
+  EXPECT_DEATH(panic_with_message(*"hello world"),
+               "^PANIC! at .*panic_unittest.cc:" DIGIT "+:" DIGIT
+               "+: hello world\n$");
 #endif
 }
 
