@@ -562,4 +562,31 @@ TEST(Result, Clone) {
   }
 }
 
+TEST(Result, Eq) {
+  struct NotEq {};
+  static_assert(!sus::ops::Eq<NotEq>);
+
+  static_assert(::sus::ops::Eq<Result<i32, i32>, Result<i32, i32>>);
+  static_assert(!::sus::ops::Eq<Result<i32, NotEq>, Result<i32, NotEq>>);
+  static_assert(!::sus::ops::Eq<Result<NotEq, i32>, Result<NotEq, i32>>);
+  static_assert(!::sus::ops::Eq<Result<NotEq, NotEq>, Result<NotEq, NotEq>>);
+
+  EXPECT_EQ((Result<i32, i32>::with(1)), (Result<i32, i32>::with(1)));
+  EXPECT_NE((Result<i32, i32>::with(1)), (Result<i32, i32>::with(2)));
+  EXPECT_NE((Result<i32, i32>::with(1)), (Result<i32, i32>::with_err(1)));
+  EXPECT_NE((Result<i32, i32>::with_err(1)), (Result<i32, i32>::with(1)));
+  EXPECT_EQ((Result<i32, i32>::with_err(1)), (Result<i32, i32>::with_err(1)));
+
+  EXPECT_EQ((Result<f32, i32>::with(1.f)), (Result<f32, i32>::with(1.f)));
+  EXPECT_EQ((Result<f32, i32>::with(0.f)), (Result<f32, i32>::with(-0.f)));
+
+  EXPECT_NE((Result<f32, i32>::with(f32::NAN)),
+            (Result<f32, i32>::with(f32::NAN)));
+  EXPECT_EQ((Result<i32, f32>::with_err(1.f)),
+            (Result<i32, f32>::with_err(1.f)));
+  EXPECT_EQ((Result<i32, f32>::with_err(0.f)),
+            (Result<i32, f32>::with_err(-0.f)));
+  EXPECT_NE((Result<i32, f32>::with_err(f32::NAN)),
+            (Result<i32, f32>::with_err(f32::NAN)));
+}
 }  // namespace
