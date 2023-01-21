@@ -18,7 +18,7 @@
 #include "subspace/macros/compiler.h"
 
 // TODO: https://github.com/llvm/llvm-project/issues/56394
-#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_56394(...) __VA_ARGS__
 #define sus_clang_bug_56394_else(...)
 #else
@@ -27,7 +27,7 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58835
-#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58835(...) __VA_ARGS__
 #define sus_clang_bug_58835_else(...)
 #else
@@ -50,7 +50,8 @@
 // TODO: https://github.com/llvm/llvm-project/issues/54050
 // Aggregate initialization fails on template classes due to lack of CTAD for
 // aggregates.
-#if __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && \
+    __clang_major__ <= 16  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_54050(...) __VA_ARGS__
 #define sus_clang_bug_54050_else(...)
 #else
@@ -59,7 +60,8 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58836
-#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && \
+    __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58836(...) __VA_ARGS__
 #define sus_clang_bug_58836_else(...)
 #else
@@ -68,7 +70,8 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58837
-#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && \
+    __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58837(...) __VA_ARGS__
 #define sus_clang_bug_58837_else(...)
 #else
@@ -77,7 +80,8 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58859
-#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && \
+    __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58859(...) __VA_ARGS__
 #define sus_clang_bug_58859_else(...)
 #else
@@ -86,7 +90,8 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/56394
-#if __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && \
+    __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_56394(...) __VA_ARGS__
 #define sus_clang_bug_56394_else(...)
 #else
@@ -118,7 +123,8 @@
 // TODO: https://github.com/llvm/llvm-project/issues/49358
 // Clang-cl doesn't support either [[no_unique_address]] nor
 // [[msvc::no_unique_address]]
-#if _MSC_VER && __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#if _MSC_VER && defined(__clang__) && \
+    __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_49358(...) __VA_ARGS__
 #define sus_clang_bug_49358_else(...)
 #else

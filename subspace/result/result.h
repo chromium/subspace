@@ -34,6 +34,7 @@
 #include "subspace/mem/take.h"
 #include "subspace/option/option.h"
 #include "subspace/result/__private/marker.h"
+#include "subspace/result/__private/result_state.h"
 #include "subspace/result/__private/storage.h"
 
 namespace sus::iter {
@@ -137,9 +138,9 @@ class [[nodiscard]] Result final {
              !std::is_trivially_destructible_v<E>)
   {
     switch (state_) {
-      case IsMoved: break;
-      case IsOk: storage_.ok_.~T(); break;
-      case IsErr: storage_.err_.~E(); break;
+      case __private::ResultState::IsMoved: break;
+      case __private::ResultState::IsOk: storage_.ok_.~T(); break;
+      case __private::ResultState::IsErr: storage_.err_.~E(); break;
     }
   }
 
@@ -156,11 +157,15 @@ class [[nodiscard]] Result final {
              !(std::is_trivially_copy_constructible_v<T> &&
                std::is_trivially_copy_constructible_v<E>))
       : state_(rhs.state_) {
-    ::sus::check(state_ != IsMoved);
+    ::sus::check(state_ != __private::ResultState::IsMoved);
     switch (state_) {
-      case IsOk: new (&storage_.ok_) T(rhs.storage_.ok_); break;
-      case IsErr: new (&storage_.err_) E(rhs.storage_.err_); break;
-      case IsMoved:
+      case __private::ResultState::IsOk:
+        new (&storage_.ok_) T(rhs.storage_.ok_);
+        break;
+      case __private::ResultState::IsErr:
+        new (&storage_.err_) E(rhs.storage_.err_);
+        break;
+      case __private::ResultState::IsMoved:
         // SAFETY: The state_ is verified to be Ok or Err at the top of the
         // function.
         ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
@@ -184,42 +189,47 @@ class [[nodiscard]] Result final {
              !(std::is_trivially_copy_assignable_v<T> &&
                std::is_trivially_copy_assignable_v<E>))
   {
-    check(o.state_ != IsMoved);
+    check(o.state_ != __private::ResultState::IsMoved);
     switch (state_) {
-      case IsOk:
+      case __private::ResultState::IsOk:
         switch (state_ = o.state_) {
-          case IsOk:
+          case __private::ResultState::IsOk:
             mem::replace_and_discard(mref(storage_.ok_), o.storage_.ok_);
             break;
-          case IsErr:
+          case __private::ResultState::IsErr:
             storage_.ok_.~T();
             new (&storage_.err_) E(o.storage_.err_);
             break;
           // SAFETY: This condition is check()'d at the top of the function.
-          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case __private::ResultState::IsMoved:
+            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
         }
         break;
-      case IsErr:
+      case __private::ResultState::IsErr:
         switch (state_ = o.state_) {
-          case IsErr:
+          case __private::ResultState::IsErr:
             mem::replace_and_discard(mref(storage_.err_), o.storage_.err_);
             break;
-          case IsOk:
+          case __private::ResultState::IsOk:
             storage_.err_.~E();
             new (&storage_.ok_) T(o.storage_.ok_);
             break;
           // SAFETY: This condition is check()'d at the top of the function.
-          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case __private::ResultState::IsMoved:
+            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
         }
         break;
-      case IsMoved:
+      case __private::ResultState::IsMoved:
         switch (state_ = o.state_) {
-          case IsErr: new (&storage_.err_) E(o.storage_.err_); break;
-          case IsOk:
+          case __private::ResultState::IsErr:
+            new (&storage_.err_) E(o.storage_.err_);
+            break;
+          case __private::ResultState::IsOk:
             new (&storage_.ok_) T(o.storage_.ok_);
             break;
             // SAFETY: This condition is check()'d at the top of the function.
-          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case __private::ResultState::IsMoved:
+            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
         }
         break;
     }
@@ -238,12 +248,17 @@ class [[nodiscard]] Result final {
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
              !(std::is_trivially_move_constructible_v<T> &&
                std::is_trivially_move_constructible_v<E>))
-      : state_(::sus::mem::replace(mref(rhs.state_), IsMoved)) {
-    ::sus::check(state_ != IsMoved);
+      : state_(::sus::mem::replace(mref(rhs.state_),
+                                   __private::ResultState::IsMoved)) {
+    ::sus::check(state_ != __private::ResultState::IsMoved);
     switch (state_) {
-      case IsOk: new (&storage_.ok_) T(::sus::move(rhs.storage_.ok_)); break;
-      case IsErr: new (&storage_.err_) E(::sus::move(rhs.storage_.err_)); break;
-      case IsMoved:
+      case __private::ResultState::IsOk:
+        new (&storage_.ok_) T(::sus::move(rhs.storage_.ok_));
+        break;
+      case __private::ResultState::IsErr:
+        new (&storage_.err_) E(::sus::move(rhs.storage_.err_));
+        break;
+      case __private::ResultState::IsMoved:
         // SAFETY: The state_ is verified to be Ok or Err at the top of the
         // function.
         ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
@@ -267,46 +282,52 @@ class [[nodiscard]] Result final {
              !(std::is_trivially_move_assignable_v<T> &&
                std::is_trivially_move_assignable_v<E>))
   {
-    check(o.state_ != IsMoved);
+    check(o.state_ != __private::ResultState::IsMoved);
     switch (state_) {
-      case IsOk:
-        switch (state_ = ::sus::mem::replace(mref(o.state_), IsMoved)) {
-          case IsOk:
+      case __private::ResultState::IsOk:
+        switch (state_ = ::sus::mem::replace(mref(o.state_),
+                                             __private::ResultState::IsMoved)) {
+          case __private::ResultState::IsOk:
             mem::replace_and_discard(mref(storage_.ok_),
                                      ::sus::move(o.storage_.ok_));
             break;
-          case IsErr:
+          case __private::ResultState::IsErr:
             storage_.ok_.~T();
             new (&storage_.err_) E(::sus::move(o.storage_.err_));
             break;
           // SAFETY: This condition is check()'d at the top of the function.
-          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case __private::ResultState::IsMoved:
+            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
         }
         break;
-      case IsErr:
-        switch (state_ = ::sus::mem::replace(mref(o.state_), IsMoved)) {
-          case IsErr:
+      case __private::ResultState::IsErr:
+        switch (state_ = ::sus::mem::replace(mref(o.state_),
+                                             __private::ResultState::IsMoved)) {
+          case __private::ResultState::IsErr:
             mem::replace_and_discard(mref(storage_.err_),
                                      ::sus::move(o.storage_.err_));
             break;
-          case IsOk:
+          case __private::ResultState::IsOk:
             storage_.err_.~E();
             new (&storage_.ok_) T(::sus::move(o.storage_.ok_));
             break;
           // SAFETY: This condition is check()'d at the top of the function.
-          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case __private::ResultState::IsMoved:
+            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
         }
         break;
-      case IsMoved:
-        switch (state_ = ::sus::mem::replace(mref(o.state_), IsMoved)) {
-          case IsErr:
+      case __private::ResultState::IsMoved:
+        switch (state_ = ::sus::mem::replace(mref(o.state_),
+                                             __private::ResultState::IsMoved)) {
+          case __private::ResultState::IsErr:
             new (&storage_.err_) E(::sus::move(o.storage_.err_));
             break;
-          case IsOk:
+          case __private::ResultState::IsOk:
             new (&storage_.ok_) T(::sus::move(o.storage_.ok_));
             break;
             // SAFETY: This condition is check()'d at the top of the function.
-          case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+          case __private::ResultState::IsMoved:
+            ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
         }
         break;
     }
@@ -321,11 +342,13 @@ class [[nodiscard]] Result final {
     requires(::sus::mem::Clone<T> && ::sus::mem::Clone<E> &&
              !(::sus::mem::Copy<T> && ::sus::mem::Copy<E>))
   {
-    ::sus::check(state_ != IsMoved);
+    ::sus::check(state_ != __private::ResultState::IsMoved);
     switch (state_) {
-      case IsOk: return Result::with(::sus::clone(storage_.ok_));
-      case IsErr: return Result::with_err(::sus::clone(storage_.err_));
-      case IsMoved: break;
+      case __private::ResultState::IsOk:
+        return Result::with(::sus::clone(storage_.ok_));
+      case __private::ResultState::IsErr:
+        return Result::with_err(::sus::clone(storage_.err_));
+      case __private::ResultState::IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
@@ -333,19 +356,20 @@ class [[nodiscard]] Result final {
   }
 
   void clone_from(const Result& source) &
-    requires(::sus::mem::Clone<T> && ::sus::mem::Clone<E> &&
-             !(::sus::mem::Copy<T> && ::sus::mem::Copy<E>))
+        requires(::sus::mem::Clone<T> && ::sus::mem::Clone<E> &&
+                 !(::sus::mem::Copy<T> && ::sus::mem::Copy<E>))
   {
-    ::sus::check(source.state_ != IsMoved);
+    ::sus::check(source.state_ != __private::ResultState::IsMoved);
     if (state_ == source.state_) {
       switch (state_) {
-        case IsOk:
+        case __private::ResultState::IsOk:
           ::sus::clone_into(mref(storage_.ok_), source.storage_.ok_);
           break;
-        case IsErr:
+        case __private::ResultState::IsErr:
           ::sus::clone_into(mref(storage_.err_), source.storage_.err_);
           break;
-        case IsMoved: ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+        case __private::ResultState::IsMoved:
+          ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
       }
     } else {
       *this = source.clone();
@@ -354,14 +378,14 @@ class [[nodiscard]] Result final {
 
   /// Returns true if the result is `Ok`.
   constexpr inline bool is_ok() const& noexcept {
-    ::sus::check(state_ != IsMoved);
-    return state_ == IsOk;
+    ::sus::check(state_ != __private::ResultState::IsMoved);
+    return state_ == __private::ResultState::IsOk;
   }
 
   /// Returns true if the result is `Err`.
   constexpr inline bool is_err() const& noexcept {
-    ::sus::check(state_ != IsMoved);
-    return state_ == IsErr;
+    ::sus::check(state_ != __private::ResultState::IsMoved);
+    return state_ == __private::ResultState::IsErr;
   }
 
   /// An operator which returns the state of the Result, either #Ok or #Err.
@@ -381,7 +405,7 @@ class [[nodiscard]] Result final {
   /// }
   /// ```
   constexpr inline operator State() const& noexcept {
-    ::sus::check(state_ != IsMoved);
+    ::sus::check(state_ != __private::ResultState::IsMoved);
     return static_cast<State>(state_);
   }
 
@@ -390,13 +414,16 @@ class [[nodiscard]] Result final {
   /// Converts self into an `Option<T>`, consuming self, and discarding the
   /// error, if any.
   constexpr inline Option<T> ok() && noexcept {
-    ::sus::check(state_ != IsMoved);
-    switch (::sus::mem::replace(mref(state_), IsMoved)) {
-      case IsOk:
+    ::sus::check(state_ != __private::ResultState::IsMoved);
+    switch (
+        ::sus::mem::replace(mref(state_), __private::ResultState::IsMoved)) {
+      case __private::ResultState::IsOk:
         return Option<T>::some(::sus::mem::take_and_destruct(
             ::sus::marker::unsafe_fn, mref(storage_.ok_)));
-      case IsErr: storage_.err_.~E(); return Option<T>::none();
-      case IsMoved: break;
+      case __private::ResultState::IsErr:
+        storage_.err_.~E();
+        return Option<T>::none();
+      case __private::ResultState::IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
@@ -408,13 +435,16 @@ class [[nodiscard]] Result final {
   /// Converts self into an `Option<E>`, consuming self, and discarding the
   /// success value, if any.
   constexpr inline Option<E> err() && noexcept {
-    ::sus::check(state_ != IsMoved);
-    switch (::sus::mem::replace(mref(state_), IsMoved)) {
-      case IsOk: storage_.ok_.~T(); return Option<E>::none();
-      case IsErr:
+    ::sus::check(state_ != __private::ResultState::IsMoved);
+    switch (
+        ::sus::mem::replace(mref(state_), __private::ResultState::IsMoved)) {
+      case __private::ResultState::IsOk:
+        storage_.ok_.~T();
+        return Option<E>::none();
+      case __private::ResultState::IsErr:
         return Option<E>::some(::sus::mem::take_and_destruct(
             ::sus::marker::unsafe_fn, mref(storage_.err_)));
-      case IsMoved: break;
+      case __private::ResultState::IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
     // function.
@@ -431,8 +461,10 @@ class [[nodiscard]] Result final {
   /// # Panics
   /// Panics if the value is an `Err`.
   constexpr inline T unwrap() && noexcept {
-    check_with_message(::sus::mem::replace(mref(state_), IsMoved) == IsOk,
-                       *"called `Result::unwrap()` on an `Err` value");
+    check_with_message(
+        ::sus::mem::replace(mref(state_), __private::ResultState::IsMoved) ==
+            __private::ResultState::IsOk,
+        *"called `Result::unwrap()` on an `Err` value");
     return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
                                          mref(storage_.ok_));
   }
@@ -453,8 +485,10 @@ class [[nodiscard]] Result final {
   /// # Panics
   /// Panics if the value is an `Ok`.
   constexpr inline E unwrap_err() && noexcept {
-    check_with_message(::sus::mem::replace(mref(state_), IsMoved) == IsErr,
-                       *"called `Result::unwrap_err()` on an `Ok` value");
+    check_with_message(
+        ::sus::mem::replace(mref(state_), __private::ResultState::IsMoved) ==
+            __private::ResultState::IsErr,
+        *"called `Result::unwrap_err()` on an `Ok` value");
     return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
                                          mref(storage_.err_));
   }
@@ -471,8 +505,8 @@ class [[nodiscard]] Result final {
   }
 
   constexpr Iterator<Once<const T&>> iter() const& noexcept {
-    ::sus::check(state_ != IsMoved);
-    if (state_ == IsOk)
+    ::sus::check(state_ != __private::ResultState::IsMoved);
+    if (state_ == __private::ResultState::IsOk)
       return Iterator<Once<const T&>>(Option<const T&>::some(storage_.ok_));
     else
       return Iterator<Once<const T&>>(Option<const T&>::none());
@@ -480,16 +514,17 @@ class [[nodiscard]] Result final {
   Iterator<Once<const T&>> iter() const&& = delete;
 
   constexpr Iterator<Once<T&>> iter_mut() & noexcept {
-    ::sus::check(state_ != IsMoved);
-    if (state_ == IsOk)
+    ::sus::check(state_ != __private::ResultState::IsMoved);
+    if (state_ == __private::ResultState::IsOk)
       return Iterator<Once<T&>>(Option<T&>::some(mref(storage_.ok_)));
     else
       return Iterator<Once<T&>>(Option<T&>::none());
   }
 
   constexpr Iterator<Once<T>> into_iter() && noexcept {
-    ::sus::check(state_ != IsMoved);
-    if (::sus::mem::replace(mref(state_), IsMoved) == IsOk) {
+    ::sus::check(state_ != __private::ResultState::IsMoved);
+    if (::sus::mem::replace(mref(state_), __private::ResultState::IsMoved) ==
+        __private::ResultState::IsOk) {
       return Iterator<Once<T>>(Option<T>::some(::sus::mem::take_and_destruct(
           ::sus::marker::unsafe_fn, mref(storage_.ok_))));
     } else {
@@ -498,26 +533,51 @@ class [[nodiscard]] Result final {
     }
   }
 
+  /// sus::ops::Eq<Result<T, E>> trait.
+  template <class U, class F>
+    requires(::sus::ops::Eq<T, U> && ::sus::ops::Eq<E, F>)
+  friend constexpr bool operator==(const Result& l,
+                                   const Result<U, F>& r) noexcept {
+    ::sus::check(l.state_ != __private::ResultState::IsMoved);
+    switch (l.state_) {
+      case __private::ResultState::IsOk:
+        return r.is_ok() && l.storage_.ok_ == r.storage_.ok_;
+      case __private::ResultState::IsErr:
+        return r.is_err() && l.storage_.err_ == r.storage_.err_;
+      case __private::ResultState::IsMoved: break;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+
+  template <class U, class F>
+    requires(!(::sus::ops::Eq<T, U> && ::sus::ops::Eq<E, F>))
+  friend constexpr bool operator==(const Result& l,
+                                   const Result<U, F>& r) = delete;
+
  private:
   enum WithOkType { WithOk };
   constexpr inline Result(WithOkType, const T& t) noexcept
-      : state_(IsOk), storage_(__private::kWithT, t) {}
+      : state_(__private::ResultState::IsOk), storage_(__private::kWithT, t) {}
   constexpr inline Result(WithOkType, T&& t) noexcept
     requires(::sus::mem::Move<T>)
-      : state_(IsOk), storage_(__private::kWithT, ::sus::move(t)) {}
+      : state_(__private::ResultState::IsOk),
+        storage_(__private::kWithT, ::sus::move(t)) {}
   enum WithErrType { WithErr };
   constexpr inline Result(WithErrType, const E& e) noexcept
-      : state_(IsErr), storage_(__private::kWithE, e) {}
+      : state_(__private::ResultState::IsErr), storage_(__private::kWithE, e) {}
   constexpr inline Result(WithErrType, E&& e) noexcept
     requires(::sus::mem::Move<E>)
-      : state_(IsErr), storage_(__private::kWithE, ::sus::move(e)) {}
+      : state_(__private::ResultState::IsErr),
+        storage_(__private::kWithE, ::sus::move(e)) {}
 
   [[sus_no_unique_address]] __private::Storage<T, E> storage_;
-  enum FullState { IsErr = 0, IsOk = 1, IsMoved = 2 } state_;
+  __private::ResultState state_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T, E,
                                            decltype(state_));
 };
+
+namespace __private {}  // namespace __private
 
 template <class T>
 [[nodiscard]] inline constexpr auto ok(
