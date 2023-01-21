@@ -39,7 +39,19 @@ union Storage {
   constexpr ~Storage()
     requires(!(std::is_trivially_destructible_v<T> &&
                std::is_trivially_destructible_v<E>))
-  {}
+  {
+    // Destruction is handled in Result in this case, but a destructor needs to
+    // exist here.
+  }
+
+  constexpr Storage(const Storage&) noexcept
+    requires(std::is_trivially_copy_constructible_v<T> &&
+             std::is_trivially_copy_constructible_v<E>)
+  = default;
+  constexpr Storage& operator=(const Storage&)
+    requires(std::is_trivially_copy_assignable_v<T> &&
+             std::is_trivially_copy_assignable_v<E>)
+  = default;
 
   constexpr Storage(Storage&&)
     requires(std::is_trivially_move_constructible_v<T> &&
