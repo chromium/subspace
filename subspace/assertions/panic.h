@@ -16,6 +16,8 @@
 
 #include <stdlib.h>
 
+#include <source_location>
+
 #include "subspace/macros/always_inline.h"
 #include "subspace/macros/builtin.h"
 #include "subspace/macros/compiler.h"
@@ -37,7 +39,8 @@
 namespace sus::assertions {
 
 namespace __private {
-void print_panic_message(const char& msg);
+void print_panic_message(const char& msg, const std::source_location& location);
+void print_panic_location(const std::source_location& location);
 }  // namespace __private
 
 /// Terminate the program.
@@ -46,37 +49,52 @@ void print_panic_message(const char& msg);
 /// function can be overridden by defining a `SUS_PROVIDE_PANIC_HANDLER()` macro
 /// when compiling the library.
 ///
+/// The panic message will be printed to stderr before aborting. This behaviour
+/// can be overridden by defining a `SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER()`
+/// macro when compiling the library.
+///
 /// # Safety
+///
 /// If `SUS_PROVIDE_PANIC_HANDLER()` is defined, the macro _must_ not return or
 /// Undefined Behaviour will result.
-[[noreturn]] _sus__crash_attributes inline void panic() noexcept {
+[[noreturn]] _sus__crash_attributes inline void panic(
+    const std::source_location location =
+        std::source_location::current()) noexcept {
+#if defined(SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER)
+  SUS_PROVIDE_PRINT_PANIC_LOCATION_HANDLER(location);
+#else
+  __private::print_panic_location(location);
+#endif
 #if defined(SUS_PROVIDE_PANIC_HANDLER)
   SUS_PROVIDE_PANIC_HANDLER();
 #else
-#if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
-  SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(*"");
-#else
-  __private::print_panic_message(*"");
-#endif
   abort();
 #endif
 }
 
 /// Terminate the program, after printing a message.
 ///
-/// The default behaviour of this function is to print the message to stderr.
-/// The behaviour of this function can be overridden by defining a
-/// `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()` macro when compiling the library.
+/// The default behaviour of this function is to abort(). The behaviour of this
+/// function can be overridden by defining a `SUS_PROVIDE_PANIC_HANDLER()` macro
+/// when compiling the library.
 ///
-/// After printing the message, the function will `panic()`.
+/// The panic message will be printed to stderr before aborting. This behaviour
+/// can be overridden by defining a `SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER()`
+/// macro when compiling the library.
 [[noreturn]] _sus__crash_attributes inline void panic_with_message(
-    /* TODO: string view type, or format + args */ const char& msg) noexcept {
+    /* TODO: string view type, or format + args */ const char& msg,
+    const std::source_location location =
+        std::source_location::current()) noexcept {
 #if defined(SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER)
-  SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(msg);
+  SUS_PROVIDE_PRINT_PANIC_MESSAGE_HANDLER(msg, location);
 #else
-  __private::print_panic_message(msg);
+  __private::print_panic_message(msg, location);
 #endif
-  panic();
+#if defined(SUS_PROVIDE_PANIC_HANDLER)
+  SUS_PROVIDE_PANIC_HANDLER();
+#else
+  abort();
+#endif
 }
 
 }  // namespace sus::assertions

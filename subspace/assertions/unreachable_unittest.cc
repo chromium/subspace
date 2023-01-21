@@ -17,23 +17,32 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/prelude.h"
 
+// Incredibly, on Posix we can use [0-9] but on Windows we can't. Yet on Windows
+// we can use `\d` and on Posix we can't (well, it causes UBSan to fire during
+// compilation and then it doesn't match).
+#if GTEST_USES_SIMPLE_RE
+#define DIGIT "\\d"
+#else
+#define DIGIT "[0-9]"
+#endif
+
 namespace sus {
 namespace {
 
-TEST(Unreachable, Unreachable) {
+TEST(UnreachableDeathTest, Unreachable) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(unreachable(), "");
+  EXPECT_DEATH(unreachable(),
+               "^PANIC! at .*unreachable_unittest.cc:" DIGIT "+:" DIGIT "+\n$");
 #endif
 }
 
 TEST(Unreachable, Unchecked) {
   switch (0) {
-    case 0: break;
-    case 1:
-      // We can't actually land here or we'd introduce UB, but the confirms we
-      // can write it and it compiles.
-      unreachable_unchecked(unsafe_fn);
+    case 0: return;
   }
+  // We can't actually land here or we'd introduce UB, but the test confirms
+  // we can write it and it compiles without warnings.
+  unreachable_unchecked(unsafe_fn);
 }
 
 }  // namespace

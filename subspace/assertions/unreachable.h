@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <source_location>
+
 #include "subspace/assertions/panic.h"
 #include "subspace/macros/always_inline.h"
 #include "subspace/macros/builtin.h"
@@ -21,7 +23,10 @@
 
 namespace sus::assertions {
 
-[[noreturn]] sus_always_inline void unreachable() { panic(); }
+[[noreturn]] sus_always_inline void unreachable(
+    const std::source_location location = std::source_location::current()) {
+  panic(location);
+}
 
 [[noreturn]] sus_always_inline void unreachable_unchecked(
     ::sus::marker::UnsafeFnMarker) {

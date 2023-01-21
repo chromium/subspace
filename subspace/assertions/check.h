@@ -15,22 +15,26 @@
 #pragma once
 
 #include <stdlib.h>
+#include <source_location>
 
 #include "subspace/assertions/panic.h"
 #include "subspace/macros/always_inline.h"
 
 namespace sus::assertions {
 
-constexpr sus_always_inline void check(bool cond) {
+constexpr sus_always_inline void check(
+    bool cond,
+    const std::source_location location = std::source_location::current()) {
   if (!cond) [[unlikely]]
-    ::sus::panic();
+    ::sus::panic(location);
 }
 
 constexpr sus_always_inline void check_with_message(
     bool cond,
-    /* TODO: string view type, or format + args */ const char& msg) {
+    /* TODO: string view type, or format + args */ const char& msg,
+    const std::source_location location = std::source_location::current()) {
   if (!cond) [[unlikely]]
-    ::sus::panic_with_message(msg);
+    ::sus::panic_with_message(msg, location);
 }
 
 }  // namespace sus::assertions
