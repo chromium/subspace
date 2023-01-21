@@ -554,6 +554,79 @@ class [[nodiscard]] Result final {
   friend constexpr bool operator==(const Result& l,
                                    const Result<U, F>& r) = delete;
 
+  /// sus::ops::Ord<Result<T, E>> trait.
+  template <class U, class F>
+    requires(::sus::ops::Ord<T, U> && ::sus::ops::Ord<E, F>)
+  friend constexpr auto operator<=>(const Result& l,
+                                    const Result<U, F>& r) noexcept {
+    ::sus::check(l.state_ != __private::ResultState::IsMoved);
+    switch (l.state_) {
+      case __private::ResultState::IsOk:
+        if (r.is_ok())
+          return std::strong_order(l.storage_.ok_, r.storage_.ok_);
+        else
+          return std::strong_ordering::greater;
+      case __private::ResultState::IsErr:
+        if (r.is_err())
+          return std::strong_order(l.storage_.err_, r.storage_.err_);
+        else
+          return std::strong_ordering::less;
+      case __private::ResultState::IsMoved: break;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+
+  /// sus::ops::WeakOrd<Result<T, E>> trait.
+  template <class U, class F>
+    requires((!::sus::ops::Ord<T, U> || !::sus::ops::Ord<E, F>) &&
+             ::sus::ops::WeakOrd<T, U> && ::sus::ops::WeakOrd<E, F>)
+  friend constexpr auto operator<=>(const Result& l,
+                                    const Result<U, F>& r) noexcept {
+    ::sus::check(l.state_ != __private::ResultState::IsMoved);
+    switch (l.state_) {
+      case __private::ResultState::IsOk:
+        if (r.is_ok())
+          return std::weak_order(l.storage_.ok_, r.storage_.ok_);
+        else
+          return std::weak_ordering::greater;
+      case __private::ResultState::IsErr:
+        if (r.is_err())
+          return std::weak_order(l.storage_.err_, r.storage_.err_);
+        else
+          return std::weak_ordering::less;
+      case __private::ResultState::IsMoved: break;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+
+  /// sus::ops::PartialOrd<Result<T, E>> trait.
+  template <class U, class F>
+    requires((!::sus::ops::WeakOrd<T, U> || !::sus::ops::WeakOrd<E, F>) &&
+             ::sus::ops::PartialOrd<T, U> && ::sus::ops::PartialOrd<E, F>)
+  friend constexpr auto operator<=>(const Result& l,
+                                    const Result<U, F>& r) noexcept {
+    ::sus::check(l.state_ != __private::ResultState::IsMoved);
+    switch (l.state_) {
+      case __private::ResultState::IsOk:
+        if (r.is_ok())
+          return std::partial_order(l.storage_.ok_, r.storage_.ok_);
+        else
+          return std::partial_ordering::greater;
+      case __private::ResultState::IsErr:
+        if (r.is_err())
+          return std::partial_order(l.storage_.err_, r.storage_.err_);
+        else
+          return std::partial_ordering::less;
+      case __private::ResultState::IsMoved: break;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+
+  template <class U, class F>
+    requires(!::sus::ops::PartialOrd<T, U> || !::sus::ops::PartialOrd<E, F>)
+  friend constexpr auto operator<=>(const Result& l,
+                                    const Result<U, F>& r) noexcept = delete;
+
  private:
   enum WithOkType { WithOk };
   constexpr inline Result(WithOkType, const T& t) noexcept
@@ -576,8 +649,6 @@ class [[nodiscard]] Result final {
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T, E,
                                            decltype(state_));
 };
-
-namespace __private {}  // namespace __private
 
 template <class T>
 [[nodiscard]] inline constexpr auto ok(

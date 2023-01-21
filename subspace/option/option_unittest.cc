@@ -301,8 +301,7 @@ TEST(Option, MoveSelfAssign) {
 }
 
 TEST(Option, CopySelfAssign) {
-  auto x = sus::Option<TriviallyCopyable>::some(
-      TriviallyCopyable(2));
+  auto x = sus::Option<TriviallyCopyable>::some(TriviallyCopyable(2));
   x = x;
   IS_SOME(x);
   EXPECT_EQ(sus::move(x).unwrap().i, 2);
@@ -315,8 +314,7 @@ TEST(Option, CopySelfAssign) {
 }
 
 TEST(Option, CloneIntoSelfAssign) {
-  auto x = sus::Option<TriviallyCopyable>::some(
-      TriviallyCopyable(2));
+  auto x = sus::Option<TriviallyCopyable>::some(TriviallyCopyable(2));
   sus::clone_into(x, x);
   IS_SOME(x);
   EXPECT_EQ(sus::move(x).unwrap().i, 2);
@@ -1606,6 +1604,8 @@ TEST(Option, Ord) {
 }
 
 TEST(Option, StrongOrder) {
+  static_assert(::sus::ops::Ord<Option<int>>);
+
   EXPECT_EQ(std::strong_order(Option<int>::some(12), Option<int>::some(12)),
             std::strong_ordering::equal);
   EXPECT_EQ(std::strong_order(Option<int>::some(12), Option<int>::some(13)),
@@ -1632,6 +1632,9 @@ struct Weak {
 };
 
 TEST(Option, WeakOrder) {
+  static_assert(!::sus::ops::Ord<Option<Weak>>);
+  static_assert(::sus::ops::WeakOrd<Option<Weak>>);
+
   auto x = std::weak_order(Option<Weak>::some(Weak(1, 2)),
                            Option<Weak>::some(Weak(1, 2)));
   EXPECT_EQ(x, std::weak_ordering::equivalent);
@@ -1647,6 +1650,9 @@ TEST(Option, WeakOrder) {
 }
 
 TEST(Option, PartialOrder) {
+  static_assert(!::sus::ops::WeakOrd<Option<float>>);
+  static_assert(::sus::ops::PartialOrd<Option<float>>);
+
   EXPECT_EQ(
       std::partial_order(Option<float>::some(0.f), Option<float>::some(-0.f)),
       std::partial_ordering::equivalent);
@@ -1679,15 +1685,11 @@ TEST(Option, PartialOrder) {
       std::partial_ordering::less);
 }
 
-struct NotCmp {};
-static_assert(!sus::ops::PartialOrd<NotCmp>);
-
-static_assert(::sus::ops::Ord<Option<int>, Option<int>>);
-static_assert(!::sus::ops::Ord<Option<Weak>, Option<Weak>>);
-static_assert(::sus::ops::WeakOrd<Option<Weak>, Option<Weak>>);
-static_assert(!::sus::ops::WeakOrd<Option<float>, Option<float>>);
-static_assert(::sus::ops::PartialOrd<Option<float>, Option<float>>);
-static_assert(!::sus::ops::PartialOrd<Option<NotCmp>, Option<NotCmp>>);
+TEST(Option, NoOrder) {
+  struct NotCmp {};
+  static_assert(!sus::ops::PartialOrd<NotCmp>);
+  static_assert(!::sus::ops::PartialOrd<Option<NotCmp>>);
+}
 
 TEST(Option, OkOr) {
   {
