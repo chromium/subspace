@@ -23,14 +23,14 @@ jobs:
         run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
       - name: Setup .gclient
-        if: startsWith(matrix.config.os, "windows-")
+        if: startsWith(matrix.config.os, 'windows-')
         run: |
           set "PATH=%CD%\depot_tools;%PATH%"
           set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
           copy tools\standalone.gclient .gclient
 
       - name: Setup .gclient
-        if: ${{ !startsWith(matrix.config.os, "windows-") }}
+        if: ${{ !startsWith(matrix.config.os, 'windows-') }}
         run: |
           echo "./depot_tools" >> $GITHUB_PATH
           cp tools/standalone.gclient .gclient
