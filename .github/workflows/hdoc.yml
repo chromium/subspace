@@ -19,6 +19,18 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh 16 all
 
+      - name: Checkout depot tools
+        run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+
+      - name: Update PATH
+        run: echo "./depot_tools" >> $GITHUB_PATH
+
+      - name: Setup .gclient
+        run: cp tools/standalone.gclient .gclient
+
+      - name: Download dependencies
+        run: gclient sync --jobs=16
+
       - name: Configure
         run: |
           # Path to LLVM+Clang nightly that we have installed.
@@ -27,7 +39,7 @@ jobs:
 
           sudo apt install build-essential cmake ninja-build
           cmake -G Ninja -B out -D CMAKE_EXPORT_COMPILE_COMMANDS=1
-      
+
       - name: Generate
         uses: hdoc/hdoc-github-action@v2
         with:
