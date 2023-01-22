@@ -104,6 +104,18 @@ jobs:
             )
           endif()
 
+      - name: Checkout depot tools
+        run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+
+      - name: Update PATH
+        run: echo "./depot_tools" >> $GITHUB_PATH
+
+      - name: Setup .gclient
+        run: cp tools/standalone.gclient .gclient
+
+      - name: Download dependencies
+        run: gclient sync --jobs=16
+
       - name: Configure
         shell: cmake -P {0}
         run: |
