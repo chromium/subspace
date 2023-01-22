@@ -32,14 +32,15 @@ jobs:
           set "PATH=%CD%\depot_tools;%PATH%"
           set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
           copy tools\standalone.gclient .gclient
-          gclient sync --jobs=16
 
       - name: Setup .gclient
         if: ${{ !startsWith(matrix.config.os, 'windows-') }}
         run: |
           echo "./depot_tools" >> $GITHUB_PATH
           cp tools/standalone.gclient .gclient
-          gclient sync --jobs=16
+
+      - name: Download dependencies
+        run: gclient sync --jobs=16
 
       - name: Configure
         run: |
