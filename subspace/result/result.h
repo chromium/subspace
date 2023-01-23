@@ -235,6 +235,7 @@ class [[nodiscard]] Result final {
 
   /// If T and E can be trivially move-constructed, Result<T, E> can also be
   /// trivially move-constructed.
+  /// #[doc(overloads=1)]
   constexpr Result(Result&&)
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
              std::is_trivially_move_constructible_v<T> &&
@@ -268,6 +269,7 @@ class [[nodiscard]] Result final {
 
   /// If T and E can be trivially move-assigned, Result<T, E> can also be
   /// trivially move-assigned.
+  /// #[doc(overloads=1)]
   constexpr Result& operator=(Result&& o)
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
              std::is_trivially_move_assignable_v<T> &&
@@ -551,7 +553,20 @@ class [[nodiscard]] Result final {
   friend constexpr bool operator==(const Result& l,
                                    const Result<U, F>& r) = delete;
 
-  /// sus::ops::Ord<Result<T, E>> trait.
+  /// Compares two Result.
+  ///
+  /// Satisfies sus::ops::Ord<Result<T, E>> if sus::ops::Ord<T> and
+  /// sus::ops::Ord<E>.
+  ///
+  /// Satisfies sus::ops::WeakOrd<Result<T, E>> if sus::ops::WeakOrd<T> and
+  /// sus::ops::WeakOrd<E>.
+  ///
+  /// Satisfies sus::ops::PartialOrd<Result<T, E>> if sus::ops::PartialOrd<T>
+  /// and sus::ops::PartialOrd<E>.
+  //
+  // sus::ops::Ord<Result<T, E>> trait.
+  // sus::ops::WeakOrd<Result<T, E>> trait.
+  // sus::ops::PartialOrd<Result<T, E>> trait.
   template <class U, class F>
     requires(::sus::ops::Ord<T, U> && ::sus::ops::Ord<E, F>)
   friend constexpr auto operator<=>(const Result& l,
@@ -573,7 +588,6 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
-  /// sus::ops::WeakOrd<Result<T, E>> trait.
   template <class U, class F>
     requires((!::sus::ops::Ord<T, U> || !::sus::ops::Ord<E, F>) &&
              ::sus::ops::WeakOrd<T, U> && ::sus::ops::WeakOrd<E, F>)
@@ -596,7 +610,6 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
-  /// sus::ops::PartialOrd<Result<T, E>> trait.
   template <class U, class F>
     requires((!::sus::ops::WeakOrd<T, U> || !::sus::ops::WeakOrd<E, F>) &&
              ::sus::ops::PartialOrd<T, U> && ::sus::ops::PartialOrd<E, F>)
