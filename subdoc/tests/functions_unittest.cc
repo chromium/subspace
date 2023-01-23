@@ -40,6 +40,25 @@ TEST_F(SubDocTest, FunctionOverloads) {
   EXPECT_TRUE(has_fn_comment(db, "7:5", "Comment headline 2"));
 }
 
+TEST_F(SubDocTest, FunctionOverloadsNoMerge) {
+  auto result = run_code(R"(
+    /// Comment headline 1
+    /// #[doc(overloads=1)]
+    ///
+    /// Body 1
+    void f(char) {}
+    /// Comment headline 2
+    /// #[doc(overloads=2)]
+    ///
+    /// Body 2
+    void f(int) {}
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_fn_comment(db, "2:5", "Comment headline 1\n\nBody 1"));
+  EXPECT_TRUE(has_fn_comment(db, "7:5", "Comment headline 2\n\nBody 2"));
+}
+
 TEST_F(SubDocTest, FunctionOverloadsDuplicate) {
   auto result = run_code(R"(
     /// Comment headline 1

@@ -14,6 +14,7 @@
 
 #include "subdoc/lib/visit.h"
 
+#include "subdoc/lib/doc_attributes.h"
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/path.h"
@@ -64,31 +65,32 @@ static clang::RawComment* get_raw_comment(clang::Decl* decl) {
   return decl->getASTContext().getRawCommentForDeclNoCache(decl);
 }
 
-static Comment make_db_comment(const DiagnosticIds& diag_ids, clang::Decl* decl,
-                               const clang::RawComment* raw) noexcept {
+struct CommentAndDocAttributes {
+  DocAttributes attributes;
+  Comment comment;
+};
+
+static CommentAndDocAttributes make_db_comment(
+    const DiagnosticIds& diag_ids, clang::Decl* decl,
+    const clang::RawComment* raw) noexcept {
   auto& ast_cx = decl->getASTContext();
   auto& src_manager = ast_cx.getSourceManager();
   if (raw) {
-    sus::result::Result<std::string, ParseCommentError> comment_result =
+    sus::result::Result<ParsedComment, ParseCommentError> comment_result =
         parse_comment(ast_cx, *raw);
     if (comment_result.is_ok()) {
-      return Comment(sus::move(comment_result).unwrap(),
-                     raw->getBeginLoc().printToString(src_manager));
+      auto&& [attrs, string] = sus::move(comment_result).unwrap();
+      return CommentAndDocAttributes{
+          .attributes = attrs,
+          .comment =
+              Comment(string, raw->getBeginLoc().printToString(src_manager)),
+      };
     }
     ast_cx.getDiagnostics()
         .Report(raw->getBeginLoc(), diag_ids.malformed_comment)
         .AddString(sus::move(comment_result).unwrap_err().message);
   }
-  return Comment();
-}
-
-static clang::SourceLocation raw_comment_loc(
-    const clang::RawComment* raw) noexcept {
-  if (raw) {
-    return raw->getBeginLoc();
-  } else {
-    return clang::SourceLocation();
-  }
+  return CommentAndDocAttributes();
 }
 
 class Visitor : public clang::RecursiveASTVisitor<Visitor> {
@@ -106,8 +108,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    auto ne = NamespaceElement(collect_namespace_path(decl),
-                               make_db_comment(diag_ids_, decl, raw_comment),
+    auto [attrs, comment] = make_db_comment(diag_ids_, decl, raw_comment);
+    auto ne = NamespaceElement(collect_namespace_path(decl), sus::move(comment),
                                decl->getNameAsString());
     NamespaceElement& parent = [&]() -> NamespaceElement& {
       clang::DeclContext* context = decl->getDeclContext();
@@ -123,7 +125,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .unwrap();
       }
     }();
-    add_namespace_to_db(decl, raw_comment_loc(raw_comment), sus::move(ne),
+    add_namespace_to_db(decl, sus::move(attrs), sus::move(ne),
                         mref(parent.namespaces));
     return true;
   }
@@ -147,9 +149,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }();
 
     // TODO: collect_record_path() too.
+    auto [attrs, comment] = make_db_comment(diag_ids_, decl, raw_comment);
     auto ce =
-        RecordElement(collect_namespace_path(decl),
-                      make_db_comment(diag_ids_, decl, raw_comment),
+        RecordElement(collect_namespace_path(decl), sus::move(comment),
                       decl->getNameAsString(), collect_record_path(decl), type);
 
     clang::DeclContext* context = decl->getDeclContext();
@@ -159,21 +161,21 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     if (clang::isa<clang::TranslationUnitDecl>(context)) {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
-      add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ce),
+      add_comment_to_db(decl, sus::move(attrs), sus::move(ce),
                         mref(parent.records));
     } else if (clang::isa<clang::NamespaceDecl>(context)) {
       NamespaceElement& parent =
           docs_db_
               .find_namespace_mut(clang::cast<clang::NamespaceDecl>(context))
               .unwrap();
-      add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ce),
+      add_comment_to_db(decl, sus::move(attrs), sus::move(ce),
                         mref(parent.records));
     } else {
       assert(clang::isa<clang::RecordDecl>(context));
       if (sus::Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
-        add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ce),
+        add_comment_to_db(decl, sus::move(attrs), sus::move(ce),
                           mref(parent->records));
       }
     }
@@ -184,8 +186,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    auto fe = FieldElement(collect_namespace_path(decl),
-                           make_db_comment(diag_ids_, decl, raw_comment),
+    auto [attrs, comment] = make_db_comment(diag_ids_, decl, raw_comment);
+    auto fe = FieldElement(collect_namespace_path(decl), sus::move(comment),
                            std::string(decl->getName()), decl->getType(),
                            collect_record_path(decl->getParent()),
                            // Static data members are found in VisitVarDecl.
@@ -195,7 +197,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
             clang::cast<clang::RecordDecl>(decl->getDeclContext()));
         parent.is_some()) {
-      add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
+      add_comment_to_db(decl, sus::move(attrs), sus::move(fe),
                         mref(parent->fields));
     }
     return true;
@@ -209,10 +211,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
+    auto [attrs, comment] = make_db_comment(diag_ids_, decl, raw_comment);
     auto* record = clang::cast<clang::RecordDecl>(decl->getDeclContext());
     auto fe =
-        FieldElement(collect_namespace_path(decl),
-                     make_db_comment(diag_ids_, decl, raw_comment),
+        FieldElement(collect_namespace_path(decl), sus::move(comment),
                      std::string(decl->getName()), decl->getType(),
                      collect_record_path(record),
                      // NonStatic data members are found in VisitFieldDecl.
@@ -221,7 +223,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
             clang::cast<clang::RecordDecl>(decl->getDeclContext()));
         parent.is_some()) {
-      add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(fe),
+      add_comment_to_db(decl, sus::move(attrs), sus::move(fe),
                         mref(parent->fields));
     }
     return true;
@@ -266,8 +268,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         case clang::RQ_RValue: signature += "&&"; break;
       }
     }
-    auto fe = FunctionElement(collect_namespace_path(decl),
-                              make_db_comment(diag_ids_, decl, raw_comment),
+    auto [attrs, comment] = make_db_comment(diag_ids_, decl, raw_comment);
+    auto fe = FunctionElement(collect_namespace_path(decl), sus::move(comment),
                               decl->getNameAsString(), sus::move(signature),
                               decl->getReturnType());
 
@@ -285,24 +287,24 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
-                                    sus::move(fe), mref(parent->ctors));
+        add_function_overload_to_db(decl, sus::move(attrs), sus::move(fe),
+                                    mref(parent->ctors));
       }
     } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
-                                    sus::move(fe), mref(parent->dtors));
+        add_function_overload_to_db(decl, sus::move(attrs), sus::move(fe),
+                                    mref(parent->dtors));
       }
     } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
-                                    sus::move(fe), mref(parent->conversions));
+        add_function_overload_to_db(decl, sus::move(attrs), sus::move(fe),
+                                    mref(parent->conversions));
       }
     } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
@@ -336,8 +338,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                   sus::unreachable();
                 }(),
         });
-        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
-                                    sus::move(fe), mref(parent->methods));
+        add_function_overload_to_db(decl, sus::move(attrs), sus::move(fe),
+                                    mref(parent->methods));
       }
     } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
       clang::DeclContext* context = decl->getDeclContext();
@@ -353,7 +355,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
+        add_function_overload_to_db(decl, sus::move(attrs),
                                     sus::move(fe), mref(parent->deductions));
       }
       */
@@ -361,8 +363,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       if (sus::Option<NamespaceElement&> parent =
               docs_db_.find_namespace_mut(find_nearest_namespace(decl));
           parent.is_some()) {
-        add_function_overload_to_db(decl, raw_comment_loc(raw_comment),
-                                    sus::move(fe), mref(parent->functions));
+        add_function_overload_to_db(decl, sus::move(attrs), sus::move(fe),
+                                    mref(parent->functions));
       }
     }
 
@@ -371,11 +373,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
  private:
   template <class MapT>
-  void add_function_overload_to_db(clang::FunctionDecl* decl,
-                                   clang::SourceLocation loc,
+  void add_function_overload_to_db(clang::FunctionDecl* decl, DocAttributes attrs,
                                    FunctionElement db_element,
                                    MapT& db_map) noexcept {
-    FunctionId key = key_for_function(decl);
+    FunctionId key = key_for_function(decl, attrs.overload_set);
     bool add_overload = true;
     auto it = db_map.find(key);
     if (it == db_map.end()) {
@@ -392,7 +393,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       auto& ast_cx = decl->getASTContext();
       const FunctionElement& old_element = it->second;
       ast_cx.getDiagnostics()
-          .Report(loc, diag_ids_.superceded_comment)
+          .Report(attrs.location, diag_ids_.superceded_comment)
           .AddString(old_element.comment.begin_loc);
     }
 
@@ -405,8 +406,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   template <class MapT>
-  void add_namespace_to_db(clang::NamespaceDecl* decl,
-                           clang::SourceLocation loc,
+  void add_namespace_to_db(clang::NamespaceDecl* decl, DocAttributes attrs,
                            NamespaceElement db_element, MapT& db_map) noexcept {
     auto key = key_for_namespace(decl);
     auto it = db_map.find(key);
@@ -423,14 +423,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       auto& ast_cx = decl->getASTContext();
       const NamespaceElement& old_element = it->second;
       ast_cx.getDiagnostics()
-          .Report(loc, diag_ids_.superceded_comment)
+          .Report(attrs.location, diag_ids_.superceded_comment)
           .AddString(old_element.comment.begin_loc);
     }
   }
 
   template <class ElementT, class MapT>
     requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
-  void add_comment_to_db(clang::Decl* decl, clang::SourceLocation loc,
+  void add_comment_to_db(clang::Decl* decl, DocAttributes attrs,
                          ElementT db_element, MapT& db_map) noexcept {
     UniqueSymbol uniq = unique_from_decl(decl);
     auto it = db_map.find(uniq);
@@ -447,7 +447,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       auto& ast_cx = decl->getASTContext();
       const ElementT& old_element = it->second;
       ast_cx.getDiagnostics()
-          .Report(loc, diag_ids_.superceded_comment)
+          .Report(attrs.location, diag_ids_.superceded_comment)
           .AddString(old_element.comment.begin_loc);
     }
   }
