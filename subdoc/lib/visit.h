@@ -45,6 +45,8 @@ struct VisitorAction : public clang::ASTFrontendAction {
   explicit VisitorAction(VisitCx& cx, Database& docs_db)
       : cx(cx), docs_db(docs_db) {}
 
+  bool PrepareToExecuteAction(clang::CompilerInstance& inst) noexcept override;
+
   // Returns a Visitor.
   std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
       clang::CompilerInstance& compiler,

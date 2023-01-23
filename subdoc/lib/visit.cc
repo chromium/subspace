@@ -14,8 +14,8 @@
 
 #include "subdoc/lib/visit.h"
 
-#include "subdoc/lib/doc_attributes.h"
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/doc_attributes.h"
 #include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/record_type.h"
@@ -256,6 +256,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
+    llvm::errs() << "Visit func " << raw_comment << "\n";
 
     auto signature = decl->getQualifiedNameAsString();
     // TODO: Add parameters.
@@ -373,7 +374,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
  private:
   template <class MapT>
-  void add_function_overload_to_db(clang::FunctionDecl* decl, DocAttributes attrs,
+  void add_function_overload_to_db(clang::FunctionDecl* decl,
+                                   DocAttributes attrs,
                                    FunctionElement db_element,
                                    MapT& db_map) noexcept {
     FunctionId key = key_for_function(decl, attrs.overload_set);
@@ -479,9 +481,18 @@ std::unique_ptr<clang::FrontendAction> VisitorFactory::create() noexcept {
   return std::make_unique<VisitorAction>(cx, docs_db);
 }
 
+bool VisitorAction::PrepareToExecuteAction(
+    clang::CompilerInstance& inst) noexcept {
+  // Speed things up by skipping things we're not looking at.
+  inst.getFrontendOpts().SkipFunctionBodies = true;
+  return true;
+}
+
 std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
-    clang::CompilerInstance&, llvm::StringRef) noexcept {
-  // set preprocessor options?
+    clang::CompilerInstance& inst, llvm::StringRef) noexcept {
+  // Keep documentation comments inside macros.
+  inst.getPreprocessor().SetCommentRetentionState(false, true);
+
   return std::make_unique<AstConsumer>(cx, docs_db);
 }
 
