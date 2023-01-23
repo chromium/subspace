@@ -89,7 +89,10 @@ struct [[sus_trivial_abi]] NonNull {
   /// pointer to throw away the length of the array.
   ///
   /// # Panics
+  ///
   /// The method will panic if the pointer `t` is null.
+  ///
+  /// #[doc(overloads=1)]
   template <::sus::convert::SameOrSubclassOf<T*> U>
   static constexpr inline NonNull from(U t) {
     check(t);

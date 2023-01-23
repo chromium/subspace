@@ -949,7 +949,9 @@ constexpr inline bool operator==(const Option<T>& l,
 /// Compares two Options.
 ///
 /// Satisfies sus::ops::Ord<Option<U>> if sus::ops::Ord<U>.
+///
 /// Satisfies sus::ops::WeakOrd<Option<U>> if sus::ops::WeakOrd<U>.
+///
 /// Satisfies sus::ops::PartialOrd<Option<U>> if sus::ops::PartialOrd<U>.
 //
 // sus::ops::Ord<Option<U>> trait.
