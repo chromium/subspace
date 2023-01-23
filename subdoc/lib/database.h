@@ -138,6 +138,20 @@ struct FieldElement : public CommentElement {
   }
 };
 
+struct NamespaceId {
+  NamespaceId(std::string name) : name(sus::move(name)) {}
+
+  std::string name;
+
+  bool operator==(const NamespaceId&) const = default;
+
+  struct Hash {
+    std::size_t operator()(const NamespaceId& k) const {
+      return std::hash<std::string>()(k.name);
+    }
+  };
+};
+
 struct FunctionId {
   FunctionId(std::string name, bool is_static)
       : name(sus::move(name)), is_static(is_static) {}
@@ -257,7 +271,8 @@ struct NamespaceElement : public CommentElement {
         namespace_name(namespace_path[0u]) {}
 
   Namespace namespace_name;
-  std::unordered_map<UniqueSymbol, NamespaceElement> namespaces;
+  std::unordered_map<NamespaceId, NamespaceElement, NamespaceId::Hash>
+      namespaces;
   std::unordered_map<UniqueSymbol, RecordElement> records;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> functions;
 
@@ -338,6 +353,18 @@ struct NamespaceElement : public CommentElement {
   }
 };
 
+inline NamespaceId key_for_namespace(clang::NamespaceDecl* decl) noexcept {
+  return NamespaceId(decl->getNameAsString());
+}
+
+inline FunctionId key_for_function(clang::FunctionDecl* decl) noexcept {
+  return FunctionId(decl->getNameAsString(), [&]() {
+    if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl))
+      return mdecl->isStatic();
+    return false;
+  }());
+}
+
 struct Database {
   NamespaceElement global =
       NamespaceElement(sus::vec(Namespace::with<Namespace::Tag::Global>()),
@@ -349,12 +376,11 @@ struct Database {
       clang::NamespaceDecl* ndecl) & noexcept {
     if (!ndecl) return sus::some(global);
 
-    sus::Option<NamespaceElement&> opt_parent_element = find_namespace_mut(
+    sus::Option<NamespaceElement&> parent_element = find_namespace_mut(
         clang::dyn_cast<clang::NamespaceDecl>(ndecl->getParent()));
-    if (opt_parent_element.is_none()) return sus::none();
-    NamespaceElement& parent_element = sus::move(opt_parent_element).unwrap();
-    if (auto it = parent_element.namespaces.find(unique_from_decl(ndecl));
-        it != parent_element.namespaces.end()) {
+    if (parent_element.is_none()) return sus::none();
+    if (auto it = parent_element->namespaces.find(key_for_namespace(ndecl));
+        it != parent_element->namespaces.end()) {
       return sus::some(it->second);
     } else {
       return sus::none();

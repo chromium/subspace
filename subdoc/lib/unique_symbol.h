@@ -36,18 +36,18 @@ struct UniqueSymbol {
 };
 
 inline UniqueSymbol unique_from_decl(const clang::Decl* decl) noexcept {
-  decl = decl->getCanonicalDecl();
   std::ostringstream s;
 
   // The USR, or Unique Symbol Resolution, is a unique value for a Decl across
-  // all translation units. However it does not differentiate on requires
-  // clauses. So we need some extra uniqueness to tell overloads apart, which we
-  // get from the canonical location.
+  // all translation units. It does not differentiate on overlods well
+  // (specifically on requires clauses). However the UniqueSymbol is not used
+  // for functions/mehhods anyhow as we collapse overloads.
   llvm::SmallString<128> usr;
   if (!clang::index::generateUSRForDecl(decl, usr)) {
     s << std::string(sus::move(usr));
+  } else {
+    s << decl->getCanonicalDecl()->getBeginLoc().getRawEncoding();
   }
-  s << decl->getBeginLoc().getRawEncoding();
 
   return UniqueSymbol{
       .bytes = llvm::SHA1::hash(llvm::arrayRefFromStringRef(s.str())),

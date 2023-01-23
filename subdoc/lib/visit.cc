@@ -123,8 +123,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .unwrap();
       }
     }();
-    add_comment_to_db(decl, raw_comment_loc(raw_comment), sus::move(ne),
-                      mref(parent.namespaces));
+    add_namespace_to_db(decl, raw_comment_loc(raw_comment), sus::move(ne),
+                        mref(parent.namespaces));
     return true;
   }
 
@@ -135,8 +135,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (auto* cxxdecl = clang::dyn_cast<clang::CXXRecordDecl>(decl)) {
       // It's a C++ class. So it may have a template decl which has the template
       // parameters. And it may be a specialization.
-      llvm::errs() << "Visiting CXX class with template, specialization kind:"
-                   << cxxdecl->getTemplateSpecializationKind() << "\n";
+      // llvm::errs() << "Visiting CXX class with template, specialization
+      // kind:"
+      //              << cxxdecl->getTemplateSpecializationKind() << "\n";
     }
 
     RecordType type = [&]() {
@@ -280,10 +281,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // as being inherited.
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
-      static int i = 0;
-      i += 1;
-      llvm::errs() << i << "\n";
-      if (i == 5771) clang::cast<clang::Decl>(decl->getDeclContext())->dump();
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
@@ -373,32 +370,27 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
  private:
-  template <class ElementT, class MapT>
-    requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
+  template <class MapT>
   void add_function_overload_to_db(clang::FunctionDecl* decl,
                                    clang::SourceLocation loc,
-                                   ElementT db_element, MapT& db_map) noexcept {
-    FunctionId id = [&]() {
-      if (clang::isa<clang::CXXMethodDecl>(decl)) {
-        return FunctionId(decl->getNameAsString(),
-                          clang::cast<clang::CXXMethodDecl>(decl)->isStatic());
-      } else {
-        return FunctionId(decl->getNameAsString(), false);
-      }
-    }();
+                                   FunctionElement db_element,
+                                   MapT& db_map) noexcept {
+    FunctionId key = key_for_function(decl);
     bool add_overload = true;
-    auto it = db_map.find(id);
+    auto it = db_map.find(key);
     if (it == db_map.end()) {
-      db_map.emplace(id, std::move(db_element));
+      db_map.emplace(key, std::move(db_element));
       add_overload = false;
     } else if (!it->second.has_comment()) {
       // Steal the comment.
-      sus::mem::swap(db_map.at(id).comment, db_element.comment);
+      sus::mem::swap(db_map.at(key).comment, db_element.comment);
     } else if (!db_element.has_comment()) {
       // Leave the existing comment in place.
+    } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
+      // We already visited this thing, from another translation unit.
     } else {
       auto& ast_cx = decl->getASTContext();
-      const ElementT& old_element = it->second;
+      const FunctionElement& old_element = it->second;
       ast_cx.getDiagnostics()
           .Report(loc, diag_ids_.superceded_comment)
           .AddString(old_element.comment.begin_loc);
@@ -408,7 +400,31 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       ::sus::check_with_message(
           db_element.overloads.len() == 1u,
           *"Expected to add FunctionElement with 1 overload");
-      db_map.at(id).overloads.push(sus::move(db_element.overloads[0u]));
+      db_map.at(key).overloads.push(sus::move(db_element.overloads[0u]));
+    }
+  }
+
+  template <class MapT>
+  void add_namespace_to_db(clang::NamespaceDecl* decl,
+                           clang::SourceLocation loc,
+                           NamespaceElement db_element, MapT& db_map) noexcept {
+    auto key = key_for_namespace(decl);
+    auto it = db_map.find(key);
+    if (it == db_map.end()) {
+      db_map.emplace(key, std::move(db_element));
+    } else if (!it->second.has_comment()) {
+      // Steal the comment.
+      sus::mem::swap(db_map.at(key).comment, db_element.comment);
+    } else if (!db_element.has_comment()) {
+      // Leave the existing comment in place, do nothing.
+    } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
+      // We already visited this thing, from another translation unit.
+    } else {
+      auto& ast_cx = decl->getASTContext();
+      const NamespaceElement& old_element = it->second;
+      ast_cx.getDiagnostics()
+          .Report(loc, diag_ids_.superceded_comment)
+          .AddString(old_element.comment.begin_loc);
     }
   }
 
@@ -425,6 +441,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       sus::mem::swap(db_map.at(uniq).comment, db_element.comment);
     } else if (!db_element.has_comment()) {
       // Leave the existing comment in place, do nothing.
+    } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
+      // We already visited this thing, from another translation unit.
     } else {
       auto& ast_cx = decl->getASTContext();
       const ElementT& old_element = it->second;
