@@ -627,18 +627,18 @@ class [[nodiscard]] Result final {
  private:
   enum WithOkType { WithOk };
   constexpr inline Result(WithOkType, const T& t) noexcept
-      : state_(__private::ResultState::IsOk), storage_(__private::kWithT, t) {}
+      : storage_(__private::kWithT, t), state_(__private::ResultState::IsOk) {}
   constexpr inline Result(WithOkType, T&& t) noexcept
     requires(::sus::mem::Move<T>)
-      : state_(__private::ResultState::IsOk),
-        storage_(__private::kWithT, ::sus::move(t)) {}
+      : storage_(__private::kWithT, ::sus::move(t)),
+        state_(__private::ResultState::IsOk) {}
   enum WithErrType { WithErr };
   constexpr inline Result(WithErrType, const E& e) noexcept
-      : state_(__private::ResultState::IsErr), storage_(__private::kWithE, e) {}
+      : storage_(__private::kWithE, e), state_(__private::ResultState::IsErr) {}
   constexpr inline Result(WithErrType, E&& e) noexcept
     requires(::sus::mem::Move<E>)
-      : state_(__private::ResultState::IsErr),
-        storage_(__private::kWithE, ::sus::move(e)) {}
+      : storage_(__private::kWithE, ::sus::move(e)),
+        state_(__private::ResultState::IsErr) {}
 
   [[sus_no_unique_address]] __private::Storage<T, E> storage_;
   __private::ResultState state_;
