@@ -68,7 +68,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
 
 void generate_namespace_namespaces(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<const sus::Tuple<std::string_view, UniqueSymbol>> namespaces) {
+    sus::Slice<const sus::Tuple<std::string_view, NamespaceId>> namespaces) {
   if (namespaces.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -81,8 +81,8 @@ void generate_namespace_namespaces(
     header_div.write_text("Namespaces");
   }
   {
-    for (auto&& [name, uniq] : namespaces)
-      generate_namespace_reference(section_div, element.namespaces.at(uniq));
+    for (auto&& [name, id] : namespaces)
+      generate_namespace_reference(section_div, element.namespaces.at(id));
   }
 }
 
@@ -158,13 +158,13 @@ void generate_namespace(const NamespaceElement& element,
   generate_namespace_overview(mref(namespace_div), element);
 
   {
-    sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> sorted;
+    sus::Vec<sus::Tuple<std::string_view, NamespaceId>> sorted;
     for (const auto& [uniq, sub_element] : element.namespaces) {
       sorted.push(sus::tuple(sub_element.name, uniq));
     }
     sorted.sort_unstable_by(
-        [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
-           const sus::Tuple<std::string_view, UniqueSymbol>& b) {
+        [](const sus::Tuple<std::string_view, NamespaceId>& a,
+           const sus::Tuple<std::string_view, NamespaceId>& b) {
           return a.get_ref<0>() <=> b.get_ref<0>();
         });
 
