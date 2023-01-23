@@ -153,17 +153,21 @@ struct NamespaceId {
 };
 
 struct FunctionId {
-  FunctionId(std::string name, bool is_static)
-      : name(sus::move(name)), is_static(is_static) {}
+  FunctionId(std::string name, bool is_static, u32 overload_set)
+      : name(sus::move(name)),
+        is_static(is_static),
+        overload_set(overload_set) {}
 
   std::string name;
   bool is_static;
+  u32 overload_set;
 
   bool operator==(const FunctionId&) const = default;
 
   struct Hash {
     std::size_t operator()(const FunctionId& k) const {
-      return std::hash<std::string>()(k.name) ^ std::hash<bool>()(k.is_static);
+      return (std::hash<std::string>()(k.name) << size_t{k.is_static}) +
+             std::hash<u32>()(k.overload_set);
     }
   };
 };
@@ -357,12 +361,15 @@ inline NamespaceId key_for_namespace(clang::NamespaceDecl* decl) noexcept {
   return NamespaceId(decl->getNameAsString());
 }
 
-inline FunctionId key_for_function(clang::FunctionDecl* decl) noexcept {
-  return FunctionId(decl->getNameAsString(), [&]() {
+inline FunctionId key_for_function(clang::FunctionDecl* decl,
+                                   sus::Option<u32> overload_set) noexcept {
+  bool is_static = [&]() {
     if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl))
       return mdecl->isStatic();
     return false;
-  }());
+  }();
+  return FunctionId(decl->getNameAsString(), is_static,
+                    sus::move(overload_set).unwrap_or_default());
 }
 
 struct Database {

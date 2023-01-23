@@ -17,21 +17,28 @@
 #include <sstream>
 #include <string>
 
+#include "subdoc/lib/doc_attributes.h"
 #include "subdoc/llvm.h"
 #include "subspace/result/result.h"
 
 namespace subdoc {
 
+struct ParsedComment {
+  DocAttributes attributes;
+  std::string comment;
+};
+
 struct ParseCommentError {
   std::string message;
 };
 
-inline sus::result::Result<std::string, ParseCommentError> parse_comment(
+inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
     clang::ASTContext& ast_cx, const clang::RawComment& raw) noexcept {
   auto& src_manager = ast_cx.getSourceManager();
   const llvm::StringRef text = raw.getRawText(src_manager);
   const llvm::StringRef eol = text.detectEOL();
 
+  DocAttributes attrs;
   std::ostringstream parsed;
 
   clang::RawComment::CommentKind kind = raw.getKind();
@@ -48,13 +55,39 @@ inline sus::result::Result<std::string, ParseCommentError> parse_comment(
     case clang::RawComment::CommentKind::RCK_BCPLSlash:  // `/// Foo`
       [[fallthrough]];
     case clang::RawComment::CommentKind::RCK_JavaDoc: {  // `/** Foo`
+      attrs.location = raw.getBeginLoc();
+
       std::vector<clang::RawComment::CommentLine> lines =
           raw.getFormattedLines(src_manager, ast_cx.getDiagnostics());
       bool add_newline = false;
       for (const auto& line : lines) {
-        if (add_newline) parsed << "\n";
-        parsed << std::string(line.Text);
-        add_newline = true;
+        // TODO: Better and more robust parser and error messages.
+        if (line.Text.starts_with("#[doc(") && line.Text.ends_with(")]")) {
+          auto v =
+              std::string_view(line.Text).substr(6, line.Text.size() - 6u - 2u);
+          size_t end_attrname = [&]() {
+            size_t i = 0;
+            while (i < v.size()) {
+              if (v[i] == '=') break;
+              i += 1;
+            }
+            return i;
+          }();
+          auto attrname = v.substr(0, end_attrname);
+          if (attrname == "overloads" && v[end_attrname] == '=') {
+            auto set = std::string(v.substr(end_attrname + 1u));
+            attrs.overload_set = sus::some(u32::from(atoi(set.data())));
+          } else {
+            std::ostringstream m;
+            m << "Invalid doc attribute: ";
+            m << attrname;
+            return sus::result::err(ParseCommentError{.message = m.str()});
+          }
+        } else {
+          if (add_newline) parsed << "\n";
+          parsed << std::string(line.Text);
+          add_newline = true;
+        }
       }
       break;
     }
@@ -80,7 +113,8 @@ inline sus::result::Result<std::string, ParseCommentError> parse_comment(
       break;
   }
 
-  return sus::result::ok(parsed.str());
+  return sus::result::ok(
+      ParsedComment(sus::move(attrs), sus::move(parsed).str()));
 }
 
 }  // namespace subdoc
