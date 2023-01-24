@@ -15,7 +15,6 @@ stable version.
 1. Install [depot_tools](https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up)
 1. Install [CMake](https://cmake.org/install/)
 1. Install [python3](https://www.python.org/downloads/)
-1. Copy `<src path>/tools/standalone.gclient` to `<src path>/.gclient`
 1. `gclient sync --jobs=16`
 1. `cmake -B out`
 1. `cmake --build out`
