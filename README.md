@@ -30,7 +30,7 @@ The CMake files define the following options:
 The latest LLVM release does not have sufficient C++20 support to format the
 library correctly. To get a more bleeding edge clang-format executable, we get
 it from the Chromium project. The binary is downloaded by gclient and
-resides in `buildtools/<platform>/clang-format`. Point your IDE at that
+resides in `third_party/buildtools/<platform>/clang-format`. Point your IDE at that
 executable.
 
 ## For Windows/VSCode.
