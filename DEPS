@@ -9,7 +9,7 @@ vars = {
 }
 
 deps = {
-  'buildtools':
+  'third_party/buildtools':
     Var('chromium_git') + '/chromium/src/buildtools@' +
     Var('buildtools_revision'),
 
@@ -28,7 +28,7 @@ hooks = [
                 '--no_resume',
                 '--no_auth',
                 '--bucket', 'chromium-clang-format',
-                '-s', 'buildtools/win/clang-format.exe.sha1',
+                '-s', 'third_party/buildtools/win/clang-format.exe.sha1',
     ],
   },
   {
@@ -39,8 +39,8 @@ hooks = [
                 '--no_resume',
                 '--no_auth',
                 '--bucket', 'chromium-clang-format',
-                '-s', 'buildtools/mac/clang-format.x64.sha1',
-                '-o', 'buildtools/mac/clang-format',
+                '-s', 'third_party/buildtools/mac/clang-format.x64.sha1',
+                '-o', 'third_party/buildtools/mac/clang-format',
     ],
   },
   {
@@ -51,8 +51,8 @@ hooks = [
                 '--no_resume',
                 '--no_auth',
                 '--bucket', 'chromium-clang-format',
-                '-s', 'buildtools/mac/clang-format.arm64.sha1',
-                '-o', 'buildtools/mac/clang-format',
+                '-s', 'third_party/buildtools/mac/clang-format.arm64.sha1',
+                '-o', 'third_party/buildtools/mac/clang-format',
     ],
   },
   {
@@ -63,7 +63,7 @@ hooks = [
                 '--no_resume',
                 '--no_auth',
                 '--bucket', 'chromium-clang-format',
-                '-s', 'buildtools/linux64/clang-format.sha1',
+                '-s', 'third_party/buildtools/linux64/clang-format.sha1',
     ],
   }
 ]
