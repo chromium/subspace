@@ -111,7 +111,6 @@ jobs:
         shell: bash
         run: |
           echo "./depot_tools" >> $GITHUB_PATH
-          cp tools/standalone.gclient .gclient
 
       - name: Download dependencies
         shell: bash

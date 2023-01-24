@@ -1,7 +1,6 @@
 out
 .cache
 .vscode/c_cpp_properties.json
-.gclient
 .gclient_previous_sync_commits
 .gclient_entries
 buildtools/
