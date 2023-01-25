@@ -30,7 +30,7 @@ namespace subdoc {
 struct Comment {
   Comment() = default;
   Comment(std::string raw_text, std::string begin_loc)
-      : raw_text(raw_text), begin_loc(begin_loc) {}
+      : raw_text(raw_text), begin_loc(sus::move(begin_loc)) {}
 
   std::string raw_text;
   std::string begin_loc;

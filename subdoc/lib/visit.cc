@@ -256,7 +256,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
-    llvm::errs() << "Visit func " << raw_comment << "\n";
 
     auto signature = decl->getQualifiedNameAsString();
     // TODO: Add parameters.
@@ -489,10 +488,7 @@ bool VisitorAction::PrepareToExecuteAction(
 }
 
 std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
-    clang::CompilerInstance& inst, llvm::StringRef) noexcept {
-  // Keep documentation comments inside macros.
-  inst.getPreprocessor().SetCommentRetentionState(false, true);
-
+    clang::CompilerInstance&, llvm::StringRef) noexcept {
   return std::make_unique<AstConsumer>(cx, docs_db);
 }
 
