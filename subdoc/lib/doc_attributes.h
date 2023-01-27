@@ -18,6 +18,6 @@
 #include "subspace/prelude.h"
 
 struct DocAttributes {
-  sus::Option<u32> overload_set;
+  sus::Option<u64> overload_set;
   clang::SourceLocation location;
 };

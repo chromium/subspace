@@ -1,9 +1,11 @@
 namespace n {
 
 /// Function with overloads
+/// #[doc.overloads=0]
 void multiple();
+/// #[doc.overloads=0]
 void multiple(int);
-/// #[doc.overloads=0]  // This is merged with the default overload set.
+/// #[doc.overloads=0]
 void multiple(float);
 
 /// Separated overload
