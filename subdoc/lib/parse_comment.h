@@ -64,10 +64,15 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
         // TODO: Better and more robust parser and error messages.
         if (line.Text.starts_with("#[doc.") &&
             line.Text.find("]") != std::string::npos) {
-          auto v = std::string_view(line.Text).substr(6u, line.Text.find("]") - 6u);
+          auto v =
+              std::string_view(line.Text).substr(6u, line.Text.find("]") - 6u);
           if (v.starts_with("overloads=")) {
-            auto number = v.substr(10u);
-            attrs.overload_set = sus::some(u32::from(atoi(number.data())));
+            auto name = v.substr(strlen("overloads="));
+            attrs.overload_set = sus::some(
+                std::hash<std::string_view>()(std::string_view(name.data())));
+          } else if (v.starts_with("inherit=")) {
+            auto name = v.substr(strlen("inherit="));
+            // attrs.inherit = sus::some(...);
           } else {
             std::ostringstream m;
             m << "Invalid doc attribute in: ";

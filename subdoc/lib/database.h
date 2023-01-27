@@ -153,21 +153,21 @@ struct NamespaceId {
 };
 
 struct FunctionId {
-  FunctionId(std::string name, bool is_static, u32 overload_set)
+  FunctionId(std::string name, bool is_static, u64 overload_set)
       : name(sus::move(name)),
         is_static(is_static),
         overload_set(overload_set) {}
 
   std::string name;
   bool is_static;
-  u32 overload_set;
+  u64 overload_set;
 
   bool operator==(const FunctionId&) const = default;
 
   struct Hash {
     std::size_t operator()(const FunctionId& k) const {
       return (std::hash<std::string>()(k.name) << size_t{k.is_static}) +
-             std::hash<u32>()(k.overload_set);
+             std::hash<u64>()(k.overload_set);
     }
   };
 };
@@ -362,7 +362,7 @@ inline NamespaceId key_for_namespace(clang::NamespaceDecl* decl) noexcept {
 }
 
 inline FunctionId key_for_function(clang::FunctionDecl* decl,
-                                   sus::Option<u32> overload_set) noexcept {
+                                   sus::Option<u64> overload_set) noexcept {
   bool is_static = [&]() {
     if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl))
       return mdecl->isStatic();
