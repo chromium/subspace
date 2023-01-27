@@ -48,6 +48,7 @@ add_executable(subdoc_unittests
     "gen_tests/gen_tests.cc"
     "tests/fields_unittest.cc"
     "tests/functions_unittest.cc"
+    "tests/inherit_unittest.cc"
     "tests/macros_unittest.cc"
     "tests/methods_unittest.cc"
     "tests/records_unittest.cc"

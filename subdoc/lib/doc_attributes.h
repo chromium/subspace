@@ -14,10 +14,35 @@
 
 #pragma once
 
+#include "subdoc/llvm.h"
+#include "subspace/choice/choice.h"
+#include "subspace/containers/vec.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
+
+namespace subdoc {
+
+enum InheritPathElementType {
+  InheritPathNamespace,
+  InheritPathRecord,
+  InheritPathFunction,
+};
+
+using InheritPathElement =
+    sus::Choice<sus_choice_types((InheritPathNamespace, std::string),  //
+                                 (InheritPathRecord, std::string),     //
+                                 (InheritPathFunction, std::string))>;
 
 struct DocAttributes {
   sus::Option<u64> overload_set;
   clang::SourceLocation location;
+  sus::Option<sus::Vec<InheritPathElement>> inherit;
+
+  DocAttributes clone() const {
+    return DocAttributes(sus::clone(overload_set),  //
+                         sus::clone(location),      //
+                         sus::clone(inherit));
+  }
 };
+
+}  // namespace subdoc
