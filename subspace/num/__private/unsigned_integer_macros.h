@@ -100,10 +100,14 @@ class Tuple;
    *                                                                           \
    * The trivial copy and move constructors are implicitly declared, as is the \
    * trivial destructor.                                                       \
+   *                                                                           \
+   * #[doc.overloads=0]                                                        \
    */                                                                          \
   constexpr inline T() noexcept = default;                                     \
                                                                                \
   /** Construction from unsigned primitive types where no bits are lost.       \
+   *                                                                           \
+   * #[doc.overloads=1]                                                        \
    */                                                                          \
   template <UnsignedPrimitiveInteger P>                                        \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
@@ -124,6 +128,8 @@ class Tuple;
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=0]                                                        \
    */                                                                          \
   template <Signed S>                                                          \
   static constexpr T from(S s) noexcept {                                      \
@@ -139,6 +145,8 @@ class Tuple;
    * etc).                                                                     \
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
+   *                                                                           \
+   * #[doc.overloads=0]                                                        \
    */                                                                          \
   template <Signed S>                                                          \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -162,6 +170,8 @@ class Tuple;
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=1]                                                        \
    */                                                                          \
   template <Unsigned U>                                                        \
   static constexpr T from(U u) noexcept {                                      \
@@ -174,6 +184,8 @@ class Tuple;
    * etc).                                                                     \
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
+   *                                                                           \
+   * #[doc.overloads=1]                                                        \
    */                                                                          \
   template <Unsigned U>                                                        \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -193,6 +205,8 @@ class Tuple;
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=2]                                                        \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
   static constexpr T from(S s) {                                               \
@@ -207,6 +221,8 @@ class Tuple;
    * long, etc).                                                               \
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
+   *                                                                           \
+   * #[doc.overloads=2]                                                        \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -231,6 +247,8 @@ class Tuple;
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=3]                                                        \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
   static constexpr T from(U u) {                                               \
@@ -243,6 +261,8 @@ class Tuple;
    * (unsigned int, unsigned long, etc).                                       \
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
+   *                                                                           \
+   * #[doc.overloads=3]                                                        \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -272,22 +292,22 @@ class Tuple;
   static_assert(true)
 
 #define _sus__unsigned_integer_comparison(T)                                  \
-  /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait. */            \
+  /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait.               \
+   * sus::concepts::Eq<##T##, Unsigned> trait. */                             \
   template <UnsignedPrimitiveInteger P>                                       \
   friend constexpr inline bool operator==(const T& l, const P& r) noexcept {  \
     return l.primitive_value == r;                                            \
   }                                                                           \
-  /** sus::concepts::Eq<##T##, Unsigned> trait. */                            \
   template <Unsigned U>                                                       \
   friend constexpr inline bool operator==(const T& l, const U& r) noexcept {  \
     return l.primitive_value == r.primitive_value;                            \
   }                                                                           \
-  /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait. */           \
+  /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait.              \
+   * sus::concepts::Ord<##T##, Unsigned> trait. */                            \
   template <UnsignedPrimitiveInteger P>                                       \
   friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept { \
     return l.primitive_value <=> r;                                           \
   }                                                                           \
-  /** sus::concepts::Ord<##T##, Unsigned> trait. */                           \
   template <Unsigned U>                                                       \
   friend constexpr inline auto operator<=>(const T& l, const U& r) noexcept { \
     return l.primitive_value <=> r.primitive_value;                           \
