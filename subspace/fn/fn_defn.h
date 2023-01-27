@@ -478,7 +478,7 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
   }
   /// `sus::construct::From` trait implementation for the output of
   /// `sus_bind()`.
-  /// #[doc(overloads=1)]
+  /// #[doc.overloads=1]
   template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
     return Fn(static_cast<__private::SusBind<F>&&>(holder));

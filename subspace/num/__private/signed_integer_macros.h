@@ -99,12 +99,16 @@ class Tuple;
   constexpr inline T() noexcept = default;                                     \
                                                                                \
   /** Construction from signed primitive types where no bits are lost.         \
+   *                                                                           \
+   * #[doc.overloads=1]                                                        \
    */                                                                          \
   template <SignedPrimitiveInteger P>                                          \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
   constexpr inline T(P v) : primitive_value(v) {}                              \
                                                                                \
   /** Construction from unsigned primitive types where no bits are lost.       \
+   *                                                                           \
+   * #[doc.overloads=2]                                                        \
    */                                                                          \
   template <UnsignedPrimitiveInteger P>                                        \
     requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<PrimitiveT>())     \
@@ -154,17 +158,17 @@ class Tuple;
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if constexpr (MIN_PRIMITIVE > S::MIN_PRIMITIVE) {                          \
       if (s.primitive_value < MIN_PRIMITIVE) {                                 \
-        return R::with_err(::sus::num::TryFromIntError(                 \
+        return R::with_err(::sus::num::TryFromIntError(                        \
             ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
       }                                                                        \
     }                                                                          \
     if constexpr (MAX_PRIMITIVE < S::MAX_PRIMITIVE) {                          \
       if (s.primitive_value > MAX_PRIMITIVE) {                                 \
-        return R::with_err(::sus::num::TryFromIntError(                 \
+        return R::with_err(::sus::num::TryFromIntError(                        \
             ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
       }                                                                        \
     }                                                                          \
-    return R::with(T(static_cast<PrimitiveT>(s.primitive_value)));   \
+    return R::with(T(static_cast<PrimitiveT>(s.primitive_value)));             \
   }                                                                            \
                                                                                \
   /** Constructs a ##T## from an unsigned integer type (u8, u16, u32, etc).    \

@@ -92,7 +92,7 @@ struct [[sus_trivial_abi]] NonNull {
   ///
   /// The method will panic if the pointer `t` is null.
   ///
-  /// #[doc(overloads=1)]
+  /// #[doc.overloads=1]
   template <::sus::convert::SameOrSubclassOf<T*> U>
   static constexpr inline NonNull from(U t) {
     check(t);

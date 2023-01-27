@@ -173,8 +173,8 @@ class [[nodiscard]] Result final {
     requires(!::sus::mem::Copy<T> || !::sus::mem::Copy<E>)
   = delete;
 
-  /// If T and E can be trivially move-assigned, Result<T, E> can also be
-  /// trivially move-assigned.
+  /// If T and E can be trivially copy-assigned, Result<T, E> can also be
+  /// trivially copy-assigned.
   constexpr Result& operator=(const Result& o)
     requires(::sus::mem::Copy<T> && ::sus::mem::Copy<E> &&
              std::is_trivially_copy_assignable_v<T> &&
@@ -235,7 +235,7 @@ class [[nodiscard]] Result final {
 
   /// If T and E can be trivially move-constructed, Result<T, E> can also be
   /// trivially move-constructed.
-  /// #[doc(overloads=1)]
+  /// #[doc.overloads=1]
   constexpr Result(Result&&)
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
              std::is_trivially_move_constructible_v<T> &&
@@ -269,7 +269,7 @@ class [[nodiscard]] Result final {
 
   /// If T and E can be trivially move-assigned, Result<T, E> can also be
   /// trivially move-assigned.
-  /// #[doc(overloads=1)]
+  /// #[doc.overloads=1]
   constexpr Result& operator=(Result&& o)
     requires(::sus::mem::Move<T> && ::sus::mem::Move<E> &&
              std::is_trivially_move_assignable_v<T> &&
