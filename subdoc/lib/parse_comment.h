@@ -62,30 +62,23 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
       bool add_newline = false;
       for (const auto& line : lines) {
         // TODO: Better and more robust parser and error messages.
-        if (line.Text.starts_with("#[doc(") && line.Text.ends_with(")]")) {
-          auto v =
-              std::string_view(line.Text).substr(6, line.Text.size() - 6u - 2u);
-          size_t end_attrname = [&]() {
-            size_t i = 0;
-            while (i < v.size()) {
-              if (v[i] == '=') break;
-              i += 1;
-            }
-            return i;
-          }();
-          auto attrname = v.substr(0, end_attrname);
-          if (attrname == "overloads" && v[end_attrname] == '=') {
-            auto set = std::string(v.substr(end_attrname + 1u));
-            attrs.overload_set = sus::some(u32::from(atoi(set.data())));
+        if (line.Text.starts_with("#[doc.") &&
+            line.Text.find("]") != std::string::npos) {
+          auto v = std::string_view(line.Text).substr(6u, line.Text.find("]") - 6u);
+          if (v.starts_with("overloads=")) {
+            auto number = v.substr(10u);
+            attrs.overload_set = sus::some(u32::from(atoi(number.data())));
           } else {
             std::ostringstream m;
-            m << "Invalid doc attribute: ";
-            m << attrname;
+            m << "Invalid doc attribute in: ";
+            m << line.Text;
             return sus::result::err(ParseCommentError{.message = m.str()});
           }
         } else {
+          if (line.Text.find("#[doc") != std::string::npos)
+            llvm::errs() << "Unused doc comment in: " << line.Text << "\n";
           if (add_newline) parsed << "\n";
-          parsed << std::string(line.Text);
+          parsed << line.Text;
           add_newline = true;
         }
       }
