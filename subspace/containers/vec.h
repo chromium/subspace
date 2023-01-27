@@ -227,6 +227,12 @@ class Vec {
     return len_;
   }
 
+  /// Returns true if the vector has a length of 0.
+  constexpr inline bool is_empty() const& noexcept {
+    check(!is_moved_from());
+    return len_ == 0u;
+  }
+
   /// Returns the number of elements there is space allocated for in the vector.
   ///
   /// This may be larger than the number of elements present, which is returned
