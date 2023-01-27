@@ -115,6 +115,8 @@ class Tuple;
   constexpr inline T(P v) : primitive_value(v) {}                              \
                                                                                \
   /** Assignment from signed primitive types where no bits are lost.           \
+   *                                                                           \
+   * #[doc.overloads=0]                                                        \
    */                                                                          \
   template <SignedPrimitiveInteger P>                                          \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
@@ -124,6 +126,8 @@ class Tuple;
   }                                                                            \
                                                                                \
   /** Assignment from unsigned primitive types where no bits are lost.         \
+   *                                                                           \
+   * #[doc.overloads=1]                                                        \
    */                                                                          \
   template <UnsignedPrimitiveInteger P>                                        \
     requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<PrimitiveT>())     \
@@ -138,6 +142,8 @@ class Tuple;
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=0]                                                        \
    */                                                                          \
   template <Signed S>                                                          \
   static constexpr T from(S s) noexcept {                                      \
@@ -151,6 +157,8 @@ class Tuple;
   /** Try to construct a ##T## from a signed integer type (i8, i16, i32, etc). \
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
+   *                                                                           \
+   * #[doc.overloads=0]                                                        \
    */                                                                          \
   template <Signed S>                                                          \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -175,6 +183,8 @@ class Tuple;
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=1]                                                        \
    */                                                                          \
   template <Unsigned U>                                                        \
   static constexpr T from(U u) noexcept {                                      \
@@ -189,6 +199,8 @@ class Tuple;
    * etc).                                                                     \
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
+   *                                                                           \
+   * #[doc.overloads=1]                                                        \
    */                                                                          \
   template <Unsigned U>                                                        \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -209,6 +221,8 @@ class Tuple;
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=2]                                                        \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
   static constexpr T from(S s) {                                               \
@@ -223,6 +237,8 @@ class Tuple;
    * long, etc).                                                               \
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
+   *                                                                           \
+   * #[doc.overloads=2]                                                        \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -248,6 +264,8 @@ class Tuple;
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=3]                                                        \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
   static constexpr T from(U u) {                                               \
@@ -263,6 +281,8 @@ class Tuple;
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=3]                                                        \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -310,22 +330,24 @@ class Tuple;
       return PrimitiveT{primitive_value != 0};                                 \
   }                                                                            \
                                                                                \
-  /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait. */             \
+  /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait.                \
+   * sus::concepts::Eq<##T##, Unsigned> trait.                                 \
+   * #[doc.overloads=uint.eq] */                                               \
   template <SignedPrimitiveInteger P>                                          \
   friend constexpr inline bool operator==(const T& l, const P& r) noexcept {   \
     return l.primitive_value == r;                                             \
   }                                                                            \
-  /** sus::concepts::Eq<##T##, Unsigned> trait. */                             \
   template <Signed S>                                                          \
   friend constexpr inline bool operator==(const T& l, const S& r) noexcept {   \
     return l.primitive_value == r.primitive_value;                             \
   }                                                                            \
-  /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait. */            \
+  /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait.               \
+  /** sus::concepts::Ord<##T##, Unsigned> trait.                               \
+   * #[doc.overloads=uint.ord] */                                              \
   template <SignedPrimitiveInteger P>                                          \
   friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept {  \
     return l.primitive_value <=> r;                                            \
   }                                                                            \
-  /** sus::concepts::Ord<##T##, Unsigned> trait. */                            \
   template <Signed S>                                                          \
   friend constexpr inline auto operator<=>(const T& l, const S& r) noexcept {  \
     return l.primitive_value <=> r.primitive_value;                            \
@@ -347,7 +369,8 @@ class Tuple;
   static_assert(true)
 
 #define _sus__signed_binary_logic_ops(T, PrimitiveT)                        \
-  /** sus::concepts::Add<##T##> trait. */                                   \
+  /** sus::concepts::Add<##T##> trait.                                      \
+   * #[doc.overloads=int##T##.+] */                                         \
   friend constexpr inline T operator+(const T& l, const T& r) noexcept {    \
     const auto out =                                                        \
         __private::add_with_overflow(l.primitive_value, r.primitive_value); \
@@ -355,7 +378,8 @@ class Tuple;
     ::sus::check(!out.overflow);                                            \
     return out.value;                                                       \
   }                                                                         \
-  /** sus::concepts::Sub<##T##> trait. */                                   \
+  /** sus::concepts::Sub<##T##> trait.                                      \
+   * #[doc.overloads=int##T##.-] */                                              \
   friend constexpr inline T operator-(const T& l, const T& r) noexcept {    \
     const auto out =                                                        \
         __private::sub_with_overflow(l.primitive_value, r.primitive_value); \
@@ -363,7 +387,8 @@ class Tuple;
     ::sus::check(!out.overflow);                                            \
     return out.value;                                                       \
   }                                                                         \
-  /** sus::concepts::Mul<##T##> trait. */                                   \
+  /** sus::concepts::Mul<##T##> trait.                                      \
+   * #[doc.overloads=int##T##.*] */                                              \
   friend constexpr inline T operator*(const T& l, const T& r) noexcept {    \
     const auto out =                                                        \
         __private::mul_with_overflow(l.primitive_value, r.primitive_value); \
@@ -371,7 +396,8 @@ class Tuple;
     ::sus::check(!out.overflow);                                            \
     return out.value;                                                       \
   }                                                                         \
-  /** sus::concepts::Div<##T##> trait. */                                   \
+  /** sus::concepts::Div<##T##> trait.                                      \
+   * #[doc.overloads=int##T##./] */                                              \
   friend constexpr inline T operator/(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0);                                   \
@@ -380,7 +406,8 @@ class Tuple;
                  r.primitive_value != -1);                                  \
     return static_cast<PrimitiveT>(l.primitive_value / r.primitive_value);  \
   }                                                                         \
-  /** sus::concepts::Rem<##T##> trait. */                                   \
+  /** sus::concepts::Rem<##T##> trait.                                      \
+   * #[doc.overloads=int##T##.%] */                                              \
   friend constexpr inline T operator%(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0);                                   \
@@ -392,26 +419,31 @@ class Tuple;
   static_assert(true)
 
 #define _sus__signed_binary_bit_ops(T, PrimitiveT)                          \
-  /** sus::concepts::BitAnd<##T##> trait. */                                \
+  /** sus::concepts::BitAnd<##T##> trait.                                   \
+   * #[doc.overloads=int##T##.&] */                                              \
   friend constexpr inline T operator&(const T& l, const T& r) noexcept {    \
     return static_cast<PrimitiveT>(l.primitive_value & r.primitive_value);  \
   }                                                                         \
-  /** sus::concepts::BitOr<##T##> trait. */                                 \
+  /** sus::concepts::BitOr<##T##> trait.                                    \
+   * #[doc.overloads=int##T##.|] */                                              \
   friend constexpr inline T operator|(const T& l, const T& r) noexcept {    \
     return static_cast<PrimitiveT>(l.primitive_value | r.primitive_value);  \
   }                                                                         \
-  /** sus::concepts::BitXor<##T##> trait. */                                \
+  /** sus::concepts::BitXor<##T##> trait.                                   \
+   * #[doc.overloads=int##T##.^] */                                              \
   friend constexpr inline T operator^(const T& l, const T& r) noexcept {    \
     return static_cast<PrimitiveT>(l.primitive_value ^ r.primitive_value);  \
   }                                                                         \
-  /** sus::concepts::Shl trait. */                                          \
+  /** sus::concepts::Shl trait.                                             \
+   * #[doc.overloads=int##T##.<<] */                                             \
   friend constexpr inline T operator<<(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS);                                                 \
     return __private::into_signed(__private::unchecked_shl(                 \
         __private::into_unsigned(l.primitive_value), r.primitive_value));   \
   }                                                                         \
-  /** sus::concepts::Shr trait. */                                          \
+  /** sus::concepts::Shr trait.                                             \
+   * #[doc.overloads=int##T##.>>] */                                             \
   friend constexpr inline T operator>>(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS);                                                 \

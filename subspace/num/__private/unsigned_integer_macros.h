@@ -293,7 +293,8 @@ class Tuple;
 
 #define _sus__unsigned_integer_comparison(T)                                  \
   /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait.               \
-   * sus::concepts::Eq<##T##, Unsigned> trait. */                             \
+   * sus::concepts::Eq<##T##, Unsigned> trait.                                \
+   * #[doc.overloads=int.eq] */                                               \
   template <UnsignedPrimitiveInteger P>                                       \
   friend constexpr inline bool operator==(const T& l, const P& r) noexcept {  \
     return l.primitive_value == r;                                            \
@@ -303,7 +304,8 @@ class Tuple;
     return l.primitive_value == r.primitive_value;                            \
   }                                                                           \
   /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait.              \
-   * sus::concepts::Ord<##T##, Unsigned> trait. */                            \
+   * sus::concepts::Ord<##T##, Unsigned> trait.                               \
+   * #[doc.overloads=int.ord] */                                              \
   template <UnsignedPrimitiveInteger P>                                       \
   friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept { \
     return l.primitive_value <=> r;                                           \
@@ -314,16 +316,18 @@ class Tuple;
   }                                                                           \
   static_assert(true)
 
-#define _sus__unsigned_unary_ops(T)                      \
-  /** sus::concepts::Neg trait intentionally omitted. */ \
-  /** sus::concepts::BitNot trait. */                    \
-  constexpr inline T operator~() const& noexcept {       \
-    return __private::unchecked_not(primitive_value);    \
-  }                                                      \
+#define _sus__unsigned_unary_ops(T)                     \
+  /* sus::concepts::Neg trait intentionally omitted. */ \
+                                                        \
+  /** sus::concepts::BitNot trait. */                   \
+  constexpr inline T operator~() const& noexcept {      \
+    return __private::unchecked_not(primitive_value);   \
+  }                                                     \
   static_assert(true)
 
 #define _sus__unsigned_binary_logic_ops(T)                                  \
-  /** sus::concepts::Add<##T##> trait. */                                   \
+  /** sus::concepts::Add<##T##> trait.                                      \
+   * #[doc.overloads=uint##T##.+] */                                        \
   friend constexpr inline T operator+(const T& l, const T& r) noexcept {    \
     const auto out =                                                        \
         __private::add_with_overflow(l.primitive_value, r.primitive_value); \
@@ -331,7 +335,8 @@ class Tuple;
     ::sus::check(!out.overflow);                                            \
     return out.value;                                                       \
   }                                                                         \
-  /** sus::concepts::Sub<##T##> trait. */                                   \
+  /** sus::concepts::Sub<##T##> trait.                                      \
+   * #[doc.overloads=uint##T##.-] */                                        \
   friend constexpr inline T operator-(const T& l, const T& r) noexcept {    \
     const auto out =                                                        \
         __private::sub_with_overflow(l.primitive_value, r.primitive_value); \
@@ -339,7 +344,8 @@ class Tuple;
     ::sus::check(!out.overflow);                                            \
     return out.value;                                                       \
   }                                                                         \
-  /** sus::concepts::Mul<##T##> trait. */                                   \
+  /** sus::concepts::Mul<##T##> trait.                                      \
+   * #[doc.overloads=uint##T##.*] */                                        \
   friend constexpr inline T operator*(const T& l, const T& r) noexcept {    \
     const auto out =                                                        \
         __private::mul_with_overflow(l.primitive_value, r.primitive_value); \
@@ -347,13 +353,15 @@ class Tuple;
     ::sus::check(!out.overflow);                                            \
     return out.value;                                                       \
   }                                                                         \
-  /** sus::concepts::Div<##T##> trait. */                                   \
+  /** sus::concepts::Div<##T##> trait.                                      \
+   * #[doc.overloads=uint##T##./] */                                        \
   friend constexpr inline T operator/(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0u);                                  \
     return __private::unchecked_div(l.primitive_value, r.primitive_value);  \
   }                                                                         \
-  /** sus::concepts::Rem<##T##> trait. */                                   \
+  /** sus::concepts::Rem<##T##> trait.                                      \
+   * #[doc.overloads=uint##T##.%] */                                        \
   friend constexpr inline T operator%(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0u);                                  \
@@ -362,25 +370,30 @@ class Tuple;
   static_assert(true)
 
 #define _sus__unsigned_binary_bit_ops(T)                                    \
-  /** sus::concepts::BitAnd<##T##> trait. */                                \
+  /** sus::concepts::BitAnd<##T##> trait.                                   \
+   * #[doc.overloads=uint##T##.&] */                                        \
   friend constexpr inline T operator&(const T& l, const T& r) noexcept {    \
     return __private::unchecked_and(l.primitive_value, r.primitive_value);  \
   }                                                                         \
-  /** sus::concepts::BitOr<##T##> trait. */                                 \
+  /** sus::concepts::BitOr<##T##> trait.                                    \
+   * #[doc.overloads=uint##T##.|] */                                        \
   friend constexpr inline T operator|(const T& l, const T& r) noexcept {    \
     return __private::unchecked_or(l.primitive_value, r.primitive_value);   \
   }                                                                         \
-  /** sus::concepts::BitXor<##T##> trait. */                                \
+  /** sus::concepts::BitXor<##T##> trait.                                   \
+   * #[doc.overloads=uint##T##.^] */                                        \
   friend constexpr inline T operator^(const T& l, const T& r) noexcept {    \
     return __private::unchecked_xor(l.primitive_value, r.primitive_value);  \
   }                                                                         \
-  /** sus::concepts::Shl trait. */                                          \
+  /** sus::concepts::Shl trait.                                             \
+   * #[doc.overloads=uint##T##.<<] */                                       \
   friend constexpr inline T operator<<(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS);                                                 \
     return __private::unchecked_shl(l.primitive_value, r.primitive_value);  \
   }                                                                         \
-  /** sus::concepts::Shr trait. */                                          \
+  /** sus::concepts::Shr trait.                                             \
+   * #[doc.overloads=uint##T##>>] */                                        \
   friend constexpr inline T operator>>(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS);                                                 \

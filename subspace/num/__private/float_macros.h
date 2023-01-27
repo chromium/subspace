@@ -87,23 +87,23 @@ class Array;
    * This value is not constexpr because the value can differ in a constexpr   \
    * evaluation context from a runtime context, leading to bugs.               \
    */                                                                          \
-  static const T NAN;                                                     \
+  static const T NAN;                                                          \
   /** Infinity. */                                                             \
-  static const T INFINITY;                                                 \
+  static const T INFINITY;                                                     \
   /** Negative infinity. */                                                    \
   static const T NEG_INFINITY;                                                 \
   static_assert(true)
 
-#define _sus__float_constants_decl(T, PrimitiveT)                            \
-  inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                           \
-  inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                           \
-  inline constexpr T T::EPSILON = T(__private::epsilon<PrimitiveT>());       \
-  inline constexpr T T::MIN_POSITIVE =                                       \
-      T(__private::min_positive_value<PrimitiveT>());                        \
-  inline const T T::NAN = T(__private::nan<PrimitiveT>());              \
+#define _sus__float_constants_decl(T, PrimitiveT)                        \
+  inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                       \
+  inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                       \
+  inline constexpr T T::EPSILON = T(__private::epsilon<PrimitiveT>());   \
+  inline constexpr T T::MIN_POSITIVE =                                   \
+      T(__private::min_positive_value<PrimitiveT>());                    \
+  inline const T T::NAN = T(__private::nan<PrimitiveT>());               \
   inline constexpr T T::INFINITY = T(__private::infinity<PrimitiveT>()); \
-  inline constexpr T T::NEG_INFINITY =                                       \
-      T(__private::negative_infinity<PrimitiveT>());                         \
+  inline constexpr T T::NEG_INFINITY =                                   \
+      T(__private::negative_infinity<PrimitiveT>());                     \
   static_assert(true)
 
 #define _sus__float_construct(T, PrimitiveT)                                   \
@@ -139,11 +139,13 @@ class Array;
   static_assert(true)
 
 #define _sus__float_comparison(T)                                              \
-  /** sus::ops::Eq<##T##> trait. */                                            \
+  /** sus::ops::Eq<##T##> trait.                                               \
+   * #[doc.overloads=float##T##.eq] */                                         \
   friend constexpr inline bool operator==(const T& l, const T& r) noexcept {   \
     return (l.primitive_value <=> r.primitive_value) == 0;                     \
   }                                                                            \
-  /** sus::ops::PartialOrd<##T##> trait. */                                    \
+  /** sus::ops::PartialOrd<##T##> trait.                                       \
+   * #[doc.overloads=float##T##.ord] */                                        \
   friend constexpr inline auto operator<=>(const T& l, const T& r) noexcept {  \
     return l.primitive_value <=> r.primitive_value;                            \
   }                                                                            \
@@ -186,19 +188,23 @@ class Array;
   constexpr inline T operator-() const { return T(-primitive_value); }
 
 #define _sus__float_binary_ops(T)                                        \
-  /** sus::concepts::Add<##T##> trait. */                                \
+  /** sus::concepts::Add<##T##> trait.                                   \
+   * #[doc.overloads=float##T##.+] */                                    \
   friend constexpr inline T operator+(const T& l, const T& r) noexcept { \
     return l.primitive_value + r.primitive_value;                        \
   }                                                                      \
-  /** sus::concepts::Sub<##T##> trait. */                                \
+  /** sus::concepts::Sub<##T##> trait.                                   \
+   * #[doc.overloads=float##T##.-] */                                    \
   friend constexpr inline T operator-(const T& l, const T& r) noexcept { \
     return l.primitive_value - r.primitive_value;                        \
   }                                                                      \
-  /** sus::concepts::Mul<##T##> trait. */                                \
+  /** sus::concepts::Mul<##T##> trait.                                   \
+   * #[doc.overloads=float##T##.*] */                                    \
   friend constexpr inline T operator*(const T& l, const T& r) noexcept { \
     return l.primitive_value * r.primitive_value;                        \
   }                                                                      \
-  /** sus::concepts::Div<##T##> trait. */                                \
+  /** sus::concepts::Div<##T##> trait.                                   \
+   * #[doc.overloads=float##T##./] */                                    \
   friend constexpr inline T operator/(const T& l, const T& r) noexcept { \
     return l.primitive_value / r.primitive_value;                        \
   }                                                                      \
@@ -208,7 +214,8 @@ class Array;
    *                                                                     \
    * The remainder has the same sign as the dividend and is computed as: \
    * `l - (l / r).trunc() * r`.                                          \
-   * */                                                                  \
+   *                                                                     \
+   * #[doc.overloads=float##T##.%] */                                    \
   friend constexpr inline T operator%(const T& l, const T& r) noexcept { \
     const auto x = l.primitive_value;                                    \
     const auto y = r.primitive_value;                                    \
@@ -264,7 +271,7 @@ class Array;
   inline T acos() const& noexcept {                                            \
     if (primitive_value < PrimitiveT{-1} || primitive_value > PrimitiveT{1})   \
         [[unlikely]]                                                           \
-      return NAN;                                                         \
+      return NAN;                                                              \
     /* MSVC acos(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::acos(primitive_value));                   \
   }                                                                            \
@@ -273,7 +280,7 @@ class Array;
    */                                                                          \
   inline T acosh() const& noexcept {                                           \
     if (primitive_value < PrimitiveT{-1}) [[unlikely]]                         \
-      return NAN;                                                         \
+      return NAN;                                                              \
     /* MSVC acosh(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::acosh(primitive_value));                  \
   }                                                                            \
@@ -283,7 +290,7 @@ class Array;
   inline T asin() const& noexcept {                                            \
     if (primitive_value < PrimitiveT{-1} || primitive_value > PrimitiveT{1})   \
         [[unlikely]]                                                           \
-      return NAN;                                                         \
+      return NAN;                                                              \
     /* MSVC asin(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::asin(primitive_value));                   \
   }                                                                            \
@@ -291,7 +298,7 @@ class Array;
    */                                                                          \
   inline T asinh() const& noexcept {                                           \
     if (primitive_value < PrimitiveT{-1}) [[unlikely]]                         \
-      return NAN;                                                         \
+      return NAN;                                                              \
     /* MSVC asinh(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::asinh(primitive_value));                  \
   }                                                                            \
@@ -508,7 +515,7 @@ class Array;
    */                                                                          \
   inline T sqrt() const& noexcept {                                            \
     if (primitive_value < -PrimitiveT{0}) [[unlikely]]                         \
-      return NAN;                                                         \
+      return NAN;                                                              \
     /* MSVC sqrt(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::sqrt(primitive_value));                   \
   }                                                                            \

@@ -338,10 +338,10 @@ class Vec {
     return get_unchecked_mut(::sus::marker::unsafe_fn, i);
   }
 
-  /// #[doc.forward=Slice::sort]
+  /// #[doc.inherit=Slice::sort]
   void sort() { as_mut().sort(); }
 
-  /// #[doc.forward=Slice::sort_by]
+  /// #[doc.inherit=Slice::sort_by]
   template <class F, int&...,
             class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
@@ -349,10 +349,10 @@ class Vec {
     as_mut().sort_by(sus::move(compare));
   }
 
-  /// #[doc.forward=Slice::sort]
+  /// #[doc.inherit=Slice::sort]
   void sort_unstable() { as_mut().sort(); }
 
-  /// #[doc.forward=Slice::sort_by]
+  /// #[doc.inherit=Slice::sort_by]
   template <class F, int&...,
             class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
