@@ -107,6 +107,14 @@ sus::result::Result<Database, DiagnosticResults> run_files(
   if (diags->getNumErrors() > 0) {
     return sus::result::err(sus::move(sus::move(diags)->results));
   }
+
+  auto r = docs_db.resolve_inherited_comments();
+  if (r.is_err()) {
+    // TODO: forward the message location into a diagnostic.
+    llvm::errs() << sus::move(sus::move(r).unwrap_err()) << "\n";
+    return sus::result::err(sus::move(sus::move(diags)->results));
+  }
+
   return sus::result::ok(sus::move(docs_db));
 }
 

@@ -14,6 +14,7 @@
 
 #pragma once
 
+// TODO: Support for Result<void, E>.
 // TODO: Support for Result<T&, E>.
 
 // TODO: and, and_then, as_mut, as_ref, cloned, copied, expect, expect_err,

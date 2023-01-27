@@ -16,6 +16,7 @@
 
 #include <unordered_map>
 
+#include "subdoc/lib/doc_attributes.h"
 #include "subdoc/lib/friendly_names.h"
 #include "subdoc/lib/method_qualifier.h"
 #include "subdoc/lib/path.h"
@@ -29,11 +30,20 @@ namespace subdoc {
 
 struct Comment {
   Comment() = default;
-  Comment(std::string raw_text, std::string begin_loc)
-      : raw_text(raw_text), begin_loc(sus::move(begin_loc)) {}
+  Comment(std::string raw_text, std::string begin_loc, DocAttributes attrs)
+      : raw_text(raw_text),
+        begin_loc(sus::move(begin_loc)),
+        attrs(sus::move(attrs)) {}
 
   std::string raw_text;
   std::string begin_loc;
+  DocAttributes attrs;
+
+  void inherit_from(const Comment& source) {
+    raw_text = source.raw_text;
+    attrs = sus::clone(source.attrs);
+    // location is not modified.
+  }
 
   std::string_view summary() const& { return raw_text; }
   std::string_view summary() && = delete;
@@ -53,7 +63,9 @@ struct CommentElement {
   Comment comment;
   std::string name;
 
-  bool has_comment() const { return !comment.raw_text.empty(); }
+  bool has_comment() const {
+    return !comment.raw_text.empty() || comment.attrs.inherit.is_some();
+  }
 };
 
 struct MethodSpecific {
@@ -101,6 +113,8 @@ struct FunctionElement : public CommentElement {
     else
       return sus::none();
   }
+
+  void for_each_comment(sus::fn::FnMut<void(Comment&)>& fn) { fn(comment); }
 };
 
 struct FieldElement : public CommentElement {
@@ -136,6 +150,8 @@ struct FieldElement : public CommentElement {
     else
       return sus::none();
   }
+
+  void for_each_comment(sus::fn::FnMut<void(Comment&)>& fn) { fn(comment); }
 };
 
 struct NamespaceId {
@@ -263,6 +279,17 @@ struct RecordElement : public CommentElement {
     }
     return out;
   }
+
+  void for_each_comment(sus::fn::FnMut<void(Comment&)>& fn) {
+    fn(comment);
+    for (auto& [k, e] : records) e.for_each_comment(fn);
+    for (auto& [k, e] : fields) e.for_each_comment(fn);
+    for (auto& [k, e] : deductions) e.for_each_comment(fn);
+    for (auto& [k, e] : ctors) e.for_each_comment(fn);
+    for (auto& [k, e] : dtors) e.for_each_comment(fn);
+    for (auto& [k, e] : conversions) e.for_each_comment(fn);
+    for (auto& [k, e] : methods) e.for_each_comment(fn);
+  }
 };
 
 struct NamespaceElement : public CommentElement {
@@ -355,6 +382,13 @@ struct NamespaceElement : public CommentElement {
     }
     return out;
   }
+
+  void for_each_comment(sus::fn::FnMut<void(Comment&)>& fn) {
+    fn(comment);
+    for (auto& [k, e] : namespaces) e.for_each_comment(fn);
+    for (auto& [k, e] : records) e.for_each_comment(fn);
+    for (auto& [k, e] : functions) e.for_each_comment(fn);
+  }
 };
 
 inline NamespaceId key_for_namespace(clang::NamespaceDecl* decl) noexcept {
@@ -378,6 +412,166 @@ struct Database {
                        Comment(), std::string());
 
   bool has_any_comments() const noexcept { return global.has_any_comments(); }
+
+  sus::result::Result</* TODO: void */ int, std::string>
+  resolve_inherited_comments() {
+    sus::Vec<Comment*> to_resolve;
+    {
+      sus::Vec<Comment*>* to_resolve_ptr = &to_resolve;
+      sus::fn::FnMut<void(Comment&)> fn = sus_bind_mut(
+          sus_store(sus_unsafe_pointer(to_resolve_ptr)), [&](Comment& c) {
+            if (c.attrs.inherit.is_some()) {
+              to_resolve_ptr->push(&c);
+            }
+          });
+      global.for_each_comment(fn);
+    }
+
+    while (!to_resolve.is_empty()) {
+      sus::Vec<Comment*> remaining;
+      remaining.reserve(to_resolve.len());
+
+      for (Comment* c : sus::move(to_resolve).into_iter()) {
+        enum class Target {
+          Namespace,
+          Record,
+          Function,
+        };
+        sus::Choice<sus_choice_types(
+            (Target::Namespace, const NamespaceElement&),
+            (Target::Record, const RecordElement&),
+            (Target::Function, const FunctionElement&))>
+            target = sus::choice<Target::Namespace>(global);
+        for (const InheritPathElement& e : *(c->attrs.inherit)) {
+          switch (e) {
+            case InheritPathNamespace: {
+              const std::string& name = e.get_ref<InheritPathFunction>();
+              auto id = NamespaceId(name);
+              if (target.which() != Target::Namespace) {
+                std::ostringstream s;
+                s << "Inherited comment at " << c->begin_loc
+                  << " has invalid path, with a namespace inside a "
+                     "non-namespace.";
+                return sus::result::err(sus::move(s).str());
+              }
+              if (!target.get_mut<Target::Namespace>().namespaces.contains(
+                      id)) {
+                std::ostringstream s;
+                s << "Inherited comment at " << c->begin_loc
+                  << " can't find namespace "
+                  << e.get_ref<InheritPathNamespace>();
+                return sus::result::err(sus::move(s).str());
+              }
+              target = sus::choice<Target::Namespace>(
+                  target.get_mut<Target::Namespace>().namespaces.at(id));
+              break;
+            }
+            case InheritPathRecord: {
+              // TODO: Make Record maps keyed on a RecordId we can construct
+              // here.
+              const std::string& name = e.get_ref<InheritPathRecord>();
+              auto find_record = [&](const auto& record_map)
+                  -> sus::Option<const RecordElement&> {
+                for (const auto& [k, e] : record_map) {
+                  if (e.name == name) return sus::some(mref(e));
+                }
+                return sus::none();
+              };
+              sus::Option<const RecordElement&> record;
+              switch (target) {
+                case Target::Namespace:
+                  record =
+                      find_record(target.get_mut<Target::Namespace>().records);
+                  break;
+                case Target::Record:
+                  record =
+                      find_record(target.get_mut<Target::Record>().records);
+                  break;
+                case Target::Function: {
+                  std::ostringstream s;
+                  s << "Inherited comment at " << c->begin_loc
+                    << " has invalid path, with a record inside a function.";
+                  return sus::result::err(sus::move(s).str());
+                }
+              }
+              if (record.is_none()) {
+                std::ostringstream s;
+                s << "Inherited comment at " << c->begin_loc
+                  << " can't find record " << name;
+                return sus::result::err(sus::move(s).str());
+              }
+              target = sus::choice<Target::Record>(sus::move(record).unwrap());
+              break;
+            }
+            case InheritPathFunction: {
+              const std::string& name = e.get_ref<InheritPathFunction>();
+              auto find_function = [&](const auto& function_map)
+                  -> sus::Option<const FunctionElement&> {
+                for (const auto& [k, e] : function_map) {
+                  if (e.name == name) return sus::some(mref(e));
+                }
+                return sus::none();
+              };
+              sus::Option<const FunctionElement&> function;
+              switch (target) {
+                case Target::Namespace:
+                  function = find_function(
+                      target.get_mut<Target::Namespace>().functions);
+                  break;
+                case Target::Record:
+                  function =
+                      find_function(target.get_mut<Target::Record>().methods);
+                  break;
+                case Target::Function: {
+                  std::ostringstream s;
+                  s << "Inherited comment at " << c->begin_loc
+                    << " has invalid path, with a function inside a function.";
+                  return sus::result::err(sus::move(s).str());
+                }
+              }
+              if (function.is_none()) {
+                std::ostringstream s;
+                s << "Inherited comment at " << c->begin_loc
+                  << " can't find function " << name;
+                return sus::result::err(sus::move(s).str());
+              }
+              target =
+                  sus::choice<Target::Function>(sus::move(function).unwrap());
+              break;
+            }
+          }
+        }
+
+        sus::Option<const Comment&> source;
+        switch (target) {
+          case Target::Namespace: {
+            const NamespaceElement& e = target.get_ref<Target::Namespace>();
+            if (e.comment.attrs.inherit.is_none()) source.insert(e.comment);
+            break;
+          }
+          case Target::Record: {
+            const RecordElement& e = target.get_ref<Target::Record>();
+            if (e.comment.attrs.inherit.is_none()) source.insert(e.comment);
+            break;
+          }
+          case Target::Function: {
+            const FunctionElement& e = target.get_ref<Target::Function>();
+            if (e.comment.attrs.inherit.is_none()) source.insert(e.comment);
+            break;
+          }
+        }
+        if (source.is_some()) {
+          c->inherit_from(sus::move(source).unwrap());
+        } else {
+          remaining.push(c);  // The target still needs to be resolved.
+        }
+      }
+
+      to_resolve = sus::move(remaining);
+    }
+
+    return sus::result::ok(0);
+  }
 
   sus::Option<NamespaceElement&> find_namespace_mut(
       clang::NamespaceDecl* ndecl) & noexcept {

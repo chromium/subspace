@@ -63,25 +63,55 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
       for (const auto& line : lines) {
         // TODO: Better and more robust parser and error messages.
         if (line.Text.starts_with("#[doc.") &&
-            line.Text.find("]") != std::string::npos) {
-          auto v =
-              std::string_view(line.Text).substr(6u, line.Text.find("]") - 6u);
+            line.Text.rfind("]") != std::string::npos) {
+          llvm::StringRef v =
+              llvm::StringRef(line.Text).substr(6u, line.Text.rfind("]") - 6u);
           if (v.starts_with("overloads=")) {
-            auto name = v.substr(strlen("overloads="));
+            llvm::StringRef name = v.substr(strlen("overloads="));
             attrs.overload_set = sus::some(
                 std::hash<std::string_view>()(std::string_view(name.data())));
           } else if (v.starts_with("inherit=")) {
-            auto name = v.substr(strlen("inherit="));
-            // attrs.inherit = sus::some(...);
+            llvm::StringRef name = v.substr(strlen("inherit="));
+            auto vec = sus::Vec<InheritPathElement>();
+            while (name != "") {
+              auto [element, remainder] = name.split("::");
+              name = remainder;
+              // TODO: This syntax sucks, and it's expensive to look up later.
+              // Should we just have a (globally-unique?
+              // top-level-namepace-unique?) identifier that a comment can set
+              // on itself, and then you inherit from that identifier?
+              if (element.starts_with("[n]")) {
+                vec.push(InheritPathElement::with<InheritPathNamespace>(
+                    std::string(element.substr(3u))));
+              } else if (element.starts_with("[r]")) {
+                vec.push(InheritPathElement::with<InheritPathRecord>(
+                    std::string(element.substr(3u))));
+              } else if (element.starts_with("[f]")) {
+                // TODO: We should be able to name if the function is static or
+                // not, and its documentation overload set name.
+                vec.push(InheritPathElement::with<InheritPathFunction>(
+                    std::string(element.substr(3u))));
+              } else {
+                std::ostringstream m;
+                m << "Invalid path element '" << std::string_view(element)
+                  << "' in doc.inherit: ";
+                m << line.Text;
+                return sus::result::err(ParseCommentError{.message = m.str()});
+              }
+            }
+            attrs.inherit = sus::some(sus::move(vec));
           } else {
             std::ostringstream m;
-            m << "Invalid doc attribute in: ";
+            m << "Unknown doc attribute " << std::string_view(v) << " in: ";
             m << line.Text;
             return sus::result::err(ParseCommentError{.message = m.str()});
           }
+        } else if (line.Text.find("#[doc") != std::string::npos) {
+          std::ostringstream m;
+          m << "Unused doc comment in: ";
+          m << line.Text;
+          return sus::result::err(ParseCommentError{.message = m.str()});
         } else {
-          if (line.Text.find("#[doc") != std::string::npos)
-            llvm::errs() << "Unused doc comment in: " << line.Text << "\n";
           if (add_newline) parsed << "\n";
           parsed << line.Text;
           add_newline = true;
