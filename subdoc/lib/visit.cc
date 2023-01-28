@@ -22,6 +22,7 @@
 #include "subdoc/lib/unique_symbol.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/mem/swap.h"
+#include "subspace/ops/ord.h"
 #include "subspace/prelude.h"
 
 namespace subdoc {
@@ -197,25 +198,25 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
   bool VisitEnumDecl(clang::EnumDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
-    //clang::RawComment* raw_comment = get_raw_comment(decl);
-    //if (raw_comment)
-    //  llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
+    // clang::RawComment* raw_comment = get_raw_comment(decl);
+    // if (raw_comment)
+    //   llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
     return true;
   }
 
   bool VisitTypedefDecl(clang::TypedefDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
-    //clang::RawComment* raw_comment = get_raw_comment(decl);
-    //if (raw_comment)
-    //  llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
+    // clang::RawComment* raw_comment = get_raw_comment(decl);
+    // if (raw_comment)
+    //   llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
     return true;
   }
 
   bool VisitTypeAliasDecl(clang::TypeAliasDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
-    //clang::RawComment* raw_comment = get_raw_comment(decl);
-    //if (raw_comment)
-    //  llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
+    // clang::RawComment* raw_comment = get_raw_comment(decl);
+    // if (raw_comment)
+    //   llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
     return true;
   }
 
@@ -456,7 +457,7 @@ class AstConsumer : public clang::ASTConsumer {
 };
 
 std::unique_ptr<clang::FrontendAction> VisitorFactory::create() noexcept {
-  return std::make_unique<VisitorAction>(cx, docs_db);
+  return std::make_unique<VisitorAction>(cx, docs_db, line_stats);
 }
 
 bool VisitorAction::PrepareToExecuteAction(
@@ -467,7 +468,24 @@ bool VisitorAction::PrepareToExecuteAction(
 }
 
 std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
-    clang::CompilerInstance&, llvm::StringRef) noexcept {
+    clang::CompilerInstance&, llvm::StringRef file) noexcept {
+  if (std::string_view(file) != line_stats.cur_file_name) {
+    std::string to_print = [&]() {
+      std::ostringstream s;
+      s << "[" << size_t{line_stats.cur_file} << "/"
+        << size_t{line_stats.num_files} << "]";
+      s << " " << std::string_view(file);
+      return sus::move(s).str();
+    }();
+    llvm::errs() << "\r" << to_print;
+    for (usize i; i < line_stats.last_line_len.saturating_sub(to_print.size());
+         i += 1u) {
+      llvm::errs() << " ";
+    }
+    line_stats.last_line_len = to_print.size();
+    line_stats.cur_file += 1u;
+    line_stats.cur_file_name = std::string(file);
+  }
   return std::make_unique<AstConsumer>(cx, docs_db);
 }
 

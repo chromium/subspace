@@ -29,21 +29,31 @@ struct VisitCx {
  private:
 };
 
+struct LineStats {
+  usize cur_file = 1_usize;
+  usize num_files;
+  usize last_line_len = 0_usize;
+  std::string cur_file_name;
+};
+
 struct VisitorFactory : public clang::tooling::FrontendActionFactory {
  public:
-  explicit VisitorFactory(VisitCx& cx, Database& docs_db)
-      : cx(cx), docs_db(docs_db) {}
+  explicit VisitorFactory(VisitCx& cx, Database& docs_db, usize num_files)
+      : cx(cx), docs_db(docs_db) {
+    line_stats.num_files = num_files;
+  }
 
   // Returns a VisitorAction.
   std::unique_ptr<clang::FrontendAction> create() noexcept override;
 
   VisitCx& cx;
   Database& docs_db;
+  LineStats line_stats;
 };
 
 struct VisitorAction : public clang::ASTFrontendAction {
-  explicit VisitorAction(VisitCx& cx, Database& docs_db)
-      : cx(cx), docs_db(docs_db) {}
+  explicit VisitorAction(VisitCx& cx, Database& docs_db, LineStats& line_stats)
+      : cx(cx), docs_db(docs_db), line_stats(line_stats) {}
 
   bool PrepareToExecuteAction(clang::CompilerInstance& inst) noexcept override;
 
@@ -54,6 +64,7 @@ struct VisitorAction : public clang::ASTFrontendAction {
 
   VisitCx& cx;
   Database& docs_db;
+  LineStats& line_stats;
 };
 
 }  // namespace subdoc

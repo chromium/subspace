@@ -76,6 +76,7 @@ sus::result::Result<Database, DiagnosticResults> run_files(
     return s;
   };
 
+  usize num_files = paths.len();
   auto tool = clang::tooling::ClangTool(
       comp_db, to_std_vec(sus::move(paths)),
       std::make_shared<clang::PCHContainerOperations>(), std::move(fs));
@@ -96,6 +97,16 @@ sus::result::Result<Database, DiagnosticResults> run_files(
       // source_location header on windows requires this to be defined. As
       // Clang's C++20 support includes consteval, let's define it.
       args.push_back("/D__cpp_consteval");
+      // Turn off warnings in code, clang-cl finds a lot of warnings that we
+      // don't get when building with regular clang.
+      args.push_back("/w");
+      // Subdoc sets a SUBDOC define when executing, allowing code to be
+      // changed while generating docs if needed.
+      args.push_back("/DSUBDOC");
+    } else {
+      // Subdoc sets a SUBDOC define when executing, allowing code to be
+      // changed while generating docs if needed.
+      args.push_back("-DSUBDOC");
     }
 
     return std::move(args);
@@ -104,8 +115,15 @@ sus::result::Result<Database, DiagnosticResults> run_files(
 
   auto cx = VisitCx();
   auto docs_db = Database();
-  auto visitor_factory = VisitorFactory(cx, docs_db);
-  if (tool.run(&visitor_factory) == 1) {
+  auto visitor_factory = VisitorFactory(cx, docs_db, num_files);
+
+  i32 run_value = tool.run(&visitor_factory);
+  // While generating, we print the file names all to the same line, and the
+  // cursor is still on a line with one of the file names. This moves to the
+  // next empty line.
+  llvm::errs() << "\n";
+
+  if (run_value == 1) {
     return sus::result::err(sus::move(sus::move(diags)->results));
   }
   if (diags->getNumErrors() > 0) {
