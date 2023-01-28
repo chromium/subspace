@@ -164,10 +164,14 @@ template <class R, class... CallArgs>
 class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
+  ///
+  /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   FnOnce(F ptr) noexcept;
 
   /// Construction from the output of `sus_bind()`.
+  ///
+  /// #[doc.overloads=ctor.bind]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   FnOnce(__private::SusBind<F>&& holder) noexcept
       : FnOnce(__private::StorageConstructionFnOnce,
@@ -182,10 +186,6 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   FnOnce& operator=(const FnOnce&) noexcept = delete;
 
   /// Runs and consumes the closure.
-  ///
-  /// Arguments passed by value to the underlying callable object are always
-  /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) && noexcept;
 
   /// `sus::construct::From` trait implementation.
@@ -315,10 +315,14 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
     : public FnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
+  ///
+  /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   FnMut(F ptr) noexcept : FnOnce<R(CallArgs...)>(::sus::move(ptr)) {}
 
   /// Construction from the output of `sus_bind()`.
+  ///
+  /// #[doc.overloads=ctor.bind]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   FnMut(__private::SusBind<F>&& holder) noexcept
       : FnOnce<R(CallArgs...)>(__private::StorageConstructionFnMut,
@@ -333,17 +337,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
   FnMut& operator=(const FnMut&) noexcept = delete;
 
   /// Runs the closure.
-  ///
-  /// Arguments passed by value to the underlying callable object are always
-  /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) & noexcept;
-
-  /// Runs and consumes the closure.
-  ///
-  /// Arguments passed by value to the underlying callable object are always
-  /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) && noexcept {
     return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
@@ -351,12 +345,16 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
 
   /// `sus::construct::From` trait implementation for function pointers or
   /// lambdas without captures.
+  ///
+  /// #[doc.overloads=from.fnpointer]
   template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return FnMut(static_cast<R (*)(CallArgs...)>(fn));
   }
   /// `sus::construct::From` trait implementation for the output of
   /// `sus_bind()`.
+  ///
+  /// #[doc.overloads=from.callableobject]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
     return FnMut(static_cast<__private::SusBind<F>&&>(holder));
@@ -441,10 +439,14 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
     : public FnMut<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
+  ///
+  /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
   Fn(F ptr) noexcept : FnMut<R(CallArgs...)>(ptr) {}
 
   /// Construction from the output of `sus_bind()`.
+  ///
+  /// #[doc.overloads=ctor.bind]
   template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
   Fn(__private::SusBind<F>&& holder) noexcept
       : FnMut<R(CallArgs...)>(__private::StorageConstructionFn,
@@ -459,12 +461,7 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
   Fn& operator=(const Fn&) noexcept = delete;
 
   /// Runs the closure.
-  ///
-  /// Arguments passed by value to the underlying callable object are always
-  /// moved. Thus, a const reference, or a mutable lvalue reference will not be
-  /// accepted here, to prevent an implicit copy from occurring.
   inline R operator()(CallArgs&&... args) const& noexcept;
-
   inline R operator()(CallArgs&&... args) && noexcept {
     return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
