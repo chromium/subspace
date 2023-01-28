@@ -746,7 +746,7 @@ class Tuple;
    * arithmetic overflow would occur. If an overflow would occur then self is  \
    * returned.                                                                 \
    *                                                                           \
-   * #Panics                                                                   \
+   * # Panics                                                                   \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
@@ -767,7 +767,7 @@ class Tuple;
   /** Saturating integer division. Computes self / rhs, saturating at the      \
    * numeric bounds instead of overflowing.                                    \
    *                                                                           \
-   * #Panics                                                                   \
+   * # Panics                                                                   \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
@@ -792,7 +792,7 @@ class Tuple;
    * this is equivalent to -MIN, a positive value that is too large to         \
    * represent in the type. In such a case, this function returns MIN itself.  \
    *                                                                           \
-   * #Panics                                                                   \
+   * # Panics                                                                   \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
