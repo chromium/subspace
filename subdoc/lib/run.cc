@@ -92,6 +92,10 @@ sus::result::Result<Database, DiagnosticResults> run_files(
       // requires this define in order to use offsetof() from constant
       // expressions, which subspace uses for the never-value optimization.
       args.push_back("/D_CRT_USE_BUILTIN_OFFSETOF");
+      // TODO: https://github.com/llvm/llvm-project/issues/60347 the
+      // source_location header on windows requires this to be defined. As
+      // Clang's C++20 support includes consteval, let's define it.
+      args.push_back("/D__cpp_consteval");
     }
 
     return std::move(args);
