@@ -428,8 +428,7 @@ struct Database {
     }
 
     while (!to_resolve.is_empty()) {
-      sus::Vec<Comment*> remaining;
-      remaining.reserve(to_resolve.len());
+      auto remaining = sus::Vec<Comment*>::with_capacity(to_resolve.len());
 
       for (Comment* c : sus::move(to_resolve).into_iter()) {
         enum class Target {

@@ -59,8 +59,7 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
 
       std::vector<clang::RawComment::CommentLine> lines =
           raw.getFormattedLines(src_manager, ast_cx.getDiagnostics());
-      sus::Vec<std::string> parsed_lines;
-      parsed_lines.reserve(lines.size());
+      auto parsed_lines = sus::Vec<std::string>::with_capacity(lines.size());
 
       for (const auto& line : lines) {
         // TODO: Better and more robust parser and error messages.

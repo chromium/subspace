@@ -14,19 +14,39 @@
 
 #pragma once
 
+#include <string>
+#include <unordered_set>
+
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/run_options.h"
 #include "subdoc/llvm.h"
+#include "subspace/option/option.h"
 #include "subspace/prelude.h"
 
 namespace subdoc {
 
+struct VisitedLocation {
+  std::string location_as_string;
+
+  friend bool operator==(const VisitedLocation&,
+                         const VisitedLocation&) = default;
+
+  struct Hash {
+    size_t operator()(const VisitedLocation& v) const {
+      return std::hash<std::string>()(v.location_as_string);
+    }
+  };
+};
+
+struct VisitedPath {
+  bool included = true;
+};
+
 struct VisitCx {
  public:
-#if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
-  VisitCx() {}
-#endif
-
- private:
+  const RunOptions& options;
+  std::unordered_set<VisitedLocation, VisitedLocation::Hash> visited_locations_;
+  std::map<std::string, VisitedPath, std::less<>> visited_paths_;
 };
 
 struct LineStats {

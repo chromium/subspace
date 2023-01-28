@@ -20,6 +20,7 @@
 #include "subdoc/llvm.h"
 #include "subspace/containers/vec.h"
 #include "subspace/prelude.h"
+#include "subdoc/lib/run_options.h"
 #include "subspace/result/result.h"
 
 namespace subdoc {
@@ -30,11 +31,13 @@ struct DiagnosticResults {
 static_assert(sus::mem::Move<DiagnosticResults>);
 
 sus::result::Result<Database, DiagnosticResults> run_test(
-    std::string content, sus::Vec<std::string> args) noexcept;
+    std::string content, sus::Slice<const std::string> command_line_args,
+    const RunOptions& options) noexcept;
 
 sus::result::Result<Database, DiagnosticResults> run_files(
     const clang::tooling::CompilationDatabase& compdb,
     sus::Vec<std::string> paths,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept;
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    const RunOptions& options) noexcept;
 
 }  // namespace subdoc
