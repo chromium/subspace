@@ -30,10 +30,17 @@
 
 class SubDocTest : public testing::Test {
  public:
-  auto run_code(std::string content) noexcept {
-    auto args = sus::Vec<std::string>();
+  auto run_code_with_options(const subdoc::RunOptions& options,
+                             std::string content) noexcept {
+    auto args = sus::Vec<std::string>::with_capacity(1u);
     args.push(std::string(subdoc::tests::cpp_version_flag(cpp_version_)));
-    return subdoc::run_test(sus::move(content), sus::move(args));
+
+    return subdoc::run_test(sus::move(content), args.as_ref(), options);
+  }
+
+  auto run_code(std::string content) noexcept {
+    return run_code_with_options(subdoc::RunOptions().set_show_progress(false),
+                                 sus::move(content));
   }
 
   /// Returns if a record was found whose comment location ends with
@@ -83,8 +90,7 @@ class SubDocTest : public testing::Test {
                     << comment_loc << "\n";
       return false;
     }
-    if (!element->comment.raw_text.starts_with(
-            comment_start)) {
+    if (!element->comment.raw_text.starts_with(comment_start)) {
       ADD_FAILURE() << type << " comment at " << comment_loc
                     << " does not match text. Found:\n"
                     << element->comment.raw_text << "\n";

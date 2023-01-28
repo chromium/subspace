@@ -14,6 +14,8 @@
 
 #include "subdoc/lib/visit.h"
 
+#include <regex>
+
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/doc_attributes.h"
 #include "subdoc/lib/parse_comment.h"
@@ -444,6 +446,54 @@ class AstConsumer : public clang::ASTConsumer {
 
   bool HandleTopLevelDecl(clang::DeclGroupRef group_ref) noexcept override {
     for (clang::Decl* decl : group_ref) {
+      clang::SourceManager& sm = decl->getASTContext().getSourceManager();
+
+      clang::SourceLocation loc = decl->getLocation();
+      clang::SourceLocation spelling = sm.getSpellingLoc(loc);
+
+      const clang::FileEntry* entry = sm.getFileEntryForID(sm.getFileID(loc));
+      // No FileEntry means a builtin, including a lot of `std::`, or inside
+      // a macro instantiation, or maybe some other things, but not the code we
+      // want to document.
+      if (!entry) continue;
+
+      auto v = VisitedLocation(loc.printToString(sm));
+      if (cx_.visited_locations_.contains(v)) continue;
+      cx_.visited_locations_.emplace(sus::move(v));
+
+      llvm::StringRef path = entry->tryGetRealPathName();
+      if (!path.empty()) {
+        enum { CheckPath, ExcludePath, IncludePath } what_to_do;
+        // We cache the regex decision for each visited path name.
+        if (auto it = cx_.visited_paths_.find(std::string_view(path));
+            it != cx_.visited_paths_.end()) {
+          what_to_do = it->second.included ? IncludePath : ExcludePath;
+        } else {
+          what_to_do = CheckPath;
+        }
+
+        switch (what_to_do) {
+          case IncludePath: break;
+          case ExcludePath: continue;
+          case CheckPath: {
+            // std::regex requires a string, so store it up front.
+            auto [it, inserted] = cx_.visited_paths_.emplace(std::string(path),
+                                                             VisitedPath(true));
+            sus::check(inserted);
+            auto& [path_str, visited_path] = *it;
+            if (!std::regex_search(path_str,
+                                   cx_.options.include_path_patterns)) {
+              visited_path.included = false;
+              continue;
+            }
+            if (std::regex_search(path_str,
+                                  cx_.options.exclude_path_patterns)) {
+              visited_path.included = false;
+              continue;
+            }
+          }
+        }
+      }
       if (!Visitor(cx_, docs_db_, DiagnosticIds::with(decl->getASTContext()))
                .TraverseDecl(decl))
         return false;
@@ -469,22 +519,25 @@ bool VisitorAction::PrepareToExecuteAction(
 
 std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
     clang::CompilerInstance&, llvm::StringRef file) noexcept {
-  if (std::string_view(file) != line_stats.cur_file_name) {
-    std::string to_print = [&]() {
-      std::ostringstream s;
-      s << "[" << size_t{line_stats.cur_file} << "/"
-        << size_t{line_stats.num_files} << "]";
-      s << " " << std::string_view(file);
-      return sus::move(s).str();
-    }();
-    llvm::errs() << "\r" << to_print;
-    for (usize i; i < line_stats.last_line_len.saturating_sub(to_print.size());
-         i += 1u) {
-      llvm::errs() << " ";
+  if (cx.options.show_progress) {
+    if (std::string_view(file) != line_stats.cur_file_name) {
+      std::string to_print = [&]() {
+        std::ostringstream s;
+        s << "[" << size_t{line_stats.cur_file} << "/"
+          << size_t{line_stats.num_files} << "]";
+        s << " " << std::string_view(file);
+        return sus::move(s).str();
+      }();
+      llvm::outs() << "\r" << to_print;
+      for (usize i;
+           i < line_stats.last_line_len.saturating_sub(to_print.size());
+           i += 1u) {
+        llvm::errs() << " ";
+      }
+      line_stats.last_line_len = to_print.size();
+      line_stats.cur_file += 1u;
+      line_stats.cur_file_name = std::string(file);
     }
-    line_stats.last_line_len = to_print.size();
-    line_stats.cur_file += 1u;
-    line_stats.cur_file_name = std::string(file);
   }
   return std::make_unique<AstConsumer>(cx, docs_db);
 }

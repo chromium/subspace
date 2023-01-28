@@ -27,5 +27,6 @@ struct Options {
   sus::Vec<std::string> stylesheets;
   sus::Vec<std::string> copy_files;
 };
+static_assert(sus::mem::Move<Options>);
 
 }  // namespace subdoc::gen

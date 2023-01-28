@@ -23,9 +23,10 @@
 namespace subdoc {
 
 sus::result::Result<Database, DiagnosticResults> run_test(
-    std::string content, sus::Vec<std::string> args) noexcept {
+    std::string content, sus::Slice<const std::string> command_line_args,
+    const RunOptions& options) noexcept {
   auto join_args = std::string();
-  for (const auto& a : sus::move(args).into_iter()) {
+  for (const std::string& a : command_line_args) {
     join_args += a + "\n";
   }
 
@@ -40,7 +41,7 @@ sus::result::Result<Database, DiagnosticResults> run_test(
   auto vfs = llvm::IntrusiveRefCntPtr(new llvm::vfs::InMemoryFileSystem());
   vfs->addFile("test.cc", 0, llvm::MemoryBuffer::getMemBuffer(content));
 
-  return run_files(*comp_db, sus::vec("test.cc"), std::move(vfs));
+  return run_files(*comp_db, sus::vec("test.cc"), std::move(vfs), options);
 }
 
 struct DiagnosticTracker : public clang::TextDiagnosticPrinter {
@@ -61,7 +62,8 @@ struct DiagnosticTracker : public clang::TextDiagnosticPrinter {
 sus::result::Result<Database, DiagnosticResults> run_files(
     const clang::tooling::CompilationDatabase& comp_db,
     sus::Vec<std::string> paths,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs) noexcept {
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    const RunOptions& options) noexcept {
   // Clang DiagnoticsConsumer that prints out the full error and context, which
   // is what the default one does, but by making it we have a pointer from which
   // we can see if an error occured.
@@ -113,15 +115,17 @@ sus::result::Result<Database, DiagnosticResults> run_files(
   };
   tool.appendArgumentsAdjuster(adj);
 
-  auto cx = VisitCx();
+  auto cx = VisitCx(options);
   auto docs_db = Database();
   auto visitor_factory = VisitorFactory(cx, docs_db, num_files);
 
   i32 run_value = tool.run(&visitor_factory);
-  // While generating, we print the file names all to the same line, and the
-  // cursor is still on a line with one of the file names. This moves to the
-  // next empty line.
-  llvm::errs() << "\n";
+  if (options.show_progress) {
+    // While generating, we print the file names all to the same line, and the
+    // cursor is still on a line with one of the file names. This moves to the
+    // next empty line.
+    llvm::outs() << "\n";
+  }
 
   if (run_value == 1) {
     return sus::result::err(sus::move(sus::move(diags)->results));
