@@ -449,47 +449,47 @@ class AstConsumer : public clang::ASTConsumer {
       clang::SourceManager& sm = decl->getASTContext().getSourceManager();
 
       clang::SourceLocation loc = decl->getLocation();
-      clang::SourceLocation spelling = sm.getSpellingLoc(loc);
-
       const clang::FileEntry* entry = sm.getFileEntryForID(sm.getFileID(loc));
       // No FileEntry means a builtin, including a lot of `std::`, or inside
-      // a macro instantiation, or maybe some other things, but not the code we
-      // want to document.
-      if (!entry) continue;
+      // a macro instantiation, or maybe some other things. We want to chase
+      // decls inside macros, but not builtins.
+      if (!entry && !loc.isMacroID()) continue;
 
       auto v = VisitedLocation(loc.printToString(sm));
       if (cx_.visited_locations_.contains(v)) continue;
       cx_.visited_locations_.emplace(sus::move(v));
 
-      llvm::StringRef path = entry->tryGetRealPathName();
-      if (!path.empty()) {
-        enum { CheckPath, ExcludePath, IncludePath } what_to_do;
-        // We cache the regex decision for each visited path name.
-        if (auto it = cx_.visited_paths_.find(std::string_view(path));
-            it != cx_.visited_paths_.end()) {
-          what_to_do = it->second.included ? IncludePath : ExcludePath;
-        } else {
-          what_to_do = CheckPath;
-        }
+      if (entry) {
+        llvm::StringRef path = entry->tryGetRealPathName();
+        if (!path.empty()) {
+          enum { CheckPath, ExcludePath, IncludePath } what_to_do;
+          // We cache the regex decision for each visited path name.
+          if (auto it = cx_.visited_paths_.find(std::string_view(path));
+              it != cx_.visited_paths_.end()) {
+            what_to_do = it->second.included ? IncludePath : ExcludePath;
+          } else {
+            what_to_do = CheckPath;
+          }
 
-        switch (what_to_do) {
-          case IncludePath: break;
-          case ExcludePath: continue;
-          case CheckPath: {
-            // std::regex requires a string, so store it up front.
-            auto [it, inserted] = cx_.visited_paths_.emplace(std::string(path),
-                                                             VisitedPath(true));
-            sus::check(inserted);
-            auto& [path_str, visited_path] = *it;
-            if (!std::regex_search(path_str,
-                                   cx_.options.include_path_patterns)) {
-              visited_path.included = false;
-              continue;
-            }
-            if (std::regex_search(path_str,
-                                  cx_.options.exclude_path_patterns)) {
-              visited_path.included = false;
-              continue;
+          switch (what_to_do) {
+            case IncludePath: break;
+            case ExcludePath: continue;
+            case CheckPath: {
+              // std::regex requires a string, so store it up front.
+              auto [it, inserted] = cx_.visited_paths_.emplace(
+                  std::string(path), VisitedPath(true));
+              sus::check(inserted);
+              auto& [path_str, visited_path] = *it;
+              if (!std::regex_search(path_str,
+                                     cx_.options.include_path_patterns)) {
+                visited_path.included = false;
+                continue;
+              }
+              if (std::regex_search(path_str,
+                                    cx_.options.exclude_path_patterns)) {
+                visited_path.included = false;
+                continue;
+              }
             }
           }
         }

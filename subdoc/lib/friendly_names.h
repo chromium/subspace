@@ -67,6 +67,19 @@ inline std::string friendly_type_name(const clang::QualType& type) noexcept {
   return unqualified.getAsString();
 }
 
+inline std::string friendly_short_type_name(
+    const clang::QualType& type) noexcept {
+  clang::QualType unqualified = type.getUnqualifiedType();
+  // Clang writes booleans as "_Bool".
+  if (unqualified->isBooleanType()) return "bool";
+  std::string full = unqualified.getAsString();
+  constexpr auto marker = std::string("::");
+  if (size_t pos = full.rfind(marker); pos != std::string::npos) {
+    full = full.substr(pos + marker.size());
+  }
+  return full;
+}
+
 inline std::string friendly_record_type_name(RecordType t,
                                              bool capitalize) noexcept {
   switch (t) {
