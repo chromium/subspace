@@ -23,6 +23,6 @@ TEST_F(SubDocTest, InheritFunction) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "2:5", "Comment headline"));
-  EXPECT_TRUE(has_function_comment(db, "4:5", "Comment headline"));
+  EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline</p>"));
+  EXPECT_TRUE(has_function_comment(db, "4:5", "<p>Comment headline</p>"));
 }

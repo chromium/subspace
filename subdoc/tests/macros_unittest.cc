@@ -24,7 +24,7 @@ TEST_F(SubDocTest, MacroFunction) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "3:7", "Comment headline"));
+  EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, MacroClass) {
@@ -37,7 +37,7 @@ TEST_F(SubDocTest, MacroClass) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "3:7", "Comment headline"));
+  EXPECT_TRUE(has_record_comment(db, "3:7", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, MacroField) {
@@ -52,7 +52,7 @@ TEST_F(SubDocTest, MacroField) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_field_comment(db, "4:9", "Comment headline"));
+  EXPECT_TRUE(has_field_comment(db, "4:9", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, MacroNamesFunction) {
@@ -65,7 +65,7 @@ TEST_F(SubDocTest, MacroNamesFunction) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "3:7", "Comment headline"));
+  EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, MacroNamesClass) {
@@ -78,7 +78,7 @@ TEST_F(SubDocTest, MacroNamesClass) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "3:7", "Comment headline"));
+  EXPECT_TRUE(has_record_comment(db, "3:7", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, MacroNamesField) {
@@ -93,17 +93,31 @@ TEST_F(SubDocTest, MacroNamesField) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_field_comment(db, "4:9", "Comment headline"));
+  EXPECT_TRUE(has_field_comment(db, "4:9", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, MacroModName) {
   auto result = run_code(R"(
     #define MOD_NAME(name) MOD_NAME_##name
     
-    /// Comment headline.
+    /// Comment headline
     struct MOD_NAME(S) {};
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "4:5", "Comment headline"));
+  EXPECT_TRUE(has_record_comment(db, "4:5", "<p>Comment headline</p>"));
+}
+
+TEST_F(SubDocTest, MacroMultilineComment) {
+  auto result = run_code(R"(
+    #define M() \
+      /** Comment headline \
+       * Second line */ \
+      void f() {}
+    
+    M()
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment headline Second line</p>"));
 }

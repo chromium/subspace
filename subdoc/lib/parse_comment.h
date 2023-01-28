@@ -38,8 +38,8 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
   const llvm::StringRef text = raw.getRawText(src_manager);
   const llvm::StringRef eol = text.detectEOL();
 
-  DocAttributes attrs;
   std::ostringstream parsed;
+  DocAttributes attrs;
 
   clang::RawComment::CommentKind kind = raw.getKind();
   if (kind == clang::RawComment::CommentKind::RCK_Merged) {
@@ -59,7 +59,9 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
 
       std::vector<clang::RawComment::CommentLine> lines =
           raw.getFormattedLines(src_manager, ast_cx.getDiagnostics());
-      bool add_newline = false;
+      sus::Vec<std::string> parsed_lines;
+      parsed_lines.reserve(lines.size());
+
       for (const auto& line : lines) {
         // TODO: Better and more robust parser and error messages.
         if (line.Text.starts_with("#[doc.") &&
@@ -112,11 +114,96 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
           m << line.Text;
           return sus::result::err(ParseCommentError{.message = m.str()});
         } else {
-          if (add_newline) parsed << "\n";
-          parsed << line.Text;
-          add_newline = true;
+          // Drop the trailing ' +\' suffix.
+          auto subline = std::string(line.Text);
+          if (subline.ends_with("\\")) subline.pop_back();
+          while (subline.ends_with(" ")) subline.pop_back();
+
+          // Substitute ##T## with the name of the type.
+          while (true) {
+            auto pos = subline.find("##T##");
+            if (pos == std::string::npos) break;
+            subline.replace(pos, strlen("##T##"), "Name");
+          }
+
+          parsed_lines.push(sus::move(subline));
         }
       }
+
+      while (!parsed_lines.is_empty() && parsed_lines[0u].empty()) {
+        parsed_lines.pop();
+      }
+      while (!parsed_lines.is_empty() &&
+             parsed_lines[parsed_lines.len() - 1u].empty()) {
+        parsed_lines.pop();
+      }
+
+      if (!parsed_lines.is_empty()) {
+        parsed << "<p>";
+        bool add_space = false;
+        bool inside_pre = false;
+        for (std::string&& s : sus::move(parsed_lines).into_iter()) {
+          // Quote any <>.
+          while (true) {
+            size_t pos = s.find_first_of("<>");
+            if (pos == std::string::npos) break;
+            if (s[pos] == '<')
+              s.replace(pos, 1u, "&lt;");
+            else
+              s.replace(pos, 1u, "&gt;");
+          }
+
+          if (s.empty()) {
+            // Empty line, preserve the paragraph break.
+            parsed << "</p><p>";
+            add_space = false;
+          } else if (s.starts_with("#")) {
+            // Markdown header.
+            if (s.starts_with("##### "))
+              parsed << "</p><h5>" << sus::move(s).substr(6) << "</h5><p>";
+            else if (s.starts_with("#### "))
+              parsed << "</p><h4>" << sus::move(s).substr(5) << "</h4><p>";
+            else if (s.starts_with("### "))
+              parsed << "</p><h3>" << sus::move(s).substr(4) << "</h3><p>";
+            else if (s.starts_with("## "))
+              parsed << "</p><h2>" << sus::move(s).substr(3) << "</h2><p>";
+            else if (s.starts_with("# "))
+              parsed << "</p><h1>" << sus::move(s).substr(2) << "</h1><p>";
+            else
+              parsed << "</p><h6>" << sus::move(s) << "</h6><p>";
+            add_space = false;
+          } else if (s.starts_with("```")) {
+            // Markdown code blocks with ``` at the start and end.
+            inside_pre = !inside_pre;
+            if (inside_pre) {
+              // TODO: After the opening ``` there can be a language for syntax
+              // highlighting...
+              parsed << "</p><pre><code>";
+            } else {
+              parsed << "</code></pre><p>";
+              add_space = false;
+            }
+          } else if (inside_pre) {
+            parsed << sus::move(s) << "\n";
+          } else {
+            // Markdown code snippets with `foo` format.
+            while (true) {
+              size_t start = s.find("`");
+              if (start == std::string::npos) break;
+              size_t end = s.find("`", start + 1u);
+              if (end != std::string::npos) s.replace(end, 1, "</code>");
+              s.replace(start, 1, "<code>");
+            }
+
+            // Finally add the text!
+            if (add_space) parsed << " ";
+            parsed << sus::move(s);
+            add_space = true;
+          }
+        }
+        parsed << "</p>";
+      }
+
       break;
     }
     case clang::RawComment::CommentKind::RCK_OrdinaryBCPL:  // `// Foo`
@@ -138,7 +225,6 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
     case clang::RawComment::CommentKind::RCK_Merged:  // More than one.
       return sus::result::err(
           ParseCommentError{.message = "Merged comment format?"});
-      break;
   }
 
   return sus::result::ok(

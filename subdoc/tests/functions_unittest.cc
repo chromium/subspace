@@ -21,7 +21,7 @@ TEST_F(SubDocTest, Function) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "2:5", "Comment headline"));
+  EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, FunctionOverloads) {
@@ -36,8 +36,8 @@ TEST_F(SubDocTest, FunctionOverloads) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "2:5", "Comment headline 1"));
-  EXPECT_TRUE(has_function_comment(db, "7:5", "Comment headline 2"));
+  EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline 1</p>"));
+  EXPECT_TRUE(has_function_comment(db, "7:5", "<p>Comment headline 2</p>"));
 }
 
 TEST_F(SubDocTest, FunctionOverloadsNoMerge) {
@@ -55,8 +55,8 @@ TEST_F(SubDocTest, FunctionOverloadsNoMerge) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "2:5", "Comment headline 1\n\nBody 1"));
-  EXPECT_TRUE(has_function_comment(db, "7:5", "Comment headline 2\n\nBody 2"));
+  EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline 1</p><p>Body 1</p>"));
+  EXPECT_TRUE(has_function_comment(db, "7:5", "<p>Comment headline 2</p><p>Body 2</p>"));
 }
 
 TEST_F(SubDocTest, FunctionOverloadsMerge) {
@@ -72,8 +72,8 @@ TEST_F(SubDocTest, FunctionOverloadsMerge) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "2:5", "Comment headline 1"));
-  EXPECT_TRUE(has_function_comment(db, "7:5", "Comment headline 2"));
+  EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline 1</p>"));
+  EXPECT_TRUE(has_function_comment(db, "7:5", "<p>Comment headline 2</p>"));
 }
 
 TEST_F(SubDocTest, FunctionOverloadsDuplicate) {
@@ -110,8 +110,8 @@ TEST_F(SubDocTest, FunctionOverloadsRequires) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "5:5", "Comment headline 1"));
-  EXPECT_TRUE(has_function_comment(db, "13:5", "Comment headline 1"));
+  EXPECT_TRUE(has_function_comment(db, "5:5", "<p>Comment headline 1</p>"));
+  EXPECT_TRUE(has_function_comment(db, "13:5", "<p>Comment headline 1</p>"));
 }
 
 TEST_F(SubDocTest, FunctionOverloadsRequiresDuplicate) {
@@ -156,7 +156,7 @@ TEST_F(SubDocTest, ForwardDeclDocumented) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "2:5", "Comment headline"));
+  EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, ForwardDeclUndocumented) {
@@ -167,7 +167,7 @@ TEST_F(SubDocTest, ForwardDeclUndocumented) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "3:5", "Comment headline"));
+  EXPECT_TRUE(has_function_comment(db, "3:5", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, FunctionInNamedNamespace) {
@@ -179,7 +179,7 @@ TEST_F(SubDocTest, FunctionInNamedNamespace) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "3:5", "Comment headline"));
+  EXPECT_TRUE(has_function_comment(db, "3:5", "<p>Comment headline</p>"));
 }
 
 TEST_F(SubDocTest, FunctionInAnonymousNamespace) {

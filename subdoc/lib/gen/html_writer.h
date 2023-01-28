@@ -43,6 +43,10 @@ class HtmlWriter {
       write_open();
       writer_.write_text(text, /*has_newlines=*/has_newlines_);
     }
+    void write_html(std::string_view text) noexcept {
+      write_open();
+      writer_.write_html(text, /*has_newlines=*/has_newlines_);
+    }
 
     auto open_div() noexcept {
       write_open();
@@ -265,16 +269,38 @@ class HtmlWriter {
 
   OpenDiv open_div() noexcept { return OpenDiv(*this); }
   OpenSpan open_span() noexcept { return OpenSpan(*this); }
-  OpenA open_a(OptionalMultiLine lines) noexcept {
-    return OpenA(*this, lines);
-  }
+  OpenA open_a(OptionalMultiLine lines) noexcept { return OpenA(*this, lines); }
   OpenTitle open_title() noexcept { return OpenTitle(*this); }
   OpenLink open_link() noexcept { return OpenLink(*this); }
 
   void write_text(std::string_view text, bool has_newlines = true) noexcept {
     if (!text.empty()) {
       if (has_newlines) write_indent();
-      stream_ << text;
+
+      size_t pos = text.find_first_of("<>");
+      if (pos == std::string::npos) {
+        stream_ << text;
+      } else {
+        auto copy = std::string(text);
+        // Quote any <>.
+        while (pos != std::string::npos) {
+          if (copy[pos] == '<')
+            copy.replace(pos, 1u, "&lt;");
+          else
+            copy.replace(pos, 1u, "&gt;");
+
+          pos = copy.find_first_of("<>");
+        }
+
+        stream_ << copy;
+      }
+      if (has_newlines) stream_ << "\n";
+    }
+  }
+  void write_html(std::string_view html, bool has_newlines = true) noexcept {
+    if (!html.empty()) {
+      if (has_newlines) write_indent();
+      stream_ << html;
       if (has_newlines) stream_ << "\n";
     }
   }

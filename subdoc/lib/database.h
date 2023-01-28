@@ -445,7 +445,7 @@ struct Database {
         for (const InheritPathElement& e : *(c->attrs.inherit)) {
           switch (e) {
             case InheritPathNamespace: {
-              const std::string& name = e.get_ref<InheritPathFunction>();
+              const std::string& name = e.get_ref<InheritPathNamespace>();
               auto id = NamespaceId(name);
               if (target.which() != Target::Namespace) {
                 std::ostringstream s;

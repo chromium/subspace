@@ -3,6 +3,7 @@ body {
     color: white;
     background-color: rgb(59, 59, 59);
     margin: 1.2em;
+    font-family: Arial Verdana sans-serif;
 }
 
 pre {
@@ -34,6 +35,11 @@ pre {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     margin-left: 1em;
+}
+.description h1 {
+    font-size: 100%;
+    font-weight: bold;
+    color: rgb(250, 199, 121);
 }
 
 .type .overview .section-header .type-name {
