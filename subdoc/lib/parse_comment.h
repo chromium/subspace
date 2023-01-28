@@ -142,6 +142,7 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
         parsed << "<p>";
         bool add_space = false;
         bool inside_pre = false;
+        bool inside_code_snippet = false;
         for (std::string&& s : sus::move(parsed_lines).into_iter()) {
           // Quote any <>.
           while (true) {
@@ -176,6 +177,10 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
             // Markdown code blocks with ``` at the start and end.
             inside_pre = !inside_pre;
             if (inside_pre) {
+              if (inside_code_snippet) {
+                return sus::result::err(ParseCommentError{
+                    .message = "Invalid markdown, found ``` inside `"});
+              }
               // TODO: After the opening ``` there can be a language for syntax
               // highlighting...
               parsed << "</p><pre><code>";
@@ -190,9 +195,17 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
             while (true) {
               size_t start = s.find("`");
               if (start == std::string::npos) break;
-              size_t end = s.find("`", start + 1u);
-              if (end != std::string::npos) s.replace(end, 1, "</code>");
-              s.replace(start, 1, "<code>");
+              inside_code_snippet = !inside_code_snippet;
+              if (inside_code_snippet) {
+                size_t end = s.find("`", start + 1u);
+                if (end != std::string::npos) {
+                  s.replace(end, 1, "</code>");
+                  inside_code_snippet = false;
+                }
+                s.replace(start, 1, "<code>");
+              } else {
+                s.replace(start, 1, "</code>");
+              }
             }
 
             // Finally add the text!
