@@ -31,7 +31,7 @@ class TryFromIntError {
   /// Constructs a TryFromIntError with a `kind`.
   explicit constexpr TryFromIntError(Kind kind) : kind_(kind) {}
 
-  std::string to_string() noexcept {
+  constexpr std::string to_string() noexcept {
     switch (kind_) {
       case Kind::OutOfBounds: return std::string("out of bounds");
     }
@@ -39,7 +39,7 @@ class TryFromIntError {
   }
 
  private:
-  Kind kind_;
+  const Kind kind_;
 };
 
 }  // namespace sus::num
