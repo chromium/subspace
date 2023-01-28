@@ -119,7 +119,7 @@ void generate_record_fields(
       {
         auto field_type_span = field_div.open_span();
         field_type_span.add_class("type-name");
-        field_type_span.write_text(fe.type_name);
+        field_type_span.write_text(fe.short_type_name);
       }
       {
         auto field_name_anchor = field_div.open_a(HtmlWriter::SingleLine);

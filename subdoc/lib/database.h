@@ -93,7 +93,8 @@ struct FunctionElement : public CommentElement {
                            clang::QualType return_qual_type)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name)),
-        return_type_name(friendly_type_name(return_qual_type)) {
+        return_type_name(friendly_type_name(return_qual_type)),
+        return_short_type_name(friendly_short_type_name(return_qual_type)) {
     overloads.push(FunctionOverload{
         .signature = sus::move(signature),
         .method = sus::none(),
@@ -101,6 +102,7 @@ struct FunctionElement : public CommentElement {
   }
 
   std::string return_type_name;
+  std::string return_short_type_name;
 
   sus::Vec<FunctionOverload> overloads;
 
@@ -131,12 +133,14 @@ struct FieldElement : public CommentElement {
                        sus::move(name)),
         record_path(sus::move(record_path)),
         type_name(friendly_type_name(qual_type)),
+        short_type_name(friendly_short_type_name(qual_type)),
         is_const(qual_type.getQualifiers().hasConst()),
         is_volatile(qual_type.getQualifiers().hasVolatile()),
         is_static(is_static) {}
 
   sus::Vec<std::string> record_path;
   std::string type_name;
+  std::string short_type_name;
   bool is_const;
   bool is_volatile;
   StaticType is_static;
