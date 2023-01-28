@@ -68,6 +68,7 @@ class HtmlWriter {
 
     HtmlWriter& writer_;
     sus::Vec<std::string> classes_;
+    sus::Vec<HtmlAttribute> attributes_;
     bool wrote_open_ = false;
     bool has_newlines_ = true;
   };
@@ -105,8 +106,6 @@ class HtmlWriter {
         wrote_open_ = true;
       }
     }
-
-    sus::Vec<HtmlAttribute> attributes_;
   };
 
   class [[nodiscard]] OpenDiv : public Html {
@@ -116,14 +115,20 @@ class HtmlWriter {
       writer_.write_close("div");
     }
 
+    void add_title(std::string_view title) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("title"),
+          .value = std::string(title),
+      });
+    }
+
    private:
     friend HtmlWriter;
     OpenDiv(HtmlWriter& writer) noexcept : Html(writer) {}
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("div", classes_.iter(),
-                           sus::iter::empty<const HtmlAttribute&>());
+        writer_.write_open("div", classes_.iter(), attributes_.iter());
         wrote_open_ = true;
       }
     }
@@ -136,14 +141,20 @@ class HtmlWriter {
       writer_.write_close("span");
     }
 
+    void add_title(std::string_view title) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("title"),
+          .value = std::string(title),
+      });
+    }
+
    private:
     friend HtmlWriter;
     OpenSpan(HtmlWriter& writer) noexcept : Html(writer) {}
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("span", classes_.iter(),
-                           sus::iter::empty<const HtmlAttribute&>());
+        writer_.write_open("span", classes_.iter(), attributes_.iter());
         wrote_open_ = true;
       }
     }
@@ -162,8 +173,7 @@ class HtmlWriter {
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("body", classes_.iter(),
-                           sus::iter::empty<const HtmlAttribute&>());
+        writer_.write_open("body", classes_.iter(), attributes_.iter());
         wrote_open_ = true;
       }
     }
@@ -182,8 +192,7 @@ class HtmlWriter {
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("title", classes_.iter(),
-                           sus::iter::empty<const HtmlAttribute&>());
+        writer_.write_open("title", classes_.iter(), attributes_.iter());
         wrote_open_ = true;
       }
     }
@@ -247,8 +256,7 @@ class HtmlWriter {
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("head", classes_.iter(),
-                           sus::iter::empty<const HtmlAttribute&>());
+        writer_.write_open("head", classes_.iter(), attributes_.iter());
         wrote_open_ = true;
       }
     }
@@ -273,26 +281,32 @@ class HtmlWriter {
   OpenTitle open_title() noexcept { return OpenTitle(*this); }
   OpenLink open_link() noexcept { return OpenLink(*this); }
 
+  // Quote any <>.
+  static sus::Option<std::string> quote_angle_brackets(std::string_view text) {
+    size_t pos = text.find_first_of("<>");
+    if (pos == std::string::npos) {
+      return sus::none();
+    }
+    auto copy = std::string(text);
+    while (pos != std::string::npos) {
+      if (copy[pos] == '<')
+        copy.replace(pos, 1u, "&lt;");
+      else
+        copy.replace(pos, 1u, "&gt;");
+
+      pos = copy.find_first_of("<>");
+    }
+    return sus::some(copy);
+  }
+
   void write_text(std::string_view text, bool has_newlines = true) noexcept {
     if (!text.empty()) {
       if (has_newlines) write_indent();
 
-      size_t pos = text.find_first_of("<>");
-      if (pos == std::string::npos) {
-        stream_ << text;
-      } else {
-        auto copy = std::string(text);
-        // Quote any <>.
-        while (pos != std::string::npos) {
-          if (copy[pos] == '<')
-            copy.replace(pos, 1u, "&lt;");
-          else
-            copy.replace(pos, 1u, "&gt;");
-
-          pos = copy.find_first_of("<>");
-        }
-
-        stream_ << copy;
+      sus::Option<std::string> quoted = quote_angle_brackets(text);
+      switch (quoted) {
+        case sus::Some: stream_ << *quoted; break;
+        case sus::None: stream_ << text; break;
       }
       if (has_newlines) stream_ << "\n";
     }
@@ -324,7 +338,13 @@ class HtmlWriter {
       stream_ << "\"";
     }
     for (const HtmlAttribute& attr : attr_iter) {
-      stream_ << " " << attr.name << "=\"" << attr.value << "\"";
+      stream_ << " " << attr.name << "=\"";
+      sus::Option<std::string> quoted = quote_angle_brackets(attr.value);
+      switch (quoted) {
+        case sus::Some: stream_ << *quoted; break;
+        case sus::None: stream_ << attr.value; break;
+      }
+      stream_ << "\"";
     }
     stream_ << ">";
     if (has_newlines) stream_ << "\n";

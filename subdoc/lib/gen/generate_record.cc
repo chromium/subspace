@@ -119,6 +119,7 @@ void generate_record_fields(
       {
         auto field_type_span = field_div.open_span();
         field_type_span.add_class("type-name");
+        field_type_span.add_title(fe.type_name);
         field_type_span.write_text(fe.short_type_name);
       }
       {
