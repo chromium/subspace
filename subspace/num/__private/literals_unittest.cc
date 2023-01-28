@@ -16,9 +16,13 @@
 
 #include "subspace/num/types.h"
 
+namespace {
+
 // Regression test for MSVC compilation bug:
 // https://developercommunity.visualstudio.com/t/MSVC-Compiler-bug-with:-numeric-literal/10108160
 template <class T>
 void TestOperationInTemplateFunction() {
   0_u32 + 1_u32;
 }
+
+}  // namespace
