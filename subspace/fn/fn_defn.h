@@ -98,7 +98,7 @@ class Fn;
 /// don't capture state from outside the lambda, such as `[i = 2]() { return i;
 /// }`.
 ///
-/// - sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
+/// - `sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
 /// which captures variables from local state.
 ///
 /// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound variables
@@ -268,7 +268,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 /// don't capture state from outside the lambda, such as `[i = 2]() { return i;
 /// }`.
 ///
-/// - sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
+/// - `sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
 /// which captures variables from local state.
 ///
 /// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound variables
@@ -392,7 +392,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
 /// don't capture state from outside the lambda, such as `[i = 2]() { return i;
 /// }`.
 ///
-/// - sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
+/// - `sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
 /// which captures variables from local state.
 ///
 /// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound variables
