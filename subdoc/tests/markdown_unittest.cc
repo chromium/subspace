@@ -42,10 +42,25 @@ TEST_F(SubDocTest, MarkdownCodeBlock) {
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(
-      has_function_comment(db, "2:5",
-                           "<p>Comment headline</p>"
-                           "<p>Before code</p>"
-                           "<pre><code>Code 1\nCode 2\n</code></pre>"
-                           "<p>After code</p>"));
+  EXPECT_TRUE(has_function_comment(db, "2:5",
+                                   "<p>Comment headline</p>"
+                                   "<p>Before code</p>"
+                                   "<pre><code>Code 1\nCode 2\n</code></pre>"
+                                   "<p>After code</p>"));
+}
+
+TEST_F(SubDocTest, MarkdownCodeSnippet) {
+  auto result = run_code(R"(
+    /// Comment headline `has snippet`
+    ///
+    /// This `snippet goes
+    /// across lines` but works out.
+    void f() {}
+    )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_function_comment(
+      db, "2:5",
+      "<p>Comment headline <code>has snippet</code></p>"
+      "<p>This <code>snippet goes across lines</code> but works out.</p>"));
 }
