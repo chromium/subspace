@@ -374,6 +374,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept = delete;
 
   /// sus::ops::Ord<Choice<Ts...>, Choice<Us...>> trait.
+  ///
+  /// #[doc.overloads=ord]
   template <class... Us, auto V, auto... Vs>
     requires(__private::ChoiceIsOrd<TagsType, __private::TypeList<Ts...>,
                                     decltype(V), __private::TypeList<Us...>>)
@@ -390,6 +392,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   }
 
   /// sus::ops::WeakOrd<Choice<Ts...>, Choice<Us...>> trait.
+  ///
+  /// #[doc.overloads=weakord]
   template <class... Us, auto V, auto... Vs>
     requires(
         __private::ChoiceIsWeakOrd<TagsType, __private::TypeList<Ts...>,
@@ -407,6 +411,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   }
 
   /// sus::ops::PartialOrd<Choice<Ts...>, Choice<Us...>> trait.
+  ///
+  /// #[doc.overloads=partialord]
   template <class... Us, auto V, auto... Vs>
     requires(
         __private::ChoiceIsPartialOrd<TagsType, __private::TypeList<Ts...>,
