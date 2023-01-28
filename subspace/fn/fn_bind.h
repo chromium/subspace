@@ -56,24 +56,26 @@
 /// The lambda may arrive in multiple arguments, if there is a comma in the
 /// definition of it. Thus we use variadic arguments to capture all of the
 /// lambda.
-#define sus_bind(names, lambda, ...)                                          \
-  [&]() {                                                                     \
-    [&]() consteval {sus_for_each(_sus__check_storage, sus_for_each_sep_none, \
-                                  _sus__unpack names)}();                     \
-    using ::sus::fn::__private::SusBind;                                      \
-    return SusBind(                                                           \
-        [sus_for_each(_sus__declare_storage, sus_for_each_sep_comma,          \
-                      _sus__unpack names)]<class... Args>(Args&&... args) {   \
-          const auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                   \
-          const bool is_const =                                               \
-              ::sus::fn::callable::CallableObjectConst<decltype(x)>;          \
-          if constexpr (!is_const) {                                          \
-            return ::sus::fn::__private::CheckCallableObjectConst<            \
-                is_const>::template error<void>();                            \
-          } else {                                                            \
-            return x(::sus::forward<Args>(args)...);                          \
-          }                                                                   \
-        });                                                                   \
+#define sus_bind(names, lambda, ...)                                        \
+  [&]() {                                                                   \
+    [&]() consteval {                                                       \
+      sus_for_each(_sus__check_storage, sus_for_each_sep_none,              \
+                   _sus__unpack names)                                      \
+    }();                                                                    \
+    using ::sus::fn::__private::SusBind;                                    \
+    return SusBind(                                                         \
+        [sus_for_each(_sus__declare_storage, sus_for_each_sep_comma,        \
+                      _sus__unpack names)]<class... Args>(Args&&... args) { \
+          const auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                 \
+          const bool is_const =                                             \
+              ::sus::fn::callable::CallableObjectConst<decltype(x)>;        \
+          if constexpr (!is_const) {                                        \
+            return ::sus::fn::__private::CheckCallableObjectConst<          \
+                is_const>::template error<void>();                          \
+          } else {                                                          \
+            return x(::sus::forward<Args>(args)...);                        \
+          }                                                                 \
+        });                                                                 \
   }()
 
 /// A variant of `sus_bind()` which only takes a lambda, omitting the
@@ -126,17 +128,19 @@
 /// # Implementation note The lambda may arrive in multiple arguments, if there
 /// is a comma in the definition of it. Thus we use variadic arguments to
 /// capture all of the lambda.
-#define sus_bind_mut(names, lambda, ...)                                      \
-  [&]() {                                                                     \
-    [&]() consteval {sus_for_each(_sus__check_storage, sus_for_each_sep_none, \
-                                  _sus__unpack names)}();                     \
-    return ::sus::fn::__private::SusBind(                                     \
-        [sus_for_each(_sus__declare_storage_mut, sus_for_each_sep_comma,      \
-                      _sus__unpack names)]<class... Args>(                    \
-            Args&&... args) mutable {                                         \
-          auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                         \
-          return x(::sus::mem::forward<Args>(args)...);                       \
-        });                                                                   \
+#define sus_bind_mut(names, lambda, ...)                                 \
+  [&]() {                                                                \
+    [&]() consteval {                                                    \
+      sus_for_each(_sus__check_storage, sus_for_each_sep_none,           \
+                   _sus__unpack names)                                   \
+    }();                                                                 \
+    return ::sus::fn::__private::SusBind(                                \
+        [sus_for_each(_sus__declare_storage_mut, sus_for_each_sep_comma, \
+                      _sus__unpack names)]<class... Args>(               \
+            Args&&... args) mutable {                                    \
+          auto x = lambda __VA_OPT__(, ) __VA_ARGS__;                    \
+          return x(::sus::mem::forward<Args>(args)...);                  \
+        });                                                              \
   }()
 
 /// A variant of `sus_bind_mut()` which only takes a lambda, omitting the
@@ -174,8 +178,7 @@ namespace sus::fn::__private {
 /// Helper type returned by sus_bind() and used to construct a closure.
 template <class F>
 struct SusBind final {
-  sus_clang_bug_54050(constexpr inline SusBind(F&& lambda)
-                      : lambda(::sus::move(lambda)){});
+  constexpr inline SusBind(F&& lambda) : lambda(::sus::move(lambda)) {}
 
   /// The lambda generated by sus_bind() which holds the user-provided
   /// lambda and any storage required for it.

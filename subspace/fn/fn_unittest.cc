@@ -112,8 +112,8 @@ static_assert(std::is_constructible_v<FnMut<int(float)>, decltype(i_f_function)>
 static_assert(std::is_constructible_v<Fn<int(float)>, decltype(i_f_function)>);
 
 // Lambdas with bound args can't be passed without sus_bind().
-static_assert(!std::is_constructible_v<FnOnce<void()>, decltype([i = int(1)](){})>);
-static_assert(!std::is_constructible_v<FnOnce<void()>, decltype([i = int(1)]() mutable {++i;})>);
+static_assert(!std::is_constructible_v<FnOnce<void()>, decltype([i = int(1)](){ (void)i; })>);
+static_assert(!std::is_constructible_v<FnOnce<void()>, decltype([i = int(1)]() mutable { ++i; })>);
 
 // The return type of the Fn must match that of the lambda. It will not allow
 // converting to void.
