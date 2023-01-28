@@ -21,7 +21,7 @@ using sus::construct::Default;
 using sus::mem::relocate_by_memcpy;
 using sus::result::Result;
 
-namespace default_constructible {
+namespace sus::test::default_constructible {
 using T = Result<sus::test::DefaultConstructible, int>;
 using From = T;
 static_assert(!std::is_trivial_v<T>);
@@ -48,9 +48,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace default_constructible
+}  // namespace sus::test::default_constructible
 
-namespace not_default_constructible {
+namespace sus::test::not_default_constructible {
 using T = Result<sus::test::NotDefaultConstructible, int>;
 using From = T;
 static_assert(!std::is_trivial_v<T>);
@@ -77,9 +77,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace not_default_constructible
+}  // namespace sus::test::not_default_constructible
 
-namespace trivially_copyable {
+namespace sus::test::trivially_copyable {
 using T = Result<sus::test::TriviallyCopyable, int>;
 using From = T;
 static_assert(!std::is_trivial_v<T>);
@@ -106,9 +106,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace trivially_copyable
+}  // namespace sus::test::trivially_copyable
 
-namespace trivially_moveable_and_relocatable {
+namespace sus::test::trivially_moveable_and_relocatable {
 using T = Result<sus::test::TriviallyMoveableAndRelocatable, int>;
 using From = T;
 static_assert(!std::is_trivial_v<T>);
@@ -135,9 +135,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace trivially_moveable_and_relocatable
+}  // namespace sus::test::trivially_moveable_and_relocatable
 
-namespace trivially_copyable_not_destructible {
+namespace sus::test::trivially_copyable_not_destructible {
 using T = Result<sus::test::TriviallyCopyableNotDestructible, int>;
 using From = T;
 static_assert(!std::is_trivial_v<T>);
@@ -164,9 +164,9 @@ static_assert(!std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(!relocate_by_memcpy<T>);
-}  // namespace trivially_copyable_not_destructible
+}  // namespace sus::test::trivially_copyable_not_destructible
 
-namespace trivially_moveable_not_destructible {
+namespace sus::test::trivially_moveable_not_destructible {
 using T = Result<sus::test::TriviallyMoveableNotDestructible, int>;
 using From = T;
 static_assert(!std::is_trivial_v<T>);
@@ -193,9 +193,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(!relocate_by_memcpy<T>);
-}  // namespace trivially_moveable_not_destructible
+}  // namespace sus::test::trivially_moveable_not_destructible
 
-namespace not_trivially_relocatable_copyable_or_moveable {
+namespace sus::test::not_trivially_relocatable_copyable_or_moveable {
 using T = Result<sus::test::NotTriviallyRelocatableCopyableOrMoveable, int>;
 using From = T;
 static_assert(!std::is_trivial_v<T>);
@@ -222,9 +222,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(!relocate_by_memcpy<T>);
-}  // namespace not_trivially_relocatable_copyable_or_moveable
+}  // namespace sus::test::not_trivially_relocatable_copyable_or_moveable
 
-namespace trivial_abi_relocatable {
+namespace sus::test::trivial_abi_relocatable {
 using T = Result<sus::test::TrivialAbiRelocatable, int>;
 using From = T;
 static_assert(!std::is_trivial_v<T>);
@@ -251,4 +251,4 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace trivial_abi_relocatable
+}  // namespace sus::test::trivial_abi_relocatable
