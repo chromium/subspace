@@ -342,7 +342,7 @@ class Tuple;
     return l.primitive_value == r.primitive_value;                             \
   }                                                                            \
   /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait.               \
-  /** sus::concepts::Ord<##T##, Unsigned> trait.                               \
+   * sus::concepts::Ord<##T##, Unsigned> trait.                                \
    * #[doc.overloads=uint.ord] */                                              \
   template <SignedPrimitiveInteger P>                                          \
   friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept {  \
@@ -379,7 +379,7 @@ class Tuple;
     return out.value;                                                       \
   }                                                                         \
   /** sus::concepts::Sub<##T##> trait.                                      \
-   * #[doc.overloads=int##T##.-] */                                              \
+   * #[doc.overloads=int##T##.-] */                                         \
   friend constexpr inline T operator-(const T& l, const T& r) noexcept {    \
     const auto out =                                                        \
         __private::sub_with_overflow(l.primitive_value, r.primitive_value); \
@@ -388,7 +388,7 @@ class Tuple;
     return out.value;                                                       \
   }                                                                         \
   /** sus::concepts::Mul<##T##> trait.                                      \
-   * #[doc.overloads=int##T##.*] */                                              \
+   * #[doc.overloads=int##T##.*] */                                         \
   friend constexpr inline T operator*(const T& l, const T& r) noexcept {    \
     const auto out =                                                        \
         __private::mul_with_overflow(l.primitive_value, r.primitive_value); \
@@ -397,7 +397,7 @@ class Tuple;
     return out.value;                                                       \
   }                                                                         \
   /** sus::concepts::Div<##T##> trait.                                      \
-   * #[doc.overloads=int##T##./] */                                              \
+   * #[doc.overloads=int##T##./] */                                         \
   friend constexpr inline T operator/(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0);                                   \
@@ -407,7 +407,7 @@ class Tuple;
     return static_cast<PrimitiveT>(l.primitive_value / r.primitive_value);  \
   }                                                                         \
   /** sus::concepts::Rem<##T##> trait.                                      \
-   * #[doc.overloads=int##T##.%] */                                              \
+   * #[doc.overloads=int##T##.%] */                                         \
   friend constexpr inline T operator%(const T& l, const T& r) noexcept {    \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0);                                   \
@@ -420,22 +420,22 @@ class Tuple;
 
 #define _sus__signed_binary_bit_ops(T, PrimitiveT)                          \
   /** sus::concepts::BitAnd<##T##> trait.                                   \
-   * #[doc.overloads=int##T##.&] */                                              \
+   * #[doc.overloads=int##T##.&] */                                         \
   friend constexpr inline T operator&(const T& l, const T& r) noexcept {    \
     return static_cast<PrimitiveT>(l.primitive_value & r.primitive_value);  \
   }                                                                         \
   /** sus::concepts::BitOr<##T##> trait.                                    \
-   * #[doc.overloads=int##T##.|] */                                              \
+   * #[doc.overloads=int##T##.|] */                                         \
   friend constexpr inline T operator|(const T& l, const T& r) noexcept {    \
     return static_cast<PrimitiveT>(l.primitive_value | r.primitive_value);  \
   }                                                                         \
   /** sus::concepts::BitXor<##T##> trait.                                   \
-   * #[doc.overloads=int##T##.^] */                                              \
+   * #[doc.overloads=int##T##.^] */                                         \
   friend constexpr inline T operator^(const T& l, const T& r) noexcept {    \
     return static_cast<PrimitiveT>(l.primitive_value ^ r.primitive_value);  \
   }                                                                         \
   /** sus::concepts::Shl trait.                                             \
-   * #[doc.overloads=int##T##.<<] */                                             \
+   * #[doc.overloads=int##T##.<<] */                                        \
   friend constexpr inline T operator<<(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS);                                                 \
@@ -443,7 +443,7 @@ class Tuple;
         __private::into_unsigned(l.primitive_value), r.primitive_value));   \
   }                                                                         \
   /** sus::concepts::Shr trait.                                             \
-   * #[doc.overloads=int##T##.>>] */                                             \
+   * #[doc.overloads=int##T##.>>] */                                        \
   friend constexpr inline T operator>>(const T& l, const u32& r) noexcept { \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r < BITS);                                                 \
