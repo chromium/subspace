@@ -26,6 +26,10 @@ TEST_F(SubDocGenTest, FunctionOverloads) {
   EXPECT_TRUE(run_gen_test("function-overloads"));
 }
 
+TEST_F(SubDocGenTest, Markdown) {
+  EXPECT_TRUE(run_gen_test("markdown"));
+}
+
 TEST_F(SubDocGenTest, NestedNamespace) {
   EXPECT_TRUE(run_gen_test("nested-namespace"));
 }

@@ -83,10 +83,11 @@ class SubDocTest : public testing::Test {
                     << comment_loc << "\n";
       return false;
     }
-    if (!sus::move(element).unwrap().comment.raw_text.starts_with(
+    if (!element->comment.raw_text.starts_with(
             comment_start)) {
       ADD_FAILURE() << type << " comment at " << comment_loc
-                    << " does not match text.\n";
+                    << " does not match text. Found:\n"
+                    << element->comment.raw_text << "\n";
       return false;
     }
     return true;

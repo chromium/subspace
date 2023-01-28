@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <filesystem>
 #include <unordered_set>
 
 #include "lib/gen/generate.h"
@@ -38,13 +39,14 @@ int main(int argc, const char** argv) {
 
   sus::Vec<std::string> run_against_files;
 
+  llvm::errs() << "Parsing comments starting at roots:\n";
   for (const auto& input_path : options_parser->getSourcePathList()) {
     bool found = false;
     for (auto s : comp_db.getAllFiles()) {
       if (s.find(input_path) == std::string::npos) {
         continue;
       }
-      llvm::outs() << s << " :\n";
+      llvm::outs() << "  " << s << "\n";
       run_against_files.push(s);
       found = true;
     }
@@ -66,7 +68,7 @@ int main(int argc, const char** argv) {
   auto options = subdoc::gen::Options{
       // TODO: Make this configurable.
       .output_root = "docs",
-      .default_stylesheet_path = "subdoc-default-style.css",
+      .default_stylesheet_path = "../subdoc/subdoc-default-style.css",
   };
   subdoc::gen::generate(docs_db, options);
   return 0;

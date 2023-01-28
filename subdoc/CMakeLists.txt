@@ -50,11 +50,15 @@ add_executable(subdoc_unittests
     "tests/functions_unittest.cc"
     "tests/inherit_unittest.cc"
     "tests/macros_unittest.cc"
+    "tests/markdown_unittest.cc"
     "tests/methods_unittest.cc"
     "tests/records_unittest.cc"
     "tests/styles_unittest.cc"
     "tests/subdoc_test.h"
 )
+
+configure_file(gen_tests/subdoc-test-style.css subdoc-default-style.css
+               COPYONLY)
 
 # subdoc_lib
 subspace_default_compile_options(subdoc_lib)

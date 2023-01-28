@@ -115,7 +115,7 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
   if (element.has_comment()) {
     auto desc_div = item_div.open_div();
     desc_div.add_class("description");
-    desc_div.write_text(element.comment.raw_text);
+    desc_div.write_html(element.comment.raw_text);
   }
 }
 

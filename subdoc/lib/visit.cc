@@ -197,25 +197,25 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
   bool VisitEnumDecl(clang::EnumDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
-    clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (raw_comment)
-      llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
+    //clang::RawComment* raw_comment = get_raw_comment(decl);
+    //if (raw_comment)
+    //  llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
     return true;
   }
 
   bool VisitTypedefDecl(clang::TypedefDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
-    clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (raw_comment)
-      llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
+    //clang::RawComment* raw_comment = get_raw_comment(decl);
+    //if (raw_comment)
+    //  llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
     return true;
   }
 
   bool VisitTypeAliasDecl(clang::TypeAliasDecl* decl) noexcept {
     if (should_skip_decl(decl)) return true;
-    clang::RawComment* raw_comment = get_raw_comment(decl);
-    if (raw_comment)
-      llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
+    //clang::RawComment* raw_comment = get_raw_comment(decl);
+    //if (raw_comment)
+    //  llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
     return true;
   }
 
@@ -239,14 +239,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                               decl->getNameAsString(), sus::move(signature),
                               decl->getReturnType());
 
-    // TODO: Allow constructors to overload with different commments.
-    // Specifically, default cons, other cons, copy cons, move cons.
-
     // TODO: It's possible to overload a method in a base class. What should we
     // show then?
-
-    // TODO: Store what base class methods comes from so we can denote them
-    // as being inherited.
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
       assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));

@@ -14,46 +14,38 @@
 
 #include "subdoc/tests/subdoc_test.h"
 
-TEST_F(SubDocTest, Mixed) {
+TEST_F(SubDocTest, MarkdownParagraph) {
   auto result = run_code(R"(
     /// Comment headline
-    // Implementation details.
-    struct S {};
+    ///
+    /// Next Paragraph
+    /// Next Line
+    void f() {}
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
+  EXPECT_TRUE(has_function_comment(
+      db, "2:5", "<p>Comment headline</p><p>Next Paragraph Next Line</p>"));
 }
 
-TEST_F(SubDocTest, CppStyle) {
+TEST_F(SubDocTest, MarkdownCodeBlock) {
   auto result = run_code(R"(
-    // Implementation details.
-    struct S {};
+    /// Comment headline
+    ///
+    /// Before code
+    /// ```
+    /// Code 1
+    /// Code 2
+    /// ```
+    /// After code
+    void f() {}
     )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_FALSE(db.has_any_comments());
-}
-
-TEST_F(SubDocTest, JavaDocStyle) {
-  auto result = run_code(R"(
-    /** Comment headline */
-    struct S {};
-    )");
-  ASSERT_TRUE(result.is_ok());
-  subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
-}
-
-TEST_F(SubDocTest, JavaDocStyleBody) {
-  auto result = run_code(R"(
-    /** Comment headline
-     * 
-     * Comment body.
-    */
-    struct S {};
-    )");
-  ASSERT_TRUE(result.is_ok());
-  subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
+  EXPECT_TRUE(
+      has_function_comment(db, "2:5",
+                           "<p>Comment headline</p>"
+                           "<p>Before code</p>"
+                           "<pre><code>Code 1\nCode 2\n</code></pre>"
+                           "<p>After code</p>"));
 }
