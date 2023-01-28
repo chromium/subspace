@@ -37,21 +37,31 @@ int main(int argc, const char** argv) {
 
   auto& comp_db = options_parser->getCompilations();
 
+  std::vector<std::string> paths = options_parser->getSourcePathList();
+  if (paths.empty()) {
+    llvm::errs() << "Error: no input files specified.\n";
+    llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
+    return 1;
+  }
+
+  // These are the files available to run the tool against.
+  std::vector<std::string> comp_db_files = comp_db.getAllFiles();
+  // These are the files we choose to run the tool against. We use fuzzy
+  // matching on the input arguments to pick them.
   sus::Vec<std::string> run_against_files;
 
-  llvm::errs() << "Parsing comments starting at roots:\n";
-  for (const auto& input_path : options_parser->getSourcePathList()) {
+  for (const std::string& input_path : paths) {
     bool found = false;
-    for (auto s : comp_db.getAllFiles()) {
+    for (const std::string& s : comp_db_files) {
       if (s.find(input_path) == std::string::npos) {
         continue;
       }
-      llvm::outs() << "  " << s << "\n";
       run_against_files.push(s);
       found = true;
     }
     if (!found) {
-      llvm::outs() << "Unknown file, not in compiledb: " << input_path << "\n";
+      llvm::errs() << "Unknown file, not in compiledb: " << input_path << "\n";
+      return 1;
     }
   }
 
@@ -60,7 +70,7 @@ int main(int argc, const char** argv) {
   auto result =
       subdoc::run_files(comp_db, sus::move(run_against_files), sus::move(fs));
   if (result.is_err()) {
-    llvm::outs() << "Error occurred. Exiting.\n";
+    llvm::errs() << "Error occurred. Exiting.\n";
     return 1;
   }
 
