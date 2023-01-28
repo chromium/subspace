@@ -111,10 +111,14 @@ class Array;
    *                                                                           \
    * The trivial copy and move constructors are implicitly declared, as is the \
    * trivial destructor.                                                       \
+   *                                                                           \
+   * #[doc.overloads=ctor.default]                                             \
    */                                                                          \
   constexpr inline T() noexcept = default;                                     \
                                                                                \
   /** Construction from primitive types where no bits are lost.                \
+   *                                                                           \
+   * #[doc.overloads=ctor.from_primitive]                                      \
    */                                                                          \
   template <PrimitiveFloat P>                                                  \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
