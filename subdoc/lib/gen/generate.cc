@@ -23,6 +23,14 @@ namespace subdoc::gen {
 void generate(const Database& db, const Options& options) {
   std::filesystem::remove_all(options.output_root);
   generate_namespace(db.global, options);
+
+  for (const std::string& s : options.copy_files) {
+    if (!std::filesystem::exists(s)) {
+      llvm::errs() << "Skipping copy of '" << s << "'. File not found.\n";
+    } else {
+      std::filesystem::copy(s, options.output_root);
+    }
+  }
 }
 
 }  // namespace subdoc::gen

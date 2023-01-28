@@ -15,13 +15,17 @@
 #pragma once
 
 #include <filesystem>
+#include <string>
+
+#include "subspace/containers/vec.h"
 
 namespace subdoc::gen {
 
 struct Options {
   // TODO: sus::Path type would be real nice.
   std::filesystem::path output_root;
-  std::string default_stylesheet_path;
+  sus::Vec<std::string> stylesheets;
+  sus::Vec<std::string> copy_files;
 };
 
 }  // namespace subdoc::gen
