@@ -41,6 +41,7 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
     {
       auto return_type_span = overload_div.open_span();
       return_type_span.add_class("type-name");
+      return_type_span.add_title(element.return_type_name);
       return_type_span.write_text(element.return_short_type_name);
     }
     {
