@@ -22,7 +22,7 @@ using sus::construct::Default;
 using sus::mem::NonNull;
 using sus::mem::relocate_by_memcpy;
 
-namespace default_constructible {
+namespace sus::test::default_constructible {
 using T = NonNull<sus::test::DefaultConstructible>;
 using From = T;
 // MSVC does not see private constructors, Clang and GCC do.
@@ -50,9 +50,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace default_constructible
+}  // namespace sus::test::default_constructible
 
-namespace not_default_constructible {
+namespace sus::test::not_default_constructible {
 using T = NonNull<sus::test::NotDefaultConstructible>;
 using From = T;
 // MSVC does not see private constructors, Clang and GCC do.
@@ -80,9 +80,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace not_default_constructible
+}  // namespace sus::test::not_default_constructible
 
-namespace trivially_copyable {
+namespace sus::test::trivially_copyable {
 using T = NonNull<sus::test::TriviallyCopyable>;
 using From = T;
 // MSVC does not see private constructors, Clang and GCC do.
@@ -109,9 +109,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace trivially_copyable
+}  // namespace sus::test::trivially_copyable
 
-namespace trivially_moveable_and_relocatable {
+namespace sus::test::trivially_moveable_and_relocatable {
 using T = NonNull<sus::test::TriviallyMoveableAndRelocatable>;
 using From = T;
 // MSVC does not see private constructors, Clang and GCC do.
@@ -139,9 +139,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace trivially_moveable_and_relocatable
+}  // namespace sus::test::trivially_moveable_and_relocatable
 
-namespace trivially_copyable_not_destructible {
+namespace sus::test::trivially_copyable_not_destructible {
 using T = NonNull<sus::test::TriviallyCopyableNotDestructible>;
 using From = T;
 // MSVC does not see private constructors, Clang and GCC do.
@@ -169,9 +169,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace trivially_copyable_not_destructible
+}  // namespace sus::test::trivially_copyable_not_destructible
 
-namespace trivially_moveable_not_destructible {
+namespace sus::test::trivially_moveable_not_destructible {
 using T = NonNull<sus::test::TriviallyMoveableNotDestructible>;
 using From = T;
 // MSVC does not see private constructors, Clang and GCC do.
@@ -199,9 +199,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace trivially_moveable_not_destructible
+}  // namespace sus::test::trivially_moveable_not_destructible
 
-namespace not_trivially_relocatable_copyable_or_moveable {
+namespace sus::test::not_trivially_relocatable_copyable_or_moveable {
 using T = NonNull<sus::test::NotTriviallyRelocatableCopyableOrMoveable>;
 using From = T;
 // MSVC does not see private constructors, Clang and GCC do.
@@ -229,9 +229,9 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace not_trivially_relocatable_copyable_or_moveable
+}  // namespace sus::test::not_trivially_relocatable_copyable_or_moveable
 
-namespace trivial_abi_relocatable {
+namespace sus::test::trivial_abi_relocatable {
 using T = NonNull<sus::test::TrivialAbiRelocatable>;
 using From = T;
 // MSVC does not see private constructors, Clang and GCC do.
@@ -259,4 +259,4 @@ static_assert(std::is_assignable_v<T, From>);
 static_assert(std::is_nothrow_destructible_v<T>);
 static_assert(!Default<T>);
 static_assert(relocate_by_memcpy<T>);
-}  // namespace trivial_abi_relocatable
+}  // namespace sus::test::trivial_abi_relocatable
