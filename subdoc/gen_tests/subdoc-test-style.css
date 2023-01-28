@@ -41,6 +41,9 @@ pre {
     font-weight: bold;
     color: rgb(250, 199, 121);
 }
+.description pre {
+    padding: 1em;
+}
 
 .type .overview .section-header .type-name {
     color: rgb(166, 240, 176);
