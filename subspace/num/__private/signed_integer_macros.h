@@ -77,10 +77,17 @@ class Tuple;
   PrimitiveT primitive_value { 0 }
 
 #define _sus__signed_constants_defn(T, PrimitiveT)                          \
+  /** The smallest value that can be represented by this integer type,      \
+   * as a native C++ primitive. */                                          \
   static constexpr auto MIN_PRIMITIVE = __private::min_value<PrimitiveT>(); \
+  /** The largest value that can be represented by this integer type,      \
+   * as a native C++ primitive. */                                          \
   static constexpr auto MAX_PRIMITIVE = __private::max_value<PrimitiveT>(); \
+  /** The smallest value that can be represented by this integer type. */   \
   static const T MIN;                                                       \
+  /** The largest value that can be represented by this integer type. */    \
   static const T MAX;                                                       \
+  /** The size of this integer type in bits. */                             \
   static const u32 BITS;                                                    \
   static_assert(true)
 
