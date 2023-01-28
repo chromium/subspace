@@ -45,8 +45,9 @@ inline std::filesystem::path construct_html_file_path(
   std::filesystem::path p = sus::move(root);
 
   std::ostringstream fname;
-  // TODO: Add Iterator::reverse.
-  for (const auto& n : namespace_path.iter() /*.reverse()*/) {
+  // TODO: Add Iterator::reverse() and use that.
+  for (size_t i = 0; i < namespace_path.len(); ++i) {
+    const Namespace& n = namespace_path[namespace_path.len() - i - 1u];
     switch (n) {
       case Namespace::Tag::Global: break;
       case Namespace::Tag::Anonymous:
