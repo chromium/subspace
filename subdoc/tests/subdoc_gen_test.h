@@ -51,7 +51,7 @@ class SubDocGenTest : public testing::Test {
               test_root.append(directory);
               return test_root;
             }(),
-        .default_stylesheet_path = "../subdoc-test-style.css",
+        .stylesheets = sus::vec("../subdoc-test-style.css"),
     };
     subdoc::gen::generate(sus::move(result).unwrap(), options);
 

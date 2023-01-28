@@ -24,10 +24,10 @@ void generate_head(HtmlWriter& html, std::string_view title_string,
       auto title = head.open_title();
       title.write_text(title_string);
     }
-    {
+    for (const std::string& path : options.stylesheets) {
       auto default_stylesheet_link = head.open_link();
       default_stylesheet_link.add_rel("stylesheet");
-      default_stylesheet_link.add_href(options.default_stylesheet_path);
+      default_stylesheet_link.add_href(path);
     }
   }
   html.write_empty_line();

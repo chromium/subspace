@@ -27,6 +27,23 @@ int main(int argc, const char** argv) {
   llvm::InitializeAllAsmParsers();
 
   llvm::cl::OptionCategory option_category("SubDoc options");
+
+  llvm::cl::list<std::string> option_css(
+      "css",
+      llvm::cl::desc(
+          "A list of CSS files to include in the generated HTML header.\n"
+          "\n"
+          "When rendering the HTML, a <link> tag will be added\n"
+          "with each path to a CSS file that is specified. For\n"
+          "example: \"../main.css,other.css,/top.css\"."),
+      llvm::cl::cat(option_category));
+
+  llvm::cl::list<std::string> option_copy_files(
+      "copy-files",
+      llvm::cl::desc("A list (comma separated) of files to be copied into the "
+                     "output directory."),
+      llvm::cl::cat(option_category));
+
   llvm::Expected<clang::tooling::CommonOptionsParser> options_parser =
       clang::tooling::CommonOptionsParser::create(argc, argv, option_category,
                                                   llvm::cl::ZeroOrMore);
@@ -75,11 +92,23 @@ int main(int argc, const char** argv) {
   }
 
   subdoc::Database docs_db = sus::move(result).unwrap();
+
   auto options = subdoc::gen::Options{
       // TODO: Make this configurable.
-      .output_root = "docs",
-      .default_stylesheet_path = "../subdoc/subdoc-default-style.css",
+      .output_root = "out/docs",
   };
+  if (option_css.empty() && option_copy_files.empty()) {
+    // Defaults to pull the test stylesheet, assuming subdoc is being run from the
+    // source root directory.
+    options.copy_files.push("subdoc/gen_tests/subdoc-test-style.css");
+    options.stylesheets.push("subdoc-test-style.css");
+  } else {
+    for (std::string s : sus::move(option_css))
+      options.stylesheets.push(sus::move(s));
+    for (std::string s : sus::move(option_copy_files))
+      options.copy_files.push(sus::move(s));
+  }
+
   subdoc::gen::generate(docs_db, options);
   return 0;
 }

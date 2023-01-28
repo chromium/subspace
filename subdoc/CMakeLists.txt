@@ -57,9 +57,6 @@ add_executable(subdoc_unittests
     "tests/subdoc_test.h"
 )
 
-configure_file(gen_tests/subdoc-test-style.css subdoc-default-style.css
-               COPYONLY)
-
 # subdoc_lib
 subspace_default_compile_options(subdoc_lib)
 
