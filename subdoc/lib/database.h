@@ -171,7 +171,7 @@ struct FieldElement : public CommentElement {
 };
 
 struct NamespaceId {
-  NamespaceId(std::string name) : name(sus::move(name)) {}
+  explicit NamespaceId(std::string name) : name(sus::move(name)) {}
 
   std::string name;
 
@@ -588,12 +588,89 @@ struct Database {
 
   sus::Option<const TypeElement&> find_type(clang::QualType qual) {
     clang::TagDecl* tag = qual.getUnqualifiedType()->getAsTagDecl();
-    (void)tag;
+
+    if (tag) {
+      auto ns_cursor = [&]() -> sus::Option<const NamespaceElement&> {
+        const NamespaceElement* cursor = &global;
+
+        auto it = iter_namespace_path(tag);
+        // TODO: Make Iterator::reverse() and use that.
+        auto v = sus::move(it).collect_vec();
+        for (usize i = 1u; i < v.len(); i += 1u) {
+          const Namespace& n = v[v.len() - i - 1u];
+          switch (n) {
+            case Namespace::Tag::Global: {
+              // We skipped the 1st namespace in the path which is the global
+              // one.
+              sus::unreachable();
+            }
+            case Namespace::Tag::Anonymous: {
+              return sus::none();
+            }
+            case Namespace::Tag::Named: {
+              const std::string& name = n.get_ref<Namespace::Tag::Named>();
+              auto ns_it = cursor->namespaces.find(NamespaceId(name));
+              if (ns_it == cursor->namespaces.end()) {
+                return sus::none();
+              }
+              cursor = &ns_it->second;
+            }
+          }
+        }
+        return sus::some(*cursor);
+      }();
+      if (ns_cursor.is_none()) {
+        llvm::errs() << "ERROR: Unable to find namespace for type '"
+                     << qual.getAsString() << "'\n";
+        return sus::none();
+      }
+
+      sus::Option<const RecordElement&> record_cursor = [&]() {
+        if (auto* containing_record_decl =
+                clang::dyn_cast<clang::RecordDecl>(tag->getDeclContext())) {
+          const RecordElement* cursor = nullptr;
+
+          auto it = iter_record_path(containing_record_decl);
+          // TODO: Make Iterator::reverse() and use that.
+          auto v = sus::move(it).collect_vec();
+          for (usize i; i < v.len(); i += 1u) {
+            std::string_view name = v[v.len() - i - 1u];
+
+            if (i == 0u) {
+              // if (ns_cursor->records.find(unique_from_decl()))
+              // cursor =
+              (void)cursor;
+            }
+          }
+
+          // return sus::some(*cursor);
+          return sus::none();
+        } else {
+          return sus::none();
+        }
+      }();
+
+      if (auto* tag_as_record_decl = clang::dyn_cast<clang::RecordDecl>(tag)) {
+        if (record_cursor.is_some()) {  // The TagDecl is located in a record.
+          auto it =
+              record_cursor->records.find(unique_from_decl(tag_as_record_decl));
+          if (it == record_cursor->records.end()) return sus::none();
+          return sus::some(it->second);
+        } else {  // The TagDecl is located in a namespace.
+          auto it =
+              ns_cursor->records.find(unique_from_decl(tag_as_record_decl));
+          if (it == ns_cursor->records.end()) return sus::none();
+          return sus::some(it->second);
+        }
+      } else if (auto* enum_decl = clang::dyn_cast<clang::EnumDecl>(tag)) {
+        // TODO: Support enums!  They are not stored in the database.
+      } else {
+        // This would imply clang added a new subclass to `clang::TagDecl`.
+        sus::unreachable();
+      }
+    }
 
     // TODO: What if the type is a typedef! How do we get to its path?
-
-    // TODO: SEarch!
-
 
     return sus::none();
   }

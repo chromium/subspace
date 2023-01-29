@@ -116,12 +116,7 @@ void generate_record_fields(
         field_type_span.add_class("volatile");
         field_type_span.write_text("volatile");
       }
-      if (1) {
-        auto field_type_span = field_div.open_span();
-        field_type_span.add_class("type-name");
-        field_type_span.add_title(fe.type_name);
-        field_type_span.write_text(fe.short_type_name);
-      } else {
+      {
         auto field_type_link = field_div.open_a(HtmlWriter::SingleLine);
         field_type_link.add_class("type-name");
         field_type_link.add_title(fe.type_name);
