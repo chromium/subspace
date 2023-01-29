@@ -44,6 +44,9 @@ using ::sus::option::Option;
 // TODO: Move forward decls somewhere?
 template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter;
+template <class FromItem, class Item, size_t InnerIterSize,
+          size_t InnerIterAlign>
+class Map;
 
 // TODO: Do we want to be able to pass IteratorBase& as a "generic" iterator?
 // Then it needs access to the adaptor methods of Iterator<T>, so make them
@@ -172,7 +175,19 @@ class [[nodiscard]] Iterator final : public I {
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
   ::sus::num::usize count() noexcept;
 
-  // TODO: map()
+  /// Creates an iterator which uses a closure to map each element to another
+  /// type.
+  ///
+  /// The returned iterator's type is whatever is returned by the closure.
+  template <class MapFn, int&..., class R = std::invoke_result_t<MapFn, Item&&>>
+    requires(!std::is_void_v<R>)
+  Iterator<Map<Item, R, ::sus::mem::size_of<I>(), alignof(I)>> map(
+      MapFn fn) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<I>)
+  {
+    // TODO: Move out of line.
+    return {::sus::move(fn), make_sized_iterator(::sus::move(*this))};
+  }
 
   /// Creates an iterator which uses a closure to determine if an element should
   /// be yielded.
@@ -216,8 +231,10 @@ class [[nodiscard]] Iterator final : public I {
   ///
   /// See `collect()` for more details.
   template <int&..., class Vec = ::sus::containers::Vec<typename I::Item>>
-  // Vec requires Move for its items.
-    requires(::sus::mem::Move<typename I::Item>)
+    requires(  // Vec requires Move for its items.
+        ::sus::mem::Move<typename I::Item>)
+  // TODO: If the iterator is over references, collect_vec() should map them to
+  // NonNull.
   Vec collect_vec() && noexcept;
 
   // TODO: cloned().
@@ -269,20 +286,6 @@ Iterator<I>::filter(
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<I>)
 {
-  // TODO: make_sized_iterator immediately copies `this` to either the body of
-  // the output iterator or to a heap allocation (if it can't be trivially
-  // relocated). It is plausible to be more lazy here and avoid moving `this`
-  // until it's actually needed, which may not be ever if the resulting iterator
-  // is used before `this` gets destroyed. The problem is `this` could be a
-  // temporary. So to do this, we could build a doubly-linked list along the
-  // chain of iterators. `this` would point to the returned iterator here, and
-  // vice versa. If `this` gets destroyed, then we would have to walk the entire
-  // linked list and move them all up into the outermost iterator immediately.
-  // Doing so dynamically would require a (single) heap allocation at that point
-  // always. It would be elided if the iterator was kept on the stack, or used
-  // inside the temporary expression. But it would require one heap allocation
-  // to use any chain of iterators in a for loop, since temporaries get
-  // destroyed after initialing the loop.
   return {::sus::move(pred), make_sized_iterator(::sus::move(*this))};
 }
 

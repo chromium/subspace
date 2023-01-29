@@ -58,6 +58,7 @@ target_sources(subspace PUBLIC
     "iter/from_iterator.h"
     "iter/iterator.h"
     "iter/iterator_defn.h"
+    "iter/map.h"
     "iter/once.h"
     "iter/sized_iterator.h"
     "macros/__private/compiler_bugs.h"

@@ -59,7 +59,7 @@ class ArrayIterator : public IteratorBase<Item> {
   Array<Option<Item>, N> items_;
 
   sus_class_trivially_relocatable_if_types(unsafe_fn, decltype(index_),
-                                            decltype(items_));
+                                           decltype(items_));
 };
 
 template <class Item>
@@ -195,27 +195,28 @@ TEST(IteratorBase, Count) {
 }
 
 TEST(Iterator, Filter) {
-  int nums[5] = {1, 2, 3, 4, 5};
+  i32 nums[5] = {1, 2, 3, 4, 5};
 
-  auto fit = ArrayIterator<int, 5>::with_array(nums).filter(
-      [](const int& i) { return i >= 3; });
+  auto fit = ArrayIterator<i32, 5>::with_array(nums).filter(
+      [](const i32& i) { return i >= 3; });
   EXPECT_EQ(fit.count(), 3_usize);
 
-  auto fit2 = ArrayIterator<int, 5>::with_array(nums)
-                  .filter([](const int& i) { return i >= 3; })
-                  .filter([](const int& i) { return i <= 4; });
-  int expect = 3;
-  for (int i : fit2) {
-    EXPECT_EQ(expect++, i);
+  auto fit2 = ArrayIterator<i32, 5>::with_array(nums)
+                  .filter([](const i32& i) { return i >= 3; })
+                  .filter([](const i32& i) { return i <= 4; });
+  i32 expect = 3;
+  for (i32 i : fit2) {
+    EXPECT_EQ(expect, i);
+    expect += 1;
   }
   EXPECT_EQ(expect, 5);
 }
 
 struct Filtering {
-  Filtering(int i) : i(i) {}
+  Filtering(i32 i) : i(i) {}
   Filtering(Filtering&& f) : i(f.i) {}
   ~Filtering() {}
-  int i;
+  i32 i;
 };
 static_assert(!::sus::mem::relocate_by_memcpy<Filtering>);
 
@@ -224,13 +225,45 @@ TEST(Iterator, FilterNonTriviallyRelocatable) {
                        Filtering(5)};
 
   auto non_relocatable_it = ArrayIterator<Filtering, 5>::with_array(nums);
-  static_assert(
-      !sus::mem::relocate_by_memcpy<decltype(non_relocatable_it)>);
+  static_assert(!sus::mem::relocate_by_memcpy<decltype(non_relocatable_it)>);
 
   auto fit = sus::move(non_relocatable_it).box().filter([](const Filtering& f) {
     return f.i >= 3;
   });
   EXPECT_EQ(fit.count(), 3_usize);
+}
+
+TEST(Iterator, Map) {
+  i32 nums[5] = {1, 2, 3, 4, 5};
+
+  auto it = ArrayIterator<i32, 5>::with_array(nums).map(
+      [](i32&& i) { return u32::from(i); });
+  auto v = sus::move(it).collect_vec();
+  static_assert(std::same_as<decltype(v), sus::Vec<u32>>);
+  {
+    u32 expect = 1u;
+    for (u32 i : v) {
+      EXPECT_EQ(expect, i);
+      expect += 1u;
+    }
+  }
+
+  struct MapOut {
+    u32 val;
+  };
+
+  auto it2 = ArrayIterator<i32, 5>::with_array(nums)
+                 .map([](i32&& i) { return u32::from(i); })
+                 .map([](u32&& i) { return MapOut(i); });
+  auto v2 = sus::move(it2).collect_vec();
+  static_assert(std::same_as<decltype(v2), sus::Vec<MapOut>>);
+  {
+    u32 expect = 1u;
+    for (const MapOut& i : v2) {
+      EXPECT_EQ(expect, i.val);
+      expect += 1u;
+    }
+  }
 }
 
 template <class T>

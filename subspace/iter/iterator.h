@@ -28,3 +28,4 @@
 // are forward declared in iterator_defn.h so that transitive includes don't get
 // them all every time.
 #include "subspace/iter/filter.h"
+#include "subspace/iter/map.h"
