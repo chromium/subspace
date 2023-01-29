@@ -181,7 +181,7 @@ void generate_record(const RecordElement& element,
                      const Options& options) noexcept {
   const std::filesystem::path path = construct_html_file_path(
       options.output_root, element.namespace_path.as_ref(),
-      element.class_path.as_ref(), element.name);
+      element.record_path.as_ref(), element.name);
   std::filesystem::create_directories(path.parent_path());
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
 
@@ -248,6 +248,10 @@ void generate_record(const RecordElement& element,
                           sorted_static_methods.as_ref());
   generate_record_methods(mref(record_div), element, false,
                           sorted_methods.as_ref());
+
+  for (const auto& [key, subrecord]: element.records) {
+    generate_record(subrecord, options);
+  }
 }
 
 void generate_record_reference(HtmlWriter::OpenDiv& section_div,
@@ -268,12 +272,12 @@ void generate_record_reference(HtmlWriter::OpenDiv& section_div,
     }
     {
       auto name_link = type_sig_div.open_a(HtmlWriter::SingleLine);
+      name_link.add_class("type-name");
       name_link.add_href(
           construct_html_file_path(std::filesystem::path(),
                                    element.namespace_path.as_ref(),
-                                   element.class_path.as_ref(), element.name)
+                                   element.record_path.as_ref(), element.name)
               .string());
-      name_link.add_class("type-name");
       name_link.write_text(element.name);
     }
   }

@@ -44,10 +44,11 @@ TEST_F(SubDocTest, TemplateStructSpecialization) {
     template <>
     struct S<void> {};
     )");
-  ASSERT_TRUE(result.is_ok());
-  subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline 1</p>"));
-  EXPECT_TRUE(has_record_comment(db, "5:5", "<p>Comment headline 2</p>"));
+  ASSERT_TRUE(result.is_err());
+  auto diags = sus::move(result).unwrap_err();
+  ASSERT_EQ(diags.locations.len(), 1u);
+  // The 2nd comment on the same structure causes an error as it is ambiguous.
+  EXPECT_EQ(diags.locations[0u], "test.cc:5:5");
 }
 
 TEST_F(SubDocTest, StructInNamedNamespace) {
