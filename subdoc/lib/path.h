@@ -84,7 +84,7 @@ inline clang::NamespaceDecl* find_nearest_namespace(
 }
 
 inline sus::Vec<std::string> collect_record_path(
-    clang::RecordDecl* decl) noexcept {
+    clang::NamedDecl* decl) noexcept {
   auto v = sus::Vec<std::string>();
   v.push(decl->getNameAsString());
 

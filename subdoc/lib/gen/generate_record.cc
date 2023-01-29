@@ -116,11 +116,24 @@ void generate_record_fields(
         field_type_span.add_class("volatile");
         field_type_span.write_text("volatile");
       }
-      {
+      if (1) {
         auto field_type_span = field_div.open_span();
         field_type_span.add_class("type-name");
         field_type_span.add_title(fe.type_name);
         field_type_span.write_text(fe.short_type_name);
+      } else {
+        auto field_type_link = field_div.open_a(HtmlWriter::SingleLine);
+        field_type_link.add_class("type-name");
+        field_type_link.add_title(fe.type_name);
+        if (fe.type_element.is_some()) {
+          field_type_link.add_href(
+              construct_html_file_path(std::filesystem::path(),
+                                       fe.type_element->namespace_path.as_ref(),
+                                       fe.type_element->record_path.as_ref(),
+                                       fe.type_element->name)
+                  .string());
+        }
+        field_type_link.write_text(fe.short_type_name);
       }
       {
         auto field_name_anchor = field_div.open_a(HtmlWriter::SingleLine);

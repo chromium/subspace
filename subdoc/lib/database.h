@@ -24,6 +24,7 @@
 #include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
 #include "subspace/choice/choice.h"
+#include "subspace/option/option.h"
 #include "subspace/prelude.h"
 
 namespace subdoc {
@@ -66,6 +67,16 @@ struct CommentElement {
   bool has_comment() const {
     return !comment.raw_text.empty() || comment.attrs.inherit.is_some();
   }
+};
+
+struct TypeElement : public CommentElement {
+  TypeElement(sus::Vec<Namespace> containing_namespaces, Comment comment,
+              std::string name, sus::Vec<std::string> record_path)
+      : CommentElement(sus::move(containing_namespaces), sus::move(comment),
+                       sus::move(name)),
+        record_path(sus::move(record_path)) {}
+
+  sus::Vec<std::string> record_path;
 };
 
 struct MethodSpecific {
@@ -139,6 +150,7 @@ struct FieldElement : public CommentElement {
         is_static(is_static) {}
 
   sus::Vec<std::string> record_path;
+  sus::Option<const TypeElement&> type_element;
   std::string type_name;
   std::string short_type_name;
   bool is_const;
@@ -192,14 +204,13 @@ struct FunctionId {
   };
 };
 
-struct RecordElement : public CommentElement {
+struct RecordElement : public TypeElement {
   explicit RecordElement(sus::Vec<Namespace> containing_namespaces,
                          Comment comment, std::string name,
                          sus::Vec<std::string> record_path,
                          RecordType record_type)
-      : CommentElement(sus::move(containing_namespaces), sus::move(comment),
-                       sus::move(name)),
-        record_path(sus::move(record_path)),
+      : TypeElement(sus::move(containing_namespaces), sus::move(comment),
+                    sus::move(name), sus::move(record_path)),
         record_type(record_type) {}
 
   // TODO: Template parameters and requires clause.
@@ -213,7 +224,6 @@ struct RecordElement : public CommentElement {
   ///   struct R { struct S { struct T{}; }; };
   /// ```
   sus::Vec<std::string> class_path;
-  sus::Vec<std::string> record_path;
   RecordType record_type;
 
   std::unordered_map<UniqueSymbol, RecordElement> records;
@@ -574,6 +584,18 @@ struct Database {
     }
 
     return sus::result::ok(0);
+  }
+
+  sus::Option<const TypeElement&> find_type(clang::QualType qual) {
+    clang::TagDecl* tag = qual.getUnqualifiedType()->getAsTagDecl();
+    (void)tag;
+
+    // TODO: What if the type is a typedef! How do we get to its path?
+
+    // TODO: SEarch!
+
+
+    return sus::none();
   }
 
   sus::Option<NamespaceElement&> find_namespace_mut(

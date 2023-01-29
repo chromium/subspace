@@ -92,6 +92,12 @@ class HtmlWriter {
           .value = std::string(name),
       });
     }
+    void add_title(std::string_view title) {
+      attributes_.push(HtmlAttribute{
+          .name = std::string("title"),
+          .value = std::string(title),
+      });
+    }
 
    private:
     friend HtmlWriter;
