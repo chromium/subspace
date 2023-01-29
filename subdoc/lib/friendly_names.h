@@ -73,9 +73,8 @@ inline std::string friendly_short_type_name(
   // Clang writes booleans as "_Bool".
   if (unqualified->isBooleanType()) return "bool";
   std::string full = unqualified.getAsString();
-  constexpr auto marker = std::string("::");
-  if (size_t pos = full.rfind(marker); pos != std::string::npos) {
-    full = full.substr(pos + marker.size());
+  if (size_t pos = full.rfind("::"); pos != std::string::npos) {
+    full = full.substr(pos + strlen("::"));
   }
   return full;
 }

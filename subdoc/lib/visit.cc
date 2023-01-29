@@ -160,9 +160,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     Comment comment = make_db_comment(decl, raw_comment);
     auto fe = FieldElement(collect_namespace_path(decl), sus::move(comment),
                            std::string(decl->getName()), decl->getType(),
-                           collect_record_path(decl->getParent()),
+                           collect_record_path(decl),
                            // Static data members are found in VisitVarDecl.
                            FieldElement::NonStatic);
+    fe.type_element = docs_db_.find_type(decl->getType());
 
     assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
     if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
