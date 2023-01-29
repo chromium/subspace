@@ -64,7 +64,49 @@ inline std::string friendly_type_name(const clang::QualType& type) noexcept {
   clang::QualType unqualified = type.getUnqualifiedType();
   // Clang writes booleans as "_Bool".
   if (unqualified->isBooleanType()) return "bool";
-  return unqualified.getAsString();
+  std::string full = unqualified.getAsString();
+
+  // Type path component other than the last show up like `struct S` instead of
+  // just `S`. So we're dropping anything before a space in each path component.
+  sus::Vec<std::string> split = [&]() {
+    sus::Vec<std::string> v;
+    // TODO: Add a String type to subspace, give it String::split().
+    while (true) {
+      size_t pos = full.find("::");
+      if (pos == std::string::npos) {
+        v.push(sus::move(full));
+        break;
+      }
+      v.push(full.substr(0, pos));
+      full = full.substr(pos + strlen("::"));
+    }
+    for (std::string& s : v.iter_mut()) {
+      if (size_t pos = s.find(" "); pos != std::string::npos) {
+        s = s.substr(pos + strlen(" "));
+      }
+    }
+    return v;
+  }();
+
+  std::ostringstream s;
+  if (type->isEnumeralType()) {
+    s << "enum ";
+  } else if (type->isStructureType()) {
+    s << "struct ";
+  } else if (type->isClassType()) {
+    s << "class ";
+  } else if (type->isUnionType()) {
+    s << "union ";
+  } else if (type->isTypedefNameType()) {
+    s << "typedef ";
+  }
+  bool add_colons = false;
+  for (std::string&& component : sus::move(split).into_iter()) {
+    if (add_colons) s << "::";
+    s << sus::move(component);
+    add_colons = true;
+  }
+  return sus::move(s).str();
 }
 
 inline std::string friendly_short_type_name(

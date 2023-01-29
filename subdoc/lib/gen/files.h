@@ -41,7 +41,7 @@ inline sus::Option<std::ofstream> open_file_for_writing(
 
 inline std::filesystem::path construct_html_file_path(
     std::filesystem::path root, sus::Slice<const Namespace> namespace_path,
-    sus::Slice<const std::string> class_path, std::string_view name) noexcept {
+    sus::Slice<const std::string> record_path, std::string_view name) noexcept {
   std::filesystem::path p = sus::move(root);
 
   std::ostringstream fname;
@@ -61,7 +61,8 @@ inline std::filesystem::path construct_html_file_path(
     }
   }
   // TODO: Add Iterator::reverse.
-  for (const auto& n : class_path.iter() /*.reverse()*/) {
+  for (size_t i = 0; i < record_path.len(); ++i) {
+    const std::string& n = record_path[record_path.len() - i - 1u];
     fname << n + "-";
   }
   fname << name;

@@ -76,6 +76,13 @@ struct TypeElement : public CommentElement {
                        sus::move(name)),
         record_path(sus::move(record_path)) {}
 
+  /// The records in which this type is nested, not including the type
+  /// itself, if it is a record.
+  ///
+  /// In this example, the record_path would be {S, R}.
+  /// ```
+  ///   struct R { struct S { struct T{}; }; };
+  /// ```
   sus::Vec<std::string> record_path;
 };
 
@@ -235,13 +242,6 @@ struct RecordElement : public TypeElement {
 
   // TODO: Link to all base classes.
 
-  /// The classes in which this class is nested.
-  ///
-  /// In this example, the class_path would be {S, R}.
-  /// ```
-  ///   struct R { struct S { struct T{}; }; };
-  /// ```
-  sus::Vec<std::string> class_path;
   RecordType record_type;
 
   std::unordered_map<RecordId, RecordElement, RecordId::Hash> records;
