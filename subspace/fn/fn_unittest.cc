@@ -54,6 +54,8 @@ struct MoveOnly {
   int i = 0;
 };
 
+// clang-format-off
+
 struct BaseClass {};
 struct SubClass : public BaseClass {};
 
@@ -67,7 +69,11 @@ BaseClass* b_b_function(BaseClass* b) { return b; }
 SubClass* s_b_function(BaseClass* b) { return static_cast<SubClass*>(b); }
 SubClass* s_s_function(SubClass* b) { return b; }
 
-// clang-format off
+// These emulate binding with sus_bind(), but don't use it cuz capturing lambdas in a constant
+// expression won't work.
+auto b_b_lambda = sus::fn::__private::SusBind([a = 1](BaseClass* b) -> BaseClass* { return b; });
+auto s_b_lambda = sus::fn::__private::SusBind([a = 1](BaseClass* b) -> SubClass* { return static_cast<SubClass*>(b); });
+auto s_s_lambda = sus::fn::__private::SusBind([a = 1](SubClass* b) -> SubClass* { return b; });
 
 // Fn types all have a never-value field.
 static_assert(sus::mem::NeverValueField<FnOnce<void()>>);
@@ -120,9 +126,14 @@ static_assert(!std::is_constructible_v<FnOnce<void()>, decltype([i = int(1)]() m
 static_assert(std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(s_b_function)>);
 static_assert(!std::is_constructible_v<Fn<void(BaseClass*)>, decltype(b_b_function)>);
 static_assert(!std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(b_b_function)>);
+static_assert(std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(s_b_lambda)>);
+static_assert(!std::is_constructible_v<Fn<void(BaseClass*)>, decltype(b_b_lambda)>);
+static_assert(!std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(b_b_lambda)>);
 // Similarly, argument types can't be converted to a different type.
 static_assert(std::is_constructible_v<Fn<SubClass*(SubClass*)>, decltype(s_s_function)>);
 static_assert(!std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(s_s_function)>);
+static_assert(std::is_constructible_v<Fn<SubClass*(SubClass*)>, decltype(s_s_lambda)>);
+static_assert(!std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(s_s_lambda)>);
 // But Fn type is compatible with convertible return and argument types in
 // opposite directions.
 // - If the return type Y of a lambda is convertible _to_ X, then Fn<X()> can be
@@ -132,8 +143,13 @@ static_assert(!std::is_constructible_v<Fn<SubClass*(BaseClass*)>, decltype(s_s_f
 //
 // In both cases, the Fn is more strict than the lambda, guaranteeing that the
 // lambda's requirements are met.
-static_assert(std::is_constructible_v<Fn<BaseClass*(BaseClass*)>, decltype(s_b_function)>);
-static_assert(std::is_constructible_v<Fn<SubClass*(SubClass*)>, decltype(s_b_function)>);
+static_assert(std::is_constructible_v<Fn<BaseClass*(BaseClass*)>, decltype(s_b_lambda)>);
+static_assert(std::is_constructible_v<Fn<SubClass*(SubClass*)>, decltype(s_b_lambda)>);
+// HOWEVER: When Fn is passed a function pointer, it stores a function pointer. C++20 does not yet
+// allow us to erase the type of that function pointer in a constexpr context. So the types in
+// the pointer must match exactly to the Fn's signature.
+static_assert(!std::is_constructible_v<Fn<BaseClass*(BaseClass*)>, decltype(s_b_function)>);
+static_assert(!std::is_constructible_v<Fn<SubClass*(SubClass*)>, decltype(s_b_function)>);
 
 // Lambdas with bound args can be passed with sus_bind(). Can use sus_bind0()
 // when there's no captured variables.

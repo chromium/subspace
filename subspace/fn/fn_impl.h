@@ -24,7 +24,7 @@
 namespace sus::fn {
 
 template <class R, class... CallArgs>
-template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
+template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
 FnOnce<R(CallArgs...)>::FnOnce(F ptr) noexcept
     : fn_ptr_(ptr), type_(__private::FnPointer) {
   ::sus::check(ptr != nullptr);

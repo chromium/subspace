@@ -166,7 +166,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
-  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   FnOnce(F ptr) noexcept;
 
   /// Construction from the output of `sus_bind()`.
@@ -191,7 +191,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// `sus::construct::From` trait implementation.
   //
   // For function pointers or lambdas without captures.
-  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return FnOnce(static_cast<R (*)(CallArgs...)>(fn));
   }
@@ -317,7 +317,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
-  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   FnMut(F ptr) noexcept : FnOnce<R(CallArgs...)>(::sus::move(ptr)) {}
 
   /// Construction from the output of `sus_bind()`.
@@ -347,7 +347,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
   /// lambdas without captures.
   ///
   /// #[doc.overloads=from.fnpointer]
-  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return FnMut(static_cast<R (*)(CallArgs...)>(fn));
   }
@@ -441,7 +441,7 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
-  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   Fn(F ptr) noexcept : FnMut<R(CallArgs...)>(ptr) {}
 
   /// Construction from the output of `sus_bind()`.
@@ -469,7 +469,7 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
 
   /// `sus::construct::From` trait implementation for function pointers or
   /// lambdas without captures.
-  template <::sus::fn::callable::FunctionPointerReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
     return Fn(static_cast<R (*)(CallArgs...)>(fn));
   }
