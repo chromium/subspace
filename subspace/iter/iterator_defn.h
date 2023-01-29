@@ -23,6 +23,7 @@
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
+#include "subspace/construct/into.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/option/option.h"
@@ -180,13 +181,14 @@ class [[nodiscard]] Iterator final : public I {
   ///
   /// The returned iterator's type is whatever is returned by the closure.
   template <class MapFn, int&..., class R = std::invoke_result_t<MapFn, Item&&>>
-    requires(!std::is_void_v<R>)
+    requires(::sus::construct::Into<MapFn, ::sus::fn::FnMut<R(Item&&)>> &&
+             !std::is_void_v<R>)
   Iterator<Map<Item, R, ::sus::mem::size_of<I>(), alignof(I)>> map(
       MapFn fn) && noexcept
     requires(::sus::mem::relocate_by_memcpy<I>)
   {
     // TODO: Move out of line.
-    return {::sus::move(fn), make_sized_iterator(::sus::move(*this))};
+    return {sus::into(::sus::move(fn)), make_sized_iterator(::sus::move(*this))};
   }
 
   /// Creates an iterator which uses a closure to determine if an element should

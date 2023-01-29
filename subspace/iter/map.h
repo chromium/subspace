@@ -43,7 +43,7 @@ class Map : public IteratorBase<Item> {
   }
 
  protected:
-  Map(MapFn&& fn, InnerSizedIter&& next_iter)
+  Map(MapFn fn, InnerSizedIter&& next_iter)
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
  private:
