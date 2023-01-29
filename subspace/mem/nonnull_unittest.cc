@@ -280,4 +280,34 @@ TEST(NonNull, Ord) {
             NonNull<Base>::with(static_cast<Base&>(s[1])));
 }
 
+TEST(NonNull, OperatorArrow) {
+  struct S {
+    i32 i = 3;
+  } s;
+
+  // Mutable.
+  {
+    auto n = NonNull<S>::with(s);
+    n->i += 1;
+    EXPECT_EQ(n.operator->(), &s);
+    EXPECT_EQ(s.i, 4);
+  }
+
+  // Const.
+  {
+    const S& cs = s;
+    auto n = NonNull<const S>::with(cs);
+    EXPECT_EQ(n.operator->(), &cs);
+    EXPECT_EQ(n->i, 4);
+  }
+}
+
+TEST(NonNull, TypeDeduction) {
+  i32 i = 3;
+  NonNull<i32> nm = sus::mem::nonnull(i);
+  EXPECT_EQ(nm.as_ptr(), &i);
+  NonNull<const i32> nc = sus::mem::nonnull(i);
+  EXPECT_EQ(nc.as_ptr(), &i);
+}
+
 }  // namespace
