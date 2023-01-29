@@ -126,7 +126,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext());
 
     Comment comment = make_db_comment(decl, raw_comment);
-    auto ce = RecordElement(
+    auto re = RecordElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
         decl->getNameAsString(),
         iter_record_path(parent_record_decl)
@@ -141,19 +141,19 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     if (clang::isa<clang::TranslationUnitDecl>(context)) {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
-      add_comment_to_db(decl, sus::move(ce), mref(parent.records));
+      add_record_to_db(decl, sus::move(re), mref(parent.records));
     } else if (clang::isa<clang::NamespaceDecl>(context)) {
       NamespaceElement& parent =
           docs_db_
               .find_namespace_mut(clang::cast<clang::NamespaceDecl>(context))
               .unwrap();
-      add_comment_to_db(decl, sus::move(ce), mref(parent.records));
+      add_record_to_db(decl, sus::move(re), mref(parent.records));
     } else {
       assert(clang::isa<clang::RecordDecl>(context));
       if (sus::Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
-        add_comment_to_db(decl, sus::move(ce), mref(parent->records));
+        add_record_to_db(decl, sus::move(re), mref(parent->records));
       }
     }
     return true;
@@ -256,6 +256,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto fe = FunctionElement(iter_namespace_path(decl).collect_vec(),
                               sus::move(comment), decl->getNameAsString(),
                               sus::move(signature), decl->getReturnType());
+    fe.return_type_element = docs_db_.find_type(decl->getReturnType());
 
     // TODO: It's possible to overload a method in a base class. What should we
     // show then?
@@ -406,6 +407,30 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
   }
 
+  template <class ElementT, class MapT>
+    requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
+  void add_record_to_db(clang::RecordDecl* decl, ElementT db_element,
+                         MapT& db_map) noexcept {
+    auto key = RecordId(*decl);
+    auto it = db_map.find(key);
+    if (it == db_map.end()) {
+      db_map.emplace(key, std::move(db_element));
+    } else if (!it->second.has_comment()) {
+      // Steal the comment.
+      sus::mem::swap(db_map.at(key).comment, db_element.comment);
+    } else if (!db_element.has_comment()) {
+      // Leave the existing comment in place, do nothing.
+    } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
+      // We already visited this thing, from another translation unit.
+    } else {
+      auto& ast_cx = decl->getASTContext();
+      const ElementT& old_element = it->second;
+      ast_cx.getDiagnostics()
+          .Report(db_element.comment.attrs.location,
+                  diag_ids_.superceded_comment)
+          .AddString(old_element.comment.begin_loc);
+    }
+  }
   template <class ElementT, class MapT>
     requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
   void add_comment_to_db(clang::Decl* decl, ElementT db_element,

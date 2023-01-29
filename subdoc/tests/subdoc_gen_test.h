@@ -172,10 +172,10 @@ class SubDocGenTest : public testing::Test {
         std::string expected = read_file(expected_path).unwrap();
         std::string actual = read_file(actual_path).unwrap();
         if (expected != actual) {
-          ADD_FAILURE() << "Files differ: " << expected_path.string() << " vs "
-                        << actual_path.string() << "\n";
           llvm::errs() << "Expected:\n" << expected << "\n";
           llvm::errs() << "Actual:\n" << actual << "\n";
+          ADD_FAILURE() << "Files differ: " << expected_path.string() << " vs "
+                        << actual_path.string() << "\n";
           return false;
         }
       }
