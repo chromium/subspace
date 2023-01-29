@@ -23,15 +23,46 @@ namespace sus::fn::callable {
 
 template <class T>
 concept FunctionPointer = requires(T t) {
-                            { std::is_pointer_v<decltype(+t)> };
-                          };
+  { std::is_pointer_v<decltype(+t)> };
+};
 
+namespace __private {
+template <class R, class... Args>
+void CallablePointer(R (*)(Args...)) noexcept {}
+}  // namespace __private
+
+/// Verifies that T is a function pointer (or captureless lambda) that returns
+/// a type convertible to `R` when called with `Args`.
+///
+/// This concept allows conversion of `Args` to the function's actual receiving
+/// types and conversion from the function's return type to `R`.
+///
 // clang-format off
 template <class T, class R, class... Args>
 concept FunctionPointerReturns = (
     FunctionPointer<T> &&
-    requires (T t, Args&&... args) {
-        { t(forward<Args>(args)...) } -> std::convertible_to<R>;
+    std::convertible_to<std::invoke_result_t<T, Args...>, R> &&
+    requires (T t) {
+        __private::CallablePointer(+t);
+    }
+);
+// clang-format on
+
+/// Verifies that T is a function pointer (or captureless lambda) that receives
+/// exactly `Args` as its parameters without conversion, and returns `R` without
+/// conversion.
+///
+/// This is concept is useful if you intend to store the pointer in a strongly
+/// typed function pointer, as the types must match exactly. If you only intend
+/// to call the function pointer, prefer `FunctionPointerReturns` which allows
+/// appropriate conversions.
+//
+// clang-format off
+template <class T, class R, class... Args>
+concept FunctionPointerMatches = (
+    FunctionPointer<T> &&
+    requires (T t) {
+        __private::CallablePointer<R, Args...>(+t);
     }
 );
 // clang-format on
@@ -41,7 +72,7 @@ template <class T, class... Args>
 concept FunctionPointerWith = (
     FunctionPointer<T> &&
     requires (T t, Args&&... args) {
-        t(forward<Args>(args)...);
+        t(::sus::mem::forward<Args>(args)...);
     }
 );
 // clang-format on
@@ -65,7 +96,7 @@ template <class T, class R, class... Args>
 concept CallableObjectReturnsConst = (
     !FunctionPointer<T> &&
     requires (const T& t, Args&&... args) {
-        { t(forward<Args>(args)...) } -> std::convertible_to<R>;
+        { t(::sus::mem::forward<Args>(args)...) } -> std::convertible_to<R>;
     }
 );
 
@@ -73,7 +104,7 @@ template <class T, class... Args>
 concept CallableObjectWithConst = (
     !FunctionPointer<T> &&
     requires (const T& t, Args&&... args) {
-     t(forward<Args>(args)...);
+     t(::sus::mem::forward<Args>(args)...);
     }
 );
 
@@ -81,7 +112,7 @@ template <class T, class R, class... Args>
 concept CallableObjectReturnsMut = (
     !FunctionPointer<T> &&
     requires (T& t, Args&&... args) {
-        { t(forward<Args>(args)...) } -> std::convertible_to<R>;
+        { t(::sus::mem::forward<Args>(args)...) } -> std::convertible_to<R>;
     }
 );
 
@@ -89,7 +120,7 @@ template <class T, class... Args>
 concept CallableObjectWithMut = (
     !FunctionPointer<T> &&
     requires (T& t, Args&&... args) {
-        t(forward<Args>(args)...);
+        t(::sus::mem::forward<Args>(args)...);
     }
 );
 // clang-format on
