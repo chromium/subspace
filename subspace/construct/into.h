@@ -26,9 +26,10 @@
 namespace sus::construct {
 
 /// A concept that declares `FromType` can be converted to `ToType`, through the
-/// `From` concept.
+/// `From` concept or through an identity transformation.
 ///
-/// When true, `ToType::from(FromType)` can be used to construct `ToType`.
+/// When true, `ToType::from(FromType)` can be used to construct `ToType`,
+/// or `ToType` is the same as `FromType`.
 ///
 /// This is the inverse of the `From` concept, meant to be used on methods that
 /// want to receive any type and which will explicitly convert what they are
@@ -38,6 +39,7 @@ namespace sus::construct {
 /// implementing the `From<T>` trait on a different type.
 ///
 /// # Templates
+///
 /// To receive `sus::into()` correctly for a templated function argument:
 /// - Avoid std::same_as<T>, use std::convertible_to<T> instead, as this will
 ///   accept the output of sus::into().
@@ -56,6 +58,7 @@ namespace sus::construct {
 ///   using `sus::into()`.
 ///
 /// # Arrays
+///
 /// Receiving an array is possible by implementing `from()` as a templated
 /// method, with a `size_t` template parameter for the size of the incoming
 /// array. For example:
@@ -68,7 +71,7 @@ namespace sus::construct {
 /// ```
 /// Then `sus::array_into(an_array)` can be used to construct `Slice<T>`.
 template <class FromType, class ToType>
-concept Into = ::sus::construct::From<ToType, FromType>;
+concept Into = ::sus::construct::From<ToType, FromType> || std::same_as<ToType, FromType>;
 
 /// Converts from the given value to whatever a receiver requires.
 ///

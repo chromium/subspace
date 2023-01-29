@@ -23,7 +23,13 @@ struct IntoRef final {
   [[nodiscard]] constexpr IntoRef(FromType&& from) noexcept
       : from_(static_cast<FromType&&>(from)) {}
 
+  template <std::same_as<FromType> ToType>
+  constexpr operator ToType() && noexcept {
+    return static_cast<ToType&&>(from_);
+  }
+
   template <::sus::construct::From<FromType> ToType>
+    requires(!std::same_as<FromType, ToType>)
   constexpr operator ToType() && noexcept {
     return ToType::from(static_cast<FromType&&>(from_));
   }
@@ -41,7 +47,13 @@ struct IntoRefArray final {
   [[nodiscard]] constexpr IntoRefArray(FromType (&from)[N]) noexcept
       : from_(from) {}
 
+  template <std::same_as<FromType (&)[N]> ToType>
+  constexpr operator ToType() && noexcept {
+    return static_cast<ToType&&>(from_);
+  }
+
   template <::sus::construct::From<FromType (&)[N]> ToType>
+    requires(!std::same_as<FromType, ToType>)
   constexpr operator ToType() && noexcept {
     return ToType::template from<N>(from_);
   }

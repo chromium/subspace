@@ -24,7 +24,8 @@ namespace sus::construct {
 /// `ToType::from(FromType)`.
 ///
 /// This concept is rarely used directly, instead prefer to use the
-/// `sus::construct::Into` concept.
+/// `sus::construct::Into` concept, as it also supports identity
+/// transformations.
 ///
 /// When a type is `From<T, O>`, it is also `Into<O, T>`. Then a variable `o` of
 /// type `O` can be explicitly converted to `T`, with type deduction, via

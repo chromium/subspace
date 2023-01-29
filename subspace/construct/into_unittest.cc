@@ -102,10 +102,6 @@ struct Counter {
   Counter(const Counter& c) : copies(c.copies), moves(c.moves) { copies += 1; }
   Counter(Counter&& c) : copies(c.copies), moves(c.moves) { moves += 1; }
 
-  static auto from(Counter&& c) -> Counter {
-    return Counter(static_cast<Counter&&>(c));
-  }
-
   int& copies;
   int& moves;
 };
