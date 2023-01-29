@@ -18,6 +18,7 @@
 #include "subspace/convert/subclass.h"
 #include "subspace/macros/nonnull.h"
 #include "subspace/marker/unsafe.h"
+#include "subspace/mem/__private/nonnull_marker.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/never_value.h"
 #include "subspace/mem/relocate.h"
@@ -38,7 +39,8 @@ namespace sus::mem {
 /// TODO: Make a NonNullArray type? https://godbolt.org/z/3vW3xsz5h
 template <class T>
   requires(!std::is_reference_v<T>)
-struct [[sus_trivial_abi]] NonNull {
+class [[sus_trivial_abi]] NonNull {
+ public:
   /// Constructs a `NonNull<T>` from a reference to `T`.
   static constexpr inline NonNull with(T& t) { return NonNull(addressof(t)); }
 
@@ -106,6 +108,17 @@ struct [[sus_trivial_abi]] NonNull {
   NonNull(const NonNull&) = default;
   /// NonNull<T> is copyable, so this is the copy assignment operator.
   NonNull& operator=(const NonNull&) = default;
+
+  /// Gives access to the object pointed to by NonNull.
+  ///
+  /// Mutable access is only given is NonNull is not const and the pointer
+  /// within is not const.
+  const T* operator->() const { return ptr_; }
+  T* operator->()
+    requires(!std::is_const_v<T>)
+  {
+    return ptr_;
+  }
 
   /// Returns a const reference to the pointee.
   constexpr inline const T& as_ref() const { return *ptr_; }
@@ -184,6 +197,16 @@ template <class T, class U>
 constexpr inline auto operator<=>(const NonNull<T>& l,
                                   const NonNull<U>& r) noexcept {
   return l.as_ptr() <=> r.as_ptr();
+}
+
+/// Used to construct a NonNull<T>, while providing type deduction.
+///
+/// Calling nonnull() produces a hint to make an NonNull<T> but does not
+/// actually construct NonNull<T>. This is because the type `T` is not known
+/// until the construction is explicitly requested.
+template <class T>
+constexpr inline __private::NonNullMarker<T> nonnull(T& t) {
+  return __private::NonNullMarker<T>(t);
 }
 
 }  // namespace sus::mem
