@@ -117,7 +117,7 @@ void generate_record_fields(
         field_type_span.write_text("volatile");
       }
       {
-        auto field_type_link = field_div.open_a(HtmlWriter::SingleLine);
+        auto field_type_link = field_div.open_a(HtmlWriter::MultiLine);
         field_type_link.add_class("type-name");
         field_type_link.add_title(fe.type_name);
         if (fe.type_element.is_some()) {

@@ -88,7 +88,7 @@ void generate_namespace_namespaces(
 
 void generate_namespace_records(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<const sus::Tuple<std::string_view, UniqueSymbol>> records,
+    sus::Slice<const sus::Tuple<std::string_view, const RecordId&>> records,
     RecordType record_type) {
   if (records.is_empty()) return;
 
@@ -111,8 +111,8 @@ void generate_namespace_records(
     }
   }
   {
-    for (auto&& [name, uniq] : records) {
-      generate_record_reference(section_div, element.records.at(uniq));
+    for (auto&& [name, key] : records) {
+      generate_record_reference(section_div, element.records.at(key));
     }
   }
 }
@@ -159,8 +159,8 @@ void generate_namespace(const NamespaceElement& element,
 
   {
     sus::Vec<sus::Tuple<std::string_view, NamespaceId>> sorted;
-    for (const auto& [uniq, sub_element] : element.namespaces) {
-      sorted.push(sus::tuple(sub_element.name, uniq));
+    for (const auto& [key, sub_element] : element.namespaces) {
+      sorted.push(sus::tuple(sub_element.name, key));
     }
     sorted.sort_unstable_by(
         [](const sus::Tuple<std::string_view, NamespaceId>& a,
@@ -173,27 +173,27 @@ void generate_namespace(const NamespaceElement& element,
   }
 
   {
-    sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> classes;
-    sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> unions;
-    for (const auto& [uniq, sub_element] : element.records) {
+    sus::Vec<sus::Tuple<std::string_view, const RecordId&>> classes;
+    sus::Vec<sus::Tuple<std::string_view, const RecordId&>> unions;
+    for (const auto& [key, sub_element] : element.records) {
       switch (sub_element.record_type) {
         case RecordType::Class: [[fallthrough]];
         case RecordType::Struct:
-          classes.push(sus::tuple(sub_element.name, uniq));
+          classes.push(sus::tuple(sub_element.name, key));
           break;
         case RecordType::Union:
-          unions.push(sus::tuple(sub_element.name, uniq));
+          unions.push(sus::tuple(sub_element.name, key));
           break;
       }
     }
     classes.sort_unstable_by(
-        [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
-           const sus::Tuple<std::string_view, UniqueSymbol>& b) {
+        [](const sus::Tuple<std::string_view, const RecordId&>& a,
+           const sus::Tuple<std::string_view, const RecordId&>& b) {
           return a.get_ref<0>() <=> b.get_ref<0>();
         });
     unions.sort_unstable_by(
-        [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
-           const sus::Tuple<std::string_view, UniqueSymbol>& b) {
+        [](const sus::Tuple<std::string_view, const RecordId&>& a,
+           const sus::Tuple<std::string_view, const RecordId&>& b) {
           return a.get_ref<0>() <=> b.get_ref<0>();
         });
 

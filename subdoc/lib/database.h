@@ -112,6 +112,7 @@ struct FunctionElement : public CommentElement {
     });
   }
 
+  sus::Option<const TypeElement&> return_type_element;
   std::string return_type_name;
   std::string return_short_type_name;
 
@@ -184,8 +185,25 @@ struct NamespaceId {
   };
 };
 
+struct RecordId {
+  explicit RecordId(std::string name) : name(sus::move(name)) {}
+  explicit RecordId(std::string_view name) : name(name) {}
+  explicit RecordId(const clang::RecordDecl& decl)
+      : name(decl.getNameAsString()) {}
+
+  std::string name;
+
+  bool operator==(const RecordId&) const = default;
+
+  struct Hash {
+    std::size_t operator()(const RecordId& k) const {
+      return std::hash<std::string>()(k.name);
+    }
+  };
+};
+
 struct FunctionId {
-  FunctionId(std::string name, bool is_static, u64 overload_set)
+  explicit FunctionId(std::string name, bool is_static, u64 overload_set)
       : name(sus::move(name)),
         is_static(is_static),
         overload_set(overload_set) {}
@@ -226,7 +244,7 @@ struct RecordElement : public TypeElement {
   sus::Vec<std::string> class_path;
   RecordType record_type;
 
-  std::unordered_map<UniqueSymbol, RecordElement> records;
+  std::unordered_map<RecordId, RecordElement, RecordId::Hash> records;
   std::unordered_map<UniqueSymbol, FieldElement> fields;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> deductions;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> ctors;
@@ -318,7 +336,7 @@ struct NamespaceElement : public CommentElement {
   Namespace namespace_name;
   std::unordered_map<NamespaceId, NamespaceElement, NamespaceId::Hash>
       namespaces;
-  std::unordered_map<UniqueSymbol, RecordElement> records;
+  std::unordered_map<RecordId, RecordElement, RecordId::Hash> records;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> functions;
 
   bool has_any_comments() const noexcept {
@@ -625,7 +643,7 @@ struct Database {
         return sus::none();
       }
 
-      sus::Option<const RecordElement&> record_cursor = [&]() {
+      auto record_cursor = [&]() -> sus::Option<const RecordElement&> {
         if (auto* containing_record_decl =
                 clang::dyn_cast<clang::RecordDecl>(tag->getDeclContext())) {
           const RecordElement* cursor = nullptr;
@@ -637,14 +655,20 @@ struct Database {
             std::string_view name = v[v.len() - i - 1u];
 
             if (i == 0u) {
-              // if (ns_cursor->records.find(unique_from_decl()))
-              // cursor =
-              (void)cursor;
+              auto r_it = ns_cursor->records.find(RecordId(name));
+              if (r_it == ns_cursor->records.end()) {
+                return sus::none();
+              }
+              cursor = &r_it->second;
+            } else {
+              auto r_it = cursor->records.find(RecordId(name));
+              if (r_it == cursor->records.end()) {
+                return sus::none();
+              }
+              cursor = &r_it->second;
             }
           }
-
-          // return sus::some(*cursor);
-          return sus::none();
+          return sus::some(*cursor);
         } else {
           return sus::none();
         }
@@ -652,13 +676,11 @@ struct Database {
 
       if (auto* tag_as_record_decl = clang::dyn_cast<clang::RecordDecl>(tag)) {
         if (record_cursor.is_some()) {  // The TagDecl is located in a record.
-          auto it =
-              record_cursor->records.find(unique_from_decl(tag_as_record_decl));
+          auto it = record_cursor->records.find(RecordId(*tag_as_record_decl));
           if (it == record_cursor->records.end()) return sus::none();
           return sus::some(it->second);
         } else {  // The TagDecl is located in a namespace.
-          auto it =
-              ns_cursor->records.find(unique_from_decl(tag_as_record_decl));
+          auto it = ns_cursor->records.find(RecordId(*tag_as_record_decl));
           if (it == ns_cursor->records.end()) return sus::none();
           return sus::some(it->second);
         }
@@ -757,13 +779,12 @@ struct Database {
       if (sus::Option<RecordElement&> parent_element =
               find_record_mut_impl(parent, ne);
           parent_element.is_some()) {
-        return sus::some(parent_element->records.at(unique_from_decl(rdecl)));
+        return sus::some(parent_element->records.at(RecordId(*rdecl)));
       } else {
         return sus::none();
       }
     } else {
-      if (auto it = ne.records.find(unique_from_decl(rdecl));
-          it != ne.records.end()) {
+      if (auto it = ne.records.find(RecordId(*rdecl)); it != ne.records.end()) {
         return sus::some(it->second);
       } else {
         return sus::none();

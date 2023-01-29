@@ -17,6 +17,7 @@
 #include <sstream>
 
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/gen/files.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
 #include "subspace/prelude.h"
@@ -39,10 +40,19 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
       static_span.write_text("static");
     }
     {
-      auto return_type_span = overload_div.open_span();
-      return_type_span.add_class("type-name");
-      return_type_span.add_title(element.return_type_name);
-      return_type_span.write_text(element.return_short_type_name);
+      auto return_type_link = overload_div.open_a(HtmlWriter::MultiLine);
+      return_type_link.add_class("type-name");
+      return_type_link.add_title(element.return_type_name);
+      if (element.return_type_element.is_some()) {
+        return_type_link.add_href(
+            construct_html_file_path(
+                std::filesystem::path(),
+                element.return_type_element->namespace_path.as_ref(),
+                element.return_type_element->record_path.as_ref(),
+                element.return_type_element->name)
+                .string());
+      }
+      return_type_link.write_text(element.return_short_type_name);
     }
     {
       auto name_anchor = overload_div.open_a(HtmlWriter::SingleLine);
