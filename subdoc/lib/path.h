@@ -19,6 +19,7 @@
 #include "subdoc/llvm.h"
 #include "subspace/choice/choice.h"
 #include "subspace/containers/vec.h"
+#include "subspace/iter/iterator.h"
 #include "subspace/prelude.h"
 
 namespace subdoc {
@@ -83,33 +84,95 @@ inline clang::NamespaceDecl* find_nearest_namespace(
   return nullptr;
 }
 
-inline sus::Vec<std::string> collect_record_path(
-    clang::NamedDecl* decl) noexcept {
-  auto v = sus::Vec<std::string>();
-  v.push(decl->getNameAsString());
+namespace __private {
 
-  clang::DeclContext* cx = decl->getDeclContext();
-  while (clang::isa<clang::RecordDecl>(cx)) {
-    decl = clang::dyn_cast<clang::RecordDecl>(cx);
-    v.push(decl->getNameAsString());
-    cx = cx->getParent();
+class RecordIter : public sus::iter::IteratorBase<std::string_view> {
+ public:
+  static auto with(clang::RecordDecl* decl) noexcept {
+    return sus::iter::Iterator<RecordIter>(decl);
   }
-  return v;
+
+  sus::Option<std::string_view> next() noexcept final {
+    if (next_decl_) {
+      clang::RecordDecl* cur_decl = next_decl_;
+
+      clang::DeclContext* cx = cur_decl->getDeclContext();
+      if (clang::isa<clang::RecordDecl>(cx)) {
+        next_decl_ = clang::dyn_cast<clang::RecordDecl>(cx);
+      } else {
+        next_decl_ = nullptr;
+      }
+      return sus::some(std::string_view(cur_decl->getName()));
+    } else {
+      return sus::none();
+    }
+  }
+
+ protected:
+  RecordIter(clang::RecordDecl* decl) noexcept : next_decl_(decl) {}
+
+ private:
+  clang::RecordDecl* next_decl_;
+
+  sus_class_trivially_relocatable(unsafe_fn, decltype(next_decl_));
+};
+
+}  // namespace __private
+
+/// Returns an iterator over the record `decl` and any records it is nested
+/// within, ordered from inside to outside.
+///
+/// The iterator returns std::string_view references to string in the clang
+/// AST, which are valid as long as the RecordDecl's pointee is valid.
+inline auto iter_record_path(clang::RecordDecl* decl) {
+  return __private::RecordIter::with(decl);
 }
 
-inline sus::Vec<Namespace> collect_namespace_path(clang::Decl* decl) noexcept {
-  clang::NamespaceDecl* ndecl = find_nearest_namespace(decl);
+namespace __private {
 
-  auto v = sus::Vec<Namespace>();
-  while (ndecl) {
-    if (ndecl->isAnonymousNamespace())
-      v.push(sus::choice<NamespaceType::Anonymous>());
-    else
-      v.push(sus::choice<NamespaceType::Named>(ndecl->getNameAsString()));
-    ndecl = clang::dyn_cast<clang::NamespaceDecl>(ndecl->getParent());
+class NamespaceIter : public sus::iter::IteratorBase<Namespace> {
+ public:
+  static auto with(clang::Decl* decl) noexcept {
+    return sus::iter::Iterator<NamespaceIter>(decl);
   }
-  v.push(sus::choice<NamespaceType::Global>());
-  return v;
+
+  sus::Option<Namespace> next() noexcept final {
+    if (next_ndecl_) {
+      clang::NamespaceDecl* cur_ndecl = next_ndecl_;
+      next_ndecl_ =
+          clang::dyn_cast<clang::NamespaceDecl>(cur_ndecl->getParent());
+      if (cur_ndecl->isAnonymousNamespace()) {
+        return sus::some(sus::choice<NamespaceType::Anonymous>());
+      } else {
+        return sus::some(
+            sus::choice<NamespaceType::Named>(cur_ndecl->getNameAsString()));
+      }
+    } else if (!done_) {
+      done_ = true;
+      return sus::some(sus::choice<NamespaceType::Global>());
+    } else {
+      return sus::none();
+    }
+  }
+
+ protected:
+  NamespaceIter(clang::Decl* decl) noexcept
+      : next_ndecl_(find_nearest_namespace(decl)) {}
+
+ private:
+  bool done_ = false;
+  clang::NamespaceDecl* next_ndecl_;
+
+  sus_class_trivially_relocatable(unsafe_fn, decltype(done_),
+                                  decltype(next_ndecl_));
+};
+
+}  // namespace __private
+
+/// Returns an iterator over the namespace that `decl` is in, ordered from the
+/// nearest inner namespace out to the global namespace.
+inline auto iter_namespace_path(clang::Decl* decl) {
+  return __private::NamespaceIter::with(decl);
 }
 
 inline bool path_contains_namespace(clang::Decl* decl, Namespace n) noexcept {
