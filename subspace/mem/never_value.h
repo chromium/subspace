@@ -53,8 +53,10 @@ namespace __private {
 template <class T>
 struct NeverValueAccess {
   /// Whether the type `T` has a never-value field.
-  static constexpr bool has_field =
-      requires { std::declval<T&>().Sus_Unsafe_NeverValueSetNeverValue(); };
+  static constexpr bool has_field = requires {
+    std::declval<T&>()._sus_Unsafe_NeverValueSetNeverValue(
+        ::sus::marker::unsafe_fn);
+  };
 
   constexpr NeverValueAccess() = default;
 
@@ -66,7 +68,7 @@ struct NeverValueAccess {
   constexpr sus_always_inline bool is_constructed() const noexcept
     requires(has_field)
   {
-    return t_.Sus_Unsafe_NeverValueIsConstructed();
+    return t_._sus_Unsafe_NeverValueIsConstructed(::sus::marker::unsafe_fn);
   }
 
   /// Sets the never-value field to the never-value.
@@ -74,7 +76,7 @@ struct NeverValueAccess {
       ::sus::marker::UnsafeFnMarker) noexcept
     requires(has_field)
   {
-    t_.Sus_Unsafe_NeverValueSetNeverValue();
+    t_._sus_Unsafe_NeverValueSetNeverValue(::sus::marker::unsafe_fn);
   }
 
   /// Sets the never-value field to the destroy-value.
@@ -82,7 +84,7 @@ struct NeverValueAccess {
       ::sus::marker::UnsafeFnMarker) noexcept
     requires(has_field)
   {
-    t_.Sus_Unsafe_NeverValueSetDestroyValue();
+    t_._sus_Unsafe_NeverValueSetDestroyValue(::sus::marker::unsafe_fn);
   }
 
   constexpr sus_always_inline const T& as_inner() const { return t_; }
@@ -140,13 +142,16 @@ concept NeverValueField = __private::NeverValueAccess<T>::has_field;
   template <class>                                                             \
   friend struct ::sus::mem::__private::NeverValueAccess;                       \
                                                                                \
-  constexpr bool Sus_Unsafe_NeverValueIsConstructed() const noexcept {         \
+  constexpr bool _sus_Unsafe_NeverValueIsConstructed(                           \
+      ::sus::marker::UnsafeFnMarker) const noexcept {                          \
     return field_name != never_value;                                          \
   }                                                                            \
-  constexpr void Sus_Unsafe_NeverValueSetNeverValue() noexcept {               \
+  constexpr void _sus_Unsafe_NeverValueSetNeverValue(                           \
+      ::sus::marker::UnsafeFnMarker) noexcept {                                \
     field_name = never_value;                                                  \
   }                                                                            \
-  constexpr void Sus_Unsafe_NeverValueSetDestroyValue() noexcept {             \
+  constexpr void _sus_Unsafe_NeverValueSetDestroyValue(                         \
+      ::sus::marker::UnsafeFnMarker) noexcept {                                \
     field_name = destroy_value;                                                \
   }                                                                            \
   static_assert(true)
