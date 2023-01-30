@@ -84,8 +84,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
     Comment comment = make_db_comment(decl, raw_comment);
-    auto ne = NamespaceElement(iter_namespace_path(decl).collect_vec(),
-                               sus::move(comment), decl->getNameAsString());
+    auto ne =
+        NamespaceElement(iter_namespace_path(decl).collect_vec(),
+                         sus::move(comment), decl->getNameAsString(),
+                         decl->getASTContext().getSourceManager().getFileOffset(
+                             decl->getLocation()));
     NamespaceElement& parent = [&]() -> NamespaceElement& {
       clang::DeclContext* context = decl->getDeclContext();
       // TODO: Save the linkage spec (`extern "C"`) so we can show it.
@@ -132,7 +135,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         iter_record_path(parent_record_decl)
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
-        type);
+        type,
+        decl->getASTContext().getSourceManager().getFileOffset(
+            decl->getLocation()));
 
     clang::DeclContext* context = decl->getDeclContext();
     // TODO: Save the linkage spec (`extern "C"`) so we can show it.
@@ -174,7 +179,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
         // Static data members are found in VisitVarDecl.
-        FieldElement::NonStatic);
+        FieldElement::NonStatic,
+        decl->getASTContext().getSourceManager().getFileOffset(
+            decl->getLocation()));
     fe.type_element = docs_db_.find_type(decl->getType());
 
     if (sus::Option<RecordElement&> parent =
@@ -201,9 +208,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         iter_record_path(record_decl)
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
-
         // NonStatic data members are found in VisitFieldDecl.
-        FieldElement::Static);
+        FieldElement::Static,
+        decl->getASTContext().getSourceManager().getFileOffset(
+            decl->getLocation()));
 
     if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
             clang::cast<clang::RecordDecl>(decl->getDeclContext()));
@@ -253,9 +261,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       }
     }
     Comment comment = make_db_comment(decl, raw_comment);
-    auto fe = FunctionElement(iter_namespace_path(decl).collect_vec(),
-                              sus::move(comment), decl->getNameAsString(),
-                              sus::move(signature), decl->getReturnType());
+    auto fe = FunctionElement(
+        iter_namespace_path(decl).collect_vec(), sus::move(comment),
+        decl->getNameAsString(), sus::move(signature), decl->getReturnType(),
+        decl->getASTContext().getSourceManager().getFileOffset(
+            decl->getLocation()));
     fe.return_type_element = docs_db_.find_type(decl->getReturnType());
 
     // TODO: It's possible to overload a method in a base class. What should we
@@ -410,7 +420,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   template <class ElementT, class MapT>
     requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
   void add_record_to_db(clang::RecordDecl* decl, ElementT db_element,
-                         MapT& db_map) noexcept {
+                        MapT& db_map) noexcept {
     auto key = RecordId(*decl);
     auto it = db_map.find(key);
     if (it == db_map.end()) {

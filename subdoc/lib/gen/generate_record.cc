@@ -29,9 +29,9 @@ namespace subdoc::gen {
 namespace {
 
 using SortedFunctionByName =
-    sus::Tuple<std::string_view, std::string_view, FunctionId>;
+    sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedFieldByName =
-    sus::Tuple<std::string_view, std::string_view, UniqueSymbol>;
+    sus::Tuple<std::string_view, u32, UniqueSymbol>;
 
 void generate_record_overview(HtmlWriter::OpenDiv& record_div,
                               const RecordElement& element) {
@@ -99,7 +99,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
                                                : "Data Members");
   }
   {
-    for (auto&& [name, comment_loc, field_unique_symbol] : fields) {
+    for (auto&& [name, sort_key, field_unique_symbol] : fields) {
       const FieldElement& fe = element.fields.at(field_unique_symbol);
 
       auto field_div = section_div.open_div();
@@ -171,7 +171,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
                                                  : "Methods");
   }
   {
-    for (auto&& [name, comment_loc, function_id] : methods) {
+    for (auto&& [name, sort_key, function_id] : methods) {
       generate_function(section_div, element.methods.at(function_id),
                         static_methods);
     }
@@ -204,11 +204,11 @@ void generate_record(const RecordElement& element,
     switch (field_element.is_static) {
       case FieldElement::Static:
         sorted_static_fields.push(sus::tuple(
-            field_element.name, field_element.comment.begin_loc, symbol));
+            field_element.name, field_element.sort_key, symbol));
         break;
       case FieldElement::NonStatic:
         sorted_fields.push(sus::tuple(field_element.name,
-                                      field_element.comment.begin_loc, symbol));
+                                      field_element.sort_key, symbol));
         break;
     }
   }
@@ -235,10 +235,10 @@ void generate_record(const RecordElement& element,
   for (const auto& [method_id, method_element] : element.methods) {
     if (method_id.is_static) {
       sorted_static_methods.push(sus::tuple(
-          method_element.name, method_element.comment.begin_loc, method_id));
+          method_element.name, method_element.sort_key, method_id));
     } else {
       sorted_methods.push(sus::tuple(
-          method_element.name, method_element.comment.begin_loc, method_id));
+          method_element.name, method_element.sort_key, method_id));
     }
   }
   sorted_static_methods.sort_unstable_by(
