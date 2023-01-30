@@ -295,7 +295,7 @@ class Option final {
   /// Returns whether the Option currently contains a value.
   ///
   /// If there is a value present, it can be extracted with `unwrap()` or
-  /// expect()`, or can be accessed through `operator->` and `operator*`.
+  /// `expect()`, or can be accessed through `operator->` and `operator*`.
   constexpr bool is_some() const noexcept { return t_.state() == Some; }
   /// Returns whether the Option is currently empty, containing no value.
   constexpr bool is_none() const noexcept { return t_.state() == None; }
