@@ -236,8 +236,7 @@ struct RecordElement : public TypeElement {
   explicit RecordElement(sus::Vec<Namespace> containing_namespaces,
                          Comment comment, std::string name,
                          sus::Vec<std::string> record_path,
-                         RecordType record_type,
-                         u32 sort_key)
+                         RecordType record_type, u32 sort_key)
       : TypeElement(sus::move(containing_namespaces), sus::move(comment),
                     sus::move(name), sus::move(record_path), sort_key),
         record_type(record_type) {}
@@ -611,6 +610,12 @@ struct Database {
   sus::Option<const TypeElement&> find_type(clang::QualType qual) {
     clang::QualType unqualified = qual.getUnqualifiedType();
     const clang::Type* base_type = unqualified.getTypePtr();
+
+    // TODO: The type can be something like std::remove_reference<T> in which
+    // case we should really be finding the `T`?
+
+    // TODO: But what about Option<Stuff>? We can't return both Option and
+    // Stuff, so how do we track multiple types in a type?
 
     if (base_type->isArrayType()) {
       base_type = base_type->getArrayElementTypeNoTypeQual();
