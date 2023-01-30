@@ -605,95 +605,110 @@ struct Database {
   }
 
   sus::Option<const TypeElement&> find_type(clang::QualType qual) {
-    clang::TagDecl* tag = qual.getUnqualifiedType()->getAsTagDecl();
+    clang::QualType unqualified = qual.getUnqualifiedType();
+    const clang::Type* base_type = unqualified.getTypePtr();
 
-    if (tag) {
-      auto ns_cursor = [&]() -> sus::Option<const NamespaceElement&> {
-        const NamespaceElement* cursor = &global;
+    if (base_type->isArrayType()) {
+      base_type = base_type->getArrayElementTypeNoTypeQual();
+    }
+    if (base_type->isPointerType()) {
+      return find_type(base_type->getPointeeType());
+    }
+    if (base_type->isReferenceType()) {
+      return find_type(base_type->getPointeeType());
+    }
 
-        auto it = iter_namespace_path(tag);
-        // TODO: Make Iterator::reverse() and use that.
-        auto v = sus::move(it).collect_vec();
-        for (usize i = 1u; i < v.len(); i += 1u) {
-          const Namespace& n = v[v.len() - i - 1u];
-          switch (n) {
-            case Namespace::Tag::Global: {
-              // We skipped the 1st namespace in the path which is the global
-              // one.
-              sus::unreachable();
-            }
-            case Namespace::Tag::Anonymous: {
+    auto* decl = [&]() -> clang::Decl* {
+      if (clang::TagDecl* tdecl = base_type->getAsTagDecl()) return tdecl;
+      if (const clang::TypedefType* type = base_type->getAs<clang::TypedefType>())
+        return type->getDecl();
+      return nullptr;
+    }();
+
+    if (!decl) return sus::none();
+
+    auto ns_cursor = [&]() -> sus::Option<const NamespaceElement&> {
+      const NamespaceElement* cursor = &global;
+
+      auto it = iter_namespace_path(decl);
+      // TODO: Make Iterator::reverse() and use that.
+      auto v = sus::move(it).collect_vec();
+      for (usize i = 1u; i < v.len(); i += 1u) {
+        const Namespace& n = v[v.len() - i - 1u];
+        switch (n) {
+          case Namespace::Tag::Global: {
+            // We skipped the 1st namespace in the path which is the global
+            // one.
+            sus::unreachable();
+          }
+          case Namespace::Tag::Anonymous: {
+            return sus::none();
+          }
+          case Namespace::Tag::Named: {
+            const std::string& name = n.get_ref<Namespace::Tag::Named>();
+            auto ns_it = cursor->namespaces.find(NamespaceId(name));
+            if (ns_it == cursor->namespaces.end()) {
               return sus::none();
             }
-            case Namespace::Tag::Named: {
-              const std::string& name = n.get_ref<Namespace::Tag::Named>();
-              auto ns_it = cursor->namespaces.find(NamespaceId(name));
-              if (ns_it == cursor->namespaces.end()) {
-                return sus::none();
-              }
-              cursor = &ns_it->second;
+            cursor = &ns_it->second;
+          }
+        }
+      }
+      return sus::some(*cursor);
+    }();
+    if (ns_cursor.is_none()) {
+      llvm::errs() << "ERROR: Unable to find namespace for type '"
+                   << qual.getAsString() << "'\n";
+      return sus::none();
+    }
+
+    auto record_cursor = [&]() -> sus::Option<const RecordElement&> {
+      if (auto* containing_record_decl =
+              clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext())) {
+        const RecordElement* cursor = nullptr;
+
+        auto it = iter_record_path(containing_record_decl);
+        // TODO: Make Iterator::reverse() and use that.
+        auto v = sus::move(it).collect_vec();
+        for (usize i; i < v.len(); i += 1u) {
+          std::string_view name = v[v.len() - i - 1u];
+
+          if (i == 0u) {
+            auto r_it = ns_cursor->records.find(RecordId(name));
+            if (r_it == ns_cursor->records.end()) {
+              return sus::none();
             }
+            cursor = &r_it->second;
+          } else {
+            auto r_it = cursor->records.find(RecordId(name));
+            if (r_it == cursor->records.end()) {
+              return sus::none();
+            }
+            cursor = &r_it->second;
           }
         }
         return sus::some(*cursor);
-      }();
-      if (ns_cursor.is_none()) {
-        llvm::errs() << "ERROR: Unable to find namespace for type '"
-                     << qual.getAsString() << "'\n";
+      } else {
         return sus::none();
       }
+    }();
 
-      auto record_cursor = [&]() -> sus::Option<const RecordElement&> {
-        if (auto* containing_record_decl =
-                clang::dyn_cast<clang::RecordDecl>(tag->getDeclContext())) {
-          const RecordElement* cursor = nullptr;
-
-          auto it = iter_record_path(containing_record_decl);
-          // TODO: Make Iterator::reverse() and use that.
-          auto v = sus::move(it).collect_vec();
-          for (usize i; i < v.len(); i += 1u) {
-            std::string_view name = v[v.len() - i - 1u];
-
-            if (i == 0u) {
-              auto r_it = ns_cursor->records.find(RecordId(name));
-              if (r_it == ns_cursor->records.end()) {
-                return sus::none();
-              }
-              cursor = &r_it->second;
-            } else {
-              auto r_it = cursor->records.find(RecordId(name));
-              if (r_it == cursor->records.end()) {
-                return sus::none();
-              }
-              cursor = &r_it->second;
-            }
-          }
-          return sus::some(*cursor);
-        } else {
-          return sus::none();
-        }
-      }();
-
-      if (auto* tag_as_record_decl = clang::dyn_cast<clang::RecordDecl>(tag)) {
-        if (record_cursor.is_some()) {  // The TagDecl is located in a record.
-          auto it = record_cursor->records.find(RecordId(*tag_as_record_decl));
-          if (it == record_cursor->records.end()) return sus::none();
-          return sus::some(it->second);
-        } else {  // The TagDecl is located in a namespace.
-          auto it = ns_cursor->records.find(RecordId(*tag_as_record_decl));
-          if (it == ns_cursor->records.end()) return sus::none();
-          return sus::some(it->second);
-        }
-      } else if (auto* enum_decl = clang::dyn_cast<clang::EnumDecl>(tag)) {
-        // TODO: Support enums!  They are not stored in the database.
-      } else {
-        // This would imply clang added a new subclass to `clang::TagDecl`.
-        sus::unreachable();
+    if (auto* record_decl = clang::dyn_cast<clang::RecordDecl>(decl)) {
+      if (record_cursor.is_some()) {  // The TagDecl is located in a record.
+        auto it = record_cursor->records.find(RecordId(*record_decl));
+        if (it == record_cursor->records.end()) return sus::none();
+        return sus::some(it->second);
+      } else {  // The TagDecl is located in a namespace.
+        auto it = ns_cursor->records.find(RecordId(*record_decl));
+        if (it == ns_cursor->records.end()) return sus::none();
+        return sus::some(it->second);
       }
+    } else if (auto* enum_decl = clang::dyn_cast<clang::EnumDecl>(decl)) {
+      // TODO: Support enums!  They are not stored in the database.
+    } else if (auto* tdef_decl =
+                   clang::dyn_cast<clang::TypedefNameDecl>(decl)) {
+      // TODO: Support typedefs!  They are not stored in the database.
     }
-
-    // TODO: What if the type is a typedef! How do we get to its path?
-
     return sus::none();
   }
 
