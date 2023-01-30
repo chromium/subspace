@@ -52,10 +52,11 @@ struct Comment {
 
 struct CommentElement {
   explicit CommentElement(sus::Vec<Namespace> namespace_path, Comment comment,
-                          std::string name)
+                          std::string name, u32 sort_key)
       : namespace_path(sus::move(namespace_path)),
         comment(sus::move(comment)),
-        name(sus::move(name)) {
+        name(sus::move(name)),
+        sort_key(sort_key) {
     // All elements have the Global namespace in their path.
     assert(this->namespace_path.len() > 0u);
   }
@@ -63,6 +64,7 @@ struct CommentElement {
   sus::Vec<Namespace> namespace_path;
   Comment comment;
   std::string name;
+  u32 sort_key;
 
   bool has_comment() const {
     return !comment.raw_text.empty() || comment.attrs.inherit.is_some();
@@ -71,9 +73,9 @@ struct CommentElement {
 
 struct TypeElement : public CommentElement {
   TypeElement(sus::Vec<Namespace> containing_namespaces, Comment comment,
-              std::string name, sus::Vec<std::string> record_path)
+              std::string name, sus::Vec<std::string> record_path, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
-                       sus::move(name)),
+                       sus::move(name), sort_key),
         record_path(sus::move(record_path)) {}
 
   /// The records in which this type is nested, not including the type
@@ -108,9 +110,9 @@ struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
                            Comment comment, std::string name,
                            std::string signature,
-                           clang::QualType return_qual_type)
+                           clang::QualType return_qual_type, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
-                       sus::move(name)),
+                       sus::move(name), sort_key),
         return_type_name(friendly_type_name(return_qual_type)),
         return_short_type_name(friendly_short_type_name(return_qual_type)) {
     overloads.push(FunctionOverload{
@@ -147,9 +149,10 @@ struct FieldElement : public CommentElement {
   explicit FieldElement(sus::Vec<Namespace> containing_namespaces,
                         Comment comment, std::string name,
                         clang::QualType qual_type,
-                        sus::Vec<std::string> record_path, StaticType is_static)
+                        sus::Vec<std::string> record_path, StaticType is_static,
+                        u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
-                       sus::move(name)),
+                       sus::move(name), sort_key),
         record_path(sus::move(record_path)),
         type_name(friendly_type_name(qual_type)),
         short_type_name(friendly_short_type_name(qual_type)),
@@ -233,9 +236,10 @@ struct RecordElement : public TypeElement {
   explicit RecordElement(sus::Vec<Namespace> containing_namespaces,
                          Comment comment, std::string name,
                          sus::Vec<std::string> record_path,
-                         RecordType record_type)
+                         RecordType record_type,
+                         u32 sort_key)
       : TypeElement(sus::move(containing_namespaces), sus::move(comment),
-                    sus::move(name), sus::move(record_path)),
+                    sus::move(name), sus::move(record_path), sort_key),
         record_type(record_type) {}
 
   // TODO: Template parameters and requires clause.
@@ -326,9 +330,9 @@ struct RecordElement : public TypeElement {
 
 struct NamespaceElement : public CommentElement {
   explicit NamespaceElement(sus::Vec<Namespace> containing_namespaces,
-                            Comment comment, std::string name)
+                            Comment comment, std::string name, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
-                       sus::move(name)),
+                       sus::move(name), sort_key),
         // The front of `namespace_path` will be this NamespaceElement's
         // identity.
         namespace_name(namespace_path[0u]) {}
@@ -441,7 +445,7 @@ inline FunctionId key_for_function(clang::FunctionDecl* decl,
 struct Database {
   NamespaceElement global =
       NamespaceElement(sus::vec(Namespace::with<Namespace::Tag::Global>()),
-                       Comment(), std::string());
+                       Comment(), std::string(), 0u);
 
   bool has_any_comments() const noexcept { return global.has_any_comments(); }
 
@@ -620,7 +624,8 @@ struct Database {
 
     auto* decl = [&]() -> clang::Decl* {
       if (clang::TagDecl* tdecl = base_type->getAsTagDecl()) return tdecl;
-      if (const clang::TypedefType* type = base_type->getAs<clang::TypedefType>())
+      if (const clang::TypedefType* type =
+              base_type->getAs<clang::TypedefType>())
         return type->getDecl();
       return nullptr;
     }();
