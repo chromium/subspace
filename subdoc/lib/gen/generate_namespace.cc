@@ -57,7 +57,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
       span.write_text("Namespace");
     }
     {
-      auto name_anchor = header_div.open_a(HtmlWriter::SingleLine);
+      auto name_anchor = header_div.open_a();
       name_anchor.add_href("#");
       name_anchor.add_class("namespace-name");
       name_anchor.write_text(namespace_display_name(element));
@@ -240,7 +240,7 @@ void generate_namespace_reference(HtmlWriter::OpenDiv& section_div,
   item_div.add_class("section-item");
 
   {
-    auto name_link = item_div.open_a(HtmlWriter::SingleLine);
+    auto name_link = item_div.open_a();
     name_link.add_class("namespace-name");
     name_link.add_href(
         construct_html_file_path_for_namespace(std::filesystem::path(), element)

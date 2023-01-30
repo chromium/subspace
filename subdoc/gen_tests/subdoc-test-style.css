@@ -25,10 +25,11 @@ pre {
 }
 
 .overload {
-    font-size: 0;  /* Hides the space between `method_name` and `()`. */
+    /* Hides the space between `function-name` and `()`. */
+    display: flex;
 }
-.overload>:is(div, span, a) {
-    font-size: 12pt;
+.overload>:not(.function-name) {
+    margin-right: 0.2em;  /* Put back the space after other elements */
 }
 
 .description {

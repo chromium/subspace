@@ -28,10 +28,8 @@ namespace subdoc::gen {
 
 namespace {
 
-using SortedFunctionByName =
-    sus::Tuple<std::string_view, u32, FunctionId>;
-using SortedFieldByName =
-    sus::Tuple<std::string_view, u32, UniqueSymbol>;
+using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
+using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
 
 void generate_record_overview(HtmlWriter::OpenDiv& record_div,
                               const RecordElement& element) {
@@ -48,7 +46,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
           friendly_record_type_name(element.record_type, true));
     }
     {
-      auto name_anchor = record_header_div.open_a(HtmlWriter::SingleLine);
+      auto name_anchor = record_header_div.open_a();
       name_anchor.add_href("#");
       name_anchor.add_class("type-name");
       name_anchor.write_text(element.name);
@@ -121,7 +119,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
         field_type_span.write_text("volatile");
       }
       {
-        auto field_type_link = field_div.open_a(HtmlWriter::MultiLine);
+        auto field_type_link = field_div.open_a();
         field_type_link.add_class("type-name");
         field_type_link.add_title(fe.type_name);
         if (fe.type_element.is_some()) {
@@ -135,7 +133,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
         field_type_link.write_text(fe.short_type_name);
       }
       {
-        auto field_name_anchor = field_div.open_a(HtmlWriter::SingleLine);
+        auto field_name_anchor = field_div.open_a();
         std::ostringstream anchor;
         anchor << "field.";
         anchor << (static_fields ? "static." : "");
@@ -203,12 +201,12 @@ void generate_record(const RecordElement& element,
   for (const auto& [symbol, field_element] : element.fields) {
     switch (field_element.is_static) {
       case FieldElement::Static:
-        sorted_static_fields.push(sus::tuple(
-            field_element.name, field_element.sort_key, symbol));
+        sorted_static_fields.push(
+            sus::tuple(field_element.name, field_element.sort_key, symbol));
         break;
       case FieldElement::NonStatic:
-        sorted_fields.push(sus::tuple(field_element.name,
-                                      field_element.sort_key, symbol));
+        sorted_fields.push(
+            sus::tuple(field_element.name, field_element.sort_key, symbol));
         break;
     }
   }
@@ -234,11 +232,11 @@ void generate_record(const RecordElement& element,
   sus::Vec<SortedFunctionByName> sorted_methods;
   for (const auto& [method_id, method_element] : element.methods) {
     if (method_id.is_static) {
-      sorted_static_methods.push(sus::tuple(
-          method_element.name, method_element.sort_key, method_id));
+      sorted_static_methods.push(
+          sus::tuple(method_element.name, method_element.sort_key, method_id));
     } else {
-      sorted_methods.push(sus::tuple(
-          method_element.name, method_element.sort_key, method_id));
+      sorted_methods.push(
+          sus::tuple(method_element.name, method_element.sort_key, method_id));
     }
   }
   sorted_static_methods.sort_unstable_by(
@@ -281,7 +279,7 @@ void generate_record_reference(HtmlWriter::OpenDiv& section_div,
       record_type_span.write_text(record_type_name);
     }
     {
-      auto name_link = type_sig_div.open_a(HtmlWriter::SingleLine);
+      auto name_link = type_sig_div.open_a();
       name_link.add_class("type-name");
       name_link.add_href(
           construct_html_file_path(std::filesystem::path(),

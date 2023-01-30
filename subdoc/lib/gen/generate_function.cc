@@ -40,7 +40,7 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
       static_span.write_text("static");
     }
     {
-      auto return_type_link = overload_div.open_a(HtmlWriter::MultiLine);
+      auto return_type_link = overload_div.open_a();
       return_type_link.add_class("type-name");
       return_type_link.add_title(element.return_type_name);
       if (element.return_type_element.is_some()) {
@@ -55,7 +55,7 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
       return_type_link.write_text(element.return_short_type_name);
     }
     {
-      auto name_anchor = overload_div.open_a(HtmlWriter::SingleLine);
+      auto name_anchor = overload_div.open_a();
       std::ostringstream anchor;
       if (overload.method.is_some())
         anchor << "method.";
