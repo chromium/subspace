@@ -28,11 +28,6 @@ struct HtmlAttribute {
 
 class HtmlWriter {
  public:
-  enum OptionalMultiLine {
-    SingleLine,
-    MultiLine,
-  };
-
   class [[nodiscard]] Html {
    public:
     void add_class(std::string_view c) noexcept {
@@ -56,9 +51,9 @@ class HtmlWriter {
       write_open();
       return writer_.open_span();
     }
-    auto open_a(OptionalMultiLine lines) noexcept {
+    auto open_a() noexcept {
       write_open();
-      return writer_.open_a(lines);
+      return writer_.open_a();
     }
 
    protected:
@@ -101,8 +96,10 @@ class HtmlWriter {
 
    private:
     friend HtmlWriter;
-    OpenA(HtmlWriter& writer, OptionalMultiLine lines) noexcept : Html(writer) {
-      has_newlines_ = lines == MultiLine;
+    OpenA(HtmlWriter& writer) noexcept : Html(writer) {
+      // Avoid newlines in <a> tags as they extend the link decoration
+      // into whitespace.
+      has_newlines_ = false;
     }
 
     void write_open() noexcept override {
@@ -283,7 +280,7 @@ class HtmlWriter {
 
   OpenDiv open_div() noexcept { return OpenDiv(*this); }
   OpenSpan open_span() noexcept { return OpenSpan(*this); }
-  OpenA open_a(OptionalMultiLine lines) noexcept { return OpenA(*this, lines); }
+  OpenA open_a() noexcept { return OpenA(*this); }
   OpenTitle open_title() noexcept { return OpenTitle(*this); }
   OpenLink open_link() noexcept { return OpenLink(*this); }
 
