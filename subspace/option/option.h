@@ -1037,7 +1037,7 @@ using sus::iter::__private::end;
 /// construct Option<T>. This is to allow constructing an Option<T> or
 /// Option<T&> correctly.
 template <class T>
-[[nodiscard]] inline constexpr auto some(
+[[nodiscard]] inline constexpr __private::SomeMarker<T&&> some(
     T&& t sus_if_clang([[clang::lifetimebound]])) noexcept {
   return __private::SomeMarker<T&&>(::sus::forward<T>(t));
 }
