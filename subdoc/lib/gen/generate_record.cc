@@ -28,6 +28,11 @@ namespace subdoc::gen {
 
 namespace {
 
+using SortedFunctionByName =
+    sus::Tuple<std::string_view, std::string_view, FunctionId>;
+using SortedFieldByName =
+    sus::Tuple<std::string_view, std::string_view, UniqueSymbol>;
+
 void generate_record_overview(HtmlWriter::OpenDiv& record_div,
                               const RecordElement& element) {
   auto section_div = record_div.open_div();
@@ -77,10 +82,9 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
   }
 }
 
-void generate_record_fields(
-    HtmlWriter::OpenDiv& record_div, const RecordElement& element,
-    bool static_fields,
-    sus::Slice<const sus::Tuple<std::string_view, UniqueSymbol>> fields) {
+void generate_record_fields(HtmlWriter::OpenDiv& record_div,
+                            const RecordElement& element, bool static_fields,
+                            sus::Slice<const SortedFieldByName> fields) {
   if (fields.is_empty()) return;
 
   auto section_div = record_div.open_div();
@@ -95,7 +99,7 @@ void generate_record_fields(
                                                : "Data Members");
   }
   {
-    for (auto&& [name, field_unique_symbol] : fields) {
+    for (auto&& [name, comment_loc, field_unique_symbol] : fields) {
       const FieldElement& fe = element.fields.at(field_unique_symbol);
 
       auto field_div = section_div.open_div();
@@ -150,10 +154,9 @@ void generate_record_fields(
   }
 }
 
-void generate_record_methods(
-    HtmlWriter::OpenDiv& record_div, const RecordElement& element,
-    bool static_methods,
-    sus::Slice<const sus::Tuple<std::string_view, const FunctionId&>> methods) {
+void generate_record_methods(HtmlWriter::OpenDiv& record_div,
+                             const RecordElement& element, bool static_methods,
+                             sus::Slice<const SortedFunctionByName> methods) {
   if (methods.is_empty()) return;
 
   auto section_div = record_div.open_div();
@@ -168,7 +171,7 @@ void generate_record_methods(
                                                  : "Methods");
   }
   {
-    for (auto&& [name, function_id] : methods) {
+    for (auto&& [name, comment_loc, function_id] : methods) {
       generate_function(section_div, element.methods.at(function_id),
                         static_methods);
     }
@@ -195,27 +198,31 @@ void generate_record(const RecordElement& element,
   record_div.add_class(friendly_record_type_name(element.record_type, false));
   generate_record_overview(mref(record_div), element);
 
-  sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> sorted_static_fields;
-  sus::Vec<sus::Tuple<std::string_view, UniqueSymbol>> sorted_fields;
+  sus::Vec<SortedFieldByName> sorted_static_fields;
+  sus::Vec<SortedFieldByName> sorted_fields;
   for (const auto& [symbol, field_element] : element.fields) {
     switch (field_element.is_static) {
       case FieldElement::Static:
-        sorted_static_fields.push(sus::tuple(field_element.name, symbol));
+        sorted_static_fields.push(sus::tuple(
+            field_element.name, field_element.comment.begin_loc, symbol));
         break;
       case FieldElement::NonStatic:
-        sorted_fields.push(sus::tuple(field_element.name, symbol));
+        sorted_fields.push(sus::tuple(field_element.name,
+                                      field_element.comment.begin_loc, symbol));
         break;
     }
   }
   sorted_static_fields.sort_unstable_by(
-      [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
-         const sus::Tuple<std::string_view, UniqueSymbol>& b) {
-        return a.get_ref<0>() <=> b.get_ref<0>();
+      [](const SortedFieldByName& a, const SortedFieldByName& b) {
+        auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+        if (ord != 0) return ord;
+        return a.get_ref<1>() <=> b.get_ref<1>();
       });
   sorted_fields.sort_unstable_by(
-      [](const sus::Tuple<std::string_view, UniqueSymbol>& a,
-         const sus::Tuple<std::string_view, UniqueSymbol>& b) {
-        return a.get_ref<0>() <=> b.get_ref<0>();
+      [](const SortedFieldByName& a, const SortedFieldByName& b) {
+        auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+        if (ord != 0) return ord;
+        return a.get_ref<1>() <=> b.get_ref<1>();
       });
 
   generate_record_fields(mref(record_div), element, true,
@@ -223,25 +230,28 @@ void generate_record(const RecordElement& element,
   generate_record_fields(mref(record_div), element, false,
                          sorted_fields.as_ref());
 
-  sus::Vec<sus::Tuple<std::string_view, const FunctionId&>>
-      sorted_static_methods;
-  sus::Vec<sus::Tuple<std::string_view, const FunctionId&>> sorted_methods;
+  sus::Vec<SortedFunctionByName> sorted_static_methods;
+  sus::Vec<SortedFunctionByName> sorted_methods;
   for (const auto& [method_id, method_element] : element.methods) {
     if (method_id.is_static) {
-      sorted_static_methods.push(sus::tuple(method_element.name, method_id));
+      sorted_static_methods.push(sus::tuple(
+          method_element.name, method_element.comment.begin_loc, method_id));
     } else {
-      sorted_methods.push(sus::tuple(method_element.name, method_id));
+      sorted_methods.push(sus::tuple(
+          method_element.name, method_element.comment.begin_loc, method_id));
     }
   }
   sorted_static_methods.sort_unstable_by(
-      [](const sus::Tuple<std::string_view, const FunctionId&>& a,
-         const sus::Tuple<std::string_view, const FunctionId&>& b) {
-        return a.get_ref<0>() <=> b.get_ref<0>();
+      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+        auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+        if (ord != 0) return ord;
+        return a.get_ref<1>() <=> b.get_ref<1>();
       });
   sorted_methods.sort_unstable_by(
-      [](const sus::Tuple<std::string_view, const FunctionId&>& a,
-         const sus::Tuple<std::string_view, const FunctionId&>& b) {
-        return a.get_ref<0>() <=> b.get_ref<0>();
+      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+        auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+        if (ord != 0) return ord;
+        return a.get_ref<1>() <=> b.get_ref<1>();
       });
 
   generate_record_methods(mref(record_div), element, true,
@@ -249,7 +259,7 @@ void generate_record(const RecordElement& element,
   generate_record_methods(mref(record_div), element, false,
                           sorted_methods.as_ref());
 
-  for (const auto& [key, subrecord]: element.records) {
+  for (const auto& [key, subrecord] : element.records) {
     generate_record(subrecord, options);
   }
 }
