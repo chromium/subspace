@@ -27,6 +27,13 @@ namespace subdoc::gen {
 
 namespace {
 
+using SortedNamespaceByName =
+    sus::Tuple<std::string_view, std::string_view, NamespaceId>;
+using SortedFunctionByName =
+    sus::Tuple<std::string_view, std::string_view, FunctionId>;
+using SortedRecordByName =
+    sus::Tuple<std::string_view, std::string_view, RecordId>;
+
 std::string namespace_display_name(const NamespaceElement& element) noexcept {
   // The namespace path includes the namespace we're generating for, so drop
   // that one.
@@ -68,7 +75,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
 
 void generate_namespace_namespaces(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<const sus::Tuple<std::string_view, NamespaceId>> namespaces) {
+    sus::Slice<const SortedNamespaceByName> namespaces) {
   if (namespaces.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -81,15 +88,15 @@ void generate_namespace_namespaces(
     header_div.write_text("Namespaces");
   }
   {
-    for (auto&& [name, id] : namespaces)
+    for (auto&& [name, comment_loc, id] : namespaces)
       generate_namespace_reference(section_div, element.namespaces.at(id));
   }
 }
 
-void generate_namespace_records(
-    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<const sus::Tuple<std::string_view, const RecordId&>> records,
-    RecordType record_type) {
+void generate_namespace_records(HtmlWriter::OpenDiv& namespace_div,
+                                const NamespaceElement& element,
+                                sus::Slice<const SortedRecordByName> records,
+                                RecordType record_type) {
   if (records.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -111,7 +118,7 @@ void generate_namespace_records(
     }
   }
   {
-    for (auto&& [name, key] : records) {
+    for (auto&& [name, comment_loc, key] : records) {
       generate_record_reference(section_div, element.records.at(key));
     }
   }
@@ -119,8 +126,7 @@ void generate_namespace_records(
 
 void generate_namespace_functions(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<const sus::Tuple<std::string_view, const FunctionId&>>
-        functions) {
+    sus::Slice<const SortedFunctionByName> functions) {
   if (functions.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -133,7 +139,7 @@ void generate_namespace_functions(
     header_div.write_text("Functions");
   }
   {
-    for (auto&& [name, function_id] : functions) {
+    for (auto&& [name, comment_loc, function_id] : functions) {
       generate_function(section_div, element.functions.at(function_id),
                         /*is_static=*/false);
     }
@@ -158,14 +164,16 @@ void generate_namespace(const NamespaceElement& element,
   generate_namespace_overview(mref(namespace_div), element);
 
   {
-    sus::Vec<sus::Tuple<std::string_view, NamespaceId>> sorted;
+    sus::Vec<SortedNamespaceByName> sorted;
     for (const auto& [key, sub_element] : element.namespaces) {
-      sorted.push(sus::tuple(sub_element.name, key));
+      sorted.push(
+          sus::tuple(sub_element.name, sub_element.comment.begin_loc, key));
     }
     sorted.sort_unstable_by(
-        [](const sus::Tuple<std::string_view, NamespaceId>& a,
-           const sus::Tuple<std::string_view, NamespaceId>& b) {
-          return a.get_ref<0>() <=> b.get_ref<0>();
+        [](const SortedNamespaceByName& a, const SortedNamespaceByName& b) {
+          auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+          if (ord != 0) return ord;
+          return a.get_ref<1>() <=> b.get_ref<1>();
         });
 
     generate_namespace_namespaces(mref(namespace_div), element,
@@ -173,28 +181,32 @@ void generate_namespace(const NamespaceElement& element,
   }
 
   {
-    sus::Vec<sus::Tuple<std::string_view, const RecordId&>> classes;
-    sus::Vec<sus::Tuple<std::string_view, const RecordId&>> unions;
+    sus::Vec<SortedRecordByName> classes;
+    sus::Vec<SortedRecordByName> unions;
     for (const auto& [key, sub_element] : element.records) {
       switch (sub_element.record_type) {
         case RecordType::Class: [[fallthrough]];
         case RecordType::Struct:
-          classes.push(sus::tuple(sub_element.name, key));
+          classes.push(
+              sus::tuple(sub_element.name, sub_element.comment.begin_loc, key));
           break;
         case RecordType::Union:
-          unions.push(sus::tuple(sub_element.name, key));
+          unions.push(
+              sus::tuple(sub_element.name, sub_element.comment.begin_loc, key));
           break;
       }
     }
     classes.sort_unstable_by(
-        [](const sus::Tuple<std::string_view, const RecordId&>& a,
-           const sus::Tuple<std::string_view, const RecordId&>& b) {
-          return a.get_ref<0>() <=> b.get_ref<0>();
+        [](const SortedRecordByName& a, const SortedRecordByName& b) {
+          auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+          if (ord != 0) return ord;
+          return a.get_ref<1>() <=> b.get_ref<1>();
         });
     unions.sort_unstable_by(
-        [](const sus::Tuple<std::string_view, const RecordId&>& a,
-           const sus::Tuple<std::string_view, const RecordId&>& b) {
-          return a.get_ref<0>() <=> b.get_ref<0>();
+        [](const SortedRecordByName& a, const SortedRecordByName& b) {
+          auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+          if (ord != 0) return ord;
+          return a.get_ref<1>() <=> b.get_ref<1>();
         });
 
     generate_namespace_records(mref(namespace_div), element, classes.as_ref(),
@@ -204,14 +216,16 @@ void generate_namespace(const NamespaceElement& element,
   }
 
   {
-    sus::Vec<sus::Tuple<std::string_view, const FunctionId&>> sorted;
+    sus::Vec<SortedFunctionByName> sorted;
     for (const auto& [function_id, sub_element] : element.functions) {
-      sorted.push(sus::tuple(sub_element.name, function_id));
+      sorted.push(sus::tuple(sub_element.name, sub_element.comment.begin_loc,
+                             function_id));
     }
     sorted.sort_unstable_by(
-        [](const sus::Tuple<std::string_view, const FunctionId&>& a,
-           const sus::Tuple<std::string_view, const FunctionId&>& b) {
-          return a.get_ref<0>() <=> b.get_ref<0>();
+        [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+          auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+          if (ord != 0) return ord;
+          return a.get_ref<1>() <=> b.get_ref<1>();
         });
 
     generate_namespace_functions(mref(namespace_div), element, sorted.as_ref());
