@@ -214,6 +214,16 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
           }
         }
         parsed << "</p>";
+
+        // A `snippet` was not terminated.
+        if (inside_code_snippet) {
+          return sus::result::err(
+              ParseCommentError{.message = "Unterminated code ` snippet"});
+        }
+        if (inside_pre) {
+          return sus::result::err(
+              ParseCommentError{.message = "Unterminated code ``` block"});
+        }
       }
 
       break;
