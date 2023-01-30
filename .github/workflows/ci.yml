@@ -74,11 +74,12 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh 16 all
 
+      # vptr is incompatible with no-rtti. We turn off rtti to match the LLVM libraries.
       - name: Set UBSan Flags
         if: endsWith(matrix.config.name, 'UBSan')
         run: |
-          echo "CFLAGS=$CFLAGS -fsanitize=undefined" >> $GITHUB_ENV
-          echo "CXXFLAGS=$CXXFLAGS -fsanitize=undefined" >> $GITHUB_ENV
+          echo "CFLAGS=$CFLAGS -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
+          echo "CXXFLAGS=$CXXFLAGS -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
 
       - name: Download Ninja
         id: ninja
