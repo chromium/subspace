@@ -67,12 +67,12 @@ inline std::string friendly_type_name(const clang::QualType& type) noexcept {
   std::string full = unqualified.getAsString();
 
   // Type path component other than the last show up like `struct S` instead of
-  // just `S`. So we're dropping anything before a space in each path component.
+  // just `S`. So we're dropping those from each component.
   sus::Vec<std::string> split = [&]() {
     sus::Vec<std::string> v;
     // TODO: Add a String type to subspace, give it String::split().
     while (true) {
-      size_t pos = full.find("::");
+      size_t pos = full.find_first_of("::");
       if (pos == std::string::npos) {
         v.push(sus::move(full));
         break;
@@ -81,9 +81,14 @@ inline std::string friendly_type_name(const clang::QualType& type) noexcept {
       full = full.substr(pos + strlen("::"));
     }
     for (std::string& s : v.iter_mut()) {
-      if (size_t pos = s.find(" "); pos != std::string::npos) {
-        s = s.substr(pos + strlen(" "));
-      }
+      if (s.starts_with("struct "))
+        s = s.substr(strlen("struct "));
+      else if (s.starts_with("class "))
+        s = s.substr(strlen("class "));
+      else if (s.starts_with("union "))
+        s = s.substr(strlen("union "));
+      else if (s.starts_with("enum "))
+        s = s.substr(strlen("enum "));
     }
     return v;
   }();
@@ -115,6 +120,8 @@ inline std::string friendly_short_type_name(
   // Clang writes booleans as "_Bool".
   if (unqualified->isBooleanType()) return "bool";
   std::string full = unqualified.getAsString();
+  // TODO: This does the wrong thing with templates!
+  // `S::T<int>::V<Z::X, Y::A>` should come out as `V<Z::X, Y::A>`.
   if (size_t pos = full.rfind("::"); pos != std::string::npos) {
     full = full.substr(pos + strlen("::"));
   }
