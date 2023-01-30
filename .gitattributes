@@ -1,0 +1,9 @@
+*.cc text eol=lf
+*.h text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.vcproj text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.txt text eol=lf
