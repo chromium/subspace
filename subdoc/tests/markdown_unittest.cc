@@ -64,3 +64,32 @@ TEST_F(SubDocTest, MarkdownCodeSnippet) {
       "<p>Comment headline <code>has snippet</code></p>"
       "<p>This <code>snippet goes across lines</code> but works out.</p>"));
 }
+
+TEST_F(SubDocTest, MarkdownUnmatchedCodeBlock) {
+  auto result = run_code(R"(
+    /// Comment headline `has snippet`
+    ///
+    /// ```
+    /// This block never ends
+    void f() {}
+    )");
+  ASSERT_TRUE(result.is_err());
+  auto diags = sus::move(result).unwrap_err();
+  ASSERT_EQ(diags.locations.len(), 1u);
+// The code snippet didn't end so it makes an error.
+  EXPECT_EQ(diags.locations[0u], "test.cc:2:5");
+}
+
+TEST_F(SubDocTest, MarkdownUnmatchedCodeSnippet) {
+  auto result = run_code(R"(
+    /// Comment headline `has snippet`
+    ///
+    /// This `snippet` never `ends
+    void f() {}
+    )");
+  ASSERT_TRUE(result.is_err());
+  auto diags = sus::move(result).unwrap_err();
+  ASSERT_EQ(diags.locations.len(), 1u);
+// The code snippet didn't end so it makes an error.
+  EXPECT_EQ(diags.locations[0u], "test.cc:2:5");
+}
