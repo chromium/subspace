@@ -20,7 +20,7 @@ TEST_F(SubDocTest, Field) {
       /// Comment headline
       int f = 1;
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_field_comment(db, "3:7", "<p>Comment headline</p>"));
@@ -32,7 +32,7 @@ TEST_F(SubDocTest, StaticField) {
       /// Comment headline
       constexpr static int f = 1;
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_field_comment(db, "3:7", "<p>Comment headline</p>"));
@@ -45,7 +45,7 @@ TEST_F(SubDocTest, PrivateField) {
       /// Comment headline
       int f = 1;
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());
@@ -58,7 +58,7 @@ TEST_F(SubDocTest, PrivateStaticField) {
       /// Comment headline
       constexpr static int f = 1;
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());

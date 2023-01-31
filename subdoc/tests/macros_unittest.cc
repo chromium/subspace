@@ -21,7 +21,7 @@ TEST_F(SubDocTest, MacroFunction) {
       void f() {}
     
     M()
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment headline</p>"));
@@ -34,7 +34,7 @@ TEST_F(SubDocTest, MacroClass) {
       struct S {};
     
     M()
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "3:7", "<p>Comment headline</p>"));
@@ -49,7 +49,7 @@ TEST_F(SubDocTest, MacroField) {
       };
     
     M()
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_field_comment(db, "4:9", "<p>Comment headline</p>"));
@@ -62,7 +62,7 @@ TEST_F(SubDocTest, MacroNamesFunction) {
       void name() {}
     
     M(f)
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment headline</p>"));
@@ -75,7 +75,7 @@ TEST_F(SubDocTest, MacroNamesClass) {
       struct name {};
     
     M(S)
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "3:7", "<p>Comment headline</p>"));
@@ -90,7 +90,7 @@ TEST_F(SubDocTest, MacroNamesField) {
       };
     
     M(field)
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_field_comment(db, "4:9", "<p>Comment headline</p>"));
@@ -102,7 +102,7 @@ TEST_F(SubDocTest, MacroModName) {
     
     /// Comment headline
     struct MOD_NAME(S) {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "4:5", "<p>Comment headline</p>"));
@@ -116,7 +116,7 @@ TEST_F(SubDocTest, MacroMultilineComment) {
       void f() {}
     
     M()
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment headline Second line</p>"));

@@ -19,7 +19,7 @@ TEST_F(SubDocTest, Mixed) {
     /// Comment headline
     // Implementation details.
     struct S {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
@@ -29,7 +29,7 @@ TEST_F(SubDocTest, CppStyle) {
   auto result = run_code(R"(
     // Implementation details.
     struct S {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());
@@ -39,7 +39,7 @@ TEST_F(SubDocTest, JavaDocStyle) {
   auto result = run_code(R"(
     /** Comment headline */
     struct S {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
@@ -52,7 +52,7 @@ TEST_F(SubDocTest, JavaDocStyleBody) {
      * Comment body.
     */
     struct S {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));

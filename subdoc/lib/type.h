@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subdoc/llvm.h"
 #include "subspace/choice/choice.h"
 #include "subspace/containers/vec.h"
 #include "subspace/prelude.h"
@@ -44,6 +45,7 @@ using SizeOrString = sus::Choice<sus_choice_types(
     (SizeOrStringTag::Size, usize), (SizeOrStringTag::String, std::string))>;
 
 struct Type {
+  std::string name;
   /// Refs can only appear on the outermost type.
   Refs refs;
   /// The first element is the innermost pointee.
@@ -83,14 +85,14 @@ inline Qualifier get_qualifiers(clang::QualType qualtype) noexcept {
                                                     : Qualifier::None);
 }
 
-inline const clang::Type* find_pointee_type(
+inline const clang::QualType find_pointee_type(
     const clang::SourceManager& sm, clang::QualType qualtype,
     sus::Vec<Qualifier>& ptr_quals, sus::Vec<std::string>& dims) noexcept {
   if (qualtype->isPointerType()) {
-    const clang::Type* t =
+    const clang::QualType pointee =
         find_pointee_type(sm, qualtype->getPointeeType(), ptr_quals, dims);
     ptr_quals.push(get_qualifiers(qualtype));
-    return t;
+    return pointee;
   } else if (const auto* array_type =
                  clang::dyn_cast<clang::ArrayType>(qualtype.getTypePtr())) {
     auto dim = [&]() -> std::string {
@@ -123,8 +125,14 @@ inline const clang::Type* find_pointee_type(
     return find_pointee_type(sm, array_type->getElementType(), ptr_quals, dims);
   } else {
     ptr_quals.push(get_qualifiers(qualtype));
-    return qualtype.getTypePtr();
+    return qualtype;
   }
+}
+
+inline std::string get_type_name(const clang::QualType& type) noexcept {
+  // Clang writes booleans as "_Bool".
+  if (type->isBooleanType()) return "bool";
+  return type.getAsString();
 }
 
 }  // namespace __private
@@ -138,15 +146,19 @@ inline Type build_local_type(const clang::SourceManager& sm,
           : (qualtype->isRValueReferenceType() ? Refs::RValueRef : Refs::None);
   sus::Vec<Qualifier> quals;
   sus::Vec<std::string> array_dims;
-  const clang::Type* pointee =
+  const clang::QualType pointee =
       __private::find_pointee_type(sm, qualtype, mref(quals), mref(array_dims));
   sus::Vec<TypeOrValue> template_params;
   if (auto* template_type =
-          clang::dyn_cast<clang::TemplateSpecializationType>(pointee)) {
+          clang::dyn_cast<clang::TemplateSpecializationType>(&*pointee)) {
     (void)template_type;
   }
 
-  return Type(refs, sus::move(quals), sus::move(array_dims),
+  // TODO: We need to remove the template params and namespaces and store the
+  // namespaces somehow.
+  std::string name = __private::get_type_name(pointee);
+
+  return Type(sus::move(name), refs, sus::move(quals), sus::move(array_dims),
               sus::move(template_params));
 }
 

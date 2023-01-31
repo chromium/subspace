@@ -21,7 +21,7 @@ TEST_F(SubDocTest, MarkdownParagraph) {
     /// Next Paragraph
     /// Next Line
     void f() {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(
@@ -39,7 +39,7 @@ TEST_F(SubDocTest, MarkdownCodeBlock) {
     /// ```
     /// After code
     void f() {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5",
@@ -56,7 +56,7 @@ TEST_F(SubDocTest, MarkdownCodeSnippet) {
     /// This `snippet goes
     /// across lines` but works out.
     void f() {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(
@@ -72,7 +72,7 @@ TEST_F(SubDocTest, MarkdownUnmatchedCodeBlock) {
     /// ```
     /// This block never ends
     void f() {}
-    )");
+  )");
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);
@@ -86,7 +86,7 @@ TEST_F(SubDocTest, MarkdownUnmatchedCodeSnippet) {
     ///
     /// This `snippet` never `ends
     void f() {}
-    )");
+  )");
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);

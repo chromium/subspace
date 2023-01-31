@@ -21,7 +21,7 @@ TEST_F(SubDocTest, IncludeRegexMissesTest) {
   auto result = run_code_with_options(opts, R"(
     /// Comment headline
     struct S {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(!db.has_any_comments());
@@ -34,7 +34,7 @@ TEST_F(SubDocTest, ExcludeRegexHitsTest) {
   auto result = run_code_with_options(opts, R"(
     /// Comment headline
     struct S {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(!db.has_any_comments());
@@ -47,7 +47,7 @@ TEST_F(SubDocTest, ExcludeRegexMissesTest) {
   auto result = run_code_with_options(opts, R"(
     /// Comment headline
     struct S {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
