@@ -33,16 +33,16 @@ jobs:
               name: "Ubuntu Nightly Clang",
               os: ubuntu-latest,
               build_type: "Release",
-              cc: "clang-16",
-              cxx: "clang++-16",
+              cc: "clang-17",
+              cxx: "clang++-17",
             }
 
           - {
               name: "Ubuntu Nightly UBSan",
               os: ubuntu-latest,
               build_type: "Release",
-              cc: "clang-16",
-              cxx: "clang++-16",
+              cc: "clang-17",
+              cxx: "clang++-17",
             }
 
           - {
@@ -72,7 +72,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 16 all
+          sudo ./llvm.sh 17 all
 
       # vptr is incompatible with no-rtti. We turn off rtti to match the LLVM libraries.
       - name: Set UBSan Flags
@@ -126,8 +126,8 @@ jobs:
           set(HAS_LLVM ON)
           if (NOT "${{ runner.os }}" STREQUAL "Windows")
             # Path to LLVM+Clang nightly that we have installed.
-            set(ENV{LLVM_DIR} "/usr/lib/llvm-16/lib/cmake/llvm")
-            set(ENV{Clang_DIR} "/usr/lib/llvm-16/lib/cmake/clang")
+            set(ENV{LLVM_DIR} "/usr/lib/llvm-17/lib/cmake/llvm")
+            set(ENV{Clang_DIR} "/usr/lib/llvm-17/lib/cmake/clang")
           else()
             # We don't have a copy of LLVM+Clang on the Windows bot.
             set(HAS_LLVM OFF)
