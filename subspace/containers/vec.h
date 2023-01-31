@@ -57,8 +57,6 @@ class Vec {
   static_assert(!std::is_const_v<T>,
                 "`Vec<const T>` should be written `const Vec<T>`, as const "
                 "applies transitively.");
-  static_assert(::sus::mem::Move<T>,
-                "Vec<T> requires that `T` is `sus::mem::Move`.");
 
  public:
   // sus::construct::Default trait.
@@ -265,8 +263,12 @@ class Vec {
   /// Appends an element to the back of the vector.
   ///
   /// # Panics
+  ///
   /// Panics if the new capacity exceeds isize::MAX bytes.
-  void push(T t) noexcept {
+  void push(T t) noexcept
+    requires(  // Vec<T> requires that `T` is `sus::mem::Move`.
+        ::sus::mem::Move<T>)
+  {
     check(!is_moved_from());
     // Avoids use of a reference, and receives by value, to sidestep the whole
     // issue of the reference being to something inside the vector which
@@ -480,7 +482,7 @@ class Vec {
   usize len_;
   usize capacity_;
 
-  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T,
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(storage_), decltype(len_),
                                            decltype(capacity_));
 };
