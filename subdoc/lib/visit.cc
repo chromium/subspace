@@ -494,7 +494,7 @@ class AstConsumer : public clang::ASTConsumer {
  public:
   AstConsumer(VisitCx& cx, Database& docs_db) : cx_(cx), docs_db_(docs_db) {}
 
-  bool HandleTopLevelDecl(clang::DeclGroupRef group_ref) noexcept override {
+  bool HandleTopLevelDecl(clang::DeclGroupRef group_ref) noexcept final {
     for (clang::Decl* decl : group_ref) {
       clang::SourceManager& sm = decl->getASTContext().getSourceManager();
 
@@ -549,6 +549,12 @@ class AstConsumer : public clang::ASTConsumer {
         return false;
     }
     return true;
+  }
+
+  void HandleTranslationUnit(clang::ASTContext& ast_cx) noexcept final {
+    if (cx_.options.on_tu_complete.is_some()) {
+      (*cx_.options.on_tu_complete)(ast_cx);
+    }
   }
 
  private:

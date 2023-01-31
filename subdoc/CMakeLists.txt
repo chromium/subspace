@@ -57,6 +57,8 @@ add_executable(subdoc_unittests
     "tests/methods_unittest.cc"
     "tests/records_unittest.cc"
     "tests/styles_unittest.cc"
+    "tests/types_unittest.cc"
+    "tests/subdoc_gen_test.h"
     "tests/subdoc_test.h"
 )
 

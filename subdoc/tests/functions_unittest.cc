@@ -18,7 +18,7 @@ TEST_F(SubDocTest, Function) {
   auto result = run_code(R"(
     /// Comment headline
     void f() {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline</p>"));
@@ -33,7 +33,7 @@ TEST_F(SubDocTest, FunctionOverloads) {
     void g(char) {}
     /// Comment headline 2
     void g(int) {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline 1</p>"));
@@ -52,11 +52,13 @@ TEST_F(SubDocTest, FunctionOverloadsNoMerge) {
     ///
     /// Body 2
     void f(int) {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline 1</p><p>Body 1</p>"));
-  EXPECT_TRUE(has_function_comment(db, "7:5", "<p>Comment headline 2</p><p>Body 2</p>"));
+  EXPECT_TRUE(has_function_comment(db, "2:5",
+                                   "<p>Comment headline 1</p><p>Body 1</p>"));
+  EXPECT_TRUE(has_function_comment(db, "7:5",
+                                   "<p>Comment headline 2</p><p>Body 2</p>"));
 }
 
 TEST_F(SubDocTest, FunctionOverloadsMerge) {
@@ -69,7 +71,7 @@ TEST_F(SubDocTest, FunctionOverloadsMerge) {
     /// Comment headline 2
     /// #[doc.overloads=2]
     void f(int) {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline 1</p>"));
@@ -82,7 +84,7 @@ TEST_F(SubDocTest, FunctionOverloadsDuplicate) {
     void f(char) {}
     /// Comment headline 2
     void f(int) {}
-    )");
+  )");
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);
@@ -107,7 +109,7 @@ TEST_F(SubDocTest, FunctionOverloadsRequires) {
     /// Comment headline 1
     template <class T>
     void g(T) requires(C<T, int>) {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "5:5", "<p>Comment headline 1</p>"));
@@ -125,7 +127,7 @@ TEST_F(SubDocTest, FunctionOverloadsRequiresDuplicate) {
     /// Comment headline 2
     template <class T>
     void f(T) requires(C<T, int>) {}
-    )");
+  )");
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   // The 2nd comment on the same function causes an error we group overloads
@@ -139,7 +141,7 @@ TEST_F(SubDocTest, ForwardDeclDuplicate) {
     void f();  // Forward decl.
     /// Comment headline 2
     void f() {}  // Defn.
-    )");
+  )");
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);
@@ -153,7 +155,7 @@ TEST_F(SubDocTest, ForwardDeclDocumented) {
     /// Comment headline
     void f();
     void f() {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5", "<p>Comment headline</p>"));
@@ -164,7 +166,7 @@ TEST_F(SubDocTest, ForwardDeclUndocumented) {
     void f();
     /// Comment headline
     void f() {}
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:5", "<p>Comment headline</p>"));
@@ -176,7 +178,7 @@ TEST_F(SubDocTest, FunctionInNamedNamespace) {
     /// Comment headline
     void f() {}
     }
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:5", "<p>Comment headline</p>"));
@@ -188,7 +190,7 @@ TEST_F(SubDocTest, FunctionInAnonymousNamespace) {
     /// Comment headline
     void f() {}
     }
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());
@@ -202,7 +204,7 @@ TEST_F(SubDocTest, FunctionInAnonymousAndNamedNamespace) {
     void f() {}
     }
     }
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());

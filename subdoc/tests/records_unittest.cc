@@ -18,7 +18,7 @@ TEST_F(SubDocTest, Struct) {
   auto result = run_code(R"(
     /// Comment headline
     struct S {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
@@ -29,7 +29,7 @@ TEST_F(SubDocTest, TemplateStruct) {
     /// Comment headline
     template <class T>
     struct S {};
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline</p>"));
@@ -43,7 +43,7 @@ TEST_F(SubDocTest, TemplateStructSpecialization) {
     /// Comment headline 2
     template <>
     struct S<void> {};
-    )");
+  )");
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);
@@ -57,7 +57,7 @@ TEST_F(SubDocTest, StructInNamedNamespace) {
     /// Comment headline
     struct S {};
     }
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "3:5", "<p>Comment headline</p>"));
@@ -71,7 +71,7 @@ TEST_F(SubDocTest, StructInPrivateNamespace) {
       int i;
     };
     }
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());
@@ -83,7 +83,7 @@ TEST_F(SubDocTest, StructInAnonymousNamespace) {
     /// Comment headline
     struct S {};
     }
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());
@@ -97,7 +97,7 @@ TEST_F(SubDocTest, StructInAnonymousAndNamedNamespace) {
     struct S {};
     }
     }
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());
@@ -110,7 +110,7 @@ TEST_F(SubDocTest, NestedStruct) {
       /// Comment headline 2
       struct R {};
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline 1</p>"));
@@ -124,7 +124,7 @@ TEST_F(SubDocTest, PrivateStruct) {
       /// Comment headline
       struct R {};
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());

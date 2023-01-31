@@ -20,7 +20,7 @@ TEST_F(SubDocTest, Method) {
       /// Comment headline
       void f() {}
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_method_comment(db, "3:7", "<p>Comment headline</p>"));
@@ -37,7 +37,7 @@ TEST_F(SubDocTest, MethodOverload) {
       /// Comment headline 2
       void g(int) {}
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_method_comment(db, "3:7", "<p>Comment headline 1</p>"));
@@ -52,7 +52,7 @@ TEST_F(SubDocTest, MethodOverloadWithStatic) {
       /// Comment headline 2
       static void f(int) {}
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_method_comment(db, "3:7", "<p>Comment headline 1</p>"));
@@ -67,7 +67,7 @@ TEST_F(SubDocTest, MethodOverloadDuplicate) {
       /// Comment headline 2
       void f(int) {}
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);
@@ -91,7 +91,7 @@ TEST_F(SubDocTest, MethodOverloadRequires) {
       /// Comment headline 2
       void g() requires(!C<T>) {}
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_method_comment(db, "7:7", "<p>Comment headline 1</p>"));
@@ -110,7 +110,7 @@ TEST_F(SubDocTest, MethodOverloadRequiresDuplicate) {
       /// Comment headline 2
       void f() requires(!C<T>) {}
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);
@@ -137,7 +137,7 @@ TEST_F(SubDocTest, MethodTemplateOverloadRequires) {
       template <class D>
       void g() requires(!C<D>) {}
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_method_comment(db, "6:7", "<p>Comment headline 1</p>"));
@@ -157,7 +157,7 @@ TEST_F(SubDocTest, MethodTemplateOverloadRequiresDuplicate) {
       template <class D>
       void f() requires(!C<D>) {}
     };
-    )");
+  )");
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);
