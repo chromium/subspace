@@ -21,6 +21,7 @@
 #include "subdoc/lib/method_qualifier.h"
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/record_type.h"
+#include "subdoc/lib/type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
 #include "subspace/choice/choice.h"
