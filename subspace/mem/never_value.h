@@ -130,28 +130,29 @@ concept NeverValueField = __private::NeverValueAccess<T>::has_field;
  private:                                                                      \
   static_assert(                                                               \
       std::same_as<decltype(unsafe_fn), const ::sus::marker::UnsafeFnMarker>); \
-  static_assert(                                                               \
-      std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,      \
-      "The `never_value` must be able to be assigned to the named field.");    \
-  static_assert(                                                               \
-      std::is_assignable_v<decltype(field_name)&, decltype(destroy_value)>,    \
-      "The `destroy_value` must be able to be assigned to the named field.");  \
-  static_assert(::sus::ops::Eq<decltype(field_name), decltype(never_value)>,   \
-                "The `never_value` must be comparable to the named field.");   \
                                                                                \
   template <class>                                                             \
   friend struct ::sus::mem::__private::NeverValueAccess;                       \
                                                                                \
-  constexpr bool _sus_Unsafe_NeverValueIsConstructed(                           \
+  constexpr bool _sus_Unsafe_NeverValueIsConstructed(                          \
       ::sus::marker::UnsafeFnMarker) const noexcept {                          \
+    static_assert(                                                             \
+        std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,    \
+        "The `never_value` must be able to be assigned to the named field.");  \
     return field_name != never_value;                                          \
   }                                                                            \
-  constexpr void _sus_Unsafe_NeverValueSetNeverValue(                           \
+  constexpr void _sus_Unsafe_NeverValueSetNeverValue(                          \
       ::sus::marker::UnsafeFnMarker) noexcept {                                \
+    static_assert(                                                             \
+        std::is_assignable_v<decltype(field_name)&, decltype(destroy_value)>,  \
+        "The `destroy_value` must be able to be assigned to the named "        \
+        "field.");                                                             \
     field_name = never_value;                                                  \
   }                                                                            \
-  constexpr void _sus_Unsafe_NeverValueSetDestroyValue(                         \
+  constexpr void _sus_Unsafe_NeverValueSetDestroyValue(                        \
       ::sus::marker::UnsafeFnMarker) noexcept {                                \
+    static_assert(::sus::ops::Eq<decltype(field_name), decltype(never_value)>, \
+                  "The `never_value` must be comparable to the named field."); \
     field_name = destroy_value;                                                \
   }                                                                            \
   static_assert(true)
