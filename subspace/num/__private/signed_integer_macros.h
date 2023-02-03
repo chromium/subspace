@@ -337,28 +337,41 @@ class Tuple;
       return PrimitiveT{primitive_value != 0};                                 \
   }                                                                            \
                                                                                \
+  /** sus::concepts::Eq<##T##> trait.                                          \
+   * #[doc.overloads=int.eq.self] */                                           \
+  friend constexpr inline bool operator==(const T& l, const T& r) noexcept =   \
+      default;                                                                 \
   /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait.                \
-   * #[doc.overloads=uint.eq.signedprimitive] */                                               \
+   * #[doc.overloads=int.eq.signedprimitive] */                                \
   template <SignedPrimitiveInteger P>                                          \
   friend constexpr inline bool operator==(const T& l, const P& r) noexcept {   \
     return l.primitive_value == r;                                             \
   }                                                                            \
-  /** sus::concepts::Eq<##T##, Unsigned> trait.                                 \
-   * #[doc.overloads=uint.eq.signed] */                                               \
+  /** sus::concepts::Eq<##T##, Unsigned> trait.                                \
+   * #[doc.overloads=int.eq.signed] */                                         \
   template <Signed S>                                                          \
   friend constexpr inline bool operator==(const T& l, const S& r) noexcept {   \
     return l.primitive_value == r.primitive_value;                             \
   }                                                                            \
-  /** sus::concepts::Ord<##T##, SignedPrimitiveInteger> trait.               \
-   * #[doc.overloads=uint.ord.signedprimitive] */                                              \
+  /** sus::concepts::Ord<##T##> trait.                                         \
+   * #[doc.overloads=int.ord.self] */                                          \
+  template <UnsignedPrimitiveInteger P>                                        \
+  friend constexpr inline std::strong_ordering operator<=>(                    \
+      const T& l, const T& r) noexcept {                                       \
+    return l.primitive_value <=> r.primitive_value;                            \
+  }                                                                            \
+  /** sus::concepts::Ord<##T##, SignedPrimitiveInteger> trait.                 \
+   * #[doc.overloads=int.ord.signedprimitive] */                               \
   template <SignedPrimitiveInteger P>                                          \
-  friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept {  \
+  friend constexpr inline std::strong_ordering operator<=>(                    \
+      const T& l, const P& r) noexcept {                                       \
     return l.primitive_value <=> r;                                            \
   }                                                                            \
-  /** sus::concepts::Ord<##T##, Signed> trait.                                \
-   * #[doc.overloads=uint.ord.signed] */                                              \
+  /** sus::concepts::Ord<##T##, Signed> trait.                                 \
+   * #[doc.overloads=int.ord.signed] */                                        \
   template <Signed S>                                                          \
-  friend constexpr inline auto operator<=>(const T& l, const S& r) noexcept {  \
+  friend constexpr inline std::strong_ordering operator<=>(                    \
+      const T& l, const S& r) noexcept {                                       \
     return l.primitive_value <=> r.primitive_value;                            \
   }                                                                            \
   static_assert(true)

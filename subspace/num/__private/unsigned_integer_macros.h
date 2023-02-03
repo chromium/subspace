@@ -298,31 +298,44 @@ class Tuple;
   }                                                                         \
   static_assert(true)
 
-#define _sus__unsigned_integer_comparison(T)                                  \
-  /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait.               \
-   * #[doc.overloads=uint.eq.unsignedprimitive] */                                               \
-  template <UnsignedPrimitiveInteger P>                                       \
-  friend constexpr inline bool operator==(const T& l, const P& r) noexcept {  \
-    return l.primitive_value == r;                                            \
-  }                                                                           \
-  /** sus::concepts::Eq<##T##, Unsigned> trait.                                \
-   * #[doc.overloads=uint.eq.unsigned] */                                               \
-  template <Unsigned U>                                                       \
-  friend constexpr inline bool operator==(const T& l, const U& r) noexcept {  \
-    return l.primitive_value == r.primitive_value;                            \
-  }                                                                           \
-  /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait.              \
-   * #[doc.overloads=uint.ord.unsignedprimitive] */                                              \
-  template <UnsignedPrimitiveInteger P>                                       \
-  friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept { \
-    return l.primitive_value <=> r;                                           \
-  }                                                                           \
-  /** sus::concepts::Ord<##T##, Unsigned> trait.                               \
-   * #[doc.overloads=uint.ord.unsigned] */                                              \
-  template <Unsigned U>                                                       \
-  friend constexpr inline auto operator<=>(const T& l, const U& r) noexcept { \
-    return l.primitive_value <=> r.primitive_value;                           \
-  }                                                                           \
+#define _sus__unsigned_integer_comparison(T)                                 \
+  /** sus::concepts::Eq<##T##> trait.                                        \
+   * #[doc.overloads=uint.eq.self] */                                        \
+  friend constexpr inline bool operator==(const T& l, const T& r) noexcept = \
+      default;                                                               \
+  /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait.              \
+   * #[doc.overloads=uint.eq.unsignedprimitive] */                           \
+  template <UnsignedPrimitiveInteger P>                                      \
+  friend constexpr inline bool operator==(const T& l, const P& r) noexcept { \
+    return l.primitive_value == r;                                           \
+  }                                                                          \
+  /** sus::concepts::Eq<##T##, Unsigned> trait.                              \
+   * #[doc.overloads=uint.eq.unsigned] */                                    \
+  template <Unsigned U>                                                      \
+  friend constexpr inline bool operator==(const T& l, const U& r) noexcept { \
+    return l.primitive_value == r.primitive_value;                           \
+  }                                                                          \
+  /** sus::concepts::Ord<##T##> trait.             \
+   * #[doc.overloads=uint.ord.self] */                          \
+  template <UnsignedPrimitiveInteger P>                                      \
+  friend constexpr inline std::strong_ordering operator<=>(                  \
+      const T& l, const T& r) noexcept {                                     \
+    return l.primitive_value <=> r.primitive_value;                          \
+  }                                                                          \
+  /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait.             \
+   * #[doc.overloads=uint.ord.unsignedprimitive] */                          \
+  template <UnsignedPrimitiveInteger P>                                      \
+  friend constexpr inline std::strong_ordering operator<=>(                  \
+      const T& l, const P& r) noexcept {                                     \
+    return l.primitive_value <=> r;                                          \
+  }                                                                          \
+  /** sus::concepts::Ord<##T##, Unsigned> trait.                             \
+   * #[doc.overloads=uint.ord.unsigned] */                                   \
+  template <Unsigned U>                                                      \
+  friend constexpr inline std::strong_ordering operator<=>(                  \
+      const T& l, const U& r) noexcept {                                     \
+    return l.primitive_value <=> r.primitive_value;                          \
+  }                                                                          \
   static_assert(true)
 
 #define _sus__unsigned_unary_ops(T)                     \
@@ -615,7 +628,7 @@ class Tuple;
    * arithmetic overflow would occur. Note that for unsigned integers overflow \
    * never occurs, so the second value is always false.                        \
    *                                                                           \
-   * # Panics                                                                   \
+   * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
@@ -630,7 +643,7 @@ class Tuple;
   /** Saturating integer division. Computes self / rhs, saturating at the      \
    *  numeric bounds instead of overflowing.                                   \
    *                                                                           \
-   * # Panics                                                                   \
+   * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
@@ -644,7 +657,7 @@ class Tuple;
    * ever happen. This function exists, so that all operations are accounted   \
    * for in the wrapping operations.                                           \
    *                                                                           \
-   * # Panics                                                                   \
+   * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
