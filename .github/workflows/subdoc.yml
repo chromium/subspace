@@ -25,15 +25,7 @@ jobs:
         run: |
           set(ninja_version "1.11.1")
 
-          if ("${{ runner.os }}" STREQUAL "Windows")
-            set(ninja_suffix "win.zip")
-          elseif ("${{ runner.os }}" STREQUAL "Linux")
-            set(ninja_suffix "linux.zip")
-          elseif ("${{ runner.os }}" STREQUAL "macOS")
-            set(ninja_suffix "mac.zip")
-          endif()
-
-          set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
+          set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-linux.zip")
           file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
           execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
 
@@ -53,36 +45,19 @@ jobs:
 
       - name: Download dependencies
         shell: bash
-        run: gclient sync --jobs=16
+        run: |
+          sudo apt-get install python3 cipd
+          gclient sync --jobs=16
 
       - name: Configure
         shell: cmake -P {0}
         run: |
-          set(ENV{CC} ${{ matrix.config.cc }})
-          set(ENV{CXX} ${{ matrix.config.cxx }})
+          set(ENV{CC} clang-17)
+          set(ENV{CXX} clang++-17)
 
-          set(HAS_LLVM ON)
-          if (NOT "${{ runner.os }}" STREQUAL "Windows")
-            # Path to LLVM+Clang nightly that we have installed.
-            set(ENV{LLVM_DIR} "/usr/lib/llvm-17/lib/cmake/llvm")
-            set(ENV{Clang_DIR} "/usr/lib/llvm-17/lib/cmake/clang")
-          else()
-            # We don't have a copy of LLVM+Clang on the Windows bot.
-            set(HAS_LLVM OFF)
-          endif()
-
-          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-            execute_process(
-              COMMAND "${{ matrix.config.environment_script }}" && set
-              OUTPUT_FILE environment_script_output.txt
-            )
-            file(STRINGS environment_script_output.txt output_lines)
-            foreach(line IN LISTS output_lines)
-              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-              endif()
-            endforeach()
-          endif()
+          # Path to LLVM+Clang nightly that we have installed.
+          set(ENV{LLVM_DIR} "/usr/lib/llvm-17/lib/cmake/llvm")
+          set(ENV{Clang_DIR} "/usr/lib/llvm-17/lib/cmake/clang")
 
           file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
 
@@ -90,7 +65,7 @@ jobs:
             COMMAND cmake
               -S .
               -B out
-              -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
+              -D CMAKE_BUILD_TYPE=Release
               -D CMAKE_EXPORT_COMPILE_COMMANDS=1
               -G Ninja
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
@@ -106,15 +81,6 @@ jobs:
         shell: cmake -P {0}
         run: |
           set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
-
-          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
-            file(STRINGS environment_script_output.txt output_lines)
-            foreach(line IN LISTS output_lines)
-              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
-                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
-              endif()
-            endforeach()
-          endif()
 
           execute_process(
             COMMAND cmake --build out
@@ -144,4 +110,3 @@ jobs:
           git add .
           git commit -m "Update docs: $SHA"
           git push origin
-
