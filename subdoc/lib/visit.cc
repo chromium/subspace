@@ -249,21 +249,21 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    auto signature = decl->getQualifiedNameAsString();
-    // TODO: Add parameters.
-    if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
-      signature += " ";
-      signature += mdecl->getMethodQualifiers().getAsString();
-      switch (mdecl->getRefQualifier()) {
-        case clang::RQ_None: break;
-        case clang::RQ_LValue: signature += "&"; break;
-        case clang::RQ_RValue: signature += "&&"; break;
-      }
-    }
     Comment comment = make_db_comment(decl, raw_comment);
+
+    auto params =
+        sus::Vec<FunctionParameter>::with_capacity(decl->parameters().size());
+    for (const clang::ParmVarDecl* v : decl->parameters()) {
+      params.emplace(docs_db_.find_type(v->getOriginalType()),
+                     sus::none(),  // TODO: `v->getDefaultArg()`
+                     friendly_type_name(v->getOriginalType()),
+                     friendly_short_type_name(v->getOriginalType()));
+    }
+
     auto fe = FunctionElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        decl->getNameAsString(), sus::move(signature), decl->getReturnType(),
+        decl->getNameAsString(),  decl->getReturnType(),
+        sus::move(params),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
     fe.return_type_element = docs_db_.find_type(decl->getReturnType());
