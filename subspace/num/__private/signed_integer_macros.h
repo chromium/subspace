@@ -338,23 +338,25 @@ class Tuple;
   }                                                                            \
                                                                                \
   /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait.                \
-   * sus::concepts::Eq<##T##, Unsigned> trait.                                 \
-   * #[doc.overloads=uint.eq] */                                               \
+   * #[doc.overloads=uint.eq.signedprimitive] */                                               \
   template <SignedPrimitiveInteger P>                                          \
   friend constexpr inline bool operator==(const T& l, const P& r) noexcept {   \
     return l.primitive_value == r;                                             \
   }                                                                            \
+  /** sus::concepts::Eq<##T##, Unsigned> trait.                                 \
+   * #[doc.overloads=uint.eq.signed] */                                               \
   template <Signed S>                                                          \
   friend constexpr inline bool operator==(const T& l, const S& r) noexcept {   \
     return l.primitive_value == r.primitive_value;                             \
   }                                                                            \
-  /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait.               \
-   * sus::concepts::Ord<##T##, Unsigned> trait.                                \
-   * #[doc.overloads=uint.ord] */                                              \
+  /** sus::concepts::Ord<##T##, SignedPrimitiveInteger> trait.               \
+   * #[doc.overloads=uint.ord.signedprimitive] */                                              \
   template <SignedPrimitiveInteger P>                                          \
   friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept {  \
     return l.primitive_value <=> r;                                            \
   }                                                                            \
+  /** sus::concepts::Ord<##T##, Signed> trait.                                \
+   * #[doc.overloads=uint.ord.signed] */                                              \
   template <Signed S>                                                          \
   friend constexpr inline auto operator<=>(const T& l, const S& r) noexcept {  \
     return l.primitive_value <=> r.primitive_value;                            \

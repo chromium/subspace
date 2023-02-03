@@ -300,23 +300,25 @@ class Tuple;
 
 #define _sus__unsigned_integer_comparison(T)                                  \
   /** sus::concepts::Eq<##T##, UnsignedPrimitiveInteger> trait.               \
-   * sus::concepts::Eq<##T##, Unsigned> trait.                                \
-   * #[doc.overloads=int.eq] */                                               \
+   * #[doc.overloads=uint.eq.unsignedprimitive] */                                               \
   template <UnsignedPrimitiveInteger P>                                       \
   friend constexpr inline bool operator==(const T& l, const P& r) noexcept {  \
     return l.primitive_value == r;                                            \
   }                                                                           \
+  /** sus::concepts::Eq<##T##, Unsigned> trait.                                \
+   * #[doc.overloads=uint.eq.unsigned] */                                               \
   template <Unsigned U>                                                       \
   friend constexpr inline bool operator==(const T& l, const U& r) noexcept {  \
     return l.primitive_value == r.primitive_value;                            \
   }                                                                           \
   /** sus::concepts::Ord<##T##, UnsignedPrimitiveInteger> trait.              \
-   * sus::concepts::Ord<##T##, Unsigned> trait.                               \
-   * #[doc.overloads=int.ord] */                                              \
+   * #[doc.overloads=uint.ord.unsignedprimitive] */                                              \
   template <UnsignedPrimitiveInteger P>                                       \
   friend constexpr inline auto operator<=>(const T& l, const P& r) noexcept { \
     return l.primitive_value <=> r;                                           \
   }                                                                           \
+  /** sus::concepts::Ord<##T##, Unsigned> trait.                               \
+   * #[doc.overloads=uint.ord.unsigned] */                                              \
   template <Unsigned U>                                                       \
   friend constexpr inline auto operator<=>(const T& l, const U& r) noexcept { \
     return l.primitive_value <=> r.primitive_value;                           \
