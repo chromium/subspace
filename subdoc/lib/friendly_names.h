@@ -120,10 +120,27 @@ inline std::string friendly_short_type_name(
   // Clang writes booleans as "_Bool".
   if (unqualified->isBooleanType()) return "bool";
   std::string full = unqualified.getAsString();
-  // TODO: This does the wrong thing with templates!
+  // TODO: This does the wrong things with templates! But it tries.
   // `S::T<int>::V<Z::X, Y::A>` should come out as `V<Z::X, Y::A>`.
-  if (size_t pos = full.rfind("::"); pos != std::string::npos) {
-    full = full.substr(pos + strlen("::"));
+  //
+  // TODO: Drop the namespaces if the type and function it's related to (not
+  // given as an input here yet) have the same top-level namespace.
+  auto pos = std::string::npos;
+  while (true) {
+    if (auto close_pos = full.rfind(">", pos); close_pos != std::string::npos) {
+      pos = close_pos - 1u;
+      continue;
+    }
+    if (auto open_pos = full.rfind("<", pos); open_pos != std::string::npos) {
+      pos = open_pos - 1u;
+      continue;
+    }
+    break;
+  }
+  pos = full.rfind("::", pos);
+  if (pos != std::string::npos) {
+    pos += strlen("::");
+    full = full.substr(pos);
   }
   return full;
 }
