@@ -1,4 +1,4 @@
-name: clang-doc
+name: subdoc
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   docs:
-    name: Generate documentation with clang-doc
+    name: Generate documentation with subdoc
     if: github.repository == 'chromium/subspace'
     runs-on: ubuntu-latest
 
@@ -148,7 +148,7 @@ jobs:
           SHA=`git rev-parse HEAD`
           cd docs
           git config user.email "noreply@chromium.org"
-          git config user.name "Subspace clang-doc generator"
+          git config user.name "Subspace subdoc generator"
           git add .
           git commit -m "Update docs: $SHA"
           git push origin
