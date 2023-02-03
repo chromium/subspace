@@ -80,7 +80,7 @@ class Tuple;
   /** The smallest value that can be represented by this integer type,      \
    * as a native C++ primitive. */                                          \
   static constexpr auto MIN_PRIMITIVE = __private::min_value<PrimitiveT>(); \
-  /** The largest value that can be represented by this integer type,      \
+  /** The largest value that can be represented by this integer type,       \
    * as a native C++ primitive. */                                          \
   static constexpr auto MAX_PRIMITIVE = __private::max_value<PrimitiveT>(); \
   /** The smallest value that can be represented by this integer type. */   \
@@ -444,18 +444,20 @@ class Tuple;
   /** sus::concepts::Shl trait.                                             \
    * #[doc.overloads=int##T##.<<] */                                        \
   friend constexpr inline T operator<<(const T& l, const u32& r) noexcept { \
+    const auto out =                                                        \
+        __private::shl_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS);                                                 \
-    return __private::into_signed(__private::unchecked_shl(                 \
-        __private::into_unsigned(l.primitive_value), r.primitive_value));   \
+    ::sus::check(!out.overflow);                                            \
+    return out.value;                                                       \
   }                                                                         \
   /** sus::concepts::Shr trait.                                             \
    * #[doc.overloads=int##T##.>>] */                                        \
   friend constexpr inline T operator>>(const T& l, const u32& r) noexcept { \
+    const auto out =                                                        \
+        __private::shr_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS);                                                 \
-    return __private::into_signed(__private::unchecked_shr(                 \
-        __private::into_unsigned(l.primitive_value), r.primitive_value));   \
+    ::sus::check(!out.overflow);                                            \
+    return out.value;                                                       \
   }                                                                         \
   static_assert(true)
 
@@ -502,33 +504,35 @@ class Tuple;
   }                                                                            \
   static_assert(true)
 
-#define _sus__signed_mutable_bit_ops(T)                                 \
-  /** sus::concepts::BitAndAssign<##T##> trait. */                      \
-  constexpr inline void operator&=(T r)& noexcept {                     \
-    primitive_value &= r.primitive_value;                               \
-  }                                                                     \
-  /** sus::concepts::BitOrAssign<##T##> trait. */                       \
-  constexpr inline void operator|=(T r)& noexcept {                     \
-    primitive_value |= r.primitive_value;                               \
-  }                                                                     \
-  /** sus::concepts::BitXorAssign<##T##> trait. */                      \
-  constexpr inline void operator^=(T r)& noexcept {                     \
-    primitive_value ^= r.primitive_value;                               \
-  }                                                                     \
-  /** sus::concepts::ShlAssign trait. */                                \
-  constexpr inline void operator<<=(const u32& r)& noexcept {           \
-    /* TODO: Allow opting out of all overflow checks? */                \
-    ::sus::check(r < BITS);                                             \
-    primitive_value = __private::into_signed(__private::unchecked_shl(  \
-        __private::into_unsigned(primitive_value), r.primitive_value)); \
-  }                                                                     \
-  /** sus::concepts::ShrAssign trait. */                                \
-  constexpr inline void operator>>=(const u32& r)& noexcept {           \
-    /* TODO: Allow opting out of all overflow checks? */                \
-    ::sus::check(r < BITS);                                             \
-    primitive_value = __private::into_signed(__private::unchecked_shr(  \
-        __private::into_unsigned(primitive_value), r.primitive_value)); \
-  }                                                                     \
+#define _sus__signed_mutable_bit_ops(T)                                   \
+  /** sus::concepts::BitAndAssign<##T##> trait. */                        \
+  constexpr inline void operator&=(T r)& noexcept {                       \
+    primitive_value &= r.primitive_value;                                 \
+  }                                                                       \
+  /** sus::concepts::BitOrAssign<##T##> trait. */                         \
+  constexpr inline void operator|=(T r)& noexcept {                       \
+    primitive_value |= r.primitive_value;                                 \
+  }                                                                       \
+  /** sus::concepts::BitXorAssign<##T##> trait. */                        \
+  constexpr inline void operator^=(T r)& noexcept {                       \
+    primitive_value ^= r.primitive_value;                                 \
+  }                                                                       \
+  /** sus::concepts::ShlAssign trait. */                                  \
+  constexpr inline void operator<<=(const u32& r)& noexcept {             \
+    const auto out =                                                      \
+        __private::shl_with_overflow(primitive_value, r.primitive_value); \
+    /* TODO: Allow opting out of all overflow checks? */                  \
+    ::sus::check(!out.overflow);                                          \
+    primitive_value = out.value;                                          \
+  }                                                                       \
+  /** sus::concepts::ShrAssign trait. */                                  \
+  constexpr inline void operator>>=(const u32& r)& noexcept {             \
+    const auto out =                                                      \
+        __private::shr_with_overflow(primitive_value, r.primitive_value); \
+    /* TODO: Allow opting out of all overflow checks? */                  \
+    ::sus::check(!out.overflow);                                          \
+    primitive_value = out.value;                                          \
+  }                                                                       \
   static_assert(true)
 
 #define _sus__signed_abs(T, PrimitiveT, UnsignedT)                            \
@@ -746,7 +750,7 @@ class Tuple;
    * arithmetic overflow would occur. If an overflow would occur then self is  \
    * returned.                                                                 \
    *                                                                           \
-   * # Panics                                                                   \
+   * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
@@ -767,7 +771,7 @@ class Tuple;
   /** Saturating integer division. Computes self / rhs, saturating at the      \
    * numeric bounds instead of overflowing.                                    \
    *                                                                           \
-   * # Panics                                                                   \
+   * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   constexpr T saturating_div(const T& rhs) const& noexcept {                   \
@@ -792,7 +796,7 @@ class Tuple;
    * this is equivalent to -MIN, a positive value that is too large to         \
    * represent in the type. In such a case, this function returns MIN itself.  \
    *                                                                           \
-   * # Panics                                                                   \
+   * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
