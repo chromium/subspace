@@ -46,7 +46,7 @@ jobs:
       - name: Download dependencies
         shell: bash
         run: |
-          sudo apt-get install python3 cipd
+          sudo apt-get install python3
           gclient sync --jobs=16
 
       - name: Configure
