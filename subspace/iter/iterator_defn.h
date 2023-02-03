@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subspace/construct/into.h"
 #include "subspace/fn/fn.h"
 #include "subspace/iter/__private/iterator_end.h"
 #include "subspace/iter/__private/iterator_loop.h"
@@ -23,7 +24,6 @@
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
-#include "subspace/construct/into.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/option/option.h"
@@ -139,9 +139,7 @@ class [[nodiscard]] Iterator final : public I {
   ///
   /// It's only possible to call this in cases where it would do something
   /// useful, that is when the Iterator type is not trivially relocatable.
-  Iterator<
-      BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
-  box() && noexcept
+  auto box() && noexcept
     requires(!::sus::mem::relocate_by_memcpy<I>);
 
   /// Tests whether all elements of the iterator match a predicate.
@@ -180,25 +178,20 @@ class [[nodiscard]] Iterator final : public I {
   /// type.
   ///
   /// The returned iterator's type is whatever is returned by the closure.
-  template <class MapFn, int&..., class R = std::invoke_result_t<MapFn, Item&&>>
-    requires(::sus::construct::Into<MapFn, ::sus::fn::FnMut<R(Item&&)>> &&
-             !std::is_void_v<R>)
-  Iterator<Map<Item, R, ::sus::mem::size_of<I>(), alignof(I)>> map(
-      MapFn fn) && noexcept
-    requires(::sus::mem::relocate_by_memcpy<I>)
-  {
-    // TODO: Move out of line.
-    return {sus::into(::sus::move(fn)), make_sized_iterator(::sus::move(*this))};
-  }
+  template <class MapFn, int&...,
+            class R = std::invoke_result_t<MapFn, typename I::Item&&>,
+            class MapFnMut = ::sus::fn::FnMut<R(typename I::Item&&)>>
+    requires(::sus::construct::Into<MapFn, MapFnMut> && !std::is_void_v<R>)
+  auto map(MapFn fn) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<I>);
 
   /// Creates an iterator which uses a closure to determine if an element should
   /// be yielded.
   ///
   /// Given an element the closure must return true or false. The returned
   /// iterator will yield only the elements for which the closure returns true.
-  Iterator<Filter<Item, ::sus::mem::size_of<I>(), alignof(I)>> filter(
-      ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
-          pred) && noexcept
+  auto filter(::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
+                  pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<I>);
 
   /// Transforms an iterator into a collection.
@@ -274,21 +267,34 @@ template <class I>
 }
 
 template <class I>
-Iterator<BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
-Iterator<I>::box() && noexcept
+auto Iterator<I>::box() && noexcept
   requires(!::sus::mem::relocate_by_memcpy<I>)
 {
-  return make_boxed_iterator(::sus::move(*this));
+  using Out = Iterator<
+      BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>;
+  return Out(make_boxed_iterator(::sus::move(*this)));
 }
 
 template <class I>
-Iterator<Filter<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>
-Iterator<I>::filter(
+template <class MapFn, int&..., class R, class MapFnMut>
+  requires(::sus::construct::Into<MapFn, MapFnMut> && !std::is_void_v<R>)
+auto Iterator<I>::map(MapFn fn) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<I>)
+{
+  using Out = Iterator<Map<Item, R, ::sus::mem::size_of<I>(), alignof(I)>>;
+  return Out(sus::into(::sus::move(fn)),
+             make_sized_iterator(::sus::move(*this)));
+}
+
+template <class I>
+auto Iterator<I>::filter(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<I>)
 {
-  return {::sus::move(pred), make_sized_iterator(::sus::move(*this))};
+  using Out =
+      Iterator<Filter<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>;
+  return Out(::sus::move(pred), make_sized_iterator(::sus::move(*this)));
 }
 
 template <class I>
