@@ -450,4 +450,5 @@ TEST(i64, InvokeEverything) {
   [[maybe_unused]] auto b = i == j;
   [[maybe_unused]] auto z = i >= j;
 }
+
 }  // namespace

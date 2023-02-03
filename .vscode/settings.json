@@ -1,5 +1,5 @@
 {
-    "editor.renderFinalNewline": true,
+    "editor.renderFinalNewline": "on",
     "C_Cpp.default.includePath": [
         "${workspaceRoot}",
         "${workspaceRoot}/third_party/googletest/googletest/include",
