@@ -169,9 +169,14 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
                                                  : "Methods");
   }
   {
+    u32 overload_set;
+    std::string_view prev_name;
     for (auto&& [name, sort_key, function_id] : methods) {
+      if (name == prev_name) overload_set += 1u;
+      else overload_set = 0u;
+      prev_name = name;
       generate_function(section_div, element.methods.at(function_id),
-                        static_methods);
+                        static_methods, overload_set);
     }
   }
 }

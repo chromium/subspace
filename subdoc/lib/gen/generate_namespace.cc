@@ -136,9 +136,16 @@ void generate_namespace_functions(
     header_div.write_text("Functions");
   }
   {
+    u32 overload_set;
+    std::string_view prev_name;
     for (auto&& [name, sort_key, function_id] : functions) {
+      if (name == prev_name)
+        overload_set += 1u;
+      else
+        overload_set = 0u;
+      prev_name = name;
       generate_function(section_div, element.functions.at(function_id),
-                        /*is_static=*/false);
+                        /*is_static=*/false, overload_set);
     }
   }
 }
