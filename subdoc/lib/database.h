@@ -675,7 +675,7 @@ struct Database {
       return sus::some(*cursor);
     }();
     if (ns_cursor.is_none()) {
-      llvm::errs() << "ERROR: Unable to find namespace for type '"
+      llvm::errs() << "WARNING: Unable to find namespace for type '"
                    << qual.getAsString() << "'\n";
       return sus::none();
     }
