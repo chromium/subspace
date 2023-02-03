@@ -13,6 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
+      - uses: webfactory/ssh-agent@v0.7.0
+        with:
+            ssh-private-key: ${{ secrets.DOCS_SSH_PRIVATE_KEY }}
+
       - name: Install LLVM+Clang
         run: |
           wget https://apt.llvm.org/llvm.sh
