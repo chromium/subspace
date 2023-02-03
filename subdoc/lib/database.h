@@ -100,8 +100,15 @@ struct MethodSpecific {
   MethodQualifier qualifier;
 };
 
+struct FunctionParameter {
+  sus::Option<const TypeElement&> type_element;
+  sus::Option<std::string> default_value;
+  std::string type_name;
+  std::string short_type_name;
+};
+
 struct FunctionOverload {
-  std::string signature;
+  sus::Vec<FunctionParameter> parameters;
   sus::Option<MethodSpecific> method;
 
   // TODO: `noexcept` stuff from FunctionDecl::getExceptionSpecType().
@@ -110,14 +117,14 @@ struct FunctionOverload {
 struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
                            Comment comment, std::string name,
-                           std::string signature,
-                           clang::QualType return_qual_type, u32 sort_key)
+                           clang::QualType return_qual_type,
+                           sus::Vec<FunctionParameter> parameters, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
         return_type_name(friendly_type_name(return_qual_type)),
         return_short_type_name(friendly_short_type_name(return_qual_type)) {
     overloads.push(FunctionOverload{
-        .signature = sus::move(signature),
+        .parameters = sus::move(parameters),
         .method = sus::none(),
     });
   }

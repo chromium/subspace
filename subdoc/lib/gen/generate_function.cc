@@ -69,10 +69,27 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
       name_anchor.write_text(element.name);
     }
     {
-      auto params_span = overload_div.open_span();
+      auto params_span = overload_div.open_span(HtmlWriter::SingleLine);
       params_span.add_class("function-params");
-      // TODO: Write params.
-      params_span.write_text("()");
+      params_span.write_text("(");
+      bool write_comma = false;
+      for (const FunctionParameter& p : overload.parameters) {
+        if (write_comma) params_span.write_text(", ");
+        auto one_param_link = params_span.open_a();
+        one_param_link.add_class("type-name");
+        one_param_link.add_title(p.type_name);
+        if (p.type_element.is_some()) {
+          one_param_link.add_href(
+              construct_html_file_path(std::filesystem::path(),
+                                       p.type_element->namespace_path.as_ref(),
+                                       p.type_element->record_path.as_ref(),
+                                       p.type_element->name)
+                  .string());
+        }
+        one_param_link.write_text(p.short_type_name);
+        write_comma = true;
+      }
+      params_span.write_text(")");
     }
     if (overload.method.is_some()) {
       if (overload.method->is_volatile) {

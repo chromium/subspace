@@ -265,16 +265,43 @@ class Vec {
   /// # Panics
   ///
   /// Panics if the new capacity exceeds isize::MAX bytes.
+  //
+  // Avoids use of a reference, and receives by value, to sidestep the whole
+  // issue of the reference being to something inside the vector which
+  // reserve() then invalidates.
   void push(T t) noexcept
     requires(  // Vec<T> requires that `T` is `sus::mem::Move`.
         ::sus::mem::Move<T>)
   {
     check(!is_moved_from());
-    // Avoids use of a reference, and receives by value, to sidestep the whole
-    // issue of the reference being to something inside the vector which
-    // reserve() then invalidates.
     reserve(1_usize);
     new (as_mut_ptr() + len_.primitive_value) T(::sus::move(t));
+    len_ += 1_usize;
+  }
+
+  /// Constructs and appends an element to the back of the vector.
+  ///
+  /// The parameters to `emplace()` are used to construct the element. This
+  /// typically works best for aggregate types, rather than types with a named
+  /// static method constructor (such as `T::with_foo(foo)`).
+  ///
+  /// Disallows construction from a reference to `T`, as `push()` should be
+  /// used in that case to avoid invalidating the input reference while
+  /// constructing from it.
+  ///
+  /// # Panics
+  ///
+  /// Panics if the new capacity exceeds isize::MAX bytes.
+  template <class... Us>
+  void emplace(Us&&... args) noexcept
+    requires(  // Vec<T> requires that `T` is `sus::mem::Move`.
+        ::sus::mem::Move<T> &&
+        !(sizeof...(Us) == 1u &&
+          (... && std::same_as<std::decay_t<T>, std::decay_t<Us>>)))
+  {
+    check(!is_moved_from());
+    reserve(1_usize);
+    new (as_mut_ptr() + len_.primitive_value) T(::sus::forward<Us>(args)...);
     len_ += 1_usize;
   }
 

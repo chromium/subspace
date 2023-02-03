@@ -28,6 +28,11 @@ struct HtmlAttribute {
 
 class HtmlWriter {
  public:
+  enum NewlineStrategy {
+    SingleLine,
+    MultiLine,
+  };
+
   class [[nodiscard]] Html {
    public:
     void add_class(std::string_view c) noexcept {
@@ -45,15 +50,15 @@ class HtmlWriter {
 
     auto open_div() noexcept {
       write_open();
-      return writer_.open_div();
+      return writer_.open_div(has_newlines_);
     }
-    auto open_span() noexcept {
+    auto open_span(NewlineStrategy newlines = MultiLine) noexcept {
       write_open();
-      return writer_.open_span();
+      return writer_.open_span(has_newlines_, newlines);
     }
     auto open_a() noexcept {
       write_open();
-      return writer_.open_a();
+      return writer_.open_a(has_newlines_);
     }
 
    protected:
@@ -66,13 +71,14 @@ class HtmlWriter {
     sus::Vec<HtmlAttribute> attributes_;
     bool wrote_open_ = false;
     bool has_newlines_ = true;
+    bool inside_has_newlines_ = true;
   };
 
   class [[nodiscard]] OpenA : public Html {
    public:
     ~OpenA() noexcept {
       write_open();
-      writer_.write_close("a", has_newlines_);
+      writer_.write_close("a", inside_has_newlines_, has_newlines_);
     }
 
     void add_href(std::string_view href) {
@@ -96,16 +102,18 @@ class HtmlWriter {
 
    private:
     friend HtmlWriter;
-    OpenA(HtmlWriter& writer) noexcept : Html(writer) {
+    OpenA(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
       // Avoid newlines in <a> tags as they extend the link decoration
       // into whitespace.
       has_newlines_ = false;
+      inside_has_newlines_ = inside_has_newlines;
     }
 
     void write_open() noexcept override {
       if (!wrote_open_) {
         writer_.write_open("a", classes_.iter(), attributes_.iter(),
-                           has_newlines_);
+                           inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
     }
@@ -115,7 +123,7 @@ class HtmlWriter {
    public:
     ~OpenDiv() noexcept {
       write_open();
-      writer_.write_close("div");
+      writer_.write_close("div", inside_has_newlines_, has_newlines_);
     }
 
     void add_title(std::string_view title) {
@@ -127,11 +135,15 @@ class HtmlWriter {
 
    private:
     friend HtmlWriter;
-    OpenDiv(HtmlWriter& writer) noexcept : Html(writer) {}
+    OpenDiv(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
+      inside_has_newlines_ = inside_has_newlines;
+    }
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("div", classes_.iter(), attributes_.iter());
+        writer_.write_open("div", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
     }
@@ -141,7 +153,7 @@ class HtmlWriter {
    public:
     ~OpenSpan() noexcept {
       write_open();
-      writer_.write_close("span");
+      writer_.write_close("span", inside_has_newlines_, has_newlines_);
     }
 
     void add_title(std::string_view title) {
@@ -153,11 +165,17 @@ class HtmlWriter {
 
    private:
     friend HtmlWriter;
-    OpenSpan(HtmlWriter& writer) noexcept : Html(writer) {}
+    OpenSpan(HtmlWriter& writer, bool inside_has_newlines,
+             NewlineStrategy newlines) noexcept
+        : Html(writer) {
+      has_newlines_ = newlines == MultiLine;
+      inside_has_newlines_ = inside_has_newlines;
+    }
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("span", classes_.iter(), attributes_.iter());
+        writer_.write_open("span", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
     }
@@ -167,7 +185,7 @@ class HtmlWriter {
    public:
     ~OpenBody() noexcept {
       write_open();
-      writer_.write_close("body");
+      writer_.write_close("body", inside_has_newlines_, has_newlines_);
     }
 
    private:
@@ -176,7 +194,8 @@ class HtmlWriter {
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("body", classes_.iter(), attributes_.iter());
+        writer_.write_open("body", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
     }
@@ -186,16 +205,20 @@ class HtmlWriter {
    public:
     ~OpenTitle() noexcept {
       write_open();
-      writer_.write_close("title");
+      writer_.write_close("title", inside_has_newlines_, has_newlines_);
     }
 
    private:
     friend HtmlWriter;
-    OpenTitle(HtmlWriter& writer) noexcept : Html(writer) {}
+    OpenTitle(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
+      inside_has_newlines_ = inside_has_newlines;
+    }
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("title", classes_.iter(), attributes_.iter());
+        writer_.write_open("title", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
     }
@@ -225,11 +248,15 @@ class HtmlWriter {
 
    private:
     friend HtmlWriter;
-    OpenLink(HtmlWriter& writer) noexcept : Html(writer) {}
+    OpenLink(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
+      inside_has_newlines_ = inside_has_newlines;
+    }
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("link", classes_.iter(), attributes_.iter());
+        writer_.write_open("link", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
     }
@@ -241,16 +268,16 @@ class HtmlWriter {
    public:
     ~OpenHead() noexcept {
       write_open();
-      writer_.write_close("head");
+      writer_.write_close("head", inside_has_newlines_, has_newlines_);
     }
 
     auto open_title() noexcept {
       write_open();
-      return writer_.open_title();
+      return writer_.open_title(has_newlines_);
     }
     auto open_link() noexcept {
       write_open();
-      return writer_.open_link();
+      return writer_.open_link(has_newlines_);
     }
 
    private:
@@ -259,7 +286,8 @@ class HtmlWriter {
 
     void write_open() noexcept override {
       if (!wrote_open_) {
-        writer_.write_open("head", classes_.iter(), attributes_.iter());
+        writer_.write_open("head", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
         wrote_open_ = true;
       }
     }
@@ -278,11 +306,22 @@ class HtmlWriter {
   friend class OpenDiv;
   friend class OpenSpan;
 
-  OpenDiv open_div() noexcept { return OpenDiv(*this); }
-  OpenSpan open_span() noexcept { return OpenSpan(*this); }
-  OpenA open_a() noexcept { return OpenA(*this); }
-  OpenTitle open_title() noexcept { return OpenTitle(*this); }
-  OpenLink open_link() noexcept { return OpenLink(*this); }
+  OpenDiv open_div(bool inside_has_newlines) noexcept {
+    return OpenDiv(*this, inside_has_newlines);
+  }
+  OpenSpan open_span(bool inside_has_newlines,
+                     NewlineStrategy newlines) noexcept {
+    return OpenSpan(*this, inside_has_newlines, newlines);
+  }
+  OpenA open_a(bool inside_has_newlines) noexcept {
+    return OpenA(*this, inside_has_newlines);
+  }
+  OpenTitle open_title(bool inside_has_newlines) noexcept {
+    return OpenTitle(*this, inside_has_newlines);
+  }
+  OpenLink open_link(bool inside_has_newlines) noexcept {
+    return OpenLink(*this, inside_has_newlines);
+  }
 
   // Quote any <>.
   static sus::Option<std::string> quote_angle_brackets(std::string_view text) {
@@ -329,8 +368,8 @@ class HtmlWriter {
       std::string_view type,
       sus::iter::Iterator<ClassIter<const std::string&>> classes_iter,
       sus::iter::Iterator<AttrIter<const HtmlAttribute&>> attr_iter,
-      bool has_newlines = true) noexcept {
-    write_indent();
+      bool inside_has_newlines, bool has_newlines) noexcept {
+    if (inside_has_newlines) write_indent();
     stream_ << "<" << type;
     if (sus::Option<const std::string&> first_class = classes_iter.next();
         first_class.is_some()) {
@@ -354,10 +393,12 @@ class HtmlWriter {
     indent_ += 2u;
   }
   void skip_close() noexcept { indent_ -= 2u; }
-  void write_close(std::string_view type, bool has_newlines = true) noexcept {
+  void write_close(std::string_view type, bool inside_has_newlines,
+                   bool has_newlines) noexcept {
     indent_ -= 2u;
     if (has_newlines) write_indent();
-    stream_ << "</" << type << ">\n";
+    stream_ << "</" << type << ">";
+    if (inside_has_newlines) stream_ << "\n";
   }
   void write_indent() noexcept {
     for (auto i = 0_u32; i < indent_; i += 1u) stream_ << " ";
