@@ -72,8 +72,8 @@ jobs:
               -D CMAKE_EXPORT_COMPILE_COMMANDS=1
               -G Ninja
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
-              -D SUBSPACE_BUILD_CIR=${HAS_LLVM}
-              -D SUBSPACE_BUILD_SUBDOC=${HAS_LLVM}
+              -D SUBSPACE_BUILD_CIR=OFF
+              -D SUBSPACE_BUILD_SUBDOC=ON
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
