@@ -74,6 +74,11 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh 17 all
 
+      - name: Install Python3
+        if: startsWith(matrix.config.os, 'ubuntu-')
+        run: |
+          sudo apt-get install python3
+
       # vptr is incompatible with no-rtti. We turn off rtti to match the LLVM libraries.
       - name: Set UBSan Flags
         if: endsWith(matrix.config.name, 'UBSan')
