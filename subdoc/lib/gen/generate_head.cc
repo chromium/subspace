@@ -16,13 +16,13 @@
 
 namespace subdoc::gen {
 
-void generate_head(HtmlWriter& html, std::string_view title_string,
+void generate_head(HtmlWriter& html, std::string_view title_html,
                    const Options& options) noexcept {
   {
     auto head = html.open_head();
     {
       auto title = head.open_title();
-      title.write_text(title_string);
+      title.write_html(title_html);
     }
     for (const std::string& path : options.stylesheets) {
       auto default_stylesheet_link = head.open_link();

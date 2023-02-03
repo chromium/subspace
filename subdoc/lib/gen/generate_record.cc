@@ -46,10 +46,49 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
           friendly_record_type_name(element.record_type, true));
     }
     {
-      auto name_anchor = record_header_div.open_a();
-      name_anchor.add_href("#");
-      name_anchor.add_class("type-name");
-      name_anchor.write_text(element.name);
+      auto full_type_span = record_header_div.open_span(HtmlWriter::SingleLine);
+      {
+        // TODO: This code gets duplicated a lot, share it.
+
+        // TODO: Add Iterator::reverse() and use that.
+        for (size_t i = 0; i < element.namespace_path.len(); ++i) {
+          const Namespace& n =
+              element.namespace_path[element.namespace_path.len() - i - 1u];
+          switch (n) {
+            case Namespace::Tag::Global: break;
+            case Namespace::Tag::Anonymous: {
+              auto namespace_anchor = full_type_span.open_a();
+              namespace_anchor.write_text("(anonymous)");
+            }
+              full_type_span.write_text("::");
+              break;
+            case Namespace::Tag::Named: {
+              // TODO: Generate links.
+              auto namespace_anchor = full_type_span.open_a();
+              namespace_anchor.write_text(n.get_ref<Namespace::Tag::Named>());
+            }
+              full_type_span.write_text("::");
+              break;
+          }
+        }
+        // TODO: Add Iterator::reverse() and use that.
+        for (size_t i = 0; i < element.record_path.len(); ++i) {
+          const std::string& record_name =
+              element.record_path[element.record_path.len() - i - 1u];
+          {
+            auto record_anchor = full_type_span.open_a();
+            record_anchor.write_text(record_name);
+          }
+          full_type_span.write_text("::");
+        }
+      }
+
+      {
+        auto local_type_anchor = full_type_span.open_a();
+        local_type_anchor.add_href("#");
+        local_type_anchor.add_class("type-name");
+        local_type_anchor.write_html(element.name);
+      }
     }
   }
   {
@@ -172,8 +211,10 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
     u32 overload_set;
     std::string_view prev_name;
     for (auto&& [name, sort_key, function_id] : methods) {
-      if (name == prev_name) overload_set += 1u;
-      else overload_set = 0u;
+      if (name == prev_name)
+        overload_set += 1u;
+      else
+        overload_set = 0u;
       prev_name = name;
       generate_function(section_div, element.methods.at(function_id),
                         static_methods, overload_set);
@@ -191,7 +232,34 @@ void generate_record(const RecordElement& element,
   std::filesystem::create_directories(path.parent_path());
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
 
-  generate_head(html, element.name, options);
+  {
+    std::ostringstream title;
+    // TODO: Add Iterator::reverse() and use that.
+    for (size_t i = 0; i < element.namespace_path.len(); ++i) {
+      const Namespace& n =
+          element.namespace_path[element.namespace_path.len() - i - 1u];
+      switch (n) {
+        case Namespace::Tag::Global: break;
+        case Namespace::Tag::Anonymous:
+          title << "(anonymous)";
+          title << "::";
+          break;
+        case Namespace::Tag::Named:
+          title << n.get_ref<Namespace::Tag::Named>();
+          title << "::";
+          break;
+      }
+    }
+    // TODO: Add Iterator::reverse() and use that.
+    for (size_t i = 0; i < element.record_path.len(); ++i) {
+      const std::string& record_name =
+          element.record_path[element.record_path.len() - i - 1u];
+      title << record_name;
+      title << "::";
+    }
+    title << element.name;
+    generate_head(html, sus::move(title).str(), options);
+  }
 
   auto body = html.open_body();
 

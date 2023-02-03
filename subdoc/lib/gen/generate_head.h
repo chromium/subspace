@@ -21,7 +21,7 @@
 
 namespace subdoc::gen {
 
-void generate_head(HtmlWriter& html, std::string_view title_string,
+void generate_head(HtmlWriter& html, std::string_view title_html,
                    const Options& options) noexcept;
 
 }
