@@ -504,6 +504,21 @@ TEST(Vec, Clear) {
 }
 
 TEST(Vec, Move) {
+  struct Move {
+    Move(Move&&) = default;
+    Move& operator=(Move&&) = default;
+  };
+
+  static_assert(!::sus::mem::Copy<Move>);
+  static_assert(!::sus::mem::Clone<Move>);
+  static_assert(!::sus::mem::CloneInto<Move>);
+  static_assert(::sus::mem::Move<Move>);
+  // Vec is Move but not Copy or Clone if T is not.
+  static_assert(!::sus::mem::Copy<Vec<Move>>);
+  static_assert(!::sus::mem::Clone<Vec<Move>>);
+  static_assert(!::sus::mem::CloneInto<Vec<Move>>);
+  static_assert(::sus::mem::Move<Vec<Move>>);
+
   static auto moves = 0_usize;
   static auto destructs = 0_usize;
   auto v = Vec<TrivialLies<false>>::with_capacity(1_usize);
