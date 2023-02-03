@@ -1,0 +1,155 @@
+name: clang-doc
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  docs:
+    name: Generate documentation with clang-doc
+    if: github.repository == 'chromium/subspace'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install LLVM+Clang
+        if: startsWith(matrix.config.os, 'ubuntu-')
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 17 all
+
+      # vptr is incompatible with no-rtti. We turn off rtti to match the LLVM libraries.
+      - name: Set UBSan Flags
+        if: endsWith(matrix.config.name, 'UBSan')
+        run: |
+          echo "CFLAGS=$CFLAGS -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
+          echo "CXXFLAGS=$CXXFLAGS -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
+
+      - name: Download Ninja
+        id: ninja
+        shell: cmake -P {0}
+        run: |
+          set(ninja_version "1.11.1")
+
+          if ("${{ runner.os }}" STREQUAL "Windows")
+            set(ninja_suffix "win.zip")
+          elseif ("${{ runner.os }}" STREQUAL "Linux")
+            set(ninja_suffix "linux.zip")
+          elseif ("${{ runner.os }}" STREQUAL "macOS")
+            set(ninja_suffix "mac.zip")
+          endif()
+
+          set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-${ninja_suffix}")
+          file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
+          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
+
+          if (NOT "${{ runner.os }}" STREQUAL "Windows")
+            execute_process(
+              COMMAND chmod +x ninja
+            )
+          endif()
+
+      - name: Checkout depot tools
+        run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+
+      - name: Setup .gclient
+        shell: bash
+        run: |
+          echo "./depot_tools" >> $GITHUB_PATH
+
+      - name: Download dependencies
+        shell: bash
+        run: gclient sync --jobs=16
+
+      - name: Configure
+        shell: cmake -P {0}
+        run: |
+          set(ENV{CC} ${{ matrix.config.cc }})
+          set(ENV{CXX} ${{ matrix.config.cxx }})
+
+          set(HAS_LLVM ON)
+          if (NOT "${{ runner.os }}" STREQUAL "Windows")
+            # Path to LLVM+Clang nightly that we have installed.
+            set(ENV{LLVM_DIR} "/usr/lib/llvm-17/lib/cmake/llvm")
+            set(ENV{Clang_DIR} "/usr/lib/llvm-17/lib/cmake/clang")
+          else()
+            # We don't have a copy of LLVM+Clang on the Windows bot.
+            set(HAS_LLVM OFF)
+          endif()
+
+          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+            execute_process(
+              COMMAND "${{ matrix.config.environment_script }}" && set
+              OUTPUT_FILE environment_script_output.txt
+            )
+            file(STRINGS environment_script_output.txt output_lines)
+            foreach(line IN LISTS output_lines)
+              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+              endif()
+            endforeach()
+          endif()
+
+          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
+
+          execute_process(
+            COMMAND cmake
+              -S .
+              -B out
+              -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
+              -D CMAKE_EXPORT_COMPILE_COMMANDS=1
+              -G Ninja
+              -D CMAKE_MAKE_PROGRAM=${ninja_program}
+              -D SUBSPACE_BUILD_CIR=${HAS_LLVM}
+              -D SUBSPACE_BUILD_SUBDOC=${HAS_LLVM}
+            RESULT_VARIABLE result
+          )
+          if (NOT result EQUAL 0)
+            message(FATAL_ERROR "Bad exit status")
+          endif()
+
+      - name: Build
+        shell: cmake -P {0}
+        run: |
+          set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+
+          if ("${{ runner.os }}" STREQUAL "Windows" AND NOT "x${{ matrix.config.environment_script }}" STREQUAL "x")
+            file(STRINGS environment_script_output.txt output_lines)
+            foreach(line IN LISTS output_lines)
+              if (line MATCHES "^([a-zA-Z0-9_-]+)=(.*)$")
+                set(ENV{${CMAKE_MATCH_1}} "${CMAKE_MATCH_2}")
+              endif()
+            endforeach()
+          endif()
+
+          execute_process(
+            COMMAND cmake --build out
+            RESULT_VARIABLE result
+          )
+          if (NOT result EQUAL 0)
+            message(FATAL_ERROR "Bad exit status")
+          endif()
+
+      - name: Checkout docs
+        run: |
+          git clone git@github.com:danakj/subspace-docs.git docs
+
+      - name: Generate
+        run: |
+          out/subdoc/subdoc \
+            -p out \
+            subspace/subspace \
+            --include-patterns subspace/subspace
+
+      - name: Deploy
+        run: |
+          SHA=`git rev-parse HEAD`
+          cd docs
+          git config user.email "noreply@chromium.org"
+          git config user.name "Subspace clang-doc generator"
+          git add .
+          git commit -m "Update docs: $SHA"
+          git push origin
+
