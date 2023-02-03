@@ -20,6 +20,7 @@
 namespace subdoc::gen {
 
 void generate_function(HtmlWriter::OpenDiv& section_div,
-                       const FunctionElement& e, bool is_static) noexcept;
+                       const FunctionElement& e, bool is_static,
+                       u32 overload_set) noexcept;
 
 }

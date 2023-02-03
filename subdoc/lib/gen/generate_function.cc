@@ -25,8 +25,8 @@
 namespace subdoc::gen {
 
 void generate_function(HtmlWriter::OpenDiv& section_div,
-                       const FunctionElement& element,
-                       bool is_static) noexcept {
+                       const FunctionElement& element, bool is_static,
+                       u32 overload_set) noexcept {
   auto item_div = section_div.open_div();
   item_div.add_class("section-item");
 
@@ -63,6 +63,7 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
         anchor << "function.";
       anchor << (is_static ? "static." : "");
       anchor << element.name;
+      if (overload_set > 0u) anchor << "." << overload_set.primitive_value;
       name_anchor.add_name(anchor.str());
       name_anchor.add_href(std::string("#") + anchor.str());
       name_anchor.add_class("function-name");
