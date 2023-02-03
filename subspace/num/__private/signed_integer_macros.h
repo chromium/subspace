@@ -357,7 +357,7 @@ class Tuple;
    * #[doc.overloads=int.ord.self] */                                          \
   template <UnsignedPrimitiveInteger P>                                        \
   friend constexpr inline std::strong_ordering operator<=>(                    \
-      const T& l, const T& r) noexcept {                                       \
+    const T& l, const T& r) noexcept {                                       \
     return l.primitive_value <=> r.primitive_value;                            \
   }                                                                            \
   /** sus::concepts::Ord<##T##, SignedPrimitiveInteger> trait.                 \
