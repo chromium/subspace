@@ -28,6 +28,12 @@ int main(int argc, const char** argv) {
 
   llvm::cl::OptionCategory option_category("SubDoc options");
 
+  llvm::cl::opt<std::string> option_out(
+      "out",
+      llvm::cl::desc("Where to generate the docs. Defaults to `./out/docs`"),
+      llvm::cl::init("out/docs"),  //
+      llvm::cl::cat(option_category));
+
   llvm::cl::list<std::string> option_css(
       "css",
       llvm::cl::desc(
@@ -142,8 +148,7 @@ int main(int argc, const char** argv) {
   subdoc::Database docs_db = sus::move(result).unwrap();
 
   auto gen_options = subdoc::gen::Options{
-      // TODO: Make this configurable.
-      .output_root = "out/docs",
+      .output_root = std::filesystem::path(option_out.getValue()),
   };
   if (option_css.empty() && option_copy_files.empty()) {
     // Defaults to pull the test stylesheet, assuming subdoc is being run from

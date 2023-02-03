@@ -100,13 +100,18 @@ jobs:
       - name: Checkout docs
         run: |
           git clone git@github.com:danakj/subspace-docs.git docs
+          rm -rf docs/*
 
+        # Generate for files in subspace. The paths are absolute, so we look
+        # for the subspace (library) directory inside the subspace (project)
+        # directory.
       - name: Generate
         run: |
           out/subdoc/subdoc \
             -p out \
-            subspace/subspace \
-            --include-patterns subspace/subspace
+            --out docs \
+            --include-patterns subspace/subspace \
+            subspace/subspace
 
       - name: Deploy
         run: |
