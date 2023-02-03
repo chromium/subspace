@@ -14,18 +14,10 @@ jobs:
       - uses: actions/checkout@v1
 
       - name: Install LLVM+Clang
-        if: startsWith(matrix.config.os, 'ubuntu-')
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 17 all
-
-      # vptr is incompatible with no-rtti. We turn off rtti to match the LLVM libraries.
-      - name: Set UBSan Flags
-        if: endsWith(matrix.config.name, 'UBSan')
-        run: |
-          echo "CFLAGS=$CFLAGS -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
-          echo "CXXFLAGS=$CXXFLAGS -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
 
       - name: Download Ninja
         id: ninja
