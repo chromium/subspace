@@ -108,7 +108,7 @@ jobs:
         # in that directory (there's no other /subspace/ directory it may include).
       - name: Generate
         run: |
-          subspace/out/subdoc/subdoc \
+          out/subdoc/subdoc \
             -p subspace/out \
             --out docs \
             --include-file-pattern /subspace/ \
