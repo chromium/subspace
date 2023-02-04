@@ -109,7 +109,7 @@ jobs:
       - name: Generate
         run: |
           out/subdoc/subdoc \
-            -p subspace/out \
+            -p out \
             --out docs \
             --include-file-pattern /subspace/ \
             --exclude-file-pattern /third_party/ \
