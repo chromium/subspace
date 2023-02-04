@@ -99,6 +99,7 @@ jobs:
 
       - name: Checkout docs
         run: |
+          cd ..
           git clone git@github.com:danakj/subspace-docs.git docs
           cd docs
           git rm -r *
@@ -109,10 +110,11 @@ jobs:
         # in that directory (there's no other /subspace/ directory it may include).
       - name: Generate
         run: |
-          out/subdoc/subdoc \
-            -p out \
+          subspace/out/subdoc/subdoc \
+            -p subspace/out \
             --out docs \
             --include-patterns /subspace/ \
+            --exclude-patterns /third_party/ \
             /home/runner/work/subspace/subspace/subspace
 
       - name: Deploy
