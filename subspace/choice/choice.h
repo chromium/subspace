@@ -270,6 +270,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// ```
   ///
   /// # Inspiration
+  /// ```txt
   ///
   ///                       ████████
   ///                   ████▓▓░░▓▓██
@@ -301,6 +302,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   ///                         ██  ██          ▓▓░░░░░░░░░░░░
   ///                           ██  ██          ▓▓▓▓▓▓▓▓▓▓▒▒
   ///                             ████
+  /// ```
   constexpr inline TagsType which() const& noexcept {
     check(index_ != kUseAfterMove);
     constexpr TagsType tags[] = {Tags...};
