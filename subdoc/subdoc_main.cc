@@ -37,7 +37,8 @@ int main(int argc, const char** argv) {
   llvm::cl::list<std::string> option_css(
       "css",
       llvm::cl::desc(
-          "A list of CSS files to include in the generated HTML header.\n"
+          "A CSS file to include in the generated HTML header. May be "
+          "specified multiple times for multiple files.\n"
           "\n"
           "When rendering the HTML, a <link> tag will be added\n"
           "with each path to a CSS file that is specified. For\n"
@@ -45,25 +46,25 @@ int main(int argc, const char** argv) {
       llvm::cl::cat(option_category));
 
   llvm::cl::list<std::string> option_copy_files(
-      "copy-files",
-      llvm::cl::desc("A list (comma separated) of files to be copied into the "
-                     "output directory."),
+      "copy-file",
+      llvm::cl::desc("A file to be copied into the output directory. May be "
+                     "specified multiple times for multiple files."),
       llvm::cl::cat(option_category));
 
   llvm::cl::list<std::string> option_include_paths(
-      "include-patterns",
-      llvm::cl::desc("A list (comma separated) of path patterns for which "
-                     "documentation should be included in the generated "
-                     "HTML. The %cwd% symbol may be used to indicate the "
-                     "current directory."),
+      "include-file-pattern",
+      llvm::cl::desc(
+          "A path pattern for which documentation should be included in the "
+          "generated HTML. May be specified multiple times for multiple "
+          "patterns."),
       llvm::cl::cat(option_category));
 
   llvm::cl::list<std::string> option_exclude_paths(
-      "exclude-patterns",
-      llvm::cl::desc("A list (comma separated) of path patterns for which "
-                     "documentation should excluded from the generated "
-                     "HTML. The %cwd% symbol may be used to indicate the "
-                     "current directory."),
+      "exclude-file-pattern",
+      llvm::cl::desc(
+          "A path pattern for which documentation should be excluded from the "
+          "generated HTML. May be specified multiple times for multiple "
+          "patterns."),
       llvm::cl::cat(option_category));
 
   llvm::Expected<clang::tooling::CommonOptionsParser> options_parser =
