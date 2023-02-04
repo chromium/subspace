@@ -99,8 +99,10 @@ jobs:
 
       - name: Checkout docs
         run: |
-          git clone git@github.com:danakj/subspace-docs.git out/docs
-          rm -rf out/docs/*
+          git clone git@github.com:danakj/subspace-docs.git docs
+          cd docs
+          git rm -r *
+          cd ..
 
         # Generate for files in subspace. We execute the tool on all files in
         # the subspace library dir, and we limit generation to things defined
@@ -109,16 +111,16 @@ jobs:
         run: |
           out/subdoc/subdoc \
             -p out \
-            --out out/docs \
+            --out docs \
             --include-patterns /subspace/ \
             /home/runner/work/subspace/subspace/subspace
 
       - name: Deploy
         run: |
           SHA=`git rev-parse HEAD`
-          cd out/docs
+          cd docs
           git config user.email "noreply@chromium.org"
           git config user.name "Subspace subdoc generator"
-          git add -f .
+          git add .
           git commit -m "Update docs: $SHA"
           git push origin
