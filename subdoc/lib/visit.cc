@@ -14,14 +14,6 @@
 
 #include "subdoc/lib/visit.h"
 
-#include <stdio.h>
-
-#ifdef _MSC_VER
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-
 #include <regex>
 
 #include "subdoc/lib/database.h"
@@ -31,7 +23,6 @@
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subspace/assertions/unreachable.h"
-#include "subspace/macros/compiler.h"
 #include "subspace/mem/swap.h"
 #include "subspace/ops/ord.h"
 #include "subspace/prelude.h"
@@ -556,17 +547,11 @@ std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
         s << " " << std::string_view(file);
         return sus::move(s).str();
       }();
-      auto isatty_fn = &sus_if_msvc_else(_isatty, isatty);
-      auto fileno_fn = &sus_if_msvc_else(_fileno, fileno);
-      if (isatty_fn(fileno_fn(stdin))) {
-        llvm::outs() << "\r" << to_print;
-        for (usize i;
-             i < line_stats.last_line_len.saturating_sub(to_print.size());
-             i += 1u) {
-          llvm::errs() << " ";
-        }
-      } else {
-        llvm::outs() << to_print << "\n";
+      llvm::outs() << "\r" << to_print;
+      for (usize i;
+           i < line_stats.last_line_len.saturating_sub(to_print.size());
+           i += 1u) {
+        llvm::errs() << " ";
       }
       line_stats.last_line_len = to_print.size();
       line_stats.cur_file += 1u;
