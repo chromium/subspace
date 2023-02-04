@@ -113,9 +113,9 @@ jobs:
             --out docs \
             --include-file-pattern /subspace/ \
             --exclude-file-pattern /third_party/ \
-            --copy-files subdoc/gen_tests/subdoc-test-style.css \
+            --copy-file subdoc/gen_tests/subdoc-test-style.css \
             --css subdoc-test-style.css \
-            --copy-files subspace/index.html \
+            --copy-file subspace/index.html \
             /home/runner/work/subspace/subspace/subspace
 
       - name: Deploy
