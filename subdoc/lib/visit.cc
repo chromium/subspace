@@ -556,9 +556,9 @@ std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
         s << " " << std::string_view(file);
         return sus::move(s).str();
       }();
-      auto isatty = &sus_if_msvc_else(_isatty, isatty);
-      auto fileno = &sus_if_msvc_else(_fileno, fileno);
-      if (isatty(fileno(stdin))) {
+      auto isatty_fn = &sus_if_msvc_else(_isatty, isatty);
+      auto fileno_fn = &sus_if_msvc_else(_fileno, fileno);
+      if (isatty_fn(fileno_fn(stdin))) {
         llvm::outs() << "\r" << to_print;
         for (usize i;
              i < line_stats.last_line_len.saturating_sub(to_print.size());
