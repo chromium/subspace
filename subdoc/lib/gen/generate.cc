@@ -21,7 +21,11 @@
 namespace subdoc::gen {
 
 void generate(const Database& db, const Options& options) {
-  std::filesystem::remove_all(options.output_root);
+  for (auto it = std::filesystem::directory_iterator(options.output_root);
+       it != std::filesystem::directory_iterator(); ++it) {
+    if (!(it->is_directory() && it->path().filename().string().starts_with(".")))
+      std::filesystem::remove(*it);
+  }
   generate_namespace(db.global, options);
 
   for (const std::string& s : options.copy_files) {
