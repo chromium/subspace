@@ -103,13 +103,13 @@ jobs:
           git clone git@github.com:danakj/subspace-docs.git docs
           cd docs
           git rm -r *
-          cd ..
 
         # Generate for files in subspace. We execute the tool on all files in
         # the subspace library dir, and we limit generation to things defined
         # in that directory (there's no other /subspace/ directory it may include).
       - name: Generate
         run: |
+          cd ..
           subspace/out/subdoc/subdoc \
             -p subspace/out \
             --out docs \
@@ -119,8 +119,8 @@ jobs:
 
       - name: Deploy
         run: |
+          cd ../docs
           SHA=`git rev-parse HEAD`
-          cd docs
           git config user.email "noreply@chromium.org"
           git config user.name "Subspace subdoc generator"
           git add .
