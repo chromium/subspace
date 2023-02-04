@@ -110,8 +110,8 @@ jobs:
           out/subdoc/subdoc \
             -p out \
             --out docs \
-            --include-patterns subspace/subspace \
-            subspace/subspace
+            --include-patterns subspace/subspace/subspace \
+            /home/runner/work/subspace/subspace/subspace
 
       - name: Deploy
         run: |
