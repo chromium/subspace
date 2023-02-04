@@ -14,6 +14,14 @@
 
 #include "subdoc/lib/visit.h"
 
+#include <stdio.h>
+
+#ifdef _MSC_VER
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <regex>
 
 #include "subdoc/lib/database.h"
@@ -23,6 +31,7 @@
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subspace/assertions/unreachable.h"
+#include "subspace/macros/compiler.h"
 #include "subspace/mem/swap.h"
 #include "subspace/ops/ord.h"
 #include "subspace/prelude.h"
@@ -44,7 +53,7 @@ struct DiagnosticIds {
   const unsigned int malformed_comment;
 };
 
-static bool should_skip_decl(clang::Decl* decl) {
+static bool should_skip_decl(VisitCx& cx, clang::Decl* decl) {
   auto* ndecl = clang::dyn_cast<clang::NamedDecl>(decl);
   if (!ndecl) return true;
 
@@ -59,6 +68,9 @@ static bool should_skip_decl(clang::Decl* decl) {
     return true;
   }
   if (path_is_private(ndecl)) {
+    return true;
+  }
+  if (!cx.should_include_decl_based_on_file(decl)) {
     return true;
   }
   return false;
@@ -80,7 +92,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitNamespaceDecl(clang::NamespaceDecl* decl) noexcept {
-    if (should_skip_decl(decl)) return true;
+    if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
     Comment comment = make_db_comment(decl, raw_comment);
@@ -108,7 +120,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitRecordDecl(clang::RecordDecl* decl) noexcept {
-    if (should_skip_decl(decl)) return true;
+    if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
     if (auto* cxxdecl = clang::dyn_cast<clang::CXXRecordDecl>(decl)) {
@@ -165,7 +177,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitFieldDecl(clang::FieldDecl* decl) noexcept {
-    if (should_skip_decl(decl)) return true;
+    if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
     clang::RecordDecl* record_decl =
@@ -197,7 +209,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // visit VarDecls but only for them.
     if (!decl->isStaticDataMember()) return true;
 
-    if (should_skip_decl(decl)) return true;
+    if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
     Comment comment = make_db_comment(decl, raw_comment);
@@ -222,7 +234,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitEnumDecl(clang::EnumDecl* decl) noexcept {
-    if (should_skip_decl(decl)) return true;
+    if (should_skip_decl(cx_, decl)) return true;
     // clang::RawComment* raw_comment = get_raw_comment(decl);
     // if (raw_comment)
     //   llvm::errs() << "EnumDecl " << raw_comment->getKind() << "\n";
@@ -230,7 +242,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitTypedefDecl(clang::TypedefDecl* decl) noexcept {
-    if (should_skip_decl(decl)) return true;
+    if (should_skip_decl(cx_, decl)) return true;
     // clang::RawComment* raw_comment = get_raw_comment(decl);
     // if (raw_comment)
     //   llvm::errs() << "TypedefDecl " << raw_comment->getKind() << "\n";
@@ -238,7 +250,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitTypeAliasDecl(clang::TypeAliasDecl* decl) noexcept {
-    if (should_skip_decl(decl)) return true;
+    if (should_skip_decl(cx_, decl)) return true;
     // clang::RawComment* raw_comment = get_raw_comment(decl);
     // if (raw_comment)
     //   llvm::errs() << "TypeAliasDecl " << raw_comment->getKind() << "\n";
@@ -246,7 +258,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
-    if (should_skip_decl(decl)) return true;
+    if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
     Comment comment = make_db_comment(decl, raw_comment);
@@ -262,8 +274,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     auto fe = FunctionElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        decl->getNameAsString(),  decl->getReturnType(),
-        sus::move(params),
+        decl->getNameAsString(), decl->getReturnType(), sus::move(params),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
     fe.return_type_element = docs_db_.find_type(decl->getReturnType());
@@ -498,52 +509,13 @@ class AstConsumer : public clang::ASTConsumer {
     for (clang::Decl* decl : group_ref) {
       clang::SourceManager& sm = decl->getASTContext().getSourceManager();
 
-      clang::SourceLocation loc = decl->getLocation();
-      const clang::FileEntry* entry = sm.getFileEntryForID(sm.getFileID(loc));
-      // No FileEntry means a builtin, including a lot of `std::`, or inside
-      // a macro instantiation, or maybe some other things. We want to chase
-      // decls inside macros, but not builtins.
-      if (!entry && !loc.isMacroID()) continue;
+      // Don't visit the same file repeatedly.
+      auto v = VisitedLocation(decl->getLocation().printToString(sm));
+      if (cx_.visited_locations.contains(v)) continue;
+      cx_.visited_locations.emplace(sus::move(v));
 
-      auto v = VisitedLocation(loc.printToString(sm));
-      if (cx_.visited_locations_.contains(v)) continue;
-      cx_.visited_locations_.emplace(sus::move(v));
+      if (!cx_.should_include_decl_based_on_file(decl)) continue;
 
-      if (entry) {
-        llvm::StringRef path = entry->tryGetRealPathName();
-        if (!path.empty()) {
-          enum { CheckPath, ExcludePath, IncludePath } what_to_do;
-          // We cache the regex decision for each visited path name.
-          if (auto it = cx_.visited_paths_.find(std::string_view(path));
-              it != cx_.visited_paths_.end()) {
-            what_to_do = it->second.included ? IncludePath : ExcludePath;
-          } else {
-            what_to_do = CheckPath;
-          }
-
-          switch (what_to_do) {
-            case IncludePath: break;
-            case ExcludePath: continue;
-            case CheckPath: {
-              // std::regex requires a string, so store it up front.
-              auto [it, inserted] = cx_.visited_paths_.emplace(
-                  std::string(path), VisitedPath(true));
-              sus::check(inserted);
-              auto& [path_str, visited_path] = *it;
-              if (!std::regex_search(path_str,
-                                     cx_.options.include_path_patterns)) {
-                visited_path.included = false;
-                continue;
-              }
-              if (std::regex_search(path_str,
-                                    cx_.options.exclude_path_patterns)) {
-                visited_path.included = false;
-                continue;
-              }
-            }
-          }
-        }
-      }
       if (!Visitor(cx_, docs_db_, DiagnosticIds::with(decl->getASTContext()))
                .TraverseDecl(decl))
         return false;
@@ -584,11 +556,17 @@ std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
         s << " " << std::string_view(file);
         return sus::move(s).str();
       }();
-      llvm::outs() << "\r" << to_print;
-      for (usize i;
-           i < line_stats.last_line_len.saturating_sub(to_print.size());
-           i += 1u) {
-        llvm::errs() << " ";
+      auto isatty = &sus_if_msvc_else(_isatty, isatty);
+      auto fileno = &sus_if_msvc_else(_fileno, fileno);
+      if (isatty(fileno(stdin))) {
+        llvm::outs() << "\r" << to_print;
+        for (usize i;
+             i < line_stats.last_line_len.saturating_sub(to_print.size());
+             i += 1u) {
+          llvm::errs() << " ";
+        }
+      } else {
+        llvm::outs() << to_print << "\n";
       }
       line_stats.last_line_len = to_print.size();
       line_stats.cur_file += 1u;
@@ -596,6 +574,56 @@ std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
     }
   }
   return std::make_unique<AstConsumer>(cx, docs_db);
+}
+
+bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
+  clang::SourceManager& sm = decl->getASTContext().getSourceManager();
+
+  clang::SourceLocation loc = decl->getLocation();
+  const clang::FileEntry* entry = sm.getFileEntryForID(sm.getFileID(loc));
+  // No FileEntry means a builtin, including a lot of `std::`, or inside
+  // a macro instantiation, or maybe some other things. We want to chase
+  // decls inside macros, but not builtins.
+  if (!entry && !loc.isMacroID()) return false;
+
+  // Unable to find a file path without a FileEntry, so default to include it.
+  if (!entry) return true;
+  // And if there's no path then we also default to include it.
+  llvm::StringRef path = entry->tryGetRealPathName();
+  if (path.empty()) return true;
+
+  // Compare the path to the user-specified include/exclude-patterns.
+  enum { CheckPath, ExcludePath, IncludePath } what_to_do;
+  // We cache the regex decision for each visited path name.
+  if (auto it = visited_paths_.find(std::string_view(path));
+      it != visited_paths_.end()) {
+    what_to_do = it->second.included ? IncludePath : ExcludePath;
+  } else {
+    what_to_do = CheckPath;
+  }
+
+  switch (what_to_do) {
+    case IncludePath: return true;
+    case ExcludePath: return false;
+    case CheckPath: {
+      // std::regex requires a string, so store it up front.
+      auto [it, inserted] =
+          visited_paths_.emplace(std::string(path), VisitedPath(true));
+      sus::check(inserted);
+      auto& [path_str, visited_path] = *it;
+      if (!std::regex_search(path_str, options.include_path_patterns)) {
+        visited_path.included = false;
+        return false;
+      }
+      if (std::regex_search(path_str, options.exclude_path_patterns)) {
+        visited_path.included = false;
+        return false;
+      }
+      return true;
+    }
+  }
+  // SAFETY: All enum values are covered in the switch, and they all return.
+  sus::unreachable_unchecked(unsafe_fn);
 }
 
 }  // namespace subdoc

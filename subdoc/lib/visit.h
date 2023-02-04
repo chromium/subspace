@@ -20,9 +20,9 @@
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/run_options.h"
 #include "subdoc/llvm.h"
+#include "subspace/fn/fn.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
-#include "subspace/fn/fn.h"
 
 namespace subdoc {
 
@@ -45,8 +45,20 @@ struct VisitedPath {
 
 struct VisitCx {
  public:
+  explicit VisitCx(const RunOptions& options) : options(options) {}
+
   const RunOptions& options;
-  std::unordered_set<VisitedLocation, VisitedLocation::Hash> visited_locations_;
+  std::unordered_set<VisitedLocation, VisitedLocation::Hash> visited_locations;
+
+  /// The user can specify file-based inclusions and exclusions, and this checks
+  /// whether the decl is included or excluded based on them.
+  ///
+  /// Because nested decls always require being in the same file, it's safe to
+  /// skip a decl based on file entirely, as all child decls will also be
+  /// skipped.
+  bool should_include_decl_based_on_file(clang::Decl* decl) noexcept;
+
+ private:
   std::map<std::string, VisitedPath, std::less<>> visited_paths_;
 };
 
@@ -80,9 +92,8 @@ struct VisitorAction : public clang::ASTFrontendAction {
 
   /// Returns a Visitor.
   std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
-      clang::CompilerInstance& compiler,
-      llvm::StringRef file) noexcept final;
-  
+      clang::CompilerInstance& compiler, llvm::StringRef file) noexcept final;
+
   VisitCx& cx;
   Database& docs_db;
   LineStats& line_stats;
