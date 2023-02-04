@@ -122,7 +122,6 @@ int main(int argc, const char** argv) {
             pos = escaped.rfind('\\', pos - 1u);
         }
         s << escaped;
-        llvm::errs() << escaped << "\n";
       } else {
         s << p;
       }
