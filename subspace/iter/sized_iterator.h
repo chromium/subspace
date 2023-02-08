@@ -21,6 +21,9 @@
 
 namespace sus::iter {
 
+template <class Item>
+class IteratorBase;
+
 template <class Item, size_t SubclassSize, size_t SubclassAlign>
 struct [[sus_trivial_abi]] SizedIterator final {
   constexpr SizedIterator(void (*destroy)(char& sized)) : destroy(destroy) {}
