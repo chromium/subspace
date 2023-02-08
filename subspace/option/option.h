@@ -49,12 +49,10 @@
 #include "subspace/result/__private/is_result_type.h"
 
 namespace sus::iter {
-template <class Item>
-class Once;
 template <class ItemT>
 class IteratorBase;
-template <class I>
-class Iterator;
+template <class Item>
+class Once;
 namespace __private {
 template <class T>
 constexpr auto begin(const T& t) noexcept;
@@ -77,7 +75,6 @@ namespace sus::option {
 
 using State::None;
 using State::Some;
-using sus::iter::Iterator;
 using sus::iter::Once;
 using sus::option::__private::Storage;
 using sus::option::__private::StoragePointer;
@@ -868,18 +865,18 @@ class Option final {
     return as_mut();
   }
 
-  constexpr Iterator<Once<const std::remove_reference_t<T>&>> iter()
+  constexpr Once<const std::remove_reference_t<T>&> iter()
       const& noexcept {
-    return Iterator<Once<const std::remove_reference_t<T>&>>(as_ref());
+    return Once<const std::remove_reference_t<T>&>::with(as_ref());
   }
-  constexpr Iterator<Once<const T&>> iter() const&& = delete;
+  constexpr Once<const T&> iter() const&& = delete;
 
-  constexpr Iterator<Once<T&>> iter_mut() & noexcept {
-    return Iterator<Once<T&>>(as_mut());
+  constexpr Once<T&> iter_mut() & noexcept {
+    return Once<T&>::with(as_mut());
   }
 
-  constexpr Iterator<Once<T>> into_iter() && noexcept {
-    return Iterator<Once<T>>(take());
+  constexpr Once<T> into_iter() && noexcept {
+    return Once<T>::with(take());
   }
 
  private:

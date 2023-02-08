@@ -254,22 +254,22 @@ class Array final {
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
-  constexpr ::sus::iter::Iterator<SliceIter<const T&>> iter() const& noexcept {
+  constexpr SliceIter<const T&> iter() const& noexcept {
     return SliceIter<const T&>::with(storage_.data_, N);
   }
-  constexpr ::sus::iter::Iterator<SliceIter<const T&>> iter() && = delete;
+  constexpr SliceIter<const T&> iter() && = delete;
 
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives mutable access to
   /// each element.
-  constexpr ::sus::iter::Iterator<SliceIterMut<T&>> iter_mut() & noexcept {
+  constexpr SliceIterMut<T&> iter_mut() & noexcept {
     return SliceIterMut<T&>::with(storage_.data_, N);
   }
 
   /// Converts the array into an iterator that consumes the array and returns
   /// each element in the same order they appear in the array.
   template <int&..., class U = T>
-  constexpr ::sus::iter::Iterator<ArrayIntoIter<U, N>> into_iter() && noexcept
+  constexpr ArrayIntoIter<U, N> into_iter() && noexcept
     requires(::sus::mem::Move<T>)
   {
     return ArrayIntoIter<T, N>::with(::sus::move(*this));

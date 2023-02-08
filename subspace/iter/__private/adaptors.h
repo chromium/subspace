@@ -12,8 +12,6 @@ template <class Item>
 class Once;
 template <class ItemT>
 class IteratorBase;
-template <class I>
-class Iterator;
 namespace __private {
 template <class T>
 constexpr auto begin(const T& t) noexcept;

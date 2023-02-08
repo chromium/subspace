@@ -14,6 +14,7 @@
 
 #include "subspace/iter/iterator.h"
 
+#include "subspace/iter/empty.h"
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/into.h"
@@ -23,19 +24,40 @@
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/prelude.h"
 
-using ::sus::containers::Array;
-using ::sus::fn::Fn;
-using ::sus::iter::Iterator;
-using ::sus::iter::IteratorBase;
-using ::sus::option::Option;
+using sus::containers::Array;
+using sus::fn::Fn;
+using sus::iter::IteratorBase;
+using sus::iter::IteratorImpl;
+using sus::option::Option;
 
 namespace {
 
+// clang-format off
+static_assert(
+  sus::iter::Iterator<sus::iter::BoxedIterator<int, 32, 32>, int>);
+static_assert(
+  ::sus::iter::Iterator<sus::iter::Empty<int>, int>);
+static_assert(
+  sus::iter::Iterator<sus::iter::Filter<int, 32, 32>, int>);
+static_assert(
+  sus::iter::Iterator<sus::iter::Map<int, int, 32, 32>, int>);
+static_assert(
+  ::sus::iter::Iterator<sus::iter::Once<int>, int>);
+static_assert(
+  sus::iter::Iterator<sus::containers::ArrayIntoIter<int, 1>, int>);
+static_assert(
+  sus::iter::Iterator<sus::containers::VecIntoIter<int>, int>);
+static_assert(
+  sus::iter::Iterator<sus::containers::SliceIter<const int&>, const int&>);
+static_assert(
+  sus::iter::Iterator<sus::containers::SliceIterMut<int&>, int&>);
+// clang-format on
+
 template <class Item, size_t N>
-class ArrayIterator : public IteratorBase<Item> {
+class ArrayIterator final : public IteratorImpl<ArrayIterator<Item, N>, Item> {
  public:
-  static auto with_array(Item (&items)[N]) noexcept {
-    return Iterator<ArrayIterator<Item, N>>(items);
+  static ArrayIterator with_array(Item (&items)[N]) noexcept {
+    return ArrayIterator(items);
   }
 
   Option<Item> next() noexcept final {
@@ -51,7 +73,7 @@ class ArrayIterator : public IteratorBase<Item> {
   ArrayIterator(Item (&items)[N])
       : items_(Array<Option<Item>, N>::with_initializer(
             [&items, i = 0]() mutable -> Option<Item> {
-              return Option<Item>::some(::sus::move(items[i++]));
+              return Option<Item>::some(sus::move(items[i++]));
             })) {}
 
  private:
@@ -62,15 +84,14 @@ class ArrayIterator : public IteratorBase<Item> {
                                            decltype(items_));
 };
 
+static_assert(sus::iter::Iterator<ArrayIterator<int, 1>, int>);
+
 template <class Item>
-class EmptyIterator : public IteratorBase<Item> {
+class EmptyIterator final : public IteratorImpl<EmptyIterator<Item>, Item> {
  public:
-  static auto construct() { return Iterator<EmptyIterator<Item>>(); }
+  EmptyIterator() {}
 
   Option<Item> next() noexcept final { return Option<Item>::none(); }
-
- protected:
-  EmptyIterator() {}
 };
 
 TEST(IteratorBase, ForLoop) {
@@ -122,7 +143,7 @@ TEST(IteratorBase, All) {
   }
 
   {
-    auto it = EmptyIterator<int>::construct();
+    auto it = EmptyIterator<int>();
     EXPECT_TRUE(it.all([](int) { return false; }));
   }
 }
@@ -157,7 +178,7 @@ TEST(IteratorBase, Any) {
   }
 
   {
-    auto it = EmptyIterator<int>::construct();
+    auto it = EmptyIterator<int>();
     EXPECT_FALSE(it.any([](int) { return false; }));
   }
 }
@@ -189,7 +210,7 @@ TEST(IteratorBase, Count) {
   }
 
   {
-    auto it = EmptyIterator<int>::construct();
+    auto it = EmptyIterator<int>();
     EXPECT_EQ(it.count(), 0_usize);
   }
 }
@@ -218,7 +239,7 @@ struct Filtering {
   ~Filtering() {}
   i32 i;
 };
-static_assert(!::sus::mem::relocate_by_memcpy<Filtering>);
+static_assert(!sus::mem::relocate_by_memcpy<Filtering>);
 
 TEST(Iterator, FilterNonTriviallyRelocatable) {
   Filtering nums[5] = {Filtering(1), Filtering(2), Filtering(3), Filtering(4),

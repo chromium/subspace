@@ -362,12 +362,10 @@ class HtmlWriter {
   }
 
   // TODO: Add an Iterator<T> concept and use that to know what Item is here.
-  template <template <class Item> class ClassIter,
-            template <class Item> class AttrIter>
   void write_open(
       std::string_view type,
-      sus::iter::Iterator<ClassIter<const std::string&>> classes_iter,
-      sus::iter::Iterator<AttrIter<const HtmlAttribute&>> attr_iter,
+      sus::iter::Iterator<const std::string&> auto classes_iter,
+      sus::iter::Iterator<const HtmlAttribute&> auto attr_iter,
       bool inside_has_newlines, bool has_newlines) noexcept {
     if (inside_has_newlines) write_indent();
     stream_ << "<" << type;

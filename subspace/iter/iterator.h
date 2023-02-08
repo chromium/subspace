@@ -16,6 +16,9 @@
 
 #include "subspace/iter/iterator_defn.h"
 
+// Provides the concept for using iterators in generic code.
+#include "subspace/iter/iterator_concept.h"
+
 // Once is included here, because there is a cycle between:
 // * Option->Once->IteratorBase->Option
 // * Result->Iterator->usize->Result

@@ -52,6 +52,10 @@ namespace sus::containers {
 /// Vec requires Move for its items:
 /// - They can't be references as a pointer to reference is not valid.
 /// - On realloc, items need to be moved between allocations.
+/// Vec requires items are not references:
+/// - References can not be moved in the vector as assignment modifies the
+///   pointee, and Vec does not wrap references to store them as pointers
+///   (for now).
 template <class T>
 class Vec {
   static_assert(!std::is_const_v<T>,
@@ -69,7 +73,9 @@ class Vec {
   /// Constructs a vector by taking all the elements from the iterator.
   ///
   /// sus::iter::FromIterator trait.
-  static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) noexcept {
+  static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) noexcept
+    requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
+  {
     // TODO: Use iter.size_hint() when it exists.
     auto v = Vec::with_capacity(0_usize);
     for (T t : iter) v.push(::sus::move(t));
@@ -270,8 +276,7 @@ class Vec {
   // issue of the reference being to something inside the vector which
   // reserve() then invalidates.
   void push(T t) noexcept
-    requires(  // Vec<T> requires that `T` is `sus::mem::Move`.
-        ::sus::mem::Move<T>)
+    requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
   {
     check(!is_moved_from());
     reserve(1_usize);
@@ -294,10 +299,9 @@ class Vec {
   /// Panics if the new capacity exceeds isize::MAX bytes.
   template <class... Us>
   void emplace(Us&&... args) noexcept
-    requires(  // Vec<T> requires that `T` is `sus::mem::Move`.
-        ::sus::mem::Move<T> &&
-        !(sizeof...(Us) == 1u &&
-          (... && std::same_as<std::decay_t<T>, std::decay_t<Us>>)))
+    requires(::sus::mem::Move<T> && !std::is_reference_v<T> &&
+             !(sizeof...(Us) == 1u &&
+               (... && std::same_as<std::decay_t<T>, std::decay_t<Us>>)))
   {
     check(!is_moved_from());
     reserve(1_usize);
@@ -429,24 +433,24 @@ class Vec {
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
-  constexpr ::sus::iter::Iterator<SliceIter<const T&>> iter() const& noexcept {
+  constexpr SliceIter<const T&> iter() const& noexcept {
     check(!is_moved_from());
     return SliceIter<const T&>::with(reinterpret_cast<const T*>(storage_),
                                      len_);
   }
-  constexpr ::sus::iter::Iterator<SliceIter<const T&>> iter() && = delete;
+  constexpr SliceIter<const T&> iter() && = delete;
 
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives mutable access to
   /// each element.
-  constexpr ::sus::iter::Iterator<SliceIterMut<T&>> iter_mut() & noexcept {
+  constexpr SliceIterMut<T&> iter_mut() & noexcept {
     check(!is_moved_from());
     return SliceIterMut<T&>::with(reinterpret_cast<T*>(storage_), len_);
   }
 
   /// Converts the array into an iterator that consumes the array and returns
   /// each element in the same order they appear in the array.
-  constexpr ::sus::iter::Iterator<VecIntoIter<T>> into_iter() && noexcept {
+  constexpr VecIntoIter<T> into_iter() && noexcept {
     check(!is_moved_from());
     return VecIntoIter<T>::with(::sus::move(*this));
   }

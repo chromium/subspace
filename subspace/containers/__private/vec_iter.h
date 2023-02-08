@@ -29,11 +29,14 @@ namespace sus::containers {
 template <class T>
 class Vec;
 
-template <class Item>
-struct VecIntoIter : public ::sus::iter::IteratorBase<Item> {
+template <class ItemT>
+struct VecIntoIter final
+    : public ::sus::iter::IteratorImpl<VecIntoIter<ItemT>, ItemT> {
  public:
+  using Item = ItemT;
+
   static constexpr auto with(Vec<Item>&& vec) noexcept {
-    return ::sus::iter::Iterator<VecIntoIter>(::sus::move(vec));
+    return VecIntoIter(::sus::move(vec));
   }
 
   Option<Item> next() noexcept final {
@@ -52,16 +55,15 @@ struct VecIntoIter : public ::sus::iter::IteratorBase<Item> {
     return Option<Item>::some(move(item));
   }
 
- protected:
+ private:
   VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
 
- private:
   usize next_index_ = 0_usize;
   Vec<Item> vec_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                            decltype(next_index_),
-                                            decltype(vec_));
+                                           decltype(next_index_),
+                                           decltype(vec_));
 };
 
 }  // namespace sus::containers
