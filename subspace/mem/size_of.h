@@ -108,6 +108,9 @@ constexpr sus_always_inline size_t size_of() noexcept {
 template <class T>
   requires(!std::is_reference_v<T>)
 constexpr sus_always_inline size_t data_size_of() noexcept {
+  static_assert(alignof(T) <= alignof(std::max_align_t),
+                "data_size_of() does not support types with alignment greater "
+                "than std::max_align_t.");
   return __private::data_size_finder<T>;
 }
 
