@@ -27,6 +27,7 @@ stable version.
 The CMake files define the following options:
 
 * `SUBSPACE_BUILD_CIR`, defaults to `ON`, set to `OFF` to disable CIR build
+* `SUBSPACE_BUILD_SUBDOC`, defaults to `ON`, set to `OFF` to disable Subdoc build
 
 ## Clang format
 
@@ -42,12 +43,15 @@ executable.
 1. Set the "Windows SDK Version" in VSCode to `10.0.19041.0` (or the version installed with Visual Studio)
 1. Set the "CMake: Generator" in VSCode to `Visual Studio 17 2022`, or add it to "CMake: Preferred Generators"
 
-# Building CIR
+# Building CIR and Subdoc
 
 CIR is a mid-level representation of C++ built on Clang in the spirit of [Rust's
 MIR](https://kanishkarj.github.io/rust-internals-mir).
 
-CIR requires an installation of LLVM from Git HEAD, including the LLVM/Clang
+Subdoc is a documentation generator from inline C++ documentation in the spirit of
+[Rustdoc](https://doc.rust-lang.org/rustdoc/what-is-rustdoc.html).
+
+These both require an installation of LLVM from Git HEAD, including the LLVM/Clang
 headers and libraries.
 
 By default, in VSCode it looks for LLVM and clang in your system paths, but you can override
