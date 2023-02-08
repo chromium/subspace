@@ -15,8 +15,8 @@
 #pragma once
 
 #include "subspace/fn/fn_defn.h"
-#include "subspace/iter/iterator_defn.h"
 #include "subspace/iter/iterator_concept.h"
+#include "subspace/iter/iterator_defn.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
@@ -60,9 +60,10 @@ class Filter final
   Pred pred_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is already known to be trivially relocatable, as SizedIterator
-  // is only constructed for trivially relocatable iterators. Likewise, the
-  // predicate is known to be trivially relocatable because FnMut is.
+  // The InnerSizedIter is already known to be trivially relocatable, as
+  // SizedIterator is only constructed for trivially relocatable iterators.
+  // Likewise, the predicate is known to be trivially relocatable because FnMut
+  // is.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(pred_),
                                   decltype(next_iter_));
 };
