@@ -434,6 +434,22 @@ TEST(Result, IntoIter) {
   EXPECT_EQ(count, 1);
 }
 
+TEST(Result, ImplicitIter) {
+  auto x = Result<i32, u8>::with_err(2_u8);
+  for ([[maybe_unused]] auto i : x) {
+    ADD_FAILURE();
+  }
+
+  int count = 0;
+  auto y = Result<MoveOnly, u8>::with(MoveOnly(-3));
+  for (const auto& m : y) {
+    static_assert(std::is_same_v<decltype(m), const MoveOnly&>, "");
+    EXPECT_EQ(m.i, -3);
+    ++count;
+  }
+  EXPECT_EQ(count, 1);
+}
+
 template <class T>
 struct CollectSum {
   sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
