@@ -16,23 +16,30 @@
 
 #include "subspace/fn/fn_defn.h"
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/iterator_concept.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
 
 namespace sus::iter {
 
-using ::sus::iter::IteratorBase;
 using ::sus::mem::relocate_by_memcpy;
 
-template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
-class Filter : public IteratorBase<Item> {
+template <class ItemT, size_t InnerIterSize, size_t InnerIterAlign>
+class Filter final
+    : public IteratorImpl<Filter<ItemT, InnerIterSize, InnerIterAlign>, ItemT> {
   using Pred = ::sus::fn::FnMut<bool(
       // TODO: write a sus::const_ref<T>?
-      const std::remove_reference_t<const std::remove_reference_t<Item>&>&)>;
-  using InnerSizedIter = SizedIterator<Item, InnerIterSize, InnerIterAlign>;
+      const std::remove_reference_t<const std::remove_reference_t<ItemT>&>&)>;
+  using InnerSizedIter = SizedIterator<ItemT, InnerIterSize, InnerIterAlign>;
 
  public:
+  using Item = ItemT;
+
+  static Filter with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
+    return Filter(::sus::move(pred), ::sus::move(next_iter));
+  }
+
   Option<Item> next() noexcept final {
     IteratorBase<Item>& next_iter = next_iter_.iterator_mut();
     Pred& pred = pred_;
@@ -40,16 +47,16 @@ class Filter : public IteratorBase<Item> {
     // TODO: Just call find(pred) on itself?
     while (true) {
       Option<Item> item = next_iter.next();
-      if (item.is_none() || pred(item.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn)))
+      if (item.is_none() ||
+          pred(item.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn)))
         return item;
     }
   }
 
- protected:
+ private:
   Filter(Pred&& pred, InnerSizedIter&& next_iter)
       : pred_(::sus::move(pred)), next_iter_(::sus::move(next_iter)) {}
 
- private:
   Pred pred_;
   InnerSizedIter next_iter_;
 
@@ -58,7 +65,7 @@ class Filter : public IteratorBase<Item> {
   // predicate is known to be trivially relocatable because the FnMut will
   // either be a function pointer or a heap allocation itself.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(pred_),
-                                             decltype(next_iter_));
+                                  decltype(next_iter_));
 };
 
 }  // namespace sus::iter

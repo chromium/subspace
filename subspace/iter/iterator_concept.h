@@ -14,26 +14,26 @@
 
 #pragma once
 
-#include "subspace/iter/iterator_defn.h"
-#include "subspace/option/option.h"
+#include "subspace/convert/subclass.h"
 
 namespace sus::iter {
 
-/// An Iterator that never returns an `Item`.
-template <class ItemT>
-class [[sus_trivial_abi]] Empty final
-    : public IteratorImpl<Empty<ItemT>, ItemT> {
- public:
-  using Item = ItemT;
+template <class Iter, class Item>
+class IteratorImpl;
 
-  constexpr Empty() = default;
-
-  constexpr Option<Item> next() noexcept final {
-    return sus::Option<Item>::none();
-  }
-
- private:
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn);
+/// A concept for dealing with iterators.
+///
+/// Types that satisfy this concept can be used in for loops and provide
+/// all the methods of an iterator type, which are found in
+/// `sus::iter::IteratorImpl`.
+template <class T, class Item>
+concept Iterator = requires {
+  // Has a T::Item typename.
+  requires(!std::is_void_v<typename T::Item>);
+  // The T::Item matches the concept input.
+  requires(std::same_as<typename T::Item, Item>);
+  // Subclasses from IteratorImpl<T, T::Item>.
+  requires ::sus::convert::SameOrSubclassOf<T*, IteratorImpl<T, Item>*>;
 };
 
 }  // namespace sus::iter

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subspace/iter/iterator_concept.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
@@ -23,55 +24,23 @@ namespace sus::iter {
 
 using ::sus::option::Option;
 
-// clang-format off
-sus_clang_bug_58859(
-  namespace __private {
-
-  template <class Item>
-  inline Iterator<Once<Item>> once(Option<Item>&& single) noexcept {
-    return Once<Item>::with_option(::sus::move(single));
-  }
-
-  }
-)
-// clang-format on
-
-/// An IteratorBase implementation that walks over at most a single Item.
-template <class Item>
-class Once : public IteratorBase<Item> {
+/// An Iterator that walks over at most a single Item.
+template <class ItemT>
+class Once final : public IteratorImpl<Once<ItemT>, ItemT> {
  public:
+  using Item = ItemT;
+
+  static Once with(Option<Item>&& o) noexcept { return Once(::sus::move(o)); }
+
   Option<Item> next() noexcept final { return single_.take(); }
 
- protected:
-  Once(Option<Item>&& single) : single_(::sus::move(single)) {}
-
  private:
-  template <class U>
-  friend inline Iterator<Once<U>> once(Option<U>&& single) noexcept
-    requires(sus::mem::Move<U>);
-  // clang-format off
-  sus_clang_bug_58859(
-    template <class U>
-    friend inline Iterator<Once<U>> __private::once(Option<U>&& single) noexcept
-  );
-  // clang-format on
-
-  static Iterator<Once> with_option(Option<Item>&& single) {
-    return Iterator<Once>(::sus::move(single));
-  }
+  Once(Option<Item>&& single) : single_(::sus::move(single)) {}
 
   Option<Item> single_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(single_));
 };
-
-template <class Item>
-inline Iterator<Once<Item>> once(Option<Item>&& single) noexcept
-  requires(sus::mem::Move<Item>)
-{
-  sus_clang_bug_58859(return __private::once(::sus::move(single)));
-  sus_clang_bug_58859_else(return Once<Item>::with_option(::sus::move(single)));
-}
 
 }  // namespace sus::iter

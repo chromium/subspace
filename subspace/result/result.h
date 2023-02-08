@@ -39,17 +39,18 @@
 #include "subspace/result/__private/storage.h"
 
 namespace sus::iter {
-template <class Item>
-class Once;
 template <class ItemT>
 class IteratorBase;
-template <class I>
-class Iterator;
+template <class Item>
+class Once;
+template <class T>
+constexpr auto begin(const T& t) noexcept;
+template <class T>
+constexpr auto end(const T& t) noexcept;
 }  // namespace sus::iter
 
 namespace sus::result {
 
-using sus::iter::Iterator;
 using sus::iter::Once;
 
 /// The representation of an Result's state, which can either be #Ok to
@@ -510,32 +511,32 @@ class [[nodiscard]] Result final {
                                          mref(storage_.err_));
   }
 
-  constexpr Iterator<Once<const T&>> iter() const& noexcept {
+  constexpr Once<const T&> iter() const& noexcept {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (state_ == __private::ResultState::IsOk)
-      return Iterator<Once<const T&>>(Option<const T&>::some(storage_.ok_));
+      return Once<const T&>::with(Option<const T&>::some(storage_.ok_));
     else
-      return Iterator<Once<const T&>>(Option<const T&>::none());
+      return Once<const T&>::with(Option<const T&>::none());
   }
-  Iterator<Once<const T&>> iter() const&& = delete;
+  Once<const T&> iter() const&& = delete;
 
-  constexpr Iterator<Once<T&>> iter_mut() & noexcept {
+  constexpr Once<T&> iter_mut() & noexcept {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (state_ == __private::ResultState::IsOk)
-      return Iterator<Once<T&>>(Option<T&>::some(mref(storage_.ok_)));
+      return Once<T&>::with(Option<T&>::some(mref(storage_.ok_)));
     else
-      return Iterator<Once<T&>>(Option<T&>::none());
+      return Once<T&>::with(Option<T&>::none());
   }
 
-  constexpr Iterator<Once<T>> into_iter() && noexcept {
+  constexpr Once<T> into_iter() && noexcept {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (::sus::mem::replace(mref(state_), __private::ResultState::IsMoved) ==
         __private::ResultState::IsOk) {
-      return Iterator<Once<T>>(Option<T>::some(::sus::mem::take_and_destruct(
+      return Once<T>::with(Option<T>::some(::sus::mem::take_and_destruct(
           ::sus::marker::unsafe_fn, mref(storage_.ok_))));
     } else {
       storage_.err_.~E();
-      return Iterator<Once<T>>(Option<T>::none());
+      return Once<T>::with(Option<T>::none());
     }
   }
 
@@ -666,6 +667,10 @@ class [[nodiscard]] Result final {
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T, E,
                                            decltype(state_));
 };
+
+// Implicit for-ranged loop iteration via `Result::iter()`.
+using sus::iter::__private::begin;
+using sus::iter::__private::end;
 
 /// Used to construct a Result<T, E> with an Ok(t) value.
 ///

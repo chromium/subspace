@@ -57,6 +57,7 @@ target_sources(subspace PUBLIC
     "iter/filter.h"
     "iter/from_iterator.h"
     "iter/iterator.h"
+    "iter/iterator_concept.h"
     "iter/iterator_defn.h"
     "iter/map.h"
     "iter/once.h"

@@ -86,10 +86,11 @@ inline clang::NamespaceDecl* find_nearest_namespace(
 
 namespace __private {
 
-class RecordIter : public sus::iter::IteratorBase<std::string_view> {
+class RecordIter final
+    : public sus::iter::IteratorImpl<RecordIter, std::string_view> {
  public:
-  static auto with(clang::RecordDecl* decl) noexcept {
-    return sus::iter::Iterator<RecordIter>(decl);
+  static RecordIter with(clang::RecordDecl* decl) noexcept {
+    return RecordIter(decl);
   }
 
   sus::Option<std::string_view> next() noexcept final {
@@ -130,10 +131,11 @@ inline auto iter_record_path(clang::RecordDecl* decl) {
 
 namespace __private {
 
-class NamespaceIter : public sus::iter::IteratorBase<Namespace> {
+class NamespaceIter final
+    : public sus::iter::IteratorImpl<NamespaceIter, Namespace> {
  public:
-  static auto with(clang::Decl* decl) noexcept {
-    return sus::iter::Iterator<NamespaceIter>(decl);
+  static NamespaceIter with(clang::Decl* decl) noexcept {
+    return NamespaceIter(decl);
   }
 
   sus::Option<Namespace> next() noexcept final {

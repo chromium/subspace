@@ -30,11 +30,14 @@ template <class T, size_t N>
   requires(N <= PTRDIFF_MAX)
 class Array;
 
-template <::sus::mem::Move Item, size_t N>
-struct ArrayIntoIter : public ::sus::iter::IteratorBase<Item> {
+template <::sus::mem::Move ItemT, size_t N>
+struct ArrayIntoIter final
+    : public ::sus::iter::IteratorImpl<ArrayIntoIter<ItemT, N>, ItemT> {
  public:
+  using Item = ItemT;
+
   static constexpr auto with(Array<Item, N>&& array) noexcept {
-    return ::sus::iter::Iterator<ArrayIntoIter>(::sus::move(array));
+    return ArrayIntoIter(::sus::move(array));
   }
 
   Option<Item> next() noexcept final {
@@ -53,16 +56,15 @@ struct ArrayIntoIter : public ::sus::iter::IteratorBase<Item> {
     return Option<Item>::some(move(item));
   }
 
- protected:
+ private:
   ArrayIntoIter(Array<Item, N>&& array) noexcept : array_(::sus::move(array)) {}
 
- private:
   usize next_index_ = 0_usize;
   Array<Item, N> array_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                            decltype(next_index_),
-                                            decltype(array_));
+                                           decltype(next_index_),
+                                           decltype(array_));
 };
 
 }  // namespace sus::containers

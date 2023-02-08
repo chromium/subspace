@@ -15,17 +15,44 @@
 #pragma once
 
 #include "subspace/convert/subclass.h"
+#include "subspace/iter/iterator_concept.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
 // Doesn't include iterator_defn.h because it's included from there.
 
 namespace sus::iter {
 
-template <class Item, size_t SubclassSize, size_t SubclassAlign>
-struct [[sus_trivial_abi]] BoxedIterator : public IteratorBase<Item> {
-  BoxedIterator(IteratorBase<Item>& iter,
-                void (*destroy)(IteratorBase<Item>& boxed))
-      : iter_(&iter), destroy_(destroy) {}
+template <class Item>
+class IteratorBase;
+template <class Iter, class Item>
+class IteratorImpl;
+
+/// A BoxedIterator wraps another Iterator but pushes it onto the heap.
+///
+/// This makes the BoxedIterator itself be trivially relocatable, as it's just
+/// some pointers to the heap.
+///
+/// BoxedIterator is only constructible from an iterator that is not trivially
+/// relocatable.
+template <class ItemT, size_t SubclassSize, size_t SubclassAlign>
+class [[sus_trivial_abi]] BoxedIterator final
+    : public IteratorImpl<BoxedIterator<ItemT, SubclassSize, SubclassAlign>,
+                          ItemT> {
+ public:
+  using Item = ItemT;
+
+  template <::sus::mem::Move IteratorSubclass>
+  static BoxedIterator with(IteratorSubclass&& subclass) noexcept
+    requires(::sus::convert::SameOrSubclassOf<
+                 IteratorSubclass*, IteratorImpl<IteratorSubclass, ItemT>*> &&
+             !::sus::mem::relocate_by_memcpy<IteratorSubclass>)
+  {
+    return BoxedIterator(
+        *new IteratorSubclass(::sus::move(subclass)),  // Move it to the heap.
+        [](IteratorBase<Item>& iter) {
+          delete static_cast<IteratorSubclass*>(&iter);
+        });
+  }
 
   BoxedIterator(BoxedIterator&& o) noexcept
       : iter_(::sus::mem::replace_ptr(mref(o.iter_), nullptr)),
@@ -43,32 +70,15 @@ struct [[sus_trivial_abi]] BoxedIterator : public IteratorBase<Item> {
   Option<Item> next() noexcept final { return iter_->next(); }
 
  private:
+  BoxedIterator(IteratorBase<Item>& iter,
+                void (*destroy)(IteratorBase<Item>& boxed))
+      : iter_(&iter), destroy_(destroy) {}
+
   IteratorBase<Item>* iter_;
   void (*destroy_)(IteratorBase<Item>& boxed);
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                             decltype(iter_),
-                                             decltype(destroy_));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(iter_),
+                                  decltype(destroy_));
 };
-
-/// Make a BoxedIterator.
-///
-/// The BoxedIterator's internals will be on the heap, making the BoxedIterator
-/// itself be trivially relocatable, as it's just some pointers to the heap.
-template <::sus::mem::Move IteratorSubclass, int&...,
-          class SubclassItem = typename IteratorSubclass::Item,
-          class BoxedIteratorType = BoxedIterator<
-              SubclassItem, ::sus::mem::size_of<IteratorSubclass>(),
-              alignof(IteratorSubclass)>>
-inline BoxedIteratorType make_boxed_iterator(IteratorSubclass&& subclass)
-  requires(::sus::convert::SameOrSubclassOf<IteratorSubclass*,
-                                            IteratorBase<SubclassItem>*> &&
-           !::sus::mem::relocate_by_memcpy<IteratorSubclass>)
-{
-  return BoxedIteratorType(*new IteratorSubclass(::sus::move(subclass)),
-                           [](IteratorBase<SubclassItem>& iter) {
-                             delete reinterpret_cast<IteratorSubclass*>(&iter);
-                           });
-}
 
 }  // namespace sus::iter

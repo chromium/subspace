@@ -16,22 +16,30 @@
 
 #include "subspace/fn/fn_defn.h"
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/iterator_concept.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
 
 namespace sus::iter {
 
-using ::sus::iter::IteratorBase;
 using ::sus::mem::relocate_by_memcpy;
 
-template <class FromItem, class Item, size_t InnerIterSize,
+template <class FromItem, class ToItem, size_t InnerIterSize,
           size_t InnerIterAlign>
-class Map : public IteratorBase<Item> {
-  using MapFn = ::sus::fn::FnMut<Item(FromItem&&)>;
+class Map final
+    : public IteratorImpl<Map<FromItem, ToItem, InnerIterSize, InnerIterAlign>,
+                          ToItem> {
+  using MapFn = ::sus::fn::FnMut<ToItem(FromItem&&)>;
   using InnerSizedIter = SizedIterator<FromItem, InnerIterSize, InnerIterAlign>;
 
  public:
+  using Item = ToItem;
+
+  static Map with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
+    return Map(::sus::move(fn), ::sus::move(next_iter));
+  }
+
   Option<Item> next() noexcept final {
     Option<FromItem> item = next_iter_.iterator_mut().next();
     if (item.is_none()) {
@@ -42,11 +50,10 @@ class Map : public IteratorBase<Item> {
     }
   }
 
- protected:
+ private:
   Map(MapFn fn, InnerSizedIter&& next_iter)
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
- private:
   MapFn fn_;
   InnerSizedIter next_iter_;
 

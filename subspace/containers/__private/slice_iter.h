@@ -31,8 +31,13 @@ namespace sus::containers {
 template <class T>
 class Slice;
 
-template <class Item>
-struct [[sus_trivial_abi]] SliceIter : public ::sus::iter::IteratorBase<Item> {
+template <class ItemT>
+struct [[sus_trivial_abi]] SliceIter final
+    : public ::sus::iter::IteratorImpl<SliceIter<ItemT>, ItemT> {
+ public:
+  using Item = ItemT;
+
+ private:
   // `Item` is a `const T&`.
   static_assert(std::is_reference_v<Item>);
   static_assert(std::is_const_v<std::remove_reference_t<Item>>);
@@ -41,7 +46,7 @@ struct [[sus_trivial_abi]] SliceIter : public ::sus::iter::IteratorBase<Item> {
 
  public:
   static constexpr auto with(const RawItem* start, usize len) noexcept {
-    return ::sus::iter::Iterator<SliceIter>(start, len);
+    return SliceIter(start, len);
   }
 
   Option<Item> next() noexcept final {
@@ -52,13 +57,12 @@ struct [[sus_trivial_abi]] SliceIter : public ::sus::iter::IteratorBase<Item> {
     return Option<Item>::some(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u));
   }
 
- protected:
+ private:
   constexpr SliceIter(const RawItem* start, usize len) noexcept
       : ptr_(start), end_(start + len.primitive_value) {
     check(end_ >= ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
- private:
   const RawItem* ptr_;
   const RawItem* end_;
 
@@ -66,9 +70,13 @@ struct [[sus_trivial_abi]] SliceIter : public ::sus::iter::IteratorBase<Item> {
                                   decltype(end_));
 };
 
-template <class Item>
-struct [[sus_trivial_abi]] SliceIterMut
-    : public ::sus::iter::IteratorBase<Item> {
+template <class ItemT>
+struct [[sus_trivial_abi]] SliceIterMut final
+    : public ::sus::iter::IteratorImpl<SliceIterMut<ItemT>, ItemT> {
+ public:
+  using Item = ItemT;
+
+ private:
   // `Item` is a `const T&`.
   static_assert(std::is_reference_v<Item>);
   static_assert(!std::is_const_v<std::remove_reference_t<Item>>);
@@ -77,7 +85,7 @@ struct [[sus_trivial_abi]] SliceIterMut
 
  public:
   static constexpr auto with(RawItem* start, usize len) noexcept {
-    return ::sus::iter::Iterator<SliceIterMut>(start, len);
+    return SliceIterMut(start, len);
   }
 
   Option<Item> next() noexcept final {

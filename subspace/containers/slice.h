@@ -239,14 +239,14 @@ class Slice {
   /// Returns an iterator over all the elements in the slice, visited in the
   /// same order they appear in the slice. The iterator gives const access to
   /// each element.
-  constexpr ::sus::iter::Iterator<SliceIter<const T&>> iter() const& noexcept {
+  constexpr SliceIter<const T&> iter() const& noexcept {
     return SliceIter<const T&>::with(data_, len_);
   }
 
   /// Returns an iterator over all the elements in the slice, visited in the
   /// same order they appear in the slice. The iterator gives mutable access to
   /// each element.
-  constexpr ::sus::iter::Iterator<SliceIterMut<T&>> iter_mut() noexcept
+  constexpr SliceIterMut<T&> iter_mut() noexcept
     requires(!std::is_const_v<T>)
   {
     return SliceIterMut<T&>::with(data_, len_);
@@ -257,12 +257,12 @@ class Slice {
   ///
   /// For a Slice<const T> the iterator will return `const T&`. For a Slice<T>
   /// the iterator will return `T&`.
-  constexpr ::sus::iter::Iterator<SliceIter<const T&>> into_iter() && noexcept
+  constexpr SliceIter<const T&> into_iter() && noexcept
     requires(std::is_const_v<T>)
   {
     return SliceIter<const T&>::with(data_, len_);
   }
-  constexpr ::sus::iter::Iterator<SliceIterMut<T&>> into_iter() && noexcept
+  constexpr SliceIterMut<T&> into_iter() && noexcept
     requires(!std::is_const_v<T>)
   {
     return SliceIterMut<T&>::with(data_, len_);

@@ -89,58 +89,17 @@ class IteratorBase {
   IteratorBase() = default;
 };
 
-template <class I>
-class [[nodiscard]] Iterator final : public I {
- public:
-  using sus_clang_bug_58837(Item =) typename I::Item;
-
- private:
-  template <class T>
-  friend class __private::IteratorLoop;  // Can see Item.
-  friend I;                              // I::foo() can construct Iterator<I>.
-
-  template <class J>
-  friend class Iterator;  // Iterator<J>::foo() can construct Iterator<I>.
-
-  // Option can't include Iterator, due to a circular dependency between
-  // Option->Once->IteratorBase->Option. So it forward declares Iterator, and
-  // needs to use the constructor directly.
-  template <class T>
-  friend class ::sus::option::Option;
-
-  // Result can't include Iterator, due to a circular dependency between
-  // Result->Iterator->usize->Result. So it forward declares Iterator, and needs
-  // to use the constructor directly.
-  template <class T, class E>
-  friend class ::sus::result::Result;
-
-  template <class... Args>
-  Iterator(Args&&... args) : I(static_cast<Args&&>(args)...) {
-    // We want to be able to use Iterator<I> and I interchangeably, so that if
-    // an `I` gets stored in SizedIterator, it doesn't misbehave.
-    static_assert(::sus::mem::size_of<I>() ==
-                  ::sus::mem::size_of<Iterator<I>>());
+template <class Iter, class Item>
+class [[nodiscard]] IteratorImpl : public IteratorBase<Item> {
+ protected:
+  IteratorImpl() noexcept : IteratorBase<Item>() {
+    static_assert(std::is_final_v<Iter>,
+                  "Iterator implementations must be `final`, as the provided "
+                  "methods must know the complete type.");
   }
 
  public:
   // Provided methods.
-
-  /// Wraps the iterator in a new iterator that is trivially relocatable.
-  ///
-  /// Being trivially relocatable is required to chain the iterator, though
-  /// methods such as `filter()`. This method converts the iterator to be
-  /// trivially relocatable by moving the iterator into heap storage, which
-  /// implies this does a heap allocation, which is slow compared to working on
-  /// the stack.
-  ///
-  /// When possible, favour making the iterator be trivially relocatable by
-  /// having it iterate over types which are themselves trivially relocatable,
-  /// instead of using `box()`. This will give much better performance.
-  ///
-  /// It's only possible to call this in cases where it would do something
-  /// useful, that is when the Iterator type is not trivially relocatable.
-  auto box() && noexcept
-    requires(!::sus::mem::relocate_by_memcpy<I>);
 
   /// Tests whether all elements of the iterator match a predicate.
   ///
@@ -162,6 +121,23 @@ class [[nodiscard]] Iterator final : public I {
   /// Returns `false` if the iterator is empty.
   bool any(::sus::fn::FnMut<bool(Item)> f) noexcept;
 
+  /// Wraps the iterator in a new iterator that is trivially relocatable.
+  ///
+  /// Being trivially relocatable is required to chain the iterator, though
+  /// methods such as `filter()`. This method converts the iterator to be
+  /// trivially relocatable by moving the iterator into heap storage, which
+  /// implies this does a heap allocation, which is slow compared to working on
+  /// the stack.
+  ///
+  /// When possible, favour making the iterator be trivially relocatable by
+  /// having it iterate over types which are themselves trivially relocatable,
+  /// instead of using `box()`. This will give much better performance.
+  ///
+  /// It's only possible to call this in cases where it would do something
+  /// useful, that is when the Iterator type is not trivially relocatable.
+  auto box() && noexcept
+    requires(!::sus::mem::relocate_by_memcpy<Iter>);
+
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
   ///
@@ -178,12 +154,11 @@ class [[nodiscard]] Iterator final : public I {
   /// type.
   ///
   /// The returned iterator's type is whatever is returned by the closure.
-  template <class MapFn, int&...,
-            class R = std::invoke_result_t<MapFn, typename I::Item&&>,
-            class MapFnMut = ::sus::fn::FnMut<R(typename I::Item&&)>>
+  template <class MapFn, int&..., class R = std::invoke_result_t<MapFn, Item&&>,
+            class MapFnMut = ::sus::fn::FnMut<R(Item&&)>>
     requires(::sus::construct::Into<MapFn, MapFnMut> && !std::is_void_v<R>)
   auto map(MapFn fn) && noexcept
-    requires(::sus::mem::relocate_by_memcpy<I>);
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Creates an iterator which uses a closure to determine if an element should
   /// be yielded.
@@ -192,7 +167,7 @@ class [[nodiscard]] Iterator final : public I {
   /// iterator will yield only the elements for which the closure returns true.
   auto filter(::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
                   pred) && noexcept
-    requires(::sus::mem::relocate_by_memcpy<I>);
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Transforms an iterator into a collection.
   ///
@@ -216,8 +191,8 @@ class [[nodiscard]] Iterator final : public I {
   /// ```cpp
   /// sus::move(iter).collect<MyContainer<i32>>()
   /// ```
-  template <::sus::iter::FromIterator<typename I::Item> C>
-  C collect() && noexcept;
+  template <::sus::iter::FromIterator<Item> C>
+  ::sus::iter::FromIterator<Item> auto collect() && noexcept;
 
   /// Transforms an iterator into a Vec.
   ///
@@ -225,21 +200,20 @@ class [[nodiscard]] Iterator final : public I {
   /// avoid the need for specifying a template argument.
   ///
   /// See `collect()` for more details.
-  template <int&..., class Vec = ::sus::containers::Vec<typename I::Item>>
-    requires(  // Vec requires Move for its items.
-        ::sus::mem::Move<typename I::Item>)
-  // TODO: If the iterator is over references, collect_vec() should map them to
+  //
+  // TODO: If the iterator is over references, collect_vec() could map them to
   // NonNull.
+  template <int&..., class Vec = ::sus::containers::Vec<Item>>
   Vec collect_vec() && noexcept;
 
   // TODO: cloned().
 };
 
-template <class I>
-bool Iterator<I>::all(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
+template <class Iter, class Item>
+bool IteratorImpl<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
   // TODO: If constexpr(I::all() exists) then call that instead.
   while (true) {
-    Option<typename I::Item> item = this->next();
+    Option<Item> item = this->next();
     if (item.is_none()) return true;
     // Safety: `item` was checked to hold Some already.
     if (!f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn)))
@@ -247,67 +221,67 @@ bool Iterator<I>::all(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
   }
 }
 
-template <class I>
-bool Iterator<I>::any(::sus::fn::FnMut<bool(typename I::Item)> f) noexcept {
+template <class Iter, class Item>
+bool IteratorImpl<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
   // TODO: If constexpr(I::any() exists) then call that instead.
   while (true) {
-    Option<typename I::Item> item = this->next();
+    Option<Item> item = this->next();
     if (item.is_none()) return false;
     // Safety: `item` was checked to hold Some already.
     if (f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return true;
   }
 }
 
-template <class I>
-::sus::num::usize Iterator<I>::count() noexcept {
+template <class Iter, class Item>
+::sus::num::usize IteratorImpl<Iter, Item>::count() noexcept {
   // TODO: If constexpr(I::count() exists) then call that instead.
   auto c = 0_usize;
   while (this->next().is_some()) c += 1_usize;
   return c;
 }
 
-template <class I>
-auto Iterator<I>::box() && noexcept
-  requires(!::sus::mem::relocate_by_memcpy<I>)
+template <class Iter, class Item>
+auto IteratorImpl<Iter, Item>::box() && noexcept
+  requires(!::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Out = Iterator<
-      BoxedIterator<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>;
-  return Out(make_boxed_iterator(::sus::move(*this)));
+  using BoxedIterator =
+      BoxedIterator<Item, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
+  return BoxedIterator::with(static_cast<Iter&&>(*this));
 }
 
-template <class I>
+template <class Iter, class Item>
 template <class MapFn, int&..., class R, class MapFnMut>
   requires(::sus::construct::Into<MapFn, MapFnMut> && !std::is_void_v<R>)
-auto Iterator<I>::map(MapFn fn) && noexcept
-  requires(::sus::mem::relocate_by_memcpy<I>)
+auto IteratorImpl<Iter, Item>::map(MapFn fn) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Out = Iterator<Map<Item, R, ::sus::mem::size_of<I>(), alignof(I)>>;
-  return Out(sus::into(::sus::move(fn)),
-             make_sized_iterator(::sus::move(*this)));
+  using Map = Map<Item, R, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
+  return Map::with(sus::into(::sus::move(fn)),
+                   make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
-template <class I>
-auto Iterator<I>::filter(
-    ::sus::fn::FnMut<bool(const std::remove_reference_t<typename I::Item>&)>
+template <class Iter, class Item>
+auto IteratorImpl<Iter, Item>::filter(
+    ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
         pred) && noexcept
-  requires(::sus::mem::relocate_by_memcpy<I>)
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Out =
-      Iterator<Filter<typename I::Item, ::sus::mem::size_of<I>(), alignof(I)>>;
-  return Out(::sus::move(pred), make_sized_iterator(::sus::move(*this)));
+  using Filter = Filter<Item, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
+  return Filter::with(::sus::move(pred),
+                      make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
-template <class I>
-template <::sus::iter::FromIterator<typename I::Item> C>
-C Iterator<I>::collect() && noexcept {
-  return C::from_iter(::sus::move(*this));
+template <class Iter, class Item>
+template <::sus::iter::FromIterator<Item> C>
+::sus::iter::FromIterator<Item> auto
+IteratorImpl<Iter, Item>::collect() && noexcept {
+  return C::from_iter(static_cast<Iter&&>(*this));
 }
 
-template <class I>
+template <class Iter, class Item>
 template <int&..., class Vec>
-  requires(::sus::mem::Move<typename I::Item>)
-Vec Iterator<I>::collect_vec() && noexcept {
-  return Vec::from_iter(::sus::move(*this));
+Vec IteratorImpl<Iter, Item>::collect_vec() && noexcept {
+  return Vec::from_iter(static_cast<Iter&&>(*this));
 }
 
 }  // namespace sus::iter
