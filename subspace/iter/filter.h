@@ -60,10 +60,9 @@ class Filter final
   Pred pred_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is already known to be trivially relocatable, by
-  // pushing the inner Iterator onto the heap if needed. Likewise, the
-  // predicate is known to be trivially relocatable because the FnMut will
-  // either be a function pointer or a heap allocation itself.
+  // The InnerSizedIter is already known to be trivially relocatable, as SizedIterator
+  // is only constructed for trivially relocatable iterators. Likewise, the
+  // predicate is known to be trivially relocatable because FnMut is.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(pred_),
                                   decltype(next_iter_));
 };

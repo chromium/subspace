@@ -45,15 +45,16 @@ struct [[sus_trivial_abi]] SizedIterator final {
   alignas(SubclassAlign) char sized[SubclassSize];
   void (*destroy)(char& sized);
 
-  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                           decltype(sized), decltype(destroy));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(sized),
+                                  decltype(destroy));
 };
 
-/// Make a SizedIterator.
+/// Make a SizedIterator which wraps a trivially relocatable iterator and erases
+/// its type.
 ///
-/// This overload is used when the IteratorSubclass can be trivially relocated.
-/// It stores the SubclassIterator directly into the SizedIterator, avoiding a
-/// heap allocation, since the SizedIterator can then be trivially relocated.
+/// This type may only be used when the IteratorSubclass can be trivially
+/// relocated. It stores the SubclassIterator directly into the SizedIterator,
+/// erasing its type but remaining trivially relocatable.
 template <::sus::mem::Move IteratorSubclass, int&...,
           class SubclassItem = typename IteratorSubclass::Item,
           class SizedIteratorType = SizedIterator<
