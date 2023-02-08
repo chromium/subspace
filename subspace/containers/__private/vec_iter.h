@@ -55,6 +55,12 @@ struct VecIntoIter final
     return Option<Item>::some(move(item));
   }
 
+  ::sus::iter::SizeHint size_hint() noexcept final {
+    const usize remaining = vec_.len() - next_index_;
+    return ::sus::iter::SizeHint(
+        remaining, ::sus::Option<::sus::num::usize>::some(remaining));
+  }
+
  private:
   VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
 

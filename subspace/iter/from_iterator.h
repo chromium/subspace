@@ -31,10 +31,8 @@ namespace sus::iter {
 /// Any type that matches this concept can be constructed from
 /// Iterator::collect().
 template <class ToType, class ItemType>
-// clang-format off
-concept FromIterator = requires (::sus::iter::IteratorBase<ItemType>&& from) {
-    { ToType::from_iter(::sus::move(from)) } -> std::same_as<ToType>;
+concept FromIterator = requires(::sus::iter::IteratorBase<ItemType>&& from) {
+  { ToType::from_iter(::sus::move(from)) } -> std::same_as<ToType>;
 };
-// clang-format on
 
 }  // namespace sus::iter

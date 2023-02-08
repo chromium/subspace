@@ -49,13 +49,14 @@ template <class FromItem, class Item, size_t InnerIterSize,
           size_t InnerIterAlign>
 class Map;
 
+struct SizeHint {
+  ::sus::num::usize lower;
+  ::sus::Option<::sus::num::usize> upper;
+};
+
 // TODO: Do we want to be able to pass IteratorBase& as a "generic" iterator?
 // Then it needs access to the adaptor methods of Iterator<T>, so make them
 // virtual methods on IteratorBase?
-//
-// TODO: Do we want to be able to pass Iterator by value as a "generic"
-// iterator? Then we need an opaque Iterator type, which can be returned from an
-// adaptor method (and we can have an explicit operator to convert to it)?
 //
 // TODO: We need virtual methods because we erase the type in SizedIterator and
 // call the virtual methods there. But when the iterator is being used directly,
@@ -72,6 +73,34 @@ class IteratorBase {
   /// Gets the next element from the iterator, if there is one. Otherwise, it
   /// returns an Option holding #None.
   virtual Option<Item> next() noexcept = 0;
+
+  /// Returns the bounds on the remaining length of the iterator.
+  ///
+  /// Specifically, `size_hint()` returns a `SizeHint` with a lower and upper
+  /// bound.
+  ///
+  /// The upper bound is an Option<usize>. A None here means that either there
+  /// is no known upper bound, or the upper bound is larger than usize.
+  ///
+  /// # Implementation notes
+  ///
+  /// It is not enforced that an iterator implementation yields the declared
+  /// number of elements. A buggy iterator may yield less than the lower bound
+  /// or more than the upper bound of elements.
+  ///
+  /// `size_hint()` is primarily intended to be used for optimizations such as
+  /// reserving space for the elements of the iterator, but must not be trusted
+  /// to e.g., omit bounds checks in unsafe code. An incorrect implementation of
+  /// `size_hint()` should not lead to memory safety violations.
+  ///
+  /// That said, the implementation should provide a correct estimation, because
+  /// otherwise it would be a violation of the `Iterator` concept's protocol.
+  ///
+  /// The default implementation returns `lower = 0` and `upper = None` which is
+  /// correct for any iterator.
+  virtual SizeHint size_hint() noexcept {
+    return SizeHint(0_usize, ::sus::Option<::sus::num::usize>::none());
+  }
 
   // Adaptors for ranged for loops.
   //
