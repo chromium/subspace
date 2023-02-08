@@ -459,6 +459,7 @@ TEST(Vec, Collect) {
   v.push(2_i32);
   v.push(3_i32);
   auto v2 = sus::move(v).into_iter().collect<Vec<i32>>();
+  EXPECT_EQ(v2.capacity(), 3_usize);
   EXPECT_EQ(v2.len(), 3_usize);
 
   auto vc = Vec<i32>();
@@ -471,6 +472,16 @@ TEST(Vec, Collect) {
   //
   // auto vc2 = v.iter().collect<Vec<i32>>();
   // EXPECT_EQ(vc2.len(), 3_usize);
+}
+
+TEST(Vec, SizeHint) {
+  auto v = Vec<i32>();
+  v.push(1_i32);
+  v.push(2_i32);
+  v.push(3_i32);
+  auto [lower, upper] = sus::move(v).into_iter().size_hint();
+  EXPECT_EQ(lower, 3_usize);
+  EXPECT_EQ(upper, sus::Option<usize>::some(3_usize));
 }
 
 TEST(Vec, Destroy) {
