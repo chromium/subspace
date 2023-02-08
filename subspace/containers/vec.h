@@ -76,8 +76,8 @@ class Vec {
   static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) noexcept
     requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
   {
-    // TODO: Use iter.size_hint() when it exists.
-    auto v = Vec::with_capacity(0_usize);
+    auto [lower, upper] = iter.size_hint();
+    auto v = Vec::with_capacity(::sus::move(upper).unwrap_or(lower));
     for (T t : iter) v.push(::sus::move(t));
     return v;
   }

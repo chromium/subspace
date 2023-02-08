@@ -57,6 +57,15 @@ struct [[sus_trivial_abi]] SliceIter final
     return Option<Item>::some(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u));
   }
 
+  ::sus::iter::SizeHint size_hint() noexcept final {
+    // SAFETY: end_ is always larger than ptr_ which is only incremented until
+    // end_, so this static cast does not drop a negative sign bit. That ptr_
+    // starts at or before end_ is checked in the constructor.
+    const usize remaining = static_cast<size_t>(end_ - ptr_);
+    return ::sus::iter::SizeHint(
+        remaining, ::sus::Option<::sus::num::usize>::some(remaining));
+  }
+
  private:
   constexpr SliceIter(const RawItem* start, usize len) noexcept
       : ptr_(start), end_(start + len.primitive_value) {
@@ -97,13 +106,21 @@ struct [[sus_trivial_abi]] SliceIterMut final
         mref(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u)));
   }
 
- protected:
+  ::sus::iter::SizeHint size_hint() noexcept final {
+    // SAFETY: end_ is always larger than ptr_ which is only incremented until
+    // end_, so this static cast does not drop a negative sign bit. That ptr_
+    // starts at or before end_ is checked in the constructor.
+    const usize remaining = static_cast<size_t>(end_ - ptr_);
+    return ::sus::iter::SizeHint(
+        remaining, ::sus::Option<::sus::num::usize>::some(remaining));
+  }
+
+ private:
   constexpr SliceIterMut(RawItem* start, usize len) noexcept
       : ptr_(start), end_(start + len.primitive_value) {
     check(end_ >= ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
   }
 
- private:
   RawItem* ptr_;
   RawItem* end_;
 

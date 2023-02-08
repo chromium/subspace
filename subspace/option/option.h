@@ -145,7 +145,7 @@ class Option final {
   /// sus::iter::FromIterator trait.
   template <class U>
   static constexpr Option from_iter(
-      ::sus::iter::IteratorBase<Option<U>>&& iter) noexcept
+      ::sus::iter::IteratorBase<Option<U>>&& option_iter) noexcept
     requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>)
   {
     struct Iter : public ::sus::iter::IteratorBase<U> {
@@ -165,7 +165,7 @@ class Option final {
 
     bool found_none = false;
     auto collected =
-        T::from_iter(Iter(::sus::move(iter), ::sus::mref(found_none)));
+        T::from_iter(Iter(::sus::move(option_iter), ::sus::mref(found_none)));
     if (found_none)
       return Option::none();
     else
@@ -865,19 +865,14 @@ class Option final {
     return as_mut();
   }
 
-  constexpr Once<const std::remove_reference_t<T>&> iter()
-      const& noexcept {
+  constexpr Once<const std::remove_reference_t<T>&> iter() const& noexcept {
     return Once<const std::remove_reference_t<T>&>::with(as_ref());
   }
   constexpr Once<const T&> iter() const&& = delete;
 
-  constexpr Once<T&> iter_mut() & noexcept {
-    return Once<T&>::with(as_mut());
-  }
+  constexpr Once<T&> iter_mut() & noexcept { return Once<T&>::with(as_mut()); }
 
-  constexpr Once<T> into_iter() && noexcept {
-    return Once<T>::with(take());
-  }
+  constexpr Once<T> into_iter() && noexcept { return Once<T>::with(take()); }
 
  private:
   template <class U>

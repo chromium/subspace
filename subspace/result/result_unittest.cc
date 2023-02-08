@@ -441,7 +441,7 @@ struct CollectSum {
   static constexpr CollectSum from_iter(
       ::sus::iter::IteratorBase<T>&& iter) noexcept {
     T sum = T();
-    for (const T& t : iter) sum += t;
+    for (T t : iter) sum += t;
     return CollectSum(sum);
   }
 
