@@ -125,5 +125,5 @@ jobs:
           git config user.email "noreply@chromium.org"
           git config user.name "Subspace subdoc generator"
           git add .
-          git commit -m "Update docs: $SHA"
-          git push origin
+          git commit -m "Update docs: $SHA" || true
+          git push origin || true
