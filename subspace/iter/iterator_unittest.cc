@@ -34,13 +34,13 @@ namespace {
 
 // clang-format off
 static_assert(
-  sus::iter::Iterator<sus::iter::BoxedIterator<int, 32, 32>, int>);
+  sus::iter::Iterator<sus::iter::BoxedIterator<int, 8, 8>, int>);
 static_assert(
   ::sus::iter::Iterator<sus::iter::Empty<int>, int>);
 static_assert(
-  sus::iter::Iterator<sus::iter::Filter<int, 32, 32>, int>);
+  sus::iter::Iterator<sus::iter::Filter<int, 8, 8>, int>);
 static_assert(
-  sus::iter::Iterator<sus::iter::Map<int, int, 32, 32>, int>);
+  sus::iter::Iterator<sus::iter::Map<int, int, 8, 8>, int>);
 static_assert(
   ::sus::iter::Iterator<sus::iter::Once<int>, int>);
 static_assert(
