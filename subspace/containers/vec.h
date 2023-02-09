@@ -316,7 +316,7 @@ class Vec {
       return Option<const T&>::none();
     return Option<const T&>::some(get_unchecked(::sus::marker::unsafe_fn, i));
   }
-  constexpr Option<const T&> get(usize i) && = delete;
+  constexpr Option<const T&> get_ref(usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
   constexpr Option<T&> get_mut(usize i) & noexcept {
