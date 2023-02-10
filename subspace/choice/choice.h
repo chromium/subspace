@@ -348,6 +348,89 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     }
   }
 
+  /// Calls overload_set with a const reference to the currently stored value in
+  /// the Choice.
+  ///
+  /// Typically the `overload_set` would be either a templated function
+  /// that checks for what type was given to it, or an object which has
+  /// methods overloaded for each possible value in the Choice.
+  ///
+  /// Because the same type may be stored for multiple tag values, the tag
+  /// value is also passed, as the first parameter, to the `overload_set`.
+  ///
+  /// If the type attached to a tag is void, the overload for that tag would
+  /// only receive the tag as a parameter: `fn(Tag t)`. Otherwise the
+  /// overload will receive the tag and the value as parameters:
+  /// `fn(Tag t, const TagValue& v)`.
+  ///
+  /// # Example
+  ///
+  /// ```cpp
+  /// struct Visitor {
+  ///   void operator()(Order which, const u32& v) {
+  ///     printf("First\n");
+  ///   }
+  ///   void operator()(Order which, const i32& v) {
+  ///     printf("Second\n");
+  ///   }
+  ///   void operator()(Order which /* void */) {
+  ///     printf("Third\n");
+  ///   }
+  /// };
+  /// Visitor visitor;
+  ///
+  /// auto c = Choice<sus_choice_types(
+  ///     (Order::First, u32),
+  ///     (Order::Second, i32))
+  ///   >::with<Order::First>(4u);
+  /// c.visit(visitor);  // Prints "First".
+  /// ```
+  void visit(auto&& overload_set) const& {
+    storage_.visit(size_t{index_}, which(), ::sus::move(overload_set));
+  }
+  void visit(auto&& overload_set) && = delete;
+
+  /// Calls overload_set with a mutable reference to the currently stored value
+  /// in the Choice.
+  ///
+  /// Typically the `overload_set` would be object which has methods overloaded
+  /// for each possible value in the Choice. If there is no `void` type attached
+  /// to any tag, then a templated function can be used as well.
+  ///
+  /// Because the same type may be stored for multiple tag values, the tag
+  /// value is also passed, as the first parameter, to the `overload_set`.
+  ///
+  /// If the type attached to a tag is void, the overload for that tag would
+  /// only receive the tag as a parameter: `fn(Tag t)`. Otherwise the
+  /// overload will receive the tag and the value as parameters:
+  /// `fn(Tag t, TagValue& v)`.
+  ///
+  /// # Example
+  ///
+  /// ```cpp
+  /// struct Visitor {
+  ///   void operator()(Order which, u32& v) {
+  ///     printf("First\n");
+  ///   }
+  ///   void operator()(Order which, i32& v) {
+  ///     printf("Second\n");
+  ///   }
+  ///   void operator()(Order which /* void */) {
+  ///     printf("Third\n");
+  ///   }
+  /// };
+  /// Visitor visitor;
+  ///
+  /// auto c = Choice<sus_choice_types(
+  ///     (Order::First, u32),
+  ///     (Order::Second, i32))
+  ///   >::with<Order::First>(4u);
+  /// c.visit_mut(visitor);  // Prints "First".
+  /// ```
+  void visit_mut(auto&& overload_set) & {
+    storage_.visit_mut(size_t{index_}, which(), ::sus::move(overload_set));
+  }
+
   template <TagsType V, int&...,
             __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
   void set() & noexcept {
