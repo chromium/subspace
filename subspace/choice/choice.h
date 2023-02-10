@@ -351,9 +351,10 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// Calls overload_set with a const reference to the currently stored value in
   /// the Choice.
   ///
-  /// Typically the `overload_set` would be either a templated function
-  /// that checks for what type was given to it, or an object which has
-  /// methods overloaded for each possible value in the Choice.
+  /// Typically the `overload_set` would be object which has `operator()`
+  /// overloaded for each possible value type in the Choice. If there is no
+  /// `void` type attached to any tag, then a templated function can be used as
+  /// well.
   ///
   /// Because the same type may be stored for multiple tag values, the tag
   /// value is also passed, as the first parameter, to the `overload_set`.
@@ -393,9 +394,10 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// Calls overload_set with a mutable reference to the currently stored value
   /// in the Choice.
   ///
-  /// Typically the `overload_set` would be object which has methods overloaded
-  /// for each possible value in the Choice. If there is no `void` type attached
-  /// to any tag, then a templated function can be used as well.
+  /// Typically the `overload_set` would be object which has `operator()`
+  /// overloaded for each possible value type in the Choice. If there is no
+  /// `void` type attached to any tag, then a templated function can be used as
+  /// well.
   ///
   /// Because the same type may be stored for multiple tag values, the tag
   /// value is also passed, as the first parameter, to the `overload_set`.
