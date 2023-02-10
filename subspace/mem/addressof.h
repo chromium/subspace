@@ -19,15 +19,9 @@
 namespace sus::mem {
 
 template <class T>
-  requires(std::is_object_v<T>)
 constexpr T* addressof(T& arg) noexcept {
+  // __builtin_addressof also handles Obj-C ARC pointers.
   return __builtin_addressof(arg);
-}
-
-template <class T>
-  requires(!std::is_object_v<T>)
-constexpr T* addressof(T& arg) noexcept {
-  return &arg;
 }
 
 template <class T>
