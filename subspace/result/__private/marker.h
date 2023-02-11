@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
 
@@ -27,63 +28,50 @@ struct OkMarker {
   T&& value;
 
   template <class U, class E>
-  inline constexpr operator Result<U, E>() && noexcept
-      // `value` is a const reference.
-    requires(std::is_const_v<std::remove_reference_t<T>>)
-  {
-    return Result<U, E>::with(value);
+  inline constexpr operator Result<U, E>() && noexcept {
+    return Result<U, E>::with(::sus::forward<T>(value));
   }
 
-  template <class U, class E>
-  inline constexpr operator Result<U, E>() && noexcept
-      // `value` is a mutable lvalue reference.
-    requires(
-        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>>&>)
-  {
-    return Result<U, E>::with(mref(value));
+  // TODO: Make Result hold references and remove the remove_reference_t.
+  template <class E>
+  Result<std::remove_reference_t<T>, std::remove_reference_t<E>>
+  construct() && noexcept {
+    return ::sus::move(*this);
   }
 
+  // TODO: Make Result hold references and remove the remove_reference_t.
   template <class U, class E>
-  inline constexpr operator Result<U, E>() && noexcept
-      // `value` is an rvalue reference.
-    requires(
-        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &&>)
-  {
-    return Result<U, E>::with(::sus::move(value));
+  Result<std::remove_reference_t<U>, std::remove_reference_t<E>>
+  construct() && noexcept {
+    return ::sus::move(*this);
   }
 };
 
-template <class T>
+template <class E>
 struct ErrMarker {
-  sus_clang_bug_54040(constexpr inline ErrMarker(T&& value)
-                      : value(::sus::forward<T>(value)){});
+  sus_clang_bug_54040(constexpr inline ErrMarker(E&& value)
+                      : value(::sus::forward<E>(value)){});
 
-  T&& value;
+  E&& value;
 
-  template <class U, class E>
-  inline constexpr operator Result<U, E>() && noexcept
-      // `value` is a const reference.
-    requires(std::is_const_v<std::remove_reference_t<T>>)
-  {
-    return Result<U, E>::with_err(value);
+  template <class T, class F>
+  inline constexpr operator Result<T, F>() && noexcept {
+    return Result<T, F>::with_err(
+        ::sus::forward<std::remove_reference_t<E>>(value));
   }
 
-  template <class U, class E>
-  inline constexpr operator Result<U, E>() && noexcept
-      // `value` is a mutable lvalue reference.
-    requires(
-        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>>&>)
-  {
-    return Result<U, E>::with_err(mref(value));
+  // TODO: Make Result hold references and remove the remove_reference_t.
+  template <class T>
+  Result<std::remove_reference_t<T>, std::remove_reference_t<E>>
+  construct() && noexcept {
+    return ::sus::move(*this);
   }
 
-  template <class U, class E>
-  inline constexpr operator Result<U, E>() && noexcept
-      // `value` is an rvalue reference.
-    requires(
-        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &&>)
-  {
-    return Result<U, E>::with_err(::sus::move(value));
+  // TODO: Make Result hold references and remove the remove_reference_t.
+  template <class T, class F = E>
+  Result<std::remove_reference_t<T>, std::remove_reference_t<F>>
+  construct() && noexcept {
+    return ::sus::move(*this);
   }
 };
 

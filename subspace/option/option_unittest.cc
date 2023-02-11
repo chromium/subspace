@@ -181,32 +181,34 @@ TEST(Option, Construct) {
 }
 
 TEST(Option, SomeNoneHelpers) {
-  auto a = Option<i32>::some(2_i32);
-  Option<i32> a2 = sus::some(2_i32);
-  EXPECT_EQ(a, a2);
-  auto mv = 2_i32;
-  a2 = sus::some(mref(mv));
-  EXPECT_EQ(a, a2);
-  const auto cv = 2_i32;
-  a2 = sus::some(cv);
-  EXPECT_EQ(a, a2);
+  {
+    auto a = Option<i32>::some(2_i32);
+    Option<i32> a2 = sus::some(2_i32);
+    EXPECT_EQ(a, a2);
+    auto mv = 2_i32;
+    a2 = sus::some(mref(mv));
+    EXPECT_EQ(a, a2);
+    const auto cv = 2_i32;
+    a2 = sus::some(cv);
+    EXPECT_EQ(a, a2);
 
-  auto b = Option<i32>::none();
-  Option<i32> b2 = sus::none();
-  EXPECT_EQ(b, b2);
+    auto b = Option<i32>::none();
+    Option<i32> b2 = sus::none();
+    EXPECT_EQ(b, b2);
 
-  auto i = NoCopyMove();
-  auto c = Option<NoCopyMove&>::some(i);
-  Option<NoCopyMove&> c2 = sus::some(i);
-  EXPECT_EQ(&c.as_ref().unwrap(), &c2.as_ref().unwrap());
+    auto i = NoCopyMove();
+    auto c = Option<NoCopyMove&>::some(i);
+    Option<NoCopyMove&> c2 = sus::some(i);
+    EXPECT_EQ(&c.as_ref().unwrap(), &c2.as_ref().unwrap());
 
-  const auto ci = NoCopyMove();
-  const auto cc = Option<const NoCopyMove&>::some(ci);
-  Option<const NoCopyMove&> cc2 = sus::some(ci);
-  EXPECT_EQ(&cc.as_ref().unwrap(), &cc2.as_ref().unwrap());
+    const auto ci = NoCopyMove();
+    const auto cc = Option<const NoCopyMove&>::some(ci);
+    Option<const NoCopyMove&> cc2 = sus::some(ci);
+    EXPECT_EQ(&cc.as_ref().unwrap(), &cc2.as_ref().unwrap());
 
-  Option<const NoCopyMove&> mut_to_const = sus::some(i);
-  EXPECT_EQ(&i, &mut_to_const.as_ref().unwrap());
+    Option<const NoCopyMove&> mut_to_const = sus::some(i);
+    EXPECT_EQ(&i, &mut_to_const.as_ref().unwrap());
+  }
 
   // Verify no copies happen in the marker.
   {
@@ -225,6 +227,22 @@ TEST(Option, SomeNoneHelpers) {
     EXPECT_EQ(copies, 0);
     Option<S> o = sus::move(marker);
     EXPECT_GE(copies, 1);
+  }
+
+  // In place explicit construction.
+  {
+    const auto i = 2_i32;
+    auto a = sus::some(i).construct();
+    static_assert(std::same_as<decltype(a), Option<const i32&>>);
+    EXPECT_EQ(*a, 2_i32);
+
+    auto b = sus::some(2_i32).construct();
+    static_assert(std::same_as<decltype(b), Option<i32>>);
+    EXPECT_EQ(*a, 2_i32);
+
+    auto c = sus::some(i).construct<i32>();
+    static_assert(std::same_as<decltype(c), Option<i32>>);
+    EXPECT_EQ(*a, 2_i32);
   }
 }
 

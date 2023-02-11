@@ -14,31 +14,24 @@
 
 #pragma once
 
-#include "subspace/mem/move.h"
-
 namespace sus::mem {
+
+namespace __private {
 template <class T>
-  requires(!std::is_reference_v<T>)
-class NonNull;
-}
-
-namespace sus::mem::__private {
-
-template <class T>
-struct NonNullMarker {
-  constexpr NonNullMarker(T& t) noexcept : t_(t) {}
-
-  template <class U>
-  constexpr operator NonNull<U>() && noexcept {
-    return ::sus::mem::NonNull<U>::with(t_);
-  }
-
-  NonNull<T> construct() && noexcept {
-    return ::sus::move(*this);
-  }
-
- private:
-  T& t_;
+struct remove_rvalue_reference_helper {
+  using type = T;
 };
 
-}  // namespace sus::mem::__private
+template <class T>
+struct remove_rvalue_reference_helper<T&&> {
+  using type = T;
+};
+
+}  // namespace __private
+
+/// Performs reference collapsing, removing rvalue references but leaving lvalue
+/// references untouched.
+template <class T>
+using remove_rvalue_reference = __private::remove_rvalue_reference_helper<T>::type;
+
+}  // namespace sus::mem

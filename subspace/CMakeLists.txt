@@ -84,6 +84,7 @@ target_sources(subspace PUBLIC
     "mem/never_value.h"
     "mem/nonnull.h"
     "mem/relocate.h"
+    "mem/remove_rvalue_reference.h"
     "mem/replace.h"
     "mem/size_of.h"
     "mem/swap.h"

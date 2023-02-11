@@ -212,6 +212,19 @@ TEST(Array, ConstructorFunction) {
     Array<S, 1> a = sus::move(marker);
     EXPECT_GE(copies, 1);
   }
+
+  // In place explicit construction.
+  {
+    auto a = sus::array(1_i32, 2_i32).construct();
+    static_assert(std::same_as<decltype(a), Array<i32, 2u>>);
+    EXPECT_EQ(a[0u], 1_i32);
+    EXPECT_EQ(a[1u], 2_i32);
+
+    auto b = sus::array(1, 2).construct<i32>();
+    static_assert(std::same_as<decltype(b), Array<i32, 2u>>);
+    EXPECT_EQ(b[0u], 1_i32);
+    EXPECT_EQ(b[1u], 2_i32);
+  }
 }
 
 TEST(Array, Get) {

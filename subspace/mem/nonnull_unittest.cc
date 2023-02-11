@@ -308,6 +308,11 @@ TEST(NonNull, TypeDeduction) {
   EXPECT_EQ(nm.as_ptr(), &i);
   NonNull<const i32> nc = sus::mem::nonnull(i);
   EXPECT_EQ(nc.as_ptr(), &i);
+
+  // In place explicit construction.
+  auto a = sus::mem::nonnull(i).construct();
+  static_assert(std::same_as<decltype(a), NonNull<i32>>);
+  EXPECT_EQ(a.as_ptr(), &i);
 }
 
 }  // namespace

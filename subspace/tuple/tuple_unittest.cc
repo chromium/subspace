@@ -196,6 +196,22 @@ TEST(Tuple, ConstructorFunction) {
     Tuple<S> tuple = sus::move(marker);
     EXPECT_GE(copies, 1);
   }
+
+  // In place explicit construction.
+  {
+    const auto i = 2_i32;
+    auto a = sus::tuple(1_i8, i, 3_u32).construct();
+    static_assert(std::same_as<decltype(a), sus::Tuple<i8, const i32&, u32>>);
+    EXPECT_EQ(a.get_ref<0>(), 1_i8);
+    EXPECT_EQ(a.get_ref<1>(), 2_i32);
+    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+
+    auto b = sus::tuple(sus::into(1_i8), i, 3_u32).construct<i32, i32, u32>();
+    static_assert(std::same_as<decltype(b), sus::Tuple<i32, i32, u32>>);
+    EXPECT_EQ(b.get_ref<0>(), 1_i32);
+    EXPECT_EQ(b.get_ref<1>(), 2_i32);
+    EXPECT_EQ(b.get_ref<2>(), 3_u32);
+  }
 }
 
 TEST(Tuple, ConstructorReferences) {
