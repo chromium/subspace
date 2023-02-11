@@ -162,13 +162,13 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
     }
   }
 
-  constexpr auto get_ref() const& {
+  constexpr auto as() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
           tuple_.template get_ref<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
-  constexpr decltype(auto) get_ref() && = delete;
+  constexpr decltype(auto) as() && = delete;
   constexpr auto get_mut() & {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
@@ -343,10 +343,10 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
     }
   }
 
-  inline constexpr decltype(auto) get_ref() const& {
+  inline constexpr decltype(auto) as() const& {
     return tuple_.template get_ref<0>();
   }
-  constexpr decltype(auto) get_ref() && = delete;
+  constexpr decltype(auto) as() && = delete;
   inline constexpr decltype(auto) get_mut() & {
     return tuple_.template get_mut<0>();
   }
@@ -413,7 +413,7 @@ union Storage<I, ::sus::Tuple<Ts...>> {
     return std::partial_order(tuple_, other.tuple_);
   }
 
-  constexpr auto get_ref() const& {
+  constexpr auto as() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
           tuple_.template get_ref<Is>()...);
@@ -524,7 +524,7 @@ union Storage<I, ::sus::Tuple<T>> {
     return std::partial_order(tuple_, other.tuple_);
   }
 
-  inline constexpr decltype(auto) get_ref() const& {
+  inline constexpr decltype(auto) as() const& {
     return tuple_.template get_ref<0>();
   }
   inline constexpr decltype(auto) get_mut() & {

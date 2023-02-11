@@ -54,7 +54,7 @@ inline std::string namespace_with_path_to_string(
         add_colons = true;
         break;
       case Namespace::Tag::Named:
-        s << n.get_ref<Namespace::Tag::Named>();
+        s << n.as<Namespace::Tag::Named>();
         add_colons = true;
         break;
     }
@@ -65,7 +65,7 @@ inline std::string namespace_with_path_to_string(
     case Namespace::Tag::Global: s << "Global namespace"; break;
     case Namespace::Tag::Anonymous: s << "(anonymous)"; break;
     case Namespace::Tag::Named:
-      s << tail.get_ref<Namespace::Tag::Named>();
+      s << tail.as<Namespace::Tag::Named>();
       break;
   }
 
@@ -187,7 +187,7 @@ inline bool path_contains_namespace(clang::Decl* decl, Namespace n) noexcept {
         if (ndecl->isAnonymousNamespace()) return true;
         break;
       case Namespace::Tag::Named:
-        const auto& name = n.get_ref<Namespace::Tag::Named>();
+        const auto& name = n.as<Namespace::Tag::Named>();
         if (ndecl->getNameAsString() == name) return true;
         break;
     }

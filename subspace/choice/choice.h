@@ -263,9 +263,9 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// # Example
   /// ```
   /// switch (my_union) {
-  ///   case Value1: return my_union.get_ref<Value1>().stuff;
-  ///   case Value2: return my_union.get_ref<Value2>().andmore;
-  ///   case Value3: return my_union.get_ref<Value3>().stufftoo;
+  ///   case Value1: return my_union.as<Value1>().stuff;
+  ///   case Value2: return my_union.as<Value2>().andmore;
+  ///   case Value3: return my_union.as<Value3>().stufftoo;
   /// }
   /// ```
   ///
@@ -312,9 +312,9 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   // clang-format off
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline decltype(auto) get_ref() const& noexcept{
+  inline decltype(auto) as() const& noexcept{
     ::sus::check(index_ == index<V>);
-    return __private::find_choice_storage<index<V>>(storage_).get_ref();
+    return __private::find_choice_storage<index<V>>(storage_).as();
   }
 
   template <TagsType V>
