@@ -335,7 +335,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// passed as the template parameter.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline decltype(auto) as() const& noexcept {
+  constexpr inline decltype(auto) as() const& noexcept {
     ::sus::check(index_ == index<V>);
     return __private::find_choice_storage<index<V>>(storage_).as();
   }
@@ -343,7 +343,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   // rvalue (temporary) Choice object.
   template <TagsType V>
     requires(!std::is_reference_v<StorageTypeOfTag<V>>)
-  inline const StorageTypeOfTag<V>& as() && noexcept = delete;
+  constexpr inline const StorageTypeOfTag<V>& as() && noexcept = delete;
 
   /// Returns a mutable reference to the value(s) inside the Choice.
   ///
@@ -359,7 +359,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// passed as the template parameter.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline decltype(auto) as_mut() & noexcept {
+  constexpr inline decltype(auto) as_mut() & noexcept {
     ::sus::check(index_ == index<V>);
     return __private::find_choice_storage_mut<index<V>>(storage_).as_mut();
   }
@@ -378,7 +378,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// passed as the template parameter.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline decltype(auto) into_inner() && noexcept {
+  constexpr inline decltype(auto) into_inner() && noexcept {
     ::sus::check(index_ == index<V>);
     auto& s = __private::find_choice_storage_mut<index<V>>(storage_);
     return ::sus::move(s).into_inner();
@@ -394,7 +394,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// active member.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline Option<AccessTypeOfTagConst<V>> get() const& noexcept {
+  constexpr inline Option<AccessTypeOfTagConst<V>> get() const& noexcept {
     if (index_ != index<V>) return ::sus::none();
     return ::sus::some(__private::find_choice_storage<index<V>>(storage_).as());
   }
@@ -402,7 +402,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   // rvalue (temporary) Choice object.
   template <TagsType V>
     requires(!std::is_reference_v<StorageTypeOfTag<V>>)
-  inline Option<AccessTypeOfTagConst<V>> get() && noexcept = delete;
+  constexpr inline Option<AccessTypeOfTagConst<V>> get() && noexcept = delete;
 
   /// Returns a mutable reference to the value(s) inside the Choice.
   ///
@@ -414,7 +414,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// active member.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline Option<AccessTypeOfTagMut<V>> get_mut() & noexcept {
+  constexpr inline Option<AccessTypeOfTagMut<V>> get_mut() & noexcept {
     if (index_ != index<V>) return ::sus::none();
     return ::sus::some(
         __private::find_choice_storage_mut<index<V>>(storage_).as_mut());
@@ -449,7 +449,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// parameter, Undefined Behaviour results.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline decltype(auto) get_unchecked(
+  constexpr inline decltype(auto) get_unchecked(
       ::sus::marker::UnsafeFnMarker) const& noexcept {
     return __private::find_choice_storage<index<V>>(storage_).as();
   }
@@ -457,7 +457,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   // rvalue (temporary) Choice object.
   template <TagsType V>
     requires(!std::is_reference_v<StorageTypeOfTag<V>>)
-  inline const StorageTypeOfTag<V>& get_unchecked(
+  constexpr inline const StorageTypeOfTag<V>& get_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept = delete;
 
   /// Returns a mutable reference to the value(s) inside the Choice.
@@ -474,7 +474,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// parameter, Undefined Behaviour results.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline decltype(auto) get_unchecked_mut(
+  constexpr inline decltype(auto) get_unchecked_mut(
       ::sus::marker::UnsafeFnMarker) & noexcept {
     return __private::find_choice_storage_mut<index<V>>(storage_).as_mut();
   }

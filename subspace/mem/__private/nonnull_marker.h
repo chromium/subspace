@@ -26,14 +26,14 @@ namespace sus::mem::__private {
 
 template <class T>
 struct NonNullMarker {
-  constexpr NonNullMarker(T& t) noexcept : t_(t) {}
+  inline constexpr NonNullMarker(T& t) noexcept : t_(t) {}
 
   template <class U>
-  constexpr operator NonNull<U>() && noexcept {
+  inline constexpr operator NonNull<U>() && noexcept {
     return ::sus::mem::NonNull<U>::with(t_);
   }
 
-  NonNull<T> construct() && noexcept {
+  inline constexpr NonNull<T> construct() && noexcept {
     return ::sus::move(*this);
   }
 

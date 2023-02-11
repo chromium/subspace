@@ -34,14 +34,16 @@ struct OkMarker {
 
   // TODO: Make Result hold references and remove the remove_reference_t.
   template <class E>
-  Result<std::remove_reference_t<T>, std::remove_reference_t<E>>
+  inline constexpr Result<std::remove_reference_t<T>,
+                          std::remove_reference_t<E>>
   construct() && noexcept {
     return ::sus::move(*this);
   }
 
   // TODO: Make Result hold references and remove the remove_reference_t.
   template <class U, class E>
-  Result<std::remove_reference_t<U>, std::remove_reference_t<E>>
+  inline constexpr Result<std::remove_reference_t<U>,
+                          std::remove_reference_t<E>>
   construct() && noexcept {
     return ::sus::move(*this);
   }
@@ -62,14 +64,16 @@ struct ErrMarker {
 
   // TODO: Make Result hold references and remove the remove_reference_t.
   template <class T>
-  Result<std::remove_reference_t<T>, std::remove_reference_t<E>>
+  inline constexpr Result<std::remove_reference_t<T>,
+                          std::remove_reference_t<E>>
   construct() && noexcept {
     return ::sus::move(*this);
   }
 
   // TODO: Make Result hold references and remove the remove_reference_t.
   template <class T, class F = E>
-  Result<std::remove_reference_t<T>, std::remove_reference_t<F>>
+  inline constexpr Result<std::remove_reference_t<T>,
+                          std::remove_reference_t<F>>
   construct() && noexcept {
     return ::sus::move(*this);
   }

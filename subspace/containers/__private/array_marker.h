@@ -44,13 +44,13 @@ struct ArrayMarker {
   }
 
   template <class T>
-  Array<T, sizeof...(Ts)> construct() && noexcept {
+  inline constexpr Array<T, sizeof...(Ts)> construct() && noexcept {
     return ::sus::move(*this);
   }
 
   template <int&..., class T = ::sus::choice_type::__private::PackFirst<Ts...>>
     requires(... && std::same_as<T, Ts>)
-  Array<T, sizeof...(Ts)> construct() && noexcept {
+  inline constexpr Array<T, sizeof...(Ts)> construct() && noexcept {
     return ::sus::move(*this);
   }
 };
