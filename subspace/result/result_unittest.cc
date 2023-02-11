@@ -117,6 +117,13 @@ TEST(Option, OkHelpers) {
     Result<S, u32> r = sus::move(marker);
     EXPECT_GE(copies, 1);
   }
+
+  // In place explicit construction.
+  {
+    auto r = sus::result::ok(2_i32).construct<u32>();
+    static_assert(std::same_as<decltype(r), Result<i32, u32>>);
+    EXPECT_EQ(sus::move(r).unwrap(), 2_i32);
+  }
 }
 
 TEST(Option, ErrHelpers) {

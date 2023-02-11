@@ -129,6 +129,19 @@ TEST(Vec, ConstructorFunction) {
     Vec<S> vec = sus::move(marker);
     EXPECT_GE(copies, 1);
   }
+
+  // In place explicit construction.
+  {
+    auto a = sus::vec(1_i32, 2_i32).construct();
+    static_assert(std::same_as<decltype(a), Vec<i32>>);
+    EXPECT_EQ(a[0u], 1_i32);
+    EXPECT_EQ(a[1u], 2_i32);
+
+    auto b = sus::vec(1, 2).construct<i32>();
+    static_assert(std::same_as<decltype(b), Vec<i32>>);
+    EXPECT_EQ(b[0u], 1_i32);
+    EXPECT_EQ(b[1u], 2_i32);
+  }
 }
 
 TEST(Vec, Push) {

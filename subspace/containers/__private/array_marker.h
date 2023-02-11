@@ -18,6 +18,7 @@
 
 #include <utility>  // TODO: Replace with our own integer_sequence.
 
+#include "subspace/choice/__private/pack_index.h"  // TODO: Move out of choice/ to share.
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
 #include "subspace/tuple/tuple.h"
@@ -40,6 +41,17 @@ struct ArrayMarker {
               ::sus::forward<Ts>(values.template get_mut<Is>())...);
         };
     return make_array(std::make_integer_sequence<size_t, sizeof...(Ts)>());
+  }
+
+  template <class T>
+  Array<T, sizeof...(Ts)> construct() && noexcept {
+    return ::sus::move(*this);
+  }
+
+  template <int&..., class T = ::sus::choice_type::__private::PackFirst<Ts...>>
+    requires(... && std::same_as<T, Ts>)
+  Array<T, sizeof...(Ts)> construct() && noexcept {
+    return ::sus::move(*this);
   }
 };
 

@@ -15,8 +15,9 @@
 #pragma once
 
 #include "subspace/macros/__private/compiler_bugs.h"
-#include "subspace/mem/move.h"
 #include "subspace/mem/forward.h"
+#include "subspace/mem/remove_rvalue_reference.h"
+#include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
 
 namespace sus::option::__private {
@@ -29,29 +30,13 @@ struct SomeMarker {
   T&& value;
 
   template <class U>
-  inline constexpr operator Option<U>() && noexcept
-      // `value` is a const reference.
-    requires(std::is_const_v<std::remove_reference_t<T>>)
-  {
-    return Option<U>::some(value);
+  inline constexpr operator Option<U>() && noexcept {
+    return Option<U>::some(::sus::forward<T>(value));
   }
 
-  template <class U>
-  inline constexpr operator Option<U>() && noexcept
-      // `value` is a mutable lvalue reference.
-    requires(
-        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>>&>)
-  {
-    return Option<U>::some(mref(value));
-  }
-
-  template <class U>
-  inline constexpr operator Option<U>() && noexcept
-      // `value` is an rvalue reference.
-    requires(
-        std::same_as<T &&, std::remove_const_t<std::remove_reference_t<T>> &&>)
-  {
-    return Option<U>::some(sus::move(value));
+  template <class U = ::sus::mem::remove_rvalue_reference<T>>
+  inline constexpr Option<U> construct() && noexcept {
+    return sus::move(*this);
   }
 };
 
@@ -59,6 +44,11 @@ struct NoneMarker {
   template <class U>
   inline constexpr operator Option<U>() && noexcept {
     return Option<U>::none();
+  }
+
+  template <class T>
+  inline constexpr Option<T> construct() && noexcept {
+    return sus::move(*this);
   }
 };
 
