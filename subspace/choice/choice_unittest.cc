@@ -200,17 +200,39 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
   }
 }
 
-TEST(Choice, GetTypes) {
+template <class T, auto Tag>
+concept CanCallAs = requires(T&& choice) { sus::forward<T>(choice).as<Tag>(); };
+template <class T, auto Tag>
+concept CanCallGet =
+    requires(T&& choice) { sus::forward<T>(choice).get<Tag>(); };
+template <class T, auto Tag>
+concept CanCallGetUnchecked = requires(T&& choice) {
+  sus::forward<T>(choice).get_unchecked<Tag>(unsafe_fn);
+};
+
+// Value types can't be accessed through an rvalue Choice as it would be a
+// reference to a temporary.
+using ChoiceWithValue = Choice<sus_choice_types((0, u32))>;
+static_assert(!CanCallAs<ChoiceWithValue, 0>);
+static_assert(!CanCallGet<ChoiceWithValue, 0>);
+static_assert(!CanCallGetUnchecked<ChoiceWithValue, 0>);
+// Reference types can be accessed through an rvalue Choice as the object does
+// not live inside the temporary.
+using ChoiceWithReference = Choice<sus_choice_types((0, u32&))>;
+static_assert(CanCallAs<ChoiceWithReference, 0>);
+static_assert(CanCallGet<ChoiceWithReference, 0>);
+static_assert(CanCallGetUnchecked<ChoiceWithReference, 0>);
+
+TEST(Choice, AsTypes) {
   // Single value first, double last.
   {
     auto u = Choice<sus_choice_types(
         (Order::First, u32), (Order::Second, i8, u64))>::with<Order::First>(3u);
-    static_assert(
-        std::same_as<decltype(u.as<Order::First>()), const u32&>);
+    static_assert(std::same_as<decltype(u.as<Order::First>()), const u32&>);
     static_assert(std::same_as<decltype(u.as<Order::Second>()),
                                sus::Tuple<const i8&, const u64&>>);
-    static_assert(std::same_as<decltype(u.get_mut<Order::First>()), u32&>);
-    static_assert(std::same_as<decltype(u.get_mut<Order::Second>()),
+    static_assert(std::same_as<decltype(u.as_mut<Order::First>()), u32&>);
+    static_assert(std::same_as<decltype(u.as_mut<Order::Second>()),
                                sus::Tuple<i8&, u64&>>);
     static_assert(
         std::same_as<decltype(sus::move(u).into_inner<Order::First>()), u32&&>);
@@ -225,11 +247,10 @@ TEST(Choice, GetTypes) {
         with<Order::First>(sus::Tuple<i8, u64>::with(1_i8, 2_u64));
     static_assert(std::same_as<decltype(u.as<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
-    static_assert(
-        std::same_as<decltype(u.as<Order::Second>()), const u32&>);
-    static_assert(std::same_as<decltype(u.get_mut<Order::First>()),
+    static_assert(std::same_as<decltype(u.as<Order::Second>()), const u32&>);
+    static_assert(std::same_as<decltype(u.as_mut<Order::First>()),
                                sus::Tuple<i8&, u64&>>);
-    static_assert(std::same_as<decltype(u.get_mut<Order::Second>()), u32&>);
+    static_assert(std::same_as<decltype(u.as_mut<Order::Second>()), u32&>);
     static_assert(
         std::same_as<decltype(sus::move(u).into_inner<Order::First>()),
                      sus::Tuple<i8, u64>>);
@@ -247,10 +268,10 @@ TEST(Choice, GetTypes) {
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(
         std::same_as<decltype(u.as<Order::Second>()), const NoCopyMove&>);
-    static_assert(std::same_as<decltype(u.get_mut<Order::First>()),
+    static_assert(std::same_as<decltype(u.as_mut<Order::First>()),
                                sus::Tuple<i8&, const u64&>>);
     static_assert(
-        std::same_as<decltype(u.get_mut<Order::Second>()), NoCopyMove&>);
+        std::same_as<decltype(u.as_mut<Order::Second>()), NoCopyMove&>);
     static_assert(
         std::same_as<decltype(sus::move(u).into_inner<Order::First>()),
                      sus::Tuple<i8&, const u64&>>);
@@ -263,6 +284,207 @@ TEST(Choice, GetTypes) {
     auto u2 = Choice<sus_choice_types(
         (Order::First, NoCopyMove&),
         (Order::Second, i8&, const u64&))>::with<Order::First>(i);
+  }
+}
+
+TEST(Choice, Get) {
+  // Single value first, double last.
+  {
+    auto u = Choice<sus_choice_types(
+        (Order::First, u32), (Order::Second, i8, u64))>::with<Order::First>(3u);
+    {
+      auto s = u.get<Order::First>();
+      EXPECT_EQ(*s, 3u);
+      auto n = u.get<Order::Second>();
+      EXPECT_EQ(n, sus::None);
+      static_assert(std::same_as<decltype(s), sus::Option<const u32&>>);
+      static_assert(
+          std::same_as<decltype(n),
+                       sus::Option<sus::Tuple<const i8&, const u64&>>>);
+    }
+
+    u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+    {
+      auto n = u.get<Order::First>();
+      EXPECT_EQ(n, sus::None);
+      auto s = u.get<Order::Second>();
+      EXPECT_EQ(*s, (sus::tuple(1_i8, 2_u64).construct()));
+      static_assert(std::same_as<decltype(n), sus::Option<const u32&>>);
+      static_assert(
+          std::same_as<decltype(s),
+                       sus::Option<sus::Tuple<const i8&, const u64&>>>);
+    }
+  }
+  // Double value first, single last.
+  {
+    auto u =
+        Choice<sus_choice_types((Order::First, i8, u64),
+                                (Order::Second, u32))>::with<Order::Second>(3u);
+    {
+      auto s = u.get<Order::Second>();
+      EXPECT_EQ(*s, 3u);
+      auto n = u.get<Order::First>();
+      EXPECT_EQ(n, sus::None);
+      static_assert(std::same_as<decltype(s), sus::Option<const u32&>>);
+      static_assert(
+          std::same_as<decltype(n),
+                       sus::Option<sus::Tuple<const i8&, const u64&>>>);
+    }
+
+    u.set<Order::First>(sus::tuple(1_i8, 2_u64));
+    {
+      auto n = u.get<Order::Second>();
+      EXPECT_EQ(n, sus::None);
+      auto s = u.get<Order::First>();
+      EXPECT_EQ(*s, (sus::tuple(1_i8, 2_u64).construct()));
+      static_assert(std::same_as<decltype(n), sus::Option<const u32&>>);
+      static_assert(
+          std::same_as<decltype(s),
+                       sus::Option<sus::Tuple<const i8&, const u64&>>>);
+    }
+  }
+  // With refs.
+  {
+    auto i = NoCopyMove();
+    auto u = Choice<sus_choice_types(
+        (Order::First, i8&, const u64&),
+        (Order::Second, NoCopyMove&))>::with<Order::Second>(i);
+    auto n = u.get<Order::First>();
+    EXPECT_EQ(n, sus::None);
+    auto s = u.get<Order::Second>();
+    EXPECT_EQ(&*s, &i);
+    static_assert(std::same_as<decltype(n),
+                               sus::Option<sus::Tuple<const i8&, const u64&>>>);
+    static_assert(std::same_as<decltype(s), sus::Option<const NoCopyMove&>>);
+  }
+}
+
+TEST(Choice, GetMut) {
+  // Single value first, double last.
+  {
+    auto u = Choice<sus_choice_types(
+        (Order::First, u32), (Order::Second, i8, u64))>::with<Order::First>(3u);
+    {
+      auto s = u.get_mut<Order::First>();
+      EXPECT_EQ(*s, 3u);
+      auto n = u.get_mut<Order::Second>();
+      EXPECT_EQ(n, sus::None);
+      static_assert(std::same_as<decltype(s), sus::Option<u32&>>);
+      static_assert(
+          std::same_as<decltype(n), sus::Option<sus::Tuple<i8&, u64&>>>);
+    }
+
+    u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+    {
+      auto n = u.get_mut<Order::First>();
+      EXPECT_EQ(n, sus::None);
+      auto s = u.get_mut<Order::Second>();
+      EXPECT_EQ(*s, (sus::tuple(1_i8, 2_u64).construct()));
+      static_assert(std::same_as<decltype(n), sus::Option<u32&>>);
+      static_assert(
+          std::same_as<decltype(s), sus::Option<sus::Tuple<i8&, u64&>>>);
+    }
+  }
+  // Double value first, single last.
+  {
+    auto u =
+        Choice<sus_choice_types((Order::First, i8, u64),
+                                (Order::Second, u32))>::with<Order::Second>(3u);
+    {
+      auto s = u.get_mut<Order::Second>();
+      EXPECT_EQ(*s, 3u);
+      auto n = u.get_mut<Order::First>();
+      EXPECT_EQ(n, sus::None);
+      static_assert(std::same_as<decltype(s), sus::Option<u32&>>);
+      static_assert(
+          std::same_as<decltype(n), sus::Option<sus::Tuple<i8&, u64&>>>);
+    }
+
+    u.set<Order::First>(sus::tuple(1_i8, 2_u64));
+    {
+      auto n = u.get_mut<Order::Second>();
+      EXPECT_EQ(n, sus::None);
+      auto s = u.get_mut<Order::First>();
+      EXPECT_EQ(*s, (sus::tuple(1_i8, 2_u64).construct()));
+      static_assert(std::same_as<decltype(n), sus::Option<u32&>>);
+      static_assert(
+          std::same_as<decltype(s), sus::Option<sus::Tuple<i8&, u64&>>>);
+    }
+  }
+  // With refs.
+  {
+    auto i = NoCopyMove();
+    auto u = Choice<sus_choice_types(
+        (Order::First, i8&, const u64&),
+        (Order::Second, NoCopyMove&))>::with<Order::Second>(i);
+    auto n = u.get_mut<Order::First>();
+    EXPECT_EQ(n, sus::None);
+    auto s = u.get_mut<Order::Second>();
+    EXPECT_EQ(&*s, &i);
+    static_assert(
+        std::same_as<decltype(n), sus::Option<sus::Tuple<i8&, const u64&>>>);
+    static_assert(std::same_as<decltype(s), sus::Option<NoCopyMove&>>);
+  }
+}
+
+TEST(Choice, GetUnchecked) {
+  // Single value first, double last.
+  {
+    auto u = Choice<sus_choice_types(
+        (Order::First, u32), (Order::Second, i8, u64))>::with<Order::First>(3u);
+    {
+      decltype(auto) s = u.get_unchecked<Order::First>(unsafe_fn);
+      EXPECT_EQ(s, 3u);
+      static_assert(std::same_as<decltype(s), const u32&>);
+    }
+
+    u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+    {
+      decltype(auto) s = u.get_unchecked<Order::Second>(unsafe_fn);
+      EXPECT_EQ(s, (sus::tuple(1_i8, 2_u64).construct()));
+      static_assert(
+          std::same_as<decltype(s), sus::Tuple<const i8&, const u64&>>);
+    }
+  }
+  // Double value first, single last.
+  {
+    auto u =
+        Choice<sus_choice_types((Order::First, i8, u64),
+                                (Order::Second, u32))>::with<Order::Second>(3u);
+    {
+      decltype(auto) s = u.get_unchecked<Order::Second>(unsafe_fn);
+      EXPECT_EQ(s, 3u);
+      static_assert(std::same_as<decltype(s), const u32&>);
+    }
+
+    u.set<Order::First>(sus::tuple(1_i8, 2_u64));
+    {
+      decltype(auto) s = u.get_unchecked<Order::First>(unsafe_fn);
+      EXPECT_EQ(s, (sus::tuple(1_i8, 2_u64).construct()));
+      static_assert(
+          std::same_as<decltype(s), sus::Tuple<const i8&, const u64&>>);
+    }
+  }
+  // With refs.
+  {
+    auto i = 1_i8;
+    const auto j = 2_u64;
+    auto u = Choice<sus_choice_types(
+        (Order::First, i8&, const u64&),
+        (Order::Second, NoCopyMove&))>::with<Order::First>(sus::tuple(i, j));
+    decltype(auto) s = u.get_unchecked<Order::First>(unsafe_fn);
+    EXPECT_EQ(&s.get_ref<0u>(), &i);
+    EXPECT_EQ(&s.get_ref<1u>(), &j);
+    static_assert(std::same_as<decltype(s), sus::Tuple<const i8&, const u64&>>);
+  }
+  {
+    auto i = NoCopyMove();
+    auto u = Choice<sus_choice_types(
+        (Order::First, i8&, const u64&),
+        (Order::Second, NoCopyMove&))>::with<Order::Second>(i);
+    decltype(auto) s = u.get_unchecked<Order::Second>(unsafe_fn);
+    EXPECT_EQ(&s, &i);
+    static_assert(std::same_as<decltype(s), const NoCopyMove&>);
   }
 }
 
@@ -322,7 +544,7 @@ TEST(Choice, Clone) {
 template <class T, auto Tag>
 concept CanGetRef = requires(T t) { t.template as<Tag>(); };
 template <class T, auto Tag>
-concept CanGetMut = requires(T t) { t.template get_mut<Tag>(); };
+concept CanGetMut = requires(T t) { t.template as_mut<Tag>(); };
 template <class T, auto Tag>
 concept CanIntoInner =
     requires(T t) { sus::move(t).template into_inner<Tag>(); };

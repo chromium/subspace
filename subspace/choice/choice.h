@@ -37,6 +37,7 @@
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
+#include "subspace/option/option.h"
 #include "subspace/tuple/tuple.h"
 
 namespace sus::choice_type {
@@ -116,6 +117,17 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
 
   template <TagsType V>
   using StorageTypeOfTag = __private::StorageTypeOfTag<size_t{index<V>}, Ts...>;
+
+  template <TagsType V>
+  using AccessTypeOfTagConst =
+      decltype(__private::find_choice_storage<index<V>>(
+                   std::declval<const Storage&>())
+                   .as());
+  template <TagsType V>
+  using AccessTypeOfTagMut =
+      decltype(__private::find_choice_storage_mut<index<V>>(
+                   std::declval<Storage&>())
+                   .as_mut());
 
  public:
   using Tag = TagsType;
@@ -309,29 +321,104 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     return tags[size_t{index_}];
   }
 
-  // clang-format off
+  /// Returns a const reference to the value(s) inside the Choice.
+  ///
+  /// The function has a template parameter specifying the tag of the active
+  /// member in the choice.
+  ///
+  /// If the active member has a single value, a reference to it is returned
+  /// directly, otherwise a Tuple of references is returned to all values in the
+  /// active member.
+  ///
+  /// # Panics
+  /// The function will panic if the active member does not match the tag value
+  /// passed as the template parameter.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline decltype(auto) as() const& noexcept{
+  inline decltype(auto) as() const& noexcept {
     ::sus::check(index_ == index<V>);
     return __private::find_choice_storage<index<V>>(storage_).as();
   }
+  // If the storage is a value type, it can't be accessed by reference in an
+  // rvalue (temporary) Choice object.
+  template <TagsType V>
+    requires(!std::is_reference_v<StorageTypeOfTag<V>>)
+  inline const StorageTypeOfTag<V>& as() && noexcept = delete;
 
+  /// Returns a mutable reference to the value(s) inside the Choice.
+  ///
+  /// The function has a template parameter specifying the tag of the active
+  /// member in the choice.
+  ///
+  /// If the active member has a single value, a reference to it is returned
+  /// directly, otherwise a Tuple of references is returned to all values in the
+  /// active member.
+  ///
+  /// # Panics
+  /// The function will panic if the active member does not match the tag value
+  /// passed as the template parameter.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline decltype(auto) get_mut() &noexcept {
+  inline decltype(auto) as_mut() & noexcept {
     ::sus::check(index_ == index<V>);
-    return __private::find_choice_storage_mut<index<V>>(storage_).get_mut();
+    return __private::find_choice_storage_mut<index<V>>(storage_).as_mut();
   }
 
+  /// Unwraps the Choice to move out the current value(s) inside the Choice.
+  ///
+  /// The function has a template parameter specifying the tag of the active
+  /// member in the choice.
+  ///
+  /// If the active member has a single value, an rvalue reference to it is
+  /// returned directly, otherwise a Tuple of rvalue references is returned to
+  /// all values in the active member.
+  ///
+  /// # Panics
+  /// The function will panic if the active member does not match the tag value
+  /// passed as the template parameter.
   template <TagsType V>
     requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  inline decltype(auto) into_inner() && noexcept{
+  inline decltype(auto) into_inner() && noexcept {
     ::sus::check(index_ == index<V>);
     auto& s = __private::find_choice_storage_mut<index<V>>(storage_);
     return ::sus::move(s).into_inner();
   }
-  // clang-format on
+
+  /// Returns a const reference to the value(s) inside the Choice.
+  ///
+  /// If the template parameter does not match the active member in the Choice,
+  /// the function returns `None`.
+  ///
+  /// If the active member has a single value, a reference to it is returned
+  /// directly, otherwise a Tuple of references is returned to all values in the
+  /// active member.
+  template <TagsType V>
+    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+  inline Option<AccessTypeOfTagConst<V>> get() const& noexcept {
+    if (index_ != index<V>) return ::sus::none();
+    return ::sus::some(__private::find_choice_storage<index<V>>(storage_).as());
+  }
+  // If the storage is a value type, it can't be accessed by reference in an
+  // rvalue (temporary) Choice object.
+  template <TagsType V>
+    requires(!std::is_reference_v<StorageTypeOfTag<V>>)
+  inline Option<AccessTypeOfTagConst<V>> get() && noexcept = delete;
+
+  /// Returns a mutable reference to the value(s) inside the Choice.
+  ///
+  /// If the template parameter does not match the active member in the Choice,
+  /// the function returns `None`.
+  ///
+  /// If the active member has a single value, a reference to it is returned
+  /// directly, otherwise a Tuple of references is returned to all values in the
+  /// active member.
+  template <TagsType V>
+    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+  inline Option<AccessTypeOfTagMut<V>> get_mut() & noexcept {
+    if (index_ != index<V>) return ::sus::none();
+    return ::sus::some(
+        __private::find_choice_storage_mut<index<V>>(storage_).as_mut());
+  }
 
   template <TagsType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U &&, Arg> &&
@@ -346,6 +433,50 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       __private::find_choice_storage_mut<index<V>>(storage_).construct(
           ::sus::move(values));
     }
+  }
+
+  /// Returns a const reference to the value(s) inside the Choice.
+  ///
+  /// The function has a template parameter specifying the tag of the active
+  /// member in the choice.
+  ///
+  /// If the active member has a single value, a reference to it is returned
+  /// directly, otherwise a Tuple of references is returned to all values in the
+  /// active member.
+  ///
+  /// # Safety
+  /// If the active member does not match the tag value passed as the template
+  /// parameter, Undefined Behaviour results.
+  template <TagsType V>
+    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+  inline decltype(auto) get_unchecked(
+      ::sus::marker::UnsafeFnMarker) const& noexcept {
+    return __private::find_choice_storage<index<V>>(storage_).as();
+  }
+  // If the storage is a value type, it can't be accessed by reference in an
+  // rvalue (temporary) Choice object.
+  template <TagsType V>
+    requires(!std::is_reference_v<StorageTypeOfTag<V>>)
+  inline const StorageTypeOfTag<V>& get_unchecked(
+      ::sus::marker::UnsafeFnMarker) && noexcept = delete;
+
+  /// Returns a mutable reference to the value(s) inside the Choice.
+  ///
+  /// The function has a template parameter specifying the tag of the active
+  /// member in the choice.
+  ///
+  /// If the active member has a single value, a reference to it is returned
+  /// directly, otherwise a Tuple of references is returned to all values in the
+  /// active member.
+  ///
+  /// # Safety
+  /// If the active member does not match the tag value passed as the template
+  /// parameter, Undefined Behaviour results.
+  template <TagsType V>
+    requires(__private::ValueIsNotVoid<StorageTypeOfTag<V>>)
+  inline decltype(auto) get_unchecked_mut(
+      ::sus::marker::UnsafeFnMarker) & noexcept {
+    return __private::find_choice_storage_mut<index<V>>(storage_).as_mut();
   }
 
   template <TagsType V, int&...,
