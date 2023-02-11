@@ -168,8 +168,7 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
           tuple_.template get_ref<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
-  constexpr decltype(auto) as() && = delete;
-  constexpr auto get_mut() & {
+  constexpr auto as_mut() & {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
@@ -346,8 +345,7 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
   inline constexpr decltype(auto) as() const& {
     return tuple_.template get_ref<0>();
   }
-  constexpr decltype(auto) as() && = delete;
-  inline constexpr decltype(auto) get_mut() & {
+  inline constexpr decltype(auto) as_mut() & {
     return tuple_.template get_mut<0>();
   }
   inline constexpr decltype(auto) into_inner() && {
@@ -419,7 +417,7 @@ union Storage<I, ::sus::Tuple<Ts...>> {
           tuple_.template get_ref<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
-  constexpr auto get_mut() & {
+  constexpr auto as_mut() & {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
@@ -527,7 +525,7 @@ union Storage<I, ::sus::Tuple<T>> {
   inline constexpr decltype(auto) as() const& {
     return tuple_.template get_ref<0>();
   }
-  inline constexpr decltype(auto) get_mut() & {
+  inline constexpr decltype(auto) as_mut() & {
     return tuple_.template get_mut<0>();
   }
   inline constexpr decltype(auto) into_inner() && {

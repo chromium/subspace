@@ -275,6 +275,15 @@ struct TupleMarker {
         };
     return make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>());
   }
+
+  Tuple<Ts...> construct() && noexcept {
+    auto make_tuple =
+        [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
+          return Tuple<Ts...>::with(
+              ::sus::forward<Ts>(values.template get_mut<Is>())...);
+        };
+    return make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>());
+  }
 };
 
 }  // namespace __private

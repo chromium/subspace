@@ -198,6 +198,17 @@ TEST(Tuple, ConstructorFunction) {
   }
 }
 
+TEST(Tuple, ConstructorReferences) {
+  {
+    // All parameters match the tuple type.
+    [](Tuple<const u32&, const u32&, const u32&> a) {
+      EXPECT_EQ(a.get_ref<0>(), 1_u32);
+      EXPECT_EQ(a.get_ref<1>(), 2_u32);
+      EXPECT_EQ(a.get_ref<2>(), 3_u32);
+    }(sus::tuple(1_u32, 2_u32, 3_u32));
+  }
+}
+
 TEST(Tuple, Copy) {
   {
     auto t1 = Tuple<i32>::with(2);
@@ -447,9 +458,9 @@ TEST(Tuple, PartialOrder) {
             std::partial_ordering::equivalent);
   EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f), Tuple<f32>::with(1.f)),
             std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f),
-                               Tuple<f32>::with(f32::NAN)),
-            std::partial_ordering::unordered);
+  EXPECT_EQ(
+      std::partial_order(Tuple<f32>::with(0.f), Tuple<f32>::with(f32::NAN)),
+      std::partial_ordering::unordered);
   EXPECT_EQ(std::partial_order(Tuple<f32>::with(f32::NAN),
                                Tuple<f32>::with(f32::NAN)),
             std::partial_ordering::unordered);

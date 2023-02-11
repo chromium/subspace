@@ -496,7 +496,7 @@ struct Database {
                      "non-namespace.";
                 return sus::result::err(sus::move(s).str());
               }
-              if (!target.get_mut<Target::Namespace>().namespaces.contains(
+              if (!target.as_mut<Target::Namespace>().namespaces.contains(
                       id)) {
                 std::ostringstream s;
                 s << "Inherited comment at " << c->begin_loc
@@ -505,7 +505,7 @@ struct Database {
                 return sus::result::err(sus::move(s).str());
               }
               target = sus::choice<Target::Namespace>(
-                  target.get_mut<Target::Namespace>().namespaces.at(id));
+                  target.as_mut<Target::Namespace>().namespaces.at(id));
               break;
             }
             case InheritPathRecord: {
@@ -523,11 +523,11 @@ struct Database {
               switch (target) {
                 case Target::Namespace:
                   record =
-                      find_record(target.get_mut<Target::Namespace>().records);
+                      find_record(target.as_mut<Target::Namespace>().records);
                   break;
                 case Target::Record:
                   record =
-                      find_record(target.get_mut<Target::Record>().records);
+                      find_record(target.as_mut<Target::Record>().records);
                   break;
                 case Target::Function: {
                   std::ostringstream s;
@@ -558,11 +558,11 @@ struct Database {
               switch (target) {
                 case Target::Namespace:
                   function = find_function(
-                      target.get_mut<Target::Namespace>().functions);
+                      target.as_mut<Target::Namespace>().functions);
                   break;
                 case Target::Record:
                   function =
-                      find_function(target.get_mut<Target::Record>().methods);
+                      find_function(target.as_mut<Target::Record>().methods);
                   break;
                 case Target::Function: {
                   std::ostringstream s;
