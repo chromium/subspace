@@ -418,8 +418,10 @@ class Vec {
   // references.
   constexpr Slice<const T> as_ref() const& noexcept {
     check(!is_moved_from());
-    return Slice<const T>::from_raw_parts(reinterpret_cast<const T*>(storage_),
-                                          len_);
+    // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
+    // is to the start of the Vec, so this Slice covers a valid range.
+    return Slice<const T>::from_raw_parts(
+        ::sus::marker::unsafe_fn, reinterpret_cast<const T*>(storage_), len_);
   }
   constexpr Slice<const T> as_ref() && = delete;
 
@@ -427,7 +429,10 @@ class Vec {
   // references.
   constexpr Slice<T> as_mut() & noexcept {
     check(!is_moved_from());
-    return Slice<T>::from_raw_parts(reinterpret_cast<T*>(storage_), len_);
+    // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
+    // is to the start of the Vec, so this Slice covers a valid range.
+    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn,
+                                    reinterpret_cast<T*>(storage_), len_);
   }
 
   /// Returns an iterator over all the elements in the array, visited in the

@@ -43,6 +43,7 @@ target_sources(subspace PUBLIC
     "containers/__private/vec_iter.h"
     "containers/__private/vec_marker.h"
     "containers/array.h"
+    "containers/range.h"
     "containers/slice.h"
     "containers/vec.h"
     "fn/__private/fn_storage.h"

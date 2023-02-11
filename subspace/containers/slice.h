@@ -24,6 +24,7 @@
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/fn/callable.h"
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/marker/unsafe.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/ord.h"
 #include "subspace/option/option.h"
@@ -33,6 +34,12 @@
 // TODO: sort_unstable_by_key()
 
 namespace sus::containers {
+
+/// A range designated by a `start` and `len`.
+struct Range {
+  usize start;
+  usize len;
+};
 
 /// A dynamically-sized view into a contiguous sequence, `[T]`.
 ///
@@ -46,7 +53,8 @@ class Slice {
  public:
   Slice() : Slice(nullptr, 0_usize) {}
 
-  static constexpr inline Slice from_raw_parts(T* data,
+  static constexpr inline Slice from_raw_parts(::sus::marker::UnsafeFnMarker,
+                                               T* data,
                                                ::sus::usize len) noexcept {
     check(len.primitive_value <= PTRDIFF_MAX);
     return Slice(data, len);
@@ -65,16 +73,37 @@ class Slice {
   /// Returns true if the slice has a length of 0.
   constexpr inline bool is_empty() const& noexcept { return len_ == 0u; }
 
-  /// Returns a const reference to the element at index `i`.
-  constexpr Option<const T&> get_ref(usize i) const& noexcept {
+  /// Returns a const reference the element at position `i` in the Slice.
+  ///
+  /// # Panics
+  /// If the index `i` is beyond the end of the slice, the function will panic.
+  constexpr inline const T& operator[](usize i) const& noexcept {
+    check(i < len_);
+    return data_[i.primitive_value];
+  }
+
+  /// Returns a mutable reference the element at position `i` in the slice.
+  ///
+  /// # Panics
+  /// If the index `i` is beyond the end of the slice, the function will panic.
+  constexpr T& operator[](usize i) & noexcept
+    requires(!std::is_const_v<T>)
+  {
+    check(i < len_);
+    return data_[i.primitive_value];
+  }
+
+  /// Returns a const reference to the element at index `i`, or `None` if
+  /// `i` is beyond the end of the Slice.
+  constexpr Option<const T&> get(usize i) const& noexcept {
     if (i < len_) [[likely]]
       return Option<const T&>::some(data_[i.primitive_value]);
     else
       return Option<const T&>::none();
   }
-  constexpr Option<const T&> get_ref(usize i) && = delete;
 
-  /// Returns a mutable reference to the element at index `i`.
+  /// Returns a mutable reference to the element at index `i`, or `None` if
+  /// `i` is beyond the end of the Slice.
   constexpr Option<T&> get_mut(usize i) & noexcept
     requires(!std::is_const_v<T>)
   {
@@ -88,21 +117,19 @@ class Slice {
   ///
   /// # Safety
   /// The index `i` must be inside the bounds of the slice or Undefined
-  /// Behaviour results. The size of the slice must therefore also be larger
-  /// than 0.
+  /// Behaviour results. The size of the slice must therefore also have a length
+  /// of at least 1.
   constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
                                           usize i) const& noexcept {
     return data_[i.primitive_value];
   }
-  constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                          usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
   ///
   /// # Safety
   /// The index `i` must be inside the bounds of the slice or Undefined
-  /// Behaviour results. The size of the slice must therefore also be larger
-  /// than 0.
+  /// Behaviour results. The size of the slice must therefore also have a length
+  /// of at least 1.
   constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
                                         usize i) & noexcept
     requires(!std::is_const_v<T>)
@@ -110,40 +137,56 @@ class Slice {
     return data_[i.primitive_value];
   }
 
-  constexpr inline const T& operator[](usize i) const& noexcept {
-    check(i < len_);
-    return data_[i.primitive_value];
-  }
-  constexpr inline const T& operator[](usize i) && = delete;
-
-  constexpr T& operator[](usize i) & noexcept
-    requires(!std::is_const_v<T>)
-  {
-    check(i < len_);
-    return data_[i.primitive_value];
-  }
-
-  struct Range {
-    usize start;
-    usize len;
-  };
-  constexpr inline Slice<T> operator[](Range range) const noexcept {
-    return get_range(range.start, range.len).unwrap();
-  }
-
-  /// Returns a subslice which contains `len` many elements starting at `start`.
+  /// Returns a subslice which contains elements in `Range`, which specifies a
+  /// start and a length.
   ///
-  /// The `start` is the index of the first element to be returned in the
-  /// subslice, and `len` is the number of elements in the output Slice.
-  /// As such, `r.get_range(0u, r.len())` simply returns a copy of
+  /// The start is the index of the first element to be returned in the
+  /// subslice, and the length is the number of elements in the output Slice.
+  /// As such, `r.get_range(Range(0u, r.len()))` simply returns a copy of
   /// `r`.
   ///
-  /// Returns None if the `start` or `end` are out of bounds.
-  constexpr Option<Slice<T>> get_range(usize start, usize len) const noexcept {
-    if (len > len_) return sus::none();  // Avoid underflow below.
+  /// # Panics
+  /// If the Range would otherwise contain an element that is out of bounds, the
+  /// function will panic.
+  constexpr inline Slice<T> operator[](const Range range) const noexcept {
+    ::sus::check(range.len <= len_);  // Avoid underflow below.
     // We allow start == len_ && end == len_, which returns an empty slice.
-    if (start > len_ || start > len_ - len) return sus::none();
-    return sus::some(Slice(data_ + size_t{start}, len));
+    ::sus::check(range.start <= len_ && range.start <= len_ - range.len);
+    return Slice(data_ + size_t{range.start}, range.len);
+  }
+
+  /// Returns a subslice which contains elements in `Range`, which specifies a
+  /// start and a length.
+  ///
+  /// The start is the index of the first element to be returned in the
+  /// subslice, and the length is the number of elements in the output Slice.
+  /// As such, `r.get_range(Range(0u, r.len()))` simply returns a copy of
+  /// `r`.
+  ///
+  /// Returns None if the Range would otherwise contain an element that is out
+  /// of bounds.
+  constexpr Option<Slice<T>> get_range(const Range range) const noexcept {
+    if (range.len > len_) return sus::none();  // Avoid underflow below.
+    // We allow start == len_ && end == len_, which returns an empty slice.
+    if (range.start > len_ || range.start > len_ - range.len)
+      return sus::none();
+    return sus::some(Slice(data_ + size_t{range.start}, range.len));
+  }
+
+  /// Returns a subslice which contains elements in `Range`, which specifies a
+  /// start and a length.
+  ///
+  /// The start is the index of the first element to be returned in the
+  /// subslice, and the length is the number of elements in the output Slice.
+  /// As such, `r.get_range(Range(0u, r.len()))` simply returns a copy of
+  /// `r`.
+  ///
+  /// # Safety
+  /// It is possible to specify a Range contains an element that is out
+  /// of bounds of the Slice, which can result in Undefined Behaviour.
+  constexpr Slice<T> get_range_unchecked(
+      ::sus::marker::UnsafeFnMarker, const Range range) const noexcept {
+    return Slice(data_ + size_t{range.start}, range.len);
   }
 
   /// Sorts the slice.
@@ -226,7 +269,6 @@ class Slice {
     check(len_ > 0_usize);
     return data_;
   }
-  inline const T* as_ptr() && = delete;
 
   /// Returns a mutable pointer to the first element in the slice.
   inline T* as_mut_ptr() & noexcept
