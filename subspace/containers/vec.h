@@ -310,13 +310,13 @@ class Vec {
   }
 
   /// Returns a const reference to the element at index `i`.
-  constexpr Option<const T&> get_ref(usize i) const& noexcept {
+  constexpr Option<const T&> get(usize i) const& noexcept {
     check(!is_moved_from());
     if (i >= len_) [[unlikely]]
       return Option<const T&>::none();
     return Option<const T&>::some(get_unchecked(::sus::marker::unsafe_fn, i));
   }
-  constexpr Option<const T&> get_ref(usize i) && = delete;
+  constexpr Option<const T&> get(usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
   constexpr Option<T&> get_mut(usize i) & noexcept {

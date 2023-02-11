@@ -152,10 +152,10 @@ TEST(Vec, Pop) {
 
 TEST(Vec, Get) {
   auto v = Vec<i32>();
-  EXPECT_EQ(v.get_ref(0u), sus::None);
+  EXPECT_EQ(v.get(0u), sus::None);
   v.push(2_i32);
-  EXPECT_EQ(v.get_ref(0u).unwrap(), 2_i32);
-  EXPECT_EQ(v.get_ref(1u), sus::None);
+  EXPECT_EQ(v.get(0u).unwrap(), 2_i32);
+  EXPECT_EQ(v.get(1u), sus::None);
 }
 
 TEST(Vec, GetMut) {
