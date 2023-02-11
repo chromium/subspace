@@ -48,13 +48,13 @@ struct VecMarker {
   }
 
   template <class T>
-  Vec<T> construct() && noexcept {
+  inline constexpr Vec<T> construct() && noexcept {
     return ::sus::move(*this);
   }
 
   template <int&..., class T = ::sus::choice_type::__private::PackFirst<Ts...>>
     requires(... && std::same_as<T, Ts>)
-  Vec<T> construct() && noexcept {
+  inline constexpr Vec<T> construct() && noexcept {
     return ::sus::move(*this);
   }
 };
