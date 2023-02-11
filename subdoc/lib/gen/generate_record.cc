@@ -65,7 +65,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
             case Namespace::Tag::Named: {
               // TODO: Generate links.
               auto namespace_anchor = full_type_span.open_a();
-              namespace_anchor.write_text(n.get_ref<Namespace::Tag::Named>());
+              namespace_anchor.write_text(n.as<Namespace::Tag::Named>());
             }
               full_type_span.write_text("::");
               break;
@@ -245,7 +245,7 @@ void generate_record(const RecordElement& element,
           title << "::";
           break;
         case Namespace::Tag::Named:
-          title << n.get_ref<Namespace::Tag::Named>();
+          title << n.as<Namespace::Tag::Named>();
           title << "::";
           break;
       }

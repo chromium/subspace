@@ -487,7 +487,7 @@ struct Database {
         for (const InheritPathElement& e : *(c->attrs.inherit)) {
           switch (e) {
             case InheritPathNamespace: {
-              const std::string& name = e.get_ref<InheritPathNamespace>();
+              const std::string& name = e.as<InheritPathNamespace>();
               auto id = NamespaceId(name);
               if (target.which() != Target::Namespace) {
                 std::ostringstream s;
@@ -501,7 +501,7 @@ struct Database {
                 std::ostringstream s;
                 s << "Inherited comment at " << c->begin_loc
                   << " can't find namespace "
-                  << e.get_ref<InheritPathNamespace>();
+                  << e.as<InheritPathNamespace>();
                 return sus::result::err(sus::move(s).str());
               }
               target = sus::choice<Target::Namespace>(
@@ -511,7 +511,7 @@ struct Database {
             case InheritPathRecord: {
               // TODO: Make Record maps keyed on a RecordId we can construct
               // here.
-              const std::string& name = e.get_ref<InheritPathRecord>();
+              const std::string& name = e.as<InheritPathRecord>();
               auto find_record = [&](const auto& record_map)
                   -> sus::Option<const RecordElement&> {
                 for (const auto& [k, e] : record_map) {
@@ -546,7 +546,7 @@ struct Database {
               break;
             }
             case InheritPathFunction: {
-              const std::string& name = e.get_ref<InheritPathFunction>();
+              const std::string& name = e.as<InheritPathFunction>();
               auto find_function = [&](const auto& function_map)
                   -> sus::Option<const FunctionElement&> {
                 for (const auto& [k, e] : function_map) {
@@ -587,17 +587,17 @@ struct Database {
         sus::Option<const Comment&> source;
         switch (target) {
           case Target::Namespace: {
-            const NamespaceElement& e = target.get_ref<Target::Namespace>();
+            const NamespaceElement& e = target.as<Target::Namespace>();
             if (e.comment.attrs.inherit.is_none()) source.insert(e.comment);
             break;
           }
           case Target::Record: {
-            const RecordElement& e = target.get_ref<Target::Record>();
+            const RecordElement& e = target.as<Target::Record>();
             if (e.comment.attrs.inherit.is_none()) source.insert(e.comment);
             break;
           }
           case Target::Function: {
-            const FunctionElement& e = target.get_ref<Target::Function>();
+            const FunctionElement& e = target.as<Target::Function>();
             if (e.comment.attrs.inherit.is_none()) source.insert(e.comment);
             break;
           }
@@ -663,7 +663,7 @@ struct Database {
             return sus::none();
           }
           case Namespace::Tag::Named: {
-            const std::string& name = n.get_ref<Namespace::Tag::Named>();
+            const std::string& name = n.as<Namespace::Tag::Named>();
             auto ns_it = cursor->namespaces.find(NamespaceId(name));
             if (ns_it == cursor->namespaces.end()) {
               return sus::none();

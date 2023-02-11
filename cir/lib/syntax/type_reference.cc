@@ -24,21 +24,21 @@ std::string to_string(const syntax::TypeReference& typeref,
   using enum syntax::TypeRefKind::Tag;
   switch (typeref.kind) {
     case Builtin: {
-      const auto& [builtin, obj_anno] = typeref.kind.get_ref<Builtin>();
+      const auto& [builtin, obj_anno] = typeref.kind.as<Builtin>();
       std::ostringstream s;
       s << cir::to_string(obj_anno, output);
       s << builtin_type_to_string(builtin);
       return s.str();
     }
     case Declared: {
-      const auto& [declared, obj_anno] = typeref.kind.get_ref<Declared>();
+      const auto& [declared, obj_anno] = typeref.kind.as<Declared>();
       std::ostringstream s;
       s << cir::to_string(obj_anno, output);
       s << "(TODO: declared type name)";
       return s.str();
     }
     case Pointer: {
-      const auto& [pointer, obj_anno] = typeref.kind.get_ref<Pointer>();
+      const auto& [pointer, obj_anno] = typeref.kind.as<Pointer>();
       std::ostringstream s;
       s << "pointer(TODO: pointee types) ";
       s << cir::to_string(obj_anno, output);
@@ -46,7 +46,7 @@ std::string to_string(const syntax::TypeReference& typeref,
       return s.str();
     }
     case FnPointer: {
-      const auto& [function_id, obj_anno] = typeref.kind.get_ref<FnPointer>();
+      const auto& [function_id, obj_anno] = typeref.kind.as<FnPointer>();
       std::ostringstream s;
       s << cir::to_string(obj_anno, output);
       s << "fn pointer(";

@@ -55,7 +55,7 @@ inline std::filesystem::path construct_html_file_path(
         fname << "-";
         break;
       case Namespace::Tag::Named:
-        fname << n.get_ref<Namespace::Tag::Named>();
+        fname << n.as<Namespace::Tag::Named>();
         fname << "-";
         break;
     }

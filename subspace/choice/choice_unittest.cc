@@ -85,35 +85,35 @@ TEST(Choice, ConstructorFunction1Value) {
   {
     // All parameters match the tuple type.
     U u = sus::choice<Order::First>(1_u32);
-    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // All parameters convert to u32.
     U u = sus::choice<Order::First>(1u);
-    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // into() as an input to the tuple.
     U u = sus::choice<Order::First>(sus::into(1));
-    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // Copies the lvalue.
     auto i = 1_u32;
     U u = sus::choice<Order::First>(i);
-    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // Copies the const lvalue.
     const auto i = 1_u32;
     U u = sus::choice<Order::First>(i);
-    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
     // Copies the rvalue reference.
     auto i = 1_u32;
     U u = sus::choice<Order::First>(sus::move(i));
-    EXPECT_EQ(u.get_ref<Order::First>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   // Verify no copies happen in the marker.
   {
@@ -142,41 +142,41 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
   {
     // All parameters match the tuple type.
     U u = sus::choice<Order::First>(1_u32, 2_u32);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // Some parameters convert to u32.
     U u = sus::choice<Order::First>(1_u32, 2u);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // All parameters convert to u32.
     U u = sus::choice<Order::First>(1u, 2u);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // into() as an input to the tuple.
     U u = sus::choice<Order::First>(1u, sus::into(2));
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // Copies the lvalue and const lvalue.
     auto i = 1_u32;
     const auto j = 2_u32;
     U u = sus::choice<Order::First>(i, j);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   {
     // Copies the rvalue reference.
     auto i = 1_u32;
     U u = sus::choice<Order::First>(sus::move(i), 2_u32);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<0>(), 1_u32);
-    EXPECT_EQ(u.get_ref<Order::First>().into_inner<1>(), 2_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
+    EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }
   // Verify no copies happen in the marker.
   {
@@ -206,8 +206,8 @@ TEST(Choice, GetTypes) {
     auto u = Choice<sus_choice_types(
         (Order::First, u32), (Order::Second, i8, u64))>::with<Order::First>(3u);
     static_assert(
-        std::same_as<decltype(u.get_ref<Order::First>()), const u32&>);
-    static_assert(std::same_as<decltype(u.get_ref<Order::Second>()),
+        std::same_as<decltype(u.as<Order::First>()), const u32&>);
+    static_assert(std::same_as<decltype(u.as<Order::Second>()),
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(std::same_as<decltype(u.get_mut<Order::First>()), u32&>);
     static_assert(std::same_as<decltype(u.get_mut<Order::Second>()),
@@ -223,10 +223,10 @@ TEST(Choice, GetTypes) {
     auto u = Choice<sus_choice_types((Order::First, i8, u64),
                                      (Order::Second, u32))>::
         with<Order::First>(sus::Tuple<i8, u64>::with(1_i8, 2_u64));
-    static_assert(std::same_as<decltype(u.get_ref<Order::First>()),
+    static_assert(std::same_as<decltype(u.as<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(
-        std::same_as<decltype(u.get_ref<Order::Second>()), const u32&>);
+        std::same_as<decltype(u.as<Order::Second>()), const u32&>);
     static_assert(std::same_as<decltype(u.get_mut<Order::First>()),
                                sus::Tuple<i8&, u64&>>);
     static_assert(std::same_as<decltype(u.get_mut<Order::Second>()), u32&>);
@@ -243,10 +243,10 @@ TEST(Choice, GetTypes) {
     auto u = Choice<sus_choice_types(
         (Order::First, i8&, const u64&),
         (Order::Second, NoCopyMove&))>::with<Order::Second>(i);
-    static_assert(std::same_as<decltype(u.get_ref<Order::First>()),
+    static_assert(std::same_as<decltype(u.as<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(
-        std::same_as<decltype(u.get_ref<Order::Second>()), const NoCopyMove&>);
+        std::same_as<decltype(u.as<Order::Second>()), const NoCopyMove&>);
     static_assert(std::same_as<decltype(u.get_mut<Order::First>()),
                                sus::Tuple<i8&, const u64&>>);
     static_assert(
@@ -257,7 +257,7 @@ TEST(Choice, GetTypes) {
     static_assert(
         std::same_as<decltype(sus::move(u).into_inner<Order::Second>()),
                      NoCopyMove&>);
-    EXPECT_EQ(&u.get_ref<Order::Second>(), &i);
+    EXPECT_EQ(&u.as<Order::Second>(), &i);
 
     // Verify storing a reference in the first-of-N slot builds.
     auto u2 = Choice<sus_choice_types(
@@ -292,7 +292,7 @@ TEST(Choice, Copy) {
   static_assert(sus::mem::Copy<decltype(u)>);
   auto v = u;
   EXPECT_EQ(u.which(), v.which());
-  EXPECT_EQ(u.get_ref<Order::First>(), v.get_ref<Order::First>());
+  EXPECT_EQ(u.as<Order::First>(), v.as<Order::First>());
 }
 
 TEST(Choice, Clone) {
@@ -315,12 +315,12 @@ TEST(Choice, Clone) {
   static_assert(sus::mem::Clone<decltype(u)>);
   auto v = sus::clone(u);
   EXPECT_EQ(u.which(), v.which());
-  EXPECT_EQ(u.get_ref<Order::First>(), v.get_ref<Order::First>());
-  EXPECT_NE(&u.get_ref<Order::First>(), &v.get_ref<Order::First>());
+  EXPECT_EQ(u.as<Order::First>(), v.as<Order::First>());
+  EXPECT_NE(&u.as<Order::First>(), &v.as<Order::First>());
 }
 
 template <class T, auto Tag>
-concept CanGetRef = requires(T t) { t.template get_ref<Tag>(); };
+concept CanGetRef = requires(T t) { t.template as<Tag>(); };
 template <class T, auto Tag>
 concept CanGetMut = requires(T t) { t.template get_mut<Tag>(); };
 template <class T, auto Tag>
