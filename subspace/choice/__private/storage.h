@@ -161,6 +161,22 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
       return more_.partial_ord(index, other.more_);
     }
   }
+  inline constexpr void visit(size_t index, auto tag,
+                              auto&& overload_set) const& {
+    if (index == I) {
+      overload_set(tag, get_ref());
+    } else {
+      more_.visit(index, tag, ::sus::move(overload_set));
+    }
+  }
+  inline constexpr void visit_mut(size_t index, auto tag,
+                                  auto&& overload_set) & {
+    if (index == I) {
+      overload_set(tag, get_mut());
+    } else {
+      more_.visit_mut(index, tag, ::sus::move(overload_set));
+    }
+  }
 
   constexpr auto get_ref() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
@@ -245,6 +261,22 @@ union Storage<I, Nothing, Elements...> {
       return std::partial_ordering::equivalent;
     } else {
       return more_.partial_ord(index, other.more_);
+    }
+  }
+  inline constexpr void visit(size_t index, auto tag,
+                              auto&& overload_set) const& {
+    if (index == I) {
+      overload_set(tag);
+    } else {
+      more_.visit(index, tag, ::sus::move(overload_set));
+    }
+  }
+  inline constexpr void visit_mut(size_t index, auto tag,
+                                  auto&& overload_set) & {
+    if (index == I) {
+      overload_set(tag);
+    } else {
+      more_.visit_mut(index, tag, ::sus::move(overload_set));
     }
   }
 
@@ -342,6 +374,22 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
       return more_.partial_ord(index, other.more_);
     }
   }
+  inline constexpr void visit(size_t index, auto tag,
+                              auto&& overload_set) const& {
+    if (index == I) {
+      overload_set(tag, get_ref());
+    } else {
+      more_.visit(index, tag, ::sus::move(overload_set));
+    }
+  }
+  inline constexpr void visit_mut(size_t index, auto tag,
+                                  auto&& overload_set) & {
+    if (index == I) {
+      overload_set(tag, get_mut());
+    } else {
+      more_.visit_mut(index, tag, ::sus::move(overload_set));
+    }
+  }
 
   inline constexpr decltype(auto) get_ref() const& {
     return tuple_.template get_ref<0>();
@@ -412,6 +460,16 @@ union Storage<I, ::sus::Tuple<Ts...>> {
     ::sus::check(index == I);
     return std::partial_order(tuple_, other.tuple_);
   }
+  inline constexpr void visit(size_t index, auto tag,
+                              auto&& overload_set) const& {
+    ::sus::check(index == I);
+    overload_set(tag, get_ref());
+  }
+  inline constexpr void visit_mut(size_t index, auto tag,
+                                  auto&& overload_set) & {
+    ::sus::check(index == I);
+    overload_set(tag, get_mut());
+  }
 
   constexpr auto get_ref() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
@@ -465,6 +523,16 @@ union Storage<I, Nothing> {
   inline constexpr auto partial_ord(size_t index, const Storage&) const& {
     ::sus::check(index == I);
     return std::partial_ordering::equivalent;
+  }
+  inline constexpr void visit(size_t index, auto tag,
+                              auto&& overload_set) const& {
+    ::sus::check(index == I);
+    overload_set(tag);
+  }
+  inline constexpr void visit_mut(size_t index, auto tag,
+                                  auto&& overload_set) & {
+    ::sus::check(index == I);
+    overload_set(tag);
   }
 };
 
@@ -523,6 +591,16 @@ union Storage<I, ::sus::Tuple<T>> {
     ::sus::check(index == I);
     return std::partial_order(tuple_, other.tuple_);
   }
+  inline constexpr void visit(size_t index, auto tag,
+                              auto&& overload_set) const& {
+    ::sus::check(index == I);
+    overload_set(tag, get_ref());
+  }
+  inline constexpr void visit_mut(size_t index, auto tag,
+                                  auto&& overload_set) & {
+    ::sus::check(index == I);
+    overload_set(tag, get_mut());
+  }
 
   inline constexpr decltype(auto) get_ref() const& {
     return tuple_.template get_ref<0>();
@@ -541,36 +619,39 @@ union Storage<I, ::sus::Tuple<T>> {
 
 template <auto I, class S>
 static constexpr const auto& find_choice_storage(const S& storage) {
-  return find_choice_storage(storage, std::integral_constant<size_t, size_t{I}>());
+  return find_choice_storage(storage,
+                             std::integral_constant<size_t, size_t{I}>());
 }
 
 template <size_t I, class S>
-static constexpr const auto& find_choice_storage(const S& storage,
-                                          std::integral_constant<size_t, I>) {
-  return find_choice_storage(storage.more_, std::integral_constant<size_t, I - 1u>());
+static constexpr const auto& find_choice_storage(
+    const S& storage, std::integral_constant<size_t, I>) {
+  return find_choice_storage(storage.more_,
+                             std::integral_constant<size_t, I - 1u>());
 }
 
 template <class S>
-static constexpr const auto& find_choice_storage(const S& storage,
-                                          std::integral_constant<size_t, 0>) {
+static constexpr const auto& find_choice_storage(
+    const S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }
 
 template <auto I, class S>
 static constexpr auto& find_choice_storage_mut(S& storage) {
-  return find_choice_storage_mut(storage, std::integral_constant<size_t, size_t{I}>());
+  return find_choice_storage_mut(storage,
+                                 std::integral_constant<size_t, size_t{I}>());
 }
 
 template <size_t I, class S>
-static constexpr auto& find_choice_storage_mut(S& storage,
-                                        std::integral_constant<size_t, I>) {
+static constexpr auto& find_choice_storage_mut(
+    S& storage, std::integral_constant<size_t, I>) {
   return find_choice_storage_mut(storage.more_,
-                          std::integral_constant<size_t, I - 1u>());
+                                 std::integral_constant<size_t, I - 1u>());
 }
 
 template <class S>
-static constexpr auto& find_choice_storage_mut(S& storage,
-                                        std::integral_constant<size_t, 0>) {
+static constexpr auto& find_choice_storage_mut(
+    S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }
 

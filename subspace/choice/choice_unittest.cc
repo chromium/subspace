@@ -535,4 +535,40 @@ TEST(Choice, VoidValues) {
   EXPECT_LT(u4, u6);
 }
 
+TEST(Choice, Visit) {
+  struct Visitor {
+    void operator()(Order which, const u32& v) {
+      EXPECT_EQ(which, Order::First);
+      EXPECT_EQ(v, 4u);
+      called.insert(which);
+    }
+    void operator()(Order which, const i32& v) {
+      EXPECT_EQ(which, Order::Second);
+      EXPECT_EQ(v, 2);
+      called.insert(which);
+    }
+    void operator()(Order which) {
+      EXPECT_EQ(which, Order::Third);
+      called.insert(which);
+    }
+
+    sus::Option<Order> called;
+  };
+  Visitor visitor;
+
+  auto c =
+      Choice<sus_choice_types((Order::First, u32), (Order::Second, i32),
+                              (Order::Third, void))>::with<Order::First>(4u);
+  c.visit(visitor);
+  EXPECT_EQ(visitor.called.take().unwrap(), Order::First);
+
+  c.set<Order::Second>(2);
+  c.visit(visitor);
+  EXPECT_EQ(visitor.called.take().unwrap(), Order::Second);
+
+  c.set<Order::Third>();
+  c.visit(visitor);
+  EXPECT_EQ(visitor.called.take().unwrap(), Order::Third);
+}
+
 }  // namespace
