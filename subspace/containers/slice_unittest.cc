@@ -24,6 +24,7 @@
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
 
+using sus::containers::Range;
 using sus::containers::Slice;
 
 namespace {
@@ -34,21 +35,43 @@ static_assert(sus::mem::Move<Slice<i32>>);
 
 TEST(Slice, FromRawParts) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
+  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+}
+
+TEST(Slice, Index) {
+  i32 a[] = {1, 2, 3};
+  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+
+  EXPECT_EQ(sc[0_usize], 1_i32);
+  EXPECT_EQ(sc[2_usize], 3_i32);
+  EXPECT_EQ(sm[0_usize], 1_i32);
+  EXPECT_EQ(sm[2_usize], 3_i32);
+}
+
+TEST(SliceDeathTest, Index) {
+  i32 a[] = {1, 2, 3};
+  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(sc[3_usize], "");
+  EXPECT_DEATH(sm[3_usize], "");
+#endif
 }
 
 TEST(Slice, Get) {
   i32 a[] = {1, 2, 3};
-  auto s = Slice<const i32>::from_raw_parts(a, 3_usize);
-  EXPECT_EQ(s.get_ref(1_usize).unwrap(), 2_i32);
-  EXPECT_EQ(s.get_ref(2_usize).unwrap(), 3_i32);
-  EXPECT_EQ(s.get_ref(3_usize), sus::None);
+  auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(s.get(1_usize).unwrap(), 2_i32);
+  EXPECT_EQ(s.get(2_usize).unwrap(), 3_i32);
+  EXPECT_EQ(s.get(3_usize), sus::None);
 
-  auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
-  EXPECT_EQ(sm.get_ref(1_usize).unwrap(), 2_i32);
-  EXPECT_EQ(sm.get_ref(2_usize).unwrap(), 3_i32);
-  EXPECT_EQ(sm.get_ref(3_usize), sus::None);
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(sm.get(1_usize).unwrap(), 2_i32);
+  EXPECT_EQ(sm.get(2_usize).unwrap(), 3_i32);
+  EXPECT_EQ(sm.get(3_usize), sus::None);
 }
 
 template <class T, class U>
@@ -62,8 +85,8 @@ static_assert(!HasGetMut<const Slice<i32>, usize>);
 
 TEST(Slice, GetMut) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
+  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
   EXPECT_EQ(sm.get_mut(1_usize).unwrap(), 2_i32);
   EXPECT_EQ(sm.get_mut(2_usize).unwrap(), 3_i32);
@@ -72,11 +95,11 @@ TEST(Slice, GetMut) {
 
 TEST(Slice, GetUnchecked) {
   i32 a[] = {1, 2, 3};
-  auto s = Slice<const i32>::from_raw_parts(a, 3_usize);
+  auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(s.get_unchecked(unsafe_fn, 1_usize), 2_i32);
   EXPECT_EQ(s.get_unchecked(unsafe_fn, 2_usize), 3_i32);
 
-  auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(sm.get_unchecked(unsafe_fn, 1_usize), 2_i32);
   EXPECT_EQ(sm.get_unchecked(unsafe_fn, 2_usize), 3_i32);
 }
@@ -91,13 +114,100 @@ static_assert(HasGetUncheckedMut<Slice<i32>, usize>);
 static_assert(!HasGetUncheckedMut<const Slice<const i32>, usize>);
 static_assert(!HasGetUncheckedMut<const Slice<i32>, usize>);
 
-TEST(Slice, GetMutUnchecked) {
+TEST(Slice, GetUncheckedMut) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
+  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
   EXPECT_EQ(sm.get_unchecked_mut(unsafe_fn, 1_usize), 2_i32);
   EXPECT_EQ(sm.get_unchecked_mut(unsafe_fn, 2_usize), 3_i32);
+}
+
+TEST(Slice, IndexRange) {
+  i32 a[] = {1, 2, 3};
+  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+
+  EXPECT_EQ(sc[Range(0u, 1u)][0u], 1_i32);
+  EXPECT_EQ(sc[Range(0u, 1u)].len(), 1_usize);
+  EXPECT_EQ(sc[Range(1u, 2u)][1u], 3_i32);
+  EXPECT_EQ(sc[Range(1u, 2u)].len(), 2_usize);
+
+  EXPECT_EQ(sc[Range(1u, 0u)].len(), 0_usize);
+  // Start == End == the original End is an empty Slice.
+  EXPECT_EQ(sc[Range(3u, 0u)].len(), 0_usize);
+
+  EXPECT_EQ(sm[Range(0u, 3u)][0u], 1_i32);
+  EXPECT_EQ(sm[Range(0u, 3u)].len(), 3_usize);
+  EXPECT_EQ(sm[Range(2u, 1u)][0u], 3_i32);
+  EXPECT_EQ(sm[Range(2u, 1u)].len(), 1_usize);
+
+  EXPECT_EQ(sm[Range(1u, 0u)].len(), 0_usize);
+  // Start == End == the original End is an empty Slice.
+  EXPECT_EQ(sm[Range(3u, 0u)].len(), 0_usize);
+
+  // Rvalue Slices are usable as they are reference types.
+  EXPECT_EQ(sc[Range(1u, 2u)][Range(1u, 1u)][0u], 3_i32);
+  EXPECT_EQ(sm[Range(1u, 2u)][Range(1u, 1u)][0u], 3_i32);
+}
+
+TEST(SliceDeathTest, IndexRange) {
+  i32 a[] = {1, 2, 3};
+  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(sc[Range(0u, 4u)], "");
+  EXPECT_DEATH(sc[Range(3u, 1u)], "");
+  EXPECT_DEATH(sm[Range(1u, 3u)], "");
+  EXPECT_DEATH(sm[Range(2u, 2u)], "");
+  EXPECT_DEATH(sm[Range(4u, 0u)], "");
+#endif
+}
+
+TEST(Slice, GetRange) {
+  i32 a[] = {1, 2, 3};
+  auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(s.get_range(Range(0u, 3u)).unwrap()[1u], 2_i32);
+  EXPECT_EQ(s.get_range(Range(1u, 2u)).unwrap()[1u], 3_i32);
+  EXPECT_EQ(s.get_range(Range(1u, 3u)), sus::None);
+  EXPECT_EQ(s.get_range(Range(3u, 0u)).unwrap().len(), 0_usize);
+  EXPECT_EQ(s.get_range(Range(4u, 0u)), sus::None);
+
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(sm.get_range(Range(0u, 3u)).unwrap()[1u], 2_i32);
+  EXPECT_EQ(sm.get_range(Range(1u, 2u)).unwrap()[1u], 3_i32);
+  EXPECT_EQ(sm.get_range(Range(1u, 3u)), sus::None);
+  EXPECT_EQ(sm.get_range(Range(3u, 0u)).unwrap().len(), 0_usize);
+  EXPECT_EQ(sm.get_range(Range(4u, 0u)), sus::None);
+
+  // Rvalue Slices are usable as they are reference types.
+  EXPECT_EQ(s.get_range(Range(3u, 0u))
+                .unwrap()
+                .get_range(Range(0u, 0u))
+                .unwrap()
+                .len(),
+            0u);
+  EXPECT_EQ(s.get_range(Range(1u, 2u))
+                .unwrap()
+                .get_range(Range(1u, 1u))
+                .unwrap()
+                .len(),
+            1u);
+  EXPECT_EQ(
+      s.get_range(Range(1u, 2u)).unwrap().get_range(Range(1u, 1u)).unwrap()[0u],
+      3_i32);
+}
+
+TEST(Slice, GetUncheckedRange) {
+  i32 a[] = {1, 2, 3};
+  auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(s.get_range_unchecked(unsafe_fn, Range(0u, 2u))[1u], 2_i32);
+  EXPECT_EQ(s.get_range_unchecked(unsafe_fn, Range(2u, 1u))[0u], 3_i32);
+
+  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, Range(0u, 2u))[1u], 2_i32);
+  EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, Range(2u, 1u))[0u], 3_i32);
 }
 
 TEST(Slice, Into) {
@@ -112,28 +222,6 @@ TEST(Slice, From) {
   i32 a[] = {1, 2, 3};
   auto s = Slice<const i32>::from(a);
   auto sm = Slice<i32>::from(a);
-}
-
-TEST(Slice, Index) {
-  i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
-
-  EXPECT_EQ(sc[0_usize], 1_i32);
-  EXPECT_EQ(sc[2_usize], 3_i32);
-  EXPECT_EQ(sm[0_usize], 1_i32);
-  EXPECT_EQ(sm[2_usize], 3_i32);
-}
-
-TEST(SliceDeathTest, Index) {
-  i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(a, 3_usize);
-
-#if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sc[3_usize], "");
-  EXPECT_DEATH(sm[3_usize], "");
-#endif
 }
 
 TEST(Slice, RangedForIter) {
@@ -228,19 +316,19 @@ TEST(Slice, ImplicitIter) {
 
 TEST(Slice, Len) {
   i32 a[] = {1, 2, 3};
-  auto s = Slice<i32>::from_raw_parts(a, 3_usize);
+  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(s.len(), 3u);
 
-  auto se = Slice<i32>::from_raw_parts(a, 0_usize);
+  auto se = Slice<i32>::from_raw_parts(unsafe_fn, a, 0_usize);
   EXPECT_EQ(se.len(), 0u);
 }
 
 TEST(Slice, IsEmpty) {
   i32 a[] = {1, 2, 3};
-  auto s = Slice<i32>::from_raw_parts(a, 3_usize);
+  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_FALSE(s.is_empty());
 
-  auto se = Slice<i32>::from_raw_parts(a, 0_usize);
+  auto se = Slice<i32>::from_raw_parts(unsafe_fn, a, 0_usize);
   EXPECT_TRUE(se.is_empty());
 }
 

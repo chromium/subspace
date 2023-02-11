@@ -94,9 +94,10 @@ This library is an experiment and not intended for use. See the
    types, which give access to data they own and reference types that share the
    reference they hold.
     * For Owning types:
-       * Methods that return a reference are lvalue-reference-qualified (with
-         `&` or `const&`). If they are `const&`-qualified, then `=delete` the
-         `&&` override to avoid rvalues returning references to what they own.
+       * Methods that return a reference to an object owned by the class are
+         lvalue-reference-qualified (with `&` or `const&`). If they are
+         `const&`-qualified, then `=delete` the `&&` override to avoid rvalues
+         returning references to what they own.
        * When the inner type is a **single** template variable, disallow const
          on the inner type. The const on the Owning type will apply transitively
          to the owned inner type.
