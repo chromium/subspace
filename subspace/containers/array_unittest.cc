@@ -232,14 +232,14 @@ TEST(Array, Get) {
     constexpr auto r = []() constexpr {
       constexpr auto a =
           Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-      return a.get_ref(2_usize).unwrap();
+      return a.at(2_usize).unwrap();
     }();
     static_assert(std::same_as<decltype(r), const int>);
     EXPECT_EQ(3, r);
   }
   {
     auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-    EXPECT_EQ(3, a.get_ref(2_usize).unwrap());
+    EXPECT_EQ(3, a.at(2_usize).unwrap());
   }
 }
 

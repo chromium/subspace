@@ -285,15 +285,15 @@ void generate_record(const RecordElement& element,
   }
   sorted_static_fields.sort_unstable_by(
       [](const SortedFieldByName& a, const SortedFieldByName& b) {
-        auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+        auto ord = a.at<0>() <=> b.at<0>();
         if (ord != 0) return ord;
-        return a.get_ref<1>() <=> b.get_ref<1>();
+        return a.at<1>() <=> b.at<1>();
       });
   sorted_fields.sort_unstable_by(
       [](const SortedFieldByName& a, const SortedFieldByName& b) {
-        auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+        auto ord = a.at<0>() <=> b.at<0>();
         if (ord != 0) return ord;
-        return a.get_ref<1>() <=> b.get_ref<1>();
+        return a.at<1>() <=> b.at<1>();
       });
 
   generate_record_fields(mref(record_div), element, true,
@@ -314,15 +314,15 @@ void generate_record(const RecordElement& element,
   }
   sorted_static_methods.sort_unstable_by(
       [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-        auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+        auto ord = a.at<0>() <=> b.at<0>();
         if (ord != 0) return ord;
-        return a.get_ref<1>() <=> b.get_ref<1>();
+        return a.at<1>() <=> b.at<1>();
       });
   sorted_methods.sort_unstable_by(
       [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-        auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+        auto ord = a.at<0>() <=> b.at<0>();
         if (ord != 0) return ord;
-        return a.get_ref<1>() <=> b.get_ref<1>();
+        return a.at<1>() <=> b.at<1>();
       });
 
   generate_record_methods(mref(record_div), element, true,

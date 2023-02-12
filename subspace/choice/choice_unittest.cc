@@ -473,8 +473,8 @@ TEST(Choice, GetUnchecked) {
         (Order::First, i8&, const u64&),
         (Order::Second, NoCopyMove&))>::with<Order::First>(sus::tuple(i, j));
     decltype(auto) s = u.get_unchecked<Order::First>(unsafe_fn);
-    EXPECT_EQ(&s.get_ref<0u>(), &i);
-    EXPECT_EQ(&s.get_ref<1u>(), &j);
+    EXPECT_EQ(&s.at<0u>(), &i);
+    EXPECT_EQ(&s.at<1u>(), &j);
     static_assert(std::same_as<decltype(s), sus::Tuple<const i8&, const u64&>>);
   }
   {

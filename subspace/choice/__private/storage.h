@@ -165,12 +165,12 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   constexpr auto as() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
-          tuple_.template get_ref<Is>()...);
+          tuple_.template at<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr auto as_mut() & {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
+      return ::sus::Tuple<Ts&...>::with(tuple_.template at_mut<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
@@ -343,10 +343,10 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
   }
 
   inline constexpr decltype(auto) as() const& {
-    return tuple_.template get_ref<0>();
+    return tuple_.template at<0>();
   }
   inline constexpr decltype(auto) as_mut() & {
-    return tuple_.template get_mut<0>();
+    return tuple_.template at_mut<0>();
   }
   inline constexpr decltype(auto) into_inner() && {
     return ::sus::move(tuple_).template into_inner<0>();
@@ -414,12 +414,12 @@ union Storage<I, ::sus::Tuple<Ts...>> {
   constexpr auto as() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
       return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
-          tuple_.template get_ref<Is>()...);
+          tuple_.template at<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr auto as_mut() & {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<Ts&...>::with(tuple_.template get_mut<Is>()...);
+      return ::sus::Tuple<Ts&...>::with(tuple_.template at_mut<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
@@ -523,10 +523,10 @@ union Storage<I, ::sus::Tuple<T>> {
   }
 
   inline constexpr decltype(auto) as() const& {
-    return tuple_.template get_ref<0>();
+    return tuple_.template at<0>();
   }
   inline constexpr decltype(auto) as_mut() & {
-    return tuple_.template get_mut<0>();
+    return tuple_.template at_mut<0>();
   }
   inline constexpr decltype(auto) into_inner() && {
     return ::sus::move(tuple_).template into_inner<0>();

@@ -136,47 +136,47 @@ TEST(Tuple, ConstructorFunction) {
   {
     // All parameters match the tuple type.
     Tuple<u32, u32, u32> a = sus::tuple(1_u32, 2_u32, 3_u32);
-    EXPECT_EQ(a.get_ref<0>(), 1_u32);
-    EXPECT_EQ(a.get_ref<1>(), 2_u32);
-    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
   }
   {
     // Some parameters convert to u32.
     Tuple<u32, u32, u32> a = sus::tuple(1_u32, 2u, 3_u32);
-    EXPECT_EQ(a.get_ref<0>(), 1_u32);
-    EXPECT_EQ(a.get_ref<1>(), 2_u32);
-    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
   }
   {
     // All parameters convert to u32.
     Tuple<u32, u32, u32> a = sus::tuple(1u, 2u, 3u);
-    EXPECT_EQ(a.get_ref<0>(), 1_u32);
-    EXPECT_EQ(a.get_ref<1>(), 2_u32);
-    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
   }
   {
     // into() as an input to the tuple.
     Tuple<u32, u32, u32> a = sus::tuple(1_u32, sus::into(2), 3_u32);
-    EXPECT_EQ(a.get_ref<0>(), 1_u32);
-    EXPECT_EQ(a.get_ref<1>(), 2_u32);
-    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
   }
   {
     // Copies the lvalue and const lvalue.
     auto i = 1_u32;
     const auto j = 2_u32;
     Tuple<u32, u32, u32> a = sus::tuple(i, j, 3_u32);
-    EXPECT_EQ(a.get_ref<0>(), 1_u32);
-    EXPECT_EQ(a.get_ref<1>(), 2_u32);
-    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
   }
   {
     // Copies the rvalue reference.
     auto i = 1_u32;
     Tuple<u32, u32, u32> a = sus::tuple(sus::move(i), 2_u32, 3_u32);
-    EXPECT_EQ(a.get_ref<0>(), 1_u32);
-    EXPECT_EQ(a.get_ref<1>(), 2_u32);
-    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_u32);
+    EXPECT_EQ(a.at<1>(), 2_u32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
   }
   // Verify no copies happen in the marker.
   {
@@ -202,15 +202,15 @@ TEST(Tuple, ConstructorFunction) {
     const auto i = 2_i32;
     auto a = sus::tuple(1_i8, i, 3_u32).construct();
     static_assert(std::same_as<decltype(a), sus::Tuple<i8, const i32&, u32>>);
-    EXPECT_EQ(a.get_ref<0>(), 1_i8);
-    EXPECT_EQ(a.get_ref<1>(), 2_i32);
-    EXPECT_EQ(a.get_ref<2>(), 3_u32);
+    EXPECT_EQ(a.at<0>(), 1_i8);
+    EXPECT_EQ(a.at<1>(), 2_i32);
+    EXPECT_EQ(a.at<2>(), 3_u32);
 
     auto b = sus::tuple(sus::into(1_i8), i, 3_u32).construct<i32, i32, u32>();
     static_assert(std::same_as<decltype(b), sus::Tuple<i32, i32, u32>>);
-    EXPECT_EQ(b.get_ref<0>(), 1_i32);
-    EXPECT_EQ(b.get_ref<1>(), 2_i32);
-    EXPECT_EQ(b.get_ref<2>(), 3_u32);
+    EXPECT_EQ(b.at<0>(), 1_i32);
+    EXPECT_EQ(b.at<1>(), 2_i32);
+    EXPECT_EQ(b.at<2>(), 3_u32);
   }
 }
 
@@ -218,9 +218,9 @@ TEST(Tuple, ConstructorReferences) {
   {
     // All parameters match the tuple type.
     [](Tuple<const u32&, const u32&, const u32&> a) {
-      EXPECT_EQ(a.get_ref<0>(), 1_u32);
-      EXPECT_EQ(a.get_ref<1>(), 2_u32);
-      EXPECT_EQ(a.get_ref<2>(), 3_u32);
+      EXPECT_EQ(a.at<0>(), 1_u32);
+      EXPECT_EQ(a.at<1>(), 2_u32);
+      EXPECT_EQ(a.at<2>(), 3_u32);
     }(sus::tuple(1_u32, 2_u32, 3_u32));
   }
 }
@@ -268,95 +268,95 @@ TEST(Tuple, Clone) {
 
   auto t1 = Tuple<Cloneable>::with(2_i32);
   auto t2 = ::sus::clone(t1);
-  EXPECT_EQ(t1.get_ref<0>().i + 1_i32, t2.get_ref<0>().i);
+  EXPECT_EQ(t1.at<0>().i + 1_i32, t2.at<0>().i);
 }
 
 TEST(TupleDeathTest, Move) {
   {
     auto t1 = Tuple<int>::with(2);
     auto t2 = sus::move(t1);
-    EXPECT_EQ(t2.get_ref<0>(), 2);
-    EXPECT_DEATH(t1.get_ref<0>(), "");
+    EXPECT_EQ(t2.at<0>(), 2);
+    EXPECT_DEATH(t1.at<0>(), "");
   }
 
   {
     auto n = NoCopyMove();
     auto t1 = Tuple<NoCopyMove&>::with(mref(n));
     auto t2 = sus::move(t1);
-    EXPECT_EQ(t2.get_ref<0>(), n);
-    EXPECT_DEATH(t1.get_ref<0>(), "");
+    EXPECT_EQ(t2.at<0>(), n);
+    EXPECT_DEATH(t1.at<0>(), "");
   }
 }
 
 TEST(Tuple, GetRef) {
   auto t1 = Tuple<int>::with(2);
-  EXPECT_EQ(t1.get_ref<0>(), 2);
-  static_assert(std::same_as<const int&, decltype(t1.get_ref<0>())>);
+  EXPECT_EQ(t1.at<0>(), 2);
+  static_assert(std::same_as<const int&, decltype(t1.at<0>())>);
 
   const auto t2 = Tuple<int, float>::with(2, 3.f);
-  EXPECT_EQ(t2.get_ref<0>(), 2);
-  static_assert(std::same_as<const int&, decltype(t2.get_ref<0>())>);
-  EXPECT_EQ(t2.get_ref<1>(), 3.f);
-  static_assert(std::same_as<const float&, decltype(t2.get_ref<1>())>);
+  EXPECT_EQ(t2.at<0>(), 2);
+  static_assert(std::same_as<const int&, decltype(t2.at<0>())>);
+  EXPECT_EQ(t2.at<1>(), 3.f);
+  static_assert(std::same_as<const float&, decltype(t2.at<1>())>);
 
   auto t3 = Tuple<int, float, int>::with(2, 3.f, 4);
-  EXPECT_EQ(t3.get_ref<0>(), 2);
-  static_assert(std::same_as<const int&, decltype(t3.get_ref<0>())>);
-  EXPECT_EQ(t3.get_ref<1>(), 3.f);
-  static_assert(std::same_as<const float&, decltype(t3.get_ref<1>())>);
-  EXPECT_EQ(t3.get_ref<2>(), 4);
-  static_assert(std::same_as<const int&, decltype(t3.get_ref<2>())>);
+  EXPECT_EQ(t3.at<0>(), 2);
+  static_assert(std::same_as<const int&, decltype(t3.at<0>())>);
+  EXPECT_EQ(t3.at<1>(), 3.f);
+  static_assert(std::same_as<const float&, decltype(t3.at<1>())>);
+  EXPECT_EQ(t3.at<2>(), 4);
+  static_assert(std::same_as<const int&, decltype(t3.at<2>())>);
 
   auto n = NoCopyMove();
   auto tn = Tuple<NoCopyMove&>::with(mref(n));
-  static_assert(std::same_as<const NoCopyMove&, decltype(tn.get_ref<0>())>);
-  EXPECT_EQ(tn.get_ref<0>(), n);
+  static_assert(std::same_as<const NoCopyMove&, decltype(tn.at<0>())>);
+  EXPECT_EQ(tn.at<0>(), n);
 
   [[maybe_unused]] constexpr auto c0 = []() {
     constexpr auto t = Tuple<int, float>::with(2, 3.f);
-    return t.get_ref<0>();
+    return t.at<0>();
   }();
   [[maybe_unused]] constexpr auto c1 = []() {
     constexpr auto t = Tuple<int, float>::with(2, 3.f);
-    return t.get_ref<1>();
+    return t.at<1>();
   }();
 }
 
 TEST(Tuple, GetMut) {
   auto t1 = Tuple<int>::with(2);
-  EXPECT_EQ(t1.get_mut<0>(), 2);
-  t1.get_mut<0>() += 1;
-  EXPECT_EQ(t1.get_mut<0>(), 3);
-  static_assert(std::same_as<int&, decltype(t1.get_mut<0>())>);
+  EXPECT_EQ(t1.at_mut<0>(), 2);
+  t1.at_mut<0>() += 1;
+  EXPECT_EQ(t1.at_mut<0>(), 3);
+  static_assert(std::same_as<int&, decltype(t1.at_mut<0>())>);
 
   auto t2 = Tuple<int, float>::with(2, 3.f);
-  EXPECT_EQ(t2.get_mut<0>(), 2);
-  t2.get_mut<0>() += 1;
-  EXPECT_EQ(t2.get_mut<0>(), 3);
-  static_assert(std::same_as<int&, decltype(t2.get_mut<0>())>);
-  EXPECT_EQ(t2.get_mut<1>(), 3.f);
-  t2.get_mut<1>() += 1.f;
-  EXPECT_EQ(t2.get_mut<1>(), 4.f);
-  static_assert(std::same_as<float&, decltype(t2.get_mut<1>())>);
+  EXPECT_EQ(t2.at_mut<0>(), 2);
+  t2.at_mut<0>() += 1;
+  EXPECT_EQ(t2.at_mut<0>(), 3);
+  static_assert(std::same_as<int&, decltype(t2.at_mut<0>())>);
+  EXPECT_EQ(t2.at_mut<1>(), 3.f);
+  t2.at_mut<1>() += 1.f;
+  EXPECT_EQ(t2.at_mut<1>(), 4.f);
+  static_assert(std::same_as<float&, decltype(t2.at_mut<1>())>);
 
   auto t3 = Tuple<int, float, int>::with(2, 3.f, 4);
-  EXPECT_EQ(t3.get_mut<0>(), 2);
-  t3.get_mut<0>() += 1;
-  EXPECT_EQ(t3.get_mut<0>(), 3);
-  static_assert(std::same_as<int&, decltype(t3.get_mut<0>())>);
-  EXPECT_EQ(t3.get_mut<1>(), 3.f);
-  t3.get_mut<1>() += 1.f;
-  EXPECT_EQ(t3.get_mut<1>(), 4.f);
-  static_assert(std::same_as<float&, decltype(t3.get_mut<1>())>);
-  EXPECT_EQ(t3.get_mut<2>(), 4);
-  t3.get_mut<2>() += 1;
-  EXPECT_EQ(t3.get_mut<2>(), 5);
-  static_assert(std::same_as<int&, decltype(t3.get_mut<2>())>);
+  EXPECT_EQ(t3.at_mut<0>(), 2);
+  t3.at_mut<0>() += 1;
+  EXPECT_EQ(t3.at_mut<0>(), 3);
+  static_assert(std::same_as<int&, decltype(t3.at_mut<0>())>);
+  EXPECT_EQ(t3.at_mut<1>(), 3.f);
+  t3.at_mut<1>() += 1.f;
+  EXPECT_EQ(t3.at_mut<1>(), 4.f);
+  static_assert(std::same_as<float&, decltype(t3.at_mut<1>())>);
+  EXPECT_EQ(t3.at_mut<2>(), 4);
+  t3.at_mut<2>() += 1;
+  EXPECT_EQ(t3.at_mut<2>(), 5);
+  static_assert(std::same_as<int&, decltype(t3.at_mut<2>())>);
 
   auto n = NoCopyMove();
   auto tn = Tuple<NoCopyMove&>::with(mref(n));
-  static_assert(std::same_as<NoCopyMove&, decltype(tn.get_mut<0>())>);
-  EXPECT_EQ(tn.get_mut<0>(), n);
+  static_assert(std::same_as<NoCopyMove&, decltype(tn.at_mut<0>())>);
+  EXPECT_EQ(tn.at_mut<0>(), n);
 }
 
 TEST(Tuple, IntoInner) {
@@ -505,9 +505,9 @@ TEST(Tuple, StructuredBinding) {
   static_assert(std::same_as<decltype(b), float>);
   static_assert(std::same_as<decltype(c), char>);
 
-  t3.get_mut<0>() += 1;
-  t3.get_mut<1>() += 2.f;
-  t3.get_mut<2>() += 3;
+  t3.at_mut<0>() += 1;
+  t3.at_mut<1>() += 2.f;
+  t3.at_mut<2>() += 3;
   EXPECT_EQ(t3, (Tuple<int, float, char>::with(3, 5.f, 'f')));
 
   const auto& [d, e, f] = t3;
