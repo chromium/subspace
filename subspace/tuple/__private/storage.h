@@ -79,8 +79,8 @@ struct TupleStorage<T> {
   constexpr inline explicit TupleStorage(U&& value)
       : value(::sus::forward<U>(value)) {}
 
-  inline constexpr const T& get_ref() const& noexcept { return value; }
-  inline constexpr T& get_mut() & noexcept { return value; }
+  inline constexpr const T& at() const& noexcept { return value; }
+  inline constexpr T& at_mut() & noexcept { return value; }
   inline constexpr T&& into_inner() && noexcept { return ::sus::move(value); }
 
  private:
@@ -92,8 +92,8 @@ struct TupleStorage<T&> {
   constexpr inline explicit TupleStorage(T& value)
       : value(::sus::mem::addressof(value)) {}
 
-  inline constexpr const T& get_ref() const& noexcept { return *value; }
-  inline constexpr T& get_mut() & noexcept { return *value; }
+  inline constexpr const T& at() const& noexcept { return *value; }
+  inline constexpr T& at_mut() & noexcept { return *value; }
   inline constexpr T& into_inner() && noexcept { return *value; }
 
  private:
@@ -109,8 +109,8 @@ struct TupleStorage<T, Ts...> : TupleStorage<Ts...> {
   constexpr inline TupleStorage(U&& value, Us&&... more) noexcept
       : Super(::sus::forward<Us>(more)...), value(::sus::forward<U>(value)) {}
 
-  inline constexpr const T& get_ref() const& noexcept { return value; }
-  inline constexpr T& get_mut() & noexcept { return value; }
+  inline constexpr const T& at() const& noexcept { return value; }
+  inline constexpr T& at_mut() & noexcept { return value; }
   inline constexpr T&& into_inner() && noexcept { return ::sus::move(value); }
 
  private:
@@ -127,8 +127,8 @@ struct TupleStorage<T&, Ts...> : TupleStorage<Ts...> {
       : Super(::sus::forward<Us>(more)...),
         value(::sus::mem::addressof(value)) {}
 
-  inline constexpr const T& get_ref() const& noexcept { return *value; }
-  inline constexpr T& get_mut() & noexcept { return *value; }
+  inline constexpr const T& at() const& noexcept { return *value; }
+  inline constexpr T& at_mut() & noexcept { return *value; }
   inline constexpr T& into_inner() && noexcept { return *value; }
 
  private:
@@ -173,7 +173,7 @@ static constexpr S& find_tuple_storage_mut(S& storage,
 
 template <size_t I, class S1, class S2>
 constexpr inline auto storage_eq_impl(const S1& l, const S2& r) noexcept {
-  return find_tuple_storage<I>(l).get_ref() == find_tuple_storage<I>(r).get_ref();
+  return find_tuple_storage<I>(l).at() == find_tuple_storage<I>(r).at();
 };
 
 template <class S1, class S2, size_t... N>
@@ -185,7 +185,7 @@ constexpr inline auto storage_eq(const S1& l, const S2& r,
 template <size_t I, class O, class S1, class S2>
 constexpr inline bool storage_cmp_impl(O& val, const S1& l,
                                        const S2& r) noexcept {
-  auto cmp = find_tuple_storage<I>(l).get_ref() <=> find_tuple_storage<I>(r).get_ref();
+  auto cmp = find_tuple_storage<I>(l).at() <=> find_tuple_storage<I>(r).at();
   // Allow downgrading from equal to equivalent, but not the inverse.
   if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.

@@ -174,9 +174,9 @@ void generate_namespace(const NamespaceElement& element,
     }
     sorted.sort_unstable_by(
         [](const SortedNamespaceByName& a, const SortedNamespaceByName& b) {
-          auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+          auto ord = a.at<0>() <=> b.at<0>();
           if (ord != 0) return ord;
-          return a.get_ref<1>() <=> b.get_ref<1>();
+          return a.at<1>() <=> b.at<1>();
         });
 
     generate_namespace_namespaces(mref(namespace_div), element,
@@ -199,15 +199,15 @@ void generate_namespace(const NamespaceElement& element,
     }
     classes.sort_unstable_by(
         [](const SortedRecordByName& a, const SortedRecordByName& b) {
-          auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+          auto ord = a.at<0>() <=> b.at<0>();
           if (ord != 0) return ord;
-          return a.get_ref<1>() <=> b.get_ref<1>();
+          return a.at<1>() <=> b.at<1>();
         });
     unions.sort_unstable_by(
         [](const SortedRecordByName& a, const SortedRecordByName& b) {
-          auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+          auto ord = a.at<0>() <=> b.at<0>();
           if (ord != 0) return ord;
-          return a.get_ref<1>() <=> b.get_ref<1>();
+          return a.at<1>() <=> b.at<1>();
         });
 
     generate_namespace_records(mref(namespace_div), element, classes.as_ref(),
@@ -224,9 +224,9 @@ void generate_namespace(const NamespaceElement& element,
     }
     sorted.sort_unstable_by(
         [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-          auto ord = a.get_ref<0>() <=> b.get_ref<0>();
+          auto ord = a.at<0>() <=> b.at<0>();
           if (ord != 0) return ord;
-          return a.get_ref<1>() <=> b.get_ref<1>();
+          return a.at<1>() <=> b.at<1>();
         });
 
     generate_namespace_functions(mref(namespace_div), element, sorted.as_ref());

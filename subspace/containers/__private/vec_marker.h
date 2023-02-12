@@ -40,7 +40,7 @@ struct VecMarker {
     auto push_elements =
         [&, this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
           // This is a fold expression over the operator `,`.
-          (v.push(::sus::forward<Ts>(values.template get_mut<Is>())), ...);
+          (v.push(::sus::forward<Ts>(values.template at_mut<Is>())), ...);
         };
     push_elements(std::make_integer_sequence<size_t, sizeof...(Ts)>());
 

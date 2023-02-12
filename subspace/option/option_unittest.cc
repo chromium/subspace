@@ -1847,8 +1847,8 @@ TEST(Option, Zip) {
         std::same_as<Tuple<const i32&, const NoCopyMove&>,
                      decltype(sus::move(i).zip(sus::move(u)).unwrap())>);
     auto zip = sus::move(i).zip(sus::move(u)).unwrap();
-    EXPECT_EQ(&zip.get_ref<0>(), &a);
-    EXPECT_EQ(&zip.get_ref<1>(), &b);
+    EXPECT_EQ(&zip.at<0>(), &a);
+    EXPECT_EQ(&zip.at<1>(), &b);
     EXPECT_EQ(i, None);
   }
 

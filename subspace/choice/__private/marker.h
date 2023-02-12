@@ -71,7 +71,7 @@ struct ChoiceMarker<Tag, Ts...> {
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
           return TupleType::with(
-              ::sus::forward<Ts>(values.template get_mut<Is>())...);
+              ::sus::forward<Ts>(values.template at_mut<Is>())...);
         };
     return Choice<TypeListOfMemberTypes, Vs...>::template with<Tag>(
         make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>()));
