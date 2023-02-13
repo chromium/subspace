@@ -418,8 +418,6 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
     return ::sus::move(tuple_).template into_inner<0>();
   }
 
-  // TODO: Switch away from Tuple for 1 object when we don't need to use the
-  // use-after-move checks there.
   [[sus_no_unique_address]] Type tuple_;
   [[sus_no_unique_address]] Storage<I + 1, Elements...> more_;
 };
@@ -637,8 +635,6 @@ union Storage<I, ::sus::Tuple<T>> {
     return ::sus::move(tuple_).template into_inner<0>();
   }
 
-  // TODO: Switch away from Tuple for 1 object when we don't need to use the
-  // use-after-move checks there.
   [[sus_no_unique_address]] ::sus::Tuple<T> tuple_;
 };
 
