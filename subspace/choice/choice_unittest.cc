@@ -199,13 +199,14 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
 }
 
 template <class T, auto Tag>
-concept CanCallAs = requires(T&& choice) { sus::forward<T>(choice).as<Tag>(); };
+concept CanCallAs =
+    requires(T&& choice) { sus::forward<T>(choice).template as<Tag>(); };
 template <class T, auto Tag>
 concept CanCallGet =
-    requires(T&& choice) { sus::forward<T>(choice).get<Tag>(); };
+    requires(T&& choice) { sus::forward<T>(choice).template get<Tag>(); };
 template <class T, auto Tag>
 concept CanCallGetUnchecked = requires(T&& choice) {
-  sus::forward<T>(choice).get_unchecked<Tag>(unsafe_fn);
+  sus::forward<T>(choice).template get_unchecked<Tag>(unsafe_fn);
 };
 
 // Value types can't be accessed through an rvalue Choice as it would be a
