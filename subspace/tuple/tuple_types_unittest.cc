@@ -180,7 +180,7 @@ static_assert(std::is_copy_constructible_v<T>);
 static_assert(std::is_copy_assignable_v<T>);
 static_assert(std::is_move_constructible_v<T>);
 static_assert(std::is_move_assignable_v<T>);
-static_assert(!std::is_nothrow_swappable_v<T>);
+static_assert(std::is_nothrow_swappable_v<T>);
 static_assert(std::is_constructible_v<T, From&&>);
 static_assert(std::is_assignable_v<T, From&&>);
 static_assert(std::is_constructible_v<T, const From&>);

@@ -80,6 +80,20 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       __private::AllValuesAreUnique<Tags...>,
       "All tag values must be unique or some of them would be inaccessible.");
 
+  // The data size of a union is not known from sus::data_size_of(), but is the
+  // max of all its members. We know all the member types so we can compute it
+  // ourselves.
+  /* TODO:
+  static constexpr size_t union_data_size = []() -> size_t {
+    size_t max = 0u;
+    auto find_max = [&max](size_t a) {
+      if (a > max) max = a;
+      return max;
+    };
+    (find_max(::sus::data_size_of<Ts>()), ...);
+    return max;
+  };
+  */
   // We add 2 to `sizeof...(Tags)` for the range of the index.
   //
   // The ~0 value (all bits are 1) is reserved for using the index as a
@@ -91,7 +105,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   // panic due to the index being outside the range of acceptable values.
   using IndexType =
       __private::IndexType<sizeof...(Tags) + 2u, ::sus::size_of<Storage>(),
-                           ::sus::data_size_of<Storage>()>;
+                           ::sus::size_of<Storage>()>;
   static_assert(!std::is_void_v<IndexType>,
                 "A union can only hold a number of members representable in "
                 "size_t (minus two).");
@@ -162,7 +176,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       storage_.destroy(size_t{index_});
   }
 
-  constexpr Choice(Choice&& o)
+  constexpr Choice(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_constructible_v<TagsType> && ... &&
               std::is_trivially_move_constructible_v<Ts>))
@@ -183,7 +197,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     storage_.move_construct(size_t{index_}, ::sus::move(o.storage_));
   }
 
-  constexpr Choice& operator=(Choice&& o)
+  constexpr Choice& operator=(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_assignable_v<TagsType> && ... &&
               std::is_trivially_move_assignable_v<Ts>))
@@ -576,6 +590,10 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
 
   [[sus_no_unique_address]] Storage storage_;
   IndexType index_;
+
+  // Declare that this type can always be trivially relocated for library
+  // optimizations.
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, IndexType, Ts...);
 
   sus_class_never_value_field(::sus::marker::unsafe_fn, Choice, index_,
                               kNeverValue, kNeverValue);

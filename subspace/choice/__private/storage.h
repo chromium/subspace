@@ -73,10 +73,34 @@ template <size_t I, class... Elements>
 union Storage;
 
 template <size_t I, class... Ts, class... Elements>
-  requires(sizeof...(Ts) > 0 && sizeof...(Elements) > 0)
+  requires(sizeof...(Ts) > 1 && sizeof...(Elements) > 0)
 union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
   Storage() {}
-  ~Storage() {}
+  ~Storage()
+    requires(std::is_trivially_destructible_v<::sus::Tuple<Ts...>> && ... &&
+             std::is_trivially_destructible_v<Elements>)
+  = default;
+  ~Storage()
+    requires(!(std::is_trivially_destructible_v<::sus::Tuple<Ts...>> && ... &&
+               std::is_trivially_destructible_v<Elements>))
+  {}
+
+  Storage(const Storage&)
+    requires(std::is_trivially_copy_constructible_v<::sus::Tuple<Ts...>> &&
+             ... && std::is_trivially_copy_constructible_v<Elements>)
+  = default;
+  Storage& operator=(const Storage&)
+    requires(std::is_trivially_copy_assignable_v<::sus::Tuple<Ts...>> && ... &&
+             std::is_trivially_copy_assignable_v<Elements>)
+  = default;
+  Storage(Storage&&)
+    requires(std::is_trivially_move_constructible_v<::sus::Tuple<Ts...>> &&
+             ... && std::is_trivially_move_constructible_v<Elements>)
+  = default;
+  Storage& operator=(Storage&&)
+    requires(std::is_trivially_move_assignable_v<::sus::Tuple<Ts...>> && ... &&
+             std::is_trivially_move_assignable_v<Elements>)
+  = default;
 
   using Type = ::sus::Tuple<Ts...>;
 
@@ -183,7 +207,25 @@ template <size_t I, class... Elements>
   requires(sizeof...(Elements) > 0)
 union Storage<I, Nothing, Elements...> {
   Storage() {}
-  ~Storage() {}
+  ~Storage()
+    requires(... && std::is_trivially_destructible_v<Elements>)
+  = default;
+  ~Storage()
+    requires(!(... && std::is_trivially_destructible_v<Elements>))
+  {}
+
+  Storage(const Storage&)
+    requires(... && std::is_trivially_copy_constructible_v<Elements>)
+  = default;
+  Storage& operator=(const Storage&)
+    requires(... && std::is_trivially_copy_assignable_v<Elements>)
+  = default;
+  Storage(Storage&&)
+    requires(... && std::is_trivially_move_constructible_v<Elements>)
+  = default;
+  Storage& operator=(Storage&&)
+    requires(... && std::is_trivially_move_assignable_v<Elements>)
+  = default;
 
   inline void move_construct(size_t index, Storage&& from) {
     if (index != I) {
@@ -254,7 +296,31 @@ template <size_t I, class T, class... Elements>
   requires(sizeof...(Elements) > 0)
 union Storage<I, ::sus::Tuple<T>, Elements...> {
   Storage() {}
-  ~Storage() {}
+  ~Storage()
+    requires(std::is_trivially_destructible_v<::sus::Tuple<T>> && ... &&
+             std::is_trivially_destructible_v<Elements>)
+  = default;
+  ~Storage()
+    requires(!(std::is_trivially_destructible_v<::sus::Tuple<T>> && ... &&
+               std::is_trivially_destructible_v<Elements>))
+  {}
+
+  Storage(const Storage&)
+    requires(std::is_trivially_copy_constructible_v<::sus::Tuple<T>> && ... &&
+             std::is_trivially_copy_constructible_v<Elements>)
+  = default;
+  Storage& operator=(const Storage&)
+    requires(std::is_trivially_copy_assignable_v<::sus::Tuple<T>> && ... &&
+             std::is_trivially_copy_assignable_v<Elements>)
+  = default;
+  Storage(Storage&&)
+    requires(std::is_trivially_move_constructible_v<::sus::Tuple<T>> && ... &&
+             std::is_trivially_move_constructible_v<Elements>)
+  = default;
+  Storage& operator=(Storage&&)
+    requires(std::is_trivially_move_assignable_v<::sus::Tuple<T>> && ... &&
+             std::is_trivially_move_assignable_v<Elements>)
+  = default;
 
   using Type = ::sus::Tuple<T>;
 
@@ -359,10 +425,28 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
 };
 
 template <size_t I, class... Ts>
-  requires(sizeof...(Ts) > 0)
+  requires(sizeof...(Ts) > 1)
 union Storage<I, ::sus::Tuple<Ts...>> {
   Storage() {}
-  ~Storage() {}
+  ~Storage()
+    requires(std::is_trivially_destructible_v<::sus::Tuple<Ts...>>)
+  = default;
+  ~Storage()
+    requires(!(std::is_trivially_destructible_v<::sus::Tuple<Ts...>>))
+  {}
+
+  Storage(const Storage&)
+    requires(std::is_trivially_copy_constructible_v<::sus::Tuple<Ts...>>)
+  = default;
+  Storage& operator=(const Storage&)
+    requires(std::is_trivially_copy_assignable_v<::sus::Tuple<Ts...>>)
+  = default;
+  Storage(Storage&&)
+    requires(std::is_trivially_move_constructible_v<::sus::Tuple<Ts...>>)
+  = default;
+  Storage& operator=(Storage&&)
+    requires(std::is_trivially_move_assignable_v<::sus::Tuple<Ts...>>)
+  = default;
 
   using Type = ::sus::Tuple<Ts...>;
 
@@ -430,7 +514,6 @@ union Storage<I, ::sus::Tuple<Ts...>> {
 template <size_t I>
 union Storage<I, Nothing> {
   Storage() {}
-  ~Storage() {}
 
   inline void move_construct(size_t index, Storage&&) {
     ::sus::check(index == I);
@@ -469,7 +552,25 @@ union Storage<I, Nothing> {
 template <size_t I, class T>
 union Storage<I, ::sus::Tuple<T>> {
   Storage() {}
-  ~Storage() {}
+  ~Storage()
+    requires(std::is_trivially_destructible_v<::sus::Tuple<T>>)
+  = default;
+  ~Storage()
+    requires(!(std::is_trivially_destructible_v<::sus::Tuple<T>>))
+  {}
+
+  Storage(const Storage&)
+    requires(std::is_trivially_copy_constructible_v<::sus::Tuple<T>>)
+  = default;
+  Storage& operator=(const Storage&)
+    requires(std::is_trivially_copy_assignable_v<::sus::Tuple<T>>)
+  = default;
+  Storage(Storage&&)
+    requires(std::is_trivially_move_constructible_v<::sus::Tuple<T>>)
+  = default;
+  Storage& operator=(Storage&&)
+    requires(std::is_trivially_move_assignable_v<::sus::Tuple<T>>)
+  = default;
 
   using Type = ::sus::Tuple<T>;
 
@@ -539,36 +640,39 @@ union Storage<I, ::sus::Tuple<T>> {
 
 template <auto I, class S>
 static constexpr const auto& find_choice_storage(const S& storage) {
-  return find_choice_storage(storage, std::integral_constant<size_t, size_t{I}>());
+  return find_choice_storage(storage,
+                             std::integral_constant<size_t, size_t{I}>());
 }
 
 template <size_t I, class S>
-static constexpr const auto& find_choice_storage(const S& storage,
-                                          std::integral_constant<size_t, I>) {
-  return find_choice_storage(storage.more_, std::integral_constant<size_t, I - 1u>());
+static constexpr const auto& find_choice_storage(
+    const S& storage, std::integral_constant<size_t, I>) {
+  return find_choice_storage(storage.more_,
+                             std::integral_constant<size_t, I - 1u>());
 }
 
 template <class S>
-static constexpr const auto& find_choice_storage(const S& storage,
-                                          std::integral_constant<size_t, 0>) {
+static constexpr const auto& find_choice_storage(
+    const S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }
 
 template <auto I, class S>
 static constexpr auto& find_choice_storage_mut(S& storage) {
-  return find_choice_storage_mut(storage, std::integral_constant<size_t, size_t{I}>());
+  return find_choice_storage_mut(storage,
+                                 std::integral_constant<size_t, size_t{I}>());
 }
 
 template <size_t I, class S>
-static constexpr auto& find_choice_storage_mut(S& storage,
-                                        std::integral_constant<size_t, I>) {
+static constexpr auto& find_choice_storage_mut(
+    S& storage, std::integral_constant<size_t, I>) {
   return find_choice_storage_mut(storage.more_,
-                          std::integral_constant<size_t, I - 1u>());
+                                 std::integral_constant<size_t, I - 1u>());
 }
 
 template <class S>
-static constexpr auto& find_choice_storage_mut(S& storage,
-                                        std::integral_constant<size_t, 0>) {
+static constexpr auto& find_choice_storage_mut(
+    S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }
 

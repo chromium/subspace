@@ -43,12 +43,10 @@ enum class Order {
   Third,
 };
 
-inline constexpr size_t UamBytes = sus::Tuple<i32>::protects_uam ? 8 : 0;
-
 // The Choice's tag can get stashed inside the Tuple, though this doesn't happen
 // on MSVC.
 static_assert(sizeof(Choice<sus_choice_types((Order::First, i32, u64))>) ==
-              2 * sizeof(u64) + UamBytes + sus_if_msvc_else(sizeof(u64), 0));
+              2 * sizeof(u64) + sus_if_msvc_else(sizeof(u64), 0));
 
 TEST(Choice, Tag) {
   using One =
