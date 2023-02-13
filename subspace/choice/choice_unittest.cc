@@ -45,8 +45,14 @@ enum class Order {
 
 // The Choice's tag can get stashed inside the Tuple, though this doesn't happen
 // on MSVC.
+// NOPE this causes data to get clobbered when move-constructing into the
+// storage.
+// Clang: https://github.com/llvm/llvm-project/issues/60711
+// GCC: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108775
+// static_assert(sizeof(Choice<sus_choice_types((Order::First, i32, u64))>) ==
+//              2 * sizeof(u64) + sus_if_msvc_else(sizeof(u64), 0));
 static_assert(sizeof(Choice<sus_choice_types((Order::First, i32, u64))>) ==
-              2 * sizeof(u64) + sus_if_msvc_else(sizeof(u64), 0));
+              2 * sizeof(u64) + sizeof(u64));
 
 TEST(Choice, Tag) {
   using One =
