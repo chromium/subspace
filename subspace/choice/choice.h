@@ -83,17 +83,19 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   // The data size of a union is not known from sus::data_size_of(), but is the
   // max of all its members. We know all the member types so we can compute it
   // ourselves.
-  /* TODO:
   static constexpr size_t union_data_size = []() -> size_t {
-    size_t max = 0u;
-    auto find_max = [&max](size_t a) {
-      if (a > max) max = a;
+    auto find_max = [max = size_t{1u}](size_t a) mutable {
+      if (a == 0 || max == 0)
+        max = 0;
+      else if (a > max)
+        max = a;
       return max;
     };
-    (find_max(::sus::data_size_of<Ts>()), ...);
-    return max;
-  };
-  */
+    auto max = (find_max(::sus::data_size_of<Ts>()), ..., find_max(1));
+    // If the result was 0 then a member of the union does not have a defined
+    // data size.
+    return max > 0u ? max : ::sus::size_of<Storage>();
+  }();
   // We add 2 to `sizeof...(Tags)` for the range of the index.
   //
   // The ~0 value (all bits are 1) is reserved for using the index as a
@@ -105,7 +107,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   // panic due to the index being outside the range of acceptable values.
   using IndexType =
       __private::IndexType<sizeof...(Tags) + 2u, ::sus::size_of<Storage>(),
-                           ::sus::size_of<Storage>()>;
+                           union_data_size>;
   static_assert(!std::is_void_v<IndexType>,
                 "A union can only hold a number of members representable in "
                 "size_t (minus two).");
@@ -593,7 +595,8 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
 
   // Declare that this type can always be trivially relocated for library
   // optimizations.
-  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, IndexType, Ts...);
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, IndexType,
+                                           Ts...);
 
   sus_class_never_value_field(::sus::marker::unsafe_fn, Choice, index_,
                               kNeverValue, kNeverValue);
