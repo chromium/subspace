@@ -99,6 +99,17 @@
 #define sus_clang_bug_56394_else(...) __VA_ARGS__
 #endif
 
+// clang reports is_trivial as true incorrectly.
+// TODO: https://github.com/llvm/llvm-project/issues/60697
+#if defined(__clang__) && \
+    __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#define sus_clang_bug_60697(...) __VA_ARGS__
+#define sus_clang_bug_60697_else(...)
+#else
+#define sus_clang_bug_60697(...)
+#define sus_clang_bug_60697_else(...) __VA_ARGS__
+#endif
+
 // GCC internal compiler error when Ord fails.
 // TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107542
 #if defined(__GNUC__) && \
