@@ -24,47 +24,6 @@
 
 namespace sus::tuple_type::__private {
 
-struct UseAfterMoveMarker {
-  constexpr inline UseAfterMoveMarker() noexcept : value(0u) {}
-  constexpr inline UseAfterMoveMarker(const UseAfterMoveMarker& o) noexcept
-      : value(o.value) {
-    ::sus::check(!any_moved_from());
-  }
-  constexpr inline UseAfterMoveMarker& operator=(
-      const UseAfterMoveMarker& o) noexcept {
-    // Verify that the other Tuple has no moved-from items.
-    value = o.value;
-    ::sus::check(!any_moved_from());
-    return *this;
-  }
-  constexpr inline UseAfterMoveMarker(UseAfterMoveMarker&& o) noexcept
-      : value(o.set_all_moved_from()) {
-    ::sus::check(!any_moved_from());
-  }
-  constexpr inline UseAfterMoveMarker& operator=(
-      UseAfterMoveMarker&& o) noexcept {
-    value = o.set_all_moved_from();
-    ::sus::check(!any_moved_from());
-    return *this;
-  }
-
-  constexpr inline bool any_moved_from() const noexcept { return value != 0u; }
-  constexpr inline bool moved_from(size_t i) const noexcept {
-    return (value & (uint64_t{1} << i)) != 0u;
-  }
-  // Sets one element as moved from and returns it was already moved from.
-  constexpr inline bool set_moved_from(size_t i) noexcept {
-    return (::sus::mem::replace(mref(value), value | uint64_t{1} << i) &
-            (uint64_t{1} << i)) != 0u;
-  }
-  // Sets all elements as moved from and returns the old value.
-  constexpr inline bool set_all_moved_from() noexcept {
-    return ::sus::mem::replace(mref(value), uint64_t{0xffffffffffffffff});
-  }
-
-  uint64_t value;
-};
-
 // TODO: Consider having TupleStorage inherit from each type (if it's final then
 // it has to compose it), or just inherit from N things that each hold a T, as
 // libc++ does for std::tuple, using `:public Holds<Index..., T...>`. Then to
@@ -75,6 +34,10 @@ struct TupleStorage;
 
 template <class T>
 struct TupleStorage<T> {
+  TupleStorage()
+    requires(std::is_trivially_default_constructible_v<T>)
+  = default;
+
   template <class U>
   constexpr inline explicit TupleStorage(U&& value)
       : value(::sus::forward<U>(value)) {}
@@ -104,6 +67,10 @@ template <class T, class... Ts>
   requires(sizeof...(Ts) > 0)
 struct TupleStorage<T, Ts...> : TupleStorage<Ts...> {
   using Super = TupleStorage<Ts...>;
+
+  TupleStorage()
+    requires(std::is_trivially_default_constructible_v<T>)
+  = default;
 
   template <class U, class... Us>
   constexpr inline TupleStorage(U&& value, Us&&... more) noexcept
@@ -141,15 +108,15 @@ static constexpr const auto& find_tuple_storage(const S& storage) {
 }
 
 template <size_t I, class S>
-static constexpr const auto& find_tuple_storage(const S& storage,
-                                          std::integral_constant<size_t, I>) {
+static constexpr const auto& find_tuple_storage(
+    const S& storage, std::integral_constant<size_t, I>) {
   return find_tuple_storage(static_cast<const S::Super&>(storage),
-                      std::integral_constant<size_t, I - 1>());
+                            std::integral_constant<size_t, I - 1>());
 }
 
 template <class S>
-static constexpr const S& find_tuple_storage(const S& storage,
-                                       std::integral_constant<size_t, 0>) {
+static constexpr const S& find_tuple_storage(
+    const S& storage, std::integral_constant<size_t, 0>) {
   return storage;
 }
 
@@ -159,15 +126,15 @@ static constexpr auto& find_tuple_storage_mut(S& storage) {
 }
 
 template <size_t I, class S>
-static constexpr auto& find_tuple_storage_mut(S& storage,
-                                        std::integral_constant<size_t, I>) {
+static constexpr auto& find_tuple_storage_mut(
+    S& storage, std::integral_constant<size_t, I>) {
   return find_tuple_storage_mut(static_cast<S::Super&>(storage),
-                          std::integral_constant<size_t, I - 1>());
+                                std::integral_constant<size_t, I - 1>());
 }
 
 template <class S>
 static constexpr S& find_tuple_storage_mut(S& storage,
-                                     std::integral_constant<size_t, 0>) {
+                                           std::integral_constant<size_t, 0>) {
   return storage;
 }
 
@@ -200,4 +167,4 @@ constexpr inline auto storage_cmp(auto equal, const S1& l, const S2& r,
   return val;
 };
 
-}  // namespace sus::tuple::__private
+}  // namespace sus::tuple_type::__private

@@ -31,8 +31,6 @@
 #include "subspace/ops/ord.h"
 #include "subspace/tuple/__private/storage.h"
 
-#define SUS_CONFIG_TUPLE_USE_AFTER_MOVE true
-
 namespace sus::tuple_type {
 
 /// A Tuple is a finite sequence of one or more heterogeneous values.
@@ -69,25 +67,30 @@ namespace sus::tuple_type {
 /// Elements in a Tuple are stored internally in reverse of the order they are
 /// specified, which is why the size of the *first* element matters for the
 /// Tuple's externally usable tail padding.
-///
-/// # Use after move
-/// Tuples optionally compile in checks against use-after-move to protect
-/// against using their internal values after they are moved. It is on by
-/// default and behind the `SUS_CONFIG_TUPLE_USE_AFTER_MOVE` define which can be
-/// true or false. When on, all Tuples are an extra 8 bytes larger.
 template <class T, class... Ts>
 class Tuple final {
- public:
-  static constexpr auto protects_uam = SUS_CONFIG_TUPLE_USE_AFTER_MOVE;
+  // clang-format off
+  static constexpr bool can_trivial_default_construct =
+      (std::is_trivially_default_constructible_v<T> && ... &&
+        std::is_trivially_default_constructible_v<Ts>)
+       &&
+       !(std::is_reference_v<T> || ... || std::is_reference_v<Ts>);
+  // clang-format on
 
+ public:
   /// Construct a Tuple with the default value for the types it contains.
   ///
   /// The Tuple's contained types must all be #Default, and will be
   /// constructed through that trait.
   inline constexpr Tuple() noexcept
-    requires((::sus::construct::Default<T> && ... &&
+    requires(!can_trivial_default_construct &&
+             (::sus::construct::Default<T> && ... &&
               ::sus::construct::Default<Ts>))
       : Tuple(T(), Ts()...) {}
+
+  Tuple()
+    requires(can_trivial_default_construct)
+  = default;
 
   /// Construct a Tuple with the given values.
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
@@ -101,7 +104,6 @@ class Tuple final {
     requires((::sus::mem::CloneOrRef<T> && ... && ::sus::mem::CloneOrRef<Ts>) &&
              !(::sus::mem::CopyOrRef<T> && ... && ::sus::mem::CopyOrRef<Ts>))
   {
-    ::sus::check(!any_moved_from());
     auto f = [this]<size_t... Is>(std::index_sequence<Is...>) {
       return Tuple::with(::sus::mem::clone_or_forward<T>(
           __private::find_tuple_storage<Is>(storage_).at())...);
@@ -113,7 +115,6 @@ class Tuple final {
   template <size_t I>
     requires(I <= sizeof...(Ts))
   constexpr inline const auto& at() const& noexcept {
-    ::sus::check(!moved_from(I));
     return __private::find_tuple_storage<I>(storage_).at();
   }
   // Disallows getting a reference to temporary Tuple.
@@ -124,7 +125,6 @@ class Tuple final {
   template <size_t I>
     requires(I <= sizeof...(Ts))
   constexpr inline auto& at_mut() & noexcept {
-    ::sus::check(!moved_from(I));
     return __private::find_tuple_storage_mut<I>(storage_).at_mut();
   }
 
@@ -133,8 +133,6 @@ class Tuple final {
   template <size_t I>
     requires(I <= sizeof...(Ts))
   constexpr inline decltype(auto) into_inner() && noexcept {
-    ::sus::check(!moved_from(I));
-    set_all_moved_from();
     return ::sus::move(__private::find_tuple_storage_mut<I>(storage_))
         .into_inner();
   }
@@ -144,8 +142,6 @@ class Tuple final {
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::ops::Eq<T, U> && ... && ::sus::ops::Eq<Ts, Us>))
   constexpr bool operator==(const Tuple<U, Us...>& r) const& noexcept {
-    ::sus::check(!any_moved_from());
-    ::sus::check(!r.any_moved_from());
     return __private::storage_eq(
         storage_, r.storage_, std::make_index_sequence<1u + sizeof...(Ts)>());
   }
@@ -162,8 +158,6 @@ class Tuple final {
              (::sus::ops::ExclusiveOrd<T, U> && ... &&
               ::sus::ops::ExclusiveOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
-    ::sus::check(!any_moved_from());
-    ::sus::check(!r.any_moved_from());
     return __private::storage_cmp(
         std::strong_ordering::equal, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
@@ -175,8 +169,6 @@ class Tuple final {
              (::sus::ops::ExclusiveWeakOrd<T, U> && ... &&
               ::sus::ops::ExclusiveWeakOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
-    ::sus::check(!any_moved_from());
-    ::sus::check(!r.any_moved_from());
     return __private::storage_cmp(
         std::weak_ordering::equivalent, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
@@ -188,8 +180,6 @@ class Tuple final {
              (::sus::ops::ExclusivePartialOrd<T, U> && ... &&
               ::sus::ops::ExclusivePartialOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
-    ::sus::check(!any_moved_from());
-    ::sus::check(!r.any_moved_from());
     return __private::storage_cmp(
         std::partial_ordering::equivalent, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
@@ -197,47 +187,23 @@ class Tuple final {
 
  private:
   template <class U, class... Us>
-  friend class Tuple;  // For access to moved_from();
+  friend class Tuple;
 
-  /// Storage for the tuple elements. The first element is the moved-from flag.
+  /// Storage for the tuple elements.
   using Storage = __private::TupleStorage<T, Ts...>;
 
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
   constexpr inline Tuple(U&& first, Us&&... more) noexcept
       : storage_(::sus::forward<U>(first), ::sus::forward<Us>(more)...) {}
 
-  // TODO: Provide a way to opt out of all moved-from checks?
-  constexpr inline bool any_moved_from() const noexcept {
-#if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
-    return marker.any_moved_from();
-#else
-    return false;
-#endif
-  }
-  constexpr inline bool moved_from(size_t i) const noexcept {
-#if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
-    return marker.moved_from(i);
-#else
-    (void)i;
-    return false;
-#endif
-  }
-  // TODO: Provide a way to opt out of all moved-from checks?
-  constexpr inline void set_all_moved_from() noexcept {
-#if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
-    marker.set_all_moved_from();
-#endif
-  }
-
-#if SUS_CONFIG_TUPLE_USE_AFTER_MOVE
-  __private::UseAfterMoveMarker marker;
-#endif
   // The use of `[[no_unique_address]]` allows the tail padding of of the
   // `storage_` to be used in structs that request to do so by putting
   // `[[no_unique_address]]` on the Tuple. For example, Choice does this with
   // its internal Tuples to put its tag inside the Tuples' storage when
   // possible.
   [[sus_no_unique_address]] Storage storage_;
+
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn, T, Ts...);
 };
 
 // Support for structured binding.

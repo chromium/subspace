@@ -176,6 +176,7 @@ add_executable(subspace_unittests
     "ops/ord_unittest.cc"
     "result/result_unittest.cc"
     "result/result_types_unittest.cc"
+    "tuple/tuple_types_unittest.cc"
     "tuple/tuple_unittest.cc"
 )
 

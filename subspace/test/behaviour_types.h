@@ -26,6 +26,10 @@ struct DefaultConstructible final {
   int i = 2;
 };
 
+struct TriviallyDefaultConstructible final {
+  int i;
+};
+
 struct NotDefaultConstructible final {
   int i;
   constexpr NotDefaultConstructible(int i) : i(i) {}

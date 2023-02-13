@@ -59,17 +59,13 @@ static_assert(
     std::same_as<const i32&,
                  std::tuple_element_t<2, Tuple<i32, i32&, const i32&>>>);
 
-// Tuples can be built with use-after-move checks which consume an extra 8
-// bytes.
-inline constexpr size_t UamBytes = Tuple<i32>::protects_uam ? 8 : 0;
-
 TEST(Tuple, TailPadding) {
   // Tuple packs stuff efficiently (except in MSVC). However sus::Tuple has
   // extra space taken right now by the use-after-move flags. If we could borrow
   // check at compile time then we could drop use-after-move checking.
   using PackedTuple = Tuple<i8, i32, i64>;
   static_assert(sizeof(PackedTuple) ==
-                (sizeof(i64) * sus_if_msvc_else(3u, 2u)) + UamBytes);
+                (sizeof(i64) * sus_if_msvc_else(3u, 2u)));
 
   // The std::tuple doesn't have use-after-move checks.
   using PackedStdTuple = std::tuple<i32, i8, i64>;
@@ -86,7 +82,7 @@ TEST(Tuple, TailPadding) {
   };
   using PackedTupleMore = Tuple<i8, TailPadding>;
   static_assert(sizeof(PackedTupleMore) ==
-                (sizeof(u64) * sus_if_msvc_else(3u, 2u)) + UamBytes);
+                (sizeof(u64) * sus_if_msvc_else(3u, 2u)));
 
   // Test the same (tuple packing inside inner types' tail padding) with more
   // than one type collapsing (except in MSVC).
@@ -104,7 +100,7 @@ TEST(Tuple, TailPadding) {
   };
   using PackedTupleTwiceMore = Tuple<i8, TailPaddingSmall, TailPaddingLarge>;
   static_assert(sizeof(PackedTupleTwiceMore) ==
-                (sizeof(i64) * sus_if_msvc_else(4u, 2u)) + UamBytes);
+                (sizeof(i64) * sus_if_msvc_else(4u, 2u)));
 
   // The Tuple type, if it has tail padding, allows types to make use of that
   // tail padding.
@@ -120,8 +116,7 @@ TEST(Tuple, TailPadding) {
     [[sus_no_unique_address]] Tuple<u32, u64> tuple;  // 16 bytes.
     u32 val;                                          // 4 bytes.
   };  // 16 bytes, since `val` is stored inside `tuple`.
-  static_assert(sizeof(ExampleFromDocs) ==
-                (16 + UamBytes) + sus_if_msvc_else(8, 0));
+  static_assert(sizeof(ExampleFromDocs) == (16 + sus_if_msvc_else(8, 0)));
 }
 
 TEST(Tuple, With) {
@@ -269,23 +264,6 @@ TEST(Tuple, Clone) {
   auto t1 = Tuple<Cloneable>::with(2_i32);
   auto t2 = ::sus::clone(t1);
   EXPECT_EQ(t1.at<0>().i + 1_i32, t2.at<0>().i);
-}
-
-TEST(TupleDeathTest, Move) {
-  {
-    auto t1 = Tuple<int>::with(2);
-    auto t2 = sus::move(t1);
-    EXPECT_EQ(t2.at<0>(), 2);
-    EXPECT_DEATH(t1.at<0>(), "");
-  }
-
-  {
-    auto n = NoCopyMove();
-    auto t1 = Tuple<NoCopyMove&>::with(mref(n));
-    auto t2 = sus::move(t1);
-    EXPECT_EQ(t2.at<0>(), n);
-    EXPECT_DEATH(t1.at<0>(), "");
-  }
 }
 
 TEST(Tuple, GetRef) {
