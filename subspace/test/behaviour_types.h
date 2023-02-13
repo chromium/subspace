@@ -57,9 +57,6 @@ struct TriviallyCopyableNotDestructible final {
       default;
   TriviallyCopyableNotDestructible& operator=(
       const TriviallyCopyableNotDestructible&) = default;
-  TriviallyCopyableNotDestructible(TriviallyCopyableNotDestructible&&) = delete;
-  TriviallyCopyableNotDestructible& operator=(
-      TriviallyCopyableNotDestructible&&) = delete;
   ~TriviallyCopyableNotDestructible() {}
   TriviallyCopyableNotDestructible(int i) : i(i) {}
   int i;

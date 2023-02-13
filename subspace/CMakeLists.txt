@@ -136,6 +136,7 @@ add_executable(subspace_unittests
     "assertions/endian_unittest.cc"
     "assertions/panic_unittest.cc"
     "assertions/unreachable_unittest.cc"
+    "choice/choice_types_unittest.cc"
     "choice/choice_unittest.cc"
     "convert/subclass_unittest.cc"
     "containers/array_unittest.cc"
