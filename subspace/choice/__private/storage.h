@@ -603,6 +603,10 @@ union Storage<I, ::sus::Tuple<T>> {
     new (&tuple_) Type(::sus::clone(from.tuple_));
   }
   inline constexpr void destroy(size_t index) {
+    if (index != I) {
+      fprintf(stderr, "index %lu I %lu\n", (unsigned long)index,
+              (unsigned long)I);
+    }
     ::sus::check(index == I);
     tuple_.~Type();
   }
