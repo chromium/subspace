@@ -69,27 +69,25 @@ namespace sus::tuple_type {
 /// Tuple's externally usable tail padding.
 template <class T, class... Ts>
 class Tuple final {
-  // clang-format off
-  static constexpr bool can_trivial_default_construct =
-      (std::is_trivially_default_constructible_v<T> && ... &&
-        std::is_trivially_default_constructible_v<Ts>)
-       &&
-       !(std::is_reference_v<T> || ... || std::is_reference_v<Ts>);
-  // clang-format on
-
  public:
   /// Construct a Tuple with the default value for the types it contains.
   ///
   /// The Tuple's contained types must all be #Default, and will be
   /// constructed through that trait.
   inline constexpr Tuple() noexcept
-    requires(!can_trivial_default_construct &&
+  //clang-format off
+    requires(!((std::is_trivially_default_constructible_v<T> && ... &&
+                std::is_trivially_default_constructible_v<Ts>) &&
+               !(std::is_reference_v<T> || ... || std::is_reference_v<Ts>)) &&
              (::sus::construct::Default<T> && ... &&
               ::sus::construct::Default<Ts>))
+  //clang-format on
       : Tuple(T(), Ts()...) {}
 
   Tuple()
-    requires(can_trivial_default_construct)
+    requires((std::is_trivially_default_constructible_v<T> && ... &&
+              std::is_trivially_default_constructible_v<Ts>) &&
+             !(std::is_reference_v<T> || ... || std::is_reference_v<Ts>))
   = default;
 
   /// Construct a Tuple with the given values.
