@@ -68,19 +68,16 @@ class Slice {
   /// Returns true if the slice has a length of 0.
   constexpr inline bool is_empty() const& noexcept { return len_ == 0u; }
 
-  /// Returns a const reference the element at position `i` in the Slice.
+  /// Returns a reference to the element at position `i` in the Slice.
   ///
   /// # Panics
   /// If the index `i` is beyond the end of the slice, the function will panic.
+  /// #[doc.overloads=slice.index.usize]
   constexpr inline const T& operator[](usize i) const& noexcept {
     check(i < len_);
     return data_[i.primitive_value];
   }
 
-  /// Returns a mutable reference the element at position `i` in the slice.
-  ///
-  /// # Panics
-  /// If the index `i` is beyond the end of the slice, the function will panic.
   constexpr T& operator[](usize i) & noexcept
     requires(!std::is_const_v<T>)
   {
@@ -143,6 +140,7 @@ class Slice {
   /// # Panics
   /// If the Range would otherwise contain an element that is out of bounds, the
   /// function will panic.
+  /// #[doc.overloads=slice.index.range]
   constexpr inline Slice<T> operator[](
       const ::sus::ops::Range<usize> range) const noexcept {
     const usize len = range.end >= range.start ? range.end - range.start : 0u;
