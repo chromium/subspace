@@ -24,8 +24,8 @@
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
 
-using sus::containers::Range;
 using sus::containers::Slice;
+using sus::ops::Range;
 
 namespace {
 

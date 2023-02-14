@@ -27,6 +27,7 @@
 #include "subspace/marker/unsafe.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/ord.h"
+#include "subspace/ops/range.h"
 #include "subspace/option/option.h"
 
 // TODO: sort_by_key()
@@ -34,12 +35,6 @@
 // TODO: sort_unstable_by_key()
 
 namespace sus::containers {
-
-/// A range designated by a `start` and `len`.
-struct Range {
-  usize start;
-  usize len;
-};
 
 /// A dynamically-sized view into a contiguous sequence, `[T]`.
 ///
@@ -137,7 +132,7 @@ class Slice {
     return data_[i.primitive_value];
   }
 
-  /// Returns a subslice which contains elements in `Range`, which specifies a
+  /// Returns a subslice which contains elements in `range`, which specifies a
   /// start and a length.
   ///
   /// The start is the index of the first element to be returned in the
@@ -148,14 +143,15 @@ class Slice {
   /// # Panics
   /// If the Range would otherwise contain an element that is out of bounds, the
   /// function will panic.
-  constexpr inline Slice<T> operator[](const Range range) const noexcept {
+  constexpr inline Slice<T> operator[](
+      const ::sus::ops::Range range) const noexcept {
     ::sus::check(range.len <= len_);  // Avoid underflow below.
     // We allow start == len_ && end == len_, which returns an empty slice.
     ::sus::check(range.start <= len_ && range.start <= len_ - range.len);
     return Slice(data_ + size_t{range.start}, range.len);
   }
 
-  /// Returns a subslice which contains elements in `Range`, which specifies a
+  /// Returns a subslice which contains elements in `range`, which specifies a
   /// start and a length.
   ///
   /// The start is the index of the first element to be returned in the
@@ -165,7 +161,8 @@ class Slice {
   ///
   /// Returns None if the Range would otherwise contain an element that is out
   /// of bounds.
-  constexpr Option<Slice<T>> get_range(const Range range) const noexcept {
+  constexpr Option<Slice<T>> get_range(
+      const ::sus::ops::Range range) const noexcept {
     if (range.len > len_) return sus::none();  // Avoid underflow below.
     // We allow start == len_ && end == len_, which returns an empty slice.
     if (range.start > len_ || range.start > len_ - range.len)
@@ -173,7 +170,7 @@ class Slice {
     return sus::some(Slice(data_ + size_t{range.start}, range.len));
   }
 
-  /// Returns a subslice which contains elements in `Range`, which specifies a
+  /// Returns a subslice which contains elements in `range`, which specifies a
   /// start and a length.
   ///
   /// The start is the index of the first element to be returned in the
@@ -185,7 +182,8 @@ class Slice {
   /// It is possible to specify a Range contains an element that is out
   /// of bounds of the Slice, which can result in Undefined Behaviour.
   constexpr Slice<T> get_range_unchecked(
-      ::sus::marker::UnsafeFnMarker, const Range range) const noexcept {
+      ::sus::marker::UnsafeFnMarker,
+      const ::sus::ops::Range range) const noexcept {
     return Slice(data_ + size_t{range.start}, range.len);
   }
 
