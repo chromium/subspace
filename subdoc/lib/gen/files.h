@@ -76,7 +76,7 @@ inline std::filesystem::path construct_html_file_path_for_namespace(
   // The namespace path includes the namespace element itself, so drop
   // that one.
   sus::Slice<const Namespace> short_namespace_path =
-      element.namespace_path.as_ref()[{1u, element.namespace_path.len() - 1u}];
+      element.namespace_path.as_ref()[{1u, element.namespace_path.len()}];
 
   std::string file_name = [&]() {
     if (element.namespace_name.which() == Namespace::Tag::Global) {

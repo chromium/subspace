@@ -35,7 +35,7 @@ std::string namespace_display_name(const NamespaceElement& element) noexcept {
   // The namespace path includes the namespace we're generating for, so drop
   // that one.
   sus::Slice<const Namespace> short_namespace_path =
-      element.namespace_path.as_ref()[{1u, element.namespace_path.len() - 1u}];
+      element.namespace_path.as_ref()[{1u, element.namespace_path.len()}];
 
   // For display in the html, we use the full path name of the namespace.
   return namespace_with_path_to_string(short_namespace_path,
