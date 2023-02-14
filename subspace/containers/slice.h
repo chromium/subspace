@@ -51,7 +51,7 @@ class Slice {
   static constexpr inline Slice from_raw_parts(::sus::marker::UnsafeFnMarker,
                                                T* data,
                                                ::sus::usize len) noexcept {
-    check(len.primitive_value <= PTRDIFF_MAX);
+    ::sus::check(len.primitive_value <= PTRDIFF_MAX);
     return Slice(data, len);
   }
 
