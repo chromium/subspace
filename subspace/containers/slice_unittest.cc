@@ -294,6 +294,29 @@ TEST(Slice, IntoIter) {
   }
 }
 
+TEST(Slice, DoubleEndedIterator) {
+  {
+    const usize ar[] = {1u, 2u, 3u};
+    auto slice = Slice<const usize>::from(ar);
+
+    auto it = slice.iter();
+    EXPECT_EQ(it.next_back(), sus::some(3_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::some(2_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::some(1_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  {
+    usize ar[] = {1u, 2u, 3u};
+    auto slice = Slice<usize>::from(ar);
+
+    auto it = slice.iter_mut();
+    EXPECT_EQ(it.next_back(), sus::some(3_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::some(2_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::some(1_usize).construct());
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+}
+
 TEST(Slice, ImplicitIter) {
   const usize ar[] = {1u, 2u, 3u};
   auto slice = Slice<const usize>::from(ar);

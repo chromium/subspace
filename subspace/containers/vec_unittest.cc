@@ -316,6 +316,19 @@ TEST(Vec, IntoIter) {
   EXPECT_EQ(sum, 6);
 }
 
+TEST(Vec, IntoIterDoubleEnded) {
+  auto v = Vec<i32>();
+  v.push(1_i32);
+  v.push(2_i32);
+  v.push(3_i32);
+
+  auto it = sus::move(v).into_iter();
+  EXPECT_EQ(it.next_back(), sus::some(3_i32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(2_i32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(1_i32).construct());
+  EXPECT_EQ(it.next_back(), sus::None);
+}
+
 TEST(Vec, Growth) {
   auto v = Vec<i32>::with_capacity(2_usize);
   EXPECT_EQ(v.capacity(), 2_usize);
