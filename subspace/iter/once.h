@@ -14,9 +14,7 @@
 
 #pragma once
 
-#include "subspace/iter/iterator_concept.h"
 #include "subspace/iter/iterator_defn.h"
-#include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
 

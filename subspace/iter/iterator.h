@@ -32,3 +32,4 @@
 // them all every time.
 #include "subspace/iter/filter.h"
 #include "subspace/iter/map.h"
+#include "subspace/iter/reverse.h"
