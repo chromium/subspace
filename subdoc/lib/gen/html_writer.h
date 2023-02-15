@@ -361,7 +361,6 @@ class HtmlWriter {
     }
   }
 
-  // TODO: Add an Iterator<T> concept and use that to know what Item is here.
   void write_open(
       std::string_view type,
       sus::iter::Iterator<const std::string&> auto classes_iter,
