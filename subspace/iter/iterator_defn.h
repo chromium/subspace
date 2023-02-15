@@ -20,7 +20,6 @@
 #include "subspace/iter/__private/iterator_loop.h"
 #include "subspace/iter/boxed_iterator.h"
 #include "subspace/iter/from_iterator.h"
-#include "subspace/iter/iterator_defn.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
@@ -48,6 +47,8 @@ class Filter;
 template <class FromItem, class Item, size_t InnerIterSize,
           size_t InnerIterAlign>
 class Map;
+template <class Item, class InnerIter>
+class Reverse;
 
 struct SizeHint {
   ::sus::num::usize lower;
@@ -203,6 +204,9 @@ class [[nodiscard]] IteratorImpl : public IteratorBase<Item> {
                   pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
+  auto reverse() && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
   /// Transforms an iterator into a collection.
   ///
   /// collect() can turn anything iterable into a relevant collection. If this
@@ -303,6 +307,14 @@ auto IteratorImpl<Iter, Item>::filter(
   using Filter = Filter<Item, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
   return Filter::with(::sus::move(pred),
                       make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+auto IteratorImpl<Iter, Item>::reverse() && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Reverse = Reverse<Item, Iter>;
+  return Reverse::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
