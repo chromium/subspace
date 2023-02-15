@@ -40,23 +40,31 @@ struct VecIntoIter final
   }
 
   Option<Item> next() noexcept final {
-    if (next_index_.primitive_value == vec_.len()) [[unlikely]]
+    if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>::none();
-    // SAFETY: The array has a fixed size. The next_index_ is encapsulated and
-    // only changed in this class/method. The next_index_ stops incrementing
-    // when it reaches N and starts at 0, and N >= 0, so when we get here we
-    // know next_index_ is in range of the array. We use get_unchecked_mut()
-    // here because it's difficult for the compiler to make the same
-    // observations we have here, as next_index_ is a field and changes across
-    // multiple method calls.
+    // SAFETY: This class owns the Vec and does not expose it, so its length is
+    // known and can not change. Thus the indices which are kept within the
+    // length of the Vec can not go out of bounds.
     Item& item = vec_.get_unchecked_mut(
         ::sus::marker::unsafe_fn,
-        ::sus::mem::replace(mref(next_index_), next_index_ + 1_usize));
+        ::sus::mem::replace(mref(front_index_), front_index_ + 1_usize));
+    return Option<Item>::some(move(item));
+  }
+
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept {
+    if (front_index_ == back_index_) [[unlikely]]
+      return Option<Item>::none();
+    // SAFETY: This class owns the Vec and does not expose it, so its length is
+    // known and can not change. Thus the indices which are kept within the
+    // length of the Vec can not go out of bounds.
+    back_index_ -= 1u;
+    Item& item = vec_.get_unchecked_mut(::sus::marker::unsafe_fn, back_index_);
     return Option<Item>::some(move(item));
   }
 
   ::sus::iter::SizeHint size_hint() noexcept final {
-    const usize remaining = vec_.len() - next_index_;
+    const usize remaining = back_index_ - front_index_;
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::some(remaining));
   }
@@ -64,11 +72,16 @@ struct VecIntoIter final
  private:
   VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
 
-  usize next_index_ = 0_usize;
+  // TODO: Decompose the Vec (with a Vec::into_raw_parts) into a (pointer, len,
+  // cap) and just store the pointer here, as the front_index_ and back_index_
+  // are all we need to retain wrt the Vec's size.
   Vec<Item> vec_;
+  usize front_index_ = 0_usize;
+  usize back_index_ = vec_.len();
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                           decltype(next_index_),
+                                           decltype(front_index_),
+                                           decltype(back_index_),
                                            decltype(vec_));
 };
 
