@@ -42,7 +42,7 @@ static_assert(
 static_assert(
   sus::iter::Iterator<sus::iter::Map<int, int, 8, 8>, int>);
 static_assert(
-  ::sus::iter::Iterator<sus::iter::Once<int>, int>);
+  sus::iter::Iterator<sus::iter::Once<int>, int>);
 static_assert(
   sus::iter::Iterator<sus::containers::ArrayIntoIter<int, 1>, int>);
 static_assert(
@@ -51,6 +51,18 @@ static_assert(
   sus::iter::Iterator<sus::containers::SliceIter<const int&>, const int&>);
 static_assert(
   sus::iter::Iterator<sus::containers::SliceIterMut<int&>, int&>);
+
+static_assert(
+  sus::iter::IntoIterator<sus::containers::Array<int, 3u>, int>);
+static_assert(
+  sus::iter::IntoIterator<sus::containers::Slice<const int>, const int&>);
+static_assert(
+  sus::iter::IntoIterator<sus::containers::Slice<int>, int&>);
+static_assert(
+  sus::iter::IntoIterator<sus::containers::Vec<int>, int>);
+
+static_assert(
+  sus::iter::IntoIterator<sus::iter::Once<int>, int>);
 // clang-format on
 
 template <class Item, size_t N>

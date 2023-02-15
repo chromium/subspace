@@ -128,6 +128,11 @@ class [[nodiscard]] IteratorImpl : public IteratorBase<Item> {
   }
 
  public:
+  /// An Iterator also satisfies IntoIterator, which simply returns itself.
+  ///
+  /// sus::iter::IntoIterator trait implementation.
+  Iter&& into_iter() && noexcept { return ::sus::move(*this); }
+
   // Provided methods.
 
   /// Tests whether all elements of the iterator match a predicate.
