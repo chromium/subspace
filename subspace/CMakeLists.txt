@@ -62,6 +62,7 @@ target_sources(subspace PUBLIC
     "iter/map.h"
     "iter/once.h"
     "iter/sized_iterator.h"
+    "iter/reverse.h"
     "macros/__private/compiler_bugs.h"
     "macros/always_inline.h"
     "macros/builtin.h"

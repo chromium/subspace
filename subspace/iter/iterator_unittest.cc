@@ -22,6 +22,7 @@
 #include "subspace/iter/empty.h"
 #include "subspace/iter/filter.h"
 #include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/replace.h"
 #include "subspace/prelude.h"
 
 using sus::containers::Array;
@@ -82,12 +83,14 @@ class ArrayIterator final : public IteratorImpl<ArrayIterator<Item, N>, Item> {
   }
 
   Option<Item> next() noexcept final {
-    if (++(index_) < N) {
-      return items_[index_].take();
-    } else {
-      --(index_);
-      return Option<Item>::none();
-    }
+    if (front_ == back_) return sus::none();
+    return items_[sus::mem::replace(front_, front_ + 1u)].take();
+  }
+
+  Option<Item> next_back() noexcept {
+    if (front_ == back_) return sus::none();
+    back_ -= 1u;
+    return items_[back_].take();
   }
 
  protected:
@@ -98,11 +101,12 @@ class ArrayIterator final : public IteratorImpl<ArrayIterator<Item, N>, Item> {
             })) {}
 
  private:
-  size_t index_ = static_cast<size_t>(-1);
+  size_t front_ = size_t{0};
+  size_t back_ = N;
   Array<Option<Item>, N> items_;
 
-  sus_class_trivially_relocatable_if_types(unsafe_fn, decltype(index_),
-                                           decltype(items_));
+  sus_class_trivially_relocatable_if_types(unsafe_fn, decltype(front_),
+                                           decltype(back_), decltype(items_));
 };
 
 static_assert(sus::iter::Iterator<ArrayIterator<int, 1>, int>);
@@ -338,6 +342,20 @@ TEST(Iterator, CollectVec) {
   EXPECT_EQ(collected[0u], 1);
   EXPECT_EQ(collected[2u], 3);
   EXPECT_EQ(collected[4u], 5);
+}
+
+TEST(Iterator, Reverse) {
+  i32 nums[5] = {1, 2, 3, 4, 5};
+
+  auto it = ArrayIterator<i32, 5>::with_array(nums).reverse();
+  static_assert(sus::iter::Iterator<decltype(it), i32>);
+  static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32>);
+  EXPECT_EQ(it.next(), sus::some(5).construct());
+  EXPECT_EQ(it.next(), sus::some(4).construct());
+  EXPECT_EQ(it.next(), sus::some(3).construct());
+  EXPECT_EQ(it.next(), sus::some(2).construct());
+  EXPECT_EQ(it.next(), sus::some(1).construct());
+  EXPECT_EQ(it.next(), sus::None);
 }
 
 }  // namespace
