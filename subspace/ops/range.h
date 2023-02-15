@@ -32,7 +32,9 @@ namespace sus::ops {
 template <class T>
   requires(::sus::ops::Ord<T>)
 struct Range {
+  /// The beginning of the range, inclusive of the given value.
   T start;
+  /// The end of the range, exclusive of the given value.
   T end;
 
   /// Returns true if `item` is contained in the range.
