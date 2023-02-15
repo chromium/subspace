@@ -57,6 +57,16 @@ struct [[sus_trivial_abi]] SliceIter final
     return Option<Item>::some(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u));
   }
 
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept {
+    if (ptr_ == end_) [[unlikely]]
+      return Option<Item>::none();
+    // SAFETY: Since end_ > ptr_, which is checked in the constructor, end_ - 1
+    // will never be null.
+    end_ -= 1u;
+    return Option<Item>::some(*end_);
+  }
+
   ::sus::iter::SizeHint size_hint() noexcept final {
     // SAFETY: end_ is always larger than ptr_ which is only incremented until
     // end_, so this static cast does not drop a negative sign bit. That ptr_
@@ -104,6 +114,16 @@ struct [[sus_trivial_abi]] SliceIterMut final
     // will never be null.
     return Option<Item>::some(
         mref(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u)));
+  }
+
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept {
+    if (ptr_ == end_) [[unlikely]]
+      return Option<Item>::none();
+    // SAFETY: Since end_ > ptr_, which is checked in the constructor, end_ - 1
+    // will never be null.
+    end_ -= 1u;
+    return Option<Item>::some(mref(*end_));
   }
 
   ::sus::iter::SizeHint size_hint() noexcept final {

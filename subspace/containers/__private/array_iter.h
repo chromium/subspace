@@ -41,29 +41,38 @@ struct ArrayIntoIter final
   }
 
   Option<Item> next() noexcept final {
-    if (next_index_.primitive_value == N) [[unlikely]]
+    if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>::none();
-    // SAFETY: The array has a fixed size. The next_index_ is encapsulated and
-    // only changed in this class/method. The next_index_ stops incrementing
-    // when it reaches N and starts at 0, and N >= 0, so when we get here we
-    // know next_index_ is in range of the array. We use get_unchecked_mut()
-    // here because it's difficult for the compiler to make the same
-    // observations we have here, as next_index_ is a field and changes across
-    // multiple method calls.
+    // SAFETY: The front and back indicies are kept within the length of the
+    // Array so can not go out of bounds.
     Item& item = array_.get_unchecked_mut(
         ::sus::marker::unsafe_fn,
-        ::sus::mem::replace(mref(next_index_), next_index_ + 1_usize));
+        ::sus::mem::replace(mref(front_index_), front_index_ + 1_usize));
+    return Option<Item>::some(move(item));
+  }
+
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept {
+    if (front_index_ == back_index_) [[unlikely]]
+      return Option<Item>::none();
+    // SAFETY: The front and back indicies are kept within the length of the
+    // Array so can not go out of bounds.
+    back_index_ -= 1u;
+    Item& item =
+        array_.get_unchecked_mut(::sus::marker::unsafe_fn, back_index_);
     return Option<Item>::some(move(item));
   }
 
  private:
   ArrayIntoIter(Array<Item, N>&& array) noexcept : array_(::sus::move(array)) {}
 
-  usize next_index_ = 0_usize;
   Array<Item, N> array_;
+  usize front_index_ = 0_usize;
+  usize back_index_ = N;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                           decltype(next_index_),
+                                           decltype(front_index_),
+                                           decltype(back_index_),
                                            decltype(array_));
 };
 

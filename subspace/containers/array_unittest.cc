@@ -436,6 +436,16 @@ TEST(Array, IntoIter) {
   EXPECT_EQ(sum, 15_usize);
 }
 
+TEST(Array, IntoIterDoubleEnded) {
+  auto a = Array<usize, 3>::with_values(1u, 2u, 3u);
+
+  auto it = sus::move(a).into_iter();
+  EXPECT_EQ(it.next_back(), sus::some(3_usize).construct());
+  EXPECT_EQ(it.next_back(), sus::some(2_usize).construct());
+  EXPECT_EQ(it.next_back(), sus::some(1_usize).construct());
+  EXPECT_EQ(it.next_back(), sus::None);
+}
+
 TEST(Array, ImplicitIter) {
   const auto a = Array<usize, 5>::with_value(3u);
   auto sum = 0_usize;

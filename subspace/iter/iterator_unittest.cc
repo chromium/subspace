@@ -14,12 +14,12 @@
 
 #include "subspace/iter/iterator.h"
 
-#include "subspace/iter/empty.h"
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
 #include "subspace/containers/vec.h"
+#include "subspace/iter/empty.h"
 #include "subspace/iter/filter.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/prelude.h"
@@ -51,6 +51,15 @@ static_assert(
   sus::iter::Iterator<sus::containers::SliceIter<const int&>, const int&>);
 static_assert(
   sus::iter::Iterator<sus::containers::SliceIterMut<int&>, int&>);
+
+static_assert(
+  sus::iter::DoubleEndedIterator<sus::containers::ArrayIntoIter<int, 1>, int>);
+static_assert(
+  sus::iter::DoubleEndedIterator<sus::containers::SliceIter<const int&>, const int&>);
+static_assert(
+  sus::iter::DoubleEndedIterator<sus::containers::SliceIterMut<int&>, int&>);
+static_assert(
+  sus::iter::DoubleEndedIterator<sus::containers::VecIntoIter<int>, int>);
 
 static_assert(
   sus::iter::IntoIterator<sus::containers::Array<int, 3u>, int>);
