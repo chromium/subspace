@@ -295,7 +295,8 @@ auto IteratorImpl<Iter, Item>::box() && noexcept
   requires(!::sus::mem::relocate_by_memcpy<Iter>)
 {
   using BoxedIterator =
-      BoxedIterator<Item, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
+      BoxedIterator<Item, ::sus::mem::size_of<Iter>(), alignof(Iter),
+                    ::sus::iter::DoubleEndedIterator<Iter, Item>>;
   return BoxedIterator::with(static_cast<Iter&&>(*this));
 }
 
