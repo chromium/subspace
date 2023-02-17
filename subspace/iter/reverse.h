@@ -57,12 +57,12 @@ class Reverse final : public IteratorImpl<Reverse<ItemT, InnerIter>, ItemT> {
     // `static constexpr` tag to say if `next_back()` is callable, then all
     // composible iterators could preserve DoubleEndedIterator the same way
     // Reverse does.
-    return static_cast<InnerIter&>(next_iter_.iterator_mut()).next_back();
+    return reinterpret_cast<InnerIter&>(*next_iter_.as_ptr_mut()).next_back();
   }
 
   // Reverse is reversible, and implements DoubleEndedIterator.
   Option<Item> next_back() noexcept {
-    return static_cast<InnerIter&>(next_iter_.iterator_mut()).next();
+    return reinterpret_cast<InnerIter&>(*next_iter_.as_ptr_mut()).next();
   }
 
  private:

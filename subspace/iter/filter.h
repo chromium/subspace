@@ -40,12 +40,11 @@ class Filter final
   }
 
   Option<Item> next() noexcept final {
-    IteratorBase<Item>& next_iter = next_iter_.iterator_mut();
     Pred& pred = pred_;
 
     // TODO: Just call find(pred) on itself?
     while (true) {
-      Option<Item> item = next_iter.next();
+      Option<Item> item = next_iter_.next();
       if (item.is_none() ||
           pred(item.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn)))
         return item;

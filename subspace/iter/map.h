@@ -38,7 +38,7 @@ class Map final
   }
 
   Option<Item> next() noexcept final {
-    Option<FromItem> item = next_iter_.iterator_mut().next();
+    Option<FromItem> item = next_iter_.next();
     if (item.is_none()) {
       return sus::none();
     } else {
