@@ -44,8 +44,7 @@ using ::sus::option::Option;
 // TODO: Move forward decls somewhere?
 template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
 class Filter;
-template <class FromItem, class Item, size_t InnerIterSize,
-          size_t InnerIterAlign>
+template <class ToItem, class InnerSizedIter>
 class Map;
 template <class Item, class InnerIter>
 class Reverse;
@@ -306,9 +305,10 @@ template <class MapFn, int&..., class R, class MapFnMut>
 auto IteratorImpl<Iter, Item>::map(MapFn fn) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Map = Map<Item, R, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
+  using Sized = SizedIteratorTypeDouble<Iter>::type;
+  using Map = Map<R, Sized>;
   return Map::with(sus::into(::sus::move(fn)),
-                   make_sized_iterator(static_cast<Iter&&>(*this)));
+                   make_sized_iterator_double(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>

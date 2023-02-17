@@ -22,13 +22,10 @@
 
 namespace sus::iter {
 
-template <class FromItem, class ToItem, size_t InnerIterSize,
-          size_t InnerIterAlign>
-class Map final
-    : public IteratorImpl<Map<FromItem, ToItem, InnerIterSize, InnerIterAlign>,
-                          ToItem> {
+template <class ToItem, class InnerSizedIter>
+class [[sus_trivial_abi]] Map final : public IteratorImpl<Map<ToItem, InnerSizedIter>, ToItem> {
+  using FromItem = InnerSizedIter::Item;
   using MapFn = ::sus::fn::FnMut<ToItem(FromItem&&)>;
-  using InnerSizedIter = SizedIterator<FromItem, InnerIterSize, InnerIterAlign>;
 
  public:
   using Item = ToItem;
@@ -37,8 +34,22 @@ class Map final
     return Map(::sus::move(fn), ::sus::move(next_iter));
   }
 
+  // sus::iter::Iterator trait.
   Option<Item> next() noexcept final {
     Option<FromItem> item = next_iter_.next();
+    if (item.is_none()) {
+      return sus::none();
+    } else {
+      return sus::some(
+          fn_(sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
+    }
+  }
+
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept
+    requires(InnerSizedIter::DoubleEnded)
+  {
+    Option<FromItem> item = next_iter_.next_back();
     if (item.is_none()) {
       return sus::none();
     } else {

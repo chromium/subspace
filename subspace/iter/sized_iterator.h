@@ -70,10 +70,16 @@ struct [[sus_trivial_abi]] SizedIterator final {
 };
 
 template <class Iter>
-struct SizedIteratorType {
+struct SizedIteratorTypeDouble {
   using type = SizedIterator<
       typename Iter::Item, ::sus::mem::size_of<Iter>(), alignof(Iter),
-      false
+      ::sus::iter::DoubleEndedIterator<Iter, typename Iter::Item>>;
+};
+
+template <class Iter>
+struct SizedIteratorType {
+  using type = SizedIterator<
+      typename Iter::Item, ::sus::mem::size_of<Iter>(), alignof(Iter), false
       //::sus::iter::DoubleEndedIterator<Iter, typename Iter::Item>
       >;
 };
@@ -112,4 +118,33 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
   new (it.as_ptr_mut()) Iter(::sus::move(iter));
   return it;
 }
+template <::sus::mem::Move Iter, int&..., class Item = typename Iter::Item>
+inline SizedIteratorTypeDouble<Iter>::type make_sized_iterator_double(Iter&& iter)
+  requires(::sus::convert::SameOrSubclassOf<Iter*, IteratorBase<Item>*> &&
+           ::sus::mem::relocate_by_memcpy<Iter>)
+{
+  // IteratorImpl also checks this. It's needed for correctness of the casts
+  // here.
+  static_assert(std::is_final_v<Iter>);
+
+  void (*destroy)(char& sized) = [](char& sized) {
+    reinterpret_cast<Iter&>(sized).~Iter();
+  };
+  Option<Item> (*next)(char& sized) = [](char& sized) {
+    return reinterpret_cast<Iter&>(sized).next();
+  };
+  Option<Item> (*next_back)(char& sized);
+  if constexpr (SizedIteratorType<Iter>::type::DoubleEnded) {
+    next_back = [](char& sized) {
+      return reinterpret_cast<Iter&>(sized).next_back();
+    };
+  } else {
+    next_back = nullptr;
+  }
+
+  auto it = typename SizedIteratorType<Iter>::type(destroy, next, next_back);
+  new (it.as_ptr_mut()) Iter(::sus::move(iter));
+  return it;
+}
+
 }  // namespace sus::iter
