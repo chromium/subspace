@@ -42,7 +42,7 @@ namespace sus::iter {
 using ::sus::option::Option;
 
 // TODO: Move forward decls somewhere?
-template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
+template <class InnerSizedIter>
 class Filter;
 template <class ToItem, class InnerSizedIter>
 class Map;
@@ -317,9 +317,10 @@ auto IteratorImpl<Iter, Item>::filter(
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Filter = Filter<Item, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
+  using Sized = SizedIteratorTypeDouble<Iter>::type;
+  using Filter = Filter<Sized>;
   return Filter::with(::sus::move(pred),
-                      make_sized_iterator(static_cast<Iter&&>(*this)));
+                      make_sized_iterator_double(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>

@@ -41,7 +41,7 @@ static_assert(
 static_assert(
   ::sus::iter::Iterator<sus::iter::Empty<int>, int>);
 static_assert(
-  sus::iter::Iterator<sus::iter::Filter<int, 8, 8>, int>);
+  sus::iter::Iterator<sus::iter::Filter<InnerSizedIter>, int>);
 static_assert(
   sus::iter::Iterator<sus::iter::Map<int, InnerSizedIter>, int>);
 static_assert(
