@@ -29,41 +29,23 @@ using ::sus::mem::relocate_by_memcpy;
 /// An iterator that iterates over another iterator but in reverse.
 ///
 /// The iterator wrapped by Reverse must be a DoubleEndedIterator.
-template <class ItemT, class InnerIter>
-class Reverse final : public IteratorImpl<Reverse<ItemT, InnerIter>, ItemT> {
-  using InnerSizedIter = SizedIterator<ItemT, ::sus::mem::size_of<InnerIter>(),
-                                       alignof(InnerIter)>;
+template <class InnerSizedIter>
+class [[sus_trivial_abi]] Reverse final
+    : public IteratorImpl<Reverse<InnerSizedIter>,
+                          typename InnerSizedIter::Item> {
+  static_assert(InnerSizedIter::DoubleEnded);
 
  public:
-  using Item = ItemT;
+  using Item = InnerSizedIter::Item;
 
-  static Reverse with(InnerSizedIter&& next_iter) noexcept
-    requires(sus::iter::DoubleEndedIterator<InnerIter, Item>)
-  {
+  static Reverse with(InnerSizedIter&& next_iter) noexcept {
     return Reverse(::sus::move(next_iter));
   }
 
-  Option<Item> next() noexcept final {
-    // This class must know the full type of the inner iterator in order to
-    // access its next_back() method.
-    //
-    // TODO: We could consider storing an object pointer and method pointer
-    // instead to erase the type, but needs to be a properly casted pointer
-    // into the SizedIterator's storage to deal with the case where the Iterator
-    // implementation has another virtual base class which comes before Iterator
-    // and thus casting moves the pointer.
-    //
-    // TODO: If SizedIterator stored the method pointer for next_back and a
-    // `static constexpr` tag to say if `next_back()` is callable, then all
-    // composible iterators could preserve DoubleEndedIterator the same way
-    // Reverse does.
-    return static_cast<InnerIter&>(next_iter_.iterator_mut()).next_back();
-  }
-
-  // Reverse is reversible, and implements DoubleEndedIterator.
-  Option<Item> next_back() noexcept {
-    return static_cast<InnerIter&>(next_iter_.iterator_mut()).next();
-  }
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept final { return next_iter_.next_back(); }
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept { return next_iter_.next(); }
 
  private:
   Reverse(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}

@@ -23,7 +23,6 @@
 
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
-#include "subspace/iter/__private/adaptors.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
@@ -39,8 +38,10 @@
 #include "subspace/result/__private/storage.h"
 
 namespace sus::iter {
-template <class ItemT>
+template <class Item>
 class IteratorBase;
+template <class Iter, class Item>
+class IteratorImpl;
 template <class Item>
 class Once;
 template <class T>
@@ -110,11 +111,31 @@ class [[nodiscard]] Result final {
       ::sus::iter::IteratorBase<Result<U, E>>&& iter) noexcept
     requires(::sus::iter::FromIterator<T, U>)
   {
+    struct Unwrapper final : public ::sus::iter::IteratorImpl<Unwrapper, U> {
+      Unwrapper(::sus::iter::IteratorBase<Result<U, E>>& iter, Option<E>& err)
+          : iter(iter), err(err) {}
+
+      // sus::iter::Iterator trait.
+      Option<U> next() noexcept final {
+        Option<Result<U, E>> try_item = iter.next();
+        if (try_item.is_none()) return Option<U>::none();
+        Result<U, E> result =
+            ::sus::move(try_item).unwrap_unchecked(::sus::marker::unsafe_fn);
+        if (result.is_ok())
+          return Option<U>::some(
+              ::sus::move(result).unwrap_unchecked(::sus::marker::unsafe_fn));
+        err.insert(
+            ::sus::move(result).unwrap_err_unchecked(::sus::marker::unsafe_fn));
+        return Option<U>::none();
+      }
+
+      ::sus::iter::IteratorBase<Result<U, E>>& iter;
+      Option<E>& err;
+    };
+
     auto err = Option<E>::none();
     auto success_out =
-        Result::with(T::from_iter(::sus::iter::__private::Unwrapper(
-            ::sus::move(iter), mref(err),
-            [](Result<U, E>&& r) { return static_cast<Result<U, E>&&>(r); })));
+        Result::with(T::from_iter(Unwrapper(mref(iter), mref(err))));
     return ::sus::move(err).map_or_else(
         [&]() { return ::sus::move(success_out); },
         [](E e) { return Result::with_err(e); });

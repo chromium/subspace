@@ -24,28 +24,45 @@ namespace sus::iter {
 
 using ::sus::mem::relocate_by_memcpy;
 
-template <class ItemT, size_t InnerIterSize, size_t InnerIterAlign>
-class Filter final
-    : public IteratorImpl<Filter<ItemT, InnerIterSize, InnerIterAlign>, ItemT> {
+template <class InnerSizedIter>
+class [[sus_trivial_abi]] Filter final
+    : public IteratorImpl<Filter<InnerSizedIter>,
+                          typename InnerSizedIter::Item> {
   using Pred = ::sus::fn::FnMut<bool(
       // TODO: write a sus::const_ref<T>?
-      const std::remove_reference_t<const std::remove_reference_t<ItemT>&>&)>;
-  using InnerSizedIter = SizedIterator<ItemT, InnerIterSize, InnerIterAlign>;
+      const std::remove_reference_t<typename InnerSizedIter::Item>&)>;
 
  public:
-  using Item = ItemT;
+  using Item = InnerSizedIter::Item;
 
   static Filter with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
     return Filter(::sus::move(pred), ::sus::move(next_iter));
   }
 
+  // sus::iter::Iterator trait.
   Option<Item> next() noexcept final {
-    IteratorBase<Item>& next_iter = next_iter_.iterator_mut();
+    InnerSizedIter& iter = next_iter_;
     Pred& pred = pred_;
 
     // TODO: Just call find(pred) on itself?
     while (true) {
-      Option<Item> item = next_iter.next();
+      Option<Item> item = iter.next();
+      if (item.is_none() ||
+          pred(item.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn)))
+        return item;
+    }
+  }
+
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept
+    requires(InnerSizedIter::DoubleEnded)
+  {
+    InnerSizedIter& iter = next_iter_;
+    Pred& pred = pred_;
+
+    // TODO: Just call find(pred) on itself?
+    while (true) {
+      Option<Item> item = iter.next_back();
       if (item.is_none() ||
           pred(item.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn)))
         return item;

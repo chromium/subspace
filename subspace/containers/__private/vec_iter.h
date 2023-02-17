@@ -39,6 +39,7 @@ struct VecIntoIter final
     return VecIntoIter(::sus::move(vec));
   }
 
+  // sus::iter::Iterator trait.
   Option<Item> next() noexcept final {
     if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>::none();
