@@ -44,17 +44,17 @@ TEST(Vec, WithCapacity) {
   }
   {
     auto v1 = Vec<i32>::with_capacity(1_usize);
-    EXPECT_EQ(v1.capacity(), 1_usize);
+    EXPECT_GE(v1.capacity(), 1_usize);
     EXPECT_EQ(v1.len(), 0_usize);
   }
   {
     auto v2 = Vec<i32>::with_capacity(2_usize);
-    EXPECT_EQ(v2.capacity(), 2_usize);
+    EXPECT_GE(v2.capacity(), 2_usize);
     EXPECT_EQ(v2.len(), 0_usize);
   }
   {
-    auto v3 = Vec<i32>::with_capacity(3_usize);
-    EXPECT_EQ(v3.capacity(), 3_usize);
+    auto v3 = Vec<i32>::with_capacity(1025_usize);
+    EXPECT_GE(v3.capacity(), 1025_usize);
     EXPECT_EQ(v3.len(), 0_usize);
   }
 }
@@ -317,7 +317,8 @@ TEST(Vec, IntoIter) {
 }
 
 TEST(Vec, Growth) {
-  auto v = Vec<i32>::with_capacity(2_usize);
+  auto v = Vec<i32>();
+  v.reserve_exact(2_usize);
   EXPECT_EQ(v.capacity(), 2_usize);
   while (v.capacity() == 2_usize) v.push(1_i32);
   // we grew capacity when we pushed the first item past existing capacity.
@@ -350,7 +351,8 @@ struct TrivialLies {
 TEST(Vec, GrowthTriviallyRelocatable) {
   static auto moves = 0_usize;
   static auto destructs = 0_usize;
-  auto v = Vec<TrivialLies<true>>::with_capacity(1_usize);
+  auto v = Vec<TrivialLies<true>>();
+  v.reserve_exact(1_usize);
   v.push(TrivialLies<true>(moves, destructs));
 
   moves = destructs = 0_usize;
@@ -363,7 +365,8 @@ TEST(Vec, GrowthTriviallyRelocatable) {
 TEST(Vec, GrowthNonTriviallyRelocatable) {
   static auto moves = 0_usize;
   static auto destructs = 0_usize;
-  auto v = Vec<TrivialLies<false>>::with_capacity(1_usize);
+  auto v = Vec<TrivialLies<false>>();
+  v.reserve_exact(1_usize);
   v.push(TrivialLies<false>(moves, destructs));
   v[0u].i = 42_i32;
 
@@ -379,7 +382,8 @@ TEST(Vec, GrowthNonTriviallyRelocatable) {
 
 TEST(Vec, Reserve) {
   {
-    auto v = Vec<i32>::with_capacity(2_usize);
+    auto v = Vec<i32>();
+    v.reserve_exact(2_usize);
     EXPECT_EQ(v.capacity(), 2_usize);
     v.reserve(1_usize);  // We already have room, so do nothing.
     v.reserve(1_usize);  // We already have room, so do nothing.
@@ -395,7 +399,8 @@ TEST(Vec, Reserve) {
   }
   {
     // Reserve considers the length of the vector.
-    auto v = Vec<i32>::with_capacity(2_usize);
+    auto v = Vec<i32>();
+    v.reserve_exact(2_usize);
     v.push(1_i32);
     v.reserve(1_usize);  // We already have room, so do nothing.
     EXPECT_EQ(v.capacity(), 2_usize);
@@ -408,7 +413,8 @@ TEST(Vec, Reserve) {
 
 TEST(Vec, ReserveExact) {
   {
-    auto v = Vec<i32>::with_capacity(2_usize);
+    auto v = Vec<i32>();
+    v.reserve_exact(2_usize);
     EXPECT_EQ(v.capacity(), 2_usize);
     v.reserve_exact(1_usize);  // We already have room, so do nothing.
     v.reserve_exact(1_usize);  // We already have room, so do nothing.
@@ -424,7 +430,9 @@ TEST(Vec, ReserveExact) {
   }
   {
     // Reserve considers the length of the vector.
-    auto v = Vec<i32>::with_capacity(2_usize);
+    auto v = Vec<i32>();
+    v.reserve_exact(2_usize);
+    EXPECT_EQ(v.capacity(), 2_usize);
     v.push(1_i32);
     v.reserve_exact(1_usize);  // We already have room, so do nothing.
     EXPECT_EQ(v.capacity(), 2_usize);
@@ -437,7 +445,8 @@ TEST(Vec, ReserveExact) {
 
 TEST(Vec, GrowToExact) {
   {
-    auto v = Vec<i32>::with_capacity(2_usize);
+    auto v = Vec<i32>();
+    v.reserve_exact(2_usize);
     EXPECT_EQ(v.capacity(), 2_usize);
     v.grow_to_exact(1_usize);  // We already have room, so do nothing.
     v.grow_to_exact(1_usize);  // We already have room, so do nothing.
@@ -453,7 +462,8 @@ TEST(Vec, GrowToExact) {
   }
   {
     // GrowTo does not consider the length of the vector.
-    auto v = Vec<i32>::with_capacity(2_usize);
+    auto v = Vec<i32>();
+    v.reserve_exact(2_usize);
     v.push(1_i32);
     v.grow_to_exact(1_usize);  // We already have room, so do nothing.
     EXPECT_EQ(v.capacity(), 2_usize);
@@ -501,7 +511,7 @@ TEST(Vec, Destroy) {
   static auto moves = 0_usize;
   static auto destructs = 0_usize;
   auto o = sus::Option<Vec<TrivialLies<false>>>::none();
-  o.insert(Vec<TrivialLies<false>>::with_capacity(1_usize));
+  o.insert(Vec<TrivialLies<false>>());
   o->push(TrivialLies<false>(moves, destructs));
   o->push(TrivialLies<false>(moves, destructs));
 
@@ -513,7 +523,8 @@ TEST(Vec, Destroy) {
 TEST(Vec, Clear) {
   static auto moves = 0_usize;
   static auto destructs = 0_usize;
-  auto v = Vec<TrivialLies<false>>::with_capacity(1_usize);
+  auto v = Vec<TrivialLies<false>>();
+  v.reserve_exact(2_usize);
   v.push(TrivialLies<false>(moves, destructs));
   v.push(TrivialLies<false>(moves, destructs));
 
@@ -545,11 +556,13 @@ TEST(Vec, Move) {
 
   static auto moves = 0_usize;
   static auto destructs = 0_usize;
-  auto v = Vec<TrivialLies<false>>::with_capacity(1_usize);
+  auto v = Vec<TrivialLies<false>>();
+  v.reserve_exact(1_usize);
   v.push(TrivialLies<false>(moves, destructs));
   v.push(TrivialLies<false>(moves, destructs));
 
-  auto v2 = Vec<TrivialLies<false>>::with_capacity(1_usize);
+  auto v2 = Vec<TrivialLies<false>>();
+  v2.reserve_exact(1_usize);
   v2.push(TrivialLies<false>(moves, destructs));
   v2.push(TrivialLies<false>(moves, destructs));
 
@@ -634,6 +647,25 @@ TEST(Vec, Clone) {
     EXPECT_EQ(s2.len(), s.len());
     EXPECT_GT(s2[0u].i, i);
   }
+}
+
+TEST(Vec, RawParts) {
+  auto v = Vec<i32>();
+  v.reserve_exact(12_usize);
+  v.push(1);
+  v.push(2);
+  v.push(3);
+  const i32* v_ptr = v.as_ptr();
+  auto raw = sus::move(v).into_raw_parts();
+  static_assert(std::same_as<decltype(raw), sus::Tuple<i32*, usize, usize>>);
+  auto [ptr, len, cap] = sus::move(raw);
+  EXPECT_EQ(ptr, v_ptr);
+  EXPECT_EQ(len, 3_usize);
+  EXPECT_EQ(cap, 12_usize);
+  auto v2 = sus::Vec<i32>::from_raw_parts(unsafe_fn, ptr, len, cap);
+  EXPECT_EQ(v2.capacity(), 12_usize);
+  EXPECT_EQ(v2.len(), 3_usize);
+  EXPECT_EQ(v2.as_ptr(), v_ptr);
 }
 
 TEST(Vec, CloneInto) {
