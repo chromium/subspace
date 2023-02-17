@@ -142,7 +142,7 @@ inline SizedIteratorTypeDouble<Iter>::type make_sized_iterator_double(Iter&& ite
     next_back = nullptr;
   }
 
-  auto it = typename SizedIteratorType<Iter>::type(destroy, next, next_back);
+  auto it = typename SizedIteratorTypeDouble<Iter>::type(destroy, next, next_back);
   new (it.as_ptr_mut()) Iter(::sus::move(iter));
   return it;
 }

@@ -33,6 +33,8 @@ using sus::option::Option;
 
 namespace {
 
+using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false>;   
+
 // clang-format off
 static_assert(
   sus::iter::Iterator<sus::iter::BoxedIterator<int, 8, 8, false>, int>);
@@ -41,7 +43,7 @@ static_assert(
 static_assert(
   sus::iter::Iterator<sus::iter::Filter<int, 8, 8>, int>);
 static_assert(
-  sus::iter::Iterator<sus::iter::Map<int, int, 8, 8>, int>);
+  sus::iter::Iterator<sus::iter::Map<int, InnerSizedIter>, int>);
 static_assert(
   sus::iter::Iterator<sus::iter::Once<int>, int>);
 static_assert(
