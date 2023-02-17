@@ -64,10 +64,47 @@ class Vec {
 
  public:
   // sus::construct::Default trait.
-  inline constexpr Vec() noexcept : Vec(kDefault) {}
+  inline constexpr Vec() noexcept : Vec(nullptr, 0_usize, 0_usize) {}
 
-  static inline Vec with_capacity(usize cap) noexcept {
-    return Vec(kWithCap, cap);
+  /// Creates a Vec<T> with at least the specified capacity.
+  ///
+  /// The vector will be able to hold at least `capacity` elements without
+  /// reallocating. This method is allowed to allocate for more elements than
+  /// capacity. If capacity is 0, the vector will not allocate.
+  ///
+  /// It is important to note that although the returned vector has the minimum
+  /// capacity specified, the vector will have a zero length.
+  ///
+  /// # Panics
+  /// Panics if the capacity exceeds `isize::MAX` bytes.
+  static inline Vec with_capacity(usize capacity) noexcept {
+    check(::sus::mem::size_of<T>() * capacity <= usize(size_t{PTRDIFF_MAX}));
+    auto v = Vec(nullptr, 0_usize, 0_usize);
+    // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
+    v.grow_to_exact(capacity);
+    return v;
+  }
+
+  /// Creates a Vec<T> directly from a pointer, a capacity, and a length.
+  ///
+  /// # Safety
+  ///
+  /// This is highly unsafe, due to the number of invariants that aren’t
+  /// checked:
+  ///
+  /// * `T` needs to have an alignment no more than what `ptr` was allocated
+  ///   with.
+  /// * The size of `T` times the `capacity` (ie. the allocated size in bytes)
+  ///   needs to be the same size the pointer was allocated with.
+  /// * `length` needs to be less than or equal to `capacity`.
+  /// * The first `length` values must be properly initialized values of type
+  ///   `T`.
+  /// * The allocated size in bytes must be no larger than `isize::MAX`.
+  /// * If `ptr` is null, then `length` and `capacity` must be `0_usize`, and
+  ///   vice versa.
+  static Vec from_raw_parts(::sus::marker::UnsafeFnMarker, T* ptr, usize length,
+                            usize capacity) noexcept {
+    return Vec(ptr, length, capacity);
   }
 
   /// Constructs a vector by taking all the elements from the iterator.
@@ -88,17 +125,17 @@ class Vec {
   }
 
   Vec(Vec&& o) noexcept
-      : storage_(::sus::mem::replace_ptr(mref(o.storage_), moved_from_value())),
-        len_(::sus::mem::replace(mref(o.len_), 0_usize)),
-        capacity_(::sus::mem::replace(mref(o.capacity_), 0_usize)) {
+      : storage_(::sus::mem::replace_ptr(mref(o.storage_), nullptr)),
+        len_(::sus::mem::replace(mref(o.len_), kMovedFromLen)),
+        capacity_(::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity)) {
     check(!is_moved_from());
   }
   Vec& operator=(Vec&& o) noexcept {
     check(!o.is_moved_from());
     if (is_alloced()) free_storage();
-    storage_ = ::sus::mem::replace_ptr(mref(o.storage_), moved_from_value());
-    len_ = ::sus::mem::replace(mref(o.len_), 0_usize);
-    capacity_ = ::sus::mem::replace(mref(o.capacity_), 0_usize);
+    storage_ = ::sus::mem::replace_ptr(mref(o.storage_), nullptr);
+    len_ = ::sus::mem::replace(mref(o.len_), kMovedFromLen);
+    capacity_ = ::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity);
     return *this;
   }
 
@@ -145,6 +182,25 @@ class Vec {
     }
   }
 
+  /// Decomposes a `Vec<T>` into its raw components.
+  ///
+  /// Returns the raw pointer to the underlying data, the length of the vector
+  /// (in elements), and the allocated capacity of the data (in elements). These
+  /// are the same arguments in the same order as the arguments to
+  /// `from_raw_parts()`.
+  ///
+  /// After calling this function, the caller is responsible for the memory
+  /// previously managed by the `Vec`. The only way to do this is to convert the
+  /// raw pointer, length, and capacity back into a `Vec` with the
+  /// `from_raw_parts()` function, allowing the destructor to perform the
+  /// cleanup.
+  ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
+    check(!is_moved_from());
+    return sus::tuple(::sus::mem::replace_ptr(mref(storage_), nullptr),
+                      ::sus::mem::replace(mref(len_), kMovedFromLen),
+                      ::sus::mem::replace(mref(capacity_), kMovedFromCapacity));
+  }
+
   /// Clears the vector, removing all values.
   ///
   /// Note that this method has no effect on the allocated capacity of the
@@ -169,6 +225,7 @@ class Vec {
   void reserve(usize additional) noexcept {
     check(!is_moved_from());
     if (len_ + additional <= capacity_) return;  // Nothing to do.
+    // TODO: Consider rounding up to nearest 2^N for some N?
     grow_to_exact(apply_growth_function(additional));
   }
 
@@ -206,16 +263,16 @@ class Vec {
     const auto bytes = ::sus::mem::size_of<T>() * cap;
     check(bytes <= usize(size_t{PTRDIFF_MAX}));
     if (!is_alloced()) {
-      storage_ = static_cast<char*>(malloc(bytes.primitive_value));
+      storage_ = static_cast<T*>(malloc(bytes.primitive_value));
     } else {
       if constexpr (::sus::mem::relocate_by_memcpy<T>) {
-        storage_ = static_cast<char*>(realloc(storage_, bytes.primitive_value));
+        storage_ = static_cast<T*>(realloc(storage_, bytes.primitive_value));
       } else {
         auto* const new_storage =
-            static_cast<char*>(malloc(bytes.primitive_value));
+            static_cast<T*>(malloc(bytes.primitive_value));
         auto* old_t = reinterpret_cast<T*>(storage_);
         auto* new_t = reinterpret_cast<T*>(new_storage);
-        const size_t len = len_.primitive_value;
+        const size_t len = size_t{len_};
         for (auto i = size_t{0}; i < len; ++i) {
           new (new_t) T(::sus::move(*old_t));
           old_t->~T();
@@ -280,7 +337,7 @@ class Vec {
   {
     check(!is_moved_from());
     reserve(1_usize);
-    new (as_mut_ptr() + len_.primitive_value) T(::sus::move(t));
+    new (as_mut_ptr() + size_t{len_}) T(::sus::move(t));
     len_ += 1_usize;
   }
 
@@ -305,7 +362,7 @@ class Vec {
   {
     check(!is_moved_from());
     reserve(1_usize);
-    new (as_mut_ptr() + len_.primitive_value) T(::sus::forward<Us>(args)...);
+    new (as_mut_ptr() + size_t{len_}) T(::sus::forward<Us>(args)...);
     len_ += 1_usize;
   }
 
@@ -461,19 +518,8 @@ class Vec {
   }
 
  private:
-  enum Default { kDefault };
-  inline constexpr Vec(Default)
-      : storage_(nullptr), len_(0_usize), capacity_(0_usize) {}
-
-  enum WithCap { kWithCap };
-  Vec(WithCap, usize cap)
-      : storage_(cap > 0_usize ? static_cast<char*>(malloc(
-                                     size_t{::sus::mem::size_of<T>() * cap}))
-                               : nullptr),
-        len_(0_usize),
-        capacity_(cap) {
-    check(::sus::mem::size_of<T>() * cap <= usize(size_t{PTRDIFF_MAX}));
-  }
+  Vec(T* ptr, usize len, usize cap)
+      : storage_(ptr), len_(len), capacity_(cap) {}
 
   constexpr usize apply_growth_function(usize additional) const noexcept {
     usize goal = additional + len_;
@@ -489,7 +535,7 @@ class Vec {
 
   inline void destroy_storage_objects() {
     if constexpr (!std::is_trivially_destructible_v<T>) {
-      const size_t len = len_.primitive_value;
+      const size_t len = size_t{len_};
       for (auto i = size_t{0}; i < len; ++i)
         reinterpret_cast<T*>(storage_)[i].~T();
     }
@@ -507,14 +553,13 @@ class Vec {
 
   // Checks if Vec has been moved from.
   constexpr inline bool is_moved_from() const noexcept {
-    return storage_ == moved_from_value();
-  }
-  // The value used in storage_ to indicate moved-from.
-  constexpr static char* moved_from_value() noexcept {
-    return static_cast<char*>(nullptr) + alignof(T);
+    return len_ > capacity_;
   }
 
-  alignas(T*) char* storage_;
+  static constexpr usize kMovedFromLen = 1_usize;
+  static constexpr usize kMovedFromCapacity = 0_usize;
+
+  T* storage_;
   usize len_;
   usize capacity_;
 
