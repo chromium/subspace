@@ -348,7 +348,8 @@ struct CollectSum {
   static constexpr CollectSum from_iter(
       sus::iter::IteratorBase<T>&& iter) noexcept {
     T sum = T();
-    for (T t : iter) sum += t;
+    for (Option<T> t = iter.next(); t.is_some(); t = iter.next())
+      sum += sus::move(t).unwrap_unchecked(unsafe_fn);
     return CollectSum(sum);
   }
 
