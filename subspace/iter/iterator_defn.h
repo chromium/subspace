@@ -46,7 +46,7 @@ template <class InnerSizedIter>
 class Filter;
 template <class ToItem, class InnerSizedIter>
 class Map;
-template <class Item, class InnerIter>
+template <class InnerSizedIter>
 class Reverse;
 
 struct SizeHint {
@@ -305,10 +305,10 @@ template <class MapFn, int&..., class R, class MapFnMut>
 auto IteratorImpl<Iter, Item>::map(MapFn fn) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Sized = SizedIteratorTypeDouble<Iter>::type;
+  using Sized = SizedIteratorType<Iter>::type;
   using Map = Map<R, Sized>;
   return Map::with(sus::into(::sus::move(fn)),
-                   make_sized_iterator_double(static_cast<Iter&&>(*this)));
+                   make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
@@ -317,17 +317,18 @@ auto IteratorImpl<Iter, Item>::filter(
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Sized = SizedIteratorTypeDouble<Iter>::type;
+  using Sized = SizedIteratorType<Iter>::type;
   using Filter = Filter<Sized>;
   return Filter::with(::sus::move(pred),
-                      make_sized_iterator_double(static_cast<Iter&&>(*this)));
+                      make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
 auto IteratorImpl<Iter, Item>::reverse() && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Reverse = Reverse<Item, Iter>;
+  using Sized = SizedIteratorType<Iter>::type;
+  using Reverse = Reverse<Sized>;
   return Reverse::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
