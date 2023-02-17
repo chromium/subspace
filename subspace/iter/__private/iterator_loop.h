@@ -20,25 +20,24 @@
 namespace sus::iter::__private {
 
 /// An adaptor for range-based for loops.
-template <class Iterator>
+template <class Iter>
 class IteratorLoop final {
-  using Item = typename std::remove_reference_t<Iterator>::Item;
+  using Item = typename std::remove_reference_t<Iter>::Item;
 
  public:
-  IteratorLoop(Iterator iter) noexcept
-      : iter_(static_cast<Iterator&&>(iter)), item_(iter_.next()) {}
+  IteratorLoop(Iter&& iter) noexcept
+      : iter_(::sus::forward<Iter>(iter)), item_(iter_.next()) {}
 
   inline bool operator==(const __private::IteratorEnd&) const noexcept {
-    return item_.is_nome();
-  }
-  inline bool operator!=(const __private::IteratorEnd&) const noexcept {
-    return item_.is_some();
+    return item_.is_none();
   }
   inline void operator++() & noexcept { item_ = iter_.next(); }
-  inline Item operator*() & noexcept { return item_.take().unwrap(); }
+  inline Item operator*() & noexcept {
+    return item_.take().unwrap_unchecked(::sus::marker::unsafe_fn);
+  }
 
  private:
-  /* TODO: NonNull<IteratorBase<Item>> */ Iterator iter_;
+  Iter iter_;
   Option<Item> item_;
 };
 
