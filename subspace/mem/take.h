@@ -45,8 +45,9 @@ inline constexpr T take(T& t) noexcept {
 
 /// Moves from `t` and destroys the object at `t`. Returns the old value of `t`.
 ///
-/// SAFETY: This does *not* re-construct the object pointed to by `t`. It must
-/// not be used (or destructed again) afterward.
+/// # Safety
+/// This does *not* re-construct the object pointed to by `t`. It must not be
+/// used (or destructed again) afterward.
 template <class T>
   requires(::sus::mem::Move<T>)
 inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
@@ -63,8 +64,9 @@ inline constexpr T take_and_destruct(::sus::marker::UnsafeFnMarker,
 /// Copies from `t` and destroys the object at `t`. Returns the old value of
 /// `t`.
 ///
-/// SAFETY: This does *not* re-construct the object pointed to by `t`. It must
-/// not be used (or destructed again) afterward.
+/// Safety
+/// This does *not* re-construct the object pointed to by `t`. It must not be
+/// used (or destructed again) afterward.
 template <class T>
   requires(::sus::mem::Copy<T>)
 inline constexpr T take_copy_and_destruct(::sus::marker::UnsafeFnMarker,

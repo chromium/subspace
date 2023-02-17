@@ -244,7 +244,7 @@ bool IteratorImpl<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
   while (true) {
     Option<Item> item = this->next();
     if (item.is_none()) return true;
-    // Safety: `item` was checked to hold Some already.
+    // SAFETY: `item` was checked to hold Some already.
     if (!f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn)))
       return false;
   }
@@ -256,7 +256,7 @@ bool IteratorImpl<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
   while (true) {
     Option<Item> item = this->next();
     if (item.is_none()) return false;
-    // Safety: `item` was checked to hold Some already.
+    // SAFETY: `item` was checked to hold Some already.
     if (f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return true;
   }
 }
