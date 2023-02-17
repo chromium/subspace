@@ -107,6 +107,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
     return SliceIterMut(start, len);
   }
 
+  // sus::iter::Iterator trait.
   Option<Item> next() noexcept final {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>::none();
