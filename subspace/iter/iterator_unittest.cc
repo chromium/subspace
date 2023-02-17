@@ -21,6 +21,7 @@
 #include "subspace/containers/vec.h"
 #include "subspace/iter/empty.h"
 #include "subspace/iter/filter.h"
+#include "subspace/iter/sized_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/replace.h"
 #include "subspace/prelude.h"
@@ -33,7 +34,7 @@ using sus::option::Option;
 
 namespace {
 
-using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false>;   
+using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false>;
 
 // clang-format off
 static_assert(
@@ -84,11 +85,13 @@ class ArrayIterator final : public IteratorImpl<ArrayIterator<Item, N>, Item> {
     return ArrayIterator(items);
   }
 
+  // sus::iter::Iterator trait.
   Option<Item> next() noexcept final {
     if (front_ == back_) return sus::none();
     return items_[sus::mem::replace(front_, front_ + 1u)].take();
   }
 
+  // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (front_ == back_) return sus::none();
     back_ -= 1u;
@@ -118,6 +121,7 @@ class EmptyIterator final : public IteratorImpl<EmptyIterator<Item>, Item> {
  public:
   EmptyIterator() {}
 
+  // sus::iter::Iterator trait.
   Option<Item> next() noexcept final { return Option<Item>::none(); }
 };
 
@@ -260,6 +264,16 @@ TEST(Iterator, Filter) {
   EXPECT_EQ(expect, 5);
 }
 
+TEST(Iterator, FilterDoubleEnded) {
+  i32 nums[5] = {1, 2, 3, 4, 5};
+
+  auto it = ArrayIterator<i32, 5>::with_array(nums).filter(
+      [](const i32& i) { return i == 2 || i == 4; });
+  EXPECT_EQ(it.next_back(), sus::some(4_i32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(2_i32).construct());
+  EXPECT_EQ(it.next_back(), sus::None);
+}
+
 struct Filtering {
   Filtering(i32 i) : i(i) {}
   Filtering(Filtering&& f) : i(f.i) {}
@@ -314,11 +328,25 @@ TEST(Iterator, Map) {
   }
 }
 
+TEST(Iterator, MapDoubleEnded) {
+  i32 nums[5] = {1, 2, 3, 4, 5};
+
+  auto it = ArrayIterator<i32, 5>::with_array(nums).map(
+      [](i32&& i) { return u32::from(i); });
+  EXPECT_EQ(it.next_back(), sus::some(5_u32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(4_u32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(3_u32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(2_u32).construct());
+  EXPECT_EQ(it.next_back(), sus::some(1_u32).construct());
+  EXPECT_EQ(it.next_back(), sus::None);
+}
+
 template <class T>
 struct CollectSum {
   sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
 
-  static constexpr CollectSum from_iter(IteratorBase<T>&& iter) noexcept {
+  static constexpr CollectSum from_iter(
+      sus::iter::IteratorBase<T>&& iter) noexcept {
     T sum = T();
     for (T t : iter) sum += t;
     return CollectSum(sum);
