@@ -49,8 +49,10 @@
 #include "subspace/result/__private/is_result_type.h"
 
 namespace sus::iter {
-template <class ItemT>
+template <class Item>
 class IteratorBase;
+template <class Iter, class Item>
+class IteratorImpl;
 template <class Item>
 class Once;
 namespace __private {
@@ -148,7 +150,9 @@ class Option final {
       ::sus::iter::IteratorBase<Option<U>>&& option_iter) noexcept
     requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>)
   {
-    struct Iter : public ::sus::iter::IteratorBase<U> {
+    // An iterator over `option_iter` that returns each element in it until
+    // it reaches a `None` or the end.
+    struct Iter final : public ::sus::iter::IteratorImpl<Iter, U> {
       Iter(::sus::iter::IteratorBase<Option<U>>&& iter, bool& found_none)
           : iter(iter), found_none(found_none) {}
 
