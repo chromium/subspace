@@ -30,7 +30,10 @@ class Once final : public IteratorImpl<Once<ItemT>, ItemT> {
 
   static Once with(Option<Item>&& o) noexcept { return Once(::sus::move(o)); }
 
+  // sus::iter::Iterator trait.
   Option<Item> next() noexcept final { return single_.take(); }
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept { return single_.take(); }
 
  private:
   Once(Option<Item>&& single) : single_(::sus::move(single)) {}

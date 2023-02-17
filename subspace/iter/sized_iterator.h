@@ -17,6 +17,7 @@
 #include "subspace/convert/subclass.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
+#include "subspace/option/option.h"
 // Doesn't include iterator_defn.h because it's included from there.
 
 namespace sus::iter {
@@ -24,32 +25,55 @@ namespace sus::iter {
 template <class Item>
 class IteratorBase;
 
-template <class Item, size_t SubclassSize, size_t SubclassAlign>
+template <class ItemT, size_t SubclassSize, size_t SubclassAlign,
+          bool DoubleEndedB>
 struct [[sus_trivial_abi]] SizedIterator final {
-  constexpr SizedIterator(void (*destroy)(char& sized)) : destroy(destroy) {}
+  using Item = ItemT;
+  static constexpr bool DoubleEnded = DoubleEndedB;
 
-  SizedIterator(SizedIterator&& o)
-      : destroy(::sus::mem::replace_ptr(mref(o.destroy), nullptr)) {
-    memcpy(sized, o.sized, SubclassSize);
+  constexpr SizedIterator(void (*destroy)(char& sized),
+                          Option<Item> (*next)(char& sized),
+                          Option<Item> (*next_back)(char& sized))
+      : destroy_(destroy), next_(next), next_back_(next_back) {}
+
+  SizedIterator(SizedIterator&& o) noexcept
+      : destroy_(::sus::mem::replace_ptr(mref(o.destroy_), nullptr)),
+        next_(::sus::mem::replace_ptr(mref(o.next_), nullptr)),
+        next_back_(::sus::mem::replace_ptr(mref(o.next_back_), nullptr)) {
+    memcpy(sized_, o.sized_, SubclassSize);
   }
   SizedIterator& operator=(SizedIterator&& o) = delete;
 
-  ~SizedIterator() {
-    if (destroy) destroy(*sized);
+  ~SizedIterator() noexcept {
+    if (destroy_) destroy_(*sized_);
   }
 
-  IteratorBase<Item>& iterator_mut() {
-    // The `sized` array points to the stored Iterator subclass, which we cast
-    // to the base class.
-    return *reinterpret_cast<IteratorBase<Item>*>(sized);
+  Option<Item> next() noexcept { return next_(*sized_); }
+  Option<Item> next_back() noexcept
+    requires(DoubleEnded)
+  {
+    return next_back_(*sized_);
   }
+
+  char* as_ptr_mut() noexcept { return sized_; }
 
  private:
-  alignas(SubclassAlign) char sized[SubclassSize];
-  void (*destroy)(char& sized);
+  alignas(SubclassAlign) char sized_[SubclassSize];
+  void (*destroy_)(char& sized);
+  Option<Item> (*next_)(char& sized);
+  // TODO: We could remove this field with a nested struct + template
+  // specialization when DoubleEnded is false.
+  Option<Item> (*next_back_)(char& sized);
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(sized),
-                                  decltype(destroy));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(sized_),
+                                  decltype(destroy_), decltype(next_back_));
+};
+
+template <class Iter>
+struct SizedIteratorType {
+  using type = SizedIterator<
+      typename Iter::Item, ::sus::mem::size_of<Iter>(), alignof(Iter),
+      ::sus::iter::DoubleEndedIterator<Iter, typename Iter::Item>>;
 };
 
 /// Make a SizedIterator which wraps a trivially relocatable iterator and erases
@@ -58,21 +82,32 @@ struct [[sus_trivial_abi]] SizedIterator final {
 /// This type may only be used when the IteratorSubclass can be trivially
 /// relocated. It stores the SubclassIterator directly into the SizedIterator,
 /// erasing its type but remaining trivially relocatable.
-template <::sus::mem::Move IteratorSubclass, int&...,
-          class SubclassItem = typename IteratorSubclass::Item,
-          class SizedIteratorType = SizedIterator<
-              SubclassItem, ::sus::mem::size_of<IteratorSubclass>(),
-              alignof(IteratorSubclass)>>
-inline SizedIteratorType make_sized_iterator(IteratorSubclass&& subclass)
-  requires(::sus::convert::SameOrSubclassOf<IteratorSubclass*,
-                                            IteratorBase<SubclassItem>*> &&
-           ::sus::mem::relocate_by_memcpy<IteratorSubclass>)
+template <::sus::mem::Move Iter, int&..., class Item = typename Iter::Item>
+inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
+  requires(::sus::convert::SameOrSubclassOf<Iter*, IteratorBase<Item>*> &&
+           ::sus::mem::relocate_by_memcpy<Iter>)
 {
-  auto it = SizedIteratorType([](char& sized) {
-    reinterpret_cast<IteratorSubclass&>(sized).~IteratorSubclass();
-  });
-  new (&it.iterator_mut()) IteratorSubclass(::sus::move(subclass));
+  // IteratorImpl also checks this. It's needed for correctness of the casts
+  // here.
+  static_assert(std::is_final_v<Iter>);
+
+  void (*destroy)(char& sized) = [](char& sized) {
+    reinterpret_cast<Iter&>(sized).~Iter();
+  };
+  Option<Item> (*next)(char& sized) = [](char& sized) {
+    return reinterpret_cast<Iter&>(sized).next();
+  };
+  Option<Item> (*next_back)(char& sized);
+  if constexpr (SizedIteratorType<Iter>::type::DoubleEnded) {
+    next_back = [](char& sized) {
+      return reinterpret_cast<Iter&>(sized).next_back();
+    };
+  } else {
+    next_back = nullptr;
+  }
+
+  auto it = typename SizedIteratorType<Iter>::type(destroy, next, next_back);
+  new (it.as_ptr_mut()) Iter(::sus::move(iter));
   return it;
 }
-
 }  // namespace sus::iter

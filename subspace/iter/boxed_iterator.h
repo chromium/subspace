@@ -34,51 +34,92 @@ class IteratorImpl;
 ///
 /// BoxedIterator is only constructible from an iterator that is not trivially
 /// relocatable.
-template <class ItemT, size_t SubclassSize, size_t SubclassAlign>
+template <class ItemT, size_t SubclassSize, size_t SubclassAlign,
+          bool DoubleEnded>
 class [[sus_trivial_abi]] BoxedIterator final
-    : public IteratorImpl<BoxedIterator<ItemT, SubclassSize, SubclassAlign>,
-                          ItemT> {
+    : public IteratorImpl<
+          BoxedIterator<ItemT, SubclassSize, SubclassAlign, DoubleEnded>,
+          ItemT> {
  public:
   using Item = ItemT;
 
-  template <::sus::mem::Move IteratorSubclass>
-  static BoxedIterator with(IteratorSubclass&& subclass) noexcept
-    requires(::sus::convert::SameOrSubclassOf<
-                 IteratorSubclass*, IteratorImpl<IteratorSubclass, ItemT>*> &&
-             !::sus::mem::relocate_by_memcpy<IteratorSubclass>)
+  template <::sus::mem::Move Iter>
+  static BoxedIterator with(Iter&& iter) noexcept
+    requires(
+        ::sus::convert::SameOrSubclassOf<Iter*, IteratorImpl<Iter, Item>*> &&
+        !::sus::mem::relocate_by_memcpy<Iter>)
   {
-    return BoxedIterator(
-        *new IteratorSubclass(::sus::move(subclass)),  // Move it to the heap.
-        [](IteratorBase<Item>& iter) {
-          delete static_cast<IteratorSubclass*>(&iter);
-        });
+    // IteratorImpl also checks this. It's needed for correctness of the move
+    // onto the heap.
+    static_assert(std::is_final_v<Iter>);
+
+    if constexpr (DoubleEnded) {
+      return BoxedIterator(
+          new Iter(::sus::move(iter)),  // Move it to the heap.
+          [](void* boxed_iter) { delete static_cast<Iter*>(boxed_iter); },
+          [](void* boxed_iter) {
+            return static_cast<Iter*>(boxed_iter)->next();
+          },
+          [](void* boxed_iter) {
+            return static_cast<Iter*>(boxed_iter)->next_back();
+          });
+    } else {
+      return BoxedIterator(
+          new Iter(::sus::move(iter)),  // Move it to the heap.
+          [](void* boxed_iter) { delete static_cast<Iter*>(boxed_iter); },
+          [](void* boxed_iter) {
+            return static_cast<Iter*>(boxed_iter)->next();
+          });
+    }
   }
 
   BoxedIterator(BoxedIterator&& o) noexcept
       : iter_(::sus::mem::replace_ptr(mref(o.iter_), nullptr)),
-        destroy_(::sus::mem::replace_ptr(mref(o.destroy_), nullptr)) {}
+        destroy_(::sus::mem::replace_ptr(mref(o.destroy_), nullptr)),
+        next_(::sus::mem::replace_ptr(mref(o.next_), nullptr)),
+        next_back_(::sus::mem::replace_ptr(mref(o.next_back_), nullptr)) {}
   BoxedIterator& operator=(BoxedIterator&& o) noexcept {
-    if (destroy_) destroy_(*iter_);
+    if (destroy_) destroy_(iter_);
     iter_ = ::sus::mem::replace_ptr(mref(o.iter_), nullptr);
     destroy_ = ::sus::mem::replace_ptr(mref(o.destroy_), nullptr);
+    next_ = ::sus::mem::replace_ptr(mref(o.next_), nullptr);
+    next_back_ = ::sus::mem::replace_ptr(mref(o.next_back_), nullptr);
   }
 
   ~BoxedIterator() {
-    if (destroy_) destroy_(*iter_);
+    if (destroy_) destroy_(iter_);
   }
 
-  Option<Item> next() noexcept final { return iter_->next(); }
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept final { return next_(iter_); }
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept
+    requires(DoubleEnded)
+  {
+    return next_back_(iter_);
+  }
 
  private:
-  BoxedIterator(IteratorBase<Item>& iter,
-                void (*destroy)(IteratorBase<Item>& boxed))
-      : iter_(&iter), destroy_(destroy) {}
+  // DoubleEnded constructor.
+  BoxedIterator(void* iter, void (*destroy)(void* boxed_iter),
+                Option<Item> (*next)(void* boxed_iter),
+                Option<Item> (*next_back)(void* boxed_iter))
+      : iter_(iter), destroy_(destroy), next_(next), next_back_(next_back) {}
+  // Not-DoubleEnded constructor.
+  BoxedIterator(void* iter, void (*destroy)(void* boxed_iter),
+                Option<Item> (*next)(void* boxed_iter))
+      : iter_(iter), destroy_(destroy), next_(next), next_back_(nullptr) {}
 
-  IteratorBase<Item>* iter_;
-  void (*destroy_)(IteratorBase<Item>& boxed);
+  void* iter_;
+  void (*destroy_)(void* boxed_iter);
+  Option<Item> (*next_)(void* boxed_iter);
+  // TODO: We could remove this field with a nested struct + template
+  // specialization when DoubleEnded is false.
+  Option<Item> (*next_back_)(void* boxed_iter);
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(iter_),
-                                  decltype(destroy_));
+                                  decltype(destroy_), decltype(next_),
+                                  decltype(next_back_));
 };
 
 }  // namespace sus::iter

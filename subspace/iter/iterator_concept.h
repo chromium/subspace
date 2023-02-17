@@ -19,7 +19,11 @@
 
 #include "subspace/convert/subclass.h"
 #include "subspace/mem/forward.h"
-#include "subspace/option/option.h"
+
+namespace sus::option {
+template <class T>
+class Option;
+}
 
 namespace sus::iter {
 
@@ -28,7 +32,7 @@ class IteratorImpl;
 
 /// A concept for all implementations of iterators.
 ///
-/// An iterator has a method, `next()`, which when called, returns an
+/// An iterator has one required method, `next()`, which when called, returns an
 /// `Option<Item>`. Calling next will return an `Option` containing the next
 /// `Item` as long as there are elements, and once they've all been exhausted,
 /// will return `None` to indicate that iteration is finished. Individual
@@ -45,7 +49,7 @@ class IteratorImpl;
 /// Iterators are also composable, and it's possible to chain them together to
 /// do more complex forms of processing.
 template <class T, class Item>
-concept Iterator = requires {
+concept Iterator = requires(T& t) {
   // Has a T::Item typename.
   requires(!std::is_void_v<typename std::decay_t<T>::Item>);
   // The T::Item matches the concept input.
@@ -53,6 +57,8 @@ concept Iterator = requires {
   // Subclasses from IteratorImpl<T, T::Item>.
   requires ::sus::convert::SameOrSubclassOf<
       std::decay_t<T>*, IteratorImpl<std::decay_t<T>, Item>*>;
+  // Required methods.
+  { t.next() } -> std::same_as<::sus::option::Option<Item>>;
 };
 
 /// An `Iterator` able to yield elements from both ends.

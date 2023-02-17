@@ -42,12 +42,11 @@ namespace sus::iter {
 using ::sus::option::Option;
 
 // TODO: Move forward decls somewhere?
-template <class Item, size_t InnerIterSize, size_t InnerIterAlign>
+template <class InnerSizedIter>
 class Filter;
-template <class FromItem, class Item, size_t InnerIterSize,
-          size_t InnerIterAlign>
+template <class ToItem, class InnerSizedIter>
 class Map;
-template <class Item, class InnerIter>
+template <class InnerSizedIter>
 class Reverse;
 
 struct SizeHint {
@@ -129,6 +128,18 @@ class [[nodiscard]] IteratorImpl : public IteratorBase<Item> {
   }
 
  public:
+  // Adaptors for ranged for loops.
+  //
+  // Shadows the ones in the base class so that the full type is known along
+  // with the `final` next() definition.
+
+  /// Adaptor for use in ranged for loops.
+  auto begin() & noexcept {
+    return __private::IteratorLoop<Iter&>(static_cast<Iter&>(*this));
+  }
+  /// Adaptor for use in ranged for loops.
+  auto end() & noexcept { return __private::IteratorEnd(); }
+
   /// An Iterator also satisfies IntoIterator, which simply returns itself.
   ///
   /// sus::iter::IntoIterator trait implementation.
@@ -251,7 +262,7 @@ template <class Iter, class Item>
 bool IteratorImpl<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
   // TODO: If constexpr(I::all() exists) then call that instead.
   while (true) {
-    Option<Item> item = this->next();
+    Option<Item> item = static_cast<Iter&>(*this).next();
     if (item.is_none()) return true;
     // SAFETY: `item` was checked to hold Some already.
     if (!f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn)))
@@ -263,7 +274,7 @@ template <class Iter, class Item>
 bool IteratorImpl<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
   // TODO: If constexpr(I::any() exists) then call that instead.
   while (true) {
-    Option<Item> item = this->next();
+    Option<Item> item = static_cast<Iter&>(*this).next();
     if (item.is_none()) return false;
     // SAFETY: `item` was checked to hold Some already.
     if (f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return true;
@@ -274,7 +285,7 @@ template <class Iter, class Item>
 ::sus::num::usize IteratorImpl<Iter, Item>::count() noexcept {
   // TODO: If constexpr(I::count() exists) then call that instead.
   auto c = 0_usize;
-  while (this->next().is_some()) c += 1_usize;
+  while (static_cast<Iter&>(*this).next().is_some()) c += 1_usize;
   return c;
 }
 
@@ -283,7 +294,8 @@ auto IteratorImpl<Iter, Item>::box() && noexcept
   requires(!::sus::mem::relocate_by_memcpy<Iter>)
 {
   using BoxedIterator =
-      BoxedIterator<Item, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
+      BoxedIterator<Item, ::sus::mem::size_of<Iter>(), alignof(Iter),
+                    ::sus::iter::DoubleEndedIterator<Iter, Item>>;
   return BoxedIterator::with(static_cast<Iter&&>(*this));
 }
 
@@ -293,7 +305,8 @@ template <class MapFn, int&..., class R, class MapFnMut>
 auto IteratorImpl<Iter, Item>::map(MapFn fn) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Map = Map<Item, R, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
+  using Sized = SizedIteratorType<Iter>::type;
+  using Map = Map<R, Sized>;
   return Map::with(sus::into(::sus::move(fn)),
                    make_sized_iterator(static_cast<Iter&&>(*this)));
 }
@@ -304,7 +317,8 @@ auto IteratorImpl<Iter, Item>::filter(
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Filter = Filter<Item, ::sus::mem::size_of<Iter>(), alignof(Iter)>;
+  using Sized = SizedIteratorType<Iter>::type;
+  using Filter = Filter<Sized>;
   return Filter::with(::sus::move(pred),
                       make_sized_iterator(static_cast<Iter&&>(*this)));
 }
@@ -313,7 +327,8 @@ template <class Iter, class Item>
 auto IteratorImpl<Iter, Item>::reverse() && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
-  using Reverse = Reverse<Item, Iter>;
+  using Sized = SizedIteratorType<Iter>::type;
+  using Reverse = Reverse<Sized>;
   return Reverse::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
