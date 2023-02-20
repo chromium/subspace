@@ -25,7 +25,7 @@ namespace sus::iter {
 using ::sus::mem::relocate_by_memcpy;
 
 template <class InnerSizedIter>
-class [[sus_trivial_abi]] Filter final
+class [[nodiscard]] [[sus_trivial_abi]] Filter final
     : public IteratorImpl<Filter<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
   using Pred = ::sus::fn::FnMut<bool(

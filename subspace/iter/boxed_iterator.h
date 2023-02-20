@@ -36,7 +36,7 @@ class IteratorImpl;
 /// relocatable.
 template <class ItemT, size_t SubclassSize, size_t SubclassAlign,
           bool DoubleEnded>
-class [[sus_trivial_abi]] BoxedIterator final
+class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
     : public IteratorImpl<
           BoxedIterator<ItemT, SubclassSize, SubclassAlign, DoubleEnded>,
           ItemT> {

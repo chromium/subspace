@@ -139,7 +139,7 @@ concept NeverValueField = __private::NeverValueAccess<T>::has_field;
     static_assert(                                                             \
         std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,    \
         "The `never_value` must be able to be assigned to the named field.");  \
-    return field_name != never_value;                                          \
+    return !(field_name == never_value);                                       \
   }                                                                            \
   constexpr void _sus_Unsafe_NeverValueSetNeverValue(                          \
       ::sus::marker::UnsafeFnMarker) noexcept {                                \

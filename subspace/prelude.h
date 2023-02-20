@@ -20,6 +20,7 @@
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
 #include "subspace/num/types.h"
+#include "subspace/ops/range_literals.h"
 
 // Imports all the things that are pulled into the top-level namespace.
 // TODO: Make a compile-time option for this.
