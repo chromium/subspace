@@ -21,7 +21,7 @@ namespace sus::iter {
 
 /// An Iterator that never returns an `Item`.
 template <class ItemT>
-class [[sus_trivial_abi]] Empty final
+class [[nodiscard]] [[sus_trivial_abi]] Empty final
     : public IteratorImpl<Empty<ItemT>, ItemT> {
  public:
   using Item = ItemT;

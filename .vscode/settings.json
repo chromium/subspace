@@ -14,7 +14,7 @@
         "-compile-commands-dir=out"
     ],
     "cmake.configureSettings": {
-        "CMAKE_MAKE_PROGRAM": "ninja"
+        "CMAKE_MAKE_PROGRAM": "ninja",
     },
     "cmake.generator": "Ninja",
     "files.eol": "\n",

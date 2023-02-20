@@ -127,27 +127,27 @@ TEST(Slice, IndexRange) {
   auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
-  EXPECT_EQ((sc[{0u, 1u}][0u]), 1_i32);
-  EXPECT_EQ((sc[{0u, 1u}].len()), 1_usize);
-  EXPECT_EQ((sc[{1u, 3u}][1u]), 3_i32);
-  EXPECT_EQ((sc[{1u, 3u}].len()), 2_usize);
+  EXPECT_EQ((sc["0..1"_r][0u]), 1_i32);
+  EXPECT_EQ((sc["0..1"_r].len()), 1_usize);
+  EXPECT_EQ((sc["1..3"_r][1u]), 3_i32);
+  EXPECT_EQ((sc["1..3"_r].len()), 2_usize);
 
-  EXPECT_EQ((sc[{1u, 1u}].len()), 0_usize);
+  EXPECT_EQ((sc["1..1"_r].len()), 0_usize);
   // Start == End == the original End is an empty Slice.
-  EXPECT_EQ((sc[{3u, 3u}].len()), 0_usize);
+  EXPECT_EQ((sc["3..3"_r].len()), 0_usize);
 
-  EXPECT_EQ((sm[{0u, 3u}][0u]), 1_i32);
-  EXPECT_EQ((sm[{0u, 3u}].len()), 3_usize);
-  EXPECT_EQ((sm[{2u, 3u}][0u]), 3_i32);
-  EXPECT_EQ((sm[{2u, 3u}].len()), 1_usize);
+  EXPECT_EQ((sm["0..3"_r][0u]), 1_i32);
+  EXPECT_EQ((sm["0..3"_r].len()), 3_usize);
+  EXPECT_EQ((sm["2..3"_r][0u]), 3_i32);
+  EXPECT_EQ((sm["2..3"_r].len()), 1_usize);
 
-  EXPECT_EQ((sm[{1u, 1u}].len()), 0_usize);
+  EXPECT_EQ((sm["1..1"_r].len()), 0_usize);
   // Start == End == the original End is an empty Slice.
-  EXPECT_EQ((sm[{3u, 3u}].len()), 0_usize);
+  EXPECT_EQ((sm["3..3"_r].len()), 0_usize);
 
   // Rvalue Slices are usable as they are reference types.
-  EXPECT_EQ((sc[{1u, 3u}][{1u, 2u}][0u]), 3_i32);
-  EXPECT_EQ((sm[{1u, 3u}][{1u, 2u}][0u]), 3_i32);
+  EXPECT_EQ((sc["1..3"_r]["1..2"_r][0u]), 3_i32);
+  EXPECT_EQ((sm["1..3"_r]["1..2"_r][0u]), 3_i32);
 }
 
 TEST(SliceDeathTest, IndexRange) {
@@ -156,48 +156,48 @@ TEST(SliceDeathTest, IndexRange) {
   auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((sc[{0u, 4u}]), "");
-  EXPECT_DEATH((sc[{3u, 4u}]), "");
-  EXPECT_DEATH((sm[{1u, 4u}]), "");
-  EXPECT_DEATH((sm[{2u, 4u}]), "");
-  EXPECT_DEATH((sm[{4u, 4u}]), "");
+  EXPECT_DEATH((sc["0..4"_r]), "");
+  EXPECT_DEATH((sc["3..4"_r]), "");
+  EXPECT_DEATH((sm["1..4"_r]), "");
+  EXPECT_DEATH((sm["2..4"_r]), "");
+  EXPECT_DEATH((sm["4..4"_r]), "");
 #endif
 }
 
 TEST(Slice, GetRange) {
   i32 a[] = {1, 2, 3};
   auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_EQ(s.get_range({0u, 3u}).unwrap()[1u], 2_i32);
-  EXPECT_EQ(s.get_range({1u, 3u}).unwrap()[1u], 3_i32);
-  EXPECT_EQ(s.get_range({1u, 4u}), sus::None);
-  EXPECT_EQ(s.get_range({3u, 3u}).unwrap().len(), 0_usize);
-  EXPECT_EQ(s.get_range({4u, 4u}), sus::None);
+  EXPECT_EQ(s.get_range("0..3"_r).unwrap()[1u], 2_i32);
+  EXPECT_EQ(s.get_range("1..3"_r).unwrap()[1u], 3_i32);
+  EXPECT_EQ(s.get_range("1..4"_r), sus::None);
+  EXPECT_EQ(s.get_range("3..3"_r).unwrap().len(), 0_usize);
+  EXPECT_EQ(s.get_range("4..4"_r), sus::None);
 
   auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_EQ(sm.get_range({0u, 3u}).unwrap()[1u], 2_i32);
-  EXPECT_EQ(sm.get_range({1u, 3u}).unwrap()[1u], 3_i32);
-  EXPECT_EQ(sm.get_range({1u, 4u}), sus::None);
-  EXPECT_EQ(sm.get_range({3u, 3u}).unwrap().len(), 0_usize);
-  EXPECT_EQ(sm.get_range({4u, 4u}), sus::None);
+  EXPECT_EQ(sm.get_range("0..3"_r).unwrap()[1u], 2_i32);
+  EXPECT_EQ(sm.get_range("1..3"_r).unwrap()[1u], 3_i32);
+  EXPECT_EQ(sm.get_range("1..4"_r), sus::None);
+  EXPECT_EQ(sm.get_range("3..3"_r).unwrap().len(), 0_usize);
+  EXPECT_EQ(sm.get_range("4..4"_r), sus::None);
 
   // Rvalue Slices are usable as they are reference types.
-  EXPECT_EQ(s.get_range({3u, 3u}).unwrap().get_range({0u, 0u}).unwrap().len(),
+  EXPECT_EQ(s.get_range("3..3"_r).unwrap().get_range("0..0"_r).unwrap().len(),
             0u);
-  EXPECT_EQ(s.get_range({1u, 3u}).unwrap().get_range({1u, 2u}).unwrap().len(),
+  EXPECT_EQ(s.get_range("1..3"_r).unwrap().get_range("1..2"_r).unwrap().len(),
             1u);
-  EXPECT_EQ(s.get_range({1u, 3u}).unwrap().get_range({1u, 2u}).unwrap()[0u],
+  EXPECT_EQ(s.get_range("1..3"_r).unwrap().get_range("1..2"_r).unwrap()[0u],
             3_i32);
 }
 
 TEST(Slice, GetUncheckedRange) {
   i32 a[] = {1, 2, 3};
   auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_EQ(s.get_range_unchecked(unsafe_fn, {0u, 2u})[1u], 2_i32);
-  EXPECT_EQ(s.get_range_unchecked(unsafe_fn, {2u, 3u})[0u], 3_i32);
+  EXPECT_EQ(s.get_range_unchecked(unsafe_fn, "0..2"_r)[1u], 2_i32);
+  EXPECT_EQ(s.get_range_unchecked(unsafe_fn, "2..3"_r)[0u], 3_i32);
 
   auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, {0u, 2u})[1u], 2_i32);
-  EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, {2u, 3u})[0u], 3_i32);
+  EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, "0..2"_r)[1u], 2_i32);
+  EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, "2..3"_r)[0u], 3_i32);
 }
 
 TEST(Slice, Into) {

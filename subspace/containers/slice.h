@@ -142,12 +142,14 @@ class Slice {
   /// function will panic.
   /// #[doc.overloads=slice.index.range]
   constexpr inline Slice<T> operator[](
-      const ::sus::ops::Range<usize> range) const noexcept {
-    const usize len = range.end >= range.start ? range.end - range.start : 0u;
+      const ::sus::ops::RangeBounds<usize> auto range) const noexcept {
+    const usize start = range.start_bound().unwrap_or(0u);
+    const usize end = range.end_bound().unwrap_or(len_);
+    const usize len = end >= start ? end - start : 0u;
     ::sus::check(len <= len_);  // Avoid underflow below.
     // We allow start == len_ && end == len_, which returns an empty slice.
-    ::sus::check(range.start <= len_ && range.start <= len_ - len);
-    return Slice(data_ + size_t{range.start}, len);
+    ::sus::check(start <= len_ && start <= len_ - len);
+    return Slice(data_ + size_t{start}, len);
   }
 
   /// Returns a subslice which contains elements in `range`, which specifies a
@@ -161,12 +163,14 @@ class Slice {
   /// Returns None if the Range would otherwise contain an element that is out
   /// of bounds.
   constexpr Option<Slice<T>> get_range(
-      const ::sus::ops::Range<usize> range) const noexcept {
-    const usize len = range.end >= range.start ? range.end - range.start : 0u;
+      const ::sus::ops::RangeBounds<usize> auto range) const noexcept {
+    const usize start = range.start_bound().unwrap_or(0u);
+    const usize end = range.end_bound().unwrap_or(len_);
+    const usize len = end >= start ? end - start : 0u;
     if (len > len_) return sus::none();  // Avoid underflow below.
     // We allow start == len_ && end == len_, which returns an empty slice.
-    if (range.start > len_ || range.start > len_ - len) return sus::none();
-    return sus::some(Slice(data_ + size_t{range.start}, len));
+    if (start > len_ || start > len_ - len) return sus::none();
+    return Option<Slice<T>>::some(Slice(data_ + size_t{start}, len));
   }
 
   /// Returns a subslice which contains elements in `range`, which specifies a
@@ -182,9 +186,11 @@ class Slice {
   /// of bounds of the Slice, which can result in Undefined Behaviour.
   constexpr Slice<T> get_range_unchecked(
       ::sus::marker::UnsafeFnMarker,
-      const ::sus::ops::Range<usize> range) const noexcept {
-    const usize len = range.end >= range.start ? range.end - range.start : 0u;
-    return Slice(data_ + size_t{range.start}, len);
+      const ::sus::ops::RangeBounds<usize> auto range) const noexcept {
+    const usize start = range.start_bound().unwrap_or(0u);
+    const usize end = range.end_bound().unwrap_or(len_);
+    const usize len = end >= start ? end - start : 0u;
+    return Slice(data_ + size_t{start}, len);
   }
 
   /// Sorts the slice.

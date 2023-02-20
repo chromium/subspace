@@ -23,7 +23,7 @@
 namespace sus::iter {
 
 template <class ToItem, class InnerSizedIter>
-class [[sus_trivial_abi]] Map final : public IteratorImpl<Map<ToItem, InnerSizedIter>, ToItem> {
+class [[nodiscard]] [[sus_trivial_abi]] Map final : public IteratorImpl<Map<ToItem, InnerSizedIter>, ToItem> {
   using FromItem = InnerSizedIter::Item;
   using MapFn = ::sus::fn::FnMut<ToItem(FromItem&&)>;
 

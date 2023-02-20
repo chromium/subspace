@@ -21,7 +21,7 @@ namespace sus::iter::__private {
 
 /// An adaptor for range-based for loops.
 template <class Iter>
-class IteratorLoop final {
+class [[nodiscard]] IteratorLoop final {
   using Item = typename std::remove_reference_t<Iter>::Item;
 
  public:

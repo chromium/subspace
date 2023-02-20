@@ -119,9 +119,9 @@ class IteratorBase {
 };
 
 template <class Iter, class Item>
-class [[nodiscard]] IteratorImpl : public IteratorBase<Item> {
+class IteratorImpl : public IteratorBase<Item> {
  protected:
-  IteratorImpl() noexcept : IteratorBase<Item>() {
+  constexpr IteratorImpl() noexcept {
     static_assert(std::is_final_v<Iter>,
                   "Iterator implementations must be `final`, as the provided "
                   "methods must know the complete type.");

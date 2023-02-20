@@ -30,7 +30,7 @@ using ::sus::mem::relocate_by_memcpy;
 ///
 /// The iterator wrapped by Reverse must be a DoubleEndedIterator.
 template <class InnerSizedIter>
-class [[sus_trivial_abi]] Reverse final
+class [[nodiscard]] [[sus_trivial_abi]] Reverse final
     : public IteratorImpl<Reverse<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
   static_assert(InnerSizedIter::DoubleEnded);

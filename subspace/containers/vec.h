@@ -568,6 +568,10 @@ class Vec {
                                            decltype(capacity_));
 };
 
+// Implicit for-ranged loop iteration via `Vec::iter()`.
+using sus::iter::__private::begin;
+using sus::iter::__private::end;
+
 /// Used to construct a Vec<T> with the parameters as its values.
 ///
 /// Calling vec() produces a hint to make a Vec<T> but does not actually
