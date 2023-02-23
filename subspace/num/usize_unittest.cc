@@ -17,6 +17,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
+#include "subspace/iter/__private/step.h"
 #include "subspace/num/num_concepts.h"
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
@@ -85,6 +86,8 @@ static_assert(
     std::same_as<decltype(std::equal_to<usize>()(0_usize, 1_usize)), bool>);
 
 TEST(usize, Traits) {
+  static_assert(sus::iter::__private::Step<usize>);
+
   // ** Unsigned only
   static_assert(!sus::num::Neg<usize>);
 
@@ -292,6 +295,17 @@ TEST(usize, From) {
   EXPECT_TRUE(usize::try_from(int64_t{i64::MIN}).is_err());
   EXPECT_TRUE(usize::try_from(int64_t{i64::MAX}).is_ok());
 
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, char{2}), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, size_t{2}), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, int8_t{2}), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, int16_t{2}), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, int32_t{2}), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, int64_t{2}), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, uint8_t{2}), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, uint16_t{2}), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, uint32_t{2}), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, uint64_t{2}), 2_usize);
+
   static_assert(sus::construct::From<usize, i8>);
   static_assert(sus::construct::From<usize, i16>);
   static_assert(sus::construct::From<usize, i32>);
@@ -341,6 +355,17 @@ TEST(usize, From) {
   }
   EXPECT_TRUE(usize::try_from(i64::MIN).is_err());
   EXPECT_TRUE(usize::try_from(i64::MAX).is_ok());
+
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_i8), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_i16), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_i32), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_i64), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_isize), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_u8), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_u16), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_u32), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_u64), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, 2_usize), 2_usize);
 }
 
 TEST(usizeDeathTest, FromOutOfRange) {

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subspace/iter/__private/step.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/mem/move.h"
 #include "subspace/ops/ord.h"
@@ -44,6 +45,74 @@ concept RangeBounds = requires(const T& t, T v, I i) {
   requires !requires { v.end_at(i); };
 };
 
+namespace __private {
+
+template <class Final, class T, bool = ::sus::iter::__private::Step<T>>
+class RangeIter;
+
+template <class Final, class T>
+class RangeIter<Final, T, true> : public ::sus::iter::IteratorImpl<Final, T> {
+ public:
+  // sus::iter::Iterator trait.
+  Option<T> next() noexcept final {
+    if (static_cast<Final*>(this)->start == static_cast<Final*>(this)->finish)
+      return Option<T>::none();
+    return Option<T>::some(
+        ::sus::mem::replace(static_cast<Final*>(this)->start,
+                            ::sus::iter::__private::step_forward(
+                                static_cast<Final*>(this)->start)));
+  }
+
+  // sus::iter::Iterator trait optional method.
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    Option<::sus::num::usize> steps =
+        ::sus::iter::__private::steps_between(
+            static_cast<const Final*>(this)->start,
+            static_cast<const Final*>(this)->finish);
+    const ::sus::num::usize lower = steps.is_some() ? *steps : 0_usize;
+    return ::sus::iter::SizeHint(lower, ::sus::move(steps));
+  }
+
+  // sus::iter::DoubleEndedIterator trait.
+  Option<T> next_back() noexcept {
+    if (static_cast<Final*>(this)->start == static_cast<Final*>(this)->finish)
+      return Option<T>::none();
+    static_cast<Final*>(this)->finish = ::sus::iter::__private::step_backward(
+        static_cast<Final*>(this)->finish);
+    return Option<T>::some(static_cast<Final*>(this)->finish);
+  }
+
+  // TODO: Provide and test overrides of Iterator min(), max(), count(),
+  // advance_by(), etc that can be done efficiently here.
+};
+
+template <class Final, class T>
+class RangeIter<Final, T, false> {};
+
+template <class Final, class T, bool = ::sus::iter::__private::Step<T>>
+class RangeFromIter;
+
+template <class Final, class T>
+class RangeFromIter<Final, T, true>
+    : public ::sus::iter::IteratorImpl<Final, T> {
+ public:
+  // sus::iter::Iterator trait.
+  Option<T> next() noexcept final {
+    return Option<T>::some(
+        ::sus::mem::replace(static_cast<Final*>(this)->start,
+                            ::sus::iter::__private::step_forward(
+                                static_cast<Final*>(this)->start)));
+  }
+
+  // TODO: Provide and test overrides of Iterator min(), max(), count(),
+  // advance_by(), etc that can be done efficiently here.
+};
+
+template <class Final, class T>
+class RangeFromIter<Final, T, false> {};
+
+}  // namespace __private
+
 /// A (half-open) range bounded inclusively below and exclusively above
 /// (`start..end`).
 ///
@@ -53,7 +122,7 @@ concept RangeBounds = requires(const T& t, T v, I i) {
 /// A Range<usize> can be constructed as a literal as `"start..end"_r`.
 template <class T>
   requires(::sus::ops::Ord<T>)
-class Range final : public ::sus::iter::IteratorImpl<Range<T>, T> {
+class Range final : public __private::RangeIter<Range<T>, T> {
  public:
   /// The beginning of the range, inclusive of the given value.
   T start;
@@ -106,29 +175,6 @@ class Range final : public ::sus::iter::IteratorImpl<Range<T>, T> {
     return Range(::sus::move(start), ::sus::move(t));
   }
 
-  // sus::iter::Iterator trait.
-  Option<T> next() noexcept final {
-    if (start == finish) return Option<T>::none();
-    return Option<T>::some(::sus::mem::replace(start, start + 1u));
-  }
-
-  // sus::iter::Iterator trait optional method.
-  ::sus::iter::SizeHint size_hint() noexcept final {
-    const T remaining = finish - start;
-    return ::sus::iter::SizeHint(
-        remaining, ::sus::Option<::sus::num::usize>::some(remaining));
-  }
-
-  // sus::iter::DoubleEndedIterator trait.
-  Option<T> next_back() noexcept {
-    if (start == finish) return Option<T>::none();
-    finish -= 1u;
-    return Option<T>::some(finish);
-  }
-
-  // TODO: Provide and test overrides of Iterator min(), max(), count(),
-  // advance_by(), etc that can be done efficiently here.
-
   // sus::ops::Eq trait
   constexpr bool operator==(const Range& rhs) const noexcept
     requires Eq<T>
@@ -153,7 +199,7 @@ class Range final : public ::sus::iter::IteratorImpl<Range<T>, T> {
 /// yield the next value.
 template <class T>
   requires(::sus::ops::Ord<T>)
-class RangeFrom final : public ::sus::iter::IteratorImpl<RangeFrom<T>, T> {
+class RangeFrom final : public __private::RangeFromIter<RangeFrom<T>, T> {
  public:
   /// The beginning of the range, inclusive of the given value.
   T start;
@@ -193,14 +239,6 @@ class RangeFrom final : public ::sus::iter::IteratorImpl<RangeFrom<T>, T> {
   constexpr Range<T> end_at(T t) && noexcept {
     return Range<T>(::sus::move(start), ::sus::move(t));
   }
-
-  // sus::iter::Iterator trait.
-  Option<T> next() noexcept final {
-    return Option<T>::some(::sus::mem::replace(start, start + 1u));
-  }
-
-  // TODO: Provide and test overrides of Iterator min(), advance_by(), etc
-  // that can be done efficiently here.
 
   // sus::ops::Eq trait
   constexpr bool operator==(const RangeFrom& rhs) const noexcept

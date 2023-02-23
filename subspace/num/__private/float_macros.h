@@ -192,27 +192,27 @@ class Array;
   constexpr inline T operator-() const { return T(-primitive_value); }
 
 #define _sus__float_binary_ops(T)                                        \
-  /** sus::concepts::Add<##T##> trait.                                   \
+  /** sus::num::Add<##T##> trait.                                   \
    * #[doc.overloads=float##T##.+] */                                    \
   friend constexpr inline T operator+(const T& l, const T& r) noexcept { \
     return l.primitive_value + r.primitive_value;                        \
   }                                                                      \
-  /** sus::concepts::Sub<##T##> trait.                                   \
+  /** sus::num::Sub<##T##> trait.                                   \
    * #[doc.overloads=float##T##.-] */                                    \
   friend constexpr inline T operator-(const T& l, const T& r) noexcept { \
     return l.primitive_value - r.primitive_value;                        \
   }                                                                      \
-  /** sus::concepts::Mul<##T##> trait.                                   \
+  /** sus::num::Mul<##T##> trait.                                   \
    * #[doc.overloads=float##T##.*] */                                    \
   friend constexpr inline T operator*(const T& l, const T& r) noexcept { \
     return l.primitive_value * r.primitive_value;                        \
   }                                                                      \
-  /** sus::concepts::Div<##T##> trait.                                   \
+  /** sus::num::Div<##T##> trait.                                   \
    * #[doc.overloads=float##T##./] */                                    \
   friend constexpr inline T operator/(const T& l, const T& r) noexcept { \
     return l.primitive_value / r.primitive_value;                        \
   }                                                                      \
-  /** sus::concepts::Rem<##T##> trait.                                   \
+  /** sus::num::Rem<##T##> trait.                                   \
    *                                                                     \
    * The remainder from the division of two floats.                      \
    *                                                                     \
@@ -228,23 +228,23 @@ class Array;
   static_assert(true)
 
 #define _sus__float_mutable_ops(T)                                       \
-  /** sus::concepts::AddAssign<##T##> trait. */                          \
+  /** sus::num::AddAssign<##T##> trait. */                          \
   constexpr inline void operator+=(T r)& noexcept {                      \
     primitive_value += r.primitive_value;                                \
   }                                                                      \
-  /** sus::concepts::SubAssign<##T##> trait. */                          \
+  /** sus::num::SubAssign<##T##> trait. */                          \
   constexpr inline void operator-=(T r)& noexcept {                      \
     primitive_value -= r.primitive_value;                                \
   }                                                                      \
-  /** sus::concepts::MulAssign<##T##> trait. */                          \
+  /** sus::num::MulAssign<##T##> trait. */                          \
   constexpr inline void operator*=(T r)& noexcept {                      \
     primitive_value *= r.primitive_value;                                \
   }                                                                      \
-  /** sus::concepts::DivAssign<##T##> trait. */                          \
+  /** sus::num::DivAssign<##T##> trait. */                          \
   constexpr inline void operator/=(T r)& noexcept {                      \
     primitive_value /= r.primitive_value;                                \
   }                                                                      \
-  /** sus::concepts::RemAssign<##T##> trait.                             \
+  /** sus::num::RemAssign<##T##> trait.                             \
    *                                                                     \
    * Assigns the remainder from the division of two floats.              \
    *                                                                     \

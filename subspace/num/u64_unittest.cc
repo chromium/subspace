@@ -17,6 +17,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
+#include "subspace/iter/__private/step.h"
 #include "subspace/num/num_concepts.h"
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
@@ -78,6 +79,8 @@ static_assert(std::same_as<decltype(std::hash<u64>()(0_u64)), size_t>);
 static_assert(std::same_as<decltype(std::equal_to<u64>()(0_u64, 1_u64)), bool>);
 
 TEST(u64, Traits) {
+  static_assert(sus::iter::__private::Step<u64>);
+
   // ** Unsigned only
   static_assert(!sus::num::Neg<u64>);
 
@@ -270,6 +273,17 @@ TEST(u64, From) {
   EXPECT_TRUE(u64::try_from(int64_t{i64::MIN}).is_err());
   EXPECT_TRUE(u64::try_from(int64_t{i64::MAX}).is_ok());
 
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, char{2}), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, size_t{2}), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, int8_t{2}), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, int16_t{2}), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, int32_t{2}), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, int64_t{2}), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, uint8_t{2}), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, uint16_t{2}), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, uint32_t{2}), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, uint64_t{2}), 2_u64);
+
   static_assert(sus::construct::From<u64, i8>);
   static_assert(sus::construct::From<u64, i16>);
   static_assert(sus::construct::From<u64, i32>);
@@ -315,6 +329,17 @@ TEST(u64, From) {
 
   EXPECT_TRUE(u64::try_from(i64::MIN).is_err());
   EXPECT_TRUE(u64::try_from(i64::MAX).is_ok());
+
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_i8), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_i16), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_i32), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_i64), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_isize), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_u8), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_u16), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_u32), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_u64), 2_u64);
+  EXPECT_EQ(u64::from_unchecked(unsafe_fn, 2_usize), 2_u64);
 }
 
 TEST(u64DeathTest, FromOutOfRange) {

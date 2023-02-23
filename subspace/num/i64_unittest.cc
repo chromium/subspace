@@ -17,6 +17,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
+#include "subspace/iter/__private/step.h"
 #include "subspace/num/num_concepts.h"
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
@@ -78,6 +79,8 @@ static_assert(std::same_as<decltype(std::hash<i64>()(0_i64)), size_t>);
 static_assert(std::same_as<decltype(std::equal_to<i64>()(0_i64, 1_i64)), bool>);
 
 TEST(i64, Traits) {
+  static_assert(sus::iter::__private::Step<i64>);
+
   // ** Signed only **
   static_assert(sus::num::Neg<i64>);
 
@@ -261,6 +264,17 @@ TEST(i64, From) {
 
   EXPECT_TRUE(i64::try_from(uint64_t{u64::MAX}).is_err());
 
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, char{2}), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, size_t{2}), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, int8_t{2}), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, int16_t{2}), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, int32_t{2}), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, int64_t{2}), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, uint8_t{2}), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, uint16_t{2}), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, uint32_t{2}), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, uint64_t{2}), 2_i64);
+
   static_assert(sus::construct::From<i64, i8>);
   static_assert(sus::construct::From<i64, i16>);
   static_assert(sus::construct::From<i64, i32>);
@@ -305,6 +319,17 @@ TEST(i64, From) {
   EXPECT_EQ(i64::try_from(2_usize).unwrap(), 2_i16);
 
   EXPECT_TRUE(i64::try_from(u64::MAX).is_err());
+
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_i8), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_i16), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_i32), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_i64), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_isize), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_u8), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_u16), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_u32), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_u64), 2_i64);
+  EXPECT_EQ(i64::from_unchecked(unsafe_fn, 2_usize), 2_i64);
 }
 
 TEST(i64DeathTest, FromOutOfRange) {
