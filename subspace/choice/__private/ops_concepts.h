@@ -20,99 +20,99 @@
 
 namespace sus::choice_type::__private {
 
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 struct ChoiceIsEqHelper;
 
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct ChoiceIsEqHelper<ValueType1, TypeList<Types1...>, ValueType2,
+template <class TagType1, class... Types1, class TagType2, class... Types2>
+struct ChoiceIsEqHelper<TagType1, TypeList<Types1...>, TagType2,
                         TypeList<Types2...>> {
-  static constexpr bool value = (::sus::ops::Eq<ValueType1, ValueType2> &&
-                                 ... && ::sus::ops::Eq<Types1, Types2>);
+  static constexpr bool value = (::sus::ops::Eq<TagType1, TagType2> && ... &&
+                                 ::sus::ops::Eq<Types1, Types2>);
 };
 
 // Out of line from the requires clause, and in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 concept ChoiceIsEq =
-    ChoiceIsEqHelper<ValueType1, Types1, ValueType2, Types2>::value;
+    ChoiceIsEqHelper<TagType1, Types1, TagType2, Types2>::value;
 
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 struct ChoiceIsOrdHelper;
 
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct ChoiceIsOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+template <class TagType1, class... Types1, class TagType2, class... Types2>
+struct ChoiceIsOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                          TypeList<Types2...>> {
-  static constexpr bool value = (::sus::ops::Ord<ValueType1, ValueType2> &&
-                                 ... && ::sus::ops::Ord<Types1, Types2>);
+  static constexpr bool value = (::sus::ops::Ord<TagType1, TagType2> && ... &&
+                                 ::sus::ops::Ord<Types1, Types2>);
 };
 
 // Out of line from the requires clause, and in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 concept ChoiceIsOrd =
-    ChoiceIsOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+    ChoiceIsOrdHelper<TagType1, Types1, TagType2, Types2>::value;
 
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 struct ChoiceIsWeakOrdHelper;
 
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct ChoiceIsWeakOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+template <class TagType1, class... Types1, class TagType2, class... Types2>
+struct ChoiceIsWeakOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                              TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
-      ((!::sus::ops::Ord<ValueType1, ValueType2> || ... ||
+      ((!::sus::ops::Ord<TagType1, TagType2> || ... ||
         !::sus::ops::Ord<Types1, Types2>)
         &&
-       (::sus::ops::WeakOrd<ValueType1, ValueType2> && ... &&
+       (::sus::ops::WeakOrd<TagType1, TagType2> && ... &&
         ::sus::ops::WeakOrd<Types1, Types2>));
   // clang-format on
 };
 
 // Out of line from the requires clause, in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 concept ChoiceIsWeakOrd =
-    ChoiceIsWeakOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+    ChoiceIsWeakOrdHelper<TagType1, Types1, TagType2, Types2>::value;
 
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 struct ChoiceIsPartialOrdHelper;
 
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct ChoiceIsPartialOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+template <class TagType1, class... Types1, class TagType2, class... Types2>
+struct ChoiceIsPartialOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                                 TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
-      (!::sus::ops::WeakOrd<ValueType1, ValueType2> || ... ||
+      (!::sus::ops::WeakOrd<TagType1, TagType2> || ... ||
        !::sus::ops::WeakOrd<Types1, Types2>)
       &&
-      (::sus::ops::PartialOrd<ValueType1, ValueType2> && ... &&
+      (::sus::ops::PartialOrd<TagType1, TagType2> && ... &&
        ::sus::ops::PartialOrd<Types1, Types2>);
   // clang-format on
 };
 
 // Out of line from the requires clause, in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 concept ChoiceIsPartialOrd =
-    ChoiceIsPartialOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+    ChoiceIsPartialOrdHelper<TagType1, Types1, TagType2, Types2>::value;
 
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 struct ChoiceIsAnyOrdHelper;
 
-template <class ValueType1, class... Types1, class ValueType2, class... Types2>
-struct ChoiceIsAnyOrdHelper<ValueType1, TypeList<Types1...>, ValueType2,
+template <class TagType1, class... Types1, class TagType2, class... Types2>
+struct ChoiceIsAnyOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                             TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
-      (::sus::ops::PartialOrd<ValueType1, ValueType2> && ... &&
+      (::sus::ops::PartialOrd<TagType1, TagType2> && ... &&
        ::sus::ops::PartialOrd<Types1, Types2>);
   // clang-format on
 };
 
 // Out of line from the requires clause, in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
-template <class ValueType1, class Types1, class ValueType2, class Types2>
+template <class TagType1, class Types1, class TagType2, class Types2>
 concept ChoiceIsAnyOrd =
-    ChoiceIsAnyOrdHelper<ValueType1, Types1, ValueType2, Types2>::value;
+    ChoiceIsAnyOrdHelper<TagType1, Types1, TagType2, Types2>::value;
 
 }  // namespace sus::choice_type::__private

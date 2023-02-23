@@ -18,12 +18,13 @@
 
 namespace sus::choice_type::__private {
 
-struct Nothing {};
-constexpr auto nothing = Nothing();
-
-constexpr bool operator==(const Nothing&, const Nothing&) { return true; }
-constexpr auto operator<=>(const Nothing&, const Nothing&) {
-  return std::strong_ordering::equivalent;
-}
+struct Nothing {
+  friend constexpr bool operator==(const Nothing&, const Nothing&) noexcept {
+    return true;
+  }
+  friend constexpr auto operator<=>(const Nothing&, const Nothing&) noexcept {
+    return std::strong_ordering::equivalent;
+  }
+};
 
 }  // namespace sus::choice_type::__private

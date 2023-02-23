@@ -35,7 +35,7 @@ struct Strong {
   i32 i;
   i32 id;
 
-  friend std::strong_ordering operator<=>(const Strong& a, const Strong& b) {
+  friend std::strong_ordering operator<=>(const Strong& a, const Strong& b) noexcept {
     return a.i <=> b.i;
   }
 };
