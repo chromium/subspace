@@ -87,16 +87,8 @@ using sus::option::__private::StoragePointer;
 /// owns the `T` in that case and it ensures the `Option` and the `T` are both
 /// accessed with the same const-ness.
 ///
-/// If a type provides a never-value field (see mem/never_value.h), and is a
-/// [standard-layout
-/// type](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType), then
-/// Option<T> will have the same size as T.
-///
-/// However the never-value field places some limitations on what can be
-/// constexpr in the Option type. Because it is not possible to query the state
-/// of the Option in a constant evaluation context, state-querying methods can
-/// not be constexpr, nor any method that branches based on the current state,
-/// such as `unwrap_or()`.
+/// If a type `T` satisties `sus::mem::NeverValueField`, then Option<T> will
+/// have the same size as T.
 template <class T>
 class Option final {
   // Note that `const T&` is allowed (so we don't `std::remove_reference_t<T>`)
@@ -828,12 +820,6 @@ class Option final {
 
   /// Returns an Option<const T&> from this Option<T>, that either holds #None
   /// or a reference to the value in this Option.
-  ///
-  /// When not holding a `sus::mem::NeverValueField` type, the method can be
-  /// evaluated in a constant expression.
-  //
-  // Not constexpr as it needs to read the state of the value which can't be
-  // done if `T` is `NeverValueField`.
   constexpr Option<const std::remove_reference_t<T>&> as_ref() const& noexcept {
     if (t_.state() == None)
       return Option<const std::remove_reference_t<T>&>::none();
@@ -851,9 +837,6 @@ class Option final {
 
   /// Returns an Option<T&> from this Option<T>, that either holds #None or a
   /// reference to the value in this Option.
-  //
-  // Not constexpr as it needs to read the state of the value which can't be
-  // done if `T` is `NeverValueField`.
   constexpr Option<T&> as_mut() & noexcept {
     if (t_.state() == None)
       return Option<T&>::none();
