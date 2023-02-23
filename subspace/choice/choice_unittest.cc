@@ -65,12 +65,14 @@ TEST(Choice, NeverValue) {
   using One =
       Choice<sus_choice_types((Order::First, u64), (Order::Second, u32))>;
   static_assert(std::is_standard_layout_v<One>);
+  static_assert(sus::mem::NeverValueField<One>);
   static_assert(sizeof(sus::Option<One>) == sizeof(One));
 
   // It used to be that Option<T> did not support the NeverValueField
   // optimization for non-Standard-Layout types, but it does now.
   using Two = Choice<sus_choice_types((Order::First, u64, u64))>;
   static_assert(!std::is_standard_layout_v<Two>);
+  static_assert(sus::mem::NeverValueField<Two>);
   static_assert(sizeof(sus::Option<Two>) == sizeof(Two));
 }
 
