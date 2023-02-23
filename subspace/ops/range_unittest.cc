@@ -15,6 +15,7 @@
 #include "subspace/ops/range.h"
 
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/construct/default.h"
 #include "subspace/prelude.h"
 
 namespace {
@@ -30,7 +31,25 @@ static_assert(sus::ops::RangeBounds<sus::ops::RangeFrom<usize>, usize>);
 static_assert(sus::ops::RangeBounds<sus::ops::RangeTo<usize>, usize>);
 static_assert(sus::ops::RangeBounds<sus::ops::RangeFull<usize>, usize>);
 
-// Range and RangeFrom satisify Iterator, and Range satisfies
+struct NoDefault {
+  NoDefault(i32) {}
+  auto operator<=>(const NoDefault&) const noexcept {
+    return std::strong_ordering::equal;
+  }
+};
+
+// Range*<T> is Default if T is. RangeFull is always Default as it has no T
+// field.
+static_assert(sus::construct::Default<sus::ops::Range<usize>>);
+static_assert(sus::construct::Default<sus::ops::RangeFrom<usize>>);
+static_assert(sus::construct::Default<sus::ops::RangeTo<usize>>);
+static_assert(sus::construct::Default<sus::ops::RangeFull<usize>>);
+static_assert(!sus::construct::Default<sus::ops::Range<NoDefault>>);
+static_assert(!sus::construct::Default<sus::ops::RangeFrom<NoDefault>>);
+static_assert(!sus::construct::Default<sus::ops::RangeTo<NoDefault>>);
+static_assert(sus::construct::Default<sus::ops::RangeFull<NoDefault>>);
+
+// Range and RangeFrom on integer types satisify Iterator, and Range satisfies
 // DoubleEndedIterator.
 static_assert(sus::iter::Iterator<sus::ops::Range<usize>, usize>);
 static_assert(sus::iter::DoubleEndedIterator<sus::ops::Range<usize>, usize>);
@@ -39,6 +58,10 @@ static_assert(
     !sus::iter::DoubleEndedIterator<sus::ops::RangeFrom<usize>, usize>);
 static_assert(!sus::iter::Iterator<sus::ops::RangeTo<usize>, usize>);
 static_assert(!sus::iter::Iterator<sus::ops::RangeFull<usize>, usize>);
+
+// Other types in Range don't let it be an Iterator.
+static_assert(!sus::iter::Iterator<sus::ops::Range<NoDefault>, NoDefault>);
+static_assert(!sus::iter::Iterator<sus::ops::RangeFrom<NoDefault>, NoDefault>);
 
 static_assert(std::same_as<decltype(".."_r), sus::ops::RangeFull<usize>>);
 static_assert(std::same_as<decltype("1.."_r), sus::ops::RangeFrom<usize>>);

@@ -17,6 +17,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
+#include "subspace/iter/__private/step.h"
 #include "subspace/num/num_concepts.h"
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
@@ -78,6 +79,8 @@ static_assert(std::same_as<decltype(std::hash<i8>()(0_i8)), size_t>);
 static_assert(std::same_as<decltype(std::equal_to<i8>()(0_i8, 1_i8)), bool>);
 
 TEST(i8, Traits) {
+  static_assert(sus::iter::__private::Step<i8>);
+
   // ** Signed only **
   static_assert(sus::num::Neg<i8>);
 
@@ -261,6 +264,17 @@ TEST(i8, From) {
   EXPECT_TRUE(i8::try_from(uint8_t{u8::MAX}).is_err());
   EXPECT_TRUE(i8::try_from(uint16_t{u16::MAX}).is_err());
 
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, char{2}), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, size_t{2}), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, int8_t{2}), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, int16_t{2}), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, int32_t{2}), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, int64_t{2}), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, uint8_t{2}), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, uint16_t{2}), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, uint32_t{2}), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, uint64_t{2}), 2_i8);
+
   static_assert(sus::construct::From<i8, i8>);
   static_assert(sus::construct::From<i8, i16>);
   static_assert(sus::construct::From<i8, i32>);
@@ -308,6 +322,17 @@ TEST(i8, From) {
   EXPECT_TRUE(i8::try_from(i16::MAX).is_err());
   EXPECT_TRUE(i8::try_from(u8::MAX).is_err());
   EXPECT_TRUE(i8::try_from(u16::MAX).is_err());
+
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_i8), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_i16), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_i32), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_i64), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_isize), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_u8), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_u16), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_u32), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_u64), 2_i8);
+  EXPECT_EQ(i8::from_unchecked(unsafe_fn, 2_usize), 2_i8);
 }
 
 TEST(i8DeathTest, FromOutOfRange) {
