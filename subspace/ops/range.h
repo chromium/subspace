@@ -25,12 +25,23 @@ namespace sus::ops {
 /// range syntax like `..`, `a..`, `..b`, `..=c`, `d..e`, or `f..=g`.
 template <class T, class I>
 concept RangeBounds = requires(const T& t, T v, I i) {
-  { t.start_bound() } -> std::same_as<::sus::option::Option<const I&>>; 
+  { t.start_bound() } -> std::same_as<::sus::option::Option<const I&>>;
   { t.end_bound() } -> std::same_as<::sus::option::Option<const I&>>;
-  // Rvalue overloads must not exist as they would return a reference to a temporary.
+  // Rvalue overloads must not exist as they would return a reference to a
+  // temporary.
   requires !requires { ::sus::move(v).start_bound(); };
   requires !requires { ::sus::move(v).end_bound(); };
   { t.contains(i) } -> std::same_as<bool>;
+  // These should return a RangeBounds, but we're unable to check that here as
+  // the type may return itself and the concept would be cyclical and thus
+  // become false.
+  { ::sus::move(v).start_at(i) };
+  { ::sus::move(v).end_at(i) };
+  // start_at() and end_at() are rvalue methods.
+  requires !requires { t.start_at(i); };
+  requires !requires { t.end_at(i); };
+  requires !requires { v.start_at(i); };
+  requires !requires { v.end_at(i); };
 };
 
 /// A (half-open) range bounded inclusively below and exclusively above
@@ -55,9 +66,8 @@ class Range final : public ::sus::iter::IteratorImpl<Range<T>, T> {
   constexpr Range() noexcept
     requires(::sus::construct::Default<T>)
   = default;
-  static constexpr Range with(T start, T finish) noexcept {
-    return Range(::sus::move(start), ::sus::move(finish));
-  }
+  constexpr Range(T start, T finish) noexcept
+      : start(::sus::move(start)), finish(::sus::move(finish)) {}
 
   /// Returns true if `item` is contained in the range.
   //
@@ -85,6 +95,17 @@ class Range final : public ::sus::iter::IteratorImpl<Range<T>, T> {
   /// The range is empty if either side is incomparable, such as `f32::NAN`.
   constexpr bool is_empty() const noexcept { return !(start < finish); }
 
+  /// Return a new Range that starts at `t` and ends where the original Range
+  /// did.
+  constexpr Range start_at(T t) && noexcept {
+    return Range(::sus::move(t), ::sus::move(finish));
+  }
+  /// Return a new Range that starts at where the original Range did and ends at
+  /// `t`.
+  constexpr Range end_at(T t) && noexcept {
+    return Range(::sus::move(start), ::sus::move(t));
+  }
+
   // sus::iter::Iterator trait.
   Option<T> next() noexcept final {
     if (start == finish) return Option<T>::none();
@@ -108,9 +129,12 @@ class Range final : public ::sus::iter::IteratorImpl<Range<T>, T> {
   // TODO: Provide and test overrides of Iterator min(), max(), count(),
   // advance_by(), etc that can be done efficiently here.
 
- private:
-  constexpr Range(T start, T finish) noexcept
-      : start(::sus::move(start)), finish(::sus::move(finish)) {}
+  // sus::ops::Eq trait
+  constexpr bool operator==(const Range& rhs) const noexcept
+    requires Eq<T>
+  {
+    return start == rhs.start && finish == rhs.finish;
+  }
 };
 
 /// A range only bounded inclusively below (`start..`).
@@ -137,9 +161,7 @@ class RangeFrom final : public ::sus::iter::IteratorImpl<RangeFrom<T>, T> {
   constexpr RangeFrom() noexcept
     requires(::sus::construct::Default<T>)
   = default;
-  static constexpr RangeFrom with(T start) noexcept {
-    return RangeFrom(::sus::move(start));
-  }
+  constexpr RangeFrom(T start) noexcept : start(::sus::move(start)) {}
 
   /// Returns true if `item` is contained in the range.
   ///
@@ -162,6 +184,16 @@ class RangeFrom final : public ::sus::iter::IteratorImpl<RangeFrom<T>, T> {
   }
   constexpr ::sus::option::Option<const T&> end_bound() && = delete;
 
+  /// Return a new RangeFrom that starts at `t` and still has no end.
+  constexpr RangeFrom start_at(T t) && noexcept {
+    return RangeFrom(::sus::move(t));
+  }
+  /// Return a new Range that starts at where the original Range did and ends at
+  /// `t`.
+  constexpr Range<T> end_at(T t) && noexcept {
+    return Range<T>(::sus::move(start), ::sus::move(t));
+  }
+
   // sus::iter::Iterator trait.
   Option<T> next() noexcept final {
     return Option<T>::some(::sus::mem::replace(start, start + 1u));
@@ -170,8 +202,12 @@ class RangeFrom final : public ::sus::iter::IteratorImpl<RangeFrom<T>, T> {
   // TODO: Provide and test overrides of Iterator min(), advance_by(), etc
   // that can be done efficiently here.
 
- private:
-  constexpr RangeFrom(T start) noexcept : start(::sus::move(start)) {}
+  // sus::ops::Eq trait
+  constexpr bool operator==(const RangeFrom& rhs) const noexcept
+    requires Eq<T>
+  {
+    return start == rhs.start;
+  }
 };
 
 /// A range only bounded exclusively above (`..end`).
@@ -190,9 +226,7 @@ class RangeTo final {
   constexpr RangeTo() noexcept
     requires(::sus::construct::Default<T>)
   = default;
-  static constexpr RangeTo with(T finish) noexcept {
-    return RangeTo(::sus::move(finish));
-  }
+  constexpr RangeTo(T finish) noexcept : finish(::sus::move(finish)) {}
 
   /// Returns true if `item` is contained in the range.
   ///
@@ -215,8 +249,20 @@ class RangeTo final {
   }
   constexpr ::sus::option::Option<const T&> end_bound() && = delete;
 
- private:
-  constexpr RangeTo(T finish) noexcept : finish(::sus::move(finish)) {}
+  /// Return a new Range that starts at `t` and ends where the original Range
+  /// did.
+  constexpr Range<T> start_at(T t) && noexcept {
+    return Range<T>(::sus::move(t), ::sus::move(finish));
+  }
+  /// Return a new Range that still has no start and ends at `t`.
+  constexpr RangeTo end_at(T t) && noexcept { return RangeTo(::sus::move(t)); }
+
+  // sus::ops::Eq trait
+  constexpr bool operator==(const RangeTo& rhs) const noexcept
+    requires Eq<T>
+  {
+    return finish == rhs.finish;
+  }
 };
 
 /// An unbounded range (`..`).
@@ -250,6 +296,22 @@ class RangeFull final {
     return ::sus::option::Option<const T&>::none();
   }
   constexpr ::sus::option::Option<const T&> end_bound() && = delete;
+
+  /// Return a new Range that starts at `t` and has no end.
+  constexpr RangeFrom<T> start_at(T t) && noexcept {
+    return RangeFrom<T>(::sus::move(t));
+  }
+  /// Return a new Range that has no start and ends at `t`.
+  constexpr RangeTo<T> end_at(T t) && noexcept {
+    return RangeTo<T>(::sus::move(t));
+  }
+
+  // sus::ops::Eq trait
+  constexpr bool operator==(const RangeFull& rhs) const noexcept
+    requires Eq<T>
+  {
+    return true;
+  }
 };
 
 }  // namespace sus::ops

@@ -126,11 +126,11 @@ constexpr auto operator""_r() {
   if constexpr (D.type == RangeLiteralDeducer::NoBound)
     return ::sus::ops::RangeFull<::sus::num::usize>();
   else if constexpr (D.type == RangeLiteralDeducer::LowerBound)
-    return ::sus::ops::RangeFrom<::sus::num::usize>::with(D.lower);
+    return ::sus::ops::RangeFrom<::sus::num::usize>(D.lower);
   else if constexpr (D.type == RangeLiteralDeducer::UpperBound)
-    return ::sus::ops::RangeTo<::sus::num::usize>::with(D.upper);
+    return ::sus::ops::RangeTo<::sus::num::usize>(D.upper);
   else
-    return ::sus::ops::Range<::sus::num::usize>::with(D.lower, D.upper);
+    return ::sus::ops::Range<::sus::num::usize>(D.lower, D.upper);
 }
 
 // TODO: _rs to make a signed RangeBounds over `isize`?
