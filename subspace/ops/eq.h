@@ -37,8 +37,8 @@ namespace sus::ops {
 /// TODO: How do we do PartialEq? Can we even? Should we require Ord to be Eq?
 template <class T, class U = T>
 concept Eq = requires(const T& lhs, const U& rhs) {
-               { lhs == rhs } -> std::same_as<bool>;
-               { lhs != rhs } -> std::same_as<bool>;
-             };
+  { lhs == rhs } noexcept -> std::same_as<bool>;
+  { lhs != rhs } noexcept -> std::same_as<bool>;
+};
 
 }  // namespace sus::ops

@@ -655,10 +655,10 @@ TEST(Result, StrongOrder) {
 }
 
 struct Weak {
-  constexpr auto operator==(const Weak& o) const& {
+  constexpr auto operator==(const Weak& o) const& noexcept {
     return a == o.a && b == o.b;
   }
-  constexpr auto operator<=>(const Weak& o) const& {
+  constexpr auto operator<=>(const Weak& o) const& noexcept {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
     return std::weak_ordering::greater;

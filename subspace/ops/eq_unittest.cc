@@ -22,8 +22,14 @@ using sus::ops::Eq;
 
 struct CComp {};
 struct C {
-  friend bool operator==(const C&, const C&) { return true; }
-  friend bool operator==(const C&, const CComp&) { return true; }
+  friend bool operator==(const C&, const C&) noexcept { return true; }
+  friend bool operator==(const C&, const CComp&) noexcept { return true; }
+};
+
+struct E {
+  // Not noexcept.
+  friend bool operator==(const E&, const E&) { return true; }
+  friend bool operator==(const E&, const CComp&) { return true; }
 };
 
 // These types are comparable.
@@ -32,6 +38,10 @@ static_assert(Eq<char>);
 static_assert(Eq<C>);
 static_assert(Eq<C, C>);
 static_assert(Eq<C, CComp>);
+
+// Not noexcept.
+static_assert(!Eq<E>);
+static_assert(!Eq<E, CComp>);
 
 struct S {};  // No operator==.
 

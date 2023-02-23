@@ -476,19 +476,19 @@ union Storage<I, ::sus::Tuple<Ts...>> {
     ::sus::check(index == I);
     tuple_.~Type();
   }
-  inline constexpr bool eq(size_t index, const Storage& other) const& {
+  inline constexpr bool eq(size_t index, const Storage& other) const& noexcept {
     ::sus::check(index == I);
     return tuple_ == other.tuple_;
   }
-  inline constexpr auto ord(size_t index, const Storage& other) const& {
+  inline constexpr auto ord(size_t index, const Storage& other) const& noexcept {
     ::sus::check(index == I);
     return std::strong_order(tuple_, other.tuple_);
   }
-  inline constexpr auto weak_ord(size_t index, const Storage& other) const& {
+  inline constexpr auto weak_ord(size_t index, const Storage& other) const& noexcept {
     ::sus::check(index == I);
     return std::weak_order(tuple_, other.tuple_);
   }
-  inline constexpr auto partial_ord(size_t index, const Storage& other) const& {
+  inline constexpr auto partial_ord(size_t index, const Storage& other) const& noexcept {
     ::sus::check(index == I);
     return std::partial_order(tuple_, other.tuple_);
   }

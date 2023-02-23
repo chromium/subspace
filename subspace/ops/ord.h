@@ -38,7 +38,7 @@ concept Ordering = (std::same_as<T, std::strong_ordering> ||
 /// Concept for types that form a total order (aka `std::strong_ordering`).
 template <class T, class U = T>
 concept Ord = requires(const T& lhs, const U& rhs) {
-  { lhs <=> rhs } -> std::same_as<std::strong_ordering>;
+  { lhs <=> rhs } noexcept -> std::same_as<std::strong_ordering>;
 };
 
 /// Concept for types that form a weak ordering (aka `std::weak_ordering`).
@@ -48,7 +48,7 @@ concept Ord = requires(const T& lhs, const U& rhs) {
 /// strongest type of ordering between the types, use `ExclusiveWeakOrd`.
 template <class T, class U = T>
 concept WeakOrd = Ord<T, U> || requires(const T& lhs, const U& rhs) {
-  { lhs <=> rhs } -> std::same_as<std::weak_ordering>;
+  { lhs <=> rhs } noexcept -> std::same_as<std::weak_ordering>;
 };
 
 /// Concept for types that form a partial ordering (aka
@@ -60,7 +60,7 @@ concept WeakOrd = Ord<T, U> || requires(const T& lhs, const U& rhs) {
 template <class T, class U = T>
 concept PartialOrd =
     WeakOrd<T, U> || Ord<T, U> || requires(const T& lhs, const U& rhs) {
-      { lhs <=> rhs } -> std::same_as<std::partial_ordering>;
+      { lhs <=> rhs } noexcept -> std::same_as<std::partial_ordering>;
     };
 
 /// Concept for types that have a total ordering (aka `std::strong_ordering`).
