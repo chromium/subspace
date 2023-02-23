@@ -19,6 +19,11 @@
 
 namespace {
 
+using sus::ops::Range;
+using sus::ops::RangeFrom;
+using sus::ops::RangeFull;
+using sus::ops::RangeTo;
+
 // Range* satisifies RangeBounds.
 static_assert(sus::ops::RangeBounds<sus::ops::Range<usize>, usize>);
 static_assert(sus::ops::RangeBounds<sus::ops::RangeFrom<usize>, usize>);
@@ -91,6 +96,60 @@ static_assert([]() constexpr {
 // auto x12 = "1'..=2"_r;
 // auto x13 = "1..='2"_r;
 // auto x14 = "1..=2'"_r;
+
+// start_at() and end_at().
+static_assert([]() constexpr {
+  auto r = "1..5"_r.start_at(8u);
+  return r == Range(8_usize, 5_usize);
+}());
+static_assert([]() constexpr {
+  auto r = "1..5"_r.start_at(8u);
+  return r == Range(8_usize, 5_usize);
+}());
+static_assert([]() constexpr {
+  auto r = "1..5"_r.end_at(8u);
+  return r == Range(1_usize, 8_usize);
+}());
+static_assert([]() constexpr {
+  auto r = "1..5"_r.start_at(8u).end_at(9u);
+  return r == Range(8_usize, 9_usize);
+}());
+static_assert([]() constexpr {
+  auto r = "1.."_r.start_at(8u);
+  return r == RangeFrom(8_usize);
+}());
+static_assert([]() constexpr {
+  auto r = "1.."_r.end_at(8u);
+  return r == Range(1_usize, 8_usize);
+}());
+static_assert([]() constexpr {
+  auto r = "1..5"_r.start_at(8u).end_at(9u);
+  return r == Range(8_usize, 9_usize);
+}());
+static_assert([]() constexpr {
+  auto r = "..5"_r.start_at(8u);
+  return r == Range(8_usize, 5_usize);
+}());
+static_assert([]() constexpr {
+  auto r = "..5"_r.end_at(8u);
+  return r == RangeTo(8_usize);
+}());
+static_assert([]() constexpr {
+  auto r = "..5"_r.start_at(8u).end_at(9u);
+  return r == Range(8_usize, 9_usize);
+}());
+static_assert([]() constexpr {
+  auto r = ".."_r.start_at(8u);
+  return r == RangeFrom(8_usize);
+}());
+static_assert([]() constexpr {
+  auto r = ".."_r.end_at(8u);
+  return r == RangeTo(8_usize);
+}());
+static_assert([]() constexpr {
+  auto r = ".."_r.start_at(8u).end_at(9u);
+  return r == Range(8_usize, 9_usize);
+}());
 
 TEST(Range, Iter) {
   auto it = "1..5"_r;
