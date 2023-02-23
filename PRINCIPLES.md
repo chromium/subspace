@@ -57,12 +57,17 @@ This library is an experiment and not intended for use. See the
 
 ## Nitty gritty.
 
-1. No public constructors, except for the default constructor. All other
-   construction is through (named) static methods.
+1. No public constructors, except for the default constructor and an aggregate
+   constructor of all fields. All other construction is through (named) static
+   methods.
+    * The aggregate constructor acts like the implicit constructor in cases
+      where it does not exist. It takes values for and initializes all data
+      members in the order they are declared.
     * Non-default constructors are prefixed with `with_()` unless there's a
       clear and better domain-specific name.
-    * Would like to extend this to Copy and Move constructors too, through `Clone`
-      and `Move` methods. Implementation details required.
+    * Avoid writing copy constructors in non-containers unless copying is so
+      cheap you would pass the argument by value. Instead write Clone.
+      Containers have a copy constructor if their inner type has one.
     * Write a `::from(x)` constructing method to implement
       `sus::construct::From` when the type is constructed from another type.
     * Exception granted for closure types (Fn, FnMut, FnOnce) because
