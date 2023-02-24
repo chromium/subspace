@@ -51,13 +51,13 @@ class Slice {
   static constexpr inline Slice from_raw_parts(::sus::marker::UnsafeFnMarker,
                                                T* data,
                                                ::sus::usize len) noexcept {
-    ::sus::check(len.primitive_value <= PTRDIFF_MAX);
+    ::sus::check(len.primitive_value <= static_cast<size_t>(isize::MAX_PRIMITIVE));
     return Slice(data, len);
   }
 
   // sus::construct::From<Slice<T>, T[]> trait.
   template <size_t N>
-    requires(N <= PTRDIFF_MAX)
+    requires(N <= size_t{PTRDIFF_MAX})
   static constexpr inline Slice from(T (&data)[N]) {
     return Slice(data, N);
   }

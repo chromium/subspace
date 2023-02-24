@@ -24,6 +24,7 @@
 #include "subspace/mem/nonnull.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
+#include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
 
 namespace sus::containers {
@@ -52,8 +53,9 @@ struct [[sus_trivial_abi]] SliceIter final
   Option<Item> next() noexcept final {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>::none();
-    // SAFETY: Since end_ > ptr_, which is checked in the constructor, ptr_ + 1
-    // will never be null.
+    // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
+    // constructor) so ptr_ will be inside the allocation, not pointing just
+    // after it (like end_ may be).
     return Option<Item>::some(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u));
   }
 
@@ -61,25 +63,36 @@ struct [[sus_trivial_abi]] SliceIter final
   Option<Item> next_back() noexcept {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>::none();
-    // SAFETY: Since end_ > ptr_, which is checked in the constructor, end_ - 1
-    // will never be null.
+    // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
+    // constructor) so subtracting one and dereffing will be inside the
+    // allocation.
     end_ -= 1u;
     return Option<Item>::some(*end_);
   }
 
-  ::sus::iter::SizeHint size_hint() noexcept final {
-    // SAFETY: end_ is always larger than ptr_ which is only incremented until
-    // end_, so this static cast does not drop a negative sign bit. That ptr_
-    // starts at or before end_ is checked in the constructor.
-    const usize remaining = static_cast<size_t>(end_ - ptr_);
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
+    // not exceed isize::MAX.
+    // TODO: Use from_unchecked()
+    const auto remaining = ::sus::num::usize(static_cast<size_t>(end_ - ptr_));
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::some(remaining));
   }
 
+  /// sus::iter::ExactSizeIterator trait.
+  ::sus::num::usize exact_size_hint() const noexcept {
+    // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
+    // not exceed isize::MAX.
+    // TODO: Use from_unchecked()
+    return ::sus::num::usize::from(static_cast<size_t>(end_ - ptr_));
+  }
+
  private:
   constexpr SliceIter(const RawItem* start, usize len) noexcept
-      : ptr_(start), end_(start + len.primitive_value) {
-    check(end_ >= ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
+      : ptr_(start), end_(start + size_t{len}) {
+    // Wrap-around would be an invalid allocation and would break our distance
+    // functions.
+    check(end_ >= ptr_);
   }
 
   const RawItem* ptr_;
@@ -111,8 +124,9 @@ struct [[sus_trivial_abi]] SliceIterMut final
   Option<Item> next() noexcept final {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>::none();
-    // SAFETY: Since end_ > ptr_, which is checked in the constructor, ptr_ + 1
-    // will never be null.
+    // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
+    // constructor) so ptr_ will be inside the allocation, not pointing just
+    // after it (like end_ may be).
     return Option<Item>::some(
         mref(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u)));
   }
@@ -121,25 +135,36 @@ struct [[sus_trivial_abi]] SliceIterMut final
   Option<Item> next_back() noexcept {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>::none();
-    // SAFETY: Since end_ > ptr_, which is checked in the constructor, end_ - 1
-    // will never be null.
+    // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
+    // constructor) so subtracting one and dereffing will be inside the
+    // allocation.
     end_ -= 1u;
     return Option<Item>::some(mref(*end_));
   }
 
-  ::sus::iter::SizeHint size_hint() noexcept final {
-    // SAFETY: end_ is always larger than ptr_ which is only incremented until
-    // end_, so this static cast does not drop a negative sign bit. That ptr_
-    // starts at or before end_ is checked in the constructor.
-    const usize remaining = static_cast<size_t>(end_ - ptr_);
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
+    // not exceed isize::MAX.
+    // TODO: Use from_unchecked()
+    const auto remaining = ::sus::num::usize(static_cast<size_t>(end_ - ptr_));
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::some(remaining));
   }
 
+  /// sus::iter::ExactSizeIterator trait.
+  ::sus::num::usize exact_size_hint() const noexcept {
+    // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
+    // not exceed isize::MAX.
+    // TODO: Use from_unchecked()
+    return ::sus::num::usize::from(static_cast<size_t>(end_ - ptr_));
+  }
+
  private:
   constexpr SliceIterMut(RawItem* start, usize len) noexcept
-      : ptr_(start), end_(start + len.primitive_value) {
-    check(end_ >= ptr_ || !end_);  // end_ may wrap around to 0, but not past 0.
+      : ptr_(start), end_(start + size_t{len}) {
+    // Wrap-around would be an invalid allocation and would break our distance
+    // functions.
+    check(end_ >= ptr_);
   }
 
   RawItem* ptr_;

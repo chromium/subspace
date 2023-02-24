@@ -57,10 +57,10 @@ struct Storage<T, 0> final {};
 
 /// A container of objects of type T, with a fixed size N.
 ///
-/// An Array can not be larger than PTRDIFF_MAX, as subtracting a pointer at a
+/// An Array can not be larger than `isize::MAX`, as subtracting a pointer at a
 /// greater distance results in Undefined Behaviour.
 template <class T, size_t N>
-  requires(N <= PTRDIFF_MAX)
+  requires(N <= size_t{PTRDIFF_MAX})
 class Array final {
   static_assert(!std::is_const_v<T>,
                 "`Array<const T, N>` should be written `const Array<T, N>`, as "
