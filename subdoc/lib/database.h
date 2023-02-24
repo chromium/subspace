@@ -496,12 +496,10 @@ struct Database {
                      "non-namespace.";
                 return sus::result::err(sus::move(s).str());
               }
-              if (!target.as_mut<Target::Namespace>().namespaces.contains(
-                      id)) {
+              if (!target.as_mut<Target::Namespace>().namespaces.contains(id)) {
                 std::ostringstream s;
                 s << "Inherited comment at " << c->begin_loc
-                  << " can't find namespace "
-                  << e.as<InheritPathNamespace>();
+                  << " can't find namespace " << e.as<InheritPathNamespace>();
                 return sus::result::err(sus::move(s).str());
               }
               target = sus::choice<Target::Namespace>(
@@ -526,8 +524,7 @@ struct Database {
                       find_record(target.as_mut<Target::Namespace>().records);
                   break;
                 case Target::Record:
-                  record =
-                      find_record(target.as_mut<Target::Record>().records);
+                  record = find_record(target.as_mut<Target::Record>().records);
                   break;
                 case Target::Function: {
                   std::ostringstream s;
@@ -648,11 +645,11 @@ struct Database {
     auto ns_cursor = [&]() -> sus::Option<const NamespaceElement&> {
       const NamespaceElement* cursor = &global;
 
-      auto it = iter_namespace_path(decl);
-      // TODO: Make Iterator::reverse() and use that.
-      auto v = sus::move(it).collect_vec();
-      for (usize i = 1u; i < v.len(); i += 1u) {
-        const Namespace& n = v[v.len() - i - 1u];
+      // Namespace path goes from the outside in to the global, we want the
+      // inverse, and then to skip the global namespace.
+      auto it = iter_namespace_path(decl).collect_vec().into_iter().reverse();
+      it.next();  // TODO: Use Iterator::skip().
+      for (const Namespace& n : it) {
         switch (n) {
           case Namespace::Tag::Global: {
             // We skipped the 1st namespace in the path which is the global
@@ -685,13 +682,12 @@ struct Database {
               clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext())) {
         const RecordElement* cursor = nullptr;
 
-        auto it = iter_record_path(containing_record_decl);
-        // TODO: Make Iterator::reverse() and use that.
-        auto v = sus::move(it).collect_vec();
-        for (usize i; i < v.len(); i += 1u) {
-          std::string_view name = v[v.len() - i - 1u];
-
-          if (i == 0u) {
+        bool first = true;  // TODO: Use Iterator::enumerate().
+        for (std::string_view name : iter_record_path(containing_record_decl)
+                                         .collect_vec()
+                                         .into_iter()
+                                         .reverse()) {
+          if (first) {
             auto r_it = ns_cursor->records.find(RecordId(name));
             if (r_it == ns_cursor->records.end()) {
               return sus::none();
@@ -704,6 +700,7 @@ struct Database {
             }
             cursor = &r_it->second;
           }
+          first = false;
         }
         return sus::some(*cursor);
       } else {

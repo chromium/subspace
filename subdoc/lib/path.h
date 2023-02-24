@@ -43,10 +43,8 @@ inline std::string namespace_with_path_to_string(
   std::ostringstream s;
   bool add_colons = false;
 
-  // TODO: Add Iterator::reverse() and use that here.
-  for (usize i = path.len(); i > 0u; i -= 1u) {
+  for (const Namespace& n : path.iter().reverse()) {
     if (add_colons) s << "::";
-    const Namespace& n = path[i - 1u];
     switch (n) {
       case Namespace::Tag::Global: break;
       case Namespace::Tag::Anonymous:
@@ -64,9 +62,7 @@ inline std::string namespace_with_path_to_string(
   switch (tail) {
     case Namespace::Tag::Global: s << "Global namespace"; break;
     case Namespace::Tag::Anonymous: s << "(anonymous)"; break;
-    case Namespace::Tag::Named:
-      s << tail.as<Namespace::Tag::Named>();
-      break;
+    case Namespace::Tag::Named: s << tail.as<Namespace::Tag::Named>(); break;
   }
 
   return s.str();
