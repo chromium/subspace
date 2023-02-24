@@ -17,6 +17,7 @@
 #include "subspace/iter/__private/step.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/mem/move.h"
+#include "subspace/mem/relocate.h"
 #include "subspace/ops/ord.h"
 #include "subspace/option/option.h"
 
@@ -65,10 +66,9 @@ class RangeIter<Final, T, true> : public ::sus::iter::IteratorImpl<Final, T> {
 
   // sus::iter::Iterator trait optional method.
   ::sus::iter::SizeHint size_hint() const noexcept final {
-    Option<::sus::num::usize> steps =
-        ::sus::iter::__private::steps_between(
-            static_cast<const Final*>(this)->start,
-            static_cast<const Final*>(this)->finish);
+    Option<::sus::num::usize> steps = ::sus::iter::__private::steps_between(
+        static_cast<const Final*>(this)->start,
+        static_cast<const Final*>(this)->finish);
     const ::sus::num::usize lower = steps.is_some() ? *steps : 0_usize;
     return ::sus::iter::SizeHint(lower, ::sus::move(steps));
   }
@@ -181,6 +181,9 @@ class Range final : public __private::RangeIter<Range<T>, T> {
   {
     return start == rhs.start && finish == rhs.finish;
   }
+
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(start), decltype(finish));
 };
 
 /// A range only bounded inclusively below (`start..`).
@@ -246,6 +249,9 @@ class RangeFrom final : public __private::RangeFromIter<RangeFrom<T>, T> {
   {
     return start == rhs.start;
   }
+
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(start));
 };
 
 /// A range only bounded exclusively above (`..end`).
@@ -301,6 +307,9 @@ class RangeTo final {
   {
     return finish == rhs.finish;
   }
+
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(finish));
 };
 
 /// An unbounded range (`..`).
@@ -311,7 +320,7 @@ class RangeTo final {
 /// A RangeFull<usize> can be constructed as a literal as `".."_r`.
 template <class T>
   requires(::sus::ops::Ord<T>)
-class RangeFull final {
+class [[sus_trivial_abi]] RangeFull final {
  public:
   RangeFull() = default;
 
@@ -350,6 +359,8 @@ class RangeFull final {
   {
     return true;
   }
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn);
 };
 
 }  // namespace sus::ops
