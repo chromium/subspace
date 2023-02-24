@@ -50,10 +50,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
       {
         // TODO: This code gets duplicated a lot, share it.
 
-        // TODO: Add Iterator::reverse() and use that.
-        for (size_t i = 0; i < element.namespace_path.len(); ++i) {
-          const Namespace& n =
-              element.namespace_path[element.namespace_path.len() - i - 1u];
+        for (const Namespace &n : element.namespace_path.iter().reverse()) {
           switch (n) {
             case Namespace::Tag::Global: break;
             case Namespace::Tag::Anonymous: {
@@ -71,10 +68,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
               break;
           }
         }
-        // TODO: Add Iterator::reverse() and use that.
-        for (size_t i = 0; i < element.record_path.len(); ++i) {
-          const std::string& record_name =
-              element.record_path[element.record_path.len() - i - 1u];
+        for (std::string_view record_name: element.record_path.iter().reverse()) {
           {
             auto record_anchor = full_type_span.open_a();
             record_anchor.write_text(record_name);
@@ -234,10 +228,7 @@ void generate_record(const RecordElement& element,
 
   {
     std::ostringstream title;
-    // TODO: Add Iterator::reverse() and use that.
-    for (size_t i = 0; i < element.namespace_path.len(); ++i) {
-      const Namespace& n =
-          element.namespace_path[element.namespace_path.len() - i - 1u];
+    for (const Namespace& n: element.namespace_path.iter().reverse()) {
       switch (n) {
         case Namespace::Tag::Global: break;
         case Namespace::Tag::Anonymous:
@@ -250,10 +241,7 @@ void generate_record(const RecordElement& element,
           break;
       }
     }
-    // TODO: Add Iterator::reverse() and use that.
-    for (size_t i = 0; i < element.record_path.len(); ++i) {
-      const std::string& record_name =
-          element.record_path[element.record_path.len() - i - 1u];
+    for (std::string_view record_name: element.record_path.iter().reverse()) {
       title << record_name;
       title << "::";
     }
