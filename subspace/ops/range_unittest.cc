@@ -16,6 +16,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/default.h"
+#include "subspace/macros/compiler.h"
 #include "subspace/prelude.h"
 
 namespace {
@@ -68,8 +69,15 @@ static_assert(sus::mem::relocate_by_memcpy<sus::ops::Range<usize>>);
 static_assert(sus::mem::relocate_by_memcpy<sus::ops::RangeFrom<usize>>);
 static_assert(sus::mem::relocate_by_memcpy<sus::ops::RangeTo<usize>>);
 // RangeFull has a 0 data size so it's not (0 is indistinguishable from the
-// error case and doesn't need to be memcpy'd).
+// error case and doesn't need to be memcpy'd). But on clang, it is marked
+// trivial_abi, so it can be seen as trivially relocatable there.
+//
+// However clang-cl (as seen via subdoc) does something weird here, and makes
+// the data size into 1.
+#if !(_MSC_VER && defined(__clang__))
+static_assert(sus::mem::data_size_of<sus::ops::RangeFull<usize>>() == 0u);
 static_assert(!sus::mem::relocate_by_memcpy<sus::ops::RangeFull<usize>>);
+#endif
 
 // The types produced by the various literal syntaxes.
 static_assert(std::same_as<decltype(".."_r), sus::ops::RangeFull<usize>>);
