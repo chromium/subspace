@@ -73,8 +73,8 @@ struct [[sus_trivial_abi]] SliceIter final
   ::sus::iter::SizeHint size_hint() const noexcept final {
     // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
     // not exceed isize::MAX.
-    // TODO: Use from_unchecked()
-    const auto remaining = ::sus::num::usize(static_cast<size_t>(end_ - ptr_));
+    const auto remaining = ::sus::num::usize::from_unchecked(
+        ::sus::marker::unsafe_fn, end_ - ptr_);
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::some(remaining));
   }
@@ -83,8 +83,8 @@ struct [[sus_trivial_abi]] SliceIter final
   ::sus::num::usize exact_size_hint() const noexcept {
     // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
     // not exceed isize::MAX.
-    // TODO: Use from_unchecked()
-    return ::sus::num::usize::from(static_cast<size_t>(end_ - ptr_));
+    return ::sus::num::usize::from_unchecked(::sus::marker::unsafe_fn,
+                                             end_ - ptr_);
   }
 
  private:
@@ -145,8 +145,8 @@ struct [[sus_trivial_abi]] SliceIterMut final
   ::sus::iter::SizeHint size_hint() const noexcept final {
     // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
     // not exceed isize::MAX.
-    // TODO: Use from_unchecked()
-    const auto remaining = ::sus::num::usize(static_cast<size_t>(end_ - ptr_));
+    const auto remaining = ::sus::num::usize::from_unchecked(
+        ::sus::marker::unsafe_fn, end_ - ptr_);
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::some(remaining));
   }
@@ -155,8 +155,8 @@ struct [[sus_trivial_abi]] SliceIterMut final
   ::sus::num::usize exact_size_hint() const noexcept {
     // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
     // not exceed isize::MAX.
-    // TODO: Use from_unchecked()
-    return ::sus::num::usize::from(static_cast<size_t>(end_ - ptr_));
+    return ::sus::num::usize::from_unchecked(::sus::marker::unsafe_fn,
+                                             end_ - ptr_);
   }
 
  private:
