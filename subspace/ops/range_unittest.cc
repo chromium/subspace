@@ -63,6 +63,15 @@ static_assert(!sus::iter::Iterator<sus::ops::RangeFull<usize>, usize>);
 static_assert(!sus::iter::Iterator<sus::ops::Range<NoDefault>, NoDefault>);
 static_assert(!sus::iter::Iterator<sus::ops::RangeFrom<NoDefault>, NoDefault>);
 
+// Range types are trivially relocatable if the inner type is.
+static_assert(sus::mem::relocate_by_memcpy<sus::ops::Range<usize>>);
+static_assert(sus::mem::relocate_by_memcpy<sus::ops::RangeFrom<usize>>);
+static_assert(sus::mem::relocate_by_memcpy<sus::ops::RangeTo<usize>>);
+// RangeFull has a 0 data size so it's not (0 is indistinguishable from the
+// error case and doesn't need to be memcpy'd).
+static_assert(!sus::mem::relocate_by_memcpy<sus::ops::RangeFull<usize>>);
+
+// The types produced by the various literal syntaxes.
 static_assert(std::same_as<decltype(".."_r), sus::ops::RangeFull<usize>>);
 static_assert(std::same_as<decltype("1.."_r), sus::ops::RangeFrom<usize>>);
 static_assert(std::same_as<decltype("..2"_r), sus::ops::RangeTo<usize>>);
