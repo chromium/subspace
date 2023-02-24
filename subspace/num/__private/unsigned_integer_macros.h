@@ -34,7 +34,7 @@
 
 namespace sus::containers {
 template <class T, size_t N>
-  requires(N <= PTRDIFF_MAX)
+  requires(N <= size_t{PTRDIFF_MAX})
 class Array;
 }
 

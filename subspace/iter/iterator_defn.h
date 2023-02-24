@@ -98,7 +98,7 @@ class IteratorBase {
   ///
   /// The default implementation returns `lower = 0` and `upper = None` which is
   /// correct for any iterator.
-  virtual SizeHint size_hint() noexcept {
+  virtual SizeHint size_hint() const noexcept {
     return SizeHint(0_usize, ::sus::Option<::sus::num::usize>::none());
   }
 

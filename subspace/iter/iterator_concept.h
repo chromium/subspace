@@ -20,6 +20,10 @@
 #include "subspace/convert/subclass.h"
 #include "subspace/mem/forward.h"
 
+namespace sus::num {
+struct usize;
+}
+
 namespace sus::option {
 template <class T>
 class Option;
@@ -76,7 +80,12 @@ concept Iterator = requires(T& t) {
 /// interchangeable for this purpose.
 template <class T, class Item>
 concept DoubleEndedIterator = Iterator<T, Item> && requires(T& t) {
-  { t.next_back() } -> std::same_as<::sus::option::Option<Item>>;
+  { t.next_back() } noexcept -> std::same_as<::sus::option::Option<Item>>;
+};
+
+template <class T, class Item>
+concept ExactSizeIterator = Iterator<T, Item> && requires(const T& t) {
+  { t.exact_size_hint() } noexcept -> std::same_as<::sus::num::usize>;
 };
 
 /// Conversion into an `Iterator`.

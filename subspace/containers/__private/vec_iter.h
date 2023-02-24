@@ -35,11 +35,12 @@ struct VecIntoIter final
  public:
   using Item = ItemT;
 
+  /// Constructs `VecIntoIter` from a `Vec`.
   static constexpr auto with(Vec<Item>&& vec) noexcept {
     return VecIntoIter(::sus::move(vec));
   }
 
-  // sus::iter::Iterator trait.
+  /// sus::iter::Iterator trait.
   Option<Item> next() noexcept final {
     if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>::none();
@@ -52,7 +53,7 @@ struct VecIntoIter final
     return Option<Item>::some(move(item));
   }
 
-  // sus::iter::DoubleEndedIterator trait.
+  /// sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>::none();
@@ -64,18 +65,21 @@ struct VecIntoIter final
     return Option<Item>::some(move(item));
   }
 
-  ::sus::iter::SizeHint size_hint() noexcept final {
+  /// sus::iter::Iterator method.
+  ::sus::iter::SizeHint size_hint() const noexcept final {
     const usize remaining = back_index_ - front_index_;
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::some(remaining));
   }
 
+  /// sus::iter::ExactSizeIterator trait.
+  ::sus::num::usize exact_size_hint() const noexcept {
+    return back_index_ - front_index_;
+  }
+
  private:
   VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
 
-  // TODO: Decompose the Vec (with a Vec::into_raw_parts) into a (pointer, len,
-  // cap) and just store the pointer here, as the front_index_ and back_index_
-  // are all we need to retain wrt the Vec's size.
   Vec<Item> vec_;
   usize front_index_ = 0_usize;
   usize back_index_ = vec_.len();
