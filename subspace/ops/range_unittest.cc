@@ -85,9 +85,16 @@ static_assert(std::same_as<decltype("1.."_r), sus::ops::RangeFrom<usize>>);
 static_assert(std::same_as<decltype("..2"_r), sus::ops::RangeTo<usize>>);
 static_assert(std::same_as<decltype("1..2"_r), sus::ops::Range<usize>>);
 static_assert(std::same_as<decltype("1..=2"_r), sus::ops::Range<usize>>);
+// SIgned.
+static_assert(std::same_as<decltype(".."_rs), sus::ops::RangeFull<isize>>);
+static_assert(std::same_as<decltype("1.."_rs), sus::ops::RangeFrom<isize>>);
+static_assert(std::same_as<decltype("..2"_rs), sus::ops::RangeTo<isize>>);
+static_assert(std::same_as<decltype("1..2"_rs), sus::ops::Range<isize>>);
+static_assert(std::same_as<decltype("1..=2"_rs), sus::ops::Range<isize>>);
+
+// clang-format off
 
 // Start and end bounds.
-// clang-format off
 static_assert([]() constexpr {auto r = ".."_r; return r.start_bound().is_none(); }());
 static_assert([]() constexpr { auto r = ".."_r; return r.end_bound().is_none(); }());
 static_assert([]() constexpr { auto r = "3.."_r; return r.start_bound().unwrap() == 3_usize; }());
@@ -100,6 +107,31 @@ static_assert([]() constexpr { auto r = "3..8"_r; return r.start_bound().unwrap(
 static_assert([]() constexpr { auto r = "3..8"_r; return r.end_bound().unwrap() == 8_usize; }());
 static_assert([]() constexpr { auto r = "3..=8"_r; return r.start_bound().unwrap() == 3_usize; }());
 static_assert([]() constexpr { auto r = "3..=8"_r; return r.end_bound().unwrap() == 9_usize; }());
+// Signed
+static_assert([]() constexpr {auto r = ".."_rs; return r.start_bound().is_none(); }());
+static_assert([]() constexpr { auto r = ".."_rs; return r.end_bound().is_none(); }());
+static_assert([]() constexpr { auto r = "3.."_rs; return r.start_bound().unwrap() == 3_isize; }());
+static_assert([]() constexpr { auto r = "3.."_rs; return r.end_bound().is_none(); }());
+static_assert([]() constexpr { auto r = "-3.."_rs; return r.start_bound().unwrap() == -3_isize; }());
+static_assert([]() constexpr { auto r = "-3.."_rs; return r.end_bound().is_none(); }());
+static_assert([]() constexpr { auto r = "..3"_rs; return r.start_bound().is_none(); }());
+static_assert([]() constexpr { auto r = "..3"_rs; return r.end_bound().unwrap() == 3_isize; }());
+static_assert([]() constexpr { auto r = "..-3"_rs; return r.start_bound().is_none(); }());
+static_assert([]() constexpr { auto r = "..-3"_rs; return r.end_bound().unwrap() == -3_isize; }());
+static_assert([]() constexpr { auto r = "..=3"_rs; return r.start_bound().is_none(); }());
+static_assert([]() constexpr { auto r = "..=3"_rs; return r.end_bound().unwrap() == 4_isize; }());
+static_assert([]() constexpr { auto r = "..=-3"_rs; return r.start_bound().is_none(); }());
+static_assert([]() constexpr { auto r = "..=-3"_rs; return r.end_bound().unwrap() == -2_isize; }());
+static_assert([]() constexpr { auto r = "-8..3"_rs; return r.start_bound().unwrap() == -8_isize; }());
+static_assert([]() constexpr { auto r = "-8..3"_rs; return r.end_bound().unwrap() == 3_isize; }());
+static_assert([]() constexpr { auto r = "-8..-3"_rs; return r.start_bound().unwrap() == -8_isize; }());
+static_assert([]() constexpr { auto r = "-8..-3"_rs; return r.end_bound().unwrap() == -3_isize; }());
+static_assert([]() constexpr { auto r = "-8..=-3"_rs; return r.start_bound().unwrap() == -8_isize; }());
+static_assert([]() constexpr { auto r = "-8..=-3"_rs; return r.end_bound().unwrap() == -2_isize; }());
+static_assert([]() constexpr { auto r = "-8..=-1"_rs; return r.end_bound().unwrap() == 0_isize; }());
+static_assert([]() constexpr { auto r = "-8..=-0"_rs; return r.end_bound().unwrap() == 1_isize; }());
+static_assert([]() constexpr { auto r = "-8..=0"_rs; return r.end_bound().unwrap() == 1_isize; }());
+
 // clang-format on
 
 // Parsing of numbers.
@@ -118,6 +150,23 @@ static_assert([]() constexpr {
 static_assert([]() constexpr {
   auto r = "3'4'5'6..87'654'3"_r;
   return r.end_bound().unwrap() == 876543_usize;
+}());
+// Signed.
+static_assert([]() constexpr {
+  auto r = "345678..876543"_rs;
+  return r.start_bound().unwrap() == 345678_isize;
+}());
+static_assert([]() constexpr {
+  auto r = "345678..876543"_rs;
+  return r.end_bound().unwrap() == 876543_isize;
+}());
+static_assert([]() constexpr {
+  auto r = "-3'4'5'6..87'654'3"_rs;
+  return r.start_bound().unwrap() == -3456_isize;
+}());
+static_assert([]() constexpr {
+  auto r = "3'4'5'6..-87'654'3"_rs;
+  return r.end_bound().unwrap() == -876543_isize;
 }());
 
 // None of these compile.
