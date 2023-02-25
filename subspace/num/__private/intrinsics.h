@@ -732,37 +732,28 @@ template <class T>
 sus_always_inline constexpr OverflowOut<T> mul_with_overflow(T x,
                                                              T y) noexcept {
 #if _MSC_VER
-  if (std::is_constant_evaluated()) {
-    if (x == T{0} || y == T{0})
-      return OverflowOut sus_clang_bug_56394(<T>){.overflow = false,
-                                                  .value = T{0}};
+  if (x == T{0} || y == T{0})
+    return OverflowOut sus_clang_bug_56394(<T>){.overflow = false,
+                                                .value = T{0}};
 
-    using U = decltype(into_unsigned(x));
-    const auto absx =
-        x >= T{0} ? into_unsigned(x)
-                  : unchecked_add(into_unsigned(unchecked_add(x, T{1})), U{1});
-    const auto absy =
-        y >= T{0} ? into_unsigned(y)
-                  : unchecked_add(into_unsigned(unchecked_add(y, T{1})), U{1});
-    const bool mul_negative = (x ^ y) < 0;
-    const auto mul_max =
-        unchecked_add(into_unsigned(max_value<T>()), U{mul_negative});
-    const bool overflow = absx > unchecked_div(mul_max, absy);
-    const auto mul_val = unchecked_mul(absx, absy);
-    return OverflowOut sus_clang_bug_56394(<T>){
-        .overflow = overflow,
-        .value = mul_negative
-                     ? unchecked_sub(unchecked_neg(static_cast<T>(mul_val - 1)),
-                                     T{1})
-                     : static_cast<T>(mul_val)};
-  } else {
-    // For MSVC, use _mul128, but what about constexpr?? If we can't do
-    // it then make the whole function non-constexpr?
-    int64_t highbits;
-    auto out = static_cast<T>(_mul128(x, y, &highbits));
-    return OverflowOut sus_clang_bug_56394(<T>){.overflow = highbits != 0,
-                                                .value = out};
-  }
+  using U = decltype(into_unsigned(x));
+  const auto absx =
+      x >= T{0}
+          ? into_unsigned(x)
+          : unchecked_add(into_unsigned(unchecked_neg(unchecked_add(x, T{1}))),
+                          U{1});
+  const auto absy =
+      y >= T{0}
+          ? into_unsigned(y)
+          : unchecked_add(into_unsigned(unchecked_neg(unchecked_add(y, T{1}))),
+                          U{1});
+  const bool mul_negative = (x ^ y) < 0;
+  const auto mul_max =
+      unchecked_add(into_unsigned(max_value<T>()), U{mul_negative});
+  const bool overflow = absx > unchecked_div(mul_max, absy);
+  const auto mul_val = unchecked_mul(into_unsigned(x), into_unsigned(y));
+  return OverflowOut sus_clang_bug_56394(<T>){.overflow = overflow,
+                                              .value = into_signed(mul_val)};
 #else
   auto out = __int128_t{x} * __int128_t{y};
   return OverflowOut sus_clang_bug_56394(<T>){

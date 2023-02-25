@@ -885,6 +885,22 @@ TEST(i32DeathTest, MulOverflow) {
 #endif
 }
 
+TEST(i32, CheckedMul) {
+  constexpr auto a = (1_i32).checked_mul(3_i32).unwrap();
+  EXPECT_EQ(a, 3_i32);
+
+  EXPECT_EQ((100_i32).checked_mul(21_i32), sus::some(2100_i32).construct());
+  EXPECT_EQ((21_i32).checked_mul(100_i32), sus::some(2100_i32).construct());
+  EXPECT_EQ((123456_i32).checked_mul(234567_i32), sus::None);
+
+  // ** Signed only.
+  EXPECT_EQ((-3_i32).checked_mul(10_i32), sus::some(-30_i32).construct());
+  EXPECT_EQ((-100_i32).checked_mul(21_i32), sus::some(-2100_i32).construct());
+  EXPECT_EQ((-21_i32).checked_mul(100_i32), sus::some(-2100_i32).construct());
+  EXPECT_EQ((-123456_i32).checked_mul(-23456_i32), sus::None);
+  EXPECT_EQ((123456_i32).checked_mul(-23456_i32), sus::None);
+}
+
 TEST(i32, OverflowingMul) {
   constexpr auto a = (123456_i32).overflowing_mul(234567_i32);
   EXPECT_EQ(
@@ -1392,6 +1408,8 @@ TEST(i32, CheckedSub) {
   EXPECT_EQ(i32::MIN.checked_sub(i32::MAX), None);
 
   // ** Signed only.
+  EXPECT_EQ((-12345_i32).checked_sub(3_i32).unwrap(), -12348_i32);
+  EXPECT_EQ((12345_i32).checked_sub(-3_i32).unwrap(), 12348_i32);
   EXPECT_EQ((-12345_i32).checked_sub(-12345_i32).unwrap(), 0_i32);
   EXPECT_EQ(i32::MAX.checked_sub(-1_i32), None);
   EXPECT_EQ((-2_i32).checked_sub(i32::MAX), None);
