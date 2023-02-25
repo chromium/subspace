@@ -631,6 +631,15 @@ TEST(u32DeathTest, MulOverflow) {
 #endif
 }
 
+TEST(u32, CheckedMul) {
+  constexpr auto a = (1_u32).checked_mul(3_u32).unwrap();
+  EXPECT_EQ(a, 3_u32);
+
+  EXPECT_EQ((100_u32).checked_mul(21_u32), sus::some(2100_u32).construct());
+  EXPECT_EQ((21_u32).checked_mul(100_u32), sus::some(2100_u32).construct());
+  EXPECT_EQ((123456_u32).checked_mul(234567_u32), sus::None);
+}
+
 TEST(u32, OverflowingMul) {
   constexpr auto a = (123456_u32).overflowing_mul(234567_u32);
   EXPECT_EQ(
