@@ -388,6 +388,8 @@ class [[nodiscard]] Result final {
                  !(::sus::mem::Copy<T> && ::sus::mem::Copy<E>))
   {
     ::sus::check(source.state_ != __private::ResultState::IsMoved);
+    if (&source == this) [[unlikely]]
+      return;
     if (state_ == source.state_) {
       switch (state_) {
         case __private::ResultState::IsOk:

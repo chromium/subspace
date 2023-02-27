@@ -278,6 +278,8 @@ class Option final {
   void clone_from(const Option& source) & noexcept
     requires(::sus::mem::Clone<T> && !::sus::mem::CopyOrRef<T>)
   {
+    if (&source == this) [[unlikely]]
+      return;
     if (t_.state() == Some && source.t_.state() == Some) {
       ::sus::clone_into(mref(t_.val_mut()), source.t_.val());
     } else {

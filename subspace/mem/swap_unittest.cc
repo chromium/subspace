@@ -17,26 +17,28 @@
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/containers/array.h"
 #include "subspace/macros/builtin.h"
 #include "subspace/mem/relocate.h"
+#include "subspace/ops/range_literals.h"
+#include "subspace/prelude.h"
 
-namespace sus::mem {
 namespace {
 
 TEST(Swap, ConstexprTrivialRelocate) {
   using T = int;
-  static_assert(relocate_by_memcpy<T>, "");
+  static_assert(sus::mem::relocate_by_memcpy<T>, "");
 
   auto i = []() constexpr {
     T i(2);
     T j(5);
-    ::sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(mref(i), mref(j));
     return i;
   };
   auto j = []() constexpr {
     T i(2);
     T j(5);
-    ::sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(mref(i), mref(j));
     return j;
   };
   static_assert(i() == T(5), "");
@@ -55,18 +57,19 @@ TEST(Swap, ConstexprTrivialAbi) {
   // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
   static_assert(
-      relocate_by_memcpy<S> == __has_extension(trivially_relocatable), "");
+      sus::mem::relocate_by_memcpy<S> == __has_extension(trivially_relocatable),
+      "");
 
   auto i = []() constexpr {
     S i(2);
     S j(5);
-    ::sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(mref(i), mref(j));
     return i;
   };
   auto j = []() constexpr {
     S i(2);
     S j(5);
-    ::sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(mref(i), mref(j));
     return j;
   };
   static_assert(i().num == 5, "");
@@ -84,18 +87,18 @@ TEST(Swap, ConstexprNonTrivial) {
     int num;
     int moves = 0;
   };
-  static_assert(!relocate_by_memcpy<S>, "");
+  static_assert(!sus::mem::relocate_by_memcpy<S>, "");
 
   auto i = []() constexpr {
     S i(2);
     S j(5);
-    ::sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(mref(i), mref(j));
     return i;
   };
   auto j = []() constexpr {
     S i(2);
     S j(5);
-    ::sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(mref(i), mref(j));
     return j;
   };
   static_assert(i().num == 5, "");
@@ -107,11 +110,11 @@ TEST(Swap, ConstexprNonTrivial) {
 
 TEST(Swap, TrivialRelocate) {
   using T = int;
-  static_assert(relocate_by_memcpy<T>, "");
+  static_assert(sus::mem::relocate_by_memcpy<T>, "");
 
   T i(2);
   T j(5);
-  ::sus::mem::swap(mref(i), mref(j));
+  sus::mem::swap(mref(i), mref(j));
   EXPECT_EQ(i, T(5));
   EXPECT_EQ(j, T(2));
 }
@@ -131,11 +134,12 @@ TEST(Swap, TrivialAbi) {
   // [[sus_trivial_abi]].
   static_assert(!std::is_trivially_move_constructible_v<S>, "");
   static_assert(
-      relocate_by_memcpy<S> == __has_extension(trivially_relocatable), "");
+      sus::mem::relocate_by_memcpy<S> == __has_extension(trivially_relocatable),
+      "");
 
   S i(2);
   S j(5);
-  ::sus::mem::swap(mref(i), mref(j));
+  sus::mem::swap(mref(i), mref(j));
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
 #if __has_extension(trivially_relocatable)
@@ -158,11 +162,11 @@ TEST(Swap, NonTrivial) {
     int num;
     int moves = 0;
   };
-  static_assert(!relocate_by_memcpy<S>, "");
+  static_assert(!sus::mem::relocate_by_memcpy<S>, "");
 
   S i(2);
   S j(5);
-  ::sus::mem::swap(mref(i), mref(j));
+  sus::mem::swap(mref(i), mref(j));
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
   // The swap was done by move operations.
@@ -170,5 +174,80 @@ TEST(Swap, NonTrivial) {
   EXPECT_GE(j.moves, 1);
 }
 
+struct Trivial {
+  explicit Trivial(sus::Array<i32, 100> i) : num(sus::move(i)) {}
+  Trivial(Trivial&&) { moves += 1u; }
+  Trivial& operator=(Trivial&&) {
+    moves += 1u;
+    return *this;
+  }
+  sus::Array<i32, 100> num;
+
+  static usize moves;
+
+  sus_class_trivially_relocatable_unchecked(unsafe_fn);
+};
+
+usize Trivial::moves;
+
+TEST(Swap, Alias) {
+  static usize moves;
+  struct S {
+    explicit S(i32 i) : num(i) {}
+    S(S&&) { moves += 1u; }
+    S& operator=(S&&) {
+      moves += 1u;
+      return *this;
+    }
+    i32 num;
+  };
+
+  S i(2);
+  sus::mem::swap(mref(i), mref(i));
+  EXPECT_EQ(moves, 0u);
+
+  Trivial::moves = 0u;
+  Trivial t(sus::Array<i32, 100>::with_initializer(
+      [i = 0_i32]() mutable { return sus::mem::replace(i, i + 1); }));
+  sus::mem::swap(mref(t), mref(t));
+  for (usize j : "0..100"_r) {
+    EXPECT_EQ(t.num[j], i32::from(j));
+  }
+  EXPECT_EQ(Trivial::moves, 0u);
+}
+
+TEST(Swap, NoAliasUnchecked) {
+  static usize moves;
+  struct S {
+    explicit S(i32 i) : num(i) {}
+    S(S&&) { moves += 1u; }
+    S& operator=(S&&) {
+      moves += 1u;
+      return *this;
+    }
+    i32 num;
+  };
+
+  S i(2);
+  sus::mem::swap_no_alias_unchecked(unsafe_fn, mref(i), mref(i));
+  // Luckily S doesn't do anything bad when assigned to itself, and we can
+  // verify the number of times a move happened.
+  EXPECT_EQ(moves, 3u);
+
+  Trivial::moves = 0u;
+  Trivial t1(sus::Array<i32, 100>::with_initializer(
+      [i = 0_i32]() mutable { return sus::mem::replace(i, i + 1); }));
+  Trivial t2(sus::Array<i32, 100>::with_initializer(
+      [i = 10_i32]() mutable { return sus::mem::replace(i, i + 1); }));
+  sus::mem::swap_no_alias_unchecked(unsafe_fn, mref(t1), mref(t2));
+  for (usize j : "0..100"_r) {
+    EXPECT_EQ(t1.num[j], i32::from(j) + 10);
+    EXPECT_EQ(t2.num[j], i32::from(j));
+  }
+  EXPECT_EQ(Trivial::moves, 0u);
+
+  sus::mem::swap_no_alias_unchecked(unsafe_fn, mref(t1), mref(t1));
+  // As memcpy() was called in an invalid way we can't really check anything
+  // here, but we can see we didn't check() anything.
+}
 }  // namespace
-}  // namespace sus::mem

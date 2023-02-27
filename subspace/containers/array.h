@@ -146,12 +146,14 @@ class Array final {
     return ar;
   }
 
-  constexpr void clone_from(const Array& other) & noexcept
+  constexpr void clone_from(const Array& source) & noexcept
     requires(::sus::mem::Clone<T>)
   {
+    if (&source == this) [[unlikely]]
+      return;
     for (auto i = size_t{0}; i < N; ++i) {
       ::sus::clone_into(mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)),
-                        other.get_unchecked(::sus::marker::unsafe_fn, i));
+                        source.get_unchecked(::sus::marker::unsafe_fn, i));
     }
   }
 

@@ -157,6 +157,8 @@ class Vec {
   {
     check(!is_moved_from());
     check(!source.is_moved_from());
+    if (&source == this) [[unlikely]]
+      return;
     if (source.capacity_ == 0_usize) {
       destroy_storage_objects();
       free_storage();
