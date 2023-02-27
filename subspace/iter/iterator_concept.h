@@ -31,7 +31,7 @@ class Option;
 namespace sus::iter {
 
 template <class Iter, class Item>
-class IteratorImpl;
+class IteratorBase;
 
 /// A concept for all implementations of iterators.
 ///
@@ -44,7 +44,7 @@ class IteratorImpl;
 ///
 /// Types that satisfy this concept can be used in for loops and provide
 /// all the methods of an iterator type, which are found in
-/// `sus::iter::IteratorImpl`.
+/// `sus::iter::IteratorBase`.
 ///
 /// Any Iterator's full definition includes a number of other methods as well,
 /// built on top of next, and so you get them for free.
@@ -57,9 +57,9 @@ concept Iterator = requires(T& t) {
   requires(!std::is_void_v<typename std::decay_t<T>::Item>);
   // The T::Item matches the concept input.
   requires(std::same_as<typename std::decay_t<T>::Item, Item>);
-  // Subclasses from IteratorImpl<T, T::Item>.
+  // Subclasses from IteratorBase<T, T::Item>.
   requires ::sus::convert::SameOrSubclassOf<
-      std::decay_t<T>*, IteratorImpl<std::decay_t<T>, Item>*>;
+      std::decay_t<T>*, IteratorBase<std::decay_t<T>, Item>*>;
   // Required methods.
   { t.next() } noexcept -> std::same_as<::sus::option::Option<Item>>;
 };

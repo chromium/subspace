@@ -23,7 +23,7 @@
 namespace sus::iter {
 
 template <class Iter, class Item>
-class IteratorImpl;
+class IteratorBase;
 
 /// A BoxedIterator wraps another Iterator but pushes it onto the heap.
 ///
@@ -35,7 +35,7 @@ class IteratorImpl;
 template <class ItemT, size_t SubclassSize, size_t SubclassAlign,
           bool DoubleEnded>
 class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
-    : public IteratorImpl<
+    : public IteratorBase<
           BoxedIterator<ItemT, SubclassSize, SubclassAlign, DoubleEnded>,
           ItemT> {
  public:
@@ -44,10 +44,10 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
   template <::sus::mem::Move Iter>
   static BoxedIterator with(Iter&& iter) noexcept
     requires(
-        ::sus::convert::SameOrSubclassOf<Iter*, IteratorImpl<Iter, Item>*> &&
+        ::sus::convert::SameOrSubclassOf<Iter*, IteratorBase<Iter, Item>*> &&
         !::sus::mem::relocate_by_memcpy<Iter>)
   {
-    // IteratorImpl also checks this. It's needed for correctness of the move
+    // IteratorBase also checks this. It's needed for correctness of the move
     // onto the heap.
     static_assert(std::is_final_v<Iter>);
 

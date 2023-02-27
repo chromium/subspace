@@ -83,7 +83,7 @@ template <::sus::mem::Move Iter, int&..., class Item = typename Iter::Item>
 inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
   requires(::sus::iter::Iterator<Iter, Item> && ::sus::mem::relocate_by_memcpy<Iter>)
 {
-  // IteratorImpl also checks this. It's needed for correctness of the casts
+  // IteratorBase also checks this. It's needed for correctness of the casts
   // here.
   static_assert(std::is_final_v<Iter>);
 

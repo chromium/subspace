@@ -52,7 +52,7 @@ template <class Final, class T, bool = ::sus::iter::__private::Step<T>>
 class RangeIter;
 
 template <class Final, class T>
-class RangeIter<Final, T, true> : public ::sus::iter::IteratorImpl<Final, T> {
+class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
  public:
   // sus::iter::Iterator trait.
   Option<T> next() noexcept {
@@ -94,7 +94,7 @@ class RangeFromIter;
 
 template <class Final, class T>
 class RangeFromIter<Final, T, true>
-    : public ::sus::iter::IteratorImpl<Final, T> {
+    : public ::sus::iter::IteratorBase<Final, T> {
  public:
   // sus::iter::Iterator trait.
   Option<T> next() noexcept {
@@ -128,7 +128,7 @@ class Range final : public __private::RangeIter<Range<T>, T> {
   T start;
   /// The end of the range, exclusive of the given value.
   //
-  // Not named `end` to avoid shadowing IteratorImpl::end(), which then breaks
+  // Not named `end` to avoid shadowing IteratorBase::end(), which then breaks
   // for loops on Range.
   T finish;
 

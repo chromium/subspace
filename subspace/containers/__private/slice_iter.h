@@ -34,7 +34,7 @@ class Slice;
 
 template <class ItemT>
 struct [[sus_trivial_abi]] SliceIter final
-    : public ::sus::iter::IteratorImpl<SliceIter<ItemT>, ItemT> {
+    : public ::sus::iter::IteratorBase<SliceIter<ItemT>, ItemT> {
  public:
   using Item = ItemT;
 
@@ -104,7 +104,7 @@ struct [[sus_trivial_abi]] SliceIter final
 
 template <class ItemT>
 struct [[sus_trivial_abi]] SliceIterMut final
-    : public ::sus::iter::IteratorImpl<SliceIterMut<ItemT>, ItemT> {
+    : public ::sus::iter::IteratorBase<SliceIterMut<ItemT>, ItemT> {
  public:
   using Item = ItemT;
 

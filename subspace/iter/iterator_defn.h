@@ -55,9 +55,9 @@ struct SizeHint {
 };
 
 template <class Iter, class ItemT>
-class IteratorImpl {
+class IteratorBase {
  protected:
-  constexpr IteratorImpl() noexcept {
+  constexpr IteratorBase() noexcept {
     static_assert(std::is_final_v<Iter>,
                   "Iterator implementations must be `final`, as the provided "
                   "methods must know the complete type.");
@@ -226,19 +226,18 @@ class IteratorImpl {
   //
   // TODO: If the iterator is over references, collect_vec() could map them to
   // NonNull.
-  template <int&..., class Vec = ::sus::containers::Vec<ItemT>>
-  Vec collect_vec() && noexcept;
+  ::sus::containers::Vec<ItemT> collect_vec() && noexcept;
 
   // TODO: cloned().
 };
 
 template <class Iter, class Item>
-SizeHint IteratorImpl<Iter, Item>::size_hint() const noexcept {
+SizeHint IteratorBase<Iter, Item>::size_hint() const noexcept {
   return SizeHint(0_usize, ::sus::Option<::sus::num::usize>::none());
 }
 
 template <class Iter, class Item>
-bool IteratorImpl<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
+bool IteratorBase<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
   while (true) {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return true;
@@ -249,7 +248,7 @@ bool IteratorImpl<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
 }
 
 template <class Iter, class Item>
-bool IteratorImpl<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
+bool IteratorBase<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
   while (true) {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return false;
@@ -259,7 +258,7 @@ bool IteratorImpl<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
 }
 
 template <class Iter, class Item>
-auto IteratorImpl<Iter, Item>::box() && noexcept
+auto IteratorBase<Iter, Item>::box() && noexcept
   requires(!::sus::mem::relocate_by_memcpy<Iter>)
 {
   using BoxedIterator =
@@ -269,7 +268,7 @@ auto IteratorImpl<Iter, Item>::box() && noexcept
 }
 
 template <class Iter, class Item>
-::sus::num::usize IteratorImpl<Iter, Item>::count() noexcept {
+::sus::num::usize IteratorBase<Iter, Item>::count() noexcept {
   auto c = 0_usize;
   while (as_subclass_mut().next().is_some()) c += 1_usize;
   return c;
@@ -278,7 +277,7 @@ template <class Iter, class Item>
 template <class Iter, class Item>
 template <class MapFn, int&..., class R, class MapFnMut>
   requires(::sus::construct::Into<MapFn, MapFnMut> && !std::is_void_v<R>)
-auto IteratorImpl<Iter, Item>::map(MapFn fn) && noexcept
+auto IteratorBase<Iter, Item>::map(MapFn fn) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
   using Sized = SizedIteratorType<Iter>::type;
@@ -288,7 +287,7 @@ auto IteratorImpl<Iter, Item>::map(MapFn fn) && noexcept
 }
 
 template <class Iter, class Item>
-auto IteratorImpl<Iter, Item>::filter(
+auto IteratorBase<Iter, Item>::filter(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
@@ -300,7 +299,7 @@ auto IteratorImpl<Iter, Item>::filter(
 }
 
 template <class Iter, class Item>
-auto IteratorImpl<Iter, Item>::rev() && noexcept
+auto IteratorBase<Iter, Item>::rev() && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter> &&
            ::sus::iter::DoubleEndedIterator<Iter, Item>)
 {
@@ -312,14 +311,13 @@ auto IteratorImpl<Iter, Item>::rev() && noexcept
 template <class Iter, class Item>
 template <::sus::iter::FromIterator<Item> C>
 ::sus::iter::FromIterator<Item> auto
-IteratorImpl<Iter, Item>::collect() && noexcept {
+IteratorBase<Iter, Item>::collect() && noexcept {
   return C::from_iter(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
-template <int&..., class Vec>
-Vec IteratorImpl<Iter, Item>::collect_vec() && noexcept {
-  return Vec::from_iter(static_cast<Iter&&>(*this));
+::sus::containers::Vec<Item> IteratorBase<Iter, Item>::collect_vec() && noexcept {
+  return ::sus::containers::Vec<Item>::from_iter(static_cast<Iter&&>(*this));
 }
 
 }  // namespace sus::iter

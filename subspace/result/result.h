@@ -40,7 +40,7 @@
 
 namespace sus::iter {
 template <class Iter, class Item>
-class IteratorImpl;
+class IteratorBase;
 template <class Item>
 class Once;
 template <class T>
@@ -116,7 +116,7 @@ class [[nodiscard]] Result final {
   static constexpr Result from_iter(IntoIter&& result_iter) noexcept
     requires(::sus::iter::FromIterator<T, U>)
   {
-    struct Unwrapper final : public ::sus::iter::IteratorImpl<Unwrapper, U> {
+    struct Unwrapper final : public ::sus::iter::IteratorBase<Unwrapper, U> {
       Unwrapper(Iter&& iter, Option<E>& err) : iter(iter), err(err) {}
 
       // sus::iter::Iterator trait.
@@ -138,8 +138,8 @@ class [[nodiscard]] Result final {
     };
 
     auto err = Option<E>::none();
-    auto success_out = Result::with(T::from_iter(
-        Unwrapper(::sus::move(result_iter).into_iter(), mref(err))));
+    auto iter = Unwrapper(::sus::move(result_iter).into_iter(), mref(err));
+    auto success_out = Result::with(T::from_iter(::sus::move(iter)));
     return ::sus::move(err).map_or_else(
         [&]() { return ::sus::move(success_out); },
         [](E e) { return Result::with_err(e); });
