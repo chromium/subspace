@@ -63,12 +63,17 @@ class IteratorImpl {
                   "methods must know the complete type.");
   }
 
+  inline const Iter& as_subclass() const {
+    return static_cast<const Iter&>(*this);
+  }
+  inline Iter& as_subclass_mut() { return static_cast<Iter&>(*this); }
+
  public:
   using Item = ItemT;
 
   /// Adaptor for use in ranged for loops.
   auto begin() & noexcept {
-    return __private::IteratorLoop<Iter&>(static_cast<Iter&>(*this));
+    return __private::IteratorLoop<Iter&>(as_subclass_mut());
   }
   /// Adaptor for use in ranged for loops.
   auto end() & noexcept { return __private::IteratorEnd(); }
@@ -78,7 +83,7 @@ class IteratorImpl {
   /// sus::iter::IntoIterator trait implementation.
   Iter&& into_iter() && noexcept { return static_cast<Iter&&>(*this); }
 
-  // Provided methods.
+  // Provided overridable methods.
 
   /// Returns the bounds on the remaining length of the iterator.
   ///
@@ -104,9 +109,7 @@ class IteratorImpl {
   ///
   /// The default implementation returns `lower = 0` and `upper = None` which is
   /// correct for any iterator.
-  virtual SizeHint size_hint() const noexcept {
-    return SizeHint(0_usize, ::sus::Option<::sus::num::usize>::none());
-  }
+  virtual SizeHint size_hint() const noexcept;
 
   /// Tests whether all elements of the iterator match a predicate.
   ///
@@ -116,7 +119,7 @@ class IteratorImpl {
   /// from the predicate.
   ///
   /// Returns `true` if the iterator is empty.
-  bool all(::sus::fn::FnMut<bool(Item)> f) noexcept;
+  virtual bool all(::sus::fn::FnMut<bool(Item)> f) noexcept;
 
   /// Tests whether any elements of the iterator match a predicate.
   ///
@@ -126,7 +129,21 @@ class IteratorImpl {
   /// the predicate.
   ///
   /// Returns `false` if the iterator is empty.
-  bool any(::sus::fn::FnMut<bool(Item)> f) noexcept;
+  virtual bool any(::sus::fn::FnMut<bool(Item)> f) noexcept;
+
+  /// Consumes the iterator, and returns the number of elements that were in
+  /// it.
+  ///
+  /// The function walks the iterator until it sees an Option holding #None.
+  ///
+  /// # Safety
+  ///
+  /// If the `usize` type does not have trapping arithmetic enabled, and the
+  /// iterator has more than `usize::MAX` elements in it, the value will wrap
+  /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
+  virtual ::sus::num::usize count() noexcept;
+
+  // Provided final methods.
 
   /// Wraps the iterator in a new iterator that is trivially relocatable.
   ///
@@ -144,18 +161,6 @@ class IteratorImpl {
   /// useful, that is when the Iterator type is not trivially relocatable.
   auto box() && noexcept
     requires(!::sus::mem::relocate_by_memcpy<Iter>);
-
-  /// Consumes the iterator, and returns the number of elements that were in
-  /// it.
-  ///
-  /// The function walks the iterator until it sees an Option holding #None.
-  ///
-  /// # Safety
-  ///
-  /// If the `usize` type does not have trapping arithmetic enabled, and the
-  /// iterator has more than `usize::MAX` elements in it, the value will wrap
-  /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
-  ::sus::num::usize count() noexcept;
 
   /// Creates an iterator which uses a closure to map each element to another
   /// type.
@@ -176,8 +181,16 @@ class IteratorImpl {
                   pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
-  auto reverse() && noexcept
-    requires(::sus::mem::relocate_by_memcpy<Iter>);
+  /// Reverses an iterator's direction.
+  ///
+  /// Usually, iterators iterate from front to back. After using `rev()`, an
+  /// iterator will instead iterate from back to front.
+  ///
+  /// This is only possible if the iterator has an end, so `rev()` only works on
+  /// `DoubleEndedIterator`s.
+  auto rev() && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter> &&
+             ::sus::iter::DoubleEndedIterator<Iter, Item>);
 
   /// Transforms an iterator into a collection.
   ///
@@ -220,10 +233,14 @@ class IteratorImpl {
 };
 
 template <class Iter, class Item>
+SizeHint IteratorImpl<Iter, Item>::size_hint() const noexcept {
+  return SizeHint(0_usize, ::sus::Option<::sus::num::usize>::none());
+}
+
+template <class Iter, class Item>
 bool IteratorImpl<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
-  // TODO: If constexpr(I::all() exists) then call that instead.
   while (true) {
-    Option<Item> item = static_cast<Iter&>(*this).next();
+    Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return true;
     // SAFETY: `item` was checked to hold Some already.
     if (!f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn)))
@@ -233,21 +250,12 @@ bool IteratorImpl<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
 
 template <class Iter, class Item>
 bool IteratorImpl<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
-  // TODO: If constexpr(I::any() exists) then call that instead.
   while (true) {
-    Option<Item> item = static_cast<Iter&>(*this).next();
+    Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return false;
     // SAFETY: `item` was checked to hold Some already.
     if (f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return true;
   }
-}
-
-template <class Iter, class Item>
-::sus::num::usize IteratorImpl<Iter, Item>::count() noexcept {
-  // TODO: If constexpr(I::count() exists) then call that instead.
-  auto c = 0_usize;
-  while (static_cast<Iter&>(*this).next().is_some()) c += 1_usize;
-  return c;
 }
 
 template <class Iter, class Item>
@@ -258,6 +266,13 @@ auto IteratorImpl<Iter, Item>::box() && noexcept
       BoxedIterator<Item, ::sus::mem::size_of<Iter>(), alignof(Iter),
                     ::sus::iter::DoubleEndedIterator<Iter, Item>>;
   return BoxedIterator::with(static_cast<Iter&&>(*this));
+}
+
+template <class Iter, class Item>
+::sus::num::usize IteratorImpl<Iter, Item>::count() noexcept {
+  auto c = 0_usize;
+  while (as_subclass_mut().next().is_some()) c += 1_usize;
+  return c;
 }
 
 template <class Iter, class Item>
@@ -285,8 +300,9 @@ auto IteratorImpl<Iter, Item>::filter(
 }
 
 template <class Iter, class Item>
-auto IteratorImpl<Iter, Item>::reverse() && noexcept
-  requires(::sus::mem::relocate_by_memcpy<Iter>)
+auto IteratorImpl<Iter, Item>::rev() && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter> &&
+           ::sus::iter::DoubleEndedIterator<Iter, Item>)
 {
   using Sized = SizedIteratorType<Iter>::type;
   using Reverse = Reverse<Sized>;

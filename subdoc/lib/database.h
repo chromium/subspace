@@ -647,7 +647,7 @@ struct Database {
 
       // Namespace path goes from the outside in to the global, we want the
       // inverse, and then to skip the global namespace.
-      auto it = iter_namespace_path(decl).collect_vec().into_iter().reverse();
+      auto it = iter_namespace_path(decl).collect_vec().into_iter().rev();
       it.next();  // TODO: Use Iterator::skip().
       for (const Namespace& n : it) {
         switch (n) {
@@ -686,7 +686,7 @@ struct Database {
         for (std::string_view name : iter_record_path(containing_record_decl)
                                          .collect_vec()
                                          .into_iter()
-                                         .reverse()) {
+                                         .rev()) {
           if (first) {
             auto r_it = ns_cursor->records.find(RecordId(name));
             if (r_it == ns_cursor->records.end()) {

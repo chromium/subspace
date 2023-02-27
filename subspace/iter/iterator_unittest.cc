@@ -374,10 +374,10 @@ TEST(Iterator, CollectVec) {
   EXPECT_EQ(collected[4u], 5);
 }
 
-TEST(Iterator, Reverse) {
+TEST(Iterator, Rev) {
   i32 nums[5] = {1, 2, 3, 4, 5};
 
-  auto it = ArrayIterator<i32, 5>::with_array(nums).reverse();
+  auto it = ArrayIterator<i32, 5>::with_array(nums).rev();
   static_assert(sus::iter::Iterator<decltype(it), i32>);
   static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32>);
   EXPECT_EQ(it.next(), sus::some(5).construct());
