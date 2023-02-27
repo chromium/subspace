@@ -29,7 +29,7 @@
 
 using sus::containers::Array;
 using sus::fn::Fn;
-using sus::iter::IteratorImpl;
+using sus::iter::IteratorBase;
 using sus::option::Option;
 
 namespace {
@@ -79,7 +79,7 @@ static_assert(
 // clang-format on
 
 template <class Item, size_t N>
-class ArrayIterator final : public IteratorImpl<ArrayIterator<Item, N>, Item> {
+class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
  public:
   static ArrayIterator with_array(Item (&items)[N]) noexcept {
     return ArrayIterator(items);
@@ -117,7 +117,7 @@ class ArrayIterator final : public IteratorImpl<ArrayIterator<Item, N>, Item> {
 static_assert(sus::iter::Iterator<ArrayIterator<int, 1>, int>);
 
 template <class Item>
-class EmptyIterator final : public IteratorImpl<EmptyIterator<Item>, Item> {
+class EmptyIterator final : public IteratorBase<EmptyIterator<Item>, Item> {
  public:
   EmptyIterator() {}
 

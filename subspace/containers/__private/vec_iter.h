@@ -31,7 +31,7 @@ class Vec;
 
 template <class ItemT>
 struct VecIntoIter final
-    : public ::sus::iter::IteratorImpl<VecIntoIter<ItemT>, ItemT> {
+    : public ::sus::iter::IteratorBase<VecIntoIter<ItemT>, ItemT> {
  public:
   using Item = ItemT;
 

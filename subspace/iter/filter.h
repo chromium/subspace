@@ -26,7 +26,7 @@ using ::sus::mem::relocate_by_memcpy;
 
 template <class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Filter final
-    : public IteratorImpl<Filter<InnerSizedIter>,
+    : public IteratorBase<Filter<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
   using Pred = ::sus::fn::FnMut<bool(
       // TODO: write a sus::const_ref<T>?

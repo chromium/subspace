@@ -50,10 +50,8 @@
 #include "subspace/result/__private/is_result_type.h"
 
 namespace sus::iter {
-template <class Item>
-class IteratorBase;
 template <class Iter, class Item>
-class IteratorImpl;
+class IteratorBase;
 template <class Item>
 class Once;
 namespace __private {
@@ -151,7 +149,7 @@ class Option final {
     // An iterator over `option_iter`'s iterator that returns each element in it
     // until it reaches a `None` or the end.
     struct UntilNoneIter final
-        : public ::sus::iter::IteratorImpl<UntilNoneIter, U> {
+        : public ::sus::iter::IteratorBase<UntilNoneIter, U> {
       UntilNoneIter(Iter&& iter, bool& found_none)
           : iter(iter), found_none(found_none) {}
 
@@ -167,8 +165,9 @@ class Option final {
     };
 
     bool found_none = false;
-    auto collected = T::from_iter(UntilNoneIter(
-        ::sus::move(option_iter).into_iter(), ::sus::mref(found_none)));
+    auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(),
+                              ::sus::mref(found_none));
+    auto collected = T::from_iter(::sus::move(iter));
     if (found_none)
       return Option::none();
     else

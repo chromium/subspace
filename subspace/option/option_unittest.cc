@@ -273,11 +273,11 @@ TEST(Option, Move) {
   };
   MoveableLvalue lvalue(2);
   auto a = Option<MoveableLvalue>::some(lvalue);
-  EXPECT_EQ(a.as_ref().unwrap().i, 2);
+  EXPECT_EQ(a->i, 2);
   EXPECT_EQ(lvalue.i, 2);
 
   auto b = Option<MoveableLvalue>::some(sus::move(lvalue));
-  EXPECT_EQ(b.as_ref().unwrap().i, 2);
+  EXPECT_EQ(b->i, 2);
   EXPECT_EQ(lvalue.i, 0);
 }
 
@@ -291,10 +291,10 @@ TEST(Option, UseAfterMove) {
       TriviallyMoveableAndRelocatable(1));
   auto y = sus::move(x);
   IS_SOME(x);  // Trivially relocatable leaves `x` fully in tact.
-  EXPECT_EQ(x.as_ref().unwrap().i, 1);
+  EXPECT_EQ(x->i, 1);
   x = sus::move(y);
   IS_SOME(y);  // Trivially relocatable leaves `y` fully in tact.
-  EXPECT_EQ(y.as_ref().unwrap().i, 1);
+  EXPECT_EQ(y->i, 1);
 
   auto a = Option<NotTriviallyRelocatableCopyableOrMoveable>::some(
       NotTriviallyRelocatableCopyableOrMoveable(1));
@@ -556,7 +556,7 @@ TEST(Option, Map) {
     return Mapped(2);
   });
   static_assert(std::is_same_v<decltype(ix), Option<Mapped>>);
-  EXPECT_EQ(ix.as_ref().unwrap().i, 2);
+  EXPECT_EQ(ix->i, 2);
   EXPECT_TRUE(called);
 
   called = false;
@@ -880,7 +880,7 @@ TEST(Option, AndThen) {
     return Option<And>::some(And(3));
   });
   static_assert(std::is_same_v<decltype(ix), Option<And>>);
-  EXPECT_EQ(ix.as_ref().unwrap().i, 3);
+  EXPECT_EQ(ix->i, 3);
   EXPECT_TRUE(called);
 
   called = false;
@@ -1330,23 +1330,23 @@ TEST(Option, TrivialMove) {
   auto x = Option<sus::test::TriviallyMoveableAndRelocatable>::some(
       sus::test::TriviallyMoveableAndRelocatable(int(3423782)));
   auto y = sus::move(x);  // Move-construct.
-  EXPECT_EQ(y.as_ref().unwrap().i, 3423782);
+  EXPECT_EQ(y->i, 3423782);
 
   y.as_mut().unwrap().i = int(6589043);
   x = sus::move(y);  // Move-assign.
-  EXPECT_EQ(x.as_ref().unwrap().i, 6589043);
+  EXPECT_EQ(x->i, 6589043);
 }
 
 TEST(Option, TrivialCopy) {
   auto x = Option<sus::test::TriviallyCopyable>::some(
       sus::test::TriviallyCopyable(int(458790)));
   auto z = x;  // Copy-construct.
-  EXPECT_EQ(z.as_ref().unwrap().i, 458790);
+  EXPECT_EQ(z->i, 458790);
 
   z.as_mut().unwrap().i = int(98563453);
   auto y = Option<sus::test::TriviallyCopyable>::none();
   y = z;  // Copy-assign.
-  EXPECT_EQ(y.as_ref().unwrap().i, 98563453);
+  EXPECT_EQ(y->i, 98563453);
 
   auto i = NoCopyMove();
 
@@ -1985,7 +1985,7 @@ TEST(Option, NonZeroField) {
   o = Option<T>::some(T::with(i));
   int j = 4;
   o.replace(T::with(j));
-  EXPECT_EQ(o.as_ref().unwrap().as_ptr(), &j);
+  EXPECT_EQ(o->as_ptr(), &j);
 }
 
 template <class T>
@@ -2012,7 +2012,7 @@ TEST(Option, FromIter) {
   static_assert(
       std::same_as<sus::Option<CollectSum<usize>>, decltype(all_some)>);
   EXPECT_EQ(all_some, Some);
-  EXPECT_EQ(all_some.as_ref().unwrap().sum, 1u + 2u + 3u);
+  EXPECT_EQ(all_some->sum, 1u + 2u + 3u);
 
   auto one_none = sus::Array<Option<usize>, 3>::with_values(
                       Option<usize>::some(1u), Option<usize>::none(),
@@ -2048,9 +2048,9 @@ TEST(Option, FromIterWithRefs) {
           .collect<Option<CollectRefs>>();
   static_assert(std::same_as<sus::Option<CollectRefs>, decltype(all_some)>);
   EXPECT_EQ(all_some, Some);
-  EXPECT_EQ(all_some.as_ref().unwrap().vec[0u], &u1);
-  EXPECT_EQ(all_some.as_ref().unwrap().vec[1u], &u2);
-  EXPECT_EQ(all_some.as_ref().unwrap().vec[2u], &u3);
+  EXPECT_EQ(all_some->vec[0u], &u1);
+  EXPECT_EQ(all_some->vec[1u], &u2);
+  EXPECT_EQ(all_some->vec[2u], &u3);
 
   auto one_none = sus::Array<Option<const NoCopyMove&>, 3>::with_values(
                       sus::some(u1), sus::none(), sus::some(u3))
@@ -2080,19 +2080,19 @@ TEST(Option, Clone) {
 
   {
     const auto s = Option<Copy>::some(Copy());
-    i32 i = s.as_ref().unwrap().i;
+    i32 i = s->i;
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Option<Copy>>);
-    EXPECT_EQ(s2.as_ref().unwrap().i, i + 1_i32);
+    EXPECT_EQ(s2->i, i + 1_i32);
   }
 
   {
     const auto s = Option<Copy>::some(Copy());
-    i32 i = s.as_ref().unwrap().i;
+    i32 i = s->i;
     auto s2 = Option<Copy>::some(Copy());
     s2.as_mut().unwrap().i = 1000_i32;
     sus::clone_into(mref(s2), s);
-    EXPECT_EQ(s2.as_ref().unwrap().i, i);
+    EXPECT_EQ(s2->i, i);
   }
 
   struct Clone {
@@ -2122,7 +2122,7 @@ TEST(Option, Clone) {
     const auto s = Option<Clone>::some(Clone());
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Option<Clone>>);
-    EXPECT_EQ(s2.as_ref().unwrap().i, 2_i32);
+    EXPECT_EQ(s2->i, 2_i32);
   }
 
   {
@@ -2130,7 +2130,7 @@ TEST(Option, Clone) {
     auto s2 = Option<Clone>::some(Clone());
     s2.as_mut().unwrap().i = 1000_i32;
     sus::clone_into(mref(s2), s);
-    EXPECT_EQ(s2.as_ref().unwrap().i, 2_i32);
+    EXPECT_EQ(s2->i, 2_i32);
   }
 
   {

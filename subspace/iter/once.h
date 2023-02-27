@@ -24,7 +24,7 @@ using ::sus::option::Option;
 
 /// An Iterator that walks over at most a single Item.
 template <class ItemT>
-class [[nodiscard]] Once final : public IteratorImpl<Once<ItemT>, ItemT> {
+class [[nodiscard]] Once final : public IteratorBase<Once<ItemT>, ItemT> {
  public:
   using Item = ItemT;
 

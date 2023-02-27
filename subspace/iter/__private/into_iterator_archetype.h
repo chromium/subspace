@@ -23,7 +23,7 @@ class Option;
 
 namespace sus::iter {
 template <class SubclassT, class ItemT>
-class IteratorImpl;
+class IteratorBase;
 }  // namespace sus::iter
 
 namespace sus::iter::__private {
@@ -31,7 +31,7 @@ namespace sus::iter::__private {
 template <class T>
 struct IntoIteratorArchetype {
   template <class Item>
-  struct Iter final : public IteratorImpl<Iter<Item>, Item> {
+  struct Iter final : public IteratorBase<Iter<Item>, Item> {
     ::sus::option::Option<Item> next() noexcept {
       return ::sus::option::Option<Item>::none();
     }

@@ -32,7 +32,7 @@ class Array;
 
 template <::sus::mem::Move ItemT, size_t N>
 struct ArrayIntoIter final
-    : public ::sus::iter::IteratorImpl<ArrayIntoIter<ItemT, N>, ItemT> {
+    : public ::sus::iter::IteratorBase<ArrayIntoIter<ItemT, N>, ItemT> {
  public:
   using Item = ItemT;
 
