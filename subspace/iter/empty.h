@@ -29,7 +29,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Empty final
   constexpr Empty() = default;
 
   // sus::iter::Iterator trait.
-  constexpr Option<Item> next() noexcept final {
+  constexpr Option<Item> next() noexcept {
     return sus::Option<Item>::none();
   }
   // sus::iter::DoubleEndedIterator trait.

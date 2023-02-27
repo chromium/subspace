@@ -54,25 +54,31 @@ struct SizeHint {
   ::sus::Option<::sus::num::usize> upper;
 };
 
-// TODO: Do we want to be able to pass IteratorBase& as a "generic" iterator?
-// Then it needs access to the adaptor methods of Iterator<T>, so make them
-// virtual methods on IteratorBase?
-//
-// TODO: We need virtual methods because we erase the type in SizedIterator and
-// call the virtual methods there. But when the iterator is being used directly,
-// do we need each call to next() to go through virtual? Could CRTP, so we can
-// call `Subclass::next()`, with the next() method being marked `final` in the
-// subclass, bypass the vtable pointer?
-template <class ItemT>
-class IteratorBase {
+template <class Iter, class ItemT>
+class IteratorImpl {
+ protected:
+  constexpr IteratorImpl() noexcept {
+    static_assert(std::is_final_v<Iter>,
+                  "Iterator implementations must be `final`, as the provided "
+                  "methods must know the complete type.");
+  }
+
  public:
   using Item = ItemT;
 
-  // Required methods.
+  /// Adaptor for use in ranged for loops.
+  auto begin() & noexcept {
+    return __private::IteratorLoop<Iter&>(static_cast<Iter&>(*this));
+  }
+  /// Adaptor for use in ranged for loops.
+  auto end() & noexcept { return __private::IteratorEnd(); }
 
-  /// Gets the next element from the iterator, if there is one. Otherwise, it
-  /// returns an Option holding #None.
-  virtual Option<Item> next() noexcept = 0;
+  /// An Iterator also satisfies IntoIterator, which simply returns itself.
+  ///
+  /// sus::iter::IntoIterator trait implementation.
+  Iter&& into_iter() && noexcept { return static_cast<Iter&&>(*this); }
+
+  // Provided methods.
 
   /// Returns the bounds on the remaining length of the iterator.
   ///
@@ -101,51 +107,6 @@ class IteratorBase {
   virtual SizeHint size_hint() const noexcept {
     return SizeHint(0_usize, ::sus::Option<::sus::num::usize>::none());
   }
-
-  // Adaptors for ranged for loops.
-  //
-  // They are in the base class for use in FromIterator implementations which
-  // see the base class type only.
-
-  /// Adaptor for use in ranged for loops.
-  auto begin() & noexcept {
-    return __private::IteratorLoop<IteratorBase<Item>&>(*this);
-  }
-  /// Adaptor for use in ranged for loops.
-  auto end() & noexcept { return __private::IteratorEnd(); }
-
- protected:
-  IteratorBase() = default;
-};
-
-template <class Iter, class Item>
-class IteratorImpl : public IteratorBase<Item> {
- protected:
-  constexpr IteratorImpl() noexcept {
-    static_assert(std::is_final_v<Iter>,
-                  "Iterator implementations must be `final`, as the provided "
-                  "methods must know the complete type.");
-  }
-
- public:
-  // Adaptors for ranged for loops.
-  //
-  // Shadows the ones in the base class so that the full type is known along
-  // with the `final` next() definition.
-
-  /// Adaptor for use in ranged for loops.
-  auto begin() & noexcept {
-    return __private::IteratorLoop<Iter&>(static_cast<Iter&>(*this));
-  }
-  /// Adaptor for use in ranged for loops.
-  auto end() & noexcept { return __private::IteratorEnd(); }
-
-  /// An Iterator also satisfies IntoIterator, which simply returns itself.
-  ///
-  /// sus::iter::IntoIterator trait implementation.
-  Iter&& into_iter() && noexcept { return ::sus::move(*this); }
-
-  // Provided methods.
 
   /// Tests whether all elements of the iterator match a predicate.
   ///
@@ -240,8 +201,8 @@ class IteratorImpl : public IteratorBase<Item> {
   /// ```cpp
   /// sus::move(iter).collect<MyContainer<i32>>()
   /// ```
-  template <::sus::iter::FromIterator<Item> C>
-  ::sus::iter::FromIterator<Item> auto collect() && noexcept;
+  template <::sus::iter::FromIterator<ItemT> C>
+  ::sus::iter::FromIterator<ItemT> auto collect() && noexcept;
 
   /// Transforms an iterator into a Vec.
   ///
@@ -252,7 +213,7 @@ class IteratorImpl : public IteratorBase<Item> {
   //
   // TODO: If the iterator is over references, collect_vec() could map them to
   // NonNull.
-  template <int&..., class Vec = ::sus::containers::Vec<Item>>
+  template <int&..., class Vec = ::sus::containers::Vec<ItemT>>
   Vec collect_vec() && noexcept;
 
   // TODO: cloned().

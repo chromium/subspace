@@ -43,7 +43,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Reverse final
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept final { return next_iter_.next_back(); }
+  Option<Item> next() noexcept { return next_iter_.next_back(); }
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept { return next_iter_.next(); }
 

@@ -27,6 +27,7 @@
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/default.h"
 #include "subspace/iter/from_iterator.h"
+#include "subspace/iter/into_iterator.h"
 #include "subspace/macros/always_inline.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/macros/nonnull.h"
@@ -137,31 +138,37 @@ class Option final {
   /// T containing the values of type U from each Option<U> is returned.
   ///
   /// sus::iter::FromIterator trait.
-  template <class U>
-  static constexpr Option from_iter(
-      ::sus::iter::IteratorBase<Option<U>>&& option_iter) noexcept
+  template <class IntoIter, int&...,
+            class Iter =
+                std::decay_t<decltype(std::declval<IntoIter&&>().into_iter())>,
+            class O = typename Iter::Item,
+            class U = __private::IsOptionType<O>::inner_type>
+    requires(__private::IsOptionType<O>::value &&
+             ::sus::iter::IntoIterator<IntoIter, Option<U>>)
+  static constexpr Option from_iter(IntoIter&& option_iter) noexcept
     requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>)
   {
-    // An iterator over `option_iter` that returns each element in it until
-    // it reaches a `None` or the end.
-    struct Iter final : public ::sus::iter::IteratorImpl<Iter, U> {
-      Iter(::sus::iter::IteratorBase<Option<U>>&& iter, bool& found_none)
+    // An iterator over `option_iter`'s iterator that returns each element in it
+    // until it reaches a `None` or the end.
+    struct UntilNoneIter final
+        : public ::sus::iter::IteratorImpl<UntilNoneIter, U> {
+      UntilNoneIter(Iter&& iter, bool& found_none)
           : iter(iter), found_none(found_none) {}
 
-      Option<U> next() noexcept final {
+      Option<U> next() noexcept {
         Option<Option<U>> item = iter.next();
         if (found_none || item.is_none()) return Option<U>::none();
         found_none = item->is_none();
         return ::sus::move(item).flatten();
       }
 
-      ::sus::iter::IteratorBase<Option<U>>& iter;
+      Iter& iter;
       bool& found_none;
     };
 
     bool found_none = false;
-    auto collected =
-        T::from_iter(Iter(::sus::move(option_iter), ::sus::mref(found_none)));
+    auto collected = T::from_iter(UntilNoneIter(
+        ::sus::move(option_iter).into_iter(), ::sus::mref(found_none)));
     if (found_none)
       return Option::none();
     else

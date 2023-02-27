@@ -41,7 +41,7 @@ struct VecIntoIter final
   }
 
   /// sus::iter::Iterator trait.
-  Option<Item> next() noexcept final {
+  Option<Item> next() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>::none();
     // SAFETY: This class owns the Vec and does not expose it, so its length is

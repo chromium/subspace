@@ -22,8 +22,6 @@
 
 namespace sus::iter {
 
-template <class Item>
-class IteratorBase;
 template <class Iter, class Item>
 class IteratorImpl;
 
@@ -91,7 +89,7 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept final { return next_(iter_); }
+  Option<Item> next() noexcept { return next_(iter_); }
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
     requires(DoubleEnded)

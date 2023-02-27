@@ -21,6 +21,7 @@
 #include "subspace/containers/vec.h"
 #include "subspace/iter/empty.h"
 #include "subspace/iter/filter.h"
+#include "subspace/iter/into_iterator.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/replace.h"
@@ -28,7 +29,6 @@
 
 using sus::containers::Array;
 using sus::fn::Fn;
-using sus::iter::IteratorBase;
 using sus::iter::IteratorImpl;
 using sus::option::Option;
 
@@ -86,7 +86,7 @@ class ArrayIterator final : public IteratorImpl<ArrayIterator<Item, N>, Item> {
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept final {
+  Option<Item> next() noexcept {
     if (front_ == back_) return sus::none();
     return items_[sus::mem::replace(front_, front_ + 1u)].take();
   }
@@ -122,10 +122,10 @@ class EmptyIterator final : public IteratorImpl<EmptyIterator<Item>, Item> {
   EmptyIterator() {}
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept final { return Option<Item>::none(); }
+  Option<Item> next() noexcept { return Option<Item>::none(); }
 };
 
-TEST(IteratorBase, ForLoop) {
+TEST(Iterator, ForLoop) {
   int nums[5] = {1, 2, 3, 4, 5};
 
   auto it_lvalue = ArrayIterator<int, 5>::with_array(nums);
@@ -144,7 +144,7 @@ TEST(IteratorBase, ForLoop) {
   EXPECT_EQ(count, 5);
 }
 
-TEST(IteratorBase, All) {
+TEST(Iterator, All) {
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
@@ -179,7 +179,7 @@ TEST(IteratorBase, All) {
   }
 }
 
-TEST(IteratorBase, Any) {
+TEST(Iterator, Any) {
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
@@ -214,7 +214,7 @@ TEST(IteratorBase, Any) {
   }
 }
 
-TEST(IteratorBase, Count) {
+TEST(Iterator, Count) {
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
@@ -346,9 +346,9 @@ struct CollectSum {
   sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
 
   static constexpr CollectSum from_iter(
-      sus::iter::IteratorBase<T>&& iter) noexcept {
+      sus::iter::IntoIterator<T> auto&& iter) noexcept {
     T sum = T();
-    for (T t : iter) sum += t;
+    for (T t : sus::move(iter).into_iter()) sum += t;
     return CollectSum(sum);
   }
 

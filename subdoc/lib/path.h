@@ -89,7 +89,7 @@ class RecordIter final
     return RecordIter(decl);
   }
 
-  sus::Option<std::string_view> next() noexcept final {
+  sus::Option<std::string_view> next() noexcept {
     if (next_decl_) {
       clang::RecordDecl* cur_decl = next_decl_;
 
@@ -134,7 +134,7 @@ class NamespaceIter final
     return NamespaceIter(decl);
   }
 
-  sus::Option<Namespace> next() noexcept final {
+  sus::Option<Namespace> next() noexcept {
     if (next_ndecl_) {
       clang::NamespaceDecl* cur_ndecl = next_ndecl_;
       next_ndecl_ =

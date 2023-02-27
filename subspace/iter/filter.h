@@ -40,7 +40,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept final {
+  Option<Item> next() noexcept {
     InnerSizedIter& iter = next_iter_;
     Pred& pred = pred_;
 

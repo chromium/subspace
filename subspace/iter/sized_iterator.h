@@ -14,16 +14,13 @@
 
 #pragma once
 
-#include "subspace/convert/subclass.h"
+#include "subspace/iter/iterator_concept.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/option/option.h"
 // Doesn't include iterator_defn.h because it's included from there.
 
 namespace sus::iter {
-
-template <class Item>
-class IteratorBase;
 
 template <class ItemT, size_t SubclassSize, size_t SubclassAlign,
           bool DoubleEndedB>
@@ -84,8 +81,7 @@ struct SizedIteratorType {
 /// erasing its type but remaining trivially relocatable.
 template <::sus::mem::Move Iter, int&..., class Item = typename Iter::Item>
 inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
-  requires(::sus::convert::SameOrSubclassOf<Iter*, IteratorBase<Item>*> &&
-           ::sus::mem::relocate_by_memcpy<Iter>)
+  requires(::sus::iter::Iterator<Iter, Item> && ::sus::mem::relocate_by_memcpy<Iter>)
 {
   // IteratorImpl also checks this. It's needed for correctness of the casts
   // here.

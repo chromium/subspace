@@ -40,7 +40,7 @@ struct ArrayIntoIter final
     return ArrayIntoIter(::sus::move(array));
   }
 
-  Option<Item> next() noexcept final {
+  Option<Item> next() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>::none();
     // SAFETY: The front and back indicies are kept within the length of the

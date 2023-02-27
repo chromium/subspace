@@ -462,14 +462,15 @@ struct CollectSum {
   sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
 
   static constexpr CollectSum from_iter(
-      ::sus::iter::IteratorBase<T>&& iter) noexcept {
+      sus::iter::IntoIterator<T> auto&& iter) noexcept {
     T sum = T();
-    for (T t : iter) sum += t;
+    for (T t : sus::move(iter).into_iter()) sum += t;
     return CollectSum(sum);
   }
 
   T sum;
 };
+static_assert(sus::iter::FromIterator<CollectSum<usize>, usize>);
 
 TEST(Result, FromIter) {
   enum class Error {
@@ -483,7 +484,7 @@ TEST(Result, FromIter) {
           Result<usize, Error>::with(3u), Result<usize, Error>::with(4u),
           Result<usize, Error>::with(5u))
           .into_iter();
-
+  
   auto no_errors_out =
       sus::move(no_errors).collect<Result<CollectSum<usize>, Error>>();
   EXPECT_EQ(no_errors_out, sus::result::Ok);
