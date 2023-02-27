@@ -50,7 +50,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
       {
         // TODO: This code gets duplicated a lot, share it.
 
-        for (const Namespace &n : element.namespace_path.iter().reverse()) {
+        for (const Namespace &n : element.namespace_path.iter().rev()) {
           switch (n) {
             case Namespace::Tag::Global: break;
             case Namespace::Tag::Anonymous: {
@@ -68,7 +68,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
               break;
           }
         }
-        for (std::string_view record_name: element.record_path.iter().reverse()) {
+        for (std::string_view record_name: element.record_path.iter().rev()) {
           {
             auto record_anchor = full_type_span.open_a();
             record_anchor.write_text(record_name);
@@ -228,7 +228,7 @@ void generate_record(const RecordElement& element,
 
   {
     std::ostringstream title;
-    for (const Namespace& n: element.namespace_path.iter().reverse()) {
+    for (const Namespace& n: element.namespace_path.iter().rev()) {
       switch (n) {
         case Namespace::Tag::Global: break;
         case Namespace::Tag::Anonymous:
@@ -241,7 +241,7 @@ void generate_record(const RecordElement& element,
           break;
       }
     }
-    for (std::string_view record_name: element.record_path.iter().reverse()) {
+    for (std::string_view record_name: element.record_path.iter().rev()) {
       title << record_name;
       title << "::";
     }

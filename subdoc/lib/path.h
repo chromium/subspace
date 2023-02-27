@@ -43,7 +43,7 @@ inline std::string namespace_with_path_to_string(
   std::ostringstream s;
   bool add_colons = false;
 
-  for (const Namespace& n : path.iter().reverse()) {
+  for (const Namespace& n : path.iter().rev()) {
     if (add_colons) s << "::";
     switch (n) {
       case Namespace::Tag::Global: break;

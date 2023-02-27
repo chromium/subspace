@@ -45,7 +45,7 @@ inline std::filesystem::path construct_html_file_path(
   std::filesystem::path p = sus::move(root);
 
   std::ostringstream fname;
-  for (const Namespace& n : namespace_path.iter().reverse()) {
+  for (const Namespace& n : namespace_path.iter().rev()) {
     switch (n) {
       case Namespace::Tag::Global: break;
       case Namespace::Tag::Anonymous:
@@ -58,7 +58,7 @@ inline std::filesystem::path construct_html_file_path(
         break;
     }
   }
-  for (std::string_view n : record_path.iter().reverse()) {
+  for (std::string_view n : record_path.iter().rev()) {
     fname << n << "-";
   }
   fname << name;
