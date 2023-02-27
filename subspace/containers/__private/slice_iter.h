@@ -50,7 +50,7 @@ struct [[sus_trivial_abi]] SliceIter final
     return SliceIter(start, len);
   }
 
-  Option<Item> next() noexcept final {
+  Option<Item> next() noexcept {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>::none();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
@@ -121,7 +121,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept final {
+  Option<Item> next() noexcept {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>::none();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the

@@ -35,7 +35,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Map final : public IteratorImpl<Map<ToIt
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept final {
+  Option<Item> next() noexcept {
     Option<FromItem> item = next_iter_.next();
     if (item.is_none()) {
       return sus::none();

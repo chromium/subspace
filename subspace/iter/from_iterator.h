@@ -16,12 +16,8 @@
 
 #include <concepts>
 
+#include "subspace/iter/__private/into_iterator_archetype.h"
 #include "subspace/mem/move.h"
-
-namespace sus::iter {
-template <class ItemT>
-class IteratorBase;
-}
 
 namespace sus::iter {
 
@@ -31,8 +27,9 @@ namespace sus::iter {
 /// Any type that matches this concept can be constructed from
 /// Iterator::collect().
 template <class ToType, class ItemType>
-concept FromIterator = requires(::sus::iter::IteratorBase<ItemType>&& from) {
-  { ToType::from_iter(::sus::move(from)) } -> std::same_as<ToType>;
-};
+concept FromIterator =
+    requires(__private::IntoIteratorArchetype<ItemType>&& from) {
+      { ToType::from_iter(::sus::move(from)) } -> std::same_as<ToType>;
+    };
 
 }  // namespace sus::iter

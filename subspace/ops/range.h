@@ -55,7 +55,7 @@ template <class Final, class T>
 class RangeIter<Final, T, true> : public ::sus::iter::IteratorImpl<Final, T> {
  public:
   // sus::iter::Iterator trait.
-  Option<T> next() noexcept final {
+  Option<T> next() noexcept {
     if (static_cast<Final*>(this)->start == static_cast<Final*>(this)->finish)
       return Option<T>::none();
     return Option<T>::some(
@@ -97,7 +97,7 @@ class RangeFromIter<Final, T, true>
     : public ::sus::iter::IteratorImpl<Final, T> {
  public:
   // sus::iter::Iterator trait.
-  Option<T> next() noexcept final {
+  Option<T> next() noexcept {
     return Option<T>::some(
         ::sus::mem::replace(static_cast<Final*>(this)->start,
                             ::sus::iter::__private::step_forward(

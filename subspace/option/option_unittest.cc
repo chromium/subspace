@@ -1637,7 +1637,9 @@ TEST(Option, StrongOrder) {
 }
 
 struct Weak {
-  auto operator==(const Weak& o) const& noexcept { return a == o.a && b == o.b; }
+  auto operator==(const Weak& o) const& noexcept {
+    return a == o.a && b == o.b;
+  }
   auto operator<=>(const Weak& o) const& noexcept {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
@@ -1991,9 +1993,9 @@ struct CollectSum {
   sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
 
   static constexpr CollectSum from_iter(
-      ::sus::iter::IteratorBase<T>&& iter) noexcept {
+      ::sus::iter::IntoIterator<T> auto&& iter) noexcept {
     T sum = T();
-    for (T t : iter) sum += t;
+    for (T t : sus::move(iter).into_iter()) sum += t;
     return CollectSum(sum);
   }
 
@@ -2001,11 +2003,14 @@ struct CollectSum {
 };
 
 TEST(Option, FromIter) {
-  auto all_some = sus::Array<Option<usize>, 3>::with_values(
-                      Option<usize>::some(1u), Option<usize>::some(2u),
-                      Option<usize>::some(3u))
-                      .into_iter()
-                      .collect<Option<CollectSum<usize>>>();
+  decltype(auto) all_some =
+      sus::Array<Option<usize>, 3>::with_values(Option<usize>::some(1u),
+                                                Option<usize>::some(2u),
+                                                Option<usize>::some(3u))
+          .into_iter()
+          .collect<Option<CollectSum<usize>>>();
+  static_assert(
+      std::same_as<sus::Option<CollectSum<usize>>, decltype(all_some)>);
   EXPECT_EQ(all_some, Some);
   EXPECT_EQ(all_some.as_ref().unwrap().sum, 1u + 2u + 3u);
 
@@ -2022,9 +2027,9 @@ struct CollectRefs {
                       : vec(sus::move(v)){});
 
   static CollectRefs from_iter(
-      sus::iter::IteratorBase<const NoCopyMove&>&& iter) noexcept {
+      sus::iter::IntoIterator<const NoCopyMove&> auto&& iter) noexcept {
     auto v = sus::Vec<const NoCopyMove*>();
-    for (const NoCopyMove& t : iter) v.push(&t);
+    for (const NoCopyMove& t : sus::move(iter).into_iter()) v.push(&t);
     return CollectRefs(sus::move(v));
   }
 
@@ -2036,10 +2041,12 @@ TEST(Option, FromIterWithRefs) {
   auto u2 = NoCopyMove();
   auto u3 = NoCopyMove();
 
-  auto all_some = sus::Array<Option<const NoCopyMove&>, 3>::with_values(
-                      sus::some(u1), sus::some(u2), sus::some(u3))
-                      .into_iter()
-                      .collect<Option<CollectRefs>>();
+  decltype(auto) all_some =
+      sus::Array<Option<const NoCopyMove&>, 3>::with_values(
+          sus::some(u1), sus::some(u2), sus::some(u3))
+          .into_iter()
+          .collect<Option<CollectRefs>>();
+  static_assert(std::same_as<sus::Option<CollectRefs>, decltype(all_some)>);
   EXPECT_EQ(all_some, Some);
   EXPECT_EQ(all_some.as_ref().unwrap().vec[0u], &u1);
   EXPECT_EQ(all_some.as_ref().unwrap().vec[1u], &u2);

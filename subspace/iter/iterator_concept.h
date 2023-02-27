@@ -18,7 +18,6 @@
 #include <type_traits>
 
 #include "subspace/convert/subclass.h"
-#include "subspace/mem/forward.h"
 
 namespace sus::num {
 struct usize;
@@ -62,7 +61,7 @@ concept Iterator = requires(T& t) {
   requires ::sus::convert::SameOrSubclassOf<
       std::decay_t<T>*, IteratorImpl<std::decay_t<T>, Item>*>;
   // Required methods.
-  { t.next() } -> std::same_as<::sus::option::Option<Item>>;
+  { t.next() } noexcept -> std::same_as<::sus::option::Option<Item>>;
 };
 
 /// An `Iterator` able to yield elements from both ends.
@@ -86,22 +85,6 @@ concept DoubleEndedIterator = Iterator<T, Item> && requires(T& t) {
 template <class T, class Item>
 concept ExactSizeIterator = Iterator<T, Item> && requires(const T& t) {
   { t.exact_size_hint() } noexcept -> std::same_as<::sus::num::usize>;
-};
-
-/// Conversion into an `Iterator`.
-///
-/// A more general trait than `Iterator` which will accept anything that can be
-/// iterated, including an `Iterator` (since all `Iterator`s also satisfy
-/// `IntoIterator`). This can be particularly useful when receiving an iterator
-/// over a set of non-reference values, allowing the caller to pass a container
-/// directly in place of an iterator.
-///
-/// Note that an `IntoIterator` type is not directly iterable in for loops, and
-/// requires calling `into_iter()` on it to convert it into an `Iterator`
-/// which is iterable in for loops.
-template <class T, class Item>
-concept IntoIterator = requires(T&& t) {
-  { ::sus::forward<T>(t).into_iter() } -> Iterator<Item>;
 };
 
 }  // namespace sus::iter

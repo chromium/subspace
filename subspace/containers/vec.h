@@ -24,6 +24,7 @@
 #include "subspace/containers/__private/vec_marker.h"
 #include "subspace/containers/slice.h"
 #include "subspace/iter/from_iterator.h"
+#include "subspace/iter/into_iterator.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
@@ -110,9 +111,10 @@ class Vec {
   /// Constructs a vector by taking all the elements from the iterator.
   ///
   /// sus::iter::FromIterator trait.
-  static constexpr Vec from_iter(::sus::iter::IteratorBase<T>&& iter) noexcept
+  static constexpr Vec from_iter(::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
     requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
   {
+    auto&& iter = sus::move(into_iter).into_iter();
     auto [lower, upper] = iter.size_hint();
     auto v = Vec::with_capacity(::sus::move(upper).unwrap_or(lower));
     for (T t : iter) v.push(::sus::move(t));

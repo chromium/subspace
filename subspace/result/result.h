@@ -23,6 +23,7 @@
 
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
+#include "subspace/iter/into_iterator.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
@@ -38,8 +39,6 @@
 #include "subspace/result/__private/storage.h"
 
 namespace sus::iter {
-template <class Item>
-class IteratorBase;
 template <class Iter, class Item>
 class IteratorImpl;
 template <class Item>
@@ -106,17 +105,22 @@ class [[nodiscard]] Result final {
   /// the values of each Result is returned.
   ///
   /// sus::iter::FromIterator trait.
-  template <class U>
-  static constexpr Result from_iter(
-      ::sus::iter::IteratorBase<Result<U, E>>&& iter) noexcept
+  template <class IntoIter, int&...,
+            class Iter =
+                std::decay_t<decltype(std::declval<IntoIter&&>().into_iter())>,
+            class R = typename Iter::Item,
+            class U = __private::IsResultType<R>::ok_type,
+            class F = __private::IsResultType<R>::err_type>
+    requires(__private::IsResultType<R>::value && std::same_as<E, F> &&
+             ::sus::iter::IntoIterator<IntoIter, Result<U, E>>)
+  static constexpr Result from_iter(IntoIter&& result_iter) noexcept
     requires(::sus::iter::FromIterator<T, U>)
   {
     struct Unwrapper final : public ::sus::iter::IteratorImpl<Unwrapper, U> {
-      Unwrapper(::sus::iter::IteratorBase<Result<U, E>>& iter, Option<E>& err)
-          : iter(iter), err(err) {}
+      Unwrapper(Iter&& iter, Option<E>& err) : iter(iter), err(err) {}
 
       // sus::iter::Iterator trait.
-      Option<U> next() noexcept final {
+      Option<U> next() noexcept {
         Option<Result<U, E>> try_item = iter.next();
         if (try_item.is_none()) return Option<U>::none();
         Result<U, E> result =
@@ -129,13 +133,13 @@ class [[nodiscard]] Result final {
         return Option<U>::none();
       }
 
-      ::sus::iter::IteratorBase<Result<U, E>>& iter;
+      Iter& iter;
       Option<E>& err;
     };
 
     auto err = Option<E>::none();
-    auto success_out =
-        Result::with(T::from_iter(Unwrapper(mref(iter), mref(err))));
+    auto success_out = Result::with(T::from_iter(
+        Unwrapper(::sus::move(result_iter).into_iter(), mref(err))));
     return ::sus::move(err).map_or_else(
         [&]() { return ::sus::move(success_out); },
         [](E e) { return Result::with_err(e); });
