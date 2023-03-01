@@ -50,7 +50,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
       {
         // TODO: This code gets duplicated a lot, share it.
 
-        for (const Namespace &n : element.namespace_path.iter().rev()) {
+        for (const Namespace& n : element.namespace_path.iter().rev()) {
           switch (n) {
             case Namespace::Tag::Global: break;
             case Namespace::Tag::Anonymous: {
@@ -68,7 +68,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
               break;
           }
         }
-        for (std::string_view record_name: element.record_path.iter().rev()) {
+        for (std::string_view record_name : element.record_path.iter().rev()) {
           {
             auto record_anchor = full_type_span.open_a();
             record_anchor.write_text(record_name);
@@ -157,10 +157,11 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
         field_type_link.add_title(fe.type_name);
         if (fe.type_element.is_some()) {
           field_type_link.add_href(
-              construct_html_file_path(std::filesystem::path(),
-                                       fe.type_element->namespace_path.as_ref(),
-                                       fe.type_element->record_path.as_ref(),
-                                       fe.type_element->name)
+              construct_html_file_path(
+                  std::filesystem::path(),
+                  fe.type_element->namespace_path.as_slice(),
+                  fe.type_element->record_path.as_slice(),
+                  fe.type_element->name)
                   .string());
         }
         field_type_link.write_text(fe.short_type_name);
@@ -221,14 +222,14 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
 void generate_record(const RecordElement& element,
                      const Options& options) noexcept {
   const std::filesystem::path path = construct_html_file_path(
-      options.output_root, element.namespace_path.as_ref(),
-      element.record_path.as_ref(), element.name);
+      options.output_root, element.namespace_path.as_slice(),
+      element.record_path.as_slice(), element.name);
   std::filesystem::create_directories(path.parent_path());
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
 
   {
     std::ostringstream title;
-    for (const Namespace& n: element.namespace_path.iter().rev()) {
+    for (const Namespace& n : element.namespace_path.iter().rev()) {
       switch (n) {
         case Namespace::Tag::Global: break;
         case Namespace::Tag::Anonymous:
@@ -241,7 +242,7 @@ void generate_record(const RecordElement& element,
           break;
       }
     }
-    for (std::string_view record_name: element.record_path.iter().rev()) {
+    for (std::string_view record_name : element.record_path.iter().rev()) {
       title << record_name;
       title << "::";
     }
@@ -285,9 +286,9 @@ void generate_record(const RecordElement& element,
       });
 
   generate_record_fields(mref(record_div), element, true,
-                         sorted_static_fields.as_ref());
+                         sorted_static_fields.as_slice());
   generate_record_fields(mref(record_div), element, false,
-                         sorted_fields.as_ref());
+                         sorted_fields.as_slice());
 
   sus::Vec<SortedFunctionByName> sorted_static_methods;
   sus::Vec<SortedFunctionByName> sorted_methods;
@@ -314,9 +315,9 @@ void generate_record(const RecordElement& element,
       });
 
   generate_record_methods(mref(record_div), element, true,
-                          sorted_static_methods.as_ref());
+                          sorted_static_methods.as_slice());
   generate_record_methods(mref(record_div), element, false,
-                          sorted_methods.as_ref());
+                          sorted_methods.as_slice());
 
   for (const auto& [key, subrecord] : element.records) {
     generate_record(subrecord, options);
@@ -344,8 +345,8 @@ void generate_record_reference(HtmlWriter::OpenDiv& section_div,
       name_link.add_class("type-name");
       name_link.add_href(
           construct_html_file_path(std::filesystem::path(),
-                                   element.namespace_path.as_ref(),
-                                   element.record_path.as_ref(), element.name)
+                                   element.namespace_path.as_slice(),
+                                   element.record_path.as_slice(), element.name)
               .string());
       name_link.write_text(element.name);
     }

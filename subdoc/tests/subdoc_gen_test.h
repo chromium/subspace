@@ -44,7 +44,7 @@ class SubDocGenTest : public testing::Test {
 
     auto run_options = subdoc::RunOptions();
 
-    auto result = subdoc::run_test(sus::move(content), args.as_ref(),
+    auto result = subdoc::run_test(sus::move(content), args.as_slice(),
                                    sus::move(run_options));
     if (!result.is_ok()) return false;
 

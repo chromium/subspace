@@ -35,7 +35,7 @@ class SubDocTest : public testing::Test {
     auto args = sus::Vec<std::string>::with_capacity(1u);
     args.push(std::string(subdoc::tests::cpp_version_flag(cpp_version_)));
 
-    return subdoc::run_test(sus::move(content), args.as_ref(), options);
+    return subdoc::run_test(sus::move(content), args.as_slice(), options);
   }
 
   auto run_code(std::string content) noexcept {

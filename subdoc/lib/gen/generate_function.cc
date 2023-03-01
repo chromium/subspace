@@ -47,8 +47,8 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
         return_type_link.add_href(
             construct_html_file_path(
                 std::filesystem::path(),
-                element.return_type_element->namespace_path.as_ref(),
-                element.return_type_element->record_path.as_ref(),
+                element.return_type_element->namespace_path.as_slice(),
+                element.return_type_element->record_path.as_slice(),
                 element.return_type_element->name)
                 .string());
       }
@@ -80,12 +80,12 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
         one_param_link.add_class("type-name");
         one_param_link.add_title(p.type_name);
         if (p.type_element.is_some()) {
-          one_param_link.add_href(
-              construct_html_file_path(std::filesystem::path(),
-                                       p.type_element->namespace_path.as_ref(),
-                                       p.type_element->record_path.as_ref(),
-                                       p.type_element->name)
-                  .string());
+          one_param_link.add_href(construct_html_file_path(
+                                      std::filesystem::path(),
+                                      p.type_element->namespace_path.as_slice(),
+                                      p.type_element->record_path.as_slice(),
+                                      p.type_element->name)
+                                      .string());
         }
         one_param_link.write_text(p.short_type_name);
         write_comma = true;
