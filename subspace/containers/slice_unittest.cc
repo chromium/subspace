@@ -498,4 +498,44 @@ TEST(Slice, Default) {
   EXPECT_TRUE(s.is_empty());
 }
 
+TEST(Slice, ToVec) {
+  sus::Array<i32, 6> array = sus::array(3, 4, 2, 1, 6, 5);
+  auto slice =
+      sus::Slice<const i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 6u);
+  EXPECT_EQ(array.as_ptr(), slice.as_ptr());
+  sus::Vec<i32> vec = slice.to_vec();
+  // The Vec is a new allocation.
+  EXPECT_NE(vec.as_ptr(), slice.as_ptr());
+  // And it has all the same content, cloned.
+  EXPECT_EQ(vec.len(), 6u);
+  EXPECT_EQ(vec[0u], 3);
+  EXPECT_EQ(vec[1u], 4);
+  EXPECT_EQ(vec[2u], 2);
+  EXPECT_EQ(vec[3u], 1);
+  EXPECT_EQ(vec[4u], 6);
+  EXPECT_EQ(vec[5u], 5);
+
+  // Verify Clone is used, not just Copy.
+  struct Cloner {
+    i32 i;
+
+    Cloner(i32 i) : i(i) {}
+
+    Cloner(Cloner&&) = default;
+    Cloner& operator=(Cloner&&) = default;
+
+    Cloner clone() const noexcept { return Cloner(i + 1); }
+  };
+  static_assert(sus::mem::Clone<Cloner>);
+  static_assert(!sus::mem::Copy<Cloner>);
+  sus::Array<Cloner, 2> v = sus::array(Cloner(1), Cloner(2));
+  sus::Vec<Cloner> v2 =
+      sus::Slice<const Cloner>::from_raw_parts(unsafe_fn, v.as_ptr(), 2u)
+          .to_vec();
+  EXPECT_NE(v.as_ptr(), v2.as_ptr());
+  EXPECT_EQ(v.len(), v2.len());
+  EXPECT_EQ(v[0u].i + 1, v2[0u].i);
+  EXPECT_EQ(v[1u].i + 1, v2[1u].i);
+}
+
 }  // namespace

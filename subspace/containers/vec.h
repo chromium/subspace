@@ -434,25 +434,25 @@ class Vec {
   }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort]
-  void sort() { as_mut().sort(); }
+  void sort() { as_mut_slice().sort(); }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_by]
   template <class F, int&...,
             class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
   void sort_by(F compare) {
-    as_mut().sort_by(sus::move(compare));
+    as_mut_slice().sort_by(sus::move(compare));
   }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_unstable]
-  void sort_unstable() { as_mut().sort(); }
+  void sort_unstable() { as_mut_slice().sort(); }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_unstable_by]
   template <class F, int&...,
             class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
   void sort_unstable_by(F compare) {
-    as_mut().sort_by(sus::move(compare));
+    as_mut_slice().sort_by(sus::move(compare));
   }
 
   /// Returns a const pointer to the first element in the vector.
@@ -478,18 +478,18 @@ class Vec {
 
   // Returns a slice that references all the elements of the vector as const
   // references.
-  constexpr Slice<const T> as_ref() const& noexcept {
+  constexpr Slice<const T> as_slice() const& noexcept {
     check(!is_moved_from());
     // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
     // is to the start of the Vec, so this Slice covers a valid range.
     return Slice<const T>::from_raw_parts(::sus::marker::unsafe_fn, storage_,
                                           len_);
   }
-  constexpr Slice<const T> as_ref() && = delete;
+  constexpr Slice<const T> as_slice() && = delete;
 
   // Returns a slice that references all the elements of the vector as mutable
   // references.
-  constexpr Slice<T> as_mut() & noexcept {
+  constexpr Slice<T> as_mut_slice() & noexcept {
     check(!is_moved_from());
     // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
     // is to the start of the Vec, so this Slice covers a valid range.
@@ -568,6 +568,10 @@ class Vec {
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(storage_), decltype(len_),
                                            decltype(capacity_));
+
+  // Slice does not satisfy NeverValueField because it requires that the default
+  // constructor is trivial, but Slice's default constructor needs to initialize
+  // its fields.
 };
 
 // Implicit for-ranged loop iteration via `Vec::iter()`.

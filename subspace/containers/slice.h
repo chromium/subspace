@@ -18,6 +18,7 @@
 
 #include <algorithm>  // Replace std::sort.
 #include <concepts>
+#include <type_traits>
 
 #include "subspace/assertions/check.h"
 #include "subspace/construct/into.h"
@@ -25,6 +26,7 @@
 #include "subspace/fn/callable.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/marker/unsafe.h"
+#include "subspace/mem/clone.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/ord.h"
 #include "subspace/ops/range.h"
@@ -36,6 +38,9 @@
 
 namespace sus::containers {
 
+template <class T>
+class Vec;
+
 /// A dynamically-sized view into a contiguous sequence, `[T]`.
 ///
 /// Contiguous here means that elements are laid out so that every element is
@@ -44,14 +49,19 @@ namespace sus::containers {
 /// Slices are a view into a block of memory represented as a pointer and a
 /// length.
 template <class T>
-class Slice {
+class [[sus_trivial_abi]] Slice {
  public:
-  Slice() : Slice(nullptr, 0_usize) {}
+  static_assert(!std::is_reference_v<T>,
+                "Slice holds references, so the type parameter can not also be "
+                "a reference");
+
+  constexpr Slice() : Slice(nullptr, 0_usize) {}
 
   static constexpr inline Slice from_raw_parts(::sus::marker::UnsafeFnMarker,
                                                T* data,
                                                ::sus::usize len) noexcept {
-    ::sus::check(len.primitive_value <= static_cast<size_t>(isize::MAX_PRIMITIVE));
+    ::sus::check(len.primitive_value <=
+                 static_cast<size_t>(isize::MAX_PRIMITIVE));
     return Slice(data, len);
   }
 
@@ -314,12 +324,33 @@ class Slice {
     return SliceIterMut<T&>::with(data_, len_);
   }
 
+  Vec<std::remove_const_t<T>> to_vec() const&
+    requires(::sus::mem::Clone<T>);
+
  private:
   constexpr Slice(T* data, usize len) noexcept : data_(data), len_(len) {}
 
   T* data_;
   ::sus::usize len_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(data_),
+                                  decltype(len_));
+
+  // Slice does not satisfy NeverValueField because it requires that the default
+  // constructor is trivial, but Slice's default constructor needs to initialize
+  // its fields.
 };
+
+template <class T>
+Vec<std::remove_const_t<T>> Slice<T>::to_vec() const&
+  requires(::sus::mem::Clone<T>)
+{
+  auto v = Vec<std::remove_const_t<T>>::with_capacity(len_);
+  for (::sus::usize i; i < len_; i += 1u) {
+    v.push(::sus::clone(data_[size_t{i}]));
+  }
+  return v;
+}
 
 // Implicit for-ranged loop iteration via `Slice::iter()`.
 using ::sus::iter::__private::begin;

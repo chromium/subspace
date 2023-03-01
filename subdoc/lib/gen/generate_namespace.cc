@@ -35,7 +35,7 @@ std::string namespace_display_name(const NamespaceElement& element) noexcept {
   // The namespace path includes the namespace we're generating for, so drop
   // that one.
   sus::Slice<const Namespace> short_namespace_path =
-      element.namespace_path.as_ref()["1.."_r];
+      element.namespace_path.as_slice()["1.."_r];
 
   // For display in the html, we use the full path name of the namespace.
   return namespace_with_path_to_string(short_namespace_path,
@@ -180,7 +180,7 @@ void generate_namespace(const NamespaceElement& element,
         });
 
     generate_namespace_namespaces(mref(namespace_div), element,
-                                  sorted.as_ref());
+                                  sorted.as_slice());
   }
 
   {
@@ -210,9 +210,9 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_records(mref(namespace_div), element, classes.as_ref(),
+    generate_namespace_records(mref(namespace_div), element, classes.as_slice(),
                                RecordType::Class);
-    generate_namespace_records(mref(namespace_div), element, unions.as_ref(),
+    generate_namespace_records(mref(namespace_div), element, unions.as_slice(),
                                RecordType::Union);
   }
 
@@ -229,7 +229,8 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_functions(mref(namespace_div), element, sorted.as_ref());
+    generate_namespace_functions(mref(namespace_div), element,
+                                 sorted.as_slice());
   }
 
   // Recurse into namespaces and records.

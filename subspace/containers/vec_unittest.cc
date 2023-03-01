@@ -238,21 +238,21 @@ TEST(Vec, AsMutPtr) {
   static_assert(std::same_as<i32*, decltype(v.as_mut_ptr())>);
 }
 
-TEST(Vec, AsRef) {
+TEST(Vec, AsSlice) {
   auto v = Vec<i32>();
-  EXPECT_EQ(v.as_ref().len(), 0_usize);
+  EXPECT_EQ(v.as_slice().len(), 0_usize);
   v.push(2_i32);
-  auto s = v.as_ref();
+  auto s = v.as_slice();
   static_assert(std::same_as<decltype(s), sus::Slice<const i32>>);
   EXPECT_EQ(s.len(), 1_usize);
   EXPECT_EQ(&s[0u], &v[0u]);
 }
 
-TEST(Vec, AsMut) {
+TEST(Vec, AsMutSlice) {
   auto v = Vec<i32>();
-  EXPECT_EQ(v.as_mut().len(), 0_usize);
+  EXPECT_EQ(v.as_mut_slice().len(), 0_usize);
   v.push(2_i32);
-  auto s = v.as_mut();
+  auto s = v.as_mut_slice();
   static_assert(std::same_as<decltype(s), sus::Slice<i32>>);
   EXPECT_EQ(s.len(), 1_usize);
   EXPECT_EQ(&s[0u], &v[0u]);
