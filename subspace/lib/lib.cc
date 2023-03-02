@@ -20,7 +20,9 @@
 
 // Architectural assumptions we make throughout the implementation of Subspace.
 static_assert(CHAR_BIT == 8);
-static_assert(sus::mem::size_of<int>() == 4);
+// Signed integers are allowed to have padding so they can have a larger size
+// thus we don't compare the size of `int` but its max value instead.
+static_assert(INT_MAX == INT32_MAX);
 static_assert(sus::mem::size_of<size_t>() >= 4);
 static_assert(sus::mem::size_of<size_t>() <= 8);
 
