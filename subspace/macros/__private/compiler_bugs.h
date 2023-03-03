@@ -18,7 +18,8 @@
 #include "subspace/macros/compiler.h"
 
 // TODO: https://github.com/llvm/llvm-project/issues/56394
-#if defined(__clang__) && __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && \
+    __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_56394(...) __VA_ARGS__
 #define sus_clang_bug_56394_else(...)
 #else
@@ -27,7 +28,8 @@
 #endif
 
 // TODO: https://github.com/llvm/llvm-project/issues/58835
-#if defined(__clang__) && __clang_major__ > 0  // TODO: Update when the bug is fixed.
+#if defined(__clang__) && \
+    __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_58835(...) __VA_ARGS__
 #define sus_clang_bug_58835_else(...)
 #else
@@ -50,8 +52,11 @@
 // TODO: https://github.com/llvm/llvm-project/issues/54050
 // Aggregate initialization fails on template classes due to lack of CTAD for
 // aggregates.
+//
+// There are still bugs with aggregate init in Clang 17:
+// https://github.com/llvm/llvm-project/issues/61145
 #if defined(__clang__) && \
-    __clang_major__ <= 16  // TODO: Update when the bug is fixed.
+    __clang_major__ <= 17  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_54050(...) __VA_ARGS__
 #define sus_clang_bug_54050_else(...)
 #else
