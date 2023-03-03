@@ -111,7 +111,8 @@ class Vec {
   /// Constructs a vector by taking all the elements from the iterator.
   ///
   /// sus::iter::FromIterator trait.
-  static constexpr Vec from_iter(::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
+  static constexpr Vec from_iter(
+      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
     requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
   {
     auto&& iter = sus::move(into_iter).into_iter();
@@ -274,8 +275,8 @@ class Vec {
       } else {
         auto* const new_storage =
             static_cast<T*>(malloc(bytes.primitive_value));
-        auto* old_t = reinterpret_cast<T*>(storage_);
-        auto* new_t = reinterpret_cast<T*>(new_storage);
+        T* old_t = storage_;
+        T* new_t = new_storage;
         const size_t len = size_t{len_};
         for (auto i = size_t{0}; i < len; ++i) {
           new (new_t) T(::sus::move(*old_t));
@@ -341,7 +342,7 @@ class Vec {
   {
     check(!is_moved_from());
     reserve(1_usize);
-    new (as_mut_ptr() + size_t{len_}) T(::sus::move(t));
+    new (&storage_[size_t{len_}]) T(::sus::move(t));
     len_ += 1_usize;
   }
 
@@ -366,7 +367,7 @@ class Vec {
   {
     check(!is_moved_from());
     reserve(1_usize);
-    new (as_mut_ptr() + size_t{len_}) T(::sus::forward<Us>(args)...);
+    new (&storage_[size_t{len_}]) T(::sus::forward<Us>(args)...);
     len_ += 1_usize;
   }
 
@@ -399,7 +400,7 @@ class Vec {
   /// will be invalid and Undefined Behaviour results.
   constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
                                           usize i) const& noexcept {
-    return reinterpret_cast<T*>(storage_)[i.primitive_value];
+    return storage_[i.primitive_value];
   }
   constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
                                           usize i) && = delete;
@@ -411,7 +412,7 @@ class Vec {
   /// Behaviour results.
   constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
                                         usize i) & noexcept {
-    return reinterpret_cast<T*>(storage_)[i.primitive_value];
+    return storage_[i.primitive_value];
   }
 
   /// Present a nicer error when trying to use operator[] with an `int`,
@@ -461,7 +462,7 @@ class Vec {
   inline const T* as_ptr() const& noexcept {
     check(!is_moved_from());
     check(is_alloced());
-    return reinterpret_cast<T*>(storage_);
+    return storage_;
   }
   const T* as_ptr() && = delete;
 
@@ -472,7 +473,7 @@ class Vec {
   inline T* as_mut_ptr() & noexcept {
     check(!is_moved_from());
     check(is_alloced());
-    return reinterpret_cast<T*>(storage_);
+    return storage_;
   }
 
   // Returns a slice that references all the elements of the vector as const
@@ -481,8 +482,8 @@ class Vec {
     check(!is_moved_from());
     // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
     // is to the start of the Vec, so this Slice covers a valid range.
-    return Slice<const T>::from_raw_parts(
-        ::sus::marker::unsafe_fn, reinterpret_cast<const T*>(storage_), len_);
+    return Slice<const T>::from_raw_parts(::sus::marker::unsafe_fn, storage_,
+                                          len_);
   }
   constexpr Slice<const T> as_ref() && = delete;
 
@@ -492,8 +493,7 @@ class Vec {
     check(!is_moved_from());
     // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
     // is to the start of the Vec, so this Slice covers a valid range.
-    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn,
-                                    reinterpret_cast<T*>(storage_), len_);
+    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, storage_, len_);
   }
 
   /// Returns an iterator over all the elements in the array, visited in the
@@ -501,8 +501,7 @@ class Vec {
   /// each element.
   constexpr SliceIter<const T&> iter() const& noexcept {
     check(!is_moved_from());
-    return SliceIter<const T&>::with(reinterpret_cast<const T*>(storage_),
-                                     len_);
+    return SliceIter<const T&>::with(storage_, len_);
   }
   constexpr SliceIter<const T&> iter() && = delete;
 
@@ -511,7 +510,7 @@ class Vec {
   /// each element.
   constexpr SliceIterMut<T&> iter_mut() & noexcept {
     check(!is_moved_from());
-    return SliceIterMut<T&>::with(reinterpret_cast<T*>(storage_), len_);
+    return SliceIterMut<T&>::with(storage_, len_);
   }
 
   /// Converts the array into an iterator that consumes the array and returns
@@ -540,8 +539,7 @@ class Vec {
   inline void destroy_storage_objects() {
     if constexpr (!std::is_trivially_destructible_v<T>) {
       const size_t len = size_t{len_};
-      for (auto i = size_t{0}; i < len; ++i)
-        reinterpret_cast<T*>(storage_)[i].~T();
+      for (auto i = size_t{0}; i < len; ++i) storage_[i].~T();
     }
   }
 
