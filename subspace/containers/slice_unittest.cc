@@ -538,4 +538,38 @@ TEST(Slice, ToVec) {
   EXPECT_EQ(v[1u].i + 1, v2[1u].i);
 }
 
+TEST(Slice, AsPtr) {
+  sus::Array<i32, 3> array = sus::array(3, 4, 2);
+  auto slice =
+      sus::Slice<const i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 3u);
+  EXPECT_EQ(slice.as_ptr(), array.as_ptr());
+}
+
+TEST(Slice, AsPtrRange) {
+  sus::Array<i32, 3> array = sus::array(3, 4, 2);
+  auto slice =
+      sus::Slice<const i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 3u);
+  auto r = slice.as_ptr_range();
+  static_assert(std::same_as<decltype(r), sus::ops::Range<const i32*>>);
+  EXPECT_EQ(r.start, array.as_ptr());
+  EXPECT_EQ(r.finish, array.as_ptr() + 3u);
+}
+
+TEST(Slice, AsMutPtr) {
+  sus::Array<i32, 3> array = sus::array(3, 4, 2);
+  auto slice =
+      sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_mut_ptr(), 3u);
+  EXPECT_EQ(slice.as_mut_ptr(), array.as_mut_ptr());
+}
+
+TEST(Slice, AsMutPtrRange) {
+  sus::Array<i32, 3> array = sus::array(3, 4, 2);
+  auto slice =
+      sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_mut_ptr(), 3u);
+  auto r = slice.as_mut_ptr_range();
+  static_assert(std::same_as<decltype(r), sus::ops::Range<i32*>>);
+  EXPECT_EQ(r.start, array.as_mut_ptr());
+  EXPECT_EQ(r.finish, array.as_mut_ptr() + 3u);
+}
+
 }  // namespace
