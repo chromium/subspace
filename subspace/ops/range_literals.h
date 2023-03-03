@@ -31,12 +31,12 @@ struct RangeLiteralDeducer {
       std::conditional_t<IsSigned, ::sus::num::isize, ::sus::num::usize>;
   using Digit = std::conditional_t<IsSigned, int, unsigned int>;
 
-  // A non-consteval method used to indicate failure in parsing, which produces
+  // A non-constexpr method used to indicate failure in parsing, which produces
   // a compiler error and still works in the presence of -fno-exceptions unlike
   // `throw`.
   static void invalid(const char*);
 
-  consteval RangeLiteralDeducer(const char* c) {
+  constexpr RangeLiteralDeducer(const char* c) {
     size_t i = 0u;
 
     bool has_lower = false;
