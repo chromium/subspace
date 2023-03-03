@@ -60,8 +60,7 @@ class [[sus_trivial_abi]] Slice {
   static constexpr inline Slice from_raw_parts(::sus::marker::UnsafeFnMarker,
                                                T* data,
                                                ::sus::usize len) noexcept {
-    ::sus::check(len.primitive_value <=
-                 static_cast<size_t>(isize::MAX_PRIMITIVE));
+    ::sus::check(size_t{len} <= size_t{isize::MAX_PRIMITIVE});
     return Slice(data, len);
   }
 
