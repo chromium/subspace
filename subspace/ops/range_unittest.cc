@@ -282,4 +282,10 @@ TEST(Range, RangeForIterator) {
   EXPECT_EQ(v.len(), 3u);
 }
 
+TEST(Range, StructuredBindings) {
+  auto [a, b] = "1..5"_r;
+  EXPECT_EQ(a, 1u);
+  EXPECT_EQ(b, 5u);
+}
+
 }  // namespace
