@@ -486,8 +486,8 @@ class [[sus_trivial_abi]] Slice {
   constexpr Slice(T* data sus_lifetimebound, usize len) noexcept
       : data_(data), len_(len) {}
 
-  T* data_;
-  ::sus::usize len_;
+  T* const data_;
+  ::sus::usize const len_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(data_),
                                   decltype(len_));

@@ -34,9 +34,9 @@ namespace sus::mem {
 /// not recommended, unless deleting the copy operations too, as it tends to
 /// break things that want to move-or-fallback-to-copy.
 ///
-/// As a special case, types that can not be assigned to at all, by copy or
-/// move, can still satisfy Move by being able to construct by move. This is
-/// required for types like lambdas.
+/// Types that can not be assigned to at all, by copy or move, can still satisfy
+/// Move by being able to construct by move. This is required for types like
+/// lambdas, or types with const fields.
 ///
 /// # Example
 /// ```
