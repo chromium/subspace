@@ -81,6 +81,7 @@ concept relocate_by_memcpy =
     || (!std::is_volatile_v<std::remove_all_extents_t<T>>
        && sus::mem::data_size_of<std::remove_all_extents_t<std::remove_reference_t<T>>>() != 0u
        && (__private::relocatable_tag<std::remove_all_extents_t<T>>::value(0)
+          || std::is_trivially_copyable_v<std::remove_all_extents_t<T>>
           || (std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>> &&
               std::is_trivially_move_assignable_v<std::remove_all_extents_t<T>> &&
               std::is_trivially_destructible_v<std::remove_all_extents_t<T>>)

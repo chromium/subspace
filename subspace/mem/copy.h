@@ -31,6 +31,10 @@ namespace sus::mem {
 /// or more complex to copy, it is better to make them satisfy `Clone` instead
 /// so that copies are always explicit.
 ///
+/// Types that can not be assigned to at all, by copy or move, can still satisfy
+/// Copy by being able to construct by copy. This is required for types with
+/// const fields.
+///
 /// # Example
 /// ```
 /// struct S {
@@ -42,10 +46,12 @@ namespace sus::mem {
 /// static_assert(sus::mem::Clone<S>);
 /// ```
 template <class T>
-concept Copy =
-    std::is_copy_constructible_v<
-        std::remove_const_t<std::remove_reference_t<T>>> &&
-    std::is_copy_assignable_v<std::remove_const_t<std::remove_reference_t<T>>>;
+concept Copy = std::is_copy_constructible_v<
+                   std::remove_const_t<std::remove_reference_t<T>>> &&
+               (std::is_copy_assignable_v<
+                    std::remove_const_t<std::remove_reference_t<T>>> ||
+                !std::is_move_assignable_v<
+                    std::remove_const_t<std::remove_reference_t<T>>>);
 
 /// A `CopyOrRef` object or reference of type `T` can be copied to construct a
 /// new `T`.
