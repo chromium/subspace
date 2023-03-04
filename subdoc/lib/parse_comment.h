@@ -32,7 +32,7 @@ struct ParseCommentError {
   std::string message;
 };
 
-inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
+inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
     clang::ASTContext& ast_cx, const clang::RawComment& raw) noexcept {
   auto& src_manager = ast_cx.getSourceManager();
   const llvm::StringRef text = raw.getRawText(src_manager);
@@ -97,7 +97,7 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
                 m << "Invalid path element '" << std::string_view(element)
                   << "' in doc.inherit: ";
                 m << line.Text;
-                return sus::result::err(ParseCommentError{.message = m.str()});
+                return sus::err(ParseCommentError{.message = m.str()});
               }
             }
             attrs.inherit = sus::some(sus::move(vec));
@@ -105,13 +105,13 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
             std::ostringstream m;
             m << "Unknown doc attribute " << std::string_view(v) << " in: ";
             m << line.Text;
-            return sus::result::err(ParseCommentError{.message = m.str()});
+            return sus::err(ParseCommentError{.message = m.str()});
           }
         } else if (line.Text.find("#[doc") != std::string::npos) {
           std::ostringstream m;
           m << "Unused doc comment in: ";
           m << line.Text;
-          return sus::result::err(ParseCommentError{.message = m.str()});
+          return sus::err(ParseCommentError{.message = m.str()});
         } else {
           // Drop the trailing ' +\' suffix.
           auto subline = std::string(line.Text);
@@ -177,7 +177,7 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
             inside_pre = !inside_pre;
             if (inside_pre) {
               if (inside_code_snippet) {
-                return sus::result::err(ParseCommentError{
+                return sus::err(ParseCommentError{
                     .message = "Invalid markdown, found ``` inside `"});
               }
               // TODO: After the opening ``` there can be a language for syntax
@@ -217,11 +217,11 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
 
         // A `snippet` was not terminated.
         if (inside_code_snippet) {
-          return sus::result::err(
+          return sus::err(
               ParseCommentError{.message = "Unterminated code ` snippet"});
         }
         if (inside_pre) {
-          return sus::result::err(
+          return sus::err(
               ParseCommentError{.message = "Unterminated code ``` block"});
         }
       }
@@ -235,21 +235,21 @@ inline sus::result::Result<ParsedComment, ParseCommentError> parse_comment(
       // TODO: Conditionally collect these?
       break;
     case clang::RawComment::CommentKind::RCK_Qt:  // `/*! Foo`
-      return sus::result::err(
+      return sus::err(
           ParseCommentError{.message = "Invalid comment format `/*!`"});
       break;
     case clang::RawComment::CommentKind::RCK_BCPLExcl:  // `//! Foo`
-      return sus::result::err(
+      return sus::err(
           ParseCommentError{.message = "Invalid comment format `//!`"});
     case clang::RawComment::CommentKind::RCK_Invalid:  // `/* Foo`
-      return sus::result::err(ParseCommentError{
+      return sus::err(ParseCommentError{
           .message = "Invalid comment format, unable to parse"});
     case clang::RawComment::CommentKind::RCK_Merged:  // More than one.
-      return sus::result::err(
+      return sus::err(
           ParseCommentError{.message = "Merged comment format?"});
   }
 
-  return sus::result::ok(
+  return sus::ok(
       ParsedComment(sus::move(attrs), sus::move(parsed).str()));
 }
 

@@ -25,13 +25,16 @@
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/macros/assume.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/marker/unsafe.h"
+#include "subspace/mem/addressof.h"
 #include "subspace/mem/clone.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/ord.h"
 #include "subspace/ops/range.h"
 #include "subspace/option/option.h"
+#include "subspace/result/result.h"
 
 // TODO: sort_by_key()
 // TODO: sort_by_cached_key()
@@ -340,6 +343,107 @@ class [[sus_trivial_abi]] Slice {
     requires(!std::is_const_v<T>)
   {
     return ::sus::ops::Range<T*>(data_, data_ + size_t{len_});
+  }
+
+  /// Binary searches this slice for a given element. This behaves similarly to
+  /// contains if this slice is sorted.
+  ///
+  /// If the value is found then `sus::Ok` is returned, with the index
+  /// of the matching element. If there are multiple matches, then any one of
+  /// the matches could be returned. The index is chosen deterministically, but
+  /// is subject to change in future versions of Subspace. If the value is not
+  /// found then `sus::Err` is returned, with the index where a matching
+  /// element could be inserted while maintaining sorted order.
+  ::sus::Result<::sus::num::usize, ::sus::num::usize> binary_search(
+      const T& x) const& noexcept
+    requires(::sus::ops::Ord<T>)
+  {
+    const T* x_ptr = ::sus::mem::addressof(x);
+    return binary_search_by(sus_bind_mut(
+        sus_store(sus_unsafe_pointer(x_ptr)),
+        [&](const T& p) -> std::strong_ordering { return p <=> *x_ptr; }));
+  }
+
+  /// Binary searches this slice with a comparator function. This behaves
+  /// similarly to `contains` if this slice is sorted.
+  ///
+  /// The comparator function should implement an order consistent with the sort
+  /// order of the underlying slice, returning a `std::strong_ordering` that
+  /// indicates whether its argument is less than, equal to or greater than the
+  /// desired target.
+  ///
+  /// If the value is found then `sus::Ok` is returned, with the index
+  /// of the matching element. If there are multiple matches, then any one of
+  /// the matches could be returned. The index is chosen deterministically, but
+  /// is subject to change in future versions of Subspace. If the value is not
+  /// found then `sus::Err` is returned, with the index where a matching
+  /// element could be inserted while maintaining sorted order.
+  ::sus::Result<::sus::num::usize, ::sus::num::usize> binary_search_by(
+      ::sus::fn::FnMut<std::strong_ordering(const T&)> f) const& noexcept
+    requires(::sus::ops::Ord<T>)
+  {
+    using Result = ::sus::Result<::sus::num::usize, ::sus::num::usize>;
+
+    // INVARIANTS:
+    // - 0 <= left <= left + size = right <= self.len()
+    // - f returns Less for everything in self[..left]
+    // - f returns Greater for everything in self[right..]
+    ::sus::num::usize size = len_;
+    ::sus::num::usize left = 0u;
+    ::sus::num::usize right = size;
+    while (left < right) {
+      auto mid = left + size / 2u;
+
+      // SAFETY: the while condition means `size` is strictly positive, so
+      // `size/2 < size`.  Thus `left + size/2 < left + size`, which coupled
+      // with the `left + size <= len_` invariant means we have
+      // `left + size/2 < len_`, and this is in-bounds.
+      auto cmp = f(get_unchecked(::sus::marker::unsafe_fn, mid));
+
+      // The order of these comparisons comes from the Rust stdlib and is
+      // performance sensitive.
+      if (cmp == std::strong_ordering::less) {
+        left = mid + 1u;
+      } else if (cmp == std::strong_ordering::greater) {
+        right = mid;
+      } else {
+        // SAFETY: same as the `get_unchecked` above.
+        sus_assume(::sus::marker::unsafe_fn, mid < len_);
+        return Result::with(mid);
+      }
+
+      size = right - left;
+    }
+
+    // SAFETY: directly true from the overall invariant.
+    // Note that this is `<=`, unlike the assume in the `Result::ok()` path.
+    sus_assume(::sus::marker::unsafe_fn, left <= len_);
+    return Result::with_err(left);
+  }
+
+  /// Binary searches this slice with a key extraction function. This behaves
+  /// similarly to `contains` if this slice is sorted.
+  ///
+  /// Assumes that the slice is sorted by the key, for instance with sort_by_key
+  /// using the same key extraction function.
+  ///
+  /// If the value is found then `sus::Ok` is returned, with the index
+  /// of the matching element. If there are multiple matches, then any one of
+  /// the matches could be returned. The index is chosen deterministically, but
+  /// is subject to change in future versions of Subspace. If the value is not
+  /// found then `sus::Err` is returned, with the index where a matching
+  /// element could be inserted while maintaining sorted order.
+  template <::sus::ops::Ord Key>
+  ::sus::Result<::sus::num::usize, ::sus::num::usize> binary_search_by_key(
+      const Key& key,
+      ::sus::construct::Into<::sus::fn::FnMut<Key(const T&)>> auto f)
+      const& noexcept {
+    ::sus::fn::FnMut<Key(const T&)> fnmut = ::sus::into(::sus::move(f));
+    const auto* key_ptr = ::sus::mem::addressof(key);
+    auto* f_ptr = ::sus::mem::addressof(fnmut);
+    return binary_search_by(sus_bind_mut(
+        sus_store(sus_unsafe_pointer(key_ptr), sus_unsafe_pointer(f_ptr)),
+        [&](const T& p) { return (*f_ptr)(p) <=> *key_ptr; }));
   }
 
   /// Returns an iterator over all the elements in the slice, visited in the

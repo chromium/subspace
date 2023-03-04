@@ -30,11 +30,11 @@ struct DiagnosticResults {
 };
 static_assert(sus::mem::Move<DiagnosticResults>);
 
-sus::result::Result<Database, DiagnosticResults> run_test(
+sus::Result<Database, DiagnosticResults> run_test(
     std::string content, sus::Slice<const std::string> command_line_args,
     const RunOptions& options) noexcept;
 
-sus::result::Result<Database, DiagnosticResults> run_files(
+sus::Result<Database, DiagnosticResults> run_files(
     const clang::tooling::CompilationDatabase& compdb,
     sus::Vec<std::string> paths,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,

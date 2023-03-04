@@ -19,7 +19,7 @@
 
 using sus::construct::Default;
 using sus::mem::relocate_by_memcpy;
-using sus::result::Result;
+using sus::Result;
 
 namespace sus::test::default_constructible {
 using T = Result<sus::test::DefaultConstructible, int>;
