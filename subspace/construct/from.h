@@ -53,12 +53,12 @@ concept From = requires(FromType&& from) {
 ///
 /// Unlike `sus::construct::From`, using the `try_from()` method gives the
 /// opportunity to catch failures since the return type is a
-/// `sus::result::Result`.
+/// `sus::Result`.
 template <class ToType, class FromType>
 concept TryFrom = requires(FromType&& from) {
   { ToType::try_from(static_cast<FromType&&>(from)) };
   requires std::same_as<
-      typename ::sus::result::__private::IsResultType<decltype(ToType::try_from(
+      typename ::sus::__private::IsResultType<decltype(ToType::try_from(
           static_cast<FromType&&>(from)))>::ok_type,
       ToType>;
 };

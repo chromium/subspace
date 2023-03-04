@@ -457,7 +457,7 @@ struct Database {
 
   bool has_any_comments() const noexcept { return global.has_any_comments(); }
 
-  sus::result::Result</* TODO: void */ int, std::string>
+  sus::Result</* TODO: void */ int, std::string>
   resolve_inherited_comments() {
     sus::Vec<Comment*> to_resolve;
     {
@@ -495,13 +495,13 @@ struct Database {
                 s << "Inherited comment at " << c->begin_loc
                   << " has invalid path, with a namespace inside a "
                      "non-namespace.";
-                return sus::result::err(sus::move(s).str());
+                return sus::err(sus::move(s).str());
               }
               if (!target.as_mut<Target::Namespace>().namespaces.contains(id)) {
                 std::ostringstream s;
                 s << "Inherited comment at " << c->begin_loc
                   << " can't find namespace " << e.as<InheritPathNamespace>();
-                return sus::result::err(sus::move(s).str());
+                return sus::err(sus::move(s).str());
               }
               target = sus::choice<Target::Namespace>(
                   target.as_mut<Target::Namespace>().namespaces.at(id));
@@ -531,14 +531,14 @@ struct Database {
                   std::ostringstream s;
                   s << "Inherited comment at " << c->begin_loc
                     << " has invalid path, with a record inside a function.";
-                  return sus::result::err(sus::move(s).str());
+                  return sus::err(sus::move(s).str());
                 }
               }
               if (record.is_none()) {
                 std::ostringstream s;
                 s << "Inherited comment at " << c->begin_loc
                   << " can't find record " << name;
-                return sus::result::err(sus::move(s).str());
+                return sus::err(sus::move(s).str());
               }
               target = sus::choice<Target::Record>(sus::move(record).unwrap());
               break;
@@ -566,14 +566,14 @@ struct Database {
                   std::ostringstream s;
                   s << "Inherited comment at " << c->begin_loc
                     << " has invalid path, with a function inside a function.";
-                  return sus::result::err(sus::move(s).str());
+                  return sus::err(sus::move(s).str());
                 }
               }
               if (function.is_none()) {
                 std::ostringstream s;
                 s << "Inherited comment at " << c->begin_loc
                   << " can't find function " << name;
-                return sus::result::err(sus::move(s).str());
+                return sus::err(sus::move(s).str());
               }
               target =
                   sus::choice<Target::Function>(sus::move(function).unwrap());
@@ -610,7 +610,7 @@ struct Database {
       to_resolve = sus::move(remaining);
     }
 
-    return sus::result::ok(0);
+    return sus::ok(0);
   }
 
   sus::Option<const TypeElement&> find_type(clang::QualType qual) {

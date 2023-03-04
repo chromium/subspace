@@ -1741,7 +1741,7 @@ TEST(Option, OkOr) {
     auto o = Option<u8>::some(3_u8);
     auto r = sus::move(o).ok_or(-5_i32);
     IS_NONE(o);
-    static_assert(std::same_as<sus::result::Result<u8, i32>, decltype(r)>);
+    static_assert(std::same_as<sus::Result<u8, i32>, decltype(r)>);
     EXPECT_TRUE(r.is_ok());
     EXPECT_EQ(sus::move(r).unwrap(), 3_u8);
   }
@@ -1749,7 +1749,7 @@ TEST(Option, OkOr) {
     auto o = Option<u8>::none();
     auto r = sus::move(o).ok_or(-5_i32);
     IS_NONE(o);
-    static_assert(std::same_as<sus::result::Result<u8, i32>, decltype(r)>);
+    static_assert(std::same_as<sus::Result<u8, i32>, decltype(r)>);
     EXPECT_TRUE(r.is_err());
     EXPECT_EQ(sus::move(r).unwrap_err(), -5_i32);
   }
@@ -1765,7 +1765,7 @@ TEST(Option, OkOr) {
     auto o = Option<i32&>::some(mref(i));
     auto r = sus::move(o).ok_or(-5_i32);
     IS_SOME(o);
-    static_assert(std::same_as<sus::result::Result<i32&, i32>, decltype(r)>);
+    static_assert(std::same_as<sus::Result<i32&, i32>, decltype(r)>);
     EXPECT_TRUE(r.is_ok());
     EXPECT_EQ(&sus::move(r).unwrap(), &i);
   }
@@ -1774,7 +1774,7 @@ TEST(Option, OkOr) {
     auto o = Option<i32&>::none();
     auto r = sus::move(o).ok_or(-5_i32);
     IS_NONE(o);
-    static_assert(std::same_as<sus::result::Result<i32&, i32>, decltype(r)>);
+    static_assert(std::same_as<sus::Result<i32&, i32>, decltype(r)>);
     EXPECT_TRUE(r.is_err());
     EXPECT_EQ(sus::move(r).unwrap_err(), -5_i32);
   }
@@ -1786,7 +1786,7 @@ TEST(Option, OkOrElse) {
     auto o = Option<u8>::some(3_u8);
     auto r = sus::move(o).ok_or_else([]() { return -5_i32; });
     IS_NONE(o);
-    static_assert(std::same_as<sus::result::Result<u8, i32>, decltype(r)>);
+    static_assert(std::same_as<sus::Result<u8, i32>, decltype(r)>);
     EXPECT_TRUE(r.is_ok());
     EXPECT_EQ(sus::move(r).unwrap(), 3_u8);
   }
@@ -1794,7 +1794,7 @@ TEST(Option, OkOrElse) {
     auto o = Option<u8>::none();
     auto r = sus::move(o).ok_or_else([]() { return -5_i32; });
     IS_NONE(o);
-    static_assert(std::same_as<sus::result::Result<u8, i32>, decltype(r)>);
+    static_assert(std::same_as<sus::Result<u8, i32>, decltype(r)>);
     EXPECT_TRUE(r.is_err());
     EXPECT_EQ(sus::move(r).unwrap_err(), -5_i32);
   }
@@ -1811,39 +1811,39 @@ TEST(Option, OkOrElse) {
 }
 
 TEST(Option, Transpose) {
-  auto none = Option<sus::result::Result<u8, i32>>::none();
+  auto none = Option<sus::Result<u8, i32>>::none();
   auto t1 = sus::move(none).transpose();
   static_assert(
-      std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t1)>);
+      std::same_as<sus::Result<Option<u8>, i32>, decltype(t1)>);
   EXPECT_EQ(t1.is_ok(), true);
   EXPECT_EQ(sus::move(t1).unwrap(), None);
 
-  auto some_ok = Option<sus::result::Result<u8, i32>>::some(
-      sus::result::Result<u8, i32>::with(5_u8));
+  auto some_ok = Option<sus::Result<u8, i32>>::some(
+      sus::Result<u8, i32>::with(5_u8));
   auto t2 = sus::move(some_ok).transpose();
   static_assert(
-      std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t2)>);
+      std::same_as<sus::Result<Option<u8>, i32>, decltype(t2)>);
   EXPECT_EQ(t2.is_ok(), true);
   EXPECT_EQ(sus::move(t2).unwrap().unwrap(), 5_u8);
 
-  auto some_err = Option<sus::result::Result<u8, i32>>::some(
-      sus::result::Result<u8, i32>::with_err(-2_i32));
+  auto some_err = Option<sus::Result<u8, i32>>::some(
+      sus::Result<u8, i32>::with_err(-2_i32));
   auto t3 = sus::move(some_err).transpose();
   static_assert(
-      std::same_as<sus::result::Result<Option<u8>, i32>, decltype(t3)>);
+      std::same_as<sus::Result<Option<u8>, i32>, decltype(t3)>);
   EXPECT_EQ(t3.is_err(), true);
   EXPECT_EQ(sus::move(t3).unwrap_err(), -2_i32);
 
   static_assert(
-      Option<sus::result::Result<u8, i32>>::some(sus::result::ok(2_u8))
+      Option<sus::Result<u8, i32>>::some(sus::ok(2_u8))
           .transpose()
           .unwrap()
           .unwrap() == 2_u8);
   static_assert(
-      Option<sus::result::Result<u8, i32>>::some(sus::result::err(3_i32))
+      Option<sus::Result<u8, i32>>::some(sus::err(3_i32))
           .transpose()
           .unwrap_err() == 3_i32);
-  static_assert(Option<sus::result::Result<u8, i32>>::none()
+  static_assert(Option<sus::Result<u8, i32>>::none()
                     .transpose()
                     .unwrap()
                     .is_none());

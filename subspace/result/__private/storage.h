@@ -18,7 +18,7 @@
 
 #pragma once
 
-namespace sus::result::__private {
+namespace sus::__private {
 
 enum WithT { kWithT };
 enum WithE { kWithE };
@@ -66,4 +66,4 @@ union Storage {
   [[sus_no_unique_address]] E err_;
 };
 
-}  // namespace sus::result::__private
+}  // namespace sus::__private

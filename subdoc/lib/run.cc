@@ -22,7 +22,7 @@
 
 namespace subdoc {
 
-sus::result::Result<Database, DiagnosticResults> run_test(
+sus::Result<Database, DiagnosticResults> run_test(
     std::string content, sus::Slice<const std::string> command_line_args,
     const RunOptions& options) noexcept {
   auto join_args = std::string();
@@ -35,7 +35,7 @@ sus::result::Result<Database, DiagnosticResults> run_test(
       ".", join_args, err);
   if (!err.empty()) {
     llvm::errs() << "error making comp_db for tests: " << err << "\n";
-    return sus::result::err(DiagnosticResults());
+    return sus::err(DiagnosticResults());
   }
 
   auto vfs = llvm::IntrusiveRefCntPtr(new llvm::vfs::InMemoryFileSystem());
@@ -59,7 +59,7 @@ struct DiagnosticTracker : public clang::TextDiagnosticPrinter {
   DiagnosticResults results;
 };
 
-sus::result::Result<Database, DiagnosticResults> run_files(
+sus::Result<Database, DiagnosticResults> run_files(
     const clang::tooling::CompilationDatabase& comp_db,
     sus::Vec<std::string> paths,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
@@ -128,20 +128,20 @@ sus::result::Result<Database, DiagnosticResults> run_files(
   }
 
   if (run_value == 1) {
-    return sus::result::err(sus::move(sus::move(diags)->results));
+    return sus::err(sus::move(sus::move(diags)->results));
   }
   if (diags->getNumErrors() > 0) {
-    return sus::result::err(sus::move(sus::move(diags)->results));
+    return sus::err(sus::move(sus::move(diags)->results));
   }
 
   auto r = docs_db.resolve_inherited_comments();
   if (r.is_err()) {
     // TODO: forward the message location into a diagnostic.
     llvm::errs() << sus::move(sus::move(r).unwrap_err()) << "\n";
-    return sus::result::err(sus::move(sus::move(diags)->results));
+    return sus::err(sus::move(sus::move(diags)->results));
   }
 
-  return sus::result::ok(sus::move(docs_db));
+  return sus::ok(sus::move(docs_db));
 }
 
 }  // namespace subdoc

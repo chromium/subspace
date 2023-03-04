@@ -18,7 +18,12 @@
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
 
-namespace sus::result::__private {
+namespace sus::result {
+template <class T, class E>
+class Result;
+}
+
+namespace sus::__private {
 
 template <class T>
 struct OkMarker {
@@ -28,22 +33,22 @@ struct OkMarker {
   T&& value;
 
   template <class U, class E>
-  inline constexpr operator Result<U, E>() && noexcept {
+  inline constexpr operator ::sus::result::Result<U, E>() && noexcept {
     return Result<U, E>::with(::sus::forward<T>(value));
   }
 
   // TODO: Make Result hold references and remove the remove_reference_t.
   template <class E>
-  inline constexpr Result<std::remove_reference_t<T>,
-                          std::remove_reference_t<E>>
+  inline constexpr ::sus::result::Result<std::remove_reference_t<T>,
+                                         std::remove_reference_t<E>>
   construct() && noexcept {
     return ::sus::move(*this);
   }
 
   // TODO: Make Result hold references and remove the remove_reference_t.
   template <class U, class E>
-  inline constexpr Result<std::remove_reference_t<U>,
-                          std::remove_reference_t<E>>
+  inline constexpr ::sus::result::Result<std::remove_reference_t<U>,
+                                         std::remove_reference_t<E>>
   construct() && noexcept {
     return ::sus::move(*this);
   }
@@ -57,26 +62,26 @@ struct ErrMarker {
   E&& value;
 
   template <class T, class F>
-  inline constexpr operator Result<T, F>() && noexcept {
+  inline constexpr operator ::sus::result::Result<T, F>() && noexcept {
     return Result<T, F>::with_err(
         ::sus::forward<std::remove_reference_t<E>>(value));
   }
 
   // TODO: Make Result hold references and remove the remove_reference_t.
   template <class T>
-  inline constexpr Result<std::remove_reference_t<T>,
-                          std::remove_reference_t<E>>
+  inline constexpr ::sus::result::Result<std::remove_reference_t<T>,
+                                         std::remove_reference_t<E>>
   construct() && noexcept {
     return ::sus::move(*this);
   }
 
   // TODO: Make Result hold references and remove the remove_reference_t.
-  template <class T, class F = E>
-  inline constexpr Result<std::remove_reference_t<T>,
-                          std::remove_reference_t<F>>
+  template <class T, class F>
+  inline constexpr ::sus::result::Result<std::remove_reference_t<T>,
+                                         std::remove_reference_t<F>>
   construct() && noexcept {
     return ::sus::move(*this);
   }
 };
 
-}  // namespace sus::result::__private
+}  // namespace sus::__private

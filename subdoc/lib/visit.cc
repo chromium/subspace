@@ -473,7 +473,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto& ast_cx = decl->getASTContext();
     auto& src_manager = ast_cx.getSourceManager();
     if (raw) {
-      sus::result::Result<ParsedComment, ParseCommentError> comment_result =
+      sus::Result<ParsedComment, ParseCommentError> comment_result =
           parse_comment(ast_cx, *raw);
       if (comment_result.is_ok()) {
         auto&& [attrs, string] = sus::move(comment_result).unwrap();

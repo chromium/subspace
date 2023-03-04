@@ -17,6 +17,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
+#include "subspace/containers/vec.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/copy.h"
@@ -570,6 +571,61 @@ TEST(Slice, AsMutPtrRange) {
   static_assert(std::same_as<decltype(r), sus::ops::Range<i32*>>);
   EXPECT_EQ(r.start, array.as_mut_ptr());
   EXPECT_EQ(r.finish, array.as_mut_ptr() + 3u);
+}
+
+TEST(Slice, BinarySearch) {
+  sus::Vec<i32> v = sus::vec(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
+  auto s = v.as_slice();
+
+  EXPECT_EQ(s.binary_search(13), sus::ok(9_usize).construct<usize>());
+  EXPECT_EQ(s.binary_search(4), sus::err(7_usize).construct<usize>());
+  EXPECT_EQ(s.binary_search(100), sus::err(13_usize).construct<usize>());
+  auto r = s.binary_search(1);
+  EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+}
+
+TEST(Slice, BinarySearchBy) {
+  sus::Vec<i32> v = sus::vec(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
+  auto s = v.as_slice();
+
+  EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 13; }),
+            sus::ok(9_usize).construct<usize>());
+  EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 4; }),
+            sus::err(7_usize).construct<usize>());
+  EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 100; }),
+            sus::err(13_usize).construct<usize>());
+  auto r = s.binary_search_by([](const i32& p) { return p <=> 1; });
+  EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+}
+
+TEST(Slice, BinarySearchByKey) {
+  sus::Array<sus::Tuple<i32, i32>, 13> arr = sus::array(
+      sus::tuple(0, 0), sus::tuple(2, 1), sus::tuple(4, 1), sus::tuple(5, 1),
+      sus::tuple(3, 1), sus::tuple(1, 2), sus::tuple(2, 3), sus::tuple(4, 5),
+      sus::tuple(5, 8), sus::tuple(3, 13), sus::tuple(1, 21), sus::tuple(2, 34),
+      sus::tuple(4, 55));
+  auto s = sus::Slice<const sus::Tuple<i32, i32>>::from_raw_parts(
+      unsafe_fn, arr.as_ptr(), arr.len());
+
+  EXPECT_EQ(s.binary_search_by_key(13_i32,
+                                   [](const sus::Tuple<i32, i32>& pair) -> i32 {
+                                     return pair.at<1u>();
+                                   }),
+            sus::ok(9_usize).construct<usize>());
+  EXPECT_EQ(s.binary_search_by_key(4_i32,
+                                   [](const sus::Tuple<i32, i32>& pair) -> i32 {
+                                     return pair.at<1u>();
+                                   }),
+            sus::err(7_usize).construct<usize>());
+  EXPECT_EQ(s.binary_search_by_key(100_i32,
+                                   [](const sus::Tuple<i32, i32>& pair) -> i32 {
+                                     return pair.at<1u>();
+                                   }),
+            sus::err(13_usize).construct<usize>());
+  auto r = s.binary_search_by_key(
+      1_i32,
+      [](const sus::Tuple<i32, i32>& pair) -> i32 { return pair.at<1u>(); });
+  EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
 }
 
 }  // namespace

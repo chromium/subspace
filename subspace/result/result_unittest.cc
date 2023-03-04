@@ -26,7 +26,7 @@
 
 namespace {
 
-using sus::result::Result;
+using sus::Result;
 using sus::test::NotTriviallyRelocatableCopyableOrMoveable;
 using sus::test::TriviallyCopyable;
 using sus::test::TriviallyMoveableAndRelocatable;
@@ -86,17 +86,17 @@ TEST(Result, WithErr) {
 
 TEST(Option, OkHelpers) {
   auto a = Result<i32, u32>::with(2_i32);
-  Result<i32, u32> a2 = sus::result::ok(2_i32);
+  Result<i32, u32> a2 = sus::ok(2_i32);
   EXPECT_EQ(a, a2);
 
   auto i = 2_i32;
   auto c = Result<i32, u32>::with(i);
-  Result<i32, u32> c2 = sus::result::ok(i);
+  Result<i32, u32> c2 = sus::ok(i);
   EXPECT_EQ(c, c2);
 
   const auto ci = 2_i32;
   const auto cc = Result<i32, u32>::with(ci);
-  Result<i32, u32> cc2 = sus::result::ok(ci);
+  Result<i32, u32> cc2 = sus::ok(ci);
   EXPECT_EQ(cc, cc2);
 
   // Verify no copies happen in the marker.
@@ -112,7 +112,7 @@ TEST(Option, OkHelpers) {
     };
     copies = 0;
     S s;
-    auto marker = sus::result::ok(s);
+    auto marker = sus::ok(s);
     EXPECT_EQ(copies, 0);
     Result<S, u32> r = sus::move(marker);
     EXPECT_GE(copies, 1);
@@ -120,7 +120,7 @@ TEST(Option, OkHelpers) {
 
   // In place explicit construction.
   {
-    auto r = sus::result::ok(2_i32).construct<u32>();
+    auto r = sus::ok(2_i32).construct<u32>();
     static_assert(std::same_as<decltype(r), Result<i32, u32>>);
     EXPECT_EQ(sus::move(r).unwrap(), 2_i32);
   }
@@ -128,17 +128,17 @@ TEST(Option, OkHelpers) {
 
 TEST(Option, ErrHelpers) {
   auto a = Result<u32, i32>::with_err(2_i32);
-  Result<u32, i32> a2 = sus::result::err(2_i32);
+  Result<u32, i32> a2 = sus::err(2_i32);
   EXPECT_EQ(a, a2);
 
   auto i = 2_i32;
   auto c = Result<u32, i32>::with_err(i);
-  Result<u32, i32> c2 = sus::result::err(i);
+  Result<u32, i32> c2 = sus::err(i);
   EXPECT_EQ(c, c2);
 
   const auto ci = 2_i32;
   const auto cc = Result<u32, i32>::with_err(ci);
-  Result<u32, i32> cc2 = sus::result::err(ci);
+  Result<u32, i32> cc2 = sus::err(ci);
   EXPECT_EQ(cc, cc2);
 
   // Verify no copies happen in the marker.
@@ -154,7 +154,7 @@ TEST(Option, ErrHelpers) {
     };
     copies = 0;
     S s;
-    auto marker = sus::result::err(s);
+    auto marker = sus::err(s);
     EXPECT_EQ(copies, 0);
     Result<u32, S> r = sus::move(marker);
     EXPECT_GE(copies, 1);
@@ -179,13 +179,13 @@ TEST(Result, IsErr) {
 
 TEST(Result, Switch) {
   switch (Result<i32, Error>::with(3_i32)) {
-    case sus::result::Ok: break;
-    case sus::result::Err: ADD_FAILURE(); break;
+    case sus::Ok: break;
+    case sus::Err: ADD_FAILURE(); break;
   }
 
   switch (Result<i32, Error>::with_err(Error())) {
-    case sus::result::Ok: ADD_FAILURE(); break;
-    case sus::result::Err: break;
+    case sus::Ok: ADD_FAILURE(); break;
+    case sus::Err: break;
   }
 }
 
@@ -487,7 +487,7 @@ TEST(Result, FromIter) {
   
   auto no_errors_out =
       sus::move(no_errors).collect<Result<CollectSum<usize>, Error>>();
-  EXPECT_EQ(no_errors_out, sus::result::Ok);
+  EXPECT_EQ(no_errors_out, sus::Ok);
   EXPECT_EQ(sus::move(no_errors_out).unwrap().sum, 1u + 2u + 3u + 4u + 5u);
 
   auto with_error =
@@ -499,7 +499,7 @@ TEST(Result, FromIter) {
 
   auto with_error_out =
       sus::move(with_error).collect<Result<CollectSum<usize>, Error>>();
-  EXPECT_EQ(with_error_out, sus::result::Err);
+  EXPECT_EQ(with_error_out, sus::Err);
   EXPECT_EQ(sus::move(with_error_out).unwrap_err(), Error::OneError);
 
   auto with_errors =
@@ -512,7 +512,7 @@ TEST(Result, FromIter) {
 
   auto with_errors_out =
       sus::move(with_errors).collect<Result<CollectSum<usize>, Error>>();
-  EXPECT_EQ(with_errors_out, sus::result::Err);
+  EXPECT_EQ(with_errors_out, sus::Err);
   EXPECT_EQ(sus::move(with_errors_out).unwrap_err(), Error::OneError);
 }
 
@@ -537,14 +537,14 @@ TEST(Result, Clone) {
     const auto s = Result<Copy, i32>::with(Copy());
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Result<Copy, i32>>);
-    EXPECT_EQ(s2, sus::result::Ok);
+    EXPECT_EQ(s2, sus::Ok);
   }
 
   {
     const auto s = Result<Copy, i32>::with_err(2_i32);
     auto s2 = Result<Copy, i32>::with(Copy());
     sus::clone_into(mref(s2), s);
-    EXPECT_EQ(s2, sus::result::Err);
+    EXPECT_EQ(s2, sus::Err);
   }
 
   struct Clone {
@@ -574,7 +574,7 @@ TEST(Result, Clone) {
     const auto s = Result<Clone, i32>::with(Clone());
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Result<Clone, i32>>);
-    EXPECT_EQ(s2, sus::result::Ok);
+    EXPECT_EQ(s2, sus::Ok);
     EXPECT_EQ(sus::move(s2).unwrap().i, 2_i32);
   }
 
@@ -582,7 +582,7 @@ TEST(Result, Clone) {
     const auto s = Result<Clone, i32>::with_err(2_i32);
     auto s2 = Result<Clone, i32>::with(Clone());
     sus::clone_into(mref(s2), s);
-    EXPECT_EQ(s2, sus::result::Err);
+    EXPECT_EQ(s2, sus::Err);
   }
 }
 

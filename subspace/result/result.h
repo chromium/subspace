@@ -721,3 +721,12 @@ template <class E>
 }
 
 }  // namespace sus::result
+
+// Promote Result and its enum values into the `sus` namespace.
+namespace sus {
+using ::sus::result::err;
+using ::sus::result::Err;
+using ::sus::result::ok;
+using ::sus::result::Ok;
+using ::sus::result::Result;
+}  // namespace sus

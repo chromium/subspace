@@ -14,23 +14,17 @@
 
 #pragma once
 
-namespace sus::result {
-template <class T, class E>
-class Result;
-}
+#include "subspace/macros/compiler.h"
+#include "subspace/marker/unsafe.h"
 
-namespace sus::__private {
-
-template <class U>
-struct IsResultType final : std::false_type {
-  using ok_type = void;
-  using err_type = void;
-};
-
-template <class U, class V>
-struct IsResultType<::sus::result::Result<U, V>> final : std::true_type {
-  using ok_type = U;
-  using err_type = V;
-};
-
-}  // namespace sus::__private
+/// Tells the compiler that condition `x` is true and to optimize for it.
+///
+/// `[[assume(x)]]` will replace this macro in C++23. */
+///
+/// # Safety
+/// If the condition `x` were to actually be false, Undefined Behaviour will
+/// result.
+#define sus_assume(unsafe_fn, x)                                \
+  static_assert(std::same_as<std::decay_t<decltype(unsafe_fn)>, \
+                             ::sus::marker::UnsafeFnMarker>);   \
+  sus_if_msvc_else(__assume, __builtin_assume)(x)
