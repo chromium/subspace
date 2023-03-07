@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include "subspace/fn/callable.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/forward.h"
@@ -41,25 +43,20 @@ class SFn;
 
 namespace __private {
 
-template <class R, class... Args>
-struct CallVtable {
-  R (*call)(void* p, Args... args);
-};
-
 template <class F>
 struct Invoker {
   template <class R, class... Args>
-  static R call_mut(void* p, Args... args) {
-    F& f = *static_cast<F*>(p);
+  static R call_mut(uintptr_t p, Args... args) {
+    F& f = *reinterpret_cast<F*>(p);
     return f(::sus::forward<Args>(args)...);
   }
 
   template <class R, class... Args>
-  static R call_const(void* p, Args... args) {
-    const F& f = *static_cast<const F*>(p);
+  static R call_const(uintptr_t p, Args... args) {
+    const F& f = *reinterpret_cast<const F*>(p);
     return f(::sus::forward<Args>(args)...);
   }
-};  // namespace __private
+};
 
 }  // namespace __private
 
@@ -96,13 +93,10 @@ class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
   /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   SFn(F ptr) noexcept {
-    ::sus::check(ptr != nullptr);
-    callable_ = static_cast<void*>(ptr);
-    static auto vtable = __private::CallVtable<R, CallArgs...>{
-        .call = &__private::Invoker<
-            std::remove_reference_t<F>>::template call_const<R, CallArgs...>,
-    };
-    vtable_ = &vtable;
+    ::sus::check(+ptr != nullptr);
+    callable_ = reinterpret_cast<uintptr_t>(+ptr);
+    invoke_ = &__private::Invoker<
+        std::remove_reference_t<F>>::template call_const<R, CallArgs...>;
   }
 
   /// Construction from a capturing lambda or other callable object.
@@ -110,28 +104,25 @@ class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
   /// #[doc.overloads=ctor.lambda]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   SFn(F&& object) noexcept {
-    callable_ = static_cast<void*>(::sus::mem::addressof(object));
-    static auto vtable = __private::CallVtable<R, CallArgs...>{
-        .call = &__private::Invoker<
-            std::remove_reference_t<F>>::template call_const<R, CallArgs...>,
-    };
-    vtable_ = &vtable;
+    callable_ = reinterpret_cast<uintptr_t>(::sus::mem::addressof(object));
+    invoke_ = &__private::Invoker<
+        std::remove_reference_t<F>>::template call_const<R, CallArgs...>;
   }
 
   ~SFn() noexcept = default;
 
   SFn(SFn&& o) noexcept
-      : callable_(::sus::mem::replace_ptr(o.callable_, nullptr)),
-        // Not setting `o.vtable_` to nullptr, as vtable_ as nullptr is its
+      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
+        // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
         // never-value.
-        vtable_(o.vtable_) {
+        invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
   SFn& operator=(SFn&& o) noexcept {
-    callable_ = ::sus::mem::replace_ptr(o.callable_, nullptr);
-    // Not setting `o.vtable_` to nullptr, as vtable_ as nullptr is its
+    callable_ = ::sus::mem::replace(o.callable_, uintptr_t{0});
+    // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
     // never-value.
-    vtable_ = o.vtable_;
+    invoke_ = o.invoke_;
     ::sus::check(callable_);  // Catch use-after-move.
     return *this;
   }
@@ -143,19 +134,19 @@ class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
   /// sus::mem::Clone trait.
   SFn clone() const {
     ::sus::check(callable_);  // Catch use-after-move.
-    return SFn(callable_, vtable_);
+    return SFn(callable_, invoke_);
   }
 
   /// Runs the closure.
   inline R operator()(CallArgs... args) const& {
-    return vtable_->call(callable_, ::sus::forward<CallArgs>(args)...);
+    return (*invoke_)(callable_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
     ::sus::check(callable_);  // Catch use-after-move.
-    return vtable_->call(::sus::mem::replace_ptr(callable_, nullptr),
-                         ::sus::forward<CallArgs>(args)...);
+    return (*invoke_)(::sus::mem::replace(callable_, uintptr_t{0}),
+                      ::sus::forward<CallArgs>(args)...);
   }
 
   /// `sus::construct::From` trait implementation.
@@ -171,12 +162,12 @@ class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
   // operator to avoid extra indirections being inserted when converting, since
   // otherwise an extra Invoker call would be introduced.
   operator SFnOnce<R, CallArgs...>() && {
-    return SFnOnce(::sus::mem::replace(callable_, nullptr), vtable_);
+    return SFnOnce(::sus::mem::replace(callable_, uintptr_t{0}), invoke_);
   }
   // operator to avoid extra indirections being inserted when converting, since
   // otherwise an extra Invoker call would be introduced.
   operator SFnMut<R, CallArgs...>() && {
-    return SFnMut(::sus::mem::replace(callable_, nullptr), vtable_);
+    return SFnMut(::sus::mem::replace(callable_, uintptr_t{0}), invoke_);
   }
 
  private:
@@ -185,15 +176,15 @@ class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
   template <class RR, class... AArgs>
   friend class SFnMut;
 
-  SFn(void* callable, __private::CallVtable<R, CallArgs...>* vtable)
-      : callable_(callable), vtable_(vtable) {}
+  SFn(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
+      : callable_(callable), invoke_(invoke) {}
 
-  void* callable_;
-  __private::CallVtable<R, CallArgs...>* vtable_;
+  uintptr_t callable_;
+  R (*invoke_)(uintptr_t p, CallArgs... args);
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(callable_),
-                                  decltype(vtable_));
-  sus_class_never_value_field(::sus::marker::unsafe_fn, SFn, vtable_, nullptr,
+                                  decltype(invoke_));
+  sus_class_never_value_field(::sus::marker::unsafe_fn, SFn, invoke_, nullptr,
                               nullptr);
 
  protected:
@@ -233,13 +224,10 @@ class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
   /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   SFnMut(F ptr) noexcept {
-    ::sus::check(ptr != nullptr);
-    callable_ = static_cast<void*>(ptr);
-    static auto vtable = __private::CallVtable<R, CallArgs...>{
-        .call = &__private::Invoker<
-            std::remove_reference_t<F>>::template call_mut<R, CallArgs...>,
-    };
-    vtable_ = &vtable;
+    ::sus::check(+ptr != nullptr);
+    callable_ = reinterpret_cast<uintptr_t>(+ptr);
+    invoke_ = &__private::Invoker<
+        std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
   }
 
   /// Construction from a capturing lambda or other callable object.
@@ -247,12 +235,9 @@ class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
   /// #[doc.overloads=ctor.lambda]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   SFnMut(F&& object) noexcept {
-    callable_ = static_cast<void*>(::sus::mem::addressof(object));
-    static auto vtable = __private::CallVtable<R, CallArgs...>{
-        .call = &__private::Invoker<
-            std::remove_reference_t<F>>::template call_mut<R, CallArgs...>,
-    };
-    vtable_ = &vtable;
+    callable_ = reinterpret_cast<uintptr_t>(::sus::mem::addressof(object));
+    invoke_ = &__private::Invoker<
+        std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
   }
 
   /// Construction from SFn.
@@ -261,25 +246,25 @@ class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
   SFnMut(SFn<R(CallArgs...)>&& o) noexcept
-      : callable_(::sus::mem::replace_ptr(o.callable_, nullptr)),
-        vtable_(o.vtable_) {
+      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
+        invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
 
   ~SFnMut() noexcept = default;
 
   SFnMut(SFnMut&& o) noexcept
-      : callable_(::sus::mem::replace_ptr(o.callable_, nullptr)),
-        // Not setting `o.vtable_` to nullptr, as vtable_ as nullptr is its
+      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
+        // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
         // never-value.
-        vtable_(o.vtable_) {
+        invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
   SFnMut& operator=(SFnMut&& o) noexcept {
-    callable_ = ::sus::mem::replace_ptr(o.callable_, nullptr);
-    // Not setting `o.vtable_` to nullptr, as vtable_ as nullptr is its
+    callable_ = ::sus::mem::replace(o.callable_, uintptr_t{0});
+    // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
     // never-value.
-    vtable_ = o.vtable_;
+    invoke_ = o.invoke_;
     ::sus::check(callable_);  // Catch use-after-move.
     return *this;
   }
@@ -291,19 +276,19 @@ class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
   /// sus::mem::Clone trait.
   SFnMut clone() const {
     ::sus::check(callable_);  // Catch use-after-move.
-    return SFnMut(callable_, vtable_);
+    return SFnMut(callable_, invoke_);
   }
 
   /// Runs the closure.
   inline R operator()(CallArgs... args) & {
-    return vtable_->call(callable_, ::sus::forward<CallArgs>(args)...);
+    return (*invoke_)(callable_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
     ::sus::check(callable_);  // Catch use-after-move.
-    return vtable_->call(::sus::mem::replace_ptr(callable_, nullptr),
-                         ::sus::forward<CallArgs>(args)...);
+    return (*invoke_)(::sus::mem::replace(callable_, uintptr_t{0}),
+                      ::sus::forward<CallArgs>(args)...);
   }
 
   /// `sus::construct::From` trait implementation.
@@ -320,15 +305,15 @@ class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
   template <class RR, class... AArgs>
   friend class SFnOnce;
 
-  SFnMut(void* callable, __private::CallVtable<R, CallArgs...>* vtable)
-      : callable_(callable), vtable_(vtable) {}
+  SFnMut(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
+      : callable_(callable), invoke_(invoke) {}
 
-  void* callable_;
-  __private::CallVtable<R, CallArgs...>* vtable_;
+  uintptr_t callable_;
+  R (*invoke_)(uintptr_t p, CallArgs... args);
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(callable_),
-                                  decltype(vtable_));
-  sus_class_never_value_field(::sus::marker::unsafe_fn, SFnMut, vtable_,
+                                  decltype(invoke_));
+  sus_class_never_value_field(::sus::marker::unsafe_fn, SFnMut, invoke_,
                               nullptr, nullptr);
 
  protected:
@@ -367,13 +352,10 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
   /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   SFnOnce(F ptr) noexcept {
-    ::sus::check(ptr != nullptr);
-    callable_ = static_cast<void*>(ptr);
-    static auto vtable = __private::CallVtable<R, CallArgs...>{
-        .call = &__private::Invoker<
-            std::remove_reference_t<F>>::template call_mut<R, CallArgs...>,
-    };
-    vtable_ = &vtable;
+    ::sus::check(+ptr != nullptr);
+    callable_ = reinterpret_cast<uintptr_t>(+ptr);
+    invoke_ = &__private::Invoker<
+        std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
   }
 
   /// Construction from a capturing lambda or other callable object.
@@ -381,12 +363,9 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
   /// #[doc.overloads=ctor.lambda]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   SFnOnce(F&& object) noexcept {
-    callable_ = static_cast<void*>(::sus::mem::addressof(object));
-    static auto vtable = __private::CallVtable<R, CallArgs...>{
-        .call = &__private::Invoker<
-            std::remove_reference_t<F>>::template call_mut<R, CallArgs...>,
-    };
-    vtable_ = &vtable;
+    callable_ = reinterpret_cast<uintptr_t>(::sus::mem::addressof(object));
+    invoke_ = &__private::Invoker<
+        std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
   }
 
   /// Construction from SFnMut.
@@ -395,8 +374,8 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
   SFnOnce(SFnMut<R(CallArgs...)>&& o) noexcept
-      : callable_(::sus::mem::replace_ptr(o.callable_, nullptr)),
-        vtable_(o.vtable_) {
+      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
+        invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
 
@@ -406,25 +385,25 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
   SFnOnce(SFn<R(CallArgs...)>&& o) noexcept
-      : callable_(::sus::mem::replace_ptr(o.callable_, nullptr)),
-        vtable_(o.vtable_) {
+      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
+        invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
 
   ~SFnOnce() noexcept = default;
 
   SFnOnce(SFnOnce&& o) noexcept
-      : callable_(::sus::mem::replace_ptr(o.callable_, nullptr)),
-        // Not setting `o.vtable_` to nullptr, as vtable_ as nullptr is its
+      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
+        // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
         // never-value.
-        vtable_(o.vtable_) {
+        invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
   SFnOnce& operator=(SFnOnce&& o) noexcept {
-    callable_ = ::sus::mem::replace_ptr(o.callable_, nullptr);
-    // Not setting `o.vtable_` to nullptr, as vtable_ as nullptr is its
+    callable_ = ::sus::mem::replace(o.callable_, uintptr_t{0});
+    // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
     // never-value.
-    vtable_ = o.vtable_;
+    invoke_ = o.invoke_;
     ::sus::check(callable_);  // Catch use-after-move.
     return *this;
   }
@@ -436,8 +415,8 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
     ::sus::check(callable_);  // Catch use-after-move.
-    return vtable_->call(::sus::mem::replace_ptr(callable_, nullptr),
-                         ::sus::forward<CallArgs>(args)...);
+    return (*invoke_)(::sus::mem::replace(callable_, uintptr_t{0}),
+                      ::sus::forward<CallArgs>(args)...);
   }
 
   /// `sus::construct::From` trait implementation.
@@ -454,15 +433,15 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
   friend SFnMut<R, CallArgs...>;
   friend SFn<R, CallArgs...>;
 
-  SFnOnce(void* callable, __private::CallVtable<R, CallArgs...>* vtable)
-      : callable_(callable), vtable_(vtable) {}
+  SFnOnce(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
+      : callable_(callable), invoke_(invoke) {}
 
-  void* callable_;
-  __private::CallVtable<R, CallArgs...>* vtable_;
+  uintptr_t callable_;
+  R (*invoke_)(uintptr_t p, CallArgs... args);
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(callable_),
-                                  decltype(vtable_));
-  sus_class_never_value_field(::sus::marker::unsafe_fn, SFnOnce, vtable_,
+                                  decltype(invoke_));
+  sus_class_never_value_field(::sus::marker::unsafe_fn, SFnOnce, invoke_,
                               nullptr, nullptr);
 
  protected:
