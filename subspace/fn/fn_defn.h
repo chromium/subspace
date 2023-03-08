@@ -53,7 +53,7 @@ template <class F>
 struct Invoker {
   template <class R, class... Args>
   static R fnptr_call_mut(const union Storage& s, Args... args) {
-    F f = static_cast<F>(s.fnptr);
+    F f = reinterpret_cast<F>(s.fnptr);
     return (*f)(::sus::forward<Args>(args)...);
   }
 
@@ -65,7 +65,7 @@ struct Invoker {
 
   template <class R, class... Args>
   static R fnptr_call_const(const union Storage& s, Args... args) {
-    const F f = static_cast<const F>(s.fnptr);
+    const F f = reinterpret_cast<const F>(s.fnptr);
     return (*f)(::sus::forward<Args>(args)...);
   }
 
@@ -131,9 +131,9 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <__private::FunctionPointer<R, CallArgs...> F>
-  constexpr Fn(F ptr) noexcept {
+  Fn(F ptr) noexcept {
     ::sus::check(ptr != nullptr);
-    storage_.fnptr = static_cast<void (*)()>(ptr);
+    storage_.fnptr = reinterpret_cast<void (*)()>(ptr);
     invoke_ = &__private::Invoker<F>::template fnptr_call_const<R, CallArgs...>;
   }
 
@@ -253,9 +253,9 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <__private::FunctionPointer<R, CallArgs...> F>
-  constexpr FnMut(F ptr) noexcept {
+  FnMut(F ptr) noexcept {
     ::sus::check(ptr != nullptr);
-    storage_.fnptr = static_cast<void (*)()>(ptr);
+    storage_.fnptr = reinterpret_cast<void (*)()>(ptr);
     invoke_ = &__private::Invoker<F>::template fnptr_call_mut<R, CallArgs...>;
   }
 
@@ -332,7 +332,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   friend class FnOnce;
 
   constexpr FnMut(union __private::Storage storage,
-        __private::InvokeFnPtr<R, CallArgs...> invoke)
+                  __private::InvokeFnPtr<R, CallArgs...> invoke)
       : storage_(storage), invoke_(invoke) {}
 
   union __private::Storage storage_;
@@ -383,9 +383,9 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <__private::FunctionPointer<R, CallArgs...> F>
-  constexpr FnOnce(F ptr) noexcept {
+  FnOnce(F ptr) noexcept {
     ::sus::check(ptr != nullptr);
-    storage_.fnptr = static_cast<void (*)()>(ptr);
+    storage_.fnptr = reinterpret_cast<void (*)()>(ptr);
     invoke_ = &__private::Invoker<F>::template fnptr_call_mut<R, CallArgs...>;
   }
 
