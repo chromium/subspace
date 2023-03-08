@@ -131,7 +131,7 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <__private::FunctionPointer<R, CallArgs...> F>
-  Fn(F ptr) noexcept {
+  constexpr Fn(F ptr) noexcept {
     ::sus::check(ptr != nullptr);
     storage_.fnptr = static_cast<void (*)()>(ptr);
     invoke_ = &__private::Invoker<F>::template fnptr_call_const<R, CallArgs...>;
@@ -141,7 +141,7 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.lambda]
   template <__private::CallableMut<R, CallArgs...> F>
-  Fn(F&& object) noexcept {
+  constexpr Fn(F&& object) noexcept {
     storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template object_call_const<R, CallArgs...>;
@@ -149,17 +149,15 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
 
   ~Fn() noexcept = default;
 
-  Fn(Fn&& o) noexcept
+  constexpr Fn(Fn&& o) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
   }
-  Fn& operator=(Fn&& o) noexcept {
+  constexpr Fn& operator=(Fn&& o) noexcept {
     storage_ = o.storage_;
     invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
     return *this;
   }
 
@@ -168,21 +166,20 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
   Fn& operator=(const Fn&) noexcept = delete;
 
   /// sus::mem::Clone trait.
-  Fn clone() const {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+  constexpr Fn clone() const {
+    ::sus::check(invoke_);  // Catch use-after-move.
     return Fn(storage_, invoke_);
   }
 
   /// Runs the closure.
   inline R operator()(CallArgs... args) const& {
+    ::sus::check(invoke_);  // Catch use-after-move.
     return (*invoke_)(storage_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
     return (*::sus::mem::replace_ptr(invoke_, nullptr))(
         storage_, ::sus::forward<CallArgs>(args)...);
   }
@@ -197,25 +194,14 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
     return Fn(::sus::forward<F>(object));
   }
 
-  // operator to avoid extra indirections being inserted when converting, since
-  // otherwise an extra Invoker call would be introduced.
-  operator FnOnce<R, CallArgs...>() && {
-    return FnOnce(storage_, ::sus::mem::replace_ptr(invoke_, nullptr));
-  }
-  // operator to avoid extra indirections being inserted when converting, since
-  // otherwise an extra Invoker call would be introduced.
-  operator FnMut<R, CallArgs...>() && {
-    return FnMut(storage_, ::sus::mem::replace_ptr(invoke_, nullptr));
-  }
-
  private:
   template <class RR, class... AArgs>
   friend class FnOnce;
   template <class RR, class... AArgs>
   friend class FnMut;
 
-  Fn(union __private::Storage storage,
-     __private::InvokeFnPtr<R, CallArgs...> invoke)
+  constexpr Fn(union __private::Storage storage,
+               __private::InvokeFnPtr<R, CallArgs...> invoke)
       : storage_(storage), invoke_(invoke) {}
 
   union __private::Storage storage_;
@@ -267,7 +253,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <__private::FunctionPointer<R, CallArgs...> F>
-  FnMut(F ptr) noexcept {
+  constexpr FnMut(F ptr) noexcept {
     ::sus::check(ptr != nullptr);
     storage_.fnptr = static_cast<void (*)()>(ptr);
     invoke_ = &__private::Invoker<F>::template fnptr_call_mut<R, CallArgs...>;
@@ -277,7 +263,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.lambda]
   template <__private::CallableMut<R, CallArgs...> F>
-  FnMut(F&& object) noexcept {
+  constexpr FnMut(F&& object) noexcept {
     storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
@@ -288,26 +274,23 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   /// Since Fn is callable, FnMut is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
-  FnMut(Fn<R(CallArgs...)>&& o) noexcept
+  constexpr FnMut(Fn<R(CallArgs...)>&& o) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
   }
 
   ~FnMut() noexcept = default;
 
-  FnMut(FnMut&& o) noexcept
+  constexpr FnMut(FnMut&& o) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
   }
-  FnMut& operator=(FnMut&& o) noexcept {
+  constexpr FnMut& operator=(FnMut&& o) noexcept {
     storage_ = o.storage_;
     invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
     return *this;
   }
 
@@ -316,21 +299,20 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   FnMut& operator=(const FnMut&) noexcept = delete;
 
   /// sus::mem::Clone trait.
-  FnMut clone() const {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+  constexpr FnMut clone() const {
+    ::sus::check(invoke_);  // Catch use-after-move.
     return FnMut(storage_, invoke_);
   }
 
   /// Runs the closure.
   inline R operator()(CallArgs... args) & {
+    ::sus::check(invoke_);  // Catch use-after-move.
     return (*invoke_)(storage_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
     return (*::sus::mem::replace_ptr(invoke_, nullptr))(
         storage_, ::sus::forward<CallArgs>(args)...);
   }
@@ -349,7 +331,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   template <class RR, class... AArgs>
   friend class FnOnce;
 
-  FnMut(union __private::Storage storage,
+  constexpr FnMut(union __private::Storage storage,
         __private::InvokeFnPtr<R, CallArgs...> invoke)
       : storage_(storage), invoke_(invoke) {}
 
@@ -401,7 +383,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <__private::FunctionPointer<R, CallArgs...> F>
-  FnOnce(F ptr) noexcept {
+  constexpr FnOnce(F ptr) noexcept {
     ::sus::check(ptr != nullptr);
     storage_.fnptr = static_cast<void (*)()>(ptr);
     invoke_ = &__private::Invoker<F>::template fnptr_call_mut<R, CallArgs...>;
@@ -411,7 +393,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.lambda]
   template <__private::CallableMut<R, CallArgs...> F>
-  FnOnce(F&& object) noexcept {
+  constexpr FnOnce(F&& object) noexcept {
     storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
@@ -422,11 +404,10 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// Since FnMut is callable, FnOnce is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
-  FnOnce(FnMut<R(CallArgs...)>&& o) noexcept
+  constexpr FnOnce(FnMut<R(CallArgs...)>&& o) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
   }
 
   /// Construction from Fn.
@@ -434,26 +415,23 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// Since Fn is callable, FnOnce is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
-  FnOnce(Fn<R(CallArgs...)>&& o) noexcept
+  constexpr FnOnce(Fn<R(CallArgs...)>&& o) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
   }
 
   ~FnOnce() noexcept = default;
 
-  FnOnce(FnOnce&& o) noexcept
+  constexpr FnOnce(FnOnce&& o) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
   }
-  FnOnce& operator=(FnOnce&& o) noexcept {
+  constexpr FnOnce& operator=(FnOnce&& o) noexcept {
     storage_ = o.storage_;
     invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
     return *this;
   }
 
@@ -463,8 +441,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
-    // Catch use-after-move.
-    ::sus::check(invoke_);
+    ::sus::check(invoke_);  // Catch use-after-move.
     return (*::sus::mem::replace_ptr(invoke_, nullptr))(
         storage_, ::sus::forward<CallArgs>(args)...);
   }
@@ -483,8 +460,8 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   friend FnMut<R, CallArgs...>;
   friend Fn<R, CallArgs...>;
 
-  FnOnce(union __private::Storage storage,
-         __private::InvokeFnPtr<R, CallArgs...> invoke)
+  constexpr FnOnce(union __private::Storage storage,
+                   __private::InvokeFnPtr<R, CallArgs...> invoke)
       : storage_(storage), invoke_(invoke) {}
 
   union __private::Storage storage_;
