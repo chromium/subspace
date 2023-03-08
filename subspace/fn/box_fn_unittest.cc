@@ -190,14 +190,25 @@ concept can_run = requires (
 };
 // clang-format on
 
-// Receiving by-value means it must be passed as a mutable move. This means no
-// implicit copy will happen.
+// Int is copyable, so references are copied when passed.
 static_assert(can_run<void, int, int>);
 static_assert(can_run<void, int, int&&>);
-static_assert(!can_run<void, int, int&>);
-static_assert(!can_run<void, int, const int>);
-static_assert(!can_run<void, int, const int&>);
-static_assert(!can_run<void, int, const int&&>);
+static_assert(can_run<void, int, int&>);
+static_assert(can_run<void, int, const int>);
+static_assert(can_run<void, int, const int&>);
+static_assert(can_run<void, int, const int&&>);
+// But for a move-only type, it can only be passed along as a reference or an
+// rvalue.
+static_assert(can_run<void, MoveOnly, MoveOnly>);
+static_assert(can_run<void, MoveOnly, MoveOnly&&>);
+static_assert(!can_run<void, MoveOnly, MoveOnly&>);
+static_assert(!can_run<void, MoveOnly, const MoveOnly>);
+static_assert(!can_run<void, MoveOnly, const MoveOnly&>);
+static_assert(!can_run<void, MoveOnly, const MoveOnly&&>);
+static_assert(can_run<void, const MoveOnly&, MoveOnly&>);
+static_assert(can_run<void, const MoveOnly&, const MoveOnly&>);
+static_assert(can_run<void, MoveOnly&, MoveOnly&>);
+static_assert(!can_run<void, MoveOnly&, const MoveOnly&>);
 
 // Receiving a mutable reference means it must be passed as a mutable reference.
 static_assert(can_run<void, int&, int&>);

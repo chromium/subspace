@@ -26,9 +26,9 @@
 namespace {
 
 using sus::construct::Into;
-using sus::fn::SFn;
-using sus::fn::SFnMut;
-using sus::fn::SFnOnce;
+using sus::fn::Fn;
+using sus::fn::FnMut;
+using sus::fn::FnOnce;
 
 struct Copyable {
   Copyable(int i) : i(i) {}
@@ -58,7 +58,7 @@ struct MoveOnly {
 struct BaseClass {};
 struct SubClass : public BaseClass {};
 
-static_assert(sizeof(SFnOnce<void()>) == 2 * sizeof(void (*)()));
+static_assert(sizeof(FnOnce<void()>) == 2 * sizeof(void (*)()));
 
 void v_v_function() {}
 int i_f_function(float) { return 0; }
@@ -74,127 +74,127 @@ auto s_b_lambda = [a = 1](BaseClass* b) -> SubClass* {
 auto s_s_lambda = [a = 1](SubClass* b) -> SubClass* { return b; };
 
 // Fn types all have a never-value field.
-static_assert(sus::mem::NeverValueField<SFnOnce<void()>>);
-static_assert(sus::mem::NeverValueField<SFnMut<void()>>);
-static_assert(sus::mem::NeverValueField<SFn<void()>>);
+static_assert(sus::mem::NeverValueField<FnOnce<void()>>);
+static_assert(sus::mem::NeverValueField<FnMut<void()>>);
+static_assert(sus::mem::NeverValueField<Fn<void()>>);
 //  Which allows them to not require a flag in Option.
-static_assert(sizeof(sus::Option<SFnOnce<void()>>) == sizeof(SFnOnce<void()>));
+static_assert(sizeof(sus::Option<FnOnce<void()>>) == sizeof(FnOnce<void()>));
 
 // Closures are not copyable.
-static_assert(!std::is_copy_constructible_v<SFnOnce<void()>>);
-static_assert(!std::is_copy_assignable_v<SFnOnce<void()>>);
-static_assert(!std::is_copy_constructible_v<SFnMut<void()>>);
-static_assert(!std::is_copy_assignable_v<SFnMut<void()>>);
-static_assert(!std::is_copy_constructible_v<SFn<void()>>);
-static_assert(!std::is_copy_assignable_v<SFn<void()>>);
+static_assert(!std::is_copy_constructible_v<FnOnce<void()>>);
+static_assert(!std::is_copy_assignable_v<FnOnce<void()>>);
+static_assert(!std::is_copy_constructible_v<FnMut<void()>>);
+static_assert(!std::is_copy_assignable_v<FnMut<void()>>);
+static_assert(!std::is_copy_constructible_v<Fn<void()>>);
+static_assert(!std::is_copy_assignable_v<Fn<void()>>);
 // Closures can be moved.
-static_assert(std::is_move_constructible_v<SFnOnce<void()>>);
-static_assert(std::is_move_assignable_v<SFnOnce<void()>>);
-static_assert(std::is_move_constructible_v<SFnMut<void()>>);
-static_assert(std::is_move_assignable_v<SFnMut<void()>>);
-static_assert(std::is_move_constructible_v<SFn<void()>>);
-static_assert(std::is_move_assignable_v<SFn<void()>>);
+static_assert(std::is_move_constructible_v<FnOnce<void()>>);
+static_assert(std::is_move_assignable_v<FnOnce<void()>>);
+static_assert(std::is_move_constructible_v<FnMut<void()>>);
+static_assert(std::is_move_assignable_v<FnMut<void()>>);
+static_assert(std::is_move_constructible_v<Fn<void()>>);
+static_assert(std::is_move_assignable_v<Fn<void()>>);
 
 // FnMut and Fn are Clone, but not FnOnce. None of them are Copy.
-static_assert(sus::mem::Move<SFnOnce<void()>>);
-static_assert(sus::mem::Move<SFnMut<void()>>);
-static_assert(sus::mem::Move<SFn<void()>>);
-static_assert(!sus::mem::Copy<SFnOnce<void()>>);
-static_assert(!sus::mem::Copy<SFnMut<void()>>);
-static_assert(!sus::mem::Copy<SFn<void()>>);
-static_assert(!sus::mem::Clone<SFnOnce<void()>>);
-static_assert(sus::mem::Clone<SFnMut<void()>>);
-static_assert(sus::mem::Clone<SFn<void()>>);
+static_assert(sus::mem::Move<FnOnce<void()>>);
+static_assert(sus::mem::Move<FnMut<void()>>);
+static_assert(sus::mem::Move<Fn<void()>>);
+static_assert(!sus::mem::Copy<FnOnce<void()>>);
+static_assert(!sus::mem::Copy<FnMut<void()>>);
+static_assert(!sus::mem::Copy<Fn<void()>>);
+static_assert(!sus::mem::Clone<FnOnce<void()>>);
+static_assert(sus::mem::Clone<FnMut<void()>>);
+static_assert(sus::mem::Clone<Fn<void()>>);
 
 // Closures are trivially relocatable.
-static_assert(sus::mem::relocate_by_memcpy<SFnOnce<void()>>);
-static_assert(sus::mem::relocate_by_memcpy<SFnMut<void()>>);
-static_assert(sus::mem::relocate_by_memcpy<SFn<void()>>);
+static_assert(sus::mem::relocate_by_memcpy<FnOnce<void()>>);
+static_assert(sus::mem::relocate_by_memcpy<FnMut<void()>>);
+static_assert(sus::mem::relocate_by_memcpy<Fn<void()>>);
 
 // A function pointer, or convertible lambda, can be bound to FnOnce, FnMut and
 // Fn.
-static_assert(std::is_constructible_v<SFnOnce<void()>, decltype([]() {})>);
-static_assert(std::is_constructible_v<SFnMut<void()>, decltype([]() {})>);
-static_assert(std::is_constructible_v<SFn<void()>, decltype([]() {})>);
-static_assert(std::is_constructible_v<SFnOnce<void()>, decltype(v_v_function)>);
-static_assert(std::is_constructible_v<SFnMut<void()>, decltype(v_v_function)>);
-static_assert(std::is_constructible_v<SFn<void()>, decltype(v_v_function)>);
+static_assert(std::is_constructible_v<FnOnce<void()>, decltype([]() {})>);
+static_assert(std::is_constructible_v<FnMut<void()>, decltype([]() {})>);
+static_assert(std::is_constructible_v<Fn<void()>, decltype([]() {})>);
+static_assert(std::is_constructible_v<FnOnce<void()>, decltype(v_v_function)>);
+static_assert(std::is_constructible_v<FnMut<void()>, decltype(v_v_function)>);
+static_assert(std::is_constructible_v<Fn<void()>, decltype(v_v_function)>);
 //  Non-void types for the same.
-static_assert(std::is_constructible_v<SFnOnce<int(float)>,
+static_assert(std::is_constructible_v<FnOnce<int(float)>,
                                       decltype([](float) { return 1; })>);
-static_assert(std::is_constructible_v<SFnMut<int(float)>,
+static_assert(std::is_constructible_v<FnMut<int(float)>,
                                       decltype([](float) { return 1; })>);
-static_assert(std::is_constructible_v<SFn<int(float)>,
+static_assert(std::is_constructible_v<Fn<int(float)>,
                                       decltype([](float) { return 1; })>);
 static_assert(
-    std::is_constructible_v<SFnOnce<int(float)>, decltype(i_f_function)>);
+    std::is_constructible_v<FnOnce<int(float)>, decltype(i_f_function)>);
 static_assert(
-    std::is_constructible_v<SFnMut<int(float)>, decltype(i_f_function)>);
-static_assert(std::is_constructible_v<SFn<int(float)>, decltype(i_f_function)>);
+    std::is_constructible_v<FnMut<int(float)>, decltype(i_f_function)>);
+static_assert(std::is_constructible_v<Fn<int(float)>, decltype(i_f_function)>);
 //  Lambdas with bound args can be bound to FnOnce, FnMut and Fn.
-static_assert(std::is_constructible_v<SFnOnce<void()>,
+static_assert(std::is_constructible_v<FnOnce<void()>,
                                       decltype([i = int(1)]() { (void)i; })>);
 static_assert(std::is_constructible_v<
-              SFnOnce<void()>, decltype([i = int(1)]() mutable { ++i; })>);
-static_assert(std::is_constructible_v<SFnMut<void()>,
+              FnOnce<void()>, decltype([i = int(1)]() mutable { ++i; })>);
+static_assert(std::is_constructible_v<FnMut<void()>,
                                       decltype([i = int(1)]() { (void)i; })>);
 static_assert(std::is_constructible_v<
-              SFnMut<void()>, decltype([i = int(1)]() mutable { ++i; })>);
-static_assert(std::is_constructible_v<SFn<void()>,
+              FnMut<void()>, decltype([i = int(1)]() mutable { ++i; })>);
+static_assert(std::is_constructible_v<Fn<void()>,
                                       decltype([i = int(1)]() { (void)i; })>);
 static_assert(std::is_constructible_v<
-              SFn<void()>, decltype([i = int(1)]() mutable { ++i; })>);
+              Fn<void()>, decltype([i = int(1)]() mutable { ++i; })>);
 
-// The return type of the SFnOnce must match that of the lambda. It will not
+// The return type of the FnOnce must match that of the lambda. It will not
 // allow converting to void.
-static_assert(std::is_constructible_v<SFnOnce<SubClass*(BaseClass*)>,
+static_assert(std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
                                       decltype(s_b_function)>);
-static_assert(!std::is_constructible_v<SFnOnce<void(BaseClass*)>,
+static_assert(!std::is_constructible_v<FnOnce<void(BaseClass*)>,
                                        decltype(b_b_function)>);
-static_assert(!std::is_constructible_v<SFnOnce<SubClass*(BaseClass*)>,
+static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
                                        decltype(b_b_function)>);
-static_assert(std::is_constructible_v<SFnOnce<SubClass*(BaseClass*)>,
+static_assert(std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
                                       decltype(s_b_lambda)>);
 static_assert(
-    !std::is_constructible_v<SFnOnce<void(BaseClass*)>, decltype(b_b_lambda)>);
-static_assert(!std::is_constructible_v<SFnOnce<SubClass*(BaseClass*)>,
+    !std::is_constructible_v<FnOnce<void(BaseClass*)>, decltype(b_b_lambda)>);
+static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
                                        decltype(b_b_lambda)>);
 // Similarly, argument types can't be converted to a different type.
-static_assert(std::is_constructible_v<SFnOnce<SubClass*(SubClass*)>,
+static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
                                       decltype(s_s_function)>);
-static_assert(!std::is_constructible_v<SFnOnce<SubClass*(BaseClass*)>,
+static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
                                        decltype(s_s_function)>);
-static_assert(std::is_constructible_v<SFnOnce<SubClass*(SubClass*)>,
+static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
                                       decltype(s_s_lambda)>);
-static_assert(!std::is_constructible_v<SFnOnce<SubClass*(BaseClass*)>,
+static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
                                        decltype(s_s_lambda)>);
-// But SFnOnce type is compatible with convertible return and argument types in
+// But FnOnce type is compatible with convertible return and argument types in
 // opposite directions.
-// - If the return type Y of a lambda is convertible _to_ X, then SFnOnce<X()>
+// - If the return type Y of a lambda is convertible _to_ X, then FnOnce<X()>
 // can be
 //   used to store it.
 // - If the argument type Y of a lambda is convertible _from_ X, then
-// SFnOnce<(X)>
+// FnOnce<(X)>
 //   can be used to store it.
 //
-// In both cases, the SFnOnce is more strict than the lambda, guaranteeing that
+// In both cases, the FnOnce is more strict than the lambda, guaranteeing that
 // the lambda's requirements are met.
-static_assert(std::is_constructible_v<SFnOnce<BaseClass*(BaseClass*)>,
+static_assert(std::is_constructible_v<FnOnce<BaseClass*(BaseClass*)>,
                                       decltype(s_b_lambda)>);
-static_assert(std::is_constructible_v<SFnOnce<SubClass*(SubClass*)>,
+static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
                                       decltype(s_b_lambda)>);
 // HOWEVER: When Fn is passed a function pointer, it stores a function pointer.
 // C++20 does not yet allow us to erase the type of that function pointer in a
 // constexpr context. So the types in the pointer must match exactly to the Fn's
 // signature.
-static_assert(!std::is_constructible_v<SFnOnce<BaseClass*(BaseClass*)>,
+static_assert(!std::is_constructible_v<FnOnce<BaseClass*(BaseClass*)>,
                                        decltype(s_b_function)>);
-static_assert(!std::is_constructible_v<SFnOnce<SubClass*(SubClass*)>,
+static_assert(!std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
                                        decltype(s_b_function)>);
 
 template <class R, class Param, class Arg>
 concept can_run =
-    requires(Arg&& arg, SFnOnce<R(Param)> fnonce, SFnMut<R(Param)> fnmut
+    requires(Arg&& arg, FnOnce<R(Param)> fnonce, FnMut<R(Param)> fnmut
              //,
              //  Fn<R(Param)> fn
     ) {
@@ -237,16 +237,16 @@ static_assert(!can_run<void, int&, const int>);
 static_assert(!can_run<void, int&, int&&>);
 static_assert(!can_run<void, int&, const int&&>);
 
-TEST(SFn, Pointer) {
+TEST(Fn, Pointer) {
   {
-    auto receive_fn = [](SFnOnce<i32(i32, i32)> f, i32 a, i32 b) {
+    auto receive_fn = [](FnOnce<i32(i32, i32)> f, i32 a, i32 b) {
       return sus::move(f)(a, b);
     };
     auto lambda = [](i32 a, i32 b) { return a * 2 + b; };
     EXPECT_EQ(receive_fn(lambda, 1, 2), 4);
   }
   {
-    auto receive_fn = [](SFnMut<i32(i32, i32)> f, i32 a, i32 b) {
+    auto receive_fn = [](FnMut<i32(i32, i32)> f, i32 a, i32 b) {
       f(a, b);
       return sus::move(f)(a, b);
     };
@@ -258,7 +258,7 @@ TEST(SFn, Pointer) {
   }
   {
     {
-      auto receive_fn = [](SFn<i32(i32, i32)> f, i32 a, i32 b) {
+      auto receive_fn = [](Fn<i32(i32, i32)> f, i32 a, i32 b) {
         f(a, b);
         return sus::move(f)(a, b);
       };
@@ -268,16 +268,16 @@ TEST(SFn, Pointer) {
   }
 }
 
-TEST(SFn, Lambda) {
+TEST(Fn, Lambda) {
   {
-    auto receive_fn = [](SFnOnce<i32(i32)> f, i32 b) {
+    auto receive_fn = [](FnOnce<i32(i32)> f, i32 b) {
       return sus::move(f)(b);
     };
     auto lambda = [a = 1_i32](i32 b) { return a * 2 + b; };
     EXPECT_EQ(receive_fn(lambda, 2), 4);
   }
   {
-    auto receive_fn = [](SFnMut<i32(i32)> f, i32 b) {
+    auto receive_fn = [](FnMut<i32(i32)> f, i32 b) {
       f(b);
       return sus::move(f)(b);
     };
@@ -288,7 +288,7 @@ TEST(SFn, Lambda) {
     EXPECT_EQ(receive_fn(lambda, 2), 8);
   }
   {
-    auto receive_fn = [](SFn<i32(i32)> f, i32 b) {
+    auto receive_fn = [](Fn<i32(i32)> f, i32 b) {
       f(b);
       return sus::move(f)(b);
     };
@@ -297,22 +297,22 @@ TEST(SFn, Lambda) {
   }
 }
 
-TEST(SFnDeathTest, NullPointer) {
+TEST(FnDeathTest, NullPointer) {
   void (*f)() = nullptr;
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((SFnOnce<void()>(f)), "");
+  EXPECT_DEATH((FnOnce<void()>(f)), "");
 #endif
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((SFnMut<void()>(f)), "");
+  EXPECT_DEATH((FnMut<void()>(f)), "");
 #endif
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((SFn<void()>(f)), "");
+  EXPECT_DEATH((Fn<void()>(f)), "");
 #endif
 }
 
-TEST(SFnDeathTest, CallAfterMoveConstruct) {
+TEST(FnDeathTest, CallAfterMoveConstruct) {
   {
-    [](SFnOnce<void()> x) {
+    [](FnOnce<void()> x) {
       [](auto) {}(sus::move(x));
 #if GTEST_HAS_DEATH_TEST
       EXPECT_DEATH(sus::move(x)(), "");
@@ -320,7 +320,7 @@ TEST(SFnDeathTest, CallAfterMoveConstruct) {
     }([]() {});
   }
   {
-    [](SFnMut<void()> x) {
+    [](FnMut<void()> x) {
       [](auto) {}(sus::move(x));
 #if GTEST_HAS_DEATH_TEST
       EXPECT_DEATH(sus::move(x)(), "");
@@ -328,7 +328,7 @@ TEST(SFnDeathTest, CallAfterMoveConstruct) {
     }([]() {});
   }
   {
-    [](SFn<void()> x) {
+    [](Fn<void()> x) {
       [](auto) {}(sus::move(x));
 #if GTEST_HAS_DEATH_TEST
       EXPECT_DEATH(sus::move(x)(), "");
@@ -337,9 +337,9 @@ TEST(SFnDeathTest, CallAfterMoveConstruct) {
   }
 }
 
-TEST(SFnDeathTest, CallAfterMoveAssign) {
+TEST(FnDeathTest, CallAfterMoveAssign) {
   {
-    [](SFnOnce<void()> x, SFnOnce<void()> y) {
+    [](FnOnce<void()> x, FnOnce<void()> y) {
       y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
       EXPECT_DEATH(sus::move(x)(), "");
@@ -347,7 +347,7 @@ TEST(SFnDeathTest, CallAfterMoveAssign) {
     }([]() {}, []() {});
   }
   {
-    [](SFnMut<void()> x, SFnMut<void()> y) {
+    [](FnMut<void()> x, FnMut<void()> y) {
       y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
       EXPECT_DEATH(sus::move(x)(), "");
@@ -355,7 +355,7 @@ TEST(SFnDeathTest, CallAfterMoveAssign) {
     }([]() {}, []() {});
   }
   {
-    [](SFn<void()> x, SFn<void()> y) {
+    [](Fn<void()> x, Fn<void()> y) {
       y = sus::move(x);
 #if GTEST_HAS_DEATH_TEST
       EXPECT_DEATH(sus::move(x)(), "");
@@ -364,9 +364,9 @@ TEST(SFnDeathTest, CallAfterMoveAssign) {
   }
 }
 
-TEST(SFnDeathTest, CallAfterCall) {
+TEST(FnDeathTest, CallAfterCall) {
   {
-    [](SFnOnce<void()> x) {
+    [](FnOnce<void()> x) {
       sus::move(x)();
 #if GTEST_HAS_DEATH_TEST
       EXPECT_DEATH(sus::move(x)(), "");
@@ -374,7 +374,7 @@ TEST(SFnDeathTest, CallAfterCall) {
     }([]() {});
   }
   {
-    [](SFnMut<void()> x) {
+    [](FnMut<void()> x) {
       sus::move(x)();
 #if GTEST_HAS_DEATH_TEST
       EXPECT_DEATH(sus::move(x)(), "");
@@ -382,7 +382,7 @@ TEST(SFnDeathTest, CallAfterCall) {
     }([]() {});
   }
   {
-    [](SFn<void()> x) {
+    [](Fn<void()> x) {
       sus::move(x)();
 #if GTEST_HAS_DEATH_TEST
       EXPECT_DEATH(sus::move(x)(), "");
@@ -391,27 +391,27 @@ TEST(SFnDeathTest, CallAfterCall) {
   }
 }
 
-TEST(SFnMut, ConvertToSFnOnce) {
-  auto receive_fnonce = [](SFnOnce<i32()> x) { return sus::move(x)(); };
-  auto receive_fnmut = [&](SFnMut<i32()> x) {
+TEST(FnMut, ConvertToFnOnce) {
+  auto receive_fnonce = [](FnOnce<i32()> x) { return sus::move(x)(); };
+  auto receive_fnmut = [&](FnMut<i32()> x) {
     return receive_fnonce(sus::move(x));
   };
   EXPECT_EQ(receive_fnmut([]() { return 2_i32; }), 2);
 }
 
-TEST(SFn, ConvertToSFnOnce) {
-  auto receive_fnonce = [](SFnOnce<i32()> x) { return sus::move(x)(); };
-  auto receive_fn = [&](SFn<i32()> x) { return receive_fnonce(sus::move(x)); };
+TEST(Fn, ConvertToFnOnce) {
+  auto receive_fnonce = [](FnOnce<i32()> x) { return sus::move(x)(); };
+  auto receive_fn = [&](Fn<i32()> x) { return receive_fnonce(sus::move(x)); };
   EXPECT_EQ(receive_fn([]() { return 2_i32; }), 2);
 }
 
-TEST(SFn, ConvertToSFnMut) {
-  auto receive_fnmut = [](SFnMut<i32()> x) { return sus::move(x)(); };
-  auto receive_fn = [&](SFn<i32()> x) { return receive_fnmut(sus::move(x)); };
+TEST(Fn, ConvertToFnMut) {
+  auto receive_fnmut = [](FnMut<i32()> x) { return sus::move(x)(); };
+  auto receive_fn = [&](Fn<i32()> x) { return receive_fnmut(sus::move(x)); };
   EXPECT_EQ(receive_fn([]() { return 2_i32; }), 2);
 }
 
-TEST(SFn, CallsCorrectOverload) {
+TEST(Fn, CallsCorrectOverload) {
   static i32 const_calls;
   static i32 mut_calls;
   struct S {
@@ -419,26 +419,26 @@ TEST(SFn, CallsCorrectOverload) {
     void operator()() { mut_calls += 1; }
   };
 
-  [](SFnOnce<void()> m) { sus::move(m)(); }(S());
+  [](FnOnce<void()> m) { sus::move(m)(); }(S());
   EXPECT_EQ(const_calls, 0);
   EXPECT_EQ(mut_calls, 1);
 
-  [](SFnMut<void()> m) { m(); }(S());
+  [](FnMut<void()> m) { m(); }(S());
   EXPECT_EQ(const_calls, 0);
   EXPECT_EQ(mut_calls, 2);
 
-  [](SFn<void()> m) { m(); }(S());
+  [](Fn<void()> m) { m(); }(S());
   EXPECT_EQ(const_calls, 1);
   EXPECT_EQ(mut_calls, 2);
 
-  // The SFn is converted to SFnMut but still calls the const overload.
-  [](SFn<void()> m) { [](SFnMut<void()> m) { m(); }(sus::move(m)); }(S());
+  // The Fn is converted to FnMut but still calls the const overload.
+  [](Fn<void()> m) { [](FnMut<void()> m) { m(); }(sus::move(m)); }(S());
   EXPECT_EQ(const_calls, 2);
   EXPECT_EQ(mut_calls, 2);
 
-  // The SFn is converted to SFnOnce but still calls the const overload.
-  [](SFn<void()> m) {
-    [](SFnOnce<void()> m) { sus::move(m)(); }(sus::move(m));
+  // The Fn is converted to FnOnce but still calls the const overload.
+  [](Fn<void()> m) {
+    [](FnOnce<void()> m) { sus::move(m)(); }(sus::move(m));
   }(S());
   EXPECT_EQ(const_calls, 3);
   EXPECT_EQ(mut_calls, 2);

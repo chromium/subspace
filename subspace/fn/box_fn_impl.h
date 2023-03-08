@@ -130,7 +130,7 @@ BoxFnOnce<R(CallArgs...)>& BoxFnOnce<R(CallArgs...)>::operator=(BoxFnOnce&& o) n
 }
 
 template <class R, class... CallArgs>
-R BoxFnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
+R BoxFnOnce<R(CallArgs...)>::operator()(CallArgs... args) && noexcept {
   switch (type_) {
     case __private::BoxFnPointer: {
       ::sus::check(fn_ptr_);  // Catch use-after-move.
@@ -163,7 +163,7 @@ R BoxFnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
 }
 
 template <class R, class... CallArgs>
-R BoxFnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
+R BoxFnMut<R(CallArgs...)>::operator()(CallArgs... args) & noexcept {
   using Super = BoxFnOnce<R(CallArgs...)>;
   switch (Super::type_) {
     case __private::BoxFnPointer:
@@ -183,7 +183,7 @@ R BoxFnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
 }
 
 template <class R, class... CallArgs>
-R BoxFn<R(CallArgs...)>::operator()(CallArgs&&... args) const& noexcept {
+R BoxFn<R(CallArgs...)>::operator()(CallArgs... args) const& noexcept {
   using Super = BoxFnOnce<R(CallArgs...)>;
   switch (Super::type_) {
     case __private::BoxFnPointer:

@@ -28,7 +28,6 @@
 #include "subspace/prelude.h"
 
 using sus::containers::Array;
-using sus::fn::BoxFn;
 using sus::iter::IteratorBase;
 using sus::option::Option;
 
