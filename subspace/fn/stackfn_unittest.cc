@@ -116,21 +116,21 @@ static_assert(sus::mem::relocate_by_memcpy<Fn<void()>>);
 static_assert(std::is_constructible_v<FnOnce<void()>, decltype([]() {})>);
 static_assert(std::is_constructible_v<FnMut<void()>, decltype([]() {})>);
 static_assert(std::is_constructible_v<Fn<void()>, decltype([]() {})>);
-static_assert(std::is_constructible_v<FnOnce<void()>, decltype(v_v_function)>);
-static_assert(std::is_constructible_v<FnMut<void()>, decltype(v_v_function)>);
-static_assert(std::is_constructible_v<Fn<void()>, decltype(v_v_function)>);
+static_assert(std::is_constructible_v<FnOnce<void()>, decltype(&v_v_function)>);
+static_assert(std::is_constructible_v<FnMut<void()>, decltype(&v_v_function)>);
+static_assert(std::is_constructible_v<Fn<void()>, decltype(&v_v_function)>);
 //  Non-void types for the same.
 static_assert(std::is_constructible_v<FnOnce<int(float)>,
                                       decltype([](float) { return 1; })>);
 static_assert(std::is_constructible_v<FnMut<int(float)>,
                                       decltype([](float) { return 1; })>);
-static_assert(std::is_constructible_v<Fn<int(float)>,
-                                      decltype([](float) { return 1; })>);
 static_assert(
-    std::is_constructible_v<FnOnce<int(float)>, decltype(i_f_function)>);
+    std::is_constructible_v<Fn<int(float)>, decltype([](float) { return 1; })>);
 static_assert(
-    std::is_constructible_v<FnMut<int(float)>, decltype(i_f_function)>);
-static_assert(std::is_constructible_v<Fn<int(float)>, decltype(i_f_function)>);
+    std::is_constructible_v<FnOnce<int(float)>, decltype(&i_f_function)>);
+static_assert(
+    std::is_constructible_v<FnMut<int(float)>, decltype(&i_f_function)>);
+static_assert(std::is_constructible_v<Fn<int(float)>, decltype(&i_f_function)>);
 //  Lambdas with bound args can be bound to FnOnce, FnMut and Fn.
 static_assert(std::is_constructible_v<FnOnce<void()>,
                                       decltype([i = int(1)]() { (void)i; })>);
@@ -140,19 +140,19 @@ static_assert(std::is_constructible_v<FnMut<void()>,
                                       decltype([i = int(1)]() { (void)i; })>);
 static_assert(std::is_constructible_v<
               FnMut<void()>, decltype([i = int(1)]() mutable { ++i; })>);
-static_assert(std::is_constructible_v<Fn<void()>,
-                                      decltype([i = int(1)]() { (void)i; })>);
+static_assert(
+    std::is_constructible_v<Fn<void()>, decltype([i = int(1)]() { (void)i; })>);
 static_assert(std::is_constructible_v<
               Fn<void()>, decltype([i = int(1)]() mutable { ++i; })>);
 
 // The return type of the FnOnce must match that of the lambda. It will not
 // allow converting to void.
 static_assert(std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
-                                      decltype(s_b_function)>);
+                                      decltype(&s_b_function)>);
 static_assert(!std::is_constructible_v<FnOnce<void(BaseClass*)>,
-                                       decltype(b_b_function)>);
+                                       decltype(&b_b_function)>);
 static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
-                                       decltype(b_b_function)>);
+                                       decltype(&b_b_function)>);
 static_assert(std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
                                       decltype(s_b_lambda)>);
 static_assert(
@@ -161,9 +161,9 @@ static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
                                        decltype(b_b_lambda)>);
 // Similarly, argument types can't be converted to a different type.
 static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
-                                      decltype(s_s_function)>);
+                                      decltype(&s_s_function)>);
 static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
-                                       decltype(s_s_function)>);
+                                       decltype(&s_s_function)>);
 static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
                                       decltype(s_s_lambda)>);
 static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
@@ -183,14 +183,10 @@ static_assert(std::is_constructible_v<FnOnce<BaseClass*(BaseClass*)>,
                                       decltype(s_b_lambda)>);
 static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
                                       decltype(s_b_lambda)>);
-// HOWEVER: When Fn is passed a function pointer, it stores a function pointer.
-// C++20 does not yet allow us to erase the type of that function pointer in a
-// constexpr context. So the types in the pointer must match exactly to the Fn's
-// signature.
-static_assert(!std::is_constructible_v<FnOnce<BaseClass*(BaseClass*)>,
-                                       decltype(s_b_function)>);
-static_assert(!std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
-                                       decltype(s_b_function)>);
+static_assert(std::is_constructible_v<FnOnce<BaseClass*(BaseClass*)>,
+                                      decltype(s_b_function)>);
+static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
+                                      decltype(s_b_function)>);
 
 template <class R, class Param, class Arg>
 concept can_run =
@@ -270,9 +266,7 @@ TEST(Fn, Pointer) {
 
 TEST(Fn, Lambda) {
   {
-    auto receive_fn = [](FnOnce<i32(i32)> f, i32 b) {
-      return sus::move(f)(b);
-    };
+    auto receive_fn = [](FnOnce<i32(i32)> f, i32 b) { return sus::move(f)(b); };
     auto lambda = [a = 1_i32](i32 b) { return a * 2 + b; };
     EXPECT_EQ(receive_fn(lambda, 2), 4);
   }
@@ -296,6 +290,8 @@ TEST(Fn, Lambda) {
     EXPECT_EQ(receive_fn(lambda, 2), 4);
   }
 }
+
+void g() {}
 
 TEST(FnDeathTest, NullPointer) {
   void (*f)() = nullptr;
