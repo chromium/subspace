@@ -119,7 +119,7 @@ class IteratorBase {
   /// from the predicate.
   ///
   /// Returns `true` if the iterator is empty.
-  virtual bool all(::sus::fn::FnMut<bool(Item)> f) noexcept;
+  virtual bool all(::sus::fn::BoxFnMut<bool(Item)> f) noexcept;
 
   /// Tests whether any elements of the iterator match a predicate.
   ///
@@ -129,7 +129,7 @@ class IteratorBase {
   /// the predicate.
   ///
   /// Returns `false` if the iterator is empty.
-  virtual bool any(::sus::fn::FnMut<bool(Item)> f) noexcept;
+  virtual bool any(::sus::fn::BoxFnMut<bool(Item)> f) noexcept;
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -167,7 +167,7 @@ class IteratorBase {
   ///
   /// The returned iterator's type is whatever is returned by the closure.
   template <class MapFn, int&..., class R = std::invoke_result_t<MapFn, Item&&>,
-            class MapFnMut = ::sus::fn::FnMut<R(Item&&)>>
+            class MapFnMut = ::sus::fn::BoxFnMut<R(Item&&)>>
     requires(::sus::construct::Into<MapFn, MapFnMut> && !std::is_void_v<R>)
   auto map(MapFn fn) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
@@ -177,7 +177,7 @@ class IteratorBase {
   ///
   /// Given an element the closure must return true or false. The returned
   /// iterator will yield only the elements for which the closure returns true.
-  auto filter(::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
+  auto filter(::sus::fn::BoxFnMut<bool(const std::remove_reference_t<Item>&)>
                   pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
@@ -237,7 +237,7 @@ SizeHint IteratorBase<Iter, Item>::size_hint() const noexcept {
 }
 
 template <class Iter, class Item>
-bool IteratorBase<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
+bool IteratorBase<Iter, Item>::all(::sus::fn::BoxFnMut<bool(Item)> f) noexcept {
   while (true) {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return true;
@@ -248,7 +248,7 @@ bool IteratorBase<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
 }
 
 template <class Iter, class Item>
-bool IteratorBase<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
+bool IteratorBase<Iter, Item>::any(::sus::fn::BoxFnMut<bool(Item)> f) noexcept {
   while (true) {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return false;
@@ -288,7 +288,7 @@ auto IteratorBase<Iter, Item>::map(MapFn fn) && noexcept
 
 template <class Iter, class Item>
 auto IteratorBase<Iter, Item>::filter(
-    ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)>
+    ::sus::fn::BoxFnMut<bool(const std::remove_reference_t<Item>&)>
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {

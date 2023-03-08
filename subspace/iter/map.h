@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "subspace/fn/fn_defn.h"
+#include "subspace/fn/box_fn_defn.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/mem/move.h"
@@ -25,7 +25,7 @@ namespace sus::iter {
 template <class ToItem, class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Map final : public IteratorBase<Map<ToItem, InnerSizedIter>, ToItem> {
   using FromItem = InnerSizedIter::Item;
-  using MapFn = ::sus::fn::FnMut<ToItem(FromItem&&)>;
+  using MapFn = ::sus::fn::BoxFnMut<ToItem(FromItem&&)>;
 
  public:
   using Item = ToItem;

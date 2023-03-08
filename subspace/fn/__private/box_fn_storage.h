@@ -18,40 +18,40 @@
 
 namespace sus::fn::__private {
 
-struct FnStorageVtableBase {};
+struct BoxFnStorageVtableBase {};
 
-struct FnStorageBase {
+struct BoxFnStorageBase {
   // Should be to a static lifetime pointee.
-  Option<const FnStorageVtableBase&> vtable = Option<const FnStorageVtableBase&>::none();
+  Option<const BoxFnStorageVtableBase&> vtable = Option<const BoxFnStorageVtableBase&>::none();
 };
 
 template <class R, class... CallArgs>
-struct FnStorageVtable final : public FnStorageVtableBase {
-  R (*call_once)(__private::FnStorageBase&&, CallArgs...);
-  R (*call_mut)(__private::FnStorageBase&, CallArgs...);
-  R (*call)(const __private::FnStorageBase&, CallArgs...);
+struct BoxFnStorageVtable final : public BoxFnStorageVtableBase {
+  R (*call_once)(__private::BoxFnStorageBase&&, CallArgs...);
+  R (*call_mut)(__private::BoxFnStorageBase&, CallArgs...);
+  R (*call)(const __private::BoxFnStorageBase&, CallArgs...);
 };
 
 template <class F>
-class FnStorage final : public FnStorageBase {
+class BoxFnStorage final : public BoxFnStorageBase {
  public:
-  constexpr FnStorage(F&& callable) : callable_(::sus::move(callable)) {}
+  constexpr BoxFnStorage(F&& callable) : callable_(::sus::move(callable)) {}
 
   template <class R, class... CallArgs>
-  static R call(const FnStorageBase& self_base, CallArgs... callargs) {
-    const auto& self = static_cast<const FnStorage&>(self_base);
+  static R call(const BoxFnStorageBase& self_base, CallArgs... callargs) {
+    const auto& self = static_cast<const BoxFnStorage&>(self_base);
     return self.callable_(forward<CallArgs>(callargs)...);
   }
 
   template <class R, class... CallArgs>
-  static R call_mut(FnStorageBase& self_base, CallArgs... callargs) {
-    auto& self = static_cast<FnStorage&>(self_base);
+  static R call_mut(BoxFnStorageBase& self_base, CallArgs... callargs) {
+    auto& self = static_cast<BoxFnStorage&>(self_base);
     return self.callable_(forward<CallArgs>(callargs)...);
   }
 
   template <class R, class... CallArgs>
-  static R call_once(FnStorageBase&& self_base, CallArgs... callargs) {
-    auto&& self = static_cast<FnStorage&&>(self_base);
+  static R call_once(BoxFnStorageBase&& self_base, CallArgs... callargs) {
+    auto&& self = static_cast<BoxFnStorage&&>(self_base);
     return ::sus::move(self.callable_)(forward<CallArgs>(callargs)...);
   }
 

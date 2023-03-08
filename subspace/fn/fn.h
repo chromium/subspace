@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "subspace/fn/fn_bind.h"
-#include "subspace/fn/fn_defn.h"
-#include "subspace/fn/fn_impl.h"
+#include "subspace/fn/bind.h"
+#include "subspace/fn/box_fn_defn.h"
+#include "subspace/fn/box_fn_impl.h"
 #include "subspace/fn/stackfn_defn.h"

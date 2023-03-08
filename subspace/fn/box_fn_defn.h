@@ -26,33 +26,33 @@ namespace __private {
 
 /// The type-erased type (dropping the type of the internal lambda) of the
 /// closure's heap-allocated storage.
-struct FnStorageBase;
+struct BoxFnStorageBase;
 
 /// Helper type returned by sus_bind() and used to construct a closure.
 template <class F>
 struct SusBind;
 
 /// Helper to determine which functions need to be instantiated for the closure,
-/// to be called from FnOnce, FnMut, and/or Fn.
+/// to be called from BoxFnOnce, BoxFnMut, and/or BoxFn.
 ///
-/// This type indicates the closure can only be called from FnOnce.
-enum StorageConstructionFnOnceType { StorageConstructionFnOnce };
+/// This type indicates the closure can only be called from BoxFnOnce.
+enum StorageConstructionBoxFnOnceType { StorageConstructionBoxFnOnce };
 /// Helper to determine which functions need to be instantiated for the closure,
-/// to be called from FnOnce, FnMut, and/or Fn.
+/// to be called from BoxFnOnce, BoxFnMut, and/or BoxFn.
 ///
-/// This type indicates the closure can be called from FnMut or FnOnce.
-enum StorageConstructionFnMutType { StorageConstructionFnMut };
+/// This type indicates the closure can be called from BoxFnMut or BoxFnOnce.
+enum StorageConstructionBoxFnMutType { StorageConstructionBoxFnMut };
 /// Helper to determine which functions need to be instantiated for the closure,
-/// to be called from FnOnce, FnMut, and/or Fn.
+/// to be called from BoxFnOnce, BoxFnMut, and/or BoxFn.
 ///
-/// This type indicates the closure can be called from Fn, FnMut or FnOnce.
-enum StorageConstructionFnType { StorageConstructionFn };
+/// This type indicates the closure can be called from BoxFn, BoxFnMut or BoxFnOnce.
+enum StorageConstructionBoxFnType { StorageConstructionBoxFn };
 
 /// Used to indicate if the closure is holding a function pointer or
 /// heap-allocated storage.
-enum FnType {
+enum BoxFnType {
   /// Holds a function pointer or captureless lambda.
-  FnPointer = 1,
+  BoxFnPointer = 1,
   /// Holds the type-erased output of sus_bind() in a heap allocation.
   Storage = 2,
 };
@@ -60,14 +60,14 @@ enum FnType {
 }  // namespace __private
 
 template <class R, class... Args>
-class FnOnce;
+class BoxFnOnce;
 template <class R, class... Args>
-class FnMut;
+class BoxFnMut;
 template <class R, class... Args>
-class Fn;
+class BoxFn;
 
 // TODO: Consider generic lambdas, it should be possible to bind them into
-// FnOnce/FnMut/Fn?
+// BoxFnOnce/BoxFnMut/BoxFn?
 // Example:
 // ```
 //    auto even = [](const auto& i) { return i % 2 == 0; };
@@ -81,11 +81,11 @@ class Fn;
 // TODO: There's no way to capture a reference right now, sus_unsafe_ref()?
 
 /// A closure that erases the type of the internal callable object (lambda). A
-/// FnOnce may only be called a single time.
+/// BoxFnOnce may only be called a single time.
 ///
-/// Fn can be used as a FnMut, which can be used as a FnOnce.
+/// BoxFn can be used as a BoxFnMut, which can be used as a BoxFnOnce.
 ///
-/// Lambdas without captures can be converted into a FnOnce, FnMut, or Fn
+/// Lambdas without captures can be converted into a BoxFnOnce, BoxFnMut, or BoxFn
 /// directly. If the lambda has captured, it must be given to one of:
 ///
 /// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
@@ -122,17 +122,17 @@ class Fn;
 /// ```
 /// int a = 1;
 /// int b = 2;
-/// FnOnce<void()> f = sus_bind_mut(
+/// BoxFnOnce<void()> f = sus_bind_mut(
 ///   sus_store(sus_take(a), b), [&a, &b]() mutable { a += b; }
 /// );
 /// ```
 ///
 /// Copies `a` into the closure's storage and defines a `b` from an rvalue.
-/// Since `b` isn't referred to outside the Fn it does not need to be bound.
+/// Since `b` isn't referred to outside the BoxFn it does not need to be bound.
 ///
 /// ```
 /// int a = 1;
-/// FnOnce<void()> f = sus_bind_mut(
+/// BoxFnOnce<void()> f = sus_bind_mut(
 ///   sus_store(a), [&a, b = 2]() mutable { a += b; }
 /// );
 /// ```
@@ -142,48 +142,48 @@ class Fn;
 ///
 /// ```
 /// struct { int foo() { return 2; } } x;
-/// FnOnce<void()> f = sus_bind_mut(
+/// BoxFnOnce<void()> f = sus_bind_mut(
 ///   sus_store(x.foo()), [&a]() mutable { a += 1; }
 /// );
 /// ```
 ///
-/// # Why can a "const" Fn convert to a mutable FnMut or FnOnce?
+/// # Why can a "const" BoxFn convert to a mutable BoxFnMut or BoxFnOnce?
 ///
-/// A FnMut or FnOnce is _allowed_ to mutate its storage, but a "const" Fn
+/// A BoxFnMut or BoxFnOnce is _allowed_ to mutate its storage, but a "const" BoxFn
 /// closure would just choose not to do so.
 ///
-/// However, a `const Fn` requires that the storage is not mutated, so it is not
-/// useful if converted to a `const FnMut` or `const FnOnce` which are only
+/// However, a `const BoxFn` requires that the storage is not mutated, so it is not
+/// useful if converted to a `const BoxFnMut` or `const BoxFnOnce` which are only
 /// callable as mutable objects.
 ///
 /// # Null pointers
 ///
-/// A null function pointer is not allowed, constructing a FnOnce from a null
+/// A null function pointer is not allowed, constructing a BoxFnOnce from a null
 /// pointer will panic.
 template <class R, class... CallArgs>
-class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
+class [[sus_trivial_abi]] BoxFnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-  FnOnce(F ptr) noexcept;
+  BoxFnOnce(F ptr) noexcept;
 
   /// Construction from the output of `sus_bind()`.
   ///
   /// #[doc.overloads=ctor.bind]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
-  FnOnce(__private::SusBind<F>&& holder) noexcept
-      : FnOnce(__private::StorageConstructionFnOnce,
+  BoxFnOnce(__private::SusBind<F>&& holder) noexcept
+      : BoxFnOnce(__private::StorageConstructionBoxFnOnce,
                ::sus::move(holder.lambda)) {}
 
-  ~FnOnce() noexcept;
+  ~BoxFnOnce() noexcept;
 
-  FnOnce(FnOnce&& o) noexcept;
-  FnOnce& operator=(FnOnce&& o) noexcept;
+  BoxFnOnce(BoxFnOnce&& o) noexcept;
+  BoxFnOnce& operator=(BoxFnOnce&& o) noexcept;
 
-  FnOnce(const FnOnce&) noexcept = delete;
-  FnOnce& operator=(const FnOnce&) noexcept = delete;
+  BoxFnOnce(const BoxFnOnce&) noexcept = delete;
+  BoxFnOnce& operator=(const BoxFnOnce&) noexcept = delete;
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs&&... args) && noexcept;
@@ -193,18 +193,18 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   // For function pointers or lambdas without captures.
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
-    return FnOnce(static_cast<R (*)(CallArgs...)>(fn));
+    return BoxFnOnce(static_cast<R (*)(CallArgs...)>(fn));
   }
   // For the output of `sus_bind()`.
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
-    return FnOnce(static_cast<__private::SusBind<F>&&>(holder));
+    return BoxFnOnce(static_cast<__private::SusBind<F>&&>(holder));
   }
 
  protected:
   template <class ConstructionType,
             ::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
-  FnOnce(ConstructionType, F&& lambda) noexcept;
+  BoxFnOnce(ConstructionType, F&& lambda) noexcept;
 
   union {
     // Used when the closure is a function pointer (or a captureless lambda,
@@ -213,51 +213,51 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 
     // Used when the closure is a lambda with storage, generated by
     // `sus_bind()`. This is a type-erased pointer to the heap storage.
-    __private::FnStorageBase* storage_;
+    __private::BoxFnStorageBase* storage_;
   };
   // TODO: Could we query the allocator to see if the pointer here is heap
   // allocated or not, instead of storing a (pointer-sized, due to alignment)
   // flag here?
-  __private::FnType type_;
+  __private::BoxFnType type_;
 
  private:
   // Functions to construct and return a pointer to a static vtable object for
-  // the `__private::FnStorage` being stored in `storage_`.
+  // the `__private::BoxFnStorage` being stored in `storage_`.
   //
-  // A FnOnce needs to store only a single pointer, for call_once(). But a Fn
+  // A BoxFnOnce needs to store only a single pointer, for call_once(). But a BoxFn
   // needs to store three, for call(), call_mut() and call_once() since it can
-  // be converted to a FnMut or FnOnce. For that reason we have 3 overloads
+  // be converted to a BoxFnMut or BoxFnOnce. For that reason we have 3 overloads
   // where each one instantiates only the functions it requires - to avoid
   // trying to compile functions that aren't accessible and thus don't need to
   // be able to compile.
-  template <class FnStorage>
-  static void make_vtable(FnStorage&,
-                          __private::StorageConstructionFnOnceType) noexcept;
-  template <class FnStorage>
-  static void make_vtable(FnStorage&,
-                          __private::StorageConstructionFnMutType) noexcept;
-  template <class FnStorage>
-  static void make_vtable(FnStorage&,
-                          __private::StorageConstructionFnType) noexcept;
+  template <class BoxFnStorage>
+  static void make_vtable(BoxFnStorage&,
+                          __private::StorageConstructionBoxFnOnceType) noexcept;
+  template <class BoxFnStorage>
+  static void make_vtable(BoxFnStorage&,
+                          __private::StorageConstructionBoxFnMutType) noexcept;
+  template <class BoxFnStorage>
+  static void make_vtable(BoxFnStorage&,
+                          __private::StorageConstructionBoxFnType) noexcept;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(fn_ptr_),
                                   decltype(storage_), decltype(type_));
-  // Set the never value field to FnPointer to perform a no-op destruction as
+  // Set the never value field to BoxFnPointer to perform a no-op destruction as
   // there is nothing cleaned up when holding a function pointer.
-  sus_class_never_value_field(::sus::marker::unsafe_fn, FnOnce, type_,
-                              static_cast<__private::FnType>(0),
-                              __private::FnType::FnPointer);
+  sus_class_never_value_field(::sus::marker::unsafe_fn, BoxFnOnce, type_,
+                              static_cast<__private::BoxFnType>(0),
+                              __private::BoxFnType::BoxFnPointer);
 
  protected:
-  constexpr FnOnce() = default;  // For the NeverValueField.
+  constexpr BoxFnOnce() = default;  // For the NeverValueField.
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
-/// FnMut may be called a multiple times, and may mutate its storage.
+/// BoxFnMut may be called a multiple times, and may mutate its storage.
 ///
-/// Fn can be used as a FnMut, which can be used as a FnOnce.
+/// BoxFn can be used as a BoxFnMut, which can be used as a BoxFnOnce.
 ///
-/// Lambdas without captures can be converted into a FnOnce, FnMut, or Fn
+/// Lambdas without captures can be converted into a BoxFnOnce, BoxFnMut, or BoxFn
 /// directly. If the lambda has captured, it must be given to one of:
 ///
 /// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
@@ -294,54 +294,54 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 /// ```
 /// int a = 1;
 /// int b = 2;
-/// FnMut<void()> f = sus_bind_mut(
+/// BoxFnMut<void()> f = sus_bind_mut(
 ///   sus_store(sus_take(a), b), [&a, &b]() mutable { a += b; }
 /// );
 /// ```
 ///
-/// # Why can a "const" Fn convert to a mutable FnMut or FnOnce?
+/// # Why can a "const" BoxFn convert to a mutable BoxFnMut or BoxFnOnce?
 ///
-/// A FnMut or FnOnce is _allowed_ to mutate its storage, but a "const" Fn
+/// A BoxFnMut or BoxFnOnce is _allowed_ to mutate its storage, but a "const" BoxFn
 /// closure would just choose not to do so.
 ///
-/// However, a `const Fn` requires that the storage is not mutated, so it is not
-/// useful if converted to a `const FnMut` or `const FnOnce` which are only
+/// However, a `const BoxFn` requires that the storage is not mutated, so it is not
+/// useful if converted to a `const BoxFnMut` or `const BoxFnOnce` which are only
 /// callable as mutable objects.
 ///
 /// # Null pointers
 ///
-/// A null function pointer is not allowed, constructing a FnMut from a null
+/// A null function pointer is not allowed, constructing a BoxFnMut from a null
 /// pointer will panic.
 template <class R, class... CallArgs>
-class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
-    : public FnOnce<R(CallArgs...)> {
+class [[sus_trivial_abi]] BoxFnMut<R(CallArgs...)>
+    : public BoxFnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-  FnMut(F ptr) noexcept : FnOnce<R(CallArgs...)>(::sus::move(ptr)) {}
+  BoxFnMut(F ptr) noexcept : BoxFnOnce<R(CallArgs...)>(::sus::move(ptr)) {}
 
   /// Construction from the output of `sus_bind()`.
   ///
   /// #[doc.overloads=ctor.bind]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
-  FnMut(__private::SusBind<F>&& holder) noexcept
-      : FnOnce<R(CallArgs...)>(__private::StorageConstructionFnMut,
+  BoxFnMut(__private::SusBind<F>&& holder) noexcept
+      : BoxFnOnce<R(CallArgs...)>(__private::StorageConstructionBoxFnMut,
                                ::sus::move(holder.lambda)) {}
 
-  ~FnMut() noexcept = default;
+  ~BoxFnMut() noexcept = default;
 
-  FnMut(FnMut&&) noexcept = default;
-  FnMut& operator=(FnMut&&) noexcept = default;
+  BoxFnMut(BoxFnMut&&) noexcept = default;
+  BoxFnMut& operator=(BoxFnMut&&) noexcept = default;
 
-  FnMut(const FnMut&) noexcept = delete;
-  FnMut& operator=(const FnMut&) noexcept = delete;
+  BoxFnMut(const BoxFnMut&) noexcept = delete;
+  BoxFnMut& operator=(const BoxFnMut&) noexcept = delete;
 
   /// Runs the closure.
   inline R operator()(CallArgs&&... args) & noexcept;
   inline R operator()(CallArgs&&... args) && noexcept {
-    return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
+    return static_cast<BoxFnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
   }
 
@@ -351,7 +351,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
   /// #[doc.overloads=from.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
-    return FnMut(static_cast<R (*)(CallArgs...)>(fn));
+    return BoxFnMut(static_cast<R (*)(CallArgs...)>(fn));
   }
   /// `sus::construct::From` trait implementation for the output of
   /// `sus_bind()`.
@@ -359,37 +359,37 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
   /// #[doc.overloads=from.callableobject]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
-    return FnMut(static_cast<__private::SusBind<F>&&>(holder));
+    return BoxFnMut(static_cast<__private::SusBind<F>&&>(holder));
   }
 
  protected:
   // This class may only have trivially-destructible storage and must not
-  // do anything in its destructor, as `FnOnce` moves from itself, and it
+  // do anything in its destructor, as `BoxFnOnce` moves from itself, and it
   // would slice that off.
 
   template <class ConstructionType,
             ::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
-  FnMut(ConstructionType c, F&& lambda) noexcept
-      : FnOnce<R(CallArgs...)>(c, ::sus::move(lambda)) {}
+  BoxFnMut(ConstructionType c, F&& lambda) noexcept
+      : BoxFnOnce<R(CallArgs...)>(c, ::sus::move(lambda)) {}
 
  private:
   sus_class_trivially_relocatable_unchecked(::sus::marker::unsafe_fn);
-  // Copied from FnOnce base class.
-  sus_class_never_value_field(::sus::marker::unsafe_fn, FnMut,
-                              FnOnce<R(CallArgs...)>::type_,
-                              static_cast<__private::FnType>(0),
-                              __private::FnType::FnPointer);
+  // Copied from BoxFnOnce base class.
+  sus_class_never_value_field(::sus::marker::unsafe_fn, BoxFnMut,
+                              BoxFnOnce<R(CallArgs...)>::type_,
+                              static_cast<__private::BoxFnType>(0),
+                              __private::BoxFnType::BoxFnPointer);
 
  protected:
-  constexpr FnMut() = default;  // For the NeverValueField.
+  constexpr BoxFnMut() = default;  // For the NeverValueField.
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
-/// Fn may be called a multiple times, and will not mutate its storage.
+/// BoxFn may be called a multiple times, and will not mutate its storage.
 ///
-/// Fn can be used as a FnMut, which can be used as a FnOnce.
+/// BoxFn can be used as a BoxFnMut, which can be used as a BoxFnOnce.
 ///
-/// Lambdas without captures can be converted into a FnOnce, FnMut, or Fn
+/// Lambdas without captures can be converted into a BoxFnOnce, BoxFnMut, or BoxFn
 /// directly. If the lambda has captured, it must be given to one of:
 ///
 /// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
@@ -426,54 +426,54 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)>
 /// ```
 /// int a = 1;
 /// int b = 2;
-/// Fn<int()> f = sus_bind(
+/// BoxFn<int()> f = sus_bind(
 ///   sus_store(sus_take(a), b), [&a, &b]() { return a + b; }
 /// );
 /// ```
 ///
-/// # Why can a "const" Fn convert to a mutable FnMut or FnOnce?
+/// # Why can a "const" BoxFn convert to a mutable BoxFnMut or BoxFnOnce?
 ///
-/// A FnMut or FnOnce is _allowed_ to mutate its storage, but a "const" Fn
+/// A BoxFnMut or BoxFnOnce is _allowed_ to mutate its storage, but a "const" BoxFn
 /// closure would just choose not to do so.
 ///
-/// However, a `const Fn` requires that the storage is not mutated, so it is not
-/// useful if converted to a `const FnMut` or `const FnOnce` which are only
+/// However, a `const BoxFn` requires that the storage is not mutated, so it is not
+/// useful if converted to a `const BoxFnMut` or `const BoxFnOnce` which are only
 /// callable as mutable objects.
 ///
 /// # Null pointers
 ///
-/// A null function pointer is not allowed, constructing a Fn from a null
+/// A null function pointer is not allowed, constructing a BoxFn from a null
 /// pointer will panic.
 template <class R, class... CallArgs>
-class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
-    : public FnMut<R(CallArgs...)> {
+class [[sus_trivial_abi]] BoxFn<R(CallArgs...)> final
+    : public BoxFnMut<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-  Fn(F ptr) noexcept : FnMut<R(CallArgs...)>(ptr) {}
+  BoxFn(F ptr) noexcept : BoxFnMut<R(CallArgs...)>(ptr) {}
 
   /// Construction from the output of `sus_bind()`.
   ///
   /// #[doc.overloads=ctor.bind]
   template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
-  Fn(__private::SusBind<F>&& holder) noexcept
-      : FnMut<R(CallArgs...)>(__private::StorageConstructionFn,
+  BoxFn(__private::SusBind<F>&& holder) noexcept
+      : BoxFnMut<R(CallArgs...)>(__private::StorageConstructionBoxFn,
                               ::sus::forward<F>(holder.lambda)) {}
 
-  ~Fn() noexcept = default;
+  ~BoxFn() noexcept = default;
 
-  Fn(Fn&&) noexcept = default;
-  Fn& operator=(Fn&&) noexcept = default;
+  BoxFn(BoxFn&&) noexcept = default;
+  BoxFn& operator=(BoxFn&&) noexcept = default;
 
-  Fn(const Fn&) noexcept = delete;
-  Fn& operator=(const Fn&) noexcept = delete;
+  BoxFn(const BoxFn&) noexcept = delete;
+  BoxFn& operator=(const BoxFn&) noexcept = delete;
 
   /// Runs the closure.
   inline R operator()(CallArgs&&... args) const& noexcept;
   inline R operator()(CallArgs&&... args) && noexcept {
-    return static_cast<FnOnce<R(CallArgs...)>&&>(*this)(
+    return static_cast<BoxFnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
   }
 
@@ -481,31 +481,31 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> final
   /// lambdas without captures.
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
-    return Fn(static_cast<R (*)(CallArgs...)>(fn));
+    return BoxFn(static_cast<R (*)(CallArgs...)>(fn));
   }
   /// `sus::construct::From` trait implementation for the output of
   /// `sus_bind()`.
   /// #[doc.overloads=1]
   template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
-    return Fn(static_cast<__private::SusBind<F>&&>(holder));
+    return BoxFn(static_cast<__private::SusBind<F>&&>(holder));
   }
 
  private:
   // This class may only have trivially-destructible storage and must not
-  // do anything in its destructor, as `FnOnce` moves from itself, and it
+  // do anything in its destructor, as `BoxFnOnce` moves from itself, and it
   // would slice that off.
 
   template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
-  Fn(__private::StorageConstructionFnType, F&& fn) noexcept;
+  BoxFn(__private::StorageConstructionBoxFnType, F&& fn) noexcept;
 
   sus_class_trivially_relocatable_unchecked(::sus::marker::unsafe_fn);
-  // Copied from FnOnce base class.
-  sus_class_never_value_field(::sus::marker::unsafe_fn, Fn,
-                              FnOnce<R(CallArgs...)>::type_,
-                              static_cast<__private::FnType>(0),
-                              __private::FnType::FnPointer);
-  constexpr Fn() = default;  // For the NeverValueField.
+  // Copied from BoxFnOnce base class.
+  sus_class_never_value_field(::sus::marker::unsafe_fn, BoxFn,
+                              BoxFnOnce<R(CallArgs...)>::type_,
+                              static_cast<__private::BoxFnType>(0),
+                              __private::BoxFnType::BoxFnPointer);
+  constexpr BoxFn() = default;  // For the NeverValueField.
 };
 
 }  // namespace sus::fn
