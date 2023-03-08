@@ -21,6 +21,7 @@
 #include "subspace/mem/forward.h"
 #include "subspace/mem/never_value.h"
 #include "subspace/mem/relocate.h"
+#include "subspace/mem/replace.h"
 
 namespace sus::fn {
 
@@ -43,20 +44,58 @@ class Fn;
 
 namespace __private {
 
+union Storage {
+  void (*fnptr)();
+  void* object;
+};
+
 template <class F>
 struct Invoker {
   template <class R, class... Args>
-  static R call_mut(uintptr_t p, Args... args) {
-    F& f = *reinterpret_cast<F*>(p);
+  static R fnptr_call_mut(const union Storage& s, Args... args) {
+    F f = static_cast<F>(s.fnptr);
+    return (*f)(::sus::forward<Args>(args)...);
+  }
+
+  template <class R, class... Args>
+  static R object_call_mut(const union Storage& s, Args... args) {
+    F& f = *static_cast<F*>(s.object);
     return f(::sus::forward<Args>(args)...);
   }
 
   template <class R, class... Args>
-  static R call_const(uintptr_t p, Args... args) {
-    const F& f = *reinterpret_cast<const F*>(p);
+  static R fnptr_call_const(const union Storage& s, Args... args) {
+    const F f = static_cast<const F>(s.fnptr);
+    return (*f)(::sus::forward<Args>(args)...);
+  }
+
+  template <class R, class... Args>
+  static R object_call_const(const union Storage& s, Args... args) {
+    const F& f = *static_cast<const F*>(s.object);
     return f(::sus::forward<Args>(args)...);
   }
 };
+
+template <class R, class... CallArgs>
+using InvokeFnPtr = R (*)(const union Storage& s, CallArgs... args);
+
+template <class F, class R, class... Args>
+concept FunctionPointer =
+    std::is_pointer_v<std::decay_t<F>> && requires(F f, Args... args) {
+      { (*f)(args...) } -> std::convertible_to<R>;
+    };
+
+template <class F, class R, class... Args>
+concept CallableMut =
+    !FunctionPointer<F, R, Args...> && requires(F & f, Args... args) {
+      { f(args...) } -> std::convertible_to<R>;
+    };
+
+template <class F, class R, class... Args>
+concept CallableConst =
+    !FunctionPointer<F, R, Args...> && requires(const F& f, Args... args) {
+      { f(args...) } -> std::convertible_to<R>;
+    };
 
 }  // namespace __private
 
@@ -91,39 +130,36 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
-  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
+  template <__private::FunctionPointer<R, CallArgs...> F>
   Fn(F ptr) noexcept {
-    ::sus::check(+ptr != nullptr);
-    callable_ = reinterpret_cast<uintptr_t>(+ptr);
-    invoke_ = &__private::Invoker<
-        std::remove_reference_t<F>>::template call_const<R, CallArgs...>;
+    ::sus::check(ptr != nullptr);
+    storage_.fnptr = static_cast<void (*)()>(ptr);
+    invoke_ = &__private::Invoker<F>::template fnptr_call_const<R, CallArgs...>;
   }
 
   /// Construction from a capturing lambda or other callable object.
   ///
   /// #[doc.overloads=ctor.lambda]
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <__private::CallableMut<R, CallArgs...> F>
   Fn(F&& object) noexcept {
-    callable_ = reinterpret_cast<uintptr_t>(::sus::mem::addressof(object));
+    storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
-        std::remove_reference_t<F>>::template call_const<R, CallArgs...>;
+        std::remove_reference_t<F>>::template object_call_const<R, CallArgs...>;
   }
 
   ~Fn() noexcept = default;
 
   Fn(Fn&& o) noexcept
-      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
-        // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
-        // never-value.
-        invoke_(o.invoke_) {
-    ::sus::check(callable_);  // Catch use-after-move.
+      : storage_(o.storage_),
+        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+    // Catch use-after-move.
+    ::sus::check(invoke_);
   }
   Fn& operator=(Fn&& o) noexcept {
-    callable_ = ::sus::mem::replace(o.callable_, uintptr_t{0});
-    // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
-    // never-value.
-    invoke_ = o.invoke_;
-    ::sus::check(callable_);  // Catch use-after-move.
+    storage_ = o.storage_;
+    invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
+    // Catch use-after-move.
+    ::sus::check(invoke_);
     return *this;
   }
 
@@ -133,28 +169,30 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
 
   /// sus::mem::Clone trait.
   Fn clone() const {
-    ::sus::check(callable_);  // Catch use-after-move.
-    return Fn(callable_, invoke_);
+    // Catch use-after-move.
+    ::sus::check(invoke_);
+    return Fn(storage_, invoke_);
   }
 
   /// Runs the closure.
   inline R operator()(CallArgs... args) const& {
-    return (*invoke_)(callable_, ::sus::forward<CallArgs>(args)...);
+    return (*invoke_)(storage_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
-    ::sus::check(callable_);  // Catch use-after-move.
-    return (*invoke_)(::sus::mem::replace(callable_, uintptr_t{0}),
-                      ::sus::forward<CallArgs>(args)...);
+    // Catch use-after-move.
+    ::sus::check(invoke_);
+    return (*::sus::mem::replace_ptr(invoke_, nullptr))(
+        storage_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// `sus::construct::From` trait implementation.
-  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-  constexpr static auto from(F fn) noexcept {
-    return Fn(fn);
+  constexpr static auto from(
+      __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
+    return Fn(ptr);
   }
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <__private::CallableMut<R, CallArgs...> F>
   constexpr static auto from(F&& object) noexcept {
     return Fn(::sus::forward<F>(object));
   }
@@ -162,12 +200,12 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
   // operator to avoid extra indirections being inserted when converting, since
   // otherwise an extra Invoker call would be introduced.
   operator FnOnce<R, CallArgs...>() && {
-    return FnOnce(::sus::mem::replace(callable_, uintptr_t{0}), invoke_);
+    return FnOnce(storage_, ::sus::mem::replace_ptr(invoke_, nullptr));
   }
   // operator to avoid extra indirections being inserted when converting, since
   // otherwise an extra Invoker call would be introduced.
   operator FnMut<R, CallArgs...>() && {
-    return FnMut(::sus::mem::replace(callable_, uintptr_t{0}), invoke_);
+    return FnMut(storage_, ::sus::mem::replace_ptr(invoke_, nullptr));
   }
 
  private:
@@ -176,16 +214,22 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
   template <class RR, class... AArgs>
   friend class FnMut;
 
-  Fn(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
-      : callable_(callable), invoke_(invoke) {}
+  Fn(union __private::Storage storage,
+     __private::InvokeFnPtr<R, CallArgs...> invoke)
+      : storage_(storage), invoke_(invoke) {}
 
-  uintptr_t callable_;
-  R (*invoke_)(uintptr_t p, CallArgs... args);
+  union __private::Storage storage_;
+  __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(callable_),
-                                  decltype(invoke_));
-  sus_class_never_value_field(::sus::marker::unsafe_fn, Fn, invoke_, nullptr,
-                              nullptr);
+  // A function pointer to use as a never-value for InvokeFnPointer.
+  static R invoke_never_value(const union __private::Storage& s,
+                              CallArgs... args) {}
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
+                                  decltype(storage_.fnptr),
+                                  decltype(storage_.object), decltype(invoke_));
+  sus_class_never_value_field(::sus::marker::unsafe_fn, Fn, invoke_,
+                              &invoke_never_value, &invoke_never_value);
 
  protected:
   constexpr Fn() = default;  // For the NeverValueField.
@@ -222,22 +266,21 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
-  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
+  template <__private::FunctionPointer<R, CallArgs...> F>
   FnMut(F ptr) noexcept {
-    ::sus::check(+ptr != nullptr);
-    callable_ = reinterpret_cast<uintptr_t>(+ptr);
-    invoke_ = &__private::Invoker<
-        std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
+    ::sus::check(ptr != nullptr);
+    storage_.fnptr = static_cast<void (*)()>(ptr);
+    invoke_ = &__private::Invoker<F>::template fnptr_call_mut<R, CallArgs...>;
   }
 
   /// Construction from a capturing lambda or other callable object.
   ///
   /// #[doc.overloads=ctor.lambda]
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <__private::CallableMut<R, CallArgs...> F>
   FnMut(F&& object) noexcept {
-    callable_ = reinterpret_cast<uintptr_t>(::sus::mem::addressof(object));
+    storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
-        std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
+        std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
   }
 
   /// Construction from Fn.
@@ -246,26 +289,25 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
   FnMut(Fn<R(CallArgs...)>&& o) noexcept
-      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
-        invoke_(o.invoke_) {
-    ::sus::check(callable_);  // Catch use-after-move.
+      : storage_(o.storage_),
+        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+    // Catch use-after-move.
+    ::sus::check(invoke_);
   }
 
   ~FnMut() noexcept = default;
 
   FnMut(FnMut&& o) noexcept
-      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
-        // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
-        // never-value.
-        invoke_(o.invoke_) {
-    ::sus::check(callable_);  // Catch use-after-move.
+      : storage_(o.storage_),
+        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+    // Catch use-after-move.
+    ::sus::check(invoke_);
   }
   FnMut& operator=(FnMut&& o) noexcept {
-    callable_ = ::sus::mem::replace(o.callable_, uintptr_t{0});
-    // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
-    // never-value.
-    invoke_ = o.invoke_;
-    ::sus::check(callable_);  // Catch use-after-move.
+    storage_ = o.storage_;
+    invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
+    // Catch use-after-move.
+    ::sus::check(invoke_);
     return *this;
   }
 
@@ -275,28 +317,30 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
 
   /// sus::mem::Clone trait.
   FnMut clone() const {
-    ::sus::check(callable_);  // Catch use-after-move.
-    return FnMut(callable_, invoke_);
+    // Catch use-after-move.
+    ::sus::check(invoke_);
+    return FnMut(storage_, invoke_);
   }
 
   /// Runs the closure.
   inline R operator()(CallArgs... args) & {
-    return (*invoke_)(callable_, ::sus::forward<CallArgs>(args)...);
+    return (*invoke_)(storage_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
-    ::sus::check(callable_);  // Catch use-after-move.
-    return (*invoke_)(::sus::mem::replace(callable_, uintptr_t{0}),
-                      ::sus::forward<CallArgs>(args)...);
+    // Catch use-after-move.
+    ::sus::check(invoke_);
+    return (*::sus::mem::replace_ptr(invoke_, nullptr))(
+        storage_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// `sus::construct::From` trait implementation.
-  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-  constexpr static auto from(F fn) noexcept {
-    return FnMut(fn);
+  constexpr static auto from(
+      __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
+    return FnMut(ptr);
   }
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <__private::CallableMut<R, CallArgs...> F>
   constexpr static auto from(F&& object) noexcept {
     return FnMut(::sus::forward<F>(object));
   }
@@ -305,16 +349,22 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   template <class RR, class... AArgs>
   friend class FnOnce;
 
-  FnMut(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
-      : callable_(callable), invoke_(invoke) {}
+  FnMut(union __private::Storage storage,
+        __private::InvokeFnPtr<R, CallArgs...> invoke)
+      : storage_(storage), invoke_(invoke) {}
 
-  uintptr_t callable_;
-  R (*invoke_)(uintptr_t p, CallArgs... args);
+  union __private::Storage storage_;
+  __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(callable_),
-                                  decltype(invoke_));
+  // A function pointer to use as a never-value for InvokeFnPointer.
+  static R invoke_never_value(const union __private::Storage& s,
+                              CallArgs... args) {}
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
+                                  decltype(storage_.fnptr),
+                                  decltype(storage_.object), decltype(invoke_));
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnMut, invoke_,
-                              nullptr, nullptr);
+                              &invoke_never_value, &invoke_never_value);
 
  protected:
   constexpr FnMut() = default;  // For the NeverValueField.
@@ -350,22 +400,21 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
-  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
+  template <__private::FunctionPointer<R, CallArgs...> F>
   FnOnce(F ptr) noexcept {
-    ::sus::check(+ptr != nullptr);
-    callable_ = reinterpret_cast<uintptr_t>(+ptr);
-    invoke_ = &__private::Invoker<
-        std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
+    ::sus::check(ptr != nullptr);
+    storage_.fnptr = static_cast<void (*)()>(ptr);
+    invoke_ = &__private::Invoker<F>::template fnptr_call_mut<R, CallArgs...>;
   }
 
   /// Construction from a capturing lambda or other callable object.
   ///
   /// #[doc.overloads=ctor.lambda]
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <__private::CallableMut<R, CallArgs...> F>
   FnOnce(F&& object) noexcept {
-    callable_ = reinterpret_cast<uintptr_t>(::sus::mem::addressof(object));
+    storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
-        std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
+        std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
   }
 
   /// Construction from FnMut.
@@ -374,9 +423,10 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
   FnOnce(FnMut<R(CallArgs...)>&& o) noexcept
-      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
-        invoke_(o.invoke_) {
-    ::sus::check(callable_);  // Catch use-after-move.
+      : storage_(o.storage_),
+        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+    // Catch use-after-move.
+    ::sus::check(invoke_);
   }
 
   /// Construction from Fn.
@@ -385,26 +435,25 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
   FnOnce(Fn<R(CallArgs...)>&& o) noexcept
-      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
-        invoke_(o.invoke_) {
-    ::sus::check(callable_);  // Catch use-after-move.
+      : storage_(o.storage_),
+        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+    // Catch use-after-move.
+    ::sus::check(invoke_);
   }
 
   ~FnOnce() noexcept = default;
 
   FnOnce(FnOnce&& o) noexcept
-      : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
-        // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
-        // never-value.
-        invoke_(o.invoke_) {
-    ::sus::check(callable_);  // Catch use-after-move.
+      : storage_(o.storage_),
+        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+    // Catch use-after-move.
+    ::sus::check(invoke_);
   }
   FnOnce& operator=(FnOnce&& o) noexcept {
-    callable_ = ::sus::mem::replace(o.callable_, uintptr_t{0});
-    // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
-    // never-value.
-    invoke_ = o.invoke_;
-    ::sus::check(callable_);  // Catch use-after-move.
+    storage_ = o.storage_;
+    invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
+    // Catch use-after-move.
+    ::sus::check(invoke_);
     return *this;
   }
 
@@ -414,17 +463,18 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
-    ::sus::check(callable_);  // Catch use-after-move.
-    return (*invoke_)(::sus::mem::replace(callable_, uintptr_t{0}),
-                      ::sus::forward<CallArgs>(args)...);
+    // Catch use-after-move.
+    ::sus::check(invoke_);
+    return (*::sus::mem::replace_ptr(invoke_, nullptr))(
+        storage_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// `sus::construct::From` trait implementation.
-  template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-  constexpr static auto from(F fn) noexcept {
-    return FnOnce(fn);
+  constexpr static auto from(
+      __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
+    return FnOnce(ptr);
   }
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <__private::CallableMut<R, CallArgs...> F>
   constexpr static auto from(F&& object) noexcept {
     return FnOnce(::sus::forward<F>(object));
   }
@@ -433,16 +483,22 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   friend FnMut<R, CallArgs...>;
   friend Fn<R, CallArgs...>;
 
-  FnOnce(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
-      : callable_(callable), invoke_(invoke) {}
+  FnOnce(union __private::Storage storage,
+         __private::InvokeFnPtr<R, CallArgs...> invoke)
+      : storage_(storage), invoke_(invoke) {}
 
-  uintptr_t callable_;
-  R (*invoke_)(uintptr_t p, CallArgs... args);
+  union __private::Storage storage_;
+  __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(callable_),
-                                  decltype(invoke_));
+  // A function pointer to use as a never-value for InvokeFnPointer.
+  static R invoke_never_value(const union __private::Storage& s,
+                              CallArgs... args) {}
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
+                                  decltype(storage_.fnptr),
+                                  decltype(storage_.object), decltype(invoke_));
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnOnce, invoke_,
-                              nullptr, nullptr);
+                              &invoke_never_value, &invoke_never_value);
 
  protected:
   constexpr FnOnce() = default;  // For the NeverValueField.
