@@ -186,7 +186,7 @@ class [[sus_trivial_abi]] BoxFnOnce<R(CallArgs...)> {
   BoxFnOnce& operator=(const BoxFnOnce&) noexcept = delete;
 
   /// Runs and consumes the closure.
-  inline R operator()(CallArgs&&... args) && noexcept;
+  inline R operator()(CallArgs... args) && noexcept;
 
   /// `sus::construct::From` trait implementation.
   //
@@ -339,8 +339,8 @@ class [[sus_trivial_abi]] BoxFnMut<R(CallArgs...)>
   BoxFnMut& operator=(const BoxFnMut&) noexcept = delete;
 
   /// Runs the closure.
-  inline R operator()(CallArgs&&... args) & noexcept;
-  inline R operator()(CallArgs&&... args) && noexcept {
+  inline R operator()(CallArgs... args) & noexcept;
+  inline R operator()(CallArgs... args) && noexcept {
     return static_cast<BoxFnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
   }
@@ -471,8 +471,8 @@ class [[sus_trivial_abi]] BoxFn<R(CallArgs...)> final
   BoxFn& operator=(const BoxFn&) noexcept = delete;
 
   /// Runs the closure.
-  inline R operator()(CallArgs&&... args) const& noexcept;
-  inline R operator()(CallArgs&&... args) && noexcept {
+  inline R operator()(CallArgs... args) const& noexcept;
+  inline R operator()(CallArgs... args) && noexcept {
     return static_cast<BoxFnOnce<R(CallArgs...)>&&>(*this)(
         forward<CallArgs>(args)...);
   }

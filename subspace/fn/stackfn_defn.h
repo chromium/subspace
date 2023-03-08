@@ -25,14 +25,14 @@
 namespace sus::fn {
 
 template <class R, class... Args>
-class SFnOnce;
+class FnOnce;
 template <class R, class... Args>
-class SFnMut;
+class FnMut;
 template <class R, class... Args>
-class SFn;
+class Fn;
 
 // TODO: Consider generic lambdas, it should be possible to bind them into
-// SFnOnce/SFnMut/SFn?
+// FnOnce/FnMut/Fn?
 // Example:
 // ```
 //    auto even = [](const auto& i) { return i % 2 == 0; };
@@ -61,38 +61,38 @@ struct Invoker {
 }  // namespace __private
 
 /// A closure that erases the type of the internal callable object (lambda). A
-/// SFnMut may be called multiple times, and holds a const callable object, so
+/// FnMut may be called multiple times, and holds a const callable object, so
 /// it will return the same value each call with the same inputs.
 ///
-/// SFn can be used as a SFnMut, which can be used as a SFnOnce. Lambdas can be
-/// converted into a SFnOnce, SFnMut, or SFn directly.
+/// Fn can be used as a FnMut, which can be used as a FnOnce. Lambdas can be
+/// converted into a FnOnce, FnMut, or Fn directly.
 ///
-/// SFnOnce, SFnMut and SFn are only safe to appear as lvalues when they are a
+/// FnOnce, FnMut and Fn are only safe to appear as lvalues when they are a
 /// function parameter, and a clang-tidy check is provided to enforce this. They
 /// only hold a reference to the underlying lambda so they must not outlive the
 /// lambda.
 ///
-/// # Why can a "const" SFn convert to a mutable SFnMut or SFnOnce?
+/// # Why can a "const" Fn convert to a mutable FnMut or FnOnce?
 ///
-/// A SFnMut or SFnOnce is _allowed_ to mutate its storage, but a "const" SFn
+/// A FnMut or FnOnce is _allowed_ to mutate its storage, but a "const" Fn
 /// closure would just choose not to do so.
 ///
-/// However, a `const SFn` requires that the storage is not mutated, so it is
-/// not useful if converted to a `const SFnMut` or `const SFnOnce` which are
+/// However, a `const Fn` requires that the storage is not mutated, so it is
+/// not useful if converted to a `const FnMut` or `const FnOnce` which are
 /// only callable as mutable objects.
 ///
 /// # Null pointers
 ///
-/// A null function pointer is not allowed, constructing a SFnOnce from a null
+/// A null function pointer is not allowed, constructing a FnOnce from a null
 /// pointer will panic.
 template <class R, class... CallArgs>
-class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
+class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-  SFn(F ptr) noexcept {
+  Fn(F ptr) noexcept {
     ::sus::check(+ptr != nullptr);
     callable_ = reinterpret_cast<uintptr_t>(+ptr);
     invoke_ = &__private::Invoker<
@@ -103,22 +103,22 @@ class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.lambda]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
-  SFn(F&& object) noexcept {
+  Fn(F&& object) noexcept {
     callable_ = reinterpret_cast<uintptr_t>(::sus::mem::addressof(object));
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template call_const<R, CallArgs...>;
   }
 
-  ~SFn() noexcept = default;
+  ~Fn() noexcept = default;
 
-  SFn(SFn&& o) noexcept
+  Fn(Fn&& o) noexcept
       : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
         // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
         // never-value.
         invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
-  SFn& operator=(SFn&& o) noexcept {
+  Fn& operator=(Fn&& o) noexcept {
     callable_ = ::sus::mem::replace(o.callable_, uintptr_t{0});
     // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
     // never-value.
@@ -128,13 +128,13 @@ class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
   }
 
   // Not copyable.
-  SFn(const SFn&) noexcept = delete;
-  SFn& operator=(const SFn&) noexcept = delete;
+  Fn(const Fn&) noexcept = delete;
+  Fn& operator=(const Fn&) noexcept = delete;
 
   /// sus::mem::Clone trait.
-  SFn clone() const {
+  Fn clone() const {
     ::sus::check(callable_);  // Catch use-after-move.
-    return SFn(callable_, invoke_);
+    return Fn(callable_, invoke_);
   }
 
   /// Runs the closure.
@@ -152,31 +152,31 @@ class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
   /// `sus::construct::From` trait implementation.
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
-    return SFn(fn);
+    return Fn(fn);
   }
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   constexpr static auto from(F&& object) noexcept {
-    return SFn(::sus::forward<F>(object));
+    return Fn(::sus::forward<F>(object));
   }
 
   // operator to avoid extra indirections being inserted when converting, since
   // otherwise an extra Invoker call would be introduced.
-  operator SFnOnce<R, CallArgs...>() && {
-    return SFnOnce(::sus::mem::replace(callable_, uintptr_t{0}), invoke_);
+  operator FnOnce<R, CallArgs...>() && {
+    return FnOnce(::sus::mem::replace(callable_, uintptr_t{0}), invoke_);
   }
   // operator to avoid extra indirections being inserted when converting, since
   // otherwise an extra Invoker call would be introduced.
-  operator SFnMut<R, CallArgs...>() && {
-    return SFnMut(::sus::mem::replace(callable_, uintptr_t{0}), invoke_);
+  operator FnMut<R, CallArgs...>() && {
+    return FnMut(::sus::mem::replace(callable_, uintptr_t{0}), invoke_);
   }
 
  private:
   template <class RR, class... AArgs>
-  friend class SFnOnce;
+  friend class FnOnce;
   template <class RR, class... AArgs>
-  friend class SFnMut;
+  friend class FnMut;
 
-  SFn(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
+  Fn(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
       : callable_(callable), invoke_(invoke) {}
 
   uintptr_t callable_;
@@ -184,46 +184,46 @@ class [[sus_trivial_abi]] SFn<R(CallArgs...)> {
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(callable_),
                                   decltype(invoke_));
-  sus_class_never_value_field(::sus::marker::unsafe_fn, SFn, invoke_, nullptr,
+  sus_class_never_value_field(::sus::marker::unsafe_fn, Fn, invoke_, nullptr,
                               nullptr);
 
  protected:
-  constexpr SFn() = default;  // For the NeverValueField.
+  constexpr Fn() = default;  // For the NeverValueField.
 };
 
 /// A closure that erases the type of the internal callable object (lambda) that
-/// may mutate internal state. A SFnMut may be called multiple times, and may
+/// may mutate internal state. A FnMut may be called multiple times, and may
 /// return a different value on each call with the same inputs.
 ///
-/// SFn can be used as a SFnMut, which can be used as a SFnOnce. Lambdas can be
-/// converted into a SFnOnce, SFnMut, or SFn directly.
+/// Fn can be used as a FnMut, which can be used as a FnOnce. Lambdas can be
+/// converted into a FnOnce, FnMut, or Fn directly.
 ///
-/// SFnOnce, SFnMut and SFn are only safe to appear as lvalues when they are a
+/// FnOnce, FnMut and Fn are only safe to appear as lvalues when they are a
 /// function parameter, and a clang-tidy check is provided to enforce this. They
 /// only hold a reference to the underlying lambda so they must not outlive the
 /// lambda.
 ///
-/// # Why can a "const" SFn convert to a mutable SFnMut or SFnOnce?
+/// # Why can a "const" Fn convert to a mutable FnMut or FnOnce?
 ///
-/// A SFnMut or SFnOnce is _allowed_ to mutate its storage, but a "const" SFn
+/// A FnMut or FnOnce is _allowed_ to mutate its storage, but a "const" Fn
 /// closure would just choose not to do so.
 ///
-/// However, a `const SFn` requires that the storage is not mutated, so it is
-/// not useful if converted to a `const SFnMut` or `const SFnOnce` which are
+/// However, a `const Fn` requires that the storage is not mutated, so it is
+/// not useful if converted to a `const FnMut` or `const FnOnce` which are
 /// only callable as mutable objects.
 ///
 /// # Null pointers
 ///
-/// A null function pointer is not allowed, constructing a SFnOnce from a null
+/// A null function pointer is not allowed, constructing a FnOnce from a null
 /// pointer will panic.
 template <class R, class... CallArgs>
-class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
+class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-  SFnMut(F ptr) noexcept {
+  FnMut(F ptr) noexcept {
     ::sus::check(+ptr != nullptr);
     callable_ = reinterpret_cast<uintptr_t>(+ptr);
     invoke_ = &__private::Invoker<
@@ -234,33 +234,33 @@ class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.lambda]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
-  SFnMut(F&& object) noexcept {
+  FnMut(F&& object) noexcept {
     callable_ = reinterpret_cast<uintptr_t>(::sus::mem::addressof(object));
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
   }
 
-  /// Construction from SFn.
+  /// Construction from Fn.
   ///
-  /// Since SFn is callable, SFnMut is already constructible from it, but
+  /// Since Fn is callable, FnMut is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
-  SFnMut(SFn<R(CallArgs...)>&& o) noexcept
+  FnMut(Fn<R(CallArgs...)>&& o) noexcept
       : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
         invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
 
-  ~SFnMut() noexcept = default;
+  ~FnMut() noexcept = default;
 
-  SFnMut(SFnMut&& o) noexcept
+  FnMut(FnMut&& o) noexcept
       : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
         // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
         // never-value.
         invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
-  SFnMut& operator=(SFnMut&& o) noexcept {
+  FnMut& operator=(FnMut&& o) noexcept {
     callable_ = ::sus::mem::replace(o.callable_, uintptr_t{0});
     // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
     // never-value.
@@ -270,13 +270,13 @@ class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
   }
 
   // Not copyable.
-  SFnMut(const SFnMut&) noexcept = delete;
-  SFnMut& operator=(const SFnMut&) noexcept = delete;
+  FnMut(const FnMut&) noexcept = delete;
+  FnMut& operator=(const FnMut&) noexcept = delete;
 
   /// sus::mem::Clone trait.
-  SFnMut clone() const {
+  FnMut clone() const {
     ::sus::check(callable_);  // Catch use-after-move.
-    return SFnMut(callable_, invoke_);
+    return FnMut(callable_, invoke_);
   }
 
   /// Runs the closure.
@@ -294,18 +294,18 @@ class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
   /// `sus::construct::From` trait implementation.
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
-    return SFnMut(fn);
+    return FnMut(fn);
   }
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   constexpr static auto from(F&& object) noexcept {
-    return SFnMut(::sus::forward<F>(object));
+    return FnMut(::sus::forward<F>(object));
   }
 
  private:
   template <class RR, class... AArgs>
-  friend class SFnOnce;
+  friend class FnOnce;
 
-  SFnMut(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
+  FnMut(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
       : callable_(callable), invoke_(invoke) {}
 
   uintptr_t callable_;
@@ -313,45 +313,45 @@ class [[sus_trivial_abi]] SFnMut<R(CallArgs...)> {
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(callable_),
                                   decltype(invoke_));
-  sus_class_never_value_field(::sus::marker::unsafe_fn, SFnMut, invoke_,
+  sus_class_never_value_field(::sus::marker::unsafe_fn, FnMut, invoke_,
                               nullptr, nullptr);
 
  protected:
-  constexpr SFnMut() = default;  // For the NeverValueField.
+  constexpr FnMut() = default;  // For the NeverValueField.
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
-/// SFnOnce may only be called a single time.
+/// FnOnce may only be called a single time.
 ///
-/// SFn can be used as a SFnMut, which can be used as a SFnOnce. Lambdas can be
-/// converted into a SFnOnce, SFnMut, or SFn directly.
+/// Fn can be used as a FnMut, which can be used as a FnOnce. Lambdas can be
+/// converted into a FnOnce, FnMut, or Fn directly.
 ///
-/// SFnOnce, SFnMut and SFn are only safe to appear as lvalues when they are a
+/// FnOnce, FnMut and Fn are only safe to appear as lvalues when they are a
 /// function parameter, and a clang-tidy check is provided to enforce this. They
 /// only hold a reference to the underlying lambda so they must not outlive the
 /// lambda.
 ///
-/// # Why can a "const" SFn convert to a mutable SFnMut or SFnOnce?
+/// # Why can a "const" Fn convert to a mutable FnMut or FnOnce?
 ///
-/// A SFnMut or SFnOnce is _allowed_ to mutate its storage, but a "const" SFn
+/// A FnMut or FnOnce is _allowed_ to mutate its storage, but a "const" Fn
 /// closure would just choose not to do so.
 ///
-/// However, a `const SFn` requires that the storage is not mutated, so it is
-/// not useful if converted to a `const SFnMut` or `const SFnOnce` which are
+/// However, a `const Fn` requires that the storage is not mutated, so it is
+/// not useful if converted to a `const FnMut` or `const FnOnce` which are
 /// only callable as mutable objects.
 ///
 /// # Null pointers
 ///
-/// A null function pointer is not allowed, constructing a SFnOnce from a null
+/// A null function pointer is not allowed, constructing a FnOnce from a null
 /// pointer will panic.
 template <class R, class... CallArgs>
-class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
+class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
  public:
   /// Construction from a function pointer or captureless lambda.
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-  SFnOnce(F ptr) noexcept {
+  FnOnce(F ptr) noexcept {
     ::sus::check(+ptr != nullptr);
     callable_ = reinterpret_cast<uintptr_t>(+ptr);
     invoke_ = &__private::Invoker<
@@ -362,44 +362,44 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.lambda]
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
-  SFnOnce(F&& object) noexcept {
+  FnOnce(F&& object) noexcept {
     callable_ = reinterpret_cast<uintptr_t>(::sus::mem::addressof(object));
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template call_mut<R, CallArgs...>;
   }
 
-  /// Construction from SFnMut.
+  /// Construction from FnMut.
   ///
-  /// Since SFnMut is callable, SFnOnce is already constructible from it, but
+  /// Since FnMut is callable, FnOnce is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
-  SFnOnce(SFnMut<R(CallArgs...)>&& o) noexcept
+  FnOnce(FnMut<R(CallArgs...)>&& o) noexcept
       : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
         invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
 
-  /// Construction from SFn.
+  /// Construction from Fn.
   ///
-  /// Since SFn is callable, SFnOnce is already constructible from it, but
+  /// Since Fn is callable, FnOnce is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
-  SFnOnce(SFn<R(CallArgs...)>&& o) noexcept
+  FnOnce(Fn<R(CallArgs...)>&& o) noexcept
       : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
         invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
 
-  ~SFnOnce() noexcept = default;
+  ~FnOnce() noexcept = default;
 
-  SFnOnce(SFnOnce&& o) noexcept
+  FnOnce(FnOnce&& o) noexcept
       : callable_(::sus::mem::replace(o.callable_, uintptr_t{0})),
         // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
         // never-value.
         invoke_(o.invoke_) {
     ::sus::check(callable_);  // Catch use-after-move.
   }
-  SFnOnce& operator=(SFnOnce&& o) noexcept {
+  FnOnce& operator=(FnOnce&& o) noexcept {
     callable_ = ::sus::mem::replace(o.callable_, uintptr_t{0});
     // Not setting `o.invoke_` to nullptr, as invoke_ as nullptr is its
     // never-value.
@@ -409,8 +409,8 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
   }
 
   // Not copyable.
-  SFnOnce(const SFnOnce&) noexcept = delete;
-  SFnOnce& operator=(const SFnOnce&) noexcept = delete;
+  FnOnce(const FnOnce&) noexcept = delete;
+  FnOnce& operator=(const FnOnce&) noexcept = delete;
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
@@ -422,18 +422,18 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
   /// `sus::construct::From` trait implementation.
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
-    return SFnOnce(fn);
+    return FnOnce(fn);
   }
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   constexpr static auto from(F&& object) noexcept {
-    return SFnOnce(::sus::forward<F>(object));
+    return FnOnce(::sus::forward<F>(object));
   }
 
  private:
-  friend SFnMut<R, CallArgs...>;
-  friend SFn<R, CallArgs...>;
+  friend FnMut<R, CallArgs...>;
+  friend Fn<R, CallArgs...>;
 
-  SFnOnce(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
+  FnOnce(uintptr_t callable, R (*invoke)(uintptr_t p, CallArgs... args))
       : callable_(callable), invoke_(invoke) {}
 
   uintptr_t callable_;
@@ -441,11 +441,11 @@ class [[sus_trivial_abi]] SFnOnce<R(CallArgs...)> {
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(callable_),
                                   decltype(invoke_));
-  sus_class_never_value_field(::sus::marker::unsafe_fn, SFnOnce, invoke_,
+  sus_class_never_value_field(::sus::marker::unsafe_fn, FnOnce, invoke_,
                               nullptr, nullptr);
 
  protected:
-  constexpr SFnOnce() = default;  // For the NeverValueField.
+  constexpr FnOnce() = default;  // For the NeverValueField.
 };
 
 }  // namespace sus::fn
