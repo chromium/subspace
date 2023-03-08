@@ -17,7 +17,7 @@
 #include <type_traits>
 
 #include "subspace/fn/callable.h"
-#include "subspace/fn/fn_defn.h"
+#include "subspace/fn/box_fn_defn.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/eval_macro.h"
 #include "subspace/macros/for_each.h"

@@ -16,8 +16,8 @@
 
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
-#include "subspace/fn/__private/fn_storage.h"
-#include "subspace/fn/fn_defn.h"
+#include "subspace/fn/__private/box_fn_storage.h"
+#include "subspace/fn/box_fn_defn.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/replace.h"
 
@@ -25,31 +25,31 @@ namespace sus::fn {
 
 template <class R, class... CallArgs>
 template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
-FnOnce<R(CallArgs...)>::FnOnce(F ptr) noexcept
-    : fn_ptr_(ptr), type_(__private::FnPointer) {
+BoxFnOnce<R(CallArgs...)>::BoxFnOnce(F ptr) noexcept
+    : fn_ptr_(ptr), type_(__private::BoxFnPointer) {
   ::sus::check(ptr != nullptr);
 }
 
 template <class R, class... CallArgs>
 template <class ConstructionType,
           ::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
-FnOnce<R(CallArgs...)>::FnOnce(ConstructionType construction,
+BoxFnOnce<R(CallArgs...)>::BoxFnOnce(ConstructionType construction,
                                F&& lambda) noexcept
     : type_(__private::Storage) {
-  using FnStorage = __private::FnStorage<F>;
+  using BoxFnStorage = __private::BoxFnStorage<F>;
   // TODO: Allow overriding the global allocator? Use the allocator in place of
   // `new` and `delete` directly?
-  auto* s = new FnStorage(::sus::move(lambda));
+  auto* s = new BoxFnStorage(::sus::move(lambda));
   make_vtable(*s, construction);
   storage_ = s;
 }
 
 template <class R, class... CallArgs>
-template <class FnStorage>
-void FnOnce<R(CallArgs...)>::make_vtable(
-    FnStorage& storage, __private::StorageConstructionFnOnceType) noexcept {
-  static __private::FnStorageVtable<R, CallArgs...> vtable = {
-      .call_once = &FnStorage::template call_once<R, CallArgs...>,
+template <class BoxFnStorage>
+void BoxFnOnce<R(CallArgs...)>::make_vtable(
+    BoxFnStorage& storage, __private::StorageConstructionBoxFnOnceType) noexcept {
+  static __private::BoxFnStorageVtable<R, CallArgs...> vtable = {
+      .call_once = &BoxFnStorage::template call_once<R, CallArgs...>,
       .call_mut = nullptr,
       .call = nullptr,
   };
@@ -57,35 +57,35 @@ void FnOnce<R(CallArgs...)>::make_vtable(
 }
 
 template <class R, class... CallArgs>
-template <class FnStorage>
-void FnOnce<R(CallArgs...)>::make_vtable(
-    FnStorage& storage, __private::StorageConstructionFnMutType) noexcept {
-  static __private::FnStorageVtable<R, CallArgs...> vtable = {
-      .call_once = &FnStorage::template call_once<R, CallArgs...>,
-      .call_mut = &FnStorage::template call_mut<R, CallArgs...>,
+template <class BoxFnStorage>
+void BoxFnOnce<R(CallArgs...)>::make_vtable(
+    BoxFnStorage& storage, __private::StorageConstructionBoxFnMutType) noexcept {
+  static __private::BoxFnStorageVtable<R, CallArgs...> vtable = {
+      .call_once = &BoxFnStorage::template call_once<R, CallArgs...>,
+      .call_mut = &BoxFnStorage::template call_mut<R, CallArgs...>,
       .call = nullptr,
   };
   storage.vtable.insert(vtable);
 }
 
 template <class R, class... CallArgs>
-template <class FnStorage>
-void FnOnce<R(CallArgs...)>::make_vtable(
-    FnStorage& storage, __private::StorageConstructionFnType) noexcept {
-  static __private::FnStorageVtable<R, CallArgs...> vtable = {
-      .call_once = &FnStorage::template call_once<R, CallArgs...>,
-      .call_mut = &FnStorage::template call_mut<R, CallArgs...>,
-      .call = &FnStorage::template call<R, CallArgs...>,
+template <class BoxFnStorage>
+void BoxFnOnce<R(CallArgs...)>::make_vtable(
+    BoxFnStorage& storage, __private::StorageConstructionBoxFnType) noexcept {
+  static __private::BoxFnStorageVtable<R, CallArgs...> vtable = {
+      .call_once = &BoxFnStorage::template call_once<R, CallArgs...>,
+      .call_mut = &BoxFnStorage::template call_mut<R, CallArgs...>,
+      .call = &BoxFnStorage::template call<R, CallArgs...>,
   };
   storage.vtable.insert(vtable);
 }
 
 template <class R, class... CallArgs>
-FnOnce<R(CallArgs...)>::~FnOnce() noexcept {
+BoxFnOnce<R(CallArgs...)>::~BoxFnOnce() noexcept {
   switch (type_) {
-    // Note that the FnPointer state is set when destroying from the never value
+    // Note that the BoxFnPointer state is set when destroying from the never value
     // state.
-    case __private::FnPointer: break;
+    case __private::BoxFnPointer: break;
     case __private::Storage: {
       if (auto* s = ::sus::mem::replace_ptr(mref(storage_), nullptr); s)
         delete s;
@@ -95,9 +95,9 @@ FnOnce<R(CallArgs...)>::~FnOnce() noexcept {
 }
 
 template <class R, class... CallArgs>
-FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) noexcept : type_(o.type_) {
+BoxFnOnce<R(CallArgs...)>::BoxFnOnce(BoxFnOnce&& o) noexcept : type_(o.type_) {
   switch (type_) {
-    case __private::FnPointer:
+    case __private::BoxFnPointer:
       ::sus::check(o.fn_ptr_);  // Catch use-after-move.
       fn_ptr_ = ::sus::mem::replace_ptr(mref(o.fn_ptr_), nullptr);
       break;
@@ -109,15 +109,15 @@ FnOnce<R(CallArgs...)>::FnOnce(FnOnce&& o) noexcept : type_(o.type_) {
 }
 
 template <class R, class... CallArgs>
-FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) noexcept {
+BoxFnOnce<R(CallArgs...)>& BoxFnOnce<R(CallArgs...)>::operator=(BoxFnOnce&& o) noexcept {
   switch (type_) {
-    case __private::FnPointer: break;
+    case __private::BoxFnPointer: break;
     case __private::Storage:
       if (auto* s = ::sus::mem::replace_ptr(mref(storage_), nullptr); s)
         delete s;
   }
   switch (type_ = o.type_) {
-    case __private::FnPointer:
+    case __private::BoxFnPointer:
       ::sus::check(o.fn_ptr_);  // Catch use-after-move.
       fn_ptr_ = ::sus::mem::replace_ptr(mref(o.fn_ptr_), nullptr);
       break;
@@ -130,9 +130,9 @@ FnOnce<R(CallArgs...)>& FnOnce<R(CallArgs...)>::operator=(FnOnce&& o) noexcept {
 }
 
 template <class R, class... CallArgs>
-R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
+R BoxFnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
   switch (type_) {
-    case __private::FnPointer: {
+    case __private::BoxFnPointer: {
       ::sus::check(fn_ptr_);  // Catch use-after-move.
       auto* fn = ::sus::mem::replace_ptr(mref(fn_ptr_), nullptr);
       return fn(static_cast<CallArgs&&>(args)...);
@@ -141,7 +141,7 @@ R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
       ::sus::check(storage_);  // Catch use-after-move.
       auto* storage = ::sus::mem::replace_ptr(mref(storage_), nullptr);
       auto& vtable =
-          static_cast<const __private::FnStorageVtable<R, CallArgs...>&>(
+          static_cast<const __private::BoxFnStorageVtable<R, CallArgs...>&>(
               storage->vtable.as_mut().unwrap());
 
       // Delete storage, after the call_once() is complete.
@@ -149,13 +149,13 @@ R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
       // TODO: `storage` and `storage_` should be owning smart pointers.
       struct DeleteStorage final {
         sus_clang_bug_54040(
-            constexpr inline DeleteStorage(__private::FnStorageBase* storage)
+            constexpr inline DeleteStorage(__private::BoxFnStorageBase* storage)
             : storage(storage){});
         ~DeleteStorage() { delete storage; }
-        __private::FnStorageBase* storage;
+        __private::BoxFnStorageBase* storage;
       } deleter(storage);
 
-      return vtable.call_once(static_cast<__private::FnStorageBase&&>(*storage),
+      return vtable.call_once(static_cast<__private::BoxFnStorageBase&&>(*storage),
                               forward<CallArgs>(args)...);
     }
   }
@@ -163,19 +163,19 @@ R FnOnce<R(CallArgs...)>::operator()(CallArgs&&... args) && noexcept {
 }
 
 template <class R, class... CallArgs>
-R FnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
-  using Super = FnOnce<R(CallArgs...)>;
+R BoxFnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
+  using Super = BoxFnOnce<R(CallArgs...)>;
   switch (Super::type_) {
-    case __private::FnPointer:
+    case __private::BoxFnPointer:
       ::sus::check(Super::fn_ptr_);  // Catch use-after-move.
       return Super::fn_ptr_(static_cast<CallArgs&&>(args)...);
     case __private::Storage: {
       ::sus::check(Super::storage_);  // Catch use-after-move.
       auto& vtable =
-          static_cast<const __private::FnStorageVtable<R, CallArgs...>&>(
+          static_cast<const __private::BoxFnStorageVtable<R, CallArgs...>&>(
               Super::storage_->vtable.as_mut().unwrap());
       return vtable.call_mut(
-          static_cast<__private::FnStorageBase&>(*Super::storage_),
+          static_cast<__private::BoxFnStorageBase&>(*Super::storage_),
           ::sus::forward<CallArgs>(args)...);
     }
   }
@@ -183,19 +183,19 @@ R FnMut<R(CallArgs...)>::operator()(CallArgs&&... args) & noexcept {
 }
 
 template <class R, class... CallArgs>
-R Fn<R(CallArgs...)>::operator()(CallArgs&&... args) const& noexcept {
-  using Super = FnOnce<R(CallArgs...)>;
+R BoxFn<R(CallArgs...)>::operator()(CallArgs&&... args) const& noexcept {
+  using Super = BoxFnOnce<R(CallArgs...)>;
   switch (Super::type_) {
-    case __private::FnPointer:
+    case __private::BoxFnPointer:
       ::sus::check(Super::fn_ptr_);  // Catch use-after-move.
       return Super::fn_ptr_(static_cast<CallArgs&&>(args)...);
     case __private::Storage: {
       ::sus::check(Super::storage_);  // Catch use-after-move.
       auto& vtable =
-          static_cast<const __private::FnStorageVtable<R, CallArgs...>&>(
+          static_cast<const __private::BoxFnStorageVtable<R, CallArgs...>&>(
               Super::storage_->vtable.as_mut().unwrap());
       return vtable.call(
-          static_cast<const __private::FnStorageBase&>(*Super::storage_),
+          static_cast<const __private::BoxFnStorageBase&>(*Super::storage_),
           ::sus::forward<CallArgs>(args)...);
     }
   }
