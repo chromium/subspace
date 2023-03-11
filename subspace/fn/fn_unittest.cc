@@ -625,9 +625,107 @@ TEST(Fn, CallsCorrectOverload) {
   EXPECT_EQ(mut_calls, 2);
 }
 
-TEST(Fn, Lvalue) {
-  Fn<void()> f([]() {});
-  Fn<void()> g([i = 1]() { (void)i; });
+TEST(Fn, Clone) {
+  static_assert(sus::mem::Clone<Fn<i32()>>);
+  auto clones_fn = [](Fn<i32()> f) {
+    return [](FnOnce<i32()> f1) { return sus::move(f1)(); }(f.clone()) +
+           [](FnOnce<i32()> f2) { return sus::move(f2)(); }(f.clone());
+  };
+  EXPECT_EQ(4, clones_fn([]() { return 2_i32; }));
+
+  static_assert(sus::mem::Clone<FnMut<i32()>>);
+  auto clones_fnmut = [](FnMut<i32()> f) {
+    return [](FnOnce<i32()> f1) { return sus::move(f1)(); }(f.clone()) +
+           [](FnOnce<i32()> f2) { return sus::move(f2)(); }(f.clone());
+  };
+  EXPECT_EQ(5, clones_fnmut([i = 1_i32]() mutable {
+              i += 1;
+              return i;
+            }));
+
+  static_assert(!sus::mem::Clone<FnOnce<i32()>>);
+}
+
+TEST(FnOnce, Split) {
+  // The return type of split() is not Copy or Move
+  static_assert(
+      !::sus::mem::Copy<decltype(std::declval<FnOnce<void()>&>().split())>);
+  static_assert(
+      !::sus::mem::Move<decltype(std::declval<FnOnce<void()>&>().split())>);
+  // It's only used to build more FnOnce objects.
+  static_assert(
+      ::sus::construct::Into<decltype(std::declval<FnOnce<void()>&>().split()),
+                             FnOnce<void()>>);
+  // And not FnMut or Fn, as that loses the intention to only call it once. This
+  // is implemented by making the operator() callable as an rvalue only.
+  static_assert(
+      !::sus::construct::Into<decltype(std::declval<FnOnce<void()>&>().split()),
+                              FnMut<void()>>);
+  static_assert(
+      !::sus::construct::Into<decltype(std::declval<FnOnce<void()>&>().split()),
+                              Fn<void()>>);
+
+  // split() as rvalues. First split is run.
+  auto rsplits_fnonce = [](FnOnce<i32()> f) {
+    i32 a = [](FnOnce<i32()> f) { return sus::move(f)(); }(f.split());
+    i32 b = [](FnOnce<i32()>) {
+      // Don't run the `FnOnce` as only one of the splits may run the
+      // FnOnce.
+      return 0_i32;
+    }(f.split());
+    return a + b;
+  };
+  EXPECT_EQ(2, rsplits_fnonce([i = 1_i32]() mutable {
+              i += 1;
+              return i;
+            }));
+
+  // split() as rvalues. Second split is run.
+  auto rsplits_fnonce2 = [](FnOnce<i32()> f) {
+    i32 a = [](FnOnce<i32()>) {
+      // Don't run the `FnOnce` as only one of the splits may run the
+      // FnOnce.
+      return 0_i32;
+    }(f.split());
+    i32 b = [](FnOnce<i32()> f) { return sus::move(f)(); }(f.split());
+    return a + b;
+  };
+  EXPECT_EQ(2, rsplits_fnonce([i = 1_i32]() mutable {
+              i += 1;
+              return i;
+            }));
+
+  // split() as lvalues. First split is run.
+  auto lsplits_fnonce = [](FnOnce<i32()> f) {
+    auto split = f.split();
+    i32 a = [](FnOnce<i32()> f) { return sus::move(f)(); }(f);
+    i32 b = [](FnOnce<i32()>) {
+      // Don't run the `FnOnce` as only one of the splits may run the
+      // FnOnce.
+      return 0_i32;
+    }(f);
+    return a + b;
+  };
+  EXPECT_EQ(2, lsplits_fnonce([i = 1_i32]() mutable {
+              i += 1;
+              return i;
+            }));
+
+  // split() as lvalues. Second split is run.
+  auto lsplits_fnonce2 = [](FnOnce<i32()> f) {
+    auto split = f.split();
+    i32 a = [](FnOnce<i32()>) {
+      // Don't run the `FnOnce` as only one of the splits may run the
+      // FnOnce.
+      return 0_i32;
+    }(f);
+    i32 b = [](FnOnce<i32()> f) { return sus::move(f)(); }(f);
+    return a + b;
+  };
+  EXPECT_EQ(2, lsplits_fnonce([i = 1_i32]() mutable {
+              i += 1;
+              return i;
+            }));
 }
 
 }  // namespace
