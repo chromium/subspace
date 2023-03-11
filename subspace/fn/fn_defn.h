@@ -501,6 +501,10 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
     return *this;
   }
 
+  // Not copyable.
+  FnOnce(const FnOnce&) noexcept = delete;
+  FnOnce& operator=(const FnOnce&) noexcept = delete;
+
   /// A split FnOnce object, which can be used to construct other FnOnce
   /// objects, but enforces that only one of them is called.
   ///
@@ -524,10 +528,6 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
    private:
     FnOnce& fn_;
   };
-
-  // Not copyable.
-  FnOnce(const FnOnce&) noexcept = delete;
-  FnOnce& operator=(const FnOnce&) noexcept = delete;
 
   /// A `FnOnce` can be split into any number of `FnOnce` objects, while
   /// enforcing that the underlying function is only called a single time.
