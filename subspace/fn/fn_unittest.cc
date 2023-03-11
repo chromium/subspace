@@ -112,6 +112,8 @@ static_assert(sus::mem::relocate_by_memcpy<FnOnce<void()>>);
 static_assert(sus::mem::relocate_by_memcpy<FnMut<void()>>);
 static_assert(sus::mem::relocate_by_memcpy<Fn<void()>>);
 
+// clang-format off
+
 // A function pointer, or convertible lambda, can be bound to FnOnce, FnMut and
 // Fn.
 static_assert(std::is_constructible_v<FnOnce<void()>, decltype([]() {})>);
@@ -121,54 +123,78 @@ static_assert(std::is_constructible_v<FnOnce<void()>, decltype(v_v_function)>);
 static_assert(std::is_constructible_v<FnMut<void()>, decltype(v_v_function)>);
 static_assert(std::is_constructible_v<Fn<void()>, decltype(v_v_function)>);
 //  Non-void types for the same.
-static_assert(std::is_constructible_v<FnOnce<int(float)>,
-                                      decltype([](float) { return 1; })>);
-static_assert(std::is_constructible_v<FnMut<int(float)>,
-                                      decltype([](float) { return 1; })>);
-static_assert(
-    std::is_constructible_v<Fn<int(float)>, decltype([](float) { return 1; })>);
-static_assert(
-    std::is_constructible_v<FnOnce<int(float)>, decltype(i_f_function)>);
-static_assert(
-    std::is_constructible_v<FnMut<int(float)>, decltype(i_f_function)>);
-static_assert(std::is_constructible_v<Fn<int(float)>, decltype(i_f_function)>);
-//  Lambdas with bound args can be bound to FnOnce, FnMut and Fn.
-static_assert(std::is_constructible_v<FnOnce<void()>,
-                                      decltype([i = int(1)]() { (void)i; })>);
 static_assert(std::is_constructible_v<
-              FnOnce<void()>, decltype([i = int(1)]() mutable { ++i; })>);
-static_assert(std::is_constructible_v<FnMut<void()>,
-                                      decltype([i = int(1)]() { (void)i; })>);
+    FnOnce<int(float)>, decltype([](float) { return 1; })>
+);
 static_assert(std::is_constructible_v<
-              FnMut<void()>, decltype([i = int(1)]() mutable { ++i; })>);
-static_assert(
-    std::is_constructible_v<Fn<void()>, decltype([i = int(1)]() { (void)i; })>);
+    FnMut<int(float)>, decltype([](float) { return 1; })>
+);
 static_assert(std::is_constructible_v<
-              Fn<void()>, decltype([i = int(1)]() mutable { ++i; })>);
+    Fn<int(float)>, decltype([](float) { return 1; })>
+);
+static_assert(std::is_constructible_v<
+    FnOnce<int(float)>, decltype(i_f_function)>
+);
+static_assert(std::is_constructible_v<
+    FnMut<int(float)>, decltype(i_f_function)>
+);
+static_assert(std::is_constructible_v<
+    Fn<int(float)>, decltype(i_f_function)>
+);
+// Lambdas with bound args can be bound to FnOnce, FnMut and Fn.
+static_assert(std::is_constructible_v<
+    FnOnce<void()>, decltype([i = int(1)]() { (void)i; })>
+);
+static_assert(std::is_constructible_v<
+    FnOnce<void()>, decltype([i = int(1)]() mutable { ++i; })>
+);
+static_assert(std::is_constructible_v<
+    FnMut<void()>, decltype([i = int(1)]() { (void)i; })>
+);
+static_assert(std::is_constructible_v<
+    FnMut<void()>, decltype([i = int(1)]() mutable { ++i; })>
+);
+static_assert(std::is_constructible_v<
+    Fn<void()>, decltype([i = int(1)]() { (void)i; })>
+);
+// But Fn, which is const, can't hold a mutable lambda.
+static_assert(!std::is_constructible_v<
+    Fn<void()>, decltype([i = int(1)]() mutable { ++i; })>
+);
 
 // The return type of the FnOnce must match that of the lambda. It will not
 // allow converting to void.
-static_assert(std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
-                                      decltype(s_b_function)>);
-static_assert(
-    !std::is_constructible_v<FnOnce<void(BaseClass*)>, decltype(b_b_function)>);
-static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
-                                       decltype(b_b_function)>);
-static_assert(std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
-                                      decltype(s_b_lambda)>);
-static_assert(
-    !std::is_constructible_v<FnOnce<void(BaseClass*)>, decltype(b_b_lambda)>);
-static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
-                                       decltype(b_b_lambda)>);
+static_assert(std::is_constructible_v<
+    FnOnce<SubClass*(BaseClass*)>, decltype(s_b_function)>
+);
+static_assert(!std::is_constructible_v<
+    FnOnce<void(BaseClass*)>, decltype(b_b_function)>
+);
+static_assert(!std::is_constructible_v<
+    FnOnce<SubClass*(BaseClass*)>, decltype(b_b_function)>
+);
+static_assert(std::is_constructible_v<
+    FnOnce<SubClass*(BaseClass*)>, decltype(s_b_lambda)>
+);
+static_assert(!std::is_constructible_v<
+    FnOnce<void(BaseClass*)>, decltype(b_b_lambda)>
+);
+static_assert(!std::is_constructible_v<
+    FnOnce<SubClass*(BaseClass*)>, decltype(b_b_lambda)>
+);
 // Similarly, argument types can't be converted to a different type.
-static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
-                                      decltype(s_s_function)>);
-static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
-                                       decltype(s_s_function)>);
-static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
-                                      decltype(s_s_lambda)>);
-static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
-                                       decltype(s_s_lambda)>);
+static_assert(std::is_constructible_v<
+    FnOnce<SubClass*(SubClass*)>, decltype(s_s_function)>
+);
+static_assert(!std::is_constructible_v<
+    FnOnce<SubClass*(BaseClass*)>, decltype(s_s_function)>
+);
+static_assert(std::is_constructible_v<
+    FnOnce<SubClass*(SubClass*)>, decltype(s_s_lambda)>
+);
+static_assert(!std::is_constructible_v<
+    FnOnce<SubClass*(BaseClass*)>, decltype(s_s_lambda)>
+);
 // But FnOnce type is compatible with convertible return and argument types in
 // opposite directions.
 // - If the return type Y of a lambda is convertible _to_ X, then FnOnce<X()>
@@ -180,14 +206,20 @@ static_assert(!std::is_constructible_v<FnOnce<SubClass*(BaseClass*)>,
 //
 // In both cases, the FnOnce is more strict than the lambda, guaranteeing that
 // the lambda's requirements are met.
-static_assert(std::is_constructible_v<FnOnce<BaseClass*(BaseClass*)>,
-                                      decltype(s_b_lambda)>);
-static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
-                                      decltype(s_b_lambda)>);
-static_assert(std::is_constructible_v<FnOnce<BaseClass*(BaseClass*)>,
-                                      decltype(s_b_function)>);
-static_assert(std::is_constructible_v<FnOnce<SubClass*(SubClass*)>,
-                                      decltype(s_b_function)>);
+static_assert(std::is_constructible_v<
+    FnOnce<BaseClass*(BaseClass*)>, decltype(s_b_lambda)>
+);
+static_assert(std::is_constructible_v<
+    FnOnce<SubClass*(SubClass*)>, decltype(s_b_lambda)>
+);
+static_assert(std::is_constructible_v<
+    FnOnce<BaseClass*(BaseClass*)>, decltype(s_b_function)>
+);
+static_assert(std::is_constructible_v<
+    FnOnce<SubClass*(SubClass*)>, decltype(s_b_function)>
+);
+
+// clang-format on
 
 template <class R, class Param, class Arg>
 concept can_run =
@@ -459,6 +491,105 @@ TEST(Fn, ConvertToFnMut) {
   auto receive_fnmut = [](FnMut<i32()> x) { return sus::move(x)(); };
   auto receive_fn = [&](Fn<i32()> x) { return receive_fnmut(sus::move(x)); };
   EXPECT_EQ(receive_fn([]() { return 2_i32; }), 2);
+}
+
+TEST(Fn, ConstructionFromConstMut) {
+  struct Captureless {
+    i32 operator()() const { return 2; }
+  };
+  struct Capture {
+    i32 operator()() const { return i; }
+    i32 i = 2;
+  };
+
+  // Const callable can be put in all the Fn types.
+  static_assert(sus::fn::__private::CallableMut<Captureless, i32>);
+  EXPECT_EQ(2, [](FnOnce<i32()> m) { return sus::move(m)(); }(Captureless()));
+  EXPECT_EQ(2, [](FnMut<i32()> m) { return sus::move(m)(); }(Captureless()));
+  EXPECT_EQ(2, [](Fn<i32()> m) { return sus::move(m)(); }(Captureless()));
+  static_assert(sus::fn::__private::CallableMut<Capture, i32>);
+  EXPECT_EQ(2, [](FnOnce<i32()> m) { return sus::move(m)(); }(Capture()));
+  EXPECT_EQ(2, [](FnMut<i32()> m) { return sus::move(m)(); }(Capture()));
+  EXPECT_EQ(2, [](Fn<i32()> m) { return sus::move(m)(); }(Capture()));
+
+  struct CapturelessMut {
+    i32 operator()() { return 2; }
+  };
+  struct CaptureMut {
+    i32 operator()() { return i; }
+    i32 i = 2;
+  };
+
+  // Mutable callable can only be put in the mutable Fn types.
+  static_assert(sus::fn::__private::CallableMut<CapturelessMut, i32>);
+  static_assert(std::is_constructible_v<FnOnce<i32()>, CapturelessMut&&>);
+  static_assert(std::is_constructible_v<FnMut<i32()>, CapturelessMut&&>);
+  static_assert(!std::is_constructible_v<Fn<i32()>, CapturelessMut&&>);
+  EXPECT_EQ(2,
+            [](FnOnce<i32()> m) { return sus::move(m)(); }(CapturelessMut()));
+  EXPECT_EQ(2, [](FnMut<i32()> m) { return sus::move(m)(); }(CapturelessMut()));
+
+  static_assert(sus::fn::__private::CallableMut<CaptureMut, i32>);
+  static_assert(std::is_constructible_v<FnOnce<i32()>, CaptureMut&&>);
+  static_assert(std::is_constructible_v<FnMut<i32()>, CaptureMut&&>);
+  static_assert(!std::is_constructible_v<Fn<i32()>, CaptureMut&&>);
+  EXPECT_EQ(2, [](FnOnce<i32()> m) { return sus::move(m)(); }(CaptureMut()));
+  EXPECT_EQ(2, [](FnMut<i32()> m) { return sus::move(m)(); }(CaptureMut()));
+}
+
+TEST(Fn, IntoFromConstMut) {
+  i32 (*f)() = +[]() { return 2_i32; };
+
+  // Function pointer can be put in all the Fn types.
+  static_assert(sus::construct::Into<decltype(f), FnOnce<i32()>>);
+  static_assert(sus::construct::Into<decltype(f), FnMut<i32()>>);
+  static_assert(sus::construct::Into<decltype(f), Fn<i32()>>);
+  EXPECT_EQ(2, FnOnce<i32()>::from(f)());
+  EXPECT_EQ(2, FnMut<i32()>::from(f)());
+  EXPECT_EQ(2, Fn<i32()>::from(f)());
+
+  struct Captureless {
+    i32 operator()() const { return 2; }
+  };
+  struct Capture {
+    i32 operator()() const { return i; }
+    i32 i = 2;
+  };
+
+  // Const callable can be put in all the Fn types.
+  static_assert(sus::construct::Into<Captureless, FnOnce<i32()>>);
+  static_assert(sus::construct::Into<Captureless, FnMut<i32()>>);
+  static_assert(sus::construct::Into<Captureless, Fn<i32()>>);
+  EXPECT_EQ(2, FnOnce<i32()>::from(Captureless())());
+  EXPECT_EQ(2, FnMut<i32()>::from(Captureless())());
+  EXPECT_EQ(2, Fn<i32()>::from(Captureless())());
+  static_assert(sus::construct::Into<Capture, FnOnce<i32()>>);
+  static_assert(sus::construct::Into<Capture, FnMut<i32()>>);
+  static_assert(sus::construct::Into<Capture, Fn<i32()>>);
+  EXPECT_EQ(2, FnOnce<i32()>::from(Capture())());
+  EXPECT_EQ(2, FnMut<i32()>::from(Capture())());
+  EXPECT_EQ(2, Fn<i32()>::from(Capture())());
+
+  struct CapturelessMut {
+    i32 operator()() { return 2; }
+  };
+  struct CaptureMut {
+    i32 operator()() { return i; }
+    i32 i = 2;
+  };
+
+  // Mutable callable can only be put in the mutable Fn types.
+  static_assert(sus::construct::Into<CapturelessMut, FnOnce<i32()>>);
+  static_assert(sus::construct::Into<CapturelessMut, FnMut<i32()>>);
+  static_assert(!sus::construct::Into<CapturelessMut, Fn<i32()>>);
+  EXPECT_EQ(2, FnOnce<i32()>::from(CapturelessMut())());
+  EXPECT_EQ(2, FnMut<i32()>::from(CapturelessMut())());
+
+  static_assert(sus::construct::Into<CaptureMut, FnOnce<i32()>>);
+  static_assert(sus::construct::Into<CaptureMut, FnMut<i32()>>);
+  static_assert(!sus::construct::Into<CaptureMut, Fn<i32()>>);
+  EXPECT_EQ(2, FnOnce<i32()>::from(CaptureMut())());
+  EXPECT_EQ(2, FnMut<i32()>::from(CaptureMut())());
 }
 
 TEST(Fn, CallsCorrectOverload) {
