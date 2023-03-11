@@ -65,6 +65,12 @@ struct Invoker {
   }
 
   template <class R, class... Args>
+  static R object_call_once(const union Storage& s, Args... args) {
+    F& f = *static_cast<F*>(s.object);
+    return ::sus::move(f)(::sus::forward<Args>(args)...);
+  }
+
+  template <class R, class... Args>
   static R fnptr_call_const(const union Storage& s, Args... args) {
     const F f = reinterpret_cast<const F>(s.fnptr);
     return (*f)(::sus::forward<Args>(args)...);
@@ -94,6 +100,12 @@ template <class F>
 concept ConvertsToFunctionPointer = requires(F f) {
   { +f } -> IsFunctionPointer;
 };
+
+template <class F, class R, class... Args>
+concept CallableOnceMut =
+    !FunctionPointer<F, R, Args...> && requires(F && f, Args... args) {
+      { ::sus::move(f)(args...) } -> std::convertible_to<R>;
+    };
 
 template <class F, class R, class... Args>
 concept CallableMut =
@@ -434,23 +446,23 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// Construction from a non-capturing lambda.
   ///
   /// #[doc.overloads=ctor.lambda]
-  template <__private::CallableMut<R, CallArgs...> F>
+  template <__private::CallableOnceMut<R, CallArgs...> F>
     requires(__private::ConvertsToFunctionPointer<F>)
   constexpr FnOnce(F&& object sus_lifetimebound) noexcept {
     storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
-        std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
+        std::remove_reference_t<F>>::template object_call_once<R, CallArgs...>;
   }
 
   /// Construction from a capturing lambda or other callable object.
   ///
   /// #[doc.overloads=ctor.capturelambda]
-  template <__private::CallableMut<R, CallArgs...> F>
+  template <__private::CallableOnceMut<R, CallArgs...> F>
     requires(!__private::ConvertsToFunctionPointer<F>)
   constexpr FnOnce(F&& object sus_lifetimebound) noexcept {
     storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
-        std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
+        std::remove_reference_t<F>>::template object_call_once<R, CallArgs...>;
   }
 
   /// Construction from FnMut.
@@ -489,9 +501,50 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
     return *this;
   }
 
+  /// A split FnOnce object, which can be used to construct other FnOnce
+  /// objects, but enforces that only one of them is called.
+  ///
+  /// The Split object must not outlive the FnOnce it's constructed from or
+  /// Undefined Behaviour results.
+  class Split {
+   public:
+    Split(FnOnce& fn sus_lifetimebound) : fn_(fn) {}
+
+    // Not Copy or Move, only used to construct FnOnce objects, which are
+    // constructible from this type.
+    Split(Split&&) = delete;
+    Split& operator=(Split&&) = delete;
+
+    /// Runs the underlying `FnOnce`. The `FnOnce` may only be called a single
+    /// time and will panic on the second call.
+    R operator()(CallArgs... args) && {
+      return ::sus::move(fn_)(::sus::forward<CallArgs>(args)...);
+    }
+
+   private:
+    FnOnce& fn_;
+  };
+
   // Not copyable.
   FnOnce(const FnOnce&) noexcept = delete;
   FnOnce& operator=(const FnOnce&) noexcept = delete;
+
+  /// A `FnOnce` can be split into any number of `FnOnce` objects, while
+  /// enforcing that the underlying function is only called a single time.
+  ///
+  /// This method returns a type that can convert into any number of `FnOnce`
+  /// objects. If two of them are called, the second call will panic.
+  ///
+  /// The returned object must not outlive the `FnOnce` object it is constructed
+  /// from, this is normally enforced by only using the `FnOnce` type in
+  /// function parameters, which ensures it lives for the entire function body,
+  /// and calling `split()` to construct temporary objects for passing to other
+  /// functions that receive a `FnOnce`. The result of `split()` should never be
+  /// stored as a member of an object.
+  ///
+  /// Only callable on an lvalue FnOnce (typically written as a function
+  /// parameter) as an rvalue can be simply passed along without splitting.
+  constexpr Split split() & noexcept sus_lifetimebound { return Split(*this); }
 
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
@@ -509,7 +562,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
       __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
     return FnOnce(ptr);
   }
-  template <__private::CallableMut<R, CallArgs...> F>
+  template <__private::CallableOnceMut<R, CallArgs...> F>
   constexpr static auto from(F&& object sus_lifetimebound) noexcept {
     return FnOnce(::sus::forward<F>(object));
   }
