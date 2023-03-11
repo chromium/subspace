@@ -17,4 +17,4 @@
 #include "subspace/fn/bind.h"
 #include "subspace/fn/fn_box_defn.h"
 #include "subspace/fn/fn_box_impl.h"
-#include "subspace/fn/fn_defn.h"
+#include "subspace/fn/fn_ref.h"

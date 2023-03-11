@@ -77,7 +77,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
   InnerSizedIter next_iter_;
 
   // The InnerSizedIter is trivially relocatable. Likewise, the predicate is
-  // known to be trivially relocatable because FnMut is.
+  // known to be trivially relocatable because FnMutBox is.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(pred_),
                                   decltype(next_iter_));
 };

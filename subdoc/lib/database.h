@@ -146,7 +146,7 @@ struct FunctionElement : public CommentElement {
       return sus::none();
   }
 
-  void for_each_comment(sus::fn::FnMut<void(Comment&)> fn) { fn(comment); }
+  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
 };
 
 struct FieldElement : public CommentElement {
@@ -187,7 +187,7 @@ struct FieldElement : public CommentElement {
       return sus::none();
   }
 
-  void for_each_comment(sus::fn::FnMut<void(Comment&)> fn) { fn(comment); }
+  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
 };
 
 struct NamespaceId {
@@ -324,7 +324,7 @@ struct RecordElement : public TypeElement {
     return out;
   }
 
-  void for_each_comment(sus::fn::FnMut<void(Comment&)> fn) {
+  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) {
     fn(comment);
     for (auto& [k, e] : records) e.for_each_comment(fn);
     for (auto& [k, e] : fields) e.for_each_comment(fn);
@@ -427,7 +427,7 @@ struct NamespaceElement : public CommentElement {
     return out;
   }
 
-  void for_each_comment(sus::fn::FnMut<void(Comment&)> fn) {
+  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) {
     fn(comment);
     for (auto& [k, e] : namespaces) e.for_each_comment(fn);
     for (auto& [k, e] : records) e.for_each_comment(fn);

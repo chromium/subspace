@@ -66,7 +66,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Map final : public IteratorBase<Map<ToIt
   InnerSizedIter next_iter_;
 
   // The InnerSizedIter is trivially relocatable. Likewise, the predicate is
-  // known to be trivially relocatable because the FnMut will either be a
+  // known to be trivially relocatable because the FnMutBox will either be a
   // function pointer or a heap allocation itself.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(fn_),
                                   decltype(next_iter_));
