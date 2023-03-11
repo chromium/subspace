@@ -73,6 +73,7 @@ target_sources(subspace PUBLIC
     "macros/compiler.h"
     "macros/eval_macro.h"
     "macros/for_each.h"
+    "macros/lifetimebound.h"
     "macros/no_unique_address.h"
     "macros/nonnull.h"
     "macros/remove_parens.h"
