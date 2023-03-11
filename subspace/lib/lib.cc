@@ -26,7 +26,7 @@ static_assert(INT_MAX == INT32_MAX);
 static_assert(sus::mem::size_of<size_t>() >= 4);
 static_assert(sus::mem::size_of<size_t>() <= 8);
 
-// Fn types expect to be able to store function and object pointers in a
+// FnRef types expect to be able to store function and object pointers in a
 // uintptr_t.
 static_assert(sus::mem::size_of<void*>() <= sus::mem::size_of<uintptr_t>());
 static_assert(sus::mem::size_of<void (*)()>() <=

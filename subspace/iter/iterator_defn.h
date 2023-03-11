@@ -120,7 +120,7 @@ class IteratorBase {
   /// from the predicate.
   ///
   /// Returns `true` if the iterator is empty.
-  virtual bool all(::sus::fn::FnMut<bool(Item)> f) noexcept;
+  virtual bool all(::sus::fn::FnMutRef<bool(Item)> f) noexcept;
 
   /// Tests whether any elements of the iterator match a predicate.
   ///
@@ -130,7 +130,7 @@ class IteratorBase {
   /// the predicate.
   ///
   /// Returns `false` if the iterator is empty.
-  virtual bool any(::sus::fn::FnMut<bool(Item)> f) noexcept;
+  virtual bool any(::sus::fn::FnMutRef<bool(Item)> f) noexcept;
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -238,7 +238,7 @@ SizeHint IteratorBase<Iter, Item>::size_hint() const noexcept {
 }
 
 template <class Iter, class Item>
-bool IteratorBase<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
+bool IteratorBase<Iter, Item>::all(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
   while (true) {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return true;
@@ -249,7 +249,7 @@ bool IteratorBase<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> f) noexcept {
 }
 
 template <class Iter, class Item>
-bool IteratorBase<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> f) noexcept {
+bool IteratorBase<Iter, Item>::any(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
   while (true) {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return false;

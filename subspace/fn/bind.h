@@ -27,7 +27,7 @@
 #include "subspace/mem/move.h"
 
 /// Bind a const lambda to storage for its bound arguments. The output can be
-/// used to construct a FnOnce, FnMut, or Fn.
+/// used to construct a FnOnceBox, FnMutBox, or FnBox.
 ///
 /// The first argument is a list of variables that will be bound into storage
 /// for access from the lambda, wrapped in sus_store(). If there are no
@@ -79,8 +79,8 @@
   }()
 
 /// A variant of `sus_bind()` which only takes a lambda, omitting the
-/// `sus_store()` list.  The output can be used to construct a FnOnce, FnMut, or
-/// Fn.
+/// `sus_store()` list.  The output can be used to construct a FnOnceBox,
+/// FnMutBox, or FnBox.
 ///
 /// Because there is no `sus_store()` list, the lambda can not capture variables
 /// from the outside scope, however it can still declare captures contained
@@ -89,7 +89,7 @@
 /// # Example
 ///
 /// This defines a lambda with a capture `a` of type `int`, and binds it so it
-/// can be used to construct a FnOnce, FnMut, or Fn.
+/// can be used to construct a FnOnceBox, FnMutBox, or FnBox.
 /// ```
 /// sus_bind0([a = int(1)](char, int){})
 /// ```
@@ -97,7 +97,7 @@
   sus_bind(sus_store(), lambda __VA_OPT__(, ) __VA_ARGS__)
 
 /// Bind a mutable lambda to storage for its bound arguments. The output can be
-/// used to construct a FnOnce or FnMut.
+/// used to construct a FnOnceBox or FnMutBox.
 ///
 /// Because the storage is mutable, the lambda may capture references to the
 /// storage and mutate it, and the lambda itself may be marked mutable.
@@ -144,7 +144,8 @@
   }()
 
 /// A variant of `sus_bind_mut()` which only takes a lambda, omitting the
-/// `sus_store()` list.  The output can be used to construct a FnOnce or FnMut.
+/// `sus_store()` list.  The output can be used to construct a FnOnceBox or
+/// FnMutBox.
 ///
 /// Because there is no `sus_store()` list, the lambda can not capture variables
 /// from the outside scope, however it can still declare captures contained
@@ -155,7 +156,7 @@
 /// # Example
 ///
 /// This defines a lambda with a capture `a` of type `int`, and binds it so it
-/// can be used to construct a FnOnce, FnMut, or Fn.
+/// can be used to construct a FnOnceBox, FnMutBox, or FnBox.
 /// ```
 /// sus_bind0_mut([a = int(1)](char, int){})
 /// ```
