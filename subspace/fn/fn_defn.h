@@ -87,7 +87,8 @@ concept FunctionPointer =
     };
 
 template <class T>
-concept IsFunctionPointer = std::is_pointer_v<T> && std::is_function_v<std::remove_pointer_t<T>>;
+concept IsFunctionPointer =
+    std::is_pointer_v<T> && std::is_function_v<std::remove_pointer_t<T>>;
 
 template <class F>
 concept ConvertsToFunctionPointer = requires(F f) {
@@ -149,9 +150,9 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
   /// Construction from a non-capturing lambda.
   ///
   /// #[doc.overloads=ctor.lambda]
-  template <__private::CallableMut<R, CallArgs...> F>
+  template <__private::CallableConst<R, CallArgs...> F>
     requires(__private::ConvertsToFunctionPointer<F>)
-  constexpr Fn(F&& object) noexcept {
+  constexpr Fn(F&& object sus_lifetimebound) noexcept {
     storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template object_call_const<R, CallArgs...>;
@@ -159,8 +160,8 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
 
   /// Construction from a capturing lambda or other callable object.
   ///
-  /// #[doc.overloads=ctor.lambda]
-  template <__private::CallableMut<R, CallArgs...> F>
+  /// #[doc.overloads=ctor.capturelambda]
+  template <__private::CallableConst<R, CallArgs...> F>
     requires(!__private::ConvertsToFunctionPointer<F>)
   constexpr Fn(F&& object sus_lifetimebound) noexcept {
     storage_.object = ::sus::mem::addressof(object);
@@ -170,12 +171,12 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
 
   ~Fn() noexcept = default;
 
-  constexpr Fn(Fn&& o) noexcept
+  constexpr Fn(Fn&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
-  constexpr Fn& operator=(Fn&& o) noexcept {
+  constexpr Fn& operator=(Fn&& o sus_lifetimebound) noexcept {
     storage_ = o.storage_;
     invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
     ::sus::check(invoke_);  // Catch use-after-move.
@@ -206,12 +207,16 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
   }
 
   /// `sus::construct::From` trait implementation.
+  ///
+  /// Fn satisfies `From<T>` for the same types that it is constructible from:
+  /// function pointers that exactly match its own signature, and const-callable
+  /// objects (lambdas) that are compatible with its signature.
   constexpr static auto from(
       __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
     return Fn(ptr);
   }
-  template <__private::CallableMut<R, CallArgs...> F>
-  constexpr static auto from(F&& object) noexcept {
+  template <__private::CallableConst<R, CallArgs...> F>
+  constexpr static auto from(F&& object sus_lifetimebound) noexcept {
     return Fn(::sus::forward<F>(object));
   }
 
@@ -280,11 +285,23 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
     invoke_ = &__private::Invoker<F>::template fnptr_call_mut<R, CallArgs...>;
   }
 
-  /// Construction from a capturing lambda or other callable object.
+  /// Construction from a non-capturing lambda.
   ///
   /// #[doc.overloads=ctor.lambda]
   template <__private::CallableMut<R, CallArgs...> F>
-  constexpr FnMut(F&& object) noexcept {
+    requires(__private::ConvertsToFunctionPointer<F>)
+  constexpr FnMut(F&& object sus_lifetimebound) noexcept {
+    storage_.object = ::sus::mem::addressof(object);
+    invoke_ = &__private::Invoker<
+        std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
+  }
+
+  /// Construction from a capturing lambda or other callable object.
+  ///
+  /// #[doc.overloads=ctor.capturelambda]
+  template <__private::CallableMut<R, CallArgs...> F>
+    requires(!__private::ConvertsToFunctionPointer<F>)
+  constexpr FnMut(F&& object sus_lifetimebound) noexcept {
     storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
@@ -295,7 +312,7 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   /// Since Fn is callable, FnMut is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
-  constexpr FnMut(Fn<R(CallArgs...)>&& o) noexcept
+  constexpr FnMut(Fn<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
@@ -303,12 +320,12 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
 
   ~FnMut() noexcept = default;
 
-  constexpr FnMut(FnMut&& o) noexcept
+  constexpr FnMut(FnMut&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
-  constexpr FnMut& operator=(FnMut&& o) noexcept {
+  constexpr FnMut& operator=(FnMut&& o sus_lifetimebound) noexcept {
     storage_ = o.storage_;
     invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
     ::sus::check(invoke_);  // Catch use-after-move.
@@ -339,12 +356,16 @@ class [[sus_trivial_abi]] FnMut<R(CallArgs...)> {
   }
 
   /// `sus::construct::From` trait implementation.
+  ///
+  /// FnMut satisfies `From<T>` for the same types that it is constructible
+  /// from: function pointers that exactly match its own signature, and callable
+  /// objects (lambdas) that are compatible with its signature.
   constexpr static auto from(
       __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
     return FnMut(ptr);
   }
   template <__private::CallableMut<R, CallArgs...> F>
-  constexpr static auto from(F&& object) noexcept {
+  constexpr static auto from(F&& object sus_lifetimebound) noexcept {
     return FnMut(::sus::forward<F>(object));
   }
 
@@ -410,11 +431,23 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
     invoke_ = &__private::Invoker<F>::template fnptr_call_mut<R, CallArgs...>;
   }
 
-  /// Construction from a capturing lambda or other callable object.
+  /// Construction from a non-capturing lambda.
   ///
   /// #[doc.overloads=ctor.lambda]
   template <__private::CallableMut<R, CallArgs...> F>
-  constexpr FnOnce(F&& object) noexcept {
+    requires(__private::ConvertsToFunctionPointer<F>)
+  constexpr FnOnce(F&& object sus_lifetimebound) noexcept {
+    storage_.object = ::sus::mem::addressof(object);
+    invoke_ = &__private::Invoker<
+        std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
+  }
+
+  /// Construction from a capturing lambda or other callable object.
+  ///
+  /// #[doc.overloads=ctor.capturelambda]
+  template <__private::CallableMut<R, CallArgs...> F>
+    requires(!__private::ConvertsToFunctionPointer<F>)
+  constexpr FnOnce(F&& object sus_lifetimebound) noexcept {
     storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template object_call_mut<R, CallArgs...>;
@@ -425,7 +458,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// Since FnMut is callable, FnOnce is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
-  constexpr FnOnce(FnMut<R(CallArgs...)>&& o) noexcept
+  constexpr FnOnce(FnMut<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
@@ -436,7 +469,7 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   /// Since Fn is callable, FnOnce is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
-  constexpr FnOnce(Fn<R(CallArgs...)>&& o) noexcept
+  constexpr FnOnce(Fn<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
@@ -444,12 +477,12 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
 
   ~FnOnce() noexcept = default;
 
-  constexpr FnOnce(FnOnce&& o) noexcept
+  constexpr FnOnce(FnOnce&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
-  constexpr FnOnce& operator=(FnOnce&& o) noexcept {
+  constexpr FnOnce& operator=(FnOnce&& o sus_lifetimebound) noexcept {
     storage_ = o.storage_;
     invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
     ::sus::check(invoke_);  // Catch use-after-move.
@@ -468,12 +501,16 @@ class [[sus_trivial_abi]] FnOnce<R(CallArgs...)> {
   }
 
   /// `sus::construct::From` trait implementation.
+  ///
+  /// FnOnce satisfies `From<T>` for the same types that it is constructible
+  /// from: function pointers that exactly match its own signature, and callable
+  /// objects (lambdas) that are compatible with its signature.
   constexpr static auto from(
       __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
     return FnOnce(ptr);
   }
   template <__private::CallableMut<R, CallArgs...> F>
-  constexpr static auto from(F&& object) noexcept {
+  constexpr static auto from(F&& object sus_lifetimebound) noexcept {
     return FnOnce(::sus::forward<F>(object));
   }
 
