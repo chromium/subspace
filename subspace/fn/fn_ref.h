@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <stdint.h>
-
 #include "subspace/fn/callable.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/addressof.h"
