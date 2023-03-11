@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include "subspace/fn/callable.h"
+#include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/never_value.h"
@@ -85,6 +86,14 @@ concept FunctionPointer =
       { (*f)(args...) } -> std::convertible_to<R>;
     };
 
+template <class T>
+concept IsFunctionPointer = std::is_pointer_v<T> && std::is_function_v<std::remove_pointer_t<T>>;
+
+template <class F>
+concept ConvertsToFunctionPointer = requires(F f) {
+  { +f } -> IsFunctionPointer;
+};
+
 template <class F, class R, class... Args>
 concept CallableMut =
     !FunctionPointer<F, R, Args...> && requires(F & f, Args... args) {
@@ -127,7 +136,7 @@ concept CallableConst =
 template <class R, class... CallArgs>
 class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
  public:
-  /// Construction from a function pointer or captureless lambda.
+  /// Construction from a function pointer.
   ///
   /// #[doc.overloads=ctor.fnpointer]
   template <__private::FunctionPointer<R, CallArgs...> F>
@@ -137,11 +146,23 @@ class [[sus_trivial_abi]] Fn<R(CallArgs...)> {
     invoke_ = &__private::Invoker<F>::template fnptr_call_const<R, CallArgs...>;
   }
 
+  /// Construction from a non-capturing lambda.
+  ///
+  /// #[doc.overloads=ctor.lambda]
+  template <__private::CallableMut<R, CallArgs...> F>
+    requires(__private::ConvertsToFunctionPointer<F>)
+  constexpr Fn(F&& object) noexcept {
+    storage_.object = ::sus::mem::addressof(object);
+    invoke_ = &__private::Invoker<
+        std::remove_reference_t<F>>::template object_call_const<R, CallArgs...>;
+  }
+
   /// Construction from a capturing lambda or other callable object.
   ///
   /// #[doc.overloads=ctor.lambda]
   template <__private::CallableMut<R, CallArgs...> F>
-  constexpr Fn(F&& object) noexcept {
+    requires(!__private::ConvertsToFunctionPointer<F>)
+  constexpr Fn(F&& object sus_lifetimebound) noexcept {
     storage_.object = ::sus::mem::addressof(object);
     invoke_ = &__private::Invoker<
         std::remove_reference_t<F>>::template object_call_const<R, CallArgs...>;

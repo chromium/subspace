@@ -494,4 +494,9 @@ TEST(Fn, CallsCorrectOverload) {
   EXPECT_EQ(mut_calls, 2);
 }
 
+TEST(Fn, Lvalue) {
+  Fn<void()> f([]() {});
+  Fn<void()> g([i = 1]() { (void)i; });
+}
+
 }  // namespace
