@@ -666,12 +666,13 @@ class Tuple;
    * panics by returning an unsigned integer.                                 \
    */                                                                         \
   constexpr UnsignedT abs_diff(const T& r) const& noexcept {                  \
-    if (primitive_value >= r.primitive_value)                                 \
-      return __private::into_unsigned(                                        \
-          __private::unchecked_sub(primitive_value, r.primitive_value));      \
-    else                                                                      \
-      return __private::into_unsigned(                                        \
-          __private::unchecked_sub(r.primitive_value, primitive_value));      \
+    if (primitive_value >= r.primitive_value) {                               \
+      return __private::sub_with_unsigned_positive_result(primitive_value,    \
+                                                          r.primitive_value); \
+    } else {                                                                  \
+      return __private::sub_with_unsigned_positive_result(r.primitive_value,  \
+                                                          primitive_value);   \
+    }                                                                         \
   }                                                                           \
   static_assert(true)
 

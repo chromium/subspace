@@ -674,6 +674,14 @@ sus_always_inline constexpr OverflowOut<T> sub_with_overflow_unsigned(
   };
 }
 
+/// SAFETY: Requires that `x > y` so the result will be positive.
+template <class T>
+  requires(std::is_integral_v<T> && std::is_signed_v<T>)
+sus_always_inline constexpr std::make_unsigned_t<T>
+sub_with_unsigned_positive_result(T x, T y) noexcept {
+  return unchecked_sub(into_unsigned(x), into_unsigned(y));
+}
+
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 4)
