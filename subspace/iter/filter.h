@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "subspace/fn/box_fn_defn.h"
+#include "subspace/fn/fn_box_defn.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/mem/move.h"
@@ -28,7 +28,7 @@ template <class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Filter final
     : public IteratorBase<Filter<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
-  using Pred = ::sus::fn::BoxFnMut<bool(
+  using Pred = ::sus::fn::FnMutBox<bool(
       // TODO: write a sus::const_ref<T>?
       const std::remove_reference_t<typename InnerSizedIter::Item>&)>;
 

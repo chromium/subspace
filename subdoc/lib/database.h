@@ -462,7 +462,7 @@ struct Database {
     sus::Vec<Comment*> to_resolve;
     {
       sus::Vec<Comment*>* to_resolve_ptr = &to_resolve;
-      sus::fn::BoxFnMut<void(Comment&)> fn = sus_bind_mut(
+      sus::fn::FnMutBox<void(Comment&)> fn = sus_bind_mut(
           sus_store(sus_unsafe_pointer(to_resolve_ptr)), [&](Comment& c) {
             if (c.attrs.inherit.is_some()) {
               to_resolve_ptr->push(&c);
