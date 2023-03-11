@@ -27,7 +27,7 @@
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/containers/slice.h"
 #include "subspace/fn/callable.h"
-#include "subspace/fn/box_fn_defn.h"
+#include "subspace/fn/fn_box_defn.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"

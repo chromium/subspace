@@ -168,7 +168,7 @@ class IteratorBase {
   ///
   /// The returned iterator's type is whatever is returned by the closure.
   template <class T, int&..., class R = std::invoke_result_t<T, Item&&>,
-  class B = ::sus::fn::BoxFnMut<R(Item&&)>>
+  class B = ::sus::fn::FnMutBox<R(Item&&)>>
     requires(!std::is_void_v<R> && Into<T, B>)
   auto map(T fn) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
@@ -178,7 +178,7 @@ class IteratorBase {
   ///
   /// Given an element the closure must return true or false. The returned
   /// iterator will yield only the elements for which the closure returns true.
-  auto filter(::sus::fn::BoxFnMut<bool(const std::remove_reference_t<Item>&)>
+  auto filter(::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
                   pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
@@ -289,7 +289,7 @@ auto IteratorBase<Iter, Item>::map(T fn) && noexcept
 
 template <class Iter, class Item>
 auto IteratorBase<Iter, Item>::filter(
-    ::sus::fn::BoxFnMut<bool(const std::remove_reference_t<Item>&)>
+    ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
