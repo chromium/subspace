@@ -516,7 +516,7 @@ class Option final {
   ///
   /// This method differs from <unwrap_or_else>() in that it does not consume
   /// the Option, and instead it can not be called on rvalues.
-  T& get_or_insert_with(::sus::fn::FnOnce<T> auto&& f) & noexcept {
+  T& get_or_insert_with(::sus::fn::FnOnce<T()> auto&& f) & noexcept {
     if (t_.state() == None)
       t_.construct_from_none(move_to_storage(::sus::move(f)()));
     return t_.val_mut();
@@ -543,7 +543,7 @@ class Option final {
   /// Returns an `Option<R>` in state #None if the current Option is in state
   /// #None.
   constexpr auto map(
-      ::sus::fn::FnOnce<::sus::fn::NonVoid, T&&> auto&& m) && noexcept {
+      ::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> auto&& m) && noexcept {
     using R = std::invoke_result_t<decltype(m), T&&>;
     if (t_.state() == Some) {
       return Option<R>(::sus::move(m)(t_.take_and_set_none()));
@@ -558,7 +558,7 @@ class Option final {
   /// Arguments passed to map_or are eagerly evaluated; if you are passing the
   /// result of a function call, it is recommended to use map_or_else, which is
   /// lazily evaluated.
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid, T&&> MapFn, int&...,
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
             class R = std::invoke_result_t<MapFn&&, T&&>>
   constexpr R map_or(R default_result, MapFn&& m) && noexcept {
     if (t_.state() == Some) {
