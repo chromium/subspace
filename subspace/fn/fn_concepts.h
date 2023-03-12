@@ -14,86 +14,26 @@
 
 #pragma once
 
-#include <concepts>
-
-#include "subspace/mem/forward.h"
+#include "subspace/fn/__private/signature.h"
 #include "subspace/mem/move.h"
 
 namespace sus::fn {
 
+/// When used as the return type of the function signature in `Fn`, `FnMut` and
+/// `FnOnce`, the concepts will match against any return type from a functor
+/// except `void`.
 struct NonVoid {
   template <class T>
   constexpr NonVoid(T&&) noexcept {}
 };
 
+/// When used as the return type of the function signature in `Fn`, `FnMut` and
+/// `FnOnce`, the concepts will match against any return type from a functor
+/// including `void`.
 struct Anything {
   template <class T>
   constexpr Anything(T&&) noexcept {}
 };
-
-namespace __private {
-template <class... Ts>
-struct Pack;
-
-template <class R, class... Args>
-struct Sig;
-
-template <class R, class... A>
-struct Sig<R(A...)> {
-  using Return = R;
-  using Args = Pack<A...>;
-};
-
-struct NoOverloadMatchesArguments {};
-
-template <class F, class ArgsPack>
-struct InvokedFnOnce {
-  constexpr static NoOverloadMatchesArguments return_type();
-};
-
-template <class F, class... Ts>
-  requires requires(F&& f) {
-    { ::sus::move(f)(std::declval<Ts>()...) };
-  }
-struct InvokedFnOnce<F, Pack<Ts...>> {
-  constexpr static decltype(std::declval<F&&>()(std::declval<Ts>()...))
-  return_type();
-};
-
-template <class F, class ArgsPack>
-struct InvokedFnMut {
-  constexpr static NoOverloadMatchesArguments return_type();
-};
-
-template <class F, class... Ts>
-  requires requires(F& f) {
-    { f(std::declval<Ts>()...) };
-  }
-struct InvokedFnMut<F, Pack<Ts...>> {
-  constexpr static decltype(std::declval<F&>()(std::declval<Ts>()...))
-  return_type();
-};
-
-template <class F, class ArgsPack>
-struct InvokedFn {
-  constexpr static NoOverloadMatchesArguments return_type();
-};
-
-template <class F, class... Ts>
-  requires requires(const F& f) {
-    { f(std::declval<Ts>()...) };
-  }
-struct InvokedFn<F, Pack<Ts...>> {
-  constexpr static decltype(std::declval<const F&>()(std::declval<Ts>()...))
-  return_type();
-};
-
-template <class ReturnType, class T>
-concept ValidReturnType =
-    !std::same_as<ReturnType, NoOverloadMatchesArguments> &&
-    (std::same_as<::sus::fn::Anything, T> ||
-     std::convertible_to<ReturnType, T>);
-}  // namespace __private
 
 /// The version of a callable object that is called on an rvalue (moved-from)
 /// receiver. A `FnOnce` is typically the best fit for any callable that will
@@ -116,6 +56,8 @@ concept ValidReturnType =
 /// ```
 ///
 /// # Use of `FnOnce`
+/// The `sus::run_once()` helper ensures that FnOnce is called correctly.
+///
 /// A `FnOnce` should only be called once, and should be moved with
 /// `sus::move()` when calling it.  It is typically received as an rvalue
 /// reference to avoid an unnecessary copy or move operation.
@@ -153,11 +95,14 @@ concept ValidReturnType =
 /// });
 ///  sus::check(x == 400 + 4);
 /// ```
-template <class F, class S>
+template <class F, class... S>
 concept FnOnce = requires(F&& f) {
+  // Receives and passes along the signature as a pack instead of a single
+  // argument in order to consistently provide a static_assert() in `Sig` when
+  // `S` is not a function signature.
   {
-    __private::InvokedFnOnce<F, typename __private::Sig<S>::Args>::return_type()
-  } -> __private::ValidReturnType<typename __private::Sig<S>::Return>;
+    __private::InvokedFnOnce<F, typename __private::Sig<S...>::Args>::returns()
+  } -> __private::ValidReturnType<typename __private::Sig<S...>::Return>;
 };
 
 /// The version of a callable object that is allowed to mutate internal state
@@ -185,6 +130,8 @@ concept FnOnce = requires(F&& f) {
 /// ```
 ///
 /// # Use of `FnMut`
+/// The `sus::run_mut()` helper ensures that `FnMut` is called correctly.
+///
 /// A `FnMut` may be called any number of times, unlike `FnOnce`, and need not
 /// be moved when called. It is typically received as a function parameter by
 /// value, which isolates any internal mutation to the current function.
@@ -219,13 +166,16 @@ concept FnOnce = requires(F&& f) {
 /// });
 /// sus::check(x == 401 + 102);
 /// ```
-template <class F, class S>
+template <class F, class... S>
 concept FnMut = requires(F& f) {
+  // Receives and passes along the signature as a pack instead of a single
+  // argument in order to consistently provide a static_assert() in `Sig` when
+  // `S` is not a function signature.
   {
-    __private::InvokedFnMut<F, typename __private::Sig<S>::Args>::return_type()
-  } -> __private::ValidReturnType<typename __private::Sig<S>::Return>;
+    __private::InvokedFnMut<F, typename __private::Sig<S...>::Args>::returns()
+  } -> __private::ValidReturnType<typename __private::Sig<S...>::Return>;
 
-  requires FnOnce<F, S>;
+  requires FnOnce<F, S...>;
 };
 
 /// The version of a callable object that may be called multiple times without
@@ -253,6 +203,8 @@ concept FnMut = requires(F& f) {
 /// ```
 ///
 /// # Use of `Fn`
+/// The `sus::run()` helper ensures that `Fn` is called correctly.
+///
 /// A `Fn` may be called any number of times, unlike `FnOnce`, and need not
 /// be moved when called. It is typically received as a function parameter as a
 /// const reference, which ensures a non-mutating call operator will be used.
@@ -286,14 +238,17 @@ concept FnMut = requires(F& f) {
 /// });
 /// sus::check(x == 401 + 101);
 /// ```
-template <class F, class S>
+template <class F, class... S>
 concept Fn = requires(const F& f) {
+  // Receives and passes along the signature as a pack instead of a single
+  // argument in order to consistently provide a static_assert() in `Sig` when
+  // `S` is not a function signature.
   {
-    __private::InvokedFn<F, typename __private::Sig<S>::Args>::return_type()
-  } -> __private::ValidReturnType<typename __private::Sig<S>::Return>;
+    __private::InvokedFn<F, typename __private::Sig<S...>::Args>::returns()
+  } -> __private::ValidReturnType<typename __private::Sig<S...>::Return>;
 
-  requires FnMut<F, S>;
-  requires FnOnce<F, S>;
+  requires FnMut<F, S...>;
+  requires FnOnce<F, S...>;
 };
 
 }  // namespace sus::fn
