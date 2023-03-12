@@ -539,7 +539,7 @@ class [[nodiscard]] Result final {
                                          mref(storage_.err_));
   }
 
-  constexpr Once<const T&> iter() const& noexcept sus_lifetimebound {
+  constexpr Once<const T&> iter() const& noexcept {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (state_ == __private::ResultState::IsOk)
       return Once<const T&>::with(Option<const T&>::some(storage_.ok_));
@@ -548,7 +548,7 @@ class [[nodiscard]] Result final {
   }
   Once<const T&> iter() const&& = delete;
 
-  constexpr Once<T&> iter_mut() & noexcept sus_lifetimebound {
+  constexpr Once<T&> iter_mut() & noexcept {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (state_ == __private::ResultState::IsOk)
       return Once<T&>::with(Option<T&>::some(mref(storage_.ok_)));
