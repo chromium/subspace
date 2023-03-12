@@ -27,6 +27,7 @@
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/default.h"
 #include "subspace/fn/fn_concepts.h"
+#include "subspace/fn/run_fn.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
 #include "subspace/macros/always_inline.h"
@@ -81,13 +82,18 @@ using sus::iter::Once;
 using sus::option::__private::Storage;
 using sus::option::__private::StoragePointer;
 
-/// A type which either holds #Some value of type `T`, or #None.
+/// A type which either holds `Some` value of type `T`, or `None`.
+///
+/// To immediately pull the inner value out of an Option, use `unwrap()`. If the
+/// `Option` is an lvalue, use `operator*` and `operator->` to access the inner
+/// value. However if doing this many times, consider doing `unwrap()` a single
+/// time up front.
 ///
 /// `Option<const T>` for non-reference-type `T` is disallowed, as the Option
 /// owns the `T` in that case and it ensures the `Option` and the `T` are both
 /// accessed with the same const-ness.
 ///
-/// If a type `T` satisties `sus::mem::NeverValueField`, then Option<T> will
+/// If a type `T` satisties `sus::mem::NeverValueField`, then `Option<T>` will
 /// have the same size as T.
 template <class T>
 class Option final {
@@ -101,7 +107,7 @@ class Option final {
  public:
   /// Default-construct an Option that is holding no value.
   ///
-  /// The Option's contained type `T` must be #Default.
+  /// The Option's contained type `T` must satisfy `sus::construct::Default`.
   inline constexpr Option() noexcept = default;
 
   /// Construct an Option that is holding the given value.
@@ -123,7 +129,7 @@ class Option final {
     }
   }
 
-  static inline constexpr Option some(T t) noexcept
+  static inline constexpr Option some(T& t) noexcept
     requires(std::is_reference_v<T>)
   {
     return Option(move_to_storage(t));
@@ -442,13 +448,11 @@ class Option final {
 
   /// Returns the contained value inside the Option, if there is one.
   /// Otherwise, returns the result of the given function.
-  template <class Functor>
-    requires(std::is_same_v<std::invoke_result_t<Functor>, T>)
-  constexpr T unwrap_or_else(Functor f) && noexcept {
+  constexpr T unwrap_or_else(::sus::fn::FnOnce<T()> auto&& f) && noexcept {
     if (t_.state() == Some) {
       return t_.take_and_set_none();
     } else {
-      return f();
+      return ::sus::run_once(::sus::move(f));
     }
   }
 
@@ -517,8 +521,9 @@ class Option final {
   /// This method differs from <unwrap_or_else>() in that it does not consume
   /// the Option, and instead it can not be called on rvalues.
   T& get_or_insert_with(::sus::fn::FnOnce<T()> auto&& f) & noexcept {
-    if (t_.state() == None)
-      t_.construct_from_none(move_to_storage(::sus::move(f)()));
+    if (t_.state() == None) {
+      t_.construct_from_none(move_to_storage(::sus::run_once(::sus::move(f))));
+    }
     return t_.val_mut();
   }
 
@@ -542,11 +547,11 @@ class Option final {
   ///
   /// Returns an `Option<R>` in state #None if the current Option is in state
   /// #None.
-  constexpr auto map(
-      ::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> auto&& m) && noexcept {
-    using R = std::invoke_result_t<decltype(m), T&&>;
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
+            class R = std::invoke_result_t<MapFn&&, T&&>>
+  constexpr auto map(MapFn&& m) && noexcept {
     if (t_.state() == Some) {
-      return Option<R>(::sus::move(m)(t_.take_and_set_none()));
+      return Option<R>(::sus::run_once(::sus::move(m), t_.take_and_set_none()));
     } else {
       return Option<R>::none();
     }
@@ -562,7 +567,7 @@ class Option final {
             class R = std::invoke_result_t<MapFn&&, T&&>>
   constexpr R map_or(R default_result, MapFn&& m) && noexcept {
     if (t_.state() == Some) {
-      return ::sus::move(m)(t_.take_and_set_none());
+      return ::sus::run_once(::sus::move(m), t_.take_and_set_none());
     } else {
       return default_result;
     }
@@ -570,15 +575,16 @@ class Option final {
 
   /// Computes a default function result (if none), or applies a different
   /// function to the contained value (if any).
-  template <class DefaultFn, class MapFn, int&...,
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid()> DefaultFn,
+            ::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
             class D = std::invoke_result_t<DefaultFn>,
             class R = std::invoke_result_t<MapFn, T&&>>
-    requires(!std::is_void_v<R> && std::is_same_v<D, R>)
-  constexpr R map_or_else(DefaultFn default_fn, MapFn m) && noexcept {
+    requires(std::is_same_v<D, R>)
+  constexpr R map_or_else(DefaultFn&& default_fn, MapFn&& m) && noexcept {
     if (t_.state() == Some) {
-      return m(t_.take_and_set_none());
+      return ::sus::run_once(::sus::move(m), t_.take_and_set_none());
     } else {
-      return default_fn();
+      return ::sus::run_once(::sus::move(default_fn));
     }
   }
 
@@ -588,11 +594,10 @@ class Option final {
   /// #None.
   ///
   /// The predicate function must take `const T&` and return `bool`.
-  template <class Predicate>
-    requires(std::is_same_v<std::invoke_result_t<Predicate, const T&>, bool>)
-  constexpr Option<T> filter(Predicate p) && noexcept {
+  constexpr Option<T> filter(
+      ::sus::fn::FnOnce<bool(const T&)> auto&& p) && noexcept {
     if (t_.state() == Some) {
-      if (p(t_.val())) {
+      if (::sus::run_once(::sus::move(p), t_.val())) {
         return Option(t_.take_and_set_none());
       } else {
         // The state has to become None, and we must destroy the inner T.
@@ -617,19 +622,22 @@ class Option final {
   }
 
   /// Consumes this Option and returns an Option with #None if this Option holds
-  /// #None, otherwise calls `f` with the contained value and returns an Option
-  /// with the result.
+  /// #None, otherwise calls `f` with the contained value and returns the
+  /// result.
+  ///
+  /// The function `f` receives the Option's inner `T` and can return any
+  /// `Option<U>`.
   ///
   /// Some languages call this operation flatmap.
-  template <
-      class AndFn, int&..., class R = std::invoke_result_t<AndFn, T&&>,
-      class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type>
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> AndFn, int&...,
+            class R = std::invoke_result_t<AndFn, T&&>,
+            class U = ::sus::option::__private::IsOptionType<R>::inner_type>
     requires(::sus::option::__private::IsOptionType<R>::value)
-  constexpr Option<InnerR> and_then(AndFn f) && noexcept {
+  constexpr Option<U> and_then(AndFn&& f) && noexcept {
     if (t_.state() == Some)
-      return f(t_.take_and_set_none());
+      return ::sus::run_once(::sus::move(f), t_.take_and_set_none());
     else
-      return Option<InnerR>::none();
+      return Option<U>::none();
   }
 
   /// Consumes and returns an Option with the same value if this Option contains
@@ -643,13 +651,12 @@ class Option final {
 
   /// Consumes and returns an Option with the same value if this Option contains
   /// a value, otherwise returns the Option returned by `f`.
-  template <class ElseFn, int&..., class R = std::invoke_result_t<ElseFn>>
-    requires(std::is_same_v<R, Option<T>>)
-  constexpr Option<T> or_else(ElseFn f) && noexcept {
+  constexpr Option<T> or_else(
+      ::sus::fn::FnOnce<Option<T>()> auto&& f) && noexcept {
     if (t_.state() == Some)
       return Option(t_.take_and_set_none());
     else
-      return ::sus::move(f)();
+      return ::sus::run_once(::sus::move(f));
   }
 
   /// Consumes this Option and returns an Option, holding the value from either
@@ -694,15 +701,16 @@ class Option final {
   /// `Ok(v)` and `None` to `Err(f())`.
   //
   // TODO: No refs in Result: https://github.com/chromium/subspace/issues/133
-  template <class ElseFn, int&..., class E = std::invoke_result_t<ElseFn>,
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid()> ElseFn, int&...,
+            class E = std::invoke_result_t<ElseFn>,
             class Result = ::sus::result::Result<T, E>>
-  constexpr Result ok_or_else(ElseFn f) && noexcept
+  constexpr Result ok_or_else(ElseFn&& f) && noexcept
     requires(!std::is_reference_v<T> && !std::is_reference_v<E>)
   {
     if (t_.state() == Some)
       return Result::with(t_.take_and_set_none());
     else
-      return Result::with_err(::sus::move(f)());
+      return Result::with_err(::sus::run_once(::sus::move(f)));
   }
 
   /// Transposes an #Option of a #Result into a #Result of an #Option.
@@ -836,10 +844,13 @@ class Option final {
   // Calling as_ref() on an rvalue is not returning a reference to the inner
   // value if the inner value is already a reference, so we allow calling it on
   // an rvalue Option in that case.
-  constexpr Option<const std::remove_reference_t<T>&> as_ref() const&& noexcept
+  constexpr Option<const std::remove_reference_t<T>&> as_ref() && noexcept
     requires(std::is_reference_v<T>)
   {
-    return as_ref();
+    if (t_.state() == None)
+      return Option<const std::remove_reference_t<T>&>::none();
+    else
+      return Option<const std::remove_reference_t<T>&>(t_.take_and_set_none());
   }
 
   /// Returns an Option<T&> from this Option<T>, that either holds #None or a
@@ -853,18 +864,31 @@ class Option final {
   // Calling as_mut() on an rvalue is not returning a reference to the inner
   // value if the inner value is already a reference, so we allow calling it on
   // an rvalue Option in that case.
-  constexpr Option<const std::remove_reference_t<T>&> as_mut() && noexcept
+  constexpr Option<T&> as_mut() && noexcept
     requires(std::is_reference_v<T>)
   {
-    return as_mut();
+    if (t_.state() == None)
+      return Option<T&>::none();
+    else
+      return Option<T&>(t_.take_and_set_none());
   }
 
   constexpr Once<const std::remove_reference_t<T>&> iter() const& noexcept {
     return Once<const std::remove_reference_t<T>&>::with(as_ref());
   }
-  constexpr Once<const T&> iter() const&& = delete;
+  constexpr Once<const std::remove_reference_t<T>&> iter() && noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return Once<const std::remove_reference_t<T>&>::with(
+        ::sus::move(*this).as_ref());
+  }
 
   constexpr Once<T&> iter_mut() & noexcept { return Once<T&>::with(as_mut()); }
+  constexpr Once<T&> iter_mut() && noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return Once<T&>::with(::sus::move(*this).as_mut());
+  }
 
   constexpr Once<T> into_iter() && noexcept { return Once<T>::with(take()); }
 
