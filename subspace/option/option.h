@@ -31,7 +31,7 @@
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
 #include "subspace/macros/always_inline.h"
-#include "subspace/macros/compiler.h"
+#include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/nonnull.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
@@ -129,7 +129,7 @@ class Option final {
     }
   }
 
-  static inline constexpr Option some(T& t) noexcept
+  static inline constexpr Option some(T& t sus_lifetimebound) noexcept
     requires(std::is_reference_v<T>)
   {
     return Option(move_to_storage(t));
@@ -385,12 +385,14 @@ class Option final {
   ///   reuse, making variable names bad.
   /// * It's expected due to std::optional and general container-of-one things
   ///   to provide access through operator* and operator->.
-  constexpr const std::remove_reference_t<T>& operator*() const& noexcept {
+  constexpr const std::remove_reference_t<T>& operator*() const& noexcept
+      sus_lifetimebound {
     ::sus::check(t_.state() == Some);
     return t_.val();
   }
   constexpr const std::remove_reference_t<T>* operator*() && noexcept = delete;
-  constexpr std::remove_reference_t<T>& operator*() & noexcept {
+  constexpr std::remove_reference_t<T>& operator*() & noexcept
+      sus_lifetimebound {
     ::sus::check(t_.state() == Some);
     return t_.val_mut();
   }
@@ -420,13 +422,15 @@ class Option final {
   ///   reuse, making variable names bad.
   /// * It's expected due to std::optional and general container-of-one things
   ///   to provide access through operator* and operator->.
-  constexpr const std::remove_reference_t<T>* operator->() const& noexcept {
+  constexpr const std::remove_reference_t<T>* operator->() const& noexcept
+      sus_lifetimebound {
     ::sus::check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<const std::remove_reference_t<T>&>(t_.val()));
   }
   constexpr const std::remove_reference_t<T>* operator->() && noexcept;
-  constexpr std::remove_reference_t<T>* operator->() & noexcept {
+  constexpr std::remove_reference_t<T>* operator->() & noexcept
+      sus_lifetimebound {
     ::sus::check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<std::remove_reference_t<T>&>(t_.val_mut()));
@@ -486,7 +490,7 @@ class Option final {
   ///
   /// If it is non-trivial to construct `T`, the <get_or_insert_with>() method
   /// would be preferable, as it only constructs a `T` if needed.
-  T& get_or_insert(T t) & noexcept
+  T& get_or_insert(T t) & noexcept sus_lifetimebound
     requires(sus::mem::MoveOrRef<T>)
   {
     if (t_.state() == None) {
@@ -507,7 +511,7 @@ class Option final {
   ///
   /// The Option's contained type `T` must be #Default, and will be
   /// constructed through that trait.
-  constexpr T& get_or_insert_default() & noexcept
+  constexpr T& get_or_insert_default() & noexcept sus_lifetimebound
     requires(::sus::construct::Default<T>)
   {
     if (t_.state() == None) t_.construct_from_none(T());
@@ -835,7 +839,8 @@ class Option final {
 
   /// Returns an Option<const T&> from this Option<T>, that either holds #None
   /// or a reference to the value in this Option.
-  constexpr Option<const std::remove_reference_t<T>&> as_ref() const& noexcept {
+  constexpr Option<const std::remove_reference_t<T>&> as_ref() const& noexcept
+      sus_lifetimebound {
     if (t_.state() == None)
       return Option<const std::remove_reference_t<T>&>::none();
     else
@@ -855,7 +860,7 @@ class Option final {
 
   /// Returns an Option<T&> from this Option<T>, that either holds #None or a
   /// reference to the value in this Option.
-  constexpr Option<T&> as_mut() & noexcept {
+  constexpr Option<T&> as_mut() & noexcept sus_lifetimebound {
     if (t_.state() == None)
       return Option<T&>::none();
     else
@@ -873,7 +878,8 @@ class Option final {
       return Option<T&>(t_.take_and_set_none());
   }
 
-  constexpr Once<const std::remove_reference_t<T>&> iter() const& noexcept {
+  constexpr Once<const std::remove_reference_t<T>&> iter() const& noexcept
+      sus_lifetimebound {
     return Once<const std::remove_reference_t<T>&>::with(as_ref());
   }
   constexpr Once<const std::remove_reference_t<T>&> iter() && noexcept
@@ -883,7 +889,9 @@ class Option final {
         ::sus::move(*this).as_ref());
   }
 
-  constexpr Once<T&> iter_mut() & noexcept { return Once<T&>::with(as_mut()); }
+  constexpr Once<T&> iter_mut() & noexcept sus_lifetimebound {
+    return Once<T&>::with(as_mut());
+  }
   constexpr Once<T&> iter_mut() && noexcept
     requires(std::is_reference_v<T>)
   {
@@ -1048,7 +1056,7 @@ using sus::iter::__private::end;
 /// Option<T&> correctly.
 template <class T>
 [[nodiscard]] inline constexpr __private::SomeMarker<T&&> some(
-    T&& t sus_if_clang([[clang::lifetimebound]])) noexcept {
+    T&& t sus_lifetimebound) noexcept {
   return __private::SomeMarker<T&&>(::sus::forward<T>(t));
 }
 
