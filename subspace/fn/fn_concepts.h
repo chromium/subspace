@@ -32,10 +32,68 @@ struct Anything {
 };
 
 namespace __private {
+template <class... Ts>
+struct Pack;
+
+template <class R, class... Args>
+struct Sig;
+
+template <class R, class... A>
+struct Sig<R(A...)> {
+  using Return = R;
+  using Args = Pack<A...>;
+};
+
+struct NoOverloadMatchesArguments {};
+
+template <class F, class ArgsPack>
+struct InvokedFnOnce {
+  constexpr static NoOverloadMatchesArguments return_type();
+};
+
+template <class F, class... Ts>
+  requires requires(F&& f) {
+    { ::sus::move(f)(std::declval<Ts>()...) };
+  }
+struct InvokedFnOnce<F, Pack<Ts...>> {
+  constexpr static decltype(std::declval<F&&>()(std::declval<Ts>()...))
+  return_type();
+};
+
+template <class F, class ArgsPack>
+struct InvokedFnMut {
+  constexpr static NoOverloadMatchesArguments return_type();
+};
+
+template <class F, class... Ts>
+  requires requires(F& f) {
+    { f(std::declval<Ts>()...) };
+  }
+struct InvokedFnMut<F, Pack<Ts...>> {
+  constexpr static decltype(std::declval<F&>()(std::declval<Ts>()...))
+  return_type();
+};
+
+template <class F, class ArgsPack>
+struct InvokedFn {
+  constexpr static NoOverloadMatchesArguments return_type();
+};
+
+template <class F, class... Ts>
+  requires requires(const F& f) {
+    { f(std::declval<Ts>()...) };
+  }
+struct InvokedFn<F, Pack<Ts...>> {
+  constexpr static decltype(std::declval<const F&>()(std::declval<Ts>()...))
+  return_type();
+};
+
 template <class ReturnType, class T>
-concept CorrectReturn =
-    std::same_as<::sus::fn::Anything, T> || std::convertible_to<ReturnType, T>;
-}
+concept ValidReturnType =
+    !std::same_as<ReturnType, NoOverloadMatchesArguments> &&
+    (std::same_as<::sus::fn::Anything, T> ||
+     std::convertible_to<ReturnType, T>);
+}  // namespace __private
 
 /// The version of a callable object that is called on an rvalue (moved-from)
 /// receiver. A `FnOnce` is typically the best fit for any callable that will
@@ -48,6 +106,14 @@ concept CorrectReturn =
 /// being callable as an rvalue (which is done by providing an operator() that
 /// is not `&`-qualified). Mutable and const lambdas will satisfy
 /// `FnOnce`.
+///
+/// The second argument of `FnOnce<F, S>` is a function signature with the
+/// format `ReturnType(Args...)`, where `Args...` are the arguments that will
+/// be passed to the `FnOnce` and `ReturnType` is what is expected to be
+/// received back. It would appear as a matching concept as:
+/// ```
+/// void function(FnOnce<ReturnType(Args...)> auto&& f) { ... }
+/// ```
 ///
 /// # Use of `FnOnce`
 /// A `FnOnce` should only be called once, and should be moved with
@@ -78,7 +144,7 @@ concept CorrectReturn =
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// i32 call_once(sus::fn::FnOnce<i32, sus::Option<i32>> auto&& f) {
+/// i32 call_once(sus::fn::FnOnce<i32(sus::Option<i32>)> auto&& f) {
 ///   return sus::move(f)(sus::some(400));  // Returns an i32.
 /// }
 ///
@@ -87,11 +153,11 @@ concept CorrectReturn =
 /// });
 ///  sus::check(x == 400 + 4);
 /// ```
-template <class F, class R, class... Args>
-concept FnOnce = requires(F&& f, Args... args) {
+template <class F, class S>
+concept FnOnce = requires(F&& f) {
   {
-    ::sus::move(f)(::sus::forward<Args>(args)...)
-  } -> __private::CorrectReturn<R>;
+    __private::InvokedFnOnce<F, typename __private::Sig<S>::Args>::return_type()
+  } -> __private::ValidReturnType<typename __private::Sig<S>::Return>;
 };
 
 /// The version of a callable object that is allowed to mutate internal state
@@ -109,6 +175,14 @@ concept FnOnce = requires(F&& f, Args... args) {
 /// being callable as an lvalue (which is done by providing an operator() that
 /// is not `&&`-qualified). Mutable and const lambdas will satisfy
 /// `FnMut`.
+///
+/// The second argument of `FnMut<F, S>` is a function signature with the
+/// format `ReturnType(Args...)`, where `Args...` are the arguments that will
+/// be passed to the `FnMut` and `ReturnType` is what is expected to be
+/// received back. It would appear as a matching concept as:
+/// ```
+/// void function(FnMut<ReturnType(Args...)> auto f) { ... }
+/// ```
 ///
 /// # Use of `FnMut`
 /// A `FnMut` may be called any number of times, unlike `FnOnce`, and need not
@@ -135,7 +209,7 @@ concept FnOnce = requires(F&& f, Args... args) {
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// static i32 call_mut(sus::fn::FnMut<i32, sus::Option<i32>> auto f) {
+/// static i32 call_mut(sus::fn::FnMut<i32(sus::Option<i32>)> auto f) {
 ///   return f(sus::some(400)) + f(sus::some(100));  // Returns an i32.
 /// }
 ///
@@ -145,10 +219,13 @@ concept FnOnce = requires(F&& f, Args... args) {
 /// });
 /// sus::check(x == 401 + 102);
 /// ```
-template <class F, class R, class... Args>
-concept FnMut = requires(F& f, Args... args) {
-  { f(::sus::forward<Args>(args)...) } -> __private::CorrectReturn<R>;
-  requires FnOnce<F, R, Args...>;
+template <class F, class S>
+concept FnMut = requires(F& f) {
+  {
+    __private::InvokedFnMut<F, typename __private::Sig<S>::Args>::return_type()
+  } -> __private::ValidReturnType<typename __private::Sig<S>::Return>;
+
+  requires FnOnce<F, S>;
 };
 
 /// The version of a callable object that may be called multiple times without
@@ -166,6 +243,14 @@ concept FnMut = requires(F& f, Args... args) {
 /// being callable as an lvalue (which is done by providing an operator() that
 /// is not `&&`-qualified). Mutable and const lambdas will satisfy
 /// `FnMut`.
+///
+/// The second argument of `Fn<F, S>` is a function signature with the format
+/// `ReturnType(Args...)`, where `Args...` are the arguments that will be passed
+/// to the `Fn` and `ReturnType` is what is expected to be received back. It
+/// would appear as a matching concept as:
+/// ```
+/// void function(const Fn<ReturnType(Args...)> auto& f) { ... }
+/// ```
 ///
 /// # Use of `Fn`
 /// A `Fn` may be called any number of times, unlike `FnOnce`, and need not
@@ -192,20 +277,23 @@ concept FnMut = requires(F& f, Args... args) {
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// static i32 call_fn(const sus::fn::Fn<i32, sus::Option<i32>> auto& f) {
+/// static i32 call_fn(const sus::fn::Fn<i32(sus::Option<i32>)> auto& f) {
 ///   return f(sus::some(400)) + f(sus::some(100));  // Returns an i32.
 /// }
-/// 
+///
 /// i32 x = call_fn([i = 1_i32](sus::Option<i32> o) -> i32 {
 ///   return sus::move(o).unwrap_or_default() + i;
 /// });
 /// sus::check(x == 401 + 101);
 /// ```
-template <class F, class R, class... Args>
-concept Fn = requires(const F& f, Args... args) {
-  { f(::sus::forward<Args>(args)...) } -> __private::CorrectReturn<R>;
-  requires FnMut<F, R, Args...>;
-  requires FnOnce<F, R, Args...>;
+template <class F, class S>
+concept Fn = requires(const F& f) {
+  {
+    __private::InvokedFn<F, typename __private::Sig<S>::Args>::return_type()
+  } -> __private::ValidReturnType<typename __private::Sig<S>::Return>;
+
+  requires FnMut<F, S>;
+  requires FnOnce<F, S>;
 };
 
 }  // namespace sus::fn
