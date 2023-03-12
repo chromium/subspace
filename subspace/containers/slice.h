@@ -25,6 +25,7 @@
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/fn/callable.h"
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/macros/lifetimebound.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
 #include "subspace/num/unsigned_integer.h"
@@ -67,7 +68,7 @@ class [[sus_trivial_abi]] Slice {
   // sus::construct::From<Slice<T>, T[]> trait.
   template <size_t N>
     requires(N <= size_t{PTRDIFF_MAX})
-  static constexpr inline Slice from(T (&data)[N]) {
+  static constexpr inline Slice from(T (&data)[N] sus_lifetimebound) {
     return Slice(data, N);
   }
 
@@ -82,12 +83,13 @@ class [[sus_trivial_abi]] Slice {
   /// # Panics
   /// If the index `i` is beyond the end of the slice, the function will panic.
   /// #[doc.overloads=slice.index.usize]
-  constexpr inline const T& operator[](usize i) const& noexcept {
+  constexpr inline const T& operator[](usize i) const& noexcept
+      sus_lifetimebound {
     check(i < len_);
     return data_[i.primitive_value];
   }
 
-  constexpr T& operator[](usize i) & noexcept
+  constexpr T& operator[](usize i) & noexcept sus_lifetimebound
     requires(!std::is_const_v<T>)
   {
     check(i < len_);
@@ -96,7 +98,7 @@ class [[sus_trivial_abi]] Slice {
 
   /// Returns a const reference to the element at index `i`, or `None` if
   /// `i` is beyond the end of the Slice.
-  constexpr Option<const T&> get(usize i) const& noexcept {
+  constexpr Option<const T&> get(usize i) const& noexcept sus_lifetimebound {
     if (i < len_) [[likely]]
       return Option<const T&>::some(data_[i.primitive_value]);
     else
@@ -105,7 +107,7 @@ class [[sus_trivial_abi]] Slice {
 
   /// Returns a mutable reference to the element at index `i`, or `None` if
   /// `i` is beyond the end of the Slice.
-  constexpr Option<T&> get_mut(usize i) & noexcept
+  constexpr Option<T&> get_mut(usize i) & noexcept sus_lifetimebound
     requires(!std::is_const_v<T>)
   {
     if (i < len_) [[likely]]
@@ -121,7 +123,8 @@ class [[sus_trivial_abi]] Slice {
   /// Behaviour results. The size of the slice must therefore also have a length
   /// of at least 1.
   constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                          usize i) const& noexcept {
+                                          usize i) const& noexcept
+      sus_lifetimebound {
     return data_[i.primitive_value];
   }
 
@@ -132,7 +135,7 @@ class [[sus_trivial_abi]] Slice {
   /// Behaviour results. The size of the slice must therefore also have a length
   /// of at least 1.
   constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
-                                        usize i) & noexcept
+                                        usize i) & noexcept sus_lifetimebound
     requires(!std::is_const_v<T>)
   {
     return data_[i.primitive_value];
@@ -151,7 +154,8 @@ class [[sus_trivial_abi]] Slice {
   /// function will panic.
   /// #[doc.overloads=slice.index.range]
   constexpr inline Slice<T> operator[](
-      const ::sus::ops::RangeBounds<usize> auto range) const noexcept {
+      const ::sus::ops::RangeBounds<usize> auto range) const noexcept
+      sus_lifetimebound {
     const usize start = range.start_bound().unwrap_or(0u);
     const usize end = range.end_bound().unwrap_or(len_);
     const usize len = end >= start ? end - start : 0u;
@@ -172,7 +176,8 @@ class [[sus_trivial_abi]] Slice {
   /// Returns None if the Range would otherwise contain an element that is out
   /// of bounds.
   constexpr Option<Slice<T>> get_range(
-      const ::sus::ops::RangeBounds<usize> auto range) const noexcept {
+      const ::sus::ops::RangeBounds<usize> auto range) const noexcept
+      sus_lifetimebound {
     const usize start = range.start_bound().unwrap_or(0u);
     const usize end = range.end_bound().unwrap_or(len_);
     const usize len = end >= start ? end - start : 0u;
@@ -195,7 +200,8 @@ class [[sus_trivial_abi]] Slice {
   /// of bounds of the Slice, which can result in Undefined Behaviour.
   constexpr Slice<T> get_range_unchecked(
       ::sus::marker::UnsafeFnMarker,
-      const ::sus::ops::RangeBounds<usize> auto range) const noexcept {
+      const ::sus::ops::RangeBounds<usize> auto range) const noexcept
+      sus_lifetimebound {
     const usize start = range.start_bound().unwrap_or(0u);
     const usize end = range.end_bound().unwrap_or(len_);
     const usize len = end >= start ? end - start : 0u;
@@ -278,13 +284,13 @@ class [[sus_trivial_abi]] Slice {
   }
 
   /// Returns a const pointer to the first element in the slice.
-  inline const T* as_ptr() const& noexcept {
+  inline const T* as_ptr() const& noexcept sus_lifetimebound {
     check(len_ > 0_usize);
     return data_;
   }
 
   /// Returns a mutable pointer to the first element in the slice.
-  inline T* as_mut_ptr() & noexcept
+  inline T* as_mut_ptr() & noexcept sus_lifetimebound
     requires(!std::is_const_v<T>)
   {
     check(len_ > 0_usize);
@@ -294,14 +300,14 @@ class [[sus_trivial_abi]] Slice {
   /// Returns an iterator over all the elements in the slice, visited in the
   /// same order they appear in the slice. The iterator gives const access to
   /// each element.
-  constexpr SliceIter<const T&> iter() const& noexcept {
+  constexpr SliceIter<const T&> iter() const& noexcept sus_lifetimebound {
     return SliceIter<const T&>::with(data_, len_);
   }
 
   /// Returns an iterator over all the elements in the slice, visited in the
   /// same order they appear in the slice. The iterator gives mutable access to
   /// each element.
-  constexpr SliceIterMut<T&> iter_mut() noexcept
+  constexpr SliceIterMut<T&> iter_mut() noexcept sus_lifetimebound
     requires(!std::is_const_v<T>)
   {
     return SliceIterMut<T&>::with(data_, len_);
@@ -323,11 +329,13 @@ class [[sus_trivial_abi]] Slice {
     return SliceIterMut<T&>::with(data_, len_);
   }
 
+  /// Constructs a `Vec<T>` by cloning each value in the Slice.
   Vec<std::remove_const_t<T>> to_vec() const&
     requires(::sus::mem::Clone<T>);
 
  private:
-  constexpr Slice(T* data, usize len) noexcept : data_(data), len_(len) {}
+  constexpr Slice(T* data sus_lifetimebound, usize len) noexcept
+      : data_(data), len_(len) {}
 
   T* data_;
   ::sus::usize len_;
