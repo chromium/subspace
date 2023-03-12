@@ -103,14 +103,23 @@ This library is an experiment and not intended for use. See the
          lvalue-reference-qualified (with `&` or `const&`). If they are
          `const&`-qualified, then `=delete` the `&&` override to avoid rvalues
          returning references to what they own.
+          * If the inner type is _always_ owned, the method can be annotated
+            with `sus_lifetimebound`, but avoid it when the inner type may be a
+            pointer/reference. We rely on deleting the `&&` override to avoid
+            references to temporaries.
        * When the inner type is a **single** template variable, disallow const
          on the inner type. The const on the Owning type will apply transitively
          to the owned inner type.
     * For Reference types:
-       * Methods that return a `const&` are `const&` qualified without deleting
+       * Methods that return a `const&` are `const&` qualified _without_ deleting
          the `&&` override. Mutable methods, including those that return a `&`
          are unqualified or `&&-qualified` (non-const, but not `&`-qualified in
          order to allow rvalues).
+          * Avoid `sus_lifetimebound` on methods that return references, as it
+            ties the lifetime to the method's class, but the class also only
+            holds a reference.
+       * Annotate constructor and method parameters with `sus_lifetimebound`
+         when the reference will be stored in the class.
        * When the inner type is a template variable, allow const on the inner
          type. The const on the Owning type is unable to be transferred to the
          inner type, i.e. a const `ref<T>` can be copied or moved to a non-const
