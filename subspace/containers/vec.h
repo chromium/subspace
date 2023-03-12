@@ -446,10 +446,10 @@ class Vec {
   void sort() { as_mut_slice().sort(); }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_by]
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid(const T&, const T&)> F,
+  template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&, const T&)> F,
             int&..., class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
-  void sort_by(F&& compare) {
+  void sort_by(F compare) {
     as_mut_slice().sort_by(sus::move(compare));
   }
 
@@ -457,10 +457,10 @@ class Vec {
   void sort_unstable() { as_mut_slice().sort(); }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_unstable_by]
-  template <::sus::fn::FnOnce<::sus::fn::NonVoid(const T&, const T&)> F,
+  template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&, const T&)> F,
             int&..., class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
-  void sort_unstable_by(F&& compare) {
+  void sort_unstable_by(F compare) {
     as_mut_slice().sort_by(sus::move(compare));
   }
 
