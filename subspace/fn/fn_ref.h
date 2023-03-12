@@ -14,7 +14,8 @@
 
 #pragma once
 
-#include "subspace/fn/callable.h"
+#include "subspace/fn/__private/callable_types.h"
+#include "subspace/fn/__private/fn_ref_invoker.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/forward.h"
@@ -31,110 +32,22 @@ class FnMutRef;
 template <class R, class... Args>
 class FnRef;
 
-// TODO: Consider generic lambdas, it should be possible to bind them into
-// FnOnceRef/FnMutRef/FnRef?
-// Example:
-// ```
-//    auto even = [](const auto& i) { return i % 2 == 0; };
-//    auto r0 = sus::Array<int, 11>::with_values(0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-//                                               10);
-//    auto result = r0.iter().filter(even);
-// ```
-
-namespace __private {
-
-union Storage {
-  void (*fnptr)();
-  void* object;
-};
-
-template <class F>
-struct Invoker {
-  template <class R, class... Args>
-  static R fnptr_call_mut(const union Storage& s, Args... args) {
-    F f = reinterpret_cast<F>(s.fnptr);
-    return (*f)(::sus::forward<Args>(args)...);
-  }
-
-  template <class R, class... Args>
-  static R object_call_mut(const union Storage& s, Args... args) {
-    F& f = *static_cast<F*>(s.object);
-    return f(::sus::forward<Args>(args)...);
-  }
-
-  template <class R, class... Args>
-  static R object_call_once(const union Storage& s, Args... args) {
-    F& f = *static_cast<F*>(s.object);
-    return ::sus::move(f)(::sus::forward<Args>(args)...);
-  }
-
-  template <class R, class... Args>
-  static R fnptr_call_const(const union Storage& s, Args... args) {
-    const F f = reinterpret_cast<const F>(s.fnptr);
-    return (*f)(::sus::forward<Args>(args)...);
-  }
-
-  template <class R, class... Args>
-  static R object_call_const(const union Storage& s, Args... args) {
-    const F& f = *static_cast<const F*>(s.object);
-    return f(::sus::forward<Args>(args)...);
-  }
-};
-
-template <class R, class... CallArgs>
-using InvokeFnPtr = R (*)(const union Storage& s, CallArgs... args);
-
-template <class F, class R, class... Args>
-concept FunctionPointer =
-    std::is_pointer_v<std::decay_t<F>> && requires(F f, Args... args) {
-      { (*f)(args...) } -> std::convertible_to<R>;
-    };
-
-template <class T>
-concept IsFunctionPointer =
-    std::is_pointer_v<T> && std::is_function_v<std::remove_pointer_t<T>>;
-
-template <class F>
-concept ConvertsToFunctionPointer = requires(F f) {
-  { +f } -> IsFunctionPointer;
-};
-
-template <class F, class R, class... Args>
-concept CallableOnceMut =
-    !FunctionPointer<F, R, Args...> && requires(F && f, Args... args) {
-      { ::sus::move(f)(args...) } -> std::convertible_to<R>;
-    };
-
-template <class F, class R, class... Args>
-concept CallableMut =
-    !FunctionPointer<F, R, Args...> && requires(F & f, Args... args) {
-      { f(args...) } -> std::convertible_to<R>;
-    };
-
-template <class F, class R, class... Args>
-concept CallableConst =
-    !FunctionPointer<F, R, Args...> && requires(const F& f, Args... args) {
-      { f(args...) } -> std::convertible_to<R>;
-    };
-
-}  // namespace __private
-
 /// A closure that erases the type of the internal callable object (lambda). A
 /// FnMutRef may be called multiple times, and holds a const callable object, so
 /// it will return the same value each call with the same inputs.
 ///
-/// FnRef can be used as a FnMutRef, which can be used as a FnOnceRef. Lambdas can be
-/// converted into a FnOnceRef, FnMutRef, or FnRef directly.
+/// FnRef can be used as a FnMutRef, which can be used as a FnOnceRef. Lambdas
+/// can be converted into a FnOnceRef, FnMutRef, or FnRef directly.
 ///
-/// FnOnceRef, FnMutRef and FnRef are only safe to appear as lvalues when they are a
-/// function parameter, and a clang-tidy check is provided to enforce this. They
-/// only hold a reference to the underlying lambda so they must not outlive the
-/// lambda.
+/// FnOnceRef, FnMutRef and FnRef are only safe to appear as lvalues when they
+/// are a function parameter, and a clang-tidy check is provided to enforce
+/// this. They only hold a reference to the underlying lambda so they must not
+/// outlive the lambda.
 ///
 /// # Why can a "const" FnRef convert to a mutable FnMutRef or FnOnceRef?
 ///
-/// A FnMutRef or FnOnceRef is _allowed_ to mutate its storage, but a "const" FnRef
-/// closure would just choose not to do so.
+/// A FnMutRef or FnOnceRef is _allowed_ to mutate its storage, but a "const"
+/// FnRef closure would just choose not to do so.
 ///
 /// However, a `const FnRef` requires that the storage is not mutated, so it is
 /// not useful if converted to a `const FnMutRef` or `const FnOnceRef` which are
@@ -218,9 +131,9 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
 
   /// `sus::construct::From` trait implementation.
   ///
-  /// FnRef satisfies `From<T>` for the same types that it is constructible from:
-  /// function pointers that exactly match its own signature, and const-callable
-  /// objects (lambdas) that are compatible with its signature.
+  /// FnRef satisfies `From<T>` for the same types that it is constructible
+  /// from: function pointers that exactly match its own signature, and
+  /// const-callable objects (lambdas) that are compatible with its signature.
   constexpr static auto from(
       __private::FunctionPointer<R, CallArgs...> auto ptr) noexcept {
     return FnRef(ptr);
@@ -237,10 +150,12 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
   friend class FnMutRef;
 
   constexpr FnRef(union __private::Storage storage,
-               __private::InvokeFnPtr<R, CallArgs...> invoke)
+                  __private::InvokeFnPtr<R, CallArgs...> invoke)
       : storage_(storage), invoke_(invoke) {}
 
   union __private::Storage storage_;
+  /// The `invoke_` pointer is set to null to indicate the FnRef is moved-from.
+  /// It uses another pointer value as its never-value.
   __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
   // A function pointer to use as a never-value for InvokeFnPointer.
@@ -261,18 +176,18 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
 /// may mutate internal state. A FnMutRef may be called multiple times, and may
 /// return a different value on each call with the same inputs.
 ///
-/// FnRef can be used as a FnMutRef, which can be used as a FnOnceRef. Lambdas can be
-/// converted into a FnOnceRef, FnMutRef, or FnRef directly.
+/// FnRef can be used as a FnMutRef, which can be used as a FnOnceRef. Lambdas
+/// can be converted into a FnOnceRef, FnMutRef, or FnRef directly.
 ///
-/// FnOnceRef, FnMutRef and FnRef are only safe to appear as lvalues when they are a
-/// function parameter, and a clang-tidy check is provided to enforce this. They
-/// only hold a reference to the underlying lambda so they must not outlive the
-/// lambda.
+/// FnOnceRef, FnMutRef and FnRef are only safe to appear as lvalues when they
+/// are a function parameter, and a clang-tidy check is provided to enforce
+/// this. They only hold a reference to the underlying lambda so they must not
+/// outlive the lambda.
 ///
 /// # Why can a "const" FnRef convert to a mutable FnMutRef or FnOnceRef?
 ///
-/// A FnMutRef or FnOnceRef is _allowed_ to mutate its storage, but a "const" FnRef
-/// closure would just choose not to do so.
+/// A FnMutRef or FnOnceRef is _allowed_ to mutate its storage, but a "const"
+/// FnRef closure would just choose not to do so.
 ///
 /// However, a `const FnRef` requires that the storage is not mutated, so it is
 /// not useful if converted to a `const FnMutRef` or `const FnOnceRef` which are
@@ -384,10 +299,12 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   friend class FnOnceRef;
 
   constexpr FnMutRef(union __private::Storage storage,
-                  __private::InvokeFnPtr<R, CallArgs...> invoke)
+                     __private::InvokeFnPtr<R, CallArgs...> invoke)
       : storage_(storage), invoke_(invoke) {}
 
   union __private::Storage storage_;
+  /// The `invoke_` pointer is set to null to indicate the `FnMutRef` is
+  /// moved-from. It uses another pointer value as its never-value.
   __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
   // A function pointer to use as a never-value for InvokeFnPointer.
@@ -407,18 +324,18 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
 /// A closure that erases the type of the internal callable object (lambda). A
 /// FnOnceRef may only be called a single time.
 ///
-/// FnRef can be used as a FnMutRef, which can be used as a FnOnceRef. Lambdas can be
-/// converted into a FnOnceRef, FnMutRef, or FnRef directly.
+/// FnRef can be used as a FnMutRef, which can be used as a FnOnceRef. Lambdas
+/// can be converted into a FnOnceRef, FnMutRef, or FnRef directly.
 ///
-/// FnOnceRef, FnMutRef and FnRef are only safe to appear as lvalues when they are a
-/// function parameter, and a clang-tidy check is provided to enforce this. They
-/// only hold a reference to the underlying lambda so they must not outlive the
-/// lambda.
+/// FnOnceRef, FnMutRef and FnRef are only safe to appear as lvalues when they
+/// are a function parameter, and a clang-tidy check is provided to enforce
+/// this. They only hold a reference to the underlying lambda so they must not
+/// outlive the lambda.
 ///
 /// # Why can a "const" FnRef convert to a mutable FnMutRef or FnOnceRef?
 ///
-/// A FnMutRef or FnOnceRef is _allowed_ to mutate its storage, but a "const" FnRef
-/// closure would just choose not to do so.
+/// A FnMutRef or FnOnceRef is _allowed_ to mutate its storage, but a "const"
+/// FnRef closure would just choose not to do so.
 ///
 /// However, a `const FnRef` requires that the storage is not mutated, so it is
 /// not useful if converted to a `const FnMutRef` or `const FnOnceRef` which are
@@ -465,9 +382,9 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
 
   /// Construction from FnMutRef.
   ///
-  /// Since FnMutRef is callable, FnOnceRef is already constructible from it, but
-  /// this constructor avoids extra indirections being inserted when converting,
-  /// since otherwise an extra invoker call would be introduced.
+  /// Since FnMutRef is callable, FnOnceRef is already constructible from it,
+  /// but this constructor avoids extra indirections being inserted when
+  /// converting, since otherwise an extra invoker call would be introduced.
   constexpr FnOnceRef(FnMutRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
@@ -574,6 +491,8 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
       : storage_(storage), invoke_(invoke) {}
 
   union __private::Storage storage_;
+  /// The `invoke_` pointer is set to null to indicate the FnOnceRef is
+  /// moved-from. It uses another pointer value as its never-value.
   __private::InvokeFnPtr<R, CallArgs...> invoke_;
 
   // A function pointer to use as a never-value for InvokeFnPointer.
