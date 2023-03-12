@@ -706,8 +706,7 @@ using sus::iter::__private::end;
 /// construct Result<T, E>. This is to deduce the actual types `T` and `E` when
 /// it is constructed, avoid specifying them both here, and support conversions.
 template <class T>
-[[nodiscard]] inline constexpr auto ok(
-    T&& t sus_if_clang([[clang::lifetimebound]])) noexcept {
+[[nodiscard]] inline constexpr auto ok(T&& t sus_lifetimebound) noexcept {
   return __private::OkMarker<T&&>(::sus::forward<T>(t));
 }
 
@@ -717,8 +716,7 @@ template <class T>
 /// construct Result<T, E>. This is to deduce the actual types `T` and `E` when
 /// it is constructed, avoid specifying them both here, and support conversions.
 template <class E>
-[[nodiscard]] inline constexpr auto err(
-    E&& e sus_if_clang([[clang::lifetimebound]])) noexcept {
+[[nodiscard]] inline constexpr auto err(E&& e sus_lifetimebound) noexcept {
   return __private::ErrMarker<E&&>(::sus::forward<E>(e));
 }
 

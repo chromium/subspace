@@ -232,14 +232,14 @@ TEST(Array, Get) {
     constexpr auto r = []() constexpr {
       constexpr auto a =
           Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-      return a.at(2_usize).unwrap();
+      return a.get(2_usize).unwrap();
     }();
     static_assert(std::same_as<decltype(r), const int>);
     EXPECT_EQ(3, r);
   }
   {
     auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-    EXPECT_EQ(3, a.at(2_usize).unwrap());
+    EXPECT_EQ(3, a.get(2_usize).unwrap());
   }
 }
 
@@ -481,18 +481,18 @@ TEST(ArrayDeathTest, Index) {
 #endif
 }
 
-TEST(Array, AsRef) {
+TEST(Array, AsSlice) {
   auto x = [](sus::Slice<const i32>) {};
   const auto ac = Array<i32, 3>::with_value(2);
   auto am = Array<i32, 3>::with_value(2);
-  x(ac.as_ref());
-  x(am.as_ref());
+  x(ac.as_slice());
+  x(am.as_slice());
 }
 
-TEST(Array, AsMut) {
+TEST(Array, AsMutSlice) {
   auto x = [](sus::Slice<i32>) {};
   auto am = Array<i32, 3>::with_value(2);
-  x(am.as_mut());
+  x(am.as_mut_slice());
 }
 
 TEST(Array, Clone) {
