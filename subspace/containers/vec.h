@@ -26,6 +26,7 @@
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
 #include "subspace/macros/compiler.h"
+#include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
@@ -93,6 +94,8 @@ class Vec {
   /// This is highly unsafe, due to the number of invariants that aren’t
   /// checked:
   ///
+  /// * `ptr` must be heap allocated through malloc() (TODO: Want our own global
+  ///   allocator API).
   /// * `T` needs to have an alignment no more than what `ptr` was allocated
   ///   with.
   /// * The size of `T` times the `capacity` (ie. the allocated size in bytes)
@@ -372,7 +375,7 @@ class Vec {
   }
 
   /// Returns a const reference to the element at index `i`.
-  constexpr Option<const T&> get(usize i) const& noexcept {
+  constexpr Option<const T&> get(usize i) const& noexcept sus_lifetimebound {
     check(!is_moved_from());
     if (i >= len_) [[unlikely]]
       return Option<const T&>::none();
@@ -381,7 +384,7 @@ class Vec {
   constexpr Option<const T&> get(usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
-  constexpr Option<T&> get_mut(usize i) & noexcept {
+  constexpr Option<T&> get_mut(usize i) & noexcept sus_lifetimebound {
     check(!is_moved_from());
     if (i >= len_) [[unlikely]]
       return Option<T&>::none();
@@ -399,7 +402,8 @@ class Vec {
   /// Additionally, the Vec must not be in a moved-from state or the pointer
   /// will be invalid and Undefined Behaviour results.
   constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                          usize i) const& noexcept {
+                                          usize i) const& noexcept
+      sus_lifetimebound {
     return storage_[i.primitive_value];
   }
   constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
@@ -411,7 +415,7 @@ class Vec {
   /// The index `i` must be inside the bounds of the array or Undefined
   /// Behaviour results.
   constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
-                                        usize i) & noexcept {
+                                        usize i) & noexcept sus_lifetimebound {
     return storage_[i.primitive_value];
   }
 
@@ -420,14 +424,15 @@ class Vec {
   template <::sus::num::SignedPrimitiveInteger I>
   constexpr inline const T& operator[](I) const = delete;
 
-  constexpr inline const T& operator[](usize i) const& noexcept {
+  constexpr inline const T& operator[](usize i) const& noexcept
+      sus_lifetimebound {
     check(!is_moved_from());
     check(i < len_);
     return get_unchecked(::sus::marker::unsafe_fn, i);
   }
   constexpr inline const T& operator[](usize i) && = delete;
 
-  constexpr inline T& operator[](usize i) & noexcept {
+  constexpr inline T& operator[](usize i) & noexcept sus_lifetimebound {
     check(!is_moved_from());
     check(i < len_);
     return get_unchecked_mut(::sus::marker::unsafe_fn, i);
@@ -459,7 +464,7 @@ class Vec {
   ///
   /// # Panics
   /// Panics if the vector's capacity is zero.
-  inline const T* as_ptr() const& noexcept {
+  inline const T* as_ptr() const& noexcept sus_lifetimebound {
     check(!is_moved_from());
     check(is_alloced());
     return storage_;
@@ -470,7 +475,7 @@ class Vec {
   ///
   /// # Panics
   /// Panics if the vector's capacity is zero.
-  inline T* as_mut_ptr() & noexcept {
+  inline T* as_mut_ptr() & noexcept sus_lifetimebound {
     check(!is_moved_from());
     check(is_alloced());
     return storage_;
@@ -478,7 +483,7 @@ class Vec {
 
   // Returns a slice that references all the elements of the vector as const
   // references.
-  constexpr Slice<const T> as_slice() const& noexcept {
+  constexpr Slice<const T> as_slice() const& noexcept sus_lifetimebound {
     check(!is_moved_from());
     // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
     // is to the start of the Vec, so this Slice covers a valid range.
@@ -489,7 +494,7 @@ class Vec {
 
   // Returns a slice that references all the elements of the vector as mutable
   // references.
-  constexpr Slice<T> as_mut_slice() & noexcept {
+  constexpr Slice<T> as_mut_slice() & noexcept sus_lifetimebound {
     check(!is_moved_from());
     // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
     // is to the start of the Vec, so this Slice covers a valid range.
@@ -499,7 +504,7 @@ class Vec {
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
-  constexpr SliceIter<const T&> iter() const& noexcept {
+  constexpr SliceIter<const T&> iter() const& noexcept sus_lifetimebound {
     check(!is_moved_from());
     return SliceIter<const T&>::with(storage_, len_);
   }
@@ -508,7 +513,7 @@ class Vec {
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives mutable access to
   /// each element.
-  constexpr SliceIterMut<T&> iter_mut() & noexcept {
+  constexpr SliceIterMut<T&> iter_mut() & noexcept sus_lifetimebound {
     check(!is_moved_from());
     return SliceIterMut<T&>::with(storage_, len_);
   }
