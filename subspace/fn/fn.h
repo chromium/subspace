@@ -18,3 +18,4 @@
 #include "subspace/fn/fn_box_defn.h"
 #include "subspace/fn/fn_box_impl.h"
 #include "subspace/fn/fn_ref.h"
+#include "subspace/fn/fn_concepts.h"

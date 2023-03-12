@@ -153,6 +153,7 @@ add_executable(subspace_unittests
     "construct/into_unittest.cc"
     "construct/default_unittest.cc"
     "fn/fn_box_unittest.cc"
+    "fn/fn_concepts_unittest.cc"
     "fn/fn_ref_unittest.cc"
     "iter/iterator_unittest.cc"
     "mem/addressof_unittest.cc"
