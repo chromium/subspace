@@ -24,6 +24,7 @@
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/iter/into_iterator.h"
+#include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
@@ -538,7 +539,7 @@ class [[nodiscard]] Result final {
                                          mref(storage_.err_));
   }
 
-  constexpr Once<const T&> iter() const& noexcept {
+  constexpr Once<const T&> iter() const& noexcept sus_lifetimebound {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (state_ == __private::ResultState::IsOk)
       return Once<const T&>::with(Option<const T&>::some(storage_.ok_));
@@ -547,7 +548,7 @@ class [[nodiscard]] Result final {
   }
   Once<const T&> iter() const&& = delete;
 
-  constexpr Once<T&> iter_mut() & noexcept {
+  constexpr Once<T&> iter_mut() & noexcept sus_lifetimebound {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (state_ == __private::ResultState::IsOk)
       return Once<T&>::with(Option<T&>::some(mref(storage_.ok_)));
