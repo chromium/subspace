@@ -26,8 +26,9 @@
 #include "subspace/containers/__private/array_marker.h"
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/containers/slice.h"
-#include "subspace/fn/callable.h"
 #include "subspace/fn/fn_box_defn.h"
+#include "subspace/fn/fn_concepts.h"
+#include "subspace/fn/run_fn.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
@@ -82,10 +83,11 @@ class Array final {
     return Array(kWithUninitialized);
   }
 
-  template <::sus::fn::callable::CallableReturns<T> InitializerFn>
+  constexpr static Array with_initializer(::sus::fn::FnMut<T()> auto f) noexcept
     requires(::sus::mem::Move<T>)
-  constexpr static Array with_initializer(InitializerFn f) noexcept {
-    return Array(kWithInitializer, move(f), std::make_index_sequence<N>());
+  {
+    return Array(kWithInitializer, ::sus::move(f),
+                 std::make_index_sequence<N>());
   }
 
   // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
@@ -282,12 +284,12 @@ class Array final {
   ///
   /// To just walk each element and map them, consider using `iter()` and
   /// `Iterator::map`. This does not require consuming the array.
-  template <::sus::fn::callable::CallableWith<T&&> MapFn, int&...,
-            class R = std::invoke_result_t<MapFn, T&&>>
-    requires(N > 0 && !std::is_void_v<R>)
+  template <::sus::fn::FnMut<::sus::fn::NonVoid(T&&)> MapFn, int&...,
+            class R = std::invoke_result_t<MapFn&&, T&&>>
+    requires(N > 0)
   Array<R, N> map(MapFn f) && noexcept {
     return Array<R, N>::with_initializer([this, &f, i = size_t{0}]() mutable {
-      return f(move(storage_.data_[i++]));
+      return ::sus::run_mut(f, move(storage_.data_[i++]));
     });
   }
 
@@ -302,9 +304,10 @@ class Array final {
 
  private:
   enum WithInitializer { kWithInitializer };
-  template <class F, size_t... Is>
-  constexpr Array(WithInitializer, F&& f, std::index_sequence<Is...>) noexcept
-      : storage_{((void)Is, f())...} {}
+  template <size_t... Is>
+  constexpr Array(WithInitializer, ::sus::fn::FnMut<T()> auto&& f,
+                  std::index_sequence<Is...>) noexcept
+      : storage_{((void)Is, ::sus::run_mut(f))...} {}
 
   enum WithValue { kWithValue };
   template <size_t... Is>
@@ -338,8 +341,8 @@ class Array final {
   };
 
   sus_class_trivially_relocatable_if(::sus::marker::unsafe_fn,
-                                      (N == 0 ||
-                                       ::sus::mem::relocate_by_memcpy<T>));
+                                     (N == 0 ||
+                                      ::sus::mem::relocate_by_memcpy<T>));
 };
 
 namespace __private {
