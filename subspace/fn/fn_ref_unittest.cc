@@ -19,6 +19,8 @@
 #include "subspace/fn/fn.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
+#include "subspace/mem/never_value.h"
+#include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
@@ -29,6 +31,13 @@ using sus::construct::Into;
 using sus::fn::FnMutRef;
 using sus::fn::FnOnceRef;
 using sus::fn::FnRef;
+
+static_assert(sus::mem::NeverValueField<FnRef<void()>>);
+static_assert(sus::mem::NeverValueField<FnMutRef<void()>>);
+static_assert(sus::mem::NeverValueField<FnOnceRef<void()>>);
+static_assert(sus::mem::relocate_by_memcpy<FnRef<void()>>);
+static_assert(sus::mem::relocate_by_memcpy<FnMutRef<void()>>);
+static_assert(sus::mem::relocate_by_memcpy<FnOnceRef<void()>>);
 
 struct Copyable {
   Copyable(int i) : i(i) {}
