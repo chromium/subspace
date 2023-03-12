@@ -1301,6 +1301,12 @@ TEST(Option, AsRef) {
   static constexpr int ci = 2;
   constexpr auto icx = Option<const int&>::some(ci);
   static_assert(&icx.as_ref().unwrap() == &ci);
+
+  // as_ref() on an rvalue allowed if the Option is holding a reference.
+  static_assert(std::is_same_v<decltype(Option<NoCopyMove&>::some(i).as_ref()),
+                               Option<const NoCopyMove&>>);
+  EXPECT_EQ(&Option<NoCopyMove&>::some(i).as_ref().unwrap(), &i);
+  EXPECT_TRUE(Option<NoCopyMove&>::none().as_ref().is_none());
 }
 
 TEST(Option, AsMut) {
@@ -1324,6 +1330,12 @@ TEST(Option, AsMut) {
     auto o = Option<int>::some(3);
     return o.as_mut().unwrap();
   }() == 3);
+
+  // as_mut() on an rvalue allowed if the Option is holding a reference.
+  static_assert(std::is_same_v<decltype(Option<NoCopyMove&>::some(i).as_mut()),
+                               Option<NoCopyMove&>>);
+  EXPECT_EQ(&Option<NoCopyMove&>::some(i).as_mut().unwrap(), &i);
+  EXPECT_TRUE(Option<NoCopyMove&>::none().as_mut().is_none());
 }
 
 TEST(Option, TrivialMove) {
@@ -1489,6 +1501,14 @@ TEST(Option, Iter) {
     ++count;
   }
   EXPECT_EQ(count, 1);
+
+  // Iterating on an rvalue is okay if it's holding a reference.
+  for (const NoCopyMove& i : Option<NoCopyMove&>::some(mref(n))) {
+    EXPECT_EQ(&i, &n);
+  }
+  for (const NoCopyMove& i : Option<NoCopyMove&>::some(mref(n)).iter()) {
+    EXPECT_EQ(&i, &n);
+  }
 }
 
 TEST(Option, IterMut) {
@@ -1521,6 +1541,11 @@ TEST(Option, IterMut) {
     ++count;
   }
   EXPECT_EQ(count, 1);
+
+  // Iterating on an rvalue is okay if it's holding a reference.
+  for (NoCopyMove& i : Option<NoCopyMove&>::some(mref(n)).iter_mut()) {
+    EXPECT_EQ(&i, &n);
+  }
 }
 
 struct MoveOnly {
