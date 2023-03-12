@@ -23,6 +23,8 @@
 #include "subspace/containers/__private/vec_iter.h"
 #include "subspace/containers/__private/vec_marker.h"
 #include "subspace/containers/slice.h"
+#include "subspace/fn/fn_concepts.h"
+#include "subspace/fn/run_fn.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
 #include "subspace/macros/compiler.h"
@@ -94,8 +96,10 @@ class Vec {
   /// This is highly unsafe, due to the number of invariants that aren’t
   /// checked:
   ///
-  /// * `ptr` must be heap allocated through malloc() (TODO: Want our own global
-  ///   allocator API).
+  /// * `ptr` must be heap allocated with the same method as Vec uses
+  ///   internally, which is not currently stable. (TODO: Want our own global
+  ///   allocator API.) The only safe way to get this pointer is from
+  ///   `from_raw_parts()`.
   /// * `T` needs to have an alignment no more than what `ptr` was allocated
   ///   with.
   /// * The size of `T` times the `capacity` (ie. the allocated size in bytes)
@@ -442,10 +446,10 @@ class Vec {
   void sort() { as_mut_slice().sort(); }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_by]
-  template <class F, int&...,
-            class R = std::invoke_result_t<F, const T&, const T&>>
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(const T&, const T&)> F,
+            int&..., class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
-  void sort_by(F compare) {
+  void sort_by(F&& compare) {
     as_mut_slice().sort_by(sus::move(compare));
   }
 
@@ -453,10 +457,10 @@ class Vec {
   void sort_unstable() { as_mut_slice().sort(); }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_unstable_by]
-  template <class F, int&...,
-            class R = std::invoke_result_t<F, const T&, const T&>>
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(const T&, const T&)> F,
+            int&..., class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
-  void sort_unstable_by(F compare) {
+  void sort_unstable_by(F&& compare) {
     as_mut_slice().sort_by(sus::move(compare));
   }
 
