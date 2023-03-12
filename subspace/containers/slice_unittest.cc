@@ -427,7 +427,7 @@ TEST(Slice, Sort) {
   );
   // clang-format on
 
-  Slice<Sortable> s = unsorted.as_mut();
+  Slice<Sortable> s = unsorted.as_mut_slice();
   s.sort();
   for (usize i = 0u; i < s.len(); i += 1u) {
     EXPECT_EQ(sorted[i], s[i]);
@@ -460,7 +460,7 @@ TEST(Slice, SortBy) {
   );
   // clang-format on
 
-  Slice<Sortable> s = unsorted.as_mut();
+  Slice<Sortable> s = unsorted.as_mut_slice();
   // Sorts backward.
   s.sort_by([](const auto& a, const auto& b) { return b <=> a; });
   for (usize i = 0u; i < s.len(); i += 1u) {
@@ -472,7 +472,7 @@ TEST(Slice, SortUnstable) {
   sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
   sus::Array<i32, 6> sorted = sus::array(1, 2, 3, 4, 5, 6);
 
-  Slice<i32> s = unsorted.as_mut();
+  Slice<i32> s = unsorted.as_mut_slice();
   s.sort_unstable();
   for (usize i = 0u; i < s.len(); i += 1u) {
     EXPECT_EQ(sorted[i], s[i]);
@@ -483,7 +483,7 @@ TEST(Slice, SortUnstableBy) {
   sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
   sus::Array<i32, 6> sorted = sus::array(6, 5, 4, 3, 2, 1);
 
-  Slice<i32> s = unsorted.as_mut();
+  Slice<i32> s = unsorted.as_mut_slice();
   // Sorts backward.
   s.sort_unstable_by([](const auto& a, const auto& b) { return b <=> a; });
   for (usize i = 0u; i < s.len(); i += 1u) {

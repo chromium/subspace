@@ -27,7 +27,6 @@
 #include "subspace/fn/run_fn.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
-#include "subspace/macros/compiler.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
@@ -446,8 +445,8 @@ class Vec {
   void sort() { as_mut_slice().sort(); }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_by]
-  template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&, const T&)> F,
-            int&..., class R = std::invoke_result_t<F, const T&, const T&>>
+  template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&, const T&)> F, int&...,
+            class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
   void sort_by(F compare) {
     as_mut_slice().sort_by(sus::move(compare));
@@ -457,8 +456,8 @@ class Vec {
   void sort_unstable() { as_mut_slice().sort(); }
 
   /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_unstable_by]
-  template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&, const T&)> F,
-            int&..., class R = std::invoke_result_t<F, const T&, const T&>>
+  template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&, const T&)> F, int&...,
+            class R = std::invoke_result_t<F, const T&, const T&>>
     requires(::sus::ops::Ordering<R>)
   void sort_unstable_by(F compare) {
     as_mut_slice().sort_by(sus::move(compare));
@@ -597,8 +596,7 @@ using sus::iter::__private::end;
 // the result of `sus::vec()` as a function argument or return value.
 template <class... Ts>
   requires(sizeof...(Ts) > 0)
-[[nodiscard]] inline constexpr auto vec(
-    Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
+[[nodiscard]] inline constexpr auto vec(Ts&&... vs sus_lifetimebound) noexcept {
   return __private::VecMarker<Ts...>(
       ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
 }

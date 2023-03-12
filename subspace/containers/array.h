@@ -26,10 +26,9 @@
 #include "subspace/containers/__private/array_marker.h"
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/containers/slice.h"
-#include "subspace/fn/fn_box_defn.h"
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/fn/run_fn.h"
-#include "subspace/macros/compiler.h"
+#include "subspace/macros/lifetimebound.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/copy.h"
@@ -172,17 +171,17 @@ class Array final {
   constexpr usize len() const& noexcept { return N; }
 
   /// Returns a const reference to the element at index `i`.
-  constexpr Option<const T&> at(usize i) const& noexcept
+  constexpr Option<const T&> get(usize i) const& noexcept sus_lifetimebound
     requires(N > 0)
   {
     if (i.primitive_value >= N) [[unlikely]]
       return Option<const T&>::none();
     return Option<const T&>::some(storage_.data_[i.primitive_value]);
   }
-  constexpr Option<const T&> at(usize i) && = delete;
+  constexpr Option<const T&> get(usize i) && = delete;
 
   /// Returns a mutable reference to the element at index `i`.
-  constexpr Option<T&> get_mut(usize i) & noexcept
+  constexpr Option<T&> get_mut(usize i) & noexcept sus_lifetimebound
     requires(N > 0)
   {
     if (i.primitive_value >= N) [[unlikely]]
@@ -195,8 +194,8 @@ class Array final {
   /// # Safety
   /// The index `i` must be inside the bounds of the array or Undefined
   /// Behaviour results.
-  constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                          usize i) const& noexcept
+  constexpr inline const T& get_unchecked(
+      ::sus::marker::UnsafeFnMarker, usize i) const& noexcept sus_lifetimebound
     requires(N > 0)
   {
     return storage_.data_[i.primitive_value];
@@ -210,25 +209,26 @@ class Array final {
   /// The index `i` must be inside the bounds of the array or Undefined
   /// Behaviour results.
   constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
-                                        usize i) & noexcept
+                                        usize i) & noexcept sus_lifetimebound
     requires(N > 0)
   {
     return storage_.data_[i.primitive_value];
   }
 
-  constexpr inline const T& operator[](usize i) const& noexcept {
+  constexpr inline const T& operator[](usize i) const& noexcept
+      sus_lifetimebound {
     check(i.primitive_value < N);
     return storage_.data_[i.primitive_value];
   }
   constexpr inline const T& operator[](usize i) && = delete;
 
-  constexpr inline T& operator[](usize i) & noexcept {
+  constexpr inline T& operator[](usize i) & noexcept sus_lifetimebound {
     check(i.primitive_value < N);
     return storage_.data_[i.primitive_value];
   }
 
   /// Returns a const pointer to the first element in the array.
-  inline const T* as_ptr() const& noexcept
+  inline const T* as_ptr() const& noexcept sus_lifetimebound
     requires(N > 0)
   {
     return storage_.data_;
@@ -236,7 +236,7 @@ class Array final {
   const T* as_ptr() && = delete;
 
   /// Returns a mutable pointer to the first element in the array.
-  inline T* as_mut_ptr() & noexcept
+  inline T* as_mut_ptr() & noexcept sus_lifetimebound
     requires(N > 0)
   {
     return storage_.data_;
@@ -244,21 +244,21 @@ class Array final {
 
   // Returns a slice that references all the elements of the array as const
   // references.
-  constexpr Slice<const T> as_ref() const& noexcept {
+  constexpr Slice<const T> as_slice() const& noexcept sus_lifetimebound {
     return Slice<const T>::from(storage_.data_);
   }
-  constexpr Slice<const T> as_ref() && = delete;
+  constexpr Slice<const T> as_slice() && = delete;
 
   // Returns a slice that references all the elements of the array as mutable
   // references.
-  constexpr Slice<T> as_mut() & noexcept {
+  constexpr Slice<T> as_mut_slice() & noexcept sus_lifetimebound {
     return Slice<T>::from(storage_.data_);
   }
 
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
-  constexpr SliceIter<const T&> iter() const& noexcept {
+  constexpr SliceIter<const T&> iter() const& noexcept sus_lifetimebound {
     return SliceIter<const T&>::with(storage_.data_, N);
   }
   constexpr SliceIter<const T&> iter() && = delete;
@@ -266,7 +266,7 @@ class Array final {
   /// Returns an iterator over all the elements in the array, visited in the
   /// same order they appear in the array. The iterator gives mutable access to
   /// each element.
-  constexpr SliceIterMut<T&> iter_mut() & noexcept {
+  constexpr SliceIterMut<T&> iter_mut() & noexcept sus_lifetimebound {
     return SliceIterMut<T&>::with(storage_.data_, N);
   }
 
@@ -331,7 +331,8 @@ class Array final {
   template <class U, size_t... Is>
   constexpr inline auto eq_impl(const Array<U, N>& r,
                                 std::index_sequence<Is...>) const& noexcept {
-    return (... && (at(Is) == r.at(Is)));
+    return (... && (get_unchecked(::sus::marker::unsafe_fn, Is) ==
+                    r.get_unchecked(::sus::marker::unsafe_fn, Is)));
   };
 
   // Using a union ensures that the default constructor doesn't initialize
@@ -350,7 +351,8 @@ namespace __private {
 template <size_t I, class O, class T, class U, size_t N>
 constexpr inline bool array_cmp_impl(O& val, const Array<T, N>& l,
                                      const Array<U, N>& r) noexcept {
-  auto cmp = l.at(I) <=> r.at(I);
+  auto cmp = l.get_unchecked(::sus::marker::unsafe_fn, I) <=>
+             r.get_unchecked(::sus::marker::unsafe_fn, I);
   // Allow downgrading from equal to equivalent, but not the inverse.
   if (cmp != 0) val = cmp;
   // Short circuit by returning true when we find a difference.
@@ -432,7 +434,7 @@ auto get(Array<T, N>&& a) noexcept {
 template <class... Ts>
   requires(sizeof...(Ts) > 0)
 [[nodiscard]] inline constexpr auto array(
-    Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
+    Ts&&... vs sus_lifetimebound) noexcept {
   return __private::ArrayMarker<Ts...>(
       ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
 }

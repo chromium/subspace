@@ -27,6 +27,7 @@
 #include "subspace/choice/__private/storage.h"
 #include "subspace/choice/__private/type_list.h"
 #include "subspace/choice/choice_types.h"
+#include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
@@ -614,7 +615,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
 /// types is not known here.
 template <auto Tag, class... Ts>
 [[nodiscard]] inline constexpr auto choice(
-    Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
+    Ts&&... vs sus_lifetimebound) noexcept {
   if constexpr (sizeof...(Ts) == 0) {
     return __private::ChoiceMarkerVoid<Tag>();
   } else if constexpr (sizeof...(Ts) == 1) {

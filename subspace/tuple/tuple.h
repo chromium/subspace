@@ -20,6 +20,7 @@
 #include "subspace/assertions/check.h"
 #include "subspace/construct/default.h"
 #include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/copy.h"
@@ -74,15 +75,16 @@ class Tuple final {
   ///
   /// The Tuple's contained types must all be #Default, and will be
   /// constructed through that trait.
+  // clang-format off
   inline constexpr Tuple() noexcept
-  //clang-format off
     requires(!((std::is_trivially_default_constructible_v<T> && ... &&
                 std::is_trivially_default_constructible_v<Ts>) &&
-               !(std::is_reference_v<T> || ... || std::is_reference_v<Ts>)) &&
+              !(std::is_reference_v<T> || ... || std::is_reference_v<Ts>)
+             ) &&
              (::sus::construct::Default<T> && ... &&
               ::sus::construct::Default<Ts>))
-  //clang-format on
       : Tuple(T(), Ts()...) {}
+  // clang-format on
 
   Tuple()
     requires((std::is_trivially_default_constructible_v<T> && ... &&
@@ -263,7 +265,7 @@ struct TupleMarker {
 template <class... Ts>
   requires(sizeof...(Ts) > 0)
 [[nodiscard]] inline constexpr auto tuple(
-    Ts&&... vs sus_if_clang([[clang::lifetimebound]])) noexcept {
+    Ts&&... vs sus_lifetimebound) noexcept {
   return __private::TupleMarker<Ts...>(
       ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
 }
