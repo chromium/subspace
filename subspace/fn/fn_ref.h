@@ -117,12 +117,16 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
   }
 
   /// Runs the closure.
+  ///
+  /// #[doc.overloads=call.const]
   inline R operator()(CallArgs... args) const& {
     ::sus::check(invoke_);  // Catch use-after-move.
     return (*invoke_)(storage_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// Runs and consumes the closure.
+  ///
+  /// #[doc.overloads=call.rvalue]
   inline R operator()(CallArgs... args) && {
     ::sus::check(invoke_);  // Catch use-after-move.
     return (*::sus::mem::replace_ptr(invoke_, nullptr))(
@@ -237,6 +241,8 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   /// Since FnRef is callable, FnMutRef is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
+  ///
+  /// #[doc.overloads=ctor.fnref]
   constexpr FnMutRef(FnRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
@@ -268,12 +274,16 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   }
 
   /// Runs the closure.
+  ///
+  /// #[doc.overloads=call.mut]
   inline R operator()(CallArgs... args) & {
     ::sus::check(invoke_);  // Catch use-after-move.
     return (*invoke_)(storage_, ::sus::forward<CallArgs>(args)...);
   }
 
   /// Runs and consumes the closure.
+  ///
+  /// #[doc.overloads=call.rvalue]
   inline R operator()(CallArgs... args) && {
     ::sus::check(invoke_);  // Catch use-after-move.
     return (*::sus::mem::replace_ptr(invoke_, nullptr))(
@@ -385,6 +395,8 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   /// Since FnMutRef is callable, FnOnceRef is already constructible from it,
   /// but this constructor avoids extra indirections being inserted when
   /// converting, since otherwise an extra invoker call would be introduced.
+  ///
+  /// #[doc.overloads=ctor.fnmutref]
   constexpr FnOnceRef(FnMutRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
@@ -396,6 +408,8 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   /// Since FnRef is callable, FnOnceRef is already constructible from it, but
   /// this constructor avoids extra indirections being inserted when converting,
   /// since otherwise an extra invoker call would be introduced.
+  ///
+  /// #[doc.overloads=ctor.fnref]
   constexpr FnOnceRef(FnRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
         invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
