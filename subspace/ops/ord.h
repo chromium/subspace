@@ -18,16 +18,13 @@
 #include <concepts>
 
 #include "subspace/assertions/check.h"
-#include "subspace/fn/callable.h"
-
-// TODO: PartialOrd comes with: lt, le, ge, gt.
-// TODO: Eq comes with eq, ne.
-// TODO: Where to put these functions??
+#include "subspace/fn/fn_concepts.h"
+#include "subspace/fn/fn_ref.h"
+#include "subspace/fn/run_fn.h"
+#include "subspace/macros/lifetimebound.h"
+#include "subspace/mem/forward.h"
 
 namespace sus::ops {
-
-using ::sus::fn::callable::CallableReturns;
-using ::sus::fn::callable::CallableWith;
 
 /// Concept that combines all ordering types together.
 template <class T>
@@ -88,12 +85,14 @@ concept ExclusivePartialOrd = (!WeakOrd<T, U> && PartialOrd<T, U>);
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::min<i32&>(a, b)`. Note that if either input is a temporary object
-/// this can return a reference to an object past its lifetime.
+/// `sus::ops::min<i32&>(a, b)`.
+///
+/// Note that if either input is a temporary object this can return a reference
+/// to an object past its lifetime.
 template <class T>
   requires(Ord<T>)
-constexpr T min(T a, T b) noexcept {
-  return a > b ? b : a;
+constexpr T min(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
+  return a > b ? ::sus::forward<T>(b) : ::sus::forward<T>(a);
 }
 
 /// Compares and returns the minimum of two values with respect to the specified
@@ -103,11 +102,19 @@ constexpr T min(T a, T b) noexcept {
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::min_by<i32&>(a, b, c)`. Note that if either input is a temporary
-/// object this can return a reference to an object past its lifetime.
-template <class T, CallableReturns<std::strong_ordering, const T&, const T&> F>
-constexpr T min_by(T a, T b, F compare) noexcept {
-  return compare(a, b) == std::strong_ordering::greater ? b : a;
+/// `sus::ops::min_by<i32&>(a, b, c)`.
+///
+/// Note that if either input is a temporary object this can return a reference
+/// to an object past its lifetime.
+template <class T>
+constexpr T min_by(
+    T a sus_lifetimebound, T b sus_lifetimebound,
+    ::sus::fn::FnOnce<std::strong_ordering(const T&, const T&)> auto&&
+        compare) noexcept {
+  return ::sus::run_once(::sus::move(compare), a, b) ==
+                 std::strong_ordering::greater
+             ? ::sus::forward<T>(b)
+             : ::sus::forward<T>(a);
 }
 
 /// Returns the element that gives the minimum value from the specified
@@ -117,13 +124,17 @@ constexpr T min_by(T a, T b, F compare) noexcept {
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::min_by_key<i32&>(a, b, k)`. Note that if either input is a
-/// temporary object this can return a reference to an object past its lifetime.
-template <class T, CallableWith<const T&> F, int&...,
-          class K = std::invoke_result_t<F, const T&>>
-  requires(Ord<K>)
-constexpr T min_by_key(T a, T b, F f) noexcept {
-  return f(a) > f(b) ? b : a;
+/// `sus::ops::min_by_key<i32&>(a, b, k)`.
+///
+/// Note that if either input is a temporary object this can return a reference
+/// to an object past its lifetime.
+template <class T, ::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn,
+          int&..., class Key = std::invoke_result_t<KeyFn&, const T&>>
+  requires(Ord<Key>)
+constexpr T min_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
+                       KeyFn f) noexcept {
+  return ::sus::run_mut(f, a) > ::sus::run_mut(f, b) ? ::sus::forward<T>(b)
+                                                     : ::sus::forward<T>(a);
 }
 
 /// Compares and returns the maximum of two values.
@@ -132,12 +143,14 @@ constexpr T min_by_key(T a, T b, F f) noexcept {
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::max<i32&>(a, b)`. Note that if either input is a temporary object
-/// this can return a reference to an object past its lifetime.
+/// `sus::ops::max<i32&>(a, b)`.
+///
+/// Note that if either input is a temporary object this can return a reference
+/// to an object past its lifetime.
 template <class T>
   requires(Ord<T>)
-constexpr T max(T a, T b) noexcept {
-  return a > b ? a : b;
+constexpr T max(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
+  return a > b ? ::sus::forward<T>(a) : ::sus::forward<T>(b);
 }
 
 /// Compares and returns the maximum of two values with respect to the specified
@@ -147,11 +160,19 @@ constexpr T max(T a, T b) noexcept {
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::max_by<i32&>(a, b, c)`. Note that if either input is a temporary
-/// object this can return a reference to an object past its lifetime.
-template <class T, CallableReturns<std::strong_ordering, const T&, const T&> F>
-constexpr T max_by(T a, T b, F compare) noexcept {
-  return compare(a, b) == std::strong_ordering::greater ? a : b;
+/// `sus::ops::max_by<i32&>(a, b, c)`.
+///
+/// Note that if either input is a temporary object this can return a reference
+/// to an object past its lifetime.
+template <class T>
+constexpr T max_by(
+    T a sus_lifetimebound, T b sus_lifetimebound,
+    ::sus::fn::FnOnce<std::strong_ordering(const T&, const T&)> auto&&
+        compare) noexcept {
+  return ::sus::run_once(::sus::move(compare), a, b) ==
+                 std::strong_ordering::greater
+             ? ::sus::forward<T>(a)
+             : ::sus::forward<T>(b);
 }
 
 /// Returns the element that gives the maximum value from the specified
@@ -161,13 +182,17 @@ constexpr T max_by(T a, T b, F compare) noexcept {
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::max_by_key<i32&>(a, b, k)`. Note that if either input is a
-/// temporary object this can return a reference to an object past its lifetime.
-template <class T, CallableWith<const T&> F, int&...,
-          class K = std::invoke_result_t<F, const T&>>
-  requires(Ord<K>)
-constexpr T max_by_key(T a, T b, F f) noexcept {
-  return f(a) > f(b) ? a : b;
+/// `sus::ops::max_by_key<i32&>(a, b, k)`.
+///
+/// Note that if either input is a temporary object this can return a reference
+/// to an object past its lifetime.
+template <class T, ::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn,
+          int&..., class Key = std::invoke_result_t<KeyFn&, const T&>>
+  requires(Ord<Key>)
+constexpr T max_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
+                       KeyFn f) noexcept {
+  return ::sus::run_mut(f, a) > ::sus::run_mut(f, b) ? ::sus::forward<T>(a)
+                                                     : ::sus::forward<T>(b);
 }
 
 /// Restrict a value to a certain interval.
@@ -177,16 +202,20 @@ constexpr T max_by_key(T a, T b, F f) noexcept {
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::clamp<i32&>(a, min, max)`. Note that if any input is a temporary
-/// object this can return a reference to an object past its lifetime.
+/// `sus::ops::clamp<i32&>(a, min, max)`.
+///
+/// Note that if any input is a temporary object this can return a reference to
+/// an object past its lifetime.
 ///
 /// # Panics
 /// Panics if `min > max`.
 template <class T>
   requires(Ord<T>)
-constexpr T clamp(T v, T min, T max) noexcept {
+constexpr T clamp(T v sus_lifetimebound, T min sus_lifetimebound,
+                  T max sus_lifetimebound) noexcept {
   ::sus::check(min <= max);
-  return v < min ? min : (v > max ? max : v);
+  return v < min ? ::sus::forward<T>(min)
+                 : (v > max ? ::sus::forward<T>(max) : ::sus::forward<T>(v));
 }
 
 }  // namespace sus::ops
