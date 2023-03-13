@@ -21,9 +21,9 @@
 #include <type_traits>
 
 #include "subspace/assertions/check.h"
-#include "subspace/construct/into.h"
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/fn/fn_concepts.h"
+#include "subspace/fn/fn_ref.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/macros/assume.h"
 #include "subspace/macros/lifetimebound.h"
@@ -45,10 +45,11 @@ namespace sus::containers {
 template <class T>
 class Vec;
 
-/// A dynamically-sized view into a contiguous sequence, `[T]`.
+/// A dynamically-sized view into a contiguous sequence of objects of type `T`.
 ///
 /// Contiguous here means that elements are laid out so that every element is
-/// the same distance from its neighbors.
+/// the same distance from its neighbors, where there are
+/// `sus::mem::size_of<T>()` many bytes between the start of each element.
 ///
 /// Slices are a view into a block of memory represented as a pointer and a
 /// length.
@@ -358,10 +359,8 @@ class [[sus_trivial_abi]] Slice {
       const T& x) const& noexcept
     requires(::sus::ops::Ord<T>)
   {
-    const T* x_ptr = ::sus::mem::addressof(x);
-    return binary_search_by(sus_bind_mut(
-        sus_store(sus_unsafe_pointer(x_ptr)),
-        [&](const T& p) -> std::strong_ordering { return p <=> *x_ptr; }));
+    return binary_search_by(
+        [&x](const T& p) -> std::strong_ordering { return p <=> x; });
   }
 
   /// Binary searches this slice with a comparator function. This behaves
@@ -379,7 +378,7 @@ class [[sus_trivial_abi]] Slice {
   /// found then `sus::Err` is returned, with the index where a matching
   /// element could be inserted while maintaining sorted order.
   ::sus::Result<::sus::num::usize, ::sus::num::usize> binary_search_by(
-      ::sus::fn::FnMut<std::strong_ordering(const T&)> f) const& noexcept
+      ::sus::fn::FnMutRef<std::strong_ordering(const T&)> f) const& noexcept
     requires(::sus::ops::Ord<T>)
   {
     using Result = ::sus::Result<::sus::num::usize, ::sus::num::usize>;
@@ -435,15 +434,10 @@ class [[sus_trivial_abi]] Slice {
   /// element could be inserted while maintaining sorted order.
   template <::sus::ops::Ord Key>
   ::sus::Result<::sus::num::usize, ::sus::num::usize> binary_search_by_key(
-      const Key& key,
-      ::sus::construct::Into<::sus::fn::FnMut<Key(const T&)>> auto f)
-      const& noexcept {
-    ::sus::fn::FnMut<Key(const T&)> fnmut = ::sus::into(::sus::move(f));
-    const auto* key_ptr = ::sus::mem::addressof(key);
-    auto* f_ptr = ::sus::mem::addressof(fnmut);
-    return binary_search_by(sus_bind_mut(
-        sus_store(sus_unsafe_pointer(key_ptr), sus_unsafe_pointer(f_ptr)),
-        [&](const T& p) { return (*f_ptr)(p) <=> *key_ptr; }));
+      const Key& key, ::sus::fn::FnMut<Key(const T&)> auto f) const& noexcept {
+    return binary_search_by([&key, &f](const T& p) -> std::strong_ordering {
+      return f(p) <=> key;
+    });
   }
 
   /// Returns an iterator over all the elements in the slice, visited in the
