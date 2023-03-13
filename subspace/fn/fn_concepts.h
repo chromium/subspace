@@ -56,11 +56,11 @@ struct Anything {
 /// ```
 ///
 /// # Use of `FnOnce`
-/// The `sus::run_once()` helper ensures that FnOnce is called correctly.
+/// `FnOnce` should be received as an rvalue reference typically, to avoid an
+/// unnecessary copy or move operation, but may also be received by value.
 ///
 /// A `FnOnce` should only be called once, and should be moved with
-/// `sus::move()` when calling it.  It is typically received as an rvalue
-/// reference to avoid an unnecessary copy or move operation.
+/// `sus::move()` when calling it.
 ///
 /// Calling it multiple times may panic or cause Undefined Behaviour. Not moving
 /// the `FnOnce` when calling it may fail to compile, panic, or cause Undefined
@@ -130,11 +130,13 @@ concept FnOnce = requires(F&& f) {
 /// ```
 ///
 /// # Use of `FnMut`
-/// The `sus::run_mut()` helper ensures that `FnMut` is called correctly.
+/// `FnMut` should be received by value reference typically, which isolates any
+/// internal mutation to the current function. It may also be received as an
+/// lvalue reference if it's desired to have its internal mutations visible to
+/// the caller.
 ///
-/// A `FnMut` may be called any number of times, unlike `FnOnce`, and need not
-/// be moved when called. It is typically received as a function parameter by
-/// value, which isolates any internal mutation to the current function.
+/// A `FnMut` may be called any number of times, unlike `FnOnce`, and should not
+/// be moved when called.
 ///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` or `FnMut` will also satisfy `FnOnce`.
@@ -203,11 +205,12 @@ concept FnMut = requires(F& f) {
 /// ```
 ///
 /// # Use of `Fn`
-/// The `sus::run()` helper ensures that `Fn` is called correctly.
+/// `Fn` should be received by const reference, so that calls to it can be sure
+/// to reach the intended const overload of operator() if there is more than
+/// one.
 ///
-/// A `Fn` may be called any number of times, unlike `FnOnce`, and need not
-/// be moved when called. It is typically received as a function parameter as a
-/// const reference, which ensures a non-mutating call operator will be used.
+/// A `Fn` may be called any number of times, unlike `FnOnce`, and should not
+/// be moved when called.
 ///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` will also satisfy `FnMut` and

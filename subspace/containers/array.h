@@ -27,7 +27,6 @@
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/containers/slice.h"
 #include "subspace/fn/fn_concepts.h"
-#include "subspace/fn/run_fn.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
@@ -85,8 +84,7 @@ class Array final {
   constexpr static Array with_initializer(::sus::fn::FnMut<T()> auto f) noexcept
     requires(::sus::mem::Move<T>)
   {
-    return Array(kWithInitializer, ::sus::move(f),
-                 std::make_index_sequence<N>());
+    return Array(kWithInitializer, f, std::make_index_sequence<N>());
   }
 
   // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
@@ -289,7 +287,7 @@ class Array final {
     requires(N > 0)
   Array<R, N> map(MapFn f) && noexcept {
     return Array<R, N>::with_initializer([this, &f, i = size_t{0}]() mutable {
-      return ::sus::run_mut(f, move(storage_.data_[i++]));
+      return f(::sus::move(storage_.data_[i++]));
     });
   }
 
@@ -305,9 +303,9 @@ class Array final {
  private:
   enum WithInitializer { kWithInitializer };
   template <size_t... Is>
-  constexpr Array(WithInitializer, ::sus::fn::FnMut<T()> auto&& f,
+  constexpr Array(WithInitializer, ::sus::fn::FnMut<T()> auto& f,
                   std::index_sequence<Is...>) noexcept
-      : storage_{((void)Is, ::sus::run_mut(f))...} {}
+      : storage_{((void)Is, f())...} {}
 
   enum WithValue { kWithValue };
   template <size_t... Is>
