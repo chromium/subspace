@@ -24,7 +24,6 @@
 #include "subspace/construct/into.h"
 #include "subspace/containers/__private/slice_iter.h"
 #include "subspace/fn/fn_concepts.h"
-#include "subspace/fn/run_fn.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/marker/unsafe.h"
@@ -239,10 +238,9 @@ class [[sus_trivial_abi]] Slice {
     requires(!std::is_const_v<T>)
   {
     if (len_ > 0_usize) {
-      std::stable_sort(data_, data_ + size_t{len_},
-                       [&compare](const T& l, const T& r) {
-                         return ::sus::run_mut(compare, l, r) < 0;
-                       });
+      std::stable_sort(
+          data_, data_ + size_t{len_},
+          [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
     }
   }
 
@@ -274,10 +272,9 @@ class [[sus_trivial_abi]] Slice {
     requires(!std::is_const_v<T>)
   {
     if (len_ > 0_usize) {
-      std::sort(data_, data_ + size_t{len_},
-                [&compare](const T& l, const T& r) {
-                  return ::sus::run_mut(compare, l, r) < 0;
-                });
+      std::sort(
+          data_, data_ + size_t{len_},
+          [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
     }
   }
 

@@ -27,7 +27,6 @@
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/default.h"
 #include "subspace/fn/fn_concepts.h"
-#include "subspace/fn/run_fn.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
 #include "subspace/macros/always_inline.h"
@@ -452,7 +451,7 @@ class Option final {
     if (t_.state() == Some) {
       return t_.take_and_set_none();
     } else {
-      return ::sus::run_once(::sus::move(f));
+      return ::sus::move(f)();
     }
   }
 
@@ -522,7 +521,7 @@ class Option final {
   /// the Option, and instead it can not be called on rvalues.
   T& get_or_insert_with(::sus::fn::FnOnce<T()> auto&& f) & noexcept {
     if (t_.state() == None) {
-      t_.construct_from_none(move_to_storage(::sus::run_once(::sus::move(f))));
+      t_.construct_from_none(move_to_storage(::sus::move(f)()));
     }
     return t_.val_mut();
   }
@@ -551,7 +550,7 @@ class Option final {
             class R = std::invoke_result_t<MapFn&&, T&&>>
   constexpr auto map(MapFn&& m) && noexcept {
     if (t_.state() == Some) {
-      return Option<R>(::sus::run_once(::sus::move(m), t_.take_and_set_none()));
+      return Option<R>(::sus::move(m)(t_.take_and_set_none()));
     } else {
       return Option<R>::none();
     }
@@ -567,7 +566,7 @@ class Option final {
             class R = std::invoke_result_t<MapFn&&, T&&>>
   constexpr R map_or(R default_result, MapFn&& m) && noexcept {
     if (t_.state() == Some) {
-      return ::sus::run_once(::sus::move(m), t_.take_and_set_none());
+      return ::sus::move(m)(t_.take_and_set_none());
     } else {
       return default_result;
     }
@@ -582,9 +581,9 @@ class Option final {
     requires(std::is_same_v<D, R>)
   constexpr R map_or_else(DefaultFn&& default_fn, MapFn&& m) && noexcept {
     if (t_.state() == Some) {
-      return ::sus::run_once(::sus::move(m), t_.take_and_set_none());
+      return ::sus::move(m)(t_.take_and_set_none());
     } else {
-      return ::sus::run_once(::sus::move(default_fn));
+      return ::sus::move(default_fn)();
     }
   }
 
@@ -597,7 +596,7 @@ class Option final {
   constexpr Option<T> filter(
       ::sus::fn::FnOnce<bool(const T&)> auto&& p) && noexcept {
     if (t_.state() == Some) {
-      if (::sus::run_once(::sus::move(p), t_.val())) {
+      if (::sus::move(p)(t_.val())) {
         return Option(t_.take_and_set_none());
       } else {
         // The state has to become None, and we must destroy the inner T.
@@ -635,7 +634,7 @@ class Option final {
     requires(::sus::option::__private::IsOptionType<R>::value)
   constexpr Option<U> and_then(AndFn&& f) && noexcept {
     if (t_.state() == Some)
-      return ::sus::run_once(::sus::move(f), t_.take_and_set_none());
+      return ::sus::move(f)(t_.take_and_set_none());
     else
       return Option<U>::none();
   }
@@ -656,7 +655,7 @@ class Option final {
     if (t_.state() == Some)
       return Option(t_.take_and_set_none());
     else
-      return ::sus::run_once(::sus::move(f));
+      return ::sus::move(f)();
   }
 
   /// Consumes this Option and returns an Option, holding the value from either
@@ -710,7 +709,7 @@ class Option final {
     if (t_.state() == Some)
       return Result::with(t_.take_and_set_none());
     else
-      return Result::with_err(::sus::run_once(::sus::move(f)));
+      return Result::with_err(::sus::move(f)());
   }
 
   /// Transposes an #Option of a #Result into a #Result of an #Option.

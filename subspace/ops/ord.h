@@ -20,7 +20,6 @@
 #include "subspace/assertions/check.h"
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/fn/fn_ref.h"
-#include "subspace/fn/run_fn.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/forward.h"
 
@@ -111,8 +110,7 @@ constexpr T min_by(
     T a sus_lifetimebound, T b sus_lifetimebound,
     ::sus::fn::FnOnce<std::strong_ordering(const T&, const T&)> auto&&
         compare) noexcept {
-  return ::sus::run_once(::sus::move(compare), a, b) ==
-                 std::strong_ordering::greater
+  return ::sus::move(compare)(a, b) == std::strong_ordering::greater
              ? ::sus::forward<T>(b)
              : ::sus::forward<T>(a);
 }
@@ -133,8 +131,7 @@ template <class T, ::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn,
   requires(Ord<Key>)
 constexpr T min_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
                        KeyFn f) noexcept {
-  return ::sus::run_mut(f, a) > ::sus::run_mut(f, b) ? ::sus::forward<T>(b)
-                                                     : ::sus::forward<T>(a);
+  return f(a) > f(b) ? ::sus::forward<T>(b) : ::sus::forward<T>(a);
 }
 
 /// Compares and returns the maximum of two values.
@@ -169,8 +166,7 @@ constexpr T max_by(
     T a sus_lifetimebound, T b sus_lifetimebound,
     ::sus::fn::FnOnce<std::strong_ordering(const T&, const T&)> auto&&
         compare) noexcept {
-  return ::sus::run_once(::sus::move(compare), a, b) ==
-                 std::strong_ordering::greater
+  return ::sus::move(compare)(a, b) == std::strong_ordering::greater
              ? ::sus::forward<T>(a)
              : ::sus::forward<T>(b);
 }
@@ -191,8 +187,7 @@ template <class T, ::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn,
   requires(Ord<Key>)
 constexpr T max_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
                        KeyFn f) noexcept {
-  return ::sus::run_mut(f, a) > ::sus::run_mut(f, b) ? ::sus::forward<T>(a)
-                                                     : ::sus::forward<T>(b);
+  return f(a) > f(b) ? ::sus::forward<T>(a) : ::sus::forward<T>(b);
 }
 
 /// Restrict a value to a certain interval.

@@ -24,7 +24,6 @@
 #include "subspace/containers/__private/vec_marker.h"
 #include "subspace/containers/slice.h"
 #include "subspace/fn/fn_concepts.h"
-#include "subspace/fn/run_fn.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
 #include "subspace/macros/lifetimebound.h"
