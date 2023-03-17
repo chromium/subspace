@@ -45,6 +45,8 @@ using ::sus::option::Option;
 // TODO: Move forward decls somewhere?
 template <class InnerSizedIter>
 class Filter;
+template <class Item>
+class Generator;
 template <class ToItem, class InnerSizedIter>
 class Map;
 template <class InnerSizedIter>
@@ -184,6 +186,11 @@ class IteratorBase {
                   pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
+  /// Creates an iterator from a generator function that consumes the current
+  /// iterator.
+  template <::sus::fn::FnOnce<::sus::iter::Generator<ItemT>(Iter&&)> GenFn>
+  ::sus::iter::Generator<ItemT> generate(GenFn&& generator_fn) && noexcept;
+
   /// Converts the iterator into a `std::ranges::range` for use with the std
   /// ranges library.
   ///
@@ -309,6 +316,13 @@ auto IteratorBase<Iter, Item>::filter(
   using Filter = Filter<Sized>;
   return Filter::with(::sus::move(pred),
                       make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+template <::sus::fn::FnOnce<::sus::iter::Generator<Item>(Iter&&)> GenFn>
+::sus::iter::Generator<Item> IteratorBase<Iter, Item>::generate(
+    GenFn&& generator_fn) && noexcept {
+  return ::sus::move(generator_fn)(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>

@@ -106,7 +106,7 @@ TEST(IterGenerator, Nested) {
   EXPECT_EQ(e, 5);
 }
 
-TEST(IterGenerator, ComposeAfter) {
+TEST(IterGenerator, ComposeFromGenerator) {
   auto x = []() -> Generator<i32> {
     co_yield 1;
     co_yield 2;
@@ -121,10 +121,17 @@ TEST(IterGenerator, ComposeAfter) {
   EXPECT_EQ(it.next(), sus::None);
 }
 
-// TODO: How about composition before? I guess I pass the prior iterator into
-// the generator as an argument and iterate on it. It's just nested-ness.
-//
-// But should we provide a helper? `Iterator::chain(FnOnce<Generator<T>(Iter)>)`
-// or something?
+TEST(IterGenerator, ComposeIntoGenerator) {
+  auto x = [](sus::iter::Iterator<i32> auto it) -> Generator<i32> {
+    for (i32 i : it) {
+      if (i > 1 && i < 4) co_yield i;
+    }
+  };
+
+  auto it = sus::vec(1, 2, 3, 4).construct<i32>().into_iter().generate(x);
+  EXPECT_EQ(it.next().unwrap(), 2);
+  EXPECT_EQ(it.next().unwrap(), 3);
+  EXPECT_EQ(it.next(), sus::None);
+}
 
 }  // namespace
