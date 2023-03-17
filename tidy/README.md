@@ -21,7 +21,9 @@
   the argument to be wrapped in `sus::mref()`. Probably exceptions for generic
   code.
 
-## IteratorLoop
+## IteratorLoop and GeneratorLoop
 * It's not safe to use IteratorLoop outside of a ranged-for loop, and we should
   check that it's not happening. UB can result from getting to the end() and
   calling operator*().
+* The GeneratorLoop can not outlive the Generator it is looping over, so should
+  not be used outside of a ranged-for loop.
