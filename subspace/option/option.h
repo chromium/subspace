@@ -1037,8 +1037,8 @@ constexpr inline auto operator<=>(const Option<T>& l,
                                   const Option<U>& r) noexcept = delete;
 
 // Implicit for-ranged loop iteration via `Option::iter()`.
-using sus::iter::__private::begin;
-using sus::iter::__private::end;
+using ::sus::iter::__private::begin;
+using ::sus::iter::__private::end;
 
 /// Used to construct an Option<T> with a Some(t) value.
 ///

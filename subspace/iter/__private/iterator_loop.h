@@ -15,6 +15,7 @@
 #pragma once
 
 #include "subspace/iter/__private/iterator_end.h"
+#include "subspace/macros/lifetimebound.h"
 #include "subspace/option/option.h"
 
 namespace sus::iter::__private {
@@ -25,7 +26,7 @@ class [[nodiscard]] IteratorLoop final {
   using Item = typename std::remove_reference_t<Iter>::Item;
 
  public:
-  IteratorLoop(Iter&& iter) noexcept
+  IteratorLoop(Iter&& iter sus_lifetimebound) noexcept
       : iter_(::sus::forward<Iter>(iter)), item_(iter_.next()) {}
 
   inline bool operator==(__private::IteratorEnd) const noexcept {
@@ -46,14 +47,27 @@ class [[nodiscard]] IteratorLoop final {
   Option<Item> item_;
 };
 
-// ADL helpers to call T::iter() in a range-based for loop, which will call
-// `begin(T)`.
-
+/// ADL helper to call `T::iter()` in a range-based for loop, which will call
+/// `begin(T)`.
+///
+/// In the same namespace as a type that has iter(), place:
+/// ```
+/// using ::sus::iter::__private::begin;
+/// using ::sus::iter::__private::end;
+/// ```
 template <class T>
 constexpr auto begin(const T& t) noexcept {
   return IteratorLoop(t.iter());
 }
 
+/// ADL helper to call `T::iter()` in a range-based for loop, which will call
+/// `end(T)`.
+///
+/// In the same namespace as a type that has iter(), place:
+/// ```
+/// using ::sus::iter::__private::begin;
+/// using ::sus::iter::__private::end;
+/// ```
 template <class T>
 constexpr auto end(const T&) noexcept {
   return ::sus::iter::__private::IteratorEnd();
