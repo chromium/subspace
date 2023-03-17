@@ -14,6 +14,8 @@
 
 #include "subspace/iter/iterator.h"
 
+#include <ranges>
+
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/into.h"

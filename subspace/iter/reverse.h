@@ -29,6 +29,8 @@ using ::sus::mem::relocate_by_memcpy;
 /// An iterator that iterates over another iterator but in reverse.
 ///
 /// The iterator wrapped by Reverse must be a DoubleEndedIterator.
+///
+/// This type is returned from `Iterator::rev()`.
 template <class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Reverse final
     : public IteratorBase<Reverse<InnerSizedIter>,

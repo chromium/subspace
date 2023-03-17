@@ -22,8 +22,12 @@
 
 namespace sus::iter {
 
+/// An iterator that maps each item to a new type based on a map function.
+///
+/// This type is returned from `Iterator::map()`.
 template <class ToItem, class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Map final : public IteratorBase<Map<ToItem, InnerSizedIter>, ToItem> {
+class [[nodiscard]] [[sus_trivial_abi]] Map final
+    : public IteratorBase<Map<ToItem, InnerSizedIter>, ToItem> {
   using FromItem = InnerSizedIter::Item;
   using MapFn = ::sus::fn::FnMutBox<ToItem(FromItem&&)>;
 

@@ -28,11 +28,16 @@ class [[nodiscard]] IteratorLoop final {
   IteratorLoop(Iter&& iter) noexcept
       : iter_(::sus::forward<Iter>(iter)), item_(iter_.next()) {}
 
-  inline bool operator==(const __private::IteratorEnd&) const noexcept {
+  inline bool operator==(__private::IteratorEnd) const noexcept {
     return item_.is_none();
   }
   inline void operator++() & noexcept { item_ = iter_.next(); }
   inline Item operator*() & noexcept {
+    // UB occurs if operator*() is called after IteratorLoop == IteratorEnd.
+    // This can not occur in a ranged-for loop, and IteratorLoop should never be
+    // held in other contexts.
+    //
+    // TODO: Write a clang-tidy for this.
     return item_.take().unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
