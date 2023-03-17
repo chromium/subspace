@@ -22,6 +22,7 @@
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/copy.h"
 #include "subspace/mem/move.h"
+#include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
 
 namespace sus::iter {
@@ -71,10 +72,13 @@ class IterPromise {
 
  private:
   Option<T> yielded_;
+
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(yielded_));
 };
 
 template <class Generator>
-class GeneratorLoop {
+class [[sus_trivial_abi]] GeneratorLoop {
  public:
   GeneratorLoop(Generator& generator sus_lifetimebound) noexcept
       : generator_(generator) {}
@@ -104,6 +108,9 @@ class GeneratorLoop {
 
  private:
   Generator& generator_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
+                                  decltype(generator_));
 };
 
 }  // namespace __private
@@ -114,7 +121,8 @@ class GeneratorLoop {
 /// `sus::iter::Generator<T>`. Then `co_yield` values of type `T`, and each one
 /// will be returned from the resulting `Iterator` in the same order.
 template <class T>
-class Generator final : public ::sus::iter::IteratorBase<Generator<T>, T> {
+class [[sus_trivial_abi]] Generator final
+    : public ::sus::iter::IteratorBase<Generator<T>, T> {
  public:
   // Coroutine implementation.
   using promise_type = __private::IterPromise<Generator<T>, T>;
@@ -168,6 +176,9 @@ class Generator final : public ::sus::iter::IteratorBase<Generator<T>, T> {
       : co_handle_(std::coroutine_handle<promise_type>::from_promise(p)) {}
 
   std::coroutine_handle<promise_type> co_handle_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
+                                  decltype(co_handle_));
 };
 
 }  // namespace sus::iter

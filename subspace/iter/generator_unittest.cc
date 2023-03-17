@@ -15,6 +15,7 @@
 #include "subspace/iter/generator.h"
 
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/iter/iterator.h"
 #include "subspace/prelude.h"
 #include "subspace/test/no_copy_move.h"
 
@@ -105,7 +106,20 @@ TEST(IterGenerator, Nested) {
   EXPECT_EQ(e, 5);
 }
 
-// TODO: Test composition after, but since it satisfies Iterator should be fine.
+TEST(IterGenerator, ComposeAfter) {
+  auto x = []() -> Generator<i32> {
+    co_yield 1;
+    co_yield 2;
+    co_yield 3;
+    co_yield 4;
+  };
+
+  // Generator is trivially relocatable, so no need to box() it.
+  auto it = x().filter([](const i32& a) { return a > 1 && a < 4; });
+  EXPECT_EQ(it.next().unwrap(), 2);
+  EXPECT_EQ(it.next().unwrap(), 3);
+  EXPECT_EQ(it.next(), sus::None);
+}
 
 // TODO: How about composition before? I guess I pass the prior iterator into
 // the generator as an argument and iterate on it. It's just nested-ness.
