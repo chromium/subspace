@@ -40,8 +40,10 @@
 // TODO: https://github.com/llvm/llvm-project/issues/54040
 // Aggregate initialization via () paren syntax.
 //
-// Support for this landed and was reverted in clang 16.
-#if defined(__clang__) && !__has_feature(__cpp_aggregate_paren_init)
+// Support for this landed and was reverted in clang 16, then relanded but is
+// currently broken in 16 and 17:
+// https://github.com/llvm/llvm-project/issues/61145
+#if defined(__clang__)  // && !__has_cpp_attribute(__cpp_aggregate_paren_init)
 #define sus_clang_bug_54040(...) __VA_ARGS__
 #define sus_clang_bug_54040_else(...)
 #else
