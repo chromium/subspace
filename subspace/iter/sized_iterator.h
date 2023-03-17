@@ -34,12 +34,18 @@ struct [[sus_trivial_abi]] SizedIterator final {
       : destroy_(destroy), next_(next), next_back_(next_back) {}
 
   SizedIterator(SizedIterator&& o) noexcept
-      : destroy_(::sus::mem::replace_ptr(mref(o.destroy_), nullptr)),
-        next_(::sus::mem::replace_ptr(mref(o.next_), nullptr)),
-        next_back_(::sus::mem::replace_ptr(mref(o.next_back_), nullptr)) {
+      : destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
+        next_(::sus::mem::replace(mref(o.next_), nullptr)),
+        next_back_(::sus::mem::replace(mref(o.next_back_), nullptr)) {
     memcpy(sized_, o.sized_, SubclassSize);
   }
-  SizedIterator& operator=(SizedIterator&& o) = delete;
+  SizedIterator& operator=(SizedIterator&& o) noexcept {
+    if (destroy_) destroy_(*sized_);
+    destroy_ = ::sus::mem::replace(mref(o.destroy_), nullptr);
+    next_ = ::sus::mem::replace(mref(o.next_), nullptr);
+    next_back_ = ::sus::mem::replace(mref(o.next_back_), nullptr);
+    memcpy(sized_, o.sized_, SubclassSize);
+  }
 
   ~SizedIterator() noexcept {
     if (destroy_) destroy_(*sized_);
@@ -81,7 +87,8 @@ struct SizedIteratorType {
 /// erasing its type but remaining trivially relocatable.
 template <::sus::mem::Move Iter, int&..., class Item = typename Iter::Item>
 inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
-  requires(::sus::iter::Iterator<Iter, Item> && ::sus::mem::relocate_by_memcpy<Iter>)
+  requires(::sus::iter::Iterator<Iter, Item> &&
+           ::sus::mem::relocate_by_memcpy<Iter>)
 {
   // IteratorBase also checks this. It's needed for correctness of the casts
   // here.

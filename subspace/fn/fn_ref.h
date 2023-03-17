@@ -96,12 +96,12 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
 
   constexpr FnRef(FnRef&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
-        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
   constexpr FnRef& operator=(FnRef&& o sus_lifetimebound) noexcept {
     storage_ = o.storage_;
-    invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
+    invoke_ = ::sus::mem::replace(o.invoke_, nullptr);
     ::sus::check(invoke_);  // Catch use-after-move.
     return *this;
   }
@@ -129,7 +129,7 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
   /// #[doc.overloads=call.rvalue]
   inline R operator()(CallArgs... args) && {
     ::sus::check(invoke_);  // Catch use-after-move.
-    return (*::sus::mem::replace_ptr(invoke_, nullptr))(
+    return (*::sus::mem::replace(invoke_, nullptr))(
         storage_, ::sus::forward<CallArgs>(args)...);
   }
 
@@ -245,7 +245,7 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   /// #[doc.overloads=ctor.fnref]
   constexpr FnMutRef(FnRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
-        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
 
@@ -253,12 +253,12 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
 
   constexpr FnMutRef(FnMutRef&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
-        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
   constexpr FnMutRef& operator=(FnMutRef&& o sus_lifetimebound) noexcept {
     storage_ = o.storage_;
-    invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
+    invoke_ = ::sus::mem::replace(o.invoke_, nullptr);
     ::sus::check(invoke_);  // Catch use-after-move.
     return *this;
   }
@@ -286,7 +286,7 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   /// #[doc.overloads=call.rvalue]
   inline R operator()(CallArgs... args) && {
     ::sus::check(invoke_);  // Catch use-after-move.
-    return (*::sus::mem::replace_ptr(invoke_, nullptr))(
+    return (*::sus::mem::replace(invoke_, nullptr))(
         storage_, ::sus::forward<CallArgs>(args)...);
   }
 
@@ -399,7 +399,7 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   /// #[doc.overloads=ctor.fnmutref]
   constexpr FnOnceRef(FnMutRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
-        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
 
@@ -412,7 +412,7 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   /// #[doc.overloads=ctor.fnref]
   constexpr FnOnceRef(FnRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
-        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
 
@@ -420,12 +420,12 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
 
   constexpr FnOnceRef(FnOnceRef&& o sus_lifetimebound) noexcept
       : storage_(o.storage_),
-        invoke_(::sus::mem::replace_ptr(o.invoke_, nullptr)) {
+        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
   constexpr FnOnceRef& operator=(FnOnceRef&& o sus_lifetimebound) noexcept {
     storage_ = o.storage_;
-    invoke_ = ::sus::mem::replace_ptr(o.invoke_, nullptr);
+    invoke_ = ::sus::mem::replace(o.invoke_, nullptr);
     ::sus::check(invoke_);  // Catch use-after-move.
     return *this;
   }
@@ -478,7 +478,7 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   /// Runs and consumes the closure.
   inline R operator()(CallArgs... args) && {
     ::sus::check(invoke_);  // Catch use-after-move.
-    return (*::sus::mem::replace_ptr(invoke_, nullptr))(
+    return (*::sus::mem::replace(invoke_, nullptr))(
         storage_, ::sus::forward<CallArgs>(args)...);
   }
 

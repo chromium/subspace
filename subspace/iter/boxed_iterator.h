@@ -72,16 +72,16 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
   }
 
   BoxedIterator(BoxedIterator&& o) noexcept
-      : iter_(::sus::mem::replace_ptr(mref(o.iter_), nullptr)),
-        destroy_(::sus::mem::replace_ptr(mref(o.destroy_), nullptr)),
-        next_(::sus::mem::replace_ptr(mref(o.next_), nullptr)),
-        next_back_(::sus::mem::replace_ptr(mref(o.next_back_), nullptr)) {}
+      : iter_(::sus::mem::replace(mref(o.iter_), nullptr)),
+        destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
+        next_(::sus::mem::replace(mref(o.next_), nullptr)),
+        next_back_(::sus::mem::replace(mref(o.next_back_), nullptr)) {}
   BoxedIterator& operator=(BoxedIterator&& o) noexcept {
     if (destroy_) destroy_(iter_);
-    iter_ = ::sus::mem::replace_ptr(mref(o.iter_), nullptr);
-    destroy_ = ::sus::mem::replace_ptr(mref(o.destroy_), nullptr);
-    next_ = ::sus::mem::replace_ptr(mref(o.next_), nullptr);
-    next_back_ = ::sus::mem::replace_ptr(mref(o.next_back_), nullptr);
+    iter_ = ::sus::mem::replace(mref(o.iter_), nullptr);
+    destroy_ = ::sus::mem::replace(mref(o.destroy_), nullptr);
+    next_ = ::sus::mem::replace(mref(o.next_), nullptr);
+    next_back_ = ::sus::mem::replace(mref(o.next_back_), nullptr);
   }
 
   ~BoxedIterator() {

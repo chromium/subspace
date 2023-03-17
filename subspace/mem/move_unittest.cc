@@ -71,7 +71,7 @@ struct MoveConsWithCopy {
 };
 
 static_assert(Move<MoveOnly>);
-static_assert(Move<MoveConsOnly>);
+static_assert(!Move<MoveConsOnly>);
 static_assert(!Move<MoveAssignOnly>);
 static_assert(!Move<MoveConsWithCopy>);
 

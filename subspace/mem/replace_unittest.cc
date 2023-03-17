@@ -144,30 +144,95 @@ TEST(Replace, NonTrivial) {
   EXPECT_EQ(1, i.assigns);
 }
 
-TEST(ReplacePtr, Const) {
+TEST(Replace, Convertible) {
+  static i32 converted = 0;
+
+  struct Target {};
+  struct [[sus_trivial_abi]] Copyable {
+    Copyable() = default;
+    Copyable(const Copyable&) = default;
+    Copyable& operator=(const Copyable&) = default;
+    operator Target() const {
+      converted += 1;
+      return Target();
+    }
+  };
+  struct [[sus_trivial_abi]] MoveableCopyConvert {
+    MoveableCopyConvert() = default;
+    MoveableCopyConvert(MoveableCopyConvert&&) = default;
+    MoveableCopyConvert& operator=(MoveableCopyConvert&&) = default;
+    // Const conversion.
+    operator Target() const& {
+      converted += 1;
+      return Target();
+    }
+  };
+  struct [[sus_trivial_abi]] MoveableMoveConvert {
+    MoveableMoveConvert() = default;
+    MoveableMoveConvert(MoveableMoveConvert&&) = default;
+    MoveableMoveConvert& operator=(MoveableMoveConvert&&) = default;
+    // Move conversion.
+    operator Target() && {
+      converted += 1;
+      return Target();
+    }
+  };
+
+  Target target;
+
+  // Tests the replace(T, const U&) path, ensuring we don't memcpy() from a
+  // different type.
+  converted = 0;
+  [[maybe_unused]] auto a = ::sus::mem::replace(mref(target), Copyable());
+  EXPECT_EQ(converted, 1);
+  ::sus::mem::replace_and_discard(mref(target), Copyable());
+  EXPECT_EQ(converted, 2);
+
+  // Tests the replace(T, U&&) path, ensuring we don't memcpy() from a
+  // different type, and that it successfully can use a const conversion
+  // operator.
+  converted = 0;
+  [[maybe_unused]] auto b =
+      ::sus::mem::replace(mref(target), MoveableCopyConvert());
+  EXPECT_EQ(converted, 1);
+  ::sus::mem::replace_and_discard(mref(target), MoveableCopyConvert());
+  EXPECT_EQ(converted, 2);
+
+  // Tests the replace(T, U&&) path, ensuring we don't memcpy() from a
+  // different type, and that it successfully can use am rvalue conversion
+  // operator.
+  converted = 0;
+  [[maybe_unused]] auto c =
+      ::sus::mem::replace(mref(target), MoveableMoveConvert());
+  EXPECT_EQ(converted, 1);
+  ::sus::mem::replace_and_discard(mref(target), MoveableMoveConvert());
+  EXPECT_EQ(converted, 2);
+}
+
+TEST(Replace, ConstPtr) {
   int i1 = 1, i2 = 2;
   const int* p1 = &i1;
   const int* p2 = &i2;
-  const int* o = replace_ptr(mref(p1), p2);
+  const int* o = replace(mref(p1), p2);
   EXPECT_EQ(o, &i1);
   EXPECT_EQ(p1, &i2);
   EXPECT_EQ(p2, &i2);
 
-  o = replace_ptr(mref(p1), nullptr);
+  o = replace(mref(p1), nullptr);
   EXPECT_EQ(o, &i2);
   EXPECT_EQ(p1, nullptr);
 }
 
-TEST(ReplacePtr, Mut) {
+TEST(Replace, MutPtr) {
   int i1 = 1, i2 = 2;
   int* p1 = &i1;
   int* p2 = &i2;
-  int* o = replace_ptr(mref(p1), p2);
+  int* o = replace(mref(p1), p2);
   EXPECT_EQ(o, &i1);
   EXPECT_EQ(p1, &i2);
   EXPECT_EQ(p2, &i2);
 
-  o = replace_ptr(mref(p1), nullptr);
+  o = replace(mref(p1), nullptr);
   EXPECT_EQ(o, &i2);
   EXPECT_EQ(p1, nullptr);
 }

@@ -133,7 +133,7 @@ class Vec {
   }
 
   Vec(Vec&& o) noexcept
-      : storage_(::sus::mem::replace_ptr(mref(o.storage_), nullptr)),
+      : storage_(::sus::mem::replace(mref(o.storage_), nullptr)),
         len_(::sus::mem::replace(mref(o.len_), kMovedFromLen)),
         capacity_(::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity)) {
     check(!is_moved_from());
@@ -141,7 +141,7 @@ class Vec {
   Vec& operator=(Vec&& o) noexcept {
     check(!o.is_moved_from());
     if (is_alloced()) free_storage();
-    storage_ = ::sus::mem::replace_ptr(mref(o.storage_), nullptr);
+    storage_ = ::sus::mem::replace(mref(o.storage_), nullptr);
     len_ = ::sus::mem::replace(mref(o.len_), kMovedFromLen);
     capacity_ = ::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity);
     return *this;
@@ -206,7 +206,7 @@ class Vec {
   /// cleanup.
   ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
     check(!is_moved_from());
-    return sus::tuple(::sus::mem::replace_ptr(mref(storage_), nullptr),
+    return sus::tuple(::sus::mem::replace(mref(storage_), nullptr),
                       ::sus::mem::replace(mref(len_), kMovedFromLen),
                       ::sus::mem::replace(mref(capacity_), kMovedFromCapacity));
   }
