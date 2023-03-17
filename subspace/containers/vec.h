@@ -582,8 +582,8 @@ class Vec {
 };
 
 // Implicit for-ranged loop iteration via `Vec::iter()`.
-using sus::iter::__private::begin;
-using sus::iter::__private::end;
+using ::sus::iter::__private::begin;
+using ::sus::iter::__private::end;
 
 /// Used to construct a Vec<T> with the parameters as its values.
 ///
