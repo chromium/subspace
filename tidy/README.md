@@ -20,3 +20,8 @@
 * Passing an lvalue to a function receiving an lvalue-reference should require
   the argument to be wrapped in `sus::mref()`. Probably exceptions for generic
   code.
+
+## IteratorLoop
+* It's not safe to use IteratorLoop outside of a ranged-for loop, and we should
+  check that it's not happening. UB can result from getting to the end() and
+  calling operator*().
