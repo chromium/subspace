@@ -45,6 +45,9 @@ class [[nodiscard]] IteratorLoop final {
  private:
   Iter iter_;
   Option<Item> item_;
+
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(iter_), decltype(item_));
 };
 
 /// ADL helper to call `T::iter()` in a range-based for loop, which will call
