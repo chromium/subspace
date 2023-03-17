@@ -88,4 +88,24 @@ TEST(IterGenerator, ForLoop) {
   EXPECT_EQ(e, 5);
 }
 
+TEST(IterGenerator, Nested) {
+  auto y = []() -> Generator<i32> {
+    co_yield 3;
+    co_yield 4;
+  };
+  auto x = [y = std::move(y)]() -> Generator<i32> {
+    co_yield 1;
+    co_yield 2;
+    for (auto i : y()) co_yield i;
+  };
+  auto it = x();
+
+  i32 e = 1;
+  for (i32 i : x()) {
+    EXPECT_EQ(e, i);
+    e += 1;
+  }
+  EXPECT_EQ(e, 5);
+}
+
 }  // namespace
