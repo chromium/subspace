@@ -49,6 +49,8 @@ template <class ToItem, class InnerSizedIter>
 class Map;
 template <class InnerSizedIter>
 class Reverse;
+template <class Iter>
+class IteratorRange;
 
 struct SizeHint {
   ::sus::num::usize lower;
@@ -168,7 +170,7 @@ class IteratorBase {
   ///
   /// The returned iterator's type is whatever is returned by the closure.
   template <class T, int&..., class R = std::invoke_result_t<T, Item&&>,
-  class B = ::sus::fn::FnMutBox<R(Item&&)>>
+            class B = ::sus::fn::FnMutBox<R(Item&&)>>
     requires(!std::is_void_v<R> && Into<T, B>)
   auto map(T fn) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
@@ -181,6 +183,16 @@ class IteratorBase {
   auto filter(::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
                   pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Converts the iterator into a `std::ranges::range` for use with the std
+  /// ranges library.
+  ///
+  /// This provides stdlib compatibility for iterators in libraries that expect
+  /// stdlib types.
+  ///
+  /// The `subspace/iter/compat_ranges.h` header must be included separately to
+  /// use this method, to avoid pulling in large stdlib headers by default.
+  auto range() && noexcept;
 
   /// Reverses an iterator's direction.
   ///
@@ -297,6 +309,11 @@ auto IteratorBase<Iter, Item>::filter(
   using Filter = Filter<Sized>;
   return Filter::with(::sus::move(pred),
                       make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+auto IteratorBase<Iter, Item>::range() && noexcept {
+  return ::sus::iter::IteratorRange<Iter>::with(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>

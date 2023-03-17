@@ -24,6 +24,9 @@ namespace sus::iter {
 
 using ::sus::mem::relocate_by_memcpy;
 
+/// An iterator that filters based on a predicate function.
+///
+/// This type is returned from `Iterator::filter()`.
 template <class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Filter final
     : public IteratorBase<Filter<InnerSizedIter>,
