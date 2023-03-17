@@ -78,7 +78,6 @@ TEST(IterGenerator, ForLoop) {
     co_yield 3;
     co_yield 4;
   };
-  auto it = x();
 
   i32 e = 1;
   for (i32 i : x()) {
@@ -98,7 +97,6 @@ TEST(IterGenerator, Nested) {
     co_yield 2;
     for (auto i : y()) co_yield i;
   };
-  auto it = x();
 
   i32 e = 1;
   for (i32 i : x()) {
