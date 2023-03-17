@@ -97,7 +97,6 @@ TEST(IterGenerator, Nested) {
     co_yield 2;
     for (auto i : y()) co_yield i;
   };
-
   i32 e = 1;
   for (i32 i : x()) {
     EXPECT_EQ(e, i);
@@ -105,5 +104,13 @@ TEST(IterGenerator, Nested) {
   }
   EXPECT_EQ(e, 5);
 }
+
+// TODO: Test composition after, but since it satisfies Iterator should be fine.
+
+// TODO: How about composition before? I guess I pass the prior iterator into
+// the generator as an argument and iterate on it. It's just nested-ness.
+//
+// But should we provide a helper? `Iterator::chain(FnOnce<Generator<T>(Iter)>)`
+// or something?
 
 }  // namespace

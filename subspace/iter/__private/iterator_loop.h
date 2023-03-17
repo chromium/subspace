@@ -26,7 +26,7 @@ class [[nodiscard]] IteratorLoop final {
   using Item = typename std::remove_reference_t<Iter>::Item;
 
  public:
-  IteratorLoop(Iter&& iter sus_lifetimebound) noexcept
+  IteratorLoop(Iter&& iter) noexcept
       : iter_(::sus::forward<Iter>(iter)), item_(iter_.next()) {}
 
   inline bool operator==(__private::IteratorEnd) const noexcept {
