@@ -56,7 +56,7 @@ struct [[sus_trivial_abi]] SliceIter final
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
-    return Option<Item>::some(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u));
+    return Option<Item>::some(*::sus::mem::replace(mref(ptr_), ptr_ + 1u));
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -128,7 +128,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
     return Option<Item>::some(
-        mref(*::sus::mem::replace_ptr(mref(ptr_), ptr_ + 1u)));
+        mref(*::sus::mem::replace(mref(ptr_), ptr_ + 1u)));
   }
 
   // sus::iter::DoubleEndedIterator trait.

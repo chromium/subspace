@@ -278,6 +278,10 @@ TEST(Iterator, FilterDoubleEnded) {
 struct Filtering {
   Filtering(i32 i) : i(i) {}
   Filtering(Filtering&& f) : i(f.i) {}
+  Filtering& operator=(Filtering&& f) {
+    i = f.i;
+    return *this;
+  }
   ~Filtering() {}
   i32 i;
 };

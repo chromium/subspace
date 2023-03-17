@@ -30,6 +30,11 @@ TEST(Take, Take) {
     S() { default_constucted += 1_i32; }
     S(i32 i) : num(i) {}
     S(S&& other) : num(other.num), moved(other.moved + 1_i32) {}
+    S& operator=(S&& other) {
+      num = other.num;
+      moved = other.moved + 1_i32;
+      return *this;
+    }
     ~S() { take_destructors += 1_i32; }
 
     i32 num = 101_i32;
@@ -57,6 +62,11 @@ TEST(Take, TakeConstexpr) {
     constexpr S() { default_constucted += 1_i32; }
     constexpr S(i32 i) : num(i) {}
     constexpr S(S&& other) : num(other.num), moved(other.moved + 1_i32) {}
+    constexpr S& operator=(S&& other) {
+      num = other.num;
+      moved = other.moved + 1_i32;
+      return *this;
+    }
 
     i32 num = 101_i32;
     i32 default_constucted = 0_i32;
@@ -85,6 +95,11 @@ TEST(Take, TakeAndDestruct) {
     S() { default_constucted += 1_i32; }
     S(i32 i) : num(i) {}
     S(S&& other) : num(other.num), moved(other.moved + 1_i32) {}
+    S& operator=(S&& other) {
+      num = other.num;
+      moved = other.moved + 1_i32;
+      return *this;
+    }
     ~S() { take_destructors += 1_i32; }
 
     i32 num = 101_i32;
@@ -119,6 +134,11 @@ TEST(Take, TakeAndDestructConstexpr) {
     constexpr S() { default_constucted += 1_i32; }
     constexpr S(i32 i) : num(i) {}
     constexpr S(S&& other) : num(other.num), moved(other.moved + 1_i32) {}
+    S& operator=(S&& other) {
+      num = other.num;
+      moved = other.moved + 1_i32;
+      return *this;
+    }
 
     i32 num = 101_i32;
     i32 default_constucted = 0_i32;

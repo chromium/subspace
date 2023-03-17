@@ -39,7 +39,7 @@ class TryFromIntError {
   }
 
  private:
-  const Kind kind_;
+  Kind kind_;
 };
 
 }  // namespace sus::num
