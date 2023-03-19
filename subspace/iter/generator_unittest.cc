@@ -32,7 +32,7 @@ TEST(IterGenerator, Iterator) {
       co_yield 5;
       co_yield 7;
     };
-    auto it = x();
+    sus::iter::Iterator<i32> auto it = x();
     static_assert(sus::iter::Iterator<decltype(it), i32>);
     EXPECT_EQ(it.next().unwrap(), 1);
     EXPECT_EQ(it.next().unwrap(), 3);
@@ -48,7 +48,7 @@ TEST(IterGenerator, Iterator) {
       co_yield n1;
       co_yield n2;
     };
-    auto it = x();
+    sus::iter::Iterator<NoCopyMove&> auto it = x();
     static_assert(sus::iter::Iterator<decltype(it), NoCopyMove&>);
     EXPECT_EQ(&it.next().unwrap(), &n3);
     EXPECT_EQ(&it.next().unwrap(), &n1);
@@ -63,7 +63,7 @@ TEST(IterGenerator, Iterator) {
       co_yield n1;
       co_yield n2;
     };
-    auto it = x();
+    sus::iter::Iterator<const NoCopyMove&> auto it = x();
     static_assert(sus::iter::Iterator<decltype(it), const NoCopyMove&>);
     EXPECT_EQ(&it.next().unwrap(), &n3);
     EXPECT_EQ(&it.next().unwrap(), &n1);
@@ -115,7 +115,8 @@ TEST(IterGenerator, ComposeFromGenerator) {
   };
 
   // Generator is trivially relocatable, so no need to box() it.
-  auto it = x().filter([](const i32& a) { return a > 1 && a < 4; });
+  sus::iter::Iterator<i32> auto it =
+      x().filter([](const i32& a) { return a > 1 && a < 4; });
   EXPECT_EQ(it.next().unwrap(), 2);
   EXPECT_EQ(it.next().unwrap(), 3);
   EXPECT_EQ(it.next(), sus::None);
@@ -128,7 +129,8 @@ TEST(IterGenerator, ComposeIntoGenerator) {
     }
   };
 
-  auto it = sus::vec(1, 2, 3, 4).construct<i32>().into_iter().generate(x);
+  sus::iter::Iterator<i32> auto it =
+      sus::vec(1, 2, 3, 4).construct<i32>().into_iter().generate(x);
   EXPECT_EQ(it.next().unwrap(), 2);
   EXPECT_EQ(it.next().unwrap(), 3);
   EXPECT_EQ(it.next(), sus::None);
