@@ -20,7 +20,7 @@
 #include <concepts>
 
 #include "subspace/assertions/check.h"
-#include "subspace/containers/__private/vec_iter.h"
+#include "subspace/containers/iterators/vec_iter.h"
 #include "subspace/containers/__private/vec_marker.h"
 #include "subspace/containers/slice.h"
 #include "subspace/fn/fn_concepts.h"
