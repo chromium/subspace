@@ -14,7 +14,7 @@
 
 #pragma once
 
-namespace sus::__private {
+namespace sus::result::__private {
 
 enum class ResultState { IsErr = 0, IsOk = 1, IsMoved = 2 };
 

@@ -19,7 +19,7 @@ template <class T, class E>
 class Result;
 }
 
-namespace sus::__private {
+namespace sus::result::__private {
 
 template <class U>
 struct IsResultType final : std::false_type {
@@ -33,4 +33,4 @@ struct IsResultType<::sus::result::Result<U, V>> final : std::true_type {
   using err_type = V;
 };
 
-}  // namespace sus::__private
+}  // namespace sus::result::__private
