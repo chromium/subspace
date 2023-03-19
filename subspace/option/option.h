@@ -686,7 +686,7 @@ class Option final {
   /// lazily evaluated.
   //
   // TODO: No refs in Result: https://github.com/chromium/subspace/issues/133
-  template <class E, int&..., class Result = ::sus::Result<T, E>>
+  template <class E, int&..., class Result = ::sus::result::Result<T, E>>
   constexpr Result ok_or(E e) && noexcept
     requires(!std::is_reference_v<T> && !std::is_reference_v<E>)
   {
@@ -716,12 +716,13 @@ class Option final {
   ///
   /// `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
   /// be mapped to `Ok(Some(_))` and `Err(_)`.
-  template <
-      int&...,
-      class OkType = typename ::sus::__private::IsResultType<T>::ok_type,
-      class ErrType = typename ::sus::__private::IsResultType<T>::err_type,
-      class Result = ::sus::Result<Option<OkType>, ErrType>>
-    requires(::sus::__private::IsResultType<T>::value)
+  template <int&...,
+            class OkType =
+                typename ::sus::result::__private::IsResultType<T>::ok_type,
+            class ErrType =
+                typename ::sus::result::__private::IsResultType<T>::err_type,
+            class Result = ::sus::result::Result<Option<OkType>, ErrType>>
+    requires(::sus::result::__private::IsResultType<T>::value)
   constexpr Result transpose() && noexcept {
     if (t_.state() == None) {
       return Result::with(Option<OkType>::none());

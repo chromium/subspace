@@ -58,7 +58,7 @@ template <class ToType, class FromType>
 concept TryFrom = requires(FromType&& from) {
   { ToType::try_from(static_cast<FromType&&>(from)) };
   requires std::same_as<
-      typename ::sus::__private::IsResultType<decltype(ToType::try_from(
+      typename ::sus::result::__private::IsResultType<decltype(ToType::try_from(
           static_cast<FromType&&>(from)))>::ok_type,
       ToType>;
 };
