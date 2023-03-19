@@ -63,6 +63,9 @@ template <class Iter, class ItemT>
 class IteratorBase {
  protected:
   constexpr IteratorBase() noexcept {
+    // These are checked in the constructor as the Iter type may be incomplete
+    // outside of it.
+    static_assert(std::same_as<ItemT, typename Iter::Item>);
     static_assert(std::is_final_v<Iter>,
                   "Iterator implementations must be `final`, as the provided "
                   "methods must know the complete type.");
