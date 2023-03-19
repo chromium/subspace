@@ -127,7 +127,7 @@ class IteratorBase {
   /// from the predicate.
   ///
   /// Returns `true` if the iterator is empty.
-  virtual bool all(::sus::fn::FnMutRef<bool(Item)> f) noexcept;
+  bool all(::sus::fn::FnMutRef<bool(Item)> f) noexcept;
 
   /// Tests whether any elements of the iterator match a predicate.
   ///
@@ -137,7 +137,7 @@ class IteratorBase {
   /// the predicate.
   ///
   /// Returns `false` if the iterator is empty.
-  virtual bool any(::sus::fn::FnMutRef<bool(Item)> f) noexcept;
+  bool any(::sus::fn::FnMutRef<bool(Item)> f) noexcept;
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -149,7 +149,7 @@ class IteratorBase {
   /// If the `usize` type does not have trapping arithmetic enabled, and the
   /// iterator has more than `usize::MAX` elements in it, the value will wrap
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
-  virtual ::sus::num::usize count() noexcept;
+  ::sus::num::usize count() && noexcept;
 
   // Provided final methods.
 
@@ -291,7 +291,7 @@ auto IteratorBase<Iter, Item>::box() && noexcept
 }
 
 template <class Iter, class Item>
-::sus::num::usize IteratorBase<Iter, Item>::count() noexcept {
+::sus::num::usize IteratorBase<Iter, Item>::count() && noexcept {
   auto c = 0_usize;
   while (as_subclass_mut().next().is_some()) c += 1_usize;
   return c;
