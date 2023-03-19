@@ -30,7 +30,7 @@ template <class T>
 class Vec;
 
 template <class ItemT>
-struct VecIntoIter final
+struct [[nodiscard]] VecIntoIter final
     : public ::sus::iter::IteratorBase<VecIntoIter<ItemT>, ItemT> {
  public:
   using Item = ItemT;

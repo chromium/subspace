@@ -33,7 +33,7 @@ template <class T>
 class Slice;
 
 template <class ItemT>
-struct [[sus_trivial_abi]] SliceIter final
+struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     : public ::sus::iter::IteratorBase<SliceIter<ItemT>, ItemT> {
  public:
   using Item = ItemT;
@@ -89,7 +89,7 @@ struct [[sus_trivial_abi]] SliceIter final
 
  private:
   constexpr SliceIter(const RawItem* start, usize len) noexcept
-      : ptr_(start), end_(start + size_t{len}) {
+      : ptr_(start), end_(start + len) {
     // Wrap-around would be an invalid allocation and would break our distance
     // functions.
     check(end_ >= ptr_);
@@ -109,7 +109,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
   using Item = ItemT;
 
  private:
-  // `Item` is a `const T&`.
+  // `Item` is a `T&`.
   static_assert(std::is_reference_v<Item>);
   static_assert(!std::is_const_v<std::remove_reference_t<Item>>);
   // `RawItem` is a `T`.
@@ -143,12 +143,8 @@ struct [[sus_trivial_abi]] SliceIterMut final
   }
 
   ::sus::iter::SizeHint size_hint() const noexcept final {
-    // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
-    // not exceed isize::MAX.
-    const auto remaining = ::sus::num::usize::from_unchecked(
-        ::sus::marker::unsafe_fn, end_ - ptr_);
-    return ::sus::iter::SizeHint(
-        remaining, ::sus::Option<::sus::num::usize>::some(remaining));
+    const auto remaining = exact_size_hint();
+    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -161,7 +157,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
 
  private:
   constexpr SliceIterMut(RawItem* start, usize len) noexcept
-      : ptr_(start), end_(start + size_t{len}) {
+      : ptr_(start), end_(start + len) {
     // Wrap-around would be an invalid allocation and would break our distance
     // functions.
     check(end_ >= ptr_);

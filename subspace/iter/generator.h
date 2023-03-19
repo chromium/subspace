@@ -78,7 +78,7 @@ class IterPromise {
 };
 
 template <class Generator>
-class [[sus_trivial_abi]] GeneratorLoop {
+class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
  public:
   GeneratorLoop(Generator& generator sus_lifetimebound) noexcept
       : generator_(generator) {}
@@ -121,7 +121,7 @@ class [[sus_trivial_abi]] GeneratorLoop {
 /// `sus::iter::Generator<T>`. Then `co_yield` values of type `T`, and each one
 /// will be returned from the resulting `Iterator` in the same order.
 template <class T>
-class [[sus_trivial_abi]] Generator final
+class [[nodiscard]] [[sus_trivial_abi]] Generator final
     : public ::sus::iter::IteratorBase<Generator<T>, T> {
  public:
   // Coroutine implementation.
