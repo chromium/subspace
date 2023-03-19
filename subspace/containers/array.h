@@ -22,9 +22,9 @@
 
 #include "subspace/assertions/check.h"
 #include "subspace/construct/default.h"
-#include "subspace/containers/__private/array_iter.h"
+#include "subspace/containers/iterators/array_iter.h"
 #include "subspace/containers/__private/array_marker.h"
-#include "subspace/containers/__private/slice_iter.h"
+#include "subspace/containers/iterators/slice_iter.h"
 #include "subspace/containers/slice.h"
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/macros/lifetimebound.h"
