@@ -64,6 +64,41 @@ struct usize final {
 _sus__unsigned_constants_decl(
     usize, /*PrimitiveT=*/::sus::num::__private::ptr_type<>::unsigned_type);
 
+/// Adds a `usize` to a pointer, returning the resulting pointer.
+///
+/// #[doc.overloads=ptr.add.usize]
+template <class T>
+[[nodiscard]] constexpr inline T* operator+(T* t, usize offset) {
+  return t + size_t{offset};
+}
+
+/// Adds a `usize` to a referenced pointer, and returns the input reference.
+///
+/// #[doc.overloads=ptr.add.usize]
+template <class T>
+constexpr inline T*& operator+=(T*& t, usize offset) {
+  t += size_t{offset};
+  return t;
+}
+
+/// Subtracts a `usize` from a pointer, returning the resulting pointer.
+///
+/// #[doc.overloads=ptr.sub.usize]
+template <class T>
+[[nodiscard]] constexpr inline T* operator-(T* t, usize offset) {
+  return t - size_t{offset};
+}
+
+/// Subtracts a `usize` from a referenced pointer, and returns the input
+/// reference.
+///
+/// #[doc.overloads=ptr.sub.usize]
+template <class T>
+constexpr inline T*& operator-=(T*& t, usize offset) {
+  t -= size_t{offset};
+  return t;
+}
+
 }  // namespace sus::num
 
 namespace std {
