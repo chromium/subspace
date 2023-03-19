@@ -561,8 +561,14 @@ TEST(Choice, Eq) {
   constexpr static NotEq not_eq_v;
   static_assert(!sus::ops::Eq<NotEq>);
 
+  // Same types.
   static_assert(
       sus::ops::Eq<Choice<sus_choice_types((1_i32, i32), (2_i32, i32))>>);
+  // Eq types.
+  static_assert(
+      sus::ops::Eq<Choice<sus_choice_types((1_i32, i32), (2_i32, i32))>,
+                   Choice<sus_choice_types((1_i64, i64), (2_i64, i16))>>);
+  // Not Eq types.
   static_assert(
       !sus::ops::Eq<Choice<sus_choice_types((1, NotEq), (2, NotEq))>>);
 
@@ -581,6 +587,19 @@ TEST(Choice, Eq) {
 
   u2.set<Order::First>(4u);
   EXPECT_EQ(u1, u2);
+
+  // Comparison with marker types. EXPECT_EQ also converts it to a const
+  // reference, so this tests that comparison from a const marker works (if the
+  // inner type is copyable).
+  auto no_storage =
+      Choice<sus_choice_types((Order::First, void))>::with<Order::First>();
+  EXPECT_EQ(no_storage, sus::choice<Order::First>());
+  auto single_storage = OrderChoice::with<Order::First>(4u);
+  EXPECT_EQ(single_storage, sus::choice<Order::First>(4u));
+  auto double_storage =
+      Choice<sus_choice_types((Order::First, u32, u64))>::with<Order::First>(
+          sus::tuple(2_u32, 3_u64));
+  EXPECT_EQ(double_storage, sus::choice<Order::First>(2u, 3u));
 }
 
 TEST(Choice, Ord) {
