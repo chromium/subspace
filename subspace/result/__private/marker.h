@@ -32,6 +32,18 @@ struct OkMarker {
 
   T&& value;
 
+  // If the Result's type can construct from a const ref `value` (roughly, is
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  template <class U, class E>
+    requires(std::constructible_from<U, const std::remove_reference_t<T>&>)
+  inline constexpr operator ::sus::result::Result<U, E>() const& noexcept {
+    return Result<U, E>::with(value);
+  }
+
   template <class U, class E>
   inline constexpr operator ::sus::result::Result<U, E>() && noexcept {
     return Result<U, E>::with(::sus::forward<T>(value));
@@ -61,10 +73,21 @@ struct ErrMarker {
 
   E&& value;
 
+  // If the Result's type can construct from a const ref `value` (roughly, is
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  template <class U, class E>
+    requires(std::constructible_from<U, const std::remove_reference_t<E>&>)
+  inline constexpr operator ::sus::result::Result<U, E>() const& noexcept {
+    return Result<U, E>::with_err(value);
+  }
+
   template <class T, class F>
   inline constexpr operator ::sus::result::Result<T, F>() && noexcept {
-    return Result<T, F>::with_err(
-        ::sus::forward<std::remove_reference_t<E>>(value));
+    return Result<T, F>::with_err(::sus::forward<E>(value));
   }
 
   // TODO: Make Result hold references and remove the remove_reference_t.

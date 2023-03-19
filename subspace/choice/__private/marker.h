@@ -34,6 +34,18 @@ struct ChoiceMarker;
 
 template <auto Tag>
 struct ChoiceMarkerVoid {
+  // If the Choice's type can construct from a const ref `value` (roughly, is
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  template <class TypeListOfMemberTypes, auto... Vs>
+  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>()
+      const& noexcept {
+    return Choice<TypeListOfMemberTypes, Vs...>::template with<Tag>();
+  }
+
   template <class TypeListOfMemberTypes, auto... Vs>
   inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() && noexcept {
     return Choice<TypeListOfMemberTypes, Vs...>::template with<Tag>();
@@ -46,6 +58,21 @@ struct ChoiceMarker<Tag, T> {
                       : value(::sus::forward<T>(value)){});
 
   T&& value;
+
+  // If the Choice's type can construct from a const ref `value` (roughly, is
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  //
+  // TODO: Write a requires class that verfies the Choice's storage type is
+  // `constructible_from<const std::remove_reference_t<T>&>`.
+  template <class TypeListOfMemberTypes, auto... Vs>
+  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>()
+      const& noexcept {
+    return Choice<TypeListOfMemberTypes, Vs...>::template with<Tag>(value);
+  }
 
   template <class TypeListOfMemberTypes, auto... Vs>
   inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() && noexcept {
@@ -62,6 +89,29 @@ struct ChoiceMarker<Tag, Ts...> {
       : values(::sus::move(values)){});
 
   ::sus::tuple_type::Tuple<Ts&&...> values;
+
+  // If the Choice's types can construct from const ref `values` (roughly, is
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  //
+  // TODO: Write a requires class that verfies the Choice's storage types are
+  // `constructible_from<const std::remove_reference_t<Ts>&>`.
+  template <class TypeListOfMemberTypes, auto... Vs>
+  inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>()
+      const& noexcept {
+    using TupleType =
+        decltype(std::declval<Choice<TypeListOfMemberTypes, Vs...>&&>()
+                     .template into_inner<Tag>());
+    auto make_tuple = [this]<size_t... Is>(
+                          std::integer_sequence<size_t, Is...>) {
+      return TupleType::with(values.template at<Is>()...);
+    };
+    return Choice<TypeListOfMemberTypes, Vs...>::template with<Tag>(
+        make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>()));
+  }
 
   template <class TypeListOfMemberTypes, auto... Vs>
   inline constexpr operator Choice<TypeListOfMemberTypes, Vs...>() && noexcept {

@@ -484,7 +484,7 @@ TEST(Result, FromIter) {
           Result<usize, Error>::with(3u), Result<usize, Error>::with(4u),
           Result<usize, Error>::with(5u))
           .into_iter();
-  
+
   auto no_errors_out =
       sus::move(no_errors).collect<Result<CollectSum<usize>, Error>>();
   EXPECT_EQ(no_errors_out, sus::Ok);
@@ -591,6 +591,7 @@ TEST(Result, Eq) {
   static_assert(!sus::ops::Eq<NotEq>);
 
   static_assert(::sus::ops::Eq<Result<i32, i32>, Result<i32, i32>>);
+  static_assert(::sus::ops::Eq<Result<i32, i32>, Result<i64, i8>>);
   static_assert(!::sus::ops::Eq<Result<i32, NotEq>, Result<i32, NotEq>>);
   static_assert(!::sus::ops::Eq<Result<NotEq, i32>, Result<NotEq, i32>>);
   static_assert(!::sus::ops::Eq<Result<NotEq, NotEq>, Result<NotEq, NotEq>>);
@@ -612,6 +613,12 @@ TEST(Result, Eq) {
             (Result<i32, f32>::with_err(-0.f)));
   EXPECT_NE((Result<i32, f32>::with_err(f32::NAN)),
             (Result<i32, f32>::with_err(f32::NAN)));
+
+  // Comparison with marker types. EXPECT_EQ also converts it to a const
+  // reference, so this tests that comparison from a const marker works (if the
+  // inner type is copyable).
+  EXPECT_EQ((Result<i32, i32>::with(1)), sus::ok(1));
+  EXPECT_EQ((Result<i32, i32>::with_err(1)), sus::err(1));
 }
 
 TEST(Result, Ord) {

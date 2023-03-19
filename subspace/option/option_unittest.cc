@@ -1623,16 +1623,34 @@ TEST(Option, Eq) {
   struct NotEq {};
   static_assert(!sus::ops::Eq<NotEq>);
 
-  static_assert(::sus::ops::Eq<Option<int>, Option<int>>);
+  // Same types.
+  static_assert(::sus::ops::Eq<Option<i32>, Option<i32>>);
+  // Eq types.
+  static_assert(::sus::ops::Eq<Option<i32>, Option<i64>>);
+  // Not Eq types.
   static_assert(!::sus::ops::Eq<Option<NotEq>, Option<NotEq>>);
 
-  EXPECT_EQ(Option<int>::some(1), Option<int>::some(1));
-  EXPECT_NE(Option<int>::some(1), Option<int>::some(2));
-  EXPECT_NE(Option<int>::none(), Option<int>::some(1));
-  EXPECT_EQ(Option<int>::none(), Option<int>::none());
+  EXPECT_EQ(Option<i32>::some(1), Option<i32>::some(1));
+  EXPECT_NE(Option<i32>::some(1), Option<i32>::some(2));
+  EXPECT_NE(Option<i32>::none(), Option<i32>::some(1));
+  EXPECT_EQ(Option<i32>::none(), Option<i32>::none());
   EXPECT_EQ(Option<f32>::some(1.f), Option<f32>::some(1.f));
   EXPECT_EQ(Option<f32>::some(0.f), Option<f32>::some(-0.f));
   EXPECT_NE(Option<f32>::some(f32::NAN), Option<f32>::some(f32::NAN));
+
+  // Compares with the State enum.
+  EXPECT_EQ(Option<i32>::some(1), Some);
+  EXPECT_NE(Option<i32>::some(1), None);
+  EXPECT_EQ(Option<i32>::none(), None);
+  EXPECT_NE(Option<i32>::none(), Some);
+
+  // Comparison with marker types. EXPECT_EQ also converts it to a const
+  // reference, so this tests that comparison from a const marker works (if the
+  // inner type is copyable).
+  EXPECT_EQ(Option<i32>::some(1), sus::some(1_i32));
+  EXPECT_EQ(Option<i32>::some(1), sus::some(1));
+  EXPECT_NE(Option<i32>::some(1), sus::none());
+  EXPECT_EQ(Option<i32>::none(), sus::none());
 }
 
 TEST(Option, Ord) {
@@ -1813,40 +1831,33 @@ TEST(Option, OkOrElse) {
 TEST(Option, Transpose) {
   auto none = Option<sus::Result<u8, i32>>::none();
   auto t1 = sus::move(none).transpose();
-  static_assert(
-      std::same_as<sus::Result<Option<u8>, i32>, decltype(t1)>);
+  static_assert(std::same_as<sus::Result<Option<u8>, i32>, decltype(t1)>);
   EXPECT_EQ(t1.is_ok(), true);
   EXPECT_EQ(sus::move(t1).unwrap(), None);
 
-  auto some_ok = Option<sus::Result<u8, i32>>::some(
-      sus::Result<u8, i32>::with(5_u8));
+  auto some_ok =
+      Option<sus::Result<u8, i32>>::some(sus::Result<u8, i32>::with(5_u8));
   auto t2 = sus::move(some_ok).transpose();
-  static_assert(
-      std::same_as<sus::Result<Option<u8>, i32>, decltype(t2)>);
+  static_assert(std::same_as<sus::Result<Option<u8>, i32>, decltype(t2)>);
   EXPECT_EQ(t2.is_ok(), true);
   EXPECT_EQ(sus::move(t2).unwrap().unwrap(), 5_u8);
 
   auto some_err = Option<sus::Result<u8, i32>>::some(
       sus::Result<u8, i32>::with_err(-2_i32));
   auto t3 = sus::move(some_err).transpose();
-  static_assert(
-      std::same_as<sus::Result<Option<u8>, i32>, decltype(t3)>);
+  static_assert(std::same_as<sus::Result<Option<u8>, i32>, decltype(t3)>);
   EXPECT_EQ(t3.is_err(), true);
   EXPECT_EQ(sus::move(t3).unwrap_err(), -2_i32);
 
-  static_assert(
-      Option<sus::Result<u8, i32>>::some(sus::ok(2_u8))
-          .transpose()
-          .unwrap()
-          .unwrap() == 2_u8);
-  static_assert(
-      Option<sus::Result<u8, i32>>::some(sus::err(3_i32))
-          .transpose()
-          .unwrap_err() == 3_i32);
-  static_assert(Option<sus::Result<u8, i32>>::none()
+  static_assert(Option<sus::Result<u8, i32>>::some(sus::ok(2_u8))
                     .transpose()
                     .unwrap()
-                    .is_none());
+                    .unwrap() == 2_u8);
+  static_assert(Option<sus::Result<u8, i32>>::some(sus::err(3_i32))
+                    .transpose()
+                    .unwrap_err() == 3_i32);
+  static_assert(
+      Option<sus::Result<u8, i32>>::none().transpose().unwrap().is_none());
 
   // TODO: Result references are not yet supported, test them when they
   // are. https://github.com/chromium/subspace/issues/133

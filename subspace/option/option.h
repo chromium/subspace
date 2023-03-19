@@ -716,12 +716,11 @@ class Option final {
   ///
   /// `None` will be mapped to `Ok(None)`. `Some(Ok(_))` and `Some(Err(_))` will
   /// be mapped to `Ok(Some(_))` and `Err(_)`.
-  template <int&...,
-            class OkType =
-                typename ::sus::__private::IsResultType<T>::ok_type,
-            class ErrType =
-                typename ::sus::__private::IsResultType<T>::err_type,
-            class Result = ::sus::Result<Option<OkType>, ErrType>>
+  template <
+      int&...,
+      class OkType = typename ::sus::__private::IsResultType<T>::ok_type,
+      class ErrType = typename ::sus::__private::IsResultType<T>::err_type,
+      class Result = ::sus::Result<Option<OkType>, ErrType>>
     requires(::sus::__private::IsResultType<T>::value)
   constexpr Result transpose() && noexcept {
     if (t_.state() == None) {
@@ -891,6 +890,26 @@ class Option final {
 
   constexpr Once<T> into_iter() && noexcept { return Once<T>::with(take()); }
 
+  /// sus::ops::Eq<Option<U>> trait.
+  template <class U>
+    requires(::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const Option<T>& l,
+                                          const Option<U>& r) noexcept {
+    switch (l) {
+      case Some:
+        return r.is_some() &&
+               (l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) ==
+                r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn));
+      case None: return r.is_none();
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+
+  template <class U>
+    requires(!::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const Option<T>& l,
+                                          const Option<U>& r) = delete;
+
  private:
   template <class U>
   friend class Option;
@@ -934,26 +953,6 @@ class Option final {
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            StorageType<T>);
 };
-
-/// sus::ops::Eq<Option<U>> trait.
-template <class T, class U>
-  requires(::sus::ops::Eq<T, U>)
-constexpr inline bool operator==(const Option<T>& l,
-                                 const Option<U>& r) noexcept {
-  switch (l) {
-    case Some:
-      return r.is_some() &&
-             (l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) ==
-              r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn));
-    case None: return r.is_none();
-  }
-  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-}
-
-template <class T, class U>
-  requires(!::sus::ops::Eq<T, U>)
-constexpr inline bool operator==(const Option<T>& l,
-                                 const Option<U>& r) = delete;
 
 /// Compares two Options.
 ///

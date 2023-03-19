@@ -16,9 +16,9 @@
 
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/forward.h"
-#include "subspace/mem/remove_rvalue_reference.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
+#include "subspace/mem/remove_rvalue_reference.h"
 
 namespace sus::option::__private {
 
@@ -28,6 +28,18 @@ struct SomeMarker {
                       : value(::sus::forward<T>(value)){});
 
   T&& value;
+
+  // If the Option's type can construct from a const ref `value` (roughly, is
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  template <class U>
+    requires(std::constructible_from<U, const std::remove_reference_t<T>&>)
+  inline constexpr operator Option<U>() const& noexcept {
+    return Option<U>::some(value);
+  }
 
   template <class U>
   inline constexpr operator Option<U>() && noexcept {
@@ -41,6 +53,17 @@ struct SomeMarker {
 };
 
 struct NoneMarker {
+  // If the Option's type can construct from a const ref `value` (roughly, is
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  template <class U>
+  inline constexpr operator Option<U>() const& noexcept {
+    return Option<U>::none();
+  }
+
   template <class U>
   inline constexpr operator Option<U>() && noexcept {
     return Option<U>::none();
