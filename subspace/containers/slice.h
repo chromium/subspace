@@ -21,8 +21,8 @@
 #include <type_traits>
 
 #include "subspace/assertions/check.h"
-#include "subspace/containers/__private/chunks.h"
 #include "subspace/containers/__private/slice_iter.h"
+#include "subspace/containers/iterators/chunks.h"
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/fn/fn_ref.h"
 #include "subspace/iter/iterator_defn.h"
@@ -211,12 +211,34 @@ class [[sus_trivial_abi]] Slice {
   ///
   /// # Panics
   /// Panics if chunk_size is 0.
-  constexpr __private::Chunks<const T> chunks(
-      usize chunk_size) const& noexcept {
+  constexpr Chunks<const T> chunks(usize chunk_size) const& noexcept {
     ::sus::check(chunk_size > 0u);
-    return __private::Chunks<const T>::with(::sus::clone(*this), chunk_size);
+    return Chunks<const T>::with(::sus::clone(*this), chunk_size);
   }
 
+  /// Returns an iterator over `chunk_size` elements of the slice at a time,
+  /// starting at the beginning of the slice.
+  ///
+  /// The chunks are slices and do not overlap. If `chunk_size` does not divide
+  /// the length of the slice, then the last up to `chunk_size-1` elements will
+  /// be omitted and can be retrieved from the `remainder` function of the
+  /// iterator.
+  ///
+  /// TODO: Verify if: due to each chunk having exactly `chunk_size` elements,
+  /// the compiler can often optimize the resulting code better than in the case
+  /// of `chunks`.
+  ///
+  /// See `chunks` for a variant of this iterator that also returns the
+  /// remainder as a smaller chunk, and `rchunks_exact` for the same iterator
+  /// but starting at the end of the slice.
+  ///
+  /// # Panics
+  /// Panics if `chunk_size` is 0.
+  constexpr ChunksExact<const T> chunks_exact(
+      usize chunk_size) const& noexcept {
+    ::sus::check(chunk_size > 0u);
+    return ChunksExact<const T>::with(::sus::clone(*this), chunk_size);
+  }
   /// Returns an iterator over chunk_size elements of the slice at a time,
   /// starting at the beginning of the slice.
   ///
@@ -224,17 +246,17 @@ class [[sus_trivial_abi]] Slice {
   /// divide the length of the slice, then the last chunk will not have length
   /// chunk_size.
   ///
-  /// See chunks_exact_mut for a variant of this iterator that returns chunks of
-  /// always exactly chunk_size elements, and rchunks_mut for the same iterator
-  /// but starting at the end of the slice.
+  /// See `chunks_exact_mut()` for a variant of this iterator that returns
+  /// chunks of always exactly chunk_size elements, and `rchunks_mut()` for the
+  /// same iterator but starting at the end of the slice.
   ///
   /// # Panics
   /// Panics if chunk_size is 0.
-  constexpr __private::ChunksMut<T> chunks_mut(usize chunk_size) const& noexcept
+  constexpr ChunksMut<T> chunks_mut(usize chunk_size) const& noexcept
     requires(!std::is_const_v<T>)
   {
     ::sus::check(chunk_size > 0u);
-    return __private::ChunksMut<T>::with(::sus::clone(*this), chunk_size);
+    return ChunksMut<T>::with(::sus::clone(*this), chunk_size);
   }
 
   /// Returns a reference to the element at position `i` in the Slice.
