@@ -219,31 +219,31 @@ TEST(Iterator, Count) {
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_EQ(it.count(), 5_usize);
+    EXPECT_EQ(sus::move(it).count(), 5_usize);
   }
   {
     int nums[2] = {4, 5};
     auto it = ArrayIterator<int, 2>::with_array(nums);
-    EXPECT_EQ(it.count(), 2_usize);
+    EXPECT_EQ(sus::move(it).count(), 2_usize);
   }
   {
     int nums[1] = {2};
     auto it = ArrayIterator<int, 1>::with_array(nums);
-    EXPECT_EQ(it.count(), 1_usize);
+    EXPECT_EQ(sus::move(it).count(), 1_usize);
   }
 
   // Consumes the whole iterator.
   {
     int nums[5] = {1, 2, 3, 4, 5};
     auto it = ArrayIterator<int, 5>::with_array(nums);
-    EXPECT_EQ(it.count(), 5_usize);
+    EXPECT_EQ(sus::move(it).count(), 5_usize);
     Option<int> n = it.next();
     ASSERT_FALSE(n.is_some());
   }
 
   {
     auto it = EmptyIterator<int>();
-    EXPECT_EQ(it.count(), 0_usize);
+    EXPECT_EQ(sus::move(it).count(), 0_usize);
   }
 }
 
@@ -252,7 +252,7 @@ TEST(Iterator, Filter) {
 
   auto fit = ArrayIterator<i32, 5>::with_array(nums).filter(
       [](const i32& i) { return i >= 3; });
-  EXPECT_EQ(fit.count(), 3_usize);
+  EXPECT_EQ(sus::move(fit).count(), 3_usize);
 
   auto fit2 = ArrayIterator<i32, 5>::with_array(nums)
                   .filter([](const i32& i) { return i >= 3; })
@@ -297,7 +297,7 @@ TEST(Iterator, FilterNonTriviallyRelocatable) {
   auto fit = sus::move(non_relocatable_it).box().filter([](const Filtering& f) {
     return f.i >= 3;
   });
-  EXPECT_EQ(fit.count(), 3_usize);
+  EXPECT_EQ(sus::move(fit).count(), 3_usize);
 }
 
 TEST(Iterator, Map) {
