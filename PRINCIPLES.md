@@ -65,9 +65,12 @@ This library is an experiment and not intended for use. See the
       members in the order they are declared.
     * Non-default constructors are prefixed with `with_()` unless there's a
       clear and better domain-specific name.
-    * Avoid writing copy constructors in non-containers unless copying is so
-      cheap you would pass the argument by value. Instead write Clone.
-      Containers have a copy constructor if their inner type has one.
+    * Avoid writing copy constructors in *non-containers* unless moving can be
+      implemented in terms of a copy, thus has the same cost as a copy, and
+      it is cheap to pass by value (a size of <= 2 pointers). Otherwise, write
+      `Clone()` instead.
+      * Containers have a copy constructor if their inner type has one, and
+        if not, implement `Clone()` if their inner type does.
     * Write a `::from(x)` constructing method to implement
       `sus::construct::From` when the type is constructed from another type.
     * Exception granted for closure types (Fn, FnMut, FnOnce) because
