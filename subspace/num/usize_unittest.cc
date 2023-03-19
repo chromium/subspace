@@ -510,4 +510,30 @@ TEST(usize, InvokeEverything) {
   [[maybe_unused]] auto z = i >= j;
 }
 
+TEST(usize, PointerArithmetic) {
+  i32 x[] = {1, 2, 3, 4, 5, 6, 7, 8};
+  i32* p = &x[0];
+  EXPECT_EQ(*p, 1);
+  p = p + 1_usize;
+  EXPECT_EQ(*p, 2);
+  p += 3_usize;
+  EXPECT_EQ(*p, 5);
+  p = p - 1_usize;
+  EXPECT_EQ(*p, 4);
+  p -= 3_usize;
+  EXPECT_EQ(*p, 1);
+
+  // operator+= returns the lhs.
+  p = (p += size_t{1}) + size_t{1};
+  EXPECT_EQ(*p, 3);
+  p = (p += 1_usize) + 1_usize;
+  EXPECT_EQ(*p, 5);
+
+  // operator-= returns the lhs.
+  p = (p -= size_t{1}) - size_t{1};
+  EXPECT_EQ(*p, 3);
+  p = (p -= 1_usize) - 1_usize;
+  EXPECT_EQ(*p, 1);
+}
+
 }  // namespace

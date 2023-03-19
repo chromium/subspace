@@ -66,6 +66,41 @@ struct isize final {
 _sus__signed_constants_decl(
     isize, /*PrimitiveT=*/::sus::num::__private::ptr_type<>::signed_type);
 
+/// Adds a `isize` to a pointer, returning the resulting pointer.
+///
+/// #[doc.overloads=ptr.add.isize]
+template <class T>
+[[nodiscard]] constexpr inline T* operator+(T* t, isize offset) {
+  return t + ptrdiff_t{offset};
+}
+
+/// Adds a `isize` to a referenced pointer, and returns the input reference.
+///
+/// #[doc.overloads=ptr.add.isize]
+template <class T>
+constexpr inline T*& operator+=(T*& t, isize offset) {
+  t += ptrdiff_t{offset};
+  return t;
+}
+
+/// Subtracts a `isize` from a pointer, returning the resulting pointer.
+///
+/// #[doc.overloads=ptr.sub.isize]
+template <class T>
+[[nodiscard]] constexpr inline T* operator-(T* t, isize offset) {
+  return t - ptrdiff_t{offset};
+}
+
+/// Subtracts a `isize` from a referenced pointer, and returns the input
+/// reference.
+///
+/// #[doc.overloads=ptr.sub.isize]
+template <class T>
+constexpr inline T*& operator-=(T*& t, isize offset) {
+  t -= ptrdiff_t{offset};
+  return t;
+}
+
 }  // namespace sus::num
 
 namespace std {
