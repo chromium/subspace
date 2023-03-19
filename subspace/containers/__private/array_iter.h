@@ -31,7 +31,7 @@ template <class T, size_t N>
 class Array;
 
 template <::sus::mem::Move ItemT, size_t N>
-struct ArrayIntoIter final
+struct [[nodiscard]] ArrayIntoIter final
     : public ::sus::iter::IteratorBase<ArrayIntoIter<ItemT, N>, ItemT> {
  public:
   using Item = ItemT;
