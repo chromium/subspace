@@ -871,4 +871,29 @@ TEST(Vec, SortUnstableBy) {
     EXPECT_EQ(sorted[i], unsorted[i]);
   }
 }
+
+TEST(Vec, FromSlice) {
+  sus::Vec<i32> original = sus::vec(1, 2, 3, 4);
+  {
+    sus::Slice<const i32> s = original.as_slice();
+    sus::Vec<i32> from = sus::into(s);
+
+    EXPECT_EQ(from.len(), original.len());
+    EXPECT_EQ(from[0u], 1);
+    EXPECT_EQ(from[1u], 2);
+    EXPECT_EQ(from[2u], 3);
+    EXPECT_EQ(from[3u], 4);
+  }
+  {
+    sus::Slice<i32> mut_s = original.as_mut_slice();
+    sus::Vec<i32> from = sus::into(mut_s);
+
+    EXPECT_EQ(from.len(), original.len());
+    EXPECT_EQ(from[0u], 1);
+    EXPECT_EQ(from[1u], 2);
+    EXPECT_EQ(from[2u], 3);
+    EXPECT_EQ(from[3u], 4);
+  }
+}
+
 }  // namespace

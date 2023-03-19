@@ -127,6 +127,28 @@ class Vec {
     return v;
   }
 
+  /// sus::construct::From<Slice<const T>> trait.
+  ///
+  /// #[doc.overloads=from.slice.const]
+  static constexpr Vec from(::sus::Slice<const T> slice) noexcept
+    requires(sus::mem::Clone<T>)
+  {
+    auto v = Vec::with_capacity(slice.len());
+    for (const T& t : slice) v.push(::sus::clone(t));
+    return v;
+  }
+
+  /// sus::construct::From<Slice<T>> trait.
+  ///
+  /// #[doc.overloads=from.slice.mut]
+  static constexpr Vec from(::sus::Slice<T> slice) noexcept
+    requires(sus::mem::Clone<T>)
+  {
+    auto v = Vec::with_capacity(slice.len());
+    for (const T& t : slice) v.push(::sus::clone(t));
+    return v;
+  }
+
   ~Vec() {
     // `is_alloced()` is false when Vec is moved-from.
     if (is_alloced()) free_storage();
