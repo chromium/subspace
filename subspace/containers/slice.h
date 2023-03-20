@@ -165,7 +165,8 @@ class [[sus_trivial_abi]] Slice {
         right = mid;
       } else {
         // SAFETY: same as the `get_unchecked` above.
-        sus_assume(::sus::marker::unsafe_fn, mid < len_);
+        sus_assume(::sus::marker::unsafe_fn,
+                   mid.primitive_value < len_.primitive_value);
         return Result::with(mid);
       }
 
@@ -174,7 +175,8 @@ class [[sus_trivial_abi]] Slice {
 
     // SAFETY: directly true from the overall invariant.
     // Note that this is `<=`, unlike the assume in the `Result::ok()` path.
-    sus_assume(::sus::marker::unsafe_fn, left <= len_);
+    sus_assume(::sus::marker::unsafe_fn,
+               left.primitive_value <= len_.primitive_value);
     return Result::with_err(left);
   }
 
@@ -595,7 +597,8 @@ class [[sus_trivial_abi]] Slice {
     const ::sus::num::usize length = len();
 
     // SAFETY: Caller has to check that `0 <= mid <= self.len()`
-    sus_assume(::sus::marker::unsafe_fn, mid <= length);
+    sus_assume(::sus::marker::unsafe_fn,
+               mid.primitive_value <= length.primitive_value);
     return ::sus::Tuple<Slice<const T>, Slice<const T>>::with(
         from_raw_parts(::sus::marker::unsafe_fn, data_, mid),
         from_raw_parts(::sus::marker::unsafe_fn, data_ + mid, length - mid));
@@ -608,7 +611,8 @@ class [[sus_trivial_abi]] Slice {
     const ::sus::num::usize length = len();
 
     // SAFETY: Caller has to check that `0 <= mid <= self.len()`
-    sus_assume(::sus::marker::unsafe_fn, mid <= length);
+    sus_assume(::sus::marker::unsafe_fn,
+               mid.primitive_value <= length.primitive_value);
     return ::sus::Tuple<Slice<T>, Slice<T>>::with(
         from_raw_parts(::sus::marker::unsafe_fn, data_, mid),
         from_raw_parts(::sus::marker::unsafe_fn, data_ + mid, length - mid));
