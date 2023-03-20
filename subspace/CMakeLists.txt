@@ -15,7 +15,6 @@
 add_library(subspace STATIC "")
 add_library(subspace::lib ALIAS subspace)
 target_sources(subspace PUBLIC
-    "assertions/arch.h"
     "assertions/check.h"
     "assertions/endian.h"
     "assertions/panic.h"
@@ -75,6 +74,7 @@ target_sources(subspace PUBLIC
     "iter/sized_iterator.h"
     "macros/__private/compiler_bugs.h"
     "macros/always_inline.h"
+    "macros/arch.h"
     "macros/builtin.h"
     "macros/compiler.h"
     "macros/eval_macro.h"
