@@ -303,4 +303,95 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
                                   decltype(rem_), decltype(chunk_size_));
 };
 
+template <class ItemT>
+struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
+    : public ::sus::iter::IteratorBase<ChunksExactMut<ItemT>,
+                                       ::sus::containers::Slice<ItemT>> {
+ public:
+  using Item = ::sus::containers::Slice<ItemT>;
+
+ private:
+  // `Item` is a `Slice<T>`.
+  static_assert(!std::is_reference_v<ItemT>);
+  static_assert(!std::is_const_v<ItemT>);
+  // `SliceItem` is a `T`.
+  using SliceItem = std::remove_const_t<ItemT>;
+
+ public:
+  /// Returns the remainder of the original slice that is not going to be
+  /// returned by the iterator. The returned slice has at most `chunk_size-1`
+  /// elements.
+  [[nodiscard]] Item remainder() const& { return rem_; }
+
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept {
+    if (v_.len() < chunk_size_) [[unlikely]] {
+      return Option<Item>::none();
+    } else {
+      // SAFETY: `split_at_mut_unchecked` requires the argument be less than or
+      // equal to the length. This is guaranteed by the checking exactly that
+      // in the condition above, and we are in the else branch.
+      auto [fst, snd] =
+          v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, chunk_size_);
+      v_ = snd;
+      return Option<Item>::some(fst);
+    }
+  }
+
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept {
+    if (v_.len() < chunk_size_) [[unlikely]] {
+      return ::sus::Option<Item>::none();
+    } else {
+      // SAFETY: `split_at_mut_unchecked` requires the argument be less than or
+      // equal to the length. This is guaranteed by subtracting an unsigned (and
+      // thus non-negative) value from the length.
+      auto [fst, snd] = v_.split_at_mut_unchecked(::sus::marker::unsafe_fn,
+                                                  v_.len() - chunk_size_);
+      v_ = fst;
+      return ::sus::Option<Item>::some(snd);
+    }
+  }
+
+  // Replace the default impl in sus::iter::IteratorBase.
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    const auto remaining = exact_size_hint();
+    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+  }
+
+  /// sus::iter::ExactSizeIterator trait.
+  ::sus::num::usize exact_size_hint() const noexcept {
+    return v_.len() / chunk_size_;
+  }
+
+  // TODO: Impl count(), nth(), last(), nth_back().
+
+ private:
+  // Constructed by Slice.
+  friend class Slice<ItemT>;
+
+  static constexpr auto with(Slice<ItemT>&& values,
+                             ::sus::num::usize chunk_size) noexcept {
+    auto rem = values.len() % chunk_size;
+    auto fst_len = values.len() - rem;
+    // SAFETY: 0 <= fst_len <= values.len() by construction above.
+    auto [fst, snd] =
+        values.split_at_mut_unchecked(::sus::marker::unsafe_fn, fst_len);
+    return ChunksExactMut(::sus::move(fst), ::sus::move(snd), chunk_size);
+  }
+
+  constexpr ChunksExactMut(Slice<ItemT>&& values, Slice<ItemT>&& remainder,
+                           ::sus::num::usize chunk_size) noexcept
+      : v_(::sus::move(values)),
+        rem_(::sus::move(remainder)),
+        chunk_size_(chunk_size) {}
+
+  Slice<ItemT> v_;
+  Slice<ItemT> rem_;
+  ::sus::num::usize chunk_size_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
+                                  decltype(rem_), decltype(chunk_size_));
+};
+
 }  // namespace sus::containers
