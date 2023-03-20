@@ -14,26 +14,47 @@
 
 #pragma once
 
-#if _MSC_VER
-#define sus_if_msvc(x) x
+// Used to determine if compiling under MSVC (or clang-cl which acts like a
+// drop-in replacement and has matching behaviour).
+#if defined(_MSC_VER)
+#define SUS_COMPILER_IS_MSVC 1
 #else
-#define sus_if_msvc(x)
+#define SUS_COMPILER_IS_MSVC 0
 #endif
 
-#if _MSC_VER
+// Used to determine if compiling under clang (but not clang-cl).
+#if defined(__clang__) && !defined(_MSC_VER)
+#define SUS_COMPILER_IS_CLANG 1
+#else
+#define SUS_COMPILER_IS_CLANG 0
+#endif
+
+// Used to determine if compiling under clang-cl.
+#if defined(__clang__) && defined(_MSC_VER)
+#define SUS_COMPILER_IS_CLANG_CL 1
+#else
+#define SUS_COMPILER_IS_CLANG_CL 0
+#endif
+
+// Used to determine if compiling under gcc.
+#if defined(__GNUC__) && !defined(__clang__)
+#define SUS_COMPILER_IS_GCC 1
+#else
+#define SUS_COMPILER_IS_GCC 0
+#endif
+
+#if SUS_COMPILER_IS_MSVC
+#define sus_if_msvc(x) x
 #define sus_if_msvc_else(x, y) x
 #else
+#define sus_if_msvc(x)
 #define sus_if_msvc_else(x, y) y
 #endif
 
-#if defined(__clang__)
+#if SUS_COMPILER_IS_CLANG
 #define sus_if_clang(x) x
-#else
-#define sus_if_clang(x)
-#endif
-
-#if defined(__clang__)
 #define sus_if_clang_else(x, y) x
 #else
+#define sus_if_clang(x)
 #define sus_if_clang_else(x, y) y
 #endif
