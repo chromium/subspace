@@ -15,15 +15,9 @@
 #pragma once
 
 #if defined(__x86_64__) || defined(_M_X64)
-#define sus_assertions_is_64bit() true  // x86_64
+#define sus_is_64bit() true  // x86_64
 #elif defined(__aarch64__) || defined(_M_ARM64)
-#define sus_assertions_is_64bit() true  // aarch64
+#define sus_is_64bit() true  // aarch64
 #else
-#define sus_assertions_is_64bit() false
+#define sus_is_64bit() false
 #endif
-
-namespace sus::assertions {
-
-constexpr inline bool is_64bit() { return sus_assertions_is_64bit(); }
-
-}  // namespace sus::assertions
