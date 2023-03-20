@@ -30,6 +30,10 @@
                              ::sus::marker::UnsafeFnMarker>);   \
   _sus__assume_impl(sus_eval_and_concat(sus_assume_result_, __LINE__), expr)
 
-#define _sus__assume_impl(var, expr) \
-  const bool var = expr;             \
-  sus_if_msvc_else(__assume, __builtin_assume)(var)
+// MSVC uses __assume(expr)
+// clang uses __builtin_assume(expr)
+// gcc uses if (expr) {} else __builtin_unreachable()
+#define _sus__assume_impl(var, expr)                                       \
+  const bool var = expr;                                                   \
+  sus_if_msvc_else(__assume, sus_if_clang_else(__builtin_assume, if))(var) \
+      sus_if_msvc_else(, sus_if_clang_else(, {} else __builtin_unreachable()))
