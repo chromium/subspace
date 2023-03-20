@@ -21,8 +21,8 @@
 #include <type_traits>
 
 #include "subspace/assertions/check.h"
-#include "subspace/containers/iterators/slice_iter.h"
 #include "subspace/containers/iterators/chunks.h"
+#include "subspace/containers/iterators/slice_iter.h"
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/fn/fn_ref.h"
 #include "subspace/iter/iterator_defn.h"
