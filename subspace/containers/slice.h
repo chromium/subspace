@@ -98,11 +98,69 @@ class [[sus_trivial_abi]] Slice {
     return Slice(data, N);
   }
 
-  /// Returns the number of elements in the slice.
-  constexpr inline usize len() const& noexcept { return len_; }
+  /// Returns a mutable pointer to the first element in the slice.
+  ///
+  /// The caller must ensure that the container outlives the pointer this
+  /// function returns, or else it will end up pointing to garbage.
+  ///
+  /// Modifying the container referenced by this slice may cause its buffer to
+  /// be reallocated, which would also make any pointers to it invalid.
+  inline T* as_mut_ptr() & noexcept
+    requires(!std::is_const_v<T>)
+  {
+    check(len_ > 0_usize);
+    return data_;
+  }
 
-  /// Returns true if the slice has a length of 0.
-  constexpr inline bool is_empty() const& noexcept { return len_ == 0u; }
+  /// Returns the two mutable pointers spanning the slice.
+  ///
+  /// The returned range is half-open, which means that the end pointer points
+  /// one past the last element of the slice. This way, an empty slice is
+  /// represented by two equal pointers, and the difference between the two
+  /// pointers represents the size of the slice.
+  ///
+  /// The end pointer requires caution, as it does not point to a valid element
+  /// in the slice.
+  ///
+  /// This function is useful for interacting with interfaces which use two
+  /// pointers to refer to a range of elements in memory, as is common in C++
+  /// stdlib algorthms. Note that the pointers can be unpacked from the Range
+  /// with structured bindings as in `auto [a, b] = s.as_mut_ptr_range();`.
+  ::sus::ops::Range<T*> as_mut_ptr_range() & noexcept
+    requires(!std::is_const_v<T>)
+  {
+    return ::sus::ops::Range<T*>(data_, data_ + len_);
+  }
+
+  /// Returns a const pointer to the first element in the slice.
+  ///
+  /// The caller must ensure that the container outlives the pointer this
+  /// function returns, or else it will end up pointing to garbage.
+  ///
+  /// Modifying the container referenced by this slice may cause its buffer to
+  /// be reallocated, which would also make any pointers to it invalid.
+  inline const T* as_ptr() const& noexcept {
+    check(len_ > 0_usize);
+    return data_;
+  }
+
+  /// Returns the two const pointers spanning the slice.
+  ///
+  /// The returned range is half-open, which means that the end pointer points
+  /// one past the last element of the slice. This way, an empty slice is
+  /// represented by two equal pointers, and the difference between the two
+  /// pointers represents the size of the slice.
+  ///
+  /// The end pointer requires caution, as it does not point to a valid element
+  /// in the slice.
+  ///
+  /// This function is useful for interacting with interfaces which use two
+  /// pointers to refer to a range of elements in memory, as is common in C++
+  /// stdlib algorthms. Note that the pointers can be unpacked from the Range
+  /// with structured bindings as in `auto [a, b] = s.as_ptr_range();`.
+  ::sus::ops::Range<const T*> as_ptr_range() & noexcept {
+    return ::sus::ops::Range<const T*>(data_, data_ + len_);
+  }
 
   /// Binary searches this slice for a given element. This behaves similarly to
   /// contains if this slice is sorted.
@@ -284,6 +342,9 @@ class [[sus_trivial_abi]] Slice {
     return ChunksMut<T>::with(::sus::clone(*this), chunk_size);
   }
 
+  /// Returns true if the slice has a length of 0.
+  constexpr inline bool is_empty() const& noexcept { return len_ == 0u; }
+
   /// Returns a reference to the element at position `i` in the Slice.
   ///
   /// # Panics
@@ -409,6 +470,41 @@ class [[sus_trivial_abi]] Slice {
     return Slice(data_ + start, len);
   }
 
+  /// Returns an iterator over all the elements in the slice, visited in the
+  /// same order they appear in the slice. The iterator gives const access to
+  /// each element.
+  constexpr SliceIter<const T&> iter() const& noexcept {
+    return SliceIter<const T&>::with(data_, len_);
+  }
+
+  /// Returns an iterator over all the elements in the slice, visited in the
+  /// same order they appear in the slice. The iterator gives mutable access to
+  /// each element.
+  constexpr SliceIterMut<T&> iter_mut() noexcept
+    requires(!std::is_const_v<T>)
+  {
+    return SliceIterMut<T&>::with(data_, len_);
+  }
+
+  /// Converts the slice into an iterator that consumes the slice and returns
+  /// each element in the same order they appear in the array.
+  ///
+  /// For a Slice<const T> the iterator will return `const T&`. For a Slice<T>
+  /// the iterator will return `T&`.
+  constexpr SliceIter<const T&> into_iter() && noexcept
+    requires(std::is_const_v<T>)
+  {
+    return SliceIter<const T&>::with(data_, len_);
+  }
+  constexpr SliceIterMut<T&> into_iter() && noexcept
+    requires(!std::is_const_v<T>)
+  {
+    return SliceIterMut<T&>::with(data_, len_);
+  }
+
+  /// Returns the number of elements in the slice.
+  constexpr inline usize len() const& noexcept { return len_; }
+
   /// Sorts the slice.
   ///
   /// This sort is stable (i.e., does not reorder equal elements) and O(n *
@@ -482,102 +578,6 @@ class [[sus_trivial_abi]] Slice {
         return compare(l, r) < 0;
       });
     }
-  }
-
-  /// Returns a const pointer to the first element in the slice.
-  ///
-  /// The caller must ensure that the container outlives the pointer this
-  /// function returns, or else it will end up pointing to garbage.
-  ///
-  /// Modifying the container referenced by this slice may cause its buffer to
-  /// be reallocated, which would also make any pointers to it invalid.
-  inline const T* as_ptr() const& noexcept {
-    check(len_ > 0_usize);
-    return data_;
-  }
-
-  /// Returns the two const pointers spanning the slice.
-  ///
-  /// The returned range is half-open, which means that the end pointer points
-  /// one past the last element of the slice. This way, an empty slice is
-  /// represented by two equal pointers, and the difference between the two
-  /// pointers represents the size of the slice.
-  ///
-  /// The end pointer requires caution, as it does not point to a valid element
-  /// in the slice.
-  ///
-  /// This function is useful for interacting with interfaces which use two
-  /// pointers to refer to a range of elements in memory, as is common in C++
-  /// stdlib algorthms. Note that the pointers can be unpacked from the Range
-  /// with structured bindings as in `auto [a, b] = s.as_ptr_range();`.
-  ::sus::ops::Range<const T*> as_ptr_range() & noexcept {
-    return ::sus::ops::Range<const T*>(data_, data_ + len_);
-  }
-
-  /// Returns a mutable pointer to the first element in the slice.
-  ///
-  /// The caller must ensure that the container outlives the pointer this
-  /// function returns, or else it will end up pointing to garbage.
-  ///
-  /// Modifying the container referenced by this slice may cause its buffer to
-  /// be reallocated, which would also make any pointers to it invalid.
-  inline T* as_mut_ptr() & noexcept
-    requires(!std::is_const_v<T>)
-  {
-    check(len_ > 0_usize);
-    return data_;
-  }
-
-  /// Returns the two mutable pointers spanning the slice.
-  ///
-  /// The returned range is half-open, which means that the end pointer points
-  /// one past the last element of the slice. This way, an empty slice is
-  /// represented by two equal pointers, and the difference between the two
-  /// pointers represents the size of the slice.
-  ///
-  /// The end pointer requires caution, as it does not point to a valid element
-  /// in the slice.
-  ///
-  /// This function is useful for interacting with interfaces which use two
-  /// pointers to refer to a range of elements in memory, as is common in C++
-  /// stdlib algorthms. Note that the pointers can be unpacked from the Range
-  /// with structured bindings as in `auto [a, b] = s.as_mut_ptr_range();`.
-  ::sus::ops::Range<T*> as_mut_ptr_range() & noexcept
-    requires(!std::is_const_v<T>)
-  {
-    return ::sus::ops::Range<T*>(data_, data_ + len_);
-  }
-
-  /// Returns an iterator over all the elements in the slice, visited in the
-  /// same order they appear in the slice. The iterator gives const access to
-  /// each element.
-  constexpr SliceIter<const T&> iter() const& noexcept {
-    return SliceIter<const T&>::with(data_, len_);
-  }
-
-  /// Returns an iterator over all the elements in the slice, visited in the
-  /// same order they appear in the slice. The iterator gives mutable access to
-  /// each element.
-  constexpr SliceIterMut<T&> iter_mut() noexcept
-    requires(!std::is_const_v<T>)
-  {
-    return SliceIterMut<T&>::with(data_, len_);
-  }
-
-  /// Converts the slice into an iterator that consumes the slice and returns
-  /// each element in the same order they appear in the array.
-  ///
-  /// For a Slice<const T> the iterator will return `const T&`. For a Slice<T>
-  /// the iterator will return `T&`.
-  constexpr SliceIter<const T&> into_iter() && noexcept
-    requires(std::is_const_v<T>)
-  {
-    return SliceIter<const T&>::with(data_, len_);
-  }
-  constexpr SliceIterMut<T&> into_iter() && noexcept
-    requires(!std::is_const_v<T>)
-  {
-    return SliceIterMut<T&>::with(data_, len_);
   }
 
   /// Divides one slice into two at an index, without doing bounds checking.
