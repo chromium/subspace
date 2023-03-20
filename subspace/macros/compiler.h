@@ -35,5 +35,5 @@
 #if defined(__clang__)
 #define sus_if_clang_else(x, y) x
 #else
-#define sus_if_clane_else(x, y) y
+#define sus_if_clang_else(x, y) y
 #endif
