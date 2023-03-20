@@ -226,10 +226,10 @@ class [[sus_trivial_abi]] Slice {
   ///
   /// TODO: Verify if: due to each chunk having exactly `chunk_size` elements,
   /// the compiler can often optimize the resulting code better than in the case
-  /// of `chunks`.
+  /// of `chunks()`.
   ///
-  /// See `chunks` for a variant of this iterator that also returns the
-  /// remainder as a smaller chunk, and `rchunks_exact` for the same iterator
+  /// See `chunks()` for a variant of this iterator that also returns the
+  /// remainder as a smaller chunk, and `rchunks_exact()` for the same iterator
   /// but starting at the end of the slice.
   ///
   /// # Panics
@@ -239,6 +239,29 @@ class [[sus_trivial_abi]] Slice {
     ::sus::check(chunk_size > 0u);
     return ChunksExact<const T>::with(::sus::clone(*this), chunk_size);
   }
+
+  /// Returns an iterator over `chunk_size` elements of the slice at a time,
+  /// starting at the beginning of the slice.
+  ///
+  /// The chunks are mutable slices, and do not overlap. If `chunk_size` does
+  /// not divide the length of the slice, then the last up to `chunk_size-1`
+  /// elements will be omitted and can be retrieved from the `remainder()`
+  /// function of the iterator.
+  ///
+  /// TODO: Verify if: Due to each chunk having exactly `chunk_size` elements,
+  /// the compiler can often optimize the resulting code better than in the case
+  /// of chunks_mut.
+  ///
+  /// See `chunks_mut()` for a variant of this iterator that also returns the
+  /// remainder as a smaller chunk, and `rchunks_exact_mut()` for the same
+  /// iterator but starting at the end of the slice.
+  constexpr ChunksExactMut<T> chunks_exact_mut(usize chunk_size) const& noexcept
+    requires(!std::is_const_v<T>)
+  {
+    ::sus::check(chunk_size > 0u);
+    return ChunksExactMut<T>::with(::sus::clone(*this), chunk_size);
+  }
+
   /// Returns an iterator over chunk_size elements of the slice at a time,
   /// starting at the beginning of the slice.
   ///
