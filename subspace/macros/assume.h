@@ -15,6 +15,7 @@
 #pragma once
 
 #include "subspace/macros/compiler.h"
+#include "subspace/macros/eval_and_concat.h"
 #include "subspace/marker/unsafe.h"
 
 /// Tells the compiler that condition `x` is true and to optimize for it.
@@ -24,7 +25,11 @@
 /// # Safety
 /// If the condition `x` were to actually be false, Undefined Behaviour will
 /// result.
-#define sus_assume(unsafe_fn, x)                                \
+#define sus_assume(unsafe_fn, expr)                             \
   static_assert(std::same_as<std::decay_t<decltype(unsafe_fn)>, \
                              ::sus::marker::UnsafeFnMarker>);   \
-  sus_if_msvc_else(__assume, __builtin_assume)(x)
+  _sus__assume_impl(sus_eval_and_concat(sus_assume_result_, __LINE__), expr)
+
+#define _sus__assume_impl(var, expr) \
+  const bool var = expr;             \
+  sus_if_msvc_else(__assume, __builtin_assume)(var)
