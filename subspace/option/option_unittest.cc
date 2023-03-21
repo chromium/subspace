@@ -2029,7 +2029,7 @@ struct CollectSum {
   sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
 
   static constexpr CollectSum from_iter(
-      ::sus::iter::IntoIterator<T> auto&& iter) noexcept {
+      ::sus::iter::IntoIterator<T> auto iter) noexcept {
     T sum = T();
     for (T t : sus::move(iter).into_iter()) sum += t;
     return CollectSum(sum);
@@ -2063,7 +2063,7 @@ struct CollectRefs {
                       : vec(sus::move(v)){});
 
   static CollectRefs from_iter(
-      sus::iter::IntoIterator<const NoCopyMove&> auto&& iter) noexcept {
+      sus::iter::IntoIterator<const NoCopyMove&> auto iter) noexcept {
     auto v = sus::Vec<const NoCopyMove*>();
     for (const NoCopyMove& t : sus::move(iter).into_iter()) v.push(&t);
     return CollectRefs(sus::move(v));

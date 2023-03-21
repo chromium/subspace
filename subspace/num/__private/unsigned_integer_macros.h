@@ -156,9 +156,9 @@ class Tuple;
    * #[doc.overloads=0]                                                        \
    */                                                                          \
   template <Signed S>                                                          \
-  static constexpr ::sus::Result<T, ::sus::num::TryFromIntError>       \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
   try_from(S s) noexcept {                                                     \
-    using R = ::sus::Result<T, ::sus::num::TryFromIntError>;           \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if (s.primitive_value < 0) {                                               \
       return R::with_err(::sus::num::TryFromIntError(                          \
           ::sus::num::TryFromIntError::Kind::OutOfBounds));                    \
@@ -195,9 +195,9 @@ class Tuple;
    * #[doc.overloads=1]                                                        \
    */                                                                          \
   template <Unsigned U>                                                        \
-  static constexpr ::sus::Result<T, ::sus::num::TryFromIntError>       \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
   try_from(U u) noexcept {                                                     \
-    using R = ::sus::Result<T, ::sus::num::TryFromIntError>;           \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE) {                          \
       if (u.primitive_value > MAX_PRIMITIVE) {                                 \
         return R::with_err(::sus::num::TryFromIntError(                        \
@@ -232,9 +232,9 @@ class Tuple;
    * #[doc.overloads=2]                                                        \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
-  static constexpr ::sus::Result<T, ::sus::num::TryFromIntError>       \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
   try_from(S s) {                                                              \
-    using R = ::sus::Result<T, ::sus::num::TryFromIntError>;           \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if (s < 0) {                                                               \
       return R::with_err(::sus::num::TryFromIntError(                          \
           ::sus::num::TryFromIntError::Kind::OutOfBounds));                    \
@@ -272,9 +272,9 @@ class Tuple;
    * #[doc.overloads=3]                                                        \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
-  static constexpr ::sus::Result<T, ::sus::num::TryFromIntError>       \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
   try_from(U u) {                                                              \
-    using R = ::sus::Result<T, ::sus::num::TryFromIntError>;           \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {                 \
       if (u > MAX_PRIMITIVE) {                                                 \
         return R::with_err(::sus::num::TryFromIntError(                        \

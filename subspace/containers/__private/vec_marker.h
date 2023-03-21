@@ -23,6 +23,11 @@
 #include "subspace/mem/move.h"
 #include "subspace/tuple/tuple.h"
 
+namespace sus::containers {
+template <class T>
+class Vec;
+}
+
 namespace sus::containers::__private {
 
 template <class... Ts>
@@ -34,6 +39,7 @@ struct VecMarker {
   ::sus::tuple_type::Tuple<Ts&&...> values;
 
   template <class U>
+    requires((... && std::constructible_from<U, Ts&&>))
   inline constexpr operator Vec<U>() && noexcept {
     auto v = Vec<U>::with_capacity(sizeof...(Ts));
 
@@ -47,14 +53,21 @@ struct VecMarker {
     return v;
   }
 
-  template <class T>
-  inline constexpr Vec<T> construct() && noexcept {
+  /// Constructs a `Vec<U>` for a user-specified `U`, as it can not be inferred.
+  template <class U>
+    requires((... && std::constructible_from<U, Ts&&>))
+  inline constexpr Vec<U> construct() && noexcept {
     return ::sus::move(*this);
   }
 
-  template <int&..., class T = ::sus::choice_type::__private::PackFirst<Ts...>>
-    requires(... && std::same_as<T, Ts>)
-  inline constexpr Vec<T> construct() && noexcept {
+  /// Constructs a `Vec<U>` where `U` is the exact type of the values passed to
+  /// `sus::vec()`.
+  ///
+  /// This function is only callable if all values passed to `sus::vec()` had
+  /// the same type.
+  template <int&..., class U = ::sus::choice_type::__private::PackFirst<Ts...>>
+    requires(... && std::same_as<U, Ts>)
+  inline constexpr Vec<U> construct() && noexcept {
     return ::sus::move(*this);
   }
 };
