@@ -24,6 +24,7 @@
 #include "subspace/mem/move.h"
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
+#include "subspace/result/result.h"
 
 using sus::containers::Slice;
 
@@ -577,9 +578,10 @@ TEST(Slice, BinarySearch) {
   sus::Vec<i32> v = sus::vec(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
   auto s = v.as_slice();
 
-  EXPECT_EQ(s.binary_search(13), sus::ok(9_usize).construct<usize>());
-  EXPECT_EQ(s.binary_search(4), sus::err(7_usize).construct<usize>());
-  EXPECT_EQ(s.binary_search(100), sus::err(13_usize).construct<usize>());
+  EXPECT_EQ(s.binary_search(13), sus::result::ok(9_usize).construct<usize>());
+  EXPECT_EQ(s.binary_search(4), sus::result::err(7_usize).construct<usize>());
+  EXPECT_EQ(s.binary_search(100),
+            sus::result::err(13_usize).construct<usize>());
   auto r = s.binary_search(1);
   EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
 }
@@ -589,11 +591,11 @@ TEST(Slice, BinarySearchBy) {
   auto s = v.as_slice();
 
   EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 13; }),
-            sus::ok(9_usize).construct<usize>());
+            sus::result::ok(9_usize).construct<usize>());
   EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 4; }),
-            sus::err(7_usize).construct<usize>());
+            sus::result::err(7_usize).construct<usize>());
   EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 100; }),
-            sus::err(13_usize).construct<usize>());
+            sus::result::err(13_usize).construct<usize>());
   auto r = s.binary_search_by([](const i32& p) { return p <=> 1; });
   EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
 }
@@ -611,17 +613,17 @@ TEST(Slice, BinarySearchByKey) {
                                    [](const sus::Tuple<i32, i32>& pair) -> i32 {
                                      return pair.at<1u>();
                                    }),
-            sus::ok(9_usize).construct<usize>());
+            sus::result::ok(9_usize).construct<usize>());
   EXPECT_EQ(s.binary_search_by_key(4_i32,
                                    [](const sus::Tuple<i32, i32>& pair) -> i32 {
                                      return pair.at<1u>();
                                    }),
-            sus::err(7_usize).construct<usize>());
+            sus::result::err(7_usize).construct<usize>());
   EXPECT_EQ(s.binary_search_by_key(100_i32,
                                    [](const sus::Tuple<i32, i32>& pair) -> i32 {
                                      return pair.at<1u>();
                                    }),
-            sus::err(13_usize).construct<usize>());
+            sus::result::err(13_usize).construct<usize>());
   auto r = s.binary_search_by_key(
       1_i32,
       [](const sus::Tuple<i32, i32>& pair) -> i32 { return pair.at<1u>(); });
@@ -1755,5 +1757,42 @@ TEST(Slice, ChunksExactMut) {
     EXPECT_EQ(it.remainder().as_ptr(), &v[7u]);
   }
 }
+
+TEST(Slice, ConcatSlices) {
+  static_assert(sus::containers::Concat<const Slice<i32>>);
+  static_assert(sus::containers::Concat<Slice<i32>>);
+  static_assert(sus::containers::Concat<const Slice<const i32>>);
+  static_assert(sus::containers::Concat<Slice<const i32>>);
+
+  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  Vec<i32> v2 = sus::vec(5, 6);
+  Vec<i32> v3 = sus::vec(7, 8, 9);
+  {
+    Vec<Slice<const i32>> vs =
+        sus::vec(v1.as_slice(), v2.as_slice(), v3.as_slice());
+    Slice<const Slice<const i32>> s = vs.as_slice();
+    auto c = s.concat();
+    static_assert(std::same_as<decltype(c), Vec<i32>>);
+
+    EXPECT_EQ(c.len(), 9u);
+    i32 expected = 1;
+    for (i32 i : c) {
+      EXPECT_EQ(i, expected);
+      expected += 1;
+    }
+    EXPECT_EQ(expected, 10);
+  }
+}
+
+TEST(Slice, ConcatExample) {
+  i32 a1[] = {1, 2}, a2[] = {3, 4};
+  Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
+  Vec<i32> v = Slice<Slice<i32>>::from(as).concat();
+  // TODO: sus::check(v == sus::vec(1_i32, 2_i32, 3_i32, 4_i32).construct());
+  sus::check(v[0u] == 1);
+  sus::check(v[1u] == 2);
+  sus::check(v[2u] == 3);
+  sus::check(v[3u] == 4);
+}  // namespace
 
 }  // namespace

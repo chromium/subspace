@@ -462,7 +462,7 @@ struct CollectSum {
   sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
 
   static constexpr CollectSum from_iter(
-      sus::iter::IntoIterator<T> auto&& iter) noexcept {
+      sus::iter::IntoIterator<T> auto iter) noexcept {
     T sum = T();
     for (T t : sus::move(iter).into_iter()) sum += t;
     return CollectSum(sum);

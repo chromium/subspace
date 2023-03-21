@@ -896,4 +896,35 @@ TEST(Vec, FromSlice) {
   }
 }
 
+TEST(Vec, ExtendFromSlice) {
+  sus::Vec<i32> v = sus::vec(1, 2, 3, 4);
+  sus::Vec<i32> out;
+  out.extend_from_slice(v.as_slice()["2..3"_r]);
+  EXPECT_EQ(out.len(), 1u);
+  EXPECT_EQ(out[0u], 3);
+
+  out.extend_from_slice(v.as_slice());
+  EXPECT_EQ(out.len(), 5u);
+  EXPECT_EQ(out[0u], 3);
+  EXPECT_EQ(out[1u], 1);
+  EXPECT_EQ(out[2u], 2);
+  EXPECT_EQ(out[3u], 3);
+  EXPECT_EQ(out[4u], 4);
+
+  out.extend_from_slice(v.as_slice()["0..0"_r]);
+  EXPECT_EQ(out.len(), 5u);
+}
+
+TEST(VecDeathTest, ExtendFromSliceAliases) {
+  sus::Vec<i32> v = sus::vec(1, 2, 3, 4);
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(v.extend_from_slice(v.as_slice()), "");
+  EXPECT_DEATH(v.extend_from_slice(v.as_slice()["1.."_r]), "");
+  EXPECT_DEATH(v.extend_from_slice(v.as_slice()["2.."_r]), "");
+  EXPECT_DEATH(v.extend_from_slice(v.as_slice()["3.."_r]), "");
+#endif
+  // Empty does not panic.
+  v.extend_from_slice(v.as_slice()["4.."_r]);
+}
+
 }  // namespace

@@ -40,7 +40,7 @@
 #if defined(__GNUC__) && !defined(__clang__)
 #define SUS_COMPILER_IS_GCC 1
 #else
-#define SUS_COMPILER_IS_GCC 0
+#define SUS_COMPILER_IS_GCCgit 0
 #endif
 
 #if SUS_COMPILER_IS_MSVC

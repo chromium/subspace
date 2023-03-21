@@ -20,8 +20,8 @@
 #include <concepts>
 
 #include "subspace/assertions/check.h"
-#include "subspace/containers/iterators/vec_iter.h"
 #include "subspace/containers/__private/vec_marker.h"
+#include "subspace/containers/iterators/vec_iter.h"
 #include "subspace/containers/slice.h"
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/iter/from_iterator.h"
@@ -80,7 +80,7 @@ class Vec {
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
   static inline Vec with_capacity(usize capacity) noexcept {
-    check(::sus::mem::size_of<T>() * capacity <= usize(size_t{PTRDIFF_MAX}));
+    check(::sus::mem::size_of<T>() * capacity <= size_t{isize::MAX_PRIMITIVE});
     auto v = Vec(nullptr, 0_usize, 0_usize);
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
     v.grow_to_exact(capacity);
@@ -117,7 +117,7 @@ class Vec {
   ///
   /// sus::iter::FromIterator trait.
   static constexpr Vec from_iter(
-      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
+      ::sus::iter::IntoIterator<T> auto into_iter) noexcept
     requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
   {
     auto&& iter = sus::move(into_iter).into_iter();
@@ -241,6 +241,38 @@ class Vec {
     check(!is_moved_from());
     destroy_storage_objects();
     len_ = 0_usize;
+  }
+
+  /// Extends the Vec by cloning the contents of a slice.
+  ///
+  /// # Panics
+  /// If the Slice is non-empty and points into the Vec, the function will
+  /// panic, as resizing the Vec would invalidate the Slice.
+  inline void extend_from_slice(::sus::containers::Slice<const T> s) noexcept
+    requires(sus::mem::Clone<T>)
+  {
+    if (s.is_empty()) [[unlikely]] {
+      return;
+    }
+    check(!is_moved_from());
+    const T* slice_ptr = s.as_ptr();
+    if (is_alloced()) {
+      const T* vec_ptr = as_ptr();
+      // If this check fails, the Slice aliases with the Vec, and the reserve()
+      // call below would invalidate the Slice.
+      //
+      // TODO: Should we handle aliasing with a temp buffer?
+      ::sus::check(!(slice_ptr >= vec_ptr && slice_ptr <= vec_ptr + len_));
+    }
+    reserve(s.len());
+    if constexpr (sus::mem::Copy<T> &&
+                  std::is_trivially_copy_constructible_v<T>) {
+      memcpy(as_mut_ptr() + len_, slice_ptr,
+             size_t{s.len() * ::sus::mem::size_of<T>()});
+      len_ += s.len();
+    } else {
+      for (const T& t : s) push(::sus::clone(t));
+    }
   }
 
   /// Reserves capacity for at least `additional` more elements to be inserted

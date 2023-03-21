@@ -21,6 +21,7 @@
 #include <type_traits>
 
 #include "subspace/assertions/check.h"
+#include "subspace/containers/concat.h"
 #include "subspace/containers/iterators/chunks.h"
 #include "subspace/containers/iterators/slice_iter.h"
 #include "subspace/fn/fn_concepts.h"
@@ -58,12 +59,26 @@ class Vec;
 template <class T>
 class [[sus_trivial_abi]] Slice {
  public:
+  template <class U>
+  friend class Slice;
+
   static_assert(!std::is_reference_v<T>,
                 "Slice holds references, so the type parameter can not also be "
                 "a reference");
 
   /// Constructs an empty Slice, which has no elements.
   constexpr Slice() : Slice(nullptr, 0_usize) {}
+
+  // Conversion from Slice<T> to Slice<const T>.
+  template <class U>
+    requires(!std::same_as<T, U> && std::same_as<T, const U>)
+  constexpr Slice(const Slice<U>& o) : data_(o.data_), len_(o.len_) {}
+  template <class U>
+    requires(!std::same_as<T, U> && std::same_as<T, const U>)
+  constexpr Slice& operator=(const Slice<U>& o) {
+    data_ = o.data_;
+    len_ = o.len_;
+  }
 
   /// Constructs a slice from its raw parts.
   ///
@@ -171,7 +186,7 @@ class [[sus_trivial_abi]] Slice {
   /// is subject to change in future versions of Subspace. If the value is not
   /// found then `sus::Err` is returned, with the index where a matching
   /// element could be inserted while maintaining sorted order.
-  ::sus::Result<::sus::num::usize, ::sus::num::usize> binary_search(
+  ::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_search(
       const T& x) const& noexcept
     requires(::sus::ops::Ord<T>)
   {
@@ -193,11 +208,11 @@ class [[sus_trivial_abi]] Slice {
   /// is subject to change in future versions of Subspace. If the value is not
   /// found then `sus::Err` is returned, with the index where a matching
   /// element could be inserted while maintaining sorted order.
-  ::sus::Result<::sus::num::usize, ::sus::num::usize> binary_search_by(
+  ::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_search_by(
       ::sus::fn::FnMutRef<std::strong_ordering(const T&)> f) const& noexcept
     requires(::sus::ops::Ord<T>)
   {
-    using Result = ::sus::Result<::sus::num::usize, ::sus::num::usize>;
+    using Result = ::sus::result::Result<::sus::num::usize, ::sus::num::usize>;
 
     // INVARIANTS:
     // - 0 <= left <= left + size = right <= self.len()
@@ -251,8 +266,9 @@ class [[sus_trivial_abi]] Slice {
   /// found then `sus::Err` is returned, with the index where a matching
   /// element could be inserted while maintaining sorted order.
   template <::sus::ops::Ord Key>
-  ::sus::Result<::sus::num::usize, ::sus::num::usize> binary_search_by_key(
-      const Key& key, ::sus::fn::FnMut<Key(const T&)> auto f) const& noexcept {
+  ::sus::result::Result<::sus::num::usize, ::sus::num::usize>
+  binary_search_by_key(const Key& key,
+                       ::sus::fn::FnMut<Key(const T&)> auto f) const& noexcept {
     return binary_search_by([&key, &f](const T& p) -> std::strong_ordering {
       return f(p) <=> key;
     });
@@ -340,6 +356,52 @@ class [[sus_trivial_abi]] Slice {
   {
     ::sus::check(chunk_size > 0u);
     return ChunksMut<T>::with(::sus::clone(*this), chunk_size);
+  }
+
+  using ConcatOutputType = ::sus::containers::Vec<std::remove_const_t<T>>;
+
+  /// Flattens and concatenates the items in the Slice.
+  ///
+  /// The items of type `T` are flattened into a container of type
+  /// `T::ConcatOutputType`. This method is only supported for types that
+  /// satisfy the `sus::containers::Concat<T>` concept.
+  ///
+  /// Slice itself satisfies Concat, with its output being `Vec`, so that a
+  /// `Slice` of `Slice<T>`s can be concat() together into a single `Vec<T>`.
+  ///
+  /// # Example
+  /// ```
+  /// i32 a1[] = {1, 2}, a2[] = {3, 4};
+  /// Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
+  /// Vec<i32> v = Slice<Slice<i32>>::from(as).concat();
+  /// // TODO: sus::check(v == sus::vec(1_i32, 2_i32, 3_i32,
+  /// 4_i32).construct()); sus::check(v[0u] == 1); sus::check(v[1u] == 2);
+  /// sus::check(v[2u] == 3);
+  /// sus::check(v[3u] == 4);
+  /// ```
+  constexpr auto concat() const& noexcept
+    requires(Concat<T>)
+  {
+    usize cap;
+    for (const T* i = data_; i < data_ + len_; i += 1u) {
+      cap += i->len();
+    }
+    using Container = typename T::ConcatOutputType;
+    auto out = Container::with_capacity(cap);
+    for (const T* i = data_; i < data_ + len_; i += 1u) {
+      i->concat_into(out);
+    }
+    return out;
+  }
+
+  /// Concatenates a clone of each element in the slice into `vec`.
+  ///
+  /// This method exists to satisfy `sus::containers::Concat<Slice<T>>`, for
+  /// concat() to append the elements in each Slice onto `vec`.
+  void concat_into(ConcatOutputType& vec) const& noexcept
+    requires(::sus::mem::Clone<T>)
+  {
+    vec.extend_from_slice(*this);
   }
 
   /// Returns true if the slice has a length of 0.
