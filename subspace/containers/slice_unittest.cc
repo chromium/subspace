@@ -27,6 +27,7 @@
 #include "subspace/result/result.h"
 
 using sus::containers::Slice;
+using sus::containers::SliceMut;
 
 namespace {
 
@@ -45,8 +46,10 @@ TEST(Slice, Index) {
   auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
+  static_assert(std::same_as<const i32&, decltype(sc[0u])>);
   EXPECT_EQ(sc[0_usize], 1_i32);
   EXPECT_EQ(sc[2_usize], 3_i32);
+  static_assert(std::same_as<i32&, decltype(sm[0u])>);
   EXPECT_EQ(sm[0_usize], 1_i32);
   EXPECT_EQ(sm[2_usize], 3_i32);
 }
@@ -1786,8 +1789,8 @@ TEST(Slice, ConcatSlices) {
 
 TEST(Slice, ConcatExample) {
   i32 a1[] = {1, 2}, a2[] = {3, 4};
-  Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
-  Vec<i32> v = Slice<Slice<i32>>::from(as).concat();
+  SliceMut<i32> as[] = {SliceMut<i32>::from(a1), SliceMut<i32>::from(a2)};
+  Vec<i32> v = SliceMut<SliceMut<i32>>::from(as).concat();
   // TODO: sus::check(v == sus::vec(1_i32, 2_i32, 3_i32, 4_i32).construct());
   sus::check(v[0u] == 1);
   sus::check(v[1u] == 2);
