@@ -356,7 +356,9 @@ TEST(Array, StrongOrder) {
 }
 
 struct Weak final {
-  auto operator==(const Weak& o) const& noexcept { return a == o.a && b == o.b; }
+  auto operator==(const Weak& o) const& noexcept {
+    return a == o.a && b == o.b;
+  }
   auto operator<=>(const Weak& o) const& noexcept {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
@@ -482,17 +484,18 @@ TEST(ArrayDeathTest, Index) {
 }
 
 TEST(Array, AsSlice) {
-  auto x = [](sus::Slice<const i32>) {};
   const auto ac = Array<i32, 3>::with_value(2);
   auto am = Array<i32, 3>::with_value(2);
-  x(ac.as_slice());
-  x(am.as_slice());
+  static_assert(std::same_as<decltype(ac.as_slice()), sus::Slice<i32>>);
+  static_assert(std::same_as<decltype(am.as_slice()), sus::Slice<i32>>);
+  EXPECT_EQ(ac.as_slice().len(), 3u);
+  EXPECT_EQ(am.as_slice().len(), 3u);
 }
 
 TEST(Array, AsMutSlice) {
-  auto x = [](sus::Slice<i32>) {};
   auto am = Array<i32, 3>::with_value(2);
-  x(am.as_mut_slice());
+  static_assert(std::same_as<decltype(am.as_mut_slice()), sus::SliceMut<i32>>);
+  EXPECT_EQ(am.as_mut_slice().len(), 3u);
 }
 
 TEST(Array, Clone) {

@@ -37,14 +37,14 @@ static_assert(sus::mem::Move<Slice<i32>>);
 
 TEST(Slice, FromRawParts) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 }
 
 TEST(Slice, Index) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
   static_assert(std::same_as<const i32&, decltype(sc[0u])>);
   EXPECT_EQ(sc[0_usize], 1_i32);
@@ -56,8 +56,8 @@ TEST(Slice, Index) {
 
 TEST(SliceDeathTest, Index) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(sc[3_usize], "");
@@ -67,12 +67,12 @@ TEST(SliceDeathTest, Index) {
 
 TEST(Slice, Get) {
   i32 a[] = {1, 2, 3};
-  auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(s.get(1_usize).unwrap(), 2_i32);
   EXPECT_EQ(s.get(2_usize).unwrap(), 3_i32);
   EXPECT_EQ(s.get(3_usize), sus::None);
 
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(sm.get(1_usize).unwrap(), 2_i32);
   EXPECT_EQ(sm.get(2_usize).unwrap(), 3_i32);
   EXPECT_EQ(sm.get(3_usize), sus::None);
@@ -82,15 +82,15 @@ template <class T, class U>
 concept HasGetMut = requires(T t, U u) { t.get_mut(u); };
 
 // get_mut() is only available for mutable slices of mutable types.
-static_assert(!HasGetMut<Slice<const i32>, usize>);
-static_assert(HasGetMut<Slice<i32>, usize>);
-static_assert(!HasGetMut<const Slice<const i32>, usize>);
+static_assert(!HasGetMut<Slice<i32>, usize>);
+static_assert(HasGetMut<SliceMut<i32>, usize>);
 static_assert(!HasGetMut<const Slice<i32>, usize>);
+static_assert(!HasGetMut<const SliceMut<i32>, usize>);
 
 TEST(Slice, GetMut) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
   EXPECT_EQ(sm.get_mut(1_usize).unwrap(), 2_i32);
   EXPECT_EQ(sm.get_mut(2_usize).unwrap(), 3_i32);
@@ -99,11 +99,11 @@ TEST(Slice, GetMut) {
 
 TEST(Slice, GetUnchecked) {
   i32 a[] = {1, 2, 3};
-  auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(s.get_unchecked(unsafe_fn, 1_usize), 2_i32);
   EXPECT_EQ(s.get_unchecked(unsafe_fn, 2_usize), 3_i32);
 
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(sm.get_unchecked(unsafe_fn, 1_usize), 2_i32);
   EXPECT_EQ(sm.get_unchecked(unsafe_fn, 2_usize), 3_i32);
 }
@@ -113,15 +113,15 @@ concept HasGetUncheckedMut =
     requires(T t, U u) { t.get_unchecked_mut(unsafe_fn, u); };
 
 // get_unchecked_mut() is only available for mutable slices of mutable types.
-static_assert(!HasGetUncheckedMut<Slice<const i32>, usize>);
-static_assert(HasGetUncheckedMut<Slice<i32>, usize>);
-static_assert(!HasGetUncheckedMut<const Slice<const i32>, usize>);
+static_assert(!HasGetUncheckedMut<Slice<i32>, usize>);
+static_assert(HasGetUncheckedMut<SliceMut<i32>, usize>);
 static_assert(!HasGetUncheckedMut<const Slice<i32>, usize>);
+static_assert(!HasGetUncheckedMut<const SliceMut<i32>, usize>);
 
 TEST(Slice, GetUncheckedMut) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
   EXPECT_EQ(sm.get_unchecked_mut(unsafe_fn, 1_usize), 2_i32);
   EXPECT_EQ(sm.get_unchecked_mut(unsafe_fn, 2_usize), 3_i32);
@@ -129,8 +129,8 @@ TEST(Slice, GetUncheckedMut) {
 
 TEST(Slice, IndexRange) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
   EXPECT_EQ((sc["0..1"_r][0u]), 1_i32);
   EXPECT_EQ((sc["0..1"_r].len()), 1_usize);
@@ -157,8 +157,8 @@ TEST(Slice, IndexRange) {
 
 TEST(SliceDeathTest, IndexRange) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
 
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH((sc["0..4"_r]), "");
@@ -171,14 +171,14 @@ TEST(SliceDeathTest, IndexRange) {
 
 TEST(Slice, GetRange) {
   i32 a[] = {1, 2, 3};
-  auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(s.get_range("0..3"_r).unwrap()[1u], 2_i32);
   EXPECT_EQ(s.get_range("1..3"_r).unwrap()[1u], 3_i32);
   EXPECT_EQ(s.get_range("1..4"_r), sus::None);
   EXPECT_EQ(s.get_range("3..3"_r).unwrap().len(), 0_usize);
   EXPECT_EQ(s.get_range("4..4"_r), sus::None);
 
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(sm.get_range("0..3"_r).unwrap()[1u], 2_i32);
   EXPECT_EQ(sm.get_range("1..3"_r).unwrap()[1u], 3_i32);
   EXPECT_EQ(sm.get_range("1..4"_r), sus::None);
@@ -196,33 +196,33 @@ TEST(Slice, GetRange) {
 
 TEST(Slice, GetUncheckedRange) {
   i32 a[] = {1, 2, 3};
-  auto s = Slice<const i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(s.get_range_unchecked(unsafe_fn, "0..2"_r)[1u], 2_i32);
   EXPECT_EQ(s.get_range_unchecked(unsafe_fn, "2..3"_r)[0u], 3_i32);
 
-  auto sm = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
   EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, "0..2"_r)[1u], 2_i32);
   EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, "2..3"_r)[0u], 3_i32);
 }
 
 TEST(Slice, Into) {
   i32 a[] = {1, 2, 3};
-  Slice<const i32> s = sus::array_into(a);
+  Slice<i32> s = sus::array_into(a);
   EXPECT_EQ(s.len(), 3u);
-  Slice<i32> sm = sus::array_into(a);
+  SliceMut<i32> sm = sus::array_into(a);
   EXPECT_EQ(sm.len(), 3u);
 }
 
 TEST(Slice, From) {
   i32 a[] = {1, 2, 3};
-  auto s = Slice<const i32>::from(a);
-  auto sm = Slice<i32>::from(a);
+  auto s = Slice<i32>::from(a);
+  auto sm = SliceMut<i32>::from(a);
 }
 
 TEST(Slice, RangedForIter) {
   {
     usize ar[] = {1u, 2u, 3u};
-    const auto slice = Slice<const usize>::from(ar);
+    const auto slice = Slice<usize>::from(ar);
     auto sum = 0_usize;
     for (const usize& i : slice) {
       sum += i;
@@ -231,7 +231,7 @@ TEST(Slice, RangedForIter) {
   }
   {
     usize ar[] = {1u, 2u, 3u};
-    const auto mslice = Slice<usize>::from(ar);
+    const auto mslice = SliceMut<usize>::from(ar);
     auto sum = 0_usize;
     for (const usize& i : mslice) {
       sum += i;
@@ -243,7 +243,7 @@ TEST(Slice, RangedForIter) {
 TEST(Slice, Iter) {
   {
     usize ar[] = {1u, 2u, 3u};
-    const auto slice = Slice<const usize>::from(ar);
+    const auto slice = Slice<usize>::from(ar);
     auto sum = 0_usize;
     for (const usize& i : slice.iter()) {
       sum += i;
@@ -252,7 +252,7 @@ TEST(Slice, Iter) {
   }
   {
     usize ar[] = {1u, 2u, 3u};
-    const auto mslice = Slice<usize>::from(ar);
+    const auto mslice = SliceMut<usize>::from(ar);
     auto sum = 0_usize;
     for (const usize& i : mslice.iter()) {
       sum += i;
@@ -263,7 +263,7 @@ TEST(Slice, Iter) {
 
 TEST(Slice, IterMut) {
   usize ar[] = {1u, 2u, 3u};
-  auto slice = Slice<usize>::from(ar);
+  auto slice = SliceMut<usize>::from(ar);
   auto sum = 0_usize;
   for (usize& i : slice.iter_mut()) {
     sum += i;
@@ -281,7 +281,7 @@ TEST(Slice, IterMut) {
 TEST(Slice, IntoIter) {
   {
     const usize ar[] = {1u, 2u, 3u};
-    auto slice = Slice<const usize>::from(ar);
+    auto slice = Slice<usize>::from(ar);
     auto sum = 0_usize;
     for (const usize& i : sus::move(slice).into_iter()) {
       sum += i;
@@ -290,7 +290,7 @@ TEST(Slice, IntoIter) {
   }
   {
     usize ar[] = {1u, 2u, 3u};
-    auto slice = Slice<usize>::from(ar);
+    auto slice = SliceMut<usize>::from(ar);
     auto sum = 0_usize;
     for (usize& i : sus::move(slice).into_iter()) {
       sum += i;
@@ -302,7 +302,7 @@ TEST(Slice, IntoIter) {
 TEST(Slice, DoubleEndedIterator) {
   {
     const usize ar[] = {1u, 2u, 3u};
-    auto slice = Slice<const usize>::from(ar);
+    auto slice = Slice<usize>::from(ar);
 
     auto it = slice.iter();
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), const usize&>);
@@ -313,7 +313,7 @@ TEST(Slice, DoubleEndedIterator) {
   }
   {
     usize ar[] = {1u, 2u, 3u};
-    auto slice = Slice<usize>::from(ar);
+    auto slice = SliceMut<usize>::from(ar);
 
     auto it = slice.iter_mut();
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), usize&>);
@@ -327,7 +327,7 @@ TEST(Slice, DoubleEndedIterator) {
 TEST(Slice, ExactSizeIterator) {
   {
     const usize ar[] = {1u, 2u, 3u};
-    auto slice = Slice<const usize>::from(ar);
+    auto slice = Slice<usize>::from(ar);
 
     auto it = slice.iter();
     static_assert(sus::iter::ExactSizeIterator<decltype(it), const usize&>);
@@ -353,7 +353,7 @@ TEST(Slice, ExactSizeIterator) {
   }
   {
     usize ar[] = {1u, 2u, 3u};
-    auto slice = Slice<usize>::from(ar);
+    auto slice = SliceMut<usize>::from(ar);
 
     auto it = slice.iter_mut();
     static_assert(sus::iter::ExactSizeIterator<decltype(it), usize&>);
@@ -366,7 +366,7 @@ TEST(Slice, ExactSizeIterator) {
 
 TEST(Slice, ImplicitIter) {
   const usize ar[] = {1u, 2u, 3u};
-  auto slice = Slice<const usize>::from(ar);
+  auto slice = Slice<usize>::from(ar);
   auto sum = 0_usize;
   for (const usize& i : slice) {
     sum += i;
@@ -381,6 +381,12 @@ TEST(Slice, Len) {
 
   auto se = Slice<i32>::from_raw_parts(unsafe_fn, a, 0_usize);
   EXPECT_EQ(se.len(), 0u);
+
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 2_usize);
+  EXPECT_EQ(sm.len(), 2u);
+
+  auto sme = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 0_usize);
+  EXPECT_EQ(sme.len(), 0u);
 }
 
 TEST(Slice, IsEmpty) {
@@ -390,6 +396,12 @@ TEST(Slice, IsEmpty) {
 
   auto se = Slice<i32>::from_raw_parts(unsafe_fn, a, 0_usize);
   EXPECT_TRUE(se.is_empty());
+
+  auto sm = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 2_usize);
+  EXPECT_FALSE(sm.is_empty());
+
+  auto sme = SliceMut<i32>::from_raw_parts(unsafe_fn, a, 0_usize);
+  EXPECT_TRUE(sme.is_empty());
 }
 
 struct Sortable {
@@ -406,7 +418,7 @@ struct Sortable {
   }
 };
 
-TEST(Slice, Sort) {
+TEST(SliceMut, Sort) {
   // clang-format off
   sus::Array<Sortable, 9> unsorted = sus::array(
     Sortable(3, 0),
@@ -432,14 +444,14 @@ TEST(Slice, Sort) {
   );
   // clang-format on
 
-  Slice<Sortable> s = unsorted.as_mut_slice();
+  SliceMut<Sortable> s = unsorted.as_mut_slice();
   s.sort();
   for (usize i = 0u; i < s.len(); i += 1u) {
     EXPECT_EQ(sorted[i], s[i]);
   }
 }
 
-TEST(Slice, SortBy) {
+TEST(SliceMut, SortBy) {
   // clang-format off
   sus::Array<Sortable, 9> unsorted = sus::array(
     Sortable(3, 0),
@@ -465,7 +477,7 @@ TEST(Slice, SortBy) {
   );
   // clang-format on
 
-  Slice<Sortable> s = unsorted.as_mut_slice();
+  SliceMut<Sortable> s = unsorted.as_mut_slice();
   // Sorts backward.
   s.sort_by([](const auto& a, const auto& b) { return b <=> a; });
   for (usize i = 0u; i < s.len(); i += 1u) {
@@ -473,22 +485,22 @@ TEST(Slice, SortBy) {
   }
 }
 
-TEST(Slice, SortUnstable) {
+TEST(SliceMut, SortUnstable) {
   sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
   sus::Array<i32, 6> sorted = sus::array(1, 2, 3, 4, 5, 6);
 
-  Slice<i32> s = unsorted.as_mut_slice();
+  SliceMut<i32> s = unsorted.as_mut_slice();
   s.sort_unstable();
   for (usize i = 0u; i < s.len(); i += 1u) {
     EXPECT_EQ(sorted[i], s[i]);
   }
 }
 
-TEST(Slice, SortUnstableBy) {
+TEST(SliceMut, SortUnstableBy) {
   sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
   sus::Array<i32, 6> sorted = sus::array(6, 5, 4, 3, 2, 1);
 
-  Slice<i32> s = unsorted.as_mut_slice();
+  SliceMut<i32> s = unsorted.as_mut_slice();
   // Sorts backward.
   s.sort_unstable_by([](const auto& a, const auto& b) { return b <=> a; });
   for (usize i = 0u; i < s.len(); i += 1u) {
@@ -497,28 +509,48 @@ TEST(Slice, SortUnstableBy) {
 }
 
 static_assert(sus::construct::Default<Slice<i32>>);
+static_assert(sus::construct::Default<SliceMut<i32>>);
 
 TEST(Slice, Default) {
   Slice<i32> s;
   EXPECT_TRUE(s.is_empty());
+  SliceMut<i32> sm;
+  EXPECT_TRUE(sm.is_empty());
 }
 
 TEST(Slice, ToVec) {
   sus::Array<i32, 6> array = sus::array(3, 4, 2, 1, 6, 5);
-  auto slice =
-      sus::Slice<const i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 6u);
-  EXPECT_EQ(array.as_ptr(), slice.as_ptr());
-  sus::Vec<i32> vec = slice.to_vec();
-  // The Vec is a new allocation.
-  EXPECT_NE(vec.as_ptr(), slice.as_ptr());
-  // And it has all the same content, cloned.
-  EXPECT_EQ(vec.len(), 6u);
-  EXPECT_EQ(vec[0u], 3);
-  EXPECT_EQ(vec[1u], 4);
-  EXPECT_EQ(vec[2u], 2);
-  EXPECT_EQ(vec[3u], 1);
-  EXPECT_EQ(vec[4u], 6);
-  EXPECT_EQ(vec[5u], 5);
+  {
+    auto s = sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 6u);
+    EXPECT_EQ(array.as_ptr(), s.as_ptr());
+    sus::Vec<i32> vec = s.to_vec();
+    // The Vec is a new allocation.
+    EXPECT_NE(vec.as_ptr(), s.as_ptr());
+    // And it has all the same content, cloned.
+    EXPECT_EQ(vec.len(), 6u);
+    EXPECT_EQ(vec[0u], 3);
+    EXPECT_EQ(vec[1u], 4);
+    EXPECT_EQ(vec[2u], 2);
+    EXPECT_EQ(vec[3u], 1);
+    EXPECT_EQ(vec[4u], 6);
+    EXPECT_EQ(vec[5u], 5);
+  }
+  {
+    auto sm =
+        sus::SliceMut<i32>::from_raw_parts(unsafe_fn, array.as_mut_ptr(), 6u);
+    EXPECT_EQ(array.as_ptr(), sm.as_ptr());
+    sus::Vec<i32> vec = sm.to_vec();
+    // The Vec is a new allocation.
+    EXPECT_NE(vec.as_ptr(), sm.as_ptr());
+    // And it has all the same content, cloned.
+    EXPECT_EQ(vec.len(), 6u);
+    EXPECT_EQ(vec[0u], 3);
+    EXPECT_EQ(vec[1u], 4);
+    EXPECT_EQ(vec[2u], 2);
+    EXPECT_EQ(vec[3u], 1);
+    EXPECT_EQ(vec[4u], 6);
+    EXPECT_EQ(vec[5u], 5);
+  }
 
   // Verify Clone is used, not just Copy.
   struct Cloner {
@@ -534,44 +566,66 @@ TEST(Slice, ToVec) {
   static_assert(sus::mem::Clone<Cloner>);
   static_assert(!sus::mem::Copy<Cloner>);
   sus::Array<Cloner, 2> v = sus::array(Cloner(1), Cloner(2));
-  sus::Vec<Cloner> v2 =
-      sus::Slice<const Cloner>::from_raw_parts(unsafe_fn, v.as_ptr(), 2u)
-          .to_vec();
-  EXPECT_NE(v.as_ptr(), v2.as_ptr());
-  EXPECT_EQ(v.len(), v2.len());
-  EXPECT_EQ(v[0u].i + 1, v2[0u].i);
-  EXPECT_EQ(v[1u].i + 1, v2[1u].i);
+  {
+    auto s = sus::Slice<Cloner>::from_raw_parts(unsafe_fn, v.as_ptr(), 2u);
+    sus::Vec<Cloner> v2 = s.to_vec();
+    EXPECT_NE(v.as_ptr(), v2.as_ptr());
+    EXPECT_EQ(v.len(), v2.len());
+    EXPECT_EQ(v[0u].i + 1, v2[0u].i);
+    EXPECT_EQ(v[1u].i + 1, v2[1u].i);
+  }
+  {
+    auto sm =
+        sus::SliceMut<Cloner>::from_raw_parts(unsafe_fn, v.as_mut_ptr(), 2u);
+    sus::Vec<Cloner> v2 = sm.to_vec();
+    EXPECT_NE(v.as_ptr(), v2.as_ptr());
+    EXPECT_EQ(v.len(), v2.len());
+    EXPECT_EQ(v[0u].i + 1, v2[0u].i);
+    EXPECT_EQ(v[1u].i + 1, v2[1u].i);
+  }
 }
 
 TEST(Slice, AsPtr) {
   sus::Array<i32, 3> array = sus::array(3, 4, 2);
-  auto slice =
-      sus::Slice<const i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 3u);
-  EXPECT_EQ(slice.as_ptr(), array.as_ptr());
+  auto s = sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 3u);
+  EXPECT_EQ(s.as_ptr(), array.as_ptr());
+
+  auto sm =
+      sus::SliceMut<i32>::from_raw_parts(unsafe_fn, array.as_mut_ptr(), 3u);
+  EXPECT_EQ(sm.as_ptr(), array.as_ptr());
 }
 
 TEST(Slice, AsPtrRange) {
   sus::Array<i32, 3> array = sus::array(3, 4, 2);
-  auto slice =
-      sus::Slice<const i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 3u);
-  auto r = slice.as_ptr_range();
-  static_assert(std::same_as<decltype(r), sus::ops::Range<const i32*>>);
-  EXPECT_EQ(r.start, array.as_ptr());
-  EXPECT_EQ(r.finish, array.as_ptr() + 3u);
+  {
+    auto s = sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 3u);
+    auto r = s.as_ptr_range();
+    static_assert(std::same_as<decltype(r), sus::ops::Range<const i32*>>);
+    EXPECT_EQ(r.start, array.as_ptr());
+    EXPECT_EQ(r.finish, array.as_ptr() + 3u);
+  }
+  {
+    auto sm =
+        sus::SliceMut<i32>::from_raw_parts(unsafe_fn, array.as_mut_ptr(), 3u);
+    auto r = sm.as_ptr_range();
+    static_assert(std::same_as<decltype(r), sus::ops::Range<const i32*>>);
+    EXPECT_EQ(r.start, array.as_ptr());
+    EXPECT_EQ(r.finish, array.as_ptr() + 3u);
+  }
 }
 
-TEST(Slice, AsMutPtr) {
+TEST(SliceMut, AsMutPtr) {
   sus::Array<i32, 3> array = sus::array(3, 4, 2);
-  auto slice =
-      sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_mut_ptr(), 3u);
-  EXPECT_EQ(slice.as_mut_ptr(), array.as_mut_ptr());
+  auto sm =
+      sus::SliceMut<i32>::from_raw_parts(unsafe_fn, array.as_mut_ptr(), 3u);
+  EXPECT_EQ(sm.as_mut_ptr(), array.as_mut_ptr());
 }
 
-TEST(Slice, AsMutPtrRange) {
+TEST(SliceMut, AsMutPtrRange) {
   sus::Array<i32, 3> array = sus::array(3, 4, 2);
-  auto slice =
-      sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_mut_ptr(), 3u);
-  auto r = slice.as_mut_ptr_range();
+  auto sm =
+      sus::SliceMut<i32>::from_raw_parts(unsafe_fn, array.as_mut_ptr(), 3u);
+  auto r = sm.as_mut_ptr_range();
   static_assert(std::same_as<decltype(r), sus::ops::Range<i32*>>);
   EXPECT_EQ(r.start, array.as_mut_ptr());
   EXPECT_EQ(r.finish, array.as_mut_ptr() + 3u);
@@ -579,28 +633,53 @@ TEST(Slice, AsMutPtrRange) {
 
 TEST(Slice, BinarySearch) {
   sus::Vec<i32> v = sus::vec(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
-  auto s = v.as_slice();
-
-  EXPECT_EQ(s.binary_search(13), sus::result::ok(9_usize).construct<usize>());
-  EXPECT_EQ(s.binary_search(4), sus::result::err(7_usize).construct<usize>());
-  EXPECT_EQ(s.binary_search(100),
-            sus::result::err(13_usize).construct<usize>());
-  auto r = s.binary_search(1);
-  EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+  {
+    auto s = v.as_slice();
+    EXPECT_EQ(s.binary_search(13), sus::result::ok(9_usize).construct<usize>());
+    EXPECT_EQ(s.binary_search(4), sus::result::err(7_usize).construct<usize>());
+    EXPECT_EQ(s.binary_search(100),
+              sus::result::err(13_usize).construct<usize>());
+    auto r = s.binary_search(1);
+    EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+  }
+  {
+    auto sm = v.as_mut_slice();
+    EXPECT_EQ(sm.binary_search(13),
+              sus::result::ok(9_usize).construct<usize>());
+    EXPECT_EQ(sm.binary_search(4),
+              sus::result::err(7_usize).construct<usize>());
+    EXPECT_EQ(sm.binary_search(100),
+              sus::result::err(13_usize).construct<usize>());
+    auto r = sm.binary_search(1);
+    EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+  }
 }
 
 TEST(Slice, BinarySearchBy) {
   sus::Vec<i32> v = sus::vec(0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
-  auto s = v.as_slice();
 
-  EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 13; }),
-            sus::result::ok(9_usize).construct<usize>());
-  EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 4; }),
-            sus::result::err(7_usize).construct<usize>());
-  EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 100; }),
-            sus::result::err(13_usize).construct<usize>());
-  auto r = s.binary_search_by([](const i32& p) { return p <=> 1; });
-  EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+  {
+    auto s = v.as_slice();
+    EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 13; }),
+              sus::result::ok(9_usize).construct<usize>());
+    EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 4; }),
+              sus::result::err(7_usize).construct<usize>());
+    EXPECT_EQ(s.binary_search_by([](const i32& p) { return p <=> 100; }),
+              sus::result::err(13_usize).construct<usize>());
+    auto r = s.binary_search_by([](const i32& p) { return p <=> 1; });
+    EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+  }
+  {
+    auto sm = v.as_mut_slice();
+    EXPECT_EQ(sm.binary_search_by([](const i32& p) { return p <=> 13; }),
+              sus::result::ok(9_usize).construct<usize>());
+    EXPECT_EQ(sm.binary_search_by([](const i32& p) { return p <=> 4; }),
+              sus::result::err(7_usize).construct<usize>());
+    EXPECT_EQ(sm.binary_search_by([](const i32& p) { return p <=> 100; }),
+              sus::result::err(13_usize).construct<usize>());
+    auto r = sm.binary_search_by([](const i32& p) { return p <=> 1; });
+    EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+  }
 }
 
 TEST(Slice, BinarySearchByKey) {
@@ -609,54 +688,88 @@ TEST(Slice, BinarySearchByKey) {
       sus::tuple(3, 1), sus::tuple(1, 2), sus::tuple(2, 3), sus::tuple(4, 5),
       sus::tuple(5, 8), sus::tuple(3, 13), sus::tuple(1, 21), sus::tuple(2, 34),
       sus::tuple(4, 55));
-  auto s = sus::Slice<const sus::Tuple<i32, i32>>::from_raw_parts(
-      unsafe_fn, arr.as_ptr(), arr.len());
+  {
+    auto s = sus::Slice<sus::Tuple<i32, i32>>::from_raw_parts(
+        unsafe_fn, arr.as_ptr(), arr.len());
 
-  EXPECT_EQ(s.binary_search_by_key(13_i32,
-                                   [](const sus::Tuple<i32, i32>& pair) -> i32 {
-                                     return pair.at<1u>();
-                                   }),
-            sus::result::ok(9_usize).construct<usize>());
-  EXPECT_EQ(s.binary_search_by_key(4_i32,
-                                   [](const sus::Tuple<i32, i32>& pair) -> i32 {
-                                     return pair.at<1u>();
-                                   }),
-            sus::result::err(7_usize).construct<usize>());
-  EXPECT_EQ(s.binary_search_by_key(100_i32,
-                                   [](const sus::Tuple<i32, i32>& pair) -> i32 {
-                                     return pair.at<1u>();
-                                   }),
-            sus::result::err(13_usize).construct<usize>());
-  auto r = s.binary_search_by_key(
-      1_i32,
-      [](const sus::Tuple<i32, i32>& pair) -> i32 { return pair.at<1u>(); });
-  EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+    EXPECT_EQ(
+        s.binary_search_by_key(13_i32,
+                               [](const sus::Tuple<i32, i32>& pair) -> i32 {
+                                 return pair.at<1u>();
+                               }),
+        sus::result::ok(9_usize).construct<usize>());
+    EXPECT_EQ(
+        s.binary_search_by_key(4_i32,
+                               [](const sus::Tuple<i32, i32>& pair) -> i32 {
+                                 return pair.at<1u>();
+                               }),
+        sus::result::err(7_usize).construct<usize>());
+    EXPECT_EQ(
+        s.binary_search_by_key(100_i32,
+                               [](const sus::Tuple<i32, i32>& pair) -> i32 {
+                                 return pair.at<1u>();
+                               }),
+        sus::result::err(13_usize).construct<usize>());
+    auto r = s.binary_search_by_key(
+        1_i32,
+        [](const sus::Tuple<i32, i32>& pair) -> i32 { return pair.at<1u>(); });
+    EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+  }
+  {
+    auto sm = sus::SliceMut<sus::Tuple<i32, i32>>::from_raw_parts(
+        unsafe_fn, arr.as_mut_ptr(), arr.len());
+
+    EXPECT_EQ(
+        sm.binary_search_by_key(13_i32,
+                                [](const sus::Tuple<i32, i32>& pair) -> i32 {
+                                  return pair.at<1u>();
+                                }),
+        sus::result::ok(9_usize).construct<usize>());
+    EXPECT_EQ(
+        sm.binary_search_by_key(4_i32,
+                                [](const sus::Tuple<i32, i32>& pair) -> i32 {
+                                  return pair.at<1u>();
+                                }),
+        sus::result::err(7_usize).construct<usize>());
+    EXPECT_EQ(
+        sm.binary_search_by_key(100_i32,
+                                [](const sus::Tuple<i32, i32>& pair) -> i32 {
+                                  return pair.at<1u>();
+                                }),
+        sus::result::err(13_usize).construct<usize>());
+    auto r = sm.binary_search_by_key(
+        1_i32,
+        [](const sus::Tuple<i32, i32>& pair) -> i32 { return pair.at<1u>(); });
+    EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
+  }
 }
 
 TEST(Slice, Chunks) {
   sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   auto s = v.as_slice();
+  auto sm = v.as_mut_slice();
+  static_assert(std::same_as<decltype(s.chunks(3u)), decltype(sm.chunks(3u))>);
 
   {
     // Check the iterator type.
     decltype(auto) it = s.chunks(3u);
-    static_assert(sus::iter::Iterator<decltype(it), sus::Slice<const i32>>);
+    static_assert(sus::iter::Iterator<decltype(it), sus::Slice<i32>>);
     static_assert(
-        sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<const i32>>);
+        sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<i32>>);
     static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
   {
     // Chunk size == len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(10u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(10u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next().unwrap();
+    sus::Slice<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -671,14 +784,14 @@ TEST(Slice, Chunks) {
   }
   {
     // Chunk size == len: next_back().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(10u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(10u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next_back().unwrap();
+    sus::Slice<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -693,14 +806,14 @@ TEST(Slice, Chunks) {
   }
   {
     // Chunk size > len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(13u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(13u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next().unwrap();
+    sus::Slice<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -715,14 +828,14 @@ TEST(Slice, Chunks) {
   }
   // Chunk size > len: next_back().
   {
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(13u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(13u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next_back().unwrap();
+    sus::Slice<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -737,14 +850,14 @@ TEST(Slice, Chunks) {
   }
   {
     // Chunk size > len, and multiple of len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(20u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(20u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next().unwrap();
+    sus::Slice<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -759,14 +872,14 @@ TEST(Slice, Chunks) {
   }
   {
     // Chunk size > len, and multiple of len: next_back().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(20u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(20u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next_back().unwrap();
+    sus::Slice<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -781,14 +894,14 @@ TEST(Slice, Chunks) {
   }
   {
     // Chunk size divides into len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(5u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(5u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<const i32> n = it.next().unwrap();
+    sus::Slice<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 5u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -813,14 +926,14 @@ TEST(Slice, Chunks) {
   }
   {
     // Chunk size divides into len: next_back().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(5u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(5u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<const i32> n = it.next_back().unwrap();
+    sus::Slice<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 5u);
     EXPECT_EQ(n.as_ptr(), &v[5u]);
 
@@ -845,14 +958,14 @@ TEST(Slice, Chunks) {
   }
   {
     // Chunk size doesn't divide into len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(7u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(7u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<const i32> n = it.next().unwrap();
+    sus::Slice<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 7u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -877,14 +990,14 @@ TEST(Slice, Chunks) {
   }
   {
     // Chunk size doesn't divide into len: next_back().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks(7u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks(7u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<const i32> n = it.next_back().unwrap();
+    sus::Slice<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 3u);
     EXPECT_EQ(n.as_ptr(), &v[7u]);
 
@@ -916,23 +1029,23 @@ TEST(Slice, ChunksMut) {
   {
     // Check the iterator type.
     decltype(auto) it = s.chunks_mut(3u);
-    static_assert(sus::iter::Iterator<decltype(it), sus::Slice<i32>>);
+    static_assert(sus::iter::Iterator<decltype(it), sus::SliceMut<i32>>);
     static_assert(
-        sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<i32>>);
+        sus::iter::DoubleEndedIterator<decltype(it), sus::SliceMut<i32>>);
     static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
   {
     // Chunk size == len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(10u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(10u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next().unwrap();
+    sus::SliceMut<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -947,14 +1060,14 @@ TEST(Slice, ChunksMut) {
   }
   {
     // Chunk size == len: next_back().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(10u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(10u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next_back().unwrap();
+    sus::SliceMut<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -969,14 +1082,14 @@ TEST(Slice, ChunksMut) {
   }
   {
     // Chunk size > len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(13u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(13u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next().unwrap();
+    sus::SliceMut<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -991,14 +1104,14 @@ TEST(Slice, ChunksMut) {
   }
   // Chunk size > len: next_back().
   {
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(13u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(13u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next_back().unwrap();
+    sus::SliceMut<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1013,14 +1126,14 @@ TEST(Slice, ChunksMut) {
   }
   {
     // Chunk size > len, and multiple of len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(20u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(20u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next().unwrap();
+    sus::SliceMut<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1035,14 +1148,14 @@ TEST(Slice, ChunksMut) {
   }
   {
     // Chunk size > len, and multiple of len: next_back().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(20u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(20u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next_back().unwrap();
+    sus::SliceMut<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1057,14 +1170,14 @@ TEST(Slice, ChunksMut) {
   }
   {
     // Chunk size divides into len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(5u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(5u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<i32> n = it.next().unwrap();
+    sus::SliceMut<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 5u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1089,14 +1202,14 @@ TEST(Slice, ChunksMut) {
   }
   {
     // Chunk size divides into len: next_back().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(5u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(5u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<i32> n = it.next_back().unwrap();
+    sus::SliceMut<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 5u);
     EXPECT_EQ(n.as_ptr(), &v[5u]);
 
@@ -1121,14 +1234,14 @@ TEST(Slice, ChunksMut) {
   }
   {
     // Chunk size doesn't divide into len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(7u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(7u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<i32> n = it.next().unwrap();
+    sus::SliceMut<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 7u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1153,14 +1266,14 @@ TEST(Slice, ChunksMut) {
   }
   {
     // Chunk size doesn't divide into len: next_back().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_mut(7u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_mut(7u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
       auto [lower, upper] = it.size_hint();
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<i32> n = it.next_back().unwrap();
+    sus::SliceMut<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 3u);
     EXPECT_EQ(n.as_ptr(), &v[7u]);
 
@@ -1187,13 +1300,13 @@ TEST(Slice, ChunksMut) {
 
 TEST(Slice, SplitAtUnchecked) {
   sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-  sus::Slice<const i32> s = v.as_slice();
+  sus::Slice<i32> s = v.as_slice();
 
   {
     // Empty left.
     auto [a, b] = s.split_at_unchecked(unsafe_fn, 0u);
-    static_assert(std::same_as<decltype(a), sus::Slice<const i32>>);
-    static_assert(std::same_as<decltype(b), sus::Slice<const i32>>);
+    static_assert(std::same_as<decltype(a), sus::Slice<i32>>);
+    static_assert(std::same_as<decltype(b), sus::Slice<i32>>);
     EXPECT_EQ(a.len(), 0u);
     EXPECT_EQ(b.len(), 10u);
     EXPECT_EQ(b.as_ptr(), &v[0u]);
@@ -1217,13 +1330,13 @@ TEST(Slice, SplitAtUnchecked) {
 
 TEST(Slice, SplitAtMutUnchecked) {
   sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
-  sus::Slice<i32> s = v.as_mut_slice();
+  sus::SliceMut<i32> s = v.as_mut_slice();
 
   {
     // Empty left.
     auto [a, b] = s.split_at_mut_unchecked(unsafe_fn, 0u);
-    static_assert(std::same_as<decltype(a), sus::Slice<i32>>);
-    static_assert(std::same_as<decltype(b), sus::Slice<i32>>);
+    static_assert(std::same_as<decltype(a), sus::SliceMut<i32>>);
+    static_assert(std::same_as<decltype(b), sus::SliceMut<i32>>);
     EXPECT_EQ(a.len(), 0u);
     EXPECT_EQ(b.len(), 10u);
     EXPECT_EQ(b.as_ptr(), &v[0u]);
@@ -1252,16 +1365,16 @@ TEST(Slice, ChunksExact) {
   {
     // Check the iterator type.
     decltype(auto) it = s.chunks_exact(3u);
-    static_assert(sus::iter::Iterator<decltype(it), sus::Slice<const i32>>);
+    static_assert(sus::iter::Iterator<decltype(it), sus::Slice<i32>>);
     static_assert(
-        sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<const i32>>);
+        sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<i32>>);
     static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
   {
     // Chunk size == len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(10u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(10u);
     EXPECT_EQ(it.remainder().len(), 0u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
@@ -1269,7 +1382,7 @@ TEST(Slice, ChunksExact) {
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next().unwrap();
+    sus::Slice<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1284,7 +1397,7 @@ TEST(Slice, ChunksExact) {
   }
   {
     // Chunk size == len: next_back().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(10u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(10u);
     EXPECT_EQ(it.remainder().len(), 0u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
@@ -1292,7 +1405,7 @@ TEST(Slice, ChunksExact) {
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next_back().unwrap();
+    sus::Slice<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1307,7 +1420,7 @@ TEST(Slice, ChunksExact) {
   }
   {
     // Chunk size > len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(13u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(13u);
     EXPECT_EQ(it.remainder().len(), 10u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[0u]);
 
@@ -1325,7 +1438,7 @@ TEST(Slice, ChunksExact) {
   }
   // Chunk size > len: next_back().
   {
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(13u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(13u);
     EXPECT_EQ(it.remainder().len(), 10u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[0u]);
 
@@ -1343,7 +1456,7 @@ TEST(Slice, ChunksExact) {
   }
   {
     // Chunk size > len, and multiple of len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(20u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(20u);
     EXPECT_EQ(it.remainder().len(), 10u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[0u]);
 
@@ -1361,7 +1474,7 @@ TEST(Slice, ChunksExact) {
   }
   {
     // Chunk size > len, and multiple of len: next_back().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(20u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(20u);
     EXPECT_EQ(it.remainder().len(), 10u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[0u]);
 
@@ -1379,7 +1492,7 @@ TEST(Slice, ChunksExact) {
   }
   {
     // Chunk size divides into len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(5u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(5u);
     EXPECT_EQ(it.remainder().len(), 0u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -1387,7 +1500,7 @@ TEST(Slice, ChunksExact) {
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<const i32> n = it.next().unwrap();
+    sus::Slice<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 5u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1412,7 +1525,7 @@ TEST(Slice, ChunksExact) {
   }
   {
     // Chunk size divides into len: next_back().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(5u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(5u);
     EXPECT_EQ(it.remainder().len(), 0u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -1420,7 +1533,7 @@ TEST(Slice, ChunksExact) {
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<const i32> n = it.next_back().unwrap();
+    sus::Slice<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 5u);
     EXPECT_EQ(n.as_ptr(), &v[5u]);
 
@@ -1445,7 +1558,7 @@ TEST(Slice, ChunksExact) {
   }
   {
     // Chunk size doesn't divide into len: next().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(7u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(7u);
     // Remainder is available immediately.
     EXPECT_EQ(it.remainder().len(), 3u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[7u]);
@@ -1455,7 +1568,7 @@ TEST(Slice, ChunksExact) {
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next().unwrap();
+    sus::Slice<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 7u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1474,7 +1587,7 @@ TEST(Slice, ChunksExact) {
   }
   {
     // Chunk size doesn't divide into len: next_back().
-    sus::iter::Iterator<sus::Slice<const i32>> auto it = s.chunks_exact(7u);
+    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact(7u);
     // Remainder is available immediately.
     EXPECT_EQ(it.remainder().len(), 3u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[7u]);
@@ -1484,7 +1597,7 @@ TEST(Slice, ChunksExact) {
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<const i32> n = it.next_back().unwrap();
+    sus::Slice<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 7u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1510,16 +1623,16 @@ TEST(Slice, ChunksExactMut) {
   {
     // Check the iterator type.
     decltype(auto) it = s.chunks_exact_mut(3u);
-    static_assert(sus::iter::Iterator<decltype(it), sus::Slice<i32>>);
+    static_assert(sus::iter::Iterator<decltype(it), sus::SliceMut<i32>>);
     static_assert(
-        sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<i32>>);
+        sus::iter::DoubleEndedIterator<decltype(it), sus::SliceMut<i32>>);
     static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
   {
     // Chunk size == len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(10u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(10u);
     EXPECT_EQ(it.remainder().len(), 0u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
@@ -1527,7 +1640,7 @@ TEST(Slice, ChunksExactMut) {
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next().unwrap();
+    sus::SliceMut<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1542,7 +1655,7 @@ TEST(Slice, ChunksExactMut) {
   }
   {
     // Chunk size == len: next_back().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(10u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(10u);
     EXPECT_EQ(it.remainder().len(), 0u);
     {
       EXPECT_EQ(it.exact_size_hint(), 1u);
@@ -1550,7 +1663,7 @@ TEST(Slice, ChunksExactMut) {
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next_back().unwrap();
+    sus::SliceMut<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 10u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1565,7 +1678,7 @@ TEST(Slice, ChunksExactMut) {
   }
   {
     // Chunk size > len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(13u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(13u);
     EXPECT_EQ(it.remainder().len(), 10u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[0u]);
 
@@ -1583,7 +1696,7 @@ TEST(Slice, ChunksExactMut) {
   }
   // Chunk size > len: next_back().
   {
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(13u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(13u);
     EXPECT_EQ(it.remainder().len(), 10u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[0u]);
 
@@ -1601,7 +1714,7 @@ TEST(Slice, ChunksExactMut) {
   }
   {
     // Chunk size > len, and multiple of len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(20u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(20u);
     EXPECT_EQ(it.remainder().len(), 10u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[0u]);
 
@@ -1619,7 +1732,7 @@ TEST(Slice, ChunksExactMut) {
   }
   {
     // Chunk size > len, and multiple of len: next_back().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(20u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(20u);
     EXPECT_EQ(it.remainder().len(), 10u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[0u]);
 
@@ -1637,7 +1750,7 @@ TEST(Slice, ChunksExactMut) {
   }
   {
     // Chunk size divides into len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(5u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(5u);
     EXPECT_EQ(it.remainder().len(), 0u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -1645,7 +1758,7 @@ TEST(Slice, ChunksExactMut) {
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<i32> n = it.next().unwrap();
+    sus::SliceMut<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 5u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1670,7 +1783,7 @@ TEST(Slice, ChunksExactMut) {
   }
   {
     // Chunk size divides into len: next_back().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(5u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(5u);
     EXPECT_EQ(it.remainder().len(), 0u);
     {
       EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -1678,7 +1791,7 @@ TEST(Slice, ChunksExactMut) {
       EXPECT_EQ(lower, 2u);
       EXPECT_EQ(upper, sus::some(2u));
     }
-    sus::Slice<i32> n = it.next_back().unwrap();
+    sus::SliceMut<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 5u);
     EXPECT_EQ(n.as_ptr(), &v[5u]);
 
@@ -1703,7 +1816,7 @@ TEST(Slice, ChunksExactMut) {
   }
   {
     // Chunk size doesn't divide into len: next().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(7u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(7u);
     // Remainder is available immediately.
     EXPECT_EQ(it.remainder().len(), 3u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[7u]);
@@ -1713,7 +1826,7 @@ TEST(Slice, ChunksExactMut) {
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next().unwrap();
+    sus::SliceMut<i32> n = it.next().unwrap();
     EXPECT_EQ(n.len(), 7u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1732,7 +1845,7 @@ TEST(Slice, ChunksExactMut) {
   }
   {
     // Chunk size doesn't divide into len: next_back().
-    sus::iter::Iterator<sus::Slice<i32>> auto it = s.chunks_exact_mut(7u);
+    sus::iter::Iterator<sus::SliceMut<i32>> auto it = s.chunks_exact_mut(7u);
     // Remainder is available immediately.
     EXPECT_EQ(it.remainder().len(), 3u);
     EXPECT_EQ(it.remainder().as_ptr(), &v[7u]);
@@ -1742,7 +1855,7 @@ TEST(Slice, ChunksExactMut) {
       EXPECT_EQ(lower, 1u);
       EXPECT_EQ(upper, sus::some(1u));
     }
-    sus::Slice<i32> n = it.next_back().unwrap();
+    sus::SliceMut<i32> n = it.next_back().unwrap();
     EXPECT_EQ(n.len(), 7u);
     EXPECT_EQ(n.as_ptr(), &v[0u]);
 
@@ -1764,16 +1877,30 @@ TEST(Slice, ChunksExactMut) {
 TEST(Slice, ConcatSlices) {
   static_assert(sus::containers::Concat<const Slice<i32>>);
   static_assert(sus::containers::Concat<Slice<i32>>);
-  static_assert(sus::containers::Concat<const Slice<const i32>>);
-  static_assert(sus::containers::Concat<Slice<const i32>>);
+  static_assert(sus::containers::Concat<const SliceMut<i32>>);
+  static_assert(sus::containers::Concat<SliceMut<i32>>);
 
   Vec<i32> v1 = sus::vec(1, 2, 3, 4);
   Vec<i32> v2 = sus::vec(5, 6);
   Vec<i32> v3 = sus::vec(7, 8, 9);
   {
-    Vec<Slice<const i32>> vs =
-        sus::vec(v1.as_slice(), v2.as_slice(), v3.as_slice());
-    Slice<const Slice<const i32>> s = vs.as_slice();
+    Vec<Slice<i32>> vs = sus::vec(v1.as_slice(), v2.as_slice(), v3.as_slice());
+    Slice<Slice<i32>> s = vs.as_slice();
+    auto c = s.concat();
+    static_assert(std::same_as<decltype(c), Vec<i32>>);
+
+    EXPECT_EQ(c.len(), 9u);
+    i32 expected = 1;
+    for (i32 i : c) {
+      EXPECT_EQ(i, expected);
+      expected += 1;
+    }
+    EXPECT_EQ(expected, 10);
+  }
+  {
+    Vec<SliceMut<i32>> vs =
+        sus::vec(v1.as_mut_slice(), v2.as_mut_slice(), v3.as_mut_slice());
+    SliceMut<SliceMut<i32>> s = vs.as_mut_slice();
     auto c = s.concat();
     static_assert(std::same_as<decltype(c), Vec<i32>>);
 
@@ -1789,13 +1916,45 @@ TEST(Slice, ConcatSlices) {
 
 TEST(Slice, ConcatExample) {
   i32 a1[] = {1, 2}, a2[] = {3, 4};
-  SliceMut<i32> as[] = {SliceMut<i32>::from(a1), SliceMut<i32>::from(a2)};
-  Vec<i32> v = SliceMut<SliceMut<i32>>::from(as).concat();
+  Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
+  Vec<i32> v = Slice<Slice<i32>>::from(as).concat();
   // TODO: sus::check(v == sus::vec(1_i32, 2_i32, 3_i32, 4_i32).construct());
   sus::check(v[0u] == 1);
   sus::check(v[1u] == 2);
   sus::check(v[2u] == 3);
   sus::check(v[3u] == 4);
 }  // namespace
+
+TEST(SliceMut, ConvertsToSlice) {
+  Vec<i32> v = sus::vec(1, 2, 3, 4);
+  SliceMut<i32> sm = v.as_mut_slice();
+  const SliceMut<i32> csm = v.as_mut_slice();
+  // Explicit construction.
+  {
+    [[maybe_unused]] Slice<i32> s(v.as_mut_slice());
+    [[maybe_unused]] Slice<i32> s2(sm);
+    [[maybe_unused]] Slice<i32> s3(csm);
+  }
+  // Implicit construction.
+  {
+    [[maybe_unused]] Slice<i32> s = v.as_mut_slice();
+    [[maybe_unused]] Slice<i32> s2 = sm;
+    [[maybe_unused]] Slice<i32> s3 = csm;
+  }
+  // Function calls.
+  {
+    [](Slice<i32>) {}(v.as_mut_slice());
+    [](Slice<i32>) {}(sm);
+    [](Slice<i32>) {}(csm);
+  }
+  // References.
+  {
+    [[maybe_unused]] const Slice<i32>& s = v.as_mut_slice();
+    [[maybe_unused]] const Slice<i32>& s2 = sm;
+    [[maybe_unused]] const Slice<i32>& s3 = csm;
+    [[maybe_unused]] Slice<i32>& s4 = sm;
+    [[maybe_unused]] Slice<i32>&& s5 = sus::move(sm);
+  }
+}
 
 }  // namespace

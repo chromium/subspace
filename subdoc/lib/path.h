@@ -39,7 +39,7 @@ using Namespace = sus::Choice<sus_choice_types(
 // clang-format on
 
 inline std::string namespace_with_path_to_string(
-    sus::Slice<const Namespace> path, const Namespace& tail) noexcept {
+    sus::Slice<Namespace> path, const Namespace& tail) noexcept {
   std::ostringstream s;
   bool add_colons = false;
 

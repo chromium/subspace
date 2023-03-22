@@ -115,7 +115,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
 
 void generate_record_fields(HtmlWriter::OpenDiv& record_div,
                             const RecordElement& element, bool static_fields,
-                            sus::Slice<const SortedFieldByName> fields) {
+                            sus::Slice<SortedFieldByName> fields) {
   if (fields.is_empty()) return;
 
   auto section_div = record_div.open_div();
@@ -188,7 +188,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
 
 void generate_record_methods(HtmlWriter::OpenDiv& record_div,
                              const RecordElement& element, bool static_methods,
-                             sus::Slice<const SortedFunctionByName> methods) {
+                             sus::Slice<SortedFunctionByName> methods) {
   if (methods.is_empty()) return;
 
   auto section_div = record_div.open_div();

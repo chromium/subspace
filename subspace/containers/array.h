@@ -22,8 +22,8 @@
 
 #include "subspace/assertions/check.h"
 #include "subspace/construct/default.h"
-#include "subspace/containers/iterators/array_iter.h"
 #include "subspace/containers/__private/array_marker.h"
+#include "subspace/containers/iterators/array_iter.h"
 #include "subspace/containers/iterators/slice_iter.h"
 #include "subspace/containers/slice.h"
 #include "subspace/fn/fn_concepts.h"
@@ -242,15 +242,15 @@ class Array final {
 
   // Returns a slice that references all the elements of the array as const
   // references.
-  constexpr Slice<const T> as_slice() const& noexcept sus_lifetimebound {
-    return Slice<const T>::from(storage_.data_);
+  constexpr Slice<T> as_slice() const& noexcept sus_lifetimebound {
+    return Slice<T>::from(storage_.data_);
   }
-  constexpr Slice<const T> as_slice() && = delete;
+  constexpr Slice<T> as_slice() && = delete;
 
   // Returns a slice that references all the elements of the array as mutable
   // references.
-  constexpr Slice<T> as_mut_slice() & noexcept sus_lifetimebound {
-    return Slice<T>::from(storage_.data_);
+  constexpr SliceMut<T> as_mut_slice() & noexcept sus_lifetimebound {
+    return SliceMut<T>::from(storage_.data_);
   }
 
   /// Returns an iterator over all the elements in the array, visited in the

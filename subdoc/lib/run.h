@@ -31,7 +31,7 @@ struct DiagnosticResults {
 static_assert(sus::mem::Move<DiagnosticResults>);
 
 sus::Result<Database, DiagnosticResults> run_test(
-    std::string content, sus::Slice<const std::string> command_line_args,
+    std::string content, sus::Slice<std::string> command_line_args,
     const RunOptions& options) noexcept;
 
 sus::Result<Database, DiagnosticResults> run_files(
