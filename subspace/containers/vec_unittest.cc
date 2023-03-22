@@ -931,27 +931,28 @@ TEST(VecDeathTest, ExtendFromSliceAliases) {
 
 TEST(Vec, ConvertsToSlice) {
   Vec<i32> v = sus::vec(1, 2, 3, 4);
-  Vec<i32> cv = sus::vec(1, 2, 3, 4);
+  const Vec<i32> cv = sus::vec(1, 2, 3, 4);
   // Explicit construction.
   {
     [[maybe_unused]] Slice<i32> s2(v);
     [[maybe_unused]] Slice<i32> s3(cv);
+    [[maybe_unused]] Slice<i32> s4(sus::move(v));
+    [[maybe_unused]] Slice<i32> s5(sus::clone(v));
     [[maybe_unused]] SliceMut<i32> sm2(v);
-    [[maybe_unused]] SliceMut<i32> sm3(cv);
+    [[maybe_unused]] SliceMut<i32> sm4(sus::move(v));
+    [[maybe_unused]] SliceMut<i32> sm5(sus::clone(v));
   }
   // Implicit construction.
   {
     [[maybe_unused]] Slice<i32> s2 = v;
     [[maybe_unused]] Slice<i32> s3 = cv;
     [[maybe_unused]] SliceMut<i32> sm2 = v;
-    [[maybe_unused]] SliceMut<i32> sm3 = cv;
   }
   // Function calls.
   {
     [](Slice<i32>) {}(v);
     [](Slice<i32>) {}(cv);
     [](SliceMut<i32>) {}(v);
-    [](SliceMut<i32>) {}(cv);
   }
   // References.
   {
@@ -960,7 +961,6 @@ TEST(Vec, ConvertsToSlice) {
     [[maybe_unused]] Slice<i32>& s4 = v;
     [[maybe_unused]] Slice<i32>&& s5 = sus::move(v);
     [[maybe_unused]] const SliceMut<i32>& s6 = v;
-    [[maybe_unused]] const SliceMut<i32>& s7 = cv;
     [[maybe_unused]] SliceMut<i32>& s8 = v;
     [[maybe_unused]] SliceMut<i32>&& s9 = sus::move(v);
   }
