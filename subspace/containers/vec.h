@@ -21,12 +21,19 @@
 
 #include "subspace/assertions/check.h"
 #include "subspace/containers/__private/vec_marker.h"
+#include "subspace/containers/concat.h"
+#include "subspace/containers/iterators/chunks.h"
+#include "subspace/containers/iterators/slice_iter.h"
 #include "subspace/containers/iterators/vec_iter.h"
 #include "subspace/containers/slice.h"
 #include "subspace/fn/fn_concepts.h"
+#include "subspace/fn/fn_ref.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
+#include "subspace/macros/assume.h"
 #include "subspace/macros/lifetimebound.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/clone.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
@@ -34,7 +41,9 @@
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/ord.h"
+#include "subspace/ops/range.h"
 #include "subspace/option/option.h"
+#include "subspace/result/result.h"
 #include "subspace/tuple/tuple.h"
 
 // TODO: sort_by_key()
@@ -59,7 +68,7 @@ namespace sus::containers {
 ///   pointee, and Vec does not wrap references to store them as pointers
 ///   (for now).
 template <class T>
-class Vec {
+class Vec final {
   static_assert(!std::is_const_v<T>,
                 "`Vec<const T>` should be written `const Vec<T>`, as const "
                 "applies transitively.");
@@ -127,10 +136,10 @@ class Vec {
     return v;
   }
 
-  /// sus::construct::From<Slice<const T>> trait.
+  /// sus::construct::From<Slice<T>> trait.
   ///
   /// #[doc.overloads=from.slice.const]
-  static constexpr Vec from(::sus::Slice<const T> slice) noexcept
+  static constexpr Vec from(::sus::Slice<T> slice) noexcept
     requires(sus::mem::Clone<T>)
   {
     auto v = Vec::with_capacity(slice.len());
@@ -138,10 +147,10 @@ class Vec {
     return v;
   }
 
-  /// sus::construct::From<Slice<T>> trait.
+  /// sus::construct::From<SliceMut<T>> trait.
   ///
   /// #[doc.overloads=from.slice.mut]
-  static constexpr Vec from(::sus::Slice<T> slice) noexcept
+  static constexpr Vec from(::sus::SliceMut<T> slice) noexcept
     requires(sus::mem::Clone<T>)
   {
     auto v = Vec::with_capacity(slice.len());
@@ -155,16 +164,16 @@ class Vec {
   }
 
   Vec(Vec&& o) noexcept
-      : storage_(::sus::mem::replace(mref(o.storage_), nullptr)),
-        len_(::sus::mem::replace(mref(o.len_), kMovedFromLen)),
+      : slice_mut_(::sus::mem::replace(mref(o.raw_data()), nullptr),
+                   ::sus::mem::replace(mref(o.raw_len()), kMovedFromLen)),
         capacity_(::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity)) {
     check(!is_moved_from());
   }
   Vec& operator=(Vec&& o) noexcept {
     check(!o.is_moved_from());
     if (is_alloced()) free_storage();
-    storage_ = ::sus::mem::replace(mref(o.storage_), nullptr);
-    len_ = ::sus::mem::replace(mref(o.len_), kMovedFromLen);
+    raw_data() = ::sus::mem::replace(mref(o.raw_data()), nullptr);
+    raw_len() = ::sus::mem::replace(mref(o.raw_len()), kMovedFromLen);
     capacity_ = ::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity);
     return *this;
   }
@@ -174,11 +183,11 @@ class Vec {
   {
     check(!is_moved_from());
     auto v = Vec::with_capacity(capacity_);
-    for (auto i = size_t{0}; i < len_; ++i) {
-      new (v.as_mut_ptr() + i)
+    for (auto i = size_t{0}; i < raw_len(); ++i) {
+      new (v.raw_data() + i)
           T(::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
     }
-    v.len_ = len_;
+    v.raw_len() = raw_len();
     return v;
   }
 
@@ -192,25 +201,24 @@ class Vec {
     if (source.capacity_ == 0_usize) {
       destroy_storage_objects();
       free_storage();
-      storage_ = nullptr;
-      len_ = 0_usize;
+      raw_data() = nullptr;
+      raw_len() = 0_usize;
       capacity_ = 0_usize;
     } else {
       grow_to_exact(source.capacity_);
       const size_t in_place_count =
-          sus::ops::min(len_, source.len_).primitive_value;
+          sus::ops::min(raw_len(), source.raw_len()).primitive_value;
       for (auto i = size_t{0}; i < in_place_count; ++i) {
-        ::sus::clone_into(mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)),
-                          source.get_unchecked(::sus::marker::unsafe_fn, i));
+        ::sus::clone_into(*(raw_data() + i), *(source.raw_data() + i));
       }
-      for (auto i = in_place_count; i < len_; ++i) {
+      for (auto i = in_place_count; i < raw_len(); ++i) {
         get_unchecked_mut(::sus::marker::unsafe_fn, i).~T();
       }
-      for (auto i = in_place_count; i < source.len_; ++i) {
-        new (as_mut_ptr() + i)
+      for (auto i = in_place_count; i < source.raw_len(); ++i) {
+        new (raw_data() + i)
             T(::sus::clone(source.get_unchecked(::sus::marker::unsafe_fn, i)));
       }
-      len_ = source.len_;
+      raw_len() = source.raw_len();
     }
   }
 
@@ -228,8 +236,8 @@ class Vec {
   /// cleanup.
   ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
     check(!is_moved_from());
-    return sus::tuple(::sus::mem::replace(mref(storage_), nullptr),
-                      ::sus::mem::replace(mref(len_), kMovedFromLen),
+    return sus::tuple(::sus::mem::replace(mref(raw_data()), nullptr),
+                      ::sus::mem::replace(mref(raw_len()), kMovedFromLen),
                       ::sus::mem::replace(mref(capacity_), kMovedFromCapacity));
   }
 
@@ -240,7 +248,7 @@ class Vec {
   void clear() noexcept {
     check(!is_moved_from());
     destroy_storage_objects();
-    len_ = 0_usize;
+    raw_len() = 0_usize;
   }
 
   /// Extends the Vec by cloning the contents of a slice.
@@ -248,7 +256,7 @@ class Vec {
   /// # Panics
   /// If the Slice is non-empty and points into the Vec, the function will
   /// panic, as resizing the Vec would invalidate the Slice.
-  inline void extend_from_slice(::sus::containers::Slice<const T> s) noexcept
+  inline void extend_from_slice(::sus::containers::Slice<T> s) noexcept
     requires(sus::mem::Clone<T>)
   {
     if (s.is_empty()) [[unlikely]] {
@@ -257,19 +265,19 @@ class Vec {
     check(!is_moved_from());
     const T* slice_ptr = s.as_ptr();
     if (is_alloced()) {
-      const T* vec_ptr = as_ptr();
+      const T* vec_ptr = raw_data();
       // If this check fails, the Slice aliases with the Vec, and the reserve()
       // call below would invalidate the Slice.
       //
       // TODO: Should we handle aliasing with a temp buffer?
-      ::sus::check(!(slice_ptr >= vec_ptr && slice_ptr <= vec_ptr + len_));
+      ::sus::check(!(slice_ptr >= vec_ptr && slice_ptr <= vec_ptr + raw_len()));
     }
     reserve(s.len());
     if constexpr (sus::mem::Copy<T> &&
                   std::is_trivially_copy_constructible_v<T>) {
-      memcpy(as_mut_ptr() + len_, slice_ptr,
+      memcpy(raw_data() + raw_len(), slice_ptr,
              size_t{s.len() * ::sus::mem::size_of<T>()});
-      len_ += s.len();
+      raw_len() += s.len();
     } else {
       for (const T& t : s) push(::sus::clone(t));
     }
@@ -288,7 +296,7 @@ class Vec {
   /// Panics if the new capacity exceeds isize::MAX() bytes.
   void reserve(usize additional) noexcept {
     check(!is_moved_from());
-    if (len_ + additional <= capacity_) return;  // Nothing to do.
+    if (raw_len() + additional <= capacity_) return;  // Nothing to do.
     // TODO: Consider rounding up to nearest 2^N for some N?
     grow_to_exact(apply_growth_function(additional));
   }
@@ -308,7 +316,7 @@ class Vec {
   /// Panics if the new capacity exceeds isize::MAX bytes.
   void reserve_exact(usize additional) noexcept {
     check(!is_moved_from());
-    const usize cap = len_ + additional;
+    const usize cap = raw_len() + additional;
     if (cap <= capacity_) return;  // Nothing to do.
     grow_to_exact(cap);
   }
@@ -327,40 +335,27 @@ class Vec {
     const auto bytes = ::sus::mem::size_of<T>() * cap;
     check(bytes <= usize(size_t{PTRDIFF_MAX}));
     if (!is_alloced()) {
-      storage_ = static_cast<T*>(malloc(bytes.primitive_value));
+      raw_data() = static_cast<T*>(malloc(bytes.primitive_value));
     } else {
       if constexpr (::sus::mem::relocate_by_memcpy<T>) {
-        storage_ = static_cast<T*>(realloc(storage_, bytes.primitive_value));
+        raw_data() =
+            static_cast<T*>(realloc(raw_data(), bytes.primitive_value));
       } else {
         auto* const new_storage =
             static_cast<T*>(malloc(bytes.primitive_value));
-        T* old_t = storage_;
+        T* old_t = raw_data();
         T* new_t = new_storage;
-        const size_t len = size_t{len_};
-        for (auto i = size_t{0}; i < len; ++i) {
+        const usize len = raw_len();
+        for (usize i; i < len; i += 1u) {
           new (new_t) T(::sus::move(*old_t));
           old_t->~T();
           ++old_t;
           ++new_t;
         }
-        storage_ = new_storage;
+        raw_data() = new_storage;
       }
     }
     capacity_ = cap;
-  }
-
-  // TODO: Clone.
-
-  /// Returns the number of elements in the vector.
-  constexpr inline usize len() const& noexcept {
-    check(!is_moved_from());
-    return len_;
-  }
-
-  /// Returns true if the vector has a length of 0.
-  constexpr inline bool is_empty() const& noexcept {
-    check(!is_moved_from());
-    return len_ == 0u;
   }
 
   /// Returns the number of elements there is space allocated for in the vector.
@@ -376,11 +371,11 @@ class Vec {
   /// empty.
   Option<T> pop() noexcept {
     check(!is_moved_from());
-    if (len_ > 0u) {
-      auto o = Option<T>::some(
-          sus::move(get_unchecked_mut(::sus::marker::unsafe_fn, len_ - 1u)));
-      get_unchecked_mut(::sus::marker::unsafe_fn, len_ - 1u).~T();
-      len_ -= 1u;
+    if (raw_len() > 0u) {
+      auto o = Option<T>::some(sus::move(
+          get_unchecked_mut(::sus::marker::unsafe_fn, raw_len() - 1u)));
+      get_unchecked_mut(::sus::marker::unsafe_fn, raw_len() - 1u).~T();
+      raw_len() -= 1u;
       return o;
     } else {
       return Option<T>::none();
@@ -401,8 +396,8 @@ class Vec {
   {
     check(!is_moved_from());
     reserve(1_usize);
-    new (&storage_[size_t{len_}]) T(::sus::move(t));
-    len_ += 1_usize;
+    new (&raw_data()[size_t{raw_len()}]) T(::sus::move(t));
+    raw_len() += 1_usize;
   }
 
   /// Constructs and appends an element to the back of the vector.
@@ -426,167 +421,66 @@ class Vec {
   {
     check(!is_moved_from());
     reserve(1_usize);
-    new (&storage_[size_t{len_}]) T(::sus::forward<Us>(args)...);
-    len_ += 1_usize;
-  }
-
-  /// Returns a const reference to the element at index `i`.
-  constexpr Option<const T&> get(usize i) const& noexcept sus_lifetimebound {
-    check(!is_moved_from());
-    if (i >= len_) [[unlikely]]
-      return Option<const T&>::none();
-    return Option<const T&>::some(get_unchecked(::sus::marker::unsafe_fn, i));
-  }
-  constexpr Option<const T&> get(usize i) && = delete;
-
-  /// Returns a mutable reference to the element at index `i`.
-  constexpr Option<T&> get_mut(usize i) & noexcept sus_lifetimebound {
-    check(!is_moved_from());
-    if (i >= len_) [[unlikely]]
-      return Option<T&>::none();
-    return Option<T&>::some(
-        mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)));
-  }
-
-  /// Returns a const reference to the element at index `i`.
-  ///
-  /// # Safety
-  ///
-  /// The index `i` must be inside the bounds of the array or Undefined
-  /// Behaviour results.
-  ///
-  /// Additionally, the Vec must not be in a moved-from state or the pointer
-  /// will be invalid and Undefined Behaviour results.
-  constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                          usize i) const& noexcept
-      sus_lifetimebound {
-    return storage_[i.primitive_value];
-  }
-  constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                          usize i) && = delete;
-
-  /// Returns a mutable reference to the element at index `i`.
-  ///
-  /// # Safety
-  /// The index `i` must be inside the bounds of the array or Undefined
-  /// Behaviour results.
-  constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
-                                        usize i) & noexcept sus_lifetimebound {
-    return storage_[i.primitive_value];
-  }
-
-  /// Present a nicer error when trying to use operator[] with an `int`,
-  /// since it can't convert to `usize` implicitly.
-  template <::sus::num::SignedPrimitiveInteger I>
-  constexpr inline const T& operator[](I) const = delete;
-
-  constexpr inline const T& operator[](usize i) const& noexcept
-      sus_lifetimebound {
-    check(!is_moved_from());
-    check(i < len_);
-    return get_unchecked(::sus::marker::unsafe_fn, i);
-  }
-  constexpr inline const T& operator[](usize i) && = delete;
-
-  constexpr inline T& operator[](usize i) & noexcept sus_lifetimebound {
-    check(!is_moved_from());
-    check(i < len_);
-    return get_unchecked_mut(::sus::marker::unsafe_fn, i);
-  }
-
-  /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort]
-  void sort() { as_mut_slice().sort(); }
-
-  /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_by]
-  template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&, const T&)> F, int&...,
-            class R = std::invoke_result_t<F, const T&, const T&>>
-    requires(::sus::ops::Ordering<R>)
-  void sort_by(F compare) {
-    as_mut_slice().sort_by(sus::move(compare));
-  }
-
-  /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_unstable]
-  void sort_unstable() { as_mut_slice().sort(); }
-
-  /// #[doc.inherit=[n]sus::[n]containers::[r]Slice::[f]sort_unstable_by]
-  template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&, const T&)> F, int&...,
-            class R = std::invoke_result_t<F, const T&, const T&>>
-    requires(::sus::ops::Ordering<R>)
-  void sort_unstable_by(F compare) {
-    as_mut_slice().sort_by(sus::move(compare));
-  }
-
-  /// Returns a const pointer to the first element in the vector.
-  ///
-  /// # Panics
-  /// Panics if the vector's capacity is zero.
-  inline const T* as_ptr() const& noexcept sus_lifetimebound {
-    check(!is_moved_from());
-    check(is_alloced());
-    return storage_;
-  }
-  const T* as_ptr() && = delete;
-
-  /// Returns a mutable pointer to the first element in the vector.
-  ///
-  /// # Panics
-  /// Panics if the vector's capacity is zero.
-  inline T* as_mut_ptr() & noexcept sus_lifetimebound {
-    check(!is_moved_from());
-    check(is_alloced());
-    return storage_;
+    new (&raw_data()[size_t{raw_len()}]) T(::sus::forward<Us>(args)...);
+    raw_len() += 1_usize;
   }
 
   // Returns a slice that references all the elements of the vector as const
   // references.
-  constexpr Slice<const T> as_slice() const& noexcept sus_lifetimebound {
+  constexpr Slice<T> as_slice() const& noexcept sus_lifetimebound {
     check(!is_moved_from());
-    // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
-    // is to the start of the Vec, so this Slice covers a valid range.
-    return Slice<const T>::from_raw_parts(::sus::marker::unsafe_fn, storage_,
-                                          len_);
+    // SAFETY: The `raw_len()` is the number of elements in the Vec, and the
+    // pointer is to the start of the Vec, so this Slice covers a valid range.
+    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, raw_data(),
+                                    raw_len());
   }
-  constexpr Slice<const T> as_slice() && = delete;
+  constexpr Slice<T> as_slice() && = delete;
 
   // Returns a slice that references all the elements of the vector as mutable
   // references.
-  constexpr Slice<T> as_mut_slice() & noexcept sus_lifetimebound {
+  constexpr SliceMut<T> as_mut_slice() & noexcept sus_lifetimebound {
     check(!is_moved_from());
-    // SAFETY: The `len_` is the number of elements in the Vec, and the pointer
-    // is to the start of the Vec, so this Slice covers a valid range.
-    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, storage_, len_);
+    // SAFETY: The `raw_len()` is the number of elements in the Vec, and the
+    // pointer is to the start of the Vec, so this Slice covers a valid range.
+    return SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn, raw_data(),
+                                       raw_len());
   }
 
-  /// Returns an iterator over all the elements in the array, visited in the
-  /// same order they appear in the array. The iterator gives const access to
-  /// each element.
-  constexpr SliceIter<const T&> iter() const& noexcept sus_lifetimebound {
-    check(!is_moved_from());
-    return SliceIter<const T&>::with(storage_, len_);
-  }
-  constexpr SliceIter<const T&> iter() && = delete;
-
-  /// Returns an iterator over all the elements in the array, visited in the
-  /// same order they appear in the array. The iterator gives mutable access to
-  /// each element.
-  constexpr SliceIterMut<T&> iter_mut() & noexcept sus_lifetimebound {
-    check(!is_moved_from());
-    return SliceIterMut<T&>::with(storage_, len_);
-  }
-
-  /// Converts the array into an iterator that consumes the array and returns
-  /// each element in the same order they appear in the array.
+  /// Consumes the Vec into an iterator that will return each element in the
+  /// same order they appear in the Vec.
   constexpr VecIntoIter<T> into_iter() && noexcept {
     check(!is_moved_from());
     return VecIntoIter<T>::with(::sus::move(*this));
   }
 
+  // Const Vec can be used as a Slice.
+  operator const Slice<T>&() const& { return slice_mut_; }
+  operator Slice<T>&() & { return slice_mut_; }
+  operator Slice<T>&&() && { return ::sus::move(slice_mut_); }
+
+  // Mutable Vec can be used as a SliceMut.
+  operator SliceMut<T>&() & { return slice_mut_; }
+  operator SliceMut<T>&&() && { return ::sus::move(slice_mut_); }
+
+#define _ptr_expr raw_data()
+#define _len_expr raw_len()
+#define _delete_rvalue 1
+#include "__private/slice_methods.inc"
+#include "__private/slice_mut_methods.inc"
+#undef _ptr_expr
+#undef _len_expr
+#undef _delete_rvalue
+
  private:
-  Vec(T* ptr, usize len, usize cap)
-      : storage_(ptr), len_(len), capacity_(cap) {}
+  Vec(T* ptr, usize len, usize cap) : slice_mut_(ptr, len), capacity_(cap) {}
+
+  constexpr T* raw_data() const noexcept { return slice_mut_.slice_.data_; }
+  constexpr T*& raw_data() noexcept { return slice_mut_.slice_.data_; }
+  constexpr usize raw_len() const noexcept { return slice_mut_.slice_.len_; }
+  constexpr usize& raw_len() noexcept { return slice_mut_.slice_.len_; }
 
   constexpr usize apply_growth_function(usize additional) const noexcept {
-    usize goal = additional + len_;
+    usize goal = additional + raw_len();
     usize cap = capacity_;
     // TODO: What is a good growth function? Steal from WTF::Vector?
     while (cap < goal) {
@@ -599,14 +493,14 @@ class Vec {
 
   inline void destroy_storage_objects() {
     if constexpr (!std::is_trivially_destructible_v<T>) {
-      const size_t len = size_t{len_};
-      for (auto i = size_t{0}; i < len; ++i) storage_[i].~T();
+      const size_t len = size_t{raw_len()};
+      for (auto i = size_t{0}; i < len; ++i) raw_data()[i].~T();
     }
   }
 
   inline void free_storage() {
     destroy_storage_objects();
-    free(storage_);
+    free(raw_data());
   }
 
   // Checks if Vec has storage allocated.
@@ -616,24 +510,33 @@ class Vec {
 
   // Checks if Vec has been moved from.
   constexpr inline bool is_moved_from() const noexcept {
-    return len_ > capacity_;
+    return raw_len() > capacity_;
   }
 
   static constexpr usize kMovedFromLen = 1_usize;
   static constexpr usize kMovedFromCapacity = 0_usize;
 
-  T* storage_;
-  usize len_;
+  SliceMut<T> slice_mut_;
   usize capacity_;
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                           decltype(storage_), decltype(len_),
+                                           decltype(slice_mut_),
                                            decltype(capacity_));
 
   // Slice does not satisfy NeverValueField because it requires that the default
   // constructor is trivial, but Slice's default constructor needs to initialize
   // its fields.
 };
+
+#define _ptr_expr raw_data()
+#define _len_expr raw_len()
+#define _delete_rvalue 1
+#define Self Vec
+#include "__private/slice_methods_impl.inc"
+#undef _ptr_expr
+#undef _len_expr
+#undef _delete_rvalue
+#undef Self
 
 // Implicit for-ranged loop iteration via `Vec::iter()`.
 using ::sus::iter::__private::begin;

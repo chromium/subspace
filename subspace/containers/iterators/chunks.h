@@ -20,6 +20,8 @@
 namespace sus::containers {
 template <class T>
 class Slice;
+template <class T>
+class SliceMut;
 }
 
 namespace sus::containers {
@@ -29,14 +31,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
     : public ::sus::iter::IteratorBase<Chunks<ItemT>,
                                        ::sus::containers::Slice<ItemT>> {
  public:
+  // `Item` is a `Slice<T>`.
   using Item = ::sus::containers::Slice<ItemT>;
 
  private:
-  // `Item` is a `Slice<const T>`.
-  static_assert(!std::is_reference_v<ItemT>);
-  static_assert(std::is_const_v<ItemT>);
-  // `SliceItem` is a `const T`.
-  using SliceItem = std::remove_const_t<ItemT>;
+  // `SliceItem` is a `T`.
+  using SliceItem = ItemT;
 
  public:
   // sus::iter::Iterator trait.
@@ -119,31 +119,28 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
     : public ::sus::iter::IteratorBase<ChunksMut<ItemT>,
-                                       ::sus::containers::Slice<ItemT>> {
+                                       ::sus::containers::SliceMut<ItemT>> {
  public:
-  using Item = ::sus::containers::Slice<ItemT>;
+  // `Item` is a `SliceMut<T>`.
+  using Item = ::sus::containers::SliceMut<ItemT>;
 
  private:
-  // `Item` is a `Slice<T>`.
   static_assert(!std::is_reference_v<ItemT>);
   static_assert(!std::is_const_v<ItemT>);
   // `SliceItem` is a `T`.
-  using SliceItem = std::remove_const_t<ItemT>;
+  using SliceItem = ItemT;
 
  public:
   // sus::iter::Iterator trait.
-  Option<Slice<ItemT>> next() noexcept {
+  Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
       return Option<Item>::none();
     } else {
       const auto chunksz = ::sus::ops::min(v_.len(), chunk_size_);
       auto [fst, snd] =
           v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, chunksz);
-      static_assert(std::same_as<Slice<::sus::num::i32>, decltype(v_)>);
-      static_assert(std::same_as<Slice<::sus::num::i32>, decltype(fst)>);
-      static_assert(std::same_as<Slice<::sus::num::i32>, decltype(snd)>);
       v_ = snd;
-      return Option<Slice<ItemT>>::some(fst);
+      return Option<SliceMut<ItemT>>::some(fst);
     }
   }
 
@@ -193,19 +190,19 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by Slice.
-  friend class Slice<ItemT>;
+  // Constructed by SliceMut.
+  friend class SliceMut<ItemT>;
 
-  static constexpr auto with(Slice<ItemT>&& values,
+  static constexpr auto with(SliceMut<ItemT>&& values,
                              ::sus::num::usize chunk_size) noexcept {
     return ChunksMut(::sus::move(values), chunk_size);
   }
 
-  constexpr ChunksMut(Slice<ItemT>&& values,
+  constexpr ChunksMut(SliceMut<ItemT>&& values,
                       ::sus::num::usize chunk_size) noexcept
       : v_(::sus::move(values)), chunk_size_(chunk_size) {}
 
-  Slice<ItemT> v_;
+  SliceMut<ItemT> v_;
   ::sus::num::usize chunk_size_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
@@ -217,14 +214,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
     : public ::sus::iter::IteratorBase<ChunksExact<ItemT>,
                                        ::sus::containers::Slice<ItemT>> {
  public:
+  // `Item` is a `Slice<T>`.
   using Item = ::sus::containers::Slice<ItemT>;
 
  private:
-  // `Item` is a `Slice<const T>`.
-  static_assert(!std::is_reference_v<ItemT>);
-  static_assert(std::is_const_v<ItemT>);
-  // `SliceItem` is a `const T`.
-  using SliceItem = std::remove_const_t<ItemT>;
+  // `SliceItem` is a `T`.
+  using SliceItem = ItemT;
 
  public:
   /// Returns the remainder of the original slice that is not going to be
@@ -306,16 +301,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
     : public ::sus::iter::IteratorBase<ChunksExactMut<ItemT>,
-                                       ::sus::containers::Slice<ItemT>> {
+                                       ::sus::containers::SliceMut<ItemT>> {
  public:
-  using Item = ::sus::containers::Slice<ItemT>;
+  // `Item` is a `SliceMut<T>`.
+  using Item = ::sus::containers::SliceMut<ItemT>;
 
  private:
-  // `Item` is a `Slice<T>`.
-  static_assert(!std::is_reference_v<ItemT>);
-  static_assert(!std::is_const_v<ItemT>);
   // `SliceItem` is a `T`.
-  using SliceItem = std::remove_const_t<ItemT>;
+  using SliceItem = ItemT;
 
  public:
   /// Returns the remainder of the original slice that is not going to be
@@ -368,9 +361,9 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
 
  private:
   // Constructed by Slice.
-  friend class Slice<ItemT>;
+  friend class SliceMut<ItemT>;
 
-  static constexpr auto with(Slice<ItemT>&& values,
+  static constexpr auto with(SliceMut<ItemT>&& values,
                              ::sus::num::usize chunk_size) noexcept {
     auto rem = values.len() % chunk_size;
     auto fst_len = values.len() - rem;
@@ -380,14 +373,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
     return ChunksExactMut(::sus::move(fst), ::sus::move(snd), chunk_size);
   }
 
-  constexpr ChunksExactMut(Slice<ItemT>&& values, Slice<ItemT>&& remainder,
+  constexpr ChunksExactMut(SliceMut<ItemT>&& values, SliceMut<ItemT>&& remainder,
                            ::sus::num::usize chunk_size) noexcept
       : v_(::sus::move(values)),
         rem_(::sus::move(remainder)),
         chunk_size_(chunk_size) {}
 
-  Slice<ItemT> v_;
-  Slice<ItemT> rem_;
+  SliceMut<ItemT> v_;
+  SliceMut<ItemT> rem_;
   ::sus::num::usize chunk_size_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),

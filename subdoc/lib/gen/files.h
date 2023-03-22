@@ -40,8 +40,8 @@ inline sus::Option<std::ofstream> open_file_for_writing(
 }
 
 inline std::filesystem::path construct_html_file_path(
-    std::filesystem::path root, sus::Slice<const Namespace> namespace_path,
-    sus::Slice<const std::string> record_path, std::string_view name) noexcept {
+    std::filesystem::path root, sus::Slice<Namespace> namespace_path,
+    sus::Slice<std::string> record_path, std::string_view name) noexcept {
   std::filesystem::path p = sus::move(root);
 
   std::ostringstream fname;
@@ -71,7 +71,7 @@ inline std::filesystem::path construct_html_file_path_for_namespace(
     std::filesystem::path root, const NamespaceElement& element) noexcept {
   // The namespace path includes the namespace element itself, so drop
   // that one.
-  sus::Slice<const Namespace> short_namespace_path =
+  sus::Slice<Namespace> short_namespace_path =
       element.namespace_path.as_slice()["1.."_r];
 
   std::string file_name = [&]() {
@@ -87,7 +87,7 @@ inline std::filesystem::path construct_html_file_path_for_namespace(
   }();
 
   return construct_html_file_path(root, short_namespace_path,
-                                  sus::Slice<const std::string>(),
+                                  sus::Slice<std::string>(),
                                   sus::move(file_name));
 }
 

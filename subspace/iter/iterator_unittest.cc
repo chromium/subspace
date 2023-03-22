@@ -69,9 +69,9 @@ static_assert(
 static_assert(
   sus::iter::IntoIterator<sus::containers::Array<int, 3u>, int>);
 static_assert(
-  sus::iter::IntoIterator<sus::containers::Slice<const int>, const int&>);
+  sus::iter::IntoIterator<sus::containers::Slice<int>, const int&>);
 static_assert(
-  sus::iter::IntoIterator<sus::containers::Slice<int>, int&>);
+  sus::iter::IntoIterator<sus::containers::SliceMut<int>, int&>);
 static_assert(
   sus::iter::IntoIterator<sus::containers::Vec<int>, int>);
 

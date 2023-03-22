@@ -21,6 +21,8 @@
 
 namespace {
 
+using sus::containers::Slice;
+using sus::containers::SliceMut;
 using sus::containers::Vec;
 
 TEST(Vec, Default) {
@@ -243,7 +245,7 @@ TEST(Vec, AsSlice) {
   EXPECT_EQ(v.as_slice().len(), 0_usize);
   v.push(2_i32);
   auto s = v.as_slice();
-  static_assert(std::same_as<decltype(s), sus::Slice<const i32>>);
+  static_assert(std::same_as<decltype(s), sus::Slice<i32>>);
   EXPECT_EQ(s.len(), 1_usize);
   EXPECT_EQ(&s[0u], &v[0u]);
 }
@@ -253,7 +255,7 @@ TEST(Vec, AsMutSlice) {
   EXPECT_EQ(v.as_mut_slice().len(), 0_usize);
   v.push(2_i32);
   auto s = v.as_mut_slice();
-  static_assert(std::same_as<decltype(s), sus::Slice<i32>>);
+  static_assert(std::same_as<decltype(s), sus::SliceMut<i32>>);
   EXPECT_EQ(s.len(), 1_usize);
   EXPECT_EQ(&s[0u], &v[0u]);
 }
@@ -875,7 +877,7 @@ TEST(Vec, SortUnstableBy) {
 TEST(Vec, FromSlice) {
   sus::Vec<i32> original = sus::vec(1, 2, 3, 4);
   {
-    sus::Slice<const i32> s = original.as_slice();
+    sus::Slice<i32> s = original.as_slice();
     sus::Vec<i32> from = sus::into(s);
 
     EXPECT_EQ(from.len(), original.len());
@@ -885,7 +887,7 @@ TEST(Vec, FromSlice) {
     EXPECT_EQ(from[3u], 4);
   }
   {
-    sus::Slice<i32> mut_s = original.as_mut_slice();
+    sus::SliceMut<i32> mut_s = original.as_mut_slice();
     sus::Vec<i32> from = sus::into(mut_s);
 
     EXPECT_EQ(from.len(), original.len());
@@ -925,6 +927,43 @@ TEST(VecDeathTest, ExtendFromSliceAliases) {
 #endif
   // Empty does not panic.
   v.extend_from_slice(v.as_slice()["4.."_r]);
+}
+
+TEST(Vec, ConvertsToSlice) {
+  Vec<i32> v = sus::vec(1, 2, 3, 4);
+  Vec<i32> cv = sus::vec(1, 2, 3, 4);
+  // Explicit construction.
+  {
+    [[maybe_unused]] Slice<i32> s2(v);
+    [[maybe_unused]] Slice<i32> s3(cv);
+    [[maybe_unused]] SliceMut<i32> sm2(v);
+    [[maybe_unused]] SliceMut<i32> sm3(cv);
+  }
+  // Implicit construction.
+  {
+    [[maybe_unused]] Slice<i32> s2 = v;
+    [[maybe_unused]] Slice<i32> s3 = cv;
+    [[maybe_unused]] SliceMut<i32> sm2 = v;
+    [[maybe_unused]] SliceMut<i32> sm3 = cv;
+  }
+  // Function calls.
+  {
+    [](Slice<i32>) {}(v);
+    [](Slice<i32>) {}(cv);
+    [](SliceMut<i32>) {}(v);
+    [](SliceMut<i32>) {}(cv);
+  }
+  // References.
+  {
+    [[maybe_unused]] const Slice<i32>& s2 = v;
+    [[maybe_unused]] const Slice<i32>& s3 = cv;
+    [[maybe_unused]] Slice<i32>& s4 = v;
+    [[maybe_unused]] Slice<i32>&& s5 = sus::move(v);
+    [[maybe_unused]] const SliceMut<i32>& s6 = v;
+    [[maybe_unused]] const SliceMut<i32>& s7 = cv;
+    [[maybe_unused]] SliceMut<i32>& s8 = v;
+    [[maybe_unused]] SliceMut<i32>&& s9 = sus::move(v);
+  }
 }
 
 }  // namespace

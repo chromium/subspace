@@ -23,6 +23,12 @@
 #include "subspace/mem/move.h"
 #include "subspace/tuple/tuple.h"
 
+namespace sus::containers {
+template <class T, size_t N>
+  requires(N <= size_t{PTRDIFF_MAX})
+class Array;
+}
+
 namespace sus::containers::__private {
 
 template <class... Ts>

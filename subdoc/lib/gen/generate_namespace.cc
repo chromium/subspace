@@ -34,7 +34,7 @@ using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
 std::string namespace_display_name(const NamespaceElement& element) noexcept {
   // The namespace path includes the namespace we're generating for, so drop
   // that one.
-  sus::Slice<const Namespace> short_namespace_path =
+  sus::Slice<Namespace> short_namespace_path =
       element.namespace_path.as_slice()["1.."_r];
 
   // For display in the html, we use the full path name of the namespace.
@@ -72,7 +72,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
 
 void generate_namespace_namespaces(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<const SortedNamespaceByName> namespaces) {
+    sus::Slice<SortedNamespaceByName> namespaces) {
   if (namespaces.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -92,7 +92,7 @@ void generate_namespace_namespaces(
 
 void generate_namespace_records(HtmlWriter::OpenDiv& namespace_div,
                                 const NamespaceElement& element,
-                                sus::Slice<const SortedRecordByName> records,
+                                sus::Slice<SortedRecordByName> records,
                                 RecordType record_type) {
   if (records.is_empty()) return;
 
@@ -123,7 +123,7 @@ void generate_namespace_records(HtmlWriter::OpenDiv& namespace_div,
 
 void generate_namespace_functions(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<const SortedFunctionByName> functions) {
+    sus::Slice<SortedFunctionByName> functions) {
   if (functions.is_empty()) return;
 
   auto section_div = namespace_div.open_div();

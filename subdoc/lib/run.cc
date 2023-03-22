@@ -23,7 +23,7 @@
 namespace subdoc {
 
 sus::Result<Database, DiagnosticResults> run_test(
-    std::string content, sus::Slice<const std::string> command_line_args,
+    std::string content, sus::Slice<std::string> command_line_args,
     const RunOptions& options) noexcept {
   auto join_args = std::string();
   for (const std::string& a : command_line_args) {
