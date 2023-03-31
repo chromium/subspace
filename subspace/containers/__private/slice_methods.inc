@@ -13,12 +13,17 @@
 // limitations under the License.
 
 ///////////////////////////////////////////////////////////////////////////
+//
+// Declares (and defines) methods of Slice or Slice-like types that provide
+// const access or no access to the contained objects. These methods are
+// suitable to be exposed from a Slice for const access.
+//
 // TO USE THIS INC FILE:
 //
 // Include it into the body of your class.
 //
-// Define `_ptr_expr` and `_len_expr` when including this file to the expressions of
-// getting the slice's data pointer and length.
+// Define `_ptr_expr` and `_len_expr` when including this file to the
+// expressions of getting the slice's data pointer and length.
 //
 // Define _delete_rvalue to true if rvalue methods that return a reference
 // should be deleted.
@@ -282,6 +287,20 @@ void concat_into(ConcatOutputType& vec) const& noexcept
   requires(::sus::mem::Clone<T>)
 {
   vec.extend_from_slice(*this);
+}
+
+/// Returns `true` if the slice contains an element with the given value.
+/// 
+/// This operation is O(n).
+/// 
+/// Note that if you have a sorted slice, `binary_search()` may be faster.
+bool contains(const T& x) const& noexcept
+  requires(::sus::ops::Eq<T>)
+{
+  for (usize i; i < _len_expr; i += 1u) {
+    if (*(_ptr_expr + i) == x) return true;
+  }
+  return false;
 }
 
 /// Returns a reference to the element at position `i` in the Slice.
