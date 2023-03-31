@@ -39,6 +39,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
   using SliceItem = ItemT;
 
  public:
+  Chunks(Chunks&&) = default;
+  Chunks& operator=(Chunks&&) = default;
+
+  /// sus::mem::Clone trait.
+  Chunks clone() const noexcept {
+    return Chunks(::sus::clone(v_), chunk_size_);
+  }
+
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
@@ -131,6 +139,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   using SliceItem = ItemT;
 
  public:
+  ChunksMut(ChunksMut&&) = default;
+  ChunksMut& operator=(ChunksMut&&) = default;
+
+  /// sus::mem::Clone trait.
+  ChunksMut clone() const noexcept {
+    return ChunksMut(::sus::clone(v_), chunk_size_);
+  }
+
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
@@ -222,6 +238,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   using SliceItem = ItemT;
 
  public:
+  ChunksExact(ChunksExact&&) = default;
+  ChunksExact& operator=(ChunksExact&&) = default;
+
+  /// sus::mem::Clone trait.
+  ChunksExact clone() const noexcept {
+    return ChunksExact(::sus::clone(v_), chunk_size_);
+  }
+
   /// Returns the remainder of the original slice that is not going to be
   /// returned by the iterator. The returned slice has at most `chunk_size-1`
   /// elements.
@@ -311,6 +335,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   using SliceItem = ItemT;
 
  public:
+  ChunksExactMut(ChunksExactMut&&) = default;
+  ChunksExactMut& operator=(ChunksExactMut&&) = default;
+
+  /// sus::mem::Clone trait.
+  ChunksExactMut clone() const noexcept {
+    return ChunksExactMut(::sus::clone(v_), chunk_size_);
+  }
   /// Returns the remainder of the original slice that is not going to be
   /// returned by the iterator. The returned slice has at most `chunk_size-1`
   /// elements.
