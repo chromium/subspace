@@ -13,6 +13,11 @@
 // limitations under the License.
 
 /////////////////////////////////////////////////////////
+//
+// Declares (and defines) methods of SliceMut or SliceMut-like types that
+// provide mutable access or no access to the contained objects. These methods
+// are suitable to be exposed from a SliceMut for mutable access.
+//
 // TO USE THIS INC FILE:
 //
 // Include it into the body of your class.

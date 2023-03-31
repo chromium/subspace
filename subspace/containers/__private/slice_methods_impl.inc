@@ -13,6 +13,11 @@
 // limitations under the License.
 
 ///////////////////////////////////////////////////////////////////////////
+//
+// Out-of-line definitions for methods defined in `slice_methods.inc` that
+// provide const access or no access to the contained objects. These methods are
+// suitable to be exposed from a Slice for const access.
+//
 // TO USE THIS INC FILE:
 //
 // Include it after the body of your class.

@@ -1957,4 +1957,15 @@ TEST(SliceMut, ConvertsToSlice) {
   }
 }
 
+TEST(Slice, Contains) {
+  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  auto s = v1.as_slice();
+  EXPECT_EQ(s.contains(0), false);
+  EXPECT_EQ(s.contains(1), true);
+  EXPECT_EQ(s.contains(2), true);
+  EXPECT_EQ(s.contains(3), true);
+  EXPECT_EQ(s.contains(4), true);
+  EXPECT_EQ(s.contains(5), false);
+}
+
 }  // namespace
