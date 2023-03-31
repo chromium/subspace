@@ -87,12 +87,6 @@ TEST(Replace, TrivialCopy) {
   T k(::sus::mem::replace(mref(i), lvalue));
   EXPECT_EQ(i, T(6));
   EXPECT_EQ(k, T(5));
-
-  ::sus::mem::replace_and_discard(mref(i), T(7));
-  EXPECT_EQ(i, T(7));
-
-  ::sus::mem::replace_and_discard(mref(i), lvalue);
-  EXPECT_EQ(i, T(6));
 }
 
 TEST(Replace, NonTrivial) {
@@ -128,18 +122,6 @@ TEST(Replace, NonTrivial) {
   S k(::sus::mem::replace(mref(i), lvalue));
   EXPECT_EQ(i.num, 6);
   EXPECT_EQ(k.num, 5);
-  // The replace was done by move operations.
-  EXPECT_EQ(1, i.assigns);
-
-  i.assigns = 0;
-  ::sus::mem::replace_and_discard(mref(i), S(7));
-  EXPECT_EQ(i.num, 7);
-  // The replace was done by move operations.
-  EXPECT_EQ(1, i.assigns);
-
-  i.assigns = 0;
-  ::sus::mem::replace_and_discard(mref(i), lvalue);
-  EXPECT_EQ(i.num, 6);
   // The replace was done by move operations.
   EXPECT_EQ(1, i.assigns);
 }
@@ -185,8 +167,6 @@ TEST(Replace, Convertible) {
   converted = 0;
   [[maybe_unused]] auto a = ::sus::mem::replace(mref(target), Copyable());
   EXPECT_EQ(converted, 1);
-  ::sus::mem::replace_and_discard(mref(target), Copyable());
-  EXPECT_EQ(converted, 2);
 
   // Tests the replace(T, U&&) path, ensuring we don't memcpy() from a
   // different type, and that it successfully can use a const conversion
@@ -195,8 +175,6 @@ TEST(Replace, Convertible) {
   [[maybe_unused]] auto b =
       ::sus::mem::replace(mref(target), MoveableCopyConvert());
   EXPECT_EQ(converted, 1);
-  ::sus::mem::replace_and_discard(mref(target), MoveableCopyConvert());
-  EXPECT_EQ(converted, 2);
 
   // Tests the replace(T, U&&) path, ensuring we don't memcpy() from a
   // different type, and that it successfully can use am rvalue conversion
@@ -205,8 +183,6 @@ TEST(Replace, Convertible) {
   [[maybe_unused]] auto c =
       ::sus::mem::replace(mref(target), MoveableMoveConvert());
   EXPECT_EQ(converted, 1);
-  ::sus::mem::replace_and_discard(mref(target), MoveableMoveConvert());
-  EXPECT_EQ(converted, 2);
 }
 
 TEST(Replace, ConstPtr) {

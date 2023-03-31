@@ -208,7 +208,7 @@ class Option final {
     requires(::sus::mem::CopyOrRef<T> &&
              !std::is_trivially_copy_constructible_v<T>)
   {
-    if (o.t_.state() == Some) t_.construct_from_none(o.t_.val());
+    if (o.t_.state() == Some) t_.construct_from_none(copy_to_storage(o.t_.val()));
   }
 
   constexpr Option(const Option& o)

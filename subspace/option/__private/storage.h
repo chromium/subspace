@@ -90,7 +90,9 @@ struct Storage<T, false> final {
 
   [[nodiscard]] constexpr inline State state() const noexcept { return state_; }
 
-  constexpr inline void construct_from_none(const T& t) noexcept {
+  constexpr inline void construct_from_none(const T& t) noexcept
+    requires(::sus::mem::Copy<T>)
+  {
     new (&val_) T(t);
     state_ = Some;
   }
@@ -99,18 +101,20 @@ struct Storage<T, false> final {
     state_ = Some;
   }
 
-  constexpr inline void set_some(const T& t) noexcept {
+  constexpr inline void set_some(const T& t) noexcept
+    requires(::sus::mem::Copy<T>)
+  {
     if (state_ == None)
       construct_from_none(t);
     else
-      ::sus::mem::replace_and_discard(mref(val_), t);
+      val_ = t;
     state_ = Some;
   }
   constexpr inline void set_some(T&& t) noexcept {
     if (state_ == None)
       construct_from_none(::sus::move(t));
     else
-      ::sus::mem::replace_and_discard(mref(val_), ::sus::move(t));
+      val_ = ::sus::move(t);
     state_ = Some;
   }
 
@@ -204,7 +208,9 @@ struct Storage<T, true> final {
     return access_.is_constructed() ? Some : None;
   }
 
-  inline void construct_from_none(const T& t) noexcept {
+  inline void construct_from_none(const T& t) noexcept
+    requires(::sus::mem::Copy<T>)
+  {
     access_.set_destroy_value(::sus::marker::unsafe_fn);
     access_.~NeverValueAccess();
     new (&access_) NeverValueAccess(t);
@@ -215,17 +221,19 @@ struct Storage<T, true> final {
     new (&access_) NeverValueAccess(::sus::move(t));
   }
 
-  constexpr inline void set_some(const T& t) noexcept {
+  constexpr inline void set_some(const T& t) noexcept
+    requires(::sus::mem::Copy<T>)
+  {
     if (state() == None)
       construct_from_none(t);
     else
-      ::sus::mem::replace_and_discard(access_.as_inner_mut(), t);
+      access_.as_inner_mut() = t;
   }
   constexpr inline void set_some(T&& t) noexcept {
     if (state() == None)
       construct_from_none(::sus::move(t));
     else
-      ::sus::mem::replace_and_discard(access_.as_inner_mut(), ::sus::move(t));
+      access_.as_inner_mut() = ::sus::move(t);
   }
 
   [[nodiscard]] constexpr inline T replace_some(T&& t) noexcept {

@@ -223,7 +223,8 @@ class [[nodiscard]] Result final {
       case __private::ResultState::IsOk:
         switch (state_ = o.state_) {
           case __private::ResultState::IsOk:
-            mem::replace_and_discard(mref(storage_.ok_), o.storage_.ok_);
+            ::sus::mem::clone_into(::sus::mem::mref(storage_.ok_),
+                                   o.storage_.ok_);
             break;
           case __private::ResultState::IsErr:
             storage_.ok_.~T();
@@ -237,7 +238,8 @@ class [[nodiscard]] Result final {
       case __private::ResultState::IsErr:
         switch (state_ = o.state_) {
           case __private::ResultState::IsErr:
-            mem::replace_and_discard(mref(storage_.err_), o.storage_.err_);
+            ::sus::mem::clone_into(::sus::mem::mref(storage_.err_),
+                                   o.storage_.err_);
             break;
           case __private::ResultState::IsOk:
             storage_.err_.~E();
@@ -321,8 +323,7 @@ class [[nodiscard]] Result final {
         switch (state_ = ::sus::mem::replace(mref(o.state_),
                                              __private::ResultState::IsMoved)) {
           case __private::ResultState::IsOk:
-            mem::replace_and_discard(mref(storage_.ok_),
-                                     ::sus::move(o.storage_.ok_));
+            storage_.ok_ = ::sus::move(o.storage_.ok_);
             break;
           case __private::ResultState::IsErr:
             storage_.ok_.~T();
@@ -337,8 +338,7 @@ class [[nodiscard]] Result final {
         switch (state_ = ::sus::mem::replace(mref(o.state_),
                                              __private::ResultState::IsMoved)) {
           case __private::ResultState::IsErr:
-            mem::replace_and_discard(mref(storage_.err_),
-                                     ::sus::move(o.storage_.err_));
+            storage_.err_ = ::sus::move(o.storage_.err_);
             break;
           case __private::ResultState::IsOk:
             storage_.err_.~E();

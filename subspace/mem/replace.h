@@ -83,37 +83,6 @@ template <class T, std::convertible_to<T> U>
   return old;
 }
 
-template <class T, std::convertible_to<T> U>
-  requires(!std::is_array_v<T> && (!std::same_as<T, U> || sus::mem::Copy<T>))
-inline void replace_and_discard(T& dest, const U& src) noexcept {
-  if constexpr (std::same_as<T, U> && std::is_trivially_copy_assignable_v<T>) {
-    // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-    if (!std::is_constant_evaluated()) {
-      memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
-             ::sus::mem::data_size_of<T>());
-      return;
-    }
-  }
-
-  dest = src;
-}
-
-template <class T, std::convertible_to<T> U>
-  requires(!std::is_array_v<T> && sus::mem::Move<T> &&
-           std::is_rvalue_reference_v<U &&> &&
-           !std::is_const_v<std::remove_reference_t<U>>)
-inline void replace_and_discard(T& dest, U&& src) noexcept {
-  if constexpr (std::same_as<T, U> && std::is_trivially_move_assignable_v<T>) {
-    // memcpy() is not constexpr so we can't use it in constexpr evaluation.
-    if (!std::is_constant_evaluated()) {
-      memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
-             ::sus::mem::data_size_of<T>());
-    }
-  }
-
-  dest = ::sus::move(src);
-}
-
 template <class T>
 [[nodiscard]] inline constexpr T* replace_ptr(T*& dest, T* src) noexcept {
   T* old = dest;
