@@ -338,7 +338,7 @@ class HtmlWriter {
 
       pos = copy.find_first_of("<>");
     }
-    return sus::some(copy);
+    return sus::some(sus::move(copy));
   }
 
   void write_text(std::string_view text, bool has_newlines = true) noexcept {
