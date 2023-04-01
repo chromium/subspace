@@ -102,32 +102,138 @@ class Tuple;
   inline constexpr u32 T::BITS = u32(__private::num_bits<PrimitiveT>()); \
   static_assert(true)
 
-#define _sus__unsigned_construct(T, PrimitiveT)                                \
-  /** Default constructor, which sets the integer to 0.                        \
-   *                                                                           \
-   * The trivial copy and move constructors are implicitly declared, as is the \
-   * trivial destructor.                                                       \
-   *                                                                           \
-   * #[doc.overloads=0]                                                        \
-   */                                                                          \
-  constexpr inline T() noexcept = default;                                     \
-                                                                               \
-  /** Construction from unsigned primitive types where no bits are lost.       \
-   *                                                                           \
-   * #[doc.overloads=1]                                                        \
-   */                                                                          \
-  template <UnsignedPrimitiveInteger P>                                        \
-    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
-  constexpr inline T(P v) : primitive_value(v) {}                              \
-                                                                               \
-  /** Assignment from unsigned primitive types where no bits are lost.         \
-   */                                                                          \
-  template <UnsignedPrimitiveInteger P>                                        \
-    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
-  constexpr inline T& operator=(P v) noexcept {                                \
-    primitive_value = v;                                                       \
-    return *this;                                                              \
-  }                                                                            \
+#define _sus__unsigned_construct(T, PrimitiveT)                                  \
+  /** Default constructor, which sets the integer to 0.                          \
+   *                                                                             \
+   * The trivial copy and move constructors are implicitly declared, as is the   \
+   * trivial destructor.                                                         \
+   *                                                                             \
+   * #[doc.overloads=ctor.default]                                               \
+   */                                                                            \
+  constexpr inline T() noexcept = default;                                       \
+                                                                                 \
+  /** Construction from unsigned primitive types where no bits are lost.         \
+   *                                                                             \
+   * #[doc.overloads=ctor.unsigned.small]                                        \
+   */                                                                            \
+  template <UnsignedPrimitiveInteger P>                                          \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
+  constexpr inline T(P v) : primitive_value(v) {}                                \
+                                                                                 \
+  /** Construction from unsigned primitive types, where it can be checked at     \
+   * compile time that no bits are lost.                                         \
+   *                                                                             \
+   * For runtime conversion of larger values, use `from()`.                      \
+   *                                                                             \
+   * #[doc.overloads=ctor.unsigned.large]                                        \
+   */                                                                            \
+  template <UnsignedPrimitiveInteger P>                                          \
+    requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
+  consteval inline T(P v)                                                        \
+      : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
+                         * cast `v` to a `T`. */                                 \
+                        static_cast<PrimitiveT>(v)) {                            \
+    /* SAFETY: P has more bits than T, so converting an unsigned T to P will     \
+     * fit. When removing the sign bit, there's still at least as many bits      \
+     * as T. */                                                                  \
+    if (v > static_cast<P>(T::MAX_PRIMITIVE)) {                                  \
+      ::sus::panic_with_message(                                             \
+            *"Cannot assign to unsigned integer from value outside its "       \
+             "range.");   \
+    }                                                                            \
+  }                                                                              \
+                                                                                 \
+  /** Construction from signed primitive types, where it can be checked at       \
+   * compile time that no bits are lost.                                         \
+   *                                                                             \
+   * For runtime conversion, use `from()`.                                       \
+   *                                                                             \
+   * #[doc.overloads=ctor.signed]                                                \
+   */                                                                            \
+  template <SignedPrimitiveInteger P>                                            \
+  consteval inline T(P v)                                                        \
+      : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
+                         * cast `v` to a `T`. */                                 \
+                        static_cast<PrimitiveT>(v)) {                            \
+    if (v < 0) {                                                                 \
+      ::sus::panic_with_message(                                                 \
+          *"Cannot construct unsigned integer from negative value.");            \
+    }                                                                            \
+    if (::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>()) {          \
+      /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
+       * fit. When removing the sign bit, there's still at least as many bits    \
+       * as T. */                                                                \
+      if (v > static_cast<P>(T::MAX_PRIMITIVE)) {                                \
+        ::sus::panic_with_message(                                             \
+            *"Cannot construct unsigned integer from value outside its "       \
+             "range."); \
+      }                                                                          \
+    }                                                                            \
+  }                                                                              \
+                                                                                 \
+  /** Assignment from unsigned primitive types where no bits are lost.           \
+   *                                                                             \
+   * #[doc.overloads=assign.unsigned.small]                                      \
+   */                                                                            \
+  template <UnsignedPrimitiveInteger P>                                          \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
+  constexpr inline T& operator=(P v) noexcept {                                  \
+    primitive_value = v;                                                         \
+    return *this;                                                                \
+  }                                                                              \
+                                                                                 \
+  /** Assignment from unsigned primitive types, where it can be checked at       \
+   * compile time that no bits are lost.                                         \
+   *                                                                             \
+   * For runtime conversion of larger values, use `from()`.                      \
+   *                                                                             \
+   * #[doc.overloads=assign.unsigned.large]                                      \
+   */                                                                            \
+  template <UnsignedPrimitiveInteger P>                                          \
+    requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
+  consteval inline T& operator=(P v) noexcept {                                  \
+    /* SAFETY: P has more bits than T, so converting an unsigned T to P will     \
+     * fit. When removing the sign bit, there's still at least as many bits      \
+     * as T. */                                                                  \
+    if (v > static_cast<P>(T::MAX_PRIMITIVE)) {                                  \
+      ::sus::panic_with_message(                                             \
+            *"Cannot assign to unsigned integer from value outside its "       \
+             "range.");   \
+    }                                                                            \
+    /* SAFETY: We check above that v <= T::MAX, so we can cast `v` to a `T`.     \
+     */                                                                          \
+    primitive_value = static_cast<PrimitiveT>(v);                                \
+    return *this;                                                                \
+  }                                                                              \
+                                                                                 \
+  /** Assignment from signed primitive types, where it can be checked at         \
+   * compile time that no bits are lost.                                         \
+   *                                                                             \
+   * For runtime conversion, use `from()`.                                       \
+   *                                                                             \
+   * #[doc.overloads=assign.signed]                                              \
+   */                                                                            \
+  template <SignedPrimitiveInteger P>                                            \
+  consteval inline T& operator=(P v) noexcept {                                  \
+    if (v < 0) {                                                                 \
+      ::sus::panic_with_message(                                                 \
+          *"Cannot assign to unsigned integer from negative value.");            \
+    }                                                                            \
+    if (::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>()) {          \
+      /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
+       * fit. When removing the sign bit, there's still at least as many bits    \
+       * as T. */                                                                \
+      if (v > static_cast<P>(T::MAX_PRIMITIVE)) {                                \
+        ::sus::panic_with_message(                                             \
+            *"Cannot assign to unsigned integer from value outside its "       \
+             "range."); \
+      }                                                                          \
+    }                                                                            \
+    /* SAFETY: We check above that v <= T::MAX, so we can cast `v` to a `T`.     \
+     */                                                                          \
+    primitive_value = static_cast<PrimitiveT>(v);                                \
+    return *this;                                                                \
+  }                                                                              \
   static_assert(true)
 
 #define _sus__unsigned_from(T, PrimitiveT)                                     \

@@ -195,15 +195,15 @@ concept NotConvertible = (!std::constructible_from<To, From> &&
                           !std::is_assignable_v<To, From>);
 
 TEST(u16, FromPrimitive) {
-  static_assert(NotConvertible<int8_t, u16>);
-  static_assert(NotConvertible<int16_t, u16>);
-  static_assert(NotConvertible<int32_t, u16>);
-  static_assert(NotConvertible<int64_t, u16>);
+  static_assert(IsImplicitlyConvertible<int8_t, u16>);
+  static_assert(IsImplicitlyConvertible<int16_t, u16>);
+  static_assert(IsImplicitlyConvertible<int32_t, u16>);
+  static_assert(IsImplicitlyConvertible<int64_t, u16>);
   static_assert(IsImplicitlyConvertible<uint8_t, u16>);
   static_assert(IsImplicitlyConvertible<uint16_t, u16>);
-  static_assert(NotConvertible<uint32_t, u16>);
-  static_assert(NotConvertible<uint64_t, u16>);
-  static_assert(NotConvertible<size_t, u16>);
+  static_assert(IsImplicitlyConvertible<uint32_t, u16>);
+  static_assert(IsImplicitlyConvertible<uint64_t, u16>);
+  static_assert(IsImplicitlyConvertible<size_t, u16>);
   static_assert(sizeof(size_t) > sizeof(u16));
 }
 
