@@ -33,7 +33,7 @@
 constexpr inline bool is_empty() const& noexcept { return _len_expr == 0u; }
 
 /// Returns the number of elements in the slice.
-constexpr inline usize len() const& noexcept { return _len_expr; }
+constexpr inline ::sus::num::usize len() const& noexcept { return _len_expr; }
 
 /// Returns a const pointer to the first element in the slice.
 ///
@@ -48,7 +48,7 @@ constexpr inline usize len() const& noexcept { return _len_expr; }
 /// pointer would be invalid.
 ///
 constexpr inline const T* as_ptr() const& noexcept {
-  ::sus::check(_len_expr > 0_usize);
+  ::sus::check(_len_expr > ::sus::num::usize(0u));
   return _ptr_expr;
 }
 
@@ -76,7 +76,7 @@ constexpr inline const T* as_ptr() && = delete;
 /// pointers would be invalid.
 ///
 constexpr ::sus::ops::Range<const T*> as_ptr_range() const& noexcept {
-  ::sus::check(_len_expr > 0_usize);
+  ::sus::check(_len_expr > ::sus::num::usize(0u));
   return ::sus::ops::Range<const T*>(_ptr_expr, _ptr_expr + _len_expr);
 }
 
@@ -94,8 +94,8 @@ constexpr ::sus::ops::Range<const T*> as_ptr_range() && = delete;
 /// found then `sus::Err` is returned, with the index where a matching
 /// element could be inserted while maintaining sorted order.
 ///
-constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_search(
-    const T& x) const& noexcept
+constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize>
+binary_search(const T& x) const& noexcept
   requires(::sus::ops::Ord<T>)
 {
   return binary_search_by(
@@ -117,7 +117,8 @@ constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_sea
 /// found then `sus::Err` is returned, with the index where a matching
 /// element could be inserted while maintaining sorted order.
 ///
-constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_search_by(
+constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize>
+binary_search_by(
     ::sus::fn::FnMutRef<std::strong_ordering(const T&)> f) const& noexcept
   requires(::sus::ops::Ord<T>)
 {
@@ -178,9 +179,10 @@ constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_sea
 /// element could be inserted while maintaining sorted order.
 ///
 template <::sus::ops::Ord Key>
-::sus::result::Result<::sus::num::usize, ::sus::num::usize>
-constexpr binary_search_by_key(const Key& key,
-                     ::sus::fn::FnMut<Key(const T&)> auto f) const& noexcept {
+::sus::result::
+    Result<::sus::num::usize, ::sus::num::usize> constexpr binary_search_by_key(
+        const Key& key,
+        ::sus::fn::FnMut<Key(const T&)> auto f) const& noexcept {
   return binary_search_by(
       [&key, &f](const T& p) -> std::strong_ordering { return f(p) <=> key; });
 }
@@ -199,7 +201,7 @@ constexpr binary_search_by_key(const Key& key,
 /// # Panics
 /// Panics if chunk_size is 0.
 ///
-constexpr Chunks<T> chunks(usize chunk_size) const& noexcept {
+constexpr Chunks<T> chunks(::sus::num::usize chunk_size) const& noexcept {
   ::sus::check(chunk_size > 0u);
   return Chunks<T>::with(::sus::containers::Slice<T>::from_raw_parts(
                              ::sus::marker::unsafe_fn, _ptr_expr, _len_expr),
@@ -207,7 +209,7 @@ constexpr Chunks<T> chunks(usize chunk_size) const& noexcept {
 }
 
 #if _delete_rvalue
-constexpr Chunks<T> chunks(usize chunk_size) && = delete;
+constexpr Chunks<T> chunks(::sus::num::usize chunk_size) && = delete;
 #endif
 
 /// Returns an iterator over `chunk_size` elements of the slice at a time,
@@ -229,7 +231,8 @@ constexpr Chunks<T> chunks(usize chunk_size) && = delete;
 /// # Panics
 /// Panics if `chunk_size` is 0.
 ///
-constexpr ChunksExact<T> chunks_exact(usize chunk_size) const& noexcept {
+constexpr ChunksExact<T> chunks_exact(
+    ::sus::num::usize chunk_size) const& noexcept {
   ::sus::check(chunk_size > 0u);
   return ChunksExact<T>::with(
       ::sus::containers::Slice<T>::from_raw_parts(::sus::marker::unsafe_fn,
@@ -238,7 +241,7 @@ constexpr ChunksExact<T> chunks_exact(usize chunk_size) const& noexcept {
 }
 
 #if _delete_rvalue
-constexpr ChunksExact<T> chunks_exact(usize chunk_size) && = delete;
+constexpr ChunksExact<T> chunks_exact(::sus::num::usize chunk_size) && = delete;
 #endif
 
 using ConcatOutputType = ::sus::containers::Vec<T>;
@@ -267,13 +270,13 @@ constexpr auto concat() const& noexcept
   requires(::sus::containers::Concat<T>)
 {
   const auto length = _len_expr;
-  usize cap;
-  for (usize i; i < length; i += 1u) {
+  ::sus::num::usize cap;
+  for (::sus::num::usize i; i < length; i += 1u) {
     cap += get_unchecked(::sus::marker::unsafe_fn, i).len();
   }
   using Container = typename T::ConcatOutputType;
   auto out = Container::with_capacity(cap);
-  for (usize i; i < length; i += 1u) {
+  for (::sus::num::usize i; i < length; i += 1u) {
     get_unchecked(::sus::marker::unsafe_fn, i).concat_into(out);
   }
   return out;
@@ -300,7 +303,7 @@ constexpr bool contains(const T& x) const& noexcept
 {
   const auto length = _len_expr;
   const auto* p = _ptr_expr;
-  for (usize i; i < length; i += 1u) {
+  for (::sus::num::usize i; i < length; i += 1u) {
     if (*(p + i) == x) return true;
   }
   return false;
@@ -312,19 +315,19 @@ constexpr bool contains(const T& x) const& noexcept
 /// If the index `i` is beyond the end of the slice, the function will panic.
 /// #[doc.overloads=slice.index.usize]
 ///
-constexpr inline const T& operator[](usize i) const& noexcept {
+constexpr inline const T& operator[](::sus::num::usize i) const& noexcept {
   ::sus::check(i < _len_expr);
   return _ptr_expr[i.primitive_value];
 }
 
 #if _delete_rvalue
-constexpr inline const T& operator[](usize i) && = delete;
+constexpr inline const T& operator[](::sus::num::usize i) && = delete;
 #endif
 
 /// Returns a const reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
 ///
-constexpr Option<const T&> get(usize i) const& noexcept {
+constexpr Option<const T&> get(::sus::num::usize i) const& noexcept {
   if (i < _len_expr) [[likely]]
     return Option<const T&>::some(_ptr_expr[i.primitive_value]);
   else
@@ -332,7 +335,7 @@ constexpr Option<const T&> get(usize i) const& noexcept {
 }
 
 #if _delete_rvalue
-constexpr Option<const T&> get(usize i) && = delete;
+constexpr Option<const T&> get(::sus::num::usize i) && = delete;
 #endif
 
 /// Returns a const reference to the element at index `i`.
@@ -343,7 +346,7 @@ constexpr Option<const T&> get(usize i) && = delete;
 /// length of at least 1.
 ///
 constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                        usize i) const& noexcept {
+                                        ::sus::num::usize i) const& noexcept {
   sus_assume(::sus::marker::unsafe_fn,
              i.primitive_value < _len_expr.primitive_value);
   return _ptr_expr[i.primitive_value];
@@ -351,7 +354,7 @@ constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
 
 #if _delete_rvalue
 constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                        usize i) && = delete;
+                                        ::sus::num::usize i) && = delete;
 #endif
 
 /// Returns a subslice which contains elements in `range`, which specifies a
@@ -368,10 +371,11 @@ constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
 /// #[doc.overloads=slice.index.range]
 ///
 constexpr inline Slice<T> operator[](
-    const ::sus::ops::RangeBounds<usize> auto range) const& noexcept {
-  const usize rstart = range.start_bound().unwrap_or(0u);
-  const usize rend = range.end_bound().unwrap_or(_len_expr);
-  const usize rlen = rend >= rstart ? rend - rstart : 0u;
+    const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
+    const& noexcept {
+  const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
+  const ::sus::num::usize rend = range.end_bound().unwrap_or(_len_expr);
+  const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
   ::sus::check(rlen <= _len_expr);
   /* Avoid underflow below. */ /* We allow rstart == _len_expr
                                 * && rend == _len_expr, which
@@ -383,7 +387,7 @@ constexpr inline Slice<T> operator[](
 
 #if _delete_rvalue
 constexpr inline Slice<T> operator[](
-    const ::sus::ops::RangeBounds<usize> auto range) && = delete;
+    const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && = delete;
 #endif
 
 /// Returns a subslice which contains elements in `range`, which specifies a
@@ -398,10 +402,11 @@ constexpr inline Slice<T> operator[](
 /// of bounds.
 ///
 constexpr Option<Slice<T>> get_range(
-    const ::sus::ops::RangeBounds<usize> auto range) const& noexcept {
-  const usize rstart = range.start_bound().unwrap_or(0u);
-  const usize rend = range.end_bound().unwrap_or(_len_expr);
-  const usize rlen = rend >= rstart ? rend - rstart : 0u;
+    const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
+    const& noexcept {
+  const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
+  const ::sus::num::usize rend = range.end_bound().unwrap_or(_len_expr);
+  const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
   if (rlen > _len_expr)
     return sus::none(); /* Avoid underflow below. */ /* We allow rstart ==
                                                       * _len_expr && rend ==
@@ -413,7 +418,7 @@ constexpr Option<Slice<T>> get_range(
 
 #if _delete_rvalue
 constexpr Option<Slice<T>> get_range(
-    const ::sus::ops::RangeBounds<usize> auto range) && = delete;
+    const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && = delete;
 #endif
 
 /// Returns a subslice which contains elements in `range`, which specifies a
@@ -430,17 +435,18 @@ constexpr Option<Slice<T>> get_range(
 ///
 constexpr Slice<T> get_range_unchecked(
     ::sus::marker::UnsafeFnMarker,
-    const ::sus::ops::RangeBounds<usize> auto range) const& noexcept {
-  const usize rstart = range.start_bound().unwrap_or(0u);
-  const usize rend = range.end_bound().unwrap_or(_len_expr);
-  const usize rlen = rend >= rstart ? rend - rstart : 0u;
+    const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
+    const& noexcept {
+  const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
+  const ::sus::num::usize rend = range.end_bound().unwrap_or(_len_expr);
+  const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
   return Slice<T>(_ptr_expr + rstart, rlen);
 }
 
 #if _delete_rvalue
 constexpr Slice<T> get_range_unchecked(
     ::sus::marker::UnsafeFnMarker,
-    const ::sus::ops::RangeBounds<usize> auto range) && = delete;
+    const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && = delete;
 #endif
 
 /// Returns an iterator over all the elements in the slice, visited in the
