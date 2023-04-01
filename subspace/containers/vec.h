@@ -454,13 +454,13 @@ class Vec final {
   }
 
   // Const Vec can be used as a Slice.
-  operator const Slice<T>&() const& { return slice_mut_; }
-  operator Slice<T>&() & { return slice_mut_; }
-  operator Slice<T>() && { return ::sus::move(slice_mut_); }
+  constexpr operator const Slice<T>&() const& { return slice_mut_; }
+  constexpr operator Slice<T>&() & { return slice_mut_; }
+  constexpr operator Slice<T>() && { return ::sus::move(slice_mut_); }
 
   // Mutable Vec can be used as a SliceMut.
-  operator SliceMut<T>&() & { return slice_mut_; }
-  operator SliceMut<T>&&() && { return ::sus::move(slice_mut_); }
+  constexpr operator SliceMut<T>&() & { return slice_mut_; }
+  constexpr operator SliceMut<T>&&() && { return ::sus::move(slice_mut_); }
 
 #define _ptr_expr slice_mut_.slice_.data_
 #define _len_expr slice_mut_.slice_.len_
