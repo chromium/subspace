@@ -26,6 +26,14 @@
 // expressions of getting the slice's data pointer and length.
 /////////////////////////////////////////////////////////
 
+// If we're deleting rvalue const access, we don't want to give rvalue mut
+// access either.
+#if _delete_rvalue
+#define _mut_ref &
+#else
+#define _mut_ref
+#endif
+
 /// Returns a mutable pointer to the first element in the slice.
 ///
 /// The caller must ensure that the container outlives the pointer this
@@ -38,7 +46,7 @@
 /// The slice must have a non-zero length, or this function will panic as the
 /// pointer would be invalid.
 ///
-inline T* as_mut_ptr() & noexcept {
+constexpr inline T* as_mut_ptr() _mut_ref noexcept {
   check(_len_expr > 0_usize);
   return _ptr_expr;
 }
@@ -62,7 +70,7 @@ inline T* as_mut_ptr() & noexcept {
 /// The slice must have a non-zero length, or this function will panic as the
 /// pointers would be invalid.
 ///
-::sus::ops::Range<T*> as_mut_ptr_range() & noexcept {
+constexpr ::sus::ops::Range<T*> as_mut_ptr_range() _mut_ref noexcept {
   check(_len_expr > 0_usize);
   return ::sus::ops::Range<T*>(_ptr_expr, _ptr_expr + _len_expr);
 }
@@ -83,7 +91,8 @@ inline T* as_mut_ptr() & noexcept {
 /// remainder as a smaller chunk, and `rchunks_exact_mut()` for the same
 /// iterator but starting at the end of the slice.
 ///
-constexpr ChunksExactMut<T> chunks_exact_mut(usize chunk_size) & noexcept {
+constexpr ChunksExactMut<T> chunks_exact_mut(
+    usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
   return ChunksExactMut<T>::with(
       ::sus::containers::SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn,
@@ -105,11 +114,109 @@ constexpr ChunksExactMut<T> chunks_exact_mut(usize chunk_size) & noexcept {
 /// # Panics
 /// Panics if chunk_size is 0.
 ///
-constexpr ChunksMut<T> chunks_mut(usize chunk_size) & noexcept {
+constexpr ChunksMut<T> chunks_mut(usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
   return ChunksMut<T>::with(::sus::containers::SliceMut<T>::from_raw_parts(
                                 ::sus::marker::unsafe_fn, _ptr_expr, _len_expr),
                             chunk_size);
+}
+
+/// Copies all elements from src into `*this`, using a `memcpy()` or equivalent.
+///
+/// The length of `src` must be the same as `*this`.
+///
+/// This function requires that `T` is trivially copy-assignable in order to give
+/// consistent performance across types. If `T` is not trivially copy-
+/// assignable, use `clone_from_slice()`.
+///
+/// # Panics
+/// This function will panic if the two slices have different lengths, or if the
+/// two slices overlap.
+constexpr void copy_from_slice(Slice<T> src) _mut_ref noexcept
+  requires(std::is_trivially_copy_assignable_v<T>)
+{
+  const usize src_len = src.len();
+  const usize dst_len = _len_expr;
+  ::sus::check(dst_len == src_len);
+
+  const T* const src_ptr = src.as_ptr();
+  T* const dst_ptr = _ptr_expr;
+  ::sus::check((src_ptr < dst_ptr && src_ptr <= dst_ptr - src_len) ||
+               (dst_ptr < src_ptr && dst_ptr <= src_ptr - dst_len));
+
+  if (std::is_constant_evaluated()) {
+    // Avoid memcpy() when the size is known at compile time, as the compiler
+    // can vectorize better and because memcpy() is not constexpr.
+    for (usize i; i < dst_len; i += 1u) *(dst_ptr + i) = *(src_ptr + i);
+  } else {
+    if constexpr (::sus::mem::size_of<T>() > 1u) {
+      constexpr auto max_len = usize::MAX / ::sus::mem::size_of<T>();
+      // We can't use memcpy() if the number of bytes would overflow.
+      if (dst_len > max_len) {
+        for (usize i; i < dst_len; i += 1u) *(dst_ptr + i) = *(src_ptr + i);
+        return;
+      }
+    }
+    // SAFETY: We do size_t multiplcation here, but we checked above that the
+    // `length <= usize::MAX / size_of<T>()`, or we would have returned. This
+    // means that `length * size_of<T> <= usize::MAX`. Thus we can multiply here
+    // as a primitive type size_t.
+    memcpy(dst_ptr, src_ptr, ::sus::mem::size_of<T>() * size_t{dst_len});
+  }
+}
+
+/// Copies all elements from src into `*this`, using a `memcpy()` or equivalent.
+///
+/// This function requires that `T` is trivially copy-assignable in order to give
+/// consistent performance across types. If `T` is not trivially copy-
+/// assignable, use `clone_from_slice()`.
+///
+/// # Safety
+/// The following conditions must hold, or Undefined Behaviour results:
+/// * The length of `src` must be at least as large as `*this`.
+/// * The length of `*this` (and `src`) must be greater than 0, and must not
+/// overflow when multiplied by the size of `T`.
+/// * The `src` slice must not overlap (aka alias) with `*this` in memory.
+constexpr void copy_from_slice_unchecked(::sus::marker::UnsafeFnMarker,
+                                         Slice<T> src) _mut_ref noexcept
+  requires(std::is_trivially_copy_assignable_v<T>)
+{
+  const usize dst_len = _len_expr;
+  const T* const src_ptr = src.as_ptr();
+  T* const dst_ptr = _ptr_expr;
+  sus_assume(
+      ::sus::marker::unsafe_fn,
+      (src_ptr < dst_ptr && src_ptr <= dst_ptr - dst_len.primitive_value) ||
+          (dst_ptr < src_ptr && dst_ptr <= src_ptr - dst_len.primitive_value));
+
+  if (std::is_constant_evaluated()) {
+    // Avoid memcpy() when the size is known at compile time, as the compiler
+    // can vectorize better and because memcpy() is not constexpr.
+    for (usize i; i < dst_len; i += 1u) *(dst_ptr + i) = *(src_ptr + i);
+  } else {
+    // This does the multiplication as size_t, not usize, so it does not check
+    // for overflow.
+    memcpy(dst_ptr, src_ptr, size_t{dst_len} * ::sus::mem::size_of<T>());
+  }
+}
+
+/// Copies the elements from `src` into `*this`.
+///
+/// The length of `src` must be the same as `*this`.
+///
+/// # Panics
+/// This function will panic if the two slices have different lengths.
+constexpr void clone_from_slice(Slice<T> src) _mut_ref noexcept
+  requires(::sus::mem::Clone<T>)
+{
+  const usize src_len = src.len();
+  const usize dst_len = _len_expr;
+  ::sus::check(dst_len == src_len);
+  const T* const src_ptr = src.as_ptr();
+  T* dst_ptr = _ptr_expr;
+  for (usize i; i < dst_len; i += 1u) {
+    ::sus::clone_into(::sus::mem::mref(*(dst_ptr + i)), *(src_ptr + i));
+  }
 }
 
 // Documented on the const overload.
@@ -118,10 +225,18 @@ constexpr T& operator[](usize i) & noexcept {
   return _ptr_expr[i.primitive_value];
 }
 
+#if !_delete_rvalue
+// Documented on the const overload.
+constexpr T& operator[](usize i) && noexcept {
+  check(i < _len_expr);
+  return _ptr_expr[i.primitive_value];
+}
+#endif
+
 /// Returns a mutable reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
 ///
-constexpr Option<T&> get_mut(usize i) & noexcept {
+constexpr Option<T&> get_mut(usize i) _mut_ref noexcept {
   if (i < _len_expr) [[likely]]
     return Option<T&>::some(mref(_ptr_expr[i.primitive_value]));
   else
@@ -136,7 +251,7 @@ constexpr Option<T&> get_mut(usize i) & noexcept {
 /// length of at least 1.
 ///
 constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
-                                      usize i) & noexcept {
+                                      usize i) _mut_ref noexcept {
   sus_assume(::sus::marker::unsafe_fn,
              i.primitive_value < _len_expr.primitive_value);
   return _ptr_expr[i.primitive_value];
@@ -155,6 +270,21 @@ constexpr inline SliceMut<T> operator[](
   return SliceMut<T>(_ptr_expr + rstart, rlen);
 }
 
+#if !_delete_rvalue
+// Documented on the const overload of operator[](RangeBounds).
+constexpr inline SliceMut<T> operator[](
+    const ::sus::ops::RangeBounds<usize> auto range) && noexcept {
+  const usize rstart = range.start_bound().unwrap_or(0u);
+  const usize rend = range.end_bound().unwrap_or(_len_expr);
+  const usize rlen = rend >= rstart ? rend - rstart : 0u;
+  ::sus::check(rlen <= _len_expr);  // Avoid underflow below.
+  // We allow rstart == _len_expr && rend == _len_expr, which returns an empty
+  // slice.
+  ::sus::check(rstart <= _len_expr && rstart <= _len_expr - rlen);
+  return SliceMut<T>(_ptr_expr + rstart, rlen);
+}
+#endif
+
 /// Returns a subslice which contains elements in `range`, which specifies a
 /// start and a length.
 ///
@@ -167,7 +297,7 @@ constexpr inline SliceMut<T> operator[](
 /// of bounds.
 ///
 constexpr Option<SliceMut<T>> get_range_mut(
-    const ::sus::ops::RangeBounds<usize> auto range) & noexcept {
+    const ::sus::ops::RangeBounds<usize> auto range) _mut_ref noexcept {
   const usize rstart = range.start_bound().unwrap_or(0u);
   const usize rend = range.end_bound().unwrap_or(_len_expr);
   const usize rlen = rend >= rstart ? rend - rstart : 0u;
@@ -192,7 +322,7 @@ constexpr Option<SliceMut<T>> get_range_mut(
 ///
 constexpr SliceMut<T> get_range_mut_unchecked(
     ::sus::marker::UnsafeFnMarker,
-    const ::sus::ops::RangeBounds<usize> auto range) & noexcept {
+    const ::sus::ops::RangeBounds<usize> auto range) _mut_ref noexcept {
   const usize rstart = range.start_bound().unwrap_or(0u);
   const usize rend = range.end_bound().unwrap_or(_len_expr);
   const usize rlen = rend >= rstart ? rend - rstart : 0u;
@@ -203,7 +333,7 @@ constexpr SliceMut<T> get_range_mut_unchecked(
 /// same order they appear in the slice. The iterator gives mutable access to
 /// each element.
 ///
-constexpr SliceIterMut<T&> iter_mut() & noexcept {
+constexpr SliceIterMut<T&> iter_mut() _mut_ref noexcept {
   return SliceIterMut<T&>::with(_ptr_expr, _len_expr);
 }
 
@@ -217,8 +347,9 @@ constexpr SliceIterMut<T&> iter_mut() & noexcept {
 /// `sort_unstable()`.
 ///
 //
-// TODO: Rust's stable sort is O(n * log(n)), so this can be improved.
-void sort() & noexcept
+// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
+// also be constexpr?
+void sort() _mut_ref noexcept
   requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
 {
   if (_len_expr > 0_usize) {
@@ -236,11 +367,12 @@ void sort() & noexcept
 /// unspecified.
 ///
 //
-// TODO: Rust's stable sort is O(n * log(n)), so this can be improved.
+// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
+// also be constexpr?
 template <::sus::fn::FnMut<::sus::fn::Anything(const T&, const T&)> F, int&...,
           class R = std::invoke_result_t<F, const T&, const T&>>
   requires(::sus::ops::Ordering<R>)
-void sort_by(F compare) & noexcept {
+void sort_by(F compare) _mut_ref noexcept {
   if (_len_expr > 0_usize) {
     std::stable_sort(
         _ptr_expr, _ptr_expr + _len_expr,
@@ -253,7 +385,7 @@ void sort_by(F compare) & noexcept {
 /// This sort is unstable (i.e., may reorder equal elements), in-place (i.e.,
 /// does not allocate), and O(n * log(n)) worst-case.
 ///
-void sort_unstable() & noexcept
+constexpr void sort_unstable() _mut_ref noexcept
   requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
 {
   if (_len_expr > 0_usize) {
@@ -274,7 +406,7 @@ void sort_unstable() & noexcept
 template <::sus::fn::FnMut<::sus::fn::Anything(const T&, const T&)> F, int&...,
           class R = std::invoke_result_t<F, const T&, const T&>>
   requires(::sus::ops::Ordering<R>)
-void sort_unstable_by(F compare) & noexcept {
+constexpr void sort_unstable_by(F compare) _mut_ref noexcept {
   if (_len_expr > 0_usize) {
     std::sort(_ptr_expr, _ptr_expr + _len_expr,
               [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
@@ -296,7 +428,7 @@ void sort_unstable_by(F compare) & noexcept {
 /// that `0 <= mid <= len()`.
 ///
 constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>> split_at_mut_unchecked(
-    ::sus::marker::UnsafeFnMarker, usize mid) & noexcept {
+    ::sus::marker::UnsafeFnMarker, usize mid) _mut_ref noexcept {
   const ::sus::num::usize length = _len_expr;
 
   // SAFETY: Caller has to check that `0 <= mid <= _len_expr`.
