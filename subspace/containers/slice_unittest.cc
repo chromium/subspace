@@ -1968,4 +1968,132 @@ TEST(Slice, Contains) {
   EXPECT_EQ(s.contains(5), false);
 }
 
+TEST(Slice, CopyFromSlice) {
+  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  Vec<i32> v2 = sus::vec(5, 6, 7, 8);
+  // Same slice, non overlapping.
+  v1["0..2"_r].copy_from_slice(v1["2..4"_r]);
+  EXPECT_EQ(v1[0u], 3);
+  EXPECT_EQ(v1[1u], 4);
+  EXPECT_EQ(v1[2u], 3);
+  EXPECT_EQ(v1[3u], 4);
+  // Different slice.
+  v1["0..2"_r].copy_from_slice(v2["2..4"_r]);
+  EXPECT_EQ(v1[0u], 7);
+  EXPECT_EQ(v1[1u], 8);
+  EXPECT_EQ(v1[2u], 3);
+  EXPECT_EQ(v1[3u], 4);
+
+  // The source slice was untouched.
+  EXPECT_EQ(v2[0u], 5);
+  EXPECT_EQ(v2[1u], 6);
+  EXPECT_EQ(v2[2u], 7);
+  EXPECT_EQ(v2[3u], 8);
+
+  // Constexpr.
+  constexpr auto x = []() constexpr {
+    i32 i[] = {1, 2, 3, 4};
+    auto s = SliceMut<i32>::from(i);
+    auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2);
+    s1.copy_from_slice(s2);
+    return s1[0];
+  }();
+  EXPECT_EQ(x, 3);
+}
+
+TEST(SliceDeathTest, CopyFromSliceChecks) {
+  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+#if GTEST_HAS_DEATH_TEST
+  // Overlapping.
+  EXPECT_DEATH(v1["0..2"_r].copy_from_slice(v1["1..4"_r]), "");
+  // Different sizes.
+  EXPECT_DEATH(v1["0..1"_r].copy_from_slice(v1["1..4"_r]), "");
+  EXPECT_DEATH(v1["0..2"_r].copy_from_slice(v1["3..4"_r]), "");
+#endif
+}
+
+TEST(Slice, CopyFromSliceUnchecked) {
+  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  Vec<i32> v2 = sus::vec(5, 6, 7, 8);
+  // Same slice, non overlapping.
+  EXPECT_EQ(v1["0..2"_r].len(), 2u);
+  v1["0..2"_r].copy_from_slice_unchecked(unsafe_fn, v1["2..4"_r]);
+  EXPECT_EQ(v1[0u], 3);
+  EXPECT_EQ(v1[1u], 4);
+  EXPECT_EQ(v1[2u], 3);
+  EXPECT_EQ(v1[3u], 4);
+  // Different slice.
+  v1["0..2"_r].copy_from_slice_unchecked(unsafe_fn, v2["2..4"_r]);
+  EXPECT_EQ(v1[0u], 7);
+  EXPECT_EQ(v1[1u], 8);
+  EXPECT_EQ(v1[2u], 3);
+  EXPECT_EQ(v1[3u], 4);
+
+  // Overlapping oops. Does not check(), but we can't verify what the outcome
+  // would be.
+  v1["0..2"_r].copy_from_slice_unchecked(unsafe_fn, v2["1..3"_r]);
+
+  // The source slice was untouched.
+  EXPECT_EQ(v2[0u], 5);
+  EXPECT_EQ(v2[1u], 6);
+  EXPECT_EQ(v2[2u], 7);
+  EXPECT_EQ(v2[3u], 8);
+
+  // Constexpr.
+  constexpr auto x = []() constexpr {
+    i32 i[] = {1, 2, 3, 4};
+    auto s = SliceMut<i32>::from(i);
+    auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2);
+    s1.copy_from_slice_unchecked(unsafe_fn, s2);
+    return s1[0];
+  }();
+  EXPECT_EQ(x, 3);
+}
+
+TEST(Slice, CloneFromSlice) {
+  struct Cloner {
+    i32 i;
+
+    constexpr Cloner(sus::construct::Into<i32> auto i) : i(sus::into(i)) {}
+
+    Cloner(Cloner&&) = default;
+    Cloner& operator=(Cloner&&) = default;
+
+    constexpr Cloner clone() const noexcept { return Cloner(i * 10); }
+  };
+
+  Vec<Cloner> v1 = sus::vec(1, 2, 3, 4);
+  Vec<Cloner> v2 = sus::vec(6, 7, 8, 9);
+  v1["0..2"_r].clone_from_slice(v2["2..4"_r]);
+  EXPECT_EQ(v1[0].i, 80);
+  EXPECT_EQ(v1[1].i, 90);
+  EXPECT_EQ(v1[2].i, 3);
+  EXPECT_EQ(v1[3].i, 4);
+
+  // The source slice was untouched.
+  EXPECT_EQ(v2[0].i, 6);
+  EXPECT_EQ(v2[1].i, 7);
+  EXPECT_EQ(v2[2].i, 8);
+  EXPECT_EQ(v2[3].i, 9);
+
+  // Constexpr.
+  constexpr auto x = []() constexpr {
+    Cloner i[] = {1, 2, 3, 4};
+    auto s = SliceMut<Cloner>::from(i);
+    auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2);
+    s1.clone_from_slice(s2);
+    return s1[0].i;
+  }();
+  EXPECT_EQ(x, 30);
+}
+
+TEST(SliceDeathTest, CloneFromSliceChecks) {
+  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+#if GTEST_HAS_DEATH_TEST
+  // Different sizes.
+  EXPECT_DEATH(v1["0..1"_r].clone_from_slice(v1["1..4"_r]), "");
+  EXPECT_DEATH(v1["0..2"_r].clone_from_slice(v1["3..4"_r]), "");
+#endif
+}
+
 }  // namespace

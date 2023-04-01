@@ -47,13 +47,13 @@ constexpr inline usize len() const& noexcept { return _len_expr; }
 /// The slice must have a non-zero length, or this function will panic as the
 /// pointer would be invalid.
 ///
-inline const T* as_ptr() const& noexcept {
+constexpr inline const T* as_ptr() const& noexcept {
   ::sus::check(_len_expr > 0_usize);
   return _ptr_expr;
 }
 
 #if _delete_rvalue
-inline const T* as_ptr() && = delete;
+constexpr inline const T* as_ptr() && = delete;
 #endif
 
 /// Returns the two const pointers spanning the slice.
@@ -75,13 +75,13 @@ inline const T* as_ptr() && = delete;
 /// The slice must have a non-zero length, or this function will panic as the
 /// pointers would be invalid.
 ///
-::sus::ops::Range<const T*> as_ptr_range() & noexcept {
+constexpr ::sus::ops::Range<const T*> as_ptr_range() const& noexcept {
   ::sus::check(_len_expr > 0_usize);
   return ::sus::ops::Range<const T*>(_ptr_expr, _ptr_expr + _len_expr);
 }
 
 #if _delete_rvalue
-::sus::ops::Range<const T*> as_ptr_range() && = delete;
+constexpr ::sus::ops::Range<const T*> as_ptr_range() && = delete;
 #endif
 
 /// Binary searches this slice for a given element. This behaves similarly
@@ -94,7 +94,7 @@ inline const T* as_ptr() && = delete;
 /// found then `sus::Err` is returned, with the index where a matching
 /// element could be inserted while maintaining sorted order.
 ///
-::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_search(
+constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_search(
     const T& x) const& noexcept
   requires(::sus::ops::Ord<T>)
 {
@@ -117,7 +117,7 @@ inline const T* as_ptr() && = delete;
 /// found then `sus::Err` is returned, with the index where a matching
 /// element could be inserted while maintaining sorted order.
 ///
-::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_search_by(
+constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize> binary_search_by(
     ::sus::fn::FnMutRef<std::strong_ordering(const T&)> f) const& noexcept
   requires(::sus::ops::Ord<T>)
 {
@@ -179,8 +179,8 @@ inline const T* as_ptr() && = delete;
 ///
 template <::sus::ops::Ord Key>
 ::sus::result::Result<::sus::num::usize, ::sus::num::usize>
-binary_search_by_key(
-    const Key& key, ::sus::fn::FnMut<Key(const T&)> auto f) const& noexcept {
+constexpr binary_search_by_key(const Key& key,
+                     ::sus::fn::FnMut<Key(const T&)> auto f) const& noexcept {
   return binary_search_by(
       [&key, &f](const T& p) -> std::strong_ordering { return f(p) <=> key; });
 }
@@ -266,13 +266,14 @@ using ConcatOutputType = ::sus::containers::Vec<T>;
 constexpr auto concat() const& noexcept
   requires(::sus::containers::Concat<T>)
 {
+  const auto length = _len_expr;
   usize cap;
-  for (usize i; i < _len_expr; i += 1u) {
+  for (usize i; i < length; i += 1u) {
     cap += get_unchecked(::sus::marker::unsafe_fn, i).len();
   }
   using Container = typename T::ConcatOutputType;
   auto out = Container::with_capacity(cap);
-  for (usize i; i < _len_expr; i += 1u) {
+  for (usize i; i < length; i += 1u) {
     get_unchecked(::sus::marker::unsafe_fn, i).concat_into(out);
   }
   return out;
@@ -283,22 +284,24 @@ constexpr auto concat() const& noexcept
 /// This method exists to satisfy `sus::containers::Concat<Slice<T>>`, for
 /// concat() to append the elements in each Slice onto `vec`.
 ///
-void concat_into(ConcatOutputType& vec) const& noexcept
+constexpr void concat_into(ConcatOutputType& vec) const& noexcept
   requires(::sus::mem::Clone<T>)
 {
   vec.extend_from_slice(*this);
 }
 
 /// Returns `true` if the slice contains an element with the given value.
-/// 
+///
 /// This operation is O(n).
-/// 
+///
 /// Note that if you have a sorted slice, `binary_search()` may be faster.
-bool contains(const T& x) const& noexcept
+constexpr bool contains(const T& x) const& noexcept
   requires(::sus::ops::Eq<T>)
 {
-  for (usize i; i < _len_expr; i += 1u) {
-    if (*(_ptr_expr + i) == x) return true;
+  const auto length = _len_expr;
+  const auto* p = _ptr_expr;
+  for (usize i; i < length; i += 1u) {
+    if (*(p + i) == x) return true;
   }
   return false;
 }
@@ -486,3 +489,5 @@ constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
 /// Constructs a `Vec<T>` by cloning each value in the Slice. */
 Vec<T> to_vec() const& noexcept
   requires(::sus::mem::Clone<T>);
+
+#undef _mut_ref
