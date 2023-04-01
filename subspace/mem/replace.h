@@ -44,22 +44,28 @@ namespace sus::mem {
 /// However if the type is trivially copy assignable, and no conversion takes
 /// place, the function will memcpy() in place of doing a copy or move
 /// assignment.
+///
+/// # Panics
+/// This function will panic if the `dest` and `src` are the same object.
 template <class T, std::convertible_to<T> U>
   requires(!std::is_array_v<T> && ::sus::mem::Move<T> &&
            (!std::same_as<T, U> || ::sus::mem::Copy<T>))
 [[nodiscard]] inline constexpr T replace(T& dest, const U& src) noexcept {
   auto old = T(::sus::move(dest));
 
-  if constexpr (std::same_as<T, U> && std::is_trivially_copy_assignable_v<T>) {
+  const T& typed_src = src;  // Possibly converts from U to T.
+  ::sus::check(::sus::mem::addressof(dest) != ::sus::mem::addressof(typed_src));
+
+  if constexpr (std::is_trivially_copy_assignable_v<T>) {
     // memcpy() is not constexpr so we can't use it in constexpr evaluation.
     if (!std::is_constant_evaluated()) {
-      memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
+      memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(typed_src),
              ::sus::mem::data_size_of<T>());
       return old;
     }
   }
 
-  dest = src;
+  dest = typed_src;
   return old;
 }
 
@@ -70,16 +76,19 @@ template <class T, std::convertible_to<T> U>
 [[nodiscard]] inline constexpr T replace(T& dest, U&& src) noexcept {
   auto old = T(::sus::move(dest));
 
+  T&& typed_src = ::sus::move(src);  // Possibly converts from U to T.
+  ::sus::check(::sus::mem::addressof(dest) != ::sus::mem::addressof(typed_src));
+
   if constexpr (std::same_as<T, U> && std::is_trivially_move_assignable_v<T>) {
     // memcpy() is not constexpr so we can't use it in constexpr evaluation.
     if (!std::is_constant_evaluated()) {
-      memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(src),
+      memcpy(::sus::mem::addressof(dest), ::sus::mem::addressof(typed_src),
              ::sus::mem::data_size_of<T>());
       return old;
     }
   }
 
-  dest = ::sus::move(src);
+  dest = ::sus::move(typed_src);
   return old;
 }
 

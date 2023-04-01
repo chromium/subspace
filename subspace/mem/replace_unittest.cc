@@ -213,4 +213,21 @@ TEST(Replace, MutPtr) {
   EXPECT_EQ(p1, nullptr);
 }
 
+TEST(ReplaceDeathTest, Aliasing) {
+  int i1 = 1;
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH([[maybe_unused]] auto x = replace(mref(i1), i1), "");
+#endif
+
+  struct S {
+    int i;
+    operator const int&() const { return i; }
+  };
+  auto s = S(0);
+#if GTEST_HAS_DEATH_TEST
+  // `s` converts to an `int` with the same address a `s.i`.
+  EXPECT_DEATH([[maybe_unused]] auto x = replace(mref(s.i), s), "");
+#endif
+}
+
 }  // namespace
