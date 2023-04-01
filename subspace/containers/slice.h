@@ -213,9 +213,9 @@ class [[sus_trivial_abi]] SliceMut final {
   }
 
   // SliceMut can be used as a Slice.
-  operator const Slice<T>&() const& { return slice_; }
-  operator Slice<T>&() & { return slice_; }
-  operator Slice<T>() && { return ::sus::move(slice_); }
+  constexpr operator const Slice<T>&() const& { return slice_; }
+  constexpr operator Slice<T>&() & { return slice_; }
+  constexpr operator Slice<T>() && { return ::sus::move(slice_); }
 
 #define _ptr_expr slice_.data_
 #define _len_expr slice_.len_
