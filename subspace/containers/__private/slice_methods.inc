@@ -309,6 +309,25 @@ constexpr bool contains(const T& x) const& noexcept
   return false;
 }
 
+/// Returns `true` if `suffix` is a suffix of the slice.
+constexpr bool ends_with(Slice<T> suffix) const& noexcept
+  requires(::sus::ops::Eq<T>)
+{
+  const auto m = _len_expr;
+  const auto n = suffix.len();
+  // SAFETY: Since `m >= n` and both are unsigned, the value of `m - n` will be
+  // in the range `[0, m]` inclusive. All of these are valid offsets of `*this`
+  // which has a length of `m`.
+  const auto sub = get_range_unchecked(::sus::marker::unsafe_fn,
+                                       ::sus::ops::RangeFrom(m - n));
+  // TODO: Use operator==.
+  // return m >= n && suffix == sub;
+  if (m < n) return false;
+  for (::sus::num::usize i; i < n; i += 1)
+    if (!(sub[i] == suffix[i])) return false;
+  return true;
+}
+
 /// Returns a reference to the element at position `i` in the Slice.
 ///
 /// # Panics

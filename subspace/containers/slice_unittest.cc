@@ -2096,4 +2096,16 @@ TEST(SliceDeathTest, CloneFromSliceChecks) {
 #endif
 }
 
+TEST(Slice, EndsWith) {
+  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  EXPECT_TRUE(v1[".."_r].ends_with(v1["4..4"_r]));
+  EXPECT_TRUE(v1[".."_r].ends_with(v1["3..4"_r]));
+  EXPECT_TRUE(v1[".."_r].ends_with(v1["2..4"_r]));
+  EXPECT_TRUE(v1[".."_r].ends_with(v1["1..4"_r]));
+  EXPECT_TRUE(v1[".."_r].ends_with(v1["0..4"_r]));
+  EXPECT_FALSE(v1[".."_r].ends_with(v1["2..3"_r]));
+  EXPECT_FALSE(v1[".."_r].ends_with(v1["1..3"_r]));
+  EXPECT_FALSE(v1[".."_r].ends_with(v1["0..3"_r]));
+}
+
 }  // namespace
