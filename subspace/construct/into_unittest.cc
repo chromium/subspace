@@ -151,6 +151,7 @@ TEST(Into, Concept) {
   auto f = []<Into<FromThings> T>(T&& t) -> FromThings {
     return sus::move_into(t);
   };
+  EXPECT_EQ(FromThings(1).got_value, 1);
   EXPECT_EQ(f(int(2)).got_value, 2);
   EXPECT_EQ(f(S(3)).got_value, 3);
 }

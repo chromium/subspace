@@ -2054,7 +2054,7 @@ TEST(Slice, CloneFromSlice) {
   struct Cloner {
     i32 i;
 
-    constexpr Cloner(sus::construct::Into<i32> auto i) : i(sus::into(i)) {}
+    constexpr Cloner(i32 i) : i(i) {}
 
     Cloner(Cloner&&) = default;
     Cloner& operator=(Cloner&&) = default;
@@ -2062,8 +2062,8 @@ TEST(Slice, CloneFromSlice) {
     constexpr Cloner clone() const noexcept { return Cloner(i * 10); }
   };
 
-  Vec<Cloner> v1 = sus::vec(1, 2, 3, 4);
-  Vec<Cloner> v2 = sus::vec(6, 7, 8, 9);
+  Vec<Cloner> v1 = sus::vec(1_i32, 2_i32, 3_i32, 4_i32);
+  Vec<Cloner> v2 = sus::vec(6_i32, 7_i32, 8_i32, 9_i32);
   v1["0..2"_r].clone_from_slice(v2["2..4"_r]);
   EXPECT_EQ(v1[0].i, 80);
   EXPECT_EQ(v1[1].i, 90);
@@ -2078,7 +2078,7 @@ TEST(Slice, CloneFromSlice) {
 
   // Constexpr.
   constexpr auto x = []() constexpr {
-    Cloner i[] = {1, 2, 3, 4};
+    Cloner i[] = {1_i32, 2_i32, 3_i32, 4_i32};
     auto s = SliceMut<Cloner>::from(i);
     auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2);
     s1.clone_from_slice(s2);

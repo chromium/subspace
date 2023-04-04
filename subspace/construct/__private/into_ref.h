@@ -23,7 +23,7 @@ struct IntoRef final {
   [[nodiscard]] constexpr IntoRef(FromType&& from) noexcept
       : from_(static_cast<FromType&&>(from)) {}
 
-  template <std::same_as<FromType> ToType>
+  template <std::same_as<std::remove_reference_t<FromType>> ToType>
   constexpr operator ToType() && noexcept {
     return static_cast<ToType&&>(from_);
   }
