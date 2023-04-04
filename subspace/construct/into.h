@@ -71,7 +71,8 @@ namespace sus::construct {
 /// ```
 /// Then `sus::array_into(an_array)` can be used to construct `Slice<T>`.
 template <class FromType, class ToType>
-concept Into = ::sus::construct::From<ToType, FromType> || std::same_as<ToType, FromType>;
+concept Into =
+    ::sus::construct::From<ToType, FromType> || std::same_as<ToType, FromType>;
 
 /// Converts from the given value to whatever a receiver requires.
 ///
