@@ -439,3 +439,5 @@ constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>> split_at_mut_unchecked(
       SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn, _ptr_expr + mid,
                                   length - mid));
 }
+
+#undef _mut_ref

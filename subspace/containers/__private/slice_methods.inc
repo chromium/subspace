@@ -514,5 +514,3 @@ constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
 /// Constructs a `Vec<T>` by cloning each value in the Slice. */
 Vec<T> to_vec() const& noexcept
   requires(::sus::mem::Clone<T>);
-
-#undef _mut_ref
