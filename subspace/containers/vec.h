@@ -453,6 +453,19 @@ class Vec final {
     return VecIntoIter<T>::with(::sus::move(*this));
   }
 
+  /// sus::ops::Eq<Vec<U>> trait.
+  template <class U>
+    requires(::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const Vec<T>& l,
+                                          const Vec<U>& r) noexcept {
+    return l.as_slice() == r.as_slice();
+  }
+
+  template <class U>
+    requires(!::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const Vec<T>& l,
+                                          const Vec<U>& r) = delete;
+
   // Const Vec can be used as a Slice.
   constexpr operator const Slice<T>&() const& { return slice_mut_; }
   constexpr operator Slice<T>&() & { return slice_mut_; }
