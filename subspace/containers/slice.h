@@ -121,8 +121,8 @@ class [[sus_trivial_abi]] Slice final {
     if (l.len() != r.len()) return false;
     const T* lp = l.data_;
     const U* rp = r.data_;
-    const T* const end = lp + l.len();
-    while (lp != end) {
+    const T* const endp = lp + l.len();
+    while (lp != endp) {
       if (!(*lp == *rp)) return false;
       lp += 1u;
       rp += 1u;
