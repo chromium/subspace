@@ -29,6 +29,7 @@
 #include "subspace/mem/clone.h"
 #include "subspace/mem/move.h"
 #include "subspace/num/unsigned_integer.h"
+#include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/ops/range.h"
 #include "subspace/option/option.h"
@@ -111,6 +112,28 @@ class [[sus_trivial_abi]] Slice final {
   constexpr SliceIter<const T&> into_iter() && noexcept {
     return SliceIter<const T&>::with(data_, len_);
   }
+
+  /// sus::ops::Eq<Slice<U>> trait.
+  template <class U>
+    requires(::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const Slice<T>& l,
+                                          const Slice<U>& r) noexcept {
+    if (l.len() != r.len()) return false;
+    const T* lp = l.data_;
+    const U* rp = r.data_;
+    const T* const end = lp + l.len();
+    while (lp != end) {
+      if (!(*lp == *rp)) return false;
+      lp += 1u;
+      rp += 1u;
+    }
+    return true;
+  }
+
+  template <class U>
+    requires(!::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const Slice<T>& l,
+                                          const Slice<U>& r) = delete;
 
 #define _ptr_expr data_
 #define _len_expr len_
@@ -210,6 +233,26 @@ class [[sus_trivial_abi]] SliceMut final {
    */
   constexpr SliceIterMut<T&> into_iter() && noexcept {
     return SliceIterMut<T&>::with(slice_.data_, slice_.len_);
+  }
+
+  /// sus::ops::Eq<SliceMut<U>> trait.
+  template <class U>
+    requires(::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const SliceMut<T>& l,
+                                          const SliceMut<U>& r) noexcept {
+    return l.as_slice() == r.as_slice();
+  }
+
+  template <class U>
+    requires(!::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const SliceMut<T>& l,
+                                          const SliceMut<U>& r) = delete;
+
+  // TODO: Impl AsRef -> Slice<T>.
+  constexpr Slice<T> as_slice() const& noexcept {
+    // SAFETY: The `raw_len()` is the number of elements in the Vec, and the
+    // pointer is to the start of the Vec, so this Slice covers a valid range.
+    return *this;
   }
 
   // SliceMut can be used as a Slice.

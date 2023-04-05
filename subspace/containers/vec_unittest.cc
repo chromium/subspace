@@ -966,4 +966,18 @@ TEST(Vec, ConvertsToSlice) {
   }
 }
 
+TEST(Vec, Eq) {
+  struct NotEq {};
+  static_assert(!sus::ops::Eq<NotEq>);
+
+  static_assert(sus::ops::Eq<Vec<int>>);
+  static_assert(!sus::ops::Eq<Vec<int>, Vec<NotEq>>);
+  static_assert(!sus::ops::Eq<Vec<NotEq>>);
+
+  auto a = sus::vec(1, 2, 3, 4).construct<i32>();
+  auto b = sus::vec(1, 2, 3, 4).construct<i32>();
+  EXPECT_EQ(a, b);
+  b[3_usize] += 1;
+  EXPECT_NE(a, b);
+}
 }  // namespace

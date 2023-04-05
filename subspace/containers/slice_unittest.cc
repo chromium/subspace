@@ -2108,4 +2108,36 @@ TEST(Slice, EndsWith) {
   EXPECT_FALSE(v1[".."_r].ends_with(v1["0..3"_r]));
 }
 
+TEST(Slice, Eq) {
+  struct NotEq {};
+  static_assert(!sus::ops::Eq<NotEq>);
+
+  static_assert(sus::ops::Eq<Slice<int>>);
+  static_assert(!sus::ops::Eq<Slice<int>, Slice<NotEq>>);
+  static_assert(!sus::ops::Eq<Slice<NotEq>>);
+
+  static_assert(sus::ops::Eq<SliceMut<int>>);
+  static_assert(!sus::ops::Eq<SliceMut<int>, SliceMut<NotEq>>);
+  static_assert(!sus::ops::Eq<SliceMut<NotEq>>);
+
+  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  EXPECT_EQ(v1.as_slice(), v1.as_slice());
+  EXPECT_EQ(v1.as_mut_slice(), v1.as_slice());
+  EXPECT_EQ(v1.as_slice(), v1.as_mut_slice());
+  EXPECT_EQ(v1.as_mut_slice(), v1.as_mut_slice());
+  Vec<i32> v2 = sus::vec(1, 2, 3, 4);
+  EXPECT_EQ(v1.as_slice(), v2.as_slice());
+  EXPECT_EQ(v1.as_mut_slice(), v2.as_slice());
+  EXPECT_EQ(v1.as_slice(), v2.as_mut_slice());
+  EXPECT_EQ(v1.as_mut_slice(), v2.as_mut_slice());
+  static_assert(std::same_as<decltype(v1[".."_r]), SliceMut<i32>>);
+  EXPECT_EQ(v1[".."_r], v2[".."_r]);
+  EXPECT_EQ(v1["1.."_r], v2["1.."_r]);
+  EXPECT_EQ(v1["1..3"_r], v2["1..3"_r]);
+  EXPECT_EQ(v1["1..3"_r].as_slice(), v2["1..3"_r].as_slice());
+  v1[3] += 1;
+  EXPECT_EQ(v1["1.."_r], v1["1.."_r]);
+  EXPECT_NE(v1["1.."_r], v2["1.."_r]);
+}
+
 }  // namespace

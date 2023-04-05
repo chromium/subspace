@@ -320,12 +320,7 @@ constexpr bool ends_with(Slice<T> suffix) const& noexcept
   // which has a length of `m`.
   const auto sub = get_range_unchecked(::sus::marker::unsafe_fn,
                                        ::sus::ops::RangeFrom(m - n));
-  // TODO: Use operator==.
-  // return m >= n && suffix == sub;
-  if (m < n) return false;
-  for (::sus::num::usize i; i < n; i += 1)
-    if (!(sub[i] == suffix[i])) return false;
-  return true;
+  return m >= n && suffix == sub;
 }
 
 /// Returns a reference to the element at position `i` in the Slice.

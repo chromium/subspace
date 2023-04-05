@@ -300,6 +300,17 @@ class Array final {
     return eq_impl(r, std::make_index_sequence<N>());
   }
 
+  // TODO: Array is a slice.
+  // Const Array can be used as a Slice.
+  // constexpr operator const Slice<T>&() const& { return slice_mut_; }
+  // constexpr operator Slice<T>&() & { return slice_mut_; }
+  // constexpr operator Slice<T>() && { return ::sus::move(slice_mut_); }
+
+  // TODO: Array is a slice.
+  // Mutable Array can be used as a SliceMut.
+  // constexpr operator SliceMut<T>&() & { return slice_mut_; }
+  // constexpr operator SliceMut<T>&&() && { return ::sus::move(slice_mut_); }
+
  private:
   enum WithInitializer { kWithInitializer };
   template <size_t... Is>
