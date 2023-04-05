@@ -88,11 +88,19 @@ class Vec final {
   ///
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
-  static inline Vec with_capacity(usize capacity) noexcept {
+  static inline constexpr Vec with_capacity(usize capacity) noexcept {
     check(::sus::mem::size_of<T>() * capacity <= size_t{isize::MAX_PRIMITIVE});
     auto v = Vec(nullptr, 0_usize, 0_usize);
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
     v.grow_to_exact(capacity);
+    return v;
+  }
+
+  template <class... Ts>
+    requires((... && std::constructible_from<T, Ts>))
+  static inline constexpr Vec with_values(Ts... values) noexcept {
+    auto v = Vec::with_capacity(sizeof...(Ts));
+    (..., v.push(::sus::forward<Ts>(values)));
     return v;
   }
 

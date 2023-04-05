@@ -61,6 +61,28 @@ TEST(Vec, WithCapacity) {
   }
 }
 
+TEST(Vec, WithValues) {
+  {
+    auto v = Vec<i32>::with_values();
+    EXPECT_EQ(v.len(), 0u);
+    EXPECT_EQ(v.capacity(), 0u);
+  }
+  {
+    auto v = Vec<i32>::with_values(1);
+    EXPECT_EQ(v.len(), 1u);
+    EXPECT_GE(v.capacity(), 1u);
+    EXPECT_EQ(v[0], 1);
+  }
+  {
+    auto v = Vec<i32>::with_values(3, 4, 5);
+    EXPECT_EQ(v.len(), 3u);
+    EXPECT_GE(v.capacity(), 3u);
+    EXPECT_EQ(v[0], 3);
+    EXPECT_EQ(v[1], 4);
+    EXPECT_EQ(v[2], 5);
+  }
+}
+
 TEST(Vec, ConstructorFunction) {
   {
     // All parameters match the vec type.
@@ -980,4 +1002,5 @@ TEST(Vec, Eq) {
   b[3_usize] += 1;
   EXPECT_NE(a, b);
 }
+
 }  // namespace
