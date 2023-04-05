@@ -2140,4 +2140,39 @@ TEST(Slice, Eq) {
   EXPECT_NE(v1["1.."_r], v2["1.."_r]);
 }
 
+TEST(SliceMut, Fill) {
+  auto v1 = Vec<i32>::with_values(1, 2, 3, 4);
+  v1["0..2"_r].fill(5);
+  EXPECT_EQ(v1[0], 5);
+  EXPECT_EQ(v1[1], 5);
+  EXPECT_EQ(v1[2], 3);
+  EXPECT_EQ(v1[3], 4);
+  v1["1..3"_r].fill(6);
+  EXPECT_EQ(v1[0], 5);
+  EXPECT_EQ(v1[1], 6);
+  EXPECT_EQ(v1[2], 6);
+  EXPECT_EQ(v1[3], 4);
+  v1[".."_r].fill(9);
+  EXPECT_EQ(v1[0], 9);
+  EXPECT_EQ(v1[1], 9);
+  EXPECT_EQ(v1[2], 9);
+  EXPECT_EQ(v1[3], 9);
+
+  struct S {
+    i32 i;
+
+    S& operator=(const S& s) {
+      i = s.i + 1;
+      return *this;
+    }
+  };
+  static_assert(sus::mem::Clone<S>);
+  auto v2 = Vec<S>::with_values(S(1), S(10));
+  // Fill from a value in the Vec. If the element being modified also changes
+  // the input, then v2[1] will be 3 instead of 2.
+  v2[".."_r].fill(v2[0]);
+  EXPECT_EQ(v2[0].i, 2);
+  EXPECT_EQ(v2[1].i, 2);
+}
+
 }  // namespace

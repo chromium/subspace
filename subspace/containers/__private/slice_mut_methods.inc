@@ -27,7 +27,8 @@
 /////////////////////////////////////////////////////////
 
 // If we're deleting rvalue const access, we don't want to give rvalue mut
-// access either.
+// access either. Use this in place of no-qualifer-at-all for methods that
+// return a reference.
 #if _delete_rvalue
 #define _mut_ref &
 #else
@@ -114,7 +115,8 @@ constexpr ChunksExactMut<T> chunks_exact_mut(
 /// # Panics
 /// Panics if chunk_size is 0.
 ///
-constexpr ChunksMut<T> chunks_mut(::sus::num::usize chunk_size) _mut_ref noexcept {
+constexpr ChunksMut<T> chunks_mut(
+    ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
   return ChunksMut<T>::with(::sus::containers::SliceMut<T>::from_raw_parts(
                                 ::sus::marker::unsafe_fn, _ptr_expr, _len_expr),
@@ -125,14 +127,14 @@ constexpr ChunksMut<T> chunks_mut(::sus::num::usize chunk_size) _mut_ref noexcep
 ///
 /// The length of `src` must be the same as `*this`.
 ///
-/// This function requires that `T` is trivially copy-assignable in order to give
-/// consistent performance across types. If `T` is not trivially copy-
+/// This function requires that `T` is trivially copy-assignable in order to
+/// give consistent performance across types. If `T` is not trivially copy-
 /// assignable, use `clone_from_slice()`.
 ///
 /// # Panics
 /// This function will panic if the two slices have different lengths, or if the
 /// two slices overlap.
-constexpr void copy_from_slice(Slice<T> src) _mut_ref noexcept
+constexpr void copy_from_slice(Slice<T> src) noexcept
   requires(std::is_trivially_copy_assignable_v<T>)
 {
   const ::sus::num::usize src_len = src.len();
@@ -147,13 +149,16 @@ constexpr void copy_from_slice(Slice<T> src) _mut_ref noexcept
   if (std::is_constant_evaluated()) {
     // Avoid memcpy() when the size is known at compile time, as the compiler
     // can vectorize better and because memcpy() is not constexpr.
-    for (::sus::num::usize i; i < dst_len; i += 1u) *(dst_ptr + i) = *(src_ptr + i);
+    for (::sus::num::usize i; i < dst_len; i += 1u)
+      *(dst_ptr + i) = *(src_ptr + i);
   } else {
     if constexpr (::sus::mem::size_of<T>() > 1u) {
-      constexpr auto max_len = ::sus::num::usize::MAX / ::sus::mem::size_of<T>();
+      constexpr auto max_len =
+          ::sus::num::usize::MAX / ::sus::mem::size_of<T>();
       // We can't use memcpy() if the number of bytes would overflow.
       if (dst_len > max_len) {
-        for (::sus::num::usize i; i < dst_len; i += 1u) *(dst_ptr + i) = *(src_ptr + i);
+        for (::sus::num::usize i; i < dst_len; i += 1u)
+          *(dst_ptr + i) = *(src_ptr + i);
         return;
       }
     }
@@ -167,8 +172,8 @@ constexpr void copy_from_slice(Slice<T> src) _mut_ref noexcept
 
 /// Copies all elements from src into `*this`, using a `memcpy()` or equivalent.
 ///
-/// This function requires that `T` is trivially copy-assignable in order to give
-/// consistent performance across types. If `T` is not trivially copy-
+/// This function requires that `T` is trivially copy-assignable in order to
+/// give consistent performance across types. If `T` is not trivially copy-
 /// assignable, use `clone_from_slice()`.
 ///
 /// # Safety
@@ -178,7 +183,7 @@ constexpr void copy_from_slice(Slice<T> src) _mut_ref noexcept
 /// overflow when multiplied by the size of `T`.
 /// * The `src` slice must not overlap (aka alias) with `*this` in memory.
 constexpr void copy_from_slice_unchecked(::sus::marker::UnsafeFnMarker,
-                                         Slice<T> src) _mut_ref noexcept
+                                         Slice<T> src) noexcept
   requires(std::is_trivially_copy_assignable_v<T>)
 {
   const ::sus::num::usize dst_len = _len_expr;
@@ -192,7 +197,8 @@ constexpr void copy_from_slice_unchecked(::sus::marker::UnsafeFnMarker,
   if (std::is_constant_evaluated()) {
     // Avoid memcpy() when the size is known at compile time, as the compiler
     // can vectorize better and because memcpy() is not constexpr.
-    for (::sus::num::usize i; i < dst_len; i += 1u) *(dst_ptr + i) = *(src_ptr + i);
+    for (::sus::num::usize i; i < dst_len; i += 1u)
+      *(dst_ptr + i) = *(src_ptr + i);
   } else {
     // This does the multiplication as size_t, not usize, so it does not check
     // for overflow.
@@ -206,7 +212,7 @@ constexpr void copy_from_slice_unchecked(::sus::marker::UnsafeFnMarker,
 ///
 /// # Panics
 /// This function will panic if the two slices have different lengths.
-constexpr void clone_from_slice(Slice<T> src) _mut_ref noexcept
+constexpr void clone_from_slice(Slice<T> src) noexcept
   requires(::sus::mem::Clone<T>)
 {
   const ::sus::num::usize src_len = src.len();
@@ -232,6 +238,21 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
   return _ptr_expr[i.primitive_value];
 }
 #endif
+
+/// Fills the slice with elements by cloning `value`.
+constexpr void fill(T value) noexcept
+  requires(::sus::mem::Clone<T>)
+{
+  // This method receives `value` by value to avoid the possiblity that it
+  // aliases with an element in the slice. If `value` is modified by cloning
+  // into an aliased element, the `value` may clone differently thereafter.
+  T* ptr = _ptr_expr;
+  T* end_ptr = ptr + _len_expr;
+  while (ptr != end_ptr) {
+    ::sus::clone_into(::sus::mem::mref(*ptr), value);
+    ptr += 1u;
+  }
+}
 
 /// Returns a mutable reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
@@ -297,7 +318,8 @@ constexpr inline SliceMut<T> operator[](
 /// of bounds.
 ///
 constexpr Option<SliceMut<T>> get_range_mut(
-    const ::sus::ops::RangeBounds<::sus::num::usize> auto range) _mut_ref noexcept {
+    const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
+    _mut_ref noexcept {
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
   const ::sus::num::usize rend = range.end_bound().unwrap_or(_len_expr);
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
@@ -322,7 +344,8 @@ constexpr Option<SliceMut<T>> get_range_mut(
 ///
 constexpr SliceMut<T> get_range_mut_unchecked(
     ::sus::marker::UnsafeFnMarker,
-    const ::sus::ops::RangeBounds<::sus::num::usize> auto range) _mut_ref noexcept {
+    const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
+    _mut_ref noexcept {
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
   const ::sus::num::usize rend = range.end_bound().unwrap_or(_len_expr);
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
@@ -349,7 +372,7 @@ constexpr SliceIterMut<T&> iter_mut() _mut_ref noexcept {
 //
 // TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
 // also be constexpr?
-void sort() _mut_ref noexcept
+void sort() noexcept
   requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
 {
   if (_len_expr > ::sus::num::usize(0u)) {
@@ -372,7 +395,7 @@ void sort() _mut_ref noexcept
 template <::sus::fn::FnMut<::sus::fn::Anything(const T&, const T&)> F, int&...,
           class R = std::invoke_result_t<F, const T&, const T&>>
   requires(::sus::ops::Ordering<R>)
-void sort_by(F compare) _mut_ref noexcept {
+void sort_by(F compare) noexcept {
   if (_len_expr > ::sus::num::usize(0u)) {
     std::stable_sort(
         _ptr_expr, _ptr_expr + _len_expr,
@@ -385,7 +408,7 @@ void sort_by(F compare) _mut_ref noexcept {
 /// This sort is unstable (i.e., may reorder equal elements), in-place (i.e.,
 /// does not allocate), and O(n * log(n)) worst-case.
 ///
-constexpr void sort_unstable() _mut_ref noexcept
+constexpr void sort_unstable() noexcept
   requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
 {
   if (_len_expr > ::sus::num::usize(0u)) {
@@ -406,7 +429,7 @@ constexpr void sort_unstable() _mut_ref noexcept
 template <::sus::fn::FnMut<::sus::fn::Anything(const T&, const T&)> F, int&...,
           class R = std::invoke_result_t<F, const T&, const T&>>
   requires(::sus::ops::Ordering<R>)
-constexpr void sort_unstable_by(F compare) _mut_ref noexcept {
+constexpr void sort_unstable_by(F compare) noexcept {
   if (_len_expr > ::sus::num::usize(0u)) {
     std::sort(_ptr_expr, _ptr_expr + _len_expr,
               [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
