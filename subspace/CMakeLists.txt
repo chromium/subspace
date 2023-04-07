@@ -117,6 +117,7 @@ target_sources(subspace PUBLIC
     "num/__private/unsigned_integer_macros.h"
     "num/float.h"
     "num/float_concepts.h"
+    "num/float_out_of_line.h"
     "num/fp_category.h"
     "num/integer_concepts.h"
     "num/signed_integer.h"

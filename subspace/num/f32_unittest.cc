@@ -19,7 +19,7 @@
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
 #include "subspace/num/__private/intrinsics.h"
-#include "subspace/num/float.h"
+#include "subspace/num/types.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/prelude.h"

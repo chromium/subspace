@@ -14,11 +14,22 @@
 
 #pragma once
 
+#include <concepts>
 #include <functional>  // TODO: remove this but we need to hash things > size_t.
 
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/marker/unsafe.h"
+#include "subspace/mem/size_of.h"
 #include "subspace/num/__private/float_consts.h"
 #include "subspace/num/__private/float_macros.h"
+#include "subspace/num/__private/float_ordering.h"
+#include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/__private/literals.h"
+#include "subspace/num/cmath_macros.h"
+#include "subspace/num/float_concepts.h"
+#include "subspace/num/fp_category.h"
+#include "subspace/num/signed_integer.h"
+#include "subspace/num/unsigned_integer.h"
 
 namespace sus::num {
 
@@ -32,8 +43,6 @@ struct f32 final {
   _sus__float_consts_struct(f32);
   _sus__float(f32, float, u32);
 };
-_sus__float_consts_struct_out_of_line(f32, f);
-_sus__float_constants_out_of_line(f32, float);
 
 /// A 64-bit floating point type (specifically, the “binary64” type defined in
 /// IEEE 754-2008).
@@ -45,8 +54,6 @@ struct f64 final {
   _sus__float_consts_struct(f64);
   _sus__float(f64, double, u64);
 };
-_sus__float_consts_struct_out_of_line(f64, );
-_sus__float_constants_out_of_line(f64, double);
 
 }  // namespace sus::num
 
