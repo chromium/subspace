@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subspace/mem/clone.h"
 #include "subspace/mem/move.h"
 
 namespace sus::num {
@@ -25,10 +26,10 @@ namespace sus::containers {
 /// Types that support being flattened and concatenated together into a
 /// container.
 ///
-/// For example, `Slice` is `Concat`, which allows a `Slice<Slice<T>>` to be
-/// concatenated into a `Slice<T>` of all the original elements. This concept
-/// requires the cooperation of the output type, through a `with_capacity()`
-/// constructor method and an `append()` method.
+/// For example, `Slice` is `Concat`, which allows a `Slice<Slice<U>>` to be
+/// concatenated into a `Slice<U>` of all the original elements. This concept
+/// requires `T` to provide `concat_into(T::ConcatOutputType&)` that does the
+/// concatenation.
 ///
 /// TODO: String should satisfy Concat as well.
 template <class T>

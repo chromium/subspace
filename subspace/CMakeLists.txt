@@ -47,6 +47,8 @@ target_sources(subspace PUBLIC
     "containers/iterators/slice_iter.h"
     "containers/iterators/vec_iter.h"
     "containers/array.h"
+    "containers/concat.h"
+    "containers/join.h"
     "containers/slice.h"
     "containers/vec.h"
     "fn/__private/callable_types.h"

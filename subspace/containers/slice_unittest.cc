@@ -1890,14 +1890,7 @@ TEST(Slice, ConcatSlices) {
     Slice<Slice<i32>> s = vs.as_slice();
     auto c = s.concat();
     static_assert(std::same_as<decltype(c), Vec<i32>>);
-
-    EXPECT_EQ(c.len(), 9u);
-    i32 expected = 1;
-    for (i32 i : c) {
-      EXPECT_EQ(i, expected);
-      expected += 1;
-    }
-    EXPECT_EQ(expected, 10);
+    EXPECT_EQ(c, Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9));
   }
   {
     Vec<SliceMut<i32>> vs =
@@ -1905,14 +1898,7 @@ TEST(Slice, ConcatSlices) {
     SliceMut<SliceMut<i32>> s = vs.as_mut_slice();
     auto c = s.concat();
     static_assert(std::same_as<decltype(c), Vec<i32>>);
-
-    EXPECT_EQ(c.len(), 9u);
-    i32 expected = 1;
-    for (i32 i : c) {
-      EXPECT_EQ(i, expected);
-      expected += 1;
-    }
-    EXPECT_EQ(expected, 10);
+    EXPECT_EQ(c, Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9));
   }
 }
 
@@ -1920,12 +1906,66 @@ TEST(Slice, ConcatExample) {
   i32 a1[] = {1, 2}, a2[] = {3, 4};
   Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
   Vec<i32> v = Slice<Slice<i32>>::from(as).concat();
-  // TODO: sus::check(v == sus::vec(1_i32, 2_i32, 3_i32, 4_i32).construct());
-  sus::check(v[0u] == 1);
-  sus::check(v[1u] == 2);
-  sus::check(v[2u] == 3);
-  sus::check(v[3u] == 4);
-}  // namespace
+  sus::check(v == sus::Vec<i32>::with_values(1, 2, 3, 4));
+}
+
+TEST(Slice, JoinSlices) {
+  static_assert(sus::containers::Join<const Slice<i32>, const Slice<i32>>);
+  static_assert(sus::containers::Join<const Slice<i32>, Slice<i32>>);
+  static_assert(sus::containers::Join<const Slice<i32>, i32>);
+  static_assert(sus::containers::Join<Slice<i32>, const Slice<i32>>);
+  static_assert(sus::containers::Join<Slice<i32>, Slice<i32>>);
+  static_assert(sus::containers::Join<Slice<i32>, i32>);
+  static_assert(sus::containers::Join<const SliceMut<i32>, const SliceMut<i32>>);
+  static_assert(sus::containers::Join<const SliceMut<i32>, SliceMut<i32>>);
+  static_assert(sus::containers::Join<const SliceMut<i32>, i32>);
+  static_assert(sus::containers::Join<SliceMut<i32>, const SliceMut<i32>>);
+  static_assert(sus::containers::Join<SliceMut<i32>, SliceMut<i32>>);
+  static_assert(sus::containers::Join<SliceMut<i32>, i32>);
+  // The separator can be converted.
+  static_assert(sus::containers::Join<SliceMut<i32>, int>);
+
+  Vec<i32> v1 = sus::vec(1, 2, 3, 4);
+  Vec<i32> v2 = sus::vec(5, 6);
+  Vec<i32> v3 = sus::vec(7, 8, 9);
+  Vec<i32> vsep = sus::vec(98, 99);
+  {
+    Vec<Slice<i32>> vs = sus::vec(v1.as_slice(), v2.as_slice(), v3.as_slice());
+    Slice<Slice<i32>> s = vs.as_slice();
+    auto c = s.join(99);
+    static_assert(std::same_as<decltype(c), Vec<i32>>);
+    EXPECT_EQ(c, Vec<i32>::with_values(1, 2, 3, 4, 99, 5, 6, 99, 7, 8, 9));
+
+    auto c2 = s.join(vsep);
+    static_assert(std::same_as<decltype(c2), Vec<i32>>);
+    EXPECT_EQ(c2, Vec<i32>::with_values(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
+  }
+  {
+    Vec<SliceMut<i32>> vs =
+        sus::vec(v1.as_mut_slice(), v2.as_mut_slice(), v3.as_mut_slice());
+    SliceMut<SliceMut<i32>> s = vs.as_mut_slice();
+    auto c = s.join(99);
+    static_assert(std::same_as<decltype(c), Vec<i32>>);
+    EXPECT_EQ(c, Vec<i32>::with_values(1, 2, 3, 4, 99, 5, 6, 99, 7, 8, 9));
+
+    auto c2 = s.join(vsep);
+    static_assert(std::same_as<decltype(c2), Vec<i32>>);
+    EXPECT_EQ(c2, Vec<i32>::with_values(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
+  }
+}
+
+TEST(Slice, JoinExample) {
+  i32 a1[] = {1, 2}, a2[] = {3, 4}, asep[] = {10, 11, 12};
+  Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
+
+  // Join slices with a slice between.
+  Vec<i32> v = Slice<Slice<i32>>::from(as).join(Slice<i32>::from(asep));
+  sus::check(v == sus::Vec<i32>::with_values(1, 2, 10, 11, 12, 3, 4));
+
+  // Join slices with a single item between.
+  Vec<i32> v2 = Slice<Slice<i32>>::from(as).join(99);
+  sus::check(v2 == sus::Vec<i32>::with_values(1, 2, 99, 3, 4));
+}
 
 TEST(SliceMut, ConvertsToSlice) {
   Vec<i32> v = sus::vec(1, 2, 3, 4);
