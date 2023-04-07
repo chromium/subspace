@@ -41,7 +41,7 @@ class Array;
   PrimitiveT primitive_value = PrimitiveT{0.0};                               \
   static_assert(true)
 
-#define _sus__float_constants_defn(T, PrimitiveT)                              \
+#define _sus__float_constants(T, PrimitiveT)                              \
   /** Smallest finite primitive value. */                                      \
   static constexpr auto MIN_PRIMITIVE = __private::min_value<PrimitiveT>();    \
   /** Largest finite primitive value. */                                       \
@@ -94,7 +94,7 @@ class Array;
   static const T NEG_INFINITY;                                                 \
   static_assert(true)
 
-#define _sus__float_constants_decl(T, PrimitiveT)                        \
+#define _sus__float_constants_out_of_line(T, PrimitiveT)                        \
   inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                       \
   inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                       \
   inline constexpr T T::EPSILON = T(__private::epsilon<PrimitiveT>());   \
@@ -774,7 +774,7 @@ class Array;
 
 #define _sus__float(T, PrimitiveT, UnsignedIntT)                          \
   _sus__float_storage(PrimitiveT);                                        \
-  _sus__float_constants_defn(T, PrimitiveT);                              \
+  _sus__float_constants(T, PrimitiveT);                              \
   _sus__float_construct(T, PrimitiveT);                                   \
   _sus__float_to_primitive(T, PrimitiveT);                                \
   _sus__float_comparison(T);                                              \

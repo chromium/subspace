@@ -167,7 +167,7 @@ class [[sus_trivial_abi]] Slice final {
 #define _len_expr len_
 #define _delete_rvalue 0
 #define Self Slice
-#include "__private/slice_methods_impl.inc"
+#include "__private/slice_methods_out_of_line.inc"
 #undef Self
 #undef _ptr_expr
 #undef _len_expr
@@ -289,7 +289,7 @@ class [[sus_trivial_abi]] SliceMut final {
 #define _len_expr slice_.len_
 #define _delete_rvalue 0
 #define Self SliceMut
-#include "__private/slice_methods_impl.inc"
+#include "__private/slice_methods_out_of_line.inc"
 #undef _ptr_expr
 #undef _len_expr
 #undef _delete_rvalue
