@@ -16,7 +16,7 @@
 
 #include <concepts>
 
-#include "subspace/mem/move.h"
+#include "subspace/mem/forward.h"
 
 namespace sus::fn {
 struct Anything;
@@ -67,7 +67,7 @@ struct InvokedFnOnce {
 
 template <class F, class... Ts>
   requires requires(F&& f) {
-    { ::sus::move(f)(std::declval<Ts>()...) };
+    { ::sus::forward<F>(f)(std::declval<Ts>()...) };
   }
 struct InvokedFnOnce<F, ArgsPack<Ts...>> {
   static decltype(std::declval<F&&>()(std::declval<Ts>()...)) returns();
@@ -85,11 +85,11 @@ struct InvokedFnMut {
 };
 
 template <class F, class... Ts>
-  requires requires(F& f) {
+  requires requires(F f) {
     { f(std::declval<Ts>()...) };
   }
 struct InvokedFnMut<F, ArgsPack<Ts...>> {
-  static decltype(std::declval<F&>()(std::declval<Ts>()...)) returns();
+  static decltype(std::declval<F>()(std::declval<Ts>()...)) returns();
 };
 
 /// Unpacks an `ArgsPack` of function argument types, and determines if a

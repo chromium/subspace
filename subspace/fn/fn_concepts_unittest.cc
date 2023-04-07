@@ -17,6 +17,7 @@
 #include <concepts>
 
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/mem/move.h"
 #include "subspace/prelude.h"
 #include "subspace/tuple/tuple.h"
 
@@ -112,15 +113,15 @@ static_assert(FnOnce<FChildParent, Anything(Child*)>);
 static_assert(!FnOnce<FChildParent, Anything(int)>);  // Incompatible argument.
 
 // Non-void return type.
-static_assert(!Fn<FVoid, NonVoid()>);                // Void return.
+static_assert(!Fn<FVoid, NonVoid()>);              // Void return.
 static_assert(!Fn<FVoidIntRvalue, NonVoid(int)>);  // Void return.
 static_assert(Fn<FChildParent, NonVoid(Child*)>);
 static_assert(!Fn<FChildParent, NonVoid(int)>);       // Incompatible argument.
-static_assert(!FnMut<FVoid, NonVoid()>);                // Void return.
+static_assert(!FnMut<FVoid, NonVoid()>);              // Void return.
 static_assert(!FnMut<FVoidIntRvalue, NonVoid(int)>);  // Void return.
 static_assert(FnMut<FChildParent, NonVoid(Child*)>);
 static_assert(!FnMut<FChildParent, NonVoid(int)>);     // Incompatible argument.
-static_assert(!FnOnce<FVoid, NonVoid()>);                // Void return.
+static_assert(!FnOnce<FVoid, NonVoid()>);              // Void return.
 static_assert(!FnOnce<FVoidIntRvalue, NonVoid(int)>);  // Void return.
 static_assert(FnOnce<FChildParent, NonVoid(Child*)>);
 static_assert(!FnOnce<FChildParent, NonVoid(int)>);  // Incompatible argument.
@@ -172,7 +173,7 @@ TEST(FnConcepts, FnOnceExample) {
 
 // Accepts any type that can be called once with (Option<i32>) and returns
 // i32.
-static i32 call_mut(sus::fn::FnMut<i32(sus::Option<i32>)> auto f) {
+static i32 call_mut(sus::fn::FnMut<i32(sus::Option<i32>)> auto&& f) {
   return f(sus::some(400)) + f(sus::some(100));  // Returns an i32.
 }
 
@@ -243,6 +244,27 @@ TEST(FnConcepts, Convertible) {
   EXPECT_EQ(5, S::fn_once([](i32 i) -> i32 { return i * 2 + 1; }));
   EXPECT_EQ(5, S::fn_mut([](i32 i) -> i32 { return i * 2 + 1; }));
   EXPECT_EQ(5, S::fn([](i32 i) -> i32 { return i * 2 + 1; }));
+}
+
+struct R {
+  static i32 fn_mut_v(FnMut<i32(i32)> auto f) { return f(2); }
+  static i32 fn_mut_l(FnMut<i32(i32)> auto& f) { return f(2); }
+  static i32 fn_mut_r(FnMut<i32(i32)> auto&& f) { return f(2); }
+};
+
+TEST(FnConcepts, FnMutPassByReference) {
+  auto x = [j = 0_i32](i32 i) mutable {
+    j += 1;
+    return j + i;
+  };
+  EXPECT_EQ(3, R::fn_mut_v(x));  // By value, `x` is not mutated locally.
+  EXPECT_EQ(3, R::fn_mut_l(x));  // By reference, `x` is mutated locally.
+  EXPECT_EQ(4, R::fn_mut_r(x));  // By reference, `x` is mutated locally.
+  EXPECT_EQ(5, R::fn_mut_v(x));
+
+  // Verify by value and by rvalue ref can receive an rvalue type.
+  EXPECT_EQ(3, R::fn_mut_v([](i32 i) { return i + 1; }));
+  EXPECT_EQ(3, R::fn_mut_r([](i32 i) { return i + 1; }));
 }
 
 }  // namespace
