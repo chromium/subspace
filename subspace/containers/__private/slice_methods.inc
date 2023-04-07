@@ -564,6 +564,18 @@ static constexpr void join_sep_into(::sus::containers::Vec<T>& vec,
   vec.push(::sus::clone(separator));
 }
 
+/// Returns the last element of the slice, or `None` if it is empty.
+constexpr ::sus::Option<const T&> last() const& noexcept {
+  if (_len_expr > 0u)
+    return ::sus::Option<const T&>::some(*(_ptr_expr + _len_expr - 1u));
+  else
+    return ::sus::Option<const T&>::none();
+}
+
+#if _delete_rvalue
+constexpr ::sus::Option<const T&> last() && = delete;
+#endif
+
 /// Creates a vector by copying a slice n times.
 ///
 /// # Panics

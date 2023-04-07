@@ -1916,7 +1916,8 @@ TEST(Slice, JoinSlices) {
   static_assert(sus::containers::Join<Slice<i32>, const Slice<i32>>);
   static_assert(sus::containers::Join<Slice<i32>, Slice<i32>>);
   static_assert(sus::containers::Join<Slice<i32>, i32>);
-  static_assert(sus::containers::Join<const SliceMut<i32>, const SliceMut<i32>>);
+  static_assert(
+      sus::containers::Join<const SliceMut<i32>, const SliceMut<i32>>);
   static_assert(sus::containers::Join<const SliceMut<i32>, SliceMut<i32>>);
   static_assert(sus::containers::Join<const SliceMut<i32>, i32>);
   static_assert(sus::containers::Join<SliceMut<i32>, const SliceMut<i32>>);
@@ -1938,7 +1939,8 @@ TEST(Slice, JoinSlices) {
 
     auto c2 = s.join(vsep);
     static_assert(std::same_as<decltype(c2), Vec<i32>>);
-    EXPECT_EQ(c2, Vec<i32>::with_values(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
+    EXPECT_EQ(c2,
+              Vec<i32>::with_values(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
   }
   {
     Vec<SliceMut<i32>> vs =
@@ -1950,7 +1952,8 @@ TEST(Slice, JoinSlices) {
 
     auto c2 = s.join(vsep);
     static_assert(std::same_as<decltype(c2), Vec<i32>>);
-    EXPECT_EQ(c2, Vec<i32>::with_values(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
+    EXPECT_EQ(c2,
+              Vec<i32>::with_values(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
   }
 }
 
@@ -2280,6 +2283,39 @@ TEST(SliceMut, FirstMut) {
       std::same_as<sus::Option<const NoCopyMove&>, decltype(s.first())>);
   static_assert(
       std::same_as<sus::Option<NoCopyMove&>, decltype(s.first_mut())>);
+}
+
+TEST(Slice, Last) {
+  const auto v1 = Vec<i32>::with_values(1, 2, 3, 4);
+  EXPECT_EQ(&v1[".."_r].last().unwrap(), v1.as_ptr() + 3u);
+  EXPECT_EQ(&v1["..2"_r].last().unwrap(), v1.as_ptr() + 1u);
+  EXPECT_EQ(v1["1..1"_r].last(), sus::None);
+
+  NoCopyMove n[] = {NoCopyMove(), NoCopyMove(), NoCopyMove()};
+  auto s = Slice<NoCopyMove>::from_raw_parts(unsafe_fn, n, 3u);
+  EXPECT_EQ(&s[".."_r].last().unwrap(), &n[2]);
+  EXPECT_EQ(&s["..2"_r].last().unwrap(), &n[1]);
+  EXPECT_EQ(s["2..1"_r].last(), sus::None);
+
+  static_assert(
+      std::same_as<sus::Option<const NoCopyMove&>, decltype(s.last())>);
+}
+
+TEST(SliceMut, LastMut) {
+  auto v1 = Vec<i32>::with_values(1, 2, 3, 4);
+  EXPECT_EQ(&v1[".."_r].last_mut().unwrap(), v1.as_ptr() + 3u);
+  EXPECT_EQ(&v1["..2"_r].last_mut().unwrap(), v1.as_ptr() + 1u);
+  EXPECT_EQ(v1["1..1"_r].last_mut(), sus::None);
+
+  NoCopyMove n[] = {NoCopyMove(), NoCopyMove(), NoCopyMove()};
+  auto s = SliceMut<NoCopyMove>::from_raw_parts(unsafe_fn, n, 3u);
+  EXPECT_EQ(&s[".."_r].last_mut().unwrap(), &n[2]);
+  EXPECT_EQ(&s["..2"_r].last_mut().unwrap(), &n[1]);
+  EXPECT_EQ(s["2..1"_r].last_mut(), sus::None);
+
+  static_assert(
+      std::same_as<sus::Option<const NoCopyMove&>, decltype(s.last())>);
+  static_assert(std::same_as<sus::Option<NoCopyMove&>, decltype(s.last_mut())>);
 }
 
 TEST(Slice, Repeat) {
