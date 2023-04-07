@@ -623,7 +623,7 @@ class Vec final {
 #define _len_expr slice_mut_.slice_.len_
 #define _delete_rvalue 1
 #define Self Vec
-#include "__private/slice_methods_impl.inc"
+#include "__private/slice_methods_out_of_line.inc"
 #undef _ptr_expr
 #undef _len_expr
 #undef _delete_rvalue

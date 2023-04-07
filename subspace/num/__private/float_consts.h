@@ -14,7 +14,7 @@
 
 #pragma once
 
-#define _sus__float_consts_defn(T)       \
+#define _sus__float_consts_struct(T)       \
   struct consts {                        \
     /** Euler's number (e) */            \
     static const T E;                \
@@ -57,7 +57,7 @@
   };                                     \
   static_assert(true)
 
-#define _sus__float_consts_decl(T, Suffix)                                     \
+#define _sus__float_consts_struct_out_of_line(T, Suffix)                                     \
   inline constexpr T T::consts::E =                                            \
       T(2.718281828459045235360287471352662##Suffix);                          \
   inline constexpr T T::consts::FRAC_1_PI =                                    \
