@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,15 @@
 
 #pragma once
 
+#include "subspace/containers/array.h"
 #include "subspace/num/float.h"
-#include "subspace/num/float_out_of_line.h"
-#include "subspace/num/signed_integer.h"
-#include "subspace/num/unsigned_integer.h"
-#include "subspace/num/unsigned_integer_out_of_line.h"
+
+namespace sus::num {
+
+_sus__float_consts_struct_out_of_line(f32, f);
+_sus__float_out_of_line(f32, float, u32);
+
+_sus__float_consts_struct_out_of_line(f64, );
+_sus__float_out_of_line(f64, double, u64);
+
+}  // namespace sus::num

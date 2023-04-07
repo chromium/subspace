@@ -14,25 +14,6 @@
 
 #pragma once
 
-#include <concepts>
-
-#include "subspace/macros/__private/compiler_bugs.h"
-#include "subspace/marker/unsafe.h"
-#include "subspace/mem/size_of.h"
-#include "subspace/num/__private/float_ordering.h"
-#include "subspace/num/__private/intrinsics.h"
-#include "subspace/num/cmath_macros.h"
-#include "subspace/num/float_concepts.h"
-#include "subspace/num/fp_category.h"
-#include "subspace/num/signed_integer.h"
-#include "subspace/num/unsigned_integer.h"
-
-namespace sus::containers {
-template <class T, size_t N>
-  requires(N <= size_t{PTRDIFF_MAX})
-class Array;
-}
-
 #define _sus__float_storage(PrimitiveT)                                       \
   /** The inner primitive value, in case it needs to be unwrapped from the    \
    * type. Avoid using this member except to convert when a consumer requires \
@@ -41,7 +22,7 @@ class Array;
   PrimitiveT primitive_value = PrimitiveT{0.0};                               \
   static_assert(true)
 
-#define _sus__float_constants(T, PrimitiveT)                              \
+#define _sus__float_constants(T, PrimitiveT)                                   \
   /** Smallest finite primitive value. */                                      \
   static constexpr auto MIN_PRIMITIVE = __private::min_value<PrimitiveT>();    \
   /** Largest finite primitive value. */                                       \
@@ -94,7 +75,7 @@ class Array;
   static const T NEG_INFINITY;                                                 \
   static_assert(true)
 
-#define _sus__float_constants_out_of_line(T, PrimitiveT)                        \
+#define _sus__float_constants_out_of_line(T, PrimitiveT)                 \
   inline constexpr T T::MIN = T(T::MIN_PRIMITIVE);                       \
   inline constexpr T T::MAX = T(T::MAX_PRIMITIVE);                       \
   inline constexpr T T::EPSILON = T(__private::epsilon<PrimitiveT>());   \
@@ -192,27 +173,27 @@ class Array;
   constexpr inline T operator-() const { return T(-primitive_value); }
 
 #define _sus__float_binary_ops(T)                                        \
-  /** sus::num::Add<##T##> trait.                                   \
+  /** sus::num::Add<##T##> trait.                                        \
    * #[doc.overloads=float##T##.+] */                                    \
   friend constexpr inline T operator+(const T& l, const T& r) noexcept { \
     return l.primitive_value + r.primitive_value;                        \
   }                                                                      \
-  /** sus::num::Sub<##T##> trait.                                   \
+  /** sus::num::Sub<##T##> trait.                                        \
    * #[doc.overloads=float##T##.-] */                                    \
   friend constexpr inline T operator-(const T& l, const T& r) noexcept { \
     return l.primitive_value - r.primitive_value;                        \
   }                                                                      \
-  /** sus::num::Mul<##T##> trait.                                   \
+  /** sus::num::Mul<##T##> trait.                                        \
    * #[doc.overloads=float##T##.*] */                                    \
   friend constexpr inline T operator*(const T& l, const T& r) noexcept { \
     return l.primitive_value * r.primitive_value;                        \
   }                                                                      \
-  /** sus::num::Div<##T##> trait.                                   \
+  /** sus::num::Div<##T##> trait.                                        \
    * #[doc.overloads=float##T##./] */                                    \
   friend constexpr inline T operator/(const T& l, const T& r) noexcept { \
     return l.primitive_value / r.primitive_value;                        \
   }                                                                      \
-  /** sus::num::Rem<##T##> trait.                                   \
+  /** sus::num::Rem<##T##> trait.                                        \
    *                                                                     \
    * The remainder from the division of two floats.                      \
    *                                                                     \
@@ -228,23 +209,23 @@ class Array;
   static_assert(true)
 
 #define _sus__float_mutable_ops(T)                                       \
-  /** sus::num::AddAssign<##T##> trait. */                          \
+  /** sus::num::AddAssign<##T##> trait. */                               \
   constexpr inline void operator+=(T r)& noexcept {                      \
     primitive_value += r.primitive_value;                                \
   }                                                                      \
-  /** sus::num::SubAssign<##T##> trait. */                          \
+  /** sus::num::SubAssign<##T##> trait. */                               \
   constexpr inline void operator-=(T r)& noexcept {                      \
     primitive_value -= r.primitive_value;                                \
   }                                                                      \
-  /** sus::num::MulAssign<##T##> trait. */                          \
+  /** sus::num::MulAssign<##T##> trait. */                               \
   constexpr inline void operator*=(T r)& noexcept {                      \
     primitive_value *= r.primitive_value;                                \
   }                                                                      \
-  /** sus::num::DivAssign<##T##> trait. */                          \
+  /** sus::num::DivAssign<##T##> trait. */                               \
   constexpr inline void operator/=(T r)& noexcept {                      \
     primitive_value /= r.primitive_value;                                \
   }                                                                      \
-  /** sus::num::RemAssign<##T##> trait.                             \
+  /** sus::num::RemAssign<##T##> trait.                                  \
    *                                                                     \
    * Assigns the remainder from the division of two floats.              \
    *                                                                     \
@@ -719,45 +700,32 @@ class Array;
   /** Return the memory representation of this floating point number as a byte \
    * array in big-endian (network) byte order.                                 \
    */                                                                          \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
-  constexpr Array to_be_bytes() const& noexcept {                              \
-    return to_bits().to_be_bytes sus_clang_bug_58835(<Array>)();               \
-  }                                                                            \
+  constexpr ::sus::containers::Array<u8, Bytes> to_be_bytes() const& noexcept; \
   /** Return the memory representation of this floating point number as a byte \
    * array in little-endian byte order.                                        \
    */                                                                          \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
-  constexpr Array to_le_bytes() const& noexcept {                              \
-    return to_bits().to_le_bytes sus_clang_bug_58835(<Array>)();               \
-  }                                                                            \
+  constexpr ::sus::containers::Array<u8, Bytes> to_le_bytes() const& noexcept; \
   /** Return the memory representation of this floating point number as a byte \
    * array in native byte order.                                               \
    *                                                                           \
    * As the target platform's native endianness is used, portable code should  \
    * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.          \
    */                                                                          \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
-  constexpr Array to_ne_bytes() const& noexcept {                              \
-    return to_bits().to_ne_bytes sus_clang_bug_58835(<Array>)();               \
-  }                                                                            \
+  constexpr ::sus::containers::Array<u8, Bytes> to_ne_bytes() const& noexcept; \
   /** Create a floating point value from its representation as a byte array in \
    * big endian.                                                               \
    *                                                                           \
    * See `##T##::from_bits()` for why this function is not constexpr.          \
    */                                                                          \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
-  static T from_be_bytes(const Array& bytes) noexcept {                        \
-    return T::from_bits(UnsignedIntT::from_be_bytes(bytes));                   \
-  }                                                                            \
+  static T from_be_bytes(                                                      \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
   /** Create a floating point value from its representation as a byte array in \
    * big endian.                                                               \
    *                                                                           \
    *  See `##T##::from_bits()` for why this function is not constexpr.         \
    */                                                                          \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
-  static T from_le_bytes(const Array& bytes) noexcept {                        \
-    return T::from_bits(UnsignedIntT::from_le_bytes(bytes));                   \
-  }                                                                            \
+  static T from_le_bytes(                                                      \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
   /** Create a floating point value from its representation as a byte array in \
    * native endian.                                                            \
    *                                                                           \
@@ -767,30 +735,60 @@ class Array;
    *                                                                           \
    *  See `##T##::from_bits()` for why this function is not constexpr.         \
    */                                                                          \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>        \
-  static T from_ne_bytes(const Array& bytes) noexcept {                        \
-    return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));                   \
-  }
-
-#define _sus__float(T, PrimitiveT, UnsignedIntT)                          \
-  _sus__float_storage(PrimitiveT);                                        \
-  _sus__float_constants(T, PrimitiveT);                              \
-  _sus__float_construct(T, PrimitiveT);                                   \
-  _sus__float_to_primitive(T, PrimitiveT);                                \
-  _sus__float_comparison(T);                                              \
-  _sus__float_unary_ops(T);                                               \
-  _sus__float_binary_ops(T);                                              \
-  _sus__float_mutable_ops(T);                                             \
-  _sus__float_abs(T, PrimitiveT);                                         \
-  _sus__float_math(T, PrimitiveT);                                        \
-  _sus__float_fract_trunc(T);                                             \
-  _sus__float_convert_to(T, PrimitiveT);                                  \
-  _sus__float_bytes(T, UnsignedIntT);                                     \
-  _sus__float_category(T);                                                \
-  _sus__float_clamp(T);                                                   \
-  _sus__float_euclid(T, PrimitiveT);                                      \
-  _sus__float_endian(T, ::sus::mem::size_of<PrimitiveT>(), UnsignedIntT); \
+  static T from_ne_bytes(                                                      \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
   static_assert(true)
+
+#define _sus__float_endian_out_of_line(T, Bytes, UnsignedIntT)     \
+  constexpr ::sus::containers::Array<u8, Bytes> T::to_be_bytes()   \
+      const& noexcept {                                            \
+    return to_bits().to_be_bytes();                                \
+  }                                                                \
+  constexpr ::sus::containers::Array<u8, Bytes> T::to_le_bytes()   \
+      const& noexcept {                                            \
+    return to_bits().to_le_bytes();                                \
+  }                                                                \
+  constexpr ::sus::containers::Array<u8, Bytes> T::to_ne_bytes()   \
+      const& noexcept {                                            \
+    return to_bits().to_ne_bytes();                                \
+  }                                                                \
+  inline T T::from_be_bytes(                                       \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept { \
+    return T::from_bits(UnsignedIntT::from_be_bytes(bytes));       \
+  }                                                                \
+  inline T T::from_le_bytes(                                       \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept { \
+    return T::from_bits(UnsignedIntT::from_le_bytes(bytes));       \
+  }                                                                \
+  inline T T::from_ne_bytes(                                       \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept { \
+    return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));       \
+  }                                                                \
+  static_assert(true)
+
+#define _sus__float(T, PrimitiveT, UnsignedIntT) \
+  _sus__float_storage(PrimitiveT);               \
+  _sus__float_constants(T, PrimitiveT);          \
+  _sus__float_construct(T, PrimitiveT);          \
+  _sus__float_to_primitive(T, PrimitiveT);       \
+  _sus__float_comparison(T);                     \
+  _sus__float_unary_ops(T);                      \
+  _sus__float_binary_ops(T);                     \
+  _sus__float_mutable_ops(T);                    \
+  _sus__float_abs(T, PrimitiveT);                \
+  _sus__float_math(T, PrimitiveT);               \
+  _sus__float_fract_trunc(T);                    \
+  _sus__float_convert_to(T, PrimitiveT);         \
+  _sus__float_bytes(T, UnsignedIntT);            \
+  _sus__float_category(T);                       \
+  _sus__float_clamp(T);                          \
+  _sus__float_euclid(T, PrimitiveT);             \
+  _sus__float_endian(T, ::sus::mem::size_of<PrimitiveT>(), UnsignedIntT)
+
+#define _sus__float_out_of_line(T, PrimitiveT, UnsignedIntT)           \
+  _sus__float_constants_out_of_line(T, PrimitiveT);                    \
+  _sus__float_endian_out_of_line(T, ::sus::mem::size_of<PrimitiveT>(), \
+                                 UnsignedIntT)
 
 #define _sus__float_hash_equal_to(Type)                                    \
   template <>                                                              \

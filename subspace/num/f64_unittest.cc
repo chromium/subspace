@@ -16,7 +16,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/containers/array.h"
-#include "subspace/num/float.h"
+#include "subspace/num/types.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/prelude.h"
