@@ -252,18 +252,15 @@ using ConcatOutputType = ::sus::containers::Vec<T>;
 /// `T::ConcatOutputType`. This method is only supported for types that
 /// satisfy the `sus::containers::Concat<T>` concept.
 ///
-/// Slice itself satisfies Concat, with its output being `Vec`, so that a
-/// `Slice` of `Slice<T>`s can be concat() together into a single `Vec<T>`.
+/// `Slice` itself satisfies `Concat`, with its output being `Vec`, so that a
+/// `Slice` of `Slice<T>`s can be `concat()` together into a single `Vec<T>`.
 ///
 /// # Example
 /// ```
 /// i32 a1[] = {1, 2}, a2[] = {3, 4};
 /// Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
 /// Vec<i32> v = Slice<Slice<i32>>::from(as).concat();
-/// // TODO: sus::check(v == sus::vec(1_i32, 2_i32, 3_i32,
-/// 4_i32).construct()); sus::check(v[0u] == 1); sus::check(v[1u] == 2);
-/// sus::check(v[2u] == 3);
-/// sus::check(v[3u] == 4);
+/// sus::check(v == sus::Vec<i32>::with_values(1, 2, 3, 4));
 /// ```
 ///
 constexpr auto concat() const& noexcept
@@ -285,9 +282,9 @@ constexpr auto concat() const& noexcept
 /// Concatenates a clone of each element in the slice into `vec`.
 ///
 /// This method exists to satisfy `sus::containers::Concat<Slice<T>>`, for
-/// concat() to append the elements in each Slice onto `vec`.
+/// `concat()` to append the elements in each Slice onto `vec`.
 ///
-constexpr void concat_into(ConcatOutputType& vec) const& noexcept
+constexpr void concat_into(::sus::containers::Vec<T>& vec) const& noexcept
   requires(::sus::mem::Clone<T>)
 {
   vec.extend_from_slice(*this);
@@ -486,6 +483,86 @@ constexpr SliceIter<const T&> iter() const& noexcept {
 #if _delete_rvalue
 constexpr SliceIter<const T&> iter() && = delete;
 #endif
+
+using JoinOutputType = ::sus::containers::Vec<T>;
+
+/// Flattens and concatenates the items in the Slice, cloning a `separator`
+/// between each item.
+///
+/// The items of type `T` are flattened into a container of type
+/// `T::JoinOutputType`. This method is only supported for types that
+/// satisfy the `sus::containers::Join<T>` concept.
+///
+/// `Slice` itself satisfies `Join`, with its output being `Vec`, so that a
+/// `Slice` of `Slice<T>`s can be `join()` together into a single `Vec<T>`.
+///
+/// # Example
+/// ```
+/// i32 a1[] = {1, 2}, a2[] = {3, 4}, asep[] = {10, 11, 12};
+/// Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
+///
+/// // Join slices with a slice between.
+/// Vec<i32> v = Slice<Slice<i32>>::from(as).join(Slice<i32>::from(asep));
+/// sus::check(v == sus::Vec<i32>::with_values(1, 2, 10, 11, 12, 3, 4));
+///
+/// // Join slices with a single item between.
+/// Vec<i32> v2 = Slice<Slice<i32>>::from(as).join(99);
+/// sus::check(v2 == sus::Vec<i32>::with_values(1, 2, 99, 3, 4));
+/// ```
+template <class Sep>
+constexpr auto join(const Sep& separator) const& noexcept
+  requires(::sus::containers::Join<T, Sep>)
+{
+  const auto length = _len_expr;
+  ::sus::num::usize cap;
+  for (::sus::num::usize i; i < length; i += 1u) {
+    cap += get_unchecked(::sus::marker::unsafe_fn, i).len();
+  }
+  using Container = typename T::JoinOutputType;
+  auto out = Container::with_capacity(cap);
+  if (length > 0u) get_unchecked(::sus::marker::unsafe_fn, 0u).join_into(out);
+  for (::sus::num::usize i = 1; i < length; i += 1u) {
+    T::join_sep_into(out, separator);
+    get_unchecked(::sus::marker::unsafe_fn, i).join_into(out);
+  }
+  return out;
+}
+
+/// Joins a clone of each element in the slice into `vec`.
+///
+/// This method exists to satisfy `sus::containers::Join<Slice<T>, U>`,
+/// for join() to append the elements in each Slice onto `vec`.
+constexpr void join_into(::sus::containers::Vec<T>& vec) const& noexcept
+  requires(::sus::mem::Clone<T>)
+{
+  vec.extend_from_slice(*this);
+}
+
+/// Joins a clone of each element in the separator into `vec`.
+///
+/// This method exists to satisfy `sus::containers::Join<Slice<T>, Slice<T>>`,
+/// for join() to append the elements in a separator Slice onto `vec`.
+///
+/// #[doc.overloads=slice.join.sep.slice]
+static constexpr void join_sep_into(::sus::containers::Vec<T>& vec,
+                                    const Slice<T>& separator) noexcept
+  requires(::sus::mem::Clone<T>)
+{
+  vec.extend_from_slice(separator);
+}
+
+/// Joins a clone of each element in the separator into `vec`.
+///
+/// This method exists to satisfy `sus::containers::Join<Slice<T>, T>`,
+/// for join() to append the elements in a separator Slice onto `vec`.
+///
+/// #[doc.overloads=slice.join.sep.t]
+static constexpr void join_sep_into(::sus::containers::Vec<T>& vec,
+                                    const T& separator) noexcept
+  requires(::sus::mem::Clone<T>)
+{
+  vec.push(::sus::clone(separator));
+}
 
 /// Creates a vector by copying a slice n times.
 ///
