@@ -56,8 +56,9 @@ struct Anything {
 /// ```
 ///
 /// # Use of `FnOnce`
-/// `FnOnce` should be received as an rvalue reference typically, to avoid an
-/// unnecessary copy or move operation, but may also be received by value.
+/// `FnOnce` should be received as an rvalue (universal) reference typically, to
+/// avoid an unnecessary copy or move operation, but may also be received by
+/// value.
 ///
 /// A `FnOnce` should only be called once, and should be moved with
 /// `sus::move()` when calling it.
@@ -96,7 +97,7 @@ struct Anything {
 ///  sus::check(x == 400 + 4);
 /// ```
 template <class F, class... S>
-concept FnOnce = requires(F&& f) {
+concept FnOnce = requires {
   // Receives and passes along the signature as a pack instead of a single
   // argument in order to consistently provide a static_assert() in `Sig` when
   // `S` is not a function signature.
@@ -126,14 +127,14 @@ concept FnOnce = requires(F&& f) {
 /// be passed to the `FnMut` and `ReturnType` is what is expected to be
 /// received back. It would appear as a matching concept as:
 /// ```
-/// void function(FnMut<ReturnType(Args...)> auto f) { ... }
+/// void function(FnMut<ReturnType(Args...)> auto&& f) { ... }
 /// ```
 ///
 /// # Use of `FnMut`
-/// `FnMut` should be received by value reference typically, which isolates any
-/// internal mutation to the current function. It may also be received as an
-/// lvalue reference if it's desired to have its internal mutations visible to
-/// the caller.
+/// `FnMut` should be received as an rvalue (universal) reference typically,
+/// to avoid an unnecessary copy or move operation, but may also be received by
+/// value in order to isolate any mutation that occurs to stay within the
+/// function, or to take ownership of the closure.
 ///
 /// A `FnMut` may be called any number of times, unlike `FnOnce`, and should not
 /// be moved when called.
@@ -158,7 +159,7 @@ concept FnOnce = requires(F&& f) {
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// static i32 call_mut(sus::fn::FnMut<i32(sus::Option<i32>)> auto f) {
+/// static i32 call_mut(sus::fn::FnMut<i32(sus::Option<i32>)> auto&& f) {
 ///   return f(sus::some(400)) + f(sus::some(100));  // Returns an i32.
 /// }
 ///
@@ -169,7 +170,7 @@ concept FnOnce = requires(F&& f) {
 /// sus::check(x == 401 + 102);
 /// ```
 template <class F, class... S>
-concept FnMut = requires(F& f) {
+concept FnMut = requires {
   // Receives and passes along the signature as a pack instead of a single
   // argument in order to consistently provide a static_assert() in `Sig` when
   // `S` is not a function signature.
@@ -242,7 +243,7 @@ concept FnMut = requires(F& f) {
 /// sus::check(x == 401 + 101);
 /// ```
 template <class F, class... S>
-concept Fn = requires(const F& f) {
+concept Fn = requires {
   // Receives and passes along the signature as a pack instead of a single
   // argument in order to consistently provide a static_assert() in `Sig` when
   // `S` is not a function signature.

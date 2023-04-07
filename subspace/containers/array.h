@@ -81,7 +81,8 @@ class Array final {
     return Array(kWithUninitialized);
   }
 
-  constexpr static Array with_initializer(::sus::fn::FnMut<T()> auto f) noexcept
+  constexpr static Array with_initializer(
+      ::sus::fn::FnMut<T()> auto&& f) noexcept
     requires(::sus::mem::Move<T>)
   {
     return Array(kWithInitializer, f, std::make_index_sequence<N>());
@@ -314,7 +315,7 @@ class Array final {
  private:
   enum WithInitializer { kWithInitializer };
   template <size_t... Is>
-  constexpr Array(WithInitializer, ::sus::fn::FnMut<T()> auto& f,
+  constexpr Array(WithInitializer, ::sus::fn::FnMut<T()> auto&& f,
                   std::index_sequence<Is...>) noexcept
       : storage_{((void)Is, f())...} {}
 
