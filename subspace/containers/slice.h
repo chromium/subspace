@@ -34,6 +34,7 @@
 #include "subspace/ops/ord.h"
 #include "subspace/ops/range.h"
 #include "subspace/option/option.h"
+#include "subspace/ptr/copy.h"
 #include "subspace/result/result.h"
 #include "subspace/tuple/tuple.h"
 

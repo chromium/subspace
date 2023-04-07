@@ -24,6 +24,7 @@
 #include "subspace/mem/mref.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
+#include "subspace/ptr/copy.h"
 
 namespace sus::mem {
 
@@ -34,20 +35,23 @@ namespace sus::mem {
 template <class T>
   requires(sus::mem::Move<T>)
 constexpr void swap(T& lhs, T& rhs) noexcept {
-  if constexpr (::sus::mem::relocate_by_memcpy<T>) {
-    // memcpy() and memmove() are not constexpr so we can't use them in
-    // constexpr evaluation.
-    if (!std::is_constant_evaluated()) {
-      constexpr auto data_size = ::sus::mem::data_size_of<T>();
-      char temp[data_size];
-      memcpy(temp, ::sus::mem::addressof(lhs), data_size);
-      memmove(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs),
-              data_size);
-      memcpy(::sus::mem::addressof(rhs), temp, data_size);
-      return;
-    }
-  }
   if (::sus::mem::addressof(lhs) != ::sus::mem::addressof(rhs)) [[likely]] {
+    if constexpr (::sus::mem::relocate_by_memcpy<T>) {
+      // copy_one() is not constexpr so we can't use it in constexpr evaluation.
+      if (!std::is_constant_evaluated()) {
+        constexpr auto data_size = ::sus::mem::data_size_of<T>();
+        char temp[data_size];
+        char* const l = reinterpret_cast<char*>(::sus::mem::addressof(lhs));
+        char* const r = reinterpret_cast<char*>(::sus::mem::addressof(rhs));
+        ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, l, temp,
+                                        data_size);
+        ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, r, l,
+                                        data_size);
+        ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, temp, r,
+                                        data_size);
+        return;
+      }
+    }
     auto temp = T(::sus::move(lhs));
     lhs = ::sus::move(rhs);
     rhs = ::sus::move(temp);
@@ -68,9 +72,14 @@ constexpr void swap_no_alias_unchecked(::sus::marker::UnsafeFnMarker, T& lhs,
     if (!std::is_constant_evaluated()) {
       constexpr auto data_size = ::sus::mem::data_size_of<T>();
       char temp[data_size];
-      memcpy(temp, ::sus::mem::addressof(lhs), data_size);
-      memcpy(::sus::mem::addressof(lhs), ::sus::mem::addressof(rhs), data_size);
-      memcpy(::sus::mem::addressof(rhs), temp, data_size);
+      char* const l = reinterpret_cast<char*>(::sus::mem::addressof(lhs));
+      char* const r = reinterpret_cast<char*>(::sus::mem::addressof(rhs));
+      ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, l, temp,
+                                      data_size);
+      ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, r, l,
+                                      data_size);
+      ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, temp, r,
+                                      data_size);
       return;
     }
   }

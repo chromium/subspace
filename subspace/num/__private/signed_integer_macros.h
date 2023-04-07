@@ -30,6 +30,7 @@
 #include "subspace/num/try_from_int_error.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/option/option.h"
+#include "subspace/ptr/copy.h"
 #include "subspace/result/result.h"
 
 namespace sus::containers {
@@ -1650,8 +1651,8 @@ class Tuple;
   template <sus_clang_bug_58835_else(int&..., ) class Array =                 \
                 ::sus::containers::Array<u8, Bytes>>                          \
   constexpr Array to_ne_bytes() const& noexcept {                             \
+      auto bytes = Array::with_uninitialized(::sus::marker::unsafe_fn);       \
     if (std::is_constant_evaluated()) {                                       \
-      auto bytes = Array::with_value(uint8_t{0});                             \
       auto uval = __private::into_unsigned(primitive_value);                  \
       for (auto i = size_t{0}; i < Bytes; ++i) {                              \
         const auto last_byte = static_cast<uint8_t>(uval & 0xff);             \
@@ -1665,8 +1666,10 @@ class Tuple;
       }                                                                       \
       return bytes;                                                           \
     } else {                                                                  \
-      auto bytes = Array::with_uninitialized(::sus::marker::unsafe_fn);       \
-      memcpy(bytes.as_mut_ptr(), &primitive_value, Bytes);                    \
+      ::sus::ptr::copy_nonoverlapping(                                        \
+          ::sus::marker::unsafe_fn,                                           \
+          reinterpret_cast<const char*>(&primitive_value),                    \
+          reinterpret_cast<char*>(bytes.as_mut_ptr()), Bytes);                \
       return bytes;                                                           \
     }                                                                         \
   }                                                                           \
@@ -1707,7 +1710,10 @@ class Tuple;
         val |= bytes[i].primitive_value << (Bytes - size_t{1} - i);           \
       }                                                                       \
     } else {                                                                  \
-      memcpy(&val, bytes.as_ptr(), Bytes);                                    \
+      ::sus::ptr::copy_nonoverlapping(                                        \
+          ::sus::marker::unsafe_fn,                                           \
+          reinterpret_cast<const char*>(bytes.as_ptr()),                      \
+          reinterpret_cast<char*>(&val), Bytes);                              \
     }                                                                         \
     return __private::into_signed(val);                                       \
   }                                                                           \

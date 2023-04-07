@@ -44,6 +44,7 @@
 #include "subspace/ops/ord.h"
 #include "subspace/ops/range.h"
 #include "subspace/option/option.h"
+#include "subspace/ptr/copy.h"
 #include "subspace/result/result.h"
 #include "subspace/tuple/tuple.h"
 
@@ -309,6 +310,8 @@ class Vec final {
 
   /// Extends the Vec by cloning the contents of a slice.
   ///
+  /// If `T` is `TrivialCopy`, then the copy is done by `memcpy()`.
+  ///
   /// # Panics
   /// If the Slice is non-empty and points into the Vec, the function will
   /// panic, as resizing the Vec would invalidate the Slice.
@@ -329,10 +332,9 @@ class Vec final {
       ::sus::check(!(slice_ptr >= vec_ptr && slice_ptr <= vec_ptr + raw_len()));
     }
     reserve(s.len());
-    if constexpr (sus::mem::Copy<T> &&
-                  std::is_trivially_copy_constructible_v<T>) {
-      memcpy(raw_data() + raw_len(), slice_ptr,
-             size_t{s.len() * ::sus::mem::size_of<T>()});
+    if constexpr (sus::mem::TrivialCopy<T>) {
+      ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, slice_ptr,
+                                      raw_data() + raw_len(), s.len());
       raw_len() += s.len();
     } else {
       for (const T& t : s) push(::sus::clone(t));

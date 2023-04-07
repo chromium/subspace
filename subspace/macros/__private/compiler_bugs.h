@@ -27,6 +27,7 @@
 #define sus_clang_bug_56394_else(...) __VA_ARGS__
 #endif
 
+// TODO: This is not actually a bug, remove this.
 // TODO: https://github.com/llvm/llvm-project/issues/58835
 #if defined(__clang__) && \
     __clang_major__ > 0  // TODO: Update when the bug is fixed.

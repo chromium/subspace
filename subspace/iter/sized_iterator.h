@@ -18,6 +18,7 @@
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/option/option.h"
+#include "subspace/ptr/copy.h"
 // Doesn't include iterator_defn.h because it's included from there.
 
 namespace sus::iter {
@@ -37,14 +38,16 @@ struct [[sus_trivial_abi]] SizedIterator final {
       : destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
         next_(::sus::mem::replace(mref(o.next_), nullptr)),
         next_back_(::sus::mem::replace(mref(o.next_back_), nullptr)) {
-    memcpy(sized_, o.sized_, SubclassSize);
+    ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, o.sized_, sized_,
+                                    SubclassSize);
   }
   SizedIterator& operator=(SizedIterator&& o) noexcept {
     if (destroy_) destroy_(*sized_);
     destroy_ = ::sus::mem::replace(mref(o.destroy_), nullptr);
     next_ = ::sus::mem::replace(mref(o.next_), nullptr);
     next_back_ = ::sus::mem::replace(mref(o.next_back_), nullptr);
-    memcpy(sized_, o.sized_, SubclassSize);
+    ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, o.sized_, sized_,
+                                    SubclassSize);
   }
 
   ~SizedIterator() noexcept {
