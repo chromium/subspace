@@ -2242,4 +2242,44 @@ TEST(SliceMut, FirstMut) {
       std::same_as<sus::Option<NoCopyMove&>, decltype(s.first_mut())>);
 }
 
+TEST(Slice, Repeat) {
+  {
+    auto v1 = Vec<i32>::with_values(1, 2);
+    auto v2 = v1.as_slice().repeat(0);
+    EXPECT_EQ(v2, sus::Vec<i32>());
+  }
+  {
+    auto v1 = Vec<i32>::with_values(1);
+    auto v2 = v1.as_slice().repeat(1);
+    EXPECT_EQ(v2, sus::vec(1).construct<i32>());
+  }
+  {
+    auto v1 = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto v2 = v1.as_slice().repeat(1);
+    EXPECT_EQ(v2, sus::vec(1, 2, 3, 4, 5).construct<i32>());
+  }
+  {
+    auto v1 = Vec<i32>::with_values(1, 2);
+    auto v2 = v1.as_slice().repeat(3u);
+    EXPECT_EQ(v2, sus::vec(1, 2, 1, 2, 1, 2).construct<i32>());
+  }
+  {
+    auto v1 = Vec<i32>::with_values(1, 2);
+    auto v2 = v1.as_slice().repeat(27u);
+    EXPECT_EQ(v2, sus::vec(1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
+                           1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
+                           1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2)
+                      .construct<i32>());
+  }
+  {
+    auto v1 = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto v2 = v1.as_slice().repeat(13u);
+    EXPECT_EQ(v2, sus::vec(1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3,
+                           4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1,
+                           2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4,
+                           5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5)
+                      .construct<i32>());
+  }
+}
+
 }  // namespace

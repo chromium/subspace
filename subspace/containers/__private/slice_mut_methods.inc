@@ -498,3 +498,5 @@ constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>> split_at_mut_unchecked(
 }
 
 #undef _mut_ref
+
+// TODO: into_vec(Own<Slice<T>>) &&
