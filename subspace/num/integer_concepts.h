@@ -62,4 +62,16 @@ template <class T>
 concept PrimitiveInteger =
     UnsignedPrimitiveInteger<T> || SignedPrimitiveInteger<T>;
 
+template <class T>
+concept UnsignedPrimitiveEnum =
+    std::is_enum_v<T> && UnsignedPrimitiveInteger<std::underlying_type_t<T>>;
+
+template <class T>
+concept SignedPrimitiveEnum =
+    std::is_enum_v<T> && SignedPrimitiveInteger<std::underlying_type_t<T>>;
+
+template <class T>
+concept PrimitiveEnum =
+    std::is_enum_v<T> && PrimitiveInteger<std::underlying_type_t<T>>;
+
 }  // namespace sus::num

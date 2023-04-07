@@ -106,6 +106,14 @@ class Tuple;
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
   constexpr inline T(P v) : primitive_value(v) {}                                \
                                                                                  \
+  /** Construction from unsigned enum types where no bits are lost.              \
+   *                                                                             \
+   * #[doc.overloads=ctor.unsigned.smallenum]                                    \
+   */                                                                            \
+  template <UnsignedPrimitiveEnum P>                                             \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
+  constexpr inline T(P v) : primitive_value(static_cast<PrimitiveT>(v)) {}       \
+                                                                                 \
   /** Construction from unsigned primitive types, where it can be checked at     \
    * compile time that no bits are lost.                                         \
    *                                                                             \
@@ -126,6 +134,29 @@ class Tuple;
       ::sus::panic_with_message(                                             \
             *"Cannot assign to unsigned integer from value outside its "       \
              "range.");   \
+    }                                                                            \
+  }                                                                              \
+                                                                                 \
+  /** Construction from unsigned enum types, where it can be checked at          \
+   * compile time that no bits are lost.                                         \
+   *                                                                             \
+   * For runtime conversion of larger values, use `from()`.                      \
+   *                                                                             \
+   * #[doc.overloads=ctor.unsigned.largeenum]                                    \
+   */                                                                            \
+  template <UnsignedPrimitiveEnum P>                                             \
+    requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
+  consteval inline T(P v)                                                        \
+      : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
+                         * cast `v` to a `T`. */                                 \
+                        static_cast<PrimitiveT>(v)) {                            \
+    /* SAFETY: P has more bits than T, so converting an unsigned T to P will     \
+     * fit. When removing the sign bit, there's still at least as many bits      \
+     * as T. */                                                                  \
+    if (v > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {          \
+      ::sus::panic_with_message(                                           \
+            *"Cannot assign to unsigned integer from value outside its "     \
+             "range.");     \
     }                                                                            \
   }                                                                              \
                                                                                  \
@@ -157,6 +188,34 @@ class Tuple;
     }                                                                            \
   }                                                                              \
                                                                                  \
+  /** Construction from signed enum types, where it can be checked at            \
+   * compile time that no bits are lost.                                         \
+   *                                                                             \
+   * For runtime conversion, use `from()`.                                       \
+   *                                                                             \
+   * #[doc.overloads=ctor.signedenum]                                            \
+   */                                                                            \
+  template <SignedPrimitiveEnum P>                                               \
+  consteval inline T(P v)                                                        \
+      : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
+                         * cast `v` to a `T`. */                                 \
+                        static_cast<PrimitiveT>(v)) {                            \
+    if (v < 0) {                                                                 \
+      ::sus::panic_with_message(                                                 \
+          *"Cannot construct unsigned integer from negative value.");            \
+    }                                                                            \
+    if (::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>()) {          \
+      /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
+       * fit. When removing the sign bit, there's still at least as many bits    \
+       * as T. */                                                                \
+      if (v > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {        \
+        ::sus::panic_with_message(                                             \
+            *"Cannot construct unsigned integer from value outside its "       \
+             "range."); \
+      }                                                                          \
+    }                                                                            \
+  }                                                                              \
+                                                                                 \
   /** Assignment from unsigned primitive types where no bits are lost.           \
    *                                                                             \
    * #[doc.overloads=assign.unsigned.small]                                      \
@@ -165,6 +224,17 @@ class Tuple;
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
   constexpr inline T& operator=(P v) noexcept {                                  \
     primitive_value = v;                                                         \
+    return *this;                                                                \
+  }                                                                              \
+                                                                                 \
+  /** Assignment from unsigned enum types where no bits are lost.                \
+   *                                                                             \
+   * #[doc.overloads=assign.unsigned.smallenum]                                  \
+   */                                                                            \
+  template <UnsignedPrimitiveEnum P>                                             \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
+  constexpr inline T& operator=(P v) noexcept {                                  \
+    primitive_value = static_cast<PrimitiveT>(v);                                \
     return *this;                                                                \
   }                                                                              \
                                                                                  \
@@ -182,6 +252,30 @@ class Tuple;
      * fit. When removing the sign bit, there's still at least as many bits      \
      * as T. */                                                                  \
     if (v > static_cast<P>(T::MAX_PRIMITIVE)) {                                  \
+      ::sus::panic_with_message(                                             \
+            *"Cannot assign to unsigned integer from value outside its "       \
+             "range.");   \
+    }                                                                            \
+    /* SAFETY: We check above that v <= T::MAX, so we can cast `v` to a `T`.     \
+     */                                                                          \
+    primitive_value = static_cast<PrimitiveT>(v);                                \
+    return *this;                                                                \
+  }                                                                              \
+                                                                                 \
+  /** Assignment from unsigned enum types, where it can be checked at            \
+   * compile time that no bits are lost.                                         \
+   *                                                                             \
+   * For runtime conversion of larger values, use `from()`.                      \
+   *                                                                             \
+   * #[doc.overloads=assign.unsigned.largeenum]                                  \
+   */                                                                            \
+  template <UnsignedPrimitiveEnum P>                                             \
+    requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
+  consteval inline T& operator=(P v) noexcept {                                  \
+    /* SAFETY: P has more bits than T, so converting an unsigned T to P will     \
+     * fit. When removing the sign bit, there's still at least as many bits      \
+     * as T. */                                                                  \
+    if (v > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {          \
       ::sus::panic_with_message(                                             \
             *"Cannot assign to unsigned integer from value outside its "       \
              "range.");   \
@@ -220,6 +314,35 @@ class Tuple;
     primitive_value = static_cast<PrimitiveT>(v);                                \
     return *this;                                                                \
   }                                                                              \
+                                                                                 \
+  /** Assignment from signed enum types, where it can be checked at              \
+   * compile time that no bits are lost.                                         \
+   *                                                                             \
+   * For runtime conversion, use `from()`.                                       \
+   *                                                                             \
+   * #[doc.overloads=assign.signedenum]                                          \
+   */                                                                            \
+  template <SignedPrimitiveEnum P>                                               \
+  consteval inline T& operator=(P v) noexcept {                                  \
+    if (v < 0) {                                                                 \
+      ::sus::panic_with_message(                                                 \
+          *"Cannot assign to unsigned integer from negative value.");            \
+    }                                                                            \
+    if (::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>()) {          \
+      /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
+       * fit. When removing the sign bit, there's still at least as many bits    \
+       * as T. */                                                                \
+      if (v > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {        \
+        ::sus::panic_with_message(                                             \
+            *"Cannot assign to unsigned integer from value outside its "       \
+             "range."); \
+      }                                                                          \
+    }                                                                            \
+    /* SAFETY: We check above that v <= T::MAX, so we can cast `v` to a `T`.     \
+     */                                                                          \
+    primitive_value = static_cast<PrimitiveT>(v);                                \
+    return *this;                                                                \
+  }                                                                              \
   static_assert(true)
 
 #define _sus__unsigned_from(T, PrimitiveT)                                     \
@@ -228,7 +351,7 @@ class Tuple;
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
    *                                                                           \
-   * #[doc.overloads=0]                                                        \
+   * #[doc.overloads=unsigned.from.signed]                                     \
    */                                                                          \
   template <Signed S>                                                          \
   static constexpr T from(S s) noexcept {                                      \
@@ -245,7 +368,7 @@ class Tuple;
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
    *                                                                           \
-   * #[doc.overloads=0]                                                        \
+   * #[doc.overloads=unsigned.tryfrom.signed]                                  \
    */                                                                          \
   template <Signed S>                                                          \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -270,7 +393,7 @@ class Tuple;
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
    *                                                                           \
-   * #[doc.overloads=1]                                                        \
+   * #[doc.overloads=unsigned.from.unsigned]                                   \
    */                                                                          \
   template <Unsigned U>                                                        \
   static constexpr T from(U u) noexcept {                                      \
@@ -284,7 +407,7 @@ class Tuple;
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
    *                                                                           \
-   * #[doc.overloads=1]                                                        \
+   * #[doc.overloads=unsigned.tryfrom.unsigned]                                \
    */                                                                          \
   template <Unsigned U>                                                        \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -305,7 +428,7 @@ class Tuple;
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
    *                                                                           \
-   * #[doc.overloads=2]                                                        \
+   * #[doc.overloads=unsigned.from.signedprimitive]                            \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
   static constexpr T from(S s) {                                               \
@@ -321,7 +444,7 @@ class Tuple;
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
    *                                                                           \
-   * #[doc.overloads=2]                                                        \
+   * #[doc.overloads=unsigned.tryfrom.signedprimitive]                         \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -341,13 +464,57 @@ class Tuple;
     return R::with(T(static_cast<PrimitiveT>(s)));                             \
   }                                                                            \
                                                                                \
+  /** Constructs a ##T## from a signed enum type (or enum class).              \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=unsigned.from.signedprimitive]                            \
+   */                                                                          \
+  template <SignedPrimitiveEnum S>                                             \
+  static constexpr T from(S s) {                                               \
+    using D = std::underlying_type_t<S>;                                       \
+    ::sus::check(static_cast<D>(s) >= 0);                                                      \
+    constexpr auto umax = __private::into_unsigned(__private::max_value<D>()); \
+    if constexpr (MAX_PRIMITIVE < umax) {                                      \
+      ::sus::check(__private::into_unsigned(static_cast<D>(s)) <=              \
+                   MAX_PRIMITIVE);                                             \
+    }                                                                          \
+    return T(static_cast<PrimitiveT>(s));                                      \
+  }                                                                            \
+                                                                               \
+  /** Tries to construct a ##T## from a signed enum type (or enum class).      \
+   *                                                                           \
+   * Returns an error if the source value is outside of the range of ##T##.    \
+   *                                                                           \
+   * #[doc.overloads=unsigned.tryfrom.signedprimitive]                         \
+   */                                                                          \
+  template <SignedPrimitiveEnum S>                                             \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(S s) {                                                              \
+    using D = std::underlying_type_t<S>;                                       \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    if (static_cast<D>(s) < 0) {                                                               \
+      return R::with_err(::sus::num::TryFromIntError(                          \
+          ::sus::num::TryFromIntError::Kind::OutOfBounds));                    \
+    }                                                                          \
+    constexpr auto umax = __private::into_unsigned(__private::max_value<D>()); \
+    if constexpr (MAX_PRIMITIVE < umax) {                                      \
+      if (__private::into_unsigned(static_cast<D>(s)) > MAX_PRIMITIVE) {       \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(s)));                             \
+  }                                                                            \
+                                                                               \
   /** Constructs a ##T## from an unsigned primitive integer type (unsigned     \
    * int, unsigned long, etc).                                                 \
    *                                                                           \
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
    *                                                                           \
-   * #[doc.overloads=3]                                                        \
+   * #[doc.overloads=unsigned.from.unsignedprimitive]                          \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
   static constexpr T from(U u) {                                               \
@@ -361,7 +528,7 @@ class Tuple;
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
    *                                                                           \
-   * #[doc.overloads=3]                                                        \
+   * #[doc.overloads=unsigned.tryfrom.unsignedprimitive]                       \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
@@ -376,13 +543,49 @@ class Tuple;
     return R::with(T(static_cast<PrimitiveT>(u)));                             \
   }                                                                            \
                                                                                \
+  /** Constructs a ##T## from an unsigned enum type (or enum class).           \
+   *                                                                           \
+   * # Panics                                                                  \
+   * The function will panic if the input value is out of range for ##T##.     \
+   *                                                                           \
+   * #[doc.overloads=unsigned.from.unsignedprimitive]                          \
+   */                                                                          \
+  template <UnsignedPrimitiveEnum U>                                           \
+  static constexpr T from(U u) {                                               \
+    using D = std::underlying_type_t<U>;                                       \
+    if constexpr (MAX_PRIMITIVE < __private::max_value<D>())                   \
+      ::sus::check(static_cast<D>(u) <= MAX_PRIMITIVE);                                        \
+    return T(static_cast<PrimitiveT>(u));                                      \
+  }                                                                            \
+                                                                               \
+  /** Tries to construct a ##T## from an unsigned enum type (or enum class).   \
+   *                                                                           \
+   * Returns an error if the source value is outside of the range of ##T##.    \
+   *                                                                           \
+   * #[doc.overloads=unsigned.tryfrom.unsignedprimitive]                       \
+   */                                                                          \
+  template <UnsignedPrimitiveEnum U>                                           \
+  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  try_from(U u) {                                                              \
+    using D = std::underlying_type_t<U>;                                       \
+    using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
+    if constexpr (MAX_PRIMITIVE < __private::max_value<D>()) {                 \
+      if (static_cast<D>(u) > MAX_PRIMITIVE) {                                                 \
+        return R::with_err(::sus::num::TryFromIntError(                        \
+            ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
+      }                                                                        \
+    }                                                                          \
+    return R::with(T(static_cast<PrimitiveT>(u)));                             \
+  }                                                                            \
+                                                                               \
   /** Constructs a ##T## from a signed or unsigned integer type (i8, i16, u32, \
    * u64 etc).                                                                 \
    *                                                                           \
-   * If the input value is out of range for ##T##, Undefined Behaviour may     \
-   * result.                                                                   \
+   * # Safety                                                                  \
+   * If the input value is out of range for ##T##, the value will be           \
+   * truncated, which may lead to application bugs and memory unsafety.        \
    *                                                                           \
-   * #[doc.overloads=0]                                                        \
+   * #[doc.overloads=unsigned.from.unchecked.int]                              \
    */                                                                          \
   template <Integer I>                                                         \
   static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,             \
@@ -394,12 +597,27 @@ class Tuple;
    * (int, long, unsigned int, etc).                                           \
    *                                                                           \
    * # Safety                                                                  \
-   * If the input value is out of range for ##T##, Undefined Behaviour may     \
-   * result.                                                                   \
+   * If the input value is out of range for ##T##, the value will be           \
+   * truncated, which may lead to application bugs and memory unsafety.        \
    *                                                                           \
-   * #[doc.overloads=1]                                                        \
+   * #[doc.overloads=unsigned.from.unchecked.primitive]                        \
    */                                                                          \
   template <PrimitiveInteger P>                                                \
+  static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,             \
+                                    P p) noexcept {                            \
+    return T(static_cast<PrimitiveT>(p));                                      \
+  }                                                                            \
+                                                                               \
+  /** Constructs a ##T## from a signed or unsigned enum type                   \
+   * (or enum class).                                                          \
+   *                                                                           \
+   * # Safety                                                                  \
+   * If the input value is out of range for ##T##, the value will be           \
+   * truncated, which may lead to application bugs and memory unsafety.        \
+   *                                                                           \
+   * #[doc.overloads=unsigned.from.unchecked.enum]                             \
+   */                                                                          \
+  template <PrimitiveEnum P>                                                   \
   static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,             \
                                     P p) noexcept {                            \
     return T(static_cast<PrimitiveT>(p));                                      \
