@@ -36,6 +36,12 @@ static_assert(std::is_signed_v<decltype(isize::primitive_value)>);
 static_assert(sizeof(decltype(isize::primitive_value)) == sizeof(void*));
 static_assert(sizeof(isize) == sizeof(decltype(isize::primitive_value)));
 
+static_assert(sus::mem::Copy<isize>);
+static_assert(sus::mem::TrivialCopy<isize>);
+static_assert(sus::mem::Clone<isize>);
+static_assert(sus::mem::relocate_by_memcpy<isize>);
+static_assert(sus::mem::Move<isize>);
+
 // `isize` can be explicitly converted to an unsigned int of the same size.
 static_assert(sizeof(isize) != sizeof(uint16_t) ||
               std::is_constructible_v<int16_t, isize>);

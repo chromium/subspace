@@ -37,6 +37,12 @@ static_assert(std::is_signed_v<decltype(i64::primitive_value)>);
 static_assert(sizeof(decltype(i64::primitive_value)) == 8);
 static_assert(sizeof(i64) == sizeof(decltype(i64::primitive_value)));
 
+static_assert(sus::mem::Copy<i64>);
+static_assert(sus::mem::TrivialCopy<i64>);
+static_assert(sus::mem::Clone<i64>);
+static_assert(sus::mem::relocate_by_memcpy<i64>);
+static_assert(sus::mem::Move<i64>);
+
 namespace behaviour {
 using T = i64;
 using From = decltype(i64::primitive_value);
