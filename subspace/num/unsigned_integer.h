@@ -14,11 +14,25 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
+#include <compare>
 #include <functional>  // TODO: remove this but we need to hash things > size_t.
 
+#include "subspace/assertions/check.h"
+#include "subspace/assertions/endian.h"
+#include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/size_of.h"
+#include "subspace/num/__private/int_log10.h"
+#include "subspace/num/__private/intrinsics.h"
+#include "subspace/num/__private/literals.h"
+#include "subspace/num/__private/ptr_type.h"
 #include "subspace/num/__private/unsigned_integer_macros.h"
+#include "subspace/num/integer_concepts.h"
+#include "subspace/num/try_from_int_error.h"
+#include "subspace/option/option.h"
+#include "subspace/result/result.h"
 
 namespace sus::num {
 

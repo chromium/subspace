@@ -16,15 +16,11 @@
 
 #include "subspace/marker/unsafe.h"
 #include "subspace/num/integer_concepts.h"
-#include "subspace/num/types.h"
+#include "subspace/num/unsigned_integer.h"
 
 namespace sus::option {
 template <class T>
 class Option;
-}
-
-namespace sus::num {
-struct usize;
 }
 
 namespace sus::iter::__private {

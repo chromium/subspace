@@ -522,8 +522,8 @@ constexpr ::sus::containers::Vec<T> repeat(usize n) const& noexcept
     // If `m > 0`, there are remaining bits up to the leftmost '1'.
     while (m > 0u) {
       // `buf.extend(buf)`:
-      memcpy(buf.as_mut_ptr() + buf.len(), buf.as_ptr(),
-             size_t{buf.len() * ::sus::mem::size_of<T>()});
+      ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, buf.as_ptr(),
+                                      buf.as_mut_ptr() + buf.len(), buf.len());
       // `buf` has capacity of `self.len() * n`.
       const usize buf_len = buf.len();
       buf.set_len(::sus::marker::unsafe_fn, buf_len * 2u);
@@ -537,8 +537,8 @@ constexpr ::sus::containers::Vec<T> repeat(usize n) const& noexcept
   if (rem_len > 0u) {
     // `buf.extend(buf[0 .. rem_len])`:
     // This is non-overlapping since `2^expn > rem`.
-    memcpy(buf.as_mut_ptr() + buf.len(), buf.as_ptr(),
-           size_t{rem_len * ::sus::mem::size_of<T>()});
+    ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, buf.as_ptr(),
+                                    buf.as_mut_ptr() + buf.len(), rem_len);
     // `buf.len() + rem_len` equals to `buf.capacity()` (`= self.len() * n`).
     buf.set_len(::sus::marker::unsafe_fn, capacity);
   }

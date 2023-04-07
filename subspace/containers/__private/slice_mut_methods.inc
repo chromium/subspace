@@ -165,7 +165,8 @@ constexpr void copy_from_slice(Slice<T> src) noexcept
     // `length <= usize::MAX / size_of<T>()`, or we would have returned. This
     // means that `length * size_of<T> <= usize::MAX`. Thus we can multiply here
     // as a primitive type size_t.
-    memcpy(dst_ptr, src_ptr, ::sus::mem::size_of<T>() * size_t{dst_len});
+    ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, src_ptr, dst_ptr,
+                                    dst_len);
   }
 }
 
@@ -199,9 +200,8 @@ constexpr void copy_from_slice_unchecked(::sus::marker::UnsafeFnMarker,
     for (::sus::num::usize i; i < dst_len; i += 1u)
       *(dst_ptr + i) = *(src_ptr + i);
   } else {
-    // This does the multiplication as size_t, not usize, so it does not check
-    // for overflow.
-    memcpy(dst_ptr, src_ptr, size_t{dst_len} * ::sus::mem::size_of<T>());
+    ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, src_ptr, dst_ptr,
+                                    dst_len);
   }
 }
 
