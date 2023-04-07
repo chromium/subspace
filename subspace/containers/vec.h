@@ -20,6 +20,7 @@
 #include <concepts>
 
 #include "subspace/assertions/check.h"
+#include "subspace/assertions/debug_check.h"
 #include "subspace/containers/__private/vec_marker.h"
 #include "subspace/containers/concat.h"
 #include "subspace/containers/iterators/chunks.h"
@@ -249,6 +250,15 @@ class Vec final {
                       ::sus::mem::replace(mref(capacity_), kMovedFromCapacity));
   }
 
+  /// Returns the number of elements there is space allocated for in the vector.
+  ///
+  /// This may be larger than the number of elements present, which is returned
+  /// by `len()`.
+  constexpr inline usize capacity() const& noexcept {
+    check(!is_moved_from());
+    return capacity_;
+  }
+
   /// Clears the vector, removing all values.
   ///
   /// Note that this method has no effect on the allocated capacity of the
@@ -257,6 +267,44 @@ class Vec final {
     check(!is_moved_from());
     destroy_storage_objects();
     raw_len() = 0_usize;
+  }
+
+  /// Extends the `Vec` with the contents of an iterator.
+  ///
+  /// sus::iter::Extend<const T&> trait.
+  ///
+  /// If `T` is `Clone` but not `Copy`, then the elements should be cloned
+  /// explicitly by the caller. Then use the `Extend<T>` concept method instead,
+  /// moving the elements into the Vec.
+  ///
+  /// #[doc.overload=vec.extend.const]
+  void extend(sus::iter::IntoIterator<const T&> auto&& ii) noexcept
+    requires(sus::mem::Copy<T>)
+  {
+    // TODO: There's some serious improvements we can do here when the iterator
+    // is over contiguous elements. See
+    // https://doc.rust-lang.org/src/alloc/vec/spec_extend.rs.html
+    auto&& it = sus::move(ii).into_iter();
+    reserve(it.size_hint().lower);
+    for (const T& v : ::sus::move(it)) {
+      push(v);
+    }
+  }
+
+  /// Extends the `Vec` with the contents of an iterator.
+  ///
+  /// sus::iter::Extend<T> trait.
+  ///
+  /// #[doc.overload=vec.extend.val]
+  void extend(sus::iter::IntoIterator<T> auto&& ii) noexcept {
+    // TODO: There's some serious improvements we can do here when the iterator
+    // is over contiguous elements. See
+    // https://doc.rust-lang.org/src/alloc/vec/spec_extend.rs.html
+    auto&& it = sus::move(ii).into_iter();
+    reserve(it.size_hint().lower);
+    for (T&& v : ::sus::move(it)) {
+      push(::sus::move(v));
+    }
   }
 
   /// Extends the Vec by cloning the contents of a slice.
@@ -291,44 +339,6 @@ class Vec final {
     }
   }
 
-  /// Reserves capacity for at least `additional` more elements to be inserted
-  /// in the given Vec<T>. The collection may reserve more space to
-  /// speculatively avoid frequent reallocations. After calling reserve,
-  /// capacity will be greater than or equal to self.len() + additional. Does
-  /// nothing if capacity is already sufficient.
-  ///
-  /// The `grow_to_exact()` function is similar to std::vector::reserve(),
-  /// taking a capacity instead of the number of elements to ensure space for.
-  ///
-  /// # Panics
-  /// Panics if the new capacity exceeds isize::MAX() bytes.
-  void reserve(usize additional) noexcept {
-    check(!is_moved_from());
-    if (raw_len() + additional <= capacity_) return;  // Nothing to do.
-    // TODO: Consider rounding up to nearest 2^N for some N?
-    grow_to_exact(apply_growth_function(additional));
-  }
-
-  /// Reserves the minimum capacity for at least `additional` more elements to
-  /// be inserted in the given Vec<T>. Unlike reserve, this will not
-  /// deliberately over-allocate to speculatively avoid frequent allocations.
-  /// After calling reserve_exact, capacity will be greater than or equal to
-  /// self.len() + additional. Does nothing if the capacity is already
-  /// sufficient.
-  ///
-  /// Note that the allocator may give the collection more space than it
-  /// requests. Therefore, capacity can not be relied upon to be precisely
-  /// minimal. Prefer reserve if future insertions are expected.
-  ///
-  /// # Panics
-  /// Panics if the new capacity exceeds isize::MAX bytes.
-  void reserve_exact(usize additional) noexcept {
-    check(!is_moved_from());
-    const usize cap = raw_len() + additional;
-    if (cap <= capacity_) return;  // Nothing to do.
-    grow_to_exact(cap);
-  }
-
   /// Increase the capacity of the vector (the total number of elements that the
   /// vector can hold without requiring reallocation) to `cap`, if there is not
   /// already room. Does nothing if capacity is already sufficient.
@@ -336,7 +346,7 @@ class Vec final {
   /// This is similar to std::vector::reserve().
   ///
   /// # Panics
-  /// Panics if the new capacity exceeds isize::MAX() bytes.
+  /// Panics if the new capacity exceeds `isize::MAX()` bytes.
   void grow_to_exact(usize cap) noexcept {
     check(!is_moved_from());
     if (cap <= capacity_) return;  // Nothing to do.
@@ -366,13 +376,58 @@ class Vec final {
     capacity_ = cap;
   }
 
-  /// Returns the number of elements there is space allocated for in the vector.
+  /// Reserves capacity for at least `additional` more elements to be inserted
+  /// in the given Vec<T>. The collection may reserve more space to
+  /// speculatively avoid frequent reallocations. After calling reserve,
+  /// capacity will be greater than or equal to self.len() + additional. Does
+  /// nothing if capacity is already sufficient.
   ///
-  /// This may be larger than the number of elements present, which is returned
-  /// by `len()`.
-  constexpr inline usize capacity() const& noexcept {
+  /// The `grow_to_exact()` function is similar to std::vector::reserve(),
+  /// taking a capacity instead of the number of elements to ensure space for.
+  ///
+  /// # Panics
+  /// Panics if the new capacity exceeds `isize::MAX` bytes.
+  void reserve(usize additional) noexcept {
     check(!is_moved_from());
-    return capacity_;
+    if (raw_len() + additional <= capacity_) return;  // Nothing to do.
+    // TODO: Consider rounding up to nearest 2^N for some N?
+    grow_to_exact(apply_growth_function(additional));
+  }
+
+  /// Reserves the minimum capacity for at least `additional` more elements to
+  /// be inserted in the given Vec<T>. Unlike reserve, this will not
+  /// deliberately over-allocate to speculatively avoid frequent allocations.
+  /// After calling reserve_exact, capacity will be greater than or equal to
+  /// self.len() + additional. Does nothing if the capacity is already
+  /// sufficient.
+  ///
+  /// Note that the allocator may give the collection more space than it
+  /// requests. Therefore, capacity can not be relied upon to be precisely
+  /// minimal. Prefer reserve if future insertions are expected.
+  ///
+  /// # Panics
+  /// Panics if the new capacity exceeds `isize::MAX` bytes.
+  void reserve_exact(usize additional) noexcept {
+    check(!is_moved_from());
+    const usize cap = raw_len() + additional;
+    if (cap <= capacity_) return;  // Nothing to do.
+    grow_to_exact(cap);
+  }
+
+  /// Forces the length of the vector to new_len.
+  ///
+  /// This is a low-level operation that maintains none of the normal invariants
+  /// of the type. Normally changing the length of a vector is done using one of
+  /// the safe operations instead, such as `truncate()`, `resize()`, `extend()`,
+  /// or `clear()`.
+  ///
+  /// # Safety
+  /// `new_len` must be less than or equal to `capacity()`.
+  /// The elements at `old_len..new_len` must be constructed.
+  /// The elements at `new_len..old_len` must be destructed.
+  void set_len(::sus::marker::UnsafeFnMarker, usize new_len) {
+    sus_debug_check(new_len <= capacity());
+    slice_mut_.slice_.len_ = new_len;
   }
 
   /// Removes the last element from a vector and returns it, or None if it is
@@ -394,7 +449,7 @@ class Vec final {
   ///
   /// # Panics
   ///
-  /// Panics if the new capacity exceeds isize::MAX bytes.
+  /// Panics if the new capacity exceeds `isize::MAX` bytes.
   //
   // Avoids use of a reference, and receives by value, to sidestep the whole
   // issue of the reference being to something inside the vector which
@@ -420,7 +475,7 @@ class Vec final {
   ///
   /// # Panics
   ///
-  /// Panics if the new capacity exceeds isize::MAX bytes.
+  /// Panics if the new capacity exceeds `isize::MAX` bytes.
   template <class... Us>
   void emplace(Us&&... args) noexcept
     requires(::sus::mem::Move<T> && !std::is_reference_v<T> &&

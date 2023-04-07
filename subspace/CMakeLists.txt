@@ -16,6 +16,7 @@ add_library(subspace STATIC "")
 add_library(subspace::lib ALIAS subspace)
 target_sources(subspace PUBLIC
     "assertions/check.h"
+    "assertions/debug_check.h"
     "assertions/endian.h"
     "assertions/panic.h"
     "assertions/panic.cc"
@@ -64,6 +65,7 @@ target_sources(subspace PUBLIC
     "iter/__private/step.h"
     "iter/boxed_iterator.h"
     "iter/compat_ranges.h"
+    "iter/extend.h"
     "iter/filter.h"
     "iter/from_iterator.h"
     "iter/generator.h"

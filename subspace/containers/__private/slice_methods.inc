@@ -487,6 +487,64 @@ constexpr SliceIter<const T&> iter() const& noexcept {
 constexpr SliceIter<const T&> iter() && = delete;
 #endif
 
+/// Creates a vector by copying a slice n times.
+///
+/// # Panics
+/// This function will panic if the capacity would become larger than
+/// `isize::MAX`.
+///
+/// # Examples
+///
+/// ```
+/// auto v = sus::Vec<i32>::with_values(1, 2);
+/// check(v[".."_r].repeat(3) == sus::vec(1, 2, 1, 2, 1, 2).construct<i32>());
+/// ```
+constexpr ::sus::containers::Vec<T> repeat(usize n) const& noexcept
+  requires(::sus::mem::TrivialCopy<T>)
+{
+  auto buf = ::sus::containers::Vec<T>();
+  if (n == 0u) return buf;
+
+  const usize l = _len_expr;
+  // If capacity ends up larger than isize::MAX, the Vec::reserve() call will
+  // panic, so we don't need to check for overflow here too.
+  const usize capacity = l.saturating_mul(n);
+  buf.reserve(capacity);
+
+  // If `n` is larger than zero, it can be split as
+  // `n = 2^expn + rem (2^expn > rem, expn >= 0, rem >= 0)`.
+  // `2^expn` is the number represented by the leftmost '1' bit of `n`,
+  // and `rem` is the remaining part of `n`.
+
+  buf.extend(iter());
+  {
+    usize m = n >> 1u;
+    // If `m > 0`, there are remaining bits up to the leftmost '1'.
+    while (m > 0u) {
+      // `buf.extend(buf)`:
+      memcpy(buf.as_mut_ptr() + buf.len(), buf.as_ptr(),
+             size_t{buf.len() * ::sus::mem::size_of<T>()});
+      // `buf` has capacity of `self.len() * n`.
+      const usize buf_len = buf.len();
+      buf.set_len(::sus::marker::unsafe_fn, buf_len * 2u);
+      m >>= 1u;
+    }
+  }
+
+  // `rem` (`= n - 2^expn`) repetition is done by copying first `rem`
+  // repetitions from `buf` itself.
+  const usize rem_len = capacity - buf.len();  // `self.len() * rem`
+  if (rem_len > 0u) {
+    // `buf.extend(buf[0 .. rem_len])`:
+    // This is non-overlapping since `2^expn > rem`.
+    memcpy(buf.as_mut_ptr() + buf.len(), buf.as_ptr(),
+           size_t{rem_len * ::sus::mem::size_of<T>()});
+    // `buf.len() + rem_len` equals to `buf.capacity()` (`= self.len() * n`).
+    buf.set_len(::sus::marker::unsafe_fn, capacity);
+  }
+  return buf;
+}
+
 /// Divides one slice into two at an index, without doing bounds checking.
 ///
 /// The first will contain all indices from [0, mid) (excluding the index mid

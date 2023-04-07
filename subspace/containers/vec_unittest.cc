@@ -15,6 +15,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/containers/vec.h"
+#include "subspace/iter/extend.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/mem/move.h"
 #include "subspace/prelude.h"
@@ -1001,6 +1002,23 @@ TEST(Vec, Eq) {
   EXPECT_EQ(a, b);
   b[3_usize] += 1;
   EXPECT_NE(a, b);
+}
+
+TEST(Vec, Extend) {
+  static_assert(sus::iter::Extend<Vec<i32>, const i32&>);
+  {
+    auto v1 = Vec<i32>::with_values(1, 2, 3);
+    auto v2 = Vec<i32>::with_values(4, 5, 6);
+    v1.extend(v2.iter());
+    EXPECT_EQ(v1, sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6));
+  }
+  static_assert(sus::iter::Extend<Vec<i32>, i32>);
+  {
+    auto v1 = Vec<i32>::with_values(1, 2, 3);
+    auto v2 = Vec<i32>::with_values(4, 5, 6);
+    v1.extend(::sus::move(v2));
+    EXPECT_EQ(v1, sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6));
+  }
 }
 
 }  // namespace
