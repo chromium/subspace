@@ -174,8 +174,9 @@ class Vec final {
   }
 
   Vec(Vec&& o) noexcept
-      : slice_mut_(::sus::mem::replace(mref(o.raw_data()), nullptr),
-                   ::sus::mem::replace(mref(o.raw_len()), kMovedFromLen)),
+      : slice_mut_(
+            ::sus::mem::replace(mref(o.raw_data()), nullptr),
+            ::sus::mem::replace(mref(o.slice_mut_.slice_.len_), kMovedFromLen)),
         capacity_(::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity)) {
     check(!is_moved_from());
   }
@@ -183,7 +184,8 @@ class Vec final {
     check(!o.is_moved_from());
     if (is_alloced()) free_storage();
     raw_data() = ::sus::mem::replace(mref(o.raw_data()), nullptr);
-    raw_len() = ::sus::mem::replace(mref(o.raw_len()), kMovedFromLen);
+    set_len(::sus::marker::unsafe_fn,
+            ::sus::mem::replace(mref(o.slice_mut_.slice_.len_), kMovedFromLen));
     capacity_ = ::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity);
     return *this;
   }
@@ -193,11 +195,12 @@ class Vec final {
   {
     check(!is_moved_from());
     auto v = Vec::with_capacity(capacity_);
-    for (auto i = size_t{0}; i < raw_len(); ++i) {
+    const auto self_len = len();
+    for (auto i = size_t{0}; i < self_len; ++i) {
       new (v.raw_data() + i)
           T(::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
     }
-    v.raw_len() = raw_len();
+    v.set_len(::sus::marker::unsafe_fn, self_len);
     return v;
   }
 
@@ -212,23 +215,29 @@ class Vec final {
       destroy_storage_objects();
       free_storage();
       raw_data() = nullptr;
-      raw_len() = 0_usize;
+      set_len(::sus::marker::unsafe_fn, 0_usize);
       capacity_ = 0_usize;
     } else {
       grow_to_exact(source.capacity_);
-      const size_t in_place_count =
-          sus::ops::min(raw_len(), source.raw_len()).primitive_value;
+
+      const size_t self_len = size_t{len()};
+      const size_t source_len = size_t{source.len()};
+      const size_t in_place_count = sus::ops::min(self_len, source_len);
+
+      // Replace element positions that are present in both Vec.
       for (auto i = size_t{0}; i < in_place_count; ++i) {
         ::sus::clone_into(*(raw_data() + i), *(source.raw_data() + i));
       }
-      for (auto i = in_place_count; i < raw_len(); ++i) {
+      // Destroy element positions in self that aren't in source.
+      for (auto i = in_place_count; i < self_len; i += 1u) {
         get_unchecked_mut(::sus::marker::unsafe_fn, i).~T();
       }
-      for (auto i = in_place_count; i < source.raw_len(); ++i) {
+      // Append element positions that weren't in self but are in source.
+      for (auto i = in_place_count; i < source_len; i += 1u) {
         new (raw_data() + i)
             T(::sus::clone(source.get_unchecked(::sus::marker::unsafe_fn, i)));
       }
-      raw_len() = source.raw_len();
+      set_len(::sus::marker::unsafe_fn, source_len);
     }
   }
 
@@ -246,9 +255,10 @@ class Vec final {
   /// cleanup.
   ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
     check(!is_moved_from());
-    return sus::tuple(::sus::mem::replace(mref(raw_data()), nullptr),
-                      ::sus::mem::replace(mref(raw_len()), kMovedFromLen),
-                      ::sus::mem::replace(mref(capacity_), kMovedFromCapacity));
+    return sus::tuple(
+        ::sus::mem::replace(mref(raw_data()), nullptr),
+        ::sus::mem::replace(mref(slice_mut_.slice_.len_), kMovedFromLen),
+        ::sus::mem::replace(mref(capacity_), kMovedFromCapacity));
   }
 
   /// Returns the number of elements there is space allocated for in the vector.
@@ -267,7 +277,7 @@ class Vec final {
   void clear() noexcept {
     check(!is_moved_from());
     destroy_storage_objects();
-    raw_len() = 0_usize;
+    set_len(::sus::marker::unsafe_fn, 0_usize);
   }
 
   /// Extends the `Vec` with the contents of an iterator.
@@ -318,10 +328,12 @@ class Vec final {
   inline void extend_from_slice(::sus::containers::Slice<T> s) noexcept
     requires(sus::mem::Clone<T>)
   {
-    if (s.is_empty()) [[unlikely]] {
+    check(!is_moved_from());
+    if (s.is_empty()) {
       return;
     }
-    check(!is_moved_from());
+    const auto self_len = len();
+    const auto slice_len = s.len();
     const T* slice_ptr = s.as_ptr();
     if (is_alloced()) {
       const T* vec_ptr = raw_data();
@@ -329,13 +341,13 @@ class Vec final {
       // call below would invalidate the Slice.
       //
       // TODO: Should we handle aliasing with a temp buffer?
-      ::sus::check(!(slice_ptr >= vec_ptr && slice_ptr <= vec_ptr + raw_len()));
+      ::sus::check(!(slice_ptr >= vec_ptr && slice_ptr <= vec_ptr + self_len));
     }
-    reserve(s.len());
+    reserve(slice_len);
     if constexpr (sus::mem::TrivialCopy<T>) {
       ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, slice_ptr,
-                                      raw_data() + raw_len(), s.len());
-      raw_len() += s.len();
+                                      raw_data() + self_len, slice_len);
+      set_len(::sus::marker::unsafe_fn, self_len + slice_len);
     } else {
       for (const T& t : s) push(::sus::clone(t));
     }
@@ -365,8 +377,8 @@ class Vec final {
             static_cast<T*>(malloc(bytes.primitive_value));
         T* old_t = raw_data();
         T* new_t = new_storage;
-        const usize len = raw_len();
-        for (usize i; i < len; i += 1u) {
+        const auto self_len = size_t{len()};
+        for (auto i = size_t{0}; i < self_len; i += 1u) {
           new (new_t) T(::sus::move(*old_t));
           old_t->~T();
           ++old_t;
@@ -391,7 +403,7 @@ class Vec final {
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
   void reserve(usize additional) noexcept {
     check(!is_moved_from());
-    if (raw_len() + additional <= capacity_) return;  // Nothing to do.
+    if (len() + additional <= capacity_) return;  // Nothing to do.
     // TODO: Consider rounding up to nearest 2^N for some N?
     grow_to_exact(apply_growth_function(additional));
   }
@@ -411,7 +423,7 @@ class Vec final {
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
   void reserve_exact(usize additional) noexcept {
     check(!is_moved_from());
-    const usize cap = raw_len() + additional;
+    const usize cap = len() + additional;
     if (cap <= capacity_) return;  // Nothing to do.
     grow_to_exact(cap);
   }
@@ -436,11 +448,12 @@ class Vec final {
   /// empty.
   Option<T> pop() noexcept {
     check(!is_moved_from());
-    if (raw_len() > 0u) {
+    const auto self_len = len();
+    if (self_len > 0u) {
       auto o = Option<T>::some(sus::move(
-          get_unchecked_mut(::sus::marker::unsafe_fn, raw_len() - 1u)));
-      get_unchecked_mut(::sus::marker::unsafe_fn, raw_len() - 1u).~T();
-      raw_len() -= 1u;
+          get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u)));
+      get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u).~T();
+      set_len(::sus::marker::unsafe_fn, self_len - 1u);
       return o;
     } else {
       return Option<T>::none();
@@ -461,8 +474,9 @@ class Vec final {
   {
     check(!is_moved_from());
     reserve(1_usize);
-    new (&raw_data()[size_t{raw_len()}]) T(::sus::move(t));
-    raw_len() += 1_usize;
+    const auto self_len = len();
+    new (raw_data() + self_len) T(::sus::move(t));
+    set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
   }
 
   /// Constructs and appends an element to the back of the vector.
@@ -486,18 +500,19 @@ class Vec final {
   {
     check(!is_moved_from());
     reserve(1_usize);
-    new (&raw_data()[size_t{raw_len()}]) T(::sus::forward<Us>(args)...);
-    raw_len() += 1_usize;
+    const auto self_len = len();
+    new (raw_data() + self_len) T(::sus::forward<Us>(args)...);
+    set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
   }
 
   // Returns a slice that references all the elements of the vector as const
   // references.
   constexpr Slice<T> as_slice() const& noexcept sus_lifetimebound {
     check(!is_moved_from());
-    // SAFETY: The `raw_len()` is the number of elements in the Vec, and the
+    // SAFETY: The `len()` is the number of elements in the Vec, and the
     // pointer is to the start of the Vec, so this Slice covers a valid range.
     return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, raw_data(),
-                                    raw_len());
+                                    len());
   }
   constexpr Slice<T> as_slice() && = delete;
 
@@ -505,10 +520,10 @@ class Vec final {
   // references.
   constexpr SliceMut<T> as_mut_slice() & noexcept sus_lifetimebound {
     check(!is_moved_from());
-    // SAFETY: The `raw_len()` is the number of elements in the Vec, and the
+    // SAFETY: The `len()` is the number of elements in the Vec, and the
     // pointer is to the start of the Vec, so this Slice covers a valid range.
     return SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn, raw_data(),
-                                       raw_len());
+                                       len());
   }
 
   /// Consumes the Vec into an iterator that will return each element in the
@@ -554,11 +569,9 @@ class Vec final {
 
   constexpr T* raw_data() const noexcept { return slice_mut_.slice_.data_; }
   constexpr T*& raw_data() noexcept { return slice_mut_.slice_.data_; }
-  constexpr usize raw_len() const noexcept { return slice_mut_.slice_.len_; }
-  constexpr usize& raw_len() noexcept { return slice_mut_.slice_.len_; }
 
   constexpr usize apply_growth_function(usize additional) const noexcept {
-    usize goal = additional + raw_len();
+    usize goal = additional + len();
     usize cap = capacity_;
     // TODO: What is a good growth function? Steal from WTF::Vector?
     while (cap < goal) {
@@ -571,8 +584,8 @@ class Vec final {
 
   inline void destroy_storage_objects() {
     if constexpr (!std::is_trivially_destructible_v<T>) {
-      const size_t len = size_t{raw_len()};
-      for (auto i = size_t{0}; i < len; ++i) raw_data()[i].~T();
+      const auto self_len = len();
+      for (::sus::num::usize i; i < self_len; i += 1u) (raw_data() + i)->~T();
     }
   }
 
@@ -588,7 +601,7 @@ class Vec final {
 
   // Checks if Vec has been moved from.
   constexpr inline bool is_moved_from() const noexcept {
-    return raw_len() > capacity_;
+    return len() > capacity_;
   }
 
   static constexpr usize kMovedFromLen = 1_usize;
