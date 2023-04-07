@@ -394,6 +394,15 @@ constexpr SliceIterMut<T&> iter_mut() _mut_ref noexcept {
   return SliceIterMut<T&>::with(_ptr_expr, _len_expr);
 }
 
+/// Returns a mutable reference to the last element of the slice, or None if it
+/// is empty.
+constexpr ::sus::Option<T&> last_mut() _mut_ref noexcept {
+  if (_len_expr > 0u)
+    return ::sus::Option<T&>::some(*(_ptr_expr + _len_expr - 1u));
+  else
+    return ::sus::Option<T&>::none();
+}
+
 /// Sorts the slice.
 ///
 /// This sort is stable (i.e., does not reorder equal elements) and
