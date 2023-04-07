@@ -25,9 +25,11 @@
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
 #include "subspace/result/result.h"
+#include "subspace/test/no_copy_move.h"
 
 using sus::containers::Slice;
 using sus::containers::SliceMut;
+using sus::test::NoCopyMove;
 
 namespace {
 
@@ -2176,7 +2178,9 @@ TEST(SliceMut, Fill) {
 }
 
 TEST(SliceMut, FillWith) {
-  auto f = [i = 6_i32]() mutable { return ::sus::mem::replace(mref(i), i + 1); };
+  auto f = [i = 6_i32]() mutable {
+    return ::sus::mem::replace(mref(i), i + 1);
+  };
   auto v1 = Vec<i32>::with_values(1, 2, 3, 4);
   v1[".."_r].fill_with(f);
   EXPECT_EQ(v1[0], 6);
@@ -2202,6 +2206,40 @@ TEST(SliceMut, FillWithDefault) {
   EXPECT_EQ(v1[1], 0);
   EXPECT_EQ(v1[2], 0);
   EXPECT_EQ(v1[3], 0);
+}
+
+TEST(Slice, First) {
+  const auto v1 = Vec<i32>::with_values(1, 2, 3, 4);
+  EXPECT_EQ(&v1[".."_r].first().unwrap(), v1.as_ptr());
+  EXPECT_EQ(&v1["1.."_r].first().unwrap(), v1["1.."_r].as_ptr());
+  EXPECT_EQ(v1["1..1"_r].first(), sus::None);
+
+  NoCopyMove n[] = {NoCopyMove(), NoCopyMove()};
+  auto s = Slice<NoCopyMove>::from_raw_parts(unsafe_fn, n, 2u);
+  EXPECT_EQ(&s[".."_r].first().unwrap(), &n[0]);
+  EXPECT_EQ(&s["1.."_r].first().unwrap(), &n[1]);
+  EXPECT_EQ(s["2..1"_r].first(), sus::None);
+
+  static_assert(
+      std::same_as<sus::Option<const NoCopyMove&>, decltype(s.first())>);
+}
+
+TEST(SliceMut, FirstMut) {
+  auto v1 = Vec<i32>::with_values(1, 2, 3, 4);
+  EXPECT_EQ(&v1[".."_r].first_mut().unwrap(), v1.as_ptr());
+  EXPECT_EQ(&v1["1.."_r].first_mut().unwrap(), v1["1.."_r].as_ptr());
+  EXPECT_EQ(v1["1..1"_r].first_mut(), sus::None);
+
+  NoCopyMove n[] = {NoCopyMove(), NoCopyMove()};
+  auto s = SliceMut<NoCopyMove>::from_raw_parts(unsafe_fn, n, 2u);
+  EXPECT_EQ(&s[".."_r].first_mut().unwrap(), &n[0]);
+  EXPECT_EQ(&s["1.."_r].first_mut().unwrap(), &n[1]);
+  EXPECT_EQ(s["2..1"_r].first_mut(), sus::None);
+
+  static_assert(
+      std::same_as<sus::Option<const NoCopyMove&>, decltype(s.first())>);
+  static_assert(
+      std::same_as<sus::Option<NoCopyMove&>, decltype(s.first_mut())>);
 }
 
 }  // namespace

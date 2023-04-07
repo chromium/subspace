@@ -323,6 +323,18 @@ constexpr bool ends_with(Slice<T> suffix) const& noexcept
   return m >= n && suffix == sub;
 }
 
+/// Returns the first element of the slice, or `None` if it is empty.
+constexpr ::sus::Option<const T&> first() const& noexcept {
+  if (_len_expr > 0u)
+    return ::sus::Option<const T&>::some(*_ptr_expr);
+  else
+    return ::sus::Option<const T&>::none();
+}
+
+#if _delete_rvalue
+constexpr ::sus::Option<const T&> first() && = delete;
+#endif
+
 /// Returns a reference to the element at position `i` in the Slice.
 ///
 /// # Panics
