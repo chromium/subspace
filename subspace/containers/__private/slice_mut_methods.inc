@@ -280,6 +280,15 @@ constexpr void fill_with_default() noexcept
   }
 }
 
+/// Returns a mutable reference to the first element of the slice, or None if it
+/// is empty.
+constexpr ::sus::Option<T&> first_mut() _mut_ref noexcept {
+  if (_len_expr > 0u)
+    return ::sus::Option<T&>::some(*_ptr_expr);
+  else
+    return ::sus::Option<T&>::none();
+}
+
 /// Returns a mutable reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
 ///
