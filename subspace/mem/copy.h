@@ -53,6 +53,22 @@ concept Copy = std::is_copy_constructible_v<
                 !std::is_move_assignable_v<
                     std::remove_const_t<std::remove_reference_t<T>>>);
 
+/// A `TrivialCopy` type is `Copy` but may be copied with memcpy() or memmove()
+/// instead of calling the copy constructor/assignment. This allows groups of
+/// items to be copied in a single operation.
+///
+/// Satisfying `TrivialCopy` also implies that the type satisfies both `Copy`
+/// and `Clone`.
+///
+/// Typically types should only be `TrivialCopy` when performing a copy is very
+/// cheap, and thus unlikely to cause performance problems. For types that are
+/// larger, it is better to make them satisfy `Clone` instead so that copies are
+/// always explicit.
+template <class T>
+concept TrivialCopy =
+    Copy<T> && std::is_trivially_copyable_v<
+                   std::remove_const_t<std::remove_reference_t<T>>>;
+
 /// A `CopyOrRef` object or reference of type `T` can be copied to construct a
 /// new `T`.
 ///

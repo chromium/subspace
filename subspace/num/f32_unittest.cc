@@ -27,6 +27,16 @@
 #define F32_NEAR(a, b, c) \
   EXPECT_NEAR((a).primitive_value, (b).primitive_value, (c).primitive_value);
 
+static_assert(std::is_signed_v<decltype(f32::primitive_value)>);
+static_assert(sizeof(decltype(f32::primitive_value)) == 4);
+static_assert(sizeof(f32) == sizeof(decltype(f32::primitive_value)));
+
+static_assert(sus::mem::Copy<f32>);
+static_assert(sus::mem::TrivialCopy<f32>);
+static_assert(sus::mem::Clone<f32>);
+static_assert(sus::mem::relocate_by_memcpy<f32>);
+static_assert(sus::mem::Move<f32>);
+
 // std hashing
 static_assert(std::same_as<decltype(std::hash<f32>()(0_f32)), size_t>);
 static_assert(std::same_as<decltype(std::equal_to<f32>()(0_f32, 1_f32)), bool>);

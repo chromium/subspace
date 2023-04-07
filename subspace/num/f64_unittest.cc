@@ -24,6 +24,20 @@
 #define F64_NEAR(a, b, c) \
   EXPECT_NEAR((a).primitive_value, (b).primitive_value, (c).primitive_value);
 
+static_assert(std::is_signed_v<decltype(f64::primitive_value)>);
+static_assert(sizeof(decltype(f64::primitive_value)) == 8);
+static_assert(sizeof(f64) == sizeof(decltype(f64::primitive_value)));
+
+static_assert(sus::mem::Copy<f64>);
+static_assert(sus::mem::TrivialCopy<f64>);
+static_assert(sus::mem::Clone<f64>);
+static_assert(sus::mem::relocate_by_memcpy<f64>);
+static_assert(sus::mem::Move<f64>);
+
+// std hashing
+static_assert(std::same_as<decltype(std::hash<f64>()(0_f64)), size_t>);
+static_assert(std::same_as<decltype(std::equal_to<f64>()(0_f64, 1_f64)), bool>);
+
 namespace {
 
 using sus::num::FpCategory;

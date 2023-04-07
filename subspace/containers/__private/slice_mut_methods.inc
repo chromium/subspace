@@ -127,15 +127,14 @@ constexpr ChunksMut<T> chunks_mut(
 ///
 /// The length of `src` must be the same as `*this`.
 ///
-/// This function requires that `T` is trivially copy-assignable in order to
-/// give consistent performance across types. If `T` is not trivially copy-
-/// assignable, use `clone_from_slice()`.
+/// This function requires that `T` is `TrivialCopy` in order to give consistent
+/// performance across types. If `T` is not `TrivialCopy`, use
+/// `clone_from_slice()`.
 ///
-/// # Panics
-/// This function will panic if the two slices have different lengths, or if the
-/// two slices overlap.
+/// # Panics This function will panic if the two slices have different lengths,
+/// or if the two slices overlap.
 constexpr void copy_from_slice(Slice<T> src) noexcept
-  requires(std::is_trivially_copy_assignable_v<T>)
+  requires(::sus::mem::TrivialCopy<T>)
 {
   const ::sus::num::usize src_len = src.len();
   const ::sus::num::usize dst_len = _len_expr;
