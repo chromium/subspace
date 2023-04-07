@@ -254,6 +254,32 @@ constexpr void fill(T value) noexcept
   }
 }
 
+/// Fills the slice with elements returned by calling a closure repeatedly.
+///
+/// This method uses a closure to create new values. If you’d rather `Clone` a
+/// given value, use `fill()`. If you want to default-construct elements for a
+/// type that satisfies `sus::construct::Default`, use `fill_with_default()`.
+constexpr void fill_with(::sus::fn::FnMutRef<T()> f) noexcept {
+  T* ptr = _ptr_expr;
+  T* end_ptr = ptr + _len_expr;
+  while (ptr != end_ptr) {
+    *ptr = f();
+    ptr += 1u;
+  }
+}
+
+/// Fills the slice with default-constructed elements of type `T`.
+constexpr void fill_with_default() noexcept
+  requires(sus::construct::Default<T>)
+{
+  T* ptr = _ptr_expr;
+  T* end_ptr = ptr + _len_expr;
+  while (ptr != end_ptr) {
+    *ptr = T();
+    ptr += 1u;
+  }
+}
+
 /// Returns a mutable reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
 ///
