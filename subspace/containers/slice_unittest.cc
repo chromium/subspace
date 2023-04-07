@@ -2175,4 +2175,33 @@ TEST(SliceMut, Fill) {
   EXPECT_EQ(v2[1].i, 2);
 }
 
+TEST(SliceMut, FillWith) {
+  auto f = [i = 6_i32]() mutable { return ::sus::mem::replace(mref(i), i + 1); };
+  auto v1 = Vec<i32>::with_values(1, 2, 3, 4);
+  v1[".."_r].fill_with(f);
+  EXPECT_EQ(v1[0], 6);
+  EXPECT_EQ(v1[1], 7);
+  EXPECT_EQ(v1[2], 8);
+  EXPECT_EQ(v1[3], 9);
+  v1["2..4"_r].fill_with(f);
+  EXPECT_EQ(v1[0], 6);
+  EXPECT_EQ(v1[1], 7);
+  EXPECT_EQ(v1[2], 10);
+  EXPECT_EQ(v1[3], 11);
+}
+
+TEST(SliceMut, FillWithDefault) {
+  auto v1 = Vec<i32>::with_values(1, 2, 3, 4);
+  v1["2..4"_r].fill_with_default();
+  EXPECT_EQ(v1[0], 1);
+  EXPECT_EQ(v1[1], 2);
+  EXPECT_EQ(v1[2], 0);
+  EXPECT_EQ(v1[3], 0);
+  v1[".."_r].fill_with_default();
+  EXPECT_EQ(v1[0], 0);
+  EXPECT_EQ(v1[1], 0);
+  EXPECT_EQ(v1[2], 0);
+  EXPECT_EQ(v1[3], 0);
+}
+
 }  // namespace

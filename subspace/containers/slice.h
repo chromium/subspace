@@ -17,6 +17,7 @@
 #include <algorithm>  // Replace std::sort.
 
 #include "subspace/assertions/check.h"
+#include "subspace/construct/default.h"
 #include "subspace/containers/concat.h"
 #include "subspace/containers/iterators/chunks.h"
 #include "subspace/containers/iterators/slice_iter.h"
