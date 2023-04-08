@@ -1820,8 +1820,7 @@ class Tuple;
                                                                               \
   constexpr ::sus::containers::Array<u8, Bytes> T::to_ne_bytes()              \
       const& noexcept {                                                       \
-    auto bytes = ::sus::containers::Array<u8, Bytes>::with_uninitialized(     \
-        ::sus::marker::unsafe_fn);                                            \
+    auto bytes = ::sus::containers::Array<u8, Bytes>();                       \
     if (std::is_constant_evaluated()) {                                       \
       auto uval = __private::into_unsigned(primitive_value);                  \
       for (auto i = size_t{0}; i < Bytes; ++i) {                              \
