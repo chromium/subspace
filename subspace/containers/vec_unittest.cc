@@ -235,22 +235,9 @@ TEST(Vec, OperatorIndexMut) {
   EXPECT_EQ(v[0u], 3_i32);
 }
 
-TEST(VecDeathTest, AsPtr) {
-  auto v = Vec<i32>();
-#if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(v.as_ptr(), "");
-#endif
-}
-
-TEST(VecDeathTest, AsMutPtr) {
-  auto v = Vec<i32>();
-#if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(v.as_mut_ptr(), "");
-#endif
-}
-
 TEST(Vec, AsPtr) {
   auto v = Vec<i32>();
+  (void)v.as_ptr();  // Empty vec returns an invalid pointer.
   v.push(2_i32);
   EXPECT_EQ(v.as_ptr(), &v[0u]);
   static_assert(std::same_as<const i32*, decltype(v.as_ptr())>);
@@ -258,6 +245,7 @@ TEST(Vec, AsPtr) {
 
 TEST(Vec, AsMutPtr) {
   auto v = Vec<i32>();
+  (void)v.as_mut_ptr();  // Empty vec returns an invalid pointer.
   v.push(2_i32);
   EXPECT_EQ(v.as_mut_ptr(), &v[0u]);
   static_assert(std::same_as<i32*, decltype(v.as_mut_ptr())>);
@@ -959,11 +947,7 @@ TEST(Vec, ConvertsToSlice) {
   {
     [[maybe_unused]] Slice<i32> s2(v);
     [[maybe_unused]] Slice<i32> s3(cv);
-    [[maybe_unused]] Slice<i32> s4(sus::move(v));
-    [[maybe_unused]] Slice<i32> s5(sus::clone(v));
     [[maybe_unused]] SliceMut<i32> sm2(v);
-    [[maybe_unused]] SliceMut<i32> sm4(sus::move(v));
-    [[maybe_unused]] SliceMut<i32> sm5(sus::clone(v));
   }
   // Implicit construction.
   {
@@ -982,10 +966,8 @@ TEST(Vec, ConvertsToSlice) {
     [[maybe_unused]] const Slice<i32>& s2 = v;
     [[maybe_unused]] const Slice<i32>& s3 = cv;
     [[maybe_unused]] Slice<i32>& s4 = v;
-    [[maybe_unused]] Slice<i32>&& s5 = sus::move(v);
     [[maybe_unused]] const SliceMut<i32>& s6 = v;
     [[maybe_unused]] SliceMut<i32>& s8 = v;
-    [[maybe_unused]] SliceMut<i32>&& s9 = sus::move(v);
   }
 }
 
