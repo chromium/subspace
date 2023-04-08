@@ -68,7 +68,7 @@ struct NonAggregate {
 TEST(Array, Default) {
   auto a = Array<int, 5>();
   static_assert(sizeof(a) == sizeof(int[5]));
-  for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
+  for (usize i; i < 5u; i += 1u) {
     EXPECT_EQ(a[i], 0);
   }
 
@@ -81,18 +81,12 @@ TEST(Array, Zero) {
   static_assert(sizeof(Array<int, 0>) == 1);
 }
 
-TEST(Array, WithUninitialized) {
-  static_assert(
-      sizeof(Array<int, 5>::with_uninitialized(unsafe_fn)) == sizeof(int[5]),
-      "");
-}
-
 TEST(Array, WithInitializer) {
   auto a =
       Array<usize, 5>::with_initializer([i = 1u]() mutable { return i++; });
   static_assert(sizeof(a) == sizeof(usize[5]));
-  for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
-    EXPECT_EQ(a[i], i + 1_usize);
+  for (auto i = 0_usize; i < 5u; i += 1u) {
+    EXPECT_EQ(a[i], i + 1u);
   }
 
   struct NotTriviallyDefaultConstructible {

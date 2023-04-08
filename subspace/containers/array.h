@@ -68,18 +68,7 @@ class Array final {
  public:
   constexpr Array() noexcept
     requires(::sus::construct::Default<T>)
-      : Array(kWithUninitialized) {
-    if constexpr (N > 0) {
-      for (size_t i = 0; i < N; ++i) {
-        new (as_mut_ptr() + i) T();
-      }
-    }
-  }
-
-  constexpr static Array with_uninitialized(
-      ::sus::marker::UnsafeFnMarker) noexcept {
-    return Array(kWithUninitialized);
-  }
+      : Array(kWithDefault, std::make_index_sequence<N>()) {}
 
   constexpr static Array with_initializer(
       ::sus::fn::FnMut<T()> auto&& f) noexcept
@@ -102,9 +91,7 @@ class Array final {
   template <std::convertible_to<T>... Ts>
     requires(sizeof...(Ts) == N && ::sus::mem::Move<T>)
   constexpr static Array with_values(Ts&&... ts) noexcept {
-    auto a = Array(kWithUninitialized);
-    init_values(a.as_mut_ptr(), 0, ::sus::forward<Ts>(ts)...);
-    return a;
+    return Array(kWithValues, ::sus::forward<Ts>(ts)...);
   }
 
   Array(Array&&)
@@ -114,10 +101,8 @@ class Array final {
   Array(Array&& o)
       // TODO: Make a NonTrivialMove<T>.
     requires(::sus::mem::Move<T> && !std::is_trivially_move_constructible_v<T>)
-      : Array(kWithUninitialized) {
-    for (auto i = size_t{0}; i < N; ++i)
-      new (as_mut_ptr() + i) T(::sus::move(o.storage_.data_[i]));
-  }
+      : Array(kWithMoveFromPointer, o.storage_.data_,
+              std::make_index_sequence<N>()) {}
   Array(Array&&)
     requires(!::sus::mem::Move<T>)
   = delete;
@@ -139,10 +124,8 @@ class Array final {
   constexpr Array clone() const& noexcept
     requires(::sus::mem::Clone<T>)
   {
-    auto ar = Array::with_uninitialized(::sus::marker::unsafe_fn);
-    for (auto i = size_t{0}; i < N; ++i) {
-      new (ar.as_mut_ptr() + i) T(::sus::clone(storage_.data_[i]));
-    }
+    auto ar = Array(kWithCloneFromPointer, storage_.data_,
+                    std::make_index_sequence<N>());
     return ar;
   }
 
@@ -313,6 +296,11 @@ class Array final {
   // constexpr operator SliceMut<T>&&() && { return ::sus::move(slice_mut_); }
 
  private:
+  enum WithDefault { kWithDefault };
+  template <size_t... Is>
+  constexpr Array(WithDefault, std::index_sequence<Is...>) noexcept
+      : storage_{((void)Is, T())...} {}
+
   enum WithInitializer { kWithInitializer };
   template <size_t... Is>
   constexpr Array(WithInitializer, ::sus::fn::FnMut<T()> auto&& f,
@@ -324,9 +312,22 @@ class Array final {
   constexpr Array(WithValue, const T& t, std::index_sequence<Is...>) noexcept
       : storage_{((void)Is, t)...} {}
 
-  enum WithUninitialized { kWithUninitialized };
+  enum WithValues { kWithValues };
+  template <class... Ts>
+  constexpr Array(WithValues, Ts&&... ts) noexcept
+      : storage_{::sus::forward<Ts>(ts)...} {}
+
+  enum WithMoveFromPointer { kWithMoveFromPointer };
   template <size_t... Is>
-  constexpr Array(WithUninitialized) noexcept {}
+  constexpr Array(WithMoveFromPointer, T* t,
+                  std::index_sequence<Is...>) noexcept
+      : storage_{::sus::move(*(t + Is))...} {}
+
+  enum WithCloneFromPointer { kWithCloneFromPointer };
+  template <size_t... Is>
+  constexpr Array(WithCloneFromPointer, const T* t,
+                  std::index_sequence<Is...>) noexcept
+      : storage_{::sus::clone(*(t + Is))...} {}
 
   template <std::convertible_to<T> T1, std::convertible_to<T>... Ts>
   static inline void init_values(T* a, size_t index, T1&& t1, Ts&&... ts) {
@@ -345,11 +346,7 @@ class Array final {
                     r.get_unchecked(::sus::marker::unsafe_fn, Is)));
   };
 
-  // Using a union ensures that the default constructor doesn't initialize
-  // anything.
-  union {
-    ::sus::containers::__private::Storage<T, N> storage_;
-  };
+  ::sus::containers::__private::Storage<T, N> storage_;
 
   sus_class_trivially_relocatable_if(::sus::marker::unsafe_fn,
                                      (N == 0 ||
