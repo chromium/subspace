@@ -19,6 +19,7 @@
 #include <concepts>
 
 #include "subspace/macros/always_inline.h"
+#include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/forward.h"
 #include "subspace/ops/eq.h"
@@ -65,7 +66,7 @@ struct NeverValueAccess {
 
   /// Checks if the never-value field is set to the never-value, returning false
   /// if it is.
-  constexpr sus_always_inline bool is_constructed() const noexcept
+  sus_pure constexpr sus_always_inline bool is_constructed() const noexcept
     requires(has_field)
   {
     return t_._sus_Unsafe_NeverValueIsConstructed(::sus::marker::unsafe_fn);
@@ -87,8 +88,8 @@ struct NeverValueAccess {
     t_._sus_Unsafe_NeverValueSetDestroyValue(::sus::marker::unsafe_fn);
   }
 
-  constexpr sus_always_inline const T& as_inner() const { return t_; }
-  constexpr sus_always_inline T& as_inner_mut() { return t_; }
+  sus_pure constexpr sus_always_inline const T& as_inner() const { return t_; }
+  sus_pure constexpr sus_always_inline T& as_inner_mut() { return t_; }
 
  private:
   T t_;
@@ -134,7 +135,7 @@ concept NeverValueField = __private::NeverValueAccess<T>::has_field;
   template <class>                                                             \
   friend struct ::sus::mem::__private::NeverValueAccess;                       \
                                                                                \
-  constexpr bool _sus_Unsafe_NeverValueIsConstructed(                          \
+  sus_pure constexpr bool _sus_Unsafe_NeverValueIsConstructed(                 \
       ::sus::marker::UnsafeFnMarker) const noexcept {                          \
     static_assert(                                                             \
         std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,    \
