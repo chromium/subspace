@@ -603,6 +603,62 @@ constexpr ::sus::num::usize partition_point(
       .unwrap_or_else([](::sus::num::usize i) { return i; });
 }
 
+
+/// Returns an iterator over `chunk_size` elements of the slice at a time,
+/// starting at the end of the slice.
+///
+/// The chunks are slices and do not overlap. If `chunk_size` does not divide
+/// the length of the slice, then the last chunk will not have length
+/// `chunk_size`.
+///
+/// See `rchunks_exact()` for a variant of this iterator that returns chunks of
+/// always exactly `chunk_size` elements, and `chunks()` for the same iterator
+/// but starting at the beginning of the slice.
+///
+/// # Panics
+/// Panics if `chunk_size` is 0.
+constexpr RChunks<T> rchunks(::sus::num::usize chunk_size) const& noexcept {
+  ::sus::check(chunk_size > 0u);
+  return RChunks<T>::with(::sus::containers::Slice<T>::from_raw_parts(
+                              ::sus::marker::unsafe_fn, _ptr_expr, _len_expr),
+                          chunk_size);
+}
+
+#if _delete_rvalue
+constexpr RChunks<T> rchunks(::sus::num::usize chunk_size) && = delete;
+#endif
+
+/// Returns an iterator over `chunk_size` elements of the slice at a time,
+/// starting at the end of the slice.
+///
+/// The chunks are slices and do not overlap. If `chunk_size` does not divide
+/// the length of the slice, then the last up to `chunk_size-1` elements will be
+/// omitted and can be retrieved from the `remainder()` function of the iterator.
+///
+/// TODO: Verify if: Due to each chunk having exactly `chunk_size` elements, the
+/// compiler can often optimize the resulting code better than in the case of
+/// `rchunks()`.
+///
+/// See `rchunks()` for a variant of this iterator that also returns the
+/// remainder as a smaller chunk, and `chunks_exact()` for the same iterator but
+/// starting at the beginning of the slice.
+///
+/// # Panics
+/// Panics if `chunk_size` is 0.
+constexpr RChunksExact<T> rchunks_exact(
+    ::sus::num::usize chunk_size) const& noexcept {
+  ::sus::check(chunk_size > 0u);
+  return RChunksExact<T>::with(
+      ::sus::containers::Slice<T>::from_raw_parts(::sus::marker::unsafe_fn,
+                                                  _ptr_expr, _len_expr),
+      chunk_size);
+}
+
+#if _delete_rvalue
+constexpr RChunksExact<T> rchunks_exact(::sus::num::usize chunk_size) && =
+    delete;
+#endif
+
 /// Creates a vector by copying a slice n times.
 ///
 /// # Panics

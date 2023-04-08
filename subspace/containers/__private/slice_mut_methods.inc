@@ -403,6 +403,54 @@ constexpr ::sus::Option<T&> last_mut() _mut_ref noexcept {
     return ::sus::Option<T&>::none();
 }
 
+/// Returns an iterator over `chunk_size` elements of the slice at a time,
+/// starting at the end of the slice.
+///
+/// The chunks are mutable slices, and do not overlap. If `chunk_size` does not
+/// divide the length of the slice, then the last up to `chunk_size-1` elements
+/// will be omitted and can be retrieved from the `remainder()` function of the
+/// iterator.
+///
+/// Due to each chunk having exactly `chunk_size` elements, the compiler can
+/// often optimize the resulting code better than in the case of chunks_mut.
+///
+/// See `rchunks_mut()` for a variant of this iterator that also returns the
+/// remainder as a smaller chunk, and `chunks_exact_mut()` for the same iterator
+/// but starting at the beginning of the slice.
+///
+/// # Panics
+/// Panics if `chunk_size` is 0.
+constexpr RChunksExactMut<T> rchunks_exact_mut(
+    ::sus::num::usize chunk_size) _mut_ref noexcept {
+  ::sus::check(chunk_size > 0u);
+  return RChunksExactMut<T>::with(
+      ::sus::containers::SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn,
+                                                     _ptr_expr, _len_expr),
+      chunk_size);
+}
+
+/// Returns an iterator over `chunk_size` elements of the slice at a time,
+/// starting at the end of the slice.
+///
+/// The chunks are mutable slices, and do not overlap. If `chunk_size` does not
+/// divide the length of the slice, then the last chunk will not have length
+/// `chunk_size`.
+///
+/// See `rchunks_exact_mut()` for a variant of this iterator that returns chunks
+/// of always exactly chunk_size elements, and `chunks_mut()` for the same
+/// iterator but starting at the beginning of the slice.
+///
+/// # Panics
+/// Panics if `chunk_size` is 0.
+constexpr RChunksMut<T> rchunks_mut(
+    ::sus::num::usize chunk_size) _mut_ref noexcept {
+  ::sus::check(chunk_size > 0u);
+  return RChunksMut<T>::with(
+      ::sus::containers::SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn,
+                                                     _ptr_expr, _len_expr),
+      chunk_size);
+}
+
 /// Sorts the slice.
 ///
 /// This sort is stable (i.e., does not reorder equal elements) and
