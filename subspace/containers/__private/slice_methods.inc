@@ -30,10 +30,14 @@
 ///////////////////////////////////////////////////////////////////////////
 
 /// Returns true if the slice has a length of 0.
-constexpr inline bool is_empty() const& noexcept { return len() == 0u; }
+sus_pure constexpr inline bool is_empty() const& noexcept {
+  return len() == 0u;
+}
 
 /// Returns the number of elements in the slice.
-constexpr inline ::sus::num::usize len() const& noexcept { return _len_expr; }
+sus_pure constexpr inline ::sus::num::usize len() const& noexcept {
+  return _len_expr;
+}
 
 /// Returns a const pointer to the first element in the slice.
 ///
@@ -42,7 +46,9 @@ constexpr inline ::sus::num::usize len() const& noexcept { return _len_expr; }
 ///
 /// Modifying the container referenced by this slice may cause its buffer to
 /// be reallocated, which would also make any pointers to it invalid.
-constexpr inline const T* as_ptr() const& noexcept { return _ptr_expr; }
+sus_pure constexpr inline const T* as_ptr() const& noexcept {
+  return _ptr_expr;
+}
 
 #if _delete_rvalue
 constexpr inline const T* as_ptr() && = delete;
@@ -62,7 +68,7 @@ constexpr inline const T* as_ptr() && = delete;
 /// pointers to refer to a range of elements in memory, as is common in C++
 /// stdlib algorthms. Note that the pointers can be unpacked from the Range
 /// with structured bindings as in `auto [a, b] = s.as_ptr_range();`.
-constexpr ::sus::ops::Range<const T*> as_ptr_range() const& noexcept {
+sus_pure constexpr ::sus::ops::Range<const T*> as_ptr_range() const& noexcept {
   return ::sus::ops::Range<const T*>(as_ptr(), as_ptr() + len());
 }
 
@@ -134,8 +140,7 @@ binary_search_by(
     } else if (cmp == std::strong_ordering::greater) {
       right = mid;
     } else { /* SAFETY: same as the `get_unchecked` above. */
-      sus_assume(::sus::marker::unsafe_fn,
-                 mid.primitive_value < _len_expr.primitive_value);
+      sus_assume(::sus::marker::unsafe_fn, mid < len());
       return Result::with(mid);
     }
 
@@ -144,8 +149,7 @@ binary_search_by(
 
   /* SAFETY: directly true from the overall invariant.
    Note that this is `<=`, unlike the assume in the `Result::ok()` path. */
-  sus_assume(::sus::marker::unsafe_fn,
-             left.primitive_value <= _len_expr.primitive_value);
+  sus_assume(::sus::marker::unsafe_fn, left <= len());
   return Result::with_err(left);
 }
 
@@ -300,7 +304,7 @@ constexpr bool ends_with(Slice<T> suffix) const& noexcept
 }
 
 /// Returns the first element of the slice, or `None` if it is empty.
-constexpr ::sus::Option<const T&> first() const& noexcept {
+sus_pure constexpr ::sus::Option<const T&> first() const& noexcept {
   if (len() > 0u) {
     return ::sus::Option<const T&>::some(
         get_unchecked(::sus::marker::unsafe_fn, 0u));
@@ -318,7 +322,7 @@ constexpr ::sus::Option<const T&> first() && = delete;
 /// # Panics
 /// If the index `i` is beyond the end of the slice, the function will panic.
 /// #[doc.overloads=slice.index.usize]
-constexpr inline const T& operator[](::sus::num::usize i) const& noexcept {
+sus_pure constexpr inline const T& operator[](::sus::num::usize i) const& noexcept {
   ::sus::check(i < len());
   return get_unchecked(::sus::marker::unsafe_fn, i);
 }
@@ -329,7 +333,7 @@ constexpr inline const T& operator[](::sus::num::usize i) && = delete;
 
 /// Returns a const reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
-constexpr Option<const T&> get(::sus::num::usize i) const& noexcept {
+sus_pure constexpr Option<const T&> get(::sus::num::usize i) const& noexcept {
   if (i < len()) [[likely]]
     return Option<const T&>::some(get_unchecked(::sus::marker::unsafe_fn, i));
   else
@@ -346,7 +350,7 @@ constexpr Option<const T&> get(::sus::num::usize i) && = delete;
 /// The index `i` must be inside the bounds of the slice or Undefined
 /// Behaviour results. The size of the slice must therefore also have a
 /// length of at least 1.
-constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
+sus_pure constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
                                         ::sus::num::usize i) const& noexcept {
   sus_assume(::sus::marker::unsafe_fn,
              i.primitive_value < _len_expr.primitive_value);
@@ -370,7 +374,7 @@ constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
 /// If the Range would otherwise contain an element that is out of bounds,
 /// the function will panic.
 /// #[doc.overloads=slice.index.range]
-constexpr inline Slice<T> operator[](
+sus_pure constexpr inline Slice<T> operator[](
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
     const& noexcept {
   const ::sus::num::usize length = len();
@@ -400,7 +404,7 @@ constexpr inline Slice<T> operator[](
 ///
 /// Returns None if the Range would otherwise contain an element that is out
 /// of bounds.
-constexpr Option<Slice<T>> get_range(
+sus_pure constexpr Option<Slice<T>> get_range(
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
     const& noexcept {
   const ::sus::num::usize length = len();
@@ -431,7 +435,7 @@ constexpr Option<Slice<T>> get_range(
 /// # Safety
 /// It is possible to specify a Range contains an element that is out
 /// of bounds of the Slice, which can result in Undefined Behaviour.
-constexpr Slice<T> get_range_unchecked(
+sus_pure constexpr Slice<T> get_range_unchecked(
     ::sus::marker::UnsafeFnMarker,
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
     const& noexcept {
@@ -439,7 +443,7 @@ constexpr Slice<T> get_range_unchecked(
   const ::sus::num::usize rend = range.end_bound().unwrap_or(len());
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
   return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + rstart,
-                               rlen);
+                                  rlen);
 }
 
 #if _delete_rvalue
@@ -451,7 +455,7 @@ constexpr Slice<T> get_range_unchecked(
 /// Returns an iterator over all the elements in the slice, visited in the
 /// same order they appear in the slice. The iterator gives const access to
 /// each element.
-constexpr SliceIter<const T&> iter() const& noexcept {
+sus_pure constexpr SliceIter<const T&> iter() const& noexcept {
   return SliceIter<const T&>::with(as_ptr(), len());
 }
 
@@ -540,7 +544,7 @@ static constexpr void join_sep_into(::sus::containers::Vec<T>& vec,
 }
 
 /// Returns the last element of the slice, or `None` if it is empty.
-constexpr ::sus::Option<const T&> last() const& noexcept {
+sus_pure constexpr ::sus::Option<const T&> last() const& noexcept {
   const auto length = len();
   if (length > 0u)
     return ::sus::Option<const T&>::some(*(as_ptr() + length - 1u));
@@ -704,7 +708,7 @@ constexpr ::sus::containers::Vec<T> repeat(usize n) const& noexcept
 /// Calling this method with an out-of-bounds index is undefined behavior
 /// even if the resulting reference is not used. The caller has to ensure
 /// that `0 <= mid <= len()`.
-constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
+sus_pure constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize mid) const& noexcept {
   const ::sus::num::usize length = len();
 

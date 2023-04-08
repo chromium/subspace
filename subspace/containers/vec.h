@@ -90,7 +90,7 @@ class Vec final {
   ///
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
-  static inline constexpr Vec with_capacity(usize capacity) noexcept {
+  sus_pure static inline constexpr Vec with_capacity(usize capacity) noexcept {
     check(::sus::mem::size_of<T>() * capacity <= size_t{isize::MAX_PRIMITIVE});
     auto v = Vec(nullptr, 0_usize, 0_usize);
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
@@ -127,8 +127,8 @@ class Vec final {
   /// * The allocated size in bytes must be no larger than `isize::MAX`.
   /// * If `ptr` is null, then `length` and `capacity` must be `0_usize`, and
   ///   vice versa.
-  static Vec from_raw_parts(::sus::marker::UnsafeFnMarker, T* ptr, usize length,
-                            usize capacity) noexcept {
+  sus_pure static Vec from_raw_parts(::sus::marker::UnsafeFnMarker, T* ptr,
+                                     usize length, usize capacity) noexcept {
     return Vec(ptr, length, capacity);
   }
 
@@ -265,7 +265,7 @@ class Vec final {
   ///
   /// This may be larger than the number of elements present, which is returned
   /// by `len()`.
-  constexpr inline usize capacity() const& noexcept {
+  sus_pure constexpr inline usize capacity() const& noexcept {
     check(!is_moved_from());
     return capacity_;
   }
@@ -507,7 +507,7 @@ class Vec final {
 
   // Returns a slice that references all the elements of the vector as const
   // references.
-  constexpr Slice<T> as_slice() const& noexcept sus_lifetimebound {
+  sus_pure constexpr Slice<T> as_slice() const& noexcept sus_lifetimebound {
     check(!is_moved_from());
     // SAFETY: The `len()` is the number of elements in the Vec, and the
     // pointer is to the start of the Vec, so this Slice covers a valid range.
@@ -518,7 +518,7 @@ class Vec final {
 
   // Returns a slice that references all the elements of the vector as mutable
   // references.
-  constexpr SliceMut<T> as_mut_slice() & noexcept sus_lifetimebound {
+  sus_pure constexpr SliceMut<T> as_mut_slice() & noexcept sus_lifetimebound {
     check(!is_moved_from());
     // SAFETY: The `len()` is the number of elements in the Vec, and the
     // pointer is to the start of the Vec, so this Slice covers a valid range.
@@ -547,12 +547,12 @@ class Vec final {
                                           const Vec<U>& r) = delete;
 
   // Const Vec can be used as a Slice.
-  constexpr operator const Slice<T>&() const& { return slice_mut_; }
-  constexpr operator const Slice<T>&() && = delete;
-  constexpr operator Slice<T>&() & { return slice_mut_; }
+  sus_pure constexpr operator const Slice<T>&() const& { return slice_mut_; }
+  sus_pure constexpr operator const Slice<T>&() && = delete;
+  sus_pure constexpr operator Slice<T>&() & { return slice_mut_; }
 
   // Mutable Vec can be used as a SliceMut.
-  constexpr operator SliceMut<T>&() & { return slice_mut_; }
+  sus_pure constexpr operator SliceMut<T>&() & { return slice_mut_; }
 
 #define _ptr_expr slice_mut_.slice_.data_
 #define _len_expr slice_mut_.slice_.len_
