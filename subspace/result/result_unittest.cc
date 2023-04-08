@@ -84,7 +84,7 @@ TEST(Result, WithErr) {
   }
 }
 
-TEST(Option, OkHelpers) {
+TEST(Result, OkHelpers) {
   auto a = Result<i32, u32>::with(2_i32);
   Result<i32, u32> a2 = sus::ok(2_i32);
   EXPECT_EQ(a, a2);
@@ -126,7 +126,7 @@ TEST(Option, OkHelpers) {
   }
 }
 
-TEST(Option, ErrHelpers) {
+TEST(Result, ErrHelpers) {
   auto a = Result<u32, i32>::with_err(2_i32);
   Result<u32, i32> a2 = sus::err(2_i32);
   EXPECT_EQ(a, a2);
@@ -677,7 +677,7 @@ struct Weak {
   int b;
 };
 
-TEST(Option, WeakOrder) {
+TEST(Result, WeakOrder) {
   static_assert(!::sus::ops::Ord<Result<Weak, i32>>);
   static_assert(!::sus::ops::Ord<Result<i32, Weak>>);
   static_assert(!::sus::ops::Ord<Result<Weak, Weak>>);
@@ -700,7 +700,7 @@ TEST(Option, WeakOrder) {
                 std::weak_ordering::greater);
 }
 
-TEST(Option, PartialOrder) {
+TEST(Result, PartialOrder) {
   static_assert(!::sus::ops::Ord<Result<f32, i8>>);
   static_assert(!::sus::ops::Ord<Result<i8, f32>>);
   static_assert(!::sus::ops::Ord<Result<f32, f32>>);
@@ -727,10 +727,19 @@ TEST(Option, PartialOrder) {
             std::partial_ordering::unordered);
 }
 
-TEST(Option, NoOrder) {
+TEST(Result, NoOrder) {
   struct NotCmp {};
   static_assert(!::sus::ops::PartialOrd<NotCmp>);
   static_assert(!::sus::ops::PartialOrd<Result<NotCmp, i8>>);
+}
+
+TEST(Result, UnwrapOrElse_BasicUsageExample) {
+  enum class ECode { ItsHappening = -1 };
+  auto conv = [](ECode e) { return static_cast<i32>(e); };
+  auto ok = sus::Result<i32, ECode>::with(2);
+  sus::check(sus::move(ok).unwrap_or_else(conv) == 2);
+  auto err = sus::Result<i32, ECode>::with_err(ECode::ItsHappening);
+  sus::check(sus::move(err).unwrap_or_else(conv) == -1);
 }
 
 }  // namespace

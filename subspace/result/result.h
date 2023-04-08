@@ -23,6 +23,7 @@
 
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
+#include "subspace/fn/fn_ref.h"
 #include "subspace/iter/into_iterator.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/no_unique_address.h"
@@ -537,6 +538,27 @@ class [[nodiscard]] Result final {
       ::sus::marker::UnsafeFnMarker) && noexcept {
     return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
                                          mref(storage_.err_));
+  }
+
+  /// Returns the contained `Ok` value or computes it from a closure.
+  ///
+  /// # Examples
+  /// Basic usage:
+  /// ```
+  /// enum ECode { ItsHappening = -1 };
+  /// auto conv = [](ECode e) { return static_cast<i32>(e); };
+  /// auto ok = sus::Result<i32, ECode>::with(2);
+  /// sus::check(sus::move(ok).unwrap_or_else(conv) == 2);
+  /// auto err = sus::Result<i32, ECode>::with_err(ItsHappening);
+  /// sus::check(sus::move(err).unwrap_or_else(conv) == -1);
+  /// ```
+  constexpr T unwrap_or_else(::sus::fn::FnOnceRef<T(E)> op) && noexcept {
+    if (is_ok()) {
+      return sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
+    } else {
+      return ::sus::move(op)(
+          sus::move(*this).unwrap_err_unchecked(::sus::marker::unsafe_fn));
+    }
   }
 
   constexpr Once<const T&> iter() const& noexcept {
