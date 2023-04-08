@@ -85,8 +85,8 @@ struct Storage<T, false> final {
   constexpr Storage(std::remove_cvref_t<T>&& t)
       : val_(::sus::move(t)), state_(Some) {}
 
-  sus_pure constexpr const T& val() const { return val_; };
-  sus_pure constexpr T& val_mut() { return val_; };
+  [[nodiscard]] sus_pure constexpr const T& val() const { return val_; };
+  [[nodiscard]] sus_pure constexpr T& val_mut() { return val_; };
 
   [[nodiscard]] sus_pure constexpr inline State state() const noexcept { return state_; }
 
@@ -201,8 +201,8 @@ struct Storage<T, true> final {
   constexpr Storage(const T& t) : access_(t) {}
   constexpr Storage(T&& t) : access_(::sus::move(t)) {}
 
-  sus_pure constexpr const T& val() const { return access_.as_inner(); };
-  sus_pure constexpr T& val_mut() { return access_.as_inner_mut(); };
+  [[nodiscard]] sus_pure constexpr const T& val() const { return access_.as_inner(); };
+  [[nodiscard]] sus_pure constexpr T& val_mut() { return access_.as_inner_mut(); };
 
   [[nodiscard]] sus_pure constexpr inline State state() const noexcept {
     return access_.is_constructed() ? Some : None;

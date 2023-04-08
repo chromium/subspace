@@ -483,20 +483,80 @@ TEST(i32, From) {
 
 TEST(i32DeathTest, FromOutOfRange) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
-  EXPECT_DEATH(i32::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff});
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(uint64_t{0xffff'ffff'ffff'ffff});
+        EXPECT_EQ(x, x);
+      },
+      "");
 
-  EXPECT_DEATH(i32::from(ENUM(, int64_t)::MIN), "");
-  EXPECT_DEATH(i32::from(ENUM(, int64_t)::MAX), "");
-  EXPECT_DEATH(i32::from(ENUM(, uint64_t)::MAX), "");
-  EXPECT_DEATH(i32::from(ENUM(class, int64_t)::MIN), "");
-  EXPECT_DEATH(i32::from(ENUM(class, int64_t)::MAX), "");
-  EXPECT_DEATH(i32::from(ENUM(class, uint64_t)::MAX), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(ENUM(, int64_t)::MIN);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(ENUM(, int64_t)::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(ENUM(, uint64_t)::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(ENUM(class, int64_t)::MIN);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(ENUM(class, int64_t)::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(ENUM(class, uint64_t)::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
 
-  EXPECT_DEATH(i32::from(i64::MAX), "");
-  EXPECT_DEATH(i32::from(u32::MAX), "");
-  EXPECT_DEATH(i32::from(u64::MAX), "");
-  EXPECT_DEATH(i32::from(usize::MAX), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(i64::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(u32::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(u64::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::from(usize::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -705,12 +765,32 @@ TEST(i32, Add) {
 
 TEST(i32DeathTest, AddOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MAX + 1_i32, "");
-  EXPECT_DEATH(i32::MAX + i32::MAX, "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX + 1_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX + i32::MAX;
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH(i32::MIN + -1_i32, "");
-  EXPECT_DEATH(i32::MIN + i32::MIN, "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN + -1_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN + i32::MIN;
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -874,14 +954,44 @@ TEST(i32, Div) {
 
 TEST(i32DeathTest, DivOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MAX / 0_i32, "");
-  EXPECT_DEATH(0_i32 / 0_i32, "");
-  EXPECT_DEATH(1_i32 / 0_i32, "");
-  EXPECT_DEATH(i32::MIN / 0_i32, "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX / 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = 0_i32 / 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = 1_i32 / 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN / 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH(-1_i32 / 0_i32, "");
-  EXPECT_DEATH(i32::MIN / -1_i32, "");
+  EXPECT_DEATH(
+      {
+        auto x = -1_i32 / 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN / -1_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   auto x = i32::MAX;
   EXPECT_DEATH(x /= 0_i32, "");
@@ -932,13 +1042,38 @@ TEST(i32, OverflowingDiv) {
 
 TEST(i32DeathTest, OverflowingDivByZero) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MAX.overflowing_div(0_i32), "");
-  EXPECT_DEATH((0_i32).overflowing_div(0_i32), "");
-  EXPECT_DEATH((1_i32).overflowing_div(0_i32), "");
-  EXPECT_DEATH(i32::MIN.overflowing_div(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX.overflowing_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (0_i32).overflowing_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (1_i32).overflowing_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN.overflowing_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH((-1_i32).overflowing_div(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (-1_i32).overflowing_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -955,13 +1090,38 @@ TEST(i32, SaturatingDiv) {
 
 TEST(i32DeathTest, SaturatingDivByZero) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MAX.saturating_div(0_i32), "");
-  EXPECT_DEATH((0_i32).saturating_div(0_i32), "");
-  EXPECT_DEATH((1_i32).saturating_div(0_i32), "");
-  EXPECT_DEATH(i32::MIN.saturating_div(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX.saturating_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (0_i32).saturating_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (1_i32).saturating_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN.saturating_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH((-1_i32).saturating_div(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (-1_i32).saturating_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -978,13 +1138,38 @@ TEST(i32, WrappingDiv) {
 
 TEST(i32DeathTest, WrappingDivByZero) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MAX.wrapping_div(0_i32), "");
-  EXPECT_DEATH((0_i32).wrapping_div(0_i32), "");
-  EXPECT_DEATH((1_i32).wrapping_div(0_i32), "");
-  EXPECT_DEATH(i32::MIN.wrapping_div(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX.wrapping_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (0_i32).wrapping_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (1_i32).wrapping_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN.wrapping_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH((-1_i32).wrapping_div(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (-1_i32).wrapping_div(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -1023,13 +1208,38 @@ TEST(i32, Mul) {
 
 TEST(i32DeathTest, MulOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MAX * 2_i32, "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX * 2_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH(i32::MAX * -2_i32, "");
-  EXPECT_DEATH(i32::MIN * 2_i32, "");
-  EXPECT_DEATH(i32::MIN * -2_i32, "");
-  EXPECT_DEATH(i32::MIN * -1_i32, "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX * -2_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN * 2_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN * -2_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN * -1_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -1140,7 +1350,12 @@ TEST(i32, Neg) {
 // ** Signed only.
 TEST(i32DeathTest, NegOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(-i32::MIN, "");
+  EXPECT_DEATH(
+      {
+        auto x = -i32::MIN;
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -1249,14 +1464,44 @@ TEST(i32, Rem) {
 
 TEST(i32DeathTest, RemOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MAX % 0_i32, "");
-  EXPECT_DEATH(0_i32 % 0_i32, "");
-  EXPECT_DEATH(1_i32 % 0_i32, "");
-  EXPECT_DEATH(i32::MIN % 0_i32, "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX % 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = 0_i32 % 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = 1_i32 % 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN % 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH(-1_i32 % 0_i32, "");
-  EXPECT_DEATH(i32::MIN % -1_i32, "");
+  EXPECT_DEATH(
+      {
+        auto x = -1_i32 % 0_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN % -1_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   auto x = i32::MAX;
   EXPECT_DEATH(x %= 0_i32, "");
@@ -1311,13 +1556,38 @@ TEST(i32, OverflowingRem) {
 
 TEST(i32DeathTest, OverflowingRemByZero) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MAX.overflowing_rem(0_i32), "");
-  EXPECT_DEATH((0_i32).overflowing_rem(0_i32), "");
-  EXPECT_DEATH((1_i32).overflowing_rem(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX.overflowing_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (0_i32).overflowing_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (1_i32).overflowing_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH(i32::MIN.overflowing_rem(0_i32), "");
-  EXPECT_DEATH((-1_i32).overflowing_rem(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN.overflowing_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (-1_i32).overflowing_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -1335,13 +1605,38 @@ TEST(i32, WrappingRem) {
 
 TEST(i32DeathTest, WrappingRemByZero) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MAX.wrapping_rem(0_i32), "");
-  EXPECT_DEATH((0_i32).wrapping_rem(0_i32), "");
-  EXPECT_DEATH((1_i32).wrapping_rem(0_i32), "");
-  EXPECT_DEATH(i32::MIN.wrapping_rem(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX.wrapping_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (0_i32).wrapping_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (1_i32).wrapping_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN.wrapping_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH((-1_i32).wrapping_rem(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (-1_i32).wrapping_rem(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -1368,9 +1663,24 @@ TEST(i32, Shl) {
 
 TEST(i32DeathTest, ShlOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(0_i32 << 32_u32, "");
-  EXPECT_DEATH(1_i32 << 33_u32, "");
-  EXPECT_DEATH(2_i32 << 64_u32, "");
+  EXPECT_DEATH(
+      {
+        auto x = 0_i32 << 32_u32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = 1_i32 << 33_u32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = 2_i32 << 64_u32;
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -1448,11 +1758,26 @@ TEST(i32, Shr) {
 
 TEST(i32DeathTest, ShrOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(0_i32 >> 33_u32, "");
-  EXPECT_DEATH(1_i32 >> 64_u32, "");
+  EXPECT_DEATH(
+      {
+        auto x = 0_i32 >> 33_u32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = 1_i32 >> 64_u32;
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH(-1_i32 >> 32_u32, "");
+  EXPECT_DEATH(
+      {
+        auto x = -1_i32 >> 32_u32;
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -1535,12 +1860,32 @@ TEST(i32, Sub) {
 
 TEST(i32DeathTest, SubOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i32::MIN - 1_i32, "");
-  EXPECT_DEATH(i32::MIN - i32::MAX, "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN - 1_i32;
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN - i32::MAX;
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH(i32::MAX - (-1_i32), "");
-  EXPECT_DEATH(i32::MAX - i32::MIN, "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX - (-1_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MAX - i32::MIN;
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -1831,11 +2176,26 @@ TEST(i32, Pow) {
 TEST(i32DeathTest, PowOverflow) {
 #if GTEST_HAS_DEATH_TEST
   // Crashes on the final acc * base.
-  EXPECT_DEATH((3_i32).pow(31_u32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (3_i32).pow(31_u32);
+        EXPECT_EQ(x, x);
+      },
+      "");
   // Crashes on base * base.
-  EXPECT_DEATH((i32::MAX / 2_i32).pow(31_u32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (i32::MAX / 2_i32).pow(31_u32);
+        EXPECT_EQ(x, x);
+      },
+      "");
   // Crashes on acc * base inside the exponent loop.
-  EXPECT_DEATH((2_i32).pow((1_u32 << 30_u32) - 1_u32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (2_i32).pow((1_u32 << 30_u32) - 1_u32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -1967,10 +2327,20 @@ TEST(i32, Log2) {
 
 TEST(i32DeathTest, Log2NonPositive) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((0_i32).log2(), "");
+  EXPECT_DEATH(
+      {
+        auto x = (0_i32).log2();
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH((-1_i32).log2(), "");
+  EXPECT_DEATH(
+      {
+        auto x = (-1_i32).log2();
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -2002,10 +2372,20 @@ TEST(i32, Log10) {
 
 TEST(i32DeathTest, Log10NonPositive) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((0_i32).log10(), "");
+  EXPECT_DEATH(
+      {
+        auto x = (0_i32).log10();
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH((-1_i32).log10(), "");
+  EXPECT_DEATH(
+      {
+        auto x = (-1_i32).log10();
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -2033,13 +2413,38 @@ TEST(i32, Log) {
 
 TEST(i32DeathTest, LogNonPositive) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((0_i32).log(10_i32), "");
-  EXPECT_DEATH((2_i32).log(0_i32), "");
-  EXPECT_DEATH((2_i32).log(1_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (0_i32).log(10_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (2_i32).log(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (2_i32).log(1_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   // ** Signed only.
-  EXPECT_DEATH((-1_i32).log(10_i32), "");
-  EXPECT_DEATH((2_i32).log(-2_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (-1_i32).log(10_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (2_i32).log(-2_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -2330,8 +2735,18 @@ TEST(i32, DivEuclid) {
 
 TEST(i32DeathTest, DivEuclidOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((7_i32).div_euclid(0_i32), "");
-  EXPECT_DEATH((i32::MIN).div_euclid(-1_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (7_i32).div_euclid(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (i32::MIN).div_euclid(-1_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -2356,7 +2771,12 @@ TEST(i32, OverflowingDivEuclid) {
 
 TEST(i32DeathTest, OverflowingDivEuclidDivByZero) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((7_i32).overflowing_div_euclid(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (7_i32).overflowing_div_euclid(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -2370,7 +2790,12 @@ TEST(i32, WrappingDivEuclid) {
 
 TEST(i32DeathTest, WrappingDivEuclidOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((7_i32).wrapping_div_euclid(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (7_i32).wrapping_div_euclid(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -2386,8 +2811,18 @@ TEST(i32, RemEuclid) {
 
 TEST(i32DeathTest, RemEuclidOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((7_i32).rem_euclid(0_i32), "");
-  EXPECT_DEATH((i32::MIN).rem_euclid(-1_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (7_i32).rem_euclid(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = (i32::MIN).rem_euclid(-1_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -2412,7 +2847,12 @@ TEST(i32, OverflowingRemEuclid) {
 
 TEST(i32DeathTest, OverflowingRemEuclidDivByZero) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((7_i32).overflowing_rem_euclid(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (7_i32).overflowing_rem_euclid(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -2426,7 +2866,12 @@ TEST(i32, WrappingRemEuclid) {
 
 TEST(i32DeathTest, WrappingRemEuclidOverflow) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((7_i32).wrapping_rem_euclid(0_i32), "");
+  EXPECT_DEATH(
+      {
+        auto x = (7_i32).wrapping_rem_euclid(0_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 

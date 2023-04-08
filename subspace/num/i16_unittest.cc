@@ -474,22 +474,92 @@ TEST(i16, From) {
 
 TEST(i16DeathTest, FromOutOfRange) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(i16::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
-  EXPECT_DEATH(i16::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff});
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(uint64_t{0xffff'ffff'ffff'ffff});
+        EXPECT_EQ(x, x);
+      },
+      "");
 
-  EXPECT_DEATH(i16::from(ENUM(, int64_t)::MIN), "");
-  EXPECT_DEATH(i16::from(ENUM(, int64_t)::MAX), "");
-  EXPECT_DEATH(i16::from(ENUM(, uint64_t)::MAX), "");
-  EXPECT_DEATH(i16::from(ENUM(class, int64_t)::MIN), "");
-  EXPECT_DEATH(i16::from(ENUM(class, int64_t)::MAX), "");
-  EXPECT_DEATH(i16::from(ENUM(class, uint64_t)::MAX), "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(ENUM(, int64_t)::MIN);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(ENUM(, int64_t)::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(ENUM(, uint64_t)::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(ENUM(class, int64_t)::MIN);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(ENUM(class, int64_t)::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(ENUM(class, uint64_t)::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
 
-  EXPECT_DEATH(i16::from(i32::MAX), "");
-  EXPECT_DEATH(i16::from(i64::MAX), "");
-  EXPECT_DEATH(i16::from(u16::MAX), "");
-  EXPECT_DEATH(i16::from(u32::MAX), "");
-  EXPECT_DEATH(i16::from(u64::MAX), "");
-  EXPECT_DEATH(i16::from(usize::MAX), "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(i32::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(i64::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(u16::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(u32::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(u64::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = i16::from(usize::MAX);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -498,106 +568,106 @@ TEST(i16, InvokeEverything) {
   auto s = 3_u16;
   auto a = sus::Array<u8, sizeof(i16)>();
 
-  i.is_negative();
-  i.is_positive();
-  i.signum();
+  (void)i.is_negative();
+  (void)i.is_positive();
+  (void)i.signum();
 
-  i.abs();
-  i.checked_abs();
-  i.overflowing_abs();
-  i.saturating_abs();
-  i.unsigned_abs();
-  i.wrapping_abs();
-  i.abs_diff(j);
+  (void)i.abs();
+  (void)i.checked_abs();
+  (void)i.overflowing_abs();
+  (void)i.saturating_abs();
+  (void)i.unsigned_abs();
+  (void)i.wrapping_abs();
+  (void)i.abs_diff(j);
 
-  i.checked_add(j);
-  i.checked_add_unsigned(s);
-  i.overflowing_add(j);
-  i.overflowing_add_unsigned(s);
-  i.saturating_add(j);
-  i.saturating_add_unsigned(s);
-  i.unchecked_add(unsafe_fn, j);
-  i.wrapping_add(j);
-  i.wrapping_add_unsigned(s);
+  (void)i.checked_add(j);
+  (void)i.checked_add_unsigned(s);
+  (void)i.overflowing_add(j);
+  (void)i.overflowing_add_unsigned(s);
+  (void)i.saturating_add(j);
+  (void)i.saturating_add_unsigned(s);
+  (void)i.unchecked_add(unsafe_fn, j);
+  (void)i.wrapping_add(j);
+  (void)i.wrapping_add_unsigned(s);
 
-  i.checked_div(j);
-  i.overflowing_div(j);
-  i.saturating_div(j);
-  i.wrapping_div(j);
+  (void)i.checked_div(j);
+  (void)i.overflowing_div(j);
+  (void)i.saturating_div(j);
+  (void)i.wrapping_div(j);
 
-  i.checked_mul(j);
-  i.overflowing_mul(j);
-  i.saturating_mul(j);
-  i.unchecked_mul(unsafe_fn, j);
-  i.wrapping_mul(j);
+  (void)i.checked_mul(j);
+  (void)i.overflowing_mul(j);
+  (void)i.saturating_mul(j);
+  (void)i.unchecked_mul(unsafe_fn, j);
+  (void)i.wrapping_mul(j);
 
-  i.checked_neg();
-  i.overflowing_neg();
-  i.wrapping_neg();
+  (void)i.checked_neg();
+  (void)i.overflowing_neg();
+  (void)i.wrapping_neg();
 
-  i.checked_rem(j);
-  i.overflowing_rem(j);
-  i.wrapping_rem(j);
+  (void)i.checked_rem(j);
+  (void)i.overflowing_rem(j);
+  (void)i.wrapping_rem(j);
 
-  i.div_euclid(j);
-  i.checked_div_euclid(j);
-  i.overflowing_div_euclid(j);
-  i.wrapping_div_euclid(j);
-  i.rem_euclid(j);
-  i.checked_rem_euclid(j);
-  i.overflowing_rem_euclid(j);
-  i.wrapping_rem_euclid(j);
+  (void)i.div_euclid(j);
+  (void)i.checked_div_euclid(j);
+  (void)i.overflowing_div_euclid(j);
+  (void)i.wrapping_div_euclid(j);
+  (void)i.rem_euclid(j);
+  (void)i.checked_rem_euclid(j);
+  (void)i.overflowing_rem_euclid(j);
+  (void)i.wrapping_rem_euclid(j);
 
-  i.checked_shl(1_u32);
-  i.overflowing_shl(1_u32);
-  i.wrapping_shl(1_u32);
-  i.checked_shr(1_u32);
-  i.overflowing_shr(1_u32);
-  i.wrapping_shr(1_u32);
+  (void)i.checked_shl(1_u32);
+  (void)i.overflowing_shl(1_u32);
+  (void)i.wrapping_shl(1_u32);
+  (void)i.checked_shr(1_u32);
+  (void)i.overflowing_shr(1_u32);
+  (void)i.wrapping_shr(1_u32);
 
-  i.checked_sub(j);
-  i.checked_sub_unsigned(s);
-  i.overflowing_sub(j);
-  i.overflowing_sub_unsigned(s);
-  i.saturating_sub(j);
-  i.saturating_sub_unsigned(s);
-  i.unchecked_sub(unsafe_fn, j);
-  i.wrapping_sub(j);
-  i.wrapping_sub_unsigned(s);
+  (void)i.checked_sub(j);
+  (void)i.checked_sub_unsigned(s);
+  (void)i.overflowing_sub(j);
+  (void)i.overflowing_sub_unsigned(s);
+  (void)i.saturating_sub(j);
+  (void)i.saturating_sub_unsigned(s);
+  (void)i.unchecked_sub(unsafe_fn, j);
+  (void)i.wrapping_sub(j);
+  (void)i.wrapping_sub_unsigned(s);
 
-  i.count_ones();
-  i.count_zeros();
-  i.leading_ones();
-  i.leading_zeros();
-  i.trailing_ones();
-  i.trailing_zeros();
-  i.reverse_bits();
-  i.rotate_left(1_u32);
-  i.rotate_right(1_u32);
-  i.swap_bytes();
+  (void)i.count_ones();
+  (void)i.count_zeros();
+  (void)i.leading_ones();
+  (void)i.leading_zeros();
+  (void)i.trailing_ones();
+  (void)i.trailing_zeros();
+  (void)i.reverse_bits();
+  (void)i.rotate_left(1_u32);
+  (void)i.rotate_right(1_u32);
+  (void)i.swap_bytes();
 
-  i.pow(1_u32);
-  i.checked_pow(1_u32);
-  i.overflowing_pow(1_u32);
-  i.wrapping_pow(1_u32);
+  (void)i.pow(1_u32);
+  (void)i.checked_pow(1_u32);
+  (void)i.overflowing_pow(1_u32);
+  (void)i.wrapping_pow(1_u32);
 
-  i.checked_log2();
-  i.log2();
-  i.checked_log10();
-  i.log10();
-  i.checked_log(j);
-  i.log(j);
+  (void)i.checked_log2();
+  (void)i.log2();
+  (void)i.checked_log10();
+  (void)i.log10();
+  (void)i.checked_log(j);
+  (void)i.log(j);
 
-  i.from_be(j);
-  i.from_le(j);
-  i.to_be();
-  i.to_le();
-  i.to_be_bytes();
-  i.to_le_bytes();
-  i.to_ne_bytes();
-  i.from_be_bytes(a);
-  i.from_le_bytes(a);
-  i.from_ne_bytes(a);
+  (void)i.from_be(j);
+  (void)i.from_le(j);
+  (void)i.to_be();
+  (void)i.to_le();
+  (void)i.to_be_bytes();
+  (void)i.to_le_bytes();
+  (void)i.to_ne_bytes();
+  (void)i.from_be_bytes(a);
+  (void)i.from_le_bytes(a);
+  (void)i.from_ne_bytes(a);
 
   i = -j;
   i = ~j;
