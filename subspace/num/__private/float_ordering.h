@@ -16,14 +16,16 @@
 
 #include <compare>
 
-#include "subspace/num/__private/intrinsics.h"
+#include "subspace/macros/pure.h"
 #include "subspace/mem/size_of.h"
+#include "subspace/num/__private/intrinsics.h"
 
 namespace sus::num::__private {
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-constexpr std::strong_ordering float_strong_ordering(T l, T r) noexcept {
+sus_pure_const inline constexpr std::strong_ordering float_strong_ordering(
+    T l, T r) noexcept {
   if (into_unsigned_integer(l) == into_unsigned_integer(r))
     return std::strong_ordering::equal;
 
@@ -53,13 +55,13 @@ constexpr std::strong_ordering float_strong_ordering(T l, T r) noexcept {
       else
         return std::strong_ordering::greater;
     } else {
-        if (l_neg) {
-      return std::strong_order(into_unsigned_integer(r),
-                               into_unsigned_integer(l));
-        } else {
-      return std::strong_order(into_unsigned_integer(l),
-                               into_unsigned_integer(r));
-        }
+      if (l_neg) {
+        return std::strong_order(into_unsigned_integer(r),
+                                 into_unsigned_integer(l));
+      } else {
+        return std::strong_order(into_unsigned_integer(l),
+                                 into_unsigned_integer(r));
+      }
     }
   }
 

@@ -18,6 +18,7 @@
 #include <functional>  // TODO: remove this but we need to hash things > size_t.
 
 #include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/__private/float_consts.h"

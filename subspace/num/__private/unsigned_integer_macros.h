@@ -104,7 +104,7 @@ class Tuple;
    */                                                                            \
   template <UnsignedPrimitiveInteger P>                                          \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
-  constexpr inline T(P v) : primitive_value(v) {}                                \
+  constexpr inline T(P v) noexcept : primitive_value(v) {}                       \
                                                                                  \
   /** Construction from unsigned enum types where no bits are lost.              \
    *                                                                             \
@@ -112,7 +112,7 @@ class Tuple;
    */                                                                            \
   template <UnsignedPrimitiveEnum P>                                             \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
-  constexpr inline T(P v) : primitive_value(v) {}                                \
+  constexpr inline T(P v) noexcept : primitive_value(v) {}                       \
                                                                                  \
   /** Construction from unsigned enum class types where no bits are lost.        \
    *                                                                             \
@@ -120,7 +120,7 @@ class Tuple;
    */                                                                            \
   template <UnsignedPrimitiveEnumClass P>                                        \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
-  explicit constexpr inline T(P v)                                               \
+  explicit constexpr inline T(P v) noexcept                                      \
       : primitive_value(static_cast<PrimitiveT>(v)) {}                           \
                                                                                  \
   /** Construction from unsigned primitive types, where it can be checked at     \
@@ -132,7 +132,7 @@ class Tuple;
    */                                                                            \
   template <UnsignedPrimitiveInteger P>                                          \
     requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
-  consteval inline T(P v)                                                        \
+  consteval inline T(P v) noexcept                                               \
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
@@ -155,7 +155,7 @@ class Tuple;
    */                                                                            \
   template <UnsignedPrimitiveEnum P>                                             \
     requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
-  consteval inline T(P v)                                                        \
+  consteval inline T(P v) noexcept                                               \
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
@@ -178,7 +178,7 @@ class Tuple;
    */                                                                            \
   template <UnsignedPrimitiveEnumClass P>                                        \
     requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
-  explicit consteval inline T(P v)                                               \
+  explicit consteval inline T(P v) noexcept                                      \
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
@@ -200,7 +200,7 @@ class Tuple;
    * #[doc.overloads=ctor.signed]                                                \
    */                                                                            \
   template <SignedPrimitiveInteger P>                                            \
-  consteval inline T(P v)                                                        \
+  consteval inline T(P v) noexcept                                               \
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
@@ -228,7 +228,7 @@ class Tuple;
    * #[doc.overloads=ctor.signedenum]                                            \
    */                                                                            \
   template <SignedPrimitiveEnum P>                                               \
-  consteval inline T(P v)                                                        \
+  consteval inline T(P v) noexcept                                               \
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
@@ -256,7 +256,7 @@ class Tuple;
    * #[doc.overloads=ctor.signedenum]                                            \
    */                                                                            \
   template <SignedPrimitiveEnumClass P>                                          \
-  explicit consteval inline T(P v)                                               \
+  explicit consteval inline T(P v) noexcept                                      \
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
@@ -414,7 +414,7 @@ class Tuple;
    * #[doc.overloads=unsigned.from.signed]                                     \
    */                                                                          \
   template <Signed S>                                                          \
-  static constexpr T from(S s) noexcept {                                      \
+  sus_pure static constexpr T from(S s) noexcept {                             \
     ::sus::check(s.primitive_value >= 0);                                      \
     constexpr auto umax = __private::into_unsigned(S::MAX_PRIMITIVE);          \
     if constexpr (MAX_PRIMITIVE < umax)                                        \
@@ -431,7 +431,8 @@ class Tuple;
    * #[doc.overloads=unsigned.tryfrom.signed]                                  \
    */                                                                          \
   template <Signed S>                                                          \
-  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  sus_pure static constexpr ::sus::result::Result<T,                           \
+                                                  ::sus::num::TryFromIntError> \
   try_from(S s) noexcept {                                                     \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if (s.primitive_value < 0) {                                               \
@@ -456,7 +457,7 @@ class Tuple;
    * #[doc.overloads=unsigned.from.unsigned]                                   \
    */                                                                          \
   template <Unsigned U>                                                        \
-  static constexpr T from(U u) noexcept {                                      \
+  sus_pure static constexpr T from(U u) noexcept {                             \
     if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)                            \
       ::sus::check(u.primitive_value <= MAX_PRIMITIVE);                        \
     return T(static_cast<PrimitiveT>(u.primitive_value));                      \
@@ -470,7 +471,8 @@ class Tuple;
    * #[doc.overloads=unsigned.tryfrom.unsigned]                                \
    */                                                                          \
   template <Unsigned U>                                                        \
-  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  sus_pure static constexpr ::sus::result::Result<T,                           \
+                                                  ::sus::num::TryFromIntError> \
   try_from(U u) noexcept {                                                     \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE) {                          \
@@ -491,7 +493,7 @@ class Tuple;
    * #[doc.overloads=unsigned.from.signedprimitive]                            \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
-  static constexpr T from(S s) {                                               \
+  sus_pure static constexpr T from(S s) {                                      \
     ::sus::check(s >= 0);                                                      \
     constexpr auto umax = __private::into_unsigned(__private::max_value<S>()); \
     if constexpr (MAX_PRIMITIVE < umax)                                        \
@@ -507,7 +509,8 @@ class Tuple;
    * #[doc.overloads=unsigned.tryfrom.signedprimitive]                         \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
-  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  sus_pure static constexpr ::sus::result::Result<T,                           \
+                                                  ::sus::num::TryFromIntError> \
   try_from(S s) {                                                              \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if (s < 0) {                                                               \
@@ -533,7 +536,7 @@ class Tuple;
    */                                                                          \
   template <class S>                                                           \
     requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)            \
-  static constexpr T from(S s) {                                               \
+  sus_pure static constexpr T from(S s) {                                      \
     using D = std::underlying_type_t<S>;                                       \
     ::sus::check(static_cast<D>(s) >= 0);                                      \
     constexpr auto umax = __private::into_unsigned(__private::max_value<D>()); \
@@ -552,7 +555,8 @@ class Tuple;
    */                                                                          \
   template <class S>                                                           \
     requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)            \
-  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  sus_pure static constexpr ::sus::result::Result<T,                           \
+                                                  ::sus::num::TryFromIntError> \
   try_from(S s) {                                                              \
     using D = std::underlying_type_t<S>;                                       \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
@@ -579,7 +583,7 @@ class Tuple;
    * #[doc.overloads=unsigned.from.unsignedprimitive]                          \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
-  static constexpr T from(U u) {                                               \
+  sus_pure static constexpr T from(U u) {                                      \
     if constexpr (MAX_PRIMITIVE < __private::max_value<U>())                   \
       ::sus::check(u <= MAX_PRIMITIVE);                                        \
     return T(static_cast<PrimitiveT>(u));                                      \
@@ -593,7 +597,8 @@ class Tuple;
    * #[doc.overloads=unsigned.tryfrom.unsignedprimitive]                       \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
-  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  sus_pure static constexpr ::sus::result::Result<T,                           \
+                                                  ::sus::num::TryFromIntError> \
   try_from(U u) {                                                              \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {                 \
@@ -614,7 +619,7 @@ class Tuple;
    */                                                                          \
   template <class U>                                                           \
     requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \
-  static constexpr T from(U u) {                                               \
+  sus_pure static constexpr T from(U u) {                                      \
     using D = std::underlying_type_t<U>;                                       \
     if constexpr (MAX_PRIMITIVE < __private::max_value<D>())                   \
       ::sus::check(static_cast<D>(u) <= MAX_PRIMITIVE);                        \
@@ -629,7 +634,8 @@ class Tuple;
    */                                                                          \
   template <class U>                                                           \
     requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \
-  static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
+  sus_pure static constexpr ::sus::result::Result<T,                           \
+                                                  ::sus::num::TryFromIntError> \
   try_from(U u) {                                                              \
     using D = std::underlying_type_t<U>;                                       \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
@@ -652,8 +658,8 @@ class Tuple;
    * #[doc.overloads=unsigned.from.unchecked.int]                              \
    */                                                                          \
   template <Integer I>                                                         \
-  static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,             \
-                                    I i) noexcept {                            \
+  sus_pure static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,    \
+                                             I i) noexcept {                   \
     return T(static_cast<PrimitiveT>(i.primitive_value));                      \
   }                                                                            \
                                                                                \
@@ -667,8 +673,8 @@ class Tuple;
    * #[doc.overloads=unsigned.from.unchecked.primitive]                        \
    */                                                                          \
   template <PrimitiveInteger P>                                                \
-  static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,             \
-                                    P p) noexcept {                            \
+  sus_pure static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,    \
+                                             P p) noexcept {                   \
     return T(static_cast<PrimitiveT>(p));                                      \
   }                                                                            \
                                                                                \
@@ -683,8 +689,8 @@ class Tuple;
    */                                                                          \
   template <class P>                                                           \
     requires(PrimitiveEnum<P> || PrimitiveEnumClass<P>)                        \
-  static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,             \
-                                    P p) noexcept {                            \
+  sus_pure static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,    \
+                                             P p) noexcept {                   \
     return T(static_cast<PrimitiveT>(p));                                      \
   }                                                                            \
   static_assert(true)
@@ -692,69 +698,72 @@ class Tuple;
 #define _sus__unsigned_to_primitive(T, PrimitiveT)                          \
   template <UnsignedPrimitiveInteger U>                                     \
     requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<PrimitiveT>()) \
-  constexpr inline explicit operator U() const {                            \
+  sus_pure constexpr inline explicit operator U() const {                   \
     return primitive_value;                                                 \
   }                                                                         \
   template <SignedPrimitiveInteger U>                                       \
     requires(::sus::mem::size_of<U>() > ::sus::mem::size_of<PrimitiveT>())  \
-  constexpr inline explicit operator U() const {                            \
+  sus_pure constexpr inline explicit operator U() const {                   \
     return primitive_value;                                                 \
   }                                                                         \
   static_assert(true)
 
-#define _sus__unsigned_integer_comparison(T)                                 \
-  /** sus::ops::Eq<##T##> trait.                                             \
-   * #[doc.overloads=uint.eq.self] */                                        \
-  friend constexpr inline bool operator==(const T& l, const T& r) noexcept = \
-      default;                                                               \
-  /** sus::ops::Eq<##T##, UnsignedPrimitiveInteger> trait.                   \
-   * #[doc.overloads=uint.eq.unsignedprimitive] */                           \
-  template <UnsignedPrimitiveInteger P>                                      \
-  friend constexpr inline bool operator==(const T& l, const P& r) noexcept { \
-    return l.primitive_value == r;                                           \
-  }                                                                          \
-  /** sus::ops::Eq<##T##, Unsigned> trait.                                   \
-   * #[doc.overloads=uint.eq.unsigned] */                                    \
-  template <Unsigned U>                                                      \
-  friend constexpr inline bool operator==(const T& l, const U& r) noexcept { \
-    return l.primitive_value == r.primitive_value;                           \
-  }                                                                          \
-  /** sus::ops::Ord<##T##> trait.                                            \
-   * #[doc.overloads=uint.ord.self] */                                       \
-  template <UnsignedPrimitiveInteger P>                                      \
-  friend constexpr inline std::strong_ordering operator<=>(                  \
-      const T& l, const T& r) noexcept {                                     \
-    return l.primitive_value <=> r.primitive_value;                          \
-  }                                                                          \
-  /** sus::ops::Ord<##T##, UnsignedPrimitiveInteger> trait.                  \
-   * #[doc.overloads=uint.ord.unsignedprimitive] */                          \
-  template <UnsignedPrimitiveInteger P>                                      \
-  friend constexpr inline std::strong_ordering operator<=>(                  \
-      const T& l, const P& r) noexcept {                                     \
-    return l.primitive_value <=> r;                                          \
-  }                                                                          \
-  /** sus::ops::Ord<##T##, Unsigned> trait.                                  \
-   * #[doc.overloads=uint.ord.unsigned] */                                   \
-  template <Unsigned U>                                                      \
-  friend constexpr inline std::strong_ordering operator<=>(                  \
-      const T& l, const U& r) noexcept {                                     \
-    return l.primitive_value <=> r.primitive_value;                          \
-  }                                                                          \
+#define _sus__unsigned_integer_comparison(T)                              \
+  /** sus::ops::Eq<##T##> trait.                                          \
+   * #[doc.overloads=uint.eq.self] */                                     \
+  friend sus_pure constexpr inline bool operator==(                       \
+      const T& l, const T& r) noexcept = default;                         \
+  /** sus::ops::Eq<##T##, UnsignedPrimitiveInteger> trait.                \
+   * #[doc.overloads=uint.eq.unsignedprimitive] */                        \
+  template <UnsignedPrimitiveInteger P>                                   \
+  friend sus_pure constexpr inline bool operator==(const T& l,            \
+                                                   const P& r) noexcept { \
+    return l.primitive_value == r;                                        \
+  }                                                                       \
+  /** sus::ops::Eq<##T##, Unsigned> trait.                                \
+   * #[doc.overloads=uint.eq.unsigned] */                                 \
+  template <Unsigned U>                                                   \
+  friend sus_pure constexpr inline bool operator==(const T& l,            \
+                                                   const U& r) noexcept { \
+    return l.primitive_value == r.primitive_value;                        \
+  }                                                                       \
+  /** sus::ops::Ord<##T##> trait.                                         \
+   * #[doc.overloads=uint.ord.self] */                                    \
+  template <UnsignedPrimitiveInteger P>                                   \
+  friend sus_pure constexpr inline std::strong_ordering operator<=>(      \
+      const T& l, const T& r) noexcept {                                  \
+    return l.primitive_value <=> r.primitive_value;                       \
+  }                                                                       \
+  /** sus::ops::Ord<##T##, UnsignedPrimitiveInteger> trait.               \
+   * #[doc.overloads=uint.ord.unsignedprimitive] */                       \
+  template <UnsignedPrimitiveInteger P>                                   \
+  friend sus_pure constexpr inline std::strong_ordering operator<=>(      \
+      const T& l, const P& r) noexcept {                                  \
+    return l.primitive_value <=> r;                                       \
+  }                                                                       \
+  /** sus::ops::Ord<##T##, Unsigned> trait.                               \
+   * #[doc.overloads=uint.ord.unsigned] */                                \
+  template <Unsigned U>                                                   \
+  friend sus_pure constexpr inline std::strong_ordering operator<=>(      \
+      const T& l, const U& r) noexcept {                                  \
+    return l.primitive_value <=> r.primitive_value;                       \
+  }                                                                       \
   static_assert(true)
 
-#define _sus__unsigned_unary_ops(T)                   \
-  /* sus::num::Neg trait intentionally omitted. */    \
-                                                      \
-  /** sus::num::BitNot trait. */                      \
-  constexpr inline T operator~() const& noexcept {    \
-    return __private::unchecked_not(primitive_value); \
-  }                                                   \
+#define _sus__unsigned_unary_ops(T)                         \
+  /* sus::num::Neg trait intentionally omitted. */          \
+                                                            \
+  /** sus::num::BitNot trait. */                            \
+  sus_pure constexpr inline T operator~() const& noexcept { \
+    return __private::unchecked_not(primitive_value);       \
+  }                                                         \
   static_assert(true)
 
 #define _sus__unsigned_binary_logic_ops(T)                                  \
   /** sus::num::Add<##T##> trait.                                           \
    * #[doc.overloads=uint##T##.+] */                                        \
-  friend constexpr inline T operator+(const T& l, const T& r) noexcept {    \
+  friend sus_pure constexpr inline T operator+(const T& l,                  \
+                                               const T& r) noexcept {       \
     const auto out =                                                        \
         __private::add_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
@@ -763,7 +772,8 @@ class Tuple;
   }                                                                         \
   /** sus::num::Sub<##T##> trait.                                           \
    * #[doc.overloads=uint##T##.-] */                                        \
-  friend constexpr inline T operator-(const T& l, const T& r) noexcept {    \
+  friend sus_pure constexpr inline T operator-(const T& l,                  \
+                                               const T& r) noexcept {       \
     const auto out =                                                        \
         __private::sub_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
@@ -772,7 +782,8 @@ class Tuple;
   }                                                                         \
   /** sus::num::Mul<##T##> trait.                                           \
    * #[doc.overloads=uint##T##.*] */                                        \
-  friend constexpr inline T operator*(const T& l, const T& r) noexcept {    \
+  friend sus_pure constexpr inline T operator*(const T& l,                  \
+                                               const T& r) noexcept {       \
     const auto out =                                                        \
         __private::mul_with_overflow(l.primitive_value, r.primitive_value); \
     /* TODO: Allow opting out of all overflow checks? */                    \
@@ -781,50 +792,57 @@ class Tuple;
   }                                                                         \
   /** sus::num::Div<##T##> trait.                                           \
    * #[doc.overloads=uint##T##./] */                                        \
-  friend constexpr inline T operator/(const T& l, const T& r) noexcept {    \
+  friend sus_pure constexpr inline T operator/(const T& l,                  \
+                                               const T& r) noexcept {       \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0u);                                  \
     return __private::unchecked_div(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   /** sus::num::Rem<##T##> trait.                                           \
    * #[doc.overloads=uint##T##.%] */                                        \
-  friend constexpr inline T operator%(const T& l, const T& r) noexcept {    \
+  friend sus_pure constexpr inline T operator%(const T& l,                  \
+                                               const T& r) noexcept {       \
     /* TODO: Allow opting out of all overflow checks? */                    \
     ::sus::check(r.primitive_value != 0u);                                  \
     return __private::unchecked_rem(l.primitive_value, r.primitive_value);  \
   }                                                                         \
   static_assert(true)
 
-#define _sus__unsigned_binary_bit_ops(T)                                    \
-  /** sus::num::BitAnd<##T##> trait.                                        \
-   * #[doc.overloads=uint##T##.&] */                                        \
-  friend constexpr inline T operator&(const T& l, const T& r) noexcept {    \
-    return __private::unchecked_and(l.primitive_value, r.primitive_value);  \
-  }                                                                         \
-  /** sus::num::BitOr<##T##> trait.                                         \
-   * #[doc.overloads=uint##T##.|] */                                        \
-  friend constexpr inline T operator|(const T& l, const T& r) noexcept {    \
-    return __private::unchecked_or(l.primitive_value, r.primitive_value);   \
-  }                                                                         \
-  /** sus::num::BitXor<##T##> trait.                                        \
-   * #[doc.overloads=uint##T##.^] */                                        \
-  friend constexpr inline T operator^(const T& l, const T& r) noexcept {    \
-    return __private::unchecked_xor(l.primitive_value, r.primitive_value);  \
-  }                                                                         \
-  /** sus::num::Shl trait.                                                  \
-   * #[doc.overloads=uint##T##.<<] */                                       \
-  friend constexpr inline T operator<<(const T& l, const u32& r) noexcept { \
-    /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS);                                                 \
-    return __private::unchecked_shl(l.primitive_value, r.primitive_value);  \
-  }                                                                         \
-  /** sus::num::Shr trait.                                                  \
-   * #[doc.overloads=uint##T##>>] */                                        \
-  friend constexpr inline T operator>>(const T& l, const u32& r) noexcept { \
-    /* TODO: Allow opting out of all overflow checks? */                    \
-    ::sus::check(r < BITS);                                                 \
-    return __private::unchecked_shr(l.primitive_value, r.primitive_value);  \
-  }                                                                         \
+#define _sus__unsigned_binary_bit_ops(T)                                   \
+  /** sus::num::BitAnd<##T##> trait.                                       \
+   * #[doc.overloads=uint##T##.&] */                                       \
+  friend sus_pure constexpr inline T operator&(const T& l,                 \
+                                               const T& r) noexcept {      \
+    return __private::unchecked_and(l.primitive_value, r.primitive_value); \
+  }                                                                        \
+  /** sus::num::BitOr<##T##> trait.                                        \
+   * #[doc.overloads=uint##T##.|] */                                       \
+  friend sus_pure constexpr inline T operator|(const T& l,                 \
+                                               const T& r) noexcept {      \
+    return __private::unchecked_or(l.primitive_value, r.primitive_value);  \
+  }                                                                        \
+  /** sus::num::BitXor<##T##> trait.                                       \
+   * #[doc.overloads=uint##T##.^] */                                       \
+  friend sus_pure constexpr inline T operator^(const T& l,                 \
+                                               const T& r) noexcept {      \
+    return __private::unchecked_xor(l.primitive_value, r.primitive_value); \
+  }                                                                        \
+  /** sus::num::Shl trait.                                                 \
+   * #[doc.overloads=uint##T##.<<] */                                      \
+  friend sus_pure constexpr inline T operator<<(const T& l,                \
+                                                const u32& r) noexcept {   \
+    /* TODO: Allow opting out of all overflow checks? */                   \
+    ::sus::check(r < BITS);                                                \
+    return __private::unchecked_shl(l.primitive_value, r.primitive_value); \
+  }                                                                        \
+  /** sus::num::Shr trait.                                                 \
+   * #[doc.overloads=uint##T##>>] */                                       \
+  friend sus_pure constexpr inline T operator>>(const T& l,                \
+                                                const u32& r) noexcept {   \
+    /* TODO: Allow opting out of all overflow checks? */                   \
+    ::sus::check(r < BITS);                                                \
+    return __private::unchecked_shr(l.primitive_value, r.primitive_value); \
+  }                                                                        \
   static_assert(true)
 
 #define _sus__unsigned_mutable_logic_ops(T)                               \
@@ -896,7 +914,7 @@ class Tuple;
 #define _sus__unsigned_abs(T)                                              \
   /** Computes the absolute difference between self and other.             \
    */                                                                      \
-  constexpr T abs_diff(const T& r) const& noexcept {                       \
+  sus_pure constexpr T abs_diff(const T& r) const& noexcept {              \
     if (primitive_value >= r.primitive_value)                              \
       return __private::unchecked_sub(primitive_value, r.primitive_value); \
     else                                                                   \
@@ -908,7 +926,7 @@ class Tuple;
   /** Checked integer addition. Computes self + rhs, returning None if         \
    * overflow occurred.                                                        \
    */                                                                          \
-  constexpr Option<T> checked_add(const T& rhs) const& noexcept {              \
+  sus_pure constexpr Option<T> checked_add(const T& rhs) const& noexcept {     \
     const auto out =                                                           \
         __private::add_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
@@ -921,7 +939,8 @@ class Tuple;
    * returning None if overflow occurred.                                      \
    */                                                                          \
   template <std::convertible_to<SignedT> S>                                    \
-  constexpr Option<T> checked_add_signed(const S& rhs) const& noexcept {       \
+  sus_pure constexpr Option<T> checked_add_signed(const S& rhs)                \
+      const& noexcept {                                                        \
     const auto out = __private::add_with_overflow_signed(primitive_value,      \
                                                          rhs.primitive_value); \
     if (!out.overflow) [[likely]]                                              \
@@ -937,7 +956,7 @@ class Tuple;
    * then the wrapped value is returned.                                       \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_add(const T& rhs) const& noexcept {              \
+  sus_pure constexpr Tuple overflowing_add(const T& rhs) const& noexcept {     \
     const auto out =                                                           \
         __private::add_with_overflow(primitive_value, rhs.primitive_value);    \
     return Tuple::with(out.value, out.overflow);                               \
@@ -951,7 +970,8 @@ class Tuple;
    */                                                                          \
   template <std::convertible_to<SignedT> S, int&...,                           \
             class Tuple = ::sus::tuple_type::Tuple<T, bool>>                   \
-  constexpr Tuple overflowing_add_signed(const S& rhs) const& noexcept {       \
+  sus_pure constexpr Tuple overflowing_add_signed(const S& rhs)                \
+      const& noexcept {                                                        \
     const auto r = __private::add_with_overflow_signed(primitive_value,        \
                                                        rhs.primitive_value);   \
     return Tuple::with(r.value, r.overflow);                                   \
@@ -960,7 +980,7 @@ class Tuple;
   /** Saturating integer addition. Computes self + rhs, saturating at the      \
    * numeric bounds instead of overflowing.                                    \
    */                                                                          \
-  constexpr T saturating_add(const T& rhs) const& noexcept {                   \
+  sus_pure constexpr T saturating_add(const T& rhs) const& noexcept {          \
     return __private::saturating_add(primitive_value, rhs.primitive_value);    \
   }                                                                            \
                                                                                \
@@ -968,7 +988,7 @@ class Tuple;
    * saturating at the numeric bounds instead of overflowing.                  \
    */                                                                          \
   template <std::convertible_to<SignedT> S>                                    \
-  constexpr T saturating_add_signed(const S& rhs) const& noexcept {            \
+  sus_pure constexpr T saturating_add_signed(const S& rhs) const& noexcept {   \
     const auto r = __private::add_with_overflow_signed(primitive_value,        \
                                                        rhs.primitive_value);   \
     if (!r.overflow) [[likely]]                                                \
@@ -991,15 +1011,15 @@ class Tuple;
    * > ##T##::MAX` or `self + rhs < ##T##::MIN`, i.e. when `checked_add()`     \
    * would return None.                                                        \
    */                                                                          \
-  inline constexpr T unchecked_add(::sus::marker::UnsafeFnMarker,              \
-                                   const T& rhs) const& noexcept {             \
+  inline sus_pure constexpr T unchecked_add(::sus::marker::UnsafeFnMarker,     \
+                                            const T& rhs) const& noexcept {    \
     return __private::unchecked_add(primitive_value, rhs.primitive_value);     \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) addition. Computes self + rhs, wrapping around at the \
    * boundary of the type.                                                     \
    */                                                                          \
-  constexpr T wrapping_add(const T& rhs) const& noexcept {                     \
+  sus_pure constexpr T wrapping_add(const T& rhs) const& noexcept {            \
     return __private::wrapping_add(primitive_value, rhs.primitive_value);      \
   }                                                                            \
                                                                                \
@@ -1007,7 +1027,7 @@ class Tuple;
    * wrapping around at the boundary of the type.                              \
    */                                                                          \
   template <std::convertible_to<SignedT> S>                                    \
-  constexpr T wrapping_add_signed(const S& rhs) const& noexcept {              \
+  sus_pure constexpr T wrapping_add_signed(const S& rhs) const& noexcept {     \
     return __private::add_with_overflow_signed(primitive_value,                \
                                                rhs.primitive_value)            \
         .value;                                                                \
@@ -1018,7 +1038,7 @@ class Tuple;
   /** Checked integer division. Computes self / rhs, returning None if `rhs == \
    * 0`.                                                                       \
    */                                                                          \
-  constexpr Option<T> checked_div(const T& rhs) const& noexcept {              \
+  sus_pure constexpr Option<T> checked_div(const T& rhs) const& noexcept {     \
     if (rhs.primitive_value != 0u) [[likely]]                                  \
       return Option<T>::some(                                                  \
           __private::unchecked_div(primitive_value, rhs.primitive_value));     \
@@ -1036,7 +1056,7 @@ class Tuple;
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_div(const T& rhs) const& noexcept {              \
+  sus_pure constexpr Tuple overflowing_div(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
     return Tuple::with(                                                        \
@@ -1050,7 +1070,7 @@ class Tuple;
    * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
-  constexpr T saturating_div(const T& rhs) const& noexcept {                   \
+  sus_pure constexpr T saturating_div(const T& rhs) const& noexcept {          \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
     return __private::unchecked_div(primitive_value, rhs.primitive_value);     \
@@ -1064,7 +1084,7 @@ class Tuple;
    * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
-  constexpr T wrapping_div(const T& rhs) const& noexcept {                     \
+  sus_pure constexpr T wrapping_div(const T& rhs) const& noexcept {            \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
     return __private::unchecked_div(primitive_value, rhs.primitive_value);     \
@@ -1075,7 +1095,7 @@ class Tuple;
   /** Checked integer multiplication. Computes self * rhs, returning None if   \
    * overflow occurred.                                                        \
    */                                                                          \
-  constexpr Option<T> checked_mul(const T& rhs) const& noexcept {              \
+  sus_pure constexpr Option<T> checked_mul(const T& rhs) const& noexcept {     \
     const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
@@ -1091,7 +1111,7 @@ class Tuple;
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_mul(const T& rhs) const& noexcept {              \
+  sus_pure constexpr Tuple overflowing_mul(const T& rhs) const& noexcept {     \
     const auto out =                                                           \
         __private::mul_with_overflow(primitive_value, rhs.primitive_value);    \
     return Tuple::with(out.value, out.overflow);                               \
@@ -1100,7 +1120,7 @@ class Tuple;
   /** Saturating integer multiplication. Computes self * rhs, saturating at    \
    * the numeric bounds instead of overflowing.                                \
    */                                                                          \
-  constexpr T saturating_mul(const T& rhs) const& noexcept {                   \
+  sus_pure constexpr T saturating_mul(const T& rhs) const& noexcept {          \
     return __private::saturating_mul(primitive_value, rhs.primitive_value);    \
   }                                                                            \
                                                                                \
@@ -1112,15 +1132,15 @@ class Tuple;
    * > ##T##::MAX` or `self * rhs < ##T##::MIN`, i.e. when `checked_mul()`     \
    * would return None.                                                        \
    */                                                                          \
-  constexpr inline T unchecked_mul(::sus::marker::UnsafeFnMarker,              \
-                                   const T& rhs) const& noexcept {             \
+  sus_pure constexpr T unchecked_mul(::sus::marker::UnsafeFnMarker,            \
+                                     const T& rhs) const& noexcept {           \
     return __private::unchecked_mul(primitive_value, rhs.primitive_value);     \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) multiplication. Computes self * rhs, wrapping around  \
    * at the boundary of the type.                                              \
    */                                                                          \
-  constexpr T wrapping_mul(const T& rhs) const& noexcept {                     \
+  sus_pure constexpr T wrapping_mul(const T& rhs) const& noexcept {            \
     return __private::wrapping_mul(primitive_value, rhs.primitive_value);      \
   }                                                                            \
   static_assert(true)
@@ -1130,7 +1150,7 @@ class Tuple;
    *                                                                           \
    * Note that negating any positive integer will overflow.                    \
    */                                                                          \
-  constexpr Option<T> checked_neg() const& noexcept {                          \
+  sus_pure constexpr Option<T> checked_neg() const& noexcept {                 \
     if (primitive_value == 0u)                                                 \
       return Option<T>::some(T(PrimitiveT{0u}));                               \
     else                                                                       \
@@ -1144,7 +1164,7 @@ class Tuple;
    * unsigned values overflow always occurs, but negating 0 does not overflow. \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_neg() const& noexcept {                          \
+  sus_pure constexpr Tuple overflowing_neg() const& noexcept {                 \
     return Tuple::with((~(*this)).wrapping_add(T(PrimitiveT{1u})),             \
                        primitive_value != 0u);                                 \
   }                                                                            \
@@ -1159,7 +1179,7 @@ class Tuple;
    * `MAX + 1 - (val - MAX - 1)` where MAX is the corresponding signed type's  \
    * maximum.                                                                  \
    */                                                                          \
-  constexpr T wrapping_neg() const& noexcept {                                 \
+  sus_pure constexpr T wrapping_neg() const& noexcept {                        \
     return (T(PrimitiveT{0u})).wrapping_sub(*this);                            \
   }                                                                            \
   static_assert(true)
@@ -1168,7 +1188,7 @@ class Tuple;
   /** Checked integer remainder. Computes `self % rhs`, returning None if `rhs \
    * == 0`.                                                                    \
    */                                                                          \
-  constexpr Option<T> checked_rem(const T& rhs) const& noexcept {              \
+  sus_pure constexpr Option<T> checked_rem(const T& rhs) const& noexcept {     \
     if (rhs.primitive_value != 0u) [[likely]]                                  \
       return Option<T>::some(                                                  \
           __private::unchecked_rem(primitive_value, rhs.primitive_value));     \
@@ -1187,7 +1207,7 @@ class Tuple;
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_rem(const T& rhs) const& noexcept {              \
+  sus_pure constexpr Tuple overflowing_rem(const T& rhs) const& noexcept {     \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
     return Tuple::with(                                                        \
@@ -1204,7 +1224,7 @@ class Tuple;
    * # Panics                                                                  \
    * This function will panic if rhs is 0.                                     \
    */                                                                          \
-  constexpr T wrapping_rem(const T& rhs) const& noexcept {                     \
+  sus_pure constexpr T wrapping_rem(const T& rhs) const& noexcept {            \
     /* TODO: Allow opting out of all overflow checks? */                       \
     ::sus::check(rhs.primitive_value != 0u);                                   \
     return __private::unchecked_rem(primitive_value, rhs.primitive_value);     \
@@ -1220,7 +1240,7 @@ class Tuple;
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  constexpr T div_euclid(const T& rhs) const& noexcept {                        \
+  sus_pure constexpr T div_euclid(const T& rhs) const& noexcept {               \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
     return __private::unchecked_div(primitive_value, rhs.primitive_value);      \
@@ -1229,7 +1249,8 @@ class Tuple;
   /** Checked Euclidean division. Computes self.div_euclid(rhs), returning      \
    * None if rhs == 0.                                                          \
    */                                                                           \
-  constexpr Option<T> checked_div_euclid(const T& rhs) const& noexcept {        \
+  sus_pure constexpr Option<T> checked_div_euclid(const T& rhs)                 \
+      const& noexcept {                                                         \
     if (rhs.primitive_value == 0u) [[unlikely]] {                               \
       return Option<T>::none();                                                 \
     } else {                                                                    \
@@ -1250,7 +1271,8 @@ class Tuple;
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>           \
-  constexpr Tuple overflowing_div_euclid(const T& rhs) const& noexcept {        \
+  sus_pure constexpr Tuple overflowing_div_euclid(const T& rhs)                 \
+      const& noexcept {                                                         \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
     return Tuple::with(                                                         \
@@ -1269,7 +1291,7 @@ class Tuple;
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {               \
+  sus_pure constexpr T wrapping_div_euclid(const T& rhs) const& noexcept {      \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
     return __private::unchecked_div(primitive_value, rhs.primitive_value);      \
@@ -1283,7 +1305,7 @@ class Tuple;
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  constexpr T rem_euclid(const T& rhs) const& noexcept {                        \
+  sus_pure constexpr T rem_euclid(const T& rhs) const& noexcept {               \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
     return __private::unchecked_rem(primitive_value, rhs.primitive_value);      \
@@ -1292,7 +1314,8 @@ class Tuple;
   /** Checked Euclidean modulo. Computes self.rem_euclid(rhs), returning None   \
    * if rhs == 0.                                                               \
    */                                                                           \
-  constexpr Option<T> checked_rem_euclid(const T& rhs) const& noexcept {        \
+  sus_pure constexpr Option<T> checked_rem_euclid(const T& rhs)                 \
+      const& noexcept {                                                         \
     if (rhs.primitive_value == 0u) [[unlikely]] {                               \
       return Option<T>::none();                                                 \
     } else {                                                                    \
@@ -1315,7 +1338,8 @@ class Tuple;
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>           \
-  constexpr Tuple overflowing_rem_euclid(const T& rhs) const& noexcept {        \
+  sus_pure constexpr Tuple overflowing_rem_euclid(const T& rhs)                 \
+      const& noexcept {                                                         \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
     return Tuple::with(                                                         \
@@ -1334,7 +1358,7 @@ class Tuple;
    * # Panics                                                                   \
    * This function will panic if rhs is 0.                                      \
    */                                                                           \
-  constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {               \
+  sus_pure constexpr T wrapping_rem_euclid(const T& rhs) const& noexcept {      \
     /* TODO: Allow opting out of all overflow checks? */                        \
     ::sus::check(rhs.primitive_value != 0u);                                    \
     return __private::unchecked_rem(primitive_value, rhs.primitive_value);      \
@@ -1345,7 +1369,7 @@ class Tuple;
   /** Checked shift left. Computes `*this << rhs`, returning None if rhs is    \
    * larger than or equal to the number of bits in self.                       \
    */                                                                          \
-  constexpr Option<T> checked_shl(const u32& rhs) const& noexcept {            \
+  sus_pure constexpr Option<T> checked_shl(const u32& rhs) const& noexcept {   \
     const auto out =                                                           \
         __private::shl_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
@@ -1363,7 +1387,7 @@ class Tuple;
    * shift.                                                                    \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_shl(const u32& rhs) const& noexcept {            \
+  sus_pure constexpr Tuple overflowing_shl(const u32& rhs) const& noexcept {   \
     const auto out =                                                           \
         __private::shl_with_overflow(primitive_value, rhs.primitive_value);    \
     return Tuple::with(out.value, out.overflow);                               \
@@ -1379,7 +1403,7 @@ class Tuple;
    * integer types all implement a rotate_left function, which may be what you \
    * want instead.                                                             \
    */                                                                          \
-  constexpr T wrapping_shl(const u32& rhs) const& noexcept {                   \
+  sus_pure constexpr T wrapping_shl(const u32& rhs) const& noexcept {          \
     return __private::shl_with_overflow(primitive_value, rhs.primitive_value)  \
         .value;                                                                \
   }                                                                            \
@@ -1387,7 +1411,7 @@ class Tuple;
   /** Checked shift right. Computes `*this >> rhs`, returning None if rhs is   \
    * larger than or equal to the number of bits in self.                       \
    */                                                                          \
-  constexpr Option<T> checked_shr(const u32& rhs) const& noexcept {            \
+  sus_pure constexpr Option<T> checked_shr(const u32& rhs) const& noexcept {   \
     const auto out =                                                           \
         __private::shr_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
@@ -1405,7 +1429,7 @@ class Tuple;
    * shift.                                                                    \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_shr(const u32& rhs) const& noexcept {            \
+  sus_pure constexpr Tuple overflowing_shr(const u32& rhs) const& noexcept {   \
     const auto out =                                                           \
         __private::shr_with_overflow(primitive_value, rhs.primitive_value);    \
     return Tuple::with(out.value, out.overflow);                               \
@@ -1421,7 +1445,7 @@ class Tuple;
    * integer types all implement a rotate_right function, which may be what    \
    * you want instead.                                                         \
    */                                                                          \
-  constexpr T wrapping_shr(const u32& rhs) const& noexcept {                   \
+  sus_pure constexpr T wrapping_shr(const u32& rhs) const& noexcept {          \
     return __private::shr_with_overflow(primitive_value, rhs.primitive_value)  \
         .value;                                                                \
   }                                                                            \
@@ -1431,7 +1455,7 @@ class Tuple;
   /** Checked integer subtraction. Computes self - rhs, returning None if      \
    * overflow occurred.                                                        \
    */                                                                          \
-  constexpr Option<T> checked_sub(const T& rhs) const& {                       \
+  constexpr Option<T> checked_sub(const T& rhs) const& sus_pure {              \
     const auto out =                                                           \
         __private::sub_with_overflow(primitive_value, rhs.primitive_value);    \
     if (!out.overflow) [[likely]]                                              \
@@ -1447,7 +1471,7 @@ class Tuple;
    * occurred then the wrapped value is returned.                              \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_sub(const T& rhs) const& noexcept {              \
+  sus_pure constexpr Tuple overflowing_sub(const T& rhs) const& noexcept {     \
     const auto out =                                                           \
         __private::sub_with_overflow(primitive_value, rhs.primitive_value);    \
     return Tuple::with(out.value, out.overflow);                               \
@@ -1456,7 +1480,7 @@ class Tuple;
   /** Saturating integer subtraction. Computes self - rhs, saturating at the   \
    * numeric bounds instead of overflowing.                                    \
    */                                                                          \
-  constexpr T saturating_sub(const T& rhs) const& {                            \
+  constexpr T saturating_sub(const T& rhs) const& sus_pure {                   \
     return __private::saturating_sub(primitive_value, rhs.primitive_value);    \
   }                                                                            \
                                                                                \
@@ -1468,15 +1492,15 @@ class Tuple;
    * > ##T##::MAX` or `self - rhs < ##T##::MIN`, i.e. when `checked_sub()`     \
    * would return None.                                                        \
    */                                                                          \
-  constexpr T unchecked_sub(::sus::marker::UnsafeFnMarker, const T& rhs)       \
-      const& {                                                                 \
+  sus_pure constexpr T unchecked_sub(::sus::marker::UnsafeFnMarker,            \
+                                     const T& rhs) const& noexcept {           \
     return __private::unchecked_sub(primitive_value, rhs.primitive_value);     \
   }                                                                            \
                                                                                \
   /** Wrapping (modular) subtraction. Computes self - rhs, wrapping around at  \
    * the boundary of the type.                                                 \
    */                                                                          \
-  constexpr T wrapping_sub(const T& rhs) const& {                              \
+  sus_pure constexpr T wrapping_sub(const T& rhs) const& noexcept {            \
     return __private::wrapping_sub(primitive_value, rhs.primitive_value);      \
   }                                                                            \
   static_assert(true)
@@ -1485,42 +1509,42 @@ class Tuple;
   /** Returns the number of ones in the binary representation of the current   \
    * value.                                                                    \
    */                                                                          \
-  constexpr u32 count_ones() const& noexcept {                                 \
+  sus_pure constexpr u32 count_ones() const& noexcept {                        \
     return __private::count_ones(primitive_value);                             \
   }                                                                            \
                                                                                \
   /** Returns the number of zeros in the binary representation of the current  \
    * value.                                                                    \
    */                                                                          \
-  constexpr u32 count_zeros() const& noexcept {                                \
+  sus_pure constexpr u32 count_zeros() const& noexcept {                       \
     return (~(*this)).count_ones();                                            \
   }                                                                            \
                                                                                \
   /** Returns the number of leading ones in the binary representation of the   \
    * current value.                                                            \
    */                                                                          \
-  constexpr u32 leading_ones() const& noexcept {                               \
+  sus_pure constexpr u32 leading_ones() const& noexcept {                      \
     return (~(*this)).leading_zeros();                                         \
   }                                                                            \
                                                                                \
   /** Returns the number of leading zeros in the binary representation of the  \
    * current value.                                                            \
    */                                                                          \
-  constexpr u32 leading_zeros() const& noexcept {                              \
+  sus_pure constexpr u32 leading_zeros() const& noexcept {                     \
     return __private::leading_zeros(primitive_value);                          \
   }                                                                            \
                                                                                \
   /** Returns the number of trailing ones in the binary representation of the  \
    * current value.                                                            \
    */                                                                          \
-  constexpr u32 trailing_ones() const& noexcept {                              \
+  sus_pure constexpr u32 trailing_ones() const& noexcept {                     \
     return (~(*this)).trailing_zeros();                                        \
   }                                                                            \
                                                                                \
   /** Returns the number of trailing zeros in the binary representation of the \
    * current value.                                                            \
    */                                                                          \
-  constexpr u32 trailing_zeros() const& noexcept {                             \
+  sus_pure constexpr u32 trailing_zeros() const& noexcept {                    \
     return __private::trailing_zeros(primitive_value);                         \
   }                                                                            \
                                                                                \
@@ -1528,7 +1552,7 @@ class Tuple;
    * becomes the most significant bit, second least-significant bit becomes    \
    * second most-significant bit, etc.                                         \
    */                                                                          \
-  constexpr T reverse_bits() const& noexcept {                                 \
+  sus_pure constexpr T reverse_bits() const& noexcept {                        \
     return __private::reverse_bits(primitive_value);                           \
   }                                                                            \
                                                                                \
@@ -1537,7 +1561,7 @@ class Tuple;
    *                                                                           \
    * Please note this isn't the same operation as the `<<` shifting operator!  \
    */                                                                          \
-  constexpr T rotate_left(const u32& n) const& noexcept {                      \
+  sus_pure constexpr T rotate_left(const u32& n) const& noexcept {             \
     return __private::rotate_left(primitive_value, n.primitive_value);         \
   }                                                                            \
                                                                                \
@@ -1546,20 +1570,20 @@ class Tuple;
    *                                                                           \
    * Please note this isn't the same operation as the >> shifting operator!    \
    */                                                                          \
-  constexpr T rotate_right(const u32& n) const& noexcept {                     \
+  sus_pure constexpr T rotate_right(const u32& n) const& noexcept {            \
     return __private::rotate_right(primitive_value, n.primitive_value);        \
   }                                                                            \
                                                                                \
   /** Reverses the byte order of the integer.                                  \
    */                                                                          \
-  constexpr T swap_bytes() const& noexcept {                                   \
+  sus_pure constexpr T swap_bytes() const& noexcept {                          \
     return __private::swap_bytes(primitive_value);                             \
   }                                                                            \
   static_assert(true)
 
 #define _sus__unsigned_pow(T)                                                  \
   /**  Raises self to the power of `exp`, using exponentiation by squaring. */ \
-  constexpr inline T pow(const u32& rhs) const& noexcept {                     \
+  sus_pure constexpr T pow(const u32& rhs) const& noexcept {                   \
     const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, rhs.primitive_value);    \
     /* TODO: Allow opting out of all overflow checks? */                       \
@@ -1570,7 +1594,7 @@ class Tuple;
   /** Checked exponentiation. Computes `##T##::pow(exp)`, returning None if    \
    * overflow occurred.                                                        \
    */                                                                          \
-  constexpr Option<T> checked_pow(const u32& rhs) const& noexcept {            \
+  sus_pure constexpr Option<T> checked_pow(const u32& rhs) const& noexcept {   \
     const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, rhs.primitive_value);    \
     /* TODO: Allow opting out of all overflow checks? */                       \
@@ -1586,7 +1610,7 @@ class Tuple;
    * whether an overflow happened.                                             \
    */                                                                          \
   template <int&..., class Tuple = ::sus::tuple_type::Tuple<T, bool>>          \
-  constexpr Tuple overflowing_pow(const u32& exp) const& noexcept {            \
+  sus_pure constexpr Tuple overflowing_pow(const u32& exp) const& noexcept {   \
     const auto out =                                                           \
         __private::pow_with_overflow(primitive_value, exp.primitive_value);    \
     return Tuple::with(out.value, out.overflow);                               \
@@ -1595,7 +1619,7 @@ class Tuple;
   /** Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping      \
    * around at the boundary of the type.                                       \
    */                                                                          \
-  constexpr T wrapping_pow(const u32& exp) const& noexcept {                   \
+  sus_pure constexpr T wrapping_pow(const u32& exp) const& noexcept {          \
     return __private::wrapping_pow(primitive_value, exp.primitive_value);      \
   }                                                                            \
   static_assert(true)
@@ -1605,7 +1629,7 @@ class Tuple;
    *                                                                          \
    * Returns None if the number is zero.                                      \
    */                                                                         \
-  constexpr Option<u32> checked_log2() const& {                               \
+  sus_pure constexpr Option<u32> checked_log2() const& noexcept {             \
     if (primitive_value == 0u) [[unlikely]] {                                 \
       return Option<u32>::none();                                             \
     } else {                                                                  \
@@ -1620,7 +1644,7 @@ class Tuple;
    * # Panics                                                                 \
    * When the number is zero the function will panic. \                       \
    */                                                                         \
-  constexpr u32 log2() const& {                                               \
+  sus_pure constexpr u32 log2() const& noexcept {                             \
     /* TODO: Allow opting out of all overflow checks? */                      \
     return checked_log2().unwrap();                                           \
   }                                                                           \
@@ -1629,7 +1653,7 @@ class Tuple;
    *                                                                          \
    * Returns None if the number is zero.                                      \
    */                                                                         \
-  constexpr Option<u32> checked_log10() const& {                              \
+  sus_pure constexpr Option<u32> checked_log10() const& noexcept {            \
     if (primitive_value == 0u) [[unlikely]] {                                 \
       return Option<u32>::none();                                             \
     } else {                                                                  \
@@ -1642,7 +1666,7 @@ class Tuple;
    * # Panics                                                                 \
    * When the number is zero the function will panic.                         \
    */                                                                         \
-  constexpr u32 log10() const& {                                              \
+  sus_pure constexpr u32 log10() const& noexcept {                            \
     /* TODO: Allow opting out of all overflow checks? */                      \
     return checked_log10().unwrap();                                          \
   }                                                                           \
@@ -1656,7 +1680,7 @@ class Tuple;
    * `checked_log2` can produce results more efficiently for base 2, and      \
    * `checked_log10` can produce results more efficiently for base 10.        \
    */                                                                         \
-  constexpr Option<u32> checked_log(const T& base) const& noexcept {          \
+  sus_pure constexpr Option<u32> checked_log(const T& base) const& noexcept { \
     if (primitive_value == 0u || base.primitive_value <= 1u) [[unlikely]] {   \
       return Option<u32>::none();                                             \
     } else {                                                                  \
@@ -1682,7 +1706,7 @@ class Tuple;
    * When the number is zero, or if the base is not at least 2, the function  \
    * will panic.                                                              \
    */                                                                         \
-  constexpr u32 log(const T& base) const& noexcept {                          \
+  sus_pure constexpr u32 log(const T& base) const& noexcept {                 \
     return checked_log(base).unwrap();                                        \
   }                                                                           \
   static_assert(true)
@@ -1693,7 +1717,7 @@ class Tuple;
    * # Panics                                                                 \
    * The function panics when the return value overflows (i.e., `self > (1 << \
    * (N-1))` for type uN). */                                                 \
-  constexpr T next_power_of_two() const& noexcept {                           \
+  sus_pure constexpr T next_power_of_two() const& noexcept {                  \
     const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
     return T(one_less) + T(PrimitiveT{1u});                                   \
@@ -1704,7 +1728,7 @@ class Tuple;
    * If the next power of two is greater than the type's maximum value, None  \
    * is returned, otherwise the power of two is wrapped in Some.              \
    */                                                                         \
-  constexpr Option<T> checked_next_power_of_two() const& noexcept {           \
+  sus_pure constexpr Option<T> checked_next_power_of_two() const& noexcept {  \
     const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
     return T(one_less).checked_add(T(PrimitiveT{1u}));                        \
@@ -1715,111 +1739,114 @@ class Tuple;
    * If the next power of two is greater than the type's maximum value, the   \
    * return value is wrapped to 0.                                            \
    */                                                                         \
-  constexpr T wrapping_next_power_of_two() const& noexcept {                  \
+  sus_pure constexpr T wrapping_next_power_of_two() const& noexcept {         \
     const auto one_less =                                                     \
         __private::one_less_than_next_power_of_two(primitive_value);          \
     return T(one_less).wrapping_add(T(PrimitiveT{1u}));                       \
   }                                                                           \
   static_assert(true)
 
-#define _sus__unsigned_endian(T, PrimitiveT, Bytes)                            \
-  /** Converts an integer from big endian to the target's endianness.          \
-   *                                                                           \
-   * On big endian this is a no-op. On little endian the bytes are swapped.    \
-   */                                                                          \
-  static constexpr T from_be(const T& x) noexcept {                            \
-    if constexpr (::sus::assertions::is_big_endian())                          \
-      return x;                                                                \
-    else                                                                       \
-      return x.swap_bytes();                                                   \
-  }                                                                            \
-                                                                               \
-  /** Converts an integer from little endian to the target's endianness.       \
-   *                                                                           \
-   * On little endian this is a no-op. On big endian the bytes are swapped.    \
-   */                                                                          \
-  static constexpr T from_le(const T& x) noexcept {                            \
-    if constexpr (::sus::assertions::is_little_endian())                       \
-      return x;                                                                \
-    else                                                                       \
-      return x.swap_bytes();                                                   \
-  }                                                                            \
-                                                                               \
-  /** Converts self to big endian from the target's endianness.                \
-   *                                                                           \
-   * On big endian this is a no-op. On little endian the bytes are swapped.    \
-   */                                                                          \
-  constexpr T to_be() const& noexcept {                                        \
-    if constexpr (::sus::assertions::is_big_endian())                          \
-      return *this;                                                            \
-    else                                                                       \
-      return swap_bytes();                                                     \
-  }                                                                            \
-                                                                               \
-  /** Converts self to little endian from the target's endianness.             \
-   *                                                                           \
-   * On little endian this is a no-op. On big endian the bytes are swapped.    \
-   */                                                                          \
-  constexpr T to_le() const& noexcept {                                        \
-    if constexpr (::sus::assertions::is_little_endian())                       \
-      return *this;                                                            \
-    else                                                                       \
-      return swap_bytes();                                                     \
-  }                                                                            \
-                                                                               \
-  /** Return the memory representation of this integer as a byte array in      \
-   * big-endian (network) byte order.                                          \
-   */                                                                          \
-  constexpr ::sus::containers::Array<u8, Bytes> to_be_bytes() const& noexcept; \
-                                                                               \
-  /** Return the memory representation of this integer as a byte array in      \
-   * little-endian byte order.                                                 \
-   */                                                                          \
-  constexpr ::sus::containers::Array<u8, Bytes> to_le_bytes() const& noexcept; \
-                                                                               \
-  /** Return the memory representation of this integer as a byte array in      \
-   * native byte order.                                                        \
-   *                                                                           \
-   * As the target platform's native endianness is used, portable code should  \
-   * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.          \
-   */                                                                          \
-  constexpr ::sus::containers::Array<u8, Bytes> to_ne_bytes() const& noexcept; \
-                                                                               \
-  /** Create an integer value from its representation as a byte array in big   \
-   * endian.                                                                   \
-   */                                                                          \
-  static constexpr T from_be_bytes(                                            \
-      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
-                                                                               \
-  /** Create an integer value from its representation as a byte array in       \
-   * little endian.                                                            \
-   */                                                                          \
-  static constexpr T from_le_bytes(                                            \
-      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
-                                                                               \
-  /** Create an integer value from its memory representation as a byte array   \
-   * in native endianness.                                                     \
-   *                                                                           \
-   * As the target platform's native endianness is used, portable code likely  \
-   * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate       \
-   * instead.                                                                  \
-   */                                                                          \
-  static constexpr T from_ne_bytes(                                            \
-      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
+#define _sus__unsigned_endian(T, PrimitiveT, Bytes)                           \
+  /** Converts an integer from big endian to the target's endianness.         \
+   *                                                                          \
+   * On big endian this is a no-op. On little endian the bytes are swapped.   \
+   */                                                                         \
+  static sus_pure constexpr T from_be(const T& x) noexcept {                  \
+    if constexpr (::sus::assertions::is_big_endian())                         \
+      return x;                                                               \
+    else                                                                      \
+      return x.swap_bytes();                                                  \
+  }                                                                           \
+                                                                              \
+  /** Converts an integer from little endian to the target's endianness.      \
+   *                                                                          \
+   * On little endian this is a no-op. On big endian the bytes are swapped.   \
+   */                                                                         \
+  static sus_pure constexpr T from_le(const T& x) noexcept {                  \
+    if constexpr (::sus::assertions::is_little_endian())                      \
+      return x;                                                               \
+    else                                                                      \
+      return x.swap_bytes();                                                  \
+  }                                                                           \
+                                                                              \
+  /** Converts self to big endian from the target's endianness.               \
+   *                                                                          \
+   * On big endian this is a no-op. On little endian the bytes are swapped.   \
+   */                                                                         \
+  sus_pure constexpr T to_be() const& noexcept {                              \
+    if constexpr (::sus::assertions::is_big_endian())                         \
+      return *this;                                                           \
+    else                                                                      \
+      return swap_bytes();                                                    \
+  }                                                                           \
+                                                                              \
+  /** Converts self to little endian from the target's endianness.            \
+   *                                                                          \
+   * On little endian this is a no-op. On big endian the bytes are swapped.   \
+   */                                                                         \
+  sus_pure constexpr T to_le() const& noexcept {                              \
+    if constexpr (::sus::assertions::is_little_endian())                      \
+      return *this;                                                           \
+    else                                                                      \
+      return swap_bytes();                                                    \
+  }                                                                           \
+                                                                              \
+  /** Return the memory representation of this integer as a byte array in     \
+   * big-endian (network) byte order.                                         \
+   */                                                                         \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> to_be_bytes()        \
+      const& noexcept;                                                        \
+                                                                              \
+  /** Return the memory representation of this integer as a byte array in     \
+   * little-endian byte order.                                                \
+   */                                                                         \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> to_le_bytes()        \
+      const& noexcept;                                                        \
+                                                                              \
+  /** Return the memory representation of this integer as a byte array in     \
+   * native byte order.                                                       \
+   *                                                                          \
+   * As the target platform's native endianness is used, portable code should \
+   * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.         \
+   */                                                                         \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> to_ne_bytes()        \
+      const& noexcept;                                                        \
+                                                                              \
+  /** Create an integer value from its representation as a byte array in big  \
+   * endian.                                                                  \
+   */                                                                         \
+  static sus_pure constexpr T from_be_bytes(                                  \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;             \
+                                                                              \
+  /** Create an integer value from its representation as a byte array in      \
+   * little endian.                                                           \
+   */                                                                         \
+  static sus_pure constexpr T from_le_bytes(                                  \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;             \
+                                                                              \
+  /** Create an integer value from its memory representation as a byte array  \
+   * in native endianness.                                                    \
+   *                                                                          \
+   * As the target platform's native endianness is used, portable code likely \
+   * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate      \
+   * instead.                                                                 \
+   */                                                                         \
+  static sus_pure constexpr T from_ne_bytes(                                  \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;             \
   static_assert(true)
 
 #define _sus__unsigned_out_of_line_endian(T, PrimitiveT, Bytes)               \
-  constexpr ::sus::containers::Array<u8, Bytes> T::to_be_bytes()              \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> T::to_be_bytes()     \
       const& noexcept {                                                       \
     return to_be().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
-  constexpr ::sus::containers::Array<u8, Bytes> T::to_le_bytes()              \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> T::to_le_bytes()     \
       const& noexcept {                                                       \
     return to_le().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
-  constexpr ::sus::containers::Array<u8, Bytes> T::to_ne_bytes()              \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> T::to_ne_bytes()     \
       const& noexcept {                                                       \
     auto bytes = ::sus::containers::Array<u8, Bytes>();                       \
     if (std::is_constant_evaluated()) {                                       \
@@ -1843,17 +1870,17 @@ class Tuple;
       return bytes;                                                           \
     }                                                                         \
   }                                                                           \
-  constexpr T T::from_be_bytes(                                               \
+  sus_pure constexpr T T::from_be_bytes(                                      \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept {            \
     return from_be(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
-  constexpr T T::from_le_bytes(                                               \
+  sus_pure constexpr T T::from_le_bytes(                                      \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept {            \
     return from_le(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
-  constexpr T T::from_ne_bytes(                                               \
+  sus_pure constexpr T T::from_ne_bytes(                                      \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept {            \
     PrimitiveT val;                                                           \
     if (std::is_constant_evaluated()) {                                       \
@@ -1871,15 +1898,18 @@ class Tuple;
   }                                                                           \
   static_assert(true)
 
-#define _sus__unsigned_hash_equal_to(Type)                                 \
-  template <>                                                              \
-  struct hash<Type> {                                                      \
-    auto operator()(const Type& u) const {                                 \
-      return std::hash<decltype(u.primitive_value)>()(u.primitive_value);  \
-    }                                                                      \
-  };                                                                       \
-  template <>                                                              \
-  struct equal_to<Type> {                                                  \
-    auto operator()(const Type& l, const Type& r) const { return l == r; } \
-  };                                                                       \
+#define _sus__unsigned_hash_equal_to(Type)                                \
+  template <>                                                             \
+  struct hash<Type> {                                                     \
+    sus_pure auto operator()(const Type& u) const noexcept {              \
+      return std::hash<decltype(u.primitive_value)>()(u.primitive_value); \
+    }                                                                     \
+  };                                                                      \
+  template <>                                                             \
+  struct equal_to<Type> {                                                 \
+    sus_pure constexpr auto operator()(const Type& l,                     \
+                                       const Type& r) const noexcept {    \
+      return l == r;                                                      \
+    }                                                                     \
+  };                                                                      \
   static_assert(true)

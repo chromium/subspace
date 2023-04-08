@@ -23,6 +23,7 @@
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/endian.h"
 #include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/macros/pure.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/__private/int_log10.h"
 #include "subspace/num/__private/intrinsics.h"
@@ -82,7 +83,7 @@ _sus__unsigned_constants_decl(
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
-[[nodiscard]] constexpr inline T* operator+(T* t, usize offset) {
+[[nodiscard]] sus_pure_const constexpr inline T* operator+(T* t, usize offset) {
   return t + size_t{offset};
 }
 
@@ -99,7 +100,7 @@ constexpr inline T*& operator+=(T*& t, usize offset) {
 ///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>
-[[nodiscard]] constexpr inline T* operator-(T* t, usize offset) {
+[[nodiscard]] sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
   return t - size_t{offset};
 }
 
