@@ -258,25 +258,25 @@ TEST(usize, FromPrimitive) {
   static_assert(IsImplicitlyConvertible<uint64_t, usize>);
   static_assert(IsImplicitlyConvertible<size_t, usize>);
 
-  static_assert(IsImplicitlyConvertible<ENUM(,int8_t), usize>);
-  static_assert(IsImplicitlyConvertible<ENUM(,int16_t), usize>);
-  static_assert(IsImplicitlyConvertible<ENUM(,int32_t), usize>);
-  static_assert(IsImplicitlyConvertible<ENUM(,int64_t), usize>);
-  static_assert(IsImplicitlyConvertible<ENUM(,uint8_t), usize>);
-  static_assert(IsImplicitlyConvertible<ENUM(,uint16_t), usize>);
-  static_assert(IsImplicitlyConvertible<ENUM(,uint32_t), usize>);
-  static_assert(IsImplicitlyConvertible<ENUM(,uint64_t), usize>);
-  static_assert(IsImplicitlyConvertible<ENUM(,size_t), usize>);
+  static_assert(IsImplicitlyConvertible<ENUM(, int8_t), usize>);
+  static_assert(IsImplicitlyConvertible<ENUM(, int16_t), usize>);
+  static_assert(IsImplicitlyConvertible<ENUM(, int32_t), usize>);
+  static_assert(IsImplicitlyConvertible<ENUM(, int64_t), usize>);
+  static_assert(IsImplicitlyConvertible<ENUM(, uint8_t), usize>);
+  static_assert(IsImplicitlyConvertible<ENUM(, uint16_t), usize>);
+  static_assert(IsImplicitlyConvertible<ENUM(, uint32_t), usize>);
+  static_assert(IsImplicitlyConvertible<ENUM(, uint64_t), usize>);
+  static_assert(IsImplicitlyConvertible<ENUM(, size_t), usize>);
 
-  static_assert(IsExplicitlyConvertible<ENUM(class,int8_t), usize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class,int16_t), usize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class,int32_t), usize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class,int64_t), usize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class,uint8_t), usize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class,uint16_t), usize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class,uint32_t), usize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class,uint64_t), usize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class,size_t), usize>);
+  static_assert(IsExplicitlyConvertible<ENUM(class, int8_t), usize>);
+  static_assert(IsExplicitlyConvertible<ENUM(class, int16_t), usize>);
+  static_assert(IsExplicitlyConvertible<ENUM(class, int32_t), usize>);
+  static_assert(IsExplicitlyConvertible<ENUM(class, int64_t), usize>);
+  static_assert(IsExplicitlyConvertible<ENUM(class, uint8_t), usize>);
+  static_assert(IsExplicitlyConvertible<ENUM(class, uint16_t), usize>);
+  static_assert(IsExplicitlyConvertible<ENUM(class, uint32_t), usize>);
+  static_assert(IsExplicitlyConvertible<ENUM(class, uint64_t), usize>);
+  static_assert(IsExplicitlyConvertible<ENUM(class, size_t), usize>);
 }
 
 TEST(usize, ToPrimitive) {
@@ -317,47 +317,47 @@ TEST(usize, From) {
   static_assert(sus::construct::TryFrom<usize, uint32_t>);
   static_assert(sus::construct::TryFrom<usize, uint64_t>);
 
-  static_assert(sus::construct::From<usize, ENUM(,char)>);
-  static_assert(sus::construct::From<usize, ENUM(,size_t)>);
-  static_assert(sus::construct::From<usize, ENUM(,int8_t)>);
-  static_assert(sus::construct::From<usize, ENUM(,int16_t)>);
-  static_assert(sus::construct::From<usize, ENUM(,int32_t)>);
-  static_assert(sus::construct::From<usize, ENUM(,int64_t)>);
-  static_assert(sus::construct::From<usize, ENUM(,uint8_t)>);
-  static_assert(sus::construct::From<usize, ENUM(,uint16_t)>);
-  static_assert(sus::construct::From<usize, ENUM(,uint32_t)>);
-  static_assert(sus::construct::From<usize, ENUM(,uint64_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,char)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,size_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,int8_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,int16_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,int32_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,int64_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,uint8_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,uint16_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,uint32_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(,uint64_t)>);
+  static_assert(sus::construct::From<usize, ENUM(, char)>);
+  static_assert(sus::construct::From<usize, ENUM(, size_t)>);
+  static_assert(sus::construct::From<usize, ENUM(, int8_t)>);
+  static_assert(sus::construct::From<usize, ENUM(, int16_t)>);
+  static_assert(sus::construct::From<usize, ENUM(, int32_t)>);
+  static_assert(sus::construct::From<usize, ENUM(, int64_t)>);
+  static_assert(sus::construct::From<usize, ENUM(, uint8_t)>);
+  static_assert(sus::construct::From<usize, ENUM(, uint16_t)>);
+  static_assert(sus::construct::From<usize, ENUM(, uint32_t)>);
+  static_assert(sus::construct::From<usize, ENUM(, uint64_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, char)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, size_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, int8_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, int16_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, int32_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, int64_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, uint8_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, uint16_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, uint32_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(, uint64_t)>);
 
-  static_assert(sus::construct::From<usize, ENUM(class,char)>);
-  static_assert(sus::construct::From<usize, ENUM(class,size_t)>);
-  static_assert(sus::construct::From<usize, ENUM(class,int8_t)>);
-  static_assert(sus::construct::From<usize, ENUM(class,int16_t)>);
-  static_assert(sus::construct::From<usize, ENUM(class,int32_t)>);
-  static_assert(sus::construct::From<usize, ENUM(class,int64_t)>);
-  static_assert(sus::construct::From<usize, ENUM(class,uint8_t)>);
-  static_assert(sus::construct::From<usize, ENUM(class,uint16_t)>);
-  static_assert(sus::construct::From<usize, ENUM(class,uint32_t)>);
-  static_assert(sus::construct::From<usize, ENUM(class,uint64_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,char)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,size_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,int8_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,int16_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,int32_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,int64_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,uint8_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,uint16_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,uint32_t)>);
-  static_assert(sus::construct::TryFrom<usize, ENUM(class,uint64_t)>);
+  static_assert(sus::construct::From<usize, ENUM(class, char)>);
+  static_assert(sus::construct::From<usize, ENUM(class, size_t)>);
+  static_assert(sus::construct::From<usize, ENUM(class, int8_t)>);
+  static_assert(sus::construct::From<usize, ENUM(class, int16_t)>);
+  static_assert(sus::construct::From<usize, ENUM(class, int32_t)>);
+  static_assert(sus::construct::From<usize, ENUM(class, int64_t)>);
+  static_assert(sus::construct::From<usize, ENUM(class, uint8_t)>);
+  static_assert(sus::construct::From<usize, ENUM(class, uint16_t)>);
+  static_assert(sus::construct::From<usize, ENUM(class, uint32_t)>);
+  static_assert(sus::construct::From<usize, ENUM(class, uint64_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, char)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, size_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, int8_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, int16_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, int32_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, int64_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, uint8_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, uint16_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, uint32_t)>);
+  static_assert(sus::construct::TryFrom<usize, ENUM(class, uint64_t)>);
 
   EXPECT_EQ(usize::from(char{2}), 2_usize);
   EXPECT_EQ(usize::from(size_t{2}), 2_usize);
@@ -388,38 +388,38 @@ TEST(usize, From) {
   EXPECT_TRUE(usize::try_from(int64_t{i64::MIN}).is_err());
   EXPECT_TRUE(usize::try_from(int64_t{i64::MAX}).is_ok());
 
-  EXPECT_EQ(usize::from(ENUM(,char)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(,size_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(,int8_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(,int16_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(,int32_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(,int64_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(,uint8_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(,uint16_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(,uint32_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(,uint64_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from(ENUM(class,uint64_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, char)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, size_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, int8_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, int16_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, int32_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, int64_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, uint8_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, uint16_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, uint32_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(, uint64_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from(ENUM(class, uint64_t)::Z), 2_usize);
 
-  EXPECT_EQ(usize::try_from(ENUM(,char)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(,size_t)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(,int8_t)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(,int16_t)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(,int32_t)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(,int64_t)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(,uint8_t)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(,uint16_t)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(,uint32_t)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(,uint64_t)::Z).unwrap(), 2_usize);
-  EXPECT_EQ(usize::try_from(ENUM(class,uint64_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, char)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, size_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, int8_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, int16_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, int32_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, int64_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, uint8_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, uint16_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, uint32_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(, uint64_t)::Z).unwrap(), 2_usize);
+  EXPECT_EQ(usize::try_from(ENUM(class, uint64_t)::Z).unwrap(), 2_usize);
 
   if constexpr (sizeof(usize) == sizeof(u32)) {
-    EXPECT_TRUE(usize::try_from(ENUM(,uint32_t)::MAX).is_ok());
-    EXPECT_TRUE(usize::try_from(ENUM(,uint64_t)::MAX).is_err());
-    EXPECT_TRUE(usize::try_from(ENUM(class,uint64_t)::MAX).is_err());
+    EXPECT_TRUE(usize::try_from(ENUM(, uint32_t)::MAX).is_ok());
+    EXPECT_TRUE(usize::try_from(ENUM(, uint64_t)::MAX).is_err());
+    EXPECT_TRUE(usize::try_from(ENUM(class, uint64_t)::MAX).is_err());
   }
-  EXPECT_TRUE(usize::try_from(ENUM(,int64_t)::MIN).is_err());
-  EXPECT_TRUE(usize::try_from(ENUM(,int64_t)::MAX).is_ok());
-  EXPECT_TRUE(usize::try_from(ENUM(class,int64_t)::MAX).is_ok());
+  EXPECT_TRUE(usize::try_from(ENUM(, int64_t)::MIN).is_err());
+  EXPECT_TRUE(usize::try_from(ENUM(, int64_t)::MAX).is_ok());
+  EXPECT_TRUE(usize::try_from(ENUM(class, int64_t)::MAX).is_ok());
 
   EXPECT_EQ(usize::from_unchecked(unsafe_fn, char{2}), 2_usize);
   EXPECT_EQ(usize::from_unchecked(unsafe_fn, size_t{2}), 2_usize);
@@ -432,16 +432,16 @@ TEST(usize, From) {
   EXPECT_EQ(usize::from_unchecked(unsafe_fn, uint32_t{2}), 2_usize);
   EXPECT_EQ(usize::from_unchecked(unsafe_fn, uint64_t{2}), 2_usize);
 
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,char)::Z), 2_usize);
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,size_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,int8_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,int16_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,int32_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,int64_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,uint8_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,uint16_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,uint32_t)::Z), 2_usize);
-  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(,uint64_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, char)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, size_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, int8_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, int16_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, int32_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, int64_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, uint8_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, uint16_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, uint32_t)::Z), 2_usize);
+  EXPECT_EQ(usize::from_unchecked(unsafe_fn, ENUM(, uint64_t)::Z), 2_usize);
 
   static_assert(sus::construct::From<usize, i8>);
   static_assert(sus::construct::From<usize, i16>);
@@ -507,25 +507,85 @@ TEST(usize, From) {
 
 TEST(usizeDeathTest, FromOutOfRange) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(usize::from(int64_t{-1}), "");
-  EXPECT_DEATH(usize::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff}), "");
+  EXPECT_DEATH(
+      {
+        auto x = usize::from(int64_t{-1});
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = usize::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff});
+        EXPECT_EQ(x, x);
+      },
+      "");
 
-  EXPECT_DEATH(usize::from(ENUM(,int64_t)::MIN), "");
-  EXPECT_DEATH(usize::from(ENUM(class,int64_t)::MIN), "");
+  EXPECT_DEATH(
+      {
+        auto x = usize::from(ENUM(, int64_t)::MIN);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = usize::from(ENUM(class, int64_t)::MIN);
+        EXPECT_EQ(x, x);
+      },
+      "");
 
   bool not64 =
       sizeof(usize) != sizeof(u64);  // `if constexpr` breaks death tests.
   if (not64) {
-    EXPECT_DEATH(usize::from(ENUM(,uint64_t)::MAX), "");
-    EXPECT_DEATH(usize::from(ENUM(class,uint64_t)::MAX), "");
-    EXPECT_DEATH(usize::from(uint64_t{0xffff'ffff'ffff'ffff}), "");
+    EXPECT_DEATH(
+        {
+          auto x = usize::from(ENUM(, uint64_t)::MAX);
+          EXPECT_EQ(x, x);
+        },
+        "");
+    EXPECT_DEATH(
+        {
+          auto x = usize::from(ENUM(class, uint64_t)::MAX);
+          EXPECT_EQ(x, x);
+        },
+        "");
+    EXPECT_DEATH(
+        {
+          auto x = usize::from(uint64_t{0xffff'ffff'ffff'ffff});
+          EXPECT_EQ(x, x);
+        },
+        "");
   }
 
-  EXPECT_DEATH(usize::from(-1_i8), "");
-  EXPECT_DEATH(usize::from(-1_i16), "");
-  EXPECT_DEATH(usize::from(-1_i32), "");
-  EXPECT_DEATH(usize::from(-1_i64), "");
-  EXPECT_DEATH(usize::from(-1_isize), "");
+  EXPECT_DEATH(
+      {
+        auto x = usize::from(-1_i8);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = usize::from(-1_i16);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = usize::from(-1_i32);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = usize::from(-1_i64);
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = usize::from(-1_isize);
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
@@ -534,96 +594,96 @@ TEST(usize, InvokeEverything) {
   auto s = 3_isize;
   auto a = sus::Array<u8, sizeof(usize)>();
 
-  i.abs_diff(j);
+  (void)i.abs_diff(j);
 
-  i.checked_add(j);
-  i.checked_add_signed(s);
-  i.overflowing_add(j);
-  i.overflowing_add_signed(s);
-  i.saturating_add(j);
-  i.saturating_add_signed(s);
-  i.unchecked_add(unsafe_fn, j);
-  i.wrapping_add(j);
-  i.wrapping_add_signed(s);
+  (void)i.checked_add(j);
+  (void)i.checked_add_signed(s);
+  (void)i.overflowing_add(j);
+  (void)i.overflowing_add_signed(s);
+  (void)i.saturating_add(j);
+  (void)i.saturating_add_signed(s);
+  (void)i.unchecked_add(unsafe_fn, j);
+  (void)i.wrapping_add(j);
+  (void)i.wrapping_add_signed(s);
 
-  i.checked_div(j);
-  i.overflowing_div(j);
-  i.saturating_div(j);
-  i.wrapping_div(j);
+  (void)i.checked_div(j);
+  (void)i.overflowing_div(j);
+  (void)i.saturating_div(j);
+  (void)i.wrapping_div(j);
 
-  i.checked_mul(j);
-  i.overflowing_mul(j);
-  i.saturating_mul(j);
-  i.unchecked_mul(unsafe_fn, j);
-  i.wrapping_mul(j);
+  (void)i.checked_mul(j);
+  (void)i.overflowing_mul(j);
+  (void)i.saturating_mul(j);
+  (void)i.unchecked_mul(unsafe_fn, j);
+  (void)i.wrapping_mul(j);
 
-  i.checked_neg();
-  i.overflowing_neg();
-  i.wrapping_neg();
+  (void)i.checked_neg();
+  (void)i.overflowing_neg();
+  (void)i.wrapping_neg();
 
-  i.checked_rem(j);
-  i.overflowing_rem(j);
-  i.wrapping_rem(j);
+  (void)i.checked_rem(j);
+  (void)i.overflowing_rem(j);
+  (void)i.wrapping_rem(j);
 
-  i.div_euclid(j);
-  i.checked_div_euclid(j);
-  i.overflowing_div_euclid(j);
-  i.wrapping_div_euclid(j);
-  i.rem_euclid(j);
-  i.checked_rem_euclid(j);
-  i.overflowing_rem_euclid(j);
-  i.wrapping_rem_euclid(j);
+  (void)i.div_euclid(j);
+  (void)i.checked_div_euclid(j);
+  (void)i.overflowing_div_euclid(j);
+  (void)i.wrapping_div_euclid(j);
+  (void)i.rem_euclid(j);
+  (void)i.checked_rem_euclid(j);
+  (void)i.overflowing_rem_euclid(j);
+  (void)i.wrapping_rem_euclid(j);
 
-  i.checked_shl(1_u32);
-  i.overflowing_shl(1_u32);
-  i.wrapping_shl(1_u32);
-  i.checked_shr(1_u32);
-  i.overflowing_shr(1_u32);
-  i.wrapping_shr(1_u32);
+  (void)i.checked_shl(1_u32);
+  (void)i.overflowing_shl(1_u32);
+  (void)i.wrapping_shl(1_u32);
+  (void)i.checked_shr(1_u32);
+  (void)i.overflowing_shr(1_u32);
+  (void)i.wrapping_shr(1_u32);
 
-  i.checked_sub(j);
-  i.overflowing_sub(j);
-  i.saturating_sub(j);
-  i.unchecked_sub(unsafe_fn, j);
-  i.wrapping_sub(j);
+  (void)i.checked_sub(j);
+  (void)i.overflowing_sub(j);
+  (void)i.saturating_sub(j);
+  (void)i.unchecked_sub(unsafe_fn, j);
+  (void)i.wrapping_sub(j);
 
-  i.count_ones();
-  i.count_zeros();
-  i.leading_ones();
-  i.leading_zeros();
-  i.trailing_ones();
-  i.trailing_zeros();
-  i.reverse_bits();
-  i.rotate_left(1_u32);
-  i.rotate_right(1_u32);
-  i.swap_bytes();
+  (void)i.count_ones();
+  (void)i.count_zeros();
+  (void)i.leading_ones();
+  (void)i.leading_zeros();
+  (void)i.trailing_ones();
+  (void)i.trailing_zeros();
+  (void)i.reverse_bits();
+  (void)i.rotate_left(1_u32);
+  (void)i.rotate_right(1_u32);
+  (void)i.swap_bytes();
 
-  i.pow(1_u32);
-  i.checked_pow(1_u32);
-  i.overflowing_pow(1_u32);
-  i.wrapping_pow(1_u32);
+  (void)i.pow(1_u32);
+  (void)i.checked_pow(1_u32);
+  (void)i.overflowing_pow(1_u32);
+  (void)i.wrapping_pow(1_u32);
 
-  i.checked_log2();
-  i.log2();
-  i.checked_log10();
-  i.log10();
-  i.checked_log(j);
-  i.log(j);
+  (void)i.checked_log2();
+  (void)i.log2();
+  (void)i.checked_log10();
+  (void)i.log10();
+  (void)i.checked_log(j);
+  (void)i.log(j);
 
-  i.next_power_of_two();
-  i.checked_next_power_of_two();
-  i.wrapping_next_power_of_two();
+  (void)i.next_power_of_two();
+  (void)i.checked_next_power_of_two();
+  (void)i.wrapping_next_power_of_two();
 
-  i.from_be(j);
-  i.from_le(j);
-  i.to_be();
-  i.to_le();
-  i.to_be_bytes();
-  i.to_le_bytes();
-  i.to_ne_bytes();
-  i.from_be_bytes(a);
-  i.from_le_bytes(a);
-  i.from_ne_bytes(a);
+  (void)i.from_be(j);
+  (void)i.from_le(j);
+  (void)i.to_be();
+  (void)i.to_le();
+  (void)i.to_be_bytes();
+  (void)i.to_le_bytes();
+  (void)i.to_ne_bytes();
+  (void)i.from_be_bytes(a);
+  (void)i.from_le_bytes(a);
+  (void)i.from_ne_bytes(a);
 
   i = ~j;
 
