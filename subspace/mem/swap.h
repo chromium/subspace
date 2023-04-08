@@ -18,6 +18,7 @@
 
 #include <type_traits>
 
+#include "subspace/macros/noalias.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/move.h"
@@ -33,7 +34,7 @@ namespace sus::mem {
 /// If both inputs point to the same object, no swap takes place, so no move
 /// constructor/operator is called.
 template <class T>
-  requires(sus::mem::Move<T>)
+  requires(sus::mem::Move<T> && !std::is_const_v<T>)
 constexpr void swap(T& lhs, T& rhs) noexcept {
   if (::sus::mem::addressof(lhs) != ::sus::mem::addressof(rhs)) [[likely]] {
     if constexpr (::sus::mem::relocate_by_memcpy<T>) {
@@ -41,14 +42,17 @@ constexpr void swap(T& lhs, T& rhs) noexcept {
       if (!std::is_constant_evaluated()) {
         constexpr auto data_size = ::sus::mem::data_size_of<T>();
         char temp[data_size];
-        char* const l = reinterpret_cast<char*>(::sus::mem::addressof(lhs));
-        char* const r = reinterpret_cast<char*>(::sus::mem::addressof(rhs));
-        ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, l, temp,
-                                        data_size);
-        ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, r, l,
-                                        data_size);
-        ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, temp, r,
-                                        data_size);
+        ::sus::ptr::copy_nonoverlapping(
+            ::sus::marker::unsafe_fn,
+            reinterpret_cast<char*>(::sus::mem::addressof(lhs)), temp,
+            data_size);
+        ::sus::ptr::copy_nonoverlapping(
+            ::sus::marker::unsafe_fn,
+            reinterpret_cast<char*>(::sus::mem::addressof(rhs)),
+            reinterpret_cast<char*>(::sus::mem::addressof(lhs)), data_size);
+        ::sus::ptr::copy_nonoverlapping(
+            ::sus::marker::unsafe_fn, temp,
+            reinterpret_cast<char*>(::sus::mem::addressof(rhs)), data_size);
         return;
       }
     }
@@ -64,22 +68,25 @@ constexpr void swap(T& lhs, T& rhs) noexcept {
 /// The inputs must not both refer to the same object, or Undefined Behaviour
 /// may result.
 template <class T>
-  requires(sus::mem::Move<T>)
-constexpr void swap_no_alias_unchecked(::sus::marker::UnsafeFnMarker, T& lhs,
-                                       T& rhs) noexcept {
+  requires(sus::mem::Move<T> && !std::is_const_v<T>)
+constexpr void swap_no_alias_unchecked(::sus::marker::UnsafeFnMarker,
+                                       T& sus_noalias_var lhs,
+                                       T& sus_noalias_var rhs) noexcept {
   if constexpr (::sus::mem::relocate_by_memcpy<T>) {
     // memcpy() is not constexpr so we can't use it in constexpr evaluation.
     if (!std::is_constant_evaluated()) {
       constexpr auto data_size = ::sus::mem::data_size_of<T>();
       char temp[data_size];
-      char* const l = reinterpret_cast<char*>(::sus::mem::addressof(lhs));
-      char* const r = reinterpret_cast<char*>(::sus::mem::addressof(rhs));
-      ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, l, temp,
-                                      data_size);
-      ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, r, l,
-                                      data_size);
-      ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, temp, r,
-                                      data_size);
+      ::sus::ptr::copy_nonoverlapping(
+          ::sus::marker::unsafe_fn,
+          reinterpret_cast<char*>(::sus::mem::addressof(lhs)), temp, data_size);
+      ::sus::ptr::copy_nonoverlapping(
+          ::sus::marker::unsafe_fn,
+          reinterpret_cast<char*>(::sus::mem::addressof(rhs)),
+          reinterpret_cast<char*>(::sus::mem::addressof(lhs)), data_size);
+      ::sus::ptr::copy_nonoverlapping(
+          ::sus::marker::unsafe_fn, temp,
+          reinterpret_cast<char*>(::sus::mem::addressof(rhs)), data_size);
       return;
     }
   }
