@@ -62,8 +62,18 @@ TEST(SliceDeathTest, Index) {
   auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
 
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(sc[3_usize], "");
-  EXPECT_DEATH(sm[3_usize], "");
+  EXPECT_DEATH(
+      {
+        auto x = sc[3_usize];
+        EXPECT_EQ(x, 3);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto y = sm[3_usize];
+        EXPECT_EQ(y, 3);
+      },
+      "");
 #endif
 }
 
@@ -163,11 +173,36 @@ TEST(SliceDeathTest, IndexRange) {
   auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
 
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH((sc["0..4"_r]), "");
-  EXPECT_DEATH((sc["3..4"_r]), "");
-  EXPECT_DEATH((sm["1..4"_r]), "");
-  EXPECT_DEATH((sm["2..4"_r]), "");
-  EXPECT_DEATH((sm["4..4"_r]), "");
+  EXPECT_DEATH(
+      {
+        auto s = sc["0..4"_r];
+        EXPECT_TRUE(s.is_empty());
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = sc["3..4"_r];
+        EXPECT_TRUE(s.is_empty());
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = sm["1..4"_r];
+        EXPECT_TRUE(s.is_empty());
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = sm["2..4"_r];
+        EXPECT_TRUE(s.is_empty());
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto s = sm["4..4"_r];
+        EXPECT_TRUE(s.is_empty());
+      },
+      "");
 #endif
 }
 

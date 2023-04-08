@@ -542,7 +542,12 @@ TEST(i32, Abs) {
 // ** Signed only
 TEST(i32DeathTest, Abs) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH([[maybe_unused]] auto x = i32::MIN.abs(), "");
+  EXPECT_DEATH(
+      {
+        auto x = i32::MIN.abs();
+        EXPECT_GT(x, 0);
+      },
+      "");
 #endif
 }
 
