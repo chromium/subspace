@@ -24,8 +24,8 @@ namespace sus::num::__private {
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr std::strong_ordering float_strong_ordering(
-    T l, T r) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr std::strong_ordering
+float_strong_ordering(T l, T r) noexcept {
   if (into_unsigned_integer(l) == into_unsigned_integer(r))
     return std::strong_ordering::equal;
 

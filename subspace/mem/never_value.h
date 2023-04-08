@@ -66,7 +66,7 @@ struct NeverValueAccess {
 
   /// Checks if the never-value field is set to the never-value, returning false
   /// if it is.
-  sus_pure constexpr sus_always_inline bool is_constructed() const noexcept
+  [[nodiscard]] sus_pure constexpr sus_always_inline bool is_constructed() const noexcept
     requires(has_field)
   {
     return t_._sus_Unsafe_NeverValueIsConstructed(::sus::marker::unsafe_fn);
@@ -88,8 +88,8 @@ struct NeverValueAccess {
     t_._sus_Unsafe_NeverValueSetDestroyValue(::sus::marker::unsafe_fn);
   }
 
-  sus_pure constexpr sus_always_inline const T& as_inner() const { return t_; }
-  sus_pure constexpr sus_always_inline T& as_inner_mut() { return t_; }
+  [[nodiscard]] sus_pure constexpr sus_always_inline const T& as_inner() const { return t_; }
+  [[nodiscard]] sus_pure constexpr sus_always_inline T& as_inner_mut() { return t_; }
 
  private:
   T t_;
@@ -135,7 +135,7 @@ concept NeverValueField = __private::NeverValueAccess<T>::has_field;
   template <class>                                                             \
   friend struct ::sus::mem::__private::NeverValueAccess;                       \
                                                                                \
-  sus_pure constexpr bool _sus_Unsafe_NeverValueIsConstructed(                 \
+  [[nodiscard]] sus_pure constexpr bool _sus_Unsafe_NeverValueIsConstructed(                 \
       ::sus::marker::UnsafeFnMarker) const noexcept {                          \
     static_assert(                                                             \
         std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,    \

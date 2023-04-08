@@ -52,7 +52,7 @@ using MathType = std::conditional_t<
 
 /// A sizeof() function that returns type uint32_t.
 template <class T>
-sus_pure_const sus_always_inline constexpr uint32_t
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t
 unchecked_sizeof() noexcept {
   static_assert(::sus::mem::size_of<T>() <= 0xfffffff);
   return static_cast<uint32_t>(::sus::mem::size_of<T>());
@@ -60,87 +60,87 @@ unchecked_sizeof() noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_neg(T x) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_neg(T x) noexcept {
   return static_cast<T>(-MathType<T>{x});
 }
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_not(T x) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_not(T x) noexcept {
   return static_cast<T>(~MathType<T>{x});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_add(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_add(T x, T y) noexcept {
   return static_cast<T>(MathType<T>{x} + MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_sub(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_sub(T x, T y) noexcept {
   return static_cast<T>(MathType<T>{x} - MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_mul(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_mul(T x, T y) noexcept {
   return static_cast<T>(MathType<T>{x} * MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_div(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_div(T x, T y) noexcept {
   return static_cast<T>(MathType<T>{x} / MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_rem(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_rem(T x, T y) noexcept {
   return static_cast<T>(MathType<T>{x} % MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_and(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_and(T x, T y) noexcept {
   return static_cast<T>(MathType<T>{x} & MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_or(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_or(T x, T y) noexcept {
   return static_cast<T>(MathType<T>{x} | MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_xor(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_xor(T x, T y) noexcept {
   return static_cast<T>(MathType<T>{x} ^ MathType<T>{y});
 }
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_shl(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_shl(
     T x, uint32_t y) noexcept {
   return static_cast<T>(MathType<T>{x} << y);
 }
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
-sus_pure_const sus_always_inline constexpr T unchecked_shr(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T unchecked_shr(
     T x, uint32_t y) noexcept {
   return static_cast<T>(MathType<T>{x} >> y);
 }
 
 template <class T>
   requires(std::is_integral_v<T>)
-sus_pure_const sus_always_inline constexpr uint32_t num_bits() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t num_bits() noexcept {
   return unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
 }
 
 template <class T>
   requires(std::is_integral_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T high_bit() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T high_bit() noexcept {
   if constexpr (::sus::mem::size_of<T>() == 1)
     return static_cast<T>(0x80);
   else if constexpr (::sus::mem::size_of<T>() == 2)
@@ -153,26 +153,26 @@ sus_pure_const sus_always_inline constexpr T high_bit() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() == 4)
-sus_pure_const sus_always_inline constexpr uint32_t high_bit() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t high_bit() noexcept {
   return uint32_t{0x80000000};
 }
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() == 8)
-sus_pure_const sus_always_inline constexpr uint64_t high_bit() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint64_t high_bit() noexcept {
   return uint64_t{0x8000000000000000};
 }
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
-sus_pure_const sus_always_inline constexpr T max_value() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T max_value() noexcept {
   return unchecked_not(T{0});
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T max_value() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T max_value() noexcept {
   if constexpr (::sus::mem::size_of<T>() == 1)
     return T{0x7f};
   else if constexpr (::sus::mem::size_of<T>() == 2)
@@ -185,20 +185,20 @@ sus_pure_const sus_always_inline constexpr T max_value() noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T>)
-sus_pure_const sus_always_inline constexpr T min_value() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T min_value() noexcept {
   return T{0};
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T min_value() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T min_value() noexcept {
   return -max_value<T>() - T{1};
 }
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr T epsilon() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T epsilon() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return 1.1920929E-7f;
   else
@@ -207,7 +207,7 @@ sus_pure_const sus_always_inline constexpr T epsilon() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr T max_value() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T max_value() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>()) {
     return 3.40282346639e+38f;
   } else
@@ -216,7 +216,7 @@ sus_pure_const sus_always_inline constexpr T max_value() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr T min_value() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T min_value() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return -3.40282346639e+38f;
   else
@@ -226,7 +226,7 @@ sus_pure_const sus_always_inline constexpr T min_value() noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr uint32_t count_ones(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t count_ones(
     T value) noexcept {
 #if _MSC_VER
   if (std::is_constant_evaluated()) {
@@ -267,7 +267,7 @@ sus_pure_const sus_always_inline constexpr uint32_t count_ones(
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr uint32_t leading_zeros_nonzero(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t leading_zeros_nonzero(
     ::sus::marker::UnsafeFnMarker, T value) noexcept {
   if (std::is_constant_evaluated()) {
     uint32_t count = 0;
@@ -348,7 +348,7 @@ sus_pure_const sus_always_inline constexpr uint32_t leading_zeros_nonzero(
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr uint32_t leading_zeros(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t leading_zeros(
     T value) noexcept {
   if (value == 0) return unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
   return leading_zeros_nonzero(::sus::marker::unsafe_fn, value);
@@ -363,7 +363,7 @@ sus_pure_const sus_always_inline constexpr uint32_t leading_zeros(
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr uint32_t trailing_zeros_nonzero(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t trailing_zeros_nonzero(
     ::sus::marker::UnsafeFnMarker, T value) noexcept {
   if (std::is_constant_evaluated()) {
     uint32_t count = 0;
@@ -412,7 +412,7 @@ sus_pure_const sus_always_inline constexpr uint32_t trailing_zeros_nonzero(
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr uint32_t trailing_zeros(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t trailing_zeros(
     T value) noexcept {
   if (value == 0) return static_cast<uint32_t>(::sus::mem::size_of<T>() * 8u);
   return trailing_zeros_nonzero(::sus::marker::unsafe_fn, value);
@@ -421,7 +421,7 @@ sus_pure_const sus_always_inline constexpr uint32_t trailing_zeros(
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T reverse_bits(T value) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T reverse_bits(T value) noexcept {
 #if __clang__
   if constexpr (::sus::mem::size_of<T>() == 1) {
     return __builtin_bitreverse8(value);
@@ -449,7 +449,7 @@ sus_pure_const sus_always_inline constexpr T reverse_bits(T value) noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T>)
-sus_pure_const inline constexpr T rotate_left(T value, uint32_t n) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T rotate_left(T value, uint32_t n) noexcept {
   const uint32_t num_bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
   // Try avoid slow % operation if we can. Comparisons are much faster than %.
   if (n >= num_bits) n %= num_bits;
@@ -460,7 +460,7 @@ sus_pure_const inline constexpr T rotate_left(T value, uint32_t n) noexcept {
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T>)
-sus_pure_const inline constexpr T rotate_right(T value, uint32_t n) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T rotate_right(T value, uint32_t n) noexcept {
   const uint32_t num_bits = unchecked_mul(unchecked_sizeof<T>(), uint32_t{8});
   // Try avoid slow % operation if we can. Comparisons are much faster than %.
   if (n >= num_bits) n %= num_bits;
@@ -472,7 +472,7 @@ sus_pure_const inline constexpr T rotate_right(T value, uint32_t n) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T swap_bytes(T value) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T swap_bytes(T value) noexcept {
   if (std::is_constant_evaluated()) {
     if constexpr (::sus::mem::size_of<T>() == 1) {
       return value;
@@ -532,7 +532,7 @@ sus_pure_const sus_always_inline constexpr T swap_bytes(T value) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr auto into_unsigned(T x) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr auto into_unsigned(T x) noexcept {
   if constexpr (::sus::mem::size_of<T>() == 1)
     return static_cast<uint8_t>(x);
   else if constexpr (::sus::mem::size_of<T>() == 2)
@@ -546,7 +546,7 @@ sus_pure_const sus_always_inline constexpr auto into_unsigned(T x) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 4)
-sus_pure_const sus_always_inline constexpr auto into_widened(T x) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr auto into_widened(T x) noexcept {
   if constexpr (::sus::mem::size_of<T>() == 1)
     return static_cast<uint16_t>(x);
   else if constexpr (::sus::mem::size_of<T>() == 2)
@@ -558,7 +558,7 @@ sus_pure_const sus_always_inline constexpr auto into_widened(T x) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 4)
-sus_pure_const sus_always_inline constexpr auto into_widened(T x) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr auto into_widened(T x) noexcept {
   if constexpr (::sus::mem::size_of<T>() == 1)
     return static_cast<int16_t>(x);
   else if constexpr (::sus::mem::size_of<T>() == 2)
@@ -570,7 +570,7 @@ sus_pure_const sus_always_inline constexpr auto into_widened(T x) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr auto into_signed(T x) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr auto into_signed(T x) noexcept {
   if constexpr (::sus::mem::size_of<T>() == 1)
     return static_cast<int8_t>(x);
   else if constexpr (::sus::mem::size_of<T>() == 2)
@@ -583,7 +583,7 @@ sus_pure_const sus_always_inline constexpr auto into_signed(T x) noexcept {
 
 template <class T>
   requires(::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr bool sign_bit(T x) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr bool sign_bit(T x) noexcept {
   if constexpr (::sus::mem::size_of<T>() == 1)
     return (x & (T(1) << 7)) != 0;
   else if constexpr (::sus::mem::size_of<T>() == 2)
@@ -597,7 +597,7 @@ sus_pure_const sus_always_inline constexpr bool sign_bit(T x) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr OverflowOut<T> add_with_overflow(T x,
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> add_with_overflow(T x,
                                                                  T y) noexcept {
   return OverflowOut sus_clang_bug_56394(<T>){
       .overflow = x > max_value<T>() - y,
@@ -608,7 +608,7 @@ sus_pure_const inline constexpr OverflowOut<T> add_with_overflow(T x,
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr OverflowOut<T> add_with_overflow(T x,
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> add_with_overflow(T x,
                                                                  T y) noexcept {
   const auto out =
       into_signed(unchecked_add(into_unsigned(x), into_unsigned(y)));
@@ -622,7 +622,7 @@ template <class T, class U = decltype(to_signed(std::declval<T>()))>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8 &&
            ::sus::mem::size_of<T>() == ::sus::mem::size_of<U>())
-sus_pure_const inline constexpr OverflowOut<T> add_with_overflow_signed(
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> add_with_overflow_signed(
     T x, U y) noexcept {
   return OverflowOut sus_clang_bug_56394(<T>){
       .overflow = (y >= 0 && into_unsigned(y) > max_value<T>() - x) ||
@@ -635,7 +635,7 @@ template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8 &&
            ::sus::mem::size_of<T>() == ::sus::mem::size_of<U>())
-sus_pure_const inline constexpr OverflowOut<T> add_with_overflow_unsigned(
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> add_with_overflow_unsigned(
     T x, U y) noexcept {
   const auto out = into_signed(unchecked_add(into_unsigned(x), y));
   return OverflowOut sus_clang_bug_56394(<T>){
@@ -647,7 +647,7 @@ sus_pure_const inline constexpr OverflowOut<T> add_with_overflow_unsigned(
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow(T x,
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow(T x,
                                                                  T y) noexcept {
   return OverflowOut sus_clang_bug_56394(<T>){
       .overflow = x < unchecked_add(min_value<T>(), y),
@@ -658,7 +658,7 @@ sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow(T x,
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow(T x,
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow(T x,
                                                                  T y) noexcept {
   const auto out =
       into_signed(unchecked_sub(into_unsigned(x), into_unsigned(y)));
@@ -672,7 +672,7 @@ template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8 &&
            ::sus::mem::size_of<T>() == ::sus::mem::size_of<U>())
-sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow_unsigned(
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow_unsigned(
     T x, U y) noexcept {
   const auto out = into_signed(unchecked_sub(into_unsigned(x), y));
   return OverflowOut sus_clang_bug_56394(<T>){
@@ -684,7 +684,7 @@ sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow_unsigned(
 /// SAFETY: Requires that `x > y` so the result will be positive.
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T>)
-sus_pure_const sus_always_inline constexpr std::make_unsigned_t<T>
+[[nodiscard]] sus_pure_const sus_always_inline constexpr std::make_unsigned_t<T>
 sub_with_unsigned_positive_result(T x, T y) noexcept {
   return unchecked_sub(into_unsigned(x), into_unsigned(y));
 }
@@ -692,7 +692,7 @@ sub_with_unsigned_positive_result(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 4)
-sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
                                                                  T y) noexcept {
   // TODO: Can we use compiler intrinsics?
   auto out = unchecked_mul(into_widened(x), into_widened(y));
@@ -704,7 +704,7 @@ sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() == 8)
-sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
                                                                  T y) noexcept {
 #if _MSC_VER
   if (std::is_constant_evaluated()) {
@@ -731,7 +731,7 @@ sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 4)
-sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
                                                                  T y) noexcept {
   // TODO: Can we use compiler intrinsics?
   auto out = into_widened(x) * into_widened(y);
@@ -744,7 +744,7 @@ sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() == 8)
-sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
                                                                  T y) noexcept {
 #if _MSC_VER
   if (x == T{0} || y == T{0})
@@ -780,7 +780,7 @@ sus_pure_const inline constexpr OverflowOut<T> mul_with_overflow(T x,
 
 template <class T>
   requires(std::is_integral_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr OverflowOut<T> pow_with_overflow(
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> pow_with_overflow(
     T base, uint32_t exp) noexcept {
   if (exp == 0)
     return OverflowOut sus_clang_bug_56394(<T>){.overflow = false,
@@ -807,7 +807,7 @@ template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
             ::sus::mem::size_of<T>() == 4 || ::sus::mem::size_of<T>() == 8))
-sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
     T x, uint32_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that ::sus::mem::size_of<T>() is a power of 2, which
@@ -823,7 +823,7 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
             ::sus::mem::size_of<T>() == 4 || ::sus::mem::size_of<T>() == 8))
-sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> shl_with_overflow(
     T x, uint32_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that ::sus::mem::size_of<T>() is a power of 2, which
@@ -840,7 +840,7 @@ template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
             ::sus::mem::size_of<T>() == 4 || ::sus::mem::size_of<T>() == 8))
-sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
     T x, uint32_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that ::sus::mem::size_of<T>() is a power of 2, which
@@ -856,7 +856,7 @@ template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            (::sus::mem::size_of<T>() == 1 || ::sus::mem::size_of<T>() == 2 ||
             ::sus::mem::size_of<T>() == 4 || ::sus::mem::size_of<T>() == 8))
-sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
+[[nodiscard]] sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
     T x, uint32_t shift) noexcept {
   // Using `num_bits<T>() - 1` as a mask only works if num_bits<T>() is a power
   // of two, so we verify that ::sus::mem::size_of<T>() is a power of 2, which
@@ -872,7 +872,7 @@ sus_pure_const inline constexpr OverflowOut<T> shr_with_overflow(
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T saturating_add(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T saturating_add(T x, T y) noexcept {
   // TODO: Optimize this? Use intrinsics?
   const auto out = add_with_overflow(x, y);
   if (!out.overflow) [[likely]]
@@ -884,7 +884,7 @@ sus_pure_const inline constexpr T saturating_add(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T saturating_add(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T saturating_add(T x, T y) noexcept {
   // TODO: Optimize this? Use intrinsics?
   if (y >= 0) {
     if (x <= max_value<T>() - y) [[likely]]
@@ -902,7 +902,7 @@ sus_pure_const inline constexpr T saturating_add(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T saturating_sub(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T saturating_sub(T x, T y) noexcept {
   // TODO: Optimize this? Use intrinsics?
   const auto out = sub_with_overflow(x, y);
   if (!out.overflow) [[likely]]
@@ -914,7 +914,7 @@ sus_pure_const inline constexpr T saturating_sub(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T saturating_sub(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T saturating_sub(T x, T y) noexcept {
   // TODO: Optimize this? Use intrinsics?
   if (y <= 0) {
     if (x <= max_value<T>() + y) [[likely]]
@@ -932,7 +932,7 @@ sus_pure_const inline constexpr T saturating_sub(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T saturating_mul(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T saturating_mul(T x, T y) noexcept {
   // TODO: Optimize this? Use intrinsics?
   const auto out = mul_with_overflow(x, y);
   if (!out.overflow) [[likely]]
@@ -944,7 +944,7 @@ sus_pure_const inline constexpr T saturating_mul(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T saturating_mul(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T saturating_mul(T x, T y) noexcept {
   // TODO: Optimize this? Use intrinsics?
   const auto out = mul_with_overflow(x, y);
   if (!out.overflow) [[likely]]
@@ -958,14 +958,14 @@ sus_pure_const inline constexpr T saturating_mul(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
   return x + y;
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
   // TODO: Are there cheaper intrinsics?
   return add_with_overflow(x, y).value;
 }
@@ -973,14 +973,14 @@ sus_pure_const sus_always_inline constexpr T wrapping_add(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
   return unchecked_sub(x, y);
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
   // TODO: Are there cheaper intrinsics?
   return sub_with_overflow(x, y).value;
 }
@@ -988,14 +988,14 @@ sus_pure_const sus_always_inline constexpr T wrapping_sub(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T wrapping_mul(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T wrapping_mul(T x, T y) noexcept {
   return x * y;
 }
 
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T wrapping_mul(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T wrapping_mul(T x, T y) noexcept {
   // TODO: Are there cheaper intrinsics?
   return mul_with_overflow(x, y).value;
 }
@@ -1003,7 +1003,7 @@ sus_pure_const sus_always_inline constexpr T wrapping_mul(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T wrapping_pow(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T wrapping_pow(
     T base, uint32_t exp) noexcept {
   // TODO: Don't need to track overflow and unsigned wraps by default, so this
   // can be cheaper.
@@ -1013,7 +1013,7 @@ sus_pure_const sus_always_inline constexpr T wrapping_pow(
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr T wrapping_pow(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T wrapping_pow(
     T base, uint32_t exp) noexcept {
   // TODO: Are there cheaper intrinsics?
   return pow_with_overflow(base, exp).value;
@@ -1031,7 +1031,7 @@ sus_pure_const sus_always_inline constexpr T wrapping_pow(
 template <class T>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T one_less_than_next_power_of_two(
+[[nodiscard]] sus_pure_const inline constexpr T one_less_than_next_power_of_two(
     T x) noexcept {
   if (x <= 1u) {
     return 0u;
@@ -1049,7 +1049,7 @@ sus_pure_const inline constexpr T one_less_than_next_power_of_two(
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr bool div_overflows(T x, T y) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool div_overflows(T x, T y) noexcept {
   // Using `&` helps LLVM see that it is the same check made in division.
   return y == T{0} || ((x == min_value<T>()) & (y == T{-1}));
 }
@@ -1057,7 +1057,7 @@ sus_pure_const inline constexpr bool div_overflows(T x, T y) noexcept {
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr bool div_overflows_nonzero(
+[[nodiscard]] sus_pure_const inline constexpr bool div_overflows_nonzero(
     ::sus::marker::UnsafeFnMarker, T x, T y) noexcept {
   // Using `&` helps LLVM see that it is the same check made in division.
   return ((x == min_value<T>()) & (y == T{-1}));
@@ -1067,7 +1067,7 @@ sus_pure_const inline constexpr bool div_overflows_nonzero(
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T div_euclid(::sus::marker::UnsafeFnMarker, T x,
+[[nodiscard]] sus_pure_const inline constexpr T div_euclid(::sus::marker::UnsafeFnMarker, T x,
                                              T y) noexcept {
   const auto q = unchecked_div(x, y);
   if (x % y >= 0)
@@ -1082,7 +1082,7 @@ sus_pure_const inline constexpr T div_euclid(::sus::marker::UnsafeFnMarker, T x,
 template <class T>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T rem_euclid(::sus::marker::UnsafeFnMarker, T x,
+[[nodiscard]] sus_pure_const inline constexpr T rem_euclid(::sus::marker::UnsafeFnMarker, T x,
                                              T y) noexcept {
   const auto r = unchecked_rem(x, y);
   if (r < 0) {
@@ -1097,7 +1097,7 @@ sus_pure_const inline constexpr T rem_euclid(::sus::marker::UnsafeFnMarker, T x,
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr auto into_unsigned_integer(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr auto into_unsigned_integer(
     T x) noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return std::bit_cast<uint32_t>(x);
@@ -1112,7 +1112,7 @@ sus_pure_const sus_always_inline constexpr auto into_unsigned_integer(
 // in order to avoid problems.
 template <class T>
   requires(std::is_integral_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr auto into_float_constexpr(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr auto into_float_constexpr(
     ::sus::marker::UnsafeFnMarker, T x) noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return std::bit_cast<float>(x);
@@ -1131,14 +1131,14 @@ sus_pure_const sus_always_inline constexpr auto into_float_constexpr(
 // `0x7f800001`.
 template <class T>
   requires(std::is_integral_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline auto into_float(T x) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline auto into_float(T x) noexcept {
   // SAFETY: Since this isn't a constexpr context, we're okay.
   return into_float_constexpr(::sus::marker::unsafe_fn, x);
 }
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr T min_positive_value() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T min_positive_value() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return 1.17549435E-38f;
   else
@@ -1147,7 +1147,7 @@ sus_pure_const sus_always_inline constexpr T min_positive_value() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr int32_t min_exp() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr int32_t min_exp() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return int32_t{-125};
   else
@@ -1156,7 +1156,7 @@ sus_pure_const sus_always_inline constexpr int32_t min_exp() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr int32_t max_exp() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr int32_t max_exp() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return int32_t{128};
   else
@@ -1165,7 +1165,7 @@ sus_pure_const sus_always_inline constexpr int32_t max_exp() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr int32_t min_10_exp() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr int32_t min_10_exp() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return int32_t{-37};
   else
@@ -1174,7 +1174,7 @@ sus_pure_const sus_always_inline constexpr int32_t min_10_exp() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr int32_t max_10_exp() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr int32_t max_10_exp() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return int32_t{38};
   else
@@ -1183,13 +1183,13 @@ sus_pure_const sus_always_inline constexpr int32_t max_10_exp() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr uint32_t radix() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t radix() noexcept {
   return 2;
 }
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr uint32_t
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t
 num_mantissa_digits() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return uint32_t{24};
@@ -1199,7 +1199,7 @@ num_mantissa_digits() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr uint32_t num_digits() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint32_t num_digits() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
     return 6;
   else
@@ -1208,7 +1208,7 @@ sus_pure_const sus_always_inline constexpr uint32_t num_digits() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr T nan() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T nan() noexcept {
   // SAFETY: We must take care that the value returned here is the same in both
   // a constexpr and non-constexpr context. The quiet bit is always set in a
   // constexpr context, so we return a quiet bit here.
@@ -1221,7 +1221,7 @@ sus_pure_const sus_always_inline constexpr T nan() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr T infinity() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T infinity() noexcept {
   // SAFETY: The value being constructed is not a NaN so we can do this in a
   // constexpr way.
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
@@ -1233,7 +1233,7 @@ sus_pure_const sus_always_inline constexpr T infinity() noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T>)
-sus_pure_const sus_always_inline constexpr T negative_infinity() noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T negative_infinity() noexcept {
   // SAFETY: The value being constructed is non a NaN so we can do this in a
   // constexpr way.
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
@@ -1243,14 +1243,14 @@ sus_pure_const sus_always_inline constexpr T negative_infinity() noexcept {
                                 uint64_t{0xfff0000000000000});
 }
 
-sus_pure_const sus_always_inline constexpr int32_t exponent_bits(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr int32_t exponent_bits(
     float x) noexcept {
   constexpr uint32_t mask = 0b01111111100000000000000000000000;
   return static_cast<int32_t>(
       unchecked_shr(into_unsigned_integer(x) & mask, 23));
 }
 
-sus_pure_const sus_always_inline constexpr int32_t exponent_bits(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr int32_t exponent_bits(
     double x) noexcept {
   constexpr uint64_t mask =
       0b0111111111110000000000000000000000000000000000000000000000000000;
@@ -1258,12 +1258,12 @@ sus_pure_const sus_always_inline constexpr int32_t exponent_bits(
       unchecked_shr(into_unsigned_integer(x) & mask, 52));
 }
 
-sus_pure_const sus_always_inline constexpr int32_t exponent_value(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr int32_t exponent_value(
     float x) noexcept {
   return exponent_bits(x) - int32_t{127};
 }
 
-sus_pure_const sus_always_inline constexpr int32_t exponent_value(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr int32_t exponent_value(
     double x) noexcept {
   return exponent_bits(x) - int32_t{1023};
 }
@@ -1273,7 +1273,7 @@ constexpr sus_always_inline uint32_t mantissa(float x) noexcept {
   return into_unsigned_integer(x) & mask;
 }
 
-sus_pure_const sus_always_inline constexpr uint64_t mantissa(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr uint64_t mantissa(
     double x) noexcept {
   constexpr uint64_t mask =
       0b0000000000001111111111111111111111111111111111111111111111111111;
@@ -1282,11 +1282,11 @@ sus_pure_const sus_always_inline constexpr uint64_t mantissa(
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr bool float_is_zero(T x) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr bool float_is_zero(T x) noexcept {
   return (into_unsigned_integer(x) & ~high_bit<T>()) == 0;
 }
 
-sus_pure_const inline constexpr bool float_is_inf(float x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_inf(float x) noexcept {
 #if __has_builtin(__builtin_isinf)
   return __builtin_isinf(x);
 #else
@@ -1297,7 +1297,7 @@ sus_pure_const inline constexpr bool float_is_inf(float x) noexcept {
 #endif
 }
 
-sus_pure_const inline constexpr bool float_is_inf(double x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_inf(double x) noexcept {
 #if __has_builtin(__builtin_isinf)
   return __builtin_isinf(x);
 #else
@@ -1307,17 +1307,17 @@ sus_pure_const inline constexpr bool float_is_inf(double x) noexcept {
 #endif
 }
 
-sus_pure_const inline constexpr bool float_is_inf_or_nan(float x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_inf_or_nan(float x) noexcept {
   constexpr auto mask = uint32_t{0x7f800000};
   return (into_unsigned_integer(x) & mask) == mask;
 }
 
-sus_pure_const inline constexpr bool float_is_inf_or_nan(double x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_inf_or_nan(double x) noexcept {
   constexpr auto mask = uint64_t{0x7ff0000000000000};
   return (into_unsigned_integer(x) & mask) == mask;
 }
 
-sus_pure_const inline constexpr bool float_is_nan(float x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_nan(float x) noexcept {
 #if __has_builtin(__builtin_isnan)
   return __builtin_isnan(x);
 #else
@@ -1327,7 +1327,7 @@ sus_pure_const inline constexpr bool float_is_nan(float x) noexcept {
 #endif
 }
 
-sus_pure_const inline constexpr bool float_is_nan(double x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_nan(double x) noexcept {
 #if __has_builtin(__builtin_isnan)
   return __builtin_isnan(x);
 #else
@@ -1338,14 +1338,14 @@ sus_pure_const inline constexpr bool float_is_nan(double x) noexcept {
 }
 
 // Assumes that x is a NaN.
-sus_pure_const inline constexpr bool float_is_nan_quiet(float x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_nan_quiet(float x) noexcept {
   // The quiet bit is the highest bit in the mantissa.
   constexpr auto quiet_mask = uint32_t{uint32_t{1} << (23 - 1)};
   return (into_unsigned_integer(x) & quiet_mask) != 0;
 }
 
 // Assumes that x is a NaN.
-sus_pure_const inline constexpr bool float_is_nan_quiet(double x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_nan_quiet(double x) noexcept {
   // The quiet bit is the highest bit in the mantissa.
   constexpr auto quiet_mask = uint64_t{uint64_t{1} << (52 - 1)};
   return (into_unsigned_integer(x) & quiet_mask) != 0;
@@ -1354,19 +1354,19 @@ sus_pure_const inline constexpr bool float_is_nan_quiet(double x) noexcept {
 // This is only valid if the argument is not (positive or negative) zero.
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const sus_always_inline constexpr bool float_nonzero_is_subnormal(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr bool float_nonzero_is_subnormal(
     T x) noexcept {
   return exponent_bits(x) == int32_t{0};
 }
 
-sus_pure_const inline constexpr bool float_is_normal(float x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_normal(float x) noexcept {
   // If the exponent is 0, the number is zero or subnormal. If the exponent is
   // all ones, the number is infinite or NaN.
   const auto e = exponent_bits(x);
   return e != 0 && e != int32_t{0b011111111};
 }
 
-sus_pure_const inline constexpr bool float_is_normal(double x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_is_normal(double x) noexcept {
   // If the exponent is 0, the number is zero or subnormal. If the exponent is
   // all ones, the number is infinite or NaN.
   const auto e = exponent_bits(x);
@@ -1375,7 +1375,7 @@ sus_pure_const inline constexpr bool float_is_normal(double x) noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T truncate_float(T x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T truncate_float(T x) noexcept {
   constexpr auto mantissa_width =
       ::sus::mem::size_of<T>() == ::sus::mem::size_of<float>() ? uint32_t{23}
                                                                : uint32_t{52};
@@ -1406,13 +1406,13 @@ sus_pure_const inline constexpr T truncate_float(T x) noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr bool float_signbit(T x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr bool float_signbit(T x) noexcept {
   return unchecked_and(into_unsigned_integer(x), high_bit<T>()) != 0;
 }
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T float_signum(T x) noexcept {
+[[nodiscard]] sus_pure_const inline constexpr T float_signum(T x) noexcept {
   // TODO: Can this be done without a branch? Beware nan values in constexpr
   // context are rewritten.
   if (float_is_nan(x)) [[unlikely]]
@@ -1426,7 +1426,7 @@ sus_pure_const inline constexpr T float_signum(T x) noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline T float_round(T x) noexcept {
+[[nodiscard]] sus_pure_const inline T float_round(T x) noexcept {
   /* MSVC round(float) is returning a double for some reason. */
   const auto out = into_unsigned_integer(static_cast<T>(::round(x)));
   // `round()` doesn't preserve the sign bit, so we need to restore it, for
@@ -1456,7 +1456,7 @@ constexpr inline ::sus::num::FpCategory float_category(T x) noexcept {
 #else
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const constexpr inline ::sus::num::FpCategory float_category(
+[[nodiscard]] sus_pure_const constexpr inline ::sus::num::FpCategory float_category(
     T x) noexcept {
   if (std::is_constant_evaluated()) {
     if (float_is_nan(x)) return ::sus::num::FpCategory::Nan;
@@ -1482,7 +1482,7 @@ sus_pure_const constexpr inline ::sus::num::FpCategory float_category(
 // function produces Undefined Behaviour.
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const constexpr inline T float_clamp(marker::UnsafeFnMarker, T x,
+[[nodiscard]] sus_pure_const constexpr inline T float_clamp(marker::UnsafeFnMarker, T x,
                                               T min, T max) noexcept {
   if (float_is_nan(x)) [[unlikely]]
     return nan<T>();
