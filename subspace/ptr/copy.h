@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "subspace/assertions/debug_check.h"
+#include "subspace/macros/noalias.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/unsigned_integer.h"
@@ -61,12 +62,15 @@ namespace sus::ptr {
 /// the pointers must be non-null and properly aligned.
 template <class T>
   requires(!std::is_const_v<T>)
-void copy_nonoverlapping(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
+void copy_nonoverlapping(::sus::marker::UnsafeFnMarker,
+                         const T* sus_noalias_var src, T* sus_noalias_var dst,
                          ::sus::num::usize count) noexcept {
   sus_debug_check(src != nullptr);
   sus_debug_check(dst != nullptr);
   sus_debug_check(src % alignof(T) == 0);
   sus_debug_check(dst % alignof(T) == 0);
+  sus_debug_check((src < dst && src + count < dst) ||
+                  (dst < src && dst + count < src));
   auto bytes = count.checked_mul(::sus::mem::size_of<T>()).expect("overflow");
   memcpy(dst, src, size_t{bytes});
 }
