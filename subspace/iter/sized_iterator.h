@@ -61,7 +61,7 @@ struct [[sus_trivial_abi]] SizedIterator final {
     return next_back_(*sized_);
   }
 
-  char* as_ptr_mut() noexcept { return sized_; }
+  char* as_mut_ptr() noexcept { return sized_; }
 
  private:
   alignas(SubclassAlign) char sized_[SubclassSize];
@@ -113,7 +113,7 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
   }
 
   auto it = typename SizedIteratorType<Iter>::type(destroy, next, next_back);
-  new (it.as_ptr_mut()) Iter(::sus::move(iter));
+  new (it.as_mut_ptr()) Iter(::sus::move(iter));
   return it;
 }
 }  // namespace sus::iter
