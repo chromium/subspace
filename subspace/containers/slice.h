@@ -30,6 +30,7 @@
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/move.h"
+#include "subspace/mem/swap.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
@@ -213,9 +214,9 @@ class [[sus_trivial_abi]] SliceMut final {
   /// This avoids addition on a dangling pointer, which is Undefined Behaviour
   /// in C++, and avoids runtime checks for `length == 0`. Care must be applied
   /// when converting slices between languages as a result.
-  static constexpr inline SliceMut from_raw_parts(::sus::marker::UnsafeFnMarker,
-                                                  T* data sus_lifetimebound,
-                                                  ::sus::usize len) noexcept {
+  static constexpr inline SliceMut from_raw_parts_mut(
+      ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
+      ::sus::usize len) noexcept {
     ::sus::check(size_t{len} <= size_t{isize::MAX_PRIMITIVE});
     return SliceMut(data, len);
   }

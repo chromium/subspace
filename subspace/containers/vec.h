@@ -522,8 +522,8 @@ class Vec final {
     check(!is_moved_from());
     // SAFETY: The `len()` is the number of elements in the Vec, and the
     // pointer is to the start of the Vec, so this Slice covers a valid range.
-    return SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn, raw_data(),
-                                       len());
+    return SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn, raw_data(),
+                                           len());
   }
 
   /// Consumes the Vec into an iterator that will return each element in the
@@ -548,12 +548,11 @@ class Vec final {
 
   // Const Vec can be used as a Slice.
   constexpr operator const Slice<T>&() const& { return slice_mut_; }
+  constexpr operator const Slice<T>&() && = delete;
   constexpr operator Slice<T>&() & { return slice_mut_; }
-  constexpr operator Slice<T>() && { return ::sus::move(slice_mut_); }
 
   // Mutable Vec can be used as a SliceMut.
   constexpr operator SliceMut<T>&() & { return slice_mut_; }
-  constexpr operator SliceMut<T>&&() && { return ::sus::move(slice_mut_); }
 
 #define _ptr_expr slice_mut_.slice_.data_
 #define _len_expr slice_mut_.slice_.len_
