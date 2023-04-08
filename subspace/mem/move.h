@@ -17,6 +17,7 @@
 #include <type_traits>
 
 #include "subspace/macros/always_inline.h"
+#include "subspace/macros/pure.h"
 
 namespace sus::mem {
 
@@ -79,7 +80,7 @@ concept MoveOrRef = Move<T> || std::is_reference_v<T>;
 // TODO: Should this be `as_rvalue()`? Kinda technical. `as_...something...()`?
 template <class T>
   requires(!std::is_const_v<std::remove_reference_t<T>>)
-[[nodiscard]] sus_always_inline constexpr auto&& move(T&& t) noexcept {
+[[nodiscard]] sus_pure_const sus_always_inline constexpr auto&& move(T&& t) noexcept {
   return static_cast<std::remove_reference_t<T>&&>(t);
 }
 

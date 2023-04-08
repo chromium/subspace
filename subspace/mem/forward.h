@@ -17,17 +17,18 @@
 #include <type_traits>
 
 #include "subspace/macros/always_inline.h"
+#include "subspace/macros/pure.h"
 
 namespace sus::mem {
 
 template <class T>
-[[nodiscard]] sus_always_inline constexpr T&& forward(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T&& forward(
     std::remove_reference_t<T>& t) noexcept {
   return static_cast<T&&>(t);
 }
 
 template <class T>
-[[nodiscard]] sus_always_inline constexpr T&& forward(
+[[nodiscard]] sus_pure_const sus_always_inline constexpr T&& forward(
     std::remove_reference_t<T>&& t) noexcept {
   static_assert(!std::is_lvalue_reference_v<T>,
                 "Can not convert an rvalue to an lvalue with forward().");

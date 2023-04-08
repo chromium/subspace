@@ -92,7 +92,7 @@ concept ExclusivePartialOrd = (!WeakOrd<T, U> && PartialOrd<T, U>);
 /// to an object past its lifetime.
 template <class T>
   requires(Ord<T>)
-constexpr T min(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
+inline constexpr T min(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
   return a > b ? ::sus::forward<T>(b) : ::sus::forward<T>(a);
 }
 
