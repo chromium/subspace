@@ -576,6 +576,33 @@ constexpr ::sus::Option<const T&> last() const& noexcept {
 constexpr ::sus::Option<const T&> last() && = delete;
 #endif
 
+/// Returns the index of the partition point according to the given predicate
+/// (the index of the first element of the second partition).
+///
+/// The slice is assumed to be partitioned according to the given predicate.
+/// This means that all elements for which the predicate returns true are at the
+/// start of the slice and all elements for which the predicate returns false
+/// are at the end. For example, `[7, 15, 3, 5, 4, 12, 6]` is partitioned under
+/// the predicate `x % 2 != 0` (all odd numbers are at the start, all even at
+/// the end).
+///
+/// If this slice is not partitioned, the returned result is unspecified and
+/// meaningless, as this method performs a kind of binary search.
+///
+/// See also `binary_search()`, `binary_search_by()`, and
+/// `binary_search_by_key()`.
+constexpr ::sus::num::usize partition_point(
+    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
+  return binary_search_by([pred = ::sus::move(pred)](const T& x) {
+           if (pred(x)) {
+             return std::strong_ordering::less;
+           } else {
+             return std::strong_ordering::greater;
+           }
+         })
+      .unwrap_or_else([](::sus::num::usize i) { return i; });
+}
+
 /// Creates a vector by copying a slice n times.
 ///
 /// # Panics

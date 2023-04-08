@@ -17,6 +17,8 @@
 #include <concepts>
 #include <type_traits>
 
+#include "subspace/mem/move.h"
+
 namespace sus::fn::__private {
 
 /// Whether a functor `F` is a function pointer that is callable with `Args...`

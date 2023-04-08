@@ -120,7 +120,16 @@ class Tuple;
    */                                                                          \
   template <SignedPrimitiveEnum P>                                             \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
-  constexpr inline T(P v) : primitive_value(static_cast<PrimitiveT>(v)) {}     \
+  constexpr inline T(P v) : primitive_value(v) {}                              \
+                                                                               \
+  /** Construction from signed enum class types where no bits are lost.        \
+   *                                                                           \
+   * #[doc.overloads=signedint.ctor.signedenumclass]                           \
+   */                                                                          \
+  template <SignedPrimitiveEnumClass P>                                        \
+    requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
+  explicit constexpr inline T(P v)                                             \
+      : primitive_value(static_cast<PrimitiveT>(v)) {}                         \
                                                                                \
   /** Construction from unsigned primitive types where no bits are lost.       \
    *                                                                           \
@@ -136,7 +145,16 @@ class Tuple;
    */                                                                          \
   template <UnsignedPrimitiveEnum P>                                           \
     requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<PrimitiveT>())     \
-  constexpr inline T(P v) : primitive_value(static_cast<PrimitiveT>(v)) {}     \
+  constexpr inline T(P v) : primitive_value(v) {}                              \
+                                                                               \
+  /** Construction from unsigned enum class types where no bits are lost.      \
+   *                                                                           \
+   * #[doc.overloads=signedint.ctor.unsignedenumclass]                         \
+   */                                                                          \
+  template <UnsignedPrimitiveEnumClass P>                                      \
+    requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<PrimitiveT>())     \
+  explicit constexpr inline T(P v)                                             \
+      : primitive_value(static_cast<PrimitiveT>(v)) {}                         \
                                                                                \
   /** Assignment from signed primitive types where no bits are lost.           \
    *                                                                           \
@@ -156,7 +174,7 @@ class Tuple;
   template <SignedPrimitiveEnum P>                                             \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())    \
   constexpr inline T& operator=(P v) noexcept {                                \
-    primitive_value = static_cast<PrimitiveT>(v);                              \
+    primitive_value = v;                                                       \
     return *this;                                                              \
   }                                                                            \
                                                                                \
@@ -178,7 +196,7 @@ class Tuple;
   template <UnsignedPrimitiveEnum P>                                           \
     requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<PrimitiveT>())     \
   constexpr inline T& operator=(P v) noexcept {                                \
-    primitive_value = static_cast<PrimitiveT>(v);                              \
+    primitive_value = v;                                                       \
     return *this;                                                              \
   }                                                                            \
   static_assert(true)
@@ -312,13 +330,14 @@ class Tuple;
    *                                                                           \
    * #[doc.overloads=signedint.from.signedenum]                                \
    */                                                                          \
-  template <SignedPrimitiveEnum S>                                             \
+  template <class S>                                                           \
+    requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)            \
   static constexpr T from(S s) {                                               \
     using D = std::underlying_type_t<S>;                                       \
     if constexpr (MIN_PRIMITIVE > __private::min_value<D>())                   \
-      ::sus::check(static_cast<D>(s) >= MIN_PRIMITIVE);                                        \
+      ::sus::check(static_cast<D>(s) >= MIN_PRIMITIVE);                        \
     if constexpr (MAX_PRIMITIVE < __private::max_value<D>())                   \
-      ::sus::check(static_cast<D>(s) <= MAX_PRIMITIVE);                                        \
+      ::sus::check(static_cast<D>(s) <= MAX_PRIMITIVE);                        \
     return T(static_cast<PrimitiveT>(s));                                      \
   }                                                                            \
                                                                                \
@@ -328,19 +347,20 @@ class Tuple;
    *                                                                           \
    * #[doc.overloads=signedint.tryfrom.signedenum]                             \
    */                                                                          \
-  template <SignedPrimitiveEnum S>                                             \
+  template <class S>                                                           \
+    requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)            \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
   try_from(S s) {                                                              \
     using D = std::underlying_type_t<S>;                                       \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if constexpr (MIN_PRIMITIVE > __private::min_value<D>()) {                 \
-      if (static_cast<D>(s) < MIN_PRIMITIVE) {                                                 \
+      if (static_cast<D>(s) < MIN_PRIMITIVE) {                                 \
         return R::with_err(::sus::num::TryFromIntError(                        \
             ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
       }                                                                        \
     }                                                                          \
     if constexpr (MAX_PRIMITIVE < __private::max_value<D>()) {                 \
-      if (static_cast<D>(s) > MAX_PRIMITIVE) {                                                 \
+      if (static_cast<D>(s) > MAX_PRIMITIVE) {                                 \
         return R::with_err(::sus::num::TryFromIntError(                        \
             ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
       }                                                                        \
@@ -393,12 +413,13 @@ class Tuple;
    *                                                                           \
    * #[doc.overloads=signedint.from.unsignedint]                               \
    */                                                                          \
-  template <UnsignedPrimitiveEnum U>                                           \
+  template <class U>                                                           \
+    requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \
   static constexpr T from(U u) {                                               \
     using D = std::underlying_type_t<U>;                                       \
     constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);             \
     if constexpr (umax < __private::max_value<D>()) {                          \
-      ::sus::check(static_cast<D>(u) <= umax);                                                 \
+      ::sus::check(static_cast<D>(u) <= umax);                                 \
     }                                                                          \
     return T(static_cast<PrimitiveT>(u));                                      \
   }                                                                            \
@@ -409,14 +430,15 @@ class Tuple;
    *                                                                           \
    * #[doc.overloads=signedint.tryfrom.unsignedint]                            \
    */                                                                          \
-  template <UnsignedPrimitiveEnum U>                                           \
+  template <class U>                                                           \
+    requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \
   static constexpr ::sus::result::Result<T, ::sus::num::TryFromIntError>       \
   try_from(U u) {                                                              \
     using D = std::underlying_type_t<U>;                                       \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);             \
     if constexpr (umax < __private::max_value<D>()) {                          \
-      if (static_cast<D>(u) > umax) {                                                          \
+      if (static_cast<D>(u) > umax) {                                          \
         return R::with_err(::sus::num::TryFromIntError(                        \
             ::sus::num::TryFromIntError::Kind::OutOfBounds));                  \
       }                                                                        \
@@ -462,7 +484,8 @@ class Tuple;
    *                                                                           \
    * #[doc.overloads=signedint.fromunchecked.enum]                             \
    */                                                                          \
-  template <PrimitiveEnum P>                                                   \
+  template <class P>                                                           \
+    requires(PrimitiveEnum<P> || PrimitiveEnumClass<P>)                        \
   static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,             \
                                     P p) noexcept {                            \
     return T(static_cast<PrimitiveT>(p));                                      \

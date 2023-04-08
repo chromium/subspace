@@ -15,6 +15,7 @@
 #pragma once
 
 #include "subspace/mem/forward.h"
+#include "subspace/mem/move.h"
 
 namespace sus::fn::__private {
 
