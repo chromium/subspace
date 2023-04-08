@@ -1283,8 +1283,18 @@ TEST(OptionDeathTest, OperatorArrowNone) {
   auto n = Option<int>::none();
   auto in = Option<NoCopyMove&>::none();
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(n.operator->(), "");
-  EXPECT_DEATH(in.operator->(), "");
+  EXPECT_DEATH(
+      {
+        auto* x = n.operator->();
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto* x = in.operator->();
+        EXPECT_EQ(x, x);
+      },
+      "");
 #endif
 }
 
