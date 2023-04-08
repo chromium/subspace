@@ -42,15 +42,7 @@
 ///
 /// Modifying the container referenced by this slice may cause its buffer to
 /// be reallocated, which would also make any pointers to it invalid.
-///
-/// # Panics
-/// The slice must have a non-zero length, or this function will panic as the
-/// pointer would be invalid.
-///
-constexpr inline T* as_mut_ptr() _mut_ref noexcept {
-  check(_len_expr > ::sus::num::usize(0u));
-  return _ptr_expr;
-}
+constexpr inline T* as_mut_ptr() _mut_ref noexcept { return _ptr_expr; }
 
 /// Returns the two mutable pointers spanning the slice.
 ///
@@ -66,14 +58,8 @@ constexpr inline T* as_mut_ptr() _mut_ref noexcept {
 /// pointers to refer to a range of elements in memory, as is common in C++
 /// stdlib algorthms. Note that the pointers can be unpacked from the Range
 /// with structured bindings as in `auto [a, b] = s.as_mut_ptr_range();`.
-///
-/// # Panics
-/// The slice must have a non-zero length, or this function will panic as the
-/// pointers would be invalid.
-///
 constexpr ::sus::ops::Range<T*> as_mut_ptr_range() _mut_ref noexcept {
-  check(_len_expr > ::sus::num::usize(0u));
-  return ::sus::ops::Range<T*>(_ptr_expr, _ptr_expr + _len_expr);
+  return ::sus::ops::Range<T*>(as_mut_ptr(), as_mut_ptr() + len());
 }
 
 /// Returns an iterator over `chunk_size` elements of the slice at a time,
@@ -96,8 +82,8 @@ constexpr ChunksExactMut<T> chunks_exact_mut(
     ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
   return ChunksExactMut<T>::with(
-      ::sus::containers::SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn,
-                                                     _ptr_expr, _len_expr),
+      ::sus::containers::SliceMut<T>::from_raw_parts_mut(
+          ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
       chunk_size);
 }
 
@@ -118,8 +104,8 @@ constexpr ChunksExactMut<T> chunks_exact_mut(
 constexpr ChunksMut<T> chunks_mut(
     ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
-  return ChunksMut<T>::with(::sus::containers::SliceMut<T>::from_raw_parts(
-                                ::sus::marker::unsafe_fn, _ptr_expr, _len_expr),
+  return ChunksMut<T>::with(::sus::containers::SliceMut<T>::from_raw_parts_mut(
+                                ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
                             chunk_size);
 }
 
@@ -137,11 +123,11 @@ constexpr void copy_from_slice(Slice<T> src) noexcept
   requires(::sus::mem::TrivialCopy<T>)
 {
   const ::sus::num::usize src_len = src.len();
-  const ::sus::num::usize dst_len = _len_expr;
+  const ::sus::num::usize dst_len = len();
   ::sus::check(dst_len == src_len);
 
   const T* const src_ptr = src.as_ptr();
-  T* const dst_ptr = _ptr_expr;
+  T* const dst_ptr = as_mut_ptr();
   ::sus::check((src_ptr < dst_ptr && src_ptr <= dst_ptr - src_len) ||
                (dst_ptr < src_ptr && dst_ptr <= src_ptr - dst_len));
 
@@ -186,9 +172,9 @@ constexpr void copy_from_slice_unchecked(::sus::marker::UnsafeFnMarker,
                                          Slice<T> src) noexcept
   requires(std::is_trivially_copy_assignable_v<T>)
 {
-  const ::sus::num::usize dst_len = _len_expr;
+  const ::sus::num::usize dst_len = len();
   const T* const src_ptr = src.as_ptr();
-  T* const dst_ptr = _ptr_expr;
+  T* const dst_ptr = as_mut_ptr();
   sus_assume(
       ::sus::marker::unsafe_fn,
       (src_ptr < dst_ptr && src_ptr <= dst_ptr - dst_len.primitive_value) ||
@@ -215,10 +201,10 @@ constexpr void clone_from_slice(Slice<T> src) noexcept
   requires(::sus::mem::Clone<T>)
 {
   const ::sus::num::usize src_len = src.len();
-  const ::sus::num::usize dst_len = _len_expr;
+  const ::sus::num::usize dst_len = len();
   ::sus::check(dst_len == src_len);
   const T* const src_ptr = src.as_ptr();
-  T* dst_ptr = _ptr_expr;
+  T* dst_ptr = as_mut_ptr();
   for (::sus::num::usize i; i < dst_len; i += 1u) {
     ::sus::clone_into(::sus::mem::mref(*(dst_ptr + i)), *(src_ptr + i));
   }
@@ -226,15 +212,15 @@ constexpr void clone_from_slice(Slice<T> src) noexcept
 
 // Documented on the const overload.
 constexpr T& operator[](::sus::num::usize i) & noexcept {
-  check(i < _len_expr);
-  return _ptr_expr[i.primitive_value];
+  check(i < len());
+  return get_unchecked_mut(::sus::marker::unsafe_fn, i);
 }
 
 #if !_delete_rvalue
 // Documented on the const overload.
 constexpr T& operator[](::sus::num::usize i) && noexcept {
-  check(i < _len_expr);
-  return _ptr_expr[i.primitive_value];
+  check(i < len());
+  return get_unchecked_mut(::sus::marker::unsafe_fn, i);
 }
 #endif
 
@@ -245,8 +231,8 @@ constexpr void fill(T value) noexcept
   // This method receives `value` by value to avoid the possiblity that it
   // aliases with an element in the slice. If `value` is modified by cloning
   // into an aliased element, the `value` may clone differently thereafter.
-  T* ptr = _ptr_expr;
-  T* end_ptr = ptr + _len_expr;
+  T* ptr = as_mut_ptr();
+  T* const end_ptr = ptr + len();
   while (ptr != end_ptr) {
     ::sus::clone_into(::sus::mem::mref(*ptr), value);
     ptr += 1u;
@@ -259,8 +245,8 @@ constexpr void fill(T value) noexcept
 /// given value, use `fill()`. If you want to default-construct elements for a
 /// type that satisfies `sus::construct::Default`, use `fill_with_default()`.
 constexpr void fill_with(::sus::fn::FnMutRef<T()> f) noexcept {
-  T* ptr = _ptr_expr;
-  T* end_ptr = ptr + _len_expr;
+  T* ptr = as_mut_ptr();
+  T* const end_ptr = ptr + len();
   while (ptr != end_ptr) {
     *ptr = f();
     ptr += 1u;
@@ -271,8 +257,8 @@ constexpr void fill_with(::sus::fn::FnMutRef<T()> f) noexcept {
 constexpr void fill_with_default() noexcept
   requires(sus::construct::Default<T>)
 {
-  T* ptr = _ptr_expr;
-  T* end_ptr = ptr + _len_expr;
+  T* ptr = as_mut_ptr();
+  T* const end_ptr = ptr + len();
   while (ptr != end_ptr) {
     *ptr = T();
     ptr += 1u;
@@ -282,8 +268,8 @@ constexpr void fill_with_default() noexcept
 /// Returns a mutable reference to the first element of the slice, or None if it
 /// is empty.
 constexpr ::sus::Option<T&> first_mut() _mut_ref noexcept {
-  if (_len_expr > 0u)
-    return ::sus::Option<T&>::some(*_ptr_expr);
+  if (len() > 0u)
+    return ::sus::Option<T&>::some(*as_mut_ptr());
   else
     return ::sus::Option<T&>::none();
 }
@@ -292,8 +278,8 @@ constexpr ::sus::Option<T&> first_mut() _mut_ref noexcept {
 /// `i` is beyond the end of the Slice.
 ///
 constexpr Option<T&> get_mut(::sus::num::usize i) _mut_ref noexcept {
-  if (i < _len_expr) [[likely]]
-    return Option<T&>::some(mref(_ptr_expr[i.primitive_value]));
+  if (i < len()) [[likely]]
+    return Option<T&>::some(get_unchecked_mut(::sus::marker::unsafe_fn, i));
   else
     return Option<T&>::none();
 }
@@ -309,34 +295,36 @@ constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
                                       ::sus::num::usize i) _mut_ref noexcept {
   sus_assume(::sus::marker::unsafe_fn,
              i.primitive_value < _len_expr.primitive_value);
-  return _ptr_expr[i.primitive_value];
+  return as_mut_ptr()[size_t{i}];
 }
 
 // Documented on the const overload of operator[](RangeBounds).
 constexpr inline SliceMut<T> operator[](
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range) & noexcept {
+  const ::sus::num::usize length = len();
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
-  const ::sus::num::usize rend = range.end_bound().unwrap_or(_len_expr);
+  const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  ::sus::check(rlen <= _len_expr);  // Avoid underflow below.
-  // We allow rstart == _len_expr && rend == _len_expr, which returns an empty
+  ::sus::check(rlen <= length);  // Avoid underflow below.
+  // We allow rstart == len() && rend == len(), which returns an empty
   // slice.
-  ::sus::check(rstart <= _len_expr && rstart <= _len_expr - rlen);
-  return SliceMut<T>(_ptr_expr + rstart, rlen);
+  ::sus::check(rstart <= length && rstart <= length - rlen);
+  return SliceMut<T>(as_mut_ptr() + rstart, rlen);
 }
 
 #if !_delete_rvalue
 // Documented on the const overload of operator[](RangeBounds).
 constexpr inline SliceMut<T> operator[](
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && noexcept {
+  const ::sus::num::usize length = len();
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
-  const ::sus::num::usize rend = range.end_bound().unwrap_or(_len_expr);
+  const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  ::sus::check(rlen <= _len_expr);  // Avoid underflow below.
-  // We allow rstart == _len_expr && rend == _len_expr, which returns an empty
+  ::sus::check(rlen <= length);  // Avoid underflow below.
+  // We allow rstart == len() && rend == len(), which returns an empty
   // slice.
-  ::sus::check(rstart <= _len_expr && rstart <= _len_expr - rlen);
-  return SliceMut<T>(_ptr_expr + rstart, rlen);
+  ::sus::check(rstart <= length && rstart <= length - rlen);
+  return SliceMut<T>(as_mut_ptr() + rstart, rlen);
 }
 #endif
 
@@ -354,14 +342,15 @@ constexpr inline SliceMut<T> operator[](
 constexpr Option<SliceMut<T>> get_range_mut(
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
     _mut_ref noexcept {
+  const ::sus::num::usize length = len();
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
-  const ::sus::num::usize rend = range.end_bound().unwrap_or(_len_expr);
+  const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  if (rlen > _len_expr) return sus::none();  // Avoid underflow below.
-  // We allow rstart == _len_expr && rend == _len_expr, which returns an empty
+  if (rlen > length) return sus::none();  // Avoid underflow below.
+  // We allow rstart == len() && rend == len(), which returns an empty
   // slice.
-  if (rstart > _len_expr || rstart > _len_expr - rlen) return sus::none();
-  return Option<SliceMut<T>>::some(SliceMut(_ptr_expr + rstart, rlen));
+  if (rstart > length || rstart > length - rlen) return sus::none();
+  return Option<SliceMut<T>>::some(SliceMut(as_mut_ptr() + rstart, rlen));
 }
 
 /// Returns a subslice which contains elements in `range`, which specifies a
@@ -381,9 +370,9 @@ constexpr SliceMut<T> get_range_mut_unchecked(
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
     _mut_ref noexcept {
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
-  const ::sus::num::usize rend = range.end_bound().unwrap_or(_len_expr);
+  const ::sus::num::usize rend = range.end_bound().unwrap_or(len());
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  return SliceMut<T>(_ptr_expr + rstart, rlen);
+  return SliceMut<T>(as_mut_ptr() + rstart, rlen);
 }
 
 /// Returns an iterator over all the elements in the slice, visited in the
@@ -391,14 +380,15 @@ constexpr SliceMut<T> get_range_mut_unchecked(
 /// each element.
 ///
 constexpr SliceIterMut<T&> iter_mut() _mut_ref noexcept {
-  return SliceIterMut<T&>::with(_ptr_expr, _len_expr);
+  return SliceIterMut<T&>::with(as_mut_ptr(), len());
 }
 
 /// Returns a mutable reference to the last element of the slice, or None if it
 /// is empty.
 constexpr ::sus::Option<T&> last_mut() _mut_ref noexcept {
-  if (_len_expr > 0u)
-    return ::sus::Option<T&>::some(*(_ptr_expr + _len_expr - 1u));
+  const ::sus::num::usize length = len();
+  if (length > 0u)
+    return ::sus::Option<T&>::some(*(as_mut_ptr() + length - 1u));
   else
     return ::sus::Option<T&>::none();
 }
@@ -424,8 +414,8 @@ constexpr RChunksExactMut<T> rchunks_exact_mut(
     ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
   return RChunksExactMut<T>::with(
-      ::sus::containers::SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn,
-                                                     _ptr_expr, _len_expr),
+      ::sus::containers::SliceMut<T>::from_raw_parts_mut(
+          ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
       chunk_size);
 }
 
@@ -446,9 +436,49 @@ constexpr RChunksMut<T> rchunks_mut(
     ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
   return RChunksMut<T>::with(
-      ::sus::containers::SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn,
-                                                     _ptr_expr, _len_expr),
+      ::sus::containers::SliceMut<T>::from_raw_parts_mut(
+          ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
       chunk_size);
+}
+
+/// Reverses the order of elements in the slice, in place.
+///
+/// # Examples
+/// ```
+/// auto forward = sus::Vec<i32>::with_values(1, 2, 3);
+/// auto sf = forward[".."_r];
+/// auto backward = sus::Vec<i32>::with_values(3, 2, 1);
+/// auto sb = backward[".."_r];
+/// sf.reverse();
+/// sus::check(sf == sb);
+/// ```
+constexpr void reverse() noexcept
+  requires(::sus::mem::Move<T>)
+{
+  const auto half_len = len() / 2;
+  const auto [start, end] = as_mut_ptr_range();
+
+  // SAFETY: The slice is valid, as it points to the start of `*this` and
+  // half_len < len() by construction above.
+  auto front_half = ::sus::containers::SliceMut<T>::from_raw_parts_mut(
+      ::sus::marker::unsafe_fn, start, half_len);
+  // SAFETY: The slice is valid, as it points to the half_len elements from the
+  // end of `*this`, and half_len < len() by construction above.
+  auto back_half = ::sus::containers::SliceMut<T>::from_raw_parts_mut(
+      ::sus::marker::unsafe_fn, end - half_len, half_len);
+
+  for (::sus::num::usize i; i < half_len; i += 1u) {
+    // SAFETY: The `front_half` refers to the first `half_len` elements, and the
+    // `back_half` refers to the last `half_len` elements. As theres >= `2 *
+    // half_len` elements, these ranges don't overlap. We loop over `half_len`
+    // here, visiting one element in the front and back halves on each
+    // iteration, the elements thus do not alias.
+    //
+    // TODO: Verify that the bounds checks are elided here since the compiler
+    // knows the length of each slice is `half_len`
+    ::sus::mem::swap_no_alias_unchecked(::sus::marker::unsafe_fn, front_half[i],
+                                        back_half[half_len - 1u - i]);
+  }
 }
 
 /// Sorts the slice.
@@ -466,8 +496,8 @@ constexpr RChunksMut<T> rchunks_mut(
 void sort() noexcept
   requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
 {
-  if (_len_expr > ::sus::num::usize(0u)) {
-    std::stable_sort(_ptr_expr, _ptr_expr + _len_expr);
+  if (len() > ::sus::num::usize(0u)) {
+    std::stable_sort(as_mut_ptr(), as_mut_ptr() + len());
   }
 }
 
@@ -487,9 +517,9 @@ template <::sus::fn::FnMut<::sus::fn::Anything(const T&, const T&)> F, int&...,
           class R = std::invoke_result_t<F, const T&, const T&>>
   requires(::sus::ops::Ordering<R>)
 void sort_by(F compare) noexcept {
-  if (_len_expr > ::sus::num::usize(0u)) {
+  if (len() > ::sus::num::usize(0u)) {
     std::stable_sort(
-        _ptr_expr, _ptr_expr + _len_expr,
+        as_mut_ptr(), as_mut_ptr() + len(),
         [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
   }
 }
@@ -502,8 +532,8 @@ void sort_by(F compare) noexcept {
 constexpr void sort_unstable() noexcept
   requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
 {
-  if (_len_expr > ::sus::num::usize(0u)) {
-    std::sort(_ptr_expr, _ptr_expr + _len_expr);
+  if (len() > ::sus::num::usize(0u)) {
+    std::sort(as_mut_ptr(), as_mut_ptr() + len());
   }
 }
 
@@ -521,8 +551,8 @@ template <::sus::fn::FnMut<::sus::fn::Anything(const T&, const T&)> F, int&...,
           class R = std::invoke_result_t<F, const T&, const T&>>
   requires(::sus::ops::Ordering<R>)
 constexpr void sort_unstable_by(F compare) noexcept {
-  if (_len_expr > ::sus::num::usize(0u)) {
-    std::sort(_ptr_expr, _ptr_expr + _len_expr,
+  if (len() > ::sus::num::usize(0u)) {
+    std::sort(as_mut_ptr(), as_mut_ptr() + len(),
               [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
   }
 }
@@ -543,15 +573,14 @@ constexpr void sort_unstable_by(F compare) noexcept {
 ///
 constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>> split_at_mut_unchecked(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize mid) _mut_ref noexcept {
-  const ::sus::num::usize length = _len_expr;
-
-  // SAFETY: Caller has to check that `0 <= mid <= _len_expr`.
+  // SAFETY: Caller has to check that `0 <= mid <= len()`.
   sus_assume(::sus::marker::unsafe_fn,
-             mid.primitive_value <= length.primitive_value);
+             mid.primitive_value <= len().primitive_value);
   return ::sus::Tuple<SliceMut<T>, SliceMut<T>>::with(
-      SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn, _ptr_expr, mid),
-      SliceMut<T>::from_raw_parts(::sus::marker::unsafe_fn, _ptr_expr + mid,
-                                  length - mid));
+      SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn, as_mut_ptr(),
+                                      mid),
+      SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
+                                      as_mut_ptr() + mid, len() - mid));
 }
 
 #undef _mut_ref
