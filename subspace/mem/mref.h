@@ -20,6 +20,7 @@
 
 #include "subspace/assertions/check.h"
 #include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
@@ -29,7 +30,7 @@ namespace sus::mem {
 /// Annotate an lvalue usage, for static analysis.
 template <class T>
   requires(!std::is_reference_v<T>)
-inline constexpr T& mref(T& t) noexcept {
+sus_pure_const inline constexpr T& mref(T& t) noexcept {
   return t;
 }
 
