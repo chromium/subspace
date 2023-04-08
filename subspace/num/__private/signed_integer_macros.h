@@ -14,25 +14,6 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-
-#include <compare>
-
-#include "subspace/assertions/check.h"
-#include "subspace/assertions/endian.h"
-#include "subspace/marker/unsafe.h"
-#include "subspace/mem/size_of.h"
-#include "subspace/num/__private/int_log10.h"
-#include "subspace/num/__private/intrinsics.h"
-#include "subspace/num/__private/literals.h"
-#include "subspace/num/integer_concepts.h"
-#include "subspace/num/try_from_int_error.h"
-#include "subspace/num/unsigned_integer.h"
-#include "subspace/option/option.h"
-#include "subspace/ptr/copy.h"
-#include "subspace/result/result.h"
-
 namespace sus::containers {
 template <class T, size_t N>
   requires(N <= size_t{PTRDIFF_MAX})
@@ -69,6 +50,10 @@ class Tuple;
   _sus__signed_pow(T);                              \
   _sus__signed_log(T);                              \
   _sus__signed_endian(T, UnsignedT, ::sus::mem::size_of<PrimitiveT>())
+
+#define _sus__signed_out_of_line_impl(T, PrimitiveT, UnsignedT) \
+  _sus__signed_endian_out_of_line(T, UnsignedT,                 \
+                                  ::sus::mem::size_of<PrimitiveT>())
 
 #define _sus__signed_storage(PrimitiveT)                                      \
   /** The inner primitive value, in case it needs to be unwrapped from the    \
@@ -1736,77 +1721,107 @@ class Tuple;
   }                                                                           \
   static_assert(true)
 
-#define _sus__signed_endian(T, UnsignedT, Bytes)                              \
-  /** Converts an integer from big endian to the target's endianness.         \
-   *                                                                          \
-   * On big endian this is a no-op. On little endian the bytes are swapped.   \
-   */                                                                         \
-  static constexpr T from_be(const T& x) noexcept {                           \
-    if (::sus::assertions::is_big_endian())                                   \
-      return x;                                                               \
-    else                                                                      \
-      return x.swap_bytes();                                                  \
+#define _sus__signed_endian(T, UnsignedT, Bytes)                               \
+  /** Converts an integer from big endian to the target's endianness.          \
+   *                                                                           \
+   * On big endian this is a no-op. On little endian the bytes are swapped.    \
+   */                                                                          \
+  static constexpr T from_be(const T& x) noexcept {                            \
+    if constexpr (::sus::assertions::is_big_endian())                          \
+      return x;                                                                \
+    else                                                                       \
+      return x.swap_bytes();                                                   \
+  }                                                                            \
+                                                                               \
+  /** Converts an integer from little endian to the target's endianness.       \
+   *                                                                           \
+   * On little endian this is a no-op. On big endian the bytes are swapped.    \
+   */                                                                          \
+  static constexpr T from_le(const T& x) noexcept {                            \
+    if constexpr (::sus::assertions::is_little_endian())                       \
+      return x;                                                                \
+    else                                                                       \
+      return x.swap_bytes();                                                   \
+  }                                                                            \
+                                                                               \
+  /** Converts self to big endian from the target's endianness.                \
+   *                                                                           \
+   * On big endian this is a no-op. On little endian the bytes are swapped.    \
+   */                                                                          \
+  constexpr T to_be() const& noexcept {                                        \
+    if constexpr (::sus::assertions::is_big_endian())                          \
+      return *this;                                                            \
+    else                                                                       \
+      return swap_bytes();                                                     \
+  }                                                                            \
+                                                                               \
+  /** Converts self to little endian from the target's endianness.             \
+   *                                                                           \
+   * On little endian this is a no-op. On big endian the bytes are swapped.    \
+   */                                                                          \
+  constexpr T to_le() const& noexcept {                                        \
+    if constexpr (::sus::assertions::is_little_endian())                       \
+      return *this;                                                            \
+    else                                                                       \
+      return swap_bytes();                                                     \
+  }                                                                            \
+                                                                               \
+  /** Return the memory representation of this integer as a byte array in      \
+   * big-endian (network) byte order.                                          \
+   */                                                                          \
+  constexpr ::sus::containers::Array<u8, Bytes> to_be_bytes() const& noexcept; \
+                                                                               \
+  /** Return the memory representation of this integer as a byte array in      \
+   * little-endian byte order.                                                 \
+   */                                                                          \
+  constexpr ::sus::containers::Array<u8, Bytes> to_le_bytes() const& noexcept; \
+                                                                               \
+  /** Return the memory representation of this integer as a byte array in      \
+   * native byte order.                                                        \
+   *                                                                           \
+   * As the target platform's native endianness is used, portable code should  \
+   * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.          \
+   */                                                                          \
+  constexpr ::sus::containers::Array<u8, Bytes> to_ne_bytes() const& noexcept; \
+                                                                               \
+  /** Create an integer value from its representation as a byte array in big   \
+   * endian.                                                                   \
+   */                                                                          \
+  static constexpr T from_be_bytes(                                            \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
+                                                                               \
+  /** Create an integer value from its representation as a byte array in       \
+   * little endian.                                                            \
+   */                                                                          \
+  static constexpr T from_le_bytes(                                            \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
+                                                                               \
+  /** Create an integer value from its memory representation as a byte array   \
+   * in native endianness.                                                     \
+   *                                                                           \
+   * As the target platform's native endianness is used, portable code likely  \
+   * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate       \
+   * instead.                                                                  \
+   */                                                                          \
+  static constexpr T from_ne_bytes(                                            \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
+  static_assert(true)
+
+#define _sus__signed_endian_out_of_line(T, UnsignedT, Bytes)                  \
+  constexpr ::sus::containers::Array<u8, Bytes> T::to_be_bytes()              \
+      const& noexcept {                                                       \
+    return to_be().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
-  /** Converts an integer from little endian to the target's endianness.      \
-   *                                                                          \
-   * On little endian this is a no-op. On big endian the bytes are swapped.   \
-   */                                                                         \
-  static constexpr T from_le(const T& x) noexcept {                           \
-    if (::sus::assertions::is_little_endian())                                \
-      return x;                                                               \
-    else                                                                      \
-      return x.swap_bytes();                                                  \
+  constexpr ::sus::containers::Array<u8, Bytes> T::to_le_bytes()              \
+      const& noexcept {                                                       \
+    return to_le().to_ne_bytes();                                             \
   }                                                                           \
                                                                               \
-  /** Converts self to big endian from the target's endianness.               \
-   *                                                                          \
-   * On big endian this is a no-op. On little endian the bytes are swapped.   \
-   */                                                                         \
-  constexpr T to_be() const& noexcept {                                       \
-    if (::sus::assertions::is_big_endian())                                   \
-      return *this;                                                           \
-    else                                                                      \
-      return swap_bytes();                                                    \
-  }                                                                           \
-                                                                              \
-  /** Converts self to little endian from the target's endianness.            \
-   *                                                                          \
-   * On little endian this is a no-op. On big endian the bytes are swapped.   \
-   */                                                                         \
-  constexpr T to_le() const& noexcept {                                       \
-    if (::sus::assertions::is_little_endian())                                \
-      return *this;                                                           \
-    else                                                                      \
-      return swap_bytes();                                                    \
-  }                                                                           \
-                                                                              \
-  /** Return the memory representation of this integer as a byte array in     \
-   * big-endian (network) byte order.                                         \
-   */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
-  constexpr Array to_be_bytes() const& noexcept {                             \
-    return to_be().to_ne_bytes sus_clang_bug_58835(<Array>)();                \
-  }                                                                           \
-                                                                              \
-  /** Return the memory representation of this integer as a byte array in     \
-   * little-endian byte order.                                                \
-   */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>>       \
-  constexpr Array to_le_bytes() const& noexcept {                             \
-    return to_le().to_ne_bytes sus_clang_bug_58835(<Array>)();                \
-  }                                                                           \
-                                                                              \
-  /** Return the memory representation of this integer as a byte array in     \
-   * native byte order.                                                       \
-   *                                                                          \
-   * As the target platform's native endianness is used, portable code should \
-   * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.         \
-   */                                                                         \
-  template <sus_clang_bug_58835_else(int&..., ) class Array =                 \
-                ::sus::containers::Array<u8, Bytes>>                          \
-  constexpr Array to_ne_bytes() const& noexcept {                             \
-    auto bytes = Array::with_uninitialized(::sus::marker::unsafe_fn);         \
+  constexpr ::sus::containers::Array<u8, Bytes> T::to_ne_bytes()              \
+      const& noexcept {                                                       \
+    auto bytes = ::sus::containers::Array<u8, Bytes>::with_uninitialized(     \
+        ::sus::marker::unsafe_fn);                                            \
     if (std::is_constant_evaluated()) {                                       \
       auto uval = __private::into_unsigned(primitive_value);                  \
       for (auto i = size_t{0}; i < Bytes; ++i) {                              \
@@ -1829,34 +1844,18 @@ class Tuple;
     }                                                                         \
   }                                                                           \
                                                                               \
-  /** Create an integer value from its representation as a byte array in big  \
-   * endian.                                                                  \
-   */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>,       \
-            std::convertible_to<Array> U>                                     \
-  static constexpr T from_be_bytes(const U& bytes) noexcept {                 \
+  inline constexpr T T::from_be_bytes(                                        \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept {            \
     return from_be(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
-  /** Create an integer value from its representation as a byte array in      \
-   * little endian.                                                           \
-   */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>,       \
-            std::convertible_to<Array> U>                                     \
-  static constexpr T from_le_bytes(const U& bytes) noexcept {                 \
+  inline constexpr T T::from_le_bytes(                                        \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept {            \
     return from_le(from_ne_bytes(bytes));                                     \
   }                                                                           \
                                                                               \
-  /** Create an integer value from its memory representation as a byte array  \
-   * in native endianness.                                                    \
-   *                                                                          \
-   * As the target platform's native endianness is used, portable code likely \
-   * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate      \
-   * instead.                                                                 \
-   */                                                                         \
-  template <int&..., class Array = ::sus::containers::Array<u8, Bytes>,       \
-            std::convertible_to<Array> U>                                     \
-  static constexpr T from_ne_bytes(const U& bytes) noexcept {                 \
+  inline constexpr T T::from_ne_bytes(                                        \
+      const ::sus::containers::Array<u8, Bytes>& bytes) noexcept {            \
     using Unsigned = decltype(__private::into_unsigned(primitive_value));     \
     Unsigned val;                                                             \
     if (std::is_constant_evaluated()) {                                       \
