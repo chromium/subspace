@@ -140,7 +140,7 @@ binary_search_by(
     } else if (cmp == std::strong_ordering::greater) {
       right = mid;
     } else { /* SAFETY: same as the `get_unchecked` above. */
-      sus_assume(::sus::marker::unsafe_fn, mid < len());
+      sus_assume(::sus::marker::unsafe_fn, size_t{mid} < size_t{len()});
       return Result::with(mid);
     }
 
@@ -149,7 +149,7 @@ binary_search_by(
 
   /* SAFETY: directly true from the overall invariant.
    Note that this is `<=`, unlike the assume in the `Result::ok()` path. */
-  sus_assume(::sus::marker::unsafe_fn, left <= len());
+  sus_assume(::sus::marker::unsafe_fn, size_t{left} <= size_t{len()});
   return Result::with_err(left);
 }
 
@@ -322,7 +322,8 @@ constexpr ::sus::Option<const T&> first() && = delete;
 /// # Panics
 /// If the index `i` is beyond the end of the slice, the function will panic.
 /// #[doc.overloads=slice.index.usize]
-sus_pure constexpr inline const T& operator[](::sus::num::usize i) const& noexcept {
+sus_pure constexpr inline const T& operator[](
+    ::sus::num::usize i) const& noexcept {
   ::sus::check(i < len());
   return get_unchecked(::sus::marker::unsafe_fn, i);
 }
@@ -350,10 +351,9 @@ constexpr Option<const T&> get(::sus::num::usize i) && = delete;
 /// The index `i` must be inside the bounds of the slice or Undefined
 /// Behaviour results. The size of the slice must therefore also have a
 /// length of at least 1.
-sus_pure constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
-                                        ::sus::num::usize i) const& noexcept {
-  sus_assume(::sus::marker::unsafe_fn,
-             i.primitive_value < _len_expr.primitive_value);
+sus_pure constexpr inline const T& get_unchecked(
+    ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) const& noexcept {
+  sus_assume(::sus::marker::unsafe_fn, size_t{i} < size_t{len()});
   return as_ptr()[size_t{i}];
 }
 
@@ -713,8 +713,7 @@ sus_pure constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
   const ::sus::num::usize length = len();
 
   /* SAFETY: Caller has to check that `0 <= mid <= len()` */
-  sus_assume(::sus::marker::unsafe_fn,
-             mid.primitive_value <= length.primitive_value);
+  sus_assume(::sus::marker::unsafe_fn, size_t{mid} <= size_t{length});
   return ::sus::Tuple<Slice<T>, Slice<T>>::with(
       Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr(), mid),
       Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + mid,
