@@ -198,17 +198,31 @@ concept NotConvertible = (!std::constructible_from<To, From> &&
                           !std::is_convertible_v<From, To> &&
                           !std::is_assignable_v<To, From>);
 
-#define ENUM(kind, T)                      \
-  decltype([]() {                          \
-    enum kind E : T {                      \
-      X,                                   \
-      Y,                                   \
-      Z,                                   \
-      MIN = std::numeric_limits<T>::min(), \
-      MAX = std::numeric_limits<T>::max()  \
-    };                                     \
-    return E::Z;                           \
-  }())
+template <class T>
+auto make_enum() {
+  enum E : T {
+    X,
+    Y,
+    Z,
+    MIN = std::numeric_limits<T>::min(),
+    MAX = std::numeric_limits<T>::max()
+  };
+  return E::Z;
+}
+
+template <class T>
+auto make_enumclass() {
+  enum class E : T {
+    X,
+    Y,
+    Z,
+    MIN = std::numeric_limits<T>::min(),
+    MAX = std::numeric_limits<T>::max()
+  };
+  return E::Z;
+}
+
+#define ENUM(kind, T) decltype([]() { return make_enum##kind<T>(); }())
 
 TEST(u8, FromPrimitive) {
   // They all register as convertible, but will fail at compile time if the
