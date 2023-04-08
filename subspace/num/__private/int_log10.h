@@ -17,12 +17,14 @@
 #include <stdint.h>
 
 #include "subspace/macros/always_inline.h"
+#include "subspace/macros/pure.h"
 
 // Based on https://doc.rust-lang.org/nightly/src/core/num/int_log10.rs.html
 namespace sus::num::__private::int_log10 {
 
 // 0 < val < 100_000
-constexpr sus_always_inline uint32_t less_than_5(uint32_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t
+less_than_5(uint32_t val) noexcept {
   // Similar to u8, when adding one of these constants to val,
   // we get two possible bit patterns above the low 17 bits,
   // depending on whether val is below or above the threshold.
@@ -42,17 +44,17 @@ constexpr sus_always_inline uint32_t less_than_5(uint32_t val) {
 }
 
 // 0 < val <= u8::MAX
-constexpr sus_always_inline uint32_t u8(uint8_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t u8(uint8_t val) {
   return less_than_5(uint32_t{val});
 }
 
 // 0 < val <= u16::MAX
-constexpr sus_always_inline uint32_t u16(uint16_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t u16(uint16_t val) noexcept {
   return less_than_5(uint32_t{val});
 }
 
 // 0 < val <= u32::MAX
-constexpr sus_always_inline uint32_t u32(uint32_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t u32(uint32_t val) noexcept {
   auto log = uint32_t{0};
   if (val >= 100'000) {
     val /= 100'000;
@@ -62,7 +64,7 @@ constexpr sus_always_inline uint32_t u32(uint32_t val) {
 }
 
 // 0 < val <= u64::MAX
-constexpr sus_always_inline uint32_t u64(uint64_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t u64(uint64_t val) noexcept {
   auto log = uint32_t{0};
   if (val >= 10'000'000'000) {
     val /= 10'000'000'000;
@@ -75,31 +77,38 @@ constexpr sus_always_inline uint32_t u64(uint64_t val) {
   return log + less_than_5(static_cast<uint32_t>(val));
 }
 
-constexpr sus_always_inline uint32_t usize(uint32_t val) { return u32(val); }
+constexpr sus_pure_const sus_always_inline uint32_t
+usize(uint32_t val) noexcept {
+  return u32(val);
+}
 
-constexpr sus_always_inline uint32_t usize(uint64_t val) { return u64(val); }
+constexpr sus_pure_const sus_always_inline uint32_t
+usize(uint64_t val) noexcept {
+  return u64(val);
+}
 
-constexpr sus_always_inline uint32_t i8(int8_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t i8(int8_t val) {
   return u8(static_cast<uint8_t>(val));
 }
 
-constexpr sus_always_inline uint32_t i16(int16_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t i16(int16_t val) noexcept {
   return u16(static_cast<uint16_t>(val));
 }
 
-constexpr sus_always_inline uint32_t i32(int32_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t i32(int32_t val) noexcept {
   return u32(static_cast<uint32_t>(val));
 }
 
-constexpr sus_always_inline uint32_t i64(int64_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t i64(int64_t val) noexcept {
   return u64(static_cast<uint64_t>(val));
 }
 
-constexpr sus_always_inline uint32_t isize(int32_t val) {
+constexpr sus_pure_const sus_always_inline uint32_t
+isize(int32_t val) noexcept {
   return usize(static_cast<uint32_t>(val));
 }
 
-constexpr sus_always_inline uint32_t isize(int64_t val) {
+constexpr sus_always_inline uint32_t isize(int64_t val) noexcept {
   return usize(static_cast<uint64_t>(val));
 }
 
