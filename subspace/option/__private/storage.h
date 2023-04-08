@@ -85,10 +85,10 @@ struct Storage<T, false> final {
   constexpr Storage(std::remove_cvref_t<T>&& t)
       : val_(::sus::move(t)), state_(Some) {}
 
-  constexpr const T& val() const { return val_; };
-  constexpr T& val_mut() { return val_; };
+  sus_pure constexpr const T& val() const { return val_; };
+  sus_pure constexpr T& val_mut() { return val_; };
 
-  [[nodiscard]] constexpr inline State state() const noexcept { return state_; }
+  [[nodiscard]] sus_pure constexpr inline State state() const noexcept { return state_; }
 
   constexpr inline void construct_from_none(const T& t) noexcept
     requires(::sus::mem::Copy<T>)
@@ -201,10 +201,10 @@ struct Storage<T, true> final {
   constexpr Storage(const T& t) : access_(t) {}
   constexpr Storage(T&& t) : access_(::sus::move(t)) {}
 
-  constexpr const T& val() const { return access_.as_inner(); };
-  constexpr T& val_mut() { return access_.as_inner_mut(); };
+  sus_pure constexpr const T& val() const { return access_.as_inner(); };
+  sus_pure constexpr T& val_mut() { return access_.as_inner_mut(); };
 
-  [[nodiscard]] constexpr inline State state() const noexcept {
+  [[nodiscard]] sus_pure constexpr inline State state() const noexcept {
     return access_.is_constructed() ? Some : None;
   }
 
