@@ -42,7 +42,7 @@
 ///
 /// Modifying the container referenced by this slice may cause its buffer to
 /// be reallocated, which would also make any pointers to it invalid.
-sus_pure constexpr inline T* as_mut_ptr() _mut_ref noexcept { return _ptr_expr; }
+[[nodiscard]] sus_pure constexpr inline T* as_mut_ptr() _mut_ref noexcept { return _ptr_expr; }
 
 /// Returns the two mutable pointers spanning the slice.
 ///
@@ -58,7 +58,7 @@ sus_pure constexpr inline T* as_mut_ptr() _mut_ref noexcept { return _ptr_expr; 
 /// pointers to refer to a range of elements in memory, as is common in C++
 /// stdlib algorthms. Note that the pointers can be unpacked from the Range
 /// with structured bindings as in `auto [a, b] = s.as_mut_ptr_range();`.
-sus_pure constexpr ::sus::ops::Range<T*> as_mut_ptr_range() _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr ::sus::ops::Range<T*> as_mut_ptr_range() _mut_ref noexcept {
   return ::sus::ops::Range<T*>(as_mut_ptr(), as_mut_ptr() + len());
 }
 
@@ -253,7 +253,7 @@ constexpr void fill_with_default() noexcept
 
 /// Returns a mutable reference to the first element of the slice, or None if it
 /// is empty.
-sus_pure constexpr ::sus::Option<T&> first_mut() _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr ::sus::Option<T&> first_mut() _mut_ref noexcept {
   if (len() > 0u)
     return ::sus::Option<T&>::some(*as_mut_ptr());
   else
@@ -261,7 +261,7 @@ sus_pure constexpr ::sus::Option<T&> first_mut() _mut_ref noexcept {
 }
 
 // Documented on the const overload.
-sus_pure constexpr T& operator[](::sus::num::usize i) & noexcept {
+[[nodiscard]] sus_pure constexpr T& operator[](::sus::num::usize i) & noexcept {
   check(i < len());
   return get_unchecked_mut(::sus::marker::unsafe_fn, i);
 }
@@ -277,7 +277,7 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 /// Returns a mutable reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
 ///
-sus_pure constexpr Option<T&> get_mut(::sus::num::usize i) _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr Option<T&> get_mut(::sus::num::usize i) _mut_ref noexcept {
   if (i < len()) [[likely]]
     return Option<T&>::some(get_unchecked_mut(::sus::marker::unsafe_fn, i));
   else
@@ -291,7 +291,7 @@ sus_pure constexpr Option<T&> get_mut(::sus::num::usize i) _mut_ref noexcept {
 /// Behaviour results. The size of the slice must therefore also have a
 /// length of at least 1.
 ///
-sus_pure constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
+[[nodiscard]] sus_pure constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
                                       ::sus::num::usize i) _mut_ref noexcept {
   sus_assume(::sus::marker::unsafe_fn,
              i.primitive_value < _len_expr.primitive_value);
@@ -299,7 +299,7 @@ sus_pure constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
 }
 
 // Documented on the const overload of operator[](RangeBounds).
-sus_pure constexpr inline SliceMut<T> operator[](
+[[nodiscard]] sus_pure constexpr inline SliceMut<T> operator[](
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range) & noexcept {
   const ::sus::num::usize length = len();
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
@@ -314,7 +314,7 @@ sus_pure constexpr inline SliceMut<T> operator[](
 
 #if !_delete_rvalue
 // Documented on the const overload of operator[](RangeBounds).
-sus_pure constexpr inline SliceMut<T> operator[](
+[[nodiscard]] sus_pure constexpr inline SliceMut<T> operator[](
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && noexcept {
   const ::sus::num::usize length = len();
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
@@ -339,7 +339,7 @@ sus_pure constexpr inline SliceMut<T> operator[](
 /// Returns None if the Range would otherwise contain an element that is out
 /// of bounds.
 ///
-sus_pure constexpr Option<SliceMut<T>> get_range_mut(
+[[nodiscard]] sus_pure constexpr Option<SliceMut<T>> get_range_mut(
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
     _mut_ref noexcept {
   const ::sus::num::usize length = len();
@@ -365,7 +365,7 @@ sus_pure constexpr Option<SliceMut<T>> get_range_mut(
 /// It is possible to specify a Range contains an element that is out
 /// of bounds of the Slice, which can result in Undefined Behaviour.
 ///
-sus_pure constexpr SliceMut<T> get_range_mut_unchecked(
+[[nodiscard]] sus_pure constexpr SliceMut<T> get_range_mut_unchecked(
     ::sus::marker::UnsafeFnMarker,
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
     _mut_ref noexcept {
@@ -379,13 +379,13 @@ sus_pure constexpr SliceMut<T> get_range_mut_unchecked(
 /// same order they appear in the slice. The iterator gives mutable access to
 /// each element.
 ///
-sus_pure constexpr SliceIterMut<T&> iter_mut() _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr SliceIterMut<T&> iter_mut() _mut_ref noexcept {
   return SliceIterMut<T&>::with(as_mut_ptr(), len());
 }
 
 /// Returns a mutable reference to the last element of the slice, or None if it
 /// is empty.
-sus_pure constexpr ::sus::Option<T&> last_mut() _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr ::sus::Option<T&> last_mut() _mut_ref noexcept {
   const ::sus::num::usize length = len();
   if (length > 0u)
     return ::sus::Option<T&>::some(*(as_mut_ptr() + length - 1u));
@@ -571,7 +571,7 @@ constexpr void sort_unstable_by(F compare) noexcept {
 /// even if the resulting reference is not used. The caller has to ensure
 /// that `0 <= mid <= len()`.
 ///
-sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>> split_at_mut_unchecked(
+[[nodiscard]] sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>> split_at_mut_unchecked(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize mid) _mut_ref noexcept {
   // SAFETY: Caller has to check that `0 <= mid <= len()`.
   sus_assume(::sus::marker::unsafe_fn,

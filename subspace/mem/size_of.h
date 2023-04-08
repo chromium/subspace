@@ -29,7 +29,7 @@ namespace sus::mem {
 /// where `sizeof(T&) == sizeof(T)`.
 template <class T>
   requires(!std::is_reference_v<T>)
-sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
+[[nodiscard]] sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
   return sizeof(T);
 }
 
@@ -108,7 +108,7 @@ sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
 /// bytes of the base class, with the exception of the base class being empty.
 template <class T>
   requires(!std::is_reference_v<T>)
-sus_pure_const consteval sus_always_inline size_t data_size_of() noexcept {
+[[nodiscard]] sus_pure_const consteval sus_always_inline size_t data_size_of() noexcept {
   static_assert(alignof(T) <= alignof(std::max_align_t),
                 "data_size_of() does not support types with alignment greater "
                 "than std::max_align_t.");
