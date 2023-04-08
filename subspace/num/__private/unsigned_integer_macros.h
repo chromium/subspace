@@ -1728,7 +1728,7 @@ class Tuple;
    * On big endian this is a no-op. On little endian the bytes are swapped.    \
    */                                                                          \
   static constexpr T from_be(const T& x) noexcept {                            \
-    if (::sus::assertions::is_big_endian())                                    \
+    if constexpr (::sus::assertions::is_big_endian())                          \
       return x;                                                                \
     else                                                                       \
       return x.swap_bytes();                                                   \
@@ -1739,7 +1739,7 @@ class Tuple;
    * On little endian this is a no-op. On big endian the bytes are swapped.    \
    */                                                                          \
   static constexpr T from_le(const T& x) noexcept {                            \
-    if (::sus::assertions::is_little_endian())                                 \
+    if constexpr (::sus::assertions::is_little_endian())                       \
       return x;                                                                \
     else                                                                       \
       return x.swap_bytes();                                                   \
@@ -1750,7 +1750,7 @@ class Tuple;
    * On big endian this is a no-op. On little endian the bytes are swapped.    \
    */                                                                          \
   constexpr T to_be() const& noexcept {                                        \
-    if (::sus::assertions::is_big_endian())                                    \
+    if constexpr (::sus::assertions::is_big_endian())                          \
       return *this;                                                            \
     else                                                                       \
       return swap_bytes();                                                     \
@@ -1761,7 +1761,7 @@ class Tuple;
    * On little endian this is a no-op. On big endian the bytes are swapped.    \
    */                                                                          \
   constexpr T to_le() const& noexcept {                                        \
-    if (::sus::assertions::is_little_endian())                                 \
+    if constexpr (::sus::assertions::is_little_endian())                       \
       return *this;                                                            \
     else                                                                       \
       return swap_bytes();                                                     \
