@@ -42,7 +42,9 @@
 ///
 /// Modifying the container referenced by this slice may cause its buffer to
 /// be reallocated, which would also make any pointers to it invalid.
-[[nodiscard]] sus_pure constexpr inline T* as_mut_ptr() _mut_ref noexcept { return _ptr_expr; }
+[[nodiscard]] sus_pure constexpr inline T* as_mut_ptr() _mut_ref noexcept {
+  return _ptr_expr;
+}
 
 /// Returns the two mutable pointers spanning the slice.
 ///
@@ -58,7 +60,8 @@
 /// pointers to refer to a range of elements in memory, as is common in C++
 /// stdlib algorthms. Note that the pointers can be unpacked from the Range
 /// with structured bindings as in `auto [a, b] = s.as_mut_ptr_range();`.
-[[nodiscard]] sus_pure constexpr ::sus::ops::Range<T*> as_mut_ptr_range() _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr ::sus::ops::Range<T*> as_mut_ptr_range()
+    _mut_ref noexcept {
   return ::sus::ops::Range<T*>(as_mut_ptr(), as_mut_ptr() + len());
 }
 
@@ -253,7 +256,8 @@ constexpr void fill_with_default() noexcept
 
 /// Returns a mutable reference to the first element of the slice, or None if it
 /// is empty.
-[[nodiscard]] sus_pure constexpr ::sus::Option<T&> first_mut() _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr ::sus::Option<T&> first_mut()
+    _mut_ref noexcept {
   if (len() > 0u)
     return ::sus::Option<T&>::some(*as_mut_ptr());
   else
@@ -277,7 +281,8 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 /// Returns a mutable reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
 ///
-[[nodiscard]] sus_pure constexpr Option<T&> get_mut(::sus::num::usize i) _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr Option<T&> get_mut(
+    ::sus::num::usize i) _mut_ref noexcept {
   if (i < len()) [[likely]]
     return Option<T&>::some(get_unchecked_mut(::sus::marker::unsafe_fn, i));
   else
@@ -291,8 +296,8 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 /// Behaviour results. The size of the slice must therefore also have a
 /// length of at least 1.
 ///
-[[nodiscard]] sus_pure constexpr inline T& get_unchecked_mut(::sus::marker::UnsafeFnMarker,
-                                      ::sus::num::usize i) _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr inline T& get_unchecked_mut(
+    ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) _mut_ref noexcept {
   sus_assume(::sus::marker::unsafe_fn,
              i.primitive_value < _len_expr.primitive_value);
   return as_mut_ptr()[size_t{i}];
@@ -385,7 +390,8 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 
 /// Returns a mutable reference to the last element of the slice, or None if it
 /// is empty.
-[[nodiscard]] sus_pure constexpr ::sus::Option<T&> last_mut() _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr ::sus::Option<T&> last_mut()
+    _mut_ref noexcept {
   const ::sus::num::usize length = len();
   if (length > 0u)
     return ::sus::Option<T&>::some(*(as_mut_ptr() + length - 1u));
@@ -435,10 +441,9 @@ constexpr RChunksExactMut<T> rchunks_exact_mut(
 constexpr RChunksMut<T> rchunks_mut(
     ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
-  return RChunksMut<T>::with(
-      ::sus::containers::SliceMut<T>::from_raw_parts_mut(
-          ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
-      chunk_size);
+  return RChunksMut<T>::with(::sus::containers::SliceMut<T>::from_raw_parts_mut(
+                                 ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
+                             chunk_size);
 }
 
 /// Reverses the order of elements in the slice, in place.
@@ -476,9 +481,32 @@ constexpr void reverse() noexcept
     //
     // TODO: Verify that the bounds checks are elided here since the compiler
     // knows the length of each slice is `half_len`
-    ::sus::mem::swap_no_alias_unchecked(::sus::marker::unsafe_fn, front_half[i],
+    ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, front_half[i],
                                         back_half[half_len - 1u - i]);
   }
+}
+
+/// Rotates the slice in-place such that the first `mid` elements of the slice
+/// move to the end while the last `self.len() - mid` elements move to the
+/// front. After calling `rotate_left()`, the element previously at index `mid`
+/// will become the first element in the slice.
+///
+/// # Panics
+/// This function will panic if `mid` is greater than the length of the slice.
+/// Note that `mid == len()` does not panic and is a no-op rotation.
+///
+/// # Complexity
+/// Takes linear (in len()) time.
+void rotate_left(::sus::num::usize mid) noexcept
+  requires(::sus::mem::Move<T>)
+{
+  ::sus::check(mid <= len());
+  const ::sus::num::usize k = len() - mid;
+  T* const p = as_mut_ptr();
+
+  // SAFETY: The range `[p.add(mid) - mid, p.add(mid) + k)` is trivially
+  // valid for reading and writing, as required by `ptr_rotate`.
+  rotate::ptr_rotate(mid, p.add(mid), k);
 }
 
 /// Sorts the slice.
@@ -571,8 +599,9 @@ constexpr void sort_unstable_by(F compare) noexcept {
 /// even if the resulting reference is not used. The caller has to ensure
 /// that `0 <= mid <= len()`.
 ///
-[[nodiscard]] sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>> split_at_mut_unchecked(
-    ::sus::marker::UnsafeFnMarker, ::sus::num::usize mid) _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>>
+split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
+                       ::sus::num::usize mid) _mut_ref noexcept {
   // SAFETY: Caller has to check that `0 <= mid <= len()`.
   sus_assume(::sus::marker::unsafe_fn,
              mid.primitive_value <= len().primitive_value);

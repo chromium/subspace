@@ -69,9 +69,9 @@ constexpr void swap(T& lhs, T& rhs) noexcept {
 /// may result.
 template <class T>
   requires(sus::mem::Move<T> && !std::is_const_v<T>)
-constexpr void swap_no_alias_unchecked(::sus::marker::UnsafeFnMarker,
-                                       T& sus_noalias_var lhs,
-                                       T& sus_noalias_var rhs) noexcept {
+constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker,
+                                   T& sus_noalias_var lhs,
+                                   T& sus_noalias_var rhs) noexcept {
   if constexpr (::sus::mem::relocate_by_memcpy<T>) {
     // memcpy() is not constexpr so we can't use it in constexpr evaluation.
     if (!std::is_constant_evaluated()) {
