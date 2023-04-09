@@ -25,6 +25,7 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/prelude.h"
+#include "subspace/test/ensure_use.h"
 #include "subspace/tuple/tuple.h"
 
 namespace {
@@ -475,33 +476,33 @@ TEST(i64DeathTest, FromOutOfRange) {
   EXPECT_DEATH(
       {
         auto x = i64::from(uint64_t{0xffff'ffff'ffff'ffff});
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
 
   EXPECT_DEATH(
       {
         auto x = i64::from(ENUM(, uint64_t)::MAX);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
   EXPECT_DEATH(
       {
         auto x = i64::from(ENUM(class, uint64_t)::MAX);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
 
   EXPECT_DEATH(
       {
         auto x = i64::from(u64::MAX);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
   EXPECT_DEATH(
       {
         auto x = i64::from(usize::MAX);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
 #endif

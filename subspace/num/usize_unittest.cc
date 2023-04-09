@@ -24,6 +24,7 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/prelude.h"
+#include "subspace/test/ensure_use.h"
 #include "subspace/tuple/tuple.h"
 
 namespace {
@@ -510,26 +511,26 @@ TEST(usizeDeathTest, FromOutOfRange) {
   EXPECT_DEATH(
       {
         auto x = usize::from(int64_t{-1});
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
   EXPECT_DEATH(
       {
         auto x = usize::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff});
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
 
   EXPECT_DEATH(
       {
         auto x = usize::from(ENUM(, int64_t)::MIN);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
   EXPECT_DEATH(
       {
         auto x = usize::from(ENUM(class, int64_t)::MIN);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
 
@@ -539,19 +540,19 @@ TEST(usizeDeathTest, FromOutOfRange) {
     EXPECT_DEATH(
         {
           auto x = usize::from(ENUM(, uint64_t)::MAX);
-          EXPECT_EQ(x, x);
+          ensure_use(&x);
         },
         "");
     EXPECT_DEATH(
         {
           auto x = usize::from(ENUM(class, uint64_t)::MAX);
-          EXPECT_EQ(x, x);
+          ensure_use(&x);
         },
         "");
     EXPECT_DEATH(
         {
           auto x = usize::from(uint64_t{0xffff'ffff'ffff'ffff});
-          EXPECT_EQ(x, x);
+          ensure_use(&x);
         },
         "");
   }
@@ -559,31 +560,31 @@ TEST(usizeDeathTest, FromOutOfRange) {
   EXPECT_DEATH(
       {
         auto x = usize::from(-1_i8);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
   EXPECT_DEATH(
       {
         auto x = usize::from(-1_i16);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
   EXPECT_DEATH(
       {
         auto x = usize::from(-1_i32);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
   EXPECT_DEATH(
       {
         auto x = usize::from(-1_i64);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
   EXPECT_DEATH(
       {
         auto x = usize::from(-1_isize);
-        EXPECT_EQ(x, x);
+        ensure_use(&x);
       },
       "");
 #endif

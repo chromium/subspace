@@ -154,6 +154,8 @@ target_sources(subspace_test_support PUBLIC
     "test/from_i32.h"
     "test/behaviour_types.h"
     "test/behaviour_types_unittest.cc"
+    "test/ensure_use.cc"
+    "test/ensure_use.h"
     "test/no_copy_move.h"
 )
 
