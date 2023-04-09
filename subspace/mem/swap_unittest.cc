@@ -229,7 +229,7 @@ TEST(Swap, NoAliasUnchecked) {
   };
 
   S i(2);
-  sus::mem::swap_no_alias_unchecked(unsafe_fn, mref(i), mref(i));
+  sus::mem::swap_nonoverlapping(unsafe_fn, mref(i), mref(i));
   // Luckily S doesn't do anything bad when assigned to itself, and we can
   // verify the number of times a move happened.
   EXPECT_EQ(moves, 3u);
@@ -239,14 +239,14 @@ TEST(Swap, NoAliasUnchecked) {
       [i = 0_i32]() mutable { return sus::mem::replace(i, i + 1); }));
   Trivial t2(sus::Array<i32, 100>::with_initializer(
       [i = 10_i32]() mutable { return sus::mem::replace(i, i + 1); }));
-  sus::mem::swap_no_alias_unchecked(unsafe_fn, mref(t1), mref(t2));
+  sus::mem::swap_nonoverlapping(unsafe_fn, mref(t1), mref(t2));
   for (usize j : "0..100"_r) {
     EXPECT_EQ(t1.num[j], i32::from(j) + 10);
     EXPECT_EQ(t2.num[j], i32::from(j));
   }
   EXPECT_EQ(Trivial::moves, 0u);
 
-  sus::mem::swap_no_alias_unchecked(unsafe_fn, mref(t1), mref(t1));
+  sus::mem::swap_nonoverlapping(unsafe_fn, mref(t1), mref(t1));
   // As memcpy() was called in an invalid way we can't really check anything
   // here, but we can see we didn't check() anything.
 }
