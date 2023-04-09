@@ -69,12 +69,6 @@ struct relocatable_tag final {
 //
 // clang-format off
 template <class... T>
-concept relocate_by_memcpy2 =
-  (... &&
-    (std::is_reference_v<T>
-    ));
-
-template <class... T>
 concept relocate_by_memcpy =
   (... &&
     (std::is_reference_v<T>
