@@ -24,6 +24,7 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/prelude.h"
+#include "subspace/test/ensure_use.h"
 #include "subspace/tuple/tuple.h"
 
 namespace {
@@ -481,47 +482,86 @@ TEST(u8, From) {
 
 TEST(u8DeathTest, FromOutOfRange) {
 #if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH({auto x= u8::from(int64_t{-1});
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff});
-        EXPECT_EQ(x, x);
-      }, "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(int64_t{-1});
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(int64_t{-1 - 0x7fff'ffff'ffff'ffff});
+        ensure_use(&x);
+      },
+      "");
 
-  EXPECT_DEATH({auto x= u8::from(ENUM(, int64_t)::MIN);
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(ENUM(, int64_t)::MAX);
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(ENUM(, uint64_t)::MAX);
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(ENUM(class, int64_t)::MIN);
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(ENUM(class, int64_t)::MAX);
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(ENUM(class, uint64_t)::MAX);
-        EXPECT_EQ(x, x);
-      }, "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(ENUM(, int64_t)::MIN);
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(ENUM(, int64_t)::MAX);
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(ENUM(, uint64_t)::MAX);
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(ENUM(class, int64_t)::MIN);
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(ENUM(class, int64_t)::MAX);
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(ENUM(class, uint64_t)::MAX);
+        ensure_use(&x);
+      },
+      "");
 
-  EXPECT_DEATH({auto x= u8::from(-1_i8);
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(-1_i16);
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(-1_i32);
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(-1_i64);
-        EXPECT_EQ(x, x);
-      }, "");
-  EXPECT_DEATH({auto x= u8::from(-1_isize);
-        EXPECT_EQ(x, x);
-      }, "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(-1_i8);
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(-1_i16);
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(-1_i32);
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(-1_i64);
+        ensure_use(&x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto x = u8::from(-1_isize);
+        ensure_use(&x);
+      },
+      "");
 #endif
 }
 
