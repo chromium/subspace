@@ -216,7 +216,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// This avoids addition on a dangling pointer, which is Undefined Behaviour
   /// in C++, and avoids runtime checks for `length == 0`. Care must be applied
   /// when converting slices between languages as a result.
- [[nodiscard]]  sus_pure static constexpr inline SliceMut from_raw_parts_mut(
+  [[nodiscard]] sus_pure static constexpr inline SliceMut from_raw_parts_mut(
       ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
       ::sus::usize len) noexcept {
     ::sus::check(size_t{len} <= size_t{isize::MAX_PRIMITIVE});
@@ -238,7 +238,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /** Converts the slice into an iterator that consumes the slice and returns \
    * each element in the same order they appear in the slice.                 \
    */
- [[nodiscard]]  sus_pure constexpr SliceIterMut<T&> into_iter() && noexcept {
+  [[nodiscard]] sus_pure constexpr SliceIterMut<T&> into_iter() && noexcept {
     return SliceIterMut<T&>::with(slice_.data_, slice_.len_);
   }
 
@@ -263,9 +263,13 @@ class [[sus_trivial_abi]] SliceMut final {
   }
 
   // SliceMut can be used as a Slice.
- [[nodiscard]]  sus_pure constexpr operator const Slice<T>&() const& { return slice_; }
- [[nodiscard]]  sus_pure constexpr operator Slice<T>&() & { return slice_; }
- [[nodiscard]]  sus_pure constexpr operator Slice<T>() && { return ::sus::move(slice_); }
+  [[nodiscard]] sus_pure constexpr operator const Slice<T>&() const& {
+    return slice_;
+  }
+  [[nodiscard]] sus_pure constexpr operator Slice<T>&() & { return slice_; }
+  [[nodiscard]] sus_pure constexpr operator Slice<T>() && {
+    return ::sus::move(slice_);
+  }
 
 #define _ptr_expr slice_.data_
 #define _len_expr slice_.len_

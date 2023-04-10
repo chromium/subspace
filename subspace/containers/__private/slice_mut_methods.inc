@@ -84,10 +84,7 @@
 constexpr ChunksExactMut<T> chunks_exact_mut(
     ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
-  return ChunksExactMut<T>::with(
-      ::sus::containers::SliceMut<T>::from_raw_parts_mut(
-          ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
-      chunk_size);
+  return ChunksExactMut<T>::with(*this, chunk_size);
 }
 
 /// Returns an iterator over chunk_size elements of the slice at a time,
@@ -107,9 +104,7 @@ constexpr ChunksExactMut<T> chunks_exact_mut(
 constexpr ChunksMut<T> chunks_mut(
     ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
-  return ChunksMut<T>::with(::sus::containers::SliceMut<T>::from_raw_parts_mut(
-                                ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
-                            chunk_size);
+  return ChunksMut<T>::with(*this, chunk_size);
 }
 
 /// Copies all elements from src into `*this`, using a `memcpy()` or equivalent.
@@ -419,10 +414,7 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 constexpr RChunksExactMut<T> rchunks_exact_mut(
     ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
-  return RChunksExactMut<T>::with(
-      ::sus::containers::SliceMut<T>::from_raw_parts_mut(
-          ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
-      chunk_size);
+  return RChunksExactMut<T>::with(*this, chunk_size);
 }
 
 /// Returns an iterator over `chunk_size` elements of the slice at a time,
@@ -441,9 +433,7 @@ constexpr RChunksExactMut<T> rchunks_exact_mut(
 constexpr RChunksMut<T> rchunks_mut(
     ::sus::num::usize chunk_size) _mut_ref noexcept {
   ::sus::check(chunk_size > 0u);
-  return RChunksMut<T>::with(::sus::containers::SliceMut<T>::from_raw_parts_mut(
-                                 ::sus::marker::unsafe_fn, as_mut_ptr(), len()),
-                             chunk_size);
+  return RChunksMut<T>::with(*this, chunk_size);
 }
 
 /// Reverses the order of elements in the slice, in place.
@@ -463,12 +453,15 @@ constexpr void reverse() noexcept
   const auto half_len = len() / 2;
   const auto [start, end] = as_mut_ptr_range();
 
+  // Note, `front_half` and `back_half` will omit the middle element in an
+  // odd-sized slice.
+
   // SAFETY: The slice is valid, as it points to the start of `*this` and
   // half_len < len() by construction above.
   auto front_half = ::sus::containers::SliceMut<T>::from_raw_parts_mut(
       ::sus::marker::unsafe_fn, start, half_len);
   // SAFETY: The slice is valid, as it points to the half_len elements from the
-  // end of `*this`, and half_len < len() by construction above.
+  // end of `*this`, and `len() - half_len + half_len == len()`.
   auto back_half = ::sus::containers::SliceMut<T>::from_raw_parts_mut(
       ::sus::marker::unsafe_fn, end - half_len, half_len);
 
@@ -482,7 +475,7 @@ constexpr void reverse() noexcept
     // TODO: Verify that the bounds checks are elided here since the compiler
     // knows the length of each slice is `half_len`
     ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, front_half[i],
-                                        back_half[half_len - 1u - i]);
+                                    back_half[half_len - 1u - i]);
   }
 }
 
@@ -496,17 +489,65 @@ constexpr void reverse() noexcept
 /// Note that `mid == len()` does not panic and is a no-op rotation.
 ///
 /// # Complexity
-/// Takes linear (in len()) time.
+/// Takes linear (in `len()`) time.
 void rotate_left(::sus::num::usize mid) noexcept
   requires(::sus::mem::Move<T>)
 {
-  ::sus::check(mid <= len());
-  const ::sus::num::usize k = len() - mid;
+  const ::sus::num::usize length = len();
+  ::sus::check(mid <= length);
+  const ::sus::num::usize k = length - mid;
   T* const p = as_mut_ptr();
 
-  // SAFETY: The range `[p.add(mid) - mid, p.add(mid) + k)` is trivially
-  // valid for reading and writing, as required by `ptr_rotate`.
-  rotate::ptr_rotate(mid, p.add(mid), k);
+  if constexpr (::sus::mem::relocate_by_memcpy<T>) {
+    if (!std::is_constant_evaluated()) {
+      // TODO: Implement this faster path.
+
+#if 0
+      // SAFETY: The range `[p + mid - mid, p + mid + k)` is trivially
+      // valid for reading and writing, as required by `ptr_rotate`.
+      ::sus::container::__private::ptr_rotate(mid, p + mid, k);
+      return;
+#endif
+    }
+  }
+
+  // In these cases, the pointers below swap with themselves, which makes them
+  // overlapping.
+  if (mid == 0 || k == 0) return;
+
+  // This portion moves everything up to `k` into place. If `k > mid` then this
+  // solves the whole slice, with an even/odd mismatch fixup below.
+  for (::sus::num::usize i; i < k; i += 1) {
+    ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, *(p + i),
+                                    *(p + mid + i));
+  }
+  if (k < mid) {
+    // If `k < mid` The elements in the range `[k, mid)` were not moved yet. The
+    // first element at `mid` now needs to move to `k`. We can solve this by
+    // recursion.
+    // SAFETY: `k <= len()` as `k` is constructed by subtracting `len() - mid`.
+    get_range_mut_unchecked(::sus::marker::unsafe_fn, ::sus::ops::RangeFrom(k))
+        .rotate_left(mid - k);
+  } else if (k > mid && mid % 2 != (k - mid) % 2) {
+    // If there's a mismatch between the number of elements visited and the
+    // number left in terms even/odd, then we need to adjust the last `mid`
+    // elements.
+    if ((k - mid) % 2 == 1) {
+      // The last elements need to be rotated right one position if we had an
+      // even number of elements in [mid, k) and an odd number in [k, length).
+      for (::sus::num::usize i = k; i < length - 1; i += 1u) {
+        ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, *(p + i),
+                                        *(p + length - 1u));
+      }
+    } else {
+      // The last elements need to be rotated left one position if we had an
+      // odd number of elements in [mid, k) and an even number in [k, length).
+      for (::sus::num::usize i = k; i < length - 1; i += 1u) {
+        ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, *(p + i),
+                                        *(p + i + 1u));
+      }
+    }
+  }
 }
 
 /// Sorts the slice.
