@@ -204,14 +204,15 @@ class Tuple;
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
-    if (v < 0) {                                                                 \
+    if (v < P{0}) {                                                              \
       ::sus::panic_with_message(                                                 \
           *"Cannot construct unsigned integer from negative value.");            \
     }                                                                            \
-    if (::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>()) {          \
-      /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
-       * fit. When removing the sign bit, there's still at least as many bits    \
-       * as T. */                                                                \
+    if constexpr (::sus::mem::size_of<P>() >                                     \
+                  ::sus::mem::size_of<PrimitiveT>()) {                           \
+      /* SAFETY: P has more bits than T, so converting an unsigned T to P        \
+       * will fit. When removing the sign bit, there's still at least as         \
+       * many bits as T. */                                                      \
       if (v > static_cast<P>(T::MAX_PRIMITIVE)) {                                \
         ::sus::panic_with_message(                                             \
             *"Cannot construct unsigned integer from value outside its "       \
@@ -232,7 +233,7 @@ class Tuple;
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
-    if (v < 0) {                                                                 \
+    if (v < P{0}) {                                                              \
       ::sus::panic_with_message(                                                 \
           *"Cannot construct unsigned integer from negative value.");            \
     }                                                                            \
@@ -260,7 +261,7 @@ class Tuple;
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
-    if (v < 0) {                                                                 \
+    if (v < P{0}) {                                                              \
       ::sus::panic_with_message(                                                 \
           *"Cannot construct unsigned integer from negative value.");            \
     }                                                                            \
@@ -355,11 +356,12 @@ class Tuple;
    */                                                                            \
   template <SignedPrimitiveInteger P>                                            \
   consteval inline T& operator=(P v) noexcept {                                  \
-    if (v < 0) {                                                                 \
+    if (v < P{0}) {                                                              \
       ::sus::panic_with_message(                                                 \
           *"Cannot assign to unsigned integer from negative value.");            \
     }                                                                            \
-    if (::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>()) {          \
+    if constexpr (::sus::mem::size_of<P>() >                                     \
+                  ::sus::mem::size_of<PrimitiveT>()) {                           \
       /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
        * fit. When removing the sign bit, there's still at least as many bits    \
        * as T. */                                                                \
@@ -384,11 +386,12 @@ class Tuple;
    */                                                                            \
   template <SignedPrimitiveEnum P>                                               \
   consteval inline T& operator=(P v) noexcept {                                  \
-    if (v < 0) {                                                                 \
+    if (v < P{0}) {                                                              \
       ::sus::panic_with_message(                                                 \
           *"Cannot assign to unsigned integer from negative value.");            \
     }                                                                            \
-    if (::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>()) {          \
+    if constexpr (::sus::mem::size_of<P>() >                                     \
+                  ::sus::mem::size_of<PrimitiveT>()) {                           \
       /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
        * fit. When removing the sign bit, there's still at least as many bits    \
        * as T. */                                                                \
@@ -414,7 +417,7 @@ class Tuple;
    * #[doc.overloads=unsigned.from.signed]                                     \
    */                                                                          \
   template <Signed S>                                                          \
-  [[nodiscard]] sus_pure static constexpr T from(S s) noexcept {                             \
+  [[nodiscard]] sus_pure static constexpr T from(S s) noexcept {               \
     ::sus::check(s.primitive_value >= 0);                                      \
     constexpr auto umax = __private::into_unsigned(S::MAX_PRIMITIVE);          \
     if constexpr (MAX_PRIMITIVE < umax)                                        \
@@ -431,8 +434,8 @@ class Tuple;
    * #[doc.overloads=unsigned.tryfrom.signed]                                  \
    */                                                                          \
   template <Signed S>                                                          \
-  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<T,                           \
-                                                  ::sus::num::TryFromIntError> \
+  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<               \
+      T, ::sus::num::TryFromIntError>                                          \
   try_from(S s) noexcept {                                                     \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if (s.primitive_value < 0) {                                               \
@@ -457,7 +460,7 @@ class Tuple;
    * #[doc.overloads=unsigned.from.unsigned]                                   \
    */                                                                          \
   template <Unsigned U>                                                        \
-  [[nodiscard]] sus_pure static constexpr T from(U u) noexcept {                             \
+  [[nodiscard]] sus_pure static constexpr T from(U u) noexcept {               \
     if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)                            \
       ::sus::check(u.primitive_value <= MAX_PRIMITIVE);                        \
     return T(static_cast<PrimitiveT>(u.primitive_value));                      \
@@ -471,8 +474,8 @@ class Tuple;
    * #[doc.overloads=unsigned.tryfrom.unsigned]                                \
    */                                                                          \
   template <Unsigned U>                                                        \
-  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<T,                           \
-                                                  ::sus::num::TryFromIntError> \
+  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<               \
+      T, ::sus::num::TryFromIntError>                                          \
   try_from(U u) noexcept {                                                     \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE) {                          \
@@ -493,7 +496,7 @@ class Tuple;
    * #[doc.overloads=unsigned.from.signedprimitive]                            \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
-  [[nodiscard]] sus_pure static constexpr T from(S s) {                                      \
+  [[nodiscard]] sus_pure static constexpr T from(S s) {                        \
     ::sus::check(s >= 0);                                                      \
     constexpr auto umax = __private::into_unsigned(__private::max_value<S>()); \
     if constexpr (MAX_PRIMITIVE < umax)                                        \
@@ -509,8 +512,8 @@ class Tuple;
    * #[doc.overloads=unsigned.tryfrom.signedprimitive]                         \
    */                                                                          \
   template <SignedPrimitiveInteger S>                                          \
-  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<T,                           \
-                                                  ::sus::num::TryFromIntError> \
+  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<               \
+      T, ::sus::num::TryFromIntError>                                          \
   try_from(S s) {                                                              \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if (s < 0) {                                                               \
@@ -536,7 +539,7 @@ class Tuple;
    */                                                                          \
   template <class S>                                                           \
     requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)            \
-  [[nodiscard]] sus_pure static constexpr T from(S s) {                                      \
+  [[nodiscard]] sus_pure static constexpr T from(S s) {                        \
     using D = std::underlying_type_t<S>;                                       \
     ::sus::check(static_cast<D>(s) >= 0);                                      \
     constexpr auto umax = __private::into_unsigned(__private::max_value<D>()); \
@@ -555,8 +558,8 @@ class Tuple;
    */                                                                          \
   template <class S>                                                           \
     requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)            \
-  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<T,                           \
-                                                  ::sus::num::TryFromIntError> \
+  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<               \
+      T, ::sus::num::TryFromIntError>                                          \
   try_from(S s) {                                                              \
     using D = std::underlying_type_t<S>;                                       \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
@@ -583,7 +586,7 @@ class Tuple;
    * #[doc.overloads=unsigned.from.unsignedprimitive]                          \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
-  [[nodiscard]] sus_pure static constexpr T from(U u) {                                      \
+  [[nodiscard]] sus_pure static constexpr T from(U u) {                        \
     if constexpr (MAX_PRIMITIVE < __private::max_value<U>())                   \
       ::sus::check(u <= MAX_PRIMITIVE);                                        \
     return T(static_cast<PrimitiveT>(u));                                      \
@@ -597,8 +600,8 @@ class Tuple;
    * #[doc.overloads=unsigned.tryfrom.unsignedprimitive]                       \
    */                                                                          \
   template <UnsignedPrimitiveInteger U>                                        \
-  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<T,                           \
-                                                  ::sus::num::TryFromIntError> \
+  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<               \
+      T, ::sus::num::TryFromIntError>                                          \
   try_from(U u) {                                                              \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
     if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {                 \
@@ -619,7 +622,7 @@ class Tuple;
    */                                                                          \
   template <class U>                                                           \
     requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \
-  [[nodiscard]] sus_pure static constexpr T from(U u) {                                      \
+  [[nodiscard]] sus_pure static constexpr T from(U u) {                        \
     using D = std::underlying_type_t<U>;                                       \
     if constexpr (MAX_PRIMITIVE < __private::max_value<D>())                   \
       ::sus::check(static_cast<D>(u) <= MAX_PRIMITIVE);                        \
@@ -634,8 +637,8 @@ class Tuple;
    */                                                                          \
   template <class U>                                                           \
     requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \
-  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<T,                           \
-                                                  ::sus::num::TryFromIntError> \
+  [[nodiscard]] sus_pure static constexpr ::sus::result::Result<               \
+      T, ::sus::num::TryFromIntError>                                          \
   try_from(U u) {                                                              \
     using D = std::underlying_type_t<U>;                                       \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
@@ -658,8 +661,8 @@ class Tuple;
    * #[doc.overloads=unsigned.from.unchecked.int]                              \
    */                                                                          \
   template <Integer I>                                                         \
-  [[nodiscard]] sus_pure static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,    \
-                                             I i) noexcept {                   \
+  [[nodiscard]] sus_pure static constexpr T from_unchecked(                    \
+      ::sus::marker::UnsafeFnMarker, I i) noexcept {                           \
     return T(static_cast<PrimitiveT>(i.primitive_value));                      \
   }                                                                            \
                                                                                \
@@ -673,8 +676,8 @@ class Tuple;
    * #[doc.overloads=unsigned.from.unchecked.primitive]                        \
    */                                                                          \
   template <PrimitiveInteger P>                                                \
-  [[nodiscard]] sus_pure static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,    \
-                                             P p) noexcept {                   \
+  [[nodiscard]] sus_pure static constexpr T from_unchecked(                    \
+      ::sus::marker::UnsafeFnMarker, P p) noexcept {                           \
     return T(static_cast<PrimitiveT>(p));                                      \
   }                                                                            \
                                                                                \
@@ -689,8 +692,8 @@ class Tuple;
    */                                                                          \
   template <class P>                                                           \
     requires(PrimitiveEnum<P> || PrimitiveEnumClass<P>)                        \
-  [[nodiscard]] sus_pure static constexpr T from_unchecked(::sus::marker::UnsafeFnMarker,    \
-                                             P p) noexcept {                   \
+  [[nodiscard]] sus_pure static constexpr T from_unchecked(                    \
+      ::sus::marker::UnsafeFnMarker, P p) noexcept {                           \
     return T(static_cast<PrimitiveT>(p));                                      \
   }                                                                            \
   static_assert(true)
@@ -1509,7 +1512,7 @@ class Tuple;
   /** Saturating integer subtraction. Computes self - rhs, saturating at the   \
    * numeric bounds instead of overflowing.                                    \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr T saturating_sub(const T& rhs) const& {                   \
+  [[nodiscard]] sus_pure constexpr T saturating_sub(const T& rhs) const& {     \
     return __private::saturating_sub(primitive_value, rhs.primitive_value);    \
   }                                                                            \
                                                                                \
@@ -1791,7 +1794,7 @@ class Tuple;
    *                                                                          \
    * On big endian this is a no-op. On little endian the bytes are swapped.   \
    */                                                                         \
-  [[nodiscard]] static sus_pure constexpr T from_be(const T& x) noexcept {                  \
+  [[nodiscard]] static sus_pure constexpr T from_be(const T& x) noexcept {    \
     if constexpr (::sus::assertions::is_big_endian())                         \
       return x;                                                               \
     else                                                                      \
@@ -1802,7 +1805,7 @@ class Tuple;
    *                                                                          \
    * On little endian this is a no-op. On big endian the bytes are swapped.   \
    */                                                                         \
-  [[nodiscard]] static sus_pure constexpr T from_le(const T& x) noexcept {                  \
+  [[nodiscard]] static sus_pure constexpr T from_le(const T& x) noexcept {    \
     if constexpr (::sus::assertions::is_little_endian())                      \
       return x;                                                               \
     else                                                                      \
@@ -1855,13 +1858,13 @@ class Tuple;
   /** Create an integer value from its representation as a byte array in big  \
    * endian.                                                                  \
    */                                                                         \
-  [[nodiscard]] static sus_pure constexpr T from_be_bytes(                                  \
+  [[nodiscard]] static sus_pure constexpr T from_be_bytes(                    \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;             \
                                                                               \
   /** Create an integer value from its representation as a byte array in      \
    * little endian.                                                           \
    */                                                                         \
-  [[nodiscard]] static sus_pure constexpr T from_le_bytes(                                  \
+  [[nodiscard]] static sus_pure constexpr T from_le_bytes(                    \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;             \
                                                                               \
   /** Create an integer value from its memory representation as a byte array  \
@@ -1871,7 +1874,7 @@ class Tuple;
    * wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate      \
    * instead.                                                                 \
    */                                                                         \
-  [[nodiscard]] static sus_pure constexpr T from_ne_bytes(                                  \
+  [[nodiscard]] static sus_pure constexpr T from_ne_bytes(                    \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;             \
   static_assert(true)
 
@@ -1938,18 +1941,18 @@ class Tuple;
   }                                                                           \
   static_assert(true)
 
-#define _sus__unsigned_hash_equal_to(Type)                                \
-  template <>                                                             \
-  struct hash<Type> {                                                     \
-    [[nodiscard]] sus_pure auto operator()(const Type& u) const noexcept {              \
-      return std::hash<decltype(u.primitive_value)>()(u.primitive_value); \
-    }                                                                     \
-  };                                                                      \
-  template <>                                                             \
-  struct equal_to<Type> {                                                 \
-    [[nodiscard]] sus_pure constexpr auto operator()(                     \
-        const Type& l, const Type& r) const noexcept {                    \
-      return l == r;                                                      \
-    }                                                                     \
-  };                                                                      \
+#define _sus__unsigned_hash_equal_to(Type)                                 \
+  template <>                                                              \
+  struct hash<Type> {                                                      \
+    [[nodiscard]] sus_pure auto operator()(const Type& u) const noexcept { \
+      return std::hash<decltype(u.primitive_value)>()(u.primitive_value);  \
+    }                                                                      \
+  };                                                                       \
+  template <>                                                              \
+  struct equal_to<Type> {                                                  \
+    [[nodiscard]] sus_pure constexpr auto operator()(                      \
+        const Type& l, const Type& r) const noexcept {                     \
+      return l == r;                                                       \
+    }                                                                      \
+  };                                                                       \
   static_assert(true)

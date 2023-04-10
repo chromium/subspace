@@ -89,7 +89,6 @@ target_sources(subspace PUBLIC
     "macros/for_each.h"
     "macros/lifetimebound.h"
     "macros/no_unique_address.h"
-    "macros/noalias.h"
     "macros/nonnull.h"
     "macros/remove_parens.h"
     "marker/unsafe.h"
