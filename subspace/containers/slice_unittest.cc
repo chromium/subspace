@@ -3818,4 +3818,315 @@ TEST(SliceMutDeathTest, RotateLeftOutOfBounds) {
   }
 }
 
+TEST(SliceMut, RotateRight) {
+  // Empty. Nothing to do.
+  {
+    auto v = sus::Vec<i32>();
+    auto s = v.as_mut_slice();
+    s.rotate_right(0u);
+    auto expected = Vec<i32>();
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  // Single. Nothing to do.
+  {
+    auto v = sus::Vec<i32>::with_values(4);
+    auto s = v.as_mut_slice();
+    s.rotate_right(0u);
+    auto expected = Vec<i32>::with_values(4);
+    EXPECT_EQ(s, expected.as_mut_slice());
+    s.rotate_right(1u);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  // Two.
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2);
+    auto s = v.as_mut_slice();
+    s.rotate_right(0u);
+    auto expected = Vec<i32>::with_values(1, 2);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2);
+    auto s = v.as_mut_slice();
+    s.rotate_right(1u);
+    auto expected = Vec<i32>::with_values(2, 1);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2);
+    auto s = v.as_mut_slice();
+    s.rotate_right(2u);
+    auto expected = Vec<i32>::with_values(1, 2);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  // Three.
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3);
+    auto s = v.as_mut_slice();
+    s.rotate_right(0u);
+    auto expected = Vec<i32>::with_values(1, 2, 3);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3);
+    auto s = v.as_mut_slice();
+    s.rotate_right(1u);
+    auto expected = Vec<i32>::with_values(3, 1, 2);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3);
+    auto s = v.as_mut_slice();
+    s.rotate_right(2u);
+    auto expected = Vec<i32>::with_values(2, 3, 1);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3);
+    auto s = v.as_mut_slice();
+    s.rotate_right(3u);
+    auto expected = Vec<i32>::with_values(1, 2, 3);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  // Four.
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4);
+    auto s = v.as_mut_slice();
+    s.rotate_right(0u);
+    auto expected = Vec<i32>::with_values(1, 2, 3, 4);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4);
+    auto s = v.as_mut_slice();
+    s.rotate_right(1u);
+    auto expected = Vec<i32>::with_values(4, 1, 2, 3);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4);
+    auto s = v.as_mut_slice();
+    s.rotate_right(2u);
+    auto expected = Vec<i32>::with_values(3, 4, 1, 2);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4);
+    auto s = v.as_mut_slice();
+    s.rotate_right(3u);
+    auto expected = Vec<i32>::with_values(2, 3, 4, 1);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4);
+    auto s = v.as_mut_slice();
+    s.rotate_right(4u);
+    auto expected = Vec<i32>::with_values(1, 2, 3, 4);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  // Five.
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto s = v.as_mut_slice();
+    s.rotate_right(0u);
+    auto expected = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto s = v.as_mut_slice();
+    s.rotate_right(1u);
+    auto expected = Vec<i32>::with_values(5, 1, 2, 3, 4);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto s = v.as_mut_slice();
+    s.rotate_right(2u);
+    auto expected = Vec<i32>::with_values(4, 5, 1, 2, 3);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto s = v.as_mut_slice();
+    s.rotate_right(3u);
+    auto expected = Vec<i32>::with_values(3, 4, 5, 1, 2);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto s = v.as_mut_slice();
+    s.rotate_right(4u);
+    auto expected = Vec<i32>::with_values(2, 3, 4, 5, 1);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto s = v.as_mut_slice();
+    s.rotate_right(5u);
+    auto expected = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  // Larger even size.
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    auto s = v.as_mut_slice();
+    s.rotate_right(0u);
+    auto expected = Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    auto s = v.as_mut_slice();
+
+    s.rotate_right(1u);
+    auto expected = Vec<i32>::with_values(8, 1, 2, 3, 4, 5, 6, 7);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    auto s = v.as_mut_slice();
+    s.rotate_right(2u);
+    auto expected = Vec<i32>::with_values(7, 8, 1, 2, 3, 4, 5, 6);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    auto s = v.as_mut_slice();
+    s.rotate_right(3u);
+    auto expected = Vec<i32>::with_values(6, 7, 8, 1, 2, 3, 4, 5);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    auto s = v.as_mut_slice();
+    s.rotate_right(4u);
+    auto expected = Vec<i32>::with_values(5, 6, 7, 8, 1, 2, 3, 4);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    auto s = v.as_mut_slice();
+    s.rotate_right(5u);
+    auto expected = Vec<i32>::with_values(4, 5, 6, 7, 8, 1, 2, 3);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    auto s = v.as_mut_slice();
+    s.rotate_right(6u);
+    auto expected = Vec<i32>::with_values(3, 4, 5, 6, 7, 8, 1, 2);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    auto s = v.as_mut_slice();
+    s.rotate_right(7u);
+    auto expected = Vec<i32>::with_values(2, 3, 4, 5, 6, 7, 8, 1);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    auto s = v.as_mut_slice();
+    s.rotate_right(8u);
+    auto expected = Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  // Larger odd size.
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+    s.rotate_right(0u);
+    auto expected = Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+
+    s.rotate_right(1u);
+    auto expected = Vec<i32>::with_values(9, 1, 2, 3, 4, 5, 6, 7, 8);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+    s.rotate_right(2u);
+    auto expected = Vec<i32>::with_values(8, 9, 1, 2, 3, 4, 5, 6, 7);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+    s.rotate_right(3u);
+    auto expected = Vec<i32>::with_values(7, 8, 9, 1, 2, 3, 4, 5, 6);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+    s.rotate_right(4u);
+    auto expected = Vec<i32>::with_values(6, 7, 8, 9, 1, 2, 3, 4, 5);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+    s.rotate_right(5u);
+    auto expected = Vec<i32>::with_values(5, 6, 7, 8, 9, 1, 2, 3, 4);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+    s.rotate_right(6u);
+    auto expected = Vec<i32>::with_values(4, 5, 6, 7, 8, 9, 1, 2, 3);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+    s.rotate_right(7u);
+    auto expected = Vec<i32>::with_values(3, 4, 5, 6, 7, 8, 9, 1, 2);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+    s.rotate_right(8u);
+    auto expected = Vec<i32>::with_values(2, 3, 4, 5, 6, 7, 8, 9, 1);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    auto s = v.as_mut_slice();
+    s.rotate_right(9u);
+    auto expected = Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    EXPECT_EQ(s, expected.as_mut_slice());
+  }
+}
+
+TEST(SliceMutDeathTest, RotateRightOutOfBounds) {
+  // Empty.
+  {
+    auto v = sus::Vec<i32>();
+    EXPECT_DEATH(v.as_mut_slice().rotate_right(1u), "");
+  }
+  // Single.
+  {
+    auto v = sus::Vec<i32>::with_values(4);
+    EXPECT_DEATH(v.as_mut_slice().rotate_right(2u), "");
+  }
+  // Odd size.
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9);
+    EXPECT_DEATH(v.as_mut_slice().rotate_right(10u), "");
+  }
+  // Odd size.
+  {
+    auto v = sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+    EXPECT_DEATH(v.as_mut_slice().rotate_right(11u), "");
+  }
+}
+
 }  // namespace
