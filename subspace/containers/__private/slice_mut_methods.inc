@@ -275,7 +275,6 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 
 /// Returns a mutable reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
-///
 [[nodiscard]] sus_pure constexpr Option<T&> get_mut(
     ::sus::num::usize i) _mut_ref noexcept {
   if (i < len()) [[likely]]
@@ -290,7 +289,6 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 /// The index `i` must be inside the bounds of the slice or Undefined
 /// Behaviour results. The size of the slice must therefore also have a
 /// length of at least 1.
-///
 [[nodiscard]] sus_pure constexpr inline T& get_unchecked_mut(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) _mut_ref noexcept {
   sus_assume(::sus::marker::unsafe_fn,
@@ -338,7 +336,6 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 ///
 /// Returns None if the Range would otherwise contain an element that is out
 /// of bounds.
-///
 [[nodiscard]] sus_pure constexpr Option<SliceMut<T>> get_range_mut(
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
     _mut_ref noexcept {
@@ -364,7 +361,6 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 /// # Safety
 /// It is possible to specify a Range contains an element that is out
 /// of bounds of the Slice, which can result in Undefined Behaviour.
-///
 [[nodiscard]] sus_pure constexpr SliceMut<T> get_range_mut_unchecked(
     ::sus::marker::UnsafeFnMarker,
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
@@ -378,7 +374,6 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 /// Returns an iterator over all the elements in the slice, visited in the
 /// same order they appear in the slice. The iterator gives mutable access to
 /// each element.
-///
 [[nodiscard]] sus_pure constexpr SliceIterMut<T&> iter_mut() _mut_ref noexcept {
   return SliceIterMut<T&>::with(as_mut_ptr(), len());
 }
@@ -656,7 +651,6 @@ constexpr void sort_unstable_by(F compare) noexcept {
 /// Calling this method with an out-of-bounds index is undefined behavior
 /// even if the resulting reference is not used. The caller has to ensure
 /// that `0 <= mid <= len()`.
-///
 [[nodiscard]] sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>>
 split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
                        ::sus::num::usize mid) _mut_ref noexcept {
