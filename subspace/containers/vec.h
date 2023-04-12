@@ -386,6 +386,7 @@ class Vec final {
           ++old_t;
           ++new_t;
         }
+        free(raw_data());
         raw_data() = new_storage;
       }
     }
