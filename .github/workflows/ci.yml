@@ -37,7 +37,7 @@ jobs:
             }
 
           - {
-              name: "Ubuntu Nightly UBSan",
+              name: "Ubuntu Nightly Sanitizer",
               os: ubuntu-latest,
               build_type: "Release",
               cc: "clang-16",
@@ -80,11 +80,11 @@ jobs:
           sudo apt-get install python3
 
       # vptr is incompatible with no-rtti. We turn off rtti to match the LLVM libraries.
-      - name: Set UBSan Flags
-        if: endsWith(matrix.config.name, 'UBSan')
+      - name: Set Sanitizer Flags
+        if: endsWith(matrix.config.name, 'Sanitizer')
         run: |
-          echo "CFLAGS=$CFLAGS -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
-          echo "CXXFLAGS=$CXXFLAGS -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
+          echo "CFLAGS=$CFLAGS -fsanitize=address -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
+          echo "CXXFLAGS=$CXXFLAGS -fsanitize=address -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
 
       - name: Download Ninja
         id: ninja
