@@ -550,6 +550,23 @@ void rotate_left(::sus::num::usize mid) noexcept
   }
 }
 
+/// Rotates the slice in-place such that the first `len() - k` elements of
+/// the slice move to the end while the last `k` elements move to the front.
+/// After calling `rotate_right()`, the element previously at index `len() - k`
+/// will become the first element in the slice.
+///
+/// # Panics
+/// This function will panic if `k` is greater than the length of the slice.
+/// Note that `k == len()` does not panic and is a no-op rotation.
+///
+/// # Complexity
+/// Takes linear (in `len()`) time.
+void rotate_right(::sus::num::usize k) noexcept
+  requires(::sus::mem::Move<T>)
+{
+  rotate_left(len() - k);
+}
+
 /// Sorts the slice.
 ///
 /// This sort is stable (i.e., does not reorder equal elements) and
