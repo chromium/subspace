@@ -1851,6 +1851,54 @@ TEST(Slice, ChunksExactMut) {
   }
 }
 
+TEST(Slice, SplitAt) {
+  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  sus::Slice<i32> s = v.as_slice();
+
+  {
+    // Empty left.
+    auto [a, b] = s.split_at(0u);
+    static_assert(std::same_as<decltype(a), sus::Slice<i32>>);
+    static_assert(std::same_as<decltype(b), sus::Slice<i32>>);
+    EXPECT_EQ(a.len(), 0u);
+    EXPECT_EQ(b.len(), 10u);
+    EXPECT_EQ(b.as_ptr(), &v[0u]);
+  }
+  {
+    // Empty Right.
+    auto [a, b] = s.split_at(10u);
+    EXPECT_EQ(a.len(), 10u);
+    EXPECT_EQ(b.len(), 0u);
+    EXPECT_EQ(a.as_ptr(), &v[0u]);
+  }
+  {
+    // Middle.
+    auto [a, b] = s.split_at(6u);
+    EXPECT_EQ(a.len(), 6u);
+    EXPECT_EQ(b.len(), 4u);
+    EXPECT_EQ(a.as_ptr(), &v[0u]);
+    EXPECT_EQ(b.as_ptr(), &v[6u]);
+  }
+}
+
+TEST(SliceDeathTest, SplitAtOutOfBounds) {
+#if GTEST_HAS_DEATH_TEST
+  auto v = sus::Vec<i32>::with_values(0, 1, 2);
+  EXPECT_DEATH(
+      {
+        auto t = v.as_slice().split_at(4u);
+        EXPECT_EQ(t.at<0>(), t.at<1>());
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto t = v.as_slice().split_at(usize::MAX);
+        EXPECT_EQ(t.at<0>(), t.at<1>());
+      },
+      "");
+#endif
+}
+
 TEST(Slice, SplitAtUnchecked) {
   sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   sus::Slice<i32> s = v.as_slice();
@@ -1881,7 +1929,54 @@ TEST(Slice, SplitAtUnchecked) {
   }
 }
 
-TEST(Slice, SplitAtMutUnchecked) {
+TEST(SliceMut, SplitAtMut) {
+  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  sus::SliceMut<i32> s = v.as_mut_slice();
+
+  {
+    // Empty left.
+    auto [a, b] = s.split_at_mut(0u);
+    static_assert(std::same_as<decltype(a), sus::SliceMut<i32>>);
+    static_assert(std::same_as<decltype(b), sus::SliceMut<i32>>);
+    EXPECT_EQ(a.len(), 0u);
+    EXPECT_EQ(b.len(), 10u);
+    EXPECT_EQ(b.as_ptr(), &v[0u]);
+  }
+  {
+    // Empty Right.
+    auto [a, b] = s.split_at_mut(10u);
+    EXPECT_EQ(a.len(), 10u);
+    EXPECT_EQ(b.len(), 0u);
+    EXPECT_EQ(a.as_ptr(), &v[0u]);
+  }
+  {
+    // Middle.
+    auto [a, b] = s.split_at_mut(6u);
+    EXPECT_EQ(a.len(), 6u);
+    EXPECT_EQ(b.len(), 4u);
+    EXPECT_EQ(a.as_ptr(), &v[0u]);
+    EXPECT_EQ(b.as_ptr(), &v[6u]);
+  }
+}
+
+TEST(SliceMutDeathTest, SplitAtOutOfBounds) {
+#if GTEST_HAS_DEATH_TEST
+  auto v = sus::Vec<i32>::with_values(0, 1, 2);
+  EXPECT_DEATH(
+      {
+        auto t = v.as_mut_slice().split_at(4u);
+        EXPECT_EQ(t.at<0>(), t.at<1>());
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto t = v.as_mut_slice().split_at(usize::MAX);
+        EXPECT_EQ(t.at<0>(), t.at<1>());
+      },
+      "");
+#endif
+}
+TEST(SliceMut, SplitAtMutUnchecked) {
   sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
   sus::SliceMut<i32> s = v.as_mut_slice();
 

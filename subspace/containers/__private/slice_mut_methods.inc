@@ -638,6 +638,20 @@ constexpr void sort_unstable_by(F compare) noexcept {
   }
 }
 
+/// Divides one mutable slice into two at an index.
+///
+/// The first will contain all indices from `[0, mid)` (excluding the index
+/// `mid` itself) and the second will contain all indices from `[mid, len())`
+/// (excluding the index `len()` itself).
+///
+/// # Panics
+/// Panics if `mid > len()`.
+[[nodiscard]] sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>>
+split_at_mut(::sus::num::usize mid) _mut_ref noexcept {
+  ::sus::check(mid <= len());
+  return split_at_mut_unchecked(::sus::marker::unsafe_fn, mid);
+}
+
 /// Divides one slice of mutable references into two at an index, without
 /// doing bounds checking.
 ///
