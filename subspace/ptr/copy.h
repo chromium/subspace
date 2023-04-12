@@ -48,8 +48,8 @@ namespace sus::ptr {
 /// * The region of memory beginning at `src` with a size of `count *
 ///   size_of<T>()` bytes must not overlap with the region of memory beginning
 ///   at `dst` with the same size.
-/// * `dst` must not have an overlapping object in its tail padding, which will
-///   be the case if `dst` is in an array, or was heap allocated.
+/// * `dst` must not have an overlapping object in its tail padding. If `dst` is
+///   in an array, or was heap allocated, then this will always be satisfied.
 ///
 /// Like `copy()`, `copy_nonoverlapping()` creates a bitwise copy of `T`,
 /// regardless of whether `T` is `TrivialCopy` or `relocate_by_memcpy`. If `T`
@@ -65,6 +65,8 @@ void copy_nonoverlapping(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
                          ::sus::num::usize count) noexcept {
   sus_debug_check(src != nullptr);
   sus_debug_check(dst != nullptr);
+  // UBSan won't catch the misaligned read/writes by memcpy, so we check it
+  // ourselves.
   sus_debug_check(src % alignof(T) == 0);
   sus_debug_check(dst % alignof(T) == 0);
   sus_debug_check((src < dst && src + count < dst) ||
@@ -102,8 +104,8 @@ void copy_nonoverlapping(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
 /// * Like `copy_nonoverlapping()`, `copy()` creates a bitwise copy of `T`,
 ///   regardless of whether `T` is `TrivialCopy`. If `T` is not `TrivialCopy`,
 ///   using the value in `*dst` can violate memory safety.
-/// * `dst` must not have an overlapping object in its tail padding, which will
-///   be the case if `dst` is in an array, or was heap allocated.
+/// * `dst` must not have an overlapping object in its tail padding. If `dst` is
+///   in an array, or was heap allocated, then this will always be satisfied.
 ///
 /// `copy()` creates a bitwise copy of `T`, regardless of whether `T` is
 /// `TrivialCopy` or `relocate_by_memcpy`. If `T` is not `TrivialCopy`, using
@@ -119,6 +121,8 @@ void copy(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
           ::sus::num::usize count) noexcept {
   sus_debug_check(src != nullptr);
   sus_debug_check(dst != nullptr);
+  // UBSan won't catch the misaligned read/writes by memcpy, so we check it
+  // ourselves.
   sus_debug_check(src % alignof(T) == 0);
   sus_debug_check(dst % alignof(T) == 0);
   if constexpr (::sus::mem::size_of<T>() > 1) {
