@@ -26,6 +26,13 @@ class SliceMut;
 
 namespace sus::containers {
 
+/// An iterator over a slice in (non-overlapping) chunks (`chunk_size` elements
+/// at a time), starting at the beginning of the slice.
+///
+/// When the slice len is not evenly divided by the chunk size, the last slice
+/// of the iteration will be the remainder.
+///
+/// This struct is created by the `chunks()` method on slices.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
     : public ::sus::iter::IteratorBase<Chunks<ItemT>,
@@ -125,6 +132,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
                                   decltype(chunk_size_));
 };
 
+/// An iterator over mutable a slice in (non-overlapping) chunks (`chunk_size`
+/// elements at a time), starting at the beginning of the slice.
+///
+/// When the slice len is not evenly divided by the chunk size, the last slice
+/// of the iteration will be the remainder.
+///
+/// This struct is created by the `chunks_mut()` method on slices.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
     : public ::sus::iter::IteratorBase<ChunksMut<ItemT>,
@@ -227,6 +241,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
                                   decltype(chunk_size_));
 };
 
+/// An iterator over a slice in (non-overlapping) chunks (`chunk_size` elements
+/// at a time), starting at the beginning of the slice.
+///
+/// When the slice len is not evenly divided by the chunk size, the last up to
+/// `chunk_size-1` elements will be omitted but can be retrieved from the
+/// remainder function from the iterator.
+///
+/// This struct is created by the `chunks_exact()` method on slices.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
     : public ::sus::iter::IteratorBase<ChunksExact<ItemT>,
@@ -322,6 +344,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
                                   decltype(rem_), decltype(chunk_size_));
 };
 
+/// An iterator over a mutable slice in (non-overlapping) chunks (`chunk_size`
+/// elements at a time), starting at the beginning of the slice.
+///
+/// When the slice len is not evenly divided by the chunk size, the last up to
+/// `chunk_size-1` elements will be omitted but can be retrieved from the
+/// remainder function from the iterator.
+///
+/// This struct is created by the `chunks_exact_mut()` method on slices.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
     : public ::sus::iter::IteratorBase<ChunksExactMut<ItemT>,
@@ -416,6 +446,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
                                   decltype(rem_), decltype(chunk_size_));
 };
 
+/// An iterator over a slice in (non-overlapping) chunks (`chunk_size` elements at
+/// a time), starting at the end of the slice.
+///
+/// When the slice len is not evenly divided by the chunk size, the last slice
+/// of the iteration will be the remainder.
+///
+/// This struct is created by the `rchunks()` method on slices.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
     : public ::sus::iter::IteratorBase<RChunks<ItemT>,
@@ -515,6 +552,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
                                   decltype(chunk_size_));
 };
 
+/// An iterator over a mutable slice in (non-overlapping) chunks (`chunk_size`
+/// elements at a time), starting at the end of the slice.
+///
+/// When the slice len is not evenly divided by the chunk size, the last slice
+/// of the iteration will be the remainder.
+///
+/// This struct is created by the `rchunks_mut()` method on slices.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
     : public ::sus::iter::IteratorBase<RChunksMut<ItemT>,
@@ -606,6 +650,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
                                   decltype(chunk_size_));
 };
 
+/// An iterator over a slice in (non-overlapping) chunks (`chunk_size` elements at
+/// a time), starting at the end of the slice.
+///
+/// When the slice len is not evenly divided by the chunk size, the last up to
+/// `chunk_size-1` elements will be omitted but can be retrieved from the
+/// remainder function from the iterator.
+///
+/// This struct is created by the `rchunks_exact()` method on slices.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
     : public ::sus::iter::IteratorBase<RChunksExact<ItemT>,
@@ -699,6 +751,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
                                   decltype(rem_), decltype(chunk_size_));
 };
 
+/// An iterator over a mutable slice in (non-overlapping) chunks (`chunk_size`
+/// elements at a time), starting at the end of the slice.
+///
+/// When the slice len is not evenly divided by the chunk size, the last up to
+/// `chunk_size-1` elements will be omitted but can be retrieved from the
+/// remainder function from the iterator.
+///
+/// This struct is created by the `rchunks_exact_mut()` method on slices.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
     : public ::sus::iter::IteratorBase<RChunksExactMut<ItemT>,
