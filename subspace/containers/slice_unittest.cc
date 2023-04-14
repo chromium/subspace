@@ -4488,4 +4488,268 @@ TEST(SliceMut, SplitMut) {
   }
 }
 
+TEST(Slice, Rsplit) {
+  auto v = sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8);
+  auto s = v.as_slice();
+
+  // No match. Front.
+  {
+    auto it = s.rsplit([](const i32& i) { return i == -1; });
+    decltype(auto) o = it.next();
+    static_assert(std::same_as<decltype(o), sus::Option<Slice<i32>>>);
+    EXPECT_EQ(sus::move(o).unwrap(), s);
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // No match. Back.
+  {
+    auto it = s.rsplit([](const i32& i) { return i == -1; });
+    decltype(auto) o = it.next_back();
+    static_assert(std::same_as<decltype(o), sus::Option<Slice<i32>>>);
+    EXPECT_EQ(sus::move(o).unwrap(), s);
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // One match middle. Front.
+  {
+    auto it = s.rsplit([](const i32& i) { return i == 3; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(4, 5, 5, 6, 7, 7, 7, 8));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // One match middle. Back.
+  {
+    auto it = s.rsplit([](const i32& i) { return i == 3; });
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2));
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(4, 5, 5, 6, 7, 7, 7, 8));
+    }
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Edge matches. Front.
+  {
+    auto it = s.rsplit([](const i32& i) { return i == 1 || i == 8; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(2, 2, 3, 4, 5, 5, 6, 7, 7, 7));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // Edge matches. Back.
+  {
+    auto it = s.rsplit([](const i32& i) { return i == 1 || i == 8; });
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(2, 2, 3, 4, 5, 5, 6, 7, 7, 7));
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Consecutive matches. Front.
+  {
+    auto it = s.rsplit([](const i32& i) { return i == 1 || i == 5; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(6, 7, 7, 7, 8));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(2, 2, 3, 4));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // Consecutive matches. Back.
+  {
+    auto it = s.rsplit([](const i32& i) { return i == 1 || i == 5; });
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(2, 2, 3, 4));
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(6, 7, 7, 7, 8));
+    }
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+}
+
+TEST(SliceMut, RsplitMut) {
+  auto v = sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8);
+  auto s = v.as_mut_slice();
+
+  // No match. Front.
+  {
+    auto it = s.rsplit_mut([](const i32& i) { return i == -1; });
+    decltype(auto) o = it.next();
+    static_assert(std::same_as<decltype(o), sus::Option<SliceMut<i32>>>);
+    EXPECT_EQ(sus::move(o).unwrap(), s);
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // No match. Back.
+  {
+    auto it = s.rsplit_mut([](const i32& i) { return i == -1; });
+    decltype(auto) o = it.next_back();
+    static_assert(std::same_as<decltype(o), sus::Option<SliceMut<i32>>>);
+    EXPECT_EQ(sus::move(o).unwrap(), s);
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // One match middle. Front.
+  {
+    auto it = s.rsplit_mut([](const i32& i) { return i == 3; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(4, 5, 5, 6, 7, 7, 7, 8));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // One match middle. Back.
+  {
+    auto it = s.rsplit_mut([](const i32& i) { return i == 3; });
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2));
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(4, 5, 5, 6, 7, 7, 7, 8));
+    }
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Edge matches. Front.
+  {
+    auto it = s.rsplit_mut([](const i32& i) { return i == 1 || i == 8; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(2, 2, 3, 4, 5, 5, 6, 7, 7, 7));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // Edge matches. Back.
+  {
+    auto it = s.rsplit_mut([](const i32& i) { return i == 1 || i == 8; });
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(2, 2, 3, 4, 5, 5, 6, 7, 7, 7));
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Consecutive matches. Front.
+  {
+    auto it = s.rsplit_mut([](const i32& i) { return i == 1 || i == 5; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(6, 7, 7, 7, 8));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(2, 2, 3, 4));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // Consecutive matches. Back.
+  {
+    auto it = s.rsplit_mut([](const i32& i) { return i == 1 || i == 5; });
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(2, 2, 3, 4));
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next_back().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(6, 7, 7, 7, 8));
+    }
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+}
+
 }  // namespace

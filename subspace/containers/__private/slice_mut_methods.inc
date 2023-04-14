@@ -563,7 +563,18 @@ void rotate_right(::sus::num::usize k) noexcept
 }
 
 /// Returns an iterator over mutable subslices separated by elements that match
-/// pred. The matched element is not contained in the subslices.
+/// `pred`, starting at the end of the slice and working backwards. The matched
+/// element is not contained in the subslices.
+///
+/// As with `split_mut()`, if the first or last element is matched, an empty
+/// slice will be the first (or last) item returned by the iterator.
+constexpr RSplitMut<T> rsplit_mut(
+    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
+  return RSplitMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred)));
+}
+
+/// Returns an iterator over mutable subslices separated by elements that match
+/// `pred`. The matched element is not contained in the subslices.
 ///
 /// If the first element is matched, an empty slice will be the first item
 /// returned by the iterator. Similarly, if the last element in the slice is
