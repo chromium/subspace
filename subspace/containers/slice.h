@@ -21,6 +21,7 @@
 #include "subspace/containers/concat.h"
 #include "subspace/containers/iterators/chunks.h"
 #include "subspace/containers/iterators/slice_iter.h"
+#include "subspace/containers/iterators/split.h"
 #include "subspace/containers/join.h"
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/fn/fn_ref.h"

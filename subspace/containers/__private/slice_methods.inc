@@ -192,9 +192,7 @@ template <::sus::ops::Ord Key>
 /// Panics if chunk_size is 0.
 constexpr Chunks<T> chunks(::sus::num::usize chunk_size) const& noexcept {
   ::sus::check(chunk_size > 0u);
-  return Chunks<T>::with(::sus::containers::Slice<T>::from_raw_parts(
-                             ::sus::marker::unsafe_fn, as_ptr(), len()),
-                         chunk_size);
+  return Chunks<T>::with(*this, chunk_size);
 }
 
 #if _delete_rvalue
@@ -700,6 +698,21 @@ constexpr ::sus::containers::Vec<T> repeat(usize n) const& noexcept
   }
   return buf;
 }
+
+/// Returns an iterator over subslices separated by elements that match pred.
+/// The matched element is not contained in the subslices.
+///
+/// If the first element is matched, an empty slice will be the first item
+/// returned by the iterator. Similarly, if the last element in the slice is
+/// matched, an empty slice will be the last item returned by the iterator.
+constexpr Split<T> split(
+    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
+  return Split<T>::with(*this, ::sus::move(pred));
+}
+
+#if _delete_rvalue
+constexpr Split<T> split(::sus::fn::FnMutRef<bool(const T&)>) && = delete;
+#endif
 
 /// Divides one slice into two at an index.
 ///

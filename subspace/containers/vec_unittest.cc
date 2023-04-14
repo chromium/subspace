@@ -979,6 +979,11 @@ TEST(Vec, Eq) {
   static_assert(!sus::ops::Eq<Vec<int>, Vec<NotEq>>);
   static_assert(!sus::ops::Eq<Vec<NotEq>>);
 
+  static_assert(sus::ops::Eq<Vec<int>, Slice<int>>);
+  static_assert(!sus::ops::Eq<Vec<int>, Slice<NotEq>>);
+  static_assert(sus::ops::Eq<Vec<int>, SliceMut<int>>);
+  static_assert(!sus::ops::Eq<Vec<int>, SliceMut<NotEq>>);
+
   auto a = sus::vec(1, 2, 3, 4).construct<i32>();
   auto b = sus::vec(1, 2, 3, 4).construct<i32>();
   EXPECT_EQ(a, b);
