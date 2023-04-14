@@ -562,6 +562,17 @@ void rotate_right(::sus::num::usize k) noexcept
   rotate_left(len() - k);
 }
 
+/// Returns an iterator over mutable subslices separated by elements that match
+/// pred. The matched element is not contained in the subslices.
+///
+/// If the first element is matched, an empty slice will be the first item
+/// returned by the iterator. Similarly, if the last element in the slice is
+/// matched, an empty slice will be the last item returned by the iterator.
+constexpr SplitMut<T> split_mut(
+    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
+  return SplitMut<T>::with(*this, ::sus::move(pred));
+}
+
 /// Sorts the slice.
 ///
 /// This sort is stable (i.e., does not reorder equal elements) and

@@ -538,7 +538,9 @@ class Vec final {
     return VecIntoIter<T>::with(::sus::move(*this));
   }
 
-  /// sus::ops::Eq<Vec<U>> trait.
+  /// sus::ops::Eq<Vec<T>, Vec<U>> trait.
+  ///
+  /// #[doc.overloads=vec.eq.vec]
   template <class U>
     requires(::sus::ops::Eq<T, U>)
   friend constexpr inline bool operator==(const Vec<T>& l,
@@ -551,12 +553,34 @@ class Vec final {
   friend constexpr inline bool operator==(const Vec<T>& l,
                                           const Vec<U>& r) = delete;
 
+  /// sus::ops::Eq<<Vec<T>, Slice<U>> trait.
+  ///
+  /// #[doc.overloads=vec.eq.slice]
+  template <class U>
+    requires(::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const Vec<T>& l,
+                                          const Slice<U>& r) noexcept {
+    return l.as_slice() == r;
+  }
+
+  /// sus::ops::Eq<<Vec<T>, SliceMut<U>> trait.
+  ///
+  /// #[doc.overloads=vec.eq.slicemut]
+  template <class U>
+    requires(::sus::ops::Eq<T, U>)
+  friend constexpr inline bool operator==(const Vec<T>& l,
+                                          const SliceMut<U>& r) noexcept {
+    return l.as_slice() == r.as_slice();
+  }
+
   // Const Vec can be used as a Slice.
   [[nodiscard]] sus_pure constexpr operator const Slice<T>&() const& {
-    return slice_mut_;
+    return slice_mut_.slice_;
   }
   [[nodiscard]] sus_pure constexpr operator const Slice<T>&() && = delete;
-  [[nodiscard]] sus_pure constexpr operator Slice<T>&() & { return slice_mut_; }
+  [[nodiscard]] sus_pure constexpr operator Slice<T>&() & {
+    return slice_mut_.slice_;
+  }
 
   // Mutable Vec can be used as a SliceMut.
   [[nodiscard]] sus_pure constexpr operator SliceMut<T>&() & {
