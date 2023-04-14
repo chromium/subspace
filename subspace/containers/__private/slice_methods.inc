@@ -699,7 +699,22 @@ constexpr ::sus::containers::Vec<T> repeat(usize n) const& noexcept
   return buf;
 }
 
-/// Returns an iterator over subslices separated by elements that match pred.
+/// Returns an iterator over subslices separated by elements that match `pred`,
+/// starting at the end of the slice and working backwards. The matched element
+/// is not contained in the subslices.
+///
+/// As with `split()`, if the first or last element is matched, an empty slice
+/// will be the first (or last) item returned by the iterator.
+constexpr RSplit<T> rsplit(
+    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
+  return RSplit<T>::with(Split<T>::with(*this, ::sus::move(pred)));
+}
+
+#if _delete_rvalue
+constexpr Split<T> rsplit(::sus::fn::FnMutRef<bool(const T&)>) && = delete;
+#endif
+
+/// Returns an iterator over subslices separated by elements that match `pred`.
 /// The matched element is not contained in the subslices.
 ///
 /// If the first element is matched, an empty slice will be the first item
