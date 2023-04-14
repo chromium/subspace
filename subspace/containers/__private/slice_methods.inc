@@ -714,6 +714,22 @@ constexpr RSplit<T> rsplit(
 constexpr Split<T> rsplit(::sus::fn::FnMutRef<bool(const T&)>) && = delete;
 #endif
 
+/// Returns an iterator over subslices separated by elements that match `pred`
+/// limited to returning at most `n` items. This starts at the end of the slice
+/// and works backwards. The matched element is not contained in the subslices.
+///
+/// The last element returned, if any, will contain the remainder of the slice.
+constexpr RSplitN<T> rsplitn(
+    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
+  return RSplitN<T>::with(
+      RSplit<T>::with(Split<T>::with(*this, ::sus::move(pred))), n);
+}
+
+#if _delete_rvalue
+constexpr RSplit<T> rsplitn(
+    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) && = delete;
+#endif
+
 /// Returns an iterator over subslices separated by elements that match `pred`.
 /// The matched element is not contained in the subslices.
 ///

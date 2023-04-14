@@ -90,18 +90,13 @@ class [[sus_trivial_abi]] GenericSplitN final
 ///
 /// This struct is created by the `split()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] Split final
+class [[nodiscard]] [[sus_trivial_abi]] Split final
     : public ::sus::iter::IteratorBase<Split<ItemT>,
                                        ::sus::containers::Slice<ItemT>> {
  public:
   // `Item` is a `Slice<T>`.
   using Item = ::sus::containers::Slice<ItemT>;
 
- private:
-  // `SliceItem` is a `T`.
-  using SliceItem = ItemT;
-
- public:
   Split(Split&&) = default;
   Split& operator=(Split&&) = default;
 
@@ -178,8 +173,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] Split final
  private:
   // Constructed by Slice.
   friend class Slice<ItemT>;
+  // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
+  // Access to finish().
+  template <class A>
+  friend class RSplit;
 
   Option<Item> finish() noexcept {
     if (finished_) {
@@ -213,18 +212,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] Split final
 ///
 /// This struct is created by the `split_mut()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] SplitMut final
+class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
     : public ::sus::iter::IteratorBase<SplitMut<ItemT>,
                                        ::sus::containers::SliceMut<ItemT>> {
  public:
   // `Item` is a `SliceMut<T>`.
   using Item = ::sus::containers::SliceMut<ItemT>;
 
- private:
-  // `SliceItem` is a `T`.
-  using SliceItem = ItemT;
-
- public:
   SplitMut(SplitMut&&) = default;
   SplitMut& operator=(SplitMut&&) = default;
 
@@ -301,8 +295,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] SplitMut final
  private:
   // Constructed by SliceMut.
   friend class SliceMut<ItemT>;
+  // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
+  // Access to finish().
+  template <class A>
+  friend class RSplitMut;
 
   Option<Item> finish() noexcept {
     if (finished_) {
@@ -336,18 +334,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] SplitMut final
 ///
 /// This struct is created by the `rsplit()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] RSplit final
+class [[nodiscard]] [[sus_trivial_abi]] RSplit final
     : public ::sus::iter::IteratorBase<RSplit<ItemT>,
                                        ::sus::containers::Slice<ItemT>> {
  public:
   // `Item` is a `Slice<T>`.
   using Item = typename Split<ItemT>::Item;
 
- private:
-  // `SliceItem` is a `T`.
-  using SliceItem = ItemT;
-
- public:
   RSplit(RSplit&&) = default;
   RSplit& operator=(RSplit&&) = default;
 
@@ -370,6 +363,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RSplit final
  private:
   // Constructed by Slice.
   friend class Slice<ItemT>;
+  // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
 
@@ -392,18 +386,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RSplit final
 ///
 /// This struct is created by the `rsplit_mut()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
+class [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
     : public ::sus::iter::IteratorBase<RSplitMut<ItemT>,
                                        ::sus::containers::SliceMut<ItemT>> {
  public:
   // `Item` is a `SliceMut<T>`.
   using Item = typename SplitMut<ItemT>::Item;
 
- private:
-  // `SliceItem` is a `T`.
-  using SliceItem = ItemT;
-
- public:
   RSplitMut(RSplitMut&&) = default;
   RSplitMut& operator=(RSplitMut&&) = default;
 
@@ -426,6 +415,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
  private:
   // Constructed by SliceMut.
   friend class SliceMut<ItemT>;
+  // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
 
@@ -448,18 +438,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
 ///
 /// This struct is created by the `splitn()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] SplitN final
+class [[nodiscard]] [[sus_trivial_abi]] SplitN final
     : public ::sus::iter::IteratorBase<SplitN<ItemT>,
                                        ::sus::containers::Slice<ItemT>> {
  public:
   // `Item` is a `Slice<T>`.
   using Item = typename Split<ItemT>::Item;
 
- private:
-  // `SliceItem` is a `T`.
-  using SliceItem = ItemT;
-
- public:
   SplitN(SplitN&&) = default;
   SplitN& operator=(SplitN&&) = default;
 
@@ -497,18 +482,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] SplitN final
 ///
 /// This struct is created by the `splitn_mut()` method on slices.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
+class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
     : public ::sus::iter::IteratorBase<SplitNMut<ItemT>,
                                        ::sus::containers::SliceMut<ItemT>> {
  public:
-  // `Item` is a `Slice<T>`.
+  // `Item` is a `SliceMut<T>`.
   using Item = typename SplitMut<ItemT>::Item;
 
- private:
-  // `SliceItem` is a `T`.
-  using SliceItem = ItemT;
-
- public:
   SplitNMut(SplitNMut&&) = default;
   SplitNMut& operator=(SplitNMut&&) = default;
 
@@ -537,6 +517,96 @@ struct [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
       : inner_(::sus::move(split), n) {}
 
   __private::GenericSplitN<SliceMut<ItemT>, SplitMut<ItemT>> inner_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+};
+
+/// An iterator over subslices separated by elements that match a predicate
+/// function, limited to a given number of splits, starting from the end of the
+/// slice.
+///
+/// This struct is created by the `rsplitn()` method on slices.
+template <class ItemT>
+class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
+    : public ::sus::iter::IteratorBase<RSplitN<ItemT>,
+                                       ::sus::containers::Slice<ItemT>> {
+ public:
+  // `Item` is a `Slice<T>`.
+  using Item = typename RSplit<ItemT>::Item;
+
+  RSplitN(RSplitN&&) = default;
+  RSplitN& operator=(RSplitN&&) = default;
+
+  /// sus::mem::Clone trait.
+  RSplitN clone() const noexcept { return RSplitN(::sus::clone(inner_)); }
+
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept { return inner_.next(); }
+
+  // Replace the default impl in sus::iter::IteratorBase.
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    return inner_.size_hint();
+  }
+
+  // TODO: Impl count(), nth(), last(), nth_back().
+
+ private:
+  // Constructed by Slice.
+  friend class Slice<ItemT>;
+
+  static constexpr auto with(RSplit<ItemT>&& split, usize n) noexcept {
+    return RSplitN(::sus::move(split), n);
+  }
+
+  constexpr RSplitN(RSplit<ItemT> split, usize n) noexcept
+      : inner_(::sus::move(split), n) {}
+
+  __private::GenericSplitN<Slice<ItemT>, RSplit<ItemT>> inner_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+};
+
+/// An iterator over subslices separated by elements that match a predicate
+/// function, limited to a given number of splits, starting from the end of the
+/// slice.
+///
+/// This struct is created by the rsplitn_mut method on slices.
+template <class ItemT>
+class [[nodiscard]] [[sus_trivial_abi]] RSplitNMut final
+    : public ::sus::iter::IteratorBase<RSplitNMut<ItemT>,
+                                       ::sus::containers::SliceMut<ItemT>> {
+ public:
+  // `Item` is a `SliceMut<T>`.
+  using Item = typename RSplitMut<ItemT>::Item;
+
+  RSplitNMut(RSplitNMut&&) = default;
+  RSplitNMut& operator=(RSplitNMut&&) = default;
+
+  /// sus::mem::Clone trait.
+  RSplitNMut clone() const noexcept { return RSplitNMut(::sus::clone(inner_)); }
+
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept { return inner_.next(); }
+
+  // Replace the default impl in sus::iter::IteratorBase.
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    return inner_.size_hint();
+  }
+
+  // TODO: Impl count(), nth(), last(), nth_back().
+
+ private:
+  // Constructed by SliceMut.
+  friend class SliceMut<ItemT>;
+
+  static constexpr auto with(RSplitMut<ItemT>&& split, usize n) noexcept {
+    return RSplitNMut(::sus::move(split), n);
+  }
+
+  constexpr RSplitNMut(RSplitMut<ItemT> split, usize n) noexcept
+      : inner_(::sus::move(split), n) {}
+
+  __private::GenericSplitN<SliceMut<ItemT>, RSplitMut<ItemT>> inner_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
 };
