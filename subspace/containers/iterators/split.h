@@ -36,6 +36,55 @@ class RangeTo;
 
 namespace sus::containers {
 
+namespace __private {
+
+/// An private iterator over subslices separated by elements that
+/// match a predicate function, splitting at most a fixed number of
+/// times.
+template <class ItemT, ::sus::iter::Iterator<ItemT> I>
+class [[sus_trivial_abi]] GenericSplitN final
+    : public ::sus::iter::IteratorBase<GenericSplitN<ItemT, I>, ItemT> {
+ public:
+  using Item = ItemT;
+
+  explicit GenericSplitN(I&& iter, usize count)
+      : iter_(::sus::move(iter)), count_(count) {}
+
+  GenericSplitN(GenericSplitN&&) = default;
+  GenericSplitN& operator=(GenericSplitN&&) = default;
+
+  Option<Item> next() noexcept {
+    if (count_ == 0)
+      return Option<Item>::none();
+    else if (count_ == 1) {
+      count_ -= 1;
+      return iter_.finish();
+    } else {
+      count_ -= 1;
+      return iter_.next();
+    }
+  }
+
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    auto [lower, upper_opt] = iter_.size_hint();
+    const auto count = count_;
+    return {::sus::ops::min(count, lower),
+            Option<usize>::some(
+                ::sus::move(upper_opt).map_or(count, [count](usize upper) {
+                  return ::sus::ops::min(count, upper);
+                }))};
+  }
+
+ private:
+  I iter_;
+  usize count_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(iter_),
+                                  decltype(count_));
+};
+
+}  // namespace __private
+
 /// An iterator over subslices separated by elements that match a predicate
 /// function.
 ///
@@ -129,6 +178,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] Split final
  private:
   // Constructed by Slice.
   friend class Slice<ItemT>;
+  template <class A, ::sus::iter::Iterator<A> B>
+  friend class __private::GenericSplitN;
 
   Option<Item> finish() noexcept {
     if (finished_) {
@@ -250,6 +301,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] SplitMut final
  private:
   // Constructed by SliceMut.
   friend class SliceMut<ItemT>;
+  template <class A, ::sus::iter::Iterator<A> B>
+  friend class __private::GenericSplitN;
 
   Option<Item> finish() noexcept {
     if (finished_) {
@@ -317,6 +370,10 @@ struct [[nodiscard]] [[sus_trivial_abi]] RSplit final
  private:
   // Constructed by Slice.
   friend class Slice<ItemT>;
+  template <class A, ::sus::iter::Iterator<A> B>
+  friend class __private::GenericSplitN;
+
+  Option<Item> finish() noexcept { return inner_.finish(); }
 
   static constexpr auto with(Split<ItemT>&& split) noexcept {
     return RSplit(::sus::move(split));
@@ -369,6 +426,10 @@ struct [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
  private:
   // Constructed by SliceMut.
   friend class SliceMut<ItemT>;
+  template <class A, ::sus::iter::Iterator<A> B>
+  friend class __private::GenericSplitN;
+
+  Option<Item> finish() noexcept { return inner_.finish(); }
 
   static constexpr auto with(SplitMut<ItemT>&& split) noexcept {
     return RSplitMut(::sus::move(split));
@@ -378,6 +439,104 @@ struct [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
       : inner_(::sus::move(split)) {}
 
   SplitMut<ItemT> inner_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+};
+
+/// An iterator over subslices separated by elements that match a predicate
+/// function, limited to a given number of splits.
+///
+/// This struct is created by the `splitn()` method on slices.
+template <class ItemT>
+struct [[nodiscard]] [[sus_trivial_abi]] SplitN final
+    : public ::sus::iter::IteratorBase<SplitN<ItemT>,
+                                       ::sus::containers::Slice<ItemT>> {
+ public:
+  // `Item` is a `Slice<T>`.
+  using Item = typename Split<ItemT>::Item;
+
+ private:
+  // `SliceItem` is a `T`.
+  using SliceItem = ItemT;
+
+ public:
+  SplitN(SplitN&&) = default;
+  SplitN& operator=(SplitN&&) = default;
+
+  /// sus::mem::Clone trait.
+  SplitN clone() const noexcept { return SplitN(::sus::clone(inner_)); }
+
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept { return inner_.next(); }
+
+  // Replace the default impl in sus::iter::IteratorBase.
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    return inner_.size_hint();
+  }
+
+  // TODO: Impl count(), nth(), last(), nth_back().
+
+ private:
+  // Constructed by Slice.
+  friend class Slice<ItemT>;
+
+  static constexpr auto with(Split<ItemT>&& split, usize n) noexcept {
+    return SplitN(::sus::move(split), n);
+  }
+
+  constexpr SplitN(Split<ItemT> split, usize n) noexcept
+      : inner_(::sus::move(split), n) {}
+
+  __private::GenericSplitN<Slice<ItemT>, Split<ItemT>> inner_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
+};
+
+/// An iterator over mutable subslices separated by elements that match a
+/// predicate function, limited to a given number of splits.
+///
+/// This struct is created by the `splitn_mut()` method on slices.
+template <class ItemT>
+struct [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
+    : public ::sus::iter::IteratorBase<SplitNMut<ItemT>,
+                                       ::sus::containers::SliceMut<ItemT>> {
+ public:
+  // `Item` is a `Slice<T>`.
+  using Item = typename SplitMut<ItemT>::Item;
+
+ private:
+  // `SliceItem` is a `T`.
+  using SliceItem = ItemT;
+
+ public:
+  SplitNMut(SplitNMut&&) = default;
+  SplitNMut& operator=(SplitNMut&&) = default;
+
+  /// sus::mem::Clone trait.
+  SplitNMut clone() const noexcept { return SplitNMut(::sus::clone(inner_)); }
+
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept { return inner_.next(); }
+
+  // Replace the default impl in sus::iter::IteratorBase.
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    return inner_.size_hint();
+  }
+
+  // TODO: Impl count(), nth(), last(), nth_back().
+
+ private:
+  // Constructed by SliceMut.
+  friend class SliceMut<ItemT>;
+
+  static constexpr auto with(SplitMut<ItemT>&& split, usize n) noexcept {
+    return SplitNMut(::sus::move(split), n);
+  }
+
+  constexpr SplitNMut(SplitMut<ItemT> split, usize n) noexcept
+      : inner_(::sus::move(split), n) {}
+
+  __private::GenericSplitN<SliceMut<ItemT>, SplitMut<ItemT>> inner_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inner_));
 };

@@ -584,6 +584,15 @@ constexpr SplitMut<T> split_mut(
   return SplitMut<T>::with(*this, ::sus::move(pred));
 }
 
+/// Returns an iterator over mutable subslices separated by elements that match
+/// `pred`, limited to returning at most `n` items. The matched element is not
+/// contained in the subslices.
+///
+/// The last element returned, if any, will contain the remainder of the slice.
+constexpr SplitNMut<T> splitn_mut(
+    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
+  return SplitNMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred)), n);
+}
 /// Sorts the slice.
 ///
 /// This sort is stable (i.e., does not reorder equal elements) and
