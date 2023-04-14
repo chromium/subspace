@@ -4752,4 +4752,178 @@ TEST(SliceMut, RsplitMut) {
   }
 }
 
+TEST(Slice, SplitN) {
+  auto v = sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8);
+  auto s = v.as_slice();
+
+  // No match.
+  {
+    auto it = s.splitn(1, [](const i32& i) { return i == -1; });
+    decltype(auto) o = it.next();
+    static_assert(std::same_as<decltype(o), sus::Option<Slice<i32>>>);
+    EXPECT_EQ(sus::move(o).unwrap(), s);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // One match middle.
+  {
+    auto it = s.splitn(3, [](const i32& i) { return i == 3; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(4, 5, 5, 6, 7, 7, 7, 8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Limit matches to 1.
+  {
+    auto it = s.splitn(1, [](const i32& i) { return i == 7; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Limit matches to 2.
+  {
+    auto it = s.splitn(2, [](const i32& i) { return i == 7; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(7, 7, 8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Limit matches to 3.
+  {
+    auto it = s.splitn(3, [](const i32& i) { return i == 7; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(7, 8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Limit matches to 4.
+  {
+    auto it = s.splitn(4, [](const i32& i) { return i == 7; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+}
+
+TEST(SliceMut, SplitNMut) {
+  auto v = sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8);
+  auto s = v.as_mut_slice();
+
+  // No match.
+  {
+    auto it = s.splitn_mut(1, [](const i32& i) { return i == -1; });
+    decltype(auto) o = it.next();
+    static_assert(std::same_as<decltype(o), sus::Option<SliceMut<i32>>>);
+    EXPECT_EQ(sus::move(o).unwrap(), s);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // One match middle.
+  {
+    auto it = s.splitn_mut(3, [](const i32& i) { return i == 3; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(4, 5, 5, 6, 7, 7, 7, 8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Limit matches to 1.
+  {
+    auto it = s.splitn_mut(1, [](const i32& i) { return i == 7; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Limit matches to 2.
+  {
+    auto it = s.splitn_mut(2, [](const i32& i) { return i == 7; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(7, 7, 8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Limit matches to 3.
+  {
+    auto it = s.splitn_mut(3, [](const i32& i) { return i == 7; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(7, 8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // Limit matches to 4.
+  {
+    auto it = s.splitn_mut(4, [](const i32& i) { return i == 7; });
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6));
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values());
+    }
+    {
+      auto o = it.next().unwrap();
+      EXPECT_EQ(o, sus::Vec<i32>::with_values(8));
+    }
+    EXPECT_EQ(it.next(), sus::None);
+  }
+}
+
 }  // namespace
