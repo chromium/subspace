@@ -44,6 +44,8 @@ using ::sus::option::Option;
 
 // TODO: Move forward decls somewhere?
 template <class InnerSizedIter>
+class Enumerate;
+template <class InnerSizedIter>
 class Filter;
 template <class Item>
 class Generator;
@@ -170,14 +172,26 @@ class IteratorBase {
   auto box() && noexcept
     requires(!::sus::mem::relocate_by_memcpy<Iter>);
 
-  /// Creates an iterator which uses a closure to map each element to another
-  /// type.
+  /// Creates an iterator which gives the current iteration count as well as the
+  /// next value.
   ///
-  /// The returned iterator's type is whatever is returned by the closure.
-  template <class T, int&..., class R = std::invoke_result_t<T, Item&&>,
-            class B = ::sus::fn::FnMutBox<R(Item&&)>>
-    requires(!std::is_void_v<R> && Into<T, B>)
-  auto map(T fn) && noexcept
+  /// The iterator returned yields pairs `(i, val)`, where `i` is the current
+  /// index of iteration and `val` is the value returned by the iterator.
+  ///
+  /// `enumerate()` keeps its count as a `usize`. If you want to count by a
+  /// different sized integer, the `zip()` function provides similar
+  /// functionality.
+  ///
+  /// # Overflow Behavior
+  /// The method does no guarding against overflows, so enumerating more than
+  /// `usize::MAX` elements either produces the wrong result or panics depending
+  /// on your build configuration. If debug assertions are enabled, a panic is
+  /// guaranteed.
+  ///
+  /// # Panics
+  /// The returned iterator might panic if the to-be-returned index would
+  /// overflow a `usize`.
+  auto enumerate() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Creates an iterator which uses a closure to determine if an element should
@@ -193,6 +207,16 @@ class IteratorBase {
   /// iterator.
   template <::sus::fn::FnOnce<::sus::iter::Generator<ItemT>(Iter&&)> GenFn>
   ::sus::iter::Generator<ItemT> generate(GenFn&& generator_fn) && noexcept;
+
+  /// Creates an iterator which uses a closure to map each element to another
+  /// type.
+  ///
+  /// The returned iterator's type is whatever is returned by the closure.
+  template <class T, int&..., class R = std::invoke_result_t<T, Item&&>,
+            class B = ::sus::fn::FnMutBox<R(Item&&)>>
+    requires(!std::is_void_v<R> && Into<T, B>)
+  auto map(T fn) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Converts the iterator into a `std::ranges::range` for use with the std
   /// ranges library.
@@ -307,6 +331,15 @@ auto IteratorBase<Iter, Item>::map(T fn) && noexcept
   using Map = Map<R, Sized>;
   return Map::with(sus::into(::sus::move(fn)),
                    make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+auto IteratorBase<Iter, Item>::enumerate() && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Enumerate = Enumerate<Sized>;
+  return Enumerate::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>

@@ -62,6 +62,13 @@ class [[nodiscard]] [[sus_trivial_abi]] Map final
     }
   }
 
+  // sus::iter::ExactSizeIterator trait.
+  usize exact_size_hint() const noexcept
+    requires(InnerSizedIter::ExactSize)
+  {
+    return next_iter_.exact_size_hint();
+  }
+
  private:
   Map(MapFn fn, InnerSizedIter&& next_iter)
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}

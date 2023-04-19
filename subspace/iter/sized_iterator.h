@@ -24,20 +24,27 @@
 namespace sus::iter {
 
 template <class ItemT, size_t SubclassSize, size_t SubclassAlign,
-          bool DoubleEndedB>
+          bool DoubleEndedB, bool ExactSizeB>
 struct [[sus_trivial_abi]] SizedIterator final {
   using Item = ItemT;
   static constexpr bool DoubleEnded = DoubleEndedB;
+  static constexpr bool ExactSize = ExactSizeB;
 
   constexpr SizedIterator(void (*destroy)(char& sized),
                           Option<Item> (*next)(char& sized),
-                          Option<Item> (*next_back)(char& sized))
-      : destroy_(destroy), next_(next), next_back_(next_back) {}
+                          Option<Item> (*next_back)(char& sized),
+                          usize (*exact_size_hint)(const char& sized))
+      : destroy_(destroy),
+        next_(next),
+        next_back_(next_back),
+        exact_size_hint_(exact_size_hint) {}
 
   SizedIterator(SizedIterator&& o) noexcept
       : destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
         next_(::sus::mem::replace(mref(o.next_), nullptr)),
-        next_back_(::sus::mem::replace(mref(o.next_back_), nullptr)) {
+        next_back_(::sus::mem::replace(mref(o.next_back_), nullptr)),
+        exact_size_hint_(
+            ::sus::mem::replace(mref(o.exact_size_hint_), nullptr)) {
     ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, o.sized_, sized_,
                                     SubclassSize);
   }
@@ -46,6 +53,7 @@ struct [[sus_trivial_abi]] SizedIterator final {
     destroy_ = ::sus::mem::replace(mref(o.destroy_), nullptr);
     next_ = ::sus::mem::replace(mref(o.next_), nullptr);
     next_back_ = ::sus::mem::replace(mref(o.next_back_), nullptr);
+    exact_size_hint_ = ::sus::mem::replace(mref(o.exact_size_hint_), nullptr);
     ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, o.sized_, sized_,
                                     SubclassSize);
   }
@@ -60,6 +68,11 @@ struct [[sus_trivial_abi]] SizedIterator final {
   {
     return next_back_(*sized_);
   }
+  usize exact_size_hint() const noexcept
+    requires(ExactSize)
+  {
+    return exact_size_hint_(*sized_);
+  }
 
   char* as_mut_ptr() noexcept { return sized_; }
 
@@ -70,6 +83,9 @@ struct [[sus_trivial_abi]] SizedIterator final {
   // TODO: We could remove this field with a nested struct + template
   // specialization when DoubleEnded is false.
   Option<Item> (*next_back_)(char& sized);
+  // TODO: We could remove this field with a nested struct + template
+  // specialization when ExactSize is false.
+  usize (*exact_size_hint_)(const char& sized);
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(sized_),
                                   decltype(destroy_), decltype(next_back_));
@@ -77,9 +93,11 @@ struct [[sus_trivial_abi]] SizedIterator final {
 
 template <class Iter>
 struct SizedIteratorType {
-  using type = SizedIterator<
-      typename Iter::Item, ::sus::mem::size_of<Iter>(), alignof(Iter),
-      ::sus::iter::DoubleEndedIterator<Iter, typename Iter::Item>>;
+  using type =
+      SizedIterator<typename Iter::Item, ::sus::mem::size_of<Iter>(),
+                    alignof(Iter),
+                    ::sus::iter::DoubleEndedIterator<Iter, typename Iter::Item>,
+                    ::sus::iter::ExactSizeIterator<Iter, typename Iter::Item>>;
 };
 
 /// Make a SizedIterator which wraps a trivially relocatable iterator and erases
@@ -111,9 +129,19 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
   } else {
     next_back = nullptr;
   }
+  usize (*exact_size_hint)(const char& sized);
+  if constexpr (SizedIteratorType<Iter>::type::ExactSize) {
+    exact_size_hint = [](const char& sized) {
+      return reinterpret_cast<const Iter&>(sized).exact_size_hint();
+    };
+  } else {
+    exact_size_hint = nullptr;
+  }
 
-  auto it = typename SizedIteratorType<Iter>::type(destroy, next, next_back);
+  auto it = typename SizedIteratorType<Iter>::type(destroy, next, next_back,
+                                                   exact_size_hint);
   new (it.as_mut_ptr()) Iter(::sus::move(iter));
   return it;
 }
+
 }  // namespace sus::iter

@@ -82,6 +82,22 @@ concept DoubleEndedIterator = Iterator<T, Item> && requires(T& t) {
   { t.next_back() } noexcept -> std::same_as<::sus::option::Option<Item>>;
 };
 
+/// An iterator that knows its exact length.
+///
+/// Many Iterators don’t know how many times they will iterate, but some do. If
+/// an iterator knows how many times it can iterate, providing access to that
+/// information can be useful. For example, if you want to iterate backwards, a
+/// good start is to know where the end is.
+///
+/// When implementing an `ExactSizeIterator`, you must also implement
+/// `Iterator`.
+///
+/// Then, to implement `ExactSizeIterator`, provide the `exact_size_hint()`
+/// method that returns the exact size of the iterator. The implementation of
+/// `Iterator::size_hint()` must also return the exact size of the iterator
+/// (usually by calling `exact_size_hint()`).
+//
+// TODO: Rename exact_size_hint() to len()?
 template <class T, class Item>
 concept ExactSizeIterator = Iterator<T, Item> && requires(const T& t) {
   { t.exact_size_hint() } noexcept -> std::same_as<::sus::num::usize>;

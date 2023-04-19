@@ -67,6 +67,7 @@ target_sources(subspace PUBLIC
     "iter/__private/step.h"
     "iter/boxed_iterator.h"
     "iter/compat_ranges.h"
+    "iter/enumerate.h"
     "iter/extend.h"
     "iter/filter.h"
     "iter/from_iterator.h"

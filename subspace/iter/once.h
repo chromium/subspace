@@ -34,6 +34,8 @@ class [[nodiscard]] Once final : public IteratorBase<Once<ItemT>, ItemT> {
   Option<Item> next() noexcept { return single_.take(); }
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept { return single_.take(); }
+  // sus::iter::ExactSizeIterator trait.
+  usize exact_size_hint() const noexcept { return single_.is_some() ? 1u : 0u; }
 
  private:
   Once(Option<Item>&& single) : single_(::sus::move(single)) {}
