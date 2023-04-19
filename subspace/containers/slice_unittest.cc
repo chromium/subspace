@@ -522,6 +522,47 @@ TEST(SliceMut, SortBy) {
   }
 }
 
+struct Unsortable {
+  Sortable sortable;
+};
+const Sortable& unsortable_key(const Unsortable& u sus_lifetimebound) noexcept {
+  return u.sortable;
+}
+
+TEST(SliceMut, SortByKey) {
+  // clang-format off
+  sus::Array<Unsortable, 9> unsorted = sus::array(
+    Unsortable(Sortable(3, 0)),
+    Unsortable(Sortable(3, 1)),
+    Unsortable(Sortable(4, 0)),
+    Unsortable(Sortable(2, 0)),
+    Unsortable(Sortable(2, 1)),
+    Unsortable(Sortable(1, 0)),
+    Unsortable(Sortable(3, 2)),
+    Unsortable(Sortable(6, 0)),
+    Unsortable(Sortable(5, 0))
+  );
+  sus::Array<Unsortable, 9> sorted = sus::array(
+    Unsortable(Sortable(1, 0)),
+    Unsortable(Sortable(2, 0)),
+    Unsortable(Sortable(2, 1)),
+    Unsortable(Sortable(3, 0)),
+    Unsortable(Sortable(3, 1)),
+    Unsortable(Sortable(3, 2)),
+    Unsortable(Sortable(4, 0)),
+    Unsortable(Sortable(5, 0)),
+    Unsortable(Sortable(6, 0))
+  );
+  // clang-format on
+
+  SliceMut<Unsortable> s = unsorted.as_mut_slice();
+  // Sorts by the inner Sortable.
+  s.sort_by_key(unsortable_key);
+  for (usize i = 0u; i < s.len(); i += 1u) {
+    EXPECT_EQ(sorted[i].sortable, s[i].sortable);
+  }
+}
+
 TEST(SliceMut, SortUnstable) {
   sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
   sus::Array<i32, 6> sorted = sus::array(1, 2, 3, 4, 5, 6);

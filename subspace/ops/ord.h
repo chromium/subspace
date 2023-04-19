@@ -91,7 +91,7 @@ concept ExclusivePartialOrd = (!WeakOrd<T, U> && PartialOrd<T, U>);
 /// Note that if either input is a temporary object this can return a reference
 /// to an object past its lifetime.
 template <class T>
-  requires(Ord<T>)
+  requires(::sus::ops::Ord<T>)
 inline constexpr T min(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
   return a > b ? ::sus::forward<T>(b) : ::sus::forward<T>(a);
 }
@@ -130,7 +130,7 @@ constexpr T min_by(
 /// to an object past its lifetime.
 template <class T, ::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn,
           int&..., class Key = std::invoke_result_t<KeyFn&, const T&>>
-  requires(Ord<Key>)
+  requires(::sus::ops::Ord<Key>)
 constexpr T min_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
                        KeyFn f) noexcept {
   return f(a) > f(b) ? ::sus::forward<T>(b) : ::sus::forward<T>(a);
@@ -147,7 +147,7 @@ constexpr T min_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
 /// Note that if either input is a temporary object this can return a reference
 /// to an object past its lifetime.
 template <class T>
-  requires(Ord<T>)
+  requires(::sus::ops::Ord<T>)
 constexpr T max(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
   return a > b ? ::sus::forward<T>(a) : ::sus::forward<T>(b);
 }
@@ -186,7 +186,7 @@ constexpr T max_by(
 /// to an object past its lifetime.
 template <class T, ::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn,
           int&..., class Key = std::invoke_result_t<KeyFn&, const T&>>
-  requires(Ord<Key>)
+  requires(::sus::ops::Ord<Key>)
 constexpr T max_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
                        KeyFn f) noexcept {
   return f(a) > f(b) ? ::sus::forward<T>(a) : ::sus::forward<T>(b);
@@ -207,7 +207,7 @@ constexpr T max_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
 /// # Panics
 /// Panics if `min > max`.
 template <class T>
-  requires(Ord<T>)
+  requires(::sus::ops::Ord<T>)
 constexpr T clamp(T v sus_lifetimebound, T min sus_lifetimebound,
                   T max sus_lifetimebound) noexcept {
   ::sus::check(min <= max);

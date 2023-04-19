@@ -584,6 +584,86 @@ constexpr RSplitNMut<T> rsplitn_mut(
       RSplitMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred))), n);
 }
 
+#if 0
+/// Reorder the slice such that the element at `index` is at its final sorted
+/// position.
+///
+/// This reordering has the additional property that any value at position `i <
+/// index` will be less than or equal to any value at a position `j > index`.
+/// Additionally, this reordering is unstable (i.e. any number of equal elements
+/// may end up at position `index`), in-place (i.e. does not allocate), and
+/// O(*n*) worst-case. This function is also known as “kth element” in other
+/// libraries. It returns a triplet of the following from the reordered slice:
+/// the subslice prior to index, the element at `index`, and the subslice after
+/// `index`; accordingly, the values in those two subslices will respectively
+/// all be less-than-or-equal-to and greater-than-or-equal-to the value of the
+/// element at `index`.
+///
+/// # Panics
+/// Panics when `index >= len()`, meaning it always panics on empty slices.
+::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable(
+    usize index) _mut_ref noexcept
+  requires(::sus::ops::Ord<T>)
+{
+  return select_nth_unstable_by(index,
+                                [](const T& a, const T& b) { return a <=> b; });
+}
+
+/// Reorder the slice with a comparator function such that the element at
+/// `index` is at its final sorted position.
+///
+/// This reordering has the additional property that any value at position` i <
+/// index` will be less than or equal to any value at a position `j > index`
+/// using the comparator function. Additionally, this reordering is unstable
+/// (i.e. any number of equal elements may end up at position `index`), in-place
+/// (i.e. does not allocate), and O(*n*) worst-case. This function is also known
+/// as “kth element” in other libraries. It returns a triplet of the following
+/// from the slice reordered according to the provided comparator function: the
+/// subslice prior to `index`, the element at `index`, and the subslice after
+/// `index`; accordingly, the values in those two subslices will respectively
+/// all be less-than-or-equal-to and greater-than-or-equal-to the value of the
+/// element at index.
+///
+/// # Panics
+/// Panics when `index >= len()`, meaning it always panics on empty slices.
+::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable_by(
+    usize index,
+    ::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)> compare)
+    _mut_ref noexcept {
+  ::sus::check_with_message(
+      index < len(), *"partition_at_index index greater than length of slice");
+
+  // TODO: Requires Iterator::enumerate(), max_by(), min_by()
+  ::sus::unreachable();
+}
+
+/// Reorder the slice with a key extraction function such that the element at
+/// `index` is at its final sorted position.
+///
+/// This reordering has the additional property that any value at position `i <
+/// index` will be less than or equal to any value at a position `j > index`
+/// using the key extraction function. Additionally, this reordering is unstable
+/// (i.e. any number of equal elements may end up at position `index`), in-place
+/// (i.e. does not allocate), and O(*n*) worst-case. This function is also known
+/// as “kth element” in other libraries. It returns a triplet of the following
+/// from the slice reordered according to the provided key extraction function:
+/// the subslice prior to `index`, the element at `index`, and the subslice
+/// after `index`; accordingly, the values in those two subslices will
+/// respectively all be less-than-or-equal-to and greater-than-or-equal-to the
+/// value of the element at `index`.
+///
+/// # Panics
+/// Panics when `index >= len()`, meaning it always panics on empty slices.
+template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
+          class Key = std::invoke_result_t<KeyFn&, const T&>>
+  requires(::sus::ops::Ord<Key>)
+::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable_by_key(
+    usize index, KeyFn f) _mut_ref noexcept {
+  return select_nth_unstable_by(
+      index, [&f](const T& a, const T& b) { return f(a) <=> f(b); });
+}
+#endif
+
 /// Returns an iterator over mutable subslices separated by elements that match
 /// `pred`. The matched element is not contained in the subslices.
 ///
@@ -636,15 +716,20 @@ void sort() noexcept
 //
 // TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
 // also be constexpr?
-template <::sus::fn::FnMut<::sus::fn::Anything(const T&, const T&)> F, int&...,
-          class R = std::invoke_result_t<F, const T&, const T&>>
-  requires(::sus::ops::Ordering<R>)
-void sort_by(F compare) noexcept {
+void sort_by(::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>&&
+                 compare) noexcept {
   if (len() > ::sus::num::usize(0u)) {
     std::stable_sort(
         as_mut_ptr(), as_mut_ptr() + len(),
         [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
   }
+}
+
+template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
+          class Key = std::invoke_result_t<KeyFn&, const T&>>
+  requires(::sus::ops::Ord<Key>)
+void sort_by_key(KeyFn f) _mut_ref noexcept {
+  return sort_by([&f](const T& a, const T& b) { return f(a) <=> f(b); });
 }
 
 /// Sorts the slice, but might not preserve the order of equal elements.
