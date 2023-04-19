@@ -17,6 +17,7 @@
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/mem/replace.h"
 #include "subspace/num/unsigned_integer.h"
+#include "subspace/ops/range.h"
 
 namespace sus::containers {
 template <class T>
@@ -24,15 +25,6 @@ class Slice;
 template <class T>
 class SliceMut;
 }  // namespace sus::containers
-
-namespace sus::ops {
-template <class T>
-  requires(::sus::ops::Ord<T>)
-class RangeFrom;
-template <class T>
-  requires(::sus::ops::Ord<T>)
-class RangeTo;
-}  // namespace sus::ops
 
 namespace sus::containers {
 

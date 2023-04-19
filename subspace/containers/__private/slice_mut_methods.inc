@@ -769,23 +769,23 @@ void sort_by_cached_key(KeyFn f) noexcept {
   }
   if constexpr (sz_u8 < sz_u16) {
     if (length <= u8::MAX) {
-      __private::sort_slice_by_cached_key<u8, Key, T>(f, *this);
+      __private::sort_slice_by_cached_key<u8, Key, T>(*this, f);
       return;
     }
   }
   if constexpr (sz_u16 < sz_u32) {
     if (length <= u16::MAX) {
-      __private::sort_slice_by_cached_key<u16, Key, T>(f, *this);
+      __private::sort_slice_by_cached_key<u16, Key, T>(*this, f);
       return;
     }
   }
   if constexpr (sz_u32 < sz_usize) {
     if (length <= u32::MAX) {
-      __private::sort_slice_by_cached_key<u32, Key, T>(f, *this);
+      __private::sort_slice_by_cached_key<u32, Key, T>(*this, f);
       return;
     }
   }
-  __private::sort_slice_by_cached_key<usize, Key, T>(f, *this);
+  __private::sort_slice_by_cached_key<usize, Key, T>(*this, f);
 }
 
 /// Sorts the slice, but might not preserve the order of equal elements.
