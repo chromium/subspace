@@ -41,6 +41,7 @@ target_sources(subspace PUBLIC
     "containers/__private/slice_methods_out_of_line.inc"
     "containers/__private/slice_methods.inc"
     "containers/__private/slice_mut_methods.inc"
+    "containers/__private/sort.h"
     "containers/__private/vec_marker.h"
     "containers/iterators/array_iter.h"
     "containers/iterators/chunks.h"

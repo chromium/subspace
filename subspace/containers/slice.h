@@ -18,6 +18,7 @@
 
 #include "subspace/assertions/check.h"
 #include "subspace/construct/default.h"
+#include "subspace/containers/__private/sort.h"
 #include "subspace/containers/concat.h"
 #include "subspace/containers/iterators/chunks.h"
 #include "subspace/containers/iterators/slice_iter.h"
@@ -41,8 +42,6 @@
 #include "subspace/ptr/copy.h"
 #include "subspace/result/result.h"
 #include "subspace/tuple/tuple.h"
-
-// TODO: sort_by_cached_key()
 
 namespace sus::containers {
 

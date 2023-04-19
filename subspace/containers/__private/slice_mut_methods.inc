@@ -735,12 +735,12 @@ void sort_by(::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>
 /// log(n)) worst-case, where the key function is O(m).
 ///
 /// For expensive key functions (e.g. functions that are not simple property
-/// accesses or basic operations), sort_by_cached_key is likely to be
+/// accesses or basic operations), `sort_by_cached_key()` is likely to be
 /// significantly faster, as it does not recompute element keys.
 ///
 /// When applicable, unstable sorting is preferred because it is generally
 /// faster than stable sorting and it doesn’t allocate auxiliary memory. See
-/// sort_unstable_by_key.
+/// `sort_unstable_by_key()`.
 ///
 /// # Current implementation
 /// The current implementation is std::stable_sort().
@@ -752,6 +752,40 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
   requires(::sus::ops::Ord<Key>)
 void sort_by_key(KeyFn f) noexcept {
   return sort_by([&f](const T& a, const T& b) { return f(a) <=> f(b); });
+}
+
+template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
+          class Key = std::invoke_result_t<KeyFn&, const T&>>
+  requires(::sus::ops::Ord<Key>)
+void sort_by_cached_key(KeyFn f) noexcept {
+  constexpr auto sz_u8 = ::sus::mem::size_of<::sus::Tuple<Key, u8>>();
+  constexpr auto sz_u16 = ::sus::mem::size_of<::sus::Tuple<Key, u16>>();
+  constexpr auto sz_u32 = ::sus::mem::size_of<::sus::Tuple<Key, u32>>();
+  constexpr auto sz_usize = ::sus::mem::size_of<::sus::Tuple<Key, usize>>();
+
+  const auto length = len();
+  if (length < 2) {
+    return;
+  }
+  if constexpr (sz_u8 < sz_u16) {
+    if (length <= u8::MAX) {
+      __private::sort_slice_by_cached_key<u8, Key, T>(f, *this);
+      return;
+    }
+  }
+  if constexpr (sz_u16 < sz_u32) {
+    if (length <= u16::MAX) {
+      __private::sort_slice_by_cached_key<u16, Key, T>(f, *this);
+      return;
+    }
+  }
+  if constexpr (sz_u32 < sz_usize) {
+    if (length <= u32::MAX) {
+      __private::sort_slice_by_cached_key<u32, Key, T>(f, *this);
+      return;
+    }
+  }
+  __private::sort_slice_by_cached_key<usize, Key, T>(f, *this);
 }
 
 /// Sorts the slice, but might not preserve the order of equal elements.
@@ -847,6 +881,23 @@ split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
                                       mid),
       SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
                                       as_mut_ptr() + mid, len() - mid));
+}
+
+/// Swaps two elements in the slice.
+///
+/// # Arguments
+/// `a` - The index of the first element
+/// `b` - The index of the second element
+///
+/// # Panics
+/// Panics if a or b are out of bounds.
+constexpr void swap(usize a, usize b) noexcept {
+  ::sus::mem::swap(operator[](a), operator[](b));
+}
+
+constexpr inline void swap_unchecked(::sus::marker::UnsafeFnMarker, usize a,
+                                     usize b) noexcept {
+  ::sus::mem::swap(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
 }
 
 #undef _mut_ref
