@@ -29,10 +29,9 @@ namespace sus::containers::__private {
 
 // Helper function for indexing our vector by the smallest possible type, to
 // reduce allocation.
-template <class U, class Key, class T, int&...,
-          class KeyFn = ::sus::fn::FnMut<Key(const T&)>>
-void sort_slice_by_cached_key(KeyFn& f,
-                              ::sus::containers::SliceMut<T>& slice) noexcept {
+template <class U, class Key, class T, ::sus::fn::FnMut<Key(const T&)> KeyFn>
+void sort_slice_by_cached_key(::sus::containers::SliceMut<T>& slice,
+                              KeyFn& f) noexcept {
   auto indices =
       slice.iter()
           .map(f)
@@ -48,11 +47,11 @@ void sort_slice_by_cached_key(KeyFn& f,
   indices.sort_unstable();
   const usize length = slice.len();
   for (usize i; i < length; i += 1u) {
-    auto index = indices[i].at<1>();
+    auto index = indices[i].template at<1>();
     while (index < i) {
-      index = indices[index].at<1>();
+      index = indices[index].template at<1>();
     }
-    indices[i].at_mut<1>() = index;
+    indices[i].template at_mut<1>() = index;
     slice.swap_unchecked(::sus::marker::unsafe_fn, i, index);
   }
 };

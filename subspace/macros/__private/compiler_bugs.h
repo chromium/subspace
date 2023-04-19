@@ -18,6 +18,7 @@
 #include "subspace/macros/compiler.h"
 
 // TODO: https://github.com/llvm/llvm-project/issues/56394
+// Aggregate initialization can't deduce template types.
 #if defined(__clang__) && \
     __clang_major__ > 0  // TODO: Update when the bug is fixed.
 #define sus_clang_bug_56394(...) __VA_ARGS__
