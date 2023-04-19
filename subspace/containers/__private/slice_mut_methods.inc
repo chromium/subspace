@@ -693,9 +693,11 @@ constexpr SplitNMut<T> splitn_mut(
 /// faster than stable sorting and it doesn’t allocate auxiliary memory. See
 /// `sort_unstable()`.
 ///
-//
-// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
-// also be constexpr?
+/// # Current implementation
+/// The current implementation is std::stable_sort().
+///
+/// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
+/// also be constexpr?
 void sort() noexcept
   requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
 {
@@ -713,10 +715,12 @@ void sort() noexcept
 /// the slice. If the ordering is not total, the order of the elements is
 /// unspecified.
 ///
-//
-// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
-// also be constexpr?
-void sort_by(::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>&&
+/// # Current implementation
+/// The current implementation is std::stable_sort().
+///
+/// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
+/// also be constexpr?
+void sort_by(::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>
                  compare) noexcept {
   if (len() > ::sus::num::usize(0u)) {
     std::stable_sort(
@@ -725,22 +729,43 @@ void sort_by(::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>&&
   }
 }
 
+/// Sorts the slice with a key extraction function.
+///
+/// This sort is stable (i.e., does not reorder equal elements) and O(m * n *
+/// log(n)) worst-case, where the key function is O(m).
+///
+/// For expensive key functions (e.g. functions that are not simple property
+/// accesses or basic operations), sort_by_cached_key is likely to be
+/// significantly faster, as it does not recompute element keys.
+///
+/// When applicable, unstable sorting is preferred because it is generally
+/// faster than stable sorting and it doesn’t allocate auxiliary memory. See
+/// sort_unstable_by_key.
+///
+/// # Current implementation
+/// The current implementation is std::stable_sort().
+///
+/// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
+/// also be constexpr?
 template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
   requires(::sus::ops::Ord<Key>)
-void sort_by_key(KeyFn f) _mut_ref noexcept {
+void sort_by_key(KeyFn f) noexcept {
   return sort_by([&f](const T& a, const T& b) { return f(a) <=> f(b); });
 }
 
 /// Sorts the slice, but might not preserve the order of equal elements.
 ///
-/// This sort is unstable (i.e., may reorder equal elements), in-place (i.e.,
-/// does not allocate), and O(n * log(n)) worst-case.
+/// # Current implementation
+/// The current implementation is std::sort(), which is O(n * log(n)) but can
+/// allocate while sorting.
 ///
+/// TODO: Rust's sort is unstable (i.e., may reorder equal elements), in-place
+/// (i.e., does not allocate), and O(n * log(n)) worst-case.
 constexpr void sort_unstable() noexcept
   requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
 {
-  if (len() > ::sus::num::usize(0u)) {
+  if (len() > 0u) {
     std::sort(as_mut_ptr(), as_mut_ptr() + len());
   }
 }
@@ -748,21 +773,40 @@ constexpr void sort_unstable() noexcept
 /// Sorts the slice with a comparator function, but might not preserve the
 /// order of equal elements.
 ///
-/// This sort is unstable (i.e., may reorder equal elements), in-place (i.e.,
-/// does not allocate), and O(n * log(n)) worst-case.
-///
 /// The comparator function must define a total ordering for the elements in
 /// the slice. If the ordering is not total, the order of the elements is
 /// unspecified.
 ///
-template <::sus::fn::FnMut<::sus::fn::Anything(const T&, const T&)> F, int&...,
-          class R = std::invoke_result_t<F, const T&, const T&>>
-  requires(::sus::ops::Ordering<R>)
-constexpr void sort_unstable_by(F compare) noexcept {
-  if (len() > ::sus::num::usize(0u)) {
+/// # Current implementation
+/// The current implementation is std::sort(), which is O(n * log(n)) but can
+/// allocate while sorting.
+///
+/// TODO: Rust's sort is unstable (i.e., may reorder equal elements), in-place
+/// (i.e., does not allocate), and O(n * log(n)) worst-case.
+constexpr void sort_unstable_by(
+    ::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>
+        compare) noexcept {
+  if (len() > 0u) {
     std::sort(as_mut_ptr(), as_mut_ptr() + len(),
               [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
   }
+}
+
+/// Sorts the slice with a key extraction function, but might not preserve the
+/// order of equal elements.
+///
+/// # Current implementation
+/// The current implementation is std::sort(), which is O(n * log(n)) but can
+/// allocate while sorting.
+///
+/// TODO: Rust's sort is unstable (i.e., may reorder equal elements), in-place
+/// (i.e., does not allocate), and O(n * log(n)) worst-case.
+template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
+          class Key = std::invoke_result_t<KeyFn&, const T&>>
+  requires(::sus::ops::Ord<Key>)
+void sort_unstable_by_key(KeyFn f) noexcept {
+  return sort_unstable_by(
+      [&f](const T& a, const T& b) { return f(a) <=> f(b); });
 }
 
 /// Divides one mutable slice into two at an index.

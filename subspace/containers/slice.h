@@ -42,9 +42,7 @@
 #include "subspace/result/result.h"
 #include "subspace/tuple/tuple.h"
 
-// TODO: sort_by_key()
 // TODO: sort_by_cached_key()
-// TODO: sort_unstable_by_key()
 
 namespace sus::containers {
 
