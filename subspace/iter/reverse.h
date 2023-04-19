@@ -48,6 +48,12 @@ class [[nodiscard]] [[sus_trivial_abi]] Reverse final
   Option<Item> next() noexcept { return next_iter_.next_back(); }
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept { return next_iter_.next(); }
+  // sus::iter::ExactSizeIterator trait.
+  usize exact_size_hint() const noexcept
+    requires(InnerSizedIter::ExactSize)
+  {
+    return next_iter_.exact_size_hint();
+  }
 
  private:
   Reverse(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}

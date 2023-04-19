@@ -35,7 +35,7 @@ using sus::option::Option;
 
 namespace {
 
-using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false>;
+using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false, false>;
 
 // clang-format off
 static_assert(
@@ -98,6 +98,9 @@ class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
     back_ -= 1u;
     return items_[back_].take();
   }
+
+  // sus::iter::ExactSizeIterator trait.
+  usize exact_size_hint() const noexcept { return back_ - front_; }
 
  protected:
   ArrayIterator(Item (&items)[N])
@@ -385,12 +388,58 @@ TEST(Iterator, Rev) {
   auto it = ArrayIterator<i32, 5>::with_array(nums).rev();
   static_assert(sus::iter::Iterator<decltype(it), i32>);
   static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32>);
+  static_assert(sus::iter::ExactSizeIterator<decltype(it), i32>);
   EXPECT_EQ(it.next(), sus::some(5).construct());
   EXPECT_EQ(it.next(), sus::some(4).construct());
   EXPECT_EQ(it.next(), sus::some(3).construct());
   EXPECT_EQ(it.next(), sus::some(2).construct());
   EXPECT_EQ(it.next(), sus::some(1).construct());
   EXPECT_EQ(it.next(), sus::None);
+}
+
+TEST(Iterator, Enumerate) {
+  i32 nums[5] = {1, 2, 3, 4, 5};
+
+  {
+    auto it = ArrayIterator<i32, 5>::with_array(nums).rev().enumerate();
+    using E = sus::Tuple<usize, i32>;
+    static_assert(sus::iter::Iterator<decltype(it), E>);
+    static_assert(sus::iter::DoubleEndedIterator<decltype(it), E>);
+    static_assert(sus::iter::ExactSizeIterator<decltype(it), E>);
+    EXPECT_EQ(it.next().unwrap(), sus::tuple(0u, 5).construct());
+    EXPECT_EQ(it.next().unwrap(), sus::tuple(1u, 4).construct());
+    EXPECT_EQ(it.next().unwrap(), sus::tuple(2u, 3).construct());
+    EXPECT_EQ(it.next().unwrap(), sus::tuple(3u, 2).construct());
+    EXPECT_EQ(it.next().unwrap(), sus::tuple(4u, 1).construct());
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  {
+    auto it = ArrayIterator<i32, 5>::with_array(nums).enumerate();
+    using E = sus::Tuple<usize, i32>;
+    static_assert(sus::iter::Iterator<decltype(it), E>);
+    static_assert(sus::iter::DoubleEndedIterator<decltype(it), E>);
+    static_assert(sus::iter::ExactSizeIterator<decltype(it), E>);
+    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(4u, 5).construct());
+    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(3u, 4).construct());
+    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(2u, 3).construct());
+    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(1u, 2).construct());
+    EXPECT_EQ(it.next_back().unwrap(), sus::tuple(0u, 1).construct());
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+
+  auto vec = Vec<i32>::with_values(0, 2, 4, 6, 8);
+  // Front to back.
+  for (auto [i, value] : vec.iter().enumerate()) {
+    EXPECT_EQ(i * 2, usize::from(value));
+  }
+  // Back to front.
+  for (auto [i, value] : vec.iter().enumerate().rev()) {
+    EXPECT_EQ(i * 2, usize::from(value));
+  }
+  // Back to front without reversing the indices.
+  for (auto [i, value] : vec.iter().rev().enumerate()) {
+    EXPECT_EQ((4 - i) * 2, usize::from(value));
+  }
 }
 
 }  // namespace
