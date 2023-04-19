@@ -564,6 +564,48 @@ TEST(SliceMut, SortByKey) {
   }
 }
 
+TEST(SliceMut, SortByCachedKey) {
+  struct Unsortable {
+    Sortable sortable;
+  };
+  auto unsortable_key =
+      [](const Unsortable& u sus_lifetimebound) noexcept -> const Sortable& {
+    return u.sortable;
+  };
+
+  // clang-format off
+  sus::Array<Unsortable, 9> unsorted = sus::array(
+    Unsortable(Sortable(3, 0)),
+    Unsortable(Sortable(3, 1)),
+    Unsortable(Sortable(4, 0)),
+    Unsortable(Sortable(2, 0)),
+    Unsortable(Sortable(2, 1)),
+    Unsortable(Sortable(1, 0)),
+    Unsortable(Sortable(3, 2)),
+    Unsortable(Sortable(6, 0)),
+    Unsortable(Sortable(5, 0))
+  );
+  sus::Array<Unsortable, 9> sorted = sus::array(
+    Unsortable(Sortable(1, 0)),
+    Unsortable(Sortable(2, 0)),
+    Unsortable(Sortable(2, 1)),
+    Unsortable(Sortable(3, 0)),
+    Unsortable(Sortable(3, 1)),
+    Unsortable(Sortable(3, 2)),
+    Unsortable(Sortable(4, 0)),
+    Unsortable(Sortable(5, 0)),
+    Unsortable(Sortable(6, 0))
+  );
+  // clang-format on
+
+  SliceMut<Unsortable> s = unsorted.as_mut_slice();
+  // Sorts by the inner Sortable.
+  s.sort_by_cached_key(unsortable_key);
+  for (usize i = 0u; i < s.len(); i += 1u) {
+    EXPECT_EQ(sorted[i].sortable, s[i].sortable);
+  }
+}
+
 TEST(SliceMut, SortUnstable) {
   sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
   sus::Array<i32, 6> sorted = sus::array(1, 2, 3, 4, 5, 6);
@@ -5166,6 +5208,54 @@ TEST(SliceMut, RSplitNMut) {
       EXPECT_EQ(o, sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5, 5, 6));
     }
     EXPECT_EQ(it.next(), sus::None);
+  }
+}
+
+TEST(SliceMut, Swap) {
+  {
+    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    SliceMut<i32> s = v.as_mut_slice();
+    s.swap(0, 0);
+    sus::Vec<i32> expected = sus::vec(1, 2, 3, 4, 5, 6);
+    EXPECT_EQ(s, expected);
+  }
+  {
+    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    SliceMut<i32> s = v.as_mut_slice();
+    s.swap(0, 1);
+    sus::Vec<i32> expected = sus::vec(2, 1, 3, 4, 5, 6);
+    EXPECT_EQ(s, expected);
+  }
+  {
+    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    SliceMut<i32> s = v.as_mut_slice();
+    s.swap(3, 5);
+    sus::Vec<i32> expected = sus::vec(1, 2, 3, 6, 5, 4);
+    EXPECT_EQ(s, expected);
+  }
+}
+
+TEST(SliceMut, SwapUnchecked) {
+  {
+    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    SliceMut<i32> s = v.as_mut_slice();
+    s.swap_unchecked(unsafe_fn, 0, 0);
+    sus::Vec<i32> expected = sus::vec(1, 2, 3, 4, 5, 6);
+    EXPECT_EQ(s, expected);
+  }
+  {
+    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    SliceMut<i32> s = v.as_mut_slice();
+    s.swap_unchecked(unsafe_fn, 0, 1);
+    sus::Vec<i32> expected = sus::vec(2, 1, 3, 4, 5, 6);
+    EXPECT_EQ(s, expected);
+  }
+  {
+    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    SliceMut<i32> s = v.as_mut_slice();
+    s.swap_unchecked(unsafe_fn, 3, 5);
+    sus::Vec<i32> expected = sus::vec(1, 2, 3, 6, 5, 4);
+    EXPECT_EQ(s, expected);
   }
 }
 
