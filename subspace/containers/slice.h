@@ -118,6 +118,8 @@ class [[sus_trivial_abi]] Slice final {
   }
 
   /// sus::ops::Eq<Slice<U>> trait.
+  ///
+  /// #[doc.overloads=slice.eq]
   template <class U>
     requires(::sus::ops::Eq<T, U>)
   friend constexpr inline bool operator==(const Slice<T>& l,
@@ -241,6 +243,8 @@ class [[sus_trivial_abi]] SliceMut final {
   }
 
   /// sus::ops::Eq<SliceMut<U>> trait.
+  ///
+  /// #[doc.overloads=slicemut.eq]
   template <class U>
     requires(::sus::ops::Eq<T, U>)
   friend constexpr inline bool operator==(const SliceMut<T>& l,

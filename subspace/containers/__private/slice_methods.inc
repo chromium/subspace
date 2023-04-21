@@ -809,6 +809,6 @@ constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize mid) && = delete;
 #endif
 
-/// Constructs a `Vec<T>` by cloning each value in the Slice. */
+/// Constructs a `Vec<T>` by cloning each value in the Slice.
 Vec<T> to_vec() const& noexcept
   requires(::sus::mem::Clone<T>);
