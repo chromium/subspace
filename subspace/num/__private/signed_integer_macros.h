@@ -401,7 +401,7 @@ class Tuple;
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
    *                                                                           \
-   * #[doc.overloads=signedint.from.unsignedint]                               \
+   * #[doc.overloads=signedint.from.unsignedenum]                              \
    */                                                                          \
   template <class U>                                                           \
     requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \
@@ -418,7 +418,7 @@ class Tuple;
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
    *                                                                           \
-   * #[doc.overloads=signedint.tryfrom.unsignedint]                            \
+   * #[doc.overloads=signedint.tryfrom.unsignedenum]                           \
    */                                                                          \
   template <class U>                                                           \
     requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \

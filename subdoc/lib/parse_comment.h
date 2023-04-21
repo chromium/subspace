@@ -55,6 +55,8 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
     case clang::RawComment::CommentKind::RCK_BCPLSlash:  // `/// Foo`
       [[fallthrough]];
     case clang::RawComment::CommentKind::RCK_JavaDoc: {  // `/** Foo`
+      // Ignore `///////...` or `/******...`.
+      if (text.starts_with("////") || text.starts_with("/***")) break;
       attrs.location = raw.getBeginLoc();
 
       std::vector<clang::RawComment::CommentLine> lines =
@@ -245,12 +247,10 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
       return sus::err(ParseCommentError{
           .message = "Invalid comment format, unable to parse"});
     case clang::RawComment::CommentKind::RCK_Merged:  // More than one.
-      return sus::err(
-          ParseCommentError{.message = "Merged comment format?"});
+      return sus::err(ParseCommentError{.message = "Merged comment format?"});
   }
 
-  return sus::ok(
-      ParsedComment(sus::move(attrs), sus::move(parsed).str()));
+  return sus::ok(ParsedComment(sus::move(attrs), sus::move(parsed).str()));
 }
 
 }  // namespace subdoc

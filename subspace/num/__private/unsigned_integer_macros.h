@@ -254,7 +254,7 @@ class Tuple;
    *                                                                             \
    * For runtime conversion, use `from()`.                                       \
    *                                                                             \
-   * #[doc.overloads=ctor.signedenum]                                            \
+   * #[doc.overloads=ctor.signedenumclass]                                       \
    */                                                                            \
   template <SignedPrimitiveEnumClass P>                                          \
   explicit consteval inline T(P v) noexcept                                      \
@@ -535,7 +535,7 @@ class Tuple;
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
    *                                                                           \
-   * #[doc.overloads=unsigned.from.signedprimitive]                            \
+   * #[doc.overloads=unsigned.from.signedenum]                                 \
    */                                                                          \
   template <class S>                                                           \
     requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)            \
@@ -554,7 +554,7 @@ class Tuple;
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
    *                                                                           \
-   * #[doc.overloads=unsigned.tryfrom.signedprimitive]                         \
+   * #[doc.overloads=unsigned.tryfrom.signedenum]                              \
    */                                                                          \
   template <class S>                                                           \
     requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)            \
@@ -618,7 +618,7 @@ class Tuple;
    * # Panics                                                                  \
    * The function will panic if the input value is out of range for ##T##.     \
    *                                                                           \
-   * #[doc.overloads=unsigned.from.unsignedprimitive]                          \
+   * #[doc.overloads=unsigned.from.unsignedenum]                               \
    */                                                                          \
   template <class U>                                                           \
     requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \
@@ -633,7 +633,7 @@ class Tuple;
    *                                                                           \
    * Returns an error if the source value is outside of the range of ##T##.    \
    *                                                                           \
-   * #[doc.overloads=unsigned.tryfrom.unsignedprimitive]                       \
+   * #[doc.overloads=unsigned.tryfrom.unsignedenum]                            \
    */                                                                          \
   template <class U>                                                           \
     requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)        \

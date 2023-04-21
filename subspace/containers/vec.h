@@ -290,7 +290,7 @@ class Vec final {
   /// explicitly by the caller. Then use the `Extend<T>` concept method instead,
   /// moving the elements into the Vec.
   ///
-  /// #[doc.overload=vec.extend.const]
+  /// #[doc.overloads=vec.extend.const]
   void extend(sus::iter::IntoIterator<const T&> auto&& ii) noexcept
     requires(sus::mem::Copy<T>)
   {
@@ -308,7 +308,7 @@ class Vec final {
   ///
   /// sus::iter::Extend<T> trait.
   ///
-  /// #[doc.overload=vec.extend.val]
+  /// #[doc.overloads=vec.extend.val]
   void extend(sus::iter::IntoIterator<T> auto&& ii) noexcept {
     // TODO: There's some serious improvements we can do here when the iterator
     // is over contiguous elements. See
