@@ -21,7 +21,7 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 17 all
+          sudo ./llvm.sh 16 all
 
       - name: Install Python3
         run: |
@@ -59,12 +59,12 @@ jobs:
       - name: Configure
         shell: cmake -P {0}
         run: |
-          set(ENV{CC} clang-17)
-          set(ENV{CXX} clang++-17)
+          set(ENV{CC} clang-16)
+          set(ENV{CXX} clang++-16)
 
           # Path to LLVM+Clang nightly that we have installed.
-          set(ENV{LLVM_DIR} "/usr/lib/llvm-17/lib/cmake/llvm")
-          set(ENV{Clang_DIR} "/usr/lib/llvm-17/lib/cmake/clang")
+          set(ENV{LLVM_DIR} "/usr/lib/llvm-16/lib/cmake/llvm")
+          set(ENV{Clang_DIR} "/usr/lib/llvm-16/lib/cmake/clang")
 
           file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
 
