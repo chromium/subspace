@@ -16,7 +16,6 @@
 #include "subspace/mem/relocate.h"
 #include "subspace/test/behaviour_types.h"
 #include "subspace/tuple/tuple.h"
-#include "subspace/macros/__private/compiler_bugs.h"
 
 using sus::construct::Default;
 using sus::mem::relocate_by_memcpy;
@@ -83,7 +82,7 @@ namespace sus::test::not_default_constructible {
 using T = sus::Tuple<sus::test::NotDefaultConstructible>;
 using From = T;
 
-sus_clang_bug_60697_else(static_assert(!std::is_trivial_v<T>));
+static_assert(!std::is_trivial_v<T>);
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
@@ -112,7 +111,7 @@ static_assert(relocate_by_memcpy<T>);
 namespace sus::test::trivially_copyable {
 using T = sus::Tuple<sus::test::TriviallyCopyable>;
 using From = T;
-sus_clang_bug_60697_else(static_assert(!std::is_trivial_v<T>));
+static_assert(!std::is_trivial_v<T>);
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
@@ -140,7 +139,7 @@ static_assert(relocate_by_memcpy<T>);
 namespace sus::test::trivially_moveable_and_relocatable {
 using T = sus::Tuple<sus::test::TriviallyMoveableAndRelocatable>;
 using From = T;
-sus_clang_bug_60697_else(static_assert(!std::is_trivial_v<T>));
+static_assert(!std::is_trivial_v<T>);
 static_assert(!std::is_aggregate_v<T>);
 static_assert(std::is_standard_layout_v<T>);
 static_assert(!std::is_trivially_default_constructible_v<T>);
