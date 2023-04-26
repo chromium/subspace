@@ -11,8 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-  
+
 #include "subdoc/tests/subdoc_test.h"
+
+// Clang 17 has a bugfix that allows reading doc comments from inside a macro,
+// and these tests fail before Clang 17. But Clang 17 is also broken due to
+// https://github.com/llvm/llvm-project/issues/62272, so our CI needs to use
+// prebuilt Clang 16 libraries.
+#if CLANG_VERSION_MAJOR >= 17
 
 TEST_F(SubDocTest, MacroFunction) {
   auto result = run_code(R"(
@@ -119,5 +125,8 @@ TEST_F(SubDocTest, MacroMultilineComment) {
   )");
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
-  EXPECT_TRUE(has_function_comment(db, "3:7", "<p>Comment headline Second line</p>"));
+  EXPECT_TRUE(
+      has_function_comment(db, "3:7", "<p>Comment headline Second line</p>"));
 }
+
+#endif
