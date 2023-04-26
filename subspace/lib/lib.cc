@@ -33,3 +33,8 @@ static_assert(sus::mem::size_of<size_t>() <= 8);
 // The Vec class, along with any other class with pointer arithmetic, assumes
 // isize::MAX == PTRDIFF_MAX.
 static_assert(sus::isize::MAX == PTRDIFF_MAX);
+
+#if defined(__clang__)
+// Require clang 16 to avoid bugs and for required features.
+static_assert(__clang_major__ >= 16, "requires at least clang 16");
+#endif
