@@ -98,9 +98,17 @@ class Tuple;
    */                                                                            \
   constexpr inline T() noexcept = default;                                       \
                                                                                  \
+  /** Construction from unsigned types where no bits are lost.                   \
+   *                                                                             \
+   * #[doc.overloads=ctor.unsigned.small.typed]                                  \
+   */                                                                            \
+  template <Unsigned U>                                                          \
+    requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<PrimitiveT>())      \
+  constexpr inline T(U v) noexcept : primitive_value(v.primitive_value) {}       \
+                                                                                 \
   /** Construction from unsigned primitive types where no bits are lost.         \
    *                                                                             \
-   * #[doc.overloads=ctor.unsigned.small]                                        \
+   * #[doc.overloads=ctor.unsigned.small.primitive]                              \
    */                                                                            \
   template <UnsignedPrimitiveInteger P>                                          \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
@@ -123,17 +131,40 @@ class Tuple;
   explicit constexpr inline T(P v) noexcept                                      \
       : primitive_value(static_cast<PrimitiveT>(v)) {}                           \
                                                                                  \
+  /** Construction from unsigned types, where it can be checked at compile       \
+   * time that no bits are lost.                                                 \
+   *                                                                             \
+   * For runtime conversion of larger values, use `from()`.                      \
+   *                                                                             \
+   * #[doc.overloads=ctor.unsigned.large.typed]                                  \
+   */                                                                            \
+  template <Unsigned U>                                                          \
+    requires(::sus::mem::size_of<U>() > ::sus::mem::size_of<PrimitiveT>())       \
+  consteval inline T(U v) noexcept                                               \
+      : primitive_value(/* SAFETY: We check below that v <= T::MAX, so we can    \
+                         * cast `v` to a `T`. */                                 \
+                        static_cast<PrimitiveT>(v.primitive_value)) {            \
+    /* SAFETY: P has more bits than T, so converting an unsigned T to P will     \
+     * fit. When removing the sign bit, there's still at least as many bits      \
+     * as T. */                                                                  \
+    if (v > static_cast<decltype(U::primitive_value)>(T::MAX_PRIMITIVE)) {       \
+      ::sus::panic_with_message(                                             \
+            *"Cannot assign to unsigned integer from value outside its "       \
+             "range.");   \
+    }                                                                            \
+  }                                                                              \
+                                                                                 \
   /** Construction from unsigned primitive types, where it can be checked at     \
    * compile time that no bits are lost.                                         \
    *                                                                             \
    * For runtime conversion of larger values, use `from()`.                      \
    *                                                                             \
-   * #[doc.overloads=ctor.unsigned.large]                                        \
+   * #[doc.overloads=ctor.unsigned.large.primitive]                              \
    */                                                                            \
   template <UnsignedPrimitiveInteger P>                                          \
     requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
   consteval inline T(P v) noexcept                                               \
-      : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
+      : primitive_value(/* SAFETY: We check below that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
     /* SAFETY: P has more bits than T, so converting an unsigned T to P will     \
@@ -179,16 +210,46 @@ class Tuple;
   template <UnsignedPrimitiveEnumClass P>                                        \
     requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
   explicit consteval inline T(P v) noexcept                                      \
-      : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
+      : primitive_value(/* SAFETY: We check below that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
     /* SAFETY: P has more bits than T, so converting an unsigned T to P will     \
      * fit. When removing the sign bit, there's still at least as many bits      \
      * as T. */                                                                  \
-    if (v > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {          \
+    if (static_cast<std::underlying_type_t<P>>(v) >                              \
+        static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {              \
       ::sus::panic_with_message(                                           \
             *"Cannot assign to unsigned integer from value outside its "     \
              "range.");     \
+    }                                                                            \
+  }                                                                              \
+                                                                                 \
+  /** Construction from signed types, where it can be checked at compile time    \
+   * that no bits are lost.                                                      \
+   *                                                                             \
+   * For runtime conversion, use `from()`.                                       \
+   *                                                                             \
+   * #[doc.overloads=ctor.signed.typed]                                          \
+   */                                                                            \
+  template <Signed S>                                                            \
+  consteval inline T(S v) noexcept                                               \
+      : primitive_value(/* SAFETY: We check below that v <= T::MAX, so we can    \
+                         * cast `v` to a `T`. */                                 \
+                        static_cast<PrimitiveT>(v.primitive_value)) {            \
+    if (v < decltype(S::primitive_value){0}) {                                   \
+      ::sus::panic_with_message(                                                 \
+          *"Cannot construct unsigned integer from negative value.");            \
+    }                                                                            \
+    if constexpr (::sus::mem::size_of<S>() >                                     \
+                  ::sus::mem::size_of<PrimitiveT>()) {                           \
+      /* SAFETY: S has more bits than T, so converting an unsigned T to S        \
+       * will fit. When removing the sign bit, there's still at least as         \
+       * many bits as T. */                                                      \
+      if (v > static_cast<decltype(S::primitive_value)>(T::MAX_PRIMITIVE)) {     \
+        ::sus::panic_with_message(                                             \
+            *"Cannot construct unsigned integer from value outside its "       \
+             "range."); \
+      }                                                                          \
     }                                                                            \
   }                                                                              \
                                                                                  \
@@ -197,7 +258,7 @@ class Tuple;
    *                                                                             \
    * For runtime conversion, use `from()`.                                       \
    *                                                                             \
-   * #[doc.overloads=ctor.signed]                                                \
+   * #[doc.overloads=ctor.signed.primitive]                                      \
    */                                                                            \
   template <SignedPrimitiveInteger P>                                            \
   consteval inline T(P v) noexcept                                               \
@@ -233,15 +294,17 @@ class Tuple;
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
-    if (v < P{0}) {                                                              \
+    const auto u = static_cast<std::underlying_type_t<P>>(v);                    \
+    if (u < std::underlying_type_t<P>{0}) {                                      \
       ::sus::panic_with_message(                                                 \
           *"Cannot construct unsigned integer from negative value.");            \
     }                                                                            \
-    if (::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>()) {          \
+    if constexpr (::sus::mem::size_of<P>() >                                     \
+                  ::sus::mem::size_of<PrimitiveT>()) {                           \
       /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
        * fit. When removing the sign bit, there's still at least as many bits    \
        * as T. */                                                                \
-      if (v > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {        \
+      if (u > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {        \
         ::sus::panic_with_message(                                             \
             *"Cannot construct unsigned integer from value outside its "       \
              "range."); \
@@ -261,15 +324,17 @@ class Tuple;
       : primitive_value(/* SAFETY: We check above that v <= T::MAX, so we can    \
                          * cast `v` to a `T`. */                                 \
                         static_cast<PrimitiveT>(v)) {                            \
-    if (v < P{0}) {                                                              \
+    const auto u = static_cast<std::underlying_type_t<P>>(v);                    \
+    if (u < std::underlying_type_t<P>{0}) {                                      \
       ::sus::panic_with_message(                                                 \
           *"Cannot construct unsigned integer from negative value.");            \
     }                                                                            \
-    if (::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>()) {          \
+    if constexpr (::sus::mem::size_of<P>() >                                     \
+                  ::sus::mem::size_of<PrimitiveT>()) {                           \
       /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
        * fit. When removing the sign bit, there's still at least as many bits    \
        * as T. */                                                                \
-      if (v > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {        \
+      if (u > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {        \
         ::sus::panic_with_message(                                             \
             *"Cannot construct unsigned integer from value outside its "       \
              "range."); \
@@ -277,9 +342,20 @@ class Tuple;
     }                                                                            \
   }                                                                              \
                                                                                  \
+  /** Assignment from unsigned types where no bits are lost.                     \
+   *                                                                             \
+   * #[doc.overloads=assign.unsigned.small.typed]                                \
+   */                                                                            \
+  template <Unsigned U>                                                          \
+    requires(::sus::mem::size_of<U>() <= ::sus::mem::size_of<PrimitiveT>())      \
+  constexpr inline T& operator=(U v) noexcept {                                  \
+    primitive_value = v.primitive_value;                                         \
+    return *this;                                                                \
+  }                                                                              \
+                                                                                 \
   /** Assignment from unsigned primitive types where no bits are lost.           \
    *                                                                             \
-   * #[doc.overloads=assign.unsigned.small]                                      \
+   * #[doc.overloads=assign.unsigned.small.primitive]                            \
    */                                                                            \
   template <UnsignedPrimitiveInteger P>                                          \
     requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<PrimitiveT>())      \
@@ -299,12 +375,36 @@ class Tuple;
     return *this;                                                                \
   }                                                                              \
                                                                                  \
+  /** Assignment from unsigned types, where it can be checked at compile time    \
+   * that no bits are lost.                                                      \
+   *                                                                             \
+   * For runtime conversion of larger values, use `from()`.                      \
+   *                                                                             \
+   * #[doc.overloads=assign.unsigned.large.typed]                                \
+   */                                                                            \
+  template <Unsigned U>                                                          \
+    requires(::sus::mem::size_of<U>() > ::sus::mem::size_of<PrimitiveT>())       \
+  consteval inline T& operator=(U v) noexcept {                                  \
+    /* SAFETY: U has more bits than T, so converting an unsigned T to U will     \
+     * fit. When removing the sign bit, there's still at least as many bits      \
+     * as T. */                                                                  \
+    if (v > static_cast<decltype(U::primitive_value)>(T::MAX_PRIMITIVE)) {       \
+      ::sus::panic_with_message(                                             \
+            *"Cannot assign to unsigned integer from value outside its "       \
+             "range.");   \
+    }                                                                            \
+    /* SAFETY: We check above that v <= T::MAX, so we can cast `v` to a `T`.     \
+     */                                                                          \
+    primitive_value = static_cast<PrimitiveT>(v.primitive_value);                \
+    return *this;                                                                \
+  }                                                                              \
+                                                                                 \
   /** Assignment from unsigned primitive types, where it can be checked at       \
    * compile time that no bits are lost.                                         \
    *                                                                             \
    * For runtime conversion of larger values, use `from()`.                      \
    *                                                                             \
-   * #[doc.overloads=assign.unsigned.large]                                      \
+   * #[doc.overloads=assign.unsigned.large.primitive]                            \
    */                                                                            \
   template <UnsignedPrimitiveInteger P>                                          \
     requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<PrimitiveT>())       \
@@ -347,16 +447,47 @@ class Tuple;
     return *this;                                                                \
   }                                                                              \
                                                                                  \
+  /** Assignment from signed types, where it can be checked at                   \
+   * compile time that no bits are lost.                                         \
+   *                                                                             \
+   * For runtime conversion, use `from()`.                                       \
+   *                                                                             \
+   * #[doc.overloads=assign.signed.typed]                                        \
+   */                                                                            \
+  template <Signed S>                                                            \
+  consteval inline T& operator=(S v) noexcept {                                  \
+    if (v < decltype(S::primitive_value){0}) {                                   \
+      ::sus::panic_with_message(                                                 \
+          *"Cannot assign to unsigned integer from negative value.");            \
+    }                                                                            \
+    if constexpr (::sus::mem::size_of<S>() >                                     \
+                  ::sus::mem::size_of<PrimitiveT>()) {                           \
+      /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
+       * fit. When removing the sign bit, there's still at least as many bits    \
+       * as T. */                                                                \
+      if (v > static_cast<decltype(S::primitive_value)>(T::MAX_PRIMITIVE)) {     \
+        ::sus::panic_with_message(                                             \
+            *"Cannot assign to unsigned integer from value outside its "       \
+             "range."); \
+      }                                                                          \
+    }                                                                            \
+    /* SAFETY: We check above that v <= T::MAX, so we can cast `v` to a `T`.     \
+     */                                                                          \
+    primitive_value = static_cast<PrimitiveT>(v.primitive_value);                \
+    return *this;                                                                \
+  }                                                                              \
+                                                                                 \
   /** Assignment from signed primitive types, where it can be checked at         \
    * compile time that no bits are lost.                                         \
    *                                                                             \
    * For runtime conversion, use `from()`.                                       \
    *                                                                             \
-   * #[doc.overloads=assign.signed]                                              \
+   * #[doc.overloads=assign.signed.primitive]                                    \
    */                                                                            \
   template <SignedPrimitiveInteger P>                                            \
   consteval inline T& operator=(P v) noexcept {                                  \
-    if (v < P{0}) {                                                              \
+    if (static_cast<std::underlying_type_t<P>>(v) <                              \
+        std::underlying_type_t<P>{0}) {                                          \
       ::sus::panic_with_message(                                                 \
           *"Cannot assign to unsigned integer from negative value.");            \
     }                                                                            \
@@ -386,7 +517,8 @@ class Tuple;
    */                                                                            \
   template <SignedPrimitiveEnum P>                                               \
   consteval inline T& operator=(P v) noexcept {                                  \
-    if (v < P{0}) {                                                              \
+    const auto u = static_cast<std::underlying_type_t<P>>(v);                    \
+    if (u < std::underlying_type_t<P>{0}) {                                      \
       ::sus::panic_with_message(                                                 \
           *"Cannot assign to unsigned integer from negative value.");            \
     }                                                                            \
@@ -395,7 +527,7 @@ class Tuple;
       /* SAFETY: P has more bits than T, so converting an unsigned T to P will   \
        * fit. When removing the sign bit, there's still at least as many bits    \
        * as T. */                                                                \
-      if (v > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {        \
+      if (u > static_cast<std::underlying_type_t<P>>(T::MAX_PRIMITIVE)) {        \
         ::sus::panic_with_message(                                             \
             *"Cannot assign to unsigned integer from value outside its "       \
              "range."); \
@@ -418,7 +550,7 @@ class Tuple;
    */                                                                          \
   template <Signed S>                                                          \
   [[nodiscard]] sus_pure static constexpr T from(S s) noexcept {               \
-    ::sus::check(s.primitive_value >= 0);                                      \
+    ::sus::check(s.primitive_value >= decltype(S::primitive_value){0});        \
     constexpr auto umax = __private::into_unsigned(S::MAX_PRIMITIVE);          \
     if constexpr (MAX_PRIMITIVE < umax)                                        \
       ::sus::check(__private::into_unsigned(s.primitive_value) <=              \
@@ -438,7 +570,7 @@ class Tuple;
       T, ::sus::num::TryFromIntError>                                          \
   try_from(S s) noexcept {                                                     \
     using R = ::sus::result::Result<T, ::sus::num::TryFromIntError>;           \
-    if (s.primitive_value < 0) {                                               \
+    if (s.primitive_value < decltype(S::primitive_value){0}) {                 \
       return R::with_err(::sus::num::TryFromIntError(                          \
           ::sus::num::TryFromIntError::Kind::OutOfBounds));                    \
     }                                                                          \

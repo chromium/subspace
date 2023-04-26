@@ -40,6 +40,7 @@
 #include "subspace/mem/replace.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/integer_concepts.h"
+#include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/ord.h"
 #include "subspace/ops/range.h"
@@ -92,7 +93,7 @@ class Vec final {
   /// Panics if the capacity exceeds `isize::MAX` bytes.
   [[nodiscard]] sus_pure static inline constexpr Vec with_capacity(
       usize capacity) noexcept {
-    check(::sus::mem::size_of<T>() * capacity <= size_t{isize::MAX_PRIMITIVE});
+    check(::sus::mem::size_of<T>() * capacity <= usize{isize::MAX});
     auto v = Vec(nullptr, 0_usize, 0_usize);
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
     v.grow_to_exact(capacity);
@@ -367,7 +368,7 @@ class Vec final {
     check(!is_moved_from());
     if (cap <= capacity_) return;  // Nothing to do.
     const auto bytes = ::sus::mem::size_of<T>() * cap;
-    check(bytes <= usize(size_t{PTRDIFF_MAX}));
+    check(bytes <= usize{isize::MAX});
     if (!is_alloced()) {
       raw_data() = static_cast<T*>(malloc(bytes.primitive_value));
     } else {

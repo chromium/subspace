@@ -250,63 +250,163 @@ auto make_enumclass() {
 
 #define ENUM(kind, T) decltype([]() { return make_enum##kind<T>(); }())
 
-TEST(isize, FromPrimitive) {
-  static_assert(sizeof(isize) > sizeof(int16_t));
-  static_assert(sizeof(isize) <= sizeof(int64_t));
+template <auto From, class To, int = [](To) constexpr { return 0; }(From)>
+constexpr bool is_constexpr_convertible(int) {
+  return true;
+}
+template <auto From, class To>
+constexpr bool is_constexpr_convertible(...) {
+  return false;
+}
 
-  static_assert(IsImplicitlyConvertible<int8_t, isize>);
-  static_assert(IsImplicitlyConvertible<int16_t, isize>);
-  static_assert(sizeof(int32_t) > sizeof(isize)
-                    ? NotConvertible<int32_t, isize>
-                    : IsImplicitlyConvertible<int32_t, isize>);
-  static_assert(sizeof(int64_t) > sizeof(isize)
-                    ? NotConvertible<int64_t, isize>
-                    : IsImplicitlyConvertible<int64_t, isize>);
-  static_assert(IsImplicitlyConvertible<uint8_t, isize>);
-  static_assert(IsImplicitlyConvertible<uint16_t, isize>);
-  static_assert(sizeof(uint32_t) >= sizeof(isize)
-                    ? NotConvertible<uint32_t, isize>
-                    : IsImplicitlyConvertible<uint32_t, isize>);
-  static_assert(NotConvertible<uint64_t, isize>);
-  static_assert(sizeof(size_t) >= sizeof(isize)
-                    ? NotConvertible<size_t, isize>
-                    : IsImplicitlyConvertible<size_t, isize>);
+template <auto From, class To, int = [](To) constexpr { return 0; }(To(From))>
+constexpr bool is_constexpr_constructible(int) {
+  return true;
+}
+template <auto From, class To>
+constexpr bool is_constexpr_constructible(...) {
+  return false;
+}
 
-  static_assert(IsImplicitlyConvertible<ENUM(, int8_t), isize>);
-  static_assert(IsImplicitlyConvertible<ENUM(, int16_t), isize>);
-  static_assert(sizeof(int32_t) > sizeof(isize)
-                    ? NotConvertible<ENUM(, int32_t), isize>
-                    : IsImplicitlyConvertible<ENUM(, int32_t), isize>);
-  static_assert(sizeof(int64_t) > sizeof(isize)
-                    ? NotConvertible<ENUM(, int64_t), isize>
-                    : IsImplicitlyConvertible<ENUM(, int64_t), isize>);
-  static_assert(IsImplicitlyConvertible<ENUM(, uint8_t), isize>);
-  static_assert(IsImplicitlyConvertible<ENUM(, uint16_t), isize>);
-  static_assert(sizeof(uint32_t) >= sizeof(isize)
-                    ? NotConvertible<ENUM(, uint32_t), isize>
-                    : IsImplicitlyConvertible<ENUM(, uint32_t), isize>);
-  static_assert(NotConvertible<ENUM(, uint64_t), isize>);
-  static_assert(sizeof(size_t) >= sizeof(isize)
-                    ? NotConvertible<ENUM(, size_t), isize>
-                    : IsImplicitlyConvertible<ENUM(, size_t), isize>);
+TEST(isize, CompileTimeConversion) {
+  using Self = isize;
 
-  static_assert(IsExplicitlyConvertible<ENUM(class, int8_t), isize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class, int16_t), isize>);
-  static_assert(sizeof(int32_t) > sizeof(isize)
-                    ? NotConvertible<ENUM(class, int32_t), isize>
-                    : IsExplicitlyConvertible<ENUM(class, int32_t), isize>);
-  static_assert(sizeof(int64_t) > sizeof(isize)
-                    ? NotConvertible<ENUM(class, int64_t), isize>
-                    : IsExplicitlyConvertible<ENUM(class, int64_t), isize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class, uint8_t), isize>);
-  static_assert(IsExplicitlyConvertible<ENUM(class, uint16_t), isize>);
-  static_assert(sizeof(uint32_t) >= sizeof(isize)
-                    ? NotConvertible<ENUM(class, uint32_t), isize>
-                    : IsExplicitlyConvertible<ENUM(class, uint32_t), isize>);
-  static_assert(NotConvertible<ENUM(class, uint64_t), isize>);
-  static_assert(sizeof(size_t) >= sizeof(isize)
-                    ? NotConvertible<ENUM(class, size_t), isize>
-                    : IsExplicitlyConvertible<ENUM(class, size_t), isize>);
+  static_assert(is_constexpr_convertible<0_i8, Self>(0));
+  static_assert(is_constexpr_convertible<0_i16, Self>(0));
+  static_assert(is_constexpr_convertible<0_i32, Self>(0));
+  static_assert(is_constexpr_convertible<0_i64, Self>(0));
+  static_assert(is_constexpr_convertible<0_isize, Self>(0));
+  static_assert(is_constexpr_convertible<int8_t{0}, Self>(0));
+  static_assert(is_constexpr_convertible<int16_t{0}, Self>(0));
+  static_assert(is_constexpr_convertible<int32_t{0}, Self>(0));
+  static_assert(is_constexpr_convertible<int64_t{0}, Self>(0));
+  static_assert(is_constexpr_convertible<-1_i8, Self>(0));
+  static_assert(is_constexpr_convertible<-1_i16, Self>(0));
+  static_assert(is_constexpr_convertible<-1_i32, Self>(0));
+  static_assert(is_constexpr_convertible<-1_i64, Self>(0));
+  static_assert(is_constexpr_convertible<-1_isize, Self>(0));
+  static_assert(is_constexpr_convertible<int8_t{-1}, Self>(0));
+  static_assert(is_constexpr_convertible<int16_t{-1}, Self>(0));
+  static_assert(is_constexpr_convertible<int32_t{-1}, Self>(0));
+  static_assert(is_constexpr_convertible<int64_t{-1}, Self>(0));
+
+  static_assert(sizeof(Self) == sizeof(u64) ||
+                !is_constexpr_convertible<i64::MAX, Self>(0));
+  static_assert(sizeof(Self) == sizeof(u64) ||
+                !is_constexpr_convertible<int64_t{i64::MAX}, Self>(0));
+  static_assert(sizeof(Self) < sizeof(u64) ||
+                is_constexpr_convertible<i64::MAX, Self>(0));
+  static_assert(sizeof(Self) < sizeof(u64) ||
+                is_constexpr_convertible<int64_t{i64::MAX}, Self>(0));
+  static_assert(is_constexpr_convertible<isize::MAX, Self>(0));
+
+  static_assert(is_constexpr_convertible<0_u8, Self>(0));
+  static_assert(is_constexpr_convertible<0_u16, Self>(0));
+  static_assert(is_constexpr_convertible<0_u32, Self>(0));
+  static_assert(is_constexpr_convertible<0_u64, Self>(0));
+  static_assert(is_constexpr_convertible<0_usize, Self>(0));
+  static_assert(is_constexpr_convertible<uint8_t{0}, Self>(0));
+  static_assert(is_constexpr_convertible<uint16_t{0}, Self>(0));
+  static_assert(is_constexpr_convertible<uint32_t{0}, Self>(0));
+  static_assert(is_constexpr_convertible<uint64_t{0}, Self>(0));
+  static_assert(is_constexpr_convertible<size_t{0}, Self>(0));
+
+  static_assert(!is_constexpr_convertible<u64::MAX, Self>(0));
+  static_assert(!is_constexpr_convertible<uint64_t{u64::MAX}, Self>(0));
+  static_assert(sizeof(Self) == sizeof(u64) ||
+                !is_constexpr_convertible<u64::MAX, Self>(0));
+  static_assert(sizeof(Self) == sizeof(u64) ||
+                !is_constexpr_convertible<uint64_t{u64::MAX}, Self>(0));
+  static_assert(sizeof(Self) < sizeof(u64) ||
+                is_constexpr_convertible<u64{i64::MAX}, Self>(0));
+  static_assert(sizeof(Self) < sizeof(u64) ||
+                is_constexpr_convertible<uint64_t{i64::MAX}, Self>(0));
+}
+
+TEST(isize, CompileTimeConversionEnum) {
+  using Self = isize;
+
+  static_assert(is_constexpr_convertible<ENUM(, int8_t)::X, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, int8_t)::MIN, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, int8_t)::MAX, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, int16_t)::X, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, int16_t)::MIN, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, int16_t)::MAX, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, int32_t)::X, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, int32_t)::MIN, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, int32_t)::MAX, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, int64_t)::X, Self>(0));
+  static_assert(sizeof(Self) < sizeof(u64) ||
+                is_constexpr_convertible<ENUM(, int64_t)::MIN, Self>(0));
+  static_assert(sizeof(Self) == sizeof(u64) ||
+                !is_constexpr_convertible<ENUM(, int64_t)::MIN, Self>(0));
+  static_assert(sizeof(Self) < sizeof(u64) ||
+                is_constexpr_convertible<ENUM(, int64_t)::MAX, Self>(0));
+  static_assert(sizeof(Self) == sizeof(u64) ||
+                !is_constexpr_convertible<ENUM(, int64_t)::MAX, Self>(0));
+
+  static_assert(!is_constexpr_convertible<ENUM(class, int8_t)::X, Self>(0));
+  static_assert(!is_constexpr_convertible<ENUM(class, int16_t)::X, Self>(0));
+  static_assert(!is_constexpr_convertible<ENUM(class, int32_t)::X, Self>(0));
+  static_assert(!is_constexpr_convertible<ENUM(class, int64_t)::X, Self>(0));
+
+  static_assert(is_constexpr_constructible<ENUM(class, int8_t)::X, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, int8_t)::MIN, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, int8_t)::MAX, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, int16_t)::X, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, int16_t)::MIN, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, int16_t)::MAX, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, int32_t)::X, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, int32_t)::MIN, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, int32_t)::MAX, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, int64_t)::X, Self>(0));
+  static_assert(sizeof(Self) < sizeof(u64) ||
+                is_constexpr_constructible<ENUM(class, int64_t)::MIN, Self>(0));
+  static_assert(
+      sizeof(Self) == sizeof(u64) ||
+      !is_constexpr_constructible<ENUM(class, int64_t)::MIN, Self>(0));
+  static_assert(sizeof(Self) < sizeof(u64) ||
+                is_constexpr_constructible<ENUM(class, int64_t)::MAX, Self>(0));
+  static_assert(
+      sizeof(Self) == sizeof(u64) ||
+      !is_constexpr_constructible<ENUM(class, int64_t)::MAX, Self>(0));
+
+  static_assert(is_constexpr_convertible<ENUM(, uint8_t)::X, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint8_t)::MIN, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint8_t)::MAX, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint16_t)::X, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint16_t)::MIN, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint16_t)::MAX, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint32_t)::X, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint32_t)::MIN, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint32_t)::MAX, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint64_t)::X, Self>(0));
+  static_assert(is_constexpr_convertible<ENUM(, uint64_t)::MIN, Self>(0));
+  static_assert(!is_constexpr_convertible<ENUM(, uint64_t)::MAX, Self>(0));
+
+  static_assert(!is_constexpr_convertible<ENUM(class, uint8_t)::X, Self>(0));
+  static_assert(!is_constexpr_convertible<ENUM(class, uint16_t)::X, Self>(0));
+  static_assert(!is_constexpr_convertible<ENUM(class, uint32_t)::X, Self>(0));
+  static_assert(!is_constexpr_convertible<ENUM(class, uint64_t)::X, Self>(0));
+
+  static_assert(is_constexpr_constructible<ENUM(class, uint8_t)::X, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, uint8_t)::MIN, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, uint8_t)::MAX, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, uint16_t)::X, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint16_t)::MIN, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint16_t)::MAX, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, uint32_t)::X, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint32_t)::MIN, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint32_t)::MAX, Self>(0));
+  static_assert(is_constexpr_constructible<ENUM(class, uint64_t)::X, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint64_t)::MIN, Self>(0));
+  static_assert(
+      !is_constexpr_constructible<ENUM(class, uint64_t)::MAX, Self>(0));
 }
 
 TEST(isize, ToPrimitive) {
@@ -324,9 +424,9 @@ TEST(isize, ToPrimitive) {
                     : IsExplicitlyConvertible<i64, int64_t>);
   static_assert(NotConvertible<i64, uint8_t>);
   static_assert(NotConvertible<i64, uint16_t>);
-  static_assert(NotConvertible<i8, uint32_t>);
-  static_assert(NotConvertible<i64, uint64_t>);
-  static_assert(NotConvertible<i64, size_t>);
+  static_assert(IsExplicitlyConvertible<i8, uint32_t>);
+  static_assert(IsExplicitlyConvertible<i64, uint64_t>);
+  static_assert(IsExplicitlyConvertible<i64, size_t>);
 }
 
 TEST(isize, From) {
