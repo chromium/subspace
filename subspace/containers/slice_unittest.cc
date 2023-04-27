@@ -4771,7 +4771,8 @@ TEST(SliceMut, SplitInclusiveMut) {
   }
   // Edge matches. Front.
   {
-    auto it = s.split_inclusive_mut([](const i32& i) { return i == 1 || i == 8; });
+    auto it =
+        s.split_inclusive_mut([](const i32& i) { return i == 1 || i == 8; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with_values(1));
@@ -4785,7 +4786,8 @@ TEST(SliceMut, SplitInclusiveMut) {
   }
   // Edge matches. Back.
   {
-    auto it = s.split_inclusive_mut([](const i32& i) { return i == 1 || i == 8; });
+    auto it =
+        s.split_inclusive_mut([](const i32& i) { return i == 1 || i == 8; });
     {
       auto o = it.next_back().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with_values(2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
@@ -4799,7 +4801,8 @@ TEST(SliceMut, SplitInclusiveMut) {
   }
   // Consecutive matches. Front.
   {
-    auto it = s.split_inclusive_mut([](const i32& i) { return i == 1 || i == 5; });
+    auto it =
+        s.split_inclusive_mut([](const i32& i) { return i == 1 || i == 5; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with_values(1));
@@ -4821,7 +4824,8 @@ TEST(SliceMut, SplitInclusiveMut) {
   }
   // Consecutive matches. Back.
   {
-    auto it = s.split_inclusive_mut([](const i32& i) { return i == 1 || i == 5; });
+    auto it =
+        s.split_inclusive_mut([](const i32& i) { return i == 1 || i == 5; });
     {
       auto o = it.next_back().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with_values(6, 7, 7, 7, 8));
@@ -5601,6 +5605,26 @@ TEST(SliceMut, SplitLastMut) {
   EXPECT_EQ(rest3.len(), 0_usize);
 
   EXPECT_EQ(rest3.split_last_mut(), sus::None);
+}
+
+TEST(Slice, StartsWith) {
+  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  sus::Slice<i32> s = v.as_slice();
+  // Comparing with itself.
+  EXPECT_EQ(s.starts_with(s[".."_r]), true);
+  // Comparing with a prefix.
+  EXPECT_EQ(s.starts_with(s["..4"_r]), true);
+  EXPECT_EQ(s.starts_with(s["..3"_r]), true);
+  EXPECT_EQ(s.starts_with(s["..2"_r]), true);
+  EXPECT_EQ(s.starts_with(s["..1"_r]), true);
+  // Comparing with empty Slice.
+  EXPECT_EQ(s.starts_with(s["..0"_r]), true);
+  // Comparing with a SliceMut.
+  EXPECT_EQ(s.starts_with(v["..4"_r]), true);
+  // Comparing with a non-prefix.
+  EXPECT_EQ(s.starts_with(s["1..4"_r]), false);
+  // Comparing with a prefix + extra content.
+  EXPECT_EQ(s["0..4"_r].starts_with(s), false);
 }
 
 }  // namespace

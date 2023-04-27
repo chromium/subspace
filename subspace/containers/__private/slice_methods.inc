@@ -295,12 +295,7 @@ constexpr bool ends_with(Slice<T> suffix) const& noexcept
 {
   const auto m = len();
   const auto n = suffix.len();
-  // SAFETY: Since `m >= n` and both are unsigned, the value of `m - n` will be
-  // in the range `[0, m]` inclusive. All of these are valid offsets of `*this`
-  // which has a length of `m`.
-  const auto sub = get_range_unchecked(::sus::marker::unsafe_fn,
-                                       ::sus::ops::RangeFrom(m - n));
-  return m >= n && suffix == sub;
+  return m >= n && suffix == (*this)[::sus::ops::RangeFrom(m - n)];
 }
 
 /// Returns the first element of the slice, or `None` if it is empty.
@@ -854,6 +849,14 @@ constexpr SplitN<T> splitn(
 constexpr Split<T> splitn(usize n,
                           ::sus::fn::FnMutRef<bool(const T&)> pred) && = delete;
 #endif
+
+/// Returns `true` if `needle` is a prefix of the slice.
+constexpr bool starts_with(Slice<T> needle) const&
+  requires(::sus::ops::Eq<T>)
+{
+  const auto n = needle.len();
+  return len() >= n && needle == (*this)[::sus::ops::RangeTo(n)];
+}
 
 /// Constructs a `Vec<T>` by cloning each value in the Slice.
 Vec<T> to_vec() const& noexcept
