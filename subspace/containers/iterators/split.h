@@ -94,7 +94,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
 
   /// sus::mem::Clone trait.
   Split clone() const noexcept {
-    return Split(::sus::clone(v_), sus::clone(pred_));
+    return Split(::sus::clone(v_), ::sus::clone(pred_));
   }
 
   // sus::iter::Iterator trait.
@@ -216,7 +216,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
 
   /// sus::mem::Clone trait.
   SplitMut clone() const noexcept {
-    return SplitMut(::sus::clone(v_), sus::clone(pred_));
+    return SplitMut(::sus::clone(v_), ::sus::clone(pred_));
   }
 
   // sus::iter::Iterator trait.
@@ -316,6 +316,239 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   SliceMut<ItemT> v_;
   ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
   bool finished_ = false;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
+                                  decltype(pred_), decltype(finished_));
+};
+
+/// An iterator over subslices separated by elements that match a predicate
+/// function. Unlike `Split`, it contains the matched part as a terminator
+/// of the subslice.
+///
+/// This struct is created by the `split_inclusive()` method on slices.
+template <class ItemT>
+class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
+    : public ::sus::iter::IteratorBase<SplitInclusive<ItemT>,
+                                       ::sus::containers::Slice<ItemT>> {
+ public:
+  // `Item` is a `Slice<T>`.
+  using Item = ::sus::containers::Slice<ItemT>;
+
+  SplitInclusive(SplitInclusive&&) = default;
+  SplitInclusive& operator=(SplitInclusive&&) = default;
+
+  /// sus::mem::Clone trait.
+  SplitInclusive clone() const noexcept {
+    return SplitInclusive(::sus::clone(v_), ::sus::clone(pred_));
+  }
+
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept {
+    Option<Item> ret;
+
+    if (finished_) [[unlikely]] {
+      return ret;
+    }
+
+    // TODO: Use v_.iter().position().
+    ::sus::num::usize idx;
+    const usize last = v_.len() - 1u;
+    auto it = v_.iter();
+    while (true) {
+      Option<const ItemT&> o = it.next();
+      if (o.is_none() || pred_(*o)) {
+        if (idx >= last) {
+          finished_ = true;
+          idx = last;
+        }
+        ret = Option<Item>::some(v_[::sus::ops::RangeTo(idx + 1u)]);
+        v_ = v_[::sus::ops::RangeFrom(idx + 1u)];
+        return ret;
+      }
+      idx += 1u;
+    }
+  }
+
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept {
+    Option<Item> ret;
+
+    if (finished_) [[unlikely]] {
+      return ret;
+    }
+
+    // The last index of `v_` is already checked and found to match
+    // by the last iteration, so we start searching a new match
+    // one index to the left.
+    const auto remainder =
+        v_.is_empty() ? Slice<ItemT>() : v_[::sus::ops::RangeTo(v_.len() - 1u)];
+    // TODO: Use v_.iter().rposition().
+    ::sus::num::usize idx = remainder.len();
+    auto it = remainder.iter().rev();
+    while (true) {
+      Option<const ItemT&> o = it.next();
+      if (o.is_none() || pred_(*o)) {
+        if (idx == 0u) {
+          finished_ = true;
+        }
+        ret = Option<Item>::some(v_[::sus::ops::RangeFrom(idx)]);
+        v_ = v_[::sus::ops::RangeTo(idx)];
+        return ret;
+      }
+      idx -= 1u;
+    }
+  }
+
+  // Replace the default impl in sus::iter::IteratorBase.
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    if (v_.is_empty()) {
+      return {0u, ::sus::Option<::sus::num::usize>::some(0u)};
+    } else {
+      // If the predicate doesn't match anything, we yield one slice. If it
+      // matches every element, we yield `len()` one-element slices, or a single
+      // empty slice.
+      return {1u, ::sus::Option<::sus::num::usize>::some(
+                      ::sus::ops::max(1_usize, v_.len()))};
+    }
+  }
+
+  // TODO: Impl count(), nth(), last(), nth_back().
+
+ private:
+  // Constructed by Slice.
+  friend class Slice<ItemT>;
+
+  static constexpr auto with(
+      Slice<ItemT> values,
+      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
+    return SplitInclusive(values, ::sus::move(pred));
+  }
+
+  constexpr SplitInclusive(
+      Slice<ItemT> values,
+      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
+      : v_(values), pred_(::sus::move(pred)), finished_(v_.is_empty()) {}
+
+  Slice<ItemT> v_;
+  ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
+  bool finished_;
+
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
+                                  decltype(pred_), decltype(finished_));
+};
+
+/// An iterator over subslices separated by elements that match a predicate
+/// function. Unlike `Split`, it contains the matched part as a terminator
+/// of the subslice.
+///
+/// This struct is created by the `split_inclusive_mut()` method on slices.
+template <class ItemT>
+class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
+    : public ::sus::iter::IteratorBase<SplitInclusiveMut<ItemT>,
+                                       ::sus::containers::SliceMut<ItemT>> {
+ public:
+  // `Item` is a `SliceMut<T>`.
+  using Item = ::sus::containers::SliceMut<ItemT>;
+
+  SplitInclusiveMut(SplitInclusiveMut&&) = default;
+  SplitInclusiveMut& operator=(SplitInclusiveMut&&) = default;
+
+  /// sus::mem::Clone trait.
+  SplitInclusiveMut clone() const noexcept {
+    return SplitInclusiveMut(::sus::clone(v_), ::sus::clone(pred_));
+  }
+
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept {
+    Option<Item> ret;
+
+    if (finished_) [[unlikely]] {
+      return ret;
+    }
+
+    // TODO: Use v_.iter().position().
+    ::sus::num::usize idx;
+    const usize last = v_.len() - 1u;
+    auto it = v_.iter();
+    while (true) {
+      Option<const ItemT&> o = it.next();
+      if (o.is_none() || pred_(*o)) {
+        if (idx >= last) {
+          finished_ = true;
+          idx = last;
+        }
+        ret = Option<Item>::some(v_[::sus::ops::RangeTo(idx + 1u)]);
+        v_ = v_[::sus::ops::RangeFrom(idx + 1u)];
+        return ret;
+      }
+      idx += 1u;
+    }
+  }
+
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept {
+    Option<Item> ret;
+
+    if (finished_) [[unlikely]] {
+      return ret;
+    }
+
+    // The last index of `v_` is already checked and found to match
+    // by the last iteration, so we start searching a new match
+    // one index to the left.
+    const auto remainder = v_.is_empty()
+                               ? SliceMut<ItemT>()
+                               : v_[::sus::ops::RangeTo(v_.len() - 1u)];
+    // TODO: Use v_.iter().rposition().
+    ::sus::num::usize idx = remainder.len();
+    auto it = remainder.iter().rev();
+    while (true) {
+      Option<const ItemT&> o = it.next();
+      if (o.is_none() || pred_(*o)) {
+        if (idx == 0u) {
+          finished_ = true;
+        }
+        ret = Option<Item>::some(v_[::sus::ops::RangeFrom(idx)]);
+        v_ = v_[::sus::ops::RangeTo(idx)];
+        return ret;
+      }
+      idx -= 1u;
+    }
+  }
+
+  // Replace the default impl in sus::iter::IteratorBase.
+  ::sus::iter::SizeHint size_hint() const noexcept final {
+    if (v_.is_empty()) {
+      return {0u, ::sus::Option<::sus::num::usize>::some(0u)};
+    } else {
+      // If the predicate doesn't match anything, we yield one slice. If it
+      // matches every element, we yield `len()` one-element slices, or a single
+      // empty slice.
+      return {1u, ::sus::Option<::sus::num::usize>::some(
+                      ::sus::ops::max(1_usize, v_.len()))};
+    }
+  }
+
+  // TODO: Impl count(), nth(), last(), nth_back().
+
+ private:
+  // Constructed by SliceMut.
+  friend class SliceMut<ItemT>;
+
+  static constexpr auto with(
+      SliceMut<ItemT> values,
+      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
+    return SplitInclusiveMut(values, ::sus::move(pred));
+  }
+
+  constexpr SplitInclusiveMut(
+      SliceMut<ItemT> values,
+      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
+      : v_(values), pred_(::sus::move(pred)), finished_(v_.is_empty()) {}
+
+  SliceMut<ItemT> v_;
+  ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
+  bool finished_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
                                   decltype(pred_), decltype(finished_));
