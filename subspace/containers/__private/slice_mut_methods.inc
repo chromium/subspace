@@ -915,6 +915,49 @@ constexpr SplitNMut<T> splitn_mut(
   return SplitNMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred)), n);
 }
 
+/// Returns a subslice with the `prefix` removed.
+///
+/// If the slice starts with `prefix`, returns the subslice after the `prefix`,
+/// wrapped in `Some`. If `prefix` is empty, simply returns the original slice.
+///
+/// If the slice does not start with `prefix`, returns `None`.
+///
+/// TODO: Accept a `SlicePattern<T>` concept instead of just a `Slice<T>`.
+constexpr ::sus::Option<SliceMut<T>> strip_prefix_mut(
+    Slice<T> prefix) _mut_ref noexcept
+  requires(::sus::ops::Eq<T>)
+{
+  const usize n = prefix.len();
+  if (n <= len()) {
+    auto [head, tail] = split_at_mut(n);
+    if (head == prefix) {
+      return ::sus::Option<SliceMut<T>>::some(tail);
+    }
+  }
+  return ::sus::Option<SliceMut<T>>::none();
+}
+
+/// Returns a subslice with the `suffix` removed.
+///
+/// If the slice ends with `suffix`, returns the subslice before the `suffix`,
+/// wrapped in `Some`. If `suffix` is empty, simply returns the original slice.
+///
+/// If the slice does not end with `suffix`, returns `None`.
+constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(
+    Slice<T> suffix) _mut_ref noexcept
+  requires(::sus::ops::Eq<T>)
+{
+  const auto l = len();
+  const auto n = suffix.len();
+  if (n <= l) {
+    auto [head, tail] = split_at_mut(l - n);
+    if (tail == suffix) {
+      return ::sus::Option<SliceMut<T>>::some(head);
+    }
+  }
+  return ::sus::Option<SliceMut<T>>::none();
+}
+
 /// Swaps two elements in the slice.
 ///
 /// # Arguments
