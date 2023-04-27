@@ -17,6 +17,7 @@
 #include <algorithm>  // Replace std::sort.
 
 #include "subspace/assertions/check.h"
+#include "subspace/assertions/debug_check.h"
 #include "subspace/construct/default.h"
 #include "subspace/containers/__private/sort.h"
 #include "subspace/containers/concat.h"
