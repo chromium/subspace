@@ -794,6 +794,21 @@ constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize mid) && = delete;
 #endif
 
+/// Returns the first and all the rest of the elements of the slice, or `None`
+/// if it is empty.
+[[nodiscard]] sus_pure constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>>
+split_first() const& noexcept {
+  if (is_empty()) return ::sus::none();
+  return ::sus::some(::sus::tuple(
+      *as_ptr(), get_range_unchecked(::sus::marker::unsafe_fn,
+                                     ::sus::ops::RangeFrom<usize>(1))));
+}
+
+#if _delete_rvalue
+constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>> split_first() && =
+    delete;
+#endif
+
 /// Returns an iterator over subslices separated by elements that match `pred`,
 /// limited to returning at most `n` items. The matched element is not contained
 /// in the subslices.
@@ -808,7 +823,6 @@ constexpr SplitN<T> splitn(
 constexpr Split<T> splitn(usize n,
                           ::sus::fn::FnMutRef<bool(const T&)> pred) && = delete;
 #endif
-
 
 /// Constructs a `Vec<T>` by cloning each value in the Slice.
 Vec<T> to_vec() const& noexcept

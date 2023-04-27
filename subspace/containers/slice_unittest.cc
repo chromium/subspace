@@ -5259,4 +5259,52 @@ TEST(SliceMut, SwapUnchecked) {
   }
 }
 
+TEST(Slice, SplitFirst) {
+  sus::Vec<i32> v = sus::vec(0, 1, 2);
+  sus::Slice<i32> s = v.as_slice();
+
+  auto&& [first, rest] = s.split_first().unwrap();
+  static_assert(std::same_as<decltype(first), const i32&>);
+  static_assert(std::same_as<decltype(rest), Slice<i32>>);
+  EXPECT_EQ(&first, &v[0]);
+  EXPECT_EQ(first, 0);
+  EXPECT_EQ(rest.len(), 2_usize);
+
+  auto&& [first2, rest2] = rest.split_first().unwrap();
+  EXPECT_EQ(&first2, &v[1]);
+  EXPECT_EQ(first2, 1);
+  EXPECT_EQ(rest2.len(), 1_usize);
+
+  auto&& [first3, rest3] = rest2.split_first().unwrap();
+  EXPECT_EQ(&first3, &v[2]);
+  EXPECT_EQ(first3, 2);
+  EXPECT_EQ(rest3.len(), 0_usize);
+
+  EXPECT_EQ(rest3.split_first(), sus::None);
+}
+
+TEST(SliceMut, SplitFirstMut) {
+  sus::Vec<i32> v = sus::vec(0, 1, 2);
+  sus::SliceMut<i32> s = v.as_mut_slice();
+
+  auto&& [first, rest] = s.split_first_mut().unwrap();
+  static_assert(std::same_as<decltype(first), i32&>);
+  static_assert(std::same_as<decltype(rest), SliceMut<i32>>);
+  EXPECT_EQ(&first, &v[0]);
+  EXPECT_EQ(first, 0);
+  EXPECT_EQ(rest.len(), 2_usize);
+
+  auto&& [first2, rest2] = rest.split_first_mut().unwrap();
+  EXPECT_EQ(&first2, &v[1]);
+  EXPECT_EQ(first2, 1);
+  EXPECT_EQ(rest2.len(), 1_usize);
+
+  auto&& [first3, rest3] = rest2.split_first_mut().unwrap();
+  EXPECT_EQ(&first3, &v[2]);
+  EXPECT_EQ(first3, 2);
+  EXPECT_EQ(rest3.len(), 0_usize);
+
+  EXPECT_EQ(rest3.split_first_mut(), sus::None);
+}
+
 }  // namespace
