@@ -5627,4 +5627,96 @@ TEST(Slice, StartsWith) {
   EXPECT_EQ(s["0..4"_r].starts_with(s), false);
 }
 
+TEST(Slice, StripPrefix) {
+  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  sus::Slice<i32> s = v.as_slice();
+
+  static_assert(std::same_as<decltype(s.strip_prefix(Slice<i32>())),
+                             sus::Option<sus::Slice<i32>>>);
+
+  EXPECT_EQ(s.strip_prefix(Slice<i32>()), sus::Some);
+  EXPECT_EQ(s.strip_prefix(s), sus::Some);
+  EXPECT_EQ(s.strip_prefix(v["..5"_r]), sus::Some);
+  EXPECT_EQ(s.strip_prefix(v["1..5"_r]), sus::None);
+  sus::Vec<i32> more = sus::vec(1, 2, 2, 3, 4, 5, 6);
+  EXPECT_EQ(s.strip_prefix(more), sus::None);
+
+  EXPECT_EQ(s.strip_prefix(Slice<i32>()).unwrap(),
+            sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5));
+  EXPECT_EQ(s.strip_prefix(v["..2"_r]).unwrap(),
+            sus::Vec<i32>::with_values(2, 3, 4, 5));
+  EXPECT_EQ(s.strip_prefix(v["..5"_r]).unwrap(), sus::Vec<i32>::with_values(5));
+  EXPECT_EQ(s.strip_prefix(v[".."_r]).unwrap(), sus::Vec<i32>::with_values());
+}
+
+TEST(SliceMut, StripPrefixMut) {
+  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  sus::SliceMut<i32> s = v.as_mut_slice();
+
+  static_assert(std::same_as<decltype(s.strip_prefix_mut(Slice<i32>())),
+                             sus::Option<sus::SliceMut<i32>>>);
+
+  EXPECT_EQ(s.strip_prefix_mut(Slice<i32>()), sus::Some);
+  EXPECT_EQ(s.strip_prefix_mut(s), sus::Some);
+  EXPECT_EQ(s.strip_prefix_mut(v["..5"_r]), sus::Some);
+  EXPECT_EQ(s.strip_prefix_mut(v["1..5"_r]), sus::None);
+  sus::Vec<i32> more = sus::vec(1, 2, 2, 3, 4, 5, 6);
+  EXPECT_EQ(s.strip_prefix_mut(more), sus::None);
+
+  EXPECT_EQ(s.strip_prefix_mut(Slice<i32>()).unwrap(),
+            sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5));
+  EXPECT_EQ(s.strip_prefix_mut(v["..2"_r]).unwrap(),
+            sus::Vec<i32>::with_values(2, 3, 4, 5));
+  EXPECT_EQ(s.strip_prefix_mut(v["..5"_r]).unwrap(),
+            sus::Vec<i32>::with_values(5));
+  EXPECT_EQ(s.strip_prefix_mut(v[".."_r]).unwrap(),
+            sus::Vec<i32>::with_values());
+}
+
+TEST(Slice, StripSuffix) {
+  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  sus::Slice<i32> s = v.as_slice();
+
+  static_assert(std::same_as<decltype(s.strip_suffix(Slice<i32>())),
+                             sus::Option<sus::Slice<i32>>>);
+
+  EXPECT_EQ(s.strip_suffix(Slice<i32>()), sus::Some);
+  EXPECT_EQ(s.strip_suffix(s), sus::Some);
+  EXPECT_EQ(s.strip_suffix(v["1.."_r]), sus::Some);
+  EXPECT_EQ(s.strip_suffix(v["1..5"_r]), sus::None);
+  sus::Vec<i32> more = sus::vec(1, 2, 2, 3, 4, 5, 6);
+  EXPECT_EQ(s.strip_suffix(more), sus::None);
+
+  EXPECT_EQ(s.strip_suffix(Slice<i32>()).unwrap(),
+            sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5));
+  EXPECT_EQ(s.strip_suffix(v["4.."_r]).unwrap(),
+            sus::Vec<i32>::with_values(1, 2, 2, 3));
+  EXPECT_EQ(s.strip_suffix(v["1.."_r]).unwrap(), sus::Vec<i32>::with_values(1));
+  EXPECT_EQ(s.strip_suffix(v[".."_r]).unwrap(), sus::Vec<i32>::with_values());
+}
+
+TEST(SliceMut, StripSuffixMut) {
+  sus::Vec<i32> v = sus::vec(1, 2, 2, 3, 4, 5);
+  sus::SliceMut<i32> s = v.as_mut_slice();
+
+  static_assert(std::same_as<decltype(s.strip_suffix_mut(Slice<i32>())),
+                             sus::Option<sus::SliceMut<i32>>>);
+
+  EXPECT_EQ(s.strip_suffix_mut(Slice<i32>()), sus::Some);
+  EXPECT_EQ(s.strip_suffix_mut(s), sus::Some);
+  EXPECT_EQ(s.strip_suffix_mut(v["1.."_r]), sus::Some);
+  EXPECT_EQ(s.strip_suffix_mut(v["1..5"_r]), sus::None);
+  sus::Vec<i32> more = sus::vec(1, 2, 2, 3, 4, 5, 6);
+  EXPECT_EQ(s.strip_suffix_mut(more), sus::None);
+
+  EXPECT_EQ(s.strip_suffix_mut(Slice<i32>()).unwrap(),
+            sus::Vec<i32>::with_values(1, 2, 2, 3, 4, 5));
+  EXPECT_EQ(s.strip_suffix_mut(v["4.."_r]).unwrap(),
+            sus::Vec<i32>::with_values(1, 2, 2, 3));
+  EXPECT_EQ(s.strip_suffix_mut(v["1.."_r]).unwrap(),
+            sus::Vec<i32>::with_values(1));
+  EXPECT_EQ(s.strip_suffix_mut(v[".."_r]).unwrap(),
+            sus::Vec<i32>::with_values());
+}
+
 }  // namespace

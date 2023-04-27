@@ -858,6 +858,55 @@ constexpr bool starts_with(Slice<T> needle) const&
   return len() >= n && needle == (*this)[::sus::ops::RangeTo(n)];
 }
 
+/// Returns a subslice with the `prefix` removed.
+///
+/// If the slice starts with `prefix`, returns the subslice after the `prefix`,
+/// wrapped in `Some`. If `prefix` is empty, simply returns the original slice.
+///
+/// If the slice does not start with `prefix`, returns `None`.
+///
+/// TODO: Accept a `SlicePattern<T>` concept instead of just a `Slice<T>`.
+constexpr ::sus::Option<Slice<T>> strip_prefix(Slice<T> prefix) const& noexcept
+  requires(::sus::ops::Eq<T>)
+{
+  const usize n = prefix.len();
+  if (n <= len()) {
+    auto [head, tail] = split_at(n);
+    if (head == prefix) {
+      return ::sus::Option<Slice<T>>::some(tail);
+    }
+  }
+  return ::sus::Option<Slice<T>>::none();
+}
+
+#if _delete_rvalue
+constexpr ::sus::Option<Slice<T>> strip_prefix(Slice<T> prefix) const& = delete;
+#endif
+
+/// Returns a subslice with the `suffix` removed.
+///
+/// If the slice ends with `suffix`, returns the subslice before the `suffix`,
+/// wrapped in `Some`. If `suffix` is empty, simply returns the original slice.
+///
+/// If the slice does not end with `suffix`, returns `None`.
+constexpr ::sus::Option<Slice<T>> strip_suffix(Slice<T> suffix) const& noexcept
+  requires(::sus::ops::Eq<T>)
+{
+  const auto l = len();
+  const auto n = suffix.len();
+  if (n <= l) {
+    auto [head, tail] = split_at(l - n);
+    if (tail == suffix) {
+      return ::sus::Option<Slice<T>>::some(head);
+    }
+  }
+  return ::sus::Option<Slice<T>>::none();
+}
+
+#if _delete_rvalue
+constexpr ::sus::Option<Slice<T>> strip_suffix(Slice<T> suffix) const& = delete;
+#endif
+
 /// Constructs a `Vec<T>` by cloning each value in the Slice.
 Vec<T> to_vec() const& noexcept
   requires(::sus::mem::Clone<T>);
