@@ -879,9 +879,18 @@ split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
 [[nodiscard]] sus_pure constexpr ::sus::Option<::sus::Tuple<T&, SliceMut<T>>>
 split_first_mut() _mut_ref noexcept {
   if (is_empty()) return ::sus::none();
-  return ::sus::some(::sus::tuple(
-      *as_mut_ptr(), get_range_mut_unchecked(::sus::marker::unsafe_fn,
-                                             ::sus::ops::RangeFrom<usize>(1))));
+  return ::sus::some(
+      ::sus::tuple(*as_mut_ptr(), (*this)[::sus::ops::RangeFrom<usize>(1)]));
+}
+
+/// Returns the last and all the rest of the elements of the slice, or `None` if
+/// it is empty.
+[[nodiscard]] sus_pure constexpr ::sus::Option<::sus::Tuple<T&, SliceMut<T>>>
+split_last_mut() _mut_ref noexcept {
+  if (is_empty()) return ::sus::none();
+  const usize last = len() - 1u;
+  return ::sus::some(::sus::tuple(*(as_mut_ptr() + last),
+                                  (*this)[::sus::ops::RangeTo<usize>(last)]));
 }
 
 /// Returns an iterator over mutable subslices separated by elements that match

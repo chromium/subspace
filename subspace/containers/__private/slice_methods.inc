@@ -799,13 +799,27 @@ constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
 [[nodiscard]] sus_pure constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>>
 split_first() const& noexcept {
   if (is_empty()) return ::sus::none();
-  return ::sus::some(::sus::tuple(
-      *as_ptr(), get_range_unchecked(::sus::marker::unsafe_fn,
-                                     ::sus::ops::RangeFrom<usize>(1))));
+  return ::sus::some(
+      ::sus::tuple(*as_ptr(), (*this)[::sus::ops::RangeFrom<usize>(1)]));
 }
 
 #if _delete_rvalue
 constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>> split_first() && =
+    delete;
+#endif
+
+/// Returns the last and all the rest of the elements of the slice, or `None` if
+/// it is empty.
+[[nodiscard]] sus_pure constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>>
+split_last() const& noexcept {
+  if (is_empty()) return ::sus::none();
+  const usize last = len() - 1u;
+  return ::sus::some(::sus::tuple(*(as_ptr() + last),
+                                  (*this)[::sus::ops::RangeTo<usize>(last)]));
+}
+
+#if _delete_rvalue
+constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>> split_last() && =
     delete;
 #endif
 
