@@ -664,26 +664,6 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
 }
 #endif
 
-/// Returns an iterator over mutable subslices separated by elements that match
-/// `pred`. The matched element is not contained in the subslices.
-///
-/// If the first element is matched, an empty slice will be the first item
-/// returned by the iterator. Similarly, if the last element in the slice is
-/// matched, an empty slice will be the last item returned by the iterator.
-constexpr SplitMut<T> split_mut(
-    ::sus::fn::FnMutRef<bool(const T&)> pred) _mut_ref noexcept {
-  return SplitMut<T>::with(*this, ::sus::move(pred));
-}
-
-/// Returns an iterator over mutable subslices separated by elements that match
-/// `pred`, limited to returning at most `n` items. The matched element is not
-/// contained in the subslices.
-///
-/// The last element returned, if any, will contain the remainder of the slice.
-constexpr SplitNMut<T> splitn_mut(
-    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) _mut_ref noexcept {
-  return SplitNMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred)), n);
-}
 /// Sorts the slice.
 ///
 /// This sort is stable (i.e., does not reorder equal elements) and
@@ -843,6 +823,17 @@ void sort_unstable_by_key(KeyFn f) noexcept {
       [&f](const T& a, const T& b) { return f(a) <=> f(b); });
 }
 
+/// Returns an iterator over mutable subslices separated by elements that match
+/// `pred`. The matched element is not contained in the subslices.
+///
+/// If the first element is matched, an empty slice will be the first item
+/// returned by the iterator. Similarly, if the last element in the slice is
+/// matched, an empty slice will be the last item returned by the iterator.
+constexpr SplitMut<T> split_mut(
+    ::sus::fn::FnMutRef<bool(const T&)> pred) _mut_ref noexcept {
+  return SplitMut<T>::with(*this, ::sus::move(pred));
+}
+
 /// Divides one mutable slice into two at an index.
 ///
 /// The first will contain all indices from `[0, mid)` (excluding the index
@@ -881,6 +872,16 @@ split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
                                       mid),
       SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
                                       as_mut_ptr() + mid, len() - mid));
+}
+
+/// Returns an iterator over mutable subslices separated by elements that match
+/// `pred`, limited to returning at most `n` items. The matched element is not
+/// contained in the subslices.
+///
+/// The last element returned, if any, will contain the remainder of the slice.
+constexpr SplitNMut<T> splitn_mut(
+    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) _mut_ref noexcept {
+  return SplitNMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred)), n);
 }
 
 /// Swaps two elements in the slice.
