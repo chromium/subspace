@@ -808,6 +808,23 @@ constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>> split_first() && =
     delete;
 #endif
 
+/// Returns an iterator over subslices separated by elements that match `pred`.
+/// The matched element is contained in the end of the previous subslice as a
+/// terminator.
+///
+/// If the last element of the slice is matched, that element will be considered
+/// the terminator of the preceding slice. That slice will be the last item
+/// returned by the iterator.
+constexpr SplitInclusive<T> split_inclusive(
+    ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
+  return SplitInclusive<T>::with(*this, ::sus::move(pred));
+}
+
+#if _delete_rvalue
+constexpr SplitInclusive<T> split_inclusive(
+    ::sus::fn::FnMutRef<bool(const T&)>) && = delete;
+#endif
+
 /// Returns the last and all the rest of the elements of the slice, or `None` if
 /// it is empty.
 [[nodiscard]] sus_pure constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>>

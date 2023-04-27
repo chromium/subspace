@@ -883,6 +883,18 @@ split_first_mut() _mut_ref noexcept {
       ::sus::tuple(*as_mut_ptr(), (*this)[::sus::ops::RangeFrom<usize>(1)]));
 }
 
+/// Returns an iterator over subslices separated by elements that match `pred`.
+/// The matched element is contained in the end of the previous subslice as a
+/// terminator.
+///
+/// If the last element of the slice is matched, that element will be considered
+/// the terminator of the preceding slice. That slice will be the last item
+/// returned by the iterator.
+constexpr SplitInclusiveMut<T> split_inclusive_mut(
+    ::sus::fn::FnMutRef<bool(const T&)> pred) _mut_ref noexcept {
+  return SplitInclusiveMut<T>::with(*this, ::sus::move(pred));
+}
+
 /// Returns the last and all the rest of the elements of the slice, or `None` if
 /// it is empty.
 [[nodiscard]] sus_pure constexpr ::sus::Option<::sus::Tuple<T&, SliceMut<T>>>
