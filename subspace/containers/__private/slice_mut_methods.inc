@@ -970,8 +970,41 @@ constexpr void swap(usize a, usize b) noexcept {
   ::sus::mem::swap(operator[](a), operator[](b));
 }
 
-constexpr inline void swap_unchecked(::sus::marker::UnsafeFnMarker, usize a,
+/// Swaps two elements in the slice. The arguments must not both refer to the
+/// same element.
+///
+/// For a safe alternative see `swap()`. For an unsafe variant that allows
+/// overlapping `a` and `b`, see `swap_unchecked()`.
+///
+/// # Arguments
+/// `a` - The index of the first element
+/// `b` - The index of the second element
+///
+/// # Safety
+/// If `a` or `b` are out of bounds, or if `a` and `b` refer to the same
+/// element, Undefined Behaviour will occur.
+constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, usize a,
+                                   usize b) noexcept {
+  sus_debug_check(a != b);
+  sus_debug_check(a < len());
+  sus_debug_check(b < len());
+  ::sus::mem::swap_nonoverlapping(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
+}
+
+/// Swaps two elements in the slice.
+///
+/// For a safe alternative see `swap()`.
+///
+/// # Arguments
+/// `a` - The index of the first element
+/// `b` - The index of the second element
+///
+/// # Safety
+/// If `a` or `b` are out of bounds, Undefined Behaviour will occur.
+constexpr void swap_unchecked(::sus::marker::UnsafeFnMarker, usize a,
                                      usize b) noexcept {
+  sus_debug_check(a < len());
+  sus_debug_check(b < len());
   ::sus::mem::swap(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
 }
 

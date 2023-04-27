@@ -5487,6 +5487,23 @@ TEST(SliceMut, Swap) {
   }
 }
 
+TEST(SliceMut, SwapNonOverlapping) {
+  {
+    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    SliceMut<i32> s = v.as_mut_slice();
+    s.swap_nonoverlapping(unsafe_fn, 0, 1);
+    sus::Vec<i32> expected = sus::vec(2, 1, 3, 4, 5, 6);
+    EXPECT_EQ(s, expected);
+  }
+  {
+    sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
+    SliceMut<i32> s = v.as_mut_slice();
+    s.swap_nonoverlapping(unsafe_fn, 3, 5);
+    sus::Vec<i32> expected = sus::vec(1, 2, 3, 6, 5, 4);
+    EXPECT_EQ(s, expected);
+  }
+}
+
 TEST(SliceMut, SwapUnchecked) {
   {
     sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
