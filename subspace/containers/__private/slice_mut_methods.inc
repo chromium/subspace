@@ -988,7 +988,8 @@ constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, usize a,
   sus_debug_check(a != b);
   sus_debug_check(a < len());
   sus_debug_check(b < len());
-  ::sus::mem::swap_nonoverlapping(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
+  ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, *(as_mut_ptr() + a),
+                                  *(as_mut_ptr() + b));
 }
 
 /// Swaps two elements in the slice.
@@ -1002,10 +1003,36 @@ constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, usize a,
 /// # Safety
 /// If `a` or `b` are out of bounds, Undefined Behaviour will occur.
 constexpr void swap_unchecked(::sus::marker::UnsafeFnMarker, usize a,
-                                     usize b) noexcept {
+                              usize b) noexcept {
   sus_debug_check(a < len());
   sus_debug_check(b < len());
   ::sus::mem::swap(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
+}
+
+/// Swaps all elements in `*this` with those in `other`.
+///
+/// The length of `other` must be the same as `*this`.
+///
+/// # Panics
+/// This function will panic if the two slices have different lengths, or if
+/// other overlaps with `*this`.
+constexpr void swap_with_slice(SliceMut<T> other) noexcept {
+  auto const self_len = len();
+  auto const other_len = other.len();
+  T* const self_ptr = as_mut_ptr();
+  T* const other_ptr = other.as_mut_ptr();
+
+  ::sus::check(self_len == other_len);
+  if (other_ptr <= self_ptr) {
+    ::sus::check(other_ptr + other_len <= self_ptr);
+  } else {
+    ::sus::check(self_ptr + self_len <= other_ptr);
+  }
+  // SAFETY: Slice pointers are aligned, and the length has already been
+  // verified to be the same for both slices, so it is valid for both pointers.
+  // The `other` and `*this` slices have been checked to be non-overlapping.
+  ::sus::ptr::swap_nonoverlapping(::sus::marker::unsafe_fn, self_ptr, other_ptr,
+                                  self_len);
 }
 
 #undef _mut_ref

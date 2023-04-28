@@ -87,7 +87,7 @@ inline constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, T& lhs,
     }
   }
   // Narrow the scope of the `__restrict` annotations as casting a
-  // `__restrict` pointer to make a new pointers is UB.
+  // `__restrict` pointer to make a new pointer is UB.
   T& __restrict l = lhs;
   T& __restrict r = rhs;
   auto temp = T(::sus::move(l));

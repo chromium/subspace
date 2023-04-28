@@ -2012,6 +2012,19 @@ TEST(u32, WrappingAddSigned) {
   EXPECT_EQ((u32::MAX - 2_u32).wrapping_add_signed(3_i32), u32::MIN);
 }
 
+// ** Unsigned only.
+TEST(u32, IsPowerOfTwo) {
+  constexpr auto a = (3_u32).is_power_of_two();
+  EXPECT_EQ(a, false);
+
+  EXPECT_EQ((2_u32).is_power_of_two(), true);
+  EXPECT_EQ((3_u32).is_power_of_two(), false);
+  EXPECT_EQ((4_u32).is_power_of_two(), true);
+  EXPECT_EQ((1000_u32).is_power_of_two(), false);
+  EXPECT_EQ((1024_u32).is_power_of_two(), true);
+}
+
+// ** Unsigned only.
 TEST(u32, NextPowerOfTwo) {
   constexpr auto a = (3_u32).next_power_of_two();
   EXPECT_EQ(a, 4_u32);
@@ -2022,6 +2035,7 @@ TEST(u32, NextPowerOfTwo) {
   EXPECT_EQ((1000_u32).next_power_of_two(), 1024_u32);
 }
 
+// ** Unsigned only.
 TEST(u32DeathTest, NextPowerOfTwoOutOfBounds) {
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(
@@ -2033,6 +2047,7 @@ TEST(u32DeathTest, NextPowerOfTwoOutOfBounds) {
 #endif
 }
 
+// ** Unsigned only.
 TEST(u32, CheckedNextPowerOfTwo) {
   constexpr auto a = (3_u32).checked_next_power_of_two();
   EXPECT_EQ(a, Option<u32>::some(4_u32));
@@ -2046,6 +2061,7 @@ TEST(u32, CheckedNextPowerOfTwo) {
   EXPECT_EQ(u32::MAX.checked_next_power_of_two(), None);
 }
 
+// ** Unsigned only.
 TEST(u32, WrappingNextPowerOfTwo) {
   constexpr auto a = (3_u32).wrapping_next_power_of_two();
   EXPECT_EQ(a, 4_u32);

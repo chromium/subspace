@@ -14,8 +14,6 @@
 
 #include "subspace/option/option.h"
 
-#include <math.h>  // TODO: Replace with f32::NAN()
-
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/containers/array.h"
 #include "subspace/iter/iterator.h"

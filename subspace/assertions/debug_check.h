@@ -15,6 +15,8 @@
 #pragma once
 
 #include "subspace/assertions/check.h"
+#include "subspace/macros/assume.h"
+#include "subspace/macros/compiler.h"
 
 /// Check a condition in debug builds, causing a `panic()` if the condition
 /// fails. Nothing is checked in release builds.
@@ -23,5 +25,9 @@
 #if !defined(NDEBUG)
 #define _sus__debug_check_impl(...) check(__VA_ARGS__)
 #else
-#define _sus__debug_check_impl(...) static_assert(true)
+#define _sus__debug_check_impl(...)                              \
+  sus_if_clang(_Pragma("clang diagnostic push"))                   \
+      sus_if_clang(_Pragma("clang diagnostic ignored \"-Wassume\"")) \
+          sus_assume(::sus::marker::unsafe_fn, __VA_ARGS__)      \
+              sus_if_clang(_Pragma("clang diagnostic pop"))
 #endif
