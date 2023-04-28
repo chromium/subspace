@@ -20,14 +20,15 @@
 
 /// Check a condition in debug builds, causing a `panic()` if the condition
 /// fails. Nothing is checked in release builds.
+///
+/// The condition must not have side effects, and should not call any functions
+/// or methods (including operator methods), as it will often not have any
+/// effect in that case (especially in MSVC https://godbolt.org/z/7T7E3P598)
 #define sus_debug_check(...) _sus__debug_check_impl(__VA_ARGS__)
 
 #if !defined(NDEBUG)
-#define _sus__debug_check_impl(...) check(__VA_ARGS__)
+#define _sus__debug_check_impl(...) ::sus::check(__VA_ARGS__)
 #else
-#define _sus__debug_check_impl(...)                              \
-  sus_if_clang(_Pragma("clang diagnostic push"))                   \
-      sus_if_clang(_Pragma("clang diagnostic ignored \"-Wassume\"")) \
-          sus_assume(::sus::marker::unsafe_fn, __VA_ARGS__)      \
-              sus_if_clang(_Pragma("clang diagnostic pop"))
+#define _sus__debug_check_impl(...) \
+  sus_assume(::sus::marker::unsafe_fn, __VA_ARGS__)
 #endif

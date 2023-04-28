@@ -116,23 +116,20 @@ binary_search_by(
 {
   using Result = ::sus::result::Result<::sus::num::usize, ::sus::num::usize>;
 
-  /*
-   INVARIANTS:
-   - 0 <= left <= left + size = right <= self.len()
-   - f returns Less for everything in self[..left]
-   - f returns Greater for everything in self[right..]
-   */
+  // INVARIANTS:
+  // - 0 <= left <= left + size = right <= self.len()
+  // - f returns Less for everything in self[..left]
+  // - f returns Greater for everything in self[right..]
   ::sus::num::usize size = len();
   ::sus::num::usize left = 0u;
   ::sus::num::usize right = size;
   while (left < right) {
     auto mid = left + size / 2u;
 
-    /* SAFETY: the while condition means `size` is strictly positive, so
-     `size/2 < size`.  Thus `left + size/2 < left + size`, which coupled
-     with the `left + size <= len()` invariant means we have
-     `left + size/2 < len()`, and this is in-bounds.
-     */
+    // SAFETY: the while condition means `size` is strictly positive, so
+    // `size/2 < size`.  Thus `left + size/2 < left + size`, which coupled
+    // with the `left + size <= len()` invariant means we have
+    // `left + size/2 < len()`, and this is in-bounds.
     auto cmp = f(get_unchecked(::sus::marker::unsafe_fn, mid));
 
     /* The order of these comparisons comes from the Rust stdlib and is
@@ -141,8 +138,10 @@ binary_search_by(
       left = mid + 1u;
     } else if (cmp == std::strong_ordering::greater) {
       right = mid;
-    } else { /* SAFETY: same as the `get_unchecked` above. */
-      sus_assume(::sus::marker::unsafe_fn, size_t{mid} < size_t{len()});
+    } else {
+      // SAFETY: same as the `get_unchecked` above.
+      sus_assume(::sus::marker::unsafe_fn,
+                 mid.primitive_value < _len_expr.primitive_value);
       return Result::with(mid);
     }
 
@@ -151,7 +150,8 @@ binary_search_by(
 
   /* SAFETY: directly true from the overall invariant.
    Note that this is `<=`, unlike the assume in the `Result::ok()` path. */
-  sus_assume(::sus::marker::unsafe_fn, size_t{left} <= size_t{len()});
+  sus_assume(::sus::marker::unsafe_fn,
+             left.primitive_value <= _len_expr.primitive_value);
   return Result::with_err(left);
 }
 
@@ -350,7 +350,7 @@ constexpr Option<const T&> get(::sus::num::usize i) && = delete;
 /// length of at least 1.
 [[nodiscard]] sus_pure constexpr inline const T& get_unchecked(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) const& noexcept {
-  sus_assume(::sus::marker::unsafe_fn, size_t{i} < size_t{len()});
+  sus_debug_check(i.primitive_value < _len_expr.primitive_value);
   return as_ptr()[size_t{i}];
 }
 
@@ -777,7 +777,8 @@ split_at_unchecked(::sus::marker::UnsafeFnMarker,
   const ::sus::num::usize length = len();
 
   /* SAFETY: Caller has to check that `0 <= mid <= len()` */
-  sus_assume(::sus::marker::unsafe_fn, size_t{mid} <= size_t{length});
+  sus_assume(::sus::marker::unsafe_fn,
+             mid.primitive_value <= length.primitive_value);
   return ::sus::Tuple<Slice<T>, Slice<T>>::with(
       Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr(), mid),
       Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + mid,

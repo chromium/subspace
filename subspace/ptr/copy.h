@@ -69,8 +69,8 @@ void copy_nonoverlapping(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
   // ourselves.
   sus_debug_check(reinterpret_cast<uintptr_t>(src) % alignof(T) == 0);
   sus_debug_check(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0);
-  sus_debug_check((src < dst && src + count < dst) ||
-                  (dst < src && dst + count < src));
+  sus_debug_check((src < dst && src <= dst - count.primitive_value) ||
+                  (dst < src && dst <= src - count.primitive_value));
   if constexpr (::sus::mem::size_of<T>() > 1) {
     auto bytes = count.checked_mul(::sus::mem::size_of<T>()).expect("overflow");
     memcpy(dst, src, size_t{bytes});

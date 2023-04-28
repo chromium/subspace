@@ -173,10 +173,9 @@ constexpr void copy_from_slice_unchecked(::sus::marker::UnsafeFnMarker,
   const ::sus::num::usize dst_len = len();
   const T* const src_ptr = src.as_ptr();
   T* const dst_ptr = as_mut_ptr();
-  sus_assume(
-      ::sus::marker::unsafe_fn,
+  sus_debug_check(
       (src_ptr < dst_ptr && src_ptr <= dst_ptr - dst_len.primitive_value) ||
-          (dst_ptr < src_ptr && dst_ptr <= src_ptr - dst_len.primitive_value));
+      (dst_ptr < src_ptr && dst_ptr <= src_ptr - dst_len.primitive_value));
 
   if (std::is_constant_evaluated()) {
     // Avoid memcpy() when the size is known at compile time, as the compiler
@@ -291,8 +290,7 @@ constexpr T& operator[](::sus::num::usize i) && noexcept {
 /// length of at least 1.
 [[nodiscard]] sus_pure constexpr inline T& get_unchecked_mut(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) _mut_ref noexcept {
-  sus_assume(::sus::marker::unsafe_fn,
-             i.primitive_value < _len_expr.primitive_value);
+  sus_debug_check(i.primitive_value < _len_expr.primitive_value);
   return as_mut_ptr()[size_t{i}];
 }
 
@@ -865,8 +863,7 @@ split_at_mut(::sus::num::usize mid) _mut_ref noexcept {
 split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
                        ::sus::num::usize mid) _mut_ref noexcept {
   // SAFETY: Caller has to check that `0 <= mid <= len()`.
-  sus_assume(::sus::marker::unsafe_fn,
-             mid.primitive_value <= len().primitive_value);
+  sus_debug_check(mid.primitive_value <= _len_expr.primitive_value);
   return ::sus::Tuple<SliceMut<T>, SliceMut<T>>::with(
       SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn, as_mut_ptr(),
                                       mid),
@@ -985,9 +982,12 @@ constexpr void swap(usize a, usize b) noexcept {
 /// element, Undefined Behaviour will occur.
 constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, usize a,
                                    usize b) noexcept {
-  sus_debug_check(a != b);
-  sus_debug_check(a < len());
-  sus_debug_check(b < len());
+  sus_debug_check(a.primitive_value != b.primitive_value);
+  sus_debug_check(a.primitive_value < _len_expr.primitive_value);
+  sus_debug_check(b.primitive_value < _len_expr.primitive_value);
+  // SAFETY: The pointers are non-overlapping, as the caller is responsible to
+  // check for that. The elements do not have objects overlapping with their
+  // tail padding as they are part of a slice (an array).
   ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, *(as_mut_ptr() + a),
                                   *(as_mut_ptr() + b));
 }
@@ -1004,8 +1004,8 @@ constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, usize a,
 /// If `a` or `b` are out of bounds, Undefined Behaviour will occur.
 constexpr void swap_unchecked(::sus::marker::UnsafeFnMarker, usize a,
                               usize b) noexcept {
-  sus_debug_check(a < len());
-  sus_debug_check(b < len());
+  sus_debug_check(a.primitive_value < _len_expr.primitive_value);
+  sus_debug_check(b.primitive_value < _len_expr.primitive_value);
   ::sus::mem::swap(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
 }
 
@@ -1041,7 +1041,8 @@ constexpr void swap_with_slice(SliceMut<T> other) noexcept {
 ///
 /// # Panics
 /// Panics if `size` is 0.
-[[nodiscard]] sus_pure constexpr WindowsMut<T> windows_mut(usize size) _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr WindowsMut<T> windows_mut(
+    usize size) _mut_ref noexcept {
   ::sus::check(size > 0u);
   return WindowsMut<T>::with(*this, size);
 }

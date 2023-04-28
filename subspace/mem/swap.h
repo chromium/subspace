@@ -74,7 +74,7 @@ inline constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, T& lhs,
     // memcpy() is not constexpr so we can't use it in constexpr evaluation.
     if (!std::is_constant_evaluated()) {
       constexpr auto data_size = ::sus::mem::data_size_of<T>();
-      char temp[data_size];
+      alignas(alignof(T)) char temp[data_size];
       char* l = reinterpret_cast<char*>(::sus::mem::addressof(lhs));
       char* r = reinterpret_cast<char*>(::sus::mem::addressof(rhs));
       ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, l, temp,

@@ -36,6 +36,9 @@ namespace sus::ptr {
 ///   `T`.
 /// * The memory region at `x` and including `count` elements must not overlap
 ///   the region at `y` including `count` elements.
+/// * The objects at `x` and `y` must not have an overlapping object in their
+///   tail padding. If `x` and `y` are arrays, or were heap allocated, then this
+///   will always be satisfied.
 template <class T>
   requires(sus::mem::Move<T> && !std::is_const_v<T>)
 inline constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, T* x,
@@ -49,7 +52,8 @@ inline constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, T* x,
     sus_debug_check(reinterpret_cast<uintptr_t>(y) % alignof(T) == 0);
   }
   // Non-overlapping.
-  sus_debug_check((x <= y && x + count <= y) || (y <= x && y + count <= x));
+  sus_debug_check((x <= y && x <= y - count.primitive_value) ||
+                  (y <= x && y <= x - count.primitive_value));
 
   constexpr usize t_size = ::sus::mem::size_of<T>();
 
@@ -98,9 +102,8 @@ inline constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, T* x,
     // Otherwise, we swap a byte at a time.
     char* const __restrict cx = reinterpret_cast<char*>(x);
     char* const __restrict cy = reinterpret_cast<char*>(y);
-    sus_assume(::sus::marker::unsafe_fn,
-               (cx <= cy && cx + byte_count <= cy) ||
-                   (cy <= cx && cy + byte_count <= cx));
+    sus_debug_check((cx <= cy && cx <= cy - byte_count.primitive_value) ||
+                    (cy <= cx && cy <= cx - byte_count.primitive_value));
     char buf;
     for (usize i; i < byte_count; i += 1u) {
       buf = *(cx + i);
