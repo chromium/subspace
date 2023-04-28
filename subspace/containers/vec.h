@@ -187,8 +187,8 @@ class Vec final {
     check(!o.is_moved_from());
     if (is_alloced()) free_storage();
     raw_data() = ::sus::mem::replace(mref(o.raw_data()), nullptr);
-    set_len(::sus::marker::unsafe_fn,
-            ::sus::mem::replace(mref(o.slice_mut_.slice_.len_), kMovedFromLen));
+    slice_mut_.slice_.len_ =
+        ::sus::mem::replace(mref(o.slice_mut_.slice_.len_), kMovedFromLen);
     capacity_ = ::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity);
     return *this;
   }
@@ -295,6 +295,7 @@ class Vec final {
   void extend(sus::iter::IntoIterator<const T&> auto&& ii) noexcept
     requires(sus::mem::Copy<T>)
   {
+    check(!is_moved_from());
     // TODO: There's some serious improvements we can do here when the iterator
     // is over contiguous elements. See
     // https://doc.rust-lang.org/src/alloc/vec/spec_extend.rs.html
@@ -311,6 +312,7 @@ class Vec final {
   ///
   /// #[doc.overloads=vec.extend.val]
   void extend(sus::iter::IntoIterator<T> auto&& ii) noexcept {
+    check(!is_moved_from());
     // TODO: There's some serious improvements we can do here when the iterator
     // is over contiguous elements. See
     // https://doc.rust-lang.org/src/alloc/vec/spec_extend.rs.html
@@ -444,7 +446,8 @@ class Vec final {
   /// The elements at `old_len..new_len` must be constructed.
   /// The elements at `new_len..old_len` must be destructed.
   void set_len(::sus::marker::UnsafeFnMarker, usize new_len) {
-    sus_debug_check(new_len <= capacity());
+    check(!is_moved_from());
+    sus_debug_check(new_len <= capacity_);
     slice_mut_.slice_.len_ = new_len;
   }
 
@@ -513,11 +516,7 @@ class Vec final {
   // references.
   [[nodiscard]] sus_pure constexpr Slice<T> as_slice() const& noexcept
       sus_lifetimebound {
-    check(!is_moved_from());
-    // SAFETY: The `len()` is the number of elements in the Vec, and the
-    // pointer is to the start of the Vec, so this Slice covers a valid range.
-    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, raw_data(),
-                                    len());
+    return *this;
   }
   constexpr Slice<T> as_slice() && = delete;
 
@@ -525,11 +524,7 @@ class Vec final {
   // references.
   [[nodiscard]] sus_pure constexpr SliceMut<T> as_mut_slice() & noexcept
       sus_lifetimebound {
-    check(!is_moved_from());
-    // SAFETY: The `len()` is the number of elements in the Vec, and the
-    // pointer is to the start of the Vec, so this Slice covers a valid range.
-    return SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn, raw_data(),
-                                           len());
+    return *this;
   }
 
   /// Consumes the Vec into an iterator that will return each element in the
@@ -576,15 +571,18 @@ class Vec final {
 
   // Const Vec can be used as a Slice.
   [[nodiscard]] sus_pure constexpr operator const Slice<T>&() const& {
+    check(!is_moved_from());
     return slice_mut_.slice_;
   }
   [[nodiscard]] sus_pure constexpr operator const Slice<T>&() && = delete;
   [[nodiscard]] sus_pure constexpr operator Slice<T>&() & {
+    check(!is_moved_from());
     return slice_mut_.slice_;
   }
 
   // Mutable Vec can be used as a SliceMut.
   [[nodiscard]] sus_pure constexpr operator SliceMut<T>&() & {
+    check(!is_moved_from());
     return slice_mut_;
   }
 

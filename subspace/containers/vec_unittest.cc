@@ -642,6 +642,12 @@ TEST(Vec, Move) {
   v = sus::move(v2);  // Destroys the objects in `v`.
   EXPECT_EQ(moves, 0_usize);
   EXPECT_EQ(destructs, 2_usize);
+
+  // Reassign to a moved-from Vec.
+  moves = destructs = 0_usize;
+  v2 = sus::move(v);
+  EXPECT_EQ(moves, 0_usize);
+  EXPECT_EQ(destructs, 0_usize);
 }
 
 TEST(Vec, Clone) {
