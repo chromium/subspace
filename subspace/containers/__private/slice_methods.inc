@@ -910,3 +910,15 @@ constexpr ::sus::Option<Slice<T>> strip_suffix(Slice<T> suffix) const& = delete;
 /// Constructs a `Vec<T>` by cloning each value in the Slice.
 Vec<T> to_vec() const& noexcept
   requires(::sus::mem::Clone<T>);
+
+/// Returns an iterator over all contiguous windows of length `size`. The
+/// windows overlap. If the slice is shorter than `size`, the iterator returns
+/// no values.
+///
+/// # Panics
+/// Panics if `size` is 0.
+[[nodiscard]] sus_pure constexpr Windows<T> windows(
+    usize size) const& noexcept {
+  ::sus::check(size > 0u);
+  return Windows<T>::with(*this, size);
+}

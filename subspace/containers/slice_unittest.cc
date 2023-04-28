@@ -5760,4 +5760,100 @@ TEST(SliceMut, StripSuffixMut) {
             sus::Vec<i32>::with_values());
 }
 
+TEST(Slice, Windows) {
+  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7);
+  sus::Slice<i32> s = v.as_slice();
+
+  // Larger than the slice size.
+  EXPECT_EQ(s.windows(9u).next(), sus::None);
+
+  // Equal to the slice size.
+  EXPECT_EQ(s.windows(8u).next().unwrap(), s);
+
+  auto w1 = s.windows(1);
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(0));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(1));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(2));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(3));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(4));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(5));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(6));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(7));
+  EXPECT_EQ(w1.next(), sus::None);
+
+  auto w2 = s.windows(2);
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(0, 1));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(1, 2));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(2, 3));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(3, 4));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(4, 5));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(5, 6));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(6, 7));
+  EXPECT_EQ(w2.next(), sus::None);
+
+  auto w3 = s.windows(3);
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(0, 1, 2));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(1, 2, 3));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(2, 3, 4));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(3, 4, 5));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(4, 5, 6));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(5, 6, 7));
+  EXPECT_EQ(w3.next(), sus::None);
+
+  auto w7 = s.windows(7);
+  EXPECT_EQ(w7.next().unwrap(),
+            sus::Vec<i32>::with_values(0, 1, 2, 3, 4, 5, 6));
+  EXPECT_EQ(w7.next().unwrap(),
+            sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7));
+  EXPECT_EQ(w7.next(), sus::None);
+}
+
+TEST(SliceMut, WindowsMut) {
+  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7);
+  sus::SliceMut<i32> s = v.as_mut_slice();
+
+  // Larger than the slice size.
+  EXPECT_EQ(s.windows_mut(9u).next(), sus::None);
+
+  // Equal to the slice size.
+  EXPECT_EQ(s.windows_mut(8u).next().unwrap(), s);
+
+  auto w1 = s.windows_mut(1);
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(0));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(1));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(2));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(3));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(4));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(5));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(6));
+  EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with_values(7));
+  EXPECT_EQ(w1.next(), sus::None);
+
+  auto w2 = s.windows_mut(2);
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(0, 1));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(1, 2));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(2, 3));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(3, 4));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(4, 5));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(5, 6));
+  EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with_values(6, 7));
+  EXPECT_EQ(w2.next(), sus::None);
+
+  auto w3 = s.windows_mut(3);
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(0, 1, 2));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(1, 2, 3));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(2, 3, 4));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(3, 4, 5));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(4, 5, 6));
+  EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with_values(5, 6, 7));
+  EXPECT_EQ(w3.next(), sus::None);
+
+  auto w7 = s.windows_mut(7);
+  EXPECT_EQ(w7.next().unwrap(),
+            sus::Vec<i32>::with_values(0, 1, 2, 3, 4, 5, 6));
+  EXPECT_EQ(w7.next().unwrap(),
+            sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7));
+  EXPECT_EQ(w7.next(), sus::None);
+}
+
 }  // namespace

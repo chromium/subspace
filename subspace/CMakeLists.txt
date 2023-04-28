@@ -47,6 +47,7 @@ target_sources(subspace PUBLIC
     "containers/iterators/chunks.h"
     "containers/iterators/slice_iter.h"
     "containers/iterators/vec_iter.h"
+    "containers/iterators/windows.h"
     "containers/array.h"
     "containers/concat.h"
     "containers/join.h"
