@@ -28,8 +28,13 @@
 /// # Safety
 /// If the condition `expr` were to actually be false, Undefined Behaviour will
 /// result.
-#define sus_assume(unsafe_fn, expr)                                         \
-  static_assert(std::same_as<std::decay_t<decltype(unsafe_fn)>,             \
-                             ::sus::marker::UnsafeFnMarker>);               \
+// clang-format off
+#define sus_assume(unsafe_fn, expr)                                       \
+  static_assert(std::same_as<std::decay_t<decltype(unsafe_fn)>,           \
+                             ::sus::marker::UnsafeFnMarker>);             \
+  sus_if_clang(_Pragma("clang diagnostic push"))                          \
+  sus_if_clang(_Pragma("clang diagnostic ignored \"-Wassume\""))      \
   sus_if_msvc_else(__assume, sus_if_clang_else(__builtin_assume, if))(expr) \
-      sus_if_msvc_else(, sus_if_clang_else(, {} else __builtin_unreachable()))
+  sus_if_msvc_else(, sus_if_clang_else(, {} else __builtin_unreachable())) \
+  sus_if_clang(_Pragma("clang diagnostic pop"))
+// clang-format on
