@@ -22,7 +22,6 @@
 #include "subspace/prelude.h"
 
 using sus::mem::replace;
-using sus::mem::replace_ptr;
 
 namespace {
 

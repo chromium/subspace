@@ -457,8 +457,7 @@ struct Database {
 
   bool has_any_comments() const noexcept { return global.has_any_comments(); }
 
-  sus::Result</* TODO: void */ int, std::string>
-  resolve_inherited_comments() {
+  sus::Result</* TODO: void */ int, std::string> resolve_inherited_comments() {
     sus::Vec<Comment*> to_resolve;
     {
       sus::Vec<Comment*>* to_resolve_ptr = &to_resolve;
@@ -514,7 +513,7 @@ struct Database {
               auto find_record = [&](const auto& record_map)
                   -> sus::Option<const RecordElement&> {
                 for (const auto& [k, e] : record_map) {
-                  if (e.name == name) return sus::some(mref(e));
+                  if (e.name == name) return sus::some(e);
                 }
                 return sus::none();
               };
@@ -548,7 +547,7 @@ struct Database {
               auto find_function = [&](const auto& function_map)
                   -> sus::Option<const FunctionElement&> {
                 for (const auto& [k, e] : function_map) {
-                  if (e.name == name) return sus::some(mref(e));
+                  if (e.name == name) return sus::some(e);
                 }
                 return sus::none();
               };

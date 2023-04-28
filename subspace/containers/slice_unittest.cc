@@ -5528,6 +5528,30 @@ TEST(SliceMut, SwapUnchecked) {
   }
 }
 
+TEST(SliceMut, SwapWithSlice) {
+  {
+    sus::Vec<i32> v1 = sus::vec(1, 2, 3, 4, 5, 6);
+    SliceMut<i32> s1 = v1.as_mut_slice();
+    sus::Vec<i32> v2 = sus::vec(101, 102, 103, 104, 105, 106);
+    SliceMut<i32> s2 = v2.as_mut_slice();
+
+    s1.swap_with_slice(s2);
+    sus::Vec<i32> expected1 = sus::vec(1, 2, 3, 4, 5, 6);
+    sus::Vec<i32> expected2 = sus::vec(101, 102, 103, 104, 105, 106);
+    EXPECT_EQ(s1, expected2);
+    EXPECT_EQ(s2, expected1);
+    s1.swap_with_slice(s2);
+    EXPECT_EQ(s1, expected1);
+    EXPECT_EQ(s2, expected2);
+
+    s1["2..4"_r].swap_with_slice(s2["3..5"_r]);
+    sus::Vec<i32> expected3 = sus::vec(1, 2, 104, 105, 5, 6);
+    sus::Vec<i32> expected4 = sus::vec(101, 102, 103, 3, 4, 106);
+    EXPECT_EQ(s1, expected3);
+    EXPECT_EQ(s2, expected4);
+  }
+}
+
 TEST(Slice, SplitFirst) {
   sus::Vec<i32> v = sus::vec(0, 1, 2);
   sus::Slice<i32> s = v.as_slice();

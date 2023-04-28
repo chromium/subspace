@@ -1885,6 +1885,11 @@ class Tuple;
   static_assert(true)
 
 #define _sus__unsigned_power_of_two(T, PrimitiveT)                            \
+  /** Returns `true` if and only if `self == 2^k` for some `k`. */            \
+  [[nodiscard]] sus_pure constexpr bool is_power_of_two() const& noexcept {   \
+    return count_ones() == 1;                                                 \
+  }                                                                           \
+                                                                              \
   /** Returns the smallest power of two greater than or equal to self.        \
    *                                                                          \
    * # Panics                                                                 \

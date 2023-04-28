@@ -39,7 +39,7 @@ namespace sus::mem {
 /// return old;
 /// ```
 template <class T, std::convertible_to<T> U>
-  requires(!std::is_array_v<T> && ::sus::mem::Move<T> &&
+  requires(!std::is_array_v<T> && ::sus::mem::Move<T> && !std::is_const_v<T> &&
            (!std::same_as<T, U> || ::sus::mem::Copy<T>))
 [[nodiscard]] inline constexpr T replace(T& dest, const U& src) noexcept {
   auto old = T(::sus::move(dest));
@@ -49,28 +49,13 @@ template <class T, std::convertible_to<T> U>
 }
 
 template <class T, std::convertible_to<T> U>
-  requires(!std::is_array_v<T> && ::sus::mem::Move<T> &&
+  requires(!std::is_array_v<T> && ::sus::mem::Move<T> && !std::is_const_v<T> &&
            std::is_rvalue_reference_v<U &&> &&
            !std::is_const_v<std::remove_reference_t<U>>)
 [[nodiscard]] inline constexpr T replace(T& dest, U&& src) noexcept {
   auto old = T(::sus::move(dest));
   T&& typed_src = ::sus::move(src);  // Possibly converts from U to T.
   dest = ::sus::move(typed_src);
-  return old;
-}
-
-template <class T>
-[[nodiscard]] inline constexpr T* replace_ptr(T*& dest, T* src) noexcept {
-  T* old = dest;
-  dest = src;
-  return old;
-}
-
-template <class T>
-[[nodiscard]] inline constexpr T* replace_ptr(T*& dest,
-                                              std::nullptr_t) noexcept {
-  T* old = dest;
-  dest = nullptr;
   return old;
 }
 

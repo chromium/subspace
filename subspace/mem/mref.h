@@ -29,7 +29,7 @@ namespace sus::mem {
 
 /// Annotate an lvalue usage, for static analysis.
 template <class T>
-  requires(!std::is_reference_v<T>)
+  requires(!std::is_reference_v<T> && !std::is_const_v<T>)
 [[nodiscard]] sus_pure_const inline constexpr T& mref(T& t) noexcept {
   return t;
 }
