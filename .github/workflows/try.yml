@@ -83,8 +83,8 @@ jobs:
       - name: Set Sanitizer Flags
         if: endsWith(matrix.config.name, 'Sanitizer')
         run: |
-          echo "CFLAGS=$CFLAGS -fsanitize=address -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
-          echo "CXXFLAGS=$CXXFLAGS -fsanitize=address -fsanitize=undefined -fno-sanitize=vptr" >> $GITHUB_ENV
+          echo "CFLAGS=$CFLAGS -fsanitize=address -fsanitize=undefined -fno-sanitize=vptr -O0" >> $GITHUB_ENV
+          echo "CXXFLAGS=$CXXFLAGS -fsanitize=address -fsanitize=undefined -fno-sanitize=vptr -O0" >> $GITHUB_ENV
 
       - name: Download Ninja
         id: ninja
