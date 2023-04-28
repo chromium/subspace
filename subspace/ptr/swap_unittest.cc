@@ -38,7 +38,7 @@ TEST(PtrSwapNonOverlapping, SmallSizedType_PowTwoSized) {
       [i = 100_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1)); });
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100);
 
-  for (usize i; i < 100; i += 1) {
+  for (usize i: "0..100"_r) {
     SCOPED_TRACE(size_t{i});
     EXPECT_EQ(a[i], S(u16::from(100 + i)));
     EXPECT_EQ(b[i], S(u16::from(0 + i)));
@@ -62,7 +62,7 @@ TEST(PtrSwapNonOverlapping, SmallSizedType_NonPowTwoSized) {
       [i = 100_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1)); });
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100);
 
-  for (usize i; i < 100; i += 1) {
+  for (usize i: "0..100"_r) {
     SCOPED_TRACE(size_t{i});
     EXPECT_EQ(a[i], S(u16::from(100 + i)));
     EXPECT_EQ(b[i], S(u16::from(0 + i)));
@@ -86,7 +86,7 @@ TEST(PtrSwapNonOverlapping, LargeSizedType_PtrAlign_PtrMultipleSize_Trivial) {
       [i = 100_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1)); });
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100);
 
-  for (usize i; i < 100; i += 1) {
+  for (usize i: "0..100"_r) {
     SCOPED_TRACE(size_t{i});
     EXPECT_EQ(a[i], S(100 + i));
     EXPECT_EQ(b[i], S(0 + i));
@@ -113,7 +113,7 @@ TEST(PtrSwapNonOverlapping,
       [i = 100_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1)); });
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100);
 
-  for (usize i; i < 100; i += 1) {
+  for (usize i: "0..100"_r) {
     SCOPED_TRACE(size_t{i});
     EXPECT_EQ(a[i], S(100 + i));
     EXPECT_EQ(b[i], S(0 + i));

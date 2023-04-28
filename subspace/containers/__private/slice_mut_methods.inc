@@ -967,7 +967,7 @@ constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(
 /// # Panics
 /// Panics if a or b are out of bounds.
 constexpr void swap(usize a, usize b) noexcept {
-  ::sus::mem::swap(operator[](a), operator[](b));
+  ::sus::mem::swap((*this)[a], (*this)[b]);
 }
 
 /// Swaps two elements in the slice. The arguments must not both refer to the
@@ -1041,7 +1041,7 @@ constexpr void swap_with_slice(SliceMut<T> other) noexcept {
 ///
 /// # Panics
 /// Panics if `size` is 0.
-constexpr WindowsMut<T> windows_mut(usize size) _mut_ref noexcept {
+[[nodiscard]] sus_pure constexpr WindowsMut<T> windows_mut(usize size) _mut_ref noexcept {
   ::sus::check(size > 0u);
   return WindowsMut<T>::with(*this, size);
 }

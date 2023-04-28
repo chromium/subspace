@@ -222,7 +222,7 @@ class [[sus_trivial_abi]] SliceMut final {
   [[nodiscard]] sus_pure static constexpr inline SliceMut from_raw_parts_mut(
       ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
       ::sus::usize len) noexcept {
-    ::sus::check(size_t{len} <= size_t{isize::MAX_PRIMITIVE});
+    ::sus::check(len <= usize{isize::MAX});
     return SliceMut(data, len);
   }
 
