@@ -1035,6 +1035,17 @@ constexpr void swap_with_slice(SliceMut<T> other) noexcept {
                                   self_len);
 }
 
+/// Returns an iterator over all contiguous windows of length `size`. The
+/// windows overlap. If the slice is shorter than `size`, the iterator returns
+/// no values.
+///
+/// # Panics
+/// Panics if `size` is 0.
+constexpr WindowsMut<T> windows_mut(usize size) _mut_ref noexcept {
+  ::sus::check(size > 0u);
+  return WindowsMut<T>::with(*this, size);
+}
+
 #undef _mut_ref
 
 // TODO: into_vec(Own<Slice<T>>) &&
