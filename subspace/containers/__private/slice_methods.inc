@@ -132,8 +132,8 @@ binary_search_by(
     // `left + size/2 < len()`, and this is in-bounds.
     auto cmp = f(get_unchecked(::sus::marker::unsafe_fn, mid));
 
-    /* The order of these comparisons comes from the Rust stdlib and is
-     performance sensitive. */
+    // The order of these comparisons comes from the Rust stdlib and is
+    // performance sensitive.
     if (cmp == std::strong_ordering::less) {
       left = mid + 1u;
     } else if (cmp == std::strong_ordering::greater) {
@@ -148,8 +148,8 @@ binary_search_by(
     size = right - left;
   }
 
-  /* SAFETY: directly true from the overall invariant.
-   Note that this is `<=`, unlike the assume in the `Result::ok()` path. */
+  // SAFETY: directly true from the overall invariant.
+  // Note that this is `<=`, unlike the assume in the `Result::with()` path.
   sus_assume(::sus::marker::unsafe_fn,
              left.primitive_value <= _len_expr.primitive_value);
   return Result::with_err(left);
