@@ -555,7 +555,7 @@ class Option final {
   /// #None.
   template <::sus::fn::FnOnce<::sus::fn::NonVoid(T&&)> MapFn, int&...,
             class R = std::invoke_result_t<MapFn&&, T&&>>
-  constexpr auto map(MapFn&& m) && noexcept {
+  constexpr Option<R> map(::sus::fn::FnRef<R(T&&)> m) && noexcept {
     if (t_.state() == Some) {
       return Option<R>(::sus::move(m)(t_.take_and_set_none()));
     } else {
