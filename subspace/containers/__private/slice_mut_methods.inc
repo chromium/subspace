@@ -677,7 +677,7 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
 /// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
 /// also be constexpr?
 void sort() noexcept
-  requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
+  requires(::sus::ops::Ord<T>)
 {
   if (len() > ::sus::num::usize(0u)) {
     std::stable_sort(as_mut_ptr(), as_mut_ptr() + len());
@@ -775,7 +775,7 @@ void sort_by_cached_key(KeyFn f) noexcept {
 /// TODO: Rust's sort is unstable (i.e., may reorder equal elements), in-place
 /// (i.e., does not allocate), and O(n * log(n)) worst-case.
 constexpr void sort_unstable() noexcept
-  requires(!std::is_const_v<T> && ::sus::ops::Ord<T>)
+  requires(::sus::ops::Ord<T>)
 {
   if (len() > 0u) {
     std::sort(as_mut_ptr(), as_mut_ptr() + len());
