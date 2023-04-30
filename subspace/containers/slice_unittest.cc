@@ -747,6 +747,10 @@ TEST(Slice, AsPtrRange) {
     static_assert(std::same_as<decltype(r), sus::ops::Range<const i32*>>);
     EXPECT_EQ(r.start, array.as_ptr());
     EXPECT_EQ(r.finish, array.as_ptr() + 3u);
+
+    auto [a, b] = s.as_ptr_range();
+    EXPECT_EQ(a, array.as_ptr());
+    EXPECT_EQ(b, array.as_ptr() + 3u);
   }
   {
     auto sm = sus::SliceMut<i32>::from_raw_parts_mut(unsafe_fn,
@@ -755,6 +759,10 @@ TEST(Slice, AsPtrRange) {
     static_assert(std::same_as<decltype(r), sus::ops::Range<const i32*>>);
     EXPECT_EQ(r.start, array.as_ptr());
     EXPECT_EQ(r.finish, array.as_ptr() + 3u);
+
+    auto [a, b] = sm.as_mut_ptr_range();
+    EXPECT_EQ(a, array.as_ptr());
+    EXPECT_EQ(b, array.as_ptr() + 3u);
   }
 }
 
@@ -773,6 +781,10 @@ TEST(SliceMut, AsMutPtrRange) {
   static_assert(std::same_as<decltype(r), sus::ops::Range<i32*>>);
   EXPECT_EQ(r.start, array.as_mut_ptr());
   EXPECT_EQ(r.finish, array.as_mut_ptr() + 3u);
+
+  auto [a, b] = sm.as_mut_ptr_range();
+  EXPECT_EQ(a, array.as_ptr());
+  EXPECT_EQ(b, array.as_ptr() + 3u);
 }
 
 TEST(Slice, BinarySearch) {
