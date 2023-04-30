@@ -26,7 +26,7 @@
 
 namespace sus::iter {
 
-/// Support for use of a sus::Iterator as a `std::input_range` in the
+/// Support for use of a sus::Iterator as a `std::ranges::input_range` in the
 /// std::ranges library.
 ///
 /// This type is returned from `Iterator::range()`.
