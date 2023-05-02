@@ -128,8 +128,8 @@ class [[sus_trivial_abi]] Slice final {
   friend constexpr inline bool operator==(const Slice<T>& l,
                                           const Slice<U>& r) noexcept {
     if (l.len() != r.len()) return false;
-    const T* lp = l.data_;
-    const U* rp = r.data_;
+    const T* lp = l.as_ptr();
+    const U* rp = r.as_ptr();
     const T* const endp = lp + l.len();
     while (lp != endp) {
       if (!(*lp == *rp)) return false;

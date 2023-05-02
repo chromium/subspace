@@ -2432,6 +2432,11 @@ TEST(Slice, Eq) {
   v1[3] += 1;
   EXPECT_EQ(v1["1.."_r], v1["1.."_r]);
   EXPECT_NE(v1["1.."_r], v2["1.."_r]);
+
+  Vec<i8> v3 = sus::vec(1_i8, 2_i8, 3_i8, 4_i8);
+  EXPECT_EQ(v1, v3);
+  EXPECT_EQ(v1.as_slice(), v3.as_slice());
+  EXPECT_EQ(v1.as_mut_slice(), v3.as_mut_slice());
 }
 
 TEST(SliceMut, Fill) {
