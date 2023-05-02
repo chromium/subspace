@@ -1,7 +1,7 @@
 [![CI](https://github.com/chromium/subspace/actions/workflows/ci.yml/badge.svg)](https://github.com/chromium/subspace/actions/workflows/ci.yml)
 [![hdoc](https://github.com/chromium/subspace/actions/workflows/hdoc.yml/badge.svg)](https://docs.hdoc.io/danakj/subspace/)
 [![sub-doc](https://github.com/chromium/subspace/actions/workflows/subdoc.yml/badge.svg)](https://danakj.github.io/subspace-docs/sus.html)
-<!--- 
+<!---
 [![clang-doc](https://github.com/chromium/subspace/actions/workflows/clang-doc.yml/badge.svg)](https://danakj.github.io/subspace-docs/sus/#Namespaces)
 -->
 # Subspace Library
@@ -85,6 +85,51 @@ Then use VSCode to choose a build configuration and run the "CMake: Build" and
 
 On windows, set the environment variable `LLVM_DEBUG=1` if the LLVM build was a
 debug build in order for CIR to link the appropriate runtime.
+
+# Using Subspace with CMake
+
+If you're looking to use Subspace in a project, CMake and `git submodules` can be used to help
+integrate the subspace library.
+
+## Add `subspace` as a submodule
+* `git submodule add https://github.com/chromium/subspace third_party/subspace`
+
+## CMakeLists.txt
+
+```
+cmake_minimum_required(VERSION 3.25)
+
+project(subspace-example VERSION 0.1.0)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+SET(SUBSPACE_BUILD_CIR OFF)
+SET(SUBSPACE_BUILD_SUBDOC OFF)
+SET(SUBSPACE_BUILD_TESTS OFF)
+add_subdirectory(third_party/subspace)
+
+add_executable(subspace-example src/main.cc)
+target_link_libraries(subspace-example PRIVATE subspace::lib)
+```
+
+## src/main.cc
+```
+#include "subspace/assertions/check.h"
+
+int main() {
+  sus::assertions::check(false);
+  return 0;
+}
+```
+
+## Building
+```
+mkdir -p out/Debug
+cd out/Debug
+CXX=clang++ cmake -GNinja ../..
+ninja
+```
 
 # Copyright
 

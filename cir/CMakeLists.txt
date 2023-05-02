@@ -35,11 +35,6 @@ add_executable(cir
     "cir_main.cc"
 )
 
-add_executable(cir_unittests
-    "tests/cir_test.h"
-    "tests/smoke_unittest.cc"
-)
-
 # cir_lib
 subspace_default_compile_options(cir_lib)
 
@@ -95,13 +90,20 @@ target_link_libraries(cir_lib
     clangTransformer
 )
 
-# cir_unittests
-subspace_test_default_compile_options(cir_unittests)
-target_link_libraries(cir_unittests cir::lib)
-
-gtest_discover_tests(cir_unittests)
-
 # cir binary
 subspace_default_compile_options(cir)
 target_link_libraries(cir cir::lib)
+
+if(${SUBSPACE_BUILD_TESTS})
+    add_executable(cir_unittests
+        "tests/cir_test.h"
+        "tests/smoke_unittest.cc"
+    )
+
+    # cir_unittests
+    subspace_test_default_compile_options(cir_unittests)
+    target_link_libraries(cir_unittests cir::lib)
+
+    gtest_discover_tests(cir_unittests)
+endif()
 

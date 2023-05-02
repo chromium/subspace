@@ -46,22 +46,6 @@ add_executable(subdoc
     "subdoc_main.cc"
 )
 
-add_executable(subdoc_unittests
-    "gen_tests/gen_tests.cc"
-    "tests/fields_unittest.cc"
-    "tests/functions_unittest.cc"
-    "tests/include_exclude_unittest.cc"
-    "tests/inherit_unittest.cc"
-    "tests/macros_unittest.cc"
-    "tests/markdown_unittest.cc"
-    "tests/methods_unittest.cc"
-    "tests/records_unittest.cc"
-    "tests/styles_unittest.cc"
-    "tests/types_unittest.cc"
-    "tests/subdoc_gen_test.h"
-    "tests/subdoc_test.h"
-)
-
 # subdoc_lib
 subspace_default_compile_options(subdoc_lib)
 
@@ -117,12 +101,31 @@ target_link_libraries(subdoc_lib
     clangTransformer
 )
 
-# subdoc_unittests
-subspace_test_default_compile_options(subdoc_unittests)
-target_link_libraries(subdoc_unittests subdoc::lib)
-
-gtest_discover_tests(subdoc_unittests)
-
 # subdoc binary
 subspace_default_compile_options(subdoc)
 target_link_libraries(subdoc subdoc::lib)
+
+if(${SUBSPACE_BUILD_TESTS})
+    add_executable(subdoc_unittests
+        "gen_tests/gen_tests.cc"
+        "tests/fields_unittest.cc"
+        "tests/functions_unittest.cc"
+        "tests/include_exclude_unittest.cc"
+        "tests/inherit_unittest.cc"
+        "tests/macros_unittest.cc"
+        "tests/markdown_unittest.cc"
+        "tests/methods_unittest.cc"
+        "tests/records_unittest.cc"
+        "tests/styles_unittest.cc"
+        "tests/types_unittest.cc"
+        "tests/subdoc_gen_test.h"
+        "tests/subdoc_test.h"
+    )
+
+    # subdoc_unittests
+    subspace_test_default_compile_options(subdoc_unittests)
+    target_link_libraries(subdoc_unittests subdoc::lib)
+
+    gtest_discover_tests(subdoc_unittests)
+endif()
+

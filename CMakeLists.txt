@@ -33,6 +33,7 @@ endif()
 
 include(OptionIf)
 
+option_if_not_defined(SUBSPACE_BUILD_TESTS "Build subspace tests" ON)
 option_if_not_defined(SUBSPACE_BUILD_CIR "Build CIR (requires LLVM)" ON)
 option_if_not_defined(SUBSPACE_BUILD_SUBDOC "Build subdoc (requires LLVM)" ON)
 
@@ -67,10 +68,12 @@ function(subspace_test_default_compile_options TARGET)
     target_link_libraries(${TARGET} gtest_main)
 endfunction()
 
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-add_subdirectory(third_party/googletest)
-include(GoogleTest)
-enable_testing()
+if(${SUBSPACE_BUILD_TESTS})
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    add_subdirectory(third_party/googletest)
+    include(GoogleTest)
+    enable_testing()
+endif()
 
 add_subdirectory(subspace)
 
