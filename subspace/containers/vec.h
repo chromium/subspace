@@ -24,6 +24,7 @@
 #include "subspace/containers/__private/vec_marker.h"
 #include "subspace/containers/concat.h"
 #include "subspace/containers/iterators/chunks.h"
+#include "subspace/containers/iterators/drain.h"
 #include "subspace/containers/iterators/slice_iter.h"
 #include "subspace/containers/iterators/vec_iter.h"
 #include "subspace/containers/slice.h"
@@ -242,6 +243,27 @@ class Vec final {
       }
       set_len(::sus::marker::unsafe_fn, source_len);
     }
+  }
+
+  /// Removes the specified range from the vector in bulk, returning all
+  /// removed elements as an iterator. If the iterator is dropped before
+  /// being fully consumed, it drops the remaining removed elements.
+  ///
+  /// The Vec becomes moved-from and will panic on use while the Drain iterator
+  /// is in use, and will be usable again once Drain is destroyed or
+  /// `Drain::keep_remain()` is called.
+  ///
+  /// # Panics
+  ///
+  /// Panics if the starting point is greater than the end point or if
+  /// the end point is greater than the length of the vector.
+  Drain<T> drain(::sus::ops::RangeBounds<usize> auto range) noexcept {
+    ::sus::ops::Range<usize> bounded_range =
+        range.start_at(range.start_bound().unwrap_or(0u))
+            .end_at(range.end_bound().unwrap_or(len()));
+    ::sus::check(bounded_range.start <= bounded_range.finish);
+    ::sus::check(bounded_range.finish <= len());
+    return Drain<T>::with(::sus::move(*this), bounded_range);
   }
 
   /// Decomposes a `Vec<T>` into its raw components.
