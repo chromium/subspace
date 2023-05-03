@@ -45,6 +45,7 @@ target_sources(subspace PUBLIC
     "containers/__private/vec_marker.h"
     "containers/iterators/array_iter.h"
     "containers/iterators/chunks.h"
+    "containers/iterators/drain.h"
     "containers/iterators/slice_iter.h"
     "containers/iterators/vec_iter.h"
     "containers/iterators/windows.h"

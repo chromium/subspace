@@ -123,8 +123,8 @@ void copy(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
   sus_debug_check(dst != nullptr);
   // UBSan won't catch the misaligned read/writes by memcpy, so we check it
   // ourselves.
-  sus_debug_check(src % alignof(T) == 0);
-  sus_debug_check(dst % alignof(T) == 0);
+  sus_debug_check(reinterpret_cast<uintptr_t>(src) % alignof(T) == 0);
+  sus_debug_check(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0);
   if constexpr (::sus::mem::size_of<T>() > 1) {
     auto bytes = count.checked_mul(::sus::mem::size_of<T>()).expect("overflow");
     memmove(dst, src, size_t{bytes});

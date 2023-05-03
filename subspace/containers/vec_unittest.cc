@@ -1014,4 +1014,237 @@ TEST(Vec, Extend) {
   }
 }
 
+TEST(Vec, Drain_TriviallyRelocatable) {
+  static_assert(sus::mem::relocate_by_memcpy<i32>);
+
+  // Drain back range.
+  {
+    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto cap = v.capacity();
+    {
+      auto d = v.drain("3.."_r);
+      EXPECT_EQ(d.next().unwrap(), 4);
+      EXPECT_EQ(d.next().unwrap(), 5);
+      EXPECT_EQ(d.next(), ::sus::None);
+      EXPECT_EQ(d.next_back(), ::sus::None);
+    }
+    EXPECT_EQ(v, Vec<i32>::with_values(1, 2, 3));
+    EXPECT_EQ(v.capacity(), cap);
+    {
+      auto d = v.drain("0.."_r);
+      EXPECT_EQ(d.next_back().unwrap(), 3);
+      EXPECT_EQ(d.next_back().unwrap(), 2);
+      EXPECT_EQ(d.next_back().unwrap(), 1);
+      EXPECT_EQ(d.next_back(), ::sus::None);
+      EXPECT_EQ(d.next(), ::sus::None);
+    }
+    EXPECT_EQ(v.is_empty(), true);
+    EXPECT_EQ(v.capacity(), cap);
+  }
+  // Drain front range.
+  {
+    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto cap = v.capacity();
+    {
+      auto d = v.drain("..3"_r);
+      EXPECT_EQ(d.next().unwrap(), 1);
+      EXPECT_EQ(d.next().unwrap(), 2);
+      EXPECT_EQ(d.next().unwrap(), 3);
+      EXPECT_EQ(d.next(), ::sus::None);
+    }
+    EXPECT_EQ(v, Vec<i32>::with_values(4, 5));
+    EXPECT_EQ(v.capacity(), cap);
+    {
+      auto d = v.drain("..2"_r);
+      EXPECT_EQ(d.next_back().unwrap(), 5);
+      EXPECT_EQ(d.next_back().unwrap(), 4);
+      EXPECT_EQ(d.next_back(), ::sus::None);
+      EXPECT_EQ(d.next(), ::sus::None);
+    }
+    EXPECT_EQ(v.is_empty(), true);
+    EXPECT_EQ(v.capacity(), cap);
+  }
+  // Drain full range.
+  {
+    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto cap = v.capacity();
+    {
+      auto d = v.drain(".."_r);
+      EXPECT_EQ(d.next().unwrap(), 1);
+      EXPECT_EQ(d.next().unwrap(), 2);
+      EXPECT_EQ(d.next().unwrap(), 3);
+      EXPECT_EQ(d.next().unwrap(), 4);
+      EXPECT_EQ(d.next().unwrap(), 5);
+      EXPECT_EQ(d.next(), ::sus::None);
+      EXPECT_EQ(d.next_back(), ::sus::None);
+    }
+    EXPECT_EQ(v.is_empty(), true);
+    EXPECT_EQ(v.capacity(), cap);
+  }
+  {
+    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto cap = v.capacity();
+    {
+      auto d = v.drain(".."_r);
+      EXPECT_EQ(d.next_back().unwrap(), 5);
+      EXPECT_EQ(d.next_back().unwrap(), 4);
+      EXPECT_EQ(d.next_back().unwrap(), 3);
+      EXPECT_EQ(d.next_back().unwrap(), 2);
+      EXPECT_EQ(d.next_back().unwrap(), 1);
+      EXPECT_EQ(d.next_back(), ::sus::None);
+      EXPECT_EQ(d.next(), ::sus::None);
+    }
+    EXPECT_EQ(v.is_empty(), true);
+    EXPECT_EQ(v.capacity(), cap);
+  }
+  // Drain in the middle.
+  {
+    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto cap = v.capacity();
+    {
+      auto d = v.drain("2..3"_r);
+      EXPECT_EQ(d.next().unwrap(), 3);
+      EXPECT_EQ(d.next(), ::sus::None);
+    }
+    EXPECT_EQ(v, Vec<i32>::with_values(1, 2, 4, 5));
+    EXPECT_EQ(v.capacity(), cap);
+  }
+  // Keep rest.
+  {
+    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto cap = v.capacity();
+    auto d = v.drain(".."_r);
+    EXPECT_EQ(d.next().unwrap(), 1);
+    EXPECT_EQ(d.next_back().unwrap(), 5);
+    sus::move(d).keep_rest();
+    EXPECT_EQ(v, Vec<i32>::with_values(2, 3, 4));
+    EXPECT_EQ(v.capacity(), cap);
+  }
+}
+
+TEST(Vec, Drain_NonTriviallyRelocatable) {
+  static usize destroyed;
+  static usize moved;
+  static usize assigned;
+  struct S {
+    S(int i) : i(i) {}
+    ~S() { destroyed += 1; }
+    S(S&& o) : i(o.i) { moved += 1; }
+    S& operator=(S&& o) { return i = o.i, assigned += 1, *this; }
+
+    bool operator==(const S& o) const noexcept { return i == o.i; }
+    bool operator==(i32 o) const noexcept { return i == o; }
+    bool operator==(int o) const noexcept { return i == o; }
+
+    i32 i;
+  };
+  static_assert(sus::mem::Move<S>);
+  static_assert(sus::ops::Eq<S>);
+  static_assert(sus::ops::Eq<S, i32>);
+  static_assert(sus::ops::Eq<S, int>);
+  static_assert(!sus::mem::relocate_by_memcpy<S>);
+
+  // Drain in the middle.
+  {
+    auto v = Vec<S>::with_values(1, 2, 3, 4, 5);
+    auto cap = v.capacity();
+    {
+      destroyed = moved = assigned = 0_usize;
+      sus::Option<sus::containers::Drain<S>> d = sus::some(v.drain("2..3"_r));
+      EXPECT_EQ(destroyed, 0u);
+      EXPECT_EQ(moved, 0u);
+      EXPECT_EQ(assigned, 0u);
+
+      sus::Option<S> s = sus::some(d->next().unwrap());
+      EXPECT_EQ(*s, 3);
+      // The S was moved out of the Vec, but the S is left inside the Vec. It
+      // moved and then destroyed each time, until the last move into `s`
+      // here.
+      EXPECT_GT(moved, 0u);
+      EXPECT_EQ(moved, destroyed + 1u);
+      EXPECT_EQ(assigned, 0u);
+
+      destroyed = moved = assigned = 0_usize;
+      s = sus::none();
+      // Now the `s` has been destroyed too.
+      EXPECT_EQ(moved, 0u);
+      EXPECT_EQ(destroyed, 1u);
+      EXPECT_EQ(assigned, 0u);
+
+      destroyed = moved = assigned = 0_usize;
+      EXPECT_EQ(d->next(), ::sus::None);
+      EXPECT_EQ(moved, 0u);
+      EXPECT_EQ(destroyed, 0u);
+      EXPECT_EQ(assigned, 0u);
+
+      // When the Drain iterator is destroyed, it shifts the remaining elements
+      // down and destroys anything left at the end.
+      destroyed = moved = assigned = 0_usize;
+      d = sus::none();
+      EXPECT_EQ(destroyed, 1u);
+      EXPECT_EQ(moved, 0u);
+      EXPECT_EQ(assigned, 2u);
+    }
+    EXPECT_EQ(v, Vec<S>::with_values(1, 2, 4, 5));
+    EXPECT_EQ(v.capacity(), cap);
+  }
+  // Keep rest.
+  {
+    auto v = Vec<S>::with_values(1, 2, 3, 4, 5);
+    auto cap = v.capacity();
+
+    destroyed = moved = assigned = 0_usize;
+    auto d = sus::some(v.drain(".."_r)).construct();
+    EXPECT_EQ(moved, 0u);
+    EXPECT_EQ(destroyed, 0u);
+    EXPECT_EQ(assigned, 0u);
+
+    destroyed = moved = assigned = 0_usize;
+    EXPECT_EQ(d->next().unwrap(), 1);
+    // The S is moved out of the Vec and each copy it was moved into was
+    // destroyed.
+    EXPECT_GT(moved, 0u);
+    EXPECT_EQ(destroyed, moved);
+    EXPECT_EQ(assigned, 0u);
+
+    destroyed = moved = assigned = 0_usize;
+    EXPECT_EQ(d->next_back().unwrap(), 5);
+    // The S is moved out of the Vec and each copy it was moved into was
+    // destroyed.
+    EXPECT_GT(moved, 0u);
+    EXPECT_EQ(destroyed, moved);
+    EXPECT_EQ(assigned, 0u);
+
+    destroyed = moved = assigned = 0_usize;
+    sus::move(*d).keep_rest();
+    // The 3 remaining pieces were shifted left one.
+    EXPECT_EQ(assigned, 3u);
+    // The last 2 spots were destroyed.
+    EXPECT_EQ(destroyed, 2u);
+    EXPECT_EQ(moved, 0u);
+
+    EXPECT_EQ(v, Vec<S>::with_values(2, 3, 4));
+    EXPECT_EQ(v.capacity(), cap);
+  }
+  // Overlapping assigns.
+  {
+    auto v = Vec<S>::with_values(1, 2, 3, 4, 5);
+    auto cap = v.capacity();
+    {
+      sus::Option<sus::containers::Drain<S>> d = sus::some(v.drain("..2"_r));
+      destroyed = moved = assigned = 0_usize;
+      d = sus::none();
+      // Move assignments that occur: 3 -> 1, 4 -> 2, 5 -> 3.
+      // That means the at what is originally `3` gets moved from and moved
+      // into.
+      EXPECT_EQ(assigned, 3u);
+      // And then 4 and 5 are destroyed.
+      EXPECT_EQ(destroyed, 2u);
+      EXPECT_EQ(moved, 0u);
+    }
+    EXPECT_EQ(v, Vec<S>::with_values(3, 4, 5));
+    EXPECT_EQ(v.capacity(), cap);
+  }
+}
+
 }  // namespace

@@ -31,6 +31,8 @@ namespace sus::containers {
 
 template <class T>
 class Slice;
+template <class T>
+class SliceMut;
 
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
@@ -48,6 +50,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
  public:
   static constexpr auto with(const RawItem* start, usize len) noexcept {
     return SliceIter(start, len);
+  }
+
+  /// Returns a slice of the items left to be iterated.
+  Slice<Item> as_slice() const& {
+    return Slice<Item>::from_raw_parts(::sus::marker::unsafe_fn, ptr_,
+                                       end_ - ptr_);
   }
 
   Option<Item> next() noexcept {
@@ -118,6 +126,13 @@ struct [[sus_trivial_abi]] SliceIterMut final
  public:
   static constexpr auto with(RawItem* start, usize len) noexcept {
     return SliceIterMut(start, len);
+  }
+
+  /// Returns a mutable slice of the items left to be iterated, consuming the
+  /// iterator.
+  SliceMut<RawItem> as_mut_slice() && {
+    return SliceMut<RawItem>::from_raw_parts_mut(::sus::marker::unsafe_fn, ptr_,
+                                                 usize::from(end_ - ptr_));
   }
 
   // sus::iter::Iterator trait.

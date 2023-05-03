@@ -39,11 +39,16 @@ concept RangeBounds = requires(const T& t, T v, I i) {
   // become false.
   { ::sus::move(v).start_at(i) };
   { ::sus::move(v).end_at(i) };
-  // start_at() and end_at() are rvalue methods.
-  requires !requires { t.start_at(i); };
-  requires !requires { t.end_at(i); };
-  requires !requires { v.start_at(i); };
-  requires !requires { v.end_at(i); };
+  // start_at() and end_at() are rvalue methods if T is not Copy.
+  requires sus::mem::Copy<T> || !requires { t.start_at(i); };
+  requires sus::mem::Copy<T> || !requires { t.end_at(i); };
+  requires sus::mem::Copy<T> || !requires { v.start_at(i); };
+  requires sus::mem::Copy<T> || !requires { v.end_at(i); };
+  // start_at() and end_at() are lvalue methods if T is Copy.
+  requires !sus::mem::Copy<T> || requires { t.start_at(i); };
+  requires !sus::mem::Copy<T> || requires { t.end_at(i); };
+  requires !sus::mem::Copy<T> || requires { v.start_at(i); };
+  requires !sus::mem::Copy<T> || requires { v.end_at(i); };
 };
 
 namespace __private {
@@ -166,11 +171,21 @@ class Range final : public __private::RangeIter<Range<T>, T> {
 
   /// Return a new Range that starts at `t` and ends where the original Range
   /// did.
+  constexpr Range start_at(T t) const& noexcept
+    requires(::sus::mem::Copy<T>)
+  {
+    return Range(::sus::move(t), finish);
+  }
   constexpr Range start_at(T t) && noexcept {
     return Range(::sus::move(t), ::sus::move(finish));
   }
   /// Return a new Range that starts at where the original Range did and ends at
   /// `t`.
+  constexpr Range end_at(T t) const& noexcept
+    requires(::sus::mem::Copy<T>)
+  {
+    return Range(start, ::sus::move(t));
+  }
   constexpr Range end_at(T t) && noexcept {
     return Range(::sus::move(start), ::sus::move(t));
   }
@@ -234,11 +249,21 @@ class RangeFrom final : public __private::RangeFromIter<RangeFrom<T>, T> {
   constexpr ::sus::option::Option<const T&> end_bound() && = delete;
 
   /// Return a new RangeFrom that starts at `t` and still has no end.
+  constexpr RangeFrom start_at(T t) const& noexcept
+    requires(::sus::mem::Copy<T>)
+  {
+    return RangeFrom(::sus::move(t));
+  }
   constexpr RangeFrom start_at(T t) && noexcept {
     return RangeFrom(::sus::move(t));
   }
   /// Return a new Range that starts at where the original Range did and ends at
   /// `t`.
+  constexpr Range<T> end_at(T t) const& noexcept
+    requires(::sus::mem::Copy<T>)
+  {
+    return Range<T>(start, ::sus::move(t));
+  }
   constexpr Range<T> end_at(T t) && noexcept {
     return Range<T>(::sus::move(start), ::sus::move(t));
   }
@@ -295,10 +320,20 @@ class RangeTo final {
 
   /// Return a new Range that starts at `t` and ends where the original Range
   /// did.
+  constexpr Range<T> start_at(T t) const& noexcept
+    requires(::sus::mem::Copy<T>)
+  {
+    return Range<T>(::sus::move(t), finish);
+  }
   constexpr Range<T> start_at(T t) && noexcept {
     return Range<T>(::sus::move(t), ::sus::move(finish));
   }
   /// Return a new Range that still has no start and ends at `t`.
+  constexpr RangeTo end_at(T t) const& noexcept
+    requires(::sus::mem::Copy<T>)
+  {
+    return RangeTo(::sus::move(t));
+  }
   constexpr RangeTo end_at(T t) && noexcept { return RangeTo(::sus::move(t)); }
 
   // sus::ops::Eq trait
@@ -345,10 +380,20 @@ class [[sus_trivial_abi]] RangeFull final {
   constexpr ::sus::option::Option<const T&> end_bound() && = delete;
 
   /// Return a new Range that starts at `t` and has no end.
+  constexpr RangeFrom<T> start_at(T t) const& noexcept
+    requires(::sus::mem::Copy<T>)
+  {
+    return RangeFrom<T>(::sus::move(t));
+  }
   constexpr RangeFrom<T> start_at(T t) && noexcept {
     return RangeFrom<T>(::sus::move(t));
   }
   /// Return a new Range that has no start and ends at `t`.
+  constexpr RangeTo<T> end_at(T t) const& noexcept
+    requires(::sus::mem::Copy<T>)
+  {
+    return RangeTo<T>(::sus::move(t));
+  }
   constexpr RangeTo<T> end_at(T t) && noexcept {
     return RangeTo<T>(::sus::move(t));
   }
