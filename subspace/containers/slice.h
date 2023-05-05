@@ -144,9 +144,9 @@ class [[sus_trivial_abi]] Slice final {
   friend constexpr inline bool operator==(const Slice<T>& l,
                                           const Slice<U>& r) = delete;
 
-#define INC_PTR_EXPR data_
-#define INC_LEN_EXPR len_
-#define INC_DELETE_RVALUE false
+#define _ptr_expr data_
+#define _len_expr len_
+#define _delete_rvalue false
 #include "__private/slice_methods.inc"
 
  private:
@@ -166,10 +166,10 @@ class [[sus_trivial_abi]] Slice final {
   // its fields.
 };
 
-#define INC_PTR_EXPR data_
-#define INC_LEN_EXPR len_
-#define INC_DELETE_RVALUE false
-#define INC_SELF Slice
+#define _ptr_expr data_
+#define _len_expr len_
+#define _delete_rvalue false
+#define _self Slice
 #include "__private/slice_methods_impl.inc"
 
 /// A dynamically-sized mutable view into a contiguous sequence of objects of
@@ -269,13 +269,13 @@ class [[sus_trivial_abi]] SliceMut final {
     return ::sus::move(slice_);
   }
 
-#define INC_PTR_EXPR slice_.data_
-#define INC_LEN_EXPR slice_.len_
-#define INC_DELETE_RVALUE false
+#define _ptr_expr slice_.data_
+#define _len_expr slice_.len_
+#define _delete_rvalue false
 #include "__private/slice_methods.inc"
-#define INC_PTR_EXPR slice_.data_
-#define INC_LEN_EXPR slice_.len_
-#define INC_DELETE_RVALUE false
+#define _ptr_expr slice_.data_
+#define _len_expr slice_.len_
+#define _delete_rvalue false
 #include "__private/slice_mut_methods.inc"
 
  private:
@@ -291,10 +291,10 @@ class [[sus_trivial_abi]] SliceMut final {
   // initialize its fields.
 };
 
-#define INC_PTR_EXPR slice_.data_
-#define INC_LEN_EXPR slice_.len_
-#define INC_DELETE_RVALUE false
-#define INC_SELF SliceMut
+#define _ptr_expr slice_.data_
+#define _len_expr slice_.len_
+#define _delete_rvalue false
+#define _self SliceMut
 #include "__private/slice_methods_impl.inc"
 
 // Implicit for-ranged loop iteration via `Slice::iter()` and

@@ -22,14 +22,14 @@
 //
 // Include it into the body of your class.
 //
-// Define `INC_PTR_EXPR` and `INC_LEN_EXPR` when including this file to the
+// Define `_ptr_expr` and `_len_expr` when including this file to the
 // expressions of getting the slice's data pointer and length.
 /////////////////////////////////////////////////////////
 
 // If we're deleting rvalue const access, we don't want to give rvalue mut
 // access either. Use this in place of no-qualifer-at-all for methods that
 // return a reference.
-#if INC_DELETE_RVALUE
+#if _delete_rvalue
 #define LVALUE_MUT &
 #else
 #define LVALUE_MUT
@@ -43,7 +43,7 @@
 /// Modifying the container referenced by this slice may cause its buffer to
 /// be reallocated, which would also make any pointers to it invalid.
 sus_pure constexpr inline T* as_mut_ptr() LVALUE_MUT noexcept {
-  return INC_PTR_EXPR;
+  return _ptr_expr;
 }
 
 /// Returns the two mutable pointers spanning the slice.
@@ -264,7 +264,7 @@ sus_pure constexpr T& operator[](::sus::num::usize i) & noexcept {
   return get_unchecked_mut(::sus::marker::unsafe_fn, i);
 }
 
-#if !INC_DELETE_RVALUE
+#if !_delete_rvalue
 // Documented on the const overload.
 constexpr T& operator[](::sus::num::usize i) && noexcept {
   check(i < len());
@@ -290,7 +290,7 @@ sus_pure constexpr Option<T&> get_mut(
 /// length of at least 1.
 sus_pure constexpr inline T& get_unchecked_mut(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) LVALUE_MUT noexcept {
-  sus_debug_check(i.primitive_value < INC_LEN_EXPR.primitive_value);
+  sus_debug_check(i.primitive_value < _len_expr.primitive_value);
   return as_mut_ptr()[size_t{i}];
 }
 
@@ -308,7 +308,7 @@ sus_pure constexpr inline SliceMut<T> operator[](
   return SliceMut<T>(as_mut_ptr() + rstart, rlen);
 }
 
-#if !INC_DELETE_RVALUE
+#if !_delete_rvalue
 // Documented on the const overload of operator[](RangeBounds).
 sus_pure constexpr inline SliceMut<T> operator[](
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && noexcept {
@@ -863,7 +863,7 @@ sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>>
 split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
                        ::sus::num::usize mid) LVALUE_MUT noexcept {
   // SAFETY: Caller has to check that `0 <= mid <= len()`.
-  sus_debug_check(mid.primitive_value <= INC_LEN_EXPR.primitive_value);
+  sus_debug_check(mid.primitive_value <= _len_expr.primitive_value);
   return ::sus::Tuple<SliceMut<T>, SliceMut<T>>::with(
       SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn, as_mut_ptr(),
                                       mid),
@@ -983,8 +983,8 @@ constexpr void swap(usize a, usize b) noexcept {
 constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, usize a,
                                    usize b) noexcept {
   sus_debug_check(a.primitive_value != b.primitive_value);
-  sus_debug_check(a.primitive_value < INC_LEN_EXPR.primitive_value);
-  sus_debug_check(b.primitive_value < INC_LEN_EXPR.primitive_value);
+  sus_debug_check(a.primitive_value < _len_expr.primitive_value);
+  sus_debug_check(b.primitive_value < _len_expr.primitive_value);
   // SAFETY: The pointers are non-overlapping, as the caller is responsible to
   // check for that. The elements do not have objects overlapping with their
   // tail padding as they are part of a slice (an array).
@@ -1004,8 +1004,8 @@ constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, usize a,
 /// If `a` or `b` are out of bounds, Undefined Behaviour will occur.
 constexpr void swap_unchecked(::sus::marker::UnsafeFnMarker, usize a,
                               usize b) noexcept {
-  sus_debug_check(a.primitive_value < INC_LEN_EXPR.primitive_value);
-  sus_debug_check(b.primitive_value < INC_LEN_EXPR.primitive_value);
+  sus_debug_check(a.primitive_value < _len_expr.primitive_value);
+  sus_debug_check(b.primitive_value < _len_expr.primitive_value);
   ::sus::mem::swap(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
 }
 

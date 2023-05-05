@@ -22,24 +22,24 @@
 //
 // Include it after the body of your class.
 //
-// Define `INC_PTR_EXPR` and `INC_LEN_EXPR` when including this file to the
+// Define `_ptr_expr` and `_len_expr` when including this file to the
 // expressions of getting the slice's data pointer and length.
 //
-// Define `INC_SELF` as the type declaring the methods.
+// Define `_self` as the type declaring the methods.
 ///////////////////////////////////////////////////////////////////////////
 
 template <class T>
-Vec<T> INC_SELF<T>::to_vec() const& noexcept
+Vec<T> _self<T>::to_vec() const& noexcept
   requires(::sus::mem::Clone<T>)
 {
-  auto v = Vec<T>::with_capacity(INC_LEN_EXPR);
-  for (::sus::usize i; i < INC_LEN_EXPR; i += 1u) {
-    v.push(::sus::clone(*(INC_PTR_EXPR + i)));
+  auto v = Vec<T>::with_capacity(_len_expr);
+  for (::sus::usize i; i < _len_expr; i += 1u) {
+    v.push(::sus::clone(*(_ptr_expr + i)));
   }
   return v;
 }
 
-#undef INC_SELF
-#undef INC_PTR_EXPR
-#undef INC_LEN_EXPR
-#undef INC_DELETE_RVALUE
+#undef _self
+#undef _ptr_expr
+#undef _len_expr
+#undef _delete_rvalue

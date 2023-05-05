@@ -608,13 +608,13 @@ class Vec final {
     return slice_mut_;
   }
 
-#define INC_PTR_EXPR slice_mut_.slice_.data_
-#define INC_LEN_EXPR slice_mut_.slice_.len_
-#define INC_DELETE_RVALUE true
+#define _ptr_expr slice_mut_.slice_.data_
+#define _len_expr slice_mut_.slice_.len_
+#define _delete_rvalue true
 #include "__private/slice_methods.inc"
-#define INC_PTR_EXPR slice_mut_.slice_.data_
-#define INC_LEN_EXPR slice_mut_.slice_.len_
-#define INC_DELETE_RVALUE true
+#define _ptr_expr slice_mut_.slice_.data_
+#define _len_expr slice_mut_.slice_.len_
+#define _delete_rvalue true
 #include "__private/slice_mut_methods.inc"
 
  private:
@@ -672,10 +672,10 @@ class Vec final {
   // its fields.
 };
 
-#define INC_PTR_EXPR slice_mut_.slice_.data_
-#define INC_LEN_EXPR slice_mut_.slice_.len_
-#define INC_DELETE_RVALUE true
-#define INC_SELF Vec
+#define _ptr_expr slice_mut_.slice_.data_
+#define _len_expr slice_mut_.slice_.len_
+#define _delete_rvalue true
+#define _self Vec
 #include "__private/slice_methods_impl.inc"
 
 // Implicit for-ranged loop iteration via `Vec::iter()`.
