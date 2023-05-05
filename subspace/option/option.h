@@ -93,8 +93,9 @@ using sus::option::__private::StoragePointer;
 /// owns the `T` in that case and it ensures the `Option` and the `T` are both
 /// accessed with the same const-ness.
 ///
-/// If a type `T` satisties `sus::mem::NeverValueField`, then `Option<T>` will
-/// have the same size as T.
+/// If a type `T` is a reference or satisties `sus::mem::NeverValueField`, then
+/// `Option<T>` will have the same size as T and will be internally represented
+/// as just a `T` (or `T*` in the case of a reference `T&`).
 template <class T>
 class Option final {
   // Note that `const T&` is allowed (so we don't `std::remove_reference_t<T>`)
