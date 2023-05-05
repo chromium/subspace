@@ -29,55 +29,63 @@
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/__private/literals.h"
 #include "subspace/num/__private/ptr_type.h"
-#include "subspace/num/__private/unsigned_integer_macros.h"
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/try_from_int_error.h"
 #include "subspace/option/option.h"
 #include "subspace/result/result.h"
 
+namespace sus::containers {
+template <class T, size_t N>
+  requires(N <= size_t{PTRDIFF_MAX})
+class Array;
+}
+
 namespace sus::num {
 
-// TODO: from_str_radix(). Need Result type and Errors.
+struct u8;
 
-// TODO: Split apart the declarations and the definitions? Then they can be in
-// u32_defn.h and u32_impl.h, allowing most of the library to just use
-// u32_defn.h which will keep some headers smaller. But then the combined
-// headers are larger, is that worse?
+// TODO: from_str_radix(). Need Result typ`e and Errors.
 
 /// A 32-bit unsigned integer.
 struct u32 final {
-  _sus__unsigned_impl(u32, /*PrimitiveT=*/uint32_t, /*SignedT=*/i32);
+#define _self u32
+#define _primitive uint32_t
+#define _signed i32
+#include "subspace/num/__private/unsigned_integer_methods.inc"
 };
-_sus__unsigned_constants_decl(u32, /*PrimitiveT=*/uint32_t);
 
 /// An 8-bit unsigned integer.
 struct u8 final {
-  _sus__unsigned_impl(u8, /*PrimitiveT=*/uint8_t, /*SignedT=*/i8);
+#define _self u8
+#define _primitive uint8_t
+#define _signed i8
+#include "subspace/num/__private/unsigned_integer_methods.inc"
 };
-_sus__unsigned_constants_decl(u8, /*PrimitiveT=*/uint8_t);
+
 
 /// A 16-bit unsigned integer.
 struct u16 final {
-  _sus__unsigned_impl(u16, /*PrimitiveT=*/uint16_t, /*SignedT=*/i16);
+#define _self u16
+#define _primitive uint16_t
+#define _signed i16
+#include "subspace/num/__private/unsigned_integer_methods.inc"
 };
-_sus__unsigned_constants_decl(u16, /*PrimitiveT=*/uint16_t);
 
 /// A 64-bit unsigned integer.
 struct u64 final {
-  _sus__unsigned_impl(u64, /*PrimitiveT=*/uint64_t,
-                      /*SignedT=*/i64);
+#define _self u64
+#define _primitive uint64_t
+#define _signed i64
+#include "subspace/num/__private/unsigned_integer_methods.inc"
 };
-_sus__unsigned_constants_decl(u64, /*PrimitiveT=*/uint64_t);
 
 /// A pointer-sized unsigned integer.
 struct usize final {
-  _sus__unsigned_impl(
-      usize,
-      /*PrimitiveT=*/::sus::num::__private::ptr_type<>::unsigned_type,
-      /*SignedT=*/isize);
+#define _self usize
+#define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
+#define _signed isize
+#include "subspace/num/__private/unsigned_integer_methods.inc"
 };
-_sus__unsigned_constants_decl(
-    usize, /*PrimitiveT=*/::sus::num::__private::ptr_type<>::unsigned_type);
 
 /// Adds a `usize` to a pointer, returning the resulting pointer.
 ///
@@ -115,14 +123,6 @@ constexpr inline T*& operator-=(T*& t, usize offset) {
 }
 
 }  // namespace sus::num
-
-namespace std {
-_sus__unsigned_hash_equal_to(::sus::num::u8);
-_sus__unsigned_hash_equal_to(::sus::num::u16);
-_sus__unsigned_hash_equal_to(::sus::num::u32);
-_sus__unsigned_hash_equal_to(::sus::num::u64);
-_sus__unsigned_hash_equal_to(::sus::num::usize);
-}  // namespace std
 
 _sus__integer_literal(u8, ::sus::num::u8);
 _sus__integer_literal(u16, ::sus::num::u16);

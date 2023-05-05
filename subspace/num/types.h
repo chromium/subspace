@@ -19,4 +19,4 @@
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/signed_integer_out_of_line.h"
 #include "subspace/num/unsigned_integer.h"
-#include "subspace/num/unsigned_integer_out_of_line.h"
+#include "subspace/num/unsigned_integer_impl.h"
