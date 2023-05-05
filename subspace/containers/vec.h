@@ -92,7 +92,7 @@ class Vec final {
   ///
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
-  [[nodiscard]] sus_pure static inline constexpr Vec with_capacity(
+  sus_pure static inline constexpr Vec with_capacity(
       usize capacity) noexcept {
     check(::sus::mem::size_of<T>() * capacity <= usize{isize::MAX});
     auto v = Vec(nullptr, 0_usize, 0_usize);
@@ -130,7 +130,7 @@ class Vec final {
   /// * The allocated size in bytes must be no larger than `isize::MAX`.
   /// * If `ptr` is null, then `length` and `capacity` must be `0_usize`, and
   ///   vice versa.
-  [[nodiscard]] sus_pure static Vec from_raw_parts(
+  sus_pure static Vec from_raw_parts(
       ::sus::marker::UnsafeFnMarker, T* ptr, usize length,
       usize capacity) noexcept {
     return Vec(ptr, length, capacity);
@@ -290,7 +290,7 @@ class Vec final {
   ///
   /// This may be larger than the number of elements present, which is returned
   /// by `len()`.
-  [[nodiscard]] sus_pure constexpr inline usize capacity() const& noexcept {
+  sus_pure constexpr inline usize capacity() const& noexcept {
     check(!is_moved_from());
     return capacity_;
   }
@@ -536,7 +536,7 @@ class Vec final {
 
   // Returns a slice that references all the elements of the vector as const
   // references.
-  [[nodiscard]] sus_pure constexpr Slice<T> as_slice() const& noexcept
+  sus_pure constexpr Slice<T> as_slice() const& noexcept
       sus_lifetimebound {
     return *this;
   }
@@ -544,7 +544,7 @@ class Vec final {
 
   // Returns a slice that references all the elements of the vector as mutable
   // references.
-  [[nodiscard]] sus_pure constexpr SliceMut<T> as_mut_slice() & noexcept
+  sus_pure constexpr SliceMut<T> as_mut_slice() & noexcept
       sus_lifetimebound {
     return *this;
   }
@@ -592,30 +592,30 @@ class Vec final {
   }
 
   // Const Vec can be used as a Slice.
-  [[nodiscard]] sus_pure constexpr operator const Slice<T>&() const& {
+  sus_pure constexpr operator const Slice<T>&() const& {
     check(!is_moved_from());
     return slice_mut_.slice_;
   }
-  [[nodiscard]] sus_pure constexpr operator const Slice<T>&() && = delete;
-  [[nodiscard]] sus_pure constexpr operator Slice<T>&() & {
+  sus_pure constexpr operator const Slice<T>&() && = delete;
+  sus_pure constexpr operator Slice<T>&() & {
     check(!is_moved_from());
     return slice_mut_.slice_;
   }
 
   // Mutable Vec can be used as a SliceMut.
-  [[nodiscard]] sus_pure constexpr operator SliceMut<T>&() & {
+  sus_pure constexpr operator SliceMut<T>&() & {
     check(!is_moved_from());
     return slice_mut_;
   }
 
-#define _ptr_expr slice_mut_.slice_.data_
-#define _len_expr slice_mut_.slice_.len_
-#define _delete_rvalue 1
+#define INC_PTR_EXPR slice_mut_.slice_.data_
+#define INC_LEN_EXPR slice_mut_.slice_.len_
+#define INC_DELETE_RVALUE true
 #include "__private/slice_methods.inc"
+#define INC_PTR_EXPR slice_mut_.slice_.data_
+#define INC_LEN_EXPR slice_mut_.slice_.len_
+#define INC_DELETE_RVALUE true
 #include "__private/slice_mut_methods.inc"
-#undef _ptr_expr
-#undef _len_expr
-#undef _delete_rvalue
 
  private:
   Vec(T* ptr, usize len, usize cap) : slice_mut_(ptr, len), capacity_(cap) {}
@@ -672,15 +672,11 @@ class Vec final {
   // its fields.
 };
 
-#define _ptr_expr slice_mut_.slice_.data_
-#define _len_expr slice_mut_.slice_.len_
-#define _delete_rvalue 1
-#define Self Vec
-#include "__private/slice_methods_out_of_line.inc"
-#undef _ptr_expr
-#undef _len_expr
-#undef _delete_rvalue
-#undef Self
+#define INC_PTR_EXPR slice_mut_.slice_.data_
+#define INC_LEN_EXPR slice_mut_.slice_.len_
+#define INC_DELETE_RVALUE true
+#define INC_SELF Vec
+#include "__private/slice_methods_impl.inc"
 
 // Implicit for-ranged loop iteration via `Vec::iter()`.
 using ::sus::iter::__private::begin;

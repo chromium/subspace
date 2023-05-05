@@ -83,7 +83,7 @@ _sus__unsigned_constants_decl(
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
-[[nodiscard]] sus_pure_const constexpr inline T* operator+(T* t, usize offset) {
+sus_pure_const constexpr inline T* operator+(T* t, usize offset) {
   return t + size_t{offset};
 }
 
@@ -100,7 +100,7 @@ constexpr inline T*& operator+=(T*& t, usize offset) {
 ///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>
-[[nodiscard]] sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
+sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
   return t - size_t{offset};
 }
 

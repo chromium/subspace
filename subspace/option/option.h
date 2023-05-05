@@ -129,14 +129,14 @@ class Option final {
     }
   }
 
-  [[nodiscard]] sus_pure static inline constexpr Option some(T& t sus_lifetimebound) noexcept
+  sus_pure static inline constexpr Option some(T& t sus_lifetimebound) noexcept
     requires(std::is_reference_v<T>)
   {
     return Option(move_to_storage(t));
   }
 
   /// Construct an Option that is holding no value.
-  [[nodiscard]] sus_pure static inline constexpr Option none() noexcept { return Option(); }
+  sus_pure static inline constexpr Option none() noexcept { return Option(); }
 
   /// Takes each item in the Iterator: if it is None, no further elements are
   /// taken, and the None is returned. Should no None occur, a container of type
@@ -305,11 +305,11 @@ class Option final {
   ///
   /// If there is a value present, it can be extracted with `unwrap()` or
   /// `expect()`, or can be accessed through `operator->` and `operator*`.
-  [[nodiscard]] sus_pure constexpr bool is_some() const noexcept {
+  sus_pure constexpr bool is_some() const noexcept {
     return t_.state() == Some;
   }
   /// Returns whether the Option is currently empty, containing no value.
-  [[nodiscard]] sus_pure constexpr bool is_none() const noexcept {
+  sus_pure constexpr bool is_none() const noexcept {
     return t_.state() == None;
   }
 
@@ -329,7 +329,7 @@ class Option final {
   ///   return -1;
   /// }
   /// ```
-  [[nodiscard]] sus_pure constexpr operator State() const& { return t_.state(); }
+  sus_pure constexpr operator State() const& { return t_.state(); }
 
   /// Returns the contained value inside the Option.
   ///
@@ -390,13 +390,13 @@ class Option final {
   ///   reuse, making variable names bad.
   /// * It's expected due to std::optional and general container-of-one things
   ///   to provide access through operator* and operator->.
-  [[nodiscard]] sus_pure constexpr const std::remove_reference_t<T>& operator*()
+  sus_pure constexpr const std::remove_reference_t<T>& operator*()
       const& noexcept {
     ::sus::check(t_.state() == Some);
     return t_.val();
   }
   constexpr const std::remove_reference_t<T>* operator*() && noexcept = delete;
-  [[nodiscard]] sus_pure constexpr std::remove_reference_t<T>& operator*() & noexcept {
+  sus_pure constexpr std::remove_reference_t<T>& operator*() & noexcept {
     ::sus::check(t_.state() == Some);
     return t_.val_mut();
   }
@@ -426,14 +426,14 @@ class Option final {
   ///   reuse, making variable names bad.
   /// * It's expected due to std::optional and general container-of-one things
   ///   to provide access through operator* and operator->.
-  [[nodiscard]] sus_pure constexpr const std::remove_reference_t<T>* operator->()
+  sus_pure constexpr const std::remove_reference_t<T>* operator->()
       const& noexcept {
     ::sus::check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<const std::remove_reference_t<T>&>(t_.val()));
   }
   constexpr const std::remove_reference_t<T>* operator->() && noexcept;
-  [[nodiscard]] sus_pure constexpr std::remove_reference_t<T>* operator->() & noexcept {
+  sus_pure constexpr std::remove_reference_t<T>* operator->() & noexcept {
     ::sus::check(t_.state() == Some);
     return ::sus::mem::addressof(
         static_cast<std::remove_reference_t<T>&>(t_.val_mut()));
@@ -842,7 +842,7 @@ class Option final {
 
   /// Returns an Option<const T&> from this Option<T>, that either holds #None
   /// or a reference to the value in this Option.
-  [[nodiscard]] sus_pure constexpr Option<const std::remove_reference_t<T>&> as_ref()
+  sus_pure constexpr Option<const std::remove_reference_t<T>&> as_ref()
       const& noexcept {
     if (t_.state() == None)
       return Option<const std::remove_reference_t<T>&>::none();
@@ -852,7 +852,7 @@ class Option final {
   // Calling as_ref() on an rvalue is not returning a reference to the inner
   // value if the inner value is already a reference, so we allow calling it on
   // an rvalue Option in that case.
-  [[nodiscard]] sus_pure constexpr Option<const std::remove_reference_t<T>&>
+  sus_pure constexpr Option<const std::remove_reference_t<T>&>
   as_ref() && noexcept
     requires(std::is_reference_v<T>)
   {
@@ -864,7 +864,7 @@ class Option final {
 
   /// Returns an Option<T&> from this Option<T>, that either holds #None or a
   /// reference to the value in this Option.
-  [[nodiscard]] sus_pure constexpr Option<T&> as_mut() & noexcept {
+  sus_pure constexpr Option<T&> as_mut() & noexcept {
     if (t_.state() == None)
       return Option<T&>::none();
     else
@@ -873,7 +873,7 @@ class Option final {
   // Calling as_mut() on an rvalue is not returning a reference to the inner
   // value if the inner value is already a reference, so we allow calling it on
   // an rvalue Option in that case.
-  [[nodiscard]] sus_pure constexpr Option<T&> as_mut() && noexcept
+  sus_pure constexpr Option<T&> as_mut() && noexcept
     requires(std::is_reference_v<T>)
   {
     if (t_.state() == None)
@@ -882,7 +882,7 @@ class Option final {
       return Option<T&>(t_.take_and_set_none());
   }
 
-  [[nodiscard]] sus_pure constexpr Once<const std::remove_reference_t<T>&> iter()
+  sus_pure constexpr Once<const std::remove_reference_t<T>&> iter()
       const& noexcept {
     return Once<const std::remove_reference_t<T>&>::with(as_ref());
   }
@@ -893,7 +893,7 @@ class Option final {
         ::sus::move(*this).as_ref());
   }
 
-  [[nodiscard]] sus_pure constexpr Once<T&> iter_mut() & noexcept {
+  sus_pure constexpr Once<T&> iter_mut() & noexcept {
     return Once<T&>::with(as_mut());
   }
   constexpr Once<T&> iter_mut() && noexcept
@@ -1069,7 +1069,7 @@ template <class T>
 /// Calling none() produces a hint to make an Option<T> but does not actually
 /// construct Option<T>. This is because the type `T` is not known until the
 /// construction is explicitly requested.
-[[nodiscard]] sus_pure_const inline constexpr auto none() noexcept {
+sus_pure_const inline constexpr auto none() noexcept {
   return __private::NoneMarker();
 }
 

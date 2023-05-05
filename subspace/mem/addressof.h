@@ -21,7 +21,7 @@
 namespace sus::mem {
 
 template <class T>
-[[nodiscard]] sus_pure_const constexpr T* addressof(T& arg) noexcept {
+sus_pure_const constexpr T* addressof(T& arg) noexcept {
   // __builtin_addressof also handles Obj-C ARC pointers.
   return __builtin_addressof(arg);
 }

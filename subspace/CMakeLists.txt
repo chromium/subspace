@@ -38,7 +38,7 @@ target_sources(subspace PUBLIC
     "construct/into.h"
     "construct/default.h"
     "containers/__private/array_marker.h"
-    "containers/__private/slice_methods_out_of_line.inc"
+    "containers/__private/slice_methods_impl.inc"
     "containers/__private/slice_methods.inc"
     "containers/__private/slice_mut_methods.inc"
     "containers/__private/sort.h"
