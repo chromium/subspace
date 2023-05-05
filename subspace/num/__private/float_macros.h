@@ -118,7 +118,7 @@
 #define _sus__float_to_primitive(T, PrimitiveT)                             \
   template <PrimitiveFloat U>                                               \
     requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<PrimitiveT>()) \
-  [[nodiscard]] sus_pure constexpr inline explicit operator U() const {                   \
+  sus_pure constexpr inline explicit operator U() const {                   \
     return primitive_value;                                                 \
   }                                                                         \
   static_assert(true)
@@ -164,7 +164,7 @@
    * IEEE 754 standard, which may not match the interpretation by some of the  \
    * older, non-conformant (e.g. MIPS) hardware implementations.               \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr std::strong_ordering total_cmp(const T& rhs)              \
+  sus_pure constexpr std::strong_ordering total_cmp(const T& rhs)              \
       const& noexcept {                                                        \
     return __private::float_strong_ordering(primitive_value,                   \
                                             rhs.primitive_value);              \
@@ -173,7 +173,7 @@
 
 #define _sus__float_unary_ops(T)     \
   /** sus::num::Neg<##T##> trait. */ \
-  [[nodiscard]] sus_pure constexpr inline T operator-() const { return T(-primitive_value); }
+  sus_pure constexpr inline T operator-() const { return T(-primitive_value); }
 
 #define _sus__float_binary_ops(T)                                        \
   /** sus::num::Add<##T##> trait.                                        \
@@ -250,7 +250,7 @@
 #define _sus__float_abs(T, PrimitiveT)                      \
   /** Computes the absolute value of itself.                \
    */                                                       \
-  [[nodiscard]] sus_pure inline T abs() const& noexcept {                 \
+  sus_pure inline T abs() const& noexcept {                 \
     return __private::into_float(                           \
         __private::into_unsigned_integer(primitive_value) & \
         ~__private::high_bit<PrimitiveT>());                \
@@ -261,7 +261,7 @@
   /** Computes the arccosine of a number. Return value is in radians in the    \
    * range [0, pi] or NaN if the number is outside the range [-1, 1].          \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T acos() const& noexcept {                                   \
+  sus_pure inline T acos() const& noexcept {                                   \
     if (primitive_value < PrimitiveT{-1} || primitive_value > PrimitiveT{1})   \
         [[unlikely]]                                                           \
       return NAN;                                                              \
@@ -271,7 +271,7 @@
   /** Inverse hyperbolic cosine function, or NaN if the number is less than    \
    * -1.                                                                       \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T acosh() const& noexcept {                                  \
+  sus_pure inline T acosh() const& noexcept {                                  \
     if (primitive_value < PrimitiveT{-1}) [[unlikely]]                         \
       return NAN;                                                              \
     /* MSVC acosh(float) is returning a double for some reason. */             \
@@ -280,7 +280,7 @@
   /** Computes the arcsine of a number. Return value is in radians in the      \
    * range [-pi/2, pi/2] or NaN if the number is outside the range [-1, 1].    \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T asin() const& noexcept {                                   \
+  sus_pure inline T asin() const& noexcept {                                   \
     if (primitive_value < PrimitiveT{-1} || primitive_value > PrimitiveT{1})   \
         [[unlikely]]                                                           \
       return NAN;                                                              \
@@ -289,7 +289,7 @@
   }                                                                            \
   /** Inverse hyperbolic sine function.                                        \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T asinh() const& noexcept {                                  \
+  sus_pure inline T asinh() const& noexcept {                                  \
     if (primitive_value < PrimitiveT{-1}) [[unlikely]]                         \
       return NAN;                                                              \
     /* MSVC asinh(float) is returning a double for some reason. */             \
@@ -298,7 +298,7 @@
   /** Computes the arctangent of a number. Return value is in radians in the   \
    * range [-pi/2, pi/2];                                                      \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T atan() const& noexcept {                                   \
+  sus_pure inline T atan() const& noexcept {                                   \
     /* MSVC atan(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::atan(primitive_value));                   \
   }                                                                            \
@@ -312,26 +312,26 @@
    *                                                                           \
    * Returns NaN if both `self` and `other` are 0.                             \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T atan2(const T& other) const& noexcept {                    \
+  sus_pure inline T atan2(const T& other) const& noexcept {                    \
     /* MSVC atan2(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(                                            \
         ::atan2(primitive_value, other.primitive_value));                      \
   }                                                                            \
   /** Inverse hyperbolic tangent function.                                     \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T atanh() const& noexcept {                                  \
+  sus_pure inline T atanh() const& noexcept {                                  \
     /* MSVC atanh(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::atanh(primitive_value));                  \
   }                                                                            \
   /** Returns the cube root of a number.                                       \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T cbrt() const& noexcept {                                   \
+  sus_pure inline T cbrt() const& noexcept {                                   \
     /* MSVC cbrt(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::cbrt(primitive_value));                   \
   }                                                                            \
   /** Returns the smallest integer greater than or equal to self.              \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T ceil() const& noexcept {                                   \
+  sus_pure inline T ceil() const& noexcept {                                   \
     /* MSVC ceil(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::ceil(primitive_value));                   \
   }                                                                            \
@@ -342,78 +342,78 @@
    * returned. Note, however, that conserving the sign bit on NaN across       \
    * arithmetical operations is not generally guaranteed.                      \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T copysign(const T& sign) const& noexcept {                  \
+  sus_pure inline T copysign(const T& sign) const& noexcept {                  \
     /* MSVC copysign(float) is returning a double for some reason. */          \
     return static_cast<PrimitiveT>(                                            \
         ::copysign(primitive_value, sign.primitive_value));                    \
   }                                                                            \
   /** Computes the cosine of a number (in radians).                            \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T cos() const& noexcept {                                    \
+  sus_pure inline T cos() const& noexcept {                                    \
     /* MSVC cos(float) is returning a double for some reason. */               \
     return static_cast<PrimitiveT>(::cos(primitive_value));                    \
   }                                                                            \
   /** Hyperbolic cosine function.                                              \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T cosh() const& noexcept {                                   \
+  sus_pure inline T cosh() const& noexcept {                                   \
     /* MSVC cosh(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::cosh(primitive_value));                   \
   }                                                                            \
   /** Returns `e^(self)`, (the exponential function).                          \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T exp() const& noexcept {                                    \
+  sus_pure inline T exp() const& noexcept {                                    \
     /* MSVC exp(float) is returning a double for some reason. */               \
     return static_cast<PrimitiveT>(::exp(primitive_value));                    \
   }                                                                            \
   /** Returns `2^(self)`.                                                      \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T exp2() const& noexcept {                                   \
+  sus_pure inline T exp2() const& noexcept {                                   \
     /* MSVC exp2(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::exp2(primitive_value));                   \
   }                                                                            \
   /** Returns `e^(self) - 1` in a way that is accurate even if the number is   \
    * close to zero.                                                            \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T exp_m1() const& noexcept {                                 \
+  sus_pure inline T exp_m1() const& noexcept {                                 \
     /* MSVC expm1(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::expm1(primitive_value));                  \
   }                                                                            \
   /** Returns the largest integer less than or equal to self.                  \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T floor() const& noexcept {                                  \
+  sus_pure inline T floor() const& noexcept {                                  \
     /* MSVC floor(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::floor(primitive_value));                  \
   }                                                                            \
   /** Calculates the length of the hypotenuse of a right-angle triangle given  \
    * legs of length x and y.                                                   \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T hypot(const T& other) const& noexcept {                    \
+  sus_pure inline T hypot(const T& other) const& noexcept {                    \
     /* MSVC hypot(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(                                            \
         ::hypot(primitive_value, other.primitive_value));                      \
   }                                                                            \
   /** Returns the natural logarithm of the number.                             \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T ln() const& noexcept {                                     \
+  sus_pure inline T ln() const& noexcept {                                     \
     /* MSVC log(float) is returning a double for some reason. */               \
     return static_cast<PrimitiveT>(::log(primitive_value));                    \
   }                                                                            \
   /** Returns ln(1+n) (natural logarithm) more accurately than if the          \
    * operations were performed separately.                                     \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T ln_1p() const& noexcept {                                  \
+  sus_pure inline T ln_1p() const& noexcept {                                  \
     /* MSVC log1p(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::log1p(primitive_value));                  \
   }                                                                            \
   /** Returns the base 10 logarithm of the number.                             \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T log10() const& noexcept {                                  \
+  sus_pure inline T log10() const& noexcept {                                  \
     /* MSVC log10(float) is returning a double for some reason. */             \
     return static_cast<PrimitiveT>(::log10(primitive_value));                  \
   }                                                                            \
   /** Returns the base 2 logarithm of the number.                              \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T log2() const& noexcept {                                   \
+  sus_pure inline T log2() const& noexcept {                                   \
     /* MSVC log2(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::log2(primitive_value));                   \
   }                                                                            \
@@ -423,14 +423,14 @@
    * details; self.log2() can produce more accurate results for base 2, and    \
    * self.log10() can produce more accurate results for base 10.               \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T log(const T& base) const& noexcept {                       \
+  sus_pure inline T log(const T& base) const& noexcept {                       \
     return ln() / base.ln();                                                   \
   }                                                                            \
   /** Returns the maximum of the two numbers, ignoring NaN.                    \
    *                                                                           \
    * If one of the arguments is NaN, then the other argument is returned.      \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T max(const T& other) const& noexcept {                      \
+  sus_pure inline T max(const T& other) const& noexcept {                      \
     /* MSVC fmax(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(                                            \
         ::fmax(primitive_value, other.primitive_value));                       \
@@ -439,7 +439,7 @@
    *                                                                           \
    * If one of the arguments is NaN, then the other argument is returned.      \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T min(const T& other) const& noexcept {                      \
+  sus_pure inline T min(const T& other) const& noexcept {                      \
     /* MSVC fmin(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(                                            \
         ::fmin(primitive_value, other.primitive_value));                       \
@@ -452,14 +452,14 @@
    * not always true, and will be heavily dependent on designing algorithms    \
    * with specific target hardware in mind.                                    \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T mul_add(const T& a, const T& b) const& noexcept {          \
+  sus_pure inline T mul_add(const T& a, const T& b) const& noexcept {          \
     /* MSVC fma(float) is returning a double for some reason. */               \
     return static_cast<PrimitiveT>(                                            \
         ::fma(primitive_value, a.primitive_value, b.primitive_value));         \
   }                                                                            \
   /** Raises a number to a floating point power.                               \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T powf(const T& n) const& noexcept {                         \
+  sus_pure inline T powf(const T& n) const& noexcept {                         \
     /* MSVC pow(float) is returning a double for some reason. */               \
     return static_cast<PrimitiveT>(::pow(primitive_value, n.primitive_value)); \
   }                                                                            \
@@ -469,20 +469,20 @@
    * different sequence of rounding operations than `powf()`, so the results   \
    * are not guaranteed to agree.                                              \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T powi(const i32& n) const& noexcept {                       \
+  sus_pure inline T powi(const i32& n) const& noexcept {                       \
     /* MSVC pow(float) is returning a double for some reason. */               \
     return static_cast<PrimitiveT>(                                            \
         ::pow(primitive_value, int{n.primitive_value}));                       \
   }                                                                            \
   /** Takes the reciprocal (inverse) of a number, `1/x`.                       \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T recip() const& noexcept {                                  \
+  sus_pure inline T recip() const& noexcept {                                  \
     return PrimitiveT{1} / primitive_value;                                    \
   }                                                                            \
   /** Returns the nearest integer to itself, rounding half-way cases away from \
    * `0.0`.                                                                    \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T round() const& noexcept {                                  \
+  sus_pure inline T round() const& noexcept {                                  \
     return __private::float_round(primitive_value);                            \
   }                                                                            \
   /** Returns a number that represents the sign of self.                       \
@@ -491,18 +491,18 @@
    * - `-1.0` if the number is negative, `-0.0` or `NEG_INFINITY`              \
    * - `NaN` if the number is `NaN`                                            \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T signum() const& noexcept {                                 \
+  sus_pure inline T signum() const& noexcept {                                 \
     return __private::float_signum(primitive_value);                           \
   }                                                                            \
   /** Computes the sine of a number (in radians).                              \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T sin() const& noexcept {                                    \
+  sus_pure inline T sin() const& noexcept {                                    \
     /* MSVC sin(float) is returning a double for some reason. */               \
     return static_cast<PrimitiveT>(::sin(primitive_value));                    \
   }                                                                            \
   /** Hyperbolic sine function.                                                \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T sinh() const& noexcept {                                   \
+  sus_pure inline T sinh() const& noexcept {                                   \
     /* MSVC sinh(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::sinh(primitive_value));                   \
   }                                                                            \
@@ -510,7 +510,7 @@
    *                                                                           \
    * Returns NaN if self is a negative number other than `-0.0`.               \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T sqrt() const& noexcept {                                   \
+  sus_pure inline T sqrt() const& noexcept {                                   \
     if (primitive_value < -PrimitiveT{0}) [[unlikely]]                         \
       return NAN;                                                              \
     /* MSVC sqrt(float) is returning a double for some reason. */              \
@@ -518,13 +518,13 @@
   }                                                                            \
   /** Computes the tangent of a number (in radians).                           \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T tan() const& noexcept {                                    \
+  sus_pure inline T tan() const& noexcept {                                    \
     /* MSVC tan(float) is returning a double for some reason. */               \
     return static_cast<PrimitiveT>(::tan(primitive_value));                    \
   }                                                                            \
   /** Hyperbolic tangent function.                                             \
    */                                                                          \
-  [[nodiscard]] sus_pure inline T tanh() const& noexcept {                                   \
+  sus_pure inline T tanh() const& noexcept {                                   \
     /* MSVC tanh(float) is returning a double for some reason. */              \
     return static_cast<PrimitiveT>(::tanh(primitive_value));                   \
   }                                                                            \
@@ -533,13 +533,13 @@
 #define _sus__float_fract_trunc(T)                                          \
   /** Returns the fractional part of self.                                  \
    */                                                                       \
-  [[nodiscard]] sus_pure inline T fract() const& noexcept {                               \
+  sus_pure inline T fract() const& noexcept {                               \
     return primitive_value - __private::truncate_float(primitive_value);    \
   }                                                                         \
   /** Returns the integer part of self. This means that non-integer numbers \
    * are always truncated towards zero.                                     \
    */                                                                       \
-  [[nodiscard]] sus_pure inline T trunc() const& noexcept {                               \
+  sus_pure inline T trunc() const& noexcept {                               \
     return __private::truncate_float(primitive_value);                      \
   }                                                                         \
   static_assert(true)
@@ -547,7 +547,7 @@
 #define _sus__float_convert_to(T, PrimitiveT)                                 \
   /** Converts radians to degrees.                                            \
    */                                                                         \
-  [[nodiscard]] sus_pure inline T to_degrees() const& noexcept {                            \
+  sus_pure inline T to_degrees() const& noexcept {                            \
     /* Use a constant for better precision. */                                \
     constexpr auto PIS_IN_180 =                                               \
         PrimitiveT{57.2957795130823208767981548141051703};                    \
@@ -555,14 +555,14 @@
   }                                                                           \
   /** Converts degrees to radians.                                            \
    */                                                                         \
-  [[nodiscard]] sus_pure inline T to_radians() const& noexcept {                            \
+  sus_pure inline T to_radians() const& noexcept {                            \
     return primitive_value * (consts::PI.primitive_value / PrimitiveT{180});  \
   }                                                                           \
   /** Rounds toward zero and converts to any primitive integer type, assuming \
    * that the value is finite and fits in that type.                          \
    */                                                                         \
   template <Integer I>                                                        \
-  [[nodiscard]] sus_pure constexpr inline I to_int_unchecked(::sus::marker::UnsafeFnMarker) \
+  sus_pure constexpr inline I to_int_unchecked(::sus::marker::UnsafeFnMarker) \
       const& noexcept {                                                       \
     return static_cast<decltype(I::primitive_value)>(primitive_value);        \
   }                                                                           \
@@ -583,7 +583,7 @@
    * This function is not constexpr, as converting a NaN does not preserve the \
    * exact bits in a constexpr context.                                        \
    */                                                                          \
-  [[nodiscard]] sus_pure static T from_bits(const UnsignedIntT& v) noexcept {                \
+  sus_pure static T from_bits(const UnsignedIntT& v) noexcept {                \
     return std::bit_cast<T>(v);                                                \
   }                                                                            \
   /** Raw transmutation to ##UnsignedT##.                                      \
@@ -591,7 +591,7 @@
    * Note that this function is distinct from Into<##UnsignedIntT##>, which    \
    * attempts to preserve the numeric value, and not the bitwise value.        \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline UnsignedIntT to_bits() const& noexcept {           \
+  sus_pure constexpr inline UnsignedIntT to_bits() const& noexcept {           \
     return std::bit_cast<decltype(UnsignedIntT::primitive_value)>(             \
         primitive_value);                                                      \
   }                                                                            \
@@ -603,28 +603,28 @@
    * If only one property is going to be tested, it is generally faster to use \
    * the specific predicate instead.                                           \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline FpCategory classify() const& noexcept {            \
+  sus_pure constexpr inline FpCategory classify() const& noexcept {            \
     return __private::float_category(primitive_value);                         \
   }                                                                            \
   /** Returns true if this number is neither infinite nor NaN.                 \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline bool is_finite() const& noexcept {                 \
+  sus_pure constexpr inline bool is_finite() const& noexcept {                 \
     return !__private::float_is_inf_or_nan(primitive_value);                   \
   }                                                                            \
   /** Returns true if this value is positive infinity or negative infinity,    \
    * and false otherwise.                                                      \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline bool is_infinite() const& noexcept {               \
+  sus_pure constexpr inline bool is_infinite() const& noexcept {               \
     return __private::float_is_inf(primitive_value);                           \
   }                                                                            \
   /** Returns true if this value is NaN.                                       \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline bool is_nan() const& noexcept {                    \
+  sus_pure constexpr inline bool is_nan() const& noexcept {                    \
     return __private::float_is_nan(primitive_value);                           \
   }                                                                            \
   /** Returns true if the number is neither zero, infinite, subnormal, or NaN. \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline bool is_normal() const& noexcept {                 \
+  sus_pure constexpr inline bool is_normal() const& noexcept {                 \
     return __private::float_is_normal(primitive_value);                        \
   }                                                                            \
   /** Returns true if self has a negative sign, including -0.0, NaNs with      \
@@ -633,7 +633,7 @@
    * Note that IEEE-745 doesn't assign any meaning to the sign bit in case of  \
    * a NaN                                                                     \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline bool is_sign_negative() const& noexcept {          \
+  sus_pure constexpr inline bool is_sign_negative() const& noexcept {          \
     return __private::float_signbit(primitive_value);                          \
   }                                                                            \
   /** Returns true if self has a positive sign, including +0.0, NaNs with      \
@@ -642,12 +642,12 @@
    * Note that IEEE-745 doesn't assign any meaning to the sign bit in case of  \
    * a NaN.                                                                    \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline bool is_sign_positive() const& noexcept {          \
+  sus_pure constexpr inline bool is_sign_positive() const& noexcept {          \
     return !__private::float_signbit(primitive_value);                         \
   }                                                                            \
   /** Returns true if the number is subnormal.                                 \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline bool is_subnormal() const& noexcept {              \
+  sus_pure constexpr inline bool is_subnormal() const& noexcept {              \
     return !__private::float_is_zero(primitive_value) &&                       \
            __private::float_nonzero_is_subnormal(primitive_value);             \
   }                                                                            \
@@ -664,7 +664,7 @@
    * # Panics                                                                  \
    * Panics if min > max, min is NaN, or max is NaN.                           \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr inline T clamp(const T& min, const T& max)                \
+  sus_pure constexpr inline T clamp(const T& min, const T& max)                \
       const& noexcept {                                                        \
     check(!min.is_nan() && !max.is_nan() &&                                    \
           min.primitive_value <= max.primitive_value);                         \
@@ -681,7 +681,7 @@
    * self.rem_euclid(rhs)`. In other words, the result is `self / rhs` rounded \
    * to the integer `n` such that `self >= n * rhs`.                           \
    */                                                                          \
-  [[nodiscard]] sus_pure T div_euclid(const T& rhs) const& noexcept {                        \
+  sus_pure T div_euclid(const T& rhs) const& noexcept {                        \
     const auto q = (*this / rhs).trunc();                                      \
     if (*this % rhs < PrimitiveT{0}) {                                         \
       if (rhs > T{PrimitiveT{0}})                                              \
@@ -702,7 +702,7 @@
    * property `self == self.div_euclid(rhs) * rhs + self.rem_euclid(rhs)`      \
    * approximately.                                                            \
    */                                                                          \
-  [[nodiscard]] sus_pure T rem_euclid(const T& rhs) const& noexcept {                        \
+  sus_pure T rem_euclid(const T& rhs) const& noexcept {                        \
     const auto r = *this % rhs;                                                \
     if (r < T{PrimitiveT{0}})                                                  \
       return r + rhs.abs();                                                    \
@@ -714,12 +714,12 @@
   /** Return the memory representation of this floating point number as a byte \
    * array in big-endian (network) byte order.                                 \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr ::sus::containers::Array<u8, Bytes> to_be_bytes()         \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> to_be_bytes()         \
       const& noexcept;                                                         \
   /** Return the memory representation of this floating point number as a byte \
    * array in little-endian byte order.                                        \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr ::sus::containers::Array<u8, Bytes> to_le_bytes()         \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> to_le_bytes()         \
       const& noexcept;                                                         \
   /** Return the memory representation of this floating point number as a byte \
    * array in native byte order.                                               \
@@ -727,21 +727,21 @@
    * As the target platform's native endianness is used, portable code should  \
    * use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.          \
    */                                                                          \
-  [[nodiscard]] sus_pure constexpr ::sus::containers::Array<u8, Bytes> to_ne_bytes()         \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> to_ne_bytes()         \
       const& noexcept;                                                         \
   /** Create a floating point value from its representation as a byte array in \
    * big endian.                                                               \
    *                                                                           \
    * See `##T##::from_bits()` for why this function is not constexpr.          \
    */                                                                          \
-  [[nodiscard]] sus_pure static T from_be_bytes(                                             \
+  sus_pure static T from_be_bytes(                                             \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
   /** Create a floating point value from its representation as a byte array in \
    * big endian.                                                               \
    *                                                                           \
    *  See `##T##::from_bits()` for why this function is not constexpr.         \
    */                                                                          \
-  [[nodiscard]] sus_pure static T from_le_bytes(                                             \
+  sus_pure static T from_le_bytes(                                             \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
   /** Create a floating point value from its representation as a byte array in \
    * native endian.                                                            \
@@ -752,32 +752,32 @@
    *                                                                           \
    *  See `##T##::from_bits()` for why this function is not constexpr.         \
    */                                                                          \
-  [[nodiscard]] sus_pure static T from_ne_bytes(                                             \
+  sus_pure static T from_ne_bytes(                                             \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept;              \
   static_assert(true)
 
 #define _sus__float_endian_out_of_line(T, Bytes, UnsignedIntT)            \
-  [[nodiscard]] sus_pure constexpr ::sus::containers::Array<u8, Bytes> T::to_be_bytes() \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> T::to_be_bytes() \
       const& noexcept {                                                   \
     return to_bits().to_be_bytes();                                       \
   }                                                                       \
-  [[nodiscard]] sus_pure constexpr ::sus::containers::Array<u8, Bytes> T::to_le_bytes() \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> T::to_le_bytes() \
       const& noexcept {                                                   \
     return to_bits().to_le_bytes();                                       \
   }                                                                       \
-  [[nodiscard]] sus_pure constexpr ::sus::containers::Array<u8, Bytes> T::to_ne_bytes() \
+  sus_pure constexpr ::sus::containers::Array<u8, Bytes> T::to_ne_bytes() \
       const& noexcept {                                                   \
     return to_bits().to_ne_bytes();                                       \
   }                                                                       \
-  [[nodiscard]] sus_pure inline T T::from_be_bytes(                                     \
+  sus_pure inline T T::from_be_bytes(                                     \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept {        \
     return T::from_bits(UnsignedIntT::from_be_bytes(bytes));              \
   }                                                                       \
-  [[nodiscard]] sus_pure inline T T::from_le_bytes(                                     \
+  sus_pure inline T T::from_le_bytes(                                     \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept {        \
     return T::from_bits(UnsignedIntT::from_le_bytes(bytes));              \
   }                                                                       \
-  [[nodiscard]] sus_pure inline T T::from_ne_bytes(                                     \
+  sus_pure inline T T::from_ne_bytes(                                     \
       const ::sus::containers::Array<u8, Bytes>& bytes) noexcept {        \
     return T::from_bits(UnsignedIntT::from_ne_bytes(bytes));              \
   }                                                                       \
@@ -810,13 +810,13 @@
 #define _sus__float_hash_equal_to(T)                                      \
   template <>                                                             \
   struct hash<T> {                                                        \
-    [[nodiscard]] sus_pure auto operator()(const T& u) const {                          \
+    sus_pure auto operator()(const T& u) const {                          \
       return std::hash<decltype(u.primitive_value)>()(u.primitive_value); \
     }                                                                     \
   };                                                                      \
   template <>                                                             \
   struct equal_to<T> {                                                    \
-    [[nodiscard]] sus_pure constexpr auto operator()(const T& l, const T& r) const {    \
+    sus_pure constexpr auto operator()(const T& l, const T& r) const {    \
       return l == r;                                                      \
     }                                                                     \
   };                                                                      \

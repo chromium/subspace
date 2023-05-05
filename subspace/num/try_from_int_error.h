@@ -32,7 +32,7 @@ class TryFromIntError {
   /// Constructs a TryFromIntError with a `kind`.
   explicit constexpr TryFromIntError(Kind kind) : kind_(kind) {}
 
-  [[nodiscard]] sus_pure constexpr std::string to_string() const noexcept {
+  sus_pure constexpr std::string to_string() const noexcept {
     switch (kind_) {
       case Kind::OutOfBounds: return std::string("out of bounds");
     }

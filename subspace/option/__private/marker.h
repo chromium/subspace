@@ -37,7 +37,7 @@ struct SomeMarker {
   // concrete type.
   template <class U>
     requires(std::constructible_from<U, const std::remove_reference_t<T>&>)
-  [[nodiscard]] sus_pure inline constexpr operator Option<U>() const& noexcept {
+  sus_pure inline constexpr operator Option<U>() const& noexcept {
     return Option<U>::some(value);
   }
 
@@ -60,12 +60,12 @@ struct NoneMarker {
   // a const&, since marker types should normally be converted quickly to the
   // concrete type.
   template <class U>
-  [[nodiscard]] sus_pure_const inline constexpr operator Option<U>() const& noexcept {
+  sus_pure_const inline constexpr operator Option<U>() const& noexcept {
     return Option<U>::none();
   }
 
   template <class U>
-  [[nodiscard]] sus_pure_const inline constexpr operator Option<U>() && noexcept {
+  sus_pure_const inline constexpr operator Option<U>() && noexcept {
     return Option<U>::none();
   }
 

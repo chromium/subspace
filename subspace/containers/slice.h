@@ -88,7 +88,7 @@ class [[sus_trivial_abi]] Slice final {
   /// This avoids addition on a dangling pointer, which is Undefined Behaviour
   /// in C++, and avoids runtime checks for `length == 0`. Care must be applied
   /// when converting slices between languages as a result.
-  [[nodiscard]] sus_pure static constexpr inline Slice from_raw_parts(
+  sus_pure static constexpr inline Slice from_raw_parts(
       ::sus::marker::UnsafeFnMarker, const T* data sus_lifetimebound,
       ::sus::usize len) noexcept {
     ::sus::check(size_t{len} <= size_t{isize::MAX_PRIMITIVE});
@@ -105,7 +105,7 @@ class [[sus_trivial_abi]] Slice final {
   /// #[doc.overloads=from.array]
   template <size_t N>
     requires(N <= size_t{isize::MAX_PRIMITIVE})
-  [[nodiscard]] sus_pure static constexpr inline Slice from(
+  sus_pure static constexpr inline Slice from(
       const T (&data)[N] sus_lifetimebound) {
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
@@ -116,7 +116,7 @@ class [[sus_trivial_abi]] Slice final {
   /** Converts the slice into an iterator that consumes the slice and returns \
    * each element in the same order they appear in the slice.                 \
    */
-  [[nodiscard]] sus_pure constexpr SliceIter<const T&> into_iter() && noexcept {
+  sus_pure constexpr SliceIter<const T&> into_iter() && noexcept {
     return SliceIter<const T&>::with(data_, len_);
   }
 
@@ -144,13 +144,10 @@ class [[sus_trivial_abi]] Slice final {
   friend constexpr inline bool operator==(const Slice<T>& l,
                                           const Slice<U>& r) = delete;
 
-#define _ptr_expr data_
-#define _len_expr len_
-#define _delete_rvalue 0
+#define INC_PTR_EXPR data_
+#define INC_LEN_EXPR len_
+#define INC_DELETE_RVALUE false
 #include "__private/slice_methods.inc"
-#undef _ptr_expr
-#undef _len_expr
-#undef _delete_rvalue
 
  private:
   constexpr Slice(T* data sus_lifetimebound, usize len) noexcept
@@ -169,15 +166,11 @@ class [[sus_trivial_abi]] Slice final {
   // its fields.
 };
 
-#define _ptr_expr data_
-#define _len_expr len_
-#define _delete_rvalue 0
-#define Self Slice
-#include "__private/slice_methods_out_of_line.inc"
-#undef Self
-#undef _ptr_expr
-#undef _len_expr
-#undef _delete_rvalue
+#define INC_PTR_EXPR data_
+#define INC_LEN_EXPR len_
+#define INC_DELETE_RVALUE false
+#define INC_SELF Slice
+#include "__private/slice_methods_impl.inc"
 
 /// A dynamically-sized mutable view into a contiguous sequence of objects of
 /// type `T`.
@@ -219,7 +212,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// This avoids addition on a dangling pointer, which is Undefined Behaviour
   /// in C++, and avoids runtime checks for `length == 0`. Care must be applied
   /// when converting slices between languages as a result.
-  [[nodiscard]] sus_pure static constexpr inline SliceMut from_raw_parts_mut(
+  sus_pure static constexpr inline SliceMut from_raw_parts_mut(
       ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
       ::sus::usize len) noexcept {
     ::sus::check(len <= usize{isize::MAX});
@@ -233,7 +226,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// #[doc.overloads=from.array]
   template <size_t N>
     requires(N <= size_t{isize::MAX_PRIMITIVE})
-  [[nodiscard]] sus_pure static constexpr inline SliceMut from(
+  sus_pure static constexpr inline SliceMut from(
       T (&data)[N] sus_lifetimebound) {
     return SliceMut(data, N);
   }
@@ -241,7 +234,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /** Converts the slice into an iterator that consumes the slice and returns \
    * each element in the same order they appear in the slice.                 \
    */
-  [[nodiscard]] sus_pure constexpr SliceIterMut<T&> into_iter() && noexcept {
+  sus_pure constexpr SliceIterMut<T&> into_iter() && noexcept {
     return SliceIterMut<T&>::with(slice_.data_, slice_.len_);
   }
 
@@ -268,22 +261,22 @@ class [[sus_trivial_abi]] SliceMut final {
   }
 
   // SliceMut can be used as a Slice.
-  [[nodiscard]] sus_pure constexpr operator const Slice<T>&() const& {
+  sus_pure constexpr operator const Slice<T>&() const& {
     return slice_;
   }
-  [[nodiscard]] sus_pure constexpr operator Slice<T>&() & { return slice_; }
-  [[nodiscard]] sus_pure constexpr operator Slice<T>() && {
+  sus_pure constexpr operator Slice<T>&() & { return slice_; }
+  sus_pure constexpr operator Slice<T>() && {
     return ::sus::move(slice_);
   }
 
-#define _ptr_expr slice_.data_
-#define _len_expr slice_.len_
-#define _delete_rvalue 0
+#define INC_PTR_EXPR slice_.data_
+#define INC_LEN_EXPR slice_.len_
+#define INC_DELETE_RVALUE false
 #include "__private/slice_methods.inc"
+#define INC_PTR_EXPR slice_.data_
+#define INC_LEN_EXPR slice_.len_
+#define INC_DELETE_RVALUE false
 #include "__private/slice_mut_methods.inc"
-#undef _ptr_expr
-#undef _len_expr
-#undef _delete_rvalue
 
  private:
   constexpr SliceMut(T* data, ::sus::num::usize len) : slice_(data, len) {}
@@ -298,15 +291,11 @@ class [[sus_trivial_abi]] SliceMut final {
   // initialize its fields.
 };
 
-#define _ptr_expr slice_.data_
-#define _len_expr slice_.len_
-#define _delete_rvalue 0
-#define Self SliceMut
-#include "__private/slice_methods_out_of_line.inc"
-#undef _ptr_expr
-#undef _len_expr
-#undef _delete_rvalue
-#undef Self
+#define INC_PTR_EXPR slice_.data_
+#define INC_LEN_EXPR slice_.len_
+#define INC_DELETE_RVALUE false
+#define INC_SELF SliceMut
+#include "__private/slice_methods_impl.inc"
 
 // Implicit for-ranged loop iteration via `Slice::iter()` and
 // `SliceMut::iter()`.
