@@ -118,7 +118,7 @@ target_link_libraries(subspace-example PRIVATE subspace::lib)
 #include "subspace/assertions/check.h"
 
 int main() {
-  sus::assertions::check(false);
+  sus::check(false);
   return 0;
 }
 ```
