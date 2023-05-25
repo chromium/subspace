@@ -174,16 +174,16 @@ TEST(f64, AssignPrimitive) {
 }
 
 template <class From, class To>
-concept IsImplicitlyConvertible = (std::is_convertible_v<From, To> &&
-                                   std::is_assignable_v<To, From>);
+concept IsImplicitlyConvertible =
+    (std::is_convertible_v<From, To> && std::is_assignable_v<To, From>);
 template <class From, class To>
-concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
-                                   !std::is_convertible_v<From, To> &&
-                                   !std::is_assignable_v<To, From>);
+concept IsExplicitlyConvertible =
+    (std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+     !std::is_assignable_v<To, From>);
 template <class From, class To>
-concept NotConvertible = (!std::constructible_from<To, From> &&
-                          !std::is_convertible_v<From, To> &&
-                          !std::is_assignable_v<To, From>);
+concept NotConvertible =
+    (!std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+     !std::is_assignable_v<To, From>);
 
 TEST(f64, FromPrimitive) {
   static_assert(IsImplicitlyConvertible<float, f64>);
@@ -842,6 +842,26 @@ TEST(f64, Trunc) {
   EXPECT_EQ(c, 0_f64);
   auto d = (-3.767_f64).trunc();
   EXPECT_EQ(d, -3_f64);
+  // 2^49 with a fraction.
+  auto e = (562949953421312.767_f64).trunc();
+  EXPECT_EQ(e, 562949953421312_f64);
+  // -2^49 with a fraction.
+  auto f = (-562949953421312.767_f64).trunc();
+  EXPECT_EQ(f, -562949953421312_f64);
+  // 2^52.
+  auto i = (4503599627370496_f64).trunc();
+  EXPECT_EQ(i, 4503599627370496_f64);
+  // -2^52.
+  auto j = (-4503599627370496_f64).trunc();
+  EXPECT_EQ(j, -4503599627370496_f64);
+  // Past i64::MAX with a fraction (the whole number won't be accurately
+  // represented in the f64, so we find that value before adding the fraction).
+  auto k = (18446744073709551616.0_f64 + 0.767_f64).trunc();
+  EXPECT_EQ(k, 18446744073709551616.0_f64);
+  // Past i64::MIN with a fraction (the whole number won't be accurately
+  // represented in the f64, so we find that value before adding the fraction).
+  auto l = (-18446744073709551616.0_f64 - 0.767_f64).trunc();
+  EXPECT_EQ(l, -18446744073709551616.0_f64);
 }
 
 TEST(f64, ToDegrees) {

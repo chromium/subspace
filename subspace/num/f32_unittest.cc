@@ -842,6 +842,32 @@ TEST(f32, Trunc) {
   EXPECT_EQ(c, 0_f32);
   auto d = (-3.767_f32).trunc();
   EXPECT_EQ(d, -3_f32);
+  // i32::MAX with a fraction.
+  auto e = (2147483648.767_f32).trunc();
+  EXPECT_EQ(e, 2147483648_f32);
+  // i32::MIN with a fraction.
+  auto f = (-2147483648.767_f32).trunc();
+  EXPECT_EQ(f, -2147483648_f32);
+  // Past i32::MAX with a fraction.
+  auto g = (2247483648.767_f32).trunc();
+  EXPECT_EQ(g, 2247483648_f32);
+  // Past i32::MIN with a fraction.
+  auto h = (-2247483648.767_f32).trunc();
+  EXPECT_EQ(h, -2247483648_f32);
+  // i32::MAX.
+  auto i = (2147483648_f32).trunc();
+  EXPECT_EQ(i, 2147483648_f32);
+  // i32::MIN.
+  auto j = (-2147483648_f32).trunc();
+  EXPECT_EQ(j, -2147483648_f32);
+  // Past i64::MAX with a fraction (the whole number won't be accurately
+  // represented in the f32, so we find that value before adding the fraction).
+  auto k = (18446744073709551616.0_f32 + 0.767_f32).trunc();
+  EXPECT_EQ(k, 18446744073709551616.0_f32);
+  // Past i64::MIN with a fraction (the whole number won't be accurately
+  // represented in the f32, so we find that value before adding the fraction).
+  auto l = (-18446744073709551616.0_f32 - 0.767_f32).trunc();
+  EXPECT_EQ(l, -18446744073709551616.0_f32);
 }
 
 TEST(f32, ToDegrees) {
