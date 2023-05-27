@@ -4,7 +4,7 @@ vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'external_gh': '/external/github.com',
 
-  'buildtools_revision': 'd843e69371f94cf20f6c130dde01a8194f3e19be',
+  'buildtools_revision': 'edbefcee3d2cc45cdb0c60c2b01b673f8ba728bc',
   'googletest_revision': 'ec25eea8f8237cf86c30703f59747e42f34b6f75',
 }
 
