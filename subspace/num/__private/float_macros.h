@@ -809,13 +809,13 @@
 
 #define _sus__float_hash_equal_to(T)                                      \
   template <>                                                             \
-  struct hash<::sus::num::T> {                                                        \
+  struct std::hash<::sus::num::T> {                                                        \
     sus_pure auto operator()(::sus::num::T u) const {                     \
       return std::hash<decltype(u.primitive_value)>()(u.primitive_value); \
     }                                                                     \
   };                                                                      \
   template <>                                                             \
-  struct equal_to<::sus::num::T> {                                                    \
+  struct std::equal_to<::sus::num::T> {                                                    \
     sus_pure constexpr auto operator()(::sus::num::T l,                   \
                                        ::sus::num::T r) const {           \
       return l == r;                                                      \
@@ -826,7 +826,7 @@
 // fmt support.
 #define _sus__float_fmt(T)                                             \
   template <typename Char>                                             \
-  struct formatter<::sus::num::T, Char> {                              \
+  struct fmt::formatter<::sus::num::T, Char> {                              \
     template <typename ParseContext>                                   \
     constexpr decltype(auto) parse(ParseContext& ctx) {                \
       return ctx.begin();                                              \
