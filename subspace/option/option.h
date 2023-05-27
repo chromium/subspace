@@ -23,6 +23,7 @@
 
 #include <type_traits>
 
+#include "fmt/core.h"
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/default.h"
@@ -1074,6 +1075,53 @@ sus_pure_const inline constexpr auto none() noexcept {
 }
 
 }  // namespace sus::option
+
+// std hash support.
+template <class T>
+struct std::hash<::sus::option::Option<T>> {
+  auto operator()(const ::sus::option::Option<T>& u) const noexcept {
+    if (u.is_some())
+      return std::hash<T>()(*u);
+    else
+      return 0;
+  }
+};
+template <class T>
+  requires(::sus::ops::Eq<T>)
+struct std::equal_to<::sus::option::Option<T>> {
+  constexpr auto operator()(const ::sus::option::Option<T>& l,
+                            const ::sus::option::Option<T>& r) const noexcept {
+    return l == r;
+  }
+};
+
+// fmt support.
+template <class T, class Char>
+  requires(fmt::is_formattable<T, Char>::value)
+struct fmt::formatter<::sus::option::Option<T>, Char>
+    : public fmt::formatter<T, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::option::Option<T>& t,
+                        FormatContext& ctx) const {
+    if (t.is_none()) {
+      return format_to(ctx.out(), "None");
+    } else {
+      auto out = ctx.out();
+      out = format_to(out, "Some(");
+      ctx.advance_to(out);
+      out = underlying_.format(*t, ctx);
+      return format_to(out, ")");
+    }
+  }
+
+ private:
+  formatter<T, Char> underlying_;
+};
 
 // Promote Option and its enum values into the `sus` namespace.
 namespace sus {

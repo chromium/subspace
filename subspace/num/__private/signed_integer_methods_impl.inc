@@ -116,7 +116,7 @@ struct std::equal_to<::sus::num::_self> {
 };
 
 // fmt support.
-template <typename Char>
+template <class Char>
 struct fmt::formatter<::sus::num::_self, Char> {
   template <typename ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
@@ -125,9 +125,7 @@ struct fmt::formatter<::sus::num::_self, Char> {
 
   template <typename FormatContext>
   constexpr auto format(::sus::num::_self t, FormatContext& ctx) const {
-    auto out = ctx.out();
-    out = detail::write<Char>(out, t.primitive_value);
-    return out;
+    return format_to(ctx.out(), "{}", t.primitive_value);
   }
 };
 
