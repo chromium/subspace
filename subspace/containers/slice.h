@@ -36,6 +36,7 @@
 #include "subspace/mem/clone.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/swap.h"
+#include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
@@ -261,13 +262,9 @@ class [[sus_trivial_abi]] SliceMut final {
   }
 
   // SliceMut can be used as a Slice.
-  sus_pure constexpr operator const Slice<T>&() const& {
-    return slice_;
-  }
+  sus_pure constexpr operator const Slice<T>&() const& { return slice_; }
   sus_pure constexpr operator Slice<T>&() & { return slice_; }
-  sus_pure constexpr operator Slice<T>() && {
-    return ::sus::move(slice_);
-  }
+  sus_pure constexpr operator Slice<T>() && { return ::sus::move(slice_); }
 
 #define _ptr_expr slice_.data_
 #define _len_expr slice_.len_

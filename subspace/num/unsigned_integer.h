@@ -53,6 +53,9 @@ struct u32 final {
 #define _signed i32
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
+#define _self u32
+#define _primitive uint32_t
+#include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// An 8-bit unsigned integer.
 struct u8 final {
@@ -61,7 +64,9 @@ struct u8 final {
 #define _signed i8
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
-
+#define _self u8
+#define _primitive uint8_t
+#include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// A 16-bit unsigned integer.
 struct u16 final {
@@ -70,6 +75,9 @@ struct u16 final {
 #define _signed i16
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
+#define _self u16
+#define _primitive uint16_t
+#include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// A 64-bit unsigned integer.
 struct u64 final {
@@ -78,6 +86,9 @@ struct u64 final {
 #define _signed i64
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
+#define _self u64
+#define _primitive uint64_t
+#include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// A pointer-sized unsigned integer.
 struct usize final {
@@ -86,6 +97,9 @@ struct usize final {
 #define _signed isize
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
+#define _self usize
+#define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
+#include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// Adds a `usize` to a pointer, returning the resulting pointer.
 ///
