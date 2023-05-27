@@ -28,7 +28,6 @@
 #include "subspace/num/__private/int_log10.h"
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/__private/literals.h"
-#include "subspace/num/__private/signed_integer_macros.h"
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/try_from_int_error.h"
 #include "subspace/num/unsigned_integer.h"
@@ -50,37 +49,43 @@ namespace sus::num {
 
 /// A 32-bit signed integer.
 struct i32 final {
-  _sus__signed_impl(i32, /*PrimitiveT=*/int32_t, /*UnsignedT=*/u32);
+#define _self i32
+#define _primitive int32_t
+#define _unsigned u32
+#include "subspace/num/__private/signed_integer_methods.inc"
 };
-_sus__signed_constants_decl(i32, /*PrimitiveT=*/int32_t);
 
 /// An 8-bit signed integer.
 struct i8 final {
-  _sus__signed_impl(i8, /*PrimitiveT=*/int8_t, /*UnsignedT=*/u8);
+#define _self i8
+#define _primitive int8_t
+#define _unsigned u8
+#include "subspace/num/__private/signed_integer_methods.inc"
 };
-_sus__signed_constants_decl(i8, /*PrimitiveT=*/int8_t);
 
 /// A 16-bit signed integer.
 struct i16 final {
-  _sus__signed_impl(i16, /*PrimitiveT=*/int16_t, /*UnsignedT=*/u16);
+#define _self i16
+#define _primitive int16_t
+#define _unsigned u16
+#include "subspace/num/__private/signed_integer_methods.inc"
 };
-_sus__signed_constants_decl(i16, /*PrimitiveT=*/int16_t);
 
 /// A 64-bit signed integer.
 struct i64 final {
-  _sus__signed_impl(i64, /*PrimitiveT=*/int64_t, /*UnsignedT=*/u64);
+#define _self i64
+#define _primitive int64_t
+#define _unsigned u64
+#include "subspace/num/__private/signed_integer_methods.inc"
 };
-_sus__signed_constants_decl(i64, /*PrimitiveT=*/int64_t);
 
 /// A pointer-sized signed integer.
 struct isize final {
-  _sus__signed_impl(
-      isize,
-      /*PrimitiveT=*/::sus::num::__private::ptr_type<>::signed_type,
-      /*UnsignedT=*/usize);
+#define _self isize
+#define _primitive ::sus::num::__private::ptr_type<>::signed_type
+#define _unsigned usize
+#include "subspace/num/__private/signed_integer_methods.inc"
 };
-_sus__signed_constants_decl(
-    isize, /*PrimitiveT=*/::sus::num::__private::ptr_type<>::signed_type);
 
 /// Adds a `isize` to a pointer, returning the resulting pointer.
 ///
@@ -118,14 +123,6 @@ constexpr inline T*& operator-=(T*& t, isize offset) {
 }
 
 }  // namespace sus::num
-
-namespace std {
-_sus__signed_hash_equal_to(::sus::num::i8);
-_sus__signed_hash_equal_to(::sus::num::i16);
-_sus__signed_hash_equal_to(::sus::num::i32);
-_sus__signed_hash_equal_to(::sus::num::i64);
-_sus__signed_hash_equal_to(::sus::num::isize);
-}  // namespace std
 
 _sus__integer_literal(i8, ::sus::num::i8);
 _sus__integer_literal(i16, ::sus::num::i16);

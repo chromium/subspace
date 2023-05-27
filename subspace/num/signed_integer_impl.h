@@ -18,20 +18,27 @@
 #include "subspace/num/signed_integer.h"
 #include "subspace/ptr/copy.h"
 
-namespace sus::num {
+#define _self i8
+#define _primitive int8_t
+#define _unsigned u8
+#include "subspace/num/__private/signed_integer_methods_impl.inc"
 
-_sus__signed_out_of_line_impl(i8, /*PrimitiveT=*/int8_t, /*UnsignedT=*/u8);
+#define _self i16
+#define _primitive int16_t
+#define _unsigned u16
+#include "subspace/num/__private/signed_integer_methods_impl.inc"
 
-_sus__signed_out_of_line_impl(i16, /*PrimitiveT=*/int16_t, /*UnsignedT=*/u16);
+#define _self i32
+#define _primitive int32_t
+#define _unsigned u32
+#include "subspace/num/__private/signed_integer_methods_impl.inc"
 
-_sus__signed_out_of_line_impl(i32, /*PrimitiveT=*/int32_t, /*UnsignedT=*/u32);
+#define _self i64
+#define _primitive int64_t
+#define _unsigned u64
+#include "subspace/num/__private/signed_integer_methods_impl.inc"
 
-_sus__signed_out_of_line_impl(i64, /*PrimitiveT=*/int64_t,
-                              /*UnsignedT=*/u64);
-
-_sus__signed_out_of_line_impl(
-    isize,
-    /*PrimitiveT=*/::sus::num::__private::ptr_type<>::signed_type,
-    /*UnsignedT=*/usize);
-
-}  // namespace sus::num
+#define _self isize
+#define _primitive ::sus::num::__private::ptr_type<>::signed_type
+#define _unsigned usize
+#include "subspace/num/__private/signed_integer_methods_impl.inc"

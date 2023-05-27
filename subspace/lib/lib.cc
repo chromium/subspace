@@ -17,6 +17,7 @@
 
 #include "subspace/mem/size_of.h"
 #include "subspace/num/signed_integer.h"
+#include "subspace/num/signed_integer_impl.h"
 
 // Architectural assumptions we make throughout the implementation of Subspace.
 static_assert(CHAR_BIT == 8);
