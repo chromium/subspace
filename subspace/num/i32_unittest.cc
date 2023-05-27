@@ -14,6 +14,7 @@
 
 #include <type_traits>
 
+#include "fmt/core.h"
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/default.h"
 #include "subspace/construct/into.h"
@@ -27,8 +28,8 @@
 #include "subspace/ops/ord.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
-#include "subspace/tuple/tuple.h"
 #include "subspace/test/ensure_use.h"
+#include "subspace/tuple/tuple.h"
 
 namespace {
 
@@ -339,8 +340,10 @@ TEST(i32, CompileTimeConversionEnum) {
   static_assert(is_constexpr_constructible<ENUM(class, int32_t)::MIN, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, int32_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, int64_t)::X, Self>(0));
-  static_assert(!is_constexpr_constructible<ENUM(class, int64_t)::MIN, Self>(0));
-  static_assert(!is_constexpr_constructible<ENUM(class, int64_t)::MAX, Self>(0));
+  static_assert(
+      !is_constexpr_constructible<ENUM(class, int64_t)::MIN, Self>(0));
+  static_assert(
+      !is_constexpr_constructible<ENUM(class, int64_t)::MAX, Self>(0));
 
   static_assert(is_constexpr_convertible<ENUM(, uint8_t)::X, Self>(0));
   static_assert(is_constexpr_convertible<ENUM(, uint8_t)::MIN, Self>(0));
@@ -364,14 +367,20 @@ TEST(i32, CompileTimeConversionEnum) {
   static_assert(is_constexpr_constructible<ENUM(class, uint8_t)::MIN, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, uint8_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, uint16_t)::X, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint16_t)::MIN, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint16_t)::MAX, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint16_t)::MIN, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint16_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, uint32_t)::X, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint32_t)::MIN, Self>(0));
-  static_assert(!is_constexpr_constructible<ENUM(class, uint32_t)::MAX, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint32_t)::MIN, Self>(0));
+  static_assert(
+      !is_constexpr_constructible<ENUM(class, uint32_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, uint64_t)::X, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint64_t)::MIN, Self>(0));
-  static_assert(!is_constexpr_constructible<ENUM(class, uint64_t)::MAX, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint64_t)::MIN, Self>(0));
+  static_assert(
+      !is_constexpr_constructible<ENUM(class, uint64_t)::MAX, Self>(0));
 }
 
 TEST(i32, ToPrimitive) {
@@ -2982,6 +2991,10 @@ TEST(i32DeathTest, WrappingRemEuclidOverflow) {
       },
       "");
 #endif
+}
+
+TEST(i32, fmt) {
+  EXPECT_EQ(fmt::format("{}", 404_i32), "404");
 }
 
 }  // namespace

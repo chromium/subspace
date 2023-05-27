@@ -14,6 +14,9 @@
 
 add_library(subspace STATIC "")
 add_library(subspace::lib ALIAS subspace)
+target_link_libraries(subspace
+    fmt::fmt
+)
 target_sources(subspace PUBLIC
     "assertions/check.h"
     "assertions/debug_check.h"
