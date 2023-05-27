@@ -126,14 +126,14 @@
 #define _sus__float_comparison(T)                                              \
   /** sus::ops::Eq<##T##> trait.                                               \
    * #[doc.overloads=float##T##.eq] */                                         \
-  [[nodiscard]] friend sus_pure constexpr inline bool operator==(const T& l,                 \
-                                                   const T& r) noexcept {      \
+  [[nodiscard]] friend sus_pure constexpr inline bool operator==(              \
+      const T& l, const T& r) noexcept {                                       \
     return (l.primitive_value <=> r.primitive_value) == 0;                     \
   }                                                                            \
   /** sus::ops::PartialOrd<##T##> trait.                                       \
    * #[doc.overloads=float##T##.ord] */                                        \
-  [[nodiscard]] friend sus_pure constexpr inline auto operator<=>(const T& l,                \
-                                                    const T& r) noexcept {     \
+  [[nodiscard]] friend sus_pure constexpr inline auto operator<=>(             \
+      const T& l, const T& r) noexcept {                                       \
     return l.primitive_value <=> r.primitive_value;                            \
   }                                                                            \
   /** Return the ordering between self and other.                              \
@@ -178,26 +178,26 @@
 #define _sus__float_binary_ops(T)                                        \
   /** sus::num::Add<##T##> trait.                                        \
    * #[doc.overloads=float##T##.+] */                                    \
-  [[nodiscard]] friend sus_pure constexpr inline T operator+(const T& l,               \
-                                               const T& r) noexcept {    \
+  [[nodiscard]] friend sus_pure constexpr inline T operator+(            \
+      const T& l, const T& r) noexcept {                                 \
     return l.primitive_value + r.primitive_value;                        \
   }                                                                      \
   /** sus::num::Sub<##T##> trait.                                        \
    * #[doc.overloads=float##T##.-] */                                    \
-  [[nodiscard]] friend sus_pure constexpr inline T operator-(const T& l,               \
-                                               const T& r) noexcept {    \
+  [[nodiscard]] friend sus_pure constexpr inline T operator-(            \
+      const T& l, const T& r) noexcept {                                 \
     return l.primitive_value - r.primitive_value;                        \
   }                                                                      \
   /** sus::num::Mul<##T##> trait.                                        \
    * #[doc.overloads=float##T##.*] */                                    \
-  [[nodiscard]] friend sus_pure constexpr inline T operator*(const T& l,               \
-                                               const T& r) noexcept {    \
+  [[nodiscard]] friend sus_pure constexpr inline T operator*(            \
+      const T& l, const T& r) noexcept {                                 \
     return l.primitive_value * r.primitive_value;                        \
   }                                                                      \
   /** sus::num::Div<##T##> trait.                                        \
    * #[doc.overloads=float##T##./] */                                    \
-  [[nodiscard]] friend sus_pure constexpr inline T operator/(const T& l,               \
-                                               const T& r) noexcept {    \
+  [[nodiscard]] friend sus_pure constexpr inline T operator/(            \
+      const T& l, const T& r) noexcept {                                 \
     return l.primitive_value / r.primitive_value;                        \
   }                                                                      \
   /** sus::num::Rem<##T##> trait.                                        \
@@ -208,8 +208,8 @@
    * `l - (l / r).trunc() * r`.                                          \
    *                                                                     \
    * #[doc.overloads=float##T##.%] */                                    \
-  [[nodiscard]] friend sus_pure constexpr inline T operator%(const T& l,               \
-                                               const T& r) noexcept {    \
+  [[nodiscard]] friend sus_pure constexpr inline T operator%(            \
+      const T& l, const T& r) noexcept {                                 \
     const auto x = l.primitive_value;                                    \
     const auto y = r.primitive_value;                                    \
     return x - __private::truncate_float(x / y) * y;                     \
@@ -809,15 +809,33 @@
 
 #define _sus__float_hash_equal_to(T)                                      \
   template <>                                                             \
-  struct hash<T> {                                                        \
-    sus_pure auto operator()(const T& u) const {                          \
+  struct hash<::sus::num::T> {                                                        \
+    sus_pure auto operator()(::sus::num::T u) const {                     \
       return std::hash<decltype(u.primitive_value)>()(u.primitive_value); \
     }                                                                     \
   };                                                                      \
   template <>                                                             \
-  struct equal_to<T> {                                                    \
-    sus_pure constexpr auto operator()(const T& l, const T& r) const {    \
+  struct equal_to<::sus::num::T> {                                                    \
+    sus_pure constexpr auto operator()(::sus::num::T l,                   \
+                                       ::sus::num::T r) const {           \
       return l == r;                                                      \
     }                                                                     \
   };                                                                      \
   static_assert(true)
+
+// fmt support.
+#define _sus__float_fmt(T)                                             \
+  template <typename Char>                                             \
+  struct formatter<::sus::num::T, Char> {                              \
+    template <typename ParseContext>                                   \
+    constexpr decltype(auto) parse(ParseContext& ctx) {                \
+      return ctx.begin();                                              \
+    }                                                                  \
+                                                                       \
+    template <typename FormatContext>                                  \
+    constexpr auto format(::sus::num::T t, FormatContext& ctx) const { \
+      auto out = ctx.out();                                            \
+      out = detail::write<Char>(out, t.primitive_value);               \
+      return out;                                                      \
+    }                                                                  \
+  };

@@ -1068,4 +1068,9 @@ TEST(f64, FromNeBytes) {
   }
 }
 
+TEST(f64, fmt) {
+  EXPECT_EQ(fmt::format("{}", -123789.456_f64), "-123789.456");
+  EXPECT_EQ(fmt::format("{}", 1234890.567_f64), "1234890.567");
+}
+
 }  // namespace
