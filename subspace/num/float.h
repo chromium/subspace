@@ -17,6 +17,7 @@
 #include <concepts>
 #include <functional>  // TODO: remove this but we need to hash things > size_t.
 
+#include "fmt/format.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
@@ -59,9 +60,13 @@ struct f64 final {
 }  // namespace sus::num
 
 namespace std {
-_sus__float_hash_equal_to(::sus::num::f32);
-_sus__float_hash_equal_to(::sus::num::f64);
+_sus__float_hash_equal_to(f32);
+_sus__float_hash_equal_to(f64);
 }  // namespace std
+namespace fmt {
+_sus__float_fmt(f32);
+_sus__float_fmt(f64);
+}  // namespace fmt
 
 _sus__float_literal(f32, ::sus::num::f32);
 _sus__float_literal(f64, ::sus::num::f64);
