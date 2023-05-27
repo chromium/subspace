@@ -900,4 +900,9 @@ TEST(usize, PointerArithmetic) {
   EXPECT_EQ(*p, 1);
 }
 
+TEST(usize, fmt) {
+  static_assert(fmt::is_formattable<usize, char>::value);
+  EXPECT_EQ(fmt::format("{}", 1234567_usize), "1234567");
+}
+
 }  // namespace

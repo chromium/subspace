@@ -809,6 +809,7 @@ TEST(i8, InvokeEverything) {
 }
 
 TEST(i8, fmt) {
+  static_assert(fmt::is_formattable<i8, char>::value);
   EXPECT_EQ(fmt::format("{}", -21_i8), "-21");
   EXPECT_EQ(fmt::format("{}", 123_i8), "123");
 }
