@@ -745,4 +745,9 @@ TEST(i64, InvokeEverything) {
   [[maybe_unused]] auto z = i >= j;
 }
 
+TEST(i64, fmt) {
+  EXPECT_EQ(fmt::format("{}", -87654321_i64), "-87654321");
+  EXPECT_EQ(fmt::format("{}", 123456789_i64), "123456789");
+}
+
 }  // namespace

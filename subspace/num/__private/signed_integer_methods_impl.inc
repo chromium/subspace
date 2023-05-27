@@ -100,21 +100,40 @@ sus_pure inline constexpr _self _self::from_ne_bytes(
 
 }  // namespace sus::num
 
+// std hash support.
 namespace std {
 template <>
 struct hash<::sus::num::_self> {
-  sus_pure auto operator()(const ::sus::num::_self& u) const noexcept {
+  sus_pure auto operator()(::sus::num::_self u) const noexcept {
     return std::hash<decltype(u.primitive_value)>()(u.primitive_value);
   }
 };
 template <>
 struct equal_to<::sus::num::_self> {
-  sus_pure constexpr auto operator()(
-      const ::sus::num::_self& l, const ::sus::num::_self& r) const noexcept {
+  sus_pure constexpr auto operator()(::sus::num::_self l,
+                                     ::sus::num::_self r) const noexcept {
     return l == r;
   }
 };
 }  // namespace std
+
+// fmt support.
+namespace fmt {
+template <typename Char>
+struct formatter<::sus::num::_self, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(::sus::num::_self t, FormatContext& ctx) const {
+    auto out = ctx.out();
+    out = detail::write<Char>(out, t.primitive_value);
+    return out;
+  }
+};
+}  // namespace fmt
 
 #undef _self
 #undef _primitive
