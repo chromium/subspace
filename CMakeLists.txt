@@ -75,6 +75,8 @@ if(${SUBSPACE_BUILD_TESTS})
     enable_testing()
 endif()
 
+add_subdirectory(third_party/fmt)
+
 add_subdirectory(subspace)
 
 if(${SUBSPACE_BUILD_CIR})

@@ -3,9 +3,11 @@ use_relative_paths = True
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
   'external_gh': '/external/github.com',
+  'fmt_git': 'https://github.com/fmtlib/fmt',
 
   'buildtools_revision': 'edbefcee3d2cc45cdb0c60c2b01b673f8ba728bc',
   'googletest_revision': 'ec25eea8f8237cf86c30703f59747e42f34b6f75',
+  'fmt_revision': '10.0.0',  # This is a git tag.
 }
 
 deps = {
@@ -16,6 +18,9 @@ deps = {
   'third_party/googletest':
     Var('chromium_git') + Var('external_gh') + '/google/googletest@' +
     Var('googletest_revision'),
+
+  'third_party/fmt':
+    Var('fmt_git') + '@' + Var('fmt_revision'),
 }
 
 hooks = [
