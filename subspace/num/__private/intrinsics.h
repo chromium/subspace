@@ -1436,8 +1436,23 @@ float_nonzero_is_subnormal(T x) noexcept {
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
 [[nodiscard]] sus_pure_const inline constexpr T truncate_float(T x) noexcept {
-  if (x <= T{max_value<int64_t>()} && x >= T{min_value<int64_t>()})
-    return static_cast<T>(static_cast<int64_t>(x));
+  if constexpr (::sus::mem::size_of<T>() == 4) {
+    // Largest float that is <= i64::MAX.
+    constexpr float max_i64 = 9223371487098961920.f;
+    // Smallest float that is >= i64::MIN.
+    constexpr float min_i64 = -9223372036854775808.f;
+
+    if (x <= max_i64 && x >= min_i64)
+      return static_cast<T>(static_cast<int64_t>(x));
+  } else {
+    // Largest double that is <= i64::MAX.
+    constexpr double max_i64 = 9223372036854774784.0;
+    // Smallest double that is >= i64::MIN.
+    constexpr float min_i64 = -9223372036854775808.0;
+
+    if (x <= max_i64 && x >= min_i64)
+      return static_cast<T>(static_cast<int64_t>(x));
+  }
 
   constexpr auto mantissa_width =
       ::sus::mem::size_of<T>() == ::sus::mem::size_of<float>() ? uint32_t{23}
