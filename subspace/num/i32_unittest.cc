@@ -14,7 +14,6 @@
 
 #include <type_traits>
 
-#include "fmt/core.h"
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/default.h"
 #include "subspace/construct/into.h"
@@ -2994,7 +2993,8 @@ TEST(i32DeathTest, WrappingRemEuclidOverflow) {
 }
 
 TEST(i32, fmt) {
-  EXPECT_EQ(fmt::format("{}", 404_i32), "404");
+  EXPECT_EQ(fmt::format("{}", -654321_i32), "-654321");
+  EXPECT_EQ(fmt::format("{}", 1234567_i32), "1234567");
 }
 
 }  // namespace

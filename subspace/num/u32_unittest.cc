@@ -2200,4 +2200,8 @@ TEST(u32DeathTest, WrappingRemEuclidOverflow) {
 #endif
 }
 
+TEST(u32, fmt) {
+  EXPECT_EQ(fmt::format("{}", 1234567_u32), "1234567");
+}
+
 }  // namespace

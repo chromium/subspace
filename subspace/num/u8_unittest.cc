@@ -786,4 +786,8 @@ TEST(u8, InvokeEverything) {
   [[maybe_unused]] auto z = i >= j;
 }
 
+TEST(u8, fmt) {
+  EXPECT_EQ(fmt::format("{}", 123_u8), "123");
+}
+
 }  // namespace
