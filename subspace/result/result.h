@@ -487,6 +487,24 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
+  /// Returns a const reference to the contained `Ok` value.
+  ///
+  /// # Panic
+  /// Panics if the value is an `Err`.
+  const std::remove_reference_t<T>& as_ok() const& {
+    ::sus::check(state_ == __private::ResultState::IsOk);
+    return storage_.ok_;
+  }
+
+  /// Returns a const reference to the contained `Err` value.
+  ///
+  /// # Panic
+  /// Panics if the value is an `Ok`.
+  const std::remove_reference_t<E>& as_err() const& {
+    ::sus::check(state_ == __private::ResultState::IsErr);
+    return storage_.err_;
+  }
+
   /// Returns the contained `Ok` value, consuming the self value.
   ///
   /// Because this function may panic, its use is generally discouraged.
@@ -743,6 +761,67 @@ template <class E>
 }
 
 }  // namespace sus::result
+
+// std hash support.
+template <class T, class E>
+struct std::hash<::sus::result::Result<T, E>> {
+  auto operator()(const ::sus::result::Result<T, E>& u) const noexcept {
+    if (u.is_ok())
+      return std::hash<T>()(u.as_ok());
+    else
+      return std::hash<T>()(u.as_err());
+  }
+};
+template <class T, class E>
+  requires(::sus::ops::Eq<::sus::result::Result<T, E>>)
+struct std::equal_to<::sus::result::Result<T, E>> {
+  constexpr auto operator()(
+      const ::sus::result::Result<T, E>& l,
+      const ::sus::result::Result<T, E>& r) const noexcept {
+    return l == r;
+  }
+};
+
+namespace __private {
+struct NoOkBase {};
+}  // namespace __private
+
+// fmt support.
+template <class T, class E, class Char>
+  requires((std::is_void_v<T> || fmt::is_formattable<T, Char>::value) &&
+           fmt::is_formattable<E, Char>::value)
+struct fmt::formatter<::sus::result::Result<T, E>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::result::Result<T, E>& t,
+                        FormatContext& ctx) const {
+    auto out = ctx.out();
+    if (t.is_err()) {
+      out = format_to(ctx.out(), "Err(");
+      ctx.advance_to(out);
+      out = underlying_err_.format(t.as_err(), ctx);
+    } else {
+      out = format_to(out, "Ok(");
+      if constexpr (std::is_void_v<T>) {
+        out = format_to(out, "<void>");
+      } else {
+        ctx.advance_to(out);
+        out = underlying_ok_.format(t.as_ok(), ctx);
+      }
+    }
+    return format_to(out, ")");
+  }
+
+ private:
+  std::conditional_t<std::is_void_v<T>, __private::NoOkBase,
+                     fmt::formatter<T, Char>>
+      underlying_ok_;
+  formatter<E, Char> underlying_err_;
+};
 
 namespace sus {
 using ::sus::result::Err;

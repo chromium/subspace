@@ -809,13 +809,13 @@
 
 #define _sus__float_hash_equal_to(T)                                      \
   template <>                                                             \
-  struct std::hash<::sus::num::T> {                                                        \
+  struct std::hash<::sus::num::T> {                                       \
     sus_pure auto operator()(::sus::num::T u) const {                     \
       return std::hash<decltype(u.primitive_value)>()(u.primitive_value); \
     }                                                                     \
   };                                                                      \
   template <>                                                             \
-  struct std::equal_to<::sus::num::T> {                                                    \
+  struct std::equal_to<::sus::num::T> {                                   \
     sus_pure constexpr auto operator()(::sus::num::T l,                   \
                                        ::sus::num::T r) const {           \
       return l == r;                                                      \
@@ -824,9 +824,9 @@
   static_assert(true)
 
 // fmt support.
-#define _sus__float_fmt(T)                                             \
-  template <typename Char>                                             \
-  struct fmt::formatter<::sus::num::T, Char> {                              \
+#define _sus__float_fmt(T, PrimitiveT)                                 \
+  template <class Char>                                                \
+  struct fmt::formatter<::sus::num::T, Char> {                         \
     template <typename ParseContext>                                   \
     constexpr decltype(auto) parse(ParseContext& ctx) {                \
       return ctx.begin();                                              \
@@ -834,8 +834,6 @@
                                                                        \
     template <typename FormatContext>                                  \
     constexpr auto format(::sus::num::T t, FormatContext& ctx) const { \
-      auto out = ctx.out();                                            \
-      out = detail::write<Char>(out, t.primitive_value);               \
-      return out;                                                      \
+      return format_to(ctx.out(), "{}", t.primitive_value);            \
     }                                                                  \
   };

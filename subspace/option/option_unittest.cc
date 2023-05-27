@@ -14,6 +14,7 @@
 
 #include "subspace/option/option.h"
 
+#include "fmt/std.h"
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/containers/array.h"
 #include "subspace/iter/iterator.h"
@@ -2202,6 +2203,23 @@ TEST(Option, Clone) {
     static_assert(std::same_as<decltype(s2), Option<i32&>>);
     EXPECT_EQ(&s2.as_ref().unwrap(), &i);
   }
+}
+
+TEST(Option, fmt) {
+  static_assert(fmt::is_formattable<::sus::Option<i32>, char>::value);
+  EXPECT_EQ(fmt::format("{}", ::sus::Option<i32>::some(12345)), "Some(12345)");
+  EXPECT_EQ(fmt::format("{}", ::sus::Option<i32>::none()), "None");
+  EXPECT_EQ(fmt::format("{}", ::sus::Option<std::string_view>::some("12345")),
+            "Some(12345)");
+  EXPECT_EQ(fmt::format("{}", ::sus::Option<std::string_view>::none()), "None");
+
+  struct NoFormat {};
+  static_assert(!fmt::is_formattable<NoFormat, char>::value);
+  static_assert(!fmt::is_formattable<Option<NoFormat>, char>::value);
+  // TODO: ...or we could make it print something without the interior?
+  // EXPECT_EQ(fmt::format("{}", ::sus::Option<NoFormat>::some(NoFormat())),
+  //           "Some(...)");
+  // EXPECT_EQ(fmt::format("{}", ::sus::Option<NoFormat>::none()), "None");
 }
 
 }  // namespace

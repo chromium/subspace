@@ -14,6 +14,7 @@
 
 #include "subspace/result/result.h"
 
+#include "fmt/std.h"
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/containers/array.h"
 #include "subspace/iter/iterator.h"
@@ -740,6 +741,23 @@ TEST(Result, UnwrapOrElse_BasicUsageExample) {
   sus::check(sus::move(ok).unwrap_or_else(conv) == 2);
   auto err = sus::Result<i32, ECode>::with_err(ECode::ItsHappening);
   sus::check(sus::move(err).unwrap_or_else(conv) == -1);
+}
+
+TEST(Result, fmt) {
+  static_assert(fmt::is_formattable<::sus::Result<i32, i32>, char>::value);
+  EXPECT_EQ(fmt::format("{}", ::sus::Result<i32, i32>::with(12345)), "Ok(12345)");
+  EXPECT_EQ(fmt::format("{}", ::sus::Result<i32, i32>::with_err(4321)), "Err(4321)");
+  EXPECT_EQ(fmt::format("{}", ::sus::Result<std::string_view, i32>::with("12345")),
+            "Ok(12345)");
+  EXPECT_EQ(fmt::format("{}", ::sus::Result<i32, std::string_view>::with_err("4321")),
+            "Err(4321)");
+
+  struct NoFormat {};
+  static_assert(!fmt::is_formattable<NoFormat, char>::value);
+  static_assert(!fmt::is_formattable<Result<NoFormat, i32>, char>::value);
+  static_assert(!fmt::is_formattable<Result<i32, NoFormat>, char>::value);
+  static_assert(!fmt::is_formattable<Result<NoFormat, NoFormat>, char>::value);
+  // TODO: ...or we could make it print something without the interior?
 }
 
 }  // namespace
