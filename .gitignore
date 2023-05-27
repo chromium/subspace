@@ -5,5 +5,6 @@ out
 .gclient_previous_sync_commits
 .gclient_entries
 third_party/buildtools/
+third_party/fmt/
 third_party/googletest
 third_party/llvm
