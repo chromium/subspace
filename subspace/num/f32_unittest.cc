@@ -1096,6 +1096,7 @@ TEST(f32, FromNeBytes) {
 }
 
 TEST(f32, fmt) {
+  static_assert(fmt::is_formattable<f32, char>::value);
   EXPECT_EQ(fmt::format("{}", -123.456_f32), "-123.456");
   EXPECT_EQ(fmt::format("{}", 1234.567_f32), "1234.567");
 }

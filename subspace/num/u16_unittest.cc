@@ -789,6 +789,7 @@ TEST(u16, InvokeEverything) {
 }
 
 TEST(u16, fmt) {
+  static_assert(fmt::is_formattable<u16, char>::value);
   EXPECT_EQ(fmt::format("{}", 12345_u16), "12345");
 }
 

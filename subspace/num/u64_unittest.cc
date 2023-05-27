@@ -763,6 +763,7 @@ TEST(u64, InvokeEverything) {
 }
 
 TEST(u64, fmt) {
+  static_assert(fmt::is_formattable<u64, char>::value);
   EXPECT_EQ(fmt::format("{}", 123456789_u64), "123456789");
 }
 
