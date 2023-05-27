@@ -27,10 +27,6 @@
 
 namespace sus::num {
 
-inline constexpr _self _self::MIN = _self(MIN_PRIMITIVE);
-inline constexpr _self _self::MAX = _self(MAX_PRIMITIVE);
-inline constexpr u32 _self::BITS = u32(__private::num_bits<_primitive>());
-
 sus_pure constexpr ::sus::containers::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 _self::to_be_bytes() const& noexcept {
