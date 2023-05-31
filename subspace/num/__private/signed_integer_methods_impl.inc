@@ -120,13 +120,16 @@ template <class Char>
 struct fmt::formatter<::sus::num::_self, Char> {
   template <typename ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
-    return ctx.begin();
+    return underlying_.parse(ctx);
   }
 
   template <typename FormatContext>
   constexpr auto format(::sus::num::_self t, FormatContext& ctx) const {
-    return format_to(ctx.out(), "{}", t.primitive_value);
+    return underlying_.format(t.primitive_value, ctx);
   }
+
+ private:
+  formatter<_primitive, Char> underlying_;
 };
 
 #undef _self

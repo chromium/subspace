@@ -903,6 +903,7 @@ TEST(usize, PointerArithmetic) {
 TEST(usize, fmt) {
   static_assert(fmt::is_formattable<usize, char>::value);
   EXPECT_EQ(fmt::format("{}", 1234567_usize), "1234567");
+  EXPECT_EQ(fmt::format("{:#x}", 1234567_usize), "0x12d687");
 }
 
 }  // namespace

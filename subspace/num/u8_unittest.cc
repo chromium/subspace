@@ -789,6 +789,7 @@ TEST(u8, InvokeEverything) {
 TEST(u8, fmt) {
   static_assert(fmt::is_formattable<u8, char>::value);
   EXPECT_EQ(fmt::format("{}", 123_u8), "123");
+  EXPECT_EQ(fmt::format("{:#x}", 123_u8), "0x7b");
 }
 
 }  // namespace
