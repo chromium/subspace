@@ -19,11 +19,10 @@
 
 #include "fmt/format.h"
 #include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/macros/eval_and_concat.h"
 #include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/size_of.h"
-#include "subspace/num/__private/float_consts.h"
-#include "subspace/num/__private/float_macros.h"
 #include "subspace/num/__private/float_ordering.h"
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/__private/literals.h"
@@ -42,9 +41,15 @@ namespace sus::num {
 /// -113.75, 0.0078125, 34359738368, 0, -1. So unlike integer types (such as
 /// i32), floating point types can represent non-integer numbers, too.
 struct f32 final {
-  _sus__float_consts_struct(f32);
-  _sus__float(f32, float, u32);
+#define _self f32
+#define _primitive float
+#define _unsigned u32
+#include "subspace/num/__private/float_methods.inc"
 };
+#define _self f32
+#define _primitive float
+#define _suffix f
+#include "subspace/num/__private/float_consts.inc"
 
 /// A 64-bit floating point type (specifically, the “binary64” type defined in
 /// IEEE 754-2008).
@@ -53,17 +58,17 @@ struct f32 final {
 /// twice as many bits. Please see the documentation for `f32` for more
 /// information.
 struct f64 final {
-  _sus__float_consts_struct(f64);
-  _sus__float(f64, double, u64);
+#define _self f64
+#define _primitive double
+#define _unsigned u64
+#include "subspace/num/__private/float_methods.inc"
 };
+#define _self f64
+#define _primitive double
+#define _suffix 0
+#include "subspace/num/__private/float_consts.inc"
 
 }  // namespace sus::num
-
-_sus__float_hash_equal_to(f32);
-_sus__float_hash_equal_to(f64);
-
-_sus__float_fmt(f32, float);
-_sus__float_fmt(f64, double);
 
 _sus__float_literal(f32, ::sus::num::f32);
 _sus__float_literal(f64, ::sus::num::f64);

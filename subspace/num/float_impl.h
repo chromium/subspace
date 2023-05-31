@@ -17,12 +17,12 @@
 #include "subspace/containers/array.h"
 #include "subspace/num/float.h"
 
-namespace sus::num {
+#define _self f32
+#define _primitive float
+#define _unsigned u32
+#include "subspace/num/__private/float_methods_impl.inc"
 
-_sus__float_consts_struct_out_of_line(f32, f);
-_sus__float_out_of_line(f32, float, u32);
-
-_sus__float_consts_struct_out_of_line(f64, );
-_sus__float_out_of_line(f64, double, u64);
-
-}  // namespace sus::num
+#define _self f64
+#define _primitive double
+#define _unsigned u64
+#include "subspace/num/__private/float_methods_impl.inc"

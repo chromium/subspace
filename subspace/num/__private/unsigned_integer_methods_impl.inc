@@ -102,7 +102,7 @@ sus_pure constexpr _self _self::from_ne_bytes(
 template <>
 struct std::hash<::sus::num::_self> {
   sus_pure auto operator()(::sus::num::_self u) const noexcept {
-    return std::hash<decltype(u.primitive_value)>()(u.primitive_value);
+    return std::hash<_primitive>()(u.primitive_value);
   }
 };
 template <>
