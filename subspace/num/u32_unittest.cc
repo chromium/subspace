@@ -2203,6 +2203,7 @@ TEST(u32DeathTest, WrappingRemEuclidOverflow) {
 TEST(u32, fmt) {
   static_assert(fmt::is_formattable<u32, char>::value);
   EXPECT_EQ(fmt::format("{}", 1234567_u32), "1234567");
+  EXPECT_EQ(fmt::format("{:#x}", 1234567_u32), "0x12d687");
 }
 
 }  // namespace

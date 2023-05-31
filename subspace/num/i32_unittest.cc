@@ -2996,6 +2996,7 @@ TEST(i32, fmt) {
   static_assert(fmt::is_formattable<i32, char>::value);
   EXPECT_EQ(fmt::format("{}", -654321_i32), "-654321");
   EXPECT_EQ(fmt::format("{}", 1234567_i32), "1234567");
+  EXPECT_EQ(fmt::format("{:+#x}", 1234567_i32), "+0x12d687");
 }
 
 }  // namespace
