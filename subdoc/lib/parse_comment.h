@@ -159,7 +159,8 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
             // Empty line, preserve the paragraph break.
             parsed << "</p><p>";
             add_space = false;
-          } else if (s.starts_with("#")) {
+          } else if (s.starts_with("#") &&
+                     !(inside_pre || inside_code_snippet)) {
             // Markdown header.
             if (s.starts_with("##### "))
               parsed << "</p><h5>" << sus::move(s).substr(6) << "</h5><p>";

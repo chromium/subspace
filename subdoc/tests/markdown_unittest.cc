@@ -76,7 +76,7 @@ TEST_F(SubDocTest, MarkdownUnmatchedCodeBlock) {
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);
-// The code snippet didn't end so it makes an error.
+  // The code snippet didn't end so it makes an error.
   EXPECT_EQ(diags.locations[0u], "test.cc:2:5");
 }
 
@@ -90,6 +90,57 @@ TEST_F(SubDocTest, MarkdownUnmatchedCodeSnippet) {
   ASSERT_TRUE(result.is_err());
   auto diags = sus::move(result).unwrap_err();
   ASSERT_EQ(diags.locations.len(), 1u);
-// The code snippet didn't end so it makes an error.
+  // The code snippet didn't end so it makes an error.
   EXPECT_EQ(diags.locations[0u], "test.cc:2:5");
+}
+
+TEST_F(SubDocTest, MarkdownMultiLineCodeSnippet) {
+  auto result = run_code(R"(
+    /// Comment headline
+    ///
+    /// This `snippet` will `end
+    /// on the next line`.
+    void f() {}
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_function_comment(db, "2:5",
+                                   "<p>Comment headline</p>"
+                                   "<p>This <code>snippet</code> will "
+                                   "<code>end on the next line</code>.</p>"));
+}
+
+TEST_F(SubDocTest, MarkdownHeaderMarkerInCodeBlock) {
+  auto result = run_code(R"(
+    /// Comment headline
+    ///
+    /// ```
+    /// This is not a
+    /// ## header.
+    /// ```
+    void f() {}
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_function_comment(
+      db, "2:5",
+      "<p>Comment headline</p>"
+      "<p></p>"
+      "<pre><code>This is not a\n## header.\n</code></pre>"));
+}
+
+TEST_F(SubDocTest, MarkdownHeaderMarkerInCodeSnippet) {
+  auto result = run_code(R"(
+    /// Comment headline
+    ///
+    /// This `is not a
+    /// ## header`.
+    void f() {}
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(
+      has_function_comment(db, "2:5",
+                           "<p>Comment headline</p>"
+                           "<p>This <code>is not a ## header</code>.</p>"));
 }
