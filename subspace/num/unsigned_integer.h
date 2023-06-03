@@ -33,12 +33,21 @@
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/try_from_int_error.h"
 #include "subspace/option/option.h"
-#include "subspace/result/result.h"
 
 namespace sus::containers {
 template <class T, size_t N>
   requires(N <= size_t{PTRDIFF_MAX})
 class Array;
+}
+
+namespace sus::option {
+template <class T>
+class Option;
+}
+
+namespace sus::result {
+template <class T, class E>
+class Result;
 }
 
 namespace sus::num {

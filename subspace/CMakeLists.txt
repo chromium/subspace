@@ -151,6 +151,8 @@ target_sources(subspace PUBLIC
     "ops/range_literals.h"
     "ptr/copy.h"
     "ptr/swap.h"
+    "string/__private/any_formatter.h"
+    "string/__private/bytes_formatter.h"
     "result/__private/is_result_type.h"
     "result/__private/marker.h"
     "result/__private/storage.h"

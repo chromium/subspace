@@ -16,6 +16,7 @@
 
 #include "fmt/std.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/assertions/endian.h"
 #include "subspace/containers/array.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
@@ -2206,20 +2207,23 @@ TEST(Option, Clone) {
 }
 
 TEST(Option, fmt) {
-  static_assert(fmt::is_formattable<::sus::Option<i32>, char>::value);
-  EXPECT_EQ(fmt::format("{}", ::sus::Option<i32>::some(12345)), "Some(12345)");
-  EXPECT_EQ(fmt::format("{}", ::sus::Option<i32>::none()), "None");
-  EXPECT_EQ(fmt::format("{}", ::sus::Option<std::string_view>::some("12345")),
+  static_assert(fmt::is_formattable<sus::Option<i32>, char>::value);
+  EXPECT_EQ(fmt::format("{}", sus::Option<i32>::some(12345)), "Some(12345)");
+  EXPECT_EQ(fmt::format("{:06}", sus::Option<i32>::some(12345)), "Some(012345)");
+  EXPECT_EQ(fmt::format("{}", sus::Option<i32>::none()), "None");
+  EXPECT_EQ(fmt::format("{:02}", sus::Option<i32>::none()), "None");
+  EXPECT_EQ(fmt::format("{}", sus::Option<std::string_view>::some("12345")),
             "Some(12345)");
   EXPECT_EQ(fmt::format("{}", ::sus::Option<std::string_view>::none()), "None");
 
-  struct NoFormat {};
+  struct NoFormat {
+    i32 a = 0x16ae3cf2;
+  };
   static_assert(!fmt::is_formattable<NoFormat, char>::value);
-  static_assert(!fmt::is_formattable<Option<NoFormat>, char>::value);
-  // TODO: ...or we could make it print something without the interior?
-  // EXPECT_EQ(fmt::format("{}", ::sus::Option<NoFormat>::some(NoFormat())),
-  //           "Some(...)");
-  // EXPECT_EQ(fmt::format("{}", ::sus::Option<NoFormat>::none()), "None");
+  static_assert(fmt::is_formattable<Option<NoFormat>, char>::value);
+  EXPECT_EQ(fmt::format("{}", ::sus::Option<NoFormat>::some(NoFormat())),
+            "Some(f2-3c-ae-16)");
+  EXPECT_EQ(fmt::format("{}", ::sus::Option<NoFormat>::none()), "None");
 }
 
 }  // namespace

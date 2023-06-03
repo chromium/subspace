@@ -491,21 +491,7 @@ sus_pure static constexpr _self from(S s) noexcept {
 template <Signed S>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(S s) noexcept {
-  using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
-  if (s.primitive_value < decltype(S::primitive_value){0}) {
-    return R::with_err(::sus::num::TryFromIntError(
-        ::sus::num::TryFromIntError::Kind::OutOfBounds));
-  }
-  constexpr auto umax = __private::into_unsigned(S::MAX_PRIMITIVE);
-  if constexpr (MAX_PRIMITIVE < umax) {
-    if (__private::into_unsigned(s.primitive_value) > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
-    }
-  }
-  return R::with(_self(static_cast<_primitive>(s.primitive_value)));
-}
+try_from(S s) noexcept;
 
 /// Constructs a _self from an unsigned integer type (u8, u16, u32, etc).
 ///
@@ -529,16 +515,7 @@ sus_pure static constexpr _self from(U u) noexcept {
 template <Unsigned U>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(U u) noexcept {
-  using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
-  if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE) {
-    if (u.primitive_value > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
-    }
-  }
-  return R::with(_self(static_cast<_primitive>(u.primitive_value)));
-}
+try_from(U u) noexcept;
 
 /// Constructs a _self from a signed primitive integer type (int, long,
 /// etc).
@@ -565,21 +542,7 @@ sus_pure static constexpr _self from(S s) {
 template <SignedPrimitiveInteger S>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(S s) {
-  using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
-  if (s < 0) {
-    return R::with_err(::sus::num::TryFromIntError(
-        ::sus::num::TryFromIntError::Kind::OutOfBounds));
-  }
-  constexpr auto umax = __private::into_unsigned(__private::max_value<S>());
-  if constexpr (MAX_PRIMITIVE < umax) {
-    if (__private::into_unsigned(s) > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
-    }
-  }
-  return R::with(_self(static_cast<_primitive>(s)));
-}
+try_from(S s);
 
 /// Constructs a _self from a signed enum type (or enum class).
 ///
@@ -608,22 +571,7 @@ template <class S>
   requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(S s) {
-  using D = std::underlying_type_t<S>;
-  using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
-  if (static_cast<D>(s) < 0) {
-    return R::with_err(::sus::num::TryFromIntError(
-        ::sus::num::TryFromIntError::Kind::OutOfBounds));
-  }
-  constexpr auto umax = __private::into_unsigned(__private::max_value<D>());
-  if constexpr (MAX_PRIMITIVE < umax) {
-    if (__private::into_unsigned(static_cast<D>(s)) > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
-    }
-  }
-  return R::with(_self(static_cast<_primitive>(s)));
-}
+try_from(S s);
 
 /// Constructs a _self from an unsigned primitive integer type (unsigned
 /// int, unsigned long, etc).
@@ -648,16 +596,7 @@ sus_pure static constexpr _self from(U u) {
 template <UnsignedPrimitiveInteger U>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(U u) {
-  using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
-  if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {
-    if (u > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
-    }
-  }
-  return R::with(_self(static_cast<_primitive>(u)));
-}
+try_from(U u);
 
 /// Constructs a _self from an unsigned enum type (or enum class).
 ///
@@ -683,17 +622,7 @@ template <class U>
   requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(U u) {
-  using D = std::underlying_type_t<U>;
-  using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
-  if constexpr (MAX_PRIMITIVE < __private::max_value<D>()) {
-    if (static_cast<D>(u) > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
-    }
-  }
-  return R::with(_self(static_cast<_primitive>(u)));
-}
+try_from(U u);
 
 /// Constructs a _self from a signed or unsigned integer type (i8, i16, u32,
 /// u64 etc).
@@ -960,27 +889,14 @@ sus_pure constexpr _self abs_diff(const _self& r) const& noexcept {
 
 /// Checked integer addition. Computes self + rhs, returning None if overflow
 /// occurred.
-sus_pure constexpr Option<_self> checked_add(const _self& rhs) const& noexcept {
-  const auto out =
-      __private::add_with_overflow(primitive_value, rhs.primitive_value);
-  if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_add(
+    const _self& rhs) const& noexcept;
 
 /// Checked integer addition with an unsigned rhs. Computes self + rhs,
 /// returning None if overflow occurred.
 template <std::convertible_to<_signed> S>
-sus_pure constexpr Option<_self> checked_add_signed(
-    const S& rhs) const& noexcept {
-  const auto out =
-      __private::add_with_overflow_signed(primitive_value, rhs.primitive_value);
-  if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_add_signed(
+    const S& rhs) const& noexcept;
 
 /// Calculates self + rhs
 ///
@@ -1059,13 +975,8 @@ sus_pure constexpr _self wrapping_add_signed(const S& rhs) const& noexcept {
 }
 
 /// Checked integer division. Computes self / rhs, returning None if `rhs == 0`.
-sus_pure constexpr Option<_self> checked_div(const _self& rhs) const& noexcept {
-  if (rhs.primitive_value != 0u) [[likely]]
-    return Option<_self>::some(
-        __private::unchecked_div(primitive_value, rhs.primitive_value));
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_div(
+    const _self& rhs) const& noexcept;
 
 /// Calculates the divisor when self is divided by rhs.
 ///
@@ -1109,14 +1020,8 @@ sus_pure constexpr _self wrapping_div(const _self& rhs) const& noexcept {
 
 /// Checked integer multiplication. Computes `self * rhs`, returning None if
 /// overflow occurred.
-sus_pure constexpr Option<_self> checked_mul(const _self& rhs) const& noexcept {
-  const auto out =
-      __private::mul_with_overflow(primitive_value, rhs.primitive_value);
-  if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_mul(
+    const _self& rhs) const& noexcept;
 
 /// Calculates the multiplication of self and `rhs`.
 ///
@@ -1157,12 +1062,7 @@ sus_pure constexpr _self wrapping_mul(const _self& rhs) const& noexcept {
 /// Checked negation. Computes -self, returning None unless `self == 0`.
 ///
 /// Note that negating any positive integer will overflow.
-sus_pure constexpr Option<_self> checked_neg() const& noexcept {
-  if (primitive_value == 0u)
-    return Option<_self>::some(_self(_primitive{0u}));
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_neg() const& noexcept;
 
 /// Negates self in an overflowing fashion.
 ///
@@ -1190,13 +1090,8 @@ sus_pure constexpr _self wrapping_neg() const& noexcept {
 
 /// Checked integer remainder. Computes `self % rhs`, returning None if `rhs ==
 /// 0`.
-sus_pure constexpr Option<_self> checked_rem(const _self& rhs) const& noexcept {
-  if (rhs.primitive_value != 0u) [[likely]]
-    return Option<_self>::some(
-        __private::unchecked_rem(primitive_value, rhs.primitive_value));
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_rem(
+    const _self& rhs) const& noexcept;
 
 /// Calculates the remainder when self is divided by rhs.
 ///
@@ -1244,15 +1139,8 @@ sus_pure constexpr _self div_euclid(const _self& rhs) const& noexcept {
 
 /// Checked Euclidean division. Computes self.div_euclid(rhs), returning
 /// None if rhs == 0.
-sus_pure constexpr Option<_self> checked_div_euclid(
-    const _self& rhs) const& noexcept {
-  if (rhs.primitive_value == 0u) [[unlikely]] {
-    return Option<_self>::none();
-  } else {
-    return Option<_self>::some(
-        __private::unchecked_div(primitive_value, rhs.primitive_value));
-  }
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
+    const _self& rhs) const& noexcept;
 
 /// Calculates the quotient of Euclidean division self.div_euclid(rhs).
 ///
@@ -1304,15 +1192,8 @@ sus_pure constexpr _self rem_euclid(const _self& rhs) const& noexcept {
 
 /// Checked Euclidean modulo. Computes self.rem_euclid(rhs), returning None if
 /// `rhs == 0`.
-sus_pure constexpr Option<_self> checked_rem_euclid(
-    const _self& rhs) const& noexcept {
-  if (rhs.primitive_value == 0u) [[unlikely]] {
-    return Option<_self>::none();
-  } else {
-    return Option<_self>::some(
-        __private::unchecked_rem(primitive_value, rhs.primitive_value));
-  }
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
+    const _self& rhs) const& noexcept;
 
 /// Calculates the remainder self.rem_euclid(rhs) as if by Euclidean division.
 ///
@@ -1351,14 +1232,8 @@ sus_pure constexpr _self wrapping_rem_euclid(const _self& rhs) const& noexcept {
 
 /// Checked shift left. Computes `*this << rhs`, returning None if rhs is
 /// larger than or equal to the number of bits in self.
-sus_pure constexpr Option<_self> checked_shl(const u32& rhs) const& noexcept {
-  const auto out =
-      __private::shl_with_overflow(primitive_value, rhs.primitive_value);
-  if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_shl(
+    const u32& rhs) const& noexcept;
 
 /// Shifts self left by rhs bits.
 ///
@@ -1389,14 +1264,8 @@ sus_pure constexpr _self wrapping_shl(const u32& rhs) const& noexcept {
 
 /// Checked shift right. Computes `*this >> rhs`, returning None if rhs is
 /// larger than or equal to the number of bits in self.
-sus_pure constexpr Option<_self> checked_shr(const u32& rhs) const& noexcept {
-  const auto out =
-      __private::shr_with_overflow(primitive_value, rhs.primitive_value);
-  if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_shr(
+    const u32& rhs) const& noexcept;
 
 /// Shifts self right by rhs bits.
 ///
@@ -1427,14 +1296,8 @@ sus_pure constexpr _self wrapping_shr(const u32& rhs) const& noexcept {
 
 /// Checked integer subtraction. Computes self - rhs, returning None if overflow
 /// occurred.
-sus_pure constexpr Option<_self> checked_sub(const _self& rhs) const& {
-  const auto out =
-      __private::sub_with_overflow(primitive_value, rhs.primitive_value);
-  if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_sub(
+    const _self& rhs) const&;
 
 /// Calculates `self - rhs`.
 ///
@@ -1547,15 +1410,8 @@ sus_pure constexpr _self pow(const u32& rhs) const& noexcept {
 
 /// Checked exponentiation. Computes `##_self##::pow(exp)`, returning None if
 /// overflow occurred.
-sus_pure constexpr Option<_self> checked_pow(const u32& rhs) const& noexcept {
-  const auto out =
-      __private::pow_with_overflow(primitive_value, rhs.primitive_value);
-  // TODO: Allow opting out of all overflow checks?
-  if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
-  else
-    return Option<_self>::none();
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_pow(
+    const u32& rhs) const& noexcept;
 
 /// Raises self to the power of `exp`, using exponentiation by squaring.
 ///
@@ -1577,44 +1433,24 @@ sus_pure constexpr _self wrapping_pow(const u32& exp) const& noexcept {
 /// Returns the base 2 logarithm of the number, rounded down.
 ///
 /// Returns None if the number is zero.
-sus_pure constexpr Option<u32> checked_log2() const& noexcept {
-  if (primitive_value == 0u) [[unlikely]] {
-    return Option<u32>::none();
-  } else {
-    uint32_t zeros = __private::leading_zeros_nonzero(::sus::marker::unsafe_fn,
-                                                      primitive_value);
-    return Option<u32>::some(BITS - u32(1u) - u32(zeros));
-  }
-}
+sus_pure constexpr ::sus::option::Option<u32> checked_log2() const& noexcept;
 
 /// Returns the base 2 logarithm of the number, rounded down.
 ///
 /// # Panics
 /// When the number is zero the function will panic.
-sus_pure constexpr u32 log2() const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  return checked_log2().unwrap();
-}
+sus_pure constexpr u32 log2() const& noexcept;
 
 /// Returns the base 10 logarithm of the number, rounded down.
 ///
 /// Returns None if the number is zero.
-sus_pure constexpr Option<u32> checked_log10() const& noexcept {
-  if (primitive_value == 0u) [[unlikely]] {
-    return Option<u32>::none();
-  } else {
-    return Option<u32>::some(__private::int_log10::_self(primitive_value));
-  }
-}
+sus_pure constexpr ::sus::option::Option<u32> checked_log10() const& noexcept;
 
 /// Returns the base 10 logarithm of the number, rounded down.
 ///
 /// # Panics
 /// When the number is zero the function will panic.
-sus_pure constexpr u32 log10() const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  return checked_log10().unwrap();
-}
+sus_pure constexpr u32 log10() const& noexcept;
 
 /// Returns the logarithm of the number with respect to an arbitrary base,
 /// rounded down.
@@ -1624,20 +1460,8 @@ sus_pure constexpr u32 log10() const& noexcept {
 /// This method might not be optimized owing to implementation details;
 /// `checked_log2` can produce results more efficiently for base 2, and
 /// `checked_log10` can produce results more efficiently for base 10.
-sus_pure constexpr Option<u32> checked_log(const _self& base) const& noexcept {
-  if (primitive_value == 0u || base.primitive_value <= 1u) [[unlikely]] {
-    return Option<u32>::none();
-  } else {
-    auto n = uint32_t{0u};
-    auto r = primitive_value;
-    const auto b = base.primitive_value;
-    while (r >= b) {
-      r /= b;
-      n += 1u;
-    }
-    return Option<u32>::some(n);
-  }
-}
+sus_pure constexpr ::sus::option::Option<u32> checked_log(
+    const _self& base) const& noexcept;
 
 /// Returns the logarithm of the number with respect to an arbitrary base,
 /// rounded down.
@@ -1649,9 +1473,7 @@ sus_pure constexpr Option<u32> checked_log(const _self& base) const& noexcept {
 /// # Panics
 /// When the number is zero, or if the base is not at least 2, the function will
 /// panic.
-sus_pure constexpr u32 log(const _self& base) const& noexcept {
-  return checked_log(base).unwrap();
-}
+sus_pure constexpr u32 log(const _self& base) const& noexcept;
 
 /// Returns `true` if and only if `self == 2^k` for some `k`.
 sus_pure constexpr bool is_power_of_two() const& noexcept {
@@ -1673,11 +1495,8 @@ sus_pure constexpr _self next_power_of_two() const& noexcept {
 ///
 /// If the next power of two is greater than the type's maximum value, None is
 /// returned, otherwise the power of two is wrapped in Some.
-sus_pure constexpr Option<_self> checked_next_power_of_two() const& noexcept {
-  const auto one_less =
-      __private::one_less_than_next_power_of_two(primitive_value);
-  return _self(one_less).checked_add(_self(_primitive{1u}));
-}
+sus_pure constexpr ::sus::option::Option<_self> checked_next_power_of_two()
+    const& noexcept;
 
 /// Returns the smallest power of two greater than or equal to n.
 ///

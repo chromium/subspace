@@ -51,6 +51,7 @@
 #include "subspace/option/__private/storage.h"
 #include "subspace/option/state.h"
 #include "subspace/result/__private/is_result_type.h"
+#include "subspace/string/__private/any_formatter.h"
 
 namespace sus::iter {
 template <class Iter, class Item>
@@ -1097,12 +1098,10 @@ struct std::equal_to<::sus::option::Option<T>> {
 
 // fmt support.
 template <class T, class Char>
-  requires(fmt::is_formattable<T, Char>::value)
-struct fmt::formatter<::sus::option::Option<T>, Char>
-    : public fmt::formatter<T, Char> {
+struct fmt::formatter<::sus::option::Option<T>, Char> {
   template <typename ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
-    return ctx.begin();
+    return underlying_.parse(ctx);
   }
 
   template <typename FormatContext>
@@ -1120,7 +1119,7 @@ struct fmt::formatter<::sus::option::Option<T>, Char>
   }
 
  private:
-  formatter<T, Char> underlying_;
+  ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
 
 // Promote Option and its enum values into the `sus` namespace.
