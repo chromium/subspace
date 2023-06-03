@@ -16,6 +16,7 @@
 
 #include <algorithm>  // Replace std::sort.
 
+#include "fmt/core.h"
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/debug_check.h"
 #include "subspace/construct/default.h"
@@ -45,6 +46,8 @@
 #include "subspace/ptr/copy.h"
 #include "subspace/ptr/swap.h"
 #include "subspace/result/result.h"
+#include "subspace/string/__private/any_formatter.h"
+#include "subspace/string/__private/format_to_stream.h"
 #include "subspace/tuple/tuple.h"
 
 namespace sus::containers {
@@ -300,6 +303,62 @@ using ::sus::iter::__private::begin;
 using ::sus::iter::__private::end;
 
 }  // namespace sus::containers
+
+// fmt support.
+template <class T, class Char>
+struct fmt::formatter<::sus::containers::Slice<T>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::containers::Slice<T>& slice,
+                        FormatContext& ctx) const {
+    auto out = ctx.out();
+    out = format_to(out, "[");
+    for (::sus::num::usize i; i < slice.len(); i += 1) {
+      if (i > 0) out = format_to(out, ", ");
+      ctx.advance_to(out);
+      out = underlying_.format(slice[i], ctx);
+    }
+    return format_to(out, "]");
+  }
+
+ private:
+  ::sus::string::__private::AnyFormatter<T, Char> underlying_;
+};
+
+// Stream support.
+sus__format_to_stream(sus::containers, Slice, T);
+
+// fmt support.
+template <class T, class Char>
+struct fmt::formatter<::sus::containers::SliceMut<T>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::containers::SliceMut<T>& slice,
+                        FormatContext& ctx) const {
+    auto out = ctx.out();
+    out = format_to(out, "[");
+    for (::sus::num::usize i; i < slice.len(); i += 1) {
+      if (i > 0) out = format_to(out, ", ");
+      ctx.advance_to(out);
+      out = underlying_.format(slice[i], ctx);
+    }
+    return format_to(out, "]");
+  }
+
+ private:
+  ::sus::string::__private::AnyFormatter<T, Char> underlying_;
+};
+
+// Stream support.
+sus__format_to_stream(sus::containers, SliceMut, T);
 
 // Promote Slice into the `sus` namespace.
 namespace sus {
