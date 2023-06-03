@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include "fmt/core.h"
+#include "subspace/string/__private/format_to_stream.h"
+
 namespace sus::marker {
 
 /// A marker that designates a function as unsafe, or containing Undefined
@@ -44,3 +47,21 @@ struct UnsafeFnMarker {
 constexpr inline auto unsafe_fn = UnsafeFnMarker();
 
 }  // namespace sus::marker
+
+// fmt support.
+template <class Char>
+struct fmt::formatter<::sus::marker::UnsafeFnMarker, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::marker::UnsafeFnMarker&,
+                        FormatContext& ctx) const {
+    return fmt::format_to(ctx.out(), "unsafe_fn");
+  }
+};
+
+// Stream support.
+sus__format_to_stream(sus::marker, UnsafeFnMarker);
