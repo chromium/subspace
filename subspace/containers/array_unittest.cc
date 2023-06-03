@@ -14,6 +14,7 @@
 
 #include "subspace/containers/array.h"
 
+#include <sstream>
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
@@ -597,6 +598,34 @@ TEST(Array, StructuredBinding) {
   static_assert(std::same_as<decltype(i), i32>);
   EXPECT_EQ((Array<i32, 3>::with_values(g, h, i)),
             (Array<i32, 3>::with_values(2, 4, 6)));
+}
+
+TEST(Array, fmt) {
+  auto a = Array<i32, 5>::with_values(1, 2, 3, 4, 5);
+  EXPECT_EQ(fmt::format("{}", a), "[1, 2, 3, 4, 5]");
+  EXPECT_EQ(fmt::format("{:02}", a), "[01, 02, 03, 04, 05]");
+
+  EXPECT_EQ(fmt::format("{}", Array<i32, 0>()), "[]");
+  EXPECT_EQ(fmt::format("{:02}", Array<i32, 0>()), "[]");
+
+  struct NoFormat {
+    i32 a = 0x16ae3cf2;
+  };
+  static_assert(!fmt::is_formattable<NoFormat, char>::value);
+
+  auto an = Array<NoFormat, 2>::with_values(NoFormat(), NoFormat(0xf00d));
+  EXPECT_EQ(fmt::format("{}", an), "[f2-3c-ae-16, 0d-f0-00-00]");
+}
+
+TEST(Array, Stream) {
+  std::stringstream s;
+  s << Array<i32, 5>::with_values(1, 2, 3, 4, 5);
+  EXPECT_EQ(s.str(), "[1, 2, 3, 4, 5]");
+}
+
+TEST(Array, GTest) {
+  EXPECT_EQ(testing::PrintToString(Array<i32, 5>::with_values(1, 2, 3, 4, 5)),
+            "[1, 2, 3, 4, 5]");
 }
 
 }  // namespace
