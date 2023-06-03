@@ -14,6 +14,8 @@
 
 #include "subspace/result/result.h"
 
+#include <sstream>
+
 #include "fmt/std.h"
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/containers/array.h"
@@ -480,7 +482,7 @@ TEST(Result, FromIter) {
   };
 
   auto no_errors =
-      ::sus::Array<Result<usize, Error>, 5>::with_values(
+      sus::Array<Result<usize, Error>, 5>::with_values(
           Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
           Result<usize, Error>::with(3u), Result<usize, Error>::with(4u),
           Result<usize, Error>::with(5u))
@@ -492,7 +494,7 @@ TEST(Result, FromIter) {
   EXPECT_EQ(sus::move(no_errors_out).unwrap().sum, 1u + 2u + 3u + 4u + 5u);
 
   auto with_error =
-      ::sus::Array<Result<usize, Error>, 5>::with_values(
+      sus::Array<Result<usize, Error>, 5>::with_values(
           Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
           Result<usize, Error>::with_err(Error::OneError),
           Result<usize, Error>::with(4u), Result<usize, Error>::with(5u))
@@ -504,7 +506,7 @@ TEST(Result, FromIter) {
   EXPECT_EQ(sus::move(with_error_out).unwrap_err(), Error::OneError);
 
   auto with_errors =
-      ::sus::Array<Result<usize, Error>, 5>::with_values(
+      sus::Array<Result<usize, Error>, 5>::with_values(
           Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
           Result<usize, Error>::with_err(Error::OneError),
           Result<usize, Error>::with(4u),
@@ -753,10 +755,10 @@ TEST(Result, fmt) {
   EXPECT_EQ(fmt::format("{:06}", sus::Result<i32, i32>::with_err(4321)),
             "Err(4321)");  // The format string is for the Ok value.
   EXPECT_EQ(
-      fmt::format("{}", ::sus::Result<std::string_view, i32>::with("12345")),
+      fmt::format("{}", sus::Result<std::string_view, i32>::with("12345")),
       "Ok(12345)");
   EXPECT_EQ(
-      fmt::format("{}", ::sus::Result<i32, std::string_view>::with_err("4321")),
+      fmt::format("{}", sus::Result<i32, std::string_view>::with_err("4321")),
       "Err(4321)");
 
   struct NoFormat {
@@ -767,15 +769,26 @@ TEST(Result, fmt) {
   static_assert(fmt::is_formattable<Result<i32, NoFormat>, char>::value);
   static_assert(fmt::is_formattable<Result<NoFormat, NoFormat>, char>::value);
 
-  EXPECT_EQ(fmt::format("{}", ::sus::Result<i32, NoFormat>::with(12345)),
+  EXPECT_EQ(fmt::format("{}", sus::Result<i32, NoFormat>::with(12345)),
             "Ok(12345)");
-  EXPECT_EQ(
-      fmt::format("{}", ::sus::Result<i32, NoFormat>::with_err(NoFormat())),
-      "Err(f2-3c-ae-16)");
-  EXPECT_EQ(fmt::format("{}", ::sus::Result<NoFormat, i32>::with(NoFormat())),
+  EXPECT_EQ(fmt::format("{}", sus::Result<i32, NoFormat>::with_err(NoFormat())),
+            "Err(f2-3c-ae-16)");
+  EXPECT_EQ(fmt::format("{}", sus::Result<NoFormat, i32>::with(NoFormat())),
             "Ok(f2-3c-ae-16)");
-  EXPECT_EQ(fmt::format("{}", ::sus::Result<NoFormat, i32>::with_err(12345)),
+  EXPECT_EQ(fmt::format("{}", sus::Result<NoFormat, i32>::with_err(12345)),
             "Err(12345)");
+}
+
+TEST(Result, Stream) {
+  std::stringstream s;
+  s << sus::Result<i32, i32>::with(12345) << " "
+    << sus::Result<i32, i32>::with_err(-76543);
+  EXPECT_EQ(s.str(), "Ok(12345) Err(-76543)");
+}
+
+TEST(Result, GTest) {
+  EXPECT_EQ(testing::PrintToString(sus::Result<i32, i32>::with(12345)),
+            "Ok(12345)");
 }
 
 }  // namespace

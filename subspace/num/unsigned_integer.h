@@ -33,6 +33,7 @@
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/try_from_int_error.h"
 #include "subspace/option/option.h"
+#include "subspace/string/__private/format_to_stream.h"
 
 namespace sus::containers {
 template <class T, size_t N>

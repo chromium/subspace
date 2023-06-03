@@ -403,6 +403,9 @@ struct fmt::formatter<::sus::num::_self, Char> {
   formatter<_primitive, Char> underlying_;
 };
 
+// Stream support.
+sus__format_to_stream(sus::num, _self);
+
 #undef _self
 #undef _primitive
 #undef _signed

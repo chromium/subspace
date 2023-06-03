@@ -35,6 +35,7 @@
 #include "subspace/option/option.h"
 #include "subspace/ptr/copy.h"
 #include "subspace/result/result.h"
+#include "subspace/string/__private/format_to_stream.h"
 
 namespace sus::num {
 

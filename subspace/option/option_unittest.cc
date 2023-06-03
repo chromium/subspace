@@ -14,6 +14,8 @@
 
 #include "subspace/option/option.h"
 
+#include <sstream>
+
 #include "fmt/std.h"
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/assertions/endian.h"
@@ -2214,16 +2216,27 @@ TEST(Option, fmt) {
   EXPECT_EQ(fmt::format("{:02}", sus::Option<i32>::none()), "None");
   EXPECT_EQ(fmt::format("{}", sus::Option<std::string_view>::some("12345")),
             "Some(12345)");
-  EXPECT_EQ(fmt::format("{}", ::sus::Option<std::string_view>::none()), "None");
+  EXPECT_EQ(fmt::format("{}", sus::Option<std::string_view>::none()), "None");
 
   struct NoFormat {
     i32 a = 0x16ae3cf2;
   };
   static_assert(!fmt::is_formattable<NoFormat, char>::value);
   static_assert(fmt::is_formattable<Option<NoFormat>, char>::value);
-  EXPECT_EQ(fmt::format("{}", ::sus::Option<NoFormat>::some(NoFormat())),
+  EXPECT_EQ(fmt::format("{}", sus::Option<NoFormat>::some(NoFormat())),
             "Some(f2-3c-ae-16)");
-  EXPECT_EQ(fmt::format("{}", ::sus::Option<NoFormat>::none()), "None");
+  EXPECT_EQ(fmt::format("{}", sus::Option<NoFormat>::none()), "None");
+}
+
+TEST(Option, Stream) {
+  std::stringstream s;
+  s << sus::Option<i32>::some(12345) << " " << sus::Option<i32>::none();
+  EXPECT_EQ(s.str(), "Some(12345) None");
+}
+
+TEST(Option, GTest) {
+  EXPECT_EQ(testing::PrintToString(sus::Option<i32>::some(12345)),
+            "Some(12345)");
 }
 
 }  // namespace

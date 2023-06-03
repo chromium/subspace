@@ -52,6 +52,7 @@
 #include "subspace/option/state.h"
 #include "subspace/result/__private/is_result_type.h"
 #include "subspace/string/__private/any_formatter.h"
+#include "subspace/string/__private/format_to_stream.h"
 
 namespace sus::iter {
 template <class Iter, class Item>
@@ -1121,6 +1122,9 @@ struct fmt::formatter<::sus::option::Option<T>, Char> {
  private:
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
+
+// Stream support.
+sus__format_to_stream(sus::option, Option, T);
 
 // Promote Option and its enum values into the `sus` namespace.
 namespace sus {
