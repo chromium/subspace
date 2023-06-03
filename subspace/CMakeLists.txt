@@ -207,6 +207,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "iter/compat_ranges_unittest.cc"
         "iter/generator_unittest.cc"
         "iter/iterator_unittest.cc"
+        "marker/unsafe_unittest.cc"
         "mem/addressof_unittest.cc"
         "mem/clone_unittest.cc"
         "mem/move_unittest.cc"
