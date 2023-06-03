@@ -21,6 +21,7 @@
 // etc...
 // https://doc.rust-lang.org/std/result/enum.Result.html
 
+#include "fmt/format.h"
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/fn/fn_ref.h"
@@ -785,12 +786,12 @@ struct std::equal_to<::sus::result::Result<T, E>> {
 // fmt support.
 template <class T, class E, class Char>
 struct fmt::formatter<::sus::result::Result<T, E>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_ok_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::result::Result<T, E>& t,
                         FormatContext& ctx) const {
     auto out = ctx.out();

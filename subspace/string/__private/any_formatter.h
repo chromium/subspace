@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: Overload all && functions with const& version if T is copyable? The
-// latter copies T instead of moving it. This could lead to a lot of unintended
-// copies if expensive types have copy constructors, which is common in
-// preexisting C++ code since there's no concept of Clone there (which will TBD
-// in this library). So it's not clear if this is the right thing to do
-// actually, needs thought.
-
 #pragma once
 
 #include <type_traits>
@@ -35,9 +28,11 @@ namespace sus::string::__private {
 ///
 /// To also be able to format `void` use `AnyOrVoidFormatter`.
 template <class T, class Char>
-using AnyFormatter =
-    std::conditional_t<fmt::is_formattable<T, Char>::value,
-                       fmt::formatter<T, Char>, BytesFormatter<T, Char>>;
+using AnyFormatter = std::conditional_t<
+    fmt::is_formattable<std::remove_cv_t<std::remove_reference_t<T>>,
+                        Char>::value,
+    fmt::formatter<std::remove_cv_t<std::remove_reference_t<T>>, Char>,
+    BytesFormatter<Char>>;
 
 template <class Char>
 auto format_void(auto out) {

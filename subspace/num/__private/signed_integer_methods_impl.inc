@@ -118,12 +118,12 @@ struct std::equal_to<::sus::num::_self> {
 // fmt support.
 template <class Char>
 struct fmt::formatter<::sus::num::_self, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(::sus::num::_self t, FormatContext& ctx) const {
     return underlying_.format(t.primitive_value, ctx);
   }

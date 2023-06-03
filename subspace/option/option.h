@@ -23,7 +23,7 @@
 
 #include <type_traits>
 
-#include "fmt/core.h"
+#include "fmt/format.h"
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/default.h"
