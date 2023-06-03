@@ -1,4 +1,3 @@
-#include <stdio.h>
 // Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "googletest/include/gtest/gtest.h"
 #include "subspace/containers/vec.h"
+
+#include <sstream>
+
+#include "googletest/include/gtest/gtest.h"
 #include "subspace/iter/extend.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/mem/move.h"
@@ -1245,6 +1247,34 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
     EXPECT_EQ(v, Vec<S>::with_values(3, 4, 5));
     EXPECT_EQ(v.capacity(), cap);
   }
+}
+
+TEST(Vec, fmt) {
+  auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+  EXPECT_EQ(fmt::format("{}", v), "[1, 2, 3, 4, 5]");
+  EXPECT_EQ(fmt::format("{:02}", v), "[01, 02, 03, 04, 05]");
+
+  EXPECT_EQ(fmt::format("{}", Vec<i32>()), "[]");
+  EXPECT_EQ(fmt::format("{:02}", Vec<i32>()), "[]");
+
+  struct NoFormat {
+    i32 a = 0x16ae3cf2;
+  };
+  static_assert(!fmt::is_formattable<NoFormat, char>::value);
+
+  auto vn = Vec<NoFormat>::with_values(NoFormat(), NoFormat(0xf00d));
+  EXPECT_EQ(fmt::format("{}", vn), "[f2-3c-ae-16, 0d-f0-00-00]");
+}
+
+TEST(Vec, Stream) {
+  std::stringstream s;
+  s << Vec<i32>::with_values(1, 2, 3, 4, 5);
+  EXPECT_EQ(s.str(), "[1, 2, 3, 4, 5]");
+}
+
+TEST(Vec, GTest) {
+  EXPECT_EQ(testing::PrintToString(Vec<i32>::with_values(1, 2, 3, 4, 5)),
+            "[1, 2, 3, 4, 5]");
 }
 
 }  // namespace
