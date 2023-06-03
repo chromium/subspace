@@ -12,36 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: Overload all && functions with const& version if T is copyable? The
-// latter copies T instead of moving it. This could lead to a lot of unintended
-// copies if expensive types have copy constructors, which is common in
-// preexisting C++ code since there's no concept of Clone there (which will TBD
-// in this library). So it's not clear if this is the right thing to do
-// actually, needs thought.
-
 #pragma once
 
 #include <concepts>
-#include <ostream>
+#include <iosfwd>
 
 #include "fmt/core.h"
+#include "subspace/string/__private/format_to_stream.h"
 
-#define sus__stream(n)                                                         \
-  namespace n {                                                                \
-  template <class Char, class T>                                               \
-    requires(fmt::is_formattable<T>::value)                                    \
-  inline std::basic_ostream<Char>& operator<<(std::basic_ostream<Char>& s,     \
-                                              const T& t) {                    \
-    /* Move to the `std` namespace to stream std::string without recursing. */ \
-    std::operator<<(s, fmt::format("{}", t));                                  \
-    return s;                                                                  \
-  }                                                                            \
-  }                                                                            \
+#define sus__stream(n)                                                      \
+  namespace n {                                                             \
+  template <class T>                                                        \
+    requires(fmt::is_formattable<T>::value)                                 \
+  inline std::basic_ostream<char>& operator<<(std::basic_ostream<char>& s,  \
+                                              const T& t) {                 \
+    return ::sus::string::__private::format_to_stream(fmt::format("{}", t), \
+                                                      s);                   \
+  }                                                                         \
+  }                                                                         \
   static_assert(true)
 
 // This file defines operator<< for all formattable subspace types by
 // placing it in the same namespace as those types. So we must define it for
-// every sub namespace.
+// every namespace.
 
 sus__stream(sus::assertions);
 sus__stream(sus::choice_type);

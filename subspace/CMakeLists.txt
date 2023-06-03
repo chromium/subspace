@@ -157,6 +157,8 @@ target_sources(subspace PUBLIC
     "result/result.h"
     "string/__private/any_formatter.h"
     "string/__private/bytes_formatter.h"
+    "string/__private/format_to_stream.h"
+    "string/__private/format_to_stream.cc"
     "string/compat_stream.h"
     "tuple/__private/storage.h"
     "tuple/tuple.h"

@@ -12,23 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sstream>
+#pragma once
 
-#include "googletest/include/gtest/gtest.h"
-#include "subspace/prelude.h"
+namespace sus::string::__private {
 
-namespace {
+template <class String, class Stream>
+Stream& format_to_stream(const String&, Stream& os);
 
-TEST(Stream, SubspaceType) {
-  std::stringstream s;
-  // i32 is formattable, so it is also streamable with compat_stream.h.
-  s << 1_i32 << " " << 2_i32 << " " << 3_i32;
-  EXPECT_EQ(s.str(), "1 2 3");
-}
-
-TEST(Stream, GTest) {
-  // i32 is formattable, so it is also printable by GTest.
-  EXPECT_EQ(testing::PrintToString(123_i32), "123");
-}
-
-}  // namespace
+}  // namespace sus::string::__private

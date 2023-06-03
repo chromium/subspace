@@ -22,12 +22,15 @@
 #include "subspace/num/types.h"
 #include "subspace/ops/range_literals.h"
 
+// TODO: Make a compile-time option to drop these.
+#include "subspace/string/compat_stream.h"
+
 // Imports all the things that are pulled into the top-level namespace.
 // TODO: Make a compile-time option for this.
 
-using ::sus::containers::Vec;
+using sus::containers::Vec;
 using sus::marker::unsafe_fn;
-using ::sus::mem::mref;
+using sus::mem::mref;
 using sus::num::f32;
 using sus::num::f64;
 using sus::num::i16;

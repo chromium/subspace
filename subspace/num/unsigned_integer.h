@@ -20,7 +20,7 @@
 #include <compare>
 #include <functional>  // TODO: remove this but we need to hash things > size_t.
 
-#include "fmt/core.h"
+#include "fmt/format.h"
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/endian.h"
 #include "subspace/macros/__private/compiler_bugs.h"
