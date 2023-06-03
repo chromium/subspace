@@ -25,6 +25,7 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/option/option.h"
+#include "subspace/string/__private/format_to_stream.h"
 
 namespace sus::mem {
 
@@ -210,3 +211,24 @@ constexpr inline __private::NonNullMarker<T> nonnull(T& t) {
 }
 
 }  // namespace sus::mem
+
+// fmt support.
+template <class T, class Char>
+struct fmt::formatter<::sus::mem::NonNull<T>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::mem::NonNull<T>& t,
+                        FormatContext& ctx) const {
+    return underlying_.format(t.as_ptr(), ctx);
+  }
+
+ private:
+  formatter<void*, Char> underlying_;
+};
+
+// Stream support.
+sus__format_to_stream(sus::mem, NonNull, T);

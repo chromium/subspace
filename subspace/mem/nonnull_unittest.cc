@@ -14,6 +14,8 @@
 
 #include "subspace/mem/nonnull.h"
 
+#include <sstream>
+
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/macros/__private/compiler_bugs.h"
@@ -313,6 +315,29 @@ TEST(NonNull, TypeDeduction) {
   auto a = sus::mem::nonnull(i).construct();
   static_assert(std::same_as<decltype(a), NonNull<i32>>);
   EXPECT_EQ(a.as_ptr(), &i);
+}
+
+TEST(NonNull, fmt) {
+  i32 i = 3;
+  NonNull<i32> nm = sus::mem::nonnull(i);
+
+  EXPECT_EQ(fmt::format("{}", nm), fmt::format("{}", fmt::ptr(&i)));
+}
+
+TEST(NonNull, Stream) {
+  i32 i = 3;
+  NonNull<i32> nm = sus::mem::nonnull(i);
+
+  std::stringstream s;
+  s << nm;
+  EXPECT_EQ(s.str(), fmt::format("{}", fmt::ptr(&i)));
+}
+
+TEST(NonNull, GTest) {
+  i32 i = 3;
+  NonNull<i32> nm = sus::mem::nonnull(i);
+
+  EXPECT_EQ(testing::PrintToString(nm), fmt::format("{}", fmt::ptr(&i)));
 }
 
 }  // namespace
