@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <utility>  // TODO: replace std::make_index_sequence.
 
+#include "fmt/core.h"
 #include "subspace/assertions/check.h"
 #include "subspace/construct/default.h"
 #include "subspace/containers/__private/array_marker.h"
@@ -38,6 +39,8 @@
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
+#include "subspace/string/__private/any_formatter.h"
+#include "subspace/string/__private/format_to_stream.h"
 #include "subspace/tuple/tuple.h"
 
 namespace sus::containers {
@@ -448,6 +451,7 @@ template <class... Ts>
 
 }  // namespace sus::containers
 
+// Structured bindings support.
 namespace std {
 template <class T, size_t N>
 struct tuple_size<::sus::containers::Array<T, N>> {
@@ -458,8 +462,52 @@ template <size_t I, class T, size_t N>
 struct tuple_element<I, ::sus::containers::Array<T, N>> {
   using type = T;
 };
-
 }  // namespace std
+
+// fmt support.
+template <class T, size_t N, class Char>
+struct fmt::formatter<::sus::containers::Array<T, N>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::containers::Array<T, N>& array,
+                        FormatContext& ctx) const
+    requires(N > 0)
+  {
+    auto out = ctx.out();
+    out = format_to(out, "[");
+    for (::sus::num::usize i; i < array.len(); i += 1) {
+      if (i > 0) out = format_to(out, ", ");
+      ctx.advance_to(out);
+      out = underlying_.format(array[i], ctx);
+    }
+    return format_to(out, "]");
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::containers::Array<T, N>&,
+                        FormatContext& ctx) const
+    requires(N == 0)
+  {
+    return format_to(ctx.out(), "[]");
+  }
+
+ private:
+  ::sus::string::__private::AnyFormatter<T, Char> underlying_;
+};
+
+// Stream support (written out manually due to size_t template param).
+namespace sus::containers {
+template <class T, size_t N>
+inline std::basic_ostream<char>& operator<<(std::basic_ostream<char>& stream,
+                                            const Array<T, N>& value) {
+  return ::sus::string::__private::format_to_stream(stream,
+                                                    fmt::format("{}", value));
+}
+}  // namespace sus::containers
 
 // Promote Array into the `sus` namespace.
 namespace sus {
