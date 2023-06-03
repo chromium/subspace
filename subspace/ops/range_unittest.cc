@@ -14,6 +14,8 @@
 
 #include "subspace/ops/range.h"
 
+#include <sstream>
+
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/default.h"
 #include "subspace/macros/compiler.h"
@@ -286,6 +288,59 @@ TEST(Range, StructuredBindings) {
   auto [a, b] = "1..5"_r;
   EXPECT_EQ(a, 1u);
   EXPECT_EQ(b, 5u);
+}
+
+TEST(Range, fmt) {
+  static_assert(fmt::is_formattable<sus::ops::Range<i32>, char>::value);
+  static_assert(fmt::is_formattable<sus::ops::RangeFrom<i32>, char>::value);
+  static_assert(fmt::is_formattable<sus::ops::RangeTo<i32>, char>::value);
+  static_assert(fmt::is_formattable<sus::ops::RangeFull<i32>, char>::value);
+
+  EXPECT_EQ(fmt::format("{}", sus::ops::Range<i32>(1, 5)), "1..5");
+  EXPECT_EQ(fmt::format("{:02}", sus::ops::Range<i32>(1, 5)), "01..05");
+  EXPECT_EQ(fmt::format("{}", sus::ops::RangeFrom<i32>(1)), "1..");
+  EXPECT_EQ(fmt::format("{:02}", sus::ops::RangeFrom<i32>(1)), "01..");
+  EXPECT_EQ(fmt::format("{}", sus::ops::RangeTo<i32>(5)), "..5");
+  EXPECT_EQ(fmt::format("{:02}", sus::ops::RangeTo<i32>(5)), "..05");
+  EXPECT_EQ(fmt::format("{}", sus::ops::RangeFull<i32>()), "..");
+  EXPECT_EQ(fmt::format("{:02}", sus::ops::RangeFull<i32>()), "..");
+
+  struct NoFormat {
+    i32 a = 0x16ae3cf2;
+    auto operator<=>(const NoFormat& rhs) const noexcept { return a <=> rhs.a; }
+  };
+  static_assert(sus::ops::Ord<NoFormat>);
+  static_assert(!fmt::is_formattable<NoFormat, char>::value);
+  static_assert(fmt::is_formattable<sus::ops::Range<NoFormat>, char>::value);
+  static_assert(
+      fmt::is_formattable<sus::ops::RangeFrom<NoFormat>, char>::value);
+  static_assert(fmt::is_formattable<sus::ops::RangeTo<NoFormat>, char>::value);
+  static_assert(
+      fmt::is_formattable<sus::ops::RangeFull<NoFormat>, char>::value);
+
+  EXPECT_EQ(fmt::format("{}", sus::ops::Range<NoFormat>(NoFormat(0xf00d),
+                                                        NoFormat(0xbeef))),
+            "0d-f0-00-00..ef-be-00-00");
+  EXPECT_EQ(fmt::format("{}", sus::ops::RangeFrom<NoFormat>(NoFormat(0xf00d))),
+            "0d-f0-00-00..");
+  EXPECT_EQ(fmt::format("{}", sus::ops::RangeTo<NoFormat>(NoFormat(0xbeef))),
+            "..ef-be-00-00");
+}
+
+TEST(Range, Stream) {
+  {
+    std::stringstream s;
+    s << sus::ops::Range<i32>(1, 5) << " " << sus::ops::RangeFrom<i32>(1) << " "
+      << sus::ops::RangeTo<i32>(5) << " " << sus::ops::RangeFull<i32>();
+    EXPECT_EQ(s.str(), "1..5 1.. ..5 ..");
+  }
+}
+
+TEST(Range, GTest) {
+  EXPECT_EQ(testing::PrintToString(sus::ops::Range<i32>(1, 5)), "1..5");
+  EXPECT_EQ(testing::PrintToString(sus::ops::RangeFrom<i32>(1)), "1..");
+  EXPECT_EQ(testing::PrintToString(sus::ops::RangeTo<i32>(5)), "..5");
+  EXPECT_EQ(testing::PrintToString(sus::ops::RangeFull<i32>()), "..");
 }
 
 }  // namespace

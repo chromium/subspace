@@ -20,6 +20,8 @@
 #include "subspace/mem/relocate.h"
 #include "subspace/ops/ord.h"
 #include "subspace/option/option.h"
+#include "subspace/string/__private/any_formatter.h"
+#include "subspace/string/__private/format_to_stream.h"
 
 namespace sus::ops {
 
@@ -409,3 +411,103 @@ class [[sus_trivial_abi]] RangeFull final {
 };
 
 }  // namespace sus::ops
+
+// fmt support.
+template <class T, class Char>
+struct fmt::formatter<::sus::ops::Range<T>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::ops::Range<T>& t,
+                        FormatContext& ctx) const {
+    auto out = ctx.out();
+    out = underlying_.format(t.start, ctx);
+    *out++ = static_cast<Char>('.');
+    *out++ = static_cast<Char>('.');
+    out = underlying_.format(t.finish, ctx);
+    return out;
+  }
+
+ private:
+  ::sus::string::__private::AnyFormatter<T, Char> underlying_;
+};
+
+// Stream support.
+sus__format_to_stream(sus::ops, Range, T);
+
+// fmt support.
+template <class T, class Char>
+struct fmt::formatter<::sus::ops::RangeFrom<T>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::ops::RangeFrom<T>& t,
+                        FormatContext& ctx) const {
+    auto out = ctx.out();
+    out = underlying_.format(t.start, ctx);
+    *out++ = static_cast<Char>('.');
+    *out++ = static_cast<Char>('.');
+    return out;
+  }
+
+ private:
+  ::sus::string::__private::AnyFormatter<T, Char> underlying_;
+};
+
+// Stream support.
+sus__format_to_stream(sus::ops, RangeFrom, T);
+
+// fmt support.
+template <class T, class Char>
+struct fmt::formatter<::sus::ops::RangeTo<T>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::ops::RangeTo<T>& t,
+                        FormatContext& ctx) const {
+    auto out = ctx.out();
+    *out++ = static_cast<Char>('.');
+    *out++ = static_cast<Char>('.');
+    out = underlying_.format(t.finish, ctx);
+    return out;
+  }
+
+ private:
+  ::sus::string::__private::AnyFormatter<T, Char> underlying_;
+};
+
+// Stream support.
+sus__format_to_stream(sus::ops, RangeTo, T);
+
+// fmt support.
+template <class T, class Char>
+struct fmt::formatter<::sus::ops::RangeFull<T>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::ops::RangeFull<T>&,
+                        FormatContext& ctx) const {
+    auto out = ctx.out();
+    *out++ = static_cast<Char>('.');
+    *out++ = static_cast<Char>('.');
+    return out;
+  }
+
+ private:
+  ::sus::string::__private::AnyFormatter<T, Char> underlying_;
+};
+
+// Stream support.
+sus__format_to_stream(sus::ops, RangeFull, T);
