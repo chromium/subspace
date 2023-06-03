@@ -14,6 +14,8 @@
 
 #include "subspace/containers/slice.h"
 
+#include <sstream>
+
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
@@ -5866,6 +5868,66 @@ TEST(SliceMut, WindowsMut) {
   EXPECT_EQ(w7.next().unwrap(),
             sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6, 7));
   EXPECT_EQ(w7.next(), sus::None);
+}
+
+TEST(Slice, fmt) {
+  auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+  EXPECT_EQ(fmt::format("{}", v.as_slice()), "[1, 2, 3, 4, 5]");
+  EXPECT_EQ(fmt::format("{:02}", v.as_slice()), "[01, 02, 03, 04, 05]");
+
+  auto empty = Vec<i32>();
+  EXPECT_EQ(fmt::format("{}", empty.as_slice()), "[]");
+  EXPECT_EQ(fmt::format("{:02}", empty.as_slice()), "[]");
+
+  struct NoFormat {
+    i32 a = 0x16ae3cf2;
+  };
+  static_assert(!fmt::is_formattable<NoFormat, char>::value);
+
+  auto vn = Vec<NoFormat>::with_values(NoFormat(), NoFormat(0xf00d));
+  EXPECT_EQ(fmt::format("{}", vn), "[f2-3c-ae-16, 0d-f0-00-00]");
+}
+
+TEST(Slice, Stream) {
+  std::stringstream s;
+  auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+  s << v.as_slice();
+  EXPECT_EQ(s.str(), "[1, 2, 3, 4, 5]");
+}
+
+TEST(Slice, GTest) {
+  auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+  EXPECT_EQ(testing::PrintToString(v.as_slice()), "[1, 2, 3, 4, 5]");
+}
+
+TEST(SliceMut, fmt) {
+  auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+  EXPECT_EQ(fmt::format("{}", v.as_mut_slice()), "[1, 2, 3, 4, 5]");
+  EXPECT_EQ(fmt::format("{:02}", v.as_mut_slice()), "[01, 02, 03, 04, 05]");
+
+  auto empty = Vec<i32>();
+  EXPECT_EQ(fmt::format("{}", empty.as_mut_slice()), "[]");
+  EXPECT_EQ(fmt::format("{:02}", empty.as_mut_slice()), "[]");
+
+  struct NoFormat {
+    i32 a = 0x16ae3cf2;
+  };
+  static_assert(!fmt::is_formattable<NoFormat, char>::value);
+
+  auto vn = Vec<NoFormat>::with_values(NoFormat(), NoFormat(0xf00d));
+  EXPECT_EQ(fmt::format("{}", vn), "[f2-3c-ae-16, 0d-f0-00-00]");
+}
+
+TEST(SliceMut, Stream) {
+  std::stringstream s;
+  auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+  s << v.as_mut_slice();
+  EXPECT_EQ(s.str(), "[1, 2, 3, 4, 5]");
+}
+
+TEST(SliceMut, GTest) {
+  auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+  EXPECT_EQ(testing::PrintToString(v.as_mut_slice()), "[1, 2, 3, 4, 5]");
 }
 
 }  // namespace
