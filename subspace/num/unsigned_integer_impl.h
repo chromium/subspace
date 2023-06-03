@@ -16,7 +16,9 @@
 
 #include "subspace/containers/array.h"
 #include "subspace/num/unsigned_integer.h"
+#include "subspace/option/option.h"
 #include "subspace/ptr/copy.h"
+#include "subspace/result/result.h"
 
 #define _self u32
 #define _primitive uint32_t

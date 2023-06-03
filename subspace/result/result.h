@@ -782,18 +782,12 @@ struct std::equal_to<::sus::result::Result<T, E>> {
   }
 };
 
-namespace __private {
-struct NoOkBase {};
-}  // namespace __private
-
 // fmt support.
 template <class T, class E, class Char>
-  requires((std::is_void_v<T> || fmt::is_formattable<T, Char>::value) &&
-           fmt::is_formattable<E, Char>::value)
 struct fmt::formatter<::sus::result::Result<T, E>, Char> {
   template <typename ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
-    return ctx.begin();
+    return underlying_ok_.parse(ctx);
   }
 
   template <typename FormatContext>
@@ -806,21 +800,15 @@ struct fmt::formatter<::sus::result::Result<T, E>, Char> {
       out = underlying_err_.format(t.as_err(), ctx);
     } else {
       out = format_to(out, "Ok(");
-      if constexpr (std::is_void_v<T>) {
-        out = format_to(out, "<void>");
-      } else {
-        ctx.advance_to(out);
-        out = underlying_ok_.format(t.as_ok(), ctx);
-      }
+      ctx.advance_to(out);
+      out = underlying_ok_.format(t.as_ok(), ctx);
     }
     return format_to(out, ")");
   }
 
  private:
-  std::conditional_t<std::is_void_v<T>, __private::NoOkBase,
-                     fmt::formatter<T, Char>>
-      underlying_ok_;
-  formatter<E, Char> underlying_err_;
+  ::sus::string::__private::AnyOrVoidFormatter<T, Char> underlying_ok_;
+  ::sus::string::__private::AnyFormatter<E, Char> underlying_err_;
 };
 
 namespace sus {

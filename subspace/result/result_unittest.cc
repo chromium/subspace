@@ -745,19 +745,37 @@ TEST(Result, UnwrapOrElse_BasicUsageExample) {
 
 TEST(Result, fmt) {
   static_assert(fmt::is_formattable<::sus::Result<i32, i32>, char>::value);
-  EXPECT_EQ(fmt::format("{}", ::sus::Result<i32, i32>::with(12345)), "Ok(12345)");
-  EXPECT_EQ(fmt::format("{}", ::sus::Result<i32, i32>::with_err(4321)), "Err(4321)");
-  EXPECT_EQ(fmt::format("{}", ::sus::Result<std::string_view, i32>::with("12345")),
-            "Ok(12345)");
-  EXPECT_EQ(fmt::format("{}", ::sus::Result<i32, std::string_view>::with_err("4321")),
+  EXPECT_EQ(fmt::format("{}", sus::Result<i32, i32>::with(12345)), "Ok(12345)");
+  EXPECT_EQ(fmt::format("{:06}", sus::Result<i32, i32>::with(12345)),
+            "Ok(012345)");  // The format string is for the Ok value.
+  EXPECT_EQ(fmt::format("{}", sus::Result<i32, i32>::with_err(4321)),
             "Err(4321)");
+  EXPECT_EQ(fmt::format("{:06}", sus::Result<i32, i32>::with_err(4321)),
+            "Err(4321)");  // The format string is for the Ok value.
+  EXPECT_EQ(
+      fmt::format("{}", ::sus::Result<std::string_view, i32>::with("12345")),
+      "Ok(12345)");
+  EXPECT_EQ(
+      fmt::format("{}", ::sus::Result<i32, std::string_view>::with_err("4321")),
+      "Err(4321)");
 
-  struct NoFormat {};
+  struct NoFormat {
+    i32 a = 0x16ae3cf2;
+  };
   static_assert(!fmt::is_formattable<NoFormat, char>::value);
-  static_assert(!fmt::is_formattable<Result<NoFormat, i32>, char>::value);
-  static_assert(!fmt::is_formattable<Result<i32, NoFormat>, char>::value);
-  static_assert(!fmt::is_formattable<Result<NoFormat, NoFormat>, char>::value);
-  // TODO: ...or we could make it print something without the interior?
+  static_assert(fmt::is_formattable<Result<NoFormat, i32>, char>::value);
+  static_assert(fmt::is_formattable<Result<i32, NoFormat>, char>::value);
+  static_assert(fmt::is_formattable<Result<NoFormat, NoFormat>, char>::value);
+
+  EXPECT_EQ(fmt::format("{}", ::sus::Result<i32, NoFormat>::with(12345)),
+            "Ok(12345)");
+  EXPECT_EQ(
+      fmt::format("{}", ::sus::Result<i32, NoFormat>::with_err(NoFormat())),
+      "Err(f2-3c-ae-16)");
+  EXPECT_EQ(fmt::format("{}", ::sus::Result<NoFormat, i32>::with(NoFormat())),
+            "Ok(f2-3c-ae-16)");
+  EXPECT_EQ(fmt::format("{}", ::sus::Result<NoFormat, i32>::with_err(12345)),
+            "Err(12345)");
 }
 
 }  // namespace
