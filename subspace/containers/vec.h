@@ -19,6 +19,7 @@
 
 #include <concepts>
 
+#include "fmt/core.h"
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/debug_check.h"
 #include "subspace/containers/__private/vec_marker.h"
@@ -48,6 +49,8 @@
 #include "subspace/option/option.h"
 #include "subspace/ptr/copy.h"
 #include "subspace/result/result.h"
+#include "subspace/string/__private/any_formatter.h"
+#include "subspace/string/__private/format_to_stream.h"
 #include "subspace/tuple/tuple.h"
 
 // TODO: sort_by_key()
@@ -92,8 +95,7 @@ class Vec final {
   ///
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
-  sus_pure static inline constexpr Vec with_capacity(
-      usize capacity) noexcept {
+  sus_pure static inline constexpr Vec with_capacity(usize capacity) noexcept {
     check(::sus::mem::size_of<T>() * capacity <= usize{isize::MAX});
     auto v = Vec(nullptr, 0_usize, 0_usize);
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
@@ -130,9 +132,8 @@ class Vec final {
   /// * The allocated size in bytes must be no larger than `isize::MAX`.
   /// * If `ptr` is null, then `length` and `capacity` must be `0_usize`, and
   ///   vice versa.
-  sus_pure static Vec from_raw_parts(
-      ::sus::marker::UnsafeFnMarker, T* ptr, usize length,
-      usize capacity) noexcept {
+  sus_pure static Vec from_raw_parts(::sus::marker::UnsafeFnMarker, T* ptr,
+                                     usize length, usize capacity) noexcept {
     return Vec(ptr, length, capacity);
   }
 
@@ -536,16 +537,14 @@ class Vec final {
 
   // Returns a slice that references all the elements of the vector as const
   // references.
-  sus_pure constexpr Slice<T> as_slice() const& noexcept
-      sus_lifetimebound {
+  sus_pure constexpr Slice<T> as_slice() const& noexcept sus_lifetimebound {
     return *this;
   }
   constexpr Slice<T> as_slice() && = delete;
 
   // Returns a slice that references all the elements of the vector as mutable
   // references.
-  sus_pure constexpr SliceMut<T> as_mut_slice() & noexcept
-      sus_lifetimebound {
+  sus_pure constexpr SliceMut<T> as_mut_slice() & noexcept sus_lifetimebound {
     return *this;
   }
 
@@ -698,6 +697,34 @@ template <class... Ts>
 }
 
 }  // namespace sus::containers
+
+// fmt support.
+template <class T, class Char>
+struct fmt::formatter<::sus::containers::Vec<T>, Char> {
+  template <typename ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  constexpr auto format(const ::sus::containers::Vec<T>& vec,
+                        FormatContext& ctx) const {
+    auto out = ctx.out();
+    out = format_to(out, "[");
+    for (::sus::num::usize i; i < vec.len(); i += 1) {
+      if (i > 0) out = format_to(out, ", ");
+      ctx.advance_to(out);
+      out = underlying_.format(vec[i], ctx);
+    }
+    return format_to(out, "]");
+  }
+
+ private:
+  ::sus::string::__private::AnyFormatter<T, Char> underlying_;
+};
+
+// Stream support.
+sus__format_to_stream(sus::containers, Vec, T);
 
 // Promote Vec into the `sus` namespace.
 namespace sus {
