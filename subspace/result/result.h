@@ -40,6 +40,7 @@
 #include "subspace/result/__private/marker.h"
 #include "subspace/result/__private/result_state.h"
 #include "subspace/result/__private/storage.h"
+#include "subspace/string/__private/format_to_stream.h"
 
 namespace sus::iter {
 template <class Iter, class Item>
@@ -811,6 +812,9 @@ struct fmt::formatter<::sus::result::Result<T, E>, Char> {
   ::sus::string::__private::AnyOrVoidFormatter<T, Char> underlying_ok_;
   ::sus::string::__private::AnyFormatter<E, Char> underlying_err_;
 };
+
+// Stream support.
+sus__format_to_stream(sus::result, Result, T, E);
 
 namespace sus {
 using ::sus::result::Err;

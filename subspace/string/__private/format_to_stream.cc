@@ -19,21 +19,9 @@
 
 namespace sus::string::__private {
 
-template <class String, class Stream>
-Stream& format_to_stream(const String& s, Stream& os) {
+std::ostream& format_to_stream(std::ostream& os, const std::string& s) {
   os << s;
   return os;
 }
-
-#define sus__instantiate(T)                                      \
-  template std::basic_ostream<T>&                                \
-  format_to_stream<std::basic_string<T>, std::basic_ostream<T>>( \
-      const std::basic_string<T>&, std::basic_ostream<T>&)
-
-sus__instantiate(char);
-sus__instantiate(char8_t);
-sus__instantiate(char16_t);
-sus__instantiate(char32_t);
-sus__instantiate(wchar_t);
 
 }  // namespace sus::string::__private

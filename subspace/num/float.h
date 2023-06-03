@@ -31,6 +31,7 @@
 #include "subspace/num/fp_category.h"
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
+#include "subspace/string/__private/format_to_stream.h"
 
 namespace sus::num {
 

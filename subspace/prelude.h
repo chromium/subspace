@@ -22,9 +22,6 @@
 #include "subspace/num/types.h"
 #include "subspace/ops/range_literals.h"
 
-// TODO: Make a compile-time option to drop these.
-#include "subspace/string/compat_stream.h"
-
 // Imports all the things that are pulled into the top-level namespace.
 // TODO: Make a compile-time option for this.
 

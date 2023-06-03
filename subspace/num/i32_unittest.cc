@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <sstream>
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
@@ -196,16 +197,16 @@ TEST(i32, Constants) {
 }
 
 template <class From, class To>
-concept IsImplicitlyConvertible = (std::is_convertible_v<From, To> &&
-                                   std::is_assignable_v<To, From>);
+concept IsImplicitlyConvertible =
+    (std::is_convertible_v<From, To> && std::is_assignable_v<To, From>);
 template <class From, class To>
-concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
-                                   !std::is_convertible_v<From, To> &&
-                                   !std::is_assignable_v<To, From>);
+concept IsExplicitlyConvertible =
+    (std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+     !std::is_assignable_v<To, From>);
 template <class From, class To>
-concept NotConvertible = (!std::constructible_from<To, From> &&
-                          !std::is_convertible_v<From, To> &&
-                          !std::is_assignable_v<To, From>);
+concept NotConvertible =
+    (!std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+     !std::is_assignable_v<To, From>);
 
 template <class T>
 auto make_enum() {
@@ -2998,5 +2999,13 @@ TEST(i32, fmt) {
   EXPECT_EQ(fmt::format("{}", 1234567_i32), "1234567");
   EXPECT_EQ(fmt::format("{:+#x}", 1234567_i32), "+0x12d687");
 }
+
+TEST(i32, Stream) {
+  std::stringstream s;
+  s << 1_i32 << " " << 2_i32 << " " << 3_i32;
+  EXPECT_EQ(s.str(), "1 2 3");
+}
+
+TEST(i32, GTest) { EXPECT_EQ(testing::PrintToString(123_i32), "123"); }
 
 }  // namespace
