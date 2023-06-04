@@ -409,7 +409,9 @@ TEST(Tuple, StrongOrder) {
 }
 
 struct Weak final {
-  auto operator==(const Weak& o) const& noexcept { return a == o.a && b == o.b; }
+  auto operator==(const Weak& o) const& noexcept {
+    return a == o.a && b == o.b;
+  }
   auto operator<=>(const Weak& o) const& noexcept {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
@@ -529,6 +531,32 @@ TEST(Tuple, Destroy) {
   }
   // Tuple elements are destroyed from first to last.
   EXPECT_EQ(destroy.primitive_value, (((0u + 1u) * 1u + 2u) * 2u + 3u) * 3u);
+}
+
+TEST(Tuple, fmt) {
+  auto t3 = Tuple<int, float, char>::with(2, 3.f, 'c');
+  static_assert(fmt::is_formattable<decltype(t3), char>::value);
+  EXPECT_EQ(fmt::format("{}", t3), "(2, 3, c)");
+
+  struct NoFormat {
+    i32 a = 0x16ae3cf2;
+  };
+  static_assert(!fmt::is_formattable<NoFormat, char>::value);
+
+  auto tn = Tuple<NoFormat, NoFormat>::with(NoFormat(), NoFormat(0xf00d));
+  static_assert(fmt::is_formattable<decltype(tn), char>::value);
+  EXPECT_EQ(fmt::format("{}", tn), "(f2-3c-ae-16, 0d-f0-00-00)");
+}
+
+TEST(Tuple, Stream) {
+  std::stringstream s;
+  s << Tuple<int, float, char>::with(2, 3.f, 'c');
+  EXPECT_EQ(s.str(), "(2, 3, c)");
+}
+
+TEST(Tuple, GTest) {
+  EXPECT_EQ(testing::PrintToString(Tuple<int, float, char>::with(2, 3.f, 'c')),
+            "(2, 3, c)");
 }
 
 }  // namespace
