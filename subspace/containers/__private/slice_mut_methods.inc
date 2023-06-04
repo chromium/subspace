@@ -27,12 +27,16 @@
 /////////////////////////////////////////////////////////
 
 // If we're deleting rvalue const access, we don't want to give rvalue mut
-// access either. Use this in place of no-qualifer-at-all for methods that
-// return a reference.
+// access either. If we're not deleting rvalue usage, the type does not own the
+// data being pointed to, so it can give a mutable pointer when const (since it
+// can just be copied from const to become mutable anyway then). Use this in
+// place of no-qualifer-at-all for methods that return a reference.
 #if _delete_rvalue
-#define LVALUE_MUT &
+#define RETURN_REF &
+#define NO_RETURN_REF
 #else
-#define LVALUE_MUT
+#define RETURN_REF const&
+#define NO_RETURN_REF const&
 #endif
 
 /// Returns a mutable pointer to the first element in the slice.
@@ -42,7 +46,7 @@
 ///
 /// Modifying the container referenced by this slice may cause its buffer to
 /// be reallocated, which would also make any pointers to it invalid.
-sus_pure constexpr inline T* as_mut_ptr() LVALUE_MUT noexcept {
+sus_pure constexpr inline T* as_mut_ptr() RETURN_REF noexcept {
   return _ptr_expr;
 }
 
@@ -61,7 +65,7 @@ sus_pure constexpr inline T* as_mut_ptr() LVALUE_MUT noexcept {
 /// stdlib algorthms. Note that the pointers can be unpacked from the Range
 /// with structured bindings as in `auto [a, b] = s.as_mut_ptr_range();`.
 sus_pure constexpr ::sus::ops::Range<T*> as_mut_ptr_range()
-    LVALUE_MUT noexcept {
+    RETURN_REF noexcept {
   return ::sus::ops::Range<T*>(as_mut_ptr(), as_mut_ptr() + len());
 }
 
@@ -81,8 +85,8 @@ sus_pure constexpr ::sus::ops::Range<T*> as_mut_ptr_range()
 /// remainder as a smaller chunk, and `rchunks_exact_mut()` for the same
 /// iterator but starting at the end of the slice.
 ///
-constexpr ChunksExactMut<T> chunks_exact_mut(
-    ::sus::num::usize chunk_size) LVALUE_MUT noexcept {
+constexpr ChunksExactMut<T> chunks_exact_mut(::sus::num::usize chunk_size)
+    RETURN_REF noexcept {
   ::sus::check(chunk_size > 0u);
   return ChunksExactMut<T>::with(*this, chunk_size);
 }
@@ -101,8 +105,8 @@ constexpr ChunksExactMut<T> chunks_exact_mut(
 /// # Panics
 /// Panics if chunk_size is 0.
 ///
-constexpr ChunksMut<T> chunks_mut(
-    ::sus::num::usize chunk_size) LVALUE_MUT noexcept {
+constexpr ChunksMut<T> chunks_mut(::sus::num::usize chunk_size)
+    RETURN_REF noexcept {
   ::sus::check(chunk_size > 0u);
   return ChunksMut<T>::with(*this, chunk_size);
 }
@@ -117,7 +121,7 @@ constexpr ChunksMut<T> chunks_mut(
 ///
 /// # Panics This function will panic if the two slices have different lengths,
 /// or if the two slices overlap.
-constexpr void copy_from_slice(Slice<T> src) noexcept
+constexpr void copy_from_slice(const Slice<T>& src) NO_RETURN_REF noexcept
   requires(::sus::mem::TrivialCopy<T>)
 {
   const ::sus::num::usize src_len = src.len();
@@ -166,8 +170,8 @@ constexpr void copy_from_slice(Slice<T> src) noexcept
 /// * The length of `*this` (and `src`) must be greater than 0, and must not
 /// overflow when multiplied by the size of `T`.
 /// * The `src` slice must not overlap (aka alias) with `*this` in memory.
-constexpr void copy_from_slice_unchecked(::sus::marker::UnsafeFnMarker,
-                                         Slice<T> src) noexcept
+constexpr void copy_from_slice_unchecked(
+    ::sus::marker::UnsafeFnMarker, const Slice<T>& src) NO_RETURN_REF noexcept
   requires(std::is_trivially_copy_assignable_v<T>)
 {
   const ::sus::num::usize dst_len = len();
@@ -194,7 +198,7 @@ constexpr void copy_from_slice_unchecked(::sus::marker::UnsafeFnMarker,
 ///
 /// # Panics
 /// This function will panic if the two slices have different lengths.
-constexpr void clone_from_slice(Slice<T> src) noexcept
+constexpr void clone_from_slice(const Slice<T>& src) NO_RETURN_REF noexcept
   requires(::sus::mem::Clone<T>)
 {
   const ::sus::num::usize src_len = src.len();
@@ -208,7 +212,7 @@ constexpr void clone_from_slice(Slice<T> src) noexcept
 }
 
 /// Fills the slice with elements by cloning `value`.
-constexpr void fill(T value) noexcept
+constexpr void fill(T value) NO_RETURN_REF noexcept
   requires(::sus::mem::Clone<T>)
 {
   // This method receives `value` by value to avoid the possiblity that it
@@ -227,7 +231,7 @@ constexpr void fill(T value) noexcept
 /// This method uses a closure to create new values. If you’d rather `Clone` a
 /// given value, use `fill()`. If you want to default-construct elements for a
 /// type that satisfies `sus::construct::Default`, use `fill_with_default()`.
-constexpr void fill_with(::sus::fn::FnMutRef<T()> f) noexcept {
+constexpr void fill_with(::sus::fn::FnMutRef<T()> f) NO_RETURN_REF noexcept {
   T* ptr = as_mut_ptr();
   T* const end_ptr = ptr + len();
   while (ptr != end_ptr) {
@@ -237,7 +241,7 @@ constexpr void fill_with(::sus::fn::FnMutRef<T()> f) noexcept {
 }
 
 /// Fills the slice with default-constructed elements of type `T`.
-constexpr void fill_with_default() noexcept
+constexpr void fill_with_default() NO_RETURN_REF noexcept
   requires(sus::construct::Default<T>)
 {
   T* ptr = as_mut_ptr();
@@ -250,32 +254,16 @@ constexpr void fill_with_default() noexcept
 
 /// Returns a mutable reference to the first element of the slice, or None if it
 /// is empty.
-sus_pure constexpr ::sus::Option<T&> first_mut()
-    LVALUE_MUT noexcept {
+sus_pure constexpr ::sus::Option<T&> first_mut() RETURN_REF noexcept {
   if (len() > 0u)
     return ::sus::Option<T&>::some(*as_mut_ptr());
   else
     return ::sus::Option<T&>::none();
 }
 
-// Documented on the const overload.
-sus_pure constexpr T& operator[](::sus::num::usize i) & noexcept {
-  check(i < len());
-  return get_unchecked_mut(::sus::marker::unsafe_fn, i);
-}
-
-#if !_delete_rvalue
-// Documented on the const overload.
-constexpr T& operator[](::sus::num::usize i) && noexcept {
-  check(i < len());
-  return get_unchecked_mut(::sus::marker::unsafe_fn, i);
-}
-#endif
-
 /// Returns a mutable reference to the element at index `i`, or `None` if
 /// `i` is beyond the end of the Slice.
-sus_pure constexpr Option<T&> get_mut(
-    ::sus::num::usize i) LVALUE_MUT noexcept {
+sus_pure constexpr Option<T&> get_mut(::sus::num::usize i) RETURN_REF noexcept {
   if (i < len()) [[likely]]
     return Option<T&>::some(get_unchecked_mut(::sus::marker::unsafe_fn, i));
   else
@@ -289,40 +277,10 @@ sus_pure constexpr Option<T&> get_mut(
 /// Behaviour results. The size of the slice must therefore also have a
 /// length of at least 1.
 sus_pure constexpr inline T& get_unchecked_mut(
-    ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) LVALUE_MUT noexcept {
+    ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) RETURN_REF noexcept {
   sus_debug_check(i.primitive_value < _len_expr.primitive_value);
   return as_mut_ptr()[size_t{i}];
 }
-
-// Documented on the const overload of operator[](RangeBounds).
-sus_pure constexpr inline SliceMut<T> operator[](
-    const ::sus::ops::RangeBounds<::sus::num::usize> auto range) & noexcept {
-  const ::sus::num::usize length = len();
-  const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
-  const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
-  const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  ::sus::check(rlen <= length);  // Avoid underflow below.
-  // We allow rstart == len() && rend == len(), which returns an empty
-  // slice.
-  ::sus::check(rstart <= length && rstart <= length - rlen);
-  return SliceMut<T>(as_mut_ptr() + rstart, rlen);
-}
-
-#if !_delete_rvalue
-// Documented on the const overload of operator[](RangeBounds).
-sus_pure constexpr inline SliceMut<T> operator[](
-    const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && noexcept {
-  const ::sus::num::usize length = len();
-  const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
-  const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
-  const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  ::sus::check(rlen <= length);  // Avoid underflow below.
-  // We allow rstart == len() && rend == len(), which returns an empty
-  // slice.
-  ::sus::check(rstart <= length && rstart <= length - rlen);
-  return SliceMut<T>(as_mut_ptr() + rstart, rlen);
-}
-#endif
 
 /// Returns a subslice which contains elements in `range`, which specifies a
 /// start and a length.
@@ -336,7 +294,7 @@ sus_pure constexpr inline SliceMut<T> operator[](
 /// of bounds.
 sus_pure constexpr Option<SliceMut<T>> get_range_mut(
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
-    LVALUE_MUT noexcept {
+    RETURN_REF noexcept {
   const ::sus::num::usize length = len();
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
   const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
@@ -345,7 +303,8 @@ sus_pure constexpr Option<SliceMut<T>> get_range_mut(
   // We allow rstart == len() && rend == len(), which returns an empty
   // slice.
   if (rstart > length || rstart > length - rlen) return sus::none();
-  return Option<SliceMut<T>>::some(SliceMut(as_mut_ptr() + rstart, rlen));
+  return Option<SliceMut<T>>::some(SliceMut<T>::from_raw_parts_mut(
+      ::sus::marker::unsafe_fn, as_mut_ptr() + rstart, rlen));
 }
 
 /// Returns a subslice which contains elements in `range`, which specifies a
@@ -362,24 +321,24 @@ sus_pure constexpr Option<SliceMut<T>> get_range_mut(
 sus_pure constexpr SliceMut<T> get_range_mut_unchecked(
     ::sus::marker::UnsafeFnMarker,
     const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
-    LVALUE_MUT noexcept {
+    RETURN_REF noexcept {
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
   const ::sus::num::usize rend = range.end_bound().unwrap_or(len());
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  return SliceMut<T>(as_mut_ptr() + rstart, rlen);
+  return SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
+                                         as_mut_ptr() + rstart, rlen);
 }
 
 /// Returns an iterator over all the elements in the slice, visited in the
 /// same order they appear in the slice. The iterator gives mutable access to
 /// each element.
-sus_pure constexpr SliceIterMut<T&> iter_mut() LVALUE_MUT noexcept {
+sus_pure constexpr SliceIterMut<T&> iter_mut() RETURN_REF noexcept {
   return SliceIterMut<T&>::with(as_mut_ptr(), len());
 }
 
 /// Returns a mutable reference to the last element of the slice, or None if it
 /// is empty.
-sus_pure constexpr ::sus::Option<T&> last_mut()
-    LVALUE_MUT noexcept {
+sus_pure constexpr ::sus::Option<T&> last_mut() RETURN_REF noexcept {
   const ::sus::num::usize length = len();
   if (length > 0u)
     return ::sus::Option<T&>::some(*(as_mut_ptr() + length - 1u));
@@ -404,8 +363,8 @@ sus_pure constexpr ::sus::Option<T&> last_mut()
 ///
 /// # Panics
 /// Panics if `chunk_size` is 0.
-constexpr RChunksExactMut<T> rchunks_exact_mut(
-    ::sus::num::usize chunk_size) LVALUE_MUT noexcept {
+constexpr RChunksExactMut<T> rchunks_exact_mut(::sus::num::usize chunk_size)
+    RETURN_REF noexcept {
   ::sus::check(chunk_size > 0u);
   return RChunksExactMut<T>::with(*this, chunk_size);
 }
@@ -423,8 +382,8 @@ constexpr RChunksExactMut<T> rchunks_exact_mut(
 ///
 /// # Panics
 /// Panics if `chunk_size` is 0.
-constexpr RChunksMut<T> rchunks_mut(
-    ::sus::num::usize chunk_size) LVALUE_MUT noexcept {
+constexpr RChunksMut<T> rchunks_mut(::sus::num::usize chunk_size)
+    RETURN_REF noexcept {
   ::sus::check(chunk_size > 0u);
   return RChunksMut<T>::with(*this, chunk_size);
 }
@@ -440,7 +399,7 @@ constexpr RChunksMut<T> rchunks_mut(
 /// sf.reverse();
 /// sus::check(sf == sb);
 /// ```
-constexpr void reverse() noexcept
+constexpr void reverse() NO_RETURN_REF noexcept
   requires(::sus::mem::Move<T>)
 {
   const auto half_len = len() / 2;
@@ -483,7 +442,7 @@ constexpr void reverse() noexcept
 ///
 /// # Complexity
 /// Takes linear (in `len()`) time.
-void rotate_left(::sus::num::usize mid) noexcept
+void rotate_left(::sus::num::usize mid) NO_RETURN_REF noexcept
   requires(::sus::mem::Move<T>)
 {
   const ::sus::num::usize length = len();
@@ -554,7 +513,7 @@ void rotate_left(::sus::num::usize mid) noexcept
 ///
 /// # Complexity
 /// Takes linear (in `len()`) time.
-void rotate_right(::sus::num::usize k) noexcept
+void rotate_right(::sus::num::usize k) NO_RETURN_REF noexcept
   requires(::sus::mem::Move<T>)
 {
   rotate_left(len() - k);
@@ -566,8 +525,8 @@ void rotate_right(::sus::num::usize k) noexcept
 ///
 /// As with `split_mut()`, if the first or last element is matched, an empty
 /// slice will be the first (or last) item returned by the iterator.
-constexpr RSplitMut<T> rsplit_mut(
-    ::sus::fn::FnMutRef<bool(const T&)> pred) LVALUE_MUT noexcept {
+constexpr RSplitMut<T> rsplit_mut(::sus::fn::FnMutRef<bool(const T&)> pred)
+    RETURN_REF noexcept {
   return RSplitMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred)));
 }
 
@@ -577,7 +536,7 @@ constexpr RSplitMut<T> rsplit_mut(
 ///
 /// The last element returned, if any, will contain the remainder of the slice.
 constexpr RSplitNMut<T> rsplitn_mut(
-    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) LVALUE_MUT noexcept {
+    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) RETURN_REF noexcept {
   return RSplitNMut<T>::with(
       RSplitMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred))), n);
 }
@@ -600,7 +559,7 @@ constexpr RSplitNMut<T> rsplitn_mut(
 /// # Panics
 /// Panics when `index >= len()`, meaning it always panics on empty slices.
 ::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable(
-    usize index) LVALUE_MUT noexcept
+    usize index) RETURN_REF noexcept
   requires(::sus::ops::Ord<T>)
 {
   return select_nth_unstable_by(index,
@@ -627,7 +586,7 @@ constexpr RSplitNMut<T> rsplitn_mut(
 ::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable_by(
     usize index,
     ::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)> compare)
-    LVALUE_MUT noexcept {
+    RETURN_REF noexcept {
   ::sus::check_with_message(
       index < len(), *"partition_at_index index greater than length of slice");
 
@@ -656,7 +615,7 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
   requires(::sus::ops::Ord<Key>)
 ::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable_by_key(
-    usize index, KeyFn f) LVALUE_MUT noexcept {
+    usize index, KeyFn f) RETURN_REF noexcept {
   return select_nth_unstable_by(
       index, [&f](const T& a, const T& b) { return f(a) <=> f(b); });
 }
@@ -676,7 +635,7 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
 ///
 /// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
 /// also be constexpr?
-void sort() noexcept
+void sort() NO_RETURN_REF noexcept
   requires(::sus::ops::Ord<T>)
 {
   if (len() > ::sus::num::usize(0u)) {
@@ -699,7 +658,7 @@ void sort() noexcept
 /// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
 /// also be constexpr?
 void sort_by(::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>
-                 compare) noexcept {
+                 compare) NO_RETURN_REF noexcept {
   if (len() > ::sus::num::usize(0u)) {
     std::stable_sort(
         as_mut_ptr(), as_mut_ptr() + len(),
@@ -728,14 +687,14 @@ void sort_by(::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>
 template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
   requires(::sus::ops::Ord<Key>)
-void sort_by_key(KeyFn f) noexcept {
+void sort_by_key(KeyFn f) NO_RETURN_REF noexcept {
   return sort_by([&f](const T& a, const T& b) { return f(a) <=> f(b); });
 }
 
 template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
   requires(::sus::ops::Ord<Key>)
-void sort_by_cached_key(KeyFn f) noexcept {
+void sort_by_cached_key(KeyFn f) NO_RETURN_REF noexcept {
   constexpr auto sz_u8 = ::sus::mem::size_of<::sus::Tuple<Key, u8>>();
   constexpr auto sz_u16 = ::sus::mem::size_of<::sus::Tuple<Key, u16>>();
   constexpr auto sz_u32 = ::sus::mem::size_of<::sus::Tuple<Key, u32>>();
@@ -774,7 +733,7 @@ void sort_by_cached_key(KeyFn f) noexcept {
 ///
 /// TODO: Rust's sort is unstable (i.e., may reorder equal elements), in-place
 /// (i.e., does not allocate), and O(n * log(n)) worst-case.
-constexpr void sort_unstable() noexcept
+constexpr void sort_unstable() NO_RETURN_REF noexcept
   requires(::sus::ops::Ord<T>)
 {
   if (len() > 0u) {
@@ -796,8 +755,8 @@ constexpr void sort_unstable() noexcept
 /// TODO: Rust's sort is unstable (i.e., may reorder equal elements), in-place
 /// (i.e., does not allocate), and O(n * log(n)) worst-case.
 constexpr void sort_unstable_by(
-    ::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>
-        compare) noexcept {
+    ::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)> compare)
+    NO_RETURN_REF noexcept {
   if (len() > 0u) {
     std::sort(as_mut_ptr(), as_mut_ptr() + len(),
               [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
@@ -816,7 +775,7 @@ constexpr void sort_unstable_by(
 template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
   requires(::sus::ops::Ord<Key>)
-void sort_unstable_by_key(KeyFn f) noexcept {
+void sort_unstable_by_key(KeyFn f) NO_RETURN_REF noexcept {
   return sort_unstable_by(
       [&f](const T& a, const T& b) { return f(a) <=> f(b); });
 }
@@ -827,8 +786,8 @@ void sort_unstable_by_key(KeyFn f) noexcept {
 /// If the first element is matched, an empty slice will be the first item
 /// returned by the iterator. Similarly, if the last element in the slice is
 /// matched, an empty slice will be the last item returned by the iterator.
-constexpr SplitMut<T> split_mut(
-    ::sus::fn::FnMutRef<bool(const T&)> pred) LVALUE_MUT noexcept {
+constexpr SplitMut<T> split_mut(::sus::fn::FnMutRef<bool(const T&)> pred)
+    RETURN_REF noexcept {
   return SplitMut<T>::with(*this, ::sus::move(pred));
 }
 
@@ -840,8 +799,8 @@ constexpr SplitMut<T> split_mut(
 ///
 /// # Panics
 /// Panics if `mid > len()`.
-sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>>
-split_at_mut(::sus::num::usize mid) LVALUE_MUT noexcept {
+sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>> split_at_mut(
+    ::sus::num::usize mid) RETURN_REF noexcept {
   ::sus::check(mid <= len());
   return split_at_mut_unchecked(::sus::marker::unsafe_fn, mid);
 }
@@ -861,7 +820,7 @@ split_at_mut(::sus::num::usize mid) LVALUE_MUT noexcept {
 /// that `0 <= mid <= len()`.
 sus_pure constexpr ::sus::Tuple<SliceMut<T>, SliceMut<T>>
 split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
-                       ::sus::num::usize mid) LVALUE_MUT noexcept {
+                       ::sus::num::usize mid) RETURN_REF noexcept {
   // SAFETY: Caller has to check that `0 <= mid <= len()`.
   sus_debug_check(mid.primitive_value <= _len_expr.primitive_value);
   return ::sus::Tuple<SliceMut<T>, SliceMut<T>>::with(
@@ -874,10 +833,14 @@ split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
 /// Returns the first and all the rest of the elements of the slice, or `None`
 /// if it is empty.
 sus_pure constexpr ::sus::Option<::sus::Tuple<T&, SliceMut<T>>>
-split_first_mut() LVALUE_MUT noexcept {
+split_first_mut() RETURN_REF noexcept {
   if (is_empty()) return ::sus::none();
   return ::sus::some(
-      ::sus::tuple(*as_mut_ptr(), (*this)[::sus::ops::RangeFrom<usize>(1)]));
+      ::sus::tuple(*as_mut_ptr(),
+                   // SAFETY: `last` must be <= len(), and it is by construction
+                   // from `1` with len() > 0.
+                   get_range_mut_unchecked(::sus::marker::unsafe_fn,
+                                           ::sus::ops::RangeFrom<usize>(1))));
 }
 
 /// Returns an iterator over subslices separated by elements that match `pred`.
@@ -888,18 +851,22 @@ split_first_mut() LVALUE_MUT noexcept {
 /// the terminator of the preceding slice. That slice will be the last item
 /// returned by the iterator.
 constexpr SplitInclusiveMut<T> split_inclusive_mut(
-    ::sus::fn::FnMutRef<bool(const T&)> pred) LVALUE_MUT noexcept {
+    ::sus::fn::FnMutRef<bool(const T&)> pred) RETURN_REF noexcept {
   return SplitInclusiveMut<T>::with(*this, ::sus::move(pred));
 }
 
 /// Returns the last and all the rest of the elements of the slice, or `None` if
 /// it is empty.
-sus_pure constexpr ::sus::Option<::sus::Tuple<T&, SliceMut<T>>>
-split_last_mut() LVALUE_MUT noexcept {
+sus_pure constexpr ::sus::Option<::sus::Tuple<T&, SliceMut<T>>> split_last_mut()
+    RETURN_REF noexcept {
   if (is_empty()) return ::sus::none();
   const usize last = len() - 1u;
-  return ::sus::some(::sus::tuple(*(as_mut_ptr() + last),
-                                  (*this)[::sus::ops::RangeTo<usize>(last)]));
+  return ::sus::some(
+      ::sus::tuple(*(as_mut_ptr() + last),
+                   // SAFETY: `last` must be <= len(), and it is by construction
+                   // from `len() - 1`.
+                   get_range_mut_unchecked(::sus::marker::unsafe_fn,
+                                           ::sus::ops::RangeTo<usize>(last))));
 }
 
 /// Returns an iterator over mutable subslices separated by elements that match
@@ -908,7 +875,7 @@ split_last_mut() LVALUE_MUT noexcept {
 ///
 /// The last element returned, if any, will contain the remainder of the slice.
 constexpr SplitNMut<T> splitn_mut(
-    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) LVALUE_MUT noexcept {
+    usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) RETURN_REF noexcept {
   return SplitNMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred)), n);
 }
 
@@ -920,8 +887,8 @@ constexpr SplitNMut<T> splitn_mut(
 /// If the slice does not start with `prefix`, returns `None`.
 ///
 /// TODO: Accept a `SlicePattern<T>` concept instead of just a `Slice<T>`.
-constexpr ::sus::Option<SliceMut<T>> strip_prefix_mut(
-    Slice<T> prefix) LVALUE_MUT noexcept
+constexpr ::sus::Option<SliceMut<T>> strip_prefix_mut(const Slice<T>& prefix)
+    RETURN_REF noexcept
   requires(::sus::ops::Eq<T>)
 {
   const usize n = prefix.len();
@@ -940,8 +907,8 @@ constexpr ::sus::Option<SliceMut<T>> strip_prefix_mut(
 /// wrapped in `Some`. If `suffix` is empty, simply returns the original slice.
 ///
 /// If the slice does not end with `suffix`, returns `None`.
-constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(
-    Slice<T> suffix) LVALUE_MUT noexcept
+constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(const Slice<T>& suffix)
+    RETURN_REF noexcept
   requires(::sus::ops::Eq<T>)
 {
   const auto l = len();
@@ -963,8 +930,10 @@ constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(
 ///
 /// # Panics
 /// Panics if a or b are out of bounds.
-constexpr void swap(usize a, usize b) noexcept {
-  ::sus::mem::swap((*this)[a], (*this)[b]);
+constexpr void swap(usize a, usize b) NO_RETURN_REF noexcept {
+  ::sus::check(a < len() && b < len());
+  // SAFETY: The check above ensures `a` and `b` are in range.
+  ::sus::mem::swap(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
 }
 
 /// Swaps two elements in the slice. The arguments must not both refer to the
@@ -981,7 +950,7 @@ constexpr void swap(usize a, usize b) noexcept {
 /// If `a` or `b` are out of bounds, or if `a` and `b` refer to the same
 /// element, Undefined Behaviour will occur.
 constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, usize a,
-                                   usize b) noexcept {
+                                   usize b) NO_RETURN_REF noexcept {
   sus_debug_check(a.primitive_value != b.primitive_value);
   sus_debug_check(a.primitive_value < _len_expr.primitive_value);
   sus_debug_check(b.primitive_value < _len_expr.primitive_value);
@@ -1003,7 +972,7 @@ constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, usize a,
 /// # Safety
 /// If `a` or `b` are out of bounds, Undefined Behaviour will occur.
 constexpr void swap_unchecked(::sus::marker::UnsafeFnMarker, usize a,
-                              usize b) noexcept {
+                              usize b) NO_RETURN_REF noexcept {
   sus_debug_check(a.primitive_value < _len_expr.primitive_value);
   sus_debug_check(b.primitive_value < _len_expr.primitive_value);
   ::sus::mem::swap(*(as_mut_ptr() + a), *(as_mut_ptr() + b));
@@ -1016,7 +985,8 @@ constexpr void swap_unchecked(::sus::marker::UnsafeFnMarker, usize a,
 /// # Panics
 /// This function will panic if the two slices have different lengths, or if
 /// other overlaps with `*this`.
-constexpr void swap_with_slice(SliceMut<T> other) noexcept {
+constexpr void swap_with_slice(const SliceMut<T>& other)
+    NO_RETURN_REF noexcept {
   auto const self_len = len();
   auto const other_len = other.len();
   T* const self_ptr = as_mut_ptr();
@@ -1041,12 +1011,12 @@ constexpr void swap_with_slice(SliceMut<T> other) noexcept {
 ///
 /// # Panics
 /// Panics if `size` is 0.
-sus_pure constexpr WindowsMut<T> windows_mut(
-    usize size) LVALUE_MUT noexcept {
+sus_pure constexpr WindowsMut<T> windows_mut(usize size) RETURN_REF noexcept {
   ::sus::check(size > 0u);
   return WindowsMut<T>::with(*this, size);
 }
 
-#undef LVALUE_MUT
+#undef RETURN_REF
+#undef NO_RETURN_REF
 
 // TODO: into_vec(Own<Slice<T>>) &&

@@ -288,7 +288,7 @@ constexpr bool contains(const T& x) const& noexcept
 }
 
 /// Returns `true` if `suffix` is a suffix of the slice.
-constexpr bool ends_with(Slice<T> suffix) const& noexcept
+constexpr bool ends_with(const Slice<T>& suffix) const& noexcept
   requires(::sus::ops::Eq<T>)
 {
   const auto m = len();
@@ -308,21 +308,6 @@ sus_pure constexpr ::sus::Option<const T&> first() const& noexcept {
 
 #if _delete_rvalue
 constexpr ::sus::Option<const T&> first() && = delete;
-#endif
-
-/// Returns a reference to the element at position `i` in the Slice.
-///
-/// # Panics
-/// If the index `i` is beyond the end of the slice, the function will panic.
-/// #[doc.overloads=slice.index.usize]
-sus_pure constexpr inline const T& operator[](
-    ::sus::num::usize i) const& noexcept {
-  ::sus::check(i < len());
-  return get_unchecked(::sus::marker::unsafe_fn, i);
-}
-
-#if _delete_rvalue
-constexpr inline const T& operator[](::sus::num::usize i) && = delete;
 #endif
 
 /// Returns a const reference to the element at index `i`, or `None` if
@@ -353,38 +338,6 @@ sus_pure constexpr inline const T& get_unchecked(
 #if _delete_rvalue
 constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
                                         ::sus::num::usize i) && = delete;
-#endif
-
-/// Returns a subslice which contains elements in `range`, which specifies a
-/// start and a length.
-///
-/// The start is the index of the first element to be returned in the
-/// subslice, and the length is the number of elements in the output slice.
-/// As such, `r.get_range(Range(0u, r.len()))` returns a slice over the
-/// full set of elements in `r`.
-///
-/// # Panics
-/// If the Range would otherwise contain an element that is out of bounds,
-/// the function will panic.
-/// #[doc.overloads=slice.index.range]
-sus_pure constexpr inline Slice<T> operator[](
-    const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
-    const& noexcept {
-  const ::sus::num::usize length = len();
-  const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
-  const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
-  const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  ::sus::check(rlen <= length);  // Avoid underflow below.
-  // We allow rstart == len() && rend == len(), which returns an empty
-  // slice.
-  ::sus::check(rstart <= length && rstart <= length - rlen);
-  return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + rstart,
-                                  rlen);
-}
-
-#if _delete_rvalue
-constexpr inline Slice<T> operator[](
-    const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && = delete;
 #endif
 
 /// Returns a subslice which contains elements in `range`, which specifies a
@@ -846,7 +799,7 @@ constexpr Split<T> splitn(usize n,
 #endif
 
 /// Returns `true` if `needle` is a prefix of the slice.
-constexpr bool starts_with(Slice<T> needle) const&
+constexpr bool starts_with(const Slice<T>& needle) const&
   requires(::sus::ops::Eq<T>)
 {
   const auto n = needle.len();
@@ -861,7 +814,8 @@ constexpr bool starts_with(Slice<T> needle) const&
 /// If the slice does not start with `prefix`, returns `None`.
 ///
 /// TODO: Accept a `SlicePattern<T>` concept instead of just a `Slice<T>`.
-constexpr ::sus::Option<Slice<T>> strip_prefix(Slice<T> prefix) const& noexcept
+constexpr ::sus::Option<Slice<T>> strip_prefix(
+    const Slice<T>& prefix) const& noexcept
   requires(::sus::ops::Eq<T>)
 {
   const usize n = prefix.len();
@@ -875,7 +829,8 @@ constexpr ::sus::Option<Slice<T>> strip_prefix(Slice<T> prefix) const& noexcept
 }
 
 #if _delete_rvalue
-constexpr ::sus::Option<Slice<T>> strip_prefix(Slice<T> prefix) const& = delete;
+constexpr ::sus::Option<Slice<T>> strip_prefix(const Slice<T>& prefix) const& =
+    delete;
 #endif
 
 /// Returns a subslice with the `suffix` removed.
@@ -884,7 +839,8 @@ constexpr ::sus::Option<Slice<T>> strip_prefix(Slice<T> prefix) const& = delete;
 /// wrapped in `Some`. If `suffix` is empty, simply returns the original slice.
 ///
 /// If the slice does not end with `suffix`, returns `None`.
-constexpr ::sus::Option<Slice<T>> strip_suffix(Slice<T> suffix) const& noexcept
+constexpr ::sus::Option<Slice<T>> strip_suffix(
+    const Slice<T>& suffix) const& noexcept
   requires(::sus::ops::Eq<T>)
 {
   const auto l = len();
@@ -899,7 +855,8 @@ constexpr ::sus::Option<Slice<T>> strip_suffix(Slice<T> suffix) const& noexcept
 }
 
 #if _delete_rvalue
-constexpr ::sus::Option<Slice<T>> strip_suffix(Slice<T> suffix) const& = delete;
+constexpr ::sus::Option<Slice<T>> strip_suffix(const Slice<T>& suffix) const& =
+    delete;
 #endif
 
 /// Constructs a `Vec<T>` by cloning each value in the Slice.

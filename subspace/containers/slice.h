@@ -64,6 +64,13 @@ class Vec;
 ///
 /// Slices are a view into a block of memory represented as a pointer and a
 /// length.
+///
+/// # Slices as function parameters
+///
+/// Receiving Slice as a const reference `const Slice<T>&` allows receiving a
+/// `Slice`, `SliceMut`, or `Vec`, without any constructor or destructor being
+/// generated at all. This is preferable to receiving them by value which would
+/// force a constructor.
 template <class T>
 class [[sus_trivial_abi]] Slice final {
  public:
@@ -95,7 +102,7 @@ class [[sus_trivial_abi]] Slice final {
   sus_pure static constexpr inline Slice from_raw_parts(
       ::sus::marker::UnsafeFnMarker, const T* data sus_lifetimebound,
       ::sus::usize len) noexcept {
-    ::sus::check(size_t{len} <= size_t{isize::MAX_PRIMITIVE});
+    ::sus::check(size_t{len} <= size_t{isize::MAX});
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
     // and store a mutable pointer.
@@ -108,7 +115,7 @@ class [[sus_trivial_abi]] Slice final {
   ///
   /// #[doc.overloads=from.array]
   template <size_t N>
-    requires(N <= size_t{isize::MAX_PRIMITIVE})
+    requires(N <= size_t{isize::MAX})
   sus_pure static constexpr inline Slice from(
       const T (&data)[N] sus_lifetimebound) {
     // We strip the `const` off `data`, however only const access is provided
@@ -148,6 +155,44 @@ class [[sus_trivial_abi]] Slice final {
   friend constexpr inline bool operator==(const Slice<T>& l,
                                           const Slice<U>& r) = delete;
 
+  /// Returns a reference to the element at position `i` in the Slice.
+  ///
+  /// # Panics
+  /// If the index `i` is beyond the end of the slice, the function will panic.
+  /// #[doc.overloads=slice.index.usize]
+  sus_pure constexpr inline const T& operator[](
+      ::sus::num::usize i) const& noexcept {
+    ::sus::check(i < len());
+    return *(as_ptr() + i);
+  }
+
+  /// Returns a subslice which contains elements in `range`, which specifies a
+  /// start and a length.
+  ///
+  /// The start is the index of the first element to be returned in the
+  /// subslice, and the length is the number of elements in the output slice.
+  /// As such, `r.get_range(Range(0u, r.len()))` returns a slice over the
+  /// full set of elements in `r`.
+  ///
+  /// # Panics
+  /// If the Range would otherwise contain an element that is out of bounds,
+  /// the function will panic.
+  /// #[doc.overloads=slice.index.range]
+  sus_pure constexpr inline Slice<T> operator[](
+      const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
+      const& noexcept {
+    const ::sus::num::usize length = len();
+    const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
+    const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
+    const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
+    ::sus::check(rlen <= length);  // Avoid underflow below.
+    // We allow rstart == len() && rend == len(), which returns an empty
+    // slice.
+    ::sus::check(rstart <= length && rstart <= length - rlen);
+    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + rstart,
+                                    rlen);
+  }
+
 #define _ptr_expr data_
 #define _len_expr len_
 #define _delete_rvalue false
@@ -186,7 +231,20 @@ class [[sus_trivial_abi]] Slice final {
 /// Slices are a view into a block of memory represented as a pointer and a
 /// length.
 ///
-/// SliceMut can be converted to or referenced as a Slice.
+/// A `SliceMut<T>` can be implicitly converted to a `Slice<T>`.
+///
+/// # Slices as function parameters
+///
+/// Receiving SliceMut as a const reference `const SliceMut<T>&` allows
+/// receiving a `Slice`, `SliceMut`, or `Vec`, without any constructor or
+/// destructor being generated at all. This is preferable to receiving them by
+/// value which would force a constructor.
+///
+/// `SliceMut<T>` encodes mutability of the underlying `T` objects in its type,
+/// and it is not an owner of those `T` objects, so its constness is not
+/// important as a correctness signal, and all its operations are also available
+/// when const. This makes receiving it in function parameters as a `const
+/// SliceMut<T>&` plausible.
 template <class T>
 class [[sus_trivial_abi]] SliceMut final {
  public:
@@ -256,6 +314,43 @@ class [[sus_trivial_abi]] SliceMut final {
     requires(!::sus::ops::Eq<T, U>)
   friend constexpr inline bool operator==(const SliceMut<T>& l,
                                           const SliceMut<U>& r) = delete;
+
+  /// Returns a reference to the element at position `i` in the Slice.
+  ///
+  /// # Panics
+  /// If the index `i` is beyond the end of the slice, the function will panic.
+  /// #[doc.overloads=slicemut.index.usize]
+  sus_pure constexpr inline T& operator[](::sus::num::usize i) const& noexcept {
+    ::sus::check(i < len());
+    return *(as_mut_ptr() + i);
+  }
+
+  /// Returns a subslice which contains elements in `range`, which specifies a
+  /// start and a length.
+  ///
+  /// The start is the index of the first element to be returned in the
+  /// subslice, and the length is the number of elements in the output slice.
+  /// As such, `r.get_range(Range(0u, r.len()))` returns a slice over the
+  /// full set of elements in `r`.
+  ///
+  /// # Panics
+  /// If the Range would otherwise contain an element that is out of bounds,
+  /// the function will panic.
+  /// #[doc.overloads=slice.index.range]
+  sus_pure constexpr inline SliceMut<T> operator[](
+      const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
+      const& noexcept {
+    const ::sus::num::usize length = len();
+    const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
+    const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
+    const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
+    ::sus::check(rlen <= length);  // Avoid underflow below.
+    // We allow rstart == len() && rend == len(), which returns an empty
+    // slice.
+    ::sus::check(rstart <= length && rstart <= length - rlen);
+    return SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
+                                           as_mut_ptr() + rstart, rlen);
+  }
 
   // TODO: Impl AsRef -> Slice<T>.
   constexpr Slice<T> as_slice() const& noexcept {

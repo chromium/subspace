@@ -208,6 +208,13 @@ TEST(Vec, GetMut) {
   EXPECT_EQ(v.get_mut(1u), sus::None);
 }
 
+template <class T, class U>
+concept HasGetMut = requires(T t, U u) { t.get_mut(u); };
+
+// get_mut() is only available for mutable Vec.
+static_assert(!HasGetMut<const Vec<i32>, usize>);
+static_assert(HasGetMut<Vec<i32>, usize>);
+
 TEST(Vec, GetUnchecked) {
   auto v = Vec<i32>();
   v.push(2_i32);
@@ -221,6 +228,14 @@ TEST(Vec, GetUncheckedMut) {
   v.get_unchecked_mut(unsafe_fn, 0u) += 1_i32;
   EXPECT_EQ(v.get_unchecked_mut(unsafe_fn, 0u), 3_i32);
 }
+
+template <class T, class U>
+concept HasGetUncheckedMut =
+    requires(T t, U u) { t.get_unchecked_mut(unsafe_fn, u); };
+
+// get_unchecked_mut() is only available for mutable Vec.
+static_assert(!HasGetUncheckedMut<const Vec<i32>, usize>);
+static_assert(HasGetUncheckedMut<Vec<i32>, usize>);
 
 TEST(Vec, OperatorIndex) {
   auto v = Vec<i32>();
@@ -968,6 +983,9 @@ TEST(Vec, ConvertsToSlice) {
     [](Slice<i32>) {}(v);
     [](Slice<i32>) {}(cv);
     [](SliceMut<i32>) {}(v);
+    [](const Slice<i32>&) {}(v);
+    [](const Slice<i32>&) {}(cv);
+    [](SliceMut<i32>&) {}(v);
   }
   // References.
   {

@@ -30,7 +30,7 @@ namespace sus::containers::__private {
 // Helper function for indexing our vector by the smallest possible type, to
 // reduce allocation.
 template <class U, class Key, class T, ::sus::fn::FnMut<Key(const T&)> KeyFn>
-void sort_slice_by_cached_key(::sus::containers::SliceMut<T>& slice,
+void sort_slice_by_cached_key(const ::sus::containers::SliceMut<T>& slice,
                               KeyFn& f) noexcept {
   auto indices =
       slice.iter()

@@ -93,6 +93,15 @@ class Vec final {
   /// It is important to note that although the returned vector has the minimum
   /// capacity specified, the vector will have a zero length.
   ///
+  /// A `Vec<T>` can be implicitly converted to a `Slice<T>`. If it is not
+  /// const, it can also be converted to a `SliceMut<T>`.
+  ///
+  /// Unlike `std::vector` and `std::span`, `Vec<T>` can also convert to a
+  /// `const Slice<T>&` or `Slice<T>&` (or `const SliceMut<T>` or
+  /// `SliceMut<T>&`) without generating any constructor or destructor, which
+  /// means smaller and faster binaries when slices are received in function
+  /// parameters as const references.
+  ///
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
   sus_pure static inline constexpr Vec with_capacity(usize capacity) noexcept {
@@ -588,6 +597,83 @@ class Vec final {
   friend constexpr inline bool operator==(const Vec<T>& l,
                                           const SliceMut<U>& r) noexcept {
     return l.as_slice() == r.as_slice();
+  }
+
+  /// Returns a reference to the element at position `i` in the Vec.
+  ///
+  /// # Panics
+  /// If the index `i` is beyond the end of the Vec, the function will panic.
+  /// #[doc.overloads=vec.index.usize]
+  sus_pure constexpr inline const T& operator[](
+      ::sus::num::usize i) const& noexcept {
+    ::sus::check(i < len());
+    return *(as_ptr() + i);
+  }
+  constexpr inline const T& operator[](::sus::num::usize i) && = delete;
+
+  /// Returns a mutable reference to the element at position `i` in the Vec.
+  ///
+  /// # Panics
+  /// If the index `i` is beyond the end of the Vec, the function will panic.
+  /// #[doc.overloads=vec.index_mut.usize]
+  sus_pure constexpr T& operator[](::sus::num::usize i) & noexcept {
+    check(i < len());
+    return *(as_mut_ptr() + i);
+  }
+
+  /// Returns a subslice which contains elements in `range`, which specifies a
+  /// start and a length.
+  ///
+  /// The start is the index of the first element to be returned in the
+  /// subslice, and the length is the number of elements in the output slice.
+  /// As such, `r.get_range(Range(0u, r.len()))` returns a slice over the
+  /// full set of elements in `r`.
+  ///
+  /// # Panics
+  /// If the Range would otherwise contain an element that is out of bounds,
+  /// the function will panic.
+  /// #[doc.overloads=vec.index.range]
+  sus_pure constexpr inline Slice<T> operator[](
+      const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
+      const& noexcept {
+    const ::sus::num::usize length = len();
+    const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
+    const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
+    const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
+    ::sus::check(rlen <= length);  // Avoid underflow below.
+    // We allow rstart == len() && rend == len(), which returns an empty
+    // slice.
+    ::sus::check(rstart <= length && rstart <= length - rlen);
+    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + rstart,
+                                    rlen);
+  }
+  constexpr inline Slice<T> operator[](
+      const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && = delete;
+
+  /// Returns a mutable subslice which contains elements in `range`, which
+  /// specifies a start and a length.
+  ///
+  /// The start is the index of the first element to be returned in the
+  /// subslice, and the length is the number of elements in the output slice.
+  /// As such, `r.get_range(Range(0u, r.len()))` returns a slice over the
+  /// full set of elements in `r`.
+  ///
+  /// # Panics
+  /// If the Range would otherwise contain an element that is out of bounds,
+  /// the function will panic.
+  /// #[doc.overloads=vec.index_mut.range]
+  sus_pure constexpr inline SliceMut<T> operator[](
+      const ::sus::ops::RangeBounds<::sus::num::usize> auto range) & noexcept {
+    const ::sus::num::usize length = len();
+    const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
+    const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
+    const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
+    ::sus::check(rlen <= length);  // Avoid underflow below.
+    // We allow rstart == len() && rend == len(), which returns an empty
+    // slice.
+    ::sus::check(rstart <= length && rstart <= length - rlen);
+    return SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
+                                           as_mut_ptr() + rstart, rlen);
   }
 
   // Const Vec can be used as a Slice.
