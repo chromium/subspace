@@ -36,9 +36,11 @@ include(OptionIf)
 option_if_not_defined(SUBSPACE_BUILD_TESTS "Build subspace tests" ON)
 option_if_not_defined(SUBSPACE_BUILD_CIR "Build CIR (requires LLVM)" ON)
 option_if_not_defined(SUBSPACE_BUILD_SUBDOC "Build subdoc (requires LLVM)" ON)
+option_if_not_defined(SUBSPACE_BUILD_TIDY "Build clang-tidy plugin (requires LLVM)" NOT WIN32)
 
 message(STATUS "Build CIR: ${SUBSPACE_BUILD_CIR}")
 message(STATUS "Build subdoc: ${SUBSPACE_BUILD_SUBDOC}")
+message(STATUS "Build clang-tidy plugin: ${SUBSPACE_BUILD_TIDY}")
 
 function(subspace_default_compile_options TARGET)
     if(MSVC)
@@ -85,4 +87,15 @@ endif()
 
 if (${SUBSPACE_BUILD_SUBDOC})
     add_subdirectory(subdoc)
+endif()
+
+if(${SUBSPACE_BUILD_TIDY})
+    add_subdirectory(tidy)
+
+    #set(CMAKE_CXX_CLANG_TIDY 
+    #    clang-tidy;
+    #    -header-filter=.;
+    #    -checks=-*,subspace-*;
+    #   -warnings-as-errors=*;
+    #)
 endif()
