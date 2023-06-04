@@ -215,12 +215,12 @@ constexpr inline __private::NonNullMarker<T> nonnull(T& t) {
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::mem::NonNull<T>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::mem::NonNull<T>& t,
                         FormatContext& ctx) const {
     return underlying_.format(t.as_ptr(), ctx);

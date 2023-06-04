@@ -701,12 +701,12 @@ template <class... Ts>
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::containers::Vec<T>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::containers::Vec<T>& vec,
                         FormatContext& ctx) const {
     auto out = ctx.out();

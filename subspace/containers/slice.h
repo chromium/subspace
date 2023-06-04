@@ -307,12 +307,12 @@ using ::sus::iter::__private::end;
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::containers::Slice<T>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::containers::Slice<T>& slice,
                         FormatContext& ctx) const {
     auto out = ctx.out();
@@ -335,12 +335,12 @@ sus__format_to_stream(sus::containers, Slice, T);
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::containers::SliceMut<T>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::containers::SliceMut<T>& slice,
                         FormatContext& ctx) const {
     auto out = ctx.out();

@@ -415,12 +415,12 @@ class [[sus_trivial_abi]] RangeFull final {
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::Range<T>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::ops::Range<T>& t,
                         FormatContext& ctx) const {
     auto out = ctx.out();
@@ -441,12 +441,12 @@ sus__format_to_stream(sus::ops, Range, T);
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::RangeFrom<T>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::ops::RangeFrom<T>& t,
                         FormatContext& ctx) const {
     auto out = ctx.out();
@@ -466,12 +466,12 @@ sus__format_to_stream(sus::ops, RangeFrom, T);
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::RangeTo<T>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::ops::RangeTo<T>& t,
                         FormatContext& ctx) const {
     auto out = ctx.out();
@@ -491,12 +491,12 @@ sus__format_to_stream(sus::ops, RangeTo, T);
 // fmt support.
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::RangeFull<T>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::ops::RangeFull<T>&,
                         FormatContext& ctx) const {
     auto out = ctx.out();
