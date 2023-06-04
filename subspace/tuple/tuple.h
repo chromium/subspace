@@ -16,7 +16,9 @@
 
 #include <compare>
 #include <concepts>
+#include <utility>  // TODO: Replace std::index_sequence.
 
+#include "fmt/core.h"
 #include "subspace/assertions/check.h"
 #include "subspace/construct/default.h"
 #include "subspace/macros/__private/compiler_bugs.h"
@@ -30,6 +32,8 @@
 #include "subspace/num/num_concepts.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
+#include "subspace/string/__private/any_formatter.h"
+#include "subspace/string/__private/format_to_stream.h"
 #include "subspace/tuple/__private/storage.h"
 
 namespace sus::tuple_type {
@@ -289,6 +293,59 @@ struct tuple_element<0, ::sus::tuple_type::Tuple<T, Types...>> {
 };
 
 }  // namespace std
+
+// fmt support.
+template <class... Types, class Char>
+struct fmt::formatter<::sus::tuple_type::Tuple<Types...>, Char> {
+  template <class ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  constexpr auto format(const ::sus::tuple_type::Tuple<Types...>& tuple,
+                        FormatContext& ctx) const {
+    auto out = ctx.out();
+    *out++ = static_cast<Char>('(');
+    ctx.advance_to(out);
+    out =
+        format_tuple(tuple, ctx, std::make_index_sequence<sizeof...(Types)>());
+    *out++ = static_cast<Char>(')');
+    return out;
+  }
+
+ private:
+  template <size_t... Is, class FormatContext>
+  static auto format_tuple(const ::sus::tuple_type::Tuple<Types...>& tuple,
+                           FormatContext& ctx, std::index_sequence<Is...>) {
+    (..., format_value<Is>(tuple, ctx));
+    return ctx.out();
+  }
+
+  template <size_t I, class FormatContext>
+  static void format_value(const ::sus::tuple_type::Tuple<Types...>& tuple,
+                           FormatContext& ctx) {
+    using ValueFormatter =
+        ::sus::string::__private::AnyFormatter<decltype(tuple.template at<I>()),
+                                               Char>;
+    auto out = ValueFormatter().format(tuple.template at<I>(), ctx);
+    if constexpr (I < sizeof...(Types) - 1) {
+      *out++ = static_cast<Char>(',');
+      *out++ = static_cast<Char>(' ');
+      ctx.advance_to(out);
+    }
+  }
+};
+
+// Stream support (written out manually due to use of template pack).
+namespace sus::tuple_type {
+template <class... Types>
+inline std::basic_ostream<char>& operator<<(std::basic_ostream<char>& stream,
+                                            const Tuple<Types...>& value) {
+  return ::sus::string::__private::format_to_stream(stream,
+                                                    fmt::format("{}", value));
+}
+}  // namespace sus::tuple_type
 
 // Promote Tuple into the `sus` namespace.
 namespace sus {
