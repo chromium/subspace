@@ -416,7 +416,7 @@ class [[sus_trivial_abi]] RangeFull final {
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::Range<T>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
@@ -442,7 +442,7 @@ sus__format_to_stream(sus::ops, Range, T);
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::RangeFrom<T>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
@@ -467,7 +467,7 @@ sus__format_to_stream(sus::ops, RangeFrom, T);
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::RangeTo<T>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
@@ -492,7 +492,7 @@ sus__format_to_stream(sus::ops, RangeTo, T);
 template <class T, class Char>
 struct fmt::formatter<::sus::ops::RangeFull<T>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 

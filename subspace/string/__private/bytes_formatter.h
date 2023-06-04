@@ -45,7 +45,7 @@ auto format_bytes(auto out, fmt::string_view bytes) {
 template <class Char>
 struct BytesFormatter {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return ctx.begin();
   }
 

@@ -788,7 +788,7 @@ struct std::equal_to<::sus::result::Result<T, E>> {
 template <class T, class E, class Char>
 struct fmt::formatter<::sus::result::Result<T, E>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_ok_.parse(ctx);
   }
 

@@ -1101,7 +1101,7 @@ struct std::equal_to<::sus::option::Option<T>> {
 template <class T, class Char>
 struct fmt::formatter<::sus::option::Option<T>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 

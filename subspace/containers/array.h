@@ -468,7 +468,7 @@ struct tuple_element<I, ::sus::containers::Array<T, N>> {
 template <class T, size_t N, class Char>
 struct fmt::formatter<::sus::containers::Array<T, N>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 

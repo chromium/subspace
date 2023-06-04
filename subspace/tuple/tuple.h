@@ -298,7 +298,7 @@ struct tuple_element<0, ::sus::tuple_type::Tuple<T, Types...>> {
 template <class... Types, class Char>
 struct fmt::formatter<::sus::tuple_type::Tuple<Types...>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return ctx.begin();
   }
 

@@ -216,7 +216,7 @@ constexpr inline __private::NonNullMarker<T> nonnull(T& t) {
 template <class T, class Char>
 struct fmt::formatter<::sus::mem::NonNull<T>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 

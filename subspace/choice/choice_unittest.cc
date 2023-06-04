@@ -34,7 +34,7 @@ enum class Order {
 template <class Char>
 struct fmt::formatter<Order, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return ctx.begin();
   }
 

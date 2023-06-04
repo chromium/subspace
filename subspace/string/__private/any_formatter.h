@@ -48,7 +48,7 @@ auto format_void(auto out) {
 template <class Char>
 struct VoidFormatter {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return ctx.begin();
   }
   template <class T, class FormatContext>

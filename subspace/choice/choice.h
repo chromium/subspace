@@ -650,7 +650,7 @@ struct fmt::formatter<
                                  Tags...>;
 
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return ctx.begin();
   }
 
