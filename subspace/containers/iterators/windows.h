@@ -92,12 +92,12 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
   // Constructed by Slice.
   friend class Slice<ItemT>;
 
-  static constexpr auto with(Slice<ItemT> values,
+  static constexpr auto with(const Slice<ItemT>& values,
                              /* TODO: NonZeroUsize*/ usize size) noexcept {
     return Windows(values, size);
   }
 
-  constexpr Windows(Slice<ItemT> values,
+  constexpr Windows(const Slice<ItemT>& values,
                     /* TODO: NonZeroUsize*/ usize size) noexcept
       : v_(values), size_(size) {}
 
@@ -175,13 +175,13 @@ class [[nodiscard]] [[sus_trivial_abi]] WindowsMut final
   // Constructed by SliceMut.
   friend class SliceMut<ItemT>;
 
-  static constexpr auto with(SliceMut<ItemT> values,
+  static constexpr auto with(const SliceMut<ItemT>& values,
                              /* TODO: NonZeroUsize*/ usize size) noexcept {
     return WindowsMut(values, size);
   }
 
-  constexpr WindowsMut(SliceMut<ItemT> values,
-                    /* TODO: NonZeroUsize*/ usize size) noexcept
+  constexpr WindowsMut(const SliceMut<ItemT>& values,
+                       /* TODO: NonZeroUsize*/ usize size) noexcept
       : v_(values), size_(size) {}
 
   SliceMut<ItemT> v_;

@@ -48,14 +48,22 @@ TEST(Slice, FromRawParts) {
 TEST(Slice, Index) {
   i32 a[] = {1, 2, 3};
   auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  const auto scc = sc;
   auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  const auto smc = sm;
 
   static_assert(std::same_as<const i32&, decltype(sc[0u])>);
   EXPECT_EQ(sc[0_usize], 1_i32);
   EXPECT_EQ(sc[2_usize], 3_i32);
+  static_assert(std::same_as<const i32&, decltype(scc[0u])>);
+  EXPECT_EQ(scc[0_usize], 1_i32);
+  EXPECT_EQ(scc[2_usize], 3_i32);
   static_assert(std::same_as<i32&, decltype(sm[0u])>);
   EXPECT_EQ(sm[0_usize], 1_i32);
   EXPECT_EQ(sm[2_usize], 3_i32);
+  static_assert(std::same_as<i32&, decltype(smc[0u])>);
+  EXPECT_EQ(smc[0_usize], 1_i32);
+  EXPECT_EQ(smc[2_usize], 3_i32);
 }
 
 TEST(SliceDeathTest, Index) {
@@ -95,11 +103,12 @@ TEST(Slice, Get) {
 template <class T, class U>
 concept HasGetMut = requires(T t, U u) { t.get_mut(u); };
 
-// get_mut() is only available for mutable slices of mutable types.
+// get_mut() is only available for mutable slices. A "const" mutable slice can
+// still give mutable access as the mutability is encoded in the type.
 static_assert(!HasGetMut<Slice<i32>, usize>);
 static_assert(HasGetMut<SliceMut<i32>, usize>);
 static_assert(!HasGetMut<const Slice<i32>, usize>);
-static_assert(!HasGetMut<const SliceMut<i32>, usize>);
+static_assert(HasGetMut<const SliceMut<i32>, usize>);
 
 TEST(Slice, GetMut) {
   i32 a[] = {1, 2, 3};
@@ -130,7 +139,7 @@ concept HasGetUncheckedMut =
 static_assert(!HasGetUncheckedMut<Slice<i32>, usize>);
 static_assert(HasGetUncheckedMut<SliceMut<i32>, usize>);
 static_assert(!HasGetUncheckedMut<const Slice<i32>, usize>);
-static_assert(!HasGetUncheckedMut<const SliceMut<i32>, usize>);
+static_assert(HasGetUncheckedMut<const SliceMut<i32>, usize>);
 
 TEST(Slice, GetUncheckedMut) {
   i32 a[] = {1, 2, 3};
@@ -144,7 +153,14 @@ TEST(Slice, GetUncheckedMut) {
 TEST(Slice, IndexRange) {
   i32 a[] = {1, 2, 3};
   auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  const auto scc = sc;
   auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  const auto smc = sm;
+
+  static_assert(std::same_as<Slice<i32>, decltype(sc[".."_r])>);
+  static_assert(std::same_as<Slice<i32>, decltype(scc[".."_r])>);
+  static_assert(std::same_as<SliceMut<i32>, decltype(sm[".."_r])>);
+  static_assert(std::same_as<SliceMut<i32>, decltype(smc[".."_r])>);
 
   EXPECT_EQ((sc["0..1"_r][0u]), 1_i32);
   EXPECT_EQ((sc["0..1"_r].len()), 1_usize);

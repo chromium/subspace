@@ -117,12 +117,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
   // Constructed by Slice.
   friend class Slice<ItemT>;
 
-  static constexpr auto with(Slice<ItemT> values,
+  static constexpr auto with(const Slice<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
     return Chunks(values, chunk_size);
   }
 
-  constexpr Chunks(Slice<ItemT> values, ::sus::num::usize chunk_size) noexcept
+  constexpr Chunks(const Slice<ItemT>& values,
+                   ::sus::num::usize chunk_size) noexcept
       : v_(values), chunk_size_(chunk_size) {}
 
   Slice<ItemT> v_;
@@ -225,12 +226,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   // Constructed by SliceMut.
   friend class SliceMut<ItemT>;
 
-  static constexpr auto with(SliceMut<ItemT> values,
+  static constexpr auto with(const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
     return ChunksMut(values, chunk_size);
   }
 
-  constexpr ChunksMut(SliceMut<ItemT> values,
+  constexpr ChunksMut(const SliceMut<ItemT>& values,
                       ::sus::num::usize chunk_size) noexcept
       : v_(values), chunk_size_(chunk_size) {}
 
@@ -322,7 +323,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   // Constructed by Slice.
   friend class Slice<ItemT>;
 
-  static constexpr auto with(Slice<ItemT> values,
+  static constexpr auto with(const Slice<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
     auto rem = values.len() % chunk_size;
     auto fst_len = values.len() - rem;
@@ -332,7 +333,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
     return ChunksExact(fst, snd, chunk_size);
   }
 
-  constexpr ChunksExact(Slice<ItemT> values, Slice<ItemT> remainder,
+  constexpr ChunksExact(const Slice<ItemT>& values,
+                        const Slice<ItemT>& remainder,
                         ::sus::num::usize chunk_size) noexcept
       : v_(values), rem_(remainder), chunk_size_(chunk_size) {}
 
@@ -424,7 +426,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   // Constructed by Slice.
   friend class SliceMut<ItemT>;
 
-  static constexpr auto with(SliceMut<ItemT> values,
+  static constexpr auto with(const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
     auto rem = values.len() % chunk_size;
     auto fst_len = values.len() - rem;
@@ -434,7 +436,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
     return ChunksExactMut(fst, snd, chunk_size);
   }
 
-  constexpr ChunksExactMut(SliceMut<ItemT> values, SliceMut<ItemT> remainder,
+  constexpr ChunksExactMut(const SliceMut<ItemT>& values,
+                           const SliceMut<ItemT>& remainder,
                            ::sus::num::usize chunk_size) noexcept
       : v_(values), rem_(remainder), chunk_size_(chunk_size) {}
 
@@ -446,8 +449,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
                                   decltype(rem_), decltype(chunk_size_));
 };
 
-/// An iterator over a slice in (non-overlapping) chunks (`chunk_size` elements at
-/// a time), starting at the end of the slice.
+/// An iterator over a slice in (non-overlapping) chunks (`chunk_size` elements
+/// at a time), starting at the end of the slice.
 ///
 /// When the slice len is not evenly divided by the chunk size, the last slice
 /// of the iteration will be the remainder.
@@ -537,12 +540,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   // Constructed by Slice.
   friend class Slice<ItemT>;
 
-  static constexpr auto with(Slice<ItemT> values,
+  static constexpr auto with(const Slice<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
     return RChunks(values, chunk_size);
   }
 
-  constexpr RChunks(Slice<ItemT> values, ::sus::num::usize chunk_size) noexcept
+  constexpr RChunks(const Slice<ItemT>& values,
+                    ::sus::num::usize chunk_size) noexcept
       : v_(values), chunk_size_(chunk_size) {}
 
   Slice<ItemT> v_;
@@ -634,12 +638,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   // Constructed by SliceMut.
   friend class SliceMut<ItemT>;
 
-  static constexpr auto with(SliceMut<ItemT> values,
+  static constexpr auto with(const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
     return RChunksMut(values, chunk_size);
   }
 
-  constexpr RChunksMut(SliceMut<ItemT> values,
+  constexpr RChunksMut(const SliceMut<ItemT>& values,
                        ::sus::num::usize chunk_size) noexcept
       : v_(values), chunk_size_(chunk_size) {}
 
@@ -650,8 +654,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
                                   decltype(chunk_size_));
 };
 
-/// An iterator over a slice in (non-overlapping) chunks (`chunk_size` elements at
-/// a time), starting at the end of the slice.
+/// An iterator over a slice in (non-overlapping) chunks (`chunk_size` elements
+/// at a time), starting at the end of the slice.
 ///
 /// When the slice len is not evenly divided by the chunk size, the last up to
 /// `chunk_size-1` elements will be omitted but can be retrieved from the
@@ -731,7 +735,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   // Constructed by Slice.
   friend class Slice<ItemT>;
 
-  static constexpr auto with(Slice<ItemT> values,
+  static constexpr auto with(const Slice<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
     auto rem = values.len() % chunk_size;
     // SAFETY: 0 <= rem <= values.len() by construction above.
@@ -739,7 +743,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
     return RChunksExact(snd, fst, chunk_size);
   }
 
-  constexpr RChunksExact(Slice<ItemT> values, Slice<ItemT> remainder,
+  constexpr RChunksExact(const Slice<ItemT>& values,
+                         const Slice<ItemT>& remainder,
                          ::sus::num::usize chunk_size) noexcept
       : v_(values), rem_(remainder), chunk_size_(chunk_size) {}
 
@@ -831,7 +836,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   // Constructed by Slice.
   friend class SliceMut<ItemT>;
 
-  static constexpr auto with(SliceMut<ItemT> values,
+  static constexpr auto with(const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
     auto rem = values.len() % chunk_size;
     // SAFETY: 0 <= rem <= values.len() by construction above.
@@ -840,7 +845,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
     return RChunksExactMut(snd, fst, chunk_size);
   }
 
-  constexpr RChunksExactMut(SliceMut<ItemT> values, SliceMut<ItemT> remainder,
+  constexpr RChunksExactMut(const SliceMut<ItemT>& values,
+                            const SliceMut<ItemT>& remainder,
                             ::sus::num::usize chunk_size) noexcept
       : v_(values), rem_(remainder), chunk_size_(chunk_size) {}
 
