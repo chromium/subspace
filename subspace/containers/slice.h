@@ -308,7 +308,7 @@ using ::sus::iter::__private::end;
 template <class T, class Char>
 struct fmt::formatter<::sus::containers::Slice<T>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
@@ -336,7 +336,7 @@ sus__format_to_stream(sus::containers, Slice, T);
 template <class T, class Char>
 struct fmt::formatter<::sus::containers::SliceMut<T>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 

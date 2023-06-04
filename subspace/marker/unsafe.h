@@ -52,7 +52,7 @@ constexpr inline auto unsafe_fn = UnsafeFnMarker();
 template <class Char>
 struct fmt::formatter<::sus::marker::UnsafeFnMarker, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return ctx.begin();
   }
 

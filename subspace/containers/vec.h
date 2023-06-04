@@ -702,7 +702,7 @@ template <class... Ts>
 template <class T, class Char>
 struct fmt::formatter<::sus::containers::Vec<T>, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 

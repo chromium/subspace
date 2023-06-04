@@ -390,7 +390,7 @@ struct std::equal_to<::sus::num::_self> {
 template <class Char>
 struct fmt::formatter<::sus::num::_self, Char> {
   template <class ParseContext>
-  constexpr decltype(auto) parse(ParseContext& ctx) {
+  constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
