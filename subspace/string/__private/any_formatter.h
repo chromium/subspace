@@ -52,8 +52,8 @@ struct VoidFormatter {
     return ctx.begin();
   }
   template <class T, class FormatContext>
-  constexpr auto format(const T& t, FormatContext& ctx) const {
-    return format_void(ctx.out());
+  constexpr auto format(const T&, FormatContext& ctx) const {
+    return format_void<Char>(ctx.out());
   }
 };
 

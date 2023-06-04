@@ -18,6 +18,8 @@
 
 #include <type_traits>
 
+#include "fmt/core.h"
+#include "subspace/assertions/debug_check.h"
 #include "subspace/choice/__private/all_values_are_unique.h"
 #include "subspace/choice/__private/index_of_value.h"
 #include "subspace/choice/__private/index_type.h"
@@ -39,12 +41,21 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 #include "subspace/option/option.h"
+#include "subspace/string/__private/any_formatter.h"
+#include "subspace/string/__private/format_to_stream.h"
 #include "subspace/tuple/tuple.h"
 
 namespace sus::choice_type {
 
 template <class TypeListOfMemberTypes, auto... Tags>
 class Choice;
+
+/// A helper concept that reports if the value in a `Choice` for the given `Tag`
+/// is null. When true, the accessor and setter methods are not available.
+template <class Choice, auto Tag>
+concept ChoiceValueIsVoid = !requires(const Choice& c) {
+  { c.template get<Tag>() };
+};
 
 template <class... Ts, auto... Tags>
 class Choice<__private::TypeList<Ts...>, Tags...> final {
@@ -626,6 +637,84 @@ template <auto Tag, class... Ts>
   }
 }
 
+}  // namespace sus::choice_type
+
+// fmt support.
+template <class... Ts, auto... Tags, class Char>
+struct fmt::formatter<
+    ::sus::choice_type::Choice<sus::choice_type::__private::TypeList<Ts...>,
+                               Tags...>,
+    Char> {
+  using Choice =
+      ::sus::choice_type::Choice<sus::choice_type::__private::TypeList<Ts...>,
+                                 Tags...>;
+
+  template <class ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  constexpr auto format(const Choice& choice, FormatContext& ctx) const {
+    return find_choice<FormatContext, Tags...>(choice, ctx);
+  }
+
+ private:
+  template <class FormatContext, auto Tag, auto... MoreTags>
+    requires(sizeof...(MoreTags) > 0)
+  static auto find_choice(const Choice& choice, FormatContext& ctx) {
+    if (choice.which() == Tag) {
+      return format_choice<Tag>(choice, ctx);
+    } else {
+      return find_choice<FormatContext, MoreTags...>(choice, ctx);
+    }
+  }
+
+  template <class FormatContext, auto Tag>
+  static auto find_choice(const Choice& choice, FormatContext& ctx) {
+    sus_debug_check(choice.which() == Tag);
+    return format_choice<Tag>(choice, ctx);
+  }
+
+  template <auto Tag, class FormatContext>
+  static auto format_choice(const Choice& choice, FormatContext& ctx) {
+    if constexpr (sus::choice_type::ChoiceValueIsVoid<Choice, Tag>) {
+      auto out = fmt::format_to(ctx.out(), "Choice(");
+      ctx.advance_to(out);
+      using TagFormatter =
+          ::sus::string::__private::AnyFormatter<decltype(Tag), Char>;
+      out = TagFormatter().format(Tag, ctx);
+      return fmt::format_to(ctx.out(), ")");
+    } else {
+      auto out = fmt::format_to(ctx.out(), "Choice(");
+      ctx.advance_to(out);
+      using TagFormatter =
+          ::sus::string::__private::AnyFormatter<decltype(Tag), Char>;
+      out = TagFormatter().format(Tag, ctx);
+      out = fmt::format_to(ctx.out(), ", ");
+      ctx.advance_to(out);
+      using ValueFormatter = ::sus::string::__private::AnyFormatter<
+          decltype(choice.template get_unchecked<Tag>(
+              ::sus::marker::unsafe_fn)),
+          Char>;
+      // SAFETY: The Tag here is the active tag as `find_choice()` calls this
+      // method only if `which() == Tag`.
+      out = ValueFormatter().format(
+          choice.template get_unchecked<Tag>(::sus::marker::unsafe_fn), ctx);
+      return fmt::format_to(ctx.out(), ")");
+    }
+  }
+};
+
+// Stream support (written out manually due to use of template specialization).
+namespace sus::choice_type {
+template <class... Ts, auto... Tags>
+inline std::basic_ostream<char>& operator<<(
+    std::basic_ostream<char>& stream,
+    const Choice<__private::TypeList<Ts...>, Tags...>& value) {
+  return ::sus::string::__private::format_to_stream(stream,
+                                                    fmt::format("{}", value));
+}
 }  // namespace sus::choice_type
 
 // Promote Choice into the `sus` namespace.

@@ -14,13 +14,41 @@
 
 #include "subspace/choice/choice.h"
 
-#include <variant>
+#include <sstream>
 
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/assertions/unreachable.h"
 #include "subspace/num/types.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
 #include "subspace/test/no_copy_move.h"
+
+namespace {
+enum class Order {
+  First,
+  Second,
+  Third,
+};
+}
+
+template <class Char>
+struct fmt::formatter<Order, Char> {
+  template <class ParseContext>
+  constexpr decltype(auto) parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  constexpr auto format(const Order& t, FormatContext& ctx) const {
+    using enum Order;
+    switch (t) {
+      case First: return fmt::format_to(ctx.out(), "First");
+      case Second: return fmt::format_to(ctx.out(), "Second");
+      case Third: return fmt::format_to(ctx.out(), "Third");
+    }
+    sus::unreachable();
+  }
+};
 
 namespace {
 
@@ -36,12 +64,6 @@ static_assert(!::sus::choice_type::__private::AllValuesAreUnique<1, 2, 2>);
 static_assert(!::sus::choice_type::__private::AllValuesAreUnique<1, 2, 3, 1>);
 static_assert(!::sus::choice_type::__private::AllValuesAreUnique<1, 2, 1, 3>);
 static_assert(!::sus::choice_type::__private::AllValuesAreUnique<1, 2, 3, 2>);
-
-enum class Order {
-  First,
-  Second,
-  Third,
-};
 
 // The Choice's tag can get stashed inside the Tuple, though this doesn't happen
 // on MSVC.
@@ -781,6 +803,49 @@ TEST(Choice, VoidValues) {
   EXPECT_NE(u4, u6);
   EXPECT_EQ(u6, u6);
   EXPECT_LT(u4, u6);
+}
+
+TEST(Choice, fmt) {
+  auto u = Choice<sus_choice_types(
+      (Order::First, u32), (Order::Second, void))>::with<Order::First>(4u);
+
+  static_assert(fmt::is_formattable<decltype(u), char>::value);
+
+  EXPECT_EQ(fmt::format("{}", u), "Choice(First, 4)");
+  u.set<Order::Second>();
+  EXPECT_EQ(fmt::format("{}", u), "Choice(Second)");
+
+  struct NoFormat {
+    i32 a = 0x16ae3cf2;
+    constexpr bool operator==(const NoFormat& rhs) const noexcept {
+      return a == rhs.a;
+    }
+  };
+  static_assert(sus::ops::Eq<NoFormat>);
+  static_assert(!fmt::is_formattable<NoFormat, char>::value);
+
+  constexpr auto taga = NoFormat();
+  constexpr auto tagb = NoFormat(0xf00d);
+  auto un = Choice<sus_choice_types((taga, u32), (tagb, void))>::with<taga>(4u);
+  static_assert(fmt::is_formattable<decltype(un), char>::value);
+  EXPECT_EQ(fmt::format("{}", un), "Choice(f2-3c-ae-16, 4)");
+  un.set<tagb>();
+  EXPECT_EQ(fmt::format("{}", un), "Choice(0d-f0-00-00)");
+}
+
+TEST(Choice, Stream) {
+  std::stringstream s;
+  s << Choice<sus_choice_types((Order::First, u32),
+                               (Order::Second, void))>::with<Order::First>(4u);
+  EXPECT_EQ(s.str(), "Choice(First, 4)");
+}
+
+TEST(Choice, GTest) {
+  EXPECT_EQ(
+      testing::PrintToString(
+          Choice<sus_choice_types((Order::First, u32), (Order::Second, void))>::
+              with<Order::First>(4u)),
+      "Choice(First, 4)");
 }
 
 }  // namespace
