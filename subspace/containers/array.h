@@ -467,12 +467,12 @@ struct tuple_element<I, ::sus::containers::Array<T, N>> {
 // fmt support.
 template <class T, size_t N, class Char>
 struct fmt::formatter<::sus::containers::Array<T, N>, Char> {
-  template <typename ParseContext>
+  template <class ParseContext>
   constexpr decltype(auto) parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::containers::Array<T, N>& array,
                         FormatContext& ctx) const
     requires(N > 0)
@@ -487,7 +487,7 @@ struct fmt::formatter<::sus::containers::Array<T, N>, Char> {
     return format_to(out, "]");
   }
 
-  template <typename FormatContext>
+  template <class FormatContext>
   constexpr auto format(const ::sus::containers::Array<T, N>&,
                         FormatContext& ctx) const
     requires(N == 0)
