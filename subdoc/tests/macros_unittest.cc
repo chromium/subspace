@@ -25,7 +25,7 @@ TEST_F(SubDocTest, MacroFunction) {
     #define M() \
       /** Comment headline */ \
       void f() {}
-    
+
     M()
   )");
   ASSERT_TRUE(result.is_ok());
@@ -38,7 +38,7 @@ TEST_F(SubDocTest, MacroClass) {
     #define M() \
       /** Comment headline */ \
       struct S {};
-    
+
     M()
   )");
   ASSERT_TRUE(result.is_ok());
@@ -53,7 +53,7 @@ TEST_F(SubDocTest, MacroField) {
         /** Comment headline */ \
         int field; \
       };
-    
+
     M()
   )");
   ASSERT_TRUE(result.is_ok());
@@ -66,7 +66,7 @@ TEST_F(SubDocTest, MacroNamesFunction) {
     #define M(name) \
       /** Comment headline */ \
       void name() {}
-    
+
     M(f)
   )");
   ASSERT_TRUE(result.is_ok());
@@ -79,7 +79,7 @@ TEST_F(SubDocTest, MacroNamesClass) {
     #define M(name) \
       /** Comment headline */ \
       struct name {};
-    
+
     M(S)
   )");
   ASSERT_TRUE(result.is_ok());
@@ -94,7 +94,7 @@ TEST_F(SubDocTest, MacroNamesField) {
         /** Comment headline */ \
         int name; \
       };
-    
+
     M(field)
   )");
   ASSERT_TRUE(result.is_ok());
@@ -105,7 +105,7 @@ TEST_F(SubDocTest, MacroNamesField) {
 TEST_F(SubDocTest, MacroModName) {
   auto result = run_code(R"(
     #define MOD_NAME(name) MOD_NAME_##name
-    
+
     /// Comment headline
     struct MOD_NAME(S) {};
   )");
@@ -120,7 +120,7 @@ TEST_F(SubDocTest, MacroMultilineComment) {
       /** Comment headline \
        * Second line */ \
       void f() {}
-    
+
     M()
   )");
   ASSERT_TRUE(result.is_ok());
@@ -129,4 +129,19 @@ TEST_F(SubDocTest, MacroMultilineComment) {
       has_function_comment(db, "3:7", "<p>Comment headline Second line</p>"));
 }
 
+TEST_F(SubDocTest, MacroUsedInExcludedFile) {
+  const auto opts = subdoc::RunOptions()           //
+                        .set_show_progress(false)  //
+                        .set_exclude_path_patterns(std::regex("test.cc"));
+  auto result = run_code_with_options(opts, R"(
+    #define M() \
+      /** Comment headline */ \
+      void f() {}
+
+    M()
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(!db.has_any_comments());
+}
 #endif

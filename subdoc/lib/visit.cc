@@ -567,16 +567,28 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
 
   clang::SourceLocation loc = decl->getLocation();
   const clang::FileEntry* entry = sm.getFileEntryForID(sm.getFileID(loc));
-  // No FileEntry means a builtin, including a lot of `std::`, or inside
-  // a macro instantiation, or maybe some other things. We want to chase
-  // decls inside macros, but not builtins.
-  if (!entry && !loc.isMacroID()) return false;
+  // For a macro, find the place of the macro expansion, which is in an actual
+  // file.
+  while (loc.isMacroID()) {
+    loc.dump(sm);
+    loc = sm.getExpansionLoc(loc);
+    loc.dump(sm);
+    entry = sm.getFileEntryForID(sm.getFileID(loc));
+    sus::check(entry != nullptr);
+  }
 
-  // Unable to find a file path without a FileEntry, so default to include it.
-  if (!entry) return true;
+  // No FileEntry (and not a macro, since we've found the macro expansion above
+  // already) means a builtin, including a lot of `std::`, or maybe some other
+  // things. We don't want to chase builtins.
+  if (!entry) {
+    return false;
+  }
+
   // And if there's no path then we also default to include it.
   llvm::StringRef path = entry->tryGetRealPathName();
-  if (path.empty()) return true;
+  if (path.empty()) {
+    return true;
+  }
 
   // Compare the path to the user-specified include/exclude-patterns.
   enum { CheckPath, ExcludePath, IncludePath } what_to_do;
