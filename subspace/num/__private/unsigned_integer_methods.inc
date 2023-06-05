@@ -680,40 +680,40 @@ sus_pure constexpr inline explicit operator U() const {
 
 /// sus::ops::Eq<##_self##> trait.
 /// #[doc.overloads=uint.eq.self]
-[[nodiscard]] friend sus_pure constexpr inline bool operator==(
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const _self& r) noexcept = default;
 /// sus::ops::Eq<##_self##, UnsignedPrimitiveInteger> trait.
 /// #[doc.overloads=uint.eq.unsignedprimitive]
 template <UnsignedPrimitiveInteger P>
-[[nodiscard]] friend sus_pure constexpr inline bool operator==(
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const P& r) noexcept {
   return l.primitive_value == r;
 }
 /// sus::ops::Eq<##_self##, Unsigned> trait.
 /// #[doc.overloads=uint.eq.unsigned]
 template <Unsigned U>
-[[nodiscard]] friend sus_pure constexpr inline bool operator==(
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const U& r) noexcept {
   return l.primitive_value == r.primitive_value;
 }
 /// sus::ops::Ord<##_self##> trait.
 /// #[doc.overloads=uint.ord.self]
 template <UnsignedPrimitiveInteger P>
-[[nodiscard]] friend sus_pure constexpr inline std::strong_ordering operator<=>(
+[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const _self& r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /// sus::ops::Ord<##_self##, UnsignedPrimitiveInteger> trait.
 /// #[doc.overloads=uint.ord.unsignedprimitive]
 template <UnsignedPrimitiveInteger P>
-[[nodiscard]] friend sus_pure constexpr inline std::strong_ordering operator<=>(
+[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const P& r) noexcept {
   return l.primitive_value <=> r;
 }
 /// sus::ops::Ord<##_self##, Unsigned> trait.
 /// #[doc.overloads=uint.ord.unsigned]
 template <Unsigned U>
-[[nodiscard]] friend sus_pure constexpr inline std::strong_ordering operator<=>(
+[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const U& r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
@@ -728,7 +728,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// sus::num::Add<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##.+]
-[[nodiscard]] friend sus_pure constexpr inline _self operator+(
+[[nodiscard]] sus_pure friend constexpr inline _self operator+(
     const _self& l, const _self& r) noexcept {
   const auto out =
       __private::add_with_overflow(l.primitive_value, r.primitive_value);
@@ -739,7 +739,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// sus::num::Sub<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##.-]
-[[nodiscard]] friend sus_pure constexpr inline _self operator-(
+[[nodiscard]] sus_pure friend constexpr inline _self operator-(
     const _self& l, const _self& r) noexcept {
   const auto out =
       __private::sub_with_overflow(l.primitive_value, r.primitive_value);
@@ -750,7 +750,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// sus::num::Mul<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##.*]
-[[nodiscard]] friend sus_pure constexpr inline _self operator*(
+[[nodiscard]] sus_pure friend constexpr inline _self operator*(
     const _self& l, const _self& r) noexcept {
   const auto out =
       __private::mul_with_overflow(l.primitive_value, r.primitive_value);
@@ -761,7 +761,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// sus::num::Div<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##./]
-[[nodiscard]] friend sus_pure constexpr inline _self operator/(
+[[nodiscard]] sus_pure friend constexpr inline _self operator/(
     const _self& l, const _self& r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
@@ -770,7 +770,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// sus::num::Rem<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##.%]
-[[nodiscard]] friend sus_pure constexpr inline _self operator%(
+[[nodiscard]] sus_pure friend constexpr inline _self operator%(
     const _self& l, const _self& r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
@@ -780,28 +780,28 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// sus::num::BitAnd<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##.&]
-[[nodiscard]] friend sus_pure constexpr inline _self operator&(
+[[nodiscard]] sus_pure friend constexpr inline _self operator&(
     const _self& l, const _self& r) noexcept {
   return __private::unchecked_and(l.primitive_value, r.primitive_value);
 }
 /// sus::num::BitOr<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##.|]
-[[nodiscard]] friend sus_pure constexpr inline _self operator|(
+[[nodiscard]] sus_pure friend constexpr inline _self operator|(
     const _self& l, const _self& r) noexcept {
   return __private::unchecked_or(l.primitive_value, r.primitive_value);
 }
 /// sus::num::BitXor<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##.^]
-[[nodiscard]] friend sus_pure constexpr inline _self operator^(
+[[nodiscard]] sus_pure friend constexpr inline _self operator^(
     const _self& l, const _self& r) noexcept {
   return __private::unchecked_xor(l.primitive_value, r.primitive_value);
 }
 /// sus::num::Shl trait.
 ///
 /// #[doc.overloads=uint##_self##.<<]
-[[nodiscard]] friend sus_pure constexpr inline _self operator<<(
+[[nodiscard]] sus_pure friend constexpr inline _self operator<<(
     const _self& l, const u32& r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r < BITS);
@@ -810,7 +810,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// sus::num::Shr trait.
 ///
 /// #[doc.overloads=uint##_self##>>]
-[[nodiscard]] friend sus_pure constexpr inline _self operator>>(
+[[nodiscard]] sus_pure friend constexpr inline _self operator>>(
     const _self& l, const u32& r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r < BITS);
@@ -1511,7 +1511,7 @@ sus_pure constexpr _self wrapping_next_power_of_two() const& noexcept {
 /// Converts an integer from big endian to the target's endianness.
 ///
 /// On big endian this is a no-op. On little endian the bytes are swapped.
-[[nodiscard]] static sus_pure constexpr _self from_be(const _self& x) noexcept {
+[[nodiscard]] sus_pure static constexpr _self from_be(const _self& x) noexcept {
   if constexpr (::sus::assertions::is_big_endian())
     return x;
   else
@@ -1521,7 +1521,7 @@ sus_pure constexpr _self wrapping_next_power_of_two() const& noexcept {
 /// Converts an integer from little endian to the target's endianness.
 ///
 /// On little endian this is a no-op. On big endian the bytes are swapped.
-[[nodiscard]] static sus_pure constexpr _self from_le(const _self& x) noexcept {
+[[nodiscard]] sus_pure static constexpr _self from_le(const _self& x) noexcept {
   if constexpr (::sus::assertions::is_little_endian())
     return x;
   else
@@ -1571,13 +1571,13 @@ to_ne_bytes() const& noexcept;
 
 /// Create an integer value from its representation as a byte array in big
 /// endian.
-[[nodiscard]] static sus_pure constexpr _self from_be_bytes(
+[[nodiscard]] sus_pure static constexpr _self from_be_bytes(
     const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
 /// Create an integer value from its representation as a byte array in little
 /// endian.
-[[nodiscard]] static sus_pure constexpr _self from_le_bytes(
+[[nodiscard]] sus_pure static constexpr _self from_le_bytes(
     const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
@@ -1586,7 +1586,7 @@ to_ne_bytes() const& noexcept;
 ///
 /// As the target platform's native endianness is used, portable code likely
 /// wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate instead.
-[[nodiscard]] static sus_pure constexpr _self from_ne_bytes(
+[[nodiscard]] sus_pure static constexpr _self from_ne_bytes(
     const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 

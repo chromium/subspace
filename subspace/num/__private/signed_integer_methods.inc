@@ -809,40 +809,40 @@ sus_pure constexpr _self signum() const& noexcept {
 
 /** sus::ops::Eq<##_self##> trait.
  * #[doc.overloads=int.eq.self] */
-[[nodiscard]] friend sus_pure constexpr inline bool operator==(
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const _self& r) noexcept = default;
 /** sus::ops::Eq<##_self##, UnsignedPrimitiveInteger> trait.
  * #[doc.overloads=int.eq.signedprimitive] */
 template <SignedPrimitiveInteger P>
-[[nodiscard]] friend sus_pure constexpr inline bool operator==(
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const P& r) noexcept {
   return l.primitive_value == r;
 }
 /** sus::ops::Eq<##_self##, Unsigned> trait.
  * #[doc.overloads=int.eq.signed] */
 template <Signed S>
-[[nodiscard]] friend sus_pure constexpr inline bool operator==(
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const S& r) noexcept {
   return l.primitive_value == r.primitive_value;
 }
 /** sus::ops::Ord<##_self##> trait.
  * #[doc.overloads=int.ord.self] */
 template <UnsignedPrimitiveInteger P>
-[[nodiscard]] friend sus_pure constexpr inline std::strong_ordering operator<=>(
+[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const _self& r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /** sus::ops::Ord<##_self##, SignedPrimitiveInteger> trait.
  * #[doc.overloads=int.ord.signedprimitive] */
 template <SignedPrimitiveInteger P>
-[[nodiscard]] friend sus_pure constexpr inline std::strong_ordering operator<=>(
+[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const P& r) noexcept {
   return l.primitive_value <=> r;
 }
 /** sus::ops::Ord<##_self##, Signed> trait.
  * #[doc.overloads=int.ord.signed] */
 template <Signed S>
-[[nodiscard]] friend sus_pure constexpr inline std::strong_ordering operator<=>(
+[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const S& r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
@@ -861,7 +861,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 
 /** sus::num::Add<##_self##> trait.
  * #[doc.overloads=int##_self##.+] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator+(
+[[nodiscard]] sus_pure friend constexpr inline _self operator+(
     const _self& l, const _self& r) noexcept {
   const auto out =
       __private::add_with_overflow(l.primitive_value, r.primitive_value);
@@ -871,7 +871,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 }
 /** sus::num::Sub<##_self##> trait.
  * #[doc.overloads=int##_self##.-] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator-(
+[[nodiscard]] sus_pure friend constexpr inline _self operator-(
     const _self& l, const _self& r) noexcept {
   const auto out =
       __private::sub_with_overflow(l.primitive_value, r.primitive_value);
@@ -881,7 +881,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 }
 /** sus::num::Mul<##_self##> trait.
  * #[doc.overloads=int##_self##.*] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator*(
+[[nodiscard]] sus_pure friend constexpr inline _self operator*(
     const _self& l, const _self& r) noexcept {
   const auto out =
       __private::mul_with_overflow(l.primitive_value, r.primitive_value);
@@ -891,7 +891,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 }
 /** sus::num::Div<##_self##> trait.
  * #[doc.overloads=int##_self##./] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator/(
+[[nodiscard]] sus_pure friend constexpr inline _self operator/(
     const _self& l, const _self& r) noexcept {
   /* TODO: Allow opting out of all overflow checks? */
   ::sus::check(r.primitive_value != 0);
@@ -901,7 +901,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 }
 /** sus::num::Rem<##_self##> trait.
  * #[doc.overloads=int##_self##.%] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator%(
+[[nodiscard]] sus_pure friend constexpr inline _self operator%(
     const _self& l, const _self& r) noexcept {
   /* TODO: Allow opting out of all overflow checks? */
   ::sus::check(r.primitive_value != 0);
@@ -912,25 +912,25 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 
 /** sus::num::BitAnd<##_self##> trait.
  * #[doc.overloads=int##_self##.&] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator&(
+[[nodiscard]] sus_pure friend constexpr inline _self operator&(
     const _self& l, const _self& r) noexcept {
   return static_cast<_primitive>(l.primitive_value & r.primitive_value);
 }
 /** sus::num::BitOr<##_self##> trait.
  * #[doc.overloads=int##_self##.|] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator|(
+[[nodiscard]] sus_pure friend constexpr inline _self operator|(
     const _self& l, const _self& r) noexcept {
   return static_cast<_primitive>(l.primitive_value | r.primitive_value);
 }
 /** sus::num::BitXor<##_self##> trait.
  * #[doc.overloads=int##_self##.^] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator^(
+[[nodiscard]] sus_pure friend constexpr inline _self operator^(
     const _self& l, const _self& r) noexcept {
   return static_cast<_primitive>(l.primitive_value ^ r.primitive_value);
 }
 /** sus::num::Shl trait.
  * #[doc.overloads=int##_self##.<<] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator<<(
+[[nodiscard]] sus_pure friend constexpr inline _self operator<<(
     const _self& l, const u32& r) noexcept {
   const auto out =
       __private::shl_with_overflow(l.primitive_value, r.primitive_value);
@@ -940,7 +940,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 }
 /** sus::num::Shr trait.
  * #[doc.overloads=int##_self##.>>] */
-[[nodiscard]] friend sus_pure constexpr inline _self operator>>(
+[[nodiscard]] sus_pure friend constexpr inline _self operator>>(
     const _self& l, const u32& r) noexcept {
   const auto out =
       __private::shr_with_overflow(l.primitive_value, r.primitive_value);
