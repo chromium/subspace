@@ -133,6 +133,8 @@ jobs:
             # Path to LLVM+Clang nightly that we have installed.
             set(ENV{LLVM_DIR} "/usr/lib/llvm-16/lib/cmake/llvm")
             set(ENV{Clang_DIR} "/usr/lib/llvm-16/lib/cmake/clang")
+            # For crash dumps.
+            set(ENV{LLVM_SYMBOLIZER_PATH} "/usr/lib/llvm-16/bin/llvm-symbolizer")
           else()
             # We don't have a copy of LLVM+Clang on the Windows bot.
             set(HAS_LLVM OFF)
