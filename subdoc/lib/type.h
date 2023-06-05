@@ -15,6 +15,7 @@
 #pragma once
 
 #include "subdoc/llvm.h"
+#include "subspace/assertions/check.h"
 #include "subspace/choice/choice.h"
 #include "subspace/containers/vec.h"
 #include "subspace/prelude.h"
@@ -105,7 +106,7 @@ inline const clang::QualType find_pointee_type(
       if (const auto* dep =
               clang::dyn_cast<clang::DependentSizedArrayType>(array_type)) {
         std::string s = dep->getBracketsRange().printToString(sm);
-        assert(s.size() > 2u);  // The string includes the `[]`.
+        sus::check(s.size() > 2u);  // The string includes the `[]`.
         return sus::move(s).substr(1u, s.size() - 2u);
       }
       if (const auto* inc =
@@ -115,7 +116,7 @@ inline const clang::QualType find_pointee_type(
       if (const auto* var =
               clang::dyn_cast<clang::VariableArrayType>(array_type)) {
         std::string s = var->getBracketsRange().printToString(sm);
-        assert(s.size() > 2u);  // The string includes the `[]`.
+        sus::check(s.size() > 2u);  // The string includes the `[]`.
         return sus::move(s).substr(1u, s.size() - 2u);
       }
       // This would imply Clang added a ne ArrayType subclass.

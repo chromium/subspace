@@ -24,6 +24,7 @@
 #include "subdoc/lib/type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
+#include "subspace/assertions/check.h"
 #include "subspace/choice/choice.h"
 #include "subspace/fn/fn.h"
 #include "subspace/option/option.h"
@@ -60,7 +61,7 @@ struct CommentElement {
         name(sus::move(name)),
         sort_key(sort_key) {
     // All elements have the Global namespace in their path.
-    assert(this->namespace_path.len() > 0u);
+    sus::check(this->namespace_path.len() > 0u);
   }
 
   sus::Vec<Namespace> namespace_path;
