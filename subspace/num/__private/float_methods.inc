@@ -149,13 +149,13 @@ sus_pure constexpr inline explicit operator U() const {
 
 /// sus::ops::Eq<##_self##> trait.
 /// #[doc.overloads=float##_self##.eq]
-[[nodiscard]] friend sus_pure constexpr inline bool operator==(
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
 /// sus::ops::PartialOrd<##_self##> trait.
 /// #[doc.overloads=float##_self##.ord]
-[[nodiscard]] friend sus_pure constexpr inline auto operator<=>(
+[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
     _self l, _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
@@ -197,25 +197,25 @@ sus_pure constexpr inline _self operator-() const {
 
 /// sus::num::Add<##_self##> trait.
 /// #[doc.overloads=float##_self##.+]
-[[nodiscard]] friend sus_pure constexpr inline _self operator+(
+[[nodiscard]] sus_pure friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
   return l.primitive_value + r.primitive_value;
 }
 /// sus::num::Sub<##_self##> trait.
 /// #[doc.overloads=float##_self##.-]
-[[nodiscard]] friend sus_pure constexpr inline _self operator-(
+[[nodiscard]] sus_pure friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
   return l.primitive_value - r.primitive_value;
 }
 /// sus::num::Mul<##_self##> trait.
 /// #[doc.overloads=float##_self##.*]
-[[nodiscard]] friend sus_pure constexpr inline _self operator*(
+[[nodiscard]] sus_pure friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
   return l.primitive_value * r.primitive_value;
 }
 /// sus::num::Div<##_self##> trait.
 /// #[doc.overloads=float##_self##./]
-[[nodiscard]] friend sus_pure constexpr inline _self operator/(
+[[nodiscard]] sus_pure friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
   return l.primitive_value / r.primitive_value;
 }
@@ -227,7 +227,7 @@ sus_pure constexpr inline _self operator-() const {
 /// `l - (l / r).trunc() * r`.
 ///
 /// #[doc.overloads=float##_self##.%]
-[[nodiscard]] friend sus_pure constexpr inline _self operator%(
+[[nodiscard]] sus_pure friend constexpr inline _self operator%(
     _self l, _self r) noexcept {
   const auto x = l.primitive_value;
   const auto y = r.primitive_value;

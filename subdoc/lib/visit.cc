@@ -570,9 +570,7 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
   // For a macro, find the place of the macro expansion, which is in an actual
   // file.
   while (loc.isMacroID()) {
-    loc.dump(sm);
     loc = sm.getExpansionLoc(loc);
-    loc.dump(sm);
     entry = sm.getFileEntryForID(sm.getFileID(loc));
     sus::check(entry != nullptr);
   }
