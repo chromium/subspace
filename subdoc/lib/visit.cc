@@ -22,6 +22,7 @@
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/unique_symbol.h"
+#include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/mem/swap.h"
 #include "subspace/ops/ord.h"
@@ -157,7 +158,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               .unwrap();
       add_record_to_db(decl, sus::move(re), mref(parent.records));
     } else {
-      assert(clang::isa<clang::RecordDecl>(context));
+      sus::check(clang::isa<clang::RecordDecl>(context));
       if (sus::Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
@@ -274,21 +275,21 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // show then?
 
     if (clang::isa<clang::CXXConstructorDecl>(decl)) {
-      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_function_overload_to_db(decl, sus::move(fe), mref(parent->ctors));
       }
     } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
-      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_function_overload_to_db(decl, sus::move(fe), mref(parent->dtors));
       }
     } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
-      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
@@ -296,7 +297,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                                     mref(parent->conversions));
       }
     } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
-      assert(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
+      sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
@@ -338,7 +339,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       // TODO: How do we get from here to the class that the deduction guide is
       // for reliably? getCorrespondingConstructor() would work if it's
       // generated only. Will the getDeclContext find it?
-      assert(clang::isa<clang::NamespaceDecl>(decl->getDeclContext()));
+      sus::check(clang::isa<clang::NamespaceDecl>(decl->getDeclContext()));
       /* TODO:
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
