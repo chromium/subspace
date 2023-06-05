@@ -37,7 +37,7 @@ jobs:
           export LLVM_DIR="/usr/lib/llvm-16/lib/cmake/llvm"
           export Clang_DIR="/usr/lib/llvm-16/lib/cmake/clang"
           # For crash dumps.
-          set(ENV{LLVM_SYMBOLIZER_PATH} "/usr/lib/llvm-16/bin/llvm-symbolizer")
+          export LLVM_SYMBOLIZER_PATH="/usr/lib/llvm-16/bin/llvm-symbolizer"
 
           sudo apt install build-essential cmake ninja-build
           cmake -G Ninja -B out -D CMAKE_EXPORT_COMPILE_COMMANDS=1
