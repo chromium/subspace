@@ -115,6 +115,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "tests/macros_unittest.cc"
         "tests/markdown_unittest.cc"
         "tests/methods_unittest.cc"
+        "tests/namespaces_unittest.cc"
         "tests/records_unittest.cc"
         "tests/styles_unittest.cc"
         "tests/types_unittest.cc"
