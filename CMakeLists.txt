@@ -33,10 +33,11 @@ endif()
 
 include(OptionIf)
 
-option_if_not_defined(SUBSPACE_BUILD_TESTS "Build subspace tests" ON)
+option_if_not_defined(SUBSPACE_BUILD_TESTS "Build tests" ON)
 option_if_not_defined(SUBSPACE_BUILD_CIR "Build CIR (requires LLVM)" ON)
 option_if_not_defined(SUBSPACE_BUILD_SUBDOC "Build subdoc (requires LLVM)" ON)
 
+message(STATUS "Build tests: ${SUBSPACE_BUILD_TESTS}")
 message(STATUS "Build CIR: ${SUBSPACE_BUILD_CIR}")
 message(STATUS "Build subdoc: ${SUBSPACE_BUILD_SUBDOC}")
 
