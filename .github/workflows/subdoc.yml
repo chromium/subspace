@@ -65,8 +65,6 @@ jobs:
           # Path to LLVM+Clang nightly that we have installed.
           set(ENV{LLVM_DIR} "/usr/lib/llvm-16/lib/cmake/llvm")
           set(ENV{Clang_DIR} "/usr/lib/llvm-16/lib/cmake/clang")
-          # For crash dumps.
-          set(ENV{LLVM_SYMBOLIZER_PATH} "/usr/lib/llvm-16/bin/llvm-symbolizer")
 
           file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
 
@@ -111,6 +109,9 @@ jobs:
         # in that directory (there's no other /subspace/ directory it may include).
       - name: Generate
         run: |
+          # For crash dumps.
+          export LLVM_SYMBOLIZER_PATH="/usr/lib/llvm-16/bin/llvm-symbolizer"
+
           out/subdoc/subdoc \
             -p out \
             --out docs \
