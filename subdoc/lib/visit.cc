@@ -152,10 +152,21 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
       add_record_to_db(decl, sus::move(re), mref(parent.records));
     } else if (clang::isa<clang::NamespaceDecl>(context)) {
+      auto* namespace_decl = clang::cast<clang::NamespaceDecl>(context);
+      // Template specializations can be for classes that are part of a
+      // namespace we never recorded as the files were excluded. e.g.
+      // ```
+      // template <>
+      // struct fmt::formatter<MyType, char> {};
+      // ```
+      if (should_skip_decl(cx_, namespace_decl)) {
+        // TODO: Should we generate docs for such things?
+        return true;
+      }
       NamespaceElement& parent =
-          docs_db_
-              .find_namespace_mut(clang::cast<clang::NamespaceDecl>(context))
-              .unwrap();
+          docs_db_.find_namespace_mut(namespace_decl)
+              .expect(
+                  "No parent namespace found in db for NamespaceDecl context");
       add_record_to_db(decl, sus::move(re), mref(parent.records));
     } else {
       sus::check(clang::isa<clang::RecordDecl>(context));
