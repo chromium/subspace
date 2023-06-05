@@ -1,0 +1,1 @@
+out\subdoc\subdoc -p out --out docs --include-file-pattern /subspace/ --exclude-file-pattern /third_party/ --copy-file subdoc/gen_tests/subdoc-test-style.css --css subdoc-test-style.css --copy-file subspace/index.html subspace\subspace
