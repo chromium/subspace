@@ -15,9 +15,32 @@
 #pragma once
 
 #include <iosfwd>
+#include <string>
 
 #include "fmt/core.h"
 #include "subspace/macros/for_each.h"
+
+namespace sus::string::__private {
+
+template <class To, class From>
+concept ConvertibleFrom = std::convertible_to<From, To>;
+
+template <class T, class Char>
+concept StreamCanReceiveString = requires(T& t, std::basic_string<Char> s) {
+  // Check ConvertibleFrom as std streams return std::basic_ostream&, which the
+  // input type `T&` is convertible to. The concept ordering means we want
+  // `ConvertibleFrom<T&, ..the output type..>` to be true then.
+  { t << s } -> ConvertibleFrom<T&>;
+};
+
+/// Consumes the string `s` and streams it to the output stream `os`.
+template <class Char, StreamCanReceiveString<Char> S>
+S& format_to_stream(S& os, const std::basic_string<Char>& s) {
+  os << s;
+  return os;
+}
+
+}  // namespace sus::string::__private
 
 #define sus__format_to_stream_add_class(x) class x
 
@@ -25,21 +48,13 @@
 /// uses fmt::formatter<T, char> to generate a string and stream it.
 #define sus__format_to_stream(Namespace, Type, ...)                            \
   namespace Namespace {                                                        \
-  __VA_OPT__(template <sus_for_each(sus__format_to_stream_add_class,           \
-                                    sus_for_each_sep_comma, __VA_ARGS__)>      \
-  )                                                                            \
-  inline std::basic_ostream<char>& operator<<(                                 \
-      std::basic_ostream<char>& stream,                                        \
-      const Type __VA_OPT__(<__VA_ARGS__>) & value) {                          \
+  using namespace ::sus::string::__private;                                    \
+  template <StreamCanReceiveString<char> S __VA_OPT__(, ) sus_for_each(        \
+      sus__format_to_stream_add_class, sus_for_each_sep_comma, __VA_ARGS__)>   \
+  inline S& operator<<(S& stream,                                              \
+                       const Type __VA_OPT__(<__VA_ARGS__>) & value) {         \
     static_assert(fmt::is_formattable<Type __VA_OPT__(<__VA_ARGS__>)>::value); \
     return ::sus::string::__private::format_to_stream(                         \
         stream, fmt::format("{}", value));                                     \
   }                                                                            \
   }
-
-namespace sus::string::__private {
-
-/// Consumes the string `s` and streams it to the ostream `os`.
-std::ostream& format_to_stream(std::ostream& os, const std::string& s);
-
-}  // namespace sus::string::__private
