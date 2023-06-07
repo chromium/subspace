@@ -93,7 +93,16 @@ struct i64 final {
 #define _primitive int64_t
 #include "subspace/num/__private/signed_integer_consts.inc"
 
-/// A pointer-sized signed integer.
+/// An address-sized signed integer.
+///
+/// This type is capable of holding any offset or distance in a single memory
+/// allocation, since memory allocations are bounded at `isize::MAX`.
+///
+/// Note that it is possible for a pointer to be larger than an address under
+/// some architectures, with a pointer holding additional data such as
+/// capabilities. See [CHERI](
+/// https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-947.pdf) for an example. So
+/// this type is not always the same size as a pointer.
 struct isize final {
 #define _self isize
 #define _primitive ::sus::num::__private::ptr_type<>::signed_type

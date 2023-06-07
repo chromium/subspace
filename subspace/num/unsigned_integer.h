@@ -101,7 +101,19 @@ struct u64 final {
 #define _primitive uint64_t
 #include "subspace/num/__private/unsigned_integer_consts.inc"
 
-/// A pointer-sized unsigned integer.
+/// An address-sized unsigned integer.
+///
+/// This type is capable of holding any offset or (positive) distance in a
+/// single memory allocation, as allocations are bounded at `isize::MAX`. It
+/// can represent any absolute address in a linear address system.
+///
+/// Note that it is possible for a pointer to be larger than an address under
+/// some architectures, with a pointer holding additional data such as
+/// capabilities. See [CHERI](
+/// https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-947.pdf) for an example. So
+/// this type is not always the same size as a pointer and should not be used to
+/// hold a pointer value without acknowledging that it is only the address part
+/// of the pointer.
 struct usize final {
 #define _self usize
 #define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
