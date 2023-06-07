@@ -30,7 +30,7 @@
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
-#include "subspace/macros/always_inline.h"
+#include "subspace/macros/inline.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/nonnull.h"
 #include "subspace/macros/pure.h"

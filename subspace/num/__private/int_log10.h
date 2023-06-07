@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 
-#include "subspace/macros/always_inline.h"
+#include "subspace/macros/inline.h"
 #include "subspace/macros/pure.h"
 
 // Based on https://doc.rust-lang.org/nightly/src/core/num/int_log10.rs.html

@@ -18,7 +18,7 @@
 
 #include <concepts>
 
-#include "subspace/macros/always_inline.h"
+#include "subspace/macros/inline.h"
 #include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/forward.h"
