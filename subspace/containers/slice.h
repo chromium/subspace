@@ -354,8 +354,6 @@ class [[sus_trivial_abi]] SliceMut final {
 
   // TODO: Impl AsRef -> Slice<T>.
   constexpr Slice<T> as_slice() const& noexcept {
-    // SAFETY: The `raw_len()` is the number of elements in the Vec, and the
-    // pointer is to the start of the Vec, so this Slice covers a valid range.
     return *this;
   }
 
