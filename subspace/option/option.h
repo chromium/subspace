@@ -110,8 +110,6 @@ class Option final {
 
  public:
   /// Default-construct an Option that is holding no value.
-  ///
-  /// The Option's contained type `T` must satisfy `sus::construct::Default`.
   inline constexpr Option() noexcept = default;
 
   /// Construct an Option that is holding the given value.
