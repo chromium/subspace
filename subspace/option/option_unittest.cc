@@ -1216,12 +1216,62 @@ TEST(Option, GetOrInsertWith) {
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
 }
 
+TEST(Option, AsValue) {
+  const auto cx = Option<int>::some(11);
+  auto x = Option<int>::some(11);
+  static_assert(std::is_same_v<decltype(cx.as_value()), const int&>);
+  static_assert(std::is_same_v<decltype(x.as_value()), const int&>);
+  EXPECT_EQ(&x.as_value(), &x.as_ref().unwrap());
+
+  // Can call on rvalue for Option holding a reference.
+  int v = 11;
+  EXPECT_EQ(&Option<int&>::some(v).as_value(), &v);
+
+  auto i = NoCopyMove();
+
+  const auto cix = Option<NoCopyMove&>::some(mref(i));
+  auto ix = Option<NoCopyMove&>::some(mref(i));
+  static_assert(std::is_same_v<decltype(cix.as_value()), const NoCopyMove&>);
+  static_assert(std::is_same_v<decltype(ix.as_value()), const NoCopyMove&>);
+  EXPECT_EQ(&ix.as_value(), &i);
+
+  // Verify constexpr.
+  constexpr auto cy = Option<int>::some(3);
+  static_assert(cy.as_value() == 3);
+}
+
+TEST(Option, AsValueMut) {
+  auto x = Option<int>::some(11);
+  static_assert(std::is_same_v<decltype(x.as_value_mut()), int&>);
+  EXPECT_EQ(&x.as_value(), &x.as_mut().unwrap());
+
+  // Can call on rvalue for Option holding a reference.
+  int v = 11;
+  EXPECT_EQ(&Option<int&>::some(v).as_value_mut(), &v);
+
+  auto i = NoCopyMove();
+
+  auto ix = Option<NoCopyMove&>::some(mref(i));
+  static_assert(std::is_same_v<decltype(ix.as_value_mut()), NoCopyMove&>);
+  EXPECT_EQ(&ix.as_value_mut(), &i);
+
+  // Verify constexpr.
+  static_assert([]() {
+    auto o = Option<int>::some(3);
+    return o.as_value_mut();
+  }() == 3);
+}
+
 TEST(Option, OperatorStarSome) {
   const auto cx = Option<int>::some(11);
   auto x = Option<int>::some(11);
   static_assert(std::is_same_v<decltype(*cx), const int&>);
   static_assert(std::is_same_v<decltype(*x), int&>);
   EXPECT_EQ(&*x, &x.as_ref().unwrap());
+
+  // Can call on rvalue for Option holding a reference.
+  int v = 11;
+  EXPECT_EQ(&*Option<int&>::some(v), &v);
 
   auto i = NoCopyMove();
 
@@ -1252,6 +1302,12 @@ TEST(OptionDeathTest, OperatorStarNone) {
         EXPECT_EQ(&y, &y);
       },
       "");
+  EXPECT_DEATH(
+      {
+        auto& y = *Option<NoCopyMove&>::none();
+        EXPECT_EQ(&y, &y);
+      },
+      "");
 #endif
 }
 
@@ -1261,6 +1317,10 @@ TEST(Option, OperatorArrowSome) {
   static_assert(std::is_same_v<decltype(cx.operator->()), const int*>);
   static_assert(std::is_same_v<decltype(x.operator->()), int*>);
   EXPECT_EQ(x.operator->(), &x.as_ref().unwrap());
+
+  // Can call on rvalue for Option holding a reference.
+  int v = 11;
+  EXPECT_EQ(Option<int&>::some(v).operator->(), &v);
 
   auto i = NoCopyMove();
 
@@ -1294,6 +1354,12 @@ TEST(OptionDeathTest, OperatorArrowNone) {
   EXPECT_DEATH(
       {
         auto* x = in.operator->();
+        EXPECT_EQ(x, x);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto* x = Option<NoCopyMove&>::none().operator->();
         EXPECT_EQ(x, x);
       },
       "");
@@ -2211,7 +2277,8 @@ TEST(Option, Clone) {
 TEST(Option, fmt) {
   static_assert(fmt::is_formattable<sus::Option<i32>, char>::value);
   EXPECT_EQ(fmt::format("{}", sus::Option<i32>::some(12345)), "Some(12345)");
-  EXPECT_EQ(fmt::format("{:06}", sus::Option<i32>::some(12345)), "Some(012345)");
+  EXPECT_EQ(fmt::format("{:06}", sus::Option<i32>::some(12345)),
+            "Some(012345)");
   EXPECT_EQ(fmt::format("{}", sus::Option<i32>::none()), "None");
   EXPECT_EQ(fmt::format("{:02}", sus::Option<i32>::none()), "None");
   EXPECT_EQ(fmt::format("{}", sus::Option<std::string_view>::some("12345")),
