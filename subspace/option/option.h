@@ -369,9 +369,8 @@ class Option final {
 
   /// Returns a reference to the contained value inside the Option.
   ///
-  /// The reference is const if the Option is const, and is mutable otherwise.
-  /// This method allows calling methods directly on the type inside the Option
-  /// without unwrapping.
+  /// To access a (non-reference) value inside an rvalue Option, use unwrap() to
+  /// extract the value.
   ///
   /// # Panic
   ///
@@ -379,12 +378,51 @@ class Option final {
   /// currently `None`.
   ///
   /// # Implementation Notes
-  //
-  /// Implementation note: We don't allow calling this method on rvalue types,
-  /// it would allow a reference to the inner object to escape from an rvalue in
-  /// an unbounded way. When passing an rvalue as a function argument,
-  /// `Option::unwrap()` does the right thing already and will convert to a
-  /// reference implicitly.
+  ///
+  /// Implementation note: We only allow calling this on an rvalue Option if the
+  /// contained value is a reference, otherwise we are returning a reference to
+  /// a short-lived object which leads to common C++ memory bugs.
+  sus_pure constexpr const std::remove_reference_t<T>& as_value()
+      const& noexcept {
+    ::sus::check(t_.state() == Some);
+    return t_.val();
+  }
+  sus_pure constexpr const std::remove_reference_t<T>& as_value() && noexcept
+    requires(std::is_reference_v<T>)
+  {
+    ::sus::check(t_.state() == Some);
+    return t_.val();
+  }
+  sus_pure constexpr std::remove_reference_t<T>& as_value_mut() & noexcept {
+    ::sus::check(t_.state() == Some);
+    return t_.val_mut();
+  }
+  sus_pure constexpr std::remove_reference_t<T>& as_value_mut() && noexcept
+    requires(std::is_reference_v<T>)
+  {
+    ::sus::check(t_.state() == Some);
+    return t_.val_mut();
+  }
+
+  /// Returns a reference to the contained value inside the Option.
+  ///
+  /// The reference is const if the Option is const, and is mutable otherwise.
+  /// This method allows calling methods directly on the type inside the Option
+  /// without unwrapping.
+  ///
+  /// To access a (non-reference) value inside an rvalue Option, use unwrap() to
+  /// extract the value.
+  ///
+  /// # Panic
+  ///
+  /// The function will panic without a message if the Option's state is
+  /// currently `None`.
+  ///
+  /// # Implementation Notes
+  ///
+  /// Implementation note: We only allow calling this on an rvalue Option if the
+  /// contained value is a reference, otherwise we are returning a reference to
+  /// a short-lived object which leads to common C++ memory bugs.
   ///
   /// Implementation note: This method is added in addition to the Rust Option
   /// API because:
@@ -398,7 +436,12 @@ class Option final {
     ::sus::check(t_.state() == Some);
     return t_.val();
   }
-  constexpr const std::remove_reference_t<T>* operator*() && noexcept = delete;
+  sus_pure constexpr const std::remove_reference_t<T>& operator*() && noexcept
+    requires(std::is_reference_v<T>)
+  {
+    ::sus::check(t_.state() == Some);
+    return t_.val();
+  }
   sus_pure constexpr std::remove_reference_t<T>& operator*() & noexcept {
     ::sus::check(t_.state() == Some);
     return t_.val_mut();
@@ -410,6 +453,9 @@ class Option final {
   /// This method allows calling methods directly on the type inside the Option
   /// without unwrapping.
   ///
+  /// To access a (non-reference) value inside an rvalue Option, use unwrap() to
+  /// extract the value.
+  ///
   /// # Panic
   ///
   /// The function will panic without a message if the Option's state is
@@ -417,10 +463,9 @@ class Option final {
   ///
   /// # Implementation Notes
   ///
-  /// Implementation note: We don't allow calling this method on rvalue types,
-  /// it would allow a pointer to the inner object to escape from an rvalue.
-  /// When using an rvalue, `Option::unwrap()` does the right thing already and
-  /// will give access to the fields and methods of the inner type.
+  /// Implementation note: We only allow calling this on an rvalue Option if the
+  /// contained value is a reference, otherwise we are returning a reference to
+  /// a short-lived object which leads to common C++ memory bugs.
   ///
   /// Implementation note: This method is added in addition to the Rust Option
   /// API because:
@@ -435,7 +480,13 @@ class Option final {
     return ::sus::mem::addressof(
         static_cast<const std::remove_reference_t<T>&>(t_.val()));
   }
-  constexpr const std::remove_reference_t<T>* operator->() && noexcept;
+  sus_pure constexpr const std::remove_reference_t<T>* operator->() && noexcept
+    requires(std::is_reference_v<T>)
+  {
+    ::sus::check(t_.state() == Some);
+    return ::sus::mem::addressof(
+        static_cast<const std::remove_reference_t<T>&>(t_.val()));
+  }
   sus_pure constexpr std::remove_reference_t<T>* operator->() & noexcept {
     ::sus::check(t_.state() == Some);
     return ::sus::mem::addressof(
@@ -845,6 +896,12 @@ class Option final {
 
   /// Returns an Option<const T&> from this Option<T>, that either holds #None
   /// or a reference to the value in this Option.
+  ///
+  /// # Implementation Notes
+  ///
+  /// Implementation note: We only allow calling this on an rvalue Option if the
+  /// contained value is a reference, otherwise we are returning a reference to
+  /// a short-lived object which leads to common C++ memory bugs.
   sus_pure constexpr Option<const std::remove_reference_t<T>&> as_ref()
       const& noexcept {
     if (t_.state() == None)
@@ -852,9 +909,6 @@ class Option final {
     else
       return Option<const std::remove_reference_t<T>&>(t_.val());
   }
-  // Calling as_ref() on an rvalue is not returning a reference to the inner
-  // value if the inner value is already a reference, so we allow calling it on
-  // an rvalue Option in that case.
   sus_pure constexpr Option<const std::remove_reference_t<T>&>
   as_ref() && noexcept
     requires(std::is_reference_v<T>)
