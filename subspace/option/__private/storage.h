@@ -85,8 +85,8 @@ struct Storage<T, false> final {
   constexpr Storage(std::remove_cvref_t<T>&& t)
       : val_(::sus::move(t)), state_(Some) {}
 
-  sus_pure constexpr const T& val() const { return val_; };
-  sus_pure constexpr T& val_mut() { return val_; };
+  sus_pure constexpr const T& val() const { return val_; }
+  sus_pure constexpr T& val_mut() { return val_; }
 
   sus_pure constexpr inline State state() const noexcept { return state_; }
 
