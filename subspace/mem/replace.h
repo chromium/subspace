@@ -38,6 +38,8 @@ namespace sus::mem {
 /// dest = sus::forward<T>(src);
 /// return old;
 /// ```
+///
+/// This operation is known as `std::exchange()` in the stdlib.
 template <class T, std::convertible_to<T> U>
   requires(!std::is_array_v<T> && ::sus::mem::Move<T> && !std::is_const_v<T> &&
            (!std::same_as<T, U> || ::sus::mem::Copy<T>))
