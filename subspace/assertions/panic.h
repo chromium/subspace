@@ -18,7 +18,7 @@
 
 #include <source_location>
 
-#include "subspace/macros/always_inline.h"
+#include "subspace/macros/inline.h"
 #include "subspace/macros/builtin.h"
 #include "subspace/macros/compiler.h"
 

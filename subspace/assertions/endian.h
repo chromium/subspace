@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "subspace/macros/always_inline.h"
+#include "subspace/macros/inline.h"
 
 namespace sus::assertions {
 

@@ -16,7 +16,7 @@
 
 #include <concepts>
 
-#include "subspace/macros/always_inline.h"
+#include "subspace/macros/inline.h"
 #include "subspace/mem/copy.h"
 #include "subspace/mem/move.h"
 

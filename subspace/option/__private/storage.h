@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "subspace/macros/always_inline.h"
+#include "subspace/macros/inline.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/move.h"

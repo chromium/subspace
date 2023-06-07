@@ -20,4 +20,9 @@
 /// `sus_always_inline` to force the compiler to inline it regardless of its
 /// heuristics.
 #define sus_always_inline \
-  sus_if_msvc_else(__forceinline, inline __attribute__((__always_inline__)))
+  sus_if_msvc_else(__forceinline, inline __attribute__((always_inline)))
+
+/// Add `sus_no_inline` to the start of a function declaration to prevent the
+/// compiler from inlining the function.
+#define sus_no_inline \
+  sus_if_msvc_else(__declspec(noinline), __attribute__((noinline)))
