@@ -40,21 +40,35 @@
 #if defined(__GNUC__) && !defined(__clang__)
 #define SUS_COMPILER_IS_GCC 1
 #else
-#define SUS_COMPILER_IS_GCCgit 0
+#define SUS_COMPILER_IS_GCC 0
 #endif
 
 #if SUS_COMPILER_IS_MSVC
-#define sus_if_msvc(x) x
+#define sus_if_msvc(...) __VA_ARGS__
+#define sus_if_not_msvc(...)
 #define sus_if_msvc_else(x, y) x
 #else
-#define sus_if_msvc(x)
+#define sus_if_msvc(...)
+#define sus_if_not_msvc(...) __VA_ARGS__
 #define sus_if_msvc_else(x, y) y
 #endif
 
 #if SUS_COMPILER_IS_CLANG
-#define sus_if_clang(x) x
+#define sus_if_clang(...) __VA_ARGS__
+#define sus_if_not_clang(...)
 #define sus_if_clang_else(x, y) x
 #else
-#define sus_if_clang(x)
+#define sus_if_clang(...)
+#define sus_if_not_clang(...) __VA_ARGS__
 #define sus_if_clang_else(x, y) y
+#endif
+
+#if SUS_COMPILER_IS_GCC
+#define sus_if_gcc(...) __VA_ARGS__
+#define sus_if_not_gcc(...)
+#define sus_if_gcc_else(x, y) x
+#else
+#define sus_if_gcc(...)
+#define sus_if_not_gcc(...) __VA_ARGS__
+#define sus_if_gcc_else(x, y) y
 #endif

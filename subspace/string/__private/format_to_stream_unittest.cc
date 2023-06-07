@@ -42,22 +42,37 @@ sus__format_to_stream(, Streamable);
 
 namespace {
 
-struct Stream {
-  Stream& operator<<(std::string) & {
-    called = true;
-    return *this;
-  }
-  bool called = false;
-};
-
 TEST(FormatToStream, ToStringStream) {
   std::stringstream s;
   s << Streamable();
   EXPECT_EQ(s.str(), "hello");
 }
 
-TEST(FormatToStream, ToCustomType) {
-  Stream s;
+struct StreamWithMethod {
+  StreamWithMethod& operator<<(std::string) & {
+    called = true;
+    return *this;
+  }
+  bool called = false;
+};
+
+TEST(FormatToStream, ToStreamWithMethod) {
+  StreamWithMethod s;
+  EXPECT_EQ(s.called, false);
+  s << Streamable();
+  EXPECT_EQ(s.called, true);
+}
+
+struct StreamWithADL {
+  friend StreamWithADL& operator<<(StreamWithADL& self, std::string) {
+    self.called = true;
+    return self;
+  }
+  bool called = false;
+};
+
+TEST(FormatToStream, ToStreamWithADL) {
+  StreamWithADL s;
   EXPECT_EQ(s.called, false);
   s << Streamable();
   EXPECT_EQ(s.called, true);
