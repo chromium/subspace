@@ -63,7 +63,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
       auto [fst, snd] =
           v_.split_at_unchecked(::sus::marker::unsafe_fn, chunksz);
       v_ = snd;
-      return Option<Item>::some(fst);
+      return Option<Item>::with(fst);
     }
   }
 
@@ -90,14 +90,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
       auto [fst, snd] =
           v_.split_at_unchecked(::sus::marker::unsafe_fn, len - chunksz);
       v_ = fst;
-      return ::sus::Option<Item>::some(snd);
+      return ::sus::Option<Item>::with(snd);
     }
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -172,7 +172,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
       auto [fst, snd] =
           v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, chunksz);
       v_ = snd;
-      return Option<SliceMut<ItemT>>::some(fst);
+      return Option<SliceMut<ItemT>>::with(fst);
     }
   }
 
@@ -199,14 +199,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
       auto [fst, snd] =
           v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, len - chunksz);
       v_ = fst;
-      return ::sus::Option<Item>::some(snd);
+      return ::sus::Option<Item>::with(snd);
     }
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -287,7 +287,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
       auto [fst, snd] =
           v_.split_at_unchecked(::sus::marker::unsafe_fn, chunk_size_);
       v_ = snd;
-      return Option<Item>::some(fst);
+      return Option<Item>::with(fst);
     }
   }
 
@@ -302,14 +302,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
       auto [fst, snd] = v_.split_at_unchecked(::sus::marker::unsafe_fn,
                                               v_.len() - chunk_size_);
       v_ = fst;
-      return ::sus::Option<Item>::some(snd);
+      return ::sus::Option<Item>::with(snd);
     }
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -390,7 +390,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
       auto [fst, snd] =
           v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, chunk_size_);
       v_ = snd;
-      return Option<Item>::some(fst);
+      return Option<Item>::with(fst);
     }
   }
 
@@ -405,14 +405,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
       auto [fst, snd] = v_.split_at_mut_unchecked(::sus::marker::unsafe_fn,
                                                   v_.len() - chunk_size_);
       v_ = fst;
-      return ::sus::Option<Item>::some(snd);
+      return ::sus::Option<Item>::with(snd);
     }
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -487,7 +487,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
       auto [fst, snd] =
           v_.split_at_unchecked(::sus::marker::unsafe_fn, len - chunksz);
       v_ = fst;
-      return Option<Item>::some(snd);
+      return Option<Item>::with(snd);
     }
   }
 
@@ -513,14 +513,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
       auto [fst, snd] =
           v_.split_at_unchecked(::sus::marker::unsafe_fn, chunksz);
       v_ = snd;
-      return ::sus::Option<Item>::some(fst);
+      return ::sus::Option<Item>::with(fst);
     }
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -596,7 +596,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
       auto [fst, snd] =
           v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, len - chunksz);
       v_ = fst;
-      return Option<SliceMut<ItemT>>::some(snd);
+      return Option<SliceMut<ItemT>>::with(snd);
     }
   }
 
@@ -611,14 +611,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
       auto [fst, snd] =
           v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, chunksz);
       v_ = snd;
-      return ::sus::Option<Item>::some(fst);
+      return ::sus::Option<Item>::with(fst);
     }
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -699,7 +699,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
       auto [fst, snd] = v_.split_at_unchecked(::sus::marker::unsafe_fn,
                                               v_.len() - chunk_size_);
       v_ = fst;
-      return Option<Item>::some(snd);
+      return Option<Item>::with(snd);
     }
   }
 
@@ -714,14 +714,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
       auto [fst, snd] =
           v_.split_at_unchecked(::sus::marker::unsafe_fn, chunk_size_);
       v_ = snd;
-      return ::sus::Option<Item>::some(fst);
+      return ::sus::Option<Item>::with(fst);
     }
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -800,7 +800,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
       auto [fst, snd] = v_.split_at_mut_unchecked(::sus::marker::unsafe_fn,
                                                   v_.len() - chunk_size_);
       v_ = fst;
-      return Option<Item>::some(snd);
+      return Option<Item>::with(snd);
     }
   }
 
@@ -815,14 +815,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
       auto [fst, snd] =
           v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, chunk_size_);
       v_ = snd;
-      return ::sus::Option<Item>::some(fst);
+      return ::sus::Option<Item>::with(fst);
     }
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.

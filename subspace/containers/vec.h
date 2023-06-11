@@ -489,7 +489,7 @@ class Vec final {
     check(!is_moved_from());
     const auto self_len = len();
     if (self_len > 0u) {
-      auto o = Option<T>::some(sus::move(
+      auto o = Option<T>::with(sus::move(
           get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u)));
       get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u).~T();
       set_len(::sus::marker::unsafe_fn, self_len - 1u);

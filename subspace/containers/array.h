@@ -161,7 +161,7 @@ class Array final {
   {
     if (i.primitive_value >= N) [[unlikely]]
       return Option<const T&>();
-    return Option<const T&>::some(storage_.data_[i.primitive_value]);
+    return Option<const T&>::with(storage_.data_[i.primitive_value]);
   }
   constexpr Option<const T&> get(usize i) && = delete;
 
@@ -171,7 +171,7 @@ class Array final {
   {
     if (i.primitive_value >= N) [[unlikely]]
       return Option<T&>();
-    return Option<T&>::some(mref(storage_.data_[i.primitive_value]));
+    return Option<T&>::with(mref(storage_.data_[i.primitive_value]));
   }
 
   /// Returns a const reference to the element at index `i`.

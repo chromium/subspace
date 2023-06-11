@@ -38,12 +38,12 @@ struct SomeMarker {
   template <class U>
     requires(std::constructible_from<U, const std::remove_reference_t<T>&>)
   sus_pure inline constexpr operator Option<U>() const& noexcept {
-    return Option<U>::some(value);
+    return Option<U>::with(value);
   }
 
   template <class U>
   inline constexpr operator Option<U>() && noexcept {
-    return Option<U>::some(::sus::forward<T>(value));
+    return Option<U>::with(::sus::forward<T>(value));
   }
 
   template <class U = ::sus::mem::remove_rvalue_reference<T>>

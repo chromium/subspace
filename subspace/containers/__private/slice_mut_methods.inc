@@ -256,7 +256,7 @@ constexpr void fill_with_default() NO_RETURN_REF noexcept
 /// is empty.
 sus_pure constexpr ::sus::Option<T&> first_mut() RETURN_REF noexcept {
   if (len() > 0u)
-    return ::sus::Option<T&>::some(*as_mut_ptr());
+    return ::sus::Option<T&>::with(*as_mut_ptr());
   else
     return ::sus::Option<T&>();
 }
@@ -265,7 +265,7 @@ sus_pure constexpr ::sus::Option<T&> first_mut() RETURN_REF noexcept {
 /// `i` is beyond the end of the Slice.
 sus_pure constexpr Option<T&> get_mut(::sus::num::usize i) RETURN_REF noexcept {
   if (i < len()) [[likely]]
-    return Option<T&>::some(get_unchecked_mut(::sus::marker::unsafe_fn, i));
+    return Option<T&>::with(get_unchecked_mut(::sus::marker::unsafe_fn, i));
   else
     return Option<T&>();
 }
@@ -303,7 +303,7 @@ sus_pure constexpr Option<SliceMut<T>> get_range_mut(
   // We allow rstart == len() && rend == len(), which returns an empty
   // slice.
   if (rstart > length || rstart > length - rlen) return sus::none();
-  return Option<SliceMut<T>>::some(SliceMut<T>::from_raw_parts_mut(
+  return Option<SliceMut<T>>::with(SliceMut<T>::from_raw_parts_mut(
       ::sus::marker::unsafe_fn, as_mut_ptr() + rstart, rlen));
 }
 
@@ -341,7 +341,7 @@ sus_pure constexpr SliceIterMut<T&> iter_mut() RETURN_REF noexcept {
 sus_pure constexpr ::sus::Option<T&> last_mut() RETURN_REF noexcept {
   const ::sus::num::usize length = len();
   if (length > 0u)
-    return ::sus::Option<T&>::some(*(as_mut_ptr() + length - 1u));
+    return ::sus::Option<T&>::with(*(as_mut_ptr() + length - 1u));
   else
     return ::sus::Option<T&>();
 }
@@ -895,7 +895,7 @@ constexpr ::sus::Option<SliceMut<T>> strip_prefix_mut(const Slice<T>& prefix)
   if (n <= len()) {
     auto [head, tail] = split_at_mut(n);
     if (head == prefix) {
-      return ::sus::Option<SliceMut<T>>::some(tail);
+      return ::sus::Option<SliceMut<T>>::with(tail);
     }
   }
   return ::sus::Option<SliceMut<T>>();
@@ -916,7 +916,7 @@ constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(const Slice<T>& suffix)
   if (n <= l) {
     auto [head, tail] = split_at_mut(l - n);
     if (tail == suffix) {
-      return ::sus::Option<SliceMut<T>>::some(head);
+      return ::sus::Option<SliceMut<T>>::with(head);
     }
   }
   return ::sus::Option<SliceMut<T>>();

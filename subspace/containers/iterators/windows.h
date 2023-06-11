@@ -51,7 +51,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
     if (size_ > v_.len()) {
       return ret;
     } else {
-      ret = Option<Item>::some(v_[::sus::ops::RangeTo<usize>(size_)]);
+      ret = Option<Item>::with(v_[::sus::ops::RangeTo<usize>(size_)]);
       v_ = v_[::sus::ops::RangeFrom<usize>(1u)];
       return ret;
     }
@@ -64,7 +64,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
     if (size_ > v_.len()) {
       return ret;
     } else {
-      ret = Option<Item>::some(
+      ret = Option<Item>::with(
           v_[::sus::ops::RangeFrom<usize>(v_.len() - size_)]);
       v_ = v_[::sus::ops::RangeTo<usize>(v_.len() - 1u)];
       return ret;
@@ -74,7 +74,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -134,7 +134,7 @@ class [[nodiscard]] [[sus_trivial_abi]] WindowsMut final
     if (size_ > v_.len()) {
       return ret;
     } else {
-      ret = Option<Item>::some(v_[::sus::ops::RangeTo<usize>(size_)]);
+      ret = Option<Item>::with(v_[::sus::ops::RangeTo<usize>(size_)]);
       v_ = v_[::sus::ops::RangeFrom<usize>(1u)];
       return ret;
     }
@@ -147,7 +147,7 @@ class [[nodiscard]] [[sus_trivial_abi]] WindowsMut final
     if (size_ > v_.len()) {
       return ret;
     } else {
-      ret = Option<Item>::some(
+      ret = Option<Item>::with(
           v_[::sus::ops::RangeFrom<usize>(v_.len() - size_)]);
       v_ = v_[::sus::ops::RangeTo<usize>(v_.len() - 1u)];
       return ret;
@@ -157,7 +157,7 @@ class [[nodiscard]] [[sus_trivial_abi]] WindowsMut final
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.

@@ -550,31 +550,31 @@ TEST(Vec, SizeHint) {
   {
     auto [lower, upper] = it.size_hint();
     EXPECT_EQ(lower, 3_usize);
-    EXPECT_EQ(upper, sus::Option<usize>::some(3_usize));
+    EXPECT_EQ(upper, sus::Option<usize>::with(3_usize));
   }
   EXPECT_EQ(it.next(), sus::Some);
   {
     auto [lower, upper] = it.size_hint();
     EXPECT_EQ(lower, 2_usize);
-    EXPECT_EQ(upper, sus::Option<usize>::some(2_usize));
+    EXPECT_EQ(upper, sus::Option<usize>::with(2_usize));
   }
   EXPECT_EQ(it.next(), sus::Some);
   {
     auto [lower, upper] = it.size_hint();
     EXPECT_EQ(lower, 1_usize);
-    EXPECT_EQ(upper, sus::Option<usize>::some(1_usize));
+    EXPECT_EQ(upper, sus::Option<usize>::with(1_usize));
   }
   EXPECT_EQ(it.next(), sus::Some);
   {
     auto [lower, upper] = it.size_hint();
     EXPECT_EQ(lower, 0_usize);
-    EXPECT_EQ(upper, sus::Option<usize>::some(0_usize));
+    EXPECT_EQ(upper, sus::Option<usize>::with(0_usize));
   }
   EXPECT_EQ(it.next(), sus::None);
   {
     auto [lower, upper] = it.size_hint();
     EXPECT_EQ(lower, 0_usize);
-    EXPECT_EQ(upper, sus::Option<usize>::some(0_usize));
+    EXPECT_EQ(upper, sus::Option<usize>::with(0_usize));
   }
 }
 

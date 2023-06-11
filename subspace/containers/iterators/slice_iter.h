@@ -64,7 +64,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
-    return Option<Item>::some(*::sus::mem::replace(mref(ptr_), ptr_ + 1u));
+    return Option<Item>::with(*::sus::mem::replace(mref(ptr_), ptr_ + 1u));
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -75,7 +75,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     // constructor) so subtracting one and dereffing will be inside the
     // allocation.
     end_ -= 1u;
-    return Option<Item>::some(*end_);
+    return Option<Item>::with(*end_);
   }
 
   ::sus::iter::SizeHint size_hint() const noexcept final {
@@ -84,7 +84,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     const auto remaining = ::sus::num::usize::from_unchecked(
         ::sus::marker::unsafe_fn, end_ - ptr_);
     return ::sus::iter::SizeHint(
-        remaining, ::sus::Option<::sus::num::usize>::some(remaining));
+        remaining, ::sus::Option<::sus::num::usize>::with(remaining));
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -142,7 +142,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
-    return Option<Item>::some(
+    return Option<Item>::with(
         mref(*::sus::mem::replace(mref(ptr_), ptr_ + 1u)));
   }
 
@@ -154,12 +154,12 @@ struct [[sus_trivial_abi]] SliceIterMut final
     // constructor) so subtracting one and dereffing will be inside the
     // allocation.
     end_ -= 1u;
-    return Option<Item>::some(mref(*end_));
+    return Option<Item>::with(mref(*end_));
   }
 
   ::sus::iter::SizeHint size_hint() const noexcept final {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::some(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.

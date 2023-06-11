@@ -137,13 +137,13 @@ class Option final {
   explicit inline constexpr Option() noexcept = default;
 
   /// Construct an Option that is holding the given value.
-  static inline constexpr Option some(const T& t) noexcept
+  static inline constexpr Option with(const T& t) noexcept
     requires(!std::is_reference_v<T> && ::sus::mem::Copy<T>)
   {
     return Option(t);
   }
 
-  static inline constexpr Option some(T&& t) noexcept
+  static inline constexpr Option with(T&& t) noexcept
     requires(!std::is_reference_v<T>)
   {
     if constexpr (::sus::mem::Move<T>) {
@@ -154,7 +154,7 @@ class Option final {
     }
   }
 
-  sus_pure static inline constexpr Option some(T& t sus_lifetimebound) noexcept
+  sus_pure static inline constexpr Option with(T& t sus_lifetimebound) noexcept
     requires(std::is_reference_v<T>)
   {
     return Option(move_to_storage(t));
@@ -200,7 +200,7 @@ class Option final {
     if (found_none)
       return Option();
     else
-      return Option::some(::sus::move(collected));
+      return Option(::sus::move(collected));
   }
 
   /// Destructor for the Option.
@@ -344,7 +344,7 @@ class Option final {
   /// # Example
   ///
   /// ```cpp
-  /// auto x = Option<int>::some(2);
+  /// auto x = Option<int>::with(2);
   /// switch (x) {
   ///  case Some:
   ///   return sus::move(x).unwrap_unchecked(unsafe_fn);
@@ -890,7 +890,7 @@ class Option final {
       return Result::with(Option<OkType>());
     } else {
       if (t_.val().is_ok()) {
-        return Result::with(Option<OkType>::some(
+        return Result::with(Option<OkType>::with(
             t_.take_and_set_none().unwrap_unchecked(::sus::marker::unsafe_fn)));
       } else {
         return Result::with_err(t_.take_and_set_none().unwrap_err_unchecked(
@@ -923,7 +923,7 @@ class Option final {
     } else if (t_.state() == None) {
       return Option<Tuple>();
     } else {
-      return Option<Tuple>::some(
+      return Option<Tuple>::with(
           Tuple::with(t_.take_and_set_none(), ::sus::move(o).unwrap()));
     }
   }
@@ -951,8 +951,8 @@ class Option final {
     if (is_some()) {
       auto&& [u, v] = t_.take_and_set_none();
       return ::sus::tuple_type::Tuple<Option<U>, Option<V>>::with(
-          Option<U>::some(::sus::forward<U>(u)),
-          Option<V>::some(::sus::forward<V>(v)));
+          Option<U>::with(::sus::forward<U>(u)),
+          Option<V>::with(::sus::forward<V>(v)));
     } else {
       return ::sus::tuple_type::Tuple<Option<U>, Option<V>>::with(Option<U>(),
                                                                   Option<V>());
@@ -986,7 +986,7 @@ class Option final {
     if (t_.state() == None) {
       return Option<std::remove_const_t<std::remove_reference_t<T>>>();
     } else {
-      return Option<std::remove_const_t<std::remove_reference_t<T>>>::some(
+      return Option<std::remove_const_t<std::remove_reference_t<T>>>::with(
           t_.val());
     }
   }
@@ -1003,7 +1003,7 @@ class Option final {
       // `StoragePointer<T>` when the Option is holding a reference, and we want
       // to clone the `T` object, not the `StoragePointer<T>`. The latter
       // converts to a `const T&`.
-      return Option<std::remove_const_t<std::remove_reference_t<T>>>::some(
+      return Option<std::remove_const_t<std::remove_reference_t<T>>>::with(
           ::sus::clone<std::remove_reference_t<T>>(t_.val()));
     }
   }
