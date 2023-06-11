@@ -27,9 +27,13 @@ template <class T, class E>
 union Storage {
   constexpr Storage() {}
 
-  constexpr Storage(WithT, const T& t) noexcept : ok_(t) {}
+  constexpr Storage(WithT, const T& t) noexcept
+    requires(sus::mem::Copy<T>)
+      : ok_(t) {}
   constexpr Storage(WithT, T&& t) noexcept : ok_(::sus::move(t)) {}
-  constexpr Storage(WithE, const E& e) noexcept : err_(e) {}
+  constexpr Storage(WithE, const E& e) noexcept
+    requires(sus::mem::Copy<E>)
+      : err_(e) {}
   constexpr Storage(WithE, E&& e) noexcept : err_(::sus::move(e)) {}
 
   constexpr ~Storage()
