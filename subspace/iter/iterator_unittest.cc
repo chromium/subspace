@@ -106,7 +106,7 @@ class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
   ArrayIterator(Item (&items)[N])
       : items_(Array<Option<Item>, N>::with_initializer(
             [&items, i = 0]() mutable -> Option<Item> {
-              return Option<Item>::some(sus::move(items[i++]));
+              return Option<Item>::with(sus::move(items[i++]));
             })) {}
 
  private:

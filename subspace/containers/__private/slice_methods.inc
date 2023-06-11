@@ -299,7 +299,7 @@ constexpr bool ends_with(const Slice<T>& suffix) const& noexcept
 /// Returns the first element of the slice, or `None` if it is empty.
 sus_pure constexpr ::sus::Option<const T&> first() const& noexcept {
   if (len() > 0u) {
-    return ::sus::Option<const T&>::some(
+    return ::sus::Option<const T&>::with(
         get_unchecked(::sus::marker::unsafe_fn, 0u));
   } else {
     return ::sus::Option<const T&>();
@@ -314,7 +314,7 @@ constexpr ::sus::Option<const T&> first() && = delete;
 /// `i` is beyond the end of the Slice.
 sus_pure constexpr Option<const T&> get(::sus::num::usize i) const& noexcept {
   if (i < len()) [[likely]]
-    return Option<const T&>::some(get_unchecked(::sus::marker::unsafe_fn, i));
+    return Option<const T&>::with(get_unchecked(::sus::marker::unsafe_fn, i));
   else
     return Option<const T&>();
 }
@@ -361,7 +361,7 @@ sus_pure constexpr Option<Slice<T>> get_range(
   // We allow rstart == len() && rend == len(), which returns an empty
   // slice.
   if (rstart > length || rstart > length - rlen) return sus::none();
-  return Option<Slice<T>>::some(Slice<T>::from_raw_parts(
+  return Option<Slice<T>>::with(Slice<T>::from_raw_parts(
       ::sus::marker::unsafe_fn, as_ptr() + rstart, rlen));
 }
 
@@ -493,7 +493,7 @@ static constexpr void join_sep_into(::sus::containers::Vec<T>& vec,
 sus_pure constexpr ::sus::Option<const T&> last() const& noexcept {
   const auto length = len();
   if (length > 0u)
-    return ::sus::Option<const T&>::some(*(as_ptr() + length - 1u));
+    return ::sus::Option<const T&>::with(*(as_ptr() + length - 1u));
   else
     return ::sus::Option<const T&>();
 }
@@ -822,7 +822,7 @@ constexpr ::sus::Option<Slice<T>> strip_prefix(
   if (n <= len()) {
     auto [head, tail] = split_at(n);
     if (head == prefix) {
-      return ::sus::Option<Slice<T>>::some(tail);
+      return ::sus::Option<Slice<T>>::with(tail);
     }
   }
   return ::sus::Option<Slice<T>>();
@@ -848,7 +848,7 @@ constexpr ::sus::Option<Slice<T>> strip_suffix(
   if (n <= l) {
     auto [head, tail] = split_at(l - n);
     if (tail == suffix) {
-      return ::sus::Option<Slice<T>>::some(head);
+      return ::sus::Option<Slice<T>>::with(head);
     }
   }
   return ::sus::Option<Slice<T>>();

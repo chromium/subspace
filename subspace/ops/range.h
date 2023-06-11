@@ -65,7 +65,7 @@ class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
   Option<T> next() noexcept {
     if (static_cast<Final*>(this)->start == static_cast<Final*>(this)->finish)
       return Option<T>();
-    return Option<T>::some(
+    return Option<T>::with(
         ::sus::mem::replace(static_cast<Final*>(this)->start,
                             ::sus::iter::__private::step_forward(
                                 static_cast<Final*>(this)->start)));
@@ -86,7 +86,7 @@ class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
       return Option<T>();
     static_cast<Final*>(this)->finish = ::sus::iter::__private::step_backward(
         static_cast<Final*>(this)->finish);
-    return Option<T>::some(static_cast<Final*>(this)->finish);
+    return Option<T>::with(static_cast<Final*>(this)->finish);
   }
 
   // TODO: Provide and test overrides of Iterator min(), max(), count(),
@@ -105,7 +105,7 @@ class RangeFromIter<Final, T, true>
  public:
   // sus::iter::Iterator trait.
   Option<T> next() noexcept {
-    return Option<T>::some(
+    return Option<T>::with(
         ::sus::mem::replace(static_cast<Final*>(this)->start,
                             ::sus::iter::__private::step_forward(
                                 static_cast<Final*>(this)->start)));
@@ -155,14 +155,14 @@ class Range final : public __private::RangeIter<Range<T>, T> {
   ///
   /// Part of the sus::ops::RangeBounds<T> trait.
   constexpr ::sus::option::Option<const T&> start_bound() const& noexcept {
-    return ::sus::option::Option<const T&>::some(start);
+    return ::sus::option::Option<const T&>::with(start);
   }
   constexpr ::sus::option::Option<const T&> start_bound() && = delete;
   /// Returns the end of the RangeBounds, exclusive of its own value.
   ///
   /// Part of the sus::ops::RangeBounds<T> trait.
   constexpr ::sus::option::Option<const T&> end_bound() const& noexcept {
-    return ::sus::option::Option<const T&>::some(finish);
+    return ::sus::option::Option<const T&>::with(finish);
   }
   constexpr ::sus::option::Option<const T&> end_bound() && = delete;
 
@@ -239,7 +239,7 @@ class RangeFrom final : public __private::RangeFromIter<RangeFrom<T>, T> {
   ///
   /// Part of the sus::ops::RangeBounds<T> trait.
   constexpr ::sus::option::Option<const T&> start_bound() const& noexcept {
-    return ::sus::option::Option<const T&>::some(start);
+    return ::sus::option::Option<const T&>::with(start);
   }
   constexpr ::sus::option::Option<const T&> start_bound() && = delete;
   /// Returns `None` for the end of the RangeBounds.
@@ -316,7 +316,7 @@ class RangeTo final {
   ///
   /// Part of the sus::ops::RangeBounds<T> trait.
   constexpr ::sus::option::Option<const T&> end_bound() const& noexcept {
-    return ::sus::option::Option<const T&>::some(finish);
+    return ::sus::option::Option<const T&>::with(finish);
   }
   constexpr ::sus::option::Option<const T&> end_bound() && = delete;
 

@@ -61,7 +61,7 @@ class [[sus_trivial_abi]] GenericSplitN final
     auto [lower, upper_opt] = iter_.size_hint();
     const auto count = count_;
     return {::sus::ops::min(count, lower),
-            Option<usize>::some(
+            Option<usize>::with(
                 ::sus::move(upper_opt).map_or(count, [count](usize upper) {
                   return ::sus::ops::min(count, upper);
                 }))};
@@ -114,7 +114,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
         return finish();
       }
       if (pred_(*o)) {
-        ret = Option<Item>::some(v_[::sus::ops::RangeTo(idx)]);
+        ret = Option<Item>::with(v_[::sus::ops::RangeTo(idx)]);
         v_ = v_[::sus::ops::RangeFrom(idx + 1u)];
         return ret;
       }
@@ -140,7 +140,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
       }
       idx -= 1u;
       if (pred_(*o)) {
-        ret = Option<Item>::some(v_[::sus::ops::RangeFrom(idx + 1u)]);
+        ret = Option<Item>::with(v_[::sus::ops::RangeFrom(idx + 1u)]);
         v_ = v_[::sus::ops::RangeTo(idx)];
         return ret;
       }
@@ -150,12 +150,12 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     if (v_.is_empty()) {
-      return {0u, ::sus::Option<::sus::num::usize>::some(0u)};
+      return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
       // If the predicate doesn't match anything, we yield one slice. If it
       // matches every element, we yield `len()` one-element slices, or a single
       // empty slice.
-      return {1u, ::sus::Option<::sus::num::usize>::some(
+      return {1u, ::sus::Option<::sus::num::usize>::with(
                       ::sus::ops::max(1_usize, v_.len()))};
     }
   }
@@ -177,7 +177,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
       return Option<Item>();
     } else {
       finished_ = true;
-      return Option<Item>::some(v_);
+      return Option<Item>::with(v_);
     }
   }
 
@@ -236,7 +236,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
         return finish();
       }
       if (pred_(*o)) {
-        ret = Option<Item>::some(v_[::sus::ops::RangeTo(idx)]);
+        ret = Option<Item>::with(v_[::sus::ops::RangeTo(idx)]);
         v_ = v_[::sus::ops::RangeFrom(idx + 1u)];
         return ret;
       }
@@ -262,7 +262,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
       }
       idx -= 1u;
       if (pred_(*o)) {
-        ret = Option<Item>::some(v_[::sus::ops::RangeFrom(idx + 1u)]);
+        ret = Option<Item>::with(v_[::sus::ops::RangeFrom(idx + 1u)]);
         v_ = v_[::sus::ops::RangeTo(idx)];
         return ret;
       }
@@ -272,12 +272,12 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     if (v_.is_empty()) {
-      return {0u, ::sus::Option<::sus::num::usize>::some(0u)};
+      return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
       // If the predicate doesn't match anything, we yield one slice. If it
       // matches every element, we yield `len()` one-element slices, or a single
       // empty slice.
-      return {1u, ::sus::Option<::sus::num::usize>::some(
+      return {1u, ::sus::Option<::sus::num::usize>::with(
                       ::sus::ops::max(1_usize, v_.len()))};
     }
   }
@@ -299,7 +299,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
       return Option<Item>();
     } else {
       finished_ = true;
-      return Option<Item>::some(v_);
+      return Option<Item>::with(v_);
     }
   }
 
@@ -361,7 +361,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
           finished_ = true;
           idx = last;
         }
-        ret = Option<Item>::some(v_[::sus::ops::RangeTo(idx + 1u)]);
+        ret = Option<Item>::with(v_[::sus::ops::RangeTo(idx + 1u)]);
         v_ = v_[::sus::ops::RangeFrom(idx + 1u)];
         return ret;
       }
@@ -391,7 +391,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
         if (idx == 0u) {
           finished_ = true;
         }
-        ret = Option<Item>::some(v_[::sus::ops::RangeFrom(idx)]);
+        ret = Option<Item>::with(v_[::sus::ops::RangeFrom(idx)]);
         v_ = v_[::sus::ops::RangeTo(idx)];
         return ret;
       }
@@ -402,12 +402,12 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     if (v_.is_empty()) {
-      return {0u, ::sus::Option<::sus::num::usize>::some(0u)};
+      return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
       // If the predicate doesn't match anything, we yield one slice. If it
       // matches every element, we yield `len()` one-element slices, or a single
       // empty slice.
-      return {1u, ::sus::Option<::sus::num::usize>::some(
+      return {1u, ::sus::Option<::sus::num::usize>::with(
                       ::sus::ops::max(1_usize, v_.len()))};
     }
   }
@@ -477,7 +477,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
           finished_ = true;
           idx = last;
         }
-        ret = Option<Item>::some(v_[::sus::ops::RangeTo(idx + 1u)]);
+        ret = Option<Item>::with(v_[::sus::ops::RangeTo(idx + 1u)]);
         v_ = v_[::sus::ops::RangeFrom(idx + 1u)];
         return ret;
       }
@@ -508,7 +508,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
         if (idx == 0u) {
           finished_ = true;
         }
-        ret = Option<Item>::some(v_[::sus::ops::RangeFrom(idx)]);
+        ret = Option<Item>::with(v_[::sus::ops::RangeFrom(idx)]);
         v_ = v_[::sus::ops::RangeTo(idx)];
         return ret;
       }
@@ -519,12 +519,12 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
   // Replace the default impl in sus::iter::IteratorBase.
   ::sus::iter::SizeHint size_hint() const noexcept final {
     if (v_.is_empty()) {
-      return {0u, ::sus::Option<::sus::num::usize>::some(0u)};
+      return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
       // If the predicate doesn't match anything, we yield one slice. If it
       // matches every element, we yield `len()` one-element slices, or a single
       // empty slice.
-      return {1u, ::sus::Option<::sus::num::usize>::some(
+      return {1u, ::sus::Option<::sus::num::usize>::with(
                       ::sus::ops::max(1_usize, v_.len()))};
     }
   }

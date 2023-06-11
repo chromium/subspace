@@ -48,7 +48,7 @@ struct [[nodiscard]] ArrayIntoIter final
     Item& item = array_.get_unchecked_mut(
         ::sus::marker::unsafe_fn,
         ::sus::mem::replace(mref(front_index_), front_index_ + 1_usize));
-    return Option<Item>::some(move(item));
+    return Option<Item>::with(move(item));
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -60,7 +60,7 @@ struct [[nodiscard]] ArrayIntoIter final
     back_index_ -= 1u;
     Item& item =
         array_.get_unchecked_mut(::sus::marker::unsafe_fn, back_index_);
-    return Option<Item>::some(move(item));
+    return Option<Item>::with(move(item));
   }
 
  private:

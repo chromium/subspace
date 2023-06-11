@@ -1038,7 +1038,7 @@ sus_pure constexpr inline _self abs() const& noexcept {
  */
 sus_pure constexpr Option<_self> checked_abs() const& noexcept {
   if (primitive_value != MIN_PRIMITIVE) [[likely]]
-    return Option<_self>::some(abs());
+    return Option<_self>::with(abs());
   else
     return Option<_self>();
 }
@@ -1119,7 +1119,7 @@ sus_pure constexpr Option<_self> checked_add(const _self& rhs) const& noexcept {
   const auto out =
       __private::add_with_overflow(primitive_value, rhs.primitive_value);
   if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
+    return Option<_self>::with(out.value);
   else
     return Option<_self>();
 }
@@ -1132,7 +1132,7 @@ sus_pure constexpr Option<_self> checked_add_unsigned(
   const auto out = __private::add_with_overflow_unsigned(primitive_value,
                                                          rhs.primitive_value);
   if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
+    return Option<_self>::with(out.value);
   else
     return Option<_self>();
 }
@@ -1221,7 +1221,7 @@ sus_pure constexpr Option<_self> checked_div(const _self& rhs) const& noexcept {
       [[unlikely]]
     return Option<_self>();
   else
-    return Option<_self>::some(
+    return Option<_self>::with(
         __private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
@@ -1300,7 +1300,7 @@ sus_pure constexpr Option<_self> checked_mul(const _self& rhs) const& noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, rhs.primitive_value);
   if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
+    return Option<_self>::with(out.value);
   else
     return Option<_self>();
 }
@@ -1349,7 +1349,7 @@ sus_pure constexpr _self wrapping_mul(const _self& rhs) const& noexcept {
  */
 sus_pure constexpr Option<_self> checked_neg() const& noexcept {
   if (primitive_value != MIN_PRIMITIVE) [[likely]]
-    return Option<_self>::some(__private::unchecked_neg(primitive_value));
+    return Option<_self>::with(__private::unchecked_neg(primitive_value));
   else
     return Option<_self>();
 }
@@ -1402,7 +1402,7 @@ sus_pure constexpr Option<_self> checked_rem(const _self& rhs) const& noexcept {
       [[unlikely]]
     return Option<_self>();
   else
-    return Option<_self>::some(
+    return Option<_self>::with(
         static_cast<_primitive>(primitive_value % rhs.primitive_value));
 }
 
@@ -1477,7 +1477,7 @@ sus_pure constexpr Option<_self> checked_div_euclid(
       [[unlikely]] {
     return Option<_self>();
   } else {
-    return Option<_self>::some(__private::div_euclid(
+    return Option<_self>::with(__private::div_euclid(
         ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value));
   }
 }
@@ -1557,7 +1557,7 @@ sus_pure constexpr Option<_self> checked_rem_euclid(
       [[unlikely]] {
     return Option<_self>();
   } else {
-    return Option<_self>::some(__private::rem_euclid(
+    return Option<_self>::with(__private::rem_euclid(
         ::sus::marker::unsafe_fn, primitive_value, rhs.primitive_value));
   }
 }
@@ -1618,7 +1618,7 @@ sus_pure constexpr Option<_self> checked_shl(const u32& rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
   if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
+    return Option<_self>::with(out.value);
   else
     return Option<_self>();
 }
@@ -1660,7 +1660,7 @@ sus_pure constexpr Option<_self> checked_shr(const u32& rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
   if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
+    return Option<_self>::with(out.value);
   else
     return Option<_self>();
 }
@@ -1702,7 +1702,7 @@ sus_pure constexpr Option<_self> checked_sub(const _self& rhs) const& {
   const auto out =
       __private::sub_with_overflow(primitive_value, rhs.primitive_value);
   if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
+    return Option<_self>::with(out.value);
   else
     return Option<_self>();
 }
@@ -1715,7 +1715,7 @@ sus_pure constexpr Option<_self> checked_sub_unsigned(
   const auto out = __private::sub_with_overflow_unsigned(primitive_value,
                                                          rhs.primitive_value);
   if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
+    return Option<_self>::with(out.value);
   else
     return Option<_self>();
 }
@@ -1885,7 +1885,7 @@ sus_pure constexpr Option<_self> checked_pow(const u32& rhs) const& noexcept {
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
   /* TODO: Allow opting out of all overflow checks? */
   if (!out.overflow) [[likely]]
-    return Option<_self>::some(out.value);
+    return Option<_self>::with(out.value);
   else
     return Option<_self>();
 }
@@ -1919,7 +1919,7 @@ sus_pure constexpr Option<u32> checked_log2() const& {
   } else {
     uint32_t zeros = __private::leading_zeros_nonzero(
         ::sus::marker::unsafe_fn, __private::into_unsigned(primitive_value));
-    return Option<u32>::some(BITS - 1_u32 - u32(zeros));
+    return Option<u32>::with(BITS - 1_u32 - u32(zeros));
   }
 }
 
@@ -1941,7 +1941,7 @@ sus_pure constexpr Option<u32> checked_log10() const& {
   if (primitive_value <= 0) [[unlikely]] {
     return Option<u32>();
   } else {
-    return Option<u32>::some(__private::int_log10::_self(primitive_value));
+    return Option<u32>::with(__private::int_log10::_self(primitive_value));
   }
 }
 
@@ -1976,7 +1976,7 @@ sus_pure constexpr Option<u32> checked_log(const _self& base) const& noexcept {
       r /= b;
       n += 1u;
     }
-    return Option<u32>::some(n);
+    return Option<u32>::with(n);
   }
 }
 

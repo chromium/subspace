@@ -130,7 +130,7 @@ class [[nodiscard]] Result final {
         Result<U, E> result =
             ::sus::move(try_item).unwrap_unchecked(::sus::marker::unsafe_fn);
         if (result.is_ok())
-          return Option<U>::some(
+          return Option<U>::with(
               ::sus::move(result).unwrap_unchecked(::sus::marker::unsafe_fn));
         err.insert(
             ::sus::move(result).unwrap_err_unchecked(::sus::marker::unsafe_fn));
@@ -456,7 +456,7 @@ class [[nodiscard]] Result final {
     switch (
         ::sus::mem::replace(mref(state_), __private::ResultState::IsMoved)) {
       case __private::ResultState::IsOk:
-        return Option<T>::some(::sus::mem::take_and_destruct(
+        return Option<T>::with(::sus::mem::take_and_destruct(
             ::sus::marker::unsafe_fn, mref(storage_.ok_)));
       case __private::ResultState::IsErr:
         storage_.err_.~E();
@@ -478,7 +478,7 @@ class [[nodiscard]] Result final {
         ::sus::mem::replace(mref(state_), __private::ResultState::IsMoved)) {
       case __private::ResultState::IsOk: storage_.ok_.~T(); return Option<E>();
       case __private::ResultState::IsErr:
-        return Option<E>::some(::sus::mem::take_and_destruct(
+        return Option<E>::with(::sus::mem::take_and_destruct(
             ::sus::marker::unsafe_fn, mref(storage_.err_)));
       case __private::ResultState::IsMoved: break;
     }
@@ -582,7 +582,7 @@ class [[nodiscard]] Result final {
   constexpr Once<const T&> iter() const& noexcept {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (state_ == __private::ResultState::IsOk)
-      return Once<const T&>::with(Option<const T&>::some(storage_.ok_));
+      return Once<const T&>::with(Option<const T&>::with(storage_.ok_));
     else
       return Once<const T&>::with(Option<const T&>());
   }
@@ -591,7 +591,7 @@ class [[nodiscard]] Result final {
   constexpr Once<T&> iter_mut() & noexcept {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (state_ == __private::ResultState::IsOk)
-      return Once<T&>::with(Option<T&>::some(mref(storage_.ok_)));
+      return Once<T&>::with(Option<T&>::with(mref(storage_.ok_)));
     else
       return Once<T&>::with(Option<T&>());
   }
@@ -600,7 +600,7 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     if (::sus::mem::replace(mref(state_), __private::ResultState::IsMoved) ==
         __private::ResultState::IsOk) {
-      return Once<T>::with(Option<T>::some(::sus::mem::take_and_destruct(
+      return Once<T>::with(Option<T>::with(::sus::mem::take_and_destruct(
           ::sus::marker::unsafe_fn, mref(storage_.ok_))));
     } else {
       storage_.err_.~E();
