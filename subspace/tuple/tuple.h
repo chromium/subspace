@@ -80,7 +80,7 @@ class Tuple final {
   /// The Tuple's contained types must all be #Default, and will be
   /// constructed through that trait.
   // clang-format off
-  inline constexpr Tuple() noexcept
+  explicit inline constexpr Tuple() noexcept
     requires(!((std::is_trivially_default_constructible_v<T> && ... &&
                 std::is_trivially_default_constructible_v<Ts>) &&
               !(std::is_reference_v<T> || ... || std::is_reference_v<Ts>)
@@ -90,7 +90,7 @@ class Tuple final {
       : Tuple(T(), Ts()...) {}
   // clang-format on
 
-  Tuple()
+  explicit Tuple()
     requires((std::is_trivially_default_constructible_v<T> && ... &&
               std::is_trivially_default_constructible_v<Ts>) &&
              !(std::is_reference_v<T> || ... || std::is_reference_v<Ts>))
