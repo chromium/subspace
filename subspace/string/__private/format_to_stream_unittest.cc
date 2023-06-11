@@ -19,7 +19,10 @@
 
 #include "fmt/core.h"
 #include "googletest/include/gtest/gtest.h"
+#include "subspace/choice/choice.h"
+#include "subspace/containers/array.h"
 #include "subspace/prelude.h"
+#include "subspace/tuple/tuple.h"
 
 namespace {
 struct Streamable {};
@@ -75,6 +78,30 @@ TEST(FormatToStream, ToStreamWithADL) {
   StreamWithADL s;
   EXPECT_EQ(s.called, false);
   s << Streamable();
+  EXPECT_EQ(s.called, true);
+}
+
+// Array has a manually written stream impl, instead of using the macro.
+TEST(FormatToStream, Array) {
+  StreamWithADL s;
+  EXPECT_EQ(s.called, false);
+  s << sus::Array<i32, 3>::with_values(1, 2, 3);
+  EXPECT_EQ(s.called, true);
+}
+
+// Choice has a manually written stream impl, instead of using the macro.
+TEST(FormatToStream, Choice) {
+  StreamWithADL s;
+  EXPECT_EQ(s.called, false);
+  s << sus::Choice<sus_choice_types((1_i32, i32))>::with<1>(1);
+  EXPECT_EQ(s.called, true);
+}
+
+// Tuple has a manually written stream impl, instead of using the macro.
+TEST(FormatToStream, Tuple) {
+  StreamWithADL s;
+  EXPECT_EQ(s.called, false);
+  s << sus::Tuple<i32>::with(1);
   EXPECT_EQ(s.called, true);
 }
 

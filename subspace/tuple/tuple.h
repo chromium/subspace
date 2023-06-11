@@ -339,9 +339,10 @@ struct fmt::formatter<::sus::tuple_type::Tuple<Types...>, Char> {
 
 // Stream support (written out manually due to use of template pack).
 namespace sus::tuple_type {
-template <class... Types>
-inline std::basic_ostream<char>& operator<<(std::basic_ostream<char>& stream,
-                                            const Tuple<Types...>& value) {
+template <class... Types,
+          ::sus::string::__private::StreamCanReceiveString<char> StreamType>
+inline StreamType& operator<<(StreamType& stream,
+                              const Tuple<Types...>& value) {
   return ::sus::string::__private::format_to_stream(stream,
                                                     fmt::format("{}", value));
 }

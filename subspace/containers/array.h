@@ -501,9 +501,9 @@ struct fmt::formatter<::sus::containers::Array<T, N>, Char> {
 
 // Stream support (written out manually due to size_t template param).
 namespace sus::containers {
-template <class T, size_t N>
-inline std::basic_ostream<char>& operator<<(std::basic_ostream<char>& stream,
-                                            const Array<T, N>& value) {
+template <class T, size_t N,
+          ::sus::string::__private::StreamCanReceiveString<char> StreamType>
+inline StreamType& operator<<(StreamType& stream, const Array<T, N>& value) {
   return ::sus::string::__private::format_to_stream(stream,
                                                     fmt::format("{}", value));
 }

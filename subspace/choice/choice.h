@@ -708,9 +708,10 @@ struct fmt::formatter<
 
 // Stream support (written out manually due to use of template specialization).
 namespace sus::choice_type {
-template <class... Ts, auto... Tags>
-inline std::basic_ostream<char>& operator<<(
-    std::basic_ostream<char>& stream,
+template <class... Ts, auto... Tags,
+          ::sus::string::__private::StreamCanReceiveString<char> StreamType>
+inline StreamType& operator<<(
+    StreamType& stream,
     const Choice<__private::TypeList<Ts...>, Tags...>& value) {
   return ::sus::string::__private::format_to_stream(stream,
                                                     fmt::format("{}", value));
