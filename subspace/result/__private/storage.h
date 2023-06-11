@@ -27,46 +27,56 @@ template <class T, class E>
 union Storage {
   constexpr Storage() {}
 
-  constexpr Storage(WithT, const T& t) noexcept
-    requires(sus::mem::Copy<T>)
+  template <std::convertible_to<T> U>
+  constexpr Storage(WithT, const U& t) noexcept
+    requires(!std::is_void_v<T> && sus::mem::Copy<T>)
       : ok_(t) {}
-  constexpr Storage(WithT, T&& t) noexcept : ok_(::sus::move(t)) {}
+  template <std::convertible_to<T> U>
+  constexpr Storage(WithT, U&& t) noexcept
+    requires(!std::is_void_v<T>)
+      : ok_(::sus::move(t)) {}
   constexpr Storage(WithE, const E& e) noexcept
     requires(sus::mem::Copy<E>)
       : err_(e) {}
   constexpr Storage(WithE, E&& e) noexcept : err_(::sus::move(e)) {}
 
   constexpr ~Storage()
-    requires(std::is_trivially_destructible_v<T> &&
+    requires((std::is_void_v<T> || std::is_trivially_destructible_v<T>) &&
              std::is_trivially_destructible_v<E>)
   = default;
   constexpr ~Storage()
-    requires(!(std::is_trivially_destructible_v<T> &&
-               std::is_trivially_destructible_v<E>))
+    requires(
+        // clang-format off
+      !((std::is_void_v<T> || std::is_trivially_destructible_v<T>) &&
+        std::is_trivially_destructible_v<E>)
+        // clang-format on
+    )
   {
     // Destruction is handled in Result in this case, but a destructor needs to
     // exist here.
   }
 
   constexpr Storage(const Storage&) noexcept
-    requires(std::is_trivially_copy_constructible_v<T> &&
+    requires((std::is_void_v<T> || std::is_trivially_copy_constructible_v<T>) &&
              std::is_trivially_copy_constructible_v<E>)
   = default;
   constexpr Storage& operator=(const Storage&)
-    requires(std::is_trivially_copy_assignable_v<T> &&
+    requires((std::is_void_v<T> || std::is_trivially_copy_assignable_v<T>) &&
              std::is_trivially_copy_assignable_v<E>)
   = default;
 
   constexpr Storage(Storage&&)
-    requires(std::is_trivially_move_constructible_v<T> &&
+    requires((std::is_void_v<T> || std::is_trivially_move_constructible_v<T>) &&
              std::is_trivially_move_constructible_v<E>)
   = default;
   constexpr Storage& operator=(Storage&&)
-    requires(std::is_trivially_move_assignable_v<T> &&
+    requires((std::is_void_v<T> || std::is_trivially_move_assignable_v<T>) &&
              std::is_trivially_move_assignable_v<E>)
   = default;
 
-  [[sus_no_unique_address]] T ok_;
+  using TStorage = std::conditional_t<std::is_void_v<T>, char, T>;
+
+  [[sus_no_unique_address]] TStorage ok_;
   [[sus_no_unique_address]] E err_;
 };
 
