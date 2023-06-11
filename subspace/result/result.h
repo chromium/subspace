@@ -126,7 +126,7 @@ class [[nodiscard]] Result final {
       // sus::iter::Iterator trait.
       Option<U> next() noexcept {
         Option<Result<U, E>> try_item = iter.next();
-        if (try_item.is_none()) return Option<U>::none();
+        if (try_item.is_none()) return Option<U>();
         Result<U, E> result =
             ::sus::move(try_item).unwrap_unchecked(::sus::marker::unsafe_fn);
         if (result.is_ok())
@@ -134,14 +134,14 @@ class [[nodiscard]] Result final {
               ::sus::move(result).unwrap_unchecked(::sus::marker::unsafe_fn));
         err.insert(
             ::sus::move(result).unwrap_err_unchecked(::sus::marker::unsafe_fn));
-        return Option<U>::none();
+        return Option<U>();
       }
 
       Iter& iter;
       Option<E>& err;
     };
 
-    auto err = Option<E>::none();
+    auto err = Option<E>();
     auto iter = Unwrapper(::sus::move(result_iter).into_iter(), mref(err));
     auto success_out = Result::with(T::from_iter(::sus::move(iter)));
     return ::sus::move(err).map_or_else(
@@ -460,7 +460,7 @@ class [[nodiscard]] Result final {
             ::sus::marker::unsafe_fn, mref(storage_.ok_)));
       case __private::ResultState::IsErr:
         storage_.err_.~E();
-        return Option<T>::none();
+        return Option<T>();
       case __private::ResultState::IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
@@ -476,9 +476,7 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != __private::ResultState::IsMoved);
     switch (
         ::sus::mem::replace(mref(state_), __private::ResultState::IsMoved)) {
-      case __private::ResultState::IsOk:
-        storage_.ok_.~T();
-        return Option<E>::none();
+      case __private::ResultState::IsOk: storage_.ok_.~T(); return Option<E>();
       case __private::ResultState::IsErr:
         return Option<E>::some(::sus::mem::take_and_destruct(
             ::sus::marker::unsafe_fn, mref(storage_.err_)));
@@ -586,7 +584,7 @@ class [[nodiscard]] Result final {
     if (state_ == __private::ResultState::IsOk)
       return Once<const T&>::with(Option<const T&>::some(storage_.ok_));
     else
-      return Once<const T&>::with(Option<const T&>::none());
+      return Once<const T&>::with(Option<const T&>());
   }
   Once<const T&> iter() const&& = delete;
 
@@ -595,7 +593,7 @@ class [[nodiscard]] Result final {
     if (state_ == __private::ResultState::IsOk)
       return Once<T&>::with(Option<T&>::some(mref(storage_.ok_)));
     else
-      return Once<T&>::with(Option<T&>::none());
+      return Once<T&>::with(Option<T&>());
   }
 
   constexpr Once<T> into_iter() && noexcept {
@@ -606,7 +604,7 @@ class [[nodiscard]] Result final {
           ::sus::marker::unsafe_fn, mref(storage_.ok_))));
     } else {
       storage_.err_.~E();
-      return Once<T>::with(Option<T>::none());
+      return Once<T>::with(Option<T>());
     }
   }
 

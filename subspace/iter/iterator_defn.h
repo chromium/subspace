@@ -280,7 +280,7 @@ class IteratorBase {
 
 template <class Iter, class Item>
 SizeHint IteratorBase<Iter, Item>::size_hint() const noexcept {
-  return SizeHint(0_usize, ::sus::Option<::sus::num::usize>::none());
+  return SizeHint(0_usize, ::sus::Option<::sus::num::usize>());
 }
 
 template <class Iter, class Item>

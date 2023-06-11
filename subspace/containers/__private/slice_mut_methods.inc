@@ -258,7 +258,7 @@ sus_pure constexpr ::sus::Option<T&> first_mut() RETURN_REF noexcept {
   if (len() > 0u)
     return ::sus::Option<T&>::some(*as_mut_ptr());
   else
-    return ::sus::Option<T&>::none();
+    return ::sus::Option<T&>();
 }
 
 /// Returns a mutable reference to the element at index `i`, or `None` if
@@ -267,7 +267,7 @@ sus_pure constexpr Option<T&> get_mut(::sus::num::usize i) RETURN_REF noexcept {
   if (i < len()) [[likely]]
     return Option<T&>::some(get_unchecked_mut(::sus::marker::unsafe_fn, i));
   else
-    return Option<T&>::none();
+    return Option<T&>();
 }
 
 /// Returns a mutable reference to the element at index `i`.
@@ -343,7 +343,7 @@ sus_pure constexpr ::sus::Option<T&> last_mut() RETURN_REF noexcept {
   if (length > 0u)
     return ::sus::Option<T&>::some(*(as_mut_ptr() + length - 1u));
   else
-    return ::sus::Option<T&>::none();
+    return ::sus::Option<T&>();
 }
 
 /// Returns an iterator over `chunk_size` elements of the slice at a time,
@@ -898,7 +898,7 @@ constexpr ::sus::Option<SliceMut<T>> strip_prefix_mut(const Slice<T>& prefix)
       return ::sus::Option<SliceMut<T>>::some(tail);
     }
   }
-  return ::sus::Option<SliceMut<T>>::none();
+  return ::sus::Option<SliceMut<T>>();
 }
 
 /// Returns a subslice with the `suffix` removed.
@@ -919,7 +919,7 @@ constexpr ::sus::Option<SliceMut<T>> strip_suffix_mut(const Slice<T>& suffix)
       return ::sus::Option<SliceMut<T>>::some(head);
     }
   }
-  return ::sus::Option<SliceMut<T>>::none();
+  return ::sus::Option<SliceMut<T>>();
 }
 
 /// Swaps two elements in the slice.

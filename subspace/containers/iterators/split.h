@@ -47,7 +47,7 @@ class [[sus_trivial_abi]] GenericSplitN final
 
   Option<Item> next() noexcept {
     if (count_ == 0)
-      return Option<Item>::none();
+      return Option<Item>();
     else if (count_ == 1) {
       count_ -= 1;
       return iter_.finish();
@@ -174,7 +174,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
 
   Option<Item> finish() noexcept {
     if (finished_) {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       finished_ = true;
       return Option<Item>::some(v_);
@@ -296,7 +296,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
 
   Option<Item> finish() noexcept {
     if (finished_) {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       finished_ = true;
       return Option<Item>::some(v_);

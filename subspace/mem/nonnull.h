@@ -57,7 +57,7 @@ class [[sus_trivial_abi]] NonNull {
     if (t) [[likely]]
       return ::sus::option::Option<NonNull<T>>::some(NonNull(t));
     else
-      return ::sus::option::Option<NonNull<T>>::none();
+      return ::sus::option::Option<NonNull<T>>();
   }
 
   template <class U, size_t N>

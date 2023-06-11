@@ -126,7 +126,7 @@ class EmptyIterator final : public IteratorBase<EmptyIterator<Item>, Item> {
   EmptyIterator() {}
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return Option<Item>::none(); }
+  Option<Item> next() noexcept { return Option<Item>(); }
 };
 
 TEST(Iterator, ForLoop) {

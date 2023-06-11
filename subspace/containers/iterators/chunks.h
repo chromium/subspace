@@ -57,7 +57,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       auto chunksz = ::sus::ops::min(v_.len(), chunk_size_);
       auto [fst, snd] =
@@ -70,7 +70,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (v_.is_empty()) [[unlikely]] {
-      return ::sus::Option<Item>::none();
+      return ::sus::Option<Item>();
     } else {
       const auto len = v_.len();
       const auto remainder = len % chunk_size_;
@@ -166,7 +166,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       const auto chunksz = ::sus::ops::min(v_.len(), chunk_size_);
       auto [fst, snd] =
@@ -179,7 +179,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (v_.is_empty()) [[unlikely]] {
-      return ::sus::Option<Item>::none();
+      return ::sus::Option<Item>();
     } else {
       const auto len = v_.len();
       const auto remainder = len % chunk_size_;
@@ -279,7 +279,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       // SAFETY: `split_at_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by the checking exactly that
@@ -294,7 +294,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
-      return ::sus::Option<Item>::none();
+      return ::sus::Option<Item>();
     } else {
       // SAFETY: `split_at_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by subtracting an unsigned (and
@@ -382,7 +382,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       // SAFETY: `split_at_mut_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by the checking exactly that
@@ -397,7 +397,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
-      return ::sus::Option<Item>::none();
+      return ::sus::Option<Item>();
     } else {
       // SAFETY: `split_at_mut_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by subtracting an unsigned (and
@@ -480,7 +480,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       const auto len = v_.len();
       auto chunksz = ::sus::ops::min(len, chunk_size_);
@@ -494,7 +494,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (v_.is_empty()) [[unlikely]] {
-      return ::sus::Option<Item>::none();
+      return ::sus::Option<Item>();
     } else {
       const auto remainder = v_.len() % chunk_size_;
       const auto chunksz = remainder != 0u ? remainder : chunk_size_;
@@ -589,7 +589,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       const auto len = v_.len();
       auto chunksz = ::sus::ops::min(len, chunk_size_);
@@ -603,7 +603,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (v_.is_empty()) [[unlikely]] {
-      return ::sus::Option<Item>::none();
+      return ::sus::Option<Item>();
     } else {
       const auto remainder = v_.len() % chunk_size_;
       const auto chunksz = remainder != 0 ? remainder : chunk_size_;
@@ -691,7 +691,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       // SAFETY: `split_at_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by subtracting a non-negative
@@ -706,7 +706,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
-      return ::sus::Option<Item>::none();
+      return ::sus::Option<Item>();
     } else {
       // SAFETY: `split_at_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by checking the condition
@@ -792,7 +792,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
-      return Option<Item>::none();
+      return Option<Item>();
     } else {
       // SAFETY: `split_at_mut_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by subtracting a non-negative
@@ -807,7 +807,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
-      return ::sus::Option<Item>::none();
+      return ::sus::Option<Item>();
     } else {
       // SAFETY: `split_at_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by checking the condition

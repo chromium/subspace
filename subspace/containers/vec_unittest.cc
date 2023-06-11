@@ -599,7 +599,7 @@ TEST(Vec, ExactSizeIterator) {
 TEST(Vec, Destroy) {
   static auto moves = 0_usize;
   static auto destructs = 0_usize;
-  auto o = sus::Option<Vec<TrivialLies<false>>>::none();
+  auto o = sus::Option<Vec<TrivialLies<false>>>();
   o.insert(Vec<TrivialLies<false>>());
   o->push(TrivialLies<false>(moves, destructs));
   o->push(TrivialLies<false>(moves, destructs));

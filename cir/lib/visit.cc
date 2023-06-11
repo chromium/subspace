@@ -35,7 +35,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   bool shouldVisitTemplateInstantiations() const { return true; }
 
   bool VisitFunctionDecl(clang::FunctionDecl* decl) {
-    auto return_var = Option<syntax::Let>::none();
+    auto return_var = Option<syntax::Let>();
     if (!decl->getReturnType()->isVoidType()) {
       // TODO: If it's a pointer, the function may be nonnull-annotated.
       auto type_ref = syntax::TypeReference::with_return_type(
@@ -52,7 +52,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       });
     }
 
-    auto this_param = Option<syntax::Let>::none();
+    auto this_param = Option<syntax::Let>();
     if (auto* method = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
       // TODO: `this` is the first parameter.
     }

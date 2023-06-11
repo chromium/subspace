@@ -33,7 +33,7 @@ struct IntoIteratorArchetype {
   template <class Item>
   struct Iter final : public IteratorBase<Iter<Item>, Item> {
     ::sus::option::Option<Item> next() noexcept {
-      return ::sus::option::Option<Item>::none();
+      return ::sus::option::Option<Item>();
     }
   };
   Iter<T> into_iter() && { return Iter<T>(); }
