@@ -42,7 +42,7 @@ struct [[nodiscard]] ArrayIntoIter final
 
   Option<Item> next() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
-      return Option<Item>::none();
+      return Option<Item>();
     // SAFETY: The front and back indicies are kept within the length of the
     // Array so can not go out of bounds.
     Item& item = array_.get_unchecked_mut(
@@ -54,7 +54,7 @@ struct [[nodiscard]] ArrayIntoIter final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
-      return Option<Item>::none();
+      return Option<Item>();
     // SAFETY: The front and back indicies are kept within the length of the
     // Array so can not go out of bounds.
     back_index_ -= 1u;

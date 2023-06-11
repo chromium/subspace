@@ -131,7 +131,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_add(
   if (!out.overflow) [[likely]]
     return ::sus::option::Option<_self>::some(out.value);
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 template <std::convertible_to<_signed> S>
@@ -142,7 +142,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_add_signed(
   if (!out.overflow) [[likely]]
     return ::sus::option::Option<_self>::some(out.value);
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
@@ -151,7 +151,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
     return ::sus::option::Option<_self>::some(
         __private::unchecked_div(primitive_value, rhs.primitive_value));
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
@@ -161,7 +161,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
   if (!out.overflow) [[likely]]
     return ::sus::option::Option<_self>::some(out.value);
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_neg()
@@ -169,7 +169,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_neg()
   if (primitive_value == 0u)
     return ::sus::option::Option<_self>::some(_self(_primitive{0u}));
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
@@ -178,13 +178,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
     return ::sus::option::Option<_self>::some(
         __private::unchecked_rem(primitive_value, rhs.primitive_value));
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
     const _self& rhs) const& noexcept {
   if (rhs.primitive_value == 0u) [[unlikely]] {
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
   } else {
     return ::sus::option::Option<_self>::some(
         __private::unchecked_div(primitive_value, rhs.primitive_value));
@@ -194,7 +194,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
     const _self& rhs) const& noexcept {
   if (rhs.primitive_value == 0u) [[unlikely]] {
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
   } else {
     return ::sus::option::Option<_self>::some(
         __private::unchecked_rem(primitive_value, rhs.primitive_value));
@@ -208,7 +208,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_shl(
   if (!out.overflow) [[likely]]
     return ::sus::option::Option<_self>::some(out.value);
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
@@ -218,7 +218,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
   if (!out.overflow) [[likely]]
     return ::sus::option::Option<_self>::some(out.value);
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
@@ -228,7 +228,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
   if (!out.overflow) [[likely]]
     return ::sus::option::Option<_self>::some(out.value);
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_pow(
@@ -239,13 +239,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_pow(
   if (!out.overflow) [[likely]]
     return ::sus::option::Option<_self>::some(out.value);
   else
-    return ::sus::option::Option<_self>::none();
+    return ::sus::option::Option<_self>();
 }
 
 sus_pure constexpr ::sus::option::Option<u32> _self::checked_log2()
     const& noexcept {
   if (primitive_value == 0u) [[unlikely]] {
-    return ::sus::option::Option<u32>::none();
+    return ::sus::option::Option<u32>();
   } else {
     uint32_t zeros = __private::leading_zeros_nonzero(::sus::marker::unsafe_fn,
                                                       primitive_value);
@@ -261,7 +261,7 @@ sus_pure constexpr u32 _self::log2() const& noexcept {
 sus_pure constexpr ::sus::option::Option<u32> _self::checked_log10()
     const& noexcept {
   if (primitive_value == 0u) [[unlikely]] {
-    return ::sus::option::Option<u32>::none();
+    return ::sus::option::Option<u32>();
   } else {
     return ::sus::option::Option<u32>::some(
         __private::int_log10::_self(primitive_value));
@@ -276,7 +276,7 @@ sus_pure constexpr u32 _self::log10() const& noexcept {
 sus_pure constexpr ::sus::option::Option<u32> _self::checked_log(
     const _self& base) const& noexcept {
   if (primitive_value == 0u || base.primitive_value <= 1u) [[unlikely]] {
-    return ::sus::option::Option<u32>::none();
+    return ::sus::option::Option<u32>();
   } else {
     auto n = uint32_t{0u};
     auto r = primitive_value;

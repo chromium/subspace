@@ -495,7 +495,7 @@ class Vec final {
       set_len(::sus::marker::unsafe_fn, self_len - 1u);
       return o;
     } else {
-      return Option<T>::none();
+      return Option<T>();
     }
   }
 

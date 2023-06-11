@@ -22,7 +22,7 @@ struct FnBoxStorageVtableBase {};
 
 struct FnBoxStorageBase {
   // Should be to a static lifetime pointee.
-  Option<const FnBoxStorageVtableBase&> vtable = Option<const FnBoxStorageVtableBase&>::none();
+  Option<const FnBoxStorageVtableBase&> vtable;
 };
 
 template <class R, class... CallArgs>

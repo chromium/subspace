@@ -54,7 +54,7 @@ class IterPromise {
   }
 
   void return_void() noexcept {
-    yielded_ = Option<T>::none();  // Yield None at the end of the generator.
+    yielded_ = Option<T>();  // Yield None at the end of the generator.
   }
 
   // Awaits in an iterator generator would yield None, which is unintuitive, so

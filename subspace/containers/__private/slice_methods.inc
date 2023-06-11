@@ -302,7 +302,7 @@ sus_pure constexpr ::sus::Option<const T&> first() const& noexcept {
     return ::sus::Option<const T&>::some(
         get_unchecked(::sus::marker::unsafe_fn, 0u));
   } else {
-    return ::sus::Option<const T&>::none();
+    return ::sus::Option<const T&>();
   }
 }
 
@@ -316,7 +316,7 @@ sus_pure constexpr Option<const T&> get(::sus::num::usize i) const& noexcept {
   if (i < len()) [[likely]]
     return Option<const T&>::some(get_unchecked(::sus::marker::unsafe_fn, i));
   else
-    return Option<const T&>::none();
+    return Option<const T&>();
 }
 
 #if _delete_rvalue
@@ -495,7 +495,7 @@ sus_pure constexpr ::sus::Option<const T&> last() const& noexcept {
   if (length > 0u)
     return ::sus::Option<const T&>::some(*(as_ptr() + length - 1u));
   else
-    return ::sus::Option<const T&>::none();
+    return ::sus::Option<const T&>();
 }
 
 #if _delete_rvalue
@@ -825,7 +825,7 @@ constexpr ::sus::Option<Slice<T>> strip_prefix(
       return ::sus::Option<Slice<T>>::some(tail);
     }
   }
-  return ::sus::Option<Slice<T>>::none();
+  return ::sus::Option<Slice<T>>();
 }
 
 #if _delete_rvalue
@@ -851,7 +851,7 @@ constexpr ::sus::Option<Slice<T>> strip_suffix(
       return ::sus::Option<Slice<T>>::some(head);
     }
   }
-  return ::sus::Option<Slice<T>>::none();
+  return ::sus::Option<Slice<T>>();
 }
 
 #if _delete_rvalue

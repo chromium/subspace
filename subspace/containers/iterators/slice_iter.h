@@ -60,7 +60,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
 
   Option<Item> next() noexcept {
     if (ptr_ == end_) [[unlikely]]
-      return Option<Item>::none();
+      return Option<Item>();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
@@ -70,7 +70,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (ptr_ == end_) [[unlikely]]
-      return Option<Item>::none();
+      return Option<Item>();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so subtracting one and dereffing will be inside the
     // allocation.
@@ -138,7 +138,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (ptr_ == end_) [[unlikely]]
-      return Option<Item>::none();
+      return Option<Item>();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
@@ -149,7 +149,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (ptr_ == end_) [[unlikely]]
-      return Option<Item>::none();
+      return Option<Item>();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so subtracting one and dereffing will be inside the
     // allocation.

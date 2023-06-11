@@ -61,12 +61,12 @@ struct NoneMarker {
   // concrete type.
   template <class U>
   sus_pure_const inline constexpr operator Option<U>() const& noexcept {
-    return Option<U>::none();
+    return Option<U>();
   }
 
   template <class U>
   sus_pure_const inline constexpr operator Option<U>() && noexcept {
-    return Option<U>::none();
+    return Option<U>();
   }
 
   template <class T>

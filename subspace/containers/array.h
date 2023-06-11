@@ -160,7 +160,7 @@ class Array final {
     requires(N > 0)
   {
     if (i.primitive_value >= N) [[unlikely]]
-      return Option<const T&>::none();
+      return Option<const T&>();
     return Option<const T&>::some(storage_.data_[i.primitive_value]);
   }
   constexpr Option<const T&> get(usize i) && = delete;
@@ -170,7 +170,7 @@ class Array final {
     requires(N > 0)
   {
     if (i.primitive_value >= N) [[unlikely]]
-      return Option<T&>::none();
+      return Option<T&>();
     return Option<T&>::some(mref(storage_.data_[i.primitive_value]));
   }
 

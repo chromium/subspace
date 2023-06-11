@@ -43,7 +43,7 @@ struct [[nodiscard]] VecIntoIter final
   /// sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
-      return Option<Item>::none();
+      return Option<Item>();
     // SAFETY: This class owns the Vec and does not expose it, so its length is
     // known and can not change. Thus the indices which are kept within the
     // length of the Vec can not go out of bounds.
@@ -56,7 +56,7 @@ struct [[nodiscard]] VecIntoIter final
   /// sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
-      return Option<Item>::none();
+      return Option<Item>();
     // SAFETY: This class owns the Vec and does not expose it, so its length is
     // known and can not change. Thus the indices which are kept within the
     // length of the Vec can not go out of bounds.
