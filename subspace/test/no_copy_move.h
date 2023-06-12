@@ -21,9 +21,10 @@
 namespace sus::test {
 
 struct NoCopyMove {
-  NoCopyMove() = default;
+  constexpr NoCopyMove() {}  // Non-trivial.
   NoCopyMove(NoCopyMove&&) = delete;
   NoCopyMove& operator=(NoCopyMove&&) = delete;
+  constexpr ~NoCopyMove() {}  // Non-trivial.
 
   friend constexpr bool operator==(const NoCopyMove& lhs,
                                    const NoCopyMove& rhs) noexcept {

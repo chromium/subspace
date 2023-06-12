@@ -48,6 +48,7 @@
 #include "subspace/option/__private/is_option_type.h"
 #include "subspace/option/__private/is_tuple_type.h"
 #include "subspace/option/__private/marker.h"
+#include "subspace/option/__private/ref_concepts.h"
 #include "subspace/option/__private/storage.h"
 #include "subspace/option/state.h"
 #include "subspace/result/__private/is_result_type.h"
@@ -131,6 +132,9 @@ class Option final {
   static_assert(!std::is_const_v<T>,
                 "`Option<const T>` should be written `const Option<T>`, as "
                 "const applies transitively.");
+  static_assert(
+      !std::is_rvalue_reference_v<T>,
+      "`Option<T&&> is not supported, use Option<T&> or Option<const T&.");
 
  public:
   /// Default-construct an Option that is holding no value.
@@ -211,11 +215,11 @@ class Option final {
   /// so we can use the default destructor, which allows Option<T> to also be
   /// trivially destroyed.
   constexpr ~Option() noexcept
-    requires(std::is_trivially_destructible_v<T>)
+    requires(__private::IsTrivialDtorOrRef<T>)
   = default;
 
   constexpr inline ~Option() noexcept
-    requires(!std::is_trivially_destructible_v<T>)
+    requires(!__private::IsTrivialDtorOrRef<T>)
   {
     if (t_.state() == Some) t_.destroy();
   }
@@ -223,13 +227,11 @@ class Option final {
   // If T can be trivially copy-constructed, Option<T> can also be trivially
   // copy-constructed.
   constexpr Option(const Option& o)
-    requires(::sus::mem::CopyOrRef<T> &&
-             std::is_trivially_copy_constructible_v<T>)
+    requires(::sus::mem::CopyOrRef<T> && __private::IsTrivialCopyCtorOrRef<T>)
   = default;
 
   constexpr Option(const Option& o) noexcept
-    requires(::sus::mem::CopyOrRef<T> &&
-             !std::is_trivially_copy_constructible_v<T>)
+    requires(::sus::mem::CopyOrRef<T> && !__private::IsTrivialCopyCtorOrRef<T>)
   {
     if (o.t_.state() == Some)
       t_.construct_from_none(copy_to_storage(o.t_.val()));
@@ -242,13 +244,11 @@ class Option final {
   // If T can be trivially move-constructed, Option<T> can also be trivially
   // move-constructed.
   constexpr Option(Option&& o)
-    requires(::sus::mem::MoveOrRef<T> &&
-             std::is_trivially_move_constructible_v<T>)
+    requires(::sus::mem::MoveOrRef<T> && __private::IsTrivialMoveCtorOrRef<T>)
   = default;
 
   constexpr Option(Option&& o) noexcept
-    requires(::sus::mem::MoveOrRef<T> &&
-             !std::is_trivially_move_constructible_v<T>)
+    requires(::sus::mem::MoveOrRef<T> && !__private::IsTrivialMoveCtorOrRef<T>)
   {
     if (o.t_.state() == Some) t_.construct_from_none(o.t_.take_and_set_none());
   }
@@ -260,12 +260,12 @@ class Option final {
   // If T can be trivially copy-assigned, Option<T> can also be trivially
   // copy-assigned.
   constexpr Option& operator=(const Option& o)
-    requires(::sus::mem::CopyOrRef<T> && std::is_trivially_copy_assignable_v<T>)
+    requires(::sus::mem::CopyOrRef<T> && __private::IsTrivialCopyAssignOrRef<T>)
   = default;
 
   Option& operator=(const Option& o) noexcept
     requires(::sus::mem::CopyOrRef<T> &&
-             !std::is_trivially_copy_assignable_v<T>)
+             !__private::IsTrivialCopyAssignOrRef<T>)
   {
     if (o.t_.state() == Some)
       t_.set_some(copy_to_storage(o.t_.val()));
@@ -282,12 +282,12 @@ class Option final {
   // it, so we can use the default destructor, which allows Option<T> to also
   // be trivially move-assigned.
   constexpr Option& operator=(Option&& o)
-    requires(::sus::mem::MoveOrRef<T> && std::is_trivially_move_assignable_v<T>)
+    requires(::sus::mem::MoveOrRef<T> && __private::IsTrivialMoveAssignOrRef<T>)
   = default;
 
   Option& operator=(Option&& o) noexcept
     requires(::sus::mem::MoveOrRef<T> &&
-             !std::is_trivially_move_assignable_v<T>)
+             !__private::IsTrivialMoveAssignOrRef<T>)
   {
     if (o.t_.state() == Some)
       t_.set_some(o.t_.take_and_set_none());

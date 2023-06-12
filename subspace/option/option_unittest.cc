@@ -248,6 +248,29 @@ TEST(Option, SomeNoneHelpers) {
   }
 }
 
+TEST(Option, Copy) {
+  // This type has a user defined copy constructor, which deletes the implicit
+  // copy constructor in Option.
+  auto static copied = 0_usize;
+  struct Type {
+    Type() = default;
+    Type(const Type&) { copied += 1; }
+    Type& operator=(const Type&) { return copied += 1, *this; }
+  };
+  auto x = Option<Type>::with(Type());
+  EXPECT_EQ(copied, 1u);
+  auto y = x;
+  EXPECT_EQ(copied, 2u);
+  IS_SOME(x);
+  IS_SOME(y);
+
+  auto m = NoCopyMove();
+  auto z = Option<NoCopyMove&>::with(m);
+  auto zz = z;
+  EXPECT_EQ(&z.as_value(), &m);
+  EXPECT_EQ(&zz.as_value(), &m);
+}
+
 TEST(Option, Move) {
   // This type has a user defined move constructor, which deletes the implicit
   // move constructor in Option.
@@ -281,6 +304,13 @@ TEST(Option, Move) {
   auto b = Option<MoveableLvalue>::with(sus::move(lvalue));
   EXPECT_EQ(b->i, 2);
   EXPECT_EQ(lvalue.i, 0);
+
+  auto m = NoCopyMove();
+  auto z = Option<NoCopyMove&>::with(m);
+  auto zz = sus::move(z);
+  // Trivial move leaves the old value behind.
+  EXPECT_EQ(&z.as_value(), &m);
+  EXPECT_EQ(&zz.as_value(), &m);
 }
 
 // No code should use Option after moving from it; that's what
