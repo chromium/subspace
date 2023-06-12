@@ -195,16 +195,16 @@ TEST(u64, Constants) {
 }
 
 template <class From, class To>
-concept IsImplicitlyConvertible = (std::is_convertible_v<From, To> &&
-                                   std::is_assignable_v<To, From>);
+concept IsImplicitlyConvertible =
+    (std::is_convertible_v<From, To> && std::is_assignable_v<To, From>);
 template <class From, class To>
-concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
-                                   !std::is_convertible_v<From, To> &&
-                                   !std::is_assignable_v<To, From>);
+concept IsExplicitlyConvertible =
+    (std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+     !std::is_assignable_v<To, From>);
 template <class From, class To>
-concept NotConvertible = (!std::constructible_from<To, From> &&
-                          !std::is_convertible_v<From, To> &&
-                          !std::is_assignable_v<To, From>);
+concept NotConvertible =
+    (!std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+     !std::is_assignable_v<To, From>);
 
 template <class T>
 auto make_enum() {
@@ -250,6 +250,11 @@ constexpr bool is_constexpr_constructible(...) {
   return false;
 }
 
+template <auto From, class To>
+concept IsConstexprAssignable = requires(To to) {
+  { to = From };
+};
+
 TEST(u64, CompileTimeConversion) {
   using Self = u64;
 
@@ -288,6 +293,17 @@ TEST(u64, CompileTimeConversion) {
 
   static_assert(is_constexpr_convertible<u64{Self::MAX}, Self>(0));
   static_assert(is_constexpr_convertible<uint64_t{Self::MAX}, Self>(0));
+
+  static_assert(IsConstexprAssignable<0_u8, Self>);
+  static_assert(IsConstexprAssignable<0_u16, Self>);
+  static_assert(IsConstexprAssignable<0_u32, Self>);
+  static_assert(IsConstexprAssignable<0_u64, Self>);
+  static_assert(IsConstexprAssignable<0_usize, Self>);
+  static_assert(IsConstexprAssignable<uint8_t{0}, Self>);
+  static_assert(IsConstexprAssignable<uint16_t{0}, Self>);
+  static_assert(IsConstexprAssignable<uint32_t{0}, Self>);
+  static_assert(IsConstexprAssignable<uint64_t{0}, Self>);
+  static_assert(IsConstexprAssignable<size_t{0}, Self>);
 }
 
 TEST(u64, CompileTimeConversionEnum) {
@@ -315,13 +331,16 @@ TEST(u64, CompileTimeConversionEnum) {
   static_assert(!is_constexpr_constructible<ENUM(class, int8_t)::MIN, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, int8_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, int16_t)::X, Self>(0));
-  static_assert(!is_constexpr_constructible<ENUM(class, int16_t)::MIN, Self>(0));
+  static_assert(
+      !is_constexpr_constructible<ENUM(class, int16_t)::MIN, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, int16_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, int32_t)::X, Self>(0));
-  static_assert(!is_constexpr_constructible<ENUM(class, int32_t)::MIN, Self>(0));
+  static_assert(
+      !is_constexpr_constructible<ENUM(class, int32_t)::MIN, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, int32_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, int64_t)::X, Self>(0));
-  static_assert(!is_constexpr_constructible<ENUM(class, int64_t)::MIN, Self>(0));
+  static_assert(
+      !is_constexpr_constructible<ENUM(class, int64_t)::MIN, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, int64_t)::MAX, Self>(0));
 
   static_assert(is_constexpr_convertible<ENUM(, uint8_t)::X, Self>(0));
@@ -346,14 +365,20 @@ TEST(u64, CompileTimeConversionEnum) {
   static_assert(is_constexpr_constructible<ENUM(class, uint8_t)::MIN, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, uint8_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, uint16_t)::X, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint16_t)::MIN, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint16_t)::MAX, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint16_t)::MIN, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint16_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, uint32_t)::X, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint32_t)::MIN, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint32_t)::MAX, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint32_t)::MIN, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint32_t)::MAX, Self>(0));
   static_assert(is_constexpr_constructible<ENUM(class, uint64_t)::X, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint64_t)::MIN, Self>(0));
-  static_assert(is_constexpr_constructible<ENUM(class, uint64_t)::MAX, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint64_t)::MIN, Self>(0));
+  static_assert(
+      is_constexpr_constructible<ENUM(class, uint64_t)::MAX, Self>(0));
 }
 
 TEST(u64, ToPrimitive) {

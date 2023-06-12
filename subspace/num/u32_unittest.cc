@@ -254,6 +254,11 @@ constexpr bool is_constexpr_constructible(...) {
   return false;
 }
 
+template <auto From, class To>
+concept IsConstexprAssignable = requires(To to) {
+  { to = From };
+};
+
 TEST(u32, CompileTimeConversion) {
   using Self = u32;
 
@@ -309,6 +314,17 @@ TEST(u32, CompileTimeConversion) {
   static_assert(sizeof(usize) <= sizeof(Self)
                     ? is_constexpr_convertible<size_t{usize::MAX}, Self>(0)
                     : !is_constexpr_convertible<size_t{usize::MAX}, Self>(0));
+
+  static_assert(IsConstexprAssignable<0_u8, Self>);
+  static_assert(IsConstexprAssignable<0_u16, Self>);
+  static_assert(IsConstexprAssignable<0_u32, Self>);
+  static_assert(IsConstexprAssignable<0_u64, Self>);
+  static_assert(IsConstexprAssignable<0_usize, Self>);
+  static_assert(IsConstexprAssignable<uint8_t{0}, Self>);
+  static_assert(IsConstexprAssignable<uint16_t{0}, Self>);
+  static_assert(IsConstexprAssignable<uint32_t{0}, Self>);
+  static_assert(IsConstexprAssignable<uint64_t{0}, Self>);
+  static_assert(IsConstexprAssignable<size_t{0}, Self>);
 }
 
 TEST(u32, CompileTimeConversionEnum) {
