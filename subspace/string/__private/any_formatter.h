@@ -21,6 +21,12 @@
 
 namespace sus::string::__private {
 
+/// Helper type used in the AnyFormatter type alias. When `T` is `void` in
+/// `AnyOrVoidFormatter`, the full type alias is still resolved, which means
+/// AnyFormatter can not use the `T` in invalid ways for `void`. To avoid
+/// compiler errors, we substitute `void` with this type.
+struct VoidPlaceholder {};
+
 /// A formatter that can format any type.
 ///
 /// If the type is not formattable itself, it will be turned into a string of
@@ -29,9 +35,13 @@ namespace sus::string::__private {
 /// To also be able to format `void` use `AnyOrVoidFormatter`.
 template <class T, class Char>
 using AnyFormatter = std::conditional_t<
-    fmt::is_formattable<std::remove_cv_t<std::remove_reference_t<T>>,
-                        Char>::value,
-    fmt::formatter<std::remove_cv_t<std::remove_reference_t<T>>, Char>,
+    fmt::is_formattable<
+        std::remove_cv_t<std::remove_reference_t<
+            std::conditional_t<std::is_void_v<T>, VoidPlaceholder, T>>>,
+        Char>::value,
+    fmt::formatter<std::remove_cv_t<std::remove_reference_t<std::conditional_t<
+                       std::is_void_v<T>, VoidPlaceholder, T>>>,
+                   Char>,
     BytesFormatter<Char>>;
 
 template <class Char>
@@ -51,8 +61,10 @@ struct VoidFormatter {
   constexpr auto parse(ParseContext& ctx) {
     return ctx.begin();
   }
-  template <class T, class FormatContext>
-  constexpr auto format(const T&, FormatContext& ctx) const {
+  // This function can't be called through fmt::format(), but there's no way to
+  // end up there with a `void` anyway.
+  template <class FormatContext>
+  constexpr auto format(FormatContext& ctx) const {
     return format_void<Char>(ctx.out());
   }
 };
