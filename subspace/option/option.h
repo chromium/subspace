@@ -154,7 +154,7 @@ class Option final {
     }
   }
 
-  sus_pure static inline constexpr Option with(T& t sus_lifetimebound) noexcept
+  sus_pure static inline constexpr Option with(T t sus_lifetimebound) noexcept
     requires(std::is_reference_v<T>)
   {
     return Option(move_to_storage(t));
@@ -1120,7 +1120,7 @@ class Option final {
   template <class U>
   static constexpr inline decltype(auto) copy_to_storage(const U& t) {
     if constexpr (std::is_reference_v<T>)
-      return StoragePointer<T&>(t);
+      return StoragePointer<T>(t);
     else
       return t;
   }
@@ -1129,7 +1129,7 @@ class Option final {
   template <class U>
   static constexpr inline decltype(auto) move_to_storage(U&& t) {
     if constexpr (std::is_reference_v<T>)
-      return StoragePointer<T&>(t);
+      return StoragePointer<T>(t);
     else
       return ::sus::move(t);
   }
