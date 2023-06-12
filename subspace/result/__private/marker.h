@@ -49,19 +49,13 @@ struct OkMarker {
     return Result<U, E>::with(::sus::forward<T>(value));
   }
 
-  // TODO: Make Result hold references and remove the remove_reference_t.
   template <class E>
-  inline constexpr ::sus::result::Result<std::remove_reference_t<T>,
-                                         std::remove_reference_t<E>>
-  construct() && noexcept {
+  inline constexpr ::sus::result::Result<::sus::mem::remove_rvalue_reference<T>, E> construct() && noexcept {
     return ::sus::move(*this);
   }
 
-  // TODO: Make Result hold references and remove the remove_reference_t.
   template <class U, class E>
-  inline constexpr ::sus::result::Result<std::remove_reference_t<U>,
-                                         std::remove_reference_t<E>>
-  construct() && noexcept {
+  inline constexpr ::sus::result::Result<U, E> construct() && noexcept {
     return ::sus::move(*this);
   }
 };
@@ -90,19 +84,8 @@ struct ErrMarker {
     return Result<T, F>::with_err(::sus::forward<E>(value));
   }
 
-  // TODO: Make Result hold references and remove the remove_reference_t.
-  template <class T>
-  inline constexpr ::sus::result::Result<std::remove_reference_t<T>,
-                                         std::remove_reference_t<E>>
-  construct() && noexcept {
-    return ::sus::move(*this);
-  }
-
-  // TODO: Make Result hold references and remove the remove_reference_t.
-  template <class T, class F>
-  inline constexpr ::sus::result::Result<std::remove_reference_t<T>,
-                                         std::remove_reference_t<F>>
-  construct() && noexcept {
+  template <class T, class F = std::remove_reference_t<E>>
+  inline constexpr ::sus::result::Result<T, F> construct() && noexcept {
     return ::sus::move(*this);
   }
 };
