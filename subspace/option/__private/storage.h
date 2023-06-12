@@ -289,6 +289,11 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
   constexpr StoragePointer() = default;  // For the NeverValueField.
 };
 
+static_assert(std::is_trivially_copy_constructible_v<StoragePointer<int&>>);
+static_assert(std::is_trivially_copy_assignable_v<StoragePointer<int&>>);
+static_assert(std::is_trivially_move_constructible_v<StoragePointer<int&>>);
+static_assert(std::is_trivially_move_assignable_v<StoragePointer<int&>>);
+
 // This must be true in order for StoragePointer to be useful with the
 // never-value field optimization.
 // clang-format off
