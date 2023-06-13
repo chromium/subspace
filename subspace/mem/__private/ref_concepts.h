@@ -14,7 +14,7 @@
 
 #pragma once
 
-namespace sus::option::__private {
+namespace sus::mem::__private {
 
 template <class T>
 concept IsTrivialDtorOrRef =
@@ -36,4 +36,4 @@ template <class T>
 concept IsTrivialMoveAssignOrRef =
     std::is_trivially_move_assignable_v<T> || std::is_reference_v<T>;
 
-}  // namespace sus::option::__private
+}  // namespace sus::mem::__private

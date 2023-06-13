@@ -35,6 +35,7 @@
 #include "subspace/macros/nonnull.h"
 #include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
+#include "subspace/mem/__private/ref_concepts.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/copy.h"
 #include "subspace/mem/forward.h"
@@ -48,7 +49,6 @@
 #include "subspace/option/__private/is_option_type.h"
 #include "subspace/option/__private/is_tuple_type.h"
 #include "subspace/option/__private/marker.h"
-#include "subspace/option/__private/ref_concepts.h"
 #include "subspace/option/__private/storage.h"
 #include "subspace/option/state.h"
 #include "subspace/result/__private/is_result_type.h"
@@ -82,9 +82,14 @@ namespace sus::option {
 
 using State::None;
 using State::Some;
-using sus::iter::Once;
-using sus::option::__private::Storage;
-using sus::option::__private::StoragePointer;
+using ::sus::iter::Once;
+using ::sus::mem::__private::IsTrivialCopyAssignOrRef;
+using ::sus::mem::__private::IsTrivialCopyCtorOrRef;
+using ::sus::mem::__private::IsTrivialDtorOrRef;
+using ::sus::mem::__private::IsTrivialMoveAssignOrRef;
+using ::sus::mem::__private::IsTrivialMoveCtorOrRef;
+using ::sus::option::__private::Storage;
+using ::sus::option::__private::StoragePointer;
 
 /// A type which either holds `Some` value of type `T`, or `None`.
 ///
@@ -215,11 +220,11 @@ class Option final {
   /// so we can use the default destructor, which allows Option<T> to also be
   /// trivially destroyed.
   constexpr ~Option() noexcept
-    requires(__private::IsTrivialDtorOrRef<T>)
+    requires(IsTrivialDtorOrRef<T>)
   = default;
 
   constexpr inline ~Option() noexcept
-    requires(!__private::IsTrivialDtorOrRef<T>)
+    requires(!IsTrivialDtorOrRef<T>)
   {
     if (t_.state() == Some) t_.destroy();
   }
@@ -227,11 +232,11 @@ class Option final {
   // If T can be trivially copy-constructed, Option<T> can also be trivially
   // copy-constructed.
   constexpr Option(const Option& o)
-    requires(::sus::mem::CopyOrRef<T> && __private::IsTrivialCopyCtorOrRef<T>)
+    requires(::sus::mem::CopyOrRef<T> && IsTrivialCopyCtorOrRef<T>)
   = default;
 
   constexpr Option(const Option& o) noexcept
-    requires(::sus::mem::CopyOrRef<T> && !__private::IsTrivialCopyCtorOrRef<T>)
+    requires(::sus::mem::CopyOrRef<T> && !IsTrivialCopyCtorOrRef<T>)
   {
     if (o.t_.state() == Some)
       t_.construct_from_none(copy_to_storage(o.t_.val()));
@@ -244,11 +249,11 @@ class Option final {
   // If T can be trivially move-constructed, Option<T> can also be trivially
   // move-constructed.
   constexpr Option(Option&& o)
-    requires(::sus::mem::MoveOrRef<T> && __private::IsTrivialMoveCtorOrRef<T>)
+    requires(::sus::mem::MoveOrRef<T> && IsTrivialMoveCtorOrRef<T>)
   = default;
 
   constexpr Option(Option&& o) noexcept
-    requires(::sus::mem::MoveOrRef<T> && !__private::IsTrivialMoveCtorOrRef<T>)
+    requires(::sus::mem::MoveOrRef<T> && !IsTrivialMoveCtorOrRef<T>)
   {
     if (o.t_.state() == Some) t_.construct_from_none(o.t_.take_and_set_none());
   }
@@ -260,12 +265,11 @@ class Option final {
   // If T can be trivially copy-assigned, Option<T> can also be trivially
   // copy-assigned.
   constexpr Option& operator=(const Option& o)
-    requires(::sus::mem::CopyOrRef<T> && __private::IsTrivialCopyAssignOrRef<T>)
+    requires(::sus::mem::CopyOrRef<T> && IsTrivialCopyAssignOrRef<T>)
   = default;
 
   Option& operator=(const Option& o) noexcept
-    requires(::sus::mem::CopyOrRef<T> &&
-             !__private::IsTrivialCopyAssignOrRef<T>)
+    requires(::sus::mem::CopyOrRef<T> && !IsTrivialCopyAssignOrRef<T>)
   {
     if (o.t_.state() == Some)
       t_.set_some(copy_to_storage(o.t_.val()));
@@ -282,12 +286,11 @@ class Option final {
   // it, so we can use the default destructor, which allows Option<T> to also
   // be trivially move-assigned.
   constexpr Option& operator=(Option&& o)
-    requires(::sus::mem::MoveOrRef<T> && __private::IsTrivialMoveAssignOrRef<T>)
+    requires(::sus::mem::MoveOrRef<T> && IsTrivialMoveAssignOrRef<T>)
   = default;
 
   Option& operator=(Option&& o) noexcept
-    requires(::sus::mem::MoveOrRef<T> &&
-             !__private::IsTrivialMoveAssignOrRef<T>)
+    requires(::sus::mem::MoveOrRef<T> && !IsTrivialMoveAssignOrRef<T>)
   {
     if (o.t_.state() == Some)
       t_.set_some(o.t_.take_and_set_none());
