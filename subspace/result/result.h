@@ -28,6 +28,7 @@
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/marker/unsafe.h"
+#include "subspace/mem/__private/ref_concepts.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/copy.h"
 #include "subspace/mem/move.h"
@@ -35,12 +36,11 @@
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
 #include "subspace/mem/take.h"
-#include "subspace/option/__private/ref_concepts.h"
+#include "subspace/ops/__private/void_concepts.h"
 #include "subspace/option/option.h"
 #include "subspace/result/__private/marker.h"
 #include "subspace/result/__private/result_state.h"
 #include "subspace/result/__private/storage.h"
-#include "subspace/result/__private/void_concepts.h"
 #include "subspace/string/__private/format_to_stream.h"
 
 namespace sus::iter {
@@ -56,15 +56,19 @@ constexpr auto end(const T& t) noexcept;
 
 namespace sus::result {
 
-using sus::iter::Once;
-using ::sus::option::__private::IsTrivialCopyAssignOrRef;
-using ::sus::option::__private::IsTrivialCopyCtorOrRef;
-using ::sus::option::__private::IsTrivialDtorOrRef;
-using ::sus::option::__private::IsTrivialMoveAssignOrRef;
-using ::sus::option::__private::IsTrivialMoveCtorOrRef;
-using sus::option::__private::StoragePointer;
-using sus::result::__private::ResultState;
-using sus::result::__private::Storage;
+using ::sus::iter::Once;
+using ::sus::mem::__private::IsTrivialCopyAssignOrRef;
+using ::sus::mem::__private::IsTrivialCopyCtorOrRef;
+using ::sus::mem::__private::IsTrivialDtorOrRef;
+using ::sus::mem::__private::IsTrivialMoveAssignOrRef;
+using ::sus::mem::__private::IsTrivialMoveCtorOrRef;
+using ::sus::ops::__private::VoidOrEq;
+using ::sus::ops::__private::VoidOrOrd;
+using ::sus::ops::__private::VoidOrPartialOrd;
+using ::sus::ops::__private::VoidOrWeakOrd;
+using ::sus::option::__private::StoragePointer;
+using ::sus::result::__private::ResultState;
+using ::sus::result::__private::Storage;
 
 /// The representation of an Result's state, which can either be #Ok to
 /// represent it has a success value, or #Err for when it is holding an error
@@ -726,7 +730,7 @@ class [[nodiscard]] Result final {
 
   /// sus::ops::Eq<Result<T, E>> trait.
   template <class U, class F>
-    requires(__private::VoidOrEq<T, U> && ::sus::ops::Eq<E, F>)
+    requires(VoidOrEq<T, U> && ::sus::ops::Eq<E, F>)
   friend constexpr bool operator==(const Result& l,
                                    const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -744,7 +748,7 @@ class [[nodiscard]] Result final {
   }
 
   template <class U, class F>
-    requires(!(__private::VoidOrEq<T, U> && ::sus::ops::Eq<E, F>))
+    requires(!(VoidOrEq<T, U> && ::sus::ops::Eq<E, F>))
   friend constexpr bool operator==(const Result& l,
                                    const Result<U, F>& r) = delete;
 
@@ -763,7 +767,7 @@ class [[nodiscard]] Result final {
   // sus::ops::WeakOrd<Result<T, E>> trait.
   // sus::ops::PartialOrd<Result<T, E>> trait.
   template <class U, class F>
-    requires(__private::VoidOrOrd<T, U> && ::sus::ops::Ord<E, F>)
+    requires(VoidOrOrd<T, U> && ::sus::ops::Ord<E, F>)
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -788,8 +792,8 @@ class [[nodiscard]] Result final {
   }
 
   template <class U, class F>
-    requires((!__private::VoidOrOrd<T, U> || !::sus::ops::Ord<E, F>) &&
-             __private::VoidOrWeakOrd<T, U> && ::sus::ops::WeakOrd<E, F>)
+    requires((!VoidOrOrd<T, U> || !::sus::ops::Ord<E, F>) &&
+             VoidOrWeakOrd<T, U> && ::sus::ops::WeakOrd<E, F>)
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -814,8 +818,8 @@ class [[nodiscard]] Result final {
   }
 
   template <class U, class F>
-    requires((!__private::VoidOrWeakOrd<T, U> || !::sus::ops::WeakOrd<E, F>) &&
-             __private::VoidOrPartialOrd<T, U> && ::sus::ops::PartialOrd<E, F>)
+    requires((!VoidOrWeakOrd<T, U> || !::sus::ops::WeakOrd<E, F>) &&
+             VoidOrPartialOrd<T, U> && ::sus::ops::PartialOrd<E, F>)
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -840,8 +844,7 @@ class [[nodiscard]] Result final {
   }
 
   template <class U, class F>
-    requires(!__private::VoidOrPartialOrd<T, U> ||
-             !::sus::ops::PartialOrd<E, F>)
+    requires(!VoidOrPartialOrd<T, U> || !::sus::ops::PartialOrd<E, F>)
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept = delete;
 

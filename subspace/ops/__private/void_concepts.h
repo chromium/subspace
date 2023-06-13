@@ -19,7 +19,7 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
 
-namespace sus::result::__private {
+namespace sus::ops::__private {
 
 template <class T, class U>
 concept VoidOrEq =
@@ -37,4 +37,4 @@ template <class T, class U>
 concept VoidOrPartialOrd =
     (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::PartialOrd<T, U>;
 
-}  // namespace sus::result::__private
+}  // namespace sus::ops::__private
