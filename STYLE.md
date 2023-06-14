@@ -21,7 +21,7 @@ footguns, crashes, bugs, and UB.
 1. Use `sus` concepts where possible.
     * If you `requires` a concept, then use that concept to do the intended
       action instead of rolling it yourself. For example if `T` was required to
-      be `Default` then construct `T` via `make_default()`.
+      be `Into<U, T>` then construct `T` via `sus::into()`.
     * On types, it often makes sense to static assert instead to give a nice
       compiler error, since they are not used in overloads like functions.
 1. Use `usize`, `u32`, `i32`, etc in all public APIs, except:
@@ -32,3 +32,8 @@ footguns, crashes, bugs, and UB.
       can get in the way.
 1. Do not `clone()` inside constructor methods. The clone should happen at the
    call site. Only allow Copy to happen inside the library type.
+1. Default constructors should not be explicit typically, allow `{}` syntax,
+   since we have to write out the type elsewhere anyway, especially with static
+   ctor methods. This reduces the amount of noise. e.g. `auto o =
+   Option<DefaultCtor>({})` instead of `auto o =
+   Option<DefaultCtor>(DefaultCtor())`.

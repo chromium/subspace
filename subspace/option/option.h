@@ -142,7 +142,7 @@ class Option final {
 
  public:
   /// Default-construct an Option that is holding no value.
-  explicit inline constexpr Option() noexcept = default;
+  inline constexpr Option() noexcept = default;
 
   /// Construct an Option that is holding the given value.
   static inline constexpr Option with(const T& t) noexcept
