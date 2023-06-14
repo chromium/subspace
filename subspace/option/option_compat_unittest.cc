@@ -16,6 +16,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/construct/into.h"
+#include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/prelude.h"
 
 namespace {
@@ -136,8 +137,8 @@ TEST(OptionCompat, ToOptionalCopy) {
     EXPECT_EQ(o.value(), s.as_value());
   }
   {
-    constexpr auto s = sus::Option<int>();
-    constexpr auto o = std::optional<int>(s);
+    sus_gcc_bug_110245_else(constexpr) auto s = sus::Option<int>();
+    sus_gcc_bug_110245_else(constexpr) auto o = std::optional<int>(s);
     EXPECT_EQ(o.has_value(), false);
   }
   // Implicit.
@@ -147,8 +148,8 @@ TEST(OptionCompat, ToOptionalCopy) {
     EXPECT_EQ(o.value(), s.as_value());
   }
   {
-    constexpr auto s = sus::Option<int>();
-    constexpr std::optional<int> o = s;
+    sus_gcc_bug_110245_else(constexpr) auto s = sus::Option<int>();
+    sus_gcc_bug_110245_else(constexpr) std::optional<int> o = s;
     EXPECT_EQ(o.has_value(), false);
   }
 

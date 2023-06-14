@@ -101,3 +101,13 @@
 #define sus_clang_bug_49358(...)
 #define sus_clang_bug_49358_else(...) __VA_ARGS__
 #endif
+
+// TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110245
+// GCC can't constexpr initialize Option without a value.
+#if defined(__GNUC__) && __GNUC__ > 0  // TODO: Update when the bug is fixed.
+#define sus_gcc_bug_110245(...) __VA_ARGS__
+#define sus_gcc_bug_110245_else(...)
+#else
+#define sus_gcc_bug_110245(...)
+#define sus_gcc_bug_110245_else(...) __VA_ARGS__
+#endif
