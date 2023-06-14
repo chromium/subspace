@@ -20,6 +20,7 @@
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/construct/default.h"
+#include "subspace/construct/into.h"
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
@@ -47,6 +48,11 @@
 #include "subspace/result/__private/is_result_type.h"
 #include "subspace/string/__private/any_formatter.h"
 #include "subspace/string/__private/format_to_stream.h"
+
+namespace std {
+template <class T>
+class optional;
+}
 
 namespace sus::iter {
 template <class Iter, class Item>
@@ -160,6 +166,20 @@ class Option final {
     requires(std::is_reference_v<T>)
   {
     return Option(move_to_storage(t));
+  }
+
+  /// Implements sus::construct::From<Option<U>> when `U` can be converted to
+  /// `T`, i.e. `sus::construct::Into<U, T>`
+  ///
+  /// #[doc.overloads=from.option]
+  template <::sus::construct::Into<T> U>
+  static constexpr Option from(const ::sus::option::Option<U>& o) noexcept {
+    return Option::with(sus::into(o.as_value()));
+  }
+  /// #[doc.overloads=from.option]
+  template <::sus::construct::Into<T> U>
+  static constexpr Option from(::sus::option::Option<U>&& o) noexcept {
+    return Option::with(sus::into(sus::move(o).unwrap()));
   }
 
   /// Takes each item in the Iterator: if it is None, no further elements are
@@ -1106,6 +1126,63 @@ class Option final {
     requires(!::sus::ops::Eq<T, U>)
   friend constexpr inline bool operator==(const Option<T>& l,
                                           const Option<U>& r) = delete;
+
+  /// Implements sus::mem::From<std::optional>.
+  ///
+  /// This also allows `sus::into()` to convert with type deduction from
+  /// `std::optional` to `sus::Option`.
+  ///
+  /// Include subspace/option/option_compat.h to use these methods, as std
+  /// `<optional>` header is not included by default.
+  ///
+  /// #[doc.overloads=from.optional]
+  constexpr static Option from(
+      const std::optional<std::remove_reference_t<T>>& s) noexcept
+    requires(::sus::mem::Copy<T> && !std::is_reference_v<T>);
+  /// #[doc.overloads=from.optional]
+  constexpr static Option from(
+      std::optional<std::remove_reference_t<T>>&& s) noexcept
+    requires(::sus::mem::Move<T> && !std::is_reference_v<T>);
+  /// Implements sus::construct::From<std::optional<U>> when `U` can be
+  /// converted to `T`, i.e. `sus::construct::Into<U, T>`
+  ///
+  /// #[doc.overloads=from.optional.u]
+  template <::sus::construct::Into<T> U>
+  static inline constexpr Option from(const std::optional<U>& s) noexcept
+    requires(!std::is_reference_v<T>);
+  /// #[doc.overloads=from.optional.u]
+  template <::sus::construct::Into<T> U>
+  static inline constexpr Option from(std::optional<U>&& s) noexcept
+    requires(!std::is_reference_v<T>);
+  /// Implicit conversion from std::optional.
+  ///
+  /// Include subspace/option/option_compat.h to use these methods, as std
+  /// `<optional>` header is not included by default.
+  ///
+  /// #[doc.overloads=ctor.optional]
+  Option(const std::optional<std::remove_reference_t<T>>& s) noexcept
+    requires(::sus::mem::Copy<T> && !std::is_reference_v<T>);
+  /// #[doc.overloads=ctor.optional]
+  Option(std::optional<std::remove_reference_t<T>>&& s) noexcept
+    requires(::sus::mem::Move<T> && !std::is_reference_v<T>);
+  /// Implicit conversion to std::optional.
+  ///
+  /// Include subspace/option/option_compat.h to use these methods, as std
+  /// `<optional>` header is not included by default.
+  ///
+  /// #[doc.overloads=convert.optional]
+  constexpr operator std::optional<std::remove_reference_t<T>>() const& noexcept
+    requires(::sus::mem::Copy<T> && !std::is_reference_v<T>);
+  /// #[doc.overloads=convert.optional]
+  constexpr operator std::optional<std::remove_reference_t<T>>() && noexcept
+    requires(::sus::mem::Move<T> && !std::is_reference_v<T>);
+  /// #[doc.overloads=convert.optional]
+  constexpr operator std::optional<const std::remove_reference_t<T>*>()
+      const noexcept
+    requires(std::is_reference_v<T>);
+  /// #[doc.overloads=convert.optional]
+  constexpr operator std::optional<std::remove_reference_t<T>*>() noexcept
+    requires(std::is_reference_v<T>);
 
  private:
   template <class U>

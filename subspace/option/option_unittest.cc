@@ -2503,6 +2503,19 @@ struct CollectSum {
   T sum;
 };
 
+TEST(Option, From) {
+  static_assert(sus::construct::Into<i64, i32>);
+
+  // Move.
+  Option<i32> o = sus::into(Option<i64>::with(101));
+  EXPECT_EQ(o.as_value(), 101_i32);
+
+  // Copy.
+  auto f = Option<i64>::with(101);
+  Option<i32> t = sus::into(f);
+  EXPECT_EQ(t.as_value(), 101_i32);
+}
+
 TEST(Option, FromIter) {
   decltype(auto) all_some =
       sus::Array<Option<usize>, 3>::with_values(Option<usize>::with(1u),
