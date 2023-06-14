@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <new>  // std::lanuder
+
 #include "subspace/iter/iterator_concept.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
@@ -116,15 +118,15 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
   static_assert(std::is_final_v<Iter>);
 
   void (*destroy)(char& sized) = [](char& sized) {
-    reinterpret_cast<Iter&>(sized).~Iter();
+    std::launder(reinterpret_cast<Iter*>(&sized))->~Iter();
   };
   Option<Item> (*next)(char& sized) = [](char& sized) {
-    return reinterpret_cast<Iter&>(sized).next();
+    return std::launder(reinterpret_cast<Iter*>(&sized))->next();
   };
   Option<Item> (*next_back)(char& sized);
   if constexpr (SizedIteratorType<Iter>::type::DoubleEnded) {
     next_back = [](char& sized) {
-      return reinterpret_cast<Iter&>(sized).next_back();
+      return std::launder(reinterpret_cast<Iter*>(&sized))->next_back();
     };
   } else {
     next_back = nullptr;
@@ -132,7 +134,8 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
   usize (*exact_size_hint)(const char& sized);
   if constexpr (SizedIteratorType<Iter>::type::ExactSize) {
     exact_size_hint = [](const char& sized) {
-      return reinterpret_cast<const Iter&>(sized).exact_size_hint();
+      return std::launder(reinterpret_cast<const Iter*>(&sized))
+          ->exact_size_hint();
     };
   } else {
     exact_size_hint = nullptr;
