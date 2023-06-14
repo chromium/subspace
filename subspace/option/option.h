@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: Overload all && functions with const& version if T is copyable? The
-// latter copies T instead of moving it. This could lead to a lot of unintended
-// copies if expensive types have copy constructors, which is common in
-// preexisting C++ code since there's no concept of Clone there (which will TBD
-// in this library). So it's not clear if this is the right thing to do
-// actually, needs thought.
-
 #pragma once
 
 #include <type_traits>
