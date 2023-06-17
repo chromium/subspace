@@ -254,8 +254,8 @@ TEST(Option, Copy) {
   auto static copied = 0_usize;
   struct Type {
     Type() = default;
-    Type(const Type&) { copied += 1; }
-    Type& operator=(const Type&) { return copied += 1, *this; }
+    Type(const Type&) { copied += 1u; }
+    Type& operator=(const Type&) { return copied += 1u, *this; }
   };
   auto x = Option<Type>::with(Type());
   EXPECT_EQ(copied, 1u);

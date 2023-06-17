@@ -606,7 +606,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
       return ::sus::Option<Item>();
     } else {
       const auto remainder = v_.len() % chunk_size_;
-      const auto chunksz = remainder != 0 ? remainder : chunk_size_;
+      const auto chunksz = remainder != 0u ? remainder : chunk_size_;
       // SAFETY: Similar to `RChunks::next_back`
       auto [fst, snd] =
           v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, chunksz);

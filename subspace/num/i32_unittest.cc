@@ -295,9 +295,9 @@ TEST(i32, CompileTimeConversion) {
   static_assert(is_constexpr_convertible<uint64_t{1}, Self>(0));
   static_assert(is_constexpr_convertible<size_t{1}, Self>(0));
 
-  static_assert(is_constexpr_convertible<u64{Self::MAX}, Self>(0));
+  static_assert(is_constexpr_convertible<u64::from(Self::MAX), Self>(0));
   static_assert(is_constexpr_convertible<uint64_t{Self::MAX}, Self>(0));
-  static_assert(!is_constexpr_convertible<u64{Self::MAX} + 1u, Self>(0));
+  static_assert(!is_constexpr_convertible<u64::from(Self::MAX) + 1u, Self>(0));
   static_assert(!is_constexpr_convertible<uint64_t{Self::MAX} + 1u, Self>(0));
   static_assert(!is_constexpr_convertible<u64::MAX, Self>(0));
   static_assert(!is_constexpr_convertible<uint64_t{u64::MAX}, Self>(0));

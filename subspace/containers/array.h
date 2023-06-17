@@ -478,8 +478,8 @@ struct fmt::formatter<::sus::containers::Array<T, N>, Char> {
   {
     auto out = ctx.out();
     out = format_to(out, "[");
-    for (::sus::num::usize i; i < array.len(); i += 1) {
-      if (i > 0) out = format_to(out, ", ");
+    for (::sus::num::usize i; i < array.len(); i += 1u) {
+      if (i > 0u) out = format_to(out, ", ");
       ctx.advance_to(out);
       out = underlying_.format(array[i], ctx);
     }

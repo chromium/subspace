@@ -277,7 +277,7 @@ class [[sus_trivial_abi]] SliceMut final {
   sus_pure static constexpr inline SliceMut from_raw_parts_mut(
       ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
       ::sus::usize len) noexcept {
-    ::sus::check(len <= usize{isize::MAX});
+    ::sus::check(len <= usize::from(isize::MAX));
     return SliceMut(data, len);
   }
 
@@ -410,8 +410,8 @@ struct fmt::formatter<::sus::containers::Slice<T>, Char> {
                         FormatContext& ctx) const {
     auto out = ctx.out();
     out = format_to(out, "[");
-    for (::sus::num::usize i; i < slice.len(); i += 1) {
-      if (i > 0) out = format_to(out, ", ");
+    for (::sus::num::usize i; i < slice.len(); i += 1u) {
+      if (i > 0u) out = format_to(out, ", ");
       ctx.advance_to(out);
       out = underlying_.format(slice[i], ctx);
     }
@@ -438,8 +438,8 @@ struct fmt::formatter<::sus::containers::SliceMut<T>, Char> {
                         FormatContext& ctx) const {
     auto out = ctx.out();
     out = format_to(out, "[");
-    for (::sus::num::usize i; i < slice.len(); i += 1) {
-      if (i > 0) out = format_to(out, ", ");
+    for (::sus::num::usize i; i < slice.len(); i += 1u) {
+      if (i > 0u) out = format_to(out, ", ");
       ctx.advance_to(out);
       out = underlying_.format(slice[i], ctx);
     }

@@ -402,7 +402,7 @@ constexpr RChunksMut<T> rchunks_mut(::sus::num::usize chunk_size)
 constexpr void reverse() NO_RETURN_REF noexcept
   requires(::sus::mem::Move<T>)
 {
-  const auto half_len = len() / 2;
+  const auto half_len = len() / 2u;
   const auto [start, end] = as_mut_ptr_range();
 
   // Note, `front_half` and `back_half` will omit the middle element in an
@@ -465,11 +465,11 @@ void rotate_left(::sus::num::usize mid) NO_RETURN_REF noexcept
 
   // In these cases, the pointers below swap with themselves, which makes them
   // overlapping.
-  if (mid == 0 || k == 0) return;
+  if (mid == 0u || k == 0u) return;
 
   // This portion moves everything up to `k` into place. If `k > mid` then this
   // solves the whole slice, with an even/odd mismatch fixup below.
-  for (::sus::num::usize i; i < k; i += 1) {
+  for (::sus::num::usize i; i < k; i += 1u) {
     ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, *(p + i),
                                     *(p + mid + i));
   }
@@ -480,21 +480,21 @@ void rotate_left(::sus::num::usize mid) NO_RETURN_REF noexcept
     // SAFETY: `k <= len()` as `k` is constructed by subtracting `len() - mid`.
     get_range_mut_unchecked(::sus::marker::unsafe_fn, ::sus::ops::RangeFrom(k))
         .rotate_left(mid - k);
-  } else if (k > mid && mid % 2 != (k - mid) % 2) {
+  } else if (k > mid && mid % 2u != (k - mid) % 2u) {
     // If there's a mismatch between the number of elements visited and the
     // number left in terms even/odd, then we need to adjust the last `mid`
     // elements.
-    if ((k - mid) % 2 == 1) {
+    if ((k - mid) % 2u == 1u) {
       // The last elements need to be rotated right one position if we had an
       // even number of elements in [mid, k) and an odd number in [k, length).
-      for (::sus::num::usize i = k; i < length - 1; i += 1u) {
+      for (::sus::num::usize i = k; i < length - 1u; i += 1u) {
         ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, *(p + i),
                                         *(p + length - 1u));
       }
     } else {
       // The last elements need to be rotated left one position if we had an
       // odd number of elements in [mid, k) and an even number in [k, length).
-      for (::sus::num::usize i = k; i < length - 1; i += 1u) {
+      for (::sus::num::usize i = k; i < length - 1u; i += 1u) {
         ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, *(p + i),
                                         *(p + i + 1u));
       }
@@ -701,7 +701,7 @@ void sort_by_cached_key(KeyFn f) NO_RETURN_REF noexcept {
   constexpr auto sz_usize = ::sus::mem::size_of<::sus::Tuple<Key, usize>>();
 
   const auto length = len();
-  if (length < 2) {
+  if (length < 2u) {
     return;
   }
   if constexpr (sz_u8 < sz_u16) {
@@ -840,7 +840,7 @@ split_first_mut() RETURN_REF noexcept {
                    // SAFETY: `last` must be <= len(), and it is by construction
                    // from `1` with len() > 0.
                    get_range_mut_unchecked(::sus::marker::unsafe_fn,
-                                           ::sus::ops::RangeFrom<usize>(1))));
+                                           ::sus::ops::RangeFrom<usize>(1u))));
 }
 
 /// Returns an iterator over subslices separated by elements that match `pred`.

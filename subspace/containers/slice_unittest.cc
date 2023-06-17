@@ -2306,9 +2306,9 @@ TEST(Slice, CopyFromSlice) {
   constexpr auto x = []() constexpr {
     i32 i[] = {1, 2, 3, 4};
     auto s = SliceMut<i32>::from(i);
-    auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2);
+    auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2u);
     s1.copy_from_slice(s2);
-    return s1[0];
+    return s1[0u];
   }();
   EXPECT_EQ(x, 3);
 }
@@ -2355,9 +2355,9 @@ TEST(Slice, CopyFromSliceUnchecked) {
   constexpr auto x = []() constexpr {
     i32 i[] = {1, 2, 3, 4};
     auto s = SliceMut<i32>::from(i);
-    auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2);
+    auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2u);
     s1.copy_from_slice_unchecked(unsafe_fn, s2);
-    return s1[0];
+    return s1[0u];
   }();
   EXPECT_EQ(x, 3);
 }
@@ -2377,24 +2377,24 @@ TEST(Slice, CloneFromSlice) {
   Vec<Cloner> v1 = sus::vec(1_i32, 2_i32, 3_i32, 4_i32);
   Vec<Cloner> v2 = sus::vec(6_i32, 7_i32, 8_i32, 9_i32);
   v1["0..2"_r].clone_from_slice(v2["2..4"_r]);
-  EXPECT_EQ(v1[0].i, 80);
-  EXPECT_EQ(v1[1].i, 90);
-  EXPECT_EQ(v1[2].i, 3);
-  EXPECT_EQ(v1[3].i, 4);
+  EXPECT_EQ(v1[0u].i, 80);
+  EXPECT_EQ(v1[1u].i, 90);
+  EXPECT_EQ(v1[2u].i, 3);
+  EXPECT_EQ(v1[3u].i, 4);
 
   // The source slice was untouched.
-  EXPECT_EQ(v2[0].i, 6);
-  EXPECT_EQ(v2[1].i, 7);
-  EXPECT_EQ(v2[2].i, 8);
-  EXPECT_EQ(v2[3].i, 9);
+  EXPECT_EQ(v2[0u].i, 6);
+  EXPECT_EQ(v2[1u].i, 7);
+  EXPECT_EQ(v2[2u].i, 8);
+  EXPECT_EQ(v2[3u].i, 9);
 
   // Constexpr.
   constexpr auto x = []() constexpr {
     Cloner i[] = {1_i32, 2_i32, 3_i32, 4_i32};
     auto s = SliceMut<Cloner>::from(i);
-    auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2);
+    auto [s1, s2] = s.split_at_mut_unchecked(unsafe_fn, 2u);
     s1.clone_from_slice(s2);
-    return s1[0].i;
+    return s1[0u].i;
   }();
   EXPECT_EQ(x, 30);
 }
@@ -2447,7 +2447,7 @@ TEST(Slice, Eq) {
   EXPECT_EQ(v1["1.."_r], v2["1.."_r]);
   EXPECT_EQ(v1["1..3"_r], v2["1..3"_r]);
   EXPECT_EQ(v1["1..3"_r].as_slice(), v2["1..3"_r].as_slice());
-  v1[3] += 1;
+  v1[3u] += 1u;
   EXPECT_EQ(v1["1.."_r], v1["1.."_r]);
   EXPECT_NE(v1["1.."_r], v2["1.."_r]);
 }
@@ -2455,20 +2455,20 @@ TEST(Slice, Eq) {
 TEST(SliceMut, Fill) {
   auto v1 = Vec<i32>::with(1, 2, 3, 4);
   v1["0..2"_r].fill(5);
-  EXPECT_EQ(v1[0], 5);
-  EXPECT_EQ(v1[1], 5);
-  EXPECT_EQ(v1[2], 3);
-  EXPECT_EQ(v1[3], 4);
+  EXPECT_EQ(v1[0u], 5);
+  EXPECT_EQ(v1[1u], 5);
+  EXPECT_EQ(v1[2u], 3);
+  EXPECT_EQ(v1[3u], 4);
   v1["1..3"_r].fill(6);
-  EXPECT_EQ(v1[0], 5);
-  EXPECT_EQ(v1[1], 6);
-  EXPECT_EQ(v1[2], 6);
-  EXPECT_EQ(v1[3], 4);
+  EXPECT_EQ(v1[0u], 5);
+  EXPECT_EQ(v1[1u], 6);
+  EXPECT_EQ(v1[2u], 6);
+  EXPECT_EQ(v1[3u], 4);
   v1[".."_r].fill(9);
-  EXPECT_EQ(v1[0], 9);
-  EXPECT_EQ(v1[1], 9);
-  EXPECT_EQ(v1[2], 9);
-  EXPECT_EQ(v1[3], 9);
+  EXPECT_EQ(v1[0u], 9);
+  EXPECT_EQ(v1[1u], 9);
+  EXPECT_EQ(v1[2u], 9);
+  EXPECT_EQ(v1[3u], 9);
 
   struct S {
     i32 i;
@@ -2482,9 +2482,9 @@ TEST(SliceMut, Fill) {
   auto v2 = Vec<S>::with(S(1), S(10));
   // Fill from a value in the Vec. If the element being modified also changes
   // the input, then v2[1] will be 3 instead of 2.
-  v2[".."_r].fill(v2[0]);
-  EXPECT_EQ(v2[0].i, 2);
-  EXPECT_EQ(v2[1].i, 2);
+  v2[".."_r].fill(v2[0u]);
+  EXPECT_EQ(v2[0u].i, 2);
+  EXPECT_EQ(v2[1u].i, 2);
 }
 
 TEST(SliceMut, FillWith) {
@@ -2493,29 +2493,29 @@ TEST(SliceMut, FillWith) {
   };
   auto v1 = Vec<i32>::with(1, 2, 3, 4);
   v1[".."_r].fill_with(f);
-  EXPECT_EQ(v1[0], 6);
-  EXPECT_EQ(v1[1], 7);
-  EXPECT_EQ(v1[2], 8);
-  EXPECT_EQ(v1[3], 9);
+  EXPECT_EQ(v1[0u], 6);
+  EXPECT_EQ(v1[1u], 7);
+  EXPECT_EQ(v1[2u], 8);
+  EXPECT_EQ(v1[3u], 9);
   v1["2..4"_r].fill_with(f);
-  EXPECT_EQ(v1[0], 6);
-  EXPECT_EQ(v1[1], 7);
-  EXPECT_EQ(v1[2], 10);
-  EXPECT_EQ(v1[3], 11);
+  EXPECT_EQ(v1[0u], 6);
+  EXPECT_EQ(v1[1u], 7);
+  EXPECT_EQ(v1[2u], 10);
+  EXPECT_EQ(v1[3u], 11);
 }
 
 TEST(SliceMut, FillWithDefault) {
   auto v1 = Vec<i32>::with(1, 2, 3, 4);
   v1["2..4"_r].fill_with_default();
-  EXPECT_EQ(v1[0], 1);
-  EXPECT_EQ(v1[1], 2);
-  EXPECT_EQ(v1[2], 0);
-  EXPECT_EQ(v1[3], 0);
+  EXPECT_EQ(v1[0u], 1);
+  EXPECT_EQ(v1[1u], 2);
+  EXPECT_EQ(v1[2u], 0);
+  EXPECT_EQ(v1[3u], 0);
   v1[".."_r].fill_with_default();
-  EXPECT_EQ(v1[0], 0);
-  EXPECT_EQ(v1[1], 0);
-  EXPECT_EQ(v1[2], 0);
-  EXPECT_EQ(v1[3], 0);
+  EXPECT_EQ(v1[0u], 0);
+  EXPECT_EQ(v1[1u], 0);
+  EXPECT_EQ(v1[2u], 0);
+  EXPECT_EQ(v1[3u], 0);
 }
 
 TEST(Slice, First) {
@@ -2588,17 +2588,17 @@ TEST(SliceMut, LastMut) {
 TEST(Slice, Repeat) {
   {
     auto v1 = Vec<i32>::with(1, 2);
-    auto v2 = v1.as_slice().repeat(0);
+    auto v2 = v1.as_slice().repeat(0u);
     EXPECT_EQ(v2, sus::Vec<i32>());
   }
   {
     auto v1 = Vec<i32>::with(1);
-    auto v2 = v1.as_slice().repeat(1);
+    auto v2 = v1.as_slice().repeat(1u);
     EXPECT_EQ(v2, sus::vec(1).construct<i32>());
   }
   {
     auto v1 = Vec<i32>::with(1, 2, 3, 4, 5);
-    auto v2 = v1.as_slice().repeat(1);
+    auto v2 = v1.as_slice().repeat(1u);
     EXPECT_EQ(v2, sus::vec(1, 2, 3, 4, 5).construct<i32>());
   }
   {
@@ -5147,7 +5147,7 @@ TEST(Slice, SplitN) {
 
   // No match.
   {
-    auto it = s.splitn(1, [](const i32& i) { return i == -1; });
+    auto it = s.splitn(1u, [](const i32& i) { return i == -1; });
     decltype(auto) o = it.next();
     static_assert(std::same_as<decltype(o), sus::Option<Slice<i32>>>);
     EXPECT_EQ(sus::move(o).unwrap(), s);
@@ -5155,7 +5155,7 @@ TEST(Slice, SplitN) {
   }
   // One match middle.
   {
-    auto it = s.splitn(3, [](const i32& i) { return i == 3; });
+    auto it = s.splitn(3u, [](const i32& i) { return i == 3; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2));
@@ -5168,7 +5168,7 @@ TEST(Slice, SplitN) {
   }
   // Limit matches to 1.
   {
-    auto it = s.splitn(1, [](const i32& i) { return i == 7; });
+    auto it = s.splitn(1u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o,
@@ -5178,7 +5178,7 @@ TEST(Slice, SplitN) {
   }
   // Limit matches to 2.
   {
-    auto it = s.splitn(2, [](const i32& i) { return i == 7; });
+    auto it = s.splitn(2u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6));
@@ -5191,7 +5191,7 @@ TEST(Slice, SplitN) {
   }
   // Limit matches to 3.
   {
-    auto it = s.splitn(3, [](const i32& i) { return i == 7; });
+    auto it = s.splitn(3u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6));
@@ -5208,7 +5208,7 @@ TEST(Slice, SplitN) {
   }
   // Limit matches to 4.
   {
-    auto it = s.splitn(4, [](const i32& i) { return i == 7; });
+    auto it = s.splitn(4u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6));
@@ -5235,7 +5235,7 @@ TEST(SliceMut, SplitNMut) {
 
   // No match.
   {
-    auto it = s.splitn_mut(1, [](const i32& i) { return i == -1; });
+    auto it = s.splitn_mut(1u, [](const i32& i) { return i == -1; });
     decltype(auto) o = it.next();
     static_assert(std::same_as<decltype(o), sus::Option<SliceMut<i32>>>);
     EXPECT_EQ(sus::move(o).unwrap(), s);
@@ -5243,7 +5243,7 @@ TEST(SliceMut, SplitNMut) {
   }
   // One match middle.
   {
-    auto it = s.splitn_mut(3, [](const i32& i) { return i == 3; });
+    auto it = s.splitn_mut(3u, [](const i32& i) { return i == 3; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2));
@@ -5256,7 +5256,7 @@ TEST(SliceMut, SplitNMut) {
   }
   // Limit matches to 1.
   {
-    auto it = s.splitn_mut(1, [](const i32& i) { return i == 7; });
+    auto it = s.splitn_mut(1u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o,
@@ -5266,7 +5266,7 @@ TEST(SliceMut, SplitNMut) {
   }
   // Limit matches to 2.
   {
-    auto it = s.splitn_mut(2, [](const i32& i) { return i == 7; });
+    auto it = s.splitn_mut(2u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6));
@@ -5279,7 +5279,7 @@ TEST(SliceMut, SplitNMut) {
   }
   // Limit matches to 3.
   {
-    auto it = s.splitn_mut(3, [](const i32& i) { return i == 7; });
+    auto it = s.splitn_mut(3u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6));
@@ -5296,7 +5296,7 @@ TEST(SliceMut, SplitNMut) {
   }
   // Limit matches to 4.
   {
-    auto it = s.splitn_mut(4, [](const i32& i) { return i == 7; });
+    auto it = s.splitn_mut(4u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6));
@@ -5323,7 +5323,7 @@ TEST(Slice, RSplitN) {
 
   // No match.
   {
-    auto it = s.rsplitn(1, [](const i32& i) { return i == -1; });
+    auto it = s.rsplitn(1u, [](const i32& i) { return i == -1; });
     decltype(auto) o = it.next();
     static_assert(std::same_as<decltype(o), sus::Option<Slice<i32>>>);
     EXPECT_EQ(sus::move(o).unwrap(), s);
@@ -5331,7 +5331,7 @@ TEST(Slice, RSplitN) {
   }
   // One match middle.
   {
-    auto it = s.rsplitn(3, [](const i32& i) { return i == 3; });
+    auto it = s.rsplitn(3u, [](const i32& i) { return i == 3; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(4, 5, 5, 6, 7, 7, 7, 8));
@@ -5344,7 +5344,7 @@ TEST(Slice, RSplitN) {
   }
   // Limit matches to 1.
   {
-    auto it = s.rsplitn(1, [](const i32& i) { return i == 7; });
+    auto it = s.rsplitn(1u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o,
@@ -5354,7 +5354,7 @@ TEST(Slice, RSplitN) {
   }
   // Limit matches to 2.
   {
-    auto it = s.rsplitn(2, [](const i32& i) { return i == 7; });
+    auto it = s.rsplitn(2u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(8));
@@ -5367,7 +5367,7 @@ TEST(Slice, RSplitN) {
   }
   // Limit matches to 3.
   {
-    auto it = s.rsplitn(3, [](const i32& i) { return i == 7; });
+    auto it = s.rsplitn(3u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(8));
@@ -5384,7 +5384,7 @@ TEST(Slice, RSplitN) {
   }
   // Limit matches to 4.
   {
-    auto it = s.rsplitn(4, [](const i32& i) { return i == 7; });
+    auto it = s.rsplitn(4u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(8));
@@ -5411,7 +5411,7 @@ TEST(SliceMut, RSplitNMut) {
 
   // No match.
   {
-    auto it = s.rsplitn_mut(1, [](const i32& i) { return i == -1; });
+    auto it = s.rsplitn_mut(1u, [](const i32& i) { return i == -1; });
     decltype(auto) o = it.next();
     static_assert(std::same_as<decltype(o), sus::Option<SliceMut<i32>>>);
     EXPECT_EQ(sus::move(o).unwrap(), s);
@@ -5419,7 +5419,7 @@ TEST(SliceMut, RSplitNMut) {
   }
   // One match middle.
   {
-    auto it = s.rsplitn_mut(3, [](const i32& i) { return i == 3; });
+    auto it = s.rsplitn_mut(3u, [](const i32& i) { return i == 3; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(4, 5, 5, 6, 7, 7, 7, 8));
@@ -5432,7 +5432,7 @@ TEST(SliceMut, RSplitNMut) {
   }
   // Limit matches to 1.
   {
-    auto it = s.rsplitn_mut(1, [](const i32& i) { return i == 7; });
+    auto it = s.rsplitn_mut(1u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o,
@@ -5442,7 +5442,7 @@ TEST(SliceMut, RSplitNMut) {
   }
   // Limit matches to 2.
   {
-    auto it = s.rsplitn_mut(2, [](const i32& i) { return i == 7; });
+    auto it = s.rsplitn_mut(2u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(8));
@@ -5455,7 +5455,7 @@ TEST(SliceMut, RSplitNMut) {
   }
   // Limit matches to 3.
   {
-    auto it = s.rsplitn_mut(3, [](const i32& i) { return i == 7; });
+    auto it = s.rsplitn_mut(3u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(8));
@@ -5472,7 +5472,7 @@ TEST(SliceMut, RSplitNMut) {
   }
   // Limit matches to 4.
   {
-    auto it = s.rsplitn_mut(4, [](const i32& i) { return i == 7; });
+    auto it = s.rsplitn_mut(4u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
       EXPECT_EQ(o, sus::Vec<i32>::with(8));
@@ -5497,21 +5497,21 @@ TEST(SliceMut, Swap) {
   {
     sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
-    s.swap(0, 0);
+    s.swap(0u, 0u);
     sus::Vec<i32> expected = sus::vec(1, 2, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
     sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
-    s.swap(0, 1);
+    s.swap(0u, 1u);
     sus::Vec<i32> expected = sus::vec(2, 1, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
     sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
-    s.swap(3, 5);
+    s.swap(3u, 5u);
     sus::Vec<i32> expected = sus::vec(1, 2, 3, 6, 5, 4);
     EXPECT_EQ(s, expected);
   }
@@ -5521,14 +5521,14 @@ TEST(SliceMut, SwapNonOverlapping) {
   {
     sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
-    s.swap_nonoverlapping(unsafe_fn, 0, 1);
+    s.swap_nonoverlapping(unsafe_fn, 0u, 1u);
     sus::Vec<i32> expected = sus::vec(2, 1, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
     sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
-    s.swap_nonoverlapping(unsafe_fn, 3, 5);
+    s.swap_nonoverlapping(unsafe_fn, 3u, 5u);
     sus::Vec<i32> expected = sus::vec(1, 2, 3, 6, 5, 4);
     EXPECT_EQ(s, expected);
   }
@@ -5538,21 +5538,21 @@ TEST(SliceMut, SwapUnchecked) {
   {
     sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
-    s.swap_unchecked(unsafe_fn, 0, 0);
+    s.swap_unchecked(unsafe_fn, 0u, 0u);
     sus::Vec<i32> expected = sus::vec(1, 2, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
     sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
-    s.swap_unchecked(unsafe_fn, 0, 1);
+    s.swap_unchecked(unsafe_fn, 0u, 1u);
     sus::Vec<i32> expected = sus::vec(2, 1, 3, 4, 5, 6);
     EXPECT_EQ(s, expected);
   }
   {
     sus::Vec<i32> v = sus::vec(1, 2, 3, 4, 5, 6);
     SliceMut<i32> s = v.as_mut_slice();
-    s.swap_unchecked(unsafe_fn, 3, 5);
+    s.swap_unchecked(unsafe_fn, 3u, 5u);
     sus::Vec<i32> expected = sus::vec(1, 2, 3, 6, 5, 4);
     EXPECT_EQ(s, expected);
   }
@@ -5589,17 +5589,17 @@ TEST(Slice, SplitFirst) {
   auto&& [first, rest] = s.split_first().unwrap();
   static_assert(std::same_as<decltype(first), const i32&>);
   static_assert(std::same_as<decltype(rest), Slice<i32>>);
-  EXPECT_EQ(&first, &v[0]);
+  EXPECT_EQ(&first, &v[0u]);
   EXPECT_EQ(first, 0);
   EXPECT_EQ(rest.len(), 2_usize);
 
   auto&& [first2, rest2] = rest.split_first().unwrap();
-  EXPECT_EQ(&first2, &v[1]);
+  EXPECT_EQ(&first2, &v[1u]);
   EXPECT_EQ(first2, 1);
   EXPECT_EQ(rest2.len(), 1_usize);
 
   auto&& [first3, rest3] = rest2.split_first().unwrap();
-  EXPECT_EQ(&first3, &v[2]);
+  EXPECT_EQ(&first3, &v[2u]);
   EXPECT_EQ(first3, 2);
   EXPECT_EQ(rest3.len(), 0_usize);
 
@@ -5613,17 +5613,17 @@ TEST(SliceMut, SplitFirstMut) {
   auto&& [first, rest] = s.split_first_mut().unwrap();
   static_assert(std::same_as<decltype(first), i32&>);
   static_assert(std::same_as<decltype(rest), SliceMut<i32>>);
-  EXPECT_EQ(&first, &v[0]);
+  EXPECT_EQ(&first, &v[0u]);
   EXPECT_EQ(first, 0);
   EXPECT_EQ(rest.len(), 2_usize);
 
   auto&& [first2, rest2] = rest.split_first_mut().unwrap();
-  EXPECT_EQ(&first2, &v[1]);
+  EXPECT_EQ(&first2, &v[1u]);
   EXPECT_EQ(first2, 1);
   EXPECT_EQ(rest2.len(), 1_usize);
 
   auto&& [first3, rest3] = rest2.split_first_mut().unwrap();
-  EXPECT_EQ(&first3, &v[2]);
+  EXPECT_EQ(&first3, &v[2u]);
   EXPECT_EQ(first3, 2);
   EXPECT_EQ(rest3.len(), 0_usize);
 
@@ -5637,17 +5637,17 @@ TEST(Slice, SplitLast) {
   auto&& [last, rest] = s.split_last().unwrap();
   static_assert(std::same_as<decltype(last), const i32&>);
   static_assert(std::same_as<decltype(rest), Slice<i32>>);
-  EXPECT_EQ(&last, &v[2]);
+  EXPECT_EQ(&last, &v[2u]);
   EXPECT_EQ(last, 2);
   EXPECT_EQ(rest.len(), 2_usize);
 
   auto&& [last2, rest2] = rest.split_last().unwrap();
-  EXPECT_EQ(&last2, &v[1]);
+  EXPECT_EQ(&last2, &v[1u]);
   EXPECT_EQ(last2, 1);
   EXPECT_EQ(rest2.len(), 1_usize);
 
   auto&& [last3, rest3] = rest2.split_last().unwrap();
-  EXPECT_EQ(&last3, &v[0]);
+  EXPECT_EQ(&last3, &v[0u]);
   EXPECT_EQ(last3, 0);
   EXPECT_EQ(rest3.len(), 0_usize);
 
@@ -5661,17 +5661,17 @@ TEST(SliceMut, SplitLastMut) {
   auto&& [last, rest] = s.split_last_mut().unwrap();
   static_assert(std::same_as<decltype(last), i32&>);
   static_assert(std::same_as<decltype(rest), SliceMut<i32>>);
-  EXPECT_EQ(&last, &v[2]);
+  EXPECT_EQ(&last, &v[2u]);
   EXPECT_EQ(last, 2);
   EXPECT_EQ(rest.len(), 2_usize);
 
   auto&& [last2, rest2] = rest.split_last_mut().unwrap();
-  EXPECT_EQ(&last2, &v[1]);
+  EXPECT_EQ(&last2, &v[1u]);
   EXPECT_EQ(last2, 1);
   EXPECT_EQ(rest2.len(), 1_usize);
 
   auto&& [last3, rest3] = rest2.split_last_mut().unwrap();
-  EXPECT_EQ(&last3, &v[0]);
+  EXPECT_EQ(&last3, &v[0u]);
   EXPECT_EQ(last3, 0);
   EXPECT_EQ(rest3.len(), 0_usize);
 
@@ -5800,7 +5800,7 @@ TEST(Slice, Windows) {
   // Equal to the slice size.
   EXPECT_EQ(s.windows(8u).next().unwrap(), s);
 
-  auto w1 = s.windows(1);
+  auto w1 = s.windows(1u);
   EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with(0));
   EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with(1));
   EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with(2));
@@ -5811,7 +5811,7 @@ TEST(Slice, Windows) {
   EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with(7));
   EXPECT_EQ(w1.next(), sus::None);
 
-  auto w2 = s.windows(2);
+  auto w2 = s.windows(2u);
   EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with(0, 1));
   EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with(1, 2));
   EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with(2, 3));
@@ -5821,7 +5821,7 @@ TEST(Slice, Windows) {
   EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with(6, 7));
   EXPECT_EQ(w2.next(), sus::None);
 
-  auto w3 = s.windows(3);
+  auto w3 = s.windows(3u);
   EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with(0, 1, 2));
   EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with(1, 2, 3));
   EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with(2, 3, 4));
@@ -5830,7 +5830,7 @@ TEST(Slice, Windows) {
   EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with(5, 6, 7));
   EXPECT_EQ(w3.next(), sus::None);
 
-  auto w7 = s.windows(7);
+  auto w7 = s.windows(7u);
   EXPECT_EQ(w7.next().unwrap(),
             sus::Vec<i32>::with(0, 1, 2, 3, 4, 5, 6));
   EXPECT_EQ(w7.next().unwrap(),
@@ -5848,7 +5848,7 @@ TEST(SliceMut, WindowsMut) {
   // Equal to the slice size.
   EXPECT_EQ(s.windows_mut(8u).next().unwrap(), s);
 
-  auto w1 = s.windows_mut(1);
+  auto w1 = s.windows_mut(1u);
   EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with(0));
   EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with(1));
   EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with(2));
@@ -5859,7 +5859,7 @@ TEST(SliceMut, WindowsMut) {
   EXPECT_EQ(w1.next().unwrap(), sus::Vec<i32>::with(7));
   EXPECT_EQ(w1.next(), sus::None);
 
-  auto w2 = s.windows_mut(2);
+  auto w2 = s.windows_mut(2u);
   EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with(0, 1));
   EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with(1, 2));
   EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with(2, 3));
@@ -5869,7 +5869,7 @@ TEST(SliceMut, WindowsMut) {
   EXPECT_EQ(w2.next().unwrap(), sus::Vec<i32>::with(6, 7));
   EXPECT_EQ(w2.next(), sus::None);
 
-  auto w3 = s.windows_mut(3);
+  auto w3 = s.windows_mut(3u);
   EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with(0, 1, 2));
   EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with(1, 2, 3));
   EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with(2, 3, 4));
@@ -5878,7 +5878,7 @@ TEST(SliceMut, WindowsMut) {
   EXPECT_EQ(w3.next().unwrap(), sus::Vec<i32>::with(5, 6, 7));
   EXPECT_EQ(w3.next(), sus::None);
 
-  auto w7 = s.windows_mut(7);
+  auto w7 = s.windows_mut(7u);
   EXPECT_EQ(w7.next().unwrap(),
             sus::Vec<i32>::with(0, 1, 2, 3, 4, 5, 6));
   EXPECT_EQ(w7.next().unwrap(),

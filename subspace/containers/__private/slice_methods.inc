@@ -446,7 +446,7 @@ constexpr auto join(const Sep& separator) const& noexcept
   using Container = typename T::JoinOutputType;
   auto out = Container::with_capacity(cap);
   if (length > 0u) get_unchecked(::sus::marker::unsafe_fn, 0u).join_into(out);
-  for (::sus::num::usize i = 1; i < length; i += 1u) {
+  for (::sus::num::usize i = 1u; i < length; i += 1u) {
     T::join_sep_into(out, separator);
     get_unchecked(::sus::marker::unsafe_fn, i).join_into(out);
   }
@@ -743,7 +743,7 @@ sus_pure constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>> split_first()
     const& noexcept {
   if (is_empty()) return ::sus::none();
   return ::sus::some(
-      ::sus::tuple(*as_ptr(), (*this)[::sus::ops::RangeFrom<usize>(1)]));
+      ::sus::tuple(*as_ptr(), (*this)[::sus::ops::RangeFrom<usize>(1u)]));
 }
 
 #if _delete_rvalue
