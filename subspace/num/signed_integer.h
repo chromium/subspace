@@ -51,7 +51,7 @@ namespace sus::num {
 // headers are larger, is that worse?
 
 /// A 32-bit signed integer.
-struct sus_trivial_abi i32 final {
+struct [[sus_trivial_abi]] i32 final {
 #define _self i32
 #define _primitive int32_t
 #define _unsigned u32
@@ -62,7 +62,7 @@ struct sus_trivial_abi i32 final {
 #include "subspace/num/__private/signed_integer_consts.inc"
 
 /// An 8-bit signed integer.
-struct sus_trivial_abi i8 final {
+struct [[sus_trivial_abi]] i8 final {
 #define _self i8
 #define _primitive int8_t
 #define _unsigned u8
@@ -73,7 +73,7 @@ struct sus_trivial_abi i8 final {
 #include "subspace/num/__private/signed_integer_consts.inc"
 
 /// A 16-bit signed integer.
-struct sus_trivial_abi i16 final {
+struct [[sus_trivial_abi]] i16 final {
 #define _self i16
 #define _primitive int16_t
 #define _unsigned u16
@@ -84,7 +84,7 @@ struct sus_trivial_abi i16 final {
 #include "subspace/num/__private/signed_integer_consts.inc"
 
 /// A 64-bit signed integer.
-struct sus_trivial_abi i64 final {
+struct [[sus_trivial_abi]] i64 final {
 #define _self i64
 #define _primitive int64_t
 #define _unsigned u64
@@ -104,7 +104,7 @@ struct sus_trivial_abi i64 final {
 /// capabilities. See [CHERI](
 /// https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-947.pdf) for an example. So
 /// this type is not always the same size as a pointer.
-struct sus_trivial_abi isize final {
+struct [[sus_trivial_abi]] isize final {
 #define _self isize
 #define _primitive ::sus::num::__private::ptr_type<>::signed_type
 #define _unsigned usize
