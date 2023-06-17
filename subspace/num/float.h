@@ -22,6 +22,7 @@
 #include "subspace/macros/eval_and_concat.h"
 #include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
+#include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/__private/float_ordering.h"
 #include "subspace/num/__private/intrinsics.h"
@@ -41,7 +42,7 @@ namespace sus::num {
 /// This type can represent a wide range of decimal numbers, like 3.5, 27,
 /// -113.75, 0.0078125, 34359738368, 0, -1. So unlike integer types (such as
 /// i32), floating point types can represent non-integer numbers, too.
-struct f32 final {
+struct sus_trivial_abi f32 final {
 #define _self f32
 #define _primitive float
 #define _unsigned u32
@@ -58,7 +59,7 @@ struct f32 final {
 /// This type is very similar to `f32`, but has increased precision by using
 /// twice as many bits. Please see the documentation for `f32` for more
 /// information.
-struct f64 final {
+struct sus_trivial_abi f64 final {
 #define _self f64
 #define _primitive double
 #define _unsigned u64

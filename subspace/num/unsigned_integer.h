@@ -25,6 +25,7 @@
 #include "subspace/assertions/endian.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/pure.h"
+#include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/__private/int_log10.h"
 #include "subspace/num/__private/intrinsics.h"
@@ -58,7 +59,7 @@ struct u8;
 // TODO: from_str_radix(). Need Result typ`e and Errors.
 
 /// A 32-bit unsigned integer.
-struct u32 final {
+struct sus_trivial_abi u32 final {
 #define _self u32
 #define _primitive uint32_t
 #define _signed i32
@@ -69,7 +70,7 @@ struct u32 final {
 #include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// An 8-bit unsigned integer.
-struct u8 final {
+struct sus_trivial_abi u8 final {
 #define _self u8
 #define _primitive uint8_t
 #define _signed i8
@@ -80,7 +81,7 @@ struct u8 final {
 #include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// A 16-bit unsigned integer.
-struct u16 final {
+struct sus_trivial_abi u16 final {
 #define _self u16
 #define _primitive uint16_t
 #define _signed i16
@@ -91,7 +92,7 @@ struct u16 final {
 #include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// A 64-bit unsigned integer.
-struct u64 final {
+struct sus_trivial_abi u64 final {
 #define _self u64
 #define _primitive uint64_t
 #define _signed i64
@@ -114,7 +115,7 @@ struct u64 final {
 /// this type is not always the same size as a pointer and should not be used to
 /// hold a pointer value without acknowledging that it is only the address part
 /// of the pointer.
-struct usize final {
+struct sus_trivial_abi usize final {
 #define _self usize
 #define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
 #define _signed isize
