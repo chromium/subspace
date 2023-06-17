@@ -25,6 +25,8 @@
 #include "subspace/assertions/unreachable.h"
 #include "subspace/fn/fn_ref.h"
 #include "subspace/iter/into_iterator.h"
+#include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/once.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/marker/unsafe.h"
@@ -42,17 +44,6 @@
 #include "subspace/result/__private/result_state.h"
 #include "subspace/result/__private/storage.h"
 #include "subspace/string/__private/format_to_stream.h"
-
-namespace sus::iter {
-template <class Iter, class Item>
-class IteratorBase;
-template <class Item>
-class Once;
-template <class T>
-constexpr auto begin(const T& t) noexcept;
-template <class T>
-constexpr auto end(const T& t) noexcept;
-}  // namespace sus::iter
 
 namespace sus::result {
 
