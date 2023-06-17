@@ -69,7 +69,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
         // Since the Drain'd elements have been moved, and they are trivially
         // relocatable, move+destroy is a no-op, so we can skip the destructors
         // here and just memmove `src` into them moved-from `dst` objects.
-        if (unyielded_len > 0) {
+        if (unyielded_len > 0u) {
           ::sus::ptr::copy(::sus::marker::unsafe_fn, src, dst, unyielded_len);
         }
       } else {
@@ -124,7 +124,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
         // Since the Drain'd elements have been moved, and they are trivially
         // relocatable, move+destroy is a no-op, so we can skip the destructors
         // here and just memmove `src` into them moved-from `dst` objects.
-        if (tail_len_ > 0) {
+        if (tail_len_ > 0u) {
           ::sus::ptr::copy(::sus::marker::unsafe_fn, src, dst, tail_len_);
         }
       } else {

@@ -45,7 +45,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
       return sus::none();
     } else {
       usize count = count_;
-      count_ += 1;
+      count_ += 1u;
       return sus::some(sus::tuple(
           count, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
     }

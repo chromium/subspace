@@ -74,15 +74,15 @@ TEST(Vec, WithValues) {
     auto v = Vec<i32>::with(1);
     EXPECT_EQ(v.len(), 1u);
     EXPECT_GE(v.capacity(), 1u);
-    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[0u], 1);
   }
   {
     auto v = Vec<i32>::with(3, 4, 5);
     EXPECT_EQ(v.len(), 3u);
     EXPECT_GE(v.capacity(), 3u);
-    EXPECT_EQ(v[0], 3);
-    EXPECT_EQ(v[1], 4);
-    EXPECT_EQ(v[2], 5);
+    EXPECT_EQ(v[0u], 3);
+    EXPECT_EQ(v[1u], 4);
+    EXPECT_EQ(v[2u], 5);
   }
 }
 
@@ -1148,9 +1148,9 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
   static usize assigned;
   struct S {
     S(int i) : i(i) {}
-    ~S() { destroyed += 1; }
-    S(S&& o) : i(o.i) { moved += 1; }
-    S& operator=(S&& o) { return i = o.i, assigned += 1, *this; }
+    ~S() { destroyed += 1u; }
+    S(S&& o) : i(o.i) { moved += 1u; }
+    S& operator=(S&& o) { return i = o.i, assigned += 1u, *this; }
 
     bool operator==(const S& o) const noexcept { return i == o.i; }
     bool operator==(i32 o) const noexcept { return i == o; }

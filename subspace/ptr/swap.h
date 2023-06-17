@@ -74,7 +74,7 @@ inline constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, T* x,
       opt_byte_count.is_none()) {
     // If the type can be vectorized already, or can't be relocated by memcpy,
     // then swap in chunks of size of T.
-    for (usize i; i < count; i += 1) {
+    for (usize i; i < count; i += 1u) {
       ::sus::mem::swap_nonoverlapping(::sus::marker::unsafe_fn, *(x + i),
                                       *(y + i));
     }
@@ -86,7 +86,7 @@ inline constexpr void swap_nonoverlapping(::sus::marker::UnsafeFnMarker, T* x,
   // If the type's alignment matches uintptr_t and the size is a multiple of
   // it, then we do the swap in chunks of uintptr_t.
   if constexpr (alignof(T) == alignof(uintptr_t) &&
-                t_size % ::sus::mem::size_of<uintptr_t>() == 0) {
+                t_size % ::sus::mem::size_of<uintptr_t>() == 0u) {
     char* const cx = reinterpret_cast<char*>(x);
     char* const cy = reinterpret_cast<char*>(y);
     alignas(alignof(uintptr_t)) char buf[::sus::mem::size_of<uintptr_t>()];

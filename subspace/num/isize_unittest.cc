@@ -318,7 +318,7 @@ TEST(isize, CompileTimeConversion) {
   static_assert(sizeof(Self) == sizeof(u64) ||
                 !is_constexpr_convertible<uint64_t{u64::MAX}, Self>(0));
   static_assert(sizeof(Self) < sizeof(u64) ||
-                is_constexpr_convertible<u64{i64::MAX}, Self>(0));
+                is_constexpr_convertible<u64::from(i64::MAX), Self>(0));
   static_assert(sizeof(Self) < sizeof(u64) ||
                 is_constexpr_convertible<uint64_t{i64::MAX}, Self>(0));
 }

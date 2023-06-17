@@ -563,8 +563,8 @@ TEST(Result, Copy) {
   auto static copied = 0_usize;
   struct Type {
     explicit Type() noexcept = default;
-    Type(const Type&) noexcept { copied += 1; }
-    Type& operator=(const Type&) noexcept { return copied += 1, *this; }
+    Type(const Type&) noexcept { copied += 1u; }
+    Type& operator=(const Type&) noexcept { return copied += 1u, *this; }
 
     constexpr bool operator==(const Type& rhs) const& noexcept {
       return this == &rhs;

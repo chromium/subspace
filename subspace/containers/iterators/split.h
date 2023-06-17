@@ -46,13 +46,13 @@ class [[sus_trivial_abi]] GenericSplitN final
   GenericSplitN& operator=(GenericSplitN&&) = default;
 
   Option<Item> next() noexcept {
-    if (count_ == 0)
+    if (count_ == 0u)
       return Option<Item>();
-    else if (count_ == 1) {
-      count_ -= 1;
+    else if (count_ == 1u) {
+      count_ -= 1u;
       return iter_.finish();
     } else {
-      count_ -= 1;
+      count_ -= 1u;
       return iter_.next();
     }
   }

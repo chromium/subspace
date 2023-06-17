@@ -105,7 +105,7 @@ class Vec final {
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
   sus_pure static inline constexpr Vec with_capacity(usize capacity) noexcept {
-    check(::sus::mem::size_of<T>() * capacity <= usize{isize::MAX});
+    check(::sus::mem::size_of<T>() * capacity <= usize::from(isize::MAX));
     auto v = Vec(nullptr, 0_usize, 0_usize);
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
     v.grow_to_exact(capacity);
@@ -401,7 +401,7 @@ class Vec final {
     check(!is_moved_from());
     if (cap <= capacity_) return;  // Nothing to do.
     const auto bytes = ::sus::mem::size_of<T>() * cap;
-    check(bytes <= usize{isize::MAX});
+    check(bytes <= usize::from(isize::MAX));
     if (!is_alloced()) {
       raw_data() = static_cast<T*>(malloc(bytes.primitive_value));
     } else {
@@ -413,8 +413,8 @@ class Vec final {
             static_cast<T*>(malloc(bytes.primitive_value));
         T* old_t = raw_data();
         T* new_t = new_storage;
-        const auto self_len = size_t{len()};
-        for (auto i = size_t{0}; i < self_len; i += 1u) {
+        const ::sus::num::usize self_len = len();
+        for (::sus::num::usize i; i < self_len; i += 1u) {
           new (new_t) T(::sus::move(*old_t));
           old_t->~T();
           ++old_t;
@@ -803,8 +803,8 @@ struct fmt::formatter<::sus::containers::Vec<T>, Char> {
                         FormatContext& ctx) const {
     auto out = ctx.out();
     out = format_to(out, "[");
-    for (::sus::num::usize i; i < vec.len(); i += 1) {
-      if (i > 0) out = format_to(out, ", ");
+    for (::sus::num::usize i; i < vec.len(); i += 1u) {
+      if (i > 0u) out = format_to(out, ", ");
       ctx.advance_to(out);
       out = underlying_.format(vec[i], ctx);
     }

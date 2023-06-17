@@ -430,15 +430,15 @@ TEST(Iterator, Enumerate) {
   auto vec = Vec<i32>::with(0, 2, 4, 6, 8);
   // Front to back.
   for (auto [i, value] : vec.iter().enumerate()) {
-    EXPECT_EQ(i * 2, usize::from(value));
+    EXPECT_EQ(i * 2u, usize::from(value));
   }
   // Back to front.
   for (auto [i, value] : vec.iter().enumerate().rev()) {
-    EXPECT_EQ(i * 2, usize::from(value));
+    EXPECT_EQ(i * 2u, usize::from(value));
   }
   // Back to front without reversing the indices.
   for (auto [i, value] : vec.iter().rev().enumerate()) {
-    EXPECT_EQ((4 - i) * 2, usize::from(value));
+    EXPECT_EQ((4u - i) * 2u, usize::from(value));
   }
 }
 
