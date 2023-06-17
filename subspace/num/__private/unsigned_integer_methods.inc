@@ -96,7 +96,7 @@ consteval inline _self(U v) noexcept
   // bits as _self.
   if (v > static_cast<decltype(U::primitive_value)>(_self::MAX_PRIMITIVE)) {
     ::sus::panic_with_message(                                             
-            *"Cannot assign to unsigned integer from value outside its "       
+            *"Cannot construct unsigned integer from value outside its "       
              "range.");
   }
 }
@@ -118,7 +118,7 @@ consteval inline _self(P v) noexcept
   // bits as _self.
   if (v > static_cast<P>(_self::MAX_PRIMITIVE)) {
     ::sus::panic_with_message(                                             
-            *"Cannot assign to unsigned integer from value outside its "       
+            *"Cannot construct unsigned integer from value outside its "       
              "range.");
   }
 }
@@ -141,7 +141,7 @@ consteval inline _self(P v) noexcept
   // bits as _self.
   if (v > static_cast<std::underlying_type_t<P>>(_self::MAX_PRIMITIVE)) {
     ::sus::panic_with_message(                                           
-            *"Cannot assign to unsigned integer from value outside its "     
+            *"Cannot construct unsigned integer from value outside its "     
              "range.");
   }
 }
@@ -165,7 +165,7 @@ explicit consteval inline _self(P v) noexcept
   if (static_cast<std::underlying_type_t<P>>(v) >
       static_cast<std::underlying_type_t<P>>(_self::MAX_PRIMITIVE)) {
     ::sus::panic_with_message(                                           
-            *"Cannot assign to unsigned integer from value outside its "     
+            *"Cannot construct unsigned integer from value outside its "     
              "range.");
   }
 }

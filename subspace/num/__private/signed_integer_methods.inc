@@ -212,7 +212,7 @@ consteval inline _self(U v) noexcept
    * as _self. */
   if (v > static_cast<decltype(U::primitive_value)>(_self::MAX_PRIMITIVE)) {
     ::sus::panic_with_message(
-        *"Cannot assign to signed integer from value outside its range.");
+        *"Cannot construct signed integer from value outside its range.");
   }
 }
 
@@ -236,7 +236,7 @@ consteval inline _self(P v) noexcept
    * data. */
   if (v > static_cast<P>(_self::MAX_PRIMITIVE)) {
     ::sus::panic_with_message(
-        *"Cannot assign to signed integer from value outside its range.");
+        *"Cannot construct signed integer from value outside its range.");
   }
 }
 
