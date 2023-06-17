@@ -22,5 +22,5 @@ TEST(Successors, GoGoGo) {
       sus::some(1_u16), [](const u16& n) { return n.checked_mul(10_u16); });
   EXPECT_EQ(
       sus::move(powers_of_10).collect<Vec<u16>>(),
-      sus::Vec<u16>::with_values(1_u16, 10_u16, 100_u16, 1000_u16, 10000_u16));
+      sus::Slice<u16>::from({1_u16, 10_u16, 100_u16, 1000_u16, 10000_u16}));
 }
