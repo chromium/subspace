@@ -61,8 +61,14 @@ template <class Item>
 class Once;
 namespace __private {
 template <class T>
+  requires requires(const T& t) {
+    { t.iter() };
+  }
 constexpr auto begin(const T& t) noexcept;
 template <class T>
+  requires requires(const T& t) {
+    { t.iter() };
+  }
 constexpr auto end(const T& t) noexcept;
 }  // namespace __private
 }  // namespace sus::iter
