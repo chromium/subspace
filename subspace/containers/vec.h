@@ -112,9 +112,8 @@ class Vec final {
     return v;
   }
 
-  template <class... Ts>
-    requires((... && std::constructible_from<T, Ts>))
-  static inline constexpr Vec with_values(Ts... values) noexcept {
+  template <std::convertible_to<T>... Ts>
+  static inline constexpr Vec with_values(Ts&&... values) noexcept {
     auto v = Vec::with_capacity(sizeof...(Ts));
     (..., v.push(::sus::forward<Ts>(values)));
     return v;
