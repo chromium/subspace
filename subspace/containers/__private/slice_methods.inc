@@ -243,7 +243,7 @@ using ConcatOutputType = ::sus::containers::Vec<T>;
 /// i32 a1[] = {1, 2}, a2[] = {3, 4};
 /// Slice<i32> as[] = {Slice<i32>::from(a1), Slice<i32>::from(a2)};
 /// Vec<i32> v = Slice<Slice<i32>>::from(as).concat();
-/// sus::check(v == sus::Vec<i32>::with_values(1, 2, 3, 4));
+/// sus::check(v == Slice<i32>::from({1, 2, 3, 4}));
 /// ```
 constexpr auto concat() const& noexcept
   requires(::sus::containers::Concat<T>)
