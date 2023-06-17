@@ -427,7 +427,7 @@ TEST(Iterator, Enumerate) {
     EXPECT_EQ(it.next_back(), sus::None);
   }
 
-  auto vec = Vec<i32>::with_values(0, 2, 4, 6, 8);
+  auto vec = Vec<i32>::with(0, 2, 4, 6, 8);
   // Front to back.
   for (auto [i, value] : vec.iter().enumerate()) {
     EXPECT_EQ(i * 2, usize::from(value));

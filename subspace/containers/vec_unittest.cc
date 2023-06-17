@@ -66,18 +66,18 @@ TEST(Vec, WithCapacity) {
 
 TEST(Vec, WithValues) {
   {
-    auto v = Vec<i32>::with_values();
+    auto v = Vec<i32>::with();
     EXPECT_EQ(v.len(), 0u);
     EXPECT_EQ(v.capacity(), 0u);
   }
   {
-    auto v = Vec<i32>::with_values(1);
+    auto v = Vec<i32>::with(1);
     EXPECT_EQ(v.len(), 1u);
     EXPECT_GE(v.capacity(), 1u);
     EXPECT_EQ(v[0], 1);
   }
   {
-    auto v = Vec<i32>::with_values(3, 4, 5);
+    auto v = Vec<i32>::with(3, 4, 5);
     EXPECT_EQ(v.len(), 3u);
     EXPECT_GE(v.capacity(), 3u);
     EXPECT_EQ(v[0], 3);
@@ -1020,17 +1020,17 @@ TEST(Vec, Eq) {
 TEST(Vec, Extend) {
   static_assert(sus::iter::Extend<Vec<i32>, const i32&>);
   {
-    auto v1 = Vec<i32>::with_values(1, 2, 3);
-    auto v2 = Vec<i32>::with_values(4, 5, 6);
+    auto v1 = Vec<i32>::with(1, 2, 3);
+    auto v2 = Vec<i32>::with(4, 5, 6);
     v1.extend(v2.iter());
-    EXPECT_EQ(v1, sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6));
+    EXPECT_EQ(v1, sus::Vec<i32>::with(1, 2, 3, 4, 5, 6));
   }
   static_assert(sus::iter::Extend<Vec<i32>, i32>);
   {
-    auto v1 = Vec<i32>::with_values(1, 2, 3);
-    auto v2 = Vec<i32>::with_values(4, 5, 6);
+    auto v1 = Vec<i32>::with(1, 2, 3);
+    auto v2 = Vec<i32>::with(4, 5, 6);
     v1.extend(::sus::move(v2));
-    EXPECT_EQ(v1, sus::Vec<i32>::with_values(1, 2, 3, 4, 5, 6));
+    EXPECT_EQ(v1, sus::Vec<i32>::with(1, 2, 3, 4, 5, 6));
   }
 }
 
@@ -1039,7 +1039,7 @@ TEST(Vec, Drain_TriviallyRelocatable) {
 
   // Drain back range.
   {
-    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto v = Vec<i32>::with(1, 2, 3, 4, 5);
     auto cap = v.capacity();
     {
       auto d = v.drain("3.."_r);
@@ -1048,7 +1048,7 @@ TEST(Vec, Drain_TriviallyRelocatable) {
       EXPECT_EQ(d.next(), ::sus::None);
       EXPECT_EQ(d.next_back(), ::sus::None);
     }
-    EXPECT_EQ(v, Vec<i32>::with_values(1, 2, 3));
+    EXPECT_EQ(v, Vec<i32>::with(1, 2, 3));
     EXPECT_EQ(v.capacity(), cap);
     {
       auto d = v.drain("0.."_r);
@@ -1063,7 +1063,7 @@ TEST(Vec, Drain_TriviallyRelocatable) {
   }
   // Drain front range.
   {
-    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto v = Vec<i32>::with(1, 2, 3, 4, 5);
     auto cap = v.capacity();
     {
       auto d = v.drain("..3"_r);
@@ -1072,7 +1072,7 @@ TEST(Vec, Drain_TriviallyRelocatable) {
       EXPECT_EQ(d.next().unwrap(), 3);
       EXPECT_EQ(d.next(), ::sus::None);
     }
-    EXPECT_EQ(v, Vec<i32>::with_values(4, 5));
+    EXPECT_EQ(v, Vec<i32>::with(4, 5));
     EXPECT_EQ(v.capacity(), cap);
     {
       auto d = v.drain("..2"_r);
@@ -1086,7 +1086,7 @@ TEST(Vec, Drain_TriviallyRelocatable) {
   }
   // Drain full range.
   {
-    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto v = Vec<i32>::with(1, 2, 3, 4, 5);
     auto cap = v.capacity();
     {
       auto d = v.drain(".."_r);
@@ -1102,7 +1102,7 @@ TEST(Vec, Drain_TriviallyRelocatable) {
     EXPECT_EQ(v.capacity(), cap);
   }
   {
-    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto v = Vec<i32>::with(1, 2, 3, 4, 5);
     auto cap = v.capacity();
     {
       auto d = v.drain(".."_r);
@@ -1119,25 +1119,25 @@ TEST(Vec, Drain_TriviallyRelocatable) {
   }
   // Drain in the middle.
   {
-    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto v = Vec<i32>::with(1, 2, 3, 4, 5);
     auto cap = v.capacity();
     {
       auto d = v.drain("2..3"_r);
       EXPECT_EQ(d.next().unwrap(), 3);
       EXPECT_EQ(d.next(), ::sus::None);
     }
-    EXPECT_EQ(v, Vec<i32>::with_values(1, 2, 4, 5));
+    EXPECT_EQ(v, Vec<i32>::with(1, 2, 4, 5));
     EXPECT_EQ(v.capacity(), cap);
   }
   // Keep rest.
   {
-    auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+    auto v = Vec<i32>::with(1, 2, 3, 4, 5);
     auto cap = v.capacity();
     auto d = v.drain(".."_r);
     EXPECT_EQ(d.next().unwrap(), 1);
     EXPECT_EQ(d.next_back().unwrap(), 5);
     sus::move(d).keep_rest();
-    EXPECT_EQ(v, Vec<i32>::with_values(2, 3, 4));
+    EXPECT_EQ(v, Vec<i32>::with(2, 3, 4));
     EXPECT_EQ(v.capacity(), cap);
   }
 }
@@ -1166,7 +1166,7 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
 
   // Drain in the middle.
   {
-    auto v = Vec<S>::with_values(1, 2, 3, 4, 5);
+    auto v = Vec<S>::with(1, 2, 3, 4, 5);
     auto cap = v.capacity();
     {
       destroyed = moved = assigned = 0_usize;
@@ -1205,12 +1205,12 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
       EXPECT_EQ(moved, 0u);
       EXPECT_EQ(assigned, 2u);
     }
-    EXPECT_EQ(v, Vec<S>::with_values(1, 2, 4, 5));
+    EXPECT_EQ(v, Vec<S>::with(1, 2, 4, 5));
     EXPECT_EQ(v.capacity(), cap);
   }
   // Keep rest.
   {
-    auto v = Vec<S>::with_values(1, 2, 3, 4, 5);
+    auto v = Vec<S>::with(1, 2, 3, 4, 5);
     auto cap = v.capacity();
 
     destroyed = moved = assigned = 0_usize;
@@ -1243,12 +1243,12 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
     EXPECT_EQ(destroyed, 2u);
     EXPECT_EQ(moved, 0u);
 
-    EXPECT_EQ(v, Vec<S>::with_values(2, 3, 4));
+    EXPECT_EQ(v, Vec<S>::with(2, 3, 4));
     EXPECT_EQ(v.capacity(), cap);
   }
   // Overlapping assigns.
   {
-    auto v = Vec<S>::with_values(1, 2, 3, 4, 5);
+    auto v = Vec<S>::with(1, 2, 3, 4, 5);
     auto cap = v.capacity();
     {
       sus::Option<sus::containers::Drain<S>> d = sus::some(v.drain("..2"_r));
@@ -1262,13 +1262,13 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
       EXPECT_EQ(destroyed, 2u);
       EXPECT_EQ(moved, 0u);
     }
-    EXPECT_EQ(v, Vec<S>::with_values(3, 4, 5));
+    EXPECT_EQ(v, Vec<S>::with(3, 4, 5));
     EXPECT_EQ(v.capacity(), cap);
   }
 }
 
 TEST(Vec, fmt) {
-  auto v = Vec<i32>::with_values(1, 2, 3, 4, 5);
+  auto v = Vec<i32>::with(1, 2, 3, 4, 5);
   EXPECT_EQ(fmt::format("{}", v), "[1, 2, 3, 4, 5]");
   EXPECT_EQ(fmt::format("{:02}", v), "[01, 02, 03, 04, 05]");
 
@@ -1280,18 +1280,18 @@ TEST(Vec, fmt) {
   };
   static_assert(!fmt::is_formattable<NoFormat, char>::value);
 
-  auto vn = Vec<NoFormat>::with_values(NoFormat(), NoFormat(0xf00d));
+  auto vn = Vec<NoFormat>::with(NoFormat(), NoFormat(0xf00d));
   EXPECT_EQ(fmt::format("{}", vn), "[f2-3c-ae-16, 0d-f0-00-00]");
 }
 
 TEST(Vec, Stream) {
   std::stringstream s;
-  s << Vec<i32>::with_values(1, 2, 3, 4, 5);
+  s << Vec<i32>::with(1, 2, 3, 4, 5);
   EXPECT_EQ(s.str(), "[1, 2, 3, 4, 5]");
 }
 
 TEST(Vec, GTest) {
-  EXPECT_EQ(testing::PrintToString(Vec<i32>::with_values(1, 2, 3, 4, 5)),
+  EXPECT_EQ(testing::PrintToString(Vec<i32>::with(1, 2, 3, 4, 5)),
             "[1, 2, 3, 4, 5]");
 }
 

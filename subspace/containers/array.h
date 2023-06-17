@@ -92,7 +92,7 @@ class Array final {
   // conversions.
   template <std::convertible_to<T>... Ts>
     requires(sizeof...(Ts) == N)
-  constexpr static Array with_values(Ts&&... ts) noexcept {
+  constexpr static Array with(Ts&&... ts) noexcept {
     return Array(kWithValues, ::sus::forward<Ts>(ts)...);
   }
 
