@@ -37,6 +37,15 @@ class [[nodiscard]] Successors final
   /// The iterator starts with the given `first` item (if any) and calls the
   /// given `FnMutBox<Option<Item>>(const Item&)` functor to compute each item's
   /// successor.
+  ///
+  /// # Example
+  /// ```
+  /// auto powers_of_10 = sus::iter::Successors<u16>::with(
+  ///     sus::some(1_u16), [](const u16& n) { return n.checked_mul(10_u16); });
+  /// sus::check(
+  ///     sus::move(powers_of_10).collect<Vec<u16>>() ==
+  ///     sus::Slice<u16>::from({1_u16, 10_u16, 100_u16, 1000_u16, 10000_u16}));
+  /// ```
   static Successors<Item> with(
       Option<Item> first,
       ::sus::fn::FnMutBox<Option<Item>(const Item&)> func) noexcept {
