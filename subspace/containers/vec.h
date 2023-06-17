@@ -113,7 +113,7 @@ class Vec final {
   }
 
   template <std::convertible_to<T>... Ts>
-  static inline constexpr Vec with_values(Ts&&... values) noexcept {
+  static inline constexpr Vec with(Ts&&... values) noexcept {
     auto v = Vec::with_capacity(sizeof...(Ts));
     (..., v.push(::sus::forward<Ts>(values)));
     return v;

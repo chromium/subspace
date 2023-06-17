@@ -1338,7 +1338,7 @@ TEST(Result, FromIter) {
   };
 
   auto no_errors =
-      sus::Array<Result<usize, Error>, 5>::with_values(
+      sus::Array<Result<usize, Error>, 5>::with(
           Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
           Result<usize, Error>::with(3u), Result<usize, Error>::with(4u),
           Result<usize, Error>::with(5u))
@@ -1350,7 +1350,7 @@ TEST(Result, FromIter) {
   EXPECT_EQ(sus::move(no_errors_out).unwrap().sum, 1u + 2u + 3u + 4u + 5u);
 
   auto with_error =
-      sus::Array<Result<usize, Error>, 5>::with_values(
+      sus::Array<Result<usize, Error>, 5>::with(
           Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
           Result<usize, Error>::with_err(Error::OneError),
           Result<usize, Error>::with(4u), Result<usize, Error>::with(5u))
@@ -1362,7 +1362,7 @@ TEST(Result, FromIter) {
   EXPECT_EQ(sus::move(with_error_out).unwrap_err(), Error::OneError);
 
   auto with_errors =
-      sus::Array<Result<usize, Error>, 5>::with_values(
+      sus::Array<Result<usize, Error>, 5>::with(
           Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
           Result<usize, Error>::with_err(Error::OneError),
           Result<usize, Error>::with(4u),

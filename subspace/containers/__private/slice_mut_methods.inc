@@ -392,9 +392,9 @@ constexpr RChunksMut<T> rchunks_mut(::sus::num::usize chunk_size)
 ///
 /// # Examples
 /// ```
-/// auto forward = sus::Vec<i32>::with_values(1, 2, 3);
+/// auto forward = sus::Vec<i32>::with(1, 2, 3);
 /// auto sf = forward[".."_r];
-/// auto backward = sus::Vec<i32>::with_values(3, 2, 1);
+/// auto backward = sus::Vec<i32>::with(3, 2, 1);
 /// auto sb = backward[".."_r];
 /// sf.reverse();
 /// sus::check(sf == sb);

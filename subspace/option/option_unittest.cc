@@ -2518,7 +2518,7 @@ TEST(Option, From) {
 
 TEST(Option, FromIter) {
   decltype(auto) all_some =
-      sus::Array<Option<usize>, 3>::with_values(Option<usize>::with(1u),
+      sus::Array<Option<usize>, 3>::with(Option<usize>::with(1u),
                                                 Option<usize>::with(2u),
                                                 Option<usize>::with(3u))
           .into_iter()
@@ -2529,7 +2529,7 @@ TEST(Option, FromIter) {
   EXPECT_EQ(all_some->sum, 1u + 2u + 3u);
 
   auto one_none =
-      sus::Array<Option<usize>, 3>::with_values(
+      sus::Array<Option<usize>, 3>::with(
           Option<usize>::with(1u), Option<usize>(), Option<usize>::with(3u))
           .into_iter()
           .collect<Option<CollectSum<usize>>>();
@@ -2556,7 +2556,7 @@ TEST(Option, FromIterWithRefs) {
   auto u3 = NoCopyMove();
 
   decltype(auto) all_some =
-      sus::Array<Option<const NoCopyMove&>, 3>::with_values(
+      sus::Array<Option<const NoCopyMove&>, 3>::with(
           sus::some(u1), sus::some(u2), sus::some(u3))
           .into_iter()
           .collect<Option<CollectRefs>>();
@@ -2566,7 +2566,7 @@ TEST(Option, FromIterWithRefs) {
   EXPECT_EQ(all_some->vec[1u], &u2);
   EXPECT_EQ(all_some->vec[2u], &u3);
 
-  auto one_none = sus::Array<Option<const NoCopyMove&>, 3>::with_values(
+  auto one_none = sus::Array<Option<const NoCopyMove&>, 3>::with(
                       sus::some(u1), sus::none(), sus::some(u3))
                       .into_iter()
                       .collect<Option<CollectRefs>>();

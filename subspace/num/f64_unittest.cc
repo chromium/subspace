@@ -1043,13 +1043,13 @@ TEST(f64, RemEuclid) {
 }
 
 TEST(f64, FromBeBytes) {
-  auto value = f64::from_be_bytes(sus::Array<u8, 8>::with_values(
+  auto value = f64::from_be_bytes(sus::Array<u8, 8>::with(
       0x40_u8, 0x29_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8));
   EXPECT_EQ(value, 12.5_f64);
 }
 
 TEST(f64, FromLeBytes) {
-  auto value = f64::from_le_bytes(sus::Array<u8, 8>::with_values(
+  auto value = f64::from_le_bytes(sus::Array<u8, 8>::with(
       0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8, 0x29_u8, 0x40_u8));
   EXPECT_EQ(value, 12.5_f64);
 }
@@ -1057,12 +1057,12 @@ TEST(f64, FromLeBytes) {
 TEST(f64, FromNeBytes) {
   if constexpr (sus::assertions::is_big_endian()) {
     auto value = f64::from_ne_bytes(
-        sus::Array<u8, 8>::with_values(0x40_u8, 0x29_u8, 0x00_u8, 0x00_u8,
+        sus::Array<u8, 8>::with(0x40_u8, 0x29_u8, 0x00_u8, 0x00_u8,
                                        0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8));
     EXPECT_EQ(value, 12.5_f64);
   } else {
     auto value = f64::from_ne_bytes(
-        sus::Array<u8, 8>::with_values(0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8,
+        sus::Array<u8, 8>::with(0x00_u8, 0x00_u8, 0x00_u8, 0x00_u8,
                                        0x00_u8, 0x00_u8, 0x29_u8, 0x40_u8));
     EXPECT_EQ(value, 12.5_f64);
   }

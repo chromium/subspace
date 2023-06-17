@@ -2678,12 +2678,12 @@ TEST(i32, FromLe) {
 TEST(i32, ToBeBytes) {
   {
     constexpr auto a = (0x12345678_i32).to_be_bytes();
-    EXPECT_EQ(a, (sus::Array<u8, 4>::with_values(0x12_u8, 0x34_u8, 0x56_u8,
+    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8,
                                                  0x78_u8)));
   }
   {
     auto a = (0x12345678_i32).to_be_bytes();
-    EXPECT_EQ(a, (sus::Array<u8, 4>::with_values(0x12_u8, 0x34_u8, 0x56_u8,
+    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8,
                                                  0x78_u8)));
   }
 }
@@ -2691,12 +2691,12 @@ TEST(i32, ToBeBytes) {
 TEST(i32, ToLeBytes) {
   {
     constexpr auto a = (0x12345678_i32).to_le_bytes();
-    EXPECT_EQ(a, (sus::Array<u8, 4>::with_values(0x78_u8, 0x56_u8, 0x34_u8,
+    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8,
                                                  0x12_u8)));
   }
   {
     auto a = (0x12345678_i32).to_le_bytes();
-    EXPECT_EQ(a, (sus::Array<u8, 4>::with_values(0x78_u8, 0x56_u8, 0x34_u8,
+    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8,
                                                  0x12_u8)));
   }
 }
@@ -2705,23 +2705,23 @@ TEST(i32, ToNeBytes) {
   if constexpr (sus::assertions::is_big_endian()) {
     {
       constexpr auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a, (sus::Array<u8, 4>::with_values(0x12_u8, 0x34_u8, 0x56_u8,
+      EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8,
                                                    0x78_u8)));
     }
     {
       auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a, (sus::Array<u8, 4>::with_values(0x12_u8, 0x34_u8, 0x56_u8,
+      EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8,
                                                    0x78_u8)));
     }
   } else {
     {
       constexpr auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a, (sus::Array<u8, 4>::with_values(0x78_u8, 0x56_u8, 0x34_u8,
+      EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8,
                                                    0x12_u8)));
     }
     {
       auto a = (0x12345678_i32).to_ne_bytes();
-      EXPECT_EQ(a, (sus::Array<u8, 4>::with_values(0x78_u8, 0x56_u8, 0x34_u8,
+      EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8,
                                                    0x12_u8)));
     }
   }
