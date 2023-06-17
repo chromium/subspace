@@ -59,6 +59,9 @@ class [[nodiscard]] IteratorLoop final {
 /// using ::sus::iter::__private::end;
 /// ```
 template <class T>
+  requires requires(const T& t) {
+    { t.iter() };
+  }
 constexpr auto begin(const T& t) noexcept {
   return IteratorLoop(t.iter());
 }
@@ -72,6 +75,9 @@ constexpr auto begin(const T& t) noexcept {
 /// using ::sus::iter::__private::end;
 /// ```
 template <class T>
+  requires requires(const T& t) {
+    { t.iter() };
+  }
 constexpr auto end(const T&) noexcept {
   return ::sus::iter::__private::IteratorEnd();
 }
