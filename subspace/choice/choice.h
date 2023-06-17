@@ -164,7 +164,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   // set of things) without placement new and thus make this constexpr?
   template <TagsType V, class U, int&...,
             __private::ValueIsNotVoid Arg = StorageTypeOfTag<V>>
-    requires(std::convertible_to<U &&, Arg>)
+    requires(std::constructible_from<Arg, U &&>)
   static Choice with(U&& values) noexcept {
     auto u = Choice(index<V>);
     find_choice_storage_mut<index<V>>(u.storage_)
