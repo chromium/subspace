@@ -36,7 +36,9 @@ namespace sus::construct {
 /// given type.
 ///
 /// This concept is not implementable directly, as it's satisfied for `T` by
-/// implementing the `From<T>` trait on a different type.
+/// implementing the `From<T>` trait on a different type. It is only possible
+/// to satisfy this concept for `ToType` that is not a reference, as it needs
+/// to be able to construct `ToType`.
 ///
 /// # Templates
 ///
