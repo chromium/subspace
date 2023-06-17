@@ -31,6 +31,9 @@ namespace sus::construct {
 /// type `O` can be explicitly converted to `T`, with type deduction, via
 /// `sus::into(o)`.
 ///
+/// It is only possible to satisfy this concept for `ToType` that is not a
+/// reference, as it needs to be able to construct `ToType`.
+///
 /// # Arrays
 /// It's possible to convert from an array, in which case `From<T, O(&)[]>` is
 /// satisfied. To do so, implement `from()` as a templated method,
