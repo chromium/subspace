@@ -75,7 +75,6 @@ class Array final {
 
   constexpr static Array with_initializer(
       ::sus::fn::FnMut<T()> auto&& f) noexcept
-    requires(::sus::mem::Move<T>)
   {
     return Array(kWithInitializer, f, std::make_index_sequence<N>());
   }
@@ -92,7 +91,7 @@ class Array final {
   // values. But doesn't use sus::construct::Into<T> to avoid implicit
   // conversions.
   template <std::convertible_to<T>... Ts>
-    requires(sizeof...(Ts) == N && ::sus::mem::Move<T>)
+    requires(sizeof...(Ts) == N)
   constexpr static Array with_values(Ts&&... ts) noexcept {
     return Array(kWithValues, ::sus::forward<Ts>(ts)...);
   }

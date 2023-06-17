@@ -558,7 +558,9 @@ class Vec final {
 
   /// Consumes the Vec into an iterator that will return each element in the
   /// same order they appear in the Vec.
-  constexpr VecIntoIter<T> into_iter() && noexcept {
+  constexpr VecIntoIter<T> into_iter() && noexcept
+    requires(::sus::mem::Move<T>)
+  {
     check(!is_moved_from());
     return VecIntoIter<T>::with(::sus::move(*this));
   }
