@@ -28,6 +28,7 @@ The CMake files define the following options:
 
 * `SUBSPACE_BUILD_CIR`, defaults to `ON`, set to `OFF` to disable CIR build
 * `SUBSPACE_BUILD_SUBDOC`, defaults to `ON`, set to `OFF` to disable Subdoc build
+* `SUBSPACE_BUILD_TESTS`, defaults to `ON`, set to `OFF` to disable building unit tests
 
 ## Clang format
 
