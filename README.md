@@ -21,7 +21,7 @@ stable version.
 1. `gclient sync --jobs=16`
 1. `cmake -B out -DSUBSPACE_BUILD_CIR=OFF -DSUBSPACE_BUILD_SUBDOC=OFF`
 1. `cmake --build out`
-1. `ctest --test-dir out`
+1. `ctest --test-dir out --output-on-failure --stop-on-failure -j 10`
 
 ## CMake options
 The CMake files define the following options:
