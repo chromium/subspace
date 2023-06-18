@@ -19,7 +19,7 @@ stable version.
 1. Install [CMake](https://cmake.org/install/)
 1. Install [python3](https://www.python.org/downloads/)
 1. `gclient sync --jobs=16`
-1. `cmake -B out`
+1. `cmake -B out -DSUBSPACE_BUILD_CIR=OFF -DSUBSPACE_BUILD_SUBDOC=OFF`
 1. `cmake --build out`
 1. `ctest --test-dir out`
 
@@ -29,6 +29,11 @@ The CMake files define the following options:
 * `SUBSPACE_BUILD_CIR`, defaults to `ON`, set to `OFF` to disable CIR build
 * `SUBSPACE_BUILD_SUBDOC`, defaults to `ON`, set to `OFF` to disable Subdoc build
 * `SUBSPACE_BUILD_TESTS`, defaults to `ON`, set to `OFF` to disable building unit tests
+
+To include Subdoc or CIR in your build, re-run `cmake -B out` and change the value for
+them from `OFF` to `ON`. You will need LLVM and Clang libraries available. Set the
+`LLVM_DIR` and `Clang_DIR` environment variables when running `cmake` to point it to
+your installation. See [Building CIR and Subdoc](#Building-CIR-and-Subdoc) for more.
 
 ## Clang format
 
