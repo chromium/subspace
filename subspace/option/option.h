@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>  // TODO: Make this.. optional?
 #include <type_traits>
 
 #include "fmt/format.h"
@@ -48,11 +49,6 @@
 #include "subspace/result/__private/is_result_type.h"
 #include "subspace/string/__private/any_formatter.h"
 #include "subspace/string/__private/format_to_stream.h"
-
-namespace std {
-template <class T>
-class optional;
-}
 
 namespace sus::iter {
 template <class Iter, class Item>
