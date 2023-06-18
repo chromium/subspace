@@ -266,23 +266,27 @@ TEST(u32, CompileTimeConversion) {
   static_assert(is_constexpr_convertible<0_u16, Self>(0));
   static_assert(is_constexpr_convertible<0_u32, Self>(0));
   static_assert(!is_constexpr_convertible<0_u64, Self>(0));
-  static_assert(!is_constexpr_convertible<0_usize, Self>(0));
+  static_assert(sizeof(i32) >= sizeof(isize) ==
+                is_constexpr_convertible<0_usize, Self>(0));
   static_assert(is_constexpr_convertible<uint8_t{0}, Self>(0));
   static_assert(is_constexpr_convertible<uint16_t{0}, Self>(0));
   static_assert(is_constexpr_convertible<uint32_t{0}, Self>(0));
   static_assert(!is_constexpr_convertible<uint64_t{0}, Self>(0));
-  static_assert(!is_constexpr_convertible<size_t{0}, Self>(0));
+  static_assert(sizeof(i32) >= sizeof(isize) ==
+                is_constexpr_convertible<size_t{0}, Self>(0));
 
   static_assert(IsConstexprAssignable<0_u8, Self>);
   static_assert(IsConstexprAssignable<0_u16, Self>);
   static_assert(IsConstexprAssignable<0_u32, Self>);
   static_assert(!IsConstexprAssignable<0_u64, Self>);
-  static_assert(!IsConstexprAssignable<0_usize, Self>);
+  static_assert(sizeof(i32) >= sizeof(isize) ==
+                IsConstexprAssignable<0_usize, Self>);
   static_assert(IsConstexprAssignable<uint8_t{0}, Self>);
   static_assert(IsConstexprAssignable<uint16_t{0}, Self>);
   static_assert(IsConstexprAssignable<uint32_t{0}, Self>);
   static_assert(!IsConstexprAssignable<uint64_t{0}, Self>);
-  static_assert(!IsConstexprAssignable<size_t{0}, Self>);
+  static_assert(sizeof(i32) >= sizeof(isize) ==
+                IsConstexprAssignable<size_t{0}, Self>);
 
   static_assert(!IsExplicitlyConvertible<int8_t, Self>);
   static_assert(!IsExplicitlyConvertible<int16_t, Self>);
@@ -1853,26 +1857,22 @@ TEST(u32, FromLe) {
 TEST(u32, ToBeBytes) {
   {
     constexpr auto a = (0x12345678_u32).to_be_bytes();
-    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8,
-                                                 0x78_u8)));
+    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8)));
   }
   {
     auto a = (0x12345678_u32).to_be_bytes();
-    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8,
-                                                 0x78_u8)));
+    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8)));
   }
 }
 
 TEST(u32, ToLeBytes) {
   {
     constexpr auto a = (0x12345678_u32).to_le_bytes();
-    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8,
-                                                 0x12_u8)));
+    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
   }
   {
     auto a = (0x12345678_u32).to_le_bytes();
-    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8,
-                                                 0x12_u8)));
+    EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
   }
 }
 
@@ -1880,24 +1880,24 @@ TEST(u32, ToNeBytes) {
   if constexpr (sus::assertions::is_big_endian()) {
     {
       constexpr auto a = (0x12345678_u32).to_ne_bytes();
-      EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8,
-                                                   0x78_u8)));
+      EXPECT_EQ(a,
+                (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8)));
     }
     {
       auto a = (0x12345678_u32).to_ne_bytes();
-      EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8,
-                                                   0x78_u8)));
+      EXPECT_EQ(a,
+                (sus::Array<u8, 4>::with(0x12_u8, 0x34_u8, 0x56_u8, 0x78_u8)));
     }
   } else {
     {
       constexpr auto a = (0x12345678_u32).to_ne_bytes();
-      EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8,
-                                                   0x12_u8)));
+      EXPECT_EQ(a,
+                (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
     }
     {
       auto a = (0x12345678_u32).to_ne_bytes();
-      EXPECT_EQ(a, (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8,
-                                                   0x12_u8)));
+      EXPECT_EQ(a,
+                (sus::Array<u8, 4>::with(0x78_u8, 0x56_u8, 0x34_u8, 0x12_u8)));
     }
   }
 }

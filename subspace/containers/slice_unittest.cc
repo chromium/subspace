@@ -2447,7 +2447,7 @@ TEST(Slice, Eq) {
   EXPECT_EQ(v1["1.."_r], v2["1.."_r]);
   EXPECT_EQ(v1["1..3"_r], v2["1..3"_r]);
   EXPECT_EQ(v1["1..3"_r].as_slice(), v2["1..3"_r].as_slice());
-  v1[3u] += 1u;
+  v1[3u] += 1;
   EXPECT_EQ(v1["1.."_r], v1["1.."_r]);
   EXPECT_NE(v1["1.."_r], v2["1.."_r]);
 }

@@ -67,52 +67,6 @@ template <SignedPrimitiveInteger P>
   requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<_primitive>())
 constexpr inline _self(P v) noexcept : primitive_value(v) {}
 
-/** Construction from signed types, where it can be checked at compile time
- * that no bits are lost.
- *
- * For runtime conversion, use `from()`.
- *
- * #[doc.overloads=ctor.signed.typed]
- */
-template <Signed S>
-  requires(::sus::mem::size_of<S>() > ::sus::mem::size_of<_primitive>())
-consteval inline _self(S v) noexcept
-    : primitive_value(/* SAFETY: We check below that v <= _self::MAX, so we can
-                       * cast `v` to a `_self`. */
-                      static_cast<_primitive>(v.primitive_value)) {
-  /* SAFETY: P has more bits than _self, so converting a signed _self to P will
-   * fit.
-   */
-  if (v > static_cast<decltype(S::primitive_value)>(_self::MAX_PRIMITIVE)) {
-    ::sus::panic_with_message(                                            
-            *"Cannot construct signed integer from value outside its "      
-             "range.");
-  }
-}
-
-/** Construction from signed primitive types, where it can be checked at
- * compile time that no bits are lost.
- *
- * For runtime conversion, use `from()`.
- *
- * #[doc.overloads=ctor.signed.primitive]
- */
-template <SignedPrimitiveInteger P>
-  requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<_primitive>())
-consteval inline _self(P v) noexcept
-    : primitive_value(/* SAFETY: We check below that v <= _self::MAX, so we can
-                       * cast `v` to a `_self`. */
-                      static_cast<_primitive>(v)) {
-  /* SAFETY: P has more bits than _self, so converting a signed _self to P will
-   * fit.
-   */
-  if (v > static_cast<P>(_self::MAX_PRIMITIVE)) {
-    ::sus::panic_with_message(                                            
-            *"Cannot construct unsigned integer from value outside its "      
-             "range.");
-  }
-}
-
 /** Construction from signed enum types where no bits are lost.
  *
  * #[doc.overloads=signedint.ctor.signedenum]
@@ -130,54 +84,6 @@ template <SignedPrimitiveEnumClass P>
 explicit constexpr inline _self(P v) noexcept
     : primitive_value(static_cast<_primitive>(v)) {}
 
-/** Construction from signed enum types, where it can be checked at compile
- * time that no bits are lost.
- *
- * For runtime conversion, use `from()`.
- *
- * #[doc.overloads=ctor.signed.signedenum]
- */
-template <SignedPrimitiveEnum P>
-  requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<_primitive>())
-consteval inline _self(P v) noexcept
-    : primitive_value(/* SAFETY: We check below that v <= _self::MAX, so we can
-                       * cast `v` to a `_self`. */
-                      static_cast<_primitive>(v)) {
-  const auto u = static_cast<std::underlying_type_t<P>>(v);
-  /* SAFETY: P has more bits than _self, so converting a signed _self to P will
-   * fit.
-   */
-  if (u > static_cast<std::underlying_type_t<P>>(_self::MAX_PRIMITIVE) ||
-      u < static_cast<std::underlying_type_t<P>>(_self::MIN_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot construct signed integer from value outside its range.");
-  }
-}
-
-/** Construction from signed enum types, where it can be checked at compile
- * time that no bits are lost.
- *
- * For runtime conversion, use `from()`.
- *
- * #[doc.overloads=ctor.signed.signedenumclass]
- */
-template <SignedPrimitiveEnumClass P>
-  requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<_primitive>())
-explicit consteval inline _self(P v) noexcept
-    : primitive_value(/* SAFETY: We check below that v <= _self::MAX, so we can
-                       * cast `v` to a `_self`. */
-                      static_cast<_primitive>(v)) {
-  const auto u = static_cast<std::underlying_type_t<P>>(v);
-  /* SAFETY: P has more bits than `_self`, so converting a signed `_self` to P
-   * will fit.
-   */
-  if (u > static_cast<std::underlying_type_t<P>>(_self::MAX_PRIMITIVE) ||
-      u < static_cast<std::underlying_type_t<P>>(_self::MIN_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot construct signed integer from value outside its range.");
-  }
-}
-
 /** Construction from unsigned types where no bits are lost.
  *
  * #[doc.overloads=signedint.ctor.unsignedint.typed]
@@ -193,52 +99,6 @@ constexpr inline _self(U v) noexcept : primitive_value(v.primitive_value) {}
 template <UnsignedPrimitiveInteger P>
   requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<_primitive>())
 constexpr inline _self(P v) noexcept : primitive_value(v) {}
-
-/** Construction from unsigned types, where it can be checked at compile
- * time that no bits are lost.
- *
- * For runtime conversion of larger values, use `from()`.
- *
- * #[doc.overloads=signedint.ctor.unsigned.large.typed]
- */
-template <Unsigned U>
-  requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
-consteval inline _self(U v) noexcept
-    : primitive_value(/* SAFETY: We check below that v <= _self::MAX, so we can
-                       * cast `v` to a `_self`. */
-                      static_cast<_primitive>(v.primitive_value)) {
-  /* SAFETY: P has more bits than _self, so converting an unsigned _self to P
-   * will fit. When removing the sign bit, there's still at least as many bits
-   * as _self. */
-  if (v > static_cast<decltype(U::primitive_value)>(_self::MAX_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot construct signed integer from value outside its range.");
-  }
-}
-
-/** Construction from unsigned primitive types, where it can be checked at
- * compile time that no bits are lost.
- *
- * For runtime conversion of larger values, use `from()`.
- *
- * #[doc.overloads=signedint.ctor.unsigned.large.primitive]
- */
-template <UnsignedPrimitiveInteger P>
-  requires(::sus::mem::size_of<P>() >= ::sus::mem::size_of<_primitive>())
-consteval inline _self(P v) noexcept
-    : primitive_value(/* SAFETY: We check below that v <= _self::MAX, so we can
-                       * cast `v` to a `_self`. */
-                      static_cast<_primitive>(v)) {
-  /* SAFETY: The unsigned P is non-negative, as is _self::MAX_PRIMITIVE, so
-   * the sign bit isn't used. If they are the same size, P has more bits
-   * than _self after removing the sign bit. Otherwise, P is larger and also has
-   * more bits than _self. Thus it is safe to convert _self to P without losing
-   * data. */
-  if (v > static_cast<P>(_self::MAX_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot construct signed integer from value outside its range.");
-  }
-}
 
 /** Construction from unsigned enum types where no bits are lost.
  *
@@ -256,55 +116,6 @@ template <UnsignedPrimitiveEnumClass P>
   requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<_primitive>())
 explicit constexpr inline _self(P v) noexcept
     : primitive_value(static_cast<_primitive>(v)) {}
-
-/** Construction from unsigned enum types, where it can be checked at
- * compile time that no bits are lost.
- *
- * For runtime conversion, use `from()`.
- *
- * #[doc.overloads=ctor.signed.unsignedenum]
- */
-template <UnsignedPrimitiveEnum P>
-  requires(::sus::mem::size_of<P>() >= ::sus::mem::size_of<_primitive>())
-consteval inline _self(P v) noexcept
-    : primitive_value(/* SAFETY: We check below that v <= _self::MAX, so we can
-                       * cast `v` to a `_self`. */
-                      static_cast<_primitive>(v)) {
-  /* SAFETY: The unsigned P is non-negative, as is _self::MAX_PRIMITIVE, so
-   * the sign bit isn't used. If they are the same size, P has more bits
-   * than _self after removing the sign bit. Otherwise, P is larger and also has
-   * more bits than _self. Thus it is safe to convert _self to P without losing
-   * data. */
-  if (v > static_cast<std::underlying_type_t<P>>(_self::MAX_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot construct signed integer from value outside its range.");
-  }
-}
-
-/** Construction from unsigned enum types, where it can be checked at
- * compile time that no bits are lost.
- *
- * For runtime conversion, use `from()`.
- *
- * #[doc.overloads=ctor.signed.unsignedenumclass]
- */
-template <UnsignedPrimitiveEnumClass P>
-  requires(::sus::mem::size_of<P>() >= ::sus::mem::size_of<_primitive>())
-explicit consteval inline _self(P v) noexcept
-    : primitive_value(/* SAFETY: We check below that v <= _self::MAX, so we can
-                       * cast `v` to a `_self`. */
-                      static_cast<_primitive>(v)) {
-  /* SAFETY: The unsigned P is non-negative, as is _self::MAX_PRIMITIVE, so
-   * the sign bit isn't used. If they are the same size, P has more bits
-   * than _self after removing the sign bit. Otherwise, P is larger and also has
-   * more bits than _self. Thus it is safe to convert _self to P without losing
-   * data. */
-  if (static_cast<std::underlying_type_t<P>>(v) >
-      static_cast<std::underlying_type_t<P>>(_self::MAX_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot construct signed integer from value outside its range.");
-  }
-}
 
 /** Assignment from signed types where no bits are lost.
  *
@@ -339,32 +150,6 @@ constexpr inline _self& operator=(P v) noexcept {
   return *this;
 }
 
-/** Assignment from signed enum types, where it can be checked at compile
- * time that no bits are lost.
- *
- * For runtime conversion, use `from()`.
- *
- * #[doc.overloads=ctor.signed.signedenum]
- */
-template <SignedPrimitiveEnum P>
-  requires(::sus::mem::size_of<P>() > ::sus::mem::size_of<_primitive>())
-consteval inline _self& operator=(P v) noexcept {
-  const auto u = static_cast<std::underlying_type_t<P>>(v);
-  /* SAFETY: P has more bits than _self, so converting a signed _self to P will
-   * fit.
-   */
-  if (u > static_cast<std::underlying_type_t<P>>(_self::MAX_PRIMITIVE) ||
-      u < static_cast<std::underlying_type_t<P>>(_self::MIN_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot construct signed integer from value outside its range.");
-  }
-  /* SAFETY: We check above that v <= _self::MAX, so we can cast `v` to a
-   * `_self`.
-   */
-  primitive_value = static_cast<_primitive>(u);
-  return *this;
-}
-
 /** Assignment from unsigned types where no bits are lost.
  *
  * #[doc.overloads=signedint.assign.unsignedint.typed]
@@ -387,56 +172,6 @@ constexpr inline _self& operator=(P v) noexcept {
   return *this;
 }
 
-/** Assignment from unsigned types, where it can be checked at compile time
- * that no bits are lost.
- *
- * For runtime conversion of larger values, use `from()`.
- *
- * #[doc.overloads=signedint.assign.unsigned.large.typed]
- */
-template <Unsigned U>
-  requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
-consteval inline _self& operator=(U v) noexcept {
-  /* SAFETY: U has more bits than _self, so converting an unsigned _self to U
-   * will fit. When removing the sign bit, there's still at least as many bits
-   * as _self. */
-  if (v > static_cast<decltype(U::primitive_value)>(_self::MAX_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot assign to signed integer from value outside its range.");
-  }
-  /* SAFETY: We check above that v <= _self::MAX, so we can cast `v` to a
-   * `_self`.
-   */
-  primitive_value = static_cast<_primitive>(v.primitive_value);
-  return *this;
-}
-
-/** Assignment from unsigned primitive types, where it can be checked at
- * compile time that no bits are lost.
- *
- * For runtime conversion of larger values, use `from()`.
- *
- * #[doc.overloads=signedint.assign.unsigned.large.primitive]
- */
-template <UnsignedPrimitiveInteger P>
-  requires(::sus::mem::size_of<P>() >= ::sus::mem::size_of<_primitive>())
-consteval inline _self& operator=(P v) noexcept {
-  /* SAFETY: The unsigned P is non-negative, as is _self::MAX_PRIMITIVE, so
-   * the sign bit isn't used. If they are the same size, P has more bits
-   * than _self after removing the sign bit. Otherwise, P is larger and also has
-   * more bits than _self. Thus it is safe to convert _self to P without losing
-   * data. */
-  if (v > static_cast<P>(_self::MAX_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot assign to signed integer from value outside its range.");
-  }
-  /* SAFETY: We check above that v <= _self::MAX, so we can cast `v` to a
-   * `_self`.
-   */
-  primitive_value = static_cast<_primitive>(v);
-  return *this;
-}
-
 /** Assignment from unsigned enum types where no bits are lost.
  *
  * #[doc.overloads=signedint.assign.unsignedenum.small]
@@ -445,32 +180,6 @@ template <UnsignedPrimitiveEnum P>
   requires(::sus::mem::size_of<P>() < ::sus::mem::size_of<_primitive>())
 constexpr inline _self& operator=(P v) noexcept {
   primitive_value = v;
-  return *this;
-}
-
-/** Assignment from unsigned enum types, where it can be checked at
- * compile time that no bits are lost.
- *
- * For runtime conversion, use `from()`.
- *
- * #[doc.overloads=signeding.assign.unsignedenum.large]
- */
-template <UnsignedPrimitiveEnum P>
-  requires(::sus::mem::size_of<P>() >= ::sus::mem::size_of<_primitive>())
-consteval inline _self& operator=(P v) noexcept {
-  /* SAFETY: The unsigned P is non-negative, as is _self::MAX_PRIMITIVE, so
-   * the sign bit isn't used. If they are the same size, P has more bits
-   * than _self after removing the sign bit. Otherwise, P is larger and also has
-   * more bits than _self. Thus it is safe to convert _self to P without losing
-   * data. */
-  if (v > static_cast<std::underlying_type_t<P>>(_self::MAX_PRIMITIVE)) {
-    ::sus::panic_with_message(
-        *"Cannot construct signed integer from value outside its range.");
-  }
-  /* SAFETY: We check above that v <= _self::MAX, so we can cast `v` to a
-   * `_self`.
-   */
-  primitive_value = static_cast<_primitive>(v);
   return *this;
 }
 
