@@ -30,6 +30,7 @@
 // them all every time.
 #include "subspace/iter/by_ref.h"
 #include "subspace/iter/chain.h"
+#include "subspace/iter/cloned.h"
 #include "subspace/iter/enumerate.h"
 #include "subspace/iter/filter.h"
 #include "subspace/iter/map.h"
