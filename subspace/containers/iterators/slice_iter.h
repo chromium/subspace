@@ -78,7 +78,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     return Option<Item>::with(*end_);
   }
 
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
     // not exceed isize::MAX.
     const auto remaining = ::sus::num::usize::from_unchecked(
@@ -157,7 +157,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
     return Option<Item>::with(mref(*end_));
   }
 
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }

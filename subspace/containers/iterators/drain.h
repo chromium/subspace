@@ -121,7 +121,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     return iter_->size_hint();
   }
 

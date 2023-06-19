@@ -26,6 +26,7 @@
 #include "subspace/iter/into_iterator.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/never_value.h"
 #include "subspace/mem/replace.h"
 #include "subspace/prelude.h"
 
@@ -79,6 +80,9 @@ static_assert(
   sus::iter::IntoIterator<sus::iter::Once<int>, int>);
 // clang-format on
 
+static_assert(sus::mem::NeverValueField<
+              sus::iter::SizedIterator<int, 12, 4, false, false>>);
+
 template <class Item, size_t N>
 class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
  public:
@@ -97,6 +101,10 @@ class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
     if (front_ == back_) return sus::none();
     back_ -= 1u;
     return items_[back_].take();
+  }
+
+  sus::iter::SizeHint size_hint() const noexcept {
+    return sus::iter::SizeHint(exact_size_hint(), sus::some(exact_size_hint()));
   }
 
   // sus::iter::ExactSizeIterator trait.
@@ -470,6 +478,49 @@ TEST(Iterator, ByRef) {
     EXPECT_EQ(it.next().unwrap(), 3);
     EXPECT_EQ(it.next(), sus::None);
   }
+}
+
+TEST(Iterator, Chain) {
+  i32 nums1[] = {1, 2, 3};
+  i32 nums2[] = {4, 5};
+
+  {
+    auto it = ArrayIterator<i32, 3>::with_array(nums1);
+    auto it2 = ArrayIterator<i32, 2>::with_array(nums2);
+
+    auto c = std::move(it).chain(std::move(it2));
+    EXPECT_EQ(c.size_hint().lower, 5u);
+    EXPECT_EQ(*c.size_hint().upper, 5u);
+
+    EXPECT_EQ(c.next().unwrap(), 1);
+    EXPECT_EQ(c.next_back().unwrap(), 5);
+    EXPECT_EQ(c.next().unwrap(), 2);
+
+    EXPECT_EQ(c.size_hint().lower, 2u);
+    EXPECT_EQ(*c.size_hint().upper, 2u);
+
+    EXPECT_EQ(c.next_back().unwrap(), 4);
+    EXPECT_EQ(c.next().unwrap(), 3);
+
+    EXPECT_EQ(c.size_hint().lower, 0u);
+    EXPECT_EQ(*c.size_hint().upper, 0u);
+
+    EXPECT_EQ(c.next(), sus::None);
+
+    EXPECT_EQ(c.size_hint().lower, 0u);
+    EXPECT_EQ(*c.size_hint().upper, 0u);
+  }
+}
+
+TEST(Iterator, ChainFromIterator) {
+  auto v1 = sus::Vec<i32>::with(1, 2);
+  auto v2 = sus::Vec<i32>::with(3);
+  sus::containers::VecIntoIter<i32> iti = sus::move(v1).into_iter();
+  auto it = sus::move(iti).chain(sus::move(v2));
+  EXPECT_EQ(it.next().unwrap(), 1);
+  EXPECT_EQ(it.next().unwrap(), 2);
+  EXPECT_EQ(it.next().unwrap(), 3);
+  EXPECT_EQ(it.next(), sus::None);
 }
 
 }  // namespace

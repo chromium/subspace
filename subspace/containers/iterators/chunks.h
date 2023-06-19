@@ -95,7 +95,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
@@ -204,7 +204,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
@@ -307,7 +307,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
@@ -410,7 +410,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
@@ -518,7 +518,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
@@ -616,7 +616,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
@@ -719,7 +719,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
@@ -820,7 +820,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }

@@ -72,7 +72,7 @@ class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
   }
 
   // sus::iter::Iterator trait optional method.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     Option<::sus::num::usize> steps = ::sus::iter::__private::steps_between(
         static_cast<const Final*>(this)->start,
         static_cast<const Final*>(this)->finish);

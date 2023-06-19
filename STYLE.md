@@ -37,3 +37,5 @@ footguns, crashes, bugs, and UB.
    ctor methods. This reduces the amount of noise. e.g. `auto o =
    Option<DefaultCtor>({})` instead of `auto o =
    Option<DefaultCtor>(DefaultCtor())`.
+1. Iterator types should be `[[nodiscard]]` always. And trivially relocatable
+   (and `[[sus_trivial_abi]]`) if at all possible.

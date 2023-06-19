@@ -66,7 +66,7 @@ struct [[nodiscard]] VecIntoIter final
   }
 
   /// sus::iter::Iterator method.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     const usize remaining = back_index_ - front_index_;
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::with(remaining));

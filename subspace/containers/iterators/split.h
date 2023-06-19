@@ -57,7 +57,7 @@ class [[sus_trivial_abi]] GenericSplitN final
     }
   }
 
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     auto [lower, upper_opt] = iter_.size_hint();
     const auto count = count_;
     return {::sus::ops::min(count, lower),
@@ -148,7 +148,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     if (v_.is_empty()) {
       return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
@@ -270,7 +270,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     if (v_.is_empty()) {
       return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
@@ -400,7 +400,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     if (v_.is_empty()) {
       return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
@@ -517,7 +517,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     if (v_.is_empty()) {
       return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
@@ -579,7 +579,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplit final
   Option<Item> next_back() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -631,7 +631,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
   Option<Item> next_back() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -680,7 +680,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitN final
   Option<Item> next() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -724,7 +724,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
   Option<Item> next() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -769,7 +769,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
   Option<Item> next() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -814,7 +814,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitNMut final
   Option<Item> next() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept final {
+  ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 

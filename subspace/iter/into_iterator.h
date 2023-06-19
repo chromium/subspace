@@ -35,4 +35,10 @@ concept IntoIterator = requires(T&& t) {
   { ::sus::forward<T>(t).into_iter() } -> Iterator<Item>;
 };
 
+/// Returns the type of iterator that will be produced from `T` where `T`
+/// satisifies `IntoIterator`.
+template <class T, class Item>
+  requires(IntoIterator<T, Item>)
+using IntoIteratorOutputType = std::decay_t<decltype(std::declval<T&&>().into_iter())>;
+
 }  // namespace sus::iter
