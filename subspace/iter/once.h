@@ -28,6 +28,8 @@ class [[nodiscard]] Once final : public IteratorBase<Once<ItemT>, ItemT> {
  public:
   using Item = ItemT;
 
+  /// Constructs a `Once` iterator that will return `o` and then None. If `o` is
+  /// `None`, then the iterator will be empty on construction.
   static Once with(Option<Item>&& o) noexcept { return Once(::sus::move(o)); }
 
   // sus::iter::Iterator trait.
