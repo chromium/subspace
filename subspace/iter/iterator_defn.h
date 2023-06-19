@@ -49,6 +49,8 @@ class ByRef;
 template <class InnerSizedIter, class OtherSizedIter>
 class Chain;
 template <class InnerSizedIter>
+class Cloned;
+template <class InnerSizedIter>
 class Enumerate;
 template <class InnerSizedIter>
 class Filter;
@@ -161,6 +163,16 @@ class IteratorBase {
     requires(
         ::sus::mem::relocate_by_memcpy<Iter> &&
         ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other, Item>>);
+
+  /// Creates an iterator which clones all of its elements.
+  ///
+  /// This is useful when you have an iterator over `&T`, but you need an
+  /// iterator over `T`.
+  ///
+  /// There is no guarantee whatsoever about the clone method actually being
+  /// called or optimized away. So code should not depend on either.
+  auto cloned() && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -276,8 +288,6 @@ class IteratorBase {
   // TODO: If the iterator is over references, collect_vec() could map them to
   // NonNull.
   ::sus::containers::Vec<ItemT> collect_vec() && noexcept;
-
-  // TODO: cloned().
 };
 
 template <class Iter, class Item>
@@ -327,6 +337,15 @@ auto IteratorBase<Iter, Item>::chain(Other&& other) && noexcept
   using Chain = Chain<Sized, OtherSized>;
   return Chain::with(make_sized_iterator(static_cast<Iter&&>(*this)),
                      make_sized_iterator(::sus::move(other).into_iter()));
+}
+
+template <class Iter, class Item>
+auto IteratorBase<Iter, Item>::cloned() && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Cloned = Cloned<Sized>;
+  return Cloned::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>

@@ -524,4 +524,54 @@ TEST(Iterator, ChainFromIterator) {
   EXPECT_EQ(it.next(), sus::None);
 }
 
+TEST(Iterator, Cloned) {
+  static usize clone_called;
+  struct Cloning {
+    Cloning() = default;
+    Cloning(Cloning&&) = default;
+    Cloning& operator=(Cloning&&) = default;
+    Cloning clone() const noexcept { return clone_called += 1u, Cloning(); }
+  };
+  static_assert(sus::mem::Clone<Cloning>);
+
+  auto cloning = sus::Vec<Cloning>::with(Cloning(), Cloning());
+
+  // Clone from references.
+  {
+    auto it = cloning.iter().cloned();
+    static_assert(std::same_as<Cloning, decltype(it.next().unwrap())>);
+    EXPECT_EQ(it.size_hint().lower, 2u);
+    EXPECT_EQ(it.size_hint().upper.unwrap(), 2u);
+
+    EXPECT_EQ(clone_called, 0u);
+    EXPECT_EQ(it.next().is_some(), true);
+    EXPECT_EQ(clone_called, 1u);
+
+    EXPECT_EQ(it.next().is_some(), true);
+    EXPECT_EQ(clone_called, 2u);
+
+    EXPECT_EQ(it.next().is_some(), false);
+    EXPECT_EQ(clone_called, 2u);
+  }
+  clone_called = 0u;
+
+  // Clone from values.
+  {
+    auto it = sus::move(cloning).into_iter().cloned();
+    static_assert(std::same_as<Cloning, decltype(it.next().unwrap())>);
+    EXPECT_EQ(it.size_hint().lower, 2u);
+    EXPECT_EQ(it.size_hint().upper.unwrap(), 2u);
+
+    EXPECT_EQ(clone_called, 0u);
+    EXPECT_EQ(it.next().is_some(), true);
+    EXPECT_EQ(clone_called, 1u);
+
+    EXPECT_EQ(it.next().is_some(), true);
+    EXPECT_EQ(clone_called, 2u);
+
+    EXPECT_EQ(it.next().is_some(), false);
+    EXPECT_EQ(clone_called, 2u);
+  }
+}
+
 }  // namespace
