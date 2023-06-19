@@ -40,10 +40,6 @@ class [[nodiscard]] [[sus_trivial_abi]] Reverse final
  public:
   using Item = InnerSizedIter::Item;
 
-  static Reverse with(InnerSizedIter&& next_iter) noexcept {
-    return Reverse(::sus::move(next_iter));
-  }
-
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept { return next_iter_.next_back(); }
   // sus::iter::DoubleEndedIterator trait.
@@ -56,6 +52,13 @@ class [[nodiscard]] [[sus_trivial_abi]] Reverse final
   }
 
  private:
+  template <class U, class V>
+  friend class IteratorBase;
+
+  static Reverse with(InnerSizedIter&& next_iter) noexcept {
+    return Reverse(::sus::move(next_iter));
+  }
+
   Reverse(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
 
   InnerSizedIter next_iter_;

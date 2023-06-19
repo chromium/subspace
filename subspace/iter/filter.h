@@ -38,10 +38,6 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
  public:
   using Item = InnerSizedIter::Item;
 
-  static Filter with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
-    return Filter(::sus::move(pred), ::sus::move(next_iter));
-  }
-
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     InnerSizedIter& iter = next_iter_;
@@ -80,7 +76,14 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
   }
 
  private:
-  Filter(Pred&& pred, InnerSizedIter&& next_iter)
+  template <class U, class V>
+  friend class IteratorBase;
+
+  static Filter with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
+    return Filter(::sus::move(pred), ::sus::move(next_iter));
+  }
+
+  Filter(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(::sus::move(pred)), next_iter_(::sus::move(next_iter)) {}
 
   Pred pred_;

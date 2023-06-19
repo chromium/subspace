@@ -16,7 +16,10 @@
 
 #include "subspace/convert/subclass.h"
 #include "subspace/iter/iterator_concept.h"
+#include "subspace/option/option.h"
+#include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
+#include "subspace/mem/replace.h"
 #include "subspace/mem/size_of.h"
 // Doesn't include iterator_defn.h because it's included from there.
 
@@ -32,6 +35,8 @@ class IteratorBase;
 ///
 /// BoxedIterator is only constructible from an iterator that is not trivially
 /// relocatable.
+///
+/// This type is returned from `Iterator::box()`.
 template <class ItemT, size_t SubclassSize, size_t SubclassAlign,
           bool DoubleEnded>
 class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
@@ -41,8 +46,38 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
  public:
   using Item = ItemT;
 
+  BoxedIterator(BoxedIterator && o) noexcept
+      : iter_(::sus::mem::replace(mref(o.iter_), nullptr)),
+        destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
+        next_(::sus::mem::replace(mref(o.next_), nullptr)),
+        next_back_(::sus::mem::replace(mref(o.next_back_), nullptr)) {}
+  BoxedIterator& operator=(BoxedIterator&& o) noexcept {
+    if (destroy_) destroy_(iter_);
+    iter_ = ::sus::mem::replace(mref(o.iter_), nullptr);
+    destroy_ = ::sus::mem::replace(mref(o.destroy_), nullptr);
+    next_ = ::sus::mem::replace(mref(o.next_), nullptr);
+    next_back_ = ::sus::mem::replace(mref(o.next_back_), nullptr);
+  }
+
+  ~BoxedIterator() {
+    if (destroy_) destroy_(iter_);
+  }
+
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept { return next_(iter_); }
+  // sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept
+    requires(DoubleEnded)
+  {
+    return next_back_(iter_);
+  }
+
+ private:
+  template <class U, class V>
+  friend class IteratorBase;
+
   template <::sus::mem::Move Iter>
-  static BoxedIterator with(Iter&& iter) noexcept
+  static BoxedIterator with(Iter && iter) noexcept
     requires(
         ::sus::convert::SameOrSubclassOf<Iter*, IteratorBase<Iter, Item>*> &&
         !::sus::mem::relocate_by_memcpy<Iter>)
@@ -71,33 +106,6 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
     }
   }
 
-  BoxedIterator(BoxedIterator&& o) noexcept
-      : iter_(::sus::mem::replace(mref(o.iter_), nullptr)),
-        destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
-        next_(::sus::mem::replace(mref(o.next_), nullptr)),
-        next_back_(::sus::mem::replace(mref(o.next_back_), nullptr)) {}
-  BoxedIterator& operator=(BoxedIterator&& o) noexcept {
-    if (destroy_) destroy_(iter_);
-    iter_ = ::sus::mem::replace(mref(o.iter_), nullptr);
-    destroy_ = ::sus::mem::replace(mref(o.destroy_), nullptr);
-    next_ = ::sus::mem::replace(mref(o.next_), nullptr);
-    next_back_ = ::sus::mem::replace(mref(o.next_back_), nullptr);
-  }
-
-  ~BoxedIterator() {
-    if (destroy_) destroy_(iter_);
-  }
-
-  // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return next_(iter_); }
-  // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
-    requires(DoubleEnded)
-  {
-    return next_back_(iter_);
-  }
-
- private:
   // DoubleEnded constructor.
   BoxedIterator(void* iter, void (*destroy)(void* boxed_iter),
                 Option<Item> (*next)(void* boxed_iter),
