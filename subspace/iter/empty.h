@@ -16,6 +16,7 @@
 
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/option/option.h"
+#include "subspace/mem/relocate.h"
 
 namespace sus::iter {
 
@@ -26,6 +27,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Empty final
  public:
   using Item = ItemT;
 
+  /// Constructs an `Empty` iterator, which is an empty iterator that returns
+  /// nothing.
   constexpr Empty() = default;
 
   // sus::iter::Iterator trait.

@@ -35,6 +35,17 @@ class IteratorRange {
   using Item = typename Iter::Item;
 
  public:
+  constexpr auto begin() noexcept {
+    return __private::RangeBegin<IteratorRange, Item>(this);
+  }
+  constexpr auto end() noexcept { return __private::IteratorEnd(); }
+
+ private:
+  template <class U, class V>
+  friend class IteratorBase;
+
+  friend class __private::RangeBegin<IteratorRange, Item>;
+
   static constexpr auto with(Iter&& it) noexcept
     requires requires {
       typename Iter::Item;
@@ -43,14 +54,6 @@ class IteratorRange {
   {
     return IteratorRange(::sus::move(it));
   }
-
-  constexpr auto begin() noexcept {
-    return __private::RangeBegin<IteratorRange, Item>(this);
-  }
-  constexpr auto end() noexcept { return __private::IteratorEnd(); }
-
- private:
-  friend class __private::RangeBegin<IteratorRange, Item>;
 
   constexpr IteratorRange(Iter&& it) noexcept : it_(::sus::move(it)) {
     item_ = it_.next();

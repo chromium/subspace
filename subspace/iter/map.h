@@ -34,10 +34,6 @@ class [[nodiscard]] [[sus_trivial_abi]] Map final
  public:
   using Item = ToItem;
 
-  static Map with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
-    return Map(::sus::move(fn), ::sus::move(next_iter));
-  }
-
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     Option<FromItem> item = next_iter_.next();
@@ -70,6 +66,13 @@ class [[nodiscard]] [[sus_trivial_abi]] Map final
   }
 
  private:
+  template <class U, class V>
+  friend class IteratorBase;
+
+  static Map with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
+    return Map(::sus::move(fn), ::sus::move(next_iter));
+  }
+
   Map(MapFn fn, InnerSizedIter&& next_iter)
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 

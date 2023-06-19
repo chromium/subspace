@@ -25,18 +25,13 @@ namespace sus::iter {
 
 /// An iterator that yields the current count and the element during iteration.
 ///
-/// This class is created by the `enumerate()` method on `IteratorBase`. See its
-/// documentation for more.
+/// This type is returned from `Iterator::enumerate()`.
 template <class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
     : public IteratorBase<Enumerate<InnerSizedIter>,
                           ::sus::Tuple<usize, typename InnerSizedIter::Item>> {
  public:
   using Item = ::sus::Tuple<usize, typename InnerSizedIter::Item>;
-
-  static Enumerate with(InnerSizedIter&& next_iter) noexcept {
-    return Enumerate(::sus::move(next_iter));
-  }
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
@@ -78,6 +73,13 @@ class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
   // TODO: Implement nth(), nth_back(), etc...
 
  private:
+  template <class U, class V>
+  friend class IteratorBase;
+
+  static Enumerate with(InnerSizedIter&& next_iter) noexcept {
+    return Enumerate(::sus::move(next_iter));
+  }
+
   Enumerate(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
 
   usize count_ = 0u;
