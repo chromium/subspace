@@ -15,6 +15,7 @@
 #pragma once
 
 #include "subspace/macros/inline.h"
+#include "subspace/macros/nonnull.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/move.h"
@@ -279,7 +280,7 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
   inline constexpr operator T&() { return *ptr_; }
 
  private:
-  T* ptr_;
+  T* sus_nonnull_var ptr_;
 
   // Pointers are trivially relocatable.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ptr_));

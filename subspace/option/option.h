@@ -377,7 +377,7 @@ class Option final {
   /// The function will panic with the given message if the Option's state is
   /// currently `None`.
   constexpr sus_nonnull_fn T expect(
-      /* TODO: string view type */ sus_nonnull_arg const char*
+      /* TODO: string view type */ sus_nonnull_arg const char* sus_nonnull_var
           msg) && noexcept {
     ::sus::check_with_message(t_.state() == Some, *msg);
     return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
