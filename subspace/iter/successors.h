@@ -59,6 +59,14 @@ class [[nodiscard]] Successors final
     return item;
   }
 
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept {
+    if (next_.is_some())
+      return SizeHint(1u, ::sus::Option<::sus::num::usize>());
+    else
+      return SizeHint(0u, ::sus::Option<::sus::num::usize>::with(0u));
+  }
+
  private:
   Successors(Option<Item> first,
              ::sus::fn::FnMutBox<Option<Item>(const Item&)>&& func)

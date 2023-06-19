@@ -15,13 +15,9 @@
 #pragma once
 
 #include "subspace/marker/unsafe.h"
+#include "subspace/option/option.h"
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/unsigned_integer.h"
-
-namespace sus::option {
-template <class T>
-class Option;
-}
 
 namespace sus::iter::__private {
 
@@ -36,12 +32,12 @@ constexpr T step_backward(T l) noexcept {
   return l - T::from_unchecked(::sus::marker::unsafe_fn, 1);
 }
 template <::sus::num::Integer T>
-constexpr Option<T> step_forward_checked(T l) noexcept {
+constexpr ::sus::Option<T> step_forward_checked(T l) noexcept {
   // SAFETY: All `Integer` can hold `1`.
   return l.checked_add(T::from_unchecked(::sus::marker::unsafe_fn, 1));
 }
 template <::sus::num::Integer T>
-constexpr Option<T> step_backward_checked(T l) noexcept {
+constexpr ::sus::Option<T> step_backward_checked(T l) noexcept {
   // SAFETY: All `Integer` can hold `1`.
   return l.checked_sub(T::from_unchecked(::sus::marker::unsafe_fn, 1));
 }
@@ -54,20 +50,20 @@ constexpr T step_backward_by(T l, ::sus::num::usize steps) noexcept {
   return l - T::from(steps);
 }
 template <::sus::num::Integer T>
-constexpr Option<T> step_forward_by_checked(T l,
-                                            ::sus::num::usize steps) noexcept {
+constexpr ::sus::Option<T> step_forward_by_checked(
+    T l, ::sus::num::usize steps) noexcept {
   return T::try_from(steps).ok().and_then(
       [&l](T steps) { return l.checked_add(::sus::marker::unsafe_fn, steps); });
 }
 template <::sus::num::Integer T>
-constexpr Option<T> step_backward_by_checked(T l,
-                                             ::sus::num::usize steps) noexcept {
+constexpr ::sus::Option<T> step_backward_by_checked(
+    T l, ::sus::num::usize steps) noexcept {
   return T::try_from(steps).ok().and_then(
       [&l](T steps) { return l.checked_sub(::sus::marker::unsafe_fn, steps); });
 }
 template <::sus::num::Integer T>
-constexpr Option<::sus::num::usize> steps_between(const T& l,
-                                                  const T& r) noexcept {
+constexpr ::sus::Option<::sus::num::usize> steps_between(
+    const T& l, const T& r) noexcept {
   return r.checked_sub(l).and_then(
       [](T steps) { return ::sus::num::usize::try_from(steps).ok(); });
 }
@@ -83,21 +79,21 @@ concept Step = requires(const T& t, ::sus::num::usize n) {
   { ::sus::iter::__private::step_backward(t) } -> std::same_as<T>;
   {
     ::sus::iter::__private::step_forward_checked(t)
-  } -> std::same_as<::sus::option::Option<T>>;
+  } -> std::same_as<::sus::Option<T>>;
   {
     ::sus::iter::__private::step_backward_checked(t)
-  } -> std::same_as<::sus::option::Option<T>>;
+  } -> std::same_as<::sus::Option<T>>;
   { ::sus::iter::__private::step_forward_by(t, n) } -> std::same_as<T>;
   { ::sus::iter::__private::step_backward_by(t, n) } -> std::same_as<T>;
   {
     ::sus::iter::__private::step_forward_by_checked(t, n)
-  } -> std::same_as<::sus::option::Option<T>>;
+  } -> std::same_as<::sus::Option<T>>;
   {
     ::sus::iter::__private::step_backward_by_checked(t, n)
-  } -> std::same_as<::sus::option::Option<T>>;
+  } -> std::same_as<::sus::Option<T>>;
   {
     ::sus::iter::__private::steps_between(t, t)
-  } -> std::same_as<::sus::option::Option<::sus::num::usize>>;
+  } -> std::same_as<::sus::Option<::sus::num::usize>>;
 };
 
 }  // namespace sus::iter::__private

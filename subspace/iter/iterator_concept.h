@@ -32,15 +32,9 @@ namespace sus::iter {
 
 template <class Iter, class Item>
 class IteratorBase;
+struct SizeHint;
 
 /// A concept for all implementations of iterators.
-///
-/// An iterator has one required method, `next()`, which when called, returns an
-/// `Option<Item>`. Calling next will return an `Option` containing the next
-/// `Item` as long as there are elements, and once they've all been exhausted,
-/// will return `None` to indicate that iteration is finished. Individual
-/// iterators may choose to resume iteration, and so calling next again may or
-/// may not eventually start returning an `Item` again at some point.
 ///
 /// Types that satisfy this concept can be used in for loops and provide
 /// all the methods of an iterator type, which are found in
@@ -51,8 +45,27 @@ class IteratorBase;
 ///
 /// Iterators are also composable, and it's possible to chain them together to
 /// do more complex forms of processing.
+///
+/// # Required methods.
+///
+/// An iterator has two required methods.
+///
+/// `next()`, which when called, returns an `Option<Item>`. Calling next will
+/// return an `Option` containing the next `Item` as long as there are elements,
+/// and once they've all been exhausted, will return `None` to indicate that
+/// iteration is finished. Individual iterators may choose to resume iteration,
+/// and so calling next again may or may not eventually start returning an
+/// `Item` again at some point.
+///
+/// `size_hint()` that returns a `sus::iter::SizeHint` containing a lower bound
+/// and optional upper bound on the number of elements left to be yielded by the
+/// iterator. An upper bound of `None` indicates either an unknown upper bound
+/// or a bound that is larger than `usize`. Rerturning `lower = 0` and `upper =
+/// None` is correct for any iterator, but providing a more accurate bound can
+/// benefit performance optiomizations. Returning an incorrect bound is
+/// technically possible but is a violation of the Iterator protocol.
 template <class T, class Item>
-concept Iterator = requires(T& t) {
+concept Iterator = requires(T& t, const T& c) {
   // Has a T::Item typename.
   requires(!std::is_void_v<typename std::decay_t<T>::Item>);
   // The T::Item matches the concept input.
@@ -62,6 +75,7 @@ concept Iterator = requires(T& t) {
       std::decay_t<T>*, IteratorBase<std::decay_t<T>, Item>*>;
   // Required methods.
   { t.next() } noexcept -> std::same_as<::sus::option::Option<Item>>;
+  { c.size_hint() } noexcept -> std::same_as<::sus::iter::SizeHint>;
 };
 
 /// An `Iterator` able to yield elements from both ends.

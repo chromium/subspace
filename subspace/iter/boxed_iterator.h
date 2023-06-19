@@ -16,11 +16,12 @@
 
 #include "subspace/convert/subclass.h"
 #include "subspace/iter/iterator_concept.h"
-#include "subspace/option/option.h"
+#include "subspace/iter/size_hint.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
 #include "subspace/mem/size_of.h"
+#include "subspace/option/option.h"
 // Doesn't include iterator_defn.h because it's included from there.
 
 namespace sus::iter {
@@ -46,7 +47,7 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
  public:
   using Item = ItemT;
 
-  BoxedIterator(BoxedIterator && o) noexcept
+  BoxedIterator(BoxedIterator&& o) noexcept
       : iter_(::sus::mem::replace(mref(o.iter_), nullptr)),
         destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
         next_(::sus::mem::replace(mref(o.next_), nullptr)),
@@ -65,6 +66,8 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept { return next_(iter_); }
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept { return size_hint_(iter_); }
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
     requires(DoubleEnded)
@@ -77,7 +80,7 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
   friend class IteratorBase;
 
   template <::sus::mem::Move Iter>
-  static BoxedIterator with(Iter && iter) noexcept
+  static BoxedIterator with(Iter&& iter) noexcept
     requires(
         ::sus::convert::SameOrSubclassOf<Iter*, IteratorBase<Iter, Item>*> &&
         !::sus::mem::relocate_by_memcpy<Iter>)
@@ -95,6 +98,9 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
           },
           [](void* boxed_iter) {
             return static_cast<Iter*>(boxed_iter)->next_back();
+          },
+          [](const void* boxed_iter) {
+            return static_cast<const Iter*>(boxed_iter)->size_hint();
           });
     } else {
       return BoxedIterator(
@@ -102,6 +108,9 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
           [](void* boxed_iter) { delete static_cast<Iter*>(boxed_iter); },
           [](void* boxed_iter) {
             return static_cast<Iter*>(boxed_iter)->next();
+          },
+          [](const void* boxed_iter) {
+            return static_cast<const Iter*>(boxed_iter)->size_hint();
           });
     }
   }
@@ -109,12 +118,22 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
   // DoubleEnded constructor.
   BoxedIterator(void* iter, void (*destroy)(void* boxed_iter),
                 Option<Item> (*next)(void* boxed_iter),
-                Option<Item> (*next_back)(void* boxed_iter))
-      : iter_(iter), destroy_(destroy), next_(next), next_back_(next_back) {}
+                Option<Item> (*next_back)(void* boxed_iter),
+                SizeHint (*size_hint)(const void* boxed_iter))
+      : iter_(iter),
+        destroy_(destroy),
+        next_(next),
+        next_back_(next_back),
+        size_hint_(size_hint) {}
   // Not-DoubleEnded constructor.
   BoxedIterator(void* iter, void (*destroy)(void* boxed_iter),
-                Option<Item> (*next)(void* boxed_iter))
-      : iter_(iter), destroy_(destroy), next_(next), next_back_(nullptr) {}
+                Option<Item> (*next)(void* boxed_iter),
+                SizeHint (*size_hint)(const void* boxed_iter))
+      : iter_(iter),
+        destroy_(destroy),
+        next_(next),
+        next_back_(nullptr),
+        size_hint_(size_hint) {}
 
   void* iter_;
   void (*destroy_)(void* boxed_iter);
@@ -122,10 +141,11 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
   // TODO: We could remove this field with a nested struct + template
   // specialization when DoubleEnded is false.
   Option<Item> (*next_back_)(void* boxed_iter);
+  SizeHint (*size_hint_)(const void* boxed_iter);
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(iter_),
                                   decltype(destroy_), decltype(next_),
-                                  decltype(next_back_));
+                                  decltype(next_back_), decltype(size_hint_));
 };
 
 }  // namespace sus::iter

@@ -45,6 +45,11 @@ class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
     }
   }
 
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept {
+    return next_iter_.size_hint();
+  }
+
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
     requires(InnerSizedIter::DoubleEnded && InnerSizedIter::ExactSize)

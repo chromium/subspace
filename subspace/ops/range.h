@@ -103,12 +103,16 @@ template <class Final, class T>
 class RangeFromIter<Final, T, true>
     : public ::sus::iter::IteratorBase<Final, T> {
  public:
-  // sus::iter::Iterator trait.
+  /// sus::iter::Iterator trait.
   Option<T> next() noexcept {
     return Option<T>::with(
         ::sus::mem::replace(static_cast<Final*>(this)->start,
                             ::sus::iter::__private::step_forward(
                                 static_cast<Final*>(this)->start)));
+  }
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept {
+    return ::sus::iter::SizeHint(0u, ::sus::Option<::sus::num::usize>());
   }
 
   // TODO: Provide and test overrides of Iterator min(), max(), count(),

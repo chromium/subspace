@@ -17,9 +17,9 @@
 #include "subspace/iter/iterator_concept.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/macros/lifetimebound.h"
-#include "subspace/mem/relocate.h"
-#include "subspace/mem/addressof.h"
 #include "subspace/macros/nonnull.h"
+#include "subspace/mem/addressof.h"
+#include "subspace/mem/relocate.h"
 
 namespace sus::iter {
 
@@ -36,17 +36,22 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
  public:
   using Item = RefIterator::Item;
 
-  // sus::iter::Iterator trait.
+  /// sus::iter::Iterator trait.
   Option<Item> next() noexcept { return next_iter_->next(); }
 
-  // sus::iter::DoubleEndedIterator trait.
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept {
+    return next_iter_->size_hint();
+  }
+
+  /// sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
     requires(::sus::iter::DoubleEndedIterator<RefIterator, Item>)
   {
     return next_iter_->next_back();
   }
 
-  // sus::iter::ExactSizeIterator trait.
+  /// sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
     requires(::sus::iter::ExactSizeIterator<RefIterator, Item>)
   {

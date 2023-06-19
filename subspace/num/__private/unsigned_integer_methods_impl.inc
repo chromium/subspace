@@ -145,6 +145,21 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_add_signed(
     return ::sus::option::Option<_self>();
 }
 
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
+    const _self& rhs) const& noexcept {
+  const auto out =
+      __private::add_with_overflow(primitive_value, rhs.primitive_value);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(out.value, out.overflow);
+}
+
+template <std::convertible_to<_signed> S>
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_add_signed(const S& rhs) const& noexcept {
+  const auto r =
+      __private::add_with_overflow_signed(primitive_value, rhs.primitive_value);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(r.value, r.overflow);
+}
+
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
     const _self& rhs) const& noexcept {
   if (rhs.primitive_value != 0u) [[likely]]
@@ -152,6 +167,14 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div(
         __private::unchecked_div(primitive_value, rhs.primitive_value));
   else
     return ::sus::option::Option<_self>();
+}
+
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
+    const _self& rhs) const& noexcept {
+  // TODO: Allow opting out of all overflow checks?
+  ::sus::check(rhs.primitive_value != 0u);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(
+      __private::unchecked_div(primitive_value, rhs.primitive_value), false);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
@@ -164,12 +187,25 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_mul(
     return ::sus::option::Option<_self>();
 }
 
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
+    const _self& rhs) const& noexcept {
+  const auto out =
+      __private::mul_with_overflow(primitive_value, rhs.primitive_value);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(out.value, out.overflow);
+}
+
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_neg()
     const& noexcept {
   if (primitive_value == 0u)
     return ::sus::option::Option<_self>::with(_self(_primitive{0u}));
   else
     return ::sus::option::Option<_self>();
+}
+
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_neg() const& noexcept {
+  return ::sus::tuple_type::Tuple<_self, bool>::with(
+      (~(*this)).wrapping_add(_self(_primitive{1u})), primitive_value != 0u);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
@@ -179,6 +215,14 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem(
         __private::unchecked_rem(primitive_value, rhs.primitive_value));
   else
     return ::sus::option::Option<_self>();
+}
+
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
+    const _self& rhs) const& noexcept {
+  // TODO: Allow opting out of all overflow checks?
+  ::sus::check(rhs.primitive_value != 0u);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(
+      __private::unchecked_rem(primitive_value, rhs.primitive_value), false);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
@@ -191,6 +235,14 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_div_euclid(
   }
 }
 
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_div_euclid(const _self& rhs) const& noexcept {
+  // TODO: Allow opting out of all overflow checks?
+  ::sus::check(rhs.primitive_value != 0u);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(
+      __private::unchecked_div(primitive_value, rhs.primitive_value), false);
+}
+
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
     const _self& rhs) const& noexcept {
   if (rhs.primitive_value == 0u) [[unlikely]] {
@@ -199,6 +251,14 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_rem_euclid(
     return ::sus::option::Option<_self>::with(
         __private::unchecked_rem(primitive_value, rhs.primitive_value));
   }
+}
+
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
+_self::overflowing_rem_euclid(const _self& rhs) const& noexcept {
+  // TODO: Allow opting out of all overflow checks?
+  ::sus::check(rhs.primitive_value != 0u);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(
+      __private::unchecked_rem(primitive_value, rhs.primitive_value), false);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_shl(
@@ -211,6 +271,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_shl(
     return ::sus::option::Option<_self>();
 }
 
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shl(
+    const u32& rhs) const& noexcept {
+  const auto out =
+      __private::shl_with_overflow(primitive_value, rhs.primitive_value);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(out.value, out.overflow);
+}
+
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
     const u32& rhs) const& noexcept {
   const auto out =
@@ -219,6 +286,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
     return ::sus::option::Option<_self>::with(out.value);
   else
     return ::sus::option::Option<_self>();
+}
+
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shr(
+    const u32& rhs) const& noexcept {
+  const auto out =
+      __private::shr_with_overflow(primitive_value, rhs.primitive_value);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(out.value, out.overflow);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
@@ -231,6 +305,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
     return ::sus::option::Option<_self>();
 }
 
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
+    const _self& rhs) const& noexcept {
+  const auto out =
+      __private::sub_with_overflow(primitive_value, rhs.primitive_value);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(out.value, out.overflow);
+}
+
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_pow(
     const u32& rhs) const& noexcept {
   const auto out =
@@ -240,6 +321,13 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_pow(
     return ::sus::option::Option<_self>::with(out.value);
   else
     return ::sus::option::Option<_self>();
+}
+
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_pow(
+    const u32& exp) const& noexcept {
+  const auto out =
+      __private::pow_with_overflow(primitive_value, exp.primitive_value);
+  return ::sus::tuple_type::Tuple<_self, bool>::with(out.value, out.overflow);
 }
 
 sus_pure constexpr ::sus::option::Option<u32> _self::checked_log2()

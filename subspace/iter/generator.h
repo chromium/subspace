@@ -151,6 +151,11 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
     return co_handle_.promise().take();
   }
 
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept {
+    return SizeHint(0u, sus::Option<::sus::num::usize>());
+  }
+
   /// Adaptor method for using Generator in ranged for loops.
   ///
   /// This replaces the implementation in IteratorBase with something more

@@ -40,11 +40,13 @@ class [[nodiscard]] [[sus_trivial_abi]] Reverse final
  public:
   using Item = InnerSizedIter::Item;
 
-  // sus::iter::Iterator trait.
+  /// sus::iter::Iterator trait.
   Option<Item> next() noexcept { return next_iter_.next_back(); }
-  // sus::iter::DoubleEndedIterator trait.
+  /// sus::iter::Iterator trait.
+  SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
+  /// sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept { return next_iter_.next(); }
-  // sus::iter::ExactSizeIterator trait.
+  /// sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
     requires(InnerSizedIter::ExactSize)
   {

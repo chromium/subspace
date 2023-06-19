@@ -67,8 +67,6 @@ class IteratorRange;
 /// IteratorBase and is `final` in order to be considered an Iterator. No
 /// code should refer to `IteratorBase` except for defining the base class
 /// of an iterator, and it should be treated as an implementation detail only.
-/// Calling methods on `IteratorBase` directly will bypass the implementation
-/// on the actual Iterator type and lead to incorrect or non-ideal behaviour.
 template <class Iter, class ItemT>
 class IteratorBase {
  protected:
@@ -102,32 +100,6 @@ class IteratorBase {
   Iter&& into_iter() && noexcept { return static_cast<Iter&&>(*this); }
 
   // Provided overridable methods.
-
-  /// Returns the bounds on the remaining length of the iterator.
-  ///
-  /// Specifically, `size_hint()` returns a `SizeHint` with a lower and upper
-  /// bound.
-  ///
-  /// The upper bound is an Option<usize>. A None here means that either there
-  /// is no known upper bound, or the upper bound is larger than usize.
-  ///
-  /// # Implementation notes
-  ///
-  /// It is not enforced that an iterator implementation yields the declared
-  /// number of elements. A buggy iterator may yield less than the lower bound
-  /// or more than the upper bound of elements.
-  ///
-  /// `size_hint()` is primarily intended to be used for optimizations such as
-  /// reserving space for the elements of the iterator, but must not be trusted
-  /// to e.g., omit bounds checks in unsafe code. An incorrect implementation of
-  /// `size_hint()` should not lead to memory safety violations.
-  ///
-  /// That said, the implementation should provide a correct estimation, because
-  /// otherwise it would be a violation of the `Iterator` concept's protocol.
-  ///
-  /// The default implementation returns `lower = 0` and `upper = None` which is
-  /// correct for any iterator.
-  SizeHint size_hint() const noexcept;
 
   /// Tests whether all elements of the iterator match a predicate.
   ///
@@ -307,11 +279,6 @@ class IteratorBase {
 
   // TODO: cloned().
 };
-
-template <class Iter, class Item>
-SizeHint IteratorBase<Iter, Item>::size_hint() const noexcept {
-  return SizeHint(0_usize, ::sus::Option<::sus::num::usize>());
-}
 
 template <class Iter, class Item>
 bool IteratorBase<Iter, Item>::all(::sus::fn::FnMutRef<bool(Item)> f) noexcept {

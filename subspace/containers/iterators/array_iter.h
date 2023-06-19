@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/size_hint.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
@@ -40,6 +41,7 @@ struct [[nodiscard]] ArrayIntoIter final
     return ArrayIntoIter(::sus::move(array));
   }
 
+  /// sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>();
@@ -51,7 +53,14 @@ struct [[nodiscard]] ArrayIntoIter final
     return Option<Item>::with(move(item));
   }
 
-  // sus::iter::DoubleEndedIterator trait.
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept {
+    ::sus::num::usize remaining = back_index_ - front_index_;
+    return ::sus::iter::SizeHint(
+        remaining, ::sus::Option<::sus::num::usize>::with(remaining));
+  }
+
+  /// sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>();

@@ -545,25 +545,17 @@ sus_pure constexpr ::sus::option::Option<_self> checked_add_signed(
 /// Returns a tuple of the addition along with a boolean indicating whether an
 /// arithmetic overflow would occur. If an overflow would have occurred then the
 /// wrapped value is returned.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_add(const _self& rhs) const& noexcept {
-  const auto out =
-      __private::add_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
-}
+sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
+    const _self& rhs) const& noexcept;
 
 /// Calculates self + rhs with an unsigned rhs
 ///
 /// Returns a tuple of the addition along with a boolean indicating whether an
 /// arithmetic overflow would occur. If an overflow would have occurred then the
 /// wrapped value is returned.
-template <std::convertible_to<_signed> S, int&...,
-          class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_add_signed(const S& rhs) const& noexcept {
-  const auto r =
-      __private::add_with_overflow_signed(primitive_value, rhs.primitive_value);
-  return Tuple::with(r.value, r.overflow);
-}
+template <std::convertible_to<_signed> S>
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_add_signed(
+    const S& rhs) const& noexcept;
 
 /// Saturating integer addition. Computes self + rhs, saturating at the numeric
 /// bounds instead of overflowing.
@@ -628,13 +620,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_div(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_div(const _self& rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(rhs.primitive_value != 0u);
-  return Tuple::with(
-      __private::unchecked_div(primitive_value, rhs.primitive_value), false);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
+    const _self& rhs) const& noexcept;
 
 /// Saturating integer division. Computes self / rhs, saturating at the  numeric
 /// bounds instead of overflowing.
@@ -670,12 +657,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_mul(
 /// Returns a tuple of the multiplication along with a boolean indicating
 /// whether an arithmetic overflow would occur. If an overflow would have
 /// occurred then the wrapped value is returned.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_mul(const _self& rhs) const& noexcept {
-  const auto out =
-      __private::mul_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
+    const _self& rhs) const& noexcept;
 
 /// Saturating integer multiplication. Computes `self * rhs`, saturating at the
 /// numeric bounds instead of overflowing.
@@ -711,11 +694,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_neg() const& noexcept;
 /// Returns `~self + 1` using wrapping operations to return the value that
 /// represents the negation of this unsigned value. Note that for positive
 /// unsigned values overflow always occurs, but negating 0 does not overflow.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_neg() const& noexcept {
-  return Tuple::with((~(*this)).wrapping_add(_self(_primitive{1u})),
-                     primitive_value != 0u);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_neg()
+    const& noexcept;
 
 /// Wrapping (modular) negation. Computes `-self`, wrapping around at the
 /// boundary of the type.
@@ -744,13 +724,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_rem(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_rem(const _self& rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(rhs.primitive_value != 0u);
-  return Tuple::with(
-      __private::unchecked_rem(primitive_value, rhs.primitive_value), false);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
+    const _self& rhs) const& noexcept;
 
 /// Wrapping (modular) remainder. Computes self % rhs. Wrapped remainder
 /// calculation on unsigned types is just the regular remainder calculation.
@@ -794,14 +769,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_div_euclid(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_div_euclid(
-    const _self& rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(rhs.primitive_value != 0u);
-  return Tuple::with(
-      __private::unchecked_div(primitive_value, rhs.primitive_value), false);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
+    const _self& rhs) const& noexcept;
 
 /// Wrapping Euclidean division. Computes self.div_euclid(rhs). Wrapped division
 /// on unsigned types is just normal division.
@@ -847,14 +816,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_rem_euclid(
 ///
 /// # Panics
 /// This function will panic if `rhs` is 0.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_rem_euclid(
-    const _self& rhs) const& noexcept {
-  // TODO: Allow opting out of all overflow checks?
-  ::sus::check(rhs.primitive_value != 0u);
-  return Tuple::with(
-      __private::unchecked_rem(primitive_value, rhs.primitive_value), false);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
+    const _self& rhs) const& noexcept;
 
 /// Wrapping Euclidean modulo. Computes self.rem_euclid(rhs). Wrapped modulo
 /// calculation on unsigned types is just the regular remainder calculation.
@@ -883,12 +846,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_shl(
 /// indicating whether the shift value was larger than or equal to the number of
 /// bits. If the shift value is too large, then value is masked (N-1) where N is
 /// the number of bits, and this value is then used to perform the shift.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_shl(const u32& rhs) const& noexcept {
-  const auto out =
-      __private::shl_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
+    const u32& rhs) const& noexcept;
 
 /// Panic-free bitwise shift-left; yields `*this << mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
@@ -915,12 +874,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_shr(
 /// indicating whether the shift value was larger than or equal to the number of
 /// bits. If the shift value is too large, then value is masked (N-1) where N is
 /// the number of bits, and this value is then used to perform the shift.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_shr(const u32& rhs) const& noexcept {
-  const auto out =
-      __private::shr_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
+    const u32& rhs) const& noexcept;
 
 /// Panic-free bitwise shift-right; yields `*this >> mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
@@ -946,12 +901,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_sub(
 /// Returns a tuple of the subtraction along with a boolean indicating whether
 /// an arithmetic overflow would occur. If an overflow would have occurred then
 /// the wrapped value is returned.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_sub(const _self& rhs) const& noexcept {
-  const auto out =
-      __private::sub_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
+    const _self& rhs) const& noexcept;
 
 /// Saturating integer subtraction. Computes self - rhs, saturating at the
 /// numeric bounds instead of overflowing.
@@ -1059,12 +1010,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_pow(
 ///
 /// Returns a tuple of the exponentiation along with a bool indicating whether
 /// an overflow happened.
-template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
-sus_pure constexpr Tuple overflowing_pow(const u32& exp) const& noexcept {
-  const auto out =
-      __private::pow_with_overflow(primitive_value, exp.primitive_value);
-  return Tuple::with(out.value, out.overflow);
-}
+sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_pow(
+    const u32& exp) const& noexcept;
 
 /// Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping around
 /// at the boundary of the type.
