@@ -47,6 +47,12 @@ function(subspace_default_compile_options TARGET)
     else()
         # LLVM is built without RTTI by default, and we need to match it.
         target_compile_options(${TARGET} PUBLIC -fno-rtti)
+
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+          # Any use of _Nonnull causes every pointer to need annotation, which
+          # we have not done.
+          target_compile_options(${TARGET} PUBLIC -Wno-nullability-completeness)
+        endif()
     endif()
 
     set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)

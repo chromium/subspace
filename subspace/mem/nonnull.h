@@ -73,8 +73,8 @@ class [[sus_trivial_abi]] NonNull {
   /// This method must not be called with a null pointer, or Undefined Behaviour
   /// results.
   template <::sus::convert::SameOrSubclassOf<T*> U>
-  static constexpr inline sus_nonnull_fn NonNull
-  with_ptr_unchecked(::sus::marker::UnsafeFnMarker, sus_nonnull_arg U t) {
+  static constexpr inline sus_nonnull_fn NonNull with_ptr_unchecked(
+      ::sus::marker::UnsafeFnMarker, sus_nonnull_arg U sus_nonnull_var t) {
     return NonNull(t);
   }
 
@@ -169,10 +169,10 @@ class [[sus_trivial_abi]] NonNull {
   }
 
  private:
-  explicit constexpr inline NonNull(sus_nonnull_arg T* t) sus_nonnull_fn
-      : ptr_(t) {}
+  explicit constexpr inline NonNull(sus_nonnull_arg T* sus_nonnull_var t)
+      sus_nonnull_fn : ptr_(t) {}
 
-  T* ptr_;
+  T* sus_nonnull_var ptr_;
 
   // Declare that this type can always be trivially relocated for library
   // optimizations.

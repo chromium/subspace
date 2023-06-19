@@ -18,6 +18,7 @@
 #include <utility>  // TODO: Replace std::index_sequence to remove this header.
 
 #include "subspace/macros/no_unique_address.h"
+#include "subspace/macros/nonnull.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
@@ -60,7 +61,7 @@ struct TupleStorage<T&> {
   inline constexpr T& into_inner() && noexcept { return *value; }
 
  private:
-  T* value;
+  T* sus_nonnull_var value;
 };
 
 template <class T, class... Ts>
