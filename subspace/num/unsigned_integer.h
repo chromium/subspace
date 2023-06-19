@@ -33,7 +33,6 @@
 #include "subspace/num/__private/ptr_type.h"
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/try_from_int_error.h"
-#include "subspace/option/option.h"
 #include "subspace/string/__private/format_to_stream.h"
 
 namespace sus::containers {
@@ -50,6 +49,11 @@ class Option;
 namespace sus::result {
 template <class T, class E>
 class Result;
+}
+
+namespace sus::tuple_type {
+template <class T, class... Ts>
+class Tuple;
 }
 
 namespace sus::num {

@@ -51,6 +51,10 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
         return item;
     }
   }
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept {
+    return next_iter_.size_hint();
+  }
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept

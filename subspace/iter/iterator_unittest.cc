@@ -488,18 +488,19 @@ TEST(Iterator, Chain) {
     auto it = ArrayIterator<i32, 3>::with_array(nums1);
     auto it2 = ArrayIterator<i32, 2>::with_array(nums2);
 
-    auto c = std::move(it).chain(std::move(it2));
+    // Make an iterator [1, 2, 3, 5, 4].
+    auto c = std::move(it).chain(std::move(it2).rev());
     EXPECT_EQ(c.size_hint().lower, 5u);
     EXPECT_EQ(*c.size_hint().upper, 5u);
 
     EXPECT_EQ(c.next().unwrap(), 1);
-    EXPECT_EQ(c.next_back().unwrap(), 5);
+    EXPECT_EQ(c.next_back().unwrap(), 4);
     EXPECT_EQ(c.next().unwrap(), 2);
 
     EXPECT_EQ(c.size_hint().lower, 2u);
     EXPECT_EQ(*c.size_hint().upper, 2u);
 
-    EXPECT_EQ(c.next_back().unwrap(), 4);
+    EXPECT_EQ(c.next_back().unwrap(), 5);
     EXPECT_EQ(c.next().unwrap(), 3);
 
     EXPECT_EQ(c.size_hint().lower, 0u);

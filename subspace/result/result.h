@@ -167,6 +167,9 @@ class [[nodiscard]] Result final {
             ::sus::move(result).unwrap_err_unchecked(::sus::marker::unsafe_fn));
         return Option<U>();
       }
+      ::sus::iter::SizeHint size_hint() const noexcept {
+        return ::sus::iter::SizeHint(0u, iter.size_hint().upper);
+      }
 
       Iter& iter;
       Option<E>& err;

@@ -19,6 +19,7 @@
 #include <type_traits>
 
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/size_hint.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
@@ -65,7 +66,7 @@ struct [[nodiscard]] VecIntoIter final
     return Option<Item>::with(move(item));
   }
 
-  /// sus::iter::Iterator method.
+  /// sus::iter::Iterator trait.
   ::sus::iter::SizeHint size_hint() const noexcept {
     const usize remaining = back_index_ - front_index_;
     return ::sus::iter::SizeHint(

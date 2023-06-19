@@ -32,9 +32,8 @@ template <class T>
 struct IntoIteratorArchetype {
   template <class Item>
   struct Iter final : public IteratorBase<Iter<Item>, Item> {
-    ::sus::option::Option<Item> next() noexcept {
-      return ::sus::option::Option<Item>();
-    }
+    ::sus::option::Option<Item> next() noexcept;
+    SizeHint size_hint() const noexcept;
   };
   Iter<T> into_iter() && { return Iter<T>(); }
   static_assert(::sus::iter::IntoIterator<Iter<T>, T>);

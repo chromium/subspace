@@ -21,7 +21,7 @@ namespace sus::iter {
 
 struct SizeHint {
   ::sus::num::usize lower;
-  ::sus::Option<::sus::num::usize> upper;
+  ::sus::option::Option<::sus::num::usize> upper;
 };
 
 }  // namespace sus::iter

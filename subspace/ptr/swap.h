@@ -21,6 +21,7 @@
 #include "subspace/mem/size_of.h"
 #include "subspace/mem/swap.h"
 #include "subspace/num/unsigned_integer.h"
+#include "subspace/option/option.h"
 
 namespace sus::ptr {
 

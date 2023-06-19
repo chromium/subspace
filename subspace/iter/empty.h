@@ -33,6 +33,10 @@ class [[nodiscard]] [[sus_trivial_abi]] Empty final
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return sus::Option<Item>(); }
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept {
+    return SizeHint(0u, ::sus::Option<::sus::num::usize>::with(0u));
+  }
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept { return sus::Option<Item>(); }
   // sus::iter::ExactSizeIterator trait.

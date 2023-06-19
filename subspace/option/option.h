@@ -197,35 +197,7 @@ class Option final {
     requires(__private::IsOptionType<O>::value &&
              ::sus::iter::IntoIterator<IntoIter, Option<U>>)
   static constexpr Option from_iter(IntoIter&& option_iter) noexcept
-    requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>)
-  {
-    // An iterator over `option_iter`'s iterator that returns each element in it
-    // until it reaches a `None` or the end.
-    struct UntilNoneIter final
-        : public ::sus::iter::IteratorBase<UntilNoneIter, U> {
-      UntilNoneIter(Iter&& iter, bool& found_none)
-          : iter(iter), found_none(found_none) {}
-
-      Option<U> next() noexcept {
-        Option<Option<U>> item = iter.next();
-        if (found_none || item.is_none()) return Option<U>();
-        found_none = item->is_none();
-        return ::sus::move(item).flatten();
-      }
-
-      Iter& iter;
-      bool& found_none;
-    };
-
-    bool found_none = false;
-    auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(),
-                              ::sus::mref(found_none));
-    auto collected = T::from_iter(::sus::move(iter));
-    if (found_none)
-      return Option();
-    else
-      return Option(::sus::move(collected));
-  }
+    requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>);
 
   /// Destructor for the Option.
   ///
@@ -1393,3 +1365,54 @@ using ::sus::option::Option;
 using ::sus::option::some;
 using ::sus::option::Some;
 }  // namespace sus
+
+//////
+
+// This contains a type that needs to use Option, and is used by an Option
+// method implementation below. So we have to include it after defining Option
+// but before implementing the method.
+#include "subspace/iter/size_hint.h"
+
+namespace sus::option {
+
+template <class T>
+template <class IntoIter, int&..., class Iter, class IterItem,
+          class IterInnerItem>
+  requires(__private::IsOptionType<IterItem>::value &&
+           ::sus::iter::IntoIterator<IntoIter, Option<IterInnerItem>>)
+constexpr Option<T> Option<T>::from_iter(IntoIter&& option_iter) noexcept
+  requires(!std::is_reference_v<T> &&
+           ::sus::iter::FromIterator<T, IterInnerItem>)
+{
+  // An iterator over `option_iter`'s iterator that returns each element in it
+  // until it reaches a `None` or the end.
+  struct UntilNoneIter final
+      : public ::sus::iter::IteratorBase<UntilNoneIter, IterInnerItem> {
+    UntilNoneIter(Iter&& iter, bool& found_none)
+        : iter(iter), found_none(found_none) {}
+
+    Option<IterInnerItem> next() noexcept {
+      Option<Option<IterInnerItem>> item = iter.next();
+      if (found_none || item.is_none()) return Option<IterInnerItem>();
+      found_none = item->is_none();
+      return ::sus::move(item).flatten();
+    }
+    ::sus::iter::SizeHint size_hint() const noexcept {
+      return ::sus::iter::SizeHint(0u, iter.size_hint().upper);
+    }
+
+    Iter& iter;
+    bool& found_none;
+  };
+
+  bool found_none = false;
+  auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(),
+                            ::sus::mref(found_none));
+  auto collected = T::from_iter(::sus::move(iter));
+  if (found_none)
+    return Option();
+  else
+    return Option(::sus::move(collected));
+}
+
+}  // namespace sus::option

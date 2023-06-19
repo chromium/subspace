@@ -25,6 +25,11 @@
 
 namespace sus::containers {
 
+template <class T>
+class Slice;
+template <class T>
+class SliceMut;
+
 /// An iterator over overlapping subslices of length `size`.
 ///
 /// This struct is created by the `windows()` method on slices.
