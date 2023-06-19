@@ -172,7 +172,7 @@ class [[sus_trivial_abi]] NonNull {
   explicit constexpr inline NonNull(sus_nonnull_arg T* sus_nonnull_var t)
       sus_nonnull_fn : ptr_(t) {}
 
-  T* sus_nonnull_var ptr_;
+  T* ptr_;
 
   // Declare that this type can always be trivially relocated for library
   // optimizations.
@@ -181,7 +181,9 @@ class [[sus_trivial_abi]] NonNull {
   // optimizations.
   sus_class_never_value_field(::sus::marker::unsafe_fn, NonNull, ptr_, nullptr,
                               nullptr);
-  constexpr NonNull() = default;  // For the NeverValueField.
+  // For the NeverValueField.
+  constexpr NonNull(::sus::mem::NeverValueConstructor) noexcept : ptr_(nullptr) {}
+  constexpr void destroy_and_set_never_value() noexcept { ptr_ = nullptr; }
 };
 
 /// sus::ops::Eq<NonNull<T>> trait.

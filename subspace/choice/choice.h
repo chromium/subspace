@@ -616,7 +616,20 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
 
   sus_class_never_value_field(::sus::marker::unsafe_fn, Choice, index_,
                               kNeverValue, kNeverValue);
-  constexpr Choice() = default;  // For the NeverValueField.
+  // For the NeverValueField.
+  constexpr Choice(sus::mem::NeverValueConstructor) noexcept
+      : index_(kNeverValue) {}
+  constexpr void destroy_and_set_never_value() noexcept
+    requires((std::is_trivially_destructible_v<TagsType> && ... &&
+              std::is_trivially_destructible_v<Ts>))
+  {}
+  constexpr void destroy_and_set_never_value() noexcept
+    requires(!(std::is_trivially_destructible_v<TagsType> && ... &&
+               std::is_trivially_destructible_v<Ts>))
+  {
+    if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
+    index_ != kNeverValue;
+  }
 };
 
 /// Used to construct a Choice with the tag and parameters as its values.
