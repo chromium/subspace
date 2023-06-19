@@ -46,10 +46,12 @@ struct relocatable_tag final {
 
 }  // namespace __private
 
-/// Tests if the type T can be relocated with memcpy(). Checking for trivially
-/// movable and destructible is not sufficient - this also honors the
+/// Tests if a variable of type T can be relocated with memcpy(). Checking for
+/// trivially movable and destructible is not sufficient - this also honors the
 /// [[trivial_abi]] clang attribute, as types annotated with the attribute are
 /// now considered "trivially relocatable" in https://reviews.llvm.org/D114732.
+/// References are treated like pointers, and are always trivially relocatable,
+/// as reference data members are relocatable in the same way pointers are.
 ///
 /// IMPORTANT: If a class satisfies this trait, only `sus::data_size_of<T>()`
 /// bytes should be memcpy'd or Undefine Behaviour can result, due to the
