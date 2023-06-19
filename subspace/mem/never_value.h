@@ -22,6 +22,7 @@
 #include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/forward.h"
+#include "subspace/mem/relocate.h"
 #include "subspace/ops/eq.h"
 
 namespace sus::mem {
@@ -93,6 +94,9 @@ struct NeverValueAccess {
 
  private:
   T t_;
+
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(t_));
 };
 
 }  // namespace __private

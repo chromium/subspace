@@ -34,7 +34,7 @@ template <class R, class... CallArgs>
 template <class ConstructionType,
           ::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
 FnOnceBox<R(CallArgs...)>::FnOnceBox(ConstructionType construction,
-                               F&& lambda) noexcept
+                                     F&& lambda) noexcept
     : type_(__private::Storage) {
   using FnBoxStorage = __private::FnBoxStorage<F>;
   // TODO: Allow overriding the global allocator? Use the allocator in place of
@@ -47,7 +47,8 @@ FnOnceBox<R(CallArgs...)>::FnOnceBox(ConstructionType construction,
 template <class R, class... CallArgs>
 template <class FnBoxStorage>
 void FnOnceBox<R(CallArgs...)>::make_vtable(
-    FnBoxStorage& storage, __private::StorageConstructionFnOnceBoxType) noexcept {
+    FnBoxStorage& storage,
+    __private::StorageConstructionFnOnceBoxType) noexcept {
   static __private::FnBoxStorageVtable<R, CallArgs...> vtable = {
       .call_once = &FnBoxStorage::template call_once<R, CallArgs...>,
       .call_mut = nullptr,
@@ -59,7 +60,8 @@ void FnOnceBox<R(CallArgs...)>::make_vtable(
 template <class R, class... CallArgs>
 template <class FnBoxStorage>
 void FnOnceBox<R(CallArgs...)>::make_vtable(
-    FnBoxStorage& storage, __private::StorageConstructionFnMutBoxType) noexcept {
+    FnBoxStorage& storage,
+    __private::StorageConstructionFnMutBoxType) noexcept {
   static __private::FnBoxStorageVtable<R, CallArgs...> vtable = {
       .call_once = &FnBoxStorage::template call_once<R, CallArgs...>,
       .call_mut = &FnBoxStorage::template call_mut<R, CallArgs...>,
@@ -83,15 +85,13 @@ void FnOnceBox<R(CallArgs...)>::make_vtable(
 template <class R, class... CallArgs>
 FnOnceBox<R(CallArgs...)>::~FnOnceBox() noexcept {
   switch (type_) {
-    // Note that the FnBoxPointer state is set when destroying from the never value
-    // state.
     case __private::FnBoxPointer: break;
     case __private::Storage: {
-      if (auto* s = ::sus::mem::replace(mref(storage_), nullptr); s)
-        delete s;
+      if (auto* s = ::sus::mem::replace(mref(storage_), nullptr); s) delete s;
       break;
     }
   }
+  // The NeverValue in `type_` means we get here and do nothing.
 }
 
 template <class R, class... CallArgs>
@@ -109,12 +109,12 @@ FnOnceBox<R(CallArgs...)>::FnOnceBox(FnOnceBox&& o) noexcept : type_(o.type_) {
 }
 
 template <class R, class... CallArgs>
-FnOnceBox<R(CallArgs...)>& FnOnceBox<R(CallArgs...)>::operator=(FnOnceBox&& o) noexcept {
+FnOnceBox<R(CallArgs...)>& FnOnceBox<R(CallArgs...)>::operator=(
+    FnOnceBox&& o) noexcept {
   switch (type_) {
     case __private::FnBoxPointer: break;
     case __private::Storage:
-      if (auto* s = ::sus::mem::replace(mref(storage_), nullptr); s)
-        delete s;
+      if (auto* s = ::sus::mem::replace(mref(storage_), nullptr); s) delete s;
   }
   switch (type_ = o.type_) {
     case __private::FnBoxPointer:
@@ -155,8 +155,9 @@ R FnOnceBox<R(CallArgs...)>::operator()(CallArgs... args) && noexcept {
         __private::FnBoxStorageBase* storage;
       } deleter(storage);
 
-      return vtable.call_once(static_cast<__private::FnBoxStorageBase&&>(*storage),
-                              forward<CallArgs>(args)...);
+      return vtable.call_once(
+          static_cast<__private::FnBoxStorageBase&&>(*storage),
+          forward<CallArgs>(args)...);
     }
   }
   ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);

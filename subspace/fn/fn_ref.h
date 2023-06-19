@@ -95,8 +95,7 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
   ~FnRef() noexcept = default;
 
   constexpr FnRef(FnRef&& o sus_lifetimebound) noexcept
-      : storage_(o.storage_),
-        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
+      : storage_(o.storage_), invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
   constexpr FnRef& operator=(FnRef&& o sus_lifetimebound) noexcept {
@@ -171,9 +170,12 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
                                   decltype(storage_.object), decltype(invoke_));
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnRef, invoke_,
                               &invoke_never_value, &invoke_never_value);
-
- protected:
-  constexpr FnRef() = default;  // For the NeverValueField.
+  // For the NeverValueField.
+  constexpr FnRef(::sus::mem::NeverValueConstructor) noexcept
+      : invoke_(&invoke_never_value) {}
+  constexpr void destroy_and_set_never_value() noexcept {
+    invoke_ = invoke_never_value;
+  }
 };
 
 /// A closure that erases the type of the internal callable object (lambda) that
@@ -244,16 +246,14 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.fnref]
   constexpr FnMutRef(FnRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
-      : storage_(o.storage_),
-        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
+      : storage_(o.storage_), invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
 
   ~FnMutRef() noexcept = default;
 
   constexpr FnMutRef(FnMutRef&& o sus_lifetimebound) noexcept
-      : storage_(o.storage_),
-        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
+      : storage_(o.storage_), invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
   constexpr FnMutRef& operator=(FnMutRef&& o sus_lifetimebound) noexcept {
@@ -326,9 +326,12 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
                                   decltype(storage_.object), decltype(invoke_));
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnMutRef, invoke_,
                               &invoke_never_value, &invoke_never_value);
-
- protected:
-  constexpr FnMutRef() = default;  // For the NeverValueField.
+  // For the NeverValueField.
+  constexpr FnMutRef(::sus::mem::NeverValueConstructor) noexcept
+      : invoke_(&invoke_never_value) {}
+  constexpr void destroy_and_set_never_value() noexcept {
+    invoke_ = invoke_never_value;
+  }
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
@@ -398,8 +401,7 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.fnmutref]
   constexpr FnOnceRef(FnMutRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
-      : storage_(o.storage_),
-        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
+      : storage_(o.storage_), invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
 
@@ -411,16 +413,14 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   ///
   /// #[doc.overloads=ctor.fnref]
   constexpr FnOnceRef(FnRef<R(CallArgs...)>&& o sus_lifetimebound) noexcept
-      : storage_(o.storage_),
-        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
+      : storage_(o.storage_), invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
 
   ~FnOnceRef() noexcept = default;
 
   constexpr FnOnceRef(FnOnceRef&& o sus_lifetimebound) noexcept
-      : storage_(o.storage_),
-        invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
+      : storage_(o.storage_), invoke_(::sus::mem::replace(o.invoke_, nullptr)) {
     ::sus::check(invoke_);  // Catch use-after-move.
   }
   constexpr FnOnceRef& operator=(FnOnceRef&& o sus_lifetimebound) noexcept {
@@ -518,9 +518,12 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
                                   decltype(storage_.object), decltype(invoke_));
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnOnceRef, invoke_,
                               &invoke_never_value, &invoke_never_value);
-
- protected:
-  constexpr FnOnceRef() = default;  // For the NeverValueField.
+  // For the NeverValueField.
+  constexpr FnOnceRef(::sus::mem::NeverValueConstructor) noexcept
+      : invoke_(&invoke_never_value) {}
+  constexpr void destroy_and_set_never_value() noexcept {
+    invoke_ = invoke_never_value;
+  }
 };
 
 }  // namespace sus::fn

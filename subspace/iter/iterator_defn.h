@@ -20,6 +20,7 @@
 #include "subspace/iter/__private/iterator_loop.h"
 #include "subspace/iter/boxed_iterator.h"
 #include "subspace/iter/from_iterator.h"
+#include "subspace/iter/into_iterator.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
@@ -45,6 +46,8 @@ using ::sus::option::Option;
 // TODO: Move forward decls somewhere?
 template <class RefIterator>
 class ByRef;
+template <class InnerSizedIter, class OtherSizedIter>
+class Chain;
 template <class InnerSizedIter>
 class Enumerate;
 template <class InnerSizedIter>
@@ -58,11 +61,14 @@ class Reverse;
 template <class Iter>
 class IteratorRange;
 
-struct SizeHint {
-  ::sus::num::usize lower;
-  ::sus::Option<::sus::num::usize> upper;
-};
-
+/// The base class for all Iterator types.
+///
+/// The `sus::iter::Iterator` concept requires that a type subclasses from
+/// IteratorBase and is `final` in order to be considered an Iterator. No
+/// code should refer to `IteratorBase` except for defining the base class
+/// of an iterator, and it should be treated as an implementation detail only.
+/// Calling methods on `IteratorBase` directly will bypass the implementation
+/// on the actual Iterator type and lead to incorrect or non-ideal behaviour.
 template <class Iter, class ItemT>
 class IteratorBase {
  protected:
@@ -121,7 +127,7 @@ class IteratorBase {
   ///
   /// The default implementation returns `lower = 0` and `upper = None` which is
   /// correct for any iterator.
-  virtual SizeHint size_hint() const noexcept;
+  SizeHint size_hint() const noexcept;
 
   /// Tests whether all elements of the iterator match a predicate.
   ///
@@ -168,6 +174,21 @@ class IteratorBase {
   /// useful, that is when the Iterator type is not trivially relocatable.
   auto box() && noexcept
     requires(!::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Takes two iterators and creates a new iterator over both in sequence.
+  ///
+  /// `chain()` will return a new iterator which will first iterate over values
+  /// from the first iterator and then over values from the second iterator.
+  ///
+  /// In other words, it links two iterators together, in a chain. 🔗
+  ///
+  /// `sus::iter::Once` is commonly used to adapt a single value into a chain of
+  /// other kinds of iteration.
+  template <IntoIterator<Item> Other>
+  auto chain(Other&& other) && noexcept
+    requires(
+        ::sus::mem::relocate_by_memcpy<Iter> &&
+        ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other, Item>>);
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -326,6 +347,19 @@ auto IteratorBase<Iter, Item>::box() && noexcept
       BoxedIterator<Item, ::sus::mem::size_of<Iter>(), alignof(Iter),
                     ::sus::iter::DoubleEndedIterator<Iter, Item>>;
   return BoxedIterator::with(static_cast<Iter&&>(*this));
+}
+
+template <class Iter, class Item>
+template <IntoIterator<Item> Other>
+auto IteratorBase<Iter, Item>::chain(Other&& other) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter> &&
+           ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other, Item>>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using OtherSized = SizedIteratorType<IntoIteratorOutputType<Other, Item>>::type;
+  using Chain = Chain<Sized, OtherSized>;
+  return Chain::with(make_sized_iterator(static_cast<Iter&&>(*this)),
+                     make_sized_iterator(::sus::move(other).into_iter()));
 }
 
 template <class Iter, class Item>

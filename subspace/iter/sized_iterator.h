@@ -17,6 +17,8 @@
 #include <new>  // std::lanuder
 
 #include "subspace/iter/iterator_concept.h"
+#include "subspace/iter/size_hint.h"
+#include "subspace/mem/never_value.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/option/option.h"
@@ -35,29 +37,35 @@ struct [[sus_trivial_abi]] SizedIterator final {
   constexpr SizedIterator(void (*destroy)(char& sized),
                           Option<Item> (*next)(char& sized),
                           Option<Item> (*next_back)(char& sized),
+                          SizeHint (*size_hint)(const char& sized),
                           usize (*exact_size_hint)(const char& sized))
       : destroy_(destroy),
         next_(next),
         next_back_(next_back),
+        size_hint_(size_hint),
         exact_size_hint_(exact_size_hint) {}
 
   SizedIterator(SizedIterator&& o) noexcept
       : destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
-        next_(::sus::mem::replace(mref(o.next_), nullptr)),
-        next_back_(::sus::mem::replace(mref(o.next_back_), nullptr)),
-        exact_size_hint_(
-            ::sus::mem::replace(mref(o.exact_size_hint_), nullptr)) {
+        // next_ is left non-null to allow NeverValueField.
+        next_(o.next_),
+        next_back_(o.next_back_),
+        size_hint_(o.size_hint_),
+        exact_size_hint_(o.exact_size_hint_) {
     ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, o.sized_, sized_,
                                     SubclassSize);
   }
   SizedIterator& operator=(SizedIterator&& o) noexcept {
     if (destroy_) destroy_(*sized_);
     destroy_ = ::sus::mem::replace(mref(o.destroy_), nullptr);
-    next_ = ::sus::mem::replace(mref(o.next_), nullptr);
-    next_back_ = ::sus::mem::replace(mref(o.next_back_), nullptr);
-    exact_size_hint_ = ::sus::mem::replace(mref(o.exact_size_hint_), nullptr);
+    // next_ is left non-null to allow NeverValueField.
+    next_ = o.next_;
+    next_back_ = o.next_back_;
+    size_hint_ = o.size_hint_;
+    exact_size_hint_ = o.exact_size_hint_;
     ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, o.sized_, sized_,
                                     SubclassSize);
+    return *this;
   }
 
   ~SizedIterator() noexcept {
@@ -69,6 +77,9 @@ struct [[sus_trivial_abi]] SizedIterator final {
     requires(DoubleEnded)
   {
     return next_back_(*sized_);
+  }
+  SizeHint size_hint() const noexcept {
+    return size_hint_(*sized_);
   }
   usize exact_size_hint() const noexcept
     requires(ExactSize)
@@ -85,12 +96,21 @@ struct [[sus_trivial_abi]] SizedIterator final {
   // TODO: We could remove this field with a nested struct + template
   // specialization when DoubleEnded is false.
   Option<Item> (*next_back_)(char& sized);
+  SizeHint (*size_hint_)(const char& sized);
   // TODO: We could remove this field with a nested struct + template
   // specialization when ExactSize is false.
   usize (*exact_size_hint_)(const char& sized);
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(sized_),
-                                  decltype(destroy_), decltype(next_back_));
+                                  decltype(destroy_), decltype(next_),
+                                  decltype(next_back_), decltype(size_hint_),
+                                  decltype(exact_size_hint_));
+
+  // Declare that the `destroy_` field is never set to `nullptr` for library
+  // optimizations.
+  sus_class_never_value_field(::sus::marker::unsafe_fn, SizedIterator, next_,
+                              nullptr, nullptr);
+  constexpr SizedIterator() = default;  // For the NeverValueField.
 };
 
 template <class Iter>
@@ -131,6 +151,9 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
   } else {
     next_back = nullptr;
   }
+  SizeHint (*size_hint)(const char& sized) = [](const char& sized) {
+    return std::launder(reinterpret_cast<const Iter*>(&sized))->size_hint();
+  };
   usize (*exact_size_hint)(const char& sized);
   if constexpr (SizedIteratorType<Iter>::type::ExactSize) {
     exact_size_hint = [](const char& sized) {
@@ -142,7 +165,7 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
   }
 
   auto it = typename SizedIteratorType<Iter>::type(destroy, next, next_back,
-                                                   exact_size_hint);
+                                                   size_hint, exact_size_hint);
   new (it.as_mut_ptr()) Iter(::sus::move(iter));
   return it;
 }

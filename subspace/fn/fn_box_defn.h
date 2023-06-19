@@ -45,7 +45,8 @@ enum StorageConstructionFnMutBoxType { StorageConstructionFnMutBox };
 /// Helper to determine which functions need to be instantiated for the closure,
 /// to be called from FnOnceBox, FnMutBox, and/or FnBox.
 ///
-/// This type indicates the closure can be called from FnBox, FnMutBox or FnOnceBox.
+/// This type indicates the closure can be called from FnBox, FnMutBox or
+/// FnOnceBox.
 enum StorageConstructionFnBoxType { StorageConstructionFnBox };
 
 /// Used to indicate if the closure is holding a function pointer or
@@ -85,8 +86,8 @@ class FnBox;
 ///
 /// FnBox can be used as a FnMutBox, which can be used as a FnOnceBox.
 ///
-/// Lambdas without captures can be converted into a FnOnceBox, FnMutBox, or FnBox
-/// directly. If the lambda has captured, it must be given to one of:
+/// Lambdas without captures can be converted into a FnOnceBox, FnMutBox, or
+/// FnBox directly. If the lambda has captured, it must be given to one of:
 ///
 /// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
 /// captures variables from local state. Variables to be captured in the lambda
@@ -149,12 +150,12 @@ class FnBox;
 ///
 /// # Why can a "const" FnBox convert to a mutable FnMutBox or FnOnceBox?
 ///
-/// A FnMutBox or FnOnceBox is _allowed_ to mutate its storage, but a "const" FnBox
-/// closure would just choose not to do so.
+/// A FnMutBox or FnOnceBox is _allowed_ to mutate its storage, but a "const"
+/// FnBox closure would just choose not to do so.
 ///
-/// However, a `const FnBox` requires that the storage is not mutated, so it is not
-/// useful if converted to a `const FnMutBox` or `const FnOnceBox` which are only
-/// callable as mutable objects.
+/// However, a `const FnBox` requires that the storage is not mutated, so it is
+/// not useful if converted to a `const FnMutBox` or `const FnOnceBox` which are
+/// only callable as mutable objects.
 ///
 /// # Null pointers
 ///
@@ -175,7 +176,7 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   FnOnceBox(__private::SusBind<F>&& holder) noexcept
       : FnOnceBox(__private::StorageConstructionFnOnceBox,
-               ::sus::move(holder.lambda)) {}
+                  ::sus::move(holder.lambda)) {}
 
   ~FnOnceBox() noexcept;
 
@@ -224,12 +225,12 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
   // Functions to construct and return a pointer to a static vtable object for
   // the `__private::FnBoxStorage` being stored in `storage_`.
   //
-  // A FnOnceBox needs to store only a single pointer, for call_once(). But a FnBox
-  // needs to store three, for call(), call_mut() and call_once() since it can
-  // be converted to a FnMutBox or FnOnceBox. For that reason we have 3 overloads
-  // where each one instantiates only the functions it requires - to avoid
-  // trying to compile functions that aren't accessible and thus don't need to
-  // be able to compile.
+  // A FnOnceBox needs to store only a single pointer, for call_once(). But a
+  // FnBox needs to store three, for call(), call_mut() and call_once() since it
+  // can be converted to a FnMutBox or FnOnceBox. For that reason we have 3
+  // overloads where each one instantiates only the functions it requires - to
+  // avoid trying to compile functions that aren't accessible and thus don't
+  // need to be able to compile.
   template <class FnBoxStorage>
   static void make_vtable(FnBoxStorage&,
                           __private::StorageConstructionFnOnceBoxType) noexcept;
@@ -249,7 +250,9 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
                               __private::FnBoxType::FnBoxPointer);
 
  protected:
-  constexpr FnOnceBox() = default;  // For the NeverValueField.
+  // For the NeverValueField.
+  FnOnceBox(::sus::mem::NeverValueConstructor) noexcept
+      : type_(static_cast<__private::FnBoxType>(0)) {}
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
@@ -257,8 +260,8 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
 ///
 /// FnBox can be used as a FnMutBox, which can be used as a FnOnceBox.
 ///
-/// Lambdas without captures can be converted into a FnOnceBox, FnMutBox, or FnBox
-/// directly. If the lambda has captured, it must be given to one of:
+/// Lambdas without captures can be converted into a FnOnceBox, FnMutBox, or
+/// FnBox directly. If the lambda has captured, it must be given to one of:
 ///
 /// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
 /// captures variables from local state. Variables to be captured in the lambda
@@ -301,12 +304,12 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
 ///
 /// # Why can a "const" FnBox convert to a mutable FnMutBox or FnOnceBox?
 ///
-/// A FnMutBox or FnOnceBox is _allowed_ to mutate its storage, but a "const" FnBox
-/// closure would just choose not to do so.
+/// A FnMutBox or FnOnceBox is _allowed_ to mutate its storage, but a "const"
+/// FnBox closure would just choose not to do so.
 ///
-/// However, a `const FnBox` requires that the storage is not mutated, so it is not
-/// useful if converted to a `const FnMutBox` or `const FnOnceBox` which are only
-/// callable as mutable objects.
+/// However, a `const FnBox` requires that the storage is not mutated, so it is
+/// not useful if converted to a `const FnMutBox` or `const FnOnceBox` which are
+/// only callable as mutable objects.
 ///
 /// # Null pointers
 ///
@@ -328,7 +331,7 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
   template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
   FnMutBox(__private::SusBind<F>&& holder) noexcept
       : FnOnceBox<R(CallArgs...)>(__private::StorageConstructionFnMutBox,
-                               ::sus::move(holder.lambda)) {}
+                                  ::sus::move(holder.lambda)) {}
 
   ~FnMutBox() noexcept = default;
 
@@ -381,7 +384,8 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
                               __private::FnBoxType::FnBoxPointer);
 
  protected:
-  constexpr FnMutBox() = default;  // For the NeverValueField.
+  FnMutBox(::sus::mem::NeverValueConstructor c) noexcept
+      : FnOnceBox<R(CallArgs...)>(c) {}
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
@@ -389,8 +393,8 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
 ///
 /// FnBox can be used as a FnMutBox, which can be used as a FnOnceBox.
 ///
-/// Lambdas without captures can be converted into a FnOnceBox, FnMutBox, or FnBox
-/// directly. If the lambda has captured, it must be given to one of:
+/// Lambdas without captures can be converted into a FnOnceBox, FnMutBox, or
+/// FnBox directly. If the lambda has captured, it must be given to one of:
 ///
 /// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
 /// captures variables from local state. Variables to be captured in the lambda
@@ -433,12 +437,12 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
 ///
 /// # Why can a "const" FnBox convert to a mutable FnMutBox or FnOnceBox?
 ///
-/// A FnMutBox or FnOnceBox is _allowed_ to mutate its storage, but a "const" FnBox
-/// closure would just choose not to do so.
+/// A FnMutBox or FnOnceBox is _allowed_ to mutate its storage, but a "const"
+/// FnBox closure would just choose not to do so.
 ///
-/// However, a `const FnBox` requires that the storage is not mutated, so it is not
-/// useful if converted to a `const FnMutBox` or `const FnOnceBox` which are only
-/// callable as mutable objects.
+/// However, a `const FnBox` requires that the storage is not mutated, so it is
+/// not useful if converted to a `const FnMutBox` or `const FnOnceBox` which are
+/// only callable as mutable objects.
 ///
 /// # Null pointers
 ///
@@ -460,7 +464,7 @@ class [[sus_trivial_abi]] FnBox<R(CallArgs...)> final
   template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
   FnBox(__private::SusBind<F>&& holder) noexcept
       : FnMutBox<R(CallArgs...)>(__private::StorageConstructionFnBox,
-                              ::sus::forward<F>(holder.lambda)) {}
+                                 ::sus::forward<F>(holder.lambda)) {}
 
   ~FnBox() noexcept = default;
 
@@ -505,7 +509,8 @@ class [[sus_trivial_abi]] FnBox<R(CallArgs...)> final
                               FnOnceBox<R(CallArgs...)>::type_,
                               static_cast<__private::FnBoxType>(0),
                               __private::FnBoxType::FnBoxPointer);
-  constexpr FnBox() = default;  // For the NeverValueField.
+  FnBox(::sus::mem::NeverValueConstructor c) noexcept
+      : FnMutBox<R(CallArgs...)>(c) {}
 };
 
 }  // namespace sus::fn
