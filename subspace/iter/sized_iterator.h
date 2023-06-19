@@ -78,9 +78,7 @@ struct [[sus_trivial_abi]] SizedIterator final {
   {
     return next_back_(*sized_);
   }
-  SizeHint size_hint() const noexcept {
-    return size_hint_(*sized_);
-  }
+  SizeHint size_hint() const noexcept { return size_hint_(*sized_); }
   usize exact_size_hint() const noexcept
     requires(ExactSize)
   {
@@ -110,7 +108,9 @@ struct [[sus_trivial_abi]] SizedIterator final {
   // optimizations.
   sus_class_never_value_field(::sus::marker::unsafe_fn, SizedIterator, next_,
                               nullptr, nullptr);
-  constexpr SizedIterator() = default;  // For the NeverValueField.
+  // For the NeverValueField.
+  constexpr SizedIterator(::sus::mem::NeverValueConstructor) noexcept
+      : destroy_(nullptr), next_(nullptr) {}
 };
 
 template <class Iter>

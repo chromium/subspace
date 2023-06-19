@@ -17,6 +17,7 @@
 #include <stddef.h>
 
 #include <concepts>
+#include <type_traits>
 
 #include "subspace/macros/inline.h"
 #include "subspace/macros/pure.h"
@@ -27,12 +28,14 @@
 
 namespace sus::mem {
 
+struct NeverValueConstructor {};
+
 namespace __private {
 
 /// A helper class that constructs and holds a NeverValueField type T.
 ///
-/// Default-constructing NeverValueAccess will trivially default construct T.
-/// The caller should then set the never-value with `set_never_value()`.
+/// Default-constructing NeverValueAccess will construct T with the never value
+/// set.
 ///
 /// The other constructors allow constructing the T from a parameter (typically
 /// a const T& or T&&).
@@ -52,13 +55,38 @@ namespace __private {
 /// We use assignment to initialize a union member with a NeverValueAccess to
 /// implement changing to a never-value state without placement new, which is
 /// not possible in a constant expression.
+///
+/// # Safety
+///
+/// To implement NeverValueAccess, a type must:
+/// * Be constructible from NeverValueConstructor, which sets the NeverValue
+///   and leaves the type in a state that can be destructed later as a no-op.
+/// * To be usable in constexpr contexts, provide destroy_and_set_never_value()
+///   which is equivalent to `t.~T(); new (&t) T(NeverValueConstructor());` such
+///   that the type is destroyed and left in the never-value state. If not
+///   provided the `new` operation will be done instead, which is not useable in
+///   a constexpr context.
+/// * Both of the above must be `private` methods to prevent incorrect access.
+template <class T>
+struct NeverValueAccess;
+
+template <class T>
+struct NeverValueAccess<T&> {
+  static constexpr bool has_field = false;
+};
+
 template <class T>
 struct NeverValueAccess {
   /// Whether the type `T` has a never-value field.
   static constexpr bool has_field = requires {
-    std::declval<T&>()._sus_Unsafe_NeverValueSetNeverValue(
+    std::declval<T&>()._sus_Unsafe_NeverValueIsConstructed(
         ::sus::marker::unsafe_fn);
   };
+
+  /// Whether destroy_and_set_never_value() can be used to convert from a valid
+  /// value to a NeverValue state in a constexpr context.
+  static constexpr bool has_constexpr_destroy =
+      requires { std::declval<T&>().destroy_and_set_never_value(); };
 
   constexpr NeverValueAccess() = default;
 
@@ -74,11 +102,11 @@ struct NeverValueAccess {
   }
 
   /// Sets the never-value field to the never-value.
-  constexpr sus_always_inline void set_never_value(
+  constexpr sus_always_inline void destroy_and_set_never_value(
       ::sus::marker::UnsafeFnMarker) noexcept
-    requires(has_field)
+    requires(has_field && has_constexpr_destroy)
   {
-    t_._sus_Unsafe_NeverValueSetNeverValue(::sus::marker::unsafe_fn);
+    t_.destroy_and_set_never_value();
   }
 
   /// Sets the never-value field to the destroy-value.
@@ -93,7 +121,7 @@ struct NeverValueAccess {
   sus_pure constexpr sus_always_inline T& as_inner_mut() { return t_; }
 
  private:
-  T t_;
+  T t_{NeverValueConstructor()};
 
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(t_));
@@ -145,14 +173,6 @@ concept NeverValueField = __private::NeverValueAccess<T>::has_field;
         std::is_assignable_v<decltype(field_name)&, decltype(never_value)>,    \
         "The `never_value` must be able to be assigned to the named field.");  \
     return !(field_name == never_value);                                       \
-  }                                                                            \
-  constexpr void _sus_Unsafe_NeverValueSetNeverValue(                          \
-      ::sus::marker::UnsafeFnMarker) noexcept {                                \
-    static_assert(                                                             \
-        std::is_assignable_v<decltype(field_name)&, decltype(destroy_value)>,  \
-        "The `destroy_value` must be able to be assigned to the named "        \
-        "field.");                                                             \
-    field_name = never_value;                                                  \
   }                                                                            \
   constexpr void _sus_Unsafe_NeverValueSetDestroyValue(                        \
       ::sus::marker::UnsafeFnMarker) noexcept {                                \

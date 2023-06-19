@@ -196,9 +196,7 @@ struct Storage<T, true> final {
     sus::unreachable();
   }
 
-  constexpr Storage() : access_() {
-    access_.set_never_value(::sus::marker::unsafe_fn);
-  }
+  constexpr Storage() : access_() {}
   constexpr Storage(const T& t) : access_(t) {}
   constexpr Storage(T&& t) : access_(::sus::move(t)) {}
 
@@ -243,19 +241,29 @@ struct Storage<T, true> final {
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
     auto t = T(::sus::move(access_.as_inner_mut()));
-    access_.~NeverValueAccess();
-    access_ = NeverValueAccess();
-    access_.set_never_value(::sus::marker::unsafe_fn);
+    if constexpr (NeverValueAccess::has_constexpr_destroy) {
+      access_.destroy_and_set_never_value(::sus::marker::unsafe_fn);
+    } else {
+      access_.~NeverValueAccess();
+      new (&access_) NeverValueAccess();
+    }
     return t;
   }
 
   constexpr inline void set_none() noexcept {
-    access_.~NeverValueAccess();
-    access_ = NeverValueAccess();
-    access_.set_never_value(::sus::marker::unsafe_fn);
+    if constexpr (NeverValueAccess::has_constexpr_destroy) {
+      access_.destroy_and_set_never_value(::sus::marker::unsafe_fn);
+    } else {
+      access_.~NeverValueAccess();
+      new (&access_) NeverValueAccess();
+    }
   }
 
-  constexpr inline void destroy() noexcept { access_.~NeverValueAccess(); }
+  constexpr inline void destroy() noexcept {
+    if (!access_.is_constructed())
+      access_.set_destroy_value(::sus::marker::unsafe_fn);
+    access_.~NeverValueAccess();
+  }
 
  private:
   using NeverValueAccess = ::sus::mem::__private::NeverValueAccess<T>;
@@ -280,14 +288,17 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
   inline constexpr operator T&() { return *ptr_; }
 
  private:
-  T* sus_nonnull_var ptr_;
+  T* ptr_;
 
   // Pointers are trivially relocatable.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ptr_));
   // The pointer is never set to null in public usage.
   sus_class_never_value_field(::sus::marker::unsafe_fn, StoragePointer, ptr_,
                               nullptr, nullptr);
-  constexpr StoragePointer() = default;  // For the NeverValueField.
+  // For the NeverValueField.
+  constexpr StoragePointer(::sus::mem::NeverValueConstructor) noexcept
+      : ptr_(nullptr) {}
+  constexpr void destroy_and_set_never_value() noexcept { ptr_ = nullptr; }
 };
 
 static_assert(std::is_trivially_copy_constructible_v<StoragePointer<int&>>);
