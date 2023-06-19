@@ -43,6 +43,8 @@ using ::sus::construct::Into;
 using ::sus::option::Option;
 
 // TODO: Move forward decls somewhere?
+template <class RefIterator>
+class ByRef;
 template <class InnerSizedIter>
 class Enumerate;
 template <class InnerSizedIter>
@@ -141,17 +143,12 @@ class IteratorBase {
   /// Returns `false` if the iterator is empty.
   bool any(::sus::fn::FnMutRef<bool(Item)> f) noexcept;
 
-  /// Consumes the iterator, and returns the number of elements that were in
-  /// it.
+  /// Returns an iterator that refers to this iterator, and for which operations
+  /// on it will also be applied to this iterator.
   ///
-  /// The function walks the iterator until it sees an Option holding #None.
-  ///
-  /// # Safety
-  ///
-  /// If the `usize` type does not have trapping arithmetic enabled, and the
-  /// iterator has more than `usize::MAX` elements in it, the value will wrap
-  /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
-  ::sus::num::usize count() && noexcept;
+  /// This is useful to allow applying iterator adapters while still retaining
+  /// ownership of the original iterator.
+  auto by_ref() & noexcept;
 
   // Provided final methods.
 
@@ -171,6 +168,18 @@ class IteratorBase {
   /// useful, that is when the Iterator type is not trivially relocatable.
   auto box() && noexcept
     requires(!::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Consumes the iterator, and returns the number of elements that were in
+  /// it.
+  ///
+  /// The function walks the iterator until it sees an Option holding #None.
+  ///
+  /// # Safety
+  ///
+  /// If the `usize` type does not have trapping arithmetic enabled, and the
+  /// iterator has more than `usize::MAX` elements in it, the value will wrap
+  /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
+  ::sus::num::usize count() && noexcept;
 
   /// Creates an iterator which gives the current iteration count as well as the
   /// next value.
@@ -302,6 +311,11 @@ bool IteratorBase<Iter, Item>::any(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
     // SAFETY: `item` was checked to hold Some already.
     if (f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return true;
   }
+}
+
+template <class Iter, class Item>
+auto IteratorBase<Iter, Item>::by_ref() & noexcept {
+  return ByRef<Iter>::with(static_cast<Iter&>(*this));
 }
 
 template <class Iter, class Item>

@@ -442,4 +442,34 @@ TEST(Iterator, Enumerate) {
   }
 }
 
+TEST(Iterator, ByRef) {
+  i32 nums[5] = {1, 2, 3, 4, 5};
+
+  {
+    auto it = ArrayIterator<i32, 5>::with_array(nums);
+    {
+      auto refit = it.by_ref();
+      EXPECT_EQ(refit.next().unwrap(), 1);
+      EXPECT_EQ(refit.next().unwrap(), 2);
+    }
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(it.next().unwrap(), 5);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  {
+    auto it = ArrayIterator<i32, 5>::with_array(nums);
+    {
+      // The `rev()` applies to the ByRef iterator but not the original one.
+      auto refit = it.by_ref().rev();
+      EXPECT_EQ(refit.next().unwrap(), 5);
+      EXPECT_EQ(refit.next().unwrap(), 4);
+    }
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+}
+
 }  // namespace
