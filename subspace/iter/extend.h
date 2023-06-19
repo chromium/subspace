@@ -22,15 +22,15 @@ namespace sus::iter {
 /// Extend a collection with the contents of an iterator.
 ///
 /// Iterators produce a series of values, and collections can also be thought of
-/// as a series of values. The `Extend` trait bridges this gap, allowing you to
+/// as a series of values. The `Extend` concept bridges this gap, allowing you to
 /// extend a collection by including the contents of that iterator. When
 /// extending a collection with an already existing key, that entry is updated
 /// or, in the case of collections that permit multiple entries with equal keys,
 /// that entry is inserted.
-template <class T, class ItemType>
+template <class Collection, class ItemType>
 concept Extend =
-    requires(T container, __private::IntoIteratorArchetype<ItemType>&& iter) {
-      { container.extend(::sus::move(iter)) } -> std::same_as<void>;
+    requires(Collection c, __private::IntoIteratorArchetype<ItemType>&& iter) {
+      { c.extend(::sus::move(iter)) } -> std::same_as<void>;
     };
 
 }  // namespace sus::iter
