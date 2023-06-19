@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include "subspace/fn/fn_box_defn.h"
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/mem/move.h"
