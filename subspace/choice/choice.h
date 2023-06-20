@@ -628,7 +628,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
                std::is_trivially_destructible_v<Ts>))
   {
     if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
-    index_ != kNeverValue;
+    index_ = kNeverValue;
   }
 };
 

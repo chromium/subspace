@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <sstream>
+
 #include "subdoc/llvm.h"
 #include "subspace/assertions/check.h"
 #include "subspace/choice/choice.h"
