@@ -296,7 +296,7 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
   sus_class_never_value_field(::sus::marker::unsafe_fn, StoragePointer, ptr_,
                               nullptr, nullptr);
   // For the NeverValueField.
-  constexpr StoragePointer(::sus::mem::NeverValueConstructor) noexcept
+  explicit constexpr StoragePointer(::sus::mem::NeverValueConstructor) noexcept
       : ptr_(nullptr) {}
   constexpr void destroy_and_set_never_value() noexcept { ptr_ = nullptr; }
 };

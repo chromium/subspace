@@ -182,7 +182,7 @@ class [[sus_trivial_abi]] NonNull {
   sus_class_never_value_field(::sus::marker::unsafe_fn, NonNull, ptr_, nullptr,
                               nullptr);
   // For the NeverValueField.
-  constexpr NonNull(::sus::mem::NeverValueConstructor) noexcept : ptr_(nullptr) {}
+  explicit constexpr NonNull(::sus::mem::NeverValueConstructor) noexcept : ptr_(nullptr) {}
   constexpr void destroy_and_set_never_value() noexcept { ptr_ = nullptr; }
 };
 

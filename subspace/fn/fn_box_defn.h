@@ -251,7 +251,7 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
 
  protected:
   // For the NeverValueField.
-  FnOnceBox(::sus::mem::NeverValueConstructor) noexcept
+  explicit FnOnceBox(::sus::mem::NeverValueConstructor) noexcept
       : type_(static_cast<__private::FnBoxType>(0)) {}
 };
 
@@ -384,7 +384,7 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
                               __private::FnBoxType::FnBoxPointer);
 
  protected:
-  FnMutBox(::sus::mem::NeverValueConstructor c) noexcept
+  explicit FnMutBox(::sus::mem::NeverValueConstructor c) noexcept
       : FnOnceBox<R(CallArgs...)>(c) {}
 };
 
@@ -509,7 +509,7 @@ class [[sus_trivial_abi]] FnBox<R(CallArgs...)> final
                               FnOnceBox<R(CallArgs...)>::type_,
                               static_cast<__private::FnBoxType>(0),
                               __private::FnBoxType::FnBoxPointer);
-  FnBox(::sus::mem::NeverValueConstructor c) noexcept
+  explicit FnBox(::sus::mem::NeverValueConstructor c) noexcept
       : FnMutBox<R(CallArgs...)>(c) {}
 };
 

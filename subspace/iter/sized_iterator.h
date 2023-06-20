@@ -109,7 +109,7 @@ struct [[sus_trivial_abi]] SizedIterator final {
   sus_class_never_value_field(::sus::marker::unsafe_fn, SizedIterator, next_,
                               nullptr, nullptr);
   // For the NeverValueField.
-  constexpr SizedIterator(::sus::mem::NeverValueConstructor) noexcept
+  explicit constexpr SizedIterator(::sus::mem::NeverValueConstructor) noexcept
       : destroy_(nullptr), next_(nullptr) {}
 };
 
