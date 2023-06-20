@@ -39,8 +39,32 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
   using Item = ItemT;
 
  public:
-  Drain(Drain&&) = default;
-  Drain& operator=(Drain&&) = default;
+  constexpr Drain(Drain&& rhs) noexcept
+      : tail_start_(rhs.tail_start_),
+        tail_len_(rhs.tail_len_),
+        // Use take() to ensure rhs is None, even if Option is trivially moved.
+        // This indicates moved-from for ~Drain.
+        iter_(rhs.iter_.take()),
+        vec_(::sus::move(rhs.vec_)),
+        original_vec_(::sus::move(rhs.original_vec_)) {}
+
+  constexpr Drain& operator=(Drain&& rhs) noexcept {
+    // The `iter_` is None if keep_rest() was run, in which cast the Vec is
+    // already restored. Or if Drain was moved from, in which case it has
+    // nothing to do.
+    if (iter_.is_some()) {
+      restore_vec(0u);
+    }
+
+    tail_start_ = rhs.tail_start_;
+    tail_len_ = rhs.tail_len_;
+    // Use take() to ensure rhs is None, even if Option is trivially moved.
+    // This indicates moved-from for ~Drain.
+    iter_ = rhs.iter_.take();
+    vec_ = ::sus::move(rhs.vec_);
+    original_vec_ = ::sus::move(rhs.original_vec_);
+    return *this;
+  }
 
   ~Drain() noexcept {
     // The `iter_` is None if keep_rest() was run, in which cast the Vec is
