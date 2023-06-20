@@ -149,7 +149,7 @@ class Vec final {
   ///
   /// sus::iter::FromIterator trait.
   static constexpr Vec from_iter(
-      ::sus::iter::IntoIterator<T> auto into_iter) noexcept
+      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
     requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
   {
     auto&& iter = sus::move(into_iter).into_iter();

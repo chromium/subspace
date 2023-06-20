@@ -104,6 +104,9 @@ class RecordIter final
       return sus::none();
     }
   }
+  sus::iter::SizeHint size_hint() const noexcept {
+    return sus::iter::SizeHint(0u, sus::none());
+  }
 
  protected:
   RecordIter(clang::RecordDecl* decl) noexcept : next_decl_(decl) {}
@@ -113,6 +116,8 @@ class RecordIter final
 
   sus_class_trivially_relocatable(unsafe_fn, decltype(next_decl_));
 };
+
+static_assert(::sus::iter::Iterator<RecordIter, std::string_view>);
 
 }  // namespace __private
 
@@ -152,6 +157,9 @@ class NamespaceIter final
       return sus::none();
     }
   }
+  sus::iter::SizeHint size_hint() const noexcept {
+    return sus::iter::SizeHint(0u, sus::none());
+  }
 
  protected:
   NamespaceIter(clang::Decl* decl) noexcept
@@ -164,6 +172,8 @@ class NamespaceIter final
   sus_class_trivially_relocatable(unsafe_fn, decltype(done_),
                                   decltype(next_ndecl_));
 };
+
+static_assert(::sus::iter::Iterator<NamespaceIter, Namespace>);
 
 }  // namespace __private
 
