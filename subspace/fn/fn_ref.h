@@ -171,7 +171,7 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnRef, invoke_,
                               &invoke_never_value, &invoke_never_value);
   // For the NeverValueField.
-  constexpr FnRef(::sus::mem::NeverValueConstructor) noexcept
+  explicit constexpr FnRef(::sus::mem::NeverValueConstructor) noexcept
       : invoke_(&invoke_never_value) {}
   constexpr void destroy_and_set_never_value() noexcept {
     invoke_ = invoke_never_value;
@@ -327,7 +327,7 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnMutRef, invoke_,
                               &invoke_never_value, &invoke_never_value);
   // For the NeverValueField.
-  constexpr FnMutRef(::sus::mem::NeverValueConstructor) noexcept
+  explicit constexpr FnMutRef(::sus::mem::NeverValueConstructor) noexcept
       : invoke_(&invoke_never_value) {}
   constexpr void destroy_and_set_never_value() noexcept {
     invoke_ = invoke_never_value;
@@ -519,7 +519,7 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   sus_class_never_value_field(::sus::marker::unsafe_fn, FnOnceRef, invoke_,
                               &invoke_never_value, &invoke_never_value);
   // For the NeverValueField.
-  constexpr FnOnceRef(::sus::mem::NeverValueConstructor) noexcept
+  explicit constexpr FnOnceRef(::sus::mem::NeverValueConstructor) noexcept
       : invoke_(&invoke_never_value) {}
   constexpr void destroy_and_set_never_value() noexcept {
     invoke_ = invoke_never_value;
