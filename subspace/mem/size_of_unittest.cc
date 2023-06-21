@@ -241,4 +241,16 @@ static_assert(sus::size_of<Empty>() == 1u);
 // marks the padding as not part of the object's fields.
 static_assert(sus::data_size_of<Empty>() == 0u);
 
+// This structure has 7 (i.e. `alignof(max_align_t) - 1`) bytes of padding. That
+// requires the data size finder to try up to `alignof(max_align_t)` bytes to
+// find the data size. When the usize alignment is the same as max_align_t, this
+// test requires the data_size_finder to check up to max_align_t bytes, and
+// caught an error where it was only checking to `max_align_t-1`.
+struct FinalClass final {
+  usize s;
+  bool b;
+};
+
+static_assert(sus::data_size_of<FinalClass>() == sizeof(size_t) * 1 + 1);
+
 }  // namespace

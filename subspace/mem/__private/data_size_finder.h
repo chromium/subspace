@@ -45,7 +45,7 @@ constexpr inline size_t data_size_finder_final_class =
 
 template <class T>
 constexpr inline size_t
-    data_size_finder_final_class<T, alignof(std::max_align_t)> = 0u;
+    data_size_finder_final_class<T, alignof(std::max_align_t) + 1> = 0u;
 
 // An inheritable class can have its padding used by a subclass.
 template <class T, size_t bytes>
@@ -56,7 +56,7 @@ constexpr inline size_t data_size_finder_inheritable_class =
 
 template <class T>
 constexpr inline size_t
-    data_size_finder_inheritable_class<T, alignof(std::max_align_t)> = 0u;
+    data_size_finder_inheritable_class<T, alignof(std::max_align_t) + 1> = 0u;
 
 // We don't know the types inside a union, so we're unable to tell what is
 // padding. Such types should not be memcpy'd unless the types inside are
