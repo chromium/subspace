@@ -14,8 +14,11 @@
 
 #pragma once
 
+#include <compare>
+
 #include "subspace/construct/into.h"
 #include "subspace/fn/fn.h"
+#include "subspace/iter/__private/iter_compare.h"
 #include "subspace/iter/__private/iterator_end.h"
 #include "subspace/iter/__private/iterator_loop.h"
 #include "subspace/iter/boxed_iterator.h"
@@ -158,7 +161,7 @@ class IteratorBase {
   ///
   /// `sus::iter::Once` is commonly used to adapt a single value into a chain of
   /// other kinds of iteration.
-  template <IntoIterator<Item> Other>
+  template <IntoIterator<ItemT> Other>
   auto chain(Other&& other) && noexcept
     requires(
         ::sus::mem::relocate_by_memcpy<Iter> &&
@@ -173,6 +176,22 @@ class IteratorBase {
   /// called or optimized away. So code should not depend on either.
   auto cloned() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
+  /// the elements of this `Iterator` with those of another.
+  template <IntoIterator<ItemT> Other>
+    requires(::sus::ops::Ord<ItemT>)
+  std::strong_ordering cmp(Other&& other) && noexcept;
+
+  /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
+  /// the elements of this `Iterator` with those of another with respect to the
+  /// specified comparison function.
+  template <IntoIterator<ItemT> Other>
+  std::strong_ordering cmp_by(Other&& other,
+                              ::sus::fn::FnMutBox<std::strong_ordering(
+                                  const std::remove_reference_t<Item>&,
+                                  const std::remove_reference_t<Item>&)>
+                                  cmp) && noexcept;
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -333,7 +352,8 @@ auto IteratorBase<Iter, Item>::chain(Other&& other) && noexcept
            ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other, Item>>)
 {
   using Sized = SizedIteratorType<Iter>::type;
-  using OtherSized = SizedIteratorType<IntoIteratorOutputType<Other, Item>>::type;
+  using OtherSized =
+      SizedIteratorType<IntoIteratorOutputType<Other, Item>>::type;
   using Chain = Chain<Sized, OtherSized>;
   return Chain::with(make_sized_iterator(static_cast<Iter&&>(*this)),
                      make_sized_iterator(::sus::move(other).into_iter()));
@@ -346,6 +366,30 @@ auto IteratorBase<Iter, Item>::cloned() && noexcept
   using Sized = SizedIteratorType<Iter>::type;
   using Cloned = Cloned<Sized>;
   return Cloned::with(make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+template <IntoIterator<Item> Other>
+  requires(::sus::ops::Ord<Item>)
+std::strong_ordering IteratorBase<Iter, Item>::cmp(Other&& other) && noexcept {
+  return static_cast<Iter&&>(*this).cmp_by(
+      ::sus::move(other),
+      [](const std::remove_reference_t<Item>& x,
+         const std::remove_reference_t<Item>& y) -> std::strong_ordering {
+        return x <=> y;
+      });
+}
+
+template <class Iter, class Item>
+template <IntoIterator<Item> Other>
+std::strong_ordering IteratorBase<Iter, Item>::cmp_by(
+    Other&& other, ::sus::fn::FnMutBox<std::strong_ordering(
+                       const std::remove_reference_t<Item>&,
+                       const std::remove_reference_t<Item>&)>
+                       cmp) && noexcept {
+  return __private::iter_compare<std::strong_ordering, Item>(
+      static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
+      ::sus::move(cmp));
 }
 
 template <class Iter, class Item>

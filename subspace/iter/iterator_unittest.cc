@@ -574,4 +574,99 @@ TEST(Iterator, Cloned) {
   }
 }
 
+TEST(Iterator, Cmp) {
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 2, 1);
+    EXPECT_EQ(std::strong_ordering::less, smol.iter().cmp(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 2, 1);
+    EXPECT_EQ(std::strong_ordering::greater, bigg.iter().cmp(smol.iter()));
+  }
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 1, 1);
+    EXPECT_EQ(std::strong_ordering::greater, smol.iter().cmp(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 2);
+    EXPECT_EQ(std::strong_ordering::equal, smol.iter().cmp(bigg.iter()));
+  }
+
+  // iter_mut.
+  {
+    auto smol = sus::Vec<i32>::with(1, 3);
+    auto bigg = sus::Vec<i32>::with(1, 2);
+    EXPECT_EQ(std::strong_ordering::greater,
+              smol.iter_mut().cmp(bigg.iter_mut()));
+  }
+
+  // into_iter.
+  {
+    auto smol = sus::Vec<i32>::with(1, 3);
+    auto bigg = sus::Vec<i32>::with(1, 2);
+    EXPECT_EQ(std::strong_ordering::greater,
+              sus::move(smol).into_iter().cmp(sus::move(bigg).into_iter()));
+  }
+}
+
+TEST(Iterator, CmpBy) {
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 2, 1);
+    EXPECT_EQ(std::strong_ordering::less,
+              smol.iter().cmp_by(bigg.iter(), [](const i32& a, const i32& b) {
+                return b <=> a;
+              }));
+  }
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 2, 1);
+    EXPECT_EQ(std::strong_ordering::greater,
+              bigg.iter().cmp_by(smol.iter(), [](const i32& a, const i32& b) {
+                return b <=> a;
+              }));
+  }
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 1, 1);
+    EXPECT_EQ(std::strong_ordering::less,
+              smol.iter().cmp_by(bigg.iter(), [](const i32& a, const i32& b) {
+                return b <=> a;
+              }));
+  }
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 2);
+    EXPECT_EQ(std::strong_ordering::equal,
+              smol.iter().cmp_by(bigg.iter(), [](const i32& a, const i32& b) {
+                return b <=> a;
+              }));
+  }
+
+  // iter_mut.
+  {
+    auto smol = sus::Vec<i32>::with(1, 3);
+    auto bigg = sus::Vec<i32>::with(1, 2);
+    EXPECT_EQ(
+        std::strong_ordering::less,
+        smol.iter_mut().cmp_by(bigg.iter_mut(), [](const i32& a, const i32& b) {
+          return b <=> a;
+        }));
+  }
+
+  // into_iter.
+  {
+    auto smol = sus::Vec<i32>::with(1, 3);
+    auto bigg = sus::Vec<i32>::with(1, 2);
+    EXPECT_EQ(std::strong_ordering::less,
+              sus::move(smol).into_iter().cmp_by(
+                  sus::move(bigg).into_iter(),
+                  [](const i32& a, const i32& b) { return b <=> a; }));
+  }
+}
+
 }  // namespace
