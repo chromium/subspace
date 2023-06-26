@@ -77,6 +77,7 @@ target_sources(subspace PUBLIC
     "iter/chain.h"
     "iter/cloned.h"
     "iter/compat_ranges.h"
+    "iter/copied.h"
     "iter/enumerate.h"
     "iter/extend.h"
     "iter/filter.h"
