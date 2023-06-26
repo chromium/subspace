@@ -251,6 +251,9 @@ struct FinalClass final {
   bool b;
 };
 
-static_assert(sus::data_size_of<FinalClass>() == sizeof(size_t) * 1 + 1);
+// MSVC doesn't make the tail padding available in this case, but other
+// compilers do.
+static_assert(sus::data_size_of<FinalClass>() ==
+              sus_if_msvc_else(sizeof(usize) * 2, sizeof(usize) * 1 + 1));
 
 }  // namespace
