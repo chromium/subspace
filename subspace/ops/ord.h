@@ -34,6 +34,29 @@ concept Ordering = (std::same_as<T, std::strong_ordering> ||
                     std::same_as<T, std::weak_ordering>);
 
 /// Concept for types that form a total order (aka `std::strong_ordering`).
+///
+/// # Lexicographical comparison
+/// Lexicographical comparison is an operation with the following properties:
+/// * Two sequences are compared element by element.
+/// * The first mismatching element defines which sequence is lexicographically
+///   less or greater than the other.
+/// * If one sequence is a prefix of another, the shorter sequence is
+///   lexicographically less than the other.
+/// * If two sequence have equivalent elements and are of the same length, then
+///   the sequences are lexicographically equal.
+/// * An empty sequence is lexicographically less than any non-empty sequence.
+/// * Two empty sequences are lexicographically equal.
+///
+/// # How can I implement Ord?
+/// `Ord` requires that the type has `operator<=>` which returns
+/// `std::strong_ordering`. It will implicitly also be `WeakOrd` and
+/// `PartialOrd` as a result.
+///
+/// # Ord and Eq interations
+/// While `Ord` can report equality, it does not imply that the type satisfies
+/// `Eq`, and a separate `operator==` is required for that concept. Generic code
+/// that requires a type to be `Ord` should take care to use `operator<=>` and
+/// not `operator==` unless also requiring `Eq`.
 template <class T, class U = T>
 concept Ord = requires(const T& lhs, const U& rhs) {
   { lhs <=> rhs } noexcept -> std::same_as<std::strong_ordering>;
