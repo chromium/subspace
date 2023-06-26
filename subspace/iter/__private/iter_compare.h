@@ -29,21 +29,21 @@ inline Ordering iter_compare(
     ::sus::iter::Iterator<Item> auto&& a, ::sus::iter::Iterator<Item> auto&& b,
     ::sus::fn::FnMut<Ordering(const std::remove_reference_t<Item>&,
                               const std::remove_reference_t<Item>&)> auto&& f) {
+  Ordering value = Ordering::equivalent;
   while (true) {
     ::sus::Option<Item> item_a = a.next();
     ::sus::Option<Item> item_b = b.next();
     if (item_a.is_none() && item_b.is_none()) {
-      return Ordering::equivalent;
+      return value;
     } else if (item_a.is_none()) {
-      return Ordering::less;
+      value = Ordering::less;
+      return value;
     } else if (item_b.is_none()) {
-      return Ordering::greater;
+      value = Ordering::greater;
+      return value;
     } else {
-      Ordering ord = f(item_a.as_value(), item_b.as_value());
-      if (ord < 0)
-        return Ordering::less;
-      else if (ord > 0)
-        return Ordering::greater;
+      value = f(item_a.as_value(), item_b.as_value());
+      if (!(value == 0)) return value;
       // Otherwise, try the next pair of elements.
     }
   }

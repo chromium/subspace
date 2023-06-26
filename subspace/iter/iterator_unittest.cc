@@ -581,8 +581,8 @@ TEST(Iterator, Cmp) {
     EXPECT_EQ(std::strong_ordering::less, smol.iter().cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Vec<i32>::with(1, 2);
     auto bigg = sus::Vec<i32>::with(1, 2, 1);
+    auto smol = sus::Vec<i32>::with(1, 2);
     EXPECT_EQ(std::strong_ordering::greater, bigg.iter().cmp(smol.iter()));
   }
   {
@@ -615,8 +615,8 @@ TEST(Iterator, Cmp) {
 
 TEST(Iterator, CmpBy) {
   {
-    auto smol = sus::Vec<i32>::with(1, 2);
     auto bigg = sus::Vec<i32>::with(1, 2, 1);
+    auto smol = sus::Vec<i32>::with(1, 2);
     EXPECT_EQ(std::strong_ordering::less,
               smol.iter().cmp_by(bigg.iter(), [](const i32& a, const i32& b) {
                 return b <=> a;
@@ -666,6 +666,255 @@ TEST(Iterator, CmpBy) {
               sus::move(smol).into_iter().cmp_by(
                   sus::move(bigg).into_iter(),
                   [](const i32& a, const i32& b) { return b <=> a; }));
+  }
+}
+
+TEST(Iterator, PartialCmp) {
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f, 1.f);
+    EXPECT_EQ(std::partial_ordering::less,
+              smol.iter().partial_cmp(bigg.iter()));
+  }
+  {
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f, 1.f);
+    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    EXPECT_EQ(std::partial_ordering::greater,
+              bigg.iter().partial_cmp(smol.iter()));
+  }
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 1.f, 1.f);
+    EXPECT_EQ(std::partial_ordering::greater,
+              smol.iter().partial_cmp(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    EXPECT_EQ(std::partial_ordering::equivalent,
+              smol.iter().partial_cmp(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<f32>::with(f32::NAN, f32::NAN);
+    auto bigg = sus::Vec<f32>::with(f32::NAN, f32::NAN);
+    EXPECT_EQ(std::partial_ordering::unordered,
+              smol.iter().partial_cmp(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<f32>::with(f32::NAN, 1.f);
+    auto bigg = sus::Vec<f32>::with(f32::NAN, 2.f);
+    EXPECT_EQ(std::partial_ordering::unordered,
+              smol.iter().partial_cmp(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<f32>::with(1.f, f32::NAN);
+    auto bigg = sus::Vec<f32>::with(f32::NAN, f32::NAN);
+    EXPECT_EQ(std::partial_ordering::unordered,
+              smol.iter().partial_cmp(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<f32>::with(1.f, f32::NAN);
+    auto bigg = sus::Vec<f32>::with(2.f, f32::NAN);
+    EXPECT_EQ(std::partial_ordering::less,
+              smol.iter().partial_cmp(bigg.iter()));
+  }
+
+  // iter_mut.
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 3.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    EXPECT_EQ(std::partial_ordering::greater,
+              smol.iter_mut().partial_cmp(bigg.iter_mut()));
+  }
+
+  // into_iter.
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 3.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    EXPECT_EQ(
+        std::partial_ordering::greater,
+        sus::move(smol).into_iter().partial_cmp(sus::move(bigg).into_iter()));
+  }
+}
+
+TEST(Iterator, PartialCmpBy) {
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f, 1.f);
+    EXPECT_EQ(
+        std::partial_ordering::less,
+        smol.iter().partial_cmp_by(
+            bigg.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
+  }
+  {
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f, 1.f);
+    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    EXPECT_EQ(
+        std::partial_ordering::greater,
+        bigg.iter().partial_cmp_by(
+            smol.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
+  }
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 1.f, 1.f);
+    EXPECT_EQ(
+        std::partial_ordering::less,
+        smol.iter().partial_cmp_by(
+            bigg.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
+  }
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    EXPECT_EQ(
+        std::partial_ordering::equivalent,
+        smol.iter().partial_cmp_by(
+            bigg.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
+  }
+
+  // iter_mut.
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 3.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    EXPECT_EQ(std::partial_ordering::less,
+              smol.iter_mut().partial_cmp_by(
+                  bigg.iter_mut(),
+                  [](const f32& a, const f32& b) { return b <=> a; }));
+  }
+
+  // into_iter.
+  {
+    auto smol = sus::Vec<f32>::with(1.f, 3.f);
+    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    EXPECT_EQ(std::partial_ordering::less,
+              sus::move(smol).into_iter().partial_cmp_by(
+                  sus::move(bigg).into_iter(),
+                  [](const f32& a, const f32& b) { return b <=> a; }));
+  }
+}
+
+struct Weak {
+  sus_clang_bug_54040(constexpr inline Weak(i32 a, i32 b) : a(a), b(b){});
+
+  constexpr auto operator==(const Weak& o) const& noexcept {
+    return a == o.a && b == o.b;
+  }
+  constexpr auto operator<=>(const Weak& o) const& noexcept {
+    if (a == o.a) return std::weak_ordering::equivalent;
+    if (a < o.a) return std::weak_ordering::less;
+    return std::weak_ordering::greater;
+  }
+
+  i32 a;
+  i32 b;
+};
+
+TEST(Iterator, WeakCmp) {
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2), Weak(1, 1));
+    EXPECT_EQ(std::weak_ordering::less, smol.iter().weak_cmp(bigg.iter()));
+  }
+  {
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2), Weak(1, 1));
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(std::weak_ordering::greater, bigg.iter().weak_cmp(smol.iter()));
+  }
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(std::weak_ordering::equivalent,
+              smol.iter().weak_cmp(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 1));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(std::weak_ordering::equivalent,
+              smol.iter().weak_cmp(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(1, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(std::weak_ordering::less, smol.iter().weak_cmp(bigg.iter()));
+  }
+
+  // iter_mut.
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(std::partial_ordering::greater,
+              smol.iter_mut().weak_cmp(bigg.iter_mut()));
+  }
+
+  // into_iter.
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(
+        std::partial_ordering::greater,
+        sus::move(smol).into_iter().weak_cmp(sus::move(bigg).into_iter()));
+  }
+}
+
+TEST(Iterator, WeakCmpBy) {
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2), Weak(1, 1));
+    EXPECT_EQ(
+        std::weak_ordering::less,
+        smol.iter().weak_cmp_by(
+            bigg.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+  }
+  {
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2), Weak(1, 1));
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(
+        std::weak_ordering::greater,
+        bigg.iter().weak_cmp_by(
+            smol.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+  }
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(
+        std::weak_ordering::equivalent,
+        smol.iter().weak_cmp_by(
+            bigg.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+  }
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 1));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(
+        std::weak_ordering::equivalent,
+        smol.iter().weak_cmp_by(
+            bigg.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+  }
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(1, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(
+        std::weak_ordering::greater,
+        smol.iter().weak_cmp_by(
+            bigg.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+  }
+
+  // iter_mut.
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(std::partial_ordering::less,
+              smol.iter_mut().weak_cmp_by(
+                  bigg.iter_mut(),
+                  [](const Weak& a, const Weak& b) { return b <=> a; }));
+  }
+
+  // into_iter.
+  {
+    auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
+    auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
+    EXPECT_EQ(std::partial_ordering::less,
+              sus::move(smol).into_iter().weak_cmp_by(
+                  sus::move(bigg).into_iter(),
+                  [](const Weak& a, const Weak& b) { return b <=> a; }));
   }
 }
 
