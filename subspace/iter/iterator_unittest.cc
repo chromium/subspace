@@ -574,6 +574,36 @@ TEST(Iterator, Cloned) {
   }
 }
 
+TEST(Iterator, Copied) {
+  static usize clone_called;
+
+  auto copying = sus::Vec<usize>::with(1u, 2u);
+
+  // Clone from references.
+  {
+    auto it = copying.iter().cloned();
+    static_assert(std::same_as<usize, decltype(it.next().unwrap())>);
+    EXPECT_EQ(it.size_hint().lower, 2u);
+    EXPECT_EQ(it.size_hint().upper.unwrap(), 2u);
+
+    EXPECT_EQ(it.next().unwrap(), 1u);
+    EXPECT_EQ(it.next().unwrap(), 2u);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+
+  // Clone from values.
+  {
+    auto it = sus::move(copying).into_iter().cloned();
+    static_assert(std::same_as<usize, decltype(it.next().unwrap())>);
+    EXPECT_EQ(it.size_hint().lower, 2u);
+    EXPECT_EQ(it.size_hint().upper.unwrap(), 2u);
+
+    EXPECT_EQ(it.next().unwrap(), 1u);
+    EXPECT_EQ(it.next().unwrap(), 2u);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+}
+
 TEST(Iterator, Cmp) {
   {
     auto smol = sus::Vec<i32>::with(1, 2);

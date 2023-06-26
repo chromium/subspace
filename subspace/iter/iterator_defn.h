@@ -54,6 +54,8 @@ class Chain;
 template <class InnerSizedIter>
 class Cloned;
 template <class InnerSizedIter>
+class Copied;
+template <class InnerSizedIter>
 class Enumerate;
 template <class InnerSizedIter>
 class Filter;
@@ -175,7 +177,7 @@ class IteratorBase {
   /// There is no guarantee whatsoever about the clone method actually being
   /// called or optimized away. So code should not depend on either.
   auto cloned() && noexcept
-    requires(::sus::mem::relocate_by_memcpy<Iter>);
+    requires(::sus::mem::Clone<Item> && ::sus::mem::relocate_by_memcpy<Iter>);
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
@@ -192,6 +194,13 @@ class IteratorBase {
                                   const std::remove_reference_t<Item>&,
                                   const std::remove_reference_t<Item>&)>
                                   cmp) && noexcept;
+
+  /// Creates an iterator which copies all of its elements.
+  ///
+  /// This is useful when you have an iterator over &T, but you need an iterator
+  /// over T.
+  auto copied() && noexcept
+    requires(::sus::mem::Copy<Item> && ::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -404,7 +413,7 @@ auto IteratorBase<Iter, Item>::chain(Other&& other) && noexcept
 
 template <class Iter, class Item>
 auto IteratorBase<Iter, Item>::cloned() && noexcept
-  requires(::sus::mem::relocate_by_memcpy<Iter>)
+  requires(::sus::mem::Clone<Item> && ::sus::mem::relocate_by_memcpy<Iter>)
 {
   using Sized = SizedIteratorType<Iter>::type;
   using Cloned = Cloned<Sized>;
@@ -433,6 +442,15 @@ std::strong_ordering IteratorBase<Iter, Item>::cmp_by(
   return __private::iter_compare<std::strong_ordering, Item>(
       static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
       ::sus::move(cmp));
+}
+
+template <class Iter, class Item>
+auto IteratorBase<Iter, Item>::copied() && noexcept
+  requires(::sus::mem::Copy<Item> && ::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Copied = Copied<Sized>;
+  return Copied::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
