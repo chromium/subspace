@@ -29,6 +29,7 @@
 #include "subspace/mem/move.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/unsigned_integer.h"
+#include "subspace/ops/eq.h"
 #include "subspace/option/option.h"
 
 namespace sus::containers {
@@ -249,6 +250,20 @@ class IteratorBase {
   /// overflow a `usize`.
   auto enumerate() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Determines if the elements of this `Iterator` are equal to those of
+  /// another.
+  template <IntoIterator<ItemT> Other>
+    requires(::sus::ops::Eq<ItemT>)
+  bool eq(Other&& other) && noexcept;
+
+  /// Determines if the elements of this `Iterator` are equal to those of
+  /// another with respect to the specified equality function.
+  template <IntoIterator<ItemT> Other>
+  bool eq_by(Other&& other,
+             ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&,
+                                      const std::remove_reference_t<Item>&)>
+                 eq_fn) && noexcept;
 
   /// Creates an iterator which uses a closure to determine if an element should
   /// be yielded.
@@ -481,6 +496,28 @@ auto IteratorBase<Iter, Item>::cycle() && noexcept
   using Sized = SizedIteratorType<Iter>::type;
   using Cycle = Cycle<Sized>;
   return Cycle::with(make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+template <IntoIterator<Item> Other>
+  requires(::sus::ops::Eq<Item>)
+bool IteratorBase<Iter, Item>::eq(Other&& other) && noexcept {
+  return static_cast<Iter&&>(*this).eq_by(
+      ::sus::move(other),
+      [](const std::remove_reference_t<Item>& x,
+         const std::remove_reference_t<Item>& y) { return x == y; });
+}
+
+template <class Iter, class Item>
+template <IntoIterator<Item> Other>
+bool IteratorBase<Iter, Item>::eq_by(
+    Other&& other,
+    ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&,
+                             const std::remove_reference_t<Item>&)>
+        eq_fn) && noexcept {
+  return __private::iter_compare_eq<Item>(static_cast<Iter&&>(*this),
+                                          ::sus::move(other).into_iter(),
+                                          ::sus::move(eq_fn));
 }
 
 template <class Iter, class Item>
