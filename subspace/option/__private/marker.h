@@ -36,7 +36,7 @@ struct SomeMarker {
   // a const&, since marker types should normally be converted quickly to the
   // concrete type.
   template <class U>
-    requires(std::constructible_from<U, const std::remove_reference_t<T>&>)
+    requires(std::constructible_from<U, std::remove_reference_t<T>&>)
   sus_pure inline constexpr operator Option<U>() const& noexcept {
     return Option<U>::with(value);
   }
