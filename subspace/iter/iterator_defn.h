@@ -138,7 +138,7 @@ class IteratorBase {
   ///
   /// This is useful to allow applying iterator adapters while still retaining
   /// ownership of the original iterator.
-  auto by_ref() & noexcept;
+  Iterator<Item> auto by_ref() & noexcept;
 
   // Provided final methods.
 
@@ -156,7 +156,7 @@ class IteratorBase {
   ///
   /// It's only possible to call this in cases where it would do something
   /// useful, that is when the Iterator type is not trivially relocatable.
-  auto box() && noexcept
+  Iterator<Item> auto box() && noexcept
     requires(!::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Takes two iterators and creates a new iterator over both in sequence.
@@ -169,7 +169,7 @@ class IteratorBase {
   /// `sus::iter::Once` is commonly used to adapt a single value into a chain of
   /// other kinds of iteration.
   template <IntoIterator<ItemT> Other>
-  auto chain(Other&& other) && noexcept
+  Iterator<Item> auto chain(Other&& other) && noexcept
     requires(
         ::sus::mem::relocate_by_memcpy<Iter> &&
         ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other, Item>>);
@@ -181,7 +181,7 @@ class IteratorBase {
   ///
   /// There is no guarantee whatsoever about the clone method actually being
   /// called or optimized away. So code should not depend on either.
-  auto cloned() && noexcept
+  Iterator<std::remove_cvref_t<Item>> auto cloned() && noexcept
     requires(::sus::mem::Clone<Item> && ::sus::mem::relocate_by_memcpy<Iter>);
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
@@ -204,7 +204,7 @@ class IteratorBase {
   ///
   /// This is useful when you have an iterator over &T, but you need an iterator
   /// over T.
-  auto copied() && noexcept
+  Iterator<std::remove_cvref_t<Item>> auto copied() && noexcept
     requires(::sus::mem::Copy<Item> && ::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Consumes the iterator, and returns the number of elements that were in
@@ -221,6 +221,9 @@ class IteratorBase {
 
   /// Repeats an iterator endlessly.
   ///
+  /// ```
+  /// asdaa
+  /// ```
   /// Instead of stopping at `None`, the iterator will instead start again, from
   /// the beginning. After iterating again, it will start at the beginning
   /// again. And again. And again. Forever. Note that in case the original
@@ -228,7 +231,7 @@ class IteratorBase {
   ///
   /// The iterator must be `Clone` as it will be cloned in order to be
   /// repeatedly iterated.
-  auto cycle() && noexcept
+  Iterator<Item> auto cycle() && noexcept
     requires(::sus::mem::Clone<Iter> && ::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Creates an iterator which gives the current iteration count as well as the
@@ -272,7 +275,7 @@ class IteratorBase {
   ///
   /// Given an element the closure must return true or false. The returned
   /// iterator will yield only the elements for which the closure returns true.
-  auto filter(::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+  Iterator<Item> auto filter(::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
                   pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
@@ -287,7 +290,7 @@ class IteratorBase {
   /// Creates an iterator from a generator function that consumes the current
   /// iterator.
   template <::sus::fn::FnOnce<::sus::iter::Generator<ItemT>(Iter&&)> GenFn>
-  ::sus::iter::Generator<ItemT> generate(GenFn&& generator_fn) && noexcept;
+  ::sus::iter::Iterator<ItemT> auto generate(GenFn&& generator_fn) && noexcept;
 
   /// Creates an iterator which uses a closure to map each element to another
   /// type.
@@ -296,7 +299,7 @@ class IteratorBase {
   template <class T, int&..., class R = std::invoke_result_t<T, Item&&>,
             class B = ::sus::fn::FnMutBox<R(Item&&)>>
     requires(!std::is_void_v<R> && Into<T, B>)
-  auto map(T fn) && noexcept
+  Iterator<R> auto map(T fn) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
@@ -339,7 +342,7 @@ class IteratorBase {
   ///
   /// This is only possible if the iterator has an end, so `rev()` only works on
   /// `DoubleEndedIterator`s.
-  auto rev() && noexcept
+  Iterator<Item> auto rev() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter> &&
              ::sus::iter::DoubleEndedIterator<Iter, Item>);
 
@@ -422,12 +425,12 @@ bool IteratorBase<Iter, Item>::any(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
 }
 
 template <class Iter, class Item>
-auto IteratorBase<Iter, Item>::by_ref() & noexcept {
+Iterator<Item> auto IteratorBase<Iter, Item>::by_ref() & noexcept {
   return ByRef<Iter>::with(static_cast<Iter&>(*this));
 }
 
 template <class Iter, class Item>
-auto IteratorBase<Iter, Item>::box() && noexcept
+Iterator<Item> auto IteratorBase<Iter, Item>::box() && noexcept
   requires(!::sus::mem::relocate_by_memcpy<Iter>)
 {
   using BoxedIterator =
@@ -438,7 +441,7 @@ auto IteratorBase<Iter, Item>::box() && noexcept
 
 template <class Iter, class Item>
 template <IntoIterator<Item> Other>
-auto IteratorBase<Iter, Item>::chain(Other&& other) && noexcept
+Iterator<Item> auto IteratorBase<Iter, Item>::chain(Other&& other) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter> &&
            ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other, Item>>)
 {
@@ -451,7 +454,8 @@ auto IteratorBase<Iter, Item>::chain(Other&& other) && noexcept
 }
 
 template <class Iter, class Item>
-auto IteratorBase<Iter, Item>::cloned() && noexcept
+Iterator<std::remove_cvref_t<Item>> auto
+IteratorBase<Iter, Item>::cloned() && noexcept
   requires(::sus::mem::Clone<Item> && ::sus::mem::relocate_by_memcpy<Iter>)
 {
   using Sized = SizedIteratorType<Iter>::type;
@@ -484,7 +488,8 @@ std::strong_ordering IteratorBase<Iter, Item>::cmp_by(
 }
 
 template <class Iter, class Item>
-auto IteratorBase<Iter, Item>::copied() && noexcept
+Iterator<std::remove_cvref_t<Item>> auto
+IteratorBase<Iter, Item>::copied() && noexcept
   requires(::sus::mem::Copy<Item> && ::sus::mem::relocate_by_memcpy<Iter>)
 {
   using Sized = SizedIteratorType<Iter>::type;
@@ -500,12 +505,21 @@ template <class Iter, class Item>
 }
 
 template <class Iter, class Item>
-auto IteratorBase<Iter, Item>::cycle() && noexcept
+Iterator<Item> auto IteratorBase<Iter, Item>::cycle() && noexcept
   requires(::sus::mem::Clone<Iter> && ::sus::mem::relocate_by_memcpy<Iter>)
 {
   using Sized = SizedIteratorType<Iter>::type;
   using Cycle = Cycle<Sized>;
   return Cycle::with(make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+auto IteratorBase<Iter, Item>::enumerate() && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Enumerate = Enumerate<Sized>;
+  return Enumerate::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
@@ -531,28 +545,7 @@ bool IteratorBase<Iter, Item>::eq_by(
 }
 
 template <class Iter, class Item>
-template <class T, int&..., class R, class B>
-  requires(!std::is_void_v<R> && Into<T, B>)
-auto IteratorBase<Iter, Item>::map(T fn) && noexcept
-  requires(::sus::mem::relocate_by_memcpy<Iter>)
-{
-  using Sized = SizedIteratorType<Iter>::type;
-  using Map = Map<R, Sized>;
-  return Map::with(sus::into(::sus::move(fn)),
-                   make_sized_iterator(static_cast<Iter&&>(*this)));
-}
-
-template <class Iter, class Item>
-auto IteratorBase<Iter, Item>::enumerate() && noexcept
-  requires(::sus::mem::relocate_by_memcpy<Iter>)
-{
-  using Sized = SizedIteratorType<Iter>::type;
-  using Enumerate = Enumerate<Sized>;
-  return Enumerate::with(make_sized_iterator(static_cast<Iter&&>(*this)));
-}
-
-template <class Iter, class Item>
-auto IteratorBase<Iter, Item>::filter(
+Iterator<Item> auto IteratorBase<Iter, Item>::filter(
     ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
@@ -577,10 +570,23 @@ Iterator<InnerR> auto IteratorBase<Iter, Item>::filter_map(F f) && noexcept
 
 template <class Iter, class Item>
 template <::sus::fn::FnOnce<::sus::iter::Generator<Item>(Iter&&)> GenFn>
-::sus::iter::Generator<Item> IteratorBase<Iter, Item>::generate(
+::sus::iter::Iterator<Item> auto IteratorBase<Iter, Item>::generate(
     GenFn&& generator_fn) && noexcept {
   return ::sus::move(generator_fn)(static_cast<Iter&&>(*this));
 }
+
+template <class Iter, class Item>
+template <class T, int&..., class R, class B>
+  requires(!std::is_void_v<R> && Into<T, B>)
+Iterator<R> auto IteratorBase<Iter, Item>::map(T fn) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Map = Map<R, Sized>;
+  return Map::with(sus::into(::sus::move(fn)),
+                   make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
 
 template <class Iter, class Item>
 template <IntoIterator<Item> Other>
@@ -613,7 +619,7 @@ auto IteratorBase<Iter, Item>::range() && noexcept {
 }
 
 template <class Iter, class Item>
-auto IteratorBase<Iter, Item>::rev() && noexcept
+Iterator<Item> auto IteratorBase<Iter, Item>::rev() && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter> &&
            ::sus::iter::DoubleEndedIterator<Iter, Item>)
 {

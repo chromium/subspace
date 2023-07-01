@@ -28,11 +28,9 @@ namespace sus::iter {
 template <class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Cloned final
     : public IteratorBase<Cloned<InnerSizedIter>,
-                          decltype(sus::clone(
-                              std::declval<typename InnerSizedIter::Item>()))> {
+                          std::remove_cvref_t<typename InnerSizedIter::Item>> {
  public:
-  using Item =
-      decltype(sus::clone(std::declval<typename InnerSizedIter::Item>()));
+  using Item = std::remove_cvref_t<typename InnerSizedIter::Item>;
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
@@ -64,11 +62,11 @@ class [[nodiscard]] [[sus_trivial_abi]] Cloned final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Cloned with(InnerSizedIter&& next_iter) noexcept {
+  static Cloned with(InnerSizedIter && next_iter) noexcept {
     return Cloned(::sus::move(next_iter));
   }
 
-  Cloned(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
+  Cloned(InnerSizedIter && next_iter) : next_iter_(::sus::move(next_iter)) {}
 
   InnerSizedIter next_iter_;
 
