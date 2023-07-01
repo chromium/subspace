@@ -36,7 +36,7 @@ using sus::option::Option;
 
 namespace {
 
-using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false, false>;
+using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false, false, false>;
 
 // clang-format off
 static_assert(
@@ -81,7 +81,7 @@ static_assert(
 // clang-format on
 
 static_assert(sus::mem::NeverValueField<
-              sus::iter::SizedIterator<int, 12, 4, false, false>>);
+              sus::iter::SizedIterator<int, 12, 4, false, false, false>>);
 
 template <class Item, size_t N>
 class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
@@ -945,6 +945,39 @@ TEST(Iterator, WeakCmpBy) {
               sus::move(smol).into_iter().weak_cmp_by(
                   sus::move(bigg).into_iter(),
                   [](const Weak& a, const Weak& b) { return b <=> a; }));
+  }
+}
+
+TEST(Iterator, Cycle) {
+  // Empty.
+  {
+    auto v = sus::Vec<i32>::with();
+    auto it = v.iter().cycle();
+    static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // One.
+  {
+    auto v = sus::Vec<i32>::with(4);
+    auto it = v.iter().cycle();
+    static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(it.next().unwrap(), 4);
+  }
+  // More.
+  {
+    auto v = sus::Vec<i32>::with(1, 2, 3);
+    auto it = v.iter().cycle();
+    static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.next().unwrap(), 1);
   }
 }
 

@@ -56,6 +56,8 @@ class Cloned;
 template <class InnerSizedIter>
 class Copied;
 template <class InnerSizedIter>
+class Cycle;
+template <class InnerSizedIter>
 class Enumerate;
 template <class InnerSizedIter>
 class Filter;
@@ -213,6 +215,18 @@ class IteratorBase {
   /// iterator has more than `usize::MAX` elements in it, the value will wrap
   /// and be incorrect. Otherwise, `usize` will catch overflow and panic.
   ::sus::num::usize count() && noexcept;
+
+  /// Repeats an iterator endlessly.
+  ///
+  /// Instead of stopping at `None`, the iterator will instead start again, from
+  /// the beginning. After iterating again, it will start at the beginning
+  /// again. And again. And again. Forever. Note that in case the original
+  /// iterator is empty, the resulting iterator will also be empty.
+  ///
+  /// The iterator must be `Clone` as it will be cloned in order to be
+  /// repeatedly iterated.
+  auto cycle() && noexcept
+    requires(::sus::mem::Clone<Iter> && ::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Creates an iterator which gives the current iteration count as well as the
   /// next value.
@@ -458,6 +472,15 @@ template <class Iter, class Item>
   auto c = 0_usize;
   while (as_subclass_mut().next().is_some()) c += 1_usize;
   return c;
+}
+
+template <class Iter, class Item>
+auto IteratorBase<Iter, Item>::cycle() && noexcept
+  requires(::sus::mem::Clone<Iter> && ::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Cycle = Cycle<Sized>;
+  return Cycle::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
