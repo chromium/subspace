@@ -40,8 +40,8 @@ sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
 /// potentially overwriting other objects. This is due to the fact that other
 /// objects can be placed inside tail padding of an object in some scenarios.
 ///
-/// Returns 0 for types where the tail padding can not be determined. In
-/// particular this is the case for union types unless and until compilers
+/// Returns `size_t(-1)` for types where the tail padding can not be determined.
+/// In particular this is the case for union types unless and until compilers
 /// provide additional support to determine the maximum data size of all
 /// union members.
 ///
