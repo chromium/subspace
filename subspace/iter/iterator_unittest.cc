@@ -658,6 +658,13 @@ TEST(Iterator, Cmp) {
     EXPECT_EQ(std::strong_ordering::greater,
               sus::move(smol).into_iter().cmp(sus::move(bigg).into_iter()));
   }
+
+  // Comparable but different types.
+  {
+    auto one = sus::Vec<i32>::with(1, 2);
+    auto two = sus::Vec<i64>::with(1, 3);
+    EXPECT_EQ(std::strong_ordering::less, one.iter().cmp(two.iter()));
+  }
 }
 
 TEST(Iterator, CmpBy) {
@@ -713,6 +720,16 @@ TEST(Iterator, CmpBy) {
               sus::move(smol).into_iter().cmp_by(
                   sus::move(bigg).into_iter(),
                   [](const i32& a, const i32& b) { return b <=> a; }));
+  }
+
+  // Comparable but different types.
+  {
+    auto one = sus::Vec<i32>::with(1, 2);
+    auto two = sus::Vec<i64>::with(1, 3);
+    EXPECT_EQ(std::strong_ordering::greater,
+              one.iter().cmp_by(two.iter(), [](const i32& a, const i64& b) {
+                return b <=> a;
+              }));
   }
 }
 
@@ -782,6 +799,13 @@ TEST(Iterator, PartialCmp) {
         std::partial_ordering::greater,
         sus::move(smol).into_iter().partial_cmp(sus::move(bigg).into_iter()));
   }
+
+  // Comparable but different types.
+  {
+    auto one = sus::Vec<f32>::with(1.f, 2.f);
+    auto two = sus::Vec<f64>::with(1., 3.);
+    EXPECT_EQ(std::partial_ordering::less, one.iter().partial_cmp(two.iter()));
+  }
 }
 
 TEST(Iterator, PartialCmpBy) {
@@ -837,23 +861,41 @@ TEST(Iterator, PartialCmpBy) {
                   sus::move(bigg).into_iter(),
                   [](const f32& a, const f32& b) { return b <=> a; }));
   }
+
+  // Comparable but different types.
+  {
+    auto one = sus::Vec<f32>::with(1.f, 2.f);
+    auto two = sus::Vec<f64>::with(1., 3.);
+    EXPECT_EQ(
+        std::partial_ordering::greater,
+        one.iter().partial_cmp_by(
+            two.iter(), [](const f32& a, const f64& b) { return b <=> a; }));
+  }
 }
 
-struct Weak {
-  sus_clang_bug_54040(constexpr inline Weak(i32 a, i32 b) : a(a), b(b){});
+template <sus::mem::Copy T>
+  requires(sus::ops::Ord<T> && sus::ops::Eq<T>)
+struct WeakT {
+  sus_clang_bug_54040(constexpr inline WeakT(T a, T b) : a(a), b(b){});
 
-  constexpr auto operator==(const Weak& o) const& noexcept {
+  template <class U>
+    requires(sus::ops::Eq<U>)
+  constexpr auto operator==(const WeakT<U>& o) const& noexcept {
     return a == o.a && b == o.b;
   }
-  constexpr auto operator<=>(const Weak& o) const& noexcept {
-    if (a == o.a) return std::weak_ordering::equivalent;
-    if (a < o.a) return std::weak_ordering::less;
+  template <class U>
+    requires(sus::ops::Ord<U>)
+  constexpr auto operator<=>(const WeakT<U>& o) const& noexcept {
+    if ((a <=> o.a) == 0) return std::weak_ordering::equivalent;
+    if ((a <=> o.a) < 0) return std::weak_ordering::less;
     return std::weak_ordering::greater;
   }
 
-  i32 a;
-  i32 b;
+  T a;
+  T b;
 };
+
+using Weak = WeakT<i32>;
 
 TEST(Iterator, WeakCmp) {
   {
@@ -899,6 +941,13 @@ TEST(Iterator, WeakCmp) {
     EXPECT_EQ(
         std::partial_ordering::greater,
         sus::move(smol).into_iter().weak_cmp(sus::move(bigg).into_iter()));
+  }
+
+  // Comparable but different types.
+  {
+    auto one = sus::Vec<WeakT<i32>>::with(WeakT<i32>(1, 1), WeakT<i32>(2, 2));
+    auto two = sus::Vec<WeakT<i64>>::with(WeakT<i64>(1, 1), WeakT<i64>(3, 2));
+    EXPECT_EQ(std::weak_ordering::less, one.iter().weak_cmp(two.iter()));
   }
 }
 
@@ -963,6 +1012,17 @@ TEST(Iterator, WeakCmpBy) {
                   sus::move(bigg).into_iter(),
                   [](const Weak& a, const Weak& b) { return b <=> a; }));
   }
+
+  // Comparable but different types.
+  {
+    auto one = sus::Vec<WeakT<i32>>::with(WeakT<i32>(1, 1), WeakT<i32>(2, 2));
+    auto two = sus::Vec<WeakT<i64>>::with(WeakT<i64>(1, 1), WeakT<i64>(3, 2));
+    EXPECT_EQ(std::weak_ordering::greater,
+              one.iter().weak_cmp_by(
+                  two.iter(), [](const WeakT<i32>& a, const WeakT<i64>& b) {
+                    return b <=> a;
+                  }));
+  }
 }
 
 TEST(Iterator, Eq) {
@@ -1009,6 +1069,13 @@ TEST(Iterator, Eq) {
     auto bigg = sus::Vec<E>::with(E(1), E(2));
     EXPECT_EQ(false,
               sus::move(smol).into_iter().eq(sus::move(bigg).into_iter()));
+  }
+
+  // Comparable but different types.
+  {
+    auto one = sus::Vec<i32>::with(1, 2);
+    auto two = sus::Vec<i64>::with(1, 2);
+    EXPECT_EQ(true, one.iter().eq(two.iter()));
   }
 }
 
@@ -1069,6 +1136,16 @@ TEST(Iterator, EqBy) {
               sus::move(smol).into_iter().eq_by(
                   sus::move(bigg).into_iter(),
                   [](const E& a, const E& b) { return a.i + 1 == b.i; }));
+  }
+
+  // Comparable but different types.
+  {
+    auto one = sus::Vec<i32>::with(1, 1);
+    auto two = sus::Vec<i64>::with(2, 2);
+    EXPECT_EQ(true,
+              one.iter().eq_by(two.iter(), [](const i32& a, const i64& b) {
+                return a + 1 == b;
+              }));
   }
 }
 

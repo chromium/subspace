@@ -24,15 +24,17 @@ namespace sus::iter::__private {
 /// Isolates the logic shared by [`cmp_by`](sus::iter::IteratorBase::cmp_by),
 /// [`partial_cmp_by`](sus::iter::IteratorBase::partial_cmp_by), and
 /// [`weak_cmp_by`](sus::iter::IteratorBase::weak_cmp_by).
-template <class Ordering, class Item>
+template <class Ordering, class ItemA, class ItemB>
 inline Ordering iter_compare(
-    ::sus::iter::Iterator<Item> auto&& a, ::sus::iter::Iterator<Item> auto&& b,
-    ::sus::fn::FnMut<Ordering(const std::remove_reference_t<Item>&,
-                              const std::remove_reference_t<Item>&)> auto&& f) {
+    ::sus::iter::Iterator<ItemA> auto&& a,
+    ::sus::iter::Iterator<ItemB> auto&& b,
+    ::sus::fn::FnMut<Ordering(const std::remove_reference_t<ItemA>&,
+                              const std::remove_reference_t<ItemB>&)> auto&&
+        f) {
   Ordering value = Ordering::equivalent;
   while (true) {
-    ::sus::Option<Item> item_a = a.next();
-    ::sus::Option<Item> item_b = b.next();
+    ::sus::Option<ItemA> item_a = a.next();
+    ::sus::Option<ItemB> item_b = b.next();
     if (item_a.is_none() && item_b.is_none()) {
       return value;
     } else if (item_a.is_none()) {
@@ -50,15 +52,16 @@ inline Ordering iter_compare(
 }
 
 /// Compares two iterators for equality element-wise using the given function.
-template <class Item>
+template <class ItemA, class ItemB>
 inline bool iter_compare_eq(
-    ::sus::iter::Iterator<Item> auto&& a, ::sus::iter::Iterator<Item> auto&& b,
-    ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&,
-                          const std::remove_reference_t<Item>&)> auto&& f) {
+    ::sus::iter::Iterator<ItemA> auto&& a,
+    ::sus::iter::Iterator<ItemB> auto&& b,
+    ::sus::fn::FnMut<bool(const std::remove_reference_t<ItemA>&,
+                          const std::remove_reference_t<ItemB>&)> auto&& f) {
   bool value = true;
   while (true) {
-    ::sus::Option<Item> item_a = a.next();
-    ::sus::Option<Item> item_b = b.next();
+    ::sus::Option<ItemA> item_a = a.next();
+    ::sus::Option<ItemB> item_b = b.next();
     if (item_a.is_none() && item_b.is_none()) {
       return value;
     } else if (item_a.is_none()) {

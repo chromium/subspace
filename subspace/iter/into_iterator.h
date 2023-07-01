@@ -35,10 +35,31 @@ concept IntoIterator = requires(T&& t) {
   { ::sus::forward<T>(t).into_iter() } -> Iterator<Item>;
 };
 
+/// Conversion into an `Iterator` over any type of values.
+///
+/// Like `IntoIterator` but is only satisfied for an iterator over any type of
+/// item, without needing to know the `Item` apriori.
+///
+/// This is useful to work around the limits of type deduction in templates,
+/// along with `IntoIteratorOutputType` to extract the `Item` being iterated
+/// over in the resulting iterator.
+template <class T>
+concept IntoIteratorAny = requires(T&& t) {
+  {
+    ::sus::forward<T>(t).into_iter()
+  } -> Iterator<
+      typename std::decay_t<decltype(::sus::forward<T>(t).into_iter())>::Item>;
+};
+
 /// Returns the type of iterator that will be produced from `T` where `T`
-/// satisifies `IntoIterator`.
-template <class T, class Item>
-  requires(IntoIterator<T, Item>)
-using IntoIteratorOutputType = std::decay_t<decltype(std::declval<T&&>().into_iter())>;
+/// satisifies `IntoIteratorAny<T>`.
+///
+/// The returned type is decayed to a value, such that if into_iter() returns a
+/// reference to itself, this resolves to the iterator type without the
+/// reference.
+template <class T>
+  requires(IntoIteratorAny<T>)
+using IntoIteratorOutputType =
+    std::decay_t<decltype(std::declval<T&&>().into_iter())>;
 
 }  // namespace sus::iter
