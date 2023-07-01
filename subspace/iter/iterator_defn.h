@@ -170,9 +170,8 @@ class IteratorBase {
   /// other kinds of iteration.
   template <IntoIterator<ItemT> Other>
   Iterator<Item> auto chain(Other&& other) && noexcept
-    requires(
-        ::sus::mem::relocate_by_memcpy<Iter> &&
-        ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other, Item>>);
+    requires(::sus::mem::relocate_by_memcpy<Iter> &&
+             ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other>>);
 
   /// Creates an iterator which clones all of its elements.
   ///
@@ -186,18 +185,20 @@ class IteratorBase {
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
-  template <IntoIterator<ItemT> Other>
-    requires(::sus::ops::Ord<ItemT>)
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::Ord<ItemT, OtherItem>)
   std::strong_ordering cmp(Other&& other) && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another with respect to the
   /// specified comparison function.
-  template <IntoIterator<ItemT> Other>
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
   std::strong_ordering cmp_by(Other&& other,
                               ::sus::fn::FnMutBox<std::strong_ordering(
                                   const std::remove_reference_t<Item>&,
-                                  const std::remove_reference_t<Item>&)>
+                                  const std::remove_reference_t<OtherItem>&)>
                                   cmp) && noexcept;
 
   /// Creates an iterator which copies all of its elements.
@@ -258,17 +259,20 @@ class IteratorBase {
 
   /// Determines if the elements of this `Iterator` are equal to those of
   /// another.
-  template <IntoIterator<ItemT> Other>
-    requires(::sus::ops::Eq<ItemT>)
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::Eq<ItemT, OtherItem>)
   bool eq(Other&& other) && noexcept;
 
   /// Determines if the elements of this `Iterator` are equal to those of
   /// another with respect to the specified equality function.
-  template <IntoIterator<ItemT> Other>
-  bool eq_by(Other&& other,
-             ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&,
-                                      const std::remove_reference_t<Item>&)>
-                 eq_fn) && noexcept;
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+  bool eq_by(
+      Other&& other,
+      ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&,
+                               const std::remove_reference_t<OtherItem>&)>
+          eq_fn) && noexcept;
 
   /// Creates an iterator which uses a closure to determine if an element should
   /// be yielded.
@@ -301,16 +305,14 @@ class IteratorBase {
   /// If you need the index of the element, see [`position()`]().
   Option<Item> find(
       ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
-          pred) && noexcept
-    requires(::sus::mem::relocate_by_memcpy<Iter>);
+          pred) && noexcept;
 
   template <
       ::sus::fn::FnMut<::sus::fn::NonVoid(ItemT&&)> FindFn, int&...,
       class R = std::invoke_result_t<FindFn&, ItemT&&>,
       class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type>
     requires(::sus::option::__private::IsOptionType<R>::value)
-  Option<InnerR> find_map(FindFn f) && noexcept
-    requires(::sus::mem::relocate_by_memcpy<Iter>);
+  Option<InnerR> find_map(FindFn f) && noexcept;
 
   /// Creates an iterator from a generator function that consumes the current
   /// iterator.
@@ -336,18 +338,20 @@ class IteratorBase {
   ///
   /// For floating-point numbers, NaN does not have a total order and will
   /// result in `std::partial_ordering::unordered` when compared.
-  template <IntoIterator<ItemT> Other>
-    requires(::sus::ops::PartialOrd<ItemT>)
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   std::partial_ordering partial_cmp(Other&& other) && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another with respect to the
   /// specified comparison function.
-  template <IntoIterator<ItemT> Other>
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
   std::partial_ordering partial_cmp_by(
       Other&& other, ::sus::fn::FnMutBox<std::partial_ordering(
                          const std::remove_reference_t<Item>&,
-                         const std::remove_reference_t<Item>&)>
+                         const std::remove_reference_t<OtherItem>&)>
                          cmp) && noexcept;
 
   /// Converts the iterator into a `std::ranges::range` for use with the std
@@ -377,18 +381,20 @@ class IteratorBase {
   /// The comparison works like short-circuit evaluation, returning a result
   /// without comparing the remaining elements. As soon as an order can be
   /// determined, the evaluation stops and a result is returned.
-  template <IntoIterator<ItemT> Other>
-    requires(::sus::ops::WeakOrd<ItemT>)
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::WeakOrd<ItemT, OtherItem>)
   std::weak_ordering weak_cmp(Other&& other) && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another with respect to the
   /// specified comparison function.
-  template <IntoIterator<ItemT> Other>
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
   std::weak_ordering weak_cmp_by(Other&& other,
                                  ::sus::fn::FnMutBox<std::weak_ordering(
                                      const std::remove_reference_t<Item>&,
-                                     const std::remove_reference_t<Item>&)>
+                                     const std::remove_reference_t<OtherItem>&)>
                                      cmp) && noexcept;
 
   /// Transforms an iterator into a collection.
@@ -468,11 +474,10 @@ template <class Iter, class Item>
 template <IntoIterator<Item> Other>
 Iterator<Item> auto IteratorBase<Iter, Item>::chain(Other&& other) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter> &&
-           ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other, Item>>)
+           ::sus::mem::relocate_by_memcpy<IntoIteratorOutputType<Other>>)
 {
   using Sized = SizedIteratorType<Iter>::type;
-  using OtherSized =
-      SizedIteratorType<IntoIteratorOutputType<Other, Item>>::type;
+  using OtherSized = SizedIteratorType<IntoIteratorOutputType<Other>>::type;
   using Chain = Chain<Sized, OtherSized>;
   return Chain::with(make_sized_iterator(static_cast<Iter&&>(*this)),
                      make_sized_iterator(::sus::move(other).into_iter()));
@@ -489,25 +494,25 @@ IteratorBase<Iter, Item>::cloned() && noexcept
 }
 
 template <class Iter, class Item>
-template <IntoIterator<Item> Other>
-  requires(::sus::ops::Ord<Item>)
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::Ord<Item, OtherItem>)
 std::strong_ordering IteratorBase<Iter, Item>::cmp(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).cmp_by(
       ::sus::move(other),
       [](const std::remove_reference_t<Item>& x,
-         const std::remove_reference_t<Item>& y) -> std::strong_ordering {
+         const std::remove_reference_t<OtherItem>& y) -> std::strong_ordering {
         return x <=> y;
       });
 }
 
 template <class Iter, class Item>
-template <IntoIterator<Item> Other>
+template <IntoIteratorAny Other, int&..., class OtherItem>
 std::strong_ordering IteratorBase<Iter, Item>::cmp_by(
     Other&& other, ::sus::fn::FnMutBox<std::strong_ordering(
                        const std::remove_reference_t<Item>&,
-                       const std::remove_reference_t<Item>&)>
+                       const std::remove_reference_t<OtherItem>&)>
                        cmp) && noexcept {
-  return __private::iter_compare<std::strong_ordering, Item>(
+  return __private::iter_compare<std::strong_ordering, Item, OtherItem>(
       static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
       ::sus::move(cmp));
 }
@@ -548,25 +553,25 @@ auto IteratorBase<Iter, Item>::enumerate() && noexcept
 }
 
 template <class Iter, class Item>
-template <IntoIterator<Item> Other>
-  requires(::sus::ops::Eq<Item>)
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::Eq<Item, OtherItem>)
 bool IteratorBase<Iter, Item>::eq(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).eq_by(
       ::sus::move(other),
       [](const std::remove_reference_t<Item>& x,
-         const std::remove_reference_t<Item>& y) { return x == y; });
+         const std::remove_reference_t<OtherItem>& y) { return x == y; });
 }
 
 template <class Iter, class Item>
-template <IntoIterator<Item> Other>
+template <IntoIteratorAny Other, int&..., class OtherItem>
 bool IteratorBase<Iter, Item>::eq_by(
     Other&& other,
     ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&,
-                             const std::remove_reference_t<Item>&)>
+                             const std::remove_reference_t<OtherItem>&)>
         eq_fn) && noexcept {
-  return __private::iter_compare_eq<Item>(static_cast<Iter&&>(*this),
-                                          ::sus::move(other).into_iter(),
-                                          ::sus::move(eq_fn));
+  return __private::iter_compare_eq<Item, OtherItem>(
+      static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
+      ::sus::move(eq_fn));
 }
 
 template <class Iter, class Item>
@@ -596,9 +601,7 @@ Iterator<InnerR> auto IteratorBase<Iter, Item>::filter_map(F f) && noexcept
 template <class Iter, class Item>
 Option<Item> IteratorBase<Iter, Item>::find(
     ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
-        pred) && noexcept
-  requires(::sus::mem::relocate_by_memcpy<Iter>)
-{
+        pred) && noexcept {
   while (true) {
     Option<Item> o = static_cast<Iter&>(*this).next();
     if (o.is_none() || pred(o.as_value())) return o;
@@ -609,9 +612,7 @@ template <class Iter, class Item>
 template <::sus::fn::FnMut<::sus::fn::NonVoid(Item&&)> FindFn, int&..., class R,
           class InnerR>
   requires(::sus::option::__private::IsOptionType<R>::value)
-Option<InnerR> IteratorBase<Iter, Item>::find_map(FindFn f) && noexcept
-  requires(::sus::mem::relocate_by_memcpy<Iter>)
-{
+Option<InnerR> IteratorBase<Iter, Item>::find_map(FindFn f) && noexcept {
   while (true) {
     Option<Option<InnerR>> o = static_cast<Iter&>(*this).next().map(f);
     if (o.is_none()) return sus::Option<InnerR>();
@@ -639,26 +640,26 @@ Iterator<R> auto IteratorBase<Iter, Item>::map(T fn) && noexcept
 }
 
 template <class Iter, class Item>
-template <IntoIterator<Item> Other>
-  requires(::sus::ops::PartialOrd<Item>)
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::PartialOrd<Item, OtherItem>)
 std::partial_ordering IteratorBase<Iter, Item>::partial_cmp(
     Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).partial_cmp_by(
       ::sus::move(other),
       [](const std::remove_reference_t<Item>& x,
-         const std::remove_reference_t<Item>& y) -> std::partial_ordering {
+         const std::remove_reference_t<OtherItem>& y) -> std::partial_ordering {
         return x <=> y;
       });
 }
 
 template <class Iter, class Item>
-template <IntoIterator<Item> Other>
+template <IntoIteratorAny Other, int&..., class OtherItem>
 std::partial_ordering IteratorBase<Iter, Item>::partial_cmp_by(
     Other&& other, ::sus::fn::FnMutBox<std::partial_ordering(
                        const std::remove_reference_t<Item>&,
-                       const std::remove_reference_t<Item>&)>
+                       const std::remove_reference_t<OtherItem>&)>
                        cmp) && noexcept {
-  return __private::iter_compare<std::partial_ordering, Item>(
+  return __private::iter_compare<std::partial_ordering, Item, OtherItem>(
       static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
       ::sus::move(cmp));
 }
@@ -679,26 +680,26 @@ Iterator<Item> auto IteratorBase<Iter, Item>::rev() && noexcept
 }
 
 template <class Iter, class Item>
-template <IntoIterator<Item> Other>
-  requires(::sus::ops::WeakOrd<Item>)
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::WeakOrd<Item, OtherItem>)
 std::weak_ordering IteratorBase<Iter, Item>::weak_cmp(
     Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).weak_cmp_by(
       ::sus::move(other),
       [](const std::remove_reference_t<Item>& x,
-         const std::remove_reference_t<Item>& y) -> std::weak_ordering {
+         const std::remove_reference_t<OtherItem>& y) -> std::weak_ordering {
         return x <=> y;
       });
 }
 
 template <class Iter, class Item>
-template <IntoIterator<Item> Other>
+template <IntoIteratorAny Other, int&..., class OtherItem>
 std::weak_ordering IteratorBase<Iter, Item>::weak_cmp_by(
-    Other&& other, ::sus::fn::FnMutBox<
-                       std::weak_ordering(const std::remove_reference_t<Item>&,
-                                          const std::remove_reference_t<Item>&)>
+    Other&& other, ::sus::fn::FnMutBox<std::weak_ordering(
+                       const std::remove_reference_t<Item>&,
+                       const std::remove_reference_t<OtherItem>&)>
                        cmp) && noexcept {
-  return __private::iter_compare<std::weak_ordering, Item>(
+  return __private::iter_compare<std::weak_ordering, Item, OtherItem>(
       static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
       ::sus::move(cmp));
 }
