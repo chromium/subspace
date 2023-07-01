@@ -72,11 +72,17 @@ TEST(f32, Traits) {
   static_assert(!sus::ops::Ord<f32>);
   static_assert(!sus::ops::WeakOrd<f32>);
   static_assert(sus::ops::PartialOrd<f32>);
+  static_assert(sus::ops::PartialOrd<f32, f64>);
+  static_assert(sus::ops::PartialOrd<f32, float>);
+  static_assert(sus::ops::PartialOrd<f32, double>);
   static_assert(1_f32 >= 1_f32);
   static_assert(2_f32 > 1_f32);
   static_assert(1_f32 <= 1_f32);
   static_assert(1_f32 < 2_f32);
   static_assert(sus::ops::Eq<f32>);
+  static_assert(sus::ops::Eq<f32, f64>);
+  static_assert(sus::ops::Eq<f32, float>);
+  static_assert(sus::ops::Eq<f32, double>);
   static_assert(1_f32 == 1_f32);
   static_assert(!(1_f32 == 2_f32));
   static_assert(1_f32 != 2_f32);
@@ -177,16 +183,16 @@ TEST(f32, AssignPrimitive) {
 }
 
 template <class From, class To>
-concept IsImplicitlyConvertible = (std::is_convertible_v<From, To> &&
-                                   std::is_assignable_v<To, From>);
+concept IsImplicitlyConvertible =
+    (std::is_convertible_v<From, To> && std::is_assignable_v<To, From>);
 template <class From, class To>
-concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
-                                   !std::is_convertible_v<From, To> &&
-                                   !std::is_assignable_v<To, From>);
+concept IsExplicitlyConvertible =
+    (std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+     !std::is_assignable_v<To, From>);
 template <class From, class To>
-concept NotConvertible = (!std::constructible_from<To, From> &&
-                          !std::is_convertible_v<From, To> &&
-                          !std::is_assignable_v<To, From>);
+concept NotConvertible =
+    (!std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+     !std::is_assignable_v<To, From>);
 
 TEST(f32, FromPrimitive) {
   static_assert(IsImplicitlyConvertible<float, f32>);
@@ -777,8 +783,7 @@ TEST(f32, Signum) {
   EXPECT_EQ((-123_f32).signum(), -1_f32);
   EXPECT_EQ(f32::INFINITY.signum(), 1_f32);
   EXPECT_EQ(f32::NEG_INFINITY.signum(), -1_f32);
-  EXPECT_TRUE(
-      ::isnan(f32::NAN.signum().primitive_value));  // TODO: is_nan()
+  EXPECT_TRUE(::isnan(f32::NAN.signum().primitive_value));  // TODO: is_nan()
 }
 
 TEST(f32, Sin) {
@@ -1050,15 +1055,13 @@ TEST(f32, RemEuclid) {
 
 TEST(f32, ToBeBytes) {
   auto array = (12.5_f32).to_be_bytes();
-  auto expected =
-      sus::Array<u8, 4>::with(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8);
+  auto expected = sus::Array<u8, 4>::with(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8);
   EXPECT_EQ(array, expected);
 }
 
 TEST(f32, ToLeBytes) {
   auto array = (12.5_f32).to_le_bytes();
-  auto expected =
-      sus::Array<u8, 4>::with(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
+  auto expected = sus::Array<u8, 4>::with(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
   EXPECT_EQ(array, expected);
 }
 
