@@ -23,7 +23,7 @@ namespace sus::iter::__private {
 ///
 /// Isolates the logic shared by [`cmp_by`](sus::iter::IteratorBase::cmp_by),
 /// [`partial_cmp_by`](sus::iter::IteratorBase::partial_cmp_by), and
-/// [`eq_by`](sus::iter::IteratorBase::eq_by).
+/// [`weak_cmp_by`](sus::iter::IteratorBase::weak_cmp_by).
 template <class Ordering, class Item>
 inline Ordering iter_compare(
     ::sus::iter::Iterator<Item> auto&& a, ::sus::iter::Iterator<Item> auto&& b,
@@ -49,4 +49,29 @@ inline Ordering iter_compare(
   }
 }
 
+/// Compares two iterators for equality element-wise using the given function.
+template <class Item>
+inline bool iter_compare_eq(
+    ::sus::iter::Iterator<Item> auto&& a, ::sus::iter::Iterator<Item> auto&& b,
+    ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&,
+                          const std::remove_reference_t<Item>&)> auto&& f) {
+  bool value = true;
+  while (true) {
+    ::sus::Option<Item> item_a = a.next();
+    ::sus::Option<Item> item_b = b.next();
+    if (item_a.is_none() && item_b.is_none()) {
+      return value;
+    } else if (item_a.is_none()) {
+      value = false;
+      return value;
+    } else if (item_b.is_none()) {
+      value = false;
+      return value;
+    } else {
+      value = f(item_a.as_value(), item_b.as_value());
+      if (!value) return value;
+      // Otherwise, try the next pair of elements.
+    }
+  }
+}
 }  // namespace sus::iter::__private

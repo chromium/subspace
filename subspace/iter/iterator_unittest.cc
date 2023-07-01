@@ -948,6 +948,114 @@ TEST(Iterator, WeakCmpBy) {
   }
 }
 
+TEST(Iterator, Eq) {
+  struct E {
+    i32 i;
+    constexpr bool operator==(const E& rhs) const& noexcept {
+      return i == rhs.i;
+    }
+  };
+  static_assert(sus::ops::Eq<E>);
+  static_assert(!sus::ops::Ord<E>);
+
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(2));
+    auto bigg = sus::Vec<E>::with(E(1), E(2), E(1));
+    EXPECT_EQ(false, smol.iter().eq(bigg.iter()));
+  }
+  {
+    auto bigg = sus::Vec<E>::with(E(1), E(2), E(1));
+    auto smol = sus::Vec<E>::with(E(1), E(2));
+    EXPECT_EQ(false, bigg.iter().eq(smol.iter()));
+  }
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(2));
+    auto bigg = sus::Vec<E>::with(E(1), E(1), E(1));
+    EXPECT_EQ(false, smol.iter().eq(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(2));
+    auto bigg = sus::Vec<E>::with(E(1), E(2));
+    EXPECT_EQ(true, smol.iter().eq(bigg.iter()));
+  }
+
+  // iter_mut.
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(3));
+    auto bigg = sus::Vec<E>::with(E(1), E(2));
+    EXPECT_EQ(false, smol.iter_mut().eq(bigg.iter_mut()));
+  }
+
+  // into_iter.
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(3));
+    auto bigg = sus::Vec<E>::with(E(1), E(2));
+    EXPECT_EQ(false,
+              sus::move(smol).into_iter().eq(sus::move(bigg).into_iter()));
+  }
+}
+
+TEST(Iterator, EqBy) {
+  struct E {
+    i32 i;
+    constexpr bool operator==(const E& rhs) const& noexcept {
+      return i == rhs.i;
+    }
+  };
+  static_assert(sus::ops::Eq<E>);
+  static_assert(!sus::ops::Ord<E>);
+
+  {
+    auto bigg = sus::Vec<E>::with(E(1), E(1), E(1));
+    auto smol = sus::Vec<E>::with(E(2), E(2));
+    EXPECT_EQ(false, smol.iter().eq_by(bigg.iter(), [](const E& a, const E& b) {
+      return a.i + 1 == b.i;
+    }));
+  }
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(1));
+    auto bigg = sus::Vec<E>::with(E(2), E(2), E(1));
+    EXPECT_EQ(false, bigg.iter().eq_by(smol.iter(), [](const E& a, const E& b) {
+      return a.i + 1 == b.i;
+    }));
+  }
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(1));
+    auto bigg = sus::Vec<E>::with(E(2), E(3), E(1));
+    EXPECT_EQ(false, smol.iter().eq_by(bigg.iter(), [](const E& a, const E& b) {
+      return a.i + 1 == b.i;
+    }));
+  }
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(1));
+    auto bigg = sus::Vec<E>::with(E(2), E(2));
+    EXPECT_EQ(true, smol.iter().eq_by(bigg.iter(), [](const E& a, const E& b) {
+      return a.i + 1 == b.i;
+    }));
+  }
+
+  // iter_mut.
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(1));
+    auto bigg = sus::Vec<E>::with(E(2), E(3));
+    EXPECT_EQ(false, smol.iter_mut().eq_by(bigg.iter_mut(),
+                                           [](const E& a, const E& b) {
+                                             return a.i + 1 == b.i;
+                                           }));
+  }
+
+  // into_iter.
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(1));
+    auto bigg = sus::Vec<E>::with(E(2), E(3));
+    EXPECT_EQ(false,
+              sus::move(smol).into_iter().eq_by(sus::move(bigg).into_iter(),
+                                                [](const E& a, const E& b) {
+                                                  return a.i + 1 == b.i;
+                                                }));
+  }
+}
+
 TEST(Iterator, Cycle) {
   // Empty.
   {
