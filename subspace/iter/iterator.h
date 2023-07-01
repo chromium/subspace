@@ -32,6 +32,7 @@
 #include "subspace/iter/chain.h"
 #include "subspace/iter/cloned.h"
 #include "subspace/iter/copied.h"
+#include "subspace/iter/cycle.h"
 #include "subspace/iter/enumerate.h"
 #include "subspace/iter/filter.h"
 #include "subspace/iter/map.h"

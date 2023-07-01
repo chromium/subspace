@@ -77,8 +77,7 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
 
   RefIterator* sus_nonnull_var next_iter_;
 
-  // The InnerSizedIter is trivially relocatable. Likewise, the predicate is
-  // known to be trivially relocatable because FnMutBox is.
+  // The RefIterator pointer is trivially relocatable.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
                                   decltype(next_iter_));
 };
