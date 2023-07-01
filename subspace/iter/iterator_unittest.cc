@@ -1170,4 +1170,61 @@ TEST(Iterator, Find) {
   }
 }
 
+TEST(Iterator, FindMap) {
+  auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+
+  // iter().
+  {
+    decltype(auto) s = a.iter().find_map([](const i32& i) -> sus::Option<u32> {
+      if (i == 3) {
+        return sus::some(3u);
+      } else {
+        return sus::none();
+      }
+    });
+    static_assert(std::same_as<decltype(s), sus::Option<u32>>);
+    EXPECT_EQ(s, sus::some(3_u32));
+
+    decltype(auto) n = a.iter().find_map(
+        [](const i32&) -> sus::Option<u32> { return sus::none(); });
+    static_assert(std::same_as<decltype(n), sus::Option<u32>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // iter_mut().
+  {
+    decltype(auto) s = a.iter_mut().find_map([](i32& i) -> sus::Option<u32> {
+      if (i == 3) {
+        return sus::some(3u);
+      } else {
+        return sus::none();
+      }
+    });
+    static_assert(std::same_as<decltype(s), sus::Option<u32>>);
+    EXPECT_EQ(s, sus::some(3_u32));
+
+    decltype(auto) n = a.iter_mut().find_map(
+        [](i32&) -> sus::Option<u32> { return sus::none(); });
+    static_assert(std::same_as<decltype(n), sus::Option<u32>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // into_iter().
+  {
+    decltype(auto) s =
+        sus::clone(a).into_iter().find_map([](i32&& i) -> sus::Option<u32> {
+          if (i == 3) {
+            return sus::some(3u);
+          } else {
+            return sus::none();
+          }
+        });
+    static_assert(std::same_as<decltype(s), sus::Option<u32>>);
+    EXPECT_EQ(s, sus::some(3_u32));
+
+    decltype(auto) n = sus::clone(a).into_iter().find_map(
+        [](i32&&) -> sus::Option<u32> { return sus::none(); });
+    static_assert(std::same_as<decltype(n), sus::Option<u32>>);
+    EXPECT_EQ(n, sus::None);
+  }
+}
+
 }  // namespace
