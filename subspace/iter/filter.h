@@ -43,12 +43,9 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
     InnerSizedIter& iter = next_iter_;
     Pred& pred = pred_;
 
-    // TODO: Just call find(pred) on itself?
     while (true) {
       Option<Item> item = iter.next();
-      if (item.is_none() ||
-          pred(item.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn)))
-        return item;
+      if (item.is_none() || pred(item.as_value())) return item;
     }
   }
   /// sus::iter::Iterator trait.

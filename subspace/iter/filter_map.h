@@ -49,7 +49,6 @@ class [[nodiscard]] [[sus_trivial_abi]] FilterMap final
     InnerSizedIter& iter = next_iter_;
     FilterMapFn& fn = fn_;
 
-    // TODO: Just call find_map(fn_) on itself?
     while (true) {
       Option<FromItem> in = iter.next();
       Option<ToItem> out;
