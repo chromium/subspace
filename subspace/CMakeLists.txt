@@ -82,6 +82,7 @@ target_sources(subspace PUBLIC
     "iter/enumerate.h"
     "iter/extend.h"
     "iter/filter.h"
+    "iter/filter_map.h"
     "iter/from_iterator.h"
     "iter/generator.h"
     "iter/into_iterator.h"

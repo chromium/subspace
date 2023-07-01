@@ -62,6 +62,8 @@ template <class InnerSizedIter>
 class Enumerate;
 template <class InnerSizedIter>
 class Filter;
+template <class ToItem, class InnerSizedIter>
+class FilterMap;
 template <class Item>
 class Generator;
 template <class ToItem, class InnerSizedIter>
@@ -272,6 +274,14 @@ class IteratorBase {
   /// iterator will yield only the elements for which the closure returns true.
   auto filter(::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
                   pred) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  template <
+      class F, int&..., class R = std::invoke_result_t<F, Item&&>,
+      class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type,
+      class B = ::sus::fn::FnMutBox<R(Item&&)>>
+    requires(::sus::option::__private::IsOptionType<R>::value && Into<F, B>)
+  Iterator<InnerR> auto filter_map(F f) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Creates an iterator from a generator function that consumes the current
@@ -551,6 +561,18 @@ auto IteratorBase<Iter, Item>::filter(
   using Filter = Filter<Sized>;
   return Filter::with(::sus::move(pred),
                       make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+template <class F, int&..., class R, class InnerR, class B>
+  requires(::sus::option::__private::IsOptionType<R>::value && Into<F, B>)
+Iterator<InnerR> auto IteratorBase<Iter, Item>::filter_map(F f) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using FilterMap = FilterMap<InnerR, Sized>;
+  return FilterMap::with(::sus::move(f),
+                         make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>

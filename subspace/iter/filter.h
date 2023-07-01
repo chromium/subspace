@@ -53,7 +53,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
   }
   /// sus::iter::Iterator trait.
   ::sus::iter::SizeHint size_hint() const noexcept {
-    return next_iter_.size_hint();
+    // Can't know a lower bound, due to the predicate.
+    return ::sus::iter::SizeHint(0u, next_iter_.size_hint().upper);
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -66,28 +67,19 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
     // TODO: Just call find(pred) on itself?
     while (true) {
       Option<Item> item = iter.next_back();
-      if (item.is_none() ||
-          pred(item.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn)))
-        return item;
+      if (item.is_none() || pred(item.as_value())) return item;
     }
-  }
-
-  // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
-    requires(InnerSizedIter::ExactSize)
-  {
-    return next_iter_.exact_size_hint();
   }
 
  private:
   template <class U, class V>
   friend class IteratorBase;
 
-  static Filter with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
+  static Filter with(Pred && pred, InnerSizedIter && next_iter) noexcept {
     return Filter(::sus::move(pred), ::sus::move(next_iter));
   }
 
-  Filter(Pred&& pred, InnerSizedIter&& next_iter) noexcept
+  Filter(Pred && pred, InnerSizedIter && next_iter) noexcept
       : pred_(::sus::move(pred)), next_iter_(::sus::move(next_iter)) {}
 
   Pred pred_;
