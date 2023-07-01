@@ -1133,4 +1133,41 @@ TEST(Iterator, Cycle) {
   }
 }
 
+TEST(Iterator, Find) {
+  auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+
+  // iter().
+  {
+    decltype(auto) s = a.iter().find([](const i32& i) { return i == 3; });
+    static_assert(std::same_as<decltype(s), sus::Option<const i32&>>);
+    EXPECT_EQ(s, sus::some(3_i32));
+
+    decltype(auto) n = a.iter().find([](const i32& i) { return i == 0; });
+    static_assert(std::same_as<decltype(n), sus::Option<const i32&>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // iter_mut().
+  {
+    decltype(auto) s = a.iter_mut().find([](const i32& i) { return i == 3; });
+    static_assert(std::same_as<decltype(s), sus::Option<i32&>>);
+    EXPECT_EQ(s, sus::some(3_i32));
+
+    decltype(auto) n = a.iter_mut().find([](const i32& i) { return i == 0; });
+    static_assert(std::same_as<decltype(n), sus::Option<i32&>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // into_iter().
+  {
+    decltype(auto) s =
+        sus::clone(a).into_iter().find([](const i32& i) { return i == 3; });
+    static_assert(std::same_as<decltype(s), sus::Option<i32>>);
+    EXPECT_EQ(s, sus::some(3_i32));
+
+    decltype(auto) n =
+        sus::clone(a).into_iter().find([](const i32& i) { return i == 0; });
+    static_assert(std::same_as<decltype(n), sus::Option<i32>>);
+    EXPECT_EQ(n, sus::None);
+  }
+}
+
 }  // namespace
