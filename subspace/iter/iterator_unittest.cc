@@ -279,6 +279,20 @@ TEST(Iterator, Filter) {
   EXPECT_EQ(expect, 5);
 }
 
+TEST(Iterator, FilterMap) {
+  auto it = sus::Vec<i32>::with(1, 2, 3, 4, 5).into_iter();
+  auto fmit = sus::move(it).filter_map([](i32&& i) -> sus::Option<u32> {
+    if (i >= 3) {
+      return sus::some(u32::from(i));
+    } else {
+      return sus::none();
+    }
+  });
+  static_assert(std::same_as<decltype(fmit.next()), sus::Option<u32>>);
+
+  EXPECT_EQ(fmit.size_hint(), sus::iter::SizeHint(0u, sus::some(5_usize)));
+}
+
 TEST(Iterator, FilterDoubleEnded) {
   i32 nums[5] = {1, 2, 3, 4, 5};
 
