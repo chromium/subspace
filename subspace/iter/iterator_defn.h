@@ -304,6 +304,14 @@ class IteratorBase {
           pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
+  template <
+      ::sus::fn::FnMut<::sus::fn::NonVoid(ItemT&&)> FindFn, int&...,
+      class R = std::invoke_result_t<FindFn&, ItemT&&>,
+      class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type>
+    requires(::sus::option::__private::IsOptionType<R>::value)
+  Option<InnerR> find_map(FindFn f) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
   /// Creates an iterator from a generator function that consumes the current
   /// iterator.
   template <::sus::fn::FnOnce<::sus::iter::Generator<ItemT>(Iter&&)> GenFn>
@@ -594,6 +602,20 @@ Option<Item> IteratorBase<Iter, Item>::find(
   while (true) {
     Option<Item> o = static_cast<Iter&>(*this).next();
     if (o.is_none() || pred(o.as_value())) return o;
+  }
+}
+
+template <class Iter, class Item>
+template <::sus::fn::FnMut<::sus::fn::NonVoid(Item&&)> FindFn, int&..., class R,
+          class InnerR>
+  requires(::sus::option::__private::IsOptionType<R>::value)
+Option<InnerR> IteratorBase<Iter, Item>::find_map(FindFn f) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  while (true) {
+    Option<Option<InnerR>> o = static_cast<Iter&>(*this).next().map(f);
+    if (o.is_none()) return sus::Option<InnerR>();
+    if (o.as_value().is_some()) return sus::move(o).flatten();
   }
 }
 
