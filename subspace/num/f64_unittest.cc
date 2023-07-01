@@ -69,11 +69,17 @@ TEST(f64, Traits) {
   static_assert(!sus::ops::Ord<f64>);
   static_assert(!sus::ops::WeakOrd<f64>);
   static_assert(sus::ops::PartialOrd<f64>);
+  static_assert(sus::ops::PartialOrd<f64, f32>);
+  static_assert(sus::ops::PartialOrd<f64, float>);
+  static_assert(sus::ops::PartialOrd<f64, double>);
   static_assert(1_f64 >= 1_f64);
   static_assert(2_f64 > 1_f64);
   static_assert(1_f64 <= 1_f64);
   static_assert(1_f64 < 2_f64);
   static_assert(sus::ops::Eq<f64>);
+  static_assert(sus::ops::Eq<f64, f32>);
+  static_assert(sus::ops::Eq<f64, float>);
+  static_assert(sus::ops::Eq<f64, double>);
   static_assert(1_f64 == 1_f64);
   static_assert(!(1_f64 == 2_f64));
   static_assert(1_f64 != 2_f64);

@@ -147,18 +147,38 @@ sus_pure constexpr inline explicit operator U() const {
   return primitive_value;
 }
 
-/// sus::ops::Eq<##_self##> trait.
-/// #[doc.overloads=float##_self##.eq]
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(
-    _self l, _self r) noexcept {
+/// sus::ops::Eq<##_self##, PrimitiveFloat> trait.
+/// #[doc.overloads=float.eq.prim]
+template <PrimitiveFloat F>
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(_self l,
+                                                               F r) noexcept {
+  return (l.primitive_value <=> r) == 0;
+}
+
+/// sus::ops::Eq<##_self##, Float> trait.
+/// #[doc.overloads=float.eq]
+template <Float F>
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(_self l,
+                                                               F r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
-/// sus::ops::PartialOrd<##_self##> trait.
-/// #[doc.overloads=float##_self##.ord]
-[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
-    _self l, _self r) noexcept {
+
+/// sus::ops::PartialOrd<##_self##, PrimitiveFloat> trait.
+/// #[doc.overloads=float.ord.prim]
+template <PrimitiveFloat F>
+[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(_self l,
+                                                                F r) noexcept {
+  return l.primitive_value <=> r;
+}
+
+/// sus::ops::PartialOrd<##_self##, Float> trait.
+/// #[doc.overloads=float.ord]
+template <Float F>
+[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(_self l,
+                                                                F r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
+
 /// Return the ordering between self and other.
 ///
 /// Unlike the standard partial comparison between floating point numbers,
