@@ -275,8 +275,9 @@ class IteratorBase {
   ///
   /// Given an element the closure must return true or false. The returned
   /// iterator will yield only the elements for which the closure returns true.
-  Iterator<Item> auto filter(::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
-                  pred) && noexcept
+  Iterator<Item> auto filter(
+      ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+          pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   template <
@@ -285,6 +286,22 @@ class IteratorBase {
       class B = ::sus::fn::FnMutBox<R(Item&&)>>
     requires(::sus::option::__private::IsOptionType<R>::value && Into<F, B>)
   Iterator<InnerR> auto filter_map(F f) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Searches for an element of an iterator that satisfies a predicate.
+  ///
+  /// `find()` takes a closure that returns `true` or `false`. It applies this
+  /// predicate to each element of the iterator, and if any of them return true,
+  /// then `find()` returns `Some(element)`. If they all return `false`, it
+  /// returns `None`.
+  ///
+  /// `find()` is short-circuiting; in other words, it will stop processing as
+  /// soon as the predicate returns `true`.
+  ///
+  /// If you need the index of the element, see [`position()`]().
+  Option<Item> find(
+      ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+          pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Creates an iterator from a generator function that consumes the current
@@ -569,6 +586,18 @@ Iterator<InnerR> auto IteratorBase<Iter, Item>::filter_map(F f) && noexcept
 }
 
 template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::find(
+    ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+        pred) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  while (true) {
+    Option<Item> o = static_cast<Iter&>(*this).next();
+    if (o.is_none() || pred(o.as_value())) return o;
+  }
+}
+
+template <class Iter, class Item>
 template <::sus::fn::FnOnce<::sus::iter::Generator<Item>(Iter&&)> GenFn>
 ::sus::iter::Iterator<Item> auto IteratorBase<Iter, Item>::generate(
     GenFn&& generator_fn) && noexcept {
@@ -586,7 +615,6 @@ Iterator<R> auto IteratorBase<Iter, Item>::map(T fn) && noexcept
   return Map::with(sus::into(::sus::move(fn)),
                    make_sized_iterator(static_cast<Iter&&>(*this)));
 }
-
 
 template <class Iter, class Item>
 template <IntoIterator<Item> Other>
