@@ -22,6 +22,9 @@ namespace sus::iter {
 struct SizeHint {
   ::sus::num::usize lower;
   ::sus::option::Option<::sus::num::usize> upper;
+
+  friend constexpr bool operator==(const SizeHint& lhs,
+                                   const SizeHint& rhs) noexcept = default;
 };
 
 }  // namespace sus::iter

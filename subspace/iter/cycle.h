@@ -51,23 +51,23 @@ class [[nodiscard]] [[sus_trivial_abi]] Cycle final
 
   /// sus::iter::Iterator trait.
   ::sus::iter::SizeHint size_hint() const noexcept {
-    const SizeHint sz = original_.size_hint();
+    SizeHint sz = original_.size_hint();
     if (sz.lower != 0u) {
       // More than 0 items, so it's infinite.
-      return SizeHint(usize::MAX, sus::Option<usize>::none());
+      return SizeHint(usize::MAX, ::sus::Option<usize>());
     }
     // Posssibly 0 items, lower limit is 0.
-    return SizeHint(0, sus::move(sz).upper.map_or_else(
-                           // No upper limit, so we have no limit either.
-                           [] { return sus::Option<usize>::none(); },
-                           [](usize u) {
-                             if (u == 0u) {
-                               // Upper limit is 0, empty iterator.
-                               return sus::Option<usize>::some(0);
-                             } else
-                               // Non-zero upper limit, will cycle forever.
-                               return sus::Option<usize>::none();
-                           }));
+    return SizeHint(0u, ::sus::move(sz).upper.map_or_else(
+        // No upper limit, so we have no limit either.
+        [] { return ::sus::Option<usize>(); },
+        [](usize u) {
+          if (u == 0u) {
+            // Upper limit is 0, empty iterator.
+            return ::sus::Option<usize>::with(0u);
+          } else
+            // Non-zero upper limit, will cycle forever.
+            return ::sus::Option<usize>();
+        }));
   }
 
  private:
@@ -79,7 +79,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Cycle final
   }
 
   Cycle(InnerSizedIter&& __restrict original,
-         InnerSizedIter&& __restrict active)
+        InnerSizedIter&& __restrict active)
       : original_(::sus::move(original)), active_(::sus::move(active)) {}
 
   InnerSizedIter original_;

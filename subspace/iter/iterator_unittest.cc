@@ -28,6 +28,7 @@
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/never_value.h"
 #include "subspace/mem/replace.h"
+#include "subspace/ops/eq.h"
 #include "subspace/prelude.h"
 
 using sus::containers::Array;
@@ -37,6 +38,8 @@ using sus::option::Option;
 namespace {
 
 using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false, false, false>;
+
+static_assert(::sus::ops::Eq<sus::iter::SizeHint>);
 
 // clang-format off
 static_assert(
@@ -1049,12 +1052,25 @@ TEST(Iterator, EqBy) {
     auto smol = sus::Vec<E>::with(E(1), E(1));
     auto bigg = sus::Vec<E>::with(E(2), E(3));
     EXPECT_EQ(false,
-              sus::move(smol).into_iter().eq_by(sus::move(bigg).into_iter(),
-                                                [](const E& a, const E& b) {
-                                                  return a.i + 1 == b.i;
-                                                }));
+              sus::move(smol).into_iter().eq_by(
+                  sus::move(bigg).into_iter(),
+                  [](const E& a, const E& b) { return a.i + 1 == b.i; }));
   }
 }
+
+struct UnknownLimitIter final
+    : public sus::iter::IteratorBase<UnknownLimitIter, i32> {
+  using Item = i32;
+  sus::Option<i32> next() noexcept { return sus::none(); }
+  sus::iter::SizeHint size_hint() const noexcept {
+    return sus::iter::SizeHint(0u, sus::some(1u));
+  }
+
+  sus_class_trivially_relocatable(unsafe_fn);
+};
+static_assert(sus::mem::Clone<UnknownLimitIter>);
+static_assert(sus::iter::Iterator<UnknownLimitIter, i32>);
+static_assert(sus::mem::relocate_by_memcpy<UnknownLimitIter>);
 
 TEST(Iterator, Cycle) {
   // Empty.
@@ -1062,6 +1078,8 @@ TEST(Iterator, Cycle) {
     auto v = sus::Vec<i32>::with();
     auto it = v.iter().cycle();
     static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
+    // Returns nothing.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
     EXPECT_EQ(it.next(), sus::None);
   }
   // One.
@@ -1069,6 +1087,8 @@ TEST(Iterator, Cycle) {
     auto v = sus::Vec<i32>::with(4);
     auto it = v.iter().cycle();
     static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
+    // No limit to the return.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(usize::MAX, sus::none()));
     EXPECT_EQ(it.next().unwrap(), 4);
     EXPECT_EQ(it.next().unwrap(), 4);
     EXPECT_EQ(it.next().unwrap(), 4);
@@ -1079,6 +1099,8 @@ TEST(Iterator, Cycle) {
     auto v = sus::Vec<i32>::with(1, 2, 3);
     auto it = v.iter().cycle();
     static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
+    // No limit to the return.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(usize::MAX, sus::none()));
     EXPECT_EQ(it.next().unwrap(), 1);
     EXPECT_EQ(it.next().unwrap(), 2);
     EXPECT_EQ(it.next().unwrap(), 3);
@@ -1086,6 +1108,14 @@ TEST(Iterator, Cycle) {
     EXPECT_EQ(it.next().unwrap(), 2);
     EXPECT_EQ(it.next().unwrap(), 3);
     EXPECT_EQ(it.next().unwrap(), 1);
+  }
+
+  // An iterator with a 0 lower bound and non-0 upper bound.
+  {
+    auto it = UnknownLimitIter().cycle();
+    static_assert(std::same_as<decltype(it.next()), sus::Option<i32>>);
+    // May return 0 or unlimited.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
   }
 }
 
