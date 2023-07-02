@@ -802,13 +802,13 @@ struct fmt::formatter<::sus::containers::Vec<T>, Char> {
   constexpr auto format(const ::sus::containers::Vec<T>& vec,
                         FormatContext& ctx) const {
     auto out = ctx.out();
-    out = format_to(out, "[");
+    out = fmt::format_to(out, "[");
     for (::sus::num::usize i; i < vec.len(); i += 1u) {
-      if (i > 0u) out = format_to(out, ", ");
+      if (i > 0u) out = fmt::format_to(out, ", ");
       ctx.advance_to(out);
       out = underlying_.format(vec[i], ctx);
     }
-    return format_to(out, "]");
+    return fmt::format_to(out, "]");
   }
 
  private:

@@ -962,18 +962,18 @@ struct fmt::formatter<::sus::result::Result<T, E>, Char> {
                         FormatContext& ctx) const {
     auto out = ctx.out();
     if (t.is_err()) {
-      out = format_to(ctx.out(), "Err(");
+      out = fmt::format_to(ctx.out(), "Err(");
       ctx.advance_to(out);
       out = underlying_err_.format(t.as_err(), ctx);
     } else {
-      out = format_to(out, "Ok(");
+      out = fmt::format_to(out, "Ok(");
       ctx.advance_to(out);
       if constexpr (std::is_void_v<T>)
         out = underlying_ok_.format(ctx);
       else
         out = underlying_ok_.format(t.as_ok(), ctx);
     }
-    return format_to(out, ")");
+    return fmt::format_to(out, ")");
   }
 
  private:

@@ -16,6 +16,13 @@
 
 #include "subspace/iter/iterator_defn.h"
 
+// The usize formatting is in unsigned_integer_impl.h which has an include cycle
+// with usize->Array->Array iterators->SizeHint->usize. So the SizeHint
+// formatting needs to be in a separate header instead of in size_hint.h in
+// order to use the usize formatting. As long as the user includes "iterator.h"
+// they can format SizeHint.
+#include "subspace/iter/size_hint_impl.h"
+
 // Provides the concept for using iterators in generic code.
 #include "subspace/iter/iterator_concept.h"
 

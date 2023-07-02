@@ -1340,13 +1340,13 @@ struct fmt::formatter<::sus::option::Option<T>, Char> {
   constexpr auto format(const ::sus::option::Option<T>& t,
                         FormatContext& ctx) const {
     if (t.is_none()) {
-      return format_to(ctx.out(), "None");
+      return fmt::format_to(ctx.out(), "None");
     } else {
       auto out = ctx.out();
-      out = format_to(out, "Some(");
+      out = fmt::format_to(out, "Some(");
       ctx.advance_to(out);
-      out = underlying_.format(*t, ctx);
-      return format_to(out, ")");
+      out = underlying_.format(t.as_value(), ctx);
+      return fmt::format_to(out, ")");
     }
   }
 
