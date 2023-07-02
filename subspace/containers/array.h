@@ -477,13 +477,13 @@ struct fmt::formatter<::sus::containers::Array<T, N>, Char> {
     requires(N > 0)
   {
     auto out = ctx.out();
-    out = format_to(out, "[");
+    out = fmt::format_to(out, "[");
     for (::sus::num::usize i; i < array.len(); i += 1u) {
-      if (i > 0u) out = format_to(out, ", ");
+      if (i > 0u) out = fmt::format_to(out, ", ");
       ctx.advance_to(out);
       out = underlying_.format(array[i], ctx);
     }
-    return format_to(out, "]");
+    return fmt::format_to(out, "]");
   }
 
   template <class FormatContext>
@@ -491,7 +491,7 @@ struct fmt::formatter<::sus::containers::Array<T, N>, Char> {
                         FormatContext& ctx) const
     requires(N == 0)
   {
-    return format_to(ctx.out(), "[]");
+    return fmt::format_to(ctx.out(), "[]");
   }
 
  private:
