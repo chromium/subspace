@@ -31,8 +31,8 @@ namespace sus::iter {
 /// requires calling `into_iter()` on it to convert it into an `Iterator`
 /// which is iterable in for loops.
 template <class T, class Item>
-concept IntoIterator = requires(T&& t) {
-  { ::sus::forward<T>(t).into_iter() } -> Iterator<Item>;
+concept IntoIterator = requires(std::remove_cvref_t<T> t) {
+  { ::sus::move(t).into_iter() } -> Iterator<Item>;
 };
 
 /// Conversion into an `Iterator` over any type of values.
@@ -44,11 +44,11 @@ concept IntoIterator = requires(T&& t) {
 /// along with `IntoIteratorOutputType` to extract the `Item` being iterated
 /// over in the resulting iterator.
 template <class T>
-concept IntoIteratorAny = requires(T&& t) {
+concept IntoIteratorAny = requires(std::remove_cvref_t<T> t) {
   {
-    ::sus::forward<T>(t).into_iter()
+    ::sus::move(t).into_iter()
   } -> Iterator<
-      typename std::decay_t<decltype(::sus::forward<T>(t).into_iter())>::Item>;
+      typename std::decay_t<decltype(::sus::move(t).into_iter())>::Item>;
 };
 
 /// Returns the type of iterator that will be produced from `T` where `T`
@@ -59,7 +59,7 @@ concept IntoIteratorAny = requires(T&& t) {
 /// reference.
 template <class T>
   requires(IntoIteratorAny<T>)
-using IntoIteratorOutputType =
-    std::decay_t<decltype(std::declval<T&&>().into_iter())>;
+using IntoIteratorOutputType = std::decay_t<
+    decltype(std::declval<std::remove_cvref_t<T>&&>().into_iter())>;
 
 }  // namespace sus::iter
