@@ -43,5 +43,6 @@
 #include "subspace/iter/enumerate.h"
 #include "subspace/iter/filter.h"
 #include "subspace/iter/filter_map.h"
+#include "subspace/iter/flatten.h"
 #include "subspace/iter/map.h"
 #include "subspace/iter/reverse.h"

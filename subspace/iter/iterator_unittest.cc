@@ -1304,4 +1304,151 @@ TEST(Iterator, FindMap) {
   }
 }
 
+TEST(Iterator, Flatten) {
+  // By value/into_iter, forward.
+  {
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2, 3),  //
+                                         sus::Vec<i32>::with(4),        //
+                                         sus::Vec<i32>::with(),         //
+                                         sus::Vec<i32>::with(5, 6));
+    auto it = sus::move(vecs).into_iter().flatten();
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 5);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 6);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // By value/into_iter, backward.
+  {
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2, 3),  //
+                                         sus::Vec<i32>::with(4),        //
+                                         sus::Vec<i32>::with(),         //
+                                         sus::Vec<i32>::with(5, 6),
+                                         sus::Vec<i32>::with()  //
+    );
+    auto it = sus::move(vecs).into_iter().flatten();
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 6);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 5);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // By value/into_iter, backward with 1 left in the first iterator, then
+  // forward.
+  {
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),  //
+                                         sus::Vec<i32>::with(3, 4));
+    auto it = sus::move(vecs).into_iter().flatten();
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // By value/into_iter, backward with none left in the first iterator, then
+  // forward.
+  {
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),  //
+                                         sus::Vec<i32>::with(3, 4));
+    auto it = sus::move(vecs).into_iter().flatten();
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // By value/into_iter, forward with 1 left in the first iterator, then
+  // backward.
+  {
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),  //
+                                         sus::Vec<i32>::with(3, 4));
+    auto it = sus::move(vecs).into_iter().flatten();
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // By value/into_iter, forward with none left in the first iterator, then
+  // backward.
+  {
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),  //
+                                         sus::Vec<i32>::with(3, 4));
+    auto it = sus::move(vecs).into_iter().flatten();
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // iter().
+  {
+    auto v1 = sus::Vec<i32>::with(1, 2);
+    auto v2 = sus::Vec<i32>::with(3);
+    auto vecs = sus::vec(v1.iter(), v2.iter()).construct();
+    auto it = sus::move(vecs).into_iter().flatten();
+    static_assert(std::same_as<decltype(it.next()), Option<const i32&>>);
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // iter_mut().
+  {
+    auto v1 = sus::Vec<i32>::with(1, 2);
+    auto v2 = sus::Vec<i32>::with(3);
+    auto vecs = sus::vec(v1.iter_mut(), v2.iter_mut()).construct();
+    auto it = sus::move(vecs).into_iter().flatten();
+    static_assert(std::same_as<decltype(it.next()), Option<i32&>>);
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+}
+
 }  // namespace
