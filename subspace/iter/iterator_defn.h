@@ -64,6 +64,8 @@ template <class InnerSizedIter>
 class Filter;
 template <class ToItem, class InnerSizedIter>
 class FilterMap;
+template <class EachIter, class InnerSizedIter>
+class Flatten;
 template <class Item>
 class Generator;
 template <class ToItem, class InnerSizedIter>
@@ -313,6 +315,17 @@ class IteratorBase {
       class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type>
     requires(::sus::option::__private::IsOptionType<R>::value)
   Option<InnerR> find_map(FindFn f) && noexcept;
+
+  /// Creates an iterator that flattens nested structure.
+  ///
+  /// This is useful when you have an iterator of iterators or an iterator of
+  /// things that can be turned into iterators and you want to remove one level
+  /// of indirection.
+  ///
+  /// In other words, this type maps `Iterator[Iterable[T]]` into `Iterator[T]`.
+  auto flatten() && noexcept
+    requires(IntoIteratorAny<Item> &&  //
+             ::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Creates an iterator from a generator function that consumes the current
   /// iterator.
@@ -618,6 +631,16 @@ Option<InnerR> IteratorBase<Iter, Item>::find_map(FindFn f) && noexcept {
     if (o.is_none()) return sus::Option<InnerR>();
     if (o.as_value().is_some()) return sus::move(o).flatten();
   }
+}
+
+template <class Iter, class Item>
+auto IteratorBase<Iter, Item>::flatten() && noexcept
+  requires(IntoIteratorAny<Item> &&  //
+           ::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Flatten = Flatten<IntoIteratorOutputType<Item>, Sized>;
+  return Flatten::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
