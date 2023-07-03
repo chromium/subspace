@@ -1602,4 +1602,42 @@ TEST(Iterator, FlatMap) {
   }
 }
 
+TEST(Iterator, Fold) {
+  // Check the accumulator type can be different from the iterating type.
+  {
+    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    auto o = sus::move(it).fold(
+        10_u32, [](u32 acc, i32&& v) { return u32::from(v) + acc; });
+    static_assert(std::same_as<u32, decltype(o)>);
+    EXPECT_EQ(o, (5u + (4u + (3u + (2u + (1u + 10u))))));
+  }
+  // Check order of iteration.
+  {
+    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    auto o =
+        sus::move(it).fold(10_i32, [](i32 acc, i32&& v) { return v - acc; });
+    static_assert(std::same_as<i32, decltype(o)>);
+    EXPECT_EQ(o, (5 - (4 - (3 - (2 - (1 - 10))))));
+  }
+}
+
+TEST(Iterator, Rfold) {
+  // Check the accumulator type can be different from the iterating type.
+  {
+    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    auto o = sus::move(it).rfold(
+        10_u32, [](u32 acc, i32&& v) { return u32::from(v) + acc; });
+    static_assert(std::same_as<u32, decltype(o)>);
+    EXPECT_EQ(o, (1u + (2u + (3u + (4u + (5u + 10u))))));
+  }
+  // Check order of iteration.
+  {
+    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    auto o =
+        sus::move(it).rfold(10_i32, [](i32 acc, i32&& v) { return v - acc; });
+    static_assert(std::same_as<i32, decltype(o)>);
+    EXPECT_EQ(o, (1 - (2 - (3 - (4 - (5 - 10))))));
+  }
+}
+
 }  // namespace

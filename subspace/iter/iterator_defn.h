@@ -348,6 +348,40 @@ class IteratorBase {
     requires(IntoIteratorAny<Item> &&  //
              ::sus::mem::relocate_by_memcpy<Iter>);
 
+  /// Folds every element into an accumulator by applying an operation,
+  /// returning the final result.
+  ///
+  /// `fold()` takes two arguments: an initial value, and a closure with two
+  /// arguments: an "accumulator", and an element. The closure returns the value
+  /// that the accumulator should have for the next iteration.
+  ///
+  /// The initial value is the value the accumulator will have on the first
+  /// call.
+  ///
+  /// After applying this closure to every element of the iterator, `fold()`
+  /// returns the accumulator.
+  ///
+  /// This operation is sometimes called "reduce" or "inject".
+  ///
+  /// Folding is useful whenever you have a collection of something, and want to
+  /// produce a single value from it.
+  ///
+  /// Note: `fold()`, and similar methods that traverse the entire iterator,
+  /// might not terminate for infinite iterators, even on traits for which a
+  /// result is determinable in finite time.
+  ///
+  /// Note: `reduce()` can be used to use the first element as the initial
+  /// value, if the accumulator type and item type is the same.
+  ///
+  /// Note: `fold()` combines elements in a left-associative fashion. For
+  /// associative operators like `+`, the order the elements are combined in is
+  /// not important, but for non-associative operators like `-` the order will
+  /// affect the final result. For a right-associative version of `fold()`, see
+  /// `rfold()` if the `Iterator` also satisfies `DoubleEndedIterator`.
+  template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT&&)> F>
+    requires(std::convertible_to<std::invoke_result_t<F&, B, ItemT &&>, B>)
+  B fold(B init, F f) && noexcept;
+
   /// Creates an iterator from a generator function that consumes the current
   /// iterator.
   template <::sus::fn::FnOnce<::sus::iter::Generator<ItemT>(Iter&&)> GenFn>
@@ -408,6 +442,38 @@ class IteratorBase {
   Iterator<Item> auto rev() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter> &&
              ::sus::iter::DoubleEndedIterator<Iter, Item>);
+
+  /// An iterator method that reduces the iterator’s elements to a single, final
+  /// value, starting from the back.
+  ///
+  /// This is the reverse version of
+  /// [`Iterator::fold()`](sus::iter::IteratorBase::fold): it takes elements
+  /// starting from the back of the iterator.
+  ///
+  /// `rfold()` takes two arguments: an initial value, and a closure with two
+  /// arguments: an "accumulator", and an element. The closure returns the value
+  /// that the accumulator should have for the next iteration.
+  ///
+  /// The initial value is the value the accumulator will have on the first
+  /// call.
+  ///
+  /// After applying this closure to every element of the iterator, `rfold()`
+  /// returns the accumulator.
+  ///
+  /// This operation is sometimes called "reduce" or "inject".
+  ///
+  /// Folding is useful whenever you have a collection of something, and want to
+  /// produce a single value from it.
+  ///
+  /// Note: `rfold()` combines elements in a right-associative fashion. For
+  /// associative operators like `+`, the order the elements are combined in is
+  /// not important, but for non-associative operators like `-` the order will
+  /// affect the final result. For a left-associative version of `rfold()`, see
+  /// [`Iterator::fold()`](sus::iter::IteratorBase::fold).
+  template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT&&)> F>
+    requires(std::convertible_to<std::invoke_result_t<F&, B, ItemT &&>, B> &&
+             DoubleEndedIterator<Iter, ItemT>)
+  B rfold(B init, F f) && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
@@ -677,6 +743,18 @@ auto IteratorBase<Iter, Item>::flat_map(F fn) && noexcept
 }
 
 template <class Iter, class Item>
+template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item&&)> F>
+  requires(std::convertible_to<std::invoke_result_t<F&, B, Item &&>, B>)
+B IteratorBase<Iter, Item>::fold(B init, F f) && noexcept {
+  while (true) {
+    if (Option<Item> o = static_cast<Iter&>(*this).next(); o.is_none())
+      return init;
+    else
+      init = f(::sus::move(init), sus::move(o).unwrap());
+  }
+}
+
+template <class Iter, class Item>
 template <::sus::fn::FnOnce<::sus::iter::Generator<Item>(Iter&&)> GenFn>
 ::sus::iter::Iterator<Item> auto IteratorBase<Iter, Item>::generate(
     GenFn&& generator_fn) && noexcept {
@@ -733,6 +811,19 @@ Iterator<Item> auto IteratorBase<Iter, Item>::rev() && noexcept
   using Sized = SizedIteratorType<Iter>::type;
   using Reverse = Reverse<Sized>;
   return Reverse::with(make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item&&)> F>
+  requires(std::convertible_to<std::invoke_result_t<F&, B, Item &&>, B> &&
+           DoubleEndedIterator<Iter, Item>)
+B IteratorBase<Iter, Item>::rfold(B init, F f) && noexcept {
+  while (true) {
+    if (Option<Item> o = static_cast<Iter&>(*this).next_back(); o.is_none())
+      return init;
+    else
+      init = f(::sus::move(init), sus::move(o).unwrap());
+  }
 }
 
 template <class Iter, class Item>
