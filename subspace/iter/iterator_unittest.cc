@@ -1654,7 +1654,7 @@ TEST(Iterator, ForEach) {
     static_assert(std::is_void_v<decltype(sus::move(it).for_each([](i32) {}))>);
 
     sus::Vec<i32> seen;
-    sus::move(it).for_each([&seen](i32 v) { return seen.push(v); });
+    sus::move(it).for_each([&seen](i32 v) { seen.push(v); });
     EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4, 5}));
   }
 
@@ -1838,6 +1838,67 @@ TEST(Iterator, Lt) {
     auto it1 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
     auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
+  }
+}
+
+TEST(Iterator, Inspect) {
+  // By value, into_iter().
+  {
+    static sus::Vec<i32> seen;
+    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+                  .into_iter()
+                  .inspect([](const i32& v) { seen.push(v); });
+    static_assert(std::same_as<Option<i32>, decltype(it.next())>);
+    EXPECT_EQ(it.next(), sus::some(1));
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1}));
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2}));
+    EXPECT_EQ(it.next(), sus::some(3));
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3}));
+    EXPECT_EQ(it.next(), sus::some(4));
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4}));
+    EXPECT_EQ(it.next(), sus::some(5));
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4, 5}));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4, 5}));
+  }
+  // By ref, iter().
+  {
+    static sus::Vec<i32> seen;
+    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto it = a.iter().inspect([](const i32& v) { seen.push(v); });
+    static_assert(std::same_as<Option<const i32&>, decltype(it.next())>);
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1}));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2}));
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3}));
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4}));
+    EXPECT_EQ(it.next().unwrap(), 5);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4, 5}));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4, 5}));
+  }
+  // By mut ref, iter_mut().
+  {
+    static sus::Vec<i32> seen;
+    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto it = a.iter_mut().inspect([](const i32& v) { seen.push(v); });
+    static_assert(std::same_as<Option<i32&>, decltype(it.next())>);
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1}));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2}));
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3}));
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4}));
+    EXPECT_EQ(it.next().unwrap(), 5);
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4, 5}));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4, 5}));
   }
 }
 

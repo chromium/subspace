@@ -88,6 +88,7 @@ target_sources(subspace PUBLIC
     "iter/from_iterator.h"
     "iter/fuse.h"
     "iter/generator.h"
+    "iter/inspect.h"
     "iter/into_iterator.h"
     "iter/iterator.h"
     "iter/iterator_concept.h"

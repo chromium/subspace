@@ -46,5 +46,6 @@
 #include "subspace/iter/flat_map.h"
 #include "subspace/iter/flatten.h"
 #include "subspace/iter/fuse.h"
+#include "subspace/iter/inspect.h"
 #include "subspace/iter/map.h"
 #include "subspace/iter/reverse.h"
