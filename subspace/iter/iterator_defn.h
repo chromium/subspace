@@ -382,6 +382,17 @@ class IteratorBase {
     requires(std::convertible_to<std::invoke_result_t<F&, B, ItemT &&>, B>)
   B fold(B init, F f) && noexcept;
 
+  /// Calls a closure on each element of an iterator.
+  ///
+  /// This is equivalent to using a for loop on the iterator, although break and
+  /// continue are not possible from a closure. It’s generally more idiomatic to
+  /// use a for loop, but for_each may be more legible when processing items at
+  /// the end of longer iterator chains. In some cases for_each may also be
+  /// faster than a loop, because it avoids constructing a proxy type for the
+  /// loop to consume.
+  template <::sus::fn::FnMut<void(ItemT&&)> F>
+  void for_each(F f) && noexcept;
+
   /// Creates an iterator from a generator function that consumes the current
   /// iterator.
   template <::sus::fn::FnOnce<::sus::iter::Generator<ItemT>(Iter&&)> GenFn>
@@ -751,6 +762,17 @@ B IteratorBase<Iter, Item>::fold(B init, F f) && noexcept {
       return init;
     else
       init = f(::sus::move(init), sus::move(o).unwrap());
+  }
+}
+
+template <class Iter, class Item>
+template <::sus::fn::FnMut<void(Item&&)> F>
+void IteratorBase<Iter, Item>::for_each(F f) && noexcept {
+  while (true) {
+    if (Option<Item> o = static_cast<Iter&>(*this).next(); o.is_none())
+      break;
+    else
+      f(std::move(o).unwrap());
   }
 }
 

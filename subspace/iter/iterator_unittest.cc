@@ -1606,16 +1606,20 @@ TEST(Iterator, Fold) {
   // Check the accumulator type can be different from the iterating type.
   {
     auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
-    auto o = sus::move(it).fold(
-        10_u32, [](u32 acc, i32&& v) { return u32::from(v) + acc; });
+    auto o =
+        sus::move(it).fold(10_u32,
+                           // Receiving rvalue ensures the caller did move.
+                           [](u32 acc, i32&& v) { return u32::from(v) + acc; });
     static_assert(std::same_as<u32, decltype(o)>);
     EXPECT_EQ(o, (5u + (4u + (3u + (2u + (1u + 10u))))));
   }
   // Check order of iteration.
   {
     auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
-    auto o =
-        sus::move(it).fold(10_i32, [](i32 acc, i32&& v) { return v - acc; });
+    auto o = sus::move(it).fold(
+        10_i32,
+        // Receiving by value shows it doesn't need to receive by reference.
+        [](i32 acc, i32 v) { return v - acc; });
     static_assert(std::same_as<i32, decltype(o)>);
     EXPECT_EQ(o, (5 - (4 - (3 - (2 - (1 - 10))))));
   }
@@ -1626,17 +1630,48 @@ TEST(Iterator, Rfold) {
   {
     auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
     auto o = sus::move(it).rfold(
-        10_u32, [](u32 acc, i32&& v) { return u32::from(v) + acc; });
+        10_u32,
+        // Receiving rvalue ensures the caller did move.
+        [](u32 acc, i32&& v) { return u32::from(v) + acc; });
     static_assert(std::same_as<u32, decltype(o)>);
     EXPECT_EQ(o, (1u + (2u + (3u + (4u + (5u + 10u))))));
   }
   // Check order of iteration.
   {
     auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
-    auto o =
-        sus::move(it).rfold(10_i32, [](i32 acc, i32&& v) { return v - acc; });
+    auto o = sus::move(it).rfold(
+        10_i32,
+        // Receiving by value shows it doesn't need to receive by reference.
+        [](i32 acc, i32 v) { return v - acc; });
     static_assert(std::same_as<i32, decltype(o)>);
     EXPECT_EQ(o, (1 - (2 - (3 - (4 - (5 - 10))))));
+  }
+}
+
+TEST(Iterator, ForEach) {
+  {
+    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    static_assert(std::is_void_v<decltype(sus::move(it).for_each([](i32) {}))>);
+
+    sus::Vec<i32> seen;
+    sus::move(it).for_each([&seen](i32 v) { return seen.push(v); });
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4, 5}));
+  }
+
+  struct Movable {
+    Movable(i32 i) : i(i) {}
+    Movable(Movable&& m) : i(m.i) {}
+    Movable& operator=(Movable&& m) { return i = m.i, *this; }
+    i32 i;
+  };
+  static_assert(sus::mem::Move<Movable>);
+  static_assert(!sus::mem::Copy<Movable>);
+  {
+    sus::Vec<i32> seen;
+    sus::Array<Movable, 2>::with(Movable(1), Movable(2))
+        .into_iter()
+        .for_each([&seen](Movable m) { seen.push(m.i); });
+    EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2}));
   }
 }
 
