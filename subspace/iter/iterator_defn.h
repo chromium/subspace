@@ -72,6 +72,8 @@ template <class InnerIter>
 class Fuse;
 template <class Item>
 class Generator;
+template <class InnerSizedIter>
+class Inspect;
 template <class ToItem, class InnerSizedIter>
 class Map;
 template <class InnerSizedIter>
@@ -428,6 +430,13 @@ class IteratorBase {
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   bool gt(Other&& other) && noexcept;
+
+  template <
+      class F, int&...,
+      class B = ::sus::fn::FnMutBox<void(const std::remove_reference_t<Item>&)>>
+    requires(Into<F, B>)
+  Iterator<Item> auto inspect(F fn) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Determines if the elements of this Iterator are
   /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) less than or
@@ -847,6 +856,18 @@ template <IntoIteratorAny Other, int&..., class OtherItem>
   requires(::sus::ops::PartialOrd<Item, OtherItem>)
 bool IteratorBase<Iter, Item>::gt(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) > 0;
+}
+
+template <class Iter, class Item>
+template <class F, int&..., class B>
+  requires(Into<F, B>)
+Iterator<Item> auto IteratorBase<Iter, Item>::inspect(F fn) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Inspect = Inspect<Sized>;
+  return Inspect::with(::sus::move_into(fn),
+                       make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
