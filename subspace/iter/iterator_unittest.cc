@@ -1582,7 +1582,7 @@ TEST(Iterator, FlatMap) {
       moves = 0u;
       return sus::move(i);
     }
-    sus::iter::Iterator<i32> auto into_iter() && noexcept {
+    auto into_iter() && noexcept {
       return sus::Array<i32, 2>::with(a, b).into_iter();
     }
   };
