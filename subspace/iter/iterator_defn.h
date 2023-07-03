@@ -68,6 +68,8 @@ template <class IntoIterable, class InnerSizedIter>
 class FlatMap;
 template <class EachIter, class InnerSizedIter>
 class Flatten;
+template <class InnerIter>
+class Fuse;
 template <class Item>
 class Generator;
 template <class ToItem, class InnerSizedIter>
@@ -393,10 +395,23 @@ class IteratorBase {
   template <::sus::fn::FnMut<void(ItemT&&)> F>
   void for_each(F f) && noexcept;
 
+  /// Creates an iterator which ends after the first None.
+  ///
+  /// After an iterator returns `None`, future calls may or may not yield
+  /// `Some(T)` again. `fuse()` adapts an iterator, ensuring that after a `None`
+  /// is given, it will always return None forever.
+  ///
+  /// This is useful for cases where the iterator may continue to be polled
+  /// after it has returned None.
+  ///
+  /// TODO: Implement a FusedIterator concept though a tag of some sort, so that
+  /// fuse() can be a no-op in that case?
+  Iterator<Item> auto fuse() && noexcept;
+
   /// Creates an iterator from a generator function that consumes the current
   /// iterator.
   template <::sus::fn::FnOnce<::sus::iter::Generator<ItemT>(Iter&&)> GenFn>
-  ::sus::iter::Iterator<ItemT> auto generate(GenFn&& generator_fn) && noexcept;
+  Iterator<Item> auto generate(GenFn&& generator_fn) && noexcept;
 
   /// Creates an iterator which uses a closure to map each element to another
   /// type.
@@ -774,6 +789,11 @@ void IteratorBase<Iter, Item>::for_each(F f) && noexcept {
     else
       f(std::move(o).unwrap());
   }
+}
+
+template <class Iter, class Item>
+::sus::iter::Iterator<Item> auto IteratorBase<Iter, Item>::fuse() && noexcept {
+  return Fuse<Iter>::with(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>

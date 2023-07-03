@@ -86,6 +86,7 @@ target_sources(subspace PUBLIC
     "iter/flat_map.h"
     "iter/flatten.h"
     "iter/from_iterator.h"
+    "iter/fuse.h"
     "iter/generator.h"
     "iter/into_iterator.h"
     "iter/iterator.h"
