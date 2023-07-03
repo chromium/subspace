@@ -1356,7 +1356,7 @@ TEST(Iterator, Flatten) {
   // By value/into_iter, backward with 1 left in the first iterator, then
   // forward.
   {
-    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),  //
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),
                                          sus::Vec<i32>::with(3, 4));
     auto it = sus::move(vecs).into_iter().flatten();
     static_assert(std::same_as<decltype(it.next()), Option<i32>>);
@@ -1374,7 +1374,7 @@ TEST(Iterator, Flatten) {
   // By value/into_iter, backward with none left in the first iterator, then
   // forward.
   {
-    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),  //
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),
                                          sus::Vec<i32>::with(3, 4));
     auto it = sus::move(vecs).into_iter().flatten();
     static_assert(std::same_as<decltype(it.next()), Option<i32>>);
@@ -1392,7 +1392,7 @@ TEST(Iterator, Flatten) {
   // By value/into_iter, forward with 1 left in the first iterator, then
   // backward.
   {
-    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),  //
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),
                                          sus::Vec<i32>::with(3, 4));
     auto it = sus::move(vecs).into_iter().flatten();
     static_assert(std::same_as<decltype(it.next()), Option<i32>>);
@@ -1410,7 +1410,7 @@ TEST(Iterator, Flatten) {
   // By value/into_iter, forward with none left in the first iterator, then
   // backward.
   {
-    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),  //
+    auto vecs = sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2),
                                          sus::Vec<i32>::with(3, 4));
     auto it = sus::move(vecs).into_iter().flatten();
     static_assert(std::same_as<decltype(it.next()), Option<i32>>);
@@ -1448,6 +1448,157 @@ TEST(Iterator, Flatten) {
     EXPECT_EQ(it.next().unwrap(), 2);
     EXPECT_EQ(it.next().unwrap(), 3);
     EXPECT_EQ(it.next(), sus::None);
+  }
+}
+
+TEST(Iterator, FlatMap) {
+  struct Integers {
+    i32 a;
+    i32 b;
+    static auto make_iterable(Integers&& i) {
+      return sus::Array<i32, 2>::with(i.a, i.b);
+    }
+  };
+
+  // By value/into_iter, forward.
+  {
+    auto vec = sus::Vec<Integers>::with(  //
+        Integers(1, 2), Integers(3, 4), Integers(10, 11));
+    auto it = sus::move(vec).into_iter().flat_map(&Integers::make_iterable);
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 10);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 11);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // By value/into_iter, backward.
+  {
+    auto vec = sus::Vec<Integers>::with(  //
+        Integers(1, 2), Integers(3, 4), Integers(10, 11));
+    auto it = sus::move(vec).into_iter().flat_map(&Integers::make_iterable);
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 11);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 10);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back(), sus::None);
+  }
+  // By value/into_iter, backward with 1 left in the first iterator, then
+  // forward.
+  {
+    auto vec = sus::Vec<Integers>::with(Integers(1, 2), Integers(3, 4));
+    auto it = sus::move(vec).into_iter().flat_map(&Integers::make_iterable);
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // By value/into_iter, backward with none left in the first iterator, then
+  // forward.
+  {
+    auto vec = sus::Vec<Integers>::with(Integers(1, 2), Integers(3, 4));
+    auto it = sus::move(vec).into_iter().flat_map(&Integers::make_iterable);
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // By value/into_iter, forward with 1 left in the first iterator, then
+  // backward.
+  {
+    auto vec = sus::Vec<Integers>::with(Integers(1, 2), Integers(3, 4));
+    auto it = sus::move(vec).into_iter().flat_map(&Integers::make_iterable);
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // By value/into_iter, forward with none left in the first iterator, then
+  // backward.
+  {
+    auto vec = sus::Vec<Integers>::with(Integers(1, 2), Integers(3, 4));
+    auto it = sus::move(vec).into_iter().flat_map(&Integers::make_iterable);
+    static_assert(std::same_as<decltype(it.next()), Option<i32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 4);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+
+  static usize moves;
+  struct MyIntoIter {
+    MyIntoIter(i32 a, i32 b) noexcept : a(a), b(b) {}
+    MyIntoIter(MyIntoIter&&) noexcept { moves += 1u; }
+    MyIntoIter& operator=(MyIntoIter&&) noexcept { return moves += 1u, *this; }
+    i32 a;
+    i32 b;
+    static MyIntoIter&& return_self(MyIntoIter&& i) noexcept {
+      moves = 0u;
+      return sus::move(i);
+    }
+    sus::iter::Iterator<i32> auto into_iter() && noexcept {
+      return sus::Array<i32, 2>::with(a, b).into_iter();
+    }
+  };
+  static_assert(sus::iter::IntoIterator<MyIntoIter, i32>);
+
+  // Test that if the map function returns the same type (which is IntoIterator
+  // itself) as an rvalue reference, that no move is invoked.
+  {
+    auto vec = sus::Vec<MyIntoIter>::with(MyIntoIter(1, 2), MyIntoIter(3, 4));
+    auto it = sus::move(vec).into_iter().flat_map(&MyIntoIter::return_self);
+    for (auto _ : sus::move(it)) {
+      // The return_self() call resets `moves` and returns a reference. That
+      // reference should not be used to construct a MyIntoIter, in order to
+      // return the i32 for iterating.
+      EXPECT_EQ(moves, 0u);
+    }
   }
 }
 
