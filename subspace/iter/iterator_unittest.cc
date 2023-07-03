@@ -1902,4 +1902,29 @@ TEST(Iterator, Inspect) {
   }
 }
 
+TEST(Iterator, Last) {
+  // into_iter().
+  {
+    decltype(auto) n = sus::Array<i32, 0>::with().into_iter().last();
+    static_assert(std::same_as<decltype(n), Option<i32>>);
+    EXPECT_EQ(n, sus::None);
+    decltype(auto) s =
+        sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().last();
+    static_assert(std::same_as<decltype(s), Option<i32>>);
+    EXPECT_EQ(s, sus::some(5));
+  }
+  // iter().
+  {
+    auto az = sus::Array<i32, 0>::with();
+    decltype(auto) n = az.iter().last();
+    static_assert(std::same_as<decltype(n), Option<const i32&>>);
+    EXPECT_EQ(n, sus::None);
+
+    auto an = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    decltype(auto) s = an.iter().last();
+    static_assert(std::same_as<decltype(s), Option<const i32&>>);
+    EXPECT_EQ(s.as_value(), 5);
+  }
+}
+
 }  // namespace
