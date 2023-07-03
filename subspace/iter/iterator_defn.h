@@ -431,6 +431,15 @@ class IteratorBase {
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   bool gt(Other&& other) && noexcept;
 
+  /// Does something with each element of an iterator, passing the value on.
+  ///
+  /// When using iterators, you’ll often chain several of them together. While
+  /// working on such code, you might want to check out what’s happening at
+  /// various parts in the pipeline. To do that, insert a call to `inspect()`.
+  ///
+  /// It’s more common for `inspect()` to be used as a debugging tool than to
+  /// exist in your final code, but applications may find it useful in certain
+  /// situations when errors need to be logged before being discarded.
   template <
       class F, int&...,
       class B = ::sus::fn::FnMutBox<void(const std::remove_reference_t<Item>&)>>
@@ -453,6 +462,13 @@ class IteratorBase {
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   bool lt(Other&& other) && noexcept;
+
+  /// Consumes the iterator, returning the last element.
+  ///
+  /// This method will evaluate the iterator until it returns `None`. While
+  /// doing so, it keeps track of the current element. After `None` is returned,
+  /// `last()` will then return the last element it saw.
+  Option<Item> last() && noexcept;
 
   /// Creates an iterator which uses a closure to map each element to another
   /// type.
@@ -882,6 +898,13 @@ template <IntoIteratorAny Other, int&..., class OtherItem>
   requires(::sus::ops::PartialOrd<Item, OtherItem>)
 bool IteratorBase<Iter, Item>::lt(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) < 0;
+}
+
+template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::last() && noexcept {
+  return static_cast<Iter&&>(*this).fold(
+      Option<Item>(),
+      [](Option<Item>&&, Item&& cur) { return Option<Item>::with(cur); });
 }
 
 template <class Iter, class Item>
