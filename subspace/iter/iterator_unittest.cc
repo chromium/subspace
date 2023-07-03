@@ -735,66 +735,66 @@ TEST(Iterator, CmpBy) {
 
 TEST(Iterator, PartialCmp) {
   {
-    auto smol = sus::Vec<f32>::with(1.f, 2.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f, 1.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>::with(1.f, 2.f, 1.f);
     EXPECT_EQ(std::partial_ordering::less,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f, 1.f);
-    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>::with(1.f, 2.f, 1.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::greater,
               bigg.iter().partial_cmp(smol.iter()));
   }
   {
-    auto smol = sus::Vec<f32>::with(1.f, 2.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 1.f, 1.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>::with(1.f, 1.f, 1.f);
     EXPECT_EQ(std::partial_ordering::greater,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Vec<f32>::with(1.f, 2.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::equivalent,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Vec<f32>::with(f32::NAN, f32::NAN);
-    auto bigg = sus::Vec<f32>::with(f32::NAN, f32::NAN);
+    auto smol = sus::Array<f32, 2>::with(f32::NAN, f32::NAN);
+    auto bigg = sus::Array<f32, 2>::with(f32::NAN, f32::NAN);
     EXPECT_EQ(std::partial_ordering::unordered,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Vec<f32>::with(f32::NAN, 1.f);
-    auto bigg = sus::Vec<f32>::with(f32::NAN, 2.f);
+    auto smol = sus::Array<f32, 2>::with(f32::NAN, 1.f);
+    auto bigg = sus::Array<f32, 2>::with(f32::NAN, 2.f);
     EXPECT_EQ(std::partial_ordering::unordered,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Vec<f32>::with(1.f, f32::NAN);
-    auto bigg = sus::Vec<f32>::with(f32::NAN, f32::NAN);
+    auto smol = sus::Array<f32, 2>::with(1.f, f32::NAN);
+    auto bigg = sus::Array<f32, 2>::with(f32::NAN, f32::NAN);
     EXPECT_EQ(std::partial_ordering::unordered,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Vec<f32>::with(1.f, f32::NAN);
-    auto bigg = sus::Vec<f32>::with(2.f, f32::NAN);
+    auto smol = sus::Array<f32, 2>::with(1.f, f32::NAN);
+    auto bigg = sus::Array<f32, 2>::with(2.f, f32::NAN);
     EXPECT_EQ(std::partial_ordering::less,
               smol.iter().partial_cmp(bigg.iter()));
   }
 
   // iter_mut.
   {
-    auto smol = sus::Vec<f32>::with(1.f, 3.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 3.f);
+    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::greater,
               smol.iter_mut().partial_cmp(bigg.iter_mut()));
   }
 
   // into_iter.
   {
-    auto smol = sus::Vec<f32>::with(1.f, 3.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 3.f);
+    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
     EXPECT_EQ(
         std::partial_ordering::greater,
         sus::move(smol).into_iter().partial_cmp(sus::move(bigg).into_iter()));
@@ -802,40 +802,40 @@ TEST(Iterator, PartialCmp) {
 
   // Comparable but different types.
   {
-    auto one = sus::Vec<f32>::with(1.f, 2.f);
-    auto two = sus::Vec<f64>::with(1., 3.);
+    auto one = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto two = sus::Array<f64, 2>::with(1., 3.);
     EXPECT_EQ(std::partial_ordering::less, one.iter().partial_cmp(two.iter()));
   }
 }
 
 TEST(Iterator, PartialCmpBy) {
   {
-    auto smol = sus::Vec<f32>::with(1.f, 2.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f, 1.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>::with(1.f, 2.f, 1.f);
     EXPECT_EQ(
         std::partial_ordering::less,
         smol.iter().partial_cmp_by(
             bigg.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
   }
   {
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f, 1.f);
-    auto smol = sus::Vec<f32>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>::with(1.f, 2.f, 1.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
     EXPECT_EQ(
         std::partial_ordering::greater,
         bigg.iter().partial_cmp_by(
             smol.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
   }
   {
-    auto smol = sus::Vec<f32>::with(1.f, 2.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 1.f, 1.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>::with(1.f, 1.f, 1.f);
     EXPECT_EQ(
         std::partial_ordering::less,
         smol.iter().partial_cmp_by(
             bigg.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
   }
   {
-    auto smol = sus::Vec<f32>::with(1.f, 2.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
     EXPECT_EQ(
         std::partial_ordering::equivalent,
         smol.iter().partial_cmp_by(
@@ -844,8 +844,8 @@ TEST(Iterator, PartialCmpBy) {
 
   // iter_mut.
   {
-    auto smol = sus::Vec<f32>::with(1.f, 3.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 3.f);
+    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::less,
               smol.iter_mut().partial_cmp_by(
                   bigg.iter_mut(),
@@ -854,8 +854,8 @@ TEST(Iterator, PartialCmpBy) {
 
   // into_iter.
   {
-    auto smol = sus::Vec<f32>::with(1.f, 3.f);
-    auto bigg = sus::Vec<f32>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>::with(1.f, 3.f);
+    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::less,
               sus::move(smol).into_iter().partial_cmp_by(
                   sus::move(bigg).into_iter(),
@@ -864,8 +864,8 @@ TEST(Iterator, PartialCmpBy) {
 
   // Comparable but different types.
   {
-    auto one = sus::Vec<f32>::with(1.f, 2.f);
-    auto two = sus::Vec<f64>::with(1., 3.);
+    auto one = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto two = sus::Array<f64, 2>::with(1., 3.);
     EXPECT_EQ(
         std::partial_ordering::greater,
         one.iter().partial_cmp_by(
@@ -1727,6 +1727,118 @@ TEST(Iterator, Fuse) {
   EXPECT_EQ(b.next_back(), sus::some(1_i32));
   EXPECT_EQ(b.next_back(), sus::none());
   EXPECT_EQ(b.next(), sus::none());
+}
+
+TEST(Iterator, Ge) {
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(true, sus::move(it1).ge(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(true, sus::move(it1).ge(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).ge(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    EXPECT_EQ(false, sus::move(it1).ge(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).ge(sus::move(it2)));
+  }
+}
+
+TEST(Iterator, Gt) {
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(true, sus::move(it1).gt(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
+  }
+}
+
+TEST(Iterator, Le) {
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(true, sus::move(it1).le(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).le(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    EXPECT_EQ(true, sus::move(it1).le(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    EXPECT_EQ(false, sus::move(it1).le(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).le(sus::move(it2)));
+  }
+}
+
+TEST(Iterator, Lt) {
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    EXPECT_EQ(true, sus::move(it1).lt(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
+  }
+  {
+    auto it1 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
+  }
 }
 
 }  // namespace

@@ -413,6 +413,38 @@ class IteratorBase {
   template <::sus::fn::FnOnce<::sus::iter::Generator<ItemT>(Iter&&)> GenFn>
   Iterator<Item> auto generate(GenFn&& generator_fn) && noexcept;
 
+  /// Determines if the elements of this Iterator are
+  /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) greater than
+  /// or equal to those of another.
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
+  bool ge(Other&& other) && noexcept;
+
+  /// Determines if the elements of this Iterator are
+  /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) greater than
+  /// those of another.
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
+  bool gt(Other&& other) && noexcept;
+
+  /// Determines if the elements of this Iterator are
+  /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) less than or
+  /// equal to those of another.
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
+  bool le(Other&& other) && noexcept;
+
+  /// Determines if the elements of this Iterator are
+  /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) less than
+  /// those of another.
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
+  bool lt(Other&& other) && noexcept;
+
   /// Creates an iterator which uses a closure to map each element to another
   /// type.
   ///
@@ -801,6 +833,34 @@ template <::sus::fn::FnOnce<::sus::iter::Generator<Item>(Iter&&)> GenFn>
 ::sus::iter::Iterator<Item> auto IteratorBase<Iter, Item>::generate(
     GenFn&& generator_fn) && noexcept {
   return ::sus::move(generator_fn)(static_cast<Iter&&>(*this));
+}
+
+template <class Iter, class Item>
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::PartialOrd<Item, OtherItem>)
+bool IteratorBase<Iter, Item>::ge(Other&& other) && noexcept {
+  return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) >= 0;
+}
+
+template <class Iter, class Item>
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::PartialOrd<Item, OtherItem>)
+bool IteratorBase<Iter, Item>::gt(Other&& other) && noexcept {
+  return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) > 0;
+}
+
+template <class Iter, class Item>
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::PartialOrd<Item, OtherItem>)
+bool IteratorBase<Iter, Item>::le(Other&& other) && noexcept {
+  return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) <= 0;
+}
+
+template <class Iter, class Item>
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::PartialOrd<Item, OtherItem>)
+bool IteratorBase<Iter, Item>::lt(Other&& other) && noexcept {
+  return static_cast<Iter&&>(*this).partial_cmp(::sus::move(other)) < 0;
 }
 
 template <class Iter, class Item>
