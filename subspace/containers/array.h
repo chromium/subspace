@@ -74,8 +74,7 @@ class Array final {
       : Array(kWithDefault, std::make_index_sequence<N>()) {}
 
   constexpr static Array with_initializer(
-      ::sus::fn::FnMut<T()> auto&& f) noexcept
-  {
+      ::sus::fn::FnMut<T()> auto&& f) noexcept {
     return Array(kWithInitializer, f, std::make_index_sequence<N>());
   }
 
@@ -243,7 +242,11 @@ class Array final {
   /// same order they appear in the array. The iterator gives const access to
   /// each element.
   constexpr SliceIter<const T&> iter() const& noexcept sus_lifetimebound {
-    return SliceIter<const T&>::with(storage_.data_, N);
+    if constexpr (N == 0) {
+      return SliceIter<const T&>::with(nullptr, N);
+    } else {
+      return SliceIter<const T&>::with(storage_.data_, N);
+    }
   }
   constexpr SliceIter<const T&> iter() && = delete;
 
@@ -251,7 +254,11 @@ class Array final {
   /// same order they appear in the array. The iterator gives mutable access to
   /// each element.
   constexpr SliceIterMut<T&> iter_mut() & noexcept sus_lifetimebound {
-    return SliceIterMut<T&>::with(storage_.data_, N);
+    if constexpr (N == 0) {
+      return SliceIterMut<T&>::with(nullptr, N);
+    } else {
+      return SliceIterMut<T&>::with(storage_.data_, N);
+    }
   }
 
   /// Converts the array into an iterator that consumes the array and returns
