@@ -1675,4 +1675,58 @@ TEST(Iterator, ForEach) {
   }
 }
 
+TEST(Iterator, Fuse) {
+  struct Alternate final : public IteratorBase<Alternate, i32> {
+    using Item = i32;
+    Option<Item> next() noexcept {
+      state_ += 1;
+      return state_ % 2 == 1 ? Option<Item>::with(state_) : Option<Item>();
+    }
+    sus::iter::SizeHint size_hint() const noexcept {
+      return {state_ % 2 == 0 ? 1u : 0u, sus::none()};
+    }
+
+    i32 state_;
+  };
+  static_assert(sus::iter::Iterator<Alternate, i32>);
+
+  {
+    auto it = Alternate();
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  {
+    auto it = Alternate().fuse();
+    // The non-empty iterator's size hint.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::none()));
+    EXPECT_EQ(it.next().unwrap(), 1);
+    // The empty iterator's size hint.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
+    EXPECT_EQ(it.next(), sus::None);
+    // Fuse knows nothing can be returned now.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.next(), sus::None);
+  }
+
+  // Forward and back.
+  auto f = sus::Vec<i32>::with(1, 2).into_iter().fuse();
+  EXPECT_EQ(f.next(), sus::some(1_i32));
+  EXPECT_EQ(f.next(), sus::some(2_i32));
+  EXPECT_EQ(f.next(), sus::none());
+  EXPECT_EQ(f.next_back(), sus::none());
+  auto b = sus::Vec<i32>::with(1, 2).into_iter().fuse();
+  EXPECT_EQ(b.next_back(), sus::some(2_i32));
+  EXPECT_EQ(b.next_back(), sus::some(1_i32));
+  EXPECT_EQ(b.next_back(), sus::none());
+  EXPECT_EQ(b.next(), sus::none());
+}
+
 }  // namespace
