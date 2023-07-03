@@ -43,14 +43,18 @@ struct [[nodiscard]] ArrayIntoIter final
 
   /// sus::iter::Iterator trait.
   Option<Item> next() noexcept {
-    if (front_index_ == back_index_) [[unlikely]]
+    if constexpr (N == 0) {
       return Option<Item>();
-    // SAFETY: The front and back indicies are kept within the length of the
-    // Array so can not go out of bounds.
-    Item& item = array_.get_unchecked_mut(
-        ::sus::marker::unsafe_fn,
-        ::sus::mem::replace(mref(front_index_), front_index_ + 1_usize));
-    return Option<Item>::with(move(item));
+    } else {
+      if (front_index_ == back_index_) [[unlikely]]
+        return Option<Item>();
+      // SAFETY: The front and back indicies are kept within the length of the
+      // Array so can not go out of bounds.
+      Item& item = array_.get_unchecked_mut(
+          ::sus::marker::unsafe_fn,
+          ::sus::mem::replace(mref(front_index_), front_index_ + 1_usize));
+      return Option<Item>::with(move(item));
+    }
   }
 
   /// sus::iter::Iterator trait.
@@ -62,14 +66,18 @@ struct [[nodiscard]] ArrayIntoIter final
 
   /// sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
-    if (front_index_ == back_index_) [[unlikely]]
+    if constexpr (N == 0) {
       return Option<Item>();
-    // SAFETY: The front and back indicies are kept within the length of the
-    // Array so can not go out of bounds.
-    back_index_ -= 1u;
-    Item& item =
-        array_.get_unchecked_mut(::sus::marker::unsafe_fn, back_index_);
-    return Option<Item>::with(move(item));
+    } else {
+      if (front_index_ == back_index_) [[unlikely]]
+        return Option<Item>();
+      // SAFETY: The front and back indicies are kept within the length of the
+      // Array so can not go out of bounds.
+      back_index_ -= 1u;
+      Item& item =
+          array_.get_unchecked_mut(::sus::marker::unsafe_fn, back_index_);
+      return Option<Item>::with(move(item));
+    }
   }
 
  private:
