@@ -64,6 +64,8 @@ template <class InnerSizedIter>
 class Filter;
 template <class ToItem, class InnerSizedIter>
 class FilterMap;
+template <class IntoIterable, class InnerSizedIter>
+class FlatMap;
 template <class EachIter, class InnerSizedIter>
 class Flatten;
 template <class Item>
@@ -315,6 +317,25 @@ class IteratorBase {
       class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type>
     requires(::sus::option::__private::IsOptionType<R>::value)
   Option<InnerR> find_map(FindFn f) && noexcept;
+
+  /// Creates an iterator that works like map, but flattens nested structure.
+  ///
+  /// The `map()` adapter is very useful, but only when the closure argument
+  /// produces values. If it produces an iterator instead, there’s an extra
+  /// layer of indirection. `flat_map()` will remove this extra layer on its
+  /// own.
+  ///
+  /// You can think of `flat_map(f)` as the semantic equivalent of mapping, and
+  /// then flattening as in `map(f).flatten()`.
+  ///
+  /// Another way of thinking about `flat_map()`: `map()`'s closure returns one
+  /// item for each element, and `flat_map()`'s closure returns an iterator for
+  /// each element.
+  template <class F, int&..., class R = std::invoke_result_t<F, ItemT&&>,
+            class B = ::sus::fn::FnMutBox<R(ItemT&&)>>
+    requires(Into<F, B>)
+  auto flat_map(F f) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Creates an iterator that flattens nested structure.
   ///
@@ -644,6 +665,18 @@ auto IteratorBase<Iter, Item>::flatten() && noexcept
 }
 
 template <class Iter, class Item>
+template <class F, int&..., class R, class B>
+  requires(Into<F, B>)
+auto IteratorBase<Iter, Item>::flat_map(F fn) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Flatten = FlatMap<R, Sized>;
+  return Flatten::with(::sus::move_into(fn),
+                       make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
 template <::sus::fn::FnOnce<::sus::iter::Generator<Item>(Iter&&)> GenFn>
 ::sus::iter::Iterator<Item> auto IteratorBase<Iter, Item>::generate(
     GenFn&& generator_fn) && noexcept {
@@ -658,7 +691,7 @@ Iterator<R> auto IteratorBase<Iter, Item>::map(T fn) && noexcept
 {
   using Sized = SizedIteratorType<Iter>::type;
   using Map = Map<R, Sized>;
-  return Map::with(sus::into(::sus::move(fn)),
+  return Map::with(sus::move_into(fn),
                    make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
