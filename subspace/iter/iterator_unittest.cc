@@ -1243,6 +1243,11 @@ TEST(Iterator, Find) {
     decltype(auto) n = a.iter().find([](const i32& i) { return i == 0; });
     static_assert(std::same_as<decltype(n), sus::Option<const i32&>>);
     EXPECT_EQ(n, sus::None);
+
+    // Repeated calls.
+    auto it = a.iter();
+    EXPECT_EQ(it.find([](const i32& i) { return i % 2 == 1; }).unwrap(), 1);
+    EXPECT_EQ(it.find([](const i32& i) { return i % 2 == 1; }).unwrap(), 3);
   }
   // iter_mut().
   {
@@ -1253,6 +1258,11 @@ TEST(Iterator, Find) {
     decltype(auto) n = a.iter_mut().find([](const i32& i) { return i == 0; });
     static_assert(std::same_as<decltype(n), sus::Option<i32&>>);
     EXPECT_EQ(n, sus::None);
+
+    // Repeated calls.
+    auto it = a.iter_mut();
+    EXPECT_EQ(it.find([](const i32& i) { return i % 2 == 1; }).unwrap(), 1);
+    EXPECT_EQ(it.find([](const i32& i) { return i % 2 == 1; }).unwrap(), 3);
   }
   // into_iter().
   {
@@ -1265,6 +1275,11 @@ TEST(Iterator, Find) {
         sus::clone(a).into_iter().find([](const i32& i) { return i == 0; });
     static_assert(std::same_as<decltype(n), sus::Option<i32>>);
     EXPECT_EQ(n, sus::None);
+
+    // Repeated calls.
+    auto it = a.iter();
+    EXPECT_EQ(it.find([](i32 i) { return i % 2 == 1; }).unwrap(), 1);
+    EXPECT_EQ(it.find([](i32 i) { return i % 2 == 1; }).unwrap(), 3);
   }
 }
 
