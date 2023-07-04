@@ -315,15 +315,15 @@ class IteratorBase {
   ///
   /// If you need the index of the element, see [`position()`]().
   Option<Item> find(
-      ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
-          pred) && noexcept;
+      ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
+          pred) noexcept;
 
   template <
       ::sus::fn::FnMut<::sus::fn::NonVoid(ItemT&&)> FindFn, int&...,
       class R = std::invoke_result_t<FindFn&, ItemT&&>,
       class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type>
     requires(::sus::option::__private::IsOptionType<R>::value)
-  Option<InnerR> find_map(FindFn f) && noexcept;
+  Option<InnerR> find_map(FindFn f) noexcept;
 
   /// Creates an iterator that works like map, but flattens nested structure.
   ///
@@ -908,8 +908,8 @@ Iterator<InnerR> auto IteratorBase<Iter, Item>::filter_map(F f) && noexcept
 
 template <class Iter, class Item>
 Option<Item> IteratorBase<Iter, Item>::find(
-    ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
-        pred) && noexcept {
+    ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
+        pred) noexcept {
   while (true) {
     Option<Item> o = static_cast<Iter&>(*this).next();
     if (o.is_none() || pred(o.as_value())) return o;
@@ -920,7 +920,7 @@ template <class Iter, class Item>
 template <::sus::fn::FnMut<::sus::fn::NonVoid(Item&&)> FindFn, int&..., class R,
           class InnerR>
   requires(::sus::option::__private::IsOptionType<R>::value)
-Option<InnerR> IteratorBase<Iter, Item>::find_map(FindFn f) && noexcept {
+Option<InnerR> IteratorBase<Iter, Item>::find_map(FindFn f) noexcept {
   while (true) {
     Option<Option<InnerR>> o = static_cast<Iter&>(*this).next().map(f);
     if (o.is_none()) return sus::Option<InnerR>();
