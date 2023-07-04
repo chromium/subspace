@@ -2086,4 +2086,302 @@ TEST(Iterator, MaxBy) {
   }
 }
 
+TEST(Iterator, MaxByKey) {
+  struct M {
+    static i32 key(const M& m) { return m.i; }
+
+    i32 i;
+  };
+
+  // 0 items.
+  {
+    decltype(auto) n = sus::Array<M, 0>::with().into_iter().max_by_key(&M::key);
+    static_assert(std::same_as<decltype(n), Option<M>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // 1 item.
+  {
+    decltype(auto) n =
+        sus::Array<M, 1>::with(M(3)).into_iter().max_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  // More items.
+  {
+    decltype(auto) n = sus::Array<M, 3>::with(M(3), M(2), M(1))
+                           .into_iter()
+                           .max_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  {
+    decltype(auto) n = sus::Array<M, 3>::with(M(1), M(2), M(3))
+                           .into_iter()
+                           .max_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  {
+    decltype(auto) n = sus::Array<M, 3>::with(M(1), M(3), M(1))
+                           .into_iter()
+                           .max_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  {
+    decltype(auto) n = sus::Array<M, 3>::with(M(3), M(3), M(1))
+                           .into_iter()
+                           .max_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+
+  // The last max value is returned.
+  struct S {
+    i32 i;
+    i32 id;
+    static i32 key(const S& s) noexcept { return s.i; }
+  };
+  {
+    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(3, 1), S(1, 2))
+                           .into_iter()
+                           .max_by_key(&S::key);
+    EXPECT_EQ(n.as_value().id, 1);
+  }
+  {
+    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(3, 2))
+                           .into_iter()
+                           .max_by_key(&S::key);
+    EXPECT_EQ(n.as_value().id, 2);
+  }
+
+  // iter().
+  {
+    auto a = sus::Array<M, 3>::with(M(1), M(3), M(1));
+    decltype(auto) n = a.iter().max_by_key(&M::key);
+    static_assert(std::same_as<decltype(n), Option<const M&>>);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<M, 3>::with(M(1), M(3), M(1));
+    decltype(auto) n = a.iter_mut().max_by_key(&M::key);
+    static_assert(std::same_as<decltype(n), Option<M&>>);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+}
+
+TEST(Iterator, Min) {
+  // 0 items.
+  {
+    decltype(auto) n = sus::Array<i32, 0>::with().into_iter().min();
+    static_assert(std::same_as<decltype(n), Option<i32>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // 1 item.
+  {
+    decltype(auto) n = sus::Array<i32, 1>::with(3).into_iter().min();
+    EXPECT_EQ(n.as_value(), 3);
+  }
+  // More items.
+  {
+    decltype(auto) n = sus::Array<i32, 3>::with(3, 2, 1).into_iter().min();
+    EXPECT_EQ(n.as_value(), 1);
+  }
+  {
+    decltype(auto) n = sus::Array<i32, 3>::with(1, 2, 3).into_iter().min();
+    EXPECT_EQ(n.as_value(), 1);
+  }
+  {
+    decltype(auto) n = sus::Array<i32, 3>::with(3, 1, 3).into_iter().min();
+    EXPECT_EQ(n.as_value(), 1);
+  }
+  {
+    decltype(auto) n = sus::Array<i32, 3>::with(1, 1, 3).into_iter().min();
+    EXPECT_EQ(n.as_value(), 1);
+  }
+
+  // The first min value is returned.
+  struct S {
+    i32 i;
+    i32 id;
+    auto operator<=>(const S& b) const noexcept { return i <=> b.i; }
+  };
+  {
+    decltype(auto) n =
+        sus::Array<S, 3>::with(S(1, 0), S(1, 1), S(3, 2)).into_iter().min();
+    EXPECT_EQ(n.as_value().id, 0);
+  }
+  {
+    decltype(auto) n =
+        sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(1, 2)).into_iter().min();
+    EXPECT_EQ(n.as_value().id, 1);
+  }
+
+  // iter().
+  {
+    auto a = sus::Array<i32, 3>::with(3, 1, 3);
+    decltype(auto) n = a.iter().min();
+    static_assert(std::same_as<decltype(n), Option<const i32&>>);
+    EXPECT_EQ(n.as_value(), 1);
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<i32, 3>::with(3, 1, 3);
+    decltype(auto) n = a.iter_mut().min();
+    static_assert(std::same_as<decltype(n), Option<i32&>>);
+    EXPECT_EQ(n.as_value(), 1);
+  }
+}
+
+TEST(Iterator, MinBy) {
+  struct M {
+    static auto cmp(const M& a, const M& b) { return a.i <=> b.i; }
+
+    i32 i;
+  };
+
+  // 0 items.
+  {
+    decltype(auto) n = sus::Array<M, 0>::with().into_iter().min_by(&M::cmp);
+    static_assert(std::same_as<decltype(n), Option<M>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // 1 item.
+  {
+    decltype(auto) n = sus::Array<M, 1>::with(M(3)).into_iter().min_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  // More items.
+  {
+    decltype(auto) n =
+        sus::Array<M, 3>::with(M(3), M(2), M(1)).into_iter().min_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+  {
+    decltype(auto) n =
+        sus::Array<M, 3>::with(M(1), M(2), M(3)).into_iter().min_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+  {
+    decltype(auto) n =
+        sus::Array<M, 3>::with(M(3), M(1), M(3)).into_iter().min_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+  {
+    decltype(auto) n =
+        sus::Array<M, 3>::with(M(1), M(1), M(3)).into_iter().min_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+
+  // The first min value is returned.
+  struct S {
+    i32 i;
+    i32 id;
+    static auto cmp(const S& a, const S& b) noexcept { return a.i <=> b.i; }
+  };
+  {
+    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(1, 2))
+                           .into_iter()
+                           .min_by(&S::cmp);
+    EXPECT_EQ(n.as_value().id, 1);
+  }
+  {
+    decltype(auto) n = sus::Array<S, 3>::with(S(1, 0), S(3, 1), S(1, 2))
+                           .into_iter()
+                           .min_by(&S::cmp);
+    EXPECT_EQ(n.as_value().id, 0);
+  }
+
+  // iter().
+  {
+    auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
+    decltype(auto) n = a.iter().min_by(&M::cmp);
+    static_assert(std::same_as<decltype(n), Option<const M&>>);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
+    decltype(auto) n = a.iter_mut().min_by(&M::cmp);
+    static_assert(std::same_as<decltype(n), Option<M&>>);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+}
+
+TEST(Iterator, MinByKey) {
+  struct M {
+    static i32 key(const M& m) { return m.i; }
+
+    i32 i;
+  };
+
+  // 0 items.
+  {
+    decltype(auto) n = sus::Array<M, 0>::with().into_iter().min_by_key(&M::key);
+    static_assert(std::same_as<decltype(n), Option<M>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // 1 item.
+  {
+    decltype(auto) n =
+        sus::Array<M, 1>::with(M(3)).into_iter().min_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  // More items.
+  {
+    decltype(auto) n = sus::Array<M, 3>::with(M(3), M(2), M(1))
+                           .into_iter()
+                           .min_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+  {
+    decltype(auto) n = sus::Array<M, 3>::with(M(1), M(2), M(3))
+                           .into_iter()
+                           .min_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+  {
+    decltype(auto) n = sus::Array<M, 3>::with(M(3), M(1), M(3))
+                           .into_iter()
+                           .min_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+  {
+    decltype(auto) n = sus::Array<M, 3>::with(M(1), M(1), M(3))
+                           .into_iter()
+                           .min_by_key(&M::key);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+
+  // The first min value is returned.
+  struct S {
+    i32 i;
+    i32 id;
+    static i32 key(const S& s) noexcept { return s.i; }
+  };
+  {
+    decltype(auto) n = sus::Array<S, 3>::with(S(1, 0), S(1, 1), S(3, 2))
+                           .into_iter()
+                           .min_by_key(&S::key);
+    EXPECT_EQ(n.as_value().id, 0);
+  }
+  {
+    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(1, 2))
+                           .into_iter()
+                           .min_by_key(&S::key);
+    EXPECT_EQ(n.as_value().id, 1);
+  }
+
+  // iter().
+  {
+    auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
+    decltype(auto) n = a.iter().min_by_key(&M::key);
+    static_assert(std::same_as<decltype(n), Option<const M&>>);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
+    decltype(auto) n = a.iter_mut().min_by_key(&M::key);
+    static_assert(std::same_as<decltype(n), Option<M&>>);
+    EXPECT_EQ(n.as_value().i, 1);
+  }
+}
+
 }  // namespace

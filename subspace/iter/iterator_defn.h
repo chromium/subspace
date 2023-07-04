@@ -31,6 +31,7 @@
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/eq.h"
 #include "subspace/option/option.h"
+#include "subspace/tuple/tuple.h"
 
 namespace sus::containers {
 template <class T>
@@ -521,6 +522,67 @@ class IteratorBase {
                           const std::remove_reference_t<Item>&)>
                           compare) && noexcept;
 
+  /// Returns the element that gives the maximum value from the specified
+  /// function.
+  ///
+  /// If several elements are equally maximum, the last element is returned. If
+  /// the iterator is empty, `None` is returned.
+  template <::sus::fn::FnMut<
+                ::sus::fn::NonVoid(const std::remove_reference_t<ItemT>&)>
+                KeyFn,
+            int&...,
+            class Key = std::invoke_result_t<
+                KeyFn&, const std::remove_reference_t<ItemT>&>>
+    requires(::sus::ops::Ord<Key> &&  //
+             !std::is_reference_v<Key>)
+  Option<Item> max_by_key(KeyFn fn) && noexcept;
+
+  /// Returns the minimum element of an iterator.
+  ///
+  /// If several elements are equally minimum, the first element is returned. If
+  /// the iterator is empty, None is returned.
+  ///
+  /// Note that `f32`/`f64` doesn’t implement `Ord` due to NaN being
+  /// incomparable. You can work around this by using [`Iterator::reduce`](
+  /// sus::iter::IteratorBase::reduce):
+  ///
+  /// ```cpp
+  /// sus::check(
+  ///     sus::Array<f32, 3>::with(2.4, f32::NAN, 1.3)
+  ///         .into_iter()
+  ///         .reduce(&f32::min)
+  ///         .unwrap() ==
+  ///     2.4
+  /// );
+  /// ```
+  Option<Item> min() && noexcept
+    requires(::sus::ops::Ord<Item>);
+
+  /// Returns the element that gives the minimum value with respect to the
+  /// specified comparison function.
+  ///
+  /// If several elements are equally minimum, the first element is returned. If
+  /// the iterator is empty, None is returned.
+  Option<Item> min_by(sus::fn::FnMutRef<std::strong_ordering(
+                          const std::remove_reference_t<Item>&,
+                          const std::remove_reference_t<Item>&)>
+                          compare) && noexcept;
+
+  /// Returns the element that gives the minimum value from the specified
+  /// function.
+  ///
+  /// If several elements are equally minimum, the first element is returned. If
+  /// the iterator is empty, `None` is returned.
+  template <::sus::fn::FnMut<
+                ::sus::fn::NonVoid(const std::remove_reference_t<ItemT>&)>
+                KeyFn,
+            int&...,
+            class Key = std::invoke_result_t<
+                KeyFn&, const std::remove_reference_t<ItemT>&>>
+    requires(::sus::ops::Ord<Key> &&  //
+             !std::is_reference_v<Key>)
+  Option<Item> min_by_key(KeyFn fn) && noexcept;
+
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
   ///
@@ -987,15 +1049,105 @@ Option<Item> IteratorBase<Iter, Item>::max_by(
         std::strong_ordering(const std::remove_reference_t<Item>&,
                              const std::remove_reference_t<Item>&)>
         compare) && noexcept {
-  auto fold = [&compare](Option<Item>&& acc, Item&& item) -> Option<Item> {
-    if (acc.is_none() || compare(item, acc.as_value()) >= 0)
-      return Option<Item>::with(::sus::forward<Item>(item));
+  // TODO: Replace this fold() with reduce().
+  return static_cast<Iter&&>(*this).fold(
+      static_cast<Iter&>(*this).next(),
+      [&compare](Option<Item>&& acc, Item&& item) -> Option<Item> {
+        if (acc.is_none() || compare(item, acc.as_value()) >= 0)
+          return Option<Item>::with(::sus::forward<Item>(item));
+        return ::sus::move(acc);
+      });
+}
+
+template <class Iter, class Item>
+template <
+    ::sus::fn::FnMut<::sus::fn::NonVoid(const std::remove_reference_t<Item>&)>
+        KeyFn,
+    int&..., class Key>
+  requires(::sus::ops::Ord<Key> &&  //
+           !std::is_reference_v<Key>)
+Option<Item> IteratorBase<Iter, Item>::max_by_key(KeyFn fn) && noexcept {
+  auto fold = [&fn](sus::Tuple<Key, Item>&& acc, Item&& item) {
+    Key key = fn(item);
+    if (key >= acc.template at<0>())
+      return sus::Tuple<Key, Item>::with(::sus::move(key),
+                                         ::sus::forward<Item>(item));
     return ::sus::move(acc);
   };
 
+  // TODO: We could do .map() to make the tuple and use max_by(), and not need
+  // the if statement but for that .map() would need to take a reference
+  // on/ownership of `fn` and that requires heap allocations for FnMutBox.
+  auto first = static_cast<Iter&>(*this).next();
+  if (first.is_none()) return Option<Item>();
+  Key first_key = fn(first.as_value());
+  return Option<Item>::with(
+      // Run fold() over a Tuple<Key, Item> to find the max Key.
+      static_cast<Iter&&>(*this)
+          .fold(sus::Tuple<Key, Item>::with(first_key,
+                                            ::sus::move(first).unwrap_unchecked(
+                                                ::sus::marker::unsafe_fn)),
+                fold)
+          // Pull out the Item for the max Key.
+          .template into_inner<1>());
+}
+
+template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::min() && noexcept
+  requires(::sus::ops::Ord<Item>)
+{
+  return static_cast<Iter&&>(*this).min_by(
+      [](const std::remove_reference_t<Item>& a,
+         const std::remove_reference_t<Item>& b) { return a <=> b; });
+}
+
+template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::min_by(
+    sus::fn::FnMutRef<
+        std::strong_ordering(const std::remove_reference_t<Item>&,
+                             const std::remove_reference_t<Item>&)>
+        compare) && noexcept {
   // TODO: Replace this fold() with reduce().
-  return static_cast<Iter&&>(*this).fold(static_cast<Iter&>(*this).next(),
-                                         fold);
+  return static_cast<Iter&&>(*this).fold(
+      static_cast<Iter&>(*this).next(),
+      [&compare](Option<Item>&& acc, Item&& item) -> Option<Item> {
+        if (acc.is_none() || compare(item, acc.as_value()) < 0)
+          return Option<Item>::with(::sus::forward<Item>(item));
+        return ::sus::move(acc);
+      });
+}
+
+template <class Iter, class Item>
+template <
+    ::sus::fn::FnMut<::sus::fn::NonVoid(const std::remove_reference_t<Item>&)>
+        KeyFn,
+    int&..., class Key>
+  requires(::sus::ops::Ord<Key> &&  //
+           !std::is_reference_v<Key>)
+Option<Item> IteratorBase<Iter, Item>::min_by_key(KeyFn fn) && noexcept {
+  auto fold = [&fn](sus::Tuple<Key, Item>&& acc, Item&& item) {
+    Key key = fn(item);
+    if (key < acc.template at<0>())
+      return sus::Tuple<Key, Item>::with(::sus::move(key),
+                                         ::sus::forward<Item>(item));
+    return ::sus::move(acc);
+  };
+
+  // TODO: We could do .map() to make the tuple and use min_by(), and not need
+  // the if statement but for that .map() would need to take a reference
+  // on/ownership of `fn` and that requires heap allocations for FnMutBox.
+  auto first = static_cast<Iter&>(*this).next();
+  if (first.is_none()) return Option<Item>();
+  Key first_key = fn(first.as_value());
+  return Option<Item>::with(
+      // Run fold() over a Tuple<Key, Item> to find the min Key.
+      static_cast<Iter&&>(*this)
+          .fold(sus::Tuple<Key, Item>::with(first_key,
+                                            ::sus::move(first).unwrap_unchecked(
+                                                ::sus::marker::unsafe_fn)),
+                fold)
+          // Pull out the Item for the min Key.
+          .template into_inner<1>());
 }
 
 template <class Iter, class Item>
