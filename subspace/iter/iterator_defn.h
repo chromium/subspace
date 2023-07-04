@@ -590,6 +590,21 @@ class IteratorBase {
     requires(::sus::ops::Eq<ItemT, OtherItem>)
   bool ne(Other&& other) && noexcept;
 
+  /// Returns the nth element of the iterator.
+  ///
+  /// Like most indexing operations, the count starts from zero, so `nth(0u)`
+  /// returns the first value, `nth(1u)` the second, and so on.
+  ///
+  /// Note that all preceding elements, as well as the returned element, will be
+  /// consumed from the iterator. That means that the preceding elements will be
+  /// discarded, and also that calling `nth(0u)` multiple times on the same
+  /// iterator will return different elements.
+  ///
+  /// `nth()` will return `None` if `n` is greater than or equal to the length
+  /// of the iterator. It will stop at the first `None` encountered in the
+  /// iterator and return `None`.
+  Option<Item> nth(usize n) noexcept;
+
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
   ///
@@ -1162,6 +1177,15 @@ template <IntoIteratorAny Other, int&..., class OtherItem>
   requires(::sus::ops::Eq<Item, OtherItem>)
 bool IteratorBase<Iter, Item>::ne(Other&& other) && noexcept {
   return !static_cast<Iter&&>(*this).eq(::sus::move(other));
+}
+
+template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::nth(usize n) noexcept {
+  while (true) {
+    if (n == 0u) return static_cast<Iter&>(*this).next();
+    if (static_cast<Iter&>(*this).next().is_none()) return Option<Item>();
+    n -= 1u;
+  }
 }
 
 template <class Iter, class Item>

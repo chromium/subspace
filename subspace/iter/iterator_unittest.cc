@@ -2438,4 +2438,20 @@ TEST(Iterator, Ne) {
   }
 }
 
+TEST(Iterator, Nth) {
+  {
+    auto it = sus::Array<i32, 0>::with().into_iter();
+    EXPECT_EQ(it.nth(10u), sus::None);
+  }
+  {
+    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto it = a.iter();
+    static_assert(std::same_as<decltype(it.next()), Option<const i32&>>);
+    EXPECT_EQ(it.nth(0u).unwrap(), 1);
+    EXPECT_EQ(it.nth(0u).unwrap(), 2);
+    EXPECT_EQ(it.nth(2u).unwrap(), 5);
+    EXPECT_EQ(it.nth(2u), sus::None);
+  }
+}
+
 }  // namespace
