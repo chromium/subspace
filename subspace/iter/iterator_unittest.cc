@@ -1338,6 +1338,25 @@ TEST(Iterator, FindMap) {
     static_assert(std::same_as<decltype(n), sus::Option<u32>>);
     EXPECT_EQ(n, sus::None);
   }
+
+  // Works on lvalue iterator.
+  {
+    auto find_even = [](const i32& i) -> sus::Option<u32> {
+      if (i % 2 == 0) return sus::some(u32::from(i));
+      return sus::none();
+    };
+
+    auto it = a.iter();
+    // Finds the 2nd.
+    auto r1 = it.find_map(find_even);
+    EXPECT_EQ(r1, sus::some(2u).construct<u32>());
+    // Finds the 4th.
+    auto r2 = it.find_map(find_even);
+    EXPECT_EQ(r2, sus::some(4u));
+    // Finds the end.
+    auto r3 = it.find_map(find_even);
+    EXPECT_EQ(r3, sus::none());
+  }
 }
 
 TEST(Iterator, Flatten) {
