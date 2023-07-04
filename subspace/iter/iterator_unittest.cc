@@ -2384,4 +2384,58 @@ TEST(Iterator, MinByKey) {
   }
 }
 
+TEST(Iterator, Ne) {
+  struct E {
+    i32 i;
+    constexpr bool operator==(const E& rhs) const& noexcept {
+      return i == rhs.i;
+    }
+  };
+  static_assert(sus::ops::Eq<E>);
+  static_assert(!sus::ops::Ord<E>);
+
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(2));
+    auto bigg = sus::Vec<E>::with(E(1), E(2), E(1));
+    EXPECT_EQ(true, smol.iter().ne(bigg.iter()));
+  }
+  {
+    auto bigg = sus::Vec<E>::with(E(1), E(2), E(1));
+    auto smol = sus::Vec<E>::with(E(1), E(2));
+    EXPECT_EQ(true, bigg.iter().ne(smol.iter()));
+  }
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(2));
+    auto bigg = sus::Vec<E>::with(E(1), E(1), E(1));
+    EXPECT_EQ(true, smol.iter().ne(bigg.iter()));
+  }
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(2));
+    auto bigg = sus::Vec<E>::with(E(1), E(2));
+    EXPECT_EQ(false, smol.iter().ne(bigg.iter()));
+  }
+
+  // iter_mut.
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(3));
+    auto bigg = sus::Vec<E>::with(E(1), E(2));
+    EXPECT_EQ(true, smol.iter_mut().ne(bigg.iter_mut()));
+  }
+
+  // into_iter.
+  {
+    auto smol = sus::Vec<E>::with(E(1), E(3));
+    auto bigg = sus::Vec<E>::with(E(1), E(2));
+    EXPECT_EQ(true,
+              sus::move(smol).into_iter().ne(sus::move(bigg).into_iter()));
+  }
+
+  // Comparable but different types.
+  {
+    auto one = sus::Vec<i32>::with(1, 2);
+    auto two = sus::Vec<i64>::with(1, 2);
+    EXPECT_EQ(false, one.iter().ne(two.iter()));
+  }
+}
+
 }  // namespace
