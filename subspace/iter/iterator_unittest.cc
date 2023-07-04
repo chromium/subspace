@@ -374,6 +374,27 @@ TEST(Iterator, MapDoubleEnded) {
   EXPECT_EQ(it.next_back(), sus::None);
 }
 
+TEST(Iterator, MapWhile) {
+  {
+    auto nums = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto it = sus::move(nums).into_iter().map_while([](i32&& i) -> Option<u32> {
+      if (i != 4)
+        return sus::some(u32::from(i));
+      else
+        return sus::none();
+    });
+    static_assert(std::same_as<decltype(it.next()), sus::Option<u32>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(5u)));
+    EXPECT_EQ(it.next(), sus::some(1u));
+    EXPECT_EQ(it.next(), sus::some(2u));
+    EXPECT_EQ(it.next(), sus::some(3u));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.next(), sus::some(5u));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+  }
+}
+
 template <class T>
 struct CollectSum {
   sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
@@ -1924,6 +1945,144 @@ TEST(Iterator, Last) {
     decltype(auto) s = an.iter().last();
     static_assert(std::same_as<decltype(s), Option<const i32&>>);
     EXPECT_EQ(s.as_value(), 5);
+  }
+}
+
+TEST(Iterator, Max) {
+  // 0 items.
+  {
+    decltype(auto) n = sus::Array<i32, 0>::with().into_iter().max();
+    static_assert(std::same_as<decltype(n), Option<i32>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // 1 item.
+  {
+    decltype(auto) n = sus::Array<i32, 1>::with(3).into_iter().max();
+    EXPECT_EQ(n.as_value(), 3);
+  }
+  // More items.
+  {
+    decltype(auto) n = sus::Array<i32, 3>::with(3, 2, 1).into_iter().max();
+    EXPECT_EQ(n.as_value(), 3);
+  }
+  {
+    decltype(auto) n = sus::Array<i32, 3>::with(1, 2, 3).into_iter().max();
+    EXPECT_EQ(n.as_value(), 3);
+  }
+  {
+    decltype(auto) n = sus::Array<i32, 3>::with(1, 3, 1).into_iter().max();
+    EXPECT_EQ(n.as_value(), 3);
+  }
+  {
+    decltype(auto) n = sus::Array<i32, 3>::with(3, 3, 1).into_iter().max();
+    EXPECT_EQ(n.as_value(), 3);
+  }
+
+  // The last max value is returned.
+  struct S {
+    i32 i;
+    i32 id;
+    auto operator<=>(const S& b) const noexcept { return i <=> b.i; }
+  };
+  {
+    decltype(auto) n =
+        sus::Array<S, 3>::with(S(3, 0), S(3, 1), S(1, 2)).into_iter().max();
+    EXPECT_EQ(n.as_value().id, 1);
+  }
+  {
+    decltype(auto) n =
+        sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(3, 2)).into_iter().max();
+    EXPECT_EQ(n.as_value().id, 2);
+  }
+
+  // iter().
+  {
+    auto a = sus::Array<i32, 3>::with(1, 3, 1);
+    decltype(auto) n = a.iter().max();
+    static_assert(std::same_as<decltype(n), Option<const i32&>>);
+    EXPECT_EQ(n.as_value(), 3);
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<i32, 3>::with(1, 3, 1);
+    decltype(auto) n = a.iter_mut().max();
+    static_assert(std::same_as<decltype(n), Option<i32&>>);
+    EXPECT_EQ(n.as_value(), 3);
+  }
+}
+
+TEST(Iterator, MaxBy) {
+  struct M {
+    static auto cmp(const M& a, const M& b) { return a.i <=> b.i; }
+
+    i32 i;
+  };
+
+  // 0 items.
+  {
+    decltype(auto) n = sus::Array<M, 0>::with().into_iter().max_by(&M::cmp);
+    static_assert(std::same_as<decltype(n), Option<M>>);
+    EXPECT_EQ(n, sus::None);
+  }
+  // 1 item.
+  {
+    decltype(auto) n = sus::Array<M, 1>::with(M(3)).into_iter().max_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  // More items.
+  {
+    decltype(auto) n =
+        sus::Array<M, 3>::with(M(3), M(2), M(1)).into_iter().max_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  {
+    decltype(auto) n =
+        sus::Array<M, 3>::with(M(1), M(2), M(3)).into_iter().max_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  {
+    decltype(auto) n =
+        sus::Array<M, 3>::with(M(1), M(3), M(1)).into_iter().max_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  {
+    decltype(auto) n =
+        sus::Array<M, 3>::with(M(3), M(3), M(1)).into_iter().max_by(&M::cmp);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+
+  // The last max value is returned.
+  struct S {
+    i32 i;
+    i32 id;
+    static auto cmp(const S& a, const S& b) noexcept { return a.i <=> b.i; }
+  };
+  {
+    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(3, 1), S(1, 2))
+                           .into_iter()
+                           .max_by(&S::cmp);
+    EXPECT_EQ(n.as_value().id, 1);
+  }
+  {
+    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(3, 2))
+                           .into_iter()
+                           .max_by(&S::cmp);
+    EXPECT_EQ(n.as_value().id, 2);
+  }
+
+  // iter().
+  {
+    auto a = sus::Array<M, 3>::with(M(1), M(3), M(1));
+    decltype(auto) n = a.iter().max_by(&M::cmp);
+    static_assert(std::same_as<decltype(n), Option<const M&>>);
+    EXPECT_EQ(n.as_value().i, 3);
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<M, 3>::with(M(1), M(3), M(1));
+    decltype(auto) n = a.iter_mut().max_by(&M::cmp);
+    static_assert(std::same_as<decltype(n), Option<M&>>);
+    EXPECT_EQ(n.as_value().i, 3);
   }
 }
 

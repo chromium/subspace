@@ -76,6 +76,8 @@ template <class InnerSizedIter>
 class Inspect;
 template <class ToItem, class InnerSizedIter>
 class Map;
+template <class ToItem, class InnerSizedIter>
+class MapWhile;
 template <class InnerSizedIter>
 class Reverse;
 template <class Iter>
@@ -479,6 +481,45 @@ class IteratorBase {
     requires(!std::is_void_v<R> && Into<T, B>)
   Iterator<R> auto map(T fn) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  template <
+      class F, int&..., class R = std::invoke_result_t<F&, Item&&>,
+      class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type,
+      class B = ::sus::fn::FnMutBox<R(Item&&)>>
+    requires(::sus::option::__private::IsOptionType<R>::value && Into<F, B>)
+  Iterator<InnerR> auto map_while(F fn) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Returns the maximum element of an iterator.
+  ///
+  /// If several elements are equally maximum, the last element is returned. If
+  /// the iterator is empty, None is returned.
+  ///
+  /// Note that `f32`/`f64` doesn’t implement `Ord` due to NaN being
+  /// incomparable. You can work around this by using [`Iterator::reduce`](
+  /// sus::iter::IteratorBase::reduce):
+  ///
+  /// ```cpp
+  /// sus::check(
+  ///     sus::Array<f32, 3>::with(2.4, f32::NAN, 1.3)
+  ///         .into_iter()
+  ///         .reduce(&f32::max)
+  ///         .unwrap() ==
+  ///     2.4
+  /// );
+  /// ```
+  Option<Item> max() && noexcept
+    requires(::sus::ops::Ord<Item>);
+
+  /// Returns the element that gives the maximum value with respect to the
+  /// specified comparison function.
+  ///
+  /// If several elements are equally maximum, the last element is returned. If
+  /// the iterator is empty, None is returned.
+  Option<Item> max_by(sus::fn::FnMutRef<std::strong_ordering(
+                          const std::remove_reference_t<Item>&,
+                          const std::remove_reference_t<Item>&)>
+                          compare) && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
@@ -917,6 +958,44 @@ Iterator<R> auto IteratorBase<Iter, Item>::map(T fn) && noexcept
   using Map = Map<R, Sized>;
   return Map::with(sus::move_into(fn),
                    make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+template <class F, int&..., class R, class InnerR, class B>
+  requires(::sus::option::__private::IsOptionType<R>::value && Into<F, B>)
+Iterator<InnerR> auto IteratorBase<Iter, Item>::map_while(F fn) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using MapWhile = MapWhile<InnerR, Sized>;
+  return MapWhile::with(sus::move_into(fn),
+                        make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::max() && noexcept
+  requires(::sus::ops::Ord<Item>)
+{
+  return static_cast<Iter&&>(*this).max_by(
+      [](const std::remove_reference_t<Item>& a,
+         const std::remove_reference_t<Item>& b) { return a <=> b; });
+}
+
+template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::max_by(
+    sus::fn::FnMutRef<
+        std::strong_ordering(const std::remove_reference_t<Item>&,
+                             const std::remove_reference_t<Item>&)>
+        compare) && noexcept {
+  auto fold = [&compare](Option<Item>&& acc, Item&& item) -> Option<Item> {
+    if (acc.is_none() || compare(item, acc.as_value()) >= 0)
+      return Option<Item>::with(::sus::forward<Item>(item));
+    return ::sus::move(acc);
+  };
+
+  // TODO: Replace this fold() with reduce().
+  return static_cast<Iter&&>(*this).fold(static_cast<Iter&>(*this).next(),
+                                         fold);
 }
 
 template <class Iter, class Item>
