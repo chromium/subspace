@@ -2488,4 +2488,72 @@ TEST(Iterator, Nth) {
   }
 }
 
+TEST(Iterator, NthBack) {
+  {
+    auto it = sus::Array<i32, 0>::with().into_iter();
+    EXPECT_EQ(it.nth_back(10u), sus::None);
+  }
+  {
+    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto it = a.iter();
+    static_assert(std::same_as<decltype(it.next()), Option<const i32&>>);
+    EXPECT_EQ(it.nth_back(0u).unwrap(), 5);
+    EXPECT_EQ(it.nth_back(0u).unwrap(), 4);
+    EXPECT_EQ(it.nth_back(2u).unwrap(), 1);
+    EXPECT_EQ(it.nth_back(2u), sus::None);
+  }
+}
+
+TEST(Iterator, Rfind) {
+  auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+
+  // iter().
+  {
+    decltype(auto) s = a.iter().rfind([](const i32& i) { return i == 3; });
+    static_assert(std::same_as<decltype(s), sus::Option<const i32&>>);
+    EXPECT_EQ(s, sus::some(3_i32));
+
+    decltype(auto) n = a.iter().rfind([](const i32& i) { return i == 0; });
+    static_assert(std::same_as<decltype(n), sus::Option<const i32&>>);
+    EXPECT_EQ(n, sus::None);
+
+    // Repeated calls.
+    auto it = a.iter();
+    EXPECT_EQ(it.rfind([](const i32& i) { return i % 2 == 1; }).unwrap(), 5);
+    EXPECT_EQ(it.rfind([](const i32& i) { return i % 2 == 1; }).unwrap(), 3);
+  }
+  // iter_mut().
+  {
+    decltype(auto) s = a.iter_mut().rfind([](const i32& i) { return i == 3; });
+    static_assert(std::same_as<decltype(s), sus::Option<i32&>>);
+    EXPECT_EQ(s, sus::some(3_i32));
+
+    decltype(auto) n = a.iter_mut().rfind([](const i32& i) { return i == 0; });
+    static_assert(std::same_as<decltype(n), sus::Option<i32&>>);
+    EXPECT_EQ(n, sus::None);
+
+    // Repeated calls.
+    auto it = a.iter_mut();
+    EXPECT_EQ(it.rfind([](const i32& i) { return i % 2 == 1; }).unwrap(), 5);
+    EXPECT_EQ(it.rfind([](const i32& i) { return i % 2 == 1; }).unwrap(), 3);
+  }
+  // into_iter().
+  {
+    decltype(auto) s =
+        sus::clone(a).into_iter().rfind([](const i32& i) { return i == 3; });
+    static_assert(std::same_as<decltype(s), sus::Option<i32>>);
+    EXPECT_EQ(s, sus::some(3_i32));
+
+    decltype(auto) n =
+        sus::clone(a).into_iter().rfind([](const i32& i) { return i == 0; });
+    static_assert(std::same_as<decltype(n), sus::Option<i32>>);
+    EXPECT_EQ(n, sus::None);
+
+    // Repeated calls.
+    auto it = a.iter();
+    EXPECT_EQ(it.rfind([](i32 i) { return i % 2 == 1; }).unwrap(), 5);
+    EXPECT_EQ(it.rfind([](i32 i) { return i % 2 == 1; }).unwrap(), 3);
+  }
+}
+
 }  // namespace

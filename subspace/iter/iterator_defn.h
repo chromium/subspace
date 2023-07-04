@@ -605,6 +605,23 @@ class IteratorBase {
   /// iterator and return `None`.
   Option<Item> nth(usize n) noexcept;
 
+  /// Returns the nth element from the end of the iterator.
+  ///
+  /// This is essentially the reversed version of Iterator::nth(). Although like
+  /// most indexing operations, the count starts from zero, so nth_back(0)
+  /// returns the first value from the end, nth_back(1) the second, and so on.
+  ///
+  /// Note that all elements between the end and the returned element will be
+  /// consumed, including the returned element. This also means that calling
+  /// nth_back(0) multiple times on the same iterator will return different
+  /// elements.
+  ///
+  /// nth_back() will return None if n is greater than or equal to the length of
+  /// the iterator.  It will stop at the first `None` encountered in the
+  /// iterator and return `None`.
+  Option<Item> nth_back(usize n) noexcept
+    requires(DoubleEndedIterator<Iter, Item>);
+
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
   ///
@@ -650,6 +667,21 @@ class IteratorBase {
   Iterator<Item> auto rev() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter> &&
              ::sus::iter::DoubleEndedIterator<Iter, Item>);
+
+  /// Searches for an element of an iterator from the back that satisfies a
+  /// predicate.
+  ///
+  /// `rfind()` takes a closure that returns `true` or `false`. It applies this
+  /// closure to each element of the iterator, starting at the end, and if any
+  /// of them return `true`, then `rfind()` returns `Some(element)`. If they all
+  /// return `false`, it returns `None`.
+  ///
+  /// `rfind()` is short-circuiting; in other words, it will stop processing as
+  /// soon as the closure returns `true`.
+  Option<Item> rfind(
+      ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
+          pred) noexcept
+    requires(DoubleEndedIterator<Iter, Item>);
 
   /// An iterator method that reduces the iterator’s elements to a single, final
   /// value, starting from the back.
@@ -1189,6 +1221,17 @@ Option<Item> IteratorBase<Iter, Item>::nth(usize n) noexcept {
 }
 
 template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::nth_back(usize n) noexcept
+  requires(DoubleEndedIterator<Iter, Item>)
+{
+  while (true) {
+    if (n == 0u) return static_cast<Iter&>(*this).next_back();
+    if (static_cast<Iter&>(*this).next_back().is_none()) return Option<Item>();
+    n -= 1u;
+  }
+}
+
+template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
   requires(::sus::ops::PartialOrd<Item, OtherItem>)
 std::partial_ordering IteratorBase<Iter, Item>::partial_cmp(
@@ -1226,6 +1269,18 @@ Iterator<Item> auto IteratorBase<Iter, Item>::rev() && noexcept
   using Sized = SizedIteratorType<Iter>::type;
   using Reverse = Reverse<Sized>;
   return Reverse::with(make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::rfind(
+    ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
+        pred) noexcept
+  requires(DoubleEndedIterator<Iter, Item>)
+{
+  while (true) {
+    Option<Item> o = static_cast<Iter&>(*this).next_back();
+    if (o.is_none() || pred(o.as_value())) return o;
+  }
 }
 
 template <class Iter, class Item>
