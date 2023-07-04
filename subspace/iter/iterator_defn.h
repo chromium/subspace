@@ -583,6 +583,13 @@ class IteratorBase {
              !std::is_reference_v<Key>)
   Option<Item> min_by_key(KeyFn fn) && noexcept;
 
+  /// Determines if the elements of this `Iterator` are not equal to those of
+  /// another.
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::Eq<ItemT, OtherItem>)
+  bool ne(Other&& other) && noexcept;
+
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
   ///
@@ -1148,6 +1155,13 @@ Option<Item> IteratorBase<Iter, Item>::min_by_key(KeyFn fn) && noexcept {
                 fold)
           // Pull out the Item for the min Key.
           .template into_inner<1>());
+}
+
+template <class Iter, class Item>
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::Eq<Item, OtherItem>)
+bool IteratorBase<Iter, Item>::ne(Other&& other) && noexcept {
+  return !static_cast<Iter&&>(*this).eq(::sus::move(other));
 }
 
 template <class Iter, class Item>
