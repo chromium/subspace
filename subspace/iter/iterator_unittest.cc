@@ -28,6 +28,7 @@
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/never_value.h"
 #include "subspace/mem/replace.h"
+#include "subspace/num/overflow_integer.h"
 #include "subspace/ops/eq.h"
 #include "subspace/prelude.h"
 
@@ -2878,6 +2879,30 @@ TEST(Iterator, Position) {
   {
     auto it = sus::Array<i32, 4>::with(10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.position([](auto) { return false; }), sus::None);
+  }
+}
+
+TEST(Iterator, Product) {
+  // Signed integer.
+  {
+    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    decltype(auto) p = sus::move(a).into_iter().product();
+    static_assert(std::same_as<decltype(p), i32>);
+    EXPECT_EQ(p, 2 * 3 * 4);
+  }
+  // Unsigned integer.
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    decltype(auto) p = sus::move(a).into_iter().product();
+    static_assert(std::same_as<decltype(p), u32>);
+    EXPECT_EQ(p, 2u * 3u * 4u);
+  }
+  // Float.
+  {
+    auto a = sus::Array<f32, 3>::with(2.f, 3.f, 4.f);
+    decltype(auto) p = sus::move(a).into_iter().product();
+    static_assert(std::same_as<decltype(p), f32>);
+    EXPECT_EQ(p, 2.f * 3.f * 4.f);
   }
 }
 

@@ -25,6 +25,7 @@
 #include "subspace/iter/extend.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
+#include "subspace/iter/product.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
@@ -685,6 +686,13 @@ class IteratorBase {
   /// than [`usize::MAX`] non-matching elements, it will panic.
   Option<usize> position(::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept;
 
+  /// Iterates over the entire iterator, multiplying all the elements
+  ///
+  /// An empty iterator returns the "one" value of the type.
+  template <class P = ItemT>
+    requires(::sus::iter::Product<P, Iter, ItemT>)
+  P product() && noexcept;
+
   /// Converts the iterator into a `std::ranges::range` for use with the std
   /// ranges library.
   ///
@@ -1339,6 +1347,13 @@ Option<usize> IteratorBase<Iter, Item>::position(
     if (pred(::sus::move(o).unwrap())) return Option<usize>::with(pos);
     pos += 1u;
   }
+}
+
+template <class Iter, class Item>
+template <class P>
+  requires(::sus::iter::Product<P, Iter, Item>)
+P IteratorBase<Iter, Item>::product() && noexcept {
+  return P::from_product(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
