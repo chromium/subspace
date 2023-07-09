@@ -21,11 +21,14 @@
 
 namespace sus::iter {
 
-/// A concept that indicates ToType can be constructed from an Iterator, via
+/// A concept that indicates `ToType` can be constructed from an `Iterator`, via
 /// `ToType::from_iterator(Iterator<IterType>)`.
 ///
 /// Any type that matches this concept can be constructed from
-/// Iterator::collect().
+/// `Iterator::collect()`.
+///
+/// The `from_iter()` method should rarely be called, as the `collect()` method
+/// provides the preferred way to construct from an iterator.
 template <class ToType, class ItemType>
 concept FromIterator =
     requires(__private::IntoIteratorArchetype<ItemType>&& from) {

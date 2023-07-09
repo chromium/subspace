@@ -478,6 +478,25 @@ sus_pure static constexpr _self from_unchecked(::sus::marker::UnsafeFnMarker,
   return _self(static_cast<_primitive>(p));
 }
 
+/// Constructs a ##_self## from an `Iterator` by computing the product of all
+/// elements in the itertor.
+///
+/// This method should rarely be called directly, as it is used to satisfy the
+/// `sus::iter::Product` concept so that `Iterator::product()` can be called for
+/// iterators over ##_self##.
+///
+/// To handle overflow without panicing, instead of `iter.product()`, use
+/// `iter.product<OverflowInteger<##_self##>>()`.
+///
+/// # Panics
+/// This method will panic if the product of all values overflows.
+sus_pure static constexpr _self from_product(
+    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+  auto p = _self(_primitive{1});
+  for (_self i : ::sus::move(it)) p *= i;
+  return p;
+}
+
 template <SignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline explicit operator U() const {

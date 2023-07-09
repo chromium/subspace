@@ -18,10 +18,12 @@
 #include <functional>  // TODO: remove this but we need to hash things > size_t.
 
 #include "fmt/format.h"
+#include "subspace/iter/iterator_concept.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/eval_and_concat.h"
 #include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
+#include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/__private/float_ordering.h"
