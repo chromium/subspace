@@ -678,18 +678,18 @@ class Vec final {
   }
 
   // Const Vec can be used as a Slice.
-  sus_pure constexpr operator const Slice<T>&() const& {
+  sus_pure constexpr operator const Slice<T>&() const& noexcept {
     check(!is_moved_from());
     return slice_mut_.slice_;
   }
   sus_pure constexpr operator const Slice<T>&() && = delete;
-  sus_pure constexpr operator Slice<T>&() & {
+  sus_pure constexpr operator Slice<T>&() & noexcept {
     check(!is_moved_from());
     return slice_mut_.slice_;
   }
 
   // Mutable Vec can be used as a SliceMut.
-  sus_pure constexpr operator SliceMut<T>&() & {
+  sus_pure constexpr operator SliceMut<T>&() & noexcept {
     check(!is_moved_from());
     return slice_mut_;
   }
