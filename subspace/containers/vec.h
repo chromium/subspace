@@ -319,8 +319,8 @@ class Vec final {
   /// sus::iter::Extend<const T&> trait.
   ///
   /// If `T` is `Clone` but not `Copy`, then the elements should be cloned
-  /// explicitly by the caller. Then use the `Extend<T>` concept method instead,
-  /// moving the elements into the Vec.
+  /// explicitly by the caller (possibly through `Iterator::cloned()`). Then use
+  /// the `Extend<T>` concept method instead, moving the elements into the Vec.
   ///
   /// #[doc.overloads=vec.extend.const]
   void extend(sus::iter::IntoIterator<const T&> auto&& ii) noexcept
