@@ -453,6 +453,27 @@ class Option final {
     return t_.val_mut();
   }
 
+  sus_pure constexpr const std::remove_reference_t<T>& as_value_unchecked(
+      ::sus::marker::UnsafeFnMarker) const& noexcept {
+    return t_.val();
+  }
+  sus_pure constexpr const std::remove_reference_t<T>& as_value_unchecked(
+      ::sus::marker::UnsafeFnMarker) && noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return t_.val();
+  }
+  sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
+      ::sus::marker::UnsafeFnMarker) & noexcept {
+    return t_.val_mut();
+  }
+  sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
+      ::sus::marker::UnsafeFnMarker) && noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return t_.val_mut();
+  }
+
   /// Returns a reference to the contained value inside the Option.
   ///
   /// The reference is const if the Option is const, and is mutable otherwise.
