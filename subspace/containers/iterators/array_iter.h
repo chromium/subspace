@@ -21,6 +21,7 @@
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/iter/size_hint.h"
 #include "subspace/marker/unsafe.h"
+#include "subspace/mem/clone.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
 #include "subspace/num/unsigned_integer.h"
@@ -39,6 +40,13 @@ struct [[nodiscard]] ArrayIntoIter final
 
   static constexpr auto with(Array<Item, N>&& array) noexcept {
     return ArrayIntoIter(::sus::move(array));
+  }
+
+  // sus::mem::Clone trait.
+  ArrayIntoIter clone() const noexcept
+    requires(::sus::mem::Clone<Array<ItemT, N>>)
+  {
+    return ArrayIntoIter(::sus::clone(array_), front_index_, back_index_);
   }
 
   /// sus::iter::Iterator trait.
@@ -80,8 +88,16 @@ struct [[nodiscard]] ArrayIntoIter final
     }
   }
 
+  /// sus::iter::ExactSizeIterator trait.
+  ::sus::num::usize exact_size_hint() const noexcept {
+    return back_index_ - front_index_;
+  }
+
  private:
   ArrayIntoIter(Array<Item, N>&& array) noexcept : array_(::sus::move(array)) {}
+
+  ArrayIntoIter(Array<Item, N>&& array, usize front, usize back) noexcept
+      : array_(::sus::move(array)), front_index_(front), back_index_(back) {}
 
   Array<Item, N> array_;
   usize front_index_ = 0_usize;

@@ -49,7 +49,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
 
  public:
   static constexpr auto with(const RawItem* start, usize len) noexcept {
-    return SliceIter(start, len);
+    const RawItem* end = start + len;
+    // Wrap-around would be an invalid allocation and would break our distance
+    // functions.
+    ::sus::check(end >= start);
+    return SliceIter(start, end);
   }
 
   /// Returns a slice of the items left to be iterated.
@@ -96,12 +100,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   }
 
  private:
-  constexpr SliceIter(const RawItem* start, usize len) noexcept
-      : ptr_(start), end_(start + len) {
-    // Wrap-around would be an invalid allocation and would break our distance
-    // functions.
-    check(end_ >= ptr_);
-  }
+  constexpr SliceIter(const RawItem* start, const RawItem* end) noexcept
+      : ptr_(start), end_(end) {}
 
   const RawItem* ptr_;
   const RawItem* end_;
@@ -109,6 +109,9 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ptr_),
                                   decltype(end_));
 };
+
+static_assert(::sus::mem::Copy<SliceIter<const i32&>>);
+static_assert(::sus::mem::Move<SliceIter<const i32&>>);
 
 template <class ItemT>
 struct [[sus_trivial_abi]] SliceIterMut final
@@ -125,7 +128,11 @@ struct [[sus_trivial_abi]] SliceIterMut final
 
  public:
   static constexpr auto with(RawItem* start, usize len) noexcept {
-    return SliceIterMut(start, len);
+    RawItem* end = start + len;
+    // Wrap-around would be an invalid allocation and would break our distance
+    // functions.
+    ::sus::check(end >= start);
+    return SliceIterMut(start, end);
   }
 
   /// Returns a mutable slice of the items left to be iterated, consuming the
@@ -171,12 +178,8 @@ struct [[sus_trivial_abi]] SliceIterMut final
   }
 
  private:
-  constexpr SliceIterMut(RawItem* start, usize len) noexcept
-      : ptr_(start), end_(start + len) {
-    // Wrap-around would be an invalid allocation and would break our distance
-    // functions.
-    check(end_ >= ptr_);
-  }
+  constexpr SliceIterMut(RawItem* start, RawItem* end) noexcept
+      : ptr_(start), end_(end) {}
 
   RawItem* ptr_;
   RawItem* end_;
@@ -184,5 +187,8 @@ struct [[sus_trivial_abi]] SliceIterMut final
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ptr_),
                                   decltype(end_));
 };
+
+static_assert(::sus::mem::Copy<SliceIterMut<i32&>>);
+static_assert(::sus::mem::Move<SliceIterMut<i32&>>);
 
 }  // namespace sus::containers

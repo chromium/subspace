@@ -49,4 +49,5 @@
 #include "subspace/iter/inspect.h"
 #include "subspace/iter/map.h"
 #include "subspace/iter/map_while.h"
+#include "subspace/iter/peekable.h"
 #include "subspace/iter/reverse.h"

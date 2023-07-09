@@ -58,7 +58,8 @@ concept Ordering = (std::same_as<T, std::strong_ordering> ||
 /// that requires a type to be `Ord` should take care to use `operator<=>` and
 /// not `operator==` unless also requiring `Eq`.
 template <class T, class U = T>
-concept Ord = requires(const T& lhs, const U& rhs) {
+concept Ord = requires(const std::remove_reference_t<T>& lhs,
+                       const std::remove_reference_t<U>& rhs) {
   { lhs <=> rhs } noexcept -> std::same_as<std::strong_ordering>;
 };
 
@@ -68,7 +69,8 @@ concept Ord = requires(const T& lhs, const U& rhs) {
 /// stronger than a weak ordering. To determine if a weak ordering is the
 /// strongest type of ordering between the types, use `ExclusiveWeakOrd`.
 template <class T, class U = T>
-concept WeakOrd = Ord<T, U> || requires(const T& lhs, const U& rhs) {
+concept WeakOrd = Ord<T, U> || requires(const std::remove_reference_t<T>& lhs,
+                                        const std::remove_reference_t<U>& rhs) {
   { lhs <=> rhs } noexcept -> std::same_as<std::weak_ordering>;
 };
 
@@ -80,7 +82,8 @@ concept WeakOrd = Ord<T, U> || requires(const T& lhs, const U& rhs) {
 /// the strongest type of ordering between the types, use `ExclusivePartialOrd`.
 template <class T, class U = T>
 concept PartialOrd =
-    WeakOrd<T, U> || Ord<T, U> || requires(const T& lhs, const U& rhs) {
+    WeakOrd<T, U> || Ord<T, U> ||
+    requires(const std::remove_reference_t<T>& lhs, const U& rhs) {
       { lhs <=> rhs } noexcept -> std::same_as<std::partial_ordering>;
     };
 
@@ -133,8 +136,9 @@ inline constexpr T min(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
 template <class T>
 constexpr T min_by(
     T a sus_lifetimebound, T b sus_lifetimebound,
-    ::sus::fn::FnOnce<std::strong_ordering(const T&, const T&)> auto&&
-        compare) noexcept {
+    ::sus::fn::FnOnce<std::strong_ordering(
+        const std::remove_reference_t<T>&,
+        const std::remove_reference_t<T>&)> auto&& compare) noexcept {
   return ::sus::move(compare)(a, b) == std::strong_ordering::greater
              ? ::sus::forward<T>(b)
              : ::sus::forward<T>(a);
@@ -151,8 +155,12 @@ constexpr T min_by(
 ///
 /// Note that if either input is a temporary object this can return a reference
 /// to an object past its lifetime.
-template <class T, ::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn,
-          int&..., class Key = std::invoke_result_t<KeyFn&, const T&>>
+template <
+    class T,
+    ::sus::fn::FnMut<::sus::fn::NonVoid(const std::remove_reference_t<T>&)>
+        KeyFn,
+    int&...,
+    class Key = std::invoke_result_t<KeyFn&, const std::remove_reference_t<T>&>>
   requires(::sus::ops::Ord<Key>)
 constexpr T min_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
                        KeyFn f) noexcept {
@@ -189,8 +197,9 @@ constexpr T max(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
 template <class T>
 constexpr T max_by(
     T a sus_lifetimebound, T b sus_lifetimebound,
-    ::sus::fn::FnOnce<std::strong_ordering(const T&, const T&)> auto&&
-        compare) noexcept {
+    ::sus::fn::FnOnce<std::strong_ordering(
+        const std::remove_reference_t<T>&,
+        const std::remove_reference_t<T>&)> auto&& compare) noexcept {
   return ::sus::move(compare)(a, b) == std::strong_ordering::greater
              ? ::sus::forward<T>(a)
              : ::sus::forward<T>(b);
@@ -207,8 +216,12 @@ constexpr T max_by(
 ///
 /// Note that if either input is a temporary object this can return a reference
 /// to an object past its lifetime.
-template <class T, ::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn,
-          int&..., class Key = std::invoke_result_t<KeyFn&, const T&>>
+template <
+    class T,
+    ::sus::fn::FnMut<::sus::fn::NonVoid(const std::remove_reference_t<T>&)>
+        KeyFn,
+    int&...,
+    class Key = std::invoke_result_t<KeyFn&, const std::remove_reference_t<T>&>>
   requires(::sus::ops::Ord<Key>)
 constexpr T max_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
                        KeyFn f) noexcept {

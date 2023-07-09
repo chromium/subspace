@@ -26,10 +26,22 @@
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
 
-using ::sus::containers::Array;
-using ::sus::mem::relocate_by_memcpy;
+using sus::containers::Array;
+using sus::mem::relocate_by_memcpy;
 
 namespace {
+
+static_assert(sus::mem::Clone<Array<i32, 0>>);
+static_assert(sus::mem::Clone<Array<i32, 3>>);
+static_assert(sus::mem::Clone<sus::containers::ArrayIntoIter<i32, 0>>);
+static_assert(sus::mem::Clone<sus::containers::ArrayIntoIter<i32, 3>>);
+
+static_assert(sus::iter::Iterator<sus::containers::ArrayIntoIter<i32, 0>, i32>);
+static_assert(sus::iter::Iterator<sus::containers::ArrayIntoIter<i32, 3>, i32>);
+static_assert(sus::iter::DoubleEndedIterator<sus::containers::ArrayIntoIter<i32, 0>, i32>);
+static_assert(sus::iter::DoubleEndedIterator<sus::containers::ArrayIntoIter<i32, 3>, i32>);
+static_assert(sus::iter::ExactSizeIterator<sus::containers::ArrayIntoIter<i32, 0>, i32>);
+static_assert(sus::iter::ExactSizeIterator<sus::containers::ArrayIntoIter<i32, 3>, i32>);
 
 struct TriviallyRelocatable {
   int i;

@@ -95,6 +95,7 @@ target_sources(subspace PUBLIC
     "iter/iterator_defn.h"
     "iter/map.h"
     "iter/once.h"
+    "iter/peekable.h"
     "iter/reverse.h"
     "iter/size_hint.h"
     "iter/size_hint_impl.h"

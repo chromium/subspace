@@ -2614,4 +2614,236 @@ TEST(Iterator, Partition) {
   }
 }
 
+TEST(Iterator, Peekable) {
+  // iter().
+  {
+    auto a = sus::Array<i32, 3>::with(1, 2, 3);
+    auto it = a.iter().peekable();
+    static_assert(sus::mem::Clone<decltype(it)>);
+    static_assert(sus::mem::relocate_by_memcpy<decltype(it)>);
+    static_assert(sus::iter::Iterator<decltype(it), const i32&>);
+    static_assert(sus::iter::DoubleEndedIterator<decltype(it), const i32&>);
+    static_assert(sus::iter::ExactSizeIterator<decltype(it), const i32&>);
+
+    static_assert(std::same_as<decltype(it.peek()), sus::Option<const i32&>>);
+    // The iterator is over const refs, so peek_mut has to return const.
+    static_assert(
+        std::same_as<decltype(it.peek_mut()), sus::Option<const i32&>>);
+
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+
+    EXPECT_EQ(it.peek().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+
+    EXPECT_EQ(it.peek().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+
+    EXPECT_EQ(it.peek().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+
+    {
+      // If next() sees the end first.
+      auto it2 = sus::clone(it);
+      EXPECT_EQ(it2.next(), sus::None);
+      EXPECT_EQ(it2.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+      EXPECT_EQ(it2.exact_size_hint(), 0u);
+
+      EXPECT_EQ(it2.peek(), sus::None);
+      EXPECT_EQ(it2.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+      EXPECT_EQ(it2.exact_size_hint(), 0u);
+
+      EXPECT_EQ(it2.next(), sus::None);
+    }
+    // If peek() sees the end first.
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<i32, 3>::with(1, 2, 3);
+    auto it = a.iter_mut().peekable();
+
+    static_assert(std::same_as<decltype(it.peek()), sus::Option<const i32&>>);
+    static_assert(std::same_as<decltype(it.peek_mut()), sus::Option<i32&>>);
+
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.peek().unwrap(), 2);
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.peek().unwrap(), 3);
+    EXPECT_EQ(it.peek().unwrap(), 3);
+    EXPECT_EQ(it.next().unwrap(), 3);
+    {
+      // If next() sees the end first.
+      auto it2 = sus::clone(it);
+      EXPECT_EQ(it2.next(), sus::None);
+      EXPECT_EQ(it2.peek(), sus::None);
+      EXPECT_EQ(it2.next(), sus::None);
+    }
+    // If peek() sees the end first.
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+  // into_iter().
+  {
+    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+
+    static_assert(std::same_as<decltype(it.peek()), sus::Option<const i32&>>);
+    static_assert(std::same_as<decltype(it.peek_mut()), sus::Option<i32&>>);
+
+    EXPECT_EQ(it.next().unwrap(), 1);
+    EXPECT_EQ(it.peek().unwrap(), 2);
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.peek().unwrap(), 3);
+    EXPECT_EQ(it.peek().unwrap(), 3);
+    EXPECT_EQ(it.next().unwrap(), 3);
+    {
+      // If next() sees the end first.
+      auto it2 = sus::clone(it);
+      EXPECT_EQ(it2.next(), sus::None);
+      EXPECT_EQ(it2.peek(), sus::None);
+      EXPECT_EQ(it2.next(), sus::None);
+    }
+    // If peek() sees the end first.
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.next(), sus::None);
+  }
+
+  // Interaction with next_back(), without peek().
+  {
+    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next_back().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next_back().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+  }
+
+  // Interaction with next_back(), it does not change the peeked value until it
+  // uses the peeked value last.
+  {
+    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+
+    EXPECT_EQ(it.peek().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+
+    EXPECT_EQ(it.next_back().unwrap(), 3);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+
+    EXPECT_EQ(it.peek().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+
+    EXPECT_EQ(it.next_back().unwrap(), 2);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+
+    EXPECT_EQ(it.peek().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+
+    EXPECT_EQ(it.next_back().unwrap(), 1);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+
+    EXPECT_EQ(it.peek(), sus::None);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+
+    EXPECT_EQ(it.next(), sus::None);
+    EXPECT_EQ(it.next_back(), sus::None);
+    EXPECT_EQ(it.peek(), sus::None);
+  }
+
+  // next_if().
+  {
+    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    EXPECT_EQ(sus::none(), it.next_if([](const i32& i) {
+      EXPECT_EQ(i, 1);
+      return false;
+    }));
+    EXPECT_EQ(sus::none(), it.next_if([](const i32& i) {
+      EXPECT_EQ(i, 1);
+      return false;
+    }));
+    EXPECT_EQ(sus::some(1), it.next_if([](const i32& i) {
+      EXPECT_EQ(i, 1);
+      return true;
+    }));
+    EXPECT_EQ(sus::some(2), it.next_if([](const i32& i) {
+      EXPECT_EQ(i, 2);
+      return true;
+    }));
+    EXPECT_EQ(sus::none(), it.next_if([](const i32& i) {
+      EXPECT_EQ(i, 3);
+      return false;
+    }));
+    EXPECT_EQ(sus::some(3), it.next_if([](const i32& i) {
+      EXPECT_EQ(i, 3);
+      return true;
+    }));
+    EXPECT_EQ(sus::none(), it.next_if([](const i32&) {
+      ADD_FAILURE();
+      return true;
+    }));
+  }
+
+  // next_if_eq().
+  {
+    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    EXPECT_EQ(sus::none(), it.next_if_eq(0));
+    EXPECT_EQ(sus::none(), it.next_if_eq(0));
+    EXPECT_EQ(sus::some(1), it.next_if_eq(1));
+    EXPECT_EQ(sus::some(2), it.next_if_eq(2));
+    EXPECT_EQ(sus::none(), it.next_if_eq(2));
+    EXPECT_EQ(sus::some(3), it.next_if_eq(3));
+    EXPECT_EQ(sus::none(), it.next_if_eq(3));
+  }
+}
+
 }  // namespace

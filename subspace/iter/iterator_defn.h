@@ -81,6 +81,8 @@ class Map;
 template <class ToItem, class InnerSizedIter>
 class MapWhile;
 template <class InnerSizedIter>
+class Peekable;
+template <class InnerSizedIter>
 class Reverse;
 template <class Iter>
 class IteratorRange;
@@ -659,6 +661,9 @@ class IteratorBase {
   sus::Tuple<B, B> partition(
       ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
           pred) && noexcept;
+
+  Iterator<Item> auto peekable() && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Converts the iterator into a `std::ranges::range` for use with the std
   /// ranges library.
@@ -1293,6 +1298,15 @@ sus::Tuple<B, B> IteratorBase<Iter, Item>::partition(
 
   static_cast<Iter&&>(*this).for_each(extend);
   return sus::Tuple<B, B>::with(sus::move(left), sus::move(right));
+}
+
+template <class Iter, class Item>
+Iterator<Item> auto IteratorBase<Iter, Item>::peekable() && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Peekable = Peekable<Sized>;
+  return Peekable::with(make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
