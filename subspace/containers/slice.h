@@ -353,14 +353,16 @@ class [[sus_trivial_abi]] SliceMut final {
   }
 
   // TODO: Impl AsRef -> Slice<T>.
-  constexpr Slice<T> as_slice() const& noexcept {
-    return *this;
-  }
+  constexpr Slice<T> as_slice() const& noexcept { return *this; }
 
   // SliceMut can be used as a Slice.
-  sus_pure constexpr operator const Slice<T>&() const& { return slice_; }
-  sus_pure constexpr operator Slice<T>&() & { return slice_; }
-  sus_pure constexpr operator Slice<T>() && { return ::sus::move(slice_); }
+  sus_pure constexpr operator const Slice<T>&() const& noexcept {
+    return slice_;
+  }
+  sus_pure constexpr operator Slice<T>&() & noexcept { return slice_; }
+  sus_pure constexpr operator Slice<T>() && noexcept {
+    return ::sus::move(slice_);
+  }
 
 #define _ptr_expr slice_.data_
 #define _len_expr slice_.len_
