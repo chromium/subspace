@@ -2846,4 +2846,39 @@ TEST(Iterator, Peekable) {
   }
 }
 
+TEST(Iterator, Position) {
+  // iter().
+  {
+    auto a = sus::Array<i32, 4>::with(10, 11, 12, 13);
+    auto it = a.iter();
+    EXPECT_EQ(it.position([](const i32& i) { return i == 11; }), sus::some(1u));
+    EXPECT_EQ(it.position([](const i32& i) { return i == 12; }), sus::some(0u));
+    EXPECT_EQ(it.position([](const i32&) { return false; }), sus::none());
+    EXPECT_EQ(it.position([](const i32&) { return true; }), sus::none());
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<i32, 4>::with(10, 11, 12, 13);
+    auto it = a.iter_mut();
+    EXPECT_EQ(it.position([](i32& i) { return i == 11; }), sus::some(1u));
+    EXPECT_EQ(it.position([](i32& i) { return i == 12; }), sus::some(0u));
+    EXPECT_EQ(it.position([](i32&) { return false; }), sus::none());
+    EXPECT_EQ(it.position([](i32&) { return true; }), sus::none());
+  }
+  // into_iter().
+  {
+    auto it = sus::Array<i32, 4>::with(10, 11, 12, 13).into_iter();
+    EXPECT_EQ(it.position([](i32&& i) { return i == 11; }), sus::some(1u));
+    EXPECT_EQ(it.position([](i32&& i) { return i == 12; }), sus::some(0u));
+    EXPECT_EQ(it.position([](i32&&) { return false; }), sus::none());
+    EXPECT_EQ(it.position([](i32&&) { return true; }), sus::none());
+  }
+
+  // No match.
+  {
+    auto it = sus::Array<i32, 4>::with(10, 11, 12, 13).into_iter();
+    EXPECT_EQ(it.position([](auto) { return false; }), sus::None);
+  }
+}
+
 }  // namespace

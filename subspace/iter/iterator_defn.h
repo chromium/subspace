@@ -665,6 +665,26 @@ class IteratorBase {
   Iterator<Item> auto peekable() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
+  /// Searches for an element in an iterator, returning its index.
+  ///
+  /// `position()` takes a closure that returns `true` or `false`. It applies
+  /// this closure to each element of the iterator, and if one of them
+  /// returns `true`, then `position()` returns `Some(index)`. If all of
+  /// them return `false`, it returns `None`.
+  ///
+  /// `position()` is short-circuiting; in other words, it will stop
+  /// processing as soon as it finds a `true`.
+  ///
+  /// If position is called multiple times on the same iterator, the second
+  /// search starts where the first left off, but always considers the first
+  /// element seen to be at position 0.
+  ///
+  /// # Panics
+  ///
+  /// The method does no guarding against overflows, so if there are more
+  /// than [`usize::MAX`] non-matching elements, it will panic.
+  Option<usize> position(::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept;
+
   /// Converts the iterator into a `std::ranges::range` for use with the std
   /// ranges library.
   ///
@@ -1307,6 +1327,18 @@ Iterator<Item> auto IteratorBase<Iter, Item>::peekable() && noexcept
   using Sized = SizedIteratorType<Iter>::type;
   using Peekable = Peekable<Sized>;
   return Peekable::with(make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+Option<usize> IteratorBase<Iter, Item>::position(
+    ::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept {
+  usize pos;
+  while (true) {
+    Option<Item> o = static_cast<Iter&>(*this).next();
+    if (o.is_none()) return Option<usize>();
+    if (pred(::sus::move(o).unwrap())) return Option<usize>::with(pos);
+    pos += 1u;
+  }
 }
 
 template <class Iter, class Item>

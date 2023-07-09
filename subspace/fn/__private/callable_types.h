@@ -17,6 +17,7 @@
 #include <concepts>
 #include <type_traits>
 
+#include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
 
 namespace sus::fn::__private {
@@ -46,8 +47,10 @@ concept ConvertsToFunctionPointer = requires(F f) {
 /// be stored as `R`.
 template <class F, class R, class... Args>
 concept CallableOnceMut =
-    !FunctionPointer<F, R, Args...> && requires(F && f, Args... args) {
-      { ::sus::move(f)(args...) } -> std::convertible_to<R>;
+    !FunctionPointer<F, R, Args...> && requires(F&& f, Args... args) {
+      {
+        ::sus::move(f)(::sus::forward<Args>(args)...)
+      } -> std::convertible_to<R>;
     };
 
 /// Whether a functor `F` is a callable object (with an `operator()`) that is
@@ -55,8 +58,8 @@ concept CallableOnceMut =
 /// can be stored as `R`.
 template <class F, class R, class... Args>
 concept CallableMut =
-    !FunctionPointer<F, R, Args...> && requires(F & f, Args... args) {
-      { f(args...) } -> std::convertible_to<R>;
+    !FunctionPointer<F, R, Args...> && requires(F& f, Args... args) {
+      { f(::sus::forward<Args>(args)...) } -> std::convertible_to<R>;
     };
 
 /// Whether a functor `F` is a callable object (with an `operator()`) that is
@@ -65,7 +68,7 @@ concept CallableMut =
 template <class F, class R, class... Args>
 concept CallableConst =
     !FunctionPointer<F, R, Args...> && requires(const F& f, Args... args) {
-      { f(args...) } -> std::convertible_to<R>;
+      { f(::sus::forward<Args>(args)...) } -> std::convertible_to<R>;
     };
 
 }  // namespace sus::fn::__private
