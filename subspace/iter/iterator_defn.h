@@ -22,6 +22,7 @@
 #include "subspace/iter/__private/iterator_end.h"
 #include "subspace/iter/__private/iterator_loop.h"
 #include "subspace/iter/boxed_iterator.h"
+#include "subspace/iter/extend.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
 #include "subspace/iter/sized_iterator.h"
@@ -647,14 +648,27 @@ class IteratorBase {
                          const std::remove_reference_t<OtherItem>&)>
                          cmp) && noexcept;
 
+  /// Consumes an iterator, creating two disjoint collections from it.
+  ///
+  /// The predicate passed to `partition()` can return `true` or `false`.
+  /// `partition()` returns a pair, all of the elements for which the predicate
+  /// returned `true`, and all of the elements for which it returned `false`.
+  template <class B>
+    requires(::sus::construct::Default<B> &&  //
+             ::sus::iter::Extend<B, ItemT>)
+  sus::Tuple<B, B> partition(
+      ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
+          pred) && noexcept;
+
   /// Converts the iterator into a `std::ranges::range` for use with the std
   /// ranges library.
   ///
-  /// This provides stdlib compatibility for iterators in libraries that expect
-  /// stdlib types.
+  /// This provides stdlib compatibility for iterators in libraries that
+  /// expect stdlib types.
   ///
-  /// The `subspace/iter/compat_ranges.h` header must be included separately to
-  /// use this method, to avoid pulling in large stdlib headers by default.
+  /// The `subspace/iter/compat_ranges.h` header must be included separately
+  /// to use this method, to avoid pulling in large stdlib headers by
+  /// default.
   auto range() && noexcept;
 
   /// Reverses an iterator's direction.
@@ -997,6 +1011,7 @@ B IteratorBase<Iter, Item>::fold(B init, F f) && noexcept {
 template <class Iter, class Item>
 template <::sus::fn::FnMut<void(Item&&)> F>
 void IteratorBase<Iter, Item>::for_each(F f) && noexcept {
+  // TODO: Implement with fold()? Allow fold to take B=void?
   while (true) {
     if (Option<Item> o = static_cast<Iter&>(*this).next(); o.is_none())
       break;
@@ -1254,6 +1269,30 @@ std::partial_ordering IteratorBase<Iter, Item>::partial_cmp_by(
   return __private::iter_compare<std::partial_ordering, Item, OtherItem>(
       static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
       ::sus::move(cmp));
+}
+
+template <class Iter, class Item>
+template <class B>
+  requires(::sus::construct::Default<B> &&  //
+           ::sus::iter::Extend<B, Item>)
+sus::Tuple<B, B> IteratorBase<Iter, Item>::partition(
+    ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
+        pred) && noexcept {
+  B left;
+  B right;
+
+  auto extend = [&pred, &left, &right](Item&& i) mutable {
+    if (pred(static_cast<const std::remove_reference_t<Item>&>(i))) {
+      // TODO: Consider adding extend_one() to the Extend concept, which can
+      // take Item instead of an Option<Item>.
+      left.extend(::sus::Option<Item>::with(::sus::forward<Item>(i)));
+    } else {
+      right.extend(::sus::Option<Item>::with(::sus::forward<Item>(i)));
+    }
+  };
+
+  static_cast<Iter&&>(*this).for_each(extend);
+  return sus::Tuple<B, B>::with(sus::move(left), sus::move(right));
 }
 
 template <class Iter, class Item>

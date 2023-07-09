@@ -2556,4 +2556,62 @@ TEST(Iterator, Rfind) {
   }
 }
 
+struct Extendable {
+  void extend(sus::iter::IntoIterator<i32> auto&& in) {
+    for (i32 each : sus::move(in).into_iter()) extend_sum += each;
+  }
+  i32 extend_sum;
+};
+static_assert(sus::construct::Default<Extendable>);
+static_assert(sus::iter::Extend<Extendable, i32>);
+
+TEST(Iterator, Partition) {
+  // Partition from iter() for a Copy type.
+  {
+    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto p = a.iter().partition<sus::Vec<i32>>([](const i32&) { return true; });
+    static_assert(
+        std::same_as<decltype(p), sus::Tuple<sus::Vec<i32>, sus::Vec<i32>>>);
+
+    auto [left, right] = a.iter().partition<sus::Vec<i32>>(
+        [](const i32& i) { return i % 2 == 1; });
+    EXPECT_EQ(left, sus::Slice<i32>::from({1, 3, 5}));
+    EXPECT_EQ(right, sus::Slice<i32>::from({2, 4}));
+  }
+
+  struct S {
+    S(i32 i) : i(i) {}
+    S(S&&) = default;
+    S& operator=(S&&) = default;
+    i32 i;
+    bool operator==(const S& rhs) const noexcept { return i == rhs.i; }
+  };
+  static_assert(sus::mem::Move<S>);
+  static_assert(!sus::mem::Copy<S>);
+  static_assert(sus::ops::Eq<S>);
+
+  // Partition from into_iter() with Move and !Copy type.
+  {
+    auto it = sus::Array<S, 5>::with(S(1), S(2), S(3), S(4), S(5)).into_iter();
+    static_assert(std::same_as<decltype(sus::move(it).partition<sus::Vec<S>>(
+                                   [](const S&) { return true; })),
+                               sus::Tuple<sus::Vec<S>, sus::Vec<S>>>);
+
+    auto [left, right] = sus::move(it).partition<sus::Vec<S>>(
+        [](const S& i) { return i.i % 2 == 1; });
+    EXPECT_EQ(left, sus::Slice<S>::from({S(1), S(3), S(5)}));
+    EXPECT_EQ(right, sus::Slice<S>::from({S(2), S(4)}));
+  }
+
+  // Test with simple Extend type.
+  {
+    auto [left, right] =
+        sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+            .into_iter()
+            .partition<Extendable>([](const i32& i) { return i <= 3; });
+    EXPECT_EQ(left.extend_sum, 1 + 2 + 3);
+    EXPECT_EQ(right.extend_sum, 4 + 5);
+  }
+}
+
 }  // namespace
