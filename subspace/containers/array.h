@@ -513,6 +513,7 @@ inline StreamType& operator<<(StreamType& stream, const Array<T, N>& value) {
   return ::sus::string::__private::format_to_stream(stream,
                                                     fmt::format("{}", value));
 }
+
 }  // namespace sus::containers
 
 // Promote Array into the `sus` namespace.
