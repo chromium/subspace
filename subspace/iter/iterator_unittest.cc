@@ -1688,6 +1688,14 @@ TEST(Iterator, Fold) {
   }
 }
 
+TEST(Iterator, Fold_Example_References) {
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  i32 init;
+  i32& out = v.iter_mut().fold<i32&>(  //
+      init, [](i32&, i32& v) -> i32& { return v; });
+  ::sus::check(&out == &v.last().unwrap());
+}
+
 TEST(Iterator, Rfold) {
   // Check the accumulator type can be different from the iterating type.
   {
@@ -2335,6 +2343,7 @@ TEST(Iterator, MinBy) {
     auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
     decltype(auto) n = a.iter().min_by(&M::cmp);
     static_assert(std::same_as<decltype(n), Option<const M&>>);
+    EXPECT_EQ(&n.as_value(), &a[1u]);
     EXPECT_EQ(n.as_value().i, 1);
   }
   // iter_mut().
@@ -2342,6 +2351,7 @@ TEST(Iterator, MinBy) {
     auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
     decltype(auto) n = a.iter_mut().min_by(&M::cmp);
     static_assert(std::same_as<decltype(n), Option<M&>>);
+    EXPECT_EQ(&n.as_value(), &a[1u]);
     EXPECT_EQ(n.as_value().i, 1);
   }
 }
@@ -2924,6 +2934,53 @@ TEST(Iterator, Product) {
     static_assert(std::same_as<decltype(p), f32>);
     EXPECT_EQ(p, 2.f * 3.f * 4.f);
   }
+}
+
+TEST(Iterator, Reduce) {
+  // Empty.
+  {
+    auto out = sus::Array<i32, 0>::with().into_iter().reduce(
+        [](i32, i32) { return 0; });
+    EXPECT_EQ(out, sus::None);
+  }
+  // into_iter().
+  {
+    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto out =
+        sus::move(a).into_iter().reduce([](i32 acc, i32 v) { return acc + v; });
+    static_assert(std::same_as<decltype(out), sus::Option<i32>>);
+    EXPECT_EQ(out, sus::some(2 + 3 + 4));
+  }
+  // iter().
+  {
+    auto a = sus::Array<i32, 3>::with(3, 2, 4);
+    auto out = a.iter().reduce([](const i32& acc, const i32& v) -> const i32& {
+      if (acc < v)
+        return acc;
+      else
+        return v;
+    });
+    static_assert(std::same_as<decltype(out), sus::Option<const i32&>>);
+    EXPECT_EQ(&out.as_value(), &a[1u]);
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<i32, 3>::with(3, 2, 4);
+    auto out = a.iter_mut().reduce([](i32& acc, i32& v) -> i32& {
+      if (acc < v)
+        return acc;
+      else
+        return v;
+    });
+    static_assert(std::same_as<decltype(out), sus::Option<i32&>>);
+    EXPECT_EQ(&out.as_value(), &a[1u]);
+  }
+}
+
+TEST(Iterator, Reduce_Example_References) {
+  auto a = sus::Array<i32, 3>::with(2, 3, 4);
+  auto out = a.iter().copied().reduce([](i32 acc, i32 v) { return acc + v; });
+  sus::check(out.as_value() == 2 + 3 + 4);
 }
 
 }  // namespace
