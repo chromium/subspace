@@ -2714,6 +2714,17 @@ TEST(Option, FromProduct) {
     static_assert(std::same_as<decltype(o), sus::Option<i32>>);
     EXPECT_EQ(o.as_value(), 2 * 3 * 4);
   }
+
+  static_assert(
+      sus::Array<Option<i32>, 3>::with(sus::some(2), sus::none(), sus::some(4))
+          .into_iter()
+          .product()
+          .is_none());
+  static_assert(
+      sus::Array<Option<i32>, 3>::with(sus::some(2), sus::some(3), sus::some(4))
+          .into_iter()
+          .product()
+          .as_value() == 2 * 3 * 4);
 }
 
 }  // namespace

@@ -1427,7 +1427,7 @@ constexpr Option<T> from_product_impl(Iter&& it) noexcept {
   class IterUntilNone final
       : public ::sus::iter::IteratorBase<IterUntilNone, T> {
    public:
-    IterUntilNone(Iter& iter, bool& found_none)
+    constexpr IterUntilNone(Iter& iter, bool& found_none)
         : iter_(iter), found_none_(found_none) {}
 
     constexpr Option<T> next() noexcept {
@@ -1439,7 +1439,7 @@ constexpr Option<T> from_product_impl(Iter&& it) noexcept {
       }
       return out;
     }
-    ::sus::iter::SizeHint size_hint() const noexcept {
+    constexpr ::sus::iter::SizeHint size_hint() const noexcept {
       return ::sus::iter::SizeHint(0u, iter_.size_hint().upper);
     }
 
