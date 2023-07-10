@@ -102,6 +102,7 @@ target_sources(subspace PUBLIC
     "iter/size_hint.h"
     "iter/size_hint_impl.h"
     "iter/sized_iterator.h"
+    "iter/skip.h"
     "iter/successors.h"
     "macros/__private/compiler_bugs.h"
     "macros/assume.h"
