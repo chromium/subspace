@@ -87,7 +87,7 @@ class OverflowInteger {
   /// panic on overflow. So instead `iter.product<OverflowInteger<T>>()` can be
   /// used (for integer type `T`) which will perform the product computation and
   /// return an OverflowInteger without ever panicking.
-  sus_pure static constexpr OverflowInteger from_product(
+  static constexpr OverflowInteger from_product(
       ::sus::iter::Iterator<I> auto&& it) noexcept {
     // SAFETY: All integers can hold positive 1.
     auto p = OverflowInteger(CONSTRUCT,
@@ -96,7 +96,7 @@ class OverflowInteger {
     return p;
   }
 
-  sus_pure static constexpr OverflowInteger from_product(
+  static constexpr OverflowInteger from_product(
       ::sus::iter::Iterator<OverflowInteger> auto&& it) noexcept {
     // SAFETY: All integers can hold positive 1.
     auto p = OverflowInteger(CONSTRUCT,

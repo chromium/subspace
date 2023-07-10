@@ -481,7 +481,7 @@ sus_pure static constexpr _self from_unchecked(::sus::marker::UnsafeFnMarker,
 ///
 /// # Panics
 /// This method will panic if the product of all values overflows.
-sus_pure static constexpr _self from_product(
+static constexpr _self from_product(
     ::sus::iter::Iterator<_self> auto&& it) noexcept {
   auto p = _self(_primitive{1});
   for (_self i : ::sus::move(it)) p *= i;

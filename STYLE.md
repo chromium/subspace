@@ -39,3 +39,7 @@ footguns, crashes, bugs, and UB.
    Option<DefaultCtor>(DefaultCtor())`.
 1. Iterator types should be `[[nodiscard]]` always. And trivially relocatable
    (and `[[sus_trivial_abi]]`) if at all possible.
+1. Accessor methods and ctor methods can be marked `sus_pure` IF:
+  * They don't mutate through a global or parameter mutable reference or pointer.
+  * Thus they don't have observable side effects. Calling them on the same input
+    values multiple times always produces the same output.
