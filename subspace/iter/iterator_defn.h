@@ -93,6 +93,8 @@ template <class InnerIter>
 class Skip;
 template <class InnerIter>
 class SkipWhile;
+template <class InnerIter>
+class StepBy;
 template <class Iter>
 class IteratorRange;
 
@@ -823,6 +825,23 @@ class IteratorBase {
   Iterator<Item> auto skip_while(
       ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
           pred) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Creates an iterator starting at the same point, but stepping by the given
+  /// amount at each iteration.
+  ///
+  /// The first element of the iterator will always be returned, regardless of
+  /// the step given. After that, skipped elements will be lazily walked
+  /// over as needed.
+  ///
+  /// `step_by()` behaves like the sequence `next()`, `nth(step-1)`,
+  /// `self.nth(step-1)`, ...
+  ///
+  /// # Panics
+  ///
+  /// The `step` must be greater than 0, or the function will panic. A step size
+  /// of 1 returns every element.
+  Iterator<Item> auto step_by(usize step) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Searches for an element of an iterator from the back that satisfies a
@@ -1559,6 +1578,15 @@ Iterator<Item> auto IteratorBase<Iter, Item>::skip_while(
   using SkipWhile = SkipWhile<Sized>;
   return SkipWhile::with(::sus::move(pred),
                          make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+Iterator<Item> auto IteratorBase<Iter, Item>::step_by(usize step) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using StepBy = StepBy<Sized>;
+  return StepBy::with(step, make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>

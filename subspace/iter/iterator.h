@@ -54,3 +54,4 @@
 #include "subspace/iter/scan.h"
 #include "subspace/iter/skip.h"
 #include "subspace/iter/skip_while.h"
+#include "subspace/iter/step_by.h"
