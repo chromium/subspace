@@ -32,14 +32,12 @@ sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(S s) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if (s.primitive_value < decltype(S::primitive_value){0}) {
-    return R::with_err(::sus::num::TryFromIntError(
-        ::sus::num::TryFromIntError::Kind::OutOfBounds));
+    return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
   }
   constexpr auto umax = __private::into_unsigned(S::MAX_PRIMITIVE);
   if constexpr (MAX_PRIMITIVE < umax) {
     if (__private::into_unsigned(s.primitive_value) > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
+      return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
   return R::with(_self(static_cast<_primitive>(s.primitive_value)));
@@ -51,8 +49,7 @@ _self::try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE) {
     if (u.primitive_value > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
+      return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
   return R::with(_self(static_cast<_primitive>(u.primitive_value)));
@@ -63,14 +60,12 @@ sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(S s) {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if (s < 0) {
-    return R::with_err(::sus::num::TryFromIntError(
-        ::sus::num::TryFromIntError::Kind::OutOfBounds));
+    return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
   }
   constexpr auto umax = __private::into_unsigned(__private::max_value<S>());
   if constexpr (MAX_PRIMITIVE < umax) {
     if (__private::into_unsigned(s) > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
+      return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
   return R::with(_self(static_cast<_primitive>(s)));
@@ -83,14 +78,12 @@ _self::try_from(S s) {
   using D = std::underlying_type_t<S>;
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if (static_cast<D>(s) < 0) {
-    return R::with_err(::sus::num::TryFromIntError(
-        ::sus::num::TryFromIntError::Kind::OutOfBounds));
+    return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
   }
   constexpr auto umax = __private::into_unsigned(__private::max_value<D>());
   if constexpr (MAX_PRIMITIVE < umax) {
     if (__private::into_unsigned(static_cast<D>(s)) > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
+      return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
   return R::with(_self(static_cast<_primitive>(s)));
@@ -102,8 +95,7 @@ _self::try_from(U u) {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {
     if (u > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
+      return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
   return R::with(_self(static_cast<_primitive>(u)));
@@ -117,8 +109,7 @@ _self::try_from(U u) {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < __private::max_value<D>()) {
     if (static_cast<D>(u) > MAX_PRIMITIVE) {
-      return R::with_err(::sus::num::TryFromIntError(
-          ::sus::num::TryFromIntError::Kind::OutOfBounds));
+      return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
   return R::with(_self(static_cast<_primitive>(u)));

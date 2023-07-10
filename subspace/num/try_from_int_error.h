@@ -16,8 +16,10 @@
 
 #include <string>
 
+#include "fmt/core.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/macros/pure.h"
+#include "subspace/marker/unsafe.h"
 
 namespace sus::num {
 
@@ -29,18 +31,44 @@ class TryFromIntError {
     OutOfBounds,
   };
 
-  /// Constructs a TryFromIntError with a `kind`.
-  explicit constexpr TryFromIntError(Kind kind) : kind_(kind) {}
+  /// Constructs a TryFromIntError with kind `OutOfBounds`.
+  constexpr static TryFromIntError with_out_of_bounds() noexcept {
+    return TryFromIntError(CONSTRUCT, Kind::OutOfBounds);
+  }
 
-  sus_pure constexpr std::string to_string() const noexcept {
-    switch (kind_) {
-      case Kind::OutOfBounds: return std::string("out of bounds");
-    }
-    ::sus::assertions::unreachable_unchecked(::sus::marker::unsafe_fn);
+  /// Gives the kind of error that occured.
+  sus_pure constexpr Kind kind() const noexcept { return kind_; }
+
+  /// sus::ops::Eq trait.
+  sus_pure constexpr bool operator==(TryFromIntError rhs) const noexcept {
+    return kind_ == rhs.kind_;
   }
 
  private:
+  enum Construct { CONSTRUCT };
+  constexpr inline explicit TryFromIntError(Construct, Kind k) noexcept
+      : kind_(k) {}
+
   Kind kind_;
 };
 
 }  // namespace sus::num
+
+// fmt support.
+template <class Char>
+struct fmt::formatter<::sus::num::TryFromIntError, Char> {
+  template <class ParseContext>
+  constexpr auto parse(ParseContext& ctx) {
+    return ctx.begin();
+  }
+
+  template <class FormatContext>
+  constexpr auto format(::sus::num::TryFromIntError t,
+                        FormatContext& ctx) const {
+    switch (t.kind()) {
+      using enum ::sus::num::TryFromIntError::Kind;
+      case OutOfBounds: return fmt::format_to(ctx.out(), "out of bounds");
+    }
+    ::sus::assertions::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+};
