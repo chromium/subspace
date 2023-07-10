@@ -25,6 +25,8 @@
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
+#include "subspace/iter/iterator_concept.h"
+#include "subspace/iter/product.h"
 #include "subspace/macros/inline.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/nonnull.h"
@@ -183,6 +185,17 @@ class Option final {
   static constexpr Option from(::sus::option::Option<U>&& o) noexcept {
     return Option::with(sus::into(sus::move(o).unwrap()));
   }
+
+  /// Computes the product of an iterator over `Option<T>` as long as there is
+  /// no `None` found. If a `None` is found, the function returns `None`.
+  ///
+  /// Implements sus::iter::Product<Option<T>, Option<T>>.
+  ///
+  /// The product is computed using the implementation of the inner type `T`
+  /// which also satisfies `sus::iter::Product<T, T>`.
+  template <::sus::iter::Iterator<Option<T>> Iter>
+    requires ::sus::iter::Product<T, T>
+  static constexpr Option from_product(Iter&& it) noexcept;
 
   /// Takes each item in the Iterator: if it is None, no further elements are
   /// taken, and the None is returned. Should no None occur, a container of type
@@ -1389,12 +1402,47 @@ using ::sus::option::Some;
 
 //////
 
-// This contains a type that needs to use Option, and is used by an Option
-// method implementation below. So we have to include it after defining Option
-// but before implementing the method.
+// This header contains a type that needs to use Option, and is used by an
+// Option method implementation below. So we have to include it after defining
+// Option but before implementing the following methods.
 #include "subspace/iter/size_hint.h"
 
 namespace sus::option {
+
+template <class T>
+template <::sus::iter::Iterator<Option<T>> Iter>
+  requires ::sus::iter::Product<T, T>
+constexpr Option<T> Option<T>::from_product(Iter&& it) noexcept {
+  class IterUntilNone final
+      : public ::sus::iter::IteratorBase<IterUntilNone, T> {
+   public:
+    IterUntilNone(Iter& iter, bool& found_none)
+        : iter_(iter), found_none_(found_none) {}
+
+    constexpr Option<T> next() noexcept {
+      Option<Option<T>> next = iter_.next();
+      Option<T> out;
+      if (next.is_some()) {
+        out = ::sus::move(next).unwrap_unchecked(::sus::marker::unsafe_fn);
+        if (out.is_none()) found_none_ = true;
+      }
+      return out;
+    }
+    ::sus::iter::SizeHint size_hint() const noexcept {
+      return ::sus::iter::SizeHint(0u, iter_.size_hint().upper);
+    }
+
+   private:
+    Iter& iter_;
+    bool& found_none_;
+  };
+  static_assert(::sus::iter::Iterator<IterUntilNone, T>);
+
+  bool found_none = false;
+  auto out = Option::with(IterUntilNone(it, found_none).product());
+  if (found_none) out = Option();
+  return out;
+}
 
 template <class T>
 template <class IntoIter, int&..., class Iter, class IterItem,

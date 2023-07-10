@@ -2519,8 +2519,8 @@ TEST(Option, From) {
 TEST(Option, FromIter) {
   decltype(auto) all_some =
       sus::Array<Option<usize>, 3>::with(Option<usize>::with(1u),
-                                                Option<usize>::with(2u),
-                                                Option<usize>::with(3u))
+                                         Option<usize>::with(2u),
+                                         Option<usize>::with(3u))
           .into_iter()
           .collect<Option<CollectSum<usize>>>();
   static_assert(
@@ -2555,11 +2555,10 @@ TEST(Option, FromIterWithRefs) {
   auto u2 = NoCopyMove();
   auto u3 = NoCopyMove();
 
-  decltype(auto) all_some =
-      sus::Array<Option<const NoCopyMove&>, 3>::with(
-          sus::some(u1), sus::some(u2), sus::some(u3))
-          .into_iter()
-          .collect<Option<CollectRefs>>();
+  decltype(auto) all_some = sus::Array<Option<const NoCopyMove&>, 3>::with(
+                                sus::some(u1), sus::some(u2), sus::some(u3))
+                                .into_iter()
+                                .collect<Option<CollectRefs>>();
   static_assert(std::same_as<sus::Option<CollectRefs>, decltype(all_some)>);
   EXPECT_EQ(all_some, Some);
   EXPECT_EQ(all_some->vec[0u], &u1);
@@ -2694,6 +2693,27 @@ TEST(Option, Stream) {
 TEST(Option, GTest) {
   EXPECT_EQ(testing::PrintToString(sus::Option<i32>::with(12345)),
             "Some(12345)");
+}
+
+TEST(Option, FromProduct) {
+  static_assert(sus::iter::Product<Option<i32>, Option<i32>>);
+
+  // With a None.
+  {
+    auto a = sus::Array<Option<i32>, 3>::with(sus::some(2), sus::none(),
+                                              sus::some(4));
+    decltype(auto) o = sus::move(a).into_iter().product();
+    static_assert(std::same_as<decltype(o), sus::Option<i32>>);
+    EXPECT_EQ(o, sus::None);
+  }
+  // Without a None.
+  {
+    auto a = sus::Array<Option<i32>, 3>::with(sus::some(2), sus::some(3),
+                                              sus::some(4));
+    decltype(auto) o = sus::move(a).into_iter().product();
+    static_assert(std::same_as<decltype(o), sus::Option<i32>>);
+    EXPECT_EQ(o.as_value(), 2 * 3 * 4);
+  }
 }
 
 }  // namespace

@@ -21,6 +21,8 @@
 #include "subspace/construct/into.h"
 #include "subspace/containers/array.h"
 #include "subspace/containers/vec.h"
+#include "subspace/iter/__private/into_iterator_archetype.h"
+#include "subspace/iter/__private/iterator_archetype.h"
 #include "subspace/iter/empty.h"
 #include "subspace/iter/filter.h"
 #include "subspace/iter/into_iterator.h"
@@ -41,6 +43,11 @@ namespace {
 using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false, false, false>;
 
 static_assert(::sus::ops::Eq<sus::iter::SizeHint>);
+
+static_assert(
+    sus::iter::Iterator<sus::iter::__private::IteratorArchetype<int>, int>);
+static_assert(sus::iter::IntoIterator<
+              sus::iter::__private::IntoIteratorArchetype<int>, int>);
 
 // clang-format off
 static_assert(
