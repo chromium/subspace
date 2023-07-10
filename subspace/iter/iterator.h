@@ -51,3 +51,4 @@
 #include "subspace/iter/map_while.h"
 #include "subspace/iter/peekable.h"
 #include "subspace/iter/reverse.h"
+#include "subspace/iter/scan.h"

@@ -86,6 +86,9 @@ template <class InnerSizedIter>
 class Peekable;
 template <class InnerSizedIter>
 class Reverse;
+template <class OutType, class State, class InnerSizedIter>
+  requires(!std::is_reference_v<State>)
+class Scan;
 template <class Iter>
 class IteratorRange;
 
@@ -769,6 +772,33 @@ class IteratorBase {
   Iterator<Item> auto rev() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter> &&
              ::sus::iter::DoubleEndedIterator<Iter, Item>);
+
+  /// An iterator adapter which, like `fold()`, holds internal state, but unlike
+  /// `fold()`, produces a new iterator.
+  ///
+  /// To write a function with internal state that receives the current iterator
+  /// as input and yields items in arbitrary ways, see `generate()`. `scan()` is
+  /// a less general tool where the given function is executed for each item in
+  /// the iterator in order.
+  ///
+  /// `scan()` takes two arguments: an initial value which seeds the internal
+  /// state, and a closure with two arguments, the first being a mutable
+  /// reference to the internal state and the second an iterator element. The
+  /// closure can mutate the internal state to share state between iterations.
+  ///
+  /// On iteration, the closure will be applied to each element of the iterator
+  /// and the return value from the closure, an `Option`, is returned by the
+  /// next method. Thus the closure can return `Some(value)` to yield value, or
+  /// `None` to end the iteration.
+  template <
+      class State, ::sus::fn::FnMut<::sus::fn::NonVoid(State&, ItemT&&)> F,
+      int&..., class R = std::invoke_result_t<F&, State&, ItemT&&>,
+      class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type,
+      class B = ::sus::fn::FnMutBox<R(State&, Item&&)>>
+    requires(::sus::option::__private::IsOptionType<R>::value &&
+             ::sus::construct::Into<F, B>)
+  Iterator<InnerR> auto scan(State initial_state, F f) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Searches for an element of an iterator from the back that satisfies a
   /// predicate.
@@ -1468,6 +1498,21 @@ Iterator<Item> auto IteratorBase<Iter, Item>::rev() && noexcept
   using Sized = SizedIteratorType<Iter>::type;
   using Reverse = Reverse<Sized>;
   return Reverse::with(make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+template <class State, ::sus::fn::FnMut<::sus::fn::NonVoid(State&, Item&&)> F,
+          int&..., class R, class InnerR, class B>
+  requires(::sus::option::__private::IsOptionType<R>::value &&
+           ::sus::construct::Into<F, B>)
+Iterator<InnerR> auto IteratorBase<Iter, Item>::scan(State initial_state,
+                                                     F f) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Scan = Scan<InnerR, State, Sized>;
+  return Scan::with(::sus::move(initial_state), ::sus::move_into(f),
+                    make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
