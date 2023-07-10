@@ -2885,7 +2885,8 @@ TEST(Iterator, Position) {
   }
   // into_iter().
   {
-    auto it = sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13).into_iter();
+    auto it =
+        sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.position([](i32&& i) { return i == 11; }), sus::some(1u));
     EXPECT_EQ(it.position([](i32&& i) { return i == 12; }), sus::some(0u));
     EXPECT_EQ(it.position([](i32&&) { return false; }), sus::none());
@@ -2988,8 +2989,10 @@ TEST(Iterator, Rposition) {
   {
     auto a = sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13);
     auto it = a.iter();
-    EXPECT_EQ(it.rposition([](const i32& i) { return i == 11; }), sus::some(5u));
-    EXPECT_EQ(it.rposition([](const i32& i) { return i == 12; }), sus::some(2u));
+    EXPECT_EQ(it.rposition([](const i32& i) { return i == 11; }),
+              sus::some(5u));
+    EXPECT_EQ(it.rposition([](const i32& i) { return i == 12; }),
+              sus::some(2u));
     EXPECT_EQ(it.rposition([](const i32&) { return false; }), sus::none());
     EXPECT_EQ(it.rposition([](const i32&) { return true; }), sus::none());
   }
@@ -3004,7 +3007,8 @@ TEST(Iterator, Rposition) {
   }
   // into_iter().
   {
-    auto it = sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13).into_iter();
+    auto it =
+        sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.rposition([](i32&& i) { return i == 11; }), sus::some(5u));
     EXPECT_EQ(it.rposition([](i32&& i) { return i == 12; }), sus::some(2u));
     EXPECT_EQ(it.rposition([](i32&&) { return false; }), sus::none());
@@ -3015,6 +3019,41 @@ TEST(Iterator, Rposition) {
   {
     auto it = sus::Array<i32, 4>::with(10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.rposition([](auto) { return false; }), sus::None);
+  }
+}
+
+TEST(Iterator, Scan) {
+  {
+    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto it = sus::move(a).into_iter().scan(
+        22_i32, [](i32& state, i32&& v) -> sus::Option<std::string> {
+          auto before = state;
+          if (v % 2 == 0) state += v;
+          return sus::some(fmt::format("{} + {} = {}", before, v, state));
+        });
+    static_assert(sus::mem::Clone<decltype(it)>);
+    EXPECT_EQ(it.next(), sus::some("22 + 2 = 24"));
+    EXPECT_EQ(it.next(), sus::some("24 + 3 = 24"));
+    EXPECT_EQ(it.next(), sus::some("24 + 4 = 28"));
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // Early terminate.
+  {
+    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto it = sus::move(a).into_iter().scan(
+        22_i32, [](i32& state, i32&& v) -> sus::Option<std::string> {
+          auto before = state;
+          if (v < 4) {
+            state += v;
+            return sus::some(fmt::format("{} + {} = {}", before, v, state));
+          } else {
+            return sus::none();
+          }
+        });
+    static_assert(sus::mem::Clone<decltype(it)>);
+    EXPECT_EQ(it.next(), sus::some("22 + 2 = 24"));
+    EXPECT_EQ(it.next(), sus::some("24 + 3 = 27"));
+    EXPECT_EQ(it.next(), sus::none());
   }
 }
 

@@ -98,6 +98,7 @@ target_sources(subspace PUBLIC
     "iter/peekable.h"
     "iter/product.h"
     "iter/reverse.h"
+    "iter/scan.h"
     "iter/size_hint.h"
     "iter/size_hint_impl.h"
     "iter/sized_iterator.h"
