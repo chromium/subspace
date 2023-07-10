@@ -74,10 +74,14 @@ class OverflowInteger {
   }
 
   /// Constructs an `OverflowInteger` from an `Iterator` by computing the
-  /// product of all elements in the vector.
+  /// product of all elements in the iterator.
   ///
   /// This method should rarely be called directly, as it is used to satisfy the
   /// `sus::iter::Product` concept.
+  ///
+  /// This method satisfies `sus::iter::Product<OverflowInteger<T>, T>` as well
+  /// as `sus::iter::Product<OverflowInteger<T>, OverflowInteger<T>>`, for a
+  /// subspace integer type `T`.
   ///
   /// If an iterator yields a subspace integer type, `iter.product()` would
   /// panic on overflow. So instead `iter.product<OverflowInteger<T>>()` can be
@@ -89,6 +93,15 @@ class OverflowInteger {
     auto p = OverflowInteger(CONSTRUCT,
                              I::from_unchecked(::sus::marker::unsafe_fn, 1));
     for (I i : ::sus::move(it)) p *= i;
+    return p;
+  }
+
+  sus_pure static constexpr OverflowInteger from_product(
+      ::sus::iter::Iterator<OverflowInteger> auto&& it) noexcept {
+    // SAFETY: All integers can hold positive 1.
+    auto p = OverflowInteger(CONSTRUCT,
+                             I::from_unchecked(::sus::marker::unsafe_fn, 1));
+    for (OverflowInteger i : ::sus::move(it)) p *= i;
     return p;
   }
 
