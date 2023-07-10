@@ -139,7 +139,7 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// This method should rarely be called directly, as it is used to satisfy the
 /// `sus::iter::Product` concept so that `Iterator::product()` can be called for
 /// iterators over ##_self##.
-sus_pure static constexpr _self from_product(
+static constexpr _self from_product(
     ::sus::iter::Iterator<_self> auto&& it) noexcept {
   auto p = _self(_primitive{1u});
   for (_self i : ::sus::move(it)) p *= i;
