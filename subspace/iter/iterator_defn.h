@@ -106,25 +106,25 @@ class IteratorBase {
                   "methods must know the complete type.");
   }
 
-  inline const Iter& as_subclass() const {
+  constexpr inline const Iter& as_subclass() const {
     return static_cast<const Iter&>(*this);
   }
-  inline Iter& as_subclass_mut() { return static_cast<Iter&>(*this); }
+  constexpr inline Iter& as_subclass_mut() { return static_cast<Iter&>(*this); }
 
  public:
   using Item = ItemT;
 
   /// Adaptor for use in ranged for loops.
-  auto begin() & noexcept {
+  constexpr auto begin() & noexcept {
     return __private::IteratorLoop<Iter&>(as_subclass_mut());
   }
   /// Adaptor for use in ranged for loops.
-  auto end() & noexcept { return __private::IteratorEnd(); }
+  constexpr auto end() & noexcept { return __private::IteratorEnd(); }
 
   /// An Iterator also satisfies IntoIterator, which simply returns itself.
   ///
   /// sus::iter::IntoIterator trait implementation.
-  Iter&& into_iter() && noexcept { return static_cast<Iter&&>(*this); }
+  constexpr Iter&& into_iter() && noexcept { return static_cast<Iter&&>(*this); }
 
   // Provided overridable methods.
 
@@ -691,7 +691,7 @@ class IteratorBase {
   /// An empty iterator returns the "one" value of the type.
   template <class P = ItemT>
     requires(Product<P, ItemT>)
-  P product() && noexcept;
+  constexpr P product() && noexcept;
 
   /// Converts the iterator into a `std::ranges::range` for use with the std
   /// ranges library.
@@ -844,7 +844,7 @@ bool IteratorBase<Iter, Item>::any(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
 
 template <class Iter, class Item>
 Iterator<Item> auto IteratorBase<Iter, Item>::by_ref() & noexcept {
-  return ByRef<Iter>::with(static_cast<Iter&>(*this));
+  return ByRef<Iter>::with(as_subclass_mut());
 }
 
 template <class Iter, class Item>
@@ -990,7 +990,7 @@ Option<Item> IteratorBase<Iter, Item>::find(
     ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
         pred) noexcept {
   while (true) {
-    Option<Item> o = static_cast<Iter&>(*this).next();
+    Option<Item> o = as_subclass_mut().next();
     if (o.is_none() || pred(o.as_value())) return o;
   }
 }
@@ -1001,7 +1001,7 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(Item&&)> FindFn, int&..., class R,
   requires(::sus::option::__private::IsOptionType<R>::value)
 Option<InnerR> IteratorBase<Iter, Item>::find_map(FindFn f) noexcept {
   while (true) {
-    Option<Option<InnerR>> o = static_cast<Iter&>(*this).next().map(f);
+    Option<Option<InnerR>> o = as_subclass_mut().next().map(f);
     if (o.is_none()) return sus::Option<InnerR>();
     if (o.as_value().is_some()) return sus::move(o).flatten();
   }
@@ -1034,7 +1034,7 @@ template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item&&)> F>
   requires(std::convertible_to<std::invoke_result_t<F&, B, Item &&>, B>)
 B IteratorBase<Iter, Item>::fold(B init, F f) && noexcept {
   while (true) {
-    if (Option<Item> o = static_cast<Iter&>(*this).next(); o.is_none())
+    if (Option<Item> o = as_subclass_mut().next(); o.is_none())
       return init;
     else
       init = f(::sus::move(init), sus::move(o).unwrap());
@@ -1046,7 +1046,7 @@ template <::sus::fn::FnMut<void(Item&&)> F>
 void IteratorBase<Iter, Item>::for_each(F f) && noexcept {
   // TODO: Implement with fold()? Allow fold to take B=void?
   while (true) {
-    if (Option<Item> o = static_cast<Iter&>(*this).next(); o.is_none())
+    if (Option<Item> o = as_subclass_mut().next(); o.is_none())
       break;
     else
       f(std::move(o).unwrap());
@@ -1153,7 +1153,7 @@ Option<Item> IteratorBase<Iter, Item>::max_by(
         compare) && noexcept {
   // TODO: Replace this fold() with reduce().
   return static_cast<Iter&&>(*this).fold(
-      static_cast<Iter&>(*this).next(),
+      as_subclass_mut().next(),
       [&compare](Option<Item>&& acc, Item&& item) -> Option<Item> {
         if (acc.is_none() || compare(item, acc.as_value()) >= 0)
           return Option<Item>::with(::sus::forward<Item>(item));
@@ -1180,7 +1180,7 @@ Option<Item> IteratorBase<Iter, Item>::max_by_key(KeyFn fn) && noexcept {
   // TODO: We could do .map() to make the tuple and use max_by(), and not need
   // the if statement but for that .map() would need to take a reference
   // on/ownership of `fn` and that requires heap allocations for FnMutBox.
-  auto first = static_cast<Iter&>(*this).next();
+  auto first = as_subclass_mut().next();
   if (first.is_none()) return Option<Item>();
   Key first_key = fn(first.as_value());
   return Option<Item>::with(
@@ -1211,7 +1211,7 @@ Option<Item> IteratorBase<Iter, Item>::min_by(
         compare) && noexcept {
   // TODO: Replace this fold() with reduce().
   return static_cast<Iter&&>(*this).fold(
-      static_cast<Iter&>(*this).next(),
+      as_subclass_mut().next(),
       [&compare](Option<Item>&& acc, Item&& item) -> Option<Item> {
         if (acc.is_none() || compare(item, acc.as_value()) < 0)
           return Option<Item>::with(::sus::forward<Item>(item));
@@ -1238,7 +1238,7 @@ Option<Item> IteratorBase<Iter, Item>::min_by_key(KeyFn fn) && noexcept {
   // TODO: We could do .map() to make the tuple and use min_by(), and not need
   // the if statement but for that .map() would need to take a reference
   // on/ownership of `fn` and that requires heap allocations for FnMutBox.
-  auto first = static_cast<Iter&>(*this).next();
+  auto first = as_subclass_mut().next();
   if (first.is_none()) return Option<Item>();
   Key first_key = fn(first.as_value());
   return Option<Item>::with(
@@ -1262,8 +1262,8 @@ bool IteratorBase<Iter, Item>::ne(Other&& other) && noexcept {
 template <class Iter, class Item>
 Option<Item> IteratorBase<Iter, Item>::nth(usize n) noexcept {
   while (true) {
-    if (n == 0u) return static_cast<Iter&>(*this).next();
-    if (static_cast<Iter&>(*this).next().is_none()) return Option<Item>();
+    if (n == 0u) return as_subclass_mut().next();
+    if (as_subclass_mut().next().is_none()) return Option<Item>();
     n -= 1u;
   }
 }
@@ -1273,8 +1273,8 @@ Option<Item> IteratorBase<Iter, Item>::nth_back(usize n) noexcept
   requires(DoubleEndedIterator<Iter, Item>)
 {
   while (true) {
-    if (n == 0u) return static_cast<Iter&>(*this).next_back();
-    if (static_cast<Iter&>(*this).next_back().is_none()) return Option<Item>();
+    if (n == 0u) return as_subclass_mut().next_back();
+    if (as_subclass_mut().next_back().is_none()) return Option<Item>();
     n -= 1u;
   }
 }
@@ -1342,7 +1342,7 @@ Option<usize> IteratorBase<Iter, Item>::position(
     ::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept {
   usize pos;
   while (true) {
-    Option<Item> o = static_cast<Iter&>(*this).next();
+    Option<Item> o = as_subclass_mut().next();
     if (o.is_none()) return Option<usize>();
     if (pred(::sus::move(o).unwrap())) return Option<usize>::with(pos);
     pos += 1u;
@@ -1352,7 +1352,7 @@ Option<usize> IteratorBase<Iter, Item>::position(
 template <class Iter, class Item>
 template <class P>
   requires(::sus::iter::Product<P, Item>)
-P IteratorBase<Iter, Item>::product() && noexcept {
+constexpr P IteratorBase<Iter, Item>::product() && noexcept {
   return P::from_product(static_cast<Iter&&>(*this));
 }
 
@@ -1378,7 +1378,7 @@ Option<Item> IteratorBase<Iter, Item>::rfind(
   requires(DoubleEndedIterator<Iter, Item>)
 {
   while (true) {
-    Option<Item> o = static_cast<Iter&>(*this).next_back();
+    Option<Item> o = as_subclass_mut().next_back();
     if (o.is_none() || pred(o.as_value())) return o;
   }
 }
@@ -1389,7 +1389,7 @@ template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item&&)> F>
            DoubleEndedIterator<Iter, Item>)
 B IteratorBase<Iter, Item>::rfold(B init, F f) && noexcept {
   while (true) {
-    if (Option<Item> o = static_cast<Iter&>(*this).next_back(); o.is_none())
+    if (Option<Item> o = as_subclass_mut().next_back(); o.is_none())
       return init;
     else
       init = f(::sus::move(init), sus::move(o).unwrap());

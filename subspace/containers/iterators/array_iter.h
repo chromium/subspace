@@ -43,14 +43,14 @@ struct [[nodiscard]] ArrayIntoIter final
   }
 
   // sus::mem::Clone trait.
-  ArrayIntoIter clone() const noexcept
+  constexpr ArrayIntoIter clone() const noexcept
     requires(::sus::mem::Clone<Array<ItemT, N>>)
   {
     return ArrayIntoIter(::sus::clone(array_), front_index_, back_index_);
   }
 
   /// sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if constexpr (N == 0) {
       return Option<Item>();
     } else {
@@ -66,14 +66,14 @@ struct [[nodiscard]] ArrayIntoIter final
   }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     ::sus::num::usize remaining = back_index_ - front_index_;
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::with(remaining));
   }
 
   /// sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if constexpr (N == 0) {
       return Option<Item>();
     } else {
@@ -89,14 +89,14 @@ struct [[nodiscard]] ArrayIntoIter final
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     return back_index_ - front_index_;
   }
 
  private:
-  ArrayIntoIter(Array<Item, N>&& array) noexcept : array_(::sus::move(array)) {}
+  constexpr ArrayIntoIter(Array<Item, N>&& array) noexcept : array_(::sus::move(array)) {}
 
-  ArrayIntoIter(Array<Item, N>&& array, usize front, usize back) noexcept
+  constexpr ArrayIntoIter(Array<Item, N>&& array, usize front, usize back) noexcept
       : array_(::sus::move(array)), front_index_(front), back_index_(back) {}
 
   Array<Item, N> array_;

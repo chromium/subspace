@@ -26,14 +26,14 @@ class [[nodiscard]] IteratorLoop final {
   using Item = typename std::remove_reference_t<Iter>::Item;
 
  public:
-  IteratorLoop(Iter&& iter) noexcept
+  constexpr IteratorLoop(Iter&& iter) noexcept
       : iter_(::sus::forward<Iter>(iter)), item_(iter_.next()) {}
 
-  inline bool operator==(__private::IteratorEnd) const noexcept {
+  constexpr inline bool operator==(__private::IteratorEnd) const noexcept {
     return item_.is_none();
   }
-  inline void operator++() & noexcept { item_ = iter_.next(); }
-  inline Item operator*() & noexcept {
+  constexpr inline void operator++() & noexcept { item_ = iter_.next(); }
+  constexpr inline Item operator*() & noexcept {
     // UB occurs if operator*() is called after IteratorLoop == IteratorEnd.
     // This can not occur in a ranged-for loop, and IteratorLoop should never be
     // held in other contexts.
