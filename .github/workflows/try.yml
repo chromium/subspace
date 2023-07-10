@@ -296,6 +296,37 @@ jobs:
             message(FATAL_ERROR "Bad exit status")
           endif()
 
+      # Reconfigure with tests enabled so that we generate docs through them
+      # to find all headers, and all static assertions.
+      - name: Reconfigure with tests
+        shell: cmake -P {0}
+        run: |
+          set(ENV{CC} clang-16)
+          set(ENV{CXX} clang++-16)
+
+          # Path to LLVM+Clang nightly that we have installed.
+          set(ENV{LLVM_DIR} "/usr/lib/llvm-16/lib/cmake/llvm")
+          set(ENV{Clang_DIR} "/usr/lib/llvm-16/lib/cmake/clang")
+
+          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
+
+          execute_process(
+            COMMAND cmake
+              -S .
+              -B out
+              -D CMAKE_BUILD_TYPE=Release
+              -D CMAKE_EXPORT_COMPILE_COMMANDS=1
+              -G Ninja
+              -D CMAKE_MAKE_PROGRAM=${ninja_program}
+              -D SUBSPACE_BUILD_TESTS=ON
+              -D SUBSPACE_BUILD_CIR=OFF
+              -D SUBSPACE_BUILD_SUBDOC=ON
+            RESULT_VARIABLE result
+          )
+          if (NOT result EQUAL 0)
+            message(FATAL_ERROR "Bad exit status")
+          endif()
+
         # Generate for files in subspace. We execute the tool on all files in
         # the subspace library dir, and we limit generation to things defined
         # in that directory (there's no other /subspace/ directory it may include).
