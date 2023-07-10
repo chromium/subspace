@@ -3211,4 +3211,119 @@ TEST(Iterator, SkipWhile) {
   }
 }
 
+TEST(Iterator, StepBy) {
+  // Step by 0.
+  {
+    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().step_by(1u);
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next(), sus::some(3));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next(), sus::some(4));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // Step by more.
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(2u);
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next(), sus::some(4));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next(), sus::some(6));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(2u);
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next_back(), sus::some(6));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next_back(), sus::some(4));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next_back(), sus::some(2));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next_back(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(3u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next(), sus::some(5));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(3u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next_back(), sus::some(5));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next_back(), sus::some(2));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // next() then next_back().
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(2u);
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next_back(), sus::some(6));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next_back(), sus::some(4));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next_back(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // The two ends.
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(5u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.next(), sus::some(7));
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(5u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.next_back(), sus::some(7));
+    EXPECT_EQ(it.next_back(), sus::none());
+  }
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(5u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next_back(), sus::some(7));
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // Step by more than length.
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(8u);
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  {
+    auto it =
+        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(8u);
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next_back(), sus::some(2));
+    EXPECT_EQ(it.next_back(), sus::none());
+  }
+}
+
 }  // namespace
