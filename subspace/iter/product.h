@@ -29,7 +29,7 @@ namespace sus::iter {
 ///
 /// When given an empty iterator, the result of `from_product()` should be the
 /// "one" value of the type.
-template <class T, class Item>
+template <class T, class Item = T>
 concept Product = requires(__private::IteratorArchetype<Item>&& iter) {
   { T::from_product(::sus::move(iter)) } -> std::same_as<T>;
 };

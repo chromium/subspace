@@ -2890,6 +2890,19 @@ TEST(Iterator, Position) {
 }
 
 TEST(Iterator, Product) {
+  static_assert(::sus::iter::Product<i8>);
+  static_assert(::sus::iter::Product<i16>);
+  static_assert(::sus::iter::Product<i32>);
+  static_assert(::sus::iter::Product<i64>);
+  static_assert(::sus::iter::Product<isize>);
+  static_assert(::sus::iter::Product<u8>);
+  static_assert(::sus::iter::Product<u16>);
+  static_assert(::sus::iter::Product<u32>);
+  static_assert(::sus::iter::Product<u64>);
+  static_assert(::sus::iter::Product<usize>);
+  static_assert(::sus::iter::Product<f32>);
+  static_assert(::sus::iter::Product<f64>);
+
   // Signed integer.
   {
     auto a = sus::Array<i32, 3>::with(2, 3, 4);
