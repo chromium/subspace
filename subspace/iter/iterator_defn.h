@@ -819,6 +819,24 @@ class IteratorBase {
               std::is_reference_v<std::invoke_result_t<F&, B&&, ItemT&&>>))
   B rfold(B init, F f) && noexcept;
 
+  /// Searches for an element in an iterator from the right, returning its
+  /// index.
+  ///
+  /// `rposition()` takes a closure that returns `true` or `false`. It applies
+  /// this closure to each element of the iterator, starting from the end,
+  /// and if one of them returns `true`, then `rposition()` returns
+  /// `Some(index)`. If all of them return `false`, it returns `None`.
+  ///
+  /// `rposition()` is short-circuiting; in other words, it will stop
+  /// processing as soon as it finds a `true`.
+  ///
+  /// Because this requires the iterator to satisfy ExactSizeIterator, which
+  /// means its length can be represented in a `usize`, this function can not
+  /// overflow and will not panic.
+  Option<usize> rposition(::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept
+    requires(DoubleEndedIterator<Iter, Item> &&  //
+             ExactSizeIterator<Iter, Item>);
+
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
   ///
@@ -1410,7 +1428,8 @@ Option<usize> IteratorBase<Iter, Item>::position(
   while (true) {
     Option<Item> o = as_subclass_mut().next();
     if (o.is_none()) return Option<usize>();
-    if (pred(::sus::move(o).unwrap())) return Option<usize>::with(pos);
+    if (pred(::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
+      return Option<usize>::with(pos);
     pos += 1u;
   }
 }
@@ -1475,6 +1494,24 @@ B IteratorBase<Iter, Item>::rfold(B init, F f) && noexcept {
       return init;
     else
       init = f(::sus::move(init), sus::move(o).unwrap());
+  }
+}
+
+template <class Iter, class Item>
+Option<usize> IteratorBase<Iter, Item>::rposition(
+    ::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept
+  requires(DoubleEndedIterator<Iter, Item> &&  //
+           ExactSizeIterator<Iter, Item>)
+{
+  usize pos = as_subclass().exact_size_hint();
+  while (true) {
+    Option<Item> o = as_subclass_mut().next_back();
+    if (o.is_none()) return Option<usize>();
+    // This can't underflow since exact_size_hint() promises we will iterate
+    // a given number of times, and that number fits in `usize`.
+    pos -= 1u;
+    if (pred(::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
+      return Option<usize>::with(pos);
   }
 }
 
