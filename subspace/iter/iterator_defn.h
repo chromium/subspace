@@ -28,6 +28,7 @@
 #include "subspace/iter/product.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
+#include "subspace/mem/addressof.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/size_of.h"
 #include "subspace/num/unsigned_integer.h"
@@ -391,8 +392,25 @@ class IteratorBase {
   /// not important, but for non-associative operators like `-` the order will
   /// affect the final result. For a right-associative version of `fold()`, see
   /// `rfold()` if the `Iterator` also satisfies `DoubleEndedIterator`.
-  template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT&&)> F>
-    requires(std::convertible_to<std::invoke_result_t<F&, B, ItemT &&>, B>)
+  ///
+  /// # Folding over References
+  ///
+  /// The initial value type for fold will decay to a value (non-reference) by
+  /// default, due to the way C++ templates resolve types. In order to fold over
+  /// reference types, pass the type of the initial value explicitly as in the
+  /// following example, which will return the last reference in the
+  /// `Iterator<i32&>`.
+  /// ```cpp
+  /// auto v = sus::Vec<i32>::with(1, 2, 3);
+  /// i32 init;
+  /// i32& out = v.iter_mut().fold<i32&>(
+  ///     init, [](i32&, i32& v) -> i32& { return v; });
+  /// ::sus::check(&out == &v.last().unwrap());
+  /// ```
+  template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F>
+    requires(std::convertible_to<std::invoke_result_t<F&, B &&, ItemT &&>, B> &&
+             (!std::is_reference_v<B> ||
+              std::is_reference_v<std::invoke_result_t<F&, B&&, ItemT&&>>))
   B fold(B init, F f) && noexcept;
 
   /// Calls a closure on each element of an iterator.
@@ -706,6 +724,41 @@ class IteratorBase {
   /// default.
   auto range() && noexcept;
 
+  /// Reduces the elements to a single one, by repeatedly applying a reducing
+  /// operation.
+  ///
+  /// If the iterator is empty, returns `None`; otherwise, returns the
+  /// result of the reduction.
+  ///
+  /// The reducing function is a closure with two arguments: an 'accumulator',
+  /// and an element. For iterators with at least one element, this is the same
+  /// as `fold()` with the first element of the iterator as the initial
+  /// accumulator value, folding every subsequent element into it.
+  ///
+  /// # Reducing References
+  ///
+  /// If the iterator is over references, the `reduce()` function will be
+  /// limited to returning a reference; in most cases to one of the members in
+  /// the iterator.
+  ///
+  /// To reduce and produce a new value, first apply `.copied()` or `.cloned()`
+  /// and then `reduce()` that, such as `it.copied().reduce(...)` which will
+  /// ensure the `reduce()` function is able to work with values instead of
+  /// references.
+  ///
+  /// This example uses `copied()` to copy each `i32` and sum them.
+  /// ```cpp
+  /// auto a = sus::Array<i32, 3>::with(2, 3, 4);
+  /// auto out = a.iter().copied().reduce(
+  ///     [](i32 acc, i32 v) { return acc + v; });
+  /// sus::check(out.as_value() == 2 + 3 + 4);
+  /// ```
+  template <::sus::fn::FnMut<ItemT(ItemT, ItemT)> F, int&...,
+            class R = std::invoke_result_t<F&, ItemT&&, ItemT&&>>
+    requires(!std::is_reference_v<ItemT> ||  //
+             std::is_reference_v<R>)
+  Option<Item> reduce(F f) && noexcept;
+
   /// Reverses an iterator's direction.
   ///
   /// Usually, iterators iterate from front to back. After using `rev()`, an
@@ -759,9 +812,11 @@ class IteratorBase {
   /// not important, but for non-associative operators like `-` the order will
   /// affect the final result. For a left-associative version of `rfold()`, see
   /// [`Iterator::fold()`](sus::iter::IteratorBase::fold).
-  template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT&&)> F>
-    requires(std::convertible_to<std::invoke_result_t<F&, B, ItemT &&>, B> &&
-             DoubleEndedIterator<Iter, ItemT>)
+  template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F>
+    requires(DoubleEndedIterator<Iter, ItemT> &&
+             std::convertible_to<std::invoke_result_t<F&, B &&, ItemT &&>, B> &&
+             (!std::is_reference_v<B> ||
+              std::is_reference_v<std::invoke_result_t<F&, B&&, ItemT&&>>))
   B rfold(B init, F f) && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
@@ -1033,14 +1088,26 @@ auto IteratorBase<Iter, Item>::flat_map(F fn) && noexcept
 }
 
 template <class Iter, class Item>
-template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item&&)> F>
-  requires(std::convertible_to<std::invoke_result_t<F&, B, Item &&>, B>)
+template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F>
+  requires(std::convertible_to<std::invoke_result_t<F&, B &&, Item &&>, B> &&
+           (!std::is_reference_v<B> ||
+            std::is_reference_v<std::invoke_result_t<F&, B&&, Item&&>>))
 B IteratorBase<Iter, Item>::fold(B init, F f) && noexcept {
-  while (true) {
-    if (Option<Item> o = as_subclass_mut().next(); o.is_none())
-      return init;
-    else
-      init = f(::sus::move(init), sus::move(o).unwrap());
+  if constexpr (std::is_reference_v<B>) {
+    std::remove_reference_t<B>* out = ::sus::mem::addressof(init);
+    while (true) {
+      if (Option<Item> o = as_subclass_mut().next(); o.is_none())
+        return *out;
+      else
+        out = ::sus::mem::addressof(f(*out, sus::move(o).unwrap()));
+    }
+  } else {
+    while (true) {
+      if (Option<Item> o = as_subclass_mut().next(); o.is_none())
+        return init;
+      else
+        init = f(::sus::move(init), sus::move(o).unwrap());
+    }
   }
 }
 
@@ -1154,13 +1221,11 @@ Option<Item> IteratorBase<Iter, Item>::max_by(
         std::strong_ordering(const std::remove_reference_t<Item>&,
                              const std::remove_reference_t<Item>&)>
         compare) && noexcept {
-  // TODO: Replace this fold() with reduce().
-  return static_cast<Iter&&>(*this).fold(
-      as_subclass_mut().next(),
-      [&compare](Option<Item>&& acc, Item&& item) -> Option<Item> {
-        if (acc.is_none() || compare(item, acc.as_value()) >= 0)
-          return Option<Item>::with(::sus::forward<Item>(item));
-        return ::sus::move(acc);
+  return static_cast<Iter&&>(*this).reduce(
+      [&compare](Item acc, Item item) -> Item {
+        auto acc_cref = static_cast<const std::remove_reference_t<Item>&>(acc);
+        if (compare(item, acc_cref) >= 0) return ::sus::forward<Item>(item);
+        return ::sus::forward<Item>(acc);
       });
 }
 
@@ -1212,13 +1277,11 @@ Option<Item> IteratorBase<Iter, Item>::min_by(
         std::strong_ordering(const std::remove_reference_t<Item>&,
                              const std::remove_reference_t<Item>&)>
         compare) && noexcept {
-  // TODO: Replace this fold() with reduce().
-  return static_cast<Iter&&>(*this).fold(
-      as_subclass_mut().next(),
-      [&compare](Option<Item>&& acc, Item&& item) -> Option<Item> {
-        if (acc.is_none() || compare(item, acc.as_value()) < 0)
-          return Option<Item>::with(::sus::forward<Item>(item));
-        return ::sus::move(acc);
+  return static_cast<Iter&&>(*this).reduce(
+      [&compare](Item acc, Item item) -> Item {
+        auto acc_cref = static_cast<const std::remove_reference_t<Item>&>(acc);
+        if (compare(item, acc_cref) < 0) return ::sus::forward<Item>(item);
+        return ::sus::forward<Item>(acc);
       });
 }
 
@@ -1365,6 +1428,20 @@ auto IteratorBase<Iter, Item>::range() && noexcept {
 }
 
 template <class Iter, class Item>
+template <::sus::fn::FnMut<Item(Item, Item)> F, int&..., class R>
+  requires(!std::is_reference_v<Item> ||  //
+           std::is_reference_v<R>)
+Option<Item> IteratorBase<Iter, Item>::reduce(F f) && noexcept {
+  Option<Item> first = as_subclass_mut().next();
+  if (first.is_some()) {
+    first = Option<Item>::with(static_cast<Iter&&>(*this).template fold<Item>(
+        ::sus::move(first).unwrap_unchecked(::sus::marker::unsafe_fn),
+        ::sus::move(f)));
+  }
+  return first;
+}
+
+template <class Iter, class Item>
 Iterator<Item> auto IteratorBase<Iter, Item>::rev() && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter> &&
            ::sus::iter::DoubleEndedIterator<Iter, Item>)
@@ -1387,9 +1464,11 @@ Option<Item> IteratorBase<Iter, Item>::rfind(
 }
 
 template <class Iter, class Item>
-template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item&&)> F>
-  requires(std::convertible_to<std::invoke_result_t<F&, B, Item &&>, B> &&
-           DoubleEndedIterator<Iter, Item>)
+template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F>
+  requires(DoubleEndedIterator<Iter, Item> &&
+           std::convertible_to<std::invoke_result_t<F&, B &&, Item &&>, B> &&
+           (!std::is_reference_v<B> ||
+            std::is_reference_v<std::invoke_result_t<F&, B&&, Item&&>>))
 B IteratorBase<Iter, Item>::rfold(B init, F f) && noexcept {
   while (true) {
     if (Option<Item> o = as_subclass_mut().next_back(); o.is_none())
