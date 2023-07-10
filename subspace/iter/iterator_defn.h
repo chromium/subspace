@@ -690,7 +690,7 @@ class IteratorBase {
   ///
   /// An empty iterator returns the "one" value of the type.
   template <class P = ItemT>
-    requires(::sus::iter::Product<P, Iter, ItemT>)
+    requires(Product<P, ItemT>)
   P product() && noexcept;
 
   /// Converts the iterator into a `std::ranges::range` for use with the std
@@ -1351,7 +1351,7 @@ Option<usize> IteratorBase<Iter, Item>::position(
 
 template <class Iter, class Item>
 template <class P>
-  requires(::sus::iter::Product<P, Iter, Item>)
+  requires(::sus::iter::Product<P, Item>)
 P IteratorBase<Iter, Item>::product() && noexcept {
   return P::from_product(static_cast<Iter&&>(*this));
 }

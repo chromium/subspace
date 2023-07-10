@@ -21,6 +21,7 @@
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/prelude.h"
+#include "subspace/test/ensure_use.h"
 
 namespace {
 
@@ -146,7 +147,12 @@ TEST(OverflowInteger, AsValue) {
 TEST(OverflowIntegerDeathTest, AsValueOverflow) {
 #if GTEST_HAS_DEATH_TEST
   auto o = OverflowInteger<i32>::with(i32::MAX) + 1;
-  EXPECT_DEATH({ [[maybe_unused]] auto v = o.as_value(); }, "");
+  EXPECT_DEATH(
+      {
+        auto v = o.as_value();
+        ensure_use(&v);
+      },
+      "");
 #endif
 }
 
@@ -169,7 +175,12 @@ TEST(OverflowInteger, AsValueMut) {
 TEST(OverflowIntegerDeathTest, AsValueMutOverflow) {
 #if GTEST_HAS_DEATH_TEST
   auto o = OverflowInteger<i32>::with(i32::MAX) + 1;
-  EXPECT_DEATH({ [[maybe_unused]] auto v = o.as_value_mut(); }, "");
+  EXPECT_DEATH(
+      {
+        auto v = o.as_value_mut();
+        ensure_use(&v);
+      },
+      "");
 #endif
 }
 

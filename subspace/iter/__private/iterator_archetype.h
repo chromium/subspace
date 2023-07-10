@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "subspace/iter/into_iterator.h"
+#include "subspace/iter/iterator_concept.h"
 
 namespace sus::option {
 template <class T>
@@ -28,14 +28,11 @@ class IteratorBase;
 
 namespace sus::iter::__private {
 
-template <class T>
-struct IntoIteratorArchetype {
-  template <class Item>
-  struct Iter final : public IteratorBase<Iter<Item>, Item> {
-    ::sus::option::Option<Item> next() noexcept;
-    SizeHint size_hint() const noexcept;
-  };
-  Iter<T> into_iter() && { return Iter<T>(); }
+template <class Item>
+struct IteratorArchetype final
+    : public ::sus::iter::IteratorBase<IteratorArchetype<Item>, Item> {
+  ::sus::option::Option<Item> next() noexcept;
+  SizeHint size_hint() const noexcept;
 };
 
 }  // namespace sus::iter::__private

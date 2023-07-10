@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subspace/iter/__private/iterator_archetype.h"
 #include "subspace/iter/iterator_concept.h"
 #include "subspace/mem/move.h"
 
@@ -28,9 +29,8 @@ namespace sus::iter {
 ///
 /// When given an empty iterator, the result of `from_product()` should be the
 /// "one" value of the type.
-template <class T, class Iter, class Item>
-concept Product = requires(Iter&& iter) {
-  requires Iterator<Iter, Item>;
+template <class T, class Item>
+concept Product = requires(__private::IteratorArchetype<Item>&& iter) {
   { T::from_product(::sus::move(iter)) } -> std::same_as<T>;
 };
 
