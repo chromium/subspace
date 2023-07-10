@@ -91,6 +91,8 @@ template <class OutType, class State, class InnerSizedIter>
 class Scan;
 template <class InnerIter>
 class Skip;
+template <class InnerIter>
+class SkipWhile;
 template <class Iter>
 class IteratorRange;
 
@@ -809,6 +811,18 @@ class IteratorBase {
   /// remaining elements are yielded. In particular, if the original iterator is
   /// too short, then the returned iterator is empty.
   Iterator<Item> auto skip(usize n) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Creates an iterator that skips elements based on a predicate.
+  ///
+  /// skip_while() takes a closure as an argument. It will call this closure on
+  /// each element of the iterator, and ignore elements until it returns false.
+  ///
+  /// After false is returned, the closure is not called again, and the
+  /// remaining elements are all yielded.
+  Iterator<Item> auto skip_while(
+      ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+          pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Searches for an element of an iterator from the back that satisfies a
@@ -1534,6 +1548,19 @@ Iterator<Item> auto IteratorBase<Iter, Item>::skip(usize n) && noexcept
   using Skip = Skip<Sized>;
   return Skip::with(n, make_sized_iterator(static_cast<Iter&&>(*this)));
 }
+
+template <class Iter, class Item>
+Iterator<Item> auto IteratorBase<Iter, Item>::skip_while(
+    ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+        pred) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using SkipWhile = SkipWhile<Sized>;
+  return SkipWhile::with(::sus::move(pred),
+                         make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
 template <class Iter, class Item>
 Option<Item> IteratorBase<Iter, Item>::rfind(
     ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
