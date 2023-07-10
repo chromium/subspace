@@ -94,6 +94,12 @@ using ::sus::mem::__private::IsTrivialMoveCtorOrRef;
 using ::sus::option::__private::Storage;
 using ::sus::option::__private::StoragePointer;
 
+namespace __private {
+template <class T, ::sus::iter::Iterator<Option<T>> Iter>
+  requires ::sus::iter::Product<T>
+constexpr Option<T> from_product_impl(Iter&& it) noexcept;
+}
+
 /// A type which either holds `Some` value of type `T`, or `None`.
 ///
 /// To immediately pull the inner value out of an Option, use `unwrap()`. If the
@@ -194,8 +200,10 @@ class Option final {
   /// The product is computed using the implementation of the inner type `T`
   /// which also satisfies `sus::iter::Product<T, T>`.
   template <::sus::iter::Iterator<Option<T>> Iter>
-    requires ::sus::iter::Product<T, T>
-  static constexpr Option from_product(Iter&& it) noexcept;
+    requires ::sus::iter::Product<T>
+  static constexpr Option from_product(Iter&& it) noexcept {
+    return __private::from_product_impl<T>(::sus::move(it));
+  }
 
   /// Takes each item in the Iterator: if it is None, no further elements are
   /// taken, and the None is returned. Should no None occur, a container of type
@@ -1409,10 +1417,13 @@ using ::sus::option::Some;
 
 namespace sus::option {
 
-template <class T>
-template <::sus::iter::Iterator<Option<T>> Iter>
-  requires ::sus::iter::Product<T, T>
-constexpr Option<T> Option<T>::from_product(Iter&& it) noexcept {
+namespace __private {
+
+// This is a separate function instead of an out-of-line definition to work
+// around bug https://github.com/llvm/llvm-project/issues/63769 in Clang 16.
+template <class T, ::sus::iter::Iterator<Option<T>> Iter>
+  requires ::sus::iter::Product<T>
+constexpr Option<T> from_product_impl(Iter&& it) noexcept {
   class IterUntilNone final
       : public ::sus::iter::IteratorBase<IterUntilNone, T> {
    public:
@@ -1439,10 +1450,12 @@ constexpr Option<T> Option<T>::from_product(Iter&& it) noexcept {
   static_assert(::sus::iter::Iterator<IterUntilNone, T>);
 
   bool found_none = false;
-  auto out = Option::with(IterUntilNone(it, found_none).product());
-  if (found_none) out = Option();
+  auto out = Option<T>::with(IterUntilNone(it, found_none).product());
+  if (found_none) out = Option<T>();
   return out;
 }
+
+}  // namespace __private
 
 template <class T>
 template <class IntoIter, int&..., class Iter, class IterItem,

@@ -496,7 +496,7 @@ class [[nodiscard]] Result final {
   /// The product is computed using the implementation of the inner type `T`
   /// which also satisfies `sus::iter::Product<T, T>`.
   template <::sus::iter::Iterator<Result<T, E>> Iter>
-    requires ::sus::iter::Product<T, T>
+    requires ::sus::iter::Product<T>
   static constexpr Result from_product(Iter&& it) noexcept {
     class IterUntilNone final
         : public ::sus::iter::IteratorBase<IterUntilNone, T> {
