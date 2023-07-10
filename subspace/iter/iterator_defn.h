@@ -124,7 +124,9 @@ class IteratorBase {
   /// An Iterator also satisfies IntoIterator, which simply returns itself.
   ///
   /// sus::iter::IntoIterator trait implementation.
-  constexpr Iter&& into_iter() && noexcept { return static_cast<Iter&&>(*this); }
+  constexpr Iter&& into_iter() && noexcept {
+    return static_cast<Iter&&>(*this);
+  }
 
   // Provided overridable methods.
 
@@ -827,7 +829,7 @@ bool IteratorBase<Iter, Item>::all(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return true;
     // SAFETY: `item` was checked to hold Some already.
-    if (!f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn)))
+    if (!f(::sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)))
       return false;
   }
 }
@@ -838,7 +840,8 @@ bool IteratorBase<Iter, Item>::any(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return false;
     // SAFETY: `item` was checked to hold Some already.
-    if (f(item.take().unwrap_unchecked(::sus::marker::unsafe_fn))) return true;
+    if (f(::sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)))
+      return true;
   }
 }
 
