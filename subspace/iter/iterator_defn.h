@@ -89,6 +89,8 @@ class Reverse;
 template <class OutType, class State, class InnerSizedIter>
   requires(!std::is_reference_v<State>)
 class Scan;
+template <class InnerIter>
+class Skip;
 template <class Iter>
 class IteratorRange;
 
@@ -798,6 +800,15 @@ class IteratorBase {
     requires(::sus::option::__private::IsOptionType<R>::value &&
              ::sus::construct::Into<F, B>)
   Iterator<InnerR> auto scan(State initial_state, F f) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Creates an iterator that skips the first `n` elements.
+  ///
+  /// `skip(n)` skips elements until `n` elements are skipped or the end of the
+  /// iterator is reached (whichever happens first). After that, all the
+  /// remaining elements are yielded. In particular, if the original iterator is
+  /// too short, then the returned iterator is empty.
+  Iterator<Item> auto skip(usize n) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Searches for an element of an iterator from the back that satisfies a
@@ -1515,6 +1526,14 @@ Iterator<InnerR> auto IteratorBase<Iter, Item>::scan(State initial_state,
                     make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
+template <class Iter, class Item>
+Iterator<Item> auto IteratorBase<Iter, Item>::skip(usize n) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Skip = Skip<Sized>;
+  return Skip::with(n, make_sized_iterator(static_cast<Iter&&>(*this)));
+}
 template <class Iter, class Item>
 Option<Item> IteratorBase<Iter, Item>::rfind(
     ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>

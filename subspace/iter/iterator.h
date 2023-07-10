@@ -52,3 +52,4 @@
 #include "subspace/iter/peekable.h"
 #include "subspace/iter/reverse.h"
 #include "subspace/iter/scan.h"
+#include "subspace/iter/skip.h"

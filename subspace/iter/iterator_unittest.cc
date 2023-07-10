@@ -3057,4 +3057,97 @@ TEST(Iterator, Scan) {
   }
 }
 
+TEST(Iterator, Skip) {
+  // Skip nothing.
+  {
+    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip(0u);
+    static_assert(sus::iter::Iterator<decltype(it), i32>);
+    static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32>);
+    static_assert(sus::iter::ExactSizeIterator<decltype(it), i32>);
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+
+    EXPECT_EQ(it.next().unwrap(), 2);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+
+    EXPECT_EQ(it.next().unwrap(), 3);
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // Skip everything.
+  {
+    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip(10u);
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // Skip some.
+  {
+    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip(2u);
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.next().unwrap(), 4);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+
+  // next_back() before skippping.
+  {
+    auto it = sus::Array<i32, 5>::with(2, 3, 4, 5, 6).into_iter().skip(3u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.next_back().unwrap(), 6);
+    EXPECT_EQ(it.next_back().unwrap(), 5);
+    EXPECT_EQ(it.next_back(), sus::none());
+  }
+  // next_back() then skippping.
+  {
+    auto it = sus::Array<i32, 5>::with(2, 3, 4, 5, 6).into_iter().skip(3u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.next_back().unwrap(), 6);
+    EXPECT_EQ(it.next().unwrap(), 5);
+    EXPECT_EQ(it.next_back(), sus::none());
+  }
+  // next_back() skips everything.
+  {
+    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip(10u);
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.next_back(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.next_back(), sus::none());
+  }
+
+  // iter().
+  {
+    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto it = a.iter().skip(1u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
+    EXPECT_EQ(&it.next().unwrap(), &a[1u]);
+    EXPECT_EQ(&it.next().unwrap(), &a[2u]);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto it = a.iter_mut().skip(1u);
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    static_assert(std::same_as<decltype(it.next()), sus::Option<i32&>>);
+    EXPECT_EQ(&it.next().unwrap(), &a[1u]);
+    EXPECT_EQ(&it.next().unwrap(), &a[2u]);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+}
+
 }  // namespace
