@@ -1003,6 +1003,16 @@ class [[nodiscard]] Result final {
 using sus::iter::__private::begin;
 using sus::iter::__private::end;
 
+/// Used to construct a Result<T, E> with an Ok(void) value.
+///
+/// Calling ok() produces a hint to make a Result<void, E> but does not actually
+/// construct Result<void, E>. This is to deduce the actual type `E`
+/// when it is constructed, avoid specifying it here, and support
+/// conversions.
+[[nodiscard]] inline constexpr auto ok() noexcept {
+  return __private::OkVoidMarker();
+}
+
 /// Used to construct a Result<T, E> with an Ok(t) value.
 ///
 /// Calling ok() produces a hint to make a Result<T, E> but does not actually
@@ -1031,14 +1041,28 @@ template <class E>
 template <class T, class E>
 struct ::sus::ops::TryImpl<::sus::result::Result<T, E>> {
   using Output = T;
+
+ private:
+  struct VoidType;
+  using OutputUnlessVoid =
+      std::conditional_t<std::is_void_v<Output>, VoidType, Output>;
+
+ public:
   constexpr static bool is_success(const ::sus::result::Result<T, E>& t) {
     return t.is_ok();
   }
   constexpr static Output to_output(::sus::result::Result<T, E> t) {
     return ::sus::move(t).unwrap();
   }
-  constexpr static ::sus::result::Result<T, E> from_output(Output t) {
+  constexpr static ::sus::result::Result<T, E> from_output(OutputUnlessVoid t)
+    requires(!std::is_void_v<Output>)
+  {
     return ::sus::result::Result<T, E>::with(::sus::move(t));
+  }
+  constexpr static ::sus::result::Result<T, E> from_output()
+    requires(std::is_void_v<Output>)
+  {
+    return ::sus::result::Result<T, E>::with();
   }
 };
 
