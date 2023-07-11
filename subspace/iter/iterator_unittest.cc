@@ -3375,4 +3375,102 @@ TEST(Iterator, Sum) {
   }
 }
 
+TEST(Iterator, Take) {
+  // Take none.
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = sus::move(a).into_iter().take(0u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = sus::move(a).into_iter().take(0u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next_back(), sus::none());
+    EXPECT_EQ(it.next_back(), sus::none());
+  }
+  // Take all.
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = sus::move(a).into_iter().take(3u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next(), sus::some(2u));
+    EXPECT_EQ(it.next(), sus::some(3u));
+    EXPECT_EQ(it.next(), sus::some(4u));
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = sus::move(a).into_iter().take(3u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next_back(), sus::some(4u));
+    EXPECT_EQ(it.next_back(), sus::some(3u));
+    EXPECT_EQ(it.next_back(), sus::some(2u));
+    EXPECT_EQ(it.next_back(), sus::none());
+  }
+  // Take more than all.
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = sus::move(a).into_iter().take(5u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next(), sus::some(2u));
+    EXPECT_EQ(it.next(), sus::some(3u));
+    EXPECT_EQ(it.next(), sus::some(4u));
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = sus::move(a).into_iter().take(5u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next_back(), sus::some(4u));
+    EXPECT_EQ(it.next_back(), sus::some(3u));
+    EXPECT_EQ(it.next_back(), sus::some(2u));
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // Take some.
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = sus::move(a).into_iter().take(2u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next(), sus::some(2u));
+    EXPECT_EQ(it.next(), sus::some(3u));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = sus::move(a).into_iter().take(2u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next_back(), sus::some(3u));
+    EXPECT_EQ(it.next_back(), sus::some(2u));
+    EXPECT_EQ(it.next_back(), sus::none());
+    EXPECT_EQ(it.next_back(), sus::none());
+  }
+  // Mix of front and back.
+  {
+    auto a = sus::Array<u32, 5>::with(2u, 3u, 4u, 5u, 6u);
+    auto it = sus::move(a).into_iter().take(3u);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next(), sus::some(2u));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next_back(), sus::some(4u));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next(), sus::some(3u));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+  }
+}
+
 }  // namespace

@@ -96,6 +96,8 @@ template <class InnerIter>
 class SkipWhile;
 template <class InnerIter>
 class StepBy;
+template <class InnerIter>
+class Take;
 template <class Iter>
 class IteratorRange;
 
@@ -943,6 +945,17 @@ class IteratorBase {
     requires(Sum<P, ItemT>)
   constexpr P sum() && noexcept;
 
+  /// Creates an iterator that yields the first `n` elements, or fewer if the
+  /// underlying iterator ends sooner.
+  ///
+  /// `take(n)` yields elements until `n` elements are yielded or the end of the
+  /// iterator is reached (whichever happens first). The returned iterator is a
+  /// prefix of length `n` if the original iterator contains at least `n`
+  /// elements, otherwise it contains all of the (fewer than `n`) elements of
+  /// the original iterator.
+  Iterator<Item> auto take(usize n) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
   ///
@@ -1671,6 +1684,15 @@ template <class P>
   requires(Sum<P, Item>)
 constexpr P IteratorBase<Iter, Item>::sum() && noexcept {
   return P::from_sum(static_cast<Iter&&>(*this));
+}
+
+template <class Iter, class Item>
+Iterator<Item> auto IteratorBase<Iter, Item>::take(usize n) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using Take = Take<Sized>;
+  return Take::with(n, make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>
