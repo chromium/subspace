@@ -14,8 +14,11 @@
 
 #pragma once
 
+#include <type_traits>
+
 #include "subspace/iter/iterator_concept.h"
 #include "subspace/mem/forward.h"
+#include "subspace/mem/move.h"
 
 namespace sus::iter {
 

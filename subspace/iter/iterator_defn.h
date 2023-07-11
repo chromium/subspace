@@ -694,7 +694,7 @@ class IteratorBase {
   /// returned `true`, and all of the elements for which it returned `false`.
   template <class B>
     requires(::sus::construct::Default<B> &&  //
-             ::sus::iter::Extend<B, ItemT>)
+             Extend<B, ItemT>)
   sus::Tuple<B, B> partition(
       ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
           pred) && noexcept;
@@ -1011,6 +1011,24 @@ class IteratorBase {
             class R = std::invoke_result_t<F&, ItemT&&>>
     requires(::sus::ops::Try<R>)
   R try_for_each(typename ::sus::ops::TryImpl<R>::Output success, F f) noexcept;
+
+  /// Converts an iterator of pairs into a pair of containers.
+  ///
+  /// `unzip()` consumes an entire iterator of pairs, producing two collections:
+  /// one from the left elements of the pairs, and one from the right elements.
+  ///
+  /// This function is, in some sense, the opposite of `zip()`.
+  template <class ContainerA, class ContainerB, int&...,
+            class ItemA =
+                ::sus::option::__private::IsTupleOfSizeTwo<ItemT>::first_type,
+            class ItemB =
+                ::sus::option::__private::IsTupleOfSizeTwo<ItemT>::second_type>
+    requires(::sus::option::__private::IsTupleOfSizeTwo<ItemT>::value &&
+             ::sus::construct::Default<ContainerA> &&  //
+             ::sus::construct::Default<ContainerB> &&  //
+             Extend<ContainerA, ItemA> &&              //
+             Extend<ContainerB, ItemB>)
+  sus::Tuple<ContainerA, ContainerB> unzip() && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
@@ -1566,7 +1584,7 @@ std::partial_ordering IteratorBase<Iter, Item>::partial_cmp_by(
 template <class Iter, class Item>
 template <class B>
   requires(::sus::construct::Default<B> &&  //
-           ::sus::iter::Extend<B, Item>)
+           Extend<B, Item>)
 sus::Tuple<B, B> IteratorBase<Iter, Item>::partition(
     ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
         pred) && noexcept {
@@ -1798,6 +1816,21 @@ R IteratorBase<Iter, Item>::try_for_each(
       }
     }
   }
+  return out;
+}
+
+template <class Iter, class Item>
+template <class ContainerA, class ContainerB, int&..., class ItemA,
+          class ItemB>
+  requires(::sus::option::__private::IsTupleOfSizeTwo<Item>::value &&
+           ::sus::construct::Default<ContainerA> &&  //
+           ::sus::construct::Default<ContainerB> &&  //
+           Extend<ContainerA, ItemA> &&              //
+           Extend<ContainerB, ItemB>)
+sus::Tuple<ContainerA, ContainerB>
+IteratorBase<Iter, Item>::unzip() && noexcept {
+  auto out = sus::Tuple<ContainerA, ContainerB>();
+  out.template extend<ItemA, ItemB>(static_cast<Iter&&>(*this));
   return out;
 }
 

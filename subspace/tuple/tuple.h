@@ -20,7 +20,10 @@
 
 #include "fmt/core.h"
 #include "subspace/assertions/check.h"
+#include "subspace/choice/__private/pack_index.h"
 #include "subspace/construct/default.h"
+#include "subspace/iter/extend.h"
+#include "subspace/iter/into_iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/no_unique_address.h"
@@ -35,6 +38,11 @@
 #include "subspace/string/__private/any_formatter.h"
 #include "subspace/string/__private/format_to_stream.h"
 #include "subspace/tuple/__private/storage.h"
+
+namespace sus::option {
+template <class T>
+class Option;
+}
 
 namespace sus::tuple_type {
 
@@ -189,12 +197,51 @@ class Tuple final {
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
+  /// Satisfies sus::iter::Extend for a Tuple of containers that each satisfies
+  /// Extend for its position-relative type in the iterator of tuples.
+  ///
+  /// The tuple this is called on is a set of containers. The iterable passed in
+  /// as an argument yields tuples of items that will be appended to the
+  /// containers.
+  ///
+  /// The item types in the argument can not be deduced, so they must be
+  /// explicitly specified by the caller, such as:
+  /// ```cpp
+  /// containers.extend<i32, std::string>(iter_over_tuples_i32_string());
+  /// ```
+  ///
+  /// Allows to `extend` a tuple of collections that also implement `Extend`.
+  ///
+  /// See also: `IteratorBase::unzip`.
+  template <class U, class... Us>
+    requires(sizeof...(Us) == sizeof...(Ts) &&
+             (::sus::iter::Extend<T, U> && ... && ::sus::iter::Extend<Ts, Us>))
+  void extend(::sus::iter::IntoIterator<Tuple<U, Us...>> auto&& ii) noexcept {
+    for (Tuple<U, Us...>&& item : ::sus::move(ii).into_iter()) {
+      auto f = [this]<size_t... Is>(Tuple<U, Us...>&& item,
+                                    std::index_sequence<Is...>) mutable {
+        // Alias to avoid packs in the fold expression.
+        using Items = Tuple<U, Us...>;
+        // TODO: Consider adding extend_one() to the Extend concept, which can
+        // take I instead of an Option<I>.
+        (...,
+         at_mut<Is>().extend(
+             ::sus::option::Option<typename Items::template IthType<Is>>::with(
+                 ::sus::move(item).template into_inner<Is>())));
+      };
+      f(::sus::move(item), std::make_index_sequence<1u + sizeof...(Ts)>());
+    }
+  }
+
  private:
   template <class U, class... Us>
   friend class Tuple;
 
   /// Storage for the tuple elements.
   using Storage = __private::TupleStorage<T, Ts...>;
+
+  template <size_t I>
+  using IthType = ::sus::choice_type::__private::PackIth<I, T, Ts...>;
 
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
   constexpr inline Tuple(U&& first, Us&&... more) noexcept
