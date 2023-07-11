@@ -98,6 +98,8 @@ template <class InnerIter>
 class StepBy;
 template <class InnerIter>
 class Take;
+template <class InnerIter>
+class TakeWhile;
 template <class Iter>
 class IteratorRange;
 
@@ -956,6 +958,19 @@ class IteratorBase {
   Iterator<Item> auto take(usize n) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
+  /// Creates an iterator that yields elements based on a predicate.
+  ///
+  /// `take_while()` takes a closure as an argument. It will call this closure
+  /// on each element of the iterator, and yield elements while it returns
+  /// `true`.
+  ///
+  /// After false is returned, the closure is not called again, and the
+  /// remaining elements will not be yielded.
+  Iterator<Item> auto take_while(
+      ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+          pred) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
   ///
@@ -1693,6 +1708,18 @@ Iterator<Item> auto IteratorBase<Iter, Item>::take(usize n) && noexcept
   using Sized = SizedIteratorType<Iter>::type;
   using Take = Take<Sized>;
   return Take::with(n, make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+Iterator<Item> auto IteratorBase<Iter, Item>::take_while(
+    ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+        pred) && noexcept
+  requires(::sus::mem::relocate_by_memcpy<Iter>)
+{
+  using Sized = SizedIteratorType<Iter>::type;
+  using TakeWhile = TakeWhile<Sized>;
+  return TakeWhile::with(::sus::move(pred),
+                         make_sized_iterator(static_cast<Iter&&>(*this)));
 }
 
 template <class Iter, class Item>

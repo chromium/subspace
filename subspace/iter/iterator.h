@@ -56,3 +56,4 @@
 #include "subspace/iter/skip_while.h"
 #include "subspace/iter/step_by.h"
 #include "subspace/iter/take.h"
+#include "subspace/iter/take_while.h"
