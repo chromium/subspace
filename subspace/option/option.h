@@ -1371,7 +1371,7 @@ sus_pure_const inline constexpr auto none() noexcept {
 
 /// Implements sus::ops::Try for Option.
 template <class T>
-struct ::sus::ops::TryImpl<::sus::option::Option<T>> {
+struct sus::ops::TryImpl<::sus::option::Option<T>> {
   using Output = T;
   constexpr static bool is_success(const ::sus::option::Option<T>& t) {
     return t.is_some();
