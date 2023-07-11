@@ -2727,4 +2727,36 @@ TEST(Option, FromProduct) {
           .as_value() == 2 * 3 * 4);
 }
 
+TEST(Option, FromSum) {
+  static_assert(sus::iter::Sum<Option<i32>, Option<i32>>);
+
+  // With a None.
+  {
+    auto a = sus::Array<Option<i32>, 3>::with(sus::some(2), sus::none(),
+                                              sus::some(4));
+    decltype(auto) o = sus::move(a).into_iter().sum();
+    static_assert(std::same_as<decltype(o), sus::Option<i32>>);
+    EXPECT_EQ(o, sus::None);
+  }
+  // Without a None.
+  {
+    auto a = sus::Array<Option<i32>, 3>::with(sus::some(2), sus::some(3),
+                                              sus::some(4));
+    decltype(auto) o = sus::move(a).into_iter().sum();
+    static_assert(std::same_as<decltype(o), sus::Option<i32>>);
+    EXPECT_EQ(o.as_value(), 2 + 3 + 4);
+  }
+
+  static_assert(
+      sus::Array<Option<i32>, 3>::with(sus::some(2), sus::none(), sus::some(4))
+          .into_iter()
+          .sum()
+          .is_none());
+  static_assert(
+      sus::Array<Option<i32>, 3>::with(sus::some(2), sus::some(3), sus::some(4))
+          .into_iter()
+          .sum()
+          .as_value() == 2 + 3 + 4);
+}
+
 }  // namespace

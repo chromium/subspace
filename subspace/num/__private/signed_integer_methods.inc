@@ -488,6 +488,25 @@ static constexpr _self from_product(
   return p;
 }
 
+/// Constructs a ##_self## from an `Iterator` by computing the sum of all
+/// elements in the itertor.
+///
+/// This method should rarely be called directly, as it is used to satisfy the
+/// `sus::iter::Sum` concept so that `Iterator::sum()` can be called for
+/// iterators over ##_self##.
+///
+/// To handle overflow without panicing, instead of `iter.sum()`, use
+/// `iter.sum<OverflowInteger<##_self##>>()`.
+///
+/// # Panics
+/// This method will panic if the product of all values overflows.
+static constexpr _self from_sum(
+    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+  auto p = _self(_primitive{0});
+  for (_self i : ::sus::move(it)) p += i;
+  return p;
+}
+
 template <SignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline explicit operator U() const {

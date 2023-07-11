@@ -27,6 +27,7 @@
 #include "subspace/iter/into_iterator.h"
 #include "subspace/iter/iterator_concept.h"
 #include "subspace/iter/product.h"
+#include "subspace/iter/sum.h"
 #include "subspace/macros/inline.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/nonnull.h"
@@ -98,7 +99,10 @@ namespace __private {
 template <class T, ::sus::iter::Iterator<Option<T>> Iter>
   requires ::sus::iter::Product<T>
 constexpr Option<T> from_product_impl(Iter&& it) noexcept;
-}
+template <class T, ::sus::iter::Iterator<Option<T>> Iter>
+  requires ::sus::iter::Sum<T>
+constexpr Option<T> from_sum_impl(Iter&& it) noexcept;
+}  // namespace __private
 
 /// A type which either holds `Some` value of type `T`, or `None`.
 ///
@@ -195,14 +199,27 @@ class Option final {
   /// Computes the product of an iterator over `Option<T>` as long as there is
   /// no `None` found. If a `None` is found, the function returns `None`.
   ///
-  /// Implements sus::iter::Product<Option<T>, Option<T>>.
+  /// Implements sus::iter::Product<Option<T>>.
   ///
   /// The product is computed using the implementation of the inner type `T`
-  /// which also satisfies `sus::iter::Product<T, T>`.
+  /// which also satisfies `sus::iter::Product<T>`.
   template <::sus::iter::Iterator<Option<T>> Iter>
     requires ::sus::iter::Product<T>
   static constexpr Option from_product(Iter&& it) noexcept {
     return __private::from_product_impl<T>(::sus::move(it));
+  }
+
+  /// Computes the sum of an iterator over `Option<T>` as long as there is
+  /// no `None` found. If a `None` is found, the function returns `None`.
+  ///
+  /// Implements sus::iter::Sum<Option<T>>.
+  ///
+  /// The sum is computed using the implementation of the inner type `T`
+  /// which also satisfies `sus::iter::Sum<T>`.
+  template <::sus::iter::Iterator<Option<T>> Iter>
+    requires ::sus::iter::Sum<T>
+  static constexpr Option from_sum(Iter&& it) noexcept {
+    return __private::from_sum_impl<T>(::sus::move(it));
   }
 
   /// Takes each item in the Iterator: if it is None, no further elements are
@@ -1451,6 +1468,42 @@ constexpr Option<T> from_product_impl(Iter&& it) noexcept {
 
   bool found_none = false;
   auto out = Option<T>::with(IterUntilNone(it, found_none).product());
+  if (found_none) out = Option<T>();
+  return out;
+}
+
+// This is a separate function instead of an out-of-line definition to work
+// around bug https://github.com/llvm/llvm-project/issues/63769 in Clang 16.
+template <class T, ::sus::iter::Iterator<Option<T>> Iter>
+  requires ::sus::iter::Sum<T>
+constexpr Option<T> from_sum_impl(Iter&& it) noexcept {
+  class IterUntilNone final
+      : public ::sus::iter::IteratorBase<IterUntilNone, T> {
+   public:
+    constexpr IterUntilNone(Iter& iter, bool& found_none)
+        : iter_(iter), found_none_(found_none) {}
+
+    constexpr Option<T> next() noexcept {
+      Option<Option<T>> next = iter_.next();
+      Option<T> out;
+      if (next.is_some()) {
+        out = ::sus::move(next).unwrap_unchecked(::sus::marker::unsafe_fn);
+        if (out.is_none()) found_none_ = true;
+      }
+      return out;
+    }
+    constexpr ::sus::iter::SizeHint size_hint() const noexcept {
+      return ::sus::iter::SizeHint(0u, iter_.size_hint().upper);
+    }
+
+   private:
+    Iter& iter_;
+    bool& found_none_;
+  };
+  static_assert(::sus::iter::Iterator<IterUntilNone, T>);
+
+  bool found_none = false;
+  auto out = Option<T>::with(IterUntilNone(it, found_none).sum());
   if (found_none) out = Option<T>();
   return out;
 }
