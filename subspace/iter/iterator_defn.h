@@ -27,6 +27,7 @@
 #include "subspace/iter/into_iterator.h"
 #include "subspace/iter/product.h"
 #include "subspace/iter/sized_iterator.h"
+#include "subspace/iter/sum.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/move.h"
@@ -718,6 +719,17 @@ class IteratorBase {
   /// Iterates over the entire iterator, multiplying all the elements
   ///
   /// An empty iterator returns the "one" value of the type.
+  ///
+  /// `product() can be used to multiply any type implementing `Product`,
+  /// including `Option` and `Result`.
+  ///
+  /// # Panics
+  ////
+  /// When calling `product()` and a primitive integer type is being returned,
+  /// method will panic if the computation overflows.
+  ///
+  /// Using `product<OverflowInteger<T>>()` will allow the caller to handle
+  /// overflow without a panic.
   template <class P = ItemT>
     requires(Product<P, ItemT>)
   constexpr P product() && noexcept;
@@ -778,71 +790,6 @@ class IteratorBase {
   Iterator<Item> auto rev() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter> &&
              ::sus::iter::DoubleEndedIterator<Iter, Item>);
-
-  /// An iterator adapter which, like `fold()`, holds internal state, but unlike
-  /// `fold()`, produces a new iterator.
-  ///
-  /// To write a function with internal state that receives the current iterator
-  /// as input and yields items in arbitrary ways, see `generate()`. `scan()` is
-  /// a less general tool where the given function is executed for each item in
-  /// the iterator in order.
-  ///
-  /// `scan()` takes two arguments: an initial value which seeds the internal
-  /// state, and a closure with two arguments, the first being a mutable
-  /// reference to the internal state and the second an iterator element. The
-  /// closure can mutate the internal state to share state between iterations.
-  ///
-  /// On iteration, the closure will be applied to each element of the iterator
-  /// and the return value from the closure, an `Option`, is returned by the
-  /// next method. Thus the closure can return `Some(value)` to yield value, or
-  /// `None` to end the iteration.
-  template <
-      class State, ::sus::fn::FnMut<::sus::fn::NonVoid(State&, ItemT&&)> F,
-      int&..., class R = std::invoke_result_t<F&, State&, ItemT&&>,
-      class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type,
-      class B = ::sus::fn::FnMutBox<R(State&, Item&&)>>
-    requires(::sus::option::__private::IsOptionType<R>::value &&
-             ::sus::construct::Into<F, B>)
-  Iterator<InnerR> auto scan(State initial_state, F f) && noexcept
-    requires(::sus::mem::relocate_by_memcpy<Iter>);
-
-  /// Creates an iterator that skips the first `n` elements.
-  ///
-  /// `skip(n)` skips elements until `n` elements are skipped or the end of the
-  /// iterator is reached (whichever happens first). After that, all the
-  /// remaining elements are yielded. In particular, if the original iterator is
-  /// too short, then the returned iterator is empty.
-  Iterator<Item> auto skip(usize n) && noexcept
-    requires(::sus::mem::relocate_by_memcpy<Iter>);
-
-  /// Creates an iterator that skips elements based on a predicate.
-  ///
-  /// skip_while() takes a closure as an argument. It will call this closure on
-  /// each element of the iterator, and ignore elements until it returns false.
-  ///
-  /// After false is returned, the closure is not called again, and the
-  /// remaining elements are all yielded.
-  Iterator<Item> auto skip_while(
-      ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
-          pred) && noexcept
-    requires(::sus::mem::relocate_by_memcpy<Iter>);
-
-  /// Creates an iterator starting at the same point, but stepping by the given
-  /// amount at each iteration.
-  ///
-  /// The first element of the iterator will always be returned, regardless of
-  /// the step given. After that, skipped elements will be lazily walked
-  /// over as needed.
-  ///
-  /// `step_by()` behaves like the sequence `next()`, `nth(step-1)`,
-  /// `self.nth(step-1)`, ...
-  ///
-  /// # Panics
-  ///
-  /// The `step` must be greater than 0, or the function will panic. A step size
-  /// of 1 returns every element.
-  Iterator<Item> auto step_by(usize step) && noexcept
-    requires(::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Searches for an element of an iterator from the back that satisfies a
   /// predicate.
@@ -910,6 +857,91 @@ class IteratorBase {
   Option<usize> rposition(::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept
     requires(DoubleEndedIterator<Iter, Item> &&  //
              ExactSizeIterator<Iter, Item>);
+
+  /// An iterator adapter which, like `fold()`, holds internal state, but unlike
+  /// `fold()`, produces a new iterator.
+  ///
+  /// To write a function with internal state that receives the current iterator
+  /// as input and yields items in arbitrary ways, see `generate()`. `scan()` is
+  /// a less general tool where the given function is executed for each item in
+  /// the iterator in order.
+  ///
+  /// `scan()` takes two arguments: an initial value which seeds the internal
+  /// state, and a closure with two arguments, the first being a mutable
+  /// reference to the internal state and the second an iterator element. The
+  /// closure can mutate the internal state to share state between iterations.
+  ///
+  /// On iteration, the closure will be applied to each element of the iterator
+  /// and the return value from the closure, an `Option`, is returned by the
+  /// next method. Thus the closure can return `Some(value)` to yield value, or
+  /// `None` to end the iteration.
+  template <
+      class State, ::sus::fn::FnMut<::sus::fn::NonVoid(State&, ItemT&&)> F,
+      int&..., class R = std::invoke_result_t<F&, State&, ItemT&&>,
+      class InnerR = ::sus::option::__private::IsOptionType<R>::inner_type,
+      class B = ::sus::fn::FnMutBox<R(State&, Item&&)>>
+    requires(::sus::option::__private::IsOptionType<R>::value &&
+             ::sus::construct::Into<F, B>)
+  Iterator<InnerR> auto scan(State initial_state, F f) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Creates an iterator that skips the first `n` elements.
+  ///
+  /// `skip(n)` skips elements until `n` elements are skipped or the end of the
+  /// iterator is reached (whichever happens first). After that, all the
+  /// remaining elements are yielded. In particular, if the original iterator is
+  /// too short, then the returned iterator is empty.
+  Iterator<Item> auto skip(usize n) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Creates an iterator that skips elements based on a predicate.
+  ///
+  /// skip_while() takes a closure as an argument. It will call this closure on
+  /// each element of the iterator, and ignore elements until it returns false.
+  ///
+  /// After false is returned, the closure is not called again, and the
+  /// remaining elements are all yielded.
+  Iterator<Item> auto skip_while(
+      ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+          pred) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Creates an iterator starting at the same point, but stepping by the given
+  /// amount at each iteration.
+  ///
+  /// The first element of the iterator will always be returned, regardless of
+  /// the step given. After that, skipped elements will be lazily walked
+  /// over as needed.
+  ///
+  /// `step_by()` behaves like the sequence `next()`, `nth(step-1)`,
+  /// `self.nth(step-1)`, ...
+  ///
+  /// # Panics
+  ///
+  /// The `step` must be greater than 0, or the function will panic. A step size
+  /// of 1 returns every element.
+  Iterator<Item> auto step_by(usize step) && noexcept
+    requires(::sus::mem::relocate_by_memcpy<Iter>);
+
+  /// Sums the elements of an iterator.
+  ///
+  /// Takes each element, adds them together, and returns the result.
+  ///
+  /// An empty iterator returns the zero value of the type.
+  ///
+  /// `sum()` can be used to sum any type implementing `Sum`, including `Option`
+  /// and `Result`.
+  ///
+  /// # Panics
+  ////
+  /// When calling `sum()` and a primitive integer type is being returned,
+  /// method will panic if the computation overflows.
+  ///
+  /// Using `sum<OverflowInteger<T>>()` will allow the caller to handle overflow
+  /// without a panic.
+  template <class P = ItemT>
+    requires(Sum<P, ItemT>)
+  constexpr P sum() && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
@@ -1545,6 +1577,51 @@ Iterator<Item> auto IteratorBase<Iter, Item>::rev() && noexcept
 }
 
 template <class Iter, class Item>
+Option<Item> IteratorBase<Iter, Item>::rfind(
+    ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
+        pred) noexcept
+  requires(DoubleEndedIterator<Iter, Item>)
+{
+  while (true) {
+    Option<Item> o = as_subclass_mut().next_back();
+    if (o.is_none() || pred(o.as_value())) return o;
+  }
+}
+
+template <class Iter, class Item>
+template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F>
+  requires(DoubleEndedIterator<Iter, Item> &&
+           std::convertible_to<std::invoke_result_t<F&, B &&, Item &&>, B> &&
+           (!std::is_reference_v<B> ||
+            std::is_reference_v<std::invoke_result_t<F&, B&&, Item&&>>))
+B IteratorBase<Iter, Item>::rfold(B init, F f) && noexcept {
+  while (true) {
+    if (Option<Item> o = as_subclass_mut().next_back(); o.is_none())
+      return init;
+    else
+      init = f(::sus::move(init), sus::move(o).unwrap());
+  }
+}
+
+template <class Iter, class Item>
+Option<usize> IteratorBase<Iter, Item>::rposition(
+    ::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept
+  requires(DoubleEndedIterator<Iter, Item> &&  //
+           ExactSizeIterator<Iter, Item>)
+{
+  usize pos = as_subclass().exact_size_hint();
+  while (true) {
+    Option<Item> o = as_subclass_mut().next_back();
+    if (o.is_none()) return Option<usize>();
+    // This can't underflow since exact_size_hint() promises we will iterate
+    // a given number of times, and that number fits in `usize`.
+    pos -= 1u;
+    if (pred(::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
+      return Option<usize>::with(pos);
+  }
+}
+
+template <class Iter, class Item>
 template <class State, ::sus::fn::FnMut<::sus::fn::NonVoid(State&, Item&&)> F,
           int&..., class R, class InnerR, class B>
   requires(::sus::option::__private::IsOptionType<R>::value &&
@@ -1590,48 +1667,10 @@ Iterator<Item> auto IteratorBase<Iter, Item>::step_by(usize step) && noexcept
 }
 
 template <class Iter, class Item>
-Option<Item> IteratorBase<Iter, Item>::rfind(
-    ::sus::fn::FnMutRef<bool(const std::remove_reference_t<Item>&)>
-        pred) noexcept
-  requires(DoubleEndedIterator<Iter, Item>)
-{
-  while (true) {
-    Option<Item> o = as_subclass_mut().next_back();
-    if (o.is_none() || pred(o.as_value())) return o;
-  }
-}
-
-template <class Iter, class Item>
-template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F>
-  requires(DoubleEndedIterator<Iter, Item> &&
-           std::convertible_to<std::invoke_result_t<F&, B &&, Item &&>, B> &&
-           (!std::is_reference_v<B> ||
-            std::is_reference_v<std::invoke_result_t<F&, B&&, Item&&>>))
-B IteratorBase<Iter, Item>::rfold(B init, F f) && noexcept {
-  while (true) {
-    if (Option<Item> o = as_subclass_mut().next_back(); o.is_none())
-      return init;
-    else
-      init = f(::sus::move(init), sus::move(o).unwrap());
-  }
-}
-
-template <class Iter, class Item>
-Option<usize> IteratorBase<Iter, Item>::rposition(
-    ::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept
-  requires(DoubleEndedIterator<Iter, Item> &&  //
-           ExactSizeIterator<Iter, Item>)
-{
-  usize pos = as_subclass().exact_size_hint();
-  while (true) {
-    Option<Item> o = as_subclass_mut().next_back();
-    if (o.is_none()) return Option<usize>();
-    // This can't underflow since exact_size_hint() promises we will iterate
-    // a given number of times, and that number fits in `usize`.
-    pos -= 1u;
-    if (pred(::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
-      return Option<usize>::with(pos);
-  }
+template <class P>
+  requires(Sum<P, Item>)
+constexpr P IteratorBase<Iter, Item>::sum() && noexcept {
+  return P::from_sum(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>

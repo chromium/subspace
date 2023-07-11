@@ -2916,6 +2916,8 @@ TEST(Iterator, Product) {
 
   // Signed integer.
   {
+    EXPECT_EQ((sus::Array<i32, 0>::with().into_iter().product()), 1);
+
     auto a = sus::Array<i32, 3>::with(2, 3, 4);
     decltype(auto) p = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(p), i32>);
@@ -2923,6 +2925,8 @@ TEST(Iterator, Product) {
   }
   // Unsigned integer.
   {
+    EXPECT_EQ((sus::Array<u32, 0>::with().into_iter().product()), 1u);
+
     auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
     decltype(auto) p = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(p), u32>);
@@ -2930,6 +2934,8 @@ TEST(Iterator, Product) {
   }
   // Float.
   {
+    EXPECT_EQ((sus::Array<f32, 0>::with().into_iter().product()), 1.f);
+
     auto a = sus::Array<f32, 3>::with(2.f, 3.f, 4.f);
     decltype(auto) p = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(p), f32>);
@@ -3323,6 +3329,49 @@ TEST(Iterator, StepBy) {
     EXPECT_EQ(it.exact_size_hint(), 1u);
     EXPECT_EQ(it.next_back(), sus::some(2));
     EXPECT_EQ(it.next_back(), sus::none());
+  }
+}
+
+TEST(Iterator, Sum) {
+  static_assert(::sus::iter::Sum<i8>);
+  static_assert(::sus::iter::Sum<i16>);
+  static_assert(::sus::iter::Sum<i32>);
+  static_assert(::sus::iter::Sum<i64>);
+  static_assert(::sus::iter::Sum<isize>);
+  static_assert(::sus::iter::Sum<u8>);
+  static_assert(::sus::iter::Sum<u16>);
+  static_assert(::sus::iter::Sum<u32>);
+  static_assert(::sus::iter::Sum<u64>);
+  static_assert(::sus::iter::Sum<usize>);
+  static_assert(::sus::iter::Sum<f32>);
+  static_assert(::sus::iter::Sum<f64>);
+
+  // Signed integer.
+  {
+    EXPECT_EQ((sus::Array<i32, 0>::with().into_iter().sum()), 0);
+
+    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    decltype(auto) p = sus::move(a).into_iter().sum();
+    static_assert(std::same_as<decltype(p), i32>);
+    EXPECT_EQ(p, 2 + 3 + 4);
+  }
+  // Unsigned integer.
+  {
+    EXPECT_EQ((sus::Array<u32, 0>::with().into_iter().sum()), 0u);
+
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    decltype(auto) p = sus::move(a).into_iter().sum();
+    static_assert(std::same_as<decltype(p), u32>);
+    EXPECT_EQ(p, 2u + 3u + 4u);
+  }
+  // Float.
+  {
+    EXPECT_EQ((sus::Array<f32, 0>::with().into_iter().sum()), 0.f);
+
+    auto a = sus::Array<f32, 3>::with(2.f, 3.f, 4.f);
+    decltype(auto) p = sus::move(a).into_iter().sum();
+    static_assert(std::same_as<decltype(p), f32>);
+    EXPECT_EQ(p, 2.f + 3.f + 4.f);
   }
 }
 

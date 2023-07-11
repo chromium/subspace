@@ -146,6 +146,19 @@ static constexpr _self from_product(
   return p;
 }
 
+/// Constructs a ##_self## from an `Iterator` by computing the sum of all
+/// elements in the iterator.
+///
+/// This method should rarely be called directly, as it is used to satisfy the
+/// `sus::iter::Sum` concept so that `Iterator::sum()` can be called for
+/// iterators over ##_self##.
+static constexpr _self from_sum(
+    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+  auto p = _self(_primitive{0u});
+  for (_self i : ::sus::move(it)) p += i;
+  return p;
+}
+
 /// Assignment from primitive types where no bits are lost.
 template <PrimitiveFloat P>
   requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<_primitive>())

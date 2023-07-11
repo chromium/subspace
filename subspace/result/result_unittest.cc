@@ -1792,4 +1792,26 @@ TEST(Result, FromProduct) {
   }
 }
 
+TEST(Result, FromSum) {
+  enum E { ERROR };
+  static_assert(sus::iter::Sum<Result<i32, E>, Result<i32, E>>);
+
+  // With a None.
+  {
+    auto a = sus::Array<Result<i32, E>, 3>::with(sus::ok(2), sus::err(ERROR),
+                                                 sus::ok(4));
+    decltype(auto) o = sus::move(a).into_iter().sum();
+    static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
+    EXPECT_EQ(o.as_err(), ERROR);
+  }
+  // Without a None.
+  {
+    auto a =
+        sus::Array<Result<i32, E>, 3>::with(sus::ok(2), sus::ok(3), sus::ok(4));
+    decltype(auto) o = sus::move(a).into_iter().sum();
+    static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
+    EXPECT_EQ(o.as_ok(), 2 + 3 + 4);
+  }
+}
+
 }  // namespace

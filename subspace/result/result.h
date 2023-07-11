@@ -536,6 +536,55 @@ class [[nodiscard]] Result final {
     return out;
   }
 
+  /// Computes the sum of an iterator over `Result<T, E>` as long as there
+  /// is no `Err` found. If an `Err` is found, the function returns the first
+  /// `Err`.
+  ///
+  /// Implements sus::iter::Sum<Result<T, E>, Result<T, E>>.
+  ///
+  /// The sum is computed using the implementation of the inner type `T`
+  /// which also satisfies `sus::iter::Sum<T, T>`.
+  template <::sus::iter::Iterator<Result<T, E>> Iter>
+    requires ::sus::iter::Sum<T>
+  static constexpr Result from_sum(Iter&& it) noexcept {
+    class IterUntilNone final
+        : public ::sus::iter::IteratorBase<IterUntilNone, T> {
+     public:
+      IterUntilNone(Iter& iter, Option<E>& err) : iter_(iter), err_(err) {}
+
+      Option<T> next() noexcept {
+        Option<Result<T, E>> next = iter_.next();
+        Option<T> out;
+        if (next.is_some()) {
+          Result<T, E> r =
+              ::sus::move(next).unwrap_unchecked(::sus::marker::unsafe_fn);
+          if (r.is_err()) {
+            err_ = ::sus::move(r).err();
+          } else {
+            out = ::sus::move(r).ok();
+          }
+        }
+        return out;
+      }
+      ::sus::iter::SizeHint size_hint() const noexcept {
+        return ::sus::iter::SizeHint(0u, iter_.size_hint().upper);
+      }
+
+     private:
+      Iter& iter_;
+      Option<E>& err_;
+    };
+    static_assert(::sus::iter::Iterator<IterUntilNone, T>);
+
+    Option<E> err;
+    auto out = Result::with(IterUntilNone(it, err).sum());
+    if (err.is_some()) {
+      out = Result::with_err(
+          ::sus::move(err).unwrap_unchecked(::sus::marker::unsafe_fn));
+    }
+    return out;
+  }
+
   /// Returns true if the result is `Ok`.
   constexpr inline bool is_ok() const& noexcept {
     ::sus::check(state_ != ResultState::IsMoved);
