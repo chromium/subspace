@@ -3622,7 +3622,7 @@ TEST(Iterator, TryForEach) {
     EXPECT_EQ(o.is_some(), true);  // Got to the end.
     EXPECT_EQ(visited, "23567");
   }
-  // With Result<non-void, E>.
+  // With Result.
   {
     auto a = sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7);
     auto it = sus::move(a).into_iter();
@@ -3640,26 +3640,6 @@ TEST(Iterator, TryForEach) {
     EXPECT_EQ(visited, "23");
     o = it.try_for_each({}, f);
     EXPECT_EQ(o.is_ok(), true);  // Got to the end.
-    EXPECT_EQ(visited, "23567");
-  }
-  // With Result<void, E>.
-  {
-    auto a = sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7);
-    auto it = sus::move(a).into_iter();
-    std::string visited;
-    auto f = [&visited](i32 i) -> sus::result::Result<void, i32> {
-      // Stop at 4.
-      if (i % 4 == 0) return sus::err(i);
-      // Record other numbers.
-      visited = fmt::format("{}{}", visited, i);
-      return sus::ok();
-    };
-    auto o = it.try_for_each(f);
-    static_assert(std::same_as<decltype(o), sus::result::Result<void, i32>>);
-    EXPECT_EQ(o, sus::err(4));  // Stopped at 4.
-    EXPECT_EQ(visited, "23");
-    o = it.try_for_each(f);
-    EXPECT_EQ(o, sus::ok());  // Got to the end.
     EXPECT_EQ(visited, "23567");
   }
 }

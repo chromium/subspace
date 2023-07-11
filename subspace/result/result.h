@@ -1041,28 +1041,15 @@ template <class E>
 template <class T, class E>
 struct ::sus::ops::TryImpl<::sus::result::Result<T, E>> {
   using Output = T;
-
- private:
-  struct VoidType;
-  using OutputUnlessVoid =
-      std::conditional_t<std::is_void_v<Output>, VoidType, Output>;
-
- public:
   constexpr static bool is_success(const ::sus::result::Result<T, E>& t) {
     return t.is_ok();
   }
   constexpr static Output to_output(::sus::result::Result<T, E> t) {
     return ::sus::move(t).unwrap();
   }
-  constexpr static ::sus::result::Result<T, E> from_output(OutputUnlessVoid t)
-    requires(!std::is_void_v<Output>)
+  constexpr static ::sus::result::Result<T, E> from_output(Output t)
   {
     return ::sus::result::Result<T, E>::with(::sus::move(t));
-  }
-  constexpr static ::sus::result::Result<T, E> from_output()
-    requires(std::is_void_v<Output>)
-  {
-    return ::sus::result::Result<T, E>::with();
   }
 };
 

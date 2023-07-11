@@ -986,9 +986,6 @@ class IteratorBase {
   ///
   /// Also unlike `fold()` the `sus::ops::Try` concept limits the accumulator
   /// value to not being a reference.
-  ///
-  /// `try_fold()` does not support Try types with a void `Output` type. Since
-  /// that implies there's no stored state, use try_for_each() instead.
   template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F, int&...,
             class R = std::invoke_result_t<F&, B&&, ItemT&&>>
     requires(::sus::ops::Try<R> &&
@@ -1006,23 +1003,14 @@ class IteratorBase {
   /// returned from the closure, iteration will stop and the failure will be
   /// returned from `for_each()`.
   ///
-  /// If the `Try` type's `Output` type is not void, the first argument to
-  /// try_for_each() will be a `success` value that is returned when the end of
-  /// the iterator is reached.
+  /// The `success` value is returned when the end of the iterator is reached.
   ///
   /// Unlike `for_each()` this function may be used on an iterator without fully
   /// consuming it, since it can stop iterating early.
   template <::sus::fn::FnMut<::sus::fn::NonVoid(ItemT)> F, int&...,
             class R = std::invoke_result_t<F&, ItemT&&>>
-    requires(::sus::ops::Try<R> &&  //
-             !std::is_void_v<typename ::sus::ops::TryImpl<R>::Output>)
+    requires(::sus::ops::Try<R>)
   R try_for_each(typename ::sus::ops::TryImpl<R>::Output success, F f) noexcept;
-
-  template <::sus::fn::FnMut<::sus::fn::NonVoid(ItemT)> F, int&...,
-            class R = std::invoke_result_t<F&, ItemT&&>>
-    requires(::sus::ops::Try<R> &&  //
-             std::is_void_v<typename ::sus::ops::TryImpl<R>::Output>)
-  R try_for_each(F f) noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
@@ -1794,33 +1782,11 @@ R IteratorBase<Iter, Item>::try_fold(B init, F f) noexcept {
 
 template <class Iter, class Item>
 template <::sus::fn::FnMut<::sus::fn::NonVoid(Item)> F, int&..., class R>
-  requires(::sus::ops::Try<R> &&  //
-           !std::is_void_v<typename ::sus::ops::TryImpl<R>::Output>)
+  requires(::sus::ops::Try<R>)
 R IteratorBase<Iter, Item>::try_for_each(
     typename ::sus::ops::TryImpl<R>::Output success, F f) noexcept {
   // TODO: Implement with try_fold()? Allow try_fold to take B=void?
   R out = ::sus::ops::TryImpl<R>::from_output(::sus::move(success));
-  while (true) {
-    if (Option<Item> o = as_subclass_mut().next(); o.is_none()) {
-      break;
-    } else {
-      R test = f(std::move(o).unwrap());
-      if (!::sus::ops::TryImpl<R>::is_success(test)) {
-        out = ::sus::move(test);  // Store the failre to be returned.
-        break;
-      }
-    }
-  }
-  return out;
-}
-
-template <class Iter, class Item>
-template <::sus::fn::FnMut<::sus::fn::NonVoid(Item)> F, int&..., class R>
-  requires(::sus::ops::Try<R> &&  //
-           std::is_void_v<typename ::sus::ops::TryImpl<R>::Output>)
-R IteratorBase<Iter, Item>::try_for_each(F f) noexcept {
-  // TODO: Implement with try_fold()? Allow try_fold to take B=void?
-  auto out = ::sus::ops::TryImpl<R>::from_output();
   while (true) {
     if (Option<Item> o = as_subclass_mut().next(); o.is_none()) {
       break;
