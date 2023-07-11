@@ -1369,7 +1369,7 @@ sus_pure_const inline constexpr auto none() noexcept {
 
 }  // namespace sus::option
 
-/// Implements sus::ops::Try for Option.
+// Implements sus::ops::Try for Option.
 template <class T>
 struct sus::ops::TryImpl<::sus::option::Option<T>> {
   using Output = T;

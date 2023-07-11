@@ -722,11 +722,11 @@ class IteratorBase {
   /// than [`usize::MAX`] non-matching elements, it will panic.
   Option<usize> position(::sus::fn::FnMutRef<bool(Item&&)> pred) noexcept;
 
-  /// Iterates over the entire iterator, multiplying all the elements
+  /// Iterates over the entire iterator, multiplying all the elements.
   ///
   /// An empty iterator returns the "one" value of the type.
   ///
-  /// `product() can be used to multiply any type implementing `Product`,
+  /// `product()` can be used to multiply any type implementing `Product`,
   /// including `Option` and `Result`.
   ///
   /// # Panics
