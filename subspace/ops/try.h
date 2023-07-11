@@ -31,9 +31,6 @@ struct TryImpl;
 ///   given `t` is a success or failure value.
 /// * A member `static Output to_output(T&& t)` that unwraps a successful T to
 ///   its success value.
-///
-/// The `Output` type is allowed to be void. Any code that works with Try types
-/// must take care to handle these cases.
 template <class T>
 concept Try =
     requires {
@@ -43,25 +40,20 @@ concept Try =
       typename TryImpl<T>::Output;
       // The Output type is also not a reference.
       requires !std::is_reference_v<typename TryImpl<T>::Output>;
+      // The Output type must not be void, as that interfers with type
+      // conversions and complicates things greatly.
+      requires !std::is_void_v<typename TryImpl<T>::Output>;
     }   //
     &&  //
-    requires(const T& t, T&& tt) {
+    requires(const T& t, T&& tt, TryImpl<T>::Output output) {
       // is_success() reports if the Try type is in a success state.
       { TryImpl<T>::is_success(t) } -> std::same_as<bool>;
       // to_output() unwraps from the Try type to its success type.
       {
         TryImpl<T>::to_output(::sus::move(tt))
       } -> std::same_as<typename TryImpl<T>::Output>;
-    }   //
-    &&  //
-    ((!std::is_void_v<typename TryImpl<T>::Output> &&
-      requires(TryImpl<T>::Output output) {
-        // from_output() converts a success type to the Try type.
-        { TryImpl<T>::from_output(::sus::move(output)) } -> std::same_as<T>;
-      }) ||
-     (std::is_void_v<typename TryImpl<T>::Output> && requires {
-       // from_output() converts a success type to the Try type.
-       { TryImpl<T>::from_output() } -> std::same_as<T>;
-     }));
+      // from_output() converts a success type to the Try type.
+      { TryImpl<T>::from_output(::sus::move(output)) } -> std::same_as<T>;
+    };
 
 }  // namespace sus::ops
