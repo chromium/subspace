@@ -3644,4 +3644,22 @@ TEST(Iterator, TryForEach) {
   }
 }
 
+TEST(Iterator, Unzip) {
+  {
+    using sus::Tuple;
+    using sus::Vec;
+
+    auto a = sus::Array<Tuple<i32, f32>, 5>::with(  //
+        ::sus::tuple(1, 2.f),                       //
+        ::sus::tuple(2, 3.f),                       //
+        ::sus::tuple(3, 4.f),                       //
+        ::sus::tuple(4, 5.f),                       //
+        ::sus::tuple(5, 6.f));
+    auto u = sus::move(a).into_iter().unzip<Vec<i32>, Vec<f32>>();
+    static_assert(std::same_as<decltype(u), Tuple<Vec<i32>, Vec<f32>>>);
+    EXPECT_EQ(u.at<0>(), sus::Slice<i32>::from({1, 2, 3, 4, 5}));
+    EXPECT_EQ(u.at<1>(), sus::Slice<f32>::from({2.f, 3.f, 4.f, 5.f, 6.f}));
+  }
+}
+
 }  // namespace
