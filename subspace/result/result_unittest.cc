@@ -1814,4 +1814,12 @@ TEST(Result, FromSum) {
   }
 }
 
+TEST(Result, Try) {
+  static_assert(sus::ops::Try<Result<i32, u32>>);
+  EXPECT_EQ((sus::ops::TryImpl<Result<i32, u32>>::is_success(sus::ok(1_i32))),
+            true);
+  EXPECT_EQ((sus::ops::TryImpl<Result<i32, u32>>::is_success(sus::err(2_u32))),
+            false);
+}
+
 }  // namespace

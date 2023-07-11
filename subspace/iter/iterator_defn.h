@@ -34,6 +34,7 @@
 #include "subspace/mem/size_of.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/eq.h"
+#include "subspace/ops/try.h"
 #include "subspace/option/option.h"
 #include "subspace/tuple/tuple.h"
 
@@ -971,6 +972,25 @@ class IteratorBase {
           pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
+  /// This function acts like `fold()` but the closure returns a type that
+  /// satisfies `sus::ops::Try` and which converts to the accumulator type on
+  /// success through the Try concept. If the closure ever returns failure, the
+  /// fold operation immediately stops and returns the failure
+  /// (short-circuiting).
+  ///
+  /// See `fold()` for more on how to use this function.
+  ///
+  /// Unlike `fold()` this function may be used on an iterator without fully
+  /// consuming it, since it can stop iterating early.
+  ///
+  /// Also unlike `fold()` the `sus::ops::Try` concept limits the accumulator
+  /// value to not being a reference.
+  template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F, int&...,
+            class R = std::invoke_result_t<F&, B&&, ItemT&&>>
+    requires(::sus::ops::Try<R> &&
+             std::convertible_to<typename ::sus::ops::TryImpl<R>::Output, B>)
+  R try_fold(B init, F f) noexcept;
+
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
   ///
@@ -1720,6 +1740,23 @@ Iterator<Item> auto IteratorBase<Iter, Item>::take_while(
   using TakeWhile = TakeWhile<Sized>;
   return TakeWhile::with(::sus::move(pred),
                          make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F, int&...,
+          class R>
+  requires(::sus::ops::Try<R> &&
+           std::convertible_to<typename ::sus::ops::TryImpl<R>::Output, B>)
+R IteratorBase<Iter, Item>::try_fold(B init, F f) noexcept {
+  while (true) {
+    if (Option<Item> o = as_subclass_mut().next(); o.is_none())
+      return ::sus::ops::TryImpl<R>::from_output(::sus::move(init));
+    else {
+      auto out = f(::sus::move(init), sus::move(o).unwrap());
+      if (!::sus::ops::TryImpl<R>::is_success(out)) return out;
+      init = ::sus::ops::TryImpl<R>::to_output(::sus::move(out));
+    }
+  }
 }
 
 template <class Iter, class Item>
