@@ -1027,6 +1027,21 @@ template <class E>
 
 }  // namespace sus::result
 
+/// Implements sus::ops::Try for Result.
+template <class T, class E>
+struct ::sus::ops::TryImpl<::sus::result::Result<T, E>> {
+  using Output = T;
+  constexpr static bool is_success(const ::sus::result::Result<T, E>& t) {
+    return t.is_ok();
+  }
+  constexpr static Output to_output(::sus::result::Result<T, E> t) {
+    return ::sus::move(t).unwrap();
+  }
+  constexpr static ::sus::result::Result<T, E> from_output(Output t) {
+    return ::sus::result::Result<T, E>::with(::sus::move(t));
+  }
+};
+
 // std hash support.
 template <class T, class E>
 struct std::hash<::sus::result::Result<T, E>> {

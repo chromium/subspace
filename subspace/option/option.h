@@ -44,6 +44,7 @@
 #include "subspace/mem/take.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
+#include "subspace/ops/try.h"
 #include "subspace/option/__private/is_option_type.h"
 #include "subspace/option/__private/is_tuple_type.h"
 #include "subspace/option/__private/marker.h"
@@ -1367,6 +1368,21 @@ sus_pure_const inline constexpr auto none() noexcept {
 }
 
 }  // namespace sus::option
+
+/// Implements sus::ops::Try for Option.
+template <class T>
+struct ::sus::ops::TryImpl<::sus::option::Option<T>> {
+  using Output = T;
+  constexpr static bool is_success(const ::sus::option::Option<T>& t) {
+    return t.is_some();
+  }
+  constexpr static Output to_output(::sus::option::Option<T> t) {
+    return ::sus::move(t).unwrap();
+  }
+  constexpr static ::sus::option::Option<T> from_output(T t) {
+    return ::sus::option::Option<T>::with(::sus::move(t));
+  }
+};
 
 // std hash support.
 template <class T>

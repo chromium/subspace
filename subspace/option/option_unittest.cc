@@ -2759,4 +2759,10 @@ TEST(Option, FromSum) {
           .as_value() == 2 + 3 + 4);
 }
 
+TEST(Option, Try) {
+  static_assert(sus::ops::Try<Option<i32>>);
+  EXPECT_EQ(sus::ops::TryImpl<Option<i32>>::is_success(sus::some(1)), true);
+  EXPECT_EQ(sus::ops::TryImpl<Option<i32>>::is_success(sus::none()), false);
+}
+
 }  // namespace
