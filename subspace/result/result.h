@@ -1039,7 +1039,7 @@ template <class E>
 
 /// Implements sus::ops::Try for Result.
 template <class T, class E>
-struct ::sus::ops::TryImpl<::sus::result::Result<T, E>> {
+struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
   using Output = T;
   constexpr static bool is_success(const ::sus::result::Result<T, E>& t) {
     return t.is_ok();
