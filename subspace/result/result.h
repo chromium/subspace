@@ -1009,6 +1009,8 @@ using sus::iter::__private::end;
 /// construct Result<void, E>. This is to deduce the actual type `E`
 /// when it is constructed, avoid specifying it here, and support
 /// conversions.
+///
+/// #[doc.overloads=ok.marker.void]
 [[nodiscard]] inline constexpr auto ok() noexcept {
   return __private::OkVoidMarker();
 }
@@ -1019,6 +1021,8 @@ using sus::iter::__private::end;
 /// construct Result<T, E>. This is to deduce the actual types `T` and `E`
 /// when it is constructed, avoid specifying them both here, and support
 /// conversions.
+///
+/// #[doc.overloads=ok.marker]
 template <class T>
 [[nodiscard]] inline constexpr auto ok(T&& t sus_lifetimebound) noexcept {
   return __private::OkMarker<T&&>(::sus::forward<T>(t));
@@ -1037,7 +1041,7 @@ template <class E>
 
 }  // namespace sus::result
 
-/// Implements sus::ops::Try for Result.
+// Implements sus::ops::Try for Result.
 template <class T, class E>
 struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
   using Output = T;
@@ -1047,8 +1051,7 @@ struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
   constexpr static Output to_output(::sus::result::Result<T, E> t) {
     return ::sus::move(t).unwrap();
   }
-  constexpr static ::sus::result::Result<T, E> from_output(Output t)
-  {
+  constexpr static ::sus::result::Result<T, E> from_output(Output t) {
     return ::sus::result::Result<T, E>::with(::sus::move(t));
   }
 };
