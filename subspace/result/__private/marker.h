@@ -25,6 +25,29 @@ class Result;
 
 namespace sus::result::__private {
 
+struct OkVoidMarker {
+  // If the Result's type can construct from a const ref `value` (roughly, is
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  template <class E>
+  inline constexpr operator ::sus::result::Result<void, E>() const& noexcept {
+    return Result<void, E>::with();
+  }
+
+  template <class E>
+  inline constexpr operator ::sus::result::Result<void, E>() && noexcept {
+    return Result<void, E>::with();
+  }
+
+  template <class E>
+  inline constexpr ::sus::result::Result<void, E> construct() && noexcept {
+    return ::sus::move(*this);
+  }
+};
+
 template <class T>
 struct OkMarker {
   sus_clang_bug_54040(constexpr inline OkMarker(T&& value)
@@ -50,7 +73,9 @@ struct OkMarker {
   }
 
   template <class E>
-  inline constexpr ::sus::result::Result<::sus::mem::remove_rvalue_reference<T>, E> construct() && noexcept {
+  inline constexpr ::sus::result::Result<::sus::mem::remove_rvalue_reference<T>,
+                                         E>
+  construct() && noexcept {
     return ::sus::move(*this);
   }
 

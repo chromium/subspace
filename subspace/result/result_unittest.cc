@@ -303,6 +303,10 @@ TEST(Result, OkHelpers) {
     static_assert(std::same_as<decltype(u), NoCopyMove&>);
     EXPECT_EQ(&u, &m);
   }
+
+  // Void Ok types.
+  Result<void, i32> r = sus::ok();
+  EXPECT_TRUE(r.is_ok());
 }
 
 TEST(Result, ErrHelpers) {
