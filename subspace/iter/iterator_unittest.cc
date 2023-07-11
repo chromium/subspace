@@ -3471,6 +3471,91 @@ TEST(Iterator, Take) {
     EXPECT_EQ(it.next(), sus::none());
     EXPECT_EQ(it.next(), sus::none());
   }
+  // iter().
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = a.iter().take(2u);
+    static_assert(std::same_as<decltype(it.next()), sus::Option<const u32&>>);
+    EXPECT_EQ(&it.next().unwrap(), &a[0u]);
+    EXPECT_EQ(&it.next().unwrap(), &a[1u]);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto it = a.iter_mut().take(2u);
+    static_assert(std::same_as<decltype(it.next()), sus::Option<u32&>>);
+    EXPECT_EQ(&it.next().unwrap(), &a[0u]);
+    EXPECT_EQ(&it.next().unwrap(), &a[1u]);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+}
+
+TEST(Iterator, TakeWhile) {
+  // Take nothing.
+  {
+    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().take_while(
+        [](const i32&) { return false; });
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(3u)));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+  }
+  // Take everything.
+  {
+    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().take_while(
+        [](const i32&) { return true; });
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(3u)));
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(2u)));
+    EXPECT_EQ(it.next(), sus::some(3));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(1u)));
+    EXPECT_EQ(it.next(), sus::some(4));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+  }
+  // Take some.
+  {
+    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().take_while(
+        [](const i32& i) { return i <= 3; });
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(3u)));
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(2u)));
+    EXPECT_EQ(it.next(), sus::some(3));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(1u)));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+  }
+  // Closure isn't called after false.
+  {
+    auto it = sus::Array<i32, 5>::with(2, 3, 4, 1, 0)
+                  .into_iter()
+                  .take_while([](const i32& i) { return i <= 3; });
+    EXPECT_EQ(it.next(), sus::some(2));
+    EXPECT_EQ(it.next(), sus::some(3));
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.next(), sus::none());
+  }
+
+  // iter().
+  {
+    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto it = a.iter().take_while([](const i32& i) { return i <= 3; });
+    static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
+    EXPECT_EQ(&it.next().unwrap(), &a[0u]);
+    EXPECT_EQ(&it.next().unwrap(), &a[1u]);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // iter_mut().
+  {
+    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto it = a.iter_mut().take_while([](const i32& i) { return i <= 3; });
+    static_assert(std::same_as<decltype(it.next()), sus::Option<i32&>>);
+    EXPECT_EQ(&it.next().unwrap(), &a[0u]);
+    EXPECT_EQ(&it.next().unwrap(), &a[1u]);
+    EXPECT_EQ(it.next(), sus::none());
+  }
 }
 
 }  // namespace
