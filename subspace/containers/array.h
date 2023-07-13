@@ -125,19 +125,24 @@ class Array final {
   constexpr Array clone() const& noexcept
     requires(::sus::mem::Clone<T>)
   {
-    auto ar = Array(kWithCloneFromPointer, storage_.data_,
-                    std::make_index_sequence<N>());
-    return ar;
+    if constexpr (N == 0) {
+      return Array<T, N>();
+    } else {
+      return Array(kWithCloneFromPointer, storage_.data_,
+                   std::make_index_sequence<N>());
+    }
   }
 
   constexpr void clone_from(const Array& source) & noexcept
     requires(::sus::mem::Clone<T>)
   {
-    if (&source == this) [[unlikely]]
-      return;
-    for (auto i = size_t{0}; i < N; ++i) {
-      ::sus::clone_into(mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)),
-                        source.get_unchecked(::sus::marker::unsafe_fn, i));
+    if constexpr (N > 0) {
+      if (&source == this) [[unlikely]]
+        return;
+      for (auto i = size_t{0}; i < N; ++i) {
+        ::sus::clone_into(mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)),
+                          source.get_unchecked(::sus::marker::unsafe_fn, i));
+      }
     }
   }
 
