@@ -761,10 +761,10 @@ class [[nodiscard]] Result final {
   {
     ::sus::check(state_ != ResultState::IsMoved);
     if (state_ == ResultState::IsOk) {
-      return Once<const std::remove_reference_t<T>&>::with(
+      return ::sus::iter::once<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>::with(storage_.ok_));
     } else {
-      return Once<const std::remove_reference_t<T>&>::with(
+      return ::sus::iter::once<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>());
     }
   }
@@ -774,11 +774,11 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != ResultState::IsMoved);
     if (::sus::mem::replace(state_, ResultState::IsMoved) ==
         ResultState::IsOk) {
-      return Once<const std::remove_reference_t<T>&>::with(
+      return ::sus::iter::once<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>::with(storage_.ok_));
     } else {
       storage_.destroy_err();
-      return Once<const std::remove_reference_t<T>&>::with(
+      return ::sus::iter::once<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>());
     }
   }
@@ -788,9 +788,9 @@ class [[nodiscard]] Result final {
   {
     ::sus::check(state_ != ResultState::IsMoved);
     if (state_ == ResultState::IsOk) {
-      return Once<T&>::with(Option<T&>::with(mref(storage_.ok_)));
+      return ::sus::iter::once<T&>(Option<T&>::with(mref(storage_.ok_)));
     } else {
-      return Once<T&>::with(Option<T&>());
+      return ::sus::iter::once<T&>(Option<T&>());
     }
   }
   constexpr Once<TUnlessVoid&> iter_mut() && noexcept
@@ -799,10 +799,10 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != ResultState::IsMoved);
     if (::sus::mem::replace(state_, ResultState::IsMoved) ==
         ResultState::IsOk) {
-      return Once<T&>::with(Option<T&>::with(mref(storage_.ok_)));
+      return ::sus::iter::once<T&>(Option<T&>::with(mref(storage_.ok_)));
     } else {
       storage_.destroy_err();
-      return Once<T&>::with(Option<T&>());
+      return ::sus::iter::once<T&>(Option<T&>());
     }
   }
 
@@ -812,11 +812,11 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != ResultState::IsMoved);
     if (::sus::mem::replace(mref(state_), ResultState::IsMoved) ==
         ResultState::IsOk) {
-      return Once<T>::with(Option<T>::with(::sus::mem::take_and_destruct(
+      return ::sus::iter::once<T>(Option<T>::with(::sus::mem::take_and_destruct(
           ::sus::marker::unsafe_fn, mref(storage_.ok_))));
     } else {
       storage_.destroy_err();
-      return Once<T>::with(Option<T>());
+      return ::sus::iter::once<T>(Option<T>());
     }
   }
 

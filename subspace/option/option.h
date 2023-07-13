@@ -54,11 +54,18 @@
 #include "subspace/string/__private/any_formatter.h"
 #include "subspace/string/__private/format_to_stream.h"
 
+namespace sus::option {
+template <class T>
+class Option;
+}
+
 namespace sus::iter {
 template <class Iter, class Item>
 class IteratorBase;
 template <class Item>
 class Once;
+template <class Item>
+Once<Item> once(::sus::option::Option<Item> o) noexcept;
 namespace __private {
 template <class T>
   requires requires(const T& t) {
@@ -1121,25 +1128,27 @@ class Option final {
 
   sus_pure constexpr Once<const std::remove_reference_t<T>&> iter()
       const& noexcept {
-    return Once<const std::remove_reference_t<T>&>::with(as_ref());
+    return ::sus::iter::once<const std::remove_reference_t<T>&>(as_ref());
   }
   constexpr Once<const std::remove_reference_t<T>&> iter() && noexcept
     requires(std::is_reference_v<T>)
   {
-    return Once<const std::remove_reference_t<T>&>::with(
+    return ::sus::iter::once<const std::remove_reference_t<T>&>(
         ::sus::move(*this).as_ref());
   }
 
   sus_pure constexpr Once<T&> iter_mut() & noexcept {
-    return Once<T&>::with(as_mut());
+    return ::sus::iter::once<T&>(as_mut());
   }
   constexpr Once<T&> iter_mut() && noexcept
     requires(std::is_reference_v<T>)
   {
-    return Once<T&>::with(::sus::move(*this).as_mut());
+    return ::sus::iter::once<T&>(::sus::move(*this).as_mut());
   }
 
-  constexpr Once<T> into_iter() && noexcept { return Once<T>::with(take()); }
+  constexpr Once<T> into_iter() && noexcept {
+    return ::sus::iter::once<T>(take());
+  }
 
   /// sus::ops::Eq<Option<U>> trait.
   template <class U>

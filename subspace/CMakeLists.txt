@@ -234,6 +234,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "iter/empty_unittest.cc"
         "iter/generator_unittest.cc"
         "iter/iterator_unittest.cc"
+        "iter/once_unittest.cc"
         "iter/successors_unittest.cc"
         "marker/unsafe_unittest.cc"
         "mem/addressof_unittest.cc"
