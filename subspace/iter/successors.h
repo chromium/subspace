@@ -50,6 +50,8 @@ inline Successors<Item> successors(
 
 /// An Iterator that generates each item from a function that takes the previous
 /// item.
+///
+/// This type is created by `sus::iter::successors()`.
 template <class ItemT>
 class [[nodiscard]] Successors final
     : public IteratorBase<Successors<ItemT>, ItemT> {

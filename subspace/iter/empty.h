@@ -15,34 +15,52 @@
 #pragma once
 
 #include "subspace/iter/iterator_defn.h"
-#include "subspace/option/option.h"
 #include "subspace/mem/relocate.h"
+#include "subspace/option/option.h"
 
 namespace sus::iter {
 
+template <class ItemT>
+class Empty;
+
+/// Constructs an `Empty` iterator, which is an empty iterator that returns
+/// nothing.
+///
+/// # Example
+/// ```
+/// auto empty = sus::iter::empty<u16>();
+/// sus::check(empty.next().is_none());
+/// ```
+template <class Item>
+constexpr inline Empty<Item> empty() noexcept {
+  return Empty<Item>();
+}
+
 /// An Iterator that never returns an `Item`.
+///
+/// This type is created by `sus::iter::empty()`.
 template <class ItemT>
 class [[nodiscard]] [[sus_trivial_abi]] Empty final
     : public IteratorBase<Empty<ItemT>, ItemT> {
  public:
   using Item = ItemT;
 
-  /// Constructs an `Empty` iterator, which is an empty iterator that returns
-  /// nothing.
-  constexpr Empty() = default;
-
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return sus::Option<Item>(); }
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     return SizeHint(0u, ::sus::Option<::sus::num::usize>::with(0u));
   }
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept { return sus::Option<Item>(); }
+  constexpr Option<Item> next_back() noexcept { return sus::Option<Item>(); }
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept { return 0u; }
+  constexpr usize exact_size_hint() const noexcept { return 0u; }
 
  private:
+  friend Empty<Item> sus::iter::empty<Item>() noexcept;
+
+  constexpr Empty() = default;
+
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn);
 };
 
