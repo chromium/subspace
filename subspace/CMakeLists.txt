@@ -231,6 +231,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "fn/fn_concepts_unittest.cc"
         "fn/fn_ref_unittest.cc"
         "iter/compat_ranges_unittest.cc"
+        "iter/empty_unittest.cc"
         "iter/generator_unittest.cc"
         "iter/iterator_unittest.cc"
         "iter/successors_unittest.cc"
