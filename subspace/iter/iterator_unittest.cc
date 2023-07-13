@@ -3761,6 +3761,26 @@ TEST(Iterator, Zip) {
     EXPECT_EQ(it.exact_size_hint(), 0u);
     EXPECT_EQ(it.next(), sus::none());
   }
+  // zip().
+  {
+    auto a = sus::Array<i32, 2>::with(2, 3);
+    auto b = sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f);
+    auto it = sus::iter::zip(::sus::move(a), ::sus::move(b));
+    static_assert(
+        std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(2, 3.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(3, 4.f)));
+    EXPECT_EQ(it.next(), sus::none());
+  }
+}
+
+TEST(Iterator, Zip_Example) {
+  auto a = sus::Array<i32, 2>::with(2, 3);
+  auto b = sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f);
+  auto it = sus::iter::zip(::sus::move(a), ::sus::move(b));
+  sus::check(it.next() == sus::some(sus::tuple(2, 3.f)));
+  sus::check(it.next() == sus::some(sus::tuple(3, 4.f)));
+  sus::check(it.next() == sus::none());
 }
 
 }  // namespace
