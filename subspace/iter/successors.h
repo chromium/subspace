@@ -23,6 +23,31 @@ namespace sus::iter {
 
 using ::sus::option::Option;
 
+template <class ItemT>
+class Successors;
+
+/// Creates a new iterator where each successive item is computed based on the
+/// preceding one.
+///
+/// The iterator starts with the given `first` item (if any) and calls the
+/// given `FnMutBox<Option<Item>>(const Item&)` functor to compute each item's
+/// successor.
+///
+/// # Example
+/// ```
+/// auto powers_of_10 = sus::iter::successors<u16>(
+///     sus::some(1_u16), [](const u16& n) { return n.checked_mul(10_u16); });
+/// sus::check(
+///     sus::move(powers_of_10).collect<Vec<u16>>() ==
+///     sus::Slice<u16>::from({1_u16, 10_u16, 100_u16, 1000_u16, 10000_u16}));
+/// ```
+template <class Item>
+inline Successors<Item> successors(
+    Option<Item> first,
+    ::sus::fn::FnMutBox<Option<Item>(const Item&)> func) noexcept {
+  return Successors<Item>(::sus::move(first), ::sus::move(func));
+}
+
 /// An Iterator that generates each item from a function that takes the previous
 /// item.
 template <class ItemT>
@@ -30,27 +55,6 @@ class [[nodiscard]] Successors final
     : public IteratorBase<Successors<ItemT>, ItemT> {
  public:
   using Item = ItemT;
-
-  /// Creates a new iterator where each successive item is computed based on the
-  /// preceding one.
-  ///
-  /// The iterator starts with the given `first` item (if any) and calls the
-  /// given `FnMutBox<Option<Item>>(const Item&)` functor to compute each item's
-  /// successor.
-  ///
-  /// # Example
-  /// ```
-  /// auto powers_of_10 = sus::iter::Successors<u16>::with(
-  ///     sus::some(1_u16), [](const u16& n) { return n.checked_mul(10_u16); });
-  /// sus::check(
-  ///     sus::move(powers_of_10).collect<Vec<u16>>() ==
-  ///     sus::Slice<u16>::from({1_u16, 10_u16, 100_u16, 1000_u16, 10000_u16}));
-  /// ```
-  static Successors<Item> with(
-      Option<Item> first,
-      ::sus::fn::FnMutBox<Option<Item>(const Item&)> func) noexcept {
-    return Successors<Item>(::sus::move(first), ::sus::move(func));
-  }
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
@@ -68,6 +72,10 @@ class [[nodiscard]] Successors final
   }
 
  private:
+  friend Successors<Item> sus::iter::successors<Item>(
+      Option<Item> first,
+      ::sus::fn::FnMutBox<Option<Item>(const Item&)> func) noexcept;
+
   Successors(Option<Item> first,
              ::sus::fn::FnMutBox<Option<Item>(const Item&)>&& func)
       : next_(::sus::move(first)), func_(::sus::move(func)) {}
