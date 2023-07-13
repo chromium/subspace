@@ -102,6 +102,8 @@ template <class InnerIter>
 class Take;
 template <class InnerIter>
 class TakeWhile;
+template <class... InnerIters>
+class Zip;
 template <class Iter>
 class IteratorRange;
 
@@ -1030,6 +1032,26 @@ class IteratorBase {
              Extend<ContainerB, ItemB>)
   sus::Tuple<ContainerA, ContainerB> unzip() && noexcept;
 
+  /// "Zips up" two iterators into a single iterator of pairs.
+  ///
+  /// `zip()` returns a new iterator that will iterate over two other iterators,
+  /// returning a tuple where the first element comes from the first iterator,
+  /// and the second element comes from the second iterator.
+  ///
+  /// In other words, it zips two iterators together, into a single one.
+  ///
+  /// If either iterator returns `None`, `next()` from the zipped iterator will
+  /// return `None`. If the zipped iterator has returned `None`, further calls
+  /// to `next()` will try advance both iterators, and if either returns `None`
+  /// the zipped iterator will continue to return `None`. The zipped iterator is
+  /// not fused if both iterators are not fused, and both resume returning
+  /// values.
+  ///
+  /// To "undo" the result of zipping up two iterators, see unzip.
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+  Iterator<sus::Tuple<ItemT, OtherItem>> auto zip(Other&& other) && noexcept;
+
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
   ///
@@ -1832,6 +1854,19 @@ IteratorBase<Iter, Item>::unzip() && noexcept {
   auto out = sus::Tuple<ContainerA, ContainerB>();
   out.template extend<ItemA, ItemB>(static_cast<Iter&&>(*this));
   return out;
+}
+
+template <class Iter, class Item>
+template <IntoIteratorAny Other, int&..., class OtherItem>
+Iterator<sus::Tuple<Item, OtherItem>> auto IteratorBase<Iter, Item>::zip(
+    Other&& other) && noexcept {
+  using Sized = SizedIteratorType<Iter>::type;
+  using OtherIter = std::decay_t<decltype(sus::move(other).into_iter())>;
+  using OtherSized = SizedIteratorType<OtherIter>::type;
+  using Zip = Zip<Sized, OtherSized>;
+  return Zip::with(
+      sus::tuple(make_sized_iterator(static_cast<Iter&&>(*this)),
+                 make_sized_iterator(sus::move(other).into_iter())));
 }
 
 template <class Iter, class Item>
