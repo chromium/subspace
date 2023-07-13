@@ -38,10 +38,14 @@ static_assert(sus::mem::Clone<sus::containers::ArrayIntoIter<i32, 3>>);
 
 static_assert(sus::iter::Iterator<sus::containers::ArrayIntoIter<i32, 0>, i32>);
 static_assert(sus::iter::Iterator<sus::containers::ArrayIntoIter<i32, 3>, i32>);
-static_assert(sus::iter::DoubleEndedIterator<sus::containers::ArrayIntoIter<i32, 0>, i32>);
-static_assert(sus::iter::DoubleEndedIterator<sus::containers::ArrayIntoIter<i32, 3>, i32>);
-static_assert(sus::iter::ExactSizeIterator<sus::containers::ArrayIntoIter<i32, 0>, i32>);
-static_assert(sus::iter::ExactSizeIterator<sus::containers::ArrayIntoIter<i32, 3>, i32>);
+static_assert(sus::iter::DoubleEndedIterator<
+              sus::containers::ArrayIntoIter<i32, 0>, i32>);
+static_assert(sus::iter::DoubleEndedIterator<
+              sus::containers::ArrayIntoIter<i32, 3>, i32>);
+static_assert(
+    sus::iter::ExactSizeIterator<sus::containers::ArrayIntoIter<i32, 0>, i32>);
+static_assert(
+    sus::iter::ExactSizeIterator<sus::containers::ArrayIntoIter<i32, 3>, i32>);
 
 struct TriviallyRelocatable {
   int i;
@@ -147,7 +151,7 @@ TEST(Array, WithValues) {
   }
   {
     auto a = Array<u8, 5>::with(sus::into(3), sus::into(4), sus::into(5),
-                                       sus::into(6), sus::into(7));
+                                sus::into(6), sus::into(7));
     static_assert(sizeof(a) == sizeof(u8[5]));
     for (auto i = 0_u8; i < 5_u8; i += 1_u8) {
       EXPECT_EQ(a[usize::from(i)], 3_u8 + i);
@@ -524,6 +528,13 @@ TEST(Array, Clone) {
   static_assert(::sus::mem::CloneInto<Array<Copy, 1>>);
   static_assert(::sus::mem::Move<Array<Copy, 1>>);
 
+  // Cloning empty.
+  {
+    auto a = sus::clone(Array<Copy, 0>());
+    auto b = Array<Copy, 0>();
+    sus::clone_into(a, b);
+  }
+
   {
     const auto s = Array<Copy, 1>::with(Copy());
     i32 i = s[0u].i;
@@ -601,15 +612,13 @@ TEST(Array, StructuredBinding) {
   static_assert(std::same_as<decltype(d), const i32>);
   static_assert(std::same_as<decltype(e), const i32>);
   static_assert(std::same_as<decltype(f), const i32>);
-  EXPECT_EQ((Array<i32, 3>::with(d, e, f)),
-            (Array<i32, 3>::with(2, 4, 6)));
+  EXPECT_EQ((Array<i32, 3>::with(d, e, f)), (Array<i32, 3>::with(2, 4, 6)));
 
   auto [g, h, i] = sus::move(a3);
   static_assert(std::same_as<decltype(g), i32>);
   static_assert(std::same_as<decltype(h), i32>);
   static_assert(std::same_as<decltype(i), i32>);
-  EXPECT_EQ((Array<i32, 3>::with(g, h, i)),
-            (Array<i32, 3>::with(2, 4, 6)));
+  EXPECT_EQ((Array<i32, 3>::with(g, h, i)), (Array<i32, 3>::with(2, 4, 6)));
 }
 
 TEST(Array, fmt) {
