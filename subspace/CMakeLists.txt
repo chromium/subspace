@@ -108,6 +108,7 @@ target_sources(subspace PUBLIC
     "iter/successors.h"
     "iter/take.h"
     "iter/take_while.h"
+    "iter/zip.h"
     "macros/__private/compiler_bugs.h"
     "macros/assume.h"
     "macros/arch.h"

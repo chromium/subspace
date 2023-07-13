@@ -3649,6 +3649,16 @@ TEST(Iterator, Unzip) {
     using sus::Tuple;
     using sus::Vec;
 
+    auto a = sus::Array<Tuple<i32, f32>, 0>::with();
+    auto u = sus::move(a).into_iter().unzip<Vec<i32>, Vec<f32>>();
+    static_assert(std::same_as<decltype(u), Tuple<Vec<i32>, Vec<f32>>>);
+    EXPECT_EQ(u.at<0>().is_empty(), true);
+    EXPECT_EQ(u.at<1>().is_empty(), true);
+  }
+  {
+    using sus::Tuple;
+    using sus::Vec;
+
     auto a = sus::Array<Tuple<i32, f32>, 5>::with(  //
         ::sus::tuple(1, 2.f),                       //
         ::sus::tuple(2, 3.f),                       //
@@ -3659,6 +3669,97 @@ TEST(Iterator, Unzip) {
     static_assert(std::same_as<decltype(u), Tuple<Vec<i32>, Vec<f32>>>);
     EXPECT_EQ(u.at<0>(), sus::Slice<i32>::from({1, 2, 3, 4, 5}));
     EXPECT_EQ(u.at<1>(), sus::Slice<f32>::from({2.f, 3.f, 4.f, 5.f, 6.f}));
+  }
+}
+
+TEST(Iterator, Zip) {
+  // Equal sizes, both sides are values.
+  {
+    auto a = sus::Array<i32, 5>::with(2, 3, 4, 5, 6);
+    auto b = sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f);
+    auto it = sus::move(a).into_iter().zip(sus::move(b));
+    static_assert(
+        std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(5u, sus::some(5u)));
+    EXPECT_EQ(it.exact_size_hint(), 5u);
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(2, 3.f)));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(4u, sus::some(4u)));
+    EXPECT_EQ(it.exact_size_hint(), 4u);
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(3, 4.f)));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(4, 5.f)));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(5, 6.f)));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(6, 7.f)));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // First ends first, both sides are values.
+  {
+    auto a = sus::Array<i32, 2>::with(2, 3);
+    auto b = sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f);
+    auto it = sus::move(a).into_iter().zip(sus::move(b));
+    static_assert(
+        std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(2, 3.f)));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(3, 4.f)));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());  // Eats 5.f.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());  // Eats 6.f.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());  // Eats 7.f.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // First ends second, both sides are values.
+  {
+    auto a = sus::Array<i32, 5>::with(2, 3, 4, 5, 6);
+    auto b = sus::Array<f32, 2>::with(3.f, 4.f);
+    auto it = sus::move(a).into_iter().zip(sus::move(b));
+    static_assert(
+        std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(2, 3.f)));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(3, 4.f)));
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());  // Eats 4.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());  // Eats 5.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());  // Eats 6.
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
+  }
+  // Empty.
+  {
+    auto a = sus::Array<i32, 0>::with();
+    auto b = sus::Array<f32, 0>::with();
+    auto it = sus::move(a).into_iter().zip(sus::move(b));
+    static_assert(
+        std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+    EXPECT_EQ(it.next(), sus::none());
   }
 }
 
