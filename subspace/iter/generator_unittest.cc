@@ -24,6 +24,17 @@ namespace {
 using sus::iter::Generator;
 using sus::test::NoCopyMove;
 
+TEST(IterGenerator, Example) {
+  auto x = []() -> Generator<i32> {
+    co_yield 1;
+    co_yield 3;
+  };
+  sus::iter::Iterator<i32> auto it = x();
+  EXPECT_EQ(it.next(), sus::some(1));
+  EXPECT_EQ(it.next(), sus::some(3));
+  EXPECT_EQ(it.next(), sus::none());
+}
+
 TEST(IterGenerator, Iterator) {
   {
     auto x = []() -> Generator<i32> {

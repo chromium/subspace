@@ -80,14 +80,14 @@ class IterPromise {
 template <class Generator>
 class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
  public:
-  GeneratorLoop(Generator& generator sus_lifetimebound) noexcept
+  GeneratorLoop(Generator & generator sus_lifetimebound) noexcept
       : generator_(generator) {}
 
   constexpr bool operator==(
       const ::sus::iter::__private::IteratorEnd&) noexcept {
     return generator_.co_handle_.done();
   }
-  constexpr GeneratorLoop& operator++() & noexcept {
+  constexpr GeneratorLoop& operator++()& noexcept {
     // UB occurs if this is called after GeneratorLoop == IteratorEnd. This
     // can't happen in a ranged-for loop, but GeneratorLoop should not be
     // held onto and used in other contexts.
@@ -96,7 +96,7 @@ class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
     generator_.co_handle_.resume();
     return *this;
   }
-  constexpr decltype(auto) operator*() & noexcept {
+  constexpr decltype(auto) operator*()& noexcept {
     // UB occurs if this is called after GeneratorLoop == IteratorEnd. This
     // can't happen in a ranged-for loop, but GeneratorLoop should not be
     // held onto and used in other contexts.
@@ -107,7 +107,7 @@ class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
   }
 
  private:
-  Generator& generator_;
+  Generator & generator_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
                                   decltype(generator_));
@@ -118,8 +118,21 @@ class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
 /// A generator type that is a `sus::iter::Iterator` over type `T`.
 ///
 /// To implement a generator iterator, write a function that returns
-/// `sus::iter::Generator<T>`. Then `co_yield` values of type `T`, and each one
-/// will be returned from the resulting `Iterator` in the same order.
+/// `sus::iter::Generator<T>` and call it. The function can `co_yield` values of
+/// type `T`, and each one will be returned from the resulting `Iterator` in the
+/// same order.
+///
+/// # Example
+/// ```
+/// auto x = []() -> Generator<i32> {
+///   co_yield 1;
+///   co_yield 3;
+/// };
+/// sus::iter::Iterator<i32> auto it = x();
+/// EXPECT_EQ(it.next(), sus::some(1));
+/// EXPECT_EQ(it.next(), sus::some(3));
+/// EXPECT_EQ(it.next(), sus::none());
+/// ```
 template <class T>
 class [[nodiscard]] [[sus_trivial_abi]] Generator final
     : public ::sus::iter::IteratorBase<Generator<T>, T> {
@@ -135,7 +148,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
   }
 
   /// sus::mem::Move trait.
-  constexpr Generator(Generator&& o) noexcept
+  constexpr Generator(Generator && o) noexcept
       : co_handle_(::sus::mem::replace(o.co_handle_, nullptr)) {
     ::sus::check(co_handle_ != nullptr);
   }
@@ -162,7 +175,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
   /// efficient, as the yielded `T` from the generator must be held in the
   /// promise, and this avoids moving it and holding it in the type returned by
   /// begin() as well.
-  constexpr auto begin() & noexcept {
+  constexpr auto begin()& noexcept {
     // Ensure the first item is yielded and ready to be returned from the
     // iterator's operator*().
     if (!co_handle_.done()) co_handle_.resume();
@@ -177,7 +190,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
   // would require storing the Item again in the GeneratorLoop.
   friend class __private::GeneratorLoop<Generator>;
 
-  constexpr Generator(promise_type& p) noexcept
+  constexpr Generator(promise_type & p) noexcept
       : co_handle_(std::coroutine_handle<promise_type>::from_promise(p)) {}
 
   std::coroutine_handle<promise_type> co_handle_;
