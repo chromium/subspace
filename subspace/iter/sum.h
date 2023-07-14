@@ -31,6 +31,8 @@ namespace sus::iter {
 /// "zero" value of the type.
 template <class T, class Item = T>
 concept Sum = requires(__private::IteratorArchetype<Item>&& iter) {
+  // Use cloned() or copied() to convert an Iterator of references to values.
+  requires(!std::is_reference_v<T>);
   { T::from_sum(::sus::move(iter)) } -> std::same_as<T>;
 };
 
