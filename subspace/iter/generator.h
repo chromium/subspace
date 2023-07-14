@@ -27,7 +27,43 @@
 
 namespace sus::iter {
 
+template <class T>
+class Generator;
 namespace __private {
+template <class T>
+struct IsGenerator;
+}
+
+/// Produces an iterator over `Item` from a coroutine function that returns
+/// `Generator<Item>` and yields `Item`s.
+///
+/// This is just a syntactic aid, as `Generator<Item>` is an iterator, so
+/// calling the generator function is what produces the iterator.
+///
+/// # Example
+/// ```
+/// sus::iter::Iterator<i32> auto it =
+///     sus::iter::from_generator([]() -> Generator<i32> {
+///       co_yield 1;
+///       co_yield 5;
+///     });
+/// sus::check(it.next() == sus::some(1));
+/// sus::check(it.next() == sus::some(5));
+/// sus::check(it.next() == sus::none());
+/// ```
+template <::sus::fn::FnOnce<::sus::fn::NonVoid()> F, int&...,
+          class R = std::invoke_result_t<F&&>>
+  requires(__private::IsGenerator<R>::value)
+Iterator<typename R::Item> auto from_generator(F&& f) {
+  return f();
+}
+
+namespace __private {
+
+template <class T>
+struct IsGenerator final : std::false_type {};
+template <class T>
+struct IsGenerator<Generator<T>> final : std::true_type {};
 
 template <class Generator, class T>
 class IterPromise {

@@ -147,4 +147,15 @@ TEST(IterGenerator, ComposeIntoGenerator) {
   EXPECT_EQ(it.next(), sus::None);
 }
 
+TEST(IterGenerator, FromGenerator_Example) {
+  sus::iter::Iterator<i32> auto it =
+      sus::iter::from_generator([]() -> Generator<i32> {
+        co_yield 1;
+        co_yield 5;
+      });
+  sus::check(it.next() == sus::some(1));
+  sus::check(it.next() == sus::some(5));
+  sus::check(it.next() == sus::none());
+}
+
 }  // namespace
