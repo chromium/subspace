@@ -994,6 +994,16 @@ class IteratorBase {
              std::convertible_to<typename ::sus::ops::TryImpl<R>::Output, B>)
   R try_fold(B init, F f) noexcept;
 
+  /// This is the reverse version of
+  /// [`Iterator::try_fold()`](sus::iter::IteratorBase::try_fold): it takes
+  /// elements starting from the back of the iterator.
+  template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F, int&...,
+            class R = std::invoke_result_t<F&, B&&, ItemT&&>>
+    requires(DoubleEndedIterator<Iter, ItemT> &&  //
+             ::sus::ops::Try<R> &&                //
+             std::convertible_to<typename ::sus::ops::TryImpl<R>::Output, B>)
+  R try_rfold(B init, F f) noexcept;
+
   /// An iterator method that applies a fallible function to each item in the
   /// iterator, stopping at the first error and returning that error.
   ///
@@ -1811,6 +1821,24 @@ template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F, int&...,
 R IteratorBase<Iter, Item>::try_fold(B init, F f) noexcept {
   while (true) {
     if (Option<Item> o = as_subclass_mut().next(); o.is_none())
+      return ::sus::ops::TryImpl<R>::from_output(::sus::move(init));
+    else {
+      R out = f(::sus::move(init), sus::move(o).unwrap());
+      if (!::sus::ops::TryImpl<R>::is_success(out)) return out;
+      init = ::sus::ops::TryImpl<R>::to_output(::sus::move(out));
+    }
+  }
+}
+
+template <class Iter, class Item>
+template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F, int&...,
+          class R>
+  requires(DoubleEndedIterator<Iter, Item> &&  //
+           ::sus::ops::Try<R> &&               //
+           std::convertible_to<typename ::sus::ops::TryImpl<R>::Output, B>)
+R IteratorBase<Iter, Item>::try_rfold(B init, F f) noexcept {
+  while (true) {
+    if (Option<Item> o = as_subclass_mut().next_back(); o.is_none())
       return ::sus::ops::TryImpl<R>::from_output(::sus::move(init));
     else {
       R out = f(::sus::move(init), sus::move(o).unwrap());
