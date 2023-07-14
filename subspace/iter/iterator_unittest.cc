@@ -3824,4 +3824,53 @@ TEST(Iterator, Zip_Example) {
   sus::check(it.next() == sus::none());
 }
 
+TEST(Iterator, IsSorted) {
+  EXPECT_EQ((sus::Array<i32, 0>().into_iter().is_sorted()), true);
+  EXPECT_EQ(sus::Slice<i32>::from({5}).into_iter().is_sorted(), true);
+  EXPECT_EQ(
+      sus::Slice<i32>::from({1, 3, 4, 4, 4, 5, 5, 6}).into_iter().is_sorted(),
+      true);
+  EXPECT_EQ(sus::Slice<i32>::from({1, 3}).into_iter().is_sorted(), true);
+  EXPECT_EQ(sus::Slice<i32>::from({3, 3}).into_iter().is_sorted(), true);
+  EXPECT_EQ(sus::Slice<i32>::from({13, 3}).into_iter().is_sorted(), false);
+  EXPECT_EQ(sus::Slice<i32>::from({1, 3, 4, 4, 4, 5, 5, 6, 4})
+                .into_iter()
+                .is_sorted(),
+            false);
+  EXPECT_EQ(sus::Slice<i32>::from({1, 3, 4, 4, 4, 2, 5, 5, 6})
+                .into_iter()
+                .is_sorted(),
+            false);
+}
+
+TEST(Iterator, IsSortedBy) {
+  auto cmp = [](f32 a, f32 b) {
+    sus::check(!a.is_nan() && !b.is_nan());
+    if (a < b) return std::strong_ordering::less;
+    if (a > b) return std::strong_ordering::greater;
+    return std::strong_ordering::equivalent;
+  };
+
+  EXPECT_EQ((sus::Array<f32, 0>().into_iter().is_sorted_by(cmp)), true);
+  EXPECT_EQ(sus::Slice<f32>::from({5.f}).into_iter().is_sorted_by(cmp), true);
+  EXPECT_EQ(sus::Slice<f32>::from({1.f, 3.f, 4.f, 4.f, 4.f, 5.f, 5.f, 6.f})
+                .into_iter()
+                .is_sorted_by(cmp),
+            true);
+  EXPECT_EQ(sus::Slice<f32>::from({1.f, 3.f}).into_iter().is_sorted_by(cmp),
+            true);
+  EXPECT_EQ(sus::Slice<f32>::from({3.f, 3.f}).into_iter().is_sorted_by(cmp),
+            true);
+  EXPECT_EQ(sus::Slice<f32>::from({13.f, 3.f}).into_iter().is_sorted_by(cmp),
+            false);
+  EXPECT_EQ(sus::Slice<f32>::from({1.f, 3.f, 4.f, 4.f, 4.f, 5.f, 5.f, 6.f, 4.f})
+                .into_iter()
+                .is_sorted_by(cmp),
+            false);
+  EXPECT_EQ(sus::Slice<f32>::from({1.f, 3.f, 4.f, 4.f, 4.f, 2.f, 5.f, 5.f, 6.f})
+                .into_iter()
+                .is_sorted_by(cmp),
+            false);
+}
+
 }  // namespace

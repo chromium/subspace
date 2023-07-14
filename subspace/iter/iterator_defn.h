@@ -492,6 +492,25 @@ class IteratorBase {
   Iterator<Item> auto inspect(F fn) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
+  /// Checks if the elements of this iterator are sorted.
+  ///
+  /// That is, it returns true if for each consecutive element `a` and `b`,
+  /// `a <= b` is true. If the iterator yields exactly zero or one element, true
+  /// is returned.
+  bool is_sorted() noexcept
+    requires(::sus::ops::Ord<Item>);
+
+  /// Checks if the elements of this iterator are sorted using the given
+  /// comparator function.
+  ///
+  /// Returns true if for each consecutive element `a` and `b`, `a <= b` is
+  /// true. If the iterator yields exactly zero or one element, true is
+  /// returned.
+  bool is_sorted_by(::sus::fn::FnMutRef<
+                    std::strong_ordering(const std::remove_reference_t<Item>&,
+                                         const std::remove_reference_t<Item>&)>
+                        compare) noexcept;
+
   /// Determines if the elements of this Iterator are
   /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) less than or
   /// equal to those of another.
@@ -1402,6 +1421,45 @@ Iterator<Item> auto IteratorBase<Iter, Item>::inspect(F fn) && noexcept
   using Inspect = Inspect<Sized>;
   return Inspect::with(::sus::move_into(fn),
                        make_sized_iterator(static_cast<Iter&&>(*this)));
+}
+
+template <class Iter, class Item>
+bool IteratorBase<Iter, Item>::is_sorted() noexcept
+  requires(::sus::ops::Ord<Item>)
+{
+  return is_sorted_by(
+      [](const std::remove_reference_t<Item>& a,
+         const std::remove_reference_t<Item>& b) { return a <=> b; });
+}
+
+template <class Iter, class Item>
+bool IteratorBase<Iter, Item>::is_sorted_by(
+    ::sus::fn::FnMutRef<
+        std::strong_ordering(const std::remove_reference_t<Item>&,
+                             const std::remove_reference_t<Item>&)>
+        compare) noexcept {
+  Option<Item> o = as_subclass_mut().next();
+  if (o.is_none()) return true;
+  // We unwrap the `Item`, if it's a reference we need to work with it as a
+  // pointer.
+  if constexpr (std::is_reference_v<Item>) {
+    std::remove_reference_t<Item>* last =
+        ::sus::mem::addressof(sus::move(o).unwrap());
+    return static_cast<Iter&&>(*this).all([&last, &compare](Item item) -> bool {
+      auto ord = compare(*last, item);
+      if (ord > 0) return false;
+      last = ::sus::mem::addressof(item);
+      return true;
+    });
+  } else {
+    Item last = sus::move(o).unwrap();
+    return static_cast<Iter&&>(*this).all([&last, &compare](Item item) -> bool {
+      auto ord = compare(last, item);
+      if (ord > 0) return false;
+      last = sus::move(item);
+      return true;
+    });
+  }
 }
 
 template <class Iter, class Item>
