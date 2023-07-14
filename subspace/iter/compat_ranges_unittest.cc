@@ -17,10 +17,12 @@
 #include <concepts>
 #include <iterator>
 #include <ranges>
+#include <vector>
 
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/containers/vec.h"
 #include "subspace/iter/empty.h"
+#include "subspace/iter/iterator.h"
 #include "subspace/prelude.h"
 
 namespace {
@@ -54,6 +56,119 @@ TEST(CompatRanges, InputRange) {
     e += 1;
   }
   EXPECT_EQ(e, 7);
+}
+
+TEST(CompatRanges, FromRange) {
+  {
+    auto v = std::vector<i32>({1, 2, 3});
+    auto it = sus::iter::from_range(v);
+    static_assert(sus::iter::Iterator<decltype(it), i32&>);
+    static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32&>);
+    static_assert(sus::iter::ExactSizeIterator<decltype(it), i32&>);
+    static_assert(sus::mem::Move<decltype(it)>);
+    static_assert(!sus::mem::Copy<decltype(it)>);
+    static_assert(sus::mem::Clone<decltype(it)>);
+    static_assert(sus::mem::relocate_by_memcpy<decltype(it)>);
+  }
+
+  // Mutable use of vector.
+  {
+    auto v = std::vector<i32>({1, 2, 3});
+    sus::iter::Iterator<i32&> auto it = sus::iter::from_range(v);
+    static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32&>);
+    static_assert(sus::iter::ExactSizeIterator<decltype(it), i32&>);
+
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+
+    EXPECT_EQ(&it.next().unwrap(), &v[0]);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+
+    EXPECT_EQ(&it.next().unwrap(), &v[1]);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+
+    EXPECT_EQ(&it.next().unwrap(), &v[2]);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+  }
+  // Const use of vector.
+  {
+    const auto v = std::vector<i32>({1, 2, 3});
+    sus::iter::Iterator<const i32&> auto it = sus::iter::from_range(v);
+    static_assert(sus::iter::DoubleEndedIterator<decltype(it), const i32&>);
+    static_assert(sus::iter::ExactSizeIterator<decltype(it), const i32&>);
+
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+
+    EXPECT_EQ(&it.next().unwrap(), &v[0]);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+
+    EXPECT_EQ(&it.next().unwrap(), &v[1]);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+
+    EXPECT_EQ(&it.next().unwrap(), &v[2]);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+
+    EXPECT_EQ(it.next(), sus::none());
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+  }
+  // next_back().
+  {
+    const auto v = std::vector<i32>({1, 2, 3});
+    sus::iter::Iterator<const i32&> auto it = sus::iter::from_range(v);
+
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
+    EXPECT_EQ(it.exact_size_hint(), 3u);
+
+    EXPECT_EQ(&it.next_back().unwrap(), &v[2]);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
+    EXPECT_EQ(it.exact_size_hint(), 2u);
+
+    EXPECT_EQ(&it.next().unwrap(), &v[0]);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
+    EXPECT_EQ(it.exact_size_hint(), 1u);
+
+    EXPECT_EQ(&it.next_back().unwrap(), &v[1]);
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+
+    EXPECT_EQ(it.next_back(), sus::none());
+    EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
+    EXPECT_EQ(it.exact_size_hint(), 0u);
+  }
+  // rvalues are moved from the range.
+  {
+    auto v = std::vector<i32>({1, 2, 3});
+    sus::iter::Iterator<i32> auto it = sus::iter::from_range(sus::move(v));
+    EXPECT_EQ(sus::move(it).sum(), 1 + 2 + 3);
+
+    EXPECT_EQ(sus::iter::from_range(std::vector<i32>({1, 2, 3})).sum(),
+              1 + 2 + 3);
+  }
+}
+
+TEST(CompatRanges, FromRange_Example) {
+  {
+    // An input_iterator by reference.
+    const auto v = std::vector<i32>({1, 2, 3});
+    sus::check(sus::iter::from_range(v).copied().sum() == 1 + 2 + 3);
+  }
+  {
+    // An input_iterator by value.
+    auto v = std::vector<i32>({1, 2, 3});
+    sus::check(sus::iter::from_range(sus::move(v)).sum() == 1 + 2 + 3);
+  }
 }
 
 }  // namespace
