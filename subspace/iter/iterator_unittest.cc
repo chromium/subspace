@@ -3599,6 +3599,47 @@ TEST(Iterator, TryFold) {
   }
 }
 
+TEST(Iterator, TryRfold) {
+  // With Option.
+  {
+    auto a = sus::Array<i32, 6>::with(1, 2, 3, 4, 5, 6);
+    auto it = sus::move(a).into_iter();
+    auto f = [](std::string acc, i32 i) -> Option<std::string> {
+      // Stop at 4.
+      if (i % 4 == 0) return sus::none();
+      // Record odd numbers.
+      if (i % 2 == 1) return sus::some(fmt::format("{}{}", acc, i));
+      // Do nothing with even numbers.
+      return sus::some(acc);
+    };
+    auto o = it.try_rfold(std::string(), f);
+    static_assert(std::same_as<decltype(o), Option<std::string>>);
+    EXPECT_EQ(o, sus::none());  // Stopped at 4.
+    o = it.try_rfold(std::string(), f);
+    EXPECT_EQ(o, sus::some("31"));  // Got to the end.
+  }
+  // With Result.
+  {
+    auto a = sus::Array<i32, 6>::with(1, 2, 3, 4, 5, 6);
+    auto it = sus::move(a).into_iter();
+    auto f = [](std::string acc,
+                i32 i) -> sus::result::Result<std::string, i32> {
+      // Stop at 4.
+      if (i % 4 == 0) return sus::err(i);
+      // Record odd numbers.
+      if (i % 2 == 1) return sus::ok(fmt::format("{}{}", acc, i));
+      // Do nothing with even numbers.
+      return sus::ok(acc);
+    };
+    auto o = it.try_rfold(std::string(), f);
+    static_assert(
+        std::same_as<decltype(o), sus::result::Result<std::string, i32>>);
+    EXPECT_EQ(o, sus::err(4));  // Stopped at 4.
+    o = it.try_rfold(std::string(), f);
+    EXPECT_EQ(o, sus::ok("31"));  // Got to the end.
+  }
+}
+
 TEST(Iterator, TryForEach) {
   struct Void {};
 
