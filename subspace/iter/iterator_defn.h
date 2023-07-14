@@ -54,6 +54,7 @@ namespace sus::iter {
 using ::sus::construct::Into;
 using ::sus::option::Option;
 
+// Include iter/iterator.h to get the implementation of these.
 // TODO: Move forward decls somewhere?
 template <class RefIterator>
 class ByRef;
