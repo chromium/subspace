@@ -18,21 +18,9 @@
 #include <type_traits>
 
 #include "subspace/convert/subclass.h"
-
-namespace sus::num {
-struct usize;
-}
-
-namespace sus::option {
-template <class T>
-class Option;
-}
+#include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::iter {
-
-template <class Iter, class Item>
-class IteratorBase;
-struct SizeHint;
 
 /// A concept for all implementations of iterators.
 ///

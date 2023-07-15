@@ -14,17 +14,8 @@
 
 #pragma once
 
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/iter/iterator_concept.h"
-
-namespace sus::option {
-template <class T>
-class Option;
-}
-
-namespace sus::iter {
-template <class SubclassT, class ItemT>
-class IteratorBase;
-}  // namespace sus::iter
 
 namespace sus::iter::__private {
 

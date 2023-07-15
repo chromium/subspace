@@ -38,11 +38,7 @@
 #include "subspace/string/__private/any_formatter.h"
 #include "subspace/string/__private/format_to_stream.h"
 #include "subspace/tuple/__private/storage.h"
-
-namespace sus::option {
-template <class T>
-class Option;
-}
+#include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::tuple_type {
 

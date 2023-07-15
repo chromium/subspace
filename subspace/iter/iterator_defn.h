@@ -29,6 +29,7 @@
 #include "subspace/iter/product.h"
 #include "subspace/iter/sized_iterator.h"
 #include "subspace/iter/sum.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/move.h"
@@ -37,76 +38,13 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/try.h"
 #include "subspace/option/option.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/tuple/tuple.h"
-
-namespace sus::containers {
-template <class T>
-class Vec;
-}
-
-namespace sus::result {
-template <class T, class E>
-class Result;
-}
 
 namespace sus::iter {
 
 using ::sus::construct::Into;
 using ::sus::option::Option;
-
-// Include iter/iterator.h to get the implementation of these.
-// TODO: Move forward decls somewhere?
-template <class RefIterator>
-class ByRef;
-template <class InnerSizedIter, class OtherSizedIter>
-class Chain;
-template <class InnerSizedIter>
-class Cloned;
-template <class InnerSizedIter>
-class Copied;
-template <class InnerSizedIter>
-class Cycle;
-template <class InnerSizedIter>
-class Enumerate;
-template <class InnerSizedIter>
-class Filter;
-template <class ToItem, class InnerSizedIter>
-class FilterMap;
-template <class IntoIterable, class InnerSizedIter>
-class FlatMap;
-template <class EachIter, class InnerSizedIter>
-class Flatten;
-template <class InnerIter>
-class Fuse;
-template <class Item>
-class Generator;
-template <class InnerSizedIter>
-class Inspect;
-template <class ToItem, class InnerSizedIter>
-class Map;
-template <class ToItem, class InnerSizedIter>
-class MapWhile;
-template <class InnerSizedIter>
-class Peekable;
-template <class InnerSizedIter>
-class Reverse;
-template <class OutType, class State, class InnerSizedIter>
-  requires(!std::is_reference_v<State>)
-class Scan;
-template <class InnerIter>
-class Skip;
-template <class InnerIter>
-class SkipWhile;
-template <class InnerIter>
-class StepBy;
-template <class InnerIter>
-class Take;
-template <class InnerIter>
-class TakeWhile;
-template <class... InnerIters>
-class Zip;
-template <class Iter>
-class IteratorRange;
 
 /// The base class for all Iterator types.
 ///
@@ -243,7 +181,8 @@ class IteratorBase {
   /// This is useful when you have an iterator over &T, but you need an iterator
   /// over T.
   Iterator<std::remove_cvref_t<Item>> auto copied() && noexcept
-    requires(::sus::mem::Copy<Item> && ::sus::mem::relocate_by_memcpy<Iter>);
+    requires(::sus::mem::Copy<Item> &&  //
+             ::sus::mem::relocate_by_memcpy<Iter>);
 
   /// Consumes the iterator, and returns the number of elements that were in
   /// it.
@@ -429,7 +368,7 @@ class IteratorBase {
   template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F>
     requires(std::convertible_to<std::invoke_result_t<F&, B &&, ItemT &&>, B> &&
              (!std::is_reference_v<B> ||
-              std::is_reference_v<std::invoke_result_t<F&, B&&, ItemT&&>>))
+              std::is_reference_v<std::invoke_result_t<F&, B &&, ItemT &&>>))
   B fold(B init, F f) && noexcept;
 
   /// Calls a closure on each element of an iterator.
@@ -865,7 +804,7 @@ class IteratorBase {
     requires(DoubleEndedIterator<Iter, ItemT> &&
              std::convertible_to<std::invoke_result_t<F&, B &&, ItemT &&>, B> &&
              (!std::is_reference_v<B> ||
-              std::is_reference_v<std::invoke_result_t<F&, B&&, ItemT&&>>))
+              std::is_reference_v<std::invoke_result_t<F&, B &&, ItemT &&>>))
   B rfold(B init, F f) && noexcept;
 
   /// Searches for an element in an iterator from the right, returning its
@@ -1174,7 +1113,9 @@ Iterator<Item> auto IteratorBase<Iter, Item>::box() && noexcept
 {
   using BoxedIterator =
       BoxedIterator<Item, ::sus::mem::size_of<Iter>(), alignof(Iter),
-                    ::sus::iter::DoubleEndedIterator<Iter, Item>>;
+                    ::sus::mem::Clone<Iter>,
+                    ::sus::iter::DoubleEndedIterator<Iter, Item>,
+                    ::sus::iter::ExactSizeIterator<Iter, Item>>;
   return BoxedIterator::with(static_cast<Iter&&>(*this));
 }
 
@@ -1354,7 +1295,7 @@ template <class Iter, class Item>
 template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F>
   requires(std::convertible_to<std::invoke_result_t<F&, B &&, Item &&>, B> &&
            (!std::is_reference_v<B> ||
-            std::is_reference_v<std::invoke_result_t<F&, B&&, Item&&>>))
+            std::is_reference_v<std::invoke_result_t<F&, B &&, Item &&>>))
 B IteratorBase<Iter, Item>::fold(B init, F f) && noexcept {
   if constexpr (std::is_reference_v<B>) {
     std::remove_reference_t<B>* out = ::sus::mem::addressof(init);
@@ -1771,7 +1712,7 @@ template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F>
   requires(DoubleEndedIterator<Iter, Item> &&
            std::convertible_to<std::invoke_result_t<F&, B &&, Item &&>, B> &&
            (!std::is_reference_v<B> ||
-            std::is_reference_v<std::invoke_result_t<F&, B&&, Item&&>>))
+            std::is_reference_v<std::invoke_result_t<F&, B &&, Item &&>>))
 B IteratorBase<Iter, Item>::rfold(B init, F f) && noexcept {
   while (true) {
     if (Option<Item> o = as_subclass_mut().next_back(); o.is_none())

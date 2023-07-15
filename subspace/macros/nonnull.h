@@ -41,6 +41,6 @@
 /// parameters it should only be used on internal methods or methods that are
 /// marked as unsafe.
 ///
-/// This is placed as a modifier on the pointer `*`, such as in `i32*
-/// sus_nonnull_var ptr_`.
+/// This is placed as a modifier on the pointer `*`, such as in
+/// `i32* sus_nonnull_var ptr_`.
 #define sus_nonnull_var sus_if_clang(_Nonnull)

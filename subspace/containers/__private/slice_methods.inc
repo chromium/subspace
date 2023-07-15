@@ -22,8 +22,9 @@
 //
 // Include it into the body of your class.
 //
-// Define `_ptr_expr` and `_len_expr` when including this file to the
-// expressions of getting the slice's data pointer and length.
+// Define `_ptr_expr`, `_len_expr`, `_iter_refs_expr` and `_iter_refs_view_expr`
+// when including this file to the expressions of getting the slice's data
+// pointer and length.
 //
 // Define `_delete_rvalue` to true if rvalue methods that return a reference
 // should be deleted.
@@ -190,7 +191,7 @@ template <::sus::ops::Ord Key>
 /// Panics if chunk_size is 0.
 constexpr Chunks<T> chunks(::sus::num::usize chunk_size) const& noexcept {
   ::sus::check(chunk_size > 0u);
-  return Chunks<T>::with(*this, chunk_size);
+  return Chunks<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
 #if _delete_rvalue
@@ -218,9 +219,7 @@ constexpr Chunks<T> chunks(::sus::num::usize chunk_size) && = delete;
 constexpr ChunksExact<T> chunks_exact(
     ::sus::num::usize chunk_size) const& noexcept {
   ::sus::check(chunk_size > 0u);
-  return ChunksExact<T>::with(::sus::containers::Slice<T>::from_raw_parts(
-                                  ::sus::marker::unsafe_fn, as_ptr(), len()),
-                              chunk_size);
+  return ChunksExact<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
 #if _delete_rvalue
@@ -362,7 +361,7 @@ sus_pure constexpr Option<Slice<T>> get_range(
   // slice.
   if (rstart > length || rstart > length - rlen) return sus::none();
   return Option<Slice<T>>::with(Slice<T>::from_raw_parts(
-      ::sus::marker::unsafe_fn, as_ptr() + rstart, rlen));
+      ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_ptr() + rstart, rlen));
 }
 
 #if _delete_rvalue
@@ -388,8 +387,8 @@ sus_pure constexpr Slice<T> get_range_unchecked(
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
   const ::sus::num::usize rend = range.end_bound().unwrap_or(len());
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + rstart,
-                                  rlen);
+  return Slice<T>::from_raw_parts(
+      ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_ptr() + rstart, rlen);
 }
 
 #if _delete_rvalue
@@ -402,7 +401,7 @@ constexpr Slice<T> get_range_unchecked(
 /// same order they appear in the slice. The iterator gives const access to
 /// each element.
 sus_pure constexpr SliceIter<const T&> iter() const& noexcept {
-  return SliceIter<const T&>::with(as_ptr(), len());
+  return SliceIter<const T&>::with(_iter_refs_expr, as_ptr(), len());
 }
 
 #if _delete_rvalue
@@ -544,9 +543,7 @@ constexpr ::sus::num::usize partition_point(
 /// Panics if `chunk_size` is 0.
 constexpr RChunks<T> rchunks(::sus::num::usize chunk_size) const& noexcept {
   ::sus::check(chunk_size > 0u);
-  return RChunks<T>::with(::sus::containers::Slice<T>::from_raw_parts(
-                              ::sus::marker::unsafe_fn, as_ptr(), len()),
-                          chunk_size);
+  return RChunks<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
 #if _delete_rvalue
@@ -574,9 +571,7 @@ constexpr RChunks<T> rchunks(::sus::num::usize chunk_size) && = delete;
 constexpr RChunksExact<T> rchunks_exact(
     ::sus::num::usize chunk_size) const& noexcept {
   ::sus::check(chunk_size > 0u);
-  return RChunksExact<T>::with(::sus::containers::Slice<T>::from_raw_parts(
-                                   ::sus::marker::unsafe_fn, as_ptr(), len()),
-                               chunk_size);
+  return RChunksExact<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
 #if _delete_rvalue
@@ -650,7 +645,8 @@ constexpr ::sus::containers::Vec<T> repeat(usize n) const& noexcept
 /// will be the first (or last) item returned by the iterator.
 constexpr RSplit<T> rsplit(
     ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return RSplit<T>::with(Split<T>::with(*this, ::sus::move(pred)));
+  return RSplit<T>::with(
+      Split<T>::with(_iter_refs_expr, *this, ::sus::move(pred)));
 }
 
 #if _delete_rvalue
@@ -664,8 +660,9 @@ constexpr Split<T> rsplit(::sus::fn::FnMutRef<bool(const T&)>) && = delete;
 /// The last element returned, if any, will contain the remainder of the slice.
 constexpr RSplitN<T> rsplitn(
     usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return RSplitN<T>::with(
-      RSplit<T>::with(Split<T>::with(*this, ::sus::move(pred))), n);
+  return RSplitN<T>::with(RSplit<T>::with(Split<T>::with(_iter_refs_expr, *this,
+                                                         ::sus::move(pred))),
+                          n);
 }
 
 #if _delete_rvalue
@@ -681,7 +678,7 @@ constexpr RSplit<T> rsplitn(
 /// matched, an empty slice will be the last item returned by the iterator.
 constexpr Split<T> split(
     ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return Split<T>::with(*this, ::sus::move(pred));
+  return Split<T>::with(_iter_refs_expr, *this, ::sus::move(pred));
 }
 
 #if _delete_rvalue
@@ -727,9 +724,10 @@ sus_pure constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
   sus_assume(::sus::marker::unsafe_fn,
              mid.primitive_value <= length.primitive_value);
   return ::sus::Tuple<Slice<T>, Slice<T>>::with(
-      Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr(), mid),
-      Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + mid,
-                               length - mid));
+      Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, _iter_refs_view_expr,
+                               as_ptr(), mid),
+      Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, _iter_refs_view_expr,
+                               as_ptr() + mid, length - mid));
 }
 
 #if _delete_rvalue
@@ -760,7 +758,7 @@ constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>> split_first() && =
 /// returned by the iterator.
 constexpr SplitInclusive<T> split_inclusive(
     ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return SplitInclusive<T>::with(*this, ::sus::move(pred));
+  return SplitInclusive<T>::with(_iter_refs_expr, *this, ::sus::move(pred));
 }
 
 #if _delete_rvalue
@@ -790,7 +788,8 @@ constexpr ::sus::Option<::sus::Tuple<const T&, Slice<T>>> split_last() && =
 /// The last element returned, if any, will contain the remainder of the slice.
 constexpr SplitN<T> splitn(
     usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
-  return SplitN<T>::with(Split<T>::with(*this, ::sus::move(pred)), n);
+  return SplitN<T>::with(
+      Split<T>::with(_iter_refs_expr, *this, ::sus::move(pred)), n);
 }
 
 #if _delete_rvalue
@@ -860,6 +859,8 @@ constexpr ::sus::Option<Slice<T>> strip_suffix(const Slice<T>& suffix) const& =
 #endif
 
 /// Constructs a `Vec<T>` by cloning each value in the Slice.
+///
+/// The caller can choose traits for the Vec by specifying the trait type.
 Vec<T> to_vec() const& noexcept
   requires(::sus::mem::Clone<T>);
 
@@ -871,9 +872,11 @@ Vec<T> to_vec() const& noexcept
 /// Panics if `size` is 0.
 sus_pure constexpr Windows<T> windows(usize size) const& noexcept {
   ::sus::check(size > 0u);
-  return Windows<T>::with(*this, size);
+  return Windows<T>::with(_iter_refs_expr, *this, size);
 }
 
 #undef _ptr_expr
 #undef _len_expr
 #undef _delete_rvalue
+#undef _iter_refs_expr
+#undef _iter_refs_view_expr

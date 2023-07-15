@@ -20,6 +20,7 @@
 
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/iter/size_hint.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/move.h"
@@ -27,10 +28,6 @@
 #include "subspace/num/unsigned_integer.h"
 
 namespace sus::containers {
-
-template <class T, size_t N>
-  requires(N <= size_t{PTRDIFF_MAX})
-class Array;
 
 template <::sus::mem::Move ItemT, size_t N>
 struct [[nodiscard]] ArrayIntoIter final
@@ -94,9 +91,11 @@ struct [[nodiscard]] ArrayIntoIter final
   }
 
  private:
-  constexpr ArrayIntoIter(Array<Item, N>&& array) noexcept : array_(::sus::move(array)) {}
+  constexpr ArrayIntoIter(Array<Item, N>&& array) noexcept
+      : array_(::sus::move(array)) {}
 
-  constexpr ArrayIntoIter(Array<Item, N>&& array, usize front, usize back) noexcept
+  constexpr ArrayIntoIter(Array<Item, N>&& array, usize front,
+                          usize back) noexcept
       : array_(::sus::move(array)), front_index_(front), back_index_(back) {}
 
   Array<Item, N> array_;

@@ -27,10 +27,12 @@
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
 #include "subspace/result/result.h"
+#include "subspace/test/ensure_use.h"
 #include "subspace/test/no_copy_move.h"
 
 using sus::containers::Slice;
 using sus::containers::SliceMut;
+using sus::iter::IterRefCounter;
 using sus::test::NoCopyMove;
 
 namespace {
@@ -41,15 +43,17 @@ static_assert(sus::mem::Move<Slice<i32>>);
 
 TEST(Slice, FromRawParts) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  auto sc = Slice<i32>::from_raw_parts(
+      unsafe_fn, IterRefCounter::empty_for_view(), a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts_mut(
+      unsafe_fn, IterRefCounter::empty_for_view(), a, 3_usize);
 }
 
 TEST(Slice, Index) {
-  i32 a[] = {1, 2, 3};
-  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
   const auto scc = sc;
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
   const auto smc = sm;
 
   static_assert(std::same_as<const i32&, decltype(sc[0u])>);
@@ -67,9 +71,9 @@ TEST(Slice, Index) {
 }
 
 TEST(SliceDeathTest, Index) {
-  i32 a[] = {1, 2, 3};
-  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
 
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(
@@ -88,13 +92,14 @@ TEST(SliceDeathTest, Index) {
 }
 
 TEST(Slice, Get) {
-  i32 a[] = {1, 2, 3};
-  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_EQ(s.get(1_usize).unwrap(), 2_i32);
-  EXPECT_EQ(s.get(2_usize).unwrap(), 3_i32);
-  EXPECT_EQ(s.get(3_usize), sus::None);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
 
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(sc.get(1_usize).unwrap(), 2_i32);
+  EXPECT_EQ(sc.get(2_usize).unwrap(), 3_i32);
+  EXPECT_EQ(sc.get(3_usize), sus::None);
+
   EXPECT_EQ(sm.get(1_usize).unwrap(), 2_i32);
   EXPECT_EQ(sm.get(2_usize).unwrap(), 3_i32);
   EXPECT_EQ(sm.get(3_usize), sus::None);
@@ -111,9 +116,9 @@ static_assert(!HasGetMut<const Slice<i32>, usize>);
 static_assert(HasGetMut<const SliceMut<i32>, usize>);
 
 TEST(Slice, GetMut) {
-  i32 a[] = {1, 2, 3};
-  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
 
   EXPECT_EQ(sm.get_mut(1_usize).unwrap(), 2_i32);
   EXPECT_EQ(sm.get_mut(2_usize).unwrap(), 3_i32);
@@ -121,12 +126,13 @@ TEST(Slice, GetMut) {
 }
 
 TEST(Slice, GetUnchecked) {
-  i32 a[] = {1, 2, 3};
-  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_EQ(s.get_unchecked(unsafe_fn, 1_usize), 2_i32);
-  EXPECT_EQ(s.get_unchecked(unsafe_fn, 2_usize), 3_i32);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
 
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(sc.get_unchecked(unsafe_fn, 1_usize), 2_i32);
+  EXPECT_EQ(sc.get_unchecked(unsafe_fn, 2_usize), 3_i32);
+
   EXPECT_EQ(sm.get_unchecked(unsafe_fn, 1_usize), 2_i32);
   EXPECT_EQ(sm.get_unchecked(unsafe_fn, 2_usize), 3_i32);
 }
@@ -142,19 +148,18 @@ static_assert(!HasGetUncheckedMut<const Slice<i32>, usize>);
 static_assert(HasGetUncheckedMut<const SliceMut<i32>, usize>);
 
 TEST(Slice, GetUncheckedMut) {
-  i32 a[] = {1, 2, 3};
-  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sm = v.as_mut_slice();
 
   EXPECT_EQ(sm.get_unchecked_mut(unsafe_fn, 1_usize), 2_i32);
   EXPECT_EQ(sm.get_unchecked_mut(unsafe_fn, 2_usize), 3_i32);
 }
 
 TEST(Slice, IndexRange) {
-  i32 a[] = {1, 2, 3};
-  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
   const auto scc = sc;
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
   const auto smc = sm;
 
   static_assert(std::same_as<Slice<i32>, decltype(sc[".."_r])>);
@@ -186,9 +191,9 @@ TEST(Slice, IndexRange) {
 }
 
 TEST(SliceDeathTest, IndexRange) {
-  i32 a[] = {1, 2, 3};
-  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
 
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(
@@ -225,15 +230,16 @@ TEST(SliceDeathTest, IndexRange) {
 }
 
 TEST(Slice, GetRange) {
-  i32 a[] = {1, 2, 3};
-  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_EQ(s.get_range("0..3"_r).unwrap()[1u], 2_i32);
-  EXPECT_EQ(s.get_range("1..3"_r).unwrap()[1u], 3_i32);
-  EXPECT_EQ(s.get_range("1..4"_r), sus::None);
-  EXPECT_EQ(s.get_range("3..3"_r).unwrap().len(), 0_usize);
-  EXPECT_EQ(s.get_range("4..4"_r), sus::None);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
 
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(sc.get_range("0..3"_r).unwrap()[1u], 2_i32);
+  EXPECT_EQ(sc.get_range("1..3"_r).unwrap()[1u], 3_i32);
+  EXPECT_EQ(sc.get_range("1..4"_r), sus::None);
+  EXPECT_EQ(sc.get_range("3..3"_r).unwrap().len(), 0_usize);
+  EXPECT_EQ(sc.get_range("4..4"_r), sus::None);
+
   EXPECT_EQ(sm.get_range("0..3"_r).unwrap()[1u], 2_i32);
   EXPECT_EQ(sm.get_range("1..3"_r).unwrap()[1u], 3_i32);
   EXPECT_EQ(sm.get_range("1..4"_r), sus::None);
@@ -241,21 +247,22 @@ TEST(Slice, GetRange) {
   EXPECT_EQ(sm.get_range("4..4"_r), sus::None);
 
   // Rvalue Slices are usable as they are reference types.
-  EXPECT_EQ(s.get_range("3..3"_r).unwrap().get_range("0..0"_r).unwrap().len(),
+  EXPECT_EQ(sc.get_range("3..3"_r).unwrap().get_range("0..0"_r).unwrap().len(),
             0u);
-  EXPECT_EQ(s.get_range("1..3"_r).unwrap().get_range("1..2"_r).unwrap().len(),
+  EXPECT_EQ(sc.get_range("1..3"_r).unwrap().get_range("1..2"_r).unwrap().len(),
             1u);
-  EXPECT_EQ(s.get_range("1..3"_r).unwrap().get_range("1..2"_r).unwrap()[0u],
+  EXPECT_EQ(sc.get_range("1..3"_r).unwrap().get_range("1..2"_r).unwrap()[0u],
             3_i32);
 }
 
 TEST(Slice, GetUncheckedRange) {
-  i32 a[] = {1, 2, 3};
-  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_EQ(s.get_range_unchecked(unsafe_fn, "0..2"_r)[1u], 2_i32);
-  EXPECT_EQ(s.get_range_unchecked(unsafe_fn, "2..3"_r)[0u], 3_i32);
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
 
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
+  EXPECT_EQ(sc.get_range_unchecked(unsafe_fn, "0..2"_r)[1u], 2_i32);
+  EXPECT_EQ(sc.get_range_unchecked(unsafe_fn, "2..3"_r)[0u], 3_i32);
+
   EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, "0..2"_r)[1u], 2_i32);
   EXPECT_EQ(sm.get_range_unchecked(unsafe_fn, "2..3"_r)[0u], 3_i32);
 }
@@ -430,32 +437,35 @@ TEST(Slice, ImplicitIter) {
 }
 
 TEST(Slice, Len) {
-  i32 a[] = {1, 2, 3};
-  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_EQ(s.len(), 3u);
+  auto v = sus::Vec<i32>::with(1, 2);
+  v.push(3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
 
-  auto se = Slice<i32>::from_raw_parts(unsafe_fn, a, 0_usize);
-  EXPECT_EQ(se.len(), 0u);
+  EXPECT_EQ(sc.len(), 3u);
+  EXPECT_EQ(sm.len(), 3u);
 
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 2_usize);
-  EXPECT_EQ(sm.len(), 2u);
+  auto ve = sus::Vec<i32>::with();
+  auto sce = ve.as_slice();
+  auto sme = ve.as_mut_slice();
 
-  auto sme = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 0_usize);
+  EXPECT_EQ(sce.len(), 0u);
   EXPECT_EQ(sme.len(), 0u);
 }
 
 TEST(Slice, IsEmpty) {
-  i32 a[] = {1, 2, 3};
-  auto s = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
-  EXPECT_FALSE(s.is_empty());
+  auto v = sus::Vec<i32>::with(1, 2, 3);
+  auto sc = v.as_slice();
+  auto sm = v.as_mut_slice();
 
-  auto se = Slice<i32>::from_raw_parts(unsafe_fn, a, 0_usize);
-  EXPECT_TRUE(se.is_empty());
-
-  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 2_usize);
+  EXPECT_FALSE(sc.is_empty());
   EXPECT_FALSE(sm.is_empty());
 
-  auto sme = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 0_usize);
+  auto ve = sus::Vec<i32>::with();
+  auto sce = ve.as_slice();
+  auto sme = ve.as_mut_slice();
+
+  EXPECT_TRUE(sce.is_empty());
   EXPECT_TRUE(sme.is_empty());
 }
 
@@ -683,7 +693,7 @@ TEST(Slice, Default) {
 TEST(Slice, ToVec) {
   sus::Array<i32, 6> array = sus::array(3, 4, 2, 1, 6, 5);
   {
-    auto s = sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 6u);
+    auto s = array.as_slice();
     EXPECT_EQ(array.as_ptr(), s.as_ptr());
     sus::Vec<i32> vec = s.to_vec();
     // The Vec is a new allocation.
@@ -698,8 +708,7 @@ TEST(Slice, ToVec) {
     EXPECT_EQ(vec[5u], 5);
   }
   {
-    auto sm = sus::SliceMut<i32>::from_raw_parts_mut(unsafe_fn,
-                                                     array.as_mut_ptr(), 6u);
+    auto sm = array.as_mut_slice();
     EXPECT_EQ(array.as_ptr(), sm.as_ptr());
     sus::Vec<i32> vec = sm.to_vec();
     // The Vec is a new allocation.
@@ -729,7 +738,7 @@ TEST(Slice, ToVec) {
   static_assert(!sus::mem::Copy<Cloner>);
   sus::Array<Cloner, 2> v = sus::array(Cloner(1), Cloner(2));
   {
-    auto s = sus::Slice<Cloner>::from_raw_parts(unsafe_fn, v.as_ptr(), 2u);
+    auto s = v.as_slice();
     sus::Vec<Cloner> v2 = s.to_vec();
     EXPECT_NE(v.as_ptr(), v2.as_ptr());
     EXPECT_EQ(v.len(), v2.len());
@@ -737,8 +746,7 @@ TEST(Slice, ToVec) {
     EXPECT_EQ(v[1u].i + 1, v2[1u].i);
   }
   {
-    auto sm = sus::SliceMut<Cloner>::from_raw_parts_mut(unsafe_fn,
-                                                        v.as_mut_ptr(), 2u);
+    auto sm = v.as_mut_slice();
     sus::Vec<Cloner> v2 = sm.to_vec();
     EXPECT_NE(v.as_ptr(), v2.as_ptr());
     EXPECT_EQ(v.len(), v2.len());
@@ -749,18 +757,17 @@ TEST(Slice, ToVec) {
 
 TEST(Slice, AsPtr) {
   sus::Array<i32, 3> array = sus::array(3, 4, 2);
-  auto s = sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 3u);
+  auto s = array.as_slice();
   EXPECT_EQ(s.as_ptr(), array.as_ptr());
 
-  auto sm =
-      sus::SliceMut<i32>::from_raw_parts_mut(unsafe_fn, array.as_mut_ptr(), 3u);
+  auto sm = array.as_mut_slice();
   EXPECT_EQ(sm.as_ptr(), array.as_ptr());
 }
 
 TEST(Slice, AsPtrRange) {
   sus::Array<i32, 3> array = sus::array(3, 4, 2);
   {
-    auto s = sus::Slice<i32>::from_raw_parts(unsafe_fn, array.as_ptr(), 3u);
+    auto s = array.as_slice();
     auto r = s.as_ptr_range();
     static_assert(std::same_as<decltype(r), sus::ops::Range<const i32*>>);
     EXPECT_EQ(r.start, array.as_ptr());
@@ -771,8 +778,7 @@ TEST(Slice, AsPtrRange) {
     EXPECT_EQ(b, array.as_ptr() + 3u);
   }
   {
-    auto sm = sus::SliceMut<i32>::from_raw_parts_mut(unsafe_fn,
-                                                     array.as_mut_ptr(), 3u);
+    auto sm = array.as_mut_slice();
     auto r = sm.as_ptr_range();
     static_assert(std::same_as<decltype(r), sus::ops::Range<const i32*>>);
     EXPECT_EQ(r.start, array.as_ptr());
@@ -786,15 +792,13 @@ TEST(Slice, AsPtrRange) {
 
 TEST(SliceMut, AsMutPtr) {
   sus::Array<i32, 3> array = sus::array(3, 4, 2);
-  auto sm =
-      sus::SliceMut<i32>::from_raw_parts_mut(unsafe_fn, array.as_mut_ptr(), 3u);
+  auto sm = array.as_mut_slice();
   EXPECT_EQ(sm.as_mut_ptr(), array.as_mut_ptr());
 }
 
 TEST(SliceMut, AsMutPtrRange) {
   sus::Array<i32, 3> array = sus::array(3, 4, 2);
-  auto sm =
-      sus::SliceMut<i32>::from_raw_parts_mut(unsafe_fn, array.as_mut_ptr(), 3u);
+  auto sm = array.as_mut_slice();
   auto r = sm.as_mut_ptr_range();
   static_assert(std::same_as<decltype(r), sus::ops::Range<i32*>>);
   EXPECT_EQ(r.start, array.as_mut_ptr());
@@ -863,8 +867,7 @@ TEST(Slice, BinarySearchByKey) {
       sus::tuple(5, 8), sus::tuple(3, 13), sus::tuple(1, 21), sus::tuple(2, 34),
       sus::tuple(4, 55));
   {
-    auto s = sus::Slice<sus::Tuple<i32, i32>>::from_raw_parts(
-        unsafe_fn, arr.as_ptr(), arr.len());
+    auto s = arr.as_slice();
 
     EXPECT_EQ(
         s.binary_search_by_key(13_i32,
@@ -890,8 +893,7 @@ TEST(Slice, BinarySearchByKey) {
     EXPECT_TRUE("1..=4"_r.contains(sus::move(r).unwrap()));
   }
   {
-    auto sm = sus::SliceMut<sus::Tuple<i32, i32>>::from_raw_parts_mut(
-        unsafe_fn, arr.as_mut_ptr(), arr.len());
+    auto sm = arr.as_mut_slice();
 
     EXPECT_EQ(
         sm.binary_search_by_key(13_i32,
@@ -2206,8 +2208,7 @@ TEST(Slice, JoinSlices) {
 
     auto c2 = s.join(vsep);
     static_assert(std::same_as<decltype(c2), Vec<i32>>);
-    EXPECT_EQ(c2,
-              Vec<i32>::with(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
+    EXPECT_EQ(c2, Vec<i32>::with(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
   }
   {
     Vec<SliceMut<i32>> vs =
@@ -2219,8 +2220,7 @@ TEST(Slice, JoinSlices) {
 
     auto c2 = s.join(vsep);
     static_assert(std::same_as<decltype(c2), Vec<i32>>);
-    EXPECT_EQ(c2,
-              Vec<i32>::with(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
+    EXPECT_EQ(c2, Vec<i32>::with(1, 2, 3, 4, 98, 99, 5, 6, 98, 99, 7, 8, 9));
   }
 }
 
@@ -2525,7 +2525,7 @@ TEST(Slice, First) {
   EXPECT_EQ(v1["1..1"_r].first(), sus::None);
 
   NoCopyMove n[] = {NoCopyMove(), NoCopyMove()};
-  auto s = Slice<NoCopyMove>::from_raw_parts(unsafe_fn, n, 2u);
+  auto s = Slice<NoCopyMove>::from(n);
   EXPECT_EQ(&s[".."_r].first().unwrap(), &n[0]);
   EXPECT_EQ(&s["1.."_r].first().unwrap(), &n[1]);
   EXPECT_EQ(s["2..1"_r].first(), sus::None);
@@ -2541,7 +2541,7 @@ TEST(SliceMut, FirstMut) {
   EXPECT_EQ(v1["1..1"_r].first_mut(), sus::None);
 
   NoCopyMove n[] = {NoCopyMove(), NoCopyMove()};
-  auto s = SliceMut<NoCopyMove>::from_raw_parts_mut(unsafe_fn, n, 2u);
+  auto s = SliceMut<NoCopyMove>::from(n);
   EXPECT_EQ(&s[".."_r].first_mut().unwrap(), &n[0]);
   EXPECT_EQ(&s["1.."_r].first_mut().unwrap(), &n[1]);
   EXPECT_EQ(s["2..1"_r].first_mut(), sus::None);
@@ -2559,7 +2559,7 @@ TEST(Slice, Last) {
   EXPECT_EQ(v1["1..1"_r].last(), sus::None);
 
   NoCopyMove n[] = {NoCopyMove(), NoCopyMove(), NoCopyMove()};
-  auto s = Slice<NoCopyMove>::from_raw_parts(unsafe_fn, n, 3u);
+  auto s = Slice<NoCopyMove>::from(n);
   EXPECT_EQ(&s[".."_r].last().unwrap(), &n[2]);
   EXPECT_EQ(&s["..2"_r].last().unwrap(), &n[1]);
   EXPECT_EQ(s["2..1"_r].last(), sus::None);
@@ -2575,7 +2575,7 @@ TEST(SliceMut, LastMut) {
   EXPECT_EQ(v1["1..1"_r].last_mut(), sus::None);
 
   NoCopyMove n[] = {NoCopyMove(), NoCopyMove(), NoCopyMove()};
-  auto s = SliceMut<NoCopyMove>::from_raw_parts_mut(unsafe_fn, n, 3u);
+  auto s = SliceMut<NoCopyMove>::from(n);
   EXPECT_EQ(&s[".."_r].last_mut().unwrap(), &n[2]);
   EXPECT_EQ(&s["..2"_r].last_mut().unwrap(), &n[1]);
   EXPECT_EQ(s["2..1"_r].last_mut(), sus::None);
@@ -5171,8 +5171,7 @@ TEST(Slice, SplitN) {
     auto it = s.splitn(1u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
-      EXPECT_EQ(o,
-                sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
+      EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
     }
     EXPECT_EQ(it.next(), sus::None);
   }
@@ -5259,8 +5258,7 @@ TEST(SliceMut, SplitNMut) {
     auto it = s.splitn_mut(1u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
-      EXPECT_EQ(o,
-                sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
+      EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
     }
     EXPECT_EQ(it.next(), sus::None);
   }
@@ -5347,8 +5345,7 @@ TEST(Slice, RSplitN) {
     auto it = s.rsplitn(1u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
-      EXPECT_EQ(o,
-                sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
+      EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
     }
     EXPECT_EQ(it.next(), sus::None);
   }
@@ -5435,8 +5432,7 @@ TEST(SliceMut, RSplitNMut) {
     auto it = s.rsplitn_mut(1u, [](const i32& i) { return i == 7; });
     {
       auto o = it.next().unwrap();
-      EXPECT_EQ(o,
-                sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
+      EXPECT_EQ(o, sus::Vec<i32>::with(1, 2, 2, 3, 4, 5, 5, 6, 7, 7, 7, 8));
     }
     EXPECT_EQ(it.next(), sus::None);
   }
@@ -5738,10 +5734,8 @@ TEST(SliceMut, StripPrefixMut) {
             sus::Vec<i32>::with(1, 2, 2, 3, 4, 5));
   EXPECT_EQ(s.strip_prefix_mut(v["..2"_r]).unwrap(),
             sus::Vec<i32>::with(2, 3, 4, 5));
-  EXPECT_EQ(s.strip_prefix_mut(v["..5"_r]).unwrap(),
-            sus::Vec<i32>::with(5));
-  EXPECT_EQ(s.strip_prefix_mut(v[".."_r]).unwrap(),
-            sus::Vec<i32>::with());
+  EXPECT_EQ(s.strip_prefix_mut(v["..5"_r]).unwrap(), sus::Vec<i32>::with(5));
+  EXPECT_EQ(s.strip_prefix_mut(v[".."_r]).unwrap(), sus::Vec<i32>::with());
 }
 
 TEST(Slice, StripSuffix) {
@@ -5784,10 +5778,8 @@ TEST(SliceMut, StripSuffixMut) {
             sus::Vec<i32>::with(1, 2, 2, 3, 4, 5));
   EXPECT_EQ(s.strip_suffix_mut(v["4.."_r]).unwrap(),
             sus::Vec<i32>::with(1, 2, 2, 3));
-  EXPECT_EQ(s.strip_suffix_mut(v["1.."_r]).unwrap(),
-            sus::Vec<i32>::with(1));
-  EXPECT_EQ(s.strip_suffix_mut(v[".."_r]).unwrap(),
-            sus::Vec<i32>::with());
+  EXPECT_EQ(s.strip_suffix_mut(v["1.."_r]).unwrap(), sus::Vec<i32>::with(1));
+  EXPECT_EQ(s.strip_suffix_mut(v[".."_r]).unwrap(), sus::Vec<i32>::with());
 }
 
 TEST(Slice, Windows) {
@@ -5831,10 +5823,8 @@ TEST(Slice, Windows) {
   EXPECT_EQ(w3.next(), sus::None);
 
   auto w7 = s.windows(7u);
-  EXPECT_EQ(w7.next().unwrap(),
-            sus::Vec<i32>::with(0, 1, 2, 3, 4, 5, 6));
-  EXPECT_EQ(w7.next().unwrap(),
-            sus::Vec<i32>::with(1, 2, 3, 4, 5, 6, 7));
+  EXPECT_EQ(w7.next().unwrap(), sus::Vec<i32>::with(0, 1, 2, 3, 4, 5, 6));
+  EXPECT_EQ(w7.next().unwrap(), sus::Vec<i32>::with(1, 2, 3, 4, 5, 6, 7));
   EXPECT_EQ(w7.next(), sus::None);
 }
 
@@ -5879,10 +5869,8 @@ TEST(SliceMut, WindowsMut) {
   EXPECT_EQ(w3.next(), sus::None);
 
   auto w7 = s.windows_mut(7u);
-  EXPECT_EQ(w7.next().unwrap(),
-            sus::Vec<i32>::with(0, 1, 2, 3, 4, 5, 6));
-  EXPECT_EQ(w7.next().unwrap(),
-            sus::Vec<i32>::with(1, 2, 3, 4, 5, 6, 7));
+  EXPECT_EQ(w7.next().unwrap(), sus::Vec<i32>::with(0, 1, 2, 3, 4, 5, 6));
+  EXPECT_EQ(w7.next().unwrap(), sus::Vec<i32>::with(1, 2, 3, 4, 5, 6, 7));
   EXPECT_EQ(w7.next(), sus::None);
 }
 
@@ -5944,6 +5932,180 @@ TEST(SliceMut, Stream) {
 TEST(SliceMut, GTest) {
   auto v = Vec<i32>::with(1, 2, 3, 4, 5);
   EXPECT_EQ(testing::PrintToString(v.as_mut_slice()), "[1, 2, 3, 4, 5]");
+}
+
+TEST(Slice, DropIteratorInvalidationTracking) {
+  auto v = Vec<i32>::with(1, 2, 3, 4, 5);
+  auto s = v.as_slice();
+  s.drop_iterator_invalidation_tracking(::sus::marker::unsafe_fn);
+  auto it = sus::move(s).into_iter();
+  v.clear();  // Does not track the invalidation and panic. `it` is now invalid.
+}
+
+TEST(SliceMut, DropIteratorInvalidationTracking) {
+  auto v = Vec<i32>::with(1, 2, 3, 4, 5);
+  auto s = v.as_mut_slice();
+  s.drop_iterator_invalidation_tracking(::sus::marker::unsafe_fn);
+  auto it = sus::move(s).into_iter();
+  v.clear();  // Does not track the invalidation and panic. `it` is now invalid.
+}
+
+TEST(SliceDeathTest, ChunksInvalidation) {
+#if GTEST_HAS_DEATH_TEST
+  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  EXPECT_DEATH(
+      {
+        auto it = v.chunks(2u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.chunks_mut(2u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.chunks_exact(2u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.chunks_exact_mut(2u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.rchunks(2u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.rchunks_mut(2u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.rchunks_exact(2u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.rchunks_exact_mut(2u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+#endif
+}
+
+TEST(SliceDeathTest, SplitInvalidation) {
+#if GTEST_HAS_DEATH_TEST
+  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  EXPECT_DEATH(
+      {
+        auto it = v.split([](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.split_mut([](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.splitn(1u, [](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.splitn_mut(1u, [](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.rsplit([](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.rsplit_mut([](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.rsplitn(1u, [](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.rsplitn_mut(1u, [](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.split_inclusive([](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.split_inclusive_mut([](auto) { return true; });
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+#endif
+}
+
+TEST(SliceDeathTest, WindowsInvalidation) {
+#if GTEST_HAS_DEATH_TEST
+  sus::Vec<i32> v = sus::vec(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+  EXPECT_DEATH(
+      {
+        auto it = v.windows(3u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+  EXPECT_DEATH(
+      {
+        auto it = v.windows_mut(3u);
+        v.push(10);
+        ensure_use(&it);
+      },
+      "");
+#endif
 }
 
 }  // namespace

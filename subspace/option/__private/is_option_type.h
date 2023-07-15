@@ -14,10 +14,7 @@
 
 #pragma once
 
-namespace sus::option {
-template <class T>
-class Option;
-}
+#include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::option::__private {
 

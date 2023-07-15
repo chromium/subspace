@@ -30,8 +30,11 @@
 #include "subspace/fn/fn_concepts.h"
 #include "subspace/fn/fn_ref.h"
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/iterator_ref.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/assume.h"
 #include "subspace/macros/lifetimebound.h"
+#include "subspace/macros/no_unique_address.h"
 #include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
@@ -51,9 +54,6 @@
 #include "subspace/tuple/tuple.h"
 
 namespace sus::containers {
-
-template <class T>
-class Vec;
 
 /// A dynamically-sized const view into a contiguous sequence of objects of type
 /// `const T`.
@@ -82,7 +82,9 @@ class [[sus_trivial_abi]] Slice final {
                 "access to the slice regardless.");
 
   /// Constructs an empty Slice, which has no elements.
-  constexpr Slice() : Slice(nullptr, 0_usize) {}
+  constexpr Slice()
+      : Slice(::sus::iter::IterRefCounter::empty_for_view(), nullptr, 0_usize) {
+  }
 
   /// Constructs a slice from its raw parts.
   ///
@@ -93,20 +95,25 @@ class [[sus_trivial_abi]] Slice final {
   /// * The pointer `data` must be a valid pointer to an allocation, not a
   ///   dangling pointer, at any point during the Slice's lifetime. This must
   ///   be true even if `len` is 0.
+  /// * The `refs` will be `sus::iter::IterRefCounter::empty_for_view()` unless
+  ///   the `Slice` is being constructed from a context that owns an
+  ///   IterRefCounter and wants to be able to observe when it invalidates the
+  ///   `Slice` by tracking its lifetime.
   ///
   /// In some other langages such as Rust, the slice may hold an invalid pointer
   /// when the length is zero. But `Slice` must not hold a dangling pointer.
-  /// This avoids addition on a dangling pointer, which is Undefined Behaviour
-  /// in C++, and avoids runtime checks for `length == 0`. Care must be applied
-  /// when converting slices between languages as a result.
+  /// Otherwise addition on the dangling pointer may happen in Slice methods,
+  /// which is Undefined Behaviour in C++. To support dangling pointers, those
+  /// methods would need `length == 0` branches. Care must be applied when
+  /// converting slices between languages as a result.
   sus_pure static constexpr inline Slice from_raw_parts(
-      ::sus::marker::UnsafeFnMarker, const T* data sus_lifetimebound,
-      ::sus::usize len) noexcept {
+      ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
+      const T* data sus_lifetimebound, usize len) noexcept {
     ::sus::check(size_t{len} <= size_t{isize::MAX});
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
     // and store a mutable pointer.
-    return Slice(const_cast<T*>(data), len);
+    return Slice(::sus::move(refs), const_cast<T*>(data), len);
   }
 
   /// sus::construct::From<T[N]> trait.
@@ -121,14 +128,17 @@ class [[sus_trivial_abi]] Slice final {
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
     // and store a mutable pointer.
-    return Slice(const_cast<T*>(data), N);
+    return Slice(sus::iter::IterRefCounter::empty_for_view(),
+                 const_cast<T*>(data), N);
   }
 
   /** Converts the slice into an iterator that consumes the slice and returns \
    * each element in the same order they appear in the slice.                 \
    */
   sus_pure constexpr SliceIter<const T&> into_iter() && noexcept {
-    return SliceIter<const T&>::with(data_, len_);
+    return SliceIter<const T&>::with(
+        // This method is in Slice only, so it's a view type.
+        iter_refs_.to_iter_from_view(), data_, len_);
   }
 
   /// sus::ops::Eq<Slice<U>> trait.
@@ -160,8 +170,7 @@ class [[sus_trivial_abi]] Slice final {
   /// # Panics
   /// If the index `i` is beyond the end of the slice, the function will panic.
   /// #[doc.overloads=slice.index.usize]
-  sus_pure constexpr inline const T& operator[](
-      ::sus::num::usize i) const& noexcept {
+  sus_pure constexpr inline const T& operator[](usize i) const& noexcept {
     ::sus::check(i < len());
     return *(as_ptr() + i);
   }
@@ -179,34 +188,58 @@ class [[sus_trivial_abi]] Slice final {
   /// the function will panic.
   /// #[doc.overloads=slice.index.range]
   sus_pure constexpr inline Slice<T> operator[](
-      const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
-      const& noexcept {
-    const ::sus::num::usize length = len();
-    const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
-    const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
-    const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
+      const ::sus::ops::RangeBounds<usize> auto range) const& noexcept {
+    const usize length = len();
+    const usize rstart = range.start_bound().unwrap_or(0u);
+    const usize rend = range.end_bound().unwrap_or(length);
+    const usize rlen = rend >= rstart ? rend - rstart : 0u;
     ::sus::check(rlen <= length);  // Avoid underflow below.
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + rstart,
-                                    rlen);
+    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn,
+                                    iter_refs_.to_view_from_view(),
+                                    as_ptr() + rstart, rlen);
+  }
+
+  /// Stops tracking iterator invalidation.
+  ///
+  /// # Safety
+  ///
+  /// If the Slice points into a container and that container is invalidated,
+  /// it will no longer be caught. The caller must provide conditions that can
+  /// ensure the `Slice`'s pointer into the container will remain valid.
+  ///
+  /// Iterator invalidation tracking also tracks the stability of the container
+  /// object itself, not just its contents, which can be overly strict.
+  ///
+  /// This function can be used when the container's contents will remain valid,
+  /// but the container itself may be moved, which would invalidate the tracking
+  /// and be treated as invalidating the iterator. There is no way to restore
+  /// tracking.
+  void drop_iterator_invalidation_tracking(::sus::marker::UnsafeFnMarker) {
+    iter_refs_ = ::sus::iter::IterRefCounter::empty_for_view();
   }
 
 #define _ptr_expr data_
 #define _len_expr len_
+#define _iter_refs_expr iter_refs_.to_iter_from_view()
+#define _iter_refs_view_expr iter_refs_.to_view_from_view()
 #define _delete_rvalue false
 #include "__private/slice_methods.inc"
 
  private:
-  constexpr Slice(T* data sus_lifetimebound, usize len) noexcept
-      : data_(data), len_(len) {}
+  constexpr Slice(::sus::iter::IterRefCounter refs, T* data sus_lifetimebound,
+                  usize len) noexcept
+      : iter_refs_(refs.take_for_view()), data_(data), len_(len) {}
 
   friend class SliceMut<T>;
-  friend class Vec<T>;
+  template <class VecT>
+  friend class Vec;
 
+  [[sus_no_unique_address]] ::sus::iter::IterRefCounter iter_refs_;
   T* data_;
-  ::sus::usize len_;
+  usize len_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(data_),
                                   decltype(len_));
@@ -217,8 +250,11 @@ class [[sus_trivial_abi]] Slice final {
 
 #define _ptr_expr data_
 #define _len_expr len_
+#define _iter_refs_expr iter_refs_.to_iter_from_view()
+#define _iter_refs_view_expr iter_refs_.to_view_from_view()
 #define _delete_rvalue false
-#define _self Slice
+#define _self_template class T
+#define _self Slice<T>
 #include "__private/slice_methods_impl.inc"
 
 /// A dynamically-sized mutable view into a contiguous sequence of objects of
@@ -263,6 +299,10 @@ class [[sus_trivial_abi]] SliceMut final {
   ///
   /// # Safety
   /// The following must be upheld or Undefined Behaviour may result:
+  /// * The `refs` will be `sus::iter::IterRefCounter::empty_for_view()` unless
+  ///   the `SliceMut` is being constructed from a context that owns an
+  ///   IterRefCounter and wants to be able to observe when it invalidates the
+  ///   `SliceMut` by tracking its lifetime.
   /// * The `len` must be no more than the number of elements in the allocation
   ///   at and after the position of `data`.
   /// * The pointer `data` must be a valid pointer to an allocation, not a
@@ -271,14 +311,15 @@ class [[sus_trivial_abi]] SliceMut final {
   ///
   /// In some other langages such as Rust, the slice may hold an invalid pointer
   /// when the length is zero. But `SliceMut` must not hold a dangling pointer.
-  /// This avoids addition on a dangling pointer, which is Undefined Behaviour
-  /// in C++, and avoids runtime checks for `length == 0`. Care must be applied
-  /// when converting slices between languages as a result.
+  /// Otherwise addition on the dangling pointer may happen in SliceMut methods,
+  /// which is Undefined Behaviour in C++. To support dangling pointers, those
+  /// methods would need `length == 0` branches. Care must be applied when
+  /// converting slices between languages as a result.
   sus_pure static constexpr inline SliceMut from_raw_parts_mut(
-      ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
-      ::sus::usize len) noexcept {
+      ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
+      T* data sus_lifetimebound, usize len) noexcept {
     ::sus::check(len <= usize::from(isize::MAX));
-    return SliceMut(data, len);
+    return SliceMut(::sus::move(refs), data, len);
   }
 
   /// sus::construct::From<T[N]> trait.
@@ -290,14 +331,16 @@ class [[sus_trivial_abi]] SliceMut final {
     requires(N <= size_t{isize::MAX_PRIMITIVE})
   sus_pure static constexpr inline SliceMut from(
       T (&data)[N] sus_lifetimebound) {
-    return SliceMut(data, N);
+    return SliceMut(::sus::iter::IterRefCounter::empty_for_view(), data, N);
   }
 
   /** Converts the slice into an iterator that consumes the slice and returns \
    * each element in the same order they appear in the slice.                 \
    */
   sus_pure constexpr SliceIterMut<T&> into_iter() && noexcept {
-    return SliceIterMut<T&>::with(slice_.data_, slice_.len_);
+    return SliceIterMut<T&>::with(
+        // This method is in SliceMut only, so it's a view type.
+        slice_.iter_refs_.to_iter_from_view(), slice_.data_, slice_.len_);
   }
 
   /// sus::ops::Eq<SliceMut<U>> trait.
@@ -320,7 +363,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// # Panics
   /// If the index `i` is beyond the end of the slice, the function will panic.
   /// #[doc.overloads=slicemut.index.usize]
-  sus_pure constexpr inline T& operator[](::sus::num::usize i) const& noexcept {
+  sus_pure constexpr inline T& operator[](usize i) const& noexcept {
     ::sus::check(i < len());
     return *(as_mut_ptr() + i);
   }
@@ -338,18 +381,18 @@ class [[sus_trivial_abi]] SliceMut final {
   /// the function will panic.
   /// #[doc.overloads=slice.index.range]
   sus_pure constexpr inline SliceMut<T> operator[](
-      const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
-      const& noexcept {
-    const ::sus::num::usize length = len();
-    const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
-    const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
-    const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
+      const ::sus::ops::RangeBounds<usize> auto range) const& noexcept {
+    const usize length = len();
+    const usize rstart = range.start_bound().unwrap_or(0u);
+    const usize rend = range.end_bound().unwrap_or(length);
+    const usize rlen = rend >= rstart ? rend - rstart : 0u;
     ::sus::check(rlen <= length);  // Avoid underflow below.
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
-                                           as_mut_ptr() + rstart, rlen);
+    return SliceMut<T>::from_raw_parts_mut(
+        ::sus::marker::unsafe_fn, slice_.iter_refs_.to_view_from_view(),
+        as_mut_ptr() + rstart, rlen);
   }
 
   // TODO: Impl AsRef -> Slice<T>.
@@ -364,19 +407,44 @@ class [[sus_trivial_abi]] SliceMut final {
     return ::sus::move(slice_);
   }
 
+  /// Stops tracking iterator invalidation.
+  ///
+  /// # Safety
+  ///
+  /// If the Slice points into a container and that container is invalidated,
+  /// it will no longer be caught. The caller must provide conditions that can
+  /// ensure the `SliceMut`'s pointer into the container will remain valid.
+  ///
+  /// Iterator invalidation tracking also tracks the stability of the container
+  /// object itself, not just its contents, which can be overly strict.
+  ///
+  /// This function can be used when the container's contents will remain valid,
+  /// but the container itself may be moved, which would invalidate the tracking
+  /// and be treated as invalidating the iterator. There is no way to restore
+  /// tracking.
+  void drop_iterator_invalidation_tracking(::sus::marker::UnsafeFnMarker) {
+    slice_.iter_refs_ = ::sus::iter::IterRefCounter::empty_for_view();
+  }
+
 #define _ptr_expr slice_.data_
 #define _len_expr slice_.len_
+#define _iter_refs_expr slice_.iter_refs_.to_iter_from_view()
+#define _iter_refs_view_expr slice_.iter_refs_.to_view_from_view()
 #define _delete_rvalue false
 #include "__private/slice_methods.inc"
 #define _ptr_expr slice_.data_
 #define _len_expr slice_.len_
+#define _iter_refs_expr slice_.iter_refs_.to_iter_from_view()
+#define _iter_refs_view_expr slice_.iter_refs_.to_view_from_view()
 #define _delete_rvalue false
 #include "__private/slice_mut_methods.inc"
 
  private:
-  constexpr SliceMut(T* data, ::sus::num::usize len) : slice_(data, len) {}
+  constexpr SliceMut(sus::iter::IterRefCounter refs, T* data, usize len)
+      : slice_(refs.take_for_view(), data, len) {}
 
-  friend class Vec<T>;
+  template <class VecT>
+  friend class Vec;
 
   Slice<T> slice_;
 
@@ -388,8 +456,11 @@ class [[sus_trivial_abi]] SliceMut final {
 
 #define _ptr_expr slice_.data_
 #define _len_expr slice_.len_
+#define _iter_refs_expr slice_.iter_refs_.to_iter_from_view()
+#define _iter_refs_view_expr slice_.iter_refs_.to_view_from_view()
 #define _delete_rvalue false
-#define _self SliceMut
+#define _self_template class T
+#define _self SliceMut<T>
 #include "__private/slice_methods_impl.inc"
 
 // Implicit for-ranged loop iteration via `Slice::iter()` and

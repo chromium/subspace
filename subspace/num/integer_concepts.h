@@ -18,18 +18,9 @@
 
 #include <concepts>
 
-namespace sus::num {
+#include "subspace/lib/__private/forward_decl.h"
 
-struct i8;
-struct i16;
-struct i32;
-struct i64;
-struct isize;
-struct u8;
-struct u16;
-struct u32;
-struct u64;
-struct usize;
+namespace sus::num {
 
 /// Unsigned Subspace integer types (u8, u16, u32, etc).
 template <class T>

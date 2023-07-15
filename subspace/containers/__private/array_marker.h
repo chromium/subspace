@@ -22,12 +22,7 @@
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
 #include "subspace/tuple/tuple.h"
-
-namespace sus::containers {
-template <class T, size_t N>
-  requires(N <= size_t{PTRDIFF_MAX})
-class Array;
-}
+#include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::containers::__private {
 

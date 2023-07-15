@@ -20,15 +20,13 @@
 
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/iter/size_hint.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
 #include "subspace/num/unsigned_integer.h"
 
 namespace sus::containers {
-
-template <class T>
-class Vec;
 
 template <class ItemT>
 struct [[nodiscard]] VecIntoIter final

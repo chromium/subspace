@@ -19,14 +19,10 @@
 #include <utility>  // TODO: Replace with our own integer_sequence.
 
 #include "subspace/choice/__private/pack_index.h"  // TODO: Move out of choice/ to share.
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/move.h"
 #include "subspace/tuple/tuple.h"
-
-namespace sus::containers {
-template <class T>
-class Vec;
-}
 
 namespace sus::containers::__private {
 
@@ -39,7 +35,7 @@ struct VecMarker {
   ::sus::tuple_type::Tuple<Ts&&...> values;
 
   template <class U>
-    requires((... && std::constructible_from<U, Ts&&>))
+    requires((... && std::constructible_from<U, Ts &&>))
   inline constexpr operator Vec<U>() && noexcept {
     auto v = Vec<U>::with_capacity(sizeof...(Ts));
 
@@ -55,7 +51,7 @@ struct VecMarker {
 
   /// Constructs a `Vec<U>` for a user-specified `U`, as it can not be inferred.
   template <class U>
-    requires((... && std::constructible_from<U, Ts&&>))
+    requires((... && std::constructible_from<U, Ts &&>))
   inline constexpr Vec<U> construct() && noexcept {
     return ::sus::move(*this);
   }

@@ -15,16 +15,12 @@
 #pragma once
 
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/iterator_ref.h"
+#include "subspace/lib/__private/forward_decl.h"
+#include "subspace/macros/no_unique_address.h"
 #include "subspace/mem/replace.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/range.h"
-
-namespace sus::containers {
-template <class T>
-class Slice;
-template <class T>
-class SliceMut;
-}  // namespace sus::containers
 
 namespace sus::containers {
 
@@ -44,6 +40,12 @@ class [[sus_trivial_abi]] GenericSplitN final
 
   GenericSplitN(GenericSplitN&&) = default;
   GenericSplitN& operator=(GenericSplitN&&) = default;
+
+  GenericSplitN clone() const
+    requires(::sus::mem::Clone<I>)
+  {
+    return GenericSplitN(::sus::clone(iter_), ::sus::clone(count_));
+  }
 
   Option<Item> next() noexcept {
     if (count_ == 0u)
@@ -163,8 +165,13 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by Slice.
+  // Constructed by Slice, Vec, Array.
   friend class Slice<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
+
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
@@ -182,21 +189,23 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   }
 
   static constexpr auto with(
-      const Slice<ItemT>& values,
+      ::sus::iter::IterRef ref, const Slice<ItemT>& values,
       ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
-    return Split(values, ::sus::move(pred));
+    return Split(::sus::move(ref), values, ::sus::move(pred));
   }
 
-  constexpr Split(const Slice<ItemT>& values,
+  constexpr Split(::sus::iter::IterRef ref, const Slice<ItemT>& values,
                   ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
-      : v_(values), pred_(::sus::move(pred)) {}
+      : ref_(::sus::move(ref)), v_(values), pred_(::sus::move(pred)) {}
 
+  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
   bool finished_ = false;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
-                                  decltype(pred_), decltype(finished_));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
+                                  decltype(v_), decltype(pred_),
+                                  decltype(finished_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
@@ -285,8 +294,13 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by SliceMut.
+  // Constructed by SliceMut, Vec, Array.
   friend class SliceMut<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
+
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
@@ -304,21 +318,23 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   }
 
   static constexpr auto with(
-      const SliceMut<ItemT>& values,
+      ::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
       ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
-    return SplitMut(values, ::sus::move(pred));
+    return SplitMut(::sus::move(ref), values, ::sus::move(pred));
   }
 
-  constexpr SplitMut(const SliceMut<ItemT>& values,
+  constexpr SplitMut(::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
                      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
-      : v_(values), pred_(::sus::move(pred)) {}
+      : ref_(::sus::move(ref)), v_(values), pred_(::sus::move(pred)) {}
 
+  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
   bool finished_ = false;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
-                                  decltype(pred_), decltype(finished_));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
+                                  decltype(v_), decltype(pred_),
+                                  decltype(finished_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
@@ -415,26 +431,35 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by Slice.
+  // Constructed by Slice, Vec, Array.
   friend class Slice<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
 
   static constexpr auto with(
-      const Slice<ItemT>& values,
+      ::sus::iter::IterRef ref, const Slice<ItemT>& values,
       ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
-    return SplitInclusive(values, ::sus::move(pred));
+    return SplitInclusive(::sus::move(ref), values, ::sus::move(pred));
   }
 
   constexpr SplitInclusive(
-      const Slice<ItemT>& values,
+      ::sus::iter::IterRef ref, const Slice<ItemT>& values,
       ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
-      : v_(values), pred_(::sus::move(pred)), finished_(v_.is_empty()) {}
+      : ref_(::sus::move(ref)),
+        v_(values),
+        pred_(::sus::move(pred)),
+        finished_(v_.is_empty()) {}
 
+  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
   bool finished_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
-                                  decltype(pred_), decltype(finished_));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
+                                  decltype(v_), decltype(pred_),
+                                  decltype(finished_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
@@ -532,26 +557,35 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by SliceMut.
+  // Constructed by SliceMut, Vec, Array.
   friend class SliceMut<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
 
   static constexpr auto with(
-      const SliceMut<ItemT>& values,
+      ::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
       ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
-    return SplitInclusiveMut(values, ::sus::move(pred));
+    return SplitInclusiveMut(::sus::move(ref), values, ::sus::move(pred));
   }
 
   constexpr SplitInclusiveMut(
-      const SliceMut<ItemT>& values,
+      ::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
       ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
-      : v_(values), pred_(::sus::move(pred)), finished_(v_.is_empty()) {}
+      : ref_(::sus::move(ref)),
+        v_(values),
+        pred_(::sus::move(pred)),
+        finished_(v_.is_empty()) {}
 
+  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   ::sus::fn::FnMutRef<bool(const ItemT&)> pred_;
   bool finished_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
-                                  decltype(pred_), decltype(finished_));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
+                                  decltype(v_), decltype(pred_),
+                                  decltype(finished_));
 };
 
 /// An iterator over subslices separated by elements that match a predicate
@@ -586,19 +620,24 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplit final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by Slice.
+  // Constructed by Slice, Vec, Array.
   friend class Slice<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
+
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
 
   Option<Item> finish() noexcept { return inner_.finish(); }
 
-  static constexpr auto with(Split<ItemT> && split) noexcept {
+  static constexpr auto with(Split<ItemT>&& split) noexcept {
     return RSplit(::sus::move(split));
   }
 
-  constexpr RSplit(Split<ItemT> && split) noexcept
+  constexpr RSplit(Split<ItemT>&& split) noexcept
       : inner_(::sus::move(split)) {}
 
   Split<ItemT> inner_;
@@ -638,19 +677,24 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by SliceMut.
+  // Constructed by SliceMut, Vec, Array.
   friend class SliceMut<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
+
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
 
   Option<Item> finish() noexcept { return inner_.finish(); }
 
-  static constexpr auto with(SplitMut<ItemT> && split) noexcept {
+  static constexpr auto with(SplitMut<ItemT>&& split) noexcept {
     return RSplitMut(::sus::move(split));
   }
 
-  constexpr RSplitMut(SplitMut<ItemT> && split) noexcept
+  constexpr RSplitMut(SplitMut<ItemT>&& split) noexcept
       : inner_(::sus::move(split)) {}
 
   SplitMut<ItemT> inner_;
@@ -687,10 +731,14 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitN final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by Slice.
+  // Constructed by Slice, Vec, Array.
   friend class Slice<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
 
-  static constexpr auto with(Split<ItemT> && split, usize n) noexcept {
+  static constexpr auto with(Split<ItemT>&& split, usize n) noexcept {
     return SplitN(::sus::move(split), n);
   }
 
@@ -731,10 +779,14 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by SliceMut.
+  // Constructed by SliceMut, Vec, Array.
   friend class SliceMut<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
 
-  static constexpr auto with(SplitMut<ItemT> && split, usize n) noexcept {
+  static constexpr auto with(SplitMut<ItemT>&& split, usize n) noexcept {
     return SplitNMut(::sus::move(split), n);
   }
 
@@ -776,10 +828,14 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by Slice.
+  // Constructed by Slice, Vec, Array.
   friend class Slice<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
 
-  static constexpr auto with(RSplit<ItemT> && split, usize n) noexcept {
+  static constexpr auto with(RSplit<ItemT>&& split, usize n) noexcept {
     return RSplitN(::sus::move(split), n);
   }
 
@@ -821,10 +877,14 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitNMut final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by SliceMut.
+  // Constructed by SliceMut, Vec, Array.
   friend class SliceMut<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
 
-  static constexpr auto with(RSplitMut<ItemT> && split, usize n) noexcept {
+  static constexpr auto with(RSplitMut<ItemT>&& split, usize n) noexcept {
     return RSplitNMut(::sus::move(split), n);
   }
 

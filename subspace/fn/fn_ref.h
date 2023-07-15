@@ -16,6 +16,7 @@
 
 #include "subspace/fn/__private/callable_types.h"
 #include "subspace/fn/__private/fn_ref_invoker.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/forward.h"
@@ -24,13 +25,6 @@
 #include "subspace/mem/replace.h"
 
 namespace sus::fn {
-
-template <class R, class... Args>
-class FnOnceRef;
-template <class R, class... Args>
-class FnMutRef;
-template <class R, class... Args>
-class FnRef;
 
 /// A closure that erases the type of the internal callable object (lambda). A
 /// FnMutRef may be called multiple times, and holds a const callable object, so

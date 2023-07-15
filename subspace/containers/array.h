@@ -28,7 +28,9 @@
 #include "subspace/containers/iterators/slice_iter.h"
 #include "subspace/containers/slice.h"
 #include "subspace/fn/fn_concepts.h"
+#include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/lifetimebound.h"
+#include "subspace/macros/no_unique_address.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/copy.h"
@@ -49,6 +51,8 @@ namespace __private {
 
 template <class T, size_t N>
 struct Storage final {
+  sus_msvc_bug_10416202_else(
+      [[sus_no_unique_address]]) sus::iter::IterRefCounter iter_refs_;
   T data_[N];
 };
 
@@ -64,6 +68,9 @@ struct Storage<T, 0> final {};
 template <class T, size_t N>
   requires(N <= size_t{PTRDIFF_MAX})
 class Array final {
+  static_assert(!std::is_reference_v<T>,
+                "Array<T&, N> is invalid as Array must hold value types. Use "
+                "Array<T*, N> instead.");
   static_assert(!std::is_const_v<T>,
                 "`Array<const T, N>` should be written `const Array<T, N>`, as "
                 "const applies transitively.");
@@ -75,7 +82,10 @@ class Array final {
 
   constexpr static Array with_initializer(
       ::sus::fn::FnMut<T()> auto&& f) noexcept {
-    return Array(kWithInitializer, f, std::make_index_sequence<N>());
+    if constexpr (N == 0)
+      return Array();
+    else
+      return Array(kWithInitializer, f, std::make_index_sequence<N>());
   }
 
   // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
@@ -83,7 +93,10 @@ class Array final {
   template <std::convertible_to<T> U>
     requires(::sus::mem::Copy<T>)
   constexpr static Array with_value(U&& t) noexcept {
-    return Array(kWithValue, t, std::make_index_sequence<N>());
+    if constexpr (N == 0)
+      return Array();
+    else
+      return Array(kWithValue, t, std::make_index_sequence<N>());
   }
 
   // Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
@@ -92,31 +105,40 @@ class Array final {
   template <std::convertible_to<T>... Ts>
     requires(sizeof...(Ts) == N)
   constexpr static Array with(Ts&&... ts) noexcept {
-    return Array(kWithValues, ::sus::forward<Ts>(ts)...);
+    if constexpr (N == 0)
+      return Array();
+    else
+      return Array(kWithValues, ::sus::forward<Ts>(ts)...);
   }
 
   Array(Array&&)
-      // TODO: Make a TrivialMove<T>.
-    requires(::sus::mem::Move<T> && std::is_trivially_move_constructible_v<T>)
+    requires(N == 0 && ::sus::mem::Move<T>)
   = default;
-  Array(Array&& o)
-      // TODO: Make a NonTrivialMove<T>.
-    requires(::sus::mem::Move<T> && !std::is_trivially_move_constructible_v<T>)
+  Array& operator=(Array&&)
+    requires(N == 0 && ::sus::mem::Move<T>)
+  = default;
+
+  constexpr Array(Array&& o) noexcept
+    requires(N > 0 && ::sus::mem::Move<T>)
       : Array(kWithMoveFromPointer, o.storage_.data_,
-              std::make_index_sequence<N>()) {}
+              o.storage_.iter_refs_.take_for_owner(),
+              std::make_index_sequence<N>()) {
+    ::sus::check(!has_iterators());
+  }
+  constexpr Array& operator=(Array&& o) noexcept
+    requires(::sus::mem::Move<T>)
+  {
+    //::sus::check(!has_iterators());
+    //::sus::check(!o.has_iterators());
+    for (auto i = size_t{0}; i < N; ++i)
+      storage_.data_[i] = ::sus::mem::take(mref(o.storage_.data_[i]));
+    storage_.iter_refs_ = o.storage_.iter_refs_.take_for_owner();
+    return *this;
+  }
+
   Array(Array&&)
     requires(!::sus::mem::Move<T>)
   = delete;
-
-  Array& operator=(Array&&)
-    requires(::sus::mem::Move<T> && std::is_trivially_move_assignable_v<T>)
-  = default;
-  Array& operator=(Array&& o)
-    requires(::sus::mem::Move<T> && !std::is_trivially_move_assignable_v<T>)
-  {
-    for (auto i = size_t{0}; i < N; ++i)
-      storage_.data_[i] = ::sus::mem::take(mref(o.storage_.data_[i]));
-  }
   Array& operator=(Array&&)
     requires(!::sus::mem::Move<T>)
   = delete;
@@ -126,7 +148,7 @@ class Array final {
     requires(::sus::mem::Clone<T>)
   {
     if constexpr (N == 0) {
-      return Array<T, N>();
+      return Array();
     } else {
       return Array(kWithCloneFromPointer, storage_.data_,
                    std::make_index_sequence<N>());
@@ -149,7 +171,7 @@ class Array final {
   ~Array()
     requires(std::is_trivially_destructible_v<T>)
   = default;
-  ~Array()
+  constexpr ~Array()
     requires(!std::is_trivially_destructible_v<T>)
   {
     for (auto i = size_t{0}; i < N; ++i) storage_.data_[i].~T();
@@ -216,7 +238,7 @@ class Array final {
   }
 
   /// Returns a const pointer to the first element in the array.
-  inline const T* as_ptr() const& noexcept sus_lifetimebound
+  constexpr inline const T* as_ptr() const& noexcept sus_lifetimebound
     requires(N > 0)
   {
     return storage_.data_;
@@ -224,7 +246,7 @@ class Array final {
   const T* as_ptr() && = delete;
 
   /// Returns a mutable pointer to the first element in the array.
-  inline T* as_mut_ptr() & noexcept sus_lifetimebound
+  constexpr inline T* as_mut_ptr() & noexcept sus_lifetimebound
     requires(N > 0)
   {
     return storage_.data_;
@@ -248,9 +270,14 @@ class Array final {
   /// each element.
   constexpr SliceIter<const T&> iter() const& noexcept sus_lifetimebound {
     if constexpr (N == 0) {
-      return SliceIter<const T&>::with(nullptr, N);
+      return SliceIter<const T&>::with(
+          sus::iter::IterRefCounter::empty_for_view().to_iter_from_view(),
+          nullptr, N);
     } else {
-      return SliceIter<const T&>::with(storage_.data_, N);
+      // TODO: Add invalidation refcounts and check them on move. Would be part
+      // of composing Array from SliceMut.
+      return SliceIter<const T&>::with(storage_.iter_refs_.to_iter_from_owner(),
+                                       storage_.data_, N);
     }
   }
   constexpr SliceIter<const T&> iter() && = delete;
@@ -260,9 +287,12 @@ class Array final {
   /// each element.
   constexpr SliceIterMut<T&> iter_mut() & noexcept sus_lifetimebound {
     if constexpr (N == 0) {
-      return SliceIterMut<T&>::with(nullptr, N);
+      return SliceIterMut<T&>::with(
+          sus::iter::IterRefCounter::empty_for_view().to_iter_from_view(),
+          nullptr, N);
     } else {
-      return SliceIterMut<T&>::with(storage_.data_, N);
+      return SliceIterMut<T&>::with(storage_.iter_refs_.to_iter_from_owner(),
+                                    storage_.data_, N);
     }
   }
 
@@ -312,36 +342,50 @@ class Array final {
  private:
   enum WithDefault { kWithDefault };
   template <size_t... Is>
+    requires(N == 0)
+  constexpr Array(WithDefault, std::index_sequence<Is...>) noexcept {}
+  template <size_t... Is>
+    requires(N > 0)
   constexpr Array(WithDefault, std::index_sequence<Is...>) noexcept
-      : storage_{((void)Is, T())...} {}
+      : storage_(::sus::iter::IterRefCounter::for_owner(),
+                 {((void)Is, T())...}) {}
 
   enum WithInitializer { kWithInitializer };
   template <size_t... Is>
+    requires(N > 0)
   constexpr Array(WithInitializer, ::sus::fn::FnMut<T()> auto&& f,
                   std::index_sequence<Is...>) noexcept
-      : storage_{((void)Is, f())...} {}
+      : storage_(::sus::iter::IterRefCounter::for_owner(),
+                 {((void)Is, f())...}) {}
 
   enum WithValue { kWithValue };
   template <size_t... Is>
+    requires(N > 0)
   constexpr Array(WithValue, const T& t, std::index_sequence<Is...>) noexcept
-      : storage_{((void)Is, t)...} {}
+      : storage_(::sus::iter::IterRefCounter::for_owner(), {((void)Is, t)...}) {
+  }
 
   enum WithValues { kWithValues };
   template <class... Ts>
+    requires(N > 0)
   constexpr Array(WithValues, Ts&&... ts) noexcept
-      : storage_{::sus::forward<Ts>(ts)...} {}
+      : storage_(::sus::iter::IterRefCounter::for_owner(),
+                 {::sus::forward<Ts>(ts)...}) {}
 
   enum WithMoveFromPointer { kWithMoveFromPointer };
   template <size_t... Is>
-  constexpr Array(WithMoveFromPointer, T* t,
+    requires(N > 0)
+  constexpr Array(WithMoveFromPointer, T* t, ::sus::iter::IterRefCounter refs,
                   std::index_sequence<Is...>) noexcept
-      : storage_{::sus::move(*(t + Is))...} {}
+      : storage_(::sus::move(refs), {::sus::move(*(t + Is))...}) {}
 
   enum WithCloneFromPointer { kWithCloneFromPointer };
   template <size_t... Is>
+    requires(N > 0)
   constexpr Array(WithCloneFromPointer, const T* t,
                   std::index_sequence<Is...>) noexcept
-      : storage_{::sus::clone(*(t + Is))...} {}
+      : storage_(::sus::iter::IterRefCounter::for_owner(),
+                 {::sus::clone(*(t + Is))...}) {}
 
   template <std::convertible_to<T> T1, std::convertible_to<T>... Ts>
   static inline void init_values(T* a, size_t index, T1&& t1, Ts&&... ts) {
@@ -351,6 +395,12 @@ class Array final {
   template <std::convertible_to<T> T1>
   static inline void init_values(T* a, size_t index, T1&& t1) {
     new (a + index) T(::sus::forward<T1>(t1));
+  }
+
+  constexpr inline bool has_iterators() const noexcept
+    requires(N > 0)
+  {
+    return storage_.iter_refs_.count_from_owner() != 0u;
   }
 
   template <class U, size_t... Is>

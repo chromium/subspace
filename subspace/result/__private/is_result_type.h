@@ -14,10 +14,7 @@
 
 #pragma once
 
-namespace sus::result {
-template <class T, class E>
-class Result;
-}
+#include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::result::__private {
 

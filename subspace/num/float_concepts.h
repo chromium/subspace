@@ -16,10 +16,9 @@
 
 #include <concepts>
 
-namespace sus::num {
+#include "subspace/lib/__private/forward_decl.h"
 
-struct f32;
-struct f64;
+namespace sus::num {
 
 template <class T>
 concept Float =

@@ -24,11 +24,12 @@
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/endian.h"
 #include "subspace/iter/iterator_concept.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/pure.h"
+#include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/size_of.h"
-#include "subspace/mem/move.h"
 #include "subspace/num/__private/int_log10.h"
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/__private/literals.h"
@@ -37,30 +38,7 @@
 #include "subspace/num/try_from_int_error.h"
 #include "subspace/string/__private/format_to_stream.h"
 
-namespace sus::containers {
-template <class T, size_t N>
-  requires(N <= size_t{PTRDIFF_MAX})
-class Array;
-}
-
-namespace sus::option {
-template <class T>
-class Option;
-}
-
-namespace sus::result {
-template <class T, class E>
-class Result;
-}
-
-namespace sus::tuple_type {
-template <class T, class... Ts>
-class Tuple;
-}
-
 namespace sus::num {
-
-struct u8;
 
 // TODO: from_str_radix(). Need Result typ`e and Errors.
 

@@ -19,6 +19,9 @@
 #include <type_traits>
 
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/iterator_ref.h"
+#include "subspace/lib/__private/forward_decl.h"
+#include "subspace/macros/no_unique_address.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
 #include "subspace/mem/nonnull.h"
@@ -28,11 +31,6 @@
 #include "subspace/num/unsigned_integer.h"
 
 namespace sus::containers {
-
-template <class T>
-class Slice;
-template <class T>
-class SliceMut;
 
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
@@ -48,12 +46,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   using RawItem = std::remove_const_t<std::remove_reference_t<Item>>;
 
  public:
-  static constexpr auto with(const RawItem* start, usize len) noexcept {
+  static constexpr auto with(::sus::iter::IterRef ref, const RawItem* start,
+                             usize len) noexcept {
     const RawItem* end = start + len;
     // Wrap-around would be an invalid allocation and would break our distance
     // functions.
     ::sus::check(end >= start);
-    return SliceIter(start, end);
+    return SliceIter(::sus::move(ref), start, end);
   }
 
   /// Returns a slice of the items left to be iterated.
@@ -100,14 +99,16 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   }
 
  private:
-  constexpr SliceIter(const RawItem* start, const RawItem* end) noexcept
-      : ptr_(start), end_(end) {}
+  constexpr SliceIter(::sus::iter::IterRef ref, const RawItem* start,
+                      const RawItem* end) noexcept
+      : ref_(::sus::move(ref)), ptr_(start), end_(end) {}
 
+  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   const RawItem* ptr_;
   const RawItem* end_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ptr_),
-                                  decltype(end_));
+                                  decltype(end_), decltype(ref_));
 };
 
 static_assert(::sus::mem::Copy<SliceIter<const i32&>>);
@@ -127,18 +128,20 @@ struct [[sus_trivial_abi]] SliceIterMut final
   using RawItem = std::remove_reference_t<Item>;
 
  public:
-  static constexpr auto with(RawItem* start, usize len) noexcept {
+  static constexpr auto with(::sus::iter::IterRef ref, RawItem* start,
+                             usize len) noexcept {
     RawItem* end = start + len;
     // Wrap-around would be an invalid allocation and would break our distance
     // functions.
     ::sus::check(end >= start);
-    return SliceIterMut(start, end);
+    return SliceIterMut(sus::move(ref), start, end);
   }
 
   /// Returns a mutable slice of the items left to be iterated, consuming the
   /// iterator.
   SliceMut<RawItem> as_mut_slice() && {
-    return SliceMut<RawItem>::from_raw_parts_mut(::sus::marker::unsafe_fn, ptr_,
+    return SliceMut<RawItem>::from_raw_parts_mut(::sus::marker::unsafe_fn,
+                                                 ref_.to_view(), ptr_,
                                                  usize::from(end_ - ptr_));
   }
 
@@ -178,14 +181,19 @@ struct [[sus_trivial_abi]] SliceIterMut final
   }
 
  private:
-  constexpr SliceIterMut(RawItem* start, RawItem* end) noexcept
-      : ptr_(start), end_(end) {}
+  constexpr SliceIterMut(::sus::iter::IterRef ref, RawItem* start,
+                         RawItem* end) noexcept
+      : ref_(::sus::move(ref)), ptr_(start), end_(end) {
+    int i = 1;
+    (void)i;
+  }
 
+  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   RawItem* ptr_;
   RawItem* end_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ptr_),
-                                  decltype(end_));
+                                  decltype(end_), decltype(ref_));
 };
 
 static_assert(::sus::mem::Copy<SliceIterMut<i32&>>);

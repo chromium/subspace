@@ -51,7 +51,7 @@ static_assert(sus::iter::IntoIterator<
 
 // clang-format off
 static_assert(
-  sus::iter::Iterator<sus::iter::BoxedIterator<int, 8, 8, false>, int>);
+  sus::iter::Iterator<sus::iter::BoxedIterator<int, 8, 8, false, false, false>, int>);
 static_assert(
   ::sus::iter::Iterator<sus::iter::Empty<int>, int>);
 static_assert(

@@ -25,6 +25,7 @@
 #include "subspace/mem/relocate.h"
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
+#include "subspace/test/ensure_use.h"
 
 using sus::containers::Array;
 using sus::mem::relocate_by_memcpy;
@@ -63,8 +64,10 @@ using T = TriviallyRelocatable;
 static_assert(std::is_move_constructible_v<Array<T, 2>>);
 static_assert(std::is_move_assignable_v<Array<T, 2>>);
 static_assert(std::is_trivially_destructible_v<Array<T, 2>>);
-static_assert(std::is_trivially_move_constructible_v<Array<T, 2>>);
-static_assert(std::is_trivially_move_assignable_v<Array<T, 2>>);
+static_assert(!std::is_trivially_move_constructible_v<Array<T, 2>>);
+static_assert(!std::is_trivially_move_assignable_v<Array<T, 2>>);
+static_assert(std::is_move_constructible_v<Array<T, 2>>);
+static_assert(std::is_move_assignable_v<Array<T, 2>>);
 static_assert(std::is_nothrow_swappable_v<Array<T, 2>>);
 static_assert(!std::is_trivially_copy_constructible_v<Array<T, 2>>);
 static_assert(!std::is_trivially_copy_assignable_v<Array<T, 2>>);
@@ -84,12 +87,9 @@ struct NonAggregate {
 
 TEST(Array, Default) {
   auto a = Array<int, 5>();
-  static_assert(sizeof(a) == sizeof(int[5]));
   for (usize i; i < 5u; i += 1u) {
     EXPECT_EQ(a[i], 0);
   }
-
-  static_assert(sizeof(Array<int, 5>) == sizeof(int[5]));
 }
 
 TEST(Array, Zero) {
@@ -101,7 +101,6 @@ TEST(Array, Zero) {
 TEST(Array, WithInitializer) {
   auto a =
       Array<usize, 5>::with_initializer([i = 1u]() mutable { return i++; });
-  static_assert(sizeof(a) == sizeof(usize[5]));
   for (auto i = 0_usize; i < 5u; i += 1u) {
     EXPECT_EQ(a[i], i + 1u);
   }
@@ -116,26 +115,19 @@ TEST(Array, WithInitializer) {
                 "");
   auto b = Array<NotTriviallyDefaultConstructible, 5>::with_initializer(
       [i = 1u]() mutable -> NotTriviallyDefaultConstructible { return {i++}; });
-  static_assert(sizeof(b) == sizeof(NotTriviallyDefaultConstructible[5]));
   for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
     EXPECT_EQ(b[i].i, i + 1_usize);
   }
 
   auto lvalue = [i = 1u]() mutable { return i++; };
   auto c = Array<usize, 5>::with_initializer(lvalue);
-  static_assert(sizeof(c) == sizeof(usize[5]));
   for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
     EXPECT_EQ(c[i], i + 1_usize);
   }
-
-  static_assert(sizeof(Array<usize, 5>::with_initializer(
-                    []() { return 1u; })) == sizeof(usize[5]),
-                "");
 }
 
 TEST(Array, WithValue) {
   auto a = Array<usize, 5>::with_value(3u);
-  static_assert(sizeof(a) == sizeof(usize[5]));
   for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
     EXPECT_EQ(a[i], 3_usize);
   }
@@ -144,7 +136,6 @@ TEST(Array, WithValue) {
 TEST(Array, WithValues) {
   {
     auto a = Array<usize, 5>::with(3u, 4u, 5u, 6u, 7u);
-    static_assert(sizeof(a) == sizeof(usize[5]));
     for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
       EXPECT_EQ(a[i], 3_usize + i);
     }
@@ -152,7 +143,6 @@ TEST(Array, WithValues) {
   {
     auto a = Array<u8, 5>::with(sus::into(3), sus::into(4), sus::into(5),
                                 sus::into(6), sus::into(7));
-    static_assert(sizeof(a) == sizeof(u8[5]));
     for (auto i = 0_u8; i < 5_u8; i += 1_u8) {
       EXPECT_EQ(a[usize::from(i)], 3_u8 + i);
     }
@@ -649,4 +639,17 @@ TEST(Array, GTest) {
             "[1, 2, 3, 4, 5]");
 }
 
+TEST(ArrayDeathTest, IteratorInvalidation) {
+#if GTEST_HAS_DEATH_TEST
+  auto v = sus::Array<i32, 2>::with(1, 2);
+  auto it = v.iter();
+  it.next();
+  EXPECT_DEATH(
+      {
+        auto v2 = sus::move(v);
+        ensure_use(&v2);
+      },
+      "");
+#endif
+}
 }  // namespace
