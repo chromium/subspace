@@ -22,8 +22,9 @@
 //
 // Include it into the body of your class.
 //
-// Define `_ptr_expr` and `_len_expr` when including this file to the
-// expressions of getting the slice's data pointer and length.
+// Define `_ptr_expr`, `_len_expr`, `_iter_refs_expr` and `_iter_refs_view_expr`
+// when including this file to the expressions of getting the slice's data
+// pointer and length.
 /////////////////////////////////////////////////////////
 
 // If we're deleting rvalue const access, we don't want to give rvalue mut
@@ -88,7 +89,7 @@ sus_pure constexpr ::sus::ops::Range<T*> as_mut_ptr_range()
 constexpr ChunksExactMut<T> chunks_exact_mut(::sus::num::usize chunk_size)
     RETURN_REF noexcept {
   ::sus::check(chunk_size > 0u);
-  return ChunksExactMut<T>::with(*this, chunk_size);
+  return ChunksExactMut<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
 /// Returns an iterator over chunk_size elements of the slice at a time,
@@ -108,7 +109,7 @@ constexpr ChunksExactMut<T> chunks_exact_mut(::sus::num::usize chunk_size)
 constexpr ChunksMut<T> chunks_mut(::sus::num::usize chunk_size)
     RETURN_REF noexcept {
   ::sus::check(chunk_size > 0u);
-  return ChunksMut<T>::with(*this, chunk_size);
+  return ChunksMut<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
 /// Copies all elements from src into `*this`, using a `memcpy()` or equivalent.
@@ -304,7 +305,8 @@ sus_pure constexpr Option<SliceMut<T>> get_range_mut(
   // slice.
   if (rstart > length || rstart > length - rlen) return sus::none();
   return Option<SliceMut<T>>::with(SliceMut<T>::from_raw_parts_mut(
-      ::sus::marker::unsafe_fn, as_mut_ptr() + rstart, rlen));
+      ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_mut_ptr() + rstart,
+      rlen));
 }
 
 /// Returns a subslice which contains elements in `range`, which specifies a
@@ -326,6 +328,7 @@ sus_pure constexpr SliceMut<T> get_range_mut_unchecked(
   const ::sus::num::usize rend = range.end_bound().unwrap_or(len());
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
   return SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
+                                         _iter_refs_view_expr,
                                          as_mut_ptr() + rstart, rlen);
 }
 
@@ -333,7 +336,7 @@ sus_pure constexpr SliceMut<T> get_range_mut_unchecked(
 /// same order they appear in the slice. The iterator gives mutable access to
 /// each element.
 sus_pure constexpr SliceIterMut<T&> iter_mut() RETURN_REF noexcept {
-  return SliceIterMut<T&>::with(as_mut_ptr(), len());
+  return SliceIterMut<T&>::with(_iter_refs_expr, as_mut_ptr(), len());
 }
 
 /// Returns a mutable reference to the last element of the slice, or None if it
@@ -366,7 +369,7 @@ sus_pure constexpr ::sus::Option<T&> last_mut() RETURN_REF noexcept {
 constexpr RChunksExactMut<T> rchunks_exact_mut(::sus::num::usize chunk_size)
     RETURN_REF noexcept {
   ::sus::check(chunk_size > 0u);
-  return RChunksExactMut<T>::with(*this, chunk_size);
+  return RChunksExactMut<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
 /// Returns an iterator over `chunk_size` elements of the slice at a time,
@@ -385,7 +388,7 @@ constexpr RChunksExactMut<T> rchunks_exact_mut(::sus::num::usize chunk_size)
 constexpr RChunksMut<T> rchunks_mut(::sus::num::usize chunk_size)
     RETURN_REF noexcept {
   ::sus::check(chunk_size > 0u);
-  return RChunksMut<T>::with(*this, chunk_size);
+  return RChunksMut<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
 /// Reverses the order of elements in the slice, in place.
@@ -411,11 +414,11 @@ constexpr void reverse() NO_RETURN_REF noexcept
   // SAFETY: The slice is valid, as it points to the start of `*this` and
   // half_len < len() by construction above.
   auto front_half = ::sus::containers::SliceMut<T>::from_raw_parts_mut(
-      ::sus::marker::unsafe_fn, start, half_len);
+      ::sus::marker::unsafe_fn, _iter_refs_view_expr, start, half_len);
   // SAFETY: The slice is valid, as it points to the half_len elements from the
   // end of `*this`, and `len() - half_len + half_len == len()`.
   auto back_half = ::sus::containers::SliceMut<T>::from_raw_parts_mut(
-      ::sus::marker::unsafe_fn, end - half_len, half_len);
+      ::sus::marker::unsafe_fn, _iter_refs_view_expr, end - half_len, half_len);
 
   for (::sus::num::usize i; i < half_len; i += 1u) {
     // SAFETY: The `front_half` refers to the first `half_len` elements, and the
@@ -527,7 +530,8 @@ void rotate_right(::sus::num::usize k) NO_RETURN_REF noexcept
 /// slice will be the first (or last) item returned by the iterator.
 constexpr RSplitMut<T> rsplit_mut(::sus::fn::FnMutRef<bool(const T&)> pred)
     RETURN_REF noexcept {
-  return RSplitMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred)));
+  return RSplitMut<T>::with(
+      SplitMut<T>::with(_iter_refs_expr, *this, ::sus::move(pred)));
 }
 
 /// Returns an iterator over subslices separated by elements that match `pred`
@@ -537,8 +541,9 @@ constexpr RSplitMut<T> rsplit_mut(::sus::fn::FnMutRef<bool(const T&)> pred)
 /// The last element returned, if any, will contain the remainder of the slice.
 constexpr RSplitNMut<T> rsplitn_mut(
     usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) RETURN_REF noexcept {
-  return RSplitNMut<T>::with(
-      RSplitMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred))), n);
+  return RSplitNMut<T>::with(RSplitMut<T>::with(SplitMut<T>::with(
+                                 _iter_refs_expr, *this, ::sus::move(pred))),
+                             n);
 }
 
 #if 0
@@ -788,7 +793,7 @@ void sort_unstable_by_key(KeyFn f) NO_RETURN_REF noexcept {
 /// matched, an empty slice will be the last item returned by the iterator.
 constexpr SplitMut<T> split_mut(::sus::fn::FnMutRef<bool(const T&)> pred)
     RETURN_REF noexcept {
-  return SplitMut<T>::with(*this, ::sus::move(pred));
+  return SplitMut<T>::with(_iter_refs_expr, *this, ::sus::move(pred));
 }
 
 /// Divides one mutable slice into two at an index.
@@ -824,10 +829,11 @@ split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
   // SAFETY: Caller has to check that `0 <= mid <= len()`.
   sus_debug_check(mid.primitive_value <= _len_expr.primitive_value);
   return ::sus::Tuple<SliceMut<T>, SliceMut<T>>::with(
-      SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn, as_mut_ptr(),
-                                      mid),
       SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
-                                      as_mut_ptr() + mid, len() - mid));
+                                      _iter_refs_view_expr, as_mut_ptr(), mid),
+      SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
+                                      _iter_refs_view_expr, as_mut_ptr() + mid,
+                                      len() - mid));
 }
 
 /// Returns the first and all the rest of the elements of the slice, or `None`
@@ -852,7 +858,7 @@ split_first_mut() RETURN_REF noexcept {
 /// returned by the iterator.
 constexpr SplitInclusiveMut<T> split_inclusive_mut(
     ::sus::fn::FnMutRef<bool(const T&)> pred) RETURN_REF noexcept {
-  return SplitInclusiveMut<T>::with(*this, ::sus::move(pred));
+  return SplitInclusiveMut<T>::with(_iter_refs_expr, *this, ::sus::move(pred));
 }
 
 /// Returns the last and all the rest of the elements of the slice, or `None` if
@@ -876,7 +882,8 @@ sus_pure constexpr ::sus::Option<::sus::Tuple<T&, SliceMut<T>>> split_last_mut()
 /// The last element returned, if any, will contain the remainder of the slice.
 constexpr SplitNMut<T> splitn_mut(
     usize n, ::sus::fn::FnMutRef<bool(const T&)> pred) RETURN_REF noexcept {
-  return SplitNMut<T>::with(SplitMut<T>::with(*this, ::sus::move(pred)), n);
+  return SplitNMut<T>::with(
+      SplitMut<T>::with(_iter_refs_expr, *this, ::sus::move(pred)), n);
 }
 
 /// Returns a subslice with the `prefix` removed.
@@ -1013,10 +1020,16 @@ constexpr void swap_with_slice(const SliceMut<T>& other)
 /// Panics if `size` is 0.
 sus_pure constexpr WindowsMut<T> windows_mut(usize size) RETURN_REF noexcept {
   ::sus::check(size > 0u);
-  return WindowsMut<T>::with(*this, size);
+  return WindowsMut<T>::with(_iter_refs_expr, *this, size);
 }
 
 #undef RETURN_REF
 #undef NO_RETURN_REF
 
 // TODO: into_vec(Own<Slice<T>>) &&
+
+#undef _ptr_expr
+#undef _len_expr
+#undef _delete_rvalue
+#undef _iter_refs_expr
+#undef _iter_refs_view_expr

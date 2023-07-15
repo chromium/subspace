@@ -33,6 +33,8 @@
 #include "subspace/fn/fn_ref.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/into_iterator.h"
+#include "subspace/iter/iterator_ref.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/assume.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/marker/unsafe.h"
@@ -74,8 +76,14 @@ namespace sus::containers {
 /// - References can not be moved in the vector as assignment modifies the
 ///   pointee, and Vec does not wrap references to store them as pointers
 ///   (for now).
+/// Vec requires items are not const:
+/// - A const Vec<T> contains const values, it does not give mutable access to
+///   its contents, so the const internal type would be redundant.
 template <class T>
 class Vec final {
+  static_assert(
+      !std::is_reference_v<T>,
+      "Vec<T&> is invalid as Vec must hold value types. Use Vec<T*> instead.");
   static_assert(!std::is_const_v<T>,
                 "`Vec<const T>` should be written `const Vec<T>`, as const "
                 "applies transitively.");
@@ -150,7 +158,7 @@ class Vec final {
   /// sus::iter::FromIterator trait.
   static constexpr Vec from_iter(
       ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
-    requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
+    requires(::sus::mem::Move<T>)
   {
     auto&& iter = sus::move(into_iter).into_iter();
     auto [lower, upper] = iter.size_hint();
@@ -188,17 +196,23 @@ class Vec final {
 
   Vec(Vec&& o) noexcept
       : slice_mut_(
+            o.slice_mut_.slice_.iter_refs_.take_for_owner(),
             ::sus::mem::replace(mref(o.raw_data()), nullptr),
             ::sus::mem::replace(mref(o.slice_mut_.slice_.len_), kMovedFromLen)),
         capacity_(::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity)) {
     check(!is_moved_from());
+    check(!has_iterators());
   }
   Vec& operator=(Vec&& o) noexcept {
     check(!o.is_moved_from());
+    check(!has_iterators());
+    check(!o.has_iterators());
     if (is_alloced()) free_storage();
     raw_data() = ::sus::mem::replace(mref(o.raw_data()), nullptr);
     slice_mut_.slice_.len_ =
         ::sus::mem::replace(mref(o.slice_mut_.slice_.len_), kMovedFromLen);
+    slice_mut_.slice_.iter_refs_ =
+        o.slice_mut_.slice_.iter_refs_.take_for_owner();
     capacity_ = ::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity);
     return *this;
   }
@@ -222,6 +236,7 @@ class Vec final {
   {
     check(!is_moved_from());
     check(!source.is_moved_from());
+    check(!has_iterators());
     if (&source == this) [[unlikely]]
       return;
     if (source.capacity_ == 0_usize) {
@@ -267,11 +282,11 @@ class Vec final {
   /// Panics if the starting point is greater than the end point or if
   /// the end point is greater than the length of the vector.
   Drain<T> drain(::sus::ops::RangeBounds<usize> auto range) noexcept {
+    check(!is_moved_from());
+    check(!has_iterators());
     ::sus::ops::Range<usize> bounded_range =
         range.start_at(range.start_bound().unwrap_or(0u))
             .end_at(range.end_bound().unwrap_or(len()));
-    ::sus::check(bounded_range.start <= bounded_range.finish);
-    ::sus::check(bounded_range.finish <= len());
     return Drain<T>::with(::sus::move(*this), bounded_range);
   }
 
@@ -289,6 +304,7 @@ class Vec final {
   /// cleanup.
   ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
     check(!is_moved_from());
+    check(!has_iterators());
     return sus::tuple(
         ::sus::mem::replace(mref(raw_data()), nullptr),
         ::sus::mem::replace(mref(slice_mut_.slice_.len_), kMovedFromLen),
@@ -310,6 +326,7 @@ class Vec final {
   /// vector.
   void clear() noexcept {
     check(!is_moved_from());
+    check(!has_iterators());
     destroy_storage_objects();
     set_len(::sus::marker::unsafe_fn, 0_usize);
   }
@@ -327,6 +344,7 @@ class Vec final {
     requires(sus::mem::Copy<T>)
   {
     check(!is_moved_from());
+    check(!has_iterators());
     // TODO: There's some serious improvements we can do here when the iterator
     // is over contiguous elements. See
     // https://doc.rust-lang.org/src/alloc/vec/spec_extend.rs.html
@@ -344,6 +362,7 @@ class Vec final {
   /// #[doc.overloads=vec.extend.val]
   void extend(sus::iter::IntoIterator<T> auto&& ii) noexcept {
     check(!is_moved_from());
+    check(!has_iterators());
     // TODO: There's some serious improvements we can do here when the iterator
     // is over contiguous elements. See
     // https://doc.rust-lang.org/src/alloc/vec/spec_extend.rs.html
@@ -365,6 +384,7 @@ class Vec final {
     requires(sus::mem::Clone<T>)
   {
     check(!is_moved_from());
+    check(!has_iterators());
     if (s.is_empty()) {
       return;
     }
@@ -399,6 +419,7 @@ class Vec final {
   /// Panics if the new capacity exceeds `isize::MAX()` bytes.
   void grow_to_exact(usize cap) noexcept {
     check(!is_moved_from());
+    check(!has_iterators());
     if (cap <= capacity_) return;  // Nothing to do.
     const auto bytes = ::sus::mem::size_of<T>() * cap;
     check(bytes <= usize::from(isize::MAX));
@@ -440,6 +461,7 @@ class Vec final {
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
   void reserve(usize additional) noexcept {
     check(!is_moved_from());
+    check(!has_iterators());
     if (len() + additional <= capacity_) return;  // Nothing to do.
     // TODO: Consider rounding up to nearest 2^N for some N?
     grow_to_exact(apply_growth_function(additional));
@@ -460,6 +482,7 @@ class Vec final {
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
   void reserve_exact(usize additional) noexcept {
     check(!is_moved_from());
+    check(!has_iterators());
     const usize cap = len() + additional;
     if (cap <= capacity_) return;  // Nothing to do.
     grow_to_exact(cap);
@@ -486,6 +509,7 @@ class Vec final {
   /// empty.
   Option<T> pop() noexcept {
     check(!is_moved_from());
+    check(!has_iterators());
     const auto self_len = len();
     if (self_len > 0u) {
       auto o = Option<T>::with(sus::move(
@@ -508,9 +532,10 @@ class Vec final {
   // issue of the reference being to something inside the vector which
   // reserve() then invalidates.
   void push(T t) noexcept
-    requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
+    requires(::sus::mem::Move<T>)
   {
     check(!is_moved_from());
+    check(!has_iterators());
     reserve(1_usize);
     const auto self_len = len();
     new (raw_data() + self_len) T(::sus::move(t));
@@ -521,7 +546,8 @@ class Vec final {
   ///
   /// The parameters to `emplace()` are used to construct the element. This
   /// typically works best for aggregate types, rather than types with a named
-  /// static method constructor (such as `T::with_foo(foo)`).
+  /// static method constructor (such as `T::with_foo(foo)`). Prefer to use
+  /// `push()` for most cases.
   ///
   /// Disallows construction from a reference to `T`, as `push()` should be
   /// used in that case to avoid invalidating the input reference while
@@ -532,11 +558,12 @@ class Vec final {
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
   template <class... Us>
   void emplace(Us&&... args) noexcept
-    requires(::sus::mem::Move<T> && !std::is_reference_v<T> &&
+    requires(::sus::mem::Move<T> &&
              !(sizeof...(Us) == 1u &&
                (... && std::same_as<std::decay_t<T>, std::decay_t<Us>>)))
   {
     check(!is_moved_from());
+    check(!has_iterators());
     reserve(1_usize);
     const auto self_len = len();
     new (raw_data() + self_len) T(::sus::forward<Us>(args)...);
@@ -645,8 +672,10 @@ class Vec final {
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, as_ptr() + rstart,
-                                    rlen);
+    return Slice<T>::from_raw_parts(
+        ::sus::marker::unsafe_fn,
+        slice_mut_.slice_.iter_refs_.to_view_from_owner(), as_ptr() + rstart,
+        rlen);
   }
   constexpr inline Slice<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && = delete;
@@ -673,8 +702,10 @@ class Vec final {
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
-                                           as_mut_ptr() + rstart, rlen);
+    return SliceMut<T>::from_raw_parts_mut(
+        ::sus::marker::unsafe_fn,
+        slice_mut_.slice_.iter_refs_.to_view_from_owner(),
+        as_mut_ptr() + rstart, rlen);
   }
 
   // Const Vec can be used as a Slice.
@@ -696,15 +727,21 @@ class Vec final {
 
 #define _ptr_expr slice_mut_.slice_.data_
 #define _len_expr slice_mut_.slice_.len_
+#define _iter_refs_expr slice_mut_.slice_.iter_refs_.to_iter_from_owner()
+#define _iter_refs_view_expr slice_mut_.slice_.iter_refs_.to_view_from_owner()
 #define _delete_rvalue true
 #include "__private/slice_methods.inc"
 #define _ptr_expr slice_mut_.slice_.data_
 #define _len_expr slice_mut_.slice_.len_
+#define _iter_refs_expr slice_mut_.slice_.iter_refs_.to_iter_from_owner()
+#define _iter_refs_view_expr slice_mut_.slice_.iter_refs_.to_view_from_owner()
 #define _delete_rvalue true
 #include "__private/slice_mut_methods.inc"
 
  private:
-  Vec(T* ptr, usize len, usize cap) : slice_mut_(ptr, len), capacity_(cap) {}
+  Vec(T* ptr, usize len, usize cap)
+      : slice_mut_(sus::iter::IterRefCounter::for_owner(), ptr, len),
+        capacity_(cap) {}
 
   constexpr T* raw_data() const noexcept { return slice_mut_.slice_.data_; }
   constexpr T*& raw_data() noexcept { return slice_mut_.slice_.data_; }
@@ -714,7 +751,7 @@ class Vec final {
     usize cap = capacity_;
     // TODO: What is a good growth function? Steal from WTF::Vector?
     while (cap < goal) {
-      cap = (cap + 1_usize) * 3_usize;
+      cap = (cap + 1u) * 3u;
       auto bytes = ::sus::mem::size_of<T>() * cap;
       check(bytes <= usize(size_t{PTRDIFF_MAX}));
     }
@@ -743,6 +780,10 @@ class Vec final {
     return len() > capacity_;
   }
 
+  constexpr inline bool has_iterators() const noexcept {
+    return slice_mut_.slice_.iter_refs_.count_from_owner() != 0u;
+  }
+
   /// The length is set to this value when Vec is moved from. It is non-zero as
   /// `is_moved_from()` returns true when `length > capacity`.
   static constexpr usize kMovedFromLen = 1_usize;
@@ -765,8 +806,11 @@ class Vec final {
 
 #define _ptr_expr slice_mut_.slice_.data_
 #define _len_expr slice_mut_.slice_.len_
+#define _iter_refs_expr slice_mut_.slice_.iter_refs_.to_iter_from_owner()
+#define _iter_refs_view_expr slice_mut_.slice_.iter_refs_.to_view_from_owner()
 #define _delete_rvalue true
-#define _self Vec
+#define _self_template class T
+#define _self Vec<T>
 #include "__private/slice_methods_impl.inc"
 
 // Implicit for-ranged loop iteration via `Vec::iter()`.

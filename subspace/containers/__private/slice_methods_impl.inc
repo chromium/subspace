@@ -22,14 +22,19 @@
 //
 // Include it after the body of your class.
 //
-// Define `_ptr_expr` and `_len_expr` when including this file to the
-// expressions of getting the slice's data pointer and length.
+// Define `_ptr_expr`, `_len_expr` `_iter_refs_expr` and `_iter_refs_view_expr`
+// when including this file to the expressions of getting the slice's data
+// pointer and length.
 //
-// Define `_self` as the type declaring the methods.
+// Define `_self` as the type declaring the methods including template
+// parameters, such as `S<A, B>`.
+//
+// Define `_self_template` as the template parameter declarations for the type,
+// such as `class A, class B`.
 ///////////////////////////////////////////////////////////////////////////
 
-template <class T>
-Vec<T> _self<T>::to_vec() const& noexcept
+template <_self_template>
+Vec<T> _self::to_vec() const& noexcept
   requires(::sus::mem::Clone<T>)
 {
   auto v = Vec<T>::with_capacity(_len_expr);
@@ -40,6 +45,9 @@ Vec<T> _self<T>::to_vec() const& noexcept
 }
 
 #undef _self
+#undef _self_template
 #undef _ptr_expr
 #undef _len_expr
 #undef _delete_rvalue
+#undef _iter_refs_expr
+#undef _iter_refs_view_expr

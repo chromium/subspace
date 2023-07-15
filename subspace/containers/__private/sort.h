@@ -19,11 +19,7 @@
 #include "subspace/mem/swap.h"
 #include "subspace/num/integer_concepts.h"
 #include "subspace/tuple/tuple.h"
-
-namespace sus::containers {
-template <class T>
-class SliceMut;
-}  // namespace sus::containers
+#include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::containers::__private {
 

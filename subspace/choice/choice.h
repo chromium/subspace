@@ -29,6 +29,7 @@
 #include "subspace/choice/__private/storage.h"
 #include "subspace/choice/__private/type_list.h"
 #include "subspace/choice/choice_types.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/marker/unsafe.h"
@@ -46,9 +47,6 @@
 #include "subspace/tuple/tuple.h"
 
 namespace sus::choice_type {
-
-template <class TypeListOfMemberTypes, auto... Tags>
-class Choice;
 
 /// A helper concept that reports if the value in a `Choice` for the given `Tag`
 /// is null. When true, the accessor and setter methods are not available.

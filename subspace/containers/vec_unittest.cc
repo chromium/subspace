@@ -21,6 +21,7 @@
 #include "subspace/iter/iterator.h"
 #include "subspace/mem/move.h"
 #include "subspace/prelude.h"
+#include "subspace/test/ensure_use.h"
 
 namespace {
 
@@ -1267,6 +1268,40 @@ TEST(Vec, Drain_NonTriviallyRelocatable) {
   }
 }
 
+TEST(VecDeathTest, DrainMove) {
+  auto v1 = Vec<i32>::with(1, 2, 3, 4, 5);
+  auto d1 = v1.drain(".."_r);
+  // Drain satisfies Move so it can be constructed into fields of other options
+  // (like in an Option).
+  static_assert(sus::mem::Move<decltype(d1)>);
+
+  // Move construct, should not panic due to the iterator pointing to the
+  // inner moved Vec.
+  auto d2 = sus::move(d1);
+  EXPECT_EQ(d2.next(), sus::some(1));
+  EXPECT_EQ(d2.next(), sus::some(2));
+  auto d3 = sus::move(d2);
+  EXPECT_EQ(d3.next(), sus::some(3));
+
+  {
+    auto short_life_vec = Vec<i32>::with(1, 2, 3, 4, 5);
+    auto drain_short_life_vec = short_life_vec.drain(".."_r);
+
+#if GTEST_HAS_DEATH_TEST
+    // Move assign will panic. That can leave the Drain `d2` object with a
+    // pointer to `v3` but it was created before `v3` and will be destroyed
+    // after. Thus this would leave `d2` destructor with a dangling reference to
+    // `v3`.
+    EXPECT_DEATH(
+        {
+          d3 = sus::move(drain_short_life_vec);
+          ensure_use(&d3);
+        },
+        "");
+#endif
+  }
+}
+
 TEST(Vec, fmt) {
   auto v = Vec<i32>::with(1, 2, 3, 4, 5);
   EXPECT_EQ(fmt::format("{}", v), "[1, 2, 3, 4, 5]");
@@ -1293,6 +1328,27 @@ TEST(Vec, Stream) {
 TEST(Vec, GTest) {
   EXPECT_EQ(testing::PrintToString(Vec<i32>::with(1, 2, 3, 4, 5)),
             "[1, 2, 3, 4, 5]");
+}
+
+TEST(VecDeathTest, IteratorInvalidation) {
+#if GTEST_HAS_DEATH_TEST
+  auto v = sus::Vec<i32>::with(1, 2);
+  auto it = v.iter();
+  it.next();
+  EXPECT_DEATH(
+      {
+        v.push(3);
+        ensure_use(&v);
+      },
+      "");
+  auto v2 = sus::Vec<i32>();
+  EXPECT_DEATH(
+      {
+        v2 = sus::move(v);
+        ensure_use(&v2);
+      },
+      "");
+#endif
 }
 
 }  // namespace

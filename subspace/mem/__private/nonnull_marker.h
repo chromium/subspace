@@ -14,13 +14,8 @@
 
 #pragma once
 
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/mem/move.h"
-
-namespace sus::mem {
-template <class T>
-  requires(!std::is_reference_v<T>)
-class NonNull;
-}
 
 namespace sus::mem::__private {
 

@@ -16,22 +16,37 @@
 
 #include "subspace/containers/iterators/slice_iter.h"
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/nonnull.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/range.h"
+#include "subspace/option/option.h"
 #include "subspace/ptr/copy.h"
-
-namespace sus::containers {
-template <class T>
-class Vec;
-}  // namespace sus::containers
 
 namespace sus::containers {
 
 /// A draining iterator for Vec<T>.
 ///
 /// This struct is created by Vec::drain. See its documentation for more.
+///
+/// # Panics
+///
+/// Drain can not support move-assignment because it holds a reference to a Vec
+/// from which it was created. Assigning can change the Vec to which it is
+/// pointing, but that Vec may have been created _after_ the Drain object, since
+/// it was not created from that Vec. Then on destruction, Drain will point to a
+/// destroyed Vec:
+/// ```
+/// auto v1 = Vec<i32>::with(1);
+/// auto d1 = v1.drain();  // Points at v1.
+/// auto v2 = Vec<i32>::with(1);
+/// auto d2 = v2.drain();  // Points at v2.
+/// d1 = sus::move(d2);  // Points at v2, is destroyed after v2.
+/// ```
+///
+/// While Drain is satisfies [`Move`](sus::mem::Move) in order to be
+/// move-constructed, it will panic on move-assignment.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] Drain final
     : public ::sus::iter::IteratorBase<Drain<ItemT>, ItemT> {
@@ -42,29 +57,20 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
   constexpr Drain(Drain&& rhs) noexcept
       : tail_start_(rhs.tail_start_),
         tail_len_(rhs.tail_len_),
+        original_vec_(::sus::move(rhs.original_vec_)),
+        vec_(::sus::move(rhs.vec_)),
         // Use take() to ensure rhs is None, even if Option is trivially moved.
         // This indicates moved-from for ~Drain.
-        iter_(rhs.iter_.take()),
-        vec_(::sus::move(rhs.vec_)),
-        original_vec_(::sus::move(rhs.original_vec_)) {}
+        iter_(rhs.iter_.take()) {}
 
-  constexpr Drain& operator=(Drain&& rhs) noexcept {
-    // The `iter_` is None if keep_rest() was run, in which cast the Vec is
-    // already restored. Or if Drain was moved from, in which case it has
-    // nothing to do.
-    if (iter_.is_some()) {
-      restore_vec(0u);
-    }
-
-    tail_start_ = rhs.tail_start_;
-    tail_len_ = rhs.tail_len_;
-    // Use take() to ensure rhs is None, even if Option is trivially moved.
-    // This indicates moved-from for ~Drain.
-    iter_ = rhs.iter_.take();
-    vec_ = ::sus::move(rhs.vec_);
-    original_vec_ = ::sus::move(rhs.original_vec_);
-    return *this;
-  }
+  /// Drain may be move-constructed in order to be stored as a member of other
+  /// objects, but it can not be assigned-to. See the class documentation for
+  /// more.
+  ///
+  /// # Panics
+  ///
+  /// Calling this function will always panic.
+  constexpr Drain& operator=(Drain&&) noexcept { ::sus::panic(); }
 
   ~Drain() noexcept {
     // The `iter_` is None if keep_rest() was run, in which cast the Vec is
@@ -132,7 +138,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
 
  private:
   // Constructed by Vec.
-  friend class Vec<Item>;
+  template <class VecT>
+  friend class Vec;
 
   void restore_vec(usize kept) {
     const usize start = vec_.len() + kept;
@@ -174,10 +181,21 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
                   ::sus::ops::Range<usize> range) noexcept
       : tail_start_(range.finish),
         tail_len_(vec.len() - range.finish),
-        iter_(::sus::some(SliceIterMut<Item&>::with(
-            vec.as_mut_ptr() + range.start, range.finish - range.start))),
         vec_(::sus::move(vec)),
         original_vec_(sus::mem::nonnull(vec)) {
+    // The `range` is saturated to the Vec's bounds by Vec::drain() before
+    // passing it here, so unwrap() won't panic. We don't use unsafe as the
+    // invariant is not verified locally here.
+    auto slice = vec_.get_range_mut(range).unwrap();
+    // SAFETY: The `slice` refers to `vec_` which is encapsulated inside
+    // this class and is not mutated until it is returned to the
+    // `original_vec_`, so the `slice` will not be invalidated inside this
+    // class.
+    slice.drop_iterator_invalidation_tracking(::sus::marker::unsafe_fn);
+    iter_ = ::sus::some(::sus::move(slice).iter_mut());
+
+    // The len field of `vec_` is used to denote which elements at the start of
+    // the Vec are _not_ being drained.
     vec_.set_len(::sus::marker::unsafe_fn, range.start);
   }
 
@@ -185,15 +203,15 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
   usize tail_start_;
   /// Length of tail.
   usize tail_len_;
-  /// Current remaining range to remove.
-  Option<SliceIterMut<Item&>> iter_;
-  /// The elements from the original_vec_, held locally for safe keeping so that
-  /// mutation of the original Vec during drain will be flagged as
-  /// use-after-move.
-  Vec<Item> vec_;
   /// The original moved-from Vec which is restored when the iterator is
   /// destroyed.
   sus::mem::NonNull<Vec<Item>> original_vec_;
+  /// The elements from the original_vec_, held locally for safe keeping so
+  /// that mutation of the original Vec during drain will be flagged as
+  /// use-after-move.
+  Vec<Item> vec_;
+  /// Current remaining range to remove.
+  Option<SliceIterMut<Item&>> iter_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
                                   decltype(tail_start_), decltype(tail_len_),

@@ -16,10 +16,7 @@
 
 #include "subspace/mem/clone.h"
 #include "subspace/mem/move.h"
-
-namespace sus::num {
-struct usize;
-}
+#include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::containers {
 

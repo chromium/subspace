@@ -15,6 +15,7 @@
 #pragma once
 
 #include "subspace/fn/callable.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/never_value.h"
@@ -59,13 +60,6 @@ enum FnBoxType {
 };
 
 }  // namespace __private
-
-template <class R, class... Args>
-class FnOnceBox;
-template <class R, class... Args>
-class FnMutBox;
-template <class R, class... Args>
-class FnBox;
 
 // TODO: Consider generic lambdas, it should be possible to bind them into
 // FnOnceBox/FnMutBox/FnBox?

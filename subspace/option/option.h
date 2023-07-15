@@ -28,6 +28,7 @@
 #include "subspace/iter/iterator_concept.h"
 #include "subspace/iter/product.h"
 #include "subspace/iter/sum.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/inline.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/nonnull.h"
@@ -54,14 +55,9 @@
 #include "subspace/string/__private/any_formatter.h"
 #include "subspace/string/__private/format_to_stream.h"
 
-namespace sus::option {
-template <class T>
-class Option;
-}
-
+// Have to forward declare a bunch of iterator stuff here because Iterator
+// includes Option, so it can't include iterator back.
 namespace sus::iter {
-template <class Iter, class Item>
-class IteratorBase;
 template <class Item>
 class Once;
 template <class Item>
@@ -79,16 +75,6 @@ template <class T>
 constexpr auto end(const T& t) noexcept;
 }  // namespace __private
 }  // namespace sus::iter
-
-namespace sus::result {
-template <class T, class E>
-class Result;
-}  // namespace sus::result
-
-namespace sus::tuple_type {
-template <class T, class... Ts>
-class Tuple;
-}  // namespace sus::tuple_type
 
 namespace sus::option {
 

@@ -14,12 +14,9 @@
 
 #pragma once
 
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/mem/clone.h"
 #include "subspace/mem/move.h"
-
-namespace sus::num {
-struct usize;
-}
 
 namespace sus::containers {
 
@@ -49,7 +46,7 @@ concept Join = requires(const T& t, const ::sus::num::usize& cap) {
   {
     T::JoinOutputType::with_capacity(cap)
   } -> std::same_as<typename T::JoinOutputType>;
-  requires requires(typename T::JoinOutputType & container, const Sep& sep) {
+  requires requires(typename T::JoinOutputType& container, const Sep& sep) {
     // The output type can be extended by each object of type T.
     { t.join_into(container) } -> std::same_as<void>;
     // The output type can be extended by the separator `Sep`. This method is

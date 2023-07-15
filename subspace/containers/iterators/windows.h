@@ -19,16 +19,14 @@
 /// This struct is created by the `windows()` method on slices.
 
 #include "subspace/iter/iterator_defn.h"
+#include "subspace/iter/iterator_ref.h"
+#include "subspace/lib/__private/forward_decl.h"
+#include "subspace/macros/no_unique_address.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/range.h"
 
 namespace sus::containers {
-
-template <class T>
-class Slice;
-template <class T>
-class SliceMut;
 
 /// An iterator over overlapping subslices of length `size`.
 ///
@@ -94,23 +92,29 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by Slice.
+  // Constructed by Slice, Vec, Array.
   friend class Slice<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
 
-  static constexpr auto with(const Slice<ItemT>& values,
+  static constexpr auto with(::sus::iter::IterRef ref,
+                             const Slice<ItemT>& values,
                              /* TODO: NonZeroUsize*/ usize size) noexcept {
-    return Windows(values, size);
+    return Windows(::sus::move(ref), values, size);
   }
 
-  constexpr Windows(const Slice<ItemT>& values,
+  constexpr Windows(::sus::iter::IterRef ref, const Slice<ItemT>& values,
                     /* TODO: NonZeroUsize*/ usize size) noexcept
-      : v_(values), size_(size) {}
+      : ref_(::sus::move(ref)), v_(values), size_(size) {}
 
+  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
   /* TODO: NonZeroUsize*/ usize size_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
-                                  decltype(size_));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
+                                  decltype(v_), decltype(size_));
 };
 
 /// An iterator over overlapping subslices of length `size`.
@@ -177,23 +181,29 @@ class [[nodiscard]] [[sus_trivial_abi]] WindowsMut final
   // TODO: Impl count(), nth(), last(), nth_back().
 
  private:
-  // Constructed by SliceMut.
+  // Constructed by SliceMut, Vec, Array.
   friend class SliceMut<ItemT>;
+  friend class Vec<ItemT>;
+  template <class ArrayItemT, size_t N>
+    requires(N <= size_t{PTRDIFF_MAX})
+  friend class Array;
 
-  static constexpr auto with(const SliceMut<ItemT>& values,
+  static constexpr auto with(::sus::iter::IterRef ref,
+                             const SliceMut<ItemT>& values,
                              /* TODO: NonZeroUsize*/ usize size) noexcept {
-    return WindowsMut(values, size);
+    return WindowsMut(::sus::move(ref), values, size);
   }
 
-  constexpr WindowsMut(const SliceMut<ItemT>& values,
+  constexpr WindowsMut(::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
                        /* TODO: NonZeroUsize*/ usize size) noexcept
-      : v_(values), size_(size) {}
+      : ref_(::sus::move(ref)), v_(values), size_(size) {}
 
+  [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
   /* TODO: NonZeroUsize*/ usize size_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(v_),
-                                  decltype(size_));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(ref_),
+                                  decltype(v_), decltype(size_));
 };
 
 }  // namespace sus::containers

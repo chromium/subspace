@@ -14,10 +14,7 @@
 
 #pragma once
 
-namespace sus::tuple_type {
-template <class T, class... Ts>
-class Tuple;
-}
+#include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::option::__private {
 

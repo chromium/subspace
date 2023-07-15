@@ -111,3 +111,16 @@
 #define sus_gcc_bug_110245(...)
 #define sus_gcc_bug_110245_else(...) __VA_ARGS__
 #endif
+
+// TODO:
+// https://developercommunity.visualstudio.com/t/MSVC-produces-incorrect-alignment-with-/10416202
+// MSVC will give the struct an incorrect alignment when
+// [[msvc::no_unique_address]] is above an array.
+#if _MSC_VER && !defined(__clang__) && \
+    _MSC_VER <= 1934  // TODO: Get a better version when it's fixed.
+#define sus_msvc_bug_10416202(...) __VA_ARGS__
+#define sus_msvc_bug_10416202_else(...)
+#else
+#define sus_msvc_bug_10416202(...)
+#define sus_msvc_bug_10416202_else(...) __VA_ARGS__
+#endif
