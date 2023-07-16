@@ -51,8 +51,8 @@ jobs:
               artifact: "Linux-GCC.tar.xz",
               os: ubuntu-latest,
               build_type: "Release",
-              cc: "gcc-12",
-              cxx: "g++-12",
+              cc: "gcc-13",
+              cxx: "g++-13",
             }
 
           # Clang doesn't have good enough C++20 support to compile this library
@@ -75,6 +75,15 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 16 all
+
+      - name: Install GCC 13
+        if: matrix.config.name == 'Ubuntu GCC'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
+          sudo apt update
+          sudo apt-get install g++-13
+          # GCC 13 and fmtlib error: https://github.com/fmtlib/fmt/issues/3533
+          echo "CXXFLAGS=$CXXFLAGS -Wno-stringop-overflow" >> $GITHUB_ENV
 
       - name: Install Python3
         if: startsWith(matrix.config.os, 'ubuntu-')
