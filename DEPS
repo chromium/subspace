@@ -7,7 +7,7 @@ vars = {
 
   'buildtools_revision': 'edbefcee3d2cc45cdb0c60c2b01b673f8ba728bc',
   'googletest_revision': 'ec25eea8f8237cf86c30703f59747e42f34b6f75',
-  'fmt_revision': '60fd9941c0dede41165bf4ba5800758a2ba11f59',
+  'fmt_revision': '8e87d3a8bead3f37eb513af093f58a4222f45038',
 }
 
 deps = {
