@@ -1,0 +1,13 @@
+Diagnostics:
+  # Disabled due to C++ concepts bug: https://github.com/llvm/llvm-project/issues/60702
+  UnusedIncludes: None
+  # Disabled since many errors in C++20 that don't match what the compiler produces.
+  Suppress: "*"
+InlayHints:
+  # Disabled due to UDLs getting hints: https://github.com/llvm/llvm-project/issues/63898
+  ParameterNames: No
+  # Disabled due noise in arrays.
+  Designators: No
+  # Disabled due to destroying visual line wrapping, since parameters don't start
+  # on the next line.
+  DeducedTypes: No
