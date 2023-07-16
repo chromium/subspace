@@ -163,7 +163,6 @@ jobs:
               -D CMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
               -G Ninja
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
-              -D SUBSPACE_BUILD_CIR=${HAS_LLVM}
               -D SUBSPACE_BUILD_SUBDOC=${HAS_LLVM}
             RESULT_VARIABLE result
           )
@@ -275,7 +274,6 @@ jobs:
               -G Ninja
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
               -D SUBSPACE_BUILD_TESTS=OFF
-              -D SUBSPACE_BUILD_CIR=OFF
               -D SUBSPACE_BUILD_SUBDOC=ON
             RESULT_VARIABLE result
           )
@@ -319,7 +317,6 @@ jobs:
               -G Ninja
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
               -D SUBSPACE_BUILD_TESTS=ON
-              -D SUBSPACE_BUILD_CIR=OFF
               -D SUBSPACE_BUILD_SUBDOC=ON
             RESULT_VARIABLE result
           )
