@@ -39,3 +39,23 @@ Subspace library in action and test the ergonomics and features of the library.
 Subdoc is still very much a work-in-progress, but it is being used to generate
 [Subspace documentation](https://danakj.github.io/subspace-docs/sus/#Namespaces)
 on each commit.
+
+## Compiler Support
+
+Subspace is a
+[concept-first](https://en.cppreference.com/w/cpp/language/constraints)
+library and requires C++20.
+Compiler support for C++20 varies, and with active development ongoing, bugs in
+their implementations still appear and disappear regularly. When in doubt,
+check out which compiler versions are used by the
+[CI bots](.github/workflows/ci.yml).
+
+| Compiler   | Version |
+|------------|---------|
+| **Clang:** | 16 and up |
+| **GCC**:   | 13 and up (with [-Wno-stringop-overflow](https://github.com/fmtlib/fmt/issues/3533)) |
+| **MSVC**:   | 17.4.2 (not [newer versions](https://github.com/chromium/subspace/issues/267)) |
+
+We attempt to work around bugs when reasonable, to widen compiler version
+support. See [compiler_bugs.h](subspace/macros/__private/compiler_bugs.h) for
+the set of bugs we are aware of and currently work around.
