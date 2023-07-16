@@ -17,7 +17,7 @@
 #include <iosfwd>
 #include <string>
 
-#include "fmt/core.h"
+#include "fmt/format.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/macros/for_each.h"
 
@@ -105,7 +105,7 @@ S& format_to_stream(S& os, const std::basic_string<Char>& s) {
     sus_if_not_gcc(const Type __VA_OPT__(<__VA_ARGS__>)& value)                \
   ) {                                                                          \
     static_assert(fmt::is_formattable<Type __VA_OPT__(<__VA_ARGS__>)>::value); \
-    return format_to_stream(stream, fmt::format("{}", value));                 \
+    return format_to_stream(stream, fmt::to_string(value));                    \
   }                                                                            \
   }
 // clang-format on
