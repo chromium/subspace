@@ -130,8 +130,8 @@ class Array final {
   constexpr Array& operator=(Array&& o) noexcept
     requires(::sus::mem::Move<T>)
   {
-    //::sus::check(!has_iterators());
-    //::sus::check(!o.has_iterators());
+    ::sus::check(!has_iterators());
+    ::sus::check(!o.has_iterators());
     for (auto i = size_t{0}; i < N; ++i)
       storage_.data_[i] = ::sus::mem::take(mref(o.storage_.data_[i]));
     storage_.iter_refs_ = o.storage_.iter_refs_.take_for_owner();
