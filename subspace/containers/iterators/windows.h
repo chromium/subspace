@@ -96,8 +96,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   static constexpr auto with(::sus::iter::IterRef ref,
                              const Slice<ItemT>& values,
@@ -185,8 +184,7 @@ class [[nodiscard]] [[sus_trivial_abi]] WindowsMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   static constexpr auto with(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
