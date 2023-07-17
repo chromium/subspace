@@ -621,8 +621,6 @@ TEST(Iterator, Cloned) {
 }
 
 TEST(Iterator, Copied) {
-  static usize clone_called;
-
   auto copying = sus::Vec<usize>::with(1u, 2u);
 
   // Clone from references.
