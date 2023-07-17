@@ -2,6 +2,7 @@ docs
 out
 .cache
 .vscode/c_cpp_properties.json
+.vscode/settings.json
 .gclient_previous_sync_commits
 .gclient_entries
 third_party/buildtools/
