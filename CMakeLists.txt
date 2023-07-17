@@ -42,6 +42,12 @@ message(STATUS "Build subdoc: ${SUBSPACE_BUILD_SUBDOC}")
 function(subspace_default_compile_options TARGET)
     if(MSVC)
         target_compile_options(${TARGET} PUBLIC /Zc:preprocessor /wd5105)
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+            # See subdoc/lib/run.cc, these are needed to have clang-cl parse Subspace.
+            target_compile_options(${TARGET} PUBLIC /D_CRT_USE_BUILTIN_OFFSETOF)
+            target_compile_options(${TARGET} PUBLIC /D__cpp_consteval)
+            target_compile_options(${TARGET} PUBLIC /w)
+        endif()
     else()
         # LLVM is built without RTTI by default, and we need to match it.
         target_compile_options(${TARGET} PUBLIC -fno-rtti)
