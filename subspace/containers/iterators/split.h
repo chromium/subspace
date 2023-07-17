@@ -169,8 +169,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
@@ -298,8 +297,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
@@ -435,8 +433,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   static constexpr auto with(
       ::sus::iter::IterRef ref, const Slice<ItemT>& values,
@@ -561,8 +558,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   static constexpr auto with(
       ::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
@@ -624,8 +620,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplit final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
@@ -681,8 +676,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
@@ -735,8 +729,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitN final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   static constexpr auto with(Split<ItemT>&& split, usize n) noexcept {
     return SplitN(::sus::move(split), n);
@@ -783,8 +776,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   static constexpr auto with(SplitMut<ItemT>&& split, usize n) noexcept {
     return SplitNMut(::sus::move(split), n);
@@ -832,8 +824,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   static constexpr auto with(RSplit<ItemT>&& split, usize n) noexcept {
     return RSplitN(::sus::move(split), n);
@@ -881,8 +872,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitNMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    requires(N <= size_t{PTRDIFF_MAX})
-  friend class Array;
+    friend class Array;
 
   static constexpr auto with(RSplitMut<ItemT>&& split, usize n) noexcept {
     return RSplitNMut(::sus::move(split), n);

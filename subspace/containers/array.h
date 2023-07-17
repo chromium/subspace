@@ -39,6 +39,7 @@
 #include "subspace/mem/move.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/num/num_concepts.h"
+#include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/eq.h"
 #include "subspace/ops/ord.h"
@@ -67,8 +68,8 @@ struct Storage<T, 0> final {};
 /// An Array can not be larger than `isize::MAX`, as subtracting a pointer at a
 /// greater distance results in Undefined Behaviour.
 template <class T, size_t N>
-  requires(N <= size_t{PTRDIFF_MAX})
 class Array final {
+  static_assert(N <= usize::from(isize::MAX));
   static_assert(!std::is_reference_v<T>,
                 "Array<T&, N> is invalid as Array must hold value types. Use "
                 "Array<T*, N> instead.");
