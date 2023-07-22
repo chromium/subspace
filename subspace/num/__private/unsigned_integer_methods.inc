@@ -23,6 +23,7 @@
 // Define `_self` to the name of the integer type.
 // Define `_primitive` to the primitive it holds inside.
 // Define `_signed` to the signed integer type of the same size.
+// Define `_pointer` to true if the type is `uptr` or false otherwise.
 ///////////////////////////////////////////////////////////////////////////
 
 /// The inner primitive value, in case it needs to be unwrapped from the type.
@@ -37,18 +38,67 @@ static constexpr auto MIN_PRIMITIVE = __private::min_value<_primitive>();
 static constexpr auto MAX_PRIMITIVE = __private::max_value<_primitive>();
 /// The smallest value that can be represented by this integer type.
 static const _self MIN;
+
+#if _pointer
+/// The largest address, the same value as `usize::MAX` but represented as a
+/// `uptr`.
+static const _self MAX_ADDR;
+/// The largest value that can be represented by this integer type, if the size
+/// of a pointer is larger than the size of an address, this value will be
+/// larger than `MAX_ADDR` and will always be the maximum value for the integer
+/// type.
+static const _self MAX_BIT_PATTERN;
+#else
 /// The largest value that can be represented by this integer type.
 static const _self MAX;
+#endif
+
 /// The size of this integer type in bits.
 static const u32 BITS;
 
 /// Default constructor, which sets the integer to 0.
 ///
-/// The trivial copy and move constructors are implicitly declared, as is the
-/// trivial destructor.
-///
 /// #[doc.overloads=ctor.default]
 constexpr inline _self() noexcept = default;
+
+#if _pointer  // Pointers need pointer provenance to be constructed.
+
+/// Construction from a pointer.
+///
+/// #[doc.overloads=ctor.unsigned.pointer]
+template <class T>
+explicit _self(T* v) noexcept
+    : primitive_value(reinterpret_cast<_primitive>(v)) {}
+
+/// Construction from a null pointer.
+///
+/// This produces the same value as the default constructor.
+///
+/// #[doc.overloads=ctor.unsigned.nullptr]
+explicit constexpr _self(std::nullptr_t) noexcept : primitive_value(0u) {}
+
+/// Construction from unsigned types of the same size as a pointer.
+///
+/// The construction of a `uptr` from an integer must be explicit, unlike for
+/// other integer types.
+///
+/// #[doc.overloads=ctor.unsigned.ptrsized]
+template <Unsigned U>
+  requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
+explicit constexpr inline _self(U v) noexcept
+    : primitive_value(v.primitive_value) {}
+
+/// Construction from unsigned primitive types the same size as a pointer.
+///
+/// The construction of a `uptr` from a primitive integer must be explicit,
+/// unlike for other integer types.
+///
+/// #[doc.overloads=ctor.unsigned.ptrsized.primitive]
+template <UnsignedPrimitiveInteger P>
+  requires(::sus::mem::size_of<P>() == ::sus::mem::size_of<_primitive>())
+explicit constexpr inline _self(P v) noexcept : primitive_value(v) {}
+
+#else
 
 /// Construction from unsigned types where no bits are lost.
 ///
@@ -78,6 +128,51 @@ template <UnsignedPrimitiveEnumClass P>
   requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<_primitive>())
 explicit constexpr inline _self(P v) noexcept
     : primitive_value(static_cast<_primitive>(v)) {}
+
+#endif
+
+#if _pointer  // Pointers need pointer provenance to be constructed.
+
+/// Assignment from a pointer.
+///
+/// #[doc.overloads=assign.unsigned.pointer]
+template <class T>
+_self& operator=(T* v) noexcept {
+  primitive_value = reinterpret_cast<_primitive>(v);
+  return *this;
+}
+
+/// Assignment from a null pointer.
+///
+/// This sets the `uptr` to the same value as the default constructor.
+///
+/// #[doc.overloads=assign.unsigned.nullptr]
+constexpr _self& operator=(std::nullptr_t) noexcept {
+  primitive_value = 0u;
+  return *this;
+}
+
+/// Assignment from unsigned types with the same size as a pointer.
+///
+/// #[doc.overloads=assign.unsigned.small.typed]
+template <Unsigned U>
+  requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
+constexpr inline _self& operator=(U v) noexcept {
+  primitive_value = v.primitive_value;
+  return *this;
+}
+
+/// Assignment from unsigned primitive types with the same size as a pointer.
+///
+/// #[doc.overloads=assign.unsigned.small.primitive]
+template <UnsignedPrimitiveInteger P>
+  requires(::sus::mem::size_of<P>() == ::sus::mem::size_of<_primitive>())
+constexpr inline _self& operator=(P v) noexcept {
+  primitive_value = v;
+  return *this;
+}
+
+#else
 
 /// Assignment from unsigned types where no bits are lost.
 ///
@@ -109,6 +204,143 @@ constexpr inline _self& operator=(P v) noexcept {
   return *this;
 }
 
+#endif
+
+#if _pointer
+
+/// Creates a new pointer with the given address.
+///
+/// This converts the address into a pointer-sized integer, but copies the
+/// address-space and provenance of the current `uptr`'s value to the new
+/// pointer. This allows us to dynamically preserve and propagate this important
+/// information in a way that is otherwise impossible with a cast.
+_self with_addr(usize addr) const& noexcept {
+  _primitive p = _primitive{addr};
+  if constexpr (::sus::mem::size_of<_self>() != ::sus::mem::size_of<usize>()) {
+    constexpr _primitive mask =
+        _self::MAX_PRIMITIVE - _primitive{usize::MAX_PRIMITIVE};
+    p |= mask & primitive_value;
+  }
+  return _self(p);
+}
+
+/// Constructs a _self from a pointer.
+///
+/// #[doc.overloads=uptr.from.pointer]
+template <class U>
+sus_pure static _self from(U* u) {
+  return _self(reinterpret_cast<_primitive>(u));
+}
+
+/// Tries to construct a _self from a pointer.
+///
+/// This operation can not fail, so it always returns success.
+///
+/// #[doc.overloads=uptr.tryfrom.pointer]
+template <class U>
+sus_pure static constexpr ::sus::result::Result<_self,
+                                                ::sus::num::TryFromIntError>
+try_from(U* u);
+
+/// Constructs a _self from an unsigned integer type (u8, u16, u32, etc)  with
+/// the same size as a pointer.
+///
+/// #[doc.overloads=unsigned.from.unsigned]
+template <Unsigned U>
+  requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
+sus_pure static constexpr _self from(U u) noexcept {
+  if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)
+    ::sus::check(u.primitive_value <= MAX_PRIMITIVE);
+  return _self(static_cast<_primitive>(u.primitive_value));
+}
+
+/// Tries to construct a _self from an unsigned integer type (u8, u16, u32,
+/// etc) with the same size as a pointer.
+///
+/// As the input has the same size, this function can not return an error.
+///
+/// #[doc.overloads=unsigned.tryfrom.unsigned]
+template <Unsigned U>
+  requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
+sus_pure static constexpr ::sus::result::Result<_self,
+                                                ::sus::num::TryFromIntError>
+try_from(U u) noexcept;
+
+/// Constructs a _self from an unsigned primitive integer type (unsigned
+/// int, unsigned long, etc) with the same size as a pointer.
+///
+/// #[doc.overloads=unsigned.from.unsignedprimitive]
+template <UnsignedPrimitiveInteger U>
+  requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
+sus_pure static constexpr _self from(U u) {
+  if constexpr (MAX_PRIMITIVE < __private::max_value<U>())
+    ::sus::check(u <= MAX_PRIMITIVE);
+  return _self(static_cast<_primitive>(u));
+}
+
+/// Construct a _self from an unsigned primitive integer type
+/// (unsigned int, unsigned long, etc) with the same size as a pointer.
+///
+/// As the input has the same size, this function can not return an error.
+///
+/// #[doc.overloads=unsigned.tryfrom.unsignedprimitive]
+template <UnsignedPrimitiveInteger U>
+  requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
+sus_pure static constexpr ::sus::result::Result<_self,
+                                                ::sus::num::TryFromIntError>
+try_from(U u);
+
+#else
+
+/// Constructs a _self from an unsigned integer type (u8, u16, u32, etc).
+///
+/// # Panics
+/// The function will panic if the input value is out of range for _self.
+///
+/// #[doc.overloads=unsigned.from.unsigned]
+template <Unsigned U>
+sus_pure static constexpr _self from(U u) noexcept {
+  if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)
+    ::sus::check(u.primitive_value <= MAX_PRIMITIVE);
+  return _self(static_cast<_primitive>(u.primitive_value));
+}
+
+/// Tries to construct a _self from an unsigned integer type (u8, u16, u32,
+/// etc).
+///
+/// Returns an error if the source value is outside of the range of _self.
+///
+/// #[doc.overloads=unsigned.tryfrom.unsigned]
+template <Unsigned U>
+sus_pure static constexpr ::sus::result::Result<_self,
+                                                ::sus::num::TryFromIntError>
+try_from(U u) noexcept;
+
+/// Constructs a _self from an unsigned primitive integer type (unsigned
+/// int, unsigned long, etc).
+///
+/// # Panics
+/// The function will panic if the input value is out of range for _self.
+///
+/// #[doc.overloads=unsigned.from.unsignedprimitive]
+template <UnsignedPrimitiveInteger U>
+sus_pure static constexpr _self from(U u) {
+  if constexpr (MAX_PRIMITIVE < __private::max_value<U>())
+    ::sus::check(u <= MAX_PRIMITIVE);
+  return _self(static_cast<_primitive>(u));
+}
+
+/// Tries to construct a _self from an unsigned primitive integer type
+/// (unsigned int, unsigned long, etc).
+///
+/// Returns an error if the source value is outside of the range of _self.
+///
+/// #[doc.overloads=unsigned.tryfrom.unsignedprimitive]
+template <UnsignedPrimitiveInteger U>
+sus_pure static constexpr ::sus::result::Result<_self,
+                                                ::sus::num::TryFromIntError>
+try_from(U u);
+
 /// Constructs a _self from a signed integer type (i8, i16, i32, etc).
 ///
 /// # Panics
@@ -134,30 +366,6 @@ template <Signed S>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(S s) noexcept;
-
-/// Constructs a _self from an unsigned integer type (u8, u16, u32, etc).
-///
-/// # Panics
-/// The function will panic if the input value is out of range for _self.
-///
-/// #[doc.overloads=unsigned.from.unsigned]
-template <Unsigned U>
-sus_pure static constexpr _self from(U u) noexcept {
-  if constexpr (MAX_PRIMITIVE < U::MAX_PRIMITIVE)
-    ::sus::check(u.primitive_value <= MAX_PRIMITIVE);
-  return _self(static_cast<_primitive>(u.primitive_value));
-}
-
-/// Tries to construct a _self from an unsigned integer type (u8, u16, u32,
-/// etc).
-///
-/// Returns an error if the source value is outside of the range of _self.
-///
-/// #[doc.overloads=unsigned.tryfrom.unsigned]
-template <Unsigned U>
-sus_pure static constexpr ::sus::result::Result<_self,
-                                                ::sus::num::TryFromIntError>
-try_from(U u) noexcept;
 
 /// Constructs a _self from a signed primitive integer type (int, long,
 /// etc).
@@ -214,31 +422,6 @@ template <class S>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
 try_from(S s);
-
-/// Constructs a _self from an unsigned primitive integer type (unsigned
-/// int, unsigned long, etc).
-///
-/// # Panics
-/// The function will panic if the input value is out of range for _self.
-///
-/// #[doc.overloads=unsigned.from.unsignedprimitive]
-template <UnsignedPrimitiveInteger U>
-sus_pure static constexpr _self from(U u) {
-  if constexpr (MAX_PRIMITIVE < __private::max_value<U>())
-    ::sus::check(u <= MAX_PRIMITIVE);
-  return _self(static_cast<_primitive>(u));
-}
-
-/// Tries to construct a _self from an unsigned primitive integer type
-/// (unsigned int, unsigned long, etc).
-///
-/// Returns an error if the source value is outside of the range of _self.
-///
-/// #[doc.overloads=unsigned.tryfrom.unsignedprimitive]
-template <UnsignedPrimitiveInteger U>
-sus_pure static constexpr ::sus::result::Result<_self,
-                                                ::sus::num::TryFromIntError>
-try_from(U u);
 
 /// Constructs a _self from an unsigned enum type (or enum class).
 ///
@@ -309,6 +492,8 @@ sus_pure static constexpr _self from_unchecked(::sus::marker::UnsafeFnMarker,
   return _self(static_cast<_primitive>(p));
 }
 
+#endif
+
 /// Constructs a ##_self## from an `Iterator` by computing the product of all
 /// elements in the iterator.
 ///
@@ -347,6 +532,15 @@ static constexpr _self from_sum(
   return p;
 }
 
+#if _pointer
+
+template <std::same_as<uintptr_t> U>
+sus_pure constexpr inline explicit operator U() const {
+  return static_cast<uintptr_t>(primitive_value);
+}
+
+#else
+
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline explicit operator U() const {
@@ -357,6 +551,8 @@ template <SignedPrimitiveInteger U>
 sus_pure constexpr inline explicit operator U() const {
   return primitive_value;
 }
+
+#endif
 
 /// sus::ops::Eq<##_self##> trait.
 /// #[doc.overloads=uint.eq.self]
@@ -402,7 +598,7 @@ template <Unsigned U>
 
 /// sus::num::BitNot trait.
 sus_pure constexpr inline _self operator~() const& noexcept {
-  return __private::unchecked_not(primitive_value);
+  return _self(__private::unchecked_not(primitive_value));
 }
 
 /// sus::num::Add<##_self##> trait.
@@ -414,7 +610,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
       __private::add_with_overflow(l.primitive_value, r.primitive_value);
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(!out.overflow);
-  return out.value;
+  return _self(out.value);
 }
 /// sus::num::Sub<##_self##> trait.
 ///
@@ -425,7 +621,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
       __private::sub_with_overflow(l.primitive_value, r.primitive_value);
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(!out.overflow);
-  return out.value;
+  return _self(out.value);
 }
 /// sus::num::Mul<##_self##> trait.
 ///
@@ -436,7 +632,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
       __private::mul_with_overflow(l.primitive_value, r.primitive_value);
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(!out.overflow);
-  return out.value;
+  return _self(out.value);
 }
 /// sus::num::Div<##_self##> trait.
 ///
@@ -445,7 +641,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
     const _self& l, const _self& r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
-  return __private::unchecked_div(l.primitive_value, r.primitive_value);
+  return _self(__private::unchecked_div(l.primitive_value, r.primitive_value));
 }
 /// sus::num::Rem<##_self##> trait.
 ///
@@ -454,7 +650,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
     const _self& l, const _self& r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
-  return __private::unchecked_rem(l.primitive_value, r.primitive_value);
+  return _self(__private::unchecked_rem(l.primitive_value, r.primitive_value));
 }
 
 /// sus::num::BitAnd<##_self##> trait.
@@ -462,21 +658,21 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 /// #[doc.overloads=uint##_self##.&]
 [[nodiscard]] sus_pure friend constexpr inline _self operator&(
     const _self& l, const _self& r) noexcept {
-  return __private::unchecked_and(l.primitive_value, r.primitive_value);
+  return _self(__private::unchecked_and(l.primitive_value, r.primitive_value));
 }
 /// sus::num::BitOr<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##.|]
 [[nodiscard]] sus_pure friend constexpr inline _self operator|(
     const _self& l, const _self& r) noexcept {
-  return __private::unchecked_or(l.primitive_value, r.primitive_value);
+  return _self(__private::unchecked_or(l.primitive_value, r.primitive_value));
 }
 /// sus::num::BitXor<##_self##> trait.
 ///
 /// #[doc.overloads=uint##_self##.^]
 [[nodiscard]] sus_pure friend constexpr inline _self operator^(
     const _self& l, const _self& r) noexcept {
-  return __private::unchecked_xor(l.primitive_value, r.primitive_value);
+  return _self(__private::unchecked_xor(l.primitive_value, r.primitive_value));
 }
 /// sus::num::Shl trait.
 ///
@@ -485,7 +681,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
     const _self& l, const u32& r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r < BITS);
-  return __private::unchecked_shl(l.primitive_value, r.primitive_value);
+  return _self(__private::unchecked_shl(l.primitive_value, r.primitive_value));
 }
 /// sus::num::Shr trait.
 ///
@@ -494,7 +690,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
     const _self& l, const u32& r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r < BITS);
-  return __private::unchecked_shr(l.primitive_value, r.primitive_value);
+  return _self(__private::unchecked_shr(l.primitive_value, r.primitive_value));
 }
 
 /// sus::num::AddAssign<##_self##> trait.
@@ -562,9 +758,9 @@ constexpr inline void operator>>=(const u32& r) & noexcept {
 /// Computes the absolute difference between self and other.
 sus_pure constexpr _self abs_diff(const _self& r) const& noexcept {
   if (primitive_value >= r.primitive_value)
-    return __private::unchecked_sub(primitive_value, r.primitive_value);
+    return _self(__private::unchecked_sub(primitive_value, r.primitive_value));
   else
-    return __private::unchecked_sub(r.primitive_value, primitive_value);
+    return _self(__private::unchecked_sub(r.primitive_value, primitive_value));
 }
 
 /// Checked integer addition. Computes self + rhs, returning None if overflow
@@ -572,11 +768,15 @@ sus_pure constexpr _self abs_diff(const _self& r) const& noexcept {
 sus_pure constexpr ::sus::option::Option<_self> checked_add(
     const _self& rhs) const& noexcept;
 
+#if !_pointer
+
 /// Checked integer addition with an unsigned rhs. Computes self + rhs,
 /// returning None if overflow occurred.
 template <std::convertible_to<_signed> S>
 sus_pure constexpr ::sus::option::Option<_self> checked_add_signed(
     const S& rhs) const& noexcept;
+
+#endif
 
 /// Calculates self + rhs
 ///
@@ -585,6 +785,8 @@ sus_pure constexpr ::sus::option::Option<_self> checked_add_signed(
 /// wrapped value is returned.
 sus_pure constexpr sus::tuple_type::Tuple<_self, bool> overflowing_add(
     const _self& rhs) const& noexcept;
+
+#if !_pointer
 
 /// Calculates self + rhs with an unsigned rhs
 ///
@@ -595,11 +797,15 @@ template <std::convertible_to<_signed> S>
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_add_signed(
     const S& rhs) const& noexcept;
 
+#endif
+
 /// Saturating integer addition. Computes self + rhs, saturating at the numeric
 /// bounds instead of overflowing.
 sus_pure constexpr _self saturating_add(const _self& rhs) const& noexcept {
-  return __private::saturating_add(primitive_value, rhs.primitive_value);
+  return _self(__private::saturating_add(primitive_value, rhs.primitive_value));
 }
+
+#if !_pointer
 
 /// Saturating integer addition with an unsigned rhs. Computes self + rhs,
 /// saturating at the numeric bounds instead of overflowing.
@@ -619,6 +825,8 @@ sus_pure constexpr _self saturating_add_signed(const S& rhs) const& noexcept {
   }
 }
 
+#endif
+
 /// Unchecked integer addition. Computes self + rhs, assuming overflow cannot
 /// occur.
 ///
@@ -628,14 +836,16 @@ sus_pure constexpr _self saturating_add_signed(const S& rhs) const& noexcept {
 /// would return None.
 sus_pure inline constexpr _self unchecked_add(
     ::sus::marker::UnsafeFnMarker, const _self& rhs) const& noexcept {
-  return __private::unchecked_add(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_add(primitive_value, rhs.primitive_value));
 }
 
 /// Wrapping (modular) addition. Computes self + rhs, wrapping around at the
 /// boundary of the type.
 sus_pure constexpr _self wrapping_add(const _self& rhs) const& noexcept {
-  return __private::wrapping_add(primitive_value, rhs.primitive_value);
+  return _self(__private::wrapping_add(primitive_value, rhs.primitive_value));
 }
+
+#if !_pointer
 
 /// Wrapping (modular) addition with an unsigned rhs. Computes self + rhs,
 /// wrapping around at the boundary of the type.
@@ -645,6 +855,8 @@ sus_pure constexpr _self wrapping_add_signed(const S& rhs) const& noexcept {
                                              rhs.primitive_value)
       .value;
 }
+
+#endif
 
 /// Checked integer division. Computes self / rhs, returning None if `rhs == 0`.
 sus_pure constexpr ::sus::option::Option<_self> checked_div(
@@ -669,7 +881,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div(
 sus_pure constexpr _self saturating_div(const _self& rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return __private::unchecked_div(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
 /// Wrapping (modular) division. Computes self / rhs. Wrapped division on
@@ -682,7 +894,7 @@ sus_pure constexpr _self saturating_div(const _self& rhs) const& noexcept {
 sus_pure constexpr _self wrapping_div(const _self& rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return __private::unchecked_div(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
 /// Checked integer multiplication. Computes `self * rhs`, returning None if
@@ -701,7 +913,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_mul(
 /// Saturating integer multiplication. Computes `self * rhs`, saturating at the
 /// numeric bounds instead of overflowing.
 sus_pure constexpr _self saturating_mul(const _self& rhs) const& noexcept {
-  return __private::saturating_mul(primitive_value, rhs.primitive_value);
+  return _self(__private::saturating_mul(primitive_value, rhs.primitive_value));
 }
 
 /// Unchecked integer multiplication. Computes `self * rhs`, assuming overflow
@@ -713,13 +925,13 @@ sus_pure constexpr _self saturating_mul(const _self& rhs) const& noexcept {
 /// would return None.
 sus_pure constexpr _self unchecked_mul(::sus::marker::UnsafeFnMarker,
                                        const _self& rhs) const& noexcept {
-  return __private::unchecked_mul(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_mul(primitive_value, rhs.primitive_value));
 }
 
 /// Wrapping (modular) multiplication. Computes self * rhs, wrapping around
 /// at the boundary of the type.
 sus_pure constexpr _self wrapping_mul(const _self& rhs) const& noexcept {
-  return __private::wrapping_mul(primitive_value, rhs.primitive_value);
+  return _self(__private::wrapping_mul(primitive_value, rhs.primitive_value));
 }
 
 /// Checked negation. Computes -self, returning None unless `self == 0`.
@@ -776,7 +988,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem(
 sus_pure constexpr _self wrapping_rem(const _self& rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return __private::unchecked_rem(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
 
 /// Performs Euclidean division.
@@ -789,7 +1001,7 @@ sus_pure constexpr _self wrapping_rem(const _self& rhs) const& noexcept {
 sus_pure constexpr _self div_euclid(const _self& rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return __private::unchecked_div(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
 /// Checked Euclidean division. Computes self.div_euclid(rhs), returning
@@ -823,7 +1035,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_div_euclid(
 sus_pure constexpr _self wrapping_div_euclid(const _self& rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return __private::unchecked_div(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_div(primitive_value, rhs.primitive_value));
 }
 
 /// Calculates the least remainder of self (mod rhs).
@@ -836,7 +1048,7 @@ sus_pure constexpr _self wrapping_div_euclid(const _self& rhs) const& noexcept {
 sus_pure constexpr _self rem_euclid(const _self& rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return __private::unchecked_rem(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
 
 /// Checked Euclidean modulo. Computes self.rem_euclid(rhs), returning None if
@@ -870,7 +1082,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_rem_euclid(
 sus_pure constexpr _self wrapping_rem_euclid(const _self& rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return __private::unchecked_rem(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_rem(primitive_value, rhs.primitive_value));
 }
 
 /// Checked shift left. Computes `*this << rhs`, returning None if rhs is
@@ -897,8 +1109,8 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
 /// integer types all implement a rotate_left function, which may be what you
 /// want instead.
 sus_pure constexpr _self wrapping_shl(const u32& rhs) const& noexcept {
-  return __private::shl_with_overflow(primitive_value, rhs.primitive_value)
-      .value;
+  return _self(
+      __private::shl_with_overflow(primitive_value, rhs.primitive_value).value);
 }
 
 /// Checked shift right. Computes `*this >> rhs`, returning None if rhs is
@@ -925,8 +1137,8 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
 /// integer types all implement a rotate_right function, which may be what you
 /// want instead.
 sus_pure constexpr _self wrapping_shr(const u32& rhs) const& noexcept {
-  return __private::shr_with_overflow(primitive_value, rhs.primitive_value)
-      .value;
+  return _self(
+      __private::shr_with_overflow(primitive_value, rhs.primitive_value).value);
 }
 
 /// Checked integer subtraction. Computes self - rhs, returning None if overflow
@@ -945,7 +1157,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_sub(
 /// Saturating integer subtraction. Computes self - rhs, saturating at the
 /// numeric bounds instead of overflowing.
 sus_pure constexpr _self saturating_sub(const _self& rhs) const& {
-  return __private::saturating_sub(primitive_value, rhs.primitive_value);
+  return _self(__private::saturating_sub(primitive_value, rhs.primitive_value));
 }
 
 /// Unchecked integer subtraction. Computes self - rhs, assuming overflow cannot
@@ -957,13 +1169,13 @@ sus_pure constexpr _self saturating_sub(const _self& rhs) const& {
 /// `checked_sub()` would return None.
 sus_pure constexpr _self unchecked_sub(::sus::marker::UnsafeFnMarker,
                                        const _self& rhs) const& noexcept {
-  return __private::unchecked_sub(primitive_value, rhs.primitive_value);
+  return _self(__private::unchecked_sub(primitive_value, rhs.primitive_value));
 }
 
 /// Wrapping (modular) subtraction. Computes self - rhs, wrapping around at the
 /// boundary of the type.
 sus_pure constexpr _self wrapping_sub(const _self& rhs) const& noexcept {
-  return __private::wrapping_sub(primitive_value, rhs.primitive_value);
+  return _self(__private::wrapping_sub(primitive_value, rhs.primitive_value));
 }
 
 /// Returns the number of ones in the binary representation of the current
@@ -1006,7 +1218,7 @@ sus_pure constexpr u32 trailing_zeros() const& noexcept {
 /// the most significant bit, second least-significant bit becomes second
 /// most-significant bit, etc.
 sus_pure constexpr _self reverse_bits() const& noexcept {
-  return __private::reverse_bits(primitive_value);
+  return _self(__private::reverse_bits(primitive_value));
 }
 
 /// Shifts the bits to the left by a specified amount, `n`, wrapping the
@@ -1014,7 +1226,7 @@ sus_pure constexpr _self reverse_bits() const& noexcept {
 ///
 /// Please note this isn't the same operation as the `<<` shifting operator!
 sus_pure constexpr _self rotate_left(const u32& n) const& noexcept {
-  return __private::rotate_left(primitive_value, n.primitive_value);
+  return _self(__private::rotate_left(primitive_value, n.primitive_value));
 }
 
 /// Shifts the bits to the right by a specified amount, n, wrapping the
@@ -1022,12 +1234,12 @@ sus_pure constexpr _self rotate_left(const u32& n) const& noexcept {
 ///
 /// Please note this isn't the same operation as the >> shifting operator!
 sus_pure constexpr _self rotate_right(const u32& n) const& noexcept {
-  return __private::rotate_right(primitive_value, n.primitive_value);
+  return _self(__private::rotate_right(primitive_value, n.primitive_value));
 }
 
 /// Reverses the byte order of the integer.
 sus_pure constexpr _self swap_bytes() const& noexcept {
-  return __private::swap_bytes(primitive_value);
+  return _self(__private::swap_bytes(primitive_value));
 }
 
 /// Raises self to the power of `exp`, using exponentiation by squaring.
@@ -1036,7 +1248,7 @@ sus_pure constexpr _self pow(const u32& rhs) const& noexcept {
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(!out.overflow);
-  return out.value;
+  return _self(out.value);
 }
 
 /// Checked exponentiation. Computes `##_self##::pow(exp)`, returning None if
@@ -1054,7 +1266,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_pow(
 /// Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping around
 /// at the boundary of the type.
 sus_pure constexpr _self wrapping_pow(const u32& exp) const& noexcept {
-  return __private::wrapping_pow(primitive_value, exp.primitive_value);
+  return _self(__private::wrapping_pow(primitive_value, exp.primitive_value));
 }
 
 /// Returns the base 2 logarithm of the number, rounded down.
@@ -1217,6 +1429,21 @@ to_ne_bytes() const& noexcept;
     const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
+#if _pointer
+
+/// Returns the address portion of the pointer.
+///
+/// In most systems the address is the entire pointer, but in cases where the
+/// pointer is larger, this returns the low bits of the pointer up to the size
+/// of an address.
+sus_pure constexpr usize addr() const& noexcept {
+  return static_cast<decltype(std::declval<usize>().primitive_value)>(
+      primitive_value);
+}
+
+#endif
+
 #undef _self
 #undef _primitive
 #undef _signed
+#undef _pointer

@@ -22,11 +22,19 @@
 //
 // Define `_self` to the name of the integer type.
 // Define `_primitive` to the primitive it holds inside.
+// Define `_pointer` to true if the type is `uptr` or false otherwise.
 ///////////////////////////////////////////////////////////////////////////
 
 inline constexpr _self _self::MIN = _self(_self::MIN_PRIMITIVE);
+
+#if _pointer
+inline constexpr _self _self::MAX_BIT_PATTERN = _self(_self::MAX_PRIMITIVE);
+#else
 inline constexpr _self _self::MAX = _self(_self::MAX_PRIMITIVE);
+#endif
+
 inline constexpr u32 _self::BITS = u32(__private::num_bits<_primitive>());
 
 #undef _self
 #undef _primitive
+#undef _pointer

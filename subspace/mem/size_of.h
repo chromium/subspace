@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 #include "subspace/macros/inline.h"
 #include "subspace/macros/pure.h"
 #include "subspace/mem/__private/data_size_finder.h"

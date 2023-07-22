@@ -39,6 +39,6 @@
 #include "subspace/num/__private/signed_integer_methods_impl.inc"
 
 #define _self isize
-#define _primitive ::sus::num::__private::ptr_type<>::signed_type
+#define _primitive ::sus::num::__private::addr_type<>::signed_type
 #define _unsigned usize
 #include "subspace/num/__private/signed_integer_methods_impl.inc"

@@ -23,8 +23,8 @@
 namespace sus::num::__private::int_log10 {
 
 // 0 < val < 100_000
-sus_pure_const sus_always_inline constexpr uint32_t
-less_than_5(uint32_t val) noexcept {
+sus_pure_const sus_always_inline constexpr uint32_t less_than_5(
+    uint32_t val) noexcept {
   // Similar to u8, when adding one of these constants to val,
   // we get two possible bit patterns above the low 17 bits,
   // depending on whether val is below or above the threshold.
@@ -77,13 +77,23 @@ sus_pure_const sus_always_inline constexpr uint32_t u64(uint64_t val) noexcept {
   return log + less_than_5(static_cast<uint32_t>(val));
 }
 
-sus_pure_const sus_always_inline constexpr uint32_t
-usize(uint32_t val) noexcept {
+sus_pure_const sus_always_inline constexpr uint32_t usize(
+    uint32_t val) noexcept {
   return u32(val);
 }
 
-sus_pure_const sus_always_inline constexpr uint32_t
-usize(uint64_t val) noexcept {
+sus_pure_const sus_always_inline constexpr uint32_t usize(
+    uint64_t val) noexcept {
+  return u64(val);
+}
+
+sus_pure_const sus_always_inline constexpr uint32_t uptr(
+    uint32_t val) noexcept {
+  return u32(val);
+}
+
+sus_pure_const sus_always_inline constexpr uint32_t uptr(
+    uint64_t val) noexcept {
   return u64(val);
 }
 
@@ -103,8 +113,8 @@ sus_pure_const sus_always_inline constexpr uint32_t i64(int64_t val) noexcept {
   return u64(static_cast<uint64_t>(val));
 }
 
-sus_pure_const sus_always_inline constexpr uint32_t
-isize(int32_t val) noexcept {
+sus_pure_const sus_always_inline constexpr uint32_t isize(
+    int32_t val) noexcept {
   return usize(static_cast<uint32_t>(val));
 }
 

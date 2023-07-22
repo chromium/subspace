@@ -14,9 +14,12 @@
 
 #pragma once
 
+#include <stddef.h>
+
 #include "subspace/mem/size_of.h"
 
 namespace sus::num::__private {
+
 template <unsigned int bytes = ::sus::mem::size_of<void*>()>
 struct ptr_type;
 
@@ -28,6 +31,21 @@ struct ptr_type<4> {
 
 template <>
 struct ptr_type<8> {
+  using unsigned_type = uint64_t;
+  using signed_type = int64_t;
+};
+
+template <unsigned int bytes = ::sus::mem::size_of<size_t>()>
+struct addr_type;
+
+template <>
+struct addr_type<4> {
+  using unsigned_type = uint32_t;
+  using signed_type = int32_t;
+};
+
+template <>
+struct addr_type<8> {
   using unsigned_type = uint64_t;
   using signed_type = int64_t;
 };

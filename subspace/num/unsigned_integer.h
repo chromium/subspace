@@ -33,7 +33,7 @@
 #include "subspace/num/__private/int_log10.h"
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/__private/literals.h"
-#include "subspace/num/__private/ptr_type.h"
+#include "subspace/num/__private/primitive_type.h"
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/try_from_int_error.h"
 #include "subspace/string/__private/format_to_stream.h"
@@ -45,44 +45,52 @@ namespace sus::num {
 /// A 32-bit unsigned integer.
 struct [[sus_trivial_abi]] u32 final {
 #define _self u32
+#define _pointer 0
 #define _primitive uint32_t
 #define _signed i32
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
 #define _self u32
+#define _pointer 0
 #define _primitive uint32_t
 #include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// An 8-bit unsigned integer.
 struct [[sus_trivial_abi]] u8 final {
 #define _self u8
+#define _pointer 0
 #define _primitive uint8_t
 #define _signed i8
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
 #define _self u8
+#define _pointer 0
 #define _primitive uint8_t
 #include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// A 16-bit unsigned integer.
 struct [[sus_trivial_abi]] u16 final {
 #define _self u16
+#define _pointer 0
 #define _primitive uint16_t
 #define _signed i16
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
 #define _self u16
+#define _pointer 0
 #define _primitive uint16_t
 #include "subspace/num/__private/unsigned_integer_consts.inc"
 
 /// A 64-bit unsigned integer.
 struct [[sus_trivial_abi]] u64 final {
 #define _self u64
+#define _pointer 0
 #define _primitive uint64_t
 #define _signed i64
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
 #define _self u64
+#define _pointer 0
 #define _primitive uint64_t
 #include "subspace/num/__private/unsigned_integer_consts.inc"
 
@@ -101,11 +109,42 @@ struct [[sus_trivial_abi]] u64 final {
 /// of the pointer.
 struct [[sus_trivial_abi]] usize final {
 #define _self usize
-#define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
+#define _pointer 0
+#define _primitive ::sus::num::__private::addr_type<>::unsigned_type
 #define _signed isize
 #include "subspace/num/__private/unsigned_integer_methods.inc"
 };
 #define _self usize
+#define _pointer 0
+#define _primitive ::sus::num::__private::addr_type<>::unsigned_type
+#include "subspace/num/__private/unsigned_integer_consts.inc"
+
+/// A pointer-sized unsigned integer.
+///
+/// This type is capable of holding a pointer, and is convertible to and from
+/// pointers. It is typically the same size as `usize` but it can be larger when
+/// pointers include additional bits that the address.
+///
+/// # Constructing a `uptr`
+///
+/// See `with_addr` for constructing `uptr` with an address from another `uptr`.
+///
+/// If pointers contain additional metadata beyond an address, the `with_addr`
+/// method copies the metadata from the original `uptr` to the newly produced
+/// `uptr.` Otherwise, constructing a uptr() from an integer can produce a
+/// pointer with invalid (empty) metadata and dereferencing such a pointer would
+/// be invalid.
+///
+/// To explicitly construct a `uptr` with empty metadata, use
+/// `uptr().with_addr(address)`.
+struct [[sus_trivial_abi]] uptr final {
+#define _self uptr
+#define _pointer 1
+#define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
+#include "subspace/num/__private/unsigned_integer_methods.inc"
+};
+#define _self uptr
+#define _pointer 1
 #define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
 #include "subspace/num/__private/unsigned_integer_consts.inc"
 
@@ -158,5 +197,6 @@ using sus::num::u16;
 using sus::num::u32;
 using sus::num::u64;
 using sus::num::u8;
+using sus::num::uptr;
 using sus::num::usize;
 }  // namespace sus

@@ -14,34 +14,47 @@
 
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include "subspace/containers/array.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/option/option.h"
-#include "subspace/tuple/tuple.h"
 #include "subspace/ptr/copy.h"
 #include "subspace/result/result.h"
+#include "subspace/tuple/tuple.h"
 
 #define _self u32
+#define _pointer 0
 #define _primitive uint32_t
 #define _signed i32
 #include "subspace/num/__private/unsigned_integer_methods_impl.inc"
 
 #define _self u8
+#define _pointer 0
 #define _primitive uint8_t
 #define _signed i8
 #include "subspace/num/__private/unsigned_integer_methods_impl.inc"
 
 #define _self u16
+#define _pointer 0
 #define _primitive uint16_t
 #define _signed i16
 #include "subspace/num/__private/unsigned_integer_methods_impl.inc"
 
 #define _self u64
+#define _pointer 0
 #define _primitive uint64_t
 #define _signed i64
 #include "subspace/num/__private/unsigned_integer_methods_impl.inc"
 
 #define _self usize
-#define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
+#define _pointer 0
+#define _primitive ::sus::num::__private::addr_type<>::unsigned_type
 #define _signed isize
+#include "subspace/num/__private/unsigned_integer_methods_impl.inc"
+
+#define _self uptr
+#define _pointer 1
+#define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
 #include "subspace/num/__private/unsigned_integer_methods_impl.inc"
