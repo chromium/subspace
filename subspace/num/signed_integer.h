@@ -32,6 +32,7 @@
 #include "subspace/num/__private/int_log10.h"
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/__private/literals.h"
+#include "subspace/num/__private/primitive_type.h"
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/try_from_int_error.h"
 #include "subspace/num/unsigned_integer.h"
@@ -108,12 +109,12 @@ struct [[sus_trivial_abi]] i64 final {
 /// this type is not always the same size as a pointer.
 struct [[sus_trivial_abi]] isize final {
 #define _self isize
-#define _primitive ::sus::num::__private::ptr_type<>::signed_type
+#define _primitive ::sus::num::__private::addr_type<>::signed_type
 #define _unsigned usize
 #include "subspace/num/__private/signed_integer_methods.inc"
 };
 #define _self isize
-#define _primitive ::sus::num::__private::ptr_type<>::signed_type
+#define _primitive ::sus::num::__private::addr_type<>::signed_type
 #include "subspace/num/__private/signed_integer_consts.inc"
 
 /// Adds a `isize` to a pointer, returning the resulting pointer.

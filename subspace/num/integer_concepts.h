@@ -26,7 +26,7 @@ namespace sus::num {
 template <class T>
 concept Unsigned =
     std::same_as<u8, T> || std::same_as<u16, T> || std::same_as<u32, T> ||
-    std::same_as<u64, T> || std::same_as<usize, T>;
+    std::same_as<u64, T> || std::same_as<usize, T> || std::same_as<uptr, T>;
 
 /// Signed Subspace integer types (i8, i16, i32, etc).
 template <class T>
@@ -41,7 +41,7 @@ concept Integer = Unsigned<T> || Signed<T>;
 /// Unsigned primitive integer types (unsigned char, unsigned int, etc).
 template <class T>
 concept UnsignedPrimitiveInteger =
-    std::same_as<size_t, T> ||
+    std::same_as<size_t, T> || std::same_as<uintptr_t, T> ||
     (std::is_unsigned_v<char> && std::same_as<char, T>) ||
     std::same_as<unsigned char, T> || std::same_as<unsigned short, T> ||
     std::same_as<unsigned int, T> || std::same_as<unsigned long, T> ||

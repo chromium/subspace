@@ -158,6 +158,7 @@ struct u16;
 struct u32;
 struct u64;
 struct usize;
+struct uptr;
 struct f32;
 struct f64;
 }  // namespace sus::num
