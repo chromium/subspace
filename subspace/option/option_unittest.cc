@@ -927,53 +927,53 @@ TEST(Option, Filter) {
 
 TEST(Option, And) {
   // Rvalue.
-  auto x = Option<int>::with(2).and_opt(Option<int>::with(3)).unwrap();
+  auto x = Option<int>::with(2).and_that(Option<int>::with(3)).unwrap();
   EXPECT_EQ(x, 3);
 
-  auto y = Option<int>::with(2).and_opt(Option<int>());
+  auto y = Option<int>::with(2).and_that(Option<int>());
   IS_NONE(y);
 
-  auto nx = Option<int>().and_opt(Option<int>::with(3));
+  auto nx = Option<int>().and_that(Option<int>::with(3));
   IS_NONE(nx);
 
-  auto ny = Option<int>().and_opt(Option<int>());
+  auto ny = Option<int>().and_that(Option<int>());
   IS_NONE(ny);
 
   // Lvalue.
   auto o = Option<int>::with(2);
-  auto lx = o.and_opt(Option<int>::with(3)).unwrap();
+  auto lx = o.and_that(Option<int>::with(3)).unwrap();
   EXPECT_EQ(lx, 3);
 
-  auto ly = o.and_opt(Option<int>());
+  auto ly = o.and_that(Option<int>());
   IS_NONE(ly);
 
   o = Option<int>();
-  auto lnx = o.and_opt(Option<int>::with(3));
+  auto lnx = o.and_that(Option<int>::with(3));
   IS_NONE(lnx);
 
-  auto lny = o.and_opt(Option<int>());
+  auto lny = o.and_that(Option<int>());
   IS_NONE(lny);
 
   // Reference.
   NoCopyMove i2, i3;
   auto& ix = Option<NoCopyMove&>::with(mref(i2))
-                 .and_opt(Option<NoCopyMove&>::with(mref(i3)))
+                 .and_that(Option<NoCopyMove&>::with(mref(i3)))
                  .unwrap();
   EXPECT_EQ(&ix, &i3);
 
-  auto iy = Option<NoCopyMove&>::with(mref(i2)).and_opt(Option<NoCopyMove&>());
+  auto iy = Option<NoCopyMove&>::with(mref(i2)).and_that(Option<NoCopyMove&>());
   IS_NONE(iy);
 
-  auto inx = Option<NoCopyMove&>().and_opt(Option<NoCopyMove&>::with(mref(i3)));
+  auto inx = Option<NoCopyMove&>().and_that(Option<NoCopyMove&>::with(mref(i3)));
   IS_NONE(inx);
 
-  auto iny = Option<NoCopyMove&>().and_opt(Option<NoCopyMove&>());
+  auto iny = Option<NoCopyMove&>().and_that(Option<NoCopyMove&>());
   IS_NONE(iny);
 
-  static_assert(Option<int>::with(1).and_opt(Option<int>::with(2)).is_some());
-  static_assert(Option<int>::with(1).and_opt(Option<int>()).is_none());
-  static_assert(Option<int>().and_opt(Option<int>::with(2)).is_none());
-  static_assert(Option<int>().and_opt(Option<int>()).is_none());
+  static_assert(Option<int>::with(1).and_that(Option<int>::with(2)).is_some());
+  static_assert(Option<int>::with(1).and_that(Option<int>()).is_none());
+  static_assert(Option<int>().and_that(Option<int>::with(2)).is_none());
+  static_assert(Option<int>().and_that(Option<int>()).is_none());
 }
 
 TEST(Option, AndThen) {
@@ -1113,58 +1113,58 @@ TEST(Option, AndThen) {
 
 TEST(Option, Or) {
   // Rvalue.
-  auto x = Option<int>::with(2).or_opt(Option<int>::with(3)).unwrap();
+  auto x = Option<int>::with(2).or_that(Option<int>::with(3)).unwrap();
   EXPECT_EQ(x, 2);
 
-  auto y = Option<int>::with(2).or_opt(Option<int>()).unwrap();
+  auto y = Option<int>::with(2).or_that(Option<int>()).unwrap();
   EXPECT_EQ(y, 2);
 
-  auto nx = Option<int>().or_opt(Option<int>::with(3)).unwrap();
+  auto nx = Option<int>().or_that(Option<int>::with(3)).unwrap();
   EXPECT_EQ(nx, 3);
 
-  auto ny = Option<int>().or_opt(Option<int>());
+  auto ny = Option<int>().or_that(Option<int>());
   IS_NONE(ny);
 
   // Lvalue.
   auto o = Option<int>::with(2);
-  auto lx = o.or_opt(Option<int>::with(3)).unwrap();
+  auto lx = o.or_that(Option<int>::with(3)).unwrap();
   EXPECT_EQ(lx, 2);
 
-  auto ly = o.or_opt(Option<int>()).unwrap();
+  auto ly = o.or_that(Option<int>()).unwrap();
   EXPECT_EQ(ly, 2);
 
   o = Option<int>();
-  auto lnx = o.or_opt(Option<int>::with(3)).unwrap();
+  auto lnx = o.or_that(Option<int>::with(3)).unwrap();
   EXPECT_EQ(lnx, 3);
 
-  auto lny = o.or_opt(Option<int>());
+  auto lny = o.or_that(Option<int>());
   IS_NONE(lny);
 
   // Reference.
   NoCopyMove i2, i3;
 
   auto& ix = Option<NoCopyMove&>::with(mref(i2))
-                 .or_opt(Option<NoCopyMove&>::with(mref(i3)))
+                 .or_that(Option<NoCopyMove&>::with(mref(i3)))
                  .unwrap();
   EXPECT_EQ(&ix, &i2);
 
   auto& iy = Option<NoCopyMove&>::with(mref(i2))
-                 .or_opt(Option<NoCopyMove&>())
+                 .or_that(Option<NoCopyMove&>())
                  .unwrap();
   EXPECT_EQ(&iy, &i2);
 
   auto& inx = Option<NoCopyMove&>()
-                  .or_opt(Option<NoCopyMove&>::with(mref(i3)))
+                  .or_that(Option<NoCopyMove&>::with(mref(i3)))
                   .unwrap();
   EXPECT_EQ(&inx, &i3);
 
-  auto iny = Option<NoCopyMove&>().or_opt(Option<NoCopyMove&>());
+  auto iny = Option<NoCopyMove&>().or_that(Option<NoCopyMove&>());
   IS_NONE(iny);
 
-  static_assert(Option<int>::with(1).or_opt(Option<int>::with(2)).is_some());
-  static_assert(Option<int>::with(1).or_opt(Option<int>()).is_some());
-  static_assert(Option<int>().or_opt(Option<int>::with(2)).is_some());
-  static_assert(Option<int>().or_opt(Option<int>()).is_none());
+  static_assert(Option<int>::with(1).or_that(Option<int>::with(2)).is_some());
+  static_assert(Option<int>::with(1).or_that(Option<int>()).is_some());
+  static_assert(Option<int>().or_that(Option<int>::with(2)).is_some());
+  static_assert(Option<int>().or_that(Option<int>()).is_none());
 }
 
 TEST(Option, OrElse) {
@@ -1298,57 +1298,57 @@ TEST(Option, OrElse) {
 
 TEST(Option, Xor) {
   // Rvalue.
-  auto x = Option<int>::with(2).xor_opt(Option<int>::with(3));
+  auto x = Option<int>::with(2).xor_that(Option<int>::with(3));
   IS_NONE(x);
 
-  auto y = Option<int>::with(2).xor_opt(Option<int>()).unwrap();
+  auto y = Option<int>::with(2).xor_that(Option<int>()).unwrap();
   EXPECT_EQ(y, 2);
 
-  auto nx = Option<int>().xor_opt(Option<int>::with(3)).unwrap();
+  auto nx = Option<int>().xor_that(Option<int>::with(3)).unwrap();
   EXPECT_EQ(nx, 3);
 
-  auto ny = Option<int>().xor_opt(Option<int>());
+  auto ny = Option<int>().xor_that(Option<int>());
   IS_NONE(ny);
 
   // Lvalue.
   auto o = Option<int>::with(2);
-  auto lx = o.xor_opt(Option<int>::with(3));
+  auto lx = o.xor_that(Option<int>::with(3));
   IS_NONE(lx);
 
-  auto ly = o.xor_opt(Option<int>()).unwrap();
+  auto ly = o.xor_that(Option<int>()).unwrap();
   EXPECT_EQ(ly, 2);
 
   o = Option<int>();
-  auto lnx = o.xor_opt(Option<int>::with(3)).unwrap();
+  auto lnx = o.xor_that(Option<int>::with(3)).unwrap();
   EXPECT_EQ(lnx, 3);
 
-  auto lny = o.xor_opt(Option<int>());
+  auto lny = o.xor_that(Option<int>());
   IS_NONE(lny);
 
   // Reference.
   NoCopyMove i2, i3;
 
-  auto ix = Option<NoCopyMove&>::with(mref(i2)).xor_opt(
+  auto ix = Option<NoCopyMove&>::with(mref(i2)).xor_that(
       Option<NoCopyMove&>::with(mref(i3)));
   IS_NONE(ix);
 
   auto& iy = Option<NoCopyMove&>::with(mref(i2))
-                 .xor_opt(Option<NoCopyMove&>())
+                 .xor_that(Option<NoCopyMove&>())
                  .unwrap();
   EXPECT_EQ(&iy, &i2);
 
   auto& inx = Option<NoCopyMove&>()
-                  .xor_opt(Option<NoCopyMove&>::with(mref(i3)))
+                  .xor_that(Option<NoCopyMove&>::with(mref(i3)))
                   .unwrap();
   EXPECT_EQ(&inx, &i3);
 
-  auto iny = Option<NoCopyMove&>().xor_opt(Option<NoCopyMove&>());
+  auto iny = Option<NoCopyMove&>().xor_that(Option<NoCopyMove&>());
   IS_NONE(iny);
 
-  static_assert(Option<int>::with(1).xor_opt(Option<int>::with(2)).is_none());
-  static_assert(Option<int>::with(1).xor_opt(Option<int>()).is_some());
-  static_assert(Option<int>().xor_opt(Option<int>::with(2)).is_some());
-  static_assert(Option<int>().xor_opt(Option<int>()).is_none());
+  static_assert(Option<int>::with(1).xor_that(Option<int>::with(2)).is_none());
+  static_assert(Option<int>::with(1).xor_that(Option<int>()).is_some());
+  static_assert(Option<int>().xor_that(Option<int>::with(2)).is_some());
+  static_assert(Option<int>().xor_that(Option<int>()).is_none());
 }
 
 TEST(Option, Insert) {
@@ -2454,19 +2454,19 @@ TEST(Option, NonZeroField) {
   EXPECT_EQ(o.take().unwrap().as_ref(), 3);
 
   EXPECT_EQ(o, None);
-  EXPECT_EQ(sus::move(o).and_opt(Option<T>::with(T::with(i))), None);
+  EXPECT_EQ(sus::move(o).and_that(Option<T>::with(T::with(i))), None);
   EXPECT_EQ(o, None);
 
   o = Option<T>::with(T::with(i));
-  EXPECT_EQ(sus::move(o).and_opt(Option<T>::with(T::with(i))), Some);
+  EXPECT_EQ(sus::move(o).and_that(Option<T>::with(T::with(i))), Some);
   EXPECT_EQ(o, None);
 
   o = Option<T>::with(T::with(i));
-  EXPECT_EQ(sus::move(o).xor_opt(Option<T>::with(T::with(i))), None);
+  EXPECT_EQ(sus::move(o).xor_that(Option<T>::with(T::with(i))), None);
   EXPECT_EQ(o, None);
 
   o = Option<T>::with(T::with(i));
-  EXPECT_EQ(sus::move(o).xor_opt(Option<T>()), Some);
+  EXPECT_EQ(sus::move(o).xor_that(Option<T>()), Some);
   EXPECT_EQ(o, None);
 
   o = Option<T>::with(T::with(i));
