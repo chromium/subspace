@@ -769,7 +769,7 @@ class Option final {
   /// Consumes this Option and returns an Option with `None` if this Option
   /// holds `None`, otherwise returns the given `opt`.
   template <class U>
-  constexpr Option<U> and_opt(Option<U> opt) && noexcept {
+  constexpr Option<U> and_that(Option<U> opt) && noexcept {
     if (t_.state() == Some) {
       t_.set_none();
     } else {
@@ -778,10 +778,10 @@ class Option final {
     return opt;
   }
   template <class U>
-  constexpr Option<U> and_opt(Option<U> opt) const& noexcept
+  constexpr Option<U> and_that(Option<U> opt) const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
-    return ::sus::clone(*this).and_opt(::sus::move(opt));
+    return ::sus::clone(*this).and_that(::sus::move(opt));
   }
 
   /// Consumes this Option and returns an Option with `None` if this Option
@@ -814,16 +814,16 @@ class Option final {
 
   /// Consumes and returns an Option with the same value if this Option contains
   /// a value, otherwise returns the given `opt`.
-  constexpr Option<T> or_opt(Option<T> opt) && noexcept {
+  constexpr Option<T> or_that(Option<T> opt) && noexcept {
     if (t_.state() == Some)
       return Option(t_.take_and_set_none());
     else
       return opt;
   }
-  constexpr Option<T> or_opt(Option<T> opt) const& noexcept
+  constexpr Option<T> or_that(Option<T> opt) const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
-    return ::sus::clone(*this).or_opt(::sus::move(opt));
+    return ::sus::clone(*this).or_that(::sus::move(opt));
   }
 
   /// Consumes and returns an Option with the same value if this Option contains
@@ -845,7 +845,7 @@ class Option final {
   /// Consumes this Option and returns an Option, holding the value from either
   /// this Option `opt`, if exactly one of them holds a value, otherwise returns
   /// an Option that holds `None`.
-  constexpr Option<T> xor_opt(Option<T> opt) && noexcept {
+  constexpr Option<T> xor_that(Option<T> opt) && noexcept {
     if (t_.state() == Some) {
       // If `this` holds Some, we change `this` to hold None. If `opt` is None,
       // we return what this was holding, otherwise we return None.
@@ -861,10 +861,10 @@ class Option final {
       return opt;
     }
   }
-  constexpr Option<T> xor_opt(Option<T> opt) const& noexcept
+  constexpr Option<T> xor_that(Option<T> opt) const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
-    return ::sus::clone(*this).xor_opt(::sus::move(opt));
+    return ::sus::clone(*this).xor_that(::sus::move(opt));
   }
 
   /// Transforms the `Option<T>` into a `Result<T, E>`, mapping `Some(v)` to
