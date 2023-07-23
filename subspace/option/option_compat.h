@@ -70,7 +70,8 @@ constexpr Option<T> Option<T>::from(std::optional<U>&& s) noexcept
 }
 
 template <class T>
-Option<T>::Option(const std::optional<std::remove_reference_t<T>>& s) noexcept
+constexpr Option<T>::Option(
+    const std::optional<std::remove_reference_t<T>>& s) noexcept
   requires(::sus::mem::Copy<T> && !std::is_reference_v<T>)
     //: Option(FromOptional, s.has_value() ? &s.value() : nullptr) {}
     : Option() {
@@ -78,7 +79,8 @@ Option<T>::Option(const std::optional<std::remove_reference_t<T>>& s) noexcept
 }
 
 template <class T>
-Option<T>::Option(std::optional<std::remove_reference_t<T>>&& s) noexcept
+constexpr Option<T>::Option(
+    std::optional<std::remove_reference_t<T>>&& s) noexcept
   requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
     : Option() {
   if (s.has_value()) insert(::sus::move(s).value());
@@ -109,7 +111,7 @@ constexpr Option<T>::operator std::optional<
 
 template <class T>
 constexpr Option<T>::operator std::optional<const std::remove_reference_t<T>*>()
-    const noexcept
+    const& noexcept
   requires(std::is_reference_v<T>)
 {
   if (is_some())
@@ -120,9 +122,10 @@ constexpr Option<T>::operator std::optional<const std::remove_reference_t<T>*>()
 }
 
 template <class T>
-constexpr Option<T>::operator std::optional<
-    std::remove_reference_t<T>*>() noexcept
-  requires(std::is_reference_v<T>)
+constexpr Option<T>::operator std::optional<std::remove_reference_t<T>*>()
+    const& noexcept
+  requires(!std::is_const_v<std::remove_reference_t<T>> &&
+           std::is_reference_v<T>)
 {
   if (is_some()) {
     return std::optional<std::remove_reference_t<T>*>(

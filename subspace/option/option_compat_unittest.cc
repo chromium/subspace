@@ -56,25 +56,25 @@ TEST(OptionCompat, CtorOptionalCopy) {
 TEST(OptionCompat, CtorOptionalMove) {
   // Explicit.
   {
-    auto s = sus::Option<int>(std::optional<int>(2));
+    constexpr auto s = sus::Option<int>(std::optional<int>(2));
     EXPECT_EQ(s.as_value(), 2);
   }
   {
-    auto s = sus::Option<int>(std::optional<int>());
+    constexpr auto s = sus::Option<int>(std::optional<int>());
     EXPECT_EQ(s.is_some(), false);
   }
   // Implicit.
   {
-    sus::Option<int> s = std::optional<int>(2);
+    constexpr sus::Option<int> s = std::optional<int>(2);
     EXPECT_EQ(s.as_value(), 2);
   }
   {
-    sus::Option<int> s = std::optional<int>();
+    constexpr sus::Option<int> s = std::optional<int>();
     EXPECT_EQ(s.is_some(), false);
   }
 
   {
-    auto sm = sus::Option<Moved>(std::optional<Moved>(std::in_place));
+    constexpr auto sm = sus::Option<Moved>(std::optional<Moved>(std::in_place));
     EXPECT_GE(sm.as_value().moved, 1);
   }
 }
@@ -191,15 +191,21 @@ TEST(OptionCompat, ToOptionalMove) {
 TEST(OptionCompat, ToOptionalRef) {
   // Explicit.
   {
+    constexpr int i = 2;
+    constexpr auto s = sus::Option<const int&>::with(i);
+    constexpr auto o = std::optional<const int*>(s);
+    static_assert(o.value() == &i);
+  }
+  {
     int i = 2;
-    auto s = sus::Option<int&>::with(i);
+    auto s = sus::Option<const int&>::with(i);
     auto o = std::optional<const int*>(s);
     EXPECT_EQ(o.value(), &i);
   }
   {
     int i = 2;
-    auto s = sus::Option<int&>::with(i);
-    auto o = std::optional<int*>(s);
+    auto s = sus::Option<const int&>::with(i);
+    auto o = std::optional<const int*>(s);
     EXPECT_EQ(o.value(), &i);
   }
   {
@@ -214,6 +220,12 @@ TEST(OptionCompat, ToOptionalRef) {
     EXPECT_EQ(o.has_value(), false);
   }
   // Implicit.
+  {
+    constexpr int i = 2;
+    constexpr auto s = sus::Option<const int&>::with(i);
+    constexpr std::optional<const int*> o = s;
+    static_assert(o.value() == &i);
+  }
   {
     int i = 2;
     auto s = sus::Option<int&>::with(i);
@@ -233,8 +245,8 @@ TEST(OptionCompat, ToOptionalRef) {
     EXPECT_EQ(o.value(), &i);
   }
   {
-    constexpr auto s = sus::Option<int&>();
-    constexpr std::optional<const int*> o = s;
+    auto s = sus::Option<int&>();
+    std::optional<const int*> o = s;
     EXPECT_EQ(o.has_value(), false);
   }
 
@@ -246,12 +258,12 @@ TEST(OptionCompat, FromOptionalCopyWithConversion) {
   static_assert(sus::construct::Into<i64, i32>);
 
   // Move.
-  sus::Option<i32> o = sus::into(std::optional<i64>(101));
+  constexpr sus::Option<i32> o = sus::into(std::optional<i64>(101));
   EXPECT_EQ(o.as_value(), 101_i32);
 
   // Copy.
-  auto f = std::optional<i64>(101);
-  sus::Option<i32> t = sus::into(f);
+  constexpr auto f = std::optional<i64>(101);
+  constexpr sus::Option<i32> t = sus::into(f);
   EXPECT_EQ(t.as_value(), 101_i32);
 }
 

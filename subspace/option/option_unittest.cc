@@ -269,6 +269,22 @@ TEST(Option, Copy) {
   auto zz = z;
   EXPECT_EQ(&z.as_value(), &m);
   EXPECT_EQ(&zz.as_value(), &m);
+
+  // Constexpr
+  struct S {
+    constexpr S(i32 i) : i(i) {}
+    constexpr S(const S& rhs) noexcept : i(rhs.i) {}
+    constexpr S& operator=(const S& rhs) noexcept { return i = rhs.i, *this; }
+    i32 i;
+  };
+  static_assert(!std::is_trivially_copy_constructible_v<S>);
+  static_assert(!std::is_trivially_copy_assignable_v<S>);
+  constexpr auto r = []() constexpr {
+    auto o = Option<S>::with(S(5));
+    auto copy = o;
+    return sus::move(copy).unwrap();
+  }();
+  static_assert(r.i == 5);
 }
 
 TEST(Option, Move) {
@@ -311,6 +327,22 @@ TEST(Option, Move) {
   // Trivial move leaves the old value behind.
   EXPECT_EQ(&z.as_value(), &m);
   EXPECT_EQ(&zz.as_value(), &m);
+
+  // Constexpr
+  struct S {
+    constexpr S(i32 i) : i(i) {}
+    constexpr S(const S& rhs) noexcept : i(rhs.i) {}
+    constexpr S& operator=(const S& rhs) noexcept { return i = rhs.i, *this; }
+    i32 i;
+  };
+  static_assert(!std::is_trivially_move_constructible_v<S>);
+  static_assert(!std::is_trivially_move_assignable_v<S>);
+  constexpr auto r = []() constexpr {
+    auto o = Option<S>::with(S(5));
+    auto copy = sus::move(o);
+    return sus::move(copy).unwrap();
+  }();
+  static_assert(r.i == 5);
 }
 
 // No code should use Option after moving from it; that's what
@@ -336,6 +368,95 @@ TEST(Option, UseAfterMove) {
   IS_NONE(b);  // Not trivially relocatable moves-from the value in `b`.
 }
 
+TEST(Option, TrivialMoveAssign) {
+  // Some-some.
+  {
+    auto x = sus::Option<i32>::with(2);
+    auto y = sus::Option<i32>::with(3);
+    x = sus::move(y);
+    EXPECT_EQ(x.as_value(), 3);
+    EXPECT_EQ(y.as_value(), 3);
+  }
+  // Some-none.
+  {
+    auto x = sus::Option<i32>::with(2);
+    auto y = sus::Option<i32>();
+    x = sus::move(y);
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+  // None-some.
+  {
+    auto x = sus::Option<i32>();
+    auto y = sus::Option<i32>::with(3);
+    x = sus::move(y);
+    EXPECT_EQ(x.as_value(), 3);
+    EXPECT_EQ(y.as_value(), 3);
+  }
+  // None-none.
+  {
+    auto x = sus::Option<i32>();
+    auto y = sus::Option<i32>();
+    x = sus::move(y);
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+
+  // Constexpr
+  constexpr auto r = []() constexpr {
+    auto x = sus::Option<i32>::with(2);
+    auto y = sus::Option<i32>::with(3);
+    x = sus::move(y);
+    return sus::move(x).unwrap();
+  }();
+  static_assert(r == 3);
+}
+
+TEST(Option, NonTrivialMoveAssign) {
+  using S = sus::test::NotTriviallyRelocatableCopyableOrMoveable;
+  // Some-some.
+  {
+    auto x = sus::Option<S>::with(S(2));
+    auto y = sus::Option<S>::with(S(3));
+    x = sus::move(y);
+    EXPECT_EQ(x.as_value().i, 3);
+    EXPECT_EQ(y.is_some(), false);
+  }
+  // Some-none.
+  {
+    auto x = sus::Option<S>::with(S(2));
+    auto y = sus::Option<S>();
+    x = sus::move(y);
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+  // None-some.
+  {
+    auto x = sus::Option<S>();
+    auto y = sus::Option<S>::with(S(3));
+    x = sus::move(y);
+    EXPECT_EQ(x.as_value().i, 3);
+    EXPECT_EQ(y.is_some(), false);
+  }
+  // None-none.
+  {
+    auto x = sus::Option<S>();
+    auto y = sus::Option<S>();
+    x = sus::move(y);
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+
+  // Constexpr.
+  constexpr auto r = []() constexpr {
+    auto x = sus::Option<S>::with(2);
+    auto y = sus::Option<S>::with(3);
+    x = sus::move(y);
+    return sus::move(x).unwrap();
+  }();
+  static_assert(r.i == 3);
+}
+
 TEST(Option, MoveSelfAssign) {
   auto x = sus::Option<TriviallyMoveableAndRelocatable>::with(
       TriviallyMoveableAndRelocatable(2));
@@ -350,6 +471,95 @@ TEST(Option, MoveSelfAssign) {
   EXPECT_EQ(sus::move(y).unwrap().i, 2);
 }
 
+TEST(Option, TrivialCopyAssign) {
+  // Some-some.
+  {
+    auto x = sus::Option<i32>::with(2);
+    auto y = sus::Option<i32>::with(3);
+    x = y;
+    EXPECT_EQ(x.as_value(), 3);
+    EXPECT_EQ(y.as_value(), 3);
+  }
+  // Some-none.
+  {
+    auto x = sus::Option<i32>::with(2);
+    auto y = sus::Option<i32>();
+    x = y;
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+  // None-some.
+  {
+    auto x = sus::Option<i32>();
+    auto y = sus::Option<i32>::with(3);
+    x = y;
+    EXPECT_EQ(x.as_value(), 3);
+    EXPECT_EQ(y.as_value(), 3);
+  }
+  // None-none.
+  {
+    auto x = sus::Option<i32>();
+    auto y = sus::Option<i32>();
+    x = y;
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+
+  // Constexpr.
+  constexpr auto r = []() constexpr {
+    auto x = sus::Option<i32>::with(2);
+    auto y = sus::Option<i32>::with(3);
+    x = y;
+    return sus::move(x).unwrap();
+  }();
+  static_assert(r == 3);
+}
+
+TEST(Option, NonTrivialCopyAssign) {
+  using S = sus::test::NotTriviallyRelocatableCopyableOrMoveable;
+  // Some-some.
+  {
+    auto x = sus::Option<S>::with(S(2));
+    auto y = sus::Option<S>::with(S(3));
+    x = y;
+    EXPECT_EQ(x.as_value().i, 3);
+    EXPECT_EQ(y.as_value().i, 3);
+  }
+  // Some-none.
+  {
+    auto x = sus::Option<S>::with(S(2));
+    auto y = sus::Option<S>();
+    x = y;
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+  // None-some.
+  {
+    auto x = sus::Option<S>();
+    auto y = sus::Option<S>::with(S(3));
+    x = y;
+    EXPECT_EQ(x.as_value().i, 3);
+    EXPECT_EQ(y.as_value().i, 3);
+  }
+  // None-none.
+  {
+    auto x = sus::Option<S>();
+    auto y = sus::Option<S>();
+    x = y;
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+
+  // Constexpr.
+  constexpr auto r = []() constexpr {
+    auto x = sus::Option<S>::with(2);
+    auto y = sus::Option<S>::with(3);
+    x = y;
+    return sus::move(x).unwrap();
+  }();
+  static_assert(r.i == 3);
+}
+
 TEST(Option, CopySelfAssign) {
   auto x = sus::Option<TriviallyCopyable>::with(TriviallyCopyable(2));
   x = x;
@@ -361,6 +571,50 @@ TEST(Option, CopySelfAssign) {
   y = y;
   IS_SOME(y);
   EXPECT_EQ(sus::move(y).unwrap().i, 2);
+}
+
+TEST(Option, CloneInto) {
+  // Some-some.
+  {
+    auto x = sus::Option<i32>::with(2);
+    auto y = sus::Option<i32>::with(3);
+    sus::clone_into(x, y);
+    EXPECT_EQ(x.as_value(), 3);
+    EXPECT_EQ(y.as_value(), 3);
+  }
+  // Some-none.
+  {
+    auto x = sus::Option<i32>::with(2);
+    auto y = sus::Option<i32>();
+    sus::clone_into(x, y);
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+  // None-some.
+  {
+    auto x = sus::Option<i32>();
+    auto y = sus::Option<i32>::with(3);
+    sus::clone_into(x, y);
+    EXPECT_EQ(x.as_value(), 3);
+    EXPECT_EQ(y.as_value(), 3);
+  }
+  // None-none.
+  {
+    auto x = sus::Option<i32>();
+    auto y = sus::Option<i32>();
+    sus::clone_into(x, y);
+    EXPECT_EQ(x.is_some(), false);
+    EXPECT_EQ(y.is_some(), false);
+  }
+
+  // Constexpr.
+  constexpr auto r = []() constexpr {
+    auto x = sus::Option<i32>::with(2);
+    auto y = sus::Option<i32>::with(3);
+    sus::clone_into(x, y);
+    return sus::move(x).unwrap();
+  }();
+  static_assert(r == 3);
 }
 
 TEST(Option, CloneIntoSelfAssign) {
@@ -1369,6 +1623,14 @@ TEST(Option, Insert) {
   auto iy = Option<NoCopyMove&>::with(mref(i2));
   iy.insert(mref(i3));
   EXPECT_EQ(&iy.as_ref().unwrap(), &i3);
+
+  // Constexpr.
+  constexpr auto r = []() constexpr {
+    auto x = Option<int>();
+    x.insert(3);
+    return sus::move(x).unwrap();
+  }();
+  static_assert(r == 3);
 }
 
 TEST(Option, GetOrInsert) {
@@ -1398,6 +1660,13 @@ TEST(Option, GetOrInsert) {
   static_assert(std::is_same_v<decltype(iy.get_or_insert(i3)), NoCopyMove&>);
   EXPECT_EQ(&iry, &i2);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
+
+  constexpr auto r = []() constexpr -> i32 {
+    auto x = Option<i32>();
+    const auto& rx = x.get_or_insert(8);
+    return rx;
+  }();
+  static_assert(r == 8);
 }
 
 TEST(Option, GetOrInsertDefault) {
@@ -1416,6 +1685,18 @@ TEST(Option, GetOrInsertDefault) {
   EXPECT_EQ(ry.i, 404);
   IS_SOME(y);
   EXPECT_EQ(sus::move(y).unwrap().i, 404);
+
+  // Constexpr.
+  struct S {
+    constexpr S() : i(8) {}
+    i32 i;
+  };
+  constexpr auto r = []() constexpr -> S {
+    auto x = Option<S>();
+    const auto& rx = x.get_or_insert_default();
+    return rx;
+  }();
+  static_assert(r.i == 8);
 }
 
 TEST(Option, GetOrInsertWith) {
@@ -1468,6 +1749,14 @@ TEST(Option, GetOrInsertWith) {
   EXPECT_FALSE(called);
   EXPECT_EQ(&iry, &i2);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
+
+  // Constexpr.
+  constexpr auto r = []() constexpr -> i32 {
+    auto x = Option<i32>();
+    const auto& rx = x.get_or_insert_with([&]() -> i32 { return 9; });
+    return rx;
+  }();
+  static_assert(r == 9);
 }
 
 TEST(Option, AsValue) {
@@ -1719,14 +2008,14 @@ TEST(Option, TrivialCopy) {
 }
 
 TEST(Option, Replace) {
-  auto x = Option<int>::with(2);
-  static_assert(std::is_same_v<decltype(x.replace(3)), Option<int>>);
+  auto x = Option<i32>::with(2);
+  static_assert(std::is_same_v<decltype(x.replace(3)), Option<i32>>);
   auto y = x.replace(3);
   EXPECT_EQ(x.as_ref().unwrap(), 3);
   EXPECT_EQ(y.as_ref().unwrap(), 2);
 
-  auto z = Option<int>();
-  static_assert(std::is_same_v<decltype(z.replace(3)), Option<int>>);
+  auto z = Option<i32>();
+  static_assert(std::is_same_v<decltype(z.replace(3)), Option<i32>>);
   auto zz = z.replace(3);
   EXPECT_EQ(z.as_ref().unwrap(), 3);
   IS_NONE(zz);
@@ -1744,6 +2033,14 @@ TEST(Option, Replace) {
   auto izz = iz.replace(mref(i3));
   EXPECT_EQ(&iz.as_ref().unwrap(), &i3);
   IS_NONE(izz);
+
+  // Constexpr.
+  constexpr auto r = []() constexpr -> sus::Tuple<i32, i32> {
+    auto x = Option<i32>::with(2);
+    auto old = x.replace(4);
+    return sus::tuple(sus::move(old).unwrap(), sus::move(x).unwrap());
+  }();
+  static_assert(r == sus::Tuple<i32, i32>::with(2, 4));
 }
 
 TEST(Option, Copied) {

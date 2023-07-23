@@ -287,7 +287,7 @@ class Option final {
     requires(::sus::mem::CopyOrRef<T> && IsTrivialCopyAssignOrRef<T>)
   = default;
 
-  Option& operator=(const Option& o) noexcept
+  constexpr Option& operator=(const Option& o) noexcept
     requires(::sus::mem::CopyOrRef<T> && !IsTrivialCopyAssignOrRef<T>)
   {
     if (o.t_.state() == Some)
@@ -308,7 +308,7 @@ class Option final {
     requires(::sus::mem::MoveOrRef<T> && IsTrivialMoveAssignOrRef<T>)
   = default;
 
-  Option& operator=(Option&& o) noexcept
+  constexpr Option& operator=(Option&& o) noexcept
     requires(::sus::mem::MoveOrRef<T> && !IsTrivialMoveAssignOrRef<T>)
   {
     if (o.t_.state() == Some)
@@ -333,7 +333,7 @@ class Option final {
   }
 
   /// sus::mem::CloneInto trait.
-  void clone_from(const Option& source) & noexcept
+  constexpr void clone_from(const Option& source) & noexcept
     requires(::sus::mem::Clone<T> && !::sus::mem::CopyOrRef<T>)
   {
     if (&source == this) [[unlikely]]
@@ -484,6 +484,11 @@ class Option final {
     ::sus::check(t_.state() == Some);
     return t_.val_mut();
   }
+  sus_pure constexpr std::remove_reference_t<T>& as_value_mut() const& noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return ::sus::clone(*this).as_value_mut();
+  }
 
   sus_pure constexpr const std::remove_reference_t<T>& as_value_unchecked(
       ::sus::marker::UnsafeFnMarker) const& noexcept {
@@ -504,6 +509,12 @@ class Option final {
     requires(std::is_reference_v<T>)
   {
     return t_.val_mut();
+  }
+  sus_pure constexpr std::remove_reference_t<T>& as_value_unchecked_mut(
+      ::sus::marker::UnsafeFnMarker) const& noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return ::sus::clone(*this).as_value_unchecked_mut(::sus::marker::unsafe_fn);
   }
 
   /// Returns a reference to the contained value inside the Option.
@@ -597,7 +608,7 @@ class Option final {
 
   /// Stores the value `t` inside this Option, replacing any previous value, and
   /// returns a mutable reference to the new value.
-  T& insert(T t) & noexcept
+  constexpr T& insert(T t) & noexcept
     requires(sus::mem::MoveOrRef<T>)
   {
     t_.set_some(move_to_storage(t));
@@ -610,7 +621,7 @@ class Option final {
   ///
   /// If it is non-trivial to construct `T`, the <get_or_insert_with>() method
   /// would be preferable, as it only constructs a `T` if needed.
-  T& get_or_insert(T t) & noexcept sus_lifetimebound
+  constexpr T& get_or_insert(T t) & noexcept sus_lifetimebound
     requires(sus::mem::MoveOrRef<T>)
   {
     if (t_.state() == None) {
@@ -644,7 +655,7 @@ class Option final {
   ///
   /// This method differs from <unwrap_or_else>() in that it does not consume
   /// the Option, and instead it can not be called on rvalues.
-  T& get_or_insert_with(::sus::fn::FnOnce<T()> auto&& f) & noexcept {
+  constexpr T& get_or_insert_with(::sus::fn::FnOnce<T()> auto&& f) & noexcept {
     if (t_.state() == None) {
       t_.construct_from_none(move_to_storage(::sus::move(f)()));
     }
@@ -1010,7 +1021,7 @@ class Option final {
 
   /// Replaces whatever the Option is currently holding with `Some` value `t`
   /// and returns an Option holding what was there previously.
-  Option replace(T t) & noexcept
+  constexpr Option replace(T t) & noexcept
     requires(sus::mem::MoveOrRef<T>)
   {
     if (t_.state() == None) {
@@ -1111,6 +1122,11 @@ class Option final {
     else
       return Option<T&>(t_.take_and_set_none());
   }
+  sus_pure constexpr Option<T&> as_mut() const& noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return ::sus::clone(*this).as_mut();
+  }
 
   sus_pure constexpr Once<const std::remove_reference_t<T>&> iter()
       const& noexcept {
@@ -1122,6 +1138,11 @@ class Option final {
     return ::sus::iter::once<const std::remove_reference_t<T>&>(
         ::sus::move(*this).as_ref());
   }
+  constexpr Once<const std::remove_reference_t<T>&> iter() const& noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return ::sus::clone(*this).iter();
+  }
 
   sus_pure constexpr Once<T&> iter_mut() & noexcept {
     return ::sus::iter::once<T&>(as_mut());
@@ -1131,9 +1152,19 @@ class Option final {
   {
     return ::sus::iter::once<T&>(::sus::move(*this).as_mut());
   }
+  constexpr Once<T&> iter_mut() const& noexcept
+    requires(std::is_reference_v<T>)
+  {
+    return ::sus::clone(*this).iter_mut();
+  }
 
   constexpr Once<T> into_iter() && noexcept {
     return ::sus::iter::once<T>(take());
+  }
+  constexpr Once<T> into_iter() const& noexcept
+    requires(::sus::mem::CopyOrRef<T>)
+  {
+    return ::sus::clone(*this).into_iter();
   }
 
   /// sus::ops::Eq<Option<U>> trait.
@@ -1189,10 +1220,10 @@ class Option final {
   /// `<optional>` header is not included by default.
   ///
   /// #[doc.overloads=ctor.optional]
-  Option(const std::optional<std::remove_reference_t<T>>& s) noexcept
+  constexpr Option(const std::optional<std::remove_reference_t<T>>& s) noexcept
     requires(::sus::mem::Copy<T> && !std::is_reference_v<T>);
   /// #[doc.overloads=ctor.optional]
-  Option(std::optional<std::remove_reference_t<T>>&& s) noexcept
+  constexpr Option(std::optional<std::remove_reference_t<T>>&& s) noexcept
     requires(::sus::mem::Move<T> && !std::is_reference_v<T>);
   /// Implicit conversion to std::optional.
   ///
@@ -1207,11 +1238,15 @@ class Option final {
     requires(::sus::mem::Move<T> && !std::is_reference_v<T>);
   /// #[doc.overloads=convert.optional]
   constexpr operator std::optional<const std::remove_reference_t<T>*>()
-      const noexcept
+      const& noexcept
     requires(std::is_reference_v<T>);
+  // Skip implementing `& noexcept` `&& noexcept` and `const& noexcept` and just
+  // implement `const& noexcept` which covers them all.
   /// #[doc.overloads=convert.optional]
-  constexpr operator std::optional<std::remove_reference_t<T>*>() noexcept
-    requires(std::is_reference_v<T>);
+  constexpr operator std::optional<std::remove_reference_t<T>*>()
+      const& noexcept
+    requires(!std::is_const_v<std::remove_reference_t<T>> &&
+             std::is_reference_v<T>);
 
  private:
   template <class U>
