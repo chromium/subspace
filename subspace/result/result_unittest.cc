@@ -711,6 +711,25 @@ TEST(Result, Copy) {
     EXPECT_EQ(&z.as_ok(), &m);
     EXPECT_EQ(&zz.as_ok(), &m);
   }
+
+  // Constexpr copy construct.
+  constexpr auto r1 = []() constexpr {
+    auto r = sus::Result<NotTriviallyRelocatableCopyableOrMoveable, u32>::with(
+        NotTriviallyRelocatableCopyableOrMoveable(5));
+    auto s = r;
+    return ::sus::move(s).unwrap();
+  }();
+  static_assert(r1.i == 5);
+  // Constexpr copy assign.
+  constexpr auto r2 = []() constexpr {
+    auto r = sus::Result<NotTriviallyRelocatableCopyableOrMoveable, u32>::with(
+        NotTriviallyRelocatableCopyableOrMoveable(5));
+    auto s = sus::Result<NotTriviallyRelocatableCopyableOrMoveable, u32>::with(
+        NotTriviallyRelocatableCopyableOrMoveable(6));
+    r = s;
+    return ::sus::move(r).unwrap();
+  }();
+  static_assert(r2.i == 6);
 }
 
 TEST(Result, Move) {
@@ -837,6 +856,25 @@ TEST(Result, Move) {
     zz = sus::move(z);
     EXPECT_EQ(zz.is_ok(), true);
   }
+
+  // Constexpr move construct.
+  constexpr auto r1 = []() constexpr {
+    auto r = sus::Result<NotTriviallyRelocatableCopyableOrMoveable, u32>::with(
+        NotTriviallyRelocatableCopyableOrMoveable(5));
+    auto s = sus::move(r);
+    return ::sus::move(s).unwrap();
+  }();
+  static_assert(r1.i == 5);
+  // Constexpr move assign.
+  constexpr auto r2 = []() constexpr {
+    auto r = sus::Result<NotTriviallyRelocatableCopyableOrMoveable, u32>::with(
+        NotTriviallyRelocatableCopyableOrMoveable(5));
+    auto s = sus::Result<NotTriviallyRelocatableCopyableOrMoveable, u32>::with(
+        NotTriviallyRelocatableCopyableOrMoveable(6));
+    r = sus::move(s);
+    return ::sus::move(r).unwrap();
+  }();
+  static_assert(r2.i == 6);
 }
 
 TEST(Result, MoveAfterTrivialMove) {

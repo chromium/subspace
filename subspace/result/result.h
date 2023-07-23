@@ -221,7 +221,7 @@ class [[nodiscard]] Result final {
              IsTrivialCopyCtorOrRef<E>)
   = default;
 
-  Result(const Result& rhs) noexcept
+  constexpr Result(const Result& rhs) noexcept
     requires(
         // clang-format off
         (std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
@@ -235,9 +235,11 @@ class [[nodiscard]] Result final {
     switch (state_) {
       case ResultState::IsOk:
         if constexpr (!std::is_void_v<T>)
-          new (&storage_.ok_) OkStorageType(rhs.storage_.ok_);
+          std::construct_at(&storage_.ok_, rhs.storage_.ok_);
         break;
-      case ResultState::IsErr: new (&storage_.err_) E(rhs.storage_.err_); break;
+      case ResultState::IsErr:
+        std::construct_at(&storage_.err_, rhs.storage_.err_);
+        break;
       case ResultState::IsMoved:
         // SAFETY: The state_ is verified to be Ok or Err at the top of the
         // function.
@@ -246,8 +248,8 @@ class [[nodiscard]] Result final {
   }
 
   constexpr Result(const Result&)
-    requires(!((std::is_void_v<T> ||
-                ::sus::mem::CopyOrRef<T>)&&::sus::mem::Copy<E>))
+    requires(!((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
+               ::sus::mem::Copy<E>))
   = delete;
 
   /// If T and E can be trivially copy-assigned, Result<T, E> can also be
@@ -261,7 +263,7 @@ class [[nodiscard]] Result final {
              IsTrivialCopyAssignOrRef<E>)
   = default;
 
-  Result& operator=(const Result& o) noexcept
+  constexpr Result& operator=(const Result& o) noexcept
     requires(
         // clang-format off
       (std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) && ::sus::mem::Copy<E> &&
@@ -281,7 +283,7 @@ class [[nodiscard]] Result final {
             break;
           case ResultState::IsErr:
             storage_.destroy_ok();
-            new (&storage_.err_) E(o.storage_.err_);
+            std::construct_at(&storage_.err_, o.storage_.err_);
             break;
           // SAFETY: This condition is check()'d at the top of the function.
           case ResultState::IsMoved:
@@ -294,7 +296,7 @@ class [[nodiscard]] Result final {
           case ResultState::IsOk:
             storage_.destroy_err();
             if constexpr (!std::is_void_v<T>)
-              new (&storage_.ok_) OkStorageType(o.storage_.ok_);
+              std::construct_at(&storage_.ok_, o.storage_.ok_);
             break;
           // SAFETY: This condition is check()'d at the top of the function.
           case ResultState::IsMoved:
@@ -304,11 +306,11 @@ class [[nodiscard]] Result final {
       case ResultState::IsMoved:
         switch (state_ = o.state_) {
           case ResultState::IsErr:
-            new (&storage_.err_) E(o.storage_.err_);
+            std::construct_at(&storage_.err_, o.storage_.err_);
             break;
           case ResultState::IsOk:
             if constexpr (!std::is_void_v<T>)
-              new (&storage_.ok_) OkStorageType(o.storage_.ok_);
+              std::construct_at(&storage_.ok_, o.storage_.ok_);
             break;
             // SAFETY: This condition is check()'d at the top of the function.
           case ResultState::IsMoved:
@@ -320,8 +322,8 @@ class [[nodiscard]] Result final {
   }
 
   constexpr Result& operator=(const Result&)
-    requires(!((std::is_void_v<T> ||
-                ::sus::mem::CopyOrRef<T>)&&::sus::mem::Copy<E>))
+    requires(!((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
+               ::sus::mem::Copy<E>))
   = delete;
 
   /// If T and E can be trivially move-constructed, Result<T, E> can also be
@@ -335,7 +337,7 @@ class [[nodiscard]] Result final {
              IsTrivialMoveCtorOrRef<E>)
   = default;
 
-  Result(Result&& rhs) noexcept
+  constexpr Result(Result&& rhs) noexcept
     requires(
         // clang-format off
       (std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) && ::sus::mem::Move<E> &&
@@ -347,10 +349,10 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != ResultState::IsMoved);
     switch (state_) {
       case ResultState::IsOk:
-        new (&storage_.ok_) OkStorageType(::sus::move(rhs.storage_.ok_));
+        std::construct_at(&storage_.ok_, ::sus::move(rhs.storage_.ok_));
         break;
       case ResultState::IsErr:
-        new (&storage_.err_) E(::sus::move(rhs.storage_.err_));
+        std::construct_at(&storage_.err_, ::sus::move(rhs.storage_.err_));
         break;
       case ResultState::IsMoved:
         // SAFETY: The state_ is verified to be Ok or Err at the top of the
@@ -360,8 +362,8 @@ class [[nodiscard]] Result final {
   }
 
   constexpr Result(Result&&)
-    requires(!((std::is_void_v<T> ||
-                ::sus::mem::MoveOrRef<T>)&&::sus::mem::Move<E>))
+    requires(!((std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) &&
+               ::sus::mem::Move<E>))
   = delete;
 
   /// If T and E can be trivially move-assigned, Result<T, E> can also be
@@ -375,7 +377,7 @@ class [[nodiscard]] Result final {
              IsTrivialMoveAssignOrRef<E>)
   = default;
 
-  Result& operator=(Result&& o) noexcept
+  constexpr Result& operator=(Result&& o) noexcept
     requires(
         // clang-format off
       (std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) && ::sus::mem::Move<E> &&
@@ -394,7 +396,7 @@ class [[nodiscard]] Result final {
             break;
           case ResultState::IsErr:
             storage_.destroy_ok();
-            new (&storage_.err_) E(::sus::move(o.storage_.err_));
+            std::construct_at(&storage_.err_, ::sus::move(o.storage_.err_));
             break;
           // SAFETY: This condition is check()'d at the top of the function.
           case ResultState::IsMoved:
@@ -409,7 +411,7 @@ class [[nodiscard]] Result final {
             break;
           case ResultState::IsOk:
             storage_.destroy_err();
-            new (&storage_.ok_) OkStorageType(::sus::move(o.storage_.ok_));
+            std::construct_at(&storage_.ok_, ::sus::move(o.storage_.ok_));
             break;
           // SAFETY: This condition is check()'d at the top of the function.
           case ResultState::IsMoved:
@@ -420,10 +422,10 @@ class [[nodiscard]] Result final {
         switch (state_ =
                     ::sus::mem::replace(mref(o.state_), ResultState::IsMoved)) {
           case ResultState::IsErr:
-            new (&storage_.err_) E(::sus::move(o.storage_.err_));
+            std::construct_at(&storage_.err_, ::sus::move(o.storage_.err_));
             break;
           case ResultState::IsOk:
-            new (&storage_.ok_) OkStorageType(::sus::move(o.storage_.ok_));
+            std::construct_at(&storage_.ok_, ::sus::move(o.storage_.ok_));
             break;
             // SAFETY: This condition is check()'d at the top of the function.
           case ResultState::IsMoved:
@@ -442,8 +444,8 @@ class [[nodiscard]] Result final {
   constexpr Result clone() const& noexcept
     requires((std::is_void_v<T> || ::sus::mem::Clone<T>) &&
              ::sus::mem::Clone<E> &&
-             !((std::is_void_v<T> ||
-                ::sus::mem::CopyOrRef<T>)&&::sus::mem::Copy<E>))
+             !((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
+               ::sus::mem::Copy<E>))
   {
     ::sus::check(state_ != ResultState::IsMoved);
     switch (state_) {
@@ -461,11 +463,11 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
-  void clone_from(const Result& source) &
-        requires((std::is_void_v<T> || ::sus::mem::Clone<T>) &&
-                 ::sus::mem::Clone<E> &&
-                 !((std::is_void_v<T> ||
-                    ::sus::mem::CopyOrRef<T>)&&::sus::mem::Copy<E>))
+  constexpr void clone_from(const Result& source) &
+    requires((std::is_void_v<T> || ::sus::mem::Clone<T>) &&
+             ::sus::mem::Clone<E> &&
+             !((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
+               ::sus::mem::Copy<E>))
   {
     ::sus::check(source.state_ != ResultState::IsMoved);
     if (&source == this) [[unlikely]]
@@ -660,7 +662,7 @@ class [[nodiscard]] Result final {
   ///
   /// # Panic
   /// Panics if the value is an `Err`.
-  const std::remove_reference_t<TUnlessVoid>& as_ok() const&
+  constexpr const std::remove_reference_t<TUnlessVoid>& as_ok() const&
     requires(!std::is_void_v<T>)
   {
     ::sus::check(state_ == ResultState::IsOk);
@@ -671,7 +673,7 @@ class [[nodiscard]] Result final {
   ///
   /// # Panic
   /// Panics if the value is an `Ok`.
-  const std::remove_reference_t<E>& as_err() const& {
+  constexpr const std::remove_reference_t<E>& as_err() const& {
     ::sus::check(state_ == ResultState::IsErr);
     return storage_.err_;
   }
