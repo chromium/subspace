@@ -36,67 +36,72 @@ struct NotDefaultConstructible final {
 };
 
 struct TriviallyCopyable final {
-  TriviallyCopyable(const TriviallyCopyable&) = default;
-  TriviallyCopyable& operator=(const TriviallyCopyable&) = default;
-  ~TriviallyCopyable() = default;
-  TriviallyCopyable(int i) : i(i) {}
+  constexpr TriviallyCopyable(const TriviallyCopyable&) = default;
+  constexpr TriviallyCopyable& operator=(const TriviallyCopyable&) = default;
+  constexpr ~TriviallyCopyable() = default;
+  constexpr TriviallyCopyable(int i) : i(i) {}
   int i;
 };
 
 struct TriviallyMoveableAndRelocatable final {
-  TriviallyMoveableAndRelocatable(TriviallyMoveableAndRelocatable&&) = default;
-  TriviallyMoveableAndRelocatable& operator=(
+  constexpr TriviallyMoveableAndRelocatable(TriviallyMoveableAndRelocatable&&) =
+      default;
+  constexpr TriviallyMoveableAndRelocatable& operator=(
       TriviallyMoveableAndRelocatable&&) = default;
-  ~TriviallyMoveableAndRelocatable() = default;
-  TriviallyMoveableAndRelocatable(int i) : i(i) {}
+  constexpr ~TriviallyMoveableAndRelocatable() = default;
+  constexpr TriviallyMoveableAndRelocatable(int i) : i(i) {}
   int i;
 };
 
 struct TriviallyCopyableNotDestructible final {
-  TriviallyCopyableNotDestructible(const TriviallyCopyableNotDestructible&) =
-      default;
-  TriviallyCopyableNotDestructible& operator=(
+  constexpr TriviallyCopyableNotDestructible(
       const TriviallyCopyableNotDestructible&) = default;
-  ~TriviallyCopyableNotDestructible() {}
-  TriviallyCopyableNotDestructible(int i) : i(i) {}
+  constexpr TriviallyCopyableNotDestructible& operator=(
+      const TriviallyCopyableNotDestructible&) = default;
+  constexpr ~TriviallyCopyableNotDestructible() {}
+  constexpr TriviallyCopyableNotDestructible(int i) : i(i) {}
   int i;
 };
 
 struct TriviallyMoveableNotDestructible final {
-  TriviallyMoveableNotDestructible(TriviallyMoveableNotDestructible&&) =
-      default;
-  TriviallyMoveableNotDestructible& operator=(
+  constexpr TriviallyMoveableNotDestructible(
       TriviallyMoveableNotDestructible&&) = default;
-  ~TriviallyMoveableNotDestructible(){};
-  TriviallyMoveableNotDestructible(int i) : i(i) {}
+  constexpr TriviallyMoveableNotDestructible& operator=(
+      TriviallyMoveableNotDestructible&&) = default;
+  constexpr ~TriviallyMoveableNotDestructible(){};
+  constexpr TriviallyMoveableNotDestructible(int i) : i(i) {}
   int i;
 };
 
 struct NotTriviallyRelocatableCopyableOrMoveable final {
-  NotTriviallyRelocatableCopyableOrMoveable(
+  constexpr NotTriviallyRelocatableCopyableOrMoveable(
       NotTriviallyRelocatableCopyableOrMoveable&& o) noexcept
       : i(o.i) {}
-  void operator=(NotTriviallyRelocatableCopyableOrMoveable&& o) noexcept {
+  constexpr void operator=(
+      NotTriviallyRelocatableCopyableOrMoveable&& o) noexcept {
     i = o.i;
   }
-  NotTriviallyRelocatableCopyableOrMoveable(
+  constexpr NotTriviallyRelocatableCopyableOrMoveable(
       const NotTriviallyRelocatableCopyableOrMoveable& o) noexcept
       : i(o.i) {}
-  void operator=(const NotTriviallyRelocatableCopyableOrMoveable& o) noexcept {
+  constexpr void operator=(
+      const NotTriviallyRelocatableCopyableOrMoveable& o) noexcept {
     i = o.i;
   }
-  ~NotTriviallyRelocatableCopyableOrMoveable() {}
-  NotTriviallyRelocatableCopyableOrMoveable(int i) : i(i) {}
+  constexpr ~NotTriviallyRelocatableCopyableOrMoveable() {}
+  constexpr NotTriviallyRelocatableCopyableOrMoveable(int i) : i(i) {}
   int i;
 };
 
 struct [[sus_trivial_abi]] TrivialAbiRelocatable final {
-  sus_class_trivially_relocatable_unchecked(::sus::marker::unsafe_fn);
-  TrivialAbiRelocatable(TrivialAbiRelocatable&&) noexcept = default;
-  TrivialAbiRelocatable& operator=(TrivialAbiRelocatable&&) noexcept = default;
-  ~TrivialAbiRelocatable() {}
-  TrivialAbiRelocatable(int i) : i(i) {}
+  constexpr TrivialAbiRelocatable(TrivialAbiRelocatable&&) noexcept = default;
+  constexpr TrivialAbiRelocatable& operator=(TrivialAbiRelocatable&&) noexcept =
+      default;
+  constexpr ~TrivialAbiRelocatable() {}
+  constexpr TrivialAbiRelocatable(int i) : i(i) {}
   int i;
+
+  sus_class_trivially_relocatable_unchecked(::sus::marker::unsafe_fn);
 };
 
 }  // namespace sus::test
