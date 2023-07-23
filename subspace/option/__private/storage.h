@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "subspace/macros/inline.h"
 #include "subspace/macros/nonnull.h"
 #include "subspace/marker/unsafe.h"
@@ -94,11 +96,11 @@ struct Storage<T, false> final {
   constexpr inline void construct_from_none(const T& t) noexcept
     requires(::sus::mem::Copy<T>)
   {
-    new (&val_) T(t);
+    std::construct_at(&val_, t);
     state_ = Some;
   }
   constexpr inline void construct_from_none(T&& t) noexcept {
-    new (&val_) T(::sus::move(t));
+    std::construct_at(&val_, ::sus::move(t));
     state_ = Some;
   }
 
@@ -207,17 +209,17 @@ struct Storage<T, true> final {
     return access_.is_constructed() ? Some : None;
   }
 
-  inline void construct_from_none(const T& t) noexcept
+  constexpr inline void construct_from_none(const T& t) noexcept
     requires(::sus::mem::Copy<T>)
   {
     access_.set_destroy_value(::sus::marker::unsafe_fn);
     access_.~NeverValueAccess();
-    new (&access_) NeverValueAccess(t);
+    std::construct_at(&access_, t);
   }
-  inline void construct_from_none(T&& t) noexcept {
+  constexpr inline void construct_from_none(T&& t) noexcept {
     access_.set_destroy_value(::sus::marker::unsafe_fn);
     access_.~NeverValueAccess();
-    new (&access_) NeverValueAccess(::sus::move(t));
+    std::construct_at(&access_, ::sus::move(t));
   }
 
   constexpr inline void set_some(const T& t) noexcept
@@ -245,7 +247,7 @@ struct Storage<T, true> final {
       access_.destroy_and_set_never_value(::sus::marker::unsafe_fn);
     } else {
       access_.~NeverValueAccess();
-      new (&access_) NeverValueAccess();
+      std::construct_at(&access_);
     }
     return t;
   }
@@ -255,7 +257,7 @@ struct Storage<T, true> final {
       access_.destroy_and_set_never_value(::sus::marker::unsafe_fn);
     } else {
       access_.~NeverValueAccess();
-      new (&access_) NeverValueAccess();
+      std::construct_at(&access_);
     }
   }
 
