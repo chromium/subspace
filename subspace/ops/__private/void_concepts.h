@@ -21,19 +21,19 @@
 
 namespace sus::ops::__private {
 
-template <class T, class U>
+template <class T, class U = T>
 concept VoidOrEq =
     (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::Eq<T, U>;
 
-template <class T, class U>
+template <class T, class U = T>
 concept VoidOrOrd =
     (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::Ord<T, U>;
 
-template <class T, class U>
+template <class T, class U = T>
 concept VoidOrWeakOrd =
     (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::WeakOrd<T, U>;
 
-template <class T, class U>
+template <class T, class U = T>
 concept VoidOrPartialOrd =
     (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::PartialOrd<T, U>;
 
