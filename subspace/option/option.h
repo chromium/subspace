@@ -1177,9 +1177,8 @@ class Option final {
   {
     switch (l) {
       case Some:
-        return r.is_some() &&
-               (l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) ==
-                r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn));
+        return r.is_some() && (l.as_value_unchecked(::sus::marker::unsafe_fn) ==
+                               r.as_value_unchecked(::sus::marker::unsafe_fn));
       case None: return r.is_none();
     }
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
@@ -1190,9 +1189,8 @@ class Option final {
                                           const Option<U>& r) noexcept {
     switch (l) {
       case Some:
-        return r.is_some() &&
-               (l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) ==
-                r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn));
+        return r.is_some() && (l.as_value_unchecked(::sus::marker::unsafe_fn) ==
+                               r.as_value_unchecked(::sus::marker::unsafe_fn));
       case None: return r.is_none();
     }
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
@@ -1202,6 +1200,148 @@ class Option final {
     requires(!::sus::ops::Eq<T, U>)
   friend constexpr inline bool operator==(const Option<T>& l,
                                           const Option<U>& r) = delete;
+
+  /// Compares two Options.
+  ///
+  /// Satisfies sus::ops::Ord<Option<U>> if sus::ops::Ord<U>.
+  ///
+  /// Satisfies sus::ops::WeakOrd<Option<U>> if sus::ops::WeakOrd<U>.
+  ///
+  /// Satisfies sus::ops::PartialOrd<Option<U>> if sus::ops::PartialOrd<U>.
+  ///
+  /// The non-template overloads allow some/none marker types to convert to
+  /// Option for comparison.
+  //
+  // sus::ops::Ord<Option<U>> trait.
+  friend constexpr inline auto operator<=>(const Option& l,
+                                           const Option& r) noexcept
+    requires(::sus::ops::ExclusiveOrd<T>)
+  {
+    switch (l) {
+      case Some:
+        if (r.is_some()) {
+          return l.as_value_unchecked(::sus::marker::unsafe_fn) <=>
+                 r.as_value_unchecked(::sus::marker::unsafe_fn);
+        } else {
+          return std::strong_ordering::greater;
+        }
+      case None:
+        if (r.is_some())
+          return std::strong_ordering::less;
+        else
+          return std::strong_ordering::equivalent;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+  template <class U>
+    requires(::sus::ops::ExclusiveOrd<T, U>)
+  friend constexpr inline auto operator<=>(const Option<T>& l,
+                                           const Option<U>& r) noexcept {
+    switch (l) {
+      case Some:
+        if (r.is_some()) {
+          return l.as_value_unchecked(::sus::marker::unsafe_fn) <=>
+                 r.as_value_unchecked(::sus::marker::unsafe_fn);
+        } else {
+          return std::strong_ordering::greater;
+        }
+      case None:
+        if (r.is_some())
+          return std::strong_ordering::less;
+        else
+          return std::strong_ordering::equivalent;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+
+  // sus::ops::WeakOrd<Option<U>> trait.
+  friend constexpr inline auto operator<=>(const Option& l,
+                                           const Option& r) noexcept
+    requires(::sus::ops::ExclusiveWeakOrd<T>)
+  {
+    switch (l) {
+      case Some:
+        if (r.is_some()) {
+          return l.as_value_unchecked(::sus::marker::unsafe_fn) <=>
+                 r.as_value_unchecked(::sus::marker::unsafe_fn);
+        } else {
+          return std::weak_ordering::greater;
+        }
+      case None:
+        if (r.is_some())
+          return std::weak_ordering::less;
+        else
+          return std::weak_ordering::equivalent;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+  template <class U>
+    requires(::sus::ops::ExclusiveWeakOrd<T, U>)
+  friend constexpr inline auto operator<=>(const Option<T>& l,
+                                           const Option<U>& r) noexcept {
+    switch (l) {
+      case Some:
+        if (r.is_some()) {
+          return l.as_value_unchecked(::sus::marker::unsafe_fn) <=>
+                 r.as_value_unchecked(::sus::marker::unsafe_fn);
+        } else {
+          return std::weak_ordering::greater;
+        }
+      case None:
+        if (r.is_some())
+          return std::weak_ordering::less;
+        else
+          return std::weak_ordering::equivalent;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+
+  // sus::ops::PartialOrd<Option<U>> trait.
+  template <class U>
+    requires(::sus::ops::ExclusivePartialOrd<T, U>)
+  friend constexpr inline auto operator<=>(const Option<T>& l,
+                                           const Option<U>& r) noexcept {
+    switch (l) {
+      case Some:
+        if (r.is_some()) {
+          return l.as_value_unchecked(::sus::marker::unsafe_fn) <=>
+                 r.as_value_unchecked(::sus::marker::unsafe_fn);
+        } else {
+          return std::partial_ordering::greater;
+        }
+      case None:
+        if (r.is_some())
+          return std::partial_ordering::less;
+        else
+          return std::partial_ordering::equivalent;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+  friend constexpr inline auto operator<=>(const Option& l,
+                                           const Option& r) noexcept
+    requires(::sus::ops::ExclusivePartialOrd<T>)
+  {
+    switch (l) {
+      case Some:
+        if (r.is_some()) {
+          return l.as_value_unchecked(::sus::marker::unsafe_fn) <=>
+                 r.as_value_unchecked(::sus::marker::unsafe_fn);
+        } else {
+          return std::partial_ordering::greater;
+        }
+      case None:
+        if (r.is_some())
+          return std::partial_ordering::less;
+        else
+          return std::partial_ordering::equivalent;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+
+  template <class U>
+    requires(!::sus::ops::PartialOrd<T, U>)
+  friend constexpr inline auto operator<=>(
+      const Option<T>& l, const Option<U>& r) noexcept = delete;
 
   /// Implements sus::mem::From<std::optional>.
   ///
@@ -1307,87 +1447,6 @@ class Option final {
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            StorageType<T>);
 };
-
-/// Compares two Options.
-///
-/// Satisfies sus::ops::Ord<Option<U>> if sus::ops::Ord<U>.
-///
-/// Satisfies sus::ops::WeakOrd<Option<U>> if sus::ops::WeakOrd<U>.
-///
-/// Satisfies sus::ops::PartialOrd<Option<U>> if sus::ops::PartialOrd<U>.
-//
-// sus::ops::Ord<Option<U>> trait.
-// sus::ops::WeakOrd<Option<U>> trait.
-// sus::ops::PartialOrd<Option<U>> trait.
-template <class T, class U>
-  requires(::sus::ops::ExclusiveOrd<T, U>)
-constexpr inline auto operator<=>(const Option<T>& l,
-                                  const Option<U>& r) noexcept {
-  switch (l) {
-    case Some:
-      if (r.is_some()) {
-        return l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) <=>
-               r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn);
-      } else {
-        return std::strong_ordering::greater;
-      }
-    case None:
-      if (r.is_some())
-        return std::strong_ordering::less;
-      else
-        return std::strong_ordering::equivalent;
-  }
-  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-}
-
-// sus::ops::WeakOrd<Option<U>> trait.
-template <class T, class U>
-  requires(::sus::ops::ExclusiveWeakOrd<T, U>)
-constexpr inline auto operator<=>(const Option<T>& l,
-                                  const Option<U>& r) noexcept {
-  switch (l) {
-    case Some:
-      if (r.is_some()) {
-        return l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) <=>
-               r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn);
-      } else {
-        return std::weak_ordering::greater;
-      }
-    case None:
-      if (r.is_some())
-        return std::weak_ordering::less;
-      else
-        return std::weak_ordering::equivalent;
-  }
-  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-}
-
-// sus::ops::PartialOrd<Option<U>> trait.
-template <class T, class U>
-  requires(::sus::ops::ExclusivePartialOrd<T, U>)
-constexpr inline auto operator<=>(const Option<T>& l,
-                                  const Option<U>& r) noexcept {
-  switch (l) {
-    case Some:
-      if (r.is_some()) {
-        return l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) <=>
-               r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn);
-      } else {
-        return std::partial_ordering::greater;
-      }
-    case None:
-      if (r.is_some())
-        return std::partial_ordering::less;
-      else
-        return std::partial_ordering::equivalent;
-  }
-  ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
-}
-
-template <class T, class U>
-  requires(!::sus::ops::PartialOrd<T, U>)
-constexpr inline auto operator<=>(const Option<T>& l,
-                                  const Option<U>& r) noexcept = delete;
 
 // Implicit for-ranged loop iteration via `Option::iter()`.
 using ::sus::iter::__private::begin;

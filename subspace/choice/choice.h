@@ -128,18 +128,11 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
           ::sus::num::__private::unchecked_not(IndexType{0u}), IndexType{1u});
 
   template <TagsType V>
-  static constexpr IndexType get_index_for_value() noexcept {
-    using Index = __private::IndexOfValue<V, Tags...>;
-    static_assert(!std::is_void_v<Index>,
-                  "The value V is not part of the Choice.");
-    // SAFETY: We know `I` fits inside `IndexType` because `I` is the index of a
-    // union member, and `IndexType` is chosen specifically to be large enough
-    // to hold the index of all union members.
-    return static_cast<IndexType>(Index::value);
-  }
-
-  template <TagsType V>
-  static constexpr IndexType index = get_index_for_value<V>();
+  static constexpr auto index =
+      // SAFETY: We know the index fits inside `IndexType` because it is the
+      // index of a union member, and `IndexType` is chosen specifically to be
+      // large enough to hold the index of all union members.
+      static_cast<IndexType>(__private::get_index_for_value<V, Tags...>());
 
   template <TagsType V>
   using StorageTypeOfTag = __private::StorageTypeOfTag<size_t{index<V>}, Ts...>;
@@ -158,8 +151,13 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
  public:
   using Tag = TagsType;
 
-  // TODO: Can we construct Tuples of trivially constructible things (or some
-  // set of things) without placement new and thus make this constexpr?
+  /// The type associated with a tag. If multiple types are associated, the
+  /// resulting type here is a Tuple of those types.
+  ///
+  /// The `Tag` must be valid or it will fail to compile.
+  template <TagsType Tag>
+  using TypeForTag = __private::PublicTypeForStorageType<StorageTypeOfTag<Tag>>;
+  
   template <TagsType V, class U, int&...,
             __private::ValueIsNotVoid Arg = StorageTypeOfTag<V>>
     requires(std::constructible_from<Arg, U &&>)

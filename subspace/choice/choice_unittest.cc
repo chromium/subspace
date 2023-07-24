@@ -394,7 +394,7 @@ TEST(Choice, Set) {
     auto u = Choice<sus_choice_types(
         (Order::First, u32), (Order::Second, i8, u64))>::with<Order::First>(3u);
     EXPECT_EQ(u.which(), Order::First);
-    EXPECT_EQ(u.get<Order::First>(), sus::some(3u));
+    EXPECT_EQ(u.get<Order::First>(), sus::some(3_u32));
     EXPECT_EQ(u.get<Order::Second>(), sus::none());
     u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
     EXPECT_EQ(u.which(), Order::Second);
@@ -418,7 +418,7 @@ TEST(Choice, Set) {
     auto u = Choice<sus_choice_types(
         (Order::First, u32), (Order::Second, void))>::with<Order::First>(3u);
     EXPECT_EQ(u.which(), Order::First);
-    EXPECT_EQ(u.get<Order::First>(), sus::some(3u));
+    EXPECT_EQ(u.get<Order::First>(), sus::some(3_u32));
     u.set<Order::Second>();
     EXPECT_EQ(u.which(), Order::Second);
     EXPECT_EQ(u.get<Order::First>(), sus::none());
