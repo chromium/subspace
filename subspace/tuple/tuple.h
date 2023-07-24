@@ -146,6 +146,9 @@ class Tuple final {
   }
 
   /// sus::ops::Eq<Tuple<U...>> trait.
+  ///
+  /// The non-template overload allows some/none marker types to convert to
+  /// Option for comparison.
   constexpr bool operator==(const Tuple& r) const& noexcept
     requires((::sus::ops::Eq<T> && ... && ::sus::ops::Eq<Ts>))
   {
