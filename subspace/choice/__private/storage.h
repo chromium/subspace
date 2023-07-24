@@ -15,6 +15,7 @@
 #pragma once
 
 #include <compare>
+#include <memory>
 #include <type_traits>
 
 #include "subspace/choice/__private/nothing.h"
@@ -33,6 +34,11 @@ concept ValueIsNotVoid = !ValueIsVoid<StorageType>;
 
 template <class... Ts>
 struct MakeStorageType {
+  static_assert(sizeof...(Ts) > 0u,
+                "Every Choice tag must come with at least one value type. "
+                "The type can be `void` to specify no value. "
+                "For example: "
+                "`using C = Choice<sus_choice_types((0, u32), (1, void))>;`");
   using type = ::sus::Tuple<Ts...>;
 };
 
@@ -41,8 +47,12 @@ struct MakeStorageType<void> {
   using type = Nothing;
 };
 
+enum MissingStorageType {};
+
 template <class... Ts>
-struct StorageTypeOfTagHelper;
+struct StorageTypeOfTagHelper {
+  using type = MissingStorageType;
+};
 
 template <>
 struct StorageTypeOfTagHelper<Nothing> {
@@ -75,12 +85,12 @@ union Storage;
 template <size_t I, class... Ts, class... Elements>
   requires(sizeof...(Ts) > 1 && sizeof...(Elements) > 0)
 union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
-  Storage() {}
+  constexpr Storage() {}
   ~Storage()
     requires(std::is_trivially_destructible_v<::sus::Tuple<Ts...>> && ... &&
              std::is_trivially_destructible_v<Elements>)
   = default;
-  ~Storage()
+  constexpr ~Storage()
     requires(!(std::is_trivially_destructible_v<::sus::Tuple<Ts...>> && ... &&
                std::is_trivially_destructible_v<Elements>))
   {}
@@ -104,15 +114,15 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
 
   using Type = ::sus::Tuple<Ts...>;
 
-  inline void construct(Type&& tuple) {
-    new (&tuple_) Type(::sus::move(tuple));
+  inline constexpr void construct(Type&& tuple) {
+    std::construct_at(&tuple_, ::sus::move(tuple));
   }
   inline constexpr void assign(Type&& tuple) { tuple_ = ::sus::move(tuple); }
   inline void move_construct(size_t index, Storage&& from) {
     if (index == I) {
-      new (&tuple_) Type(::sus::move(from.tuple_));
+      std::construct_at(&tuple_, ::sus::move(from.tuple_));
     } else {
-      new (&more_) decltype(more_)();  // Make the more_ member active.
+      std::construct_at(&more_);  // Make the more_ member active.
       more_.move_construct(index, ::sus::move(from.more_));
     }
   }
@@ -123,11 +133,11 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
       more_.move_assign(index, ::sus::move(from.more_));
     }
   }
-  inline void copy_construct(size_t index, const Storage& from) {
+  inline constexpr void copy_construct(size_t index, const Storage& from) {
     if (index == I) {
-      new (&tuple_) Type(from.tuple_);
+      std::construct_at(&tuple_, from.tuple_);
     } else {
-      new (&more_) decltype(more_)();  // Make the more_ member active.
+      std::construct_at(&more_);  // Make the more_ member active.
       more_.copy_construct(index, from.more_);
     }
   }
@@ -138,11 +148,11 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
       more_.copy_assign(index, from.more_);
     }
   }
-  inline void clone_construct(size_t index, const Storage& from) {
+  inline constexpr void clone_construct(size_t index, const Storage& from) {
     if (index == I) {
-      new (&tuple_) Type(::sus::clone(from.tuple_));
+      std::construct_at(&tuple_, ::sus::clone(from.tuple_));
     } else {
-      new (&more_) decltype(more_)();  // Make the more_ member active.
+      std::construct_at(&more_);  // Make the more_ member active.
       more_.clone_construct(index, from.more_);
     }
   }
@@ -206,11 +216,11 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
 template <size_t I, class... Elements>
   requires(sizeof...(Elements) > 0)
 union Storage<I, Nothing, Elements...> {
-  Storage() {}
+  constexpr Storage() {}
   ~Storage()
     requires(... && std::is_trivially_destructible_v<Elements>)
   = default;
-  ~Storage()
+  constexpr ~Storage()
     requires(!(... && std::is_trivially_destructible_v<Elements>))
   {}
 
@@ -227,9 +237,9 @@ union Storage<I, Nothing, Elements...> {
     requires(... && std::is_trivially_move_assignable_v<Elements>)
   = default;
 
-  inline void move_construct(size_t index, Storage&& from) {
+  inline constexpr void move_construct(size_t index, Storage&& from) {
     if (index != I) {
-      new (&more_) decltype(more_)();  // Make the more_ member active.
+      std::construct_at(&more_);  // Make the more_ member active.
       more_.move_construct(index, ::sus::move(from.more_));
     }
   }
@@ -238,9 +248,9 @@ union Storage<I, Nothing, Elements...> {
       more_.move_assign(index, ::sus::move(from.more_));
     }
   }
-  inline void copy_construct(size_t index, const Storage& from) {
+  inline constexpr void copy_construct(size_t index, const Storage& from) {
     if (index != I) {
-      new (&more_) decltype(more_)();  // Make the more_ member active.
+      std::construct_at(&more_);  // Make the more_ member active.
       more_.copy_construct(index, from.more_);
     }
   }
@@ -249,7 +259,7 @@ union Storage<I, Nothing, Elements...> {
       more_.copy_assign(index, from.more_);
     }
   }
-  inline void clone_construct(size_t index, const Storage& from) {
+  inline constexpr void clone_construct(size_t index, const Storage& from) {
     if (index != I) {
       more_.clone_construct(index, from.more_);
     }
@@ -295,12 +305,12 @@ union Storage<I, Nothing, Elements...> {
 template <size_t I, class T, class... Elements>
   requires(sizeof...(Elements) > 0)
 union Storage<I, ::sus::Tuple<T>, Elements...> {
-  Storage() {}
+  constexpr Storage() {}
   ~Storage()
     requires(std::is_trivially_destructible_v<::sus::Tuple<T>> && ... &&
              std::is_trivially_destructible_v<Elements>)
   = default;
-  ~Storage()
+  constexpr ~Storage()
     requires(!(std::is_trivially_destructible_v<::sus::Tuple<T>> && ... &&
                std::is_trivially_destructible_v<Elements>))
   {}
@@ -325,18 +335,17 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
   using Type = ::sus::Tuple<T>;
 
   template <class U>
-  inline void construct(U&& value) {
-    new (&tuple_)::sus::Tuple<T>(
-        ::sus::Tuple<T>::with(::sus::forward<U>(value)));
+  inline constexpr void construct(U&& value) {
+    std::construct_at(&tuple_, ::sus::Tuple<T>::with(::sus::forward<U>(value)));
   }
   inline constexpr void assign(T&& value) {
     tuple_ = Type::with(::sus::move(value));
   }
-  inline void move_construct(size_t index, Storage&& from) {
+  inline constexpr void move_construct(size_t index, Storage&& from) {
     if (index == I) {
-      new (&tuple_) Type(::sus::move(from.tuple_));
+      std::construct_at(&tuple_, ::sus::move(from.tuple_));
     } else {
-      new (&more_) decltype(more_)();  // Make the more_ member active.
+      std::construct_at(&more_);  // Make the more_ member active.
       more_.move_construct(index, ::sus::move(from.more_));
     }
   }
@@ -347,11 +356,11 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
       more_.move_assign(index, ::sus::move(from.more_));
     }
   }
-  inline void copy_construct(size_t index, const Storage& from) {
+  inline constexpr void copy_construct(size_t index, const Storage& from) {
     if (index == I) {
-      new (&tuple_) Type(from.tuple_);
+      std::construct_at(&tuple_, from.tuple_);
     } else {
-      new (&more_) decltype(more_)();  // Make the more_ member active.
+      std::construct_at(&more_);  // Make the more_ member active.
       more_.copy_construct(index, from.more_);
     }
   }
@@ -362,12 +371,12 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
       more_.copy_assign(index, from.more_);
     }
   }
-  inline void clone_construct(size_t index, const Storage& from) {
+  inline constexpr void clone_construct(size_t index, const Storage& from) {
     if (index == I) {
       auto x = ::sus::clone(from.tuple_);
-      new (&tuple_) Type(sus::move(x));
+      std::construct_at(&tuple_, sus::move(x));
     } else {
-      new (&more_) decltype(more_)();  // Make the more_ member active.
+      std::construct_at(&more_);  // Make the more_ member active.
       more_.clone_construct(index, from.more_);
     }
   }
@@ -425,11 +434,11 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
 template <size_t I, class... Ts>
   requires(sizeof...(Ts) > 1)
 union Storage<I, ::sus::Tuple<Ts...>> {
-  Storage() {}
+  constexpr Storage() {}
   ~Storage()
     requires(std::is_trivially_destructible_v<::sus::Tuple<Ts...>>)
   = default;
-  ~Storage()
+  constexpr ~Storage()
     requires(!(std::is_trivially_destructible_v<::sus::Tuple<Ts...>>))
   {}
 
@@ -448,29 +457,29 @@ union Storage<I, ::sus::Tuple<Ts...>> {
 
   using Type = ::sus::Tuple<Ts...>;
 
-  inline void construct(Type&& tuple) {
-    new (&tuple_) Type(::sus::move(tuple));
+  inline constexpr void construct(Type&& tuple) {
+    std::construct_at(&tuple_, ::sus::move(tuple));
   }
   inline constexpr void assign(Type&& tuple) { tuple_ = ::sus::move(tuple); }
-  inline void move_construct(size_t index, Storage&& from) {
+  inline constexpr void move_construct(size_t index, Storage&& from) {
     ::sus::check(index == I);
-    new (&tuple_) Type(::sus::move(from.tuple_));
+    std::construct_at(&tuple_, ::sus::move(from.tuple_));
   }
   inline constexpr void move_assign(size_t index, Storage&& from) {
     ::sus::check(index == I);
     tuple_ = ::sus::move(from.tuple_);
   }
-  inline void copy_construct(size_t index, const Storage& from) {
+  inline constexpr void copy_construct(size_t index, const Storage& from) {
     ::sus::check(index == I);
-    new (&tuple_) Type(from.tuple_);
+    std::construct_at(&tuple_, from.tuple_);
   }
   inline constexpr void copy_assign(size_t index, const Storage& from) {
     ::sus::check(index == I);
     tuple_ = from.tuple_;
   }
-  inline void clone_construct(size_t index, const Storage& from) {
+  inline constexpr void clone_construct(size_t index, const Storage& from) {
     ::sus::check(index == I);
-    new (&tuple_) Type(::sus::clone(from.tuple_));
+    std::construct_at(&tuple_, ::sus::clone(from.tuple_));
   }
   inline constexpr void destroy(size_t index) {
     ::sus::check(index == I);
@@ -480,15 +489,18 @@ union Storage<I, ::sus::Tuple<Ts...>> {
     ::sus::check(index == I);
     return tuple_ == other.tuple_;
   }
-  inline constexpr auto ord(size_t index, const Storage& other) const& noexcept {
+  inline constexpr auto ord(size_t index,
+                            const Storage& other) const& noexcept {
     ::sus::check(index == I);
     return std::strong_order(tuple_, other.tuple_);
   }
-  inline constexpr auto weak_ord(size_t index, const Storage& other) const& noexcept {
+  inline constexpr auto weak_ord(size_t index,
+                                 const Storage& other) const& noexcept {
     ::sus::check(index == I);
     return std::weak_order(tuple_, other.tuple_);
   }
-  inline constexpr auto partial_ord(size_t index, const Storage& other) const& noexcept {
+  inline constexpr auto partial_ord(size_t index,
+                                    const Storage& other) const& noexcept {
     ::sus::check(index == I);
     return std::partial_order(tuple_, other.tuple_);
   }
@@ -511,21 +523,21 @@ union Storage<I, ::sus::Tuple<Ts...>> {
 
 template <size_t I>
 union Storage<I, Nothing> {
-  Storage() {}
+  constexpr Storage() {}
 
-  inline void move_construct(size_t index, Storage&&) {
+  inline constexpr void move_construct(size_t index, Storage&&) {
     ::sus::check(index == I);
   }
   inline constexpr void move_assign(size_t index, Storage&&) {
     ::sus::check(index == I);
   }
-  inline void copy_construct(size_t index, const Storage&) {
+  inline constexpr void copy_construct(size_t index, const Storage&) {
     ::sus::check(index == I);
   }
   inline constexpr void copy_assign(size_t index, const Storage&) {
     ::sus::check(index == I);
   }
-  inline void clone_construct(size_t index, const Storage&) {
+  inline constexpr void clone_construct(size_t index, const Storage&) {
     ::sus::check(index == I);
   }
   inline constexpr void destroy(size_t index) { ::sus::check(index == I); }
@@ -549,11 +561,11 @@ union Storage<I, Nothing> {
 
 template <size_t I, class T>
 union Storage<I, ::sus::Tuple<T>> {
-  Storage() {}
+  constexpr Storage() {}
   ~Storage()
     requires(std::is_trivially_destructible_v<::sus::Tuple<T>>)
   = default;
-  ~Storage()
+  constexpr ~Storage()
     requires(!(std::is_trivially_destructible_v<::sus::Tuple<T>>))
   {}
 
@@ -573,38 +585,33 @@ union Storage<I, ::sus::Tuple<T>> {
   using Type = ::sus::Tuple<T>;
 
   template <class U>
-  inline void construct(U&& value) {
-    new (&tuple_)::sus::Tuple<T>(
-        ::sus::Tuple<T>::with(::sus::forward<U>(value)));
+  inline constexpr void construct(U&& value) {
+    std::construct_at(&tuple_, ::sus::Tuple<T>::with(::sus::forward<U>(value)));
   }
   inline constexpr void assign(T&& value) {
     tuple_ = Type::with(::sus::move(value));
   }
-  inline void move_construct(size_t index, Storage&& from) {
+  inline constexpr void move_construct(size_t index, Storage&& from) {
     ::sus::check(index == I);
-    new (&tuple_) Type(::sus::move(from.tuple_));
+    std::construct_at(&tuple_, ::sus::move(from.tuple_));
   }
   inline constexpr void move_assign(size_t index, Storage&& from) {
     ::sus::check(index == I);
     tuple_ = ::sus::move(from.tuple_);
   }
-  inline void copy_construct(size_t index, const Storage& from) {
+  inline constexpr void copy_construct(size_t index, const Storage& from) {
     ::sus::check(index == I);
-    new (&tuple_) Type(from.tuple_);
+    std::construct_at(&tuple_, from.tuple_);
   }
   inline constexpr void copy_assign(size_t index, const Storage& from) {
     ::sus::check(index == I);
     tuple_ = from.tuple_;
   }
-  inline void clone_construct(size_t index, const Storage& from) {
+  inline constexpr void clone_construct(size_t index, const Storage& from) {
     ::sus::check(index == I);
-    new (&tuple_) Type(::sus::clone(from.tuple_));
+    std::construct_at(&tuple_, ::sus::clone(from.tuple_));
   }
   inline constexpr void destroy(size_t index) {
-    if (index != I) {
-      fprintf(stderr, "index %lu I %lu\n", (unsigned long)index,
-              (unsigned long)I);
-    }
     ::sus::check(index == I);
     tuple_.~Type();
   }

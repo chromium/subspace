@@ -388,6 +388,53 @@ TEST(Choice, Get) {
   }
 }
 
+TEST(Choice, Set) {
+  // Set non-void.
+  {
+    auto u = Choice<sus_choice_types(
+        (Order::First, u32), (Order::Second, i8, u64))>::with<Order::First>(3u);
+    EXPECT_EQ(u.which(), Order::First);
+    EXPECT_EQ(u.get<Order::First>(), sus::some(3u));
+    EXPECT_EQ(u.get<Order::Second>(), sus::none());
+    u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+    EXPECT_EQ(u.which(), Order::Second);
+    EXPECT_EQ(u.get<Order::First>(), sus::none());
+    EXPECT_EQ(u.get<Order::Second>(), sus::some(sus::tuple(1_i8, 2_u64)));
+  }
+  // Constexpr non-void.
+  {
+    constexpr auto r = []() constexpr {
+      auto u = Choice<sus_choice_types(
+          (Order::First, u32),
+          (Order::Second, i8, u64))>::with<Order::First>(3u);
+      u.set<Order::Second>(sus::tuple(1_i8, 2_u64));
+      return sus::move(u).into_inner<Order::Second>();
+    }();
+    static_assert(r == sus::tuple(1_i8, 2_u64));
+  }
+
+  // Set void.
+  {
+    auto u = Choice<sus_choice_types(
+        (Order::First, u32), (Order::Second, void))>::with<Order::First>(3u);
+    EXPECT_EQ(u.which(), Order::First);
+    EXPECT_EQ(u.get<Order::First>(), sus::some(3u));
+    u.set<Order::Second>();
+    EXPECT_EQ(u.which(), Order::Second);
+    EXPECT_EQ(u.get<Order::First>(), sus::none());
+  }
+  // Constexpr void.
+  {
+    constexpr auto r = []() constexpr {
+      auto u = Choice<sus_choice_types(
+          (Order::First, u32), (Order::Second, void))>::with<Order::First>(3u);
+      u.set<Order::Second>();
+      return u.which();
+    }();
+    static_assert(r == Order::Second);
+  }
+}
+
 TEST(Choice, GetMut) {
   // Single value first, double last.
   {
