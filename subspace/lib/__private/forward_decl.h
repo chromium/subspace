@@ -17,6 +17,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <type_traits>
+
 // Forward declarations of all types that ever need a forward declaration.
 // Include this header instead of writing out a forward declaration. And add
 // them as needed.
