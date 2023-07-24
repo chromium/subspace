@@ -108,6 +108,12 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
 
   using Type = ::sus::Tuple<Ts...>;
 
+  inline constexpr void activate_for_construct(size_t index) {
+    if (index != I) {
+      std::construct_at(&more_);  // Make the more_ member active.
+      more_.activate_for_construct(index);
+    }
+  }
   inline constexpr void construct(Type&& tuple) {
     std::construct_at(&tuple_, ::sus::move(tuple));
   }
@@ -231,6 +237,12 @@ union Storage<I, Nothing, Elements...> {
     requires(... && std::is_trivially_move_assignable_v<Elements>)
   = default;
 
+  inline constexpr void activate_for_construct(size_t index) {
+    if (index != I) {
+      std::construct_at(&more_);  // Make the more_ member active.
+      more_.activate_for_construct(index);
+    }
+  }
   inline constexpr void move_construct(size_t index, Storage&& from) {
     if (index != I) {
       std::construct_at(&more_);  // Make the more_ member active.
@@ -328,6 +340,12 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
 
   using Type = ::sus::Tuple<T>;
 
+  inline constexpr void activate_for_construct(size_t index) {
+    if (index != I) {
+      std::construct_at(&more_);  // Make the more_ member active.
+      more_.activate_for_construct(index);
+    }
+  }
   template <class U>
   inline constexpr void construct(U&& value) {
     std::construct_at(&tuple_, ::sus::Tuple<T>::with(::sus::forward<U>(value)));
@@ -451,6 +469,9 @@ union Storage<I, ::sus::Tuple<Ts...>> {
 
   using Type = ::sus::Tuple<Ts...>;
 
+  inline constexpr void activate_for_construct(size_t index) {
+    ::sus::check(index == I);
+  }
   inline constexpr void construct(Type&& tuple) {
     std::construct_at(&tuple_, ::sus::move(tuple));
   }
@@ -519,6 +540,9 @@ template <size_t I>
 union Storage<I, Nothing> {
   constexpr Storage() {}
 
+  inline constexpr void activate_for_construct(size_t index) {
+    ::sus::check(index == I);
+  }
   inline constexpr void move_construct(size_t index, Storage&&) {
     ::sus::check(index == I);
   }
@@ -578,6 +602,9 @@ union Storage<I, ::sus::Tuple<T>> {
 
   using Type = ::sus::Tuple<T>;
 
+  inline constexpr void activate_for_construct(size_t index) {
+    ::sus::check(index == I);
+  }
   template <class U>
   inline constexpr void construct(U&& value) {
     std::construct_at(&tuple_, ::sus::Tuple<T>::with(::sus::forward<U>(value)));
@@ -638,6 +665,26 @@ union Storage<I, ::sus::Tuple<T>> {
 
   [[sus_no_unique_address]] ::sus::Tuple<T> tuple_;
 };
+
+template <auto I, class S>
+static constexpr auto& construct_choice_storage(S& storage) {
+  return construct_choice_storage(storage,
+                                  std::integral_constant<size_t, size_t{I}>());
+}
+
+template <size_t I, class S>
+static constexpr auto& construct_choice_storage(
+    S& storage, std::integral_constant<size_t, I>) {
+  std::construct_at(&storage.more_);
+  return construct_choice_storage(storage.more_,
+                                  std::integral_constant<size_t, I - 1u>());
+}
+
+template <class S>
+static constexpr auto& construct_choice_storage(
+    S& storage, std::integral_constant<size_t, 0>) {
+  return storage;
+}
 
 template <size_t I, class S>
 static constexpr const auto& find_choice_storage(const S& storage) {

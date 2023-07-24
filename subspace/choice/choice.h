@@ -157,12 +157,13 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   /// The `Tag` must be valid or it will fail to compile.
   template <TagsType Tag>
   using TypeForTag = __private::PublicTypeForStorageType<StorageTypeOfTag<Tag>>;
-  
+
   template <TagsType V, class U, int&...,
             __private::ValueIsNotVoid Arg = StorageTypeOfTag<V>>
     requires(std::constructible_from<Arg, U &&>)
   constexpr static Choice with(U&& values) noexcept {
     auto u = Choice(index<V>);
+    u.storage_.activate_for_construct(size_t{index<V>});
     find_choice_storage_mut<index<V>>(u.storage_)
         .construct(::sus::forward<U>(values));
     return u;
@@ -454,6 +455,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     } else {
       if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
       index_ = index<V>;
+      storage_.activate_for_construct(size_t{index<V>});
       __private::find_choice_storage_mut<index<V>>(storage_).construct(
           ::sus::move(values));
     }
