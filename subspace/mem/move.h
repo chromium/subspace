@@ -47,6 +47,7 @@ namespace sus::mem {
 ///   S& operator=(S&&) = default;
 /// };
 /// static_assert(sus::mem::Move<S>);
+/// ```
 template <class T>
 concept Move = std::is_move_constructible_v<
                    std::remove_const_t<std::remove_reference_t<T>>> &&
