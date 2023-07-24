@@ -15,6 +15,7 @@
 #pragma once
 
 #include <compare>
+#include <type_traits>
 
 namespace sus::choice_type::__private {
 
@@ -26,5 +27,17 @@ struct Nothing {
     return std::strong_ordering::equivalent;
   }
 };
+
+template <class StorageType>
+concept ValueIsVoid = std::same_as<Nothing, StorageType>;
+
+template <class StorageType>
+concept ValueIsNotVoid = !ValueIsVoid<StorageType>;
+
+/// Maps the storage type back to the public type, which means it maps `Nothing`
+/// back to `void`.
+template <class StorageType>
+using PublicTypeForStorageType =
+    std::conditional_t<ValueIsVoid<StorageType>, void, StorageType>;
 
 }  // namespace sus::choice_type::__private

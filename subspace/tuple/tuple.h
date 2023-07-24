@@ -22,6 +22,7 @@
 #include "subspace/assertions/check.h"
 #include "subspace/choice/__private/pack_index.h"
 #include "subspace/construct/default.h"
+#include "subspace/construct/safe_from_reference.h"
 #include "subspace/iter/extend.h"
 #include "subspace/iter/into_iterator.h"
 #include "subspace/lib/__private/forward_decl.h"
@@ -147,7 +148,7 @@ class Tuple final {
 
   /// sus::ops::Eq<Tuple<U...>> trait.
   ///
-  /// The non-template overload allows some/none marker types to convert to
+  /// The non-template overload allows tuple() marker types to convert to
   /// Option for comparison.
   constexpr bool operator==(const Tuple& r) const& noexcept
     requires((::sus::ops::Eq<T> && ... && ::sus::ops::Eq<Ts>))
@@ -168,8 +169,19 @@ class Tuple final {
   /// Satisfies sus::ops::Ord<Tuple<...>> if sus::ops::Ord<...>.
   /// Satisfies sus::ops::WeakOrd<Option<...>> if sus::ops::WeakOrd<...>.
   /// Satisfies sus::ops::PartialOrd<Option<...>> if sus::ops::PartialOrd<...>.
+  ///
+  /// The non-template overloads allow tuple() marker types to convert to
+  /// Option for comparison.
   //
   // sus::ops::Ord<Tuple<U...>> trait.
+  constexpr auto operator<=>(const Tuple& r) const& noexcept
+    requires((::sus::ops::ExclusiveOrd<T> && ... &&
+              ::sus::ops::ExclusiveOrd<Ts>))
+  {
+    return __private::storage_cmp(
+        std::strong_ordering::equal, storage_, r.storage_,
+        std::make_index_sequence<1u + sizeof...(Ts)>());
+  }
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::ops::ExclusiveOrd<T, U> && ... &&
@@ -181,6 +193,14 @@ class Tuple final {
   }
 
   // sus::ops::WeakOrd<Tuple<U...>> trait.
+  constexpr auto operator<=>(const Tuple& r) const& noexcept
+    requires((::sus::ops::ExclusiveWeakOrd<T> && ... &&
+              ::sus::ops::ExclusiveWeakOrd<Ts>))
+  {
+    return __private::storage_cmp(
+        std::weak_ordering::equivalent, storage_, r.storage_,
+        std::make_index_sequence<1u + sizeof...(Ts)>());
+  }
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::ops::ExclusiveWeakOrd<T, U> && ... &&
@@ -192,6 +212,14 @@ class Tuple final {
   }
 
   // sus::ops::PartialOrd<Tuple<U...>> trait.
+  constexpr auto operator<=>(const Tuple& r) const& noexcept
+    requires((::sus::ops::ExclusivePartialOrd<T> && ... &&
+              ::sus::ops::ExclusivePartialOrd<Ts>))
+  {
+    return __private::storage_cmp(
+        std::partial_ordering::equivalent, storage_, r.storage_,
+        std::make_index_sequence<1u + sizeof...(Ts)>());
+  }
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::ops::ExclusivePartialOrd<T, U> && ... &&
@@ -297,6 +325,14 @@ struct TupleMarker {
   template <class... Us>
     requires((... && std::constructible_from<Us, std::remove_reference_t<Ts>&>))
   sus_pure inline constexpr operator Tuple<Us...>() const& noexcept {
+    static_assert(
+        (... &&
+         ::sus::construct::SafelyConstructibleFromReference<Us, const Ts&>),
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The TupleMarker's value "
+        "type must match the Tuple's. For example a `Tuple<const i32&, u32>` "
+        "can not be constructed from a TupleMarker holding `const i16&, u32`, "
+        "but it can be constructed from `i32&&, u16`.");
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
           return Tuple<Us...>::with(values.template at<Is>()...);
@@ -306,6 +342,13 @@ struct TupleMarker {
 
   template <class... Us>
   inline constexpr operator Tuple<Us...>() && noexcept {
+    static_assert(
+        (... && ::sus::construct::SafelyConstructibleFromReference<Us, Ts&&>),
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The TupleMarker's value "
+        "type must match the Tuple's. For example a `Tuple<const i32&, u32>` "
+        "can not be constructed from a TupleMarker holding `const i16&, u32`, "
+        "but it can be constructed from `i32&&, u16`.");
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
           return Tuple<Us...>::with(

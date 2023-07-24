@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subspace/construct/safe_from_reference.h"
 #include "subspace/lib/__private/forward_decl.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
@@ -58,13 +59,27 @@ struct OkMarker {
   // a const&, since marker types should normally be converted quickly to the
   // concrete type.
   template <class U, class E>
-    requires(std::constructible_from<U, std::remove_reference_t<T>&>)
+    requires(std::constructible_from<U, const T&>)
   inline constexpr operator ::sus::result::Result<U, E>() const& noexcept {
-    return Result<U, E>::with(value);
+    static_assert(
+        ::sus::construct::SafelyConstructibleFromReference<U, const T&>,
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The OkMarker's value type "
+        "must match the Result's. For example a `Result<const i32&, E>` can "
+        "not be constructed from an OkMarker holding `const i16&`, but it can "
+        "be constructed from `i32&&`.");
+    return Result<U, E>::with(static_cast<const T&>(value));
   }
 
   template <class U, class E>
   inline constexpr operator ::sus::result::Result<U, E>() && noexcept {
+    static_assert(
+        ::sus::construct::SafelyConstructibleFromReference<U, T&&>,
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The OkMarker's value type "
+        "must match the Result's. For example a `Result<const i32&, E>` can "
+        "not be constructed from an OkMarker holding `const i16&`, but it can "
+        "be constructed from `i32&&`.");
     return Result<U, E>::with(::sus::forward<T>(value));
   }
 

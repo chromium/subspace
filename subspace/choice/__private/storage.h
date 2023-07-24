@@ -26,12 +26,6 @@
 
 namespace sus::choice_type::__private {
 
-template <class StorageType>
-concept ValueIsVoid = std::same_as<Nothing, StorageType>;
-
-template <class StorageType>
-concept ValueIsNotVoid = !ValueIsVoid<StorageType>;
-
 template <class... Ts>
 struct MakeStorageType {
   static_assert(sizeof...(Ts) > 0u,
@@ -645,10 +639,9 @@ union Storage<I, ::sus::Tuple<T>> {
   [[sus_no_unique_address]] ::sus::Tuple<T> tuple_;
 };
 
-template <auto I, class S>
+template <size_t I, class S>
 static constexpr const auto& find_choice_storage(const S& storage) {
-  return find_choice_storage(storage,
-                             std::integral_constant<size_t, size_t{I}>());
+  return find_choice_storage(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>

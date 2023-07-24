@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "subspace/construct/safe_from_reference.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
@@ -36,13 +37,27 @@ struct SomeMarker {
   // a const&, since marker types should normally be converted quickly to the
   // concrete type.
   template <class U>
-    requires(std::constructible_from<U, std::remove_reference_t<T>&>)
-  sus_pure inline constexpr operator Option<U>() const& noexcept {
-    return Option<U>::with(value);
+    requires(std::constructible_from<U, const T&>)
+  inline constexpr operator Option<U>() const& noexcept {
+    static_assert(
+        ::sus::construct::SafelyConstructibleFromReference<U, const T&>,
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The SomeMarker's value type "
+        "must match the Option's. For example an `Option<const i32&>` can not "
+        "be constructed from a SomeMarker holding `const i16&`, but it can be "
+        "constructed from `i32&&`.");
+    return Option<U>::with(static_cast<const T&>(value));
   }
 
   template <class U>
   inline constexpr operator Option<U>() && noexcept {
+    static_assert(
+        ::sus::construct::SafelyConstructibleFromReference<U, T&&>,
+        "Unable to safely convert to a different reference type, as conversion "
+        "would produce a reference to a temporary. The SomeMarker's value type "
+        "must match the Option's. For example an `Option<const i32&>` can not "
+        "be constructed from a SomeMarker holding `const i16&`, but it can be "
+        "constructed from `i32&&`.");
     return Option<U>::with(::sus::forward<T>(value));
   }
 
@@ -54,11 +69,12 @@ struct SomeMarker {
 
 struct NoneMarker {
   // If the Option's type can construct from a const ref `value` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the same.
+  // copy-constructible, but may change types), then the marker can do the
+  // same.
   //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
-  // a const&, since marker types should normally be converted quickly to the
-  // concrete type.
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them
+  // as a const&, since marker types should normally be converted quickly to
+  // the concrete type.
   template <class U>
   sus_pure_const inline constexpr operator Option<U>() const& noexcept {
     return Option<U>();

@@ -44,4 +44,12 @@ struct IndexOfValueHelper<SearchValue, I> {
 template <auto SearchValue, auto... Vs>
 using IndexOfValue = IndexOfValueHelper<SearchValue, 0u, Vs...>::index;
 
+template <auto Tag, auto... Tags>
+static constexpr size_t get_index_for_value() noexcept {
+  using Index = __private::IndexOfValue<Tag, Tags...>;
+  static_assert(!std::is_void_v<Index>,
+                "The Tag value is not part of the Choice.");
+  return Index::value;
+}
+
 }  // namespace sus::choice_type::__private

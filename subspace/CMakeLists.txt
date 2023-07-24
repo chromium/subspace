@@ -40,6 +40,7 @@ target_sources(subspace PUBLIC
     "construct/from.h"
     "construct/into.h"
     "construct/default.h"
+    "construct/safe_from_reference.h"
     "containers/__private/array_marker.h"
     "containers/__private/slice_methods_impl.inc"
     "containers/__private/slice_methods.inc"
