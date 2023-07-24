@@ -48,12 +48,20 @@ namespace sus::num {
 // TODO: div_ceil() and div_floor()? Lots of discussion still on
 // https://github.com/rust-lang/rust/issues/88581 for signed types.
 
-// TODO: Split apart the declarations and the definitions? Then they can be in
-// u32_defn.h and u32_impl.h, allowing most of the library to just use
-// u32_defn.h which will keep some headers smaller. But then the combined
-// headers are larger, is that worse?
-
 /// A 32-bit signed integer.
+///
+/// # Conversions
+///
+/// To convert to and from integer values, use `sus::into()` when
+/// `sus::construct::Into<From, To>` is satisfied between the two types for
+/// lossless conversion. Otherwise use `sus::try_into()` when
+/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
+/// where the value can not be represented in the target type.
+///
+/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// all integer types and C++ primitive types. When converting to a larger
+/// type, the value will be sign-extended. Between integers this behaves the
+/// same as static_cast<T>() on primitive integers.
 struct [[sus_trivial_abi]] i32 final {
 #define _self i32
 #define _primitive int32_t
@@ -65,6 +73,19 @@ struct [[sus_trivial_abi]] i32 final {
 #include "subspace/num/__private/signed_integer_consts.inc"
 
 /// An 8-bit signed integer.
+///
+/// # Conversions
+///
+/// To convert to and from integer values, use `sus::into()` when
+/// `sus::construct::Into<From, To>` is satisfied between the two types for
+/// lossless conversion. Otherwise use `sus::try_into()` when
+/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
+/// where the value can not be represented in the target type.
+///
+/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// all integer types and C++ primitive types. When converting to a larger
+/// type, the value will be sign-extended. Between integers this behaves the
+/// same as static_cast<T>() on primitive integers.
 struct [[sus_trivial_abi]] i8 final {
 #define _self i8
 #define _primitive int8_t
@@ -76,6 +97,19 @@ struct [[sus_trivial_abi]] i8 final {
 #include "subspace/num/__private/signed_integer_consts.inc"
 
 /// A 16-bit signed integer.
+///
+/// # Conversions
+///
+/// To convert to and from integer values, use `sus::into()` when
+/// `sus::construct::Into<From, To>` is satisfied between the two types for
+/// lossless conversion. Otherwise use `sus::try_into()` when
+/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
+/// where the value can not be represented in the target type.
+///
+/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// all integer types and C++ primitive types. When converting to a larger
+/// type, the value will be sign-extended. Between integers this behaves the
+/// same as static_cast<T>() on primitive integers.
 struct [[sus_trivial_abi]] i16 final {
 #define _self i16
 #define _primitive int16_t
@@ -87,6 +121,19 @@ struct [[sus_trivial_abi]] i16 final {
 #include "subspace/num/__private/signed_integer_consts.inc"
 
 /// A 64-bit signed integer.
+///
+/// # Conversions
+///
+/// To convert to and from integer values, use `sus::into()` when
+/// `sus::construct::Into<From, To>` is satisfied between the two types for
+/// lossless conversion. Otherwise use `sus::try_into()` when
+/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
+/// where the value can not be represented in the target type.
+///
+/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// all integer types and C++ primitive types. When converting to a larger
+/// type, the value will be sign-extended. Between integers this behaves the
+/// same as static_cast<T>() on primitive integers.
 struct [[sus_trivial_abi]] i64 final {
 #define _self i64
 #define _primitive int64_t
@@ -107,6 +154,19 @@ struct [[sus_trivial_abi]] i64 final {
 /// capabilities. See [CHERI](
 /// https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-947.pdf) for an example. So
 /// this type is not always the same size as a pointer.
+///
+/// # Conversions
+///
+/// To convert to and from integer values, use `sus::into()` when
+/// `sus::construct::Into<From, To>` is satisfied between the two types for
+/// lossless conversion. Otherwise use `sus::try_into()` when
+/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
+/// where the value can not be represented in the target type.
+///
+/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// all integer types and C++ primitive types. When converting to a larger
+/// type, the value will be sign-extended. Between integers this behaves the
+/// same as static_cast<T>() on primitive integers.
 struct [[sus_trivial_abi]] isize final {
 #define _self isize
 #define _primitive ::sus::num::__private::addr_type<>::signed_type
@@ -159,6 +219,46 @@ _sus__integer_literal(i16, ::sus::num::i16);
 _sus__integer_literal(i32, ::sus::num::i32);
 _sus__integer_literal(i64, ::sus::num::i64);
 _sus__integer_literal(isize, ::sus::num::isize);
+
+// sus::construct::AsBits<Signed, Integer> trait.
+template <sus::num::Signed T, sus::num::Integer F>
+struct sus::construct::AsBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return T(static_cast<decltype(T::MAX_PRIMITIVE)>(from.primitive_value));
+  }
+};
+
+// sus::construct::AsBits<Signed, PrimitiveInteger> trait.
+template <sus::num::Signed T, sus::num::PrimitiveInteger F>
+struct sus::construct::AsBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return T(static_cast<decltype(T::MAX_PRIMITIVE)>(from));
+  }
+};
+
+// sus::construct::AsBits<PrimitiveInteger, Signed> trait.
+template <sus::num::PrimitiveInteger T, sus::num::Signed F>
+struct sus::construct::AsBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(from.primitive_value);
+  }
+};
+
+// sus::construct::AsBits<std::byte, Signed> trait.
+template <sus::num::Signed F>
+struct sus::construct::AsBitsImpl<std::byte, F> {
+  constexpr static std::byte from_bits(const F& from) noexcept {
+    return static_cast<std::byte>(from.primitive_value);
+  }
+};
+
+// sus::construct::AsBits<Signed, std::byte> trait.
+template <sus::num::Signed T>
+struct sus::construct::AsBitsImpl<T, std::byte> {
+  constexpr static T from_bits(const std::byte& from) noexcept {
+    return T(static_cast<decltype(T::MAX_PRIMITIVE)>(from));
+  }
+};
 
 // Promote signed integer types into the `sus` namespace.
 namespace sus {

@@ -620,6 +620,73 @@ TEST(i8DeathTest, FromOutOfRange) {
 #endif
 }
 
+TEST(i8, AsBits) {
+  using Self = i8;
+
+  static_assert(sus::construct::AsBits<Self, char>);
+  static_assert(sus::construct::AsBits<Self, signed char>);
+  static_assert(sus::construct::AsBits<Self, unsigned char>);
+  static_assert(sus::construct::AsBits<Self, int8_t>);
+  static_assert(sus::construct::AsBits<Self, int16_t>);
+  static_assert(sus::construct::AsBits<Self, int32_t>);
+  static_assert(sus::construct::AsBits<Self, int64_t>);
+  static_assert(sus::construct::AsBits<Self, uint8_t>);
+  static_assert(sus::construct::AsBits<Self, uint16_t>);
+  static_assert(sus::construct::AsBits<Self, uint32_t>);
+  static_assert(sus::construct::AsBits<Self, uint64_t>);
+  static_assert(sus::construct::AsBits<Self, size_t>);
+  static_assert(sus::construct::AsBits<Self, intptr_t>);
+  static_assert(sus::construct::AsBits<Self, uintptr_t>);
+  static_assert(sus::construct::AsBits<Self, std::byte>);
+
+  static_assert(sus::construct::AsBits<Self, i8>);
+  static_assert(sus::construct::AsBits<Self, i16>);
+  static_assert(sus::construct::AsBits<Self, i32>);
+  static_assert(sus::construct::AsBits<Self, i64>);
+  static_assert(sus::construct::AsBits<Self, isize>);
+  static_assert(sus::construct::AsBits<Self, u8>);
+  static_assert(sus::construct::AsBits<Self, u16>);
+  static_assert(sus::construct::AsBits<Self, u32>);
+  static_assert(sus::construct::AsBits<Self, u64>);
+  static_assert(sus::construct::AsBits<Self, usize>);
+  static_assert(sus::construct::AsBits<Self, uptr>);
+
+  static_assert(sus::construct::AsBits<char, Self>);
+  static_assert(sus::construct::AsBits<signed char, Self>);
+  static_assert(sus::construct::AsBits<unsigned char, Self>);
+  static_assert(sus::construct::AsBits<int8_t, Self>);
+  static_assert(sus::construct::AsBits<int16_t, Self>);
+  static_assert(sus::construct::AsBits<int32_t, Self>);
+  static_assert(sus::construct::AsBits<int64_t, Self>);
+  static_assert(sus::construct::AsBits<uint8_t, Self>);
+  static_assert(sus::construct::AsBits<uint16_t, Self>);
+  static_assert(sus::construct::AsBits<uint32_t, Self>);
+  static_assert(sus::construct::AsBits<uint64_t, Self>);
+  static_assert(sus::construct::AsBits<size_t, Self>);
+  static_assert(sus::construct::AsBits<intptr_t, Self>);
+  static_assert(sus::construct::AsBits<uintptr_t, Self>);
+  static_assert(sus::construct::AsBits<std::byte, Self>);
+
+  // Smaller unsigned to larger signed self.
+  {
+    auto i = sus::as_bits<Self>(i8::MIN);
+    static_assert(std::same_as<decltype(i), Self>);
+    EXPECT_EQ(i, i8::MIN);
+  }
+  // Larger unsigned to smaller signed self.
+  {
+    auto i = sus::as_bits<Self>(u64::MAX);
+    static_assert(std::same_as<decltype(i), Self>);
+    EXPECT_EQ(i, -1_i8);
+  }
+  // Signed self to unsigned.
+  {
+    auto i = sus::as_bits<uint8_t>(-1_i8);
+    static_assert(std::same_as<decltype(i), uint8_t>);
+    EXPECT_EQ(i, u8::MAX_PRIMITIVE);
+  }
+}
+
 TEST(i8, InvokeEverything) {
   auto i = 10_i8, j = 11_i8;
   auto s = 3_u8;

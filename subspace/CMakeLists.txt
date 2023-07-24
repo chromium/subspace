@@ -225,6 +225,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "choice/choice_types_unittest.cc"
         "choice/choice_unittest.cc"
         "convert/subclass_unittest.cc"
+        "construct/as_bits_unittest.cc"
         "containers/array_unittest.cc"
         "containers/invalidation_off_size_unittest.cc"
         "containers/invalidation_on_size_unittest.cc"
