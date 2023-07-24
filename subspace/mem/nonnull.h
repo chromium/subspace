@@ -183,7 +183,6 @@ class [[sus_trivial_abi]] NonNull {
                               nullptr);
   // For the NeverValueField.
   explicit constexpr NonNull(::sus::mem::NeverValueConstructor) noexcept : ptr_(nullptr) {}
-  constexpr void destroy_and_set_never_value() noexcept { ptr_ = nullptr; }
 };
 
 /// sus::ops::Eq<NonNull<T>> trait.

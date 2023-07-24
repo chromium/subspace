@@ -243,22 +243,14 @@ struct Storage<T, true> final {
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
     auto t = T(::sus::move(access_.as_inner_mut()));
-    if constexpr (NeverValueAccess::has_constexpr_destroy) {
-      access_.destroy_and_set_never_value(::sus::marker::unsafe_fn);
-    } else {
-      access_.~NeverValueAccess();
-      std::construct_at(&access_);
-    }
+    access_.~NeverValueAccess();
+    std::construct_at(&access_);
     return t;
   }
 
   constexpr inline void set_none() noexcept {
-    if constexpr (NeverValueAccess::has_constexpr_destroy) {
-      access_.destroy_and_set_never_value(::sus::marker::unsafe_fn);
-    } else {
-      access_.~NeverValueAccess();
-      std::construct_at(&access_);
-    }
+    access_.~NeverValueAccess();
+    std::construct_at(&access_);
   }
 
   constexpr inline void destroy() noexcept {
@@ -300,7 +292,6 @@ struct [[sus_trivial_abi]] StoragePointer<T&> {
   // For the NeverValueField.
   explicit constexpr StoragePointer(::sus::mem::NeverValueConstructor) noexcept
       : ptr_(nullptr) {}
-  constexpr void destroy_and_set_never_value() noexcept { ptr_ = nullptr; }
 };
 
 static_assert(std::is_trivially_copy_constructible_v<StoragePointer<int&>>);

@@ -45,28 +45,25 @@ namespace __private {
 /// * the never-value, after trivial default construction.
 /// * the destroy-value before destroying it from the never-value state.
 ///
-/// # Why trivial default construction?
+/// A type which satisfies NeverValueField has a field which is never set to a
+/// specific value during its lifetime under normal use. The type provides a
+/// private way construct it with that never-value in the field as a signal to
+/// say the type is not really constructed/present.
 ///
-/// NeverValueAccess requires that `T` is trivially default constructible
-/// because the spec requires this for initializing a union member through
-/// assignment (some discussion here:
-/// https://github.com/llvm/llvm-project/issues/50604).
-///
-/// We use assignment to initialize a union member with a NeverValueAccess to
-/// implement changing to a never-value state without placement new, which is
-/// not possible in a constant expression.
+/// The destructor must be a no-op when being destroyed from the never-value
+/// state. To help make that easier, a separate "destroy value" can be specified
+/// which the never-value field is set to before calling the destructor so that
+/// the destructor does not need to handle the never-value.
 ///
 /// # Safety
 ///
 /// To implement NeverValueAccess, a type must:
-/// * Be constructible from NeverValueConstructor, which sets the NeverValue
-///   and leaves the type in a state that can be destructed later as a no-op.
-/// * To be usable in constexpr contexts, provide destroy_and_set_never_value()
-///   which is equivalent to `t.~T(); new (&t) T(NeverValueConstructor());` such
-///   that the type is destroyed and left in the never-value state. If not
-///   provided the `new` operation will be done instead, which is not useable in
-///   a constexpr context.
-/// * Both of the above must be `private` methods to prevent incorrect access.
+/// * Insert a call to the sus_class_never_value_field() macro inside its body,
+///   which takes as parameters the NeverValue configuration of the type.
+/// * Be (optionally-constexpr-) constructible from NeverValueConstructor, which
+///   sets the NeverValue and leaves the type in a state that can be destructed
+///   later as a no-op.
+/// * The above constructor must be `private` to prevent incorrect access.
 template <class T>
 struct NeverValueAccess;
 
@@ -83,11 +80,6 @@ struct NeverValueAccess {
         ::sus::marker::unsafe_fn);
   };
 
-  /// Whether destroy_and_set_never_value() can be used to convert from a valid
-  /// value to a NeverValue state in a constexpr context.
-  static constexpr bool has_constexpr_destroy =
-      requires { std::declval<T&>().destroy_and_set_never_value(); };
-
   constexpr NeverValueAccess() = default;
 
   template <class... U>
@@ -99,14 +91,6 @@ struct NeverValueAccess {
     requires(has_field)
   {
     return t_._sus_Unsafe_NeverValueIsConstructed(::sus::marker::unsafe_fn);
-  }
-
-  /// Sets the never-value field to the never-value.
-  constexpr sus_always_inline void destroy_and_set_never_value(
-      ::sus::marker::UnsafeFnMarker) noexcept
-    requires(has_field && has_constexpr_destroy)
-  {
-    t_.destroy_and_set_never_value();
   }
 
   /// Sets the never-value field to the destroy-value.

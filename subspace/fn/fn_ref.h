@@ -167,9 +167,6 @@ class [[sus_trivial_abi]] FnRef<R(CallArgs...)> {
   // For the NeverValueField.
   explicit constexpr FnRef(::sus::mem::NeverValueConstructor) noexcept
       : invoke_(&invoke_never_value) {}
-  constexpr void destroy_and_set_never_value() noexcept {
-    invoke_ = invoke_never_value;
-  }
 };
 
 /// A closure that erases the type of the internal callable object (lambda) that
@@ -323,9 +320,6 @@ class [[sus_trivial_abi]] FnMutRef<R(CallArgs...)> {
   // For the NeverValueField.
   explicit constexpr FnMutRef(::sus::mem::NeverValueConstructor) noexcept
       : invoke_(&invoke_never_value) {}
-  constexpr void destroy_and_set_never_value() noexcept {
-    invoke_ = invoke_never_value;
-  }
 };
 
 /// A closure that erases the type of the internal callable object (lambda). A
@@ -515,9 +509,6 @@ class [[sus_trivial_abi]] FnOnceRef<R(CallArgs...)> {
   // For the NeverValueField.
   explicit constexpr FnOnceRef(::sus::mem::NeverValueConstructor) noexcept
       : invoke_(&invoke_never_value) {}
-  constexpr void destroy_and_set_never_value() noexcept {
-    invoke_ = invoke_never_value;
-  }
 };
 
 }  // namespace sus::fn
