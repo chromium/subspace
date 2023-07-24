@@ -823,6 +823,25 @@ class [[nodiscard]] Result final {
   }
 
   /// sus::ops::Eq<Result<T, E>> trait.
+  ///
+  /// The non-template overload allows some/none marker types to convert to
+  /// Option for comparison.
+  friend constexpr bool operator==(const Result& l, const Result& r) noexcept
+    requires(VoidOrEq<T> && ::sus::ops::Eq<E>)
+  {
+    ::sus::check(l.state_ != ResultState::IsMoved);
+    switch (l.state_) {
+      case ResultState::IsOk:
+        if constexpr (!std::is_void_v<T>)
+          return r.is_ok() && l.storage_.ok_ == r.storage_.ok_;
+        else
+          return r.is_ok();
+      case ResultState::IsErr:
+        return r.is_err() && l.storage_.err_ == r.storage_.err_;
+      case ResultState::IsMoved: break;
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
   template <class U, class F>
     requires(VoidOrEq<T, U> && ::sus::ops::Eq<E, F>)
   friend constexpr bool operator==(const Result& l,
@@ -840,7 +859,6 @@ class [[nodiscard]] Result final {
     }
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
-
   template <class U, class F>
     requires(!(VoidOrEq<T, U> && ::sus::ops::Eq<E, F>))
   friend constexpr bool operator==(const Result& l,

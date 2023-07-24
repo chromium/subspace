@@ -1168,6 +1168,22 @@ class Option final {
   }
 
   /// sus::ops::Eq<Option<U>> trait.
+  ///
+  /// The non-template overload allows some/none marker types to convert to
+  /// Option for comparison.
+  friend constexpr inline bool operator==(const Option& l,
+                                          const Option& r) noexcept
+    requires(::sus::ops::Eq<T>)
+  {
+    switch (l) {
+      case Some:
+        return r.is_some() &&
+               (l.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn) ==
+                r.as_ref().unwrap_unchecked(::sus::marker::unsafe_fn));
+      case None: return r.is_none();
+    }
+    ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
   template <class U>
     requires(::sus::ops::Eq<T, U>)
   friend constexpr inline bool operator==(const Option<T>& l,
