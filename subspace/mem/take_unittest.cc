@@ -114,7 +114,7 @@ TEST(Take, TakeAndDestruct) {
   } u;
 
   take_destructors = 0_i32;
-  new (&u.s) S(404_i32);
+  std::construct_at(&u.s, 404_i32);
   EXPECT_EQ(u.s.default_constucted, 0_i32);
   EXPECT_EQ(u.s.num, 404_i32);
   S out(::sus::mem::take_and_destruct(unsafe_fn, mref(u.s)));
