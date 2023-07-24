@@ -103,7 +103,7 @@ concept ExclusiveWeakOrd = (!Ord<T, U> && WeakOrd<T, U>);
 /// Determines if the types `Lhs` and `Rhs` have a partial ordering (aka
 /// `std::partial_ordering`), and that this is the strongest ordering that
 /// exists between the types.
-template <class T, class U>
+template <class T, class U = T>
 concept ExclusivePartialOrd = (!WeakOrd<T, U> && PartialOrd<T, U>);
 
 /// Compares and returns the minimum of two values.
