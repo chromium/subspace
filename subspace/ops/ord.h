@@ -57,9 +57,9 @@ concept Ordering = (std::same_as<T, std::strong_ordering> ||
 /// `Eq`, and a separate `operator==` is required for that concept. Generic code
 /// that requires a type to be `Ord` should take care to use `operator<=>` and
 /// not `operator==` unless also requiring `Eq`.
-template <class T, class U = T>
-concept Ord = requires(const std::remove_reference_t<T>& lhs,
-                       const std::remove_reference_t<U>& rhs) {
+template <class Lhs, class Rhs = Lhs>
+concept Ord = requires(const std::remove_reference_t<Lhs>& lhs,
+                       const std::remove_reference_t<Rhs>& rhs) {
   { lhs <=> rhs } noexcept -> std::same_as<std::strong_ordering>;
 };
 
@@ -68,11 +68,12 @@ concept Ord = requires(const std::remove_reference_t<T>& lhs,
 /// This will be true if the types have a total ordering as well, which is
 /// stronger than a weak ordering. To determine if a weak ordering is the
 /// strongest type of ordering between the types, use `ExclusiveWeakOrd`.
-template <class T, class U = T>
-concept WeakOrd = Ord<T, U> || requires(const std::remove_reference_t<T>& lhs,
-                                        const std::remove_reference_t<U>& rhs) {
-  { lhs <=> rhs } noexcept -> std::same_as<std::weak_ordering>;
-};
+template <class Lhs, class Rhs = Lhs>
+concept WeakOrd =
+    Ord<Lhs, Rhs> || requires(const std::remove_reference_t<Lhs>& lhs,
+                              const std::remove_reference_t<Rhs>& rhs) {
+      { lhs <=> rhs } noexcept -> std::same_as<std::weak_ordering>;
+    };
 
 /// Concept for types that form a partial ordering (aka
 /// `std::partial_ordering`).
@@ -80,10 +81,10 @@ concept WeakOrd = Ord<T, U> || requires(const std::remove_reference_t<T>& lhs,
 /// This will be true if the types have a weak r total ordering as well, which
 /// is stronger than a partial ordering. To determine if a partial ordering is
 /// the strongest type of ordering between the types, use `ExclusivePartialOrd`.
-template <class T, class U = T>
+template <class Lhs, class Rhs = Lhs>
 concept PartialOrd =
-    WeakOrd<T, U> || Ord<T, U> ||
-    requires(const std::remove_reference_t<T>& lhs, const U& rhs) {
+    WeakOrd<Lhs, Rhs> || Ord<Lhs, Rhs> ||
+    requires(const std::remove_reference_t<Lhs>& lhs, const Rhs& rhs) {
       { lhs <=> rhs } noexcept -> std::same_as<std::partial_ordering>;
     };
 
@@ -91,20 +92,20 @@ concept PartialOrd =
 ///
 /// This is an alias for Ord, but exists as a set with `ExclusiveWeakOrd` and
 /// `ExclusivePartialOrd`.
-template <class T, class U = T>
-concept ExclusiveOrd = Ord<T, U>;
+template <class Lhs, class Rhs = Lhs>
+concept ExclusiveOrd = Ord<Lhs, Rhs>;
 
 /// Determines if the types `Lhs` and `Rhs` have a weak ordering (aka
 /// `std::weak_ordering`), and that this is the strongest ordering that exists
 /// between the types.
-template <class T, class U = T>
-concept ExclusiveWeakOrd = (!Ord<T, U> && WeakOrd<T, U>);
+template <class Lhs, class Rhs = Lhs>
+concept ExclusiveWeakOrd = (!Ord<Lhs, Rhs> && WeakOrd<Lhs, Rhs>);
 
 /// Determines if the types `Lhs` and `Rhs` have a partial ordering (aka
 /// `std::partial_ordering`), and that this is the strongest ordering that
 /// exists between the types.
-template <class T, class U = T>
-concept ExclusivePartialOrd = (!WeakOrd<T, U> && PartialOrd<T, U>);
+template <class Lhs, class Rhs = Lhs>
+concept ExclusivePartialOrd = (!WeakOrd<Lhs, Rhs> && PartialOrd<Lhs, Rhs>);
 
 /// Compares and returns the minimum of two values.
 ///
