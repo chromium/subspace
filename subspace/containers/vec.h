@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include <concepts>
+#include <memory>
 
 #include "fmt/core.h"
 #include "subspace/assertions/check.h"
@@ -224,8 +225,9 @@ class Vec final {
     auto v = Vec::with_capacity(capacity_);
     const auto self_len = len();
     for (auto i = size_t{0}; i < self_len; ++i) {
-      new (v.raw_data() + i)
-          T(::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
+      std::construct_at(
+          v.raw_data() + i,  //
+          ::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
     }
     v.set_len(::sus::marker::unsafe_fn, self_len);
     return v;
@@ -262,8 +264,9 @@ class Vec final {
       }
       // Append element positions that weren't in self but are in source.
       for (auto i = in_place_count; i < source_len; i += 1u) {
-        new (raw_data() + i)
-            T(::sus::clone(source.get_unchecked(::sus::marker::unsafe_fn, i)));
+        std::construct_at(
+            raw_data() + i,  //
+            ::sus::clone(source.get_unchecked(::sus::marker::unsafe_fn, i)));
       }
       set_len(::sus::marker::unsafe_fn, source_len);
     }
@@ -436,7 +439,7 @@ class Vec final {
         T* new_t = new_storage;
         const ::sus::num::usize self_len = len();
         for (::sus::num::usize i; i < self_len; i += 1u) {
-          new (new_t) T(::sus::move(*old_t));
+          std::construct_at(new_t, ::sus::move(*old_t));
           old_t->~T();
           ++old_t;
           ++new_t;
@@ -538,7 +541,7 @@ class Vec final {
     check(!has_iterators());
     reserve(1_usize);
     const auto self_len = len();
-    new (raw_data() + self_len) T(::sus::move(t));
+    std::construct_at(raw_data() + self_len, ::sus::move(t));
     set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
   }
 
@@ -566,7 +569,7 @@ class Vec final {
     check(!has_iterators());
     reserve(1_usize);
     const auto self_len = len();
-    new (raw_data() + self_len) T(::sus::forward<Us>(args)...);
+    std::construct_at(raw_data() + self_len, ::sus::forward<Us>(args)...);
     set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
   }
 

@@ -39,7 +39,7 @@ template <class T>
 inline constexpr T take(T& t) noexcept {
   auto taken = T(::sus::move(t));
   t.~T();
-  new (&t) T();
+  std::construct_at(&t);
   return taken;
 }
 

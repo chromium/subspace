@@ -188,7 +188,7 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
 
   auto it = typename SizedIteratorType<Iter>::type(
       destroy, next, next_back, size_hint, exact_size_hint, clone);
-  new (it.as_mut_ptr()) Iter(::sus::move(iter));
+  std::construct_at(reinterpret_cast<Iter*>(it.as_mut_ptr()), ::sus::move(iter));
   return it;
 }
 
