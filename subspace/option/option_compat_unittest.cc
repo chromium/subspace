@@ -191,10 +191,10 @@ TEST(OptionCompat, ToOptionalMove) {
 TEST(OptionCompat, ToOptionalRef) {
   // Explicit.
   {
-    constexpr int i = 2;
-    constexpr auto s = sus::Option<const int&>::with(i);
-    constexpr auto o = std::optional<const int*>(s);
-    static_assert(o.value() == &i);
+    int i = 2;
+    auto s = sus::Option<const int&>::with(i);
+    auto o = std::optional<const int*>(s);
+    EXPECT_EQ(o.value(), &i);
   }
   {
     int i = 2;
@@ -221,10 +221,10 @@ TEST(OptionCompat, ToOptionalRef) {
   }
   // Implicit.
   {
-    constexpr int i = 2;
-    constexpr auto s = sus::Option<const int&>::with(i);
-    constexpr std::optional<const int*> o = s;
-    static_assert(o.value() == &i);
+    int i = 2;
+    auto s = sus::Option<const int&>::with(i);
+    std::optional<const int*> o = s;
+    EXPECT_EQ(o.value(), &i);
   }
   {
     int i = 2;
