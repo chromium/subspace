@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <concepts>
+
 #include "subspace/convert/subclass.h"
 
 namespace sus::construct {
