@@ -74,8 +74,14 @@ explicit _self(T* v) noexcept
 ///
 /// This produces the same value as the default constructor.
 ///
+/// # Implementation notes
+///
+/// The function receives std::same_as<nullptr_t> to avoid implicit conversions
+/// from integer types on some compilers (like GCC 13).
+///
 /// #[doc.overloads=ctor.unsigned.nullptr]
-explicit constexpr _self(std::nullptr_t) noexcept : primitive_value(0u) {}
+explicit constexpr _self(std::same_as<std::nullptr_t> auto) noexcept
+    : primitive_value(0u) {}
 
 /// Construction from unsigned types of the same size as a pointer.
 ///
@@ -146,8 +152,13 @@ _self& operator=(T* v) noexcept {
 ///
 /// This sets the `uptr` to the same value as the default constructor.
 ///
+/// # Implementation notes
+///
+/// The function receives std::same_as<nullptr_t> to avoid implicit conversions
+/// from integer types on some compilers (like GCC 13).
+///
 /// #[doc.overloads=assign.unsigned.nullptr]
-constexpr _self& operator=(std::nullptr_t) noexcept {
+constexpr _self& operator=(std::same_as<std::nullptr_t> auto) noexcept {
   primitive_value = 0u;
   return *this;
 }
