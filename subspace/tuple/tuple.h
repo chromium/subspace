@@ -24,6 +24,7 @@
 #include "subspace/construct/default.h"
 #include "subspace/iter/extend.h"
 #include "subspace/iter/into_iterator.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/macros/no_unique_address.h"
@@ -38,7 +39,6 @@
 #include "subspace/string/__private/any_formatter.h"
 #include "subspace/string/__private/format_to_stream.h"
 #include "subspace/tuple/__private/storage.h"
-#include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::tuple_type {
 
@@ -146,6 +146,12 @@ class Tuple final {
   }
 
   /// sus::ops::Eq<Tuple<U...>> trait.
+  constexpr bool operator==(const Tuple& r) const& noexcept
+    requires((::sus::ops::Eq<T> && ... && ::sus::ops::Eq<Ts>))
+  {
+    return __private::storage_eq(
+        storage_, r.storage_, std::make_index_sequence<1u + sizeof...(Ts)>());
+  }
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::ops::Eq<T, U> && ... && ::sus::ops::Eq<Ts, Us>))
@@ -278,6 +284,22 @@ struct TupleMarker {
                       : values(::sus::move(values)){});
 
   Tuple<Ts&&...> values;
+
+  // If the Tuple's types can construct from a const ref `value` (roughly, is
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  template <class... Us>
+    requires((... && std::constructible_from<Us, std::remove_reference_t<Ts>&>))
+  sus_pure inline constexpr operator Tuple<Us...>() const& noexcept {
+    auto make_tuple =
+        [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
+          return Tuple<Us...>::with(values.template at<Is>()...);
+        };
+    return make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>());
+  }
 
   template <class... Us>
   inline constexpr operator Tuple<Us...>() && noexcept {

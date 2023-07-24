@@ -389,16 +389,6 @@ class Array final {
       : storage_(::sus::iter::IterRefCounter::for_owner(),
                  {::sus::clone(*(t + Is))...}) {}
 
-  template <std::convertible_to<T> T1, std::convertible_to<T>... Ts>
-  static inline void init_values(T* a, size_t index, T1&& t1, Ts&&... ts) {
-    new (a + index) T(::sus::forward<T1>(t1));
-    init_values(a, index + 1, ::sus::forward<Ts>(ts)...);
-  }
-  template <std::convertible_to<T> T1>
-  static inline void init_values(T* a, size_t index, T1&& t1) {
-    new (a + index) T(::sus::forward<T1>(t1));
-  }
-
   constexpr inline bool has_iterators() const noexcept
     requires(N > 0)
   {

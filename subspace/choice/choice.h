@@ -163,7 +163,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   template <TagsType V, class U, int&...,
             __private::ValueIsNotVoid Arg = StorageTypeOfTag<V>>
     requires(std::constructible_from<Arg, U &&>)
-  static Choice with(U&& values) noexcept {
+  constexpr static Choice with(U&& values) noexcept {
     auto u = Choice(index<V>);
     find_choice_storage_mut<index<V>>(u.storage_)
         .construct(::sus::forward<U>(values));
@@ -172,7 +172,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
 
   template <TagsType V, int&...,
             __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
-  static Choice with() noexcept {
+  constexpr static Choice with() noexcept {
     return Choice(index<V>);
   }
 
@@ -180,7 +180,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires((std::is_trivially_destructible_v<TagsType> && ... &&
               std::is_trivially_destructible_v<Ts>))
   = default;
-  ~Choice() noexcept
+  constexpr ~Choice() noexcept
     requires(!(std::is_trivially_destructible_v<TagsType> && ... &&
                std::is_trivially_destructible_v<Ts>))
   {
@@ -197,7 +197,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(!(... && ::sus::mem::Move<Ts>))
   = delete;
 
-  Choice(Choice&& o) noexcept
+  constexpr Choice(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_constructible_v<TagsType> && ... &&
                std::is_trivially_move_constructible_v<Ts>))
@@ -209,7 +209,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     storage_.move_construct(size_t{index_}, ::sus::move(o.storage_));
   }
 
-  constexpr Choice& operator=(Choice&& o) noexcept
+  Choice& operator=(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              (std::is_trivially_move_assignable_v<TagsType> && ... &&
               std::is_trivially_move_assignable_v<Ts>))
@@ -218,7 +218,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(!(... && ::sus::mem::Move<Ts>))
   = delete;
 
-  Choice& operator=(Choice&& o) noexcept
+  constexpr Choice& operator=(Choice&& o) noexcept
     requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_assignable_v<TagsType> && ... &&
                std::is_trivially_move_assignable_v<Ts>))
@@ -244,7 +244,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(!(... && ::sus::mem::Copy<Ts>))
   = delete;
 
-  Choice(const Choice& o) noexcept
+  constexpr Choice(const Choice& o) noexcept
     requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_constructible_v<TagsType> && ... &&
                std::is_trivially_copy_constructible_v<Ts>))
@@ -262,7 +262,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(!(... && ::sus::mem::Copy<Ts>))
   = delete;
 
-  Choice& operator=(const Choice& o) noexcept
+  constexpr Choice& operator=(const Choice& o) noexcept
     requires((... && ::sus::mem::Copy<Ts>) &&
              !(std::is_trivially_copy_assignable_v<TagsType> && ... &&
                std::is_trivially_copy_assignable_v<Ts>))
@@ -449,7 +449,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   template <TagsType V, class U, int&..., class Arg = StorageTypeOfTag<V>>
     requires(std::convertible_to<U &&, Arg> &&
              __private::ValueIsNotVoid<StorageTypeOfTag<V>>)
-  void set(U&& values) & noexcept {
+  constexpr void set(U&& values) & noexcept {
     if (index_ == index<V>) {
       __private::find_choice_storage_mut<index<V>>(storage_).assign(
           ::sus::move(values));
@@ -507,7 +507,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
 
   template <TagsType V, int&...,
             __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
-  void set() & noexcept {
+  constexpr void set() & noexcept {
     if (index_ != index<V>) {
       if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
       index_ = index<V>;
