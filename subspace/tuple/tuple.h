@@ -102,8 +102,23 @@ class Tuple final {
   = default;
 
   /// Construct a Tuple with the given values.
+  ///
+  /// # Const References
+  ///
+  /// For `Result<const T&, E>` it is possible to bind to a temporary which
+  /// would create a memory safety bug. The `[[clang::lifetimebound]]` attribute
+  /// is used to prevent this via Clang. But additionally, the incoming type is
+  /// required to match with `sus::construct::SafelyConstructibleFromReference`
+  /// to prevent conversions that would construct a temporary.
+  ///
+  /// To force accepting a const reference anyway in cases where a type can
+  /// convert to a reference without constructing a temporary, use an unsafe
+  /// `static_cast<const T&>()` at the callsite (and document it =)).
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
-    requires(sizeof...(Us) == sizeof...(Ts))
+    requires(sizeof...(Us) == sizeof...(Ts) &&
+             (sus::construct::SafelyConstructibleFromReference<T, U &&> &&
+              ... &&
+              sus::construct::SafelyConstructibleFromReference<Ts, Us &&>))
   constexpr inline static Tuple with(U&& first, Us&&... more) noexcept {
     return Tuple(::sus::forward<U>(first), ::sus::forward<Us>(more)...);
   }

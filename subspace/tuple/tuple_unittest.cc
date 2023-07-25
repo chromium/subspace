@@ -119,6 +119,59 @@ TEST(Tuple, TailPadding) {
   static_assert(sizeof(ExampleFromDocs) == (16 + sus_if_msvc_else(8, 0)));
 }
 
+template <class T, class = void, class... Args>
+struct is_with_callable : std::false_type {};
+
+template <class T, class... Args>
+struct is_with_callable<
+    T, std::void_t<decltype(T::with(std::declval<Args>()...))>, Args...>
+    : std::true_type {};
+
+template <class T, class... Args>
+inline constexpr bool is_with_callable_v =
+    is_with_callable<T, void, Args...>::value;
+
+static_assert(is_with_callable_v<Tuple<i32>, i32>);
+static_assert(is_with_callable_v<Tuple<i32>, const i32>);
+static_assert(is_with_callable_v<Tuple<i32>, i32&>);
+static_assert(is_with_callable_v<Tuple<i32>, i32&&>);
+static_assert(is_with_callable_v<Tuple<i32>, const i32&>);
+
+static_assert(!is_with_callable_v<Tuple<i32&>, i32>);
+static_assert(!is_with_callable_v<Tuple<i32&>, const i32>);
+static_assert(is_with_callable_v<Tuple<i32&>, i32&>);
+static_assert(!is_with_callable_v<Tuple<i32&>, const i32&>);
+
+static_assert(is_with_callable_v<Tuple<const i32&>, i32>);
+static_assert(is_with_callable_v<Tuple<const i32&>, const i32&>);
+static_assert(is_with_callable_v<Tuple<const i32&>, i32&>);
+static_assert(is_with_callable_v<Tuple<const i32&>, i32&&>);
+static_assert(is_with_callable_v<Tuple<const i32&>, const i32&&>);
+
+// No conversion to a temporary.
+static_assert(is_with_callable_v<Tuple<i32>, i16>);
+static_assert(is_with_callable_v<Tuple<i32>, const i16&>);
+static_assert(is_with_callable_v<Tuple<i32>, i16&>);
+static_assert(is_with_callable_v<Tuple<i32>, i16&&>);
+static_assert(is_with_callable_v<Tuple<i32>, const i16&&>);
+static_assert(!is_with_callable_v<Tuple<const i32&>, i16>);
+static_assert(!is_with_callable_v<Tuple<const i32&>, const i16&>);
+static_assert(!is_with_callable_v<Tuple<const i32&>, i16&>);
+static_assert(!is_with_callable_v<Tuple<const i32&>, i16&&>);
+static_assert(!is_with_callable_v<Tuple<const i32&>, const i16&&>);
+// clang-format off
+static_assert(is_with_callable_v<Tuple<i32, i32>, i16, i16>);
+static_assert(is_with_callable_v<Tuple<i32, i32>, const i16&, const i16&>);
+static_assert(is_with_callable_v<Tuple<i32, i32>, i16&, i16&>);
+static_assert(is_with_callable_v<Tuple<i32, i32>, i16&&, i16&&>);
+static_assert(is_with_callable_v<Tuple<i32, i32>, const i16&, const i16&&>);
+static_assert(!is_with_callable_v<Tuple<i32, const i32&>, i16, i16>);
+static_assert(!is_with_callable_v<Tuple<i32, const i32&>, const i16&, const i16&>);
+static_assert(!is_with_callable_v<Tuple<i32, const i32&>, i16&, i16&>);
+static_assert(!is_with_callable_v<Tuple<i32, const i32&>, i16&&, i16&&>);
+static_assert(!is_with_callable_v<Tuple<i32, const i32&>, const i16&, const i16&&>);
+// clang-format on
+
 TEST(Tuple, With) {
   auto t1 = Tuple<i32>::with(2);
   auto t2 = Tuple<i32, f32>::with(2, 3.f);

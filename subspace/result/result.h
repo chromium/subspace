@@ -95,6 +95,18 @@ class [[nodiscard]] Result final {
   using ErrType = E;
 
   /// Construct an Result that is holding the given success value.
+  ///
+  /// # Const References
+  ///
+  /// For `Result<const T&, E>` it is possible to bind to a temporary which
+  /// would create a memory safety bug. The `[[clang::lifetimebound]]` attribute
+  /// is used to prevent this via Clang. But additionally, the incoming type is
+  /// required to match with `sus::construct::SafelyConstructibleFromReference`
+  /// to prevent conversions that would construct a temporary.
+  ///
+  /// To force accepting a const reference anyway in cases where a type can
+  /// convert to a reference without constructing a temporary, use an unsafe
+  /// `static_cast<const T&>()` at the callsite (and document it =)).
   static constexpr inline Result with() noexcept
     requires(std::is_void_v<T>)
   {
@@ -116,8 +128,10 @@ class [[nodiscard]] Result final {
       return Result(WithOk, t);
     }
   }
-  static constexpr inline Result with(TUnlessVoid t sus_lifetimebound) noexcept
-    requires(!std::is_void_v<T> && std::is_reference_v<T>)
+  template <std::convertible_to<TUnlessVoid> U>
+  sus_pure static inline constexpr Result with(U&& t sus_lifetimebound) noexcept
+    requires(!std::is_void_v<T> && std::is_reference_v<T> &&
+             sus::construct::SafelyConstructibleFromReference<T, U &&>)
   {
     return Result(WithOk, move_ok_to_storage(t));
   }
@@ -630,8 +644,11 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != ResultState::IsMoved);
     switch (::sus::mem::replace(mref(state_), ResultState::IsMoved)) {
       case ResultState::IsOk:
-        return Option<T>::with(::sus::mem::take_and_destruct(
-            ::sus::marker::unsafe_fn, mref(storage_.ok_)));
+        // SAFETY: The static_cast is needed to convert the pointer storage type
+        // to a `const T&`, which does not create a temporary as it's converting
+        // a pointer to a reference.
+        return Option<T>::with(static_cast<T>(::sus::mem::take_and_destruct(
+            ::sus::marker::unsafe_fn, mref(storage_.ok_))));
       case ResultState::IsErr: storage_.destroy_err(); return Option<T>();
       case ResultState::IsMoved: break;
     }
@@ -764,7 +781,11 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != ResultState::IsMoved);
     if (state_ == ResultState::IsOk) {
       return ::sus::iter::once<const std::remove_reference_t<T>&>(
-          Option<const std::remove_reference_t<T>&>::with(storage_.ok_));
+          // SAFETY: The static_cast is needed to convert the pointer storage
+          // type to a `const T&`, which does not create a temporary as it's
+          // converting a pointer to a reference.
+          Option<const std::remove_reference_t<T>&>::with(
+              static_cast<const std::remove_reference_t<T>&>(storage_.ok_)));
     } else {
       return ::sus::iter::once<const std::remove_reference_t<T>&>(
           Option<const std::remove_reference_t<T>&>());
@@ -979,8 +1000,7 @@ class [[nodiscard]] Result final {
   }
 
   // sus::ops::PartialOrd<Result<T, E>> trait.
-  friend constexpr auto operator<=>(const Result& l,
-                                    const Result& r) noexcept
+  friend constexpr auto operator<=>(const Result& l, const Result& r) noexcept
     requires((!VoidOrWeakOrd<T> || !::sus::ops::WeakOrd<E>) &&
              VoidOrPartialOrd<T> && ::sus::ops::PartialOrd<E>)
   {
