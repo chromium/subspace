@@ -16,6 +16,7 @@
 
 #include <concepts>
 
+#include "subspace/mem/forward.h"
 #include "subspace/result/__private/is_result_type.h"
 
 namespace sus::construct {
@@ -48,7 +49,7 @@ namespace sus::construct {
 /// ```
 template <class ToType, class FromType>
 concept From = requires(FromType&& from) {
-  { ToType::from(static_cast<FromType&&>(from)) } -> std::same_as<ToType>;
+  { ToType::from(::sus::forward<FromType>(from)) } -> std::same_as<ToType>;
 };
 
 /// A concept that indicates `ToType` can be (sometimes) constructed from a
@@ -59,11 +60,9 @@ concept From = requires(FromType&& from) {
 /// `sus::Result`.
 template <class ToType, class FromType>
 concept TryFrom = requires(FromType&& from) {
-  { ToType::try_from(static_cast<FromType&&>(from)) };
-  requires std::same_as<
-      typename ::sus::result::__private::IsResultType<decltype(ToType::try_from(
-          static_cast<FromType&&>(from)))>::ok_type,
-      ToType>;
+  {
+    ToType::try_from(::sus::forward<FromType>(from))
+  } -> ::sus::result::__private::IsResultWithSuccessType<ToType>;
 };
 
 }  // namespace sus::construct

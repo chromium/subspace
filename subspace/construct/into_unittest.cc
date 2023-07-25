@@ -17,6 +17,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/mem/forward.h"
+#include "subspace/prelude.h"
 #include "subspace/test/behaviour_types.h"
 
 using sus::construct::From;
@@ -154,6 +155,13 @@ TEST(Into, Concept) {
   EXPECT_EQ(FromThings(1).got_value, 1);
   EXPECT_EQ(f(int(2)).got_value, 2);
   EXPECT_EQ(f(S(3)).got_value, 3);
+}
+
+TEST(TryInto, Example) {
+  auto valid = sus::try_into<u8>(123_i32).unwrap_or_default();
+  sus::check(valid == 123u);
+  auto invalid = sus::try_into<u8>(-1_i32).unwrap_or_default();
+  sus::check(invalid == 0u);
 }
 
 }  // namespace

@@ -22,10 +22,12 @@
 #include "subspace/construct/__private/into_ref.h"
 #include "subspace/construct/from.h"
 #include "subspace/macros/compiler.h"
+#include "subspace/macros/lifetimebound.h"
+#include "subspace/mem/forward.h"
 
 namespace sus::construct {
 
-/// A concept that declares `FromType` can be converted to `ToType`, through the
+/// A concept that declares `FromType` can be converted to `ToType` through the
 /// `From` concept or through an identity transformation.
 ///
 /// When true, `ToType::from(FromType)` can be used to construct `ToType`,
@@ -84,16 +86,14 @@ template <class FromType>
   requires(!std::is_const_v<std::remove_reference_t<FromType>> &&
            std::is_rvalue_reference_v<FromType &&> &&
            !std::is_array_v<FromType>)
-constexpr inline auto into(
-    FromType&& from sus_if_clang([[clang::lifetimebound]])) noexcept {
+constexpr inline auto into(FromType&& from sus_lifetimebound) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_reference_t<FromType>&&>(from));
 }
 
 template <class FromType>
   requires(std::is_trivially_copyable_v<FromType> && !std::is_array_v<FromType>)
-constexpr inline auto into(
-    const FromType& from sus_if_clang([[clang::lifetimebound]])) noexcept {
+constexpr inline auto into(const FromType& from sus_lifetimebound) noexcept {
   return __private::IntoRef<const FromType&>(from);
 }
 
@@ -101,8 +101,7 @@ template <class FromType>
   requires(!std::is_const_v<std::remove_reference_t<FromType>> &&
            std::is_trivially_move_constructible_v<FromType> &&
            !std::is_array_v<FromType>)
-constexpr inline auto into(
-    FromType& from sus_if_clang([[clang::lifetimebound]])) noexcept {
+constexpr inline auto into(FromType& from sus_lifetimebound) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_reference_t<FromType>&&>(from));
 }
@@ -113,7 +112,7 @@ constexpr inline auto into(
 /// satisfied.
 template <class FromType, size_t N>
 constexpr inline auto array_into(
-    FromType (&from)[N] sus_if_clang([[clang::lifetimebound]])) noexcept {
+    FromType (&from)[N] sus_lifetimebound) noexcept {
   return __private::IntoRefArray<FromType, N>(from);
 }
 
@@ -128,8 +127,7 @@ constexpr inline auto array_into(
 template <class FromType>
   requires(!std::is_const_v<std::remove_reference_t<FromType>> &&
            !std::is_array_v<FromType>)
-constexpr inline auto move_into(
-    FromType& from sus_if_clang([[clang::lifetimebound]])) noexcept {
+constexpr inline auto move_into(FromType& from sus_lifetimebound) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_cv_t<std::remove_reference_t<FromType>>&&>(from));
 }
@@ -138,13 +136,37 @@ template <class FromType>
   requires(std::is_rvalue_reference_v<FromType &&> &&
            !std::is_const_v<std::remove_reference_t<FromType>> &&
            !std::is_array_v<FromType>)
-constexpr inline auto move_into(
-    FromType&& from sus_if_clang([[clang::lifetimebound]])) noexcept {
+constexpr inline auto move_into(FromType&& from sus_lifetimebound) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_cv_t<std::remove_reference_t<FromType>>&&>(from));
 }
 
-// TODO: Consider adding sus::try_into() and a TryInto concept?
+/// A concept that declares `FromType` can (sometimes) be converted to `ToType`
+/// through the `TryFrom` concept or through an identity transformation.
+template <class FromType, class ToType>
+concept TryInto = ::sus::construct::TryFrom<ToType, FromType> ||
+                  std::same_as<ToType, FromType>;
+
+/// Attempts to convert from the given value to a `ToType`.
+///
+/// Unlike `into()`, this function can not use type deduction to determine the
+/// receiving type as it needs to determine the Result type and allow the caller
+/// the chance to handle the error condition.
+///
+/// The `TryFrom` concept requires a `try_from()` method that returns a
+/// `Result`. That `Result` will be the return type of this function.
+///
+/// # Example
+/// ```
+/// auto valid = sus::try_into<u8>(123_i32).unwrap_or_default();
+/// sus::check(valid == 123);
+/// auto invalid = sus::try_into<u8>(-1_i32).unwrap_or_default();
+/// sus::check(invalid == 0);
+/// ```
+template <class ToType, TryInto<ToType> FromType>
+constexpr inline auto try_into(FromType&& from) noexcept {
+  return ToType::try_from(::sus::forward<FromType>(from));
+}
 
 }  // namespace sus::construct
 
@@ -153,4 +175,5 @@ namespace sus {
 using ::sus::construct::array_into;
 using ::sus::construct::into;
 using ::sus::construct::move_into;
+using ::sus::construct::try_into;
 }  // namespace sus
