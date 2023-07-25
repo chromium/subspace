@@ -15,8 +15,10 @@
 #include "subspace/construct/from.h"
 
 #include "subspace/construct/into.h"
+#include "subspace/result/result.h"
 
 using sus::construct::From;
+using sus::construct::TryFrom;
 
 namespace {
 
@@ -43,5 +45,25 @@ static_assert(!From<NotFromInt, int>);
 static_assert(!From<WithFromS, int>);
 static_assert(!From<FromReturnsVoid, int>);
 static_assert(!From<FromReturnsElse, int>);
+
+enum Error {};
+
+struct TryYes {
+  static sus::Result<TryYes, Error> try_from(S) { return sus::ok(TryYes()); }
+};
+struct TryNoResult {
+  static TryYes try_from(S) { return TryYes(); }
+};
+struct TryWrongResult {
+  static sus::Result<S, Error> try_from(S) { return sus::ok(S()); }
+};
+struct TryVoidResult {
+  static sus::Result<void, Error> try_from(S) { return sus::ok(); }
+};
+
+static_assert(TryFrom<TryYes, S>);
+static_assert(!TryFrom<TryNoResult, S>);
+static_assert(!TryFrom<TryWrongResult, S>);
+static_assert(!TryFrom<TryVoidResult, S>);
 
 }  // namespace

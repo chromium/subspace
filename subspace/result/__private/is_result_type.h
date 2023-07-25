@@ -30,4 +30,9 @@ struct IsResultType<::sus::result::Result<U, V>> final : std::true_type {
   using err_type = V;
 };
 
+template <class T, class Success>
+concept IsResultWithSuccessType =
+    IsResultType<T>::value &&
+    std::same_as<Success, typename IsResultType<T>::ok_type>;
+
 }  // namespace sus::result::__private
