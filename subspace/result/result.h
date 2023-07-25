@@ -666,6 +666,28 @@ class [[nodiscard]] Result final {
     }
   }
 
+  /// Returns the contained Ok value or a default.
+  ///
+  /// Consumes the Result and, if it held an Ok value, the value is returned.
+  /// Otherwise the default value of the Ok value's type is returned.
+  constexpr T unwrap_or_default() && noexcept
+    requires(!std::is_reference_v<T> &&
+             (std::is_void_v<T> || ::sus::construct::Default<T>))
+  {
+    ResultState was = ::sus::mem::replace(mref(state_), ResultState::IsMoved);
+    check_with_message(
+        was != ResultState::IsMoved,
+        *"called `Result::unwrap_or_default()` on a moved Result");
+    if constexpr (!std::is_void_v<T>) {
+      if (was == ResultState::IsOk) {
+        return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                             mref(storage_.ok_));
+      } else {
+        return T();
+      }
+    }
+  }
+
   /// Returns the contained `Ok` value, consuming the self value, without
   /// checking that the value is not an `Err`.
   ///

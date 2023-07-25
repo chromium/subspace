@@ -572,6 +572,31 @@ TEST(Result, Unwrap) {
   EXPECT_EQ(&cu, &m);
 }
 
+TEST(Result, UnwrapOrDefault) {
+  {
+    constexpr auto a = Result<i32, Error>::with(3_i32).unwrap_or_default();
+    static_assert(std::same_as<decltype(a), const i32>);
+    EXPECT_EQ(a, 3_i32);
+
+    constexpr auto d =
+        Result<i32, Error>::with_err(Error()).unwrap_or_default();
+    static_assert(std::same_as<decltype(d), const i32>);
+    EXPECT_EQ(d, 0_i32);
+  }
+  {
+    // Returns void, doesn't panic.
+    Result<void, Error>::with().unwrap_or_default();
+    static_assert(
+        std::same_as<decltype(Result<void, Error>::with().unwrap_or_default()),
+                     void>);
+    // Returns void, doesn't panic.
+    Result<void, Error>::with_err(Error()).unwrap_or_default();
+    static_assert(
+        std::same_as<decltype(Result<void, Error>::with().unwrap_or_default()),
+                     void>);
+  }
+}
+
 TEST(ResultDeathTest, UnwrapWithErr) {
 #if GTEST_HAS_DEATH_TEST
   auto r = Result<i32, Error>::with_err(Error());
