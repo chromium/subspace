@@ -153,6 +153,18 @@ class Option final {
   inline constexpr Option() noexcept = default;
 
   /// Construct an Option that is holding the given value.
+  ///
+  /// # Const References
+  ///
+  /// For `Option<const T&>` it is possible to bind to a temporary which would
+  /// create a memory safety bug. The `[[clang::lifetimebound]]` attribute is
+  /// used to prevent this via Clang. But additionally, the incoming type is
+  /// required to match with `sus::construct::SafelyConstructibleFromReference`
+  /// to prevent conversions that would construct a temporary.
+  ///
+  /// To force accepting a const reference anyway in cases where a type can
+  /// convert to a reference without constructing a temporary, use an unsafe
+  /// `static_cast<const T&>()` at the callsite (and document it =)).
   static inline constexpr Option with(const T& t) noexcept
     requires(!std::is_reference_v<T> && ::sus::mem::Copy<T>)
   {
@@ -170,8 +182,10 @@ class Option final {
     }
   }
 
-  sus_pure static inline constexpr Option with(T t sus_lifetimebound) noexcept
-    requires(std::is_reference_v<T>)
+  template <std::convertible_to<T> U>
+  sus_pure static inline constexpr Option with(U&& t sus_lifetimebound) noexcept
+    requires(std::is_reference_v<T> &&
+             sus::construct::SafelyConstructibleFromReference<T, U &&>)
   {
     return Option(move_to_storage(t));
   }
@@ -968,7 +982,7 @@ class Option final {
   /// Zips self with another Option.
   ///
   /// If self is `Some(s)` and other is `Some(o)`, this method returns
-  /// `Some((s, o))`. Otherwise, `None` is returned.
+  /// `Some(Tuple(s, o))`. Otherwise, `None` is returned.
   template <class U, int&..., class Tuple = ::sus::tuple_type::Tuple<T, U>>
   constexpr Option<Tuple> zip(Option<U> o) && noexcept {
     if (o.t_.state() == None) {
@@ -977,8 +991,10 @@ class Option final {
     } else if (t_.state() == None) {
       return Option<Tuple>();
     } else {
-      return Option<Tuple>::with(
-          Tuple::with(t_.take_and_set_none(), ::sus::move(o).unwrap()));
+      // SAFETY: We have verified `*this` and `o` contain Some above.
+      return Option<Tuple>::with(Tuple::with(
+          ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn),
+          ::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)));
     }
   }
   template <class U, int&..., class Tuple = ::sus::tuple_type::Tuple<T, U>>

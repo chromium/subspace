@@ -58,7 +58,48 @@ static_assert(!sus::mem::Copy<Result<TriviallyMoveableAndRelocatable, i32>>);
 static_assert(sus::mem::Move<Result<TriviallyMoveableAndRelocatable, i32>>);
 static_assert(!sus::mem::Clone<Result<TriviallyMoveableAndRelocatable, i32>>);
 
-TEST(Option, Construct) {
+template <class T, class = void, class... Args>
+struct is_with_callable : std::false_type {};
+
+template <class T, class... Args>
+struct is_with_callable<
+    T, std::void_t<decltype(T::with(std::declval<Args>()...))>, Args...>
+    : std::true_type {};
+
+template <class T, class... Args>
+inline constexpr bool is_with_callable_v =
+    is_with_callable<T, void, Args...>::value;
+
+static_assert(is_with_callable_v<Result<i32, Error>, i32>);
+static_assert(is_with_callable_v<Result<i32, Error>, const i32>);
+static_assert(is_with_callable_v<Result<i32, Error>, i32&>);
+static_assert(is_with_callable_v<Result<i32, Error>, i32&&>);
+static_assert(is_with_callable_v<Result<i32, Error>, const i32&>);
+
+static_assert(!is_with_callable_v<Result<i32&, Error>, i32>);
+static_assert(!is_with_callable_v<Result<i32&, Error>, const i32>);
+static_assert(is_with_callable_v<Result<i32&, Error>, i32&>);
+static_assert(!is_with_callable_v<Result<i32&, Error>, const i32&>);
+
+static_assert(is_with_callable_v<Result<const i32&, Error>, i32>);
+static_assert(is_with_callable_v<Result<const i32&, Error>, const i32&>);
+static_assert(is_with_callable_v<Result<const i32&, Error>, i32&>);
+static_assert(is_with_callable_v<Result<const i32&, Error>, i32&&>);
+static_assert(is_with_callable_v<Result<const i32&, Error>, const i32&&>);
+
+// No conversion to a temporary.
+static_assert(is_with_callable_v<Result<i32, Error>, i16>);
+static_assert(is_with_callable_v<Result<i32, Error>, const i16&>);
+static_assert(is_with_callable_v<Result<i32, Error>, i16&>);
+static_assert(is_with_callable_v<Result<i32, Error>, i16&&>);
+static_assert(is_with_callable_v<Result<i32, Error>, const i16&&>);
+static_assert(!is_with_callable_v<Result<const i32&, Error>, i16>);
+static_assert(!is_with_callable_v<Result<const i32&, Error>, const i16&>);
+static_assert(!is_with_callable_v<Result<const i32&, Error>, i16&>);
+static_assert(!is_with_callable_v<Result<const i32&, Error>, i16&&>);
+static_assert(!is_with_callable_v<Result<const i32&, Error>, const i16&&>);
+
+TEST(Result, Construct) {
   {
     using T = DefaultConstructible;
     auto x = Result<T, i32>::with(T());

@@ -81,27 +81,45 @@ static_assert(sizeof(Option<LargerThanAPointer&>) ==
               sizeof(LargerThanAPointer*));
 
 template <class T, class = void, class... Args>
-struct is_some_callable : std::false_type {};
+struct is_with_callable : std::false_type {};
 
 template <class T, class... Args>
-struct is_some_callable<
+struct is_with_callable<
     T, std::void_t<decltype(T::with(std::declval<Args>()...))>, Args...>
     : std::true_type {};
 
 template <class T, class... Args>
-inline constexpr bool is_some_callable_v =
-    is_some_callable<T, void, Args...>::value;
+inline constexpr bool is_with_callable_v =
+    is_with_callable<T, void, Args...>::value;
 
-static_assert(is_some_callable_v<Option<int>, int>);
-static_assert(is_some_callable_v<Option<int>, const int>);
-static_assert(is_some_callable_v<Option<int>, int&>);
-static_assert(is_some_callable_v<Option<int>, int&&>);
-static_assert(is_some_callable_v<Option<int>, const int&>);
+static_assert(is_with_callable_v<Option<i32>, i32>);
+static_assert(is_with_callable_v<Option<i32>, const i32>);
+static_assert(is_with_callable_v<Option<i32>, i32&>);
+static_assert(is_with_callable_v<Option<i32>, i32&&>);
+static_assert(is_with_callable_v<Option<i32>, const i32&>);
 
-static_assert(!is_some_callable_v<Option<int&>, int>);
-static_assert(!is_some_callable_v<Option<int&>, const int>);
-static_assert(is_some_callable_v<Option<int&>, int&>);
-static_assert(!is_some_callable_v<Option<int&>, const int&>);
+static_assert(!is_with_callable_v<Option<i32&>, i32>);
+static_assert(!is_with_callable_v<Option<i32&>, const i32>);
+static_assert(is_with_callable_v<Option<i32&>, i32&>);
+static_assert(!is_with_callable_v<Option<i32&>, const i32&>);
+
+static_assert(is_with_callable_v<Option<const i32&>, i32>);
+static_assert(is_with_callable_v<Option<const i32&>, const i32&>);
+static_assert(is_with_callable_v<Option<const i32&>, i32&>);
+static_assert(is_with_callable_v<Option<const i32&>, i32&&>);
+static_assert(is_with_callable_v<Option<const i32&>, const i32&&>);
+
+// No conversion to a temporary.
+static_assert(is_with_callable_v<Option<i32>, i16>);
+static_assert(is_with_callable_v<Option<i32>, const i16&>);
+static_assert(is_with_callable_v<Option<i32>, i16&>);
+static_assert(is_with_callable_v<Option<i32>, i16&&>);
+static_assert(is_with_callable_v<Option<i32>, const i16&&>);
+static_assert(!is_with_callable_v<Option<const i32&>, i16>);
+static_assert(!is_with_callable_v<Option<const i32&>, const i16&>);
+static_assert(!is_with_callable_v<Option<const i32&>, i16&>);
+static_assert(!is_with_callable_v<Option<const i32&>, i16&&>);
+static_assert(!is_with_callable_v<Option<const i32&>, const i16&&>);
 
 TEST(Option, Construct) {
   {
@@ -1218,7 +1236,8 @@ TEST(Option, And) {
   auto iy = Option<NoCopyMove&>::with(mref(i2)).and_that(Option<NoCopyMove&>());
   IS_NONE(iy);
 
-  auto inx = Option<NoCopyMove&>().and_that(Option<NoCopyMove&>::with(mref(i3)));
+  auto inx =
+      Option<NoCopyMove&>().and_that(Option<NoCopyMove&>::with(mref(i3)));
   IS_NONE(inx);
 
   auto iny = Option<NoCopyMove&>().and_that(Option<NoCopyMove&>());
