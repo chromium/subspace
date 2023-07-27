@@ -22,7 +22,7 @@ namespace sus::num {
 
 template <class T>
 concept Float =
-    std::same_as<f32, std::decay_t<T>> || std::same_as<f64, std::decay_t<T>>;
+    std::same_as<f32, T> || std::same_as<f64, T>;
 
 template <class T>
 concept PrimitiveFloat = std::same_as<float, T> || std::same_as<double, T> ||

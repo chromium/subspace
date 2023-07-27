@@ -23,7 +23,6 @@
 #include "fmt/format.h"
 #include "subspace/assertions/check.h"
 #include "subspace/assertions/endian.h"
-#include "subspace/construct/as_bits.h"
 #include "subspace/iter/iterator_concept.h"
 #include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/__private/compiler_bugs.h"
@@ -35,6 +34,7 @@
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/__private/literals.h"
 #include "subspace/num/__private/primitive_type.h"
+#include "subspace/num/float_concepts.h"
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/try_from_int_error.h"
 #include "subspace/string/__private/format_to_stream.h"
@@ -54,9 +54,10 @@ namespace sus::num {
 /// where the value can not be represented in the target type.
 ///
 /// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
-/// all integer types and C++ primitive types. When converting from a smaller
-/// signed type, the value will be sign-extended. Between integers this behaves
-/// the same as static_cast<T>() on primitive integers.
+/// all integer and float types and C++ primitive types. When converting from a
+/// smaller signed type, the value will be sign-extended. Between integers this
+/// behaves the same as static_cast<T>() on primitive integers. Between integers
+/// and floats, this strictly converts the bit value.
 struct [[sus_trivial_abi]] u32 final {
 #define _self u32
 #define _pointer 0
@@ -80,9 +81,10 @@ struct [[sus_trivial_abi]] u32 final {
 /// where the value can not be represented in the target type.
 ///
 /// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
-/// all integer types and C++ primitive types. When converting from a smaller
-/// signed type, the value will be sign-extended. Between integers this behaves
-/// the same as static_cast<T>() on primitive integers.
+/// all integer and float types and C++ primitive types. When converting from a
+/// smaller signed type, the value will be sign-extended. Between integers this
+/// behaves the same as static_cast<T>() on primitive integers. Between integers
+/// and floats, this strictly converts the bit value.
 struct [[sus_trivial_abi]] u8 final {
 #define _self u8
 #define _pointer 0
@@ -106,9 +108,10 @@ struct [[sus_trivial_abi]] u8 final {
 /// where the value can not be represented in the target type.
 ///
 /// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
-/// all integer types and C++ primitive types. When converting from a smaller
-/// signed type, the value will be sign-extended. Between integers this behaves
-/// the same as static_cast<T>() on primitive integers.
+/// all integer and float types and C++ primitive types. When converting from a
+/// smaller signed type, the value will be sign-extended. Between integers this
+/// behaves the same as static_cast<T>() on primitive integers. Between integers
+/// and floats, this strictly converts the bit value.
 struct [[sus_trivial_abi]] u16 final {
 #define _self u16
 #define _pointer 0
@@ -132,9 +135,10 @@ struct [[sus_trivial_abi]] u16 final {
 /// where the value can not be represented in the target type.
 ///
 /// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
-/// all integer types and C++ primitive types. When converting from a smaller
-/// signed type, the value will be sign-extended. Between integers this behaves
-/// the same as static_cast<T>() on primitive integers.
+/// all integer and float types and C++ primitive types. When converting from a
+/// smaller signed type, the value will be sign-extended. Between integers this
+/// behaves the same as static_cast<T>() on primitive integers. Between integers
+/// and floats, this strictly converts the bit value.
 struct [[sus_trivial_abi]] u64 final {
 #define _self u64
 #define _pointer 0
@@ -170,9 +174,10 @@ struct [[sus_trivial_abi]] u64 final {
 /// where the value can not be represented in the target type.
 ///
 /// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
-/// all integer types and C++ primitive types. When converting from a smaller
-/// signed type, the value will be sign-extended. Between integers this behaves
-/// the same as static_cast<T>() on primitive integers.
+/// all integer and float types and C++ primitive types. When converting from a
+/// smaller signed type, the value will be sign-extended. Between integers this
+/// behaves the same as static_cast<T>() on primitive integers. Between integers
+/// and floats, this strictly converts the bit value.
 struct [[sus_trivial_abi]] usize final {
 #define _self usize
 #define _pointer 0
@@ -213,9 +218,10 @@ struct [[sus_trivial_abi]] usize final {
 /// where the value can not be represented in the target type.
 ///
 /// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
-/// all integer types and C++ primitive types. When converting from a smaller
-/// signed type, the value will be sign-extended. Between integers this behaves
-/// the same as static_cast<T>() on primitive integers.
+/// all integer and float types and C++ primitive types. When converting from a
+/// smaller signed type, the value will be sign-extended. Between integers this
+/// behaves the same as static_cast<T>() on primitive integers. Between integers
+/// and floats, this strictly converts the bit value.
 struct [[sus_trivial_abi]] uptr final {
 #define _self uptr
 #define _pointer 1
@@ -269,46 +275,6 @@ _sus__integer_literal(u16, ::sus::num::u16);
 _sus__integer_literal(u32, ::sus::num::u32);
 _sus__integer_literal(u64, ::sus::num::u64);
 _sus__integer_literal(usize, ::sus::num::usize);
-
-// sus::construct::AsBits<Unsigned, Integer> trait.
-template <sus::num::Unsigned T, sus::num::Integer F>
-struct sus::construct::AsBitsImpl<T, F> {
-  constexpr static T from_bits(const F& from) noexcept {
-    return T(static_cast<decltype(T::MAX_PRIMITIVE)>(from.primitive_value));
-  }
-};
-
-// sus::construct::AsBits<Unsigned, PrimitiveInteger> trait.
-template <sus::num::Unsigned T, sus::num::PrimitiveInteger F>
-struct sus::construct::AsBitsImpl<T, F> {
-  constexpr static T from_bits(const F& from) noexcept {
-    return T(static_cast<decltype(T::MAX_PRIMITIVE)>(from));
-  }
-};
-
-// sus::construct::AsBits<PrimitiveInteger, Unsigned> trait.
-template <sus::num::PrimitiveInteger T, sus::num::Unsigned F>
-struct sus::construct::AsBitsImpl<T, F> {
-  constexpr static T from_bits(const F& from) noexcept {
-    return static_cast<T>(from.primitive_value);
-  }
-};
-
-// sus::construct::AsBits<std::byte, Unsigned> trait.
-template <sus::num::Unsigned F>
-struct sus::construct::AsBitsImpl<std::byte, F> {
-  constexpr static std::byte from_bits(const F& from) noexcept {
-    return static_cast<std::byte>(from.primitive_value);
-  }
-};
-
-// sus::construct::AsBits<Unsigned, std::byte> trait.
-template <sus::num::Unsigned T>
-struct sus::construct::AsBitsImpl<T, std::byte> {
-  constexpr static T from_bits(const std::byte& from) noexcept {
-    return T(static_cast<decltype(T::MAX_PRIMITIVE)>(from));
-  }
-};
 
 // Promote unsigned integer types into the `sus` namespace.
 namespace sus {
