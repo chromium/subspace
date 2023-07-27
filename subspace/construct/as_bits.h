@@ -43,6 +43,12 @@ namespace sus::construct {
 template <class To, class From>
 struct AsBitsImpl;
 
+// sus::construct::AsBits<T, T> trait for identity conversion.
+template <class T>
+struct sus::construct::AsBitsImpl<T, T> {
+  constexpr static T from_bits(const T& from) noexcept { return from; }
+};
+
 /// A type `T` that satisfies `AsBits<T, F>` can be constructed from `F` through
 /// a bitwise conversion that preserves the bits but not the conceptual value of
 /// `F`. The conversion may also truncate or extend `F` in order to do the
