@@ -489,6 +489,20 @@ sus_pure inline _self mul_add(_self a, _self b) const& noexcept {
   return static_cast<_primitive>(
       ::fma(primitive_value, a.primitive_value, b.primitive_value));
 }
+
+/// Returns the next representable value of the float type after `self` in the
+/// direction of `toward`. If `self == toward`, `toward` is returned. If either
+/// `self` or `toward` is NAN, NAN is returned.
+///
+/// This is implemented by the
+/// [cmath](https://en.cppreference.com/w/c/numeric/math/nextafter) library, see
+/// the documentation for details on errors.
+//
+// TODO: constexpr in C++23.
+sus_pure inline _self next_toward(_self toward) const& noexcept {
+  return __private::next_toward(primitive_value, toward.primitive_value);
+}
+
 /// Raises a number to a floating point power.
 sus_pure inline _self powf(_self n) const& noexcept {
   // MSVC pow(float) is returning a double for some reason.
