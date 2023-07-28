@@ -53,7 +53,7 @@ check out which compiler versions are used by the
 | Compiler   | Version |
 |------------|---------|
 | **Clang:** | 16 and up |
-| **GCC**:   | 13 and up (with [-Wno-stringop-overflow](https://github.com/fmtlib/fmt/issues/3533)) |
+| **GCC**:   | 13 and up |
 | **MSVC**:   | 17.4.2 (not [newer versions](https://github.com/chromium/subspace/issues/267)) |
 
 We attempt to work around bugs when reasonable, to widen compiler version
