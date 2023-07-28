@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "subspace/construct/as_bits.h"
+#include "subspace/construct/to_bits.h"
 
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/prelude.h"
 
 namespace {
 
-TEST(AsBits, Example_Concept) {
-  auto add = [](u32 a, const sus::construct::AsBits<u32> auto& b) -> u32 {
-    return a.wrapping_add(sus::as_bits<u32>(b));
+TEST(ToBits, Example_Concept) {
+  auto add = [](u32 a, const sus::construct::ToBits<u32> auto& b) -> u32 {
+    return a.wrapping_add(sus::to_bits<u32>(b));
   };
   sus::check(add(3_u32, -1_i32) == u32::MIN + 2u);
 }
 
-TEST(AsBits, Example_Function) {
-  sus::check(u32::MAX == sus::as_bits<u32>(-1_i64));
+TEST(ToBits, Example_Function) {
+  sus::check(u32::MAX == sus::to_bits<u32>(-1_i64));
 }
 
 }  // namespace

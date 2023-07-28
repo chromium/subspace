@@ -17,7 +17,7 @@
 #include <bit>
 #include <type_traits>
 
-#include "subspace/construct/as_bits.h"
+#include "subspace/construct/to_bits.h"
 #include "subspace/num/float.h"
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
@@ -26,85 +26,85 @@
 
 // ## === Into `Integer`
 
-// sus::construct::AsBits<Integer, Integer> trait.
+// sus::construct::ToBits<Integer, Integer> trait.
 template <sus::num::Integer T, sus::num::Integer F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(
         from.primitive_value));
   }
 };
 
-// sus::construct::AsBits<Integer, PrimitiveInteger> trait.
+// sus::construct::ToBits<Integer, PrimitiveInteger> trait.
 template <sus::num::Integer T, sus::num::PrimitiveInteger F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(from));
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(from));
   }
 };
 
-// sus::construct::AsBits<Integer, std::byte> trait.
+// sus::construct::ToBits<Integer, std::byte> trait.
 template <sus::num::Integer T>
-struct sus::construct::AsBitsImpl<T, std::byte> {
+struct sus::construct::ToBitsImpl<T, std::byte> {
   constexpr static T from_bits(const std::byte& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(from));
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(from));
   }
 };
 
-// sus::construct::AsBits<Integer, Float> trait.
+// sus::construct::ToBits<Integer, Float> trait.
 template <sus::num::Integer T, sus::num::Float F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(
         from.primitive_value));
   }
 };
 
-// sus::construct::AsBits<Integer, PrimitiveFloat> trait.
+// sus::construct::ToBits<Integer, PrimitiveFloat> trait.
 template <sus::num::Integer T, sus::num::PrimitiveFloat F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(from));
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(from));
   }
 };
 
 // ## === Into `PrimitiveInteger`
 
-// sus::construct::AsBits<PrimitiveInteger, Integer> trait.
+// sus::construct::ToBits<PrimitiveInteger, Integer> trait.
 template <sus::num::PrimitiveInteger T, sus::num::Integer F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return ::sus::as_bits<T>(from.primitive_value);
+    return ::sus::to_bits<T>(from.primitive_value);
   }
 };
 
-// sus::construct::AsBits<PrimitiveInteger, PrimitiveInteger> trait.
+// sus::construct::ToBits<PrimitiveInteger, PrimitiveInteger> trait.
 template <sus::num::PrimitiveInteger T, sus::num::PrimitiveInteger F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
     return static_cast<T>(from);
   }
 };
 
-// sus::construct::AsBits<PrimitiveInteger, std::byte> trait.
+// sus::construct::ToBits<PrimitiveInteger, std::byte> trait.
 template <sus::num::PrimitiveInteger T>
-struct sus::construct::AsBitsImpl<T, std::byte> {
+struct sus::construct::ToBitsImpl<T, std::byte> {
   constexpr static T from_bits(const std::byte& from) noexcept {
     return static_cast<T>(from);
   }
 };
 
-// sus::construct::AsBits<PrimitiveInteger, Float> trait.
+// sus::construct::ToBits<PrimitiveInteger, Float> trait.
 template <sus::num::PrimitiveInteger T, sus::num::Float F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return ::sus::as_bits<T>(from.primitive_value);
+    return ::sus::to_bits<T>(from.primitive_value);
   }
 };
 
-// sus::construct::AsBits<PrimitiveInteger, PrimitiveFloat> trait.
+// sus::construct::ToBits<PrimitiveInteger, PrimitiveFloat> trait.
 template <sus::num::PrimitiveInteger T, sus::num::PrimitiveFloat F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
     if constexpr (::sus::mem::size_of<F>() == 4u) {
       return static_cast<T>(
@@ -119,33 +119,33 @@ struct sus::construct::AsBitsImpl<T, F> {
 
 // ## === Into `std::byte`
 
-// sus::construct::AsBits<std::byte, Integer> trait.
+// sus::construct::ToBits<std::byte, Integer> trait.
 template <sus::num::Integer F>
-struct sus::construct::AsBitsImpl<std::byte, F> {
+struct sus::construct::ToBitsImpl<std::byte, F> {
   constexpr static std::byte from_bits(const F& from) noexcept {
-    return ::sus::as_bits<std::byte>(from.primitive_value);
+    return ::sus::to_bits<std::byte>(from.primitive_value);
   }
 };
 
-// sus::construct::AsBits<std::byte, PrimitiveInteger> trait.
+// sus::construct::ToBits<std::byte, PrimitiveInteger> trait.
 template <sus::num::PrimitiveInteger F>
-struct sus::construct::AsBitsImpl<std::byte, F> {
+struct sus::construct::ToBitsImpl<std::byte, F> {
   constexpr static std::byte from_bits(const F& from) noexcept {
     return static_cast<std::byte>(from);
   }
 };
 
-// sus::construct::AsBits<std::byte, Float> trait.
+// sus::construct::ToBits<std::byte, Float> trait.
 template <sus::num::Float F>
-struct sus::construct::AsBitsImpl<std::byte, F> {
+struct sus::construct::ToBitsImpl<std::byte, F> {
   constexpr static std::byte from_bits(const F& from) noexcept {
-    return ::sus::as_bits<std::byte>(from.primitive_value);
+    return ::sus::to_bits<std::byte>(from.primitive_value);
   }
 };
 
-// sus::construct::AsBits<PrimitiveInteger, PrimitiveFloat> trait.
+// sus::construct::ToBits<PrimitiveInteger, PrimitiveFloat> trait.
 template <sus::num::PrimitiveFloat F>
-struct sus::construct::AsBitsImpl<std::byte, F> {
+struct sus::construct::ToBitsImpl<std::byte, F> {
   constexpr static std::byte from_bits(const F& from) noexcept {
     if constexpr (::sus::mem::size_of<F>() == 4u) {
       return static_cast<std::byte>(std::bit_cast<uint32_t>(from));
@@ -158,61 +158,61 @@ struct sus::construct::AsBitsImpl<std::byte, F> {
 
 // ## === Into `Float`
 
-// sus::construct::AsBits<Float, Integer> trait.
+// sus::construct::ToBits<Float, Integer> trait.
 template <sus::num::Float T, sus::num::Integer F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(
         from.primitive_value));
   }
 };
 
-// sus::construct::AsBits<Float, PrimitiveInteger> trait.
+// sus::construct::ToBits<Float, PrimitiveInteger> trait.
 template <sus::num::Float T, sus::num::PrimitiveInteger F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(from));
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(from));
   }
 };
 
-// sus::construct::AsBits<Float, std::byte> trait.
+// sus::construct::ToBits<Float, std::byte> trait.
 template <sus::num::Float T>
-struct sus::construct::AsBitsImpl<T, std::byte> {
+struct sus::construct::ToBitsImpl<T, std::byte> {
   constexpr static T from_bits(const std::byte& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(from));
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(from));
   }
 };
 
-// sus::construct::AsBits<Float, Float> trait.
+// sus::construct::ToBits<Float, Float> trait.
 template <sus::num::Float T, sus::num::Float F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(
         from.primitive_value));
   }
 };
 
-// sus::construct::AsBits<Float, PrimitiveFloat> trait.
+// sus::construct::ToBits<Float, PrimitiveFloat> trait.
 template <sus::num::Float T, sus::num::PrimitiveFloat F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return T(::sus::as_bits<decltype(std::declval<T>().primitive_value)>(from));
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(from));
   }
 };
 
 // ## === Into `PrimitiveFloat`
 
-// sus::construct::AsBits<PrimitiveFloat, Integer> trait.
+// sus::construct::ToBits<PrimitiveFloat, Integer> trait.
 template <sus::num::PrimitiveFloat T, sus::num::Integer F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return ::sus::as_bits<T>(from.primitive_value);
+    return ::sus::to_bits<T>(from.primitive_value);
   }
 };
 
-// sus::construct::AsBits<PrimitiveFloat, PrimitiveInteger> trait.
+// sus::construct::ToBits<PrimitiveFloat, PrimitiveInteger> trait.
 template <sus::num::PrimitiveFloat T, sus::num::PrimitiveInteger F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
     if constexpr (::sus::mem::size_of<T>() == 4u) {
       return std::bit_cast<float>(
@@ -225,9 +225,9 @@ struct sus::construct::AsBitsImpl<T, F> {
   }
 };
 
-// sus::construct::AsBits<PrimitiveFloat, std::byte> trait.
+// sus::construct::ToBits<PrimitiveFloat, std::byte> trait.
 template <sus::num::PrimitiveFloat T>
-struct sus::construct::AsBitsImpl<T, std::byte> {
+struct sus::construct::ToBitsImpl<T, std::byte> {
   constexpr static T from_bits(const std::byte& from) noexcept {
     if constexpr (::sus::mem::size_of<T>() == 4u) {
       return std::bit_cast<float>(static_cast<uint32_t>(from));
@@ -238,17 +238,17 @@ struct sus::construct::AsBitsImpl<T, std::byte> {
   }
 };
 
-// sus::construct::AsBits<PrimitiveFloat, Float> trait.
+// sus::construct::ToBits<PrimitiveFloat, Float> trait.
 template <sus::num::PrimitiveFloat T, sus::num::Float F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return ::sus::as_bits<T>(from.primitive_value);
+    return ::sus::to_bits<T>(from.primitive_value);
   }
 };
 
-// sus::construct::AsBits<PrimitiveFloat, PrimitiveFloat> trait.
+// sus::construct::ToBits<PrimitiveFloat, PrimitiveFloat> trait.
 template <sus::num::PrimitiveFloat T, sus::num::PrimitiveFloat F>
-struct sus::construct::AsBitsImpl<T, F> {
+struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
     static_assert(::sus::mem::size_of<T>() == 4u ||
                   ::sus::mem::size_of<T>() == 8u);
