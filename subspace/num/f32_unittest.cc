@@ -1106,4 +1106,15 @@ TEST(f32, fmt) {
   EXPECT_EQ(fmt::format("{:.4f}", 1234.567_f32), "1234.5670");
 }
 
+TEST(f32, NextToward) {
+  EXPECT_EQ((0_f32).next_toward(f32::NAN).is_nan(), true);
+  EXPECT_EQ(f32::NAN.next_toward(0_f32).is_nan(), true);
+  EXPECT_EQ((1_f32).next_toward(f32::INFINITY) - 1_f32,
+            f32(std::numeric_limits<float>::epsilon()));
+  EXPECT_GT((0_f32).next_toward(f32::INFINITY), 0_f32);
+  EXPECT_GT((0_f32).next_toward(1_f32), 0_f32);
+  EXPECT_LT((0_f32).next_toward(f32::NEG_INFINITY), 0_f32);
+  EXPECT_LT((0_f32).next_toward(-1_f32), 0_f32);
+}
+
 }  // namespace

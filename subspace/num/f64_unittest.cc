@@ -1082,4 +1082,15 @@ TEST(f64, fmt) {
   EXPECT_EQ(fmt::format("{:.4f}", 1234890.567_f64), "1234890.5670");
 }
 
+TEST(f64, NextToward) {
+  EXPECT_EQ((0_f64).next_toward(f64::NAN).is_nan(), true);
+  EXPECT_EQ(f64::NAN.next_toward(0_f64).is_nan(), true);
+  EXPECT_EQ((1_f64).next_toward(f64::INFINITY) - 1_f64,
+            f64(std::numeric_limits<double>::epsilon()));
+  EXPECT_GT((0_f64).next_toward(f64::INFINITY), 0_f64);
+  EXPECT_GT((0_f64).next_toward(1_f64), 0_f64);
+  EXPECT_LT((0_f64).next_toward(f64::NEG_INFINITY), 0_f64);
+  EXPECT_LT((0_f64).next_toward(-1_f64), 0_f64);
+}
+
 }  // namespace

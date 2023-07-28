@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include <math.h>  // TODO: Remove this and define nans and truncf ourselves.
 #include <stddef.h>
 #include <stdint.h>
 
 #include <bit>
+#include <cmath>
 #include <type_traits>
 
 #if _MSC_VER
@@ -26,8 +26,8 @@
 #endif
 
 #include "subspace/assertions/unreachable.h"
-#include "subspace/macros/inline.h"
 #include "subspace/macros/builtin.h"
+#include "subspace/macros/inline.h"
 #include "subspace/macros/pure.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/size_of.h"
@@ -1509,6 +1509,16 @@ sus_pure_const constexpr inline T float_clamp(marker::UnsafeFnMarker, T x,
   else if (x > max)
     return max;
   return x;
+}
+
+// TODO: constexpr in C++23.
+template <class T>
+  requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
+sus_pure_const inline T next_toward(T from, T to) {
+  if constexpr (::sus::mem::size_of<T>() == 4u)
+    return std::nexttowardf(from, to);
+  else
+    return std::nexttoward(from, to);
 }
 
 }  // namespace sus::num::__private
