@@ -22,6 +22,14 @@
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
 
+/// Casting from a float to an integer will round the float towards zero,
+/// except:
+/// * NaN will return 0.
+/// * Values larger than the maximum integer value, including `INFINITY`, will
+///   saturate to the maximum value of the integer type.
+/// * Values smaller than the minimum integer value, including `NEG_INFINITY`,
+///   will saturate to the minimum value of the integer type.
+
 // # ================ From signed integers. ============================
 
 // ## === Into `Integer`
@@ -98,7 +106,77 @@ struct sus::construct::ToBitsImpl<T, std::byte> {
 template <sus::num::PrimitiveInteger T, sus::num::Float F>
 struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return ::sus::to_bits<T>(from.primitive_value);
+    if (from.is_nan()) [[unlikely]]
+      return T(0);
+
+    struct MinMax {
+      F min, max;
+    };
+    constexpr MinMax minmax = []() {
+      if constexpr (::sus::mem::size_of<T>() == 1u) {
+        if constexpr (std::is_signed_v<T>) {
+          if constexpr (::sus::mem::size_of<F>() == 4u) {
+            return MinMax(-128.f, 127.f);
+          } else {
+            return MinMax(-128.0, 127.0);
+          }
+        } else {
+          if constexpr (::sus::mem::size_of<F>() == 4u) {
+            return MinMax(0.f, 255.f);
+          } else {
+            return MinMax(0.0, 255.0);
+          }
+        }
+      } else if constexpr (::sus::mem::size_of<T>() == 2u) {
+        if constexpr (std::is_signed_v<T>) {
+          if constexpr (::sus::mem::size_of<F>() == 4u) {
+            return MinMax(-32768.f, 32767.f);
+          } else {
+            return MinMax(-32768.0, 32767.0);
+          }
+        } else {
+          if constexpr (::sus::mem::size_of<F>() == 4u) {
+            return MinMax(0.f, 65535.f);
+          } else {
+            return MinMax(0.0, 65535.0);
+          }
+        }
+      } else if constexpr (::sus::mem::size_of<T>() == 4u) {
+        if constexpr (std::is_signed_v<T>) {
+          if constexpr (::sus::mem::size_of<F>() == 4u) {
+            return MinMax(-2147483648.f, 2147483647.f);
+          } else {
+            return MinMax(-2147483648.0, 2147483647.0);
+          }
+        } else {
+          if constexpr (::sus::mem::size_of<F>() == 4u) {
+            return MinMax(0.f, 4294967295.f);
+          } else {
+            return MinMax(0.0, 4294967295.0);
+          }
+        }
+      } else {
+        static_assert(::sus::mem::size_of<T>() == 8u);
+        if constexpr (std::is_signed_v<T>) {
+          if constexpr (::sus::mem::size_of<F>() == 4u) {
+            return MinMax(-9223372036854775808.f, 9223372036854775807.f);
+          } else {
+            return MinMax(-9223372036854775808.0, 9223372036854775807.0);
+          }
+        } else {
+          if constexpr (::sus::mem::size_of<F>() == 4u) {
+            return MinMax(0.f, 18446744073709551615.f);
+          } else {
+            return MinMax(0.0, 18446744073709551615.0);
+          }
+        }
+      }
+    }();
+    if (from >= minmax.max) [[unlikely]]
+      return ::sus::num::__private::max_value<T>();
+    if (from <= minmax.min) [[unlikely]]
+      return ::sus::num::__private::min_value<T>();
+    return static_cast<T>(from.primitive_value);
   }
 };
 
@@ -107,12 +185,10 @@ template <sus::num::PrimitiveInteger T, sus::num::PrimitiveFloat F>
 struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
     if constexpr (::sus::mem::size_of<F>() == 4u) {
-      return static_cast<T>(
-          static_cast<std::make_unsigned_t<T>>(std::bit_cast<uint32_t>(from)));
+      return ::sus::to_bits<T>(::sus::num::f32(from));
     } else {
       static_assert(::sus::mem::size_of<F>() == 8u);
-      return static_cast<T>(
-          static_cast<std::make_unsigned_t<T>>(std::bit_cast<uint64_t>(from)));
+      return ::sus::to_bits<T>(::sus::num::f64(from));
     }
   }
 };
