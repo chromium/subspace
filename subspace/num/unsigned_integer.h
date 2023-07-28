@@ -53,7 +53,7 @@ namespace sus::num {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting from a
 /// smaller signed type, the value will be sign-extended. Between integers this
 /// behaves the same as static_cast<T>() on primitive integers. Between integers
@@ -80,7 +80,7 @@ struct [[sus_trivial_abi]] u32 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting from a
 /// smaller signed type, the value will be sign-extended. Between integers this
 /// behaves the same as static_cast<T>() on primitive integers. Between integers
@@ -107,7 +107,7 @@ struct [[sus_trivial_abi]] u8 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting from a
 /// smaller signed type, the value will be sign-extended. Between integers this
 /// behaves the same as static_cast<T>() on primitive integers. Between integers
@@ -134,7 +134,7 @@ struct [[sus_trivial_abi]] u16 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting from a
 /// smaller signed type, the value will be sign-extended. Between integers this
 /// behaves the same as static_cast<T>() on primitive integers. Between integers
@@ -173,7 +173,7 @@ struct [[sus_trivial_abi]] u64 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting from a
 /// smaller signed type, the value will be sign-extended. Between integers this
 /// behaves the same as static_cast<T>() on primitive integers. Between integers
@@ -217,7 +217,7 @@ struct [[sus_trivial_abi]] usize final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::as_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting from a
 /// smaller signed type, the value will be sign-extended. Between integers this
 /// behaves the same as static_cast<T>() on primitive integers. Between integers
