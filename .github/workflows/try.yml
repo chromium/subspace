@@ -73,6 +73,7 @@ jobs:
       - name: Install LLVM+Clang
         if: startsWith(matrix.config.os, 'ubuntu-')
         run: |
+          sudo apt-get remove clang-14 lldb-14 lld-14 clangd-14 clang-tidy-14 clang-format-14 clang-tools-14 llvm-14-dev lld-14 lldb-14 llvm-14-tools libomp-14-dev libc++-14-dev libc++abi-14-dev libclang-common-14-dev libclang-14-dev libclang-cpp14-dev libunwind-14-dev
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 16 all
@@ -226,6 +227,7 @@ jobs:
 
       - name: Install LLVM+Clang
         run: |
+          sudo apt-get remove clang-14 lldb-14 lld-14 clangd-14 clang-tidy-14 clang-format-14 clang-tools-14 llvm-14-dev lld-14 lldb-14 llvm-14-tools libomp-14-dev libc++-14-dev libc++abi-14-dev libclang-common-14-dev libclang-14-dev libclang-cpp14-dev libunwind-14-dev
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 16 all
