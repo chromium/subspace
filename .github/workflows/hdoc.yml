@@ -9,15 +9,36 @@ jobs:
     name: Generate documentation with hdoc
     if: github.repository == 'chromium/subspace'
     runs-on: ubuntu-latest
+    env:
+      clang_version: 17
+      installed_clang_version: 14
 
     steps:
       - uses: actions/checkout@v1
 
       - name: Install LLVM+Clang
         run: |
+          sudo apt-get remove clang-${installed_clang_version} \
+            lldb-${installed_clang_version} \
+            lld-${installed_clang_version} \
+            clangd-${installed_clang_version} \
+            clang-tidy-${installed_clang_version} \
+            clang-format-${installed_clang_version} \
+            clang-tools-${installed_clang_version} \
+            llvm-${installed_clang_version}-dev \
+            lld-${installed_clang_version} \
+            lldb-${installed_clang_version} \
+            llvm-${installed_clang_version}-tools \
+            libomp-${installed_clang_version}-dev \
+            libc++-${installed_clang_version}-dev \
+            libc++abi-${installed_clang_version}-dev \
+            libclang-common-${installed_clang_version}-dev \
+            libclang-${installed_clang_version}-dev \
+            libclang-cpp${installed_clang_version}-dev \
+            libunwind-${installed_clang_version}-dev
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 16 all
+          sudo ./llvm.sh ${clang_version} all
 
       - name: Checkout depot tools
         run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
@@ -34,8 +55,8 @@ jobs:
       - name: Configure
         run: |
           # Path to LLVM+Clang nightly that we have installed.
-          export LLVM_DIR="/usr/lib/llvm-16/lib/cmake/llvm"
-          export Clang_DIR="/usr/lib/llvm-16/lib/cmake/clang"
+          export LLVM_DIR="/usr/lib/llvm-${clang_version}/lib/cmake/llvm"
+          export Clang_DIR="/usr/lib/llvm-${clang_version}/lib/cmake/clang"
 
           sudo apt install build-essential cmake ninja-build
           cmake -G Ninja -B out -D CMAKE_EXPORT_COMPILE_COMMANDS=1
