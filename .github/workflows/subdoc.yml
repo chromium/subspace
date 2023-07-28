@@ -111,7 +111,7 @@ jobs:
           set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
 
           execute_process(
-            COMMAND cmake --build out
+            COMMAND cmake --build out -j 10
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
