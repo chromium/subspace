@@ -226,7 +226,7 @@ jobs:
           endif()
 
           execute_process(
-            COMMAND cmake --build out
+            COMMAND cmake --build out -j 10
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
