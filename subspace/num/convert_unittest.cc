@@ -355,99 +355,202 @@ TEST(ConvertToBits, isize) {
 }
 
 TEST(ConvertToBits, f32) {
-  // Bit value 0b1100'0000'0101'0101'1101'0101'0000'1110.
-  constexpr auto v = -3.34112882614_f32;
+  static_assert(std::same_as<decltype(sus::to_bits<u16>(0_f32)), u16>);
 
   // Float to smaller unsigned.
   {
-    auto i = sus::to_bits<u16>(v);
-    static_assert(std::same_as<decltype(i), u16>);
-    EXPECT_EQ(i, 0b1101'0101'0000'1110_u16);
-    auto f = sus::to_bits<f32>(i);
-    EXPECT_EQ(f, 7.64296208412e-41_f32);
-  }
-  // Float to larger unsigned.
-  {
-    auto i = sus::to_bits<u64>(v);
-    static_assert(std::same_as<decltype(i), u64>);
-    EXPECT_EQ(i, 0b1100'0000'0101'0101'1101'0101'0000'1110);
-    auto f = sus::to_bits<f32>(i);
-    EXPECT_EQ(f, v);
+    EXPECT_EQ(sus::to_bits<u16>(f32::NAN), 0_u16);
+
+    EXPECT_EQ(sus::to_bits<u16>(0_f32), u16::MIN);
+    EXPECT_EQ(sus::to_bits<u16>(-0_f32), u16::MIN);
+    EXPECT_EQ(sus::to_bits<u16>(-0.00001_f32), u16::MIN);
+    EXPECT_EQ(sus::to_bits<u16>(-99999999_f32), u16::MIN);
+    EXPECT_EQ(sus::to_bits<u16>(f32::NEG_INFINITY), u16::MIN);
+
+    EXPECT_EQ(sus::to_bits<u16>(0.1_f32), 0_u16);
+    EXPECT_EQ(sus::to_bits<u16>(0.51_f32), 0_u16);
+    EXPECT_EQ(sus::to_bits<u16>(0.9999_f32), 0_u16);
+    EXPECT_EQ(sus::to_bits<u16>(1_f32), 1_u16);
+    EXPECT_EQ(sus::to_bits<u16>(65535_f32), u16::MAX);
+    EXPECT_EQ(sus::to_bits<u16>(65535.00001_f32), u16::MAX);
+    EXPECT_EQ(sus::to_bits<u16>(65536_f32), u16::MAX);
+    EXPECT_EQ(sus::to_bits<u16>(999999999_f32), u16::MAX);
+    EXPECT_EQ(sus::to_bits<u16>(f32::INFINITY), u16::MAX);
   }
   // Float to smaller signed.
   {
-    auto i = sus::to_bits<i16>(v);
-    static_assert(std::same_as<decltype(i), i16>);
-    EXPECT_EQ(i, sus::to_bits<i16>(0b1101'0101'0000'1110_u16));
-    EXPECT_EQ(i, -10994);
-    auto f = sus::to_bits<f32>(i);
-    EXPECT_EQ(f, 7.64296208412e-41_f32);
+    EXPECT_EQ(sus::to_bits<i16>(f32::NAN), 0_i16);
+
+    EXPECT_EQ(sus::to_bits<i16>(0_f32), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-0_f32), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-0.00001_f32), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-0.9999_f32), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-1_f32), -1_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-32767.999_f32), -32767_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-32768_f32), i16::MIN);
+    EXPECT_EQ(sus::to_bits<i16>(-32768.00001_f32), i16::MIN);
+    EXPECT_EQ(sus::to_bits<i16>(-99999999_f32), i16::MIN);
+    EXPECT_EQ(sus::to_bits<i16>(f32::NEG_INFINITY), i16::MIN);
+
+    EXPECT_EQ(sus::to_bits<i16>(0.1_f32), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(0.51_f32), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(0.9999_f32), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(1_f32), 1_i16);
+    EXPECT_EQ(sus::to_bits<i16>(32767.999_f32), i16::MAX);
+    EXPECT_EQ(sus::to_bits<i16>(32767.00001_f32), i16::MAX);
+    EXPECT_EQ(sus::to_bits<i16>(32767_f32), i16::MAX);
+    EXPECT_EQ(sus::to_bits<i16>(999999999_f32), i16::MAX);
+    EXPECT_EQ(sus::to_bits<i16>(f32::INFINITY), i16::MAX);
+  }
+
+  // Float to larger unsigned.
+  {
+    EXPECT_EQ(sus::to_bits<u64>(f32::NAN), 0_u64);
+
+    EXPECT_EQ(sus::to_bits<u64>(0_f32), u64::MIN);
+    EXPECT_EQ(sus::to_bits<u64>(-0_f32), u64::MIN);
+    EXPECT_EQ(sus::to_bits<u64>(-0.00001_f32), u64::MIN);
+    EXPECT_EQ(sus::to_bits<u64>(-99999999_f32), u64::MIN);
+    EXPECT_EQ(sus::to_bits<u64>(f32::NEG_INFINITY), u64::MIN);
+
+    EXPECT_EQ(sus::to_bits<u64>(0.1_f32), 0_u64);
+    EXPECT_EQ(sus::to_bits<u64>(0.51_f32), 0_u64);
+    EXPECT_EQ(sus::to_bits<u64>(0.9999_f32), 0_u64);
+    EXPECT_EQ(sus::to_bits<u64>(1_f32), 1_u64);
+    EXPECT_LT(sus::to_bits<u64>((18446744073709551615_f32).next_toward(0_f32)),
+              u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(18446744073709551615_f32), u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(18446744073709551615.00001_f32), u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(18446744073709551615_f32 + 1_f32), u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(18446744073709551615_f32 * 2_f32), u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(f32::INFINITY), u64::MAX);
   }
   // Float to larger signed.
   {
-    auto i = sus::to_bits<i64>(v);
-    static_assert(std::same_as<decltype(i), i64>);
-    EXPECT_EQ(i, sus::to_bits<i64>(0b1100'0000'0101'0101'1101'0101'0000'1110));
-    EXPECT_EQ(i, 3226850574);
-    auto f = sus::to_bits<f32>(i);
-    EXPECT_EQ(f, v);
-  }
-  // Float to double.
-  {
-    auto i = sus::to_bits<f64>(v);
-    static_assert(std::same_as<decltype(i), f64>);
-    EXPECT_EQ(i, 1.59427601287650712395167736662e-314_f64);
-    auto f = sus::to_bits<f32>(i);
-    EXPECT_EQ(f, v);
+    EXPECT_EQ(sus::to_bits<i64>(f32::NAN), 0_i64);
+
+    EXPECT_EQ(sus::to_bits<i64>(0_f32), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(-0_f32), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(-0.00001_f32), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(-0.9999_f32), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(-1_f32), -1_i64);
+    EXPECT_GT(sus::to_bits<i64>((-9223372036854775808_f32).next_toward(0_f32)),
+              i64::MIN);
+    EXPECT_EQ(sus::to_bits<i64>(-9223372036854775808_f32), i64::MIN);
+    EXPECT_EQ(sus::to_bits<i64>(-9223372036854775808.00001_f32), i64::MIN);
+    EXPECT_EQ(sus::to_bits<i64>(-9999999999999999999_f32), i64::MIN);
+    EXPECT_EQ(sus::to_bits<i64>(f32::NEG_INFINITY), i64::MIN);
+
+    EXPECT_EQ(sus::to_bits<i64>(0.1_f32), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(0.51_f32), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(0.9999_f32), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(1_f32), 1_i64);
+    EXPECT_LT(sus::to_bits<i64>((9223372036854775807_f32).next_toward(0_f32)),
+              i64::MAX);
+    EXPECT_EQ(sus::to_bits<i64>(9223372036854775807_f32), i64::MAX);
+    EXPECT_EQ(sus::to_bits<i64>(92233720368547758075.00001_f32), i64::MAX);
+    EXPECT_EQ(sus::to_bits<i64>(9223372036854775808_f32), i64::MAX);
+    EXPECT_EQ(sus::to_bits<i64>(9999999999999999999_f32), i64::MAX);
+    EXPECT_EQ(sus::to_bits<i64>(f32::INFINITY), i64::MAX);
   }
 }
 
 TEST(ConvertToBits, f64) {
-  // Bit value
-  // 0b10101000'10101010'10101010'00101010'10101000'10101010'10101110'11101110.
-  constexpr auto v = -8.66220694718676082014277885371e-113_f64;
+  static_assert(std::same_as<decltype(sus::to_bits<u16>(0_f64)), u16>);
 
-  // Double to smaller unsigned.
+  // Float to smaller unsigned.
   {
-    auto i = sus::to_bits<u16>(v);
-    static_assert(std::same_as<decltype(i), u16>);
-    EXPECT_EQ(i, 0b10101110'11101110_u16);
-    auto f = sus::to_bits<f64>(i);
-    EXPECT_EQ(f, 2.21252477520627027413151036822e-319_f64);
+    EXPECT_EQ(sus::to_bits<u16>(f64::NAN), 0_u16);
+
+    EXPECT_EQ(sus::to_bits<u16>(0_f64), u16::MIN);
+    EXPECT_EQ(sus::to_bits<u16>(-0_f64), u16::MIN);
+    EXPECT_EQ(sus::to_bits<u16>(-0.00001_f64), u16::MIN);
+    EXPECT_EQ(sus::to_bits<u16>(-99999999_f64), u16::MIN);
+    EXPECT_EQ(sus::to_bits<u16>(f64::NEG_INFINITY), u16::MIN);
+
+    EXPECT_EQ(sus::to_bits<u16>(0.1_f64), 0_u16);
+    EXPECT_EQ(sus::to_bits<u16>(0.51_f64), 0_u16);
+    EXPECT_EQ(sus::to_bits<u16>(0.9999_f64), 0_u16);
+    EXPECT_EQ(sus::to_bits<u16>(1_f64), 1_u16);
+    EXPECT_EQ(sus::to_bits<u16>(65535_f64), u16::MAX);
+    EXPECT_EQ(sus::to_bits<u16>(65535.00001_f64), u16::MAX);
+    EXPECT_EQ(sus::to_bits<u16>(65536_f64), u16::MAX);
+    EXPECT_EQ(sus::to_bits<u16>(999999999_f64), u16::MAX);
+    EXPECT_EQ(sus::to_bits<u16>(f64::INFINITY), u16::MAX);
   }
-  // Double to unsigned.
+  // Float to smaller signed.
   {
-    auto i = sus::to_bits<u64>(v);
-    static_assert(std::same_as<decltype(i), u64>);
-    EXPECT_EQ(i, 0b10101000'10101010'10101010'00101010'10101000'10101010'10101110'11101110_u64);
-    auto f = sus::to_bits<f64>(i);
-    EXPECT_EQ(f, v);
+    EXPECT_EQ(sus::to_bits<i16>(f64::NAN), 0_i16);
+
+    EXPECT_EQ(sus::to_bits<i16>(0_f64), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-0_f64), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-0.00001_f64), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-0.9999_f64), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-1_f64), -1_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-32767.999_f64), -32767_i16);
+    EXPECT_EQ(sus::to_bits<i16>(-32768_f64), i16::MIN);
+    EXPECT_EQ(sus::to_bits<i16>(-32768.00001_f64), i16::MIN);
+    EXPECT_EQ(sus::to_bits<i16>(-99999999_f64), i16::MIN);
+    EXPECT_EQ(sus::to_bits<i16>(f64::NEG_INFINITY), i16::MIN);
+
+    EXPECT_EQ(sus::to_bits<i16>(0.1_f64), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(0.51_f64), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(0.9999_f64), 0_i16);
+    EXPECT_EQ(sus::to_bits<i16>(1_f64), 1_i16);
+    EXPECT_EQ(sus::to_bits<i16>(65535_f64), i16::MAX);
+    EXPECT_EQ(sus::to_bits<i16>(65535.00001_f64), i16::MAX);
+    EXPECT_EQ(sus::to_bits<i16>(65536_f64), i16::MAX);
+    EXPECT_EQ(sus::to_bits<i16>(999999999_f64), i16::MAX);
+    EXPECT_EQ(sus::to_bits<i16>(f64::INFINITY), i16::MAX);
   }
-  // Double to smaller signed.
+
+  // Float to unsigned.
   {
-    auto i = sus::to_bits<i16>(v);
-    static_assert(std::same_as<decltype(i), i16>);
-    EXPECT_EQ(i, sus::to_bits<i16>(0b10101110'11101110_u16));
-    EXPECT_EQ(i, -20754);
-    auto f = sus::to_bits<f64>(i);
-    EXPECT_EQ(f, 2.21252477520627027413151036822e-319_f64);
+    EXPECT_EQ(sus::to_bits<u64>(f64::NAN), 0_u64);
+
+    EXPECT_EQ(sus::to_bits<u64>(0_f64), u64::MIN);
+    EXPECT_EQ(sus::to_bits<u64>(-0_f64), u64::MIN);
+    EXPECT_EQ(sus::to_bits<u64>(-0.00001_f64), u64::MIN);
+    EXPECT_EQ(sus::to_bits<u64>(-99999999_f64), u64::MIN);
+    EXPECT_EQ(sus::to_bits<u64>(f64::NEG_INFINITY), u64::MIN);
+
+    EXPECT_EQ(sus::to_bits<u64>(0.1_f64), 0_u64);
+    EXPECT_EQ(sus::to_bits<u64>(0.51_f64), 0_u64);
+    EXPECT_EQ(sus::to_bits<u64>(0.9999_f64), 0_u64);
+    EXPECT_EQ(sus::to_bits<u64>(1_f64), 1_u64);
+    EXPECT_LT(sus::to_bits<u64>((18446744073709551615_f64).next_toward(0_f64)),
+              u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(18446744073709551615_f64), u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(18446744073709551615.00001_f64), u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(18446744073709551615_f64 + 1_f64), u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(18446744073709551615_f64 * 2_f64), u64::MAX);
+    EXPECT_EQ(sus::to_bits<u64>(f64::INFINITY), u64::MAX);
   }
-  // Double to signed.
+  // Float to signed.
   {
-    auto i = sus::to_bits<i64>(v);
-    static_assert(std::same_as<decltype(i), i64>);
-    EXPECT_EQ(i, sus::to_bits<i64>(0b10101000'10101010'10101010'00101010'10101000'10101010'10101110'11101110_u64));
-    EXPECT_EQ(i, -6293030429101740306);
-    auto f = sus::to_bits<f64>(i);
-    EXPECT_EQ(f, v);
-  }
-  // Double to float.
-  {
-    auto i = sus::to_bits<f32>(v);
-    static_assert(std::same_as<decltype(i), f32>);
-    EXPECT_EQ(i, -1.89496550775e-14_f32);
-    auto f = sus::to_bits<f64>(i);
-    EXPECT_EQ(f, 1.39808630771690684819284234772e-314_f64);
+    EXPECT_EQ(sus::to_bits<i64>(f64::NAN), 0_i64);
+
+    EXPECT_EQ(sus::to_bits<i64>(0_f64), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(-0_f64), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(-0.00001_f64), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(-0.9999_f64), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(-1_f64), -1_i64);
+    EXPECT_GT(sus::to_bits<i64>((-9223372036854775808_f64).next_toward(0_f64)),
+              i64::MIN);
+    EXPECT_EQ(sus::to_bits<i64>(-9223372036854775808_f64), i64::MIN);
+    EXPECT_EQ(sus::to_bits<i64>(-9223372036854775808.00001_f64), i64::MIN);
+    EXPECT_EQ(sus::to_bits<i64>(-9223372036854775808_f64 * 2_f64), i64::MIN);
+    EXPECT_EQ(sus::to_bits<i64>(f64::NEG_INFINITY), i64::MIN);
+
+    EXPECT_EQ(sus::to_bits<i64>(0.1_f64), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(0.51_f64), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(0.9999_f64), 0_i64);
+    EXPECT_EQ(sus::to_bits<i64>(1_f64), 1_i64);
+    EXPECT_LT(sus::to_bits<i64>((9223372036854775807_f64).next_toward(0_f64)), i64::MAX);
+    EXPECT_EQ(sus::to_bits<i64>(9223372036854775807_f64), i64::MAX);
+    EXPECT_EQ(sus::to_bits<i64>(9223372036854775807.00001_f64), i64::MAX);
+    EXPECT_EQ(sus::to_bits<i64>(9223372036854775807_f64 * 2_f64), i64::MAX);
+    EXPECT_EQ(sus::to_bits<i64>(f64::INFINITY), i64::MAX);
   }
 }
 
