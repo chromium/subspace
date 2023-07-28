@@ -84,8 +84,7 @@ jobs:
           sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
           sudo apt update
           sudo apt-get install g++-13
-          # GCC 13 and fmtlib error: https://github.com/fmtlib/fmt/issues/3533
-          echo "CXXFLAGS=$CXXFLAGS -Wno-stringop-overflow" >> $GITHUB_ENV
+          echo "CXXFLAGS=$CXXFLAGS" >> $GITHUB_ENV
   
       - name: Install Python3
         if: startsWith(matrix.config.os, 'ubuntu-')
