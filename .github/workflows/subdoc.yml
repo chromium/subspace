@@ -9,6 +9,9 @@ jobs:
     name: Generate documentation with subdoc
     if: github.repository == 'chromium/subspace'
     runs-on: ubuntu-latest
+    env:
+      clang_version: 17
+      installed_clang_version: 14
 
     steps:
       - uses: actions/checkout@v1
@@ -19,10 +22,27 @@ jobs:
 
       - name: Install LLVM+Clang
         run: |
-          sudo apt-get remove clang-14 lldb-14 lld-14 clangd-14 clang-tidy-14 clang-format-14 clang-tools-14 llvm-14-dev lld-14 lldb-14 llvm-14-tools libomp-14-dev libc++-14-dev libc++abi-14-dev libclang-common-14-dev libclang-14-dev libclang-cpp14-dev libunwind-14-dev
+          sudo apt-get remove clang-${installed_clang_version} \
+            lldb-${installed_clang_version} \
+            lld-${installed_clang_version} \
+            clangd-${installed_clang_version} \
+            clang-tidy-${installed_clang_version} \
+            clang-format-${installed_clang_version} \
+            clang-tools-${installed_clang_version} \
+            llvm-${installed_clang_version}-dev \
+            lld-${installed_clang_version} \
+            lldb-${installed_clang_version} \
+            llvm-${installed_clang_version}-tools \
+            libomp-${installed_clang_version}-dev \
+            libc++-${installed_clang_version}-dev \
+            libc++abi-${installed_clang_version}-dev \
+            libclang-common-${installed_clang_version}-dev \
+            libclang-${installed_clang_version}-dev \
+            libclang-cpp${installed_clang_version}-dev \
+            libunwind-${installed_clang_version}-dev
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 16 all
+          sudo ./llvm.sh ${clang_version} all
 
       - name: Install Python3
         run: |
@@ -60,12 +80,12 @@ jobs:
       - name: Configure
         shell: cmake -P {0}
         run: |
-          set(ENV{CC} clang-16)
-          set(ENV{CXX} clang++-16)
+          set(ENV{CC} clang-$ENV{clang_version})
+          set(ENV{CXX} clang++-$ENV{clang_version})
 
           # Path to LLVM+Clang nightly that we have installed.
-          set(ENV{LLVM_DIR} "/usr/lib/llvm-16/lib/cmake/llvm")
-          set(ENV{Clang_DIR} "/usr/lib/llvm-16/lib/cmake/clang")
+          set(ENV{LLVM_DIR} "/usr/lib/llvm-$ENV{clang_version}/lib/cmake/llvm")
+          set(ENV{Clang_DIR} "/usr/lib/llvm-$ENV{clang_version}/lib/cmake/clang")
 
           file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
 
@@ -103,12 +123,12 @@ jobs:
       - name: Reconfigure with tests
         shell: cmake -P {0}
         run: |
-          set(ENV{CC} clang-16)
-          set(ENV{CXX} clang++-16)
+          set(ENV{CC} clang-$ENV{clang_version})
+          set(ENV{CXX} clang++-$ENV{clang_version})
 
           # Path to LLVM+Clang nightly that we have installed.
-          set(ENV{LLVM_DIR} "/usr/lib/llvm-16/lib/cmake/llvm")
-          set(ENV{Clang_DIR} "/usr/lib/llvm-16/lib/cmake/clang")
+          set(ENV{LLVM_DIR} "/usr/lib/llvm-$ENV{clang_version}/lib/cmake/llvm")
+          set(ENV{Clang_DIR} "/usr/lib/llvm-$ENV{clang_version}/lib/cmake/clang")
 
           file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
 
@@ -140,7 +160,7 @@ jobs:
       - name: Generate
         run: |
           # For crash dumps.
-          export LLVM_SYMBOLIZER_PATH="/usr/lib/llvm-16/bin/llvm-symbolizer"
+          export LLVM_SYMBOLIZER_PATH="/usr/lib/llvm-${clang_version}/bin/llvm-symbolizer"
 
           out/subdoc/subdoc \
             -p out \
