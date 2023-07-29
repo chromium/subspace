@@ -38,7 +38,6 @@
 #include "subspace/ops/eq.h"
 #include "subspace/ops/try.h"
 #include "subspace/option/option.h"
-#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/tuple/tuple.h"
 
 namespace sus::iter {
@@ -1926,13 +1925,14 @@ template <class Iter, class Item>
 template <::sus::iter::FromIterator<Item> C>
 ::sus::iter::FromIterator<Item> auto
 IteratorBase<Iter, Item>::collect() && noexcept {
-  return C::from_iter(static_cast<Iter&&>(*this));
+  return FromIteratorImpl<C>::from_iter(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
 ::sus::containers::Vec<Item>
 IteratorBase<Iter, Item>::collect_vec() && noexcept {
-  return ::sus::containers::Vec<Item>::from_iter(static_cast<Iter&&>(*this));
+  return FromIteratorImpl<::sus::containers::Vec<Item>>::from_iter(
+      static_cast<Iter&&>(*this));
 }
 
 }  // namespace sus::iter

@@ -20,6 +20,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subspace/assertions/endian.h"
 #include "subspace/containers/array.h"
+#include "subspace/iter/from_iterator.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/builtin.h"
@@ -41,7 +42,41 @@ using sus::construct::Default;
 using sus::mem::relocate_by_memcpy;
 using namespace sus::test;
 
+namespace sus::test::option {
+
+template <class T>
+struct CollectSum {
+  T sum;
+};
+
+struct CollectRefs {
+  sus::Vec<const NoCopyMove*> vec;
+};
+
+}  // namespace sus::test::option
+
+template <class T>
+struct sus::iter::FromIteratorImpl<sus::test::option::CollectSum<T>> {
+  static constexpr ::sus::test::option::CollectSum<T> from_iter(
+      sus::iter::IntoIterator<T> auto&& iter) noexcept {
+    T sum = T();
+    for (T t : sus::move(iter).into_iter()) sum += t;
+    return ::sus::test::option::CollectSum<T>(sum);
+  }
+};
+
+template <>
+struct sus::iter::FromIteratorImpl<sus::test::option::CollectRefs> {
+  static sus::test::option::CollectRefs from_iter(
+      sus::iter::IntoIterator<const NoCopyMove&> auto iter) noexcept {
+    auto v = sus::Vec<const NoCopyMove*>();
+    for (const NoCopyMove& t : sus::move(iter).into_iter()) v.push(&t);
+    return sus::test::option::CollectRefs(sus::move(v));
+  }
+};
+
 namespace {
+using namespace ::sus::test::option;
 
 #define IS_SOME(x)              \
   do {                          \
@@ -2805,20 +2840,6 @@ TEST(Option, NonZeroField) {
   EXPECT_EQ(o->as_ptr(), &j);
 }
 
-template <class T>
-struct CollectSum {
-  sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
-
-  static constexpr CollectSum from_iter(
-      ::sus::iter::IntoIterator<T> auto iter) noexcept {
-    T sum = T();
-    for (T t : sus::move(iter).into_iter()) sum += t;
-    return CollectSum(sum);
-  }
-
-  T sum;
-};
-
 TEST(Option, From) {
   static_assert(sus::construct::Into<i64, i32>);
 
@@ -2851,20 +2872,6 @@ TEST(Option, FromIter) {
           .collect<Option<CollectSum<usize>>>();
   EXPECT_EQ(one_none, None);
 }
-
-struct CollectRefs {
-  sus_clang_bug_54050(CollectRefs(sus::Vec<const NoCopyMove*> v)
-                      : vec(sus::move(v)){});
-
-  static CollectRefs from_iter(
-      sus::iter::IntoIterator<const NoCopyMove&> auto iter) noexcept {
-    auto v = sus::Vec<const NoCopyMove*>();
-    for (const NoCopyMove& t : sus::move(iter).into_iter()) v.push(&t);
-    return CollectRefs(sus::move(v));
-  }
-
-  sus::Vec<const NoCopyMove*> vec;
-};
 
 TEST(Option, FromIterWithRefs) {
   auto u1 = NoCopyMove();
