@@ -55,4 +55,13 @@ TEST(CompatUnorderedSet, Options) {
              sus::some(std::unordered_set<i32>{3, 4, 2, 7, 6, 1, 5}));
 }
 
+TEST(CompatUnorderedMultiSet, FromIterator) {
+  auto in = std::vector<i32>{3, 4, 2, 7, 2, 6, 1, 2, 5};
+  auto out = sus::iter::from_range(sus::move(in))
+                 .filter([](const i32& i) { return i % 2 == 0; })
+                 .collect<std::unordered_multiset<i32>>();
+  static_assert(std::same_as<decltype(out), std::unordered_multiset<i32>>);
+  sus::check(out == std::unordered_multiset<i32>{2, 2, 2, 4, 6});
+}
+
 }  // namespace
