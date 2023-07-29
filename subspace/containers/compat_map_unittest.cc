@@ -27,8 +27,8 @@ static_assert(
     sus::containers::compat::Pair<std::tuple<usize, usize>, usize, usize>);
 
 // For any `usize`.
-static_assert(sus::iter::FromIterator<std::map<usize, usize>,
-                                      std::tuple<usize, usize>>);
+static_assert(
+    sus::iter::FromIterator<std::map<usize, usize>, std::tuple<usize, usize>>);
 
 TEST(CompatMap, FromIterator) {
   auto in =
@@ -51,6 +51,18 @@ TEST(CompatMap, FromIteratorSusTuple) {
                  })
                  .collect<std::map<i32, u32>>();
   sus::check(out == std::map<i32, u32>{{4, 5u}, {6, 7u}});
+}
+
+TEST(CompatMultiMap, FromIterator) {
+  auto in = std::vector<std::tuple<i32, u32>>{{3, 4u}, {4, 5u}, {4, 4u},
+                                              {5, 6u}, {6, 7u}, {4, 6u}};
+  auto out = sus::iter::from_range(sus::move(in))
+                 .filter([](const std::tuple<i32, u32>& i) {
+                   return get<0>(i) % 2 == 0;
+                 })
+                 .collect<std::multimap<i32, u32>>();
+  sus::check(out ==
+             std::multimap<i32, u32>{{4, 5u}, {4, 4u}, {6, 7u}, {4, 6u}});
 }
 
 }  // namespace
