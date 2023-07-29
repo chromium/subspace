@@ -40,8 +40,8 @@ namespace sus::ops {
 template <class T, class U = T>
 concept Eq = requires(const std::remove_reference_t<T>& lhs,
                       const std::remove_reference_t<U>& rhs) {
-  { lhs == rhs } noexcept -> std::same_as<bool>;
-  { lhs != rhs } noexcept -> std::same_as<bool>;
+  { lhs == rhs } -> std::same_as<bool>;
+  { lhs != rhs } -> std::same_as<bool>;
 };
 
 }  // namespace sus::ops
