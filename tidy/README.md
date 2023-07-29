@@ -2,11 +2,11 @@
 
 ## Closure concept usage
 * Templates restricted as Fn are received as const&-ref
-* Templates restricted as Fn are invoked as lvalue `f()`
+* Templates restricted as Fn are invoked as lvalue `std::invoke(f, ...)`
 * Templates restricted as FnMut are received by value or as &-ref
-* Templates restricted as FnMut are invoked as lvalue `f()`
+* Templates restricted as FnMut are invoked as lvalue `std::invoke(f, ...)`
 * Templates restricted as FnOnce are received as &&-ref or by value
-* Templates restricted as FnOnce are invoked as rvalue `sus::move(f)()`
+* Templates restricted as FnOnce are invoked as rvalue `std::invoke(sus::move(f), ...)`
 
 ## References to closures
 * FnOnceRef, FnMutRef and FnRef types only appear as lvalues as ParamVarDecl,
