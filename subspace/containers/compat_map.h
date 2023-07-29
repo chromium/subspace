@@ -14,19 +14,17 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <utility>
+#include <map>
 
+#include "subspace/containers/compat_pair_concept.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/iterator.h"
 #include "subspace/mem/forward.h"
-#include "subspace/containers/compat_pair_concept.h"
 
-template <class Key, class T, class Hash, class KeyEqual, class Allocator>
-struct sus::iter::FromIteratorImpl<
-    std::unordered_map<Key, T, Hash, KeyEqual, Allocator>> {
+template <class Key, class T, class Compare, class Allocator>
+struct sus::iter::FromIteratorImpl<std::map<Key, T, Compare, Allocator>> {
  private:
-  using Self = std::unordered_map<Key, T, Hash, KeyEqual, Allocator>;
+  using Self = std::map<Key, T, Compare, Allocator>;
 
  public:
   template <

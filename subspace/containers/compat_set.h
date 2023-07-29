@@ -14,30 +14,19 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <utility>
+#include <set>
 
+#include "subspace/iter/compat_ranges.h"
 #include "subspace/iter/from_iterator.h"
 #include "subspace/iter/iterator.h"
-#include "subspace/mem/forward.h"
-#include "subspace/containers/compat_pair_concept.h"
 
-template <class Key, class T, class Hash, class KeyEqual, class Allocator>
-struct sus::iter::FromIteratorImpl<
-    std::unordered_map<Key, T, Hash, KeyEqual, Allocator>> {
- private:
-  using Self = std::unordered_map<Key, T, Hash, KeyEqual, Allocator>;
-
- public:
-  template <
-      class IntoIter,
-      class Item = typename sus::iter::IntoIteratorOutputType<IntoIter>::Item>
-    requires(sus::containers::compat::Pair<Item, Key, T>)
-  static constexpr Self from_iter(IntoIter&& into_iter) noexcept {
+template <class Key, class Compare, class Allocator>
+struct sus::iter::FromIteratorImpl<std::set<Key, Compare, Allocator>> {
+  static constexpr std::set<Key, Compare, Allocator> from_iter(
+      ::sus::iter::IntoIterator<Key> auto&& into_iter) noexcept {
     auto&& iter = sus::move(into_iter).into_iter();
-    auto s = Self();
-    for (auto&& [key, t] : iter)
-      s.emplace(sus::forward<Key>(key), sus::forward<T>(t));
+    auto s = std::set<Key, Compare, Allocator>();
+    for (Key k : iter) s.insert(k);
     return s;
   }
 };
