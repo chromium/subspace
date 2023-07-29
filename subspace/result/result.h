@@ -148,55 +148,6 @@ class [[nodiscard]] Result final {
     return Result(WithErr, ::sus::move(e));
   }
 
-  /// Takes each element in the Iterator: if it is an Err, no further elements
-  /// are taken, and the Err is returned. Should no Err occur, a container with
-  /// the values of each Result is returned.
-  ///
-  /// sus::iter::FromIterator trait.
-  template <class IntoIter, int&...,
-            class Iter =
-                std::decay_t<decltype(std::declval<IntoIter&&>().into_iter())>,
-            class R = typename Iter::Item,
-            class U = __private::IsResultType<R>::ok_type,
-            class F = __private::IsResultType<R>::err_type>
-    requires(__private::IsResultType<R>::value && std::same_as<E, F> &&
-             ::sus::iter::IntoIterator<IntoIter, Result<U, E>>)
-  static constexpr Result from_iter(IntoIter&& result_iter) noexcept
-    requires(!std::is_void_v<T> && !std::is_reference_v<T> &&
-             ::sus::iter::FromIterator<T, U>)
-  {
-    struct Unwrapper final : public ::sus::iter::IteratorBase<Unwrapper, U> {
-      Unwrapper(Iter&& iter, Option<E>& err) : iter(iter), err(err) {}
-
-      // sus::iter::Iterator trait.
-      Option<U> next() noexcept {
-        Option<Result<U, E>> try_item = iter.next();
-        if (try_item.is_none()) return Option<U>();
-        Result<U, E> result =
-            ::sus::move(try_item).unwrap_unchecked(::sus::marker::unsafe_fn);
-        if (result.is_ok())
-          return Option<U>::with(
-              ::sus::move(result).unwrap_unchecked(::sus::marker::unsafe_fn));
-        err.insert(
-            ::sus::move(result).unwrap_err_unchecked(::sus::marker::unsafe_fn));
-        return Option<U>();
-      }
-      ::sus::iter::SizeHint size_hint() const noexcept {
-        return ::sus::iter::SizeHint(0u, iter.size_hint().upper);
-      }
-
-      Iter& iter;
-      Option<E>& err;
-    };
-
-    auto err = Option<E>();
-    auto iter = Unwrapper(::sus::move(result_iter).into_iter(), mref(err));
-    auto success_out = Result::with(T::from_iter(::sus::move(iter)));
-    return ::sus::move(err).map_or_else(
-        [&]() { return ::sus::move(success_out); },
-        [](E e) { return Result::with_err(e); });
-  }
-
   /// Destructor for the Result.
   ///
   /// Destroys the Ok or Err value contained within the Result.
@@ -1168,6 +1119,63 @@ struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
   }
   constexpr static ::sus::result::Result<T, E> from_output(Output t) {
     return ::sus::result::Result<T, E>::with(::sus::move(t));
+  }
+};
+
+// Implements sus::iter::FromIterator for Result.
+template <class T, class E>
+struct sus::iter::FromIteratorImpl<::sus::result::Result<T, E>> {
+  // TODO: Subdoc doesn't split apart template instantiations so comments
+  // collide. This should be able to appear in the docs.
+  //
+  // Takes each element in the Iterator: if it is an Err, no further elements
+  // are taken, and the Err is returned. Should no Err occur, a container with
+  // the values of each Result is returned.
+  template <class IntoIter, int&...,
+            class Iter =
+                std::decay_t<decltype(std::declval<IntoIter&&>().into_iter())>,
+            class R = typename Iter::Item,
+            class U = ::sus::result::__private::IsResultType<R>::ok_type,
+            class F = ::sus::result::__private::IsResultType<R>::err_type>
+    requires(::sus::result::__private::IsResultType<R>::value &&
+             std::same_as<E, F> &&
+             ::sus::iter::IntoIterator<IntoIter, ::sus::result::Result<U, E>>)
+  static constexpr ::sus::result::Result<T, E> from_iter(
+      IntoIter&& result_iter) noexcept
+    requires(!std::is_void_v<T> && !std::is_reference_v<T> &&
+             ::sus::iter::FromIterator<T, U>)
+  {
+    struct Unwrapper final : public ::sus::iter::IteratorBase<Unwrapper, U> {
+      Unwrapper(Iter&& iter, Option<E>& err) : iter(iter), err(err) {}
+
+      // sus::iter::Iterator trait.
+      Option<U> next() noexcept {
+        Option<::sus::result::Result<U, E>> try_item = iter.next();
+        if (try_item.is_none()) return Option<U>();
+        ::sus::result::Result<U, E> result =
+            ::sus::move(try_item).unwrap_unchecked(::sus::marker::unsafe_fn);
+        if (result.is_ok())
+          return Option<U>::with(
+              ::sus::move(result).unwrap_unchecked(::sus::marker::unsafe_fn));
+        err.insert(
+            ::sus::move(result).unwrap_err_unchecked(::sus::marker::unsafe_fn));
+        return Option<U>();
+      }
+      ::sus::iter::SizeHint size_hint() const noexcept {
+        return ::sus::iter::SizeHint(0u, iter.size_hint().upper);
+      }
+
+      Iter& iter;
+      Option<E>& err;
+    };
+
+    auto err = Option<E>();
+    auto iter = Unwrapper(::sus::move(result_iter).into_iter(), mref(err));
+    auto success_out = ::sus::result::Result<T, E>::with(
+        ::sus::iter::FromIteratorImpl<T>::from_iter(::sus::move(iter)));
+    return ::sus::move(err).map_or_else(
+        [&]() { return ::sus::move(success_out); },
+        [](E e) { return ::sus::result::Result<T, E>::with_err(e); });
   }
 };
 

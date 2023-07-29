@@ -21,6 +21,9 @@
 
 namespace sus::iter {
 
+template <class ToType>
+struct FromIteratorImpl;
+
 /// A concept that indicates `ToType` can be constructed from an `Iterator`, via
 /// `ToType::from_iterator(Iterator<IterType>)`.
 ///
@@ -32,7 +35,9 @@ namespace sus::iter {
 template <class ToType, class ItemType>
 concept FromIterator =
     requires(__private::IntoIteratorArchetype<ItemType>&& from) {
-      { ToType::from_iter(::sus::move(from)) } -> std::same_as<ToType>;
+      {
+        FromIteratorImpl<ToType>::from_iter(::sus::move(from))
+      } -> std::same_as<ToType>;
     };
 
 }  // namespace sus::iter

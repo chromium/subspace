@@ -38,7 +38,27 @@ using sus::containers::Array;
 using sus::iter::IteratorBase;
 using sus::option::Option;
 
+namespace sus::test::iter {
+
+template <class T>
+struct CollectSum {
+  T sum;
+};
+
+}  // namespace sus::test::iter
+
+template <class T>
+struct sus::iter::FromIteratorImpl<sus::test::iter::CollectSum<T>> {
+  static constexpr sus::test::iter::CollectSum<T> from_iter(
+      sus::iter::IntoIterator<T> auto&& iter) noexcept {
+    T sum = T();
+    for (T t : sus::move(iter).into_iter()) sum += t;
+    return sus::test::iter::CollectSum<T>(sum);
+  }
+};
+
 namespace {
+using namespace sus::test::iter;
 
 using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false, false, false>;
 
@@ -402,20 +422,6 @@ TEST(Iterator, MapWhile) {
     EXPECT_EQ(it.next(), sus::none());
   }
 }
-
-template <class T>
-struct CollectSum {
-  sus_clang_bug_54040(CollectSum(T sum) : sum(sum){});
-
-  static constexpr CollectSum from_iter(
-      sus::iter::IntoIterator<T> auto&& iter) noexcept {
-    T sum = T();
-    for (T t : sus::move(iter).into_iter()) sum += t;
-    return CollectSum(sum);
-  }
-
-  T sum;
-};
 
 TEST(Iterator, Collect) {
   i32 nums[5] = {1, 2, 3, 4, 5};

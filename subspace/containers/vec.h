@@ -154,20 +154,6 @@ class Vec final {
     return Vec(ptr, length, capacity);
   }
 
-  /// Constructs a vector by taking all the elements from the iterator.
-  ///
-  /// sus::iter::FromIterator trait.
-  static constexpr Vec from_iter(
-      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
-    requires(::sus::mem::Move<T>)
-  {
-    auto&& iter = sus::move(into_iter).into_iter();
-    auto [lower, upper] = iter.size_hint();
-    auto v = Vec::with_capacity(::sus::move(upper).unwrap_or(lower));
-    for (T t : iter) v.push(::sus::move(t));
-    return v;
-  }
-
   /// sus::construct::From<Slice<T>> trait.
   ///
   /// #[doc.overloads=from.slice.const]
@@ -836,6 +822,23 @@ template <class... Ts>
 }
 
 }  // namespace sus::containers
+
+// sus::iter::FromIterator trait for Vec.
+template <class T>
+struct sus::iter::FromIteratorImpl<::sus::containers::Vec<T>> {
+  /// Constructs a vector by taking all the elements from the iterator.
+  static constexpr ::sus::containers::Vec<T> from_iter(
+      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
+    requires(::sus::mem::Move<T>)
+  {
+    auto&& iter = sus::move(into_iter).into_iter();
+    auto [lower, upper] = iter.size_hint();
+    auto v = ::sus::containers::Vec<T>::with_capacity(
+        ::sus::move(upper).unwrap_or(lower));
+    for (T t : iter) v.push(::sus::move(t));
+    return v;
+  }
+};
 
 // fmt support.
 template <class T, class Char>

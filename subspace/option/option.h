@@ -230,21 +230,6 @@ class Option final {
     return __private::from_sum_impl<T>(::sus::move(it));
   }
 
-  /// Takes each item in the Iterator: if it is None, no further elements are
-  /// taken, and the None is returned. Should no None occur, a container of type
-  /// T containing the values of type U from each Option<U> is returned.
-  ///
-  /// sus::iter::FromIterator trait.
-  template <class IntoIter, int&...,
-            class Iter =
-                std::decay_t<decltype(std::declval<IntoIter&&>().into_iter())>,
-            class O = typename Iter::Item,
-            class U = __private::IsOptionType<O>::inner_type>
-    requires(__private::IsOptionType<O>::value &&
-             ::sus::iter::IntoIterator<IntoIter, Option<U>>)
-  static constexpr Option from_iter(IntoIter&& option_iter) noexcept
-    requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>);
-
   /// Destructor for the Option.
   ///
   /// Destroys the value contained within the option, if there is one.
@@ -1647,44 +1632,57 @@ constexpr Option<T> from_sum_impl(Iter&& it) noexcept {
 
 }  // namespace __private
 
-template <class T>
-template <class IntoIter, int&..., class Iter, class IterItem,
-          class IterInnerItem>
-  requires(__private::IsOptionType<IterItem>::value &&
-           ::sus::iter::IntoIterator<IntoIter, Option<IterInnerItem>>)
-constexpr Option<T> Option<T>::from_iter(IntoIter&& option_iter) noexcept
-  requires(!std::is_reference_v<T> &&
-           ::sus::iter::FromIterator<T, IterInnerItem>)
-{
-  // An iterator over `option_iter`'s iterator that returns each element in it
-  // until it reaches a `None` or the end.
-  struct UntilNoneIter final
-      : public ::sus::iter::IteratorBase<UntilNoneIter, IterInnerItem> {
-    UntilNoneIter(Iter&& iter, bool& found_none)
-        : iter(iter), found_none(found_none) {}
-
-    Option<IterInnerItem> next() noexcept {
-      Option<Option<IterInnerItem>> item = iter.next();
-      if (found_none || item.is_none()) return Option<IterInnerItem>();
-      found_none = item->is_none();
-      return ::sus::move(item).flatten();
-    }
-    ::sus::iter::SizeHint size_hint() const noexcept {
-      return ::sus::iter::SizeHint(0u, iter.size_hint().upper);
-    }
-
-    Iter& iter;
-    bool& found_none;
-  };
-
-  bool found_none = false;
-  auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(),
-                            ::sus::mref(found_none));
-  auto collected = T::from_iter(::sus::move(iter));
-  if (found_none)
-    return Option();
-  else
-    return Option(::sus::move(collected));
-}
-
 }  // namespace sus::option
+
+// sus::iter::FromIterator trait for Option.
+template <class T>
+struct sus::iter::FromIteratorImpl<::sus::option::Option<T>> {
+  // TODO: Subdoc doesn't split apart template instantiations so comments
+  // collide. This should be able to appear in the docs.
+  //
+  // Takes each item in the Iterator: if it is None, no further elements are
+  // taken, and the None is returned. Should no None occur, a container of type
+  // T containing the values of type U from each Option<U> is returned.
+  template <class IntoIter, int&...,
+            class Iter =
+                std::decay_t<decltype(std::declval<IntoIter&&>().into_iter())>,
+            class O = typename Iter::Item,
+            class U = ::sus::option::__private::IsOptionType<O>::inner_type>
+    requires(::sus::option::__private::IsOptionType<O>::value &&
+             ::sus::iter::IntoIterator<IntoIter, ::sus::option::Option<U>>)
+  static constexpr ::sus::option::Option<T> from_iter(
+      IntoIter&& option_iter) noexcept
+    requires(!std::is_reference_v<T> && ::sus::iter::FromIterator<T, U>)
+  {
+    // An iterator over `option_iter`'s iterator that returns each element in it
+    // until it reaches a `None` or the end.
+    struct UntilNoneIter final
+        : public ::sus::iter::IteratorBase<UntilNoneIter, U> {
+      UntilNoneIter(Iter&& iter, bool& found_none)
+          : iter(iter), found_none(found_none) {}
+
+      ::sus::option::Option<U> next() noexcept {
+        ::sus::option::Option<::sus::option::Option<U>> item = iter.next();
+        if (found_none || item.is_none()) return ::sus::option::Option<U>();
+        found_none = item->is_none();
+        return ::sus::move(item).flatten();
+      }
+      ::sus::iter::SizeHint size_hint() const noexcept {
+        return ::sus::iter::SizeHint(0u, iter.size_hint().upper);
+      }
+
+      Iter& iter;
+      bool& found_none;
+    };
+
+    bool found_none = false;
+    auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(),
+                              ::sus::mref(found_none));
+    auto collected =
+        sus::iter::FromIteratorImpl<T>::from_iter(::sus::move(iter));
+    if (found_none)
+      return ::sus::option::Option<T>();
+    else
+      return ::sus::option::Option<T>::with(::sus::move(collected));
+  }
+};

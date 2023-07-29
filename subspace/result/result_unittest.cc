@@ -28,8 +28,27 @@
 #include "subspace/test/behaviour_types.h"
 #include "subspace/test/no_copy_move.h"
 
-namespace {
+namespace sus::test::result {
+template <class T>
+struct CollectSum {
+  T sum;
+};
+}  // namespace sus::test::result
 
+template <class T>
+struct sus::iter::FromIteratorImpl<sus::test::result::CollectSum<T>> {
+  static constexpr sus::test::result::CollectSum<T> from_iter(
+      sus::iter::IntoIterator<T> auto iter) noexcept {
+    T sum = T();
+    for (T t : sus::move(iter).into_iter()) sum += t;
+    return sus::test::result::CollectSum<T>(sum);
+  }
+};
+static_assert(
+    sus::iter::FromIterator<sus::test::result::CollectSum<usize>, usize>);
+
+namespace {
+using namespace sus::test::result;
 using sus::Result;
 using namespace sus::test;
 
@@ -1398,21 +1417,6 @@ TEST(Result, ImplicitIter) {
   }
   EXPECT_EQ(count, 1);
 }
-
-template <class T>
-struct CollectSum {
-  sus_clang_bug_54050(CollectSum(T sum) : sum(sum){});
-
-  static constexpr CollectSum from_iter(
-      sus::iter::IntoIterator<T> auto iter) noexcept {
-    T sum = T();
-    for (T t : sus::move(iter).into_iter()) sum += t;
-    return CollectSum(sum);
-  }
-
-  T sum;
-};
-static_assert(sus::iter::FromIterator<CollectSum<usize>, usize>);
 
 TEST(Result, FromIter) {
   enum class Error {
