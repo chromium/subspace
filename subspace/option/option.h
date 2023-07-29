@@ -1678,8 +1678,7 @@ struct sus::iter::FromIteratorImpl<::sus::option::Option<T>> {
     bool found_none = false;
     auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(),
                               ::sus::mref(found_none));
-    auto collected =
-        sus::iter::FromIteratorImpl<T>::from_iter(::sus::move(iter));
+    auto collected = sus::iter::from_iter<T>(::sus::move(iter));
     if (found_none)
       return ::sus::option::Option<T>();
     else

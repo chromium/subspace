@@ -1172,7 +1172,7 @@ struct sus::iter::FromIteratorImpl<::sus::result::Result<T, E>> {
     auto err = Option<E>();
     auto iter = Unwrapper(::sus::move(result_iter).into_iter(), mref(err));
     auto success_out = ::sus::result::Result<T, E>::with(
-        ::sus::iter::FromIteratorImpl<T>::from_iter(::sus::move(iter)));
+        ::sus::iter::from_iter<T>(::sus::move(iter)));
     return ::sus::move(err).map_or_else(
         [&]() { return ::sus::move(success_out); },
         [](E e) { return ::sus::result::Result<T, E>::with_err(e); });
