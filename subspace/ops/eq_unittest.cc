@@ -39,9 +39,9 @@ static_assert(Eq<C>);
 static_assert(Eq<C, C>);
 static_assert(Eq<C, CComp>);
 
-// Not noexcept.
-static_assert(!Eq<E>);
-static_assert(!Eq<E, CComp>);
+// Not noexcept. Allowed for compat with std.
+static_assert(Eq<E>);
+static_assert(Eq<E, CComp>);
 
 struct S {};  // No operator==.
 
