@@ -1925,13 +1925,13 @@ template <class Iter, class Item>
 template <::sus::iter::FromIterator<Item> C>
 ::sus::iter::FromIterator<Item> auto
 IteratorBase<Iter, Item>::collect() && noexcept {
-  return FromIteratorImpl<C>::from_iter(static_cast<Iter&&>(*this));
+  return ::sus::iter::from_iter<C>(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
 ::sus::containers::Vec<Item>
 IteratorBase<Iter, Item>::collect_vec() && noexcept {
-  return FromIteratorImpl<::sus::containers::Vec<Item>>::from_iter(
+  return ::sus::iter::from_iter<::sus::containers::Vec<Item>>(
       static_cast<Iter&&>(*this));
 }
 
