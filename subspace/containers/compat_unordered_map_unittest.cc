@@ -53,4 +53,15 @@ TEST(CompatUnorderedMap, FromIteratorSusTuple) {
   sus::check(out == std::unordered_map<i32, u32>{{4, 5u}, {6, 7u}});
 }
 
+TEST(CompatUnorderedMultiMap, FromIterator) {
+  auto in = std::vector<std::tuple<i32, u32>>{{3, 4u}, {4, 4u}, {4, 5u},
+                                              {5, 6u}, {6, 7u}, {4, 6u}};
+  auto out = sus::iter::from_range(sus::move(in))
+                 .filter([](const std::tuple<i32, u32>& i) {
+                   return get<0>(i) % 2 == 0;
+                 })
+                 .collect<std::unordered_multimap<i32, u32>>();
+  sus::check(out == std::unordered_multimap<i32, u32>{{4, 4u}, {4, 5u}, {6, 7u}, {4, 6u}});
+}
+
 }  // namespace
