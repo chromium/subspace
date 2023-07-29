@@ -39,3 +39,22 @@ struct sus::iter::FromIteratorImpl<std::map<Key, T, Compare, Allocator>> {
     return s;
   }
 };
+
+template <class Key, class T, class Compare, class Allocator>
+struct sus::iter::FromIteratorImpl<std::multimap<Key, T, Compare, Allocator>> {
+ private:
+  using Self = std::multimap<Key, T, Compare, Allocator>;
+
+ public:
+  template <
+      class IntoIter,
+      class Item = typename sus::iter::IntoIteratorOutputType<IntoIter>::Item>
+    requires(sus::containers::compat::Pair<Item, Key, T>)
+  static constexpr Self from_iter(IntoIter&& into_iter) noexcept {
+    auto&& iter = sus::move(into_iter).into_iter();
+    auto s = Self();
+    for (auto&& [key, t] : iter)
+      s.emplace(sus::forward<Key>(key), sus::forward<T>(t));
+    return s;
+  }
+};

@@ -33,4 +33,13 @@ TEST(CompatSet, FromIterator) {
   sus::check(out == std::set<i32>{2, 4, 6});
 }
 
+TEST(CompaMultiSet, FromIterator) {
+  auto in = std::vector<i32>{3, 4, 2, 7, 6, 2, 1, 5, 2};
+  auto out = sus::iter::from_range(sus::move(in))
+                 .filter([](const i32& i) { return i % 2 == 0; })
+                 .collect<std::multiset<i32>>();
+  static_assert(std::same_as<decltype(out), std::multiset<i32>>);
+  sus::check(out == std::multiset<i32>{2, 2, 2, 4, 6});
+}
+
 }  // namespace
