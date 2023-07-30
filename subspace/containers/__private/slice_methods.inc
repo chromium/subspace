@@ -129,7 +129,8 @@ binary_search_by(
     // `size/2 < size`.  Thus `left + size/2 < left + size`, which coupled
     // with the `left + size <= len()` invariant means we have
     // `left + size/2 < len()`, and this is in-bounds.
-    auto cmp = f(get_unchecked(::sus::marker::unsafe_fn, mid));
+    auto cmp =
+        ::sus::fn::call_mut(f, get_unchecked(::sus::marker::unsafe_fn, mid));
 
     // The order of these comparisons comes from the Rust stdlib and is
     // performance sensitive.
@@ -172,8 +173,9 @@ template <::sus::ops::Ord Key>
     Result<::sus::num::usize, ::sus::num::usize> constexpr binary_search_by_key(
         const Key& key,
         ::sus::fn::FnMut<Key(const T&)> auto&& f) const& noexcept {
-  return binary_search_by(
-      [&key, &f](const T& p) -> std::strong_ordering { return f(p) <=> key; });
+  return binary_search_by([&key, &f](const T& p) -> std::strong_ordering {
+    return ::sus::fn::call_mut(f, p) <=> key;
+  });
 }
 
 /// Returns an iterator over `chunk_size` elements of the slice at a time,
@@ -519,7 +521,7 @@ constexpr ::sus::Option<const T&> last() && = delete;
 constexpr ::sus::num::usize partition_point(
     ::sus::fn::FnMutRef<bool(const T&)> pred) const& noexcept {
   return binary_search_by([pred = ::sus::move(pred)](const T& x) {
-           if (pred(x)) {
+           if (::sus::fn::call_mut(pred, x)) {
              return std::strong_ordering::less;
            } else {
              return std::strong_ordering::greater;

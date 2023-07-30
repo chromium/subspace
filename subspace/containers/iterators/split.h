@@ -115,7 +115,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
       if (o.is_none()) {
         return finish();
       }
-      if (pred_(*o)) {
+      if (::sus::fn::call_mut(pred_, *o)) {
         ret = Option<Item>::with(v_[::sus::ops::RangeTo(idx)]);
         v_ = v_[::sus::ops::RangeFrom(idx + 1u)];
         return ret;
@@ -141,7 +141,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
         return finish();
       }
       idx -= 1u;
-      if (pred_(*o)) {
+      if (::sus::fn::call_mut(pred_, *o)) {
         ret = Option<Item>::with(v_[::sus::ops::RangeFrom(idx + 1u)]);
         v_ = v_[::sus::ops::RangeTo(idx)];
         return ret;
@@ -169,7 +169,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
@@ -243,7 +243,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
       if (o.is_none()) {
         return finish();
       }
-      if (pred_(*o)) {
+      if (::sus::fn::call_mut(pred_, *o)) {
         ret = Option<Item>::with(v_[::sus::ops::RangeTo(idx)]);
         v_ = v_[::sus::ops::RangeFrom(idx + 1u)];
         return ret;
@@ -269,7 +269,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
         return finish();
       }
       idx -= 1u;
-      if (pred_(*o)) {
+      if (::sus::fn::call_mut(pred_, *o)) {
         ret = Option<Item>::with(v_[::sus::ops::RangeFrom(idx + 1u)]);
         v_ = v_[::sus::ops::RangeTo(idx)];
         return ret;
@@ -297,7 +297,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
@@ -370,7 +370,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
     auto it = v_.iter();
     while (true) {
       Option<const ItemT&> o = it.next();
-      if (o.is_none() || pred_(*o)) {
+      if (o.is_none() || ::sus::fn::call_mut(pred_, *o)) {
         if (idx >= last) {
           finished_ = true;
           idx = last;
@@ -401,7 +401,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
     auto it = remainder.iter().rev();
     while (true) {
       Option<const ItemT&> o = it.next();
-      if (o.is_none() || pred_(*o)) {
+      if (o.is_none() || ::sus::fn::call_mut(pred_, *o)) {
         if (idx == 0u) {
           finished_ = true;
         }
@@ -433,7 +433,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(
       ::sus::iter::IterRef ref, const Slice<ItemT>& values,
@@ -494,7 +494,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
     auto it = v_.iter();
     while (true) {
       Option<const ItemT&> o = it.next();
-      if (o.is_none() || pred_(*o)) {
+      if (o.is_none() || ::sus::fn::call_mut(pred_, *o)) {
         if (idx >= last) {
           finished_ = true;
           idx = last;
@@ -526,7 +526,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
     auto it = remainder.iter().rev();
     while (true) {
       Option<const ItemT&> o = it.next();
-      if (o.is_none() || pred_(*o)) {
+      if (o.is_none() || ::sus::fn::call_mut(pred_, *o)) {
         if (idx == 0u) {
           finished_ = true;
         }
@@ -558,7 +558,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(
       ::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
@@ -620,7 +620,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplit final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
@@ -676,7 +676,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   // Access to finish().
   template <class A, ::sus::iter::Iterator<A> B>
@@ -729,7 +729,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitN final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(Split<ItemT>&& split, usize n) noexcept {
     return SplitN(::sus::move(split), n);
@@ -776,7 +776,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(SplitMut<ItemT>&& split, usize n) noexcept {
     return SplitNMut(::sus::move(split), n);
@@ -824,7 +824,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(RSplit<ItemT>&& split, usize n) noexcept {
     return RSplitN(::sus::move(split), n);
@@ -872,7 +872,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitNMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(RSplitMut<ItemT>&& split, usize n) noexcept {
     return RSplitNMut(::sus::move(split), n);

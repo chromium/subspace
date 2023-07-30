@@ -52,8 +52,9 @@ class [[nodiscard]] FlatMap final
         front_iter_ = Option<EachIter>();
       }
       // Otherwise grab the next iterator into front_iter_.
-      front_iter_ = iters_.next().map(
-          [this](auto&& i) { return map_fn_(::sus::move(i)).into_iter(); });
+      front_iter_ = iters_.next().map([this](auto&& i) {
+        return ::sus::fn::call_mut(map_fn_, ::sus::move(i)).into_iter();
+      });
       if (front_iter_.is_none()) break;
     }
     // There's no more iterator to place in front_iter_. Take an item off
@@ -96,8 +97,9 @@ class [[nodiscard]] FlatMap final
         back_iter_ = Option<EachIter>();
       }
       // Otherwise grab the next iterator into back_iter_.
-      back_iter_ = iters_.next_back().map(
-          [this](auto&& i) { return map_fn_(::sus::move(i)).into_iter(); });
+      back_iter_ = iters_.next_back().map([this](auto&& i) {
+        return ::sus::fn::call_mut(map_fn_, ::sus::move(i)).into_iter();
+      });
       if (back_iter_.is_none()) break;
     }
     // There's no more iterator to place in back_iter_. Take an item off

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <concepts>
+#include <functional>
 
 #include "subspace/mem/forward.h"
 
@@ -67,10 +68,10 @@ struct InvokedFnOnce {
 
 template <class F, class... Ts>
   requires requires(F&& f) {
-    { ::sus::forward<F>(f)(std::declval<Ts>()...) };
+    { std::invoke(::sus::forward<F>(f), std::declval<Ts>()...) };
   }
 struct InvokedFnOnce<F, ArgsPack<Ts...>> {
-  static decltype(std::declval<F&&>()(std::declval<Ts>()...)) returns();
+  static std::invoke_result_t<F&&, Ts...> returns();
 };
 
 /// Unpacks an `ArgsPack` of function argument types, and determines if a
@@ -86,10 +87,10 @@ struct InvokedFnMut {
 
 template <class F, class... Ts>
   requires requires(F f) {
-    { f(std::declval<Ts>()...) };
+    { std::invoke(f, std::declval<Ts>()...) };
   }
 struct InvokedFnMut<F, ArgsPack<Ts...>> {
-  static decltype(std::declval<F>()(std::declval<Ts>()...)) returns();
+  static std::invoke_result_t<F, Ts...> returns();
 };
 
 /// Unpacks an `ArgsPack` of function argument types, and determines if a
@@ -105,10 +106,10 @@ struct InvokedFn {
 
 template <class F, class... Ts>
   requires requires(const F& f) {
-    { f(std::declval<Ts>()...) };
+    { std::invoke(f, std::declval<Ts>()...) };
   }
 struct InvokedFn<F, ArgsPack<Ts...>> {
-  static decltype(std::declval<const F&>()(std::declval<Ts>()...)) returns();
+  static std::invoke_result_t<const F&, Ts...> returns();
 };
 
 /// Whether the `ReturnType` of a functor is compatible with receiving it as

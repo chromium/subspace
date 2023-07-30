@@ -746,4 +746,146 @@ TEST(FnOnceRef, Split) {
             }));
 }
 
+struct C {
+  i32 method(i32 p) const& { return p + 1; }
+  i32 method(i32 p) & { return p + 2; }
+  i32 method(i32 p) && { return p + 3; }
+
+  i32 simple() const { return 99; }
+};
+
+TEST(FnOnceRef, Methods) {
+  {
+    auto test_simple = [](FnOnceRef<i32(const C&)> y) {
+      const C c;
+      return call_once(sus::move(y), c);
+    };
+    EXPECT_EQ(test_simple(&C::simple), 99);
+  }
+  {
+    auto test_simple = [](FnOnceRef<i32(C&)> y) {
+      C c;
+      return call_once(sus::move(y), c);
+    };
+    EXPECT_EQ(test_simple(&C::simple), 99);
+  }
+  {
+    auto test_simple = [](FnOnceRef<i32(C&&)> y) {
+      return call_once(sus::move(y), C());
+    };
+    EXPECT_EQ(test_simple(&C::simple), 99);
+  }
+
+  // Overloaded methods.
+  {
+    auto test_const = [](FnOnceRef<i32(const C&, i32)> y) {
+      return call_once(sus::move(y), C(), 10_i32);
+    };
+    EXPECT_EQ(  //
+        test_const(static_cast<i32 (C::*)(i32) const&>(&C::method)), 10 + 1);
+
+    auto test_mut = [](FnOnceRef<i32(C&, i32)> y) {
+      C c;
+      return call_once(sus::move(y), c, 10_i32);
+    };
+    EXPECT_EQ(  //
+        test_mut(static_cast<i32 (C::*)(i32)&>(&C::method)), 10 + 2);
+
+    auto test_rvalue = [](FnOnceRef<i32(C&&, i32)> y) {
+      C c;
+      return call_once(sus::move(y), sus::move(c), 10_i32);
+    };
+    EXPECT_EQ(  //
+        test_rvalue(static_cast<i32 (C::*)(i32) &&>(&C::method)), 10 + 3);
+  }
+}
+
+TEST(FnMutRef, Methods) {
+  {
+    auto test_simple = [](FnMutRef<i32(const C&)> y) {
+      const C c;
+      return call_mut(y, c);
+    };
+    EXPECT_EQ(test_simple(&C::simple), 99);
+  }
+  {
+    auto test_simple = [](FnMutRef<i32(C&)> y) {
+      C c;
+      return call_mut(y, c);
+    };
+    EXPECT_EQ(test_simple(&C::simple), 99);
+  }
+  {
+    auto test_simple = [](FnMutRef<i32(C&&)> y) { return call_mut(y, C()); };
+    EXPECT_EQ(test_simple(&C::simple), 99);
+  }
+
+  // Overloaded methods.
+  {
+    auto test_const = [](FnMutRef<i32(const C&, i32)> y) {
+      return call_mut(y, C(), 10_i32);
+    };
+    EXPECT_EQ(  //
+        test_const(static_cast<i32 (C::*)(i32) const&>(&C::method)), 10 + 1);
+
+    auto test_mut = [](FnMutRef<i32(C&, i32)> y) {
+      C c;
+      return call_mut(y, c, 10_i32);
+    };
+    EXPECT_EQ(  //
+        test_mut(static_cast<i32 (C::*)(i32)&>(&C::method)), 10 + 2);
+
+    auto test_rvalue = [](FnMutRef<i32(C&&, i32)> y) {
+      C c;
+      return call_mut(y, sus::move(c), 10_i32);
+    };
+    EXPECT_EQ(  //
+        test_rvalue(static_cast<i32 (C::*)(i32) &&>(&C::method)), 10 + 3);
+  }
+}
+
+TEST(FnRef, Methods) {
+  {
+    auto test_simple = [](FnRef<i32(const C&)> y) {
+      const C c;
+      return call(y, c);
+    };
+    EXPECT_EQ(test_simple(&C::simple), 99);
+  }
+  {
+    auto test_simple = [](FnRef<i32(C&)> y) {
+      C c;
+      return call(y, c);
+    };
+    EXPECT_EQ(test_simple(&C::simple), 99);
+  }
+  {
+    auto test_simple = [](FnRef<i32(C&&)> y) { return call(y, C()); };
+    EXPECT_EQ(test_simple(&C::simple), 99);
+  }
+
+  // Overloaded methods.
+  {
+    auto test_const = [](FnRef<i32(const C&, i32)> y) {
+      return call(y, C(), 10_i32);
+    };
+    EXPECT_EQ(  //
+        test_const(static_cast<i32 (C::*)(i32) const&>(&C::method)), 10 + 1);
+
+    auto test_mut = [](FnRef<i32(C&, i32)> y) {
+      C c;
+      return call(y, c, 10_i32);
+    };
+    EXPECT_EQ(  //
+        test_mut(static_cast<i32 (C::*)(i32)&>(&C::method)), 10 + 2);
+
+    auto test_rvalue = [](FnRef<i32(C&&, i32)> y) {
+      C c;
+      return call(y, sus::move(c), 10_i32);
+    };
+    EXPECT_EQ(  //
+        test_rvalue(static_cast<i32 (C::*)(i32) &&>(&C::method)), 10 + 3);
+  }
+}
+
 }  // namespace

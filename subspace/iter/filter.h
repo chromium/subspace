@@ -40,12 +40,10 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
-    InnerSizedIter& iter = next_iter_;
-    Pred& pred = pred_;
-
     while (true) {
-      Option<Item> item = iter.next();
-      if (item.is_none() || pred(item.as_value())) return item;
+      Option<Item> item = next_iter_.next();
+      if (item.is_none() || ::sus::fn::call_mut(pred_, item.as_value()))
+        return item;
     }
   }
   /// sus::iter::Iterator trait.
@@ -58,13 +56,11 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
   Option<Item> next_back() noexcept
     requires(InnerSizedIter::DoubleEnded)
   {
-    InnerSizedIter& iter = next_iter_;
-    Pred& pred = pred_;
-
     // TODO: Just call find(pred) on itself?
     while (true) {
-      Option<Item> item = iter.next_back();
-      if (item.is_none() || pred(item.as_value())) return item;
+      Option<Item> item = next_iter_.next_back();
+      if (item.is_none() || ::sus::fn::call_mut(pred_, item.as_value()))
+        return item;
     }
   }
 
@@ -72,11 +68,11 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Filter with(Pred && pred, InnerSizedIter && next_iter) noexcept {
+  static Filter with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
     return Filter(::sus::move(pred), ::sus::move(next_iter));
   }
 
-  Filter(Pred && pred, InnerSizedIter && next_iter) noexcept
+  Filter(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(::sus::move(pred)), next_iter_(::sus::move(next_iter)) {}
 
   Pred pred_;

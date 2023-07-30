@@ -44,7 +44,7 @@ inline Ordering iter_compare(
       value = Ordering::greater;
       return value;
     } else {
-      value = f(item_a.as_value(), item_b.as_value());
+      value = ::sus::fn::call_mut(f, item_a.as_value(), item_b.as_value());
       if (!(value == 0)) return value;
       // Otherwise, try the next pair of elements.
     }
@@ -71,7 +71,7 @@ inline bool iter_compare_eq(
       value = false;
       return value;
     } else {
-      value = f(item_a.as_value(), item_b.as_value());
+      value = ::sus::fn::call_mut(f, item_a.as_value(), item_b.as_value());
       if (!value) return value;
       // Otherwise, try the next pair of elements.
     }

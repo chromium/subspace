@@ -59,13 +59,17 @@ class [[nodiscard]] [[sus_trivial_abi]] RepeatWith final
   using Item = ItemT;
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return ::sus::some(gen_()); }
+  Option<Item> next() noexcept {
+    return ::sus::some(::sus::fn::call_mut(gen_));
+  }
   /// sus::iter::Iterator trait.
   ::sus::iter::SizeHint size_hint() const noexcept {
     return SizeHint(usize::MAX, ::sus::Option<::sus::num::usize>());
   }
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept { return ::sus::some(gen_()); }
+  Option<Item> next_back() noexcept {
+    return ::sus::some(::sus::fn::call_mut(gen_));
+  }
 
  private:
   friend RepeatWith<Item> sus::iter::repeat_with<Item>(

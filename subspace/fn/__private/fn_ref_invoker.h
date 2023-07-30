@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
 
@@ -33,21 +35,21 @@ struct Invoker {
   template <class R, class... Args>
   static R fnptr_call_mut(const union Storage& s, Args... args) {
     F f = reinterpret_cast<F>(s.fnptr);
-    return (*f)(::sus::forward<Args>(args)...);
+    return std::invoke(*f, ::sus::forward<Args>(args)...);
   }
 
   /// Calls the `F` in `Storage`, as an lvalue, when it is a callable object.
   template <class R, class... Args>
   static R object_call_mut(const union Storage& s, Args... args) {
     F& f = *static_cast<F*>(s.object);
-    return f(::sus::forward<Args>(args)...);
+    return std::invoke(f, ::sus::forward<Args>(args)...);
   }
 
   /// Calls the `F` in `Storage`, as an rvalue, when it is a callable object.
   template <class R, class... Args>
   static R object_call_once(const union Storage& s, Args... args) {
     F& f = *static_cast<F*>(s.object);
-    return ::sus::move(f)(::sus::forward<Args>(args)...);
+    return std::invoke(::sus::move(f), ::sus::forward<Args>(args)...);
   }
 
   /// Calls the `F` in `Storage`, allowing only const overloads, when it is a
@@ -55,7 +57,7 @@ struct Invoker {
   template <class R, class... Args>
   static R fnptr_call_const(const union Storage& s, Args... args) {
     const F f = reinterpret_cast<const F>(s.fnptr);
-    return (*f)(::sus::forward<Args>(args)...);
+    return std::invoke(*f, ::sus::forward<Args>(args)...);
   }
 
   /// Calls the `F` in `Storage`, as a const object, when it is a callable
@@ -63,7 +65,7 @@ struct Invoker {
   template <class R, class... Args>
   static R object_call_const(const union Storage& s, Args... args) {
     const F& f = *static_cast<const F*>(s.object);
-    return f(::sus::forward<Args>(args)...);
+    return std::invoke(f, ::sus::forward<Args>(args)...);
   }
 };
 

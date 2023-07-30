@@ -61,7 +61,7 @@ class [[nodiscard]] Successors final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     Option<Item> item = next_.take();
-    if (item.is_some()) next_ = func_(item.as_value());
+    if (item.is_some()) next_ = ::sus::fn::call_mut(func_, item.as_value());
     return item;
   }
 

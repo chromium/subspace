@@ -29,7 +29,7 @@ constexpr inline Option<U> and_then_or_clear(
   if (opt.is_none()) {
     return Option<U>();
   } else {
-    return f(*opt).or_else([&opt]() {
+    return ::sus::fn::call_once(::sus::move(f), *opt).or_else([&opt]() {
       opt = Option<T>();
       return Option<U>();
     });

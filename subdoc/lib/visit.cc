@@ -528,7 +528,7 @@ class AstConsumer : public clang::ASTConsumer {
 
   void HandleTranslationUnit(clang::ASTContext& ast_cx) noexcept final {
     if (cx_.options.on_tu_complete.is_some()) {
-      (*cx_.options.on_tu_complete)(ast_cx);
+      ::sus::fn::call(*cx_.options.on_tu_complete, ast_cx);
     }
   }
 

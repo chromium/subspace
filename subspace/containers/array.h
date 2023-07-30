@@ -358,7 +358,7 @@ class Array final {
   constexpr Array(WithInitializer, ::sus::fn::FnMut<T()> auto&& f,
                   std::index_sequence<Is...>) noexcept
       : storage_(::sus::iter::IterRefCounter::for_owner(),
-                 {((void)Is, f())...}) {}
+                 {((void)Is, ::sus::fn::call_mut(f))...}) {}
 
   enum WithValue { kWithValue };
   template <size_t... Is>

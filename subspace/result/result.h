@@ -718,10 +718,11 @@ class [[nodiscard]] Result final {
   template <::sus::fn::FnOnce<T(E&&)> F>
   constexpr T unwrap_or_else(F&& op) && noexcept {
     if (is_ok()) {
-      return sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
+      return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
     } else {
-      return ::sus::move(op)(
-          sus::move(*this).unwrap_err_unchecked(::sus::marker::unsafe_fn));
+      return ::sus::fn::call_once(
+          ::sus::move(op),
+          ::sus::move(*this).unwrap_err_unchecked(::sus::marker::unsafe_fn));
     }
   }
 

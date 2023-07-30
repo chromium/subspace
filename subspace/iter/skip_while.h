@@ -52,7 +52,8 @@ class [[nodiscard]] [[sus_trivial_abi]] SkipWhile final
       Option<Item> out = next_iter_.next();
       if (out.is_none() || pred_.is_none()) return out;
       // SAFETY: `out` and `pred_` are both checked for None above.
-      if (!pred_.as_value_unchecked_mut(::sus::marker::unsafe_fn)(
+      if (!::sus::fn::call_mut(
+              pred_.as_value_unchecked_mut(::sus::marker::unsafe_fn),
               out.as_value_unchecked(::sus::marker::unsafe_fn))) {
         pred_ = Option<Pred>();
         return out;
@@ -71,11 +72,11 @@ class [[nodiscard]] [[sus_trivial_abi]] SkipWhile final
   template <class U, class V>
   friend class IteratorBase;
 
-  static SkipWhile with(Pred && pred, InnerSizedIter && next_iter) noexcept {
+  static SkipWhile with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
     return SkipWhile(::sus::move(pred), ::sus::move(next_iter));
   }
 
-  SkipWhile(Pred && pred, InnerSizedIter && next_iter) noexcept
+  SkipWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(Option<Pred>::with(::sus::move(pred))),
         next_iter_(::sus::move(next_iter)) {}
 
