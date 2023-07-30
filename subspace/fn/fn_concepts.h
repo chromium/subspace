@@ -125,6 +125,21 @@ struct Anything {
 /// auto c = Class(42);
 /// sus::check(map_class_once(c, &Class::value) == 42);
 /// ```
+///
+/// Using a method pointer as the parameter for `Option::map()` will call that
+/// method on the object inside the Option:
+/// ```
+/// struct Class {
+///   Class(i32 value) : value_(value) {}
+///   i32 value() const { return value_; }
+///
+///  private:
+///   i32 value_;
+/// };
+///
+/// auto o = sus::Option<Class>::with(Class(42));
+/// sus::check(o.map(&Class::value) == sus::some(42));
+/// ```
 template <class F, class... S>
 concept FnOnce = requires {
   // Receives and passes along the signature as a pack instead of a single
@@ -222,6 +237,21 @@ concept FnOnce = requires {
 /// auto c = Class(42);
 /// sus::check(map_class_mut(c, &Class::value) == 42);
 /// ```
+///
+/// Using a method pointer as the parameter for `Option::map()` will call that
+/// method on the object inside the Option:
+/// ```
+/// struct Class {
+///   Class(i32 value) : value_(value) {}
+///   i32 value() const { return value_; }
+///
+///  private:
+///   i32 value_;
+/// };
+///
+/// auto o = sus::Option<Class>::with(Class(42));
+/// sus::check(o.map(&Class::value) == sus::some(42));
+/// ```
 template <class F, class... S>
 concept FnMut = requires {
   // Receives and passes along the signature as a pack instead of a single
@@ -318,6 +348,21 @@ concept FnMut = requires {
 /// // Map the class C to its value().
 /// auto c = Class(42);
 /// sus::check(map_class(c, &Class::value) == 42);
+/// ```
+///
+/// Using a method pointer as the parameter for `Option::map()` will call that
+/// method on the object inside the Option:
+/// ```
+/// struct Class {
+///   Class(i32 value) : value_(value) {}
+///   i32 value() const { return value_; }
+///
+///  private:
+///   i32 value_;
+/// };
+///
+/// auto o = sus::Option<Class>::with(Class(42));
+/// sus::check(o.map(&Class::value) == sus::some(42));
 /// ```
 template <class F, class... S>
 concept Fn = requires {
