@@ -30,12 +30,16 @@
 ///     saturate to the maximum value of the integer type.
 ///   * Values smaller than the minimum integer value, including `NEG_INFINITY`,
 ///     will saturate to the minimum value of the integer type.
+/// * Casting from an integer to a float will perform a static_cast, which ...
+///
 /// * Casting from an f32 to an f64 preserves the value unchanged.
 /// * Casting f64 to f32 performs the same action as a static_cast if the value
 ///   is in range for f32, otherwise:
 ///   * NaN will return a NaN.
 ///   * Values outside of f32's range will return INFINITY or NEG_INFINITY for
 ///     positive and negative values respectively.
+/// * Casting to and from std::byte produces the same values as casting to and
+///   from `u8`.
 
 // # ================ From signed integers. ============================
 
@@ -183,6 +187,10 @@ struct sus::construct::ToBitsImpl<T, F> {
       return ::sus::num::__private::max_value<T>();
     if (from <= minmax.min) [[unlikely]]
       return ::sus::num::__private::min_value<T>();
+    // SAFETY: The conversion from a float to an integer is UB if the value is
+    // out of range for the integer. We have checked above that it is not out of
+    // range by comparing with the floating point representation of the
+    // integer's min/max values.
     return static_cast<T>(from.primitive_value);
   }
 };
@@ -230,12 +238,7 @@ struct sus::construct::ToBitsImpl<std::byte, F> {
 template <sus::num::PrimitiveFloat F>
 struct sus::construct::ToBitsImpl<std::byte, F> {
   constexpr static std::byte from_bits(const F& from) noexcept {
-    if constexpr (::sus::mem::size_of<F>() == 4u) {
-      return static_cast<std::byte>(std::bit_cast<uint32_t>(from));
-    } else {
-      static_assert(::sus::mem::size_of<F>() == 8u);
-      return static_cast<std::byte>(std::bit_cast<uint64_t>(from));
-    }
+    return static_cast<std::byte>(::sus::to_bits<uint8_t>(from));
   }
 };
 
@@ -312,12 +315,8 @@ struct sus::construct::ToBitsImpl<T, F> {
 template <sus::num::PrimitiveFloat T>
 struct sus::construct::ToBitsImpl<T, std::byte> {
   constexpr static T from_bits(const std::byte& from) noexcept {
-    if constexpr (::sus::mem::size_of<T>() == 4u) {
-      return std::bit_cast<float>(static_cast<uint32_t>(from));
-    } else {
-      static_assert(::sus::mem::size_of<T>() == 8u);
-      return std::bit_cast<double>(static_cast<uint64_t>(from));
-    }
+    // SAFETY: The value of std::byte is always in range for uint8_t.
+    return ::sus::to_bits<T>(static_cast<uint8_t>(from));
   }
 };
 
