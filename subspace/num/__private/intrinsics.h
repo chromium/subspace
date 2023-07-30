@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <fenv.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -618,7 +619,7 @@ sus_pure_const inline constexpr OverflowOut<T> add_with_overflow(T x,
   };
 }
 
-template <class T, class U = decltype(to_signed(std::declval<T>()))>
+template <class T, class U = decltype(into_signed(std::declval<T>()))>
   requires(std::is_integral_v<T> && !std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8 &&
            ::sus::mem::size_of<T>() == ::sus::mem::size_of<U>())
@@ -631,7 +632,7 @@ sus_pure_const inline constexpr OverflowOut<T> add_with_overflow_signed(
   };
 }
 
-template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
+template <class T, class U = decltype(into_unsigned(std::declval<T>()))>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8 &&
            ::sus::mem::size_of<T>() == ::sus::mem::size_of<U>())
@@ -668,7 +669,7 @@ sus_pure_const inline constexpr OverflowOut<T> sub_with_overflow(T x,
   };
 }
 
-template <class T, class U = decltype(to_unsigned(std::declval<T>()))>
+template <class T, class U = decltype(into_unsigned(std::declval<T>()))>
   requires(std::is_integral_v<T> && std::is_signed_v<T> &&
            ::sus::mem::size_of<T>() <= 8 &&
            ::sus::mem::size_of<T>() == ::sus::mem::size_of<U>())
@@ -1258,12 +1259,14 @@ sus_pure_const sus_always_inline constexpr int32_t exponent_bits(
       unchecked_shr(into_unsigned_integer(x) & mask, 52));
 }
 
-sus_pure_const sus_always_inline constexpr int32_t exponent_value(
+/// This function requires that `x` is a normal value to produce a value result.
+sus_pure_const sus_always_inline constexpr int32_t float_normal_exponent_value(
     float x) noexcept {
   return exponent_bits(x) - int32_t{127};
 }
 
-sus_pure_const sus_always_inline constexpr int32_t exponent_value(
+/// This function requires that `x` is a normal value to produce a value result.
+sus_pure_const sus_always_inline constexpr int32_t float_normal_exponent_value(
     double x) noexcept {
   return exponent_bits(x) - int32_t{1023};
 }
@@ -1399,8 +1402,10 @@ sus_pure_const inline constexpr T truncate_float(T x) noexcept {
                                                                : uint32_t{52};
 
   if (float_is_inf_or_nan(x) || float_is_zero(x)) return x;
+  if (float_nonzero_is_subnormal(x)) [[unlikely]]
+    return T{0};
 
-  const int32_t exponent = exponent_value(x);
+  const int32_t exponent = float_normal_exponent_value(x);
 
   // If the exponent is greater than the most negative mantissa
   // exponent, then x is already an integer.
@@ -1520,5 +1525,40 @@ sus_pure_const inline T next_toward(T from, T to) {
   else
     return std::nexttoward(from, to);
 }
+
+#pragma warning(push)
+// MSVC claims that "overflow in constant arithmetic" occurs on the static_cast
+// in `into_smaller_float()` but we check for overflow first, the conversion is
+// in range.
+#pragma warning(disable : 4756)
+
+// Not constexpr as rounding is always toward zero in a constexpr context.
+template <class Out, class T>
+  requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() == 8 &&
+           ::sus::mem::size_of<Out>() == 4)
+sus_pure_const constexpr inline Out into_smaller_float(T x) noexcept {
+  if (x <= T{max_value<Out>()} && x >= T{min_value<Out>()}) [[likely]] {
+    // C++20 Section 7.3.9: A prvalue of floating-point type can be converted to
+    // a prvalue of another floating-point type. If the source value can be
+    // exactly represented in the destination type, the result of the conversion
+    // is that exact representation. If the source value is between two adjacent
+    // destination values, the result of the conversion is an
+    // implementation-defined choice of either of those values. Otherwise, the
+    // behavior is undefined.
+    //
+    // SAFETY: Because the value `x` is at or between two valid values of type
+    // `Out`, the static_cast does not cause UB.
+    return static_cast<Out>(x);  // Handles values in range.
+  }
+  if (x > T{max_value<Out>()}) {
+    return infinity<Out>();  // Handles large values and INFINITY.
+  }
+  if (x < T{min_value<Out>()}) {
+    return negative_infinity<Out>();  // Handles small values and NEG_INFINITY.
+  }
+  return nan<Out>();  // All that's left are NaNs.
+}
+
+#pragma warning(pop)
 
 }  // namespace sus::num::__private
