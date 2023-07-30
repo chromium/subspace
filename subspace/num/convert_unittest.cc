@@ -586,4 +586,28 @@ TEST(ConvertToBits, f64) {
   }
 }
 
+TEST(ConvertToBits, stdbyte) {
+  EXPECT_EQ(sus::to_bits<u8>(std::byte{0xff}), 0xff_u8);
+  EXPECT_EQ(sus::to_bits<u32>(std::byte{0xff}), 0xff_u32);
+  EXPECT_EQ(sus::to_bits<i8>(std::byte{0xff}), -1_i8);
+  EXPECT_EQ(sus::to_bits<i32>(std::byte{0xff}), 0xff_i32);
+  EXPECT_EQ(sus::to_bits<f32>(std::byte{0xff}), 0xff_f32);
+  EXPECT_EQ(sus::to_bits<f64>(std::byte{0xff}), 0xff_f64);
+
+  EXPECT_EQ(sus::to_bits<std::byte>(0xff_u8), std::byte{0xff});
+  EXPECT_EQ(sus::to_bits<std::byte>(0xff_u32), std::byte{0xff});
+  EXPECT_EQ(sus::to_bits<std::byte>(-1_i8), std::byte{0xff});
+  EXPECT_EQ(sus::to_bits<std::byte>(0xff_i32), std::byte{0xff});
+  EXPECT_EQ(sus::to_bits<std::byte>(0xff_f32), std::byte{0xff});
+  EXPECT_EQ(sus::to_bits<std::byte>(0xff_f64), std::byte{0xff});
+
+  // Truncating from integer.
+  EXPECT_EQ(sus::to_bits<std::byte>(-2_i32), std::byte{0xfe});
+  EXPECT_EQ(sus::to_bits<std::byte>(259_i32), std::byte{3});
+
+  // Saturating from float.
+  EXPECT_EQ(sus::to_bits<std::byte>(-1_f64), std::byte{0x00});
+  EXPECT_EQ(sus::to_bits<std::byte>(256_f64), std::byte{0xff});
+}
+
 }  // namespace
