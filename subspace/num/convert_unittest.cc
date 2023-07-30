@@ -354,6 +354,37 @@ TEST(ConvertToBits, isize) {
   }
 }
 
+TEST(ConvertToBits, LosslessFloatConversion) {
+  EXPECT_EQ(sus::to_bits<f64>(-1.8949651689383756e-14_f32),
+            -1.8949651689383756e-14_f64);
+  EXPECT_EQ(sus::to_bits<f32>(-1.8949651689383756e-14_f32),
+            -1.8949651689383756e-14_f32);
+  EXPECT_EQ(sus::to_bits<f64>(-4.59218127443847370761468605771e-102_f64),
+            -4.59218127443847370761468605771e-102_f64);
+}
+
+TEST(ConvertToBits, f64tof32) {
+  EXPECT_EQ(sus::to_bits<f32>(f64::NAN).is_nan(), true);
+  EXPECT_EQ(sus::to_bits<f32>(f64::INFINITY), f32::INFINITY);
+  EXPECT_EQ(sus::to_bits<f32>(f64::NEG_INFINITY), f32::NEG_INFINITY);
+  EXPECT_EQ(sus::to_bits<f32>(f64::MAX), f32::INFINITY);
+  EXPECT_EQ(sus::to_bits<f32>(f64::MIN), f32::NEG_INFINITY);
+
+  // Just past the valid range of values for f32 in either direciton. A
+  // static_cast<float>(double) for these values would cause UB.
+  EXPECT_EQ(sus::to_bits<f32>(
+                sus::to_bits<f64>(f32::MIN).next_toward(f64::NEG_INFINITY)),
+            f32::NEG_INFINITY);
+  EXPECT_EQ(
+      sus::to_bits<f32>(sus::to_bits<f64>(f32::MAX).next_toward(f64::INFINITY)),
+      f32::INFINITY);
+
+  // This is a value with bits set throughout the exponent and mantissa. Its
+  // exponent is <= 127 and >= -126 so it's possible to represent it in f32.
+  EXPECT_EQ(sus::to_bits<f32>(-4.59218127443847370761468605771e-102_f64),
+            -4.59218127443847370761468605771e-102_f32);
+}
+
 TEST(ConvertToBits, f32) {
   static_assert(std::same_as<decltype(sus::to_bits<u16>(0_f32)), u16>);
 
@@ -546,7 +577,8 @@ TEST(ConvertToBits, f64) {
     EXPECT_EQ(sus::to_bits<i64>(0.51_f64), 0_i64);
     EXPECT_EQ(sus::to_bits<i64>(0.9999_f64), 0_i64);
     EXPECT_EQ(sus::to_bits<i64>(1_f64), 1_i64);
-    EXPECT_LT(sus::to_bits<i64>((9223372036854775807_f64).next_toward(0_f64)), i64::MAX);
+    EXPECT_LT(sus::to_bits<i64>((9223372036854775807_f64).next_toward(0_f64)),
+              i64::MAX);
     EXPECT_EQ(sus::to_bits<i64>(9223372036854775807_f64), i64::MAX);
     EXPECT_EQ(sus::to_bits<i64>(9223372036854775807.00001_f64), i64::MAX);
     EXPECT_EQ(sus::to_bits<i64>(9223372036854775807_f64 * 2_f64), i64::MAX);

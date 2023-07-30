@@ -18,17 +18,24 @@
 #include <type_traits>
 
 #include "subspace/construct/to_bits.h"
+#include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/float.h"
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
 
-/// Casting from a float to an integer will round the float towards zero,
-/// except:
-/// * NaN will return 0.
-/// * Values larger than the maximum integer value, including `INFINITY`, will
-///   saturate to the maximum value of the integer type.
-/// * Values smaller than the minimum integer value, including `NEG_INFINITY`,
-///   will saturate to the minimum value of the integer type.
+/// * Casting from a float to an integer will perform a static_cast, which
+///   rounds the float towards zero, except:
+///   * NaN will return 0.
+///   * Values larger than the maximum integer value, including `INFINITY`, will
+///     saturate to the maximum value of the integer type.
+///   * Values smaller than the minimum integer value, including `NEG_INFINITY`,
+///     will saturate to the minimum value of the integer type.
+/// * Casting from an f32 to an f64 preserves the value unchanged.
+/// * Casting f64 to f32 performs the same action as a static_cast if the value
+///   is in range for f32, otherwise:
+///   * NaN will return a NaN.
+///   * Values outside of f32's range will return INFINITY or NEG_INFINITY for
+///     positive and negative values respectively.
 
 // # ================ From signed integers. ============================
 
@@ -335,13 +342,13 @@ struct sus::construct::ToBitsImpl<T, F> {
       if constexpr (::sus::mem::size_of<F>() == 4u) {
         return from;
       } else {
-        return std::bit_cast<float>(
-            static_cast<uint32_t>(std::bit_cast<uint64_t>(from)));
+        return ::sus::num::__private::into_smaller_float<float>(from);
       }
     } else {
       if constexpr (::sus::mem::size_of<F>() == 4u) {
-        return std::bit_cast<double>(
-            static_cast<uint64_t>(std::bit_cast<uint32_t>(from)));
+        // C++20 Section 7.3.7: A prvalue of type float can be converted to a
+        // prvalue of type double. The value is unchanged.
+        return T{from};
       } else {
         return from;
       }
