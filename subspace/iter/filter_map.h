@@ -46,14 +46,11 @@ class [[nodiscard]] [[sus_trivial_abi]] FilterMap final
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
-    InnerSizedIter& iter = next_iter_;
-    FilterMapFn& fn = fn_;
-
     while (true) {
-      Option<FromItem> in = iter.next();
+      Option<FromItem> in = next_iter_.next();
       Option<ToItem> out;
       if (in.is_none()) return out;
-      out = fn_(sus::move(in).unwrap());
+      out = ::sus::fn::call_mut(fn_, sus::move(in).unwrap());
       if (out.is_some()) return out;
     }
   }
@@ -68,14 +65,11 @@ class [[nodiscard]] [[sus_trivial_abi]] FilterMap final
   Option<Item> next_back() noexcept
     requires(InnerSizedIter::DoubleEnded)
   {
-    InnerSizedIter& iter = next_iter_;
-    FilterMapFn& fn = fn_;
-
     while (true) {
-      Option<FromItem> in = iter.next_back();
+      Option<FromItem> in = next_iter_.next_back();
       Option<ToItem> out;
       if (in.is_none()) return out;
-      out = fn_(sus::move(in).unwrap());
+      out = ::sus::fn::call_mut(fn_, sus::move(in).unwrap());
       if (out.is_some()) return out;
     }
   }
@@ -84,12 +78,11 @@ class [[nodiscard]] [[sus_trivial_abi]] FilterMap final
   template <class U, class V>
   friend class IteratorBase;
 
-  static FilterMap with(FilterMapFn && fn,
-                        InnerSizedIter && next_iter) noexcept {
+  static FilterMap with(FilterMapFn&& fn, InnerSizedIter&& next_iter) noexcept {
     return FilterMap(::sus::move(fn), ::sus::move(next_iter));
   }
 
-  FilterMap(FilterMapFn && fn, InnerSizedIter && next_iter) noexcept
+  FilterMap(FilterMapFn&& fn, InnerSizedIter&& next_iter) noexcept
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   FilterMapFn fn_;

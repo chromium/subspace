@@ -236,7 +236,7 @@ constexpr void fill_with(::sus::fn::FnMutRef<T()> f) NO_RETURN_REF noexcept {
   T* ptr = as_mut_ptr();
   T* const end_ptr = ptr + len();
   while (ptr != end_ptr) {
-    *ptr = f();
+    *ptr = ::sus::fn::call_mut(f);
     ptr += 1u;
   }
 }
@@ -622,7 +622,7 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
 ::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable_by_key(
     usize index, KeyFn f) RETURN_REF noexcept {
   return select_nth_unstable_by(
-      index, [&f](const T& a, const T& b) { return f(a) <=> f(b); });
+      index, [&f](const T& a, const T& b) { return ::sus::fn::call_mut(f, a) <=> ::sus::fn::call_mut(f, b); });
 }
 #endif
 
@@ -665,9 +665,10 @@ void sort() NO_RETURN_REF noexcept
 void sort_by(::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>
                  compare) NO_RETURN_REF noexcept {
   if (len() > ::sus::num::usize(0u)) {
-    std::stable_sort(
-        as_mut_ptr(), as_mut_ptr() + len(),
-        [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
+    std::stable_sort(as_mut_ptr(), as_mut_ptr() + len(),
+                     [&compare](const T& l, const T& r) {
+                       return ::sus::fn::call_mut(compare, l, r) < 0;
+                     });
   }
 }
 
@@ -693,7 +694,9 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
   requires(::sus::ops::Ord<Key>)
 void sort_by_key(KeyFn f) NO_RETURN_REF noexcept {
-  return sort_by([&f](const T& a, const T& b) { return f(a) <=> f(b); });
+  return sort_by([&f](const T& a, const T& b) {
+    return ::sus::fn::call_mut(f, a) <=> ::sus::fn::call_mut(f, b);
+  });
 }
 
 template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
@@ -764,7 +767,9 @@ constexpr void sort_unstable_by(
     NO_RETURN_REF noexcept {
   if (len() > 0u) {
     std::sort(as_mut_ptr(), as_mut_ptr() + len(),
-              [&compare](const T& l, const T& r) { return compare(l, r) < 0; });
+              [&compare](const T& l, const T& r) {
+                return ::sus::fn::call_mut(compare, l, r) < 0;
+              });
   }
 }
 
@@ -781,8 +786,9 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(const T&)> KeyFn, int&...,
           class Key = std::invoke_result_t<KeyFn&, const T&>>
   requires(::sus::ops::Ord<Key>)
 void sort_unstable_by_key(KeyFn f) NO_RETURN_REF noexcept {
-  return sort_unstable_by(
-      [&f](const T& a, const T& b) { return f(a) <=> f(b); });
+  return sort_unstable_by([&f](const T& a, const T& b) {
+    return ::sus::fn::call_mut(f, a) <=> ::sus::fn::call_mut(f, b);
+  });
 }
 
 /// Returns an iterator over mutable subslices separated by elements that match

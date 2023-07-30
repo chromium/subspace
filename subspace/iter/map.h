@@ -40,8 +40,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Map final
     if (item.is_none()) {
       return sus::none();
     } else {
-      return sus::some(
-          fn_(sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
+      return sus::some(::sus::fn::call_mut(
+          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
     }
   }
 
@@ -58,8 +58,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Map final
     if (item.is_none()) {
       return sus::none();
     } else {
-      return sus::some(
-          fn_(sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
+      return sus::some(::sus::fn::call_mut(
+          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
     }
   }
 

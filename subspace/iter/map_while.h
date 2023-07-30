@@ -47,7 +47,8 @@ class [[nodiscard]] [[sus_trivial_abi]] MapWhile final
     if (item.is_none()) {
       return sus::none();
     } else {
-      return fn_(sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn));
+      return ::sus::fn::call_mut(
+          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn));
     }
   }
 
@@ -65,7 +66,8 @@ class [[nodiscard]] [[sus_trivial_abi]] MapWhile final
     if (item.is_none()) {
       return sus::none();
     } else {
-      return fn_(sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn));
+      return ::sus::fn::call_mut(
+          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn));
     }
   }
 
@@ -73,11 +75,11 @@ class [[nodiscard]] [[sus_trivial_abi]] MapWhile final
   template <class U, class V>
   friend class IteratorBase;
 
-  static MapWhile with(MapFn fn, InnerSizedIter && next_iter) noexcept {
+  static MapWhile with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
     return MapWhile(::sus::move(fn), ::sus::move(next_iter));
   }
 
-  MapWhile(MapFn fn, InnerSizedIter && next_iter)
+  MapWhile(MapFn fn, InnerSizedIter&& next_iter)
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   MapFn fn_;

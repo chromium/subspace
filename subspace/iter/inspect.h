@@ -46,7 +46,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Inspect final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     Option<Item> item = next_iter_.next();
-    if (item.is_some()) inspect_(item.as_value());
+    if (item.is_some()) ::sus::fn::call_mut(inspect_, item.as_value());
     return item;
   }
 
@@ -60,7 +60,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Inspect final
     requires(InnerSizedIter::DoubleEnded)
   {
     Option<Item> item = next_iter_.next_back();
-    if (item.is_some()) inspect_(item.as_value());
+    if (item.is_some()) ::sus::fn::call_mut(inspect_, item.as_value());
     return item;
   }
 
@@ -75,11 +75,11 @@ class [[nodiscard]] [[sus_trivial_abi]] Inspect final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Inspect with(InspectFn fn, InnerSizedIter && next_iter) noexcept {
+  static Inspect with(InspectFn fn, InnerSizedIter&& next_iter) noexcept {
     return Inspect(::sus::move(fn), ::sus::move(next_iter));
   }
 
-  Inspect(InspectFn && fn, InnerSizedIter && next_iter)
+  Inspect(InspectFn&& fn, InnerSizedIter&& next_iter)
       : inspect_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   InspectFn inspect_;

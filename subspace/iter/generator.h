@@ -55,7 +55,7 @@ template <::sus::fn::FnOnce<::sus::fn::NonVoid()> F, int&...,
           class R = std::invoke_result_t<F&&>>
   requires(__private::IsGenerator<R>::value)
 Iterator<typename R::Item> auto from_generator(F&& f) {
-  return f();
+  return ::sus::fn::call_once(sus::move(f));
 }
 
 namespace __private {
@@ -116,14 +116,14 @@ class IterPromise {
 template <class Generator>
 class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
  public:
-  GeneratorLoop(Generator & generator sus_lifetimebound) noexcept
+  GeneratorLoop(Generator& generator sus_lifetimebound) noexcept
       : generator_(generator) {}
 
   constexpr bool operator==(
       const ::sus::iter::__private::IteratorEnd&) noexcept {
     return generator_.co_handle_.done();
   }
-  constexpr GeneratorLoop& operator++()& noexcept {
+  constexpr GeneratorLoop& operator++() & noexcept {
     // UB occurs if this is called after GeneratorLoop == IteratorEnd. This
     // can't happen in a ranged-for loop, but GeneratorLoop should not be
     // held onto and used in other contexts.
@@ -132,7 +132,7 @@ class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
     generator_.co_handle_.resume();
     return *this;
   }
-  constexpr decltype(auto) operator*()& noexcept {
+  constexpr decltype(auto) operator*() & noexcept {
     // UB occurs if this is called after GeneratorLoop == IteratorEnd. This
     // can't happen in a ranged-for loop, but GeneratorLoop should not be
     // held onto and used in other contexts.
@@ -143,7 +143,7 @@ class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
   }
 
  private:
-  Generator & generator_;
+  Generator& generator_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
                                   decltype(generator_));
@@ -184,7 +184,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
   }
 
   /// sus::mem::Move trait.
-  constexpr Generator(Generator && o) noexcept
+  constexpr Generator(Generator&& o) noexcept
       : co_handle_(::sus::mem::replace(o.co_handle_, nullptr)) {
     ::sus::check(co_handle_ != nullptr);
   }
@@ -211,7 +211,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
   /// efficient, as the yielded `T` from the generator must be held in the
   /// promise, and this avoids moving it and holding it in the type returned by
   /// begin() as well.
-  constexpr auto begin()& noexcept {
+  constexpr auto begin() & noexcept {
     // Ensure the first item is yielded and ready to be returned from the
     // iterator's operator*().
     if (!co_handle_.done()) co_handle_.resume();
@@ -226,7 +226,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
   // would require storing the Item again in the GeneratorLoop.
   friend class __private::GeneratorLoop<Generator>;
 
-  constexpr Generator(promise_type & p) noexcept
+  constexpr Generator(promise_type& p) noexcept
       : co_handle_(std::coroutine_handle<promise_type>::from_promise(p)) {}
 
   std::coroutine_handle<promise_type> co_handle_;

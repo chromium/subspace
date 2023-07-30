@@ -14,7 +14,11 @@
 
 #pragma once
 
+#include <functional>
+
 #include "subspace/fn/__private/signature.h"
+#include "subspace/macros/inline.h"
+#include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
 
 namespace sus::fn {
@@ -60,12 +64,14 @@ struct Anything {
 /// avoid an unnecessary copy or move operation, but may also be received by
 /// value.
 ///
-/// A `FnOnce` should only be called once, and should be moved with
-/// `sus::move()` when calling it.
+/// A `FnOnce` should be called by moving it with `sus::move()` when passing it
+/// to `sus::fn::call_once()` along with any arguments. It is moved-from after
+/// calling, and it should only be called once.
 ///
-/// Calling it multiple times may panic or cause Undefined Behaviour. Not moving
-/// the `FnOnce` when calling it may fail to compile, panic, or cause Undefined
-/// Behaviour depending on the type that is being used to satisfy `FnOnce`.
+/// Calling a `FnOnce` multiple times may panic or cause Undefined Behaviour.
+/// Not moving the `FnOnce` when calling it may fail to compile, panic, or cause
+/// Undefined Behaviour depending on the type that is being used to satisfy
+/// `FnOnce`.
 ///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` or `FnMut` will also satisfy `FnOnce`.
@@ -87,11 +93,11 @@ struct Anything {
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// i32 call_once(sus::fn::FnOnce<i32(sus::Option<i32>)> auto&& f) {
-///   return sus::move(f)(sus::some(400));  // Returns an i32.
+/// i32 do_stuff_once(sus::fn::FnOnce<i32(sus::Option<i32>)> auto&& f) {
+///   return sus::fn::call_once(sus::move(f), sus::some(400));
 /// }
 ///
-/// i32 x = call_once([](sus::Option<i32> o) -> i32 {
+/// i32 x = do_stuff_once([](sus::Option<i32> o) -> i32 {
 ///   return sus::move(o).unwrap_or_default() + 4;
 /// });
 ///  sus::check(x == 400 + 4);
@@ -136,8 +142,9 @@ concept FnOnce = requires {
 /// value in order to isolate any mutation that occurs to stay within the
 /// function, or to take ownership of the closure.
 ///
-/// A `FnMut` may be called any number of times, unlike `FnOnce`, and should not
-/// be moved when called.
+/// A `FnMut` should be called by passing it to `sus::fn::call_mut()` along with
+/// any arguments. A `FnMut` may be called any number of times, unlike `FnOnce`,
+/// and should not be moved when called.
 ///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` or `FnMut` will also satisfy `FnOnce`.
@@ -159,11 +166,12 @@ concept FnOnce = requires {
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// static i32 call_mut(sus::fn::FnMut<i32(sus::Option<i32>)> auto&& f) {
-///   return f(sus::some(400)) + f(sus::some(100));  // Returns an i32.
+/// static i32 do_stuff_mut(sus::fn::FnMut<i32(sus::Option<i32>)> auto&& f) {
+///   return sus::fn::call_mut(f, sus::some(400)) +
+///          sus::fn::call_mut(f, sus::some(100));
 /// }
 ///
-/// i32 x = call_mut([i = 0_i32](sus::Option<i32> o) mutable -> i32 {
+/// i32 x = do_stuff_mut([i = 0_i32](sus::Option<i32> o) mutable -> i32 {
 ///   i += 1;
 ///   return sus::move(o).unwrap_or_default() + i;
 /// });
@@ -210,8 +218,9 @@ concept FnMut = requires {
 /// to reach the intended const overload of operator() if there is more than
 /// one.
 ///
-/// A `Fn` may be called any number of times, unlike `FnOnce`, and should not
-/// be moved when called.
+/// A `Fn` should be called by passing it to `std::fn::call()` along with any
+/// arguments. A `Fn` may be called any number of times, unlike `FnOnce`, and
+/// should not be moved when called.
 ///
 /// # Compatibility
 /// Any callable type that satisfies `Fn` will also satisfy `FnMut` and
@@ -233,11 +242,12 @@ concept FnMut = requires {
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
-/// static i32 call_fn(const sus::fn::Fn<i32(sus::Option<i32>)> auto& f) {
-///   return f(sus::some(400)) + f(sus::some(100));  // Returns an i32.
+/// static i32 do_stuff(const sus::fn::Fn<i32(sus::Option<i32>)> auto& f) {
+///   return sus::fn::call(f, sus::some(400)) +
+///          sus::fn::call(f, sus::some(100));
 /// }
 ///
-/// i32 x = call_fn([i = 1_i32](sus::Option<i32> o) -> i32 {
+/// i32 x = do_stuff([i = 1_i32](sus::Option<i32> o) -> i32 {
 ///   return sus::move(o).unwrap_or_default() + i;
 /// });
 /// sus::check(x == 401 + 101);
@@ -254,5 +264,49 @@ concept Fn = requires {
   requires FnMut<F, S...>;
   requires FnOnce<F, S...>;
 };
+
+/// Invokes the `FnOnce`, passing any given arguments along, and returning the
+/// result.
+///
+/// This function is like
+/// [`std::invoke()`](https://en.cppreference.com/w/cpp/utility/functional/invoke)
+/// but it provides the following additional guiderails:
+/// * Verifies that the thing being invoked is being moved from so that the
+///   correct overload will be invoked.
+template <class F, class... Args>
+  requires(std::is_rvalue_reference_v<F &&> &&  //
+           !std::is_const_v<std::remove_reference_t<F>>)
+sus_always_inline constexpr decltype(auto) call_once(F&& f, Args&&... args) {
+  return std::invoke(sus::move(f), sus::forward<Args>(args)...);
+}
+
+/// Invokes the `FnMut`, passing any given arguments along, and returning the
+/// result.
+///
+/// This function is like
+/// [`std::invoke()`](https://en.cppreference.com/w/cpp/utility/functional/invoke)
+/// but it provides the following additional guiderails:
+/// * Verifies that the thing being invoked is called as a mutable lvalue so
+///   that the correct overload will be invoked.
+template <class F, class... Args>
+  requires(!std::is_const_v<std::remove_reference_t<F>>)
+sus_always_inline constexpr decltype(auto) call_mut(F&& f, Args&&... args) {
+  return std::invoke(static_cast<std::remove_reference_t<F>&>(f),
+                     sus::forward<Args>(args)...);
+}
+
+/// Invokes the `Fn`, passing any given arguments along, and returning the
+/// result.
+///
+/// This function is like
+/// [`std::invoke()`](https://en.cppreference.com/w/cpp/utility/functional/invoke)
+/// but it provides the following additional guiderails:
+/// * Verifies that the thing being invoked is called as a const lvalue so
+///   that the correct overload will be invoked.
+template <class F, class... Args>
+sus_always_inline constexpr decltype(auto) call(F&& f, Args&&... args) {
+  return std::invoke(static_cast<const std::remove_reference_t<F>&>(f),
+                     sus::forward<Args>(args)...);
+}
 
 }  // namespace sus::fn

@@ -55,7 +55,7 @@ class [[nodiscard]] [[sus_trivial_abi]] OnceWith final
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
-    return gen_.take().map([](auto&& gen) { return ::sus::move(gen)(); });
+    return gen_.take().map([](auto&& gen) { return ::sus::fn::call_mut(gen); });
   }
   /// sus::iter::Iterator trait.
   ::sus::iter::SizeHint size_hint() const noexcept {
@@ -64,7 +64,7 @@ class [[nodiscard]] [[sus_trivial_abi]] OnceWith final
   }
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
-    return gen_.take().map([](auto&& gen) { return ::sus::move(gen)(); });
+    return gen_.take().map([](auto&& gen) { return ::sus::fn::call_mut(gen); });
   }
   // sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept { return gen_.is_some() ? 1u : 0u; }

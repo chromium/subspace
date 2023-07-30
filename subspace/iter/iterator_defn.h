@@ -1085,7 +1085,8 @@ bool IteratorBase<Iter, Item>::all(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return true;
     // SAFETY: `item` was checked to hold Some already.
-    if (!f(::sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)))
+    if (!::sus::fn::call_mut(
+            f, ::sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)))
       return false;
   }
 }
@@ -1096,7 +1097,8 @@ bool IteratorBase<Iter, Item>::any(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return false;
     // SAFETY: `item` was checked to hold Some already.
-    if (f(::sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)))
+    if (::sus::fn::call_mut(
+            f, ::sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)))
       return true;
   }
 }
@@ -1252,7 +1254,7 @@ Option<Item> IteratorBase<Iter, Item>::find(
         pred) noexcept {
   while (true) {
     Option<Item> o = as_subclass_mut().next();
-    if (o.is_none() || pred(o.as_value())) return o;
+    if (o.is_none() || ::sus::fn::call_mut(pred, o.as_value())) return o;
   }
 }
 
@@ -1302,14 +1304,15 @@ B IteratorBase<Iter, Item>::fold(B init, F f) && noexcept {
       if (Option<Item> o = as_subclass_mut().next(); o.is_none())
         return *out;
       else
-        out = ::sus::mem::addressof(f(*out, sus::move(o).unwrap()));
+        out = ::sus::mem::addressof(
+            ::sus::fn::call_mut(f, *out, sus::move(o).unwrap()));
     }
   } else {
     while (true) {
       if (Option<Item> o = as_subclass_mut().next(); o.is_none())
         return init;
       else
-        init = f(::sus::move(init), sus::move(o).unwrap());
+        init = ::sus::fn::call_mut(f, ::sus::move(init), sus::move(o).unwrap());
     }
   }
 }
@@ -1322,7 +1325,7 @@ void IteratorBase<Iter, Item>::for_each(F f) && noexcept {
     if (Option<Item> o = as_subclass_mut().next(); o.is_none())
       break;
     else
-      f(std::move(o).unwrap());
+      ::sus::fn::call_mut(f, std::move(o).unwrap());
   }
 }
 
@@ -1335,7 +1338,8 @@ template <class Iter, class Item>
 template <::sus::fn::FnOnce<::sus::iter::Generator<Item>(Iter&&)> GenFn>
 ::sus::iter::Iterator<Item> auto IteratorBase<Iter, Item>::generate(
     GenFn&& generator_fn) && noexcept {
-  return ::sus::move(generator_fn)(static_cast<Iter&&>(*this));
+  return ::sus::fn::call_once(::sus::move(generator_fn),
+                              static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1387,7 +1391,7 @@ bool IteratorBase<Iter, Item>::is_sorted_by(
     std::remove_reference_t<Item>* last =
         ::sus::mem::addressof(sus::move(o).unwrap());
     return static_cast<Iter&&>(*this).all([&last, &compare](Item item) -> bool {
-      auto ord = compare(*last, item);
+      auto ord = ::sus::fn::call_mut(compare, *last, item);
       if (ord > 0) return false;
       last = ::sus::mem::addressof(item);
       return true;
@@ -1395,7 +1399,7 @@ bool IteratorBase<Iter, Item>::is_sorted_by(
   } else {
     Item last = sus::move(o).unwrap();
     return static_cast<Iter&&>(*this).all([&last, &compare](Item item) -> bool {
-      auto ord = compare(last, item);
+      auto ord = ::sus::fn::call_mut(compare, last, item);
       if (ord > 0) return false;
       last = sus::move(item);
       return true;
@@ -1466,7 +1470,8 @@ Option<Item> IteratorBase<Iter, Item>::max_by(
   return static_cast<Iter&&>(*this).reduce(
       [&compare](Item acc, Item item) -> Item {
         auto acc_cref = static_cast<const std::remove_reference_t<Item>&>(acc);
-        if (compare(item, acc_cref) >= 0) return ::sus::forward<Item>(item);
+        if (::sus::fn::call_mut(compare, item, acc_cref) >= 0)
+          return ::sus::forward<Item>(item);
         return ::sus::forward<Item>(acc);
       });
 }
@@ -1480,7 +1485,7 @@ template <
            !std::is_reference_v<Key>)
 Option<Item> IteratorBase<Iter, Item>::max_by_key(KeyFn fn) && noexcept {
   auto fold = [&fn](sus::Tuple<Key, Item>&& acc, Item&& item) {
-    Key key = fn(item);
+    Key key = ::sus::fn::call_mut(fn, item);
     if (key >= acc.template at<0>())
       return sus::Tuple<Key, Item>::with(::sus::move(key),
                                          ::sus::forward<Item>(item));
@@ -1522,7 +1527,8 @@ Option<Item> IteratorBase<Iter, Item>::min_by(
   return static_cast<Iter&&>(*this).reduce(
       [&compare](Item acc, Item item) -> Item {
         auto acc_cref = static_cast<const std::remove_reference_t<Item>&>(acc);
-        if (compare(item, acc_cref) < 0) return ::sus::forward<Item>(item);
+        if (::sus::fn::call_mut(compare, item, acc_cref) < 0)
+          return ::sus::forward<Item>(item);
         return ::sus::forward<Item>(acc);
       });
 }
@@ -1536,7 +1542,7 @@ template <
            !std::is_reference_v<Key>)
 Option<Item> IteratorBase<Iter, Item>::min_by_key(KeyFn fn) && noexcept {
   auto fold = [&fn](sus::Tuple<Key, Item>&& acc, Item&& item) {
-    Key key = fn(item);
+    Key key = ::sus::fn::call_mut(fn, item);
     if (key < acc.template at<0>())
       return sus::Tuple<Key, Item>::with(::sus::move(key),
                                          ::sus::forward<Item>(item));
@@ -1623,7 +1629,8 @@ sus::Tuple<B, B> IteratorBase<Iter, Item>::partition(
   B right;
 
   auto extend = [&pred, &left, &right](Item&& i) mutable {
-    if (pred(static_cast<const std::remove_reference_t<Item>&>(i))) {
+    if (::sus::fn::call_mut(
+            pred, static_cast<const std::remove_reference_t<Item>&>(i))) {
       // TODO: Consider adding extend_one() to the Extend concept, which can
       // take Item instead of an Option<Item>.
       left.extend(::sus::Option<Item>::with(::sus::forward<Item>(i)));
@@ -1652,7 +1659,8 @@ Option<usize> IteratorBase<Iter, Item>::position(
   while (true) {
     Option<Item> o = as_subclass_mut().next();
     if (o.is_none()) return Option<usize>();
-    if (pred(::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
+    if (::sus::fn::call_mut(
+            pred, ::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
       return Option<usize>::with(pos);
     pos += 1u;
   }
@@ -1702,7 +1710,7 @@ Option<Item> IteratorBase<Iter, Item>::rfind(
 {
   while (true) {
     Option<Item> o = as_subclass_mut().next_back();
-    if (o.is_none() || pred(o.as_value())) return o;
+    if (o.is_none() || ::sus::fn::call_mut(pred, o.as_value())) return o;
   }
 }
 
@@ -1717,7 +1725,7 @@ B IteratorBase<Iter, Item>::rfold(B init, F f) && noexcept {
     if (Option<Item> o = as_subclass_mut().next_back(); o.is_none())
       return init;
     else
-      init = f(::sus::move(init), sus::move(o).unwrap());
+      init = ::sus::fn::call_mut(f, ::sus::move(init), sus::move(o).unwrap());
   }
 }
 
@@ -1734,7 +1742,8 @@ Option<usize> IteratorBase<Iter, Item>::rposition(
     // This can't underflow since exact_size_hint() promises we will iterate
     // a given number of times, and that number fits in `usize`.
     pos -= 1u;
-    if (pred(::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
+    if (::sus::fn::call_mut(
+            pred, ::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
       return Option<usize>::with(pos);
   }
 }
@@ -1822,7 +1831,7 @@ R IteratorBase<Iter, Item>::try_fold(B init, F f) noexcept {
     if (Option<Item> o = as_subclass_mut().next(); o.is_none())
       return ::sus::ops::TryImpl<R>::from_output(::sus::move(init));
     else {
-      R out = f(::sus::move(init), sus::move(o).unwrap());
+      R out = ::sus::fn::call_mut(f, ::sus::move(init), sus::move(o).unwrap());
       if (!::sus::ops::TryImpl<R>::is_success(out)) return out;
       init = ::sus::ops::TryImpl<R>::to_output(::sus::move(out));
     }
@@ -1840,7 +1849,7 @@ R IteratorBase<Iter, Item>::try_rfold(B init, F f) noexcept {
     if (Option<Item> o = as_subclass_mut().next_back(); o.is_none())
       return ::sus::ops::TryImpl<R>::from_output(::sus::move(init));
     else {
-      R out = f(::sus::move(init), sus::move(o).unwrap());
+      R out = ::sus::fn::call_mut(f, ::sus::move(init), sus::move(o).unwrap());
       if (!::sus::ops::TryImpl<R>::is_success(out)) return out;
       init = ::sus::ops::TryImpl<R>::to_output(::sus::move(out));
     }
@@ -1858,7 +1867,7 @@ R IteratorBase<Iter, Item>::try_for_each(
     if (Option<Item> o = as_subclass_mut().next(); o.is_none()) {
       break;
     } else {
-      R test = f(std::move(o).unwrap());
+      R test = ::sus::fn::call_mut(f, std::move(o).unwrap());
       if (!::sus::ops::TryImpl<R>::is_success(test)) {
         out = ::sus::move(test);  // Store the failre to be returned.
         break;

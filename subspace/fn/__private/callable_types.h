@@ -15,6 +15,7 @@
 #pragma once
 
 #include <concepts>
+#include <functional>
 #include <type_traits>
 
 #include "subspace/mem/forward.h"
@@ -27,7 +28,7 @@ namespace sus::fn::__private {
 template <class F, class R, class... Args>
 concept FunctionPointer =
     std::is_pointer_v<std::decay_t<F>> && requires(F f, Args... args) {
-      { (*f)(args...) } -> std::convertible_to<R>;
+      { std::invoke(*f, args...) } -> std::convertible_to<R>;
     };
 
 /// Whether a functor `T` is a function pointer.
@@ -49,7 +50,7 @@ template <class F, class R, class... Args>
 concept CallableOnceMut =
     !FunctionPointer<F, R, Args...> && requires(F&& f, Args... args) {
       {
-        ::sus::move(f)(::sus::forward<Args>(args)...)
+        std::invoke(::sus::move(f), ::sus::forward<Args>(args)...)
       } -> std::convertible_to<R>;
     };
 
@@ -59,7 +60,9 @@ concept CallableOnceMut =
 template <class F, class R, class... Args>
 concept CallableMut =
     !FunctionPointer<F, R, Args...> && requires(F& f, Args... args) {
-      { f(::sus::forward<Args>(args)...) } -> std::convertible_to<R>;
+      {
+        std::invoke(f, ::sus::forward<Args>(args)...)
+      } -> std::convertible_to<R>;
     };
 
 /// Whether a functor `F` is a callable object (with an `operator()`) that is
@@ -68,7 +71,9 @@ concept CallableMut =
 template <class F, class R, class... Args>
 concept CallableConst =
     !FunctionPointer<F, R, Args...> && requires(const F& f, Args... args) {
-      { f(::sus::forward<Args>(args)...) } -> std::convertible_to<R>;
+      {
+        std::invoke(f, ::sus::forward<Args>(args)...)
+      } -> std::convertible_to<R>;
     };
 
 }  // namespace sus::fn::__private

@@ -51,7 +51,8 @@ class [[nodiscard]] [[sus_trivial_abi]] TakeWhile final
     out = next_iter_.next();
     if (out.is_none()) return out;
     // SAFETY: `pred_` and `out` have each been checked for None already.
-    if (!pred_.as_value_unchecked_mut(::sus::marker::unsafe_fn)(
+    if (!::sus::fn::call_mut(
+            pred_.as_value_unchecked_mut(::sus::marker::unsafe_fn),
             out.as_value_unchecked(::sus::marker::unsafe_fn))) {
       pred_ = Option<Pred>();
       out = Option<Item>();
@@ -70,11 +71,11 @@ class [[nodiscard]] [[sus_trivial_abi]] TakeWhile final
   template <class U, class V>
   friend class IteratorBase;
 
-  static TakeWhile with(Pred && pred, InnerSizedIter && next_iter) noexcept {
+  static TakeWhile with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
     return TakeWhile(::sus::move(pred), ::sus::move(next_iter));
   }
 
-  TakeWhile(Pred && pred, InnerSizedIter && next_iter) noexcept
+  TakeWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(::sus::some(::sus::move(pred))),
         next_iter_(::sus::move(next_iter)) {}
 

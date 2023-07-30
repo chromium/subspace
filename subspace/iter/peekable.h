@@ -70,7 +70,7 @@ class [[nodiscard]] Peekable final
       ::sus::fn::FnOnceRef<bool(const std::remove_reference_t<Item>&)>
           pred) noexcept {
     Option<Item> o = next();
-    if (o.is_some() && ::sus::move(pred)(o.as_value())) {
+    if (o.is_some() && ::sus::fn::call_once(::sus::move(pred), o.as_value())) {
       return o;
     } else {
       // Since we called `next()`, we consumed `peeked_`, so we can insert

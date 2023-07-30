@@ -140,7 +140,8 @@ constexpr T min_by(
     ::sus::fn::FnOnce<std::strong_ordering(
         const std::remove_reference_t<T>&,
         const std::remove_reference_t<T>&)> auto&& compare) noexcept {
-  return ::sus::move(compare)(a, b) == std::strong_ordering::greater
+  return ::sus::fn::call_once(::sus::move(compare), a, b) ==
+                 std::strong_ordering::greater
              ? ::sus::forward<T>(b)
              : ::sus::forward<T>(a);
 }
@@ -165,7 +166,9 @@ template <
   requires(::sus::ops::Ord<Key>)
 constexpr T min_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
                        KeyFn f) noexcept {
-  return f(a) > f(b) ? ::sus::forward<T>(b) : ::sus::forward<T>(a);
+  return ::sus::fn::call_mut(f, a) > ::sus::fn::call_mut(f, b)
+             ? ::sus::forward<T>(b)
+             : ::sus::forward<T>(a);
 }
 
 /// Compares and returns the maximum of two values.
@@ -201,7 +204,8 @@ constexpr T max_by(
     ::sus::fn::FnOnce<std::strong_ordering(
         const std::remove_reference_t<T>&,
         const std::remove_reference_t<T>&)> auto&& compare) noexcept {
-  return ::sus::move(compare)(a, b) == std::strong_ordering::greater
+  return ::sus::fn::call_once(::sus::move(compare), a, b) ==
+                 std::strong_ordering::greater
              ? ::sus::forward<T>(a)
              : ::sus::forward<T>(b);
 }

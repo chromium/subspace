@@ -51,8 +51,9 @@ class [[nodiscard]] Scan final
     Option<Item> out;
     if (Option<typename InnerSizedIter::Item> o = next_iter_.next();
         o.is_some()) {
-      out = fn_(state_,
-                ::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn));
+      out = ::sus::fn::call_mut(
+          fn_, state_,
+          ::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn));
     }
     return out;
   }
