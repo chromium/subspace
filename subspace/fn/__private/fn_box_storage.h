@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "subspace/option/option.h"
 
 namespace sus::fn::__private {
@@ -21,6 +23,8 @@ namespace sus::fn::__private {
 struct FnBoxStorageVtableBase {};
 
 struct FnBoxStorageBase {
+  virtual ~FnBoxStorageBase() = default;
+
   // Should be to a static lifetime pointee.
   Option<const FnBoxStorageVtableBase&> vtable;
 };
@@ -35,24 +39,34 @@ struct FnBoxStorageVtable final : public FnBoxStorageVtableBase {
 template <class F>
 class FnBoxStorage final : public FnBoxStorageBase {
  public:
-  constexpr FnBoxStorage(F&& callable) : callable_(::sus::move(callable)) {}
+  ~FnBoxStorage() override = default;
+
+  constexpr FnBoxStorage(F&& callable)
+    requires(!(std::is_member_function_pointer_v<std::remove_reference_t<F>> ||
+               std::is_member_object_pointer_v<std::remove_reference_t<F>>))
+      : callable_(::sus::move(callable)) {}
+  constexpr FnBoxStorage(F ptr)
+    requires(std::is_member_function_pointer_v<F> ||
+             std::is_member_object_pointer_v<F>)
+      : callable_(ptr) {}
 
   template <class R, class... CallArgs>
   static R call(const FnBoxStorageBase& self_base, CallArgs... callargs) {
     const auto& self = static_cast<const FnBoxStorage&>(self_base);
-    return self.callable_(forward<CallArgs>(callargs)...);
+    return std::invoke(self.callable_, forward<CallArgs>(callargs)...);
   }
 
   template <class R, class... CallArgs>
   static R call_mut(FnBoxStorageBase& self_base, CallArgs... callargs) {
     auto& self = static_cast<FnBoxStorage&>(self_base);
-    return self.callable_(forward<CallArgs>(callargs)...);
+    return std::invoke(self.callable_, forward<CallArgs>(callargs)...);
   }
 
   template <class R, class... CallArgs>
   static R call_once(FnBoxStorageBase&& self_base, CallArgs... callargs) {
     auto&& self = static_cast<FnBoxStorage&&>(self_base);
-    return ::sus::move(self.callable_)(forward<CallArgs>(callargs)...);
+    return std::invoke(::sus::move(self.callable_),
+                       forward<CallArgs>(callargs)...);
   }
 
   F callable_;

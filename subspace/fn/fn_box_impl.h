@@ -32,14 +32,31 @@ FnOnceBox<R(CallArgs...)>::FnOnceBox(F ptr) noexcept
 
 template <class R, class... CallArgs>
 template <class ConstructionType,
-          ::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+          ::sus::fn::callable::CallableObjectReturnsOnce<R, CallArgs...> F>
+  requires(!(std::is_member_function_pointer_v<std::remove_reference_t<F>> ||
+             std::is_member_object_pointer_v<std::remove_reference_t<F>>))
 FnOnceBox<R(CallArgs...)>::FnOnceBox(ConstructionType construction,
                                      F&& lambda) noexcept
     : type_(__private::Storage) {
-  using FnBoxStorage = __private::FnBoxStorage<F>;
   // TODO: Allow overriding the global allocator? Use the allocator in place of
   // `new` and `delete` directly?
-  auto* s = new FnBoxStorage(::sus::move(lambda));
+  auto* s = new __private::FnBoxStorage<F>(::sus::move(lambda));
+  make_vtable(*s, construction);
+  storage_ = s;
+}
+
+template <class R, class... CallArgs>
+template <class ConstructionType,
+          ::sus::fn::callable::CallableObjectReturnsOnce<R, CallArgs...> F>
+  requires(std::is_member_function_pointer_v<F> ||
+           std::is_member_object_pointer_v<F>)
+FnOnceBox<R(CallArgs...)>::FnOnceBox(ConstructionType construction,
+                                     F ptr) noexcept
+    : type_(__private::Storage) {
+  ::sus::check(ptr != nullptr);
+  // TODO: Allow overriding the global allocator? Use the allocator in place of
+  // `new` and `delete` directly?
+  auto* s = new __private::FnBoxStorage<F>(ptr);
   make_vtable(*s, construction);
   storage_ = s;
 }
@@ -135,7 +152,7 @@ R FnOnceBox<R(CallArgs...)>::operator()(CallArgs... args) && noexcept {
     case __private::FnBoxPointer: {
       ::sus::check(fn_ptr_);  // Catch use-after-move.
       auto* fn = ::sus::mem::replace(mref(fn_ptr_), nullptr);
-      return fn(static_cast<CallArgs&&>(args)...);
+      return std::invoke(fn, static_cast<CallArgs&&>(args)...);
     }
     case __private::Storage: {
       ::sus::check(storage_);  // Catch use-after-move.

@@ -164,10 +164,49 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   FnOnceBox(F ptr) noexcept;
 
+  /// Construction from a method or data member pointer.
+  ///
+  /// #[doc.overloads=ctor.methodpointer]
+  template <::sus::fn::callable::CallableObjectReturnsOnce<R, CallArgs...> F>
+    requires(std::is_member_function_pointer_v<F> ||
+             std::is_member_object_pointer_v<F>)
+  FnOnceBox(F ptr) noexcept
+      : FnOnceBox(__private::StorageConstructionFnOnceBox, ptr) {}
+
+  /// Construction from a compatible FnOnceBox.
+  ///
+  /// #[doc.overloads=ctor.fnoncebox]
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsOnce<
+             FnOnceBox<U, UArgs...> &&, R, CallArgs...>)
+  FnOnceBox(FnOnceBox<U, UArgs...>&& box) noexcept
+      : FnOnceBox<R(CallArgs...)>(__private::StorageConstructionFnOnceBox,
+                                  ::sus::move(box)) {}
+
+  /// Construction from a compatible FnMutBox.
+  ///
+  /// #[doc.overloads=ctor.fnmutbox]
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsOnce<
+             FnMutBox<U, UArgs...>, R, CallArgs...>)
+  FnOnceBox(FnMutBox<U, UArgs...>&& box) noexcept
+      : FnOnceBox<R(CallArgs...)>(__private::StorageConstructionFnOnceBox,
+                                  ::sus::move(box)) {}
+
+  /// Construction from a compatible FnBox.
+  ///
+  /// #[doc.overloads=ctor.fnbox]
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsOnce<FnBox<U, UArgs...>,
+                                                            R, CallArgs...>)
+  FnOnceBox(FnBox<U, UArgs...>&& box) noexcept
+      : FnOnceBox<R(CallArgs...)>(__private::StorageConstructionFnOnceBox,
+                                  ::sus::move(box)) {}
+
   /// Construction from the output of `sus_bind()`.
   ///
   /// #[doc.overloads=ctor.bind]
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::CallableObjectReturnsOnce<R, CallArgs...> F>
   FnOnceBox(__private::SusBind<F>&& holder) noexcept
       : FnOnceBox(__private::StorageConstructionFnOnceBox,
                   ::sus::move(holder.lambda)) {}
@@ -188,18 +227,54 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
   // For function pointers or lambdas without captures.
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
-    return FnOnceBox(static_cast<R (*)(CallArgs...)>(fn));
+    return FnOnceBox(fn);
+  }
+  // For method or data member pointers.
+  template <::sus::fn::callable::CallableObjectReturnsOnce<R, CallArgs...> F>
+    requires(std::is_member_function_pointer_v<F> ||
+             std::is_member_object_pointer_v<F>)
+  constexpr static auto from(F fn) noexcept {
+    return FnOnceBox(fn);
+  }
+  // For compatible FnOnceBox.
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsOnce<
+             FnOnceBox<U, UArgs...> &&, R, CallArgs...>)
+  constexpr static auto from(FnOnceBox<U, UArgs...>&& box) noexcept {
+    return FnOnceBox(::sus::move(box));
+  }
+  // For compatible FnMutBox.
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsOnce<
+             FnMutBox<U, UArgs...>, R, CallArgs...>)
+  constexpr static auto from(FnMutBox<U, UArgs...>&& box) noexcept {
+    return FnOnceBox(::sus::move(box));
+  }
+  // For compatible FnBox.
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsOnce<FnBox<U, UArgs...>,
+                                                            R, CallArgs...>)
+  constexpr static auto from(FnBox<U, UArgs...>&& box) noexcept {
+    return FnOnceBox(::sus::move(box));
   }
   // For the output of `sus_bind()`.
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::CallableObjectReturnsOnce<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
-    return FnOnceBox(static_cast<__private::SusBind<F>&&>(holder));
+    return FnOnceBox(::sus::move(holder));
   }
 
  protected:
   template <class ConstructionType,
-            ::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+            ::sus::fn::callable::CallableObjectReturnsOnce<R, CallArgs...> F>
+    requires(!(std::is_member_function_pointer_v<std::remove_reference_t<F>> ||
+               std::is_member_object_pointer_v<std::remove_reference_t<F>>))
   FnOnceBox(ConstructionType, F&& lambda) noexcept;
+
+  template <class ConstructionType,
+            ::sus::fn::callable::CallableObjectReturnsOnce<R, CallArgs...> F>
+    requires(std::is_member_function_pointer_v<F> ||
+             std::is_member_object_pointer_v<F>)
+  FnOnceBox(ConstructionType, F ptr) noexcept;
 
   union {
     // Used when the closure is a function pointer (or a captureless lambda,
@@ -258,24 +333,25 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
 /// FnBox directly. If the lambda has captured, it must be given to one of:
 ///
 /// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
-/// captures variables from local state. Variables to be captured in the lambda
-/// must also be named in sus_store(). `sus_bind()` only allows those named
-/// variables to be captured, and ensures they are stored by value instead of by
-/// reference.
+/// captures variables from local state. Variables to be captured in the
+/// lambda must also be named in sus_store(). `sus_bind()` only allows those
+/// named variables to be captured, and ensures they are stored by value
+/// instead of by reference.
 ///
-/// - `sus_bind0(lambda)` to bind a const lambda which has bound variables that
-/// don't capture state from outside the lambda, such as `[i = 2]() { return i;
+/// - `sus_bind0(lambda)` to bind a const lambda which has bound variables
+/// that don't capture state from outside the lambda, such as `[i = 2]() {
+/// return i;
 /// }`.
 ///
-/// - `sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
-/// which captures variables from local state.
+/// - `sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable
+/// lambda which captures variables from local state.
 ///
-/// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound variables
-/// that don't capture state from outside the lambda, such as `[i = 2]() {
-/// return ++i; }`.
+/// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound
+/// variables that don't capture state from outside the lambda, such as `[i =
+/// 2]() { return ++i; }`.
 ///
-/// Within sus_store(), a variable name can be wrapped with a helper to capture
-/// in different ways:
+/// Within sus_store(), a variable name can be wrapped with a helper to
+/// capture in different ways:
 ///
 /// - `sus_take(x)` will move `x` into the closure instead of copying it.
 ///
@@ -301,14 +377,14 @@ class [[sus_trivial_abi]] FnOnceBox<R(CallArgs...)> {
 /// A FnMutBox or FnOnceBox is _allowed_ to mutate its storage, but a "const"
 /// FnBox closure would just choose not to do so.
 ///
-/// However, a `const FnBox` requires that the storage is not mutated, so it is
-/// not useful if converted to a `const FnMutBox` or `const FnOnceBox` which are
-/// only callable as mutable objects.
+/// However, a `const FnBox` requires that the storage is not mutated, so it
+/// is not useful if converted to a `const FnMutBox` or `const FnOnceBox`
+/// which are only callable as mutable objects.
 ///
 /// # Null pointers
 ///
-/// A null function pointer is not allowed, constructing a FnMutBox from a null
-/// pointer will panic.
+/// A null function pointer is not allowed, constructing a FnMutBox from a
+/// null pointer will panic.
 template <class R, class... CallArgs>
 class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
     : public FnOnceBox<R(CallArgs...)> {
@@ -319,10 +395,40 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   FnMutBox(F ptr) noexcept : FnOnceBox<R(CallArgs...)>(::sus::move(ptr)) {}
 
+  /// Construction from a method or data member pointer.
+  ///
+  /// #[doc.overloads=ctor.methodpointer]
+  template <::sus::fn::callable::CallableObjectReturnsMut<R, CallArgs...> F>
+    requires(std::is_member_function_pointer_v<F> ||
+             std::is_member_object_pointer_v<F>)
+  FnMutBox(F ptr) noexcept
+      : FnOnceBox<R(CallArgs...)>(__private::StorageConstructionFnMutBox, ptr) {
+  }
+
+  /// Construction from a compatible FnMutBox.
+  ///
+  /// #[doc.overloads=ctor.fnmutbox]
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsMut<
+             FnMutBox<U, UArgs...>, R, CallArgs...>)
+  FnMutBox(FnMutBox<U, UArgs...>&& box) noexcept
+      : FnOnceBox<R(CallArgs...)>(__private::StorageConstructionFnMutBox,
+                                  ::sus::move(box)) {}
+
+  /// Construction from a compatible FnBox.
+  ///
+  /// #[doc.overloads=ctor.fnbox]
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsMut<FnBox<U, UArgs...>,
+                                                           R, CallArgs...>)
+  FnMutBox(FnBox<U, UArgs...>&& box) noexcept
+      : FnOnceBox<R(CallArgs...)>(__private::StorageConstructionFnMutBox,
+                                  ::sus::move(box)) {}
+
   /// Construction from the output of `sus_bind()`.
   ///
   /// #[doc.overloads=ctor.bind]
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::CallableObjectReturnsMut<R, CallArgs...> F>
   FnMutBox(__private::SusBind<F>&& holder) noexcept
       : FnOnceBox<R(CallArgs...)>(__private::StorageConstructionFnMutBox,
                                   ::sus::move(holder.lambda)) {}
@@ -348,15 +454,47 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
   /// #[doc.overloads=from.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
-    return FnMutBox(static_cast<R (*)(CallArgs...)>(fn));
+    return FnMutBox(fn);
   }
+
+  /// `sus::construct::From` trait implementation for method or data member
+  /// pointers.
+  ///
+  /// #[doc.overloads=from.method]
+  template <::sus::fn::callable::CallableObjectReturnsMut<R, CallArgs...> F>
+    requires(std::is_member_function_pointer_v<F> ||
+             std::is_member_object_pointer_v<F>)
+  constexpr static auto from(F fn) noexcept {
+    return FnMutBox(fn);
+  }
+
+  /// `sus::construct::From` compatible FnMutBox.
+  ///
+  /// #[doc.overloads=from.fnmutbox]
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsMut<
+             FnMutBox<U, UArgs...>, R, CallArgs...>)
+  constexpr static auto from(FnMutBox<U, UArgs...>&& box) noexcept {
+    return FnMutBox(::sus::move(box));
+  }
+
+  /// `sus::construct::From` compatible FnBox.
+  ///
+  /// #[doc.overloads=from.fnbox]
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsMut<FnBox<U, UArgs...>,
+                                                           R, CallArgs...>)
+  constexpr static auto from(FnBox<U, UArgs...>&& box) noexcept {
+    return FnMutBox(::sus::move(box));
+  }
+
   /// `sus::construct::From` trait implementation for the output of
   /// `sus_bind()`.
   ///
   /// #[doc.overloads=from.callableobject]
-  template <::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+  template <::sus::fn::callable::CallableObjectReturnsMut<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
-    return FnMutBox(static_cast<__private::SusBind<F>&&>(holder));
+    return FnMutBox(::sus::move(holder));
   }
 
  protected:
@@ -365,7 +503,7 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
   // would slice that off.
 
   template <class ConstructionType,
-            ::sus::fn::callable::CallableObjectReturns<R, CallArgs...> F>
+            ::sus::fn::callable::CallableObjectReturnsMut<R, CallArgs...> F>
   FnMutBox(ConstructionType c, F&& lambda) noexcept
       : FnOnceBox<R(CallArgs...)>(c, ::sus::move(lambda)) {}
 
@@ -391,24 +529,25 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
 /// FnBox directly. If the lambda has captured, it must be given to one of:
 ///
 /// - `sus_bind(sus_store(..captures..), lambda)` to bind a const lambda which
-/// captures variables from local state. Variables to be captured in the lambda
-/// must also be named in sus_store(). `sus_bind()` only allows those named
-/// variables to be captured, and ensures they are stored by value instead of by
-/// reference.
+/// captures variables from local state. Variables to be captured in the
+/// lambda must also be named in sus_store(). `sus_bind()` only allows those
+/// named variables to be captured, and ensures they are stored by value
+/// instead of by reference.
 ///
-/// - `sus_bind0(lambda)` to bind a const lambda which has bound variables that
-/// don't capture state from outside the lambda, such as `[i = 2]() { return i;
+/// - `sus_bind0(lambda)` to bind a const lambda which has bound variables
+/// that don't capture state from outside the lambda, such as `[i = 2]() {
+/// return i;
 /// }`.
 ///
-/// - `sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable lambda
-/// which captures variables from local state.
+/// - `sus_bind_mut(sus_store(...captures...), lambda)` to bind a mutable
+/// lambda which captures variables from local state.
 ///
-/// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound variables
-/// that don't capture state from outside the lambda, such as `[i = 2]() {
-/// return ++i; }`.
+/// - `sus_bind0_mut(lambda)` to bind a mutable lambda which has bound
+/// variables that don't capture state from outside the lambda, such as `[i =
+/// 2]() { return ++i; }`.
 ///
-/// Within sus_store(), a variable name can be wrapped with a helper to capture
-/// in different ways:
+/// Within sus_store(), a variable name can be wrapped with a helper to
+/// capture in different ways:
 ///
 /// - `sus_take(x)` will move `x` into the closure instead of copying it.
 ///
@@ -434,9 +573,9 @@ class [[sus_trivial_abi]] FnMutBox<R(CallArgs...)>
 /// A FnMutBox or FnOnceBox is _allowed_ to mutate its storage, but a "const"
 /// FnBox closure would just choose not to do so.
 ///
-/// However, a `const FnBox` requires that the storage is not mutated, so it is
-/// not useful if converted to a `const FnMutBox` or `const FnOnceBox` which are
-/// only callable as mutable objects.
+/// However, a `const FnBox` requires that the storage is not mutated, so it
+/// is not useful if converted to a `const FnMutBox` or `const FnOnceBox`
+/// which are only callable as mutable objects.
 ///
 /// # Null pointers
 ///
@@ -452,13 +591,32 @@ class [[sus_trivial_abi]] FnBox<R(CallArgs...)> final
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   FnBox(F ptr) noexcept : FnMutBox<R(CallArgs...)>(ptr) {}
 
+  /// Construction from a method or data member pointer.
+  ///
+  /// #[doc.overloads=ctor.methodpointer]
+  template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
+    requires(std::is_member_function_pointer_v<F> ||
+             std::is_member_object_pointer_v<F>)
+  FnBox(F ptr) noexcept
+      : FnMutBox<R(CallArgs...)>(__private::StorageConstructionFnBox, ptr) {}
+
+  /// Construction from a compatible FnBox.
+  ///
+  /// #[doc.overloads=ctor.fnbox]
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsConst<FnBox<U, UArgs...>,
+                                                             R, CallArgs...>)
+  FnBox(FnBox<U, UArgs...>&& box) noexcept
+      : FnMutBox<R(CallArgs...)>(__private::StorageConstructionFnBox,
+                                 ::sus::move(box)) {}
+
   /// Construction from the output of `sus_bind()`.
   ///
   /// #[doc.overloads=ctor.bind]
   template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
   FnBox(__private::SusBind<F>&& holder) noexcept
       : FnMutBox<R(CallArgs...)>(__private::StorageConstructionFnBox,
-                                 ::sus::forward<F>(holder.lambda)) {}
+                                 ::sus::move(holder.lambda)) {}
 
   ~FnBox() noexcept = default;
 
@@ -477,16 +635,40 @@ class [[sus_trivial_abi]] FnBox<R(CallArgs...)> final
 
   /// `sus::construct::From` trait implementation for function pointers or
   /// lambdas without captures.
+  ///
+  /// #[doc.overloads=from.fnpointer]
   template <::sus::fn::callable::FunctionPointerMatches<R, CallArgs...> F>
   constexpr static auto from(F fn) noexcept {
-    return FnBox(static_cast<R (*)(CallArgs...)>(fn));
+    return FnBox(fn);
   }
+
+  /// `sus::construct::From` trait implementation for method or data member
+  /// pointers.
+  ///
+  /// #[doc.overloads=from.method]
+  template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
+    requires(std::is_member_function_pointer_v<F> ||
+             std::is_member_object_pointer_v<F>)
+  constexpr static auto from(F fn) noexcept {
+    return FnBox(fn);
+  }
+
+  /// `sus::construct::From` compatible FnBox.
+  ///
+  /// #[doc.overloads=from.fnbox]
+  template <class U, class... UArgs>
+    requires(::sus::fn::callable::CallableObjectReturnsConst<FnBox<U, UArgs...>,
+                                                             R, CallArgs...>)
+  constexpr static auto from(FnBox<U, UArgs...>&& box) noexcept {
+    return FnMutBox(::sus::move(box));
+  }
+
   /// `sus::construct::From` trait implementation for the output of
   /// `sus_bind()`.
   /// #[doc.overloads=1]
   template <::sus::fn::callable::CallableObjectReturnsConst<R, CallArgs...> F>
   constexpr static auto from(__private::SusBind<F>&& holder) noexcept {
-    return FnBox(static_cast<__private::SusBind<F>&&>(holder));
+    return FnBox(::sus::move(holder));
   }
 
  private:
