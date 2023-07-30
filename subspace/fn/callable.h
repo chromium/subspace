@@ -15,6 +15,7 @@
 #pragma once
 
 #include <concepts>
+#include <functional>
 #include <type_traits>
 
 #include "subspace/mem/forward.h"
@@ -25,11 +26,6 @@ template <class T>
 concept FunctionPointer = requires(T t) {
   { std::is_pointer_v<decltype(+t)> };
 };
-
-namespace __private {
-template <class R, class... Args>
-void CallablePointer(R (*)(Args...)) noexcept {}
-}  // namespace __private
 
 /// Verifies that T is a function pointer (or captureless lambda) that returns
 /// a type convertible to `R` when called with `Args`.
@@ -42,8 +38,10 @@ template <class T, class R, class... Args>
 concept FunctionPointerReturns = (
     FunctionPointer<T> &&
     std::convertible_to<std::invoke_result_t<T, Args...>, R> &&
-    requires (T t) {
-        __private::CallablePointer(+t);
+    // We verify that `T` can be stored in a function pointer. Types must match
+    // more strictly than just for invoking it.
+    requires (R(*p)(Args...), T t) {
+        { p = t };
     }
 );
 // clang-format on
@@ -61,8 +59,10 @@ concept FunctionPointerReturns = (
 template <class T, class R, class... Args>
 concept FunctionPointerMatches = (
     FunctionPointer<T> &&
-    requires (T t) {
-        __private::CallablePointer<R, Args...>(+t);
+    // We verify that `T` can be stored in a function pointer. Types must match
+    // more strictly than just for invoking it.
+    requires (R(*p)(Args...), T t) {
+        { p = t };
     }
 );
 // clang-format on
@@ -72,7 +72,7 @@ template <class T, class... Args>
 concept FunctionPointerWith = (
     FunctionPointer<T> &&
     requires (T t, Args&&... args) {
-        t(::sus::mem::forward<Args>(args)...);
+        std::invoke(t, ::sus::mem::forward<Args>(args)...);
     }
 );
 // clang-format on
@@ -84,68 +84,33 @@ inline constexpr bool callable_const(R (T::*)(Args...) const) {
   return true;
 };
 
-template <class T, class R, class... Args>
-inline constexpr bool callable_mut(R (T::*)(Args...)) {
-  return true;
-};
-
 }  // namespace __private
 
-// clang-format off
 template <class T, class R, class... Args>
-concept CallableObjectReturnsConst = (
-    !FunctionPointer<T> &&
-    requires (const T& t, Args&&... args) {
-        { t(::sus::mem::forward<Args>(args)...) } -> std::convertible_to<R>;
-    }
-);
-
-template <class T, class... Args>
-concept CallableObjectWithConst = (
-    !FunctionPointer<T> &&
-    requires (const T& t, Args&&... args) {
-     t(::sus::mem::forward<Args>(args)...);
-    }
-);
+concept CallableObjectReturnsOnce =
+    !FunctionPointer<T> && requires(T t, Args&&... args) {
+      {
+        std::invoke(static_cast<T&&>(t), ::sus::mem::forward<Args>(args)...)
+      } -> std::convertible_to<R>;
+    };
 
 template <class T, class R, class... Args>
-concept CallableObjectReturnsMut = (
-    !FunctionPointer<T> &&
-    requires (T& t, Args&&... args) {
-        { t(::sus::mem::forward<Args>(args)...) } -> std::convertible_to<R>;
-    }
-);
-
-template <class T, class... Args>
-concept CallableObjectWithMut = (
-    !FunctionPointer<T> &&
-    requires (T& t, Args&&... args) {
-        t(::sus::mem::forward<Args>(args)...);
-    }
-);
-// clang-format on
+concept CallableObjectReturnsConst =
+    !FunctionPointer<T> && requires(const T& t, Args&&... args) {
+      {
+        std::invoke(t, ::sus::mem::forward<Args>(args)...)
+      } -> std::convertible_to<R>;
+    };
 
 template <class T, class R, class... Args>
-concept CallableObjectReturns = CallableObjectReturnsConst<T, R, Args...> ||
-                                CallableObjectReturnsMut<T, R, Args...>;
-
-template <class T, class... Args>
-concept CallableObjectWith =
-    CallableObjectWithConst<T, Args...> || CallableObjectWithMut<T, Args...>;
+concept CallableObjectReturnsMut =
+    !FunctionPointer<T> && requires(T& t, Args&&... args) {
+      {
+        std::invoke(t, ::sus::mem::forward<Args>(args)...)
+      } -> std::convertible_to<R>;
+    };
 
 template <class T>
 concept CallableObjectConst = __private::callable_const(&T::operator());
-
-template <class T>
-concept CallableObjectMut = CallableObjectConst<T> ||
-                            __private::callable_mut(&T::operator());
-
-template <class T, class... Args>
-concept CallableWith =
-    FunctionPointerWith<T, Args...> || CallableObjectWith<T, Args...>;
-
-template <class T, class R, class... Args>
-concept CallableReturns = FunctionPointerReturns<T, R, Args...> ||
-                          CallableObjectReturns<T, R, Args...>;
 
 }  // namespace sus::fn::callable
