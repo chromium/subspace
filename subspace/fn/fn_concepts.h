@@ -89,7 +89,8 @@ struct Anything {
 /// `FnOnceRef`. And `FnBox` is convertible to `FnMutBox` is convertible to
 /// `FnOnceBox`.
 ///
-/// # Example
+/// # Examples
+/// A function that receives a `FnOnce` matching type and calls it:
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
@@ -101,6 +102,28 @@ struct Anything {
 ///   return sus::move(o).unwrap_or_default() + 4;
 /// });
 ///  sus::check(x == 400 + 4);
+/// ```
+///
+/// A `FnOnce` whose first parameter is a class can be matched with a method
+/// from that same class if the remaining parameters match the method's
+/// signature:
+/// ```
+/// struct Class {
+///   Class(i32 value) : value_(value) {}
+///   i32 value() const { return value_; }
+///
+///  private:
+///   i32 value_;
+/// };
+///
+/// i32 map_class_once(const Class& c,
+///                    sus::fn::FnOnce<i32(const Class&)> auto&& f) {
+///   return sus::fn::call_once(sus::move(f), c);
+/// }
+///
+/// // Map the class C to its value().
+/// auto c = Class(42);
+/// sus::check(map_class_once(c, &Class::value) == 42);
 /// ```
 template <class F, class... S>
 concept FnOnce = requires {
@@ -162,7 +185,8 @@ concept FnOnce = requires {
 /// `FnOnceRef`. And `FnBox` is convertible to `FnMutBox` is convertible to
 /// `FnOnceBox`.
 ///
-/// # Example
+/// # Examples
+/// A function that receives a `FnMut` matching type and calls it:
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
@@ -176,6 +200,27 @@ concept FnOnce = requires {
 ///   return sus::move(o).unwrap_or_default() + i;
 /// });
 /// sus::check(x == 401 + 102);
+/// ```
+///
+/// A `FnMut` whose first parameter is a class can be matched with a method from
+/// that same class if the remaining parameters match the method's signature:
+/// ```
+/// struct Class {
+///   Class(i32 value) : value_(value) {}
+///   i32 value() const { return value_; }
+///
+///  private:
+///   i32 value_;
+/// };
+///
+/// i32 map_class_mut(const Class& c,
+///                   sus::fn::FnMut<i32(const Class&)> auto&& f) {
+///   return sus::fn::call_mut(f, c);
+/// }
+///
+/// // Map the class C to its value().
+/// auto c = Class(42);
+/// sus::check(map_class_mut(c, &Class::value) == 42);
 /// ```
 template <class F, class... S>
 concept FnMut = requires {
@@ -238,7 +283,8 @@ concept FnMut = requires {
 /// `FnOnceRef`. And `FnBox` is convertible to `FnMutBox` is convertible to
 /// `FnOnceBox`.
 ///
-/// # Example
+/// # Examples
+/// A function that receives a `Fn` matching type and calls it:
 /// ```
 /// // Accepts any type that can be called once with (Option<i32>) and returns
 /// // i32.
@@ -251,6 +297,27 @@ concept FnMut = requires {
 ///   return sus::move(o).unwrap_or_default() + i;
 /// });
 /// sus::check(x == 401 + 101);
+/// ```
+///
+/// A `Fn` whose first parameter is a class can be matched with a method from
+/// that same class if the remaining parameters match the method's signature:
+/// ```
+/// struct Class {
+///   Class(i32 value) : value_(value) {}
+///   i32 value() const { return value_; }
+///
+///  private:
+///   i32 value_;
+/// };
+///
+/// i32 map_class(const Class& c,
+///               sus::fn::Fn<i32(const Class&)> auto const& f) {
+///   return sus::fn::call(f, c);
+/// }
+///
+/// // Map the class C to its value().
+/// auto c = Class(42);
+/// sus::check(map_class(c, &Class::value) == 42);
 /// ```
 template <class F, class... S>
 concept Fn = requires {
