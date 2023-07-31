@@ -114,7 +114,7 @@ TEST(Vec, ConstructorFunction) {
   }
   {
     // into() as an input to the vec.
-    Vec<u32> a = sus::vec(1_u32, sus::into(2), 3_u32);
+    Vec<u32> a = sus::vec(1_u32, sus::into(2_u16), 3_u32);
     EXPECT_EQ(a.len(), 3_usize);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);

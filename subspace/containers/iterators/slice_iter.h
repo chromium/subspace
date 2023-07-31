@@ -82,20 +82,17 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   }
 
   ::sus::iter::SizeHint size_hint() const noexcept {
-    // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
-    // not exceed isize::MAX.
-    const auto remaining = ::sus::num::usize::from_unchecked(
-        ::sus::marker::unsafe_fn, end_ - ptr_);
+    const auto remaining = exact_size_hint();
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::with(remaining));
   }
 
   /// sus::iter::ExactSizeIterator trait.
   ::sus::num::usize exact_size_hint() const noexcept {
-    // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
+    // SAFETY: The constructor checks that `end_ - ptr_` is positive and Slice can
     // not exceed isize::MAX.
-    return ::sus::num::usize::from_unchecked(::sus::marker::unsafe_fn,
-                                             end_ - ptr_);
+    return ::sus::num::usize::try_from(end_ - ptr_)
+        .unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
  private:
@@ -140,9 +137,13 @@ struct [[sus_trivial_abi]] SliceIterMut final
   /// Returns a mutable slice of the items left to be iterated, consuming the
   /// iterator.
   SliceMut<RawItem> as_mut_slice() && {
-    return SliceMut<RawItem>::from_raw_parts_mut(::sus::marker::unsafe_fn,
-                                                 ref_.to_view(), ptr_,
-                                                 usize::from(end_ - ptr_));
+    return SliceMut<RawItem>::from_raw_parts_mut(
+        ::sus::marker::unsafe_fn, ref_.to_view(), ptr_,
+        // SAFETY: `end_ > ptr_` at all times, and the distance between two
+        // pointers in a single allocation is at most isize::MAX which fits in
+        // usize.
+        usize::try_from(end_ - ptr_)
+            .unwrap_unchecked(::sus::marker::unsafe_fn));
   }
 
   // sus::iter::Iterator trait.
@@ -173,11 +174,11 @@ struct [[sus_trivial_abi]] SliceIterMut final
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  usize exact_size_hint() const noexcept {
     // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
     // not exceed isize::MAX.
-    return ::sus::num::usize::from_unchecked(::sus::marker::unsafe_fn,
-                                             end_ - ptr_);
+    return usize::try_from(end_ - ptr_)
+        .unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
  private:

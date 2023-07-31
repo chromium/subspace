@@ -122,7 +122,7 @@ TEST(Choice, ConstructorFunction1Value) {
   }
   {
     // into() as an input to the tuple.
-    U u = sus::choice<Order::First>(sus::into(1));
+    U u = sus::choice<Order::First>(sus::into(1_u16));
     EXPECT_EQ(u.as<Order::First>(), 1_u32);
   }
   {
@@ -187,7 +187,7 @@ TEST(Choice, ConstructorFunctionMoreThan1Value) {
   }
   {
     // into() as an input to the tuple.
-    U u = sus::choice<Order::First>(1u, sus::into(2));
+    U u = sus::choice<Order::First>(1u, sus::into(2_u16));
     EXPECT_EQ(u.as<Order::First>().into_inner<0>(), 1_u32);
     EXPECT_EQ(u.as<Order::First>().into_inner<1>(), 2_u32);
   }

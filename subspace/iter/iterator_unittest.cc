@@ -311,7 +311,7 @@ TEST(Iterator, FilterMap) {
   auto it = sus::Vec<i32>::with(1, 2, 3, 4, 5).into_iter();
   auto fmit = sus::move(it).filter_map([](i32&& i) -> sus::Option<u32> {
     if (i >= 3) {
-      return sus::some(u32::from(i));
+      return u32::try_from(i).ok();
     } else {
       return sus::none();
     }
@@ -360,7 +360,7 @@ TEST(Iterator, Map) {
   i32 nums[5] = {1, 2, 3, 4, 5};
 
   auto it = ArrayIterator<i32, 5>::with_array(nums).map(
-      [](i32&& i) { return u32::from(i); });
+      [](i32&& i) { return u32::try_from(i).unwrap(); });
   auto v = sus::move(it).collect_vec();
   static_assert(std::same_as<decltype(v), sus::Vec<u32>>);
   {
@@ -376,7 +376,7 @@ TEST(Iterator, Map) {
   };
 
   auto it2 = ArrayIterator<i32, 5>::with_array(nums)
-                 .map([](i32&& i) { return u32::from(i); })
+                 .map([](i32&& i) { return u32::try_from(i).unwrap(); })
                  .map([](u32&& i) { return MapOut(i); });
   auto v2 = sus::move(it2).collect_vec();
   static_assert(std::same_as<decltype(v2), sus::Vec<MapOut>>);
@@ -393,7 +393,7 @@ TEST(Iterator, MapDoubleEnded) {
   i32 nums[5] = {1, 2, 3, 4, 5};
 
   auto it = ArrayIterator<i32, 5>::with_array(nums).map(
-      [](i32&& i) { return u32::from(i); });
+      [](i32&& i) { return u32::try_from(i).unwrap(); });
   EXPECT_EQ(it.next_back(), sus::some(5_u32).construct());
   EXPECT_EQ(it.next_back(), sus::some(4_u32).construct());
   EXPECT_EQ(it.next_back(), sus::some(3_u32).construct());
@@ -407,7 +407,7 @@ TEST(Iterator, MapWhile) {
     auto nums = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
     auto it = sus::move(nums).into_iter().map_while([](i32&& i) -> Option<u32> {
       if (i != 4)
-        return sus::some(u32::from(i));
+        return u32::try_from(i).ok();
       else
         return sus::none();
     });
@@ -490,15 +490,15 @@ TEST(Iterator, Enumerate) {
   auto vec = Vec<i32>::with(0, 2, 4, 6, 8);
   // Front to back.
   for (auto [i, value] : vec.iter().enumerate()) {
-    EXPECT_EQ(i * 2u, usize::from(value));
+    EXPECT_EQ(i * 2u, usize::try_from(value).unwrap());
   }
   // Back to front.
   for (auto [i, value] : vec.iter().enumerate().rev()) {
-    EXPECT_EQ(i * 2u, usize::from(value));
+    EXPECT_EQ(i * 2u, usize::try_from(value).unwrap());
   }
   // Back to front without reversing the indices.
   for (auto [i, value] : vec.iter().rev().enumerate()) {
-    EXPECT_EQ((4u - i) * 2u, usize::from(value));
+    EXPECT_EQ((4u - i) * 2u, usize::try_from(value).unwrap());
   }
 }
 
@@ -1354,7 +1354,7 @@ TEST(Iterator, FindMap) {
   // Works on lvalue iterator.
   {
     auto find_even = [](const i32& i) -> sus::Option<u32> {
-      if (i % 2 == 0) return sus::some(u32::from(i));
+      if (i % 2 == 0) return u32::try_from(i).ok();
       return sus::none();
     };
 
@@ -1673,10 +1673,10 @@ TEST(Iterator, Fold) {
   // Check the accumulator type can be different from the iterating type.
   {
     auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
-    auto o =
-        sus::move(it).fold(10_u32,
-                           // Receiving rvalue ensures the caller did move.
-                           [](u32 acc, i32&& v) { return u32::from(v) + acc; });
+    auto o = sus::move(it).fold(
+        10_u32,
+        // Receiving rvalue ensures the caller did move.
+        [](u32 acc, i32&& v) { return u32::try_from(v).unwrap() + acc; });
     static_assert(std::same_as<u32, decltype(o)>);
     EXPECT_EQ(o, (5u + (4u + (3u + (2u + (1u + 10u))))));
   }
@@ -1707,7 +1707,7 @@ TEST(Iterator, Rfold) {
     auto o = sus::move(it).rfold(
         10_u32,
         // Receiving rvalue ensures the caller did move.
-        [](u32 acc, i32&& v) { return u32::from(v) + acc; });
+        [](u32 acc, i32&& v) { return u32::try_from(v).unwrap() + acc; });
     static_assert(std::same_as<u32, decltype(o)>);
     EXPECT_EQ(o, (1u + (2u + (3u + (4u + (5u + 10u))))));
   }

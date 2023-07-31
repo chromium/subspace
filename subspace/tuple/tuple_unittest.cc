@@ -204,7 +204,7 @@ TEST(Tuple, ConstructorFunction) {
   }
   {
     // into() as an input to the tuple.
-    Tuple<u32, u32, u32> a = sus::tuple(1_u32, sus::into(2), 3_u32);
+    Tuple<u32, u32, u32> a = sus::tuple(1_u32, sus::into(2_u16), 3_u32);
     EXPECT_EQ(a.at<0>(), 1_u32);
     EXPECT_EQ(a.at<1>(), 2_u32);
     EXPECT_EQ(a.at<2>(), 3_u32);

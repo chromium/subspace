@@ -15,31 +15,33 @@
 #pragma once
 
 #include "subspace/marker/unsafe.h"
-#include "subspace/option/option.h"
 #include "subspace/num/integer_concepts.h"
 #include "subspace/num/unsigned_integer.h"
+#include "subspace/option/option.h"
 
 namespace sus::iter::__private {
 
 template <::sus::num::Integer T>
 constexpr T step_forward(T l) noexcept {
   // SAFETY: All `Integer` can hold `1`.
-  return l + T::from_unchecked(::sus::marker::unsafe_fn, 1);
+  return l + T::try_from(1).unwrap_unchecked(::sus::marker::unsafe_fn);
 }
 template <::sus::num::Integer T>
 constexpr T step_backward(T l) noexcept {
   // SAFETY: All `Integer` can hold `1`.
-  return l - T::from_unchecked(::sus::marker::unsafe_fn, 1);
+  return l - T::try_from(1).unwrap_unchecked(::sus::marker::unsafe_fn);
 }
 template <::sus::num::Integer T>
 constexpr ::sus::Option<T> step_forward_checked(T l) noexcept {
   // SAFETY: All `Integer` can hold `1`.
-  return l.checked_add(T::from_unchecked(::sus::marker::unsafe_fn, 1));
+  return l.checked_add(
+      T::try_from(1).unwrap_unchecked(::sus::marker::unsafe_fn));
 }
 template <::sus::num::Integer T>
 constexpr ::sus::Option<T> step_backward_checked(T l) noexcept {
   // SAFETY: All `Integer` can hold `1`.
-  return l.checked_sub(T::from_unchecked(::sus::marker::unsafe_fn, 1));
+  return l.checked_sub(
+      T::try_from(1).unwrap_unchecked(::sus::marker::unsafe_fn));
 }
 template <::sus::num::Integer T>
 constexpr T step_forward_by(T l, ::sus::num::usize steps) noexcept {
@@ -62,8 +64,8 @@ constexpr ::sus::Option<T> step_backward_by_checked(
       [&l](T steps) { return l.checked_sub(::sus::marker::unsafe_fn, steps); });
 }
 template <::sus::num::Integer T>
-constexpr ::sus::Option<::sus::num::usize> steps_between(
-    const T& l, const T& r) noexcept {
+constexpr ::sus::Option<::sus::num::usize> steps_between(const T& l,
+                                                         const T& r) noexcept {
   return r.checked_sub(l).and_then(
       [](T steps) { return ::sus::num::usize::try_from(steps).ok(); });
 }

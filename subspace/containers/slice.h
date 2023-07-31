@@ -110,7 +110,7 @@ class [[sus_trivial_abi]] Slice final {
   sus_pure static constexpr inline Slice from_raw_parts(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       const T* data sus_lifetimebound, usize len) noexcept {
-    ::sus::check(size_t{len} <= sus::to_bits<size_t>(isize::MAX));
+    ::sus::check(len <= ::sus::to_bits<usize>(isize::MAX));
     // We strip the `const` off `data`, however only const access is provided
     // through this class. This is done so that mutable types can compose Slice
     // and store a mutable pointer.
@@ -123,7 +123,7 @@ class [[sus_trivial_abi]] Slice final {
   ///
   /// #[doc.overloads=from.array]
   template <size_t N>
-    requires(N <= sus::to_bits<size_t>(isize::MAX))
+    requires(N <= ::sus::to_bits<usize>(isize::MAX))
   sus_pure static constexpr inline Slice from(
       const T (&data)[N] sus_lifetimebound) {
     // We strip the `const` off `data`, however only const access is provided
@@ -319,7 +319,7 @@ class [[sus_trivial_abi]] SliceMut final {
   sus_pure static constexpr inline SliceMut from_raw_parts_mut(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       T* data sus_lifetimebound, usize len) noexcept {
-    ::sus::check(len <= usize::from(isize::MAX));
+    ::sus::check(len <= ::sus::to_bits<usize>(isize::MAX));
     return SliceMut(::sus::move(refs), data, len);
   }
 
@@ -329,7 +329,7 @@ class [[sus_trivial_abi]] SliceMut final {
   ///
   /// #[doc.overloads=from.array]
   template <size_t N>
-    requires(N <= sus::to_bits<size_t>(isize::MAX_PRIMITIVE))
+    requires(N <= ::sus::to_bits<usize>(isize::MAX_PRIMITIVE))
   sus_pure static constexpr inline SliceMut from(
       T (&data)[N] sus_lifetimebound) {
     return SliceMut(::sus::iter::IterRefCounter::empty_for_view(), data, N);
