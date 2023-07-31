@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "subspace/num/convert.h"
+#include "subspace/num/transmogrify.h"
 #include "subspace/num/float.h"
 #include "subspace/num/float_impl.h"
 #include "subspace/num/signed_integer.h"

@@ -54,8 +54,8 @@ constexpr inline _self() noexcept = default;
 /** Construction from signed types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.ctor.signedint.typed]
  */
@@ -66,8 +66,8 @@ constexpr inline _self(S v) noexcept : primitive_value(v.primitive_value) {}
 /** Construction from signed primitive types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.ctor.signedint.primitive]
  */
@@ -78,8 +78,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /** Construction from signed enum types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.ctor.signedenum]
  */
@@ -90,8 +90,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /** Construction from signed enum class types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.ctor.signedenumclass]
  */
@@ -103,8 +103,8 @@ explicit constexpr inline _self(P v) noexcept
 /** Construction from unsigned types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.ctor.unsignedint.typed]
  */
@@ -115,8 +115,8 @@ constexpr inline _self(U v) noexcept : primitive_value(v.primitive_value) {}
 /** Construction from unsigned primitive types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.ctor.unsignedint.primitive]
  */
@@ -127,8 +127,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /** Construction from unsigned enum types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.ctor.unsignedenum]
  */
@@ -139,8 +139,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /** Construction from unsigned enum class types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.ctor.unsignedenumclass]
  */
@@ -152,8 +152,8 @@ explicit constexpr inline _self(P v) noexcept
 /** Assignment from signed types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.assign.signedint.typed]
  */
@@ -167,8 +167,8 @@ constexpr inline _self& operator=(S v) noexcept {
 /** Assignment from signed primitive types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.assign.signedint.primitive]
  */
@@ -182,8 +182,8 @@ constexpr inline _self& operator=(P v) noexcept {
 /** Assignment from signed enum types where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.assign.signedenum]
  */
@@ -198,8 +198,8 @@ constexpr inline _self& operator=(P v) noexcept {
  * no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=from.signed]
  */
@@ -258,8 +258,8 @@ try_from(U u) noexcept {
  * where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=from.signed.prim]
  */
@@ -298,8 +298,8 @@ try_from(S s) noexcept {
  * are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
- * conversions use the `sus::construct::ToBits` concept with
- * `sus::to_bits<##_self##>()`.
+ * conversions use the `sus::construct::Transmogrify` concept with
+ * `sus::mog<##_self##>()`.
  *
  * #[doc.overloads=signedint.from.signedenum]
  */
@@ -422,9 +422,9 @@ static constexpr _self from_sum(
 ///
 /// Typically this should be used in a curly-brace conversion statement such as
 /// `int32_t{3_i32}` which will ensure a compiler error if the conversion can
-/// lose data. Lossy conversions can be done through the `sus::convert::ToBits`
-/// concept, such as `sus::to_bits<int32_t>(3_i32)` or
-/// `sus::to_bits<uint32_t>(3_i32)`.
+/// lose data. Lossy conversions can be done through the `sus::convert::Transmogrify`
+/// concept, such as `sus::mog<int32_t>(3_i32)` or
+/// `sus::mog<uint32_t>(3_i32)`.
 template <SignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline explicit operator U() const {

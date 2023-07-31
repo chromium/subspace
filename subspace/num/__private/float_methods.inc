@@ -208,8 +208,8 @@ static constexpr _self from_product(
 ///
 /// Typically this should be used in a curly-brace conversion statement such as
 /// `float{3_f32}` which will ensure a compiler error if the conversion can lose
-/// data. Lossy conversions can be done through the `sus::convert::ToBits`
-/// concept, such as `sus::to_bits<float>(3_f32)`.
+/// data. Lossy conversions can be done through the `sus::convert::Transmogrify`
+/// concept, such as `sus::mog<float>(3_f32)`.
 template <PrimitiveFloat U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline explicit operator U() const {
@@ -288,7 +288,8 @@ template <Float F>
 /// IEEE 754 standard, which may not match the interpretation by some of the
 /// older, non-conformant (e.g. MIPS) hardware implementations.
 sus_pure constexpr std::strong_ordering total_cmp(_self other) const& noexcept {
-  return __private::float_strong_ordering(primitive_value, other.primitive_value);
+  return __private::float_strong_ordering(primitive_value,
+                                          other.primitive_value);
 }
 
 /// sus::num::Neg<##_self##> trait.
@@ -650,8 +651,35 @@ sus_pure constexpr inline I to_int_unchecked(
 
 /// Raw transmutation from `##_unsigned##`.
 ///
-/// Note that this function is distinct from Into<##_self##>, which attempts to
-/// preserve the numeric value, and not the bitwise value.
+/// This is identical to [`std::bit_cast<f32,
+/// u32>`](https://en.cppreference.com/w/cpp/numeric/bit_cast), or
+/// `std::bit_cast<f64, u64>`. It turns out this is incredibly portable, for two
+/// reasons:
+///
+/// * Floats and Ints have the same endianness on all modern platforms.
+/// * IEEE 754 very precisely specifies the bit layout of floats.
+///
+/// However there is one caveat: prior to the 2008 version of IEEE 754, how to
+/// interpret the NaN signaling bit wasn’t actually specified. Most platforms
+/// (notably x86 and ARM) picked the interpretation that was ultimately
+/// standardized in 2008, but some didn’t (notably MIPS). As a result, all
+/// signaling NaNs on MIPS are quiet NaNs on x86, and vice-versa.
+///
+/// Rather than trying to preserve signaling-ness cross-platform, this
+/// implementation favors preserving the exact bits. This means that any
+/// payloads encoded in NaNs will be preserved even if the result of this method
+/// is sent over the network from an x86 machine to a MIPS one.
+///
+/// If the results of this method are only manipulated by the same architecture
+/// that produced them, then there is no portability concern.
+///
+/// If the input isn’t NaN, then there is no portability concern.
+///
+/// If you don’t care about signalingness (very likely), then there is no
+/// portability concern.
+///
+/// Note that this function is distinct from `Transmogrify` casting, which
+/// attempts to preserve the *numeric* value, and not the bitwise value.
 ///
 /// # Examples
 /// ```
@@ -666,8 +694,15 @@ sus_pure static _self from_bits(_unsigned v) noexcept {
 }
 /// Raw transmutation to ##UnsignedT##.
 ///
-/// Note that this function is distinct from Into<##_unsigned##>, which
-/// attempts to preserve the numeric value, and not the bitwise value.
+/// This is identical to [`std::bit_cast<u32,
+/// f32>`](https://en.cppreference.com/w/cpp/numeric/bit_cast), or
+/// `std::bit_cast<u64, f64>`.
+///
+/// See `from_bits()` for some discussion of the portability of this operation
+/// (there are almost no issues).
+///
+/// Note that this function is distinct from `Transmogrify` casting, which
+/// attempts to preserve the *numeric* value, and not the bitwise value.
 sus_pure constexpr inline _unsigned to_bits() const& noexcept {
   return std::bit_cast<decltype(_unsigned::primitive_value)>(primitive_value);
 }

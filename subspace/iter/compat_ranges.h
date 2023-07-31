@@ -24,7 +24,7 @@
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/move.h"
-#include "subspace/num/convert.h"
+#include "subspace/num/transmogrify.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/option/option.h"
 
