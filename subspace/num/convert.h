@@ -43,11 +43,21 @@ struct sus::construct::ToBitsImpl<T, F> {
   }
 };
 
-// sus::construct::ToBits<Integer, std::byte> trait.
-template <sus::num::Integer T>
-struct sus::construct::ToBitsImpl<T, std::byte> {
-  constexpr static T from_bits(const std::byte& from) noexcept {
-    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(from));
+// sus::construct::ToBits<Integer, PrimitiveEnum> trait.
+template <sus::num::Integer T, sus::num::PrimitiveEnum F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(
+        static_cast<std::underlying_type_t<F>>(from)));
+  }
+};
+
+// sus::construct::ToBits<Integer, PrimitiveEnumClass> trait.
+template <sus::num::Integer T, sus::num::PrimitiveEnumClass F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(
+        static_cast<std::underlying_type_t<F>>(from)));
   }
 };
 
@@ -86,11 +96,19 @@ struct sus::construct::ToBitsImpl<T, F> {
   }
 };
 
-// sus::construct::ToBits<PrimitiveInteger, std::byte> trait.
-template <sus::num::PrimitiveInteger T>
-struct sus::construct::ToBitsImpl<T, std::byte> {
-  constexpr static T from_bits(const std::byte& from) noexcept {
-    return static_cast<T>(from);
+// sus::construct::ToBits<PrimitiveInteger, PrimitiveEnum> trait.
+template <sus::num::PrimitiveInteger T, sus::num::PrimitiveEnum F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(static_cast<std::underlying_type_t<F>>(from));
+  }
+};
+
+// sus::construct::ToBits<PrimitiveInteger, PrimitiveEnumClass> trait.
+template <sus::num::PrimitiveInteger T, sus::num::PrimitiveEnumClass F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(static_cast<std::underlying_type_t<F>>(from));
   }
 };
 
@@ -189,37 +207,75 @@ struct sus::construct::ToBitsImpl<T, F> {
   }
 };
 
-// ## === Into `std::byte`
+// ## === Into `PrimitiveEnum`
 
-// sus::construct::ToBits<std::byte, Integer> trait.
-template <sus::num::Integer F>
-struct sus::construct::ToBitsImpl<std::byte, F> {
-  constexpr static std::byte from_bits(const F& from) noexcept {
-    return ::sus::to_bits<std::byte>(from.primitive_value);
+// sus::construct::ToBits<PrimitiveEnum, Integer> trait.
+template <sus::num::PrimitiveEnum T, sus::num::Integer F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(::sus::to_bits<std::underlying_type_t<T>>(from));
   }
 };
 
-// sus::construct::ToBits<std::byte, PrimitiveInteger> trait.
-template <sus::num::PrimitiveInteger F>
-struct sus::construct::ToBitsImpl<std::byte, F> {
-  constexpr static std::byte from_bits(const F& from) noexcept {
-    return static_cast<std::byte>(from);
+// sus::construct::ToBits<PrimitiveEnum, PrimitiveInteger> trait.
+template <sus::num::PrimitiveEnum T, sus::num::PrimitiveInteger F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(::sus::to_bits<std::underlying_type_t<T>>(from));
   }
 };
 
-// sus::construct::ToBits<std::byte, Float> trait.
-template <sus::num::Float F>
-struct sus::construct::ToBitsImpl<std::byte, F> {
-  constexpr static std::byte from_bits(const F& from) noexcept {
-    return ::sus::to_bits<std::byte>(from.primitive_value);
+// sus::construct::ToBits<PrimitiveEnum, PrimitiveEnum> trait.
+template <sus::num::PrimitiveEnum T, sus::num::PrimitiveEnum F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(::sus::to_bits<std::underlying_type_t<T>>(
+        static_cast<std::underlying_type_t<F>>(from)));
   }
 };
 
-// sus::construct::ToBits<PrimitiveInteger, PrimitiveFloat> trait.
-template <sus::num::PrimitiveFloat F>
-struct sus::construct::ToBitsImpl<std::byte, F> {
-  constexpr static std::byte from_bits(const F& from) noexcept {
-    return static_cast<std::byte>(::sus::to_bits<uint8_t>(from));
+// sus::construct::ToBits<PrimitiveEnum, PrimitiveEnumClass> trait.
+template <sus::num::PrimitiveEnum T, sus::num::PrimitiveEnumClass F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(::sus::to_bits<std::underlying_type_t<T>>(
+        static_cast<std::underlying_type_t<F>>(from)));
+  }
+};
+
+// ## === Into `PrimitiveEnumClass`
+
+// sus::construct::ToBits<PrimitiveEnumClass, Integer> trait.
+template <sus::num::PrimitiveEnumClass T, sus::num::Integer F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(::sus::to_bits<std::underlying_type_t<T>>(from));
+  }
+};
+
+// sus::construct::ToBits<PrimitiveEnumClass, PrimitiveInteger> trait.
+template <sus::num::PrimitiveEnumClass T, sus::num::PrimitiveInteger F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(::sus::to_bits<std::underlying_type_t<T>>(from));
+  }
+};
+
+// sus::construct::ToBits<PrimitiveEnumClass, PrimitiveEnum> trait.
+template <sus::num::PrimitiveEnumClass T, sus::num::PrimitiveEnum F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(::sus::to_bits<std::underlying_type_t<T>>(
+        static_cast<std::underlying_type_t<F>>(from)));
+  }
+};
+
+// sus::construct::ToBits<PrimitiveEnumClass, PrimitiveEnumClass> trait.
+template <sus::num::PrimitiveEnumClass T, sus::num::PrimitiveEnumClass F>
+struct sus::construct::ToBitsImpl<T, F> {
+  constexpr static T from_bits(const F& from) noexcept {
+    return static_cast<T>(::sus::to_bits<std::underlying_type_t<T>>(
+        static_cast<std::underlying_type_t<F>>(from)));
   }
 };
 
@@ -238,14 +294,6 @@ struct sus::construct::ToBitsImpl<T, F> {
 template <sus::num::Float T, sus::num::PrimitiveInteger F>
 struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(from));
-  }
-};
-
-// sus::construct::ToBits<Float, std::byte> trait.
-template <sus::num::Float T>
-struct sus::construct::ToBitsImpl<T, std::byte> {
-  constexpr static T from_bits(const std::byte& from) noexcept {
     return T(::sus::to_bits<decltype(std::declval<T>().primitive_value)>(from));
   }
 };
@@ -282,15 +330,6 @@ template <sus::num::PrimitiveFloat T, sus::num::PrimitiveInteger F>
 struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
     return ::sus::num::__private::static_cast_int_to_float<float>(from);
-  }
-};
-
-// sus::construct::ToBits<PrimitiveFloat, std::byte> trait.
-template <sus::num::PrimitiveFloat T>
-struct sus::construct::ToBitsImpl<T, std::byte> {
-  constexpr static T from_bits(const std::byte& from) noexcept {
-    // SAFETY: The value of std::byte is always in range for uint8_t.
-    return ::sus::to_bits<T>(static_cast<uint8_t>(from));
   }
 };
 

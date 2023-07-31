@@ -109,6 +109,7 @@ concept ToBits = requires(const From& from) {
 /// sus::check(u32::MAX == sus::to_bits<u32>(-1_i64));
 /// ```
 template <class To, class From>
+  requires(ToBits<To, From>)
 constexpr inline To to_bits(const From& from) {
   return ToBitsImpl<To, From>::from_bits(from);
 }
