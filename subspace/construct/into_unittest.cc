@@ -164,4 +164,25 @@ TEST(TryInto, Example) {
   sus::check(invalid == 0u);
 }
 
+TEST(Into, Ref) {
+  struct S {
+    S() {}
+    S(const S&&) {}
+    S(S&&) {}
+  };
+  S s;
+
+  // S&.
+  sus::Option<S&> m = sus::mref_into(s);
+  EXPECT_EQ(&m.as_value(), &s);
+
+  // S& to const S&.
+  sus::Option<const S&> m2 = sus::mref_into(s);
+  EXPECT_EQ(&m2.as_value(), &s);
+
+  // const S&.
+  sus::Option<const S&> c = sus::ref_into(s);
+  EXPECT_EQ(&c.as_value(), &s);
+}
+
 }  // namespace

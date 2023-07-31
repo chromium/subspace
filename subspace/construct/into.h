@@ -23,7 +23,9 @@
 #include "subspace/construct/from.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/macros/lifetimebound.h"
+#include "subspace/mem/copy.h"
 #include "subspace/mem/forward.h"
+#include "subspace/mem/move.h"
 
 namespace sus::construct {
 
@@ -80,8 +82,16 @@ concept Into =
 
 /// Converts from the given value to whatever a receiver requires.
 ///
-/// The result will be receivable if `Into<GivenType, ReceiverType>` is
-/// satisfied.
+/// The result will be receivable if `Into<FromType, ToType>` is
+/// satisfied where `ToType` is deduced by the type constructed from the return
+/// value of `into()`.
+///
+/// `into()` will implicitly copy from lvalue inputs that are trivially
+/// copyable or from mutable lvalues that are trivially moveable. To move from
+/// the input otherwise, use `move_into()` or wrap the input with `sus::move()`.
+///
+/// To capture a const reference to an lvalue, use `ref_into()`. To capture a
+/// mutable reference to an lvalue, use `mref_into()`.
 template <class FromType>
   requires(!std::is_const_v<std::remove_reference_t<FromType>> &&
            std::is_rvalue_reference_v<FromType &&> &&
@@ -90,30 +100,47 @@ constexpr inline auto into(FromType&& from sus_lifetimebound) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_reference_t<FromType>&&>(from));
 }
-
 template <class FromType>
-  requires(std::is_trivially_copyable_v<FromType> && !std::is_array_v<FromType>)
+  requires((std::is_trivially_copy_constructible_v<FromType>) &&
+           !std::is_array_v<FromType>)
 constexpr inline auto into(const FromType& from sus_lifetimebound) noexcept {
   return __private::IntoRef<const FromType&>(from);
 }
-
 template <class FromType>
-  requires(!std::is_const_v<std::remove_reference_t<FromType>> &&
-           std::is_trivially_move_constructible_v<FromType> &&
+  requires((std::is_trivially_move_constructible_v<FromType>) &&
            !std::is_array_v<FromType>)
 constexpr inline auto into(FromType& from sus_lifetimebound) noexcept {
-  return __private::IntoRef(
-      static_cast<std::remove_reference_t<FromType>&&>(from));
+  return __private::IntoRef<FromType&&>(::sus::move(from));
 }
 
-/// Converts from the given array to whatever a receiver requires.
+/// Converts from the given const reference to whatever a receiver requires.
 ///
-/// The result will be receivable if `Into<GivenType, ReceiverType[]>` is
-/// satisfied.
-template <class FromType, size_t N>
-constexpr inline auto array_into(
-    FromType (&from)[N] sus_lifetimebound) noexcept {
-  return __private::IntoRefArray<FromType, N>(from);
+/// The result will be receivable if `Into<FromType, ToType>` is
+/// satisfied where `ToType` is deduced by the type constructed from the return
+/// value of `into()`.
+///
+/// To capture an rvalue, use `into()`. To capture a mutable reference to an
+/// lvalue, use `mref_into()`. To move out of an lvalue, use `move_into()`.
+template <class FromType>
+  requires(!std::is_array_v<FromType>)
+constexpr inline auto ref_into(
+    const FromType& from sus_lifetimebound) noexcept {
+  return __private::IntoRef<const FromType&>(from);
+}
+
+/// Converts from the given const reference to whatever a receiver requires.
+///
+/// The result will be receivable if `Into<FromType, ToType>` is
+/// satisfied where `ToType` is deduced by the type constructed from the return
+/// value of `into()`.
+///
+/// To capture an rvalue, use `into()`. To capture a const reference to an
+/// lvalue, use `ref_into()`. To move out of an lvalue, use `move_into()`.
+template <class FromType>
+  requires(!std::is_const_v<std::remove_reference_t<FromType>> &&
+           !std::is_array_v<FromType>)
+constexpr inline auto mref_into(FromType& from sus_lifetimebound) noexcept {
+  return __private::IntoRef<FromType&>(from);
 }
 
 /// Moves from and converts from the given value to whatever a receiver
@@ -122,8 +149,11 @@ constexpr inline auto array_into(
 /// This is sugar for `sus::into(sus::move(x))`, which can be written as
 /// `sus::move_into(x)`.
 ///
-/// The result will be receivable if `Into<GivenType, ReceiverType>` is
-/// satisfied.
+/// The result will be receivable if `Into<FromType, ToType>` is satisfied.
+///
+/// To capture an rvalue, use `into()`. To capture a const reference to an
+/// lvalue, use `ref_into()`. To capture a mutable reference to an lvalue, use
+/// `mref_into()`.
 template <class FromType>
   requires(!std::is_const_v<std::remove_reference_t<FromType>> &&
            !std::is_array_v<FromType>)
@@ -139,6 +169,16 @@ template <class FromType>
 constexpr inline auto move_into(FromType&& from sus_lifetimebound) noexcept {
   return __private::IntoRef(
       static_cast<std::remove_cv_t<std::remove_reference_t<FromType>>&&>(from));
+}
+
+/// Converts from the given array to whatever a receiver requires.
+///
+/// The result will be receivable if `Into<GivenType, ReceiverType[]>` is
+/// satisfied.
+template <class FromType, size_t N>
+constexpr inline auto array_into(
+    FromType (&from)[N] sus_lifetimebound) noexcept {
+  return __private::IntoRefArray<FromType, N>(from);
 }
 
 /// A concept that declares `FromType` can (sometimes) be converted to `ToType`
@@ -175,5 +215,7 @@ namespace sus {
 using ::sus::construct::array_into;
 using ::sus::construct::into;
 using ::sus::construct::move_into;
+using ::sus::construct::mref_into;
+using ::sus::construct::ref_into;
 using ::sus::construct::try_into;
 }  // namespace sus

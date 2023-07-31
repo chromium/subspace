@@ -182,7 +182,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
       : tail_start_(range.finish),
         tail_len_(vec.len() - range.finish),
         vec_(::sus::move(vec)),
-        original_vec_(sus::into(vec)) {
+        original_vec_(sus::mref_into(vec)) {
     // The `range` is saturated to the Vec's bounds by Vec::drain() before
     // passing it here, so unwrap() won't panic. We don't use unsafe as the
     // invariant is not verified locally here.
