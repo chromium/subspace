@@ -35,7 +35,6 @@ struct CheckToBits {
   static_assert(sus::construct::ToBits<Self, size_t>);
   static_assert(sus::construct::ToBits<Self, intptr_t>);
   static_assert(sus::construct::ToBits<Self, uintptr_t>);
-  static_assert(sus::construct::ToBits<Self, std::byte>);
   static_assert(sus::construct::ToBits<Self, float>);
   static_assert(sus::construct::ToBits<Self, double>);
 
@@ -50,6 +49,8 @@ struct CheckToBits {
   static_assert(sus::construct::ToBits<Self, isize>);
   static_assert(sus::construct::ToBits<Self, usize>);
   static_assert(sus::construct::ToBits<Self, uptr>);
+  static_assert(sus::construct::ToBits<Self, f32>);
+  static_assert(sus::construct::ToBits<Self, f64>);
 
   static_assert(sus::construct::ToBits<char, Self>);
   static_assert(sus::construct::ToBits<signed char, Self>);
@@ -65,7 +66,6 @@ struct CheckToBits {
   static_assert(sus::construct::ToBits<size_t, Self>);
   static_assert(sus::construct::ToBits<intptr_t, Self>);
   static_assert(sus::construct::ToBits<uintptr_t, Self>);
-  static_assert(sus::construct::ToBits<std::byte, Self>);
   static_assert(sus::construct::ToBits<float, Self>);
   static_assert(sus::construct::ToBits<double, Self>);
 
@@ -80,13 +80,14 @@ struct CheckToBits {
   static_assert(sus::construct::ToBits<isize, Self>);
   static_assert(sus::construct::ToBits<usize, Self>);
   static_assert(sus::construct::ToBits<uptr, Self>);
+  static_assert(sus::construct::ToBits<f32, Self>);
+  static_assert(sus::construct::ToBits<f64, Self>);
 };
 
 TEST(ConvertToBits, Satisfies) {
   CheckToBits<char>();
   CheckToBits<signed char>();
   CheckToBits<unsigned char>();
-  CheckToBits<std::byte>();
   CheckToBits<int8_t>();
   CheckToBits<int16_t>();
   CheckToBits<int32_t>();
@@ -621,23 +622,57 @@ TEST(ConvertToBits, stdbyte) {
   EXPECT_EQ(sus::to_bits<u32>(std::byte{0xff}), 0xff_u32);
   EXPECT_EQ(sus::to_bits<i8>(std::byte{0xff}), -1_i8);
   EXPECT_EQ(sus::to_bits<i32>(std::byte{0xff}), 0xff_i32);
-  EXPECT_EQ(sus::to_bits<f32>(std::byte{0xff}), 0xff_f32);
-  EXPECT_EQ(sus::to_bits<f64>(std::byte{0xff}), 0xff_f64);
 
   EXPECT_EQ(sus::to_bits<std::byte>(0xff_u8), std::byte{0xff});
   EXPECT_EQ(sus::to_bits<std::byte>(0xff_u32), std::byte{0xff});
   EXPECT_EQ(sus::to_bits<std::byte>(-1_i8), std::byte{0xff});
   EXPECT_EQ(sus::to_bits<std::byte>(0xff_i32), std::byte{0xff});
-  EXPECT_EQ(sus::to_bits<std::byte>(0xff_f32), std::byte{0xff});
-  EXPECT_EQ(sus::to_bits<std::byte>(0xff_f64), std::byte{0xff});
 
-  // Truncating from integer.
+  // Truncating from integers.
   EXPECT_EQ(sus::to_bits<std::byte>(-2_i32), std::byte{0xfe});
   EXPECT_EQ(sus::to_bits<std::byte>(259_i32), std::byte{3});
+}
 
-  // Saturating from float.
-  EXPECT_EQ(sus::to_bits<std::byte>(-1_f64), std::byte{0x00});
-  EXPECT_EQ(sus::to_bits<std::byte>(256_f64), std::byte{0xff});
+enum E : uint16_t {
+  EA = 1,
+  EB = 2,
+  ED = 4,
+};
+
+enum class EC : int16_t {
+  A = 1,
+  B = 2,
+  D = 4,
+};
+
+TEST(ConvertToBits, Enums) {
+  static_assert(sus::construct::ToBits<E, i8>);
+  static_assert(sus::construct::ToBits<E, i64>);
+  static_assert(sus::construct::ToBits<E, int16_t>);
+  static_assert(sus::construct::ToBits<E, intptr_t>);
+  static_assert(sus::construct::ToBits<E, u8>);
+  static_assert(sus::construct::ToBits<E, u64>);
+  static_assert(sus::construct::ToBits<E, uint16_t>);
+  static_assert(sus::construct::ToBits<E, size_t>);
+  static_assert(!sus::construct::ToBits<E, f32>);
+  static_assert(!sus::construct::ToBits<E, f64>);
+
+  EXPECT_EQ(sus::to_bits<E>(1_i64), EA);
+  EXPECT_EQ(sus::to_bits<E>(2_u64), EB);
+
+  static_assert(sus::construct::ToBits<EC, i8>);
+  static_assert(sus::construct::ToBits<EC, i64>);
+  static_assert(sus::construct::ToBits<EC, int16_t>);
+  static_assert(sus::construct::ToBits<EC, intptr_t>);
+  static_assert(sus::construct::ToBits<EC, u8>);
+  static_assert(sus::construct::ToBits<EC, u64>);
+  static_assert(sus::construct::ToBits<EC, uint16_t>);
+  static_assert(sus::construct::ToBits<EC, size_t>);
+  static_assert(!sus::construct::ToBits<EC, f32>);
+  static_assert(!sus::construct::ToBits<EC, f64>);
+
+  EXPECT_EQ(sus::to_bits<EC>(2_i64), EC::B);
+  EXPECT_EQ(sus::to_bits<EC>(4_u64), EC::D);
 }
 
 }  // namespace
