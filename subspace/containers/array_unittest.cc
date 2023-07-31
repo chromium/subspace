@@ -141,8 +141,7 @@ TEST(Array, WithValues) {
     }
   }
   {
-    auto a = Array<u8, 5>::with(sus::into(3), sus::into(4), sus::into(5),
-                                sus::into(6), sus::into(7));
+    auto a = Array<u8, 5>::with(3_u8, 4_u8, 5_u8, 6_u8, 7_u8);
     for (auto i = 0_u8; i < 5_u8; i += 1_u8) {
       EXPECT_EQ(a[usize::from(i)], 3_u8 + i);
     }
@@ -173,7 +172,7 @@ TEST(Array, ConstructorFunction) {
   }
   {
     // into() as an input to the array.
-    Array<u32, 3> a = sus::array(1_u32, sus::into(2), 3_u32);
+    Array<u32, 3> a = sus::array(1_u32, sus::into(2_u16), 3_u32);
     EXPECT_EQ(a[0u], 1_u32);
     EXPECT_EQ(a[1u], 2_u32);
     EXPECT_EQ(a[2u], 3_u32);
@@ -460,7 +459,7 @@ TEST(Array, ImplicitIter) {
 
 TEST(Array, Map) {
   auto a = Array<usize, 3>::with(3u, 4u, 5u);
-  auto a2 = sus::move(a).map(+[](usize i) { return u32::from(i + 1_usize); });
+  auto a2 = sus::move(a).map(+[](usize i) { return u32::try_from(i + 1_usize).unwrap(); });
   EXPECT_EQ(a2, (Array<u32, 3>::with(4_u32, 5_u32, 6_u32)));
 }
 

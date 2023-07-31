@@ -69,7 +69,7 @@ struct Storage<T, 0> final {};
 /// greater distance results in Undefined Behaviour.
 template <class T, size_t N>
 class Array final {
-  static_assert(N <= usize::from(isize::MAX));
+  static_assert(N <= ::sus::to_bits<usize>(isize::MAX));
   static_assert(!std::is_reference_v<T>,
                 "Array<T&, N> is invalid as Array must hold value types. Use "
                 "Array<T*, N> instead.");

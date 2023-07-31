@@ -40,8 +40,8 @@ TEST(PtrSwapNonOverlapping, SmallSizedType_PowTwoSized) {
 
   for (usize i : "0..100"_r) {
     SCOPED_TRACE(size_t{i});
-    EXPECT_EQ(a[i], S(u16::from(100u + i)));
-    EXPECT_EQ(b[i], S(u16::from(0u + i)));
+    EXPECT_EQ(a[i], S(u16::try_from(100u + i).unwrap()));
+    EXPECT_EQ(b[i], S(u16::try_from(0u + i).unwrap()));
   }
 }
 
@@ -64,8 +64,8 @@ TEST(PtrSwapNonOverlapping, SmallSizedType_NonPowTwoSized) {
 
   for (usize i : "0..100"_r) {
     SCOPED_TRACE(size_t{i});
-    EXPECT_EQ(a[i], S(u16::from(100u + i)));
-    EXPECT_EQ(b[i], S(u16::from(0u + i)));
+    EXPECT_EQ(a[i], S(u16::try_from(100u + i).unwrap()));
+    EXPECT_EQ(b[i], S(u16::try_from(0u + i).unwrap()));
   }
 }
 

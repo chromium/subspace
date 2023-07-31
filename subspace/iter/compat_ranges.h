@@ -24,6 +24,8 @@
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/lifetimebound.h"
 #include "subspace/mem/move.h"
+#include "subspace/num/convert.h"
+#include "subspace/num/unsigned_integer.h"
 #include "subspace/option/option.h"
 
 namespace sus::iter {
@@ -143,7 +145,11 @@ class IteratorOverRange final
   usize exact_size_hint() const noexcept
     requires(std::sized_sentinel_for<B, E>)
   {
-    return usize::from(end_ - begin_);
+    // SAFETY: `end_ > begin_` so the value is not negative and offsets in a
+    // container are always in the range of `isize`, so the value is
+    // representable in `usize`.
+    return usize::try_from(end_ - begin_)
+        .unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
   // TODO: If std::random_access_range<B> then implement more efficient nth(),
