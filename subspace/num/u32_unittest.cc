@@ -1494,13 +1494,13 @@ TEST(u32, ReverseBits) {
   constexpr auto a3 = (0xf8f800_u32).reverse_bits();
   EXPECT_EQ(a3, 0x1f1f00_u32);
   constexpr auto a5 = (1_u32).reverse_bits();
-  EXPECT_EQ(a5, 1_u32 << (sus::to_bits<u32>(sizeof(u32)) * 8_u32 - 1_u32));
+  EXPECT_EQ(a5, 1_u32 << (sus::mog<u32>(sizeof(u32)) * 8_u32 - 1_u32));
 
   EXPECT_EQ((0_u32).reverse_bits(), 0_u32);
   EXPECT_EQ((2_u32).reverse_bits(), 1_u32 << 30_u32);
   EXPECT_EQ((0xf8f800_u32).reverse_bits(), 0x1f1f00_u32);
   EXPECT_EQ((1_u32).reverse_bits().primitive_value,
-            1_u32 << (sus::to_bits<u32>(sizeof(u32)) * 8_u32 - 1_u32));
+            1_u32 << (sus::mog<u32>(sizeof(u32)) * 8_u32 - 1_u32));
 }
 
 TEST(u32, RotateLeft) {

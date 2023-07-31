@@ -16,47 +16,62 @@
 
 #include <concepts>
 
+#include "subspace/mem/copy.h"
+
 namespace sus::construct {
 
 /// Specializing this class for `To` and `From` allows `To` to satisfy
-/// `ToBits<To, From>`.
+/// `Transmogrify<To, From>`.
 ///
 /// # Examples
 ///
 /// To allow bitwise conversion to `Goat` from any type satisying a
 /// concept `GoatLike`:
 /// ```cpp
-/// // Satisfies ToBits<Goat, GoatLike>.
+/// // Satisfies Transmogrify<Goat, GoatLike>.
 /// template <class Goat, GoatLike G>
-/// struct ToBitsImpl<Goat, G> {
-///   constexpr static Goat from_bits(const G& g) noexcept { return ...; }
+/// struct TransmogrifyImpl<Goat, G> {
+///   constexpr static Goat mog_from(const G& g) noexcept { return ...; }
 /// };
 /// ```
 ///
 /// To receive something that can be bitwise converted to an `u32`.
 /// ```cpp
-/// auto add = [](u32 a, const sus::construct::ToBits<u32> auto& b) -> u32 {
-///   return a.wrapping_add(sus::to_bits<u32>(b));
+/// auto add = [](u32 a, const sus::construct::Transmogrify<u32> auto& b) -> u32
+/// {
+///   return a.wrapping_add(sus::mog<u32>(b));
 /// };
 /// sus::check(add(3_u32, -1_i32) == u32::MIN + 2);
 /// ```
 template <class To, class From>
-struct ToBitsImpl;
+struct TransmogrifyImpl;
 
-// sus::construct::ToBits<T, T> trait for identity conversion.
-template <class T>
-struct ToBitsImpl<T, T> {
-  constexpr static T from_bits(const T& from) noexcept { return from; }
+// sus::construct::Transmogrify<T, T> trait for identity conversion when `T` is
+// `Copy`.
+template <::sus::mem::Copy T>
+struct TransmogrifyImpl<T, T> {
+  constexpr static T mog_from(const T& from) noexcept { return from; }
 };
 
-/// A type `T` that satisfies `ToBits<T, F>` can be constructed from `F` through
-/// a conversion that will always succeed in producing _some_ value, but may be
-/// lossy or produce a value with a different meaning. The conversion may
-/// truncate or extend `F` in order to do the conversion to `T`.
+/// When a pair of types `T` and `F` satisfy `Transmogrify<T, F>`, it means that
+/// `F` can be converted
+/// ([transmogrified](https://calvinandhobbes.fandom.com/wiki/Transmogrifier))
+/// to `T` through a conversion that will always succeed in producing _some_
+/// value, but may be lossy or produce a value with a different meaning. The
+/// conversion may truncate or extend `F` in order to do the conversion to `T`.
 ///
-/// For numeric and primitive types, this provides a mechanism like
-/// `static_cast<T>` but it is much safer than `static_cast<T>` as it has
-/// defined behaviour for all inputs:
+/// This operation is also commonly known as type casting, or type coercion. The
+/// conversion to `T` can be done by calling `sus::mog<T>(from)`.
+///
+/// The conversion is defined for the identity conversion where both the input
+/// and output are the same type, if the type is `Copy`, in which case the input
+/// is copied and returned. As Transmogrification is meant to be a cheap
+/// conversion, primarily for primitive types, it does not support `Clone`
+/// types, and `sus::construct::Into` should be used in more complex cases.
+///
+/// For numeric and primitive types, `Transmogrify` is defined to provide a
+/// mechanism like `static_cast<T>` but it is much safer than `static_cast<T>`
+/// as it has defined behaviour for all inputs:
 ///
 /// * Casting from a float to an integer will perform a static_cast, which
 ///   rounds the float towards zero, except:
@@ -81,24 +96,44 @@ struct ToBitsImpl<T, T> {
 ///   from `u8`.
 ///
 /// These conversions are all defined in `subspace/num/types.h`.
+///
+/// The transmogrifier is one of three of the most complicated inventions. The
+/// other two are the [Cerebral
+/// Enhance-O-Tron](https://calvinandhobbes.fandom.com/wiki/Cerebral_Enhance-O-Tron),
+/// and the [Transmogrifier
+/// Gun](https://calvinandhobbes.fandom.com/wiki/Transmogrifier_Gun).
+///
+/// # Extending to other types
+///
+/// Types can participate in defining their transmogrification strategy by
+/// providing a specialization of `sus::convert::TransmogrifyImpl<To, From>`.
+/// The conversions should always produce a value of type `T`, should not panic,
+/// and should not cause Undefined Behaviour.
+///
+/// The `Transmogrify` specialization needs a static method `mog_from()` that
+/// receives `const From&` and returns `To`.
 template <class To, class From>
-concept ToBits = requires(const From& from) {
+concept Transmogrify = requires(const From& from) {
   {
-    ::sus::construct::ToBitsImpl<To, From>::from_bits(from)
+    ::sus::construct::TransmogrifyImpl<To, From>::mog_from(from)
   } noexcept -> std::same_as<To>;
 };
 
-/// An infallible conversion that may lose the original value in the process. If
-/// the input can not be represented in the output, some other value will be
-/// produced, which may lead to application bugs and memory unsafety if used
-/// incorrectly.
+/// An infallible conversion (transmogrification) that may lose the original
+/// value in the process. If the input can not be represented in the output,
+/// some other value will be produced, which may lead to application bugs and
+/// memory unsafety if used incorrectly. This behaves like `static_cast<To>()`
+/// but without Undefined Behaviour.
+///
+/// The `mog` operation is supported for types `To` and `From` that satisfy
+/// `Transmogrify<To, From>`.
 ///
 /// To convert between types while ensuring the values are preserved, use
 /// `sus::construct::Into` or `sus::construct::TryInto`. Usually prefer using
-/// `sus::into(x)` or `sus::try_into(x)` over `sus::to_bits<Y>(x)` as most code
+/// `sus::into(x)` or `sus::try_into(x)` over `sus::mog<Y>(x)` as most code
 /// should preserve values across type transitions.
 ///
-/// See `AsBits` for how numeric and primitive values are converted.
+/// See `Transmogrify` for how numeric and primitive values are converted.
 ///
 /// # Examples
 ///
@@ -106,17 +141,17 @@ concept ToBits = requires(const From& from) {
 /// becoming a large positive number, and truncates the high 32 bits, losing the
 /// original.
 /// ```cpp
-/// sus::check(u32::MAX == sus::to_bits<u32>(-1_i64));
+/// sus::check(u32::MAX == sus::mog<u32>(-1_i64));
 /// ```
 template <class To, class From>
-  requires(ToBits<To, From>)
-constexpr inline To to_bits(const From& from) {
-  return ToBitsImpl<To, From>::from_bits(from);
+  requires(Transmogrify<To, From>)
+constexpr inline To mog(const From& from) {
+  return TransmogrifyImpl<To, From>::mog_from(from);
 }
 
 }  // namespace sus::construct
 
-// Bring the to_bits() function into the `sus` namespace.
+// Bring the mog() function into the `sus` namespace.
 namespace sus {
-using ::sus::construct::to_bits;
+using ::sus::construct::mog;
 }

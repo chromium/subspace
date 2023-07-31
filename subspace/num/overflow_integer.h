@@ -21,7 +21,7 @@
 #include "subspace/marker/unsafe.h"
 #include "subspace/option/option.h"
 #include "subspace/result/result.h"
-#include "subspace/num/convert.h"
+#include "subspace/num/transmogrify.h"
 
 namespace sus::num {
 
@@ -88,7 +88,7 @@ class OverflowInteger {
     auto p = OverflowInteger(
         CONSTRUCT,
         // SAFETY: This is not lossy, as all integers can hold positive 1.
-        ::sus::to_bits<I>(1));
+        ::sus::mog<I>(1));
     for (I i : ::sus::move(it)) p *= i;
     return p;
   }
@@ -98,7 +98,7 @@ class OverflowInteger {
     auto p = OverflowInteger(
         CONSTRUCT,
         // SAFETY: This is not lossy, as all integers can hold positive 1.
-        ::sus::to_bits<I>(1));
+        ::sus::mog<I>(1));
     for (OverflowInteger i : ::sus::move(it)) p *= i;
     return p;
   }

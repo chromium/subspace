@@ -58,7 +58,7 @@ namespace sus::num {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting to a
 /// larger signed integer type, the value will be sign-extended. Between
 /// integers this behaves the same as static_cast<T>() on primitive integers.
@@ -83,7 +83,7 @@ struct [[sus_trivial_abi]] i32 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting to a
 /// larger signed integer type, the value will be sign-extended. Between
 /// integers this behaves the same as static_cast<T>() on primitive integers.
@@ -108,7 +108,7 @@ struct [[sus_trivial_abi]] i8 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting to a
 /// larger signed integer type, the value will be sign-extended. Between
 /// integers this behaves the same as static_cast<T>() on primitive integers.
@@ -133,7 +133,7 @@ struct [[sus_trivial_abi]] i16 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting to a
 /// larger signed integer type, the value will be sign-extended. Between
 /// integers this behaves the same as static_cast<T>() on primitive integers.
@@ -167,7 +167,7 @@ struct [[sus_trivial_abi]] i64 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::to_bits<T>()` which is supported with
+/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
 /// all integer and float types and C++ primitive types. When converting to a
 /// larger signed integer type, the value will be sign-extended. Between
 /// integers this behaves the same as static_cast<T>() on primitive integers.

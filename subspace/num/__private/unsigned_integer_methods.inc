@@ -109,8 +109,8 @@ explicit constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from unsigned types where no bits are lost.
 ///
 /// For conversions from types with a larger range use `try_from()`. For lossy
-/// conversions use the `sus::construct::ToBits` concept with
-/// `sus::to_bits<##_self##>()`.
+/// conversions use the `sus::construct::Transmogrify` concept with
+/// `sus::mog<##_self##>()`.
 ///
 /// #[doc.overloads=ctor.unsigned.small.typed]
 template <Unsigned U>
@@ -120,8 +120,8 @@ constexpr inline _self(U v) noexcept : primitive_value(v.primitive_value) {}
 /// Construction from unsigned primitive types where no bits are lost.
 ///
 /// For conversions from types with a larger range use `try_from()`. For lossy
-/// conversions use the `sus::construct::ToBits` concept with
-/// `sus::to_bits<##_self##>()`.
+/// conversions use the `sus::construct::Transmogrify` concept with
+/// `sus::mog<##_self##>()`.
 ///
 /// #[doc.overloads=ctor.unsigned.small.primitive]
 template <UnsignedPrimitiveInteger P>
@@ -131,8 +131,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from unsigned enum types where no bits are lost.
 ///
 /// For conversions from types with a larger range use `try_from()`. For lossy
-/// conversions use the `sus::construct::ToBits` concept with
-/// `sus::to_bits<##_self##>()`.
+/// conversions use the `sus::construct::Transmogrify` concept with
+/// `sus::mog<##_self##>()`.
 ///
 /// #[doc.overloads=ctor.unsigned.smallenum]
 template <UnsignedPrimitiveEnum P>
@@ -142,8 +142,8 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
 /// Construction from unsigned enum class types where no bits are lost.
 ///
 /// For conversions from types with a larger range use `try_from()`. For lossy
-/// conversions use the `sus::construct::ToBits` concept with
-/// `sus::to_bits<##_self##>()`.
+/// conversions use the `sus::construct::Transmogrify` concept with
+/// `sus::mog<##_self##>()`.
 ///
 /// #[doc.overloads=ctor.unsigned.smallenumclass]
 template <UnsignedPrimitiveEnumClass P>
@@ -204,8 +204,8 @@ constexpr inline _self& operator=(P v) noexcept {
 /// Assignment from unsigned types (u8, u16, etc.) where no bits are lost.
 ///
 /// For conversions from types with a larger range use `try_from()`. For lossy
-/// conversions use the `sus::construct::ToBits` concept with
-/// `sus::to_bits<##_self##>()`.
+/// conversions use the `sus::construct::Transmogrify` concept with
+/// `sus::mog<##_self##>()`.
 ///
 /// #[doc.overloads=assign.unsigned.small.typed]
 template <Unsigned U>
@@ -219,8 +219,8 @@ constexpr inline _self& operator=(U v) noexcept {
 /// where no bits are lost.
 ///
 /// For conversions from types with a larger range use `try_from()`. For lossy
-/// conversions use the `sus::construct::ToBits` concept with
-/// `sus::to_bits<##_self##>()`.
+/// conversions use the `sus::construct::Transmogrify` concept with
+/// `sus::mog<##_self##>()`.
 ///
 /// #[doc.overloads=assign.unsigned.small.primitive]
 template <UnsignedPrimitiveInteger P>
@@ -233,8 +233,8 @@ constexpr inline _self& operator=(P v) noexcept {
 /// Assignment from unsigned enum types where no bits are lost.
 ///
 /// For conversions from types with a larger range use `try_from()`. For lossy
-/// conversions use the `sus::construct::ToBits` concept with
-/// `sus::to_bits<##_self##>()`.
+/// conversions use the `sus::construct::Transmogrify` concept with
+/// `sus::mog<##_self##>()`.
 ///
 /// #[doc.overloads=assign.unsigned.smallenum]
 template <UnsignedPrimitiveEnum P>
@@ -482,9 +482,9 @@ sus_pure constexpr inline explicit operator U() const {
 ///
 /// Typically this should be used in a curly-brace conversion statement such as
 /// `uint32_t{3_i32}` which will ensure a compiler error if the conversion can
-/// lose data. Lossy conversions can be done through the `sus::convert::ToBits`
-/// concept, such as `sus::to_bits<uint32_t>(3_i32)` or
-/// `sus::to_bits<int32_t>(3_i32)`.
+/// lose data. Lossy conversions can be done through the `sus::convert::Transmogrify`
+/// concept, such as `sus::mog<uint32_t>(3_i32)` or
+/// `sus::mog<int32_t>(3_i32)`.
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline explicit operator U() const {

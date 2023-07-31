@@ -19,15 +19,15 @@
 
 namespace {
 
-TEST(ToBits, Example_Concept) {
-  auto add = [](u32 a, const sus::construct::ToBits<u32> auto& b) -> u32 {
-    return a.wrapping_add(sus::to_bits<u32>(b));
+TEST(Transmogrify, Example_Concept) {
+  auto add = [](u32 a, const sus::construct::Transmogrify<u32> auto& b) -> u32 {
+    return a.wrapping_add(sus::mog<u32>(b));
   };
   sus::check(add(3_u32, -1_i32) == u32::MIN + 2u);
 }
 
-TEST(ToBits, Example_Function) {
-  sus::check(u32::MAX == sus::to_bits<u32>(-1_i64));
+TEST(Transmogrify, Example_Function) {
+  sus::check(u32::MAX == sus::mog<u32>(-1_i64));
 }
 
 }  // namespace
