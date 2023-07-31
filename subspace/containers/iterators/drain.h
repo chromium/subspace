@@ -18,11 +18,11 @@
 #include "subspace/iter/iterator_defn.h"
 #include "subspace/lib/__private/forward_decl.h"
 #include "subspace/mem/move.h"
-#include "subspace/mem/nonnull.h"
 #include "subspace/num/unsigned_integer.h"
 #include "subspace/ops/range.h"
 #include "subspace/option/option.h"
 #include "subspace/ptr/copy.h"
+#include "subspace/ptr/nonnull.h"
 
 namespace sus::containers {
 
@@ -182,7 +182,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
       : tail_start_(range.finish),
         tail_len_(vec.len() - range.finish),
         vec_(::sus::move(vec)),
-        original_vec_(sus::mem::nonnull(vec)) {
+        original_vec_(sus::into(vec)) {
     // The `range` is saturated to the Vec's bounds by Vec::drain() before
     // passing it here, so unwrap() won't panic. We don't use unsafe as the
     // invariant is not verified locally here.
@@ -205,7 +205,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
   usize tail_len_;
   /// The original moved-from Vec which is restored when the iterator is
   /// destroyed.
-  sus::mem::NonNull<Vec<Item>> original_vec_;
+  sus::ptr::NonNull<Vec<Item>> original_vec_;
   /// The elements from the original_vec_, held locally for safe keeping so
   /// that mutation of the original Vec during drain will be flagged as
   /// use-after-move.

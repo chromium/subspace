@@ -24,7 +24,7 @@
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/mem/move.h"
 #include "subspace/mem/mref.h"
-#include "subspace/mem/nonnull.h"
+#include "subspace/ptr/nonnull.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
 #include "subspace/num/signed_integer.h"

@@ -24,7 +24,7 @@
 #include "subspace/iter/iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/builtin.h"
-#include "subspace/mem/nonnull.h"
+#include "subspace/ptr/nonnull.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
@@ -2765,7 +2765,7 @@ TEST(Option, Unzip) {
 }
 
 TEST(Option, NonZeroField) {
-  using T = sus::mem::NonNull<int>;
+  using T = sus::ptr::NonNull<int>;
   static_assert(sizeof(Option<T>) == sizeof(T));
   int i = 3;
 
