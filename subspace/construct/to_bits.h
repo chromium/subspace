@@ -50,14 +50,37 @@ struct ToBitsImpl<T, T> {
 };
 
 /// A type `T` that satisfies `ToBits<T, F>` can be constructed from `F` through
-/// a bitwise conversion that preserves the bits but not the conceptual value of
-/// `F`. The conversion may also truncate or extend `F` in order to do the
-/// bitwise conversion to `T`.
+/// a conversion that will always succeed in producing _some_ value, but may be
+/// lossy or produce a value with a different meaning. The conversion may
+/// truncate or extend `F` in order to do the conversion to `T`.
 ///
-/// This provides a similar mechanism to `std::bit_cast<T>` but also allowing
-/// conversion to larger or smaller types, like `static_cast<T>`, while allowing
-/// types to participate in deciding how and when bitwise converstions can be
-/// performed.
+/// For numeric and primitive types, this provides a mechanism like
+/// `static_cast<T>` but it is much safer than `static_cast<T>` as it has
+/// defined behaviour for all inputs:
+///
+/// * Casting from a float to an integer will perform a static_cast, which
+///   rounds the float towards zero, except:
+///   * `NAN` will return 0.
+///   * Values larger than the maximum integer value, including `f32::INFINITY`,
+///     will saturate to the maximum value of the integer type.
+///   * Values smaller than the minimum integer value, including
+///     `f32::NEG_INFINITY`, will saturate to the minimum value of the integer
+///     type.
+/// * Casting from an integer to a float will perform a static_cast, which
+///   converts to the nearest floating point value. The rounding direction for
+///   values that land between representable floating point values is
+///   implementation defined (per C++20 Section 7.3.10).
+/// * Casting from an `f32` (or `float`) to an `f64` (or `double`) preserves the
+///   value unchanged.
+/// * Casting from an `f64` (or `double`) to an `f32` (or float) performs the
+///   same action as a static_cast if the value is in range for f32, otherwise:
+///   * `NAN` will return a `NAN`.
+///   * Values outside of f32's range will return `f32::INFINITY` or
+///     `f32::NEG_INFINITY` for positive and negative values respectively.
+/// * Casting to and from `std::byte` produces the same values as casting to and
+///   from `u8`.
+///
+/// These conversions are all defined in `subspace/num/types.h`.
 template <class To, class From>
 concept ToBits = requires(const From& from) {
   {
@@ -65,23 +88,23 @@ concept ToBits = requires(const From& from) {
   } noexcept -> std::same_as<To>;
 };
 
-/// Bitwise conversion from `From` to `To`. The conversion is done in a way
-/// that attempts to preserve the bits of `From` without necessarily preserving
-/// the value or meaning.
+/// An infallible conversion that may lose the original value in the process. If
+/// the input can not be represented in the output, some other value will be
+/// produced, which may lead to application bugs and memory unsafety if used
+/// incorrectly.
 ///
-/// To convert between types while preserving the meaning of the value, use
+/// To convert between types while ensuring the values are preserved, use
 /// `sus::construct::Into` or `sus::construct::TryInto`. Usually prefer using
 /// `sus::into(x)` or `sus::try_into(x)` over `sus::to_bits<Y>(x)` as most code
-/// is not doing bitwise manipulation.
+/// should preserve values across type transitions.
 ///
-/// The result of `to_bits()` may be lossy. It may truncate bits from the input,
-/// or extend it.
+/// See `AsBits` for how numeric and primitive values are converted.
 ///
 /// # Examples
 ///
-/// This converts `-1_i64` into a `u32`, which changes its meaning, becoming a
-/// large positive number, and truncates 32 bits which loses the original value
-/// as well.
+/// This converts `-1_i64` into a `u32`, which both changes its meaning,
+/// becoming a large positive number, and truncates the high 32 bits, losing the
+/// original.
 /// ```cpp
 /// sus::check(u32::MAX == sus::to_bits<u32>(-1_i64));
 /// ```

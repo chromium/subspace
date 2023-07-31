@@ -183,20 +183,18 @@ constexpr inline _self& operator=(P v) noexcept {
   return *this;
 }
 
-/** Constructs a ##_self## from a signed integer type (i8, i16, i32, etc).
+/** Constructs a ##_self## from a signed integer type (i8, i16, i32, etc) where
+ * no bits are lost.
  *
- * # Panics
- * The function will panic if the input value is out of range for ##_self##.
+ * For fallible conversions use `try_from()`. For lossy conversions use the
+ * `sus::construct::ToBits` concept with `sus::to_bits<##_self##>()`.
  *
- * #[doc.overloads=0]
+ * #[doc.overloads=from.signed]
  */
 template <Signed S>
+  requires(::sus::mem::size_of<S>() <= ::sus::mem::size_of<_primitive>())
 sus_pure static constexpr _self from(S s) noexcept {
-  if constexpr (MIN_PRIMITIVE > S::MIN_PRIMITIVE)
-    ::sus::check(s.primitive_value >= MIN_PRIMITIVE);
-  if constexpr (MAX_PRIMITIVE < S::MAX_PRIMITIVE)
-    ::sus::check(s.primitive_value <= MAX_PRIMITIVE);
-  return _self(static_cast<_primitive>(s.primitive_value));
+  return _self(s);
 }
 
 /** Try to construct a ##_self## from a signed integer type (i8, i16, i32, etc).
@@ -223,22 +221,6 @@ try_from(S s) noexcept {
   return R::with(_self(static_cast<_primitive>(s.primitive_value)));
 }
 
-/** Constructs a ##_self## from an unsigned integer type (u8, u16, u32, etc).
- *
- * # Panics
- * The function will panic if the input value is out of range for ##_self##.
- *
- * #[doc.overloads=1]
- */
-template <Unsigned U>
-sus_pure static constexpr _self from(U u) noexcept {
-  constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);
-  if constexpr (umax < U::MAX_PRIMITIVE) {
-    ::sus::check(u.primitive_value <= umax);
-  }
-  return _self(static_cast<_primitive>(u.primitive_value));
-}
-
 /** Try to construct a ##_self## from an unsigned integer type (u8, u16, u32,
  * etc).
  *
@@ -260,21 +242,18 @@ try_from(U u) noexcept {
   return R::with(_self(static_cast<_primitive>(u.primitive_value)));
 }
 
-/** Constructs a ##_self## from a signed primitive integer type (int, long,
- * etc).
+/** Constructs a ##_self## from a signed primitive integer type (int, long, etc)
+ * where no bits are lost.
  *
- * # Panics
- * The function will panic if the input value is out of range for ##_self##.
+ * For fallible conversions use `try_from()`. For lossy conversions use the
+ * `sus::construct::ToBits` concept with `sus::to_bits<##_self##>()`.
  *
- * #[doc.overloads=signedint.from.signedint]
+ * #[doc.overloads=from.signed.prim]
  */
 template <SignedPrimitiveInteger S>
+  requires(::sus::mem::size_of<S>() <= ::sus::mem::size_of<_primitive>())
 sus_pure static constexpr _self from(S s) noexcept {
-  if constexpr (MIN_PRIMITIVE > __private::min_value<S>())
-    ::sus::check(s >= MIN_PRIMITIVE);
-  if constexpr (MAX_PRIMITIVE < __private::max_value<S>())
-    ::sus::check(s <= MAX_PRIMITIVE);
-  return _self(static_cast<_primitive>(s));
+  return _self(s);
 }
 
 /** Tries to construct a ##_self## from a signed primitive integer type (int,
@@ -302,22 +281,20 @@ try_from(S s) noexcept {
   return R::with(_self(static_cast<_primitive>(s)));
 }
 
-/** Constructs a ##_self## from a signed enum type (or enum class).
+/** Constructs a ##_self## from a signed enum type (or enum class) where no bits
+ * are lost.
  *
- * # Panics
- * The function will panic if the input value is out of range for ##_self##.
+ * For fallible conversions use `try_from()`. For lossy conversions use the
+ * `sus::construct::ToBits` concept with `sus::to_bits<##_self##>()`.
  *
  * #[doc.overloads=signedint.from.signedenum]
  */
 template <class S>
-  requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
+  requires((SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>) &&
+           ::sus::mem::size_of<S>() <= ::sus::mem::size_of<_primitive>())
 sus_pure static constexpr _self from(S s) noexcept {
   using D = std::underlying_type_t<S>;
-  if constexpr (MIN_PRIMITIVE > __private::min_value<D>())
-    ::sus::check(static_cast<D>(s) >= MIN_PRIMITIVE);
-  if constexpr (MAX_PRIMITIVE < __private::max_value<D>())
-    ::sus::check(static_cast<D>(s) <= MAX_PRIMITIVE);
-  return _self(static_cast<_primitive>(s));
+  return _self(static_cast<std::underlying_type_t<S>>(s));
 }
 
 /** Tries to construct a ##_self## from a signed enum type (or enum class).
@@ -349,23 +326,6 @@ try_from(S s) noexcept {
 /** Constructs a ##_self## from an unsigned primitive integer type (unsigned
  * int, unsigned long, etc).
  *
- * # Panics
- * The function will panic if the input value is out of range for ##_self##.
- *
- * #[doc.overloads=signedint.from.unsignedint]
- */
-template <UnsignedPrimitiveInteger U>
-sus_pure static constexpr _self from(U u) noexcept {
-  constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);
-  if constexpr (umax < __private::max_value<U>()) {
-    ::sus::check(u <= umax);
-  }
-  return _self(static_cast<_primitive>(u));
-}
-
-/** Constructs a ##_self## from an unsigned primitive integer type (unsigned
- * int, unsigned long, etc).
- *
  * Returns an error if the source value is outside of the range of ##_self##.
  *
  * #[doc.overloads=signedint.tryfrom.unsignedint]
@@ -382,24 +342,6 @@ try_from(U u) noexcept {
     }
   }
   return R::with(_self(static_cast<_primitive>(u)));
-}
-
-/** Constructs a ##_self## from an unsigned enum type (or enum class).
- *
- * # Panics
- * The function will panic if the input value is out of range for ##_self##.
- *
- * #[doc.overloads=signedint.from.unsignedenum]
- */
-template <class U>
-  requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
-sus_pure static constexpr _self from(U u) noexcept {
-  using D = std::underlying_type_t<U>;
-  constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);
-  if constexpr (umax < __private::max_value<D>()) {
-    ::sus::check(static_cast<D>(u) <= umax);
-  }
-  return _self(static_cast<_primitive>(u));
 }
 
 /** Constructs a ##_self## from an unsigned enum type (or enum class).
@@ -422,51 +364,6 @@ try_from(U u) noexcept {
     }
   }
   return R::with(_self(static_cast<_primitive>(u)));
-}
-
-/** Constructs a ##_self## from a signed or unsigned integer type (i8, i16, u32,
- * u64 etc).
- *
- * # Safety
- * If the input value is out of range for ##_self##, the value will be
- * truncated, which may lead to application bugs and memory unsafety.
- *
- * #[doc.overloads=signedint.fromunchecked.int]
- */
-template <Integer I>
-sus_pure static constexpr _self from_unchecked(::sus::marker::UnsafeFnMarker,
-                                               I i) noexcept {
-  return _self(static_cast<_primitive>(i.primitive_value));
-}
-
-/** Constructs a ##_self## from a signed or unsigned integer primitive type
- * (int, long, unsigned int, etc).
- *
- * # Safety
- * If the input value is out of range for ##_self##, the value will be
- * truncated, which may lead to application bugs and memory unsafety.
- *
- * #[doc.overloads=signedint.fromunchecked.primitive]
- */
-template <PrimitiveInteger P>
-sus_pure static constexpr _self from_unchecked(::sus::marker::UnsafeFnMarker,
-                                               P p) noexcept {
-  return _self(static_cast<_primitive>(p));
-}
-
-/** Constructs a ##_self## from a signed or unsigned enum type (or enum class).
- *
- * # Safety
- * If the input value is out of range for ##_self##, the value will be
- * truncated, which may lead to application bugs and memory unsafety.
- *
- * #[doc.overloads=signedint.fromunchecked.enum]
- */
-template <class P>
-  requires(PrimitiveEnum<P> || PrimitiveEnumClass<P>)
-sus_pure static constexpr _self from_unchecked(::sus::marker::UnsafeFnMarker,
-                                               P p) noexcept {
-  return _self(static_cast<_primitive>(p));
 }
 
 /// Constructs a ##_self## from an `Iterator` by computing the product of all

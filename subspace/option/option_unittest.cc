@@ -2820,16 +2820,16 @@ struct CollectSum {
 };
 
 TEST(Option, From) {
-  static_assert(sus::construct::Into<i64, i32>);
+  static_assert(sus::construct::Into< i32, i64>);
 
   // Move.
-  Option<i32> o = sus::into(Option<i64>::with(101));
-  EXPECT_EQ(o.as_value(), 101_i32);
+  Option<i64> o = sus::into(Option<i32>::with(101));
+  EXPECT_EQ(o.as_value(), 101_i64);
 
   // Copy.
-  auto f = Option<i64>::with(101);
-  Option<i32> t = sus::into(f);
-  EXPECT_EQ(t.as_value(), 101_i32);
+  auto f = Option<i32>::with(101);
+  Option<i64> t = sus::into(f);
+  EXPECT_EQ(t.as_value(), 101_i64);
 }
 
 TEST(Option, FromIter) {

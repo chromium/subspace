@@ -211,7 +211,7 @@ TEST(Swap, Alias) {
       [i = 0_i32]() mutable { return sus::mem::replace(i, i + 1); }));
   sus::mem::swap(mref(t), mref(t));
   for (usize j : "0..100"_r) {
-    EXPECT_EQ(t.num[j], i32::from(j));
+    EXPECT_EQ(t.num[j], i32::try_from(j).unwrap());
   }
   EXPECT_EQ(Trivial::moves, 0u);
 }
@@ -240,8 +240,8 @@ TEST(Swap, NoAliasUnchecked) {
       [i = 10_i32]() mutable { return sus::mem::replace(i, i + 1); }));
   sus::mem::swap_nonoverlapping(unsafe_fn, mref(t1), mref(t2));
   for (usize j : "0..100"_r) {
-    EXPECT_EQ(t1.num[j], i32::from(j) + 10);
-    EXPECT_EQ(t2.num[j], i32::from(j));
+    EXPECT_EQ(t1.num[j], i32::try_from(j).unwrap() + 10);
+    EXPECT_EQ(t2.num[j], i32::try_from(j).unwrap());
   }
   EXPECT_EQ(Trivial::moves, 0u);
 }

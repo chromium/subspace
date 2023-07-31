@@ -75,19 +75,25 @@ TEST(OverflowInteger, From) {
   static_assert(::sus::construct::Into<i8, OverflowInteger<i32>>);
   static_assert(::sus::construct::Into<i16, OverflowInteger<i32>>);
   static_assert(::sus::construct::Into<i32, OverflowInteger<i32>>);
-  static_assert(::sus::construct::Into<i64, OverflowInteger<i32>>);
-  static_assert(::sus::construct::Into<u8, OverflowInteger<i32>>);
-  static_assert(::sus::construct::Into<u16, OverflowInteger<i32>>);
-  static_assert(::sus::construct::Into<u32, OverflowInteger<i32>>);
-  static_assert(::sus::construct::Into<u64, OverflowInteger<i32>>);
+  static_assert(!::sus::construct::Into<i64, OverflowInteger<i32>>);
+  static_assert(!::sus::construct::Into<u8, OverflowInteger<i32>>);
+  static_assert(!::sus::construct::Into<u16, OverflowInteger<i32>>);
+  static_assert(!::sus::construct::Into<u32, OverflowInteger<i32>>);
+  static_assert(!::sus::construct::Into<u64, OverflowInteger<i32>>);
 
-  EXPECT_EQ(OverflowInteger<i32>::from(13_u64).unwrap(), 13);
-  EXPECT_EQ(OverflowInteger<i32>(sus::into(13_u64)).unwrap(), 13);
+  EXPECT_EQ(OverflowInteger<i64>::from(13_i32).unwrap(), 13);
+  EXPECT_EQ(OverflowInteger<i64>(sus::into(13_i32)).unwrap(), 13);
 }
 
 TEST(OverflowInteger, TryFrom) {
-  static_assert(::sus::construct::TryFrom<OverflowInteger<i32>, u16>);
-  static_assert(::sus::construct::TryFrom<OverflowInteger<i32>, i64>);
+  static_assert(::sus::construct::TryInto<i8, OverflowInteger<i32>>);
+  static_assert(::sus::construct::TryInto<i16, OverflowInteger<i32>>);
+  static_assert(::sus::construct::TryInto<i32, OverflowInteger<i32>>);
+  static_assert(::sus::construct::TryInto<i64, OverflowInteger<i32>>);
+  static_assert(::sus::construct::TryInto<u8, OverflowInteger<i32>>);
+  static_assert(::sus::construct::TryInto<u16, OverflowInteger<i32>>);
+  static_assert(::sus::construct::TryInto<u32, OverflowInteger<i32>>);
+  static_assert(::sus::construct::TryInto<u64, OverflowInteger<i32>>);
 
   EXPECT_EQ(OverflowInteger<i32>::try_from(13_u64).unwrap().unwrap(), 13);
   EXPECT_EQ(OverflowInteger<i32>::try_from(u64::MAX).unwrap_err(),

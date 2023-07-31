@@ -22,26 +22,6 @@
 #include "subspace/num/float_concepts.h"
 #include "subspace/num/integer_concepts.h"
 
-/// * Casting from a float to an integer will perform a static_cast, which
-///   rounds the float towards zero, except:
-///   * NaN will return 0.
-///   * Values larger than the maximum integer value, including `INFINITY`, will
-///     saturate to the maximum value of the integer type.
-///   * Values smaller than the minimum integer value, including `NEG_INFINITY`,
-///     will saturate to the minimum value of the integer type.
-/// * Casting from an integer to a float will perform a static_cast, which
-///   converts to the nearest floating point value. The rounding direction for
-///   values that land between representable floating point values is
-///   implementation defined (per C++20 Section 7.3.10).
-/// * Casting from an f32 to an f64 preserves the value unchanged.
-/// * Casting f64 to f32 performs the same action as a static_cast if the value
-///   is in range for f32, otherwise:
-///   * NaN will return a NaN.
-///   * Values outside of f32's range will return INFINITY or NEG_INFINITY for
-///     positive and negative values respectively.
-/// * Casting to and from std::byte produces the same values as casting to and
-///   from `u8`.
-
 // # ================ From signed integers. ============================
 
 // ## === Into `Integer`
