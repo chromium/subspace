@@ -58,11 +58,10 @@ namespace sus::num {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting to a
-/// larger signed integer type, the value will be sign-extended. Between
-/// integers this behaves the same as static_cast<T>() on primitive integers.
-/// Between integers and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] i32 final {
 #define _self i32
 #define _primitive int32_t
@@ -83,11 +82,10 @@ struct [[sus_trivial_abi]] i32 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting to a
-/// larger signed integer type, the value will be sign-extended. Between
-/// integers this behaves the same as static_cast<T>() on primitive integers.
-/// Between integers and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] i8 final {
 #define _self i8
 #define _primitive int8_t
@@ -108,11 +106,10 @@ struct [[sus_trivial_abi]] i8 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting to a
-/// larger signed integer type, the value will be sign-extended. Between
-/// integers this behaves the same as static_cast<T>() on primitive integers.
-/// Between integers and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] i16 final {
 #define _self i16
 #define _primitive int16_t
@@ -133,11 +130,10 @@ struct [[sus_trivial_abi]] i16 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting to a
-/// larger signed integer type, the value will be sign-extended. Between
-/// integers this behaves the same as static_cast<T>() on primitive integers.
-/// Between integers and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] i64 final {
 #define _self i64
 #define _primitive int64_t
@@ -167,11 +163,10 @@ struct [[sus_trivial_abi]] i64 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting to a
-/// larger signed integer type, the value will be sign-extended. Between
-/// integers this behaves the same as static_cast<T>() on primitive integers.
-/// Between integers and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] isize final {
 #define _self isize
 #define _primitive ::sus::num::__private::addr_type<>::signed_type

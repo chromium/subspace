@@ -38,12 +38,23 @@
 
 namespace sus::num {
 
-/// A 32-bit floating point type (specifically, the “binary32” type defined in
-/// IEEE 754-2008).
+/// A 32-bit floating point type (specifically, this type holds the same values
+/// as the `float` type specified by the C++ standard).
 ///
 /// This type can represent a wide range of decimal numbers, like 3.5, 27,
 /// -113.75, 0.0078125, 34359738368, 0, -1. So unlike integer types (such as
-/// i32), floating point types can represent non-integer numbers, too.
+/// `i32`), floating point types can represent non-integer numbers, too.
+///
+/// # Conversions
+///
+/// To convert between floating point types, use `sus::into()` to losslessly
+/// promote to larger types (`f32` to `f64`) `sus::try_into()` to try convert to
+/// smaller types (`f64` to `f32`).
+///
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When
+/// converting to a larger signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] f32 final {
 #define _self f32
 #define _primitive float
@@ -55,12 +66,22 @@ struct [[sus_trivial_abi]] f32 final {
 #define _suffix f
 #include "subspace/num/__private/float_consts.inc"
 
-/// A 64-bit floating point type (specifically, the “binary64” type defined in
-/// IEEE 754-2008).
+/// A 64-bit floating point type (specifically, this type holds the same values
+/// as the `double` type specified by the C++ standard).
 ///
 /// This type is very similar to `f32`, but has increased precision by using
-/// twice as many bits. Please see the documentation for `f32` for more
-/// information.
+/// twice as many bits.
+///
+/// # Conversions
+///
+/// To convert between floating point types, use `sus::into()` to losslessly
+/// promote to larger types (`f32` to `f64`) `sus::try_into()` to try convert to
+/// smaller types (`f64` to `f32`).
+///
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When
+/// converting to a larger signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] f64 final {
 #define _self f64
 #define _primitive double

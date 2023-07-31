@@ -53,11 +53,10 @@ namespace sus::num {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting from a
-/// smaller signed type, the value will be sign-extended. Between integers this
-/// behaves the same as static_cast<T>() on primitive integers. Between integers
-/// and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] u32 final {
 #define _self u32
 #define _pointer 0
@@ -80,11 +79,10 @@ struct [[sus_trivial_abi]] u32 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting from a
-/// smaller signed type, the value will be sign-extended. Between integers this
-/// behaves the same as static_cast<T>() on primitive integers. Between integers
-/// and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] u8 final {
 #define _self u8
 #define _pointer 0
@@ -107,11 +105,10 @@ struct [[sus_trivial_abi]] u8 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting from a
-/// smaller signed type, the value will be sign-extended. Between integers this
-/// behaves the same as static_cast<T>() on primitive integers. Between integers
-/// and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] u16 final {
 #define _self u16
 #define _pointer 0
@@ -134,11 +131,10 @@ struct [[sus_trivial_abi]] u16 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting from a
-/// smaller signed type, the value will be sign-extended. Between integers this
-/// behaves the same as static_cast<T>() on primitive integers. Between integers
-/// and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] u64 final {
 #define _self u64
 #define _pointer 0
@@ -154,8 +150,8 @@ struct [[sus_trivial_abi]] u64 final {
 /// An address-sized unsigned integer.
 ///
 /// This type is capable of holding any offset or (positive) distance in a
-/// single memory allocation, as allocations are bounded at `isize::MAX`. It
-/// can represent any absolute address in a linear address system.
+/// single memory allocation, as allocations are bounded at `isize::MAX`. It can
+/// represent any absolute address in a linear address system.
 ///
 /// Note that it is possible for a pointer to be larger than an address under
 /// some architectures, with a pointer holding additional data such as
@@ -173,11 +169,10 @@ struct [[sus_trivial_abi]] u64 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting from a
-/// smaller signed type, the value will be sign-extended. Between integers this
-/// behaves the same as static_cast<T>() on primitive integers. Between integers
-/// and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] usize final {
 #define _self usize
 #define _pointer 0
@@ -217,11 +212,10 @@ struct [[sus_trivial_abi]] usize final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// To do a bitwise conversion, use `sus::mog<T>()` which is supported with
-/// all integer and float types and C++ primitive types. When converting from a
-/// smaller signed type, the value will be sign-extended. Between integers this
-/// behaves the same as static_cast<T>() on primitive integers. Between integers
-/// and floats, this strictly converts the bit value.
+/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// `static_cast<T>()`) between integer and floating point types, or C++
+/// primitive integers, floating point, or enums. When converting to a larger
+/// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] uptr final {
 #define _self uptr
 #define _pointer 1
