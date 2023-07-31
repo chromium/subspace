@@ -25,7 +25,7 @@ namespace sus::construct {
 ///
 /// # Examples
 ///
-/// To allow bitwise conversion to `Goat` from any type satisying a
+/// To allow lossy type conversion to `Goat` from any type satisying a
 /// concept `GoatLike`:
 /// ```cpp
 /// // Satisfies Transmogrify<Goat, GoatLike>.
@@ -35,7 +35,7 @@ namespace sus::construct {
 /// };
 /// ```
 ///
-/// To receive something that can be bitwise converted to an `u32`.
+/// To receive something that can be lossily converted to a `u32`.
 /// ```cpp
 /// auto add = [](u32 a, const sus::construct::Transmogrify<u32> auto& b) -> u32
 /// {

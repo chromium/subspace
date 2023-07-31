@@ -16,7 +16,7 @@
 
 #include <type_traits>
 
-#include "subspace/construct/to_bits.h"
+#include "subspace/construct/transmogrify.h"
 #include "subspace/lib/__private/forward_decl.h"
 #include "subspace/num/__private/intrinsics.h"
 #include "subspace/num/float_concepts.h"
