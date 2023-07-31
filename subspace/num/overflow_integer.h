@@ -21,6 +21,7 @@
 #include "subspace/marker/unsafe.h"
 #include "subspace/option/option.h"
 #include "subspace/result/result.h"
+#include "subspace/num/convert.h"
 
 namespace sus::num {
 
@@ -46,11 +47,6 @@ class OverflowInteger {
 
   /// Satisfies `sus::construct::From<OverflowInteger<I>, U>` if the inner
   /// integer type `I` satisfies `sus::construct::From<I, U>`.
-  ///
-  /// # Panics
-  ///
-  /// The `from()` method on subspace integer types may panic if the input is
-  /// out of bounds, in which case this method will also panic.
   template <class U>
     requires(::sus::construct::From<I, U>)
   sus_pure static constexpr OverflowInteger from(U u) noexcept {
@@ -89,18 +85,20 @@ class OverflowInteger {
   /// return an OverflowInteger without ever panicking.
   static constexpr OverflowInteger from_product(
       ::sus::iter::Iterator<I> auto&& it) noexcept {
-    // SAFETY: All integers can hold positive 1.
-    auto p = OverflowInteger(CONSTRUCT,
-                             I::from_unchecked(::sus::marker::unsafe_fn, 1));
+    auto p = OverflowInteger(
+        CONSTRUCT,
+        // SAFETY: This is not lossy, as all integers can hold positive 1.
+        ::sus::to_bits<I>(1));
     for (I i : ::sus::move(it)) p *= i;
     return p;
   }
 
   static constexpr OverflowInteger from_product(
       ::sus::iter::Iterator<OverflowInteger> auto&& it) noexcept {
-    // SAFETY: All integers can hold positive 1.
-    auto p = OverflowInteger(CONSTRUCT,
-                             I::from_unchecked(::sus::marker::unsafe_fn, 1));
+    auto p = OverflowInteger(
+        CONSTRUCT,
+        // SAFETY: This is not lossy, as all integers can hold positive 1.
+        ::sus::to_bits<I>(1));
     for (OverflowInteger i : ::sus::move(it)) p *= i;
     return p;
   }

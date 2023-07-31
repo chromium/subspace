@@ -356,17 +356,18 @@ TEST(isize, ToPrimitive) {
 }
 
 TEST(isize, From) {
-  static_assert(sus::construct::From<isize, char>);
-  static_assert(sus::construct::From<isize, size_t>);
+  static_assert(!sus::construct::From<isize, bool>);
+  static_assert(sus::construct::From<isize, signed char>);
+  static_assert(!sus::construct::From<isize, size_t>);
   static_assert(sus::construct::From<isize, int8_t>);
   static_assert(sus::construct::From<isize, int16_t>);
   static_assert(sus::construct::From<isize, int32_t>);
   static_assert(sus::construct::From<isize, int64_t>);
-  static_assert(sus::construct::From<isize, uint8_t>);
-  static_assert(sus::construct::From<isize, uint16_t>);
-  static_assert(sus::construct::From<isize, uint32_t>);
-  static_assert(sus::construct::From<isize, uint64_t>);
-  static_assert(sus::construct::TryFrom<i32, char>);
+  static_assert(!sus::construct::From<isize, uint8_t>);
+  static_assert(!sus::construct::From<isize, uint16_t>);
+  static_assert(!sus::construct::From<isize, uint32_t>);
+  static_assert(!sus::construct::From<isize, uint64_t>);
+  static_assert(sus::construct::TryFrom<i32,signed  char>);
   static_assert(sus::construct::TryFrom<i32, size_t>);
   static_assert(sus::construct::TryFrom<i32, int8_t>);
   static_assert(sus::construct::TryFrom<i32, int16_t>);
@@ -377,17 +378,17 @@ TEST(isize, From) {
   static_assert(sus::construct::TryFrom<i32, uint32_t>);
   static_assert(sus::construct::TryFrom<i32, uint64_t>);
 
-  static_assert(sus::construct::From<isize, ENUM(, char)>);
-  static_assert(sus::construct::From<isize, ENUM(, size_t)>);
+  static_assert(sus::construct::From<isize, ENUM(, signed char)>);
+  static_assert(!sus::construct::From<isize, ENUM(, size_t)>);
   static_assert(sus::construct::From<isize, ENUM(, int8_t)>);
   static_assert(sus::construct::From<isize, ENUM(, int16_t)>);
   static_assert(sus::construct::From<isize, ENUM(, int32_t)>);
   static_assert(sus::construct::From<isize, ENUM(, int64_t)>);
-  static_assert(sus::construct::From<isize, ENUM(, uint8_t)>);
-  static_assert(sus::construct::From<isize, ENUM(, uint16_t)>);
-  static_assert(sus::construct::From<isize, ENUM(, uint32_t)>);
-  static_assert(sus::construct::From<isize, ENUM(, uint64_t)>);
-  static_assert(sus::construct::TryFrom<isize, ENUM(, char)>);
+  static_assert(!sus::construct::From<isize, ENUM(, uint8_t)>);
+  static_assert(!sus::construct::From<isize, ENUM(, uint16_t)>);
+  static_assert(!sus::construct::From<isize, ENUM(, uint32_t)>);
+  static_assert(!sus::construct::From<isize, ENUM(, uint64_t)>);
+  static_assert(sus::construct::TryFrom<isize, ENUM(, signed char)>);
   static_assert(sus::construct::TryFrom<isize, ENUM(, size_t)>);
   static_assert(sus::construct::TryFrom<isize, ENUM(, int8_t)>);
   static_assert(sus::construct::TryFrom<isize, ENUM(, int16_t)>);
@@ -398,17 +399,17 @@ TEST(isize, From) {
   static_assert(sus::construct::TryFrom<isize, ENUM(, uint32_t)>);
   static_assert(sus::construct::TryFrom<isize, ENUM(, uint64_t)>);
 
-  static_assert(sus::construct::From<isize, ENUM(class, char)>);
-  static_assert(sus::construct::From<isize, ENUM(class, size_t)>);
+  static_assert(sus::construct::From<isize, ENUM(class, signed char)>);
+  static_assert(!sus::construct::From<isize, ENUM(class, size_t)>);
   static_assert(sus::construct::From<isize, ENUM(class, int8_t)>);
   static_assert(sus::construct::From<isize, ENUM(class, int16_t)>);
   static_assert(sus::construct::From<isize, ENUM(class, int32_t)>);
   static_assert(sus::construct::From<isize, ENUM(class, int64_t)>);
-  static_assert(sus::construct::From<isize, ENUM(class, uint8_t)>);
-  static_assert(sus::construct::From<isize, ENUM(class, uint16_t)>);
-  static_assert(sus::construct::From<isize, ENUM(class, uint32_t)>);
-  static_assert(sus::construct::From<isize, ENUM(class, uint64_t)>);
-  static_assert(sus::construct::TryFrom<isize, ENUM(class, char)>);
+  static_assert(!sus::construct::From<isize, ENUM(class, uint8_t)>);
+  static_assert(!sus::construct::From<isize, ENUM(class, uint16_t)>);
+  static_assert(!sus::construct::From<isize, ENUM(class, uint32_t)>);
+  static_assert(!sus::construct::From<isize, ENUM(class, uint64_t)>);
+  static_assert(sus::construct::TryFrom<isize, ENUM(class, signed char)>);
   static_assert(sus::construct::TryFrom<isize, ENUM(class, size_t)>);
   static_assert(sus::construct::TryFrom<isize, ENUM(class, int8_t)>);
   static_assert(sus::construct::TryFrom<isize, ENUM(class, int16_t)>);
@@ -419,18 +420,13 @@ TEST(isize, From) {
   static_assert(sus::construct::TryFrom<isize, ENUM(class, uint32_t)>);
   static_assert(sus::construct::TryFrom<isize, ENUM(class, uint64_t)>);
 
-  EXPECT_EQ(isize::from(char{2}), 2_isize);
-  EXPECT_EQ(isize::from(size_t{2}), 2_isize);
+  EXPECT_EQ(isize::from(signed char{2}), 2_isize);
   EXPECT_EQ(isize::from(int8_t{2}), 2_isize);
   EXPECT_EQ(isize::from(int16_t{2}), 2_isize);
   EXPECT_EQ(isize::from(int32_t{2}), 2_isize);
   EXPECT_EQ(isize::from(int64_t{2}), 2_isize);
-  EXPECT_EQ(isize::from(uint8_t{2}), 2_isize);
-  EXPECT_EQ(isize::from(uint16_t{2}), 2_isize);
-  EXPECT_EQ(isize::from(uint32_t{2}), 2_isize);
-  EXPECT_EQ(isize::from(uint64_t{2}), 2_isize);
 
-  EXPECT_EQ(isize::try_from(char{2}).unwrap(), 2_isize);
+  EXPECT_EQ(isize::try_from(signed char{2}).unwrap(), 2_isize);
   EXPECT_EQ(isize::try_from(size_t{2}).unwrap(), 2_isize);
   EXPECT_EQ(isize::try_from(int8_t{2}).unwrap(), 2_isize);
   EXPECT_EQ(isize::try_from(int16_t{2}).unwrap(), 2_isize);
@@ -448,19 +444,13 @@ TEST(isize, From) {
   }
   EXPECT_TRUE(isize::try_from(uint64_t{u64::MAX}).is_err());
 
-  EXPECT_EQ(isize::from(ENUM(, char)::Z), 2_isize);
-  EXPECT_EQ(isize::from(ENUM(, size_t)::Z), 2_isize);
+  EXPECT_EQ(isize::from(ENUM(, signed char)::Z), 2_isize);
   EXPECT_EQ(isize::from(ENUM(, int8_t)::Z), 2_isize);
   EXPECT_EQ(isize::from(ENUM(, int16_t)::Z), 2_isize);
   EXPECT_EQ(isize::from(ENUM(, int32_t)::Z), 2_isize);
   EXPECT_EQ(isize::from(ENUM(, int64_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from(ENUM(, uint8_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from(ENUM(, uint16_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from(ENUM(, uint32_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from(ENUM(, uint64_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from(ENUM(class, uint64_t)::Z), 2_isize);
 
-  EXPECT_EQ(isize::try_from(ENUM(, char)::Z).unwrap(), 2_isize);
+  EXPECT_EQ(isize::try_from(ENUM(,signed  char)::Z).unwrap(), 2_isize);
   EXPECT_EQ(isize::try_from(ENUM(, size_t)::Z).unwrap(), 2_isize);
   EXPECT_EQ(isize::try_from(ENUM(, int8_t)::Z).unwrap(), 2_isize);
   EXPECT_EQ(isize::try_from(ENUM(, int16_t)::Z).unwrap(), 2_isize);
@@ -481,40 +471,17 @@ TEST(isize, From) {
   EXPECT_TRUE(isize::try_from(ENUM(, uint64_t)::MAX).is_err());
   EXPECT_TRUE(isize::try_from(ENUM(class, uint64_t)::MAX).is_err());
 
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, char{2}), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, size_t{2}), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, int8_t{2}), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, int16_t{2}), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, int32_t{2}), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, int64_t{2}), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, uint8_t{2}), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, uint16_t{2}), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, uint32_t{2}), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, uint64_t{2}), 2_isize);
-
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, char)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, size_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, int8_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, int16_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, int32_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, int64_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, uint8_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, uint16_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, uint32_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(, uint64_t)::Z), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, ENUM(class, uint64_t)::Z),
-            2_isize);
-
   static_assert(sus::construct::From<isize, i8>);
   static_assert(sus::construct::From<isize, i16>);
   static_assert(sus::construct::From<isize, i32>);
   static_assert(sus::construct::From<isize, i64>);
   static_assert(sus::construct::From<isize, isize>);
-  static_assert(sus::construct::From<isize, u8>);
-  static_assert(sus::construct::From<isize, u16>);
-  static_assert(sus::construct::From<isize, u32>);
-  static_assert(sus::construct::From<isize, u64>);
-  static_assert(sus::construct::From<isize, usize>);
+  static_assert(!sus::construct::From<isize, u8>);
+  static_assert(!sus::construct::From<isize, u16>);
+  static_assert(!sus::construct::From<isize, u32>);
+  static_assert(!sus::construct::From<isize, u64>);
+  static_assert(!sus::construct::From<isize, usize>);
+  static_assert(!sus::construct::From<isize, uptr>);
   static_assert(sus::construct::TryFrom<i32, i8>);
   static_assert(sus::construct::TryFrom<i32, i16>);
   static_assert(sus::construct::TryFrom<i32, i32>);
@@ -525,17 +492,13 @@ TEST(isize, From) {
   static_assert(sus::construct::TryFrom<i32, u32>);
   static_assert(sus::construct::TryFrom<i32, u64>);
   static_assert(sus::construct::TryFrom<i32, usize>);
+  static_assert(sus::construct::TryFrom<i32, uptr>);
 
   EXPECT_EQ(isize::from(2_i8), 2_isize);
   EXPECT_EQ(isize::from(2_i16), 2_isize);
   EXPECT_EQ(isize::from(2_i32), 2_isize);
   EXPECT_EQ(isize::from(2_i64), 2_isize);
   EXPECT_EQ(isize::from(2_isize), 2_isize);
-  EXPECT_EQ(isize::from(2_u8), 2_isize);
-  EXPECT_EQ(isize::from(2_u16), 2_isize);
-  EXPECT_EQ(isize::from(2_u32), 2_isize);
-  EXPECT_EQ(isize::from(2_u64), 2_isize);
-  EXPECT_EQ(isize::from(2_usize), 2_isize);
 
   EXPECT_EQ(isize::try_from(2_i8).unwrap(), 2_isize);
   EXPECT_EQ(isize::try_from(2_i16).unwrap(), 2_isize);
@@ -554,112 +517,6 @@ TEST(isize, From) {
     EXPECT_TRUE(isize::try_from(u64::MAX).is_err());
   }
   EXPECT_TRUE(isize::try_from(u64::MAX).is_err());
-
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_i8), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_i16), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_i32), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_i64), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_isize), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_u8), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_u16), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_u32), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_u64), 2_isize);
-  EXPECT_EQ(isize::from_unchecked(unsafe_fn, 2_usize), 2_isize);
-}
-
-TEST(isizeDeathTest, FromOutOfRange) {
-#if GTEST_HAS_DEATH_TEST
-  EXPECT_DEATH(
-      {
-        auto x = isize::from(uint64_t{0xffff'ffff'ffff'ffff});
-        ensure_use(&x);
-      },
-      "");
-
-  EXPECT_DEATH(
-      {
-        auto x = isize::from(ENUM(, uint64_t)::MAX);
-        ensure_use(&x);
-      },
-      "");
-  EXPECT_DEATH(
-      {
-        auto x = isize::from(ENUM(class, uint64_t)::MAX);
-        ensure_use(&x);
-      },
-      "");
-
-  bool not64 = sizeof(isize) != sizeof(i64);
-  if (not64) {
-    EXPECT_DEATH(
-        {
-          auto x = isize::from(ENUM(, int64_t)::MIN);
-          ensure_use(&x);
-        },
-        "");
-    EXPECT_DEATH(
-        {
-          auto x = isize::from(ENUM(, int64_t)::MAX);
-          ensure_use(&x);
-        },
-        "");
-    EXPECT_DEATH(
-        {
-          auto x = isize::from(ENUM(, uint32_t)::MAX);
-          ensure_use(&x);
-        },
-        "");
-    EXPECT_DEATH(
-        {
-          auto x = isize::from(ENUM(class, int64_t)::MIN);
-          ensure_use(&x);
-        },
-        "");
-    EXPECT_DEATH(
-        {
-          auto x = isize::from(ENUM(class, int64_t)::MAX);
-          ensure_use(&x);
-        },
-        "");
-    EXPECT_DEATH(
-        {
-          auto x = isize::from(ENUM(class, uint32_t)::MAX);
-          ensure_use(&x);
-        },
-        "");
-
-    EXPECT_DEATH(
-        {
-          auto x = isize::from(i64::MIN);
-          ensure_use(&x);
-        },
-        "");
-    EXPECT_DEATH(
-        {
-          auto x = isize::from(i64::MAX);
-          ensure_use(&x);
-        },
-        "");
-    EXPECT_DEATH(
-        {
-          auto x = isize::from(u32::MAX);
-          ensure_use(&x);
-        },
-        "");
-  }
-  EXPECT_DEATH(
-      {
-        auto x = isize::from(u64::MAX);
-        ensure_use(&x);
-      },
-      "");
-  EXPECT_DEATH(
-      {
-        auto x = isize::from(usize::MAX);
-        ensure_use(&x);
-      },
-      "");
-#endif
 }
 
 TEST(isize, InvokeEverything) {

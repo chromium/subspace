@@ -255,16 +255,16 @@ TEST(OptionCompat, ToOptionalRef) {
 }
 
 TEST(OptionCompat, FromOptionalCopyWithConversion) {
-  static_assert(sus::construct::Into<i64, i32>);
+  static_assert(sus::construct::Into<i32, i64>);
 
   // Move.
-  constexpr sus::Option<i32> o = sus::into(std::optional<i64>(101));
-  EXPECT_EQ(o.as_value(), 101_i32);
+  constexpr sus::Option<i64> o = sus::into(std::optional<i32>(101));
+  EXPECT_EQ(o.as_value(), 101_i64);
 
   // Copy.
-  constexpr auto f = std::optional<i64>(101);
-  constexpr sus::Option<i32> t = sus::into(f);
-  EXPECT_EQ(t.as_value(), 101_i32);
+  constexpr auto f = std::optional<i32>(101);
+  constexpr sus::Option<i64> t = sus::into(f);
+  EXPECT_EQ(t.as_value(), 101_i64);
 }
 
 }  // namespace

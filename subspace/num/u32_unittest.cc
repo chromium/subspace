@@ -632,14 +632,15 @@ TEST(u32DeathTest, FromOutOfRange) {
 
 TEST(u32, TryFromBoundaries) {
   // Signed primitives.
-  EXPECT_TRUE(u32::try_from(int64_t{i64::from(u32::MAX)}).is_ok());
-  EXPECT_TRUE(u32::try_from(int64_t{i64::from(u32::MAX) + 1}).is_err());
+  EXPECT_TRUE(u32::try_from(int64_t{i64::try_from(u32::MAX).unwrap()}).is_ok());
+  EXPECT_TRUE(
+      u32::try_from(int64_t{i64::try_from(u32::MAX).unwrap() + 1}).is_err());
   EXPECT_TRUE(u32::try_from(int64_t{0}).is_ok());
   EXPECT_TRUE(u32::try_from(int64_t{-1}).is_err());
 
   // Signed integers.
-  EXPECT_TRUE(u32::try_from(i64::from(u32::MAX)).is_ok());
-  EXPECT_TRUE(u32::try_from(i64::from(u32::MAX) + 1).is_err());
+  EXPECT_TRUE(u32::try_from(i64::try_from(u32::MAX).unwrap()).is_ok());
+  EXPECT_TRUE(u32::try_from(i64::try_from(u32::MAX).unwrap() + 1).is_err());
   EXPECT_TRUE(u32::try_from(0_i32).is_ok());
   EXPECT_TRUE(u32::try_from(-1_i32).is_err());
 
