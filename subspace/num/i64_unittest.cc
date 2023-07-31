@@ -317,8 +317,10 @@ TEST(i64, ToPrimitive) {
 }
 
 TEST(i64, From) {
+  using signed_char = signed char;
+
   static_assert(!sus::construct::From<i64, bool>);
-  static_assert(sus::construct::From<i64, signed char>);
+  static_assert(sus::construct::From<i64, signed_char>);
   static_assert(!sus::construct::From<i64, size_t>);
   static_assert(sus::construct::From<i64, int8_t>);
   static_assert(sus::construct::From<i64, int16_t>);
@@ -328,7 +330,7 @@ TEST(i64, From) {
   static_assert(!sus::construct::From<i64, uint16_t>);
   static_assert(!sus::construct::From<i64, uint32_t>);
   static_assert(!sus::construct::From<i64, uint64_t>);
-  static_assert(sus::construct::TryFrom<i64, signed char>);
+  static_assert(sus::construct::TryFrom<i64, signed_char>);
   static_assert(sus::construct::TryFrom<i64, size_t>);
   static_assert(sus::construct::TryFrom<i64, int8_t>);
   static_assert(sus::construct::TryFrom<i64, int16_t>);
@@ -339,7 +341,7 @@ TEST(i64, From) {
   static_assert(sus::construct::TryFrom<i64, uint32_t>);
   static_assert(sus::construct::TryFrom<i64, uint64_t>);
 
-  static_assert(sus::construct::From<i64, ENUM(, signed char)>);
+  static_assert(sus::construct::From<i64, ENUM(, signed_char)>);
   static_assert(!sus::construct::From<i64, ENUM(, size_t)>);
   static_assert(sus::construct::From<i64, ENUM(, int8_t)>);
   static_assert(sus::construct::From<i64, ENUM(, int16_t)>);
@@ -381,13 +383,13 @@ TEST(i64, From) {
   static_assert(sus::construct::TryFrom<i64, ENUM(class, uint32_t)>);
   static_assert(sus::construct::TryFrom<i64, ENUM(class, uint64_t)>);
 
-  EXPECT_EQ(i64::from(signed char{2}), 2_i64);
+  EXPECT_EQ(i64::from(signed_char{2}), 2_i64);
   EXPECT_EQ(i64::from(int8_t{2}), 2_i64);
   EXPECT_EQ(i64::from(int16_t{2}), 2_i64);
   EXPECT_EQ(i64::from(int32_t{2}), 2_i64);
   EXPECT_EQ(i64::from(int64_t{2}), 2_i64);
 
-  EXPECT_EQ(i64::try_from(signed char{2}).unwrap(), 2_i64);
+  EXPECT_EQ(i64::try_from(signed_char{2}).unwrap(), 2_i64);
   EXPECT_EQ(i64::try_from(size_t{2}).unwrap(), 2_i64);
   EXPECT_EQ(i64::try_from(int8_t{2}).unwrap(), 2_i64);
   EXPECT_EQ(i64::try_from(int16_t{2}).unwrap(), 2_i64);
@@ -400,13 +402,13 @@ TEST(i64, From) {
 
   EXPECT_TRUE(i64::try_from(uint64_t{u64::MAX}).is_err());
 
-  EXPECT_EQ(i64::from(ENUM(, signed char)::Z), 2_i64);
+  EXPECT_EQ(i64::from(ENUM(, signed_char)::Z), 2_i64);
   EXPECT_EQ(i64::from(ENUM(, int8_t)::Z), 2_i64);
   EXPECT_EQ(i64::from(ENUM(, int16_t)::Z), 2_i64);
   EXPECT_EQ(i64::from(ENUM(, int32_t)::Z), 2_i64);
   EXPECT_EQ(i64::from(ENUM(, int64_t)::Z), 2_i64);
 
-  EXPECT_EQ(i64::try_from(ENUM(, signed char)::Z).unwrap(), 2_i64);
+  EXPECT_EQ(i64::try_from(ENUM(, signed_char)::Z).unwrap(), 2_i64);
   EXPECT_EQ(i64::try_from(ENUM(, size_t)::Z).unwrap(), 2_i64);
   EXPECT_EQ(i64::try_from(ENUM(, int8_t)::Z).unwrap(), 2_i64);
   EXPECT_EQ(i64::try_from(ENUM(, int16_t)::Z).unwrap(), 2_i64);
