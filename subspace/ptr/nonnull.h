@@ -18,7 +18,6 @@
 #include "subspace/convert/subclass.h"
 #include "subspace/macros/nonnull.h"
 #include "subspace/marker/unsafe.h"
-#include "subspace/mem/__private/nonnull_marker.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/never_value.h"
 #include "subspace/mem/relocate.h"
@@ -27,7 +26,7 @@
 #include "subspace/option/option.h"
 #include "subspace/string/__private/format_to_stream.h"
 
-namespace sus::mem {
+namespace sus::ptr {
 
 /// A pointer wrapper which holds a never-null pointer.
 ///
@@ -43,7 +42,9 @@ template <class T>
 class [[sus_trivial_abi]] NonNull {
  public:
   /// Constructs a `NonNull<T>` from a reference to `T`.
-  static constexpr inline NonNull with(T& t) { return NonNull(addressof(t)); }
+  static constexpr inline NonNull with(T& t) {
+    return NonNull(::sus::mem::addressof(t));
+  }
 
   /// Constructs a `NonNull<T>` from a pointer to `T`.
   ///
@@ -98,7 +99,7 @@ class [[sus_trivial_abi]] NonNull {
   /// #[doc.overloads=1]
   template <::sus::convert::SameOrSubclassOf<T*> U>
   static constexpr inline NonNull from(U t) {
-    check(t);
+    ::sus::check(t);
     return NonNull(t);
   }
 
@@ -182,7 +183,8 @@ class [[sus_trivial_abi]] NonNull {
   sus_class_never_value_field(::sus::marker::unsafe_fn, NonNull, ptr_, nullptr,
                               nullptr);
   // For the NeverValueField.
-  explicit constexpr NonNull(::sus::mem::NeverValueConstructor) noexcept : ptr_(nullptr) {}
+  explicit constexpr NonNull(::sus::mem::NeverValueConstructor) noexcept
+      : ptr_(nullptr) {}
 };
 
 /// sus::ops::Eq<NonNull<T>> trait.
@@ -201,28 +203,18 @@ constexpr inline auto operator<=>(const NonNull<T>& l,
   return l.as_ptr() <=> r.as_ptr();
 }
 
-/// Used to construct a NonNull<T>, while providing type deduction.
-///
-/// Calling nonnull() produces a hint to make an NonNull<T> but does not
-/// actually construct NonNull<T>. This is because the type `T` is not known
-/// until the construction is explicitly requested.
-template <class T>
-constexpr inline __private::NonNullMarker<T> nonnull(T& t) {
-  return __private::NonNullMarker<T>(t);
-}
-
-}  // namespace sus::mem
+}  // namespace sus::ptr
 
 // fmt support.
 template <class T, class Char>
-struct fmt::formatter<::sus::mem::NonNull<T>, Char> {
+struct fmt::formatter<::sus::ptr::NonNull<T>, Char> {
   template <class ParseContext>
   constexpr auto parse(ParseContext& ctx) {
     return underlying_.parse(ctx);
   }
 
   template <class FormatContext>
-  constexpr auto format(const ::sus::mem::NonNull<T>& t,
+  constexpr auto format(const ::sus::ptr::NonNull<T>& t,
                         FormatContext& ctx) const {
     return underlying_.format(t.as_ptr(), ctx);
   }
@@ -232,4 +224,4 @@ struct fmt::formatter<::sus::mem::NonNull<T>, Char> {
 };
 
 // Stream support.
-sus__format_to_stream(sus::mem, NonNull, T);
+sus__format_to_stream(sus::ptr, NonNull, T);

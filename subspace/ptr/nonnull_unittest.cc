@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "subspace/mem/nonnull.h"
+#include "subspace/ptr/nonnull.h"
 
 #include <sstream>
 
@@ -28,7 +28,7 @@
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
 
-using sus::mem::NonNull;
+using sus::ptr::NonNull;
 
 static_assert(sus::mem::relocate_by_memcpy<NonNull<int>>);
 
@@ -304,29 +304,16 @@ TEST(NonNull, OperatorArrow) {
   }
 }
 
-TEST(NonNull, TypeDeduction) {
-  i32 i = 3;
-  NonNull<i32> nm = sus::mem::nonnull(i);
-  EXPECT_EQ(nm.as_ptr(), &i);
-  NonNull<const i32> nc = sus::mem::nonnull(i);
-  EXPECT_EQ(nc.as_ptr(), &i);
-
-  // In place explicit construction.
-  auto a = sus::mem::nonnull(i).construct();
-  static_assert(std::same_as<decltype(a), NonNull<i32>>);
-  EXPECT_EQ(a.as_ptr(), &i);
-}
-
 TEST(NonNull, fmt) {
   i32 i = 3;
-  NonNull<i32> nm = sus::mem::nonnull(i);
+  auto nm = NonNull<i32>::with(i);
 
   EXPECT_EQ(fmt::format("{}", nm), fmt::format("{}", fmt::ptr(&i)));
 }
 
 TEST(NonNull, Stream) {
   i32 i = 3;
-  NonNull<i32> nm = sus::mem::nonnull(i);
+  auto nm = NonNull<i32>::with(i);
 
   std::stringstream s;
   s << nm;
@@ -335,7 +322,7 @@ TEST(NonNull, Stream) {
 
 TEST(NonNull, GTest) {
   i32 i = 3;
-  NonNull<i32> nm = sus::mem::nonnull(i);
+  auto nm = NonNull<i32>::with(i);
 
   EXPECT_EQ(testing::PrintToString(nm), fmt::format("{}", fmt::ptr(&i)));
 }

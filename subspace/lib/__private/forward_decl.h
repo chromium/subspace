@@ -142,7 +142,7 @@ namespace sus::iter {
 struct SizeHint;
 }
 
-namespace sus::mem {
+namespace sus::ptr {
 template <class T>
   requires(!std::is_reference_v<T>)
 class NonNull;

@@ -14,12 +14,12 @@
 
 #include "subspace/construct/default.h"
 #include "subspace/macros/compiler.h"
-#include "subspace/mem/nonnull.h"
+#include "subspace/ptr/nonnull.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/test/behaviour_types.h"
 
 using sus::construct::Default;
-using sus::mem::NonNull;
+using sus::ptr::NonNull;
 using sus::mem::relocate_by_memcpy;
 
 namespace sus::test::default_constructible {
