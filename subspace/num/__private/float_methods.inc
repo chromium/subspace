@@ -126,6 +126,13 @@ struct consts {
 /// #[doc.overloads=ctor.default]
 constexpr inline _self() noexcept = default;
 
+/// Construction from floating point types where no bits are lost.
+///
+/// #[doc.overloads=ctor.from_float]
+template <Float F>
+  requires(::sus::mem::size_of<F>() <= ::sus::mem::size_of<_primitive>())
+constexpr inline _self(F v) noexcept : primitive_value(v.primitive_value) {}
+
 /// Construction from primitive types where no bits are lost.
 ///
 /// #[doc.overloads=ctor.from_primitive]
@@ -133,17 +140,42 @@ template <PrimitiveFloat P>
   requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<_primitive>())
 constexpr inline _self(P v) noexcept : primitive_value(v) {}
 
-/// Constructs a ##_self## from an `Iterator` by computing the product of all
-/// elements in the iterator.
+/// Construction from floating point types where no bits are lost.
 ///
-/// This method should rarely be called directly, as it is used to satisfy the
-/// `sus::iter::Product` concept so that `Iterator::product()` can be called for
-/// iterators over ##_self##.
-static constexpr _self from_product(
-    ::sus::iter::Iterator<_self> auto&& it) noexcept {
-  auto p = _self(_primitive{1u});
-  for (_self i : ::sus::move(it)) p *= i;
-  return p;
+/// #[doc.overloads=from.float]
+template <Float F>
+  requires(::sus::mem::size_of<F>() <= ::sus::mem::size_of<_primitive>())
+sus_pure static constexpr _self from(F f) noexcept {
+  return _self(f);
+}
+
+/// Construction from primitive floating point types where no bits are lost.
+///
+/// #[doc.overloads=from.primitivefloat]
+template <PrimitiveFloat F>
+  requires(::sus::mem::size_of<F>() <= ::sus::mem::size_of<_primitive>())
+sus_pure static constexpr _self from(F f) noexcept {
+  return _self(f);
+}
+
+/// Assignment from floating point types where no bits are lost.
+///
+/// #[doc.overloads=assign.from_float]
+template <Float F>
+  requires(::sus::mem::size_of<F>() <= ::sus::mem::size_of<_primitive>())
+constexpr inline _self& operator=(F v) noexcept {
+  primitive_value = v.primitive_value;
+  return *this;
+}
+
+/// Assignment from primitive types where no bits are lost.
+///
+/// #[doc.overloads=assign.from_primitive]
+template <PrimitiveFloat P>
+  requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<_primitive>())
+constexpr inline _self& operator=(P v) noexcept {
+  primitive_value = v;
+  return *this;
 }
 
 /// Constructs a ##_self## from an `Iterator` by computing the sum of all
@@ -159,20 +191,38 @@ static constexpr _self from_sum(
   return p;
 }
 
-/// Assignment from primitive types where no bits are lost.
-template <PrimitiveFloat P>
-  requires(::sus::mem::size_of<P>() <= ::sus::mem::size_of<_primitive>())
-constexpr inline _self& operator=(P v) noexcept {
-  primitive_value = v;
-  return *this;
+/// Constructs a ##_self## from an `Iterator` by computing the product of all
+/// elements in the iterator.
+///
+/// This method should rarely be called directly, as it is used to satisfy the
+/// `sus::iter::Product` concept so that `Iterator::product()` can be called for
+/// iterators over ##_self##.
+static constexpr _self from_product(
+    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+  auto p = _self(_primitive{1u});
+  for (_self i : ::sus::move(it)) p *= i;
+  return p;
 }
 
+/// Explicit conversion from the numeric type to the inner primitive type.
+///
+/// Typically this should be used in a curly-brace conversion statement such as
+/// `float{3_f32}` which will ensure a compiler error if the conversion can lose
+/// data. Lossy conversions can be done through the `sus::convert::ToBits`
+/// concept, such as `sus::to_bits<float>(3_f32)`.
 template <PrimitiveFloat U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline explicit operator U() const {
   return primitive_value;
 }
 
+/// sus::ops::Eq<##_self##> trait.
+/// #[doc.overloads=float.eq.self]
+template <PrimitiveFloat F>
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+    _self l, _self r) noexcept {
+  return (l.primitive_value <=> r.primitive_value) == 0;
+}
 /// sus::ops::Eq<##_self##, PrimitiveFloat> trait.
 /// #[doc.overloads=float.eq.prim]
 template <PrimitiveFloat F>
@@ -180,9 +230,8 @@ template <PrimitiveFloat F>
                                                                F r) noexcept {
   return (l.primitive_value <=> r) == 0;
 }
-
 /// sus::ops::Eq<##_self##, Float> trait.
-/// #[doc.overloads=float.eq]
+/// #[doc.overloads=float.eq.float]
 template <Float F>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(_self l,
                                                                F r) noexcept {
@@ -190,22 +239,28 @@ template <Float F>
 }
 
 /// sus::ops::PartialOrd<##_self##, PrimitiveFloat> trait.
+/// #[doc.overloads=float.ord.self]
+template <PrimitiveFloat F>
+[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
+    _self l, _self r) noexcept {
+  return l.primitive_value <=> r.primitive_value;
+}
+/// sus::ops::PartialOrd<##_self##, PrimitiveFloat> trait.
 /// #[doc.overloads=float.ord.prim]
 template <PrimitiveFloat F>
 [[nodiscard]] sus_pure friend constexpr inline auto operator<=>(_self l,
                                                                 F r) noexcept {
   return l.primitive_value <=> r;
 }
-
 /// sus::ops::PartialOrd<##_self##, Float> trait.
-/// #[doc.overloads=float.ord]
+/// #[doc.overloads=float.ord.float]
 template <Float F>
 [[nodiscard]] sus_pure friend constexpr inline auto operator<=>(_self l,
                                                                 F r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 
-/// Return the ordering between self and other.
+/// Return the ordering between `*this` and `other`.
 ///
 /// Unlike the standard partial comparison between floating point numbers,
 /// this comparison always produces an ordering in accordance to the
@@ -232,8 +287,8 @@ template <Float F>
 /// The interpretation of the signaling NaN bit follows the definition in the
 /// IEEE 754 standard, which may not match the interpretation by some of the
 /// older, non-conformant (e.g. MIPS) hardware implementations.
-sus_pure constexpr std::strong_ordering total_cmp(_self rhs) const& noexcept {
-  return __private::float_strong_ordering(primitive_value, rhs.primitive_value);
+sus_pure constexpr std::strong_ordering total_cmp(_self other) const& noexcept {
+  return __private::float_strong_ordering(primitive_value, other.primitive_value);
 }
 
 /// sus::num::Neg<##_self##> trait.

@@ -484,6 +484,21 @@ TEST(ConvertToBits, f32) {
     EXPECT_EQ(sus::to_bits<i64>(9999999999999999999_f32), i64::MAX);
     EXPECT_EQ(sus::to_bits<i64>(f32::INFINITY), i64::MAX);
   }
+
+  // Ints to f32.
+  {
+    EXPECT_EQ(sus::to_bits<f32>(0_i8), 0_f32);
+    EXPECT_EQ(sus::to_bits<f32>(0_u8), 0_f32);
+    EXPECT_EQ(sus::to_bits<f32>(i16::MIN), -32768_f32);
+    EXPECT_EQ(sus::to_bits<f32>(i16::MAX), 32767_f32);
+    // These values are rounded in an implementation-defined way.
+    EXPECT_EQ(sus::to_bits<f32>(i32::MIN), -2147483600_f32);
+    EXPECT_EQ(sus::to_bits<f32>(i32::MAX), 2147483600_f32);
+    EXPECT_EQ(sus::to_bits<f32>(i64::MIN), -9223372036854775808_f32);
+    EXPECT_EQ(sus::to_bits<f32>(i64::MAX), 9223372036854775808_f32);
+    EXPECT_EQ(sus::to_bits<f32>(u64::MIN), 0_f32);
+    EXPECT_EQ(sus::to_bits<f32>(u64::MAX), 18446744073709551616e+0_f32);
+  }
 }
 
 TEST(ConvertToBits, f64) {
@@ -583,6 +598,21 @@ TEST(ConvertToBits, f64) {
     EXPECT_EQ(sus::to_bits<i64>(9223372036854775807.00001_f64), i64::MAX);
     EXPECT_EQ(sus::to_bits<i64>(9223372036854775807_f64 * 2_f64), i64::MAX);
     EXPECT_EQ(sus::to_bits<i64>(f64::INFINITY), i64::MAX);
+  }
+
+  // Ints to f64.
+  {
+    EXPECT_EQ(sus::to_bits<f64>(0_i8), 0_f64);
+    EXPECT_EQ(sus::to_bits<f64>(0_u8), 0_f64);
+    EXPECT_EQ(sus::to_bits<f64>(i16::MIN), -32768_f64);
+    EXPECT_EQ(sus::to_bits<f64>(i16::MAX), 32767_f64);
+    // These values are rounded in an implementation-defined way.
+    EXPECT_EQ(sus::to_bits<f64>(i32::MIN), -2147483648_f64);
+    EXPECT_EQ(sus::to_bits<f64>(i32::MAX), 2147483648_f64);
+    EXPECT_EQ(sus::to_bits<f64>(i64::MIN), -9223372036854775808_f64);
+    EXPECT_EQ(sus::to_bits<f64>(i64::MAX), 9223372036854775808_f64);
+    EXPECT_EQ(sus::to_bits<f64>(u64::MIN), 0_f64);
+    EXPECT_EQ(sus::to_bits<f64>(u64::MAX), 18446744073709551616e+0_f64);
   }
 }
 

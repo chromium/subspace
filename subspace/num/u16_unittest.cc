@@ -309,8 +309,8 @@ TEST(u16, CompileTimeConversionEnum) {
 TEST(u16, ToPrimitive) {
   static_assert(NotConvertible<u16, int8_t>);
   static_assert(NotConvertible<u16, int16_t>);
-  static_assert(IsExplicitlyConvertible<u16, int32_t>);
-  static_assert(IsExplicitlyConvertible<u16, int64_t>);
+  static_assert(NotConvertible<u16, int32_t>);
+  static_assert(NotConvertible<u16, int64_t>);
   static_assert(NotConvertible<u16, uint8_t>);
   static_assert(IsExplicitlyConvertible<u16, uint16_t>);
   static_assert(IsExplicitlyConvertible<u16, uint32_t>);

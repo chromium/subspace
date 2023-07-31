@@ -269,7 +269,7 @@ try_from(U u) noexcept {
  * #[doc.overloads=signedint.from.signedint]
  */
 template <SignedPrimitiveInteger S>
-sus_pure static constexpr _self from(S s) {
+sus_pure static constexpr _self from(S s) noexcept {
   if constexpr (MIN_PRIMITIVE > __private::min_value<S>())
     ::sus::check(s >= MIN_PRIMITIVE);
   if constexpr (MAX_PRIMITIVE < __private::max_value<S>())
@@ -287,7 +287,7 @@ sus_pure static constexpr _self from(S s) {
 template <SignedPrimitiveInteger S>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(S s) {
+try_from(S s) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MIN_PRIMITIVE > __private::min_value<S>()) {
     if (s < MIN_PRIMITIVE) {
@@ -311,7 +311,7 @@ try_from(S s) {
  */
 template <class S>
   requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
-sus_pure static constexpr _self from(S s) {
+sus_pure static constexpr _self from(S s) noexcept {
   using D = std::underlying_type_t<S>;
   if constexpr (MIN_PRIMITIVE > __private::min_value<D>())
     ::sus::check(static_cast<D>(s) >= MIN_PRIMITIVE);
@@ -330,7 +330,7 @@ template <class S>
   requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(S s) {
+try_from(S s) noexcept {
   using D = std::underlying_type_t<S>;
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MIN_PRIMITIVE > __private::min_value<D>()) {
@@ -355,7 +355,7 @@ try_from(S s) {
  * #[doc.overloads=signedint.from.unsignedint]
  */
 template <UnsignedPrimitiveInteger U>
-sus_pure static constexpr _self from(U u) {
+sus_pure static constexpr _self from(U u) noexcept {
   constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);
   if constexpr (umax < __private::max_value<U>()) {
     ::sus::check(u <= umax);
@@ -373,7 +373,7 @@ sus_pure static constexpr _self from(U u) {
 template <UnsignedPrimitiveInteger U>
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(U u) {
+try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);
   if constexpr (umax < __private::max_value<U>()) {
@@ -393,7 +393,7 @@ try_from(U u) {
  */
 template <class U>
   requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
-sus_pure static constexpr _self from(U u) {
+sus_pure static constexpr _self from(U u) noexcept {
   using D = std::underlying_type_t<U>;
   constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);
   if constexpr (umax < __private::max_value<D>()) {
@@ -412,7 +412,7 @@ template <class U>
   requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
 sus_pure static constexpr ::sus::result::Result<_self,
                                                 ::sus::num::TryFromIntError>
-try_from(U u) {
+try_from(U u) noexcept {
   using D = std::underlying_type_t<U>;
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   constexpr auto umax = __private::into_unsigned(MAX_PRIMITIVE);
@@ -507,16 +507,17 @@ static constexpr _self from_sum(
   return p;
 }
 
+/// Explicit conversion from the numeric type to the inner primitive type.
+///
+/// Typically this should be used in a curly-brace conversion statement such as
+/// `int32_t{3_i32}` which will ensure a compiler error if the conversion can
+/// lose data. Lossy conversions can be done through the `sus::convert::ToBits`
+/// concept, such as `sus::to_bits<int32_t>(3_i32)` or
+/// `sus::to_bits<uint32_t>(3_i32)`.
 template <SignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline explicit operator U() const {
   return primitive_value;
-}
-
-template <UnsignedPrimitiveInteger U>
-  requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr inline explicit operator U() const {
-  return static_cast<U>(primitive_value);
 }
 
 /** Returns true if the current value is positive and false if the number is
@@ -549,14 +550,14 @@ sus_pure constexpr _self signum() const& noexcept {
  * #[doc.overloads=int.eq.self] */
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const _self& r) noexcept = default;
-/** sus::ops::Eq<##_self##, UnsignedPrimitiveInteger> trait.
+/** sus::ops::Eq<##_self##, SignedPrimitiveInteger> trait.
  * #[doc.overloads=int.eq.signedprimitive] */
 template <SignedPrimitiveInteger P>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const P& r) noexcept {
   return l.primitive_value == r;
 }
-/** sus::ops::Eq<##_self##, Unsigned> trait.
+/** sus::ops::Eq<##_self##, Signed> trait.
  * #[doc.overloads=int.eq.signed] */
 template <Signed S>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
