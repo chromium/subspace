@@ -43,3 +43,9 @@ footguns, crashes, bugs, and UB.
   * They don't mutate through a global or parameter mutable reference or pointer.
   * Thus they don't have observable side effects. Calling them on the same input
     values multiple times always produces the same output.
+  * Additionally, if the function does not deref a pointer, access through
+    a reference, or access any static variables, it may be marked
+    `sus_pure_const`.
+1. If a type has implicit ctor from T then it should have assignment from T.
+   The same is not true for an explicit ctor: no assignment should be present
+   for that type.
