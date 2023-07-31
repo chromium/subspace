@@ -33,7 +33,7 @@ namespace sus::num {
 
 template <class U>
 sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
-_self::try_from(U* u) {
+_self::try_from(U* u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   return R::with(_self(reinterpret_cast<_primitive>(u)));
 }
@@ -54,7 +54,7 @@ _self::try_from(U u) noexcept {
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() == ::sus::mem::size_of<_primitive>())
 sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
-_self::try_from(U u) {
+_self::try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {
     if (u > MAX_PRIMITIVE) {
@@ -80,7 +80,7 @@ _self::try_from(U u) noexcept {
 
 template <UnsignedPrimitiveInteger U>
 sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
-_self::try_from(U u) {
+_self::try_from(U u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < __private::max_value<U>()) {
     if (u > MAX_PRIMITIVE) {
@@ -108,7 +108,7 @@ _self::try_from(S s) noexcept {
 
 template <SignedPrimitiveInteger S>
 sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
-_self::try_from(S s) {
+_self::try_from(S s) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if (s < 0) {
     return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
@@ -125,7 +125,7 @@ _self::try_from(S s) {
 template <class S>
   requires(SignedPrimitiveEnum<S> || SignedPrimitiveEnumClass<S>)
 sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
-_self::try_from(S s) {
+_self::try_from(S s) noexcept {
   using D = std::underlying_type_t<S>;
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if (static_cast<D>(s) < 0) {
@@ -143,7 +143,7 @@ _self::try_from(S s) {
 template <class U>
   requires(UnsignedPrimitiveEnum<U> || UnsignedPrimitiveEnumClass<U>)
 sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
-_self::try_from(U u) {
+_self::try_from(U u) noexcept {
   using D = std::underlying_type_t<U>;
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
   if constexpr (MAX_PRIMITIVE < __private::max_value<D>()) {

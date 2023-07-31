@@ -42,6 +42,7 @@ concept Integer = Unsigned<T> || Signed<T>;
 template <class T>
 concept UnsignedPrimitiveInteger =
     std::same_as<size_t, T> || std::same_as<uintptr_t, T> ||
+    std::same_as<bool, T> ||
     (std::is_unsigned_v<char> && std::same_as<char, T>) ||
     std::same_as<unsigned char, T> || std::same_as<unsigned short, T> ||
     std::same_as<unsigned int, T> || std::same_as<unsigned long, T> ||

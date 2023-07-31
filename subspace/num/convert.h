@@ -14,14 +14,13 @@
 
 #pragma once
 
-#include <bit>
 #include <type_traits>
 
 #include "subspace/construct/to_bits.h"
+#include "subspace/lib/__private/forward_decl.h"
 #include "subspace/num/__private/intrinsics.h"
-#include "subspace/num/float.h"
-#include "subspace/num/signed_integer.h"
-#include "subspace/num/unsigned_integer.h"
+#include "subspace/num/float_concepts.h"
+#include "subspace/num/integer_concepts.h"
 
 /// * Casting from a float to an integer will perform a static_cast, which
 ///   rounds the float towards zero, except:
@@ -30,8 +29,10 @@
 ///     saturate to the maximum value of the integer type.
 ///   * Values smaller than the minimum integer value, including `NEG_INFINITY`,
 ///     will saturate to the minimum value of the integer type.
-/// * Casting from an integer to a float will perform a static_cast, which ...
-///
+/// * Casting from an integer to a float will perform a static_cast, which
+///   converts to the nearest floating point value. The rounding direction for
+///   values that land between representable floating point values is
+///   implementation defined (per C++20 Section 7.3.10).
 /// * Casting from an f32 to an f64 preserves the value unchanged.
 /// * Casting f64 to f32 performs the same action as a static_cast if the value
 ///   is in range for f32, otherwise:
@@ -300,14 +301,7 @@ struct sus::construct::ToBitsImpl<T, F> {
 template <sus::num::PrimitiveFloat T, sus::num::PrimitiveInteger F>
 struct sus::construct::ToBitsImpl<T, F> {
   constexpr static T from_bits(const F& from) noexcept {
-    if constexpr (::sus::mem::size_of<T>() == 4u) {
-      return std::bit_cast<float>(
-          static_cast<uint32_t>(static_cast<std::make_unsigned_t<F>>(from)));
-    } else {
-      static_assert(::sus::mem::size_of<T>() == 8u);
-      return std::bit_cast<double>(
-          static_cast<uint64_t>(static_cast<std::make_unsigned_t<F>>(from)));
-    }
+    return ::sus::num::__private::static_cast_int_to_float<float>(from);
   }
 };
 
@@ -341,7 +335,7 @@ struct sus::construct::ToBitsImpl<T, F> {
       if constexpr (::sus::mem::size_of<F>() == 4u) {
         return from;
       } else {
-        return ::sus::num::__private::into_smaller_float<float>(from);
+        return ::sus::num::__private::static_cast_to_smaller_float<float>(from);
       }
     } else {
       if constexpr (::sus::mem::size_of<F>() == 4u) {

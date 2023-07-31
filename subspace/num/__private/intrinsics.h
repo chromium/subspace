@@ -210,18 +210,18 @@ template <class T>
   requires(std::is_floating_point_v<T>)
 sus_pure_const sus_always_inline constexpr T max_value() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>()) {
-    return 3.40282346639e+38f;
+    return 340282346638528859811704183484516925440.f;
   } else
-    return 1.7976931348623157E+308;
+    return 179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.0;
 }
 
 template <class T>
   requires(std::is_floating_point_v<T>)
 sus_pure_const sus_always_inline constexpr T min_value() noexcept {
   if constexpr (::sus::mem::size_of<T>() == ::sus::mem::size_of<float>())
-    return -3.40282346639e+38f;
+    return -340282346638528859811704183484516925440.f;
   else
-    return -1.7976931348623157E+308;
+    return -179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.0;
 }
 
 template <class T>
@@ -1528,15 +1528,42 @@ sus_pure_const inline T next_toward(T from, T to) {
 
 #pragma warning(push)
 // MSVC claims that "overflow in constant arithmetic" occurs on the static_cast
-// in `into_smaller_float()` but we check for overflow first, the conversion is
-// in range.
+// to float/double, but we check for overflow first, the conversion is in range.
 #pragma warning(disable : 4756)
 
-// Not constexpr as rounding is always toward zero in a constexpr context.
 template <class Out, class T>
-  requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() == 8 &&
-           ::sus::mem::size_of<Out>() == 4)
-sus_pure_const constexpr inline Out into_smaller_float(T x) noexcept {
+  requires(std::is_integral_v<T> && std::is_floating_point_v<Out> &&
+           (::sus::mem::size_of<T>() <= 8) &&
+           (::sus::mem::size_of<Out>() == 4 || ::sus::mem::size_of<Out>() == 8))
+sus_pure_const constexpr inline Out static_cast_int_to_float(T x) noexcept {
+  // C++20 Section 7.3.10: A prvalue of an integer type or of an unscoped
+  // enumeration type can be converted to a prvalue of a floatingpoint type. The
+  // result is exact if possible. If the value being converted is in the range
+  // of values that can be represented but the value cannot be represented
+  // exactly, it is an implementation-defined choice of either the next lower or
+  // higher representable value. [Note: Loss of precision occurs if the integral
+  // value cannot be represented exactly as a value of the floating-point type.
+  // — end note] If the value being converted is outside the range of values
+  // that can be represented, the behavior is undefined.
+  //
+  // SAFETY: The output is a floating point 32 or 64 bits. The input is an
+  // integer of size <= 64 bits.
+  //
+  // i64::MIN = -9223372036854775808.
+  // u64::MAX = 18446744073709551615.
+  // f32::MIN = -340282346638528859811704183484516925440.
+  // f32::MAX = 340282346638528859811704183484516925440.
+  //
+  // Thus the integers of the largest magnitude can be represented by f32, and
+  // since f64 is larger they can be represented there too. So no static_cast
+  // input here will cause UB.
+  return static_cast<Out>(x);
+}
+
+template <class Out, class T>
+  requires(std::is_floating_point_v<T> && std::is_floating_point_v<Out> &&
+           ::sus::mem::size_of<T>() == 8 && ::sus::mem::size_of<Out>() == 4)
+sus_pure_const constexpr inline Out static_cast_to_smaller_float(T x) noexcept {
   if (x <= T{max_value<Out>()} && x >= T{min_value<Out>()}) [[likely]] {
     // C++20 Section 7.3.9: A prvalue of floating-point type can be converted to
     // a prvalue of another floating-point type. If the source value can be

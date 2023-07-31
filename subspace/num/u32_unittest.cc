@@ -323,7 +323,7 @@ TEST(u32, ToPrimitive) {
   static_assert(NotConvertible<u32, int8_t>);
   static_assert(NotConvertible<u32, int16_t>);
   static_assert(NotConvertible<u32, int32_t>);
-  static_assert(IsExplicitlyConvertible<u32, int64_t>);
+  static_assert(NotConvertible<u32, int64_t>);
   static_assert(NotConvertible<u32, uint8_t>);
   static_assert(NotConvertible<u32, uint16_t>);
   static_assert(IsExplicitlyConvertible<u32, uint32_t>);

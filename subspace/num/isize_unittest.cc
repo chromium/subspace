@@ -337,22 +337,22 @@ TEST(isize, CompileTimeConversionEnum) {
 
 TEST(isize, ToPrimitive) {
   static_assert(sizeof(isize) > sizeof(int8_t)
-                    ? NotConvertible<i64, int8_t>
-                    : IsExplicitlyConvertible<i64, int8_t>);
+                    ? NotConvertible<isize, int8_t>
+                    : IsExplicitlyConvertible<isize, int8_t>);
   static_assert(sizeof(isize) > sizeof(int16_t)
-                    ? NotConvertible<i64, int16_t>
-                    : IsExplicitlyConvertible<i64, int16_t>);
+                    ? NotConvertible<isize, int16_t>
+                    : IsExplicitlyConvertible<isize, int16_t>);
   static_assert(sizeof(isize) > sizeof(int32_t)
-                    ? NotConvertible<i64, int32_t>
-                    : IsExplicitlyConvertible<i64, int32_t>);
+                    ? NotConvertible<isize, int32_t>
+                    : IsExplicitlyConvertible<isize, int32_t>);
   static_assert(sizeof(isize) > sizeof(int64_t)
-                    ? NotConvertible<i64, int64_t>
-                    : IsExplicitlyConvertible<i64, int64_t>);
-  static_assert(NotConvertible<i64, uint8_t>);
-  static_assert(NotConvertible<i64, uint16_t>);
-  static_assert(IsExplicitlyConvertible<i8, uint32_t>);
-  static_assert(IsExplicitlyConvertible<i64, uint64_t>);
-  static_assert(IsExplicitlyConvertible<i64, size_t>);
+                    ? NotConvertible<isize, int64_t>
+                    : IsExplicitlyConvertible<isize, int64_t>);
+  static_assert(NotConvertible<isize, uint8_t>);
+  static_assert(NotConvertible<isize, uint16_t>);
+  static_assert(NotConvertible<isize, uint32_t>);
+  static_assert(NotConvertible<isize, uint64_t>);
+  static_assert(NotConvertible<isize, size_t>);
 }
 
 TEST(isize, From) {
