@@ -49,3 +49,14 @@ footguns, crashes, bugs, and UB.
 1. If a type has implicit ctor from T then it should have assignment from T.
    The same is not true for an explicit ctor: no assignment should be present
    for that type.
+1. Use [IWYU pragmas](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUPragmas.md):
+   `// IWYU pragma: ___`
+  * Headers that are impl details are marked and point to the public header
+    like `private, public "sus/public/header.h"`.
+  * Headers in __private are marked `private`.
+  * All private headers have `friend "sus/.*"`
+  * Headers that just include other headers mark those with `export`, usually
+    through a `begin_exports` and `end_exports` section.
+  * But don't follow the IWYU rules _inside_ the library. We include the minimal internal
+    headers internally to reduce the amount of textual parsing needed to satisfy
+    including one public header.
