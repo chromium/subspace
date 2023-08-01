@@ -14,6 +14,7 @@
 
 #pragma once
 
+// IWYU pragma: begin_exports
 #include "sus/iter/iterator_defn.h"
 
 // The usize formatting is in unsigned_integer_impl.h which has an include cycle
@@ -26,35 +27,31 @@
 // Provides the concept for using iterators in generic code.
 #include "sus/iter/iterator_concept.h"
 
-// Once is included here, because there is a cycle between:
-// * Option->Once->IteratorBase->Option
-// So Option can't include Once or Iterator directly. But as long as the user
-// includes "iterator.h" they should be able to use the iterators on Option.
-#include "sus/iter/once.h"
-
 // Headers that define iterators that Iterator can construct and return. They
 // are forward declared in iterator_defn.h so that transitive includes don't get
 // them all every time.
-#include "sus/iter/by_ref.h"
-#include "sus/iter/chain.h"
-#include "sus/iter/cloned.h"
-#include "sus/iter/copied.h"
-#include "sus/iter/cycle.h"
-#include "sus/iter/enumerate.h"
-#include "sus/iter/filter.h"
-#include "sus/iter/filter_map.h"
-#include "sus/iter/flat_map.h"
-#include "sus/iter/flatten.h"
-#include "sus/iter/fuse.h"
-#include "sus/iter/inspect.h"
-#include "sus/iter/map.h"
-#include "sus/iter/map_while.h"
-#include "sus/iter/peekable.h"
-#include "sus/iter/reverse.h"
-#include "sus/iter/scan.h"
-#include "sus/iter/skip.h"
-#include "sus/iter/skip_while.h"
-#include "sus/iter/step_by.h"
-#include "sus/iter/take.h"
-#include "sus/iter/take_while.h"
-#include "sus/iter/zip.h"
+#include "sus/iter/adaptors/boxed_iterator.h"
+#include "sus/iter/adaptors/by_ref.h"
+#include "sus/iter/adaptors/chain.h"
+#include "sus/iter/adaptors/cloned.h"
+#include "sus/iter/adaptors/copied.h"
+#include "sus/iter/adaptors/cycle.h"
+#include "sus/iter/adaptors/enumerate.h"
+#include "sus/iter/adaptors/filter.h"
+#include "sus/iter/adaptors/filter_map.h"
+#include "sus/iter/adaptors/flat_map.h"
+#include "sus/iter/adaptors/flatten.h"
+#include "sus/iter/adaptors/fuse.h"
+#include "sus/iter/adaptors/inspect.h"
+#include "sus/iter/adaptors/map.h"
+#include "sus/iter/adaptors/map_while.h"
+#include "sus/iter/adaptors/peekable.h"
+#include "sus/iter/adaptors/reverse.h"
+#include "sus/iter/adaptors/scan.h"
+#include "sus/iter/adaptors/skip.h"
+#include "sus/iter/adaptors/skip_while.h"
+#include "sus/iter/adaptors/step_by.h"
+#include "sus/iter/adaptors/take.h"
+#include "sus/iter/adaptors/take_while.h"
+#include "sus/iter/adaptors/zip.h"
+// IWYU pragma: end_exports

@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private
+// IWYU pragma: friend "sus/.*"
+
 ///////////////////////////////////////////////////////////////////////////
 //
 // Defines constants in a floating point type.

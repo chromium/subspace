@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private
+// IWYU pragma: friend "sus/.*"
+
 ///////////////////////////////////////////////////////////////////////////
 //
 // Out-of-line definitions for methods defined in `slice_methods.inc` that

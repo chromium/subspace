@@ -24,7 +24,7 @@
 #include "sus/iter/__private/into_iterator_archetype.h"
 #include "sus/iter/__private/iterator_archetype.h"
 #include "sus/iter/empty.h"
-#include "sus/iter/filter.h"
+#include "sus/iter/adaptors/filter.h"
 #include "sus/iter/into_iterator.h"
 #include "sus/iter/sized_iterator.h"
 #include "sus/macros/__private/compiler_bugs.h"

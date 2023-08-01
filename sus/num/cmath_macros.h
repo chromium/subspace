@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private, include "sus/num/types.h"
+// IWYU pragma: friend "sus/.*"
 #pragma once
 
 // By including math.h (and cmath) and then #undef-ing NAN and INFINITY, we

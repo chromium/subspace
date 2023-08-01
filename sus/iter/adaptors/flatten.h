@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private, include "sus/iter/iterator.h"
+// IWYU pragma: friend "sus/.*"
 #pragma once
 
-#include "sus/fn/fn_box_defn.h"
 #include "sus/iter/iterator_defn.h"
 #include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
@@ -22,22 +23,16 @@
 
 namespace sus::iter {
 
-/// An iterator that maps an iterator of types into an iterator of iterable
-/// types through a user-defined function, and then flattens them into an
-/// interator of those those iterable types' items.
+/// An iterator that flattens an iterator of iterable types into an iterator of
+/// those iterable types' items.
 ///
-/// In other words, this type maps `Iterator[X]` into
-/// `Iterator[IntoIterable[T]]` into `Iterator[T]`.
+/// In other words, this type maps `Iterator[Iterable[T]]` into `Iterator[T]`.
 ///
-/// This type is returned from `Iterator::flat_map()`.
-template <class IntoIterable, class InnerSizedIter>
-class [[nodiscard]] FlatMap final
-    : public IteratorBase<FlatMap<IntoIterable, InnerSizedIter>,
-                          typename IntoIteratorOutputType<IntoIterable>::Item> {
-  using EachIter = IntoIteratorOutputType<IntoIterable>;
-  using MapFn =
-      ::sus::fn::FnMutBox<IntoIterable(typename InnerSizedIter::Item&&)>;
-
+/// This type is returned from `Iterator::flatten()`.
+template <class EachIter, class InnerSizedIter>
+class [[nodiscard]] Flatten final
+    : public IteratorBase<Flatten<EachIter, InnerSizedIter>,
+                          typename EachIter::Item> {
  public:
   using Item = typename EachIter::Item;
 
@@ -52,9 +47,8 @@ class [[nodiscard]] FlatMap final
         front_iter_ = Option<EachIter>();
       }
       // Otherwise grab the next iterator into front_iter_.
-      front_iter_ = iters_.next().map([this](auto&& i) {
-        return ::sus::fn::call_mut(map_fn_, ::sus::move(i)).into_iter();
-      });
+      front_iter_ = iters_.next().map(
+          [](auto&& i) { return ::sus::move(i).into_iter(); });
       if (front_iter_.is_none()) break;
     }
     // There's no more iterator to place in front_iter_. Take an item off
@@ -97,9 +91,8 @@ class [[nodiscard]] FlatMap final
         back_iter_ = Option<EachIter>();
       }
       // Otherwise grab the next iterator into back_iter_.
-      back_iter_ = iters_.next_back().map([this](auto&& i) {
-        return ::sus::fn::call_mut(map_fn_, ::sus::move(i)).into_iter();
-      });
+      back_iter_ = iters_.next_back().map(
+          [](auto&& i) { return ::sus::move(i).into_iter(); });
       if (back_iter_.is_none()) break;
     }
     // There's no more iterator to place in back_iter_. Take an item off
@@ -117,22 +110,19 @@ class [[nodiscard]] FlatMap final
   template <class U, class V>
   friend class IteratorBase;
 
-  static FlatMap with(MapFn&& fn, InnerSizedIter&& iters) noexcept {
-    return FlatMap(::sus::move(fn), ::sus::move(iters));
+  static Flatten with(InnerSizedIter&& iters) noexcept {
+    return Flatten(::sus::move(iters));
   }
 
-  FlatMap(MapFn&& fn, InnerSizedIter&& iters)
-      : map_fn_(::sus::move(fn)), iters_(::sus::move(iters)) {}
+  Flatten(InnerSizedIter&& iters) : iters_(::sus::move(iters)) {}
 
-  MapFn map_fn_;
   InnerSizedIter iters_;
   ::sus::Option<EachIter> front_iter_;
   ::sus::Option<EachIter> back_iter_;
 
-  // The MapFn and InnerSizedIter are trivially relocatable but the EachIter may
-  // not be.
+  // The InnerSizedIter is trivially relocatable but the EachIter may not be.
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                           decltype(map_fn_), decltype(iters_),
+                                           decltype(iters_),
                                            decltype(front_iter_),
                                            decltype(front_iter_));
 };
