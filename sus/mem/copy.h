@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private, include "sus/prelude.h"
+// IWYU pragma: friend "sus/.*"
 #pragma once
 
 #include <concepts>
