@@ -219,7 +219,6 @@ if(${SUBSPACE_BUILD_TESTS})
     add_library(subspace_test_support STATIC "")
     add_library(subspace::test_support ALIAS subspace_test_support)
     target_sources(subspace_test_support PUBLIC
-        "test/from_i32.h"
         "test/behaviour_types.h"
         "test/behaviour_types_unittest.cc"
         "test/ensure_use.cc"
