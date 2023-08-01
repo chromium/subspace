@@ -190,18 +190,27 @@ class Option final {
     return Option(move_to_storage(t));
   }
 
-  /// Implements sus::construct::From<Option<U>> when `U` can be converted to
-  /// `T`, i.e. `sus::construct::Into<U, T>`
+  /// Moves `val` into a new `Option<T>` holding `Some(val)`.
   ///
-  /// #[doc.overloads=from.option]
-  template <::sus::construct::Into<T> U>
-  static constexpr Option from(const ::sus::option::Option<U>& o) noexcept {
-    return Option::with(sus::into(o.as_value()));
+  /// Implements `sus::construct::From<Option<T>, T>`.
+  ///
+  /// #[doc.overloads=from.t]
+  static constexpr Option from(const T& val) noexcept
+    requires(!std::is_reference_v<T> && ::sus::mem::Copy<T>)
+  {
+    return with(val);
   }
-  /// #[doc.overloads=from.option]
-  template <::sus::construct::Into<T> U>
-  static constexpr Option from(::sus::option::Option<U>&& o) noexcept {
-    return Option::with(sus::into(sus::move(o).unwrap()));
+  static constexpr Option from(T&& val) noexcept
+    requires(!std::is_reference_v<T>)
+  {
+    return with(::sus::move(val));
+  }
+  template <std::convertible_to<T> U>
+  sus_pure static constexpr Option from(U&& val sus_lifetimebound) noexcept
+    requires(std::is_reference_v<T> &&
+             sus::construct::SafelyConstructibleFromReference<T, U &&>)
+  {
+    return with(::sus::forward<U>(val));
   }
 
   /// Computes the product of an iterator over `Option<T>` as long as there is

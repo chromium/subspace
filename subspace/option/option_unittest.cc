@@ -24,10 +24,10 @@
 #include "subspace/iter/iterator.h"
 #include "subspace/macros/__private/compiler_bugs.h"
 #include "subspace/macros/builtin.h"
-#include "subspace/ptr/nonnull.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/num/types.h"
 #include "subspace/prelude.h"
+#include "subspace/ptr/nonnull.h"
 #include "subspace/result/result.h"
 #include "subspace/test/behaviour_types.h"
 #include "subspace/test/from_i32.h"
@@ -2841,16 +2841,20 @@ TEST(Option, NonZeroField) {
 }
 
 TEST(Option, From) {
-  static_assert(sus::construct::Into< i32, i64>);
+  static_assert(sus::construct::From<Option<i64>, i64>);
+  // No extra conversion.
+  static_assert(!sus::construct::From<Option<i64>, i32>);
 
-  // Move.
-  Option<i64> o = sus::into(Option<i32>::with(101));
-  EXPECT_EQ(o.as_value(), 101_i64);
+  // References from convertible references.
+  static_assert(sus::construct::From<Option<i64&>, i64&>);
+  static_assert(!sus::construct::From<Option<i64&>, const i64&>);
+  static_assert(!sus::construct::From<Option<i64&>, i64&&>);
+  static_assert(sus::construct::From<Option<const i64&>, i64&>);
+  static_assert(sus::construct::From<Option<const i64&>, const i64&>);
+  static_assert(sus::construct::From<Option<const i64&>, i64&&>);
 
-  // Copy.
-  auto f = Option<i32>::with(101);
-  Option<i64> t = sus::into(f);
-  EXPECT_EQ(t.as_value(), 101_i64);
+  Option<i64> o = sus::into(3_i64);
+  EXPECT_EQ(o.as_value(), 3_i64);
 }
 
 TEST(Option, FromIter) {
