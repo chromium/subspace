@@ -20,7 +20,7 @@ namespace sus::ops {
 
 /// Specializations of this struct are used to implement the Try concept.
 template <class T>
-struct TryImpl {};
+struct TryImpl;
 
 /// A concept for types that can indicate success and failure.
 ///
