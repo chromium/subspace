@@ -143,7 +143,6 @@ target_sources(subspace PUBLIC
     "mem/copy.h"
     "mem/forward.h"
     "mem/move.h"
-    "mem/mref.h"
     "mem/never_value.h"
     "mem/relocate.h"
     "mem/remove_rvalue_reference.h"

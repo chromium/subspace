@@ -133,7 +133,7 @@ class Array final {
     ::sus::check(!has_iterators());
     ::sus::check(!o.has_iterators());
     for (auto i = size_t{0}; i < N; ++i)
-      storage_.data_[i] = ::sus::mem::take(mref(o.storage_.data_[i]));
+      storage_.data_[i] = ::sus::mem::take(o.storage_.data_[i]);
     storage_.iter_refs_ = o.storage_.iter_refs_.take_for_owner();
     return *this;
   }
@@ -164,7 +164,7 @@ class Array final {
       if (&source == this) [[unlikely]]
         return;
       for (auto i = size_t{0}; i < N; ++i) {
-        ::sus::clone_into(mref(get_unchecked_mut(::sus::marker::unsafe_fn, i)),
+        ::sus::clone_into(get_unchecked_mut(::sus::marker::unsafe_fn, i),
                           source.get_unchecked(::sus::marker::unsafe_fn, i));
       }
     }
@@ -198,7 +198,7 @@ class Array final {
   {
     if (i.primitive_value >= N) [[unlikely]]
       return Option<T&>();
-    return Option<T&>::with(mref(storage_.data_[i.primitive_value]));
+    return Option<T&>::with(storage_.data_[i.primitive_value]);
   }
 
   /// Returns a const reference to the element at index `i`.

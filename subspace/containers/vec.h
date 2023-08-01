@@ -186,9 +186,9 @@ class Vec final {
   Vec(Vec&& o) noexcept
       : slice_mut_(
             o.slice_mut_.slice_.iter_refs_.take_for_owner(),
-            ::sus::mem::replace(mref(o.raw_data()), nullptr),
-            ::sus::mem::replace(mref(o.slice_mut_.slice_.len_), kMovedFromLen)),
-        capacity_(::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity)) {
+            ::sus::mem::replace(o.raw_data(), nullptr),
+            ::sus::mem::replace(o.slice_mut_.slice_.len_, kMovedFromLen)),
+        capacity_(::sus::mem::replace(o.capacity_, kMovedFromCapacity)) {
     check(!is_moved_from());
     check(!has_iterators());
   }
@@ -197,12 +197,12 @@ class Vec final {
     check(!has_iterators());
     check(!o.has_iterators());
     if (is_alloced()) free_storage();
-    raw_data() = ::sus::mem::replace(mref(o.raw_data()), nullptr);
+    raw_data() = ::sus::mem::replace(o.raw_data(), nullptr);
     slice_mut_.slice_.len_ =
-        ::sus::mem::replace(mref(o.slice_mut_.slice_.len_), kMovedFromLen);
+        ::sus::mem::replace(o.slice_mut_.slice_.len_, kMovedFromLen);
     slice_mut_.slice_.iter_refs_ =
         o.slice_mut_.slice_.iter_refs_.take_for_owner();
-    capacity_ = ::sus::mem::replace(mref(o.capacity_), kMovedFromCapacity);
+    capacity_ = ::sus::mem::replace(o.capacity_, kMovedFromCapacity);
     return *this;
   }
 
@@ -297,9 +297,9 @@ class Vec final {
     check(!is_moved_from());
     check(!has_iterators());
     return sus::tuple(
-        ::sus::mem::replace(mref(raw_data()), nullptr),
-        ::sus::mem::replace(mref(slice_mut_.slice_.len_), kMovedFromLen),
-        ::sus::mem::replace(mref(capacity_), kMovedFromCapacity));
+        ::sus::mem::replace(raw_data(), nullptr),
+        ::sus::mem::replace(slice_mut_.slice_.len_, kMovedFromLen),
+        ::sus::mem::replace(capacity_, kMovedFromCapacity));
   }
 
   /// Returns the number of elements there is space allocated for in the vector.

@@ -256,7 +256,7 @@ void generate_record(const RecordElement& element,
   record_div.add_class("type");
   record_div.add_class("record");
   record_div.add_class(friendly_record_type_name(element.record_type, false));
-  generate_record_overview(mref(record_div), element);
+  generate_record_overview(record_div, element);
 
   sus::Vec<SortedFieldByName> sorted_static_fields;
   sus::Vec<SortedFieldByName> sorted_fields;
@@ -285,9 +285,9 @@ void generate_record(const RecordElement& element,
         return a.at<1>() <=> b.at<1>();
       });
 
-  generate_record_fields(mref(record_div), element, true,
+  generate_record_fields(record_div, element, true,
                          sorted_static_fields.as_slice());
-  generate_record_fields(mref(record_div), element, false,
+  generate_record_fields(record_div, element, false,
                          sorted_fields.as_slice());
 
   sus::Vec<SortedFunctionByName> sorted_static_methods;
@@ -314,9 +314,9 @@ void generate_record(const RecordElement& element,
         return a.at<1>() <=> b.at<1>();
       });
 
-  generate_record_methods(mref(record_div), element, true,
+  generate_record_methods(record_div, element, true,
                           sorted_static_methods.as_slice());
-  generate_record_methods(mref(record_div), element, false,
+  generate_record_methods(record_div, element, false,
                           sorted_methods.as_slice());
 
   for (const auto& [key, subrecord] : element.records) {

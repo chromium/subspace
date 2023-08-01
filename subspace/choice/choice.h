@@ -200,7 +200,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires((... && ::sus::mem::Move<Ts>) &&
              !(std::is_trivially_move_constructible_v<TagsType> && ... &&
                std::is_trivially_move_constructible_v<Ts>))
-      : index_(::sus::mem::replace(::sus::mref(o.index_),
+      : index_(::sus::mem::replace(o.index_,
                                    // Attempt to catch use-after-move by setting
                                    // the tag to an unused value.
                                    kUseAfterMove)) {

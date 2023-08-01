@@ -104,7 +104,7 @@ FnOnceBox<R(CallArgs...)>::~FnOnceBox() noexcept {
   switch (type_) {
     case __private::FnBoxPointer: break;
     case __private::Storage: {
-      if (auto* s = ::sus::mem::replace(mref(storage_), nullptr); s) delete s;
+      if (auto* s = ::sus::mem::replace(storage_, nullptr); s) delete s;
       break;
     }
   }
@@ -116,11 +116,11 @@ FnOnceBox<R(CallArgs...)>::FnOnceBox(FnOnceBox&& o) noexcept : type_(o.type_) {
   switch (type_) {
     case __private::FnBoxPointer:
       ::sus::check(o.fn_ptr_);  // Catch use-after-move.
-      fn_ptr_ = ::sus::mem::replace(mref(o.fn_ptr_), nullptr);
+      fn_ptr_ = ::sus::mem::replace(o.fn_ptr_, nullptr);
       break;
     case __private::Storage:
       ::sus::check(o.storage_);  // Catch use-after-move.
-      storage_ = ::sus::mem::replace(mref(o.storage_), nullptr);
+      storage_ = ::sus::mem::replace(o.storage_, nullptr);
       break;
   }
 }
@@ -131,16 +131,16 @@ FnOnceBox<R(CallArgs...)>& FnOnceBox<R(CallArgs...)>::operator=(
   switch (type_) {
     case __private::FnBoxPointer: break;
     case __private::Storage:
-      if (auto* s = ::sus::mem::replace(mref(storage_), nullptr); s) delete s;
+      if (auto* s = ::sus::mem::replace(storage_, nullptr); s) delete s;
   }
   switch (type_ = o.type_) {
     case __private::FnBoxPointer:
       ::sus::check(o.fn_ptr_);  // Catch use-after-move.
-      fn_ptr_ = ::sus::mem::replace(mref(o.fn_ptr_), nullptr);
+      fn_ptr_ = ::sus::mem::replace(o.fn_ptr_, nullptr);
       break;
     case __private::Storage:
       ::sus::check(o.storage_);  // Catch use-after-move.
-      storage_ = ::sus::mem::replace(mref(o.storage_), nullptr);
+      storage_ = ::sus::mem::replace(o.storage_, nullptr);
       break;
   }
   return *this;
@@ -151,12 +151,12 @@ R FnOnceBox<R(CallArgs...)>::operator()(CallArgs... args) && noexcept {
   switch (type_) {
     case __private::FnBoxPointer: {
       ::sus::check(fn_ptr_);  // Catch use-after-move.
-      auto* fn = ::sus::mem::replace(mref(fn_ptr_), nullptr);
+      auto* fn = ::sus::mem::replace(fn_ptr_, nullptr);
       return std::invoke(fn, static_cast<CallArgs&&>(args)...);
     }
     case __private::Storage: {
       ::sus::check(storage_);  // Catch use-after-move.
-      auto* storage = ::sus::mem::replace(mref(storage_), nullptr);
+      auto* storage = ::sus::mem::replace(storage_, nullptr);
       auto& vtable =
           static_cast<const __private::FnBoxStorageVtable<R, CallArgs...>&>(
               storage->vtable.as_mut().unwrap());

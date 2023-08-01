@@ -31,12 +31,12 @@ TEST(Replace, ConstexprTrivialCopy) {
 
   auto i = []() constexpr {
     T i(2);
-    [[maybe_unused]] T j(::sus::mem::replace(mref(i), T(5)));
+    [[maybe_unused]] T j(::sus::mem::replace(i, T(5)));
     return i;
   };
   auto j = []() constexpr {
     T i(2);
-    T j(::sus::mem::replace(mref(i), T(5)));
+    T j(::sus::mem::replace(i, T(5)));
     return j;
   };
   static_assert(i() == T(5), "");
@@ -58,12 +58,12 @@ TEST(Replace, ConstexprNonTrivial) {
 
   auto i = []() constexpr {
     S i(2);
-    S j(::sus::mem::replace(mref(i), S(5)));
+    S j(::sus::mem::replace(i, S(5)));
     return i;
   };
   auto j = []() constexpr {
     S i(2);
-    S j(::sus::mem::replace(mref(i), S(5)));
+    S j(::sus::mem::replace(i, S(5)));
     return j;
   };
   static_assert(i().num == 5, "");
@@ -77,13 +77,13 @@ TEST(Replace, TrivialCopy) {
   static_assert(std::is_trivially_copyable_v<T>, "");
 
   T i(2);
-  T j(::sus::mem::replace(mref(i), T(5)));
+  T j(::sus::mem::replace(i, T(5)));
   EXPECT_EQ(i, T(5));
   EXPECT_EQ(j, T(2));
 
   T lvalue(6);
 
-  T k(::sus::mem::replace(mref(i), lvalue));
+  T k(::sus::mem::replace(i, lvalue));
   EXPECT_EQ(i, T(6));
   EXPECT_EQ(k, T(5));
 }
@@ -109,7 +109,7 @@ TEST(Replace, NonTrivial) {
   static_assert(!std::is_trivially_copyable_v<S>, "");
 
   S i(2);
-  S j(::sus::mem::replace(mref(i), S(5)));
+  S j(::sus::mem::replace(i, S(5)));
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
   // The replace was done by move operations.
@@ -118,7 +118,7 @@ TEST(Replace, NonTrivial) {
   S lvalue(6);
 
   i.assigns = 0;
-  S k(::sus::mem::replace(mref(i), lvalue));
+  S k(::sus::mem::replace(i, lvalue));
   EXPECT_EQ(i.num, 6);
   EXPECT_EQ(k.num, 5);
   // The replace was done by move operations.
@@ -164,7 +164,7 @@ TEST(Replace, Convertible) {
   // Tests the replace(T, const U&) path, ensuring we don't memcpy() from a
   // different type.
   converted = 0;
-  [[maybe_unused]] auto a = ::sus::mem::replace(mref(target), Copyable());
+  [[maybe_unused]] auto a = ::sus::mem::replace(target, Copyable());
   EXPECT_EQ(converted, 1);
 
   // Tests the replace(T, U&&) path, ensuring we don't memcpy() from a
@@ -172,7 +172,7 @@ TEST(Replace, Convertible) {
   // operator.
   converted = 0;
   [[maybe_unused]] auto b =
-      ::sus::mem::replace(mref(target), MoveableCopyConvert());
+      ::sus::mem::replace(target, MoveableCopyConvert());
   EXPECT_EQ(converted, 1);
 
   // Tests the replace(T, U&&) path, ensuring we don't memcpy() from a
@@ -180,7 +180,7 @@ TEST(Replace, Convertible) {
   // operator.
   converted = 0;
   [[maybe_unused]] auto c =
-      ::sus::mem::replace(mref(target), MoveableMoveConvert());
+      ::sus::mem::replace(target, MoveableMoveConvert());
   EXPECT_EQ(converted, 1);
 }
 
@@ -188,12 +188,12 @@ TEST(Replace, ConstPtr) {
   int i1 = 1, i2 = 2;
   const int* p1 = &i1;
   const int* p2 = &i2;
-  const int* o = replace(mref(p1), p2);
+  const int* o = replace(p1, p2);
   EXPECT_EQ(o, &i1);
   EXPECT_EQ(p1, &i2);
   EXPECT_EQ(p2, &i2);
 
-  o = replace(mref(p1), nullptr);
+  o = replace(p1, nullptr);
   EXPECT_EQ(o, &i2);
   EXPECT_EQ(p1, nullptr);
 }
@@ -202,12 +202,12 @@ TEST(Replace, MutPtr) {
   int i1 = 1, i2 = 2;
   int* p1 = &i1;
   int* p2 = &i2;
-  int* o = replace(mref(p1), p2);
+  int* o = replace(p1, p2);
   EXPECT_EQ(o, &i1);
   EXPECT_EQ(p1, &i2);
   EXPECT_EQ(p2, &i2);
 
-  o = replace(mref(p1), nullptr);
+  o = replace(p1, nullptr);
   EXPECT_EQ(o, &i2);
   EXPECT_EQ(p1, nullptr);
 }

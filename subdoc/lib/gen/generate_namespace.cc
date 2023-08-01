@@ -165,7 +165,7 @@ void generate_namespace(const NamespaceElement& element,
 
   auto namespace_div = body.open_div();
   namespace_div.add_class("namespace");
-  generate_namespace_overview(mref(namespace_div), element);
+  generate_namespace_overview(namespace_div, element);
 
   {
     sus::Vec<SortedNamespaceByName> sorted;
@@ -179,7 +179,7 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_namespaces(mref(namespace_div), element,
+    generate_namespace_namespaces(namespace_div, element,
                                   sorted.as_slice());
   }
 
@@ -210,9 +210,9 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_records(mref(namespace_div), element, classes.as_slice(),
+    generate_namespace_records(namespace_div, element, classes.as_slice(),
                                RecordType::Class);
-    generate_namespace_records(mref(namespace_div), element, unions.as_slice(),
+    generate_namespace_records(namespace_div, element, unions.as_slice(),
                                RecordType::Union);
   }
 
@@ -229,7 +229,7 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_functions(mref(namespace_div), element,
+    generate_namespace_functions(namespace_div, element,
                                  sorted.as_slice());
   }
 

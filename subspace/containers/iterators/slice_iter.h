@@ -23,12 +23,11 @@
 #include "subspace/lib/__private/forward_decl.h"
 #include "subspace/macros/no_unique_address.h"
 #include "subspace/mem/move.h"
-#include "subspace/mem/mref.h"
-#include "subspace/ptr/nonnull.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
 #include "subspace/num/signed_integer.h"
 #include "subspace/num/unsigned_integer.h"
+#include "subspace/ptr/nonnull.h"
 
 namespace sus::containers {
 
@@ -67,7 +66,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
-    return Option<Item>::with(*::sus::mem::replace(mref(ptr_), ptr_ + 1u));
+    return Option<Item>::with(*::sus::mem::replace(ptr_, ptr_ + 1u));
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -89,8 +88,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
 
   /// sus::iter::ExactSizeIterator trait.
   ::sus::num::usize exact_size_hint() const noexcept {
-    // SAFETY: The constructor checks that `end_ - ptr_` is positive and Slice can
-    // not exceed isize::MAX.
+    // SAFETY: The constructor checks that `end_ - ptr_` is positive and Slice
+    // can not exceed isize::MAX.
     return ::sus::num::usize::try_from(end_ - ptr_)
         .unwrap_unchecked(::sus::marker::unsafe_fn);
   }
@@ -153,8 +152,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
-    return Option<Item>::with(
-        mref(*::sus::mem::replace(mref(ptr_), ptr_ + 1u)));
+    return Option<Item>::with(*::sus::mem::replace(ptr_, ptr_ + 1u));
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -165,7 +163,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
     // constructor) so subtracting one and dereffing will be inside the
     // allocation.
     end_ -= 1u;
-    return Option<Item>::with(mref(*end_));
+    return Option<Item>::with(*end_);
   }
 
   ::sus::iter::SizeHint size_hint() const noexcept {

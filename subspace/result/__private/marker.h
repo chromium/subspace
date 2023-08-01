@@ -18,7 +18,6 @@
 #include "subspace/lib/__private/forward_decl.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
-#include "subspace/mem/mref.h"
 
 namespace sus::result::__private {
 

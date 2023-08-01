@@ -50,7 +50,7 @@ struct [[sus_trivial_abi]] SizedIterator final {
         clone_(clone) {}
 
   SizedIterator(SizedIterator&& o) noexcept
-      : destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
+      : destroy_(::sus::mem::replace(o.destroy_, nullptr)),
         // next_ is left non-null to allow NeverValueField.
         next_(o.next_),
         next_back_(o.next_back_),
@@ -62,7 +62,7 @@ struct [[sus_trivial_abi]] SizedIterator final {
   }
   SizedIterator& operator=(SizedIterator&& o) noexcept {
     if (destroy_) destroy_(*sized_);
-    destroy_ = ::sus::mem::replace(mref(o.destroy_), nullptr);
+    destroy_ = ::sus::mem::replace(o.destroy_, nullptr);
     // next_ is left non-null to allow NeverValueField.
     next_ = o.next_;
     next_back_ = o.next_back_;

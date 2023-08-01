@@ -21,7 +21,6 @@
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/copy.h"
 #include "subspace/mem/move.h"
-#include "subspace/mem/mref.h"
 #include "subspace/mem/relocate.h"
 
 namespace sus::mem {

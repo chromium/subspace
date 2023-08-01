@@ -21,7 +21,6 @@
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/addressof.h"
 #include "subspace/mem/move.h"
-#include "subspace/mem/mref.h"
 #include "subspace/mem/never_value.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
@@ -122,14 +121,14 @@ struct Storage<T, false> final {
   }
 
   [[nodiscard]] constexpr inline T replace_some(T&& t) noexcept {
-    return ::sus::mem::replace(mref(val_), ::sus::move(t));
+    return ::sus::mem::replace(val_, ::sus::move(t));
   }
 
   [[nodiscard]] constexpr inline T take_and_set_none() noexcept {
     state_ = None;
     if constexpr (::sus::mem::Move<T>) {
       return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                           mref(val_));
+                                           val_);
     } else {
       return ::sus::mem::take_copy_and_destruct(::sus::marker::unsafe_fn, val_);
     }

@@ -282,7 +282,7 @@ TEST(Tuple, Copy) {
 
   {
     auto n = NoCopyMove();
-    auto t1 = Tuple<NoCopyMove&>::with(mref(n));
+    auto t1 = Tuple<NoCopyMove&>::with(n);
     auto t2 = t1;
     EXPECT_EQ(t1, t2);
   }
@@ -297,7 +297,7 @@ TEST(Tuple, CloneCopy) {
 
   {
     auto n = NoCopyMove();
-    auto t1 = Tuple<NoCopyMove&>::with(mref(n));
+    auto t1 = Tuple<NoCopyMove&>::with(n);
     auto t2 = sus::clone(t1);
     EXPECT_EQ(t1, t2);
   }
@@ -339,7 +339,7 @@ TEST(Tuple, GetRef) {
   static_assert(std::same_as<const int&, decltype(t3.at<2>())>);
 
   auto n = NoCopyMove();
-  auto tn = Tuple<NoCopyMove&>::with(mref(n));
+  auto tn = Tuple<NoCopyMove&>::with(n);
   static_assert(std::same_as<const NoCopyMove&, decltype(tn.at<0>())>);
   EXPECT_EQ(tn.at<0>(), n);
 
@@ -385,7 +385,7 @@ TEST(Tuple, GetMut) {
   static_assert(std::same_as<int&, decltype(t3.at_mut<2>())>);
 
   auto n = NoCopyMove();
-  auto tn = Tuple<NoCopyMove&>::with(mref(n));
+  auto tn = Tuple<NoCopyMove&>::with(n);
   static_assert(std::same_as<NoCopyMove&, decltype(tn.at_mut<0>())>);
   EXPECT_EQ(tn.at_mut<0>(), n);
 }
@@ -397,7 +397,7 @@ TEST(Tuple, IntoInner) {
   EXPECT_EQ(sus::move(t1).into_inner<0>(), 2_i32);
 
   auto n = NoCopyMove();
-  auto tn = Tuple<NoCopyMove&>::with(mref(n));
+  auto tn = Tuple<NoCopyMove&>::with(n);
   static_assert(
       std::same_as<NoCopyMove&, decltype(sus::move(tn).into_inner<0>())>);
   EXPECT_EQ(sus::move(tn).into_inner<0>(), n);
@@ -423,9 +423,9 @@ TEST(Tuple, Eq) {
   EXPECT_NE(Tuple<f32>::with(f32::NAN), Tuple<f32>::with(f32::NAN));
 
   auto n1 = NoCopyMove();
-  auto tn1 = Tuple<NoCopyMove&>::with(mref(n1));
+  auto tn1 = Tuple<NoCopyMove&>::with(n1);
   auto n2 = NoCopyMove();
-  auto tn2 = Tuple<NoCopyMove&>::with(mref(n2));
+  auto tn2 = Tuple<NoCopyMove&>::with(n2);
   EXPECT_EQ(tn1, tn1);
   EXPECT_NE(tn1, tn2);
 }
@@ -443,8 +443,8 @@ TEST(Tuple, Ord) {
   EXPECT_LT(Tuple<int*>::with(&i[0]), Tuple<int*>::with(&i[1]));
 
   NoCopyMove ns[] = {NoCopyMove(), NoCopyMove()};
-  auto tn1 = Tuple<NoCopyMove&>::with(mref(ns[0]));
-  auto tn2 = Tuple<NoCopyMove&>::with(mref(ns[1]));
+  auto tn1 = Tuple<NoCopyMove&>::with(ns[0]);
+  auto tn2 = Tuple<NoCopyMove&>::with(ns[1]);
   EXPECT_GE(tn1, tn1);
   EXPECT_LT(tn1, tn2);
 }

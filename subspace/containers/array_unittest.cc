@@ -536,7 +536,7 @@ TEST(Array, Clone) {
     auto s = Array<Copy, 1>::with(Copy());
     s[0u].i = 1000_i32;
     auto s2 = Array<Copy, 1>::with(Copy());
-    ::sus::clone_into(mref(s2), s);
+    ::sus::clone_into(s2, s);
     EXPECT_EQ(s2[0u].i, 1000);
   }
 
@@ -580,7 +580,7 @@ TEST(Array, Clone) {
     auto s = Array<Clone, 1>::with(Clone());
     s[0u].i = 1000_i32;
     auto s2 = Array<Clone, 1>::with(Clone());
-    ::sus::clone_into(mref(s2), s);
+    ::sus::clone_into(s2, s);
     EXPECT_EQ(s2[0u].i.primitive_value, (1200_i32).primitive_value);
   }
 }

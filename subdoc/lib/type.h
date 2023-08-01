@@ -150,7 +150,7 @@ inline Type build_local_type(const clang::SourceManager& sm,
   sus::Vec<Qualifier> quals;
   sus::Vec<std::string> array_dims;
   const clang::QualType pointee =
-      __private::find_pointee_type(sm, qualtype, mref(quals), mref(array_dims));
+      __private::find_pointee_type(sm, qualtype, quals, array_dims);
   sus::Vec<TypeOrValue> template_params;
   if (auto* template_type =
           clang::dyn_cast<clang::TemplateSpecializationType>(&*pointee)) {

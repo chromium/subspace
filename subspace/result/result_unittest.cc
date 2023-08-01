@@ -190,10 +190,10 @@ TEST(Result, Construct) {
   {
     using T = NoCopyMove&;
     auto i = NoCopyMove();
-    auto x = Result<T, i32>::with(mref(static_cast<T>(i)));
+    auto x = Result<T, i32>::with(static_cast<T>(i));
     auto y = Result<T, i32>::with_err(1);
     T t = i;
-    auto z = Result<T, i32>::with(mref(t));
+    auto z = Result<T, i32>::with(t);
   }
 }
 
@@ -295,7 +295,7 @@ TEST(Result, WithErr) {
     auto f = Error();
     auto a = Result<i32, Error>::with_err(Error());
     auto b = Result<i32, Error>::with_err(e);
-    auto c = Result<i32, Error>::with_err(mref(f));
+    auto c = Result<i32, Error>::with_err(f);
   }
 }
 
@@ -1514,7 +1514,7 @@ TEST(Result, Clone) {
   {
     const auto s = Result<Copy, i32>::with_err(2_i32);
     auto s2 = Result<Copy, i32>::with(Copy());
-    sus::clone_into(mref(s2), s);
+    sus::clone_into(s2, s);
     EXPECT_EQ(s2, sus::Err);
   }
 

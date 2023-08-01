@@ -80,7 +80,7 @@ TEST(Clone, Copy) {
 
   s1 = S(5_i32);
   EXPECT_EQ(s1.i, 5_i32);
-  clone_into(mref(s1), s2);
+  clone_into(s1, s2);
   EXPECT_EQ(s1.i, 2_i32);
 }
 
@@ -101,7 +101,7 @@ TEST(Clone, Clone) {
 
   s1 = S(5_i32);
   EXPECT_EQ(s1.i, 5_i32);
-  clone_into(mref(s1), s2);
+  clone_into(s1, s2);
   EXPECT_EQ(s1.i, 2_i32);
 }
 
