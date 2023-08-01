@@ -432,7 +432,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   template <class ElementT, class MapT>
-    requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
+    requires ::sus::ptr::SameOrSubclassOf<ElementT*, CommentElement*>
   void add_record_to_db(clang::RecordDecl* decl, ElementT db_element,
                         MapT& db_map) noexcept {
     auto key = RecordId(*decl);
@@ -456,7 +456,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
   }
   template <class ElementT, class MapT>
-    requires ::sus::convert::SameOrSubclassOf<ElementT*, CommentElement*>
+    requires ::sus::ptr::SameOrSubclassOf<ElementT*, CommentElement*>
   void add_comment_to_db(clang::Decl* decl, ElementT db_element,
                          MapT& db_map) noexcept {
     UniqueSymbol uniq = unique_from_decl(decl);

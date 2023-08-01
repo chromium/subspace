@@ -27,7 +27,7 @@
 #include "subdoc/tests/cpp_version.h"
 #include "subspace/assertions/unreachable.h"
 #include "subspace/containers/vec.h"
-#include "subspace/convert/subclass.h"
+#include "subspace/ptr/subclass.h"
 #include "subspace/macros/compiler.h"
 #include "subspace/option/option.h"
 #include "subspace/prelude.h"
