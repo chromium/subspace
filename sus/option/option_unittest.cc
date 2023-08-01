@@ -30,7 +30,6 @@
 #include "sus/ptr/nonnull.h"
 #include "sus/result/result.h"
 #include "sus/test/behaviour_types.h"
-#include "sus/test/from_i32.h"
 #include "sus/test/no_copy_move.h"
 #include "sus/tuple/tuple.h"
 
