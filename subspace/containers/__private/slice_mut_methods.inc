@@ -208,7 +208,7 @@ constexpr void clone_from_slice(const Slice<T>& src) NO_RETURN_REF noexcept
   const T* const src_ptr = src.as_ptr();
   T* dst_ptr = as_mut_ptr();
   for (::sus::num::usize i; i < dst_len; i += 1u) {
-    ::sus::clone_into(::sus::mem::mref(*(dst_ptr + i)), *(src_ptr + i));
+    ::sus::clone_into(*(dst_ptr + i), *(src_ptr + i));
   }
 }
 
@@ -222,7 +222,7 @@ constexpr void fill(T value) NO_RETURN_REF noexcept
   T* ptr = as_mut_ptr();
   T* const end_ptr = ptr + len();
   while (ptr != end_ptr) {
-    ::sus::clone_into(::sus::mem::mref(*ptr), value);
+    ::sus::clone_into(*ptr, value);
     ptr += 1u;
   }
 }

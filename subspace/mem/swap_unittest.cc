@@ -32,13 +32,13 @@ TEST(Swap, ConstexprTrivialRelocate) {
   auto i = []() constexpr {
     T i(2);
     T j(5);
-    sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(i, j);
     return i;
   };
   auto j = []() constexpr {
     T i(2);
     T j(5);
-    sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(i, j);
     return j;
   };
   static_assert(i() == T(5), "");
@@ -63,13 +63,13 @@ TEST(Swap, ConstexprTrivialAbi) {
   auto i = []() constexpr {
     S i(2);
     S j(5);
-    sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(i, j);
     return i;
   };
   auto j = []() constexpr {
     S i(2);
     S j(5);
-    sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(i, j);
     return j;
   };
   static_assert(i().num == 5, "");
@@ -92,13 +92,13 @@ TEST(Swap, ConstexprNonTrivial) {
   auto i = []() constexpr {
     S i(2);
     S j(5);
-    sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(i, j);
     return i;
   };
   auto j = []() constexpr {
     S i(2);
     S j(5);
-    sus::mem::swap(mref(i), mref(j));
+    sus::mem::swap(i, j);
     return j;
   };
   static_assert(i().num == 5, "");
@@ -114,7 +114,7 @@ TEST(Swap, TrivialRelocate) {
 
   T i(2);
   T j(5);
-  sus::mem::swap(mref(i), mref(j));
+  sus::mem::swap(i, j);
   EXPECT_EQ(i, T(5));
   EXPECT_EQ(j, T(2));
 }
@@ -139,7 +139,7 @@ TEST(Swap, TrivialAbi) {
 
   S i(2);
   S j(5);
-  sus::mem::swap(mref(i), mref(j));
+  sus::mem::swap(i, j);
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
 #if __has_extension(trivially_relocatable)
@@ -166,7 +166,7 @@ TEST(Swap, NonTrivial) {
 
   S i(2);
   S j(5);
-  sus::mem::swap(mref(i), mref(j));
+  sus::mem::swap(i, j);
   EXPECT_EQ(i.num, 5);
   EXPECT_EQ(j.num, 2);
   // The swap was done by move operations.
@@ -203,13 +203,13 @@ TEST(Swap, Alias) {
   };
 
   S i(2);
-  sus::mem::swap(mref(i), mref(i));
+  sus::mem::swap(i, i);
   EXPECT_EQ(moves, 0u);
 
   Trivial::moves = 0u;
   Trivial t(sus::Array<i32, 100>::with_initializer(
       [i = 0_i32]() mutable { return sus::mem::replace(i, i + 1); }));
-  sus::mem::swap(mref(t), mref(t));
+  sus::mem::swap(t, t);
   for (usize j : "0..100"_r) {
     EXPECT_EQ(t.num[j], i32::try_from(j).unwrap());
   }
@@ -230,7 +230,7 @@ TEST(Swap, NoAliasUnchecked) {
 
   S i1(2);
   S i2(3);
-  sus::mem::swap_nonoverlapping(unsafe_fn, mref(i1), mref(i2));
+  sus::mem::swap_nonoverlapping(unsafe_fn, i1, i2);
   EXPECT_EQ(moves, 3u);
 
   Trivial::moves = 0u;
@@ -238,7 +238,7 @@ TEST(Swap, NoAliasUnchecked) {
       [i = 0_i32]() mutable { return sus::mem::replace(i, i + 1); }));
   Trivial t2(sus::Array<i32, 100>::with_initializer(
       [i = 10_i32]() mutable { return sus::mem::replace(i, i + 1); }));
-  sus::mem::swap_nonoverlapping(unsafe_fn, mref(t1), mref(t2));
+  sus::mem::swap_nonoverlapping(unsafe_fn, t1, t2);
   for (usize j : "0..100"_r) {
     EXPECT_EQ(t1.num[j], i32::try_from(j).unwrap() + 10);
     EXPECT_EQ(t2.num[j], i32::try_from(j).unwrap());

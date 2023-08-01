@@ -18,7 +18,6 @@
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/copy.h"
 #include "subspace/mem/move.h"
-#include "subspace/mem/mref.h"
 #include "subspace/num/types.h"
 #include "subspace/ops/range_literals.h"
 
@@ -27,7 +26,6 @@
 
 using sus::containers::Vec;
 using sus::marker::unsafe_fn;
-using sus::mem::mref;
 using sus::num::f32;
 using sus::num::f64;
 using sus::num::i16;

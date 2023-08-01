@@ -2489,7 +2489,7 @@ TEST(SliceMut, Fill) {
 
 TEST(SliceMut, FillWith) {
   auto f = [i = 6_i32]() mutable {
-    return ::sus::mem::replace(mref(i), i + 1);
+    return ::sus::mem::replace(i, i + 1);
   };
   auto v1 = Vec<i32>::with(1, 2, 3, 4);
   v1[".."_r].fill_with(f);

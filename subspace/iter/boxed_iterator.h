@@ -46,23 +46,23 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
   using Item = ItemT;
 
   BoxedIterator(BoxedIterator&& o) noexcept
-      : iter_(::sus::mem::replace(mref(o.iter_), nullptr)),
-        destroy_(::sus::mem::replace(mref(o.destroy_), nullptr)),
-        clone_(::sus::mem::replace(mref(o.clone_), nullptr)),
-        next_(::sus::mem::replace(mref(o.next_), nullptr)),
-        next_back_(::sus::mem::replace(mref(o.next_back_), nullptr)),
-        size_hint_(::sus::mem::replace(mref(o.size_hint_), nullptr)),
+      : iter_(::sus::mem::replace(o.iter_, nullptr)),
+        destroy_(::sus::mem::replace(o.destroy_, nullptr)),
+        clone_(::sus::mem::replace(o.clone_, nullptr)),
+        next_(::sus::mem::replace(o.next_, nullptr)),
+        next_back_(::sus::mem::replace(o.next_back_, nullptr)),
+        size_hint_(::sus::mem::replace(o.size_hint_, nullptr)),
         exact_size_hint_(
-            ::sus::mem::replace(mref(o.exact_size_hint_), nullptr)) {}
+            ::sus::mem::replace(o.exact_size_hint_, nullptr)) {}
   BoxedIterator& operator=(BoxedIterator&& o) noexcept {
     if (destroy_) destroy_(iter_);
-    iter_ = ::sus::mem::replace(mref(o.iter_), nullptr);
-    destroy_ = ::sus::mem::replace(mref(o.destroy_), nullptr);
-    clone_ = ::sus::mem::replace(mref(o.clone_), nullptr);
-    next_ = ::sus::mem::replace(mref(o.next_), nullptr);
-    next_back_ = ::sus::mem::replace(mref(o.next_back_), nullptr);
-    size_hint_ = ::sus::mem::replace(mref(o.size_hint_), nullptr);
-    exact_size_hint_ = ::sus::mem::replace(mref(o.exact_size_hint_), nullptr);
+    iter_ = ::sus::mem::replace(o.iter_, nullptr);
+    destroy_ = ::sus::mem::replace(o.destroy_, nullptr);
+    clone_ = ::sus::mem::replace(o.clone_, nullptr);
+    next_ = ::sus::mem::replace(o.next_, nullptr);
+    next_back_ = ::sus::mem::replace(o.next_back_, nullptr);
+    size_hint_ = ::sus::mem::replace(o.size_hint_, nullptr);
+    exact_size_hint_ = ::sus::mem::replace(o.exact_size_hint_, nullptr);
   }
 
   ~BoxedIterator() {

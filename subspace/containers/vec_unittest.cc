@@ -703,7 +703,7 @@ TEST(Vec, Clone) {
     s.push(Copy());
     i32 i = s[0u].i;
     auto s2 = Vec<Copy>();
-    sus::clone_into(mref(s2), s);
+    sus::clone_into(s2, s);
     EXPECT_EQ(s2.capacity(), s.capacity());
     EXPECT_EQ(s2.len(), s.len());
     EXPECT_GT(s2[0u].i, i);
@@ -779,7 +779,7 @@ TEST(Vec, CloneInto) {
   v1.push(S());
   v2.push(S());
   v2.push(S());
-  ::sus::clone_into(mref(v1), v2);
+  ::sus::clone_into(v1, v2);
   v1.clear();
   v2.clear();
   EXPECT_EQ(count, 0_usize);
@@ -789,7 +789,7 @@ TEST(Vec, CloneInto) {
   // Case 2: Clone from same size vector.
   v1.push(S());
   v2.push(S());
-  ::sus::clone_into(mref(v1), v2);
+  ::sus::clone_into(v1, v2);
   v1.clear();
   v2.clear();
   EXPECT_EQ(count, 0_usize);
@@ -800,7 +800,7 @@ TEST(Vec, CloneInto) {
   v1.push(S());
   v1.push(S());
   v2.push(S());
-  ::sus::clone_into(mref(v1), v2);
+  ::sus::clone_into(v1, v2);
   v1.clear();
   v2.clear();
   EXPECT_EQ(count, 0_usize);

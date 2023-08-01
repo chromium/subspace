@@ -39,7 +39,6 @@
 #include "subspace/mem/copy.h"
 #include "subspace/mem/forward.h"
 #include "subspace/mem/move.h"
-#include "subspace/mem/mref.h"
 #include "subspace/mem/relocate.h"
 #include "subspace/mem/replace.h"
 #include "subspace/mem/take.h"
@@ -347,7 +346,7 @@ class Option final {
     if (&source == this) [[unlikely]]
       return;
     if (t_.state() == Some && source.t_.state() == Some) {
-      ::sus::clone_into(mref(t_.val_mut()), source.t_.val());
+      ::sus::clone_into(t_.val_mut(), source.t_.val());
     } else {
       *this = source.clone();
     }
@@ -1688,7 +1687,7 @@ struct sus::iter::FromIteratorImpl<::sus::option::Option<T>> {
 
     bool found_none = false;
     auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(),
-                              ::sus::mref(found_none));
+                              found_none);
     auto collected = sus::iter::from_iter<T>(::sus::move(iter));
     if (found_none)
       return ::sus::option::Option<T>();

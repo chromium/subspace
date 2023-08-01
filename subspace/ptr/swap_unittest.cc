@@ -33,9 +33,9 @@ TEST(PtrSwapNonOverlapping, SmallSizedType_PowTwoSized) {
   static_assert(sus::mem::relocate_by_memcpy<S>);
 
   auto a = sus::Array<S, 100>::with_initializer(
-      [i = 0_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1_u8)); });
+      [i = 0_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
   auto b = sus::Array<S, 100>::with_initializer(
-      [i = 100_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1_u8)); });
+      [i = 100_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100u);
 
   for (usize i : "0..100"_r) {
@@ -57,9 +57,9 @@ TEST(PtrSwapNonOverlapping, SmallSizedType_NonPowTwoSized) {
   static_assert(sus::mem::relocate_by_memcpy<S>);
 
   auto a = sus::Array<S, 100>::with_initializer(
-      [i = 0_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1_u8)); });
+      [i = 0_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
   auto b = sus::Array<S, 100>::with_initializer(
-      [i = 100_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1_u8)); });
+      [i = 100_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100u);
 
   for (usize i : "0..100"_r) {
@@ -81,9 +81,9 @@ TEST(PtrSwapNonOverlapping, LargeSizedType_PtrAlign_PtrMultipleSize_Trivial) {
   static_assert(sus::mem::relocate_by_memcpy<S>);
 
   auto a = sus::Array<S, 100>::with_initializer(
-      [i = 0_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1_u8)); });
+      [i = 0_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
   auto b = sus::Array<S, 100>::with_initializer(
-      [i = 100_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1_u8)); });
+      [i = 100_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100u);
 
   for (usize i : "0..100"_r) {
@@ -108,9 +108,9 @@ TEST(PtrSwapNonOverlapping,
   static_assert(!sus::mem::relocate_by_memcpy<S>);
 
   auto a = sus::Array<S, 100>::with_initializer(
-      [i = 0_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1_u8)); });
+      [i = 0_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
   auto b = sus::Array<S, 100>::with_initializer(
-      [i = 100_u8]() mutable { return S(sus::mem::replace(mref(i), i + 1_u8)); });
+      [i = 100_u8]() mutable { return S(sus::mem::replace(i, i + 1_u8)); });
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100u);
 
   for (usize i : "0..100"_r) {

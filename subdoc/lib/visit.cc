@@ -107,7 +107,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .unwrap();
       }
     }();
-    add_namespace_to_db(decl, sus::move(ne), mref(parent.namespaces));
+    add_namespace_to_db(decl, sus::move(ne), parent.namespaces);
     return true;
   }
 
@@ -150,7 +150,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     if (clang::isa<clang::TranslationUnitDecl>(context)) {
       NamespaceElement& parent = docs_db_.find_namespace_mut(nullptr).unwrap();
-      add_record_to_db(decl, sus::move(re), mref(parent.records));
+      add_record_to_db(decl, sus::move(re), parent.records);
     } else if (clang::isa<clang::NamespaceDecl>(context)) {
       auto* namespace_decl = clang::cast<clang::NamespaceDecl>(context);
       // Template specializations can be for classes that are part of a
@@ -167,13 +167,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           docs_db_.find_namespace_mut(namespace_decl)
               .expect(
                   "No parent namespace found in db for NamespaceDecl context");
-      add_record_to_db(decl, sus::move(re), mref(parent.records));
+      add_record_to_db(decl, sus::move(re), parent.records);
     } else {
       sus::check(clang::isa<clang::RecordDecl>(context));
       if (sus::Option<RecordElement&> parent =
               docs_db_.find_record_mut(clang::cast<clang::RecordDecl>(context));
           parent.is_some()) {
-        add_record_to_db(decl, sus::move(re), mref(parent->records));
+        add_record_to_db(decl, sus::move(re), parent->records);
       }
     }
     return true;
@@ -202,7 +202,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (sus::Option<RecordElement&> parent =
             docs_db_.find_record_mut(record_decl);
         parent.is_some()) {
-      add_comment_to_db(decl, sus::move(fe), mref(parent->fields));
+      add_comment_to_db(decl, sus::move(fe), parent->fields);
     }
     return true;
   }
@@ -231,7 +231,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
             clang::cast<clang::RecordDecl>(decl->getDeclContext()));
         parent.is_some()) {
-      add_comment_to_db(decl, sus::move(fe), mref(parent->fields));
+      add_comment_to_db(decl, sus::move(fe), parent->fields);
     }
     return true;
   }
@@ -290,14 +290,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_function_overload_to_db(decl, sus::move(fe), mref(parent->ctors));
+        add_function_overload_to_db(decl, sus::move(fe), parent->ctors);
       }
     } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
       sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_function_overload_to_db(decl, sus::move(fe), mref(parent->dtors));
+        add_function_overload_to_db(decl, sus::move(fe), parent->dtors);
       }
     } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
       sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
@@ -305,7 +305,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_function_overload_to_db(decl, sus::move(fe),
-                                    mref(parent->conversions));
+                                    parent->conversions);
       }
     } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
       sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
@@ -339,7 +339,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                   sus::unreachable();
                 }(),
         });
-        add_function_overload_to_db(decl, sus::move(fe), mref(parent->methods));
+        add_function_overload_to_db(decl, sus::move(fe), parent->methods);
       }
     } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
       clang::DeclContext* context = decl->getDeclContext();
@@ -356,7 +356,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
         add_function_overload_to_db(decl,
-                                    sus::move(fe), mref(parent->deductions));
+                                    sus::move(fe), parent->deductions);
       }
       */
     } else {
@@ -364,7 +364,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               docs_db_.find_namespace_mut(find_nearest_namespace(decl));
           parent.is_some()) {
         add_function_overload_to_db(decl, sus::move(fe),
-                                    mref(parent->functions));
+                                    parent->functions);
       }
     }
 

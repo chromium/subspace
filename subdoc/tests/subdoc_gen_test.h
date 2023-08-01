@@ -68,10 +68,10 @@ class SubDocGenTest : public testing::Test {
 
     sus::Vec<std::filesystem::path> expecteds;
     find_paths(path_to_input(directory, sus::none()), std::filesystem::path(),
-               mref(expecteds));
+               expecteds);
     sus::Vec<std::filesystem::path> actuals;
     find_paths(path_to_output(directory, sus::none()), std::filesystem::path(),
-               mref(actuals));
+               actuals);
     // TODO: Implement Vec::Eq.
     auto eq = [](const auto& a, const auto& b) {
       if (a.len() != b.len()) return false;

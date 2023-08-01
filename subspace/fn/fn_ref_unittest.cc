@@ -52,9 +52,9 @@ struct MoveOnly {
   MoveOnly(int i) : i(i) {}
   MoveOnly(const MoveOnly& c) = delete;
   MoveOnly& operator=(const MoveOnly& c) = delete;
-  MoveOnly(MoveOnly&& c) : i(::sus::mem::replace(mref(c.i), -1)) {}
+  MoveOnly(MoveOnly&& c) : i(::sus::mem::replace(c.i, -1)) {}
   MoveOnly& operator=(MoveOnly&& c) {
-    i = ::sus::mem::replace(mref(c.i), -1);
+    i = ::sus::mem::replace(c.i, -1);
     return *this;
   }
   ~MoveOnly() { i = -10000000; }

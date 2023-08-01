@@ -228,10 +228,10 @@ TEST(Option, Construct) {
   {
     using T = NoCopyMove&;
     auto i = NoCopyMove();
-    auto x = Option<T>::with(mref(static_cast<T>(i)));
+    auto x = Option<T>::with(static_cast<T>(i));
     auto y = Option<T>();
     T t = i;
-    auto z = Option<T>::with(mref(t));
+    auto z = Option<T>::with(t);
   }
 }
 
@@ -241,7 +241,7 @@ TEST(Option, SomeNoneHelpers) {
     Option<i32> a2 = sus::some(2_i32);
     EXPECT_EQ(a, a2);
     auto mv = 2_i32;
-    a2 = sus::some(mref(mv));
+    a2 = sus::some(mv);
     EXPECT_EQ(a, a2);
     const auto cv = 2_i32;
     a2 = sus::some(cv);
@@ -691,7 +691,7 @@ TEST(Option, Some) {
   IS_SOME(y);
 
   auto i = NoCopyMove();
-  auto ix = Option<NoCopyMove&>::with(mref(i));
+  auto ix = Option<NoCopyMove&>::with(i);
   IS_SOME(ix);
 
   static_assert(
@@ -737,7 +737,7 @@ TEST(Option, Destructor) {
 
   WatchDestructor w;
   {
-    auto x = Option<WatchDestructor&>::with(mref(w));
+    auto x = Option<WatchDestructor&>::with(w);
     count = 0;
   }
   EXPECT_EQ(0, count);
@@ -748,7 +748,7 @@ TEST(Option, ExpectSome) {
   EXPECT_EQ(x, 0);
 
   auto i = NoCopyMove();
-  auto& xi = Option<NoCopyMove&>::with(mref(i)).expect("hello world");
+  auto& xi = Option<NoCopyMove&>::with(i).expect("hello world");
   EXPECT_EQ(&xi, &i);
 }
 
@@ -764,7 +764,7 @@ TEST(Option, UnwrapSome) {
   EXPECT_EQ(x, 0);
 
   auto i = NoCopyMove();
-  auto& ix = Option<NoCopyMove&>::with(mref(i)).unwrap();
+  auto& ix = Option<NoCopyMove&>::with(i).unwrap();
   EXPECT_EQ(&ix, &i);
 }
 
@@ -780,7 +780,7 @@ TEST(Option, UnwrapUncheckedSome) {
   EXPECT_EQ(x, 0);
 
   auto i = NoCopyMove();
-  auto& ix = Option<NoCopyMove&>::with(mref(i)).unwrap_unchecked(unsafe_fn);
+  auto& ix = Option<NoCopyMove&>::with(i).unwrap_unchecked(unsafe_fn);
   EXPECT_EQ(&ix, &i);
 }
 
@@ -799,7 +799,7 @@ TEST(Option, Take) {
   IS_NONE(m);
 
   auto i = NoCopyMove();
-  auto ix = Option<NoCopyMove&>::with(mref(i));
+  auto ix = Option<NoCopyMove&>::with(i);
   auto iy = ix.take();
   IS_NONE(ix);
   IS_SOME(iy);
@@ -823,7 +823,7 @@ TEST(Option, UnwrapOr) {
   EXPECT_EQ(y, 3);
 
   NoCopyMove i, i2;
-  auto& ix = Option<NoCopyMove&>::with(mref(i)).unwrap_or(i2);
+  auto& ix = Option<NoCopyMove&>::with(i).unwrap_or(i2);
   EXPECT_EQ(&ix, &i);
 
   auto& iy = Option<NoCopyMove&>().unwrap_or(i2);
@@ -841,7 +841,7 @@ TEST(Option, UnwrapOrElse) {
   EXPECT_EQ(y, 3);
 
   NoCopyMove i, i2;
-  auto& ix = Option<NoCopyMove&>::with(mref(i)).unwrap_or_else(
+  auto& ix = Option<NoCopyMove&>::with(i).unwrap_or_else(
       [&]() -> NoCopyMove& { return i2; });
   EXPECT_EQ(&ix, &i);
 
@@ -913,7 +913,7 @@ TEST(Option, Map) {
   // Reference.
   called = false;
   NoCopyMove i;
-  auto ix = Option<NoCopyMove&>::with(mref(i)).map([&](NoCopyMove&) {
+  auto ix = Option<NoCopyMove&>::with(i).map([&](NoCopyMove&) {
     called = true;
     return Mapped(2);
   });
@@ -979,7 +979,7 @@ TEST(Option, MapOr) {
 
   // Reference.
   auto i = NoCopyMove();
-  auto ix = Option<NoCopyMove&>::with(mref(i)).map_or(
+  auto ix = Option<NoCopyMove&>::with(i).map_or(
       Mapped(1), [](NoCopyMove&) { return Mapped(2); });
   static_assert(std::is_same_v<decltype(ix), Mapped>);
   EXPECT_EQ(ix.i, 2);
@@ -1068,7 +1068,7 @@ TEST(Option, MapOrElse) {
   // Reference.
   auto i = NoCopyMove();
   map_called = else_called = false;
-  auto ix = Option<NoCopyMove&>::with(mref(i)).map_or_else(
+  auto ix = Option<NoCopyMove&>::with(i).map_or_else(
       [&]() {
         else_called = true;
         return Mapped(1);
@@ -1155,12 +1155,12 @@ TEST(Option, Filter) {
 
   // Reference.
   auto i = NoCopyMove();
-  auto ix = Option<NoCopyMove&>::with(mref(i)).filter(
+  auto ix = Option<NoCopyMove&>::with(i).filter(
       [](const NoCopyMove&) { return true; });
   static_assert(std::is_same_v<decltype(ix), Option<NoCopyMove&>>);
   IS_SOME(ix);
 
-  auto iy = Option<NoCopyMove&>::with(mref(i)).filter(
+  auto iy = Option<NoCopyMove&>::with(i).filter(
       [](const NoCopyMove&) { return false; });
   static_assert(std::is_same_v<decltype(iy), Option<NoCopyMove&>>);
   IS_NONE(iy);
@@ -1224,7 +1224,7 @@ TEST(Option, Filter) {
   WatchDestructor w;
   {
     count = 0;
-    auto c = Option<WatchDestructor&>::with(mref(w));
+    auto c = Option<WatchDestructor&>::with(w);
     auto cf = sus::move(c).filter([](const WatchDestructor&) { return false; });
     // Nothing constructed or destructed.
     EXPECT_EQ(count, 0);
@@ -1263,16 +1263,16 @@ TEST(Option, And) {
 
   // Reference.
   NoCopyMove i2, i3;
-  auto& ix = Option<NoCopyMove&>::with(mref(i2))
-                 .and_that(Option<NoCopyMove&>::with(mref(i3)))
+  auto& ix = Option<NoCopyMove&>::with(i2)
+                 .and_that(Option<NoCopyMove&>::with(i3))
                  .unwrap();
   EXPECT_EQ(&ix, &i3);
 
-  auto iy = Option<NoCopyMove&>::with(mref(i2)).and_that(Option<NoCopyMove&>());
+  auto iy = Option<NoCopyMove&>::with(i2).and_that(Option<NoCopyMove&>());
   IS_NONE(iy);
 
   auto inx =
-      Option<NoCopyMove&>().and_that(Option<NoCopyMove&>::with(mref(i3)));
+      Option<NoCopyMove&>().and_that(Option<NoCopyMove&>::with(i3));
   IS_NONE(inx);
 
   auto iny = Option<NoCopyMove&>().and_that(Option<NoCopyMove&>());
@@ -1370,7 +1370,7 @@ TEST(Option, AndThen) {
   auto i = NoCopyMove();
 
   called = false;
-  auto ix = Option<NoCopyMove&>::with(mref(i)).and_then([&](NoCopyMove&) {
+  auto ix = Option<NoCopyMove&>::with(i).and_then([&](NoCopyMove&) {
     called = true;
     return Option<And>::with(And(3));
   });
@@ -1379,7 +1379,7 @@ TEST(Option, AndThen) {
   EXPECT_TRUE(called);
 
   called = false;
-  auto iy = Option<NoCopyMove&>::with(mref(i)).and_then([&](NoCopyMove&) {
+  auto iy = Option<NoCopyMove&>::with(i).and_then([&](NoCopyMove&) {
     called = true;
     return Option<And>();
   });
@@ -1451,18 +1451,18 @@ TEST(Option, Or) {
   // Reference.
   NoCopyMove i2, i3;
 
-  auto& ix = Option<NoCopyMove&>::with(mref(i2))
-                 .or_that(Option<NoCopyMove&>::with(mref(i3)))
+  auto& ix = Option<NoCopyMove&>::with(i2)
+                 .or_that(Option<NoCopyMove&>::with(i3))
                  .unwrap();
   EXPECT_EQ(&ix, &i2);
 
-  auto& iy = Option<NoCopyMove&>::with(mref(i2))
+  auto& iy = Option<NoCopyMove&>::with(i2)
                  .or_that(Option<NoCopyMove&>())
                  .unwrap();
   EXPECT_EQ(&iy, &i2);
 
   auto& inx = Option<NoCopyMove&>()
-                  .or_that(Option<NoCopyMove&>::with(mref(i3)))
+                  .or_that(Option<NoCopyMove&>::with(i3))
                   .unwrap();
   EXPECT_EQ(&inx, &i3);
 
@@ -1554,17 +1554,17 @@ TEST(Option, OrElse) {
   NoCopyMove i2, i3;
 
   called = false;
-  auto& ix = Option<NoCopyMove&>::with(mref(i2))
+  auto& ix = Option<NoCopyMove&>::with(i2)
                  .or_else([&]() {
                    called = true;
-                   return Option<NoCopyMove&>::with(mref(i3));
+                   return Option<NoCopyMove&>::with(i3);
                  })
                  .unwrap();
   EXPECT_EQ(&ix, &i2);
   EXPECT_FALSE(called);
 
   called = false;
-  auto& iy = Option<NoCopyMove&>::with(mref(i2))
+  auto& iy = Option<NoCopyMove&>::with(i2)
                  .or_else([&]() {
                    called = true;
                    return Option<NoCopyMove&>();
@@ -1577,7 +1577,7 @@ TEST(Option, OrElse) {
   auto& inx = Option<NoCopyMove&>()
                   .or_else([&]() {
                     called = true;
-                    return Option<NoCopyMove&>::with(mref(i3));
+                    return Option<NoCopyMove&>::with(i3);
                   })
                   .unwrap();
   EXPECT_EQ(&inx, &i3);
@@ -1636,17 +1636,17 @@ TEST(Option, Xor) {
   // Reference.
   NoCopyMove i2, i3;
 
-  auto ix = Option<NoCopyMove&>::with(mref(i2)).xor_that(
-      Option<NoCopyMove&>::with(mref(i3)));
+  auto ix = Option<NoCopyMove&>::with(i2).xor_that(
+      Option<NoCopyMove&>::with(i3));
   IS_NONE(ix);
 
-  auto& iy = Option<NoCopyMove&>::with(mref(i2))
+  auto& iy = Option<NoCopyMove&>::with(i2)
                  .xor_that(Option<NoCopyMove&>())
                  .unwrap();
   EXPECT_EQ(&iy, &i2);
 
   auto& inx = Option<NoCopyMove&>()
-                  .xor_that(Option<NoCopyMove&>::with(mref(i3)))
+                  .xor_that(Option<NoCopyMove&>::with(i3))
                   .unwrap();
   EXPECT_EQ(&inx, &i3);
 
@@ -1671,11 +1671,11 @@ TEST(Option, Insert) {
   NoCopyMove i2, i3;
 
   auto ix = Option<NoCopyMove&>();
-  ix.insert(mref(i2));
+  ix.insert(i2);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i2);
 
-  auto iy = Option<NoCopyMove&>::with(mref(i2));
-  iy.insert(mref(i3));
+  auto iy = Option<NoCopyMove&>::with(i2);
+  iy.insert(i3);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i3);
 
   // Constexpr.
@@ -1704,13 +1704,13 @@ TEST(Option, GetOrInsert) {
   NoCopyMove i2, i3;
 
   auto ix = Option<NoCopyMove&>();
-  auto& irx = ix.get_or_insert(mref(i3));
+  auto& irx = ix.get_or_insert(i3);
   static_assert(std::is_same_v<decltype(ix.get_or_insert(i3)), NoCopyMove&>);
   EXPECT_EQ(&irx, &i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
 
-  auto iy = Option<NoCopyMove&>::with(mref(i2));
-  auto& iry = iy.get_or_insert(mref(i3));
+  auto iy = Option<NoCopyMove&>::with(i2);
+  auto& iry = iy.get_or_insert(i3);
   static_assert(std::is_same_v<decltype(iy.get_or_insert(i3)), NoCopyMove&>);
   EXPECT_EQ(&iry, &i2);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
@@ -1794,7 +1794,7 @@ TEST(Option, GetOrInsertWith) {
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
 
   called = false;
-  auto iy = Option<NoCopyMove&>::with(mref(i2));
+  auto iy = Option<NoCopyMove&>::with(i2);
   auto&& iry = iy.get_or_insert_with([&]() -> NoCopyMove& {
     called = true;
     return i3;
@@ -1826,8 +1826,8 @@ TEST(Option, AsValue) {
 
   auto i = NoCopyMove();
 
-  const auto cix = Option<NoCopyMove&>::with(mref(i));
-  auto ix = Option<NoCopyMove&>::with(mref(i));
+  const auto cix = Option<NoCopyMove&>::with(i);
+  auto ix = Option<NoCopyMove&>::with(i);
   static_assert(std::is_same_v<decltype(cix.as_value()), const NoCopyMove&>);
   static_assert(std::is_same_v<decltype(ix.as_value()), const NoCopyMove&>);
   EXPECT_EQ(&ix.as_value(), &i);
@@ -1848,7 +1848,7 @@ TEST(Option, AsValueMut) {
 
   auto i = NoCopyMove();
 
-  auto ix = Option<NoCopyMove&>::with(mref(i));
+  auto ix = Option<NoCopyMove&>::with(i);
   static_assert(std::is_same_v<decltype(ix.as_value_mut()), NoCopyMove&>);
   EXPECT_EQ(&ix.as_value_mut(), &i);
 
@@ -1872,8 +1872,8 @@ TEST(Option, OperatorStarSome) {
 
   auto i = NoCopyMove();
 
-  const auto cix = Option<NoCopyMove&>::with(mref(i));
-  auto ix = Option<NoCopyMove&>::with(mref(i));
+  const auto cix = Option<NoCopyMove&>::with(i);
+  auto ix = Option<NoCopyMove&>::with(i);
   static_assert(std::is_same_v<decltype(*cix), const NoCopyMove&>);
   static_assert(std::is_same_v<decltype(*ix), NoCopyMove&>);
   EXPECT_EQ(&*ix, &i);
@@ -1921,8 +1921,8 @@ TEST(Option, OperatorArrowSome) {
 
   auto i = NoCopyMove();
 
-  const auto cix = Option<NoCopyMove&>::with(mref(i));
-  auto ix = Option<NoCopyMove&>::with(mref(i));
+  const auto cix = Option<NoCopyMove&>::with(i);
+  auto ix = Option<NoCopyMove&>::with(i);
   static_assert(std::is_same_v<decltype(cix.operator->()), const NoCopyMove*>);
   static_assert(std::is_same_v<decltype(ix.operator->()), NoCopyMove*>);
   EXPECT_EQ(ix.operator->(), &ix.as_ref().unwrap());
@@ -1973,7 +1973,7 @@ TEST(Option, AsRef) {
 
   auto i = NoCopyMove();
 
-  auto ix = Option<NoCopyMove&>::with(mref(i));
+  auto ix = Option<NoCopyMove&>::with(i);
   static_assert(
       std::is_same_v<decltype(ix.as_ref()), Option<const NoCopyMove&>>);
   EXPECT_EQ(&i, &ix.as_ref().unwrap());
@@ -2004,7 +2004,7 @@ TEST(Option, AsMut) {
 
   auto i = NoCopyMove();
 
-  auto ix = Option<NoCopyMove&>::with(mref(i));
+  auto ix = Option<NoCopyMove&>::with(i);
   static_assert(std::is_same_v<decltype(ix.as_mut()), Option<NoCopyMove&>>);
   EXPECT_EQ(&i, &ix.as_mut().unwrap());
 
@@ -2047,7 +2047,7 @@ TEST(Option, TrivialCopy) {
 
   auto i = NoCopyMove();
 
-  auto ix = Option<NoCopyMove&>::with(mref(i));
+  auto ix = Option<NoCopyMove&>::with(i);
   auto iy = sus::move(ix);  // Move-construct.
   EXPECT_EQ(&iy.as_ref().unwrap(), &i);
   ix = sus::move(iy);  // Move-assign.
@@ -2076,15 +2076,15 @@ TEST(Option, Replace) {
 
   NoCopyMove i2, i3;
 
-  auto ix = Option<NoCopyMove&>::with(mref(i2));
+  auto ix = Option<NoCopyMove&>::with(i2);
   static_assert(std::is_same_v<decltype(ix.replace(i3)), Option<NoCopyMove&>>);
-  auto iy = ix.replace(mref(i3));
+  auto iy = ix.replace(i3);
   EXPECT_EQ(&ix.as_ref().unwrap(), &i3);
   EXPECT_EQ(&iy.as_ref().unwrap(), &i2);
 
   auto iz = Option<NoCopyMove&>();
   static_assert(std::is_same_v<decltype(iz.replace(i3)), Option<NoCopyMove&>>);
-  auto izz = iz.replace(mref(i3));
+  auto izz = iz.replace(i3);
   EXPECT_EQ(&iz.as_ref().unwrap(), &i3);
   IS_NONE(izz);
 
@@ -2105,7 +2105,7 @@ TEST(Option, Copied) {
   auto x = Option<int&>().copied();
   IS_NONE(x);
 
-  auto y = Option<int&>::with(mref(i)).copied();
+  auto y = Option<int&>::with(i).copied();
   EXPECT_EQ(*y, i);
   EXPECT_NE(&y.as_ref().unwrap(), &i);
 
@@ -2113,7 +2113,7 @@ TEST(Option, Copied) {
   auto o = Option<int&>();
   EXPECT_EQ(o.copied(), None);
 
-  o = Option<int&>::with(mref(i));
+  o = Option<int&>::with(i);
   auto lc = o.copied();
   EXPECT_EQ(*lc, i);
   EXPECT_NE(&lc.as_ref().unwrap(), &i);
@@ -2139,14 +2139,14 @@ TEST(Option, Cloned) {
   auto x = Option<Cloneable&>().cloned();
   IS_NONE(x);
 
-  auto y = Option<Cloneable&>::with(mref(c)).cloned();
+  auto y = Option<Cloneable&>::with(c).cloned();
   EXPECT_NE(&y.as_ref().unwrap(), &c);
 
   // Lvalue.
   auto o = Option<Cloneable&>();
   EXPECT_EQ(o.cloned(), None);
 
-  o = Option<Cloneable&>::with(mref(c));
+  o = Option<Cloneable&>::with(c);
   auto lc = o.cloned();
   EXPECT_NE(&lc.as_ref().unwrap(), &c);
 
@@ -2187,7 +2187,7 @@ TEST(Option, Flatten) {
 
   // Reference.
   i32 i = 2;
-  EXPECT_EQ(&Option<Option<i32&>>::with(Option<i32&>::with(mref(i)))
+  EXPECT_EQ(&Option<Option<i32&>>::with(Option<i32&>::with(i))
                  .flatten()
                  .unwrap(),
             &i);
@@ -2220,7 +2220,7 @@ TEST(Option, Iter) {
 
   count = 0;
   auto n = NoCopyMove();
-  auto z = Option<NoCopyMove&>::with(mref(n));
+  auto z = Option<NoCopyMove&>::with(n);
   for (auto& i : z.iter()) {
     static_assert(std::is_same_v<decltype(i), const NoCopyMove&>);
     EXPECT_EQ(&i, &n);
@@ -2229,10 +2229,10 @@ TEST(Option, Iter) {
   EXPECT_EQ(count, 1);
 
   // Iterating on an rvalue is okay if it's holding a reference.
-  for (const NoCopyMove& i : Option<NoCopyMove&>::with(mref(n))) {
+  for (const NoCopyMove& i : Option<NoCopyMove&>::with(n)) {
     EXPECT_EQ(&i, &n);
   }
-  for (const NoCopyMove& i : Option<NoCopyMove&>::with(mref(n)).iter()) {
+  for (const NoCopyMove& i : Option<NoCopyMove&>::with(n).iter()) {
     EXPECT_EQ(&i, &n);
   }
 }
@@ -2260,7 +2260,7 @@ TEST(Option, IterMut) {
 
   count = 0;
   auto n = NoCopyMove();
-  auto z = Option<NoCopyMove&>::with(mref(n));
+  auto z = Option<NoCopyMove&>::with(n);
   for (auto& i : z.iter_mut()) {
     static_assert(std::is_same_v<decltype(i), NoCopyMove&>);
     EXPECT_EQ(&i, &n);
@@ -2269,7 +2269,7 @@ TEST(Option, IterMut) {
   EXPECT_EQ(count, 1);
 
   // Iterating on an rvalue is okay if it's holding a reference.
-  for (NoCopyMove& i : Option<NoCopyMove&>::with(mref(n)).iter_mut()) {
+  for (NoCopyMove& i : Option<NoCopyMove&>::with(n).iter_mut()) {
     EXPECT_EQ(&i, &n);
   }
 }
@@ -2304,7 +2304,7 @@ TEST(Option, IntoIter) {
 
   count = 0;
   auto n = NoCopyMove();
-  auto z = Option<NoCopyMove&>::with(mref(n));
+  auto z = Option<NoCopyMove&>::with(n);
   for (auto& i : sus::move(z).into_iter()) {
     static_assert(std::is_same_v<decltype(i), NoCopyMove&>);
     EXPECT_EQ(&i, &n);
@@ -2336,7 +2336,7 @@ TEST(Option, ImplicitIter) {
 
   count = 0;
   auto n = NoCopyMove();
-  auto z = Option<NoCopyMove&>::with(mref(n));
+  auto z = Option<NoCopyMove&>::with(n);
   for (auto& i : z) {
     static_assert(std::is_same_v<decltype(i), const NoCopyMove&>);
     EXPECT_EQ(&i, &n);
@@ -2524,7 +2524,7 @@ TEST(Option, OkOr) {
   /*
   {
     auto i = 1_i32;
-    auto o = Option<i32&>::with(mref(i));
+    auto o = Option<i32&>::with(i);
     auto r = sus::move(o).ok_or(-5_i32);
     IS_SOME(o);
     static_assert(std::same_as<sus::Result<i32&, i32>, decltype(r)>);
@@ -2737,8 +2737,8 @@ TEST(Option, Unzip) {
     static_assert(
         std::same_as<decltype(sr), Tuple<Option<NoCopyMove&>, Option<u32&>>>);
     EXPECT_EQ(sr, (Tuple<Option<NoCopyMove&>, Option<u32&>>::with(
-                      Option<NoCopyMove&>::with(mref(i)),
-                      Option<u32&>::with(mref(u)))));
+                      Option<NoCopyMove&>::with(i),
+                      Option<u32&>::with(u))));
 
     auto ci = NoCopyMove();
     auto cu = 4_u32;
@@ -2931,7 +2931,7 @@ TEST(Option, Clone) {
     i32 i = s->i;
     auto s2 = Option<Copy>::with(Copy());
     s2.as_mut().unwrap().i = 1000_i32;
-    sus::clone_into(mref(s2), s);
+    sus::clone_into(s2, s);
     EXPECT_EQ(s2->i, i);
   }
 
@@ -2969,7 +2969,7 @@ TEST(Option, Clone) {
     const auto s = Option<Clone>::with(Clone());
     auto s2 = Option<Clone>::with(Clone());
     s2.as_mut().unwrap().i = 1000_i32;
-    sus::clone_into(mref(s2), s);
+    sus::clone_into(s2, s);
     EXPECT_EQ(s2->i, 2_i32);
   }
 
@@ -2983,7 +2983,7 @@ TEST(Option, Clone) {
 
   {
     auto i = 1_i32;
-    const auto s = Option<i32&>::with(mref(i));
+    const auto s = Option<i32&>::with(i);
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Option<i32&>>);
     EXPECT_EQ(&s2.as_ref().unwrap(), &i);

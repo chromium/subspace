@@ -23,7 +23,6 @@
 #include "subspace/lib/__private/forward_decl.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/move.h"
-#include "subspace/mem/mref.h"
 #include "subspace/num/unsigned_integer.h"
 
 namespace sus::containers {
@@ -48,7 +47,7 @@ struct [[nodiscard]] VecIntoIter final
     // length of the Vec can not go out of bounds.
     Item& item = vec_.get_unchecked_mut(
         ::sus::marker::unsafe_fn,
-        ::sus::mem::replace(mref(front_index_), front_index_ + 1_usize));
+        ::sus::mem::replace(front_index_, front_index_ + 1_usize));
     return Option<Item>::with(move(item));
   }
 
