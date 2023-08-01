@@ -17,7 +17,7 @@
 #include <concepts>
 #include <type_traits>
 
-#include "subspace/convert/subclass.h"
+#include "subspace/ptr/subclass.h"
 #include "subspace/lib/__private/forward_decl.h"
 
 namespace sus::iter {
@@ -59,7 +59,7 @@ concept Iterator = requires(T& t, const T& c) {
   // The T::Item matches the concept input.
   requires(std::same_as<typename std::decay_t<T>::Item, Item>);
   // Subclasses from IteratorBase<T, T::Item>.
-  requires ::sus::convert::SameOrSubclassOf<
+  requires ::sus::ptr::SameOrSubclassOf<
       std::decay_t<T>*, IteratorBase<std::decay_t<T>, Item>*>;
   // Required methods.
   { t.next() } noexcept -> std::same_as<::sus::option::Option<Item>>;

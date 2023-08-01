@@ -16,7 +16,7 @@
 
 #include <concepts>
 
-#include "subspace/convert/subclass.h"
+#include "subspace/ptr/subclass.h"
 
 namespace sus::construct {
 
@@ -43,7 +43,7 @@ concept SafelyConstructibleFromReference =
     // If the type is the same then no temporary will be created.
     std::same_as<std::remove_cvref_t<From>, std::remove_cvref_t<To>> ||
     // If the type is a base class then no temporary will be created.
-    sus::convert::SameOrSubclassOf<std::remove_cvref_t<From>*,
+    sus::ptr::SameOrSubclassOf<std::remove_cvref_t<From>*,
                                    std::remove_cvref_t<To>*>;
 
 }  // namespace sus::construct

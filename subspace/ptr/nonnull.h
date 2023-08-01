@@ -15,7 +15,7 @@
 #pragma once
 
 #include "subspace/assertions/check.h"
-#include "subspace/convert/subclass.h"
+#include "subspace/ptr/subclass.h"
 #include "subspace/macros/nonnull.h"
 #include "subspace/marker/unsafe.h"
 #include "subspace/mem/addressof.h"
@@ -53,7 +53,7 @@ class [[sus_trivial_abi]] NonNull {
   ///
   /// # Panics
   /// The method will panic if the pointer `t` is null.
-  template <::sus::convert::SameOrSubclassOf<T*> U>
+  template <::sus::ptr::SameOrSubclassOf<T*> U>
   static constexpr inline ::sus::option::Option<NonNull> with_ptr(U t) {
     if (t) [[likely]]
       return ::sus::option::Option<NonNull<T>>::with(NonNull(t));
@@ -73,7 +73,7 @@ class [[sus_trivial_abi]] NonNull {
   /// # Safety
   /// This method must not be called with a null pointer, or Undefined Behaviour
   /// results.
-  template <::sus::convert::SameOrSubclassOf<T*> U>
+  template <::sus::ptr::SameOrSubclassOf<T*> U>
   static constexpr inline sus_nonnull_fn NonNull with_ptr_unchecked(
       ::sus::marker::UnsafeFnMarker, sus_nonnull_arg U sus_nonnull_var t) {
     return NonNull(t);
@@ -97,7 +97,7 @@ class [[sus_trivial_abi]] NonNull {
   /// The method will panic if the pointer `t` is null.
   ///
   /// #[doc.overloads=1]
-  template <::sus::convert::SameOrSubclassOf<T*> U>
+  template <::sus::ptr::SameOrSubclassOf<T*> U>
   static constexpr inline NonNull from(U t) {
     ::sus::check(t);
     return NonNull(t);
@@ -152,7 +152,7 @@ class [[sus_trivial_abi]] NonNull {
   /// This requires that `T*` is a subclass of `U*`. To perform a
   /// downcast, like static_cast<U*> allows, use `downcast()`.
   template <class U>
-    requires ::sus::convert::SameOrSubclassOf<T*, U*>
+    requires ::sus::ptr::SameOrSubclassOf<T*, U*>
   NonNull<U> cast() const {
     return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn,
                                           static_cast<U*>(ptr_));

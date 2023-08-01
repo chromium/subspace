@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "subspace/convert/subclass.h"
+#include "subspace/ptr/subclass.h"
 #include "subspace/iter/iterator_concept.h"
 #include "subspace/iter/size_hint.h"
 #include "subspace/lib/__private/forward_decl.h"
@@ -99,7 +99,7 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
   template <::sus::mem::Move Iter>
   static BoxedIterator with(Iter&& iter) noexcept
     requires(
-        ::sus::convert::SameOrSubclassOf<Iter*, IteratorBase<Iter, Item>*> &&
+        ::sus::ptr::SameOrSubclassOf<Iter*, IteratorBase<Iter, Item>*> &&
         !::sus::mem::relocate_by_memcpy<Iter>)
   {
     // IteratorBase also checks this. It's needed for correctness of the move
