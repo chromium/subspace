@@ -14,6 +14,7 @@
 
 #pragma once
 
+// IWYU pragma: begin_exports
 #include "sus/num/transmogrify.h"
 #include "sus/num/float.h"
 #include "sus/num/float_impl.h"
@@ -21,3 +22,4 @@
 #include "sus/num/signed_integer_impl.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/num/unsigned_integer_impl.h"
+// IWYU pragma: end_exports

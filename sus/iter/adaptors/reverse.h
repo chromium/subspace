@@ -12,45 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private, include "sus/iter/iterator.h"
+// IWYU pragma: friend "sus/.*"
 #pragma once
 
+#include "sus/fn/fn_box_defn.h"
+#include "sus/iter/iterator_concept.h"
 #include "sus/iter/iterator_defn.h"
 #include "sus/iter/sized_iterator.h"
-#include "sus/mem/clone.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
+#include "sus/mem/size_of.h"
 
 namespace sus::iter {
 
-/// An iterator that copied the elements of an underlying iterator.
-///
-/// This type is returned from `Iterator::copied()`.
-template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Copied final
-    : public IteratorBase<Copied<InnerSizedIter>,
-                          std::remove_cvref_t<typename InnerSizedIter::Item>> {
- public:
-  using Item = std::remove_cvref_t<typename InnerSizedIter::Item>;
+using ::sus::mem::relocate_by_memcpy;
 
-  // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
-    return next_iter_.next().map([](const Item& item) -> Item { return item; });
-  }
+/// An iterator that iterates over another iterator but in reverse.
+///
+/// The iterator wrapped by Reverse must be a DoubleEndedIterator.
+///
+/// This type is returned from `Iterator::rev()`.
+template <class InnerSizedIter>
+class [[nodiscard]] [[sus_trivial_abi]] Reverse final
+    : public IteratorBase<Reverse<InnerSizedIter>,
+                          typename InnerSizedIter::Item> {
+  static_assert(InnerSizedIter::DoubleEnded);
+
+ public:
+  using Item = InnerSizedIter::Item;
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
-    return next_iter_.size_hint();
-  }
-
-  // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded)
-  {
-    return next_iter_.next_back().map(
-        [](const Item& item) -> Item { return item; });
-  }
-
-  // sus::iter::ExactSizeIterator trait.
+  Option<Item> next() noexcept { return next_iter_.next_back(); }
+  /// sus::iter::Iterator trait.
+  SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
+  /// sus::iter::DoubleEndedIterator trait.
+  Option<Item> next_back() noexcept { return next_iter_.next(); }
+  /// sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
     requires(InnerSizedIter::ExactSize)
   {
@@ -61,11 +59,11 @@ class [[nodiscard]] [[sus_trivial_abi]] Copied final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Copied with(InnerSizedIter && next_iter) noexcept {
-    return Copied(::sus::move(next_iter));
+  static Reverse with(InnerSizedIter&& next_iter) noexcept {
+    return Reverse(::sus::move(next_iter));
   }
 
-  Copied(InnerSizedIter && next_iter) : next_iter_(::sus::move(next_iter)) {}
+  Reverse(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
 
   InnerSizedIter next_iter_;
 

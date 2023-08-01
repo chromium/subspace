@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private, include "sus/iter/iterator.h"
+// IWYU pragma: friend "sus/.*"
 #pragma once
 
 #include "sus/fn/fn_box_defn.h"
@@ -22,32 +24,27 @@
 
 namespace sus::iter {
 
-/// An iterator that calls a function with a reference to each element before
-/// yielding it.
+/// An iterator that maps each item to a new type based on a map function.
 ///
-/// This type is returned from `Iterator::inspect()`.
-template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Inspect final
-    : public IteratorBase<Inspect<InnerSizedIter>,
-                          typename InnerSizedIter::Item> {
-  using InspectFn = ::sus::fn::FnMutBox<void(
-      const std::remove_reference_t<typename InnerSizedIter::Item>&)>;
+/// This type is returned from `Iterator::map()`.
+template <class ToItem, class InnerSizedIter>
+class [[nodiscard]] [[sus_trivial_abi]] Map final
+    : public IteratorBase<Map<ToItem, InnerSizedIter>, ToItem> {
+  using FromItem = InnerSizedIter::Item;
+  using MapFn = ::sus::fn::FnMutBox<ToItem(FromItem&&)>;
 
  public:
-  using Item = typename InnerSizedIter::Item;
-
-  // sus::mem::Clone trait.
-  Inspect clone() noexcept
-    requires(InnerSizedIter::Clone)
-  {
-    return Inspect(::sus::clone(inspect_), ::sus::clone(next_iter_));
-  }
+  using Item = ToItem;
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
-    Option<Item> item = next_iter_.next();
-    if (item.is_some()) ::sus::fn::call_mut(inspect_, item.as_value());
-    return item;
+    Option<FromItem> item = next_iter_.next();
+    if (item.is_none()) {
+      return sus::none();
+    } else {
+      return sus::some(::sus::fn::call_mut(
+          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
+    }
   }
 
   /// sus::iter::Iterator trait.
@@ -59,9 +56,13 @@ class [[nodiscard]] [[sus_trivial_abi]] Inspect final
   Option<Item> next_back() noexcept
     requires(InnerSizedIter::DoubleEnded)
   {
-    Option<Item> item = next_iter_.next_back();
-    if (item.is_some()) ::sus::fn::call_mut(inspect_, item.as_value());
-    return item;
+    Option<FromItem> item = next_iter_.next_back();
+    if (item.is_none()) {
+      return sus::none();
+    } else {
+      return sus::some(::sus::fn::call_mut(
+          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
+    }
   }
 
   // sus::iter::ExactSizeIterator trait.
@@ -75,20 +76,20 @@ class [[nodiscard]] [[sus_trivial_abi]] Inspect final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Inspect with(InspectFn fn, InnerSizedIter&& next_iter) noexcept {
-    return Inspect(::sus::move(fn), ::sus::move(next_iter));
+  static Map with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
+    return Map(::sus::move(fn), ::sus::move(next_iter));
   }
 
-  Inspect(InspectFn&& fn, InnerSizedIter&& next_iter)
-      : inspect_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
+  Map(MapFn fn, InnerSizedIter&& next_iter)
+      : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
-  InspectFn inspect_;
+  MapFn fn_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is trivially relocatable. Likewise, the InspectFn is
+  // The InnerSizedIter is trivially relocatable. Likewise, the MapFn is
   // known to be trivially relocatable because the FnMutBox will either be a
   // function pointer or a heap allocation itself.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(inspect_),
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(fn_),
                                   decltype(next_iter_));
 };
 

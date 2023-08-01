@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: always_keep
 #pragma once
 
 #include "sus/containers/vec.h"

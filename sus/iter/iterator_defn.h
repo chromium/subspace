@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private, include "sus/iter/iterator.h"
+// IWYU pragma: friend "sus/.*"
 #pragma once
 
 #include <compare>
@@ -22,7 +24,6 @@
 #include "sus/iter/__private/iter_compare.h"
 #include "sus/iter/__private/iterator_end.h"
 #include "sus/iter/__private/iterator_loop.h"
-#include "sus/iter/boxed_iterator.h"
 #include "sus/iter/extend.h"
 #include "sus/iter/from_iterator.h"
 #include "sus/iter/into_iterator.h"

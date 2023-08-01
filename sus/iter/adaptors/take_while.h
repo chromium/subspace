@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private, include "sus/iter/iterator.h"
+// IWYU pragma: friend "sus/.*"
 #pragma once
 
-#include "sus/fn/fn_box_defn.h"
 #include "sus/iter/iterator_defn.h"
 #include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
@@ -24,12 +25,12 @@ namespace sus::iter {
 
 using ::sus::mem::relocate_by_memcpy;
 
-/// An iterator that filters based on a predicate function.
+/// An iterator that only accepts elements while `pred` returns `true`.
 ///
-/// This type is returned from `Iterator::filter()`.
+/// This type is returned from `Iterator::take()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Filter final
-    : public IteratorBase<Filter<InnerSizedIter>,
+class [[nodiscard]] [[sus_trivial_abi]] TakeWhile final
+    : public IteratorBase<TakeWhile<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
   using Pred = ::sus::fn::FnMutBox<bool(
       // TODO: write a sus::const_ref<T>?
@@ -38,48 +39,52 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
  public:
   using Item = InnerSizedIter::Item;
 
-  // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
-    while (true) {
-      Option<Item> item = next_iter_.next();
-      if (item.is_none() || ::sus::fn::call_mut(pred_, item.as_value()))
-        return item;
-    }
-  }
-  /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
-    // Can't know a lower bound, due to the predicate.
-    return ::sus::iter::SizeHint(0u, next_iter_.size_hint().upper);
+  // sus::mem::Clone trait.
+  TakeWhile clone() const noexcept
+    requires(InnerSizedIter::Clone)
+  {
+    return TakeWhile(::sus::clone(pred_), ::sus::clone(next_iter_));
   }
 
-  // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded)
-  {
-    // TODO: Just call find(pred) on itself?
-    while (true) {
-      Option<Item> item = next_iter_.next_back();
-      if (item.is_none() || ::sus::fn::call_mut(pred_, item.as_value()))
-        return item;
+  // sus::iter::Iterator trait.
+  Option<Item> next() noexcept {
+    Option<Item> out;
+    if (pred_.is_none()) return out;
+    out = next_iter_.next();
+    if (out.is_none()) return out;
+    // SAFETY: `pred_` and `out` have each been checked for None already.
+    if (!::sus::fn::call_mut(
+            pred_.as_value_unchecked_mut(::sus::marker::unsafe_fn),
+            out.as_value_unchecked(::sus::marker::unsafe_fn))) {
+      pred_ = Option<Pred>();
+      out = Option<Item>();
     }
+    return out;
+  }
+
+  /// sus::iter::Iterator trait.
+  ::sus::iter::SizeHint size_hint() const noexcept {
+    if (pred_.is_none()) return {0u, sus::some(0u)};
+    // Can't know a lower bound, due to the predicate.
+    return {0u, next_iter_.size_hint().upper};
   }
 
  private:
   template <class U, class V>
   friend class IteratorBase;
 
-  static Filter with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
-    return Filter(::sus::move(pred), ::sus::move(next_iter));
+  static TakeWhile with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
+    return TakeWhile(::sus::move(pred), ::sus::move(next_iter));
   }
 
-  Filter(Pred&& pred, InnerSizedIter&& next_iter) noexcept
-      : pred_(::sus::move(pred)), next_iter_(::sus::move(next_iter)) {}
+  TakeWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
+      : pred_(::sus::some(::sus::move(pred))),
+        next_iter_(::sus::move(next_iter)) {}
 
-  Pred pred_;
+  ::sus::Option<Pred> pred_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is trivially relocatable. Likewise, the predicate is
-  // known to be trivially relocatable because FnMutBox is.
+  // The InnerSizedIter and usize are trivially relocatable.
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(pred_),
                                   decltype(next_iter_));
 };

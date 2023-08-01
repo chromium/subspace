@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private
+// IWYU pragma: friend "sus/.*"
 #pragma once
 
 #include <stddef.h>
@@ -85,6 +87,9 @@ class IteratorBase;
 
 // Include iter/iterator.h to get the implementation of these.
 namespace sus::iter {
+template <class ItemT, size_t SubclassSize, size_t SubclassAlign, bool Clone,
+          bool DoubleEnded, bool ExactSize>
+class BoxedIterator;
 template <class RefIterator>
 class ByRef;
 template <class InnerSizedIter, class OtherSizedIter>

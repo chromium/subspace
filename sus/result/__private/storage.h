@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// IWYU pragma: private
+// IWYU pragma: friend "sus/.*"
+#pragma once
+
 #include <concepts>
 
 #include "sus/macros/no_unique_address.h"
 #include "sus/mem/copy.h"
 #include "sus/mem/move.h"
-
-#pragma once
 
 namespace sus::result::__private {
 
