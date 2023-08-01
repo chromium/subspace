@@ -19,8 +19,8 @@
 #include <sstream>
 
 #include "subdoc/lib/database.h"
-#include "subspace/containers/slice.h"
-#include "subspace/iter/iterator.h"
+#include "sus/containers/slice.h"
+#include "sus/iter/iterator.h"
 
 namespace subdoc::gen {
 

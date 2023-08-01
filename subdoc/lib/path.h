@@ -17,10 +17,10 @@
 #include <sstream>
 
 #include "subdoc/llvm.h"
-#include "subspace/choice/choice.h"
-#include "subspace/containers/vec.h"
-#include "subspace/iter/iterator.h"
-#include "subspace/prelude.h"
+#include "sus/choice/choice.h"
+#include "sus/containers/vec.h"
+#include "sus/iter/iterator.h"
+#include "sus/prelude.h"
 
 namespace subdoc {
 

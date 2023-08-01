@@ -21,7 +21,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_record.h"
 #include "subdoc/lib/gen/html_writer.h"
-#include "subspace/containers/slice.h"
+#include "sus/containers/slice.h"
 
 namespace subdoc::gen {
 

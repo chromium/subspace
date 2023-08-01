@@ -16,8 +16,8 @@
 
 #include <fstream>
 
-#include "subspace/iter/empty.h"
-#include "subspace/prelude.h"
+#include "sus/iter/empty.h"
+#include "sus/prelude.h"
 
 namespace subdoc::gen {
 

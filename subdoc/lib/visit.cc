@@ -22,11 +22,11 @@
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/unique_symbol.h"
-#include "subspace/assertions/check.h"
-#include "subspace/assertions/unreachable.h"
-#include "subspace/mem/swap.h"
-#include "subspace/ops/ord.h"
-#include "subspace/prelude.h"
+#include "sus/assertions/check.h"
+#include "sus/assertions/unreachable.h"
+#include "sus/mem/swap.h"
+#include "sus/ops/ord.h"
+#include "sus/prelude.h"
 
 namespace subdoc {
 

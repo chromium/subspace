@@ -156,7 +156,7 @@ jobs:
 
         # Generate for files in subspace. We execute the tool on all files in
         # the subspace library dir, and we limit generation to things defined
-        # in that directory (there's no other /subspace/ directory it may include).
+        # in that directory (there's no other /sus/ directory it may include).
       - name: Generate
         run: |
           # For crash dumps.
@@ -165,12 +165,12 @@ jobs:
           out/subdoc/subdoc \
             -p out \
             --out docs \
-            --include-file-pattern /subspace/ \
+            --include-file-pattern /sus/ \
             --exclude-file-pattern /third_party/ \
             --copy-file subdoc/gen_tests/subdoc-test-style.css \
             --css subdoc-test-style.css \
-            --copy-file subspace/index.html \
-            /home/runner/work/subspace/subspace/subspace
+            --copy-file sus/index.html \
+            /home/runner/work/subspace/subspace/sus
 
       - name: Deploy
         run: |

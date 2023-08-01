@@ -18,10 +18,10 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/llvm.h"
-#include "subspace/containers/vec.h"
-#include "subspace/prelude.h"
+#include "sus/containers/vec.h"
+#include "sus/prelude.h"
 #include "subdoc/lib/run_options.h"
-#include "subspace/result/result.h"
+#include "sus/result/result.h"
 
 namespace subdoc {
 

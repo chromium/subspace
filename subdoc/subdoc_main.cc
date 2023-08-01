@@ -18,7 +18,7 @@
 #include "lib/gen/generate.h"
 #include "lib/run.h"
 #include "subdoc/llvm.h"
-#include "subspace/prelude.h"
+#include "sus/prelude.h"
 
 int main(int argc, const char** argv) {
   llvm::InitLLVM init(argc, argv);

@@ -8,7 +8,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug subspace_unittests",
-            "program": "${workspaceFolder}/out/subspace/subspace_unittests",
+            "program": "${workspaceFolder}/out/sus/subspace_unittests",
             "args": [
                 // "--gtest_filter=*"
             ],

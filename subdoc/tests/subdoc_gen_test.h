@@ -25,13 +25,13 @@
 #include "subdoc/lib/gen/generate.h"
 #include "subdoc/lib/run.h"
 #include "subdoc/tests/cpp_version.h"
-#include "subspace/assertions/unreachable.h"
-#include "subspace/containers/vec.h"
-#include "subspace/ptr/subclass.h"
-#include "subspace/macros/compiler.h"
-#include "subspace/option/option.h"
-#include "subspace/prelude.h"
-#include "subspace/result/result.h"
+#include "sus/assertions/unreachable.h"
+#include "sus/containers/vec.h"
+#include "sus/ptr/subclass.h"
+#include "sus/macros/compiler.h"
+#include "sus/option/option.h"
+#include "sus/prelude.h"
+#include "sus/result/result.h"
 
 class SubDocGenTest : public testing::Test {
  public:
