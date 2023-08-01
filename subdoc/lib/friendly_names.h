@@ -20,8 +20,8 @@
 #include "subdoc/lib/method_qualifier.h"
 #include "subdoc/lib/record_type.h"
 #include "subdoc/llvm.h"
-#include "subspace/assertions/unreachable.h"
-#include "subspace/prelude.h"
+#include "sus/assertions/unreachable.h"
+#include "sus/prelude.h"
 
 namespace subdoc {
 

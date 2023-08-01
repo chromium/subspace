@@ -16,7 +16,7 @@
 
 #include <string_view>
 
-#include "subspace/assertions/unreachable.h"
+#include "sus/assertions/unreachable.h"
 
 namespace subdoc::tests {
 

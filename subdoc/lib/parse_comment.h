@@ -19,7 +19,7 @@
 
 #include "subdoc/lib/doc_attributes.h"
 #include "subdoc/llvm.h"
-#include "subspace/result/result.h"
+#include "sus/result/result.h"
 
 namespace subdoc {
 

@@ -13,7 +13,7 @@ This library is an experiment and not intended for use. See the
       happening. We will use [a naming convention of "unchecked"](
       https://github.com/chromium/subspace/blob/9d0ae908aa8a98d11f78e0315470be64b97a0dbe/mem/nonnull.h#L31),
       and [a marker argument type of `UnsafeFnMarker`](
-      https://github.com/chromium/subspace/blob/main/subspace/marker/unsafe.h),
+      https://github.com/chromium/subspace/blob/main/sus/marker/unsafe.h),
       to do so in place of [a language keyword](
       https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/unsafe).
 1. KISS Principle
@@ -190,9 +190,9 @@ This library is an experiment and not intended for use. See the
     * Calls to functions in another library that can throw exceptions are
       banned.
     * We will provide vocabulary types for returning a
-      [success-or-failure](https://github.com/chromium/subspace/blob/main/subspace/result/result.h)
+      [success-or-failure](https://github.com/chromium/subspace/blob/main/sus/result/result.h)
       and a
-      [value-or-none](https://github.com/chromium/subspace/blob/main/subspace/option/option.h).
+      [value-or-none](https://github.com/chromium/subspace/blob/main/sus/option/option.h).
 1. Traits, SFINAE and type tags to define behaviour on data. No inheritance
    unless from an abstract interface. All other classes are marked `final`.
     * Always use `final` instead of `override`.
@@ -207,7 +207,7 @@ This library is an experiment and not intended for use. See the
     * Use [std::is_constant_evaluated](https://en.cppreference.com/w/cpp/types/is_constant_evaluated)
       to provide a (more expensive) constexpr implementation when needed.
 1. Common C++ language behaviours are part of the class' public API. We will
-   document _and [test](https://github.com/chromium/subspace/blob/main/subspace/test/behaviour_types_unittest.cc)_
+   document _and [test](https://github.com/chromium/subspace/blob/main/sus/test/behaviour_types_unittest.cc)_
    for being trivially copyable, movable, destructible, among others.
 1. Everything comes with tests. Tests are not flaky.
 1. Avoid compiler-specific things whenever possible. Some exceptions:

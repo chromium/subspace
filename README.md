@@ -57,5 +57,5 @@ check out which compiler versions are used by the
 | **MSVC**:   | 17.4.2 (not [newer versions](https://github.com/chromium/subspace/issues/267)) |
 
 We attempt to work around bugs when reasonable, to widen compiler version
-support. See [compiler_bugs.h](subspace/macros/__private/compiler_bugs.h) for
+support. See [compiler_bugs.h](sus/macros/__private/compiler_bugs.h) for
 the set of bugs we are aware of and currently work around.

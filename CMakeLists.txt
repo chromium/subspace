@@ -89,7 +89,7 @@ endif()
 
 add_subdirectory(third_party/fmt)
 
-add_subdirectory(subspace)
+add_subdirectory(sus)
 
 if (${SUBSPACE_BUILD_SUBDOC})
     add_subdirectory(subdoc)

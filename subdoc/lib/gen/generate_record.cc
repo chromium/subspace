@@ -22,7 +22,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
-#include "subspace/prelude.h"
+#include "sus/prelude.h"
 
 namespace subdoc::gen {
 

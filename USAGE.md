@@ -28,8 +28,8 @@ target_link_libraries(subspace-example PRIVATE subspace::lib)
 
 ## src/main.cc
 ```
-#include "subspace/assertions/check.h"
-#include "subspace/prelude.h"  // Import core types.
+#include "sus/assertions/check.h"
+#include "sus/prelude.h"  // Import core types.
 
 int main() {
   i32 a = 6;

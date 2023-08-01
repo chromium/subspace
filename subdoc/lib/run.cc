@@ -18,7 +18,7 @@
 #include <utility>
 
 #include "subdoc/lib/visit.h"
-#include "subspace/iter/iterator.h"
+#include "sus/iter/iterator.h"
 
 namespace subdoc {
 

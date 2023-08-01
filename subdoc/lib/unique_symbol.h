@@ -17,7 +17,7 @@
 #include <sstream>
 
 #include "subdoc/llvm.h"
-#include "subspace/prelude.h"
+#include "sus/prelude.h"
 
 namespace subdoc {
 

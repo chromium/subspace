@@ -24,11 +24,11 @@
 #include "subdoc/lib/type.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "subdoc/llvm.h"
-#include "subspace/assertions/check.h"
-#include "subspace/choice/choice.h"
-#include "subspace/fn/fn.h"
-#include "subspace/option/option.h"
-#include "subspace/prelude.h"
+#include "sus/assertions/check.h"
+#include "sus/choice/choice.h"
+#include "sus/fn/fn.h"
+#include "sus/option/option.h"
+#include "sus/prelude.h"
 
 namespace subdoc {
 
