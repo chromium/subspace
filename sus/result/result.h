@@ -654,11 +654,12 @@ class [[nodiscard]] Result final {
   constexpr inline T unwrap() && noexcept {
     ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
     check_with_message(
-        was != ResultState::IsMoved,
-        *"called `Result::unwrap_or_default()` on a moved Result");
-    check_with_message(was == ResultState::IsOk,
-                       *"called `Result::unwrap()` on an `Err` value");
-    return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
+        was == ResultState::IsOk,
+        *"called `Result::unwrap()` on an `Err` value or moved Result");
+    if constexpr (!std::is_void_v<T>) {
+      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                           storage_.ok_);
+    }
   }
 
   /// Returns the contained Ok value or a default.
@@ -675,7 +676,8 @@ class [[nodiscard]] Result final {
         *"called `Result::unwrap_or_default()` on a moved Result");
     if constexpr (!std::is_void_v<T>) {
       if (was == ResultState::IsOk) {
-        return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
+        return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                             storage_.ok_);
       } else {
         return T();
       }
@@ -690,6 +692,7 @@ class [[nodiscard]] Result final {
   /// Behavior.
   constexpr inline T unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
+    state_ = ResultState::IsMoved;
     if constexpr (!std::is_void_v<T>) {
       return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
                                            storage_.ok_);
@@ -701,10 +704,12 @@ class [[nodiscard]] Result final {
   /// # Panics
   /// Panics if the value is an `Ok` or the Result is moved from.
   constexpr inline E unwrap_err() && noexcept {
+    ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
     check_with_message(
-        ::sus::mem::replace(state_, ResultState::IsMoved) == ResultState::IsErr,
-        *"called `Result::unwrap_err()` on an `Ok` value");
-    return ::sus::move(*this).unwrap_err_unchecked(::sus::marker::unsafe_fn);
+        was == ResultState::IsErr,
+        *"called `Result::unwrap_err()` on an `Ok` value or moved Result");
+    return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                         storage_.err_);
   }
 
   /// Returns the contained `Err` value, consuming the self value, without
@@ -715,6 +720,7 @@ class [[nodiscard]] Result final {
   /// Behavior.
   constexpr inline E unwrap_err_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
+    state_ = ResultState::IsMoved;
     return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
                                          storage_.err_);
   }
