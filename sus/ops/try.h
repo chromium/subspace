@@ -29,8 +29,10 @@ struct TryImpl;
 /// * A type `Output` that is the unwrapped success value type.
 /// * A member `static bool is_success(const T& t)` that reports if the
 ///   given `t` is a success or failure value.
-/// * A member `static Output to_output(T&& t)` that unwraps a successful T to
+/// * A member `static Output into_output(T t)` that unwraps a successful T to
 ///   its success value.
+/// * A member `static T from_output(Output t)` that constructs a successful T
+///   from a success value.
 template <class T>
 concept Try =
     requires {
@@ -48,12 +50,51 @@ concept Try =
     requires(const T& t, T&& tt, TryImpl<T>::Output output) {
       // is_success() reports if the Try type is in a success state.
       { TryImpl<T>::is_success(t) } -> std::same_as<bool>;
-      // to_output() unwraps from the Try type to its success type.
+      // into_output() unwraps from the Try type to its success type. It may
+      // assume that the input is in a success state (`is_success()` would
+      // return true), as the `try_into_output()` method verifies this.
       {
-        TryImpl<T>::to_output(::sus::move(tt))
+        TryImpl<T>::into_output(::sus::move(tt))
       } -> std::same_as<typename TryImpl<T>::Output>;
       // from_output() converts a success type to the Try type.
       { TryImpl<T>::from_output(::sus::move(output)) } -> std::same_as<T>;
     };
+
+/// Determines if a type `T` that satisfies `Try` represents success in its
+/// current state.
+template <Try T>
+constexpr inline bool try_is_success(const T& t) noexcept {
+  return TryImpl<T>::is_success(t);
+}
+
+/// Unwraps from the Try type that is currently in its success state
+/// (`is_success()` would return true) to produce its success value.
+///
+/// For instance, this unwraps an `Result<T, E>` which can represent success or
+/// failure into `T` which represents only success in the type system.
+///
+/// # Panics
+///
+/// If the input is not in a success state (`is_success()` would return true)
+/// the function will panic.
+template <Try T>
+  requires(::sus::mem::IsMoveRef<T &&>)
+constexpr inline TryImpl<T>::Output try_into_output(T&& t) noexcept {
+  ::sus::check(TryImpl<T>::is_success(t));
+  return TryImpl<T>::into_output(::sus::move(t));
+}
+
+/// Constructs an object of type `T` that satisfies `Try` from a value that
+/// represents success for `T`.
+///
+/// For instance, this constructs a `Result<T, E>` from a `T` since `Result`
+/// satisfies `Try` and `T` is the type that represents its success values.
+///
+/// The template variable `T` must be specified as it can not be deduced here.
+/// For example: `sus::ops::try_from_output<Result<T, E>>(T())`.
+template <Try T>
+constexpr inline T try_from_output(typename TryImpl<T>::Output&& t) noexcept {
+  return TryImpl<T>::from_output(::sus::move(t));
+}
 
 }  // namespace sus::ops

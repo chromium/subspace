@@ -50,7 +50,7 @@ static_assert(Into<int, FromStuff>);
 static_assert(Into<S, FromStuff>);
 
 template <class To, class From>
-concept CanInto = requires(From&& from) {
+concept CanInto = requires(From from) {
   {
     [](To) {}(sus::into(sus::forward<From>(from)))
   };
