@@ -10,6 +10,11 @@ used to pull the Subspace code into your project.
 git submodule add https://github.com/chromium/subspace third_party/subspace
 ```
 
+And grab its dependencies as submodules.
+```
+git submodule update --init --recursive
+```
+
 ## CMakeLists.txt
 
 ```

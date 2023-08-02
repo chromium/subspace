@@ -14,7 +14,9 @@ jobs:
       installed_clang_version: 14
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
 
       - name: Install LLVM+Clang
         run: |
@@ -39,14 +41,6 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh ${clang_version} all
-
-      - name: Checkout depot tools
-        run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-
-      - name: Setup .gclient
-        shell: bash
-        run: |
-          echo "./depot_tools" >> $GITHUB_PATH
 
       - name: Download dependencies
         shell: bash

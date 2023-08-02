@@ -2,20 +2,16 @@
 
 ## Install the required tools
 
-1. Install [depot_tools](https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up)
 1. Install [CMake](https://cmake.org/install/)
     * Don't use the one that comes with Visual Studio on Windows.
 1. Install [Ninja](https://ninja-build.org/)
-1. Install [python3](https://www.python.org/downloads/)
 
-## Install dependencies
+## Fetch submodule dependencies
 
 From the root of the Subspace project, run:
 ```
-gclient sync
+git submodule update --init
 ```
-
-This will need to be done again when dependencies are updated in [`DEPS`](DEPS).
 
 ## Configure the Subspace build
 
