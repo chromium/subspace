@@ -1072,9 +1072,10 @@ class [[nodiscard]] Result final {
       : storage_(__private::kWithE, ::sus::move(e)),
         state_(ResultState::IsErr) {}
 
+  struct VoidStorage {};
   using OkStorageType =
       std::conditional_t<std::is_reference_v<T>, StoragePointer<T>,
-                         std::conditional_t<std::is_void_v<T>, char, T>>;
+                         std::conditional_t<std::is_void_v<T>, VoidStorage, T>>;
 
   [[sus_no_unique_address]] Storage<OkStorageType, E> storage_;
   ResultState state_;
