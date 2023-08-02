@@ -1359,7 +1359,7 @@ class Option final {
   /// This also allows `sus::into()` to convert with type deduction from
   /// `std::optional` to `sus::Option`.
   ///
-  /// Include sus/option/option_compat.h to use these methods, as std
+  /// Include sus/option/compat_option.h to use these methods, as std
   /// `<optional>` header is not included by default.
   ///
   /// #[doc.overloads=from.optional]
@@ -1383,7 +1383,7 @@ class Option final {
     requires(!std::is_reference_v<T>);
   /// Implicit conversion from std::optional.
   ///
-  /// Include sus/option/option_compat.h to use these methods, as std
+  /// Include sus/option/compat_option.h to use these methods, as std
   /// `<optional>` header is not included by default.
   ///
   /// #[doc.overloads=ctor.optional]
@@ -1394,7 +1394,7 @@ class Option final {
     requires(::sus::mem::Move<T> && !std::is_reference_v<T>);
   /// Implicit conversion to std::optional.
   ///
-  /// Include sus/option/option_compat.h to use these methods, as std
+  /// Include sus/option/compat_option.h to use these methods, as std
   /// `<optional>` header is not included by default.
   ///
   /// #[doc.overloads=convert.optional]

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sus/option/option_compat.h"
+#include "sus/option/compat_option.h"
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/construct/into.h"
