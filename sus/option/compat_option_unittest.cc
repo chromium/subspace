@@ -28,7 +28,7 @@ struct Moved {
   i32 moved = 0;
 };
 
-TEST(OptionCompat, CtorOptionalCopy) {
+TEST(CompatOption, CtorOptionalCopy) {
   // Explicit.
   {
     constexpr auto o = std::optional<int>(2);
@@ -53,7 +53,7 @@ TEST(OptionCompat, CtorOptionalCopy) {
   }
 }
 
-TEST(OptionCompat, CtorOptionalMove) {
+TEST(CompatOption, CtorOptionalMove) {
   // Explicit.
   {
     constexpr auto s = sus::Option<int>(std::optional<int>(2));
@@ -79,7 +79,7 @@ TEST(OptionCompat, CtorOptionalMove) {
   }
 }
 
-TEST(OptionCompat, FromOptionalCopy) {
+TEST(CompatOption, FromOptionalCopy) {
   {
     constexpr auto o = std::optional<int>(2);
     constexpr auto s = sus::Option<int>::from(o);
@@ -103,7 +103,7 @@ TEST(OptionCompat, FromOptionalCopy) {
   }
 }
 
-TEST(OptionCompat, FromOptionalMove) {
+TEST(CompatOption, FromOptionalMove) {
   {
     constexpr auto s = sus::Option<int>::from(std::optional<int>(2));
     EXPECT_EQ(s.as_value(), 2);
@@ -129,7 +129,7 @@ TEST(OptionCompat, FromOptionalMove) {
   }
 }
 
-TEST(OptionCompat, ToOptionalCopy) {
+TEST(CompatOption, ToOptionalCopy) {
   // Explicit.
   {
     constexpr auto s = sus::Option<int>::with(2);
@@ -157,7 +157,7 @@ TEST(OptionCompat, ToOptionalCopy) {
   // extension point.
 }
 
-TEST(OptionCompat, ToOptionalMove) {
+TEST(CompatOption, ToOptionalMove) {
   // Explicit.
   {
     constexpr auto o = std::optional<int>(sus::Option<int>::with(2));
@@ -188,7 +188,7 @@ TEST(OptionCompat, ToOptionalMove) {
   }
 }
 
-TEST(OptionCompat, ToOptionalRef) {
+TEST(CompatOption, ToOptionalRef) {
   // Explicit.
   {
     int i = 2;
@@ -254,7 +254,7 @@ TEST(OptionCompat, ToOptionalRef) {
   // extension point.
 }
 
-TEST(OptionCompat, FromOptionalCopyWithConversion) {
+TEST(CompatOption, FromOptionalCopyWithConversion) {
   static_assert(sus::construct::Into<i32, i64>);
 
   // Move.
@@ -265,6 +265,12 @@ TEST(OptionCompat, FromOptionalCopyWithConversion) {
   constexpr auto f = std::optional<i32>(101);
   constexpr sus::Option<i64> t = sus::into(f);
   EXPECT_EQ(t.as_value(), 101_i64);
+}
+
+TEST(CompatOption, Try) {
+  static_assert(sus::ops::Try<std::optional<i32>>);
+  EXPECT_EQ(sus::ops::try_is_success(std::optional<i32>(std::in_place, 1)), true);
+  EXPECT_EQ(sus::ops::try_is_success(std::optional<i32>()), false);
 }
 
 }  // namespace

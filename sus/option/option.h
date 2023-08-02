@@ -1492,10 +1492,12 @@ struct sus::ops::TryImpl<::sus::option::Option<T>> {
   constexpr static bool is_success(const ::sus::option::Option<T>& t) {
     return t.is_some();
   }
-  constexpr static Output to_output(::sus::option::Option<T> t) {
-    return ::sus::move(t).unwrap();
+  constexpr static Output into_output(::sus::option::Option<T> t) {
+    // SAFETY: The Option is verified to be holding Some(T) by
+    // `sus::ops::try_into_output()` before it calls here.
+    return ::sus::move(t).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
-  constexpr static ::sus::option::Option<T> from_output(T t) {
+  constexpr static ::sus::option::Option<T> from_output(Output t) {
     return ::sus::option::Option<T>::with(::sus::move(t));
   }
 };
@@ -1686,8 +1688,7 @@ struct sus::iter::FromIteratorImpl<::sus::option::Option<T>> {
     };
 
     bool found_none = false;
-    auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(),
-                              found_none);
+    auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(), found_none);
     auto collected = sus::iter::from_iter<T>(::sus::move(iter));
     if (found_none)
       return ::sus::option::Option<T>();
