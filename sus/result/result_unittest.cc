@@ -597,6 +597,79 @@ TEST(Result, UnwrapOrDefault) {
   }
 }
 
+TEST(Result, UnwrapUnchecked) {
+  constexpr auto a = Result<i32, Error>::with(3).unwrap_unchecked(unsafe_fn);
+  static_assert(std::same_as<decltype(a), const i32>);
+  EXPECT_EQ(a, 3_i32);
+
+  // Returns void, doesn't panic.
+  Result<void, Error>::with().unwrap_unchecked(unsafe_fn);
+  static_assert(
+      std::same_as<decltype(Result<void, Error>::with().unwrap_unchecked(
+                       unsafe_fn)),
+                   void>);
+
+  auto m = NoCopyMove();
+  decltype(auto) u =
+      Result<NoCopyMove&, Error>::with(m).unwrap_unchecked(unsafe_fn);
+  static_assert(std::same_as<decltype(u), NoCopyMove&>);
+  EXPECT_EQ(&u, &m);
+
+  decltype(auto) cu =
+      Result<const NoCopyMove&, Error>::with(m).unwrap_unchecked(unsafe_fn);
+  static_assert(std::same_as<decltype(cu), const NoCopyMove&>);
+  EXPECT_EQ(&cu, &m);
+}
+
+TEST(Result, DestroyAfterUnwrap) {
+  static i32 destroyed = 0;
+  struct S {
+    S() = default;
+    S(S&&) = default;
+    S& operator=(S&&) = default;
+    ~S() { destroyed += 1; }
+  };
+
+  // Verify an unwrapped Result doesn't destroy a value that was already
+  // unwrapped/destroyed.
+
+  i32 counted_destroyed;
+  {
+    auto r = Result<S, Error>::with(S());
+    sus::move(r).unwrap();
+    counted_destroyed = destroyed;
+  }
+  EXPECT_EQ(destroyed, counted_destroyed);
+
+  {
+    auto r = Result<S, Error>::with(S());
+    sus::move(r).unwrap_or_default();
+    counted_destroyed = destroyed;
+  }
+  EXPECT_EQ(destroyed, counted_destroyed);
+
+  {
+    auto r = Result<S, Error>::with(S());
+    sus::move(r).unwrap_unchecked(unsafe_fn);
+    counted_destroyed = destroyed;
+  }
+  EXPECT_EQ(destroyed, counted_destroyed);
+
+  {
+    auto r = Result<void, S>::with_err(S());
+    sus::move(r).unwrap_err();
+    counted_destroyed = destroyed;
+  }
+  EXPECT_EQ(destroyed, counted_destroyed);
+
+  {
+    auto r = Result<void, S>::with_err(S());
+    sus::move(r).unwrap_err_unchecked(unsafe_fn);
+    counted_destroyed = destroyed;
+  }
+  EXPECT_EQ(destroyed, counted_destroyed);
+}
+
 TEST(ResultDeathTest, UnwrapWithErr) {
 #if GTEST_HAS_DEATH_TEST
   auto r = Result<i32, Error>::with_err(Error());
