@@ -37,10 +37,6 @@ namespace sus::mem {
 /// not recommended, unless deleting the copy operations too, as it tends to
 /// break things that want to move-or-fallback-to-copy.
 ///
-/// Types that can not be assigned to at all, by copy or move, can still satisfy
-/// Move by being able to construct by move. This is required for types like
-/// lambdas, or types with const fields.
-///
 /// # Example
 /// ```
 /// struct S {
@@ -51,12 +47,10 @@ namespace sus::mem {
 /// static_assert(sus::mem::Move<S>);
 /// ```
 template <class T>
-concept Move = std::is_move_constructible_v<
-                   std::remove_const_t<std::remove_reference_t<T>>> &&
-               (std::is_move_assignable_v<
-                    std::remove_const_t<std::remove_reference_t<T>>>/* ||
-                !std::is_copy_assignable_v<
-                    std::remove_const_t<std::remove_reference_t<T>>>*/);
+concept Move =
+    std::is_move_constructible_v<
+        std::remove_const_t<std::remove_reference_t<T>>> &&
+    std::is_move_assignable_v<std::remove_const_t<std::remove_reference_t<T>>>;
 
 /// A `MoveOrRef` object or reference of type `T` can be moved to construct a
 /// new `T`.
@@ -79,13 +73,35 @@ concept MoveOrRef = Move<T> || std::is_reference_v<T>;
 /// to `std::move()`. It enables an lvalue (a named object) to be used as an
 /// rvalue. The function does not require `T` to be `Move`, in order to call
 /// rvalue-qualified methods on `T` even if it is not `Move`.
-//
-// TODO: Should this be `as_rvalue()`? Kinda technical. `as_...something...()`?
 template <class T>
   requires(!std::is_const_v<std::remove_reference_t<T>>)
-sus_pure_const sus_always_inline constexpr auto&& move(T&& t) noexcept {
+sus_pure_const sus_always_inline constexpr decltype(auto) move(T&& t) noexcept {
   return static_cast<std::remove_reference_t<T>&&>(t);
 }
+
+/// A concept that can be used to constrain a universal reference parameter to
+/// ensure the caller provides something that was moved from, akin to receiving
+/// by value. This avoids inadvertantly moving out of an lvalue in the caller.
+///
+/// In the common case, when you want to receive a parameter that will be moved,
+/// it should be received by value. However, library implementors sometimes with
+/// to receive an *rvalue reference*. That is a reference to an rvalue which can
+/// be moved from. This is unfortunately spelled the same as a universal
+/// reference, so it will also bind to an lvalue in the caller, and moving from
+/// the reference would move from the caller's lvalue.
+///
+/// To receive an rvalue reference (and not a universal reference), constrain
+/// the input universal reference `T&&` by the `IsMoveRef` concept with
+/// `requires(IsMoveRef<T&&>)`. When this is satisfied, the input will
+/// need to be an rvalue. In this case, `sus::move()` will always perform a move
+/// from an rvalue and will not move out of an lvalue in the caller.
+///
+/// `sus::forward<T>` can also be used with universal references, but when
+/// constructing a v`alue type `T` it will implicitly copy from const
+/// references.
+template <class T>
+concept IsMoveRef = std::is_rvalue_reference_v<T> &&
+                    !std::is_const_v<std::remove_reference_t<T>>;
 
 }  // namespace sus::mem
 

@@ -17,6 +17,7 @@
 #pragma once
 
 #include <functional>
+#include <type_traits>
 
 #include "sus/fn/__private/signature.h"
 #include "sus/macros/inline.h"
@@ -388,8 +389,7 @@ concept Fn = requires {
 /// * Verifies that the thing being invoked is being moved from so that the
 ///   correct overload will be invoked.
 template <class F, class... Args>
-  requires(std::is_rvalue_reference_v<F &&> &&  //
-           !std::is_const_v<std::remove_reference_t<F>>)
+  requires(::sus::mem::IsMoveRef<F &&>)
 sus_always_inline constexpr decltype(auto) call_once(F&& f, Args&&... args) {
   return std::invoke(sus::move(f), sus::forward<Args>(args)...);
 }

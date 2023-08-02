@@ -353,8 +353,7 @@ class [[nodiscard]] Result final {
     check(o.state_ != ResultState::IsMoved);
     switch (state_) {
       case ResultState::IsOk:
-        switch (state_ =
-                    ::sus::mem::replace(o.state_, ResultState::IsMoved)) {
+        switch (state_ = ::sus::mem::replace(o.state_, ResultState::IsMoved)) {
           case ResultState::IsOk:
             storage_.ok_ = ::sus::move(o.storage_.ok_);
             break;
@@ -368,8 +367,7 @@ class [[nodiscard]] Result final {
         }
         break;
       case ResultState::IsErr:
-        switch (state_ =
-                    ::sus::mem::replace(o.state_, ResultState::IsMoved)) {
+        switch (state_ = ::sus::mem::replace(o.state_, ResultState::IsMoved)) {
           case ResultState::IsErr:
             storage_.err_ = ::sus::move(o.storage_.err_);
             break;
@@ -383,8 +381,7 @@ class [[nodiscard]] Result final {
         }
         break;
       case ResultState::IsMoved:
-        switch (state_ =
-                    ::sus::mem::replace(o.state_, ResultState::IsMoved)) {
+        switch (state_ = ::sus::mem::replace(o.state_, ResultState::IsMoved)) {
           case ResultState::IsErr:
             std::construct_at(&storage_.err_, ::sus::move(o.storage_.err_));
             break;
@@ -639,7 +636,7 @@ class [[nodiscard]] Result final {
   /// Returns a const reference to the contained `Err` value.
   ///
   /// # Panic
-  /// Panics if the value is an `Ok`.
+  /// Panics if the value is an `Ok` or the Result is moved from.
   constexpr const std::remove_reference_t<E>& as_err() const& {
     ::sus::check(state_ == ResultState::IsErr);
     return storage_.err_;
@@ -653,16 +650,15 @@ class [[nodiscard]] Result final {
   /// `unwrap_or_default()`.
   ///
   /// # Panics
-  /// Panics if the value is an `Err`.
+  /// Panics if the value is an `Err` or the Result is moved from.
   constexpr inline T unwrap() && noexcept {
+    ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
     check_with_message(
-        ::sus::mem::replace(state_, ResultState::IsMoved) ==
-            ResultState::IsOk,
-        *"called `Result::unwrap()` on an `Err` value");
-    if constexpr (!std::is_void_v<T>) {
-      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                           storage_.ok_);
-    }
+        was != ResultState::IsMoved,
+        *"called `Result::unwrap_or_default()` on a moved Result");
+    check_with_message(was == ResultState::IsOk,
+                       *"called `Result::unwrap()` on an `Err` value");
+    return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Returns the contained Ok value or a default.
@@ -679,8 +675,7 @@ class [[nodiscard]] Result final {
         *"called `Result::unwrap_or_default()` on a moved Result");
     if constexpr (!std::is_void_v<T>) {
       if (was == ResultState::IsOk) {
-        return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                             storage_.ok_);
+        return ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn);
       } else {
         return T();
       }
@@ -691,7 +686,8 @@ class [[nodiscard]] Result final {
   /// checking that the value is not an `Err`.
   ///
   /// # Safety
-  /// Calling this method on an `Err` is Undefined Behavior.
+  /// Calling this method on an `Err` or a moved-from Result is Undefined
+  /// Behavior.
   constexpr inline T unwrap_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
     if constexpr (!std::is_void_v<T>) {
@@ -703,21 +699,20 @@ class [[nodiscard]] Result final {
   /// Returns the contained `Err` value, consuming the self value.
   ///
   /// # Panics
-  /// Panics if the value is an `Ok`.
+  /// Panics if the value is an `Ok` or the Result is moved from.
   constexpr inline E unwrap_err() && noexcept {
     check_with_message(
-        ::sus::mem::replace(state_, ResultState::IsMoved) ==
-            ResultState::IsErr,
+        ::sus::mem::replace(state_, ResultState::IsMoved) == ResultState::IsErr,
         *"called `Result::unwrap_err()` on an `Ok` value");
-    return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
-                                         storage_.err_);
+    return ::sus::move(*this).unwrap_err_unchecked(::sus::marker::unsafe_fn);
   }
 
   /// Returns the contained `Err` value, consuming the self value, without
   /// checking that the value is not an `Ok`.
   ///
   /// # Safety
-  /// Calling this method on an `Ok` is Undefined Behavior.
+  /// Calling this method on an `Ok` or a moved-from Result is Undefined
+  /// Behavior.
   constexpr inline E unwrap_err_unchecked(
       ::sus::marker::UnsafeFnMarker) && noexcept {
     return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
@@ -765,13 +760,17 @@ class [[nodiscard]] Result final {
     }
   }
   constexpr Once<const std::remove_reference_t<TUnlessVoid>&> iter() && noexcept
-    requires(!std::is_void_v<T> && std::is_rvalue_reference_v<T>)
+    requires(!std::is_void_v<T> && std::is_reference_v<T>)
   {
     ::sus::check(state_ != ResultState::IsMoved);
     if (::sus::mem::replace(state_, ResultState::IsMoved) ==
         ResultState::IsOk) {
       return ::sus::iter::once<const std::remove_reference_t<T>&>(
-          Option<const std::remove_reference_t<T>&>::with(storage_.ok_));
+          // SAFETY: The static_cast is needed to convert the pointer storage
+          // type to a `const T&`, which does not create a temporary as it's
+          // converting a pointer to a reference.
+          Option<const std::remove_reference_t<T>&>::with(
+              static_cast<const std::remove_reference_t<T>&>(storage_.ok_)));
     } else {
       storage_.destroy_err();
       return ::sus::iter::once<const std::remove_reference_t<T>&>(
@@ -1136,8 +1135,10 @@ struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
   constexpr static bool is_success(const ::sus::result::Result<T, E>& t) {
     return t.is_ok();
   }
-  constexpr static Output to_output(::sus::result::Result<T, E> t) {
-    return ::sus::move(t).unwrap();
+  constexpr static Output into_output(::sus::result::Result<T, E> t) {
+    // SAFETY: The Result is verified to be holding Ok(T) by
+    // `::sus::ops::try_into_output()` before it calls here.
+    return ::sus::move(t).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
   constexpr static ::sus::result::Result<T, E> from_output(Output t) {
     return ::sus::result::Result<T, E>::with(::sus::move(t));

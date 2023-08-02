@@ -82,35 +82,33 @@ concept Into =
 
 /// Converts from the given value to whatever a receiver requires.
 ///
-/// The result will be receivable if `Into<FromType, ToType>` is
-/// satisfied where `ToType` is deduced by the type constructed from the return
-/// value of `into()`.
+/// The result will be receivable if `Into<FromType, ToType>` is satisfied where
+/// `ToType` is deduced by the type constructed from the return value of
+/// `into()`.
 ///
-/// `into()` will implicitly copy from lvalue inputs that are trivially
-/// copyable or from mutable lvalues that are trivially moveable. To move from
-/// the input otherwise, use `move_into()` or wrap the input with `sus::move()`.
+/// `into()` will implicitly copy from lvalue inputs that are trivially copyable
+/// (const) or movable (mutable). To move from the input otherwise, use
+/// `move_into()` or wrap the input with `sus::move()`.
 ///
 /// To capture a const reference to an lvalue, use `ref_into()`. To capture a
 /// mutable reference to an lvalue, use `mref_into()`.
 template <class FromType>
-  requires(!std::is_const_v<std::remove_reference_t<FromType>> &&
-           std::is_rvalue_reference_v<FromType &&> &&
-           !std::is_array_v<FromType>)
+  requires(::sus::mem::IsMoveRef<FromType &&> &&  //
+           !std::is_array_v<std::remove_reference_t<FromType>>)
 constexpr inline auto into(FromType&& from sus_lifetimebound) noexcept {
-  return __private::IntoRef(
-      static_cast<std::remove_reference_t<FromType>&&>(from));
+  return __private::IntoRef(::sus::move(from));
 }
 template <class FromType>
-  requires((std::is_trivially_copy_constructible_v<FromType>) &&
-           !std::is_array_v<FromType>)
+  requires(std::is_trivially_copy_constructible_v<FromType> &&
+           !std::is_array_v<std::remove_reference_t<FromType>>)
 constexpr inline auto into(const FromType& from sus_lifetimebound) noexcept {
   return __private::IntoRef<const FromType&>(from);
 }
 template <class FromType>
-  requires((std::is_trivially_move_constructible_v<FromType>) &&
-           !std::is_array_v<FromType>)
+  requires(std::is_trivially_move_constructible_v<FromType> &&
+           !std::is_const_v<std::remove_reference_t<FromType>>)
 constexpr inline auto into(FromType& from sus_lifetimebound) noexcept {
-  return __private::IntoRef<FromType&&>(::sus::move(from));
+  return __private::IntoRef(::sus::move(from));
 }
 
 /// Converts from the given const reference to whatever a receiver requires.

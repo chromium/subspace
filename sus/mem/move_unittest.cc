@@ -21,6 +21,11 @@ namespace {
 using sus::move;
 using sus::mem::Move;
 
+struct NonTrivial {
+  NonTrivial(const NonTrivial&) {}
+  NonTrivial& operator=(const NonTrivial&) { return *this; }
+};
+
 // clang-format off
 template <class T>
 concept can_move = requires(T t) {
@@ -28,11 +33,19 @@ concept can_move = requires(T t) {
 };
 // clang-format on
 
+// Trivially move-constructible.
 static_assert(can_move<int>);
 static_assert(can_move<int&>);
 static_assert(can_move<int&&>);
 static_assert(!can_move<const int&>);
 static_assert(!can_move<const int&&>);
+
+// Non-trivially move-constructible.
+static_assert(can_move<NonTrivial>);
+static_assert(can_move<NonTrivial&>);
+static_assert(can_move<NonTrivial&&>);
+static_assert(!can_move<const NonTrivial&>);
+static_assert(!can_move<const NonTrivial&&>);
 
 void bind_rvalue(int&&) {}
 void bind_value(int) {}

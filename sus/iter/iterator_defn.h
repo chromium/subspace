@@ -1830,11 +1830,11 @@ template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F, int&...,
 R IteratorBase<Iter, Item>::try_fold(B init, F f) noexcept {
   while (true) {
     if (Option<Item> o = as_subclass_mut().next(); o.is_none())
-      return ::sus::ops::TryImpl<R>::from_output(::sus::move(init));
+      return ::sus::ops::try_from_output<R>(::sus::move(init));
     else {
       R out = ::sus::fn::call_mut(f, ::sus::move(init), sus::move(o).unwrap());
-      if (!::sus::ops::TryImpl<R>::is_success(out)) return out;
-      init = ::sus::ops::TryImpl<R>::to_output(::sus::move(out));
+      if (!::sus::ops::try_is_success(out)) return out;
+      init = ::sus::ops::try_into_output(::sus::move(out));
     }
   }
 }
@@ -1848,11 +1848,11 @@ template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, Item)> F, int&...,
 R IteratorBase<Iter, Item>::try_rfold(B init, F f) noexcept {
   while (true) {
     if (Option<Item> o = as_subclass_mut().next_back(); o.is_none())
-      return ::sus::ops::TryImpl<R>::from_output(::sus::move(init));
+      return ::sus::ops::try_from_output<R>(::sus::move(init));
     else {
       R out = ::sus::fn::call_mut(f, ::sus::move(init), sus::move(o).unwrap());
-      if (!::sus::ops::TryImpl<R>::is_success(out)) return out;
-      init = ::sus::ops::TryImpl<R>::to_output(::sus::move(out));
+      if (!::sus::ops::try_is_success(out)) return out;
+      init = ::sus::ops::try_into_output(::sus::move(out));
     }
   }
 }
@@ -1863,14 +1863,14 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(Item)> F, int&..., class R>
 R IteratorBase<Iter, Item>::try_for_each(
     typename ::sus::ops::TryImpl<R>::Output success, F f) noexcept {
   // TODO: Implement with try_fold()? Allow try_fold to take B=void?
-  R out = ::sus::ops::TryImpl<R>::from_output(::sus::move(success));
+  R out = ::sus::ops::try_from_output<R>(::sus::move(success));
   while (true) {
     if (Option<Item> o = as_subclass_mut().next(); o.is_none()) {
       break;
     } else {
       R test = ::sus::fn::call_mut(f, std::move(o).unwrap());
-      if (!::sus::ops::TryImpl<R>::is_success(test)) {
-        out = ::sus::move(test);  // Store the failre to be returned.
+      if (!::sus::ops::try_is_success(test)) {
+        out = ::sus::move(test);  // Store the failure to be returned.
         break;
       }
     }
