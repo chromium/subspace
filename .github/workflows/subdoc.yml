@@ -14,7 +14,9 @@ jobs:
       installed_clang_version: 14
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
 
       - uses: webfactory/ssh-agent@v0.7.0
         with:
@@ -44,10 +46,6 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh ${clang_version} all
 
-      - name: Install Python3
-        run: |
-          sudo apt-get install python3
-
       - name: Download Ninja
         id: ninja
         shell: cmake -P {0}
@@ -63,19 +61,6 @@ jobs:
               COMMAND chmod +x ninja
             )
           endif()
-
-      - name: Checkout depot tools
-        run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-
-      - name: Setup .gclient
-        shell: bash
-        run: |
-          echo "./depot_tools" >> $GITHUB_PATH
-
-      - name: Download dependencies
-        shell: bash
-        run: |
-          gclient sync --jobs=16
 
       - name: Configure
         shell: cmake -P {0}

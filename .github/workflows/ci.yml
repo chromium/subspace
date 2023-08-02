@@ -81,7 +81,9 @@ jobs:
           #  }
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
 
       - name: Install LLVM+Clang
         if: startsWith(matrix.config.os, 'ubuntu-')
@@ -116,11 +118,6 @@ jobs:
           sudo apt-get install g++-13
           echo "CXXFLAGS=$CXXFLAGS" >> $GITHUB_ENV
 
-      - name: Install Python3
-        if: startsWith(matrix.config.os, 'ubuntu-')
-        run: |
-          sudo apt-get install python3
-
       # vptr is incompatible with no-rtti. We turn off rtti to match the LLVM libraries.
       - name: Set Sanitizer Flags
         if: endsWith(matrix.config.name, 'Sanitizer')
@@ -151,18 +148,6 @@ jobs:
               COMMAND chmod +x ninja
             )
           endif()
-
-      - name: Checkout depot tools
-        run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-
-      - name: Setup .gclient
-        shell: bash
-        run: |
-          echo "./depot_tools" >> $GITHUB_PATH
-
-      - name: Download dependencies
-        shell: bash
-        run: gclient sync --jobs=16
 
       - name: Configure
         shell: cmake -P {0}
