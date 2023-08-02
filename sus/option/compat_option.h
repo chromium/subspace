@@ -134,4 +134,22 @@ constexpr Option<T>::operator std::optional<std::remove_reference_t<T>*>()
     return std::optional<std::remove_reference_t<T>*>(std::nullopt);
 }
 
+// Implements sus::ops::Try for std::optional.
+template <class T>
+struct sus::ops::TryImpl<std::optional<T>> {
+  using Output = T;
+  constexpr static bool is_success(const std::optional<T>& t) {
+    return t.has_value();
+  }
+  constexpr static Output into_output(std::optional<T> t) {
+    // SAFETY: `operator*` causes UB if the optional is empty. But the optional
+    // is verified to be holding a value by `sus::ops::try_into_output()` before
+    // it calls here.
+    return *::sus::move(t);
+  }
+  constexpr static std::optional<T> from_output(Output t) {
+    return std::optional<T>(std::in_place, ::sus::move(t));
+  }
+};
+
 }  // namespace sus
