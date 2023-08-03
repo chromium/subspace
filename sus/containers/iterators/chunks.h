@@ -44,14 +44,6 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
   using SliceItem = ItemT;
 
  public:
-  Chunks(Chunks&&) = default;
-  Chunks& operator=(Chunks&&) = default;
-
-  /// sus::mem::Clone trait.
-  Chunks clone() const noexcept {
-    return Chunks(::sus::clone(v_), chunk_size_);
-  }
-
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
@@ -158,14 +150,6 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   using SliceItem = ItemT;
 
  public:
-  ChunksMut(ChunksMut&&) = default;
-  ChunksMut& operator=(ChunksMut&&) = default;
-
-  /// sus::mem::Clone trait.
-  ChunksMut clone() const noexcept {
-    return ChunksMut(::sus::clone(v_), chunk_size_);
-  }
-
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
@@ -271,22 +255,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   using SliceItem = ItemT;
 
  public:
-  ChunksExact(ChunksExact&&) = default;
-  ChunksExact& operator=(ChunksExact&&) = default;
-
-  /// sus::mem::Clone trait.
-  ChunksExact clone() const noexcept {
-    return ChunksExact(::sus::clone(ref_), ::sus::clone(v_), ::sus::clone(rem_),
-                       chunk_size_);
-  }
-
   /// Returns the remainder of the original slice that is not going to be
   /// returned by the iterator. The returned slice has at most `chunk_size-1`
   /// elements.
   [[nodiscard]] Item remainder() const& { return rem_; }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
       return Option<Item>();
     } else {
@@ -301,7 +276,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
       return ::sus::Option<Item>();
     } else {
@@ -316,13 +291,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     return v_.len() / chunk_size_;
   }
 
@@ -385,20 +360,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   using SliceItem = ItemT;
 
  public:
-  ChunksExactMut(ChunksExactMut&&) = default;
-  ChunksExactMut& operator=(ChunksExactMut&&) = default;
-
-  /// sus::mem::Clone trait.
-  ChunksExactMut clone() const noexcept {
-    return ChunksExactMut(::sus::clone(v_), chunk_size_);
-  }
   /// Returns the remainder of the original slice that is not going to be
   /// returned by the iterator. The returned slice has at most `chunk_size-1`
   /// elements.
-  [[nodiscard]] Item remainder() const& { return rem_; }
+  [[nodiscard]] constexpr Item remainder() const& { return rem_; }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
       return Option<Item>();
     } else {
@@ -413,7 +381,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
       return ::sus::Option<Item>();
     } else {
@@ -428,13 +396,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     return v_.len() / chunk_size_;
   }
 
@@ -497,16 +465,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   using SliceItem = ItemT;
 
  public:
-  RChunks(RChunks&&) = default;
-  RChunks& operator=(RChunks&&) = default;
-
-  /// sus::mem::Clone trait.
-  RChunks clone() const noexcept {
-    return RChunks(::sus::clone(v_), chunk_size_);
-  }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
       return Option<Item>();
     } else {
@@ -520,7 +480,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if (v_.is_empty()) [[unlikely]] {
       return ::sus::Option<Item>();
     } else {
@@ -546,13 +506,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     if (v_.is_empty()) {
       return 0u;
     } else {
@@ -611,16 +571,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   using SliceItem = ItemT;
 
  public:
-  RChunksMut(RChunksMut&&) = default;
-  RChunksMut& operator=(RChunksMut&&) = default;
-
-  /// sus::mem::Clone trait.
-  RChunksMut clone() const noexcept {
-    return ChunksMut(::sus::clone(v_), chunk_size_);
-  }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (v_.is_empty()) [[unlikely]] {
       return Option<Item>();
     } else {
@@ -634,7 +586,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if (v_.is_empty()) [[unlikely]] {
       return ::sus::Option<Item>();
     } else {
@@ -649,13 +601,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     if (v_.is_empty()) {
       return 0u;
     } else {
@@ -713,21 +665,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   using SliceItem = ItemT;
 
  public:
-  RChunksExact(RChunksExact&&) = default;
-  RChunksExact& operator=(RChunksExact&&) = default;
-
-  /// sus::mem::Clone trait.
-  RChunksExact clone() const noexcept {
-    return RChunksExact(::sus::clone(v_), chunk_size_);
-  }
-
   /// Returns the remainder of the original slice that is not going to be
   /// returned by the iterator. The returned slice has at most `chunk_size-1`
   /// elements.
-  [[nodiscard]] Item remainder() const& { return rem_; }
+  [[nodiscard]] constexpr Item remainder() const& { return rem_; }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
       return Option<Item>();
     } else {
@@ -742,7 +686,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
       return ::sus::Option<Item>();
     } else {
@@ -757,13 +701,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     return v_.len() / chunk_size_;
   }
 
@@ -824,20 +768,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   using SliceItem = ItemT;
 
  public:
-  RChunksExactMut(RChunksExactMut&&) = default;
-  RChunksExactMut& operator=(RChunksExactMut&&) = default;
-
-  /// sus::mem::Clone trait.
-  RChunksExactMut clone() const noexcept {
-    return RChunksExactMut(::sus::clone(v_), chunk_size_);
-  }
   /// Returns the remainder of the original slice that is not going to be
   /// returned by the iterator. The returned slice has at most `chunk_size-1`
   /// elements.
-  [[nodiscard]] Item remainder() const& { return rem_; }
+  [[nodiscard]] constexpr Item remainder() const& { return rem_; }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
       return Option<Item>();
     } else {
@@ -852,7 +789,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if (v_.len() < chunk_size_) [[unlikely]] {
       return ::sus::Option<Item>();
     } else {
@@ -867,13 +804,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     return v_.len() / chunk_size_;
   }
 

@@ -41,16 +41,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
   // `Item` is a `Slice<T>`.
   using Item = ::sus::containers::Slice<ItemT>;
 
-  Windows(Windows&&) = default;
-  Windows& operator=(Windows&&) = default;
-
-  /// sus::mem::Clone trait.
-  Windows clone() const noexcept {
-    return Windows(::sus::clone(v_), ::sus::clone(size_));
-  }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> ret;
 
     if (size_ > v_.len()) {
@@ -63,7 +55,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     Option<Item> ret;
 
     if (size_ > v_.len()) {
@@ -77,13 +69,13 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     if (size_ > v_.len()) {
       return 0u;
     } else {

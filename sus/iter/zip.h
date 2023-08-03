@@ -36,7 +36,8 @@ namespace sus::iter {
 /// sus::check(it.next() == sus::some(sus::tuple(3, 4.f)));
 /// sus::check(it.next() == sus::none());
 /// ```
-auto zip(IntoIteratorAny auto&& iia, IntoIteratorAny auto&& iib) noexcept
+inline constexpr auto zip(IntoIteratorAny auto&& iia,
+                          IntoIteratorAny auto&& iib) noexcept
     -> Iterator<
         ::sus::Tuple<typename IntoIteratorOutputType<decltype(iia)>::Item,
                      typename IntoIteratorOutputType<decltype(iib)>::Item>> auto

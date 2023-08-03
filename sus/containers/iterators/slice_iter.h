@@ -57,12 +57,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   }
 
   /// Returns a slice of the items left to be iterated.
-  Slice<Item> as_slice() const& {
+  constexpr Slice<Item> as_slice() const& {
     return Slice<Item>::from_raw_parts(::sus::marker::unsafe_fn, ptr_,
                                        end_ - ptr_);
   }
 
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
@@ -72,7 +72,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
@@ -82,14 +82,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     return Option<Item>::with(*end_);
   }
 
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::with(remaining));
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     // SAFETY: The constructor checks that `end_ - ptr_` is positive and Slice
     // can not exceed isize::MAX.
     return ::sus::num::usize::try_from(end_ - ptr_)
@@ -137,7 +137,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
 
   /// Returns a mutable slice of the items left to be iterated, consuming the
   /// iterator.
-  SliceMut<RawItem> as_mut_slice() && {
+  constexpr SliceMut<RawItem> as_mut_slice() && {
     return SliceMut<RawItem>::from_raw_parts_mut(
         ::sus::marker::unsafe_fn, ref_.to_view(), ptr_,
         // SAFETY: `end_ > ptr_` at all times, and the distance between two
@@ -148,7 +148,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
@@ -158,7 +158,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if (ptr_ == end_) [[unlikely]]
       return Option<Item>();
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
@@ -168,13 +168,13 @@ struct [[sus_trivial_abi]] SliceIterMut final
     return Option<Item>::with(*end_);
   }
 
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept {
+  constexpr usize exact_size_hint() const noexcept {
     // SAFETY: The constructor checks that end_ - ptr_ is positive and Slice can
     // not exceed isize::MAX.
     return usize::try_from(end_ - ptr_)

@@ -41,7 +41,7 @@ struct [[nodiscard]] VecIntoIter final
   }
 
   /// sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>();
     // SAFETY: This class owns the Vec and does not expose it, so its length is
@@ -54,7 +54,7 @@ struct [[nodiscard]] VecIntoIter final
   }
 
   /// sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     if (front_index_ == back_index_) [[unlikely]]
       return Option<Item>();
     // SAFETY: This class owns the Vec and does not expose it, so its length is
@@ -66,19 +66,19 @@ struct [[nodiscard]] VecIntoIter final
   }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const usize remaining = back_index_ - front_index_;
     return ::sus::iter::SizeHint(
         remaining, ::sus::Option<::sus::num::usize>::with(remaining));
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  ::sus::num::usize exact_size_hint() const noexcept {
+  constexpr ::sus::num::usize exact_size_hint() const noexcept {
     return back_index_ - front_index_;
   }
 
  private:
-  VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
+  constexpr VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
 
   Vec<Item> vec_;
   usize front_index_ = 0_usize;

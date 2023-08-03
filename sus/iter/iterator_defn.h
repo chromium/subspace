@@ -1019,7 +1019,7 @@ class IteratorBase {
   /// To "undo" the result of zipping up two iterators, see unzip.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-  Iterator<sus::Tuple<ItemT, OtherItem>> auto zip(Other&& other) && noexcept;
+  constexpr Iterator<sus::Tuple<ItemT, OtherItem>> auto zip(Other&& other) && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
@@ -1895,7 +1895,7 @@ IteratorBase<Iter, Item>::unzip() && noexcept {
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-Iterator<sus::Tuple<Item, OtherItem>> auto IteratorBase<Iter, Item>::zip(
+constexpr Iterator<sus::Tuple<Item, OtherItem>> auto IteratorBase<Iter, Item>::zip(
     Other&& other) && noexcept {
   using Sized = SizedIteratorType<Iter>::type;
   using OtherIter = std::decay_t<decltype(sus::move(other).into_iter())>;
