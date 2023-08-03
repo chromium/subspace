@@ -33,6 +33,16 @@
                 // "--gtest_filter=*"
             ],
             "cwd": "${workspaceFolder}/out/subdoc"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug bench",
+            "program": "${workspaceFolder}/out/bench/bench",
+            "args": [
+                // "--gtest_filter=*"
+            ],
+            "cwd": "${workspaceFolder}/out/bench"
         }
     ]
 }
