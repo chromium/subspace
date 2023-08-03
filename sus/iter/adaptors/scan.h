@@ -60,9 +60,9 @@ class [[nodiscard]] Scan final
     return out;
   }
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     // Can't know a lower bound, due to the function returning None at any time.
-    return ::sus::iter::SizeHint(0u, next_iter_.size_hint().upper);
+    return SizeHint(0u, next_iter_.size_hint().upper);
   }
 
  private:

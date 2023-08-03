@@ -57,7 +57,7 @@ class [[nodiscard]] [[sus_trivial_abi]] StepBy final
     return out;
   }
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     auto first_size = [this](usize n) {
       if (n == 0u) {
         return 0_usize;

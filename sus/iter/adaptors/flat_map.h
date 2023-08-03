@@ -71,7 +71,7 @@ class [[nodiscard]] FlatMap final
   }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     auto [flo, fhi] = front_iter_.as_ref().map_or(
         SizeHint(0u, ::sus::some(0u)),
         [](const EachIter& i) { return i.size_hint(); });

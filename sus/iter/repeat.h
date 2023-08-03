@@ -68,7 +68,7 @@ class [[nodiscard]] Repeat final : public IteratorBase<Repeat<ItemT>, ItemT> {
     return ::sus::Option<Item>::with(sus::clone(item_));
   }
   /// sus::iter::Iterator trait.
-  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     return SizeHint(usize::MAX, ::sus::Option<::sus::num::usize>());
   }
   // sus::iter::DoubleEndedIterator trait.

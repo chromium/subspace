@@ -63,7 +63,7 @@ class [[nodiscard]] [[sus_trivial_abi]] TakeWhile final
   }
 
   /// sus::iter::Iterator trait.
-  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     if (pred_.is_none()) return {0u, sus::some(0u)};
     // Can't know a lower bound, due to the predicate.
     return {0u, next_iter_.size_hint().upper};

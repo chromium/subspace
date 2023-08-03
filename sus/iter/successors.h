@@ -66,7 +66,7 @@ class [[nodiscard]] Successors final
   }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     if (next_.is_some())
       return SizeHint(1u, ::sus::Option<::sus::num::usize>());
     else

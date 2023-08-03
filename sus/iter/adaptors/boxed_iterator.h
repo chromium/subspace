@@ -80,7 +80,7 @@ class [[nodiscard]] [[sus_trivial_abi]] BoxedIterator final
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept { return next_(iter_); }
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept { return size_hint_(iter_); }
+  SizeHint size_hint() const noexcept { return size_hint_(iter_); }
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
     requires(DoubleEnded)

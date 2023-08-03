@@ -65,7 +65,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SkipWhile final
   }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     // No lower bound is known, as we don't know how many will be skipped.
     return {0u, next_iter_.size_hint().upper};
   }

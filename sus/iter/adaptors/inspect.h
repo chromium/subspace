@@ -53,7 +53,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Inspect final
   }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     return next_iter_.size_hint();
   }
 
