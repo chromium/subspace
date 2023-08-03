@@ -113,6 +113,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
   static constexpr auto with(::sus::iter::IterRef ref,
                              const Slice<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
+    ::sus::check(chunk_size > 0u);
     return Chunks(::sus::move(ref), values, chunk_size);
   }
 
@@ -219,6 +220,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   static constexpr auto with(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
+    ::sus::check(chunk_size > 0u);
     return ChunksMut(::sus::move(ref), values, chunk_size);
   }
 
@@ -283,8 +285,15 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
       // SAFETY: `split_at_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by subtracting an unsigned (and
       // thus non-negative) value from the length.
-      auto [fst, snd] = v_.split_at_unchecked(::sus::marker::unsafe_fn,
-                                              v_.len() - chunk_size_);
+      //
+      // SAFETY: unchecked_sub() requires that result of the subtraction is <=
+      // usize::MAX and >= usize::MIN. the len() is greater than chunk_size_
+      // from the above if condition (we're in the else branch) so the result is
+      // >= usize::MIN. Both values are positive and len() is <= usize::MAX
+      // (from its type) so the result is <= usize::MAX.
+      auto [fst, snd] = v_.split_at_unchecked(
+          ::sus::marker::unsafe_fn,
+          v_.len().unchecked_sub(::sus::marker::unsafe_fn, chunk_size_));
       v_ = fst;
       return ::sus::Option<Item>::with(snd);
     }
@@ -313,8 +322,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   static constexpr auto with(::sus::iter::IterRef ref,
                              const Slice<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
+    ::sus::check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
-    auto fst_len = values.len() - rem;
+    // SAFETY: rem <= len() by construction above, so len() - rem is a
+    // non-negative value <= len() <= usize:MAX.
+    auto fst_len = values.len().unchecked_sub(::sus::marker::unsafe_fn, rem);
     // SAFETY: 0 <= fst_len <= values.len() by construction above.
     auto [fst, snd] =
         values.split_at_unchecked(::sus::marker::unsafe_fn, fst_len);
@@ -388,8 +400,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
       // SAFETY: `split_at_mut_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by subtracting an unsigned (and
       // thus non-negative) value from the length.
-      auto [fst, snd] = v_.split_at_mut_unchecked(::sus::marker::unsafe_fn,
-                                                  v_.len() - chunk_size_);
+      //
+      // SAFETY: chunks_size <= len() as checked above, so len() - chunk_size_
+      // is a non-negative value <= len() <= usize::MAX.
+      auto [fst, snd] = v_.split_at_mut_unchecked(
+          ::sus::marker::unsafe_fn,
+          v_.len().unchecked_sub(::sus::marker::unsafe_fn, chunk_size_));
       v_ = fst;
       return ::sus::Option<Item>::with(snd);
     }
@@ -418,8 +434,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   static constexpr auto with(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
+    ::sus::check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
-    auto fst_len = values.len() - rem;
+    // SAFETY: rem < len() by construction above, so len() - rem is a
+    // non-negative value <= len() <= usize::MAX.
+    auto fst_len = values.len().unchecked_sub(::sus::marker::unsafe_fn, rem);
     // SAFETY: 0 <= fst_len <= values.len() by construction above.
     auto [fst, snd] =
         values.split_at_mut_unchecked(::sus::marker::unsafe_fn, fst_len);
@@ -471,9 +490,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
       return Option<Item>();
     } else {
       const auto len = v_.len();
-      auto chunksz = ::sus::ops::min(len, chunk_size_);
-      auto [fst, snd] =
-          v_.split_at_unchecked(::sus::marker::unsafe_fn, len - chunksz);
+      const auto chunksz = ::sus::ops::min(len, chunk_size_);
+      // SAFETY: chunkz <= len due to min(), so len - chunksz is a non-negative
+      // value <= len <= usize::MAX.
+      const auto mid = len.unchecked_sub(::sus::marker::unsafe_fn, chunksz);
+      // SAFETY: 0 <= mid <= len since we're subtracting from len a value that
+      // is <= len.
+      auto [fst, snd] = v_.split_at_unchecked(::sus::marker::unsafe_fn, mid);
       v_ = fst;
       return Option<Item>::with(snd);
     }
@@ -534,6 +557,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   static constexpr auto with(::sus::iter::IterRef ref,
                              const Slice<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
+    ::sus::check(chunk_size > 0u);
     return RChunks(::sus::move(ref), values, chunk_size);
   }
 
@@ -578,8 +602,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
     } else {
       const auto len = v_.len();
       auto chunksz = ::sus::ops::min(len, chunk_size_);
+      // SAFETY: chunkz <= len due to min(), so len - chunksz is a non-negative
+      // value <= len <= usize::MAX.
+      const auto mid = len.unchecked_sub(::sus::marker::unsafe_fn, chunksz);
+      // SAFETY: 0 <= mid <= len since we're subtracting from len a value that
+      // is <= len.
       auto [fst, snd] =
-          v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, len - chunksz);
+          v_.split_at_mut_unchecked(::sus::marker::unsafe_fn, mid);
       v_ = fst;
       return Option<SliceMut<ItemT>>::with(snd);
     }
@@ -629,6 +658,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   static constexpr auto with(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
+    ::sus::check(chunk_size > 0u);
     return RChunksMut(::sus::move(ref), values, chunk_size);
   }
 
@@ -675,11 +705,15 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
     if (v_.len() < chunk_size_) [[unlikely]] {
       return Option<Item>();
     } else {
+      // SAFETY: chunk_size_ <= len() as checked in the if condition above, so
+      // subtracting len() - chunk_size_ produces a non-negative value <= len()
+      // <= usize::MAX.
+      const auto mid =
+          v_.len().unchecked_sub(::sus::marker::unsafe_fn, chunk_size_);
       // SAFETY: `split_at_unchecked` requires the argument be less than or
       // equal to the length. This is guaranteed by subtracting a non-negative
       // value from the len.
-      auto [fst, snd] = v_.split_at_unchecked(::sus::marker::unsafe_fn,
-                                              v_.len() - chunk_size_);
+      auto [fst, snd] = v_.split_at_unchecked(::sus::marker::unsafe_fn, mid);
       v_ = fst;
       return Option<Item>::with(snd);
     }
@@ -723,6 +757,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   static constexpr auto with(::sus::iter::IterRef ref,
                              const Slice<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
+    ::sus::check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
     // SAFETY: 0 <= rem <= values.len() by construction above.
     auto [fst, snd] = values.split_at_unchecked(::sus::marker::unsafe_fn, rem);
@@ -826,6 +861,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   static constexpr auto with(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
+    ::sus::check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
     // SAFETY: 0 <= rem <= values.len() by construction above.
     auto [fst, snd] =
