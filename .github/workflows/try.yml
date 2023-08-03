@@ -378,3 +378,104 @@ jobs:
             --css subdoc-test-style.css \
             --copy-file sus/index.html \
             /home/runner/work/subspace/subspace/sus
+
+  bench:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    env:
+      clang_version: 17
+      installed_clang_version: 14
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+
+      - name: Install LLVM+Clang
+        run: |
+          sudo apt-get remove clang-${installed_clang_version} \
+            lldb-${installed_clang_version} \
+            lld-${installed_clang_version} \
+            clangd-${installed_clang_version} \
+            clang-tidy-${installed_clang_version} \
+            clang-format-${installed_clang_version} \
+            clang-tools-${installed_clang_version} \
+            llvm-${installed_clang_version}-dev \
+            lld-${installed_clang_version} \
+            lldb-${installed_clang_version} \
+            llvm-${installed_clang_version}-tools \
+            libomp-${installed_clang_version}-dev \
+            libc++-${installed_clang_version}-dev \
+            libc++abi-${installed_clang_version}-dev \
+            libclang-common-${installed_clang_version}-dev \
+            libclang-${installed_clang_version}-dev \
+            libclang-cpp${installed_clang_version}-dev \
+            libunwind-${installed_clang_version}-dev
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh ${clang_version} all
+
+      - name: Download Ninja
+        id: ninja
+        shell: cmake -P {0}
+        run: |
+          set(ninja_version "1.11.1")
+
+          set(ninja_url "https://github.com/ninja-build/ninja/releases/download/v${ninja_version}/ninja-linux.zip")
+          file(DOWNLOAD "${ninja_url}" ./ninja.zip SHOW_PROGRESS)
+          execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ninja.zip)
+
+          if (NOT "${{ runner.os }}" STREQUAL "Windows")
+            execute_process(
+              COMMAND chmod +x ninja
+            )
+          endif()
+
+      - name: Configure
+        shell: cmake -P {0}
+        run: |
+          set(ENV{CC} clang-$ENV{clang_version})
+          set(ENV{CXX} clang++-$ENV{clang_version})
+
+          # Path to LLVM+Clang nightly that we have installed.
+          set(ENV{LLVM_DIR} "/usr/lib/llvm-$ENV{clang_version}/lib/cmake/llvm")
+          set(ENV{Clang_DIR} "/usr/lib/llvm-$ENV{clang_version}/lib/cmake/clang")
+
+          file(TO_CMAKE_PATH "$ENV{GITHUB_WORKSPACE}/ninja" ninja_program)
+
+          execute_process(
+            COMMAND cmake
+              -S .
+              -B out
+              -D CMAKE_BUILD_TYPE=Release
+              -D CMAKE_EXPORT_COMPILE_COMMANDS=1
+              -G Ninja
+              -D CMAKE_MAKE_PROGRAM=${ninja_program}
+              -D SUBSPACE_BUILD_TESTS=OFF
+              -D SUBSPACE_BUILD_SUBDOC=OFF
+              -D SUBSPACE_BUILD_BENCHMARKS=ON
+            RESULT_VARIABLE result
+          )
+          if (NOT result EQUAL 0)
+            message(FATAL_ERROR "Bad exit status")
+          endif()
+
+      - name: Build
+        shell: cmake -P {0}
+        run: |
+          set(ENV{NINJA_STATUS} "[%f/%t %o/sec] ")
+
+          execute_process(
+            COMMAND cmake --build out -j 10
+            RESULT_VARIABLE result
+          )
+          if (NOT result EQUAL 0)
+            message(FATAL_ERROR "Bad exit status")
+          endif()
+
+      - name: Run
+        run: |
+          # For crash dumps.
+          export LLVM_SYMBOLIZER_PATH="/usr/lib/llvm-${clang_version}/bin/llvm-symbolizer"
+
+          out/bench/bench

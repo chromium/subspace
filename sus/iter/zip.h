@@ -37,9 +37,12 @@ namespace sus::iter {
 /// sus::check(it.next() == sus::none());
 /// ```
 auto zip(IntoIteratorAny auto&& iia, IntoIteratorAny auto&& iib) noexcept
-    -> Iterator<::sus::Tuple<
-        typename IntoIteratorOutputType<decltype(iia)>::Item,
-        typename IntoIteratorOutputType<decltype(iib)>::Item>> auto {
+    -> Iterator<
+        ::sus::Tuple<typename IntoIteratorOutputType<decltype(iia)>::Item,
+                     typename IntoIteratorOutputType<decltype(iib)>::Item>> auto
+  requires(::sus::mem::IsMoveRef<decltype(iia)> &&
+           ::sus::mem::IsMoveRef<decltype(iib)>)
+{
   return ::sus::move(iia).into_iter().zip(::sus::move(iib));
 }
 

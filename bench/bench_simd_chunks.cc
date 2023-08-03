@@ -76,7 +76,7 @@ auto common_prefix_chunks_exact(const sus::Slice<u8>& xs,
   bool escape = false;
   for (auto [xs_chunk, ys_chunk] :
        zip(xs.chunks_exact(chunk_size), ys.chunks_exact(chunk_size))) {
-    for (auto [x, y] : zip(xs_chunk, ys_chunk)) {
+    for (auto [x, y] : zip(sus::move(xs_chunk), sus::move(ys_chunk))) {
       if (x != y) {
         escape = true;
         break;
@@ -101,7 +101,7 @@ auto common_prefix_no_shortcircuit(const sus::Slice<u8>& xs,
   for (auto [xs_chunk, ys_chunk] :
        zip(xs.chunks_exact(chunk_size), ys.chunks_exact(chunk_size))) {
     bool chunk_equal = true;
-    for (auto [x, y] : zip(xs_chunk, ys_chunk)) {
+    for (auto [x, y] : zip(sus::move(xs_chunk), sus::move(ys_chunk))) {
       // NB: &, unlike &&, doesn't short-circuit.
       chunk_equal = chunk_equal & (x == y);
     }
