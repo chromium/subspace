@@ -185,8 +185,6 @@ struct [[sus_trivial_abi]] SliceIterMut final
   constexpr SliceIterMut(::sus::iter::IterRef ref, RawItem* start,
                          RawItem* end) noexcept
       : ref_(::sus::move(ref)), ptr_(start), end_(end) {
-    int i = 1;
-    (void)i;
   }
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;

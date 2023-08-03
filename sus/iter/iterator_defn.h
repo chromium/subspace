@@ -95,7 +95,7 @@ class IteratorBase {
   /// from the predicate.
   ///
   /// Returns `true` if the iterator is empty.
-  bool all(::sus::fn::FnMutRef<bool(Item)> f) noexcept;
+  bool all(::sus::fn::FnMut<bool(Item)> auto f) noexcept;
 
   /// Tests whether any elements of the iterator match a predicate.
   ///
@@ -105,7 +105,7 @@ class IteratorBase {
   /// the predicate.
   ///
   /// Returns `false` if the iterator is empty.
-  bool any(::sus::fn::FnMutRef<bool(Item)> f) noexcept;
+  bool any(::sus::fn::FnMut<bool(Item)> auto f) noexcept;
 
   /// Returns an iterator that refers to this iterator, and for which operations
   /// on it will also be applied to this iterator.
@@ -1045,7 +1045,7 @@ class IteratorBase {
 };
 
 template <class Iter, class Item>
-bool IteratorBase<Iter, Item>::all(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
+bool IteratorBase<Iter, Item>::all(::sus::fn::FnMut<bool(Item)> auto f) noexcept {
   while (true) {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return true;
@@ -1057,7 +1057,7 @@ bool IteratorBase<Iter, Item>::all(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
 }
 
 template <class Iter, class Item>
-bool IteratorBase<Iter, Item>::any(::sus::fn::FnMutRef<bool(Item)> f) noexcept {
+bool IteratorBase<Iter, Item>::any(::sus::fn::FnMut<bool(Item)> auto f) noexcept {
   while (true) {
     Option<Item> item = as_subclass_mut().next();
     if (item.is_none()) return false;
