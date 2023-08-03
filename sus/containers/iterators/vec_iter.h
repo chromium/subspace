@@ -25,12 +25,13 @@
 #include "sus/lib/__private/forward_decl.h"
 #include "sus/marker/unsafe.h"
 #include "sus/mem/move.h"
+#include "sus/mem/relocate.h"
 #include "sus/num/unsigned_integer.h"
 
 namespace sus::containers {
 
 template <class ItemT>
-struct [[nodiscard]] VecIntoIter final
+struct [[nodiscard]] [[sus_trivial_abi]] VecIntoIter final
     : public ::sus::iter::IteratorBase<VecIntoIter<ItemT>, ItemT> {
  public:
   using Item = ItemT;
@@ -38,6 +39,13 @@ struct [[nodiscard]] VecIntoIter final
   /// Constructs `VecIntoIter` from a `Vec`.
   static constexpr auto with(Vec<Item>&& vec) noexcept {
     return VecIntoIter(::sus::move(vec));
+  }
+
+  // sus::mem::Clone implementation.
+  constexpr VecIntoIter clone() const noexcept
+    requires(::sus::mem::Clone<Item>)
+  {
+    return VecIntoIter(::sus::clone(vec_), front_index_, back_index_);
   }
 
   /// sus::iter::Iterator trait.
@@ -78,16 +86,19 @@ struct [[nodiscard]] VecIntoIter final
   }
 
  private:
+  // Regular ctor.
   constexpr VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
+  // Ctor for Clone.
+  constexpr VecIntoIter(Vec<Item>&& vec, usize front, usize back) noexcept
+      : vec_(::sus::move(vec)), front_index_(front), back_index_(back) {}
 
   Vec<Item> vec_;
   usize front_index_ = 0_usize;
   usize back_index_ = vec_.len();
 
-  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                           decltype(front_index_),
-                                           decltype(back_index_),
-                                           decltype(vec_));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
+                                  decltype(front_index_), decltype(back_index_),
+                                  decltype(vec_));
 };
 
 }  // namespace sus::containers
