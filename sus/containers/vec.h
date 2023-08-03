@@ -84,7 +84,7 @@ namespace sus::containers {
 /// - A const Vec<T> contains const values, it does not give mutable access to
 ///   its contents, so the const internal type would be redundant.
 template <class T>
-class Vec final {
+class [[sus_trivial_abi]] Vec final {
   static_assert(
       !std::is_reference_v<T>,
       "Vec<T&> is invalid as Vec must hold value types. Use Vec<T*> instead.");
@@ -152,8 +152,9 @@ class Vec final {
   /// * The allocated size in bytes must be no larger than `isize::MAX`.
   /// * If `ptr` is null, then `length` and `capacity` must be `0_usize`, and
   ///   vice versa.
-  sus_pure static Vec from_raw_parts(::sus::marker::UnsafeFnMarker, T* ptr,
-                                     usize length, usize capacity) noexcept {
+  sus_pure static constexpr Vec from_raw_parts(::sus::marker::UnsafeFnMarker,
+                                               T* ptr, usize length,
+                                               usize capacity) noexcept {
     return Vec(ptr, length, capacity);
   }
 
@@ -198,12 +199,12 @@ class Vec final {
     return v;
   }
 
-  ~Vec() {
+  constexpr ~Vec() {
     // `is_alloced()` is false when Vec is moved-from.
     if (is_alloced()) free_storage();
   }
 
-  Vec(Vec&& o) noexcept
+  constexpr Vec(Vec&& o) noexcept
       : slice_mut_(
             o.slice_mut_.slice_.iter_refs_.take_for_owner(),
             ::sus::mem::replace(o.raw_data(), nullptr),
@@ -212,7 +213,7 @@ class Vec final {
     check(!is_moved_from());
     check(!has_iterators());
   }
-  Vec& operator=(Vec&& o) noexcept {
+  constexpr Vec& operator=(Vec&& o) noexcept {
     check(!o.is_moved_from());
     check(!has_iterators());
     check(!o.has_iterators());
@@ -226,7 +227,7 @@ class Vec final {
     return *this;
   }
 
-  Vec clone() const& noexcept
+  constexpr Vec clone() const& noexcept
     requires(::sus::mem::Clone<T>)
   {
     check(!is_moved_from());
@@ -241,7 +242,7 @@ class Vec final {
     return v;
   }
 
-  void clone_from(const Vec& source) & noexcept
+  constexpr void clone_from(const Vec& source) & noexcept
     requires(::sus::mem::Clone<T>)
   {
     check(!is_moved_from());
@@ -292,7 +293,7 @@ class Vec final {
   ///
   /// Panics if the starting point is greater than the end point or if
   /// the end point is greater than the length of the vector.
-  Drain<T> drain(::sus::ops::RangeBounds<usize> auto range) noexcept {
+  constexpr Drain<T> drain(::sus::ops::RangeBounds<usize> auto range) noexcept {
     check(!is_moved_from());
     check(!has_iterators());
     ::sus::ops::Range<usize> bounded_range =
@@ -313,7 +314,7 @@ class Vec final {
   /// raw pointer, length, and capacity back into a `Vec` with the
   /// `from_raw_parts()` function, allowing the destructor to perform the
   /// cleanup.
-  ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
+  constexpr ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
     check(!is_moved_from());
     check(!has_iterators());
     return sus::tuple(
@@ -335,7 +336,7 @@ class Vec final {
   ///
   /// Note that this method has no effect on the allocated capacity of the
   /// vector.
-  void clear() noexcept {
+  constexpr void clear() noexcept {
     check(!is_moved_from());
     check(!has_iterators());
     destroy_storage_objects();
@@ -351,8 +352,9 @@ class Vec final {
   /// the `Extend<T>` concept method instead, moving the elements into the Vec.
   ///
   /// #[doc.overloads=vec.extend.const]
-  void extend(sus::iter::IntoIterator<const T&> auto&& ii) noexcept
-    requires(sus::mem::Copy<T>)
+  constexpr void extend(sus::iter::IntoIterator<const T&> auto&& ii) noexcept
+    requires(sus::mem::Copy<T> &&  //
+             ::sus::mem::IsMoveRef<decltype(ii)>)
   {
     check(!is_moved_from());
     check(!has_iterators());
@@ -371,7 +373,9 @@ class Vec final {
   /// sus::iter::Extend<T> trait.
   ///
   /// #[doc.overloads=vec.extend.val]
-  void extend(sus::iter::IntoIterator<T> auto&& ii) noexcept {
+  constexpr void extend(sus::iter::IntoIterator<T> auto&& ii) noexcept
+    requires(::sus::mem::IsMoveRef<decltype(ii)>)
+  {
     check(!is_moved_from());
     check(!has_iterators());
     // TODO: There's some serious improvements we can do here when the iterator
@@ -391,7 +395,7 @@ class Vec final {
   /// # Panics
   /// If the Slice is non-empty and points into the Vec, the function will
   /// panic, as resizing the Vec would invalidate the Slice.
-  inline void extend_from_slice(::sus::containers::Slice<T> s) noexcept
+  constexpr void extend_from_slice(::sus::containers::Slice<T> s) noexcept
     requires(sus::mem::Clone<T>)
   {
     check(!is_moved_from());
@@ -428,34 +432,44 @@ class Vec final {
   ///
   /// # Panics
   /// Panics if the new capacity exceeds `isize::MAX()` bytes.
-  void grow_to_exact(usize cap) noexcept {
+  constexpr void grow_to_exact(usize cap) noexcept {
     check(!is_moved_from());
     check(!has_iterators());
     if (cap <= capacity_) return;  // Nothing to do.
     const auto bytes = ::sus::mem::size_of<T>() * cap;
     check(bytes <= ::sus::mog<usize>(isize::MAX));
+
     if (!is_alloced()) {
-      raw_data() = static_cast<T*>(malloc(bytes.primitive_value));
-    } else {
-      if constexpr (::sus::mem::relocate_by_memcpy<T>) {
-        raw_data() =
-            static_cast<T*>(realloc(raw_data(), bytes.primitive_value));
-      } else {
-        auto* const new_storage =
-            static_cast<T*>(malloc(bytes.primitive_value));
-        T* old_t = raw_data();
-        T* new_t = new_storage;
-        const ::sus::num::usize self_len = len();
-        for (::sus::num::usize i; i < self_len; i += 1u) {
-          std::construct_at(new_t, ::sus::move(*old_t));
-          old_t->~T();
-          ++old_t;
-          ++new_t;
-        }
-        free(raw_data());
-        raw_data() = new_storage;
+      raw_data() = std::allocator<T>().allocate(size_t{cap});
+      capacity_ = cap;
+      return;
+    }
+
+    T* new_allocation = std::allocator<T>().allocate(size_t{cap});
+    T* old_t = raw_data();
+    T* new_t = new_allocation;
+    if constexpr (::sus::mem::relocate_by_memcpy<T>) {
+      if (!std::is_constant_evaluated()) {
+        // SAFETY: new_t was just allocated above, so does not alias with
+        // `old_t` which was the previous allocation.
+        ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, old_t, new_t,
+                                        cap);
+        std::allocator<T>().deallocate(raw_data(), size_t{capacity_});
+        raw_data() = new_allocation;
+        capacity_ = cap;
+        return;
       }
     }
+
+    const ::sus::num::usize self_len = len();
+    for (::sus::num::usize i; i < self_len; i += 1u) {
+      std::construct_at(new_t, ::sus::move(*old_t));
+      old_t->~T();
+      ++old_t;
+      ++new_t;
+    }
+    std::allocator<T>().deallocate(raw_data(), size_t{capacity_});
+    raw_data() = new_allocation;
     capacity_ = cap;
   }
 
@@ -470,7 +484,7 @@ class Vec final {
   ///
   /// # Panics
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
-  void reserve(usize additional) noexcept {
+  constexpr void reserve(usize additional) noexcept {
     check(!is_moved_from());
     check(!has_iterators());
     if (len() + additional <= capacity_) return;  // Nothing to do.
@@ -491,7 +505,7 @@ class Vec final {
   ///
   /// # Panics
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
-  void reserve_exact(usize additional) noexcept {
+  constexpr void reserve_exact(usize additional) noexcept {
     check(!is_moved_from());
     check(!has_iterators());
     const usize cap = len() + additional;
@@ -510,7 +524,7 @@ class Vec final {
   /// `new_len` must be less than or equal to `capacity()`.
   /// The elements at `old_len..new_len` must be constructed.
   /// The elements at `new_len..old_len` must be destructed.
-  void set_len(::sus::marker::UnsafeFnMarker, usize new_len) {
+  constexpr void set_len(::sus::marker::UnsafeFnMarker, usize new_len) {
     check(!is_moved_from());
     sus_debug_check(new_len <= capacity_);
     slice_mut_.slice_.len_ = new_len;
@@ -518,7 +532,7 @@ class Vec final {
 
   /// Removes the last element from a vector and returns it, or None if it is
   /// empty.
-  Option<T> pop() noexcept {
+  constexpr Option<T> pop() noexcept {
     check(!is_moved_from());
     check(!has_iterators());
     const auto self_len = len();
@@ -542,7 +556,7 @@ class Vec final {
   // Avoids use of a reference, and receives by value, to sidestep the whole
   // issue of the reference being to something inside the vector which
   // reserve() then invalidates.
-  void push(T t) noexcept
+  constexpr void push(T t) noexcept
     requires(::sus::mem::Move<T>)
   {
     check(!is_moved_from());
@@ -568,7 +582,7 @@ class Vec final {
   ///
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
   template <class... Us>
-  void emplace(Us&&... args) noexcept
+  constexpr void emplace(Us&&... args) noexcept
     requires(::sus::mem::Move<T> &&
              !(sizeof...(Us) == 1u &&
                (... && std::same_as<std::decay_t<T>, std::decay_t<Us>>)))
@@ -608,23 +622,21 @@ class Vec final {
   /// #[doc.overloads=vec.eq.vec]
   template <class U>
     requires(::sus::ops::Eq<T, U>)
-  friend constexpr inline bool operator==(const Vec<T>& l,
-                                          const Vec<U>& r) noexcept {
+  friend constexpr bool operator==(const Vec<T>& l, const Vec<U>& r) noexcept {
     return l.as_slice() == r.as_slice();
   }
 
   template <class U>
     requires(!::sus::ops::Eq<T, U>)
-  friend constexpr inline bool operator==(const Vec<T>& l,
-                                          const Vec<U>& r) = delete;
+  friend constexpr bool operator==(const Vec<T>& l, const Vec<U>& r) = delete;
 
   /// sus::ops::Eq<<Vec<T>, Slice<U>> trait.
   ///
   /// #[doc.overloads=vec.eq.slice]
   template <class U>
     requires(::sus::ops::Eq<T, U>)
-  friend constexpr inline bool operator==(const Vec<T>& l,
-                                          const Slice<U>& r) noexcept {
+  friend constexpr bool operator==(const Vec<T>& l,
+                                   const Slice<U>& r) noexcept {
     return l.as_slice() == r;
   }
 
@@ -633,8 +645,8 @@ class Vec final {
   /// #[doc.overloads=vec.eq.slicemut]
   template <class U>
     requires(::sus::ops::Eq<T, U>)
-  friend constexpr inline bool operator==(const Vec<T>& l,
-                                          const SliceMut<U>& r) noexcept {
+  friend constexpr bool operator==(const Vec<T>& l,
+                                   const SliceMut<U>& r) noexcept {
     return l.as_slice() == r.as_slice();
   }
 
@@ -643,12 +655,11 @@ class Vec final {
   /// # Panics
   /// If the index `i` is beyond the end of the Vec, the function will panic.
   /// #[doc.overloads=vec.index.usize]
-  sus_pure constexpr inline const T& operator[](
-      ::sus::num::usize i) const& noexcept {
+  sus_pure constexpr const T& operator[](::sus::num::usize i) const& noexcept {
     ::sus::check(i < len());
     return *(as_ptr() + i);
   }
-  constexpr inline const T& operator[](::sus::num::usize i) && = delete;
+  constexpr const T& operator[](::sus::num::usize i) && = delete;
 
   /// Returns a mutable reference to the element at position `i` in the Vec.
   ///
@@ -672,7 +683,7 @@ class Vec final {
   /// If the Range would otherwise contain an element that is out of bounds,
   /// the function will panic.
   /// #[doc.overloads=vec.index.range]
-  sus_pure constexpr inline Slice<T> operator[](
+  sus_pure constexpr Slice<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
       const& noexcept {
     const ::sus::num::usize length = len();
@@ -688,7 +699,7 @@ class Vec final {
         slice_mut_.slice_.iter_refs_.to_view_from_owner(), as_ptr() + rstart,
         rlen);
   }
-  constexpr inline Slice<T> operator[](
+  constexpr Slice<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && = delete;
 
   /// Returns a mutable subslice which contains elements in `range`, which
@@ -703,7 +714,7 @@ class Vec final {
   /// If the Range would otherwise contain an element that is out of bounds,
   /// the function will panic.
   /// #[doc.overloads=vec.index_mut.range]
-  sus_pure constexpr inline SliceMut<T> operator[](
+  sus_pure constexpr SliceMut<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range) & noexcept {
     const ::sus::num::usize length = len();
     const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
@@ -750,7 +761,7 @@ class Vec final {
 #include "__private/slice_mut_methods.inc"
 
  private:
-  Vec(T* ptr, usize len, usize cap)
+  constexpr Vec(T* ptr, usize len, usize cap)
       : slice_mut_(sus::iter::IterRefCounter::for_owner(), ptr, len),
         capacity_(cap) {}
 
@@ -769,16 +780,16 @@ class Vec final {
     return cap;
   }
 
-  inline void destroy_storage_objects() {
+  constexpr void destroy_storage_objects() {
     if constexpr (!std::is_trivially_destructible_v<T>) {
       const auto self_len = len();
       for (::sus::num::usize i; i < self_len; i += 1u) (raw_data() + i)->~T();
     }
   }
 
-  inline void free_storage() {
+  constexpr void free_storage() {
     destroy_storage_objects();
-    free(raw_data());
+    std::allocator<T>().deallocate(raw_data(), size_t{capacity_});
   }
 
   /// Checks if Vec has storage allocated.
@@ -806,9 +817,8 @@ class Vec final {
   SliceMut<T> slice_mut_;
   usize capacity_;
 
-  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
-                                           decltype(slice_mut_),
-                                           decltype(capacity_));
+  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
+                                  decltype(slice_mut_), decltype(capacity_));
 
   // Slice does not satisfy NeverValueField because it requires that the default
   // constructor is trivial, but Slice's default constructor needs to initialize

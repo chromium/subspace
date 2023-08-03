@@ -232,7 +232,7 @@ class [[sus_trivial_abi]] Slice final {
  private:
   constexpr Slice(::sus::iter::IterRefCounter refs, T* data sus_lifetimebound,
                   usize len) noexcept
-      : iter_refs_(refs.take_for_view()), data_(data), len_(len) {}
+      : iter_refs_(::sus::move(refs)), data_(data), len_(len) {}
 
   friend class SliceMut<T>;
   template <class VecT>
@@ -442,7 +442,7 @@ class [[sus_trivial_abi]] SliceMut final {
 
  private:
   constexpr SliceMut(sus::iter::IterRefCounter refs, T* data, usize len)
-      : slice_(refs.take_for_view(), data, len) {}
+      : slice_(::sus::move(refs), data, len) {}
 
   template <class VecT>
   friend class Vec;
