@@ -46,7 +46,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Copied final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded)
+    requires(DoubleEndedIterator<InnerSizedIter, Item>)
   {
     return next_iter_.next_back().map(
         [](const Item& item) -> Item { return item; });
@@ -54,7 +54,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Copied final
 
   // sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
-    requires(InnerSizedIter::ExactSize)
+    requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     return next_iter_.exact_size_hint();
   }

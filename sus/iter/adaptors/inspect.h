@@ -40,7 +40,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Inspect final
 
   // sus::mem::Clone trait.
   Inspect clone() noexcept
-    requires(InnerSizedIter::Clone)
+    requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return Inspect(::sus::clone(inspect_), ::sus::clone(next_iter_));
   }
@@ -59,7 +59,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Inspect final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded)
+    requires(DoubleEndedIterator<InnerSizedIter, Item>)
   {
     Option<Item> item = next_iter_.next_back();
     if (item.is_some()) ::sus::fn::call_mut(inspect_, item.as_value());
@@ -68,7 +68,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Inspect final
 
   // sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
-    requires(InnerSizedIter::ExactSize)
+    requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     return next_iter_.exact_size_hint();
   }

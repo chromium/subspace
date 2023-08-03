@@ -41,7 +41,7 @@ class [[nodiscard]] [[sus_trivial_abi]] TakeWhile final
 
   // sus::mem::Clone trait.
   TakeWhile clone() const noexcept
-    requires(InnerSizedIter::Clone)
+    requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return TakeWhile(::sus::clone(pred_), ::sus::clone(next_iter_));
   }

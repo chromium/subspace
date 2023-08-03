@@ -48,14 +48,14 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
 
   /// sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(::sus::iter::DoubleEndedIterator<RefIterator, Item>)
+    requires(DoubleEndedIterator<RefIterator, Item>)
   {
     return next_iter_->next_back();
   }
 
   /// sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
-    requires(::sus::iter::ExactSizeIterator<RefIterator, Item>)
+    requires(ExactSizeIterator<RefIterator, Item>)
   {
     return next_iter_->exact_size_hint();
   }

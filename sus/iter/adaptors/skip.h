@@ -36,7 +36,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Skip final
 
   // sus::mem::Clone trait.
   Skip clone() const noexcept
-    requires(InnerSizedIter::Clone)
+    requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return Skip(skip_, ::sus::clone(next_iter_));
   }
@@ -60,8 +60,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Skip final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded &&  //
-             InnerSizedIter::ExactSize)
+    requires(DoubleEndedIterator<InnerSizedIter, Item> &&  //
+             ExactSizeIterator<InnerSizedIter, Item>)
   {
     if (exact_size_hint() > 0u) {
       return next_iter_.next_back();

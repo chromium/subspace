@@ -42,7 +42,7 @@ class [[nodiscard]] Scan final
   // sus::mem::Clone trait.
   Scan clone() const noexcept
     requires(::sus::mem::Clone<State> &&  //
-             InnerSizedIter::Clone)
+             ::sus::mem::Clone<InnerSizedIter>)
   {
     return Scan(::sus::clone(state_), ::sus::clone(fn_),
                 ::sus::clone(next_iter_));

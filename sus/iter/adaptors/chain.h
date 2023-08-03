@@ -64,7 +64,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Chain final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded && OtherSizedIter::DoubleEnded)
+    requires(DoubleEndedIterator<InnerSizedIter, Item> &&
+             DoubleEndedIterator<OtherSizedIter, Item>)
   {
     return __private::and_then_or_clear<OtherSizedIter, Item>(
                second_iter_,
@@ -77,9 +78,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Chain final
         });
   }
 
-  SizeHint size_hint() const noexcept
-    requires(InnerSizedIter::ExactSize && OtherSizedIter::ExactSize)
-  {
+  SizeHint size_hint() const noexcept {
     if (first_iter_.is_none()) {
       if (second_iter_.is_none()) {
         return SizeHint(0u, sus::Option<usize>::with(0u));
@@ -100,6 +99,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Chain final
       }
     }
   }
+
+  // No exact_size_hint() as the size of two iterators may overflow.
 
   // TODO: Implement nth(), nth_back(), etc...
 

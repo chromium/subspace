@@ -87,8 +87,9 @@ class [[nodiscard]] FlatMap final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded &&  //
-             DoubleEndedIterator<EachIter, typename EachIter::Item>)
+    requires(DoubleEndedIterator<InnerSizedIter,
+                                 typename InnerSizedIter::Item> &&  //
+             DoubleEndedIterator<EachIter, Item>)
   {
     Option<Item> out;
     while (true) {

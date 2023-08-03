@@ -31,8 +31,10 @@ template <class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
     : public IteratorBase<Enumerate<InnerSizedIter>,
                           ::sus::Tuple<usize, typename InnerSizedIter::Item>> {
+  using FromItem = typename InnerSizedIter::Item;
+
  public:
-  using Item = ::sus::Tuple<usize, typename InnerSizedIter::Item>;
+  using Item = ::sus::Tuple<usize, FromItem>;
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
@@ -54,9 +56,10 @@ class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded && InnerSizedIter::ExactSize)
+    requires(DoubleEndedIterator<InnerSizedIter, FromItem> &&
+             ExactSizeIterator<InnerSizedIter, FromItem>)
   {
-    Option<typename InnerSizedIter::Item> item = next_iter_.next_back();
+    Option<FromItem> item = next_iter_.next_back();
     if (item.is_none()) {
       return sus::none();
     } else {
@@ -71,7 +74,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
 
   // sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
-    requires(InnerSizedIter::ExactSize)
+    requires(ExactSizeIterator<InnerSizedIter, FromItem>)
   {
     return next_iter_.exact_size_hint();
   }

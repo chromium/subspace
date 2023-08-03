@@ -37,7 +37,7 @@ template <class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Reverse final
     : public IteratorBase<Reverse<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
-  static_assert(InnerSizedIter::DoubleEnded);
+  static_assert(DoubleEndedIterator<InnerSizedIter, typename InnerSizedIter::Item>);
 
  public:
   using Item = InnerSizedIter::Item;
@@ -50,7 +50,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Reverse final
   Option<Item> next_back() noexcept { return next_iter_.next(); }
   /// sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
-    requires(InnerSizedIter::ExactSize)
+    requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     return next_iter_.exact_size_hint();
   }

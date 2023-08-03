@@ -18,6 +18,7 @@
 
 #include "sus/iter/iterator_defn.h"
 #include "sus/iter/sized_iterator.h"
+#include "sus/mem/clone.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 #include "sus/mem/size_of.h"
@@ -37,8 +38,13 @@ class [[nodiscard]] Peekable final
  public:
   using Item = InnerSizedIter::Item;
 
+  // Type is Move and Clone.
+  Peekable(Peekable&&) = default;
+  Peekable& operator=(Peekable&&) = default;
+
+  /// sus::mem::Clone implementation
   Peekable clone() const noexcept
-    requires(InnerSizedIter::Clone &&  //
+    requires(::sus::mem::Clone<InnerSizedIter> &&  //
              ::sus::mem::CloneOrRef<Item>)
   {
     return Peekable(::sus::clone(peeked_), ::sus::clone(next_iter_));
@@ -116,7 +122,7 @@ class [[nodiscard]] Peekable final
 
   /// sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded)
+    requires(DoubleEndedIterator<InnerSizedIter, Item>)
   {
     if (peeked_.is_some()) {
       if (peeked_.as_value().is_some()) {
@@ -136,7 +142,7 @@ class [[nodiscard]] Peekable final
 
   /// sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
-    requires(InnerSizedIter::ExactSize)
+    requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     if (peeked_.is_some()) {
       if (peeked_.as_value().is_some()) {
