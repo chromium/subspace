@@ -145,7 +145,7 @@ TEST(BenchSimdChunks, common_prefix) {
   auto v1 = sus::Vec<u8>::from(PREFIX1);
   auto v2 = sus::Vec<u8>::from(PREFIX2);
 
-  b.minEpochIterations(43380);
+  b.minEpochIterations(48498);
   b.run("common_prefix_naive", [&]() {
     auto r = common_prefix_naive(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
@@ -163,6 +163,7 @@ TEST(BenchSimdChunks, common_prefix) {
     auto r = common_prefix_no_shortcircuit(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
   });
+  b.minEpochIterations(48498);
   b.run("common_prefix_take_while", [&]() {
     auto r = common_prefix_take_while(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
