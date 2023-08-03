@@ -23,8 +23,8 @@
 #include "sus/containers/vec.h"
 #include "sus/iter/__private/into_iterator_archetype.h"
 #include "sus/iter/__private/iterator_archetype.h"
-#include "sus/iter/empty.h"
 #include "sus/iter/adaptors/filter.h"
+#include "sus/iter/empty.h"
 #include "sus/iter/into_iterator.h"
 #include "sus/iter/sized_iterator.h"
 #include "sus/iter/zip.h"
@@ -3561,6 +3561,12 @@ TEST(Iterator, TakeWhile) {
     EXPECT_EQ(&it.next().unwrap(), &a[1u]);
     EXPECT_EQ(it.next(), sus::none());
   }
+
+  constexpr auto a = sus::Array<i32, 3>::with(2, 3, 4)
+                         .into_iter()
+                         .take_while([](const i32& i) constexpr { return i <= 3; })
+                         .sum();
+  static_assert(a == 5);
 }
 
 TEST(Iterator, TryFold) {

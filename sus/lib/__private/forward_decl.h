@@ -135,7 +135,7 @@ template <class InnerIter>
 class StepBy;
 template <class InnerIter>
 class Take;
-template <class InnerIter>
+template <class InnerIter, class Pred>
 class TakeWhile;
 template <class... InnerIters>
 class Zip;
