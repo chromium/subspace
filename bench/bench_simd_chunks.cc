@@ -45,6 +45,16 @@ const char PREFIX2[] =
     "lkffpoasjf;sadp;fsapfksa;kdfposa'pfmfa;sofuo9psfp; "
     "lkffpoasjf;sadp;fsapfksa;kdfposa'pf";
 
+auto common_prefix_unsafe_array_len_pairs(const u8* xs, usize xslen,
+                                          const u8* ys, usize yslen) -> usize {
+  auto result = 0_usize;
+  while (result < xslen && result < yslen) {
+    if (xs[size_t{result}] != ys[size_t{result}]) break;
+    result += 1u;
+  }
+  return result;
+}
+
 auto common_prefix_naive(const sus::Slice<u8>& xs, const sus::Slice<u8>& ys)
     -> usize {
   auto result = 0_usize;
@@ -146,6 +156,11 @@ TEST(BenchSimdChunks, common_prefix) {
   auto v2 = sus::Vec<u8>::from(PREFIX2);
 
   b.minEpochIterations(48498);
+  b.run("common_prefix_unsafe_array_len_pairs", [&]() {
+    auto r = common_prefix_unsafe_array_len_pairs(v1.as_ptr(), v1.len(),
+                                                  v2.as_ptr(), v2.len());
+    ankerl::nanobench::doNotOptimizeAway(r);
+  });
   b.run("common_prefix_naive", [&]() {
     auto r = common_prefix_naive(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
