@@ -7,3 +7,6 @@
 [submodule "third_party/buildtools"]
 	path = third_party/buildtools
 	url = https://chromium.googlesource.com/chromium/src/buildtools
+[submodule "third_party/nanobench"]
+	path = third_party/nanobench
+	url = https://github.com/martinus/nanobench
