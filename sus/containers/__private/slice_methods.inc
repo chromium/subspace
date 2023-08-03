@@ -195,7 +195,6 @@ template <::sus::ops::Ord Key>
 /// # Panics
 /// Panics if chunk_size is 0.
 constexpr Chunks<T> chunks(::sus::num::usize chunk_size) const& noexcept {
-  ::sus::check(chunk_size > 0u);
   return Chunks<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
@@ -223,7 +222,6 @@ constexpr Chunks<T> chunks(::sus::num::usize chunk_size) && = delete;
 /// Panics if `chunk_size` is 0.
 constexpr ChunksExact<T> chunks_exact(
     ::sus::num::usize chunk_size) const& noexcept {
-  ::sus::check(chunk_size > 0u);
   return ChunksExact<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
@@ -547,7 +545,6 @@ constexpr ::sus::num::usize partition_point(
 /// # Panics
 /// Panics if `chunk_size` is 0.
 constexpr RChunks<T> rchunks(::sus::num::usize chunk_size) const& noexcept {
-  ::sus::check(chunk_size > 0u);
   return RChunks<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
@@ -575,7 +572,6 @@ constexpr RChunks<T> rchunks(::sus::num::usize chunk_size) && = delete;
 /// Panics if `chunk_size` is 0.
 constexpr RChunksExact<T> rchunks_exact(
     ::sus::num::usize chunk_size) const& noexcept {
-  ::sus::check(chunk_size > 0u);
   return RChunksExact<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
@@ -723,16 +719,19 @@ constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at(::sus::num::usize mid) && =
 /// that `0 <= mid <= len()`.
 sus_pure constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize mid) const& noexcept {
-  const ::sus::num::usize length = len();
+  // SAFETY: Caller has to check that `0 <= mid <= len()`.
+  sus_debug_check(mid.primitive_value <= _len_expr.primitive_value);
 
-  /* SAFETY: Caller has to check that `0 <= mid <= len()` */
-  sus_assume(::sus::marker::unsafe_fn,
-             mid.primitive_value <= length.primitive_value);
+  // SAFETY: Since `0 <= min <= len()` subtracting `len() - mid` produces a
+  // non-negative result that is <= len().
+  const ::sus::num::usize rem =
+      len().unchecked_sub(::sus::marker::unsafe_fn, mid);
+
   return ::sus::Tuple<Slice<T>, Slice<T>>::with(
       Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, _iter_refs_view_expr,
                                as_ptr(), mid),
       Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, _iter_refs_view_expr,
-                               as_ptr() + mid, length - mid));
+                               as_ptr() + mid, rem));
 }
 
 #if _delete_rvalue

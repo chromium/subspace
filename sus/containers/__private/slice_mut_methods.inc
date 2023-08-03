@@ -91,7 +91,6 @@ sus_pure constexpr ::sus::ops::Range<T*> as_mut_ptr_range()
 ///
 constexpr ChunksExactMut<T> chunks_exact_mut(::sus::num::usize chunk_size)
     RETURN_REF noexcept {
-  ::sus::check(chunk_size > 0u);
   return ChunksExactMut<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
@@ -111,7 +110,6 @@ constexpr ChunksExactMut<T> chunks_exact_mut(::sus::num::usize chunk_size)
 ///
 constexpr ChunksMut<T> chunks_mut(::sus::num::usize chunk_size)
     RETURN_REF noexcept {
-  ::sus::check(chunk_size > 0u);
   return ChunksMut<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
@@ -371,7 +369,6 @@ sus_pure constexpr ::sus::Option<T&> last_mut() RETURN_REF noexcept {
 /// Panics if `chunk_size` is 0.
 constexpr RChunksExactMut<T> rchunks_exact_mut(::sus::num::usize chunk_size)
     RETURN_REF noexcept {
-  ::sus::check(chunk_size > 0u);
   return RChunksExactMut<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
@@ -390,7 +387,6 @@ constexpr RChunksExactMut<T> rchunks_exact_mut(::sus::num::usize chunk_size)
 /// Panics if `chunk_size` is 0.
 constexpr RChunksMut<T> rchunks_mut(::sus::num::usize chunk_size)
     RETURN_REF noexcept {
-  ::sus::check(chunk_size > 0u);
   return RChunksMut<T>::with(_iter_refs_expr, *this, chunk_size);
 }
 
@@ -837,12 +833,18 @@ split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
                        ::sus::num::usize mid) RETURN_REF noexcept {
   // SAFETY: Caller has to check that `0 <= mid <= len()`.
   sus_debug_check(mid.primitive_value <= _len_expr.primitive_value);
+
+  // SAFETY: Since `0 <= min <= len()` subtracting `len() - mid` produces a
+  // non-negative result that is <= len().
+  const ::sus::num::usize rem =
+      len().unchecked_sub(::sus::marker::unsafe_fn, mid);
+
   return ::sus::Tuple<SliceMut<T>, SliceMut<T>>::with(
       SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
                                       _iter_refs_view_expr, as_mut_ptr(), mid),
       SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
                                       _iter_refs_view_expr, as_mut_ptr() + mid,
-                                      len() - mid));
+                                      rem));
 }
 
 /// Returns the first and all the rest of the elements of the slice, or `None`
