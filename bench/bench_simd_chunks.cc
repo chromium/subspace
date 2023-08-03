@@ -145,10 +145,12 @@ TEST(SimdChunks, common_prefix) {
   auto v1 = sus::Vec<u8>::from(PREFIX1);
   auto v2 = sus::Vec<u8>::from(PREFIX2);
 
+  b.minEpochIterations(43380);
   b.run("common_prefix_naive", [&]() {
     auto r = common_prefix_naive(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
   });
+  b.minEpochIterations(4468);
   b.run("common_prefix_zip", [&]() {
     auto r = common_prefix_zip(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
