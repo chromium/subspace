@@ -37,19 +37,10 @@ class [[sus_trivial_abi]] GenericSplitN final
  public:
   using Item = ItemT;
 
-  explicit GenericSplitN(I&& iter, usize count)
+  constexpr explicit GenericSplitN(I&& iter, usize count)
       : iter_(::sus::move(iter)), count_(count) {}
 
-  GenericSplitN(GenericSplitN&&) = default;
-  GenericSplitN& operator=(GenericSplitN&&) = default;
-
-  GenericSplitN clone() const
-    requires(::sus::mem::Clone<I>)
-  {
-    return GenericSplitN(::sus::clone(iter_), ::sus::clone(count_));
-  }
-
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (count_ == 0u)
       return Option<Item>();
     else if (count_ == 1u) {
@@ -61,7 +52,7 @@ class [[sus_trivial_abi]] GenericSplitN final
     }
   }
 
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     auto [lower, upper_opt] = iter_.size_hint();
     const auto count = count_;
     return {::sus::ops::min(count, lower),
@@ -93,16 +84,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   // `Item` is a `Slice<T>`.
   using Item = ::sus::containers::Slice<ItemT>;
 
-  Split(Split&&) = default;
-  Split& operator=(Split&&) = default;
-
-  /// sus::mem::Clone trait.
-  Split clone() const noexcept {
-    return Split(::sus::clone(v_), ::sus::clone(pred_));
-  }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> ret;
 
     if (finished_) [[unlikely]] {
@@ -127,7 +110,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     Option<Item> ret;
 
     if (finished_) [[unlikely]] {
@@ -152,7 +135,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     if (v_.is_empty()) {
       return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
@@ -180,7 +163,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
   template <class A>
   friend class RSplit;
 
-  Option<Item> finish() noexcept {
+  constexpr Option<Item> finish() noexcept {
     if (finished_) {
       return Option<Item>();
     } else {
@@ -221,16 +204,8 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   // `Item` is a `SliceMut<T>`.
   using Item = ::sus::containers::SliceMut<ItemT>;
 
-  SplitMut(SplitMut&&) = default;
-  SplitMut& operator=(SplitMut&&) = default;
-
-  /// sus::mem::Clone trait.
-  SplitMut clone() const noexcept {
-    return SplitMut(::sus::clone(v_), ::sus::clone(pred_));
-  }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> ret;
 
     if (finished_) [[unlikely]] {
@@ -255,7 +230,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     Option<Item> ret;
 
     if (finished_) [[unlikely]] {
@@ -280,7 +255,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     if (v_.is_empty()) {
       return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
@@ -308,7 +283,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitMut final
   template <class A>
   friend class RSplitMut;
 
-  Option<Item> finish() noexcept {
+  constexpr Option<Item> finish() noexcept {
     if (finished_) {
       return Option<Item>();
     } else {
@@ -350,16 +325,8 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   // `Item` is a `Slice<T>`.
   using Item = ::sus::containers::Slice<ItemT>;
 
-  SplitInclusive(SplitInclusive&&) = default;
-  SplitInclusive& operator=(SplitInclusive&&) = default;
-
-  /// sus::mem::Clone trait.
-  SplitInclusive clone() const noexcept {
-    return SplitInclusive(::sus::clone(v_), ::sus::clone(pred_));
-  }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> ret;
 
     if (finished_) [[unlikely]] {
@@ -386,7 +353,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     Option<Item> ret;
 
     if (finished_) [[unlikely]] {
@@ -416,7 +383,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     if (v_.is_empty()) {
       return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
@@ -474,16 +441,8 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
   // `Item` is a `SliceMut<T>`.
   using Item = ::sus::containers::SliceMut<ItemT>;
 
-  SplitInclusiveMut(SplitInclusiveMut&&) = default;
-  SplitInclusiveMut& operator=(SplitInclusiveMut&&) = default;
-
-  /// sus::mem::Clone trait.
-  SplitInclusiveMut clone() const noexcept {
-    return SplitInclusiveMut(::sus::clone(v_), ::sus::clone(pred_));
-  }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> ret;
 
     if (finished_) [[unlikely]] {
@@ -510,7 +469,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept {
+  constexpr Option<Item> next_back() noexcept {
     Option<Item> ret;
 
     if (finished_) [[unlikely]] {
@@ -541,7 +500,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusiveMut final
   }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     if (v_.is_empty()) {
       return {0u, ::sus::Option<::sus::num::usize>::with(0u)};
     } else {
@@ -598,20 +557,14 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplit final
   // `Item` is a `Slice<T>`.
   using Item = typename Split<ItemT>::Item;
 
-  RSplit(RSplit&&) = default;
-  RSplit& operator=(RSplit&&) = default;
-
-  /// sus::mem::Clone trait.
-  RSplit clone() const noexcept { return RSplit(::sus::clone(inner_)); }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return inner_.next_back(); }
+  constexpr Option<Item> next() noexcept { return inner_.next_back(); }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept { return inner_.next(); }
+  constexpr Option<Item> next_back() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -628,7 +581,7 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplit final
   template <class A, ::sus::iter::Iterator<A> B>
   friend class __private::GenericSplitN;
 
-  Option<Item> finish() noexcept { return inner_.finish(); }
+  constexpr Option<Item> finish() noexcept { return inner_.finish(); }
 
   static constexpr auto with(Split<ItemT>&& split) noexcept {
     return RSplit(::sus::move(split));
@@ -654,20 +607,14 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
   // `Item` is a `SliceMut<T>`.
   using Item = typename SplitMut<ItemT>::Item;
 
-  RSplitMut(RSplitMut&&) = default;
-  RSplitMut& operator=(RSplitMut&&) = default;
-
-  /// sus::mem::Clone trait.
-  RSplitMut clone() const noexcept { return RSplitMut(::sus::clone(inner_)); }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return inner_.next_back(); }
+  constexpr Option<Item> next() noexcept { return inner_.next_back(); }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept { return inner_.next(); }
+  constexpr Option<Item> next_back() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -710,17 +657,11 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitN final
   // `Item` is a `Slice<T>`.
   using Item = typename Split<ItemT>::Item;
 
-  SplitN(SplitN&&) = default;
-  SplitN& operator=(SplitN&&) = default;
-
-  /// sus::mem::Clone trait.
-  SplitN clone() const noexcept { return SplitN(::sus::clone(inner_)); }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return inner_.next(); }
+  constexpr Option<Item> next() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -757,17 +698,11 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
   // `Item` is a `SliceMut<T>`.
   using Item = typename SplitMut<ItemT>::Item;
 
-  SplitNMut(SplitNMut&&) = default;
-  SplitNMut& operator=(SplitNMut&&) = default;
-
-  /// sus::mem::Clone trait.
-  SplitNMut clone() const noexcept { return SplitNMut(::sus::clone(inner_)); }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return inner_.next(); }
+  constexpr Option<Item> next() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -805,17 +740,11 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
   // `Item` is a `Slice<T>`.
   using Item = typename RSplit<ItemT>::Item;
 
-  RSplitN(RSplitN&&) = default;
-  RSplitN& operator=(RSplitN&&) = default;
-
-  /// sus::mem::Clone trait.
-  RSplitN clone() const noexcept { return RSplitN(::sus::clone(inner_)); }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return inner_.next(); }
+  constexpr Option<Item> next() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 
@@ -853,17 +782,11 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitNMut final
   // `Item` is a `SliceMut<T>`.
   using Item = typename RSplitMut<ItemT>::Item;
 
-  RSplitNMut(RSplitNMut&&) = default;
-  RSplitNMut& operator=(RSplitNMut&&) = default;
-
-  /// sus::mem::Clone trait.
-  RSplitNMut clone() const noexcept { return RSplitNMut(::sus::clone(inner_)); }
-
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return inner_.next(); }
+  constexpr Option<Item> next() noexcept { return inner_.next(); }
 
   // Replace the default impl in sus::iter::IteratorBase.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     return inner_.size_hint();
   }
 

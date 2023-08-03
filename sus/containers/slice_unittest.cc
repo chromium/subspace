@@ -932,7 +932,7 @@ TEST(Slice, Chunks) {
     static_assert(sus::iter::Iterator<decltype(it), sus::Slice<i32>>);
     static_assert(
         sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<i32>>);
-    static_assert(!sus::mem::Copy<decltype(it)>);
+    static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
@@ -1208,7 +1208,7 @@ TEST(Slice, ChunksMut) {
     static_assert(sus::iter::Iterator<decltype(it), sus::SliceMut<i32>>);
     static_assert(
         sus::iter::DoubleEndedIterator<decltype(it), sus::SliceMut<i32>>);
-    static_assert(!sus::mem::Copy<decltype(it)>);
+    static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
@@ -1484,7 +1484,7 @@ TEST(Slice, ChunksExact) {
     static_assert(sus::iter::Iterator<decltype(it), sus::Slice<i32>>);
     static_assert(
         sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<i32>>);
-    static_assert(!sus::mem::Copy<decltype(it)>);
+    static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
@@ -1742,7 +1742,7 @@ TEST(Slice, ChunksExactMut) {
     static_assert(sus::iter::Iterator<decltype(it), sus::SliceMut<i32>>);
     static_assert(
         sus::iter::DoubleEndedIterator<decltype(it), sus::SliceMut<i32>>);
-    static_assert(!sus::mem::Copy<decltype(it)>);
+    static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
@@ -2637,7 +2637,7 @@ TEST(Slice, RChunks) {
     static_assert(sus::iter::Iterator<decltype(it), sus::Slice<i32>>);
     static_assert(
         sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<i32>>);
-    static_assert(!sus::mem::Copy<decltype(it)>);
+    static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
@@ -2913,7 +2913,7 @@ TEST(Slice, RChunksMut) {
     static_assert(sus::iter::Iterator<decltype(it), sus::SliceMut<i32>>);
     static_assert(
         sus::iter::DoubleEndedIterator<decltype(it), sus::SliceMut<i32>>);
-    static_assert(!sus::mem::Copy<decltype(it)>);
+    static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
@@ -3189,7 +3189,7 @@ TEST(Slice, RChunksExact) {
     static_assert(sus::iter::Iterator<decltype(it), sus::Slice<i32>>);
     static_assert(
         sus::iter::DoubleEndedIterator<decltype(it), sus::Slice<i32>>);
-    static_assert(!sus::mem::Copy<decltype(it)>);
+    static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
@@ -3447,7 +3447,7 @@ TEST(Slice, RChunksExactMut) {
     static_assert(sus::iter::Iterator<decltype(it), sus::SliceMut<i32>>);
     static_assert(
         sus::iter::DoubleEndedIterator<decltype(it), sus::SliceMut<i32>>);
-    static_assert(!sus::mem::Copy<decltype(it)>);
+    static_assert(sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
   }
