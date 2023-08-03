@@ -414,6 +414,24 @@ class [[sus_trivial_abi]] RangeFull final {
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn);
 };
 
+/// Return a new Range that starts at `start` and ends at `end`.
+template <class T>
+constexpr inline Range<T> range(T start, T end) noexcept {
+  return Range<T>(start, end);
+}
+
+/// Return a new Range that has no start and ends at `t`.
+template <class T>
+constexpr inline RangeTo<T> range_to(T t) noexcept {
+  return RangeTo<T>(t);
+}
+
+/// Return a new Range that starts at `t` and has no end.
+template <class T>
+constexpr inline RangeFrom<T> range_from(T t) noexcept {
+  return RangeFrom<T>(t);
+}
+
 }  // namespace sus::ops
 
 // fmt support.

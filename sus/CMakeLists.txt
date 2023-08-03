@@ -124,6 +124,7 @@ target_sources(subspace PUBLIC
     "iter/size_hint_impl.h"
     "iter/sized_iterator.h"
     "iter/successors.h"
+    "iter/zip.h"
     "macros/__private/compiler_bugs.h"
     "macros/assume.h"
     "macros/arch.h"
@@ -214,6 +215,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
     # clang-cl requires this define in order to use offsetof() from constant
     # expressions, which is needed for the never-value optimization.
     target_compile_options(subspace PUBLIC /D_CRT_USE_BUILTIN_OFFSETOF)
+    # See subdoc/lib/run.cc, these are needed to have clang-cl parse Subspace.
+    target_compile_options(subspace PUBLIC /D__cpp_consteval)
+    target_compile_options(subspace PUBLIC /w)
 endif()
 
 if(${SUBSPACE_BUILD_TESTS})
