@@ -38,7 +38,7 @@ class [[nodiscard]] [[sus_trivial_abi]] MapWhile final
 
   // sus::mem::Clone trait.
   MapWhile clone() const noexcept
-    requires(InnerSizedIter::Clone)
+    requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return MapWhile(::sus::clone(fn_), ::sus::clone(next_iter_));
   }
@@ -62,7 +62,7 @@ class [[nodiscard]] [[sus_trivial_abi]] MapWhile final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded)
+    requires(DoubleEndedIterator<InnerSizedIter, FromItem>)
   {
     Option<FromItem> item = next_iter_.next_back();
     if (item.is_none()) {

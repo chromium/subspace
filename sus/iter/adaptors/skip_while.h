@@ -43,7 +43,7 @@ class [[nodiscard]] [[sus_trivial_abi]] SkipWhile final
   // sus::mem::Clone trait.
   SkipWhile clone() const noexcept
     requires(::sus::mem::Clone<Pred> &&  //
-             InnerSizedIter::Clone)
+             ::sus::mem::Clone<InnerSizedIter>)
   {
     return SkipWhile(::sus::clone(pred_), ::sus::clone(next_iter_));
   }

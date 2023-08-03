@@ -127,13 +127,19 @@ struct [[sus_trivial_abi]] SizedIterator final {
 
 template <class Iter>
 struct SizedIteratorType {
-  using type =
+  using old_type =
       SizedIterator<typename Iter::Item, ::sus::mem::size_of<Iter>(),
                     alignof(Iter),
-                    ::sus::iter::DoubleEndedIterator<Iter, typename Iter::Item>,
-                    ::sus::iter::ExactSizeIterator<Iter, typename Iter::Item>,
+                    DoubleEndedIterator<Iter, typename Iter::Item>,
+                    ExactSizeIterator<Iter, typename Iter::Item>,
                     ::sus::mem::Clone<Iter>>;
+  using type = Iter;
 };
+
+template <class Iter>
+inline constexpr auto&& make_sized_iterator(Iter&& it) noexcept {
+  return ::sus::forward<Iter>(it);
+}
 
 /// Make a SizedIterator which wraps a trivially relocatable iterator and erases
 /// its type.
@@ -142,7 +148,7 @@ struct SizedIteratorType {
 /// relocated. It stores the SubclassIterator directly into the SizedIterator,
 /// erasing its type but remaining trivially relocatable.
 template <::sus::mem::Move Iter, int&..., class Item = typename Iter::Item>
-inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
+inline SizedIteratorType<Iter>::old_type make_sized_iterator_old(Iter&& iter)
   requires(::sus::iter::Iterator<Iter, Item> &&
            ::sus::mem::relocate_by_memcpy<Iter>)
 {
@@ -157,7 +163,7 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
     return std::launder(reinterpret_cast<Iter*>(&sized))->next();
   };
   Option<Item> (*next_back)(char& sized);
-  if constexpr (SizedIteratorType<Iter>::type::DoubleEnded) {
+  if constexpr (SizedIteratorType<Iter>::old_type::DoubleEnded) {
     next_back = [](char& sized) {
       return std::launder(reinterpret_cast<Iter*>(&sized))->next_back();
     };
@@ -168,7 +174,7 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
     return std::launder(reinterpret_cast<const Iter*>(&sized))->size_hint();
   };
   usize (*exact_size_hint)(const char& sized);
-  if constexpr (SizedIteratorType<Iter>::type::ExactSize) {
+  if constexpr (SizedIteratorType<Iter>::old_type::ExactSize) {
     exact_size_hint = [](const char& sized) {
       return std::launder(reinterpret_cast<const Iter*>(&sized))
           ->exact_size_hint();
@@ -176,8 +182,8 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
   } else {
     exact_size_hint = nullptr;
   }
-  typename SizedIteratorType<Iter>::type (*clone)(const char& sized);
-  if constexpr (SizedIteratorType<Iter>::type::Clone) {
+  typename SizedIteratorType<Iter>::old_type (*clone)(const char& sized);
+  if constexpr (SizedIteratorType<Iter>::old_type::Clone) {
     clone = [](const char& sized) {
       return make_sized_iterator(
           sus::clone(*std::launder(reinterpret_cast<const Iter*>(&sized))));
@@ -186,7 +192,7 @@ inline SizedIteratorType<Iter>::type make_sized_iterator(Iter&& iter)
     clone = nullptr;
   }
 
-  auto it = typename SizedIteratorType<Iter>::type(
+  auto it = typename SizedIteratorType<Iter>::old_type(
       destroy, next, next_back, size_hint, exact_size_hint, clone);
   std::construct_at(reinterpret_cast<Iter*>(it.as_mut_ptr()), ::sus::move(iter));
   return it;

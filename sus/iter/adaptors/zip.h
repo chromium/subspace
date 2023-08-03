@@ -31,7 +31,7 @@ template <class T>
 using GetItem = typename T::Item;
 
 template <class Item, size_t N, class... T>
-constexpr auto nexts(Option<Item>& out, auto& iters, T&&... args) -> void {
+inline constexpr auto nexts(Option<Item>& out, auto& iters, T&&... args) -> void {
   constexpr size_t I = sizeof...(T);
   if constexpr (I == N) {
     if ((... && args.is_some()))
@@ -43,7 +43,7 @@ constexpr auto nexts(Option<Item>& out, auto& iters, T&&... args) -> void {
 }
 
 template <size_t I, size_t N>
-constexpr auto size_hints(auto& iters) noexcept -> SizeHint {
+inline constexpr auto size_hints(auto& iters) noexcept -> SizeHint {
   if constexpr (I == N - 1) {
     return iters.template at<I>().size_hint();
   } else {
@@ -65,7 +65,7 @@ constexpr auto size_hints(auto& iters) noexcept -> SizeHint {
 }
 
 template <size_t I, size_t N>
-constexpr auto exact_size_hints(auto& iters) noexcept -> usize {
+inline constexpr auto exact_size_hints(auto& iters) noexcept -> usize {
   if constexpr (I == N - 1) {
     return iters.template at<I>().exact_size_hint();
   } else {
@@ -87,9 +87,13 @@ class [[nodiscard]] [[sus_trivial_abi]] Zip final
  public:
   using Item = sus::Tuple<__private::GetItem<InnerSizedIters>...>;
 
+  // Type is Move and Clone.
+  constexpr Zip(Zip&&) = default;
+  Zip& operator=(Zip&&) = default;
+
   // sus::mem::Clone trait.
   constexpr Zip clone() const noexcept
-    requires((... && InnerSizedIters::Clone))
+    requires((... && ::sus::mem::Clone<InnerSizedIters>))
   {
     return Zip(::sus::clone(iters_));
   }
@@ -107,7 +111,9 @@ class [[nodiscard]] [[sus_trivial_abi]] Zip final
 
   // sus::iter::ExactSizeIterator trait.
   constexpr usize exact_size_hint() const noexcept
-    requires((... && InnerSizedIters::ExactSize))
+    requires(
+        (... &&
+         ExactSizeIterator<InnerSizedIters, typename InnerSizedIters::Item>))
   {
     return __private::exact_size_hints<0, sizeof...(InnerSizedIters)>(iters_);
   }
@@ -116,11 +122,11 @@ class [[nodiscard]] [[sus_trivial_abi]] Zip final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Zip with(sus::Tuple<InnerSizedIters...> && iters) noexcept {
+  static constexpr Zip with(sus::Tuple<InnerSizedIters...>&& iters) noexcept {
     return Zip(::sus::move(iters));
   }
 
-  constexpr Zip(::sus::Tuple<InnerSizedIters...> && iters) noexcept
+  constexpr Zip(::sus::Tuple<InnerSizedIters...>&& iters) noexcept
       : iters_(::sus::move(iters)) {}
 
   ::sus::Tuple<InnerSizedIters...> iters_;

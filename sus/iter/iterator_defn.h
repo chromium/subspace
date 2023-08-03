@@ -756,7 +756,7 @@ class IteratorBase {
   /// `DoubleEndedIterator`s.
   Iterator<Item> auto rev() && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter> &&
-             ::sus::iter::DoubleEndedIterator<Iter, Item>);
+             DoubleEndedIterator<Iter, Item>);
 
   /// Searches for an element of an iterator from the back that satisfies a
   /// predicate.
@@ -1116,8 +1116,8 @@ Iterator<Item> auto IteratorBase<Iter, Item>::box() && noexcept
   using BoxedIterator =
       BoxedIterator<Item, ::sus::mem::size_of<Iter>(), alignof(Iter),
                     ::sus::mem::Clone<Iter>,
-                    ::sus::iter::DoubleEndedIterator<Iter, Item>,
-                    ::sus::iter::ExactSizeIterator<Iter, Item>>;
+                    DoubleEndedIterator<Iter, Item>,
+                    ExactSizeIterator<Iter, Item>>;
   return BoxedIterator::with(static_cast<Iter&&>(*this));
 }
 
@@ -1696,7 +1696,7 @@ Option<Item> IteratorBase<Iter, Item>::reduce(F f) && noexcept {
 template <class Iter, class Item>
 Iterator<Item> auto IteratorBase<Iter, Item>::rev() && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter> &&
-           ::sus::iter::DoubleEndedIterator<Iter, Item>)
+           DoubleEndedIterator<Iter, Item>)
 {
   using Sized = SizedIteratorType<Iter>::type;
   using Reverse = Reverse<Sized>;

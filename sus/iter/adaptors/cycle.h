@@ -31,7 +31,7 @@ template <class InnerSizedIter>
 class [[nodiscard]] [[sus_trivial_abi]] Cycle final
     : public IteratorBase<Cycle<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
-  static_assert(InnerSizedIter::Clone);
+  static_assert(::sus::mem::Clone<InnerSizedIter>);
 
  public:
   using Item = typename InnerSizedIter::Item;

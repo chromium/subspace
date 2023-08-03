@@ -41,7 +41,7 @@ class [[nodiscard]] [[sus_trivial_abi]] FilterMap final
 
   // sus::mem::Clone trait.
   FilterMap clone() const noexcept
-    requires(InnerSizedIter::Clone)
+    requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return FilterMap(sus::clone(fn_), sus::clone(next_iter_));
   }
@@ -65,7 +65,7 @@ class [[nodiscard]] [[sus_trivial_abi]] FilterMap final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded)
+    requires(DoubleEndedIterator<InnerSizedIter, FromItem>)
   {
     while (true) {
       Option<FromItem> in = next_iter_.next_back();

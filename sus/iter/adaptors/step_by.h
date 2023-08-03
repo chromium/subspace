@@ -37,7 +37,7 @@ class [[nodiscard]] [[sus_trivial_abi]] StepBy final
 
   // sus::mem::Clone trait.
   StepBy clone() const noexcept
-    requires(InnerSizedIter::Clone)
+    requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return StepBy(step_, ::sus::clone(next_iter_), first_take_);
   }
@@ -78,8 +78,8 @@ class [[nodiscard]] [[sus_trivial_abi]] StepBy final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded &&  //
-             InnerSizedIter::ExactSize)
+    requires(DoubleEndedIterator<InnerSizedIter, Item> &&  //
+             ExactSizeIterator<InnerSizedIter, Item>)
   {
     // TODO: If SizedIterator satisifies Iterator we can use
     // nth_back(n).
@@ -94,7 +94,7 @@ class [[nodiscard]] [[sus_trivial_abi]] StepBy final
 
   // sus::iter::ExactSizeIterator trait.
   usize exact_size_hint() const noexcept
-    requires(InnerSizedIter::ExactSize)
+    requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     return size_hint().lower;
   }
@@ -106,7 +106,7 @@ class [[nodiscard]] [[sus_trivial_abi]] StepBy final
   // The zero-based index starting from the end of the iterator of the
   // last element. Used in the `DoubleEndedIterator` implementation.
   usize next_back_index() const
-    requires(InnerSizedIter::ExactSize)
+    requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     auto rem = next_iter_.exact_size_hint() % (step_ + 1u);
     if (first_take_)

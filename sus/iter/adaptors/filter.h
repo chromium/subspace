@@ -56,7 +56,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
-    requires(InnerSizedIter::DoubleEnded)
+    requires(DoubleEndedIterator<InnerSizedIter, Item>)
   {
     // TODO: Just call find(pred) on itself?
     while (true) {
