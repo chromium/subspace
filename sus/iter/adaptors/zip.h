@@ -34,8 +34,11 @@ inline constexpr auto nexts(Option<Item>& out, auto& iters, T&&... args)
     -> void {
   constexpr size_t I = sizeof...(T);
   if constexpr (I == N) {
-    if ((... && args.is_some()))
-      out.insert(Item::with(::sus::move(args).unwrap()...));
+    if ((... && args.is_some())) {
+      // SAFETY: args.is_some() is checked above, so unwrap has a value.
+      out.insert(Item::with(
+          ::sus::move(args).unwrap_unchecked(::sus::marker::unsafe_fn)...));
+    }
   } else {
     return nexts<Item, N>(out, iters, ::sus::move(args)...,
                           iters.template at_mut<I>().next());
