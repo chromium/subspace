@@ -58,7 +58,7 @@ class [[nodiscard]] [[sus_trivial_abi]] OnceWith final
     return gen_.take().map([](auto&& gen) { return ::sus::fn::call_mut(gen); });
   }
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     ::sus::num::usize rem = gen_.is_some() ? 1u : 0u;
     return SizeHint(rem, ::sus::Option<::sus::num::usize>::with(rem));
   }

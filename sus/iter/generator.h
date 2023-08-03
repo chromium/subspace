@@ -201,7 +201,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
   }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     return SizeHint(0u, sus::Option<::sus::num::usize>());
   }
 

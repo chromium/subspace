@@ -65,7 +65,7 @@ concept Iterator = requires(T& t, const T& c) {
       std::decay_t<T>*, IteratorBase<std::decay_t<T>, Item>*>;
   // Required methods.
   { t.next() } noexcept -> std::same_as<::sus::option::Option<Item>>;
-  { c.size_hint() } noexcept -> std::same_as<::sus::iter::SizeHint>;
+  { c.size_hint() } noexcept -> std::same_as<SizeHint>;
 };
 
 /// An `Iterator` able to yield elements from both ends.

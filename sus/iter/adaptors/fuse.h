@@ -62,7 +62,7 @@ class [[nodiscard]] Fuse final
     //     });
   }
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     if (iter_.is_some())
       return iter_.as_value().size_hint();
     else

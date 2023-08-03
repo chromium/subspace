@@ -50,7 +50,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Skip final
     return next_iter_.next();
   }
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     auto [lower, upper] = next_iter_.size_hint();
     lower = lower.saturating_sub(skip_);
     upper =

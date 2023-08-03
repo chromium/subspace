@@ -42,7 +42,7 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
   Option<Item> next() noexcept { return next_iter_->next(); }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     return next_iter_->size_hint();
   }
 

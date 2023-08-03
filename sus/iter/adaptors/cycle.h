@@ -52,7 +52,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Cycle final
   }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  SizeHint size_hint() const noexcept {
     SizeHint sz = original_.size_hint();
     if (sz.lower != 0u) {
       // More than 0 items, so it's infinite.
