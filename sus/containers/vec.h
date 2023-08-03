@@ -46,9 +46,9 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/size_of.h"
-#include "sus/num/transmogrify.h"
 #include "sus/num/integer_concepts.h"
 #include "sus/num/signed_integer.h"
+#include "sus/num/transmogrify.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/ops/ord.h"
 #include "sus/ops/range.h"
@@ -117,8 +117,7 @@ class Vec final {
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
   sus_pure static inline constexpr Vec with_capacity(usize capacity) noexcept {
-    check(::sus::mem::size_of<T>() * capacity <=
-          ::sus::mog<usize>(isize::MAX));
+    check(::sus::mem::size_of<T>() * capacity <= ::sus::mog<usize>(isize::MAX));
     auto v = Vec(nullptr, 0_usize, 0_usize);
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
     v.grow_to_exact(capacity);
@@ -177,6 +176,25 @@ class Vec final {
   {
     auto v = Vec::with_capacity(slice.len());
     for (const T& t : slice) v.push(::sus::clone(t));
+    return v;
+  }
+
+  /// Allocate a `Vec<u8>` and fill it with a string from a char array.
+  ///
+  /// # Panics
+  /// This function expects the input string to be null-terminated, and it will
+  /// panic otherwise.
+  template <class C, size_t N>
+    requires(std::same_as<T, u8> &&  //
+             (std::same_as<C, char> || std::same_as<C, signed char> ||
+              std::same_as<C, unsigned char>) &&
+             N <= ::sus::mog<usize>(isize::MAX))
+  static constexpr Vec from(const C (&arr)[N]) {
+    auto s = sus::Slice<C>::from(arr);
+    auto v = Vec::with_capacity(N - 1);
+    for (auto c : s[sus::ops::RangeTo<usize>(N - 1)])
+      v.push(sus::mog<uint8_t>(c));
+    ::sus::check(s[N - 1] == 0);  // Null terminated.
     return v;
   }
 

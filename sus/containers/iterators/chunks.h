@@ -230,7 +230,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
@@ -276,7 +276,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
 
   /// sus::mem::Clone trait.
   ChunksExact clone() const noexcept {
-    return ChunksExact(::sus::clone(v_), chunk_size_);
+    return ChunksExact(::sus::clone(ref_), ::sus::clone(v_), ::sus::clone(rem_),
+                       chunk_size_);
   }
 
   /// Returns the remainder of the original slice that is not going to be
@@ -332,7 +333,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(::sus::iter::IterRef ref,
                              const Slice<ItemT>& values,
@@ -444,7 +445,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
@@ -568,7 +569,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(::sus::iter::IterRef ref,
                              const Slice<ItemT>& values,
@@ -671,7 +672,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
@@ -773,7 +774,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   friend class Slice<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(::sus::iter::IterRef ref,
                              const Slice<ItemT>& values,
@@ -883,7 +884,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   friend class SliceMut<ItemT>;
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
-    friend class Array;
+  friend class Array;
 
   static constexpr auto with(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,

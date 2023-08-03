@@ -35,19 +35,15 @@ include(OptionIf)
 
 option_if_not_defined(SUBSPACE_BUILD_TESTS "Build tests" OFF)
 option_if_not_defined(SUBSPACE_BUILD_SUBDOC "Build subdoc (requires LLVM)" OFF)
+option_if_not_defined(SUBSPACE_BUILD_BENCHMARKS "Build benchmarks" OFF)
 
 message(STATUS "Build tests: ${SUBSPACE_BUILD_TESTS}")
 message(STATUS "Build subdoc: ${SUBSPACE_BUILD_SUBDOC}")
+message(STATUS "Build benchmarks: ${SUBSPACE_BUILD_BENCHMARKS}")
 
 function(subspace_default_compile_options TARGET)
     if(MSVC)
         target_compile_options(${TARGET} PUBLIC /Zc:preprocessor /wd5105)
-        if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            # See subdoc/lib/run.cc, these are needed to have clang-cl parse Subspace.
-            target_compile_options(${TARGET} PUBLIC /D_CRT_USE_BUILTIN_OFFSETOF)
-            target_compile_options(${TARGET} PUBLIC /D__cpp_consteval)
-            target_compile_options(${TARGET} PUBLIC /w)
-        endif()
     else()
         # LLVM is built without RTTI by default, and we need to match it.
         target_compile_options(${TARGET} PUBLIC -fno-rtti)
@@ -80,11 +76,16 @@ function(subspace_test_default_compile_options TARGET)
     target_link_libraries(${TARGET} gtest_main)
 endfunction()
 
-if(${SUBSPACE_BUILD_TESTS})
+if(${SUBSPACE_BUILD_TESTS} OR ${SUBSPACE_BUILD_BENCHMARKS})
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     add_subdirectory(third_party/googletest)
     include(GoogleTest)
     enable_testing()
+endif()
+
+if(${SUBSPACE_BUILD_BENCHMARKS})
+    add_subdirectory(third_party/nanobench)
+    add_subdirectory(bench)
 endif()
 
 add_subdirectory(third_party/fmt)

@@ -192,6 +192,7 @@ jobs:
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
               -D SUBSPACE_BUILD_TESTS=ON
               -D SUBSPACE_BUILD_SUBDOC=${HAS_LLVM}
+              -D SUBSPACE_BUILD_BENCHMARKS=ON
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
@@ -309,6 +310,7 @@ jobs:
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
               -D SUBSPACE_BUILD_TESTS=OFF
               -D SUBSPACE_BUILD_SUBDOC=ON
+              -D SUBSPACE_BUILD_BENCHMARKS=OFF
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)
@@ -352,6 +354,7 @@ jobs:
               -D CMAKE_MAKE_PROGRAM=${ninja_program}
               -D SUBSPACE_BUILD_TESTS=ON
               -D SUBSPACE_BUILD_SUBDOC=ON
+              -D SUBSPACE_BUILD_BENCHMARKS=OFF
             RESULT_VARIABLE result
           )
           if (NOT result EQUAL 0)

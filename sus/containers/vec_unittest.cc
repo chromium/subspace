@@ -933,6 +933,30 @@ TEST(Vec, FromSlice) {
   }
 }
 
+TEST(Vec, FromCharArray) {
+  {
+    const signed char SIGNED[] = "abcdefg";
+    auto v = Vec<u8>::from(SIGNED);
+    EXPECT_EQ(v.len(), 7u);
+    EXPECT_EQ(v[0u], sus::mog<u8>('a'));
+    EXPECT_EQ(v[6u], sus::mog<u8>('g'));
+  }
+  {
+    const unsigned char UNSIGNED[] = "abcdefg";
+    auto v = Vec<u8>::from(UNSIGNED);
+    EXPECT_EQ(v.len(), 7u);
+    EXPECT_EQ(v[0u], sus::mog<u8>('a'));
+    EXPECT_EQ(v[6u], sus::mog<u8>('g'));
+  }
+  {
+    const char CHARS[] = "abcdefg";
+    auto v = Vec<u8>::from(CHARS);
+    EXPECT_EQ(v.len(), 7u);
+    EXPECT_EQ(v[0u], sus::mog<u8>('a'));
+    EXPECT_EQ(v[6u], sus::mog<u8>('g'));
+  }
+}
+
 TEST(Vec, ExtendFromSlice) {
   sus::Vec<i32> v = sus::vec(1, 2, 3, 4);
   sus::Vec<i32> out;
