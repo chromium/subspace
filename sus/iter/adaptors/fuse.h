@@ -18,7 +18,6 @@
 
 #include "sus/fn/fn_box_defn.h"
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -30,14 +29,6 @@ using ::sus::mem::relocate_by_memcpy;
 /// and then only returns `None`.
 ///
 /// This type is returned from `Iterator::fuse()`.
-///
-/// # Implementation Note
-/// This class uses the actual inner iterator type instead of a SizedIterator,
-/// which is unusual. This leads to more template instantiations, as every
-/// iterator type `I` that is used with Fuse produces a `Fuse<I>` instantiation.
-/// The reason for this choice is that Fuse is meant to be a no-op, other than
-/// to stop returning anything past `None`, and thus we want to avoid any extra
-/// codegen/overhead involved in making a SizedIterator for it.
 template <class InnerIter>
 class [[nodiscard]] Fuse final
     : public IteratorBase<Fuse<InnerIter>, typename InnerIter::Item> {

@@ -18,7 +18,6 @@
 
 #include "sus/fn/fn_box_defn.h"
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -31,7 +30,7 @@ using ::sus::mem::relocate_by_memcpy;
 ///
 /// This type is returned from `Iterator::filter_map()`.
 template <class ToItem, class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] FilterMap final
+class [[nodiscard]] FilterMap final
     : public IteratorBase<FilterMap<ToItem, InnerSizedIter>, ToItem> {
   using FromItem = InnerSizedIter::Item;
   using FilterMapFn = ::sus::fn::FnMutBox<::sus::Option<ToItem>(FromItem&&)>;
@@ -90,10 +89,8 @@ class [[nodiscard]] [[sus_trivial_abi]] FilterMap final
   FilterMapFn fn_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is trivially relocatable. Likewise, the FilterMapFn
-  // function is known to be trivially relocatable because FnMutBox is.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(fn_),
-                                  decltype(next_iter_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(fn_), decltype(next_iter_));
 };
 
 }  // namespace sus::iter

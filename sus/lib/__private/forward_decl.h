@@ -87,9 +87,6 @@ class IteratorBase;
 
 // Include iter/iterator.h to get the implementation of these.
 namespace sus::iter {
-template <class ItemT, size_t SubclassSize, size_t SubclassAlign, bool Clone,
-          bool DoubleEnded, bool ExactSize>
-class BoxedIterator;
 template <class RefIterator>
 class ByRef;
 template <class InnerSizedIter, class OtherSizedIter>

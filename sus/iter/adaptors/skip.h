@@ -17,7 +17,6 @@
 #pragma once
 
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -29,7 +28,7 @@ using ::sus::mem::relocate_by_memcpy;
 ///
 /// This type is returned from `Iterator::skip()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Skip final
+class [[nodiscard]] Skip final
     : public IteratorBase<Skip<InnerSizedIter>, typename InnerSizedIter::Item> {
  public:
   using Item = InnerSizedIter::Item;
@@ -79,19 +78,19 @@ class [[nodiscard]] [[sus_trivial_abi]] Skip final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Skip with(usize n, InnerSizedIter && next_iter) noexcept {
+  static Skip with(usize n, InnerSizedIter&& next_iter) noexcept {
     return Skip(n, ::sus::move(next_iter));
   }
 
-  Skip(usize n, InnerSizedIter && next_iter) noexcept
+  Skip(usize n, InnerSizedIter&& next_iter) noexcept
       : skip_(n), next_iter_(::sus::move(next_iter)) {}
 
   usize skip_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter and usize are trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(skip_),
-                                  decltype(next_iter_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(skip_),
+                                           decltype(next_iter_));
 };
 
 }  // namespace sus::iter

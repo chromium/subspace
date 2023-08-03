@@ -17,7 +17,6 @@
 #pragma once
 
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
@@ -174,7 +173,6 @@ class [[nodiscard]] Peekable final
   ::sus::Option<::sus::Option<Item>> peeked_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is trivially relocatable, but the Item may not be.
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(peeked_),
                                            decltype(next_iter_));

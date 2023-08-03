@@ -17,7 +17,6 @@
 #pragma once
 
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -29,7 +28,7 @@ using ::sus::mem::relocate_by_memcpy;
 ///
 /// This type is returned from `Iterator::skip()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] StepBy final
+class [[nodiscard]] StepBy final
     : public IteratorBase<StepBy<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
  public:
@@ -99,7 +98,7 @@ class [[nodiscard]] [[sus_trivial_abi]] StepBy final
     return size_hint().lower;
   }
 
- //private:
+  // private:
   template <class U, class V>
   friend class IteratorBase;
 
@@ -115,13 +114,13 @@ class [[nodiscard]] [[sus_trivial_abi]] StepBy final
       return rem;
   }
 
-  static StepBy with(usize step, InnerSizedIter && next_iter) noexcept {
+  static StepBy with(usize step, InnerSizedIter&& next_iter) noexcept {
     // We subtract one from `step`, as stepping 1 means we skip 0 elements
     // between each.
     return StepBy(step - 1u, ::sus::move(next_iter), true);
   }
 
-  StepBy(usize step, InnerSizedIter && next_iter, bool first_take) noexcept
+  StepBy(usize step, InnerSizedIter&& next_iter, bool first_take) noexcept
       : step_(step),
         next_iter_(::sus::move(next_iter)),
         first_take_(first_take) {}
@@ -130,9 +129,10 @@ class [[nodiscard]] [[sus_trivial_abi]] StepBy final
   InnerSizedIter next_iter_;
   bool first_take_;
 
-  // The InnerSizedIter, usize and bool are trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(step_),
-                                  decltype(next_iter_), decltype(first_take_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(step_),
+                                           decltype(next_iter_),
+                                           decltype(first_take_));
 };
 
 }  // namespace sus::iter

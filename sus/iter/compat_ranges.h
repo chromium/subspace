@@ -52,19 +52,6 @@ class IteratorOverRange;
 /// `std::ranges::std::sized_sentinel_for<end type, begin type>`, then the
 /// output `Iterator` will be an `ExactSizeIterator`.
 ///
-/// # Heap Allocation
-///
-/// It is a principle of Subspace to not have surprise heap allocations, however
-/// the Standard library creates a hard obstable for us here.
-///
-/// Standard Range iterator types may change their ability to be trivially
-/// relocated depending on the Debug/Release build configuration, which is very
-/// hostile to working with them, as it then requires `box()` in Debug builds.
-/// To ensure consistent API characteristics of the Iterator returned by
-/// `from_range()`, a heap allocation may be required to keep the Iterator
-/// trivially relocatable. This will be eliminated in Release builds if the
-/// Standard Range iterator is trivially relocatable there, which most are.
-///
 /// # Examples
 /// Iterates over references of a vector, copying and summing:
 /// ```
@@ -93,11 +80,7 @@ auto from_range(R&& r) noexcept {
     using B = decltype(std::make_move_iterator(std::declval<R&>().begin()));
     using E = decltype(std::make_move_iterator(std::declval<R&>().end()));
     using Item = typename std::iterator_traits<B>::value_type;
-    if constexpr (sus::mem::relocate_by_memcpy<B> &&
-                  sus::mem::relocate_by_memcpy<E>)
-      return IteratorOverRange<R, B, E, Item>(r);
-    else
-      return IteratorOverRange<R, B, E, Item>(r).box();
+    return IteratorOverRange<R, B, E, Item>(r);
   }
 }
 

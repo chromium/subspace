@@ -18,7 +18,6 @@
 
 #include "sus/fn/fn_box_defn.h"
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -83,9 +82,6 @@ class [[nodiscard]] Scan final
   Fn fn_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is trivially relocatable. Likewise, the predicate is
-  // known to be trivially relocatable because FnMutBox is. But the State may or
-  // may not be.
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(state_), decltype(fn_),
                                            decltype(next_iter_));

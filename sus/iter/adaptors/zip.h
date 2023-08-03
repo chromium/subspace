@@ -18,7 +18,6 @@
 
 #include "sus/fn/fn_concepts.h"
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -31,7 +30,8 @@ template <class T>
 using GetItem = typename T::Item;
 
 template <class Item, size_t N, class... T>
-inline constexpr auto nexts(Option<Item>& out, auto& iters, T&&... args) -> void {
+inline constexpr auto nexts(Option<Item>& out, auto& iters, T&&... args)
+    -> void {
   constexpr size_t I = sizeof...(T);
   if constexpr (I == N) {
     if ((... && args.is_some()))
@@ -81,7 +81,7 @@ inline constexpr auto exact_size_hints(auto& iters) noexcept -> usize {
 ///
 /// This type is returned from `Iterator::zip()`.
 template <class... InnerSizedIters>
-class [[nodiscard]] [[sus_trivial_abi]] Zip final
+class [[nodiscard]] Zip final
     : public IteratorBase<Zip<InnerSizedIters...>,
                           sus::Tuple<__private::GetItem<InnerSizedIters>...>> {
  public:
@@ -131,8 +131,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Zip final
 
   ::sus::Tuple<InnerSizedIters...> iters_;
 
-  // The InnerSizedIter and usize are trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(iters_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(iters_));
 };
 
 }  // namespace sus::iter

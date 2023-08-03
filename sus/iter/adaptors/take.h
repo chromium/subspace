@@ -17,7 +17,6 @@
 #pragma once
 
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -30,7 +29,7 @@ using ::sus::mem::relocate_by_memcpy;
 ///
 /// This type is returned from `Iterator::take()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Take final
+class [[nodiscard]] Take final
     : public IteratorBase<Take<InnerSizedIter>, typename InnerSizedIter::Item> {
  public:
   using Item = InnerSizedIter::Item;
@@ -95,19 +94,18 @@ class [[nodiscard]] [[sus_trivial_abi]] Take final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Take with(usize n, InnerSizedIter && next_iter) noexcept {
+  static Take with(usize n, InnerSizedIter&& next_iter) noexcept {
     return Take(n, ::sus::move(next_iter));
   }
 
-  Take(usize n, InnerSizedIter && next_iter) noexcept
+  Take(usize n, InnerSizedIter&& next_iter) noexcept
       : n_(n), next_iter_(::sus::move(next_iter)) {}
 
   usize n_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter and usize are trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(n_),
-                                  decltype(next_iter_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(n_), decltype(next_iter_));
 };
 
 }  // namespace sus::iter

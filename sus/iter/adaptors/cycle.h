@@ -17,7 +17,6 @@
 #pragma once
 
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
@@ -28,7 +27,7 @@ namespace sus::iter {
 ///
 /// This type is returned from `Iterator::cycle()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Cycle final
+class [[nodiscard]] Cycle final
     : public IteratorBase<Cycle<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
   static_assert(::sus::mem::Clone<InnerSizedIter>);
@@ -60,23 +59,23 @@ class [[nodiscard]] [[sus_trivial_abi]] Cycle final
     }
     // Posssibly 0 items, lower limit is 0.
     return SizeHint(0u, ::sus::move(sz).upper.map_or_else(
-        // No upper limit, so we have no limit either.
-        [] { return ::sus::Option<usize>(); },
-        [](usize u) {
-          if (u == 0u) {
-            // Upper limit is 0, empty iterator.
-            return ::sus::Option<usize>::with(0u);
-          } else
-            // Non-zero upper limit, will cycle forever.
-            return ::sus::Option<usize>();
-        }));
+                            // No upper limit, so we have no limit either.
+                            [] { return ::sus::Option<usize>(); },
+                            [](usize u) {
+                              if (u == 0u) {
+                                // Upper limit is 0, empty iterator.
+                                return ::sus::Option<usize>::with(0u);
+                              } else
+                                // Non-zero upper limit, will cycle forever.
+                                return ::sus::Option<usize>();
+                            }));
   }
 
  private:
   template <class U, class V>
   friend class IteratorBase;
 
-  static Cycle with(InnerSizedIter && iter) noexcept {
+  static Cycle with(InnerSizedIter&& iter) noexcept {
     return Cycle(::sus::clone(iter), ::sus::move(iter));
   }
 
@@ -87,9 +86,9 @@ class [[nodiscard]] [[sus_trivial_abi]] Cycle final
   InnerSizedIter original_;
   InnerSizedIter active_;
 
-  // The InnerSizedIter is trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(original_),
-                                  decltype(active_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(original_),
+                                           decltype(active_));
 };
 
 }  // namespace sus::iter
