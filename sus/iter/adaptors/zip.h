@@ -30,23 +30,24 @@ template <class T>
 using GetItem = typename T::Item;
 
 template <class Item, size_t N, class... T>
-inline constexpr auto nexts(Option<Item>& out, auto& iters, T&&... args)
-    -> void {
+inline constexpr Option<Item> nexts(auto& iters, T&&... args) {
   constexpr size_t I = sizeof...(T);
   if constexpr (I == N) {
     if ((... && args.is_some())) {
       // SAFETY: args.is_some() is checked above, so unwrap has a value.
-      out.insert(Item::with(
+      return Option<Item>::with(Item::with(
           ::sus::move(args).unwrap_unchecked(::sus::marker::unsafe_fn)...));
+    } else {
+      return Option<Item>();
     }
   } else {
-    return nexts<Item, N>(out, iters, ::sus::move(args)...,
+    return nexts<Item, N>(iters, ::sus::move(args)...,
                           iters.template at_mut<I>().next());
   }
 }
 
 template <size_t I, size_t N>
-inline constexpr auto size_hints(auto& iters) noexcept -> SizeHint {
+inline constexpr SizeHint size_hints(auto& iters) noexcept {
   if constexpr (I == N - 1) {
     return iters.template at<I>().size_hint();
   } else {
@@ -68,7 +69,7 @@ inline constexpr auto size_hints(auto& iters) noexcept -> SizeHint {
 }
 
 template <size_t I, size_t N>
-inline constexpr auto exact_size_hints(auto& iters) noexcept -> usize {
+inline constexpr usize exact_size_hints(auto& iters) noexcept {
   if constexpr (I == N - 1) {
     return iters.template at<I>().exact_size_hint();
   } else {
@@ -103,9 +104,7 @@ class [[nodiscard]] Zip final
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
-    Option<Item> out;
-    __private::nexts<Item, sizeof...(InnerSizedIters)>(out, iters_);
-    return out;
+    return __private::nexts<Item, sizeof...(InnerSizedIters)>(iters_);
   }
   /// sus::iter::Iterator trait.
   constexpr SizeHint size_hint() const noexcept {
