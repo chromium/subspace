@@ -139,7 +139,7 @@ auto common_prefix_take_while(const sus::Slice<u8>& xs,
              .count();
 }
 
-TEST(SimdChunks, common_prefix) {
+TEST(BenchSimdChunks, common_prefix) {
   auto b = ankerl::nanobench::Bench();
 
   auto v1 = sus::Vec<u8>::from(PREFIX1);
