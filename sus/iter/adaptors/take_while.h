@@ -28,26 +28,26 @@ using ::sus::mem::relocate_by_memcpy;
 /// An iterator that only accepts elements while `pred` returns `true`.
 ///
 /// This type is returned from `Iterator::take()`.
-template <class InnerSizedIter>
+template <class InnerSizedIter, class Pred>
 class [[nodiscard]] [[sus_trivial_abi]] TakeWhile final
-    : public IteratorBase<TakeWhile<InnerSizedIter>,
+    : public IteratorBase<TakeWhile<InnerSizedIter, Pred>,
                           typename InnerSizedIter::Item> {
-  using Pred = ::sus::fn::FnMutBox<bool(
-      // TODO: write a sus::const_ref<T>?
-      const std::remove_reference_t<typename InnerSizedIter::Item>&)>;
+  using ConstRefItem =
+      const std::remove_reference_t<typename InnerSizedIter::Item>&;
+  static_assert(::sus::fn::FnMut<Pred, bool(ConstRefItem)>);
 
  public:
   using Item = InnerSizedIter::Item;
 
   // sus::mem::Clone trait.
-  TakeWhile clone() const noexcept
+  constexpr TakeWhile clone() const noexcept
     requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return TakeWhile(::sus::clone(pred_), ::sus::clone(next_iter_));
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> out;
     if (pred_.is_none()) return out;
     out = next_iter_.next();
@@ -63,7 +63,7 @@ class [[nodiscard]] [[sus_trivial_abi]] TakeWhile final
   }
 
   /// sus::iter::Iterator trait.
-  ::sus::iter::SizeHint size_hint() const noexcept {
+  constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     if (pred_.is_none()) return {0u, sus::some(0u)};
     // Can't know a lower bound, due to the predicate.
     return {0u, next_iter_.size_hint().upper};
@@ -73,11 +73,11 @@ class [[nodiscard]] [[sus_trivial_abi]] TakeWhile final
   template <class U, class V>
   friend class IteratorBase;
 
-  static TakeWhile with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
+  static constexpr TakeWhile with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
     return TakeWhile(::sus::move(pred), ::sus::move(next_iter));
   }
 
-  TakeWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
+  constexpr TakeWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(::sus::some(::sus::move(pred))),
         next_iter_(::sus::move(next_iter)) {}
 

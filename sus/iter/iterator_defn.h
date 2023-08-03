@@ -929,8 +929,8 @@ class IteratorBase {
   ///
   /// After false is returned, the closure is not called again, and the
   /// remaining elements will not be yielded.
-  Iterator<Item> auto take_while(
-      ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+  constexpr Iterator<Item> auto take_while(
+      ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)> auto
           pred) && noexcept
     requires(::sus::mem::relocate_by_memcpy<Iter>);
 
@@ -1019,7 +1019,8 @@ class IteratorBase {
   /// To "undo" the result of zipping up two iterators, see unzip.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-  constexpr Iterator<sus::Tuple<ItemT, OtherItem>> auto zip(Other&& other) && noexcept;
+  constexpr Iterator<sus::Tuple<ItemT, OtherItem>> auto zip(
+      Other&& other) && noexcept;
 
   /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
   /// the elements of this `Iterator` with those of another.
@@ -1811,13 +1812,14 @@ Iterator<Item> auto IteratorBase<Iter, Item>::take(usize n) && noexcept
 }
 
 template <class Iter, class Item>
-Iterator<Item> auto IteratorBase<Iter, Item>::take_while(
-    ::sus::fn::FnMutBox<bool(const std::remove_reference_t<Item>&)>
+constexpr Iterator<Item> auto IteratorBase<Iter, Item>::take_while(
+    ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)> auto
         pred) && noexcept
   requires(::sus::mem::relocate_by_memcpy<Iter>)
 {
   using Sized = SizedIteratorType<Iter>::type;
-  using TakeWhile = TakeWhile<Sized>;
+  using Pred = decltype(pred);
+  using TakeWhile = TakeWhile<Sized, Pred>;
   return TakeWhile::with(::sus::move(pred),
                          make_sized_iterator(static_cast<Iter&&>(*this)));
 }
@@ -1895,8 +1897,8 @@ IteratorBase<Iter, Item>::unzip() && noexcept {
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-constexpr Iterator<sus::Tuple<Item, OtherItem>> auto IteratorBase<Iter, Item>::zip(
-    Other&& other) && noexcept {
+constexpr Iterator<sus::Tuple<Item, OtherItem>> auto
+IteratorBase<Iter, Item>::zip(Other&& other) && noexcept {
   using Sized = SizedIteratorType<Iter>::type;
   using OtherIter = std::decay_t<decltype(sus::move(other).into_iter())>;
   using OtherSized = SizedIteratorType<OtherIter>::type;
