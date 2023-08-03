@@ -17,7 +17,6 @@
 #pragma once
 
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 #include "sus/tuple/tuple.h"
@@ -28,7 +27,7 @@ namespace sus::iter {
 ///
 /// This type is returned from `Iterator::enumerate()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
+class [[nodiscard]] Enumerate final
     : public IteratorBase<Enumerate<InnerSizedIter>,
                           ::sus::Tuple<usize, typename InnerSizedIter::Item>> {
   using FromItem = typename InnerSizedIter::Item;
@@ -50,9 +49,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
-    return next_iter_.size_hint();
-  }
+  SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
@@ -94,9 +91,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Enumerate final
   usize count_ = 0u;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                  decltype(next_iter_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(next_iter_));
 };
 
 }  // namespace sus::iter

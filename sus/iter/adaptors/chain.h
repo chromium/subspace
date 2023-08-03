@@ -18,7 +18,6 @@
 
 #include "sus/fn/fn_concepts.h"
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -44,7 +43,7 @@ constexpr inline Option<U> and_then_or_clear(
 ///
 /// This type is returned from `Iterator::enumerate()`.
 template <class InnerSizedIter, class OtherSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Chain final
+class [[nodiscard]] Chain final
     : public IteratorBase<Chain<InnerSizedIter, OtherSizedIter>,
                           typename InnerSizedIter::Item> {
  public:
@@ -129,10 +128,9 @@ class [[nodiscard]] [[sus_trivial_abi]] Chain final
   ::sus::Option<InnerSizedIter> first_iter_;
   ::sus::Option<OtherSizedIter> second_iter_;
 
-  // The InnerSizedIter is trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                  decltype(first_iter_),
-                                  decltype(second_iter_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(first_iter_),
+                                           decltype(second_iter_));
 };
 
 }  // namespace sus::iter

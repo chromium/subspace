@@ -18,7 +18,6 @@
 
 #include "sus/fn/fn_box_defn.h"
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -30,7 +29,7 @@ using ::sus::mem::relocate_by_memcpy;
 ///
 /// This type is returned from `Iterator::skip()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] SkipWhile final
+class [[nodiscard]] SkipWhile final
     : public IteratorBase<SkipWhile<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
   using Pred = ::sus::fn::FnMutBox<bool(
@@ -85,9 +84,9 @@ class [[nodiscard]] [[sus_trivial_abi]] SkipWhile final
   Option<Pred> pred_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter and FnMutBox are trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(pred_),
-                                  decltype(next_iter_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(pred_),
+                                           decltype(next_iter_));
 };
 
 }  // namespace sus::iter

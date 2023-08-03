@@ -30,7 +30,6 @@
 // Headers that define iterators that Iterator can construct and return. They
 // are forward declared in iterator_defn.h so that transitive includes don't get
 // them all every time.
-#include "sus/iter/adaptors/boxed_iterator.h"
 #include "sus/iter/adaptors/by_ref.h"
 #include "sus/iter/adaptors/chain.h"
 #include "sus/iter/adaptors/cloned.h"

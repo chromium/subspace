@@ -18,7 +18,6 @@
 
 #include "sus/fn/fn_box_defn.h"
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 
@@ -30,7 +29,7 @@ using ::sus::mem::relocate_by_memcpy;
 ///
 /// This type is returned from `Iterator::filter()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Filter final
+class [[nodiscard]] Filter final
     : public IteratorBase<Filter<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
   using Pred = ::sus::fn::FnMutBox<bool(
@@ -80,10 +79,9 @@ class [[nodiscard]] [[sus_trivial_abi]] Filter final
   Pred pred_;
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is trivially relocatable. Likewise, the predicate is
-  // known to be trivially relocatable because FnMutBox is.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn, decltype(pred_),
-                                  decltype(next_iter_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(pred_),
+                                           decltype(next_iter_));
 };
 
 }  // namespace sus::iter

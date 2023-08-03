@@ -19,7 +19,6 @@
 #include "sus/fn/fn_box_defn.h"
 #include "sus/iter/iterator_concept.h"
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 #include "sus/mem/size_of.h"
@@ -34,10 +33,11 @@ using ::sus::mem::relocate_by_memcpy;
 ///
 /// This type is returned from `Iterator::rev()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Reverse final
+class [[nodiscard]] Reverse final
     : public IteratorBase<Reverse<InnerSizedIter>,
                           typename InnerSizedIter::Item> {
-  static_assert(DoubleEndedIterator<InnerSizedIter, typename InnerSizedIter::Item>);
+  static_assert(
+      DoubleEndedIterator<InnerSizedIter, typename InnerSizedIter::Item>);
 
  public:
   using Item = InnerSizedIter::Item;
@@ -67,9 +67,8 @@ class [[nodiscard]] [[sus_trivial_abi]] Reverse final
 
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                  decltype(next_iter_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(next_iter_));
 };
 
 }  // namespace sus::iter

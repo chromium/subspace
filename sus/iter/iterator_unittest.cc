@@ -26,7 +26,6 @@
 #include "sus/iter/adaptors/filter.h"
 #include "sus/iter/empty.h"
 #include "sus/iter/into_iterator.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/iter/zip.h"
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/mem/never_value.h"
@@ -61,8 +60,6 @@ struct sus::iter::FromIteratorImpl<sus::test::iter::CollectSum<T>> {
 namespace {
 using namespace sus::test::iter;
 
-using InnerSizedIter = sus::iter::SizedIterator<int, 8, 8, false, false, false>;
-
 static_assert(::sus::ops::Eq<sus::iter::SizeHint>);
 
 static_assert(
@@ -72,13 +69,11 @@ static_assert(sus::iter::IntoIterator<
 
 // clang-format off
 static_assert(
-  sus::iter::Iterator<sus::iter::BoxedIterator<int, 8, 8, false, false, false>, int>);
-static_assert(
   ::sus::iter::Iterator<sus::iter::Empty<int>, int>);
 static_assert(
-  sus::iter::Iterator<sus::iter::Filter<InnerSizedIter>, int>);
+  sus::iter::Iterator<sus::iter::Filter<sus::iter::Empty<int>>, int>);
 static_assert(
-  sus::iter::Iterator<sus::iter::Map<int, InnerSizedIter>, int>);
+  sus::iter::Iterator<sus::iter::Map<int, sus::iter::Empty<int>>, int>);
 static_assert(
   sus::iter::Iterator<sus::iter::Once<int>, int>);
 static_assert(
@@ -111,9 +106,6 @@ static_assert(
 static_assert(
   sus::iter::IntoIterator<sus::iter::Once<int>, int>);
 // clang-format on
-
-static_assert(sus::mem::NeverValueField<
-              sus::iter::SizedIterator<int, 12, 4, false, false, false>>);
 
 template <class Item, size_t N>
 class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
@@ -351,7 +343,11 @@ TEST(Iterator, FilterNonTriviallyRelocatable) {
   auto non_relocatable_it = ArrayIterator<Filtering, 5>::with_array(nums);
   static_assert(!sus::mem::relocate_by_memcpy<decltype(non_relocatable_it)>);
 
-  auto fit = sus::move(non_relocatable_it).box().filter([](const Filtering& f) {
+  // Previously we needed iterators to be trivially relocatable to nest them in
+  // an adaptor iterator like filter(). So this test would call box() to move
+  // the iterator to the heap. That is no longer case, and this test now shows
+  // it is not needed.
+  auto fit = sus::move(non_relocatable_it).filter([](const Filtering& f) {
     return f.i >= 3;
   });
   EXPECT_EQ(sus::move(fit).count(), 3_usize);
@@ -3562,10 +3558,11 @@ TEST(Iterator, TakeWhile) {
     EXPECT_EQ(it.next(), sus::none());
   }
 
-  constexpr auto a = sus::Array<i32, 3>::with(2, 3, 4)
-                         .into_iter()
-                         .take_while([](const i32& i) constexpr { return i <= 3; })
-                         .sum();
+  constexpr auto a =
+      sus::Array<i32, 3>::with(2, 3, 4)
+          .into_iter()
+          .take_while([](const i32& i) constexpr { return i <= 3; })
+          .sum();
   static_assert(a == 5);
 }
 

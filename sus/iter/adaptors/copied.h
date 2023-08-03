@@ -17,7 +17,6 @@
 #pragma once
 
 #include "sus/iter/iterator_defn.h"
-#include "sus/iter/sized_iterator.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
@@ -28,7 +27,7 @@ namespace sus::iter {
 ///
 /// This type is returned from `Iterator::copied()`.
 template <class InnerSizedIter>
-class [[nodiscard]] [[sus_trivial_abi]] Copied final
+class [[nodiscard]] Copied final
     : public IteratorBase<Copied<InnerSizedIter>,
                           std::remove_cvref_t<typename InnerSizedIter::Item>> {
  public:
@@ -40,9 +39,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Copied final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
-    return next_iter_.size_hint();
-  }
+  SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept
@@ -63,17 +60,16 @@ class [[nodiscard]] [[sus_trivial_abi]] Copied final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Copied with(InnerSizedIter && next_iter) noexcept {
+  static Copied with(InnerSizedIter&& next_iter) noexcept {
     return Copied(::sus::move(next_iter));
   }
 
-  Copied(InnerSizedIter && next_iter) : next_iter_(::sus::move(next_iter)) {}
+  Copied(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
 
   InnerSizedIter next_iter_;
 
-  // The InnerSizedIter is trivially relocatable.
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                  decltype(next_iter_));
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(next_iter_));
 };
 
 }  // namespace sus::iter
