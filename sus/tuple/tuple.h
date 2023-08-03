@@ -264,7 +264,10 @@ class Tuple final {
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (::sus::iter::Extend<T, U> && ... && ::sus::iter::Extend<Ts, Us>))
-  void extend(::sus::iter::IntoIterator<Tuple<U, Us...>> auto&& ii) noexcept {
+  constexpr void extend(
+      ::sus::iter::IntoIterator<Tuple<U, Us...>> auto&& ii) noexcept
+    requires(::sus::mem::IsMoveRef<decltype(ii)>)
+  {
     for (Tuple<U, Us...>&& item : ::sus::move(ii).into_iter()) {
       auto f = [this]<size_t... Is>(Tuple<U, Us...>&& item,
                                     std::index_sequence<Is...>) mutable {

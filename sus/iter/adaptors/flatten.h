@@ -36,7 +36,7 @@ class [[nodiscard]] Flatten final
   using Item = typename EachIter::Item;
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> out;
     while (true) {
       // Take an item off front_iter_ if possible.
@@ -62,7 +62,7 @@ class [[nodiscard]] Flatten final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     auto [flo, fhi] = front_iter_.as_ref().map_or(
         SizeHint(0u, ::sus::some(0u)),
         [](const EachIter& i) { return i.size_hint(); });
@@ -77,7 +77,7 @@ class [[nodiscard]] Flatten final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter,
                                  typename InnerSizedIter::Item> &&  //
              DoubleEndedIterator<EachIter, Item>)
@@ -110,11 +110,11 @@ class [[nodiscard]] Flatten final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Flatten with(InnerSizedIter&& iters) noexcept {
+  static constexpr Flatten with(InnerSizedIter&& iters) noexcept {
     return Flatten(::sus::move(iters));
   }
 
-  Flatten(InnerSizedIter&& iters) : iters_(::sus::move(iters)) {}
+  constexpr Flatten(InnerSizedIter&& iters) : iters_(::sus::move(iters)) {}
 
   InnerSizedIter iters_;
   ::sus::Option<EachIter> front_iter_;

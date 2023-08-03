@@ -18,6 +18,7 @@
 
 #include "sus/assertions/unreachable.h"
 #include "sus/iter/__private/iterator_end.h"
+#include "sus/iter/__private/is_generator.h"
 #include "sus/iter/iterator_defn.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/mem/copy.h"
@@ -27,12 +28,6 @@
 
 namespace sus::iter {
 
-template <class T>
-class Generator;
-namespace __private {
-template <class T>
-struct IsGenerator;
-}
 
 /// Produces an iterator over `Item` from a coroutine function that returns
 /// `Generator<Item>` and yields `Item`s.
@@ -60,11 +55,6 @@ Iterator<typename R::Item> auto from_generator(F&& f) {
 
 namespace __private {
 
-template <class T>
-struct IsGenerator final : std::false_type {};
-template <class T>
-struct IsGenerator<Generator<T>> final : std::true_type {};
-
 template <class Generator, class T>
 class IterPromise {
  public:
@@ -89,7 +79,7 @@ class IterPromise {
     return std::suspend_always();
   }
 
-  void return_void() noexcept {
+  constexpr void return_void() noexcept {
     yielded_ = Option<T>();  // Yield None at the end of the generator.
   }
 
@@ -102,9 +92,9 @@ class IterPromise {
 
   constexpr auto initial_suspend() noexcept { return std::suspend_always(); }
   constexpr auto final_suspend() noexcept { return std::suspend_always(); }
-  void unhandled_exception() noexcept { ::sus::unreachable(); }
+  constexpr void unhandled_exception() noexcept { ::sus::unreachable(); }
 
-  Option<T> take() & noexcept { return yielded_.take(); }
+  constexpr Option<T> take() & noexcept { return yielded_.take(); }
 
  private:
   Option<T> yielded_;
@@ -116,7 +106,7 @@ class IterPromise {
 template <class Generator>
 class [[nodiscard]] [[sus_trivial_abi]] GeneratorLoop {
  public:
-  GeneratorLoop(Generator& generator sus_lifetimebound) noexcept
+  constexpr GeneratorLoop(Generator& generator sus_lifetimebound) noexcept
       : generator_(generator) {}
 
   constexpr bool operator==(
@@ -201,7 +191,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Generator final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     return SizeHint(0u, sus::Option<::sus::num::usize>());
   }
 

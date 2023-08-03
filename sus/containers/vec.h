@@ -453,7 +453,7 @@ class [[sus_trivial_abi]] Vec final {
         // SAFETY: new_t was just allocated above, so does not alias with
         // `old_t` which was the previous allocation.
         ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, old_t, new_t,
-                                        cap);
+                                        capacity_);
         std::allocator<T>().deallocate(raw_data(), size_t{capacity_});
         raw_data() = new_allocation;
         capacity_ = cap;

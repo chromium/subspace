@@ -34,7 +34,7 @@ class Once;
 /// sus::check(o.next().unwrap() == 3_u16);
 /// ```
 template <class Item>
-inline Once<Item> once(Option<Item> o) noexcept {
+constexpr inline Once<Item> once(Option<Item> o) noexcept {
   return Once<Item>(::sus::move(o));
 }
 
@@ -45,21 +45,23 @@ class [[nodiscard]] Once final : public IteratorBase<Once<ItemT>, ItemT> {
   using Item = ItemT;
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return single_.take(); }
+  constexpr Option<Item> next() noexcept { return single_.take(); }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     ::sus::num::usize rem = single_.is_some() ? 1u : 0u;
     return SizeHint(rem, ::sus::Option<::sus::num::usize>::with(rem));
   }
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept { return single_.take(); }
+  constexpr Option<Item> next_back() noexcept { return single_.take(); }
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept { return single_.is_some() ? 1u : 0u; }
+  constexpr usize exact_size_hint() const noexcept {
+    return single_.is_some() ? 1u : 0u;
+  }
 
  private:
-  friend Once<Item> sus::iter::once<Item>(Option<Item> o) noexcept;
+  friend constexpr Once<Item> sus::iter::once<Item>(Option<Item> o) noexcept;
 
-  Once(Option<Item> single) : single_(::sus::move(single)) {}
+  constexpr Once(Option<Item> single) : single_(::sus::move(single)) {}
 
   Option<Item> single_;
 

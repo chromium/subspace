@@ -50,7 +50,7 @@ class [[nodiscard]] Chain final
   using Item = typename InnerSizedIter::Item;
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     return __private::and_then_or_clear<InnerSizedIter, Item>(
                first_iter_, [](InnerSizedIter& iter) { return iter.next(); })
         .or_else([this] {
@@ -62,7 +62,7 @@ class [[nodiscard]] Chain final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, Item> &&
              DoubleEndedIterator<OtherSizedIter, Item>)
   {
@@ -77,7 +77,7 @@ class [[nodiscard]] Chain final
         });
   }
 
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     if (first_iter_.is_none()) {
       if (second_iter_.is_none()) {
         return SizeHint(0u, sus::Option<usize>::with(0u));
@@ -107,12 +107,12 @@ class [[nodiscard]] Chain final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Chain with(InnerSizedIter&& first_iter,
+  static constexpr Chain with(InnerSizedIter&& first_iter,
                     OtherSizedIter&& second_iter) noexcept {
     return Chain(::sus::move(first_iter), ::sus::move(second_iter));
   }
 
-  Chain(InnerSizedIter&& first_iter, OtherSizedIter&& second_iter)
+  constexpr Chain(InnerSizedIter&& first_iter, OtherSizedIter&& second_iter)
       : first_iter_(
             ::sus::Option<InnerSizedIter>::with(::sus::move(first_iter))),
         second_iter_(

@@ -272,8 +272,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
       // in the condition above, and we are in the else branch.
       auto [fst, snd] =
           v_.split_at_unchecked(::sus::marker::unsafe_fn, chunk_size_);
-      v_ = snd;
-      return Option<Item>::with(fst);
+      v_ = ::sus::move(snd);
+      return Option<Item>::with(::sus::move(fst));
     }
   }
 
@@ -294,8 +294,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
       auto [fst, snd] = v_.split_at_unchecked(
           ::sus::marker::unsafe_fn,
           v_.len().unchecked_sub(::sus::marker::unsafe_fn, chunk_size_));
-      v_ = fst;
-      return ::sus::Option<Item>::with(snd);
+      v_ = ::sus::move(fst);
+      return ::sus::Option<Item>::with(::sus::move(snd));
     }
   }
 

@@ -60,7 +60,7 @@ namespace sus::iter {
 template <class Item>
 class Once;
 template <class Item>
-Once<Item> once(::sus::option::Option<Item> o) noexcept;
+constexpr Once<Item> once(::sus::option::Option<Item> o) noexcept;
 namespace __private {
 template <class T>
   requires requires(const T& t) {

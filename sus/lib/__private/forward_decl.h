@@ -99,11 +99,11 @@ template <class InnerSizedIter>
 class Cycle;
 template <class InnerSizedIter>
 class Enumerate;
-template <class InnerSizedIter>
+template <class InnerSizedIter, class Pred>
 class Filter;
-template <class ToItem, class InnerSizedIter>
+template <class ToItem, class InnerSizedIter, class FilterMapFn>
 class FilterMap;
-template <class IntoIterable, class InnerSizedIter>
+template <class IntoIterable, class InnerSizedIter, class MapFn>
 class FlatMap;
 template <class EachIter, class InnerSizedIter>
 class Flatten;
@@ -111,7 +111,7 @@ template <class InnerIter>
 class Fuse;
 template <class Item>
 class Generator;
-template <class InnerSizedIter>
+template <class InnerSizedIter, class InspectFn>
 class Inspect;
 template <class ToItem, class InnerSizedIter>
 class Map;

@@ -443,6 +443,19 @@ i32 map_class(const Class& c, sus::fn::Fn<i32(const Class&)> auto const& f) {
   return sus::fn::call(f, c);
 }
 
+i32 map_fn(const Class& c) { return c.value(); }
+
+TEST(FnConcepts, ExampleFunction) {
+  // Map the class C to its value().
+  auto c = Class(42);
+  sus::check(map_class_once(c, &map_fn) == 42);
+  sus::check(map_class_mut(c, &map_fn) == 42);
+  sus::check(map_class(c, &map_fn) == 42);
+
+  auto o = sus::Option<Class>::with(Class(42));
+  sus::check(o.map(&map_fn) == sus::some(42));
+}
+
 TEST(FnConcepts, Example_Method) {
   // Map the class C to its value().
   auto c = Class(42);

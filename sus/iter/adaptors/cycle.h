@@ -35,13 +35,17 @@ class [[nodiscard]] Cycle final
  public:
   using Item = typename InnerSizedIter::Item;
 
+  // The type is Move and CLone.
+  Cycle(Cycle&&) = default;
+  Cycle& operator=(Cycle&&) = default;
+
   // sus::mem::Clone trait.
   Cycle clone() const noexcept {
     return Cycle(::sus::clone(original_), ::sus::clone(active_));
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     auto o = active_.next();
     if (o.is_none()) {
       active_ = ::sus::clone(original_);
@@ -51,7 +55,7 @@ class [[nodiscard]] Cycle final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     SizeHint sz = original_.size_hint();
     if (sz.lower != 0u) {
       // More than 0 items, so it's infinite.
@@ -75,12 +79,12 @@ class [[nodiscard]] Cycle final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Cycle with(InnerSizedIter&& iter) noexcept {
+  static constexpr Cycle with(InnerSizedIter&& iter) noexcept {
     return Cycle(::sus::clone(iter), ::sus::move(iter));
   }
 
-  Cycle(InnerSizedIter&& __restrict original,
-        InnerSizedIter&& __restrict active)
+  constexpr Cycle(InnerSizedIter&& __restrict original,
+                  InnerSizedIter&& __restrict active)
       : original_(::sus::move(original)), active_(::sus::move(active)) {}
 
   InnerSizedIter original_;

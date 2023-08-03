@@ -31,19 +31,19 @@ namespace sus::iter {
 /// `Iterator[IntoIterable[T]]` into `Iterator[T]`.
 ///
 /// This type is returned from `Iterator::flat_map()`.
-template <class IntoIterable, class InnerSizedIter>
+template <class IntoIterable, class InnerSizedIter, class MapFn>
 class [[nodiscard]] FlatMap final
-    : public IteratorBase<FlatMap<IntoIterable, InnerSizedIter>,
+    : public IteratorBase<FlatMap<IntoIterable, InnerSizedIter, MapFn>,
                           typename IntoIteratorOutputType<IntoIterable>::Item> {
   using EachIter = IntoIteratorOutputType<IntoIterable>;
-  using MapFn =
-      ::sus::fn::FnMutBox<IntoIterable(typename InnerSizedIter::Item&&)>;
+  static_assert(
+      ::sus::fn::FnMut<MapFn, IntoIterable(typename InnerSizedIter::Item&&)>);
 
  public:
   using Item = typename EachIter::Item;
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> out;
     while (true) {
       // Take an item off front_iter_ if possible.
@@ -70,7 +70,7 @@ class [[nodiscard]] FlatMap final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     auto [flo, fhi] = front_iter_.as_ref().map_or(
         SizeHint(0u, ::sus::some(0u)),
         [](const EachIter& i) { return i.size_hint(); });
@@ -85,7 +85,7 @@ class [[nodiscard]] FlatMap final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter,
                                  typename InnerSizedIter::Item> &&  //
              DoubleEndedIterator<EachIter, Item>)
@@ -119,11 +119,11 @@ class [[nodiscard]] FlatMap final
   template <class U, class V>
   friend class IteratorBase;
 
-  static FlatMap with(MapFn&& fn, InnerSizedIter&& iters) noexcept {
+  static constexpr FlatMap with(MapFn&& fn, InnerSizedIter&& iters) noexcept {
     return FlatMap(::sus::move(fn), ::sus::move(iters));
   }
 
-  FlatMap(MapFn&& fn, InnerSizedIter&& iters)
+  constexpr FlatMap(MapFn&& fn, InnerSizedIter&& iters)
       : map_fn_(::sus::move(fn)), iters_(::sus::move(iters)) {}
 
   MapFn map_fn_;

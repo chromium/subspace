@@ -131,22 +131,19 @@ auto common_prefix_no_shortcircuit(const sus::Slice<u8>& xs,
 auto common_prefix_take_while(const sus::Slice<u8>& xs,
                               const sus::Slice<u8>& ys) -> usize {
   const auto chunk_size = 16_usize;
-  auto off =
-      zip(xs.chunks_exact(chunk_size), ys.chunks_exact(chunk_size))
-          .take_while(
-              [](const sus::Tuple<sus::Slice<u8>, sus::Slice<u8>>& chunks) {
-                const auto& [xs_chunk, ys_chunk] = chunks;
-                return xs_chunk == ys_chunk;
-              })
-          .count() *
-      chunk_size;
-  return off +
-         zip(xs[sus::ops::range_from(off)], ys[sus::ops::range_from(off)])
-             .take_while([](const sus::Tuple<const u8&, const u8&>& pair) {
-               const auto& [x, y] = pair;
-               return x == y;
-             })
-             .count();
+  auto off = zip(xs.chunks_exact(chunk_size), ys.chunks_exact(chunk_size))
+                 .take_while([](const auto& chunks) {
+                   auto [xs_chunk, ys_chunk] = chunks;
+                   return xs_chunk == ys_chunk;
+                 })
+                 .count() *
+             chunk_size;
+  return off + zip(xs[sus::ops::range_from(off)], ys[sus::ops::range_from(off)])
+                   .take_while([](const auto& pair) {
+                     auto [x, y] = pair;
+                     return x == y;
+                   })
+                   .count();
 }
 
 TEST(BenchSimdChunks, common_prefix) {
