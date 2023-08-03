@@ -155,32 +155,56 @@ TEST(BenchSimdChunks, common_prefix) {
   auto v1 = sus::Vec<u8>::from(PREFIX1);
   auto v2 = sus::Vec<u8>::from(PREFIX2);
 
+  usize first_result;
+  usize result;
+
+  // These ones run fast.
   b.minEpochIterations(48498);
+
   b.run("common_prefix_unsafe_array_len_pairs", [&]() {
     auto r = common_prefix_unsafe_array_len_pairs(v1.as_ptr(), v1.len(),
                                                   v2.as_ptr(), v2.len());
     ankerl::nanobench::doNotOptimizeAway(r);
+    first_result = r;
   });
   b.run("common_prefix_naive", [&]() {
     auto r = common_prefix_naive(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
+    result = r;
   });
+  EXPECT_EQ(result, first_result);
+
+  // These ones run slow.
   b.minEpochIterations(4468);
+
   b.run("common_prefix_zip", [&]() {
     auto r = common_prefix_zip(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
+    result = r;
   });
+  EXPECT_EQ(result, first_result);
+
   b.run("common_prefix_chunks_exact", [&]() {
     auto r = common_prefix_chunks_exact(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
+    result = r;
   });
+  EXPECT_EQ(result, first_result);
+
   b.run("common_prefix_no_shortcircuit", [&]() {
     auto r = common_prefix_no_shortcircuit(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
+    result = r;
   });
+  EXPECT_EQ(result, first_result);
+
+  // The next one runs fast.
   b.minEpochIterations(48498);
+
   b.run("common_prefix_take_while", [&]() {
     auto r = common_prefix_take_while(v1, v2);
     ankerl::nanobench::doNotOptimizeAway(r);
+    result = r;
   });
+  EXPECT_EQ(result, first_result);
 }
