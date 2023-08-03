@@ -141,7 +141,7 @@ TEST(IterGenerator, ComposeIntoGenerator) {
   };
 
   sus::iter::Iterator<i32> auto it =
-      sus::vec(1, 2, 3, 4).construct<i32>().into_iter().generate(x);
+      sus::Vec<i32>::with(1, 2, 3, 4).into_iter().generate(x);
   EXPECT_EQ(it.next().unwrap(), 2);
   EXPECT_EQ(it.next().unwrap(), 3);
   EXPECT_EQ(it.next(), sus::None);

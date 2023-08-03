@@ -79,6 +79,7 @@ target_sources(subspace PUBLIC
     "fn/fn_box_impl.h"
     "fn/fn_ref.h"
     "iter/__private/into_iterator_archetype.h"
+    "iter/__private/is_generator.h"
     "iter/__private/iter_compare.h"
     "iter/__private/iterator_end.h"
     "iter/__private/iterator_loop.h"

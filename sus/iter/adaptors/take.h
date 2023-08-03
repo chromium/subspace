@@ -34,15 +34,19 @@ class [[nodiscard]] Take final
  public:
   using Item = InnerSizedIter::Item;
 
+  // The type is Move and Clone.
+  Take(Take&&) = default;
+  Take& operator=(Take&&) = default;
+
   // sus::mem::Clone trait.
-  Take clone() const noexcept
+  constexpr Take clone() const noexcept
     requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return Take(n_, ::sus::clone(next_iter_));
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     if (n_ != 0u) {
       n_ -= 1u;
       return next_iter_.next();
@@ -51,7 +55,7 @@ class [[nodiscard]] Take final
     }
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     if (n_ == 0u) {
       return {0u, ::sus::some(0u)};
     }
@@ -67,7 +71,7 @@ class [[nodiscard]] Take final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, Item> &&  //
              ExactSizeIterator<InnerSizedIter, Item>)
   {
@@ -86,7 +90,7 @@ class [[nodiscard]] Take final
   }
 
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept {
+  constexpr usize exact_size_hint() const noexcept {
     return ::sus::ops::min(next_iter_.exact_size_hint(), n_);
   }
 
@@ -94,11 +98,11 @@ class [[nodiscard]] Take final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Take with(usize n, InnerSizedIter&& next_iter) noexcept {
+  static constexpr Take with(usize n, InnerSizedIter&& next_iter) noexcept {
     return Take(n, ::sus::move(next_iter));
   }
 
-  Take(usize n, InnerSizedIter&& next_iter) noexcept
+  constexpr Take(usize n, InnerSizedIter&& next_iter) noexcept
       : n_(n), next_iter_(::sus::move(next_iter)) {}
 
   usize n_;

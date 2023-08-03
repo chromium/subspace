@@ -36,7 +36,7 @@ class [[nodiscard]] Enumerate final
   using Item = ::sus::Tuple<usize, FromItem>;
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<typename InnerSizedIter::Item> item = next_iter_.next();
     if (item.is_none()) {
       return sus::none();
@@ -49,10 +49,12 @@ class [[nodiscard]] Enumerate final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
+  constexpr SizeHint size_hint() const noexcept {
+    return next_iter_.size_hint();
+  }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, FromItem> &&
              ExactSizeIterator<InnerSizedIter, FromItem>)
   {
@@ -70,7 +72,7 @@ class [[nodiscard]] Enumerate final
   }
 
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
+  constexpr usize exact_size_hint() const noexcept
     requires(ExactSizeIterator<InnerSizedIter, FromItem>)
   {
     return next_iter_.exact_size_hint();
@@ -82,11 +84,12 @@ class [[nodiscard]] Enumerate final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Enumerate with(InnerSizedIter&& next_iter) noexcept {
+  static constexpr Enumerate with(InnerSizedIter&& next_iter) noexcept {
     return Enumerate(::sus::move(next_iter));
   }
 
-  Enumerate(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
+  constexpr Enumerate(InnerSizedIter&& next_iter)
+      : next_iter_(::sus::move(next_iter)) {}
 
   usize count_ = 0u;
   InnerSizedIter next_iter_;

@@ -25,8 +25,6 @@
 
 namespace sus::iter {
 
-using ::sus::mem::relocate_by_memcpy;
-
 /// An iterator that holds a reference to another iterator and proxies calls
 /// through to it. Used to create multiple iterators that share underlying
 /// state. The ByRef class must outlive the iterator it refers to.
@@ -39,28 +37,28 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
   using Item = RefIterator::Item;
 
   /// sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return next_iter_->next(); }
+  constexpr Option<Item> next() noexcept { return next_iter_->next(); }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     return next_iter_->size_hint();
   }
 
   /// sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<RefIterator, Item>)
   {
     return next_iter_->next_back();
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
+  constexpr usize exact_size_hint() const noexcept
     requires(ExactSizeIterator<RefIterator, Item>)
   {
     return next_iter_->exact_size_hint();
   }
 
-  ~ByRef() noexcept {
+  constexpr ~ByRef() noexcept {
     // TODO: Drop a refcount on the thing `next_iter_` is iterating on.
   }
 
@@ -68,11 +66,12 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
   template <class U, class V>
   friend class IteratorBase;
 
-  static ByRef with(RefIterator& next_iter sus_lifetimebound) noexcept {
+  static constexpr ByRef with(
+      RefIterator& next_iter sus_lifetimebound) noexcept {
     return ByRef(next_iter);
   }
 
-  ByRef(RefIterator& next_iter sus_lifetimebound) noexcept
+  constexpr ByRef(RefIterator& next_iter sus_lifetimebound) noexcept
       : next_iter_(::sus::mem::addressof(next_iter)) {
     // TODO: Add a refcount on the thing `next_iter_` is iterating on.
   }

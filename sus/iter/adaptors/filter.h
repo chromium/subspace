@@ -28,19 +28,18 @@ using ::sus::mem::relocate_by_memcpy;
 /// An iterator that filters based on a predicate function.
 ///
 /// This type is returned from `Iterator::filter()`.
-template <class InnerSizedIter>
+template <class InnerSizedIter, class Pred>
 class [[nodiscard]] Filter final
-    : public IteratorBase<Filter<InnerSizedIter>,
+    : public IteratorBase<Filter<InnerSizedIter, Pred>,
                           typename InnerSizedIter::Item> {
-  using Pred = ::sus::fn::FnMutBox<bool(
-      // TODO: write a sus::const_ref<T>?
-      const std::remove_reference_t<typename InnerSizedIter::Item>&)>;
-
  public:
   using Item = InnerSizedIter::Item;
 
+  static_assert(
+      ::sus::fn::FnMut<Pred, bool(const std::remove_reference_t<Item>&)>);
+
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     while (true) {
       Option<Item> item = next_iter_.next();
       if (item.is_none() || ::sus::fn::call_mut(pred_, item.as_value()))
@@ -48,13 +47,13 @@ class [[nodiscard]] Filter final
     }
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     // Can't know a lower bound, due to the predicate.
     return SizeHint(0u, next_iter_.size_hint().upper);
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, Item>)
   {
     // TODO: Just call find(pred) on itself?
@@ -69,11 +68,12 @@ class [[nodiscard]] Filter final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Filter with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
+  static constexpr Filter with(Pred&& pred,
+                               InnerSizedIter&& next_iter) noexcept {
     return Filter(::sus::move(pred), ::sus::move(next_iter));
   }
 
-  Filter(Pred&& pred, InnerSizedIter&& next_iter) noexcept
+  constexpr Filter(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(::sus::move(pred)), next_iter_(::sus::move(next_iter)) {}
 
   Pred pred_;

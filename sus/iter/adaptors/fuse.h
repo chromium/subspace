@@ -36,7 +36,7 @@ class [[nodiscard]] Fuse final
   using Item = InnerIter::Item;
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> o;
     if (iter_.is_some()) {
       o = iter_.as_value_mut().next();
@@ -53,7 +53,7 @@ class [[nodiscard]] Fuse final
     //     });
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     if (iter_.is_some())
       return iter_.as_value().size_hint();
     else
@@ -61,7 +61,7 @@ class [[nodiscard]] Fuse final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerIter, Item>)
   {
     Option<Item> o;
@@ -76,11 +76,11 @@ class [[nodiscard]] Fuse final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Fuse with(InnerIter&& iter) noexcept {
+  static constexpr Fuse with(InnerIter&& iter) noexcept {
     return Fuse(::sus::move(iter));
   }
 
-  Fuse(InnerIter&& iter) noexcept
+  constexpr Fuse(InnerIter&& iter) noexcept
       : iter_(::sus::Option<InnerIter>::with(::sus::move(iter))) {}
 
   ::sus::Option<InnerIter> iter_;

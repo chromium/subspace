@@ -25,12 +25,13 @@ namespace sus::iter::__private {
 /// [`partial_cmp_by`](sus::iter::IteratorBase::partial_cmp_by), and
 /// [`weak_cmp_by`](sus::iter::IteratorBase::weak_cmp_by).
 template <class Ordering, class ItemA, class ItemB>
-inline Ordering iter_compare(
+constexpr inline Ordering iter_compare(
     ::sus::iter::Iterator<ItemA> auto&& a,
     ::sus::iter::Iterator<ItemB> auto&& b,
     ::sus::fn::FnMut<Ordering(const std::remove_reference_t<ItemA>&,
-                              const std::remove_reference_t<ItemB>&)> auto&&
-        f) {
+                              const std::remove_reference_t<ItemB>&)> auto&& f)
+  requires(sus::mem::IsMoveRef<decltype(f)>)
+{
   Ordering value = Ordering::equivalent;
   while (true) {
     ::sus::Option<ItemA> item_a = a.next();
@@ -53,11 +54,13 @@ inline Ordering iter_compare(
 
 /// Compares two iterators for equality element-wise using the given function.
 template <class ItemA, class ItemB>
-inline bool iter_compare_eq(
+constexpr inline bool iter_compare_eq(
     ::sus::iter::Iterator<ItemA> auto&& a,
     ::sus::iter::Iterator<ItemB> auto&& b,
     ::sus::fn::FnMut<bool(const std::remove_reference_t<ItemA>&,
-                          const std::remove_reference_t<ItemB>&)> auto&& f) {
+                          const std::remove_reference_t<ItemB>&)> auto&& f)
+  requires(sus::mem::IsMoveRef<decltype(f)>)
+{
   bool value = true;
   while (true) {
     ::sus::Option<ItemA> item_a = a.next();

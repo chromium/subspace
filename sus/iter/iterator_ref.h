@@ -79,10 +79,10 @@ struct [[sus_trivial_abi]] IterRef final {
 /// outstanding references.
 struct [[sus_trivial_abi]] IterRefCounter final {
   static constexpr IterRefCounter for_owner() noexcept {
-    return IterRefCounter(0_usize);
+    return IterRefCounter(FOR_OWNER, 0_usize);
   }
   static constexpr IterRefCounter empty_for_view() noexcept {
-    return IterRefCounter(nullptr);
+    return IterRefCounter(FOR_VIEW, nullptr);
   }
 
   /// Only valid to be called on owning containers such as Vec.
@@ -96,12 +96,12 @@ struct [[sus_trivial_abi]] IterRefCounter final {
 
   /// Only valid to be called on owning containers such as Vec.
   constexpr IterRefCounter to_view_from_owner() const noexcept {
-    return IterRefCounter(&count);
+    return IterRefCounter(FOR_VIEW, &count);
   }
   /// Only valid to be called on non-owning views such as Slice.
   constexpr IterRefCounter to_view_from_view() const noexcept {
     // Clone of a view points to the same owner.
-    return IterRefCounter(count_ptr);
+    return IterRefCounter(FOR_VIEW, count_ptr);
   }
 
   /// Only valid to be called on owning containers such as Vec.
@@ -112,20 +112,22 @@ struct [[sus_trivial_abi]] IterRefCounter final {
   ///
   /// Only valid to be called on owning containers such as Vec.
   constexpr IterRefCounter take_for_owner() & noexcept {
-    return IterRefCounter(::sus::mem::replace(count, 0u));
+    return IterRefCounter(FOR_OWNER, ::sus::mem::replace(count, 0u));
   }
   /// Resets self to no pointer to a ref count, returning a new IterRefCounter
   /// containing the old pointetr.
   ///
   constexpr IterRefCounter take_for_view() & noexcept {
-    return IterRefCounter(::sus::mem::replace(count_ptr, nullptr));
+    return IterRefCounter(FOR_VIEW, ::sus::mem::replace(count_ptr, nullptr));
   }
 
  private:
   friend struct IterRef;  // IterRef can re-construct IterRefCounter.
 
-  constexpr IterRefCounter(usize count) noexcept : count(count) {}
-  constexpr IterRefCounter(usize* ptr) noexcept : count_ptr(ptr) {}
+  enum ForOwner { FOR_OWNER };
+  constexpr IterRefCounter(ForOwner, usize count) noexcept : count(count) {}
+  enum ForView { FOR_VIEW };
+  constexpr IterRefCounter(ForView, usize* ptr) noexcept : count_ptr(ptr) {}
 
   union {
     /// The `count` member is active in owning containers like `Vec`.
@@ -142,7 +144,7 @@ struct [[sus_trivial_abi]] IterRefCounter final {
 };
 
 constexpr IterRefCounter IterRef::to_view() const noexcept {
-  return IterRefCounter(count_ptr_);
+  return IterRefCounter(IterRefCounter::FOR_VIEW, count_ptr_);
 }
 
 #else

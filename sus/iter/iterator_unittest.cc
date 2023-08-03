@@ -71,7 +71,7 @@ static_assert(sus::iter::IntoIterator<
 static_assert(
   ::sus::iter::Iterator<sus::iter::Empty<int>, int>);
 static_assert(
-  sus::iter::Iterator<sus::iter::Filter<sus::iter::Empty<int>>, int>);
+  sus::iter::Iterator<sus::iter::Filter<sus::iter::Empty<int>, decltype([](int){return true;})>, int>);
 static_assert(
   sus::iter::Iterator<sus::iter::Map<int, sus::iter::Empty<int>>, int>);
 static_assert(
@@ -213,6 +213,9 @@ TEST(Iterator, All) {
     auto it = EmptyIterator<int>();
     EXPECT_TRUE(it.all([](int) { return false; }));
   }
+
+  static_assert(sus::Array<i32, 3>::with(2, 3, 4).into_iter().all(
+                    [](auto i) { return i <= 4; }) == true);
 }
 
 TEST(Iterator, Any) {
@@ -248,6 +251,9 @@ TEST(Iterator, Any) {
     auto it = EmptyIterator<int>();
     EXPECT_FALSE(it.any([](int) { return false; }));
   }
+
+  static_assert(sus::Array<i32, 3>::with(2, 3, 4).into_iter().any(
+                    [](auto i) { return i > 4; }) == false);
 }
 
 TEST(Iterator, Count) {
@@ -298,6 +304,11 @@ TEST(Iterator, Filter) {
     expect += 1;
   }
   EXPECT_EQ(expect, 5);
+
+  static_assert(sus::Vec<i32>::with(2, 3, 4, 5, 6)
+                    .into_iter()
+                    .filter([](i32 i) { return i >= 3 && i <= 5; })
+                    .sum() == 3 + 4 + 5);
 }
 
 TEST(Iterator, FilterMap) {
@@ -312,6 +323,16 @@ TEST(Iterator, FilterMap) {
   static_assert(std::same_as<decltype(fmit.next()), sus::Option<u32>>);
 
   EXPECT_EQ(fmit.size_hint(), sus::iter::SizeHint(0u, sus::some(5_usize)));
+
+  static_assert(sus::Vec<i32>::with(2, 3, 4, 5, 6)
+                    .into_iter()
+                    .filter_map([](i32 i) -> Option<u32> {
+                      if (i >= 3 && i <= 5)
+                        return sus::some(sus::mog<u32>(i));
+                      else
+                        return sus::none();
+                    })
+                    .sum() == 3u + 4u + 5u);
 }
 
 TEST(Iterator, FilterDoubleEnded) {
@@ -497,6 +518,18 @@ TEST(Iterator, Enumerate) {
   for (auto [i, value] : vec.iter().rev().enumerate()) {
     EXPECT_EQ((4u - i) * 2u, usize::try_from(value).unwrap());
   }
+
+  static_assert(
+      sus::Vec<i32>::with(2, 3, 4)
+          .into_iter()
+          .enumerate()
+          // Create an iterator over the enumerate indices, to sum it.
+          .unzip<sus::Vec<usize>, sus::Vec<i32>>()
+          // Grabs the iterator over indices, discards the vector values.
+          .into_inner<0>()
+          .into_iter()
+          // Sum the indices.
+          .sum() == 0u + 1u + 2u);
 }
 
 TEST(Iterator, ByRef) {
@@ -527,6 +560,11 @@ TEST(Iterator, ByRef) {
     EXPECT_EQ(it.next().unwrap(), 3);
     EXPECT_EQ(it.next(), sus::None);
   }
+
+  static_assert([]() {
+    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter();
+    return it.by_ref().any([](auto i) { return i >= 4; });
+  }() == true);
 }
 
 TEST(Iterator, Chain) {
@@ -560,6 +598,13 @@ TEST(Iterator, Chain) {
     EXPECT_EQ(c.size_hint().lower, 0u);
     EXPECT_EQ(*c.size_hint().upper, 0u);
   }
+
+  static_assert(sus::Vec<i32>::with(2, 3, 4).len() == 3u);
+
+  static_assert(sus::Vec<i32>::with(2, 3, 4)
+                    .into_iter()
+                    .chain(sus::Vec<i32>::with(5, 6))
+                    .count() == 5u);
 }
 
 TEST(Iterator, ChainFromIterator) {
@@ -1107,6 +1152,9 @@ TEST(Iterator, Eq) {
     auto two = sus::Vec<i64>::with(1, 2);
     EXPECT_EQ(true, one.iter().eq(two.iter()));
   }
+
+  static_assert(sus::Vec<i32>::with(2, 3, 4).into_iter().eq(
+      sus::Array<i32, 3>::with(2, 3, 4)));
 }
 
 TEST(Iterator, EqBy) {
@@ -1177,6 +1225,10 @@ TEST(Iterator, EqBy) {
                 return a + 1 == b;
               }));
   }
+
+  static_assert(sus::Vec<i32>::with(2, 3, 4).into_iter().eq_by(
+      sus::Array<i32, 3>::with(1, 2, 3),
+      [](i32 a, i32 b) { return a == b + 1; }));
 }
 
 struct UnknownLimitIter final
@@ -1238,6 +1290,10 @@ TEST(Iterator, Cycle) {
     // May return 0 or unlimited.
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::none()));
   }
+
+  static_assert(
+      sus::Vec<i32>::with(2, 3, 4).into_iter().cycle().take(32u).count() ==
+      32u);
 }
 
 TEST(Iterator, Find) {
@@ -1290,6 +1346,12 @@ TEST(Iterator, Find) {
     EXPECT_EQ(it.find([](i32 i) { return i % 2 == 1; }).unwrap(), 1);
     EXPECT_EQ(it.find([](i32 i) { return i % 2 == 1; }).unwrap(), 3);
   }
+
+  static_assert(sus::Vec<i32>::with(2, 3, 4, 3, 2)
+                    .into_iter()
+                    .enumerate()
+                    .find([](auto p) { return p.template at<1>() == 3; })
+                    .unwrap() == sus::Tuple<usize, i32>::with(1u, 3));
 }
 
 TEST(Iterator, FindMap) {
@@ -1366,6 +1428,26 @@ TEST(Iterator, FindMap) {
     auto r3 = it.find_map(find_even);
     EXPECT_EQ(r3, sus::none());
   }
+
+  static_assert(sus::Vec<i32>::with(2, 3, 4, 3, 2)
+                    .into_iter()
+                    .enumerate()
+                    .find_map([](auto p) -> sus::Option<u32> {
+                      if (p.template at<1>() == 3) {
+                        return sus::some(101u);
+                      } else {
+                        return sus::none();
+                      }
+                    }) == sus::some(101u));
+  static_assert(sus::Vec<i32>::with(2, 3, 4, 3, 2)
+                    .into_iter()
+                    .find_map([](i32 i) -> sus::Option<u32> {
+                      if (i == 99) {
+                        return sus::some(101u);
+                      } else {
+                        return sus::none();
+                      }
+                    }) == sus::none());
 }
 
 TEST(Iterator, Flatten) {
@@ -1513,6 +1595,14 @@ TEST(Iterator, Flatten) {
     EXPECT_EQ(it.next().unwrap(), 3);
     EXPECT_EQ(it.next(), sus::None);
   }
+
+  static_assert(sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2, 3),  //
+                                         sus::Vec<i32>::with(4),        //
+                                         sus::Vec<i32>::with(),         //
+                                         sus::Vec<i32>::with(5, 6))
+                    .into_iter()
+                    .flatten()
+                    .sum() == 1 + 2 + 3 + 4 + 5 + 6);
 }
 
 TEST(Iterator, FlatMap) {
@@ -1664,6 +1754,12 @@ TEST(Iterator, FlatMap) {
       EXPECT_EQ(moves, 0u);
     }
   }
+
+  static_assert(
+      sus::Vec<i32>::with(2, 3, 4)
+          .into_iter()
+          .flat_map([](i32 i) { return sus::Vec<i32>::with(i, i + 1, i + 2); })
+          .sum() == (2 + 3 + 4) + (3 + 4 + 5) + (4 + 5 + 6));
 }
 
 TEST(Iterator, Fold) {
@@ -1687,6 +1783,13 @@ TEST(Iterator, Fold) {
     static_assert(std::same_as<i32, decltype(o)>);
     EXPECT_EQ(o, (5 - (4 - (3 - (2 - (1 - 10))))));
   }
+
+  static_assert(sus::Array<char, 5>::with('a', 'b', 'c', 'd', 'e')
+                    .into_iter()
+                    .fold(std::string(), [](std::string acc, char v) {
+                      acc.push_back(v);
+                      return acc;
+                    }) == "abcde");
 }
 
 TEST(Iterator, Fold_Example_References) {
@@ -1718,6 +1821,13 @@ TEST(Iterator, Rfold) {
     static_assert(std::same_as<i32, decltype(o)>);
     EXPECT_EQ(o, (1 - (2 - (3 - (4 - (5 - 10))))));
   }
+
+  static_assert(sus::Array<char, 5>::with('a', 'b', 'c', 'd', 'e')
+                    .into_iter()
+                    .rfold(std::string(), [](std::string acc, char v) {
+                      acc.push_back(v);
+                      return acc;
+                    }) == "edcba");
 }
 
 TEST(Iterator, ForEach) {
@@ -1745,16 +1855,24 @@ TEST(Iterator, ForEach) {
         .for_each([&seen](Movable m) { seen.push(m.i); });
     EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2}));
   }
+
+  static_assert([]() {
+    std::string acc;
+    sus::Array<char, 5>::with('a', 'b', 'c', 'd', 'e')
+        .into_iter()
+        .for_each([&](char v) { acc.push_back(v); });
+    return acc;
+  }() == "abcde");
 }
 
 TEST(Iterator, Fuse) {
   struct Alternate final : public IteratorBase<Alternate, i32> {
     using Item = i32;
-    Option<Item> next() noexcept {
+    constexpr Option<Item> next() noexcept {
       state_ += 1;
       return state_ % 2 == 1 ? Option<Item>::with(state_) : Option<Item>();
     }
-    sus::iter::SizeHint size_hint() const noexcept {
+    constexpr sus::iter::SizeHint size_hint() const noexcept {
       return {state_ % 2 == 0 ? 1u : 0u, sus::none()};
     }
 
@@ -1799,6 +1917,8 @@ TEST(Iterator, Fuse) {
   EXPECT_EQ(b.next_back(), sus::some(1_i32));
   EXPECT_EQ(b.next_back(), sus::none());
   EXPECT_EQ(b.next(), sus::none());
+
+  static_assert(Alternate().fuse().count() == 1u);
 }
 
 TEST(Iterator, Ge) {
@@ -1827,6 +1947,9 @@ TEST(Iterator, Ge) {
     auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).ge(sus::move(it2)));
   }
+
+  static_assert(sus::Vec<i32>::with(2, 4, 4).into_iter().ge(
+      sus::Array<i32, 3>::with(2, 3, 4)));
 }
 
 TEST(Iterator, Gt) {
@@ -1855,6 +1978,9 @@ TEST(Iterator, Gt) {
     auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
   }
+
+  static_assert(sus::Vec<i32>::with(2, 4, 4).into_iter().gt(
+      sus::Array<i32, 3>::with(2, 3, 4)));
 }
 
 TEST(Iterator, Le) {
@@ -1883,6 +2009,9 @@ TEST(Iterator, Le) {
     auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).le(sus::move(it2)));
   }
+
+  static_assert(sus::Vec<i32>::with(2, 2, 4).into_iter().le(
+      sus::Array<i32, 3>::with(2, 3, 4)));
 }
 
 TEST(Iterator, Lt) {
@@ -1911,6 +2040,9 @@ TEST(Iterator, Lt) {
     auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
   }
+
+  static_assert(sus::Vec<i32>::with(2, 2, 4).into_iter().lt(
+      sus::Array<i32, 3>::with(2, 3, 4)));
 }
 
 TEST(Iterator, Inspect) {
@@ -1972,6 +2104,15 @@ TEST(Iterator, Inspect) {
     EXPECT_EQ(it.next(), sus::none());
     EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2, 3, 4, 5}));
   }
+
+  static_assert([]() {
+    sus::Vec<i32> seen;
+    sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+        .into_iter()
+        .inspect([&](const i32& v) { seen.push(v); })
+        .count();
+    return seen;
+  }() == sus::Vec<i32>::with(1, 2, 3, 4, 5));
 }
 
 TEST(Iterator, Last) {
@@ -1997,6 +2138,10 @@ TEST(Iterator, Last) {
     static_assert(std::same_as<decltype(s), Option<const i32&>>);
     EXPECT_EQ(s.as_value(), 5);
   }
+
+  static_assert(sus::Array<i32, 0>::with().into_iter().last() == sus::none());
+  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().last() ==
+                sus::some(5));
 }
 
 TEST(Iterator, Max) {
@@ -2573,6 +2718,12 @@ TEST(Iterator, Rfind) {
     EXPECT_EQ(it.rfind([](i32 i) { return i % 2 == 1; }).unwrap(), 5);
     EXPECT_EQ(it.rfind([](i32 i) { return i % 2 == 1; }).unwrap(), 3);
   }
+
+  static_assert(sus::Vec<i32>::with(2, 5, 4, 5, 2)
+                    .into_iter()
+                    .enumerate()
+                    .rfind([](auto p) { return p.template at<1>() == 5; })
+                    .unwrap() == sus::Tuple<usize, i32>::with(3u, 5));
 }
 
 struct Extendable {
@@ -3849,6 +4000,13 @@ TEST(Iterator, IsSorted) {
                 .into_iter()
                 .is_sorted(),
             false);
+
+  static_assert(sus::Slice<i32>::from({1, 2, 3, 4, 4, 4, 5, 5, 6})
+                    .into_iter()
+                    .is_sorted() == true);
+  static_assert(sus::Slice<i32>::from({1, 3, 4, 4, 4, 2, 5, 5, 6})
+                    .into_iter()
+                    .is_sorted() == false);
 }
 
 TEST(Iterator, IsSortedBy) {
@@ -3879,6 +4037,13 @@ TEST(Iterator, IsSortedBy) {
                 .into_iter()
                 .is_sorted_by(cmp),
             false);
+
+  static_assert(
+      sus::Slice<f32>::from({1.f, 2.f, 3.f}).into_iter().is_sorted_by(cmp) ==
+      true);
+  static_assert(
+      sus::Slice<f32>::from({1.f, 3.f, 2.f}).into_iter().is_sorted_by(cmp) ==
+      false);
 }
 
 }  // namespace

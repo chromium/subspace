@@ -27,35 +27,41 @@ namespace sus::iter {
 /// yielding it.
 ///
 /// This type is returned from `Iterator::inspect()`.
-template <class InnerSizedIter>
+template <class InnerSizedIter, class InspectFn>
 class [[nodiscard]] Inspect final
-    : public IteratorBase<Inspect<InnerSizedIter>,
+    : public IteratorBase<Inspect<InnerSizedIter, InspectFn>,
                           typename InnerSizedIter::Item> {
-  using InspectFn = ::sus::fn::FnMutBox<void(
-      const std::remove_reference_t<typename InnerSizedIter::Item>&)>;
-
  public:
   using Item = typename InnerSizedIter::Item;
 
+  static_assert(
+      ::sus::fn::FnMut<InspectFn, void(const std::remove_reference_t<Item>&)>);
+
+  // Type is Move and (can be) Clone.
+  Inspect(Inspect&&) = default;
+  Inspect& operator=(Inspect&&) = default;
+
   // sus::mem::Clone trait.
-  Inspect clone() noexcept
+  constexpr Inspect clone() noexcept
     requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return Inspect(::sus::clone(inspect_), ::sus::clone(next_iter_));
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> item = next_iter_.next();
     if (item.is_some()) ::sus::fn::call_mut(inspect_, item.as_value());
     return item;
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
+  constexpr SizeHint size_hint() const noexcept {
+    return next_iter_.size_hint();
+  }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, Item>)
   {
     Option<Item> item = next_iter_.next_back();
@@ -64,7 +70,7 @@ class [[nodiscard]] Inspect final
   }
 
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
+  constexpr usize exact_size_hint() const noexcept
     requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     return next_iter_.exact_size_hint();
@@ -74,11 +80,12 @@ class [[nodiscard]] Inspect final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Inspect with(InspectFn fn, InnerSizedIter&& next_iter) noexcept {
+  static constexpr Inspect with(InspectFn fn,
+                                InnerSizedIter&& next_iter) noexcept {
     return Inspect(::sus::move(fn), ::sus::move(next_iter));
   }
 
-  Inspect(InspectFn&& fn, InnerSizedIter&& next_iter)
+  constexpr Inspect(InspectFn&& fn, InnerSizedIter&& next_iter)
       : inspect_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   InspectFn inspect_;
