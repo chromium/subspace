@@ -7,6 +7,8 @@
 #   Default: false
 # * TESTS=[true|false] to build tests.
 #   Default: true
+# * BENCHMARKS=[true|false] to build benchmarks.
+#   Default: true
 #
 # Requires LLVM:
 # * SUBDOC=[true|false] to build subdoc. This requires an LLVM installation.
@@ -30,6 +32,7 @@
 # Defaults.
 if [[ $USE_DEBUG == "" ]]; then USE_DEBUG=false; fi
 if [[ $TESTS == "" ]]; then TESTS=true; fi
+if [[ $BENCHMARKS == "" ]]; then BENCHMARKS=true; fi
 if [[ $SUBDOC == "" ]]; then SUBDOC=false; fi
 if [[ $LLVM_ROOT == "" ]]; then LLVM_ROOT=$HOME/s/llvm/install; fi
 if [[ $USE_ASAN == "" ]]; then USE_ASAN=false; fi
@@ -62,6 +65,11 @@ if [[ $TESTS == true ]]; then
 else
     SUBSPACE_BUILD_TESTS=OFF
 fi
+if [[ $BENCHMARKS == true ]]; then
+    SUBSPACE_BUILD_BENCHMARKS=ON
+else
+    SUBSPACE_BUILD_BENCHMARKS=OFF
+fi
 
 function set_env() {
     echo Set env: "$@"
@@ -89,6 +97,7 @@ set_env Clang_DIR="$LLVM_ROOT/lib/cmake/clang"
 run cmake -B out \
         -DSUBSPACE_BUILD_TESTS=$SUBSPACE_BUILD_TESTS \
         -DSUBSPACE_BUILD_SUBDOC=$SUBSPACE_BUILD_SUBDOC \
+        -DSUBSPACE_BUILD_BENCHMARKS=$SUBSPACE_BUILD_BENCHMARKS \
         -G Ninja \
         -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
         -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
