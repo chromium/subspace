@@ -20,4 +20,3 @@ subspace_test_default_compile_options(bench)
 target_link_libraries(bench
     subspace::lib
     nanobench)
-gtest_discover_tests(bench)

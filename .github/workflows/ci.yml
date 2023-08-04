@@ -226,7 +226,7 @@ jobs:
           ProcessorCount(N)
 
           execute_process(
-            COMMAND ctest -j ${N} --rerun-failed --output-on-failure -E ^Bench.*
+            COMMAND ctest -j ${N} --rerun-failed --output-on-failure
             WORKING_DIRECTORY out
             RESULT_VARIABLE result
           )
