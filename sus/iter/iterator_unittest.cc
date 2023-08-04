@@ -1786,10 +1786,10 @@ TEST(Iterator, Fold) {
 
   static_assert(sus::Array<char, 5>::with('a', 'b', 'c', 'd', 'e')
                     .into_iter()
-                    .fold(std::string(), [](std::string acc, char v) {
-                      acc.push_back(v);
+                    .fold(sus::Vec<char>(), [](sus::Vec<char> acc, char v) {
+                      acc.push(v);
                       return acc;
-                    }) == "abcde");
+                    }) == sus::vec('a', 'b', 'c', 'd', 'e'));
 }
 
 TEST(Iterator, Fold_Example_References) {
@@ -1824,10 +1824,10 @@ TEST(Iterator, Rfold) {
 
   static_assert(sus::Array<char, 5>::with('a', 'b', 'c', 'd', 'e')
                     .into_iter()
-                    .rfold(std::string(), [](std::string acc, char v) {
-                      acc.push_back(v);
+                    .rfold(sus::Vec<char>(), [](sus::Vec<char> acc, char v) {
+                      acc.push(v);
                       return acc;
-                    }) == "edcba");
+                    }) == sus::vec('e', 'd', 'c', 'b', 'a'));
 }
 
 TEST(Iterator, ForEach) {
@@ -1857,12 +1857,12 @@ TEST(Iterator, ForEach) {
   }
 
   static_assert([]() {
-    std::string acc;
+    sus::Vec<char> acc;
     sus::Array<char, 5>::with('a', 'b', 'c', 'd', 'e')
         .into_iter()
-        .for_each([&](char v) { acc.push_back(v); });
+        .for_each([&](char v) { acc.push(v); });
     return acc;
-  }() == "abcde");
+  }() == sus::vec('a', 'b', 'c', 'd', 'e'));
 }
 
 TEST(Iterator, Fuse) {
@@ -2112,7 +2112,7 @@ TEST(Iterator, Inspect) {
         .inspect([&](const i32& v) { seen.push(v); })
         .count();
     return seen;
-  }() == sus::Vec<i32>::with(1, 2, 3, 4, 5));
+  }() == sus::vec(1, 2, 3, 4, 5));
 }
 
 TEST(Iterator, Last) {
