@@ -22,7 +22,6 @@
 #include "sus/mem/copy.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
-#include "sus/mem/size_of.h"
 
 namespace sus::mem {
 
