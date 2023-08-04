@@ -15,6 +15,7 @@
 #pragma once
 
 #include "sus/iter/iterator_defn.h"
+#include "sus/iter/size_hint.h"
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 

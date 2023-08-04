@@ -1227,7 +1227,7 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(Item&&)> F, int&..., class R,
 constexpr Iterator<InnerR> auto IteratorBase<Iter, Item>::flat_map(
     F fn) && noexcept {
   using Flatten = FlatMap<R, Iter, F>;
-  return Flatten::with(::sus::move_into(fn), static_cast<Iter&&>(*this));
+  return Flatten::with(::sus::move(fn), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1309,7 +1309,7 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::inspect(
     ::sus::fn::FnMut<void(const std::remove_reference_t<Item>&)> auto
         fn) && noexcept {
   using Inspect = Inspect<Iter, decltype(fn)>;
-  return Inspect::with(::sus::move_into(fn), static_cast<Iter&&>(*this));
+  return Inspect::with(::sus::move(fn), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>

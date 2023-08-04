@@ -26,6 +26,7 @@
 #include "sus/marker/unsafe.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/move.h"
+#include "sus/mem/relocate.h"
 #include "sus/num/unsigned_integer.h"
 
 namespace sus::containers {
