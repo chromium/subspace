@@ -1596,13 +1596,15 @@ TEST(Iterator, Flatten) {
     EXPECT_EQ(it.next(), sus::None);
   }
 
-  static_assert(sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2, 3),  //
-                                         sus::Vec<i32>::with(4),        //
-                                         sus::Vec<i32>::with(),         //
-                                         sus::Vec<i32>::with(5, 6))
-                    .into_iter()
-                    .flatten()
-                    .sum() == 1 + 2 + 3 + 4 + 5 + 6);
+  sus_gcc_bug_110905_else(                                                  //
+      static_assert(sus::Vec<Vec<i32>>::with(sus::Vec<i32>::with(1, 2, 3),  //
+                                             sus::Vec<i32>::with(4),        //
+                                             sus::Vec<i32>::with(),         //
+                                             sus::Vec<i32>::with(5, 6))
+                        .into_iter()
+                        .flatten()
+                        .sum() == 1 + 2 + 3 + 4 + 5 + 6)  //
+  );
 }
 
 TEST(Iterator, FlatMap) {
@@ -1755,11 +1757,14 @@ TEST(Iterator, FlatMap) {
     }
   }
 
-  static_assert(
-      sus::Vec<i32>::with(2, 3, 4)
-          .into_iter()
-          .flat_map([](i32 i) { return sus::Vec<i32>::with(i, i + 1, i + 2); })
-          .sum() == (2 + 3 + 4) + (3 + 4 + 5) + (4 + 5 + 6));
+  sus_gcc_bug_110905_else(  //
+      static_assert(sus::Vec<i32>::with(2, 3, 4)
+                        .into_iter()
+                        .flat_map([](i32 i) {
+                          return sus::Vec<i32>::with(i, i + 1, i + 2);
+                        })
+                        .sum() == (2 + 3 + 4) + (3 + 4 + 5) + (4 + 5 + 6))  //
+  );
 }
 
 TEST(Iterator, Fold) {
