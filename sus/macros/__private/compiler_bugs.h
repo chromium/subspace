@@ -126,3 +126,13 @@
 #define sus_msvc_bug_10416202(...)
 #define sus_msvc_bug_10416202_else(...) __VA_ARGS__
 #endif
+
+// TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110905
+// GCC can't constant-evaluate code that sets an Option multiple times.
+#if defined(__GNUC__) && __GNUC__ > 0  // TODO: Update when the bug is fixed.
+#define sus_gcc_bug_110905(...) __VA_ARGS__
+#define sus_gcc_bug_110905_else(...)
+#else
+#define sus_gcc_bug_110905(...)
+#define sus_gcc_bug_110905_else(...) __VA_ARGS__
+#endif
