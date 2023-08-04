@@ -68,21 +68,13 @@ concept PrimitiveInteger =
 template <class T>
 concept UnsignedPrimitiveEnum =
     std::is_enum_v<T> && UnsignedPrimitiveInteger<std::underlying_type_t<T>> &&
-    requires(T t) {
-      {
-        [](std::underlying_type_t<T>) {}(t)
-      };
-    };
+    std::is_convertible_v<T, std::underlying_type_t<T>>;
 
 /// Enum types that are backed by a signed value, excluding `enum class` types.
 template <class T>
 concept SignedPrimitiveEnum =
     std::is_enum_v<T> && SignedPrimitiveInteger<std::underlying_type_t<T>> &&
-    requires(T t) {
-      {
-        [](std::underlying_type_t<T>) {}(t)
-      };
-    };
+    std::is_convertible_v<T, std::underlying_type_t<T>>;
 
 /// Enum types that are backed by a signed or unsigned value, excluding `enum
 /// class` types.
