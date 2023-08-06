@@ -458,7 +458,7 @@ struct Database {
 
   bool has_any_comments() const noexcept { return global.has_any_comments(); }
 
-  sus::Result</* TODO: void */ int, std::string> resolve_inherited_comments() {
+  sus::Result<void, std::string> resolve_inherited_comments() {
     sus::Vec<Comment*> to_resolve;
     {
       sus::Vec<Comment*>* to_resolve_ptr = &to_resolve;
@@ -610,7 +610,7 @@ struct Database {
       to_resolve = sus::move(remaining);
     }
 
-    return sus::ok(0);
+    return sus::ok();
   }
 
   sus::Option<const TypeElement&> find_type(clang::QualType qual) {
