@@ -25,8 +25,6 @@
 
 namespace sus::iter {
 
-using ::sus::mem::relocate_by_memcpy;
-
 /// An iterator that iterates over another iterator but in reverse.
 ///
 /// The iterator wrapped by Reverse must be a DoubleEndedIterator.
@@ -43,13 +41,13 @@ class [[nodiscard]] Reverse final
   using Item = InnerSizedIter::Item;
 
   /// sus::iter::Iterator trait.
-  Option<Item> next() noexcept { return next_iter_.next_back(); }
+  constexpr Option<Item> next() noexcept { return next_iter_.next_back(); }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
+  constexpr SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
   /// sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept { return next_iter_.next(); }
+  constexpr Option<Item> next_back() noexcept { return next_iter_.next(); }
   /// sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
+  constexpr usize exact_size_hint() const noexcept
     requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     return next_iter_.exact_size_hint();
@@ -59,11 +57,11 @@ class [[nodiscard]] Reverse final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Reverse with(InnerSizedIter&& next_iter) noexcept {
+  static constexpr Reverse with(InnerSizedIter&& next_iter) noexcept {
     return Reverse(::sus::move(next_iter));
   }
 
-  Reverse(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
+  constexpr Reverse(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
 
   InnerSizedIter next_iter_;
 

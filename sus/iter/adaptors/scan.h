@@ -28,19 +28,24 @@ using ::sus::mem::relocate_by_memcpy;
 /// An iterator to maintain state while iterating another iterator.
 ///
 /// This type is returned from `Iterator::scan()`.
-template <class OutType, class State, class InnerSizedIter>
-  requires(!std::is_reference_v<State>)
+template <class OutType, class State, class InnerSizedIter, class Fn>
 class [[nodiscard]] Scan final
-    : public IteratorBase<Scan<OutType, State, InnerSizedIter>, OutType> {
-  using Fn = ::sus::fn::FnMutBox<Option<OutType>(
-      State&, typename InnerSizedIter::Item&&)>;
+    : public IteratorBase<Scan<OutType, State, InnerSizedIter, Fn>, OutType> {
+  static_assert(!std::is_reference_v<State>);
+  static_assert(::sus::fn::FnMut<
+                Fn, Option<OutType>(State&, typename InnerSizedIter::Item&&)>);
 
  public:
   using Item = OutType;
 
+  // The type is Move and (can be) Clone.
+  Scan(Scan&&) = default;
+  Scan& operator=(Scan&&) = default;
+
   // sus::mem::Clone trait.
-  Scan clone() const noexcept
+  constexpr Scan clone() const noexcept
     requires(::sus::mem::Clone<State> &&  //
+             ::sus::mem::Clone<Fn> && //
              ::sus::mem::Clone<InnerSizedIter>)
   {
     return Scan(::sus::clone(state_), ::sus::clone(fn_),
@@ -48,7 +53,7 @@ class [[nodiscard]] Scan final
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> out;
     if (Option<typename InnerSizedIter::Item> o = next_iter_.next();
         o.is_some()) {
@@ -59,7 +64,7 @@ class [[nodiscard]] Scan final
     return out;
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     // Can't know a lower bound, due to the function returning None at any time.
     return SizeHint(0u, next_iter_.size_hint().upper);
   }
@@ -68,12 +73,12 @@ class [[nodiscard]] Scan final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Scan with(State&& state, Fn&& fn,
-                   InnerSizedIter&& next_iter) noexcept {
+  static constexpr Scan with(State&& state, Fn&& fn,
+                             InnerSizedIter&& next_iter) noexcept {
     return Scan(::sus::move(state), ::sus::move(fn), ::sus::move(next_iter));
   }
 
-  Scan(State&& state, Fn&& fn, InnerSizedIter&& next_iter) noexcept
+  constexpr Scan(State&& state, Fn&& fn, InnerSizedIter&& next_iter) noexcept
       : state_(::sus::move(state)),
         fn_(::sus::move(fn)),
         next_iter_(::sus::move(next_iter)) {}

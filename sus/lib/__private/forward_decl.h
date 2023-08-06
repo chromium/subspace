@@ -113,20 +113,19 @@ template <class Item>
 class Generator;
 template <class InnerSizedIter, class InspectFn>
 class Inspect;
-template <class ToItem, class InnerSizedIter>
+template <class ToItem, class InnerSizedIter, class MapFn>
 class Map;
-template <class ToItem, class InnerSizedIter>
+template <class ToItem, class InnerSizedIter, class MapFn>
 class MapWhile;
 template <class InnerSizedIter>
 class Peekable;
 template <class InnerSizedIter>
 class Reverse;
-template <class OutType, class State, class InnerSizedIter>
-  requires(!std::is_reference_v<State>)
+template <class OutType, class State, class InnerSizedIter, class Fn>
 class Scan;
 template <class InnerIter>
 class Skip;
-template <class InnerIter>
+template <class InnerIter, class Pred>
 class SkipWhile;
 template <class InnerIter>
 class StepBy;

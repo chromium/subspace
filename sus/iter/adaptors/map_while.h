@@ -26,24 +26,29 @@ namespace sus::iter {
 /// An iterator that maps each item to a new type based on a map function.
 ///
 /// This type is returned from `Iterator::map()`.
-template <class ToItem, class InnerSizedIter>
+template <class ToItem, class InnerSizedIter, class MapFn>
 class [[nodiscard]] MapWhile final
-    : public IteratorBase<MapWhile<ToItem, InnerSizedIter>, ToItem> {
+    : public IteratorBase<MapWhile<ToItem, InnerSizedIter, MapFn>, ToItem> {
   using FromItem = InnerSizedIter::Item;
-  using MapFn = ::sus::fn::FnMutBox<::sus::Option<ToItem>(FromItem&&)>;
+  static_assert(::sus::fn::FnMut<MapFn, ::sus::Option<ToItem>(FromItem&&)>);
 
  public:
   using Item = ToItem;
 
+  // Type is Move and (can be) Clone.
+  MapWhile(MapWhile&&) = default;
+  MapWhile& operator=(MapWhile&&) = default;
+
   // sus::mem::Clone trait.
-  MapWhile clone() const noexcept
-    requires(::sus::mem::Clone<InnerSizedIter>)
+  constexpr MapWhile clone() const noexcept
+    requires(::sus::mem::Clone<MapFn> &&  //
+             ::sus::mem::Clone<InnerSizedIter>)
   {
     return MapWhile(::sus::clone(fn_), ::sus::clone(next_iter_));
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<FromItem> item = next_iter_.next();
     if (item.is_none()) {
       return sus::none();
@@ -54,13 +59,13 @@ class [[nodiscard]] MapWhile final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     // Can't know a lower bound, due to the predicate.
     return SizeHint(0u, next_iter_.size_hint().upper);
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, FromItem>)
   {
     Option<FromItem> item = next_iter_.next_back();
@@ -76,11 +81,11 @@ class [[nodiscard]] MapWhile final
   template <class U, class V>
   friend class IteratorBase;
 
-  static MapWhile with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
+  static constexpr MapWhile with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
     return MapWhile(::sus::move(fn), ::sus::move(next_iter));
   }
 
-  MapWhile(MapFn fn, InnerSizedIter&& next_iter)
+  constexpr MapWhile(MapFn fn, InnerSizedIter&& next_iter)
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   MapFn fn_;

@@ -33,6 +33,11 @@ struct TryImpl;
 ///   its success value.
 /// * A member `static T from_output(Output t)` that constructs a successful T
 ///   from a success value.
+///
+/// Note that when the `Output` type is `void` then `from_output()` will not be
+/// useable. To support `void`, the `TryDefault` concept can be used instead of
+/// `Try`. The `TryDefault` concept allows construction of the `Try` type with a
+/// default success value which can be `void`.
 template <class T>
 concept Try =
     requires {
@@ -42,12 +47,9 @@ concept Try =
       typename TryImpl<T>::Output;
       // The Output type is also not a reference.
       requires !std::is_reference_v<typename TryImpl<T>::Output>;
-      // The Output type must not be void, as that interfers with type
-      // conversions and complicates things greatly.
-      requires !std::is_void_v<typename TryImpl<T>::Output>;
     }   //
     &&  //
-    requires(const T& t, T&& tt, TryImpl<T>::Output output) {
+    requires(const T& t, T&& tt) {
       // is_success() reports if the Try type is in a success state.
       { TryImpl<T>::is_success(t) } -> std::same_as<bool>;
       // into_output() unwraps from the Try type to its success type. It may
@@ -56,9 +58,29 @@ concept Try =
       {
         TryImpl<T>::into_output(::sus::move(tt))
       } -> std::same_as<typename TryImpl<T>::Output>;
-      // from_output() converts a success type to the Try type.
-      { TryImpl<T>::from_output(::sus::move(output)) } -> std::same_as<T>;
-    };
+    }   //
+    &&  //
+    // from_output() is not needed (or possible) for void Output types. To
+    // construct a `T` with a void Output type, require `TryDefault` instead and
+    // use `from_default()`.
+    (std::is_void_v<typename TryImpl<T>::Output> ||  //
+     requires(typename TryImpl<T>::Output output) {
+       // from_output() converts a success type to the Try type.
+       { TryImpl<T>::from_output(::sus::move(output)) } -> std::same_as<T>;
+     });
+
+/// Identifies Try types which can be constructed with a default success value.
+///
+/// This takes the place of the void type in Rust types, such as `Option<()>`
+/// and `Result<(), E>` as `void` is not a constructible type in C++. But by
+/// satisfying `TryDefault`, `Result<void, E>` can be constructed with a default
+/// success value of nothing.
+template <class T>
+concept TryDefault = Try<T> && requires {
+  // from_default() construct the Try type with the default value for its
+  // success type.
+  { TryImpl<T>::from_default() } -> std::same_as<T>;
+};
 
 /// Determines if a type `T` that satisfies `Try` represents success in its
 /// current state.
@@ -92,9 +114,30 @@ constexpr inline TryImpl<T>::Output try_into_output(T&& t) noexcept {
 ///
 /// The template variable `T` must be specified as it can not be deduced here.
 /// For example: `sus::ops::try_from_output<Result<T, E>>(T())`.
+///
+/// # Void success values
+///
+/// The `Output` type of `Try<T>` can not be void. To construct a type that has
+/// an output of `void`, require `T` to be `TryDefault` and use
+/// `try_from_default()`.
 template <Try T>
+  requires(!std::is_void_v<typename TryImpl<T>::Output>)
 constexpr inline T try_from_output(typename TryImpl<T>::Output&& t) noexcept {
   return TryImpl<T>::from_output(::sus::move(t));
+}
+
+/// Constructs an object of type `T` that satisfies `TryDefault` (and `Try`)
+/// with its default success value.
+///
+/// The template variable `T` must be specified as it can not be deduced here.
+/// For example: `sus::ops::try_from_default<Result<void, E>>()`.
+///
+/// The default success value is specified by the type, but is typically the
+/// success state containing the default constructed value of the inner type,
+/// such as `Some(0_i32)` for `Option<i32>`.
+template <TryDefault T>
+constexpr inline T try_from_default() noexcept {
+  return TryImpl<T>::from_default();
 }
 
 }  // namespace sus::ops

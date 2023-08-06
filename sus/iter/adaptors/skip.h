@@ -33,15 +33,19 @@ class [[nodiscard]] Skip final
  public:
   using Item = InnerSizedIter::Item;
 
+  // The type is Move and (can be) Clone.
+  Skip(Skip&&) = default;
+  Skip& operator=(Skip&&) = default;
+
   // sus::mem::Clone trait.
-  Skip clone() const noexcept
+  constexpr Skip clone() const noexcept
     requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return Skip(skip_, ::sus::clone(next_iter_));
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     while (skip_ > 0u) {
       next_iter_.next();
       skip_ -= 1u;
@@ -49,7 +53,7 @@ class [[nodiscard]] Skip final
     return next_iter_.next();
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     auto [lower, upper] = next_iter_.size_hint();
     lower = lower.saturating_sub(skip_);
     upper =
@@ -58,7 +62,7 @@ class [[nodiscard]] Skip final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, Item> &&  //
              ExactSizeIterator<InnerSizedIter, Item>)
   {
@@ -70,7 +74,7 @@ class [[nodiscard]] Skip final
   }
 
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept {
+  constexpr usize exact_size_hint() const noexcept {
     return next_iter_.exact_size_hint().saturating_sub(skip_);
   }
 
@@ -78,11 +82,11 @@ class [[nodiscard]] Skip final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Skip with(usize n, InnerSizedIter&& next_iter) noexcept {
+  static constexpr Skip with(usize n, InnerSizedIter&& next_iter) noexcept {
     return Skip(n, ::sus::move(next_iter));
   }
 
-  Skip(usize n, InnerSizedIter&& next_iter) noexcept
+  constexpr Skip(usize n, InnerSizedIter&& next_iter) noexcept
       : skip_(n), next_iter_(::sus::move(next_iter)) {}
 
   usize skip_;

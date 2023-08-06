@@ -73,7 +73,9 @@ static_assert(
 static_assert(
   sus::iter::Iterator<sus::iter::Filter<sus::iter::Empty<int>, decltype([](int){return true;})>, int>);
 static_assert(
-  sus::iter::Iterator<sus::iter::Map<int, sus::iter::Empty<int>>, int>);
+  sus::iter::Iterator<sus::iter::Map<bool, sus::iter::Empty<int>, decltype([](int){return true;})>, bool>);
+static_assert(
+  sus::iter::Iterator<sus::iter::MapWhile<bool, sus::iter::Empty<int>, decltype([](int){return sus::Option<bool>::with(true);})>, bool>);
 static_assert(
   sus::iter::Iterator<sus::iter::Once<int>, int>);
 static_assert(
@@ -405,6 +407,11 @@ TEST(Iterator, Map) {
       expect += 1u;
     }
   }
+
+  static_assert(sus::Array<i32, 3>::with(2, 3, 4)
+                    .into_iter()
+                    .map([](i32 i) { return u32::try_from(i).unwrap() + 1u; })
+                    .sum() == 3u + 4u + 5u);
 }
 
 TEST(Iterator, MapDoubleEnded) {
@@ -439,6 +446,11 @@ TEST(Iterator, MapWhile) {
     EXPECT_EQ(it.next(), sus::none());
     EXPECT_EQ(it.next(), sus::none());
   }
+
+  static_assert(sus::Array<i32, 5>::with(2, 3, 4, -1, 5)
+                    .into_iter()
+                    .map_while([](i32 i) { return u32::try_from(i).ok(); })
+                    .sum() == 2u + 3u + 4u);
 }
 
 TEST(Iterator, Collect) {
@@ -447,6 +459,11 @@ TEST(Iterator, Collect) {
   auto collected =
       ArrayIterator<i32, 5>::with_array(nums).collect<CollectSum<i32>>();
   EXPECT_EQ(collected.sum, 1 + 2 + 3 + 4 + 5);
+
+  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+                    .into_iter()
+                    .collect<CollectSum<i32>>()
+                    .sum == 1 + 2 + 3 + 4 + 5);
 }
 
 TEST(Iterator, CollectVec) {
@@ -458,6 +475,10 @@ TEST(Iterator, CollectVec) {
   EXPECT_EQ(collected[0u], 1);
   EXPECT_EQ(collected[2u], 3);
   EXPECT_EQ(collected[4u], 5);
+
+  static_assert(
+      sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().collect_vec() ==
+      sus::Vec<i32>::with(1, 2, 3, 4, 5));
 }
 
 TEST(Iterator, Rev) {
@@ -473,6 +494,10 @@ TEST(Iterator, Rev) {
   EXPECT_EQ(it.next(), sus::some(2).construct());
   EXPECT_EQ(it.next(), sus::some(1).construct());
   EXPECT_EQ(it.next(), sus::None);
+
+  static_assert(
+      sus::Vec<i32>::with(1, 2, 3).into_iter().rev().collect<sus::Vec<i32>>() ==
+      sus::Vec<i32>::with(3, 2, 1));
 }
 
 TEST(Iterator, Enumerate) {
@@ -881,6 +906,14 @@ TEST(Iterator, PartialCmp) {
     auto two = sus::Array<f64, 2>::with(1., 3.);
     EXPECT_EQ(std::partial_ordering::less, one.iter().partial_cmp(two.iter()));
   }
+
+  static_assert(sus::Array<f32, 2>::with(1.f, 2.f).into_iter().partial_cmp(
+                    sus::Array<f32, 2>::with(1.f, 3.f)) ==
+                std::partial_ordering::less);
+  static_assert(sus::Array<f32, 3>::with(1.f, 2.f, 0.f)
+                    .into_iter()
+                    .partial_cmp(sus::Array<f32, 2>::with(1.f, 2.f)) ==
+                std::partial_ordering::greater);
 }
 
 TEST(Iterator, PartialCmpBy) {
@@ -946,6 +979,11 @@ TEST(Iterator, PartialCmpBy) {
         one.iter().partial_cmp_by(
             two.iter(), [](const f32& a, const f64& b) { return b <=> a; }));
   }
+
+  static_assert(sus::Array<f32, 2>::with(1.f, 2.f).into_iter().partial_cmp_by(
+                    sus::Array<f32, 2>::with(1.f, 3.f),
+                    [](const f32& a, const f32& b) { return b <=> a; }) ==
+                std::partial_ordering::greater);
 }
 
 template <sus::mem::Copy T>
@@ -1005,7 +1043,7 @@ TEST(Iterator, WeakCmp) {
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(std::partial_ordering::greater,
+    EXPECT_EQ(std::weak_ordering::greater,
               smol.iter_mut().weak_cmp(bigg.iter_mut()));
   }
 
@@ -1013,9 +1051,8 @@ TEST(Iterator, WeakCmp) {
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(
-        std::partial_ordering::greater,
-        sus::move(smol).into_iter().weak_cmp(sus::move(bigg).into_iter()));
+    EXPECT_EQ(std::weak_ordering::greater, sus::move(smol).into_iter().weak_cmp(
+                                               sus::move(bigg).into_iter()));
   }
 
   // Comparable but different types.
@@ -1024,6 +1061,11 @@ TEST(Iterator, WeakCmp) {
     auto two = sus::Vec<WeakT<i64>>::with(WeakT<i64>(1, 1), WeakT<i64>(3, 2));
     EXPECT_EQ(std::weak_ordering::less, one.iter().weak_cmp(two.iter()));
   }
+
+  static_assert(sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2))
+                    .into_iter()
+                    .weak_cmp(sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2))) ==
+                std::weak_ordering::greater);
 }
 
 TEST(Iterator, WeakCmpBy) {
@@ -1098,6 +1140,13 @@ TEST(Iterator, WeakCmpBy) {
                     return b <=> a;
                   }));
   }
+
+  static_assert(sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2))
+                    .into_iter()
+                    .weak_cmp_by(sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2)),
+                                 [](const Weak& a, const Weak& b) {
+                                   return b <=> a;
+                                 }) == std::weak_ordering::less);
 }
 
 TEST(Iterator, Eq) {
@@ -2210,6 +2259,9 @@ TEST(Iterator, Max) {
     static_assert(std::same_as<decltype(n), Option<i32&>>);
     EXPECT_EQ(n.as_value(), 3);
   }
+
+  static_assert(sus::Vec<i32>::with(2, 3, 2).into_iter().max() == sus::some(3));
+  static_assert(sus::Vec<i32>::with().into_iter().max() == sus::none());
 }
 
 TEST(Iterator, MaxBy) {
@@ -2285,11 +2337,17 @@ TEST(Iterator, MaxBy) {
     static_assert(std::same_as<decltype(n), Option<M&>>);
     EXPECT_EQ(n.as_value().i, 3);
   }
+
+  static_assert(
+      sus::Vec<f32>::with(2.f, 3.f, 2.f).into_iter().max_by(&f32::total_cmp) ==
+      sus::some(3.f));
+  static_assert(sus::Vec<f32>::with().into_iter().max_by(&f32::total_cmp) ==
+                sus::none());
 }
 
 TEST(Iterator, MaxByKey) {
   struct M {
-    static i32 key(const M& m) { return m.i; }
+    constexpr static i32 key(const M& m) { return m.i; }
 
     i32 i;
   };
@@ -2365,6 +2423,13 @@ TEST(Iterator, MaxByKey) {
     static_assert(std::same_as<decltype(n), Option<M&>>);
     EXPECT_EQ(n.as_value().i, 3);
   }
+
+  static_assert(sus::Vec<M>::with(M(2), M(3), M(2))
+                    .into_iter()
+                    .max_by_key(&M::key)
+                    .unwrap()
+                    .i == 3);
+  static_assert(sus::Vec<M>::with().into_iter().max_by_key(&M::key).is_none());
 }
 
 TEST(Iterator, Min) {
@@ -2428,6 +2493,9 @@ TEST(Iterator, Min) {
     static_assert(std::same_as<decltype(n), Option<i32&>>);
     EXPECT_EQ(n.as_value(), 1);
   }
+
+  static_assert(sus::Vec<i32>::with(4, 3, 4).into_iter().min() == sus::some(3));
+  static_assert(sus::Vec<i32>::with().into_iter().min() == sus::none());
 }
 
 TEST(Iterator, MinBy) {
@@ -2505,11 +2573,17 @@ TEST(Iterator, MinBy) {
     EXPECT_EQ(&n.as_value(), &a[1u]);
     EXPECT_EQ(n.as_value().i, 1);
   }
+
+  static_assert(
+      sus::Vec<f32>::with(4.f, 3.f, 4.f).into_iter().min_by(&f32::total_cmp) ==
+      sus::some(3.f));
+  static_assert(sus::Vec<f32>::with().into_iter().min_by(&f32::total_cmp) ==
+                sus::none());
 }
 
 TEST(Iterator, MinByKey) {
   struct M {
-    static i32 key(const M& m) { return m.i; }
+    constexpr static i32 key(const M& m) { return m.i; }
 
     i32 i;
   };
@@ -2585,6 +2659,13 @@ TEST(Iterator, MinByKey) {
     static_assert(std::same_as<decltype(n), Option<M&>>);
     EXPECT_EQ(n.as_value().i, 1);
   }
+
+  static_assert(sus::Vec<M>::with(M(4), M(3), M(4))
+                    .into_iter()
+                    .min_by_key(&M::key)
+                    .unwrap()
+                    .i == 3);
+  static_assert(sus::Vec<M>::with().into_iter().min_by_key(&M::key).is_none());
 }
 
 TEST(Iterator, Ne) {
@@ -2639,6 +2720,9 @@ TEST(Iterator, Ne) {
     auto two = sus::Vec<i64>::with(1, 2);
     EXPECT_EQ(false, one.iter().ne(two.iter()));
   }
+
+  static_assert(sus::Vec<i32>::with(2, 3, 4).into_iter().ne(
+      sus::Array<i32, 3>::with(2, 3, 5)));
 }
 
 TEST(Iterator, Nth) {
@@ -2655,6 +2739,13 @@ TEST(Iterator, Nth) {
     EXPECT_EQ(it.nth(2u).unwrap(), 5);
     EXPECT_EQ(it.nth(2u), sus::None);
   }
+
+  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().nth(3u) ==
+                sus::some(4));
+  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().nth(4u) ==
+                sus::some(5));
+  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().nth(5u) ==
+                sus::none());
 }
 
 TEST(Iterator, NthBack) {
@@ -2732,7 +2823,7 @@ TEST(Iterator, Rfind) {
 }
 
 struct Extendable {
-  void extend(sus::iter::IntoIterator<i32> auto&& in) {
+  constexpr void extend(sus::iter::IntoIterator<i32> auto&& in) {
     for (i32 each : sus::move(in).into_iter()) extend_sum += each;
   }
   i32 extend_sum;
@@ -2787,6 +2878,17 @@ TEST(Iterator, Partition) {
     EXPECT_EQ(left.extend_sum, 1 + 2 + 3);
     EXPECT_EQ(right.extend_sum, 4 + 5);
   }
+
+  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+                    .into_iter()
+                    .partition<Extendable>([](const i32& i) { return i <= 3; })
+                    .into_inner<0>()
+                    .extend_sum == 1 + 2 + 3);
+  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+                    .into_iter()
+                    .partition<Extendable>([](const i32& i) { return i <= 3; })
+                    .into_inner<1>()
+                    .extend_sum == 4 + 5);
 }
 
 TEST(Iterator, Peekable) {
@@ -3019,6 +3121,12 @@ TEST(Iterator, Peekable) {
     EXPECT_EQ(sus::some(3), it.next_if_eq(3));
     EXPECT_EQ(sus::none(), it.next_if_eq(3));
   }
+
+  static_assert([]() {
+    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    auto peeked = it.peek().unwrap();
+    return peeked + it.next().unwrap();
+  }() == 1 + 1);
 }
 
 TEST(Iterator, Position) {
@@ -3055,6 +3163,15 @@ TEST(Iterator, Position) {
     auto it = sus::Array<i32, 4>::with(10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.position([](auto) { return false; }), sus::None);
   }
+
+  static_assert(
+      sus::Array<i32, 4>::with(10, 11, 12, 11).into_iter().position([](auto i) {
+        return i == 11;
+      }) == sus::some(1u));
+  static_assert(
+      sus::Array<i32, 4>::with(10, 11, 12, 11).into_iter().position([](auto i) {
+        return i == 14;
+      }) == sus::none());
 }
 
 TEST(Iterator, Product) {
@@ -3098,6 +3215,13 @@ TEST(Iterator, Product) {
     static_assert(std::same_as<decltype(p), f32>);
     EXPECT_EQ(p, 2.f * 3.f * 4.f);
   }
+
+  static_assert(sus::Array<i32, 3>::with(2, 3, 4).into_iter().product() ==
+                2 * 3 * 4);
+  static_assert(sus::Array<u32, 3>::with(2u, 3u, 4u).into_iter().product() ==
+                2u * 3u * 4u);
+  static_assert(sus::Array<f32, 3>::with(2.f, 3.f, 4.f).into_iter().product() ==
+                2.f * 3.f * 4.f);
 }
 
 TEST(Iterator, Reduce) {
@@ -3139,6 +3263,11 @@ TEST(Iterator, Reduce) {
     static_assert(std::same_as<decltype(out), sus::Option<i32&>>);
     EXPECT_EQ(&out.as_value(), &a[1u]);
   }
+
+  static_assert(sus::Array<i32, 3>::with(2, 3, 4)
+                    .into_iter()
+                    .reduce([](i32 acc, i32 v) { return acc + v; })
+                    .unwrap() == 2 + 3 + 4);
 }
 
 TEST(Iterator, Reduce_Example_References) {
@@ -3183,6 +3312,11 @@ TEST(Iterator, Rposition) {
     auto it = sus::Array<i32, 4>::with(10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.rposition([](auto) { return false; }), sus::None);
   }
+
+  static_assert(sus::Array<i32, 4>::with(10, 11, 12, 11)
+                    .into_iter()
+                    .rposition([](auto i) { return i == 11; }) ==
+                sus::some(3u));
 }
 
 TEST(Iterator, Scan) {
@@ -3218,6 +3352,15 @@ TEST(Iterator, Scan) {
     EXPECT_EQ(it.next(), sus::some("24 + 3 = 27"));
     EXPECT_EQ(it.next(), sus::none());
   }
+
+  static_assert(sus::Array<i32, 3>::with(2, 3, 4)
+                    .into_iter()
+                    .scan(10_i32,
+                          [](i32& state, i32 v) -> sus::Option<i32> {
+                            state += 1;
+                            return sus::some(state * v);
+                          })
+                    .sum() == (11 * 2 + 12 * 3 + 13 * 4));
 }
 
 TEST(Iterator, Skip) {
@@ -3311,6 +3454,10 @@ TEST(Iterator, Skip) {
     EXPECT_EQ(&it.next().unwrap(), &a[2u]);
     EXPECT_EQ(it.next(), sus::none());
   }
+
+  static_assert(
+      sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().skip(4u).sum() ==
+      6 + 7);
 }
 
 TEST(Iterator, SkipWhile) {
@@ -3372,6 +3519,11 @@ TEST(Iterator, SkipWhile) {
     EXPECT_EQ(&it.next().unwrap(), &a[2u]);
     EXPECT_EQ(it.next(), sus::none());
   }
+
+  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+                    .into_iter()
+                    .skip_while([](i32 i) { return i <= 4; })
+                    .sum() == 5 + 6 + 7);
 }
 
 TEST(Iterator, StepBy) {
@@ -3487,6 +3639,11 @@ TEST(Iterator, StepBy) {
     EXPECT_EQ(it.next_back(), sus::some(2));
     EXPECT_EQ(it.next_back(), sus::none());
   }
+
+  static_assert(sus::Array<i32, 7>::with(2, 3, 4, 5, 6, 7, 8)
+                    .into_iter()
+                    .step_by(3u)
+                    .sum() == 2 + 5 + 8);
 }
 
 TEST(Iterator, Sum) {
@@ -3530,6 +3687,11 @@ TEST(Iterator, Sum) {
     static_assert(std::same_as<decltype(p), f32>);
     EXPECT_EQ(p, 2.f + 3.f + 4.f);
   }
+
+  static_assert(sus::Array<i32, 3>::with(2, 3, 4).into_iter().sum() ==
+                2 + 3 + 4);
+  static_assert(sus::Array<f32, 3>::with(2.f, 3.f, 4.f).into_iter().sum() ==
+                2.f + 3.f + 4.f);
 }
 
 TEST(Iterator, Take) {
@@ -3646,6 +3808,10 @@ TEST(Iterator, Take) {
     EXPECT_EQ(&it.next().unwrap(), &a[1u]);
     EXPECT_EQ(it.next(), sus::none());
   }
+
+  static_assert(
+      sus::Array<i32, 5>::with(2, 3, 4, 5, 6).into_iter().take(3u).sum() ==
+      2 + 3 + 4);
 }
 
 TEST(Iterator, TakeWhile) {
@@ -3714,12 +3880,10 @@ TEST(Iterator, TakeWhile) {
     EXPECT_EQ(it.next(), sus::none());
   }
 
-  constexpr auto a =
-      sus::Array<i32, 3>::with(2, 3, 4)
-          .into_iter()
-          .take_while([](const i32& i) constexpr { return i <= 3; })
-          .sum();
-  static_assert(a == 5);
+  static_assert(sus::Array<i32, 3>::with(2, 3, 4)
+                    .into_iter()
+                    .take_while([](i32 i) constexpr { return i <= 3; })
+                    .sum() == 2 + 3);
 }
 
 TEST(Iterator, TryFold) {
@@ -3761,6 +3925,20 @@ TEST(Iterator, TryFold) {
     o = it.try_fold(std::string(), f);
     EXPECT_EQ(o, sus::ok("57"));  // Got to the end.
   }
+
+  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+                    .into_iter()
+                    .try_fold(0_i32, [](i32 acc, i32 i) -> Option<i32> {
+                      if (i < 3) return sus::some(acc);
+                      if (i < 6) return sus::some(acc + i);
+                      return sus::some(acc * 2);
+                    }) == sus::some((3 + 4 + 5) * 2 * 2));
+  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+                    .into_iter()
+                    .try_fold(0_i32, [](i32 acc, i32 i) -> Option<i32> {
+                      if (i < 3) return sus::some(acc);
+                      return sus::none();
+                    }) == sus::none());
 }
 
 TEST(Iterator, TryRfold) {
@@ -3802,6 +3980,20 @@ TEST(Iterator, TryRfold) {
     o = it.try_rfold(std::string(), f);
     EXPECT_EQ(o, sus::ok("31"));  // Got to the end.
   }
+
+  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+                    .into_iter()
+                    .try_rfold(0_i32, [](i32 acc, i32 i) -> Option<i32> {
+                      if (i < 3) return sus::some(acc);
+                      if (i < 6) return sus::some(acc + i);
+                      return sus::some(acc * 2);
+                    }) == sus::some((0 * 2 * 2) + 3 + 4 + 5));
+  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+                    .into_iter()
+                    .try_rfold(0_i32, [](i32 acc, i32 i) -> Option<i32> {
+                      if (i < 3) return sus::some(acc);
+                      return sus::none();
+                    }) == sus::none());
 }
 
 TEST(Iterator, TryForEach) {
@@ -3819,11 +4011,11 @@ TEST(Iterator, TryForEach) {
       visited = fmt::format("{}{}", visited, i);
       return sus::some(Void());
     };
-    auto o = it.try_for_each({}, f);
+    auto o = it.try_for_each(f);
     static_assert(std::same_as<decltype(o), Option<Void>>);
     EXPECT_EQ(o.is_some(), false);  // Stopped at 4.
     EXPECT_EQ(visited, "23");
-    o = it.try_for_each({}, f);
+    o = it.try_for_each(f);
     EXPECT_EQ(o.is_some(), true);  // Got to the end.
     EXPECT_EQ(visited, "23567");
   }
@@ -3839,21 +4031,51 @@ TEST(Iterator, TryForEach) {
       visited = fmt::format("{}{}", visited, i);
       return sus::ok(Void());
     };
-    auto o = it.try_for_each({}, f);
+    auto o = it.try_for_each(f);
     static_assert(std::same_as<decltype(o), sus::result::Result<Void, i32>>);
     EXPECT_EQ(o.as_err(), 4);  // Stopped at 4.
     EXPECT_EQ(visited, "23");
-    o = it.try_for_each({}, f);
+    o = it.try_for_each(f);
     EXPECT_EQ(o.is_ok(), true);  // Got to the end.
     EXPECT_EQ(visited, "23567");
   }
+  // With void Result.
+  {
+    auto a = sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7);
+    auto it = sus::move(a).into_iter();
+    std::string visited;
+    auto f = [&visited](i32 i) -> sus::result::Result<void, i32> {
+      // Stop at 4.
+      if (i % 4 == 0) return sus::err(i);
+      // Record other numbers.
+      visited = fmt::format("{}{}", visited, i);
+      return sus::ok();
+    };
+    auto o = it.try_for_each(f);
+    static_assert(std::same_as<decltype(o), sus::result::Result<void, i32>>);
+    EXPECT_EQ(o.as_err(), 4);  // Stopped at 4.
+    EXPECT_EQ(visited, "23");
+    o = it.try_for_each(f);
+    EXPECT_EQ(o.is_ok(), true);  // Got to the end.
+    EXPECT_EQ(visited, "23567");
+  }
+
+  static_assert([] {
+    i32 sum;
+    auto r = sus::Array<i32, 3>::with(2, 3, 4).into_iter().try_for_each(
+        [&](i32 i) -> sus::result::Result<void, i32> {
+          sum += i;
+          return sus::result::Result<void, i32>::with();
+        });
+    sus::check(r.is_ok());
+    return sum;
+  }() == 2 + 3 + 4);
 }
 
 TEST(Iterator, Unzip) {
+  using sus::Tuple;
+  using sus::Vec;
   {
-    using sus::Tuple;
-    using sus::Vec;
-
     auto a = sus::Array<Tuple<i32, f32>, 0>::with();
     auto u = sus::move(a).into_iter().unzip<Vec<i32>, Vec<f32>>();
     static_assert(std::same_as<decltype(u), Tuple<Vec<i32>, Vec<f32>>>);
@@ -3861,9 +4083,6 @@ TEST(Iterator, Unzip) {
     EXPECT_EQ(u.at<1>().is_empty(), true);
   }
   {
-    using sus::Tuple;
-    using sus::Vec;
-
     auto a = sus::Array<Tuple<i32, f32>, 5>::with(  //
         ::sus::tuple(1, 2.f),                       //
         ::sus::tuple(2, 3.f),                       //
@@ -3875,6 +4094,17 @@ TEST(Iterator, Unzip) {
     EXPECT_EQ(u.at<0>(), sus::Slice<i32>::from({1, 2, 3, 4, 5}));
     EXPECT_EQ(u.at<1>(), sus::Slice<f32>::from({2.f, 3.f, 4.f, 5.f, 6.f}));
   }
+
+  static_assert(sus::Array<Tuple<i32, f32>, 5>::with(::sus::tuple(1, 2.f),  //
+                                                     ::sus::tuple(2, 3.f),  //
+                                                     ::sus::tuple(3, 4.f),  //
+                                                     ::sus::tuple(4, 5.f),  //
+                                                     ::sus::tuple(5, 6.f))
+                    .into_iter()
+                    .unzip<Vec<i32>, Vec<f32>>()
+                    .into_inner<0>()
+                    .into_iter()
+                    .sum() == 1 + 2 + 3 + 4 + 5);
 }
 
 TEST(Iterator, Zip) {
@@ -3977,6 +4207,12 @@ TEST(Iterator, Zip) {
     EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(3, 4.f)));
     EXPECT_EQ(it.next(), sus::none());
   }
+
+  static_assert(
+      sus::iter::zip(sus::Array<i32, 2>::with(2, 3),
+                     sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f))
+          .map([](sus::Tuple<i32, f32> pair) { return pair.template at<0>(); })
+          .sum() == 2 + 3);
 }
 
 TEST(Iterator, Zip_Example) {

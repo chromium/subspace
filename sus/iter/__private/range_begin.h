@@ -21,21 +21,21 @@ namespace sus::iter::__private {
 template <class IteratorRange, class Item>
 class RangeBegin {
  public:
-  explicit RangeBegin(IteratorRange* r) : range_(r) {}
+  constexpr explicit RangeBegin(IteratorRange* r) : range_(r) {}
 
   // This violates const correctness but it's required to by
   // `std::indirectly_readable`, which we need to satisfy to also satisfy
   // `std::input_iterator`, so that `sus::iter::IteratorRange` can satisfy
   // `std::input_range`.
-  Item& operator*() const& noexcept { return *range_->item_; }
+  constexpr Item& operator*() const& noexcept { return *range_->item_; }
 
-  RangeBegin& operator++() & noexcept {
+  constexpr RangeBegin& operator++() & noexcept {
     range_->item_ = range_->it_.next();
     return *this;
   }
-  void operator++(int) & noexcept { range_->item_ = range_->it_.next(); }
+  constexpr void operator++(int) & noexcept { range_->item_ = range_->it_.next(); }
 
-  bool operator==(::sus::iter::__private::IteratorEnd) const noexcept {
+  constexpr bool operator==(::sus::iter::__private::IteratorEnd) const noexcept {
     return range_->item_.is_none();
   }
 
