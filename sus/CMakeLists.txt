@@ -200,6 +200,7 @@ target_sources(subspace PUBLIC
     "string/__private/any_formatter.h"
     "string/__private/bytes_formatter.h"
     "string/__private/format_to_stream.h"
+    "string/compat_string.h"
     "tuple/__private/storage.h"
     "tuple/tuple.h"
     "lib/lib.cc"
@@ -307,6 +308,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "result/result_unittest.cc"
         "result/result_types_unittest.cc"
         "string/__private/format_to_stream_unittest.cc"
+        "string/compat_string_unittest.cc"
         "tuple/tuple_types_unittest.cc"
         "tuple/tuple_unittest.cc"
     )
