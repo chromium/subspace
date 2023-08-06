@@ -37,12 +37,12 @@ class [[nodiscard]] Peekable final
  public:
   using Item = InnerSizedIter::Item;
 
-  // Type is Move and Clone.
+  // Type is Move and (can be) Clone.
   Peekable(Peekable&&) = default;
   Peekable& operator=(Peekable&&) = default;
 
   /// sus::mem::Clone implementation
-  Peekable clone() const noexcept
+  constexpr Peekable clone() const noexcept
     requires(::sus::mem::Clone<InnerSizedIter> &&  //
              ::sus::mem::CloneOrRef<Item>)
   {
@@ -54,7 +54,7 @@ class [[nodiscard]] Peekable final
   ///
   /// Like `next()`, if there is a value, it is wrapped in a `Some(T)`.
   /// But if the iteration is over, `None` is returned.
-  Option<const std::remove_reference_t<Item>&> peek() noexcept {
+  constexpr Option<const std::remove_reference_t<Item>&> peek() noexcept {
     return peeked_.get_or_insert_with([this] { return next_iter_.next(); })
         .as_ref();
   }
@@ -64,7 +64,7 @@ class [[nodiscard]] Peekable final
   ///
   /// Like `next()`, if there is a value, it is wrapped in a `Some(T)`.
   /// But if the iteration is over, `None` is returned.
-  Option<Item&> peek_mut() noexcept {
+  constexpr Option<Item&> peek_mut() noexcept {
     return peeked_.get_or_insert_with([this] { return next_iter_.next(); })
         .as_mut();
   }
@@ -73,7 +73,7 @@ class [[nodiscard]] Peekable final
   ///
   /// If `func` returns `true` for the next value of this iterator, consume and
   /// return it. Otherwise, return `None`.
-  Option<Item> next_if(
+  constexpr Option<Item> next_if(
       ::sus::fn::FnOnceRef<bool(const std::remove_reference_t<Item>&)>
           pred) noexcept {
     Option<Item> o = next();
@@ -88,7 +88,7 @@ class [[nodiscard]] Peekable final
   }
 
   /// Consume and return the next item if it is equal to `expected`.
-  Option<Item> next_if_eq(
+  constexpr Option<Item> next_if_eq(
       const std::remove_reference_t<Item>& expected) noexcept
     requires(::sus::ops::Eq<Item>)
   {
@@ -96,12 +96,12 @@ class [[nodiscard]] Peekable final
   }
 
   /// sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     return peeked_.take().unwrap_or_else(
         [this]() { return next_iter_.next(); });
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     usize peek_len;
     if (peeked_.is_some()) {
       if (peeked_.as_value().is_some()) {
@@ -120,7 +120,7 @@ class [[nodiscard]] Peekable final
   }
 
   /// sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, Item>)
   {
     if (peeked_.is_some()) {
@@ -140,7 +140,7 @@ class [[nodiscard]] Peekable final
   }
 
   /// sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
+  constexpr usize exact_size_hint() const noexcept
     requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     if (peeked_.is_some()) {
@@ -161,13 +161,16 @@ class [[nodiscard]] Peekable final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Peekable with(InnerSizedIter&& next_iter) noexcept {
+  static constexpr Peekable with(InnerSizedIter&& next_iter) noexcept {
     return Peekable(::sus::move(next_iter));
   }
 
-  Peekable(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
-  Peekable(::sus::Option<::sus::Option<Item>>&& peeked,
-           InnerSizedIter&& next_iter)
+  // Regular ctor.
+  constexpr Peekable(InnerSizedIter&& next_iter)
+      : next_iter_(::sus::move(next_iter)) {}
+  // Clone ctor.
+  constexpr Peekable(::sus::Option<::sus::Option<Item>>&& peeked,
+                     InnerSizedIter&& next_iter)
       : peeked_(::sus::move(peeked)), next_iter_(::sus::move(next_iter)) {}
 
   ::sus::Option<::sus::Option<Item>> peeked_;

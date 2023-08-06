@@ -34,15 +34,19 @@ class [[nodiscard]] StepBy final
  public:
   using Item = InnerSizedIter::Item;
 
+  // The type is Move and (can be) Clone.
+  StepBy(StepBy&&) = default;
+  StepBy& operator=(StepBy&&) = default;
+
   // sus::mem::Clone trait.
-  StepBy clone() const noexcept
+  constexpr StepBy clone() const noexcept
     requires(::sus::mem::Clone<InnerSizedIter>)
   {
     return StepBy(step_, ::sus::clone(next_iter_), first_take_);
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<Item> out = next_iter_.next();
     if (first_take_) {
       first_take_ = false;
@@ -56,7 +60,7 @@ class [[nodiscard]] StepBy final
     return out;
   }
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     auto first_size = [this](usize n) {
       if (n == 0u) {
         return 0_usize;
@@ -76,7 +80,7 @@ class [[nodiscard]] StepBy final
   }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, Item> &&  //
              ExactSizeIterator<InnerSizedIter, Item>)
   {
@@ -92,7 +96,7 @@ class [[nodiscard]] StepBy final
   }
 
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
+  constexpr usize exact_size_hint() const noexcept
     requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     return size_hint().lower;
@@ -104,7 +108,7 @@ class [[nodiscard]] StepBy final
 
   // The zero-based index starting from the end of the iterator of the
   // last element. Used in the `DoubleEndedIterator` implementation.
-  usize next_back_index() const
+  constexpr usize next_back_index() const
     requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     auto rem = next_iter_.exact_size_hint() % (step_ + 1u);
@@ -114,13 +118,15 @@ class [[nodiscard]] StepBy final
       return rem;
   }
 
-  static StepBy with(usize step, InnerSizedIter&& next_iter) noexcept {
+  static constexpr StepBy with(usize step,
+                               InnerSizedIter&& next_iter) noexcept {
     // We subtract one from `step`, as stepping 1 means we skip 0 elements
     // between each.
     return StepBy(step - 1u, ::sus::move(next_iter), true);
   }
 
-  StepBy(usize step, InnerSizedIter&& next_iter, bool first_take) noexcept
+  constexpr StepBy(usize step, InnerSizedIter&& next_iter,
+                   bool first_take) noexcept
       : step_(step),
         next_iter_(::sus::move(next_iter)),
         first_take_(first_take) {}

@@ -1135,8 +1135,9 @@ template <class E>
 
 }  // namespace sus::result
 
-// Implements sus::ops::Try for Result.
+// Implements sus::ops::Try for Result<T, E>
 template <class T, class E>
+  requires(!std::is_void_v<T>)
 struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
   using Output = T;
   constexpr static bool is_success(const ::sus::result::Result<T, E>& t) {
@@ -1149,6 +1150,29 @@ struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
   }
   constexpr static ::sus::result::Result<T, E> from_output(Output t) {
     return ::sus::result::Result<T, E>::with(::sus::move(t));
+  }
+  // Implements sus::ops::TryDefault for `Result<T, E>` if `T` satisfies
+  // `Default`.
+  constexpr static ::sus::result::Result<T, E> from_default() noexcept
+    requires(sus::construct::Default<T>)
+  {
+    return ::sus::result::Result<T, E>::with(T());
+  }
+};
+
+// Implements sus::ops::Try for Result<void, E>
+template <class E>
+struct sus::ops::TryImpl<::sus::result::Result<void, E>> {
+  using Output = void;
+  constexpr static bool is_success(
+      const ::sus::result::Result<void, E>& t) noexcept {
+    return t.is_ok();
+  }
+  constexpr static void into_output(::sus::result::Result<void, E> t) noexcept {
+  }
+  // Implements sus::ops::TryDefault for `Result<void, E>`.
+  constexpr static ::sus::result::Result<void, E> from_default() noexcept {
+    return ::sus::result::Result<void, E>::with();
   }
 };
 

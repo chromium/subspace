@@ -56,6 +56,10 @@ TEST(CompatRanges, InputRange) {
     e += 1;
   }
   EXPECT_EQ(e, 7);
+
+  // max() requires a `std::ranges::input_range`.
+  static_assert(std::ranges::max(
+                    sus::Vec<i32>::with(1, 2, 4, 3).into_iter().range()) == 4);
 }
 
 TEST(CompatRanges, FromRange) {

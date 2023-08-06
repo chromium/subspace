@@ -28,19 +28,22 @@ using ::sus::mem::relocate_by_memcpy;
 /// An iterator that rejects elements while `pred` returns `true`.
 ///
 /// This type is returned from `Iterator::skip()`.
-template <class InnerSizedIter>
+template <class InnerSizedIter, class Pred>
 class [[nodiscard]] SkipWhile final
-    : public IteratorBase<SkipWhile<InnerSizedIter>,
+    : public IteratorBase<SkipWhile<InnerSizedIter, Pred>,
                           typename InnerSizedIter::Item> {
-  using Pred = ::sus::fn::FnMutBox<bool(
-      // TODO: write a sus::const_ref<T>?
-      const std::remove_reference_t<typename InnerSizedIter::Item>&)>;
+  static_assert(::sus::fn::FnMut<Pred, bool(const std::remove_reference_t<
+                                            typename InnerSizedIter::Item>&)>);
 
  public:
   using Item = InnerSizedIter::Item;
 
+  // The type is Move and (can be) Clone.
+  SkipWhile(SkipWhile&&) = default;
+  SkipWhile& operator=(SkipWhile&&) = default;
+
   // sus::mem::Clone trait.
-  SkipWhile clone() const noexcept
+  constexpr SkipWhile clone() const noexcept
     requires(::sus::mem::Clone<Pred> &&  //
              ::sus::mem::Clone<InnerSizedIter>)
   {
@@ -48,7 +51,7 @@ class [[nodiscard]] SkipWhile final
   }
 
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     while (true) {
       Option<Item> out = next_iter_.next();
       if (out.is_none() || pred_.is_none()) return out;
@@ -64,7 +67,7 @@ class [[nodiscard]] SkipWhile final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept {
+  constexpr SizeHint size_hint() const noexcept {
     // No lower bound is known, as we don't know how many will be skipped.
     return {0u, next_iter_.size_hint().upper};
   }
@@ -73,11 +76,12 @@ class [[nodiscard]] SkipWhile final
   template <class U, class V>
   friend class IteratorBase;
 
-  static SkipWhile with(Pred&& pred, InnerSizedIter&& next_iter) noexcept {
+  static constexpr SkipWhile with(Pred&& pred,
+                                  InnerSizedIter&& next_iter) noexcept {
     return SkipWhile(::sus::move(pred), ::sus::move(next_iter));
   }
 
-  SkipWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
+  constexpr SkipWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(Option<Pred>::with(::sus::move(pred))),
         next_iter_(::sus::move(next_iter)) {}
 

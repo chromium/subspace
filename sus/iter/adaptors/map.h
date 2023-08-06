@@ -26,17 +26,29 @@ namespace sus::iter {
 /// An iterator that maps each item to a new type based on a map function.
 ///
 /// This type is returned from `Iterator::map()`.
-template <class ToItem, class InnerSizedIter>
+template <class ToItem, class InnerSizedIter, class MapFn>
 class [[nodiscard]] Map final
-    : public IteratorBase<Map<ToItem, InnerSizedIter>, ToItem> {
+    : public IteratorBase<Map<ToItem, InnerSizedIter, MapFn>, ToItem> {
   using FromItem = InnerSizedIter::Item;
-  using MapFn = ::sus::fn::FnMutBox<ToItem(FromItem&&)>;
+  static_assert(::sus::fn::FnMut<MapFn, ToItem(FromItem&&)>);
 
  public:
   using Item = ToItem;
 
+  // Type is Move and (can be) Clone.
+  Map(Map&&) = default;
+  Map& operator=(Map&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr Map clone() const noexcept
+    requires(::sus::mem::Clone<MapFn> &&  //
+             ::sus::mem::Clone<InnerSizedIter>)
+  {
+    return Map(::sus::clone(fn_), ::sus::clone(next_iter_));
+  }
+
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     Option<FromItem> item = next_iter_.next();
     if (item.is_none()) {
       return sus::none();
@@ -47,10 +59,10 @@ class [[nodiscard]] Map final
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
+  constexpr SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, FromItem>)
   {
     Option<FromItem> item = next_iter_.next_back();
@@ -63,7 +75,7 @@ class [[nodiscard]] Map final
   }
 
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
+  constexpr usize exact_size_hint() const noexcept
     requires(ExactSizeIterator<InnerSizedIter, FromItem>)
   {
     return next_iter_.exact_size_hint();
@@ -73,11 +85,11 @@ class [[nodiscard]] Map final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Map with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
+  static constexpr Map with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
     return Map(::sus::move(fn), ::sus::move(next_iter));
   }
 
-  Map(MapFn fn, InnerSizedIter&& next_iter)
+  constexpr Map(MapFn fn, InnerSizedIter&& next_iter)
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   MapFn fn_;

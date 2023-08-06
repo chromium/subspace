@@ -1489,16 +1489,23 @@ sus_pure_const inline constexpr auto none() noexcept {
 template <class T>
 struct sus::ops::TryImpl<::sus::option::Option<T>> {
   using Output = T;
-  constexpr static bool is_success(const ::sus::option::Option<T>& t) {
+  constexpr static bool is_success(const ::sus::option::Option<T>& t) noexcept {
     return t.is_some();
   }
-  constexpr static Output into_output(::sus::option::Option<T> t) {
+  constexpr static Output into_output(::sus::option::Option<T> t) noexcept {
     // SAFETY: The Option is verified to be holding Some(T) by
     // `sus::ops::try_into_output()` before it calls here.
     return ::sus::move(t).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
-  constexpr static ::sus::option::Option<T> from_output(Output t) {
+  constexpr static ::sus::option::Option<T> from_output(Output t) noexcept {
     return ::sus::option::Option<T>::with(::sus::move(t));
+  }
+
+  // Implements sus::ops::TryDefault for `Option<T>` if `T` satisfies `Default`.
+  constexpr static ::sus::option::Option<T> from_default() noexcept
+    requires(sus::construct::Default<T>)
+  {
+    return ::sus::option::Option<T>::with(T());
   }
 };
 
