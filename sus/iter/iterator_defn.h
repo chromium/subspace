@@ -1047,7 +1047,7 @@ class IteratorBase {
   /// bunch of transformations, and then collect() at the end.
   ///
   /// collect() can also create instances of types that are not typical
-  /// collections. For example, (TODO: a String can be built from chars, and) an
+  /// collections. For example, a string can be built from chars, and an
   /// iterator of Result<T, E> items can be collected into Result<Collection<T>,
   /// E>. Or an iterator of Option<T> can be collected into
   /// Option<Collection<T>>.
