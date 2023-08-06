@@ -150,6 +150,14 @@ struct sus::ops::TryImpl<std::optional<T>> {
   constexpr static std::optional<T> from_output(Output t) {
     return std::optional<T>(std::in_place, ::sus::move(t));
   }
+
+  // Implements sus::ops::TryDefault for `std::optional<T>` if `T` satisfies
+  // `Default`.
+  constexpr static std::optional<T> from_default() noexcept
+    requires(sus::construct::Default<T>)
+  {
+    return std::optional<T>(std::in_place, T());
+  }
 };
 
 }  // namespace sus
