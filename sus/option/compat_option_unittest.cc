@@ -269,8 +269,11 @@ TEST(CompatOption, FromOptionalCopyWithConversion) {
 
 TEST(CompatOption, Try) {
   static_assert(sus::ops::Try<std::optional<i32>>);
-  EXPECT_EQ(sus::ops::try_is_success(std::optional<i32>(std::in_place, 1)), true);
-  EXPECT_EQ(sus::ops::try_is_success(std::optional<i32>()), false);
+  static_assert(sus::ops::TryDefault<std::optional<i32>>);
+  static_assert(sus::ops::try_is_success(std::optional<i32>(std::in_place, 1)));
+  static_assert(!sus::ops::try_is_success(std::optional<i32>()));
+  static_assert(sus::ops::try_from_default<std::optional<i32>>() ==
+                std::optional<i32>(0_i32));
 }
 
 }  // namespace
