@@ -45,11 +45,11 @@ const char PREFIX2[] =
     "lkffpoasjf;sadp;fsapfksa;kdfposa'pfmfa;sofuo9psfp; "
     "lkffpoasjf;sadp;fsapfksa;kdfposa'pf";
 
-auto common_prefix_unsafe_array_len_pairs(const u8* xs, usize xslen,
-                                          const u8* ys, usize yslen) -> usize {
-  auto result = 0_usize;
+auto common_prefix_unsafe_array_len_pairs(const u8* xs, size_t xslen,
+                                          const u8* ys, size_t yslen) -> size_t {
+  auto result = size_t{0};
   while (result < xslen && result < yslen) {
-    if (xs[size_t{result}] != ys[size_t{result}]) break;
+    if (xs[result] != ys[result]) break;
     result += 1u;
   }
   return result;
@@ -80,7 +80,7 @@ auto common_prefix_zip(const sus::Slice<u8>& xs, const sus::Slice<u8>& ys)
 // This should be slightly faster than `common_prefix_zip`. It is in Rust.
 auto common_prefix_chunks_exact(const sus::Slice<u8>& xs,
                                 const sus::Slice<u8>& ys) -> usize {
-  const auto chunk_size = 16_usize;
+  constexpr auto chunk_size = 16_usize;
   auto result = 0_usize;
 
   bool escape = false;
@@ -106,7 +106,7 @@ auto common_prefix_chunks_exact(const sus::Slice<u8>& xs,
 // This should be significantly faster if SIMD auto vectorization kicks in.
 auto common_prefix_no_shortcircuit(const sus::Slice<u8>& xs,
                                    const sus::Slice<u8>& ys) -> usize {
-  const auto chunk_size = 16_usize;
+  constexpr auto chunk_size = 16_usize;
   auto result = 0_usize;
   for (auto [xs_chunk, ys_chunk] :
        zip(xs.chunks_exact(chunk_size), ys.chunks_exact(chunk_size))) {
@@ -130,7 +130,7 @@ auto common_prefix_no_shortcircuit(const sus::Slice<u8>& xs,
 
 auto common_prefix_take_while(const sus::Slice<u8>& xs,
                               const sus::Slice<u8>& ys) -> usize {
-  const auto chunk_size = 16_usize;
+  constexpr auto chunk_size = 16_usize;
   auto off = zip(xs.chunks_exact(chunk_size), ys.chunks_exact(chunk_size))
                  .take_while([](const auto& chunks) {
                    auto [xs_chunk, ys_chunk] = chunks;
@@ -156,8 +156,8 @@ TEST(BenchSimdChunks, common_prefix) {
   usize result;
 
   b.run("common_prefix_unsafe_array_len_pairs", [&]() {
-    auto r = common_prefix_unsafe_array_len_pairs(v1.as_ptr(), v1.len(),
-                                                  v2.as_ptr(), v2.len());
+    auto r = common_prefix_unsafe_array_len_pairs(v1.as_ptr(), size_t{v1.len()},
+                                                  v2.as_ptr(), size_t{v2.len()});
     ankerl::nanobench::doNotOptimizeAway(r);
     first_result = r;
   });
