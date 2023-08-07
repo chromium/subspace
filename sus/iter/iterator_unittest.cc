@@ -539,7 +539,7 @@ TEST(Iterator, TryCollect) {
                          .into_iter()
                          .try_collect<Vec<i32>>();
     static_assert(std::same_as<decltype(collected), Result<Vec<i32>, Error>>);
-    EXPECT_EQ(collected.as_ok(), sus::Vec<i32>::with(1, 2, 3));
+    EXPECT_EQ(collected.as_value(), sus::Vec<i32>::with(1, 2, 3));
 
     auto it = sus::Array<Result<i32, Error>, 3>::with(
                   ::sus::ok(1), ::sus::err(ERROR), ::sus::ok(3))
@@ -547,7 +547,7 @@ TEST(Iterator, TryCollect) {
     auto up_to_err = it.try_collect<Vec<i32>>();
     EXPECT_EQ(up_to_err, sus::err(ERROR));
     auto after_err = it.try_collect<Vec<i32>>();
-    EXPECT_EQ(after_err.as_ok(), sus::Vec<i32>::with(3));
+    EXPECT_EQ(after_err.as_value(), sus::Vec<i32>::with(3));
   }
 
   auto from =
