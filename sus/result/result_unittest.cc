@@ -814,8 +814,8 @@ TEST(Result, Copy) {
   {
     auto z = Result<NoCopyMove&, int>::with(m);
     auto zz = z;
-    EXPECT_EQ(&z.as_ok(), &m);
-    EXPECT_EQ(&zz.as_ok(), &m);
+    EXPECT_EQ(&z.as_value(), &m);
+    EXPECT_EQ(&zz.as_value(), &m);
   }
   {
     auto z = Result<NoCopyMove&, int>::with_err(2);
@@ -827,8 +827,8 @@ TEST(Result, Copy) {
     auto z =
         Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>::with(m);
     auto zz = z;
-    EXPECT_EQ(&z.as_ok(), &m);
-    EXPECT_EQ(&zz.as_ok(), &m);
+    EXPECT_EQ(&z.as_value(), &m);
+    EXPECT_EQ(&zz.as_value(), &m);
   }
   {
     auto z = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>::
@@ -848,8 +848,8 @@ TEST(Result, Copy) {
     auto z = Result<NoCopyMove&, int>::with(m);
     auto zz = Result<NoCopyMove&, int>::with_err(2);
     zz = z;
-    EXPECT_EQ(&z.as_ok(), &m);
-    EXPECT_EQ(&zz.as_ok(), &m);
+    EXPECT_EQ(&z.as_value(), &m);
+    EXPECT_EQ(&zz.as_value(), &m);
   }
   {
     auto z =
@@ -866,8 +866,8 @@ TEST(Result, Copy) {
     auto zz = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>::
         with_err(NotTriviallyRelocatableCopyableOrMoveable(2));
     zz = z;
-    EXPECT_EQ(&z.as_ok(), &m);
-    EXPECT_EQ(&zz.as_ok(), &m);
+    EXPECT_EQ(&z.as_value(), &m);
+    EXPECT_EQ(&zz.as_value(), &m);
   }
 
   // Constexpr copy construct.
@@ -917,11 +917,11 @@ TEST(Result, Move) {
   };
   MoveableLvalue lvalue(2);
   auto a = Result<MoveableLvalue, i32>::with(lvalue);
-  EXPECT_EQ(a.as_ok().i, 2);
+  EXPECT_EQ(a.as_value().i, 2);
   EXPECT_EQ(lvalue.i, 2);
 
   auto b = Result<MoveableLvalue, i32>::with(sus::move(lvalue));
-  EXPECT_EQ(b.as_ok().i, 2);
+  EXPECT_EQ(b.as_value().i, 2);
   EXPECT_EQ(lvalue.i, 0);
 
   {
@@ -969,18 +969,18 @@ TEST(Result, Move) {
     auto m = NoCopyMove();
     auto z = Result<NoCopyMove&, int>::with(m);
     auto zz = sus::move(z);
-    EXPECT_EQ(&zz.as_ok(), &m);
+    EXPECT_EQ(&zz.as_value(), &m);
     z = sus::move(zz);
-    EXPECT_EQ(&z.as_ok(), &m);
+    EXPECT_EQ(&z.as_value(), &m);
   }
   {
     auto m = NoCopyMove();
     auto z =
         Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>::with(m);
     auto zz = sus::move(z);
-    EXPECT_EQ(&zz.as_ok(), &m);
+    EXPECT_EQ(&zz.as_value(), &m);
     z = sus::move(zz);
-    EXPECT_EQ(&z.as_ok(), &m);
+    EXPECT_EQ(&z.as_value(), &m);
   }
   {
     auto m = NoCopyMove();
@@ -1066,7 +1066,7 @@ TEST(Result, MoveAfterTrivialMove) {
     auto rv = Result<NoCopyMove&, i32>::with(m);
     auto rv3 = sus::move(rv);
     auto rv2 = sus::move(rv3);
-    EXPECT_EQ(&rv2.as_ok(), &m);
+    EXPECT_EQ(&rv2.as_value(), &m);
   }
 }
 
@@ -1118,14 +1118,14 @@ TEST(Result, AssignAfterTrivialMove) {
     auto rv = Result<NoCopyMove&, i32>::with(m);
     auto rv3 = sus::move(rv);
     rv = sus::move(rv3);
-    EXPECT_EQ(&rv.as_ok(), &m);
+    EXPECT_EQ(&rv.as_value(), &m);
   }
   {
     auto rv = Result<NoCopyMove&, i32>::with(m);
     auto rv3 = sus::move(rv);
     rv = Result<NoCopyMove&, i32>::with_err(2);
     rv = sus::move(rv3);
-    EXPECT_EQ(&rv.as_ok(), &m);
+    EXPECT_EQ(&rv.as_value(), &m);
   }
 }
 
@@ -1162,7 +1162,7 @@ TEST(ResultDeathTest, MoveAfterNonTrivialMove) {
     auto rv = Result<NoCopyMove&, NonTrivialMove>::with(m);
     auto rv3 = sus::move(rv);
     rv = sus::move(rv3);
-    EXPECT_EQ(&rv.as_ok(), &m);
+    EXPECT_EQ(&rv.as_value(), &m);
   }
 }
 
@@ -1256,14 +1256,14 @@ TEST(Result, AssignAfterNonTrivialMove) {
     auto r = Result<NoCopyMove&, NonTrivialMove>::with(m);
     auto r3 = sus::move(r);
     r = sus::move(r3);
-    EXPECT_EQ(&r.as_ok(), &m);
+    EXPECT_EQ(&r.as_value(), &m);
   }
   {
     auto r = Result<NoCopyMove&, NonTrivialMove>::with(m);
     auto r3 = sus::move(r);
     r = Result<NoCopyMove&, NonTrivialMove>::with_err(NonTrivialMove(1));
     r = sus::move(r3);
-    EXPECT_EQ(&r.as_ok(), &m);
+    EXPECT_EQ(&r.as_value(), &m);
   }
 
   {
@@ -1279,8 +1279,8 @@ TEST(Result, AssignAfterNonTrivialMove) {
     auto r = Result<NoCopyMove&, NonTrivialMove>::with(m);
     auto r2 = sus::move(r);
     r = Result<NoCopyMove&, NonTrivialMove>::with(m2);
-    EXPECT_EQ(&r.as_ok(), &m2);
-    EXPECT_EQ(&r2.as_ok(), &m);
+    EXPECT_EQ(&r.as_value(), &m2);
+    EXPECT_EQ(&r2.as_value(), &m);
   }
 }
 
@@ -1310,7 +1310,7 @@ TEST(Result, MoveSelfAssign) {
   auto m = NoCopyMove();
   auto rm = Result<NoCopyMove&, i32>::with(m);
   rm = sus::move(rm);
-  EXPECT_EQ(&rm.as_ok(), &m);
+  EXPECT_EQ(&rm.as_value(), &m);
 }
 
 TEST(Result, CopySelfAssign) {
@@ -1339,7 +1339,7 @@ TEST(Result, CopySelfAssign) {
   auto m = NoCopyMove();
   auto rm = Result<NoCopyMove&, i32>::with(m);
   rm = rm;
-  EXPECT_EQ(&rm.as_ok(), &m);
+  EXPECT_EQ(&rm.as_value(), &m);
 }
 
 TEST(Result, CloneIntoSelfAssign) {
@@ -1368,7 +1368,7 @@ TEST(Result, CloneIntoSelfAssign) {
   auto m = NoCopyMove();
   auto rm = Result<NoCopyMove&, i32>::with(m);
   sus::clone_into(rm, rm);
-  EXPECT_EQ(&rm.as_ok(), &m);
+  EXPECT_EQ(&rm.as_value(), &m);
 }
 
 TEST(Result, Iter) {
@@ -1614,8 +1614,8 @@ TEST(Result, Clone) {
     const auto s = Result<Clone, i32>::with(Clone(1));
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Result<Clone, i32>>);
-    EXPECT_EQ(s.as_ok().i, 1_i32);
-    EXPECT_EQ(s2.as_ok().i, 2_i32);
+    EXPECT_EQ(s.as_value().i, 1_i32);
+    EXPECT_EQ(s2.as_value().i, 2_i32);
   }
   {
     const auto s = Result<Clone, i32>::with_err(2);
@@ -1628,15 +1628,15 @@ TEST(Result, Clone) {
     const auto s = Result<Clone, i32>::with(Clone(1));
     auto s2 = Result<Clone, i32>::with(Clone(4));
     sus::clone_into(s2, s);
-    EXPECT_EQ(s.as_ok().i, 1_i32);
-    EXPECT_EQ(s2.as_ok().i, 2_i32);
+    EXPECT_EQ(s.as_value().i, 1_i32);
+    EXPECT_EQ(s2.as_value().i, 2_i32);
   }
   {
     const auto s = Result<Clone, i32>::with(Clone(1));
     auto s2 = Result<Clone, i32>::with_err(2);
     sus::clone_into(s2, s);
-    EXPECT_EQ(s.as_ok().i, 1_i32);
-    EXPECT_EQ(s2.as_ok().i, 2_i32);
+    EXPECT_EQ(s.as_value().i, 1_i32);
+    EXPECT_EQ(s2.as_value().i, 2_i32);
   }
   {
     const auto s = Result<Clone, i32>::with_err(2);
@@ -1687,8 +1687,8 @@ TEST(Result, Clone) {
     const auto v = Result<NoCopyMove&, i32>::with(m);
     auto v2 = sus::clone(v);
     static_assert(std::same_as<decltype(v2), Result<NoCopyMove&, i32>>);
-    EXPECT_EQ(&v.as_ok(), &m);
-    EXPECT_EQ(&v2.as_ok(), &m);
+    EXPECT_EQ(&v.as_value(), &m);
+    EXPECT_EQ(&v2.as_value(), &m);
   }
   {
     const auto v = Result<NoCopyMove&, i32>::with_err(2);
@@ -1701,15 +1701,15 @@ TEST(Result, Clone) {
     const auto v = Result<NoCopyMove&, i32>::with(m);
     auto v2 = Result<NoCopyMove&, i32>::with(m);
     sus::clone_into(v2, v);
-    EXPECT_EQ(&v.as_ok(), &m);
-    EXPECT_EQ(&v2.as_ok(), &m);
+    EXPECT_EQ(&v.as_value(), &m);
+    EXPECT_EQ(&v2.as_value(), &m);
   }
   {
     const auto v = Result<NoCopyMove&, i32>::with(m);
     auto v2 = Result<NoCopyMove&, i32>::with_err(2);
     sus::clone_into(v2, v);
-    EXPECT_EQ(&v.as_ok(), &m);
-    EXPECT_EQ(&v2.as_ok(), &m);
+    EXPECT_EQ(&v.as_value(), &m);
+    EXPECT_EQ(&v2.as_value(), &m);
   }
   {
     const auto v = Result<NoCopyMove&, i32>::with_err(2);
@@ -1973,7 +1973,7 @@ TEST(Result, FromProduct) {
         sus::Array<Result<i32, E>, 3>::with(sus::ok(2), sus::ok(3), sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
-    EXPECT_EQ(o.as_ok(), 2 * 3 * 4);
+    EXPECT_EQ(o.as_value(), 2 * 3 * 4);
   }
 }
 
@@ -1995,7 +1995,7 @@ TEST(Result, FromSum) {
         sus::Array<Result<i32, E>, 3>::with(sus::ok(2), sus::ok(3), sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
-    EXPECT_EQ(o.as_ok(), 2 + 3 + 4);
+    EXPECT_EQ(o.as_value(), 2 + 3 + 4);
   }
 }
 
@@ -2005,6 +2005,23 @@ TEST(Result, Try) {
             true);
   EXPECT_EQ((sus::ops::TryImpl<Result<i32, u32>>::is_success(sus::err(2_u32))),
             false);
+}
+
+template <class E>
+concept AsValueRvalue = requires {
+  { Result<i32, E>::with(2_i32).as_value() };
+};
+
+TEST(Result, AsValue) {
+  auto x = Result<i32, u8>::with(2_i32);
+  static_assert(std::same_as<decltype(x.as_value()), const i32&>);
+  EXPECT_EQ(x.as_value(), 2);
+
+  static_assert(!AsValueRvalue<u8>);
+
+  auto y = Result<i32, u8>::with(2_i32);
+  static_assert(std::same_as<decltype(y.as_value_mut()), i32&>);
+  EXPECT_EQ(y.as_value_mut(), 2);
 }
 
 }  // namespace

@@ -626,13 +626,24 @@ class [[nodiscard]] Result final {
   ///
   /// # Panic
   /// Panics if the value is an `Err`.
-  constexpr const std::remove_reference_t<TUnlessVoid>& as_ok() const&
+  constexpr const std::remove_reference_t<TUnlessVoid>& as_value() const&
     requires(!std::is_void_v<T>)
   {
     ::sus::check(state_ == ResultState::IsOk);
     return storage_.ok_;
   }
+  constexpr const std::remove_reference_t<TUnlessVoid>& as_value() && = delete;
 
+  /// Returns a mutable reference to the contained `Ok` value.
+  ///
+  /// # Panic
+  /// Panics if the value is an `Err`.
+  constexpr std::remove_reference_t<TUnlessVoid>& as_value_mut() &
+    requires(!std::is_void_v<T>)
+  {
+    ::sus::check(state_ == ResultState::IsOk);
+    return storage_.ok_;
+  }
   /// Returns a const reference to the contained `Err` value.
   ///
   /// # Panic
@@ -1254,7 +1265,7 @@ template <class T, class E>
 struct std::hash<::sus::result::Result<T, E>> {
   auto operator()(const ::sus::result::Result<T, E>& u) const noexcept {
     if (u.is_ok())
-      return std::hash<T>()(u.as_ok());
+      return std::hash<T>()(u.as_value());
     else
       return std::hash<T>()(u.as_err());
   }
@@ -1291,7 +1302,7 @@ struct fmt::formatter<::sus::result::Result<T, E>, Char> {
       if constexpr (std::is_void_v<T>)
         out = underlying_ok_.format(ctx);
       else
-        out = underlying_ok_.format(t.as_ok(), ctx);
+        out = underlying_ok_.format(t.as_value(), ctx);
     }
     return fmt::format_to(out, ")");
   }
