@@ -138,6 +138,8 @@ constexpr Option<T>::operator std::optional<std::remove_reference_t<T>*>()
 template <class T>
 struct sus::ops::TryImpl<std::optional<T>> {
   using Output = T;
+  template <class U>
+  using RemapOutput = std::optional<U>;
   constexpr static bool is_success(const std::optional<T>& t) {
     return t.has_value();
   }
@@ -149,6 +151,13 @@ struct sus::ops::TryImpl<std::optional<T>> {
   }
   constexpr static std::optional<T> from_output(Output t) {
     return std::optional<T>(std::in_place, ::sus::move(t));
+  }
+  template <class U>
+  constexpr static std::optional<T> preserve_error(std::optional<U>) noexcept {
+    // The incoming optional is known to be empty (the error state) and this is
+    // checked by try_preserve_error() before coming here. So we can just return
+    // another empty optional.
+    return std::optional<T>();
   }
 
   // Implements sus::ops::TryDefault for `std::optional<T>` if `T` satisfies

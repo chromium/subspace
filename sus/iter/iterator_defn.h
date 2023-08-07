@@ -927,6 +927,57 @@ class IteratorBase {
       ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)> auto
           pred) && noexcept;
 
+  /// Fallibly transforms an iterator into a collection, short circuiting if a
+  /// failure is encountered.
+  ///
+  /// `try_collect()` is a variation of `collect()` that allows fallible
+  /// conversions during collection. Its main use case is simplifying
+  /// conversions from iterators yielding `Option<T>` into
+  /// `Option<Collection<T>>`, or similarly for other Try types (e.g. `Result`
+  /// or `std::optional`).
+  ///
+  /// Importantly, `try_collect()` doesn’t require that the outer `Try` type
+  /// also implements FromIterator; only the `Try` type's `Output` type must
+  /// implement it. Concretely, this means that collecting into
+  /// `TryThing<Vec<i32>, _>` can be valid because `Vec<i32>` implements
+  /// FromIterator, even if `TryThing` doesn’t.
+  ///
+  /// Also, if a failure is encountered during `try_collect()`, the iterator is
+  /// still valid and may continue to be used, in which case it will continue
+  /// iterating starting after the element that triggered the failure. See the
+  /// last example below for an example of how this works.
+  ///
+  /// # Examples
+  /// Successfully collecting an iterator of `Option<i32>` into
+  /// `Option<Vec<i32>>`:
+  /// ```
+  /// auto u = Vec<Option<i32>>::with(some(1), some(2), some(3));
+  /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
+  /// sus::check(v == some(Vec<i32>::with(1, 2, 3 )));
+  /// ```
+  /// Failing to collect in the same way:
+  /// ```
+  /// auto u = Vec<Option<i32>>::with(some(1), some(2), none(), some(3));
+  /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
+  /// sus::check(v == none());
+  /// ```
+  /// A similar example, but with [`Result`](sus::result::Result):
+  /// ```
+  /// enum Error { ERROR };
+  /// auto u = Vec<Result<i32, Error>>::with(ok(1), ok(2), ok(3));
+  /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
+  /// sus::check(v == ok(Vec<i32>::with(1, 2, 3)));
+  /// auto w = Vec<Result<i32, Error>>::with(ok(1), ok(2), err(ERROR), ok(3));
+  /// auto x = sus::move(w).into_iter().try_collect<Vec<i32>>();
+  /// sus::check(x == err(ERROR));
+  /// ```
+  template <class C>
+    requires(::sus::ops::Try<ItemT> &&  //
+             FromIterator<C, ::sus::ops::TryOutputType<ItemT>> &&
+             // Void can not be collected from.
+             !std::is_void_v<::sus::ops::TryOutputType<ItemT>>)
+  constexpr auto try_collect() noexcept;
+
   /// This function acts like `fold()` but the closure returns a type that
   /// satisfies `sus::ops::Try` and which converts to the accumulator type on
   /// success through the Try concept. If the closure ever returns failure, the
@@ -1059,7 +1110,7 @@ class IteratorBase {
   /// sus::move(iter).collect<MyContainer<i32>>()
   /// ```
   template <FromIterator<ItemT> C>
-  constexpr FromIterator<ItemT> auto collect() && noexcept;
+  constexpr C collect() && noexcept;
 
   /// Transforms an iterator into a Vec.
   ///
@@ -1433,7 +1484,8 @@ template <class Iter, class Item>
 template <
     ::sus::fn::FnMut<::sus::fn::NonVoid(const std::remove_reference_t<Item>&)>
         KeyFn,
-    int&..., class Key>
+    int&...,
+    class Key>
   requires(::sus::ops::Ord<Key> &&  //
            !std::is_reference_v<Key>)
 constexpr Option<Item> IteratorBase<Iter, Item>::max_by_key(
@@ -1490,7 +1542,8 @@ template <class Iter, class Item>
 template <
     ::sus::fn::FnMut<::sus::fn::NonVoid(const std::remove_reference_t<Item>&)>
         KeyFn,
-    int&..., class Key>
+    int&...,
+    class Key>
   requires(::sus::ops::Ord<Key> &&  //
            !std::is_reference_v<Key>)
 constexpr Option<Item> IteratorBase<Iter, Item>::min_by_key(
@@ -1699,7 +1752,8 @@ constexpr Option<usize> IteratorBase<Iter, Item>::rposition(
 
 template <class Iter, class Item>
 template <class State, ::sus::fn::FnMut<::sus::fn::NonVoid(State&, Item&&)> F,
-          int&..., class R, class InnerR>
+          int&..., class R,
+          class InnerR>
   requires(::sus::option::__private::IsOptionType<R>::value &&  //
            !std::is_reference_v<State>)
 constexpr Iterator<InnerR> auto IteratorBase<Iter, Item>::scan(
@@ -1859,14 +1913,13 @@ constexpr std::weak_ordering IteratorBase<Iter, Item>::weak_cmp_by(
 
 template <class Iter, class Item>
 template <FromIterator<Item> C>
-constexpr FromIterator<Item> auto
-IteratorBase<Iter, Item>::collect() && noexcept {
+constexpr C IteratorBase<Iter, Item>::collect() && noexcept {
   return from_iter<C>(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
-::sus::containers::Vec<Item> constexpr IteratorBase<
-    Iter, Item>::collect_vec() && noexcept {
+constexpr ::sus::containers::Vec<Item>
+IteratorBase<Iter, Item>::collect_vec() && noexcept {
   return from_iter<::sus::containers::Vec<Item>>(static_cast<Iter&&>(*this));
 }
 

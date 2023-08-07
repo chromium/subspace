@@ -50,9 +50,10 @@ concept FromIterator =
 /// typically called through calling `collect()` on an iterator. However this
 /// function can be preferrable for some readers, especially in generic template
 /// code.
-template <class ToType, ::sus::iter::IntoIteratorAny IntoIter>
-  requires(
-      FromIterator<ToType, typename IntoIteratorOutputType<IntoIter>::Item>)
+template <class ToType, IntoIteratorAny IntoIter>
+  requires(FromIterator<ToType,
+                        typename IntoIteratorOutputType<IntoIter>::Item> &&  //
+           ::sus::mem::IsMoveRef<IntoIter &&>)
 constexpr inline ToType from_iter(IntoIter&& into_iter) noexcept {
   return FromIteratorImpl<ToType>::from_iter(
       ::sus::move(into_iter).into_iter());

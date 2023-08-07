@@ -1489,6 +1489,8 @@ sus_pure_const inline constexpr auto none() noexcept {
 template <class T>
 struct sus::ops::TryImpl<::sus::option::Option<T>> {
   using Output = T;
+  template <class U>
+  using RemapOutput = ::sus::option::Option<U>;
   constexpr static bool is_success(const ::sus::option::Option<T>& t) noexcept {
     return t.is_some();
   }
@@ -1499,6 +1501,14 @@ struct sus::ops::TryImpl<::sus::option::Option<T>> {
   }
   constexpr static ::sus::option::Option<T> from_output(Output t) noexcept {
     return ::sus::option::Option<T>::with(::sus::move(t));
+  }
+  template <class U>
+  constexpr static ::sus::option::Option<T> preserve_error(
+      ::sus::option::Option<U>) noexcept {
+    // The incoming Option is known to be empty (the error state) and this is
+    // checked by try_preserve_error() before coming here. So we can just return
+    // another empty Option.
+    return ::sus::option::Option<T>();
   }
 
   // Implements sus::ops::TryDefault for `Option<T>` if `T` satisfies `Default`.
@@ -1677,16 +1687,16 @@ struct sus::iter::FromIteratorImpl<::sus::option::Option<T>> {
     // until it reaches a `None` or the end.
     struct UntilNoneIter final
         : public ::sus::iter::IteratorBase<UntilNoneIter, U> {
-      UntilNoneIter(Iter&& iter, bool& found_none)
+      constexpr UntilNoneIter(Iter&& iter, bool& found_none)
           : iter(iter), found_none(found_none) {}
 
-      ::sus::option::Option<U> next() noexcept {
+      constexpr ::sus::option::Option<U> next() noexcept {
         ::sus::option::Option<::sus::option::Option<U>> item = iter.next();
         if (found_none || item.is_none()) return ::sus::option::Option<U>();
         found_none = item->is_none();
         return ::sus::move(item).flatten();
       }
-      ::sus::iter::SizeHint size_hint() const noexcept {
+      constexpr ::sus::iter::SizeHint size_hint() const noexcept {
         return ::sus::iter::SizeHint(0u, iter.size_hint().upper);
       }
 
@@ -1696,10 +1706,9 @@ struct sus::iter::FromIteratorImpl<::sus::option::Option<T>> {
 
     bool found_none = false;
     auto iter = UntilNoneIter(::sus::move(option_iter).into_iter(), found_none);
-    auto collected = sus::iter::from_iter<T>(::sus::move(iter));
-    if (found_none)
-      return ::sus::option::Option<T>();
-    else
-      return ::sus::option::Option<T>::with(::sus::move(collected));
+    auto collected =
+        Option<T>::with(sus::iter::from_iter<T>(::sus::move(iter)));
+    if (found_none) collected = ::sus::option::Option<T>();
+    return collected;
   }
 };

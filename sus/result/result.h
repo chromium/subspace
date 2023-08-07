@@ -1140,16 +1140,26 @@ template <class T, class E>
   requires(!std::is_void_v<T>)
 struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
   using Output = T;
+  template <class U>
+  using RemapOutput = ::sus::result::Result<U, E>;
   constexpr static bool is_success(const ::sus::result::Result<T, E>& t) {
     return t.is_ok();
   }
   constexpr static Output into_output(::sus::result::Result<T, E> t) {
     // SAFETY: The Result is verified to be holding Ok(T) by
-    // `::sus::ops::try_into_output()` before it calls here.
+    // `sus::ops::try_into_output()` before it calls here.
     return ::sus::move(t).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
   constexpr static ::sus::result::Result<T, E> from_output(Output t) {
     return ::sus::result::Result<T, E>::with(::sus::move(t));
+  }
+  template <class U>
+  constexpr static ::sus::result::Result<T, E> preserve_error(
+      ::sus::result::Result<U, E> t) noexcept {
+    // SAFETY: The Result is verified to be holding Err(T) by
+    // `sus::ops::try_preserve_error()` before it calls here.
+    return ::sus::result::Result<T, E>::with_err(
+        ::sus::move(t).unwrap_err_unchecked(::sus::marker::unsafe_fn));
   }
   // Implements sus::ops::TryDefault for `Result<T, E>` if `T` satisfies
   // `Default`.
@@ -1164,11 +1174,17 @@ struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
 template <class E>
 struct sus::ops::TryImpl<::sus::result::Result<void, E>> {
   using Output = void;
+  template <class U>
+  using RemapOutput = ::sus::result::Result<U, E>;
   constexpr static bool is_success(
       const ::sus::result::Result<void, E>& t) noexcept {
     return t.is_ok();
   }
   constexpr static void into_output(::sus::result::Result<void, E> t) noexcept {
+  }
+  constexpr static ::sus::result::Result<void, E> preserve_error(
+      ::sus::result::Result<void, E> t) noexcept {
+    ::sus::move(t);  // Preserve the Err by returning it.
   }
   // Implements sus::ops::TryDefault for `Result<void, E>`.
   constexpr static ::sus::result::Result<void, E> from_default() noexcept {
@@ -1200,10 +1216,10 @@ struct sus::iter::FromIteratorImpl<::sus::result::Result<T, E>> {
              ::sus::iter::FromIterator<T, U>)
   {
     struct Unwrapper final : public ::sus::iter::IteratorBase<Unwrapper, U> {
-      Unwrapper(Iter&& iter, Option<E>& err) : iter(iter), err(err) {}
+      constexpr Unwrapper(Iter&& iter, Option<E>& err) : iter(iter), err(err) {}
 
       // sus::iter::Iterator trait.
-      Option<U> next() noexcept {
+      constexpr Option<U> next() noexcept {
         Option<::sus::result::Result<U, E>> try_item = iter.next();
         if (try_item.is_none()) return Option<U>();
         ::sus::result::Result<U, E> result =
@@ -1215,7 +1231,7 @@ struct sus::iter::FromIteratorImpl<::sus::result::Result<T, E>> {
             ::sus::move(result).unwrap_err_unchecked(::sus::marker::unsafe_fn));
         return Option<U>();
       }
-      ::sus::iter::SizeHint size_hint() const noexcept {
+      constexpr ::sus::iter::SizeHint size_hint() const noexcept {
         return ::sus::iter::SizeHint(0u, iter.size_hint().upper);
       }
 
@@ -1225,11 +1241,11 @@ struct sus::iter::FromIteratorImpl<::sus::result::Result<T, E>> {
 
     auto err = Option<E>();
     auto iter = Unwrapper(::sus::move(result_iter).into_iter(), err);
-    auto success_out = ::sus::result::Result<T, E>::with(
+    auto out = ::sus::result::Result<T, E>::with(
         ::sus::iter::from_iter<T>(::sus::move(iter)));
-    return ::sus::move(err).map_or_else(
-        [&]() { return ::sus::move(success_out); },
-        [](E e) { return ::sus::result::Result<T, E>::with_err(e); });
+    if (err.is_some())
+      out = ::sus::result::Result<T, E>::with_err(::sus::move(err).unwrap());
+    return out;
   }
 };
 
