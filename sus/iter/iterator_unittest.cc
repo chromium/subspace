@@ -33,16 +33,23 @@
 #include "sus/num/overflow_integer.h"
 #include "sus/ops/eq.h"
 #include "sus/prelude.h"
+#include "sus/test/no_copy_move.h"
 
 using sus::containers::Array;
 using sus::iter::IteratorBase;
 using sus::option::Option;
+using sus::result::Result;
+using sus::test::NoCopyMove;
 
 namespace sus::test::iter {
 
 template <class T>
 struct CollectSum {
   T sum;
+};
+
+struct CollectRefs {
+  sus::Vec<const NoCopyMove*> vec;
 };
 
 }  // namespace sus::test::iter
@@ -54,6 +61,16 @@ struct sus::iter::FromIteratorImpl<sus::test::iter::CollectSum<T>> {
     T sum = T();
     for (T t : sus::move(iter).into_iter()) sum += t;
     return sus::test::iter::CollectSum<T>(sum);
+  }
+};
+
+template <>
+struct sus::iter::FromIteratorImpl<sus::test::iter::CollectRefs> {
+  static sus::test::iter::CollectRefs from_iter(
+      sus::iter::IntoIterator<const NoCopyMove&> auto iter) noexcept {
+    auto v = sus::Vec<const NoCopyMove*>();
+    for (const NoCopyMove& t : sus::move(iter).into_iter()) v.push(&t);
+    return sus::test::iter::CollectRefs(sus::move(v));
   }
 };
 
@@ -460,6 +477,10 @@ TEST(Iterator, Collect) {
       ArrayIterator<i32, 5>::with_array(nums).collect<CollectSum<i32>>();
   EXPECT_EQ(collected.sum, 1 + 2 + 3 + 4 + 5);
 
+  auto from = sus::iter::from_iter<CollectSum<i32>>(
+      ArrayIterator<i32, 5>::with_array(nums));
+  EXPECT_EQ(from.sum, 1 + 2 + 3 + 4 + 5);
+
   static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
                     .into_iter()
                     .collect<CollectSum<i32>>()
@@ -479,6 +500,97 @@ TEST(Iterator, CollectVec) {
   static_assert(
       sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().collect_vec() ==
       sus::Vec<i32>::with(1, 2, 3, 4, 5));
+}
+
+TEST(Iterator, TryCollect) {
+  // Option.
+  {
+    auto collected = sus::Array<Option<i32>, 3>::with(
+                         ::sus::some(1), ::sus::some(2), ::sus::some(3))
+                         .into_iter()
+                         .try_collect<Vec<i32>>();
+    static_assert(std::same_as<decltype(collected), Option<Vec<i32>>>);
+    EXPECT_EQ(collected.is_some(), true);
+    EXPECT_EQ(collected.as_value(), sus::Vec<i32>::with(1, 2, 3));
+
+    auto it = sus::Array<Option<i32>, 3>::with(::sus::some(1), ::sus::none(),
+                                               ::sus::some(3))
+                  .into_iter();
+    auto up_to_none = it.try_collect<Vec<i32>>();
+    EXPECT_EQ(up_to_none, sus::none());
+    auto after_none = it.try_collect<Vec<i32>>();
+    EXPECT_EQ(after_none.as_value(), sus::Vec<i32>::with(3));
+
+    NoCopyMove n[3];
+    auto refs = sus::Array<Option<const NoCopyMove&>, 3>::with(
+                    ::sus::some(n[0]), ::sus::some(n[1]), ::sus::some(n[2]))
+                    .into_iter()
+                    .try_collect<CollectRefs>();
+    EXPECT_EQ(refs.is_some(), true);
+    EXPECT_EQ(refs.as_value().vec[0u], &n[0]);
+    EXPECT_EQ(refs.as_value().vec[1u], &n[1]);
+    EXPECT_EQ(refs.as_value().vec[2u], &n[2]);
+  }
+  // Result.
+  enum Error { ERROR };
+  {
+    auto collected = sus::Array<Result<i32, Error>, 3>::with(
+                         ::sus::ok(1), ::sus::ok(2), ::sus::ok(3))
+                         .into_iter()
+                         .try_collect<Vec<i32>>();
+    static_assert(std::same_as<decltype(collected), Result<Vec<i32>, Error>>);
+    EXPECT_EQ(collected.as_ok(), sus::Vec<i32>::with(1, 2, 3));
+
+    auto it = sus::Array<Result<i32, Error>, 3>::with(
+                  ::sus::ok(1), ::sus::err(ERROR), ::sus::ok(3))
+                  .into_iter();
+    auto up_to_err = it.try_collect<Vec<i32>>();
+    EXPECT_EQ(up_to_err, sus::err(ERROR));
+    auto after_err = it.try_collect<Vec<i32>>();
+    EXPECT_EQ(after_err.as_ok(), sus::Vec<i32>::with(3));
+  }
+
+  auto from =
+      sus::iter::try_from_iter<Vec<i32>>(sus::Array<Option<i32>, 3>::with(
+          ::sus::some(1), ::sus::some(2), ::sus::some(3)));
+  EXPECT_EQ(from.as_value(), sus::Vec<i32>::with(1, 2, 3));
+
+  static_assert(
+      sus::Array<Option<i32>, 3>::with(sus::some(1), sus::some(2), sus::some(3))
+          .into_iter()
+          .try_collect<Vec<i32>>()
+          .unwrap()
+          .into_iter()
+          .sum() == 1 + 2 + 3);
+}
+
+TEST(Iterator, TryCollect_Example) {
+  using sus::none;
+  using sus::ok;
+  using sus::err;
+  using sus::Option;
+  using sus::result::Result;
+  using sus::some;
+  using sus::Vec;
+  {
+    auto u = Vec<Option<i32>>::with(some(1), some(2), some(3));
+    auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
+    sus::check(v == some(Vec<i32>::with(1, 2, 3)));
+  }
+  {
+    auto u = Vec<Option<i32>>::with(some(1), some(2), none(), some(3));
+    auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
+    sus::check(v == none());
+  }
+  {
+    enum Error { ERROR };
+    auto u = Vec<Result<i32, Error>>::with(ok(1), ok(2), ok(3));
+    auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
+    sus::check(v == ok(Vec<i32>::with(1, 2, 3)));
+    auto w = Vec<Result<i32, Error>>::with(ok(1), ok(2), err(ERROR), ok(3));
+    auto x = sus::move(w).into_iter().try_collect<Vec<i32>>();
+    sus::check(x == err(ERROR));
+  }
 }
 
 TEST(Iterator, Rev) {

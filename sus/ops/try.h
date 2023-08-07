@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include "sus/macros/__private/compiler_bugs.h"
+#include "sus/mem/forward.h"
 #include "sus/mem/move.h"
 
 namespace sus::ops {
@@ -43,10 +45,13 @@ concept Try =
     requires {
       // The Try type is not a reference, conversions require concrete types.
       requires !std::is_reference_v<T>;
-      // The Output type can be converted to/from the Try type.
+      // The Output success type can be converted to/from the Try type.
       typename TryImpl<T>::Output;
-      // The Output type is also not a reference.
-      requires !std::is_reference_v<typename TryImpl<T>::Output>;
+#if !defined(sus_gcc_bug_110927_exists)
+      // The Try type can be used to produce another Try type with a different
+      // Output type but the same error type.
+      typename TryImpl<T>::template RemapOutput<typename TryImpl<T>::Output>;
+#endif
     }   //
     &&  //
     requires(const T& t, T&& tt) {
@@ -64,9 +69,12 @@ concept Try =
     // construct a `T` with a void Output type, require `TryDefault` instead and
     // use `from_default()`.
     (std::is_void_v<typename TryImpl<T>::Output> ||  //
-     requires(typename TryImpl<T>::Output output) {
+     requires(typename TryImpl<T>::Output&& output) {
        // from_output() converts a success type to the Try type.
-       { TryImpl<T>::from_output(::sus::move(output)) } -> std::same_as<T>;
+       {
+         TryImpl<T>::from_output(
+             ::sus::forward<typename TryImpl<T>::Output>(output))
+       } -> std::same_as<T>;
      });
 
 /// Identifies Try types which can be constructed with a default success value.
@@ -81,6 +89,32 @@ concept TryDefault = Try<T> && requires {
   // success type.
   { TryImpl<T>::from_default() } -> std::same_as<T>;
 };
+
+/// Can be used to further constrain the relationship between two `Try` types
+/// such that an error in one can be used to construct the other type.
+///
+/// This allows `Try<A, E>` to be returned from a function working with
+/// `Try<B, E>` in the case of an error, as `sus::ops::try_preserve_error<A>()`
+/// can be used to construct the error return type.
+template <class From, class To>
+concept TryErrorConvertibleTo =
+    Try<From> &&  //
+    Try<To> &&    //
+    requires(From&& f) {
+      // preserve_error() constructs a Try type from another related type while
+      // passing the error state along.
+      {
+        TryImpl<To>::template preserve_error(::sus::move(f))
+      } -> std::same_as<To>;
+    };
+
+/// A helper to get the `Output` type for a type `T` that satisfies `Try`.
+template <Try T>
+using TryOutputType = typename TryImpl<T>::Output;
+
+/// A helper to get the `RemapOutput` type for a type `T` that satisfies `Try`.
+template <Try T, class U>
+using TryRemapOutputType = typename TryImpl<T>::template RemapOutput<U>;
 
 /// Determines if a type `T` that satisfies `Try` represents success in its
 /// current state.
@@ -123,7 +157,8 @@ constexpr inline TryImpl<T>::Output try_into_output(T&& t) noexcept {
 template <Try T>
   requires(!std::is_void_v<typename TryImpl<T>::Output>)
 constexpr inline T try_from_output(typename TryImpl<T>::Output&& t) noexcept {
-  return TryImpl<T>::from_output(::sus::move(t));
+  return TryImpl<T>::from_output(
+      ::sus::forward<typename TryImpl<T>::Output>(t));
 }
 
 /// Constructs an object of type `T` that satisfies `TryDefault` (and `Try`)
@@ -138,6 +173,21 @@ constexpr inline T try_from_output(typename TryImpl<T>::Output&& t) noexcept {
 template <TryDefault T>
 constexpr inline T try_from_default() noexcept {
   return TryImpl<T>::from_default();
+}
+
+/// Converts from a `Try` type `T` to another `Try` type `U` with a compatible
+/// error state. The input must be in an error state, and the output will be as
+/// well.
+///
+/// # Panics
+///
+/// If the input is not in an error state (`is_success()` would return false)
+/// the function will panic.
+template <class U, TryErrorConvertibleTo<U> T>
+  requires(::sus::mem::IsMoveRef<T &&>)
+constexpr inline U try_preserve_error(T&& t) noexcept {
+  ::sus::check(!TryImpl<T>::is_success(t));
+  return TryImpl<U>::preserve_error(::sus::move(t));
 }
 
 }  // namespace sus::ops

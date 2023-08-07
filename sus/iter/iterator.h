@@ -16,6 +16,7 @@
 
 // IWYU pragma: begin_exports
 #include "sus/iter/iterator_defn.h"
+#include "sus/iter/iterator_impl.h"
 
 // The usize formatting is in unsigned_integer_impl.h which has an include cycle
 // with usize->Array->Array iterators->SizeHint->usize. So the SizeHint
