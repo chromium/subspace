@@ -1914,13 +1914,14 @@ constexpr std::weak_ordering IteratorBase<Iter, Item>::weak_cmp_by(
 template <class Iter, class Item>
 template <FromIterator<Item> C>
 constexpr C IteratorBase<Iter, Item>::collect() && noexcept {
-  return from_iter<C>(static_cast<Iter&&>(*this));
+  return ::sus::iter::from_iter<C>(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
 constexpr ::sus::containers::Vec<Item>
 IteratorBase<Iter, Item>::collect_vec() && noexcept {
-  return from_iter<::sus::containers::Vec<Item>>(static_cast<Iter&&>(*this));
+  return ::sus::iter::from_iter<::sus::containers::Vec<Item>>(
+      static_cast<Iter&&>(*this));
 }
 
 }  // namespace sus::iter

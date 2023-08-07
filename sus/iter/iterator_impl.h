@@ -32,7 +32,7 @@ template <class C>
            // Void can not be collected from.
            !std::is_void_v<::sus::ops::TryOutputType<Item>>)
 constexpr auto IteratorBase<Iter, Item>::try_collect() noexcept {
-  return try_from_iter<C>(static_cast<Iter&&>(*this));
+  return ::sus::iter::try_from_iter<C>(static_cast<Iter&&>(*this));
 }
 
 }  // namespace sus::iter
