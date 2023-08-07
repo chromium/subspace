@@ -42,10 +42,6 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh ${clang_version} all
 
-      - name: Download dependencies
-        shell: bash
-        run: gclient sync --jobs=16
-
       - name: Configure
         run: |
           # Path to LLVM+Clang nightly that we have installed.
