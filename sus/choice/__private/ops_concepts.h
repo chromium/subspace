@@ -44,8 +44,8 @@ struct ChoiceIsOrdHelper;
 template <class TagType1, class... Types1, class TagType2, class... Types2>
 struct ChoiceIsOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                          TypeList<Types2...>> {
-  static constexpr bool value = (::sus::ops::Ord<TagType1, TagType2> && ... &&
-                                 ::sus::ops::Ord<Types1, Types2>);
+  static constexpr bool value = (::sus::ops::StrongOrd<TagType1, TagType2> && ... &&
+                                 ::sus::ops::StrongOrd<Types1, Types2>);
 };
 
 // Out of line from the requires clause, and in a struct, to work around
@@ -62,11 +62,11 @@ struct ChoiceIsWeakOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                              TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
-      ((!::sus::ops::Ord<TagType1, TagType2> || ... ||
-        !::sus::ops::Ord<Types1, Types2>)
+      ((!::sus::ops::StrongOrd<TagType1, TagType2> || ... ||
+        !::sus::ops::StrongOrd<Types1, Types2>)
         &&
-       (::sus::ops::WeakOrd<TagType1, TagType2> && ... &&
-        ::sus::ops::WeakOrd<Types1, Types2>));
+       (::sus::ops::Ord<TagType1, TagType2> && ... &&
+        ::sus::ops::Ord<Types1, Types2>));
   // clang-format on
 };
 
@@ -84,8 +84,8 @@ struct ChoiceIsPartialOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                                 TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
-      (!::sus::ops::WeakOrd<TagType1, TagType2> || ... ||
-       !::sus::ops::WeakOrd<Types1, Types2>)
+      (!::sus::ops::Ord<TagType1, TagType2> || ... ||
+       !::sus::ops::Ord<Types1, Types2>)
       &&
       (::sus::ops::PartialOrd<TagType1, TagType2> && ... &&
        ::sus::ops::PartialOrd<Types1, Types2>);

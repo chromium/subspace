@@ -93,8 +93,7 @@ constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize>
 binary_search(const T& x) const& noexcept
   requires(::sus::ops::Ord<T>)
 {
-  return binary_search_by(
-      [&x](const T& p) -> std::strong_ordering { return p <=> x; });
+  return binary_search_by([&x](const T& p) { return p <=> x; });
 }
 
 /// Binary searches this slice with a comparator function. This behaves
@@ -113,9 +112,7 @@ binary_search(const T& x) const& noexcept
 /// element could be inserted while maintaining sorted order.
 constexpr ::sus::result::Result<::sus::num::usize, ::sus::num::usize>
 binary_search_by(
-    ::sus::fn::FnMutRef<std::strong_ordering(const T&)> f) const& noexcept
-  requires(::sus::ops::Ord<T>)
-{
+    ::sus::fn::FnMutRef<std::weak_ordering(const T&)> f) const& noexcept {
   using Result = ::sus::result::Result<::sus::num::usize, ::sus::num::usize>;
 
   // INVARIANTS:
@@ -171,7 +168,7 @@ binary_search_by(
 /// found then `sus::Err` is returned, with the index where a matching
 /// element could be inserted while maintaining sorted order.
 ///
-template <::sus::ops::Ord Key>
+template <::sus::ops::StrongOrd Key>
 ::sus::result::
     Result<::sus::num::usize, ::sus::num::usize> constexpr binary_search_by_key(
         const Key& key,

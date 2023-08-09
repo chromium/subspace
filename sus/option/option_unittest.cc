@@ -2378,7 +2378,7 @@ TEST(Option, Eq) {
   EXPECT_EQ(Option<i32>(), sus::none());
 }
 
-TEST(Option, Ord) {
+TEST(Option, StrongOrd) {
   EXPECT_LT(Option<int>::with(1), Option<int>::with(2));
   EXPECT_GT(Option<int>::with(3), Option<int>::with(2));
 
@@ -2390,7 +2390,7 @@ TEST(Option, Ord) {
 }
 
 TEST(Option, StrongOrder) {
-  static_assert(::sus::ops::Ord<Option<int>>);
+  static_assert(::sus::ops::StrongOrd<Option<int>>);
 
   EXPECT_EQ(std::strong_order(Option<int>::with(12), Option<int>::with(12)),
             std::strong_ordering::equal);
@@ -2420,8 +2420,8 @@ struct Weak {
 };
 
 TEST(Option, WeakOrder) {
-  static_assert(!::sus::ops::Ord<Option<Weak>>);
-  static_assert(::sus::ops::WeakOrd<Option<Weak>>);
+  static_assert(!::sus::ops::StrongOrd<Option<Weak>>);
+  static_assert(::sus::ops::Ord<Option<Weak>>);
 
   auto x = std::weak_order(Option<Weak>::with(Weak(1, 2)),
                            Option<Weak>::with(Weak(1, 2)));
@@ -2438,7 +2438,7 @@ TEST(Option, WeakOrder) {
 }
 
 TEST(Option, PartialOrder) {
-  static_assert(!::sus::ops::WeakOrd<Option<float>>);
+  static_assert(!::sus::ops::Ord<Option<float>>);
   static_assert(::sus::ops::PartialOrd<Option<float>>);
 
   EXPECT_EQ(

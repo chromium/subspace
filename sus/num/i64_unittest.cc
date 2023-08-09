@@ -114,15 +114,15 @@ TEST(i64, Traits) {
   static_assert(sus::num::Shr<i64>);
   static_assert(sus::num::ShrAssign<i64>);
 
-  static_assert(sus::ops::Ord<i64, int8_t>);
-  static_assert(sus::ops::Ord<i64, int16_t>);
-  static_assert(sus::ops::Ord<i64, int32_t>);
-  static_assert(sus::ops::Ord<i64, int64_t>);
-  static_assert(sus::ops::Ord<i64, i8>);
-  static_assert(sus::ops::Ord<i64, i16>);
-  static_assert(sus::ops::Ord<i64, i32>);
-  static_assert(sus::ops::Ord<i64, i64>);
-  static_assert(sus::ops::Ord<i64, isize>);
+  static_assert(sus::ops::StrongOrd<i64, int8_t>);
+  static_assert(sus::ops::StrongOrd<i64, int16_t>);
+  static_assert(sus::ops::StrongOrd<i64, int32_t>);
+  static_assert(sus::ops::StrongOrd<i64, int64_t>);
+  static_assert(sus::ops::StrongOrd<i64, i8>);
+  static_assert(sus::ops::StrongOrd<i64, i16>);
+  static_assert(sus::ops::StrongOrd<i64, i32>);
+  static_assert(sus::ops::StrongOrd<i64, i64>);
+  static_assert(sus::ops::StrongOrd<i64, isize>);
   static_assert(1_i64 >= 1_i64);
   static_assert(2_i64 > 1_i64);
   static_assert(1_i64 <= 1_i64);

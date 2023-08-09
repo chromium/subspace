@@ -70,7 +70,7 @@
 #define sus_clang_bug_54050_else(...) __VA_ARGS__
 #endif
 
-// GCC internal compiler error when Ord fails.
+// GCC internal compiler error when StrongOrd fails.
 // TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107542
 // Fixed in GCC 12.3 and 13.x.
 #if defined(__GNUC__) && \

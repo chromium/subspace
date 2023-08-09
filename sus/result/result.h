@@ -876,11 +876,11 @@ class [[nodiscard]] Result final {
 
   /// Compares two Result.
   ///
+  /// Satisfies sus::ops::StrongOrd<Result<T, E>> if sus::ops::StrongOrd<T> and
+  /// sus::ops::StrongOrd<E>.
+  ///
   /// Satisfies sus::ops::Ord<Result<T, E>> if sus::ops::Ord<T> and
   /// sus::ops::Ord<E>.
-  ///
-  /// Satisfies sus::ops::WeakOrd<Result<T, E>> if sus::ops::WeakOrd<T> and
-  /// sus::ops::WeakOrd<E>.
   ///
   /// Satisfies sus::ops::PartialOrd<Result<T, E>> if sus::ops::PartialOrd<T>
   /// and sus::ops::PartialOrd<E>.
@@ -888,9 +888,9 @@ class [[nodiscard]] Result final {
   /// The non-template overloads allow ok/err marker types to convert to
   /// Option for comparison.
   //
-  // sus::ops::Ord<Result<T, E>> trait.
+  // sus::ops::StrongOrd<Result<T, E>> trait.
   friend constexpr auto operator<=>(const Result& l, const Result& r) noexcept
-    requires(VoidOrOrd<T> && ::sus::ops::Ord<E>)
+    requires(VoidOrOrd<T> && ::sus::ops::StrongOrd<E>)
   {
     ::sus::check(l.state_ != ResultState::IsMoved);
     switch (l.state_) {
@@ -913,7 +913,7 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U, class F>
-    requires(VoidOrOrd<T, U> && ::sus::ops::Ord<E, F>)
+    requires(VoidOrOrd<T, U> && ::sus::ops::StrongOrd<E, F>)
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -937,10 +937,10 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
-  // sus::ops::WeakOrd<Result<T, E>> trait.
+  // sus::ops::Ord<Result<T, E>> trait.
   friend constexpr auto operator<=>(const Result& l, const Result& r) noexcept
-    requires((!VoidOrOrd<T> || !::sus::ops::Ord<E>) && VoidOrWeakOrd<T> &&
-             ::sus::ops::WeakOrd<E>)
+    requires((!VoidOrOrd<T> || !::sus::ops::StrongOrd<E>) && VoidOrWeakOrd<T> &&
+             ::sus::ops::Ord<E>)
   {
     ::sus::check(l.state_ != ResultState::IsMoved);
     switch (l.state_) {
@@ -963,8 +963,8 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U, class F>
-    requires((!VoidOrOrd<T, U> || !::sus::ops::Ord<E, F>) &&
-             VoidOrWeakOrd<T, U> && ::sus::ops::WeakOrd<E, F>)
+    requires((!VoidOrOrd<T, U> || !::sus::ops::StrongOrd<E, F>) &&
+             VoidOrWeakOrd<T, U> && ::sus::ops::Ord<E, F>)
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -990,7 +990,7 @@ class [[nodiscard]] Result final {
 
   // sus::ops::PartialOrd<Result<T, E>> trait.
   friend constexpr auto operator<=>(const Result& l, const Result& r) noexcept
-    requires((!VoidOrWeakOrd<T> || !::sus::ops::WeakOrd<E>) &&
+    requires((!VoidOrWeakOrd<T> || !::sus::ops::Ord<E>) &&
              VoidOrPartialOrd<T> && ::sus::ops::PartialOrd<E>)
   {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -1014,7 +1014,7 @@ class [[nodiscard]] Result final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U, class F>
-    requires((!VoidOrWeakOrd<T, U> || !::sus::ops::WeakOrd<E, F>) &&
+    requires((!VoidOrWeakOrd<T, U> || !::sus::ops::Ord<E, F>) &&
              VoidOrPartialOrd<T, U> && ::sus::ops::PartialOrd<E, F>)
   friend constexpr auto operator<=>(const Result& l,
                                     const Result<U, F>& r) noexcept {

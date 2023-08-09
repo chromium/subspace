@@ -117,16 +117,16 @@ TEST(u32, Traits) {
   static_assert(sus::num::Shr<u32>);
   static_assert(sus::num::ShrAssign<u32>);
 
-  static_assert(sus::ops::Ord<u32, uint8_t>);
-  static_assert(sus::ops::Ord<u32, uint16_t>);
-  static_assert(sus::ops::Ord<u32, uint32_t>);
-  static_assert(sus::ops::Ord<u32, uint64_t>);
-  static_assert(sus::ops::Ord<u32, size_t>);
-  static_assert(sus::ops::Ord<u32, u8>);
-  static_assert(sus::ops::Ord<u32, u16>);
-  static_assert(sus::ops::Ord<u32, u32>);
-  static_assert(sus::ops::Ord<u32, u64>);
-  static_assert(sus::ops::Ord<u32, usize>);
+  static_assert(sus::ops::StrongOrd<u32, uint8_t>);
+  static_assert(sus::ops::StrongOrd<u32, uint16_t>);
+  static_assert(sus::ops::StrongOrd<u32, uint32_t>);
+  static_assert(sus::ops::StrongOrd<u32, uint64_t>);
+  static_assert(sus::ops::StrongOrd<u32, size_t>);
+  static_assert(sus::ops::StrongOrd<u32, u8>);
+  static_assert(sus::ops::StrongOrd<u32, u16>);
+  static_assert(sus::ops::StrongOrd<u32, u32>);
+  static_assert(sus::ops::StrongOrd<u32, u64>);
+  static_assert(sus::ops::StrongOrd<u32, usize>);
   static_assert(1_u32 >= 1_u32);
   static_assert(2_u32 > 1_u32);
   static_assert(1_u32 <= 1_u32);

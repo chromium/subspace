@@ -671,7 +671,7 @@ TEST(Choice, Eq) {
   EXPECT_EQ(double_storage, sus::choice<Order::First>(2u, 3u));
 }
 
-TEST(Choice, Ord) {
+TEST(Choice, StrongOrd) {
   using OrderChoice =
       Choice<sus_choice_types((Order::First, u32), (Order::Second, u8))>;
   auto u1 = OrderChoice::with<Order::First>(4u);
@@ -726,8 +726,8 @@ struct Weak {
 TEST(Choice, WeakOrder) {
   using ChoiceWeak =
       Choice<sus_choice_types((Order::First, Weak), (Order::Second, Weak))>;
-  static_assert(!sus::ops::Ord<ChoiceWeak>);
-  static_assert(sus::ops::WeakOrd<ChoiceWeak>);
+  static_assert(!sus::ops::StrongOrd<ChoiceWeak>);
+  static_assert(sus::ops::Ord<ChoiceWeak>);
 
   // Same enum value and inner value.
   auto u1 = ChoiceWeak::with<Order::First>(Weak(1, 1));
@@ -787,13 +787,13 @@ TEST(Choice, PartialOrder) {
 struct NotCmp {};
 static_assert(!sus::ops::PartialOrd<NotCmp>);
 
-static_assert(::sus::ops::Ord<Choice<sus_choice_types((1, int))>,
+static_assert(::sus::ops::StrongOrd<Choice<sus_choice_types((1, int))>,
                               Choice<sus_choice_types((1, int))>>);
-static_assert(!::sus::ops::Ord<Choice<sus_choice_types((1, Weak))>,
+static_assert(!::sus::ops::StrongOrd<Choice<sus_choice_types((1, Weak))>,
                                Choice<sus_choice_types((1, Weak))>>);
-static_assert(::sus::ops::WeakOrd<Choice<sus_choice_types((1, Weak))>,
+static_assert(::sus::ops::Ord<Choice<sus_choice_types((1, Weak))>,
                                   Choice<sus_choice_types((1, Weak))>>);
-static_assert(!::sus::ops::WeakOrd<Choice<sus_choice_types((1, float))>,
+static_assert(!::sus::ops::Ord<Choice<sus_choice_types((1, float))>,
                                    Choice<sus_choice_types((1, float))>>);
 static_assert(::sus::ops::PartialOrd<Choice<sus_choice_types((1, float))>,
                                      Choice<sus_choice_types((1, float))>>);
@@ -814,8 +814,8 @@ TEST(Choice, VoidValues) {
   static_assert(sus::mem::Copy<decltype(u3)>);
   static_assert(sus::ops::Eq<decltype(u1)>);
   static_assert(sus::ops::Eq<decltype(u3)>);
-  static_assert(sus::ops::Ord<decltype(u1)>);
-  static_assert(sus::ops::Ord<decltype(u3)>);
+  static_assert(sus::ops::StrongOrd<decltype(u1)>);
+  static_assert(sus::ops::StrongOrd<decltype(u3)>);
 
   static_assert(CanGetRef<decltype(u1), Order::First>);
   static_assert(!CanGetRef<decltype(u1), Order::Second>);

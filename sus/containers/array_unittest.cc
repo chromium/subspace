@@ -338,7 +338,7 @@ TEST(Array, Eq) {
   EXPECT_NE(a, b);
 }
 
-TEST(Array, Ord) {
+TEST(Array, StrongOrd) {
   auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
   auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
   EXPECT_LE(a, b);
@@ -393,15 +393,15 @@ TEST(Array, PartialOrder) {
 struct NotCmp {};
 static_assert(!sus::ops::PartialOrd<NotCmp>);
 
+static_assert(!sus::ops::StrongOrd<Array<int, 3>, Array<int, 4>>);
 static_assert(!sus::ops::Ord<Array<int, 3>, Array<int, 4>>);
-static_assert(!sus::ops::WeakOrd<Array<int, 3>, Array<int, 4>>);
 static_assert(!sus::ops::PartialOrd<Array<int, 3>, Array<int, 4>>);
 
-static_assert(sus::ops::Ord<Array<int, 3>>);
-static_assert(!sus::ops::Ord<Array<Weak, 3>>);
-static_assert(sus::ops::WeakOrd<Array<Weak, 3>>);
-static_assert(!sus::ops::WeakOrd<Array<float, 3>>);
-static_assert(!sus::ops::WeakOrd<Array<float, 3>>);
+static_assert(sus::ops::StrongOrd<Array<int, 3>>);
+static_assert(!sus::ops::StrongOrd<Array<Weak, 3>>);
+static_assert(sus::ops::Ord<Array<Weak, 3>>);
+static_assert(!sus::ops::Ord<Array<float, 3>>);
+static_assert(!sus::ops::Ord<Array<float, 3>>);
 static_assert(!sus::ops::PartialOrd<Array<NotCmp, 3>>);
 
 TEST(Array, Iter) {

@@ -181,17 +181,17 @@ class Tuple final {
 
   /// Compares two Tuples.
   ///
-  /// Satisfies sus::ops::Ord<Tuple<...>> if sus::ops::Ord<...>.
-  /// Satisfies sus::ops::WeakOrd<Option<...>> if sus::ops::WeakOrd<...>.
+  /// Satisfies sus::ops::StrongOrd<Tuple<...>> if sus::ops::StrongOrd<...>.
+  /// Satisfies sus::ops::Ord<Option<...>> if sus::ops::Ord<...>.
   /// Satisfies sus::ops::PartialOrd<Option<...>> if sus::ops::PartialOrd<...>.
   ///
   /// The non-template overloads allow tuple() marker types to convert to
   /// Option for comparison.
   //
-  // sus::ops::Ord<Tuple<U...>> trait.
+  // sus::ops::StrongOrd<Tuple<U...>> trait.
   constexpr auto operator<=>(const Tuple& r) const& noexcept
-    requires((::sus::ops::ExclusiveOrd<T> && ... &&
-              ::sus::ops::ExclusiveOrd<Ts>))
+    requires((::sus::ops::ExclusiveStrongOrd<T> && ... &&
+              ::sus::ops::ExclusiveStrongOrd<Ts>))
   {
     return __private::storage_cmp(
         std::strong_ordering::equal, storage_, r.storage_,
@@ -199,18 +199,18 @@ class Tuple final {
   }
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
-             (::sus::ops::ExclusiveOrd<T, U> && ... &&
-              ::sus::ops::ExclusiveOrd<Ts, Us>))
+             (::sus::ops::ExclusiveStrongOrd<T, U> && ... &&
+              ::sus::ops::ExclusiveStrongOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
     return __private::storage_cmp(
         std::strong_ordering::equal, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
-  // sus::ops::WeakOrd<Tuple<U...>> trait.
+  // sus::ops::Ord<Tuple<U...>> trait.
   constexpr auto operator<=>(const Tuple& r) const& noexcept
-    requires((::sus::ops::ExclusiveWeakOrd<T> && ... &&
-              ::sus::ops::ExclusiveWeakOrd<Ts>))
+    requires((::sus::ops::ExclusiveOrd<T> && ... &&
+              ::sus::ops::ExclusiveOrd<Ts>))
   {
     return __private::storage_cmp(
         std::weak_ordering::equivalent, storage_, r.storage_,
@@ -218,8 +218,8 @@ class Tuple final {
   }
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
-             (::sus::ops::ExclusiveWeakOrd<T, U> && ... &&
-              ::sus::ops::ExclusiveWeakOrd<Ts, Us>))
+             (::sus::ops::ExclusiveOrd<T, U> && ... &&
+              ::sus::ops::ExclusiveOrd<Ts, Us>))
   constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
     return __private::storage_cmp(
         std::weak_ordering::equivalent, storage_, r.storage_,

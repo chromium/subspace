@@ -33,7 +33,38 @@ concept Ordering = (std::same_as<T, std::strong_ordering> ||
                     std::same_as<T, std::partial_ordering> ||
                     std::same_as<T, std::weak_ordering>);
 
-/// Concept for types that form a total order (aka `std::strong_ordering`).
+/// Concept for types that form a unique total order (aka
+/// `std::strong_ordering`). Objects that sort the same for ordering must also
+/// compare as equal.
+///
+/// # How can I implement StrongOrd?
+/// `StrongOrd` requires that the type has `operator<=>` which returns
+/// `std::strong_ordering`. It will implicitly also be `Ord` and
+/// `PartialOrd` as a result.
+///
+/// # StrongOrd and Eq interations
+/// While `StrongOrd` can report equality, it does not imply that the type
+/// satisfies `Eq`, and a separate `operator==` is required for that concept.
+/// For correctness, types that satisfy `StrongOrd` and `Eq` must have object
+/// which compare as equivalent for ording also compare as equal with
+/// `operator==`.
+///
+/// Generic code that requires a type to be `StrongOrd` should take care to use
+/// `operator<=>` and not `operator==` unless also requiring `Eq`.
+template <class Lhs, class Rhs = Lhs>
+concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
+                             const std::remove_reference_t<Rhs>& rhs) {
+  { lhs <=> rhs } -> std::same_as<std::strong_ordering>;
+};
+
+/// Concept for types that form a total ordering (aka `std::weak_ordering`).
+///
+/// Types that satisfy `Ord` can be sorted or compared and always return a
+/// consistent result as all possible values are comparable. Objects that
+/// compare as equivalent for ordering may still be different internally and
+/// compare as different through `operator==`. If unique identity is required,
+/// use `StrongOrd`. Otherwise, typically use `Ord` for constraining types that
+/// will be ordered.
 ///
 /// # Lexicographical comparison
 /// Lexicographical comparison is an operation with the following properties:
@@ -49,63 +80,64 @@ concept Ordering = (std::same_as<T, std::strong_ordering> ||
 ///
 /// # How can I implement Ord?
 /// `Ord` requires that the type has `operator<=>` which returns
-/// `std::strong_ordering`. It will implicitly also be `WeakOrd` and
-/// `PartialOrd` as a result.
+/// `std::weak_ordering`. It will implicitly also be `PartialOrd` as a
+/// result. If the `operator<=>` returns `std::strong_ordering` then the type
+/// will satisfy `StrongOrd` which also satisfies `Ord`.
 ///
 /// # Ord and Eq interations
 /// While `Ord` can report equality, it does not imply that the type satisfies
-/// `Eq`, and a separate `operator==` is required for that concept. Generic code
-/// that requires a type to be `Ord` should take care to use `operator<=>` and
-/// not `operator==` unless also requiring `Eq`.
-template <class Lhs, class Rhs = Lhs>
-concept Ord = requires(const std::remove_reference_t<Lhs>& lhs,
-                       const std::remove_reference_t<Rhs>& rhs) {
-  { lhs <=> rhs } -> std::same_as<std::strong_ordering>;
-};
-
-/// Concept for types that form a weak ordering (aka `std::weak_ordering`).
+/// `Eq`, and a separate `operator==` is required for that concept. Unlike
+/// `StrongOrd`, it is not required that objects which are ordered as equivalent
+/// also compare as equal with `operator==`.
 ///
-/// This will be true if the types have a total ordering as well, which is
-/// stronger than a weak ordering. To determine if a weak ordering is the
-/// strongest type of ordering between the types, use `ExclusiveWeakOrd`.
+/// Generic code that requires a type to be `Ord` should take care to use
+/// `operator<=>` and not `operator==` unless also requiring `Eq`, in which case
+/// consider requiring `StrongOrd` in place of both `Ord` and `Eq`.
+///
+/// # Determining `Ord` strictly
+/// `Ord` will be also sastisfied if the types satisfy `StrongOrd`. To determine
+/// if a `Ord` is the strongest type of ordering between the types, use
+/// `ExclusiveOrd`.
 template <class Lhs, class Rhs = Lhs>
-concept WeakOrd =
-    Ord<Lhs, Rhs> || requires(const std::remove_reference_t<Lhs>& lhs,
-                              const std::remove_reference_t<Rhs>& rhs) {
+concept Ord =
+    StrongOrd<Lhs, Rhs> || requires(const std::remove_reference_t<Lhs>& lhs,
+                                    const std::remove_reference_t<Rhs>& rhs) {
       { lhs <=> rhs } -> std::same_as<std::weak_ordering>;
     };
 
 /// Concept for types that form a partial ordering (aka
 /// `std::partial_ordering`).
 ///
-/// This will be true if the types have a weak r total ordering as well, which
-/// is stronger than a partial ordering. To determine if a partial ordering is
-/// the strongest type of ordering between the types, use `ExclusivePartialOrd`.
+/// # Determining `PartialOrd` strictly
+/// `PartialOrd` will be satisfied if the types satisfy `StrongOrd` or `Ord`. To
+/// determine if a partial ordering is the strongest type of ordering between
+/// the types, use `ExclusivePartialOrd`.
 template <class Lhs, class Rhs = Lhs>
 concept PartialOrd =
-    WeakOrd<Lhs, Rhs> || Ord<Lhs, Rhs> ||
+    Ord<Lhs, Rhs> || StrongOrd<Lhs, Rhs> ||
     requires(const std::remove_reference_t<Lhs>& lhs, const Rhs& rhs) {
       { lhs <=> rhs } -> std::same_as<std::partial_ordering>;
     };
 
-/// Concept for types that have a total ordering (aka `std::strong_ordering`).
+/// Concept for types that have a unique total ordering (aka
+/// `std::strong_ordering`).
 ///
-/// This is an alias for Ord, but exists as a set with `ExclusiveWeakOrd` and
-/// `ExclusivePartialOrd`.
+/// This is an alias for StrongOrd, but exists as a set with `ExclusiveOrd`
+/// and `ExclusivePartialOrd`.
 template <class Lhs, class Rhs = Lhs>
-concept ExclusiveOrd = Ord<Lhs, Rhs>;
+concept ExclusiveStrongOrd = StrongOrd<Lhs, Rhs>;
 
-/// Determines if the types `Lhs` and `Rhs` have a weak ordering (aka
+/// Determines if the types `Lhs` and `Rhs` have total ordering (aka
 /// `std::weak_ordering`), and that this is the strongest ordering that exists
 /// between the types.
 template <class Lhs, class Rhs = Lhs>
-concept ExclusiveWeakOrd = (!Ord<Lhs, Rhs> && WeakOrd<Lhs, Rhs>);
+concept ExclusiveOrd = (!StrongOrd<Lhs, Rhs> && Ord<Lhs, Rhs>);
 
 /// Determines if the types `Lhs` and `Rhs` have a partial ordering (aka
 /// `std::partial_ordering`), and that this is the strongest ordering that
 /// exists between the types.
 template <class Lhs, class Rhs = Lhs>
-concept ExclusivePartialOrd = (!WeakOrd<Lhs, Rhs> && PartialOrd<Lhs, Rhs>);
+concept ExclusivePartialOrd = (!Ord<Lhs, Rhs> && PartialOrd<Lhs, Rhs>);
 
 /// Compares and returns the minimum of two values.
 ///
@@ -137,11 +169,11 @@ inline constexpr T min(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
 template <class T>
 constexpr T min_by(
     T a sus_lifetimebound, T b sus_lifetimebound,
-    ::sus::fn::FnOnce<std::strong_ordering(
+    ::sus::fn::FnOnce<std::weak_ordering(
         const std::remove_reference_t<T>&,
         const std::remove_reference_t<T>&)> auto&& compare) noexcept {
   return ::sus::fn::call_once(::sus::move(compare), a, b) ==
-                 std::strong_ordering::greater
+                 std::weak_ordering::greater
              ? ::sus::forward<T>(b)
              : ::sus::forward<T>(a);
 }
@@ -201,11 +233,11 @@ constexpr T max(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
 template <class T>
 constexpr T max_by(
     T a sus_lifetimebound, T b sus_lifetimebound,
-    ::sus::fn::FnOnce<std::strong_ordering(
+    ::sus::fn::FnOnce<std::weak_ordering(
         const std::remove_reference_t<T>&,
         const std::remove_reference_t<T>&)> auto&& compare) noexcept {
   return ::sus::fn::call_once(::sus::move(compare), a, b) ==
-                 std::strong_ordering::greater
+                 std::weak_ordering::greater
              ? ::sus::forward<T>(a)
              : ::sus::forward<T>(b);
 }

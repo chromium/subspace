@@ -36,7 +36,7 @@ namespace sus::ops {
 /// they can still be compared with `==` and `!=`. Unlike Rust, C++ does not
 /// understand partial equivalence so we are unable to differentiate.
 ///
-/// TODO: How do we do PartialEq? Can we even? Should we require Ord to be Eq?
+/// TODO: How do we do PartialEq? Can we even? Should we require StrongOrd to be Eq?
 template <class T, class U = T>
 concept Eq = requires(const std::remove_reference_t<T>& lhs,
                       const std::remove_reference_t<U>& rhs) {

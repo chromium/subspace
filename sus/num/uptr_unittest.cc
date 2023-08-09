@@ -113,16 +113,16 @@ TEST(uptr, Traits) {
   static_assert(sus::num::Shr<uptr>);
   static_assert(sus::num::ShrAssign<uptr>);
 
-  static_assert(sus::ops::Ord<uptr, uint8_t>);
-  static_assert(sus::ops::Ord<uptr, uint16_t>);
-  static_assert(sus::ops::Ord<uptr, uint64_t>);
-  static_assert(sus::ops::Ord<uptr, uint64_t>);
-  static_assert(sus::ops::Ord<uptr, size_t>);
-  static_assert(sus::ops::Ord<uptr, u8>);
-  static_assert(sus::ops::Ord<uptr, u16>);
-  static_assert(sus::ops::Ord<uptr, u32>);
-  static_assert(sus::ops::Ord<uptr, u64>);
-  static_assert(sus::ops::Ord<uptr, uptr>);
+  static_assert(sus::ops::StrongOrd<uptr, uint8_t>);
+  static_assert(sus::ops::StrongOrd<uptr, uint16_t>);
+  static_assert(sus::ops::StrongOrd<uptr, uint64_t>);
+  static_assert(sus::ops::StrongOrd<uptr, uint64_t>);
+  static_assert(sus::ops::StrongOrd<uptr, size_t>);
+  static_assert(sus::ops::StrongOrd<uptr, u8>);
+  static_assert(sus::ops::StrongOrd<uptr, u16>);
+  static_assert(sus::ops::StrongOrd<uptr, u32>);
+  static_assert(sus::ops::StrongOrd<uptr, u64>);
+  static_assert(sus::ops::StrongOrd<uptr, uptr>);
   static_assert(uptr(uintptr_t{1}) >= uptr(uintptr_t{1}));
   static_assert(uptr(uintptr_t{2}) > uptr(uintptr_t{1}));
   static_assert(uptr(uintptr_t{1}) <= uptr(uintptr_t{1}));

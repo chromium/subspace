@@ -29,11 +29,11 @@ concept VoidOrEq =
 
 template <class T, class U = T>
 concept VoidOrOrd =
-    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::Ord<T, U>;
+    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::StrongOrd<T, U>;
 
 template <class T, class U = T>
 concept VoidOrWeakOrd =
-    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::WeakOrd<T, U>;
+    (std::is_void_v<T> && std::is_void_v<U>) || ::sus::ops::Ord<T, U>;
 
 template <class T, class U = T>
 concept VoidOrPartialOrd =
