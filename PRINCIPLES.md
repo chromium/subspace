@@ -132,7 +132,6 @@ This library is an experiment and not intended for use. See the
    be packed into the tail padding, if it exists and is usable by the compiler
    implementation.
 1. Bounds are always checked unless you explicitly ask for them to not be.
-1. Lifetimes are always checked unless you explicitly ask for them to not be.
 1. Small headers. C++ compilation speed is proportional to the amount of input.
     * We will split types into separate headers as much as possible.
     * We may provide headers which group together smaller headers for simplicity
