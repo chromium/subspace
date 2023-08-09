@@ -514,21 +514,21 @@ template <Unsigned U>
     const _self& l, const U& r) noexcept {
   return l.primitive_value == r.primitive_value;
 }
-/// sus::ops::Ord<##_self##> trait.
+/// sus::ops::StrongOrd<##_self##> trait.
 /// #[doc.overloads=uint.ord.self]
 template <UnsignedPrimitiveInteger P>
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const _self& r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
-/// sus::ops::Ord<##_self##, UnsignedPrimitiveInteger> trait.
+/// sus::ops::StrongOrd<##_self##, UnsignedPrimitiveInteger> trait.
 /// #[doc.overloads=uint.ord.unsignedprimitive]
 template <UnsignedPrimitiveInteger P>
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const P& r) noexcept {
   return l.primitive_value <=> r;
 }
-/// sus::ops::Ord<##_self##, Unsigned> trait.
+/// sus::ops::StrongOrd<##_self##, Unsigned> trait.
 /// #[doc.overloads=uint.ord.unsigned]
 template <Unsigned U>
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(

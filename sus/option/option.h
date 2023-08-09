@@ -1214,19 +1214,19 @@ class Option final {
 
   /// Compares two Options.
   ///
-  /// Satisfies sus::ops::Ord<Option<U>> if sus::ops::Ord<U>.
+  /// Satisfies sus::ops::StrongOrd<Option<U>> if sus::ops::StrongOrd<U>.
   ///
-  /// Satisfies sus::ops::WeakOrd<Option<U>> if sus::ops::WeakOrd<U>.
+  /// Satisfies sus::ops::Ord<Option<U>> if sus::ops::Ord<U>.
   ///
   /// Satisfies sus::ops::PartialOrd<Option<U>> if sus::ops::PartialOrd<U>.
   ///
   /// The non-template overloads allow some/none marker types to convert to
   /// Option for comparison.
   //
-  // sus::ops::Ord<Option<U>> trait.
+  // sus::ops::StrongOrd<Option<U>> trait.
   friend constexpr inline auto operator<=>(const Option& l,
                                            const Option& r) noexcept
-    requires(::sus::ops::ExclusiveOrd<T>)
+    requires(::sus::ops::ExclusiveStrongOrd<T>)
   {
     switch (l) {
       case Some:
@@ -1245,7 +1245,7 @@ class Option final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
-    requires(::sus::ops::ExclusiveOrd<T, U>)
+    requires(::sus::ops::ExclusiveStrongOrd<T, U>)
   friend constexpr inline auto operator<=>(const Option<T>& l,
                                            const Option<U>& r) noexcept {
     switch (l) {
@@ -1265,10 +1265,10 @@ class Option final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
 
-  // sus::ops::WeakOrd<Option<U>> trait.
+  // sus::ops::Ord<Option<U>> trait.
   friend constexpr inline auto operator<=>(const Option& l,
                                            const Option& r) noexcept
-    requires(::sus::ops::ExclusiveWeakOrd<T>)
+    requires(::sus::ops::ExclusiveOrd<T>)
   {
     switch (l) {
       case Some:
@@ -1287,7 +1287,7 @@ class Option final {
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
   template <class U>
-    requires(::sus::ops::ExclusiveWeakOrd<T, U>)
+    requires(::sus::ops::ExclusiveOrd<T, U>)
   friend constexpr inline auto operator<=>(const Option<T>& l,
                                            const Option<U>& r) noexcept {
     switch (l) {

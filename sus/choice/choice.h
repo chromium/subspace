@@ -532,7 +532,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept = delete;
 
-  /// sus::ops::Ord<Choice<Ts...>, Choice<Us...>> trait.
+  /// sus::ops::StrongOrd<Choice<Ts...>, Choice<Us...>> trait.
   ///
   /// #[doc.overloads=ord]
   template <class... Us, auto V, auto... Vs>
@@ -550,7 +550,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     }
   }
 
-  /// sus::ops::WeakOrd<Choice<Ts...>, Choice<Us...>> trait.
+  /// sus::ops::Ord<Choice<Ts...>, Choice<Us...>> trait.
   ///
   /// #[doc.overloads=weakord]
   template <class... Us, auto V, auto... Vs>

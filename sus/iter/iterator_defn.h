@@ -139,23 +139,23 @@ class IteratorBase {
   Iterator<std::remove_cvref_t<Item>> auto cloned() && noexcept
     requires(::sus::mem::Clone<Item>);
 
-  /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
   /// the elements of this `Iterator` with those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::Ord<ItemT, OtherItem>)
-  std::strong_ordering cmp(Other&& other) && noexcept;
+  constexpr std::weak_ordering cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
   /// the elements of this `Iterator` with those of another with respect to the
   /// specified comparison function.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-  std::strong_ordering cmp_by(Other&& other,
-                              ::sus::fn::FnMutBox<std::strong_ordering(
-                                  const std::remove_reference_t<Item>&,
-                                  const std::remove_reference_t<OtherItem>&)>
-                                  cmp) && noexcept;
+  constexpr std::weak_ordering cmp_by(
+      Other&& other,
+      ::sus::fn::FnMut<std::weak_ordering(
+          const std::remove_reference_t<Item>&,
+          const std::remove_reference_t<OtherItem>&)> auto cmp) && noexcept;
 
   /// Creates an iterator which copies all of its elements.
   ///
@@ -388,7 +388,7 @@ class IteratorBase {
   Iterator<GenR> auto generate(GenFn generator_fn) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) greater than
+  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) greater than
   /// or equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -396,7 +396,7 @@ class IteratorBase {
   constexpr bool ge(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) greater than
+  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) greater than
   /// those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -431,12 +431,12 @@ class IteratorBase {
   /// true. If the iterator yields exactly zero or one element, true is
   /// returned.
   constexpr bool is_sorted_by(
-      ::sus::fn::FnMut<std::strong_ordering(
+      ::sus::fn::FnMut<std::weak_ordering(
           const std::remove_reference_t<Item>&,
           const std::remove_reference_t<Item>&)> auto compare) noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) less than or
+  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) less than or
   /// equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -444,7 +444,7 @@ class IteratorBase {
   constexpr bool le(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) less than
+  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) less than
   /// those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -484,7 +484,7 @@ class IteratorBase {
   /// If several elements are equally maximum, the last element is returned. If
   /// the iterator is empty, None is returned.
   ///
-  /// Note that `f32`/`f64` doesn’t implement `Ord` due to NaN being
+  /// Note that `f32`/`f64` doesn’t implement `StrongOrd` due to NaN being
   /// incomparable. You can work around this by using [`Iterator::reduce`](
   /// sus::iter::IteratorBase::reduce):
   ///
@@ -506,7 +506,7 @@ class IteratorBase {
   /// If several elements are equally maximum, the last element is returned. If
   /// the iterator is empty, None is returned.
   constexpr Option<Item> max_by(
-      sus::fn::FnMut<std::strong_ordering(
+      sus::fn::FnMut<std::weak_ordering(
           const std::remove_reference_t<Item>&,
           const std::remove_reference_t<Item>&)> auto compare) && noexcept;
 
@@ -530,7 +530,7 @@ class IteratorBase {
   /// If several elements are equally minimum, the first element is returned. If
   /// the iterator is empty, None is returned.
   ///
-  /// Note that `f32`/`f64` doesn’t implement `Ord` due to NaN being
+  /// Note that `f32`/`f64` doesn’t implement `StrongOrd` due to NaN being
   /// incomparable. You can work around this by using [`Iterator::reduce`](
   /// sus::iter::IteratorBase::reduce):
   ///
@@ -552,7 +552,7 @@ class IteratorBase {
   /// If several elements are equally minimum, the first element is returned. If
   /// the iterator is empty, None is returned.
   constexpr Option<Item> min_by(
-      sus::fn::FnMut<std::strong_ordering(
+      sus::fn::FnMut<std::weak_ordering(
           const std::remove_reference_t<Item>&,
           const std::remove_reference_t<Item>&)> auto compare) && noexcept;
 
@@ -610,7 +610,7 @@ class IteratorBase {
   constexpr Option<Item> nth_back(usize n) noexcept
     requires(DoubleEndedIterator<Iter, Item>);
 
-  /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
   /// the elements of this `Iterator` with those of another.
   ///
   /// The comparison works like short-circuit evaluation, returning a result
@@ -624,7 +624,7 @@ class IteratorBase {
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   constexpr std::partial_ordering partial_cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
   /// the elements of this `Iterator` with those of another with respect to the
   /// specified comparison function.
   template <IntoIteratorAny Other, int&...,
@@ -885,6 +885,33 @@ class IteratorBase {
   /// of 1 returns every element.
   constexpr Iterator<Item> auto step_by(usize step) && noexcept;
 
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
+  /// the elements of this `Iterator` with those of another.
+  ///
+  /// Strong ordering requires each item being compared that compares equal to
+  /// share the same identity (be replaceable). Typically `Ord` is
+  /// sufficient, which is required for `cmp()` and `cmp_by()`, where items that
+  /// compare equivalent may still have different internal state.
+  ///
+  /// The comparison works like short-circuit evaluation, returning a result
+  /// without comparing the remaining elements. As soon as an order can be
+  /// determined, the evaluation stops and a result is returned.
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+    requires(::sus::ops::StrongOrd<ItemT, OtherItem>)
+  constexpr std::strong_ordering strong_cmp(Other&& other) && noexcept;
+
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
+  /// the elements of this `Iterator` with those of another with respect to the
+  /// specified comparison function.
+  template <IntoIteratorAny Other, int&...,
+            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
+  constexpr std::strong_ordering strong_cmp_by(
+      Other&& other,
+      ::sus::fn::FnMut<std::strong_ordering(
+          const std::remove_reference_t<Item>&,
+          const std::remove_reference_t<OtherItem>&)> auto cmp) && noexcept;
+
   /// Sums the elements of an iterator.
   ///
   /// Takes each element, adds them together, and returns the result.
@@ -1065,28 +1092,6 @@ class IteratorBase {
   constexpr Iterator<sus::Tuple<ItemT, OtherItem>> auto zip(
       Other&& other) && noexcept;
 
-  /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
-  /// the elements of this `Iterator` with those of another.
-  ///
-  /// The comparison works like short-circuit evaluation, returning a result
-  /// without comparing the remaining elements. As soon as an order can be
-  /// determined, the evaluation stops and a result is returned.
-  template <IntoIteratorAny Other, int&...,
-            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-    requires(::sus::ops::WeakOrd<ItemT, OtherItem>)
-  constexpr std::weak_ordering weak_cmp(Other&& other) && noexcept;
-
-  /// [Lexicographically](sus::ops::Ord#How-can-I-implement-Ord?) compares
-  /// the elements of this `Iterator` with those of another with respect to the
-  /// specified comparison function.
-  template <IntoIteratorAny Other, int&...,
-            class OtherItem = typename IntoIteratorOutputType<Other>::Item>
-  constexpr std::weak_ordering weak_cmp_by(
-      Other&& other,
-      ::sus::fn::FnMut<std::weak_ordering(
-          const std::remove_reference_t<Item>&,
-          const std::remove_reference_t<OtherItem>&)> auto cmp) && noexcept;
-
   /// Transforms an iterator into a collection.
   ///
   /// collect() can turn anything iterable into a relevant collection. If this
@@ -1176,23 +1181,21 @@ IteratorBase<Iter, Item>::cloned() && noexcept
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
   requires(::sus::ops::Ord<Item, OtherItem>)
-std::strong_ordering IteratorBase<Iter, Item>::cmp(Other&& other) && noexcept {
+constexpr std::weak_ordering IteratorBase<Iter, Item>::cmp(Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).cmp_by(
       ::sus::move(other),
       [](const std::remove_reference_t<Item>& x,
-         const std::remove_reference_t<OtherItem>& y) -> std::strong_ordering {
-        return x <=> y;
-      });
+         const std::remove_reference_t<OtherItem>& y) { return x <=> y; });
 }
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
-std::strong_ordering IteratorBase<Iter, Item>::cmp_by(
-    Other&& other, ::sus::fn::FnMutBox<std::strong_ordering(
-                       const std::remove_reference_t<Item>&,
-                       const std::remove_reference_t<OtherItem>&)>
-                       cmp) && noexcept {
-  return __private::iter_compare<std::strong_ordering, Item, OtherItem>(
+constexpr std::weak_ordering IteratorBase<Iter, Item>::cmp_by(
+    Other&& other,
+    ::sus::fn::FnMut<std::weak_ordering(
+        const std::remove_reference_t<Item>&,
+        const std::remove_reference_t<OtherItem>&)> auto cmp) && noexcept {
+  return __private::iter_compare<std::weak_ordering, Item, OtherItem>(
       static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
       ::sus::move(cmp));
 }
@@ -1392,7 +1395,7 @@ constexpr bool IteratorBase<Iter, Item>::is_sorted() noexcept
 
 template <class Iter, class Item>
 constexpr bool IteratorBase<Iter, Item>::is_sorted_by(
-    ::sus::fn::FnMut<std::strong_ordering(
+    ::sus::fn::FnMut<std::weak_ordering(
         const std::remove_reference_t<Item>&,
         const std::remove_reference_t<Item>&)> auto compare) noexcept {
   Option<Item> o = as_subclass_mut().next();
@@ -1468,7 +1471,7 @@ constexpr Option<Item> IteratorBase<Iter, Item>::max() && noexcept
 
 template <class Iter, class Item>
 constexpr Option<Item> IteratorBase<Iter, Item>::max_by(
-    sus::fn::FnMut<std::strong_ordering(
+    sus::fn::FnMut<std::weak_ordering(
         const std::remove_reference_t<Item>&,
         const std::remove_reference_t<Item>&)> auto compare) && noexcept {
   return static_cast<Iter&&>(*this).reduce(
@@ -1526,7 +1529,7 @@ constexpr Option<Item> IteratorBase<Iter, Item>::min() && noexcept
 
 template <class Iter, class Item>
 constexpr Option<Item> IteratorBase<Iter, Item>::min_by(
-    sus::fn::FnMut<std::strong_ordering(
+    sus::fn::FnMut<std::weak_ordering(
         const std::remove_reference_t<Item>&,
         const std::remove_reference_t<Item>&)> auto compare) && noexcept {
   return static_cast<Iter&&>(*this).reduce(
@@ -1786,6 +1789,29 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::step_by(
 }
 
 template <class Iter, class Item>
+template <IntoIteratorAny Other, int&..., class OtherItem>
+  requires(::sus::ops::StrongOrd<Item, OtherItem>)
+constexpr std::strong_ordering IteratorBase<Iter, Item>::strong_cmp(
+    Other&& other) && noexcept {
+  return static_cast<Iter&&>(*this).strong_cmp_by(
+      ::sus::move(other),
+      [](const std::remove_reference_t<Item>& x,
+         const std::remove_reference_t<OtherItem>& y) { return x <=> y; });
+}
+
+template <class Iter, class Item>
+template <IntoIteratorAny Other, int&..., class OtherItem>
+constexpr std::strong_ordering IteratorBase<Iter, Item>::strong_cmp_by(
+    Other&& other,
+    ::sus::fn::FnMut<std::strong_ordering(
+        const std::remove_reference_t<Item>&,
+        const std::remove_reference_t<OtherItem>&)> auto cmp) && noexcept {
+  return __private::iter_compare<std::strong_ordering, Item, OtherItem>(
+      static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
+      ::sus::move(cmp));
+}
+
+template <class Iter, class Item>
 template <class P>
   requires(Sum<P, Item>)
 constexpr P IteratorBase<Iter, Item>::sum() && noexcept {
@@ -1884,31 +1910,6 @@ IteratorBase<Iter, Item>::zip(Other&& other) && noexcept {
   using Zip = Zip<Iter, IntoIteratorOutputType<Other>>;
   return Zip::with(
       sus::tuple(static_cast<Iter&&>(*this), sus::move(other).into_iter()));
-}
-
-template <class Iter, class Item>
-template <IntoIteratorAny Other, int&..., class OtherItem>
-  requires(::sus::ops::WeakOrd<Item, OtherItem>)
-constexpr std::weak_ordering IteratorBase<Iter, Item>::weak_cmp(
-    Other&& other) && noexcept {
-  return static_cast<Iter&&>(*this).weak_cmp_by(
-      ::sus::move(other),
-      [](const std::remove_reference_t<Item>& x,
-         const std::remove_reference_t<OtherItem>& y) -> std::weak_ordering {
-        return x <=> y;
-      });
-}
-
-template <class Iter, class Item>
-template <IntoIteratorAny Other, int&..., class OtherItem>
-constexpr std::weak_ordering IteratorBase<Iter, Item>::weak_cmp_by(
-    Other&& other,
-    ::sus::fn::FnMut<std::weak_ordering(
-        const std::remove_reference_t<Item>&,
-        const std::remove_reference_t<OtherItem>&)> auto cmp) && noexcept {
-  return __private::iter_compare<std::weak_ordering, Item, OtherItem>(
-      static_cast<Iter&&>(*this), ::sus::move(other).into_iter(),
-      ::sus::move(cmp));
 }
 
 template <class Iter, class Item>

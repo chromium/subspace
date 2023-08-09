@@ -450,10 +450,10 @@ TEST(OverflowInteger, Eq) {
             OverflowInteger<i32>::with(5));
 }
 
-TEST(OverflowInteger, Ord) {
-  static_assert(::sus::ops::Ord<OverflowInteger<i32>>);
-  static_assert(::sus::ops::Ord<OverflowInteger<i32>, i32>);
-  static_assert(::sus::ops::Ord<i32, OverflowInteger<i32>>);
+TEST(OverflowInteger, StrongOrd) {
+  static_assert(::sus::ops::StrongOrd<OverflowInteger<i32>>);
+  static_assert(::sus::ops::StrongOrd<OverflowInteger<i32>, i32>);
+  static_assert(::sus::ops::StrongOrd<i32, OverflowInteger<i32>>);
 
   EXPECT_EQ(OverflowInteger<i32>::with(5) <=> 4_i32,
             std::strong_ordering::greater);

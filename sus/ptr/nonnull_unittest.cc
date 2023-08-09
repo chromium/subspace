@@ -263,11 +263,11 @@ TEST(NonNull, Eq) {
   EXPECT_NE(NonNull<Sub>::with(s), NonNull<Base>::with(static_cast<Base&>(s2)));
 }
 
-TEST(NonNull, Ord) {
+TEST(NonNull, StrongOrd) {
   struct NotCmp {};
-  static_assert(sus::ops::Ord<NonNull<int>>);
+  static_assert(sus::ops::StrongOrd<NonNull<int>>);
   sus_gcc_bug_107542_else(
-      static_assert(!sus::ops::Ord<NonNull<int>, NonNull<NotCmp>>));
+      static_assert(!sus::ops::StrongOrd<NonNull<int>, NonNull<NotCmp>>));
 
   int a[] = {1, 2};
   EXPECT_LE(NonNull<int>::with(a[0]), NonNull<int>::with(a[0]));

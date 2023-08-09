@@ -195,9 +195,9 @@ constexpr inline bool operator==(const NonNull<T>& l,
   return l.as_ptr() == r.as_ptr();
 }
 
-/// sus::ops::Ord<NonNull<T>> trait.
+/// sus::ops::StrongOrd<NonNull<T>> trait.
 template <class T, class U>
-  requires(::sus::ops::Ord<const T*, const U*>)
+  requires(::sus::ops::StrongOrd<const T*, const U*>)
 constexpr inline auto operator<=>(const NonNull<T>& l,
                                   const NonNull<U>& r) noexcept {
   return l.as_ptr() <=> r.as_ptr();

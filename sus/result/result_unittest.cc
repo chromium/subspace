@@ -1766,8 +1766,8 @@ TEST(Result, Eq) {
             (Result<NoCopyMove&, i32>::with_err(2)));
 }
 
-TEST(Result, Ord) {
-  static_assert(::sus::ops::Ord<Result<i32, i32>>);
+TEST(Result, StrongOrd) {
+  static_assert(::sus::ops::StrongOrd<Result<i32, i32>>);
 
   static_assert(Result<i32, i32>::with(1) < Result<i32, i32>::with(2));
   static_assert(Result<i32, i32>::with(3) > Result<i32, i32>::with(2));
@@ -1841,13 +1841,13 @@ struct Weak {
 };
 
 TEST(Result, WeakOrder) {
-  static_assert(!::sus::ops::Ord<Result<Weak, i32>>);
-  static_assert(!::sus::ops::Ord<Result<i32, Weak>>);
-  static_assert(!::sus::ops::Ord<Result<Weak, Weak>>);
+  static_assert(!::sus::ops::StrongOrd<Result<Weak, i32>>);
+  static_assert(!::sus::ops::StrongOrd<Result<i32, Weak>>);
+  static_assert(!::sus::ops::StrongOrd<Result<Weak, Weak>>);
 
-  static_assert(::sus::ops::WeakOrd<Result<Weak, i32>>);
-  static_assert(::sus::ops::WeakOrd<Result<i32, Weak>>);
-  static_assert(::sus::ops::WeakOrd<Result<Weak, Weak>>);
+  static_assert(::sus::ops::Ord<Result<Weak, i32>>);
+  static_assert(::sus::ops::Ord<Result<i32, Weak>>);
+  static_assert(::sus::ops::Ord<Result<Weak, Weak>>);
 
   static_assert(std::weak_order(Result<Weak, i32>::with(Weak(1, 2)),
                                 Result<Weak, i32>::with(Weak(1, 2))) ==
@@ -1864,13 +1864,13 @@ TEST(Result, WeakOrder) {
 }
 
 TEST(Result, PartialOrder) {
+  static_assert(!::sus::ops::StrongOrd<Result<f32, i8>>);
+  static_assert(!::sus::ops::StrongOrd<Result<i8, f32>>);
+  static_assert(!::sus::ops::StrongOrd<Result<f32, f32>>);
+
   static_assert(!::sus::ops::Ord<Result<f32, i8>>);
   static_assert(!::sus::ops::Ord<Result<i8, f32>>);
   static_assert(!::sus::ops::Ord<Result<f32, f32>>);
-
-  static_assert(!::sus::ops::WeakOrd<Result<f32, i8>>);
-  static_assert(!::sus::ops::WeakOrd<Result<i8, f32>>);
-  static_assert(!::sus::ops::WeakOrd<Result<f32, f32>>);
 
   static_assert(::sus::ops::PartialOrd<Result<f32, i8>>);
   static_assert(::sus::ops::PartialOrd<Result<i8, f32>>);

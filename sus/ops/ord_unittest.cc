@@ -39,7 +39,7 @@ struct Strong {
     return a.i <=> b.i;
   }
 };
-static_assert(sus::ops::Ord<Strong>);
+static_assert(sus::ops::StrongOrd<Strong>);
 
 struct NoCmp {
   sus_clang_bug_54040(NoCmp(i32 i, i32 id) : i(i), id(id){});
@@ -47,9 +47,9 @@ struct NoCmp {
   i32 i;
   i32 id;
 };
-static_assert(!sus::ops::Ord<NoCmp>);
+static_assert(!sus::ops::StrongOrd<NoCmp>);
 
-TEST(Ord, Min) {
+TEST(StrongOrd, Min) {
   auto low1 = Strong(1, 1);
   auto low2 = Strong(1, 2);
   auto high = Strong(3, 3);
@@ -62,14 +62,14 @@ TEST(Ord, Min) {
   EXPECT_EQ(min(low2, low1).id, 2_i32);
 }
 
-TEST(Ord, MinBy) {
+TEST(StrongOrd, MinBy) {
   auto cmp = [](const NoCmp& a, const NoCmp& b) { return a.i <=> b.i; };
 
   auto low1 = NoCmp(1, 1);
   auto low2 = NoCmp(1, 2);
   auto high = NoCmp(3, 3);
 
-  // NoCmp is not Ord, but the comparator returns a strong_ordering, so they can
+  // NoCmp is not StrongOrd, but the comparator returns a strong_ordering, so they can
   // be compared through it.
   EXPECT_EQ(min_by(low1, high, cmp).id, 1_i32);
   EXPECT_EQ(min_by(high, low1, cmp).id, 1_i32);
@@ -79,14 +79,14 @@ TEST(Ord, MinBy) {
   EXPECT_EQ(min_by(low2, low1, cmp).id, 2_i32);
 }
 
-TEST(Ord, MinByKey) {
+TEST(StrongOrd, MinByKey) {
   auto get_i = [](const NoCmp& a) { return a.i; };
 
   auto low1 = NoCmp(1, 1);
   auto low2 = NoCmp(1, 2);
   auto high = NoCmp(3, 3);
 
-  // NoCmp is not Ord, but the key function returns a type that is Ord.
+  // NoCmp is not StrongOrd, but the key function returns a type that is StrongOrd.
   EXPECT_EQ(min_by_key(low1, high, get_i).id, 1_i32);
   EXPECT_EQ(min_by_key(high, low1, get_i).id, 1_i32);
 
@@ -95,7 +95,7 @@ TEST(Ord, MinByKey) {
   EXPECT_EQ(min_by_key(low2, low1, get_i).id, 2_i32);
 }
 
-TEST(Ord, Max) {
+TEST(StrongOrd, Max) {
   auto low1 = Strong(1, 1);
   auto low2 = Strong(1, 2);
   auto high = Strong(3, 3);
@@ -108,14 +108,14 @@ TEST(Ord, Max) {
   EXPECT_EQ(max(low2, low1).id, 1_i32);
 }
 
-TEST(Ord, MaxBy) {
+TEST(StrongOrd, MaxBy) {
   auto cmp = [](const NoCmp& a, const NoCmp& b) { return a.i <=> b.i; };
 
   auto low1 = NoCmp(1, 1);
   auto low2 = NoCmp(1, 2);
   auto high = NoCmp(3, 3);
 
-  // NoCmp is not Ord, but the comparator returns a strong_ordering, so they can
+  // NoCmp is not StrongOrd, but the comparator returns a strong_ordering, so they can
   // be compared through it.
   EXPECT_EQ(max_by(low1, high, cmp).id, 3_i32);
   EXPECT_EQ(max_by(high, low1, cmp).id, 3_i32);
@@ -125,14 +125,14 @@ TEST(Ord, MaxBy) {
   EXPECT_EQ(max_by(low2, low1, cmp).id, 1_i32);
 }
 
-TEST(Ord, MaxByKey) {
+TEST(StrongOrd, MaxByKey) {
   auto get_i = [](const NoCmp& a) { return a.i; };
 
   auto low1 = NoCmp(1, 1);
   auto low2 = NoCmp(1, 2);
   auto high = NoCmp(3, 3);
 
-  // NoCmp is not Ord, but the key function returns a type that is Ord.
+  // NoCmp is not StrongOrd, but the key function returns a type that is StrongOrd.
   EXPECT_EQ(max_by_key(low1, high, get_i).id, 3_i32);
   EXPECT_EQ(max_by_key(high, low1, get_i).id, 3_i32);
 

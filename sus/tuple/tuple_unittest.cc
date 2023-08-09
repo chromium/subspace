@@ -430,7 +430,7 @@ TEST(Tuple, Eq) {
   EXPECT_NE(tn1, tn2);
 }
 
-TEST(Tuple, Ord) {
+TEST(Tuple, StrongOrd) {
   EXPECT_LT(Tuple<int>::with(1), Tuple<int>::with(2));
   EXPECT_GT(Tuple<int>::with(3), Tuple<int>::with(2));
   EXPECT_GT((Tuple<int, int>::with(3, 4)), (Tuple<int, int>::with(3, 3)));
@@ -524,11 +524,11 @@ TEST(Tuple, PartialOrder) {
 struct NotCmp {};
 static_assert(!sus::ops::PartialOrd<NotCmp>);
 
-static_assert(sus::ops::Ord<Tuple<int>>);
-static_assert(!sus::ops::Ord<Tuple<Weak>>);
-static_assert(sus::ops::WeakOrd<Tuple<Weak>>);
-static_assert(!sus::ops::WeakOrd<Tuple<float>>);
-static_assert(!sus::ops::WeakOrd<Tuple<float>>);
+static_assert(sus::ops::StrongOrd<Tuple<int>>);
+static_assert(!sus::ops::StrongOrd<Tuple<Weak>>);
+static_assert(sus::ops::Ord<Tuple<Weak>>);
+static_assert(!sus::ops::Ord<Tuple<float>>);
+static_assert(!sus::ops::Ord<Tuple<float>>);
 static_assert(!sus::ops::PartialOrd<Tuple<NotCmp>>);
 
 TEST(Tuple, StructuredBinding) {

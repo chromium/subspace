@@ -435,17 +435,17 @@ constexpr inline auto array_cmp(auto equal, const Array<T, N>& l,
 
 /// Compares two Arrays.
 ///
-/// Satisfies sus::ops::Ord<Array<T, N>> if sus::ops::Ord<T>.
+/// Satisfies sus::ops::StrongOrd<Array<T, N>> if sus::ops::StrongOrd<T>.
 ///
-/// Satisfies sus::ops::WeakOrd<Array<T, N>> if sus::ops::WeakOrd<T>.
+/// Satisfies sus::ops::Ord<Array<T, N>> if sus::ops::Ord<T>.
 ///
 /// Satisfies sus::ops::PartialOrd<Array<T, N>> if sus::ops::PartialOrd<T>.
 //
+// sus::ops::StrongOrd<Array<T, N>> trait.
 // sus::ops::Ord<Array<T, N>> trait.
-// sus::ops::WeakOrd<Array<T, N>> trait.
 // sus::ops::PartialOrd<Array<T, N>> trait.
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusiveOrd<T, U>)
+  requires(::sus::ops::ExclusiveStrongOrd<T, U>)
 constexpr inline auto operator<=>(const Array<T, N>& l,
                                   const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::strong_ordering::equivalent, l, r,
@@ -453,7 +453,7 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
 }
 
 template <class T, class U, size_t N>
-  requires(::sus::ops::ExclusiveWeakOrd<T, U>)
+  requires(::sus::ops::ExclusiveOrd<T, U>)
 constexpr inline auto operator<=>(const Array<T, N>& l,
                                   const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::weak_ordering::equivalent, l, r,

@@ -300,7 +300,7 @@ TEST(Range, fmt) {
     i32 a = 0x16ae3cf2;
     auto operator<=>(const NoFormat& rhs) const noexcept { return a <=> rhs.a; }
   };
-  static_assert(sus::ops::Ord<NoFormat>);
+  static_assert(sus::ops::StrongOrd<NoFormat>);
   static_assert(!fmt::is_formattable<NoFormat, char>::value);
   static_assert(fmt::is_formattable<sus::ops::Range<NoFormat>, char>::value);
   static_assert(

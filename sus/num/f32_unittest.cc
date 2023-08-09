@@ -69,8 +69,8 @@ TEST(f32, Traits) {
   static_assert(!sus::num::Shr<f32>);
   static_assert(!sus::num::ShrAssign<f32>);
 
+  static_assert(!sus::ops::StrongOrd<f32>);
   static_assert(!sus::ops::Ord<f32>);
-  static_assert(!sus::ops::WeakOrd<f32>);
   static_assert(sus::ops::PartialOrd<f32>);
   static_assert(sus::ops::PartialOrd<f32, f64>);
   static_assert(sus::ops::PartialOrd<f32, float>);

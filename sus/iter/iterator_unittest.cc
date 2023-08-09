@@ -565,13 +565,13 @@ TEST(Iterator, TryCollect) {
 }
 
 TEST(Iterator, TryCollect_Example) {
+  using sus::err;
   using sus::none;
   using sus::ok;
-  using sus::err;
   using sus::Option;
-  using sus::result::Result;
   using sus::some;
   using sus::Vec;
+  using sus::result::Result;
   {
     auto u = Vec<Option<i32>>::with(some(1), some(2), some(3));
     auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
@@ -833,26 +833,28 @@ TEST(Iterator, Copied) {
   }
 }
 
-TEST(Iterator, Cmp) {
+TEST(Iterator, StrongCmp) {
   {
     auto smol = sus::Vec<i32>::with(1, 2);
     auto bigg = sus::Vec<i32>::with(1, 2, 1);
-    EXPECT_EQ(std::strong_ordering::less, smol.iter().cmp(bigg.iter()));
+    EXPECT_EQ(std::strong_ordering::less, smol.iter().strong_cmp(bigg.iter()));
   }
   {
     auto bigg = sus::Vec<i32>::with(1, 2, 1);
     auto smol = sus::Vec<i32>::with(1, 2);
-    EXPECT_EQ(std::strong_ordering::greater, bigg.iter().cmp(smol.iter()));
+    EXPECT_EQ(std::strong_ordering::greater,
+              bigg.iter().strong_cmp(smol.iter()));
   }
   {
     auto smol = sus::Vec<i32>::with(1, 2);
     auto bigg = sus::Vec<i32>::with(1, 1, 1);
-    EXPECT_EQ(std::strong_ordering::greater, smol.iter().cmp(bigg.iter()));
+    EXPECT_EQ(std::strong_ordering::greater,
+              smol.iter().strong_cmp(bigg.iter()));
   }
   {
     auto smol = sus::Vec<i32>::with(1, 2);
     auto bigg = sus::Vec<i32>::with(1, 2);
-    EXPECT_EQ(std::strong_ordering::equal, smol.iter().cmp(bigg.iter()));
+    EXPECT_EQ(std::strong_ordering::equal, smol.iter().strong_cmp(bigg.iter()));
   }
 
   // iter_mut.
@@ -860,68 +862,75 @@ TEST(Iterator, Cmp) {
     auto smol = sus::Vec<i32>::with(1, 3);
     auto bigg = sus::Vec<i32>::with(1, 2);
     EXPECT_EQ(std::strong_ordering::greater,
-              smol.iter_mut().cmp(bigg.iter_mut()));
+              smol.iter_mut().strong_cmp(bigg.iter_mut()));
   }
 
   // into_iter.
   {
     auto smol = sus::Vec<i32>::with(1, 3);
     auto bigg = sus::Vec<i32>::with(1, 2);
-    EXPECT_EQ(std::strong_ordering::greater,
-              sus::move(smol).into_iter().cmp(sus::move(bigg).into_iter()));
+    EXPECT_EQ(
+        std::strong_ordering::greater,
+        sus::move(smol).into_iter().strong_cmp(sus::move(bigg).into_iter()));
   }
 
   // Comparable but different types.
   {
     auto one = sus::Vec<i32>::with(1, 2);
     auto two = sus::Vec<i64>::with(1, 3);
-    EXPECT_EQ(std::strong_ordering::less, one.iter().cmp(two.iter()));
+    EXPECT_EQ(std::strong_ordering::less, one.iter().strong_cmp(two.iter()));
   }
+
+  static_assert(sus::Array<i32, 2>::with(1, 2).into_iter().strong_cmp(
+                    sus::Array<i32, 2>::with(1, 3)) ==
+                std::strong_ordering::less);
+  static_assert(sus::Array<i32, 3>::with(1, 2, 0).into_iter().strong_cmp(
+                    sus::Array<i32, 2>::with(1, 2)) ==
+                std::strong_ordering::greater);
 }
 
-TEST(Iterator, CmpBy) {
+TEST(Iterator, StrongCmpBy) {
   {
     auto bigg = sus::Vec<i32>::with(1, 2, 1);
     auto smol = sus::Vec<i32>::with(1, 2);
-    EXPECT_EQ(std::strong_ordering::less,
-              smol.iter().cmp_by(bigg.iter(), [](const i32& a, const i32& b) {
-                return b <=> a;
-              }));
+    EXPECT_EQ(
+        std::strong_ordering::less,
+        smol.iter().strong_cmp_by(
+            bigg.iter(), [](const i32& a, const i32& b) { return b <=> a; }));
   }
   {
     auto smol = sus::Vec<i32>::with(1, 2);
     auto bigg = sus::Vec<i32>::with(1, 2, 1);
-    EXPECT_EQ(std::strong_ordering::greater,
-              bigg.iter().cmp_by(smol.iter(), [](const i32& a, const i32& b) {
-                return b <=> a;
-              }));
+    EXPECT_EQ(
+        std::strong_ordering::greater,
+        bigg.iter().strong_cmp_by(
+            smol.iter(), [](const i32& a, const i32& b) { return b <=> a; }));
   }
   {
     auto smol = sus::Vec<i32>::with(1, 2);
     auto bigg = sus::Vec<i32>::with(1, 1, 1);
-    EXPECT_EQ(std::strong_ordering::less,
-              smol.iter().cmp_by(bigg.iter(), [](const i32& a, const i32& b) {
-                return b <=> a;
-              }));
+    EXPECT_EQ(
+        std::strong_ordering::less,
+        smol.iter().strong_cmp_by(
+            bigg.iter(), [](const i32& a, const i32& b) { return b <=> a; }));
   }
   {
     auto smol = sus::Vec<i32>::with(1, 2);
     auto bigg = sus::Vec<i32>::with(1, 2);
-    EXPECT_EQ(std::strong_ordering::equal,
-              smol.iter().cmp_by(bigg.iter(), [](const i32& a, const i32& b) {
-                return b <=> a;
-              }));
+    EXPECT_EQ(
+        std::strong_ordering::equal,
+        smol.iter().strong_cmp_by(
+            bigg.iter(), [](const i32& a, const i32& b) { return b <=> a; }));
   }
 
   // iter_mut.
   {
     auto smol = sus::Vec<i32>::with(1, 3);
     auto bigg = sus::Vec<i32>::with(1, 2);
-    EXPECT_EQ(
-        std::strong_ordering::less,
-        smol.iter_mut().cmp_by(bigg.iter_mut(), [](const i32& a, const i32& b) {
-          return b <=> a;
-        }));
+    EXPECT_EQ(std::strong_ordering::less,
+              smol.iter_mut().strong_cmp_by(
+                  bigg.iter_mut(),
+                  [](const i32& a, const i32& b) { return b <=> a; }));
   }
 
   // into_iter.
@@ -929,7 +938,7 @@ TEST(Iterator, CmpBy) {
     auto smol = sus::Vec<i32>::with(1, 3);
     auto bigg = sus::Vec<i32>::with(1, 2);
     EXPECT_EQ(std::strong_ordering::less,
-              sus::move(smol).into_iter().cmp_by(
+              sus::move(smol).into_iter().strong_cmp_by(
                   sus::move(bigg).into_iter(),
                   [](const i32& a, const i32& b) { return b <=> a; }));
   }
@@ -938,11 +947,16 @@ TEST(Iterator, CmpBy) {
   {
     auto one = sus::Vec<i32>::with(1, 2);
     auto two = sus::Vec<i64>::with(1, 3);
-    EXPECT_EQ(std::strong_ordering::greater,
-              one.iter().cmp_by(two.iter(), [](const i32& a, const i64& b) {
-                return b <=> a;
-              }));
+    EXPECT_EQ(
+        std::strong_ordering::greater,
+        one.iter().strong_cmp_by(
+            two.iter(), [](const i32& a, const i64& b) { return b <=> a; }));
   }
+
+  static_assert(sus::Array<i32, 2>::with(1, 2).into_iter().strong_cmp_by(
+                    sus::Array<i32, 2>::with(1, 3),
+                    [](const i32& a, const i32& b) { return b <=> a; }) ==
+                std::strong_ordering::greater);
 }
 
 TEST(Iterator, PartialCmp) {
@@ -1099,7 +1113,7 @@ TEST(Iterator, PartialCmpBy) {
 }
 
 template <sus::mem::Copy T>
-  requires(sus::ops::Ord<T> && sus::ops::Eq<T>)
+  requires(sus::ops::StrongOrd<T> && sus::ops::Eq<T>)
 struct WeakT {
   sus_clang_bug_54040(constexpr inline WeakT(T a, T b) : a(a), b(b){});
 
@@ -1109,7 +1123,7 @@ struct WeakT {
     return a == o.a && b == o.b;
   }
   template <class U>
-    requires(sus::ops::Ord<U>)
+    requires(sus::ops::StrongOrd<U>)
   constexpr auto operator<=>(const WeakT<U>& o) const& noexcept {
     if ((a <=> o.a) == 0) return std::weak_ordering::equivalent;
     if ((a <=> o.a) < 0) return std::weak_ordering::less;
@@ -1122,33 +1136,31 @@ struct WeakT {
 
 using Weak = WeakT<i32>;
 
-TEST(Iterator, WeakCmp) {
+TEST(Iterator, Cmp) {
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2), Weak(1, 1));
-    EXPECT_EQ(std::weak_ordering::less, smol.iter().weak_cmp(bigg.iter()));
+    EXPECT_EQ(std::weak_ordering::less, smol.iter().cmp(bigg.iter()));
   }
   {
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2), Weak(1, 1));
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(std::weak_ordering::greater, bigg.iter().weak_cmp(smol.iter()));
+    EXPECT_EQ(std::weak_ordering::greater, bigg.iter().cmp(smol.iter()));
   }
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(std::weak_ordering::equivalent,
-              smol.iter().weak_cmp(bigg.iter()));
+    EXPECT_EQ(std::weak_ordering::equivalent, smol.iter().cmp(bigg.iter()));
   }
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 1));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(std::weak_ordering::equivalent,
-              smol.iter().weak_cmp(bigg.iter()));
+    EXPECT_EQ(std::weak_ordering::equivalent, smol.iter().cmp(bigg.iter()));
   }
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(1, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(std::weak_ordering::less, smol.iter().weak_cmp(bigg.iter()));
+    EXPECT_EQ(std::weak_ordering::less, smol.iter().cmp(bigg.iter()));
   }
 
   // iter_mut.
@@ -1156,70 +1168,77 @@ TEST(Iterator, WeakCmp) {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
     EXPECT_EQ(std::weak_ordering::greater,
-              smol.iter_mut().weak_cmp(bigg.iter_mut()));
+              smol.iter_mut().cmp(bigg.iter_mut()));
   }
 
   // into_iter.
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(std::weak_ordering::greater, sus::move(smol).into_iter().weak_cmp(
-                                               sus::move(bigg).into_iter()));
+    EXPECT_EQ(std::weak_ordering::greater,
+              sus::move(smol).into_iter().cmp(sus::move(bigg).into_iter()));
   }
 
   // Comparable but different types.
   {
     auto one = sus::Vec<WeakT<i32>>::with(WeakT<i32>(1, 1), WeakT<i32>(2, 2));
     auto two = sus::Vec<WeakT<i64>>::with(WeakT<i64>(1, 1), WeakT<i64>(3, 2));
-    EXPECT_EQ(std::weak_ordering::less, one.iter().weak_cmp(two.iter()));
+    EXPECT_EQ(std::weak_ordering::less, one.iter().cmp(two.iter()));
+  }
+
+  // Strong ordering.
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 2, 1);
+    EXPECT_EQ(std::weak_ordering::less, smol.iter().cmp(bigg.iter()));
   }
 
   static_assert(sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2))
                     .into_iter()
-                    .weak_cmp(sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2))) ==
+                    .cmp(sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2))) ==
                 std::weak_ordering::greater);
 }
 
-TEST(Iterator, WeakCmpBy) {
+TEST(Iterator, CmpBy) {
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2), Weak(1, 1));
-    EXPECT_EQ(
-        std::weak_ordering::less,
-        smol.iter().weak_cmp_by(
-            bigg.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+    EXPECT_EQ(std::weak_ordering::less,
+              smol.iter().cmp_by(bigg.iter(), [](const Weak& a, const Weak& b) {
+                return b <=> a;
+              }));
   }
   {
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2), Weak(1, 1));
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(
-        std::weak_ordering::greater,
-        bigg.iter().weak_cmp_by(
-            smol.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+    EXPECT_EQ(std::weak_ordering::greater,
+              bigg.iter().cmp_by(smol.iter(), [](const Weak& a, const Weak& b) {
+                return b <=> a;
+              }));
   }
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(
-        std::weak_ordering::equivalent,
-        smol.iter().weak_cmp_by(
-            bigg.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+    EXPECT_EQ(std::weak_ordering::equivalent,
+              smol.iter().cmp_by(bigg.iter(), [](const Weak& a, const Weak& b) {
+                return b <=> a;
+              }));
   }
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 1));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(
-        std::weak_ordering::equivalent,
-        smol.iter().weak_cmp_by(
-            bigg.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+    EXPECT_EQ(std::weak_ordering::equivalent,
+              smol.iter().cmp_by(bigg.iter(), [](const Weak& a, const Weak& b) {
+                return b <=> a;
+              }));
   }
   {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(1, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
-    EXPECT_EQ(
-        std::weak_ordering::greater,
-        smol.iter().weak_cmp_by(
-            bigg.iter(), [](const Weak& a, const Weak& b) { return b <=> a; }));
+    EXPECT_EQ(std::weak_ordering::greater,
+              smol.iter().cmp_by(bigg.iter(), [](const Weak& a, const Weak& b) {
+                return b <=> a;
+              }));
   }
 
   // iter_mut.
@@ -1227,7 +1246,7 @@ TEST(Iterator, WeakCmpBy) {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
     EXPECT_EQ(std::partial_ordering::less,
-              smol.iter_mut().weak_cmp_by(
+              smol.iter_mut().cmp_by(
                   bigg.iter_mut(),
                   [](const Weak& a, const Weak& b) { return b <=> a; }));
   }
@@ -1237,7 +1256,7 @@ TEST(Iterator, WeakCmpBy) {
     auto smol = sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2));
     auto bigg = sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2));
     EXPECT_EQ(std::partial_ordering::less,
-              sus::move(smol).into_iter().weak_cmp_by(
+              sus::move(smol).into_iter().cmp_by(
                   sus::move(bigg).into_iter(),
                   [](const Weak& a, const Weak& b) { return b <=> a; }));
   }
@@ -1247,18 +1266,27 @@ TEST(Iterator, WeakCmpBy) {
     auto one = sus::Vec<WeakT<i32>>::with(WeakT<i32>(1, 1), WeakT<i32>(2, 2));
     auto two = sus::Vec<WeakT<i64>>::with(WeakT<i64>(1, 1), WeakT<i64>(3, 2));
     EXPECT_EQ(std::weak_ordering::greater,
-              one.iter().weak_cmp_by(
-                  two.iter(), [](const WeakT<i32>& a, const WeakT<i64>& b) {
-                    return b <=> a;
-                  }));
+              one.iter().cmp_by(two.iter(),
+                                [](const WeakT<i32>& a, const WeakT<i64>& b) {
+                                  return b <=> a;
+                                }));
+  }
+
+  // Strong ordering.
+  {
+    auto smol = sus::Vec<i32>::with(1, 2);
+    auto bigg = sus::Vec<i32>::with(1, 2, 1);
+    EXPECT_EQ(
+        std::weak_ordering::less,
+        smol.iter().cmp_by(bigg.iter(), [](i32 a, i32 b) { return b <=> a; }));
   }
 
   static_assert(sus::Vec<Weak>::with(Weak(1, 1), Weak(3, 2))
                     .into_iter()
-                    .weak_cmp_by(sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2)),
-                                 [](const Weak& a, const Weak& b) {
-                                   return b <=> a;
-                                 }) == std::weak_ordering::less);
+                    .cmp_by(sus::Vec<Weak>::with(Weak(1, 1), Weak(2, 2)),
+                            [](const Weak& a, const Weak& b) {
+                              return b <=> a;
+                            }) == std::weak_ordering::less);
 }
 
 TEST(Iterator, Eq) {
@@ -1269,7 +1297,7 @@ TEST(Iterator, Eq) {
     }
   };
   static_assert(sus::ops::Eq<E>);
-  static_assert(!sus::ops::Ord<E>);
+  static_assert(!sus::ops::StrongOrd<E>);
 
   {
     auto smol = sus::Vec<E>::with(E(1), E(2));
@@ -1326,7 +1354,7 @@ TEST(Iterator, EqBy) {
     }
   };
   static_assert(sus::ops::Eq<E>);
-  static_assert(!sus::ops::Ord<E>);
+  static_assert(!sus::ops::StrongOrd<E>);
 
   {
     auto bigg = sus::Vec<E>::with(E(1), E(1), E(1));
@@ -2788,7 +2816,7 @@ TEST(Iterator, Ne) {
     }
   };
   static_assert(sus::ops::Eq<E>);
-  static_assert(!sus::ops::Ord<E>);
+  static_assert(!sus::ops::StrongOrd<E>);
 
   {
     auto smol = sus::Vec<E>::with(E(1), E(2));
