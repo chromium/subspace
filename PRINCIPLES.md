@@ -164,9 +164,16 @@ This library is an experiment and not intended for use. See the
     * Native arrays can't be bounds-checked, and decay to pointers, making them
       a bit invisible. A library type has the same overheads, unless it
       explicitly chooses to provide more.
-1. Deep constness. Const methods do not mutate state in visible ways.
+1. Deep constness. Const methods of owning types do not mutate state in visible ways.
     * No const methods return non-const pointers or references.
     * No const methods call non-const methods through pointers or references.
+    * Reference/view types follow the same, or else provide clear const vs mutable
+      access. SliceMut allows const methods that act in mutable ways on the
+      container because it expresses mutability vs Slice in a clear way in the
+      type system. This compromise is required to allow receiving lvalue and rvalue
+      refences (as `const&`) without forcing multiple overloads onto library users
+      or without receiving by value ([which is more expensive](
+      https://danakj.github.io/2023/06/05/not-generating-constructors.html)).
     * No `const_cast` usage.
     * State in members marked `mutable` does not escape the class from const
       methods.
