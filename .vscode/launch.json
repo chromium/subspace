@@ -7,6 +7,30 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug subdoc",
+            "program": "${workspaceFolder}/out/subdoc/subdoc",
+            "args": [
+                "-p",
+                "out",
+                "--out",
+                "docs",
+                "--include-file-pattern",
+                "/sus/",
+                "--exclude-file-pattern",
+                "/third_party/",
+                "--copy-file",
+                "subdoc/gen_tests/subdoc-test-style.css",
+                "--css",
+                "subdoc-test-style.css",
+                "--copy-file",
+                "sus/index.html",
+                "subspace\\sus\\lib"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug subspace_unittests",
             "program": "${workspaceFolder}/out/sus/subspace_unittests",
             "args": [
