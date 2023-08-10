@@ -17,6 +17,8 @@
 #include "googletest/include/gtest/gtest.h"
 #include "sus/num/float.h"
 
+namespace {
+
 TEST(CMathMacros, Nan) {
   // The NAN macro conflicts with a constant name. So we redefine it as STD_NAN.
   constexpr auto nan = STD_NAN;  // Must be a constant expression.
@@ -28,4 +30,6 @@ TEST(CMathMacros, Inf) {
   // STD_INFINITY.
   constexpr auto inf = STD_INFINITY;  // Must be a constant expression.
   EXPECT_TRUE(std::isinf(inf));       // constexpr in C++23.
+}
+
 }
