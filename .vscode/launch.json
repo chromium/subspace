@@ -24,7 +24,9 @@
                 "subdoc-test-style.css",
                 "--copy-file",
                 "sus/index.html",
-                "subspace\\sus\\lib"
+                "--project-md",
+                "sus/project.md",
+                "subspace/sus/lib"
             ],
             "cwd": "${workspaceFolder}"
         },
