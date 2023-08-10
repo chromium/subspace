@@ -65,7 +65,6 @@ struct VisitCx {
 struct LineStats {
   usize cur_file = 1_usize;
   usize num_files;
-  usize last_line_len = 0_usize;
   std::string cur_file_name;
 };
 

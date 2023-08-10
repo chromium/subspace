@@ -93,10 +93,14 @@ int main(int argc, const char** argv) {
   for (const std::string& input_path : paths) {
     bool found = false;
     for (const std::string& s : comp_db_files) {
-      if (s.find(input_path) == std::string::npos) {
+      // Canonicalize the path to use `/` instead of `\`.
+      auto canonical_path = std::string(s);
+      std::replace(canonical_path.begin(), canonical_path.end(), '\\', '/');
+
+      if (canonical_path.find(input_path) == std::string::npos) {
         continue;
       }
-      run_against_files.push(s);
+      run_against_files.push(sus::move(canonical_path));
       found = true;
     }
     if (!found) {
