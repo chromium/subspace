@@ -14,17 +14,24 @@
 
 #pragma once
 
+#include <string>
+
 #include "subdoc/lib/database.h"
-#include "subdoc/lib/gen/html_writer.h"
-#include "subdoc/lib/gen/options.h"
+#include "sus/prelude.h"
 
 namespace subdoc::gen {
 
-void generate_record(const RecordElement& element,
-                     const sus::Slice<const NamespaceElement*>& namespaces,
-                     const Options& options) noexcept;
+struct CppPathElement {
+  std::string name;
+  std::string link_href;
+};
 
-void generate_record_reference(HtmlWriter::OpenDiv& section_div,
-                               const RecordElement& element) noexcept;
+sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
+    const NamespaceElement& element,
+    const sus::Slice<const NamespaceElement*>& ancestors) noexcept;
+
+sus::Vec<CppPathElement> generate_cpp_path_for_type(
+    const TypeElement& element,
+    const sus::Slice<const NamespaceElement*>& ancestors) noexcept;
 
 }  // namespace subdoc::gen

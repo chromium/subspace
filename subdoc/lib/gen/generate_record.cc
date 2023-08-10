@@ -18,8 +18,10 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/files.h"
+#include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
+#include "subdoc/lib/gen/generate_namespace.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
 #include "sus/prelude.h"
@@ -32,56 +34,36 @@ using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
 
 void generate_record_overview(HtmlWriter::OpenDiv& record_div,
-                              const RecordElement& element) {
+                              const RecordElement& element,
+                              const sus::Slice<const NamespaceElement*>& namespaces) {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
 
   {
-    auto record_header_div = section_div.open_div();
-    record_header_div.add_class("section-header");
+    auto header_div = section_div.open_div();
+    header_div.add_class("section-header");
     {
-      auto record_type_span = record_header_div.open_span();
+      auto record_type_span = header_div.open_span();
       record_type_span.write_text(
           friendly_record_type_name(element.record_type, true));
     }
-    {
-      auto full_type_span = record_header_div.open_span(HtmlWriter::SingleLine);
-      {
-        // TODO: This code gets duplicated a lot, share it.
-
-        for (const Namespace& n : element.namespace_path.iter().rev()) {
-          switch (n) {
-            case Namespace::Tag::Global: break;
-            case Namespace::Tag::Anonymous: {
-              auto namespace_anchor = full_type_span.open_a();
-              namespace_anchor.write_text("(anonymous)");
-            }
-              full_type_span.write_text("::");
-              break;
-            case Namespace::Tag::Named: {
-              // TODO: Generate links.
-              auto namespace_anchor = full_type_span.open_a();
-              namespace_anchor.write_text(n.as<Namespace::Tag::Named>());
-            }
-              full_type_span.write_text("::");
-              break;
-          }
+    for (auto [i, e] : generate_cpp_path_for_type(element, namespaces)
+                           .into_iter()
+                           .enumerate()) {
+      if (e.link_href.empty()) {
+        auto span = header_div.open_span();
+        span.write_text(e.name);
+      } else {
+        if (i > 0u) {
+          auto span = header_div.open_span(HtmlWriter::SingleLine);
+          span.add_class("namespace-dots");
+          span.write_text("::");
         }
-        for (std::string_view record_name : element.record_path.iter().rev()) {
-          {
-            auto record_anchor = full_type_span.open_a();
-            record_anchor.write_text(record_name);
-          }
-          full_type_span.write_text("::");
-        }
-      }
-
-      {
-        auto local_type_anchor = full_type_span.open_a();
-        local_type_anchor.add_href("#");
-        local_type_anchor.add_class("type-name");
-        local_type_anchor.write_html(element.name);
+        auto ancestor_anchor = header_div.open_a();
+        ancestor_anchor.add_class("type-name");
+        ancestor_anchor.add_href(e.link_href);
+        ancestor_anchor.write_text(e.name);
       }
     }
   }
@@ -220,6 +202,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
 }  // namespace
 
 void generate_record(const RecordElement& element,
+                     const sus::Slice<const NamespaceElement*>& namespaces,
                      const Options& options) noexcept {
   const std::filesystem::path path = construct_html_file_path(
       options.output_root, element.namespace_path.as_slice(),
@@ -256,7 +239,7 @@ void generate_record(const RecordElement& element,
   record_div.add_class("type");
   record_div.add_class("record");
   record_div.add_class(friendly_record_type_name(element.record_type, false));
-  generate_record_overview(record_div, element);
+  generate_record_overview(record_div, element, namespaces);
 
   sus::Vec<SortedFieldByName> sorted_static_fields;
   sus::Vec<SortedFieldByName> sorted_fields;
@@ -287,8 +270,7 @@ void generate_record(const RecordElement& element,
 
   generate_record_fields(record_div, element, true,
                          sorted_static_fields.as_slice());
-  generate_record_fields(record_div, element, false,
-                         sorted_fields.as_slice());
+  generate_record_fields(record_div, element, false, sorted_fields.as_slice());
 
   sus::Vec<SortedFunctionByName> sorted_static_methods;
   sus::Vec<SortedFunctionByName> sorted_methods;
@@ -320,7 +302,7 @@ void generate_record(const RecordElement& element,
                           sorted_methods.as_slice());
 
   for (const auto& [key, subrecord] : element.records) {
-    generate_record(subrecord, options);
+    generate_record(subrecord, namespaces, options);
   }
 }
 
