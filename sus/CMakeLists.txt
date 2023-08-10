@@ -205,6 +205,7 @@ target_sources(subspace PUBLIC
     "string/compat_string.h"
     "tuple/__private/storage.h"
     "tuple/tuple.h"
+    "lib/lib.h"
     "lib/lib.cc"
 )
 

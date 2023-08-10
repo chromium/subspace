@@ -102,7 +102,7 @@ target_link_libraries(subdoc_lib
 )
 
 # subdoc binary
-subspace_default_compile_options(subdoc)
+subspace_binary_default_compile_options(subdoc)
 target_link_libraries(subdoc subdoc::lib)
 
 if(${SUBSPACE_BUILD_TESTS})

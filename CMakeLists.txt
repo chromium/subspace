@@ -60,19 +60,21 @@ function(subspace_default_compile_options TARGET)
     target_include_directories(${TARGET} PUBLIC ${PROJECT_SOURCE_DIR})
 endfunction()
 
-function(subspace_test_default_compile_options TARGET)
+function(subspace_binary_default_compile_options TARGET)
     subspace_default_compile_options(${TARGET})
-
-    target_include_directories(${TARGET} PRIVATE
-        ${PROJECT_SOURCE_DIR}/third_party/googletest
-    )
-
     if(MSVC)
         target_compile_options(${TARGET} PUBLIC /W4 /WX)
     else()
         target_compile_options(${TARGET} PUBLIC -Werror)
     endif()
+endfunction()
 
+function(subspace_test_default_compile_options TARGET)
+    subspace_binary_default_compile_options(${TARGET})
+
+    target_include_directories(${TARGET} PRIVATE
+        ${PROJECT_SOURCE_DIR}/third_party/googletest
+    )
     target_link_libraries(${TARGET} gtest_main)
 endfunction()
 
