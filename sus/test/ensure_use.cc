@@ -14,4 +14,8 @@
 
 #include "sus/test/ensure_use.h"
 
+namespace sus::test {
+
 void ensure_use(void*) {}
+
+}  // namespace sus::test

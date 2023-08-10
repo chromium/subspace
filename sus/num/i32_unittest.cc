@@ -36,6 +36,7 @@ namespace {
 using sus::None;
 using sus::Option;
 using sus::Tuple;
+using sus::test::ensure_use;
 
 static_assert(std::is_signed_v<decltype(i32::primitive_value)>);
 static_assert(sizeof(decltype(i32::primitive_value)) == 4);
@@ -497,8 +498,10 @@ TEST(i32, TryFromBoundaries) {
   EXPECT_TRUE(i32::try_from(i64::from(i32::MAX) + 1).is_err());
 
   // Unsigned primitives.
-  EXPECT_TRUE(i32::try_from(uint32_t{u32::try_from(i32::MAX).unwrap()}).is_ok());
-  EXPECT_TRUE(i32::try_from(uint32_t{u32::try_from(i32::MAX).unwrap() + 1u}).is_err());
+  EXPECT_TRUE(
+      i32::try_from(uint32_t{u32::try_from(i32::MAX).unwrap()}).is_ok());
+  EXPECT_TRUE(
+      i32::try_from(uint32_t{u32::try_from(i32::MAX).unwrap() + 1u}).is_err());
 
   // Unsigned integers.
   EXPECT_TRUE(i32::try_from(u32::try_from(i32::MAX).unwrap()).is_ok());

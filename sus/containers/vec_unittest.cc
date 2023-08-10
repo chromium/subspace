@@ -28,6 +28,7 @@ namespace {
 using sus::containers::Slice;
 using sus::containers::SliceMut;
 using sus::containers::Vec;
+using sus::test::ensure_use;
 
 TEST(Vec, Default) {
   auto v = Vec<i32>();

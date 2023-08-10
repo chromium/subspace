@@ -24,7 +24,6 @@
 #include "sus/ops/eq.h"
 #include "sus/ops/ord.h"
 #include "sus/prelude.h"
-#include "sus/test/ensure_use.h"
 #include "sus/tuple/tuple.h"
 
 namespace {

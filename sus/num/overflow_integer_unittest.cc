@@ -26,6 +26,7 @@
 namespace {
 
 using sus::num::OverflowInteger;
+using sus::test::ensure_use;
 
 TEST(OverflowInteger, CopyCloneMove) {
   {

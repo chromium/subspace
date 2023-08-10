@@ -29,6 +29,7 @@
 
 using sus::containers::Array;
 using sus::mem::relocate_by_memcpy;
+using sus::test::ensure_use;
 
 namespace {
 
@@ -459,7 +460,8 @@ TEST(Array, ImplicitIter) {
 
 TEST(Array, Map) {
   auto a = Array<usize, 3>::with(3u, 4u, 5u);
-  auto a2 = sus::move(a).map(+[](usize i) { return u32::try_from(i + 1_usize).unwrap(); });
+  auto a2 = sus::move(a).map(
+      +[](usize i) { return u32::try_from(i + 1_usize).unwrap(); });
   EXPECT_EQ(a2, (Array<u32, 3>::with(4_u32, 5_u32, 6_u32)));
 }
 
