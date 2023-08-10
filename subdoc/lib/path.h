@@ -38,36 +38,6 @@ using Namespace = sus::Choice<sus_choice_types(
 )>;
 // clang-format on
 
-inline std::string namespace_with_path_to_string(
-    sus::Slice<Namespace> path, const Namespace& tail) noexcept {
-  std::ostringstream s;
-  bool add_colons = false;
-
-  for (const Namespace& n : path.iter().rev()) {
-    if (add_colons) s << "::";
-    switch (n) {
-      case Namespace::Tag::Global: break;
-      case Namespace::Tag::Anonymous:
-        s << "(anonymous)";
-        add_colons = true;
-        break;
-      case Namespace::Tag::Named:
-        s << n.as<Namespace::Tag::Named>();
-        add_colons = true;
-        break;
-    }
-  }
-
-  if (add_colons) s << "::";
-  switch (tail) {
-    case Namespace::Tag::Global: s << "Global namespace"; break;
-    case Namespace::Tag::Anonymous: s << "(anonymous)"; break;
-    case Namespace::Tag::Named: s << tail.as<Namespace::Tag::Named>(); break;
-  }
-
-  return s.str();
-}
-
 inline clang::NamespaceDecl* find_nearest_namespace(
     clang::Decl* decl) noexcept {
   if (auto* ndecl = clang::dyn_cast<clang::NamespaceDecl>(decl)) return ndecl;

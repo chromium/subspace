@@ -31,19 +31,94 @@ using SortedNamespaceByName = sus::Tuple<std::string_view, u32, NamespaceId>;
 using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
 
-std::string namespace_display_name(const NamespaceElement& element) noexcept {
-  // The namespace path includes the namespace we're generating for, so drop
-  // that one.
-  sus::Slice<Namespace> short_namespace_path =
-      element.namespace_path.as_slice()["1.."_r];
+struct DisplayNamespace {
+  std::string name;
+  std::string link_href;
+};
 
-  // For display in the html, we use the full path name of the namespace.
-  return namespace_with_path_to_string(short_namespace_path,
-                                       element.namespace_name);
+sus::Vec<DisplayNamespace> namespace_display(
+    const NamespaceElement& element,
+    const sus::Slice<const NamespaceElement*>& ancestors) noexcept {
+  sus::Vec<DisplayNamespace> out;
+  switch (element.namespace_name) {
+    case Namespace::Tag::Global:
+      out.push(DisplayNamespace{
+          // TODO: Project name in options.
+          .name = "PROJECT NAME: Subspace",
+          .link_href = "#",
+      });
+      break;
+    case Namespace::Tag::Anonymous:
+      out.push(DisplayNamespace{
+          .name = "(anonymous)",
+          .link_href = "#",
+      });
+      break;
+    case Namespace::Tag::Named: {
+      for (const NamespaceElement& ancestor : ancestors.iter().map(
+               [](const NamespaceElement* e) -> const NamespaceElement& {
+                 return *e;
+               })) {
+        {
+          out.push(DisplayNamespace{
+              .name =
+                  [&]() {
+                    switch (ancestor.namespace_name) {
+                      case Namespace::Tag::Global:
+                        // TODO: Project name in options.
+                        return std::string("PROJECT NAME");
+                      case Namespace::Tag::Anonymous:
+                        return std::string("(anonymous)");
+                      case Namespace::Tag::Named:
+                        return sus::clone(ancestor.name);
+                    }
+                    // SAFETY: No default or fallthrough from the switch above
+                    // so all cases return.
+                    sus::unreachable_unchecked(unsafe_fn);
+                  }(),
+              .link_href = construct_html_file_path_for_namespace(
+                               std::filesystem::path(), ancestor)
+                               .string(),
+          });
+        }
+      }
+      out.push(DisplayNamespace{
+          .name = sus::clone(element.name),
+          .link_href = "#",
+      });
+      break;
+    }
+  }
+  return out;
 }
 
-void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
-                                 const NamespaceElement& element) {
+std::string namespace_display_name(
+    const NamespaceElement& element,
+    const sus::Slice<const NamespaceElement*>& ancestors) noexcept {
+  std::ostringstream out;
+
+  if (element.namespace_name == Namespace::Tag::Global) {
+    for (auto d : namespace_display(element, ancestors).into_iter())
+      out << d.name;
+  } else {
+    std::string project_name;
+    for (auto [i, d] :
+         namespace_display(element, ancestors).into_iter().enumerate()) {
+      if (i == 0u)
+        project_name = sus::move(d.name);
+      else {
+        if (i > 1u) out << "::";
+        out << sus::move(d.name);
+      }
+    }
+    out << " - " << sus::move(project_name);
+  }
+  return sus::move(out).str();
+}
+
+void generate_namespace_overview(
+    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
+    const sus::Slice<const NamespaceElement*>& ancestors) {
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -51,16 +126,26 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
-
-    if (element.namespace_name.which() == Namespace::Tag::Named) {
+    if (element.namespace_name != Namespace::Tag::Global) {
       auto span = header_div.open_span();
       span.write_text("Namespace");
     }
-    {
-      auto name_anchor = header_div.open_a();
-      name_anchor.add_href("#");
-      name_anchor.add_class("namespace-name");
-      name_anchor.write_text(namespace_display_name(element));
+    for (auto [i, d] :
+         namespace_display(element, ancestors).into_iter().enumerate()) {
+      if (d.link_href.empty()) {
+        auto span = header_div.open_span();
+        span.write_text(d.name);
+      } else {
+        if (i > 0u) {
+          auto span = header_div.open_span(HtmlWriter::SingleLine);
+          span.add_class("namespace-dots");
+          span.write_text("::");
+        }
+        auto ancestor_anchor = header_div.open_a();
+        ancestor_anchor.add_class("namespace-name");
+        ancestor_anchor.add_href(d.link_href);
+        ancestor_anchor.write_text(d.name);
+      }
     }
     if (element.has_comment()) {
       auto desc_div = header_div.open_div();
@@ -121,9 +206,9 @@ void generate_namespace_records(HtmlWriter::OpenDiv& namespace_div,
   }
 }
 
-void generate_namespace_functions(
-    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<SortedFunctionByName> functions) {
+void generate_namespace_functions(HtmlWriter::OpenDiv& namespace_div,
+                                  const NamespaceElement& element,
+                                  sus::Slice<SortedFunctionByName> functions) {
   if (functions.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -153,6 +238,7 @@ void generate_namespace_functions(
 }  // namespace
 
 void generate_namespace(const NamespaceElement& element,
+                        sus::Vec<const NamespaceElement*> ancestors,
                         const Options& options) noexcept {
   if (element.is_empty()) return;
 
@@ -161,13 +247,13 @@ void generate_namespace(const NamespaceElement& element,
   std::filesystem::create_directories(path.parent_path());
 
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
-  generate_head(html, namespace_display_name(element), options);
+  generate_head(html, namespace_display_name(element, ancestors), options);
 
   auto body = html.open_body();
 
   auto namespace_div = body.open_div();
   namespace_div.add_class("namespace");
-  generate_namespace_overview(namespace_div, element);
+  generate_namespace_overview(namespace_div, element, ancestors);
 
   {
     sus::Vec<SortedNamespaceByName> sorted;
@@ -181,8 +267,7 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_namespaces(namespace_div, element,
-                                  sorted.as_slice());
+    generate_namespace_namespaces(namespace_div, element, sorted.as_slice());
   }
 
   {
@@ -231,13 +316,13 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_functions(namespace_div, element,
-                                 sorted.as_slice());
+    generate_namespace_functions(namespace_div, element, sorted.as_slice());
   }
 
   // Recurse into namespaces and records.
+  ancestors.push(&element);
   for (const auto& [u, sub_element] : element.namespaces) {
-    generate_namespace(sub_element, options);
+    generate_namespace(sub_element, sus::clone(ancestors), options);
   }
   for (const auto& [u, sub_element] : element.records) {
     generate_record(sub_element, options);

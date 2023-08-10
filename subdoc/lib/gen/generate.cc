@@ -48,7 +48,7 @@ sus::result::Result<void, std::error_code> generate(const Database& db,
       }
     }
   }
-  generate_namespace(db.global, options);
+  generate_namespace(db.global, sus::vec(), options);
 
   for (const std::string& s : options.copy_files) {
     if (!std::filesystem::exists(s)) {

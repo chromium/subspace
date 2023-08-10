@@ -463,9 +463,11 @@ inline FunctionId key_for_function(clang::FunctionDecl* decl,
 }
 
 struct Database {
-  NamespaceElement global =
-      NamespaceElement(sus::vec(Namespace::with<Namespace::Tag::Global>()),
-                       Comment(), std::string(), 0u);
+  explicit Database(Comment overview_comment)
+      : global(sus::vec(Namespace::with<Namespace::Tag::Global>()),
+               sus::move(overview_comment), std::string(), 0u) {}
+
+  NamespaceElement global;
 
   bool has_any_comments() const noexcept { return global.has_any_comments(); }
 

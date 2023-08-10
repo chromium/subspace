@@ -17,6 +17,7 @@
 #include <memory>
 #include <utility>
 
+#include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/visit.h"
 #include "sus/iter/iterator.h"
 
@@ -115,8 +116,19 @@ sus::Result<Database, DiagnosticResults> run_files(
   };
   tool.appendArgumentsAdjuster(adj);
 
+  sus::Vec<std::string> md_lines = sus::clone(options.project_overview_markdown);
+  auto parsed_overview_html = parse_comment_markdown_to_html(md_lines);
+  if (parsed_overview_html.is_err()) {
+    llvm::errs() << "Unable to parse project overview markdown: "
+                 << sus::move(parsed_overview_html).unwrap_err().message
+                 << "\n";
+    return sus::err(sus::move(sus::move(diags)->results));
+  }
+  std::string overview_html = sus::move(parsed_overview_html).unwrap();
+
   auto cx = VisitCx(options);
-  auto docs_db = Database();
+  auto docs_db =
+      Database(Comment(sus::move(overview_html), "", "", DocAttributes()));
   auto visitor_factory = VisitorFactory(cx, docs_db, num_files);
 
   i32 run_value = sus::move(tool).run(&visitor_factory);
