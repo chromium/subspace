@@ -55,8 +55,14 @@ static bool should_skip_decl(VisitCx& cx, clang::Decl* decl) {
                               sus::choice<Namespace::Tag::Anonymous>())) {
     return true;
   }
+  // TODO: Make this configurable on the command line.
   if (path_contains_namespace(
           ndecl, sus::choice<Namespace::Tag::Named>("__private"))) {
+    return true;
+  }
+  // TODO: Make this configurable on the command line.
+  if (path_contains_namespace(
+          ndecl, sus::choice<Namespace::Tag::Named>("test"))) {
     return true;
   }
   if (path_is_private(ndecl)) {
