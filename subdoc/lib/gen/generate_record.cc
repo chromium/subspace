@@ -109,7 +109,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
   if (element.has_comment()) {
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
-    desc_div.write_html(element.comment.raw_text);
+    desc_div.write_html(element.comment.full());
   }
 }
 
@@ -180,7 +180,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
       if (fe.has_comment()) {
         auto desc_div = field_div.open_div();
         desc_div.add_class("description");
-        desc_div.write_html(fe.comment.raw_text);
+        desc_div.write_html(fe.comment.full());
       }
     }
   }

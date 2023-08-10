@@ -65,7 +65,7 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
     if (element.has_comment()) {
       auto desc_div = header_div.open_div();
       desc_div.add_class("description");
-      desc_div.write_html(element.comment.raw_text);
+      desc_div.write_html(element.comment.full());
     }
   }
 }
@@ -154,6 +154,8 @@ void generate_namespace_functions(
 
 void generate_namespace(const NamespaceElement& element,
                         const Options& options) noexcept {
+  if (element.is_empty()) return;
+
   const std::filesystem::path path =
       construct_html_file_path_for_namespace(options.output_root, element);
   std::filesystem::create_directories(path.parent_path());
@@ -244,6 +246,8 @@ void generate_namespace(const NamespaceElement& element,
 
 void generate_namespace_reference(HtmlWriter::OpenDiv& section_div,
                                   const NamespaceElement& element) noexcept {
+  if (element.is_empty()) return;
+
   auto item_div = section_div.open_div();
   item_div.add_class("section-item");
 

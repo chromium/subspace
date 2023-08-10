@@ -99,10 +99,10 @@ class SubDocTest : public testing::Test {
                     << comment_loc << "\n";
       return false;
     }
-    if (!element->comment.raw_text.starts_with(comment_start)) {
+    if (!element->comment.full().starts_with(comment_start)) {
       ADD_FAILURE() << type << " comment at " << comment_loc
                     << " does not match text. Found:\n"
-                    << element->comment.raw_text << "\n";
+                    << element->comment.full() << "\n";
       return false;
     }
     return true;

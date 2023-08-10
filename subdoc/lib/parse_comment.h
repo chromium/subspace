@@ -19,18 +19,53 @@
 
 #include "subdoc/lib/doc_attributes.h"
 #include "subdoc/llvm.h"
+#include "sus/ops/range.h"
 #include "sus/result/result.h"
 
 namespace subdoc {
 
 struct ParsedComment {
   DocAttributes attributes;
-  std::string comment;
+  std::string full_comment;
+  std::string summary;
 };
 
 struct ParseCommentError {
   std::string message;
 };
+
+/// Grabs the contents of the first non-empty html tag as the summary.
+inline std::string summarize_html(std::string_view html) {
+  if (html.empty()) return std::string(html);
+
+  bool inside_tag = false;
+  sus::Option<size_t> start_non_empty;
+  for (auto i : sus::ops::range(size_t{0u}, html.size())) {
+    if (inside_tag) {
+      if (html[i] == '>') {
+        inside_tag = false;
+      }
+    } else {
+      if (html.substr(i).starts_with("<")) {
+        if (start_non_empty.is_some()) {
+          std::ostringstream summary;
+          summary << "<p>";
+          summary << html.substr(start_non_empty.as_value(),
+                                 i - start_non_empty.as_value());
+          summary << "</p>";
+          return summary.str();
+        }
+        inside_tag = true;
+      } else {
+        // We see a character that's not part of an html tag.
+        start_non_empty = start_non_empty.or_that(sus::some(i));
+      }
+    }
+  }
+  llvm::errs() << "WARNING: Html summary could not find non-empty tag pair.\n";
+  llvm::errs() << html << "\n";
+  return std::string(html);
+}
 
 inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
     clang::ASTContext& ast_cx, const clang::RawComment& raw) noexcept {
@@ -251,7 +286,10 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
       return sus::err(ParseCommentError{.message = "Merged comment format?"});
   }
 
-  return sus::ok(ParsedComment(sus::move(attrs), sus::move(parsed).str()));
+  auto parsed_str = sus::move(parsed).str();
+  auto summary = summarize_html(parsed_str);
+  return sus::ok(ParsedComment(sus::move(attrs), sus::move(parsed_str),
+                               sus::move(summary)));
 }
 
 }  // namespace subdoc

@@ -486,8 +486,10 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       sus::Result<ParsedComment, ParseCommentError> comment_result =
           parse_comment(ast_cx, *raw);
       if (comment_result.is_ok()) {
-        auto&& [attrs, string] = sus::move(comment_result).unwrap();
-        return Comment(string, raw->getBeginLoc().printToString(src_manager),
+        auto&& [attrs, full_html, summary_html] =
+            sus::move(comment_result).unwrap();
+        return Comment(full_html, summary_html,
+                       raw->getBeginLoc().printToString(src_manager),
                        sus::move(attrs));
       }
       ast_cx.getDiagnostics()
