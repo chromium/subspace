@@ -32,6 +32,7 @@ sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
 
 sus::Vec<CppPathElement> generate_cpp_path_for_type(
     const TypeElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors) noexcept;
+    const sus::Slice<const NamespaceElement*>& namespace_ancestors,
+    const sus::Slice<const TypeElement*>& type_ancestors) noexcept;
 
 }  // namespace subdoc::gen

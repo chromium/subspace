@@ -268,7 +268,7 @@ void generate_namespace(const NamespaceElement& element,
     generate_namespace(sub_element, sus::clone(ancestors), options);
   }
   for (const auto& [u, sub_element] : element.records) {
-    generate_record(sub_element, ancestors, options);
+    generate_record(sub_element, ancestors, sus::vec(), options);
   }
 }
 

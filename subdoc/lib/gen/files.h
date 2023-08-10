@@ -40,8 +40,8 @@ inline sus::Option<std::ofstream> open_file_for_writing(
 }
 
 inline std::filesystem::path construct_html_file_path(
-    std::filesystem::path root, sus::Slice<Namespace> namespace_path,
-    sus::Slice<std::string> record_path, std::string_view name) noexcept {
+    std::filesystem::path root, const sus::Slice<Namespace>& namespace_path,
+    const sus::Slice<std::string>& record_path, std::string_view name) noexcept {
   std::filesystem::path p = sus::move(root);
 
   std::ostringstream fname;
