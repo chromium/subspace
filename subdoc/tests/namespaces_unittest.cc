@@ -89,3 +89,37 @@ TEST_F(SubDocTest, NamespaceTwoDots) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "3:5", "<p>Comment headline</p>"));
 }
+
+TEST_F(SubDocTest, NamespaceComment) {
+  auto result = run_code(R"(
+    /// Comment headline
+    namespace single {}
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_namespace_comment(db, "2:5", "<p>Comment headline</p>"));
+}
+
+TEST_F(SubDocTest, NestedNamespaceComment) {
+  auto result = run_code(R"(
+    namespace single {
+    /// Comment headline
+    namespace nested {}
+    }
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_namespace_comment(db, "3:5", "<p>Comment headline</p>"));
+}
+
+TEST_F(SubDocTest, NamespaceDotsComment) {
+  auto result = run_code(R"(
+    /// Comment headline
+    namespace single::nested {}
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  // Unfortunately, as of Clang 17, Clang applies this comment to both `single`
+  // and `nested` so it's not a useful way to write comments in practice.
+  EXPECT_TRUE(has_namespace_comment(db, "2:5", "<p>Comment headline</p>"));
+}
