@@ -21,9 +21,13 @@
 using sus::Array;
 using sus::Slice;
 
+namespace {
+
 constexpr usize round_up(usize n, usize multiple) {
   if (n % multiple == 0u) return n;
   return n + multiple - ((n + multiple) % multiple);
+}
+
 }
 
 // The Array has a ref-count for iterator invalidation. So it's size is 5 *
