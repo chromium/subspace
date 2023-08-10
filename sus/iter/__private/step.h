@@ -32,42 +32,32 @@ constexpr T step_backward(T l) noexcept {
   return l - T::try_from(1).unwrap_unchecked(::sus::marker::unsafe_fn);
 }
 template <::sus::num::Integer T>
-constexpr ::sus::Option<T> step_forward_checked(T l) noexcept {
-  // SAFETY: All `Integer` can hold `1`.
-  return l.checked_add(
-      T::try_from(1).unwrap_unchecked(::sus::marker::unsafe_fn));
-}
-template <::sus::num::Integer T>
-constexpr ::sus::Option<T> step_backward_checked(T l) noexcept {
-  // SAFETY: All `Integer` can hold `1`.
-  return l.checked_sub(
-      T::try_from(1).unwrap_unchecked(::sus::marker::unsafe_fn));
-}
-template <::sus::num::Integer T>
-constexpr T step_forward_by(T l, ::sus::num::usize steps) noexcept {
-  return l + T::from(steps);
-}
-template <::sus::num::Integer T>
-constexpr T step_backward_by(T l, ::sus::num::usize steps) noexcept {
-  return l - T::from(steps);
-}
-template <::sus::num::Integer T>
-constexpr ::sus::Option<T> step_forward_by_checked(
-    T l, ::sus::num::usize steps) noexcept {
-  return T::try_from(steps).ok().and_then(
-      [&l](T steps) { return l.checked_add(::sus::marker::unsafe_fn, steps); });
-}
-template <::sus::num::Integer T>
-constexpr ::sus::Option<T> step_backward_by_checked(
-    T l, ::sus::num::usize steps) noexcept {
-  return T::try_from(steps).ok().and_then(
-      [&l](T steps) { return l.checked_sub(::sus::marker::unsafe_fn, steps); });
-}
-template <::sus::num::Integer T>
 constexpr ::sus::Option<::sus::num::usize> steps_between(const T& l,
                                                          const T& r) noexcept {
   return r.checked_sub(l).and_then(
       [](T steps) { return ::sus::num::usize::try_from(steps).ok(); });
+}
+
+template <::sus::num::PrimitiveInteger T>
+constexpr T step_forward(T l) noexcept {
+  ::sus::check(l < ::sus::num::__private::max_value<T>());
+  // SAFETY: All `PrimitiveInteger` can hold `1`.
+  return l + T(1);
+}
+template <::sus::num::PrimitiveInteger T>
+constexpr T step_backward(T l) noexcept {
+  ::sus::check(l > ::sus::num::__private::min_value<T>());
+  // SAFETY: All `PrimitiveInteger` can hold `1`.
+  return l - T(1);
+}
+template <::sus::num::PrimitiveInteger T>
+constexpr ::sus::Option<::sus::num::usize> steps_between(const T& l,
+                                                         const T& r) noexcept {
+  if (r >= l) {
+    return ::sus::num::usize::try_from(r - l).ok();
+  } else {
+    return sus::none();
+  }
 }
 
 /// Objects that have a notion of successor and predecessor operations.
@@ -79,6 +69,7 @@ concept Step = requires(const T& t, ::sus::num::usize n) {
   // Required methods.
   { ::sus::iter::__private::step_forward(t) } -> std::same_as<T>;
   { ::sus::iter::__private::step_backward(t) } -> std::same_as<T>;
+  /* These are part of Rust std, but are not used in C++ yet, so not required.
   {
     ::sus::iter::__private::step_forward_checked(t)
   } -> std::same_as<::sus::Option<T>>;
@@ -93,6 +84,7 @@ concept Step = requires(const T& t, ::sus::num::usize n) {
   {
     ::sus::iter::__private::step_backward_by_checked(t, n)
   } -> std::same_as<::sus::Option<T>>;
+  */
   {
     ::sus::iter::__private::steps_between(t, t)
   } -> std::same_as<::sus::Option<::sus::num::usize>>;
