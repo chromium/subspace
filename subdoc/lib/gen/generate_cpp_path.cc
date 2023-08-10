@@ -22,8 +22,8 @@ namespace subdoc::gen {
 namespace {
 
 sus::Vec<CppPathElement> generate_with_ancestors(
-    std::string_view name,
-    const sus::Slice<const NamespaceElement*>& ancestors) {
+    std::string_view name, const sus::Slice<const NamespaceElement*>& ancestors,
+    const sus::Slice<const TypeElement*>& type_ancestors) noexcept {
   sus::Vec<CppPathElement> out;
   for (const NamespaceElement& ancestor : ancestors.iter().map(
            [](const NamespaceElement* e) -> const NamespaceElement& {
@@ -47,6 +47,17 @@ sus::Vec<CppPathElement> generate_with_ancestors(
         .link_href = construct_html_file_path_for_namespace(
                          std::filesystem::path(), ancestor)
                          .string(),
+    });
+  }
+  for (const TypeElement& ancestor : type_ancestors.iter().map(
+           [](const TypeElement* e) -> const TypeElement& { return *e; })) {
+    out.push(CppPathElement{
+        .name = sus::clone(ancestor.name),
+        .link_href =
+            construct_html_file_path(
+                std::filesystem::path(), ancestor.namespace_path.as_slice(),
+                ancestor.record_path.as_slice(), ancestor.name)
+                .string(),
     });
   }
   out.push(CppPathElement{
@@ -77,7 +88,8 @@ sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
       });
       break;
     case Namespace::Tag::Named: {
-      out.extend(generate_with_ancestors(element.name, ancestors));
+      out.extend(generate_with_ancestors(element.name, ancestors,
+                                         sus::Slice<const TypeElement*>()));
       break;
     }
   }
@@ -86,8 +98,10 @@ sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
 
 sus::Vec<CppPathElement> generate_cpp_path_for_type(
     const TypeElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors) noexcept {
-  return generate_with_ancestors(element.name, ancestors);
+    const sus::Slice<const NamespaceElement*>& namespace_ancestors,
+    const sus::Slice<const TypeElement*>& type_ancestors) noexcept {
+  return generate_with_ancestors(element.name, namespace_ancestors,
+                                 type_ancestors);
 }
 
 }  // namespace subdoc::gen

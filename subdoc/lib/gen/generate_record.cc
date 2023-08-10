@@ -33,9 +33,10 @@ namespace {
 using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
 
-void generate_record_overview(HtmlWriter::OpenDiv& record_div,
-                              const RecordElement& element,
-                              const sus::Slice<const NamespaceElement*>& namespaces) {
+void generate_record_overview(
+    HtmlWriter::OpenDiv& record_div, const RecordElement& element,
+    const sus::Slice<const NamespaceElement*>& namespaces,
+    const sus::Slice<const TypeElement*>& type_ancestors) noexcept {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -48,9 +49,10 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
       record_type_span.write_text(
           friendly_record_type_name(element.record_type, true));
     }
-    for (auto [i, e] : generate_cpp_path_for_type(element, namespaces)
-                           .into_iter()
-                           .enumerate()) {
+    for (auto [i, e] :
+         generate_cpp_path_for_type(element, namespaces, type_ancestors)
+             .into_iter()
+             .enumerate()) {
       if (e.link_href.empty()) {
         auto span = header_div.open_span();
         span.write_text(e.name);
@@ -203,6 +205,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
 
 void generate_record(const RecordElement& element,
                      const sus::Slice<const NamespaceElement*>& namespaces,
+                     sus::Vec<const TypeElement*> type_ancestors,
                      const Options& options) noexcept {
   const std::filesystem::path path = construct_html_file_path(
       options.output_root, element.namespace_path.as_slice(),
@@ -239,7 +242,7 @@ void generate_record(const RecordElement& element,
   record_div.add_class("type");
   record_div.add_class("record");
   record_div.add_class(friendly_record_type_name(element.record_type, false));
-  generate_record_overview(record_div, element, namespaces);
+  generate_record_overview(record_div, element, namespaces, type_ancestors);
 
   sus::Vec<SortedFieldByName> sorted_static_fields;
   sus::Vec<SortedFieldByName> sorted_fields;
@@ -301,8 +304,9 @@ void generate_record(const RecordElement& element,
   generate_record_methods(record_div, element, false,
                           sorted_methods.as_slice());
 
+  type_ancestors.push(&element);
   for (const auto& [key, subrecord] : element.records) {
-    generate_record(subrecord, namespaces, options);
+    generate_record(subrecord, namespaces, sus::clone(type_ancestors), options);
   }
 }
 
