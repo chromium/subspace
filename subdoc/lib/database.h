@@ -34,23 +34,30 @@ namespace subdoc {
 
 struct Comment {
   Comment() = default;
-  Comment(std::string raw_text, std::string begin_loc, DocAttributes attrs)
-      : raw_text(raw_text),
+  Comment(std::string full_html, std::string summary_html,
+          std::string begin_loc, DocAttributes attrs)
+      : full_html(sus::move(full_html)),
+        summary_html(sus::move(summary_html)),
         begin_loc(sus::move(begin_loc)),
         attrs(sus::move(attrs)) {}
 
-  std::string raw_text;
+  std::string full_html;
+  std::string summary_html;
   std::string begin_loc;
   DocAttributes attrs;
 
   void inherit_from(const Comment& source) {
-    raw_text = source.raw_text;
+    full_html = sus::clone(source.full_html);
+    summary_html = sus::clone(source.summary_html);
     attrs = sus::clone(source.attrs);
     // location is not modified.
   }
 
-  std::string_view summary() const& { return raw_text; }
+  std::string_view summary() const& { return summary_html; }
   std::string_view summary() && = delete;
+
+  std::string_view full() const& { return full_html; }
+  std::string_view full() && = delete;
 };
 
 struct CommentElement {
@@ -70,7 +77,7 @@ struct CommentElement {
   u32 sort_key;
 
   bool has_comment() const {
-    return !comment.raw_text.empty() || comment.attrs.inherit.is_some();
+    return !comment.full_html.empty() || comment.attrs.inherit.is_some();
   }
 };
 
@@ -351,6 +358,10 @@ struct NamespaceElement : public CommentElement {
       namespaces;
   std::unordered_map<RecordId, RecordElement, RecordId::Hash> records;
   std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash> functions;
+
+  bool is_empty() const noexcept {
+    return namespaces.empty() && records.empty() && functions.empty();
+  }
 
   bool has_any_comments() const noexcept {
     if (has_comment()) return true;
