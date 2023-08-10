@@ -29,6 +29,20 @@
 namespace sus::containers::__private {
 
 template <class... Ts>
+struct VecEmptyMarker {
+  template <class U>
+  inline constexpr operator Vec<U>() && noexcept {
+    return Vec<U>();
+  }
+
+  /// Constructs a `Vec<U>` for a user-specified `U`, as it can not be inferred.
+  template <class U>
+  inline constexpr Vec<U> construct() && noexcept {
+    return ::sus::move(*this);
+  }
+};
+
+template <class... Ts>
 struct VecMarker {
   sus_clang_bug_54040(
       constexpr inline VecMarker(::sus::tuple_type::Tuple<Ts&&...>&& values)
