@@ -20,17 +20,32 @@
 
 namespace subdoc::gen {
 
-void generate(const Database& db, const Options& options) {
+sus::result::Result<void, std::error_code> generate(const Database& db,
+                                                    const Options& options) {
   if (std::filesystem::exists(options.output_root)) {
     if (std::filesystem::is_directory(options.output_root)) {
       for (auto it = std::filesystem::directory_iterator(options.output_root);
            it != std::filesystem::directory_iterator(); ++it) {
         if (!(it->is_directory() &&
-              it->path().filename().string().starts_with(".")))
-          std::filesystem::remove(*it);
+              it->path().filename().string().starts_with("."))) {
+          std::error_code ec;
+          std::filesystem::remove(*it, ec);
+          if (ec) {
+            llvm::errs() << "Failed to remove "
+                         << it->path().filename().string() << ": "
+                         << ec.message() << "\n";
+            return sus::err(ec);
+          }
+        }
       }
     } else {
-      std::filesystem::remove(options.output_root);
+      std::error_code ec;
+      std::filesystem::remove(options.output_root, ec);
+      if (ec) {
+        llvm::errs() << "Failed to remove " << options.output_root.string()
+                     << ": " << ec.message() << "\n";
+        return sus::err(ec);
+      }
     }
   }
   generate_namespace(db.global, options);
@@ -39,9 +54,17 @@ void generate(const Database& db, const Options& options) {
     if (!std::filesystem::exists(s)) {
       llvm::errs() << "Skipping copy of '" << s << "'. File not found.\n";
     } else {
-      std::filesystem::copy(s, options.output_root);
+      std::error_code ec;
+      std::filesystem::copy(s, options.output_root, ec);
+      if (ec) {
+        llvm::errs() << "Failed to copy file " << s << ": " << ec.message()
+                     << "\n";
+        return sus::err(ec);
+      }
     }
   }
+
+  return sus::ok();
 }
 
 }  // namespace subdoc::gen

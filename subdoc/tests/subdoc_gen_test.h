@@ -27,10 +27,10 @@
 #include "subdoc/tests/cpp_version.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/containers/vec.h"
-#include "sus/ptr/subclass.h"
 #include "sus/macros/compiler.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
+#include "sus/ptr/subclass.h"
 #include "sus/result/result.h"
 
 class SubDocGenTest : public testing::Test {
@@ -57,7 +57,13 @@ class SubDocGenTest : public testing::Test {
             }(),
         .stylesheets = sus::vec("../subdoc-test-style.css"),
     };
-    subdoc::gen::generate(sus::move(result).unwrap(), options);
+    sus::result::Result<void, std::error_code> r =
+        subdoc::gen::generate(sus::move(result).unwrap(), options);
+    if (r.is_err()) {
+      ADD_FAILURE() << "Failed to generate html: "
+                    << sus::move(r).unwrap_err().message();
+      return false;
+    }
 
     // TODO: Add an Iterator<const std::filesystem::path&> concept.
     auto paths_to_strings = [](auto paths_iter) {
