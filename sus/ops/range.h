@@ -94,7 +94,14 @@ class RangeIter<Final, T, true> : public ::sus::iter::IteratorBase<Final, T> {
 };
 
 template <class Final, class T>
-class RangeIter<Final, T, false> {};
+class RangeIter<Final, T, false> {
+  auto begin() noexcept {
+    static_assert(!std::same_as<T, T>,
+                  "Step<T> is not defined for the T that the range is over. "
+                  "Use a range over subspace numerics to iterate.");
+  }
+  auto end() noexcept {}
+};
 
 template <class Final, class T, bool = ::sus::iter::__private::Step<T>>
 class RangeFromIter;
