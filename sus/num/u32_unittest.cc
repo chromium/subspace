@@ -36,6 +36,7 @@ namespace {
 using sus::None;
 using sus::Option;
 using sus::Tuple;
+using sus::test::ensure_use;
 
 static_assert(!std::is_signed_v<decltype(u32::primitive_value)>);
 static_assert(sizeof(decltype(u32::primitive_value)) == 4);

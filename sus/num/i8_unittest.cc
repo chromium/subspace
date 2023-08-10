@@ -24,7 +24,6 @@
 #include "sus/ops/eq.h"
 #include "sus/ops/ord.h"
 #include "sus/prelude.h"
-#include "sus/test/ensure_use.h"
 #include "sus/tuple/tuple.h"
 
 namespace {
@@ -401,7 +400,7 @@ TEST(i8, From) {
   EXPECT_TRUE(i8::try_from(uint8_t{u8::MAX}).is_err());
   EXPECT_TRUE(i8::try_from(uint16_t{u16::MAX}).is_err());
 
-  EXPECT_EQ(i8::from(ENUM(,signed  char)::Z), 2_i8);
+  EXPECT_EQ(i8::from(ENUM(, signed char)::Z), 2_i8);
   EXPECT_EQ(i8::from(ENUM(, int8_t)::Z), 2_i8);
 
   EXPECT_EQ(i8::try_from(ENUM(, signed_char)::Z).unwrap(), 2_i8);

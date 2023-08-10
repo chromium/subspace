@@ -14,4 +14,8 @@
 
 #pragma once
 
+namespace sus::test {
+
 void ensure_use(void*);
+
+}
