@@ -22,10 +22,10 @@
 #include "subdoc/lib/run.h"
 #include "subdoc/tests/cpp_version.h"
 #include "sus/containers/vec.h"
-#include "sus/ptr/subclass.h"
 #include "sus/macros/compiler.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
+#include "sus/ptr/subclass.h"
 #include "sus/result/result.h"
 
 class SubDocTest : public testing::Test {
@@ -41,6 +41,15 @@ class SubDocTest : public testing::Test {
   auto run_code(std::string content) noexcept {
     return run_code_with_options(subdoc::RunOptions().set_show_progress(false),
                                  sus::move(content));
+  }
+
+  /// Returns if a record was found whose comment location ends with
+  /// `comment_loc` and whose comment begins with `comment_start`.
+  bool has_namespace_comment(const subdoc::Database& db,
+                             std::string_view comment_loc,
+                             std::string_view comment_start) const noexcept {
+    return verify_comment("namespace", db.find_namespace_comment(comment_loc),
+                          comment_loc, comment_start);
   }
 
   /// Returns if a record was found whose comment location ends with
