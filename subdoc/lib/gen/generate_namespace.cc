@@ -17,6 +17,7 @@
 #include <filesystem>
 
 #include "subdoc/lib/gen/files.h"
+#include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_record.h"
@@ -31,84 +32,25 @@ using SortedNamespaceByName = sus::Tuple<std::string_view, u32, NamespaceId>;
 using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
 
-struct DisplayNamespace {
-  std::string name;
-  std::string link_href;
-};
-
-sus::Vec<DisplayNamespace> namespace_display(
-    const NamespaceElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors) noexcept {
-  sus::Vec<DisplayNamespace> out;
-  switch (element.namespace_name) {
-    case Namespace::Tag::Global:
-      out.push(DisplayNamespace{
-          // TODO: Project name in options.
-          .name = "PROJECT NAME: Subspace",
-          .link_href = "#",
-      });
-      break;
-    case Namespace::Tag::Anonymous:
-      out.push(DisplayNamespace{
-          .name = "(anonymous)",
-          .link_href = "#",
-      });
-      break;
-    case Namespace::Tag::Named: {
-      for (const NamespaceElement& ancestor : ancestors.iter().map(
-               [](const NamespaceElement* e) -> const NamespaceElement& {
-                 return *e;
-               })) {
-        {
-          out.push(DisplayNamespace{
-              .name =
-                  [&]() {
-                    switch (ancestor.namespace_name) {
-                      case Namespace::Tag::Global:
-                        // TODO: Project name in options.
-                        return std::string("PROJECT NAME");
-                      case Namespace::Tag::Anonymous:
-                        return std::string("(anonymous)");
-                      case Namespace::Tag::Named:
-                        return sus::clone(ancestor.name);
-                    }
-                    // SAFETY: No default or fallthrough from the switch above
-                    // so all cases return.
-                    sus::unreachable_unchecked(unsafe_fn);
-                  }(),
-              .link_href = construct_html_file_path_for_namespace(
-                               std::filesystem::path(), ancestor)
-                               .string(),
-          });
-        }
-      }
-      out.push(DisplayNamespace{
-          .name = sus::clone(element.name),
-          .link_href = "#",
-      });
-      break;
-    }
-  }
-  return out;
-}
-
 std::string namespace_display_name(
     const NamespaceElement& element,
     const sus::Slice<const NamespaceElement*>& ancestors) noexcept {
   std::ostringstream out;
 
   if (element.namespace_name == Namespace::Tag::Global) {
-    for (auto d : namespace_display(element, ancestors).into_iter())
-      out << d.name;
+    for (auto e :
+         generate_cpp_path_for_namespace(element, ancestors).into_iter())
+      out << e.name;
   } else {
     std::string project_name;
-    for (auto [i, d] :
-         namespace_display(element, ancestors).into_iter().enumerate()) {
+    for (auto [i, e] : generate_cpp_path_for_namespace(element, ancestors)
+                           .into_iter()
+                           .enumerate()) {
       if (i == 0u)
-        project_name = sus::move(d.name);
+        project_name = sus::move(e.name);
       else {
         if (i > 1u) out << "::";
-        out << sus::move(d.name);
+        out << sus::move(e.name);
       }
     }
     out << " - " << sus::move(project_name);
@@ -130,11 +72,12 @@ void generate_namespace_overview(
       auto span = header_div.open_span();
       span.write_text("Namespace");
     }
-    for (auto [i, d] :
-         namespace_display(element, ancestors).into_iter().enumerate()) {
-      if (d.link_href.empty()) {
+    for (auto [i, e] : generate_cpp_path_for_namespace(element, ancestors)
+                           .into_iter()
+                           .enumerate()) {
+      if (e.link_href.empty()) {
         auto span = header_div.open_span();
-        span.write_text(d.name);
+        span.write_text(e.name);
       } else {
         if (i > 0u) {
           auto span = header_div.open_span(HtmlWriter::SingleLine);
@@ -143,8 +86,8 @@ void generate_namespace_overview(
         }
         auto ancestor_anchor = header_div.open_a();
         ancestor_anchor.add_class("namespace-name");
-        ancestor_anchor.add_href(d.link_href);
-        ancestor_anchor.write_text(d.name);
+        ancestor_anchor.add_href(e.link_href);
+        ancestor_anchor.write_text(e.name);
       }
     }
     if (element.has_comment()) {
@@ -325,7 +268,7 @@ void generate_namespace(const NamespaceElement& element,
     generate_namespace(sub_element, sus::clone(ancestors), options);
   }
   for (const auto& [u, sub_element] : element.records) {
-    generate_record(sub_element, options);
+    generate_record(sub_element, ancestors, options);
   }
 }
 
