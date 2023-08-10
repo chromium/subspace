@@ -21,6 +21,7 @@
 namespace subdoc::gen {
 
 void generate_namespace(const NamespaceElement& element,
+                        sus::Vec<const NamespaceElement*> ancestors,
                         const Options& options) noexcept;
 
 void generate_namespace_reference(HtmlWriter::OpenDiv& section_div,

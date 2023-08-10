@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <filesystem>
+#include <fstream>
 #include <unordered_set>
 
 #include "lib/gen/generate.h"
@@ -32,6 +33,12 @@ int main(int argc, const char** argv) {
       "out",
       llvm::cl::desc("Where to generate the docs. Defaults to `./out/docs`"),
       llvm::cl::init("out/docs"),  //
+      llvm::cl::cat(option_category));
+
+  llvm::cl::opt<std::string> option_project_md(
+      "project-md",
+      llvm::cl::desc("A markdown file containing an overview of the project, "
+                     "to insert into the project root"),
       llvm::cl::cat(option_category));
 
   llvm::cl::list<std::string> option_css(
@@ -140,6 +147,15 @@ int main(int argc, const char** argv) {
     run_options.include_path_patterns = paths_to_regex(option_include_paths);
   if (!option_exclude_paths.empty())
     run_options.exclude_path_patterns = paths_to_regex(option_exclude_paths);
+  if (option_project_md.getNumOccurrences() > 0) {
+    auto markdown_file =
+        std::ifstream(std::filesystem::path(option_project_md.getValue()));
+    if (markdown_file.is_open()) {
+      std::string line;
+      while (std::getline(markdown_file, line))
+        run_options.project_overview_markdown.push(sus::clone(line));
+    }
+  }
 
   auto fs = llvm::vfs::getRealFileSystem();
   auto result = subdoc::run_files(comp_db, sus::move(run_against_files),

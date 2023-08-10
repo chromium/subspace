@@ -67,13 +67,114 @@ inline std::string summarize_html(std::string_view html) {
   return std::string(html);
 }
 
+inline sus::result::Result<std::string, ParseCommentError>
+parse_comment_markdown_to_html(sus::SliceMut<std::string> lines) noexcept {
+  std::ostringstream parsed;
+  while (lines.first().is_some() && lines.first().as_value().empty()) {
+    lines = lines["1.."_r];
+  }
+  while (lines.last().is_some() && lines.last().as_value().empty()) {
+    lines = lines[".."_r.end_at(lines.len() - 1u)];
+  }
+
+  if (!lines.is_empty()) {
+    parsed << "<p>";
+    bool add_space = false;
+    bool inside_pre = false;
+    bool inside_code_snippet = false;
+    for (std::string& s : lines.iter_mut()) {
+      // Quote any <>.
+      while (true) {
+        size_t pos = s.find_first_of("<>");
+        if (pos == std::string::npos) break;
+        if (s[pos] == '<')
+          s.replace(pos, 1u, "&lt;");
+        else
+          s.replace(pos, 1u, "&gt;");
+      }
+
+      if (s.empty()) {
+        // Empty line, preserve the paragraph break.
+        parsed << "</p><p>";
+        add_space = false;
+      } else if (s.starts_with("#") && !(inside_pre || inside_code_snippet)) {
+        // Markdown header.
+        if (s.starts_with("##### "))
+          parsed << "</p><h5>" << sus::move(s).substr(6) << "</h5><p>";
+        else if (s.starts_with("#### "))
+          parsed << "</p><h4>" << sus::move(s).substr(5) << "</h4><p>";
+        else if (s.starts_with("### "))
+          parsed << "</p><h3>" << sus::move(s).substr(4) << "</h3><p>";
+        else if (s.starts_with("## "))
+          parsed << "</p><h2>" << sus::move(s).substr(3) << "</h2><p>";
+        else if (s.starts_with("# "))
+          parsed << "</p><h1>" << sus::move(s).substr(2) << "</h1><p>";
+        else
+          parsed << "</p><h6>" << sus::move(s) << "</h6><p>";
+        add_space = false;
+      } else if (s.starts_with("```")) {
+        // Markdown code blocks with ``` at the start and end.
+        inside_pre = !inside_pre;
+        if (inside_pre) {
+          if (inside_code_snippet) {
+            return sus::err(ParseCommentError{
+                .message = "Invalid markdown, found ``` inside `"});
+          }
+          // TODO: After the opening ``` there can be a language for syntax
+          // highlighting...
+          parsed << "</p><pre><code>";
+        } else {
+          parsed << "</code></pre><p>";
+          add_space = false;
+        }
+      } else if (inside_pre) {
+        parsed << sus::move(s) << "\n";
+      } else {
+        // Markdown code snippets with `foo` format.
+        while (true) {
+          size_t start = s.find("`");
+          if (start == std::string::npos) break;
+          inside_code_snippet = !inside_code_snippet;
+          if (inside_code_snippet) {
+            size_t end = s.find("`", start + 1u);
+            if (end != std::string::npos) {
+              s.replace(end, 1, "</code>");
+              inside_code_snippet = false;
+            }
+            s.replace(start, 1, "<code>");
+          } else {
+            s.replace(start, 1, "</code>");
+          }
+        }
+
+        // Finally add the text!
+        if (add_space) parsed << " ";
+        parsed << sus::move(s);
+        add_space = true;
+      }
+    }
+    parsed << "</p>";
+
+    // A `snippet` was not terminated.
+    if (inside_code_snippet) {
+      return sus::err(
+          ParseCommentError{.message = "Unterminated code ` snippet"});
+    }
+    if (inside_pre) {
+      return sus::err(
+          ParseCommentError{.message = "Unterminated code ``` block"});
+    }
+  }
+  return sus::ok(sus::move(parsed).str());
+}
+
 inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
     clang::ASTContext& ast_cx, const clang::RawComment& raw) noexcept {
   auto& src_manager = ast_cx.getSourceManager();
   const llvm::StringRef text = raw.getRawText(src_manager);
   const llvm::StringRef eol = text.detectEOL();
 
-  std::ostringstream parsed;
+  std::string html;
   DocAttributes attrs;
 
   clang::RawComment::CommentKind kind = raw.getKind();
@@ -157,113 +258,19 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
 
           // Substitute ##T## with the name of the type.
           while (true) {
-            auto pos = subline.find("##T##");
+            auto pos = subline.find("##_self##");
             if (pos == std::string::npos) break;
-            subline.replace(pos, strlen("##T##"), "Name");
+            // TODO: Use the name of the type!
+            subline.replace(pos, strlen("##_self#"), "Name");
           }
 
           parsed_lines.push(sus::move(subline));
         }
       }
 
-      while (!parsed_lines.is_empty() && parsed_lines[0u].empty()) {
-        parsed_lines.pop();
-      }
-      while (!parsed_lines.is_empty() &&
-             parsed_lines[parsed_lines.len() - 1u].empty()) {
-        parsed_lines.pop();
-      }
-
-      if (!parsed_lines.is_empty()) {
-        parsed << "<p>";
-        bool add_space = false;
-        bool inside_pre = false;
-        bool inside_code_snippet = false;
-        for (std::string&& s : sus::move(parsed_lines).into_iter()) {
-          // Quote any <>.
-          while (true) {
-            size_t pos = s.find_first_of("<>");
-            if (pos == std::string::npos) break;
-            if (s[pos] == '<')
-              s.replace(pos, 1u, "&lt;");
-            else
-              s.replace(pos, 1u, "&gt;");
-          }
-
-          if (s.empty()) {
-            // Empty line, preserve the paragraph break.
-            parsed << "</p><p>";
-            add_space = false;
-          } else if (s.starts_with("#") &&
-                     !(inside_pre || inside_code_snippet)) {
-            // Markdown header.
-            if (s.starts_with("##### "))
-              parsed << "</p><h5>" << sus::move(s).substr(6) << "</h5><p>";
-            else if (s.starts_with("#### "))
-              parsed << "</p><h4>" << sus::move(s).substr(5) << "</h4><p>";
-            else if (s.starts_with("### "))
-              parsed << "</p><h3>" << sus::move(s).substr(4) << "</h3><p>";
-            else if (s.starts_with("## "))
-              parsed << "</p><h2>" << sus::move(s).substr(3) << "</h2><p>";
-            else if (s.starts_with("# "))
-              parsed << "</p><h1>" << sus::move(s).substr(2) << "</h1><p>";
-            else
-              parsed << "</p><h6>" << sus::move(s) << "</h6><p>";
-            add_space = false;
-          } else if (s.starts_with("```")) {
-            // Markdown code blocks with ``` at the start and end.
-            inside_pre = !inside_pre;
-            if (inside_pre) {
-              if (inside_code_snippet) {
-                return sus::err(ParseCommentError{
-                    .message = "Invalid markdown, found ``` inside `"});
-              }
-              // TODO: After the opening ``` there can be a language for syntax
-              // highlighting...
-              parsed << "</p><pre><code>";
-            } else {
-              parsed << "</code></pre><p>";
-              add_space = false;
-            }
-          } else if (inside_pre) {
-            parsed << sus::move(s) << "\n";
-          } else {
-            // Markdown code snippets with `foo` format.
-            while (true) {
-              size_t start = s.find("`");
-              if (start == std::string::npos) break;
-              inside_code_snippet = !inside_code_snippet;
-              if (inside_code_snippet) {
-                size_t end = s.find("`", start + 1u);
-                if (end != std::string::npos) {
-                  s.replace(end, 1, "</code>");
-                  inside_code_snippet = false;
-                }
-                s.replace(start, 1, "<code>");
-              } else {
-                s.replace(start, 1, "</code>");
-              }
-            }
-
-            // Finally add the text!
-            if (add_space) parsed << " ";
-            parsed << sus::move(s);
-            add_space = true;
-          }
-        }
-        parsed << "</p>";
-
-        // A `snippet` was not terminated.
-        if (inside_code_snippet) {
-          return sus::err(
-              ParseCommentError{.message = "Unterminated code ` snippet"});
-        }
-        if (inside_pre) {
-          return sus::err(
-              ParseCommentError{.message = "Unterminated code ``` block"});
-        }
-      }
-
+      auto parsed = parse_comment_markdown_to_html(parsed_lines);
+      if (parsed.is_err()) return sus::err(sus::move(parsed).unwrap_err());
+      html = sus::move(parsed).unwrap();
       break;
     }
     case clang::RawComment::CommentKind::RCK_OrdinaryBCPL:  // `// Foo`
@@ -286,9 +293,8 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
       return sus::err(ParseCommentError{.message = "Merged comment format?"});
   }
 
-  auto parsed_str = sus::move(parsed).str();
-  auto summary = summarize_html(parsed_str);
-  return sus::ok(ParsedComment(sus::move(attrs), sus::move(parsed_str),
+  auto summary = summarize_html(html);
+  return sus::ok(ParsedComment(sus::move(attrs), sus::move(html),
                                sus::move(summary)));
 }
 
