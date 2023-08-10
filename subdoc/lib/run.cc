@@ -120,13 +120,6 @@ sus::Result<Database, DiagnosticResults> run_files(
   auto visitor_factory = VisitorFactory(cx, docs_db, num_files);
 
   i32 run_value = sus::move(tool).run(&visitor_factory);
-  if (options.show_progress) {
-    // While generating, we print the file names all to the same line, and the
-    // cursor is still on a line with one of the file names. This moves to the
-    // next empty line.
-    llvm::outs() << "\n";
-  }
-
   if (run_value == 1) {
     return sus::err(sus::move(sus::move(diags)->results));
   }

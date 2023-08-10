@@ -304,8 +304,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
               clang::cast<clang::RecordDecl>(decl->getDeclContext()));
           parent.is_some()) {
-        add_function_overload_to_db(decl, sus::move(fe),
-                                    parent->conversions);
+        add_function_overload_to_db(decl, sus::move(fe), parent->conversions);
       }
     } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
       sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
@@ -363,8 +362,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       if (sus::Option<NamespaceElement&> parent =
               docs_db_.find_namespace_mut(find_nearest_namespace(decl));
           parent.is_some()) {
-        add_function_overload_to_db(decl, sus::move(fe),
-                                    parent->functions);
+        add_function_overload_to_db(decl, sus::move(fe), parent->functions);
       }
     }
 
@@ -514,10 +512,14 @@ class AstConsumer : public clang::ASTConsumer {
 
       // Don't visit the same file repeatedly.
       auto v = VisitedLocation(decl->getLocation().printToString(sm));
-      if (cx_.visited_locations.contains(v)) continue;
+      if (cx_.visited_locations.contains(v)) {
+        continue;
+      }
       cx_.visited_locations.emplace(sus::move(v));
 
-      if (!cx_.should_include_decl_based_on_file(decl)) continue;
+      if (!cx_.should_include_decl_based_on_file(decl)) {
+        continue;
+      }
 
       if (!Visitor(cx_, docs_db_, DiagnosticIds::with(decl->getASTContext()))
                .TraverseDecl(decl))
@@ -552,20 +554,8 @@ std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
     clang::CompilerInstance&, llvm::StringRef file) noexcept {
   if (cx.options.show_progress) {
     if (std::string_view(file) != line_stats.cur_file_name) {
-      std::string to_print = [&]() {
-        std::ostringstream s;
-        s << "[" << size_t{line_stats.cur_file} << "/"
-          << size_t{line_stats.num_files} << "]";
-        s << " " << std::string_view(file);
-        return sus::move(s).str();
-      }();
-      llvm::outs() << "\r" << to_print;
-      for (usize i;
-           i < line_stats.last_line_len.saturating_sub(to_print.size());
-           i += 1u) {
-        llvm::errs() << " ";
-      }
-      line_stats.last_line_len = to_print.size();
+      llvm::outs() << "[" << size_t{line_stats.cur_file} << "/"
+                   << size_t{line_stats.num_files} << "] " << file << "\n";
       line_stats.cur_file += 1u;
       line_stats.cur_file_name = std::string(file);
     }
@@ -598,11 +588,14 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
   if (path.empty()) {
     return true;
   }
+  // Canonicalize the path to use `/` instead of `\`.
+  auto canonical_path = std::string(path);
+  std::replace(canonical_path.begin(), canonical_path.end(), '\\', '/');
 
   // Compare the path to the user-specified include/exclude-patterns.
   enum { CheckPath, ExcludePath, IncludePath } what_to_do;
   // We cache the regex decision for each visited path name.
-  if (auto it = visited_paths_.find(std::string_view(path));
+  if (auto it = visited_paths_.find(canonical_path);
       it != visited_paths_.end()) {
     what_to_do = it->second.included ? IncludePath : ExcludePath;
   } else {
@@ -613,9 +606,8 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
     case IncludePath: return true;
     case ExcludePath: return false;
     case CheckPath: {
-      // std::regex requires a string, so store it up front.
       auto [it, inserted] =
-          visited_paths_.emplace(std::string(path), VisitedPath(true));
+          visited_paths_.emplace(sus::move(canonical_path), VisitedPath(true));
       sus::check(inserted);
       auto& [path_str, visited_path] = *it;
       if (!std::regex_search(path_str, options.include_path_patterns)) {
