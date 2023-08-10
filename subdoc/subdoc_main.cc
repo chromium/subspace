@@ -164,6 +164,6 @@ int main(int argc, const char** argv) {
 
   llvm::outs() << "Generating into '" << gen_options.output_root.string()
                << "'\n";
-  subdoc::gen::generate(docs_db, sus::move(gen_options));
-  return 0;
+  auto r = subdoc::gen::generate(docs_db, sus::move(gen_options));
+  return r.is_ok() ? 0 : 1;
 }

@@ -14,11 +14,19 @@
 
 #pragma once
 
+#include <system_error>
+
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/options.h"
+#include "sus/prelude.h"
+#include "sus/result/result.h"
 
 namespace subdoc::gen {
 
-void generate(const Database& db, const Options& options);
+/// Generate the html output from the database.
+///
+/// Returns an error if generation fails.
+sus::result::Result<void, std::error_code> generate(const Database& db,
+                                                    const Options& options);
 
 }  // namespace subdoc::gen
