@@ -357,12 +357,10 @@ sus_pure_const sus_always_inline constexpr uint32_t leading_zeros(
   return leading_zeros_nonzero(::sus::marker::unsafe_fn, value);
 }
 
-/** Counts the number of trailing zeros in a non-zero input.
- *
- * # Safety
- * This function produces Undefined Behaviour if passed a zero value.
- */
-// TODO: Any way to make it constexpr?
+/// Counts the number of trailing zeros in a non-zero input.
+///
+/// # Safety
+/// This function produces Undefined Behaviour if passed a zero value.
 template <class T>
   requires(std::is_integral_v<T> && std::is_unsigned_v<T> &&
            ::sus::mem::size_of<T>() <= 8)
