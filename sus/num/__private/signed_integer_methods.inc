@@ -58,7 +58,7 @@ constexpr inline _self() noexcept = default;
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.ctor.signedint.typed]
  */
@@ -70,7 +70,7 @@ constexpr inline _self(S v) noexcept : primitive_value(v.primitive_value) {}
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.ctor.signedint.primitive]
  */
@@ -82,7 +82,7 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.ctor.signedenum]
  */
@@ -94,7 +94,7 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.ctor.signedenumclass]
  */
@@ -107,7 +107,7 @@ explicit constexpr inline _self(P v) noexcept
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.ctor.unsignedint.typed]
  */
@@ -119,7 +119,7 @@ constexpr inline _self(U v) noexcept : primitive_value(v.primitive_value) {}
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.ctor.unsignedint.primitive]
  */
@@ -131,7 +131,7 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.ctor.unsignedenum]
  */
@@ -143,7 +143,7 @@ constexpr inline _self(P v) noexcept : primitive_value(v) {}
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.ctor.unsignedenumclass]
  */
@@ -156,7 +156,7 @@ explicit constexpr inline _self(P v) noexcept
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.assign.signedint.typed]
  */
@@ -171,7 +171,7 @@ constexpr inline _self& operator=(S v) noexcept {
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.assign.signedint.primitive]
  */
@@ -186,7 +186,7 @@ constexpr inline _self& operator=(P v) noexcept {
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.assign.signedenum]
  */
@@ -197,12 +197,12 @@ constexpr inline _self& operator=(P v) noexcept {
   return *this;
 }
 
-/** Constructs a ##_self## from a signed integer type (i8, i16, i32, etc) where
+/** Constructs a @doc.self from a signed integer type (i8, i16, i32, etc) where
  * no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=from.signed]
  */
@@ -212,9 +212,9 @@ sus_pure static constexpr _self from(S s) noexcept {
   return _self(s);
 }
 
-/** Try to construct a ##_self## from a signed integer type (i8, i16, i32, etc).
+/** Try to construct a @doc.self from a signed integer type (i8, i16, i32, etc).
  *
- * Returns an error if the source value is outside of the range of ##_self##.
+ * Returns an error if the source value is outside of the range of @doc.self.
  *
  * #[doc.overloads=0]
  */
@@ -236,10 +236,10 @@ try_from(S s) noexcept {
   return R::with(_self(static_cast<_primitive>(s.primitive_value)));
 }
 
-/** Try to construct a ##_self## from an unsigned integer type (u8, u16, u32,
+/** Try to construct a @doc.self from an unsigned integer type (u8, u16, u32,
  * etc).
  *
- * Returns an error if the source value is outside of the range of ##_self##.
+ * Returns an error if the source value is outside of the range of @doc.self.
  *
  * #[doc.overloads=1]
  */
@@ -257,12 +257,12 @@ try_from(U u) noexcept {
   return R::with(_self(static_cast<_primitive>(u.primitive_value)));
 }
 
-/** Constructs a ##_self## from a signed primitive integer type (int, long, etc)
+/** Constructs a @doc.self from a signed primitive integer type (int, long, etc)
  * where no bits are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=from.signed.prim]
  */
@@ -272,10 +272,10 @@ sus_pure static constexpr _self from(S s) noexcept {
   return _self(s);
 }
 
-/** Tries to construct a ##_self## from a signed primitive integer type (int,
+/** Tries to construct a @doc.self from a signed primitive integer type (int,
  * long, etc).
  *
- * Returns an error if the source value is outside of the range of ##_self##.
+ * Returns an error if the source value is outside of the range of @doc.self.
  *
  * #[doc.overloads=signedint.tryfrom.signedint]
  */
@@ -297,12 +297,12 @@ try_from(S s) noexcept {
   return R::with(_self(static_cast<_primitive>(s)));
 }
 
-/** Constructs a ##_self## from a signed enum type (or enum class) where no bits
+/** Constructs a @doc.self from a signed enum type (or enum class) where no bits
  * are lost.
  *
  * For conversions from types with a larger range use `try_from()`. For lossy
  * conversions use the `sus::construct::Transmogrify` concept with
- * `sus::mog<##_self##>()`.
+ * `sus::mog<@doc.self>()`.
  *
  * #[doc.overloads=signedint.from.signedenum]
  */
@@ -314,9 +314,9 @@ sus_pure static constexpr _self from(S s) noexcept {
   return _self(static_cast<std::underlying_type_t<S>>(s));
 }
 
-/** Tries to construct a ##_self## from a signed enum type (or enum class).
+/** Tries to construct a @doc.self from a signed enum type (or enum class).
  *
- * Returns an error if the source value is outside of the range of ##_self##.
+ * Returns an error if the source value is outside of the range of @doc.self.
  *
  * #[doc.overloads=signedint.tryfrom.signedenum]
  */
@@ -340,10 +340,10 @@ try_from(S s) noexcept {
   return R::with(_self(static_cast<_primitive>(s)));
 }
 
-/** Constructs a ##_self## from an unsigned primitive integer type (unsigned
+/** Constructs a @doc.self from an unsigned primitive integer type (unsigned
  * int, unsigned long, etc).
  *
- * Returns an error if the source value is outside of the range of ##_self##.
+ * Returns an error if the source value is outside of the range of @doc.self.
  *
  * #[doc.overloads=signedint.tryfrom.unsignedint]
  */
@@ -361,9 +361,9 @@ try_from(U u) noexcept {
   return R::with(_self(static_cast<_primitive>(u)));
 }
 
-/** Constructs a ##_self## from an unsigned enum type (or enum class).
+/** Constructs a @doc.self from an unsigned enum type (or enum class).
  *
- * Returns an error if the source value is outside of the range of ##_self##.
+ * Returns an error if the source value is outside of the range of @doc.self.
  *
  * #[doc.overloads=signedint.tryfrom.unsignedenum]
  */
@@ -383,15 +383,15 @@ try_from(U u) noexcept {
   return R::with(_self(static_cast<_primitive>(u)));
 }
 
-/// Constructs a ##_self## from an `Iterator` by computing the product of all
+/// Constructs a @doc.self from an `Iterator` by computing the product of all
 /// elements in the itertor.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
 /// `sus::iter::Product` concept so that `Iterator::product()` can be called for
-/// iterators over ##_self##.
+/// iterators over @doc.self.
 ///
 /// To handle overflow without panicing, instead of `iter.product()`, use
-/// `iter.product<OverflowInteger<##_self##>>()`.
+/// `iter.product<OverflowInteger<@doc.self>>()`.
 ///
 /// # Panics
 /// This method will panic if the product of all values overflows.
@@ -402,15 +402,15 @@ static constexpr _self from_product(
   return p;
 }
 
-/// Constructs a ##_self## from an `Iterator` by computing the sum of all
+/// Constructs a @doc.self from an `Iterator` by computing the sum of all
 /// elements in the itertor.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
 /// `sus::iter::Sum` concept so that `Iterator::sum()` can be called for
-/// iterators over ##_self##.
+/// iterators over @doc.self.
 ///
 /// To handle overflow without panicing, instead of `iter.sum()`, use
-/// `iter.sum<OverflowInteger<##_self##>>()`.
+/// `iter.sum<OverflowInteger<@doc.self>>()`.
 ///
 /// # Panics
 /// This method will panic if the product of all values overflows.
@@ -460,39 +460,39 @@ sus_pure constexpr _self signum() const& noexcept {
     return _primitive{primitive_value != 0};
 }
 
-/** sus::ops::Eq<##_self##> trait.
+/** sus::ops::Eq<@doc.self> trait.
  * #[doc.overloads=int.eq.self] */
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const _self& r) noexcept = default;
-/** sus::ops::Eq<##_self##, SignedPrimitiveInteger> trait.
+/** sus::ops::Eq<@doc.self, SignedPrimitiveInteger> trait.
  * #[doc.overloads=int.eq.signedprimitive] */
 template <SignedPrimitiveInteger P>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const P& r) noexcept {
   return l.primitive_value == r;
 }
-/** sus::ops::Eq<##_self##, Signed> trait.
+/** sus::ops::Eq<@doc.self, Signed> trait.
  * #[doc.overloads=int.eq.signed] */
 template <Signed S>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     const _self& l, const S& r) noexcept {
   return l.primitive_value == r.primitive_value;
 }
-/** sus::ops::StrongOrd<##_self##> trait.
+/** sus::ops::StrongOrd<@doc.self> trait.
  * #[doc.overloads=int.ord.self] */
 template <UnsignedPrimitiveInteger P>
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const _self& r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
-/** sus::ops::StrongOrd<##_self##, SignedPrimitiveInteger> trait.
+/** sus::ops::StrongOrd<@doc.self, SignedPrimitiveInteger> trait.
  * #[doc.overloads=int.ord.signedprimitive] */
 template <SignedPrimitiveInteger P>
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     const _self& l, const P& r) noexcept {
   return l.primitive_value <=> r;
 }
-/** sus::ops::StrongOrd<##_self##, Signed> trait.
+/** sus::ops::StrongOrd<@doc.self, Signed> trait.
  * #[doc.overloads=int.ord.signed] */
 template <Signed S>
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
@@ -512,8 +512,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
       __private::unchecked_not(__private::into_unsigned(primitive_value)));
 }
 
-/** sus::num::Add<##_self##> trait.
- * #[doc.overloads=int##_self##.+] */
+/** sus::num::Add<@doc.self> trait.
+ * #[doc.overloads=self.+] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator+(
     const _self& l, const _self& r) noexcept {
   const auto out =
@@ -522,8 +522,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return out.value;
 }
-/** sus::num::Sub<##_self##> trait.
- * #[doc.overloads=int##_self##.-] */
+/** sus::num::Sub<@doc.self> trait.
+ * #[doc.overloads=self.-] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
     const _self& l, const _self& r) noexcept {
   const auto out =
@@ -532,8 +532,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return out.value;
 }
-/** sus::num::Mul<##_self##> trait.
- * #[doc.overloads=int##_self##.*] */
+/** sus::num::Mul<@doc.self> trait.
+ * #[doc.overloads=self.*] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
     const _self& l, const _self& r) noexcept {
   const auto out =
@@ -542,8 +542,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return out.value;
 }
-/** sus::num::Div<##_self##> trait.
- * #[doc.overloads=int##_self##./] */
+/** sus::num::Div<@doc.self> trait.
+ * #[doc.overloads=self./] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
     const _self& l, const _self& r) noexcept {
   /* TODO: Allow opting out of all overflow checks? */
@@ -552,8 +552,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(l.primitive_value != MIN_PRIMITIVE || r.primitive_value != -1);
   return static_cast<_primitive>(l.primitive_value / r.primitive_value);
 }
-/** sus::num::Rem<##_self##> trait.
- * #[doc.overloads=int##_self##.%] */
+/** sus::num::Rem<@doc.self> trait.
+ * #[doc.overloads=self.%] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator%(
     const _self& l, const _self& r) noexcept {
   /* TODO: Allow opting out of all overflow checks? */
@@ -563,26 +563,26 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   return static_cast<_primitive>(l.primitive_value % r.primitive_value);
 }
 
-/** sus::num::BitAnd<##_self##> trait.
- * #[doc.overloads=int##_self##.&] */
+/** sus::num::BitAnd<@doc.self> trait.
+ * #[doc.overloads=self.&] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator&(
     const _self& l, const _self& r) noexcept {
   return static_cast<_primitive>(l.primitive_value & r.primitive_value);
 }
-/** sus::num::BitOr<##_self##> trait.
- * #[doc.overloads=int##_self##.|] */
+/** sus::num::BitOr<@doc.self> trait.
+ * #[doc.overloads=self.|] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator|(
     const _self& l, const _self& r) noexcept {
   return static_cast<_primitive>(l.primitive_value | r.primitive_value);
 }
-/** sus::num::BitXor<##_self##> trait.
- * #[doc.overloads=int##_self##.^] */
+/** sus::num::BitXor<@doc.self> trait.
+ * #[doc.overloads=self.^] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator^(
     const _self& l, const _self& r) noexcept {
   return static_cast<_primitive>(l.primitive_value ^ r.primitive_value);
 }
 /** sus::num::Shl trait.
- * #[doc.overloads=int##_self##.<<] */
+ * #[doc.overloads=self.<<] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator<<(
     const _self& l, const u32& r) noexcept {
   const auto out =
@@ -592,7 +592,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   return out.value;
 }
 /** sus::num::Shr trait.
- * #[doc.overloads=int##_self##.>>] */
+ * #[doc.overloads=self.>>] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator>>(
     const _self& l, const u32& r) noexcept {
   const auto out =
@@ -602,7 +602,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   return out.value;
 }
 
-/** sus::num::AddAssign<##_self##> trait. */
+/** sus::num::AddAssign<@doc.self> trait. */
 constexpr inline void operator+=(_self r) & noexcept {
   const auto out =
       __private::add_with_overflow(primitive_value, r.primitive_value);
@@ -610,7 +610,7 @@ constexpr inline void operator+=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/** sus::num::SubAssign<##_self##> trait. */
+/** sus::num::SubAssign<@doc.self> trait. */
 constexpr inline void operator-=(_self r) & noexcept {
   const auto out =
       __private::sub_with_overflow(primitive_value, r.primitive_value);
@@ -618,7 +618,7 @@ constexpr inline void operator-=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/** sus::num::MulAssign<##_self##> trait. */
+/** sus::num::MulAssign<@doc.self> trait. */
 constexpr inline void operator*=(_self r) & noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, r.primitive_value);
@@ -626,7 +626,7 @@ constexpr inline void operator*=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/** sus::num::DivAssign<##_self##> trait. */
+/** sus::num::DivAssign<@doc.self> trait. */
 constexpr inline void operator/=(_self r) & noexcept {
   /* TODO: Allow opting out of all overflow checks? */
   ::sus::check(r.primitive_value != 0);
@@ -634,7 +634,7 @@ constexpr inline void operator/=(_self r) & noexcept {
   ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1);
   primitive_value /= r.primitive_value;
 }
-/** sus::num::RemAssign<##_self##> trait. */
+/** sus::num::RemAssign<@doc.self> trait. */
 constexpr inline void operator%=(_self r) & noexcept {
   /* TODO: Allow opting out of all overflow checks? */
   ::sus::check(r.primitive_value != 0);
@@ -643,15 +643,15 @@ constexpr inline void operator%=(_self r) & noexcept {
   primitive_value %= r.primitive_value;
 }
 
-/** sus::num::BitAndAssign<##_self##> trait. */
+/** sus::num::BitAndAssign<@doc.self> trait. */
 constexpr inline void operator&=(_self r) & noexcept {
   primitive_value &= r.primitive_value;
 }
-/** sus::num::BitOrAssign<##_self##> trait. */
+/** sus::num::BitOrAssign<@doc.self> trait. */
 constexpr inline void operator|=(_self r) & noexcept {
   primitive_value |= r.primitive_value;
 }
-/** sus::num::BitXorAssign<##_self##> trait. */
+/** sus::num::BitXorAssign<@doc.self> trait. */
 constexpr inline void operator^=(_self r) & noexcept {
   primitive_value ^= r.primitive_value;
 }
@@ -674,7 +674,7 @@ constexpr inline void operator>>=(const u32& r) & noexcept {
 
 /** Computes the absolute value of itself.
  *
- * The absolute value of ##_self##::MIN cannot be represented as an ##_self##,
+ * The absolute value of @doc.self::MIN cannot be represented as an @doc.self,
  * and attempting to calculate it will panic.
  */
 sus_pure constexpr inline _self abs() const& noexcept {
@@ -700,7 +700,7 @@ sus_pure constexpr Option<_self> checked_abs() const& noexcept {
  *
  * Returns a tuple of the absolute version of self along with a boolean
  * indicating whether an overflow happened. If self is the minimum value
- * (e.g., ##_self##::MIN for values of type ##_self##), then the minimum value
+ * (e.g., @doc.self::MIN for values of type @doc.self), then the minimum value
  * will be returned again and true will be returned for an overflow happening.
  */
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
@@ -841,8 +841,8 @@ sus_pure constexpr _self saturating_add_unsigned(
  * cannot occur.
  *
  * # Safety
- * This results in undefined behavior when self + rhs > ##_self##::MAX or self
- * + rhs < ##_self##::MIN, i.e. when checked_add() would return None.
+ * This results in undefined behavior when self + rhs > @doc.self::MAX or self
+ * + rhs < @doc.self::MIN, i.e. when checked_add() would return None.
  */
 sus_pure inline constexpr _self unchecked_add(
     ::sus::marker::UnsafeFnMarker, const _self& rhs) const& noexcept {
@@ -982,9 +982,9 @@ sus_pure constexpr _self saturating_mul(const _self& rhs) const& noexcept {
  * cannot occur.
  *
  * # Safety
- * This results in undefined behavior when `self * rhs > ##_self##::MAX` or
+ * This results in undefined behavior when `self * rhs > @doc.self::MAX` or
  * `self
- * * rhs < ##_self##::MIN`, i.e. when `checked_mul()` would return None.
+ * * rhs < @doc.self::MIN`, i.e. when `checked_mul()` would return None.
  */
 sus_pure constexpr inline _self unchecked_mul(
     ::sus::marker::UnsafeFnMarker, const _self& rhs) const& noexcept {
@@ -1011,7 +1011,7 @@ sus_pure constexpr Option<_self> checked_neg() const& noexcept {
  *
  * Returns a tuple of the negated version of self along with a boolean
  * indicating whether an overflow happened. If self is the minimum value
- * (e.g., ##_self##::MIN for values of type ##_self##), then the minimum value
+ * (e.g., @doc.self::MIN for values of type @doc.self), then the minimum value
  * will be returned again and true will be returned for an overflow happening.
  */
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
@@ -1530,7 +1530,7 @@ sus_pure constexpr inline _self pow(const u32& rhs) const& noexcept {
   return out.value;
 }
 
-/** Checked exponentiation. Computes `##_self##::pow(exp)`, returning None if
+/** Checked exponentiation. Computes `@doc.self::pow(exp)`, returning None if
  * overflow occurred.
  */
 sus_pure constexpr Option<_self> checked_pow(const u32& rhs) const& noexcept {

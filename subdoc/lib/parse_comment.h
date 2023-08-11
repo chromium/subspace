@@ -258,10 +258,10 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
 
           // Substitute ##T## with the name of the type.
           while (true) {
-            auto pos = subline.find("##_self##");
+            auto pos = subline.find("@doc.self");
             if (pos == std::string::npos) break;
             // TODO: Use the name of the type!
-            subline.replace(pos, strlen("##_self#"), "Name");
+            subline.replace(pos, strlen("@doc.self"), "Name");
           }
 
           parsed_lines.push(sus::move(subline));
