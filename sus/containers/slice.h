@@ -27,7 +27,6 @@
 #include "sus/containers/iterators/split.h"
 #include "sus/containers/iterators/windows.h"
 #include "sus/containers/join.h"
-#include "sus/num/transmogrify.h"
 #include "sus/fn/fn_concepts.h"
 #include "sus/fn/fn_ref.h"
 #include "sus/iter/iterator_defn.h"
@@ -42,6 +41,7 @@
 #include "sus/mem/move.h"
 #include "sus/mem/swap.h"
 #include "sus/num/signed_integer.h"
+#include "sus/num/transmogrify.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/ops/eq.h"
 #include "sus/ops/ord.h"
@@ -133,9 +133,8 @@ class [[sus_trivial_abi]] Slice final {
                  const_cast<T*>(data), N);
   }
 
-  /** Converts the slice into an iterator that consumes the slice and returns \
-   * each element in the same order they appear in the slice.                 \
-   */
+  /// Converts the slice into an iterator that consumes the slice and returns
+  /// each element in the same order they appear in the slice.
   sus_pure constexpr SliceIter<const T&> into_iter() && noexcept {
     return SliceIter<const T&>::with(
         // This method is in Slice only, so it's a view type.
@@ -330,9 +329,8 @@ class [[sus_trivial_abi]] SliceMut final {
     return SliceMut(::sus::iter::IterRefCounter::empty_for_view(), data, N);
   }
 
-  /** Converts the slice into an iterator that consumes the slice and returns \
-   * each element in the same order they appear in the slice.                 \
-   */
+  /// Converts the slice into an iterator that consumes the slice and returns
+  /// each element in the same order they appear in the slice.
   sus_pure constexpr SliceIterMut<T&> into_iter() && noexcept {
     return SliceIterMut<T&>::with(
         // This method is in SliceMut only, so it's a view type.
