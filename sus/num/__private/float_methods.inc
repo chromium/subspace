@@ -37,22 +37,22 @@ _primitive primitive_value = _primitive{0.0};
 static const _primitive MIN_PRIMITIVE;
 /// Largest finite primitive value.
 static const _primitive MAX_PRIMITIVE;
-/// Smallest finite `##_self##`.
+/// Smallest finite `@doc.self`.
 static const _self MIN;
-/// Largest finite `##_self##`.
+/// Largest finite `@doc.self`.
 static const _self MAX;
-/// The radix or base of the internal representation of `##_self##`.
+/// The radix or base of the internal representation of `@doc.self`.
 static const u32 RADIX;
 /// Approximate number of significant digits in base 2.
 static const u32 MANTISSA_DIGITS;
 /// Approximate number of significant digits in base 10.
 static const u32 DIGITS;
-/// Machine epsilon value for `##_self##`.
+/// Machine epsilon value for `@doc.self`.
 ///
 /// This is the difference between `1.0` and the next larger representable
 /// number.
 static const _self EPSILON;
-/// Smallest positive normal `##_self##` value.
+/// Smallest positive normal `@doc.self` value.
 static const _self MIN_POSITIVE;
 /// One greater than the minimum possible normal power of 2 exponent.
 static const i32 MIN_EXP;
@@ -181,12 +181,12 @@ constexpr inline _self& operator=(P v) noexcept {
   return *this;
 }
 
-/// Constructs a ##_self## from an `Iterator` by computing the sum of all
+/// Constructs a @doc.self from an `Iterator` by computing the sum of all
 /// elements in the iterator.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
 /// `sus::iter::Sum` concept so that `Iterator::sum()` can be called for
-/// iterators over ##_self##.
+/// iterators over @doc.self.
 static constexpr _self from_sum(
     ::sus::iter::Iterator<_self> auto&& it) noexcept {
   auto p = _self(_primitive{0u});
@@ -194,12 +194,12 @@ static constexpr _self from_sum(
   return p;
 }
 
-/// Constructs a ##_self## from an `Iterator` by computing the product of all
+/// Constructs a @doc.self from an `Iterator` by computing the product of all
 /// elements in the iterator.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
 /// `sus::iter::Product` concept so that `Iterator::product()` can be called for
-/// iterators over ##_self##.
+/// iterators over @doc.self.
 static constexpr _self from_product(
     ::sus::iter::Iterator<_self> auto&& it) noexcept {
   auto p = _self(_primitive{1u});
@@ -219,21 +219,21 @@ sus_pure constexpr inline explicit operator U() const {
   return primitive_value;
 }
 
-/// sus::ops::Eq<##_self##> trait.
+/// sus::ops::Eq<@doc.self> trait.
 /// #[doc.overloads=float.eq.self]
 template <PrimitiveFloat F>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
-/// sus::ops::Eq<##_self##, PrimitiveFloat> trait.
+/// sus::ops::Eq<@doc.self, PrimitiveFloat> trait.
 /// #[doc.overloads=float.eq.prim]
 template <PrimitiveFloat F>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(_self l,
                                                                F r) noexcept {
   return (l.primitive_value <=> r) == 0;
 }
-/// sus::ops::Eq<##_self##, Float> trait.
+/// sus::ops::Eq<@doc.self, Float> trait.
 /// #[doc.overloads=float.eq.float]
 template <Float F>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(_self l,
@@ -241,21 +241,21 @@ template <Float F>
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
 
-/// sus::ops::PartialOrd<##_self##, PrimitiveFloat> trait.
+/// sus::ops::PartialOrd<@doc.self, PrimitiveFloat> trait.
 /// #[doc.overloads=float.ord.self]
 template <PrimitiveFloat F>
 [[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
     _self l, _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
-/// sus::ops::PartialOrd<##_self##, PrimitiveFloat> trait.
+/// sus::ops::PartialOrd<@doc.self, PrimitiveFloat> trait.
 /// #[doc.overloads=float.ord.prim]
 template <PrimitiveFloat F>
 [[nodiscard]] sus_pure friend constexpr inline auto operator<=>(_self l,
                                                                 F r) noexcept {
   return l.primitive_value <=> r;
 }
-/// sus::ops::PartialOrd<##_self##, Float> trait.
+/// sus::ops::PartialOrd<@doc.self, Float> trait.
 /// #[doc.overloads=float.ord.float]
 template <Float F>
 [[nodiscard]] sus_pure friend constexpr inline auto operator<=>(_self l,
@@ -284,7 +284,7 @@ template <Float F>
 /// positive quiet NaN.
 ///
 /// The ordering established by this function does not always agree with the
-/// `PartialOrd` and `Eq` implementations of ##_self##. For example, they
+/// `PartialOrd` and `Eq` implementations of @doc.self. For example, they
 /// consider negative and positive zero equal, while total_cmp doesn't.
 ///
 /// The interpretation of the signaling NaN bit follows the definition in the
@@ -295,43 +295,43 @@ sus_pure constexpr std::strong_ordering total_cmp(_self other) const& noexcept {
                                           other.primitive_value);
 }
 
-/// sus::num::Neg<##_self##> trait.
+/// sus::num::Neg<@doc.self> trait.
 sus_pure constexpr inline _self operator-() const {
   return _self(-primitive_value);
 }
 
-/// sus::num::Add<##_self##> trait.
-/// #[doc.overloads=float##_self##.+]
+/// sus::num::Add<@doc.self> trait.
+/// #[doc.overloads=self.+]
 [[nodiscard]] sus_pure friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
   return l.primitive_value + r.primitive_value;
 }
-/// sus::num::Sub<##_self##> trait.
-/// #[doc.overloads=float##_self##.-]
+/// sus::num::Sub<@doc.self> trait.
+/// #[doc.overloads=self.-]
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
   return l.primitive_value - r.primitive_value;
 }
-/// sus::num::Mul<##_self##> trait.
-/// #[doc.overloads=float##_self##.*]
+/// sus::num::Mul<@doc.self> trait.
+/// #[doc.overloads=self.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
   return l.primitive_value * r.primitive_value;
 }
-/// sus::num::Div<##_self##> trait.
-/// #[doc.overloads=float##_self##./]
+/// sus::num::Div<@doc.self> trait.
+/// #[doc.overloads=self./]
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
   return l.primitive_value / r.primitive_value;
 }
-/// sus::num::Rem<##_self##> trait.
+/// sus::num::Rem<@doc.self> trait.
 ///
 /// The remainder from the division of two floats.
 ///
 /// The remainder has the same sign as the dividend and is computed as:
 /// `l - (l / r).trunc() * r`.
 ///
-/// #[doc.overloads=float##_self##.%]
+/// #[doc.overloads=self.%]
 [[nodiscard]] sus_pure friend constexpr inline _self operator%(
     _self l, _self r) noexcept {
   const auto x = l.primitive_value;
@@ -339,23 +339,23 @@ sus_pure constexpr inline _self operator-() const {
   return x - __private::truncate_float(x / y) * y;
 }
 
-/// sus::num::AddAssign<##_self##> trait.
+/// sus::num::AddAssign<@doc.self> trait.
 constexpr inline void operator+=(_self r) & noexcept {
   primitive_value += r.primitive_value;
 }
-/// sus::num::SubAssign<##_self##> trait.
+/// sus::num::SubAssign<@doc.self> trait.
 constexpr inline void operator-=(_self r) & noexcept {
   primitive_value -= r.primitive_value;
 }
-/// sus::num::MulAssign<##_self##> trait.
+/// sus::num::MulAssign<@doc.self> trait.
 constexpr inline void operator*=(_self r) & noexcept {
   primitive_value *= r.primitive_value;
 }
-/// sus::num::DivAssign<##_self##> trait.
+/// sus::num::DivAssign<@doc.self> trait.
 constexpr inline void operator/=(_self r) & noexcept {
   primitive_value /= r.primitive_value;
 }
-/// sus::num::RemAssign<##_self##> trait.
+/// sus::num::RemAssign<@doc.self> trait.
 ///
 /// Assigns the remainder from the division of two floats.
 ///
@@ -828,14 +828,14 @@ to_ne_bytes() const& noexcept;
 /// Create a floating point value from its representation as a byte array in
 /// big endian.
 ///
-/// See `##_self##::from_bits()` for why this function is not constexpr.
+/// See `@doc.self::from_bits()` for why this function is not constexpr.
 sus_pure static _self from_be_bytes(
     const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 /// Create a floating point value from its representation as a byte array in
 /// big endian.
 ///
-///  See `##_self##::from_bits()` for why this function is not constexpr.
+///  See `@doc.self::from_bits()` for why this function is not constexpr.
 sus_pure static _self from_le_bytes(
     const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
@@ -846,7 +846,7 @@ sus_pure static _self from_le_bytes(
 /// wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate
 /// instead.
 ///
-///  See `##_self##::from_bits()` for why this function is not constexpr.
+///  See `@doc.self::from_bits()` for why this function is not constexpr.
 sus_pure static _self from_ne_bytes(
     const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
