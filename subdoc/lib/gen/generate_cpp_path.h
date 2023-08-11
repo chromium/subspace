@@ -21,9 +21,15 @@
 
 namespace subdoc::gen {
 
+enum CppPathElementType {
+    CppPathNamespace,
+    CppPathRecord,
+};
+
 struct CppPathElement {
   std::string name;
   std::string link_href;
+  CppPathElementType type;
 };
 
 sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
@@ -33,6 +39,6 @@ sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
 sus::Vec<CppPathElement> generate_cpp_path_for_type(
     const TypeElement& element,
     const sus::Slice<const NamespaceElement*>& namespace_ancestors,
-    const sus::Slice<const TypeElement*>& type_ancestors) noexcept;
+    const sus::Slice<const RecordElement*>& type_ancestors) noexcept;
 
 }  // namespace subdoc::gen
