@@ -55,9 +55,7 @@ namespace __private {
 class RecordIter final
     : public sus::iter::IteratorBase<RecordIter, std::string_view> {
  public:
-  static RecordIter with(clang::RecordDecl* decl) noexcept {
-    return RecordIter(decl);
-  }
+  explicit RecordIter(clang::RecordDecl* decl) noexcept : next_decl_(decl) {}
 
   sus::Option<std::string_view> next() noexcept {
     if (next_decl_) {
@@ -78,9 +76,6 @@ class RecordIter final
     return sus::iter::SizeHint(0u, sus::none());
   }
 
- protected:
-  RecordIter(clang::RecordDecl* decl) noexcept : next_decl_(decl) {}
-
  private:
   clang::RecordDecl* next_decl_;
 
@@ -96,8 +91,9 @@ static_assert(::sus::iter::Iterator<RecordIter, std::string_view>);
 ///
 /// The iterator returns std::string_view references to string in the clang
 /// AST, which are valid as long as the RecordDecl's pointee is valid.
-inline auto iter_record_path(clang::RecordDecl* decl) {
-  return __private::RecordIter::with(decl);
+inline sus::iter::Iterator<std::string_view> auto iter_record_path(
+    clang::RecordDecl* decl) {
+  return __private::RecordIter(decl);
 }
 
 namespace __private {
@@ -105,9 +101,8 @@ namespace __private {
 class NamespaceIter final
     : public sus::iter::IteratorBase<NamespaceIter, Namespace> {
  public:
-  static NamespaceIter with(clang::Decl* decl) noexcept {
-    return NamespaceIter(decl);
-  }
+  explicit NamespaceIter(clang::Decl* decl) noexcept
+      : next_ndecl_(find_nearest_namespace(decl)) {}
 
   sus::Option<Namespace> next() noexcept {
     if (next_ndecl_) {
@@ -131,10 +126,6 @@ class NamespaceIter final
     return sus::iter::SizeHint(0u, sus::none());
   }
 
- protected:
-  NamespaceIter(clang::Decl* decl) noexcept
-      : next_ndecl_(find_nearest_namespace(decl)) {}
-
  private:
   bool done_ = false;
   clang::NamespaceDecl* next_ndecl_;
@@ -149,8 +140,9 @@ static_assert(::sus::iter::Iterator<NamespaceIter, Namespace>);
 
 /// Returns an iterator over the namespace that `decl` is in, ordered from the
 /// nearest inner namespace out to the global namespace.
-inline auto iter_namespace_path(clang::Decl* decl) {
-  return __private::NamespaceIter::with(decl);
+inline sus::iter::Iterator<Namespace> auto iter_namespace_path(
+    clang::Decl* decl) {
+  return __private::NamespaceIter(decl);
 }
 
 inline bool path_contains_namespace(clang::Decl* decl, Namespace n) noexcept {
