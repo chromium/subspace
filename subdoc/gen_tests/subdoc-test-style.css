@@ -46,6 +46,9 @@ pre {
     padding: 1em;
 }
 
+.type .overview .namespace-name {
+    color: rgb(130, 221, 135);
+}
 .type .overview .section-header .type-name {
     color: rgb(166, 240, 176);
 }
@@ -84,9 +87,6 @@ pre {
     color: rgb(191, 142, 236);
 }
 
-.namespace .overview .namespace-name {
-    color: rgb(130, 221, 135);
-}
 .namespace .overview .namespace-name {
     color: rgb(130, 221, 135);
 }
