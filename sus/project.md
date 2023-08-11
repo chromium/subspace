@@ -6,4 +6,3 @@ stable applications quickly, and to make your application performant through
 explicitly leveraging compiler optimizations without tripping over Undefined
 Behaviour. Stop spending time debugging tricky heisenbugs and start relying
 on the compiler to produce the program you wrote.
-Root namespace for the Subspace C++ library.
