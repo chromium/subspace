@@ -231,6 +231,8 @@ struct [[sus_trivial_abi]] uptr final {
 
 /// Adds a `usize` to a pointer, returning the resulting pointer.
 ///
+/// Satisfies the `sus::num::Add<T*, usize>` concept.
+///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
 sus_pure_const constexpr inline T* operator+(T* t, usize offset) {
@@ -238,6 +240,8 @@ sus_pure_const constexpr inline T* operator+(T* t, usize offset) {
 }
 
 /// Adds a `usize` to a referenced pointer, and returns the input reference.
+///
+/// Satisfies the `sus::num::AddAssign<T*, usize>` concept.
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
@@ -248,6 +252,8 @@ constexpr inline T*& operator+=(T*& t, usize offset) {
 
 /// Subtracts a `usize` from a pointer, returning the resulting pointer.
 ///
+/// Satisfies the `sus::num::Sub<T*, usize>` concept.
+///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>
 sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
@@ -256,6 +262,8 @@ sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
 
 /// Subtracts a `usize` from a referenced pointer, and returns the input
 /// reference.
+///
+/// Satisfies the `sus::num::SubAssign<T*, usize>` concept.
 ///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>

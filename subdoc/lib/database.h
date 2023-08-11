@@ -312,6 +312,26 @@ struct RecordElement : public TypeElement {
     return out;
   }
 
+  sus::Option<const CommentElement&> find_ctor_comment(
+      std::string_view comment_loc) const noexcept {
+    sus::Option<const CommentElement&> out;
+    for (const auto& [u, e] : ctors) {
+      out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    return out;
+  }
+
+  sus::Option<const CommentElement&> find_dtor_comment(
+      std::string_view comment_loc) const noexcept {
+    sus::Option<const CommentElement&> out;
+    for (const auto& [u, e] : dtors) {
+      out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    return out;
+  }
+
   sus::Option<const CommentElement&> find_method_comment(
       std::string_view comment_loc) const noexcept {
     sus::Option<const CommentElement&> out;
@@ -414,6 +434,26 @@ struct NamespaceElement : public CommentElement {
     }
     for (const auto& [u, e] : functions) {
       out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    return out;
+  }
+
+  sus::Option<const CommentElement&> find_ctor_comment(
+      std::string_view comment_loc) const noexcept {
+    sus::Option<const CommentElement&> out;
+    for (const auto& [u, e] : records) {
+      out = e.find_ctor_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    return out;
+  }
+
+  sus::Option<const CommentElement&> find_dtor_comment(
+      std::string_view comment_loc) const noexcept {
+    sus::Option<const CommentElement&> out;
+    for (const auto& [u, e] : records) {
+      out = e.find_dtor_comment(comment_loc);
       if (out.is_some()) return out;
     }
     return out;
@@ -795,6 +835,24 @@ struct Database {
   }
   sus::Option<const CommentElement&> find_function_comment(
       std::string_view comment_loc) && = delete;
+
+  /// Finds a comment whose location ends with the `comment_loc` suffix.
+  ///
+  /// The suffix can be used to look for the line:column and ignore the
+  /// filename in the comment location format `filename:line:col`.
+  sus::Option<const CommentElement&> find_ctor_comment(
+      std::string_view comment_loc) const noexcept {
+    return global.find_ctor_comment(comment_loc);
+  }
+
+  /// Finds a comment whose location ends with the `comment_loc` suffix.
+  ///
+  /// The suffix can be used to look for the line:column and ignore the
+  /// filename in the comment location format `filename:line:col`.
+  sus::Option<const CommentElement&> find_dtor_comment(
+      std::string_view comment_loc) const noexcept {
+    return global.find_dtor_comment(comment_loc);
+  }
 
   /// Finds a comment whose location ends with the `comment_loc` suffix.
   ///
