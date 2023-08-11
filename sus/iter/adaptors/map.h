@@ -59,7 +59,9 @@ class [[nodiscard]] Map final
   }
 
   /// sus::iter::Iterator trait.
-  constexpr SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
+  constexpr SizeHint size_hint() const noexcept {
+    return next_iter_.size_hint();
+  }
 
   // sus::iter::DoubleEndedIterator trait.
   constexpr Option<Item> next_back() noexcept
@@ -85,11 +87,7 @@ class [[nodiscard]] Map final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Map with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
-    return Map(::sus::move(fn), ::sus::move(next_iter));
-  }
-
-  constexpr Map(MapFn fn, InnerSizedIter&& next_iter)
+  explicit constexpr Map(MapFn fn, InnerSizedIter&& next_iter)
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   MapFn fn_;

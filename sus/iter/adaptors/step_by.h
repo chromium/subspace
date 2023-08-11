@@ -42,7 +42,7 @@ class [[nodiscard]] StepBy final
   constexpr StepBy clone() const noexcept
     requires(::sus::mem::Clone<InnerSizedIter>)
   {
-    return StepBy(step_, ::sus::clone(next_iter_), first_take_);
+    return StepBy(CLONE, step_, ::sus::clone(next_iter_), first_take_);
   }
 
   // sus::iter::Iterator trait.
@@ -118,15 +118,17 @@ class [[nodiscard]] StepBy final
       return rem;
   }
 
-  static constexpr StepBy with(usize step,
-                               InnerSizedIter&& next_iter) noexcept {
-    // We subtract one from `step`, as stepping 1 means we skip 0 elements
-    // between each.
-    return StepBy(step - 1u, ::sus::move(next_iter), true);
-  }
-
-  constexpr StepBy(usize step, InnerSizedIter&& next_iter,
-                   bool first_take) noexcept
+  // Regular ctor.
+  explicit constexpr StepBy(usize step, InnerSizedIter&& next_iter) noexcept
+      :  // We subtract one from `step`, as stepping 1 means we skip 0 elements
+         // between each.
+        step_(step - 1u),
+        next_iter_(::sus::move(next_iter)),
+        first_take_(true) {}
+  // Clone ctor.
+  enum Clone { CLONE };
+  explicit constexpr StepBy(Clone, usize step, InnerSizedIter&& next_iter,
+                            bool first_take) noexcept
       : step_(step),
         next_iter_(::sus::move(next_iter)),
         first_take_(first_take) {}

@@ -82,11 +82,7 @@ class [[nodiscard]] Skip final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Skip with(usize n, InnerSizedIter&& next_iter) noexcept {
-    return Skip(n, ::sus::move(next_iter));
-  }
-
-  constexpr Skip(usize n, InnerSizedIter&& next_iter) noexcept
+  explicit constexpr Skip(usize n, InnerSizedIter&& next_iter) noexcept
       : skip_(n), next_iter_(::sus::move(next_iter)) {}
 
   usize skip_;

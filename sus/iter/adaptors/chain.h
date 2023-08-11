@@ -49,6 +49,18 @@ class [[nodiscard]] Chain final
  public:
   using Item = typename InnerSizedIter::Item;
 
+  // Type is Move and (can be) Clone.
+  Chain(Chain&&) = default;
+  Chain& operator=(Chain&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr Chain clone() const noexcept
+    requires(::sus::mem::Clone<InnerSizedIter> &&  //
+             ::sus::mem::Clone<OtherSizedIter>)
+  {
+    return Chain(::sus::clone(first_iter_), ::sus::clone(second_iter_));
+  }
+
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
     return __private::and_then_or_clear<InnerSizedIter, Item>(
@@ -107,12 +119,8 @@ class [[nodiscard]] Chain final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Chain with(InnerSizedIter&& first_iter,
-                    OtherSizedIter&& second_iter) noexcept {
-    return Chain(::sus::move(first_iter), ::sus::move(second_iter));
-  }
-
-  constexpr Chain(InnerSizedIter&& first_iter, OtherSizedIter&& second_iter)
+  explicit constexpr Chain(InnerSizedIter&& first_iter,
+                           OtherSizedIter&& second_iter)
       : first_iter_(
             ::sus::Option<InnerSizedIter>::with(::sus::move(first_iter))),
         second_iter_(

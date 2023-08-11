@@ -40,9 +40,14 @@ class [[nodiscard]] FilterMap final
  public:
   using Item = ToItem;
 
+  // Type is Move and (can be) Clone.
+  FilterMap(FilterMap&&) = default;
+  FilterMap& operator=(FilterMap&&) = default;
+
   // sus::mem::Clone trait.
   constexpr FilterMap clone() const noexcept
-    requires(::sus::mem::Clone<InnerSizedIter>)
+    requires(::sus::mem::Clone<FilterMapFn> &&  //
+             ::sus::mem::Clone<InnerSizedIter>)
   {
     return FilterMap(sus::clone(fn_), sus::clone(next_iter_));
   }
@@ -81,12 +86,8 @@ class [[nodiscard]] FilterMap final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr FilterMap with(FilterMapFn&& fn,
-                                  InnerSizedIter&& next_iter) noexcept {
-    return FilterMap(::sus::move(fn), ::sus::move(next_iter));
-  }
-
-  constexpr FilterMap(FilterMapFn&& fn, InnerSizedIter&& next_iter) noexcept
+  explicit constexpr FilterMap(FilterMapFn&& fn,
+                               InnerSizedIter&& next_iter) noexcept
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   FilterMapFn fn_;

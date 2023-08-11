@@ -136,19 +136,19 @@ class IteratorBase {
   ///
   /// There is no guarantee whatsoever about the clone method actually being
   /// called or optimized away. So code should not depend on either.
-  Iterator<std::remove_cvref_t<Item>> auto cloned() && noexcept
+  constexpr Iterator<std::remove_cvref_t<Item>> auto cloned() && noexcept
     requires(::sus::mem::Clone<Item>);
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
-  /// the elements of this `Iterator` with those of another.
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// compares the elements of this `Iterator` with those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::Ord<ItemT, OtherItem>)
   constexpr std::weak_ordering cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
-  /// the elements of this `Iterator` with those of another with respect to the
-  /// specified comparison function.
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// compares the elements of this `Iterator` with those of another with
+  /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
   constexpr std::weak_ordering cmp_by(
@@ -161,7 +161,7 @@ class IteratorBase {
   ///
   /// This is useful when you have an iterator over &T, but you need an iterator
   /// over T.
-  Iterator<std::remove_cvref_t<Item>> auto copied() && noexcept
+  constexpr Iterator<std::remove_cvref_t<Item>> auto copied() && noexcept
     requires(::sus::mem::Copy<Item>);
 
   /// Consumes the iterator, and returns the number of elements that were in
@@ -388,16 +388,16 @@ class IteratorBase {
   Iterator<GenR> auto generate(GenFn generator_fn) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) greater than
-  /// or equal to those of another.
+  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// greater than or equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   constexpr bool ge(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) greater than
-  /// those of another.
+  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// greater than those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
@@ -436,16 +436,16 @@ class IteratorBase {
           const std::remove_reference_t<Item>&)> auto compare) noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) less than or
-  /// equal to those of another.
+  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// less than or equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   constexpr bool le(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) less than
-  /// those of another.
+  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// less than those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
@@ -610,8 +610,8 @@ class IteratorBase {
   constexpr Option<Item> nth_back(usize n) noexcept
     requires(DoubleEndedIterator<Iter, Item>);
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
-  /// the elements of this `Iterator` with those of another.
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// compares the elements of this `Iterator` with those of another.
   ///
   /// The comparison works like short-circuit evaluation, returning a result
   /// without comparing the remaining elements. As soon as an order can be
@@ -624,9 +624,9 @@ class IteratorBase {
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   constexpr std::partial_ordering partial_cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
-  /// the elements of this `Iterator` with those of another with respect to the
-  /// specified comparison function.
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// compares the elements of this `Iterator` with those of another with
+  /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
   constexpr std::partial_ordering partial_cmp_by(
@@ -885,8 +885,8 @@ class IteratorBase {
   /// of 1 returns every element.
   constexpr Iterator<Item> auto step_by(usize step) && noexcept;
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
-  /// the elements of this `Iterator` with those of another.
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// compares the elements of this `Iterator` with those of another.
   ///
   /// Strong ordering requires each item being compared that compares equal to
   /// share the same identity (be replaceable). Typically `Ord` is
@@ -901,9 +901,9 @@ class IteratorBase {
     requires(::sus::ops::StrongOrd<ItemT, OtherItem>)
   constexpr std::strong_ordering strong_cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?) compares
-  /// the elements of this `Iterator` with those of another with respect to the
-  /// specified comparison function.
+  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// compares the elements of this `Iterator` with those of another with
+  /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
   constexpr std::strong_ordering strong_cmp_by(
@@ -1157,7 +1157,7 @@ constexpr bool IteratorBase<Iter, Item>::any(
 
 template <class Iter, class Item>
 constexpr Iterator<Item> auto IteratorBase<Iter, Item>::by_ref() & noexcept {
-  return ByRef<Iter>::with(as_subclass_mut());
+  return ByRef<Iter>(as_subclass_mut());
 }
 
 template <class Iter, class Item>
@@ -1165,23 +1165,23 @@ template <IntoIterator<Item> Other>
 constexpr Iterator<Item> auto IteratorBase<Iter, Item>::chain(
     Other&& other) && noexcept {
   using Chain = Chain<Iter, IntoIteratorOutputType<Other>>;
-  return Chain::with(static_cast<Iter&&>(*this),
-                     ::sus::move(other).into_iter());
+  return Chain(static_cast<Iter&&>(*this), ::sus::move(other).into_iter());
 }
 
 template <class Iter, class Item>
-Iterator<std::remove_cvref_t<Item>> auto
+constexpr Iterator<std::remove_cvref_t<Item>> auto
 IteratorBase<Iter, Item>::cloned() && noexcept
   requires(::sus::mem::Clone<Item>)
 {
   using Cloned = Cloned<Iter>;
-  return Cloned::with(static_cast<Iter&&>(*this));
+  return Cloned(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
 template <IntoIteratorAny Other, int&..., class OtherItem>
   requires(::sus::ops::Ord<Item, OtherItem>)
-constexpr std::weak_ordering IteratorBase<Iter, Item>::cmp(Other&& other) && noexcept {
+constexpr std::weak_ordering IteratorBase<Iter, Item>::cmp(
+    Other&& other) && noexcept {
   return static_cast<Iter&&>(*this).cmp_by(
       ::sus::move(other),
       [](const std::remove_reference_t<Item>& x,
@@ -1201,12 +1201,12 @@ constexpr std::weak_ordering IteratorBase<Iter, Item>::cmp_by(
 }
 
 template <class Iter, class Item>
-Iterator<std::remove_cvref_t<Item>> auto
-IteratorBase<Iter, Item>::copied() && noexcept
+Iterator<std::remove_cvref_t<Item>> auto constexpr IteratorBase<
+    Iter, Item>::copied() && noexcept
   requires(::sus::mem::Copy<Item>)
 {
   using Copied = Copied<Iter>;
-  return Copied::with(static_cast<Iter&&>(*this));
+  return Copied(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1221,13 +1221,13 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::cycle() && noexcept
   requires(::sus::mem::Clone<Iter>)
 {
   using Cycle = Cycle<Iter>;
-  return Cycle::with(static_cast<Iter&&>(*this));
+  return Cycle(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
 constexpr auto IteratorBase<Iter, Item>::enumerate() && noexcept {
   using Enumerate = Enumerate<Iter>;
-  return Enumerate::with(static_cast<Iter&&>(*this));
+  return Enumerate(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1257,7 +1257,7 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::filter(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)> auto
         pred) && noexcept {
   using Filter = Filter<Iter, decltype(pred)>;
-  return Filter::with(::sus::move(pred), static_cast<Iter&&>(*this));
+  return Filter(::sus::move(pred), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1267,7 +1267,7 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(Item&&)> MapFn, int&..., class R,
 constexpr Iterator<InnerR> auto IteratorBase<Iter, Item>::filter_map(
     MapFn f) && noexcept {
   using FilterMap = FilterMap<InnerR, Iter, decltype(f)>;
-  return FilterMap::with(::sus::move(f), static_cast<Iter&&>(*this));
+  return FilterMap(::sus::move(f), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1298,8 +1298,8 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(Item&&)> F, int&..., class R,
   requires(IntoIteratorAny<R>)
 constexpr Iterator<InnerR> auto IteratorBase<Iter, Item>::flat_map(
     F fn) && noexcept {
-  using Flatten = FlatMap<R, Iter, F>;
-  return Flatten::with(::sus::move(fn), static_cast<Iter&&>(*this));
+  using FlatMap = FlatMap<R, Iter, F>;
+  return FlatMap(::sus::move(fn), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1307,7 +1307,7 @@ constexpr auto IteratorBase<Iter, Item>::flatten() && noexcept
   requires(IntoIteratorAny<Item>)
 {
   using Flatten = Flatten<IntoIteratorOutputType<Item>, Iter>;
-  return Flatten::with(static_cast<Iter&&>(*this));
+  return Flatten(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1349,7 +1349,7 @@ constexpr void IteratorBase<Iter, Item>::for_each(F f) && noexcept {
 
 template <class Iter, class Item>
 constexpr Iterator<Item> auto IteratorBase<Iter, Item>::fuse() && noexcept {
-  return Fuse<Iter>::with(static_cast<Iter&&>(*this));
+  return Fuse<Iter>(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1381,7 +1381,7 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::inspect(
     ::sus::fn::FnMut<void(const std::remove_reference_t<Item>&)> auto
         fn) && noexcept {
   using Inspect = Inspect<Iter, decltype(fn)>;
-  return Inspect::with(::sus::move(fn), static_cast<Iter&&>(*this));
+  return Inspect(::sus::move(fn), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1447,7 +1447,7 @@ template <class Iter, class Item>
 template <::sus::fn::FnMut<::sus::fn::NonVoid(Item&&)> MapFn, int&..., class R>
 constexpr Iterator<R> auto IteratorBase<Iter, Item>::map(MapFn fn) && noexcept {
   using Map = Map<R, Iter, MapFn>;
-  return Map::with(sus::move(fn), static_cast<Iter&&>(*this));
+  return Map(sus::move(fn), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1457,7 +1457,7 @@ template <::sus::fn::FnMut<::sus::fn::NonVoid(Item&&)> MapFn, int&..., class R,
 constexpr Iterator<InnerR> auto IteratorBase<Iter, Item>::map_while(
     MapFn fn) && noexcept {
   using MapWhile = MapWhile<InnerR, Iter, MapFn>;
-  return MapWhile::with(sus::move(fn), static_cast<Iter&&>(*this));
+  return MapWhile(sus::move(fn), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1656,7 +1656,7 @@ constexpr sus::Tuple<B, B> IteratorBase<Iter, Item>::partition(
 template <class Iter, class Item>
 constexpr Iterator<Item> auto IteratorBase<Iter, Item>::peekable() && noexcept {
   using Peekable = Peekable<Iter>;
-  return Peekable::with(static_cast<Iter&&>(*this));
+  return Peekable(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1704,7 +1704,7 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::rev() && noexcept
   requires(DoubleEndedIterator<Iter, Item>)
 {
   using Reverse = Reverse<Iter>;
-  return Reverse::with(static_cast<Iter&&>(*this));
+  return Reverse(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1762,15 +1762,15 @@ template <class State, ::sus::fn::FnMut<::sus::fn::NonVoid(State&, Item&&)> F,
 constexpr Iterator<InnerR> auto IteratorBase<Iter, Item>::scan(
     State initial_state, F f) && noexcept {
   using Scan = Scan<InnerR, State, Iter, F>;
-  return Scan::with(::sus::move(initial_state), ::sus::move(f),
-                    static_cast<Iter&&>(*this));
+  return Scan(::sus::move(initial_state), ::sus::move(f),
+              static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
 constexpr Iterator<Item> auto IteratorBase<Iter, Item>::skip(
     usize n) && noexcept {
   using Skip = Skip<Iter>;
-  return Skip::with(n, static_cast<Iter&&>(*this));
+  return Skip(n, static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1778,14 +1778,14 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::skip_while(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)> auto
         pred) && noexcept {
   using SkipWhile = SkipWhile<Iter, decltype(pred)>;
-  return SkipWhile::with(::sus::move(pred), static_cast<Iter&&>(*this));
+  return SkipWhile(::sus::move(pred), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
 constexpr Iterator<Item> auto IteratorBase<Iter, Item>::step_by(
     usize step) && noexcept {
   using StepBy = StepBy<Iter>;
-  return StepBy::with(step, static_cast<Iter&&>(*this));
+  return StepBy(step, static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1822,7 +1822,7 @@ template <class Iter, class Item>
 constexpr Iterator<Item> auto IteratorBase<Iter, Item>::take(
     usize n) && noexcept {
   using Take = Take<Iter>;
-  return Take::with(n, static_cast<Iter&&>(*this));
+  return Take(n, static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1830,7 +1830,7 @@ constexpr Iterator<Item> auto IteratorBase<Iter, Item>::take_while(
     ::sus::fn::FnMut<bool(const std::remove_reference_t<Item>&)> auto
         pred) && noexcept {
   using TakeWhile = TakeWhile<Iter, decltype(pred)>;
-  return TakeWhile::with(::sus::move(pred), static_cast<Iter&&>(*this));
+  return TakeWhile(::sus::move(pred), static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>
@@ -1908,7 +1908,7 @@ template <IntoIteratorAny Other, int&..., class OtherItem>
 constexpr Iterator<sus::Tuple<Item, OtherItem>> auto
 IteratorBase<Iter, Item>::zip(Other&& other) && noexcept {
   using Zip = Zip<Iter, IntoIteratorOutputType<Other>>;
-  return Zip::with(
+  return Zip(
       sus::tuple(static_cast<Iter&&>(*this), sus::move(other).into_iter()));
 }
 

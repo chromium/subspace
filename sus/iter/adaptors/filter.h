@@ -38,6 +38,18 @@ class [[nodiscard]] Filter final
   static_assert(
       ::sus::fn::FnMut<Pred, bool(const std::remove_reference_t<Item>&)>);
 
+  // Type is Move and (can be) Clone.
+  Filter(Filter&&) = default;
+  Filter& operator=(Filter&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr Filter clone() const noexcept
+    requires(::sus::mem::Clone<Pred> &&  //
+             ::sus::mem::Clone<InnerSizedIter>)
+  {
+    return Filter(sus::clone(pred_), sus::clone(next_iter_));
+  }
+
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
     while (true) {
@@ -68,12 +80,7 @@ class [[nodiscard]] Filter final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Filter with(Pred&& pred,
-                               InnerSizedIter&& next_iter) noexcept {
-    return Filter(::sus::move(pred), ::sus::move(next_iter));
-  }
-
-  constexpr Filter(Pred&& pred, InnerSizedIter&& next_iter) noexcept
+  explicit constexpr Filter(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(::sus::move(pred)), next_iter_(::sus::move(next_iter)) {}
 
   Pred pred_;

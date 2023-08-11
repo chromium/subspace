@@ -43,7 +43,8 @@ class [[nodiscard]] Inspect final
 
   // sus::mem::Clone trait.
   constexpr Inspect clone() noexcept
-    requires(::sus::mem::Clone<InnerSizedIter>)
+    requires(::sus::mem::Clone<InspectFn> &&  //
+             ::sus::mem::Clone<InnerSizedIter>)
   {
     return Inspect(::sus::clone(inspect_), ::sus::clone(next_iter_));
   }
@@ -80,12 +81,7 @@ class [[nodiscard]] Inspect final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Inspect with(InspectFn fn,
-                                InnerSizedIter&& next_iter) noexcept {
-    return Inspect(::sus::move(fn), ::sus::move(next_iter));
-  }
-
-  constexpr Inspect(InspectFn&& fn, InnerSizedIter&& next_iter)
+  explicit constexpr Inspect(InspectFn&& fn, InnerSizedIter&& next_iter)
       : inspect_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   InspectFn inspect_;

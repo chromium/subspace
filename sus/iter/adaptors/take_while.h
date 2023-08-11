@@ -38,9 +38,14 @@ class [[nodiscard]] TakeWhile final
  public:
   using Item = InnerSizedIter::Item;
 
+  // Type is Move and (can be) Clone.
+  TakeWhile(TakeWhile&&) = default;
+  TakeWhile& operator=(TakeWhile&&) = default;
+
   // sus::mem::Clone trait.
   constexpr TakeWhile clone() const noexcept
-    requires(::sus::mem::Clone<InnerSizedIter>)
+    requires(::sus::mem::Clone<Pred> &&  //
+             ::sus::mem::Clone<InnerSizedIter>)
   {
     return TakeWhile(::sus::clone(pred_), ::sus::clone(next_iter_));
   }
@@ -72,12 +77,7 @@ class [[nodiscard]] TakeWhile final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr TakeWhile with(Pred&& pred,
-                                  InnerSizedIter&& next_iter) noexcept {
-    return TakeWhile(::sus::move(pred), ::sus::move(next_iter));
-  }
-
-  constexpr TakeWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
+  explicit constexpr TakeWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(::sus::some(::sus::move(pred))),
         next_iter_(::sus::move(next_iter)) {}
 

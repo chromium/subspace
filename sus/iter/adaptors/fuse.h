@@ -35,6 +35,17 @@ class [[nodiscard]] Fuse final
  public:
   using Item = InnerIter::Item;
 
+  // Type is Move and (can be) Clone.
+  Fuse(Fuse&&) = default;
+  Fuse& operator=(Fuse&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr Fuse clone() const noexcept
+    requires(::sus::mem::Clone<InnerIter>)
+  {
+    return Fuse(CLONE, ::sus::clone(iter_));
+  }
+
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
     Option<Item> o;
@@ -76,12 +87,13 @@ class [[nodiscard]] Fuse final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Fuse with(InnerIter&& iter) noexcept {
-    return Fuse(::sus::move(iter));
-  }
-
-  constexpr Fuse(InnerIter&& iter) noexcept
+  // Regular ctor.
+  explicit constexpr Fuse(InnerIter&& iter) noexcept
       : iter_(::sus::Option<InnerIter>::with(::sus::move(iter))) {}
+  // Clone ctor.
+  enum Clone { CLONE };
+  explicit constexpr Fuse(Clone, ::sus::Option<InnerIter>&& iter) noexcept
+      : iter_(::sus::move(iter)) {}
 
   ::sus::Option<InnerIter> iter_;
 
