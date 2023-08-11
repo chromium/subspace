@@ -22,7 +22,8 @@
 namespace subdoc::gen {
 
 struct Options {
-  // TODO: sus::Path type would be real nice.
+  std::string project_name = "PROJECT NAME";
+  // TODO: sus::PathBuf type would be real nice.
   std::filesystem::path output_root;
   sus::Vec<std::string> stylesheets;
   sus::Vec<std::string> copy_files;

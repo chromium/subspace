@@ -24,6 +24,7 @@
 #include "subdoc/lib/gen/generate_namespace.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
+#include "sus/assertions/unreachable.h"
 #include "sus/prelude.h"
 
 namespace subdoc::gen {
@@ -36,7 +37,8 @@ using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
 void generate_record_overview(
     HtmlWriter::OpenDiv& record_div, const RecordElement& element,
     const sus::Slice<const NamespaceElement*>& namespaces,
-    const sus::Slice<const RecordElement*>& type_ancestors) noexcept {
+    const sus::Slice<const RecordElement*>& type_ancestors,
+    const Options& options) noexcept {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -49,10 +51,10 @@ void generate_record_overview(
       record_type_span.write_text(
           friendly_record_type_name(element.record_type, true));
     }
-    for (auto [i, e] :
-         generate_cpp_path_for_type(element, namespaces, type_ancestors)
-             .into_iter()
-             .enumerate()) {
+    for (auto [i, e] : generate_cpp_path_for_type(element, namespaces,
+                                                  type_ancestors, options)
+                           .into_iter()
+                           .enumerate()) {
       if (e.link_href.empty()) {
         auto span = header_div.open_span();
         span.write_text(e.name);
@@ -63,10 +65,14 @@ void generate_record_overview(
           span.write_text("::");
         }
         auto ancestor_anchor = header_div.open_a();
-        if (e.type == CppPathNamespace)
-          ancestor_anchor.add_class("namespace-name");
-        else
-          ancestor_anchor.add_class("type-name");
+        ancestor_anchor.add_class([&e]() {
+          switch (e.type) {
+            case CppPathProject: return "project-name";
+            case CppPathNamespace: return "namespace-name";
+            case CppPathRecord: return "type-name";
+          }
+          sus::unreachable();
+        }());
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);
       }
@@ -245,7 +251,8 @@ void generate_record(const RecordElement& element,
   record_div.add_class("type");
   record_div.add_class("record");
   record_div.add_class(friendly_record_type_name(element.record_type, false));
-  generate_record_overview(record_div, element, namespaces, type_ancestors);
+  generate_record_overview(record_div, element, namespaces, type_ancestors,
+                           options);
 
   sus::Vec<SortedFieldByName> sorted_static_fields;
   sus::Vec<SortedFieldByName> sorted_fields;
