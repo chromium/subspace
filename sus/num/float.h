@@ -53,7 +53,7 @@ namespace sus::num {
 /// promote to larger types (`f32` to `f64`) `sus::try_into()` to try convert to
 /// smaller types (`f64` to `f32`).
 ///
-/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// Use `sus::mog<T>()` to do a lossy type coercion (like
 /// `static_cast<T>()`) between integer and floating point types, or C++
 /// primitive integers, floating point, or enums. When
 /// converting to a larger signed integer type, the value will be sign-extended.
@@ -80,7 +80,7 @@ struct [[sus_trivial_abi]] f32 final {
 /// promote to larger types (`f32` to `f64`) `sus::try_into()` to try convert to
 /// smaller types (`f64` to `f32`).
 ///
-/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// Use `sus::mog<T>()` to do a lossy type coercion (like
 /// `static_cast<T>()`) between integer and floating point types, or C++
 /// primitive integers, floating point, or enums. When
 /// converting to a larger signed integer type, the value will be sign-extended.

@@ -55,7 +55,7 @@ namespace sus::num {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// Use `sus::mog<T>()` to do a lossy type coercion (like
 /// `static_cast<T>()`) between integer and floating point types, or C++
 /// primitive integers, floating point, or enums. When converting to a larger
 /// signed integer type, the value will be sign-extended.
@@ -81,7 +81,7 @@ struct [[sus_trivial_abi]] u32 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// Use `sus::mog<T>()` to do a lossy type coercion (like
 /// `static_cast<T>()`) between integer and floating point types, or C++
 /// primitive integers, floating point, or enums. When converting to a larger
 /// signed integer type, the value will be sign-extended.
@@ -107,7 +107,7 @@ struct [[sus_trivial_abi]] u8 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// Use `sus::mog<T>()` to do a lossy type coercion (like
 /// `static_cast<T>()`) between integer and floating point types, or C++
 /// primitive integers, floating point, or enums. When converting to a larger
 /// signed integer type, the value will be sign-extended.
@@ -133,7 +133,7 @@ struct [[sus_trivial_abi]] u16 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// Use `sus::mog<T>()` to do a lossy type coercion (like
 /// `static_cast<T>()`) between integer and floating point types, or C++
 /// primitive integers, floating point, or enums. When converting to a larger
 /// signed integer type, the value will be sign-extended.
@@ -171,7 +171,7 @@ struct [[sus_trivial_abi]] u64 final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// Use `sus::mog<T>()` to do a lossy type coercion (like
 /// `static_cast<T>()`) between integer and floating point types, or C++
 /// primitive integers, floating point, or enums. When converting to a larger
 /// signed integer type, the value will be sign-extended.
@@ -214,7 +214,7 @@ struct [[sus_trivial_abi]] usize final {
 /// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
 /// where the value can not be represented in the target type.
 ///
-/// Use use `sus::mog<T>()` to do a lossy type coercion (like
+/// Use `sus::mog<T>()` to do a lossy type coercion (like
 /// `static_cast<T>()`) between integer and floating point types, or C++
 /// primitive integers, floating point, or enums. When converting to a larger
 /// signed integer type, the value will be sign-extended.
