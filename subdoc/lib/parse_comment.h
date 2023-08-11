@@ -169,7 +169,8 @@ parse_comment_markdown_to_html(sus::SliceMut<std::string> lines) noexcept {
 }
 
 inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
-    clang::ASTContext& ast_cx, const clang::RawComment& raw) noexcept {
+    clang::ASTContext& ast_cx, const clang::RawComment& raw,
+    std::string_view self_name) noexcept {
   auto& src_manager = ast_cx.getSourceManager();
   const llvm::StringRef text = raw.getRawText(src_manager);
   const llvm::StringRef eol = text.detectEOL();
@@ -199,21 +200,32 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
           raw.getFormattedLines(src_manager, ast_cx.getDiagnostics());
       auto parsed_lines = sus::Vec<std::string>::with_capacity(lines.size());
 
-      for (const auto& line : lines) {
+      for (const auto& line_ref : lines) {
+        auto line = std::string(line_ref.Text);
+
+        // Substitute @doc.self with the name of the type. This also gets
+        // applied inside subdoc attributes.
+        while (true) {
+          auto pos = line.find("@doc.self");
+          if (pos == std::string::npos) break;
+          // TODO: Use the name of the type!
+          line.replace(pos, strlen("@doc.self"), self_name);
+        }
+
         // TODO: Better and more robust parser and error messages.
-        if (line.Text.starts_with("#[doc.") &&
-            line.Text.rfind("]") != std::string::npos) {
-          llvm::StringRef v =
-              llvm::StringRef(line.Text).substr(6u, line.Text.rfind("]") - 6u);
+        if (line.starts_with("#[doc.") &&
+            line.rfind("]") != std::string::npos) {
+          std::string_view v =
+              std::string_view(line).substr(6u, line.rfind("]") - 6u);
           if (v.starts_with("overloads=")) {
-            llvm::StringRef name = v.substr(strlen("overloads="));
-            attrs.overload_set = sus::some(
-                std::hash<std::string_view>()(std::string_view(name.data())));
+            std::string_view name = v.substr(strlen("overloads="));
+            attrs.overload_set =
+                sus::some(std::hash<std::string_view>()(name.data()));
           } else if (v.starts_with("inherit=")) {
-            llvm::StringRef name = v.substr(strlen("inherit="));
+            std::string_view name = v.substr(strlen("inherit="));
             auto vec = sus::Vec<InheritPathElement>();
             while (name != "") {
-              auto [element, remainder] = name.split("::");
+              auto [element, remainder] = llvm::StringRef(name).split("::");
               name = remainder;
               // TODO: This syntax sucks, and it's expensive to look up later.
               // Should we just have a (globally-unique?
@@ -234,7 +246,7 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
                 std::ostringstream m;
                 m << "Invalid path element '" << std::string_view(element)
                   << "' in doc.inherit: ";
-                m << line.Text;
+                m << sus::move(line);
                 return sus::err(ParseCommentError{.message = m.str()});
               }
             }
@@ -242,29 +254,19 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
           } else {
             std::ostringstream m;
             m << "Unknown doc attribute " << std::string_view(v) << " in: ";
-            m << line.Text;
+            m << sus::move(line);
             return sus::err(ParseCommentError{.message = m.str()});
           }
-        } else if (line.Text.find("#[doc") != std::string::npos) {
+        } else if (line.find("#[doc") != std::string::npos) {
           std::ostringstream m;
           m << "Unused doc comment in: ";
-          m << line.Text;
+          m << sus::move(line);
           return sus::err(ParseCommentError{.message = m.str()});
         } else {
           // Drop the trailing ' +\' suffix.
-          auto subline = std::string(line.Text);
-          if (subline.ends_with("\\")) subline.pop_back();
-          while (subline.ends_with(" ")) subline.pop_back();
-
-          // Substitute ##T## with the name of the type.
-          while (true) {
-            auto pos = subline.find("@doc.self");
-            if (pos == std::string::npos) break;
-            // TODO: Use the name of the type!
-            subline.replace(pos, strlen("@doc.self"), "Name");
-          }
-
-          parsed_lines.push(sus::move(subline));
+          if (line.ends_with("\\")) line.pop_back();
+          while (line.ends_with(" ")) line.pop_back();
+          parsed_lines.push(sus::move(line));
         }
       }
 
@@ -294,8 +296,8 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
   }
 
   auto summary = summarize_html(html);
-  return sus::ok(ParsedComment(sus::move(attrs), sus::move(html),
-                               sus::move(summary)));
+  return sus::ok(
+      ParsedComment(sus::move(attrs), sus::move(html), sus::move(summary)));
 }
 
 }  // namespace subdoc

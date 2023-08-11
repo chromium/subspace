@@ -475,7 +475,7 @@ template <Signed S>
   return l.primitive_value <=> r.primitive_value;
 }
 
-/// sus::num::Neg trait. */
+/// sus::num::Neg<T> trait for signed integers. */
 sus_pure constexpr inline _self operator-() const& noexcept {
   /* TODO: Allow opting out of all overflow checks? */
   ::sus::check(primitive_value != MIN_PRIMITIVE);
@@ -487,8 +487,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
       __private::unchecked_not(__private::into_unsigned(primitive_value)));
 }
 
-/// sus::num::Add<@doc.self> trait.
-/// #[doc.overloads=self.+] */
+/// sus::num::Add<T> trait for signed integers.
+/// #[doc.overloads=signedint.+] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator+(
     const _self& l, const _self& r) noexcept {
   const auto out =
@@ -497,8 +497,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return out.value;
 }
-/// sus::num::Sub<@doc.self> trait.
-/// #[doc.overloads=self.-] */
+/// sus::num::Sub<T> trait for signed integers.
+/// #[doc.overloads=signedint.-] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
     const _self& l, const _self& r) noexcept {
   const auto out =
@@ -507,8 +507,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return out.value;
 }
-/// sus::num::Mul<@doc.self> trait.
-/// #[doc.overloads=self.*] */
+/// sus::num::Mul<T> trait for signed integers.
+/// #[doc.overloads=signedint.*] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
     const _self& l, const _self& r) noexcept {
   const auto out =
@@ -517,8 +517,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return out.value;
 }
-/// sus::num::Div<@doc.self> trait.
-/// #[doc.overloads=self./] */
+/// sus::num::Div<T> trait for signed integers.
+/// #[doc.overloads=signedint./] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
     const _self& l, const _self& r) noexcept {
   /* TODO: Allow opting out of all overflow checks? */
@@ -527,8 +527,8 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(l.primitive_value != MIN_PRIMITIVE || r.primitive_value != -1);
   return static_cast<_primitive>(l.primitive_value / r.primitive_value);
 }
-/// sus::num::Rem<@doc.self> trait.
-/// #[doc.overloads=self.%] */
+/// sus::num::Rem<T> trait for signed integers.
+/// #[doc.overloads=signedint.%] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator%(
     const _self& l, const _self& r) noexcept {
   /* TODO: Allow opting out of all overflow checks? */
@@ -538,26 +538,26 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   return static_cast<_primitive>(l.primitive_value % r.primitive_value);
 }
 
-/// sus::num::BitAnd<@doc.self> trait.
-/// #[doc.overloads=self.&] */
+/// sus::num::BitAnd<T> trait for signed integers.
+/// #[doc.overloads=signedint.&] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator&(
     const _self& l, const _self& r) noexcept {
   return static_cast<_primitive>(l.primitive_value & r.primitive_value);
 }
-/// sus::num::BitOr<@doc.self> trait.
-/// #[doc.overloads=self.|] */
+/// sus::num::BitOr<T> trait for signed integers.
+/// #[doc.overloads=signedint.|] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator|(
     const _self& l, const _self& r) noexcept {
   return static_cast<_primitive>(l.primitive_value | r.primitive_value);
 }
-/// sus::num::BitXor<@doc.self> trait.
-/// #[doc.overloads=self.^] */
+/// sus::num::BitXor<T> trait for signed integers.
+/// #[doc.overloads=signedint.^] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator^(
     const _self& l, const _self& r) noexcept {
   return static_cast<_primitive>(l.primitive_value ^ r.primitive_value);
 }
-/// sus::num::Shl trait.
-/// #[doc.overloads=self.<<] */
+/// sus::num::Shl<T> trait for signed integers.
+/// #[doc.overloads=signedint.<<] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator<<(
     const _self& l, const u32& r) noexcept {
   const auto out =
@@ -566,8 +566,9 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return out.value;
 }
-/// sus::num::Shr trait.
-/// #[doc.overloads=self.>>] */
+/// sus::num::Shr<T> trait for signed integers.
+///
+/// #[doc.overloads=signedint.>>] */
 [[nodiscard]] sus_pure friend constexpr inline _self operator>>(
     const _self& l, const u32& r) noexcept {
   const auto out =
@@ -577,7 +578,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   return out.value;
 }
 
-/// sus::num::AddAssign<@doc.self> trait. */
+/// sus::num::AddAssign<@doc.self> trait.
 constexpr inline void operator+=(_self r) & noexcept {
   const auto out =
       __private::add_with_overflow(primitive_value, r.primitive_value);
@@ -585,7 +586,7 @@ constexpr inline void operator+=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/// sus::num::SubAssign<@doc.self> trait. */
+/// sus::num::SubAssign<@doc.self> trait.
 constexpr inline void operator-=(_self r) & noexcept {
   const auto out =
       __private::sub_with_overflow(primitive_value, r.primitive_value);
@@ -593,7 +594,7 @@ constexpr inline void operator-=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/// sus::num::MulAssign<@doc.self> trait. */
+/// sus::num::MulAssign<@doc.self> trait.
 constexpr inline void operator*=(_self r) & noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, r.primitive_value);
@@ -601,7 +602,7 @@ constexpr inline void operator*=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/// sus::num::DivAssign<@doc.self> trait. */
+/// sus::num::DivAssign<@doc.self> trait.
 constexpr inline void operator/=(_self r) & noexcept {
   /* TODO: Allow opting out of all overflow checks? */
   ::sus::check(r.primitive_value != 0);
@@ -609,7 +610,7 @@ constexpr inline void operator/=(_self r) & noexcept {
   ::sus::check(primitive_value != MIN_PRIMITIVE || r.primitive_value != -1);
   primitive_value /= r.primitive_value;
 }
-/// sus::num::RemAssign<@doc.self> trait. */
+/// sus::num::RemAssign<@doc.self> trait.
 constexpr inline void operator%=(_self r) & noexcept {
   /* TODO: Allow opting out of all overflow checks? */
   ::sus::check(r.primitive_value != 0);
@@ -618,19 +619,19 @@ constexpr inline void operator%=(_self r) & noexcept {
   primitive_value %= r.primitive_value;
 }
 
-/// sus::num::BitAndAssign<@doc.self> trait. */
+/// sus::num::BitAndAssign<@doc.self> trait.
 constexpr inline void operator&=(_self r) & noexcept {
   primitive_value &= r.primitive_value;
 }
-/// sus::num::BitOrAssign<@doc.self> trait. */
+/// sus::num::BitOrAssign<@doc.self> trait.
 constexpr inline void operator|=(_self r) & noexcept {
   primitive_value |= r.primitive_value;
 }
-/// sus::num::BitXorAssign<@doc.self> trait. */
+/// sus::num::BitXorAssign<@doc.self> trait.
 constexpr inline void operator^=(_self r) & noexcept {
   primitive_value ^= r.primitive_value;
 }
-/// sus::num::ShlAssign trait. */
+/// sus::num::ShlAssign<@doc.self> trait.
 constexpr inline void operator<<=(const u32& r) & noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, r.primitive_value);
@@ -638,7 +639,7 @@ constexpr inline void operator<<=(const u32& r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
-/// sus::num::ShrAssign trait. */
+/// sus::num::ShrAssign<@doc.self> trait.
 constexpr inline void operator>>=(const u32& r) & noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, r.primitive_value);

@@ -129,3 +129,23 @@ TEST_F(SubDocTest, PrivateStruct) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());
 }
+
+TEST_F(SubDocTest, ReplaceDocSelf) {
+  auto result = run_code(R"(
+    /// Comment headline @doc.self 1.
+    struct S {
+      /// Comment headline @doc.self 2.
+      S() {}
+      /// Comment headline @doc.self 3.
+      ~S() {}
+      /// Comment headline @doc.self 4.
+      void m() {}
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_record_comment(db, "2:5", "<p>Comment headline S 1.</p>"));
+  EXPECT_TRUE(has_ctor_comment(db, "4:7", "<p>Comment headline S 2.</p>"));
+  EXPECT_TRUE(has_dtor_comment(db, "6:7", "<p>Comment headline S 3.</p>"));
+  EXPECT_TRUE(has_method_comment(db, "8:7", "<p>Comment headline S 4.</p>"));
+}

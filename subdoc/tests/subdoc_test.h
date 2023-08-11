@@ -71,6 +71,24 @@ class SubDocTest : public testing::Test {
                           comment_loc, comment_start);
   }
 
+  /// Returns if a ctor was found whose comment location ends with
+  /// `comment_loc` and whose comment begins with `comment_start`.
+  bool has_ctor_comment(const subdoc::Database& db,
+                          std::string_view comment_loc,
+                          std::string_view comment_start) const noexcept {
+    return verify_comment("method", db.find_ctor_comment(comment_loc),
+                          comment_loc, comment_start);
+  }
+
+  /// Returns if a ctor was found whose comment location ends with
+  /// `comment_loc` and whose comment begins with `comment_start`.
+  bool has_dtor_comment(const subdoc::Database& db,
+                          std::string_view comment_loc,
+                          std::string_view comment_start) const noexcept {
+    return verify_comment("method", db.find_dtor_comment(comment_loc),
+                          comment_loc, comment_start);
+  }
+
   /// Returns if a method was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_method_comment(const subdoc::Database& db,

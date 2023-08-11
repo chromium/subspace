@@ -61,8 +61,8 @@ static bool should_skip_decl(VisitCx& cx, clang::Decl* decl) {
     return true;
   }
   // TODO: Make this configurable on the command line.
-  if (path_contains_namespace(
-          ndecl, sus::choice<Namespace::Tag::Named>("test"))) {
+  if (path_contains_namespace(ndecl,
+                              sus::choice<Namespace::Tag::Named>("test"))) {
     return true;
   }
   if (path_is_private(ndecl)) {
@@ -93,7 +93,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    Comment comment = make_db_comment(decl, raw_comment);
+    Comment comment = make_db_comment(decl, raw_comment, "");
     auto ne =
         NamespaceElement(iter_namespace_path(decl).collect_vec(),
                          sus::move(comment), decl->getNameAsString(),
@@ -138,7 +138,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RecordDecl* parent_record_decl =
         clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext());
 
-    Comment comment = make_db_comment(decl, raw_comment);
+    Comment comment = make_db_comment(decl, raw_comment, decl->getName());
     auto re = RecordElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
         decl->getNameAsString(),
@@ -192,7 +192,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RecordDecl* record_decl =
         clang::cast<clang::RecordDecl>(decl->getDeclContext());
 
-    Comment comment = make_db_comment(decl, raw_comment);
+    Comment comment =
+        make_db_comment(decl, raw_comment, record_decl->getName());
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
         std::string(decl->getName()), decl->getType(),
@@ -221,7 +222,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    Comment comment = make_db_comment(decl, raw_comment);
+    Comment comment = make_db_comment(decl, raw_comment, "");
     auto* record_decl = clang::cast<clang::RecordDecl>(decl->getDeclContext());
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
@@ -270,108 +271,124 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    Comment comment = make_db_comment(decl, raw_comment);
+    // TODO: Save the linkage spec (`extern "C"`) so we can show it.
+    clang::DeclContext* context = decl->getDeclContext();
+    while (clang::isa<clang::LinkageSpecDecl>(context))
+      context = context->getParent();
 
-    auto params =
-        sus::Vec<FunctionParameter>::with_capacity(decl->parameters().size());
-    for (const clang::ParmVarDecl* v : decl->parameters()) {
-      params.emplace(docs_db_.find_type(v->getOriginalType()),
-                     sus::none(),  // TODO: `v->getDefaultArg()`
-                     friendly_type_name(v->getOriginalType()),
-                     friendly_short_type_name(v->getOriginalType()));
+    auto map_and_self_name = [&]()
+        -> sus::Option<sus::Tuple<
+            std::unordered_map<FunctionId, FunctionElement, FunctionId::Hash>&,
+            std::string_view>> {
+      if (clang::isa<clang::CXXConstructorDecl>(decl)) {
+        sus::check(clang::isa<clang::RecordDecl>(context));
+        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+                clang::cast<clang::RecordDecl>(context));
+            parent.is_some()) {
+          return sus::some(
+              sus::tuple(parent.as_value_mut().ctors, parent.as_value().name));
+        }
+      } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
+        sus::check(clang::isa<clang::RecordDecl>(context));
+        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+                clang::cast<clang::RecordDecl>(context));
+            parent.is_some()) {
+          return sus::some(
+              sus::tuple(parent.as_value_mut().dtors, parent.as_value().name));
+        }
+      } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
+        sus::check(clang::isa<clang::RecordDecl>(context));
+        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+                clang::cast<clang::RecordDecl>(context));
+            parent.is_some()) {
+          return sus::some(sus::tuple(parent.as_value_mut().conversions,
+                                      parent.as_value().name));
+        }
+      } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
+        sus::check(clang::isa<clang::RecordDecl>(context));
+        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+                clang::cast<clang::RecordDecl>(context));
+            parent.is_some()) {
+          return sus::some(sus::tuple(parent.as_value_mut().methods,
+                                      parent.as_value().name));
+        }
+      } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
+        sus::check(clang::isa<clang::NamespaceDecl>(context));
+        // TODO: How do we get from here to the class that the deduction guide
+        // is for reliably? getCorrespondingConstructor() would work if it's
+        // generated only. Will the DeclContext find it?
+        // return sus::some(parent->deductions);
+      } else {
+        if (sus::Option<NamespaceElement&> parent =
+                docs_db_.find_namespace_mut(find_nearest_namespace(decl));
+            parent.is_some()) {
+          return sus::some(sus::tuple(parent.as_value_mut().functions, ""));
+        }
+      }
+      return sus::none();
+    }();
+
+    if (map_and_self_name.is_some()) {
+      auto&& [map, self_name] = sus::move(map_and_self_name).unwrap();
+
+      Comment comment = make_db_comment(decl, raw_comment, self_name);
+
+      auto params =
+          sus::Vec<FunctionParameter>::with_capacity(decl->parameters().size());
+      for (const clang::ParmVarDecl* v : decl->parameters()) {
+        params.emplace(docs_db_.find_type(v->getOriginalType()),
+                       sus::none(),  // TODO: `v->getDefaultArg()`
+                       friendly_type_name(v->getOriginalType()),
+                       friendly_short_type_name(v->getOriginalType()));
+      }
+
+      auto fe = FunctionElement(
+          iter_namespace_path(decl).collect_vec(), sus::move(comment),
+          decl->getNameAsString(), decl->getReturnType(), sus::move(params),
+          decl->getASTContext().getSourceManager().getFileOffset(
+              decl->getLocation()));
+      fe.return_type_element = docs_db_.find_type(decl->getReturnType());
+
+      if (clang::isa<clang::CXXMethodDecl>(decl)) {
+        sus::check(clang::isa<clang::RecordDecl>(context));
+
+        // TODO: It's possible to overload a method in a base class. What should
+        // we show then?
+
+        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+                clang::cast<clang::RecordDecl>(context));
+            parent.is_some()) {
+          auto* mdecl = clang::cast<clang::CXXMethodDecl>(decl);
+          fe.overloads[0u].method = sus::some(MethodSpecific{
+              .is_static = mdecl->isStatic(),
+              .is_volatile = mdecl->isVolatile(),
+              .is_virtual = mdecl->isVirtual(),
+              .qualifier =
+                  [mdecl]() {
+                    switch (mdecl->getRefQualifier()) {
+                      case clang::RQ_None:
+                        if (mdecl->isConst())
+                          return MethodQualifier::Const;
+                        else
+                          return MethodQualifier::Mutable;
+                      case clang::RQ_LValue:
+                        if (mdecl->isConst())
+                          return MethodQualifier::ConstLValue;
+                        else
+                          return MethodQualifier::MutableLValue;
+                      case clang::RQ_RValue:
+                        if (mdecl->isConst())
+                          return MethodQualifier::ConstRValue;
+                        else
+                          return MethodQualifier::MutableRValue;
+                    }
+                    sus::unreachable();
+                  }(),
+          });
+        }
+      }
+      add_function_overload_to_db(decl, sus::move(fe), map);
     }
-
-    auto fe = FunctionElement(
-        iter_namespace_path(decl).collect_vec(), sus::move(comment),
-        decl->getNameAsString(), decl->getReturnType(), sus::move(params),
-        decl->getASTContext().getSourceManager().getFileOffset(
-            decl->getLocation()));
-    fe.return_type_element = docs_db_.find_type(decl->getReturnType());
-
-    // TODO: It's possible to overload a method in a base class. What should we
-    // show then?
-
-    if (clang::isa<clang::CXXConstructorDecl>(decl)) {
-      sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
-      if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-              clang::cast<clang::RecordDecl>(decl->getDeclContext()));
-          parent.is_some()) {
-        add_function_overload_to_db(decl, sus::move(fe), parent->ctors);
-      }
-    } else if (clang::isa<clang::CXXDestructorDecl>(decl)) {
-      sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
-      if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-              clang::cast<clang::RecordDecl>(decl->getDeclContext()));
-          parent.is_some()) {
-        add_function_overload_to_db(decl, sus::move(fe), parent->dtors);
-      }
-    } else if (clang::isa<clang::CXXConversionDecl>(decl)) {
-      sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
-      if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-              clang::cast<clang::RecordDecl>(decl->getDeclContext()));
-          parent.is_some()) {
-        add_function_overload_to_db(decl, sus::move(fe), parent->conversions);
-      }
-    } else if (clang::isa<clang::CXXMethodDecl>(decl)) {
-      sus::check(clang::isa<clang::RecordDecl>(decl->getDeclContext()));
-      if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-              clang::cast<clang::RecordDecl>(decl->getDeclContext()));
-          parent.is_some()) {
-        auto* mdecl = clang::cast<clang::CXXMethodDecl>(decl);
-        fe.overloads[0u].method = sus::some(MethodSpecific{
-            .is_static = mdecl->isStatic(),
-            .is_volatile = mdecl->isVolatile(),
-            .is_virtual = mdecl->isVirtual(),
-            .qualifier =
-                [mdecl]() {
-                  switch (mdecl->getRefQualifier()) {
-                    case clang::RQ_None:
-                      if (mdecl->isConst())
-                        return MethodQualifier::Const;
-                      else
-                        return MethodQualifier::Mutable;
-                    case clang::RQ_LValue:
-                      if (mdecl->isConst())
-                        return MethodQualifier::ConstLValue;
-                      else
-                        return MethodQualifier::MutableLValue;
-                    case clang::RQ_RValue:
-                      if (mdecl->isConst())
-                        return MethodQualifier::ConstRValue;
-                      else
-                        return MethodQualifier::MutableRValue;
-                  }
-                  sus::unreachable();
-                }(),
-        });
-        add_function_overload_to_db(decl, sus::move(fe), parent->methods);
-      }
-    } else if (clang::isa<clang::CXXDeductionGuideDecl>(decl)) {
-      clang::DeclContext* context = decl->getDeclContext();
-      // TODO: Save the linkage spec (`extern "C"`) so we can show it.
-      while (clang::isa<clang::LinkageSpecDecl>(context))
-        context = context->getParent();
-
-      // TODO: How do we get from here to the class that the deduction guide is
-      // for reliably? getCorrespondingConstructor() would work if it's
-      // generated only. Will the getDeclContext find it?
-      sus::check(clang::isa<clang::NamespaceDecl>(decl->getDeclContext()));
-      /* TODO:
-      if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-              clang::cast<clang::RecordDecl>(decl->getDeclContext()));
-          parent.is_some()) {
-        add_function_overload_to_db(decl,
-                                    sus::move(fe), parent->deductions);
-      }
-      */
-    } else {
-      if (sus::Option<NamespaceElement&> parent =
-              docs_db_.find_namespace_mut(find_nearest_namespace(decl));
-          parent.is_some()) {
-        add_function_overload_to_db(decl, sus::move(fe), parent->functions);
-      }
-    }
-
     return true;
   }
 
@@ -484,13 +501,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
   }
 
-  Comment make_db_comment(clang::Decl* decl,
-                          const clang::RawComment* raw) noexcept {
+  Comment make_db_comment(clang::Decl* decl, const clang::RawComment* raw,
+                          std::string_view self_name) noexcept {
     auto& ast_cx = decl->getASTContext();
     auto& src_manager = ast_cx.getSourceManager();
     if (raw) {
       sus::Result<ParsedComment, ParseCommentError> comment_result =
-          parse_comment(ast_cx, *raw);
+          parse_comment(ast_cx, *raw, self_name);
       if (comment_result.is_ok()) {
         auto&& [attrs, full_html, summary_html] =
             sus::move(comment_result).unwrap();
@@ -584,9 +601,9 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
     sus::check(entry != nullptr);
   }
 
-  // No FileEntry (and not a macro, since we've found the macro expansion above
-  // already) means a builtin, including a lot of `std::`, or maybe some other
-  // things. We don't want to chase builtins.
+  // No FileEntry (and not a macro, since we've found the macro expansion
+  // above already) means a builtin, including a lot of `std::`, or maybe some
+  // other things. We don't want to chase builtins.
   if (!entry) {
     return false;
   }
