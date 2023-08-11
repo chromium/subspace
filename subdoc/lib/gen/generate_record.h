@@ -22,7 +22,7 @@ namespace subdoc::gen {
 
 void generate_record(const RecordElement& element,
                      const sus::Slice<const NamespaceElement*>& namespaces,
-                     sus::Vec<const TypeElement*> type_ancestors,
+                     sus::Vec<const RecordElement*> type_ancestors,
                      const Options& options) noexcept;
 
 void generate_record_reference(HtmlWriter::OpenDiv& section_div,

@@ -36,7 +36,7 @@ using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
 void generate_record_overview(
     HtmlWriter::OpenDiv& record_div, const RecordElement& element,
     const sus::Slice<const NamespaceElement*>& namespaces,
-    const sus::Slice<const TypeElement*>& type_ancestors) noexcept {
+    const sus::Slice<const RecordElement*>& type_ancestors) noexcept {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -63,7 +63,10 @@ void generate_record_overview(
           span.write_text("::");
         }
         auto ancestor_anchor = header_div.open_a();
-        ancestor_anchor.add_class("type-name");
+        if (e.type == CppPathNamespace)
+          ancestor_anchor.add_class("namespace-name");
+        else
+          ancestor_anchor.add_class("type-name");
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);
       }
@@ -205,7 +208,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
 
 void generate_record(const RecordElement& element,
                      const sus::Slice<const NamespaceElement*>& namespaces,
-                     sus::Vec<const TypeElement*> type_ancestors,
+                     sus::Vec<const RecordElement*> type_ancestors,
                      const Options& options) noexcept {
   const std::filesystem::path path = construct_html_file_path(
       options.output_root, element.namespace_path.as_slice(),
