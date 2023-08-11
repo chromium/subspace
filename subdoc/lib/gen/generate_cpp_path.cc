@@ -24,7 +24,8 @@ namespace {
 sus::Vec<CppPathElement> generate_with_ancestors(
     std::string_view name, CppPathElementType self_type,
     const sus::Slice<const NamespaceElement*>& ancestors,
-    const sus::Slice<const RecordElement*>& type_ancestors) noexcept {
+    const sus::Slice<const RecordElement*>& type_ancestors,
+    const Options& options) noexcept {
   sus::Vec<CppPathElement> out;
   for (const NamespaceElement& ancestor : ancestors.iter().map(
            [](const NamespaceElement* e) -> const NamespaceElement& {
@@ -35,20 +36,25 @@ sus::Vec<CppPathElement> generate_with_ancestors(
             [&]() {
               switch (ancestor.namespace_name) {
                 case Namespace::Tag::Global:
-                  // TODO: Project name in options.
-                  return std::string("PROJECT NAME");
+                  return sus::clone(options.project_name);
                 case Namespace::Tag::Anonymous:
                   return std::string("(anonymous)");
                 case Namespace::Tag::Named: return sus::clone(ancestor.name);
               }
-              // SAFETY: No default or fallthrough from the switch above
-              // so all cases return.
-              sus::unreachable_unchecked(unsafe_fn);
+              sus::unreachable();
             }(),
         .link_href = construct_html_file_path_for_namespace(
                          std::filesystem::path(), ancestor)
                          .string(),
-        .type = CppPathNamespace,
+        .type =
+            [&]() {
+              switch (ancestor.namespace_name) {
+                case Namespace::Tag::Global: return CppPathProject;
+                case Namespace::Tag::Anonymous: return CppPathNamespace;
+                case Namespace::Tag::Named: return CppPathNamespace;
+              }
+              sus::unreachable();
+            }(),
     });
   }
   for (const RecordElement& ancestor : type_ancestors.iter().map(
@@ -75,15 +81,15 @@ sus::Vec<CppPathElement> generate_with_ancestors(
 
 sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
     const NamespaceElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors) noexcept {
+    const sus::Slice<const NamespaceElement*>& ancestors,
+    const Options& options) noexcept {
   sus::Vec<CppPathElement> out;
   switch (element.namespace_name) {
     case Namespace::Tag::Global:
       out.push(CppPathElement{
-          // TODO: Project name in options.
-          .name = "PROJECT NAME: Subspace",
+          .name = sus::clone(options.project_name),
           .link_href = "#",
-          .type = CppPathNamespace,
+          .type = CppPathProject,
       });
       break;
     case Namespace::Tag::Anonymous:
@@ -94,9 +100,9 @@ sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
       });
       break;
     case Namespace::Tag::Named: {
-      out.extend(generate_with_ancestors(element.name, CppPathNamespace,
-                                         ancestors,
-                                         sus::Slice<const RecordElement*>()));
+      out.extend(
+          generate_with_ancestors(element.name, CppPathNamespace, ancestors,
+                                  sus::Slice<const RecordElement*>(), options));
       break;
     }
   }
@@ -106,9 +112,10 @@ sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
 sus::Vec<CppPathElement> generate_cpp_path_for_type(
     const TypeElement& element,
     const sus::Slice<const NamespaceElement*>& namespace_ancestors,
-    const sus::Slice<const RecordElement*>& type_ancestors) noexcept {
+    const sus::Slice<const RecordElement*>& type_ancestors,
+    const Options& options) noexcept {
   return generate_with_ancestors(element.name, CppPathRecord,
-                                 namespace_ancestors, type_ancestors);
+                                 namespace_ancestors, type_ancestors, options);
 }
 
 }  // namespace subdoc::gen

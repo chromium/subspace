@@ -29,6 +29,12 @@ int main(int argc, const char** argv) {
 
   llvm::cl::OptionCategory option_category("SubDoc options");
 
+  llvm::cl::opt<std::string> option_project_name(
+      "project-name",
+      llvm::cl::desc("The name of the project, which will appear in the "
+                     "generated output."),
+      llvm::cl::cat(option_category));
+
   llvm::cl::opt<std::string> option_out(
       "out",
       llvm::cl::desc("Where to generate the docs. Defaults to `./out/docs`"),
@@ -170,6 +176,9 @@ int main(int argc, const char** argv) {
   auto gen_options = subdoc::gen::Options{
       .output_root = std::filesystem::path(option_out.getValue()),
   };
+  if (option_project_name.getNumOccurrences() > 0) {
+    gen_options.project_name = option_project_name.getValue();
+  }
   if (option_css.empty() && option_copy_files.empty()) {
     // Defaults to pull the test stylesheet, assuming subdoc is being run from
     // the source root directory.

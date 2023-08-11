@@ -46,6 +46,9 @@ pre {
     padding: 1em;
 }
 
+.type .overview .project-name {
+    color: rgb(173, 48, 153);
+}
 .type .overview .namespace-name {
     color: rgb(130, 221, 135);
 }
@@ -87,6 +90,9 @@ pre {
     color: rgb(191, 142, 236);
 }
 
+.namespace .overview .project-name {
+    color: rgb(173, 48, 153);
+}
 .namespace .overview .namespace-name {
     color: rgb(130, 221, 135);
 }

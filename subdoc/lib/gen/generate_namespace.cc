@@ -22,7 +22,9 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_record.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "sus/assertions/unreachable.h"
 #include "sus/containers/slice.h"
+#include "sus/prelude.h"
 
 namespace subdoc::gen {
 
@@ -34,18 +36,20 @@ using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
 
 std::string namespace_display_name(
     const NamespaceElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors) noexcept {
+    const sus::Slice<const NamespaceElement*>& ancestors,
+    const Options& options) noexcept {
   std::ostringstream out;
 
   if (element.namespace_name == Namespace::Tag::Global) {
-    for (auto e :
-         generate_cpp_path_for_namespace(element, ancestors).into_iter())
+    for (auto e : generate_cpp_path_for_namespace(element, ancestors, options)
+                      .into_iter())
       out << e.name;
   } else {
     std::string project_name;
-    for (auto [i, e] : generate_cpp_path_for_namespace(element, ancestors)
-                           .into_iter()
-                           .enumerate()) {
+    for (auto [i, e] :
+         generate_cpp_path_for_namespace(element, ancestors, options)
+             .into_iter()
+             .enumerate()) {
       if (i == 0u)
         project_name = sus::move(e.name);
       else {
@@ -60,7 +64,8 @@ std::string namespace_display_name(
 
 void generate_namespace_overview(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors) {
+    const sus::Slice<const NamespaceElement*>& ancestors,
+    const Options& options) {
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -72,9 +77,10 @@ void generate_namespace_overview(
       auto span = header_div.open_span();
       span.write_text("Namespace");
     }
-    for (auto [i, e] : generate_cpp_path_for_namespace(element, ancestors)
-                           .into_iter()
-                           .enumerate()) {
+    auto it = generate_cpp_path_for_namespace(element, ancestors, options)
+                  .into_iter()
+                  .enumerate();
+    for (auto [i, e] : it) {
       if (e.link_href.empty()) {
         auto span = header_div.open_span();
         span.write_text(e.name);
@@ -85,7 +91,14 @@ void generate_namespace_overview(
           span.write_text("::");
         }
         auto ancestor_anchor = header_div.open_a();
-        ancestor_anchor.add_class("namespace-name");
+        ancestor_anchor.add_class([&e]() {
+          switch (e.type) {
+            case CppPathProject: return "project-name";
+            case CppPathNamespace: return "namespace-name";
+            case CppPathRecord: return "type-name";
+          }
+          sus::unreachable();
+        }());
         ancestor_anchor.add_href(e.link_href);
         ancestor_anchor.write_text(e.name);
       }
@@ -190,13 +203,14 @@ void generate_namespace(const NamespaceElement& element,
   std::filesystem::create_directories(path.parent_path());
 
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
-  generate_head(html, namespace_display_name(element, ancestors), options);
+  generate_head(html, namespace_display_name(element, ancestors, options),
+                options);
 
   auto body = html.open_body();
 
   auto namespace_div = body.open_div();
   namespace_div.add_class("namespace");
-  generate_namespace_overview(namespace_div, element, ancestors);
+  generate_namespace_overview(namespace_div, element, ancestors, options);
 
   {
     sus::Vec<SortedNamespaceByName> sorted;
