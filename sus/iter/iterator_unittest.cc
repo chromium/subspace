@@ -813,6 +813,9 @@ TEST(Iterator, Cloned) {
     EXPECT_EQ(it.next().is_some(), false);
     EXPECT_EQ(clone_called, 2u);
   }
+
+  static_assert(sus::Vec<usize>::with(1u, 2u).into_iter().cloned().sum() ==
+                1u + 2u);
 }
 
 TEST(Iterator, Copied) {
@@ -841,6 +844,9 @@ TEST(Iterator, Copied) {
     EXPECT_EQ(it.next().unwrap(), 2u);
     EXPECT_EQ(it.next(), sus::None);
   }
+
+  static_assert(sus::Vec<usize>::with(1u, 2u).into_iter().copied().sum() ==
+                1u + 2u);
 }
 
 TEST(Iterator, StrongCmp) {

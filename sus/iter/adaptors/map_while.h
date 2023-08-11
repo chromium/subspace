@@ -81,11 +81,7 @@ class [[nodiscard]] MapWhile final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr MapWhile with(MapFn fn, InnerSizedIter&& next_iter) noexcept {
-    return MapWhile(::sus::move(fn), ::sus::move(next_iter));
-  }
-
-  constexpr MapWhile(MapFn fn, InnerSizedIter&& next_iter)
+  explicit constexpr MapWhile(MapFn fn, InnerSizedIter&& next_iter)
       : fn_(::sus::move(fn)), next_iter_(::sus::move(next_iter)) {}
 
   MapFn fn_;

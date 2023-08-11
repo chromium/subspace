@@ -40,7 +40,7 @@ class [[nodiscard]] Cycle final
   Cycle& operator=(Cycle&&) = default;
 
   // sus::mem::Clone trait.
-  Cycle clone() const noexcept {
+  constexpr Cycle clone() const noexcept {
     return Cycle(::sus::clone(original_), ::sus::clone(active_));
   }
 
@@ -79,13 +79,8 @@ class [[nodiscard]] Cycle final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Cycle with(InnerSizedIter&& iter) noexcept {
-    return Cycle(::sus::clone(iter), ::sus::move(iter));
-  }
-
-  constexpr Cycle(InnerSizedIter&& __restrict original,
-                  InnerSizedIter&& __restrict active)
-      : original_(::sus::move(original)), active_(::sus::move(active)) {}
+  explicit constexpr Cycle(InnerSizedIter&& iter)
+      : original_(::sus::clone(iter)), active_(::sus::move(iter)) {}
 
   InnerSizedIter original_;
   InnerSizedIter active_;

@@ -35,6 +35,19 @@ class [[nodiscard]] Flatten final
  public:
   using Item = typename EachIter::Item;
 
+  // Type is Move and (can be) Clone.
+  Flatten(Flatten&&) = default;
+  Flatten& operator=(Flatten&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr Flatten clone() const noexcept
+    requires(::sus::mem::Clone<InnerSizedIter> &&  //
+             ::sus::mem::Clone<EachIter>)
+  {
+    return Flatten(CLONE, ::sus::clone(iters_), ::sus::clone(front_iter_),
+                   ::sus::clone(back_iter_));
+  }
+
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
     Option<Item> out;
@@ -110,11 +123,17 @@ class [[nodiscard]] Flatten final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Flatten with(InnerSizedIter&& iters) noexcept {
-    return Flatten(::sus::move(iters));
-  }
-
-  constexpr Flatten(InnerSizedIter&& iters) : iters_(::sus::move(iters)) {}
+  // Regular ctor.
+  explicit constexpr Flatten(InnerSizedIter&& iters)
+      : iters_(::sus::move(iters)) {}
+  // Clone ctor.
+  enum Clone { CLONE };
+  explicit constexpr Flatten(Clone, InnerSizedIter&& iters,
+                             ::sus::Option<EachIter>&& front,
+                             ::sus::Option<EachIter>&& back)
+      : iters_(::sus::move(iters)),
+        front_iter_(::sus::move(front)),
+        back_iter_(::sus::move(back)) {}
 
   InnerSizedIter iters_;
   ::sus::Option<EachIter> front_iter_;
@@ -123,7 +142,7 @@ class [[nodiscard]] Flatten final
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(iters_),
                                            decltype(front_iter_),
-                                           decltype(front_iter_));
+                                           decltype(back_iter_));
 };
 
 }  // namespace sus::iter

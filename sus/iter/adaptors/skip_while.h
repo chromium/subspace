@@ -76,12 +76,7 @@ class [[nodiscard]] SkipWhile final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr SkipWhile with(Pred&& pred,
-                                  InnerSizedIter&& next_iter) noexcept {
-    return SkipWhile(::sus::move(pred), ::sus::move(next_iter));
-  }
-
-  constexpr SkipWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
+  explicit constexpr SkipWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
       : pred_(Option<Pred>::with(::sus::move(pred))),
         next_iter_(::sus::move(next_iter)) {}
 

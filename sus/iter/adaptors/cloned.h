@@ -33,17 +33,30 @@ class [[nodiscard]] Cloned final
  public:
   using Item = std::remove_cvref_t<typename InnerSizedIter::Item>;
 
+  // Type is Move and (can be) Clone.
+  Cloned(Cloned&&) = default;
+  Cloned& operator=(Cloned&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr Cloned clone() const noexcept
+    requires(::sus::mem::Clone<InnerSizedIter>)
+  {
+    return Cloned(::sus::clone(next_iter_));
+  }
+
   // sus::iter::Iterator trait.
-  Option<Item> next() noexcept {
+  constexpr Option<Item> next() noexcept {
     return next_iter_.next().map(
         [](const Item& item) { return ::sus::clone(item); });
   }
 
   /// sus::iter::Iterator trait.
-  SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
+  constexpr SizeHint size_hint() const noexcept {
+    return next_iter_.size_hint();
+  }
 
   // sus::iter::DoubleEndedIterator trait.
-  Option<Item> next_back() noexcept
+  constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, Item>)
   {
     return next_iter_.next_back().map(
@@ -51,7 +64,7 @@ class [[nodiscard]] Cloned final
   }
 
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept
+  constexpr usize exact_size_hint() const noexcept
     requires(ExactSizeIterator<InnerSizedIter, Item>)
   {
     return next_iter_.exact_size_hint();
@@ -61,11 +74,8 @@ class [[nodiscard]] Cloned final
   template <class U, class V>
   friend class IteratorBase;
 
-  static Cloned with(InnerSizedIter&& next_iter) noexcept {
-    return Cloned(::sus::move(next_iter));
-  }
-
-  Cloned(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
+  explicit constexpr Cloned(InnerSizedIter&& next_iter)
+      : next_iter_(::sus::move(next_iter)) {}
 
   InnerSizedIter next_iter_;
 

@@ -40,10 +40,23 @@ class [[nodiscard]] Reverse final
  public:
   using Item = InnerSizedIter::Item;
 
+  // Type is Move and (can be) Clone.
+  Reverse(Reverse&&) = default;
+  Reverse& operator=(Reverse&&) = default;
+
+  /// sus::mem::Clone implementation
+  constexpr Reverse clone() const noexcept
+    requires(::sus::mem::Clone<InnerSizedIter>)
+  {
+    return Reverse(::sus::clone(next_iter_));
+  }
+
   /// sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return next_iter_.next_back(); }
   /// sus::iter::Iterator trait.
-  constexpr SizeHint size_hint() const noexcept { return next_iter_.size_hint(); }
+  constexpr SizeHint size_hint() const noexcept {
+    return next_iter_.size_hint();
+  }
   /// sus::iter::DoubleEndedIterator trait.
   constexpr Option<Item> next_back() noexcept { return next_iter_.next(); }
   /// sus::iter::ExactSizeIterator trait.
@@ -57,11 +70,8 @@ class [[nodiscard]] Reverse final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Reverse with(InnerSizedIter&& next_iter) noexcept {
-    return Reverse(::sus::move(next_iter));
-  }
-
-  constexpr Reverse(InnerSizedIter&& next_iter) : next_iter_(::sus::move(next_iter)) {}
+  explicit constexpr Reverse(InnerSizedIter&& next_iter)
+      : next_iter_(::sus::move(next_iter)) {}
 
   InnerSizedIter next_iter_;
 

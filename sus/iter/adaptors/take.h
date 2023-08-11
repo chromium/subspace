@@ -34,7 +34,7 @@ class [[nodiscard]] Take final
  public:
   using Item = InnerSizedIter::Item;
 
-  // The type is Move and Clone.
+  // The type is Move and (can be) Clone.
   Take(Take&&) = default;
   Take& operator=(Take&&) = default;
 
@@ -98,11 +98,7 @@ class [[nodiscard]] Take final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Take with(usize n, InnerSizedIter&& next_iter) noexcept {
-    return Take(n, ::sus::move(next_iter));
-  }
-
-  constexpr Take(usize n, InnerSizedIter&& next_iter) noexcept
+  explicit constexpr Take(usize n, InnerSizedIter&& next_iter) noexcept
       : n_(n), next_iter_(::sus::move(next_iter)) {}
 
   usize n_;

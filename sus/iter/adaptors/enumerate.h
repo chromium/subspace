@@ -35,6 +35,17 @@ class [[nodiscard]] Enumerate final
  public:
   using Item = ::sus::Tuple<usize, FromItem>;
 
+  // Type is Move and (can be) Clone.
+  Enumerate(Enumerate&&) = default;
+  Enumerate& operator=(Enumerate&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr Enumerate clone() const noexcept
+    requires(::sus::mem::Clone<InnerSizedIter>)
+  {
+    return Enunerate(CLONE, count_, sus::clone(next_iter_));
+  }
+
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
     Option<typename InnerSizedIter::Item> item = next_iter_.next();
@@ -84,12 +95,13 @@ class [[nodiscard]] Enumerate final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Enumerate with(InnerSizedIter&& next_iter) noexcept {
-    return Enumerate(::sus::move(next_iter));
-  }
-
-  constexpr Enumerate(InnerSizedIter&& next_iter)
+  // Regular ctor.
+  explicit constexpr Enumerate(InnerSizedIter&& next_iter)
       : next_iter_(::sus::move(next_iter)) {}
+  // Clone ctor.
+  enum Clone { CLONE };
+  explicit constexpr Enumerate(Clone, usize count, InnerSizedIter&& next_iter)
+      : count_(count), next_iter_(::sus::move(next_iter)) {}
 
   usize count_ = 0u;
   InnerSizedIter next_iter_;

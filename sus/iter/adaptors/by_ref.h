@@ -36,6 +36,13 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
  public:
   using Item = RefIterator::Item;
 
+  // Type is Move and Clone.
+  ByRef(ByRef&&) = default;
+  ByRef& operator=(ByRef&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr ByRef clone() const noexcept { return ByRef(next_iter_); }
+
   /// sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept { return next_iter_->next(); }
 
@@ -66,12 +73,7 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr ByRef with(
-      RefIterator& next_iter sus_lifetimebound) noexcept {
-    return ByRef(next_iter);
-  }
-
-  constexpr ByRef(RefIterator& next_iter sus_lifetimebound) noexcept
+  explicit constexpr ByRef(RefIterator& next_iter sus_lifetimebound) noexcept
       : next_iter_(::sus::mem::addressof(next_iter)) {
     // TODO: Add a refcount on the thing `next_iter_` is iterating on.
   }

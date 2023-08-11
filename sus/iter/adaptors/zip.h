@@ -91,7 +91,7 @@ class [[nodiscard]] Zip final
  public:
   using Item = sus::Tuple<__private::GetItem<InnerSizedIters>...>;
 
-  // Type is Move and Clone.
+  // Type is Move and (can be) Clone.
   constexpr Zip(Zip&&) = default;
   Zip& operator=(Zip&&) = default;
 
@@ -124,11 +124,7 @@ class [[nodiscard]] Zip final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Zip with(sus::Tuple<InnerSizedIters...>&& iters) noexcept {
-    return Zip(::sus::move(iters));
-  }
-
-  constexpr Zip(::sus::Tuple<InnerSizedIters...>&& iters) noexcept
+  explicit constexpr Zip(::sus::Tuple<InnerSizedIters...>&& iters) noexcept
       : iters_(::sus::move(iters)) {}
 
   ::sus::Tuple<InnerSizedIters...> iters_;

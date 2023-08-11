@@ -42,6 +42,20 @@ class [[nodiscard]] FlatMap final
  public:
   using Item = typename EachIter::Item;
 
+  // Type is Move and (can be) Clone.
+  FlatMap(FlatMap&&) = default;
+  FlatMap& operator=(FlatMap&&) = default;
+
+  // sus::mem::Clone trait.
+  constexpr FlatMap clone() const noexcept
+    requires(::sus::mem::Clone<MapFn> &&           //
+             ::sus::mem::Clone<InnerSizedIter> &&  //
+             ::sus::mem::Clone<EachIter>)
+  {
+    return FlatMap(CLONE, ::sus::clone(map_fn_), ::sus::clone(iters_),
+                   ::sus::clone(front_iter_), ::sus::clone(back_iter_));
+  }
+
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
     Option<Item> out;
@@ -119,12 +133,18 @@ class [[nodiscard]] FlatMap final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr FlatMap with(MapFn&& fn, InnerSizedIter&& iters) noexcept {
-    return FlatMap(::sus::move(fn), ::sus::move(iters));
-  }
-
-  constexpr FlatMap(MapFn&& fn, InnerSizedIter&& iters)
+  // Regular ctor.
+  explicit constexpr FlatMap(MapFn&& fn, InnerSizedIter&& iters)
       : map_fn_(::sus::move(fn)), iters_(::sus::move(iters)) {}
+  // Clone ctor.
+  enum Clone { CLONE };
+  explicit constexpr FlatMap(Clone, MapFn&& fn, InnerSizedIter&& iters,
+                             ::sus::Option<EachIter>&& front,
+                             ::sus::Option<EachIter>&& back)
+      : map_fn_(::sus::move(fn)),
+        iters_(::sus::move(iters)),
+        front_iter_(::sus::move(front)),
+        back_iter_(::sus::move(back)) {}
 
   MapFn map_fn_;
   InnerSizedIter iters_;
@@ -134,7 +154,7 @@ class [[nodiscard]] FlatMap final
   sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
                                            decltype(map_fn_), decltype(iters_),
                                            decltype(front_iter_),
-                                           decltype(front_iter_));
+                                           decltype(back_iter_));
 };
 
 }  // namespace sus::iter

@@ -46,7 +46,7 @@ class [[nodiscard]] Peekable final
     requires(::sus::mem::Clone<InnerSizedIter> &&  //
              ::sus::mem::CloneOrRef<Item>)
   {
-    return Peekable(::sus::clone(peeked_), ::sus::clone(next_iter_));
+    return Peekable(CLONE, ::sus::clone(peeked_), ::sus::clone(next_iter_));
   }
 
   /// Returns a const reference to the `next()` value without advancing the
@@ -161,16 +161,14 @@ class [[nodiscard]] Peekable final
   template <class U, class V>
   friend class IteratorBase;
 
-  static constexpr Peekable with(InnerSizedIter&& next_iter) noexcept {
-    return Peekable(::sus::move(next_iter));
-  }
-
   // Regular ctor.
-  constexpr Peekable(InnerSizedIter&& next_iter)
+  explicit constexpr Peekable(InnerSizedIter&& next_iter)
       : next_iter_(::sus::move(next_iter)) {}
   // Clone ctor.
-  constexpr Peekable(::sus::Option<::sus::Option<Item>>&& peeked,
-                     InnerSizedIter&& next_iter)
+  enum Clone { CLONE };
+  explicit constexpr Peekable(Clone,
+                              ::sus::Option<::sus::Option<Item>>&& peeked,
+                              InnerSizedIter&& next_iter)
       : peeked_(::sus::move(peeked)), next_iter_(::sus::move(next_iter)) {}
 
   ::sus::Option<::sus::Option<Item>> peeked_;
