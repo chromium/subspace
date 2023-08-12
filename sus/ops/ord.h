@@ -209,10 +209,8 @@ constexpr T min_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::max<i32&>(a, b)`.
-///
-/// Note that if either input is a temporary object this can return a reference
-/// to an object past its lifetime.
+/// `sus::ops::max<i32&>(a, b)`. Note that if either input is a temporary object
+/// this can return a reference to an object past its lifetime.
 template <class T>
   requires(::sus::ops::Ord<T>)
 constexpr T max(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
@@ -226,10 +224,8 @@ constexpr T max(T a sus_lifetimebound, T b sus_lifetimebound) noexcept {
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::max_by<i32&>(a, b, c)`.
-///
-/// Note that if either input is a temporary object this can return a reference
-/// to an object past its lifetime.
+/// `sus::ops::max_by<i32&>(a, b, c)`. Note that if either input is a
+/// temporary object this can return a reference to an object past its lifetime.
 template <class T>
 constexpr T max_by(
     T a sus_lifetimebound, T b sus_lifetimebound,
@@ -249,10 +245,8 @@ constexpr T max_by(
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::max_by_key<i32&>(a, b, k)`.
-///
-/// Note that if either input is a temporary object this can return a reference
-/// to an object past its lifetime.
+/// `sus::ops::max_by_key<i32&>(a, b, k)`. Note that if either input is a
+/// temporary object this can return a reference to an object past its lifetime.
 template <
     class T,
     ::sus::fn::FnMut<::sus::fn::NonVoid(const std::remove_reference_t<T>&)>
@@ -272,10 +266,8 @@ constexpr T max_by_key(T a sus_lifetimebound, T b sus_lifetimebound,
 ///
 /// By default this receives and returns objects by value. To receive and return
 /// references, specify the type parameter, such as:
-/// `sus::ops::clamp<i32&>(a, min, max)`.
-///
-/// Note that if any input is a temporary object this can return a reference to
-/// an object past its lifetime.
+/// `sus::ops::clamp<i32&>(a, min, max)`. Note that if any input is a temporary
+/// object this can return a reference to an object past its lifetime.
 ///
 /// # Panics
 /// Panics if `min > max`.

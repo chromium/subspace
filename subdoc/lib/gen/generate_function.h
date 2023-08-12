@@ -16,8 +16,13 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/options.h"
 
 namespace subdoc::gen {
+
+void generate_function(const FunctionElement& e,
+                       const sus::Slice<const NamespaceElement*>& namespaces,
+                       u32 overload_set, const Options& options) noexcept;
 
 void generate_function_reference(HtmlWriter::OpenUl& items_list,
                                  const FunctionElement& e, bool is_static,

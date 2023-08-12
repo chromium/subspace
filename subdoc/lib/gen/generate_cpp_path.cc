@@ -118,4 +118,13 @@ sus::Vec<CppPathElement> generate_cpp_path_for_type(
                                  namespace_ancestors, type_ancestors, options);
 }
 
+sus::Vec<CppPathElement> generate_cpp_path_for_function(
+    const FunctionElement& element,
+    const sus::Slice<const NamespaceElement*>& namespace_ancestors,
+    const Options& options) noexcept {
+  return generate_with_ancestors(element.name, CppPathFunction,
+                                 namespace_ancestors,
+                                 sus::Slice<const RecordElement*>(), options);
+}
+
 }  // namespace subdoc::gen
