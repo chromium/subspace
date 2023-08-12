@@ -405,11 +405,11 @@ void generate_record_reference(HtmlWriter::OpenUl& items_list,
       name_link.write_text(element.name);
     }
   }
-  if (element.has_comment()) {
+  {
     auto desc_div = item_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    desc_div.write_html(element.comment.summary());
+    if (element.has_comment()) desc_div.write_html(element.comment.summary());
   }
 }
 

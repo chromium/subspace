@@ -313,11 +313,11 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
                           style,
                           /*link_to_page=*/true);
   }
-  if (element.has_comment()) {
+  {
     auto desc_div = item_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    desc_div.write_html(element.comment.summary());
+    if (element.has_comment()) desc_div.write_html(element.comment.summary());
   }
 }
 
@@ -333,11 +333,11 @@ void generate_function_long_reference(HtmlWriter::OpenDiv& item_div,
                           StyleLong,
                           /*link_to_page=*/false);
   }
-  if (element.has_comment()) {
+  {
     auto desc_div = item_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    desc_div.write_html(element.comment.full());
+    if (element.has_comment()) desc_div.write_html(element.comment.full());
   }
 }
 
