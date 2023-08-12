@@ -79,6 +79,9 @@ struct CommentElement {
   bool has_comment() const {
     return !comment.full_html.empty() || comment.attrs.inherit.is_some();
   }
+  bool hidden() const {
+    return comment.attrs.hidden;
+  }
 };
 
 struct TypeElement : public CommentElement {

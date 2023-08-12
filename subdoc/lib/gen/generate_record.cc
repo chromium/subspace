@@ -158,13 +158,19 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
           field_type_link.add_class("type-name");
           field_type_link.add_title(fe.type_name);
           if (fe.type_element.is_some()) {
-            field_type_link.add_href(
-                construct_html_file_path(
-                    std::filesystem::path(),
-                    fe.type_element->namespace_path.as_slice(),
-                    fe.type_element->record_path.as_slice(),
-                    fe.type_element->name)
-                    .string());
+            if (!fe.hidden()) {
+              field_type_link.add_href(
+                  construct_html_file_path(
+                      std::filesystem::path(),
+                      fe.type_element->namespace_path.as_slice(),
+                      fe.type_element->record_path.as_slice(),
+                      fe.type_element->name)
+                      .string());
+            } else {
+              llvm::errs() << "WARNING: Reference to hidden FieldElement "
+                           << fe.name << " in record " << element.name
+                           << " in namespace " << element.namespace_path;
+            }
           }
           field_type_link.write_text(fe.short_type_name);
         }
@@ -248,6 +254,8 @@ void generate_record(const RecordElement& element,
                      const sus::Slice<const NamespaceElement*>& namespaces,
                      sus::Vec<const RecordElement*> type_ancestors,
                      const Options& options) noexcept {
+  if (element.hidden()) return;
+
   const std::filesystem::path path = construct_html_file_path(
       options.output_root, element.namespace_path.as_slice(),
       element.record_path.as_slice(), element.name);
@@ -289,6 +297,8 @@ void generate_record(const RecordElement& element,
   sus::Vec<SortedFieldByName> sorted_static_fields;
   sus::Vec<SortedFieldByName> sorted_fields;
   for (const auto& [symbol, field_element] : element.fields) {
+    if (field_element.hidden()) continue;
+
     switch (field_element.is_static) {
       case FieldElement::Static:
         sorted_static_fields.push(
@@ -321,6 +331,8 @@ void generate_record(const RecordElement& element,
   sus::Vec<SortedFunctionByName> sorted_methods;
   sus::Vec<SortedFunctionByName> sorted_operators;
   for (const auto& [method_id, method_element] : element.methods) {
+    if (method_element.hidden()) continue;
+
     if (method_id.is_static) {
       sorted_static_methods.push(
           sus::tuple(method_element.name, method_element.sort_key, method_id));
@@ -379,11 +391,17 @@ void generate_record_reference(HtmlWriter::OpenUl& items_list,
     {
       auto name_link = type_sig_div.open_a();
       name_link.add_class("type-name");
-      name_link.add_href(
-          construct_html_file_path(std::filesystem::path(),
-                                   element.namespace_path.as_slice(),
-                                   element.record_path.as_slice(), element.name)
-              .string());
+      if (!element.hidden()) {
+        name_link.add_href(construct_html_file_path(
+                               std::filesystem::path(),
+                               element.namespace_path.as_slice(),
+                               element.record_path.as_slice(), element.name)
+                               .string());
+      } else {
+        llvm::errs() << "WARNING: Reference to hidden RecordElement "
+                     << element.name << " in namespace "
+                     << element.namespace_path;
+      }
       name_link.write_text(element.name);
     }
   }

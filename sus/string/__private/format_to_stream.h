@@ -93,6 +93,7 @@ S& format_to_stream(S& os, const std::basic_string<Char>& s) {
       )                                                                        \
       StreamCanReceiveString<char> Sus_StreamType                              \
   >                                                                            \
+  /** #[doc.hidden] */                                                         \
   inline Sus_StreamType& operator<<(                                           \
     Sus_StreamType& stream,                                                    \
     /* Uses `Sus_ValueType` as the type if required for GCC, or `Type`. */     \

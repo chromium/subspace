@@ -37,6 +37,7 @@ struct DocAttributes {
   sus::Option<u64> overload_set;
   clang::SourceLocation location;
   sus::Option<sus::Vec<InheritPathElement>> inherit;
+  bool hidden = false;
 
   DocAttributes clone() const {
     return DocAttributes(sus::clone(overload_set),  //
