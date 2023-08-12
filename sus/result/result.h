@@ -1108,29 +1108,22 @@ class [[nodiscard]] Result final {
 using sus::iter::__private::begin;
 using sus::iter::__private::end;
 
-/// Used to construct a Result<T, E> with an Ok(void) value.
-///
-/// Calling ok() produces a hint to make a Result<void, E> but does not actually
-/// construct Result<void, E>. This is to deduce the actual type `E`
-/// when it is constructed, avoid specifying it here, and support
-/// conversions.
-///
-/// #[doc.overloads=ok.marker.void]
-[[nodiscard]] inline constexpr auto ok() noexcept {
-  return __private::OkVoidMarker();
-}
-
 /// Used to construct a Result<T, E> with an Ok(t) value.
 ///
-/// Calling ok() produces a hint to make a Result<T, E> but does not actually
-/// construct Result<T, E>. This is to deduce the actual types `T` and `E`
+/// Calling `ok()` produces a hint to make a Result<T, E> but does not actually
+/// construct `Result<T, E>`. This is to deduce the actual types `T` and `E`
 /// when it is constructed, avoid specifying them both here, and support
 /// conversions.
 ///
-/// #[doc.overloads=ok.marker]
+/// `Result<void, E>` can also be constructed from calling `ok()` without an
+/// argument.
 template <class T>
 [[nodiscard]] inline constexpr auto ok(T&& t sus_lifetimebound) noexcept {
   return __private::OkMarker<T&&>(::sus::forward<T>(t));
+}
+
+[[nodiscard]] inline constexpr auto ok() noexcept {
+  return __private::OkVoidMarker();
 }
 
 /// Used to construct a Result<T, E> with an Err(e) value.
