@@ -1005,7 +1005,7 @@ sus_pure constexpr _self wrapping_rem_euclid(_self rhs) const& noexcept {
 /// Checked shift left. Computes `*this << rhs`, returning None if rhs is
 /// larger than or equal to the number of bits in self.
 sus_pure constexpr ::sus::option::Option<_self> checked_shl(
-    const u32& rhs) const& noexcept;
+    u32 rhs) const& noexcept;
 
 /// Shifts self left by rhs bits.
 ///
@@ -1014,7 +1014,7 @@ sus_pure constexpr ::sus::option::Option<_self> checked_shl(
 /// bits. If the shift value is too large, then value is masked (N-1) where N is
 /// the number of bits, and this value is then used to perform the shift.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
-    const u32& rhs) const& noexcept;
+    u32 rhs) const& noexcept;
 
 /// Panic-free bitwise shift-left; yields `*this << mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
@@ -1025,7 +1025,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shl(
 /// shifted out of the LHS being returned to the other end. The primitive
 /// integer types all implement a rotate_left function, which may be what you
 /// want instead.
-sus_pure constexpr _self wrapping_shl(const u32& rhs) const& noexcept {
+sus_pure constexpr _self wrapping_shl(u32 rhs) const& noexcept {
   return _self(
       __private::shl_with_overflow(primitive_value, rhs.primitive_value).value);
 }
@@ -1033,7 +1033,7 @@ sus_pure constexpr _self wrapping_shl(const u32& rhs) const& noexcept {
 /// Checked shift right. Computes `*this >> rhs`, returning None if rhs is
 /// larger than or equal to the number of bits in self.
 sus_pure constexpr ::sus::option::Option<_self> checked_shr(
-    const u32& rhs) const& noexcept;
+    u32 rhs) const& noexcept;
 
 /// Shifts self right by rhs bits.
 ///
@@ -1042,7 +1042,7 @@ sus_pure constexpr ::sus::option::Option<_self> checked_shr(
 /// bits. If the shift value is too large, then value is masked (N-1) where N is
 /// the number of bits, and this value is then used to perform the shift.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
-    const u32& rhs) const& noexcept;
+    u32 rhs) const& noexcept;
 
 /// Panic-free bitwise shift-right; yields `*this >> mask(rhs)`, where mask
 /// removes any high-order bits of `rhs` that would cause the shift to exceed
@@ -1053,7 +1053,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_shr(
 /// shifted out of the LHS being returned to the other end. The primitive
 /// integer types all implement a rotate_right function, which may be what you
 /// want instead.
-sus_pure constexpr _self wrapping_shr(const u32& rhs) const& noexcept {
+sus_pure constexpr _self wrapping_shr(u32 rhs) const& noexcept {
   return _self(
       __private::shr_with_overflow(primitive_value, rhs.primitive_value).value);
 }
@@ -1141,7 +1141,7 @@ sus_pure constexpr _self reverse_bits() const& noexcept {
 /// truncated bits to the end of the resulting integer.
 ///
 /// Please note this isn't the same operation as the `<<` shifting operator!
-sus_pure constexpr _self rotate_left(const u32& n) const& noexcept {
+sus_pure constexpr _self rotate_left(u32 n) const& noexcept {
   return _self(__private::rotate_left(primitive_value, n.primitive_value));
 }
 
@@ -1149,7 +1149,7 @@ sus_pure constexpr _self rotate_left(const u32& n) const& noexcept {
 /// truncated bits to the beginning of the resulting integer.
 ///
 /// Please note this isn't the same operation as the >> shifting operator!
-sus_pure constexpr _self rotate_right(const u32& n) const& noexcept {
+sus_pure constexpr _self rotate_right(u32 n) const& noexcept {
   return _self(__private::rotate_right(primitive_value, n.primitive_value));
 }
 
@@ -1159,7 +1159,7 @@ sus_pure constexpr _self swap_bytes() const& noexcept {
 }
 
 /// Raises self to the power of `exp`, using exponentiation by squaring.
-sus_pure constexpr _self pow(const u32& rhs) const& noexcept {
+sus_pure constexpr _self pow(u32 rhs) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, rhs.primitive_value);
   // TODO: Allow opting out of all overflow checks?
@@ -1170,18 +1170,18 @@ sus_pure constexpr _self pow(const u32& rhs) const& noexcept {
 /// Checked exponentiation. Computes `@doc.self::pow(exp)`, returning None if
 /// overflow occurred.
 sus_pure constexpr ::sus::option::Option<_self> checked_pow(
-    const u32& rhs) const& noexcept;
+    u32 rhs) const& noexcept;
 
 /// Raises self to the power of `exp`, using exponentiation by squaring.
 ///
 /// Returns a tuple of the exponentiation along with a bool indicating whether
 /// an overflow happened.
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> overflowing_pow(
-    const u32& exp) const& noexcept;
+    u32 exp) const& noexcept;
 
 /// Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping around
 /// at the boundary of the type.
-sus_pure constexpr _self wrapping_pow(const u32& exp) const& noexcept {
+sus_pure constexpr _self wrapping_pow(u32 exp) const& noexcept {
   return _self(__private::wrapping_pow(primitive_value, exp.primitive_value));
 }
 
