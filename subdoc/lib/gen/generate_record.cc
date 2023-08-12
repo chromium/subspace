@@ -70,6 +70,7 @@ void generate_record_overview(
             case CppPathProject: return "project-name";
             case CppPathNamespace: return "namespace-name";
             case CppPathRecord: return "type-name";
+            case CppPathFunction: sus::unreachable();
           }
           sus::unreachable();
         }());
@@ -189,21 +190,38 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
   }
 }
 
+enum MethodType {
+  StaticMethods,
+  NonStaticMethods,
+  NonStaticOperators,
+};
+
 void generate_record_methods(HtmlWriter::OpenDiv& record_div,
-                             const RecordElement& element, bool static_methods,
+                             const RecordElement& element, MethodType type,
                              sus::Slice<SortedFunctionByName> methods) {
   if (methods.is_empty()) return;
 
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("methods");
-  section_div.add_class(static_methods ? "static" : "nonstatic");
+  switch (type) {
+    case StaticMethods: section_div.add_class("static"); break;
+    case NonStaticMethods: section_div.add_class("nonstatic"); break;
+    case NonStaticOperators: section_div.add_class("nonstatic"); break;
+  }
 
   {
     auto methods_header_div = section_div.open_div();
     methods_header_div.add_class("section-header");
-    methods_header_div.write_text(static_methods ? "Static Methods"
-                                                 : "Methods");
+    switch (type) {
+      case StaticMethods:
+        methods_header_div.write_text("Static Methods");
+        break;
+      case NonStaticMethods: methods_header_div.write_text("Methods"); break;
+      case NonStaticOperators:
+        methods_header_div.write_text("Operators");
+        break;
+    }
   }
   {
     auto items_div = section_div.open_div();
@@ -219,7 +237,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
       prev_name = name;
       generate_function_long_reference(items_div,
                                        element.methods.at(function_id),
-                                       static_methods, overload_set);
+                                       type == StaticMethods, overload_set);
     }
   }
 }
@@ -301,9 +319,13 @@ void generate_record(const RecordElement& element,
 
   sus::Vec<SortedFunctionByName> sorted_static_methods;
   sus::Vec<SortedFunctionByName> sorted_methods;
+  sus::Vec<SortedFunctionByName> sorted_operators;
   for (const auto& [method_id, method_element] : element.methods) {
     if (method_id.is_static) {
       sorted_static_methods.push(
+          sus::tuple(method_element.name, method_element.sort_key, method_id));
+    } else if (method_element.is_operator) {
+      sorted_operators.push(
           sus::tuple(method_element.name, method_element.sort_key, method_id));
     } else {
       sorted_methods.push(
@@ -322,11 +344,19 @@ void generate_record(const RecordElement& element,
         if (ord != 0) return ord;
         return a.at<1>() <=> b.at<1>();
       });
+  sorted_operators.sort_unstable_by(
+      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+        auto ord = a.at<0>() <=> b.at<0>();
+        if (ord != 0) return ord;
+        return a.at<1>() <=> b.at<1>();
+      });
 
-  generate_record_methods(record_div, element, true,
+  generate_record_methods(record_div, element, StaticMethods,
                           sorted_static_methods.as_slice());
-  generate_record_methods(record_div, element, false,
+  generate_record_methods(record_div, element, NonStaticMethods,
                           sorted_methods.as_slice());
+  generate_record_methods(record_div, element, NonStaticOperators,
+                          sorted_operators.as_slice());
 
   type_ancestors.push(&element);
   for (const auto& [key, subrecord] : element.records) {
