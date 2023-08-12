@@ -1408,9 +1408,6 @@ class Option final {
   /// This also allows `sus::into()` to convert with type deduction from
   /// `std::optional` to `sus::Option`.
   ///
-  /// Include sus/option/compat_option.h to use these methods, as std
-  /// `<optional>` header is not included by default.
-  ///
   /// #[doc.overloads=from.optional]
   constexpr static Option from(
       const std::optional<std::remove_reference_t<T>>& s) noexcept
@@ -1432,9 +1429,6 @@ class Option final {
     requires(!std::is_reference_v<T>);
   /// Implicit conversion from std::optional.
   ///
-  /// Include sus/option/compat_option.h to use these methods, as std
-  /// `<optional>` header is not included by default.
-  ///
   /// #[doc.overloads=ctor.optional]
   constexpr Option(const std::optional<std::remove_reference_t<T>>& s) noexcept
     requires(::sus::mem::Copy<T> && !std::is_reference_v<T>);
@@ -1442,9 +1436,6 @@ class Option final {
   constexpr Option(std::optional<std::remove_reference_t<T>>&& s) noexcept
     requires(::sus::mem::Move<T> && !std::is_reference_v<T>);
   /// Implicit conversion to std::optional.
-  ///
-  /// Include sus/option/compat_option.h to use these methods, as std
-  /// `<optional>` header is not included by default.
   ///
   /// #[doc.overloads=convert.optional]
   constexpr operator std::optional<std::remove_reference_t<T>>() const& noexcept
