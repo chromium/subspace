@@ -19,8 +19,7 @@
 
 #include "sus/iter/__private/iterator_end.h"
 #include "sus/iter/__private/range_begin.h"
-#include "sus/iter/iterator_concept.h"
-#include "sus/iter/iterator_defn.h"
+#include "sus/iter/iterator.h"
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/mem/move.h"

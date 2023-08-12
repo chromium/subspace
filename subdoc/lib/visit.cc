@@ -21,6 +21,7 @@
 #include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/record_type.h"
+#include "subdoc/lib/requires.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/unreachable.h"
@@ -343,10 +344,31 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                        friendly_short_type_name(v->getOriginalType()));
       }
 
+      sus::Option<RequiresConstraints> constraints;
+      if (clang::FunctionTemplateDecl* tmpl =
+              decl->getDescribedFunctionTemplate()) {
+        llvm::SmallVector<const clang::Expr*> assoc;
+        tmpl->getAssociatedConstraints(assoc);
+        for (const clang::Expr* e : assoc) {
+          if (constraints.is_none()) constraints.insert(RequiresConstraints());
+          requires_constraints_add_expr(constraints.as_value_mut(),
+                                        decl->getASTContext(), e);
+        }
+      }
+      {
+        llvm::SmallVector<const clang::Expr*> assoc;
+        decl->getAssociatedConstraints(assoc);
+        for (const clang::Expr* e : assoc) {
+          if (constraints.is_none()) constraints.insert(RequiresConstraints());
+          requires_constraints_add_expr(constraints.as_value_mut(),
+                                        decl->getASTContext(), e);
+        }
+      }
+
       auto fe = FunctionElement(
           iter_namespace_path(decl).collect_vec(), sus::move(comment),
           decl->getNameAsString(), decl->isOverloadedOperator(),
-          decl->getReturnType(), sus::move(params),
+          decl->getReturnType(), sus::move(constraints), sus::move(params),
           decl->getASTContext().getSourceManager().getFileOffset(
               decl->getLocation()));
       fe.overloads[0u].return_type_element =

@@ -20,11 +20,11 @@ pre {
     border-bottom: 1px solid;
 }
 
-.overload {
+.overload .function-signature {
     /* Hides the space between `function-name` and `()`. */
     display: flex;
 }
-.overload>:not(.function-name) {
+.overload .function-signature>:not(.function-name) {
     margin-right: 0.2em;  /* Put back the space after other elements */
 }
 
@@ -101,11 +101,25 @@ pre {
     color: rgb(191, 142, 236);
 }
 
-.function .overview .function-signature {
+.function .overview .overload-set {
     background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5em;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+}
+
+.overload .requires {
+    margin-left: 4ex;
+}
+.overload .requires .requires-keyword {
+    color: rgb(84, 194, 238)
+}
+.overload .requires .requires-paren {
+    color: rgb(180, 180, 180)
+}
+.overload .requires .requires-constaint {
+    margin-left: 4ex;
+    color: rgb(87, 218, 218)
 }
 
 .item-table {
