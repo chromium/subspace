@@ -37,7 +37,7 @@ namespace sus::marker {
 /// over time.
 ///
 /// To call such an unsafe function, pass it the global `unsafe_fn` object,
-/// which is brought into the global namespace by "sus/prelude.h".
+/// which is brought into the global namespace by `#include "sus/prelude.h"`.
 struct UnsafeFnMarker {
   // `explicit` prevents `{}` or `{any values...}` from being used to construct
   // an `UnsafeFnMarker`. The marker should only be used as `unsafe_fn`.

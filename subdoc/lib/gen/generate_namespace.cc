@@ -96,6 +96,7 @@ void generate_namespace_overview(
             case CppPathProject: return "project-name";
             case CppPathNamespace: return "namespace-name";
             case CppPathRecord: return "type-name";
+            case CppPathFunction: sus::unreachable();
           }
           sus::unreachable();
         }());
