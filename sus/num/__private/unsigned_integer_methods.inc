@@ -619,7 +619,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 [[nodiscard]] sus_pure friend constexpr inline _self operator<<(
     _self l, u32 r) noexcept {
   // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r < BITS);
+  ::sus::check(r < u32(__private::num_bits<_primitive>()));
   return _self(__private::unchecked_shl(l.primitive_value, r.primitive_value));
 }
 /// sus::num::Shr<T> trait for unsigned integers.
@@ -628,7 +628,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 [[nodiscard]] sus_pure friend constexpr inline _self operator>>(
     _self l, u32 r) noexcept {
   // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r < BITS);
+  ::sus::check(r < u32(__private::num_bits<_primitive>()));
   return _self(__private::unchecked_shr(l.primitive_value, r.primitive_value));
 }
 
@@ -684,13 +684,13 @@ constexpr inline void operator^=(_self r) & noexcept {
 /// sus::num::ShlAssign<@doc.self> trait.
 constexpr inline void operator<<=(u32 r) & noexcept {
   // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r < BITS);
+  ::sus::check(r < u32(__private::num_bits<_primitive>()));
   primitive_value <<= r.primitive_value;
 }
 /// sus::num::ShrAssign<@doc.self> trait.
 constexpr inline void operator>>=(u32 r) & noexcept {
   // TODO: Allow opting out of all overflow checks?
-  ::sus::check(r < BITS);
+  ::sus::check(r < u32(__private::num_bits<_primitive>()));
   primitive_value >>= r.primitive_value;
 }
 

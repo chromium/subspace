@@ -1469,7 +1469,8 @@ sus_pure constexpr Option<u32> checked_log2() const& noexcept {
   } else {
     uint32_t zeros = __private::leading_zeros_nonzero(
         ::sus::marker::unsafe_fn, __private::into_unsigned(primitive_value));
-    return Option<u32>::with(BITS - 1_u32 - u32(zeros));
+    return Option<u32>::with(u32(__private::num_bits<_primitive>()) - 1_u32 -
+                             u32(zeros));
   }
 }
 
