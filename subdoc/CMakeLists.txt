@@ -35,6 +35,8 @@ target_sources(subdoc_lib PUBLIC
     "lib/parse_comment.h"
     "lib/path.h"
     "lib/record_type.h"
+    "lib/requires.cc"
+    "lib/requires.h"
     "lib/run_options.h"
     "lib/run.cc"
     "lib/run.h"

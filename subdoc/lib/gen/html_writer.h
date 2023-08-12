@@ -48,9 +48,9 @@ class HtmlWriter {
       writer_.write_html(text, /*has_newlines=*/has_newlines_);
     }
 
-    auto open_div() noexcept {
+    auto open_div(NewlineStrategy newlines = MultiLine) noexcept {
       write_open();
-      return writer_.open_div(has_newlines_);
+      return writer_.open_div(has_newlines_, newlines);
     }
     auto open_span(NewlineStrategy newlines = MultiLine) noexcept {
       write_open();
@@ -139,8 +139,10 @@ class HtmlWriter {
 
    private:
     friend HtmlWriter;
-    OpenDiv(HtmlWriter& writer, bool inside_has_newlines) noexcept
+    OpenDiv(HtmlWriter& writer, bool inside_has_newlines,
+            NewlineStrategy newlines) noexcept
         : Html(writer) {
+      has_newlines_ = newlines == MultiLine;
       inside_has_newlines_ = inside_has_newlines;
     }
 
@@ -365,8 +367,9 @@ class HtmlWriter {
   friend class OpenUl;
   friend class OpenLi;
 
-  OpenDiv open_div(bool inside_has_newlines) noexcept {
-    return OpenDiv(*this, inside_has_newlines);
+  OpenDiv open_div(bool inside_has_newlines,
+                   NewlineStrategy newlines) noexcept {
+    return OpenDiv(*this, inside_has_newlines, newlines);
   }
   OpenSpan open_span(bool inside_has_newlines,
                      NewlineStrategy newlines) noexcept {

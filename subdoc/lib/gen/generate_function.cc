@@ -143,6 +143,38 @@ void generate_function_signature(HtmlWriter::OpenDiv& div,
   }
 }
 
+void generate_function_requires(HtmlWriter::OpenDiv& div,
+                                const FunctionOverload& overload) {
+  if (overload.constraints.is_some() && !overload.constraints->list.is_empty()) {
+    auto requires_div = div.open_div();
+    requires_div.add_class("requires");
+    {
+      auto keyword_div = requires_div.open_span(HtmlWriter::SingleLine);
+      keyword_div.add_class("requires-keyword");
+      keyword_div.add_class("keyword");
+      keyword_div.write_text("requires");
+    }
+    for (const RequiresConstraint& constraint : overload.constraints->list) {
+      auto clause_div = requires_div.open_div(HtmlWriter::SingleLine);
+      clause_div.add_class("requires-constaint");
+      switch (constraint) {
+        using enum RequiresConstraint::Tag;
+        case Concept:
+          clause_div.write_text(constraint.as<Concept>().concept_name);
+          clause_div.write_text("<");
+          for (const auto& [i, s] :
+               constraint.as<Concept>().args.iter().enumerate()) {
+            if (i > 0u) clause_div.write_text(", ");
+            clause_div.write_text(s);
+          }
+          clause_div.write_text(">");
+          break;
+        case Text: clause_div.write_text(constraint.as<Text>()); break;
+      }
+    }
+  }
+}
+
 void generate_overload_set(HtmlWriter::OpenDiv& div,
                            const FunctionElement& element, bool is_static,
                            u32 overload_set, Style style,
@@ -151,42 +183,53 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
     auto overload_div = div.open_div();
     overload_div.add_class("overload");
 
-    if (style == StyleLong) {
-      generate_return_type(overload_div, overload, is_static);
-    }
     {
-      auto name_anchor = overload_div.open_a();
-      if (link_to_page) {
-        if (!element.hidden()) {
-          name_anchor.add_href(
-              construct_html_file_path_for_function(std::filesystem::path(),
-                                                    element, overload_set)
-                  .string());
-        } else {
-          llvm::errs() << "WARNING: Reference to hidden FunctionElement "
-                       << element.name << " in namespace "
-                       << element.namespace_path;
-        }
-      } else {
-        std::ostringstream anchor;
-        if (overload.method.is_some())
-          anchor << "method.";
-        else
-          anchor << "function.";
-        anchor << (is_static ? "static." : "");
-        anchor << element.name;
-        if (overload_set > 0u) anchor << "." << overload_set;
-        name_anchor.add_name(anchor.str());
-        name_anchor.add_href(std::string("#") + anchor.str());
+      auto signature_div = overload_div.open_div();
+      signature_div.add_class("function-signature");
+
+      if (style == StyleLong) {
+        generate_return_type(signature_div, overload, is_static);
       }
-      name_anchor.add_class("function-name");
-      name_anchor.write_text(element.name);
+      {
+        auto name_anchor = signature_div.open_a();
+        if (link_to_page) {
+          if (!element.hidden()) {
+            name_anchor.add_href(
+                construct_html_file_path_for_function(std::filesystem::path(),
+                                                      element, overload_set)
+                    .string());
+          } else {
+            llvm::errs() << "WARNING: Reference to hidden FunctionElement "
+                         << element.name << " in namespace "
+                         << element.namespace_path;
+          }
+        } else {
+          std::ostringstream anchor;
+          if (overload.method.is_some())
+            anchor << "method.";
+          else
+            anchor << "function.";
+          anchor << (is_static ? "static." : "");
+          anchor << element.name;
+          if (overload_set > 0u) anchor << "." << overload_set;
+          name_anchor.add_name(anchor.str());
+          name_anchor.add_href(std::string("#") + anchor.str());
+        }
+        name_anchor.add_class("function-name");
+        name_anchor.write_text(element.name);
+      }
+      if (style == StyleLong) {
+        generate_function_signature(signature_div, overload);
+      }
     }
 
     if (style == StyleLong) {
-      generate_function_signature(overload_div, overload);
+      generate_function_requires(overload_div, overload);
     }
-    if (style == StyleShort) break;
+
+    if (style == StyleShort) {
+      break;  // Only show one overload/copy of the name in short style.
+    }
   }
 }
 
@@ -266,25 +309,29 @@ void generate_function(const FunctionElement& element,
     }
   }
   {
-    auto type_sig_div = section_div.open_div();
-    type_sig_div.add_class("function-signature");
-
-    auto overload_set_div = type_sig_div.open_div();
+    auto overload_set_div = section_div.open_div();
     overload_set_div.add_class("overload-set");
     for (const FunctionOverload& overload : element.overloads) {
       auto overload_div = overload_set_div.open_div();
       overload_div.add_class("overload");
 
-      // No need to display the `static` on a free function, so just consider
-      // ourselves not.
-      generate_return_type(overload_div, overload, /*is_static=*/false);
       {
-        auto name_anchor = overload_div.open_a();
-        name_anchor.add_href("#");
-        name_anchor.add_class("function-name");
-        name_anchor.write_text(element.name);
+        auto signature_div = overload_div.open_div();
+        signature_div.add_class("function-signature");
+
+        // No need to display the `static` on a free function, so just consider
+        // ourselves not.
+        generate_return_type(signature_div, overload, /*is_static=*/false);
+        {
+          auto name_anchor = signature_div.open_a();
+          name_anchor.add_href("#");
+          name_anchor.add_class("function-name");
+          name_anchor.write_text(element.name);
+        }
+        generate_function_signature(signature_div, overload);
       }
-      generate_function_signature(overload_div, overload);
+
+      generate_function_requires(overload_div, overload);
     }
   }
   if (element.has_comment()) {
