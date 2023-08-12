@@ -174,8 +174,13 @@ class [[nodiscard]] Result final {
     }
   }
 
-  /// If T and E can be trivially copy-constructed, Result<T, E> can also be
-  /// trivially copy-constructed.
+  /// Copy constructor for `Result<T, E>` which satisfies
+  /// [`sus::mem::Copy<Result<T, E>>`](sus::mem::Copy) if
+  /// [`Copy<T>`](sus::mem::Copy) and
+  /// [`Copy<E>`](sus::mem::Copy) are satisfied.
+  ///
+  /// If `T` and `E` can be trivially copy-constructed, then `Result<T, E>` can
+  /// also be trivially copy-constructed.
   ///
   /// #[doc.overloads=copy]
   constexpr Result(const Result&)
@@ -185,6 +190,7 @@ class [[nodiscard]] Result final {
              IsTrivialCopyCtorOrRef<E>)
   = default;
 
+  /// #[doc.overloads=copy]
   constexpr Result(const Result& rhs) noexcept
     requires(
         // clang-format off
@@ -211,13 +217,19 @@ class [[nodiscard]] Result final {
     }
   }
 
+  /// #[doc.overloads=copy]
   constexpr Result(const Result&)
     requires(!((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
                ::sus::mem::Copy<E>))
   = delete;
 
-  /// If T and E can be trivially copy-assigned, Result<T, E> can also be
-  /// trivially copy-assigned.
+  /// Copy assignment for `Result<T, E>` which satisfies
+  /// [`sus::mem::Copy<Result<T, E>>`](sus::mem::Copy) if
+  /// [`Copy<T>`](sus::mem::Copy) and
+  /// [`Copy<E>`](sus::mem::Copy) are satisfied.
+  ///
+  /// If `T` and `E` can be trivially copy-assigned, then `Result<T, E>` can
+  /// also be trivially copy-assigned.
   ///
   /// #[doc.overloads=copy]
   constexpr Result& operator=(const Result& o)
@@ -227,6 +239,7 @@ class [[nodiscard]] Result final {
              IsTrivialCopyAssignOrRef<E>)
   = default;
 
+  /// #[doc.overloads=copy]
   constexpr Result& operator=(const Result& o) noexcept
     requires(
         // clang-format off
@@ -285,13 +298,21 @@ class [[nodiscard]] Result final {
     return *this;
   }
 
+  /// #[doc.overloads=copy]
   constexpr Result& operator=(const Result&)
     requires(!((std::is_void_v<T> || ::sus::mem::CopyOrRef<T>) &&
                ::sus::mem::Copy<E>))
   = delete;
 
-  /// If T and E can be trivially move-constructed, Result<T, E> can also be
-  /// trivially move-constructed.
+  /// Move constructor for `Result<T, E>` which satisfies
+  /// [`sus::mem::Move<Result<T, E>>`](sus::mem::Move) if
+  /// [`Move<T>`](sus::mem::Move) and
+  /// [`Move<E>`](sus::mem::Move) are satisfied.
+  ///
+  /// If `T` and `E` can be trivially move-constructed, then `Result<T, E>` can
+  /// also be trivially move-constructed. When trivially-moved, the `Result` is
+  /// copied on move, and the moved-from Result is unchanged but should still
+  /// not be used thereafter without reinitializing it.
   ///
   /// #[doc.overloads=move]
   constexpr Result(Result&&)
@@ -301,6 +322,7 @@ class [[nodiscard]] Result final {
              IsTrivialMoveCtorOrRef<E>)
   = default;
 
+  /// #[doc.overloads=move]
   constexpr Result(Result&& rhs) noexcept
     requires(
         // clang-format off
@@ -325,13 +347,21 @@ class [[nodiscard]] Result final {
     }
   }
 
+  /// #[doc.overloads=move]
   constexpr Result(Result&&)
     requires(!((std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) &&
                ::sus::mem::Move<E>))
   = delete;
 
-  /// If T and E can be trivially move-assigned, Result<T, E> can also be
-  /// trivially move-assigned.
+  /// Move assignment for `Result<T, E>` which satisfies
+  /// [`sus::mem::Move<Result<T, E>>`](sus::mem::Move) if
+  /// [`Move<T>`](sus::mem::Move) and
+  /// [`Move<E>`](sus::mem::Move) are satisfied.
+  ///
+  /// If `T` and `E` can be trivially move-assigned, then `Result<T, E>` can
+  /// also be trivially move-assigned. When trivially-moved, the `Result` is
+  /// copied on move, and the moved-from Result is unchanged but should still
+  /// not be used thereafter without reinitializing it.
   ///
   /// #[doc.overloads=move]
   constexpr Result& operator=(Result&& o)
@@ -341,6 +371,7 @@ class [[nodiscard]] Result final {
              IsTrivialMoveAssignOrRef<E>)
   = default;
 
+  /// #[doc.overloads=move]
   constexpr Result& operator=(Result&& o) noexcept
     requires(
         // clang-format off
@@ -397,6 +428,7 @@ class [[nodiscard]] Result final {
     return *this;
   }
 
+  /// #[doc.overloads=move]
   constexpr Result& operator=(Result&& o)
     requires(!(std::is_void_v<T> || ::sus::mem::MoveOrRef<T>) ||
              !::sus::mem::Move<E>)
@@ -454,6 +486,9 @@ class [[nodiscard]] Result final {
   /// is no `Err` found. If an `Err` is found, the function returns the first
   /// `Err`.
   ///
+  /// Prefer to call `product()` on the iterator rather than calling
+  /// `from_product()` directly.
+  ///
   /// Implements sus::iter::Product<Result<T, E>, Result<T, E>>.
   ///
   /// The product is computed using the implementation of the inner type `T`
@@ -502,6 +537,9 @@ class [[nodiscard]] Result final {
   /// Computes the sum of an iterator over `Result<T, E>` as long as there
   /// is no `Err` found. If an `Err` is found, the function returns the first
   /// `Err`.
+  ///
+  /// Prefer to call `sum()` on the iterator rather than calling `from_sum()`
+  /// directly.
   ///
   /// Implements sus::iter::Sum<Result<T, E>, Result<T, E>>.
   ///

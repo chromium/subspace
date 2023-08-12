@@ -215,6 +215,9 @@ class Option final {
   /// Computes the product of an iterator over `Option<T>` as long as there is
   /// no `None` found. If a `None` is found, the function returns `None`.
   ///
+  /// Prefer to call `product()` on the iterator rather than calling
+  /// `from_product()` directly.
+  ///
   /// Implements sus::iter::Product<Option<T>>.
   ///
   /// The product is computed using the implementation of the inner type `T`
@@ -227,6 +230,9 @@ class Option final {
 
   /// Computes the sum of an iterator over `Option<T>` as long as there is
   /// no `None` found. If a `None` is found, the function returns `None`.
+  ///
+  /// Prefer to call `sum()` on the iterator rather than calling `from_sum()`
+  /// directly.
   ///
   /// Implements sus::iter::Sum<Option<T>>.
   ///
@@ -255,12 +261,19 @@ class Option final {
     if (t_.state() == Some) t_.destroy();
   }
 
-  // If T can be trivially copy-constructed, Option<T> can also be trivially
-  // copy-constructed.
+  /// Copy constructor for `Option<T>` which satisfies
+  /// [`sus::mem::Copy<Option<T>>`](sus::mem::Copy) if
+  /// [`Copy<T>`](sus::mem::Copy) is satisfied.
+  ///
+  /// If `T` can be trivially copy-constructed, then `Option<T>` can also be
+  /// trivially copy-constructed.
+  ///
+  /// #[doc.overloads=copy]
   constexpr Option(const Option& o)
     requires(::sus::mem::CopyOrRef<T> && IsTrivialCopyCtorOrRef<T>)
   = default;
 
+  /// #[doc.overloads=copy]
   constexpr Option(const Option& o) noexcept
     requires(::sus::mem::CopyOrRef<T> && !IsTrivialCopyCtorOrRef<T>)
   {
@@ -268,32 +281,52 @@ class Option final {
       t_.construct_from_none(copy_to_storage(o.t_.val()));
   }
 
+  /// #[doc.overloads=copy]
   constexpr Option(const Option& o)
     requires(!::sus::mem::CopyOrRef<T>)
   = delete;
 
-  // If T can be trivially move-constructed, Option<T> can also be trivially
-  // move-constructed.
+  /// Move constructor for `Option<T>` which satisfies
+  /// [`sus::mem::Move<Option<T>>`](sus::mem::Move) if
+  /// [`Move<T>`](sus::mem::Move) is satisfied.
+  ///
+  /// If `T` can be trivially move-constructed, then `Option<T>` can also be
+  /// trivially move-constructed. When trivially-moved, the `Option` is
+  /// copied on move, and the moved-from Option is unchanged but should still
+  /// not be used thereafter without reinitializing it. Use `take()` instead to
+  /// move the value out of `Option` when the `Option` may be used again
+  /// afterward.
+  ///
+  /// #[doc.overloads=move]
   constexpr Option(Option&& o)
     requires(::sus::mem::MoveOrRef<T> && IsTrivialMoveCtorOrRef<T>)
   = default;
 
+  /// #[doc.overloads=move]
   constexpr Option(Option&& o) noexcept
     requires(::sus::mem::MoveOrRef<T> && !IsTrivialMoveCtorOrRef<T>)
   {
     if (o.t_.state() == Some) t_.construct_from_none(o.t_.take_and_set_none());
   }
 
+  /// #[doc.overloads=move]
   constexpr Option(Option&& o)
     requires(!::sus::mem::MoveOrRef<T>)
   = delete;
 
-  // If T can be trivially copy-assigned, Option<T> can also be trivially
-  // copy-assigned.
+  /// Copy assignment for `Option<T>` which satisfies
+  /// [`sus::mem::Copy<Option<T>>`](sus::mem::Copy) if
+  /// [`Copy<T>`](sus::mem::Copy) is satisfied.
+  ///
+  /// If `T` can be trivially copy-assigned, then `Option<T>` can also be
+  /// trivially copy-assigned.
+  ///
+  /// #[doc.overloads=copy]
   constexpr Option& operator=(const Option& o)
     requires(::sus::mem::CopyOrRef<T> && IsTrivialCopyAssignOrRef<T>)
   = default;
 
+  /// #[doc.overloads=copy]
   constexpr Option& operator=(const Option& o) noexcept
     requires(::sus::mem::CopyOrRef<T> && !IsTrivialCopyAssignOrRef<T>)
   {
@@ -304,17 +337,28 @@ class Option final {
     return *this;
   }
 
+  /// #[doc.overloads=copy]
   constexpr Option& operator=(const Option& o)
     requires(!::sus::mem::CopyOrRef<T>)
   = delete;
 
-  // If T can be trivially move-assigned, we don't need to explicitly construct
-  // it, so we can use the default destructor, which allows Option<T> to also
-  // be trivially move-assigned.
+  /// Move assignment for `Option<T>` which satisfies
+  /// [`sus::mem::Move<Option<T>>`](sus::mem::Move) if
+  /// [`Move<T>`](sus::mem::Move) is satisfied.
+  ///
+  /// If `T` can be trivially move-assigned, then `Option<T>` can also be
+  /// trivially move-assigned. When trivially-moved, the `Option` is
+  /// copied on move, and the moved-from Option is unchanged but should still
+  /// not be used thereafter without reinitializing it. Use `take()` instead to
+  /// move the value out of `Option` when the `Option` may be used again
+  /// afterward.
+  ///
+  /// #[doc.overloads=move]
   constexpr Option& operator=(Option&& o)
     requires(::sus::mem::MoveOrRef<T> && IsTrivialMoveAssignOrRef<T>)
   = default;
 
+  /// #[doc.overloads=move]
   constexpr Option& operator=(Option&& o) noexcept
     requires(::sus::mem::MoveOrRef<T> && !IsTrivialMoveAssignOrRef<T>)
   {
@@ -325,6 +369,7 @@ class Option final {
     return *this;
   }
 
+  /// #[doc.overloads=move]
   constexpr Option& operator=(Option&& o)
     requires(!::sus::mem::MoveOrRef<T>)
   = delete;
