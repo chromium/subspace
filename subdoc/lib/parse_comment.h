@@ -39,6 +39,7 @@ inline std::string summarize_html(std::string_view html) {
   if (html.empty()) return std::string(html);
 
   bool inside_tag = false;
+  i32 tag_depth = 0;
   sus::Option<size_t> start_non_empty;
   for (auto i : sus::ops::range(size_t{0u}, html.size())) {
     if (inside_tag) {
@@ -47,15 +48,23 @@ inline std::string summarize_html(std::string_view html) {
       }
     } else {
       if (html.substr(i).starts_with("<")) {
-        if (start_non_empty.is_some()) {
-          std::ostringstream summary;
-          summary << "<p>";
-          summary << html.substr(start_non_empty.as_value(),
-                                 i - start_non_empty.as_value());
-          summary << "</p>";
-          return summary.str();
-        }
         inside_tag = true;
+        if (start_non_empty.is_some()) {
+          if (html.substr(i).starts_with("</")) {
+            if (start_non_empty.is_some() && tag_depth == 0) {
+              std::ostringstream summary;
+              summary << "<p>";
+              summary << html.substr(start_non_empty.as_value(),
+                                     i - start_non_empty.as_value());
+              summary << "</p>";
+              return summary.str();
+            }
+
+            tag_depth -= 1;
+          } else {
+            tag_depth += 1;
+          }
+        }
       } else {
         // We see a character that's not part of an html tag.
         start_non_empty = start_non_empty.or_that(sus::some(i));
