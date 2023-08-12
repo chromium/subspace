@@ -49,12 +49,20 @@ pre {
     padding: 1em;
 }
 
-.type .overview .project-name {
+ .project-name {
     color: rgb(207, 66, 184);
 }
-.type .overview .namespace-name {
-    color: rgb(130, 221, 135);
+ .function-name {
+    color: rgb(191, 142, 236);
 }
+ .namespace-name {
+    color: rgb(142, 214, 236);
+}
+
+.type-name {
+    color: rgb(105, 223, 105);
+}
+
 .type .overview .section-header .type-name {
     color: rgb(166, 240, 176);
 }
@@ -93,20 +101,11 @@ pre {
     color: rgb(191, 142, 236);
 }
 
-.namespace .overview .project-name {
-    color: rgb(207, 66, 184);
-}
-.namespace .overview .namespace-name {
-    color: rgb(130, 221, 135);
-}
-.namespace .function-name {
-    color: rgb(191, 142, 236);
-}
-.namespace .namespace-name {
-    color: rgb(142, 214, 236);
-}
-.namespace .type-name {
-    color: rgb(105, 223, 105);
+.function .overview .function-signature {
+    background-color: rgba(43, 43, 43, 1.0);
+    padding: 0.5em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
 }
 
 .item-table {

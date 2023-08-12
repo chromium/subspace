@@ -328,6 +328,28 @@ void generate_namespace(const NamespaceElement& element,
   for (const auto& [u, sub_element] : element.records) {
     generate_record(sub_element, ancestors, sus::vec(), options);
   }
+
+  sus::Vec<SortedFunctionByName> sorted;
+  for (const auto& [function_id, sub_element] : element.functions) {
+    sorted.push(
+        sus::tuple(sub_element.name, sub_element.sort_key, function_id));
+  }
+  sorted.sort_unstable_by(
+      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+        auto ord = a.at<0>() <=> b.at<0>();
+        if (ord != 0) return ord;
+        return a.at<1>() <=> b.at<1>();
+      });
+  u32 overload_set;
+  std::string_view prev_name;
+  for (auto&& [name, sort_key, function_id] : sorted) {
+    if (name == prev_name)
+      overload_set += 1u;
+    else
+      overload_set = 0u;
+    prev_name = name;
+    generate_function(element.functions.at(function_id), ancestors, overload_set, options);
+  }
 }
 
 void generate_namespace_reference(HtmlWriter::OpenUl& items_list,
