@@ -179,9 +179,9 @@ struct [[sus_trivial_abi]] isize final {
 #define _primitive ::sus::num::__private::addr_type<>::signed_type
 #include "sus/num/__private/signed_integer_consts.inc"
 
-/// Adds a `isize` to a pointer, returning the resulting pointer.
+/// sus::num::Add<T*, isize> trait.
 ///
-/// Satisfies the `sus::num::Add<T*, isize>` concept.
+///Adds a `isize` to a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.add.isize]
 template <class T>
@@ -189,9 +189,9 @@ sus_pure_const constexpr inline T* operator+(T* t, isize offset) {
   return t + ptrdiff_t{offset};
 }
 
-/// Adds a `isize` to a referenced pointer, and returns the input reference.
+/// sus::num::AddAssign<T*, isize> trait.
 ///
-/// Satisfies the `sus::num::AddAssign<T*, isize>` concept.
+/// Adds a `isize` to a referenced pointer, and returns the input reference.
 ///
 /// #[doc.overloads=ptr.add.isize]
 template <class T>
@@ -200,9 +200,9 @@ constexpr inline T*& operator+=(T*& t, isize offset) {
   return t;
 }
 
-/// Subtracts a `isize` from a pointer, returning the resulting pointer.
+/// sus::num::Sub<T*, isize> trait.
 ///
-/// Satisfies the `sus::num::Sub<T*, isize>` concept.
+/// Subtracts a `isize` from a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.sub.isize]
 template <class T>
@@ -210,10 +210,10 @@ sus_pure_const constexpr inline T* operator-(T* t, isize offset) {
   return t - ptrdiff_t{offset};
 }
 
+/// sus::num::SubAssign<T*, isize> trait.
+///
 /// Subtracts a `isize` from a referenced pointer, and returns the input
 /// reference.
-///
-/// Satisfies the `sus::num::SubAssign<T*, isize>` concept.
 ///
 /// #[doc.overloads=ptr.sub.isize]
 template <class T>

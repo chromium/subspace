@@ -229,9 +229,9 @@ struct [[sus_trivial_abi]] uptr final {
 #define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
-/// Adds a `usize` to a pointer, returning the resulting pointer.
+/// sus::num::Add<T*, usize> trait.
 ///
-/// Satisfies the `sus::num::Add<T*, usize>` concept.
+/// Adds a `usize` to a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
@@ -239,9 +239,9 @@ sus_pure_const constexpr inline T* operator+(T* t, usize offset) {
   return t + size_t{offset};
 }
 
-/// Adds a `usize` to a referenced pointer, and returns the input reference.
+/// sus::num::AddAssign<T*, usize> trait.
 ///
-/// Satisfies the `sus::num::AddAssign<T*, usize>` concept.
+/// Adds a `usize` to a referenced pointer, and returns the input reference.
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
@@ -250,9 +250,9 @@ constexpr inline T*& operator+=(T*& t, usize offset) {
   return t;
 }
 
-/// Subtracts a `usize` from a pointer, returning the resulting pointer.
+/// sus::num::Sub<T*, usize> trait.
 ///
-/// Satisfies the `sus::num::Sub<T*, usize>` concept.
+/// Subtracts a `usize` from a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>
@@ -260,10 +260,10 @@ sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
   return t - size_t{offset};
 }
 
+/// sus::num::SubAssign<T*, usize> trait.
+///
 /// Subtracts a `usize` from a referenced pointer, and returns the input
 /// reference.
-///
-/// Satisfies the `sus::num::SubAssign<T*, usize>` concept.
 ///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>

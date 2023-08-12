@@ -218,47 +218,44 @@ sus_pure constexpr inline explicit operator U() const {
   return primitive_value;
 }
 
-/// sus::ops::Eq<@doc.self> trait.
+/// sus::ops::Eq<T> trait for floating point numbers.
 /// #[doc.overloads=float.eq.self]
 template <PrimitiveFloat F>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
-/// sus::ops::Eq<@doc.self, PrimitiveFloat> trait.
+/// sus::ops::Eq<T, U> trait for floating point numbers and primitive floating
+/// point numbers.
 /// #[doc.overloads=float.eq.prim]
-template <PrimitiveFloat F>
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(_self l,
-                                                               F r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+    _self l, PrimitiveFloat auto r) noexcept {
   return (l.primitive_value <=> r) == 0;
 }
-/// sus::ops::Eq<@doc.self, Float> trait.
+/// sus::ops::Eq<T, U> trait for heterogeneous floating point numbers.
 /// #[doc.overloads=float.eq.float]
-template <Float F>
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(_self l,
-                                                               F r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+    _self l, Float auto r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
 
-/// sus::ops::PartialOrd<@doc.self, PrimitiveFloat> trait.
+/// sus::ops::PartialOrd<T> trait for floating point numbers.
 /// #[doc.overloads=float.ord.self]
-template <PrimitiveFloat F>
 [[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
     _self l, _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
-/// sus::ops::PartialOrd<@doc.self, PrimitiveFloat> trait.
+/// sus::ops::PartialOrd<T, U> trait for floating point numbers and primitive
+/// floating point numbers.
 /// #[doc.overloads=float.ord.prim]
-template <PrimitiveFloat F>
-[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(_self l,
-                                                                F r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
+    _self l, PrimitiveFloat auto r) noexcept {
   return l.primitive_value <=> r;
 }
-/// sus::ops::PartialOrd<@doc.self, Float> trait.
+/// sus::ops::PartialOrd<T, U> trait for heterogeneous floating point numbers.
 /// #[doc.overloads=float.ord.float]
-template <Float F>
-[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(_self l,
-                                                                F r) noexcept {
+[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
+    _self l, Float auto r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 

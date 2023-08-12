@@ -434,43 +434,40 @@ sus_pure constexpr _self signum() const& noexcept {
     return _primitive{primitive_value != 0};
 }
 
-/// sus::ops::Eq<@doc.self> trait.
+/// sus::ops::Eq<T> trait for signed integers.
 /// #[doc.overloads=int.eq.self] */
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
-    const _self& l, const _self& r) noexcept = default;
-/// sus::ops::Eq<@doc.self, SignedPrimitiveInteger> trait.
+     _self l,  _self r) noexcept = default;
+/// sus::ops::Eq<T, U> trait for signed integers and primitive signed
+/// integers.
 /// #[doc.overloads=int.eq.signedprimitive] */
-template <SignedPrimitiveInteger P>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
-    const _self& l, const P& r) noexcept {
+     _self l,  SignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value == r;
 }
-/// sus::ops::Eq<@doc.self, Signed> trait.
+/// sus::ops::Eq<T, U> trait for heterogeneous signed integers.
 /// #[doc.overloads=int.eq.signed] */
-template <Signed S>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
-    const _self& l, const S& r) noexcept {
+     _self l,  Signed auto r) noexcept {
   return l.primitive_value == r.primitive_value;
 }
-/// sus::ops::StrongOrd<@doc.self> trait.
+/// sus::ops::StrongOrd<T> trait for signed integers.
 /// #[doc.overloads=int.ord.self] */
-template <UnsignedPrimitiveInteger P>
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
-    const _self& l, const _self& r) noexcept {
+     _self l,  _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
-/// sus::ops::StrongOrd<@doc.self, SignedPrimitiveInteger> trait.
+/// sus::ops::StrongOrd<T, U> trait for signed integers and primitive signed
+/// integers.
 /// #[doc.overloads=int.ord.signedprimitive] */
-template <SignedPrimitiveInteger P>
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
-    const _self& l, const P& r) noexcept {
+     _self l,  SignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value <=> r;
 }
-/// sus::ops::StrongOrd<@doc.self, Signed> trait.
+/// sus::ops::StrongOrd<T, U> trait for heterogeneous signed integers.
 /// #[doc.overloads=int.ord.signed] */
-template <Signed S>
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
-    const _self& l, const S& r) noexcept {
+     _self l,  Signed auto r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 
