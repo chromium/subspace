@@ -25,7 +25,7 @@ void generate_record(const RecordElement& element,
                      sus::Vec<const RecordElement*> type_ancestors,
                      const Options& options) noexcept;
 
-void generate_record_reference(HtmlWriter::OpenDiv& section_div,
+void generate_record_reference(HtmlWriter::OpenUl& items_list,
                                const RecordElement& element) noexcept;
 
 }  // namespace subdoc::gen
