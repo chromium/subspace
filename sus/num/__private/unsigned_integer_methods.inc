@@ -29,8 +29,8 @@
 // Define `_pointer` to true if the type is `uptr` or false otherwise.
 ///////////////////////////////////////////////////////////////////////////
 
-/// The inner primitive value, in case it needs to be unwrapped from the type.
-/// Avoid using this member except to convert when a consumer requires it.
+/// The inner primitive value. Prefer to cast to the desired primitive type,
+/// such as with `uint32_t{n}` for a Subspace numeric value `n`.
 _primitive primitive_value{0u};
 
 /// The smallest value that can be represented by this integer type, as a native
@@ -485,8 +485,8 @@ sus_pure constexpr inline explicit operator U() const {
 ///
 /// Typically this should be used in a curly-brace conversion statement such as
 /// `uint32_t{3_i32}` which will ensure a compiler error if the conversion can
-/// lose data. Lossy conversions can be done through the `sus::convert::Transmogrify`
-/// concept, such as `sus::mog<uint32_t>(3_i32)` or
+/// lose data. Lossy conversions can be done through the
+/// `sus::convert::Transmogrify` concept, such as `sus::mog<uint32_t>(3_i32)` or
 /// `sus::mog<int32_t>(3_i32)`.
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())

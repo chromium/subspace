@@ -28,9 +28,8 @@
 // Define `_unsigned` to the unsigned integer type of the same size.
 ///////////////////////////////////////////////////////////////////////////
 
-/// The inner primitive value, in case it needs to be unwrapped from the
-/// type. Avoid using this member except to convert when a consumer requires
-/// it.
+/// The inner primitive value. Prefer to cast to the desired primitive type,
+/// such as with `int32_t{n}` for a numeric value `n`.
 _primitive primitive_value{0};
 
 /// The smallest value that can be represented by this integer type,
