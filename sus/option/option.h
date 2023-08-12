@@ -108,6 +108,8 @@ constexpr Option<T> from_sum_impl(Iter&& it) noexcept;
 /// owns the `T` in that case and it ensures the `Option` and the `T` are both
 /// accessed with the same const-ness.
 ///
+/// Representation
+///
 /// If a type `T` is a reference or satisties `sus::mem::NeverValueField`, then
 /// `Option<T>` will have the same size as T and will be internally represented
 /// as just a `T` (or `T*` in the case of a reference `T&`).
@@ -199,11 +201,13 @@ class Option final {
   {
     return with(val);
   }
+  /// #[doc.overloads=from.t]
   static constexpr Option from(T&& val) noexcept
     requires(!std::is_reference_v<T>)
   {
     return with(::sus::move(val));
   }
+  /// #[doc.overloads=from.t]
   template <std::convertible_to<T> U>
   sus_pure static constexpr Option from(U&& val sus_lifetimebound) noexcept
     requires(std::is_reference_v<T> &&
