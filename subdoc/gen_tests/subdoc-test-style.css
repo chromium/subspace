@@ -47,7 +47,7 @@ pre {
 }
 
 .type .overview .project-name {
-    color: rgb(173, 48, 153);
+    color: rgb(207, 66, 184);
 }
 .type .overview .namespace-name {
     color: rgb(130, 221, 135);
@@ -91,7 +91,7 @@ pre {
 }
 
 .namespace .overview .project-name {
-    color: rgb(173, 48, 153);
+    color: rgb(207, 66, 184);
 }
 .namespace .overview .namespace-name {
     color: rgb(130, 221, 135);
