@@ -56,6 +56,10 @@ class HtmlWriter {
       write_open();
       return writer_.open_span(has_newlines_, newlines);
     }
+    auto open_ul() noexcept {
+      write_open();
+      return writer_.open_ul(has_newlines_);
+    }
     auto open_a() noexcept {
       write_open();
       return writer_.open_a(has_newlines_);
@@ -181,6 +185,57 @@ class HtmlWriter {
     }
   };
 
+  class [[nodiscard]] OpenUl : public Html {
+   public:
+    ~OpenUl() noexcept {
+      write_open();
+      writer_.write_close("ul", inside_has_newlines_, has_newlines_);
+    }
+
+    auto open_li() noexcept {
+      write_open();
+      return writer_.open_li(has_newlines_);
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenUl(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("ul", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
+  class [[nodiscard]] OpenLi : public Html {
+   public:
+    ~OpenLi() noexcept {
+      write_open();
+      writer_.write_close("li", inside_has_newlines_, has_newlines_);
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenLi(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("li", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
   class [[nodiscard]] OpenBody : public Html {
    public:
     ~OpenBody() noexcept {
@@ -294,7 +349,9 @@ class HtmlWriter {
   };
 
   explicit HtmlWriter(std::ofstream stream) noexcept
-      : stream_(sus::move(stream)) {}
+      : stream_(sus::move(stream)) {
+    stream_ << "<!DOCTYPE html>\n\n";
+  }
   ~HtmlWriter() noexcept { stream_.close(); }
 
   OpenBody open_body() noexcept { return OpenBody(*this); }
@@ -305,6 +362,8 @@ class HtmlWriter {
  private:
   friend class OpenDiv;
   friend class OpenSpan;
+  friend class OpenUl;
+  friend class OpenLi;
 
   OpenDiv open_div(bool inside_has_newlines) noexcept {
     return OpenDiv(*this, inside_has_newlines);
@@ -312,6 +371,12 @@ class HtmlWriter {
   OpenSpan open_span(bool inside_has_newlines,
                      NewlineStrategy newlines) noexcept {
     return OpenSpan(*this, inside_has_newlines, newlines);
+  }
+  OpenUl open_ul(bool inside_has_newlines) noexcept {
+    return OpenUl(*this, inside_has_newlines);
+  }
+  OpenLi open_li(bool inside_has_newlines) noexcept {
+    return OpenLi(*this, inside_has_newlines);
   }
   OpenA open_a(bool inside_has_newlines) noexcept {
     return OpenA(*this, inside_has_newlines);
@@ -361,11 +426,10 @@ class HtmlWriter {
     }
   }
 
-  void write_open(
-      std::string_view type,
-      sus::iter::Iterator<const std::string&> auto classes_iter,
-      sus::iter::Iterator<const HtmlAttribute&> auto attr_iter,
-      bool inside_has_newlines, bool has_newlines) noexcept {
+  void write_open(std::string_view type,
+                  sus::iter::Iterator<const std::string&> auto classes_iter,
+                  sus::iter::Iterator<const HtmlAttribute&> auto attr_iter,
+                  bool inside_has_newlines, bool has_newlines) noexcept {
     if (inside_has_newlines) write_indent();
     stream_ << "<" << type;
     if (sus::Option<const std::string&> first_class = classes_iter.next();

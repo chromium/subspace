@@ -106,6 +106,7 @@ void generate_namespace_overview(
     if (element.has_comment()) {
       auto desc_div = header_div.open_div();
       desc_div.add_class("description");
+      desc_div.add_class("long");
       desc_div.write_html(element.comment.full());
     }
   }
@@ -126,8 +127,12 @@ void generate_namespace_namespaces(
     header_div.write_text("Namespaces");
   }
   {
+    auto items_list = section_div.open_ul();
+    items_list.add_class("section-items");
+    items_list.add_class("item-table");
+
     for (auto&& [name, sort_key, id] : namespaces)
-      generate_namespace_reference(section_div, element.namespaces.at(id));
+      generate_namespace_reference(items_list, element.namespaces.at(id));
   }
 }
 
@@ -156,15 +161,25 @@ void generate_namespace_records(HtmlWriter::OpenDiv& namespace_div,
     }
   }
   {
+    auto items_list = section_div.open_ul();
+    items_list.add_class("section-items");
+    items_list.add_class("item-table");
+
     for (auto&& [name, sort_key, key] : records) {
-      generate_record_reference(section_div, element.records.at(key));
+      generate_record_reference(items_list, element.records.at(key));
     }
   }
 }
 
+enum GenerateFunctionType {
+  GenerateFunctions,
+  GenerateOperators,
+};
+
 void generate_namespace_functions(HtmlWriter::OpenDiv& namespace_div,
                                   const NamespaceElement& element,
-                                  sus::Slice<SortedFunctionByName> functions) {
+                                  sus::Slice<SortedFunctionByName> functions,
+                                  GenerateFunctionType type) {
   if (functions.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -174,9 +189,16 @@ void generate_namespace_functions(HtmlWriter::OpenDiv& namespace_div,
   {
     auto header_div = section_div.open_div();
     header_div.add_class("section-header");
-    header_div.write_text("Functions");
+    switch (type) {
+      case GenerateFunctions: header_div.write_text("Functions"); break;
+      case GenerateOperators: header_div.write_text("Operators"); break;
+    }
   }
   {
+    auto items_list = section_div.open_ul();
+    items_list.add_class("section-items");
+    items_list.add_class("item-table");
+
     u32 overload_set;
     std::string_view prev_name;
     for (auto&& [name, sort_key, function_id] : functions) {
@@ -185,8 +207,8 @@ void generate_namespace_functions(HtmlWriter::OpenDiv& namespace_div,
       else
         overload_set = 0u;
       prev_name = name;
-      generate_function(section_div, element.functions.at(function_id),
-                        /*is_static=*/false, overload_set);
+      generate_function_reference(items_list, element.functions.at(function_id),
+                                  /*is_static=*/false, overload_set);
     }
   }
 }
@@ -263,8 +285,10 @@ void generate_namespace(const NamespaceElement& element,
   {
     sus::Vec<SortedFunctionByName> sorted;
     for (const auto& [function_id, sub_element] : element.functions) {
-      sorted.push(
-          sus::tuple(sub_element.name, sub_element.sort_key, function_id));
+      if (!sub_element.is_operator) {
+        sorted.push(
+            sus::tuple(sub_element.name, sub_element.sort_key, function_id));
+      }
     }
     sorted.sort_unstable_by(
         [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
@@ -273,7 +297,27 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_functions(namespace_div, element, sorted.as_slice());
+    generate_namespace_functions(namespace_div, element, sorted.as_slice(),
+                                 GenerateFunctions);
+  }
+
+  {
+    sus::Vec<SortedFunctionByName> sorted;
+    for (const auto& [function_id, sub_element] : element.functions) {
+      if (sub_element.is_operator) {
+        sorted.push(
+            sus::tuple(sub_element.name, sub_element.sort_key, function_id));
+      }
+    }
+    sorted.sort_unstable_by(
+        [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+          auto ord = a.at<0>() <=> b.at<0>();
+          if (ord != 0) return ord;
+          return a.at<1>() <=> b.at<1>();
+        });
+
+    generate_namespace_functions(namespace_div, element, sorted.as_slice(),
+                                 GenerateOperators);
   }
 
   // Recurse into namespaces and records.
@@ -286,14 +330,17 @@ void generate_namespace(const NamespaceElement& element,
   }
 }
 
-void generate_namespace_reference(HtmlWriter::OpenDiv& section_div,
+void generate_namespace_reference(HtmlWriter::OpenUl& items_list,
                                   const NamespaceElement& element) noexcept {
   if (element.is_empty()) return;
 
-  auto item_div = section_div.open_div();
-  item_div.add_class("section-item");
+  auto item_li = items_list.open_li();
+  item_li.add_class("section-item");
 
   {
+    auto item_div = item_li.open_div();
+    item_div.add_class("item-name");
+
     auto name_link = item_div.open_a();
     name_link.add_class("namespace-name");
     name_link.add_href(
@@ -302,8 +349,9 @@ void generate_namespace_reference(HtmlWriter::OpenDiv& section_div,
     name_link.write_text(element.name);
   }
   if (element.has_comment()) {
-    auto desc_div = item_div.open_div();
+    auto desc_div = item_li.open_div();
     desc_div.add_class("description");
+    desc_div.add_class("short");
     desc_div.write_html(element.comment.summary());
   }
 }

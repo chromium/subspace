@@ -119,29 +119,33 @@ struct FunctionParameter {
 struct FunctionOverload {
   sus::Vec<FunctionParameter> parameters;
   sus::Option<MethodSpecific> method;
+  // The return type is in the overload info because operator overloads can each
+  // have different return types, e.g. operator+(int, int) vs
+  // operator+(char, char).
+  sus::Option<const TypeElement&> return_type_element;
+  std::string return_type_name;
+  std::string return_short_type_name;
 
   // TODO: `noexcept` stuff from FunctionDecl::getExceptionSpecType().
 };
 
 struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
-                           Comment comment, std::string name,
+                           Comment comment, std::string name, bool is_operator,
                            clang::QualType return_qual_type,
                            sus::Vec<FunctionParameter> parameters, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
-        return_type_name(friendly_type_name(return_qual_type)),
-        return_short_type_name(friendly_short_type_name(return_qual_type)) {
+        is_operator(is_operator) {
     overloads.push(FunctionOverload{
         .parameters = sus::move(parameters),
         .method = sus::none(),
+        .return_type_name = friendly_type_name(return_qual_type),
+        .return_short_type_name = friendly_short_type_name(return_qual_type),
     });
   }
 
-  sus::Option<const TypeElement&> return_type_element;
-  std::string return_type_name;
-  std::string return_short_type_name;
-
+  bool is_operator;
   sus::Vec<FunctionOverload> overloads;
 
   bool has_any_comments() const noexcept { return has_comment(); }
@@ -726,8 +730,8 @@ struct Database {
       return sus::some(*cursor);
     }();
     if (ns_cursor.is_none()) {
-      llvm::errs() << "WARNING: Unable to find namespace for type '"
-                   << qual.getAsString() << "'\n";
+      // llvm::errs() << "WARNING: Unable to find namespace for type '"
+      //              << qual.getAsString() << "'\n";
       return sus::none();
     }
 

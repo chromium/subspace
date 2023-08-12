@@ -3,7 +3,7 @@ body {
     color: white;
     background-color: rgb(59, 59, 59);
     margin: 1.2em;
-    font-family: Arial Verdana sans-serif;
+    font-family: Arial, Verdana, sans-serif;
 }
 
 pre {
@@ -20,10 +20,6 @@ pre {
     border-bottom: 1px solid;
 }
 
-.section-item {
-    margin-top: 0.75em;
-}
-
 .overload {
     /* Hides the space between `function-name` and `()`. */
     display: flex;
@@ -32,7 +28,14 @@ pre {
     margin-right: 0.2em;  /* Put back the space after other elements */
 }
 
-.description {
+.description.short {
+    margin: 0;
+}
+.description.short p {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+.description.long {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     margin-left: 1em;
@@ -104,4 +107,20 @@ pre {
 }
 .namespace .type-name {
     color: rgb(105, 223, 105);
+}
+
+.item-table {
+    display: table;
+    overflow-wrap: break-word;
+}
+.item-table > li {
+    display: table-row;
+}
+.item-table > li > div {
+    display: table-cell;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
+.item-table .item-name {
+    padding-right: 1.25rem;
 }

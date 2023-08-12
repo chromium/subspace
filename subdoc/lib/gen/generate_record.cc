@@ -102,6 +102,7 @@ void generate_record_overview(
   if (element.has_comment()) {
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
+    desc_div.add_class("long");
     desc_div.write_html(element.comment.full());
   }
 }
@@ -123,56 +124,66 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
                                                : "Data Members");
   }
   {
+    auto items_list = section_div.open_ul();
+    items_list.add_class("section-items");
+    items_list.add_class("item-table");
+
     for (auto&& [name, sort_key, field_unique_symbol] : fields) {
       const FieldElement& fe = element.fields.at(field_unique_symbol);
 
-      auto field_div = section_div.open_div();
-      field_div.add_class("section-item");
+      auto field_li = items_list.open_li();
+      field_li.add_class("section-item");
 
-      if (static_fields) {
-        auto static_span = field_div.open_span();
-        static_span.add_class("static");
-        static_span.write_text("static");
-      }
-      if (fe.is_const) {
-        auto field_type_span = field_div.open_span();
-        field_type_span.add_class("const");
-        field_type_span.write_text("const");
-      }
-      if (fe.is_volatile) {
-        auto field_type_span = field_div.open_span();
-        field_type_span.add_class("volatile");
-        field_type_span.write_text("volatile");
-      }
       {
-        auto field_type_link = field_div.open_a();
-        field_type_link.add_class("type-name");
-        field_type_link.add_title(fe.type_name);
-        if (fe.type_element.is_some()) {
-          field_type_link.add_href(
-              construct_html_file_path(
-                  std::filesystem::path(),
-                  fe.type_element->namespace_path.as_slice(),
-                  fe.type_element->record_path.as_slice(),
-                  fe.type_element->name)
-                  .string());
+        auto name_div = field_li.open_div();
+        name_div.add_class("item-name");
+
+        if (static_fields) {
+          auto static_span = name_div.open_span();
+          static_span.add_class("static");
+          static_span.write_text("static");
         }
-        field_type_link.write_text(fe.short_type_name);
-      }
-      {
-        auto field_name_anchor = field_div.open_a();
-        std::ostringstream anchor;
-        anchor << "field.";
-        anchor << (static_fields ? "static." : "");
-        anchor << fe.name;
-        field_name_anchor.add_name(anchor.str());
-        field_name_anchor.add_href(std::string("#") + anchor.str());
-        field_name_anchor.add_class("field-name");
-        field_name_anchor.write_text(fe.name);
+        if (fe.is_const) {
+          auto field_type_span = name_div.open_span();
+          field_type_span.add_class("const");
+          field_type_span.write_text("const");
+        }
+        if (fe.is_volatile) {
+          auto field_type_span = name_div.open_span();
+          field_type_span.add_class("volatile");
+          field_type_span.write_text("volatile");
+        }
+        {
+          auto field_type_link = name_div.open_a();
+          field_type_link.add_class("type-name");
+          field_type_link.add_title(fe.type_name);
+          if (fe.type_element.is_some()) {
+            field_type_link.add_href(
+                construct_html_file_path(
+                    std::filesystem::path(),
+                    fe.type_element->namespace_path.as_slice(),
+                    fe.type_element->record_path.as_slice(),
+                    fe.type_element->name)
+                    .string());
+          }
+          field_type_link.write_text(fe.short_type_name);
+        }
+        {
+          auto field_name_anchor = name_div.open_a();
+          std::ostringstream anchor;
+          anchor << "field.";
+          anchor << (static_fields ? "static." : "");
+          anchor << fe.name;
+          field_name_anchor.add_name(anchor.str());
+          field_name_anchor.add_href(std::string("#") + anchor.str());
+          field_name_anchor.add_class("field-name");
+          field_name_anchor.write_text(fe.name);
+        }
       }
       if (fe.has_comment()) {
-        auto desc_div = field_div.open_div();
+        auto desc_div = field_li.open_div();
         desc_div.add_class("description");
+        desc_div.add_class("long");
         desc_div.write_html(fe.comment.full());
       }
     }
@@ -196,6 +207,9 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
                                                  : "Methods");
   }
   {
+    auto items_div = section_div.open_div();
+    items_div.add_class("section-items");
+
     u32 overload_set;
     std::string_view prev_name;
     for (auto&& [name, sort_key, function_id] : methods) {
@@ -204,8 +218,9 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
       else
         overload_set = 0u;
       prev_name = name;
-      generate_function(section_div, element.methods.at(function_id),
-                        static_methods, overload_set);
+      generate_function_long_reference(items_div,
+                                       element.methods.at(function_id),
+                                       static_methods, overload_set);
     }
   }
 }
@@ -320,22 +335,18 @@ void generate_record(const RecordElement& element,
   }
 }
 
-void generate_record_reference(HtmlWriter::OpenDiv& section_div,
+void generate_record_reference(HtmlWriter::OpenUl& items_list,
                                const RecordElement& element) noexcept {
-  auto item_div = section_div.open_div();
-  item_div.add_class("section-item");
+  auto item_li = items_list.open_li();
+  item_li.add_class("section-item");
 
   {
+    auto item_div = item_li.open_div();
+    item_div.add_class("item-name");
+
     auto type_sig_div = item_div.open_div();
     type_sig_div.add_class("type-signature");
 
-    {
-      auto record_type_span = type_sig_div.open_span();
-      std::string record_type_name =
-          friendly_record_type_name(element.record_type, false);
-      record_type_span.add_class(record_type_name);
-      record_type_span.write_text(record_type_name);
-    }
     {
       auto name_link = type_sig_div.open_a();
       name_link.add_class("type-name");
@@ -348,8 +359,9 @@ void generate_record_reference(HtmlWriter::OpenDiv& section_div,
     }
   }
   if (element.has_comment()) {
-    auto desc_div = item_div.open_div();
+    auto desc_div = item_li.open_div();
     desc_div.add_class("description");
+    desc_div.add_class("short");
     desc_div.write_html(element.comment.summary());
   }
 }

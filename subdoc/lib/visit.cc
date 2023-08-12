@@ -268,6 +268,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
+    if (decl->isTemplateInstantiation()) return true;
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
@@ -344,10 +345,12 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
       auto fe = FunctionElement(
           iter_namespace_path(decl).collect_vec(), sus::move(comment),
-          decl->getNameAsString(), decl->getReturnType(), sus::move(params),
+          decl->getNameAsString(), decl->isOverloadedOperator(),
+          decl->getReturnType(), sus::move(params),
           decl->getASTContext().getSourceManager().getFileOffset(
               decl->getLocation()));
-      fe.return_type_element = docs_db_.find_type(decl->getReturnType());
+      fe.overloads[0u].return_type_element =
+          docs_db_.find_type(decl->getReturnType());
 
       if (clang::isa<clang::CXXMethodDecl>(decl)) {
         sus::check(clang::isa<clang::RecordDecl>(context));
@@ -535,12 +538,14 @@ class AstConsumer : public clang::ASTConsumer {
     for (clang::Decl* decl : group_ref) {
       clang::SourceManager& sm = decl->getASTContext().getSourceManager();
 
-      // Don't visit the same file repeatedly.
-      auto v = VisitedLocation(decl->getLocation().printToString(sm));
-      if (cx_.visited_locations.contains(v)) {
-        continue;
+      if (!decl->getLocation().isMacroID()) {
+        // Don't visit the same file repeatedly.
+        auto v = VisitedLocation(decl->getLocation().printToString(sm));
+        if (cx_.visited_locations.contains(v)) {
+          continue;
+        }
+        cx_.visited_locations.emplace(sus::move(v));
       }
-      cx_.visited_locations.emplace(sus::move(v));
 
       if (!cx_.should_include_decl_based_on_file(decl)) {
         continue;
@@ -646,8 +651,7 @@ bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {
       return true;
     }
   }
-  // SAFETY: All enum values are covered in the switch, and they all return.
-  sus::unreachable_unchecked(unsafe_fn);
+  sus::unreachable();
 }
 
 }  // namespace subdoc

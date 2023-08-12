@@ -24,14 +24,13 @@
 
 namespace subdoc::gen {
 
-void generate_function(HtmlWriter::OpenDiv& section_div,
-                       const FunctionElement& element, bool is_static,
-                       u32 overload_set) noexcept {
-  auto item_div = section_div.open_div();
-  item_div.add_class("section-item");
+namespace {
 
+void generate_overload_set(HtmlWriter::OpenDiv& div,
+                           const FunctionElement& element, bool is_static,
+                           u32 overload_set) noexcept {
   for (const FunctionOverload& overload : element.overloads) {
-    auto overload_div = item_div.open_div();
+    auto overload_div = div.open_div();
     overload_div.add_class("overload");
 
     if (is_static) {
@@ -42,17 +41,17 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
     {
       auto return_type_link = overload_div.open_a();
       return_type_link.add_class("type-name");
-      return_type_link.add_title(element.return_type_name);
-      if (element.return_type_element.is_some()) {
+      return_type_link.add_title(overload.return_type_name);
+      if (overload.return_type_element.is_some()) {
         return_type_link.add_href(
             construct_html_file_path(
                 std::filesystem::path(),
-                element.return_type_element->namespace_path.as_slice(),
-                element.return_type_element->record_path.as_slice(),
-                element.return_type_element->name)
+                overload.return_type_element->namespace_path.as_slice(),
+                overload.return_type_element->record_path.as_slice(),
+                overload.return_type_element->name)
                 .string());
       }
-      return_type_link.write_text(element.return_short_type_name);
+      return_type_link.write_text(overload.return_short_type_name);
     }
     {
       auto name_anchor = overload_div.open_a();
@@ -141,9 +140,44 @@ void generate_function(HtmlWriter::OpenDiv& section_div,
       }
     }
   }
+}
+
+}  // namespace
+
+void generate_function_reference(HtmlWriter::OpenUl& items_list,
+                                 const FunctionElement& element, bool is_static,
+                                 u32 overload_set) noexcept {
+  auto item_li = items_list.open_li();
+  item_li.add_class("section-item");
+
+  {
+    auto overload_set_div = item_li.open_div();
+    overload_set_div.add_class("overload-set");
+    overload_set_div.add_class("item-name");
+    generate_overload_set(overload_set_div, element, is_static, overload_set);
+  }
+  if (element.has_comment()) {
+    auto desc_div = item_li.open_div();
+    desc_div.add_class("description");
+    desc_div.add_class("short");
+    desc_div.write_html(element.comment.summary());
+  }
+}
+
+void generate_function_long_reference(HtmlWriter::OpenDiv& item_div,
+                                      const FunctionElement& element,
+                                      bool is_static,
+                                      u32 overload_set) noexcept {
+  {
+    auto overload_set_div = item_div.open_div();
+    overload_set_div.add_class("overload-set");
+    overload_set_div.add_class("item-name");
+    generate_overload_set(overload_set_div, element, is_static, overload_set);
+  }
   if (element.has_comment()) {
     auto desc_div = item_div.open_div();
     desc_div.add_class("description");
+    desc_div.add_class("long");
     desc_div.write_html(element.comment.full());
   }
 }
