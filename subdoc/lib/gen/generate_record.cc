@@ -124,18 +124,17 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
                                                : "Data Members");
   }
   {
-    auto items_list = section_div.open_ul();
-    items_list.add_class("section-items");
-    items_list.add_class("item-table");
+    auto items_div = section_div.open_div();
+    items_div.add_class("section-items");
 
     for (auto&& [name, sort_key, field_unique_symbol] : fields) {
       const FieldElement& fe = element.fields.at(field_unique_symbol);
 
-      auto field_li = items_list.open_li();
-      field_li.add_class("section-item");
+      auto field_div = items_div.open_div();
+      field_div.add_class("section-item");
 
       {
-        auto name_div = field_li.open_div();
+        auto name_div = field_div.open_div();
         name_div.add_class("item-name");
 
         if (static_fields) {
@@ -181,7 +180,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
         }
       }
       if (fe.has_comment()) {
-        auto desc_div = field_li.open_div();
+        auto desc_div = field_div.open_div();
         desc_div.add_class("description");
         desc_div.add_class("long");
         desc_div.write_html(fe.comment.full());
