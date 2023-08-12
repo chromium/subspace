@@ -26,32 +26,39 @@ namespace subdoc::gen {
 
 namespace {
 
+enum Style {
+  StyleShort,
+  StyleLong,
+};
+
 void generate_overload_set(HtmlWriter::OpenDiv& div,
                            const FunctionElement& element, bool is_static,
-                           u32 overload_set) noexcept {
+                           u32 overload_set, Style style) noexcept {
   for (const FunctionOverload& overload : element.overloads) {
     auto overload_div = div.open_div();
     overload_div.add_class("overload");
 
-    if (is_static) {
-      auto static_span = overload_div.open_span();
-      static_span.add_class("static");
-      static_span.write_text("static");
-    }
-    {
-      auto return_type_link = overload_div.open_a();
-      return_type_link.add_class("type-name");
-      return_type_link.add_title(overload.return_type_name);
-      if (overload.return_type_element.is_some()) {
-        return_type_link.add_href(
-            construct_html_file_path(
-                std::filesystem::path(),
-                overload.return_type_element->namespace_path.as_slice(),
-                overload.return_type_element->record_path.as_slice(),
-                overload.return_type_element->name)
-                .string());
+    if (style == StyleLong) {
+      if (is_static) {
+        auto static_span = overload_div.open_span();
+        static_span.add_class("static");
+        static_span.write_text("static");
       }
-      return_type_link.write_text(overload.return_short_type_name);
+      {
+        auto return_type_link = overload_div.open_a();
+        return_type_link.add_class("type-name");
+        return_type_link.add_title(overload.return_type_name);
+        if (overload.return_type_element.is_some()) {
+          return_type_link.add_href(
+              construct_html_file_path(
+                  std::filesystem::path(),
+                  overload.return_type_element->namespace_path.as_slice(),
+                  overload.return_type_element->record_path.as_slice(),
+                  overload.return_type_element->name)
+                  .string());
+        }
+        return_type_link.write_text(overload.return_short_type_name);
+      }
     }
     {
       auto name_anchor = overload_div.open_a();
@@ -68,7 +75,8 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       name_anchor.add_class("function-name");
       name_anchor.write_text(element.name);
     }
-    {
+
+    if (style == StyleLong) {
       auto params_span = overload_div.open_span(HtmlWriter::SingleLine);
       params_span.add_class("function-params");
       params_span.write_text("(");
@@ -90,55 +98,56 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         write_comma = true;
       }
       params_span.write_text(")");
-    }
-    if (overload.method.is_some()) {
-      if (overload.method->is_volatile) {
-        auto volatile_span = overload_div.open_span();
-        volatile_span.add_class("volatile");
-        volatile_span.write_text("volatile");
-      }
-      {
-        switch (overload.method->qualifier) {
-          case MethodQualifier::Const: {
-            auto qualifier_span = overload_div.open_span();
-            qualifier_span.add_class("const");
-            qualifier_span.write_text("const");
-            break;
-          }
-          case MethodQualifier::ConstLValue: {
-            auto qualifier_span = overload_div.open_span();
-            qualifier_span.add_class("const");
-            qualifier_span.add_class("ref");
-            qualifier_span.write_text("const&");
-            break;
-          }
-          case MethodQualifier::ConstRValue: {
-            auto qualifier_span = overload_div.open_span();
-            qualifier_span.add_class("const");
-            qualifier_span.add_class("rref");
-            qualifier_span.write_text("const&&");
-            break;
-          }
-          case MethodQualifier::Mutable: {
-            break;
-          }
-          case MethodQualifier::MutableLValue: {
-            auto qualifier_span = overload_div.open_span();
-            qualifier_span.add_class("mutable");
-            qualifier_span.add_class("ref");
-            qualifier_span.write_text("&");
-            break;
-          }
-          case MethodQualifier::MutableRValue: {
-            auto qualifier_span = overload_div.open_span();
-            qualifier_span.add_class("mutable");
-            qualifier_span.add_class("rref");
-            qualifier_span.write_text("&&");
-            break;
+      if (overload.method.is_some()) {
+        if (overload.method->is_volatile) {
+          auto volatile_span = overload_div.open_span();
+          volatile_span.add_class("volatile");
+          volatile_span.write_text("volatile");
+        }
+        {
+          switch (overload.method->qualifier) {
+            case MethodQualifier::Const: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("const");
+              qualifier_span.write_text("const");
+              break;
+            }
+            case MethodQualifier::ConstLValue: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("const");
+              qualifier_span.add_class("ref");
+              qualifier_span.write_text("const&");
+              break;
+            }
+            case MethodQualifier::ConstRValue: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("const");
+              qualifier_span.add_class("rref");
+              qualifier_span.write_text("const&&");
+              break;
+            }
+            case MethodQualifier::Mutable: {
+              break;
+            }
+            case MethodQualifier::MutableLValue: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("mutable");
+              qualifier_span.add_class("ref");
+              qualifier_span.write_text("&");
+              break;
+            }
+            case MethodQualifier::MutableRValue: {
+              auto qualifier_span = overload_div.open_span();
+              qualifier_span.add_class("mutable");
+              qualifier_span.add_class("rref");
+              qualifier_span.write_text("&&");
+              break;
+            }
           }
         }
       }
     }
+    if (style == StyleShort) break;
   }
 }
 
@@ -154,7 +163,12 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
     auto overload_set_div = item_li.open_div();
     overload_set_div.add_class("overload-set");
     overload_set_div.add_class("item-name");
-    generate_overload_set(overload_set_div, element, is_static, overload_set);
+
+    // Operator overloads can all have different parameters and return types, so
+    // we display them in long form.
+    Style style = element.is_operator ? StyleLong : StyleShort;
+    generate_overload_set(overload_set_div, element, is_static, overload_set,
+                          style);
   }
   if (element.has_comment()) {
     auto desc_div = item_li.open_div();
@@ -172,7 +186,8 @@ void generate_function_long_reference(HtmlWriter::OpenDiv& item_div,
     auto overload_set_div = item_div.open_div();
     overload_set_div.add_class("overload-set");
     overload_set_div.add_class("item-name");
-    generate_overload_set(overload_set_div, element, is_static, overload_set);
+    generate_overload_set(overload_set_div, element, is_static, overload_set,
+                          StyleLong);
   }
   if (element.has_comment()) {
     auto desc_div = item_div.open_div();
