@@ -230,6 +230,8 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
             std::string_view name = v.substr(strlen("overloads="));
             attrs.overload_set =
                 sus::some(std::hash<std::string_view>()(name.data()));
+          } else if (v == "hidden") {
+            attrs.hidden = true;
           } else if (v.starts_with("inherit=")) {
             std::string_view name = v.substr(strlen("inherit="));
             auto vec = sus::Vec<InheritPathElement>();

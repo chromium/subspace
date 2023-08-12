@@ -113,7 +113,7 @@ void generate_namespace_overview(
   }
 }
 
-void generate_namespace_namespaces(
+void generate_namespace_references(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
     sus::Slice<SortedNamespaceByName> namespaces) {
   if (namespaces.is_empty()) return;
@@ -137,7 +137,7 @@ void generate_namespace_namespaces(
   }
 }
 
-void generate_namespace_records(HtmlWriter::OpenDiv& namespace_div,
+void generate_record_references(HtmlWriter::OpenDiv& namespace_div,
                                 const NamespaceElement& element,
                                 sus::Slice<SortedRecordByName> records,
                                 RecordType record_type) {
@@ -177,7 +177,7 @@ enum GenerateFunctionType {
   GenerateOperators,
 };
 
-void generate_namespace_functions(HtmlWriter::OpenDiv& namespace_div,
+void generate_function_references(HtmlWriter::OpenDiv& namespace_div,
                                   const NamespaceElement& element,
                                   sus::Slice<SortedFunctionByName> functions,
                                   GenerateFunctionType type) {
@@ -220,6 +220,7 @@ void generate_namespace(const NamespaceElement& element,
                         sus::Vec<const NamespaceElement*> ancestors,
                         const Options& options) noexcept {
   if (element.is_empty()) return;
+  if (element.hidden()) return;
 
   const std::filesystem::path path =
       construct_html_file_path_for_namespace(options.output_root, element);
@@ -238,6 +239,9 @@ void generate_namespace(const NamespaceElement& element,
   {
     sus::Vec<SortedNamespaceByName> sorted;
     for (const auto& [key, sub_element] : element.namespaces) {
+      if (sub_element.hidden()) continue;
+      if (sub_element.is_empty()) continue;
+
       sorted.push(sus::tuple(sub_element.name, sub_element.sort_key, key));
     }
     sorted.sort_unstable_by(
@@ -247,13 +251,15 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_namespaces(namespace_div, element, sorted.as_slice());
+    generate_namespace_references(namespace_div, element, sorted.as_slice());
   }
 
   {
     sus::Vec<SortedRecordByName> classes;
     sus::Vec<SortedRecordByName> unions;
     for (const auto& [key, sub_element] : element.records) {
+      if (sub_element.hidden()) continue;
+
       switch (sub_element.record_type) {
         case RecordType::Class: [[fallthrough]];
         case RecordType::Struct:
@@ -277,86 +283,83 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_records(namespace_div, element, classes.as_slice(),
+    generate_record_references(namespace_div, element, classes.as_slice(),
                                RecordType::Class);
-    generate_namespace_records(namespace_div, element, unions.as_slice(),
+    generate_record_references(namespace_div, element, unions.as_slice(),
                                RecordType::Union);
   }
 
   {
-    sus::Vec<SortedFunctionByName> sorted;
+    sus::Vec<SortedFunctionByName> sorted_functions;
+    sus::Vec<SortedFunctionByName> sorted_operators;
     for (const auto& [function_id, sub_element] : element.functions) {
+      if (sub_element.hidden()) continue;
+
       if (!sub_element.is_operator) {
-        sorted.push(
+        sorted_functions.push(
+            sus::tuple(sub_element.name, sub_element.sort_key, function_id));
+      } else {
+        sorted_operators.push(
             sus::tuple(sub_element.name, sub_element.sort_key, function_id));
       }
     }
-    sorted.sort_unstable_by(
+    sorted_functions.sort_unstable_by(
         [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
           auto ord = a.at<0>() <=> b.at<0>();
           if (ord != 0) return ord;
           return a.at<1>() <=> b.at<1>();
         });
-
-    generate_namespace_functions(namespace_div, element, sorted.as_slice(),
+    sorted_operators.sort_unstable_by(
+        [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+          auto ord = a.at<0>() <=> b.at<0>();
+          if (ord != 0) return ord;
+          return a.at<1>() <=> b.at<1>();
+        });
+    generate_function_references(namespace_div, element, sorted_functions,
                                  GenerateFunctions);
-  }
-
-  {
-    sus::Vec<SortedFunctionByName> sorted;
-    for (const auto& [function_id, sub_element] : element.functions) {
-      if (sub_element.is_operator) {
-        sorted.push(
-            sus::tuple(sub_element.name, sub_element.sort_key, function_id));
-      }
-    }
-    sorted.sort_unstable_by(
-        [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-          auto ord = a.at<0>() <=> b.at<0>();
-          if (ord != 0) return ord;
-          return a.at<1>() <=> b.at<1>();
-        });
-
-    generate_namespace_functions(namespace_div, element, sorted.as_slice(),
+    generate_function_references(namespace_div, element, sorted_operators,
                                  GenerateOperators);
   }
 
-  // Recurse into namespaces and records.
+  // Recurse into namespaces, records and functions.
   ancestors.push(&element);
   for (const auto& [u, sub_element] : element.namespaces) {
+    if (sub_element.hidden()) continue;
     generate_namespace(sub_element, sus::clone(ancestors), options);
   }
   for (const auto& [u, sub_element] : element.records) {
+    if (sub_element.hidden()) continue;
     generate_record(sub_element, ancestors, sus::vec(), options);
   }
-
-  sus::Vec<SortedFunctionByName> sorted;
-  for (const auto& [function_id, sub_element] : element.functions) {
-    sorted.push(
-        sus::tuple(sub_element.name, sub_element.sort_key, function_id));
-  }
-  sorted.sort_unstable_by(
-      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
-  u32 overload_set;
-  std::string_view prev_name;
-  for (auto&& [name, sort_key, function_id] : sorted) {
-    if (name == prev_name)
-      overload_set += 1u;
-    else
-      overload_set = 0u;
-    prev_name = name;
-    generate_function(element.functions.at(function_id), ancestors, overload_set, options);
+  {
+    sus::Vec<SortedFunctionByName> sorted;
+    for (const auto& [function_id, sub_element] : element.functions) {
+      if (sub_element.hidden()) continue;
+      sorted.push(
+          sus::tuple(sub_element.name, sub_element.sort_key, function_id));
+    }
+    sorted.sort_unstable_by(
+        [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+          auto ord = a.at<0>() <=> b.at<0>();
+          if (ord != 0) return ord;
+          return a.at<1>() <=> b.at<1>();
+        });
+    u32 overload_set;
+    std::string_view prev_name;
+    for (auto&& [name, sort_key, function_id] : sorted) {
+      if (name == prev_name)
+        overload_set += 1u;
+      else
+        overload_set = 0u;
+      prev_name = name;
+      generate_function(element.functions.at(function_id), ancestors,
+                        overload_set, options);
+    }
   }
 }
 
 void generate_namespace_reference(HtmlWriter::OpenUl& items_list,
                                   const NamespaceElement& element) noexcept {
-  if (element.is_empty()) return;
-
   auto item_li = items_list.open_li();
   item_li.add_class("section-item");
 
@@ -366,9 +369,15 @@ void generate_namespace_reference(HtmlWriter::OpenUl& items_list,
 
     auto name_link = item_div.open_a();
     name_link.add_class("namespace-name");
-    name_link.add_href(
-        construct_html_file_path_for_namespace(std::filesystem::path(), element)
-            .string());
+    if (!element.hidden()) {
+      name_link.add_href(construct_html_file_path_for_namespace(
+                             std::filesystem::path(), element)
+                             .string());
+    } else {
+      llvm::errs() << "WARNING: Reference to hidden NamespaceElement "
+                   << element.name << " in namespace "
+                   << element.namespace_path;
+    }
     name_link.write_text(element.name);
   }
   if (element.has_comment()) {

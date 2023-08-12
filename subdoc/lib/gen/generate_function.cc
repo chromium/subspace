@@ -46,13 +46,19 @@ void generate_return_type(HtmlWriter::OpenDiv& div,
     return_type_link.add_class("type-name");
     return_type_link.add_title(overload.return_type_name);
     if (overload.return_type_element.is_some()) {
-      return_type_link.add_href(
-          construct_html_file_path(
-              std::filesystem::path(),
-              overload.return_type_element->namespace_path.as_slice(),
-              overload.return_type_element->record_path.as_slice(),
-              overload.return_type_element->name)
-              .string());
+      if (!overload.return_type_element->hidden()) {
+        return_type_link.add_href(
+            construct_html_file_path(
+                std::filesystem::path(),
+                overload.return_type_element->namespace_path.as_slice(),
+                overload.return_type_element->record_path.as_slice(),
+                overload.return_type_element->name)
+                .string());
+      } else {
+        llvm::errs() << "WARNING: Reference to hidden TypeElement "
+                     << overload.return_type_element->name << " in namespace "
+                     << overload.return_type_element->namespace_path;
+      }
     }
     return_type_link.write_text(overload.return_short_type_name);
   }
@@ -70,12 +76,18 @@ void generate_function_signature(HtmlWriter::OpenDiv& div,
     one_param_link.add_class("type-name");
     one_param_link.add_title(p.type_name);
     if (p.type_element.is_some()) {
-      one_param_link.add_href(
-          construct_html_file_path(std::filesystem::path(),
-                                   p.type_element->namespace_path.as_slice(),
-                                   p.type_element->record_path.as_slice(),
-                                   p.type_element->name)
-              .string());
+      if (!p.type_element->hidden()) {
+        one_param_link.add_href(
+            construct_html_file_path(std::filesystem::path(),
+                                     p.type_element->namespace_path.as_slice(),
+                                     p.type_element->record_path.as_slice(),
+                                     p.type_element->name)
+                .string());
+      } else {
+        llvm::errs() << "WARNING: Reference to hidden TypeElement "
+                     << p.type_element->name << " in namespace "
+                     << p.type_element->namespace_path;
+      }
     }
     one_param_link.write_text(p.short_type_name);
     write_comma = true;
@@ -145,9 +157,16 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
     {
       auto name_anchor = overload_div.open_a();
       if (link_to_page) {
-        name_anchor.add_href(construct_html_file_path_for_function(
-                                 std::filesystem::path(), element, overload_set)
-                                 .string());
+        if (!element.hidden()) {
+          name_anchor.add_href(
+              construct_html_file_path_for_function(std::filesystem::path(),
+                                                    element, overload_set)
+                  .string());
+        } else {
+          llvm::errs() << "WARNING: Reference to hidden FunctionElement "
+                       << element.name << " in namespace "
+                       << element.namespace_path;
+        }
       } else {
         std::ostringstream anchor;
         if (overload.method.is_some())
@@ -176,6 +195,8 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
 void generate_function(const FunctionElement& element,
                        const sus::Slice<const NamespaceElement*>& namespaces,
                        u32 overload_set, const Options& options) noexcept {
+  if (element.hidden()) return;
+
   const std::filesystem::path path = construct_html_file_path_for_function(
       options.output_root, element, overload_set);
   std::filesystem::create_directories(path.parent_path());
@@ -302,7 +323,8 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
 
 void generate_function_long_reference(HtmlWriter::OpenDiv& item_div,
                                       const FunctionElement& element,
-                                      bool is_static, u32 overload_set) noexcept {
+                                      bool is_static,
+                                      u32 overload_set) noexcept {
   {
     auto overload_set_div = item_div.open_div();
     overload_set_div.add_class("overload-set");
