@@ -23,6 +23,7 @@ pre {
 .overload .function-signature {
     /* Hides the space between `function-name` and `()`. */
     display: flex;
+    flex-wrap: wrap;
 }
 .overload .function-signature>:not(.function-name) {
     margin-right: 0.2em;  /* Put back the space after other elements */
@@ -56,39 +57,22 @@ pre {
     padding: 1em;
 }
 
- .project-name {
-    color: rgb(207, 66, 184);
-}
- .function-name {
-    color: rgb(191, 142, 236);
-}
- .namespace-name {
-    color: rgb(142, 214, 236);
-}
-
-.type-name {
-    color: rgb(105, 223, 105);
-}
-
-.type .overview .section-header .type-name {
-    color: rgb(166, 240, 176);
-}
-.type .overview .type-signature {
+.overview .type-signature {
     background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5em;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
 }
-.type .overview .type-signature .struct {
+.overview .type-signature .struct {
     color: rgb(130, 169, 243);
 }
-.type .overview .type-signature .class {
+.overview .type-signature .class {
     color: rgb(125, 231, 235);
 }
-.type .overview .type-signature .union {
+.overview .type-signature .union {
     color: rgb(132, 229, 173);
 }
-.type .overview .type-signature .type-name {
+.overview .type-signature .type-name {
     color: rgb(130, 221, 135);
 }
 
@@ -104,15 +88,47 @@ pre {
 .type .section:is(.fields, .methods) .const {
     color: yellowgreen;
 }
-.type .section:is(.fields, .methods) :is(.field-name, .function-name) {
-    color: rgb(191, 142, 236);
-}
 
-.function .overview .overload-set {
+.overview .overload-set {
     background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5em;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+}
+
+.overview .section-header a {
+    text-decoration: none;
+}
+.overview .section-header .type-name {
+    color: rgb(166, 240, 176);
+}
+
+:is(.type-signature, .function-signature, .member-signature, .requires) {
+    font-family: monospace;
+}
+.function-signature :is(.function-auto, .return-arrow) {
+    color:rgb(173, 173, 173);
+}
+
+a.function-name {
+    text-decoration: none;
+    color: rgb(191, 142, 236);
+}
+a.type-name {
+    text-decoration: none;
+    color: rgb(142, 201, 236);
+}
+a.field-name {
+    text-decoration: none;
+    color: rgb(142, 201, 236);
+}
+a.project-name {
+    text-decoration: none;
+    color: rgb(207, 66, 184);
+}
+a.namespace-name {
+    text-decoration: none;
+    color: rgb(142, 214, 236);
 }
 
 .overload .requires {

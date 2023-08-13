@@ -137,6 +137,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
       {
         auto name_div = field_div.open_div();
         name_div.add_class("item-name");
+        name_div.add_class("member-signature");
 
         if (static_fields) {
           auto static_span = name_div.open_span();

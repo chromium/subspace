@@ -34,13 +34,7 @@ enum Style {
 };
 
 void generate_return_type(HtmlWriter::OpenDiv& div,
-                          const FunctionOverload& overload,
-                          bool is_static) noexcept {
-  if (is_static) {
-    auto static_span = div.open_span();
-    static_span.add_class("static");
-    static_span.write_text("static");
-  }
+                          const FunctionOverload& overload) noexcept {
   {
     auto return_type_link = div.open_a();
     return_type_link.add_class("type-name");
@@ -221,8 +215,15 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       auto signature_div = overload_div.open_div();
       signature_div.add_class("function-signature");
 
-      if (style == StyleLong) {
-        generate_return_type(signature_div, overload, is_static);
+      if (is_static) {
+        auto static_span = signature_div.open_span(HtmlWriter::SingleLine);
+        static_span.add_class("static");
+        static_span.write_text("static");
+      }
+      {
+        auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
+        auto_span.add_class("function-auto");
+        auto_span.write_text("auto");
       }
       {
         auto name_anchor = signature_div.open_a();
@@ -254,6 +255,12 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       }
       if (style == StyleLong) {
         generate_function_params(signature_div, overload);
+        {
+          auto arrow_span = signature_div.open_span(HtmlWriter::SingleLine);
+          arrow_span.add_class("return-arrow");
+          arrow_span.write_text("->");
+        }
+        generate_return_type(signature_div, overload);
       }
     }
 
@@ -353,9 +360,11 @@ void generate_function(const FunctionElement& element,
         auto signature_div = overload_div.open_div();
         signature_div.add_class("function-signature");
 
-        // No need to display the `static` on a free function, so just consider
-        // ourselves not.
-        generate_return_type(signature_div, overload, /*is_static=*/false);
+        {
+          auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
+          auto_span.add_class("function-auto");
+          auto_span.write_text("auto");
+        }
         {
           auto name_anchor = signature_div.open_a();
           name_anchor.add_href("#");
@@ -363,6 +372,12 @@ void generate_function(const FunctionElement& element,
           name_anchor.write_text(element.name);
         }
         generate_function_params(signature_div, overload);
+        {
+          auto arrow_span = signature_div.open_span(HtmlWriter::SingleLine);
+          arrow_span.add_class("return-arrow");
+          arrow_span.write_text("->");
+        }
+        generate_return_type(signature_div, overload);
       }
 
       generate_function_requires(overload_div, overload);

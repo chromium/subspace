@@ -355,8 +355,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
           requires_constraints_add_expr(constraints.as_value_mut(),
                                         decl->getASTContext(), e);
         }
-      }
-      {
+      } else {
         llvm::SmallVector<const clang::Expr*> assoc;
         decl->getAssociatedConstraints(assoc);
         for (const clang::Expr* e : assoc) {
