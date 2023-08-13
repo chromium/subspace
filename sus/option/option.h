@@ -744,8 +744,8 @@ class Option final {
             class R = std::invoke_result_t<MapFn&&, T&&>>
   constexpr Option<R> map(MapFn&& m) && noexcept {
     if (t_.state() == Some) {
-      return Option<R>(
-          ::sus::fn::call_once(::sus::move(m), t_.take_and_set_none()));
+      return Option<R>(::sus::fn::call_once(
+          ::sus::move(m), static_cast<T&&>(t_.take_and_set_none())));
     } else {
       return Option<R>();
     }
@@ -768,7 +768,8 @@ class Option final {
             class R = std::invoke_result_t<MapFn&&, T&&>>
   constexpr R map_or(R default_result, MapFn&& m) && noexcept {
     if (t_.state() == Some) {
-      return ::sus::fn::call_once(::sus::move(m), t_.take_and_set_none());
+      return ::sus::fn::call_once(::sus::move(m),
+                                  static_cast<T&&>(t_.take_and_set_none()));
     } else {
       return default_result;
     }
@@ -791,7 +792,8 @@ class Option final {
     requires(std::is_same_v<D, R>)
   constexpr R map_or_else(DefaultFn&& default_fn, MapFn&& m) && noexcept {
     if (t_.state() == Some) {
-      return ::sus::fn::call_once(::sus::move(m), t_.take_and_set_none());
+      return ::sus::fn::call_once(::sus::move(m),
+                                  static_cast<T&&>(t_.take_and_set_none()));
     } else {
       return ::sus::move(default_fn)();
     }
@@ -815,9 +817,12 @@ class Option final {
   ///
   /// The predicate function must take `const T&` and return `bool`.
   constexpr Option<T> filter(
-      ::sus::fn::FnOnce<bool(const T&)> auto&& p) && noexcept {
+      ::sus::fn::FnOnce<bool(const std::remove_reference_t<T>&)> auto&&
+          p) && noexcept {
     if (t_.state() == Some) {
-      if (::sus::fn::call_once(::sus::move(p), t_.val())) {
+      if (::sus::fn::call_once(
+              ::sus::move(p),
+              static_cast<const std::remove_reference_t<T>&>(t_.val()))) {
         return Option(t_.take_and_set_none());
       } else {
         // The state has to become None, and we must destroy the inner T.
@@ -829,7 +834,8 @@ class Option final {
     }
   }
   constexpr Option<T> filter(
-      ::sus::fn::FnOnce<bool(const T&)> auto&& p) const& noexcept
+      ::sus::fn::FnOnce<bool(const std::remove_reference_t<T>&)> auto&& p)
+      const& noexcept
     requires(::sus::mem::CopyOrRef<T>)
   {
     return ::sus::clone(*this).filter(::sus::move(p));
@@ -867,7 +873,8 @@ class Option final {
     requires(::sus::option::__private::IsOptionType<R>::value)
   constexpr Option<U> and_then(AndFn&& f) && noexcept {
     if (t_.state() == Some)
-      return ::sus::fn::call_once(::sus::move(f), t_.take_and_set_none());
+      return ::sus::fn::call_once(::sus::move(f),
+                                  static_cast<T&&>(t_.take_and_set_none()));
     else
       return Option<U>();
   }
