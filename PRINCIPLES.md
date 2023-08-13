@@ -65,11 +65,11 @@ This library is an experiment and not intended for use. See the
       members in the order they are declared.
     * Non-default constructors are prefixed with `with_()` unless there's a
       clear and better domain-specific name.
-    * Avoid writing copy constructors in *non-containers* unless moving can be
+    * Avoid writing copy constructors in *non-collections* unless moving can be
       implemented in terms of a copy, thus has the same cost as a copy, and
       it is cheap to pass by value (a size of <= 2 pointers). Otherwise, write
       `Clone()` instead.
-      * Containers have a copy constructor if their inner type has one, and
+      * collections have a copy constructor if their inner type has one, and
         if not, implement `Clone()` if their inner type does.
     * Write a `::from(x)` constructing method to implement
       `sus::construct::From` when the type is constructed from another type.
@@ -169,7 +169,7 @@ This library is an experiment and not intended for use. See the
     * No const methods call non-const methods through pointers or references.
     * Reference/view types follow the same, or else provide clear const vs mutable
       access. SliceMut allows const methods that act in mutable ways on the
-      container because it expresses mutability vs Slice in a clear way in the
+      collection because it expresses mutability vs Slice in a clear way in the
       type system. This compromise is required to allow receiving lvalue and rvalue
       refences (as `const&`) without forcing multiple overloads onto library users
       or without receiving by value ([which is more expensive](
@@ -235,7 +235,7 @@ This library is an experiment and not intended for use. See the
    semantics.
     * The smart pointers are not "leaky", and are not (safely) backward
       compatible with raw pointer ownership.
-1. Containers with lifetime safety at runtime.
+1. Collections with lifetime safety at runtime.
 1. Function pointers with additional state bound to them, for purposes of
    currying.
 1. Vocabulary types for returning success-or-failure with different embedded

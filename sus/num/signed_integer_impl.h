@@ -16,7 +16,7 @@
 // IWYU pragma: friend "sus/.*"
 #pragma once
 
-#include "sus/containers/array.h"
+#include "sus/collections/array.h"
 #include "sus/num/signed_integer.h"
 #include "sus/ptr/copy.h"
 

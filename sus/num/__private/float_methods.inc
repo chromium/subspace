@@ -804,12 +804,12 @@ sus_pure _self rem_euclid(_self rhs) const& noexcept {
 
 /// Return the memory representation of this floating point number as a byte
 /// array in big-endian (network) byte order.
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 to_be_bytes() const& noexcept;
 /// Return the memory representation of this floating point number as a byte
 /// array in little-endian byte order.
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 to_le_bytes() const& noexcept;
 /// Return the memory representation of this floating point number as a byte
@@ -817,7 +817,7 @@ to_le_bytes() const& noexcept;
 ///
 /// As the target platform's native endianness is used, portable code should
 /// use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 to_ne_bytes() const& noexcept;
 /// Create a floating point value from its representation as a byte array in
@@ -825,14 +825,14 @@ to_ne_bytes() const& noexcept;
 ///
 /// See `@doc.self::from_bits()` for why this function is not constexpr.
 sus_pure static _self from_be_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 /// Create a floating point value from its representation as a byte array in
 /// big endian.
 ///
 ///  See `@doc.self::from_bits()` for why this function is not constexpr.
 sus_pure static _self from_le_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 /// Create a floating point value from its representation as a byte array in
 /// native endian.
@@ -843,7 +843,7 @@ sus_pure static _self from_le_bytes(
 ///
 ///  See `@doc.self::from_bits()` for why this function is not constexpr.
 sus_pure static _self from_ne_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
 #undef _self

@@ -30,22 +30,22 @@ template <class TypeListOfMemberTypes, auto... Tags>
 class Choice;
 }
 
-namespace sus::containers {
+namespace sus::collections {
 template <class T, size_t N>
 class Array;
 }
 
-namespace sus::containers {
+namespace sus::collections {
 template <class T>
 class Slice;
 }
 
-namespace sus::containers {
+namespace sus::collections {
 template <class T>
 class SliceMut;
 }
 
-namespace sus::containers {
+namespace sus::collections {
 template <class T>
 class Vec;
 }

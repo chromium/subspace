@@ -18,7 +18,7 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/llvm.h"
-#include "sus/containers/vec.h"
+#include "sus/collections/vec.h"
 #include "sus/prelude.h"
 #include "subdoc/lib/run_options.h"
 #include "sus/result/result.h"

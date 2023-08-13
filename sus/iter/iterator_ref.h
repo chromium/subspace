@@ -30,8 +30,8 @@ struct IterRefCounter;
 
 #if SUS_ITERATOR_INVALIDATION
 
-/// An iterator's refcount on the owning container, preventig mutation while the
-/// iterator is alive.
+/// An iterator's refcount on the owning collection, preventig mutation while
+/// the iterator is alive.
 struct [[sus_trivial_abi]] IterRef final {
   constexpr IterRef(usize* ptr) noexcept : count_ptr_(ptr) { inc(); }
   constexpr ~IterRef() noexcept { dec(); }
@@ -59,7 +59,7 @@ struct [[sus_trivial_abi]] IterRef final {
   usize* count_ptr_;
 
   constexpr void inc() {
-    // TODO: Remove this condition? Some slices have no container so the
+    // TODO: Remove this condition? Some slices have no collection so the
     // iterator doesn't either.
     if (count_ptr_) *count_ptr_ += 1u;
   }
@@ -73,7 +73,7 @@ struct [[sus_trivial_abi]] IterRef final {
 
 /// Reference counting outstanding iterators (and view types since they need to
 /// be able to produce iterators) in order to catch iterator invalidation and
-/// prevent them from being used afterward. Mutating the container should check
+/// prevent them from being used afterward. Mutating the collection should check
 /// that the `count` is empty. This is much like a `RefCell` in Rust, using
 /// runtime verfication that modification does not occur while there are
 /// outstanding references.
@@ -85,7 +85,7 @@ struct [[sus_trivial_abi]] IterRefCounter final {
     return IterRefCounter(FOR_VIEW, nullptr);
   }
 
-  /// Only valid to be called on owning containers such as Vec.
+  /// Only valid to be called on owning collections such as Vec.
   constexpr IterRef to_iter_from_owner() const noexcept {
     return IterRef(&count);
   }
@@ -94,7 +94,7 @@ struct [[sus_trivial_abi]] IterRefCounter final {
     return IterRef(count_ptr);
   }
 
-  /// Only valid to be called on owning containers such as Vec.
+  /// Only valid to be called on owning collections such as Vec.
   constexpr IterRefCounter to_view_from_owner() const noexcept {
     return IterRefCounter(FOR_VIEW, &count);
   }
@@ -104,13 +104,13 @@ struct [[sus_trivial_abi]] IterRefCounter final {
     return IterRefCounter(FOR_VIEW, count_ptr);
   }
 
-  /// Only valid to be called on owning containers such as Vec.
+  /// Only valid to be called on owning collections such as Vec.
   constexpr usize count_from_owner() const noexcept { return count; }
 
   /// Resets self to no ref counts, returning a new IterRefCounter containing
   /// the old ref counts.
   ///
-  /// Only valid to be called on owning containers such as Vec.
+  /// Only valid to be called on owning collections such as Vec.
   constexpr IterRefCounter take_for_owner() & noexcept {
     return IterRefCounter(FOR_OWNER, ::sus::mem::replace(count, 0u));
   }
@@ -130,10 +130,10 @@ struct [[sus_trivial_abi]] IterRefCounter final {
   constexpr IterRefCounter(ForView, usize* ptr) noexcept : count_ptr(ptr) {}
 
   union {
-    /// The `count` member is active in owning containers like `Vec`.
+    /// The `count` member is active in owning collections like `Vec`.
     mutable usize count;  // TODO: should be uptr.
-    /// The `count_ptr` member is active in view containers like `Slice`. It
-    /// points to he owning container. The presence of a `count_ptr` must also
+    /// The `count_ptr` member is active in view collections like `Slice`. It
+    /// points to he owning collection. The presence of a `count_ptr` must also
     /// indicate an increment in the `count` it points to, lest the `count_ptr`
     /// become invalid without terminating the program.
     usize* count_ptr;
@@ -159,7 +159,7 @@ struct [[sus_trivial_abi]] IterRef final {
 
 /// Reference counting outstanding iterators (and view types since they need to
 /// be able to produce iterators) in order to catch iterator invalidation and
-/// prevent them from being used afterward. Mutating the container should check
+/// prevent them from being used afterward. Mutating the collection should check
 /// that the `count` is empty. This is much like a `RefCell` in Rust, using
 /// runtime verfication that modification does not occur while there are
 /// outstanding references.

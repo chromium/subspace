@@ -15,7 +15,7 @@
 // IWYU pragma: always_keep
 #pragma once
 
-#include "sus/containers/vec.h"
+#include "sus/collections/vec.h"
 #include "sus/marker/unsafe.h"
 #include "sus/mem/copy.h"
 #include "sus/mem/move.h"
@@ -25,7 +25,7 @@
 // Imports all the things that are pulled into the top-level namespace.
 // TODO: Make a compile-time option for this.
 
-using sus::containers::Vec;
+using sus::collections::Vec;
 using sus::marker::unsafe_fn;
 using sus::num::f32;
 using sus::num::f64;

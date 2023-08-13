@@ -53,7 +53,7 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 /// also `CloneInto`.
 ///
 /// It is not valid to be `Copy` and also have a `clone()` method, as it becomes
-/// ambiguous. One outcome of this is a container type should only implement a
+/// ambiguous. One outcome of this is a collection type should only implement a
 /// clone() method if the type within is (Clone && !Copy), and should implement
 /// copy constructors if the type within is Copy.
 template <class T>

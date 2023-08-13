@@ -17,7 +17,7 @@
 #include <filesystem>
 #include <string>
 
-#include "sus/containers/vec.h"
+#include "sus/collections/vec.h"
 
 namespace subdoc::gen {
 

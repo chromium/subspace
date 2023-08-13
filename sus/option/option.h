@@ -603,8 +603,11 @@ class Option final {
   /// * C++ moving is verbose, making unwrap() on lvalues loud.
   /// * Unwrapping requires a new lvalue name since C++ doesn't allow name
   ///   reuse, making variable names bad.
-  /// * It's expected due to std::optional and general container-of-one things
-  ///   to provide access through operator* and operator->.
+  /// * We also provide `as_value()` and `as_value_mut()` for explicit
+  ///   const/mutable lvalue access but...
+  /// * It's expected in C++ ecosystems, due to std::optional and other
+  ///   pre-existing collection-of-one things to provide access through
+  ///   `operator*` and `operator->`.
   sus_pure constexpr const std::remove_reference_t<T>& operator*()
       const& noexcept {
     ::sus::check(t_.state() == Some);
@@ -646,8 +649,11 @@ class Option final {
   /// * C++ moving is verbose, making unwrap() on lvalues loud.
   /// * Unwrapping requires a new lvalue name since C++ doesn't allow name
   ///   reuse, making variable names bad.
-  /// * It's expected due to std::optional and general container-of-one things
-  ///   to provide access through operator* and operator->.
+  /// * We also provide `as_value()` and `as_value_mut()` for explicit
+  ///   const/mutable lvalue access but...
+  /// * It's expected in C++ ecosystems, due to std::optional and other
+  ///   pre-existing collection-of-one things to provide access through
+  ///   `operator*` and `operator->`.
   sus_pure constexpr const std::remove_reference_t<T>* operator->()
       const& noexcept {
     ::sus::check(t_.state() == Some);
@@ -1722,7 +1728,7 @@ struct sus::iter::FromIteratorImpl<::sus::option::Option<T>> {
   // collide. This should be able to appear in the docs.
   //
   // Takes each item in the Iterator: if it is None, no further elements are
-  // taken, and the None is returned. Should no None occur, a container of type
+  // taken, and the None is returned. Should no None occur, a collection of type
   // T containing the values of type U from each Option<U> is returned.
   template <class IntoIter, int&...,
             class Iter =

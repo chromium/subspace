@@ -19,7 +19,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "sus/containers/array.h"
+#include "sus/collections/array.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/option/option.h"
 #include "sus/ptr/copy.h"

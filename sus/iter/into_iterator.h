@@ -27,7 +27,7 @@ namespace sus::iter {
 /// A more general trait than `Iterator` which will accept anything that can be
 /// iterated, including an `Iterator` (since all `Iterator`s also satisfy
 /// `IntoIterator`). This can be particularly useful when receiving an iterator
-/// over a set of non-reference values, allowing the caller to pass a container
+/// over a set of non-reference values, allowing the caller to pass a collection
 /// directly in place of an iterator.
 ///
 /// Note that an `IntoIterator` type is not directly iterable in for loops, and

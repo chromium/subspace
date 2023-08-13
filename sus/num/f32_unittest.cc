@@ -17,7 +17,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/construct/into.h"
-#include "sus/containers/array.h"
+#include "sus/collections/array.h"
 #include "sus/num/__private/intrinsics.h"
 #include "sus/num/types.h"
 #include "sus/ops/eq.h"

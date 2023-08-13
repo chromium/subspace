@@ -128,7 +128,7 @@ class IteratorOverRange final
     requires(std::sized_sentinel_for<B, E>)
   {
     // SAFETY: `end_ > begin_` so the value is not negative and offsets in a
-    // container are always in the range of `isize`, so the value is
+    // collection are always in the range of `isize`, so the value is
     // representable in `usize`.
     return usize::try_from(end_ - begin_)
         .unwrap_unchecked(::sus::marker::unsafe_fn);

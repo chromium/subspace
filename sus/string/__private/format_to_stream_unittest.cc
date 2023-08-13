@@ -20,7 +20,7 @@
 #include "fmt/core.h"
 #include "googletest/include/gtest/gtest.h"
 #include "sus/choice/choice.h"
-#include "sus/containers/array.h"
+#include "sus/collections/array.h"
 #include "sus/prelude.h"
 #include "sus/tuple/tuple.h"
 
