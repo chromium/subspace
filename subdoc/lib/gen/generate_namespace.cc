@@ -132,8 +132,41 @@ void generate_namespace_references(
     items_list.add_class("section-items");
     items_list.add_class("item-table");
 
-    for (auto&& [name, sort_key, id] : namespaces)
-      generate_namespace_reference(items_list, element.namespaces.at(id));
+    for (auto&& [name, sort_key, id] : namespaces) {
+      {
+        auto item_li = items_list.open_li();
+        item_li.add_class("section-item");
+
+        generate_namespace_reference(item_li,
+                                     element.namespaces.at(id));
+      }
+
+      {
+        sus::Vec<SortedNamespaceByName> sorted;
+        for (const auto& [key, sub_element] :
+             element.namespaces.at(id).namespaces) {
+          if (sub_element.hidden()) continue;
+          if (sub_element.is_empty()) continue;
+
+          sorted.push(sus::tuple(sub_element.name, sub_element.sort_key, key));
+        }
+        sorted.sort_unstable_by(
+            [](const SortedNamespaceByName& a, const SortedNamespaceByName& b) {
+              auto ord = a.at<0>() <=> b.at<0>();
+              if (ord != 0) return ord;
+              return a.at<1>() <=> b.at<1>();
+            });
+
+        for (auto&& [sub_name, sub_sort_key, sub_id] : sorted) {
+          auto item_li = items_list.open_li();
+          item_li.add_class("nested");
+          item_li.add_class("section-item");
+          generate_namespace_reference(
+              item_li,
+              element.namespaces.at(id).namespaces.at(sub_id));
+        }
+      }
+    }
   }
 }
 
@@ -358,13 +391,10 @@ void generate_namespace(const NamespaceElement& element,
   }
 }
 
-void generate_namespace_reference(HtmlWriter::OpenUl& items_list,
+void generate_namespace_reference(HtmlWriter::OpenLi& open_li,
                                   const NamespaceElement& element) noexcept {
-  auto item_li = items_list.open_li();
-  item_li.add_class("section-item");
-
   {
-    auto item_div = item_li.open_div();
+    auto item_div = open_li.open_div();
     item_div.add_class("item-name");
 
     auto name_link = item_div.open_a();
@@ -381,7 +411,7 @@ void generate_namespace_reference(HtmlWriter::OpenUl& items_list,
     name_link.write_text(element.name);
   }
   {
-    auto desc_div = item_li.open_div();
+    auto desc_div = open_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
     if (element.has_comment()) desc_div.write_html(element.comment.summary());

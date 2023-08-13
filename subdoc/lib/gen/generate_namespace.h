@@ -24,7 +24,7 @@ void generate_namespace(const NamespaceElement& element,
                         sus::Vec<const NamespaceElement*> ancestors,
                         const Options& options) noexcept;
 
-void generate_namespace_reference(HtmlWriter::OpenUl& items_list,
+void generate_namespace_reference(HtmlWriter::OpenLi& li,
                                   const NamespaceElement& element) noexcept;
 
 }  // namespace subdoc::gen
