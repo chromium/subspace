@@ -104,12 +104,12 @@ void generate_namespace_overview(
         ancestor_anchor.write_text(e.name);
       }
     }
-    if (element.has_comment()) {
-      auto desc_div = header_div.open_div();
-      desc_div.add_class("description");
-      desc_div.add_class("long");
-      desc_div.write_html(element.comment.full());
-    }
+  }
+  {
+    auto desc_div = section_div.open_div();
+    desc_div.add_class("description");
+    desc_div.add_class("long");
+    if (element.has_comment()) desc_div.write_html(element.comment.full());
   }
 }
 
@@ -137,8 +137,7 @@ void generate_namespace_references(
         auto item_li = items_list.open_li();
         item_li.add_class("section-item");
 
-        generate_namespace_reference(item_li,
-                                     element.namespaces.at(id));
+        generate_namespace_reference(item_li, element.namespaces.at(id));
       }
 
       {
@@ -162,8 +161,7 @@ void generate_namespace_references(
           item_li.add_class("nested");
           item_li.add_class("section-item");
           generate_namespace_reference(
-              item_li,
-              element.namespaces.at(id).namespaces.at(sub_id));
+              item_li, element.namespaces.at(id).namespaces.at(sub_id));
         }
       }
     }
