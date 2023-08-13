@@ -3,10 +3,15 @@
 
 /// Comment headline S
 struct S {
+  /// #[doc.hidden]
+  void f();  // This function will be ignored.
+
+  /// This function will also be ignored.
+  /// #[doc.hidden]
+  void g();
 };
 
 namespace __private {
-    /// This struct will be ignored.
-    struct P {
-    };
+/// This struct will be ignored.
+struct P {};
 }
