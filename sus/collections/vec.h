@@ -26,6 +26,7 @@
 #include "sus/assertions/check.h"
 #include "sus/assertions/debug_check.h"
 #include "sus/collections/__private/vec_marker.h"
+#include "sus/collections/collections.h"
 #include "sus/collections/concat.h"
 #include "sus/collections/iterators/chunks.h"
 #include "sus/collections/iterators/drain.h"
@@ -521,9 +522,11 @@ class [[sus_trivial_abi]] Vec final {
   /// or `clear()`.
   ///
   /// # Safety
-  /// `new_len` must be less than or equal to `capacity()`.
-  /// The elements at `old_len..new_len` must be constructed.
-  /// The elements at `new_len..old_len` must be destructed.
+  /// * `new_len` must be less than or equal to `capacity()`.
+  /// * The elements at `old_len..new_len` must be constructed before or after
+  ///   the call.
+  /// * The elements at `new_len..old_len` must be destructed before or after
+  ///   the call.
   constexpr void set_len(::sus::marker::UnsafeFnMarker, usize new_len) {
     check(!is_moved_from());
     sus_debug_check(new_len <= capacity_);
