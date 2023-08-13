@@ -30,33 +30,33 @@
 
 namespace sus::num {
 
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 _self::to_be_bytes() const& noexcept {
   return to_bits().to_be_bytes();
 }
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 _self::to_le_bytes() const& noexcept {
   return to_bits().to_le_bytes();
 }
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 _self::to_ne_bytes() const& noexcept {
   return to_bits().to_ne_bytes();
 }
 sus_pure inline _self _self::from_be_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   return _self::from_bits(_unsigned::from_be_bytes(bytes));
 }
 sus_pure inline _self _self::from_le_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   return _self::from_bits(_unsigned::from_le_bytes(bytes));
 }
 sus_pure inline _self _self::from_ne_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   return _self::from_bits(_unsigned::from_ne_bytes(bytes));
 }

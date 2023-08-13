@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/containers/vec.h"
+#include "sus/collections/vec.h"
 #include "sus/iter/empty.h"
 #include "sus/iter/iterator.h"
 #include "sus/prelude.h"

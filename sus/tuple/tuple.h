@@ -266,17 +266,17 @@ class Tuple final {
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
-  /// Satisfies sus::iter::Extend for a Tuple of containers that each satisfies
+  /// Satisfies sus::iter::Extend for a Tuple of collections that each satisfies
   /// Extend for its position-relative type in the iterator of tuples.
   ///
-  /// The tuple this is called on is a set of containers. The iterable passed in
+  /// The tuple this is called on is a set of collections. The iterable passed in
   /// as an argument yields tuples of items that will be appended to the
-  /// containers.
+  /// collections.
   ///
   /// The item types in the argument can not be deduced, so they must be
   /// explicitly specified by the caller, such as:
   /// ```cpp
-  /// containers.extend<i32, std::string>(iter_over_tuples_i32_string());
+  /// collections.extend<i32, std::string>(iter_over_tuples_i32_string());
   /// ```
   ///
   /// Allows to `extend` a tuple of collections that also implement `Extend`.

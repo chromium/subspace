@@ -23,7 +23,7 @@
 #include "subdoc/lib/gen/generate_record.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "sus/assertions/unreachable.h"
-#include "sus/containers/slice.h"
+#include "sus/collections/slice.h"
 #include "sus/prelude.h"
 
 namespace subdoc::gen {

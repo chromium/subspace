@@ -17,7 +17,7 @@
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/containers/array.h"
+#include "sus/collections/array.h"
 #include "sus/macros/builtin.h"
 #include "sus/mem/relocate.h"
 #include "sus/ops/range_literals.h"

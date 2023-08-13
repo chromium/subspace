@@ -19,8 +19,8 @@
 #include "googletest/include/gtest/gtest.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/construct/into.h"
-#include "sus/containers/array.h"
-#include "sus/containers/vec.h"
+#include "sus/collections/array.h"
+#include "sus/collections/vec.h"
 #include "sus/iter/__private/into_iterator_archetype.h"
 #include "sus/iter/__private/iterator_archetype.h"
 #include "sus/iter/adaptors/filter.h"
@@ -35,7 +35,7 @@
 #include "sus/prelude.h"
 #include "sus/test/no_copy_move.h"
 
-using sus::containers::Array;
+using sus::collections::Array;
 using sus::iter::IteratorBase;
 using sus::option::Option;
 using sus::result::Result;
@@ -96,31 +96,31 @@ static_assert(
 static_assert(
   sus::iter::Iterator<sus::iter::Once<int>, int>);
 static_assert(
-  sus::iter::Iterator<sus::containers::ArrayIntoIter<int, 1>, int>);
+  sus::iter::Iterator<sus::collections::ArrayIntoIter<int, 1>, int>);
 static_assert(
-  sus::iter::Iterator<sus::containers::VecIntoIter<int>, int>);
+  sus::iter::Iterator<sus::collections::VecIntoIter<int>, int>);
 static_assert(
-  sus::iter::Iterator<sus::containers::SliceIter<const int&>, const int&>);
+  sus::iter::Iterator<sus::collections::SliceIter<const int&>, const int&>);
 static_assert(
-  sus::iter::Iterator<sus::containers::SliceIterMut<int&>, int&>);
+  sus::iter::Iterator<sus::collections::SliceIterMut<int&>, int&>);
 
 static_assert(
-  sus::iter::DoubleEndedIterator<sus::containers::ArrayIntoIter<int, 1>, int>);
+  sus::iter::DoubleEndedIterator<sus::collections::ArrayIntoIter<int, 1>, int>);
 static_assert(
-  sus::iter::DoubleEndedIterator<sus::containers::SliceIter<const int&>, const int&>);
+  sus::iter::DoubleEndedIterator<sus::collections::SliceIter<const int&>, const int&>);
 static_assert(
-  sus::iter::DoubleEndedIterator<sus::containers::SliceIterMut<int&>, int&>);
+  sus::iter::DoubleEndedIterator<sus::collections::SliceIterMut<int&>, int&>);
 static_assert(
-  sus::iter::DoubleEndedIterator<sus::containers::VecIntoIter<int>, int>);
+  sus::iter::DoubleEndedIterator<sus::collections::VecIntoIter<int>, int>);
 
 static_assert(
-  sus::iter::IntoIterator<sus::containers::Array<int, 3u>, int>);
+  sus::iter::IntoIterator<sus::collections::Array<int, 3u>, int>);
 static_assert(
-  sus::iter::IntoIterator<sus::containers::Slice<int>, const int&>);
+  sus::iter::IntoIterator<sus::collections::Slice<int>, const int&>);
 static_assert(
-  sus::iter::IntoIterator<sus::containers::SliceMut<int>, int&>);
+  sus::iter::IntoIterator<sus::collections::SliceMut<int>, int&>);
 static_assert(
-  sus::iter::IntoIterator<sus::containers::Vec<int>, int>);
+  sus::iter::IntoIterator<sus::collections::Vec<int>, int>);
 
 static_assert(
   sus::iter::IntoIterator<sus::iter::Once<int>, int>);
@@ -747,7 +747,7 @@ TEST(Iterator, Chain) {
 TEST(Iterator, ChainFromIterator) {
   auto v1 = sus::Vec<i32>::with(1, 2);
   auto v2 = sus::Vec<i32>::with(3);
-  sus::containers::VecIntoIter<i32> iti = sus::move(v1).into_iter();
+  sus::collections::VecIntoIter<i32> iti = sus::move(v1).into_iter();
   auto it = sus::move(iti).chain(sus::move(v2));
   EXPECT_EQ(it.next().unwrap(), 1);
   EXPECT_EQ(it.next().unwrap(), 2);

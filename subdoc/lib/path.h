@@ -18,7 +18,7 @@
 
 #include "subdoc/llvm.h"
 #include "sus/choice/choice.h"
-#include "sus/containers/vec.h"
+#include "sus/collections/vec.h"
 #include "sus/iter/iterator.h"
 #include "sus/prelude.h"
 

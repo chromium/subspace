@@ -30,23 +30,23 @@
 
 namespace sus::num {
 
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 _self::to_be_bytes() const& noexcept {
   return to_be().to_ne_bytes();
 }
 
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 _self::to_le_bytes() const& noexcept {
   return to_le().to_ne_bytes();
 }
 
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 _self::to_ne_bytes() const& noexcept {
   auto bytes =
-      ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>();
+      ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>();
   if (std::is_constant_evaluated()) {
     auto uval = __private::into_unsigned(primitive_value);
     for (auto i = size_t{0}; i < ::sus::mem::size_of<_primitive>(); ++i) {
@@ -71,19 +71,19 @@ _self::to_ne_bytes() const& noexcept {
 }
 
 sus_pure inline constexpr _self _self::from_be_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   return from_be(from_ne_bytes(bytes));
 }
 
 sus_pure inline constexpr _self _self::from_le_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   return from_le(from_ne_bytes(bytes));
 }
 
 sus_pure inline constexpr _self _self::from_ne_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
   using Unsigned = decltype(__private::into_unsigned(primitive_value));
   Unsigned val;

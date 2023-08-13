@@ -21,7 +21,7 @@
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/run.h"
 #include "subdoc/tests/cpp_version.h"
-#include "sus/containers/vec.h"
+#include "sus/collections/vec.h"
 #include "sus/macros/compiler.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"

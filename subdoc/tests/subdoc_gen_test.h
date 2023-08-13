@@ -27,7 +27,7 @@
 #include "subdoc/tests/cpp_version.h"
 #include "subdoc/tests/test_main.h"
 #include "sus/assertions/unreachable.h"
-#include "sus/containers/vec.h"
+#include "sus/collections/vec.h"
 #include "sus/macros/compiler.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"

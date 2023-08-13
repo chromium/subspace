@@ -19,7 +19,7 @@
 #include <sstream>
 
 #include "subdoc/lib/database.h"
-#include "sus/containers/slice.h"
+#include "sus/collections/slice.h"
 #include "sus/iter/iterator.h"
 
 namespace subdoc::gen {

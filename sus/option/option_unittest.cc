@@ -19,7 +19,7 @@
 #include "fmt/std.h"
 #include "googletest/include/gtest/gtest.h"
 #include "sus/assertions/endian.h"
-#include "sus/containers/array.h"
+#include "sus/collections/array.h"
 #include "sus/iter/from_iterator.h"
 #include "sus/iter/iterator.h"
 #include "sus/macros/__private/compiler_bugs.h"

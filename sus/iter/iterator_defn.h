@@ -1053,23 +1053,23 @@ class IteratorBase {
     requires(::sus::ops::TryDefault<R>)
   constexpr R try_for_each(F f) noexcept;
 
-  /// Converts an iterator of pairs into a pair of containers.
+  /// Converts an iterator of pairs into a pair of collections.
   ///
   /// `unzip()` consumes an entire iterator of pairs, producing two collections:
   /// one from the left elements of the pairs, and one from the right elements.
   ///
   /// This function is, in some sense, the opposite of `zip()`.
-  template <class ContainerA, class ContainerB, int&...,
+  template <class CollectionA, class CollectionB, int&...,
             class ItemA =
                 ::sus::option::__private::IsTupleOfSizeTwo<ItemT>::first_type,
             class ItemB =
                 ::sus::option::__private::IsTupleOfSizeTwo<ItemT>::second_type>
     requires(::sus::option::__private::IsTupleOfSizeTwo<ItemT>::value &&
-             ::sus::construct::Default<ContainerA> &&  //
-             ::sus::construct::Default<ContainerB> &&  //
-             Extend<ContainerA, ItemA> &&              //
-             Extend<ContainerB, ItemB>)
-  constexpr sus::Tuple<ContainerA, ContainerB> unzip() && noexcept;
+             ::sus::construct::Default<CollectionA> &&  //
+             ::sus::construct::Default<CollectionB> &&  //
+             Extend<CollectionA, ItemA> &&              //
+             Extend<CollectionB, ItemB>)
+  constexpr sus::Tuple<CollectionA, CollectionB> unzip() && noexcept;
 
   /// "Zips up" two iterators into a single iterator of pairs.
   ///
@@ -1112,7 +1112,7 @@ class IteratorBase {
   /// collect() doesn't know the type of collection that you want to produce, so
   /// you will always need to pass it a type argument, such as:
   /// ```cpp
-  /// sus::move(iter).collect<MyContainer<i32>>()
+  /// sus::move(iter).collect<MyCollection<i32>>()
   /// ```
   template <FromIterator<ItemT> C>
   constexpr C collect() && noexcept;
@@ -1126,7 +1126,7 @@ class IteratorBase {
   //
   // TODO: If the iterator is over references, collect_vec() could map them to
   // NonNull.
-  constexpr ::sus::containers::Vec<ItemT> collect_vec() && noexcept;
+  constexpr ::sus::collections::Vec<ItemT> collect_vec() && noexcept;
 };
 
 template <class Iter, class Item>
@@ -1889,16 +1889,16 @@ constexpr R IteratorBase<Iter, Item>::try_for_each(F f) noexcept {
 }
 
 template <class Iter, class Item>
-template <class ContainerA, class ContainerB, int&..., class ItemA,
+template <class CollectionA, class CollectionB, int&..., class ItemA,
           class ItemB>
   requires(::sus::option::__private::IsTupleOfSizeTwo<Item>::value &&
-           ::sus::construct::Default<ContainerA> &&  //
-           ::sus::construct::Default<ContainerB> &&  //
-           Extend<ContainerA, ItemA> &&              //
-           Extend<ContainerB, ItemB>)
-sus::Tuple<ContainerA,
-           ContainerB> constexpr IteratorBase<Iter, Item>::unzip() && noexcept {
-  auto out = sus::Tuple<ContainerA, ContainerB>();
+           ::sus::construct::Default<CollectionA> &&  //
+           ::sus::construct::Default<CollectionB> &&  //
+           Extend<CollectionA, ItemA> &&              //
+           Extend<CollectionB, ItemB>)
+sus::Tuple<CollectionA,
+           CollectionB> constexpr IteratorBase<Iter, Item>::unzip() && noexcept {
+  auto out = sus::Tuple<CollectionA, CollectionB>();
   out.template extend<ItemA, ItemB>(static_cast<Iter&&>(*this));
   return out;
 }
@@ -1919,9 +1919,9 @@ constexpr C IteratorBase<Iter, Item>::collect() && noexcept {
 }
 
 template <class Iter, class Item>
-constexpr ::sus::containers::Vec<Item>
+constexpr ::sus::collections::Vec<Item>
 IteratorBase<Iter, Item>::collect_vec() && noexcept {
-  return ::sus::iter::from_iter<::sus::containers::Vec<Item>>(
+  return ::sus::iter::from_iter<::sus::collections::Vec<Item>>(
       static_cast<Iter&&>(*this));
 }
 

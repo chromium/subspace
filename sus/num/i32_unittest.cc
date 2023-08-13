@@ -18,7 +18,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "sus/construct/default.h"
 #include "sus/construct/into.h"
-#include "sus/containers/array.h"
+#include "sus/collections/array.h"
 #include "sus/iter/__private/step.h"
 #include "sus/mem/relocate.h"
 #include "sus/num/num_concepts.h"

@@ -15,7 +15,7 @@
 #include <math.h>
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/containers/array.h"
+#include "sus/collections/array.h"
 #include "sus/num/types.h"
 #include "sus/ops/eq.h"
 #include "sus/ops/ord.h"

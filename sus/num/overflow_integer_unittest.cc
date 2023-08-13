@@ -17,7 +17,7 @@
 #include <concepts>
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/containers/array.h"
+#include "sus/collections/array.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/prelude.h"

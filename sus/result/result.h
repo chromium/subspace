@@ -1246,7 +1246,7 @@ struct sus::iter::FromIteratorImpl<::sus::result::Result<T, E>> {
   // collide. This should be able to appear in the docs.
   //
   // Takes each element in the Iterator: if it is an Err, no further elements
-  // are taken, and the Err is returned. Should no Err occur, a container with
+  // are taken, and the Err is returned. Should no Err occur, a collection with
   // the values of each Result is returned.
   template <class IntoIter, int&...,
             class Iter =

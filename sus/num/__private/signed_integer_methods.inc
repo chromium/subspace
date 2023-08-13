@@ -1582,13 +1582,13 @@ sus_pure constexpr _self to_le() const& noexcept {
 
 /// Return the memory representation of this integer as a byte array in
 /// big-endian (network) byte order.
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 to_be_bytes() const& noexcept;
 
 /// Return the memory representation of this integer as a byte array in
 /// little-endian byte order.
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 to_le_bytes() const& noexcept;
 
@@ -1597,20 +1597,20 @@ to_le_bytes() const& noexcept;
 ///
 /// As the target platform's native endianness is used, portable code should
 /// use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.
-sus_pure constexpr ::sus::containers::Array<u8,
+sus_pure constexpr ::sus::collections::Array<u8,
                                             ::sus::mem::size_of<_primitive>()>
 to_ne_bytes() const& noexcept;
 
 /// Create an integer value from its representation as a byte array in big
 /// endian.
 sus_pure static constexpr _self from_be_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
 /// Create an integer value from its representation as a byte array in
 /// little endian.
 sus_pure static constexpr _self from_le_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
 /// Create an integer value from its memory representation as a byte array
@@ -1620,7 +1620,7 @@ sus_pure static constexpr _self from_le_bytes(
 /// wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate
 /// instead.
 sus_pure static constexpr _self from_ne_bytes(
-    const ::sus::containers::Array<u8, ::sus::mem::size_of<_primitive>()>&
+    const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 
 #undef _self
