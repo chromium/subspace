@@ -19,4 +19,6 @@ add_executable(bench
 subspace_test_default_compile_options(bench)
 target_link_libraries(bench
     subspace::lib
-    nanobench)
+    nanobench
+    gtest_main
+)

@@ -325,6 +325,7 @@ if(${SUBSPACE_BUILD_TESTS})
     target_link_libraries(subspace_unittests
         subspace::lib
         subspace::test_support
+        gtest_main
     )
 
     gtest_discover_tests(subspace_unittests)

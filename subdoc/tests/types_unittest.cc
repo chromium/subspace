@@ -29,10 +29,6 @@ sus::Option<clang::FunctionDecl&> find_function(
 }
 
 TEST_F(SubDocTest, TypePrimitive) {
-  const char code[] = R"(
-    int f();
-  )";
-
   auto test = [](clang::ASTContext& cx) {
     sus::Option<clang::FunctionDecl&> fdecl = find_function(cx, "f");
     ASSERT_TRUE(fdecl.is_some());
@@ -47,8 +43,12 @@ TEST_F(SubDocTest, TypePrimitive) {
     EXPECT_TRUE(t.template_params.is_empty());
   };
 
-  auto result = run_code_with_options(
-      subdoc::RunOptions().set_on_tu_complete(test), code);
+  auto opts = subdoc::RunOptions()           //
+                  .set_show_progress(false)  //
+                  .set_on_tu_complete(test);
+  auto result = run_code_with_options(opts, R"(
+    int f();
+  )");
   ASSERT_TRUE(result.is_ok());
 }
 

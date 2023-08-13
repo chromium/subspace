@@ -75,7 +75,6 @@ function(subspace_test_default_compile_options TARGET)
     target_include_directories(${TARGET} PRIVATE
         ${PROJECT_SOURCE_DIR}/third_party/googletest
     )
-    target_link_libraries(${TARGET} gtest_main)
 endfunction()
 
 if(${SUBSPACE_BUILD_TESTS} OR ${SUBSPACE_BUILD_BENCHMARKS})

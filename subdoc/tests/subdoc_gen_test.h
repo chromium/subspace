@@ -25,6 +25,7 @@
 #include "subdoc/lib/gen/generate.h"
 #include "subdoc/lib/run.h"
 #include "subdoc/tests/cpp_version.h"
+#include "subdoc/tests/test_main.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/containers/vec.h"
 #include "sus/macros/compiler.h"
@@ -42,7 +43,7 @@ class SubDocGenTest : public testing::Test {
     auto args = sus::Vec<std::string>();
     args.push(std::string(subdoc::tests::cpp_version_flag(cpp_version_)));
 
-    auto run_options = subdoc::RunOptions();
+    auto run_options = subdoc::RunOptions().set_show_progress(false);
 
     auto result = subdoc::run_test(sus::move(content), args.as_slice(),
                                    sus::move(run_options));
@@ -175,14 +176,29 @@ class SubDocGenTest : public testing::Test {
         expected_path.append(it->path().filename().string());
         auto actual_path = out;
         actual_path.append(it->path().filename().string());
-        std::string expected = read_file(expected_path).unwrap();
-        std::string actual = read_file(actual_path).unwrap();
-        if (expected != actual) {
-          llvm::errs() << "Expected:\n" << expected << "\n";
-          llvm::errs() << "Actual:\n" << actual << "\n";
-          ADD_FAILURE() << "Files differ: " << expected_path.string() << " vs "
-                        << actual_path.string() << "\n";
-          return false;
+
+        if (test_main_command_line_args().contains("--rebaseline")) {
+          std::error_code ec;
+          std::filesystem::copy_file(
+              actual_path, expected_path,
+              std::filesystem::copy_options::overwrite_existing, ec);
+          if (ec) {
+            llvm::errs() << "--rebaseline failed to copy "
+                         << actual_path.string() << " to "
+                         << expected_path.string() << ": " << ec.message()
+                         << "\n";
+            return false;
+          }
+        } else {
+          std::string expected = read_file(expected_path).unwrap();
+          std::string actual = read_file(actual_path).unwrap();
+          if (expected != actual) {
+            llvm::errs() << "Expected:\n" << expected << "\n";
+            llvm::errs() << "Actual:\n" << actual << "\n";
+            ADD_FAILURE() << "Files differ: " << expected_path.string()
+                          << " vs " << actual_path.string() << "\n";
+            return false;
+          }
         }
       }
       if (it->is_directory()) {
