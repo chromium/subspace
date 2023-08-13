@@ -378,6 +378,7 @@ jobs:
             --css subdoc-test-style.css \
             --copy-file sus/index.html \
             --project-md sus/project.md \
+            --project-name Subspace \
             /home/runner/work/subspace/subspace/sus
 
   bench:
