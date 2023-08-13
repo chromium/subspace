@@ -125,11 +125,16 @@ if(${SUBSPACE_BUILD_TESTS})
         "tests/types_unittest.cc"
         "tests/subdoc_gen_test.h"
         "tests/subdoc_test.h"
+        "tests/test_main.h"
+        "tests/test_main.cc"
     )
 
     # subdoc_unittests
     subspace_test_default_compile_options(subdoc_unittests)
-    target_link_libraries(subdoc_unittests subdoc::lib)
+    target_link_libraries(subdoc_unittests
+        subdoc::lib
+        gtest
+    )
 
     gtest_discover_tests(subdoc_unittests)
 endif()
