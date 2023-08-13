@@ -220,7 +220,6 @@ sus_pure constexpr inline explicit operator U() const {
 
 /// sus::ops::Eq<T> trait for floating point numbers.
 /// #[doc.overloads=float.eq.self]
-template <PrimitiveFloat F>
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
