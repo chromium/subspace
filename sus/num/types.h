@@ -16,12 +16,23 @@
 // IWYU pragma: friend "sus/.*"
 #pragma once
 
+namespace sus {
+/// Safe integer and floating point numerics, and numeric concepts.
+///
+/// This namespace contains safe integer types (i8, i16, u32, usize, etc.) and
+/// floating point types (f32, f64).
+///
+/// Additionally, there are Concepts that match against safe numerics, C++
+/// primitive types, and operations with numeric types.
+namespace num {}
+}  // namespace sus
+
 // IWYU pragma: begin_exports
-#include "sus/num/transmogrify.h"
 #include "sus/num/float.h"
 #include "sus/num/float_impl.h"
 #include "sus/num/signed_integer.h"
 #include "sus/num/signed_integer_impl.h"
+#include "sus/num/transmogrify.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/num/unsigned_integer_impl.h"
 // IWYU pragma: end_exports
