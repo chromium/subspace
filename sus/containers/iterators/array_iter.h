@@ -31,6 +31,9 @@
 
 namespace sus::containers {
 
+/// An iterator that consumes an `Array` and returns the items from it.
+///
+/// This type is returned from `Array::into_iter()`.
 template <::sus::mem::Move ItemT, size_t N>
 struct [[nodiscard]] ArrayIntoIter final
     : public ::sus::iter::IteratorBase<ArrayIntoIter<ItemT, N>, ItemT> {

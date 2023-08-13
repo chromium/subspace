@@ -30,6 +30,9 @@
 
 namespace sus::containers {
 
+/// An iterator that consumes a `Vec` and returns the items from it.
+///
+/// This type is returned from `Vec::into_iter()`.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] VecIntoIter final
     : public ::sus::iter::IteratorBase<VecIntoIter<ItemT>, ItemT> {
