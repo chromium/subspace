@@ -33,6 +33,9 @@
 
 namespace sus::containers {
 
+/// An iterator over a contiguous array of objects with const access to them.
+///
+/// This type is returned from `Vec::iter()` and `Slice::iter()` among others.
 template <class ItemT>
 struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     : public ::sus::iter::IteratorBase<SliceIter<ItemT>, ItemT> {
@@ -112,6 +115,10 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
 static_assert(::sus::mem::Copy<SliceIter<const i32&>>);
 static_assert(::sus::mem::Move<SliceIter<const i32&>>);
 
+/// An iterator over a contiguous array of objects with mutable access to them.
+///
+/// This type is returned from `Vec::iter_mut()` and `Slice::iter_mut()` among
+/// others.
 template <class ItemT>
 struct [[sus_trivial_abi]] SliceIterMut final
     : public ::sus::iter::IteratorBase<SliceIterMut<ItemT>, ItemT> {
@@ -184,8 +191,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
  private:
   constexpr SliceIterMut(::sus::iter::IterRef ref, RawItem* start,
                          RawItem* end) noexcept
-      : ref_(::sus::move(ref)), ptr_(start), end_(end) {
-  }
+      : ref_(::sus::move(ref)), ptr_(start), end_(end) {}
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   RawItem* ptr_;
