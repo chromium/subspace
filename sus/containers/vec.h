@@ -838,35 +838,26 @@ class [[sus_trivial_abi]] Vec final {
 using ::sus::iter::__private::begin;
 using ::sus::iter::__private::end;
 
-/// Used to construct a Vec<T> with the parameters as its values.
+/// Used to construct a `Vec<T>` with the parameters as its values.
 ///
-/// Calling vec() produces a hint to make a Vec<T> but does not actually
-/// construct Vec<T>, as the type `T` is not known here.
+/// Calling `vec()` produces a hint to make a `Vec<T>` but does not actually
+/// construct `Vec<T>`, as the type `T` is not known here. The `Vec<T>` will be
+/// constructed once the `T` is deduced by converting the marker to the `Vec<T>`
+/// type.
 ///
-/// #[doc.overloads=vec.marker.many]
+/// Passing no arguments will produce an empty `Vec<T>`.
 //
 // Note: A marker type is used instead of explicitly constructing a vec
 // immediately in order to avoid redundantly having to specify `T` when using
 // the result of `sus::vec()` as a function argument or return value.
 template <class... Ts>
-  requires(sizeof...(Ts) > 0)
 [[nodiscard]] inline constexpr auto vec(Ts&&... vs sus_lifetimebound) noexcept {
-  return __private::VecMarker<Ts...>(
-      ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
-}
-
-/// Used to construct an empty Vec<T>.
-///
-/// Calling vec() produces a hint to make a Vec<T> but does not actually
-/// construct Vec<T>, as the type `T` is not known here.
-///
-/// #[doc.overloads=vec.marker.empty]
-//
-// Note: A marker type is used instead of explicitly constructing a vec
-// immediately in order to avoid redundantly having to specify `T` when using
-// the result of `sus::vec()` as a function argument or return value.
-[[nodiscard]] inline constexpr auto vec() noexcept {
-  return __private::VecEmptyMarker();
+  if constexpr (sizeof...(Ts) > 0) {
+    return __private::VecMarker<Ts...>(
+        ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+  } else {
+    return __private::VecEmptyMarker();
+  }
 }
 
 }  // namespace sus::containers
