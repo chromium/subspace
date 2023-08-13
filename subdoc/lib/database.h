@@ -116,6 +116,7 @@ struct FunctionParameter {
   sus::Option<std::string> default_value;
   std::string type_name;
   std::string short_type_name;
+  std::string parameter_name;
 };
 
 struct FunctionOverload {

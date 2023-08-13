@@ -27,6 +27,13 @@ pre {
 .overload .function-signature>:not(.function-name) {
     margin-right: 0.2em;  /* Put back the space after other elements */
 }
+.overload .function-signature>.function-params>.type-name {
+    margin-right: 0.2em;  /* Put back the space after other elements */
+}
+.overload .function-signature>.function-params>.parameter-default-eq {
+    margin-left: 0.2em;  /* Put back the space after other elements */
+    margin-right: 0.2em;  /* Put back the space after other elements */
+}
 
 .description.short {
     margin: 0;

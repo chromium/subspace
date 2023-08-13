@@ -341,7 +341,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         params.emplace(docs_db_.find_type(v->getOriginalType()),
                        sus::none(),  // TODO: `v->getDefaultArg()`
                        friendly_type_name(v->getOriginalType()),
-                       friendly_short_type_name(v->getOriginalType()));
+                       friendly_short_type_name(v->getOriginalType()),
+                       v->getNameAsString());
       }
 
       sus::Option<RequiresConstraints> constraints;
