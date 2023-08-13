@@ -468,19 +468,23 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
                               std::make_index_sequence<N>());
 }
 
-// Implicit for-ranged loop iteration via `Array::iter()`.
+/// Implicit for-ranged loop iteration via `Array::iter()`.
 using ::sus::iter::__private::begin;
+/// Implicit for-ranged loop iteration via `Array::iter()`.
 using ::sus::iter::__private::end;
 
-// Support for structured binding.
+/// Support for using structured bindings with `Array`.
+/// #[doc.overloads=array.structured.bindings]
 template <size_t I, class T, size_t N>
 const auto& get(const Array<T, N>& a) noexcept {
   return a.get_unchecked(::sus::marker::unsafe_fn, I);
 }
+/// #[doc.overloads=array.structured.bindings]
 template <size_t I, class T, size_t N>
 auto& get(Array<T, N>& a) noexcept {
   return a.get_unchecked_mut(::sus::marker::unsafe_fn, I);
 }
+/// #[doc.overloads=array.structured.bindings]
 template <size_t I, class T, size_t N>
 auto get(Array<T, N>&& a) noexcept {
   return ::sus::move(a.get_unchecked_mut(::sus::marker::unsafe_fn, I));
