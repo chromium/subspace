@@ -64,35 +64,65 @@ void generate_return_type(HtmlWriter::OpenDiv& div,
   }
 }
 
-void generate_function_signature(HtmlWriter::OpenDiv& div,
-                                 const FunctionOverload& overload) {
+void generate_function_params(HtmlWriter::OpenDiv& div,
+                              const FunctionOverload& overload) {
   auto params_span = div.open_span(HtmlWriter::SingleLine);
   params_span.add_class("function-params");
-  params_span.write_text("(");
-  bool write_comma = false;
-  for (const FunctionParameter& p : overload.parameters) {
-    if (write_comma) params_span.write_text(", ");
-    auto one_param_link = params_span.open_a();
-    one_param_link.add_class("type-name");
-    one_param_link.add_title(p.type_name);
-    if (p.type_element.is_some()) {
-      if (!p.type_element->hidden()) {
-        one_param_link.add_href(
-            construct_html_file_path(std::filesystem::path(),
-                                     p.type_element->namespace_path.as_slice(),
-                                     p.type_element->record_path.as_slice(),
-                                     p.type_element->name)
-                .string());
-      } else {
-        llvm::errs() << "WARNING: Reference to hidden TypeElement "
-                     << p.type_element->name << " in namespace "
-                     << p.type_element->namespace_path;
+  {
+    auto open_paren = params_span.open_span(HtmlWriter::SingleLine);
+    open_paren.add_class("paren");
+    open_paren.add_class("open-paren");
+    open_paren.write_text("(");
+  }
+  for (const auto& [i, p] : overload.parameters.iter().enumerate()) {
+    if (i > 0u) params_span.write_text(", ");
+
+    {
+      auto one_param_link = params_span.open_a();
+      one_param_link.add_class("type-name");
+      one_param_link.add_title(p.type_name);
+      if (p.type_element.is_some()) {
+        if (!p.type_element->hidden()) {
+          one_param_link.add_href(construct_html_file_path(
+                                      std::filesystem::path(),
+                                      p.type_element->namespace_path.as_slice(),
+                                      p.type_element->record_path.as_slice(),
+                                      p.type_element->name)
+                                      .string());
+        } else {
+          llvm::errs() << "WARNING: Reference to hidden TypeElement "
+                       << p.type_element->name << " in namespace "
+                       << p.type_element->namespace_path;
+        }
+      }
+      one_param_link.write_text(p.short_type_name);
+    }
+
+    {
+      auto name_span = params_span.open_span(HtmlWriter::SingleLine);
+      name_span.add_class("parameter-name");
+      name_span.write_text(p.parameter_name);
+    }
+
+    if (p.default_value.is_some()) {
+      {
+        auto default_span = params_span.open_span(HtmlWriter::SingleLine);
+        default_span.add_class("parameter-default-eq");
+        default_span.write_text("=");
+      }
+      {
+        auto default_span = params_span.open_span(HtmlWriter::SingleLine);
+        default_span.add_class("parameter-default-value");
+        default_span.write_text(p.default_value.as_value());
       }
     }
-    one_param_link.write_text(p.short_type_name);
-    write_comma = true;
   }
-  params_span.write_text(")");
+  {
+    auto close_paren = params_span.open_span(HtmlWriter::SingleLine);
+    close_paren.add_class("paren");
+    close_paren.add_class("close-paren");
+    close_paren.write_text(")");
+  }
   if (overload.method.is_some()) {
     if (overload.method->is_volatile) {
       auto volatile_span = div.open_span();
@@ -145,7 +175,8 @@ void generate_function_signature(HtmlWriter::OpenDiv& div,
 
 void generate_function_requires(HtmlWriter::OpenDiv& div,
                                 const FunctionOverload& overload) {
-  if (overload.constraints.is_some() && !overload.constraints->list.is_empty()) {
+  if (overload.constraints.is_some() &&
+      !overload.constraints->list.is_empty()) {
     auto requires_div = div.open_div();
     requires_div.add_class("requires");
     {
@@ -219,7 +250,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         name_anchor.write_text(element.name);
       }
       if (style == StyleLong) {
-        generate_function_signature(signature_div, overload);
+        generate_function_params(signature_div, overload);
       }
     }
 
@@ -328,7 +359,7 @@ void generate_function(const FunctionElement& element,
           name_anchor.add_class("function-name");
           name_anchor.write_text(element.name);
         }
-        generate_function_signature(signature_div, overload);
+        generate_function_params(signature_div, overload);
       }
 
       generate_function_requires(overload_div, overload);

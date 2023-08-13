@@ -27,8 +27,13 @@ std::string template_arg_to_string(
       // How can this happen in a concept instantiation?
       sus::unreachable();
     case clang::TemplateArgument::ArgKind::Type: {
+      if (arg.getAsType()->isDependentType()) {
+        // A template argument that is a template parameter (from the function,
+        // the class, etc.)
+        return arg.getAsType().getAsString();
+      }
       // TODO: Can be a link to a TypeElement in the Database.
-      return arg.getAsType().getAsString();
+      return arg.getAsType().getCanonicalType().getAsString();
     }
     case clang::TemplateArgument::ArgKind::Declaration:
       // How can this happen in a concept instantiation?
@@ -90,6 +95,9 @@ void requires_constraints_add_expr(RequiresConstraints& constaints,
     const char* start = sm.getCharacterData(e->getBeginLoc());
     const char* end = sm.getCharacterData(e->getEndLoc()) + 1;
 
+    // TODO: There can be types in here that need to be resolved, such as the
+    // macro name `_primitive` in:
+    // * `::sus::mem::size_of<S>() <= ::sus::mem::size_of<_primitive>()`
     constaints.list.push(
         RequiresConstraint::with<RequiresConstraint::Tag::Text>(
             std::string(std::string_view(start, end - start))));
