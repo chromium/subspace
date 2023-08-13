@@ -66,86 +66,89 @@ void generate_return_type(HtmlWriter::OpenDiv& div,
 
 void generate_function_params(HtmlWriter::OpenDiv& div,
                               const FunctionOverload& overload) {
-  auto params_span = div.open_span(HtmlWriter::SingleLine);
-  params_span.add_class("function-params");
   {
-    auto open_paren = params_span.open_span(HtmlWriter::SingleLine);
-    open_paren.add_class("paren");
-    open_paren.add_class("open-paren");
-    open_paren.write_text("(");
-  }
-  for (const auto& [i, p] : overload.parameters.iter().enumerate()) {
-    if (i > 0u) params_span.write_text(", ");
-
+    auto params_span = div.open_span(HtmlWriter::SingleLine);
+    params_span.add_class("function-params");
     {
-      auto one_param_link = params_span.open_a();
-      one_param_link.add_class("type-name");
-      one_param_link.add_title(p.type_name);
-      if (p.type_element.is_some()) {
-        if (!p.type_element->hidden()) {
-          one_param_link.add_href(construct_html_file_path(
-                                      std::filesystem::path(),
-                                      p.type_element->namespace_path.as_slice(),
-                                      p.type_element->record_path.as_slice(),
-                                      p.type_element->name)
-                                      .string());
-        } else {
-          llvm::errs() << "WARNING: Reference to hidden TypeElement "
-                       << p.type_element->name << " in namespace "
-                       << p.type_element->namespace_path;
+      auto open_paren = params_span.open_span(HtmlWriter::SingleLine);
+      open_paren.add_class("paren");
+      open_paren.add_class("open-paren");
+      open_paren.write_text("(");
+    }
+    for (const auto& [i, p] : overload.parameters.iter().enumerate()) {
+      if (i > 0u) params_span.write_text(", ");
+
+      {
+        auto one_param_link = params_span.open_a();
+        one_param_link.add_class("type-name");
+        one_param_link.add_title(p.type_name);
+        if (p.type_element.is_some()) {
+          if (!p.type_element->hidden()) {
+            one_param_link.add_href(
+                construct_html_file_path(
+                    std::filesystem::path(),
+                    p.type_element->namespace_path.as_slice(),
+                    p.type_element->record_path.as_slice(),
+                    p.type_element->name)
+                    .string());
+          } else {
+            llvm::errs() << "WARNING: Reference to hidden TypeElement "
+                         << p.type_element->name << " in namespace "
+                         << p.type_element->namespace_path;
+          }
+        }
+        one_param_link.write_text(p.short_type_name);
+      }
+
+      {
+        auto name_span = params_span.open_span(HtmlWriter::SingleLine);
+        name_span.add_class("parameter-name");
+        name_span.write_text(p.parameter_name);
+      }
+
+      if (p.default_value.is_some()) {
+        {
+          auto default_span = params_span.open_span(HtmlWriter::SingleLine);
+          default_span.add_class("parameter-default-eq");
+          default_span.write_text("=");
+        }
+        {
+          auto default_span = params_span.open_span(HtmlWriter::SingleLine);
+          default_span.add_class("parameter-default-value");
+          default_span.write_text(p.default_value.as_value());
         }
       }
-      one_param_link.write_text(p.short_type_name);
     }
-
     {
-      auto name_span = params_span.open_span(HtmlWriter::SingleLine);
-      name_span.add_class("parameter-name");
-      name_span.write_text(p.parameter_name);
+      auto close_paren = params_span.open_span(HtmlWriter::SingleLine);
+      close_paren.add_class("paren");
+      close_paren.add_class("close-paren");
+      close_paren.write_text(")");
     }
-
-    if (p.default_value.is_some()) {
-      {
-        auto default_span = params_span.open_span(HtmlWriter::SingleLine);
-        default_span.add_class("parameter-default-eq");
-        default_span.write_text("=");
-      }
-      {
-        auto default_span = params_span.open_span(HtmlWriter::SingleLine);
-        default_span.add_class("parameter-default-value");
-        default_span.write_text(p.default_value.as_value());
-      }
-    }
-  }
-  {
-    auto close_paren = params_span.open_span(HtmlWriter::SingleLine);
-    close_paren.add_class("paren");
-    close_paren.add_class("close-paren");
-    close_paren.write_text(")");
   }
   if (overload.method.is_some()) {
     if (overload.method->is_volatile) {
-      auto volatile_span = div.open_span();
+      auto volatile_span = div.open_span(HtmlWriter::SingleLine);
       volatile_span.add_class("volatile");
       volatile_span.write_text("volatile");
     }
     {
       switch (overload.method->qualifier) {
         case MethodQualifier::Const: {
-          auto qualifier_span = div.open_span();
+          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
           qualifier_span.add_class("const");
           qualifier_span.write_text("const");
           break;
         }
         case MethodQualifier::ConstLValue: {
-          auto qualifier_span = div.open_span();
+          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
           qualifier_span.add_class("const");
           qualifier_span.add_class("ref");
           qualifier_span.write_text("const&");
           break;
         }
         case MethodQualifier::ConstRValue: {
-          auto qualifier_span = div.open_span();
+          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
           qualifier_span.add_class("const");
           qualifier_span.add_class("rref");
           qualifier_span.write_text("const&&");
@@ -155,14 +158,14 @@ void generate_function_params(HtmlWriter::OpenDiv& div,
           break;
         }
         case MethodQualifier::MutableLValue: {
-          auto qualifier_span = div.open_span();
+          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
           qualifier_span.add_class("mutable");
           qualifier_span.add_class("ref");
           qualifier_span.write_text("&");
           break;
         }
         case MethodQualifier::MutableRValue: {
-          auto qualifier_span = div.open_span();
+          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
           qualifier_span.add_class("mutable");
           qualifier_span.add_class("rref");
           qualifier_span.write_text("&&");

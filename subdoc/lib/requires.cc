@@ -33,7 +33,7 @@ std::string template_arg_to_string(
         return arg.getAsType().getAsString();
       }
       // TODO: Can be a link to a TypeElement in the Database.
-      return arg.getAsType().getCanonicalType().getAsString();
+      return arg.getAsType().getAsString();
     }
     case clang::TemplateArgument::ArgKind::Declaration:
       // How can this happen in a concept instantiation?
