@@ -27,6 +27,8 @@
 // Define `_primitive` to the primitive it holds inside.
 // Define `_signed` to the signed integer type of the same size.
 // Define `_pointer` to true if the type is `uptr` or false otherwise.
+// Define `_pointer_sized` to the same-size safe unsigned integer, when _pointer
+//   is true.
 ///////////////////////////////////////////////////////////////////////////
 
 /// The inner primitive value. Prefer to cast to the desired primitive type,
@@ -259,7 +261,8 @@ constexpr inline _self& operator=(P v) noexcept {
 /// information in a way that is otherwise impossible with a cast.
 _self with_addr(usize addr) const& noexcept {
   _primitive p = _primitive{addr};
-  if constexpr (::sus::mem::size_of<_self>() != ::sus::mem::size_of<usize>()) {
+  if constexpr (::sus::mem::size_of<_primitive>() !=
+                ::sus::mem::size_of<usize>()) {
     constexpr _primitive mask =
         _self::MAX_PRIMITIVE - _primitive{usize::MAX_PRIMITIVE};
     p |= mask & primitive_value;
@@ -474,63 +477,90 @@ static constexpr _self from_sum(
 
 #if _pointer
 
+/// Conversion from the numeric type to a C++ primitive type.
+///
+/// This converts to `uintptr_t` but not to other signed or unsigned integer
+/// types. Note that the C++ standard library may alias `uintptr_t` with
+/// `uint32_t` or `uint64_t` which would then allow that specific conversion as
+/// well.
+///
+/// ```
+/// auto d = uintptr_t{uptr()};  // Compiles.
+/// auto e = uintptr_t(uptr());  // Compiles.
+/// uintptr_t f = uptr();  // Compiles.
+///
+/// auto d = int64_t{uptr()};  // Does not compile.
+/// auto e = int64_t(uptr());  // Does not compile.
+/// int64_t f = uptr();  // Does not compile.
+/// ```
+///
+/// Potentially-lossy type conversions can be forced through the
+/// `sus::convert::Transmogrify` concept, such as `sus::mog<uint32_t>(uptr())`
+/// or `sus::mog<int32_t>(uptr())`, or even `sus::mog<u32>(uptr())`.
 template <std::same_as<uintptr_t> U>
-sus_pure constexpr inline explicit operator U() const {
+sus_pure constexpr inline operator U() const noexcept {
+  // SAFETY: The `primitive_value` in uptr has the same size as `uintptr_t` even
+  // though it's not explicitly that type.
   return static_cast<uintptr_t>(primitive_value);
 }
 
 #else
 
-/// Explicit conversion from the numeric type to the inner primitive type.
+/// Conversion from the numeric type to a C++ primitive type.
 ///
-/// Typically this should be used in a curly-brace conversion statement such as
-/// `uint32_t{3_i32}` which will ensure a compiler error if the conversion can
-/// lose data. Lossy conversions can be done through the
-/// `sus::convert::Transmogrify` concept, such as `sus::mog<uint32_t>(3_i32)` or
-/// `sus::mog<int32_t>(3_i32)`.
+/// This converts to unsigned primitives which are at least as large as the
+/// `#[@doc.self]`.
+///
+/// ```
+/// auto d = uint32_t{3_u32};  // Compiles.
+/// auto e = uint32_t(3_u32);  // Compiles.
+/// uint32_t f = 3_u32;  // Compiles.
+///
+/// auto d = uint16_t{3_u32};  // Does not compile.
+/// auto e = uint16_t(3_u32);  // Does not compile.
+/// uint16_t f = 3_u32;  // Does not compile.
+/// ```
+///
+/// Potentially-lossy type conversions can be forced through the
+/// `sus::convert::Transmogrify` concept, such as `sus::mog<uint16_t>(3_u32)`
+/// or `sus::mog<int32_t>(3_u32)`, or even `sus::mog<i32>(3_u32)`.
 template <UnsignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr inline explicit operator U() const {
+sus_pure constexpr inline operator U() const noexcept {
   return primitive_value;
 }
 
 #endif
 
 /// sus::ops::Eq<T> trait for unsigned integers.
-/// #[doc.overloads=uint.eq.self]
+/// #[doc.overloads=uint.eq]
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept = default;
-/// sus::ops::Eq<T, U> trait for unsigned integers and primitive unsigned
-/// integers.
-/// #[doc.overloads=uint.eq.unsignedprimitive]
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(
-    _self l, UnsignedPrimitiveInteger auto r) noexcept {
-  return l.primitive_value == r;
-}
-/// sus::ops::Eq<T, U> trait for heterogeneous unsigned integers.
-/// #[doc.overloads=uint.eq.unsigned]
+/// #[doc.overloads=uint.eq]
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, Unsigned auto r) noexcept {
   return l.primitive_value == r.primitive_value;
 }
+/// #[doc.overloads=uint.eq]
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+    _self l, UnsignedPrimitiveInteger auto r) noexcept {
+  return l.primitive_value == r;
+}
 /// sus::ops::StrongOrd<T> trait for unsigned integers.
-/// #[doc.overloads=uint.ord.self]
+/// #[doc.overloads=uint.strongord]
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     _self l, _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
-/// sus::ops::StrongOrd<T, U> trait for unsigned integers and primitive unsigned
-/// integers.
-/// #[doc.overloads=uint.ord.unsignedprimitive]
-[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
-    _self l, UnsignedPrimitiveInteger auto r) noexcept {
-  return l.primitive_value <=> r;
-}
-/// sus::ops::StrongOrd<T, U> trait for heterogeneous unsigned integers.
-/// #[doc.overloads=uint.ord.unsigned]
+/// #[doc.overloads=uint.strongord]
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     _self l, Unsigned auto r) noexcept {
   return l.primitive_value <=> r.primitive_value;
+}
+/// #[doc.overloads=uint.strongord]
+[[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
+    _self l, UnsignedPrimitiveInteger auto r) noexcept {
+  return l.primitive_value <=> r;
 }
 
 // sus::num::Neg trait intentionally omitted.
@@ -542,6 +572,10 @@ sus_pure constexpr inline _self operator~() const& noexcept {
 
 /// sus::num::Add<T> trait for unsigned integers.
 ///
+/// This operation supports working with primitive unsigned integers that
+/// convert to @doc.self, as well as enums. However enum class is excluded as
+/// they require an explicit conversion to a @doc.self.
+///
 /// #[doc.overloads=unsignedint.+]
 [[nodiscard]] sus_pure friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
@@ -551,7 +585,41 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return _self(out.value);
 }
+/// #[doc.overloads=unsignedint.+]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                  //
+           (UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+    _self l, U r) noexcept {
+  return l + _self(static_cast<_primitive>(r));
+}
+/// #[doc.overloads=unsignedint.+]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                  //
+           (UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+           ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>())
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+    U l, _self r) noexcept {
+  return _self(static_cast<_primitive>(l)) + r;
+}
+/// #[doc.overloads=unsignedint.+]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator+(_self l, U r) noexcept = delete;
+/// #[doc.overloads=unsignedint.+]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
 /// sus::num::Sub<T> trait for unsigned integers.
+///
+/// This operation supports working with primitive unsigned integers that
+/// convert to @doc.self, as well as enums. However enum class is excluded as
+/// they require an explicit conversion to a @doc.self.
 ///
 /// #[doc.overloads=unsignedint.-]
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
@@ -562,7 +630,41 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return _self(out.value);
 }
+/// #[doc.overloads=unsignedint.-]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+    _self l, U r) noexcept {
+  return l - _self(static_cast<_primitive>(r));
+}
+/// #[doc.overloads=unsignedint.-]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+    U l, _self r) noexcept {
+  return _self(static_cast<_primitive>(l)) - r;
+}
+/// #[doc.overloads=unsignedint.-]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator-(_self l, U r) noexcept = delete;
+/// #[doc.overloads=unsignedint.-]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
 /// sus::num::Mul<T> trait for unsigned integers.
+///
+/// This operation supports working with primitive unsigned integers that
+/// convert to @doc.self, as well as enums. However enum class is excluded as
+/// they require an explicit conversion to a @doc.self.
 ///
 /// #[doc.overloads=unsignedint.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
@@ -573,7 +675,41 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(!out.overflow);
   return _self(out.value);
 }
+/// #[doc.overloads=unsignedint.*]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+    _self l, U r) noexcept {
+  return l * _self(static_cast<_primitive>(r));
+}
+/// #[doc.overloads=unsignedint.*]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+    U l, _self r) noexcept {
+  return _self(static_cast<_primitive>(l)) * r;
+}
+/// #[doc.overloads=unsignedint.*]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator*(_self l, U r) noexcept = delete;
+/// #[doc.overloads=unsignedint.*]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
 /// sus::num::Div<T> trait for unsigned integers.
+///
+/// This operation supports working with primitive unsigned integers that
+/// convert to @doc.self, as well as enums. However enum class is excluded as
+/// they require an explicit conversion to a @doc.self.
 ///
 /// #[doc.overloads=unsignedint./]
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
@@ -582,7 +718,41 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(r.primitive_value != 0u);
   return _self(__private::unchecked_div(l.primitive_value, r.primitive_value));
 }
+/// #[doc.overloads=unsignedint./]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+    _self l, U r) noexcept {
+  return l / _self(static_cast<_primitive>(r));
+}
+/// #[doc.overloads=unsignedint./]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+    U l, _self r) noexcept {
+  return _self(static_cast<_primitive>(l)) / r;
+}
+/// #[doc.overloads=unsignedint./]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator/(_self l, U r) noexcept = delete;
+/// #[doc.overloads=unsignedint./]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
 /// sus::num::Rem<T> trait for unsigned integers.
+///
+/// This operation supports working with primitive unsigned integers that
+/// convert to @doc.self, as well as enums. However enum class is excluded as
+/// they require an explicit conversion to a @doc.self.
 ///
 /// #[doc.overloads=unsignedint.%]
 [[nodiscard]] sus_pure friend constexpr inline _self operator%(
@@ -591,46 +761,190 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   ::sus::check(r.primitive_value != 0u);
   return _self(__private::unchecked_rem(l.primitive_value, r.primitive_value));
 }
+/// #[doc.overloads=unsignedint.%]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+    _self l, U r) noexcept {
+  return l % _self(static_cast<_primitive>(r));
+}
+/// #[doc.overloads=unsignedint.%]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+    U l, _self r) noexcept {
+  return _self(static_cast<_primitive>(l)) % r;
+}
+/// #[doc.overloads=unsignedint.%]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator%(_self l, U r) noexcept = delete;
+/// #[doc.overloads=unsignedint.%]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 
 /// sus::num::BitAnd<T> trait for unsigned integers.
+///
+/// This operation supports working with primitive unsigned integers that
+/// convert to @doc.self, as well as enums. However enum class is excluded as
+/// they require an explicit conversion to a @doc.self.
 ///
 /// #[doc.overloads=unsignedint.&]
 [[nodiscard]] sus_pure friend constexpr inline _self operator&(
     _self l, _self r) noexcept {
   return _self(__private::unchecked_and(l.primitive_value, r.primitive_value));
 }
+/// #[doc.overloads=unsignedint.&]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator&(
+    _self l, U r) noexcept {
+  return l & _self(static_cast<_primitive>(r));
+}
+/// #[doc.overloads=unsignedint.&]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator&(
+    U l, _self r) noexcept {
+  return _self(static_cast<_primitive>(l)) & r;
+}
+/// #[doc.overloads=unsignedint.&]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator&(_self l, U r) noexcept = delete;
+/// #[doc.overloads=unsignedint.&]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator&(U l, _self r) noexcept = delete;
 /// sus::num::BitOr<T> trait for unsigned integers.
+///
+/// This operation supports working with primitive unsigned integers that
+/// convert to @doc.self, as well as enums. However enum class is excluded as
+/// they require an explicit conversion to a @doc.self.
 ///
 /// #[doc.overloads=unsignedint.|]
 [[nodiscard]] sus_pure friend constexpr inline _self operator|(
     _self l, _self r) noexcept {
   return _self(__private::unchecked_or(l.primitive_value, r.primitive_value));
 }
+/// #[doc.overloads=unsignedint.|]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator|(
+    _self l, U r) noexcept {
+  return l | _self(static_cast<_primitive>(r));
+}
+/// #[doc.overloads=unsignedint.|]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator|(
+    U l, _self r) noexcept {
+  return _self(static_cast<_primitive>(l)) | r;
+}
+/// #[doc.overloads=unsignedint.|]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator|(_self l, U r) noexcept = delete;
+/// #[doc.overloads=unsignedint.|]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator|(U l, _self r) noexcept = delete;
 /// sus::num::BitXor<T> trait for unsigned integers.
+///
+/// This operation supports working with primitive unsigned integers that
+/// convert to @doc.self, as well as enums. However enum class is excluded as
+/// they require an explicit conversion to a @doc.self.
 ///
 /// #[doc.overloads=unsignedint.^]
 [[nodiscard]] sus_pure friend constexpr inline _self operator^(
     _self l, _self r) noexcept {
   return _self(__private::unchecked_xor(l.primitive_value, r.primitive_value));
 }
+/// #[doc.overloads=unsignedint.^]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator^(
+    _self l, U r) noexcept {
+  return l ^ _self(static_cast<_primitive>(r));
+}
+/// #[doc.overloads=unsignedint.^]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&                   //
+           ((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+            ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator^(
+    U l, _self r) noexcept {
+  return _self(static_cast<_primitive>(l)) ^ r;
+}
+/// #[doc.overloads=unsignedint.^]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator^(_self l, U r) noexcept = delete;
+/// #[doc.overloads=unsignedint.^]
+template <class U>
+  requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
+           !((UnsignedPrimitiveInteger<U> || UnsignedPrimitiveEnum<U>) &&  //
+             ::sus::mem::size_of<U>() <= ::sus::mem::size_of<_primitive>()))
+friend constexpr inline _self operator^(U l, _self r) noexcept = delete;
 /// sus::num::Shl<T> trait for unsigned integers.
 ///
 /// #[doc.overloads=unsignedint.<<]
 [[nodiscard]] sus_pure friend constexpr inline _self operator<<(
-    _self l, u32 r) noexcept {
+    _self l, std::convertible_to<u32> auto r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r < u32(__private::num_bits<_primitive>()));
-  return _self(__private::unchecked_shl(l.primitive_value, r.primitive_value));
+  return _self(
+      __private::unchecked_shl(l.primitive_value, u32(r).primitive_value));
 }
+/// #[doc.overloads=unsignedint.<<]
+template <class U>
+  requires(!std::convertible_to<U, u32>)
+[[nodiscard]] sus_pure friend constexpr inline _self operator<<(
+    _self l, U r) noexcept = delete;
 /// sus::num::Shr<T> trait for unsigned integers.
 ///
 /// #[doc.overloads=unsignedint.>>]
 [[nodiscard]] sus_pure friend constexpr inline _self operator>>(
-    _self l, u32 r) noexcept {
+    _self l, std::convertible_to<u32> auto r) noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r < u32(__private::num_bits<_primitive>()));
-  return _self(__private::unchecked_shr(l.primitive_value, r.primitive_value));
+  return _self(
+      __private::unchecked_shr(l.primitive_value, u32(r).primitive_value));
 }
+/// #[doc.overloads=unsignedint.<<]
+template <class U>
+  requires(!std::convertible_to<U, u32>)
+[[nodiscard]] sus_pure friend constexpr inline _self operator>>(
+    _self l, U r) noexcept = delete;
 
 /// sus::num::AddAssign<@doc.self> trait
 constexpr inline void operator+=(_self r) & noexcept {
@@ -640,6 +954,11 @@ constexpr inline void operator+=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
+#if _pointer  // uptr can't be created from other safe numerics.
+constexpr inline void operator+=(_pointer_sized r) & noexcept {
+  *this += _self(_primitive{r.primitive_value});
+}
+#endif
 /// sus::num::SubAssign<@doc.self> trait.
 constexpr inline void operator-=(_self r) & noexcept {
   const auto out =
@@ -648,6 +967,11 @@ constexpr inline void operator-=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
+#if _pointer  // uptr can't be created from other safe numerics.
+constexpr inline void operator-=(_pointer_sized r) & noexcept {
+  *this -= _self(_primitive{r.primitive_value});
+}
+#endif
 /// sus::num::MulAssign<@doc.self> trait.
 constexpr inline void operator*=(_self r) & noexcept {
   const auto out =
@@ -656,31 +980,61 @@ constexpr inline void operator*=(_self r) & noexcept {
   ::sus::check(!out.overflow);
   primitive_value = out.value;
 }
+#if _pointer  // uptr can't be created from other safe numerics.
+constexpr inline void operator*=(_pointer_sized r) & noexcept {
+  *this *= _self(_primitive{r.primitive_value});
+}
+#endif
 /// sus::num::DivAssign<@doc.self> trait.
 constexpr inline void operator/=(_self r) & noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
   primitive_value /= r.primitive_value;
 }
+#if _pointer  // uptr can't be created from other safe numerics.
+constexpr inline void operator/=(_pointer_sized r) & noexcept {
+  *this /= _self(_primitive{r.primitive_value});
+}
+#endif
 /// sus::num::RemAssign<@doc.self> trait.
 constexpr inline void operator%=(_self r) & noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(r.primitive_value != 0u);
   primitive_value %= r.primitive_value;
 }
+#if _pointer  // uptr can't be created from other safe numerics.
+constexpr inline void operator%=(_pointer_sized r) & noexcept {
+  *this %= _self(_primitive{r.primitive_value});
+}
+#endif
 
 /// sus::num::BitAndAssign<@doc.self> trait.
 constexpr inline void operator&=(_self r) & noexcept {
   primitive_value &= r.primitive_value;
 }
+#if _pointer  // uptr can't be created from other safe numerics.
+constexpr inline void operator&=(_pointer_sized r) & noexcept {
+  *this &= _self(_primitive{r.primitive_value});
+}
+#endif
 /// sus::num::BitOrAssign<@doc.self> trait.
 constexpr inline void operator|=(_self r) & noexcept {
   primitive_value |= r.primitive_value;
 }
+#if _pointer  // uptr can't be created from other safe numerics.
+constexpr inline void operator|=(_pointer_sized r) & noexcept {
+  *this |= _self(_primitive{r.primitive_value});
+}
+#endif
 /// sus::num::BitXorAssign<@doc.self> trait.
 constexpr inline void operator^=(_self r) & noexcept {
   primitive_value ^= r.primitive_value;
 }
+#if _pointer  // uptr can't be created from other safe numerics.
+constexpr inline void operator^=(_pointer_sized r) & noexcept {
+  *this ^= _self(_primitive{r.primitive_value});
+}
+#endif
 /// sus::num::ShlAssign<@doc.self> trait.
 constexpr inline void operator<<=(u32 r) & noexcept {
   // TODO: Allow opting out of all overflow checks?
@@ -1306,13 +1660,13 @@ sus_pure constexpr _self to_le() const& noexcept {
 /// Return the memory representation of this integer as a byte array in
 /// big-endian (network) byte order.
 sus_pure constexpr ::sus::collections::Array<u8,
-                                            ::sus::mem::size_of<_primitive>()>
+                                             ::sus::mem::size_of<_primitive>()>
 to_be_bytes() const& noexcept;
 
 /// Return the memory representation of this integer as a byte array in
 /// little-endian byte order.
 sus_pure constexpr ::sus::collections::Array<u8,
-                                            ::sus::mem::size_of<_primitive>()>
+                                             ::sus::mem::size_of<_primitive>()>
 to_le_bytes() const& noexcept;
 
 /// Return the memory representation of this integer as a byte array in native
@@ -1321,7 +1675,7 @@ to_le_bytes() const& noexcept;
 /// As the target platform's native endianness is used, portable code should use
 /// `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.
 sus_pure constexpr ::sus::collections::Array<u8,
-                                            ::sus::mem::size_of<_primitive>()>
+                                             ::sus::mem::size_of<_primitive>()>
 to_ne_bytes() const& noexcept;
 
 /// Create an integer value from its representation as a byte array in big
@@ -1363,3 +1717,4 @@ sus_pure constexpr usize addr() const& noexcept {
 #undef _primitive
 #undef _signed
 #undef _pointer
+#undef _pointer_sized

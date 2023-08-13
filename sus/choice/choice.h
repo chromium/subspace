@@ -135,7 +135,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       static_cast<IndexType>(__private::get_index_for_value<V, Tags...>());
 
   template <TagsType V>
-  using StorageTypeOfTag = __private::StorageTypeOfTag<size_t{index<V>}, Ts...>;
+  using StorageTypeOfTag = __private::StorageTypeOfTag<index<V>, Ts...>;
 
   template <TagsType V>
   using AccessTypeOfTagConst =
@@ -163,7 +163,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(std::constructible_from<Arg, U &&>)
   constexpr static Choice with(U&& values) noexcept {
     auto u = Choice(index<V>);
-    u.storage_.activate_for_construct(size_t{index<V>});
+    u.storage_.activate_for_construct(index<V>);
     find_choice_storage_mut<index<V>>(u.storage_)
         .construct(::sus::forward<U>(values));
     return u;
@@ -184,7 +184,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
                std::is_trivially_destructible_v<Ts>))
   {
     if (index_ != kUseAfterMove && index_ != kNeverValue)
-      storage_.destroy(size_t{index_});
+      storage_.destroy(index_);
   }
 
   constexpr Choice(Choice&& o) noexcept
@@ -205,7 +205,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
                                    // the tag to an unused value.
                                    kUseAfterMove)) {
     check(index_ != kUseAfterMove);
-    storage_.move_construct(size_t{index_}, ::sus::move(o.storage_));
+    storage_.move_construct(index_, ::sus::move(o.storage_));
   }
 
   Choice& operator=(Choice&& o) noexcept
@@ -224,11 +224,11 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   {
     check(o.index_ != kUseAfterMove);
     if (index_ == o.index_) {
-      storage_.move_assign(size_t{index_}, ::sus::move(o.storage_));
+      storage_.move_assign(index_, ::sus::move(o.storage_));
     } else {
-      if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
+      if (index_ != kUseAfterMove) storage_.destroy(index_);
       index_ = ::sus::move(o.index_);
-      storage_.move_construct(size_t{index_}, ::sus::move(o.storage_));
+      storage_.move_construct(index_, ::sus::move(o.storage_));
     }
     o.index_ = kUseAfterMove;
     return *this;
@@ -249,7 +249,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
                std::is_trivially_copy_constructible_v<Ts>))
       : index_(o.index_) {
     check(o.index_ != kUseAfterMove);
-    storage_.copy_construct(size_t{index_}, o.storage_);
+    storage_.copy_construct(index_, o.storage_);
   }
 
   constexpr Choice& operator=(const Choice& o)
@@ -268,11 +268,11 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   {
     check(o.index_ != kUseAfterMove);
     if (index_ == o.index_) {
-      storage_.copy_assign(size_t{index_}, o.storage_);
+      storage_.copy_assign(index_, o.storage_);
     } else {
-      if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
+      if (index_ != kUseAfterMove) storage_.destroy(index_);
       index_ = o.index_;
-      storage_.copy_construct(size_t{index_}, o.storage_);
+      storage_.copy_construct(index_, o.storage_);
     }
     return *this;
   }
@@ -283,7 +283,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   {
     check(index_ != kUseAfterMove);
     auto u = Choice(::sus::clone(index_));
-    u.storage_.clone_construct(size_t{index_}, storage_);
+    u.storage_.clone_construct(index_, storage_);
     return u;
   }
 
@@ -453,9 +453,9 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       __private::find_choice_storage_mut<index<V>>(storage_).assign(
           ::sus::move(values));
     } else {
-      if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
+      if (index_ != kUseAfterMove) storage_.destroy(index_);
       index_ = index<V>;
-      storage_.activate_for_construct(size_t{index<V>});
+      storage_.activate_for_construct(index<V>);
       __private::find_choice_storage_mut<index<V>>(storage_).construct(
           ::sus::move(values));
     }
@@ -509,7 +509,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
             __private::ValueIsVoid Arg = StorageTypeOfTag<V>>
   constexpr void set() & noexcept {
     if (index_ != index<V>) {
-      if (index_ != kUseAfterMove) storage_.destroy(size_t{index_});
+      if (index_ != kUseAfterMove) storage_.destroy(index_);
       index_ = index<V>;
     }
   }
@@ -522,7 +522,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
-    return l.index_ == r.index_ && l.storage_.eq(size_t{l.index_}, r.storage_);
+    return l.index_ == r.index_ && l.storage_.eq(l.index_, r.storage_);
   }
 
   template <class... Us, auto V, auto... Vs>
@@ -546,7 +546,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     if (value_order != std::strong_ordering::equivalent) {
       return value_order;
     } else {
-      return l.storage_.ord(size_t{l.index_}, r.storage_);
+      return l.storage_.ord(l.index_, r.storage_);
     }
   }
 
@@ -565,7 +565,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     if (value_order != std::weak_ordering::equivalent) {
       return value_order;
     } else {
-      return l.storage_.weak_ord(size_t{l.index_}, r.storage_);
+      return l.storage_.weak_ord(l.index_, r.storage_);
     }
   }
 
@@ -584,7 +584,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     if (value_order != std::partial_ordering::equivalent) {
       return value_order;
     } else {
-      return l.storage_.partial_ord(size_t{l.index_}, r.storage_);
+      return l.storage_.partial_ord(l.index_, r.storage_);
     }
   }
 

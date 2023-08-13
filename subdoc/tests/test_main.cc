@@ -15,22 +15,24 @@
 #include "subdoc/tests/test_main.h"
 
 #include "googletest/include/gtest/gtest.h"
+#include "sus/iter/iterator.h"
 #include "sus/prelude.h"
 
 namespace {
-sus::Vec<std::string>* args;
+sus::Vec<std::string_view>* args;
 }
 
-const sus::Slice<std::string>& test_main_command_line_args() { return *args; }
+const sus::Slice<std::string_view>& test_main_command_line_args() { return *args; }
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
 
-  auto nargs = usize::try_from(argc).unwrap();
-  args = new sus::Vec<std::string>(sus::Vec<std::string>::with_capacity(nargs));
-  for (usize i; i < nargs; i += 1u) {
-    args->push(std::string(argv[size_t{i}]));
-  }
+  auto slice = sus::SliceMut<char*>::from_raw_parts_mut(
+      unsafe_fn, argv, usize::try_from(argc).unwrap());
+  args = new sus::Vec<std::string_view>(
+      slice.iter()
+          .map([](char* arg) { return std::string_view(arg); })
+          .collect<sus::Vec<std::string_view>>());
 
   return RUN_ALL_TESTS();
 }

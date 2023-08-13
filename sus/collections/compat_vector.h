@@ -27,7 +27,7 @@ struct sus::iter::FromIteratorImpl<std::vector<T, Allocator>> {
     auto [lower, upper] = iter.size_hint();
     usize reserve = ::sus::move(upper).unwrap_or(lower);
     auto v = std::vector<T, Allocator>();
-    v.reserve(size_t{reserve});
+    v.reserve(reserve);
     for (T t : iter) v.push_back(::sus::move(t));
     return v;
   }

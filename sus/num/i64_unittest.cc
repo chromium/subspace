@@ -16,8 +16,8 @@
 #include <type_traits>
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/construct/into.h"
 #include "sus/collections/array.h"
+#include "sus/construct/into.h"
 #include "sus/iter/__private/step.h"
 #include "sus/num/num_concepts.h"
 #include "sus/num/signed_integer.h"
@@ -141,9 +141,25 @@ TEST(i64, Traits) {
   static_assert(!(1_i64 != 1_i64));
 
   // Verify constexpr.
-  [[maybe_unused]] constexpr i64 c =
-      1_i64 + 2_i64 - 3_i64 * 4_i64 / 5_i64 % 6_i64 & 7_i64 | 8_i64 ^ -9_i64;
-  [[maybe_unused]] constexpr std::strong_ordering o = 2_i64 <=> 3_i64;
+  [[maybe_unused]] constexpr i64 e = []() {
+    i64 a =
+        1_i64 + 2_i64 - 3_i64 * 4_i64 / 5_i64 % 6_i64 & 7_i64 | 8_i64 ^ 9_i64;
+    [[maybe_unused]] bool b = 2_i64 == 3_i64;
+    [[maybe_unused]] std::strong_ordering c = 2_i64 <=> 3_i64;
+    [[maybe_unused]] i64 d = a << 1_u32;
+    [[maybe_unused]] i64 e = a >> 1_u32;
+    a += 1_i64;
+    a -= 1_i64;
+    a *= 1_i64;
+    a /= 1_i64;
+    a %= 1_i64;
+    a &= 1_i64;
+    a |= 1_i64;
+    a ^= 1_i64;
+    a <<= 1_u32;
+    a >>= 1_u32;
+    return a;
+  }();
 }
 
 TEST(i64, Literals) {
@@ -188,16 +204,16 @@ TEST(i64, Constants) {
 }
 
 template <class From, class To>
-concept IsImplicitlyConvertible = (std::is_convertible_v<From, To> &&
-                                   std::is_assignable_v<To, From>);
+concept IsImplicitlyConvertible =
+    std::is_convertible_v<From, To> && std::is_nothrow_assignable_v<To&, From>;
 template <class From, class To>
-concept IsExplicitlyConvertible = (std::constructible_from<To, From> &&
-                                   !std::is_convertible_v<From, To> &&
-                                   !std::is_assignable_v<To, From>);
+concept IsExplicitlyConvertible =
+    std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+    !std::is_assignable_v<To&, From>;
 template <class From, class To>
-concept NotConvertible = (!std::constructible_from<To, From> &&
-                          !std::is_convertible_v<From, To> &&
-                          !std::is_assignable_v<To, From>);
+concept NotConvertible =
+    !std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
+    !std::is_assignable_v<To&, From>;
 
 template <class T>
 auto make_enum() {
@@ -307,7 +323,7 @@ TEST(i64, ToPrimitive) {
   static_assert(NotConvertible<i64, int8_t>);
   static_assert(NotConvertible<i64, int16_t>);
   static_assert(NotConvertible<i64, int32_t>);
-  static_assert(IsExplicitlyConvertible<i64, int64_t>);
+  static_assert(IsImplicitlyConvertible<i64, int64_t>);
   static_assert(NotConvertible<i64, uint8_t>);
   static_assert(NotConvertible<i64, uint16_t>);
   static_assert(NotConvertible<i64, uint32_t>);
@@ -315,19 +331,143 @@ TEST(i64, ToPrimitive) {
   static_assert(NotConvertible<i64, size_t>);
 }
 
+template <class Sus, class Prim>
+concept CanOperator = requires(Sus sus, Prim prim) {
+  { sus + prim } -> std::same_as<Sus>;
+  { sus - prim } -> std::same_as<Sus>;
+  { sus* prim } -> std::same_as<Sus>;
+  { sus / prim } -> std::same_as<Sus>;
+  { sus % prim } -> std::same_as<Sus>;
+  { sus& prim } -> std::same_as<Sus>;
+  { sus | prim } -> std::same_as<Sus>;
+  { sus ^ prim } -> std::same_as<Sus>;
+  { prim + sus } -> std::same_as<Sus>;
+  { prim - sus } -> std::same_as<Sus>;
+  { prim* sus } -> std::same_as<Sus>;
+  { prim / sus } -> std::same_as<Sus>;
+  { prim % sus } -> std::same_as<Sus>;
+  { prim& sus } -> std::same_as<Sus>;
+  { prim | sus } -> std::same_as<Sus>;
+  { prim ^ sus } -> std::same_as<Sus>;
+  { sus += prim };
+  { sus -= prim };
+  { sus *= prim };
+  { sus /= prim };
+  { sus %= prim };
+  { sus &= prim };
+  { sus |= prim };
+  { sus ^= prim };
+};
+
+// clang-format off
+template <class Sus, class Prim>
+concept CantOperator =
+  !requires(Sus sus, Prim prim) { { sus + prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus - prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus* prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus / prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus % prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus& prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus | prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus ^ prim }; } &&
+  !requires(Sus sus, Prim prim) { { prim + sus }; } &&
+  !requires(Sus sus, Prim prim) { { prim - sus }; } &&
+  !requires(Sus sus, Prim prim) { { prim* sus }; } &&
+  !requires(Sus sus, Prim prim) { { prim / sus }; } &&
+  !requires(Sus sus, Prim prim) { { prim % sus }; } &&
+  !requires(Sus sus, Prim prim) { { prim& sus }; } &&
+  !requires(Sus sus, Prim prim) { { prim | sus }; } &&
+  !requires(Sus sus, Prim prim) { { prim ^ sus }; } &&
+  !requires(Sus sus, Prim prim) { { sus += prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus -= prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus *= prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus /= prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus %= prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus &= prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus |= prim }; } &&
+  !requires(Sus sus, Prim prim) { { sus ^= prim }; };
+// clang-format on
+
+template <class Lhs, class Rhs>
+concept CanShift = requires(Lhs l, Rhs r) {
+  { l << r } -> std::same_as<Lhs>;
+  { l >> r } -> std::same_as<Lhs>;
+};
+
+// clang-format off
+template <class Lhs, class Rhs>
+concept CantShift =
+  !requires(Lhs l, Rhs r) { { l << r }; } &&
+  !requires(Lhs l, Rhs r) { { l >> r }; };
+// clang-format on
+
+TEST(i64, OperatorsWithPrimitives) {
+  static_assert(CanOperator<i64, uint8_t>);
+  static_assert(CanOperator<i64, uint16_t>);
+  static_assert(CanOperator<i64, uint32_t>);
+  static_assert(CantOperator<i64, uint64_t>);
+
+  static_assert(CanOperator<i64, int8_t>);
+  static_assert(CanOperator<i64, int16_t>);
+  static_assert(CanOperator<i64, int32_t>);
+  static_assert(CanOperator<i64, int64_t>);
+
+  static_assert(CanOperator<i64, ENUM(, uint8_t)>);
+  static_assert(CanOperator<i64, ENUM(, uint16_t)>);
+  static_assert(CanOperator<i64, ENUM(, uint32_t)>);
+  static_assert(CantOperator<i64, ENUM(, uint64_t)>);
+
+  static_assert(CanOperator<i64, ENUM(, int8_t)>);
+  static_assert(CanOperator<i64, ENUM(, int16_t)>);
+  static_assert(CanOperator<i64, ENUM(, int32_t)>);
+  static_assert(CanOperator<i64, ENUM(, int64_t)>);
+
+  static_assert(CantOperator<i64, ENUM(class, uint8_t)>);
+  static_assert(CantOperator<i64, ENUM(class, uint16_t)>);
+  static_assert(CantOperator<i64, ENUM(class, uint32_t)>);
+  static_assert(CantOperator<i64, ENUM(class, uint64_t)>);
+
+  static_assert(CantOperator<i64, ENUM(class, int8_t)>);
+  static_assert(CantOperator<i64, ENUM(class, int16_t)>);
+  static_assert(CantOperator<i64, ENUM(class, int32_t)>);
+  static_assert(CantOperator<i64, ENUM(class, int64_t)>);
+
+  static_assert(CanShift<i64, uint8_t>);
+  static_assert(CanShift<i64, uint16_t>);
+  static_assert(CanShift<i64, uint32_t>);
+  static_assert(CantShift<i64, uint64_t>);
+  static_assert(CanShift<i64, ENUM(, uint8_t)>);
+  static_assert(CanShift<i64, ENUM(, uint16_t)>);
+  static_assert(CanShift<i64, ENUM(, uint32_t)>);
+  static_assert(CantShift<i64, ENUM(, uint64_t)>);
+  static_assert(CantShift<i64, ENUM(class, uint8_t)>);
+  static_assert(CantShift<i64, ENUM(class, uint16_t)>);
+  static_assert(CantShift<i64, ENUM(class, uint32_t)>);
+  static_assert(CantShift<i64, ENUM(class, uint64_t)>);
+
+  static_assert(CantShift<i64, int8_t>);
+
+  static_assert(CantShift<int8_t, i64>);
+  static_assert(CantShift<uint8_t, i64>);
+  static_assert(CantShift<ENUM(, int8_t), i64>);
+  static_assert(CantShift<ENUM(, uint8_t), i64>);
+  static_assert(CantShift<ENUM(class, int8_t), i64>);
+  static_assert(CantShift<ENUM(class, uint8_t), i64>);
+}
+
 TEST(i64, From) {
   using signed_char = signed char;
 
-  static_assert(!sus::construct::From<i64, bool>);
+  static_assert(sus::construct::From<i64, bool>);
   static_assert(sus::construct::From<i64, signed_char>);
   static_assert(!sus::construct::From<i64, size_t>);
   static_assert(sus::construct::From<i64, int8_t>);
   static_assert(sus::construct::From<i64, int16_t>);
   static_assert(sus::construct::From<i64, int32_t>);
   static_assert(sus::construct::From<i64, int64_t>);
-  static_assert(!sus::construct::From<i64, uint8_t>);
-  static_assert(!sus::construct::From<i64, uint16_t>);
-  static_assert(!sus::construct::From<i64, uint32_t>);
+  static_assert(sus::construct::From<i64, uint8_t>);
+  static_assert(sus::construct::From<i64, uint16_t>);
+  static_assert(sus::construct::From<i64, uint32_t>);
   static_assert(!sus::construct::From<i64, uint64_t>);
   static_assert(sus::construct::TryFrom<i64, signed_char>);
   static_assert(sus::construct::TryFrom<i64, size_t>);
@@ -346,11 +486,11 @@ TEST(i64, From) {
   static_assert(sus::construct::From<i64, ENUM(, int16_t)>);
   static_assert(sus::construct::From<i64, ENUM(, int32_t)>);
   static_assert(sus::construct::From<i64, ENUM(, int64_t)>);
-  static_assert(!sus::construct::From<i64, ENUM(, uint8_t)>);
-  static_assert(!sus::construct::From<i64, ENUM(, uint16_t)>);
-  static_assert(!sus::construct::From<i64, ENUM(, uint32_t)>);
+  static_assert(sus::construct::From<i64, ENUM(, uint8_t)>);
+  static_assert(sus::construct::From<i64, ENUM(, uint16_t)>);
+  static_assert(sus::construct::From<i64, ENUM(, uint32_t)>);
   static_assert(!sus::construct::From<i64, ENUM(, uint64_t)>);
-  static_assert(sus::construct::TryFrom<i64, ENUM(,signed  char)>);
+  static_assert(sus::construct::TryFrom<i64, ENUM(, signed char)>);
   static_assert(sus::construct::TryFrom<i64, ENUM(, size_t)>);
   static_assert(sus::construct::TryFrom<i64, ENUM(, int8_t)>);
   static_assert(sus::construct::TryFrom<i64, ENUM(, int16_t)>);
@@ -361,17 +501,17 @@ TEST(i64, From) {
   static_assert(sus::construct::TryFrom<i64, ENUM(, uint32_t)>);
   static_assert(sus::construct::TryFrom<i64, ENUM(, uint64_t)>);
 
-  static_assert(sus::construct::From<i64, ENUM(class,signed  char)>);
+  static_assert(sus::construct::From<i64, ENUM(class, signed char)>);
   static_assert(!sus::construct::From<i64, ENUM(class, size_t)>);
   static_assert(sus::construct::From<i64, ENUM(class, int8_t)>);
   static_assert(sus::construct::From<i64, ENUM(class, int16_t)>);
   static_assert(sus::construct::From<i64, ENUM(class, int32_t)>);
   static_assert(sus::construct::From<i64, ENUM(class, int64_t)>);
-  static_assert(!sus::construct::From<i64, ENUM(class, uint8_t)>);
-  static_assert(!sus::construct::From<i64, ENUM(class, uint16_t)>);
-  static_assert(!sus::construct::From<i64, ENUM(class, uint32_t)>);
+  static_assert(sus::construct::From<i64, ENUM(class, uint8_t)>);
+  static_assert(sus::construct::From<i64, ENUM(class, uint16_t)>);
+  static_assert(sus::construct::From<i64, ENUM(class, uint32_t)>);
   static_assert(!sus::construct::From<i64, ENUM(class, uint64_t)>);
-  static_assert(sus::construct::TryFrom<i64, ENUM(class,signed  char)>);
+  static_assert(sus::construct::TryFrom<i64, ENUM(class, signed char)>);
   static_assert(sus::construct::TryFrom<i64, ENUM(class, size_t)>);
   static_assert(sus::construct::TryFrom<i64, ENUM(class, int8_t)>);
   static_assert(sus::construct::TryFrom<i64, ENUM(class, int16_t)>);

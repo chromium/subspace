@@ -18,9 +18,9 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "sus/assertions/unreachable.h"
-#include "sus/construct/into.h"
 #include "sus/collections/array.h"
 #include "sus/collections/vec.h"
+#include "sus/construct/into.h"
 #include "sus/iter/__private/into_iterator_archetype.h"
 #include "sus/iter/__private/iterator_archetype.h"
 #include "sus/iter/adaptors/filter.h"
@@ -135,15 +135,18 @@ class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
 
   // sus::iter::Iterator trait.
   Option<Item> next() noexcept {
-    if (front_ == back_) return sus::none();
-    return items_[sus::mem::replace(front_, front_ + 1u)].take();
+    if (front_ >= back_) return sus::none();
+    return items_
+        .get_unchecked_mut(::sus::marker::unsafe_fn,
+                           sus::mem::replace(front_, front_ + 1u))
+        .take();
   }
 
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
-    if (front_ == back_) return sus::none();
+    if (front_ >= back_) return sus::none();
     back_ -= 1u;
-    return items_[back_].take();
+    return items_.get_unchecked_mut(::sus::marker::unsafe_fn, back_).take();
   }
 
   sus::iter::SizeHint size_hint() const noexcept {
@@ -151,18 +154,25 @@ class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
   }
 
   // sus::iter::ExactSizeIterator trait.
-  usize exact_size_hint() const noexcept { return back_ - front_; }
+  usize exact_size_hint() const noexcept {
+    // SAFETY: This requires `back_ - front_` is in range which is guaranteed by
+    // `back_ >= front_`. This is true since `front_` starts from 0 and `back_`
+    // from N with `0 <= N`. Then `front_` is incremented and `back_` is
+    // decremented, but when `front_ == back_` neither is moved thereafter.
+    return back_.unchecked_sub(::sus::marker::unsafe_fn, front_);
+  }
 
  protected:
   ArrayIterator(Item (&items)[N])
       : items_(Array<Option<Item>, N>::with_initializer(
-            [&items, i = 0]() mutable -> Option<Item> {
-              return Option<Item>::with(sus::move(items[i++]));
+            [&items, i = 0_usize]() mutable -> Option<Item> {
+              return Option<Item>::with(
+                  sus::move(*(items + ::sus::mem::replace(i, i + 1u))));
             })) {}
 
  private:
-  size_t front_ = size_t{0};
-  size_t back_ = N;
+  usize front_;
+  usize back_ = N;
   Array<Option<Item>, N> items_;
 
   sus_class_trivially_relocatable_if_types(unsafe_fn, decltype(front_),

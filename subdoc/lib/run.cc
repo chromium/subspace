@@ -19,6 +19,7 @@
 
 #include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/visit.h"
+#include "sus/collections/compat_vector.h"
 #include "sus/iter/iterator.h"
 
 namespace subdoc {
@@ -71,17 +72,9 @@ sus::Result<Database, DiagnosticResults> run_files(
   auto diags = std::make_unique<DiagnosticTracker>(
       llvm::errs(), new clang::DiagnosticOptions());
 
-  // TODO: Implement this efficiently in subspace.
-  auto to_std_vec = []<class T>(sus::Vec<T> v) {
-    std::vector<T> s;
-    s.reserve(size_t{v.len()});
-    for (auto&& e : sus::move(v).into_iter()) s.push_back(sus::move(e));
-    return s;
-  };
-
   usize num_files = paths.len();
   auto tool = clang::tooling::ClangTool(
-      comp_db, to_std_vec(sus::move(paths)),
+      comp_db, sus::move(paths).into_iter().collect<std::vector<std::string>>(),
       std::make_shared<clang::PCHContainerOperations>(), std::move(fs));
   tool.setDiagnosticConsumer(&*diags);
 
@@ -116,7 +109,8 @@ sus::Result<Database, DiagnosticResults> run_files(
   };
   tool.appendArgumentsAdjuster(adj);
 
-  sus::Vec<std::string> md_lines = sus::clone(options.project_overview_markdown);
+  sus::Vec<std::string> md_lines =
+      sus::clone(options.project_overview_markdown);
   auto parsed_overview_html = parse_comment_markdown_to_html(md_lines);
   if (parsed_overview_html.is_err()) {
     llvm::errs() << "Unable to parse project overview markdown: "

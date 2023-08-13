@@ -25,10 +25,12 @@ namespace sus::mem {
 /// Returns the size of the type T.
 ///
 /// This is the number of bytes that will be allocated for a type T, and
-/// includes any tail padding.
+/// includes any tail padding. Use `data_size_of()` to exclude tail padding for
+/// the purpose of `memcpy()` or `sus::ptr::copy()`.
 ///
-/// Disallows calls with a reference type, since C++ does a surprising thing,
-/// where `sizeof(T&) == sizeof(T)`.
+/// Returns the same value as the builtin `sizeof()` operator, but disallows
+/// calls with a reference type to avoid surprises or bugs when working with
+/// references since `sizeof(T&) == sizeof(T)`.
 template <class T>
   requires(!std::is_reference_v<T>)
 sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
@@ -41,6 +43,9 @@ sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
 /// is the number of bytes that can be memcpy'd into the type without
 /// potentially overwriting other objects. This is due to the fact that other
 /// objects can be placed inside tail padding of an object in some scenarios.
+///
+/// To get the size of an object including tail padding, such as to know the
+/// storage taken in an array or as a stack variable, use `size_of()`.
 ///
 /// Returns `size_t(-1)` for types where the tail padding can not be determined.
 /// In particular this is the case for union types unless and until compilers

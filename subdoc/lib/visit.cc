@@ -611,8 +611,8 @@ std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
     clang::CompilerInstance&, llvm::StringRef file) noexcept {
   if (cx.options.show_progress) {
     if (std::string_view(file) != line_stats.cur_file_name) {
-      llvm::outs() << "[" << size_t{line_stats.cur_file} << "/"
-                   << size_t{line_stats.num_files} << "] " << file << "\n";
+      llvm::outs() << "[" << line_stats.cur_file << "/" << line_stats.num_files
+                   << "] " << file << "\n";
       line_stats.cur_file += 1u;
       line_stats.cur_file_name = std::string(file);
     }

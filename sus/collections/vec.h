@@ -234,7 +234,7 @@ class [[sus_trivial_abi]] Vec final {
     check(!is_moved_from());
     auto v = Vec::with_capacity(capacity_);
     const auto self_len = len();
-    for (auto i = size_t{0}; i < self_len; ++i) {
+    for (usize i; i < self_len; i += 1u) {
       std::construct_at(
           v.raw_data() + i,  //
           ::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
@@ -260,20 +260,20 @@ class [[sus_trivial_abi]] Vec final {
     } else {
       grow_to_exact(source.capacity_);
 
-      const size_t self_len = size_t{len()};
-      const size_t source_len = size_t{source.len()};
-      const size_t in_place_count = sus::ops::min(self_len, source_len);
+      const usize self_len = len();
+      const usize source_len = source.len();
+      const usize in_place_count = sus::ops::min(self_len, source_len);
 
       // Replace element positions that are present in both Vec.
-      for (auto i = size_t{0}; i < in_place_count; ++i) {
+      for (usize i; i < in_place_count; i += 1u) {
         ::sus::clone_into(*(raw_data() + i), *(source.raw_data() + i));
       }
       // Destroy element positions in self that aren't in source.
-      for (auto i = in_place_count; i < self_len; i += 1u) {
-        get_unchecked_mut(::sus::marker::unsafe_fn, i).~T();
+      for (usize i = in_place_count; i < self_len; i += 1u) {
+        std::destroy_at(as_mut_ptr() + i);
       }
       // Append element positions that weren't in self but are in source.
-      for (auto i = in_place_count; i < source_len; i += 1u) {
+      for (usize i = in_place_count; i < source_len; i += 1u) {
         std::construct_at(
             raw_data() + i,  //
             ::sus::clone(source.get_unchecked(::sus::marker::unsafe_fn, i)));
@@ -441,12 +441,12 @@ class [[sus_trivial_abi]] Vec final {
     check(bytes <= ::sus::mog<usize>(isize::MAX));
 
     if (!is_alloced()) {
-      raw_data() = std::allocator<T>().allocate(size_t{cap});
+      raw_data() = std::allocator<T>().allocate(cap);
       capacity_ = cap;
       return;
     }
 
-    T* new_allocation = std::allocator<T>().allocate(size_t{cap});
+    T* new_allocation = std::allocator<T>().allocate(cap);
     T* old_t = raw_data();
     T* new_t = new_allocation;
     if constexpr (::sus::mem::relocate_by_memcpy<T>) {
@@ -455,7 +455,7 @@ class [[sus_trivial_abi]] Vec final {
         // `old_t` which was the previous allocation.
         ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, old_t, new_t,
                                         capacity_);
-        std::allocator<T>().deallocate(raw_data(), size_t{capacity_});
+        std::allocator<T>().deallocate(raw_data(), capacity_);
         raw_data() = new_allocation;
         capacity_ = cap;
         return;
@@ -465,11 +465,11 @@ class [[sus_trivial_abi]] Vec final {
     const ::sus::num::usize self_len = len();
     for (::sus::num::usize i; i < self_len; i += 1u) {
       std::construct_at(new_t, ::sus::move(*old_t));
-      old_t->~T();
+      std::destroy_at(old_t);
       ++old_t;
       ++new_t;
     }
-    std::allocator<T>().deallocate(raw_data(), size_t{capacity_});
+    std::allocator<T>().deallocate(raw_data(), capacity_);
     raw_data() = new_allocation;
     capacity_ = cap;
   }
@@ -542,7 +542,7 @@ class [[sus_trivial_abi]] Vec final {
     if (self_len > 0u) {
       auto o = Option<T>::with(sus::move(
           get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u)));
-      get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u).~T();
+      std::destroy_at(as_mut_ptr() + self_len - 1u);
       set_len(::sus::marker::unsafe_fn, self_len - 1u);
       return o;
     } else {
@@ -697,7 +697,7 @@ class [[sus_trivial_abi]] Vec final {
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return Slice<T>::from_raw_parts(
+    return Slice<T>::from_raw_collection(
         ::sus::marker::unsafe_fn,
         slice_mut_.slice_.iter_refs_.to_view_from_owner(), as_ptr() + rstart,
         rlen);
@@ -727,7 +727,7 @@ class [[sus_trivial_abi]] Vec final {
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return SliceMut<T>::from_raw_parts_mut(
+    return SliceMut<T>::from_raw_collection_mut(
         ::sus::marker::unsafe_fn,
         slice_mut_.slice_.iter_refs_.to_view_from_owner(),
         as_mut_ptr() + rstart, rlen);
@@ -778,7 +778,7 @@ class [[sus_trivial_abi]] Vec final {
     while (cap < goal) {
       cap = (cap + 1u) * 3u;
       auto bytes = ::sus::mem::size_of<T>() * cap;
-      check(bytes <= usize(size_t{PTRDIFF_MAX}));
+      check(bytes <= ::sus::mog<usize>(isize::MAX));
     }
     return cap;
   }
@@ -786,13 +786,14 @@ class [[sus_trivial_abi]] Vec final {
   constexpr void destroy_storage_objects() {
     if constexpr (!std::is_trivially_destructible_v<T>) {
       const auto self_len = len();
-      for (::sus::num::usize i; i < self_len; i += 1u) (raw_data() + i)->~T();
+      for (::sus::num::usize i; i < self_len; i += 1u)
+        std::destroy_at(raw_data() + i);
     }
   }
 
   constexpr void free_storage() {
     destroy_storage_objects();
-    std::allocator<T>().deallocate(raw_data(), size_t{capacity_});
+    std::allocator<T>().deallocate(raw_data(), capacity_);
   }
 
   /// Checks if Vec has storage allocated.

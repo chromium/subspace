@@ -206,56 +206,62 @@ static constexpr _self from_product(
   return p;
 }
 
-/// Explicit conversion from the numeric type to the inner primitive type.
+/// Conversion from the numeric type to a C++ primitive type.
 ///
-/// Typically this should be used in a curly-brace conversion statement such as
-/// `float{3_f32}` which will ensure a compiler error if the conversion can lose
-/// data. Lossy conversions can be done through the `sus::convert::Transmogrify`
-/// concept, such as `sus::mog<float>(3_f32)`.
+/// This converts to floating point primitives which are at least as large as
+/// the `#[@doc.self]`.
+///
+/// ```
+/// auto d = double{3_f64};  // Compiles.
+/// auto e = double(3_f64);  // Compiles.
+/// double f = 3_f64;  // Compiles.
+///
+/// auto d = float{3_f64};  // Does not compile.
+/// auto e = float(3_f64);  // Does not compile.
+/// float f = 3_f64;  // Does not compile.
+/// ```
+///
+/// Potentially-lossy type conversions can be forced through the
+/// `sus::convert::Transmogrify` concept, such as `sus::mog<float>(3_f64)` or
+/// `sus::mog<f32>(3_f64)`.
 template <PrimitiveFloat U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
-sus_pure constexpr inline explicit operator U() const {
+sus_pure constexpr inline operator U() const noexcept {
   return primitive_value;
 }
 
 /// sus::ops::Eq<T> trait for floating point numbers.
-/// #[doc.overloads=float.eq.self]
+/// #[doc.overloads=float.eq]
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
-/// sus::ops::Eq<T, U> trait for floating point numbers and primitive floating
-/// point numbers.
-/// #[doc.overloads=float.eq.prim]
+/// #[doc.overloads=float.eq]
+[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+    _self l, Float auto r) noexcept {
+  return (l.primitive_value <=> r.primitive_value) == 0;
+}
+/// #[doc.overloads=float.eq]
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, PrimitiveFloat auto r) noexcept {
   return (l.primitive_value <=> r) == 0;
 }
-/// sus::ops::Eq<T, U> trait for heterogeneous floating point numbers.
-/// #[doc.overloads=float.eq.float]
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(
-    _self l, Float auto r) noexcept {
-  return (l.primitive_value <=> r.primitive_value) == 0;
-}
 
 /// sus::ops::PartialOrd<T> trait for floating point numbers.
-/// #[doc.overloads=float.ord.self]
+/// #[doc.overloads=float.partialord]
 [[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
     _self l, _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
-/// sus::ops::PartialOrd<T, U> trait for floating point numbers and primitive
-/// floating point numbers.
-/// #[doc.overloads=float.ord.prim]
-[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
-    _self l, PrimitiveFloat auto r) noexcept {
-  return l.primitive_value <=> r;
-}
-/// sus::ops::PartialOrd<T, U> trait for heterogeneous floating point numbers.
-/// #[doc.overloads=float.ord.float]
+/// #[doc.overloads=float.partialord]
 [[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
     _self l, Float auto r) noexcept {
   return l.primitive_value <=> r.primitive_value;
+}
+/// #[doc.overloads=float.partialord]
+[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
+    _self l, PrimitiveFloat auto r) noexcept {
+  return l.primitive_value <=> r;
 }
 
 /// Return the ordering between `*this` and `other`.
@@ -301,25 +307,111 @@ sus_pure constexpr inline _self operator-() const {
     _self l, _self r) noexcept {
   return l.primitive_value + r.primitive_value;
 }
+/// #[doc.overloads=float.+]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+    _self l, U r) noexcept {
+  return l + _self(r);
+}
+/// #[doc.overloads=float.+]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator+(
+    U l, _self r) noexcept {
+  return _self(l) + r;
+}
+/// #[doc.overloads=float.+]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator+(_self l, U r) noexcept = delete;
+/// #[doc.overloads=float.+]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
 /// sus::num::Sub<T> trait for floating point types. */
 /// #[doc.overloads=float.-]
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
   return l.primitive_value - r.primitive_value;
 }
-/// sus::num::Mul<T> trait for floating point types. */
+/// #[doc.overloads=float.-]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+    _self l, U r) noexcept {
+  return l - _self(r);
+}
+/// #[doc.overloads=float.-]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator-(
+    U l, _self r) noexcept {
+  return _self(l) - r;
+}
+/// #[doc.overloads=float.-]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator-(_self l, U r) noexcept = delete;
+/// #[doc.overloads=float.-]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator-(U l, _self r) noexcept = delete;/// sus::num::Mul<T> trait for floating point types. */
 /// #[doc.overloads=float.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
   return l.primitive_value * r.primitive_value;
 }
+/// #[doc.overloads=float.*]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+    _self l, U r) noexcept {
+  return l * _self(r);
+}
+/// #[doc.overloads=float.*]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator*(
+    U l, _self r) noexcept {
+  return _self(l) * r;
+}
+/// #[doc.overloads=float.*]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator*(_self l, U r) noexcept = delete;
+/// #[doc.overloads=float.*]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
 /// sus::num::Div<T> trait for floating point types. */
 /// #[doc.overloads=float./]
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
   return l.primitive_value / r.primitive_value;
 }
-/// sus::num::Rem<T> trait for floating point types. */
+/// #[doc.overloads=float./]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+    _self l, U r) noexcept {
+  return l / _self(r);
+}
+/// #[doc.overloads=float./]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator/(
+    U l, _self r) noexcept {
+  return _self(l) / r;
+}
+/// #[doc.overloads=float./]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator/(_self l, U r) noexcept = delete;
+/// #[doc.overloads=float./]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator/(U l, _self r) noexcept = delete;/// sus::num::Rem<T> trait for floating point types. */
 ///
 /// The remainder from the division of two floats.
 ///
@@ -333,6 +425,28 @@ sus_pure constexpr inline _self operator-() const {
   const auto y = r.primitive_value;
   return x - __private::truncate_float(x / y) * y;
 }
+/// #[doc.overloads=float.%]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+    _self l, U r) noexcept {
+  return l % _self(r);
+}
+/// #[doc.overloads=float.%]
+template <PrimitiveFloat U>
+  requires(std::convertible_to<U, _self>)
+[[nodiscard]] sus_pure_const friend constexpr inline _self operator%(
+    U l, _self r) noexcept {
+  return _self(l) % r;
+}
+/// #[doc.overloads=float.%]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator%(_self l, U r) noexcept = delete;
+/// #[doc.overloads=float.%]
+template <PrimitiveFloat U>
+  requires(!std::convertible_to<U, _self>)
+friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 
 /// sus::num::AddAssign<@doc.self> trait. */
 constexpr inline void operator+=(_self r) & noexcept {
@@ -805,12 +919,12 @@ sus_pure _self rem_euclid(_self rhs) const& noexcept {
 /// Return the memory representation of this floating point number as a byte
 /// array in big-endian (network) byte order.
 sus_pure constexpr ::sus::collections::Array<u8,
-                                            ::sus::mem::size_of<_primitive>()>
+                                             ::sus::mem::size_of<_primitive>()>
 to_be_bytes() const& noexcept;
 /// Return the memory representation of this floating point number as a byte
 /// array in little-endian byte order.
 sus_pure constexpr ::sus::collections::Array<u8,
-                                            ::sus::mem::size_of<_primitive>()>
+                                             ::sus::mem::size_of<_primitive>()>
 to_le_bytes() const& noexcept;
 /// Return the memory representation of this floating point number as a byte
 /// array in native byte order.
@@ -818,7 +932,7 @@ to_le_bytes() const& noexcept;
 /// As the target platform's native endianness is used, portable code should
 /// use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.
 sus_pure constexpr ::sus::collections::Array<u8,
-                                            ::sus::mem::size_of<_primitive>()>
+                                             ::sus::mem::size_of<_primitive>()>
 to_ne_bytes() const& noexcept;
 /// Create a floating point value from its representation as a byte array in
 /// big endian.

@@ -27,7 +27,7 @@ struct sus::iter::FromIteratorImpl<std::basic_string<Char, Traits, Allocator>> {
     auto [lower, upper] = iter.size_hint();
     usize reserve = ::sus::move(upper).unwrap_or(lower);
     auto s = std::basic_string<Char, Traits, Allocator>();
-    s.reserve(size_t{reserve});
+    s.reserve(reserve);
     for (Char c : iter) s.push_back(c);
     return s;
   }
