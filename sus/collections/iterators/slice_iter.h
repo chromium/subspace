@@ -61,8 +61,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
 
   /// Returns a slice of the items left to be iterated.
   constexpr Slice<Item> as_slice() const& {
-    return Slice<Item>::from_raw_parts(::sus::marker::unsafe_fn, ptr_,
-                                       end_ - ptr_);
+    return Slice<Item>::from_raw_collection(::sus::marker::unsafe_fn, ptr_,
+                                            end_ - ptr_);
   }
 
   constexpr Option<Item> next() noexcept {
@@ -145,7 +145,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
   /// Returns a mutable slice of the items left to be iterated, consuming the
   /// iterator.
   constexpr SliceMut<RawItem> as_mut_slice() && {
-    return SliceMut<RawItem>::from_raw_parts_mut(
+    return SliceMut<RawItem>::from_raw_collection_mut(
         ::sus::marker::unsafe_fn, ref_.to_view(), ptr_,
         // SAFETY: `end_ > ptr_` at all times, and the distance between two
         // pointers in a single allocation is at most isize::MAX which fits in

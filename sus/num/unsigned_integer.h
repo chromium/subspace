@@ -61,13 +61,14 @@ namespace sus::num {
 /// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] u32 final {
 #define _self u32
-#define _pointer 0
+#define _pointer false
+#define _pointer_sized
 #define _primitive uint32_t
 #define _signed i32
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self u32
-#define _pointer 0
+#define _pointer false
 #define _primitive uint32_t
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
@@ -87,13 +88,14 @@ struct [[sus_trivial_abi]] u32 final {
 /// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] u8 final {
 #define _self u8
-#define _pointer 0
+#define _pointer false
+#define _pointer_sized
 #define _primitive uint8_t
 #define _signed i8
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self u8
-#define _pointer 0
+#define _pointer false
 #define _primitive uint8_t
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
@@ -113,13 +115,14 @@ struct [[sus_trivial_abi]] u8 final {
 /// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] u16 final {
 #define _self u16
-#define _pointer 0
+#define _pointer false
+#define _pointer_sized
 #define _primitive uint16_t
 #define _signed i16
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self u16
-#define _pointer 0
+#define _pointer false
 #define _primitive uint16_t
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
@@ -139,13 +142,14 @@ struct [[sus_trivial_abi]] u16 final {
 /// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] u64 final {
 #define _self u64
-#define _pointer 0
+#define _pointer false
+#define _pointer_sized
 #define _primitive uint64_t
 #define _signed i64
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self u64
-#define _pointer 0
+#define _pointer false
 #define _primitive uint64_t
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
@@ -177,14 +181,15 @@ struct [[sus_trivial_abi]] u64 final {
 /// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] usize final {
 #define _self usize
-#define _pointer 0
-#define _primitive ::sus::num::__private::addr_type<>::unsigned_type
+#define _pointer false
+#define _pointer_sized
+#define _primitive size_t
 #define _signed isize
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self usize
-#define _pointer 0
-#define _primitive ::sus::num::__private::addr_type<>::unsigned_type
+#define _pointer false
+#define _primitive size_t
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// A pointer-sized unsigned integer.
@@ -220,13 +225,14 @@ struct [[sus_trivial_abi]] usize final {
 /// signed integer type, the value will be sign-extended.
 struct [[sus_trivial_abi]] uptr final {
 #define _self uptr
-#define _pointer 1
-#define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
+#define _pointer true
+#define _pointer_sized ::sus::num::__private::ptr_type<>::pointer_sized_type
+#define _primitive uintptr_t
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self uptr
-#define _pointer 1
-#define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
+#define _pointer true
+#define _primitive uintptr_t
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// sus::num::Add<T*, usize> trait.
@@ -271,6 +277,32 @@ constexpr inline T*& operator-=(T*& t, usize offset) {
   t -= size_t{offset};
   return t;
 }
+
+template <class P, Integer U>
+  requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
+           std::convertible_to<U, u32>)
+[[nodiscard]] sus_pure_const constexpr inline P operator<<(P l, U r) noexcept {
+  // No UB checks on primitive types, since there's no promotion to a Subspace
+  // return type?
+  return l << u32(r).primitive_value;
+}
+template <class P, Integer U>
+  requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
+           !std::convertible_to<U, u32>)
+constexpr inline P operator<<(P l, U r) noexcept = delete;
+
+template <class P, Integer U>
+  requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
+           std::convertible_to<U, u32>)
+[[nodiscard]] sus_pure_const constexpr inline P operator>>(P l, U r) noexcept {
+  // No UB checks on primitive types, since there's no promotion to a Subspace
+  // return type?
+  return l >> u32(r).primitive_value;
+}
+template <class P, Integer U>
+  requires((UnsignedPrimitiveInteger<P> || UnsignedPrimitiveEnum<P>) &&
+           !std::convertible_to<U, u32>)
+constexpr inline P operator>>(P l, U r) noexcept = delete;
 
 }  // namespace sus::num
 

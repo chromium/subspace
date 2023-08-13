@@ -73,9 +73,9 @@ void copy_nonoverlapping(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
                   (dst < src && dst <= src - count.primitive_value));
   if constexpr (::sus::mem::size_of<T>() > 1) {
     auto bytes = count.checked_mul(::sus::mem::size_of<T>()).expect("overflow");
-    memcpy(dst, src, size_t{bytes});
+    memcpy(dst, src, bytes);
   } else {
-    memcpy(dst, src, size_t{count});
+    memcpy(dst, src, count);
   }
 }
 
@@ -127,9 +127,9 @@ void copy(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
   sus_debug_check(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0);
   if constexpr (::sus::mem::size_of<T>() > 1) {
     auto bytes = count.checked_mul(::sus::mem::size_of<T>()).expect("overflow");
-    memmove(dst, src, size_t{bytes});
+    memmove(dst, src, bytes);
   } else {
-    memmove(dst, src, size_t{count});
+    memmove(dst, src, count);
   }
 }
 

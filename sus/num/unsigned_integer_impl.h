@@ -52,11 +52,11 @@
 
 #define _self usize
 #define _pointer 0
-#define _primitive ::sus::num::__private::addr_type<>::unsigned_type
+#define _primitive size_t
 #define _signed isize
 #include "sus/num/__private/unsigned_integer_methods_impl.inc"
 
 #define _self uptr
 #define _pointer 1
-#define _primitive ::sus::num::__private::ptr_type<>::unsigned_type
+#define _primitive uintptr_t
 #include "sus/num/__private/unsigned_integer_methods_impl.inc"

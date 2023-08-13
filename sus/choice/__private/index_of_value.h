@@ -27,20 +27,22 @@ struct IndexOfValueHelper;
 
 template <auto SearchValue, size_t I, auto... Vs>
 struct IndexOfValueHelper<SearchValue, I, SearchValue, Vs...> {
-  using index = std::integral_constant<size_t, I>;  // We found the SearchValue.
+  // We found the SearchValue.
+  using index = std::integral_constant<size_t, I>;
 };
 
 template <auto SearchValue, size_t I, auto V, auto... Vs>
 struct IndexOfValueHelper<SearchValue, I, V, Vs...> {
   static_assert(SearchValue != V);
-  static constexpr auto next_index = I + size_t{1u};
+  static constexpr size_t next_index = I + size_t{1u};
+  // Still looking for the SearchValue, recurse.
   using index = IndexOfValueHelper<SearchValue, next_index, Vs...>::index;
 };
 
 template <auto SearchValue, size_t I>
 struct IndexOfValueHelper<SearchValue, I> {
-  using index =
-      void;  // We didn't find the SearchValue, it's not part of the Choice.
+  // We didn't find the SearchValue, it's not part of the Choice.
+  using index = void;
 };
 
 template <auto SearchValue, auto... Vs>

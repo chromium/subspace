@@ -17,9 +17,9 @@
 #include <sstream>
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/construct/into.h"
 #include "sus/collections/array.h"
 #include "sus/collections/vec.h"
+#include "sus/construct/into.h"
 #include "sus/iter/iterator.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/copy.h"
@@ -44,10 +44,8 @@ static_assert(sus::mem::Move<Slice<i32>>);
 
 TEST(Slice, FromRawParts) {
   i32 a[] = {1, 2, 3};
-  auto sc = Slice<i32>::from_raw_parts(
-      unsafe_fn, IterRefCounter::empty_for_view(), a, 3_usize);
-  auto sm = SliceMut<i32>::from_raw_parts_mut(
-      unsafe_fn, IterRefCounter::empty_for_view(), a, 3_usize);
+  auto sc = Slice<i32>::from_raw_parts(unsafe_fn, a, 3_usize);
+  auto sm = SliceMut<i32>::from_raw_parts_mut(unsafe_fn, a, 3_usize);
 }
 
 TEST(Slice, Index) {

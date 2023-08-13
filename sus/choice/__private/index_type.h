@@ -29,10 +29,10 @@ namespace sus::choice_type::__private {
 template <size_t count, size_t size_of_union, size_t data_size_of_union>
 consteval size_t index_size() noexcept {
   constexpr size_t size_of_padding = size_of_union - data_size_of_union;
-  if constexpr (count + 1 <= size_t{0xff} && size_of_padding >= 8u) return 8u;
-  if constexpr (count + 1 <= size_t{0xffff} && size_of_padding >= 16u)
+  if constexpr (count + 1u <= size_t{0xff} && size_of_padding >= 8u) return 8u;
+  if constexpr (count + 1u <= size_t{0xffff} && size_of_padding >= 16u)
     return 16u;
-  if constexpr (count + 1 <= size_t{0xffffffff}) return 32u;
+  if constexpr (count + 1u <= size_t{0xffffffff}) return 32u;
   return 64u;
 }
 
@@ -46,11 +46,11 @@ consteval size_t index_size() noexcept {
 template <size_t count, size_t size_of_union, size_t data_size_of_union>
 using IndexType =
   std::conditional_t<
-      index_size<count, size_of_union, data_size_of_union>() == 8, uint8_t,
+      index_size<count, size_of_union, data_size_of_union>() == 8u, uint8_t,
   std::conditional_t<
-      index_size<count, size_of_union, data_size_of_union>() == 16, uint16_t,
+      index_size<count, size_of_union, data_size_of_union>() == 16u, uint16_t,
   std::conditional_t<
-      index_size<count, size_of_union, data_size_of_union>() == 32, uint32_t,
+      index_size<count, size_of_union, data_size_of_union>() == 32u, uint32_t,
   std::conditional_t<
       ::sus::mem::size_of<size_t>() == ::sus::mem::size_of<uint64_t>(), uint64_t,
   void>>>>;

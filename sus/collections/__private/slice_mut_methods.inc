@@ -281,7 +281,7 @@ sus_pure constexpr Option<T&> get_mut(::sus::num::usize i) RETURN_REF noexcept {
 sus_pure constexpr inline T& get_unchecked_mut(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) RETURN_REF noexcept {
   sus_debug_check(i.primitive_value < _len_expr.primitive_value);
-  return as_mut_ptr()[size_t{i}];
+  return *(as_mut_ptr() + i);
 }
 
 /// Returns a subslice which contains elements in `range`, which specifies a
@@ -305,7 +305,7 @@ sus_pure constexpr Option<SliceMut<T>> get_range_mut(
   // We allow rstart == len() && rend == len(), which returns an empty
   // slice.
   if (rstart > length || rstart > length - rlen) return sus::none();
-  return Option<SliceMut<T>>::with(SliceMut<T>::from_raw_parts_mut(
+  return Option<SliceMut<T>>::with(SliceMut<T>::from_raw_collection_mut(
       ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_mut_ptr() + rstart,
       rlen));
 }
@@ -328,9 +328,9 @@ sus_pure constexpr SliceMut<T> get_range_mut_unchecked(
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
   const ::sus::num::usize rend = range.end_bound().unwrap_or(len());
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  return SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
-                                         _iter_refs_view_expr,
-                                         as_mut_ptr() + rstart, rlen);
+  return SliceMut<T>::from_raw_collection_mut(::sus::marker::unsafe_fn,
+                                              _iter_refs_view_expr,
+                                              as_mut_ptr() + rstart, rlen);
 }
 
 /// Returns an iterator over all the elements in the slice, visited in the
@@ -412,11 +412,11 @@ constexpr void reverse() NO_RETURN_REF noexcept
 
   // SAFETY: The slice is valid, as it points to the start of `*this` and
   // half_len < len() by construction above.
-  auto front_half = ::sus::collections::SliceMut<T>::from_raw_parts_mut(
+  auto front_half = ::sus::collections::SliceMut<T>::from_raw_collection_mut(
       ::sus::marker::unsafe_fn, _iter_refs_view_expr, start, half_len);
   // SAFETY: The slice is valid, as it points to the half_len elements from the
   // end of `*this`, and `len() - half_len + half_len == len()`.
-  auto back_half = ::sus::collections::SliceMut<T>::from_raw_parts_mut(
+  auto back_half = ::sus::collections::SliceMut<T>::from_raw_collection_mut(
       ::sus::marker::unsafe_fn, _iter_refs_view_expr, end - half_len, half_len);
 
   for (::sus::num::usize i; i < half_len; i += 1u) {
@@ -840,11 +840,11 @@ split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
       len().unchecked_sub(::sus::marker::unsafe_fn, mid);
 
   return ::sus::Tuple<SliceMut<T>, SliceMut<T>>::with(
-      SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
-                                      _iter_refs_view_expr, as_mut_ptr(), mid),
-      SliceMut<T>::from_raw_parts_mut(::sus::marker::unsafe_fn,
-                                      _iter_refs_view_expr, as_mut_ptr() + mid,
-                                      rem));
+      SliceMut<T>::from_raw_collection_mut(
+          ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_mut_ptr(), mid),
+      SliceMut<T>::from_raw_collection_mut(::sus::marker::unsafe_fn,
+                                           _iter_refs_view_expr,
+                                           as_mut_ptr() + mid, rem));
 }
 
 /// Returns the first and all the rest of the elements of the slice, or `None`

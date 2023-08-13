@@ -63,7 +63,7 @@ TEST(PtrSwapNonOverlapping, SmallSizedType_NonPowTwoSized) {
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100u);
 
   for (usize i : "0..100"_r) {
-    SCOPED_TRACE(size_t{i});
+    SCOPED_TRACE(i);
     EXPECT_EQ(a[i], S(u16::try_from(100u + i).unwrap()));
     EXPECT_EQ(b[i], S(u16::try_from(0u + i).unwrap()));
   }
@@ -87,7 +87,7 @@ TEST(PtrSwapNonOverlapping, LargeSizedType_PtrAlign_PtrMultipleSize_Trivial) {
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100u);
 
   for (usize i : "0..100"_r) {
-    SCOPED_TRACE(size_t{i});
+    SCOPED_TRACE(i);
     EXPECT_EQ(a[i], S(100u + i));
     EXPECT_EQ(b[i], S(0u + i));
   }
@@ -114,7 +114,7 @@ TEST(PtrSwapNonOverlapping,
   sus::ptr::swap_nonoverlapping(unsafe_fn, a.as_mut_ptr(), b.as_mut_ptr(), 100u);
 
   for (usize i : "0..100"_r) {
-    SCOPED_TRACE(size_t{i});
+    SCOPED_TRACE(i);
     EXPECT_EQ(a[i], S(100u + i));
     EXPECT_EQ(b[i], S(0u + i));
   }

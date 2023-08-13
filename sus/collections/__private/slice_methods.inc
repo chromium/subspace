@@ -331,7 +331,7 @@ constexpr Option<const T&> get(::sus::num::usize i) && = delete;
 sus_pure constexpr inline const T& get_unchecked(
     ::sus::marker::UnsafeFnMarker, ::sus::num::usize i) const& noexcept {
   sus_debug_check(i.primitive_value < _len_expr.primitive_value);
-  return as_ptr()[size_t{i}];
+  return *(as_ptr() + i);
 }
 
 #if _delete_rvalue
@@ -360,7 +360,7 @@ sus_pure constexpr Option<Slice<T>> get_range(
   // We allow rstart == len() && rend == len(), which returns an empty
   // slice.
   if (rstart > length || rstart > length - rlen) return sus::none();
-  return Option<Slice<T>>::with(Slice<T>::from_raw_parts(
+  return Option<Slice<T>>::with(Slice<T>::from_raw_collection(
       ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_ptr() + rstart, rlen));
 }
 
@@ -387,7 +387,7 @@ sus_pure constexpr Slice<T> get_range_unchecked(
   const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
   const ::sus::num::usize rend = range.end_bound().unwrap_or(len());
   const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
-  return Slice<T>::from_raw_parts(
+  return Slice<T>::from_raw_collection(
       ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_ptr() + rstart, rlen);
 }
 
@@ -725,10 +725,10 @@ sus_pure constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
       len().unchecked_sub(::sus::marker::unsafe_fn, mid);
 
   return ::sus::Tuple<Slice<T>, Slice<T>>::with(
-      Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, _iter_refs_view_expr,
-                               as_ptr(), mid),
-      Slice<T>::from_raw_parts(::sus::marker::unsafe_fn, _iter_refs_view_expr,
-                               as_ptr() + mid, rem));
+      Slice<T>::from_raw_collection(::sus::marker::unsafe_fn,
+                                    _iter_refs_view_expr, as_ptr(), mid),
+      Slice<T>::from_raw_collection(::sus::marker::unsafe_fn,
+                                    _iter_refs_view_expr, as_ptr() + mid, rem));
 }
 
 #if _delete_rvalue

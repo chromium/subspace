@@ -181,7 +181,7 @@ struct [[sus_trivial_abi]] isize final {
 
 /// sus::num::Add<T*, isize> trait.
 ///
-///Adds a `isize` to a pointer, returning the resulting pointer.
+/// Adds a `isize` to a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.add.isize]
 template <class T>
@@ -221,6 +221,32 @@ constexpr inline T*& operator-=(T*& t, isize offset) {
   t -= ptrdiff_t{offset};
   return t;
 }
+
+template <class P, Integer U>
+  requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
+           std::convertible_to<U, u32>)
+[[nodiscard]] sus_pure_const constexpr inline P operator<<(P l, U r) noexcept {
+  // No UB checks on primitive types, since there's no promotion to a Subspace
+  // return type?
+  return l << u32(r).primitive_value;
+}
+template <class P, Integer U>
+  requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
+           !std::convertible_to<U, u32>)
+constexpr inline P operator<<(P l, U r) noexcept = delete;
+
+template <class P, Integer U>
+  requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
+           std::convertible_to<U, u32>)
+[[nodiscard]] sus_pure_const constexpr inline P operator>>(P l, U r) noexcept {
+  // No UB checks on primitive types, since there's no promotion to a Subspace
+  // return type?
+  return l >> u32(r).primitive_value;
+}
+template <class P, Integer U>
+  requires((SignedPrimitiveInteger<P> || SignedPrimitiveEnum<P>) &&
+           !std::convertible_to<U, u32>)
+constexpr inline P operator>>(P l, U r) noexcept = delete;
 
 }  // namespace sus::num
 

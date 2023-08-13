@@ -19,7 +19,6 @@
 #include "fmt/core.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/debug_check.h"
-#include "sus/construct/default.h"
 #include "sus/collections/__private/sort.h"
 #include "sus/collections/concat.h"
 #include "sus/collections/iterators/chunks.h"
@@ -27,6 +26,7 @@
 #include "sus/collections/iterators/split.h"
 #include "sus/collections/iterators/windows.h"
 #include "sus/collections/join.h"
+#include "sus/construct/default.h"
 #include "sus/fn/fn_concepts.h"
 #include "sus/fn/fn_ref.h"
 #include "sus/iter/iterator_defn.h"
@@ -89,6 +89,9 @@ class [[sus_trivial_abi]] Slice final {
 
   /// Constructs a slice from its raw parts.
   ///
+  /// For building a Slice from a collection, use `from_raw_collection()`
+  /// in order to participate in iterator invalidation tracking.
+  ///
   /// # Safety
   /// The following must be upheld or Undefined Behaviour may result:
   /// * The `len` must be no more than the number of elements in the allocation
@@ -108,6 +111,41 @@ class [[sus_trivial_abi]] Slice final {
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
   sus_pure static constexpr inline Slice from_raw_parts(
+      ::sus::marker::UnsafeFnMarker, const T* data sus_lifetimebound,
+      usize len) noexcept {
+    ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
+    // We strip the `const` off `data`, however only const access is provided
+    // through this class. This is done so that mutable types can compose Slice
+    // and store a mutable pointer.
+    return Slice(::sus::iter::IterRefCounter::empty_for_view(),
+                 const_cast<T*>(data), len);
+  }
+
+  /// Constructs a slice from its raw parts with iterator invalidation tracking.
+  /// Iterators produced from this slice will interact with the collection to
+  /// allow it to know when they are being invalidated by the collection.
+  ///
+  /// For building a Slice from primitive pointer, use `from_raw_parts()`.
+  ///
+  /// # Safety
+  /// The following must be upheld or Undefined Behaviour may result:
+  /// * The `len` must be no more than the number of elements in the allocation
+  ///   at and after the position of `data`.
+  /// * The pointer `data` must be a valid pointer to an allocation, not a
+  ///   dangling pointer, at any point during the Slice's lifetime. This must
+  ///   be true even if `len` is 0.
+  /// * The `refs` will be `sus::iter::IterRefCounter::empty_for_view()` unless
+  ///   the `Slice` is being constructed from a context that owns an
+  ///   IterRefCounter and wants to be able to observe when it invalidates the
+  ///   `Slice` by tracking its lifetime.
+  ///
+  /// In some other langages such as Rust, the slice may hold an invalid pointer
+  /// when the length is zero. But `Slice` must not hold a dangling pointer.
+  /// Otherwise addition on the dangling pointer may happen in Slice methods,
+  /// which is Undefined Behaviour in C++. To support dangling pointers, those
+  /// methods would need `length == 0` branches. Care must be applied when
+  /// converting slices between languages as a result.
+  sus_pure static constexpr inline Slice from_raw_collection(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       const T* data sus_lifetimebound, usize len) noexcept {
     ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
@@ -192,9 +230,9 @@ class [[sus_trivial_abi]] Slice final {
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return Slice<T>::from_raw_parts(::sus::marker::unsafe_fn,
-                                    iter_refs_.to_view_from_view(),
-                                    as_ptr() + rstart, rlen);
+    return Slice<T>::from_raw_collection(::sus::marker::unsafe_fn,
+                                         iter_refs_.to_view_from_view(),
+                                         as_ptr() + rstart, rlen);
   }
 
   /// Stops tracking iterator invalidation.
@@ -208,10 +246,10 @@ class [[sus_trivial_abi]] Slice final {
   /// Iterator invalidation tracking also tracks the stability of the collection
   /// object itself, not just its contents, which can be overly strict.
   ///
-  /// This function can be used when the collection's contents will remain valid,
-  /// but the collection itself may be moved, which would invalidate the tracking
-  /// and be treated as invalidating the iterator. There is no way to restore
-  /// tracking.
+  /// This function can be used when the collection's contents will remain
+  /// valid, but the collection itself may be moved, which would invalidate the
+  /// tracking and be treated as invalidating the iterator. There is no way to
+  /// restore tracking.
   void drop_iterator_invalidation_tracking(::sus::marker::UnsafeFnMarker) {
     iter_refs_ = ::sus::iter::IterRefCounter::empty_for_view();
   }
@@ -292,10 +330,11 @@ class [[sus_trivial_abi]] SliceMut final {
 
   /// Constructs a slice from its raw parts.
   ///
+  /// For building a SliceMut from a collection, use `from_raw_collection_mut()`
+  /// in order to participate in iterator invalidation tracking.
+  ///
   /// # Safety
   /// The following must be upheld or Undefined Behaviour may result:
-  /// * The `refs` will be `sus::iter::IterRefCounter::empty_for_view()` unless
-  ///   the `SliceMut` is being constructed from a context that owns an
   ///   IterRefCounter and wants to be able to observe when it invalidates the
   ///   `SliceMut` by tracking its lifetime.
   /// * The `len` must be no more than the number of elements in the allocation
@@ -311,6 +350,36 @@ class [[sus_trivial_abi]] SliceMut final {
   /// methods would need `length == 0` branches. Care must be applied when
   /// converting slices between languages as a result.
   sus_pure static constexpr inline SliceMut from_raw_parts_mut(
+      ::sus::marker::UnsafeFnMarker, T* data sus_lifetimebound,
+      usize len) noexcept {
+    ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
+    return SliceMut(::sus::iter::IterRefCounter::empty_for_view(), data, len);
+  }
+
+  /// Constructs a slice from its raw parts with iterator invalidation tracking.
+  /// Iterators produced from this slice will interact with the collection to
+  /// allow it to know when they are being invalidated by the collection.
+  ///
+  /// For building a SliceMut from primitive pointer, use
+  /// `from_raw_parts_mut()`.
+  ///
+  /// # Safety
+  /// The following must be upheld or Undefined Behaviour may result:
+  /// * The `refs` should be constructed from an `IterRefCounter` in the
+  ///   collection with `IterRefCounter::to_view_from_owner()`.
+  /// * The `len` must be no more than the number of elements in the allocation
+  ///   at and after the position of `data`.
+  /// * The pointer `data` must be a valid pointer to an allocation, not a
+  ///   dangling pointer, at any point during the SliceMut's lifetime. This must
+  ///   be true even if `len` is 0.
+  ///
+  /// In some other langages such as Rust, the slice may hold an invalid pointer
+  /// when the length is zero. But `SliceMut` must not hold a dangling pointer.
+  /// Otherwise addition on the dangling pointer may happen in SliceMut methods,
+  /// which is Undefined Behaviour in C++. To support dangling pointers, those
+  /// methods would need `length == 0` branches. Care must be applied when
+  /// converting slices between languages as a result.
+  sus_pure static constexpr inline SliceMut from_raw_collection_mut(
       ::sus::marker::UnsafeFnMarker, ::sus::iter::IterRefCounter refs,
       T* data sus_lifetimebound, usize len) noexcept {
     ::sus::check(len <= ::sus::mog<usize>(isize::MAX));
@@ -384,7 +453,7 @@ class [[sus_trivial_abi]] SliceMut final {
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return SliceMut<T>::from_raw_parts_mut(
+    return SliceMut<T>::from_raw_collection_mut(
         ::sus::marker::unsafe_fn, slice_.iter_refs_.to_view_from_view(),
         as_mut_ptr() + rstart, rlen);
   }
@@ -412,10 +481,10 @@ class [[sus_trivial_abi]] SliceMut final {
   /// Iterator invalidation tracking also tracks the stability of the collection
   /// object itself, not just its contents, which can be overly strict.
   ///
-  /// This function can be used when the collection's contents will remain valid,
-  /// but the collection itself may be moved, which would invalidate the tracking
-  /// and be treated as invalidating the iterator. There is no way to restore
-  /// tracking.
+  /// This function can be used when the collection's contents will remain
+  /// valid, but the collection itself may be moved, which would invalidate the
+  /// tracking and be treated as invalidating the iterator. There is no way to
+  /// restore tracking.
   void drop_iterator_invalidation_tracking(::sus::marker::UnsafeFnMarker) {
     slice_.iter_refs_ = ::sus::iter::IterRefCounter::empty_for_view();
   }

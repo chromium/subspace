@@ -23,11 +23,12 @@
 
 #include "fmt/core.h"
 #include "sus/assertions/check.h"
-#include "sus/construct/default.h"
 #include "sus/collections/__private/array_marker.h"
+#include "sus/collections/collections.h"
 #include "sus/collections/iterators/array_iter.h"
 #include "sus/collections/iterators/slice_iter.h"
 #include "sus/collections/slice.h"
+#include "sus/construct/default.h"
 #include "sus/fn/fn_concepts.h"
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/macros/lifetimebound.h"
@@ -132,8 +133,8 @@ class Array final {
   {
     ::sus::check(!has_iterators());
     ::sus::check(!o.has_iterators());
-    for (auto i = size_t{0}; i < N; ++i)
-      storage_.data_[i] = ::sus::mem::take(o.storage_.data_[i]);
+    for (usize i; i < N; i += 1u)
+      *(storage_.data_ + i) = ::sus::mem::take(*(o.storage_.data_ + i));
     storage_.iter_refs_ = o.storage_.iter_refs_.take_for_owner();
     return *this;
   }
@@ -163,7 +164,7 @@ class Array final {
     if constexpr (N > 0) {
       if (&source == this) [[unlikely]]
         return;
-      for (auto i = size_t{0}; i < N; ++i) {
+      for (usize i; i < N; i += 1u) {
         ::sus::clone_into(get_unchecked_mut(::sus::marker::unsafe_fn, i),
                           source.get_unchecked(::sus::marker::unsafe_fn, i));
       }
@@ -176,7 +177,7 @@ class Array final {
   constexpr ~Array()
     requires(!std::is_trivially_destructible_v<T>)
   {
-    for (auto i = size_t{0}; i < N; ++i) storage_.data_[i].~T();
+    for (usize i; i < N; i += 1u) (storage_.data_ + i)->~T();
   }
 
   /// Returns the number of elements in the array.
@@ -186,9 +187,9 @@ class Array final {
   constexpr Option<const T&> get(usize i) const& noexcept sus_lifetimebound
     requires(N > 0)
   {
-    if (i.primitive_value >= N) [[unlikely]]
+    if (i >= N) [[unlikely]]
       return Option<const T&>();
-    return Option<const T&>::with(storage_.data_[i.primitive_value]);
+    return Option<const T&>::with(*(storage_.data_ + i));
   }
   constexpr Option<const T&> get(usize i) && = delete;
 
@@ -196,9 +197,9 @@ class Array final {
   constexpr Option<T&> get_mut(usize i) & noexcept sus_lifetimebound
     requires(N > 0)
   {
-    if (i.primitive_value >= N) [[unlikely]]
+    if (i >= N) [[unlikely]]
       return Option<T&>();
-    return Option<T&>::with(storage_.data_[i.primitive_value]);
+    return Option<T&>::with(*(storage_.data_ + i));
   }
 
   /// Returns a const reference to the element at index `i`.
@@ -210,7 +211,7 @@ class Array final {
       ::sus::marker::UnsafeFnMarker, usize i) const& noexcept sus_lifetimebound
     requires(N > 0)
   {
-    return storage_.data_[i.primitive_value];
+    return *(storage_.data_ + i);
   }
   constexpr inline const T& get_unchecked(::sus::marker::UnsafeFnMarker,
                                           usize i) && = delete;
@@ -224,19 +225,19 @@ class Array final {
                                         usize i) & noexcept sus_lifetimebound
     requires(N > 0)
   {
-    return storage_.data_[i.primitive_value];
+    return *(storage_.data_ + i);
   }
 
   constexpr inline const T& operator[](usize i) const& noexcept
       sus_lifetimebound {
-    check(i.primitive_value < N);
-    return storage_.data_[i.primitive_value];
+    check(i < N);
+    return *(storage_.data_ + i);
   }
   constexpr inline const T& operator[](usize i) && = delete;
 
   constexpr inline T& operator[](usize i) & noexcept sus_lifetimebound {
-    check(i.primitive_value < N);
-    return storage_.data_[i.primitive_value];
+    check(i < N);
+    return *(storage_.data_ + i);
   }
 
   /// Returns a const pointer to the first element in the array.
@@ -316,8 +317,8 @@ class Array final {
             class R = std::invoke_result_t<MapFn&&, T&&>>
     requires(N > 0)
   Array<R, N> map(MapFn f) && noexcept {
-    return Array<R, N>::with_initializer([this, &f, i = size_t{0}]() mutable {
-      return f(::sus::move(storage_.data_[i++]));
+    return Array<R, N>::with_initializer([this, &f, i = 0_usize]() mutable {
+      return f(::sus::move(*(storage_.data_ + ::sus::mem::replace(i, i + 1u))));
     });
   }
 

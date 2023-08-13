@@ -463,33 +463,33 @@ _self::checked_next_power_of_two() const& noexcept {
 }
 
 sus_pure constexpr ::sus::collections::Array<u8,
-                                            ::sus::mem::size_of<_primitive>()>
+                                             ::sus::mem::size_of<_primitive>()>
 _self::to_be_bytes() const& noexcept {
   return to_be().to_ne_bytes();
 }
 
 sus_pure constexpr ::sus::collections::Array<u8,
-                                            ::sus::mem::size_of<_primitive>()>
+                                             ::sus::mem::size_of<_primitive>()>
 _self::to_le_bytes() const& noexcept {
   return to_le().to_ne_bytes();
 }
 
 sus_pure constexpr ::sus::collections::Array<u8,
-                                            ::sus::mem::size_of<_primitive>()>
+                                             ::sus::mem::size_of<_primitive>()>
 _self::to_ne_bytes() const& noexcept {
   auto bytes =
       ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>();
   if (std::is_constant_evaluated()) {
     auto uval = primitive_value;
-    for (auto i = size_t{0}; i < ::sus::mem::size_of<_primitive>(); ++i) {
+    for (usize i; i < ::sus::mem::size_of<_primitive>(); i += 1u) {
       const auto last_byte = static_cast<uint8_t>(uval & 0xff);
       if (sus::assertions::is_little_endian())
         bytes[i] = last_byte;
       else
-        bytes[::sus::mem::size_of<_primitive>() - 1 - i] = last_byte;
+        bytes[::sus::mem::size_of<_primitive>() - 1u - i] = last_byte;
       // If _self is one byte, this shift would be UB. But it's also not needed
       //   since the loop will not run again.
-      if constexpr (::sus::mem::size_of<_primitive>() > 1) uval >>= 8u;
+      if constexpr (::sus::mem::size_of<_primitive>() > 1u) uval >>= 8u;
     }
     return bytes;
   } else {
@@ -516,17 +516,18 @@ sus_pure constexpr _self _self::from_le_bytes(
 sus_pure constexpr _self _self::from_ne_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept {
-  _primitive val;
+  _self val;
   if (std::is_constant_evaluated()) {
-    val = 0u;
-    for (auto i = size_t{0}; i < ::sus::mem::size_of<_primitive>(); ++i) {
-      val |= bytes[i].primitive_value
-             << (::sus::mem::size_of<_primitive>() - 1 - i);
+    val = _primitive{0};
+    for (usize i; i < ::sus::mem::size_of<_primitive>(); i += 1u) {
+      // size_of<_primitive>() is < u32::MAX so the mog<u32>() is not lossy.
+      val |= bytes[i] << ::sus::mog<u32>(::sus::mem::size_of<_primitive>() -
+                                         1u - i);
     }
   } else {
     ::sus::ptr::copy_nonoverlapping(
         ::sus::marker::unsafe_fn, reinterpret_cast<const char*>(bytes.as_ptr()),
-        reinterpret_cast<char*>(&val), ::sus::mem::size_of<_primitive>());
+        reinterpret_cast<char*>(&val.primitive_value), ::sus::mem::size_of<_primitive>());
   }
   return _self(val);
 }

@@ -668,10 +668,10 @@ union Storage<I, ::sus::Tuple<T>> {
   [[sus_no_unique_address]] ::sus::Tuple<T> tuple_;
 };
 
-template <auto I, class S>
+template <size_t I, class S>
 static constexpr auto& construct_choice_storage(S& storage) {
   return construct_choice_storage(storage,
-                                  std::integral_constant<size_t, size_t{I}>());
+                                  std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>
@@ -706,10 +706,10 @@ static constexpr const auto& find_choice_storage(
   return storage;
 }
 
-template <auto I, class S>
+template <size_t I, class S>
 static constexpr auto& find_choice_storage_mut(S& storage) {
   return find_choice_storage_mut(storage,
-                                 std::integral_constant<size_t, size_t{I}>());
+                                 std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>

@@ -16,4 +16,8 @@
 
 #include "sus/prelude.h"
 
-const sus::Slice<std::string>& test_main_command_line_args();
+/// The command line arguments passed when running the tests.
+///
+/// The arguments have a static lifetime, so the returned reference, and the
+/// pointers in the slice, are never invalidated.
+const sus::Slice<std::string_view>& test_main_command_line_args();

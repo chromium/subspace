@@ -41,7 +41,7 @@ inline std::string summarize_html(std::string_view html) {
   bool inside_tag = false;
   i32 tag_depth = 0;
   sus::Option<size_t> start_non_empty;
-  for (auto i : sus::ops::range(size_t{0u}, html.size())) {
+  for (auto i : sus::ops::range<usize>(0u, html.size())) {
     if (inside_tag) {
       if (html[i] == '>') {
         inside_tag = false;
