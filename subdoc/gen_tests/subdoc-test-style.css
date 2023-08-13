@@ -103,7 +103,7 @@ pre {
     color: rgb(166, 240, 176);
 }
 
-:is(.type-signature, .function-signature, .member-signature, .requires) {
+:is(.type-signature, .function-signature, .member-signature, .requires, .deleted, .virtual) {
     font-family: monospace;
 }
 .function-signature :is(.function-auto, .return-arrow) {
@@ -131,7 +131,7 @@ a.namespace-name {
     color: rgb(142, 214, 236);
 }
 
-.overload .requires {
+.overload :is(.requires, .deleted, .virtual) {
     margin-left: 1.5rem;
 }
 .overload .requires .requires-keyword {
@@ -143,6 +143,12 @@ a.namespace-name {
 .overload .requires .requires-constaint {
     margin-left: 1.5rem;
     color: rgb(87, 218, 218)
+}
+.overload .deleted {
+    color: rgb(238, 84, 110)
+}
+.overload .virtual {
+    color: rgb(84, 238, 117)
 }
 
 .item-table {

@@ -240,7 +240,7 @@ void generate_function_references(HtmlWriter::OpenDiv& namespace_div,
         overload_set = 0u;
       prev_name = name;
       generate_function_reference(items_list, element.functions.at(function_id),
-                                  /*is_static=*/false, overload_set);
+                                  overload_set);
     }
   }
 }

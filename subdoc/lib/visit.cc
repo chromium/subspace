@@ -368,7 +368,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       auto fe = FunctionElement(
           iter_namespace_path(decl).collect_vec(), sus::move(comment),
           decl->getNameAsString(), decl->isOverloadedOperator(),
-          decl->getReturnType(), sus::move(constraints), sus::move(params),
+          decl->getReturnType(), sus::move(constraints), decl->isDeleted(),
+          sus::move(params),
           decl->getASTContext().getSourceManager().getFileOffset(
               decl->getLocation()));
       fe.overloads[0u].return_type_element =

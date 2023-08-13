@@ -25,11 +25,11 @@ void generate_function(const FunctionElement& e,
                        u32 overload_set, const Options& options) noexcept;
 
 void generate_function_reference(HtmlWriter::OpenUl& items_list,
-                                 const FunctionElement& e, bool is_static,
+                                 const FunctionElement& e,
                                  u32 overload_set) noexcept;
 
 void generate_function_long_reference(HtmlWriter::OpenDiv& items_list,
-                                      const FunctionElement& e, bool is_static,
+                                      const FunctionElement& e,
                                       u32 overload_set) noexcept;
 
 }  // namespace subdoc::gen

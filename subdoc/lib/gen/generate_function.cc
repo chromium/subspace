@@ -203,13 +203,31 @@ void generate_function_requires(HtmlWriter::OpenDiv& div,
   }
 }
 
+void generate_function_extras(HtmlWriter::OpenDiv& div,
+                              const FunctionOverload& overload) noexcept {
+  if (overload.is_deleted) {
+    auto extra_div = div.open_div();
+    extra_div.add_class("deleted");
+    extra_div.write_text("deleted");
+  }
+  if (overload.method.is_some() && overload.method.as_value().is_virtual) {
+    auto extra_div = div.open_div();
+    extra_div.add_class("virtual");
+    extra_div.write_text("virtual");
+  }
+}
+
 void generate_overload_set(HtmlWriter::OpenDiv& div,
-                           const FunctionElement& element, bool is_static,
-                           u32 overload_set, Style style,
-                           bool link_to_page) noexcept {
+                           const FunctionElement& element, u32 overload_set,
+                           Style style, bool link_to_page) noexcept {
   for (const FunctionOverload& overload : element.overloads) {
     auto overload_div = div.open_div();
     overload_div.add_class("overload");
+
+    bool is_static =
+        overload.method.as_ref()
+            .map([](const auto& method) { return method.is_static; })
+            .unwrap_or(false);
 
     {
       auto signature_div = overload_div.open_div();
@@ -266,6 +284,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
 
     if (style == StyleLong) {
       generate_function_requires(overload_div, overload);
+      generate_function_extras(overload_div, overload);
     }
 
     if (style == StyleShort) {
@@ -381,6 +400,7 @@ void generate_function(const FunctionElement& element,
       }
 
       generate_function_requires(overload_div, overload);
+      generate_function_extras(overload_div, overload);
     }
   }
   if (element.has_comment()) {
@@ -392,7 +412,7 @@ void generate_function(const FunctionElement& element,
 }
 
 void generate_function_reference(HtmlWriter::OpenUl& items_list,
-                                 const FunctionElement& element, bool is_static,
+                                 const FunctionElement& element,
                                  u32 overload_set) noexcept {
   auto item_li = items_list.open_li();
   item_li.add_class("section-item");
@@ -405,8 +425,7 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
     // Operator overloads can all have different parameters and return types, so
     // we display them in long form.
     Style style = element.is_operator ? StyleLong : StyleShort;
-    generate_overload_set(overload_set_div, element, is_static, overload_set,
-                          style,
+    generate_overload_set(overload_set_div, element, overload_set, style,
                           /*link_to_page=*/true);
   }
   {
@@ -419,14 +438,12 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
 
 void generate_function_long_reference(HtmlWriter::OpenDiv& item_div,
                                       const FunctionElement& element,
-                                      bool is_static,
                                       u32 overload_set) noexcept {
   {
     auto overload_set_div = item_div.open_div();
     overload_set_div.add_class("overload-set");
     overload_set_div.add_class("item-name");
-    generate_overload_set(overload_set_div, element, is_static, overload_set,
-                          StyleLong,
+    generate_overload_set(overload_set_div, element, overload_set, StyleLong,
                           /*link_to_page=*/false);
   }
   {

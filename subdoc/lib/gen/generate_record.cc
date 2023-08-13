@@ -242,9 +242,8 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
       else
         overload_set = 0u;
       prev_name = name;
-      generate_function_long_reference(items_div,
-                                       element.methods.at(function_id),
-                                       type == StaticMethods, overload_set);
+      generate_function_long_reference(
+          items_div, element.methods.at(function_id), overload_set);
     }
   }
 }

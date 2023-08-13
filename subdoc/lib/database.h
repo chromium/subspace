@@ -130,6 +130,7 @@ struct FunctionOverload {
   std::string return_type_name;
   std::string return_short_type_name;
   sus::Option<RequiresConstraints> constraints;
+  bool is_deleted = false;
 
   // TODO: `noexcept` stuff from FunctionDecl::getExceptionSpecType().
 };
@@ -139,6 +140,7 @@ struct FunctionElement : public CommentElement {
                            Comment comment, std::string name, bool is_operator,
                            clang::QualType return_qual_type,
                            sus::Option<RequiresConstraints> constraints,
+                           bool is_deleted,
                            sus::Vec<FunctionParameter> parameters, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
@@ -149,6 +151,7 @@ struct FunctionElement : public CommentElement {
         .return_type_name = friendly_type_name(return_qual_type),
         .return_short_type_name = friendly_short_type_name(return_qual_type),
         .constraints = sus::move(constraints),
+        .is_deleted = is_deleted,
     });
   }
 
