@@ -25,6 +25,7 @@
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
 #include "sus/assertions/unreachable.h"
+#include "sus/iter/compat_ranges.h"
 #include "sus/prelude.h"
 
 namespace subdoc::gen {
@@ -198,6 +199,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
 }
 
 enum MethodType {
+  SpecialMethods,
   StaticMethods,
   NonStaticMethods,
   NonStaticOperators,
@@ -212,6 +214,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
   section_div.add_class("section");
   section_div.add_class("methods");
   switch (type) {
+    case SpecialMethods: section_div.add_class("special"); break;
     case StaticMethods: section_div.add_class("static"); break;
     case NonStaticMethods: section_div.add_class("nonstatic"); break;
     case NonStaticOperators: section_div.add_class("nonstatic"); break;
@@ -221,6 +224,9 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
     auto methods_header_div = section_div.open_div();
     methods_header_div.add_class("section-header");
     switch (type) {
+      case SpecialMethods:
+        methods_header_div.write_text("Special Methods");
+        break;
       case StaticMethods:
         methods_header_div.write_text("Static Methods");
         break;
@@ -242,8 +248,22 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
       else
         overload_set = 0u;
       prev_name = name;
-      generate_function_long_reference(
-          items_div, element.methods.at(function_id), overload_set);
+      const FunctionElement& func = [&]() -> decltype(auto) {
+        switch (type) {
+          case SpecialMethods: {
+            if (element.ctors.count(function_id))
+              return element.ctors.at(function_id);
+            if (element.dtors.count(function_id))
+              return element.dtors.at(function_id);
+            return element.conversions.at(function_id);
+          }
+          case StaticMethods: return element.methods.at(function_id);
+          case NonStaticMethods: return element.methods.at(function_id);
+          case NonStaticOperators: return element.methods.at(function_id);
+        }
+        sus::unreachable();
+      }();
+      generate_function_long_reference(items_div, func, overload_set);
     }
   }
 }
@@ -327,9 +347,19 @@ void generate_record(const RecordElement& element,
                          sorted_static_fields.as_slice());
   generate_record_fields(record_div, element, false, sorted_fields.as_slice());
 
+  sus::Vec<SortedFunctionByName> sorted_special_methods;
   sus::Vec<SortedFunctionByName> sorted_static_methods;
   sus::Vec<SortedFunctionByName> sorted_methods;
   sus::Vec<SortedFunctionByName> sorted_operators;
+  for (const auto& [method_id, method_element] :
+       sus::iter::from_range(element.ctors)
+           .chain(sus::iter::from_range(element.dtors))
+           .chain(sus::iter::from_range(element.conversions))) {
+    if (method_element.hidden()) continue;
+
+    sorted_special_methods.push(
+        sus::tuple(method_element.name, method_element.sort_key, method_id));
+  }
   for (const auto& [method_id, method_element] : element.methods) {
     if (method_element.hidden()) continue;
 
@@ -344,6 +374,16 @@ void generate_record(const RecordElement& element,
           sus::tuple(method_element.name, method_element.sort_key, method_id));
     }
   }
+  sorted_special_methods.sort_unstable_by(
+      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
+        bool a_dtor = a.at<0>().starts_with("~");
+        bool b_dtor = b.at<0>().starts_with("~");
+        auto dtor_ord = a_dtor <=> b_dtor;
+        if (dtor_ord != 0) return dtor_ord;
+        auto ord = a.at<0>() <=> b.at<0>();
+        if (ord != 0) return ord;
+        return a.at<1>() <=> b.at<1>();
+      });
   sorted_static_methods.sort_unstable_by(
       [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
         auto ord = a.at<0>() <=> b.at<0>();
@@ -363,6 +403,8 @@ void generate_record(const RecordElement& element,
         return a.at<1>() <=> b.at<1>();
       });
 
+  generate_record_methods(record_div, element, SpecialMethods,
+                          sorted_special_methods.as_slice());
   generate_record_methods(record_div, element, StaticMethods,
                           sorted_static_methods.as_slice());
   generate_record_methods(record_div, element, NonStaticMethods,

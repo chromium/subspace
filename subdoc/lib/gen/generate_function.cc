@@ -228,6 +228,12 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         overload.method.as_ref()
             .map([](const auto& method) { return method.is_static; })
             .unwrap_or(false);
+    const bool has_return = overload.method.as_ref()
+                                .map([](const auto& method) {
+                                  return !method.is_ctor && !method.is_dtor &&
+                                         !method.is_conversion;
+                                })
+                                .unwrap_or(true);
 
     {
       auto signature_div = overload_div.open_div();
@@ -238,7 +244,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         static_span.add_class("static");
         static_span.write_text("static");
       }
-      {
+      if (has_return) {
         auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
         auto_span.add_class("function-auto");
         auto_span.write_text("auto");
@@ -273,12 +279,14 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       }
       if (style == StyleLong) {
         generate_function_params(signature_div, overload);
-        {
-          auto arrow_span = signature_div.open_span(HtmlWriter::SingleLine);
-          arrow_span.add_class("return-arrow");
-          arrow_span.write_text("->");
+        if (has_return) {
+          {
+            auto arrow_span = signature_div.open_span(HtmlWriter::SingleLine);
+            arrow_span.add_class("return-arrow");
+            arrow_span.write_text("->");
+          }
+          generate_return_type(signature_div, overload);
         }
-        generate_return_type(signature_div, overload);
       }
     }
 

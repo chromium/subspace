@@ -389,6 +389,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               .is_static = mdecl->isStatic(),
               .is_volatile = mdecl->isVolatile(),
               .is_virtual = mdecl->isVirtual(),
+              .is_ctor = clang::isa<clang::CXXConstructorDecl>(decl),
+              .is_dtor = clang::isa<clang::CXXDestructorDecl>(decl),
+              .is_conversion = clang::isa<clang::CXXConversionDecl>(decl),
               .qualifier =
                   [mdecl]() {
                     switch (mdecl->getRefQualifier()) {

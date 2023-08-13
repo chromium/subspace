@@ -105,6 +105,9 @@ struct MethodSpecific {
   bool is_static;
   bool is_volatile;
   bool is_virtual;
+  bool is_ctor;
+  bool is_dtor;
+  bool is_conversion;
 
   // TODO: Find the Database element of the root ancestor virtual method,
   // when this one is virtual, and link to it.
