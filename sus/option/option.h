@@ -75,6 +75,11 @@ constexpr auto end(const T& t) noexcept;
 }  // namespace __private
 }  // namespace sus::iter
 
+namespace sus {
+/// The Option type, and the some() and none() type deduction functions.
+namespace option {}
+}  // namespace sus
+
 namespace sus::option {
 
 using State::None;

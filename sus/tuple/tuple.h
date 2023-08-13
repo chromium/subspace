@@ -41,9 +41,30 @@
 #include "sus/string/__private/format_to_stream.h"
 #include "sus/tuple/__private/storage.h"
 
+namespace sus {
+/// The Tuple type, and the tuple() type deduction function.
+namespace tuple_type {}
+}  // namespace sus
+
 namespace sus::tuple_type {
 
 /// A Tuple is a finite sequence of one or more heterogeneous values.
+///
+/// The Tuple is similar to
+/// [std::tuple](https://en.cppreference.com/w/cpp/utility/tuple) with some
+/// differences:
+/// * It allows storing reference types.
+/// * It interacts with iterators through satisfying
+///   [`Extend`](sus::iter::Extend), allowing an iterator to `unzip()` into
+///   a Tuple of collections that satisfy Extend.
+/// * It provides explicit methods for const, mutable or rvalue access to
+///   its values.
+/// * It satisfies [`Clone`](sus::mem::Clone) if its elements all satisfy
+///   `Clone`.
+///
+/// Tuple elements can also be accessed through `get()` for code that wants to
+/// work generically over tuple-like objects including `sus::Tuple` and
+/// `std::tuple`.
 ///
 /// # Tail padding
 /// The Tuple's tail padding may be reused when the Tuple is marked as

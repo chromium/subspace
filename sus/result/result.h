@@ -44,6 +44,11 @@
 #include "sus/result/__private/storage.h"
 #include "sus/string/__private/format_to_stream.h"
 
+namespace sus {
+/// The Result type, and the ok() and err() type deduction functions.
+namespace result {}
+}  // namespace sus
+
 namespace sus::result {
 
 using ::sus::iter::Once;
