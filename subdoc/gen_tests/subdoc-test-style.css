@@ -49,9 +49,16 @@ pre {
     margin-left: 1em;
 }
 .description h1 {
+    font-size: 110%;
+    font-weight: bold;
+    color: rgb(250, 199, 121);
+    border-bottom: 1px solid rgb(184, 184, 184);
+}
+.description h2 {
     font-size: 100%;
     font-weight: bold;
     color: rgb(250, 199, 121);
+    border-bottom: 1px solid rgb(184, 184, 184);
 }
 .description pre {
     padding: 1em;
@@ -99,6 +106,9 @@ pre {
 .overview .section-header a {
     text-decoration: none;
 }
+.overview .section-header a:hover {
+    text-decoration: underline;
+}
 .overview .section-header .type-name {
     color: rgb(166, 240, 176);
 }
@@ -114,21 +124,36 @@ a.function-name {
     text-decoration: none;
     color: rgb(191, 142, 236);
 }
+a.function-name:hover {
+    text-decoration: underline;
+}
 a.type-name {
     text-decoration: none;
     color: rgb(142, 201, 236);
+}
+a.type-name:hover {
+    text-decoration: underline;
 }
 a.field-name {
     text-decoration: none;
     color: rgb(142, 201, 236);
 }
+a.field-name:hover {
+    text-decoration: underline;
+}
 a.project-name {
     text-decoration: none;
     color: rgb(207, 66, 184);
 }
+a.project-name:hover {
+    text-decoration: underline;
+}
 a.namespace-name {
     text-decoration: none;
     color: rgb(142, 214, 236);
+}
+a.namespace-name:hover {
+    text-decoration: underline;
 }
 
 .overload :is(.requires, .deleted, .virtual) {

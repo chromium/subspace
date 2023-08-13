@@ -54,6 +54,7 @@ target_sources(subspace PUBLIC
     "collections/iterators/vec_iter.h"
     "collections/iterators/windows.h"
     "collections/array.h"
+    "collections/collections.h"
     "collections/compat_deque.h"
     "collections/compat_forward_list.h"
     "collections/compat_list.h"
