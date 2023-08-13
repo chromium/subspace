@@ -6,4 +6,4 @@ out\subdoc\subdoc -p out --out docs ^
     --copy-file sus/index.html ^
     --project-md sus/project.md ^
     --project-name Subspace ^
-    subspace/sus/containers/vec_unit
+    subspace/sus/num/i32 subspace/sus/num/i64

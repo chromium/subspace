@@ -429,13 +429,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
       add_overload = false;
-    } else if (!it->second.has_comment()) {
+    } else if (!it->second.has_comment() && db_element.has_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
-    } else if (!db_element.has_comment()) {
+    } else if (!db_element.has_comment() & it->second.has_comment()) {
       // Leave the existing comment in place.
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
+      add_overload = false;
     } else {
       auto& ast_cx = decl->getASTContext();
       const FunctionElement& old_element = it->second;
