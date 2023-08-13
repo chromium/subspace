@@ -42,7 +42,8 @@ struct DocAttributes {
   DocAttributes clone() const {
     return DocAttributes(sus::clone(overload_set),  //
                          sus::clone(location),      //
-                         sus::clone(inherit));
+                         sus::clone(inherit),       //
+                         sus::clone(hidden));
   }
 };
 

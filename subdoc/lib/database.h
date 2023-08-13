@@ -78,7 +78,8 @@ struct CommentElement {
   u32 sort_key;
 
   bool has_comment() const {
-    return !comment.full_html.empty() || comment.attrs.inherit.is_some();
+    return !comment.full_html.empty() || comment.attrs.inherit.is_some() ||
+           comment.attrs.hidden;
   }
   bool hidden() const { return comment.attrs.hidden; }
 };
