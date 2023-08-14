@@ -95,7 +95,7 @@ class [[sus_trivial_abi]] Vec final {
 
  public:
   // sus::construct::Default trait.
-  inline constexpr Vec() noexcept : Vec(nullptr, 0_usize, 0_usize) {}
+  inline constexpr Vec() noexcept : Vec(0_usize, nullptr, 0_usize) {}
 
   /// Creates a Vec<T> with at least the specified capacity.
   ///
@@ -119,7 +119,7 @@ class [[sus_trivial_abi]] Vec final {
   /// Panics if the capacity exceeds `isize::MAX` bytes.
   sus_pure static inline constexpr Vec with_capacity(usize capacity) noexcept {
     check(::sus::mem::size_of<T>() * capacity <= ::sus::mog<usize>(isize::MAX));
-    auto v = Vec(nullptr, 0_usize, 0_usize);
+    auto v = Vec(0_usize, nullptr, 0_usize);
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
     v.grow_to_exact(capacity);
     return v;
@@ -156,7 +156,7 @@ class [[sus_trivial_abi]] Vec final {
   sus_pure static constexpr Vec from_raw_parts(::sus::marker::UnsafeFnMarker,
                                                T* ptr, usize length,
                                                usize capacity) noexcept {
-    return Vec(ptr, length, capacity);
+    return Vec(capacity, ptr, length);
   }
 
   /// sus::construct::From<Slice<T>> trait.
@@ -206,11 +206,10 @@ class [[sus_trivial_abi]] Vec final {
   }
 
   constexpr Vec(Vec&& o) noexcept
-      : slice_mut_(
-            o.slice_mut_.slice_.iter_refs_.take_for_owner(),
-            ::sus::mem::replace(o.raw_data(), nullptr),
-            ::sus::mem::replace(o.slice_mut_.slice_.len_, kMovedFromLen)),
-        capacity_(::sus::mem::replace(o.capacity_, kMovedFromCapacity)) {
+      : capacity_(::sus::mem::replace(o.capacity_, kMovedFromCapacity)),
+        iter_refs_(o.iter_refs_.take_for_owner()),
+        data_(::sus::mem::replace(o.data_, nullptr)),
+        len_(::sus::mem::replace(o.len_, kMovedFromLen)) {
     check(!is_moved_from());
     check(!has_iterators());
   }
@@ -219,11 +218,9 @@ class [[sus_trivial_abi]] Vec final {
     check(!has_iterators());
     check(!o.has_iterators());
     if (is_alloced()) free_storage();
-    raw_data() = ::sus::mem::replace(o.raw_data(), nullptr);
-    slice_mut_.slice_.len_ =
-        ::sus::mem::replace(o.slice_mut_.slice_.len_, kMovedFromLen);
-    slice_mut_.slice_.iter_refs_ =
-        o.slice_mut_.slice_.iter_refs_.take_for_owner();
+    data_ = ::sus::mem::replace(o.data_, nullptr);
+    len_ = ::sus::mem::replace(o.len_, kMovedFromLen);
+    iter_refs_ = o.iter_refs_.take_for_owner();
     capacity_ = ::sus::mem::replace(o.capacity_, kMovedFromCapacity);
     return *this;
   }
@@ -236,7 +233,7 @@ class [[sus_trivial_abi]] Vec final {
     const auto self_len = len();
     for (usize i; i < self_len; i += 1u) {
       std::construct_at(
-          v.raw_data() + i,  //
+          v.data_ + i,  //
           ::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
     }
     v.set_len(::sus::marker::unsafe_fn, self_len);
@@ -254,7 +251,7 @@ class [[sus_trivial_abi]] Vec final {
     if (source.capacity_ == 0_usize) {
       destroy_storage_objects();
       free_storage();
-      raw_data() = nullptr;
+      data_ = nullptr;
       set_len(::sus::marker::unsafe_fn, 0_usize);
       capacity_ = 0_usize;
     } else {
@@ -266,7 +263,7 @@ class [[sus_trivial_abi]] Vec final {
 
       // Replace element positions that are present in both Vec.
       for (usize i; i < in_place_count; i += 1u) {
-        ::sus::clone_into(*(raw_data() + i), *(source.raw_data() + i));
+        ::sus::clone_into(*(data_ + i), *(source.data_ + i));
       }
       // Destroy element positions in self that aren't in source.
       for (usize i = in_place_count; i < self_len; i += 1u) {
@@ -275,7 +272,7 @@ class [[sus_trivial_abi]] Vec final {
       // Append element positions that weren't in self but are in source.
       for (usize i = in_place_count; i < source_len; i += 1u) {
         std::construct_at(
-            raw_data() + i,  //
+            data_ + i,  //
             ::sus::clone(source.get_unchecked(::sus::marker::unsafe_fn, i)));
       }
       set_len(::sus::marker::unsafe_fn, source_len);
@@ -318,10 +315,9 @@ class [[sus_trivial_abi]] Vec final {
   constexpr ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
     check(!is_moved_from());
     check(!has_iterators());
-    return sus::tuple(
-        ::sus::mem::replace(raw_data(), nullptr),
-        ::sus::mem::replace(slice_mut_.slice_.len_, kMovedFromLen),
-        ::sus::mem::replace(capacity_, kMovedFromCapacity));
+    return sus::tuple(::sus::mem::replace(data_, nullptr),
+                      ::sus::mem::replace(len_, kMovedFromLen),
+                      ::sus::mem::replace(capacity_, kMovedFromCapacity));
   }
 
   /// Returns the number of elements there is space allocated for in the vector.
@@ -408,7 +404,7 @@ class [[sus_trivial_abi]] Vec final {
     const auto slice_len = s.len();
     const T* slice_ptr = s.as_ptr();
     if (is_alloced()) {
-      const T* vec_ptr = raw_data();
+      const T* vec_ptr = data_;
       // If this check fails, the Slice aliases with the Vec, and the reserve()
       // call below would invalidate the Slice.
       //
@@ -418,7 +414,7 @@ class [[sus_trivial_abi]] Vec final {
     reserve(slice_len);
     if constexpr (sus::mem::TrivialCopy<T>) {
       ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, slice_ptr,
-                                      raw_data() + self_len, slice_len);
+                                      data_ + self_len, slice_len);
       set_len(::sus::marker::unsafe_fn, self_len + slice_len);
     } else {
       for (const T& t : s) push(::sus::clone(t));
@@ -441,13 +437,13 @@ class [[sus_trivial_abi]] Vec final {
     check(bytes <= ::sus::mog<usize>(isize::MAX));
 
     if (!is_alloced()) {
-      raw_data() = std::allocator<T>().allocate(cap);
+      data_ = std::allocator<T>().allocate(cap);
       capacity_ = cap;
       return;
     }
 
     T* new_allocation = std::allocator<T>().allocate(cap);
-    T* old_t = raw_data();
+    T* old_t = data_;
     T* new_t = new_allocation;
     if constexpr (::sus::mem::relocate_by_memcpy<T>) {
       if (!std::is_constant_evaluated()) {
@@ -455,8 +451,8 @@ class [[sus_trivial_abi]] Vec final {
         // `old_t` which was the previous allocation.
         ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, old_t, new_t,
                                         capacity_);
-        std::allocator<T>().deallocate(raw_data(), capacity_);
-        raw_data() = new_allocation;
+        std::allocator<T>().deallocate(data_, capacity_);
+        data_ = new_allocation;
         capacity_ = cap;
         return;
       }
@@ -469,8 +465,8 @@ class [[sus_trivial_abi]] Vec final {
       ++old_t;
       ++new_t;
     }
-    std::allocator<T>().deallocate(raw_data(), capacity_);
-    raw_data() = new_allocation;
+    std::allocator<T>().deallocate(data_, capacity_);
+    data_ = new_allocation;
     capacity_ = cap;
   }
 
@@ -530,7 +526,7 @@ class [[sus_trivial_abi]] Vec final {
   constexpr void set_len(::sus::marker::UnsafeFnMarker, usize new_len) {
     check(!is_moved_from());
     sus_debug_check(new_len <= capacity_);
-    slice_mut_.slice_.len_ = new_len;
+    len_ = new_len;
   }
 
   /// Removes the last element from a vector and returns it, or None if it is
@@ -566,7 +562,7 @@ class [[sus_trivial_abi]] Vec final {
     check(!has_iterators());
     reserve(1_usize);
     const auto self_len = len();
-    std::construct_at(raw_data() + self_len, ::sus::move(t));
+    std::construct_at(data_ + self_len, ::sus::move(t));
     set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
   }
 
@@ -594,7 +590,7 @@ class [[sus_trivial_abi]] Vec final {
     check(!has_iterators());
     reserve(1_usize);
     const auto self_len = len();
-    std::construct_at(raw_data() + self_len, ::sus::forward<Us>(args)...);
+    std::construct_at(data_ + self_len, ::sus::forward<Us>(args)...);
     set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
   }
 
@@ -697,10 +693,9 @@ class [[sus_trivial_abi]] Vec final {
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return Slice<T>::from_raw_collection(
-        ::sus::marker::unsafe_fn,
-        slice_mut_.slice_.iter_refs_.to_view_from_owner(), as_ptr() + rstart,
-        rlen);
+    return Slice<T>::from_raw_collection(::sus::marker::unsafe_fn,
+                                         iter_refs_.to_view_from_owner(),
+                                         as_ptr() + rstart, rlen);
   }
   constexpr Slice<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range) && = delete;
@@ -727,49 +722,50 @@ class [[sus_trivial_abi]] Vec final {
     // We allow rstart == len() && rend == len(), which returns an empty
     // slice.
     ::sus::check(rstart <= length && rstart <= length - rlen);
-    return SliceMut<T>::from_raw_collection_mut(
-        ::sus::marker::unsafe_fn,
-        slice_mut_.slice_.iter_refs_.to_view_from_owner(),
-        as_mut_ptr() + rstart, rlen);
+    return SliceMut<T>::from_raw_collection_mut(::sus::marker::unsafe_fn,
+                                                iter_refs_.to_view_from_owner(),
+                                                as_mut_ptr() + rstart, rlen);
   }
 
   // Const Vec can be used as a Slice.
-  sus_pure constexpr operator const Slice<T>&() const& noexcept {
+  sus_pure constexpr operator Slice<T>() const& noexcept {
     check(!is_moved_from());
-    return slice_mut_.slice_;
+    return Slice<T>::from_raw_collection(
+        ::sus::marker::unsafe_fn, iter_refs_.to_view_from_owner(), data_, len_);
   }
-  sus_pure constexpr operator const Slice<T>&() && = delete;
-  sus_pure constexpr operator Slice<T>&() & noexcept {
+  sus_pure constexpr operator Slice<T>() && = delete;
+  sus_pure constexpr operator Slice<T>() & noexcept {
     check(!is_moved_from());
-    return slice_mut_.slice_;
+    return Slice<T>::from_raw_collection(
+        ::sus::marker::unsafe_fn, iter_refs_.to_view_from_owner(), data_, len_);
   }
 
   // Mutable Vec can be used as a SliceMut.
-  sus_pure constexpr operator SliceMut<T>&() & noexcept {
+  sus_pure constexpr operator SliceMut<T>() & noexcept {
     check(!is_moved_from());
-    return slice_mut_;
+    return SliceMut<T>::from_raw_collection_mut(
+        ::sus::marker::unsafe_fn, iter_refs_.to_view_from_owner(), data_, len_);
   }
 
-#define _ptr_expr slice_mut_.slice_.data_
-#define _len_expr slice_mut_.slice_.len_
-#define _iter_refs_expr slice_mut_.slice_.iter_refs_.to_iter_from_owner()
-#define _iter_refs_view_expr slice_mut_.slice_.iter_refs_.to_view_from_owner()
+#define _ptr_expr data_
+#define _len_expr len_
+#define _iter_refs_expr iter_refs_.to_iter_from_owner()
+#define _iter_refs_view_expr iter_refs_.to_view_from_owner()
 #define _delete_rvalue true
 #include "__private/slice_methods.inc"
-#define _ptr_expr slice_mut_.slice_.data_
-#define _len_expr slice_mut_.slice_.len_
-#define _iter_refs_expr slice_mut_.slice_.iter_refs_.to_iter_from_owner()
-#define _iter_refs_view_expr slice_mut_.slice_.iter_refs_.to_view_from_owner()
+#define _ptr_expr data_
+#define _len_expr len_
+#define _iter_refs_expr iter_refs_.to_iter_from_owner()
+#define _iter_refs_view_expr iter_refs_.to_view_from_owner()
 #define _delete_rvalue true
 #include "__private/slice_mut_methods.inc"
 
  private:
-  constexpr Vec(T* ptr, usize len, usize cap)
-      : slice_mut_(sus::iter::IterRefCounter::for_owner(), ptr, len),
-        capacity_(cap) {}
-
-  constexpr T* raw_data() const noexcept { return slice_mut_.slice_.data_; }
-  constexpr T*& raw_data() noexcept { return slice_mut_.slice_.data_; }
+  constexpr Vec(usize cap, T* ptr, usize len)
+      : capacity_(cap),
+        iter_refs_(sus::iter::IterRefCounter::for_owner()),
+        data_(ptr),
+        len_(len) {}
 
   constexpr usize apply_growth_function(usize additional) const noexcept {
     usize goal = additional + len();
@@ -787,13 +783,13 @@ class [[sus_trivial_abi]] Vec final {
     if constexpr (!std::is_trivially_destructible_v<T>) {
       const auto self_len = len();
       for (::sus::num::usize i; i < self_len; i += 1u)
-        std::destroy_at(raw_data() + i);
+        std::destroy_at(data_ + i);
     }
   }
 
   constexpr void free_storage() {
     destroy_storage_objects();
-    std::allocator<T>().deallocate(raw_data(), capacity_);
+    std::allocator<T>().deallocate(data_, capacity_);
   }
 
   /// Checks if Vec has storage allocated.
@@ -807,7 +803,7 @@ class [[sus_trivial_abi]] Vec final {
   }
 
   constexpr inline bool has_iterators() const noexcept {
-    return slice_mut_.slice_.iter_refs_.count_from_owner() != 0u;
+    return iter_refs_.count_from_owner() != 0u;
   }
 
   /// The length is set to this value when Vec is moved from. It is non-zero as
@@ -818,21 +814,22 @@ class [[sus_trivial_abi]] Vec final {
   /// signal its moved-from state.
   static constexpr usize kMovedFromCapacity = 0_usize;
 
-  SliceMut<T> slice_mut_;
   usize capacity_;
+  // These are in the same order as Slice/SliceMut, and come last to make it
+  // easier to reuse the same stack space.
+  [[sus_no_unique_address]] ::sus::iter::IterRefCounter iter_refs_;
+  T* data_;
+  usize len_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                  decltype(slice_mut_), decltype(capacity_));
-
-  // Slice does not satisfy NeverValueField because it requires that the default
-  // constructor is trivial, but Slice's default constructor needs to initialize
-  // its fields.
+                                  decltype(iter_refs_), decltype(capacity_),
+                                  decltype(data_), decltype(len_));
 };
 
-#define _ptr_expr slice_mut_.slice_.data_
-#define _len_expr slice_mut_.slice_.len_
-#define _iter_refs_expr slice_mut_.slice_.iter_refs_.to_iter_from_owner()
-#define _iter_refs_view_expr slice_mut_.slice_.iter_refs_.to_view_from_owner()
+#define _ptr_expr data_
+#define _len_expr len_
+#define _iter_refs_expr iter_refs_.to_iter_from_owner()
+#define _iter_refs_view_expr iter_refs_.to_view_from_owner()
 #define _delete_rvalue true
 #define _self_template class T
 #define _self Vec<T>

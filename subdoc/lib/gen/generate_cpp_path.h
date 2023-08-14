@@ -37,18 +37,18 @@ struct CppPathElement {
 
 sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
     const NamespaceElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors,
+    sus::Slice<const NamespaceElement*> ancestors,
     const Options& options) noexcept;
 
 sus::Vec<CppPathElement> generate_cpp_path_for_type(
     const TypeElement& element,
-    const sus::Slice<const NamespaceElement*>& namespace_ancestors,
-    const sus::Slice<const RecordElement*>& type_ancestors,
+    sus::Slice<const NamespaceElement*> namespace_ancestors,
+    sus::Slice<const RecordElement*> type_ancestors,
     const Options& options) noexcept;
 
 sus::Vec<CppPathElement> generate_cpp_path_for_function(
     const FunctionElement& element,
-    const sus::Slice<const NamespaceElement*>& namespace_ancestors,
+    sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept;
 
 }  // namespace subdoc::gen

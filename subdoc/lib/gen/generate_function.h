@@ -21,7 +21,7 @@
 namespace subdoc::gen {
 
 void generate_function(const FunctionElement& e,
-                       const sus::Slice<const NamespaceElement*>& namespaces,
+                       sus::Slice<const NamespaceElement*> namespaces,
                        u32 overload_set, const Options& options) noexcept;
 
 void generate_function_reference(HtmlWriter::OpenUl& items_list,

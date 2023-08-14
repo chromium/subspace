@@ -83,6 +83,20 @@ namespace sus {
 ///
 /// TODO: Performance info/comparisons when there's more types.
 ///
+/// # Slices vs spans
+/// `Slice` and `SliceMut` are how the Subspace library exposes views of
+/// contiguous sequences of elements with O(1) random access. They provide const
+/// and mutable access to the underlying objects, respectively.
+///
+/// `Slice<T>` is similar to `std::span<const T>` and `SliceMut<T>` is similar
+/// to `std::span<T>`. All contiguous sequence collections in this library can
+/// implicitly convert to a `Slice` (always) or to a `SliceMut` (if the
+/// container is mutable).
+///
+/// Slices share most of the same API surface as do the owning collections like
+/// `Vec`, including methods such as `sort()`, `chunks()`, `iter()`, and
+/// `concat()`.
+///
 /// # Capacity Management
 /// Many collections provide several constructors and methods that refer to
 /// "capacity". These collections are generally built on top of an array.

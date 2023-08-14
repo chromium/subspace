@@ -23,8 +23,8 @@ namespace {
 
 sus::Vec<CppPathElement> generate_with_ancestors(
     std::string_view name, CppPathElementType self_type,
-    const sus::Slice<const NamespaceElement*>& ancestors,
-    const sus::Slice<const RecordElement*>& type_ancestors,
+    sus::Slice<const NamespaceElement*> ancestors,
+    sus::Slice<const RecordElement*> type_ancestors,
     const Options& options) noexcept {
   sus::Vec<CppPathElement> out;
   for (const NamespaceElement& ancestor : ancestors.iter().map(
@@ -81,7 +81,7 @@ sus::Vec<CppPathElement> generate_with_ancestors(
 
 sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
     const NamespaceElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors,
+    sus::Slice<const NamespaceElement*> ancestors,
     const Options& options) noexcept {
   sus::Vec<CppPathElement> out;
   switch (element.namespace_name) {
@@ -111,8 +111,8 @@ sus::Vec<CppPathElement> generate_cpp_path_for_namespace(
 
 sus::Vec<CppPathElement> generate_cpp_path_for_type(
     const TypeElement& element,
-    const sus::Slice<const NamespaceElement*>& namespace_ancestors,
-    const sus::Slice<const RecordElement*>& type_ancestors,
+    sus::Slice<const NamespaceElement*> namespace_ancestors,
+    sus::Slice<const RecordElement*> type_ancestors,
     const Options& options) noexcept {
   return generate_with_ancestors(element.name, CppPathRecord,
                                  namespace_ancestors, type_ancestors, options);
@@ -120,7 +120,7 @@ sus::Vec<CppPathElement> generate_cpp_path_for_type(
 
 sus::Vec<CppPathElement> generate_cpp_path_for_function(
     const FunctionElement& element,
-    const sus::Slice<const NamespaceElement*>& namespace_ancestors,
+    sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept {
   return generate_with_ancestors(element.name, CppPathFunction,
                                  namespace_ancestors,
