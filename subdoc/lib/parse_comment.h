@@ -217,7 +217,6 @@ inline sus::Result<ParsedComment, ParseCommentError> parse_comment(
         while (true) {
           auto pos = line.find("@doc.self");
           if (pos == std::string::npos) break;
-          // TODO: Use the name of the type!
           line.replace(pos, strlen("@doc.self"), self_name);
         }
 
