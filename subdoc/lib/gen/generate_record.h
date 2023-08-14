@@ -21,7 +21,7 @@
 namespace subdoc::gen {
 
 void generate_record(const RecordElement& element,
-                     const sus::Slice<const NamespaceElement*>& namespaces,
+                     sus::Slice<const NamespaceElement*> namespaces,
                      sus::Vec<const RecordElement*> type_ancestors,
                      const Options& options) noexcept;
 

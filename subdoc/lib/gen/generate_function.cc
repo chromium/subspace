@@ -304,7 +304,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
 }  // namespace
 
 void generate_function(const FunctionElement& element,
-                       const sus::Slice<const NamespaceElement*>& namespaces,
+                       sus::Slice<const NamespaceElement*> namespaces,
                        u32 overload_set, const Options& options) noexcept {
   if (element.hidden()) return;
 

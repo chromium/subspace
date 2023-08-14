@@ -22,7 +22,7 @@ namespace {
 sus::Vec<std::string_view>* args;
 }
 
-const sus::Slice<std::string_view>& test_main_command_line_args() { return *args; }
+sus::Slice<std::string_view> test_main_command_line_args() { return *args; }
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

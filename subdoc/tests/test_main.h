@@ -20,4 +20,4 @@
 ///
 /// The arguments have a static lifetime, so the returned reference, and the
 /// pointers in the slice, are never invalidated.
-const sus::Slice<std::string_view>& test_main_command_line_args();
+sus::Slice<std::string_view> test_main_command_line_args();

@@ -1009,17 +1009,6 @@ TEST(Vec, ConvertsToSlice) {
     [](Slice<i32>) {}(v);
     [](Slice<i32>) {}(cv);
     [](SliceMut<i32>) {}(v);
-    [](const Slice<i32>&) {}(v);
-    [](const Slice<i32>&) {}(cv);
-    [](SliceMut<i32>&) {}(v);
-  }
-  // References.
-  {
-    [[maybe_unused]] const Slice<i32>& s2 = v;
-    [[maybe_unused]] const Slice<i32>& s3 = cv;
-    [[maybe_unused]] Slice<i32>& s4 = v;
-    [[maybe_unused]] const SliceMut<i32>& s6 = v;
-    [[maybe_unused]] SliceMut<i32>& s8 = v;
   }
 }
 
@@ -1374,6 +1363,14 @@ TEST(VecDeathTest, IteratorInvalidation) {
       },
       "");
 #endif
+}
+
+TEST(Vec, SliceInvalidation) {
+  auto vec = sus::Vec<i32>::with(1, 2);
+  const sus::Slice<i32>& s = vec;
+  EXPECT_EQ(s.len(), 2u);
+  vec.push(3);
+  EXPECT_EQ(s.len(), 2u);
 }
 
 }  // namespace

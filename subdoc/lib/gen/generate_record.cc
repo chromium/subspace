@@ -37,8 +37,8 @@ using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
 
 void generate_record_overview(
     HtmlWriter::OpenDiv& record_div, const RecordElement& element,
-    const sus::Slice<const NamespaceElement*>& namespaces,
-    const sus::Slice<const RecordElement*>& type_ancestors,
+    sus::Slice<const NamespaceElement*> namespaces,
+    sus::Slice<const RecordElement*> type_ancestors,
     const Options& options) noexcept {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
@@ -271,7 +271,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
 }  // namespace
 
 void generate_record(const RecordElement& element,
-                     const sus::Slice<const NamespaceElement*>& namespaces,
+                     sus::Slice<const NamespaceElement*> namespaces,
                      sus::Vec<const RecordElement*> type_ancestors,
                      const Options& options) noexcept {
   if (element.hidden()) return;

@@ -36,7 +36,7 @@ using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
 
 std::string namespace_display_name(
     const NamespaceElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors,
+    sus::Slice<const NamespaceElement*> ancestors,
     const Options& options) noexcept {
   std::ostringstream out;
 
@@ -64,7 +64,7 @@ std::string namespace_display_name(
 
 void generate_namespace_overview(
     HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    const sus::Slice<const NamespaceElement*>& ancestors,
+    sus::Slice<const NamespaceElement*> ancestors,
     const Options& options) {
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");

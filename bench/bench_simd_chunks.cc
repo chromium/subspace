@@ -55,7 +55,7 @@ auto common_prefix_unsafe_array_len_pairs(const u8* xs, size_t xslen,
   return result;
 }
 
-auto common_prefix_naive(const sus::Slice<u8>& xs, const sus::Slice<u8>& ys)
+auto common_prefix_naive(sus::Slice<u8> xs, sus::Slice<u8> ys)
     -> usize {
   auto result = 0_usize;
   while (result < xs.len() && result < ys.len()) {
@@ -67,7 +67,7 @@ auto common_prefix_naive(const sus::Slice<u8>& xs, const sus::Slice<u8>& ys)
 
 // This should be about the same as common_prefix_naive, it's just nicer
 // iterating.
-auto common_prefix_zip(const sus::Slice<u8>& xs, const sus::Slice<u8>& ys)
+auto common_prefix_zip(sus::Slice<u8> xs, sus::Slice<u8> ys)
     -> usize {
   auto result = 0_usize;
   for (auto [x, y] : zip(xs.iter(), ys.iter())) {
@@ -78,8 +78,8 @@ auto common_prefix_zip(const sus::Slice<u8>& xs, const sus::Slice<u8>& ys)
 }
 
 // This should be slightly faster than `common_prefix_zip`. It is in Rust.
-auto common_prefix_chunks_exact(const sus::Slice<u8>& xs,
-                                const sus::Slice<u8>& ys) -> usize {
+auto common_prefix_chunks_exact(sus::Slice<u8> xs,
+                                sus::Slice<u8> ys) -> usize {
   constexpr auto chunk_size = 16_usize;
   auto result = 0_usize;
 
@@ -104,8 +104,8 @@ auto common_prefix_chunks_exact(const sus::Slice<u8>& xs,
 }
 
 // This should be significantly faster if SIMD auto vectorization kicks in.
-auto common_prefix_no_shortcircuit(const sus::Slice<u8>& xs,
-                                   const sus::Slice<u8>& ys) -> usize {
+auto common_prefix_no_shortcircuit(sus::Slice<u8> xs,
+                                   sus::Slice<u8> ys) -> usize {
   constexpr auto chunk_size = 16_usize;
   auto result = 0_usize;
   for (auto [xs_chunk, ys_chunk] :
@@ -128,8 +128,8 @@ auto common_prefix_no_shortcircuit(const sus::Slice<u8>& xs,
   return result;
 }
 
-auto common_prefix_take_while(const sus::Slice<u8>& xs,
-                              const sus::Slice<u8>& ys) -> usize {
+auto common_prefix_take_while(sus::Slice<u8> xs,
+                              sus::Slice<u8> ys) -> usize {
   constexpr auto chunk_size = 16_usize;
   auto off = zip(xs.chunks_exact(chunk_size), ys.chunks_exact(chunk_size))
                  .take_while([](const auto& chunks) {
