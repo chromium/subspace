@@ -87,8 +87,6 @@ struct VisitorAction : public clang::ASTFrontendAction {
   explicit VisitorAction(VisitCx& cx, Database& docs_db, LineStats& line_stats)
       : cx(cx), docs_db(docs_db), line_stats(line_stats) {}
 
-  bool PrepareToExecuteAction(clang::CompilerInstance& inst) noexcept final;
-
   /// Returns a Visitor.
   std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
       clang::CompilerInstance& compiler, llvm::StringRef file) noexcept final;

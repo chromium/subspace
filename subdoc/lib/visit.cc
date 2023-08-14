@@ -600,13 +600,6 @@ std::unique_ptr<clang::FrontendAction> VisitorFactory::create() noexcept {
   return std::make_unique<VisitorAction>(cx, docs_db, line_stats);
 }
 
-bool VisitorAction::PrepareToExecuteAction(
-    clang::CompilerInstance& inst) noexcept {
-  // Speed things up by skipping things we're not looking at.
-  inst.getFrontendOpts().SkipFunctionBodies = true;
-  return true;
-}
-
 std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
     clang::CompilerInstance&, llvm::StringRef file) noexcept {
   if (cx.options.show_progress) {
