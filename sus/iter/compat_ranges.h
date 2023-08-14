@@ -172,35 +172,12 @@ class IteratorRange {
 
   friend class __private::RangeBegin<IteratorRange, Item>;
 
-  static constexpr auto with(Iter&& it) noexcept
-    requires requires {
-      typename Iter::Item;
-      requires sus::iter::Iterator<Iter, typename Iter::Item>;
-    }
-  {
-    return IteratorRange(::sus::move(it));
-  }
+  constexpr IteratorRange(Iter&& it) noexcept : it_(::sus::move(it)) { step(); }
 
-  constexpr IteratorRange(Iter&& it) noexcept : it_(::sus::move(it)) {
-    item_ = it_.next();
-  }
+  constexpr void step() noexcept { item_ = it_.next(); }
 
   Iter it_;
   Option<Item> item_;
 };
 
 }  // namespace sus::iter
-
-namespace std {
-
-template <class IteratorRange, class Item>
-struct iterator_traits<
-    typename ::sus::iter::__private::RangeBegin<IteratorRange, Item>> {
-  using difference_type = std::ptrdiff_t;
-  using value_type = Item;
-  using reference = Item&;
-  using iterator_category = std::input_iterator_tag;
-  using iterator_concept = std::input_iterator_tag;
-};
-
-}  // namespace std

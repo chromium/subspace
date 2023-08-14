@@ -42,11 +42,15 @@ namespace sus {
 /// * Providing fallible APIs for element access that hook into the rich,
 ///   composable APIs of `Option` in order to clearly and easily write error
 ///   handling instead of Undefined Behaviour or crashes.
-/// * Const correctness. A collection that owns its values (this excludes view
-///   types like `Slice`) that is const does not give mutable access to the
-///   objects within it. This means a const API provides stronger guarantees,
-///   and the need for programmer global knowledge of a codebase can be
-///   reduced.
+/// * No accidental copies. Subspace collections (that are not view types) do
+///   not satisfy the `sus::mem::Copy` concept, and instead must be explicitly
+///   cloned via `sus::clone(x)` to make a copy. This allows them to be passed
+///   by value without introducing a copy at a caller that was expecting it to
+///   be received by reference.
+/// * Catch iterator invalidation. By default Subspace containers are built with
+///   runtime protection against iterator invalidation. Iterators produced by
+///   collections are tracked and if the collection is mutated while an iterator
+///   still exists, the collection will panic and terminate the program.
 ///
 /// Subspace's collections can be grouped into four major categories:
 /// * Sequences: `Vec`, `Array` (TODO: VecDeque, LinkedList,
@@ -209,6 +213,24 @@ namespace sus {
 /// “pipe” the sequence into any collection if desired. Otherwise, the sequence
 /// can be looped over with a for loop. The iterator can also be discarded after
 /// partial use, preventing the computation of the unused items.
+///
+/// # Ranges
+/// The collections in the Subspace C++ library can be used with standard ranges
+/// by calling the [`range()`](sus::iter::IteratorBase::range) adaptor on any
+/// Subspace iterator. It will return an object that satisfies
+/// [`std::ranges::input_range`](https://en.cppreference.com/w/cpp/ranges/input_range)
+// and
+/// [`std::ranges::viewable_range`](https://en.cppreference.com/w/cpp/ranges/viewable_range),
+/// such as with `vec.iter().range()`.
+///
+/// Iterators over value types or mutable references when converted by `range()`
+/// will also satisfy
+/// [`std::ranges::output_range`](https://en.cppreference.com/w/cpp/ranges/input_range),
+/// such as with `vec.iter_mut().range()`.
+///
+/// Conversely, standard ranges, such as the types in the standard containers
+/// library, can be used to construct a Subspace iterator through
+/// [`sus::iter::from_range()`](sus::iter::from_range).
 ///
 /// # Familiarity with Rust APIs.
 /// These collections were inspired by porting Rust

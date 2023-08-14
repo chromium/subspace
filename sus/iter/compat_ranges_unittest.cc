@@ -28,13 +28,27 @@
 namespace {
 
 using CompatRange = sus::iter::IteratorRange<sus::iter::Empty<i32>>;
-
 static_assert(std::ranges::range<CompatRange>);
 static_assert(std::ranges::viewable_range<CompatRange>);
 static_assert(std::ranges::input_range<CompatRange>);
+static_assert(std::ranges::output_range<CompatRange, i32>);
+
+using CompatRangeConstRef =
+    sus::iter::IteratorRange<sus::iter::Empty<const i32&>>;
+static_assert(std::ranges::range<CompatRangeConstRef>);
+static_assert(std::ranges::viewable_range<CompatRangeConstRef>);
+static_assert(std::ranges::input_range<CompatRangeConstRef>);
+static_assert(!std::ranges::output_range<CompatRangeConstRef, i32>);
+
+using CompatRangeMutRef = sus::iter::IteratorRange<sus::iter::Empty<i32&>>;
+static_assert(std::ranges::range<CompatRangeMutRef>);
+static_assert(std::ranges::viewable_range<CompatRangeMutRef>);
+static_assert(std::ranges::input_range<CompatRangeMutRef>);
+static_assert(std::ranges::output_range<CompatRangeMutRef, i32>);
 
 TEST(CompatRanges, ViewableRange) {
   sus::Vec<i32> vec = sus::vec(1, 2, 3, 4, 5, 6);
+
   // all() requires a `std::ranges::viewable_range`.
   auto view = std::ranges::views::all(sus::move(vec).into_iter().range());
   i32 e = 1;
@@ -45,21 +59,69 @@ TEST(CompatRanges, ViewableRange) {
   EXPECT_EQ(e, 7);
 }
 
-TEST(CompatRanges, InputRange) {
+TEST(CompatRanges, ViewableRangeConstRefs) {
   sus::Vec<i32> vec = sus::vec(1, 2, 3, 4, 5, 6);
-  // filter() requires a `std::ranges::input_range`.
-  auto filter = std::ranges::views::filter(sus::move(vec).into_iter().range(),
-                                           [](const i32& i) { return i > 3; });
-  i32 e = 4;
-  for (i32 i : filter) {
+
+  // all() requires a `std::ranges::viewable_range`.
+  auto view = std::ranges::views::all(vec.iter().range());
+  i32 e = 1;
+  for (const i32& i : view) {
     EXPECT_EQ(e, i);
     e += 1;
   }
   EXPECT_EQ(e, 7);
+}
+
+TEST(CompatRanges, ViewableRangeMutRefs) {
+  sus::Vec<i32> vec = sus::vec(1, 2, 3, 4, 5, 6);
+
+  // all() requires a `std::ranges::viewable_range`.
+  auto view = std::ranges::views::all(vec.iter_mut().range());
+  for (i32& i : view) {
+    i += 1;
+  }
+
+  EXPECT_EQ(vec, sus::vec(2, 3, 4, 5, 6, 7));
+}
+
+TEST(CompatRanges, InputRange) {
+  sus::Vec<i32> vec = sus::vec(1, 2, 3, 4, 5, 6);
+
+  // max() requires a `std::ranges::input_range`.
+  auto max = std::ranges::max(sus::move(vec).into_iter().range());
+  EXPECT_EQ(max, 6);
 
   // max() requires a `std::ranges::input_range`.
   static_assert(std::ranges::max(
                     sus::Vec<i32>::with(1, 2, 4, 3).into_iter().range()) == 4);
+}
+
+TEST(CompatRanges, InputRangeConstRefs) {
+  sus::Vec<i32> vec = sus::vec(1, 2, 3, 6, 4, 5);
+
+  // max() requires a `std::ranges::input_range`.
+  auto max = std::ranges::max(vec.iter().range());
+  EXPECT_EQ(max, 6);
+
+  // max() requires a `std::ranges::input_range`.
+  static_assert([]() {
+    auto vec = sus::Vec<i32>::with(1, 2, 4, 3);
+    return std::ranges::max(vec.iter().range());
+  }() == 4);
+}
+
+TEST(CompatRanges, InputRangeMutRefs) {
+  sus::Vec<i32> vec = sus::vec(1, 2, 3, 6, 4, 5);
+
+  // max() requires a `std::ranges::input_range`.
+  auto max = std::ranges::max(vec.iter_mut().range());
+  EXPECT_EQ(max, 6);
+
+  // max() requires a `std::ranges::input_range`.
+  static_assert([]() {
+    auto vec = sus::Vec<i32>::with(1, 2, 4, 3);
+    return std::ranges::max(vec.iter_mut().range());
+  }() == 4);
 }
 
 TEST(CompatRanges, FromRange) {

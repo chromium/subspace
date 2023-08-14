@@ -1682,7 +1682,7 @@ constexpr P IteratorBase<Iter, Item>::product() && noexcept {
 
 template <class Iter, class Item>
 constexpr IteratorRange<Iter> IteratorBase<Iter, Item>::range() && noexcept {
-  return IteratorRange<Iter>::with(static_cast<Iter&&>(*this));
+  return IteratorRange<Iter>(static_cast<Iter&&>(*this));
 }
 
 template <class Iter, class Item>

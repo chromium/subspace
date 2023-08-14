@@ -14,10 +14,14 @@
 
 #pragma once
 
+#include <iterator>
+
 #include "sus/iter/__private/iterator_end.h"
+#include "sus/mem/addressof.h"
 
 namespace sus::iter::__private {
 
+/// The std iterator type that works with IteratorRange, which is a std range.
 template <class IteratorRange, class Item>
 class RangeBegin {
  public:
@@ -30,12 +34,16 @@ class RangeBegin {
   constexpr Item& operator*() const& noexcept { return *range_->item_; }
 
   constexpr RangeBegin& operator++() & noexcept {
-    range_->item_ = range_->it_.next();
+    range_->step();
     return *this;
   }
-  constexpr void operator++(int) & noexcept { range_->item_ = range_->it_.next(); }
+  constexpr RangeBegin& operator++(int) & noexcept {
+    range_->step();
+    return *this;
+  }
 
-  constexpr bool operator==(::sus::iter::__private::IteratorEnd) const noexcept {
+  constexpr bool operator==(
+      ::sus::iter::__private::IteratorEnd) const noexcept {
     return range_->item_.is_none();
   }
 
@@ -44,3 +52,25 @@ class RangeBegin {
 };
 
 }  // namespace sus::iter::__private
+
+namespace std {
+
+template <class IteratorRange, class Item>
+struct iterator_traits<
+    typename ::sus::iter::__private::RangeBegin<IteratorRange, Item&>> {
+  using difference_type = std::ptrdiff_t;
+  using value_type = std::remove_cv_t<Item>;
+  using reference = Item&;
+  using iterator_concept = std::input_iterator_tag;
+};
+
+template <class IteratorRange, class Item>
+struct iterator_traits<
+    typename ::sus::iter::__private::RangeBegin<IteratorRange, Item>> {
+  using difference_type = std::ptrdiff_t;
+  using value_type = std::remove_cv_t<Item>;
+  using reference = Item&;
+  using iterator_concept = std::input_iterator_tag;
+};
+
+}  // namespace std
