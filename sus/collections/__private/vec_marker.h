@@ -30,6 +30,14 @@ namespace sus::collections::__private {
 
 template <class... Ts>
 struct VecEmptyMarker {
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  template <class U>
+  inline constexpr operator Vec<U>() const& noexcept {
+    return Vec<U>();
+  }
+
   template <class U>
   inline constexpr operator Vec<U>() && noexcept {
     return Vec<U>();
@@ -49,6 +57,27 @@ struct VecMarker {
       : values(::sus::move(values)){});
 
   ::sus::tuple_type::Tuple<Ts&&...> values;
+
+  // If the Vec's type can construct from a const ref `values` (roughly, are
+  // copy-constructible, but may change types), then the marker can do the same.
+  //
+  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
+  // a const&, since marker types should normally be converted quickly to the
+  // concrete type.
+  template <class U>
+    requires((... && std::constructible_from<U, const Ts&>))
+  inline constexpr operator Vec<U>() const& noexcept {
+    auto v = Vec<U>::with_capacity(sizeof...(Ts));
+
+    auto push_elements =
+        [&, this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
+          // This is a fold expression over the operator `,`.
+          (v.push(values.template at<Is>()), ...);
+        };
+    push_elements(std::make_integer_sequence<size_t, sizeof...(Ts)>());
+
+    return v;
+  }
 
   template <class U>
     requires((... && std::constructible_from<U, Ts &&>))
