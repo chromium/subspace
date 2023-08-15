@@ -1025,11 +1025,15 @@ TEST(Vec, Eq) {
   static_assert(sus::ops::Eq<Vec<int>, SliceMut<int>>);
   static_assert(!sus::ops::Eq<Vec<int>, SliceMut<NotEq>>);
 
-  auto a = sus::vec(1, 2, 3, 4).construct<i32>();
-  auto b = sus::vec(1, 2, 3, 4).construct<i32>();
+  auto a = sus::Vec<i32>(1, 2, 3, 4);
+  auto b = sus::Vec<i32>(1, 2, 3, 4);
   EXPECT_EQ(a, b);
+  EXPECT_EQ(a, b.as_slice());
+  EXPECT_EQ(a, b.as_mut_slice());
   b[3_usize] += 1;
   EXPECT_NE(a, b);
+  EXPECT_NE(a, b.as_slice());
+  EXPECT_NE(a, b.as_mut_slice());
 }
 
 TEST(Vec, Extend) {
