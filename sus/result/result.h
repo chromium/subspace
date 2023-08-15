@@ -77,9 +77,6 @@ enum class State : bool {
 using State::Err;
 using State::Ok;
 
-/// A marker type for constructing Result with an Ok(void) value.
-struct OkVoid {};
-
 template <class T, class E>
 class [[nodiscard]] Result final {
   static_assert(!std::is_reference_v<E>,
@@ -113,7 +110,7 @@ class [[nodiscard]] Result final {
   /// To force accepting a const reference anyway in cases where a type can
   /// convert to a reference without constructing a temporary, use an unsafe
   /// `static_cast<const T&>()` at the callsite (and document it =)).
-  /// #[doc.overloads=result.ctor.ok]
+  /// #[doc.overloads=ctor.ok]
   explicit constexpr Result(OkVoid) noexcept
     requires(std::is_void_v<T>)
       : Result(WITH_OK) {}
