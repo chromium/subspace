@@ -32,14 +32,34 @@ namespace subdoc::gen {
 
 namespace {
 
-using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
+using SortedFunctionByName = sus::Tuple<std::string_view, u32, u32, FunctionId>;
 using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
 
-void generate_record_overview(
-    HtmlWriter::OpenDiv& record_div, const RecordElement& element,
-    sus::Slice<const NamespaceElement*> namespaces,
-    sus::Slice<const RecordElement*> type_ancestors,
-    const Options& options) noexcept {
+/// Compares two `SortedFunctionByName` for ordering. It compares by ignoring
+/// the `FunctionId` (which is not `Ord`).
+constexpr inline std::weak_ordering cmp_functions_by_name(
+    const SortedFunctionByName& a, const SortedFunctionByName& b) noexcept {
+  auto ord0 = a.at<0>() <=> b.at<0>();
+  if (ord0 != 0) return ord0;
+  auto ord1 = a.at<1>() <=> b.at<1>();
+  if (ord1 != 0) return ord1;
+  return a.at<2>() <=> b.at<2>();
+}
+
+/// Compares two `SortedFunctionByName` for ordering. It compares by ignoring
+/// the `UniqueSymbol` (which is not `Ord`).
+constexpr inline std::weak_ordering cmp_fields_by_name(
+    const SortedFieldByName& a, const SortedFieldByName& b) noexcept {
+  auto ord0 = a.at<0>() <=> b.at<0>();
+  if (ord0 != 0) return ord0;
+  return a.at<1>() <=> b.at<1>();
+}
+
+void generate_record_overview(HtmlWriter::OpenDiv& record_div,
+                              const RecordElement& element,
+                              sus::Slice<const NamespaceElement*> namespaces,
+                              sus::Slice<const RecordElement*> type_ancestors,
+                              const Options& options) noexcept {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -199,9 +219,9 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
 }
 
 enum MethodType {
-  SpecialMethods,
   StaticMethods,
   NonStaticMethods,
+  Conversions,
   NonStaticOperators,
 };
 
@@ -214,7 +234,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
   section_div.add_class("section");
   section_div.add_class("methods");
   switch (type) {
-    case SpecialMethods: section_div.add_class("special"); break;
+    case Conversions: section_div.add_class("conversion"); break;
     case StaticMethods: section_div.add_class("static"); break;
     case NonStaticMethods: section_div.add_class("nonstatic"); break;
     case NonStaticOperators: section_div.add_class("nonstatic"); break;
@@ -224,13 +244,11 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
     auto methods_header_div = section_div.open_div();
     methods_header_div.add_class("section-header");
     switch (type) {
-      case SpecialMethods:
-        methods_header_div.write_text("Special Methods");
-        break;
       case StaticMethods:
         methods_header_div.write_text("Static Methods");
         break;
       case NonStaticMethods: methods_header_div.write_text("Methods"); break;
+      case Conversions: methods_header_div.write_text("Conversions"); break;
       case NonStaticOperators:
         methods_header_div.write_text("Operators");
         break;
@@ -242,7 +260,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
 
     u32 overload_set;
     std::string_view prev_name;
-    for (auto&& [name, sort_key, function_id] : methods) {
+    for (auto&& [name, sort_key1, sort_key2, function_id] : methods) {
       if (name == prev_name)
         overload_set += 1u;
       else
@@ -250,16 +268,14 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
       prev_name = name;
       const FunctionElement& func = [&]() -> decltype(auto) {
         switch (type) {
-          case SpecialMethods: {
+          case StaticMethods: {
             if (element.ctors.count(function_id))
               return element.ctors.at(function_id);
-            if (element.dtors.count(function_id))
-              return element.dtors.at(function_id);
-            return element.conversions.at(function_id);
+            return element.methods.at(function_id);
           }
-          case StaticMethods: return element.methods.at(function_id);
           case NonStaticMethods: return element.methods.at(function_id);
           case NonStaticOperators: return element.methods.at(function_id);
+          case Conversions: return element.conversions.at(function_id);
         }
         sus::unreachable();
       }();
@@ -330,85 +346,56 @@ void generate_record(const RecordElement& element,
         break;
     }
   }
-  sorted_static_fields.sort_unstable_by(
-      [](const SortedFieldByName& a, const SortedFieldByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
-  sorted_fields.sort_unstable_by(
-      [](const SortedFieldByName& a, const SortedFieldByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
+  sorted_static_fields.sort_unstable_by(cmp_fields_by_name);
+  sorted_fields.sort_unstable_by(cmp_fields_by_name);
 
   generate_record_fields(record_div, element, true,
                          sorted_static_fields.as_slice());
   generate_record_fields(record_div, element, false, sorted_fields.as_slice());
 
-  sus::Vec<SortedFunctionByName> sorted_special_methods;
   sus::Vec<SortedFunctionByName> sorted_static_methods;
   sus::Vec<SortedFunctionByName> sorted_methods;
+  sus::Vec<SortedFunctionByName> sorted_conversions;
   sus::Vec<SortedFunctionByName> sorted_operators;
-  for (const auto& [method_id, method_element] :
-       sus::iter::from_range(element.ctors)
-           .chain(sus::iter::from_range(element.dtors))
-           .chain(sus::iter::from_range(element.conversions))) {
+  for (const auto& [method_id, method_element] : element.ctors) {
     if (method_element.hidden()) continue;
 
-    sorted_special_methods.push(
-        sus::tuple(method_element.name, method_element.sort_key, method_id));
+    sorted_static_methods.push(sus::tuple(method_element.name, 0u,
+                                          method_element.sort_key, method_id));
   }
   for (const auto& [method_id, method_element] : element.methods) {
     if (method_element.hidden()) continue;
 
     if (method_id.is_static) {
-      sorted_static_methods.push(
-          sus::tuple(method_element.name, method_element.sort_key, method_id));
+      sorted_static_methods.push(sus::tuple(method_element.name,
+                                            1u,  // After ctors.
+                                            method_element.sort_key,
+                                            method_id));
     } else if (method_element.is_operator) {
-      sorted_operators.push(
-          sus::tuple(method_element.name, method_element.sort_key, method_id));
+      sorted_operators.push(sus::tuple(method_element.name, 0u,
+                                       method_element.sort_key, method_id));
     } else {
-      sorted_methods.push(
-          sus::tuple(method_element.name, method_element.sort_key, method_id));
+      sorted_methods.push(sus::tuple(method_element.name, 0u,
+                                     method_element.sort_key, method_id));
     }
   }
-  sorted_special_methods.sort_unstable_by(
-      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-        bool a_dtor = a.at<0>().starts_with("~");
-        bool b_dtor = b.at<0>().starts_with("~");
-        auto dtor_ord = a_dtor <=> b_dtor;
-        if (dtor_ord != 0) return dtor_ord;
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
-  sorted_static_methods.sort_unstable_by(
-      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
-  sorted_methods.sort_unstable_by(
-      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
-  sorted_operators.sort_unstable_by(
-      [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-        auto ord = a.at<0>() <=> b.at<0>();
-        if (ord != 0) return ord;
-        return a.at<1>() <=> b.at<1>();
-      });
+  for (const auto& [method_id, method_element] : element.conversions) {
+    if (method_element.hidden()) continue;
 
-  generate_record_methods(record_div, element, SpecialMethods,
-                          sorted_special_methods.as_slice());
+    sorted_conversions.push(sus::tuple(method_element.name, 0u,
+                                       method_element.sort_key, method_id));
+  }
+  sorted_static_methods.sort_unstable_by(cmp_functions_by_name);
+  sorted_methods.sort_unstable_by(cmp_functions_by_name);
+  sorted_conversions.sort_unstable_by(cmp_functions_by_name);
+  sorted_operators.sort_unstable_by(cmp_functions_by_name);
+
   generate_record_methods(record_div, element, StaticMethods,
                           sorted_static_methods.as_slice());
   generate_record_methods(record_div, element, NonStaticMethods,
                           sorted_methods.as_slice());
+  generate_record_methods(record_div, element, Conversions,
+                          sorted_conversions.as_slice());
   generate_record_methods(record_div, element, NonStaticOperators,
                           sorted_operators.as_slice());
 
