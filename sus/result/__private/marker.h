@@ -20,6 +20,7 @@
 #include "sus/lib/__private/forward_decl.h"
 #include "sus/mem/forward.h"
 #include "sus/mem/move.h"
+#include "sus/result/ok_void.h"
 
 namespace sus::result::__private {
 
