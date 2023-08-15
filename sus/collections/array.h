@@ -79,39 +79,47 @@ class Array final {
                 "const applies transitively.");
 
  public:
+  /// Default constructor of `Array` which default-constructs each object `T` in
+  /// the array.
+  ///
+  /// This satisifies `sus::construct::Default<Array<T, N>>`, but requires hat
+  /// `sus::construct::Default<T>` is true.
+  /// #[doc.overloads=ctor.default]
   constexpr Array() noexcept
     requires(::sus::construct::Default<T>)
-      : Array(kWithDefault, std::make_index_sequence<N>()) {}
+      : Array(WITH_DEFAULT, std::make_index_sequence<N>()) {}
 
-  constexpr static Array with_initializer(
-      ::sus::fn::FnMut<T()> auto&& f) noexcept {
-    if constexpr (N == 0)
-      return Array();
-    else
-      return Array(kWithInitializer, f, std::make_index_sequence<N>());
-  }
+  /// Constructs an `Array` with `N` elements from the `N` arguments given to
+  /// the constructor.
+  /// #[doc.overloads=ctor.values]
+  template <std::convertible_to<T>... Ts>
+    requires(sizeof...(Ts) == N &&  //
+             N > 0u)
+  constexpr Array(Ts&&... ts) noexcept
+      : storage_(::sus::iter::IterRefCounter::for_owner(),
+                 {::sus::forward<Ts>(ts)...}) {}
 
-  // Uses convertible_to<T> to accept `sus::into()` values. But doesn't use
-  // sus::construct::Into<T> to avoid implicit conversions.
+  /// Constructs an `Array` with `N` elements from a single argument, repeatedly
+  /// using it to construct each element. The given argument must be `Copy` in
+  /// order to do this.
+  ///
+  /// To construct an Array from a single value that is `Clone` but not `Copy`,
+  /// use `with_initializer([&x]() -> T { return sus::clone(x); })`;
   template <std::convertible_to<T> U>
     requires(::sus::mem::Copy<T>)
-  constexpr static Array with_value(U&& t) noexcept {
-    if constexpr (N == 0)
-      return Array();
-    else
-      return Array(kWithValue, t, std::make_index_sequence<N>());
+  constexpr static Array with_value(const U& t) noexcept {
+    return [&t]<size_t... Is>(std::index_sequence<Is...>) {
+      return Array(((void)Is, t)...);
+    }(std::make_index_sequence<N>());
   }
 
-  // Uses convertible_to<T> instead of same_as<T> to accept `sus::into()`
-  // values. But doesn't use sus::construct::Into<T> to avoid implicit
-  // conversions.
-  template <std::convertible_to<T>... Ts>
-    requires(sizeof...(Ts) == N)
-  constexpr static Array with(Ts&&... ts) noexcept {
-    if constexpr (N == 0)
-      return Array();
-    else
-      return Array(kWithValues, ::sus::forward<Ts>(ts)...);
+  /// Constructs an `Array` with `N` elements, where each element is constructed
+  /// from the given closure.
+  constexpr static Array with_initializer(
+      ::sus::fn::FnMut<T()> auto f) noexcept {
+    return [&f]<size_t... Is>(std::index_sequence<Is...>) {
+      return Array(((void)Is, ::sus::fn::call_mut(f))...);
+    }(std::make_index_sequence<N>());
   }
 
   Array(Array&&)
@@ -123,7 +131,7 @@ class Array final {
 
   constexpr Array(Array&& o) noexcept
     requires(N > 0 && ::sus::mem::Move<T>)
-      : Array(kWithMoveFromPointer, o.storage_.data_,
+      : Array(WITH_MOVE_FROM_POINTER, o.storage_.data_,
               o.storage_.iter_refs_.take_for_owner(),
               std::make_index_sequence<N>()) {
     ::sus::check(!has_iterators());
@@ -153,7 +161,7 @@ class Array final {
     if constexpr (N == 0) {
       return Array();
     } else {
-      return Array(kWithCloneFromPointer, storage_.data_,
+      return Array(WITH_CLONE_FROM_POINTER, storage_.data_,
                    std::make_index_sequence<N>());
     }
   }
@@ -343,7 +351,7 @@ class Array final {
   // constexpr operator SliceMut<T>&&() && { return ::sus::move(slice_mut_); }
 
  private:
-  enum WithDefault { kWithDefault };
+  enum WithDefault { WITH_DEFAULT };
   template <size_t... Is>
     requires(N == 0)
   constexpr Array(WithDefault, std::index_sequence<Is...>) noexcept {}
@@ -353,36 +361,14 @@ class Array final {
       : storage_(::sus::iter::IterRefCounter::for_owner(),
                  {((void)Is, T())...}) {}
 
-  enum WithInitializer { kWithInitializer };
-  template <size_t... Is>
-    requires(N > 0)
-  constexpr Array(WithInitializer, ::sus::fn::FnMut<T()> auto&& f,
-                  std::index_sequence<Is...>) noexcept
-      : storage_(::sus::iter::IterRefCounter::for_owner(),
-                 {((void)Is, ::sus::fn::call_mut(f))...}) {}
-
-  enum WithValue { kWithValue };
-  template <size_t... Is>
-    requires(N > 0)
-  constexpr Array(WithValue, const T& t, std::index_sequence<Is...>) noexcept
-      : storage_(::sus::iter::IterRefCounter::for_owner(), {((void)Is, t)...}) {
-  }
-
-  enum WithValues { kWithValues };
-  template <class... Ts>
-    requires(N > 0)
-  constexpr Array(WithValues, Ts&&... ts) noexcept
-      : storage_(::sus::iter::IterRefCounter::for_owner(),
-                 {::sus::forward<Ts>(ts)...}) {}
-
-  enum WithMoveFromPointer { kWithMoveFromPointer };
+  enum WithMoveFromPointer { WITH_MOVE_FROM_POINTER };
   template <size_t... Is>
     requires(N > 0)
   constexpr Array(WithMoveFromPointer, T* t, ::sus::iter::IterRefCounter refs,
                   std::index_sequence<Is...>) noexcept
       : storage_(::sus::move(refs), {::sus::move(*(t + Is))...}) {}
 
-  enum WithCloneFromPointer { kWithCloneFromPointer };
+  enum WithCloneFromPointer { WITH_CLONE_FROM_POINTER };
   template <size_t... Is>
     requires(N > 0)
   constexpr Array(WithCloneFromPointer, const T* t,
@@ -493,8 +479,8 @@ auto get(Array<T, N>&& a) noexcept {
 
 /// Used to construct an Array<T, N> with the parameters as its values.
 ///
-/// Calling array() produces a hint to make an Array<T, N> but does not actually
-/// construct Array<T, N>, as the type `T` is not known here.
+/// Calling array() produces a hint to make an Array<T, N> but does not
+/// actually construct Array<T, N>, as the type `T` is not known here.
 //
 // Note: A marker type is used instead of explicitly constructing an array
 // immediately in order to avoid redundantly having to specify `T` when using

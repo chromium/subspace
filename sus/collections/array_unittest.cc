@@ -136,13 +136,13 @@ TEST(Array, WithValue) {
 
 TEST(Array, WithValues) {
   {
-    auto a = Array<usize, 5>::with(3u, 4u, 5u, 6u, 7u);
+    auto a = Array<usize, 5>(3u, 4u, 5u, 6u, 7u);
     for (auto i = 0_usize; i < 5_usize; i += 1_usize) {
       EXPECT_EQ(a[i], 3_usize + i);
     }
   }
   {
-    auto a = Array<u8, 5>::with(3_u8, 4_u8, 5_u8, 6_u8, 7_u8);
+    auto a = Array<u8, 5>(3_u8, 4_u8, 5_u8, 6_u8, 7_u8);
     for (auto i = 0_u8; i < 5_u8; i += 1_u8) {
       EXPECT_EQ(a[usize::from(i)], 3_u8 + i);
     }
@@ -440,7 +440,7 @@ TEST(Array, IntoIter) {
 }
 
 TEST(Array, IntoIterDoubleEnded) {
-  auto a = Array<usize, 3>::with(1u, 2u, 3u);
+  auto a = Array<usize, 3>(1u, 2u, 3u);
 
   auto it = sus::move(a).into_iter();
   EXPECT_EQ(it.next_back(), sus::some(3_usize).construct());
@@ -459,15 +459,15 @@ TEST(Array, ImplicitIter) {
 }
 
 TEST(Array, Map) {
-  auto a = Array<usize, 3>::with(3u, 4u, 5u);
+  auto a = Array<usize, 3>(3u, 4u, 5u);
   auto a2 = sus::move(a).map(
       +[](usize i) { return u32::try_from(i + 1_usize).unwrap(); });
-  EXPECT_EQ(a2, (Array<u32, 3>::with(4_u32, 5_u32, 6_u32)));
+  EXPECT_EQ(a2, (Array<u32, 3>(4_u32, 5_u32, 6_u32)));
 }
 
 TEST(Array, Index) {
-  const auto ac = Array<i32, 3>::with(1, 2, 3);
-  auto am = Array<i32, 3>::with(1, 2, 3);
+  const auto ac = Array<i32, 3>(1, 2, 3);
+  auto am = Array<i32, 3>(1, 2, 3);
 
   EXPECT_EQ(ac[0_usize], 1_i32);
   EXPECT_EQ(ac[2_usize], 3_i32);
@@ -476,8 +476,8 @@ TEST(Array, Index) {
 }
 
 TEST(ArrayDeathTest, Index) {
-  const auto ac = Array<i32, 3>::with(1, 2, 3);
-  auto am = Array<i32, 3>::with(1, 2, 3);
+  const auto ac = Array<i32, 3>(1, 2, 3);
+  auto am = Array<i32, 3>(1, 2, 3);
 
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(ac[3_usize], "");
@@ -527,7 +527,7 @@ TEST(Array, Clone) {
   }
 
   {
-    const auto s = Array<Copy, 1>::with(Copy());
+    const auto s = Array<Copy, 1>(Copy());
     i32 i = s[0u].i;
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Array<Copy, 1>>);
@@ -535,9 +535,9 @@ TEST(Array, Clone) {
   }
 
   {
-    auto s = Array<Copy, 1>::with(Copy());
+    auto s = Array<Copy, 1>(Copy());
     s[0u].i = 1000_i32;
-    auto s2 = Array<Copy, 1>::with(Copy());
+    auto s2 = Array<Copy, 1>(Copy());
     ::sus::clone_into(s2, s);
     EXPECT_EQ(s2[0u].i, 1000);
   }
@@ -571,7 +571,7 @@ TEST(Array, Clone) {
   static_assert(::sus::mem::Move<Array<Clone, 1>>);
 
   {
-    const auto s = Array<Clone, 1>::with(Clone());
+    const auto s = Array<Clone, 1>(Clone());
     i32 i = s[0u].i;
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Array<Clone, 1>>);
@@ -579,16 +579,16 @@ TEST(Array, Clone) {
   }
 
   {
-    auto s = Array<Clone, 1>::with(Clone());
+    auto s = Array<Clone, 1>(Clone());
     s[0u].i = 1000_i32;
-    auto s2 = Array<Clone, 1>::with(Clone());
+    auto s2 = Array<Clone, 1>(Clone());
     ::sus::clone_into(s2, s);
     EXPECT_EQ(s2[0u].i.primitive_value, (1200_i32).primitive_value);
   }
 }
 
 TEST(Array, StructuredBinding) {
-  auto a3 = Array<i32, 3>::with(1, 2, 3);
+  auto a3 = Array<i32, 3>(1, 2, 3);
   auto& [a, b, c] = a3;
   static_assert(std::same_as<decltype(a), i32>);
   static_assert(std::same_as<decltype(b), i32>);
@@ -597,23 +597,23 @@ TEST(Array, StructuredBinding) {
   a3.get_mut(0u).unwrap() += 1;
   a3.get_mut(1u).unwrap() += 2;
   a3.get_mut(2u).unwrap() += 3;
-  EXPECT_EQ(a3, (Array<i32, 3>::with(2, 4, 6)));
+  EXPECT_EQ(a3, (Array<i32, 3>(2, 4, 6)));
 
   const auto& [d, e, f] = a3;
   static_assert(std::same_as<decltype(d), const i32>);
   static_assert(std::same_as<decltype(e), const i32>);
   static_assert(std::same_as<decltype(f), const i32>);
-  EXPECT_EQ((Array<i32, 3>::with(d, e, f)), (Array<i32, 3>::with(2, 4, 6)));
+  EXPECT_EQ((Array<i32, 3>(d, e, f)), (Array<i32, 3>(2, 4, 6)));
 
   auto [g, h, i] = sus::move(a3);
   static_assert(std::same_as<decltype(g), i32>);
   static_assert(std::same_as<decltype(h), i32>);
   static_assert(std::same_as<decltype(i), i32>);
-  EXPECT_EQ((Array<i32, 3>::with(g, h, i)), (Array<i32, 3>::with(2, 4, 6)));
+  EXPECT_EQ((Array<i32, 3>(g, h, i)), (Array<i32, 3>(2, 4, 6)));
 }
 
 TEST(Array, fmt) {
-  auto a = Array<i32, 5>::with(1, 2, 3, 4, 5);
+  auto a = Array<i32, 5>(1, 2, 3, 4, 5);
   EXPECT_EQ(fmt::format("{}", a), "[1, 2, 3, 4, 5]");
   EXPECT_EQ(fmt::format("{:02}", a), "[01, 02, 03, 04, 05]");
 
@@ -625,24 +625,24 @@ TEST(Array, fmt) {
   };
   static_assert(!fmt::is_formattable<NoFormat, char>::value);
 
-  auto an = Array<NoFormat, 2>::with(NoFormat(), NoFormat(0xf00d));
+  auto an = Array<NoFormat, 2>(NoFormat(), NoFormat(0xf00d));
   EXPECT_EQ(fmt::format("{}", an), "[f2-3c-ae-16, 0d-f0-00-00]");
 }
 
 TEST(Array, Stream) {
   std::stringstream s;
-  s << Array<i32, 5>::with(1, 2, 3, 4, 5);
+  s << Array<i32, 5>(1, 2, 3, 4, 5);
   EXPECT_EQ(s.str(), "[1, 2, 3, 4, 5]");
 }
 
 TEST(Array, GTest) {
-  EXPECT_EQ(testing::PrintToString(Array<i32, 5>::with(1, 2, 3, 4, 5)),
+  EXPECT_EQ(testing::PrintToString(Array<i32, 5>(1, 2, 3, 4, 5)),
             "[1, 2, 3, 4, 5]");
 }
 
 TEST(ArrayDeathTest, IteratorInvalidation) {
 #if GTEST_HAS_DEATH_TEST
-  auto v = sus::Array<i32, 2>::with(1, 2);
+  auto v = sus::Array<i32, 2>(1, 2);
   auto it = v.iter();
   it.next();
   EXPECT_DEATH(

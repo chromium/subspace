@@ -29,8 +29,8 @@ namespace sus::iter {
 ///
 /// # Example
 /// ```
-/// auto a = sus::Array<i32, 2>::with(2, 3);
-/// auto b = sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f);
+/// auto a = sus::Array<i32, 2>(2, 3);
+/// auto b = sus::Array<f32, 5>(3.f, 4.f, 5.f, 6.f, 7.f);
 /// auto it = sus::iter::zip(::sus::move(a), ::sus::move(b));
 /// sus::check(it.next() == sus::some(sus::tuple(2, 3.f)));
 /// sus::check(it.next() == sus::some(sus::tuple(3, 4.f)));

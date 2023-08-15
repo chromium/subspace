@@ -243,7 +243,7 @@ TEST(Iterator, All) {
     EXPECT_TRUE(it.all([](int) { return false; }));
   }
 
-  static_assert(sus::Array<i32, 3>::with(2, 3, 4).into_iter().all(
+  static_assert(sus::Array<i32, 3>(2, 3, 4).into_iter().all(
                     [](auto i) { return i <= 4; }) == true);
 }
 
@@ -281,7 +281,7 @@ TEST(Iterator, Any) {
     EXPECT_FALSE(it.any([](int) { return false; }));
   }
 
-  static_assert(sus::Array<i32, 3>::with(2, 3, 4).into_iter().any(
+  static_assert(sus::Array<i32, 3>(2, 3, 4).into_iter().any(
                     [](auto i) { return i > 4; }) == false);
 }
 
@@ -435,7 +435,7 @@ TEST(Iterator, Map) {
     }
   }
 
-  static_assert(sus::Array<i32, 3>::with(2, 3, 4)
+  static_assert(sus::Array<i32, 3>(2, 3, 4)
                     .into_iter()
                     .map([](i32 i) { return u32::try_from(i).unwrap() + 1u; })
                     .sum() == 3u + 4u + 5u);
@@ -456,7 +456,7 @@ TEST(Iterator, MapDoubleEnded) {
 
 TEST(Iterator, MapWhile) {
   {
-    auto nums = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto nums = sus::Array<i32, 5>(1, 2, 3, 4, 5);
     auto it = sus::move(nums).into_iter().map_while([](i32&& i) -> Option<u32> {
       if (i != 4)
         return u32::try_from(i).ok();
@@ -474,7 +474,7 @@ TEST(Iterator, MapWhile) {
     EXPECT_EQ(it.next(), sus::none());
   }
 
-  static_assert(sus::Array<i32, 5>::with(2, 3, 4, -1, 5)
+  static_assert(sus::Array<i32, 5>(2, 3, 4, -1, 5)
                     .into_iter()
                     .map_while([](i32 i) { return u32::try_from(i).ok(); })
                     .sum() == 2u + 3u + 4u);
@@ -491,7 +491,7 @@ TEST(Iterator, Collect) {
       ArrayIterator<i32, 5>::with_array(nums));
   EXPECT_EQ(from.sum, 1 + 2 + 3 + 4 + 5);
 
-  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+  static_assert(sus::Array<i32, 5>(1, 2, 3, 4, 5)
                     .into_iter()
                     .collect<CollectSum<i32>>()
                     .sum == 1 + 2 + 3 + 4 + 5);
@@ -508,14 +508,14 @@ TEST(Iterator, CollectVec) {
   EXPECT_EQ(collected[4u], 5);
 
   static_assert(
-      sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().collect_vec() ==
+      sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter().collect_vec() ==
       sus::Vec<i32>(1, 2, 3, 4, 5));
 }
 
 TEST(Iterator, TryCollect) {
   // Option.
   {
-    auto collected = sus::Array<Option<i32>, 3>::with(
+    auto collected = sus::Array<Option<i32>, 3>(
                          ::sus::some(1), ::sus::some(2), ::sus::some(3))
                          .into_iter()
                          .try_collect<Vec<i32>>();
@@ -523,7 +523,7 @@ TEST(Iterator, TryCollect) {
     EXPECT_EQ(collected.is_some(), true);
     EXPECT_EQ(collected.as_value(), sus::Vec<i32>(1, 2, 3));
 
-    auto it = sus::Array<Option<i32>, 3>::with(::sus::some(1), ::sus::none(),
+    auto it = sus::Array<Option<i32>, 3>(::sus::some(1), ::sus::none(),
                                                ::sus::some(3))
                   .into_iter();
     auto up_to_none = it.try_collect<Vec<i32>>();
@@ -532,7 +532,7 @@ TEST(Iterator, TryCollect) {
     EXPECT_EQ(after_none.as_value(), sus::Vec<i32>(3));
 
     NoCopyMove n[3];
-    auto refs = sus::Array<Option<const NoCopyMove&>, 3>::with(
+    auto refs = sus::Array<Option<const NoCopyMove&>, 3>(
                     ::sus::some(n[0]), ::sus::some(n[1]), ::sus::some(n[2]))
                     .into_iter()
                     .try_collect<CollectRefs>();
@@ -544,14 +544,14 @@ TEST(Iterator, TryCollect) {
   // Result.
   enum Error { ERROR };
   {
-    auto collected = sus::Array<Result<i32, Error>, 3>::with(
+    auto collected = sus::Array<Result<i32, Error>, 3>(
                          ::sus::ok(1), ::sus::ok(2), ::sus::ok(3))
                          .into_iter()
                          .try_collect<Vec<i32>>();
     static_assert(std::same_as<decltype(collected), Result<Vec<i32>, Error>>);
     EXPECT_EQ(collected.as_value(), sus::Vec<i32>(1, 2, 3));
 
-    auto it = sus::Array<Result<i32, Error>, 3>::with(
+    auto it = sus::Array<Result<i32, Error>, 3>(
                   ::sus::ok(1), ::sus::err(ERROR), ::sus::ok(3))
                   .into_iter();
     auto up_to_err = it.try_collect<Vec<i32>>();
@@ -561,12 +561,12 @@ TEST(Iterator, TryCollect) {
   }
 
   auto from =
-      sus::iter::try_from_iter<Vec<i32>>(sus::Array<Option<i32>, 3>::with(
+      sus::iter::try_from_iter<Vec<i32>>(sus::Array<Option<i32>, 3>(
           ::sus::some(1), ::sus::some(2), ::sus::some(3)));
   EXPECT_EQ(from.as_value(), sus::Vec<i32>(1, 2, 3));
 
   static_assert(
-      sus::Array<Option<i32>, 3>::with(sus::some(1), sus::some(2), sus::some(3))
+      sus::Array<Option<i32>, 3>(sus::some(1), sus::some(2), sus::some(3))
           .into_iter()
           .try_collect<Vec<i32>>()
           .unwrap()
@@ -709,7 +709,7 @@ TEST(Iterator, ByRef) {
   }
 
   static_assert([]() {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter();
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter();
     return it.by_ref().any([](auto i) { return i >= 4; });
   }() == true);
 }
@@ -897,11 +897,11 @@ TEST(Iterator, StrongCmp) {
     EXPECT_EQ(std::strong_ordering::less, one.iter().strong_cmp(two.iter()));
   }
 
-  static_assert(sus::Array<i32, 2>::with(1, 2).into_iter().strong_cmp(
-                    sus::Array<i32, 2>::with(1, 3)) ==
+  static_assert(sus::Array<i32, 2>(1, 2).into_iter().strong_cmp(
+                    sus::Array<i32, 2>(1, 3)) ==
                 std::strong_ordering::less);
-  static_assert(sus::Array<i32, 3>::with(1, 2, 0).into_iter().strong_cmp(
-                    sus::Array<i32, 2>::with(1, 2)) ==
+  static_assert(sus::Array<i32, 3>(1, 2, 0).into_iter().strong_cmp(
+                    sus::Array<i32, 2>(1, 2)) ==
                 std::strong_ordering::greater);
 }
 
@@ -969,74 +969,74 @@ TEST(Iterator, StrongCmpBy) {
             two.iter(), [](const i32& a, const i64& b) { return b <=> a; }));
   }
 
-  static_assert(sus::Array<i32, 2>::with(1, 2).into_iter().strong_cmp_by(
-                    sus::Array<i32, 2>::with(1, 3),
+  static_assert(sus::Array<i32, 2>(1, 2).into_iter().strong_cmp_by(
+                    sus::Array<i32, 2>(1, 3),
                     [](const i32& a, const i32& b) { return b <=> a; }) ==
                 std::strong_ordering::greater);
 }
 
 TEST(Iterator, PartialCmp) {
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
-    auto bigg = sus::Array<f32, 3>::with(1.f, 2.f, 1.f);
+    auto smol = sus::Array<f32, 2>(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>(1.f, 2.f, 1.f);
     EXPECT_EQ(std::partial_ordering::less,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto bigg = sus::Array<f32, 3>::with(1.f, 2.f, 1.f);
-    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>(1.f, 2.f, 1.f);
+    auto smol = sus::Array<f32, 2>(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::greater,
               bigg.iter().partial_cmp(smol.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
-    auto bigg = sus::Array<f32, 3>::with(1.f, 1.f, 1.f);
+    auto smol = sus::Array<f32, 2>(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>(1.f, 1.f, 1.f);
     EXPECT_EQ(std::partial_ordering::greater,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
-    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>(1.f, 2.f);
+    auto bigg = sus::Array<f32, 2>(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::equivalent,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>::with(f32::NAN, f32::NAN);
-    auto bigg = sus::Array<f32, 2>::with(f32::NAN, f32::NAN);
+    auto smol = sus::Array<f32, 2>(f32::NAN, f32::NAN);
+    auto bigg = sus::Array<f32, 2>(f32::NAN, f32::NAN);
     EXPECT_EQ(std::partial_ordering::unordered,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>::with(f32::NAN, 1.f);
-    auto bigg = sus::Array<f32, 2>::with(f32::NAN, 2.f);
+    auto smol = sus::Array<f32, 2>(f32::NAN, 1.f);
+    auto bigg = sus::Array<f32, 2>(f32::NAN, 2.f);
     EXPECT_EQ(std::partial_ordering::unordered,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, f32::NAN);
-    auto bigg = sus::Array<f32, 2>::with(f32::NAN, f32::NAN);
+    auto smol = sus::Array<f32, 2>(1.f, f32::NAN);
+    auto bigg = sus::Array<f32, 2>(f32::NAN, f32::NAN);
     EXPECT_EQ(std::partial_ordering::unordered,
               smol.iter().partial_cmp(bigg.iter()));
   }
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, f32::NAN);
-    auto bigg = sus::Array<f32, 2>::with(2.f, f32::NAN);
+    auto smol = sus::Array<f32, 2>(1.f, f32::NAN);
+    auto bigg = sus::Array<f32, 2>(2.f, f32::NAN);
     EXPECT_EQ(std::partial_ordering::less,
               smol.iter().partial_cmp(bigg.iter()));
   }
 
   // iter_mut.
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 3.f);
-    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>(1.f, 3.f);
+    auto bigg = sus::Array<f32, 2>(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::greater,
               smol.iter_mut().partial_cmp(bigg.iter_mut()));
   }
 
   // into_iter.
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 3.f);
-    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>(1.f, 3.f);
+    auto bigg = sus::Array<f32, 2>(1.f, 2.f);
     EXPECT_EQ(
         std::partial_ordering::greater,
         sus::move(smol).into_iter().partial_cmp(sus::move(bigg).into_iter()));
@@ -1044,48 +1044,48 @@ TEST(Iterator, PartialCmp) {
 
   // Comparable but different types.
   {
-    auto one = sus::Array<f32, 2>::with(1.f, 2.f);
-    auto two = sus::Array<f64, 2>::with(1., 3.);
+    auto one = sus::Array<f32, 2>(1.f, 2.f);
+    auto two = sus::Array<f64, 2>(1., 3.);
     EXPECT_EQ(std::partial_ordering::less, one.iter().partial_cmp(two.iter()));
   }
 
-  static_assert(sus::Array<f32, 2>::with(1.f, 2.f).into_iter().partial_cmp(
-                    sus::Array<f32, 2>::with(1.f, 3.f)) ==
+  static_assert(sus::Array<f32, 2>(1.f, 2.f).into_iter().partial_cmp(
+                    sus::Array<f32, 2>(1.f, 3.f)) ==
                 std::partial_ordering::less);
-  static_assert(sus::Array<f32, 3>::with(1.f, 2.f, 0.f)
+  static_assert(sus::Array<f32, 3>(1.f, 2.f, 0.f)
                     .into_iter()
-                    .partial_cmp(sus::Array<f32, 2>::with(1.f, 2.f)) ==
+                    .partial_cmp(sus::Array<f32, 2>(1.f, 2.f)) ==
                 std::partial_ordering::greater);
 }
 
 TEST(Iterator, PartialCmpBy) {
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
-    auto bigg = sus::Array<f32, 3>::with(1.f, 2.f, 1.f);
+    auto smol = sus::Array<f32, 2>(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>(1.f, 2.f, 1.f);
     EXPECT_EQ(
         std::partial_ordering::less,
         smol.iter().partial_cmp_by(
             bigg.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
   }
   {
-    auto bigg = sus::Array<f32, 3>::with(1.f, 2.f, 1.f);
-    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>(1.f, 2.f, 1.f);
+    auto smol = sus::Array<f32, 2>(1.f, 2.f);
     EXPECT_EQ(
         std::partial_ordering::greater,
         bigg.iter().partial_cmp_by(
             smol.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
   }
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
-    auto bigg = sus::Array<f32, 3>::with(1.f, 1.f, 1.f);
+    auto smol = sus::Array<f32, 2>(1.f, 2.f);
+    auto bigg = sus::Array<f32, 3>(1.f, 1.f, 1.f);
     EXPECT_EQ(
         std::partial_ordering::less,
         smol.iter().partial_cmp_by(
             bigg.iter(), [](const f32& a, const f32& b) { return b <=> a; }));
   }
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 2.f);
-    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>(1.f, 2.f);
+    auto bigg = sus::Array<f32, 2>(1.f, 2.f);
     EXPECT_EQ(
         std::partial_ordering::equivalent,
         smol.iter().partial_cmp_by(
@@ -1094,8 +1094,8 @@ TEST(Iterator, PartialCmpBy) {
 
   // iter_mut.
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 3.f);
-    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>(1.f, 3.f);
+    auto bigg = sus::Array<f32, 2>(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::less,
               smol.iter_mut().partial_cmp_by(
                   bigg.iter_mut(),
@@ -1104,8 +1104,8 @@ TEST(Iterator, PartialCmpBy) {
 
   // into_iter.
   {
-    auto smol = sus::Array<f32, 2>::with(1.f, 3.f);
-    auto bigg = sus::Array<f32, 2>::with(1.f, 2.f);
+    auto smol = sus::Array<f32, 2>(1.f, 3.f);
+    auto bigg = sus::Array<f32, 2>(1.f, 2.f);
     EXPECT_EQ(std::partial_ordering::less,
               sus::move(smol).into_iter().partial_cmp_by(
                   sus::move(bigg).into_iter(),
@@ -1114,16 +1114,16 @@ TEST(Iterator, PartialCmpBy) {
 
   // Comparable but different types.
   {
-    auto one = sus::Array<f32, 2>::with(1.f, 2.f);
-    auto two = sus::Array<f64, 2>::with(1., 3.);
+    auto one = sus::Array<f32, 2>(1.f, 2.f);
+    auto two = sus::Array<f64, 2>(1., 3.);
     EXPECT_EQ(
         std::partial_ordering::greater,
         one.iter().partial_cmp_by(
             two.iter(), [](const f32& a, const f64& b) { return b <=> a; }));
   }
 
-  static_assert(sus::Array<f32, 2>::with(1.f, 2.f).into_iter().partial_cmp_by(
-                    sus::Array<f32, 2>::with(1.f, 3.f),
+  static_assert(sus::Array<f32, 2>(1.f, 2.f).into_iter().partial_cmp_by(
+                    sus::Array<f32, 2>(1.f, 3.f),
                     [](const f32& a, const f32& b) { return b <=> a; }) ==
                 std::partial_ordering::greater);
 }
@@ -1359,7 +1359,7 @@ TEST(Iterator, Eq) {
   }
 
   static_assert(sus::Vec<i32>(2, 3, 4).into_iter().eq(
-      sus::Array<i32, 3>::with(2, 3, 4)));
+      sus::Array<i32, 3>(2, 3, 4)));
 }
 
 TEST(Iterator, EqBy) {
@@ -1432,7 +1432,7 @@ TEST(Iterator, EqBy) {
   }
 
   static_assert(sus::Vec<i32>(2, 3, 4).into_iter().eq_by(
-      sus::Array<i32, 3>::with(1, 2, 3),
+      sus::Array<i32, 3>(1, 2, 3),
       [](i32 a, i32 b) { return a == b + 1; }));
 }
 
@@ -1502,7 +1502,7 @@ TEST(Iterator, Cycle) {
 }
 
 TEST(Iterator, Find) {
-  auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+  auto a = sus::Array<i32, 5>(1, 2, 3, 4, 5);
 
   // iter().
   {
@@ -1560,7 +1560,7 @@ TEST(Iterator, Find) {
 }
 
 TEST(Iterator, FindMap) {
-  auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+  auto a = sus::Array<i32, 5>(1, 2, 3, 4, 5);
 
   // iter().
   {
@@ -1817,7 +1817,7 @@ TEST(Iterator, FlatMap) {
     i32 a;
     i32 b;
     static auto make_iterable(Integers&& i) {
-      return sus::Array<i32, 2>::with(i.a, i.b);
+      return sus::Array<i32, 2>(i.a, i.b);
     }
   };
 
@@ -1944,7 +1944,7 @@ TEST(Iterator, FlatMap) {
       return sus::move(i);
     }
     auto into_iter() && noexcept {
-      return sus::Array<i32, 2>::with(a, b).into_iter();
+      return sus::Array<i32, 2>(a, b).into_iter();
     }
   };
   static_assert(sus::iter::IntoIterator<MyIntoIter, i32>);
@@ -1975,7 +1975,7 @@ TEST(Iterator, FlatMap) {
 TEST(Iterator, Fold) {
   // Check the accumulator type can be different from the iterating type.
   {
-    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    auto it = sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter();
     auto o = sus::move(it).fold(
         10_u32,
         // Receiving rvalue ensures the caller did move.
@@ -1985,7 +1985,7 @@ TEST(Iterator, Fold) {
   }
   // Check order of iteration.
   {
-    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    auto it = sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter();
     auto o = sus::move(it).fold(
         10_i32,
         // Receiving by value shows it doesn't need to receive by reference.
@@ -1994,7 +1994,7 @@ TEST(Iterator, Fold) {
     EXPECT_EQ(o, (5 - (4 - (3 - (2 - (1 - 10))))));
   }
 
-  static_assert(sus::Array<char, 5>::with('a', 'b', 'c', 'd', 'e')
+  static_assert(sus::Array<char, 5>('a', 'b', 'c', 'd', 'e')
                     .into_iter()
                     .fold(sus::Vec<char>(), [](sus::Vec<char> acc, char v) {
                       acc.push(v);
@@ -2013,7 +2013,7 @@ TEST(Iterator, Fold_Example_References) {
 TEST(Iterator, Rfold) {
   // Check the accumulator type can be different from the iterating type.
   {
-    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    auto it = sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter();
     auto o = sus::move(it).rfold(
         10_u32,
         // Receiving rvalue ensures the caller did move.
@@ -2023,7 +2023,7 @@ TEST(Iterator, Rfold) {
   }
   // Check order of iteration.
   {
-    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    auto it = sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter();
     auto o = sus::move(it).rfold(
         10_i32,
         // Receiving by value shows it doesn't need to receive by reference.
@@ -2032,7 +2032,7 @@ TEST(Iterator, Rfold) {
     EXPECT_EQ(o, (1 - (2 - (3 - (4 - (5 - 10))))));
   }
 
-  static_assert(sus::Array<char, 5>::with('a', 'b', 'c', 'd', 'e')
+  static_assert(sus::Array<char, 5>('a', 'b', 'c', 'd', 'e')
                     .into_iter()
                     .rfold(sus::Vec<char>(), [](sus::Vec<char> acc, char v) {
                       acc.push(v);
@@ -2042,7 +2042,7 @@ TEST(Iterator, Rfold) {
 
 TEST(Iterator, ForEach) {
   {
-    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter();
+    auto it = sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter();
     static_assert(std::is_void_v<decltype(sus::move(it).for_each([](i32) {}))>);
 
     sus::Vec<i32> seen;
@@ -2060,7 +2060,7 @@ TEST(Iterator, ForEach) {
   static_assert(!sus::mem::Copy<Movable>);
   {
     sus::Vec<i32> seen;
-    sus::Array<Movable, 2>::with(Movable(1), Movable(2))
+    sus::Array<Movable, 2>(Movable(1), Movable(2))
         .into_iter()
         .for_each([&seen](Movable m) { seen.push(m.i); });
     EXPECT_EQ(seen, sus::Slice<i32>::from({1, 2}));
@@ -2068,7 +2068,7 @@ TEST(Iterator, ForEach) {
 
   static_assert([]() {
     sus::Vec<char> acc;
-    sus::Array<char, 5>::with('a', 'b', 'c', 'd', 'e')
+    sus::Array<char, 5>('a', 'b', 'c', 'd', 'e')
         .into_iter()
         .for_each([&](char v) { acc.push(v); });
     return acc;
@@ -2133,133 +2133,133 @@ TEST(Iterator, Fuse) {
 
 TEST(Iterator, Ge) {
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(true, sus::move(it1).ge(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(true, sus::move(it1).ge(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).ge(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
     EXPECT_EQ(false, sus::move(it1).ge(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).ge(sus::move(it2)));
   }
 
   static_assert(sus::Vec<i32>(2, 4, 4).into_iter().ge(
-      sus::Array<i32, 3>::with(2, 3, 4)));
+      sus::Array<i32, 3>(2, 3, 4)));
 }
 
 TEST(Iterator, Gt) {
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(true, sus::move(it1).gt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
     EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).gt(sus::move(it2)));
   }
 
   static_assert(sus::Vec<i32>(2, 4, 4).into_iter().gt(
-      sus::Array<i32, 3>::with(2, 3, 4)));
+      sus::Array<i32, 3>(2, 3, 4)));
 }
 
 TEST(Iterator, Le) {
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(true, sus::move(it1).le(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).le(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
     EXPECT_EQ(true, sus::move(it1).le(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
     EXPECT_EQ(false, sus::move(it1).le(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).le(sus::move(it2)));
   }
 
   static_assert(sus::Vec<i32>(2, 2, 4).into_iter().le(
-      sus::Array<i32, 3>::with(2, 3, 4)));
+      sus::Array<i32, 3>(2, 3, 4)));
 }
 
 TEST(Iterator, Lt) {
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
     EXPECT_EQ(true, sus::move(it1).lt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, 4.f).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, 4.f).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
     EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
   }
   {
-    auto it1 = sus::Array<f32, 2>::with(1.f, f32::NAN).into_iter();
-    auto it2 = sus::Array<f32, 2>::with(1.f, 3.f).into_iter();
+    auto it1 = sus::Array<f32, 2>(1.f, f32::NAN).into_iter();
+    auto it2 = sus::Array<f32, 2>(1.f, 3.f).into_iter();
     EXPECT_EQ(false, sus::move(it1).lt(sus::move(it2)));
   }
 
   static_assert(sus::Vec<i32>(2, 2, 4).into_iter().lt(
-      sus::Array<i32, 3>::with(2, 3, 4)));
+      sus::Array<i32, 3>(2, 3, 4)));
 }
 
 TEST(Iterator, Inspect) {
   // By value, into_iter().
   {
     static sus::Vec<i32> seen;
-    auto it = sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+    auto it = sus::Array<i32, 5>(1, 2, 3, 4, 5)
                   .into_iter()
                   .inspect([](const i32& v) { seen.push(v); });
     static_assert(std::same_as<Option<i32>, decltype(it.next())>);
@@ -2279,7 +2279,7 @@ TEST(Iterator, Inspect) {
   // By ref, iter().
   {
     static sus::Vec<i32> seen;
-    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto a = sus::Array<i32, 5>(1, 2, 3, 4, 5);
     auto it = a.iter().inspect([](const i32& v) { seen.push(v); });
     static_assert(std::same_as<Option<const i32&>, decltype(it.next())>);
     EXPECT_EQ(it.next().unwrap(), 1);
@@ -2298,7 +2298,7 @@ TEST(Iterator, Inspect) {
   // By mut ref, iter_mut().
   {
     static sus::Vec<i32> seen;
-    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto a = sus::Array<i32, 5>(1, 2, 3, 4, 5);
     auto it = a.iter_mut().inspect([](const i32& v) { seen.push(v); });
     static_assert(std::same_as<Option<i32&>, decltype(it.next())>);
     EXPECT_EQ(it.next().unwrap(), 1);
@@ -2317,7 +2317,7 @@ TEST(Iterator, Inspect) {
 
   static_assert([]() {
     sus::Vec<i32> seen;
-    sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+    sus::Array<i32, 5>(1, 2, 3, 4, 5)
         .into_iter()
         .inspect([&](const i32& v) { seen.push(v); })
         .count();
@@ -2328,59 +2328,59 @@ TEST(Iterator, Inspect) {
 TEST(Iterator, Last) {
   // into_iter().
   {
-    decltype(auto) n = sus::Array<i32, 0>::with().into_iter().last();
+    decltype(auto) n = sus::Array<i32, 0>().into_iter().last();
     static_assert(std::same_as<decltype(n), Option<i32>>);
     EXPECT_EQ(n, sus::None);
     decltype(auto) s =
-        sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().last();
+        sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter().last();
     static_assert(std::same_as<decltype(s), Option<i32>>);
     EXPECT_EQ(s, sus::some(5));
   }
   // iter().
   {
-    auto az = sus::Array<i32, 0>::with();
+    auto az = sus::Array<i32, 0>();
     decltype(auto) n = az.iter().last();
     static_assert(std::same_as<decltype(n), Option<const i32&>>);
     EXPECT_EQ(n, sus::None);
 
-    auto an = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto an = sus::Array<i32, 5>(1, 2, 3, 4, 5);
     decltype(auto) s = an.iter().last();
     static_assert(std::same_as<decltype(s), Option<const i32&>>);
     EXPECT_EQ(s.as_value(), 5);
   }
 
-  static_assert(sus::Array<i32, 0>::with().into_iter().last() == sus::none());
-  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().last() ==
+  static_assert(sus::Array<i32, 0>().into_iter().last() == sus::none());
+  static_assert(sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter().last() ==
                 sus::some(5));
 }
 
 TEST(Iterator, Max) {
   // 0 items.
   {
-    decltype(auto) n = sus::Array<i32, 0>::with().into_iter().max();
+    decltype(auto) n = sus::Array<i32, 0>().into_iter().max();
     static_assert(std::same_as<decltype(n), Option<i32>>);
     EXPECT_EQ(n, sus::None);
   }
   // 1 item.
   {
-    decltype(auto) n = sus::Array<i32, 1>::with(3).into_iter().max();
+    decltype(auto) n = sus::Array<i32, 1>(3).into_iter().max();
     EXPECT_EQ(n.as_value(), 3);
   }
   // More items.
   {
-    decltype(auto) n = sus::Array<i32, 3>::with(3, 2, 1).into_iter().max();
+    decltype(auto) n = sus::Array<i32, 3>(3, 2, 1).into_iter().max();
     EXPECT_EQ(n.as_value(), 3);
   }
   {
-    decltype(auto) n = sus::Array<i32, 3>::with(1, 2, 3).into_iter().max();
+    decltype(auto) n = sus::Array<i32, 3>(1, 2, 3).into_iter().max();
     EXPECT_EQ(n.as_value(), 3);
   }
   {
-    decltype(auto) n = sus::Array<i32, 3>::with(1, 3, 1).into_iter().max();
+    decltype(auto) n = sus::Array<i32, 3>(1, 3, 1).into_iter().max();
     EXPECT_EQ(n.as_value(), 3);
   }
   {
-    decltype(auto) n = sus::Array<i32, 3>::with(3, 3, 1).into_iter().max();
+    decltype(auto) n = sus::Array<i32, 3>(3, 3, 1).into_iter().max();
     EXPECT_EQ(n.as_value(), 3);
   }
 
@@ -2392,25 +2392,25 @@ TEST(Iterator, Max) {
   };
   {
     decltype(auto) n =
-        sus::Array<S, 3>::with(S(3, 0), S(3, 1), S(1, 2)).into_iter().max();
+        sus::Array<S, 3>(S(3, 0), S(3, 1), S(1, 2)).into_iter().max();
     EXPECT_EQ(n.as_value().id, 1);
   }
   {
     decltype(auto) n =
-        sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(3, 2)).into_iter().max();
+        sus::Array<S, 3>(S(3, 0), S(1, 1), S(3, 2)).into_iter().max();
     EXPECT_EQ(n.as_value().id, 2);
   }
 
   // iter().
   {
-    auto a = sus::Array<i32, 3>::with(1, 3, 1);
+    auto a = sus::Array<i32, 3>(1, 3, 1);
     decltype(auto) n = a.iter().max();
     static_assert(std::same_as<decltype(n), Option<const i32&>>);
     EXPECT_EQ(n.as_value(), 3);
   }
   // iter_mut().
   {
-    auto a = sus::Array<i32, 3>::with(1, 3, 1);
+    auto a = sus::Array<i32, 3>(1, 3, 1);
     decltype(auto) n = a.iter_mut().max();
     static_assert(std::same_as<decltype(n), Option<i32&>>);
     EXPECT_EQ(n.as_value(), 3);
@@ -2429,34 +2429,34 @@ TEST(Iterator, MaxBy) {
 
   // 0 items.
   {
-    decltype(auto) n = sus::Array<M, 0>::with().into_iter().max_by(&M::cmp);
+    decltype(auto) n = sus::Array<M, 0>().into_iter().max_by(&M::cmp);
     static_assert(std::same_as<decltype(n), Option<M>>);
     EXPECT_EQ(n, sus::None);
   }
   // 1 item.
   {
-    decltype(auto) n = sus::Array<M, 1>::with(M(3)).into_iter().max_by(&M::cmp);
+    decltype(auto) n = sus::Array<M, 1>(M(3)).into_iter().max_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 3);
   }
   // More items.
   {
     decltype(auto) n =
-        sus::Array<M, 3>::with(M(3), M(2), M(1)).into_iter().max_by(&M::cmp);
+        sus::Array<M, 3>(M(3), M(2), M(1)).into_iter().max_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 3);
   }
   {
     decltype(auto) n =
-        sus::Array<M, 3>::with(M(1), M(2), M(3)).into_iter().max_by(&M::cmp);
+        sus::Array<M, 3>(M(1), M(2), M(3)).into_iter().max_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 3);
   }
   {
     decltype(auto) n =
-        sus::Array<M, 3>::with(M(1), M(3), M(1)).into_iter().max_by(&M::cmp);
+        sus::Array<M, 3>(M(1), M(3), M(1)).into_iter().max_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 3);
   }
   {
     decltype(auto) n =
-        sus::Array<M, 3>::with(M(3), M(3), M(1)).into_iter().max_by(&M::cmp);
+        sus::Array<M, 3>(M(3), M(3), M(1)).into_iter().max_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 3);
   }
 
@@ -2467,13 +2467,13 @@ TEST(Iterator, MaxBy) {
     static auto cmp(const S& a, const S& b) noexcept { return a.i <=> b.i; }
   };
   {
-    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(3, 1), S(1, 2))
+    decltype(auto) n = sus::Array<S, 3>(S(3, 0), S(3, 1), S(1, 2))
                            .into_iter()
                            .max_by(&S::cmp);
     EXPECT_EQ(n.as_value().id, 1);
   }
   {
-    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(3, 2))
+    decltype(auto) n = sus::Array<S, 3>(S(3, 0), S(1, 1), S(3, 2))
                            .into_iter()
                            .max_by(&S::cmp);
     EXPECT_EQ(n.as_value().id, 2);
@@ -2481,14 +2481,14 @@ TEST(Iterator, MaxBy) {
 
   // iter().
   {
-    auto a = sus::Array<M, 3>::with(M(1), M(3), M(1));
+    auto a = sus::Array<M, 3>(M(1), M(3), M(1));
     decltype(auto) n = a.iter().max_by(&M::cmp);
     static_assert(std::same_as<decltype(n), Option<const M&>>);
     EXPECT_EQ(n.as_value().i, 3);
   }
   // iter_mut().
   {
-    auto a = sus::Array<M, 3>::with(M(1), M(3), M(1));
+    auto a = sus::Array<M, 3>(M(1), M(3), M(1));
     decltype(auto) n = a.iter_mut().max_by(&M::cmp);
     static_assert(std::same_as<decltype(n), Option<M&>>);
     EXPECT_EQ(n.as_value().i, 3);
@@ -2510,37 +2510,37 @@ TEST(Iterator, MaxByKey) {
 
   // 0 items.
   {
-    decltype(auto) n = sus::Array<M, 0>::with().into_iter().max_by_key(&M::key);
+    decltype(auto) n = sus::Array<M, 0>().into_iter().max_by_key(&M::key);
     static_assert(std::same_as<decltype(n), Option<M>>);
     EXPECT_EQ(n, sus::None);
   }
   // 1 item.
   {
     decltype(auto) n =
-        sus::Array<M, 1>::with(M(3)).into_iter().max_by_key(&M::key);
+        sus::Array<M, 1>(M(3)).into_iter().max_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 3);
   }
   // More items.
   {
-    decltype(auto) n = sus::Array<M, 3>::with(M(3), M(2), M(1))
+    decltype(auto) n = sus::Array<M, 3>(M(3), M(2), M(1))
                            .into_iter()
                            .max_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 3);
   }
   {
-    decltype(auto) n = sus::Array<M, 3>::with(M(1), M(2), M(3))
+    decltype(auto) n = sus::Array<M, 3>(M(1), M(2), M(3))
                            .into_iter()
                            .max_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 3);
   }
   {
-    decltype(auto) n = sus::Array<M, 3>::with(M(1), M(3), M(1))
+    decltype(auto) n = sus::Array<M, 3>(M(1), M(3), M(1))
                            .into_iter()
                            .max_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 3);
   }
   {
-    decltype(auto) n = sus::Array<M, 3>::with(M(3), M(3), M(1))
+    decltype(auto) n = sus::Array<M, 3>(M(3), M(3), M(1))
                            .into_iter()
                            .max_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 3);
@@ -2553,13 +2553,13 @@ TEST(Iterator, MaxByKey) {
     static i32 key(const S& s) noexcept { return s.i; }
   };
   {
-    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(3, 1), S(1, 2))
+    decltype(auto) n = sus::Array<S, 3>(S(3, 0), S(3, 1), S(1, 2))
                            .into_iter()
                            .max_by_key(&S::key);
     EXPECT_EQ(n.as_value().id, 1);
   }
   {
-    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(3, 2))
+    decltype(auto) n = sus::Array<S, 3>(S(3, 0), S(1, 1), S(3, 2))
                            .into_iter()
                            .max_by_key(&S::key);
     EXPECT_EQ(n.as_value().id, 2);
@@ -2567,14 +2567,14 @@ TEST(Iterator, MaxByKey) {
 
   // iter().
   {
-    auto a = sus::Array<M, 3>::with(M(1), M(3), M(1));
+    auto a = sus::Array<M, 3>(M(1), M(3), M(1));
     decltype(auto) n = a.iter().max_by_key(&M::key);
     static_assert(std::same_as<decltype(n), Option<const M&>>);
     EXPECT_EQ(n.as_value().i, 3);
   }
   // iter_mut().
   {
-    auto a = sus::Array<M, 3>::with(M(1), M(3), M(1));
+    auto a = sus::Array<M, 3>(M(1), M(3), M(1));
     decltype(auto) n = a.iter_mut().max_by_key(&M::key);
     static_assert(std::same_as<decltype(n), Option<M&>>);
     EXPECT_EQ(n.as_value().i, 3);
@@ -2591,30 +2591,30 @@ TEST(Iterator, MaxByKey) {
 TEST(Iterator, Min) {
   // 0 items.
   {
-    decltype(auto) n = sus::Array<i32, 0>::with().into_iter().min();
+    decltype(auto) n = sus::Array<i32, 0>().into_iter().min();
     static_assert(std::same_as<decltype(n), Option<i32>>);
     EXPECT_EQ(n, sus::None);
   }
   // 1 item.
   {
-    decltype(auto) n = sus::Array<i32, 1>::with(3).into_iter().min();
+    decltype(auto) n = sus::Array<i32, 1>(3).into_iter().min();
     EXPECT_EQ(n.as_value(), 3);
   }
   // More items.
   {
-    decltype(auto) n = sus::Array<i32, 3>::with(3, 2, 1).into_iter().min();
+    decltype(auto) n = sus::Array<i32, 3>(3, 2, 1).into_iter().min();
     EXPECT_EQ(n.as_value(), 1);
   }
   {
-    decltype(auto) n = sus::Array<i32, 3>::with(1, 2, 3).into_iter().min();
+    decltype(auto) n = sus::Array<i32, 3>(1, 2, 3).into_iter().min();
     EXPECT_EQ(n.as_value(), 1);
   }
   {
-    decltype(auto) n = sus::Array<i32, 3>::with(3, 1, 3).into_iter().min();
+    decltype(auto) n = sus::Array<i32, 3>(3, 1, 3).into_iter().min();
     EXPECT_EQ(n.as_value(), 1);
   }
   {
-    decltype(auto) n = sus::Array<i32, 3>::with(1, 1, 3).into_iter().min();
+    decltype(auto) n = sus::Array<i32, 3>(1, 1, 3).into_iter().min();
     EXPECT_EQ(n.as_value(), 1);
   }
 
@@ -2626,25 +2626,25 @@ TEST(Iterator, Min) {
   };
   {
     decltype(auto) n =
-        sus::Array<S, 3>::with(S(1, 0), S(1, 1), S(3, 2)).into_iter().min();
+        sus::Array<S, 3>(S(1, 0), S(1, 1), S(3, 2)).into_iter().min();
     EXPECT_EQ(n.as_value().id, 0);
   }
   {
     decltype(auto) n =
-        sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(1, 2)).into_iter().min();
+        sus::Array<S, 3>(S(3, 0), S(1, 1), S(1, 2)).into_iter().min();
     EXPECT_EQ(n.as_value().id, 1);
   }
 
   // iter().
   {
-    auto a = sus::Array<i32, 3>::with(3, 1, 3);
+    auto a = sus::Array<i32, 3>(3, 1, 3);
     decltype(auto) n = a.iter().min();
     static_assert(std::same_as<decltype(n), Option<const i32&>>);
     EXPECT_EQ(n.as_value(), 1);
   }
   // iter_mut().
   {
-    auto a = sus::Array<i32, 3>::with(3, 1, 3);
+    auto a = sus::Array<i32, 3>(3, 1, 3);
     decltype(auto) n = a.iter_mut().min();
     static_assert(std::same_as<decltype(n), Option<i32&>>);
     EXPECT_EQ(n.as_value(), 1);
@@ -2663,34 +2663,34 @@ TEST(Iterator, MinBy) {
 
   // 0 items.
   {
-    decltype(auto) n = sus::Array<M, 0>::with().into_iter().min_by(&M::cmp);
+    decltype(auto) n = sus::Array<M, 0>().into_iter().min_by(&M::cmp);
     static_assert(std::same_as<decltype(n), Option<M>>);
     EXPECT_EQ(n, sus::None);
   }
   // 1 item.
   {
-    decltype(auto) n = sus::Array<M, 1>::with(M(3)).into_iter().min_by(&M::cmp);
+    decltype(auto) n = sus::Array<M, 1>(M(3)).into_iter().min_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 3);
   }
   // More items.
   {
     decltype(auto) n =
-        sus::Array<M, 3>::with(M(3), M(2), M(1)).into_iter().min_by(&M::cmp);
+        sus::Array<M, 3>(M(3), M(2), M(1)).into_iter().min_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 1);
   }
   {
     decltype(auto) n =
-        sus::Array<M, 3>::with(M(1), M(2), M(3)).into_iter().min_by(&M::cmp);
+        sus::Array<M, 3>(M(1), M(2), M(3)).into_iter().min_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 1);
   }
   {
     decltype(auto) n =
-        sus::Array<M, 3>::with(M(3), M(1), M(3)).into_iter().min_by(&M::cmp);
+        sus::Array<M, 3>(M(3), M(1), M(3)).into_iter().min_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 1);
   }
   {
     decltype(auto) n =
-        sus::Array<M, 3>::with(M(1), M(1), M(3)).into_iter().min_by(&M::cmp);
+        sus::Array<M, 3>(M(1), M(1), M(3)).into_iter().min_by(&M::cmp);
     EXPECT_EQ(n.as_value().i, 1);
   }
 
@@ -2701,13 +2701,13 @@ TEST(Iterator, MinBy) {
     static auto cmp(const S& a, const S& b) noexcept { return a.i <=> b.i; }
   };
   {
-    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(1, 2))
+    decltype(auto) n = sus::Array<S, 3>(S(3, 0), S(1, 1), S(1, 2))
                            .into_iter()
                            .min_by(&S::cmp);
     EXPECT_EQ(n.as_value().id, 1);
   }
   {
-    decltype(auto) n = sus::Array<S, 3>::with(S(1, 0), S(3, 1), S(1, 2))
+    decltype(auto) n = sus::Array<S, 3>(S(1, 0), S(3, 1), S(1, 2))
                            .into_iter()
                            .min_by(&S::cmp);
     EXPECT_EQ(n.as_value().id, 0);
@@ -2715,7 +2715,7 @@ TEST(Iterator, MinBy) {
 
   // iter().
   {
-    auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
+    auto a = sus::Array<M, 3>(M(3), M(1), M(3));
     decltype(auto) n = a.iter().min_by(&M::cmp);
     static_assert(std::same_as<decltype(n), Option<const M&>>);
     EXPECT_EQ(&n.as_value(), &a[1u]);
@@ -2723,7 +2723,7 @@ TEST(Iterator, MinBy) {
   }
   // iter_mut().
   {
-    auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
+    auto a = sus::Array<M, 3>(M(3), M(1), M(3));
     decltype(auto) n = a.iter_mut().min_by(&M::cmp);
     static_assert(std::same_as<decltype(n), Option<M&>>);
     EXPECT_EQ(&n.as_value(), &a[1u]);
@@ -2746,37 +2746,37 @@ TEST(Iterator, MinByKey) {
 
   // 0 items.
   {
-    decltype(auto) n = sus::Array<M, 0>::with().into_iter().min_by_key(&M::key);
+    decltype(auto) n = sus::Array<M, 0>().into_iter().min_by_key(&M::key);
     static_assert(std::same_as<decltype(n), Option<M>>);
     EXPECT_EQ(n, sus::None);
   }
   // 1 item.
   {
     decltype(auto) n =
-        sus::Array<M, 1>::with(M(3)).into_iter().min_by_key(&M::key);
+        sus::Array<M, 1>(M(3)).into_iter().min_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 3);
   }
   // More items.
   {
-    decltype(auto) n = sus::Array<M, 3>::with(M(3), M(2), M(1))
+    decltype(auto) n = sus::Array<M, 3>(M(3), M(2), M(1))
                            .into_iter()
                            .min_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 1);
   }
   {
-    decltype(auto) n = sus::Array<M, 3>::with(M(1), M(2), M(3))
+    decltype(auto) n = sus::Array<M, 3>(M(1), M(2), M(3))
                            .into_iter()
                            .min_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 1);
   }
   {
-    decltype(auto) n = sus::Array<M, 3>::with(M(3), M(1), M(3))
+    decltype(auto) n = sus::Array<M, 3>(M(3), M(1), M(3))
                            .into_iter()
                            .min_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 1);
   }
   {
-    decltype(auto) n = sus::Array<M, 3>::with(M(1), M(1), M(3))
+    decltype(auto) n = sus::Array<M, 3>(M(1), M(1), M(3))
                            .into_iter()
                            .min_by_key(&M::key);
     EXPECT_EQ(n.as_value().i, 1);
@@ -2789,13 +2789,13 @@ TEST(Iterator, MinByKey) {
     static i32 key(const S& s) noexcept { return s.i; }
   };
   {
-    decltype(auto) n = sus::Array<S, 3>::with(S(1, 0), S(1, 1), S(3, 2))
+    decltype(auto) n = sus::Array<S, 3>(S(1, 0), S(1, 1), S(3, 2))
                            .into_iter()
                            .min_by_key(&S::key);
     EXPECT_EQ(n.as_value().id, 0);
   }
   {
-    decltype(auto) n = sus::Array<S, 3>::with(S(3, 0), S(1, 1), S(1, 2))
+    decltype(auto) n = sus::Array<S, 3>(S(3, 0), S(1, 1), S(1, 2))
                            .into_iter()
                            .min_by_key(&S::key);
     EXPECT_EQ(n.as_value().id, 1);
@@ -2803,14 +2803,14 @@ TEST(Iterator, MinByKey) {
 
   // iter().
   {
-    auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
+    auto a = sus::Array<M, 3>(M(3), M(1), M(3));
     decltype(auto) n = a.iter().min_by_key(&M::key);
     static_assert(std::same_as<decltype(n), Option<const M&>>);
     EXPECT_EQ(n.as_value().i, 1);
   }
   // iter_mut().
   {
-    auto a = sus::Array<M, 3>::with(M(3), M(1), M(3));
+    auto a = sus::Array<M, 3>(M(3), M(1), M(3));
     decltype(auto) n = a.iter_mut().min_by_key(&M::key);
     static_assert(std::same_as<decltype(n), Option<M&>>);
     EXPECT_EQ(n.as_value().i, 1);
@@ -2878,16 +2878,16 @@ TEST(Iterator, Ne) {
   }
 
   static_assert(sus::Vec<i32>(2, 3, 4).into_iter().ne(
-      sus::Array<i32, 3>::with(2, 3, 5)));
+      sus::Array<i32, 3>(2, 3, 5)));
 }
 
 TEST(Iterator, Nth) {
   {
-    auto it = sus::Array<i32, 0>::with().into_iter();
+    auto it = sus::Array<i32, 0>().into_iter();
     EXPECT_EQ(it.nth(10u), sus::None);
   }
   {
-    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto a = sus::Array<i32, 5>(1, 2, 3, 4, 5);
     auto it = a.iter();
     static_assert(std::same_as<decltype(it.next()), Option<const i32&>>);
     EXPECT_EQ(it.nth(0u).unwrap(), 1);
@@ -2896,21 +2896,21 @@ TEST(Iterator, Nth) {
     EXPECT_EQ(it.nth(2u), sus::None);
   }
 
-  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().nth(3u) ==
+  static_assert(sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter().nth(3u) ==
                 sus::some(4));
-  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().nth(4u) ==
+  static_assert(sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter().nth(4u) ==
                 sus::some(5));
-  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5).into_iter().nth(5u) ==
+  static_assert(sus::Array<i32, 5>(1, 2, 3, 4, 5).into_iter().nth(5u) ==
                 sus::none());
 }
 
 TEST(Iterator, NthBack) {
   {
-    auto it = sus::Array<i32, 0>::with().into_iter();
+    auto it = sus::Array<i32, 0>().into_iter();
     EXPECT_EQ(it.nth_back(10u), sus::None);
   }
   {
-    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto a = sus::Array<i32, 5>(1, 2, 3, 4, 5);
     auto it = a.iter();
     static_assert(std::same_as<decltype(it.next()), Option<const i32&>>);
     EXPECT_EQ(it.nth_back(0u).unwrap(), 5);
@@ -2921,7 +2921,7 @@ TEST(Iterator, NthBack) {
 }
 
 TEST(Iterator, Rfind) {
-  auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+  auto a = sus::Array<i32, 5>(1, 2, 3, 4, 5);
 
   // iter().
   {
@@ -2990,7 +2990,7 @@ static_assert(sus::iter::Extend<Extendable, i32>);
 TEST(Iterator, Partition) {
   // Partition from iter() for a Copy type.
   {
-    auto a = sus::Array<i32, 5>::with(1, 2, 3, 4, 5);
+    auto a = sus::Array<i32, 5>(1, 2, 3, 4, 5);
     auto p = a.iter().partition<sus::Vec<i32>>([](const i32&) { return true; });
     static_assert(
         std::same_as<decltype(p), sus::Tuple<sus::Vec<i32>, sus::Vec<i32>>>);
@@ -3014,7 +3014,7 @@ TEST(Iterator, Partition) {
 
   // Partition from into_iter() with Move and !Copy type.
   {
-    auto it = sus::Array<S, 5>::with(S(1), S(2), S(3), S(4), S(5)).into_iter();
+    auto it = sus::Array<S, 5>(S(1), S(2), S(3), S(4), S(5)).into_iter();
     static_assert(std::same_as<decltype(sus::move(it).partition<sus::Vec<S>>(
                                    [](const S&) { return true; })),
                                sus::Tuple<sus::Vec<S>, sus::Vec<S>>>);
@@ -3028,19 +3028,19 @@ TEST(Iterator, Partition) {
   // Test with simple Extend type.
   {
     auto [left, right] =
-        sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+        sus::Array<i32, 5>(1, 2, 3, 4, 5)
             .into_iter()
             .partition<Extendable>([](const i32& i) { return i <= 3; });
     EXPECT_EQ(left.extend_sum, 1 + 2 + 3);
     EXPECT_EQ(right.extend_sum, 4 + 5);
   }
 
-  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+  static_assert(sus::Array<i32, 5>(1, 2, 3, 4, 5)
                     .into_iter()
                     .partition<Extendable>([](const i32& i) { return i <= 3; })
                     .into_inner<0>()
                     .extend_sum == 1 + 2 + 3);
-  static_assert(sus::Array<i32, 5>::with(1, 2, 3, 4, 5)
+  static_assert(sus::Array<i32, 5>(1, 2, 3, 4, 5)
                     .into_iter()
                     .partition<Extendable>([](const i32& i) { return i <= 3; })
                     .into_inner<1>()
@@ -3050,7 +3050,7 @@ TEST(Iterator, Partition) {
 TEST(Iterator, Peekable) {
   // iter().
   {
-    auto a = sus::Array<i32, 3>::with(1, 2, 3);
+    auto a = sus::Array<i32, 3>(1, 2, 3);
     auto it = a.iter().peekable();
     static_assert(sus::mem::Clone<decltype(it)>);
     static_assert(sus::mem::relocate_by_memcpy<decltype(it)>);
@@ -3117,7 +3117,7 @@ TEST(Iterator, Peekable) {
   }
   // iter_mut().
   {
-    auto a = sus::Array<i32, 3>::with(1, 2, 3);
+    auto a = sus::Array<i32, 3>(1, 2, 3);
     auto it = a.iter_mut().peekable();
 
     static_assert(std::same_as<decltype(it.peek()), sus::Option<const i32&>>);
@@ -3147,7 +3147,7 @@ TEST(Iterator, Peekable) {
   }
   // into_iter().
   {
-    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    auto it = sus::Array<i32, 3>(1, 2, 3).into_iter().peekable();
 
     static_assert(std::same_as<decltype(it.peek()), sus::Option<const i32&>>);
     static_assert(std::same_as<decltype(it.peek_mut()), sus::Option<i32&>>);
@@ -3177,7 +3177,7 @@ TEST(Iterator, Peekable) {
 
   // Interaction with next_back(), without peek().
   {
-    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    auto it = sus::Array<i32, 3>(1, 2, 3).into_iter().peekable();
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);
     EXPECT_EQ(it.next_back().unwrap(), 3);
@@ -3196,7 +3196,7 @@ TEST(Iterator, Peekable) {
   // Interaction with next_back(), it does not change the peeked value until it
   // uses the peeked value last.
   {
-    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    auto it = sus::Array<i32, 3>(1, 2, 3).into_iter().peekable();
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);
 
@@ -3235,7 +3235,7 @@ TEST(Iterator, Peekable) {
 
   // next_if().
   {
-    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    auto it = sus::Array<i32, 3>(1, 2, 3).into_iter().peekable();
     EXPECT_EQ(sus::none(), it.next_if([](const i32& i) {
       EXPECT_EQ(i, 1);
       return false;
@@ -3268,7 +3268,7 @@ TEST(Iterator, Peekable) {
 
   // next_if_eq().
   {
-    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    auto it = sus::Array<i32, 3>(1, 2, 3).into_iter().peekable();
     EXPECT_EQ(sus::none(), it.next_if_eq(0));
     EXPECT_EQ(sus::none(), it.next_if_eq(0));
     EXPECT_EQ(sus::some(1), it.next_if_eq(1));
@@ -3279,7 +3279,7 @@ TEST(Iterator, Peekable) {
   }
 
   static_assert([]() {
-    auto it = sus::Array<i32, 3>::with(1, 2, 3).into_iter().peekable();
+    auto it = sus::Array<i32, 3>(1, 2, 3).into_iter().peekable();
     auto peeked = it.peek().unwrap();
     return peeked + it.next().unwrap();
   }() == 1 + 1);
@@ -3288,7 +3288,7 @@ TEST(Iterator, Peekable) {
 TEST(Iterator, Position) {
   // iter().
   {
-    auto a = sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13);
+    auto a = sus::Array<i32, 8>(10, 11, 12, 13, 10, 11, 12, 13);
     auto it = a.iter();
     EXPECT_EQ(it.position([](const i32& i) { return i == 11; }), sus::some(1u));
     EXPECT_EQ(it.position([](const i32& i) { return i == 12; }), sus::some(0u));
@@ -3297,7 +3297,7 @@ TEST(Iterator, Position) {
   }
   // iter_mut().
   {
-    auto a = sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13);
+    auto a = sus::Array<i32, 8>(10, 11, 12, 13, 10, 11, 12, 13);
     auto it = a.iter_mut();
     EXPECT_EQ(it.position([](i32& i) { return i == 11; }), sus::some(1u));
     EXPECT_EQ(it.position([](i32& i) { return i == 12; }), sus::some(0u));
@@ -3307,7 +3307,7 @@ TEST(Iterator, Position) {
   // into_iter().
   {
     auto it =
-        sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13).into_iter();
+        sus::Array<i32, 8>(10, 11, 12, 13, 10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.position([](i32&& i) { return i == 11; }), sus::some(1u));
     EXPECT_EQ(it.position([](i32&& i) { return i == 12; }), sus::some(0u));
     EXPECT_EQ(it.position([](i32&&) { return false; }), sus::none());
@@ -3316,16 +3316,16 @@ TEST(Iterator, Position) {
 
   // No match.
   {
-    auto it = sus::Array<i32, 4>::with(10, 11, 12, 13).into_iter();
+    auto it = sus::Array<i32, 4>(10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.position([](auto) { return false; }), sus::None);
   }
 
   static_assert(
-      sus::Array<i32, 4>::with(10, 11, 12, 11).into_iter().position([](auto i) {
+      sus::Array<i32, 4>(10, 11, 12, 11).into_iter().position([](auto i) {
         return i == 11;
       }) == sus::some(1u));
   static_assert(
-      sus::Array<i32, 4>::with(10, 11, 12, 11).into_iter().position([](auto i) {
+      sus::Array<i32, 4>(10, 11, 12, 11).into_iter().position([](auto i) {
         return i == 14;
       }) == sus::none());
 }
@@ -3346,50 +3346,50 @@ TEST(Iterator, Product) {
 
   // Signed integer.
   {
-    EXPECT_EQ((sus::Array<i32, 0>::with().into_iter().product()), 1);
+    EXPECT_EQ((sus::Array<i32, 0>().into_iter().product()), 1);
 
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     decltype(auto) p = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(p), i32>);
     EXPECT_EQ(p, 2 * 3 * 4);
   }
   // Unsigned integer.
   {
-    EXPECT_EQ((sus::Array<u32, 0>::with().into_iter().product()), 1u);
+    EXPECT_EQ((sus::Array<u32, 0>().into_iter().product()), 1u);
 
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     decltype(auto) p = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(p), u32>);
     EXPECT_EQ(p, 2u * 3u * 4u);
   }
   // Float.
   {
-    EXPECT_EQ((sus::Array<f32, 0>::with().into_iter().product()), 1.f);
+    EXPECT_EQ((sus::Array<f32, 0>().into_iter().product()), 1.f);
 
-    auto a = sus::Array<f32, 3>::with(2.f, 3.f, 4.f);
+    auto a = sus::Array<f32, 3>(2.f, 3.f, 4.f);
     decltype(auto) p = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(p), f32>);
     EXPECT_EQ(p, 2.f * 3.f * 4.f);
   }
 
-  static_assert(sus::Array<i32, 3>::with(2, 3, 4).into_iter().product() ==
+  static_assert(sus::Array<i32, 3>(2, 3, 4).into_iter().product() ==
                 2 * 3 * 4);
-  static_assert(sus::Array<u32, 3>::with(2u, 3u, 4u).into_iter().product() ==
+  static_assert(sus::Array<u32, 3>(2u, 3u, 4u).into_iter().product() ==
                 2u * 3u * 4u);
-  static_assert(sus::Array<f32, 3>::with(2.f, 3.f, 4.f).into_iter().product() ==
+  static_assert(sus::Array<f32, 3>(2.f, 3.f, 4.f).into_iter().product() ==
                 2.f * 3.f * 4.f);
 }
 
 TEST(Iterator, Reduce) {
   // Empty.
   {
-    auto out = sus::Array<i32, 0>::with().into_iter().reduce(
+    auto out = sus::Array<i32, 0>().into_iter().reduce(
         [](i32, i32) { return 0; });
     EXPECT_EQ(out, sus::None);
   }
   // into_iter().
   {
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     auto out =
         sus::move(a).into_iter().reduce([](i32 acc, i32 v) { return acc + v; });
     static_assert(std::same_as<decltype(out), sus::Option<i32>>);
@@ -3397,7 +3397,7 @@ TEST(Iterator, Reduce) {
   }
   // iter().
   {
-    auto a = sus::Array<i32, 3>::with(3, 2, 4);
+    auto a = sus::Array<i32, 3>(3, 2, 4);
     auto out = a.iter().reduce([](const i32& acc, const i32& v) -> const i32& {
       if (acc < v)
         return acc;
@@ -3409,7 +3409,7 @@ TEST(Iterator, Reduce) {
   }
   // iter_mut().
   {
-    auto a = sus::Array<i32, 3>::with(3, 2, 4);
+    auto a = sus::Array<i32, 3>(3, 2, 4);
     auto out = a.iter_mut().reduce([](i32& acc, i32& v) -> i32& {
       if (acc < v)
         return acc;
@@ -3420,14 +3420,14 @@ TEST(Iterator, Reduce) {
     EXPECT_EQ(&out.as_value(), &a[1u]);
   }
 
-  static_assert(sus::Array<i32, 3>::with(2, 3, 4)
+  static_assert(sus::Array<i32, 3>(2, 3, 4)
                     .into_iter()
                     .reduce([](i32 acc, i32 v) { return acc + v; })
                     .unwrap() == 2 + 3 + 4);
 }
 
 TEST(Iterator, Reduce_Example_References) {
-  auto a = sus::Array<i32, 3>::with(2, 3, 4);
+  auto a = sus::Array<i32, 3>(2, 3, 4);
   auto out = a.iter().copied().reduce([](i32 acc, i32 v) { return acc + v; });
   sus::check(out.as_value() == 2 + 3 + 4);
 }
@@ -3435,7 +3435,7 @@ TEST(Iterator, Reduce_Example_References) {
 TEST(Iterator, Rposition) {
   // iter().
   {
-    auto a = sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13);
+    auto a = sus::Array<i32, 8>(10, 11, 12, 13, 10, 11, 12, 13);
     auto it = a.iter();
     EXPECT_EQ(it.rposition([](const i32& i) { return i == 11; }),
               sus::some(5u));
@@ -3446,7 +3446,7 @@ TEST(Iterator, Rposition) {
   }
   // iter_mut().
   {
-    auto a = sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13);
+    auto a = sus::Array<i32, 8>(10, 11, 12, 13, 10, 11, 12, 13);
     auto it = a.iter_mut();
     EXPECT_EQ(it.rposition([](i32& i) { return i == 11; }), sus::some(5u));
     EXPECT_EQ(it.rposition([](i32& i) { return i == 12; }), sus::some(2u));
@@ -3456,7 +3456,7 @@ TEST(Iterator, Rposition) {
   // into_iter().
   {
     auto it =
-        sus::Array<i32, 8>::with(10, 11, 12, 13, 10, 11, 12, 13).into_iter();
+        sus::Array<i32, 8>(10, 11, 12, 13, 10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.rposition([](i32&& i) { return i == 11; }), sus::some(5u));
     EXPECT_EQ(it.rposition([](i32&& i) { return i == 12; }), sus::some(2u));
     EXPECT_EQ(it.rposition([](i32&&) { return false; }), sus::none());
@@ -3465,11 +3465,11 @@ TEST(Iterator, Rposition) {
 
   // No match.
   {
-    auto it = sus::Array<i32, 4>::with(10, 11, 12, 13).into_iter();
+    auto it = sus::Array<i32, 4>(10, 11, 12, 13).into_iter();
     EXPECT_EQ(it.rposition([](auto) { return false; }), sus::None);
   }
 
-  static_assert(sus::Array<i32, 4>::with(10, 11, 12, 11)
+  static_assert(sus::Array<i32, 4>(10, 11, 12, 11)
                     .into_iter()
                     .rposition([](auto i) { return i == 11; }) ==
                 sus::some(3u));
@@ -3477,7 +3477,7 @@ TEST(Iterator, Rposition) {
 
 TEST(Iterator, Scan) {
   {
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     auto it = sus::move(a).into_iter().scan(
         22_i32, [](i32& state, i32&& v) -> sus::Option<std::string> {
           auto before = state;
@@ -3492,7 +3492,7 @@ TEST(Iterator, Scan) {
   }
   // Early terminate.
   {
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     auto it = sus::move(a).into_iter().scan(
         22_i32, [](i32& state, i32&& v) -> sus::Option<std::string> {
           auto before = state;
@@ -3509,7 +3509,7 @@ TEST(Iterator, Scan) {
     EXPECT_EQ(it.next(), sus::none());
   }
 
-  static_assert(sus::Array<i32, 3>::with(2, 3, 4)
+  static_assert(sus::Array<i32, 3>(2, 3, 4)
                     .into_iter()
                     .scan(10_i32,
                           [](i32& state, i32 v) -> sus::Option<i32> {
@@ -3522,7 +3522,7 @@ TEST(Iterator, Scan) {
 TEST(Iterator, Skip) {
   // Skip nothing.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip(0u);
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().skip(0u);
     static_assert(sus::iter::Iterator<decltype(it), i32>);
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32>);
     static_assert(sus::iter::ExactSizeIterator<decltype(it), i32>);
@@ -3545,7 +3545,7 @@ TEST(Iterator, Skip) {
   }
   // Skip everything.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip(10u);
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().skip(10u);
     EXPECT_EQ(it.exact_size_hint(), 0u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
     EXPECT_EQ(it.next(), sus::none());
@@ -3553,7 +3553,7 @@ TEST(Iterator, Skip) {
   }
   // Skip some.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip(2u);
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().skip(2u);
     EXPECT_EQ(it.exact_size_hint(), 1u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
     EXPECT_EQ(it.next().unwrap(), 4);
@@ -3562,7 +3562,7 @@ TEST(Iterator, Skip) {
 
   // next_back() before skippping.
   {
-    auto it = sus::Array<i32, 5>::with(2, 3, 4, 5, 6).into_iter().skip(3u);
+    auto it = sus::Array<i32, 5>(2, 3, 4, 5, 6).into_iter().skip(3u);
     EXPECT_EQ(it.exact_size_hint(), 2u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
     EXPECT_EQ(it.next_back().unwrap(), 6);
@@ -3571,7 +3571,7 @@ TEST(Iterator, Skip) {
   }
   // next_back() then skippping.
   {
-    auto it = sus::Array<i32, 5>::with(2, 3, 4, 5, 6).into_iter().skip(3u);
+    auto it = sus::Array<i32, 5>(2, 3, 4, 5, 6).into_iter().skip(3u);
     EXPECT_EQ(it.exact_size_hint(), 2u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
     EXPECT_EQ(it.next_back().unwrap(), 6);
@@ -3580,7 +3580,7 @@ TEST(Iterator, Skip) {
   }
   // next_back() skips everything.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip(10u);
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().skip(10u);
     EXPECT_EQ(it.exact_size_hint(), 0u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
     EXPECT_EQ(it.next_back(), sus::none());
@@ -3590,7 +3590,7 @@ TEST(Iterator, Skip) {
 
   // iter().
   {
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     auto it = a.iter().skip(1u);
     EXPECT_EQ(it.exact_size_hint(), 2u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
@@ -3601,7 +3601,7 @@ TEST(Iterator, Skip) {
   }
   // iter_mut().
   {
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     auto it = a.iter_mut().skip(1u);
     EXPECT_EQ(it.exact_size_hint(), 2u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
@@ -3612,14 +3612,14 @@ TEST(Iterator, Skip) {
   }
 
   static_assert(
-      sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().skip(4u).sum() ==
+      sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().skip(4u).sum() ==
       6 + 7);
 }
 
 TEST(Iterator, SkipWhile) {
   // Skip nothing.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip_while(
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().skip_while(
         [](const i32&) { return false; });
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(3u)));
     EXPECT_EQ(it.next().unwrap(), 2);
@@ -3632,7 +3632,7 @@ TEST(Iterator, SkipWhile) {
   }
   // Skip everything.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip_while(
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().skip_while(
         [](const i32&) { return true; });
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(3u)));
     EXPECT_EQ(it.next(), sus::none());
@@ -3640,7 +3640,7 @@ TEST(Iterator, SkipWhile) {
   }
   // Skip some.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().skip_while(
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().skip_while(
         [](const i32& i) { return i <= 3; });
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(3u)));
     EXPECT_EQ(it.next(), sus::some(4));
@@ -3650,7 +3650,7 @@ TEST(Iterator, SkipWhile) {
   }
   // Closure isn't called after false.
   {
-    auto it = sus::Array<i32, 5>::with(2, 3, 4, 1, 0)
+    auto it = sus::Array<i32, 5>(2, 3, 4, 1, 0)
                   .into_iter()
                   .skip_while([](const i32& i) { return i <= 3; });
     EXPECT_EQ(it.next(), sus::some(4));
@@ -3661,7 +3661,7 @@ TEST(Iterator, SkipWhile) {
 
   // iter().
   {
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     auto it = a.iter().skip_while([](const i32& i) { return i <= 3; });
     static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
     EXPECT_EQ(&it.next().unwrap(), &a[2u]);
@@ -3669,14 +3669,14 @@ TEST(Iterator, SkipWhile) {
   }
   // iter_mut().
   {
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     auto it = a.iter_mut().skip_while([](const i32& i) { return i <= 3; });
     static_assert(std::same_as<decltype(it.next()), sus::Option<i32&>>);
     EXPECT_EQ(&it.next().unwrap(), &a[2u]);
     EXPECT_EQ(it.next(), sus::none());
   }
 
-  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+  static_assert(sus::Array<i32, 6>(2, 3, 4, 5, 6, 7)
                     .into_iter()
                     .skip_while([](i32 i) { return i <= 4; })
                     .sum() == 5 + 6 + 7);
@@ -3685,7 +3685,7 @@ TEST(Iterator, SkipWhile) {
 TEST(Iterator, StepBy) {
   // Step by 0.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().step_by(1u);
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().step_by(1u);
     EXPECT_EQ(it.exact_size_hint(), 3u);
     EXPECT_EQ(it.next(), sus::some(2));
     EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -3698,7 +3698,7 @@ TEST(Iterator, StepBy) {
   // Step by more.
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(2u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(2u);
     EXPECT_EQ(it.exact_size_hint(), 3u);
     EXPECT_EQ(it.next(), sus::some(2));
     EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -3710,7 +3710,7 @@ TEST(Iterator, StepBy) {
   }
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(2u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(2u);
     EXPECT_EQ(it.exact_size_hint(), 3u);
     EXPECT_EQ(it.next_back(), sus::some(6));
     EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -3723,7 +3723,7 @@ TEST(Iterator, StepBy) {
   }
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(3u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(3u);
     EXPECT_EQ(it.exact_size_hint(), 2u);
     EXPECT_EQ(it.next(), sus::some(2));
     EXPECT_EQ(it.exact_size_hint(), 1u);
@@ -3733,7 +3733,7 @@ TEST(Iterator, StepBy) {
   }
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(3u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(3u);
     EXPECT_EQ(it.exact_size_hint(), 2u);
     EXPECT_EQ(it.next_back(), sus::some(5));
     EXPECT_EQ(it.exact_size_hint(), 1u);
@@ -3744,7 +3744,7 @@ TEST(Iterator, StepBy) {
   // next() then next_back().
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(2u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(2u);
     EXPECT_EQ(it.exact_size_hint(), 3u);
     EXPECT_EQ(it.next(), sus::some(2));
     EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -3758,7 +3758,7 @@ TEST(Iterator, StepBy) {
   // The two ends.
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(5u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(5u);
     EXPECT_EQ(it.exact_size_hint(), 2u);
     EXPECT_EQ(it.next(), sus::some(2));
     EXPECT_EQ(it.next(), sus::some(7));
@@ -3766,7 +3766,7 @@ TEST(Iterator, StepBy) {
   }
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(5u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(5u);
     EXPECT_EQ(it.exact_size_hint(), 2u);
     EXPECT_EQ(it.next(), sus::some(2));
     EXPECT_EQ(it.next_back(), sus::some(7));
@@ -3774,7 +3774,7 @@ TEST(Iterator, StepBy) {
   }
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(5u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(5u);
     EXPECT_EQ(it.exact_size_hint(), 2u);
     EXPECT_EQ(it.next_back(), sus::some(7));
     EXPECT_EQ(it.next(), sus::some(2));
@@ -3783,20 +3783,20 @@ TEST(Iterator, StepBy) {
   // Step by more than length.
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(8u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(8u);
     EXPECT_EQ(it.exact_size_hint(), 1u);
     EXPECT_EQ(it.next(), sus::some(2));
     EXPECT_EQ(it.next(), sus::none());
   }
   {
     auto it =
-        sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7).into_iter().step_by(8u);
+        sus::Array<i32, 6>(2, 3, 4, 5, 6, 7).into_iter().step_by(8u);
     EXPECT_EQ(it.exact_size_hint(), 1u);
     EXPECT_EQ(it.next_back(), sus::some(2));
     EXPECT_EQ(it.next_back(), sus::none());
   }
 
-  static_assert(sus::Array<i32, 7>::with(2, 3, 4, 5, 6, 7, 8)
+  static_assert(sus::Array<i32, 7>(2, 3, 4, 5, 6, 7, 8)
                     .into_iter()
                     .step_by(3u)
                     .sum() == 2 + 5 + 8);
@@ -3818,42 +3818,42 @@ TEST(Iterator, Sum) {
 
   // Signed integer.
   {
-    EXPECT_EQ((sus::Array<i32, 0>::with().into_iter().sum()), 0);
+    EXPECT_EQ((sus::Array<i32, 0>().into_iter().sum()), 0);
 
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     decltype(auto) p = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(p), i32>);
     EXPECT_EQ(p, 2 + 3 + 4);
   }
   // Unsigned integer.
   {
-    EXPECT_EQ((sus::Array<u32, 0>::with().into_iter().sum()), 0u);
+    EXPECT_EQ((sus::Array<u32, 0>().into_iter().sum()), 0u);
 
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     decltype(auto) p = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(p), u32>);
     EXPECT_EQ(p, 2u + 3u + 4u);
   }
   // Float.
   {
-    EXPECT_EQ((sus::Array<f32, 0>::with().into_iter().sum()), 0.f);
+    EXPECT_EQ((sus::Array<f32, 0>().into_iter().sum()), 0.f);
 
-    auto a = sus::Array<f32, 3>::with(2.f, 3.f, 4.f);
+    auto a = sus::Array<f32, 3>(2.f, 3.f, 4.f);
     decltype(auto) p = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(p), f32>);
     EXPECT_EQ(p, 2.f + 3.f + 4.f);
   }
 
-  static_assert(sus::Array<i32, 3>::with(2, 3, 4).into_iter().sum() ==
+  static_assert(sus::Array<i32, 3>(2, 3, 4).into_iter().sum() ==
                 2 + 3 + 4);
-  static_assert(sus::Array<f32, 3>::with(2.f, 3.f, 4.f).into_iter().sum() ==
+  static_assert(sus::Array<f32, 3>(2.f, 3.f, 4.f).into_iter().sum() ==
                 2.f + 3.f + 4.f);
 }
 
 TEST(Iterator, Take) {
   // Take none.
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = sus::move(a).into_iter().take(0u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
     EXPECT_EQ(it.exact_size_hint(), 0u);
@@ -3861,7 +3861,7 @@ TEST(Iterator, Take) {
     EXPECT_EQ(it.next(), sus::none());
   }
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = sus::move(a).into_iter().take(0u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
     EXPECT_EQ(it.exact_size_hint(), 0u);
@@ -3870,7 +3870,7 @@ TEST(Iterator, Take) {
   }
   // Take all.
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = sus::move(a).into_iter().take(3u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);
@@ -3880,7 +3880,7 @@ TEST(Iterator, Take) {
     EXPECT_EQ(it.next(), sus::none());
   }
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = sus::move(a).into_iter().take(3u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);
@@ -3891,7 +3891,7 @@ TEST(Iterator, Take) {
   }
   // Take more than all.
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = sus::move(a).into_iter().take(5u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);
@@ -3901,7 +3901,7 @@ TEST(Iterator, Take) {
     EXPECT_EQ(it.next(), sus::none());
   }
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = sus::move(a).into_iter().take(5u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);
@@ -3912,7 +3912,7 @@ TEST(Iterator, Take) {
   }
   // Take some.
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = sus::move(a).into_iter().take(2u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
     EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -3922,7 +3922,7 @@ TEST(Iterator, Take) {
     EXPECT_EQ(it.next(), sus::none());
   }
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = sus::move(a).into_iter().take(2u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
     EXPECT_EQ(it.exact_size_hint(), 2u);
@@ -3933,7 +3933,7 @@ TEST(Iterator, Take) {
   }
   // Mix of front and back.
   {
-    auto a = sus::Array<u32, 5>::with(2u, 3u, 4u, 5u, 6u);
+    auto a = sus::Array<u32, 5>(2u, 3u, 4u, 5u, 6u);
     auto it = sus::move(a).into_iter().take(3u);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);
@@ -3948,7 +3948,7 @@ TEST(Iterator, Take) {
   }
   // iter().
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = a.iter().take(2u);
     static_assert(std::same_as<decltype(it.next()), sus::Option<const u32&>>);
     EXPECT_EQ(&it.next().unwrap(), &a[0u]);
@@ -3957,7 +3957,7 @@ TEST(Iterator, Take) {
   }
   // iter_mut().
   {
-    auto a = sus::Array<u32, 3>::with(2u, 3u, 4u);
+    auto a = sus::Array<u32, 3>(2u, 3u, 4u);
     auto it = a.iter_mut().take(2u);
     static_assert(std::same_as<decltype(it.next()), sus::Option<u32&>>);
     EXPECT_EQ(&it.next().unwrap(), &a[0u]);
@@ -3966,14 +3966,14 @@ TEST(Iterator, Take) {
   }
 
   static_assert(
-      sus::Array<i32, 5>::with(2, 3, 4, 5, 6).into_iter().take(3u).sum() ==
+      sus::Array<i32, 5>(2, 3, 4, 5, 6).into_iter().take(3u).sum() ==
       2 + 3 + 4);
 }
 
 TEST(Iterator, TakeWhile) {
   // Take nothing.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().take_while(
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().take_while(
         [](const i32&) { return false; });
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(3u)));
     EXPECT_EQ(it.next(), sus::none());
@@ -3981,7 +3981,7 @@ TEST(Iterator, TakeWhile) {
   }
   // Take everything.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().take_while(
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().take_while(
         [](const i32&) { return true; });
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(3u)));
     EXPECT_EQ(it.next(), sus::some(2));
@@ -3995,7 +3995,7 @@ TEST(Iterator, TakeWhile) {
   }
   // Take some.
   {
-    auto it = sus::Array<i32, 3>::with(2, 3, 4).into_iter().take_while(
+    auto it = sus::Array<i32, 3>(2, 3, 4).into_iter().take_while(
         [](const i32& i) { return i <= 3; });
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(3u)));
     EXPECT_EQ(it.next(), sus::some(2));
@@ -4007,7 +4007,7 @@ TEST(Iterator, TakeWhile) {
   }
   // Closure isn't called after false.
   {
-    auto it = sus::Array<i32, 5>::with(2, 3, 4, 1, 0)
+    auto it = sus::Array<i32, 5>(2, 3, 4, 1, 0)
                   .into_iter()
                   .take_while([](const i32& i) { return i <= 3; });
     EXPECT_EQ(it.next(), sus::some(2));
@@ -4019,7 +4019,7 @@ TEST(Iterator, TakeWhile) {
 
   // iter().
   {
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     auto it = a.iter().take_while([](const i32& i) { return i <= 3; });
     static_assert(std::same_as<decltype(it.next()), sus::Option<const i32&>>);
     EXPECT_EQ(&it.next().unwrap(), &a[0u]);
@@ -4028,7 +4028,7 @@ TEST(Iterator, TakeWhile) {
   }
   // iter_mut().
   {
-    auto a = sus::Array<i32, 3>::with(2, 3, 4);
+    auto a = sus::Array<i32, 3>(2, 3, 4);
     auto it = a.iter_mut().take_while([](const i32& i) { return i <= 3; });
     static_assert(std::same_as<decltype(it.next()), sus::Option<i32&>>);
     EXPECT_EQ(&it.next().unwrap(), &a[0u]);
@@ -4036,7 +4036,7 @@ TEST(Iterator, TakeWhile) {
     EXPECT_EQ(it.next(), sus::none());
   }
 
-  static_assert(sus::Array<i32, 3>::with(2, 3, 4)
+  static_assert(sus::Array<i32, 3>(2, 3, 4)
                     .into_iter()
                     .take_while([](i32 i) constexpr { return i <= 3; })
                     .sum() == 2 + 3);
@@ -4045,7 +4045,7 @@ TEST(Iterator, TakeWhile) {
 TEST(Iterator, TryFold) {
   // With Option.
   {
-    auto a = sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7);
+    auto a = sus::Array<i32, 6>(2, 3, 4, 5, 6, 7);
     auto it = sus::move(a).into_iter();
     auto f = [](std::string acc, i32 i) -> Option<std::string> {
       // Stop at 4.
@@ -4063,7 +4063,7 @@ TEST(Iterator, TryFold) {
   }
   // With Result.
   {
-    auto a = sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7);
+    auto a = sus::Array<i32, 6>(2, 3, 4, 5, 6, 7);
     auto it = sus::move(a).into_iter();
     auto f = [](std::string acc,
                 i32 i) -> sus::result::Result<std::string, i32> {
@@ -4082,14 +4082,14 @@ TEST(Iterator, TryFold) {
     EXPECT_EQ(o, sus::ok("57"));  // Got to the end.
   }
 
-  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+  static_assert(sus::Array<i32, 6>(2, 3, 4, 5, 6, 7)
                     .into_iter()
                     .try_fold(0_i32, [](i32 acc, i32 i) -> Option<i32> {
                       if (i < 3) return sus::some(acc);
                       if (i < 6) return sus::some(acc + i);
                       return sus::some(acc * 2);
                     }) == sus::some((3 + 4 + 5) * 2 * 2));
-  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+  static_assert(sus::Array<i32, 6>(2, 3, 4, 5, 6, 7)
                     .into_iter()
                     .try_fold(0_i32, [](i32 acc, i32 i) -> Option<i32> {
                       if (i < 3) return sus::some(acc);
@@ -4100,7 +4100,7 @@ TEST(Iterator, TryFold) {
 TEST(Iterator, TryRfold) {
   // With Option.
   {
-    auto a = sus::Array<i32, 6>::with(1, 2, 3, 4, 5, 6);
+    auto a = sus::Array<i32, 6>(1, 2, 3, 4, 5, 6);
     auto it = sus::move(a).into_iter();
     auto f = [](std::string acc, i32 i) -> Option<std::string> {
       // Stop at 4.
@@ -4118,7 +4118,7 @@ TEST(Iterator, TryRfold) {
   }
   // With Result.
   {
-    auto a = sus::Array<i32, 6>::with(1, 2, 3, 4, 5, 6);
+    auto a = sus::Array<i32, 6>(1, 2, 3, 4, 5, 6);
     auto it = sus::move(a).into_iter();
     auto f = [](std::string acc,
                 i32 i) -> sus::result::Result<std::string, i32> {
@@ -4137,14 +4137,14 @@ TEST(Iterator, TryRfold) {
     EXPECT_EQ(o, sus::ok("31"));  // Got to the end.
   }
 
-  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+  static_assert(sus::Array<i32, 6>(2, 3, 4, 5, 6, 7)
                     .into_iter()
                     .try_rfold(0_i32, [](i32 acc, i32 i) -> Option<i32> {
                       if (i < 3) return sus::some(acc);
                       if (i < 6) return sus::some(acc + i);
                       return sus::some(acc * 2);
                     }) == sus::some((0 * 2 * 2) + 3 + 4 + 5));
-  static_assert(sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7)
+  static_assert(sus::Array<i32, 6>(2, 3, 4, 5, 6, 7)
                     .into_iter()
                     .try_rfold(0_i32, [](i32 acc, i32 i) -> Option<i32> {
                       if (i < 3) return sus::some(acc);
@@ -4157,7 +4157,7 @@ TEST(Iterator, TryForEach) {
 
   // With Option.
   {
-    auto a = sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7);
+    auto a = sus::Array<i32, 6>(2, 3, 4, 5, 6, 7);
     auto it = sus::move(a).into_iter();
     std::string visited;
     auto f = [&visited](i32 i) -> Option<Void> {
@@ -4177,7 +4177,7 @@ TEST(Iterator, TryForEach) {
   }
   // With Result.
   {
-    auto a = sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7);
+    auto a = sus::Array<i32, 6>(2, 3, 4, 5, 6, 7);
     auto it = sus::move(a).into_iter();
     std::string visited;
     auto f = [&visited](i32 i) -> sus::result::Result<Void, i32> {
@@ -4197,7 +4197,7 @@ TEST(Iterator, TryForEach) {
   }
   // With void Result.
   {
-    auto a = sus::Array<i32, 6>::with(2, 3, 4, 5, 6, 7);
+    auto a = sus::Array<i32, 6>(2, 3, 4, 5, 6, 7);
     auto it = sus::move(a).into_iter();
     std::string visited;
     auto f = [&visited](i32 i) -> sus::result::Result<void, i32> {
@@ -4218,7 +4218,7 @@ TEST(Iterator, TryForEach) {
 
   static_assert([] {
     i32 sum;
-    auto r = sus::Array<i32, 3>::with(2, 3, 4).into_iter().try_for_each(
+    auto r = sus::Array<i32, 3>(2, 3, 4).into_iter().try_for_each(
         [&](i32 i) -> sus::result::Result<void, i32> {
           sum += i;
           return sus::result::Result<void, i32>::with();
@@ -4232,14 +4232,14 @@ TEST(Iterator, Unzip) {
   using sus::Tuple;
   using sus::Vec;
   {
-    auto a = sus::Array<Tuple<i32, f32>, 0>::with();
+    auto a = sus::Array<Tuple<i32, f32>, 0>();
     auto u = sus::move(a).into_iter().unzip<Vec<i32>, Vec<f32>>();
     static_assert(std::same_as<decltype(u), Tuple<Vec<i32>, Vec<f32>>>);
     EXPECT_EQ(u.at<0>().is_empty(), true);
     EXPECT_EQ(u.at<1>().is_empty(), true);
   }
   {
-    auto a = sus::Array<Tuple<i32, f32>, 5>::with(  //
+    auto a = sus::Array<Tuple<i32, f32>, 5>(  //
         ::sus::tuple(1, 2.f),                       //
         ::sus::tuple(2, 3.f),                       //
         ::sus::tuple(3, 4.f),                       //
@@ -4251,7 +4251,7 @@ TEST(Iterator, Unzip) {
     EXPECT_EQ(u.at<1>(), sus::Slice<f32>::from({2.f, 3.f, 4.f, 5.f, 6.f}));
   }
 
-  static_assert(sus::Array<Tuple<i32, f32>, 5>::with(::sus::tuple(1, 2.f),  //
+  static_assert(sus::Array<Tuple<i32, f32>, 5>(::sus::tuple(1, 2.f),  //
                                                      ::sus::tuple(2, 3.f),  //
                                                      ::sus::tuple(3, 4.f),  //
                                                      ::sus::tuple(4, 5.f),  //
@@ -4266,8 +4266,8 @@ TEST(Iterator, Unzip) {
 TEST(Iterator, Zip) {
   // Equal sizes, both sides are values.
   {
-    auto a = sus::Array<i32, 5>::with(2, 3, 4, 5, 6);
-    auto b = sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f);
+    auto a = sus::Array<i32, 5>(2, 3, 4, 5, 6);
+    auto b = sus::Array<f32, 5>(3.f, 4.f, 5.f, 6.f, 7.f);
     auto it = sus::move(a).into_iter().zip(sus::move(b));
     static_assert(
         std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
@@ -4292,8 +4292,8 @@ TEST(Iterator, Zip) {
   }
   // First ends first, both sides are values.
   {
-    auto a = sus::Array<i32, 2>::with(2, 3);
-    auto b = sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f);
+    auto a = sus::Array<i32, 2>(2, 3);
+    auto b = sus::Array<f32, 5>(3.f, 4.f, 5.f, 6.f, 7.f);
     auto it = sus::move(a).into_iter().zip(sus::move(b));
     static_assert(
         std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
@@ -4318,8 +4318,8 @@ TEST(Iterator, Zip) {
   }
   // First ends second, both sides are values.
   {
-    auto a = sus::Array<i32, 5>::with(2, 3, 4, 5, 6);
-    auto b = sus::Array<f32, 2>::with(3.f, 4.f);
+    auto a = sus::Array<i32, 5>(2, 3, 4, 5, 6);
+    auto b = sus::Array<f32, 2>(3.f, 4.f);
     auto it = sus::move(a).into_iter().zip(sus::move(b));
     static_assert(
         std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
@@ -4343,8 +4343,8 @@ TEST(Iterator, Zip) {
   }
   // Empty.
   {
-    auto a = sus::Array<i32, 0>::with();
-    auto b = sus::Array<f32, 0>::with();
+    auto a = sus::Array<i32, 0>();
+    auto b = sus::Array<f32, 0>();
     auto it = sus::move(a).into_iter().zip(sus::move(b));
     static_assert(
         std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
@@ -4354,8 +4354,8 @@ TEST(Iterator, Zip) {
   }
   // zip().
   {
-    auto a = sus::Array<i32, 2>::with(2, 3);
-    auto b = sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f);
+    auto a = sus::Array<i32, 2>(2, 3);
+    auto b = sus::Array<f32, 5>(3.f, 4.f, 5.f, 6.f, 7.f);
     auto it = sus::iter::zip(::sus::move(a), ::sus::move(b));
     static_assert(
         std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
@@ -4365,15 +4365,15 @@ TEST(Iterator, Zip) {
   }
 
   static_assert(
-      sus::iter::zip(sus::Array<i32, 2>::with(2, 3),
-                     sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f))
+      sus::iter::zip(sus::Array<i32, 2>(2, 3),
+                     sus::Array<f32, 5>(3.f, 4.f, 5.f, 6.f, 7.f))
           .map([](sus::Tuple<i32, f32> pair) { return pair.template at<0>(); })
           .sum() == 2 + 3);
 }
 
 TEST(Iterator, Zip_Example) {
-  auto a = sus::Array<i32, 2>::with(2, 3);
-  auto b = sus::Array<f32, 5>::with(3.f, 4.f, 5.f, 6.f, 7.f);
+  auto a = sus::Array<i32, 2>(2, 3);
+  auto b = sus::Array<f32, 5>(3.f, 4.f, 5.f, 6.f, 7.f);
   auto it = sus::iter::zip(::sus::move(a), ::sus::move(b));
   sus::check(it.next() == sus::some(sus::tuple(2, 3.f)));
   sus::check(it.next() == sus::some(sus::tuple(3, 4.f)));

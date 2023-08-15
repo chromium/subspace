@@ -490,7 +490,7 @@ class IteratorBase {
   ///
   /// ```cpp
   /// sus::check(
-  ///     sus::Array<f32, 3>::with(2.4, f32::NAN, 1.3)
+  ///     sus::Array<f32, 3>(2.4, f32::NAN, 1.3)
   ///         .into_iter()
   ///         .reduce(&f32::max)
   ///         .unwrap() ==
@@ -536,7 +536,7 @@ class IteratorBase {
   ///
   /// ```cpp
   /// sus::check(
-  ///     sus::Array<f32, 3>::with(2.4, f32::NAN, 1.3)
+  ///     sus::Array<f32, 3>(2.4, f32::NAN, 1.3)
   ///         .into_iter()
   ///         .reduce(&f32::min)
   ///         .unwrap() ==
@@ -735,7 +735,7 @@ class IteratorBase {
   ///
   /// This example uses `copied()` to copy each `i32` and sum them.
   /// ```cpp
-  /// auto a = sus::Array<i32, 3>::with(2, 3, 4);
+  /// auto a = sus::Array<i32, 3>(2, 3, 4);
   /// auto out = a.iter().copied().reduce(
   ///     [](i32 acc, i32 v) { return acc + v; });
   /// sus::check(out.as_value() == 2 + 3 + 4);

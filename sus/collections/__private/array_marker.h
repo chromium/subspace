@@ -40,7 +40,7 @@ struct ArrayMarker {
   inline constexpr operator Array<U, sizeof...(Ts)>() && noexcept {
     auto make_array =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          return Array<U, sizeof...(Is)>::with(
+          return Array<U, sizeof...(Is)>(
               ::sus::forward<Ts>(values.template at_mut<Is>())...);
         };
     return make_array(std::make_integer_sequence<size_t, sizeof...(Ts)>());

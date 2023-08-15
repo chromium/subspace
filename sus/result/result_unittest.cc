@@ -1523,7 +1523,7 @@ TEST(Result, FromIter) {
   };
 
   auto no_errors =
-      sus::Array<Result<usize, Error>, 5>::with(
+      sus::Array<Result<usize, Error>, 5>(
           Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
           Result<usize, Error>::with(3u), Result<usize, Error>::with(4u),
           Result<usize, Error>::with(5u))
@@ -1535,7 +1535,7 @@ TEST(Result, FromIter) {
   EXPECT_EQ(sus::move(no_errors_out).unwrap().sum, 1u + 2u + 3u + 4u + 5u);
 
   auto with_error =
-      sus::Array<Result<usize, Error>, 5>::with(
+      sus::Array<Result<usize, Error>, 5>(
           Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
           Result<usize, Error>::with_err(Error::OneError),
           Result<usize, Error>::with(4u), Result<usize, Error>::with(5u))
@@ -1547,7 +1547,7 @@ TEST(Result, FromIter) {
   EXPECT_EQ(sus::move(with_error_out).unwrap_err(), Error::OneError);
 
   auto with_errors =
-      sus::Array<Result<usize, Error>, 5>::with(
+      sus::Array<Result<usize, Error>, 5>(
           Result<usize, Error>::with(1u), Result<usize, Error>::with(2u),
           Result<usize, Error>::with_err(Error::OneError),
           Result<usize, Error>::with(4u),
@@ -1961,7 +1961,7 @@ TEST(Result, FromProduct) {
 
   // With a None.
   {
-    auto a = sus::Array<Result<i32, E>, 3>::with(sus::ok(2), sus::err(ERROR),
+    auto a = sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::err(ERROR),
                                                  sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
@@ -1970,7 +1970,7 @@ TEST(Result, FromProduct) {
   // Without a None.
   {
     auto a =
-        sus::Array<Result<i32, E>, 3>::with(sus::ok(2), sus::ok(3), sus::ok(4));
+        sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::ok(3), sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
     EXPECT_EQ(o.as_value(), 2 * 3 * 4);
@@ -1983,7 +1983,7 @@ TEST(Result, FromSum) {
 
   // With a None.
   {
-    auto a = sus::Array<Result<i32, E>, 3>::with(sus::ok(2), sus::err(ERROR),
+    auto a = sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::err(ERROR),
                                                  sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
@@ -1992,7 +1992,7 @@ TEST(Result, FromSum) {
   // Without a None.
   {
     auto a =
-        sus::Array<Result<i32, E>, 3>::with(sus::ok(2), sus::ok(3), sus::ok(4));
+        sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::ok(3), sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
     EXPECT_EQ(o.as_value(), 2 + 3 + 4);
