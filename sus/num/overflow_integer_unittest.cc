@@ -107,7 +107,7 @@ TEST(OverflowInteger, FromProduct) {
 
   // To OverflowInteger with overflow.
   {
-    auto a = sus::Array<i32, 2>::with(2, i32::MAX);
+    auto a = sus::Array<i32, 2>(2, i32::MAX);
     decltype(auto) o =
         sus::move(a).into_iter().product<sus::num::OverflowInteger<i32>>();
     static_assert(std::same_as<decltype(o), sus::num::OverflowInteger<i32>>);
@@ -115,7 +115,7 @@ TEST(OverflowInteger, FromProduct) {
   }
   // To OverflowInteger without overflow.
   {
-    auto a = sus::Array<i32, 2>::with(2, 4);
+    auto a = sus::Array<i32, 2>(2, 4);
     decltype(auto) o =
         sus::move(a).into_iter().product<sus::num::OverflowInteger<i32>>();
     static_assert(std::same_as<decltype(o), sus::num::OverflowInteger<i32>>);
@@ -123,7 +123,7 @@ TEST(OverflowInteger, FromProduct) {
   }
   // Iterating OverflowInteger types with overflow.
   {
-    auto a = sus::Array<OverflowInteger<i32>, 2>::with(
+    auto a = sus::Array<OverflowInteger<i32>, 2>(
         OverflowInteger<i32>::with(2), OverflowInteger<i32>::with(i32::MAX));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::num::OverflowInteger<i32>>);
@@ -131,7 +131,7 @@ TEST(OverflowInteger, FromProduct) {
   }
   // Iterating OverflowInteger types without overflow.
   {
-    auto a = sus::Array<OverflowInteger<i32>, 2>::with(
+    auto a = sus::Array<OverflowInteger<i32>, 2>(
         OverflowInteger<i32>::with(2), OverflowInteger<i32>::with(4));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::num::OverflowInteger<i32>>);

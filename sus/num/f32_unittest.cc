@@ -1055,13 +1055,13 @@ TEST(f32, RemEuclid) {
 
 TEST(f32, ToBeBytes) {
   auto array = (12.5_f32).to_be_bytes();
-  auto expected = sus::Array<u8, 4>::with(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8);
+  auto expected = sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8);
   EXPECT_EQ(array, expected);
 }
 
 TEST(f32, ToLeBytes) {
   auto array = (12.5_f32).to_le_bytes();
-  auto expected = sus::Array<u8, 4>::with(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
+  auto expected = sus::Array<u8, 4>(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
   EXPECT_EQ(array, expected);
 }
 
@@ -1069,31 +1069,31 @@ TEST(f32, ToNeBytes) {
   auto array = (12.5_f32).to_ne_bytes();
   auto expected =
       sus::assertions::is_big_endian()
-          ? sus::Array<u8, 4>::with(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8)
-          : sus::Array<u8, 4>::with(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
+          ? sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8)
+          : sus::Array<u8, 4>(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
   EXPECT_EQ(array, expected);
 }
 
 TEST(f32, FromBeBytes) {
   auto value = f32::from_be_bytes(
-      sus::Array<u8, 4>::with(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8));
+      sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8));
   EXPECT_EQ(value, 12.5_f32);
 }
 
 TEST(f32, FromLeBytes) {
   auto value = f32::from_le_bytes(
-      sus::Array<u8, 4>::with(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8));
+      sus::Array<u8, 4>(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8));
   EXPECT_EQ(value, 12.5_f32);
 }
 
 TEST(f32, FromNeBytes) {
   if constexpr (sus::assertions::is_big_endian()) {
     auto value = f32::from_ne_bytes(
-        sus::Array<u8, 4>::with(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8));
+        sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8));
     EXPECT_EQ(value, 12.5_f32);
   } else {
     auto value = f32::from_ne_bytes(
-        sus::Array<u8, 4>::with(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8));
+        sus::Array<u8, 4>(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8));
     EXPECT_EQ(value, 12.5_f32);
   }
 }

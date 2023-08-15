@@ -68,7 +68,7 @@ enum FnBoxType {
 // Example:
 // ```
 //    auto even = [](const auto& i) { return i % 2 == 0; };
-//    auto r0 = sus::Array<int, 11>::with(0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+//    auto r0 = sus::Array<int, 11>(0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
 //    10); auto result = r0.iter().filter(even);
 // ```
 

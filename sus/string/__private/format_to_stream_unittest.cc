@@ -85,7 +85,7 @@ TEST(FormatToStream, ToStreamWithADL) {
 TEST(FormatToStream, Array) {
   StreamWithADL s;
   EXPECT_EQ(s.called, false);
-  s << sus::Array<i32, 3>::with(1, 2, 3);
+  s << sus::Array<i32, 3>(1, 2, 3);
   EXPECT_EQ(s.called, true);
 }
 
