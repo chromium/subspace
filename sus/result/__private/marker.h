@@ -32,12 +32,12 @@ struct OkVoidMarker {
   // concrete type.
   template <class E>
   inline constexpr operator ::sus::result::Result<void, E>() const& noexcept {
-    return Result<void, E>();
+    return Result<void, E>(::sus::result::OkVoid());
   }
 
   template <class E>
   inline constexpr operator ::sus::result::Result<void, E>() && noexcept {
-    return Result<void, E>();
+    return Result<void, E>(::sus::result::OkVoid());
   }
 
   template <class E>
