@@ -106,9 +106,11 @@ class [[sus_trivial_abi]] NonNull {
   template <class U, size_t N>
   static constexpr inline NonNull from(U (&t)[N]) = delete;
 
-  /// NonNull<T> is copyable, so this is the copy constructor.
+  /// NonNull<T> is `Copy`, so this is the copy constructor.
+  /// #[doc.overloads=ctor.copy]
   NonNull(const NonNull&) = default;
-  /// NonNull<T> is copyable, so this is the copy assignment operator.
+  /// NonNull<T> is `Copy`, so this is the copy assignment operator.
+  /// #[doc.overloads=assign.copy]
   NonNull& operator=(const NonNull&) = default;
 
   /// Gives access to the object pointed to by NonNull.
