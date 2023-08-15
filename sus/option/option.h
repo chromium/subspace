@@ -1473,24 +1473,14 @@ class Option final {
   }
   /// Implicit conversion from std::optional.
   ///
-  /// Prevents conversions from U to optional<T> when constructing
-  /// Option<optional<T>>.
+  /// Prevents conversions from `U` to `optional<T>` when constructing
+  /// `Option<optional<T>>`.
   ///
   /// #[doc.overloads=ctor.optional]
   constexpr Option(
-      const std::same_as<std::optional<std::remove_reference_t<T>>> auto&
-          s) noexcept
+      std::same_as<std::optional<std::remove_reference_t<T>>> auto s) noexcept
     requires(!std::is_reference_v<T> &&  //
-             ::sus::mem::Copy<T>)
-      : Option() {
-    if (s.has_value()) insert(s.value());
-  }
-  /// #[doc.overloads=ctor.optional]
-  constexpr Option(
-      std::same_as<std::optional<std::remove_reference_t<T>>> auto&& s) noexcept
-    requires(!std::is_reference_v<T> &&  //
-             ::sus::mem::Move<T> &&      //
-             ::sus::mem::IsMoveRef<decltype(s)>)
+             ::sus::mem::Move<T>)
       : Option() {
     if (s.has_value()) insert(::sus::move(s).value());
   }
