@@ -273,7 +273,7 @@ TEST(Choice, AsTypes) {
   {
     auto u = Choice<sus_choice_types((Order::First, i8, u64),
                                      (Order::Second, u32))>::
-        with<Order::First>(sus::Tuple<i8, u64>::with(1_i8, 2_u64));
+        with<Order::First>(sus::Tuple<i8, u64>(1_i8, 2_u64));
     static_assert(std::same_as<decltype(u.as<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(std::same_as<decltype(u.as<Order::Second>()), const u32&>);

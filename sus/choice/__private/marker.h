@@ -184,7 +184,7 @@ struct ChoiceMarker<Tag, Ts...> {
         decltype(std::declval<Choice<C, Vs...>&&>().template into_inner<Tag>());
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          return TupleType::with(values.template at<Is>()...);
+          return TupleType(values.template at<Is>()...);
         };
     return Choice<C, Vs...>::template with<Tag>(
         make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>()));
@@ -206,7 +206,7 @@ struct ChoiceMarker<Tag, Ts...> {
         decltype(std::declval<Choice<C, Vs...>&&>().template into_inner<Tag>());
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          return TupleType::with(
+          return TupleType(
               ::sus::forward<Ts>(values.template at_mut<Is>())...);
         };
     return Choice<C, Vs...>::template with<Tag>(

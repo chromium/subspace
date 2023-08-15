@@ -36,7 +36,7 @@ void sort_slice_by_cached_key(const ::sus::collections::SliceMut<T>& slice,
           .enumerate()
           .map([](::sus::Tuple<usize, Key>&& t) {
             auto&& [i, k] = ::sus::move(t);
-            return ::sus::Tuple<Key, U>::with(::sus::forward<Key>(k), i);
+            return ::sus::Tuple<Key, U>(::sus::forward<Key>(k), i);
           })
           .collect_vec();
   // The elements of `indices` are unique, as they are indexed, so any sort

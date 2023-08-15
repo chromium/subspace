@@ -2088,7 +2088,7 @@ TEST(Option, Replace) {
     auto old = x.replace(4);
     return sus::tuple(sus::move(old).unwrap(), sus::move(x).unwrap());
   }();
-  static_assert(r == sus::Tuple<i32, i32>::with(2, 4));
+  static_assert(r == sus::Tuple<i32, i32>(2, 4));
 }
 
 TEST(Option, Copied) {
@@ -2647,7 +2647,7 @@ TEST(Option, Zip) {
 
     auto o = Option<i32>::with(-2_i32);
     EXPECT_EQ(sus::move(o).zip(Option<u8>::with(3_u8)).unwrap(),
-              (Tuple<i32, u8>::with(-2_i32, 3_u8)));
+              (Tuple<i32, u8>(-2_i32, 3_u8)));
     EXPECT_EQ(o, None);
   }
 
@@ -2663,7 +2663,7 @@ TEST(Option, Zip) {
 
     auto o = Option<i32>::with(-2_i32);
     EXPECT_EQ(o.zip(Option<u8>::with(3_u8)).unwrap(),
-              (Tuple<i32, u8>::with(-2_i32, 3_u8)));
+              (Tuple<i32, u8>(-2_i32, 3_u8)));
     EXPECT_EQ(o, sus::some(-2_i32));
   }
 
@@ -2692,12 +2692,11 @@ TEST(Option, Zip) {
 TEST(Option, Unzip) {
   // Rvalue.
   {
-    auto s =
-        Option<Tuple<i32, u32>>::with(Tuple<i32, u32>::with(-2_i32, 4_u32));
+    auto s = Option<Tuple<i32, u32>>::with(Tuple<i32, u32>(-2_i32, 4_u32));
     auto sr = sus::move(s).unzip();
     static_assert(std::same_as<decltype(sr), Tuple<Option<i32>, Option<u32>>>);
-    EXPECT_EQ(sr, (Tuple<Option<i32>, Option<u32>>::with(
-                      Option<i32>::with(-2_i32), Option<u32>::with(4_u32))));
+    EXPECT_EQ(sr,
+              sus::tuple(Option<i32>::with(-2_i32), Option<u32>::with(4_u32)));
     auto n = Option<Tuple<i32, u32>>();
     auto nr = sus::move(n).unzip();
     static_assert(std::same_as<decltype(nr), Tuple<Option<i32>, Option<u32>>>);
@@ -2706,12 +2705,11 @@ TEST(Option, Unzip) {
 
   // Lvalue.
   {
-    auto s =
-        Option<Tuple<i32, u32>>::with(Tuple<i32, u32>::with(-2_i32, 4_u32));
+    auto s = Option<Tuple<i32, u32>>::with(Tuple<i32, u32>(-2_i32, 4_u32));
     auto sr = s.unzip();
     static_assert(std::same_as<decltype(sr), Tuple<Option<i32>, Option<u32>>>);
-    EXPECT_EQ(sr, (Tuple<Option<i32>, Option<u32>>::with(
-                      Option<i32>::with(-2_i32), Option<u32>::with(4_u32))));
+    EXPECT_EQ(sr,
+              sus::tuple(Option<i32>::with(-2_i32), Option<u32>::with(4_u32)));
     auto n = Option<Tuple<i32, u32>>();
     auto nr = n.unzip();
     static_assert(std::same_as<decltype(nr), Tuple<Option<i32>, Option<u32>>>);
@@ -2722,19 +2720,19 @@ TEST(Option, Unzip) {
   {
     auto i = NoCopyMove();
     auto u = 4_u32;
-    auto s = Option<Tuple<NoCopyMove&, u32&>>::with(
-        Tuple<NoCopyMove&, u32&>::with(i, u));
+    auto s =
+        Option<Tuple<NoCopyMove&, u32&>>::with(Tuple<NoCopyMove&, u32&>(i, u));
     auto sr = sus::move(s).unzip();
     static_assert(
         std::same_as<decltype(sr), Tuple<Option<NoCopyMove&>, Option<u32&>>>);
-    EXPECT_EQ(sr, (Tuple<Option<NoCopyMove&>, Option<u32&>>::with(
-                      Option<NoCopyMove&>::with(i), Option<u32&>::with(u))));
+    EXPECT_EQ(sr,
+              sus::tuple(Option<NoCopyMove&>::with(i), Option<u32&>::with(u)));
 
     auto ci = NoCopyMove();
     auto cu = 4_u32;
 
     auto sc = Option<Tuple<const NoCopyMove&, const u32&>>::with(
-        Tuple<const NoCopyMove&, const u32&>::with(ci, cu));
+        Tuple<const NoCopyMove&, const u32&>(ci, cu));
     auto scr = sus::move(sc).unzip();
     static_assert(
         std::same_as<decltype(scr),
@@ -2748,10 +2746,8 @@ TEST(Option, Unzip) {
   }
 
   static_assert([]() {
-    return Option<Tuple<i32, u32>>::with(Tuple<i32, u32>::with(-2_i32, 4_u32))
-        .unzip();
-  }() == Tuple<Option<i32>, Option<u32>>::with(Option<i32>::with(-2_i32),
-                                               Option<u32>::with(4_u32)));
+    return Option<Tuple<i32, u32>>::with(sus::tuple(-2_i32, 4_u32)).unzip();
+  }() == sus::tuple(Option<i32>::with(-2_i32), Option<u32>::with(4_u32)));
 }
 
 TEST(Option, NonZeroField) {
@@ -2811,9 +2807,8 @@ TEST(Option, NonZeroField) {
   EXPECT_EQ(o, None);
 
   o = Option<T>::with(T::with(i));
-  EXPECT_EQ(
-      sus::move(o).zip(Option<T>::with(T::with(i))),
-      (Option<Tuple<T, T>>::with(Tuple<T, T>::with(T::with(i), T::with(i)))));
+  EXPECT_EQ(sus::move(o).zip(Option<T>::with(T::with(i))),
+            (Option<Tuple<T, T>>::with(Tuple<T, T>(T::with(i), T::with(i)))));
   EXPECT_EQ(o, None);
 
   o = Option<T>::with(T::with(i));

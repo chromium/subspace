@@ -119,65 +119,53 @@ TEST(Tuple, TailPadding) {
   static_assert(sizeof(ExampleFromDocs) == (16 + sus_if_msvc_else(8, 0)));
 }
 
-template <class T, class = void, class... Args>
-struct is_with_callable : std::false_type {};
+static_assert(std::constructible_from<Tuple<i32>, i32>);
+static_assert(std::constructible_from<Tuple<i32>, const i32>);
+static_assert(std::constructible_from<Tuple<i32>, i32&>);
+static_assert(std::constructible_from<Tuple<i32>, i32&&>);
+static_assert(std::constructible_from<Tuple<i32>, const i32&>);
 
-template <class T, class... Args>
-struct is_with_callable<
-    T, std::void_t<decltype(T::with(std::declval<Args>()...))>, Args...>
-    : std::true_type {};
+static_assert(!std::constructible_from<Tuple<i32&>, i32>);
+static_assert(!std::constructible_from<Tuple<i32&>, const i32>);
+static_assert(std::constructible_from<Tuple<i32&>, i32&>);
+static_assert(!std::constructible_from<Tuple<i32&>, const i32&>);
 
-template <class T, class... Args>
-inline constexpr bool is_with_callable_v =
-    is_with_callable<T, void, Args...>::value;
-
-static_assert(is_with_callable_v<Tuple<i32>, i32>);
-static_assert(is_with_callable_v<Tuple<i32>, const i32>);
-static_assert(is_with_callable_v<Tuple<i32>, i32&>);
-static_assert(is_with_callable_v<Tuple<i32>, i32&&>);
-static_assert(is_with_callable_v<Tuple<i32>, const i32&>);
-
-static_assert(!is_with_callable_v<Tuple<i32&>, i32>);
-static_assert(!is_with_callable_v<Tuple<i32&>, const i32>);
-static_assert(is_with_callable_v<Tuple<i32&>, i32&>);
-static_assert(!is_with_callable_v<Tuple<i32&>, const i32&>);
-
-static_assert(is_with_callable_v<Tuple<const i32&>, i32>);
-static_assert(is_with_callable_v<Tuple<const i32&>, const i32&>);
-static_assert(is_with_callable_v<Tuple<const i32&>, i32&>);
-static_assert(is_with_callable_v<Tuple<const i32&>, i32&&>);
-static_assert(is_with_callable_v<Tuple<const i32&>, const i32&&>);
+static_assert(std::constructible_from<Tuple<const i32&>, i32>);
+static_assert(std::constructible_from<Tuple<const i32&>, const i32&>);
+static_assert(std::constructible_from<Tuple<const i32&>, i32&>);
+static_assert(std::constructible_from<Tuple<const i32&>, i32&&>);
+static_assert(std::constructible_from<Tuple<const i32&>, const i32&&>);
 
 // No conversion to a temporary.
-static_assert(is_with_callable_v<Tuple<i32>, i16>);
-static_assert(is_with_callable_v<Tuple<i32>, const i16&>);
-static_assert(is_with_callable_v<Tuple<i32>, i16&>);
-static_assert(is_with_callable_v<Tuple<i32>, i16&&>);
-static_assert(is_with_callable_v<Tuple<i32>, const i16&&>);
-static_assert(!is_with_callable_v<Tuple<const i32&>, i16>);
-static_assert(!is_with_callable_v<Tuple<const i32&>, const i16&>);
-static_assert(!is_with_callable_v<Tuple<const i32&>, i16&>);
-static_assert(!is_with_callable_v<Tuple<const i32&>, i16&&>);
-static_assert(!is_with_callable_v<Tuple<const i32&>, const i16&&>);
+static_assert(std::constructible_from<Tuple<i32>, i16>);
+static_assert(std::constructible_from<Tuple<i32>, const i16&>);
+static_assert(std::constructible_from<Tuple<i32>, i16&>);
+static_assert(std::constructible_from<Tuple<i32>, i16&&>);
+static_assert(std::constructible_from<Tuple<i32>, const i16&&>);
+static_assert(!std::constructible_from<Tuple<const i32&>, i16>);
+static_assert(!std::constructible_from<Tuple<const i32&>, const i16&>);
+static_assert(!std::constructible_from<Tuple<const i32&>, i16&>);
+static_assert(!std::constructible_from<Tuple<const i32&>, i16&&>);
+static_assert(!std::constructible_from<Tuple<const i32&>, const i16&&>);
 // clang-format off
-static_assert(is_with_callable_v<Tuple<i32, i32>, i16, i16>);
-static_assert(is_with_callable_v<Tuple<i32, i32>, const i16&, const i16&>);
-static_assert(is_with_callable_v<Tuple<i32, i32>, i16&, i16&>);
-static_assert(is_with_callable_v<Tuple<i32, i32>, i16&&, i16&&>);
-static_assert(is_with_callable_v<Tuple<i32, i32>, const i16&, const i16&&>);
-static_assert(!is_with_callable_v<Tuple<i32, const i32&>, i16, i16>);
-static_assert(!is_with_callable_v<Tuple<i32, const i32&>, const i16&, const i16&>);
-static_assert(!is_with_callable_v<Tuple<i32, const i32&>, i16&, i16&>);
-static_assert(!is_with_callable_v<Tuple<i32, const i32&>, i16&&, i16&&>);
-static_assert(!is_with_callable_v<Tuple<i32, const i32&>, const i16&, const i16&&>);
+static_assert(std::constructible_from<Tuple<i32, i32>, i16, i16>);
+static_assert(std::constructible_from<Tuple<i32, i32>, const i16&, const i16&>);
+static_assert(std::constructible_from<Tuple<i32, i32>, i16&, i16&>);
+static_assert(std::constructible_from<Tuple<i32, i32>, i16&&, i16&&>);
+static_assert(std::constructible_from<Tuple<i32, i32>, const i16&, const i16&&>);
+static_assert(!std::constructible_from<Tuple<i32, const i32&>, i16, i16>);
+static_assert(!std::constructible_from<Tuple<i32, const i32&>, const i16&, const i16&>);
+static_assert(!std::constructible_from<Tuple<i32, const i32&>, i16&, i16&>);
+static_assert(!std::constructible_from<Tuple<i32, const i32&>, i16&&, i16&&>);
+static_assert(!std::constructible_from<Tuple<i32, const i32&>, const i16&, const i16&&>);
 // clang-format on
 
 TEST(Tuple, With) {
-  auto t1 = Tuple<i32>::with(2);
-  auto t2 = Tuple<i32, f32>::with(2, 3.f);
-  auto t3 = Tuple<i32, f32, i32>::with(2, 3.f, 4);
+  auto t1 = Tuple<i32>(2);
+  auto t2 = Tuple<i32, f32>(2, 3.f);
+  auto t3 = Tuple<i32, f32, i32>(2, 3.f, 4);
 
-  [[maybe_unused]] constexpr auto c = Tuple<i32, f32>::with(2, 3.f);
+  [[maybe_unused]] constexpr auto c = Tuple<i32, f32>(2, 3.f);
 }
 
 TEST(Tuple, ConstructorFunction) {
@@ -275,14 +263,14 @@ TEST(Tuple, ConstructorReferences) {
 
 TEST(Tuple, Copy) {
   {
-    auto t1 = Tuple<i32>::with(2);
+    auto t1 = Tuple<i32>(2);
     auto t2 = t1;
     EXPECT_EQ(t1, t2);
   }
 
   {
     auto n = NoCopyMove();
-    auto t1 = Tuple<NoCopyMove&>::with(n);
+    auto t1 = Tuple<NoCopyMove&>(n);
     auto t2 = t1;
     EXPECT_EQ(t1, t2);
   }
@@ -290,14 +278,14 @@ TEST(Tuple, Copy) {
 
 TEST(Tuple, CloneCopy) {
   {
-    auto t1 = Tuple<i32>::with(2);
+    auto t1 = Tuple<i32>(2);
     auto t2 = sus::clone(t1);
     EXPECT_EQ(t1, t2);
   }
 
   {
     auto n = NoCopyMove();
-    auto t1 = Tuple<NoCopyMove&>::with(n);
+    auto t1 = Tuple<NoCopyMove&>(n);
     auto t2 = sus::clone(t1);
     EXPECT_EQ(t1, t2);
   }
@@ -314,23 +302,23 @@ TEST(Tuple, Clone) {
     i32 i = 2_i32;
   };
 
-  auto t1 = Tuple<Cloneable>::with(2_i32);
+  auto t1 = Tuple<Cloneable>(2_i32);
   auto t2 = ::sus::clone(t1);
   EXPECT_EQ(t1.at<0>().i + 1_i32, t2.at<0>().i);
 }
 
 TEST(Tuple, GetRef) {
-  auto t1 = Tuple<int>::with(2);
+  auto t1 = Tuple<int>(2);
   EXPECT_EQ(t1.at<0>(), 2);
   static_assert(std::same_as<const int&, decltype(t1.at<0>())>);
 
-  const auto t2 = Tuple<int, float>::with(2, 3.f);
+  const auto t2 = Tuple<int, float>(2, 3.f);
   EXPECT_EQ(t2.at<0>(), 2);
   static_assert(std::same_as<const int&, decltype(t2.at<0>())>);
   EXPECT_EQ(t2.at<1>(), 3.f);
   static_assert(std::same_as<const float&, decltype(t2.at<1>())>);
 
-  auto t3 = Tuple<int, float, int>::with(2, 3.f, 4);
+  auto t3 = Tuple<int, float, int>(2, 3.f, 4);
   EXPECT_EQ(t3.at<0>(), 2);
   static_assert(std::same_as<const int&, decltype(t3.at<0>())>);
   EXPECT_EQ(t3.at<1>(), 3.f);
@@ -339,28 +327,28 @@ TEST(Tuple, GetRef) {
   static_assert(std::same_as<const int&, decltype(t3.at<2>())>);
 
   auto n = NoCopyMove();
-  auto tn = Tuple<NoCopyMove&>::with(n);
+  auto tn = Tuple<NoCopyMove&>(n);
   static_assert(std::same_as<const NoCopyMove&, decltype(tn.at<0>())>);
   EXPECT_EQ(tn.at<0>(), n);
 
   [[maybe_unused]] constexpr auto c0 = []() {
-    constexpr auto t = Tuple<int, float>::with(2, 3.f);
+    constexpr auto t = Tuple<int, float>(2, 3.f);
     return t.at<0>();
   }();
   [[maybe_unused]] constexpr auto c1 = []() {
-    constexpr auto t = Tuple<int, float>::with(2, 3.f);
+    constexpr auto t = Tuple<int, float>(2, 3.f);
     return t.at<1>();
   }();
 }
 
 TEST(Tuple, GetMut) {
-  auto t1 = Tuple<int>::with(2);
+  auto t1 = Tuple<int>(2);
   EXPECT_EQ(t1.at_mut<0>(), 2);
   t1.at_mut<0>() += 1;
   EXPECT_EQ(t1.at_mut<0>(), 3);
   static_assert(std::same_as<int&, decltype(t1.at_mut<0>())>);
 
-  auto t2 = Tuple<int, float>::with(2, 3.f);
+  auto t2 = Tuple<int, float>(2, 3.f);
   EXPECT_EQ(t2.at_mut<0>(), 2);
   t2.at_mut<0>() += 1;
   EXPECT_EQ(t2.at_mut<0>(), 3);
@@ -370,7 +358,7 @@ TEST(Tuple, GetMut) {
   EXPECT_EQ(t2.at_mut<1>(), 4.f);
   static_assert(std::same_as<float&, decltype(t2.at_mut<1>())>);
 
-  auto t3 = Tuple<int, float, int>::with(2, 3.f, 4);
+  auto t3 = Tuple<int, float, int>(2, 3.f, 4);
   EXPECT_EQ(t3.at_mut<0>(), 2);
   t3.at_mut<0>() += 1;
   EXPECT_EQ(t3.at_mut<0>(), 3);
@@ -385,19 +373,19 @@ TEST(Tuple, GetMut) {
   static_assert(std::same_as<int&, decltype(t3.at_mut<2>())>);
 
   auto n = NoCopyMove();
-  auto tn = Tuple<NoCopyMove&>::with(n);
+  auto tn = Tuple<NoCopyMove&>(n);
   static_assert(std::same_as<NoCopyMove&, decltype(tn.at_mut<0>())>);
   EXPECT_EQ(tn.at_mut<0>(), n);
 }
 
 TEST(Tuple, IntoInner) {
-  auto t1 = Tuple<i32, u32>::with(2, 3u);
+  auto t1 = Tuple<i32, u32>(2, 3u);
   static_assert(std::same_as<decltype(sus::move(t1).into_inner<0>()), i32&&>);
   static_assert(std::same_as<decltype(sus::move(t1).into_inner<1>()), u32&&>);
   EXPECT_EQ(sus::move(t1).into_inner<0>(), 2_i32);
 
   auto n = NoCopyMove();
-  auto tn = Tuple<NoCopyMove&>::with(n);
+  auto tn = Tuple<NoCopyMove&>(n);
   static_assert(
       std::same_as<NoCopyMove&, decltype(sus::move(tn).into_inner<0>())>);
   EXPECT_EQ(sus::move(tn).into_inner<0>(), n);
@@ -409,55 +397,55 @@ TEST(Tuple, Eq) {
   static_assert(sus::ops::Eq<Tuple<int>>);
   static_assert(!sus::ops::Eq<Tuple<NotEq>>);
 
-  EXPECT_EQ(Tuple<int>::with(1), Tuple<int>::with(1));
-  EXPECT_NE(Tuple<int>::with(1), Tuple<int>::with(2));
-  EXPECT_EQ((Tuple<int, int>::with(2, 1)), (Tuple<int, int>::with(2, 1)));
-  EXPECT_NE((Tuple<int, int>::with(2, 1)), (Tuple<int, int>::with(2, 2)));
+  EXPECT_EQ(Tuple<int>(1), Tuple<int>(1));
+  EXPECT_NE(Tuple<int>(1), Tuple<int>(2));
+  EXPECT_EQ((Tuple<int, int>(2, 1)), (Tuple<int, int>(2, 1)));
+  EXPECT_NE((Tuple<int, int>(2, 1)), (Tuple<int, int>(2, 2)));
 
   int i;
-  EXPECT_EQ(Tuple<int*>::with(&i), Tuple<int*>::with(&i));
+  EXPECT_EQ(Tuple<int*>(&i), Tuple<int*>(&i));
 
-  EXPECT_EQ(Tuple<f32>::with(1.f), Tuple<f32>::with(1.f));
-  EXPECT_EQ(Tuple<f32>::with(0.f), Tuple<f32>::with(0.f));
-  EXPECT_EQ(Tuple<f32>::with(0.f), Tuple<f32>::with(-0.f));
-  EXPECT_NE(Tuple<f32>::with(f32::NAN), Tuple<f32>::with(f32::NAN));
+  EXPECT_EQ(Tuple<f32>(1.f), Tuple<f32>(1.f));
+  EXPECT_EQ(Tuple<f32>(0.f), Tuple<f32>(0.f));
+  EXPECT_EQ(Tuple<f32>(0.f), Tuple<f32>(-0.f));
+  EXPECT_NE(Tuple<f32>(f32::NAN), Tuple<f32>(f32::NAN));
 
   auto n1 = NoCopyMove();
-  auto tn1 = Tuple<NoCopyMove&>::with(n1);
+  auto tn1 = Tuple<NoCopyMove&>(n1);
   auto n2 = NoCopyMove();
-  auto tn2 = Tuple<NoCopyMove&>::with(n2);
+  auto tn2 = Tuple<NoCopyMove&>(n2);
   EXPECT_EQ(tn1, tn1);
   EXPECT_NE(tn1, tn2);
 }
 
 TEST(Tuple, StrongOrd) {
-  EXPECT_LT(Tuple<int>::with(1), Tuple<int>::with(2));
-  EXPECT_GT(Tuple<int>::with(3), Tuple<int>::with(2));
-  EXPECT_GT((Tuple<int, int>::with(3, 4)), (Tuple<int, int>::with(3, 3)));
-  EXPECT_GE((Tuple<int, int>::with(3, 4)), (Tuple<int, int>::with(3, 3)));
-  EXPECT_GE((Tuple<int, int>::with(3, 3)), (Tuple<int, int>::with(3, 3)));
-  EXPECT_GT((Tuple<int, int, int>::with(3, 4, 2)),
-            (Tuple<int, int, int>::with(3, 3, 3)));
+  EXPECT_LT(Tuple<int>(1), Tuple<int>(2));
+  EXPECT_GT(Tuple<int>(3), Tuple<int>(2));
+  EXPECT_GT((Tuple<int, int>(3, 4)), (Tuple<int, int>(3, 3)));
+  EXPECT_GE((Tuple<int, int>(3, 4)), (Tuple<int, int>(3, 3)));
+  EXPECT_GE((Tuple<int, int>(3, 3)), (Tuple<int, int>(3, 3)));
+  EXPECT_GT((Tuple<int, int, int>(3, 4, 2)),
+            (Tuple<int, int, int>(3, 3, 3)));
 
   int i[2];
-  EXPECT_LT(Tuple<int*>::with(&i[0]), Tuple<int*>::with(&i[1]));
+  EXPECT_LT(Tuple<int*>(&i[0]), Tuple<int*>(&i[1]));
 
   NoCopyMove ns[] = {NoCopyMove(), NoCopyMove()};
-  auto tn1 = Tuple<NoCopyMove&>::with(ns[0]);
-  auto tn2 = Tuple<NoCopyMove&>::with(ns[1]);
+  auto tn1 = Tuple<NoCopyMove&>(ns[0]);
+  auto tn2 = Tuple<NoCopyMove&>(ns[1]);
   EXPECT_GE(tn1, tn1);
   EXPECT_LT(tn1, tn2);
 }
 
 TEST(Tuple, StrongOrder) {
-  EXPECT_EQ(std::strong_order(Tuple<int>::with(12), Tuple<int>::with(12)),
+  EXPECT_EQ(std::strong_order(Tuple<int>(12), Tuple<int>(12)),
             std::strong_ordering::equal);
-  EXPECT_EQ(std::strong_order(Tuple<int>::with(12), Tuple<int>::with(12)),
+  EXPECT_EQ(std::strong_order(Tuple<int>(12), Tuple<int>(12)),
             std::strong_ordering::equivalent);
-  EXPECT_EQ(std::strong_order(Tuple<int>::with(12), Tuple<int>::with(13)),
+  EXPECT_EQ(std::strong_order(Tuple<int>(12), Tuple<int>(13)),
             std::strong_ordering::less);
-  EXPECT_EQ(std::strong_order(Tuple<int, int>::with(12, 13),
-                              Tuple<int, int>::with(12, 12)),
+  EXPECT_EQ(std::strong_order(Tuple<int, int>(12, 13),
+                              Tuple<int, int>(12, 12)),
             std::strong_ordering::greater);
 }
 
@@ -477,47 +465,47 @@ struct Weak final {
 };
 
 TEST(Tuple, WeakOrder) {
-  EXPECT_EQ(std::weak_order(Tuple<Weak>::with(Weak(1, 2)),
-                            Tuple<Weak>::with(Weak(1, 2))),
+  EXPECT_EQ(std::weak_order(Tuple<Weak>(Weak(1, 2)),
+                            Tuple<Weak>(Weak(1, 2))),
             std::weak_ordering::equivalent);
-  EXPECT_EQ(std::weak_order(Tuple<Weak>::with(Weak(1, 2)),
-                            Tuple<Weak>::with(Weak(1, 3))),
+  EXPECT_EQ(std::weak_order(Tuple<Weak>(Weak(1, 2)),
+                            Tuple<Weak>(Weak(1, 3))),
             std::weak_ordering::equivalent);
-  EXPECT_EQ(std::weak_order(Tuple<Weak>::with(Weak(1, 2)),
-                            Tuple<Weak>::with(Weak(2, 3))),
+  EXPECT_EQ(std::weak_order(Tuple<Weak>(Weak(1, 2)),
+                            Tuple<Weak>(Weak(2, 3))),
             std::weak_ordering::less);
-  EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>::with(Weak(1, 2), Weak(1, 3)),
-                            Tuple<Weak, Weak>::with(Weak(1, 1), Weak(1, 4))),
+  EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>(Weak(1, 2), Weak(1, 3)),
+                            Tuple<Weak, Weak>(Weak(1, 1), Weak(1, 4))),
             std::weak_ordering::equivalent);
-  EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>::with(Weak(1, 2), Weak(2, 3)),
-                            Tuple<Weak, Weak>::with(Weak(1, 1), Weak(1, 4))),
+  EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>(Weak(1, 2), Weak(2, 3)),
+                            Tuple<Weak, Weak>(Weak(1, 1), Weak(1, 4))),
             std::weak_ordering::greater);
-  EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>::with(Weak(1, 2), Weak(2, 3)),
-                            Tuple<Weak, Weak>::with(Weak(2, 1), Weak(1, 4))),
+  EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>(Weak(1, 2), Weak(2, 3)),
+                            Tuple<Weak, Weak>(Weak(2, 1), Weak(1, 4))),
             std::weak_ordering::less);
 }
 
 TEST(Tuple, PartialOrder) {
-  EXPECT_EQ(std::partial_order(Tuple<f32>::with(12.f), Tuple<f32>::with(12.f)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(12.f), Tuple<f32>(12.f)),
             std::partial_ordering::equivalent);
-  EXPECT_EQ(std::partial_order(Tuple<f32, f32>::with(12.f, 13.f),
-                               Tuple<f32, f32>::with(12.f, 11.f)),
+  EXPECT_EQ(std::partial_order(Tuple<f32, f32>(12.f, 13.f),
+                               Tuple<f32, f32>(12.f, 11.f)),
             std::partial_ordering::greater);
-  EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f), Tuple<f32>::with(-0.f)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(-0.f)),
             std::partial_ordering::equivalent);
-  EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f), Tuple<f32>::with(1.f)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(1.f)),
             std::partial_ordering::less);
   EXPECT_EQ(
-      std::partial_order(Tuple<f32>::with(0.f), Tuple<f32>::with(f32::NAN)),
+      std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::NAN)),
       std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Tuple<f32>::with(f32::NAN),
-                               Tuple<f32>::with(f32::NAN)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(f32::NAN),
+                               Tuple<f32>(f32::NAN)),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f),
-                               Tuple<f32>::with(f32::INFINITY)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f),
+                               Tuple<f32>(f32::INFINITY)),
             std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Tuple<f32>::with(0.f),
-                               Tuple<f32>::with(f32::NEG_INFINITY)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f),
+                               Tuple<f32>(f32::NEG_INFINITY)),
             std::partial_ordering::greater);
 }
 
@@ -532,7 +520,7 @@ static_assert(!sus::ops::Ord<Tuple<float>>);
 static_assert(!sus::ops::PartialOrd<Tuple<NotCmp>>);
 
 TEST(Tuple, StructuredBinding) {
-  auto t3 = Tuple<int, float, char>::with(2, 3.f, 'c');
+  auto t3 = Tuple<int, float, char>(2, 3.f, 'c');
   auto& [a, b, c] = t3;
   static_assert(std::same_as<decltype(a), int>);
   static_assert(std::same_as<decltype(b), float>);
@@ -541,21 +529,21 @@ TEST(Tuple, StructuredBinding) {
   t3.at_mut<0>() += 1;
   t3.at_mut<1>() += 2.f;
   t3.at_mut<2>() += 3;
-  EXPECT_EQ(t3, (Tuple<int, float, char>::with(3, 5.f, 'f')));
+  EXPECT_EQ(t3, (Tuple<int, float, char>(3, 5.f, 'f')));
 
   const auto& [d, e, f] = t3;
   static_assert(std::same_as<decltype(d), const int>);
   static_assert(std::same_as<decltype(e), const float>);
   static_assert(std::same_as<decltype(f), const char>);
-  EXPECT_EQ((Tuple<int, float, char>::with(d, e, f)),
-            (Tuple<int, float, char>::with(3, 5.f, 'f')));
+  EXPECT_EQ((Tuple<int, float, char>(d, e, f)),
+            (Tuple<int, float, char>(3, 5.f, 'f')));
 
   auto [g, h, i] = sus::move(t3);
   static_assert(std::same_as<decltype(g), int>);
   static_assert(std::same_as<decltype(h), float>);
   static_assert(std::same_as<decltype(i), char>);
-  EXPECT_EQ((Tuple<int, float, char>::with(d, e, f)),
-            (Tuple<int, float, char>::with(3, 5.f, 'f')));
+  EXPECT_EQ((Tuple<int, float, char>(d, e, f)),
+            (Tuple<int, float, char>(3, 5.f, 'f')));
 }
 
 TEST(Tuple, StructuredBindingMoves) {
@@ -579,7 +567,7 @@ TEST(Tuple, Destroy) {
   };
 
   {
-    auto t = Tuple<S, S, S>::with(S(1u), S(2u), S(3u));
+    auto t = Tuple<S, S, S>(S(1u), S(2u), S(3u));
     destroy = 0u;
   }
   // Tuple elements are destroyed from first to last.
@@ -587,7 +575,7 @@ TEST(Tuple, Destroy) {
 }
 
 TEST(Tuple, fmt) {
-  auto t3 = Tuple<int, float, char>::with(2, 3.f, 'c');
+  auto t3 = Tuple<int, float, char>(2, 3.f, 'c');
   static_assert(fmt::is_formattable<decltype(t3), char>::value);
   EXPECT_EQ(fmt::format("{}", t3), "(2, 3, c)");
 
@@ -596,19 +584,19 @@ TEST(Tuple, fmt) {
   };
   static_assert(!fmt::is_formattable<NoFormat, char>::value);
 
-  auto tn = Tuple<NoFormat, NoFormat>::with(NoFormat(), NoFormat(0xf00d));
+  auto tn = Tuple<NoFormat, NoFormat>(NoFormat(), NoFormat(0xf00d));
   static_assert(fmt::is_formattable<decltype(tn), char>::value);
   EXPECT_EQ(fmt::format("{}", tn), "(f2-3c-ae-16, 0d-f0-00-00)");
 }
 
 TEST(Tuple, Stream) {
   std::stringstream s;
-  s << Tuple<int, float, char>::with(2, 3.f, 'c');
+  s << Tuple<int, float, char>(2, 3.f, 'c');
   EXPECT_EQ(s.str(), "(2, 3, c)");
 }
 
 TEST(Tuple, GTest) {
-  EXPECT_EQ(testing::PrintToString(Tuple<int, float, char>::with(2, 3.f, 'c')),
+  EXPECT_EQ(testing::PrintToString(Tuple<int, float, char>(2, 3.f, 'c')),
             "(2, 3, c)");
 }
 

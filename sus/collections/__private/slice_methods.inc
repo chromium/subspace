@@ -724,7 +724,7 @@ sus_pure constexpr ::sus::Tuple<Slice<T>, Slice<T>> split_at_unchecked(
   const ::sus::num::usize rem =
       len().unchecked_sub(::sus::marker::unsafe_fn, mid);
 
-  return ::sus::Tuple<Slice<T>, Slice<T>>::with(
+  return ::sus::Tuple<Slice<T>, Slice<T>>(
       Slice<T>::from_raw_collection(::sus::marker::unsafe_fn,
                                     _iter_refs_view_expr, as_ptr(), mid),
       Slice<T>::from_raw_collection(::sus::marker::unsafe_fn,

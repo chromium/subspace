@@ -101,7 +101,7 @@ TEST(FormatToStream, Choice) {
 TEST(FormatToStream, Tuple) {
   StreamWithADL s;
   EXPECT_EQ(s.called, false);
-  s << sus::Tuple<i32>::with(1);
+  s << sus::Tuple<i32>(1);
   EXPECT_EQ(s.called, true);
 }
 

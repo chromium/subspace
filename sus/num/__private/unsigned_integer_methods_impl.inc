@@ -187,7 +187,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
     _self rhs) const& noexcept {
   const auto out =
       __private::add_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(_self(out.value),
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
                                                      out.overflow);
 }
 
@@ -197,7 +197,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_add_signed(_signed rhs) const& noexcept {
   const auto r =
       __private::add_with_overflow_signed(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(r.value, r.overflow);
+  return ::sus::tuple_type::Tuple<_self, bool>(r.value, r.overflow);
 }
 
 sus_pure constexpr _self _self::saturating_add_signed(
@@ -238,7 +238,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_div(
     _self rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(
+  return ::sus::tuple_type::Tuple<_self, bool>(
       _self(__private::unchecked_div(primitive_value, rhs.primitive_value)),
       false);
 }
@@ -257,7 +257,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
     _self rhs) const& noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(_self(out.value),
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
                                                      out.overflow);
 }
 
@@ -271,7 +271,7 @@ sus_pure constexpr ::sus::option::Option<_self> _self::checked_neg()
 
 sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_neg() const& noexcept {
-  return ::sus::tuple_type::Tuple<_self, bool>::with(
+  return ::sus::tuple_type::Tuple<_self, bool>(
       (~(*this)).wrapping_add(_self(_primitive{1u})), primitive_value != 0u);
 }
 
@@ -288,7 +288,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_rem(
     _self rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(
+  return ::sus::tuple_type::Tuple<_self, bool>(
       _self(__private::unchecked_rem(primitive_value, rhs.primitive_value)),
       false);
 }
@@ -307,7 +307,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_div_euclid(_self rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(
+  return ::sus::tuple_type::Tuple<_self, bool>(
       _self(__private::unchecked_div(primitive_value, rhs.primitive_value)),
       false);
 }
@@ -326,7 +326,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool>
 _self::overflowing_rem_euclid(_self rhs) const& noexcept {
   // TODO: Allow opting out of all overflow checks?
   ::sus::check(rhs.primitive_value != 0u);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(
+  return ::sus::tuple_type::Tuple<_self, bool>(
       _self(__private::unchecked_rem(primitive_value, rhs.primitive_value)),
       false);
 }
@@ -345,7 +345,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shl(
     u32 rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(_self(out.value),
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
                                                      out.overflow);
 }
 
@@ -363,7 +363,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shr(
     u32 rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(_self(out.value),
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
                                                      out.overflow);
 }
 
@@ -381,7 +381,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
     _self rhs) const& noexcept {
   const auto out =
       __private::sub_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(_self(out.value),
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
                                                      out.overflow);
 }
 
@@ -400,7 +400,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_pow(
     u32 exp) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, exp.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>::with(_self(out.value),
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
                                                      out.overflow);
 }
 
