@@ -32,7 +32,7 @@
 namespace subdoc {
 
 struct DiagnosticIds {
-  static DiagnosticIds with(clang::ASTContext& ast_cx) noexcept {
+  static DiagnosticIds with_context(clang::ASTContext& ast_cx) noexcept {
     return DiagnosticIds{
         .superceded_comment = ast_cx.getDiagnostics().getCustomDiagID(
             clang::DiagnosticsEngine::Error,
@@ -578,7 +578,7 @@ class AstConsumer : public clang::ASTConsumer {
         continue;
       }
 
-      if (!Visitor(cx_, docs_db_, DiagnosticIds::with(decl->getASTContext()))
+      if (!Visitor(cx_, docs_db_, DiagnosticIds::with_context(decl->getASTContext()))
                .TraverseDecl(decl))
         return false;
     }
