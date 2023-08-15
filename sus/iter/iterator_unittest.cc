@@ -92,7 +92,7 @@ static_assert(
 static_assert(
   sus::iter::Iterator<sus::iter::Map<bool, sus::iter::Empty<int>, decltype([](int){return true;})>, bool>);
 static_assert(
-  sus::iter::Iterator<sus::iter::MapWhile<bool, sus::iter::Empty<int>, decltype([](int){return sus::Option<bool>::with(true);})>, bool>);
+  sus::iter::Iterator<sus::iter::MapWhile<bool, sus::iter::Empty<int>, decltype([](int){return sus::Option<bool>(true);})>, bool>);
 static_assert(
   sus::iter::Iterator<sus::iter::Once<int>, int>);
 static_assert(
@@ -166,7 +166,7 @@ class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
   ArrayIterator(Item (&items)[N])
       : items_(Array<Option<Item>, N>::with_initializer(
             [&items, i = 0_usize]() mutable -> Option<Item> {
-              return Option<Item>::with(
+              return Option<Item>(
                   sus::move(*(items + ::sus::mem::replace(i, i + 1u))));
             })) {}
 
@@ -2080,7 +2080,7 @@ TEST(Iterator, Fuse) {
     using Item = i32;
     constexpr Option<Item> next() noexcept {
       state_ += 1;
-      return state_ % 2 == 1 ? Option<Item>::with(state_) : Option<Item>();
+      return state_ % 2 == 1 ? Option<Item>(state_) : Option<Item>();
     }
     constexpr sus::iter::SizeHint size_hint() const noexcept {
       return {state_ % 2 == 0 ? 1u : 0u, sus::none()};

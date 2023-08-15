@@ -68,7 +68,7 @@ class [[nodiscard]] Cycle final
                             [](usize u) {
                               if (u == 0u) {
                                 // Upper limit is 0, empty iterator.
-                                return ::sus::Option<usize>::with(0u);
+                                return ::sus::Option<usize>(0u);
                               } else
                                 // Non-zero upper limit, will cycle forever.
                                 return ::sus::Option<usize>();

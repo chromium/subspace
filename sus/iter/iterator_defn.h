@@ -1440,7 +1440,7 @@ template <class Iter, class Item>
 constexpr Option<Item> IteratorBase<Iter, Item>::last() && noexcept {
   return static_cast<Iter&&>(*this).fold(
       Option<Item>(),
-      [](Option<Item>&&, Item&& cur) { return Option<Item>::with(cur); });
+      [](Option<Item>&&, Item&& cur) { return Option<Item>(cur); });
 }
 
 template <class Iter, class Item>
@@ -1507,7 +1507,7 @@ constexpr Option<Item> IteratorBase<Iter, Item>::max_by_key(
   auto first = as_subclass_mut().next();
   if (first.is_none()) return Option<Item>();
   Key first_key = fn(first.as_value());
-  return Option<Item>::with(
+  return Option<Item>(
       // Run fold() over a Tuple<Key, Item> to find the max Key.
       static_cast<Iter&&>(*this)
           .fold(sus::Tuple<Key, Item>(first_key,
@@ -1565,7 +1565,7 @@ constexpr Option<Item> IteratorBase<Iter, Item>::min_by_key(
   auto first = as_subclass_mut().next();
   if (first.is_none()) return Option<Item>();
   Key first_key = fn(first.as_value());
-  return Option<Item>::with(
+  return Option<Item>(
       // Run fold() over a Tuple<Key, Item> to find the min Key.
       static_cast<Iter&&>(*this)
           .fold(sus::Tuple<Key, Item>(first_key,
@@ -1643,9 +1643,9 @@ constexpr sus::Tuple<B, B> IteratorBase<Iter, Item>::partition(
             pred, static_cast<const std::remove_reference_t<Item>&>(i))) {
       // TODO: Consider adding extend_one() to the Extend concept, which can
       // take Item instead of an Option<Item>.
-      left.extend(::sus::Option<Item>::with(::sus::forward<Item>(i)));
+      left.extend(::sus::Option<Item>(::sus::forward<Item>(i)));
     } else {
-      right.extend(::sus::Option<Item>::with(::sus::forward<Item>(i)));
+      right.extend(::sus::Option<Item>(::sus::forward<Item>(i)));
     }
   };
 
@@ -1668,7 +1668,7 @@ constexpr Option<usize> IteratorBase<Iter, Item>::position(
     if (o.is_none()) return Option<usize>();
     if (::sus::fn::call_mut(
             pred, ::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
-      return Option<usize>::with(pos);
+      return Option<usize>(pos);
     pos += 1u;
   }
 }
@@ -1692,7 +1692,7 @@ template <::sus::fn::FnMut<Item(Item, Item)> F, int&..., class R>
 constexpr Option<Item> IteratorBase<Iter, Item>::reduce(F f) && noexcept {
   Option<Item> first = as_subclass_mut().next();
   if (first.is_some()) {
-    first = Option<Item>::with(static_cast<Iter&&>(*this).template fold<Item>(
+    first = Option<Item>(static_cast<Iter&&>(*this).template fold<Item>(
         ::sus::move(first).unwrap_unchecked(::sus::marker::unsafe_fn),
         ::sus::move(f)));
   }
@@ -1749,7 +1749,7 @@ constexpr Option<usize> IteratorBase<Iter, Item>::rposition(
     pos -= 1u;
     if (::sus::fn::call_mut(
             pred, ::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)))
-      return Option<usize>::with(pos);
+      return Option<usize>(pos);
   }
 }
 

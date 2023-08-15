@@ -60,7 +60,7 @@ class [[nodiscard]] [[sus_trivial_abi]] OnceWith final
   /// sus::iter::Iterator trait.
   SizeHint size_hint() const noexcept {
     ::sus::num::usize rem = gen_.is_some() ? 1u : 0u;
-    return SizeHint(rem, ::sus::Option<::sus::num::usize>::with(rem));
+    return SizeHint(rem, ::sus::Option<::sus::num::usize>(rem));
   }
   // sus::iter::DoubleEndedIterator trait.
   Option<Item> next_back() noexcept {
@@ -74,7 +74,7 @@ class [[nodiscard]] [[sus_trivial_abi]] OnceWith final
       ::sus::fn::FnMutBox<Item()> gen) noexcept;
 
   OnceWith(::sus::fn::FnMutBox<Item()> gen)
-      : gen_(sus::Option<::sus::fn::FnMutBox<Item()>>::with(::sus::move(gen))) {
+      : gen_(sus::Option<::sus::fn::FnMutBox<Item()>>(::sus::move(gen))) {
   }
 
   Option<::sus::fn::FnMutBox<Item()>> gen_;

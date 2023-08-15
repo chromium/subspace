@@ -197,7 +197,7 @@ class Array final {
   {
     if (i >= N) [[unlikely]]
       return Option<const T&>();
-    return Option<const T&>::with(*(storage_.data_ + i));
+    return Option<const T&>(*(storage_.data_ + i));
   }
   constexpr Option<const T&> get(usize i) && = delete;
 
@@ -207,7 +207,7 @@ class Array final {
   {
     if (i >= N) [[unlikely]]
       return Option<T&>();
-    return Option<T&>::with(*(storage_.data_ + i));
+    return Option<T&>(*(storage_.data_ + i));
   }
 
   /// Returns a const reference to the element at index `i`.

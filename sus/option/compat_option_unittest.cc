@@ -132,7 +132,7 @@ TEST(CompatOption, FromOptionalMove) {
 TEST(CompatOption, ToOptionalCopy) {
   // Explicit.
   {
-    constexpr auto s = sus::Option<int>::with(2);
+    constexpr auto s = sus::Option<int>(2);
     constexpr auto o = std::optional<int>(s);
     EXPECT_EQ(o.value(), s.as_value());
   }
@@ -143,7 +143,7 @@ TEST(CompatOption, ToOptionalCopy) {
   }
   // Implicit.
   {
-    constexpr auto s = sus::Option<int>::with(2);
+    constexpr auto s = sus::Option<int>(2);
     constexpr std::optional<int> o = s;
     EXPECT_EQ(o.value(), s.as_value());
   }
@@ -160,7 +160,7 @@ TEST(CompatOption, ToOptionalCopy) {
 TEST(CompatOption, ToOptionalMove) {
   // Explicit.
   {
-    constexpr auto o = std::optional<int>(sus::Option<int>::with(2));
+    constexpr auto o = std::optional<int>(sus::Option<int>(2));
     EXPECT_EQ(o.value(), 2);
   }
   {
@@ -169,7 +169,7 @@ TEST(CompatOption, ToOptionalMove) {
   }
   // Implicit.
   {
-    constexpr std::optional<int> o = sus::Option<int>::with(2);
+    constexpr std::optional<int> o = sus::Option<int>(2);
     EXPECT_EQ(o.value(), 2);
   }
   {
@@ -181,7 +181,7 @@ TEST(CompatOption, ToOptionalMove) {
   // extension point.
 
   {
-    auto s = sus::Option<Moved>::with(Moved());
+    auto s = sus::Option<Moved>(Moved());
     EXPECT_EQ(s.as_value().moved, 1);
     auto o = std::optional<Moved>(sus::move(s));
     EXPECT_GT(o.value().moved, 1);
@@ -192,25 +192,25 @@ TEST(CompatOption, ToOptionalRef) {
   // Explicit.
   {
     int i = 2;
-    auto s = sus::Option<const int&>::with(i);
+    auto s = sus::Option<const int&>(i);
     auto o = std::optional<const int*>(s);
     EXPECT_EQ(o.value(), &i);
   }
   {
     int i = 2;
-    auto s = sus::Option<const int&>::with(i);
+    auto s = sus::Option<const int&>(i);
     auto o = std::optional<const int*>(s);
     EXPECT_EQ(o.value(), &i);
   }
   {
     int i = 2;
-    auto s = sus::Option<const int&>::with(i);
+    auto s = sus::Option<const int&>(i);
     auto o = std::optional<const int*>(s);
     EXPECT_EQ(o.value(), &i);
   }
   {
     int i = 2;
-    auto s = sus::Option<int&>::with(i);
+    auto s = sus::Option<int&>(i);
     auto o = std::optional<const int*>(s);
     EXPECT_EQ(o.value(), &i);
   }
@@ -222,25 +222,25 @@ TEST(CompatOption, ToOptionalRef) {
   // Implicit.
   {
     int i = 2;
-    auto s = sus::Option<const int&>::with(i);
+    auto s = sus::Option<const int&>(i);
     std::optional<const int*> o = s;
     EXPECT_EQ(o.value(), &i);
   }
   {
     int i = 2;
-    auto s = sus::Option<int&>::with(i);
+    auto s = sus::Option<int&>(i);
     std::optional<const int*> o = s;
     EXPECT_EQ(o.value(), &i);
   }
   {
     int i = 2;
-    auto s = sus::Option<int&>::with(i);
+    auto s = sus::Option<int&>(i);
     std::optional<int*> o = s;
     EXPECT_EQ(o.value(), &i);
   }
   {
     int i = 2;
-    auto s = sus::Option<int&>::with(i);
+    auto s = sus::Option<int&>(i);
     std::optional<const int*> o = s;
     EXPECT_EQ(o.value(), &i);
   }

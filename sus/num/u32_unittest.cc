@@ -716,7 +716,7 @@ TEST(u32DeathTest, AddOverflow) {
 
 TEST(u32, CheckedAdd) {
   constexpr auto a = (1_u32).checked_add(3_u32);
-  EXPECT_EQ(a, Option<u32>::with(4_u32));
+  EXPECT_EQ(a, Option<u32>(4_u32));
 
   EXPECT_EQ((0_u32).checked_add(0_u32).unwrap(), 0_u32);
 
@@ -842,10 +842,10 @@ TEST(u32DeathTest, DivOverflow) {
 
 TEST(u32, CheckedDiv) {
   constexpr auto a = (4_u32).checked_div(2_u32);
-  EXPECT_EQ(a, Option<u32>::with(2_u32));
+  EXPECT_EQ(a, Option<u32>(2_u32));
 
-  EXPECT_EQ((0_u32).checked_div(123_u32), Option<u32>::with(0_u32));
-  EXPECT_EQ((2345_u32).checked_div(1_u32), Option<u32>::with(2345_u32));
+  EXPECT_EQ((0_u32).checked_div(123_u32), Option<u32>(0_u32));
+  EXPECT_EQ((2345_u32).checked_div(1_u32), Option<u32>(2345_u32));
 
   EXPECT_EQ(u32::MAX.checked_div(0_u32), None);
   EXPECT_EQ((0_u32).checked_div(0_u32), None);
@@ -1052,9 +1052,9 @@ TEST(u32, WrappingMul) {
 
 TEST(u32, CheckedNeg) {
   constexpr auto a = (0_u32).checked_neg();
-  EXPECT_EQ(a, Option<u32>::with(0_u32));
+  EXPECT_EQ(a, Option<u32>(0_u32));
 
-  EXPECT_EQ((0_u32).checked_neg(), Option<u32>::with(0_u32));
+  EXPECT_EQ((0_u32).checked_neg(), Option<u32>(0_u32));
 
   // ** Unsigned only.
   EXPECT_EQ((123_u32).checked_neg(), None);
@@ -1140,10 +1140,10 @@ TEST(u32DeathTest, RemOverflow) {
 
 TEST(u32, CheckedRem) {
   constexpr auto a = (5_u32).checked_rem(3_u32);
-  EXPECT_EQ(a, Option<u32>::with(2_u32));
+  EXPECT_EQ(a, Option<u32>(2_u32));
 
-  EXPECT_EQ((0_u32).checked_rem(123_u32), Option<u32>::with(0_u32));
-  EXPECT_EQ((2345_u32).checked_rem(4_u32), Option<u32>::with(1_u32));
+  EXPECT_EQ((0_u32).checked_rem(123_u32), Option<u32>(0_u32));
+  EXPECT_EQ((2345_u32).checked_rem(4_u32), Option<u32>(1_u32));
 
   EXPECT_EQ(u32::MAX.checked_rem(0_u32), None);
   EXPECT_EQ((0_u32).checked_rem(0_u32), None);
@@ -1273,9 +1273,9 @@ TEST(u32, OverflowingShl) {
 
 TEST(u32, CheckedShl) {
   constexpr auto a = (5_u32).checked_shl(1_u32);
-  EXPECT_EQ(a, Option<u32>::with(10_u32));
+  EXPECT_EQ(a, Option<u32>(10_u32));
 
-  EXPECT_EQ((2_u32).checked_shl(1_u32), Option<u32>::with(4_u32));
+  EXPECT_EQ((2_u32).checked_shl(1_u32), Option<u32>(4_u32));
 
   EXPECT_EQ((0_u32).checked_shl(32_u32), None);
   EXPECT_EQ((1_u32).checked_shl(33_u32), None);
@@ -1323,9 +1323,9 @@ TEST(u32DeathTest, ShrOverflow) {
 
 TEST(u32, CheckedShr) {
   constexpr auto a = (5_u32).checked_shr(1_u32);
-  EXPECT_EQ(a, Option<u32>::with(2_u32));
+  EXPECT_EQ(a, Option<u32>(2_u32));
 
-  EXPECT_EQ((4_u32).checked_shr(1_u32), Option<u32>::with(2_u32));
+  EXPECT_EQ((4_u32).checked_shr(1_u32), Option<u32>(2_u32));
   EXPECT_EQ((0_u32).checked_shr(33_u32), None);
   EXPECT_EQ((1_u32).checked_shr(64_u32), None);
 }
@@ -1393,7 +1393,7 @@ TEST(u32DeathTest, SubOverflow) {
 
 TEST(u32, CheckedSub) {
   constexpr auto a = (5_u32).checked_sub(3_u32);
-  EXPECT_EQ(a, Option<u32>::with(2_u32));
+  EXPECT_EQ(a, Option<u32>(2_u32));
 
   EXPECT_EQ((0_u32).checked_sub(0_u32).unwrap(), 0_u32);
   EXPECT_EQ((12345_u32).checked_sub(12345_u32).unwrap(), 0_u32);
@@ -1599,15 +1599,15 @@ TEST(u32, OverflowingPow) {
 
 TEST(u32, CheckedPow) {
   constexpr auto a = (2_u32).checked_pow(5_u32);
-  EXPECT_EQ(a, Option<u32>::with(32_u32));
+  EXPECT_EQ(a, Option<u32>(32_u32));
 
-  EXPECT_EQ((2_u32).checked_pow(5_u32), Option<u32>::with(32_u32));
-  EXPECT_EQ((2_u32).checked_pow(0_u32), Option<u32>::with(1_u32));
-  EXPECT_EQ((2_u32).checked_pow(1_u32), Option<u32>::with(2_u32));
-  EXPECT_EQ((2_u32).checked_pow(30_u32), Option<u32>::with(1_u32 << 30_u32));
-  EXPECT_EQ((1_u32).checked_pow(u32::MAX), Option<u32>::with(1_u32));
-  EXPECT_EQ((u32::MAX).checked_pow(1_u32), Option<u32>::with(u32::MAX));
-  EXPECT_EQ((u32::MAX).checked_pow(0_u32), Option<u32>::with(1_u32));
+  EXPECT_EQ((2_u32).checked_pow(5_u32), Option<u32>(32_u32));
+  EXPECT_EQ((2_u32).checked_pow(0_u32), Option<u32>(1_u32));
+  EXPECT_EQ((2_u32).checked_pow(1_u32), Option<u32>(2_u32));
+  EXPECT_EQ((2_u32).checked_pow(30_u32), Option<u32>(1_u32 << 30_u32));
+  EXPECT_EQ((1_u32).checked_pow(u32::MAX), Option<u32>(1_u32));
+  EXPECT_EQ((u32::MAX).checked_pow(1_u32), Option<u32>(u32::MAX));
+  EXPECT_EQ((u32::MAX).checked_pow(0_u32), Option<u32>(1_u32));
 
   // Fails on the final acc * base.
   EXPECT_EQ((3_u32).checked_pow(31_u32), None);
@@ -1702,14 +1702,14 @@ TEST(u32DeathTest, Log2NonPositive) {
 
 TEST(u32, CheckedLog2) {
   constexpr auto a = (2_u32).checked_log2();
-  EXPECT_EQ(a, Option<u32>::with(1_u32));
+  EXPECT_EQ(a, Option<u32>(1_u32));
 
-  EXPECT_EQ((2_u32).checked_log2(), Option<u32>::with(1_u32));
-  EXPECT_EQ((55555_u32).checked_log2(), Option<u32>::with(15_u32));
+  EXPECT_EQ((2_u32).checked_log2(), Option<u32>(1_u32));
+  EXPECT_EQ((55555_u32).checked_log2(), Option<u32>(15_u32));
   EXPECT_EQ((0_u32).checked_log2(), None);
 
   // ** Unsigned only.
-  EXPECT_EQ((u32::MAX / 2_u32).checked_log2(), Option<u32>::with(30_u32));
+  EXPECT_EQ((u32::MAX / 2_u32).checked_log2(), Option<u32>(30_u32));
 }
 
 TEST(u32, Log10) {
@@ -1734,11 +1734,11 @@ TEST(u32DeathTest, Log10NonPositive) {
 
 TEST(u32, CheckedLog10) {
   constexpr auto a = (55555_u32).checked_log10();
-  EXPECT_EQ(a, Option<u32>::with(4_u32));
+  EXPECT_EQ(a, Option<u32>(4_u32));
 
-  EXPECT_EQ((2_u32).checked_log10(), Option<u32>::with(0_u32));
-  EXPECT_EQ((55555_u32).checked_log10(), Option<u32>::with(4_u32));
-  EXPECT_EQ((u32::MAX).checked_log10(), Option<u32>::with(9_u32));
+  EXPECT_EQ((2_u32).checked_log10(), Option<u32>(0_u32));
+  EXPECT_EQ((55555_u32).checked_log10(), Option<u32>(4_u32));
+  EXPECT_EQ((u32::MAX).checked_log10(), Option<u32>(9_u32));
   EXPECT_EQ((0_u32).checked_log10(), None);
 }
 
@@ -1776,11 +1776,11 @@ TEST(u32DeathTest, LogNonPositive) {
 
 TEST(u32, CheckedLog) {
   constexpr auto a = (55555_u32).checked_log(10_u32);
-  EXPECT_EQ(a, Option<u32>::with(4u));
+  EXPECT_EQ(a, Option<u32>(4u));
 
-  EXPECT_EQ((2_u32).checked_log(10_u32), Option<u32>::with(0_u32));
-  EXPECT_EQ((55555_u32).checked_log(10_u32), Option<u32>::with(4_u32));
-  EXPECT_EQ(u32::MAX.checked_log(10_u32), Option<u32>::with(9_u32));
+  EXPECT_EQ((2_u32).checked_log(10_u32), Option<u32>(0_u32));
+  EXPECT_EQ((55555_u32).checked_log(10_u32), Option<u32>(4_u32));
+  EXPECT_EQ(u32::MAX.checked_log(10_u32), Option<u32>(9_u32));
   EXPECT_EQ((0_u32).checked_log(10_u32), None);
 }
 
@@ -1907,11 +1907,11 @@ TEST(u32, ToNeBytes) {
 // ** Unsigned only.
 TEST(u32, CheckedAddSigned) {
   constexpr auto a = (1_u32).checked_add_signed(3_i32);
-  EXPECT_EQ(a, Option<u32>::with(4_u32));
+  EXPECT_EQ(a, Option<u32>(4_u32));
 
-  EXPECT_EQ((1_u32).checked_add_signed(2_i32), Option<u32>::with(3_u32));
+  EXPECT_EQ((1_u32).checked_add_signed(2_i32), Option<u32>(3_u32));
   EXPECT_EQ((u32::MIN + 1_u32).checked_add_signed(-1_i32),
-            Option<u32>::with(u32::MIN));
+            Option<u32>(u32::MIN));
   EXPECT_EQ((u32::MIN).checked_add_signed(-1_i32), None);
   EXPECT_EQ((u32::MAX - 2_u32).checked_add_signed(3_i32), None);
 }
@@ -1991,13 +1991,13 @@ TEST(u32DeathTest, NextPowerOfTwoOutOfBounds) {
 // ** Unsigned only.
 TEST(u32, CheckedNextPowerOfTwo) {
   constexpr auto a = (3_u32).checked_next_power_of_two();
-  EXPECT_EQ(a, Option<u32>::with(4_u32));
+  EXPECT_EQ(a, Option<u32>(4_u32));
 
-  EXPECT_EQ((2_u32).checked_next_power_of_two(), Option<u32>::with(2_u32));
-  EXPECT_EQ((3_u32).checked_next_power_of_two(), Option<u32>::with(4_u32));
-  EXPECT_EQ((4_u32).checked_next_power_of_two(), Option<u32>::with(4_u32));
+  EXPECT_EQ((2_u32).checked_next_power_of_two(), Option<u32>(2_u32));
+  EXPECT_EQ((3_u32).checked_next_power_of_two(), Option<u32>(4_u32));
+  EXPECT_EQ((4_u32).checked_next_power_of_two(), Option<u32>(4_u32));
   EXPECT_EQ((1000_u32).checked_next_power_of_two(),
-            Option<u32>::with(1024_u32));
+            Option<u32>(1024_u32));
 
   EXPECT_EQ(u32::MAX.checked_next_power_of_two(), None);
 }
@@ -2035,9 +2035,9 @@ TEST(u32DeathTest, DivEuclidOverflow) {
 
 TEST(u32, CheckedDivEuclid) {
   constexpr auto a = (7_u32).checked_div_euclid(4_u32);
-  EXPECT_EQ(a, Option<u32>::with(1_u32));
+  EXPECT_EQ(a, Option<u32>(1_u32));
 
-  EXPECT_EQ((7_u32).checked_div_euclid(4_u32), Option<u32>::with(1_u32));
+  EXPECT_EQ((7_u32).checked_div_euclid(4_u32), Option<u32>(1_u32));
   EXPECT_EQ((7_u32).checked_div_euclid(0_u32), None);
 }
 
@@ -2098,9 +2098,9 @@ TEST(u32DeathTest, RemEuclidOverflow) {
 
 TEST(u32, CheckedRemEuclid) {
   constexpr auto a = (7_u32).checked_rem_euclid(4_u32);
-  EXPECT_EQ(a, Option<u32>::with(3_u32));
+  EXPECT_EQ(a, Option<u32>(3_u32));
 
-  EXPECT_EQ((7_u32).checked_rem_euclid(4_u32), Option<u32>::with(3_u32));
+  EXPECT_EQ((7_u32).checked_rem_euclid(4_u32), Option<u32>(3_u32));
   EXPECT_EQ((7_u32).checked_rem_euclid(0_u32), None);
 }
 

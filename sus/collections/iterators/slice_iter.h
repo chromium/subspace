@@ -71,7 +71,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
-    return Option<Item>::with(*::sus::mem::replace(ptr_, ptr_ + 1u));
+    return Option<Item>(*::sus::mem::replace(ptr_, ptr_ + 1u));
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -82,13 +82,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
     // constructor) so subtracting one and dereffing will be inside the
     // allocation.
     end_ -= 1u;
-    return Option<Item>::with(*end_);
+    return Option<Item>(*end_);
   }
 
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
     return ::sus::iter::SizeHint(
-        remaining, ::sus::Option<::sus::num::usize>::with(remaining));
+        remaining, ::sus::Option<::sus::num::usize>(remaining));
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -161,7 +161,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
     // SAFETY: end_ is always > ptr_ when we get here (this was checked by the
     // constructor) so ptr_ will be inside the allocation, not pointing just
     // after it (like end_ may be).
-    return Option<Item>::with(*::sus::mem::replace(ptr_, ptr_ + 1u));
+    return Option<Item>(*::sus::mem::replace(ptr_, ptr_ + 1u));
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -172,12 +172,12 @@ struct [[sus_trivial_abi]] SliceIterMut final
     // constructor) so subtracting one and dereffing will be inside the
     // allocation.
     end_ -= 1u;
-    return Option<Item>::with(*end_);
+    return Option<Item>(*end_);
   }
 
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
-    return {remaining, ::sus::Option<::sus::num::usize>::with(remaining)};
+    return {remaining, ::sus::Option<::sus::num::usize>(remaining)};
   }
 
   /// sus::iter::ExactSizeIterator trait.

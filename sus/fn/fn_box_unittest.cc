@@ -702,7 +702,7 @@ struct Class {
 };
 
 TEST(FnBox, Method) {
-  auto it = sus::Option<Class>::with(Class(42)).into_iter().map(&Class::value);
+  auto it = sus::Option<Class>(Class(42)).into_iter().map(&Class::value);
   sus::check(it.next() == sus::some(42));
 }
 

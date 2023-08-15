@@ -69,7 +69,7 @@ struct OkMarker {
         "must match the Result's. For example a `Result<const i32&, E>` can "
         "not be constructed from an OkMarker holding `const i16&`, but it can "
         "be constructed from `i32&&`.");
-    return Result<U, E>(static_cast<const T&>(value));
+    return Result<U, E>(U(static_cast<const T&>(value)));
   }
 
   template <class U, class E>

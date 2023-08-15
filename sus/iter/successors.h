@@ -70,7 +70,7 @@ class [[nodiscard]] Successors final
     if (next_.is_some())
       return SizeHint(1u, ::sus::Option<::sus::num::usize>());
     else
-      return SizeHint(0u, ::sus::Option<::sus::num::usize>::with(0u));
+      return SizeHint(0u, ::sus::Option<::sus::num::usize>(0u));
   }
 
  private:

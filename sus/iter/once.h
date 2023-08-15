@@ -50,7 +50,7 @@ class [[nodiscard]] Once final : public IteratorBase<Once<ItemT>, ItemT> {
   /// sus::iter::Iterator trait.
   constexpr SizeHint size_hint() const noexcept {
     ::sus::num::usize rem = single_.is_some() ? 1u : 0u;
-    return SizeHint(rem, ::sus::Option<::sus::num::usize>::with(rem));
+    return SizeHint(rem, ::sus::Option<::sus::num::usize>(rem));
   }
   // sus::iter::DoubleEndedIterator trait.
   constexpr Option<Item> next_back() noexcept { return single_.take(); }

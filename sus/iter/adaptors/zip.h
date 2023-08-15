@@ -35,7 +35,7 @@ inline constexpr Option<TupleItem> nexts(auto& iters, T&&... args) {
   if constexpr (I == N) {
     if ((... && args.is_some())) {
       // SAFETY: args.is_some() is checked above, so unwrap has a value.
-      return Option<TupleItem>::with(TupleItem(
+      return Option<TupleItem>(TupleItem(
           ::sus::move(args).unwrap_unchecked(::sus::marker::unsafe_fn)...));
     } else {
       return Option<TupleItem>();

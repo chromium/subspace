@@ -77,7 +77,7 @@ class [[nodiscard]] SkipWhile final
   friend class IteratorBase;
 
   explicit constexpr SkipWhile(Pred&& pred, InnerSizedIter&& next_iter) noexcept
-      : pred_(Option<Pred>::with(::sus::move(pred))),
+      : pred_(Option<Pred>(::sus::move(pred))),
         next_iter_(::sus::move(next_iter)) {}
 
   Option<Pred> pred_;
