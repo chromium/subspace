@@ -105,6 +105,7 @@ class Tuple final {
   ///
   /// The Tuple's contained types must all be #Default, and will be
   /// constructed through that trait.
+  /// #[doc.overloads=ctor.default]
   // clang-format off
   explicit inline constexpr Tuple() noexcept
     requires(!((std::is_trivially_default_constructible_v<T> && ... &&
@@ -116,6 +117,7 @@ class Tuple final {
       : Tuple(T(), Ts()...) {}
   // clang-format on
 
+  /// #[doc.overloads=ctor.default]
   explicit Tuple()
     requires((std::is_trivially_default_constructible_v<T> && ... &&
               std::is_trivially_default_constructible_v<Ts>) &&
@@ -135,6 +137,7 @@ class Tuple final {
   /// To force accepting a const reference anyway in cases where a type can
   /// convert to a reference without constructing a temporary, use an unsafe
   /// `static_cast<const T&>()` at the callsite (and document it =)).
+  /// #[doc.overloads=ctor.values]
   template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
              (sus::construct::SafelyConstructibleFromReference<T, U &&> &&
