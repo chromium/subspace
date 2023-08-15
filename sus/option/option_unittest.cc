@@ -1270,8 +1270,7 @@ TEST(Option, And) {
   auto iy = Option<NoCopyMove&>::with(i2).and_that(Option<NoCopyMove&>());
   IS_NONE(iy);
 
-  auto inx =
-      Option<NoCopyMove&>().and_that(Option<NoCopyMove&>::with(i3));
+  auto inx = Option<NoCopyMove&>().and_that(Option<NoCopyMove&>::with(i3));
   IS_NONE(inx);
 
   auto iny = Option<NoCopyMove&>().and_that(Option<NoCopyMove&>());
@@ -1455,14 +1454,12 @@ TEST(Option, Or) {
                  .unwrap();
   EXPECT_EQ(&ix, &i2);
 
-  auto& iy = Option<NoCopyMove&>::with(i2)
-                 .or_that(Option<NoCopyMove&>())
-                 .unwrap();
+  auto& iy =
+      Option<NoCopyMove&>::with(i2).or_that(Option<NoCopyMove&>()).unwrap();
   EXPECT_EQ(&iy, &i2);
 
-  auto& inx = Option<NoCopyMove&>()
-                  .or_that(Option<NoCopyMove&>::with(i3))
-                  .unwrap();
+  auto& inx =
+      Option<NoCopyMove&>().or_that(Option<NoCopyMove&>::with(i3)).unwrap();
   EXPECT_EQ(&inx, &i3);
 
   auto iny = Option<NoCopyMove&>().or_that(Option<NoCopyMove&>());
@@ -1635,18 +1632,16 @@ TEST(Option, Xor) {
   // Reference.
   NoCopyMove i2, i3;
 
-  auto ix = Option<NoCopyMove&>::with(i2).xor_that(
-      Option<NoCopyMove&>::with(i3));
+  auto ix =
+      Option<NoCopyMove&>::with(i2).xor_that(Option<NoCopyMove&>::with(i3));
   IS_NONE(ix);
 
-  auto& iy = Option<NoCopyMove&>::with(i2)
-                 .xor_that(Option<NoCopyMove&>())
-                 .unwrap();
+  auto& iy =
+      Option<NoCopyMove&>::with(i2).xor_that(Option<NoCopyMove&>()).unwrap();
   EXPECT_EQ(&iy, &i2);
 
-  auto& inx = Option<NoCopyMove&>()
-                  .xor_that(Option<NoCopyMove&>::with(i3))
-                  .unwrap();
+  auto& inx =
+      Option<NoCopyMove&>().xor_that(Option<NoCopyMove&>::with(i3)).unwrap();
   EXPECT_EQ(&inx, &i3);
 
   auto iny = Option<NoCopyMove&>().xor_that(Option<NoCopyMove&>());
@@ -2186,10 +2181,9 @@ TEST(Option, Flatten) {
 
   // Reference.
   i32 i = 2;
-  EXPECT_EQ(&Option<Option<i32&>>::with(Option<i32&>::with(i))
-                 .flatten()
-                 .unwrap(),
-            &i);
+  EXPECT_EQ(
+      &Option<Option<i32&>>::with(Option<i32&>::with(i)).flatten().unwrap(),
+      &i);
 
   static_assert(Option<Option<i32>>().flatten().is_none());
   static_assert(Option<Option<i32>>::with(Option<i32>()).flatten().is_none());
@@ -2597,8 +2591,7 @@ TEST(Option, Transpose) {
   EXPECT_EQ(t1.is_ok(), true);
   EXPECT_EQ(sus::move(t1).unwrap(), None);
 
-  auto some_ok =
-      Option<sus::Result<u8, i32>>::with(sus::Result<u8, i32>::with(5_u8));
+  auto some_ok = Option<sus::Result<u8, i32>>::with(sus::ok(5_u8));
   auto t2 = sus::move(some_ok).transpose();
   static_assert(std::same_as<sus::Result<Option<u8>, i32>, decltype(t2)>);
   EXPECT_EQ(t2.is_ok(), true);
@@ -2618,8 +2611,7 @@ TEST(Option, Transpose) {
   EXPECT_EQ(t1.is_ok(), true);
   EXPECT_EQ(sus::move(t1).unwrap(), None);
 
-  some_ok =
-      Option<sus::Result<u8, i32>>::with(sus::Result<u8, i32>::with(5_u8));
+  some_ok = Option<sus::Result<u8, i32>>::with(sus::ok(5_u8));
   t2 = some_ok.transpose();
   static_assert(std::same_as<sus::Result<Option<u8>, i32>, decltype(t2)>);
   EXPECT_EQ(t2.is_ok(), true);
@@ -2736,8 +2728,7 @@ TEST(Option, Unzip) {
     static_assert(
         std::same_as<decltype(sr), Tuple<Option<NoCopyMove&>, Option<u32&>>>);
     EXPECT_EQ(sr, (Tuple<Option<NoCopyMove&>, Option<u32&>>::with(
-                      Option<NoCopyMove&>::with(i),
-                      Option<u32&>::with(u))));
+                      Option<NoCopyMove&>::with(i), Option<u32&>::with(u))));
 
     auto ci = NoCopyMove();
     auto cu = 4_u32;
@@ -2859,8 +2850,8 @@ TEST(Option, From) {
 TEST(Option, FromIter) {
   decltype(auto) all_some =
       sus::Array<Option<usize>, 3>(Option<usize>::with(1u),
-                                         Option<usize>::with(2u),
-                                         Option<usize>::with(3u))
+                                   Option<usize>::with(2u),
+                                   Option<usize>::with(3u))
           .into_iter()
           .collect<Option<CollectSum<usize>>>();
   static_assert(
@@ -2869,8 +2860,8 @@ TEST(Option, FromIter) {
   EXPECT_EQ(all_some->sum, 1u + 2u + 3u);
 
   auto one_none =
-      sus::Array<Option<usize>, 3>(
-          Option<usize>::with(1u), Option<usize>(), Option<usize>::with(3u))
+      sus::Array<Option<usize>, 3>(Option<usize>::with(1u), Option<usize>(),
+                                   Option<usize>::with(3u))
           .into_iter()
           .collect<Option<CollectSum<usize>>>();
   EXPECT_EQ(one_none, None);
@@ -3026,16 +3017,16 @@ TEST(Option, FromProduct) {
 
   // With a None.
   {
-    auto a = sus::Array<Option<i32>, 3>(sus::some(2), sus::none(),
-                                              sus::some(4));
+    auto a =
+        sus::Array<Option<i32>, 3>(sus::some(2), sus::none(), sus::some(4));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::Option<i32>>);
     EXPECT_EQ(o, sus::None);
   }
   // Without a None.
   {
-    auto a = sus::Array<Option<i32>, 3>(sus::some(2), sus::some(3),
-                                              sus::some(4));
+    auto a =
+        sus::Array<Option<i32>, 3>(sus::some(2), sus::some(3), sus::some(4));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::Option<i32>>);
     EXPECT_EQ(o.as_value(), 2 * 3 * 4);
@@ -3058,16 +3049,16 @@ TEST(Option, FromSum) {
 
   // With a None.
   {
-    auto a = sus::Array<Option<i32>, 3>(sus::some(2), sus::none(),
-                                              sus::some(4));
+    auto a =
+        sus::Array<Option<i32>, 3>(sus::some(2), sus::none(), sus::some(4));
     decltype(auto) o = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(o), sus::Option<i32>>);
     EXPECT_EQ(o, sus::None);
   }
   // Without a None.
   {
-    auto a = sus::Array<Option<i32>, 3>(sus::some(2), sus::some(3),
-                                              sus::some(4));
+    auto a =
+        sus::Array<Option<i32>, 3>(sus::some(2), sus::some(3), sus::some(4));
     decltype(auto) o = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(o), sus::Option<i32>>);
     EXPECT_EQ(o.as_value(), 2 + 3 + 4);

@@ -967,7 +967,7 @@ class Option final {
     requires(!std::is_reference_v<T> && !std::is_reference_v<E>)
   {
     if (t_.state() == Some)
-      return Result::with(t_.take_and_set_none());
+      return Result(t_.take_and_set_none());
     else
       return Result::with_err(::sus::move(e));
   }
@@ -990,7 +990,7 @@ class Option final {
     requires(!std::is_reference_v<T> && !std::is_reference_v<E>)
   {
     if (t_.state() == Some)
-      return Result::with(t_.take_and_set_none());
+      return Result(t_.take_and_set_none());
     else
       return Result::with_err(::sus::fn::call_once(::sus::move(f)));
   }
@@ -1017,10 +1017,10 @@ class Option final {
     requires(::sus::result::__private::IsResultType<T>::value)
   constexpr Result transpose() && noexcept {
     if (t_.state() == None) {
-      return Result::with(Option<OkType>());
+      return Result(Option<OkType>());
     } else {
       if (t_.val().is_ok()) {
-        return Result::with(Option<OkType>::with(
+        return Result(Option<OkType>(
             t_.take_and_set_none().unwrap_unchecked(::sus::marker::unsafe_fn)));
       } else {
         return Result::with_err(t_.take_and_set_none().unwrap_err_unchecked(

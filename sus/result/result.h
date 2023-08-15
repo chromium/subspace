@@ -87,7 +87,7 @@ class [[nodiscard]] Result final {
   static_assert(!std::is_void_v<E>,
                 "A void Error type is not supported. Use Option<T> instead.");
 
-  struct VoidType;
+  struct VoidType {};
   // A helper type used for `T&` references since `T` can be void which then
   // makes `T&` ill-formed. So using this allows code to compile for functions
   // that are excluded when `T` is void without templating them. Why can't
@@ -111,45 +111,40 @@ class [[nodiscard]] Result final {
   /// To force accepting a const reference anyway in cases where a type can
   /// convert to a reference without constructing a temporary, use an unsafe
   /// `static_cast<const T&>()` at the callsite (and document it =)).
-  static constexpr inline Result with() noexcept
+  /// #[doc.overloads=result.ctor.ok]
+  explicit constexpr Result() noexcept
     requires(std::is_void_v<T>)
-  {
-    return Result(WithOk);
-  }
-  static constexpr inline Result with(const TUnlessVoid& t) noexcept
-    requires(!std::is_void_v<T> && !std::is_reference_v<T> &&
+      : Result(WITH_OK) {}
+  /// #[doc.overloads=ctor.ok]
+  explicit constexpr Result(const TUnlessVoid& t) noexcept
+    requires(!std::is_void_v<T> &&       //
+             !std::is_reference_v<T> &&  //
              ::sus::mem::Copy<T>)
-  {
-    return Result(WithOk, t);
-  }
-  static constexpr inline Result with(TUnlessVoid&& t) noexcept
-    requires(!std::is_void_v<T> && !std::is_reference_v<T>)
-  {
-    if constexpr (::sus::mem::Move<T>) {
-      return Result(WithOk, move_ok_to_storage(t));
-    } else {
-      static_assert(::sus::mem::Copy<T>, "All types should be Copy or Move.");
-      return Result(WithOk, t);
-    }
-  }
+      : Result(WITH_OK, t) {}
+  /// #[doc.overloads=ctor.ok]
+  explicit constexpr Result(TUnlessVoid&& t) noexcept
+    requires(!std::is_void_v<T> &&       //
+             !std::is_reference_v<T> &&  //
+             ::sus::mem::Move<T>)
+      : Result(WITH_OK, move_ok_to_storage(t)) {}
+  /// #[doc.overloads=ctor.ok]
   template <std::convertible_to<TUnlessVoid> U>
-  sus_pure static inline constexpr Result with(U&& t sus_lifetimebound) noexcept
-    requires(!std::is_void_v<T> && std::is_reference_v<T> &&
+  explicit constexpr Result(U&& t sus_lifetimebound) noexcept
+    requires(!std::is_void_v<T> &&      //
+             std::is_reference_v<T> &&  //
              sus::construct::SafelyConstructibleFromReference<T, U &&>)
-  {
-    return Result(WithOk, move_ok_to_storage(t));
-  }
+      : Result(WITH_OK, move_ok_to_storage(t)) {}
 
   /// Construct an Result that is holding the given error value.
   static constexpr inline Result with_err(const E& e) noexcept
     requires(::sus::mem::Copy<E>)
   {
-    return Result(WithErr, e);
+    return Result(WITH_ERR, e);
   }
   static constexpr inline Result with_err(E&& e) noexcept
     requires(::sus::mem::Move<E>)
   {
-    return Result(WithErr, ::sus::move(e));
+    return Result(WITH_ERR, ::sus::move(e));
   }
 
   /// Destructor for the Result.
@@ -449,11 +444,11 @@ class [[nodiscard]] Result final {
     switch (state_) {
       case ResultState::IsOk:
         if constexpr (std::is_void_v<T>)
-          return Result(WithOk);
+          return Result(WITH_OK);
         else
-          return Result(WithOk, ::sus::clone(storage_.ok_));
+          return Result(WITH_OK, ::sus::clone(storage_.ok_));
       case ResultState::IsErr:
-        return Result(WithErr, ::sus::clone(storage_.err_));
+        return Result(WITH_ERR, ::sus::clone(storage_.err_));
       case ResultState::IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
@@ -531,7 +526,7 @@ class [[nodiscard]] Result final {
     static_assert(::sus::iter::Iterator<IterUntilNone, T>);
 
     Option<E> err;
-    auto out = Result::with(IterUntilNone(it, err).product());
+    auto out = Result(IterUntilNone(it, err).product());
     if (err.is_some()) {
       out = Result::with_err(
           ::sus::move(err).unwrap_unchecked(::sus::marker::unsafe_fn));
@@ -583,7 +578,7 @@ class [[nodiscard]] Result final {
     static_assert(::sus::iter::Iterator<IterUntilNone, T>);
 
     Option<E> err;
-    auto out = Result::with(IterUntilNone(it, err).sum());
+    auto out = Result(IterUntilNone(it, err).sum());
     if (err.is_some()) {
       out = Result::with_err(
           ::sus::move(err).unwrap_unchecked(::sus::marker::unsafe_fn));
@@ -610,11 +605,12 @@ class [[nodiscard]] Result final {
   ///
   /// # Example
   ///
+  /// A reimplementation of `Result::unwrap_or()`.
   /// ```cpp
-  /// auto x = Result<int, char>::with(2);
+  /// auto x = Result<int, char>(2);
   /// switch (x) {
   ///  case Ok:
-  ///   return sus::move(x).unwrap_unchecked(::sus::marker::unsafe_fn);
+  ///   return sus::move(x).unwrap();
   ///  case Err:
   ///   return -1;
   /// }
@@ -786,7 +782,7 @@ class [[nodiscard]] Result final {
   /// ```
   /// enum ECode { ItsHappening = -1 };
   /// auto conv = [](ECode e) { return static_cast<i32>(e); };
-  /// auto ok = sus::Result<i32, ECode>::with(2);
+  /// auto ok = sus::Result<i32, ECode>(2);
   /// sus::check(sus::move(ok).unwrap_or_else(conv) == 2);
   /// auto err = sus::Result<i32, ECode>::with_err(ItsHappening);
   /// sus::check(sus::move(err).unwrap_or_else(conv) == -1);
@@ -1111,23 +1107,23 @@ class [[nodiscard]] Result final {
   }
 
   // Constructors for `Ok`.
-  enum WithOkType { WithOk };
-  constexpr inline Result(WithOkType) noexcept
+  enum WithOk { WITH_OK };
+  constexpr inline Result(WithOk) noexcept
     requires(std::is_void_v<T>)
       : storage_(), state_(ResultState::IsOk) {}
   template <std::convertible_to<T> U>
-  constexpr inline Result(WithOkType, const U& t) noexcept
+  constexpr inline Result(WithOk, const U& t) noexcept
       : storage_(__private::kWithT, t), state_(ResultState::IsOk) {}
   template <std::convertible_to<T> U>
-  constexpr inline Result(WithOkType, U&& t) noexcept
+  constexpr inline Result(WithOk, U&& t) noexcept
     requires(::sus::mem::Move<T>)
       : storage_(__private::kWithT, ::sus::move(t)),
         state_(ResultState::IsOk) {}
   // Constructors for `Err`.
-  enum WithErrType { WithErr };
-  constexpr inline Result(WithErrType, const E& e) noexcept
+  enum WithErr { WITH_ERR };
+  constexpr inline Result(WithErr, const E& e) noexcept
       : storage_(__private::kWithE, e), state_(ResultState::IsErr) {}
-  constexpr inline Result(WithErrType, E&& e) noexcept
+  constexpr inline Result(WithErr, E&& e) noexcept
     requires(::sus::mem::Move<E>)
       : storage_(__private::kWithE, ::sus::move(e)),
         state_(ResultState::IsErr) {}
@@ -1198,7 +1194,7 @@ struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
     return ::sus::move(t).unwrap_unchecked(::sus::marker::unsafe_fn);
   }
   constexpr static ::sus::result::Result<T, E> from_output(Output t) {
-    return ::sus::result::Result<T, E>::with(::sus::move(t));
+    return ::sus::result::Result<T, E>(::sus::move(t));
   }
   template <class U>
   constexpr static ::sus::result::Result<T, E> preserve_error(
@@ -1213,7 +1209,7 @@ struct sus::ops::TryImpl<::sus::result::Result<T, E>> {
   constexpr static ::sus::result::Result<T, E> from_default() noexcept
     requires(sus::construct::Default<T>)
   {
-    return ::sus::result::Result<T, E>::with(T());
+    return ::sus::result::Result<T, E>(T());
   }
 };
 
@@ -1235,7 +1231,7 @@ struct sus::ops::TryImpl<::sus::result::Result<void, E>> {
   }
   // Implements sus::ops::TryDefault for `Result<void, E>`.
   constexpr static ::sus::result::Result<void, E> from_default() noexcept {
-    return ::sus::result::Result<void, E>::with();
+    return ::sus::result::Result<void, E>();
   }
 };
 
@@ -1288,7 +1284,7 @@ struct sus::iter::FromIteratorImpl<::sus::result::Result<T, E>> {
 
     auto err = Option<E>();
     auto iter = Unwrapper(::sus::move(result_iter).into_iter(), err);
-    auto out = ::sus::result::Result<T, E>::with(
+    auto out = ::sus::result::Result<T, E>(
         ::sus::iter::from_iter<T>(::sus::move(iter)));
     if (err.is_some())
       out = ::sus::result::Result<T, E>::with_err(::sus::move(err).unwrap());

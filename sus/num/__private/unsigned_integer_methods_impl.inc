@@ -38,7 +38,7 @@ template <class U>
 sus_pure constexpr ::sus::result::Result<_self, ::sus::num::TryFromIntError>
 _self::try_from(U* u) noexcept {
   using R = ::sus::result::Result<_self, ::sus::num::TryFromIntError>;
-  return R::with(_self(reinterpret_cast<_primitive>(u)));
+  return R(_self(reinterpret_cast<_primitive>(u)));
 }
 
 template <Unsigned U>
@@ -51,7 +51,7 @@ _self::try_from(U u) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(u.primitive_value)));
+  return R(_self(static_cast<_primitive>(u.primitive_value)));
 }
 
 template <UnsignedPrimitiveInteger U>
@@ -64,7 +64,7 @@ _self::try_from(U u) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(u)));
+  return R(_self(static_cast<_primitive>(u)));
 }
 
 #else
@@ -78,7 +78,7 @@ _self::try_from(U u) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(u.primitive_value)));
+  return R(_self(static_cast<_primitive>(u.primitive_value)));
 }
 
 template <UnsignedPrimitiveInteger U>
@@ -90,7 +90,7 @@ _self::try_from(U u) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(u)));
+  return R(_self(static_cast<_primitive>(u)));
 }
 
 template <Signed S>
@@ -106,7 +106,7 @@ _self::try_from(S s) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(s.primitive_value)));
+  return R(_self(static_cast<_primitive>(s.primitive_value)));
 }
 
 template <SignedPrimitiveInteger S>
@@ -122,7 +122,7 @@ _self::try_from(S s) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(s)));
+  return R(_self(static_cast<_primitive>(s)));
 }
 
 template <class S>
@@ -140,7 +140,7 @@ _self::try_from(S s) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(s)));
+  return R(_self(static_cast<_primitive>(s)));
 }
 
 template <class U>
@@ -154,7 +154,7 @@ _self::try_from(U u) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(u)));
+  return R(_self(static_cast<_primitive>(u)));
 }
 
 #endif

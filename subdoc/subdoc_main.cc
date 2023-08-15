@@ -175,6 +175,8 @@ int main(int argc, const char** argv) {
 
   auto gen_options = subdoc::gen::Options{
       .output_root = std::filesystem::path(option_out.getValue()),
+      .stylesheets = sus::vec(),
+      .copy_files = sus::vec(),
   };
   if (option_project_name.getNumOccurrences() > 0) {
     gen_options.project_name = option_project_name.getValue();

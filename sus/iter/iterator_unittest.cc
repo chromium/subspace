@@ -4221,7 +4221,7 @@ TEST(Iterator, TryForEach) {
     auto r = sus::Array<i32, 3>(2, 3, 4).into_iter().try_for_each(
         [&](i32 i) -> sus::result::Result<void, i32> {
           sum += i;
-          return sus::result::Result<void, i32>::with();
+          return sus::ok();
         });
     sus::check(r.is_ok());
     return sum;
