@@ -72,6 +72,7 @@ inline std::filesystem::path construct_html_file_path_for_function(
     std::filesystem::path root, const FunctionElement& element,
     u32 overload_set) noexcept {
   std::ostringstream s;
+  s << "fn.";
   s << element.name;
   // TODO: Should collect all overload sets together on one html page with
   // #anchors to each set? How can the overload be more stable over time?

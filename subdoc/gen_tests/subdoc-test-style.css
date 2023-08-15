@@ -48,17 +48,21 @@ pre {
     margin-bottom: 0.5em;
     margin-left: 1em;
 }
+.overview .description :is(h1, h2, h3, h4, h5, h6) {
+    border-bottom: 1px solid rgb(184, 184, 184);
+}
+.overview .description h1 {
+    font-size: 120%;
+}
 .description h1 {
-    font-size: 110%;
+    font-size: 100%;
     font-weight: bold;
     color: rgb(250, 199, 121);
-    border-bottom: 1px solid rgb(184, 184, 184);
 }
 .description h2 {
     font-size: 100%;
     font-weight: bold;
     color: rgb(250, 199, 121);
-    border-bottom: 1px solid rgb(184, 184, 184);
 }
 .description pre {
     padding: 1em;
