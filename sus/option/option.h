@@ -181,8 +181,8 @@ class Option final {
   /// #[doc.overloads=ctor.some]
   template <std::convertible_to<T> U>
   explicit constexpr Option(U&& t) noexcept
-    requires(!std::is_reference_v<T> &&                  //
-             ::sus::mem::Move<T> &&                      //
+    requires(!std::is_reference_v<T> &&  //
+             ::sus::mem::Move<T> &&      //
              ::sus::mem::IsMoveRef<U &&>)
       : Option(WITH_SOME, move_to_storage(t)) {}
 
@@ -1473,15 +1473,24 @@ class Option final {
   }
   /// Implicit conversion from std::optional.
   ///
+  /// Prevents conversions from U to optional<T> when constructing
+  /// Option<optional<T>>.
+  ///
   /// #[doc.overloads=ctor.optional]
-  constexpr Option(const std::optional<std::remove_reference_t<T>>& s) noexcept
-    requires(::sus::mem::Copy<T> && !std::is_reference_v<T>)
+  constexpr Option(
+      const std::same_as<std::optional<std::remove_reference_t<T>>> auto&
+          s) noexcept
+    requires(!std::is_reference_v<T> &&  //
+             ::sus::mem::Copy<T>)
       : Option() {
     if (s.has_value()) insert(s.value());
   }
   /// #[doc.overloads=ctor.optional]
-  constexpr Option(std::optional<std::remove_reference_t<T>>&& s) noexcept
-    requires(::sus::mem::Move<T> && !std::is_reference_v<T>)
+  constexpr Option(
+      std::same_as<std::optional<std::remove_reference_t<T>>> auto&& s) noexcept
+    requires(!std::is_reference_v<T> &&  //
+             ::sus::mem::Move<T> &&      //
+             ::sus::mem::IsMoveRef<decltype(s)>)
       : Option() {
     if (s.has_value()) insert(::sus::move(s).value());
   }
