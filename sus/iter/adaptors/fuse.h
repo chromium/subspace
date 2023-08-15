@@ -68,7 +68,7 @@ class [[nodiscard]] Fuse final
     if (iter_.is_some())
       return iter_.as_value().size_hint();
     else
-      return SizeHint(0u, Option<usize>::with(0u));
+      return SizeHint(0u, Option<usize>(0u));
   }
 
   // sus::iter::DoubleEndedIterator trait.
@@ -89,7 +89,7 @@ class [[nodiscard]] Fuse final
 
   // Regular ctor.
   explicit constexpr Fuse(InnerIter&& iter) noexcept
-      : iter_(::sus::Option<InnerIter>::with(::sus::move(iter))) {}
+      : iter_(::sus::Option<InnerIter>(::sus::move(iter))) {}
   // Clone ctor.
   enum Clone { CLONE };
   explicit constexpr Fuse(Clone, ::sus::Option<InnerIter>&& iter) noexcept

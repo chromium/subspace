@@ -63,7 +63,7 @@ struct [[nodiscard]] ArrayIntoIter final
       Item& item = array_.get_unchecked_mut(
           ::sus::marker::unsafe_fn,
           ::sus::mem::replace(front_index_, front_index_ + 1_usize));
-      return Option<Item>::with(move(item));
+      return Option<Item>(move(item));
     }
   }
 
@@ -71,7 +71,7 @@ struct [[nodiscard]] ArrayIntoIter final
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     ::sus::num::usize remaining = back_index_ - front_index_;
     return ::sus::iter::SizeHint(
-        remaining, ::sus::Option<::sus::num::usize>::with(remaining));
+        remaining, ::sus::Option<::sus::num::usize>(remaining));
   }
 
   /// sus::iter::DoubleEndedIterator trait.
@@ -86,7 +86,7 @@ struct [[nodiscard]] ArrayIntoIter final
       back_index_ -= 1u;
       Item& item =
           array_.get_unchecked_mut(::sus::marker::unsafe_fn, back_index_);
-      return Option<Item>::with(move(item));
+      return Option<Item>(move(item));
     }
   }
 

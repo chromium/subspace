@@ -297,7 +297,7 @@ class Tuple final {
         // take I instead of an Option<I>.
         (...,
          at_mut<Is>().extend(
-             ::sus::option::Option<typename Items::template IthType<Is>>::with(
+             ::sus::option::Option<typename Items::template IthType<Is>>(
                  ::sus::move(item).template into_inner<Is>())));
       };
       f(::sus::move(item), std::make_index_sequence<1u + sizeof...(Ts)>());

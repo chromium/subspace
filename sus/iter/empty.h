@@ -49,7 +49,7 @@ class [[nodiscard]] [[sus_trivial_abi]] Empty final
   constexpr Option<Item> next() noexcept { return sus::Option<Item>(); }
   /// sus::iter::Iterator trait.
   constexpr SizeHint size_hint() const noexcept {
-    return SizeHint(0u, ::sus::Option<::sus::num::usize>::with(0u));
+    return SizeHint(0u, ::sus::Option<::sus::num::usize>(0u));
   }
   // sus::iter::DoubleEndedIterator trait.
   constexpr Option<Item> next_back() noexcept { return sus::Option<Item>(); }

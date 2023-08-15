@@ -61,7 +61,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] VecIntoIter final
     Item& item = vec_.get_unchecked_mut(
         ::sus::marker::unsafe_fn,
         ::sus::mem::replace(front_index_, front_index_ + 1_usize));
-    return Option<Item>::with(move(item));
+    return Option<Item>(move(item));
   }
 
   /// sus::iter::DoubleEndedIterator trait.
@@ -73,14 +73,14 @@ struct [[nodiscard]] [[sus_trivial_abi]] VecIntoIter final
     // length of the Vec can not go out of bounds.
     back_index_ -= 1u;
     Item& item = vec_.get_unchecked_mut(::sus::marker::unsafe_fn, back_index_);
-    return Option<Item>::with(move(item));
+    return Option<Item>(move(item));
   }
 
   /// sus::iter::Iterator trait.
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const usize remaining = back_index_ - front_index_;
     return ::sus::iter::SizeHint(
-        remaining, ::sus::Option<::sus::num::usize>::with(remaining));
+        remaining, ::sus::Option<::sus::num::usize>(remaining));
   }
 
   /// sus::iter::ExactSizeIterator trait.

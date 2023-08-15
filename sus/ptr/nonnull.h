@@ -56,7 +56,7 @@ class [[sus_trivial_abi]] NonNull {
   template <::sus::ptr::SameOrSubclassOf<T*> U>
   static constexpr inline ::sus::option::Option<NonNull> with_ptr(U t) {
     if (t) [[likely]]
-      return ::sus::option::Option<NonNull<T>>::with(NonNull(t));
+      return ::sus::option::Option<NonNull<T>>(NonNull(t));
     else
       return ::sus::option::Option<NonNull<T>>();
   }

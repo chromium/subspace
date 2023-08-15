@@ -37,7 +37,7 @@ class OverflowInteger {
   // integer type `I`.
   constexpr OverflowInteger() noexcept
     requires(::sus::construct::Default<I>)
-      : v_(Option<I>::with(I())) {}
+      : v_(Option<I>(I())) {}
 
   /// Constructs an OverflowInteger from the same subspace integer type.
   template <std::convertible_to<I> U>
@@ -312,7 +312,7 @@ class OverflowInteger {
  private:
   enum Construct { CONSTRUCT };
   explicit inline constexpr OverflowInteger(Construct, I i) noexcept
-      : v_(Option<I>::with(i)) {}
+      : v_(Option<I>(i)) {}
   enum FromOption { FROM_OPTION };
   explicit inline constexpr OverflowInteger(FromOption, Option<I> o) noexcept
       : v_(::sus::move(o)) {}

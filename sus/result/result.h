@@ -635,7 +635,7 @@ class [[nodiscard]] Result final {
         // SAFETY: The static_cast is needed to convert the pointer storage type
         // to a `const T&`, which does not create a temporary as it's converting
         // a pointer to a reference.
-        return Option<T>::with(static_cast<T>(::sus::mem::take_and_destruct(
+        return Option<T>(static_cast<T>(::sus::mem::take_and_destruct(
             ::sus::marker::unsafe_fn, storage_.ok_)));
       case ResultState::IsErr: storage_.destroy_err(); return Option<T>();
       case ResultState::IsMoved: break;
@@ -654,7 +654,7 @@ class [[nodiscard]] Result final {
     switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
       case ResultState::IsOk: storage_.destroy_ok(); return Option<E>();
       case ResultState::IsErr:
-        return Option<E>::with(::sus::mem::take_and_destruct(
+        return Option<E>(::sus::mem::take_and_destruct(
             ::sus::marker::unsafe_fn, storage_.err_));
       case ResultState::IsMoved: break;
     }
@@ -810,7 +810,7 @@ class [[nodiscard]] Result final {
           // SAFETY: The static_cast is needed to convert the pointer storage
           // type to a `const T&`, which does not create a temporary as it's
           // converting a pointer to a reference.
-          Option<const std::remove_reference_t<T>&>::with(
+          Option<const std::remove_reference_t<T>&>(
               static_cast<const std::remove_reference_t<T>&>(storage_.ok_)));
     } else {
       return ::sus::iter::once<const std::remove_reference_t<T>&>(
@@ -827,7 +827,7 @@ class [[nodiscard]] Result final {
           // SAFETY: The static_cast is needed to convert the pointer storage
           // type to a `const T&`, which does not create a temporary as it's
           // converting a pointer to a reference.
-          Option<const std::remove_reference_t<T>&>::with(
+          Option<const std::remove_reference_t<T>&>(
               static_cast<const std::remove_reference_t<T>&>(storage_.ok_)));
     } else {
       storage_.destroy_err();
@@ -841,7 +841,7 @@ class [[nodiscard]] Result final {
   {
     ::sus::check(state_ != ResultState::IsMoved);
     if (state_ == ResultState::IsOk) {
-      return ::sus::iter::once<T&>(Option<T&>::with(storage_.ok_));
+      return ::sus::iter::once<T&>(Option<T&>(storage_.ok_));
     } else {
       return ::sus::iter::once<T&>(Option<T&>());
     }
@@ -852,7 +852,7 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != ResultState::IsMoved);
     if (::sus::mem::replace(state_, ResultState::IsMoved) ==
         ResultState::IsOk) {
-      return ::sus::iter::once<T&>(Option<T&>::with(storage_.ok_));
+      return ::sus::iter::once<T&>(Option<T&>(storage_.ok_));
     } else {
       storage_.destroy_err();
       return ::sus::iter::once<T&>(Option<T&>());
@@ -865,7 +865,7 @@ class [[nodiscard]] Result final {
     ::sus::check(state_ != ResultState::IsMoved);
     if (::sus::mem::replace(state_, ResultState::IsMoved) ==
         ResultState::IsOk) {
-      return ::sus::iter::once<T>(Option<T>::with(::sus::mem::take_and_destruct(
+      return ::sus::iter::once<T>(Option<T>(::sus::mem::take_and_destruct(
           ::sus::marker::unsafe_fn, storage_.ok_)));
     } else {
       storage_.destroy_err();
@@ -1270,7 +1270,7 @@ struct sus::iter::FromIteratorImpl<::sus::result::Result<T, E>> {
         ::sus::result::Result<U, E> result =
             ::sus::move(try_item).unwrap_unchecked(::sus::marker::unsafe_fn);
         if (result.is_ok())
-          return Option<U>::with(
+          return Option<U>(
               ::sus::move(result).unwrap_unchecked(::sus::marker::unsafe_fn));
         err.insert(
             ::sus::move(result).unwrap_err_unchecked(::sus::marker::unsafe_fn));

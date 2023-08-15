@@ -47,7 +47,7 @@ struct SomeMarker {
         "must match the Option's. For example an `Option<const i32&>` can not "
         "be constructed from a SomeMarker holding `const i16&`, but it can be "
         "constructed from `i32&&`.");
-    return Option<U>::with(static_cast<const T&>(value));
+    return Option<U>(U(static_cast<const T&>(value)));
   }
 
   template <class U>
@@ -59,7 +59,7 @@ struct SomeMarker {
         "must match the Option's. For example an `Option<const i32&>` can not "
         "be constructed from a SomeMarker holding `const i16&`, but it can be "
         "constructed from `i32&&`.");
-    return Option<U>::with(::sus::forward<T>(value));
+    return Option<U>(::sus::forward<T>(value));
   }
 
   template <class U = ::sus::mem::remove_rvalue_reference<T>>

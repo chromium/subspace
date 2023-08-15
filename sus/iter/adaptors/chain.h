@@ -92,7 +92,7 @@ class [[nodiscard]] Chain final
   constexpr SizeHint size_hint() const noexcept {
     if (first_iter_.is_none()) {
       if (second_iter_.is_none()) {
-        return SizeHint(0u, sus::Option<usize>::with(0u));
+        return SizeHint(0u, sus::Option<usize>(0u));
       } else {
         return second_iter_->size_hint();
       }
@@ -122,9 +122,9 @@ class [[nodiscard]] Chain final
   explicit constexpr Chain(InnerSizedIter&& first_iter,
                            OtherSizedIter&& second_iter)
       : first_iter_(
-            ::sus::Option<InnerSizedIter>::with(::sus::move(first_iter))),
+            ::sus::Option<InnerSizedIter>(::sus::move(first_iter))),
         second_iter_(
-            ::sus::Option<OtherSizedIter>::with(::sus::move(second_iter))) {}
+            ::sus::Option<OtherSizedIter>(::sus::move(second_iter))) {}
 
   // These are "fused" with `Option` so we don't need separate state to track
   // which part is already exhausted, and we get niche layout for `None` with

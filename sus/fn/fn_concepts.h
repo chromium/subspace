@@ -140,7 +140,7 @@ struct Anything {
 ///   i32 value_;
 /// };
 ///
-/// auto o = sus::Option<Class>::with(Class(42));
+/// auto o = sus::Option<Class>(Class(42));
 /// sus::check(o.map(&Class::value) == sus::some(42));
 /// ```
 template <class F, class... S>
@@ -252,7 +252,7 @@ concept FnOnce = requires {
 ///   i32 value_;
 /// };
 ///
-/// auto o = sus::Option<Class>::with(Class(42));
+/// auto o = sus::Option<Class>(Class(42));
 /// sus::check(o.map(&Class::value) == sus::some(42));
 /// ```
 template <class F, class... S>
@@ -364,7 +364,7 @@ concept FnMut = requires {
 ///   i32 value_;
 /// };
 ///
-/// auto o = sus::Option<Class>::with(Class(42));
+/// auto o = sus::Option<Class>(Class(42));
 /// sus::check(o.map(&Class::value) == sus::some(42));
 /// ```
 template <class F, class... S>

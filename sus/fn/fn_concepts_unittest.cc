@@ -452,7 +452,7 @@ TEST(FnConcepts, ExampleFunction) {
   sus::check(map_class_mut(c, &map_fn) == 42);
   sus::check(map_class(c, &map_fn) == 42);
 
-  auto o = sus::Option<Class>::with(Class(42));
+  auto o = sus::Option<Class>(Class(42));
   sus::check(o.map(&map_fn) == sus::some(42));
 }
 
@@ -463,7 +463,7 @@ TEST(FnConcepts, Example_Method) {
   sus::check(map_class_mut(c, &Class::value) == 42);
   sus::check(map_class(c, &Class::value) == 42);
 
-  auto o = sus::Option<Class>::with(Class(42));
+  auto o = sus::Option<Class>(Class(42));
   sus::check(o.map(&Class::value) == sus::some(42));
 }
 

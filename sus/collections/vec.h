@@ -550,7 +550,7 @@ class [[sus_trivial_abi]] Vec final {
     check(!has_iterators());
     const auto self_len = len();
     if (self_len > 0u) {
-      auto o = Option<T>::with(sus::move(
+      auto o = Option<T>(sus::move(
           get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u)));
       std::destroy_at(as_mut_ptr() + self_len - 1u);
       set_len(::sus::marker::unsafe_fn, self_len - 1u);
