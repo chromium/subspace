@@ -483,69 +483,101 @@ struct Sortable {
 };
 
 TEST(SliceMut, Sort) {
-  // clang-format off
-  sus::Array<Sortable, 9> unsorted = sus::array(
-    Sortable(3, 0),
-    Sortable(3, 1),
-    Sortable(4, 0),
-    Sortable(2, 0),
-    Sortable(2, 1),
-    Sortable(1, 0),
-    Sortable(3, 2),
-    Sortable(6, 0),
-    Sortable(5, 0)
-  );
-  sus::Array<Sortable, 9> sorted = sus::array(
-    Sortable(1, 0),
-    Sortable(2, 0),
-    Sortable(2, 1),
-    Sortable(3, 0),
-    Sortable(3, 1),
-    Sortable(3, 2),
-    Sortable(4, 0),
-    Sortable(5, 0),
-    Sortable(6, 0)
-  );
-  // clang-format on
+  {
+    // clang-format off
+    sus::Array<Sortable, 9> unsorted = sus::array(
+      Sortable(3, 0),
+      Sortable(3, 1),
+      Sortable(4, 0),
+      Sortable(2, 0),
+      Sortable(2, 1),
+      Sortable(1, 0),
+      Sortable(3, 2),
+      Sortable(6, 0),
+      Sortable(5, 0)
+    );
+    sus::Array<Sortable, 9> sorted = sus::array(
+      Sortable(1, 0),
+      Sortable(2, 0),
+      Sortable(2, 1),
+      Sortable(3, 0),
+      Sortable(3, 1),
+      Sortable(3, 2),
+      Sortable(4, 0),
+      Sortable(5, 0),
+      Sortable(6, 0)
+    );
+    // clang-format on
 
-  SliceMut<Sortable> s = unsorted.as_mut_slice();
-  s.sort();
-  for (usize i = 0u; i < s.len(); i += 1u) {
-    EXPECT_EQ(sorted[i], s[i]);
+    SliceMut<Sortable> s = unsorted.as_mut_slice();
+    s.sort();
+    for (usize i = 0u; i < s.len(); i += 1u) {
+      EXPECT_EQ(sorted[i], s[i]);
+    }
+  }
+
+  // Weak ordering is sufficient.
+  {
+    struct S {
+      i32 i;
+      constexpr std::weak_ordering operator<=>(const S& b) const noexcept {
+        return i <=> b.i;
+      }
+    };
+
+    auto a = sus::Vec<S>(S(1), S(3), S(0), S(4));
+    a.as_mut_slice().sort();
+    EXPECT_TRUE(a.iter().eq_by(sus::Slice<S>::from({S(0), S(1), S(3), S(4)}),
+                               [](S a, S b) { return a.i == b.i; }));
   }
 }
 
 TEST(SliceMut, SortBy) {
-  // clang-format off
-  sus::Array<Sortable, 9> unsorted = sus::array(
-    Sortable(3, 0),
-    Sortable(3, 1),
-    Sortable(4, 0),
-    Sortable(2, 0),
-    Sortable(2, 1),
-    Sortable(1, 0),
-    Sortable(3, 2),
-    Sortable(6, 0),
-    Sortable(5, 0)
-  );
-  sus::Array<Sortable, 9> sorted = sus::array(
-    Sortable(6, 0),
-    Sortable(5, 0),
-    Sortable(4, 0),
-    Sortable(3, 0),
-    Sortable(3, 1),
-    Sortable(3, 2),
-    Sortable(2, 0),
-    Sortable(2, 1),
-    Sortable(1, 0)
-  );
-  // clang-format on
+  {
+    // clang-format off
+    sus::Array<Sortable, 9> unsorted = sus::array(
+      Sortable(3, 0),
+      Sortable(3, 1),
+      Sortable(4, 0),
+      Sortable(2, 0),
+      Sortable(2, 1),
+      Sortable(1, 0),
+      Sortable(3, 2),
+      Sortable(6, 0),
+      Sortable(5, 0)
+    );
+    sus::Array<Sortable, 9> sorted = sus::array(
+      Sortable(6, 0),
+      Sortable(5, 0),
+      Sortable(4, 0),
+      Sortable(3, 0),
+      Sortable(3, 1),
+      Sortable(3, 2),
+      Sortable(2, 0),
+      Sortable(2, 1),
+      Sortable(1, 0)
+    );
+    // clang-format on
 
-  SliceMut<Sortable> s = unsorted.as_mut_slice();
-  // Sorts backward.
-  s.sort_by([](const auto& a, const auto& b) { return b <=> a; });
-  for (usize i = 0u; i < s.len(); i += 1u) {
-    EXPECT_EQ(sorted[i], s[i]);
+    SliceMut<Sortable> s = unsorted.as_mut_slice();
+    // Sorts backward.
+    s.sort_by([](const auto& a, const auto& b) { return b <=> a; });
+    for (usize i = 0u; i < s.len(); i += 1u) {
+      EXPECT_EQ(sorted[i], s[i]);
+    }
+  }
+
+  // Weak ordering is sufficient.
+  {
+    struct S {
+      i32 i;
+    };
+
+    auto a = sus::Vec<S>(S(1), S(3), S(0), S(4));
+    a.as_mut_slice().sort_by(
+        [](S a, S b) noexcept -> std::weak_ordering { return a.i <=> b.i; });
+    EXPECT_TRUE(a.iter().eq_by(sus::Slice<S>::from({S(0), S(1), S(3), S(4)}),
+                               [](S a, S b) { return a.i == b.i; }));
   }
 }
 
@@ -634,25 +666,57 @@ TEST(SliceMut, SortByCachedKey) {
 }
 
 TEST(SliceMut, SortUnstable) {
-  sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
-  sus::Array<i32, 6> sorted = sus::array(1, 2, 3, 4, 5, 6);
+  {
+    sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
+    sus::Array<i32, 6> sorted = sus::array(1, 2, 3, 4, 5, 6);
 
-  SliceMut<i32> s = unsorted.as_mut_slice();
-  s.sort_unstable();
-  for (usize i = 0u; i < s.len(); i += 1u) {
-    EXPECT_EQ(sorted[i], s[i]);
+    SliceMut<i32> s = unsorted.as_mut_slice();
+    s.sort_unstable();
+    for (usize i = 0u; i < s.len(); i += 1u) {
+      EXPECT_EQ(sorted[i], s[i]);
+    }
+  }
+
+  // Weak ordering is sufficient.
+  {
+    struct S {
+      i32 i;
+      constexpr std::weak_ordering operator<=>(const S& b) const noexcept {
+        return i <=> b.i;
+      }
+    };
+
+    auto a = sus::Vec<S>(S(1), S(3), S(0), S(4));
+    a.as_mut_slice().sort_unstable();
+    EXPECT_TRUE(a.iter().eq_by(sus::Slice<S>::from({S(0), S(1), S(3), S(4)}),
+                               [](S a, S b) { return a.i == b.i; }));
   }
 }
 
 TEST(SliceMut, SortUnstableBy) {
-  sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
-  sus::Array<i32, 6> sorted = sus::array(6, 5, 4, 3, 2, 1);
+  {
+    sus::Array<i32, 6> unsorted = sus::array(3, 4, 2, 1, 6, 5);
+    sus::Array<i32, 6> sorted = sus::array(6, 5, 4, 3, 2, 1);
 
-  SliceMut<i32> s = unsorted.as_mut_slice();
-  // Sorts backward.
-  s.sort_unstable_by([](const auto& a, const auto& b) { return b <=> a; });
-  for (usize i = 0u; i < s.len(); i += 1u) {
-    EXPECT_EQ(sorted[i], s[i]);
+    SliceMut<i32> s = unsorted.as_mut_slice();
+    // Sorts backward.
+    s.sort_unstable_by([](const auto& a, const auto& b) { return b <=> a; });
+    for (usize i = 0u; i < s.len(); i += 1u) {
+      EXPECT_EQ(sorted[i], s[i]);
+    }
+  }
+
+  // Weak ordering is sufficient.
+  {
+    struct S {
+      i32 i;
+    };
+
+    auto a = sus::Vec<S>(S(1), S(3), S(0), S(4));
+    a.as_mut_slice().sort_unstable_by(
+        [](S a, S b) noexcept -> std::weak_ordering { return a.i <=> b.i; });
+    EXPECT_TRUE(a.iter().eq_by(sus::Slice<S>::from({S(0), S(1), S(3), S(4)}),
+                               [](S a, S b) { return a.i == b.i; }));
   }
 }
 
@@ -5707,8 +5771,7 @@ TEST(Slice, StripPrefix) {
 
   EXPECT_EQ(s.strip_prefix(Slice<i32>()).unwrap(),
             sus::Vec<i32>(1, 2, 2, 3, 4, 5));
-  EXPECT_EQ(s.strip_prefix(v["..2"_r]).unwrap(),
-            sus::Vec<i32>(2, 3, 4, 5));
+  EXPECT_EQ(s.strip_prefix(v["..2"_r]).unwrap(), sus::Vec<i32>(2, 3, 4, 5));
   EXPECT_EQ(s.strip_prefix(v["..5"_r]).unwrap(), sus::Vec<i32>(5));
   EXPECT_EQ(s.strip_prefix(v[".."_r]).unwrap(), sus::Vec<i32>());
 }
@@ -5729,8 +5792,7 @@ TEST(SliceMut, StripPrefixMut) {
 
   EXPECT_EQ(s.strip_prefix_mut(Slice<i32>()).unwrap(),
             sus::Vec<i32>(1, 2, 2, 3, 4, 5));
-  EXPECT_EQ(s.strip_prefix_mut(v["..2"_r]).unwrap(),
-            sus::Vec<i32>(2, 3, 4, 5));
+  EXPECT_EQ(s.strip_prefix_mut(v["..2"_r]).unwrap(), sus::Vec<i32>(2, 3, 4, 5));
   EXPECT_EQ(s.strip_prefix_mut(v["..5"_r]).unwrap(), sus::Vec<i32>(5));
   EXPECT_EQ(s.strip_prefix_mut(v[".."_r]).unwrap(), sus::Vec<i32>());
 }
@@ -5751,8 +5813,7 @@ TEST(Slice, StripSuffix) {
 
   EXPECT_EQ(s.strip_suffix(Slice<i32>()).unwrap(),
             sus::Vec<i32>(1, 2, 2, 3, 4, 5));
-  EXPECT_EQ(s.strip_suffix(v["4.."_r]).unwrap(),
-            sus::Vec<i32>(1, 2, 2, 3));
+  EXPECT_EQ(s.strip_suffix(v["4.."_r]).unwrap(), sus::Vec<i32>(1, 2, 2, 3));
   EXPECT_EQ(s.strip_suffix(v["1.."_r]).unwrap(), sus::Vec<i32>(1));
   EXPECT_EQ(s.strip_suffix(v[".."_r]).unwrap(), sus::Vec<i32>());
 }
@@ -5773,8 +5834,7 @@ TEST(SliceMut, StripSuffixMut) {
 
   EXPECT_EQ(s.strip_suffix_mut(Slice<i32>()).unwrap(),
             sus::Vec<i32>(1, 2, 2, 3, 4, 5));
-  EXPECT_EQ(s.strip_suffix_mut(v["4.."_r]).unwrap(),
-            sus::Vec<i32>(1, 2, 2, 3));
+  EXPECT_EQ(s.strip_suffix_mut(v["4.."_r]).unwrap(), sus::Vec<i32>(1, 2, 2, 3));
   EXPECT_EQ(s.strip_suffix_mut(v["1.."_r]).unwrap(), sus::Vec<i32>(1));
   EXPECT_EQ(s.strip_suffix_mut(v[".."_r]).unwrap(), sus::Vec<i32>());
 }

@@ -589,7 +589,7 @@ constexpr RSplitNMut<T> rsplitn_mut(
 /// Panics when `index >= len()`, meaning it always panics on empty slices.
 ::sus::Tuple<SliceMut<T>, T&, SliceMut<T>> select_nth_unstable_by(
     usize index,
-    ::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)> compare)
+    ::sus::fn::FnMutRef<std::weak_ordering(const T&, const T&)> compare)
     RETURN_REF noexcept {
   ::sus::check_with_message(
       index < len(), *"partition_at_index index greater than length of slice");
@@ -661,7 +661,7 @@ void sort() NO_RETURN_REF noexcept
 ///
 /// TODO: Rust's stable sort is O(n * log(n)), so this can be improved. It can
 /// also be constexpr?
-void sort_by(::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)>
+void sort_by(::sus::fn::FnMutRef<std::weak_ordering(const T&, const T&)>
                  compare) NO_RETURN_REF noexcept {
   if (len() > ::sus::num::usize(0u)) {
     std::stable_sort(as_mut_ptr(), as_mut_ptr() + len(),
@@ -762,7 +762,7 @@ constexpr void sort_unstable() NO_RETURN_REF noexcept
 /// TODO: Rust's sort is unstable (i.e., may reorder equal elements), in-place
 /// (i.e., does not allocate), and O(n * log(n)) worst-case.
 constexpr void sort_unstable_by(
-    ::sus::fn::FnMutRef<std::strong_ordering(const T&, const T&)> compare)
+    ::sus::fn::FnMutRef<std::weak_ordering(const T&, const T&)> compare)
     NO_RETURN_REF noexcept {
   if (len() > 0u) {
     std::sort(as_mut_ptr(), as_mut_ptr() + len(),
