@@ -28,12 +28,18 @@
 #include "sus/test/behaviour_types.h"
 #include "sus/test/no_copy_move.h"
 
+using sus::result::Result;
+using sus::result::OkVoid;
+using namespace sus::test;
+
 namespace sus::test::result {
 template <class T>
 struct CollectSum {
   T sum;
 };
 }  // namespace sus::test::result
+
+using namespace sus::test::result;
 
 template <class T>
 struct sus::iter::FromIteratorImpl<sus::test::result::CollectSum<T>> {
@@ -48,10 +54,6 @@ static_assert(
     sus::iter::FromIterator<sus::test::result::CollectSum<usize>, usize>);
 
 namespace {
-using namespace sus::test::result;
-using sus::Result;
-using namespace sus::test;
-
 struct TailPadding {
   i64 i;
   i32 j;
@@ -246,7 +248,7 @@ TEST(Result, Destructor) {
   { auto r = Result<NoCopyMove&, int>::with_err(2); }
 
   {
-    auto r = Result<void, E>();
+    auto r = Result<void, E>(OkVoid());
     t_destructed = e_destructed = 0_usize;
   }
   EXPECT_EQ(e_destructed, 0_usize);
@@ -255,7 +257,7 @@ TEST(Result, Destructor) {
     t_destructed = e_destructed = 0_usize;
   }
   EXPECT_EQ(e_destructed, 1_usize);
-  { auto r = Result<void, int>(); }
+  { auto r = Result<void, int>(OkVoid()); }
   { auto r = Result<void, int>::with_err(2); }
 }
 
@@ -546,9 +548,9 @@ TEST(Result, Unwrap) {
   static_assert(std::same_as<decltype(a), const i32>);
   EXPECT_EQ(a, 3_i32);
 
-  Result<void, Error>().unwrap();  // Returns void, doesn't panic.
+  Result<void, Error>(OkVoid()).unwrap();  // Returns void, doesn't panic.
   static_assert(
-      std::same_as<decltype(Result<void, Error>().unwrap()), void>);
+      std::same_as<decltype(Result<void, Error>(OkVoid()).unwrap()), void>);
 
   auto m = NoCopyMove();
   decltype(auto) u = Result<NoCopyMove&, Error>(m).unwrap();
@@ -573,14 +575,14 @@ TEST(Result, UnwrapOrDefault) {
   }
   {
     // Returns void, doesn't panic.
-    Result<void, Error>().unwrap_or_default();
+    Result<void, Error>(OkVoid()).unwrap_or_default();
     static_assert(
-        std::same_as<decltype(Result<void, Error>().unwrap_or_default()),
+        std::same_as<decltype(Result<void, Error>(OkVoid()).unwrap_or_default()),
                      void>);
     // Returns void, doesn't panic.
     Result<void, Error>::with_err(Error()).unwrap_or_default();
     static_assert(
-        std::same_as<decltype(Result<void, Error>().unwrap_or_default()),
+        std::same_as<decltype(Result<void, Error>(OkVoid()).unwrap_or_default()),
                      void>);
   }
 }
@@ -591,9 +593,9 @@ TEST(Result, UnwrapUnchecked) {
   EXPECT_EQ(a, 3_i32);
 
   // Returns void, doesn't panic.
-  Result<void, Error>().unwrap_unchecked(unsafe_fn);
+  Result<void, Error>(OkVoid()).unwrap_unchecked(unsafe_fn);
   static_assert(
-      std::same_as<decltype(Result<void, Error>().unwrap_unchecked(
+      std::same_as<decltype(Result<void, Error>(OkVoid()).unwrap_unchecked(
                        unsafe_fn)),
                    void>);
 
@@ -681,7 +683,7 @@ TEST(ResultDeathTest, UnwrapErrWithOk) {
   auto r = Result<i32, Error>(3_i32);
   EXPECT_DEATH(sus::move(r).unwrap_err(), "");
 
-  auto r2 = Result<void, Error>();
+  auto r2 = Result<void, Error>(OkVoid());
   EXPECT_DEATH(sus::move(r).unwrap_err(), "");
 #endif
 }
@@ -696,10 +698,10 @@ TEST(Result, UnwrapOrElse) {
       [](Error) constexpr { return 4_i32; });
   EXPECT_EQ(b, 4_i32);
 
-  Result<void, Error>().unwrap_or_else(
+  Result<void, Error>(OkVoid()).unwrap_or_else(
       [](Error) {});  // Returns void, doesn't panic.
   static_assert(
-      std::same_as<decltype(Result<void, Error>().unwrap_or_else(
+      std::same_as<decltype(Result<void, Error>(OkVoid()).unwrap_or_else(
                        [](Error) {})),
                    void>);
 
@@ -760,7 +762,7 @@ TEST(Result, Copy) {
 
   copied = 0_usize;
   {
-    auto rv = Result<void, Type>();
+    auto rv = Result<void, Type>(OkVoid());
     EXPECT_EQ(copied, 0u);
     auto rv2 = rv;
     EXPECT_EQ(copied, 0u);
@@ -779,7 +781,7 @@ TEST(Result, Copy) {
   }
   {
     copied = 0_usize;
-    auto rv = Result<void, Type>();
+    auto rv = Result<void, Type>(OkVoid());
     auto rv2 = Result<void, Type>::with_err(Type());
     EXPECT_EQ(copied, 1u);
     rv = rv2;
@@ -789,7 +791,7 @@ TEST(Result, Copy) {
   }
   {
     copied = 0_usize;
-    auto rv = Result<void, Type>();
+    auto rv = Result<void, Type>(OkVoid());
     auto rv2 = Result<void, Type>::with_err(Type());
     EXPECT_EQ(copied, 1u);
     rv2 = rv;
@@ -913,40 +915,40 @@ TEST(Result, Move) {
   EXPECT_EQ(lvalue.i, 0);
 
   {
-    auto z = Result<void, int>();
+    auto z = Result<void, int>(OkVoid());
     auto zz = sus::move(z);
     EXPECT_EQ(zz.is_ok(), true);
     z = sus::move(zz);
     EXPECT_EQ(z.is_ok(), true);
   }
   {
-    auto z = Result<void, NotTriviallyRelocatableCopyableOrMoveable>();
+    auto z = Result<void, NotTriviallyRelocatableCopyableOrMoveable>(OkVoid());
     auto zz = sus::move(z);
     EXPECT_EQ(zz.is_ok(), true);
     z = sus::move(zz);
     EXPECT_EQ(z.is_ok(), true);
   }
   {
-    auto z = Result<void, int>();
+    auto z = Result<void, int>(OkVoid());
     auto zz = Result<void, int>::with_err(2);
     z = sus::move(zz);
     EXPECT_EQ(z.as_err(), 2);
   }
   {
-    auto z = Result<void, int>();
+    auto z = Result<void, int>(OkVoid());
     auto zz = Result<void, int>::with_err(2);
     zz = sus::move(z);
     EXPECT_EQ(zz.is_ok(), true);
   }
   {
-    auto z = Result<void, NotTriviallyRelocatableCopyableOrMoveable>();
+    auto z = Result<void, NotTriviallyRelocatableCopyableOrMoveable>(OkVoid());
     auto zz = Result<void, NotTriviallyRelocatableCopyableOrMoveable>::with_err(
         NotTriviallyRelocatableCopyableOrMoveable(2));
     z = sus::move(zz);
     EXPECT_EQ(z.as_err().i, 2);
   }
   {
-    auto z = Result<void, NotTriviallyRelocatableCopyableOrMoveable>();
+    auto z = Result<void, NotTriviallyRelocatableCopyableOrMoveable>(OkVoid());
     auto zz = Result<void, NotTriviallyRelocatableCopyableOrMoveable>::with_err(
         NotTriviallyRelocatableCopyableOrMoveable(2));
     zz = sus::move(z);
@@ -1043,7 +1045,7 @@ TEST(Result, MoveAfterTrivialMove) {
     EXPECT_EQ(sus::move(r2).unwrap_err(), 2_i32);
   }
   {
-    auto rv = Result<void, i32>();
+    auto rv = Result<void, i32>(OkVoid());
     auto rv3 = sus::move(rv);
     auto rv2 = sus::move(rv3);
     EXPECT_TRUE(rv2.is_ok());
@@ -1088,13 +1090,13 @@ TEST(Result, AssignAfterTrivialMove) {
   }
 
   {
-    auto rv = Result<void, i32>();
+    auto rv = Result<void, i32>(OkVoid());
     auto rv3 = sus::move(rv);
     rv = sus::move(rv3);
     EXPECT_TRUE(rv.is_ok());
   }
   {
-    auto rv = Result<void, i32>();
+    auto rv = Result<void, i32>(OkVoid());
     auto rv3 = sus::move(rv);
     rv = Result<void, i32>::with_err(2);
     rv = sus::move(rv3);
@@ -1140,7 +1142,7 @@ TEST(ResultDeathTest, MoveAfterNonTrivialMove) {
     EXPECT_DEATH([[maybe_unused]] auto r2 = sus::move(r), "");
   }
   {
-    auto r = Result<void, NonTrivialMove>();
+    auto r = Result<void, NonTrivialMove>(OkVoid());
     sus::move(r).unwrap();
     EXPECT_DEATH([[maybe_unused]] auto r2 = sus::move(r), "");
   }
@@ -1212,13 +1214,13 @@ TEST(Result, AssignAfterNonTrivialMove) {
   }
 
   {
-    auto r = Result<void, NonTrivialMove>();
+    auto r = Result<void, NonTrivialMove>(OkVoid());
     auto r3 = sus::move(r);
     r = sus::move(r3);
     EXPECT_EQ(r, sus::Ok);
   }
   {
-    auto r = Result<void, NonTrivialMove>();
+    auto r = Result<void, NonTrivialMove>(OkVoid());
     auto r3 = sus::move(r);
     r = Result<void, NonTrivialMove>::with_err(NonTrivialMove(2));
     r = sus::move(r3);
@@ -1234,7 +1236,7 @@ TEST(Result, AssignAfterNonTrivialMove) {
   {
     auto r = Result<void, NonTrivialMove>::with_err(NonTrivialMove(2));
     auto r3 = sus::move(r);
-    r = Result<void, NonTrivialMove>();
+    r = Result<void, NonTrivialMove>(OkVoid());
     r = sus::move(r3);
     EXPECT_EQ(sus::move(r).unwrap_err().i, 2_i32);
   }
@@ -1277,7 +1279,7 @@ TEST(Result, MoveSelfAssign) {
   r = sus::move(r);
   EXPECT_EQ(sus::move(r).unwrap().i, 1);
 
-  auto rv = Result<void, i32>();
+  auto rv = Result<void, i32>(OkVoid());
   rv = sus::move(rv);
   EXPECT_TRUE(rv.is_ok());
 
@@ -1306,7 +1308,7 @@ TEST(Result, CopySelfAssign) {
   r = r;
   EXPECT_EQ(sus::move(r).unwrap().i, 1);
 
-  auto rv = Result<void, i32>();
+  auto rv = Result<void, i32>(OkVoid());
   rv = rv;
   EXPECT_TRUE(rv.is_ok());
 
@@ -1335,7 +1337,7 @@ TEST(Result, CloneIntoSelfAssign) {
   sus::clone_into(r, r);
   EXPECT_EQ(sus::move(r).unwrap().i, 1);
 
-  auto v = Result<void, i32>();
+  auto v = Result<void, i32>(OkVoid());
   sus::clone_into(v, v);
   EXPECT_TRUE(v.is_ok());
 
@@ -1635,7 +1637,7 @@ TEST(Result, Clone) {
   }
 
   {
-    const auto v = Result<void, Clone>();
+    const auto v = Result<void, Clone>(OkVoid());
     auto v2 = sus::clone(v);
     static_assert(std::same_as<decltype(v2), Result<void, Clone>>);
     EXPECT_TRUE(v.is_ok());
@@ -1649,14 +1651,14 @@ TEST(Result, Clone) {
     EXPECT_EQ(v2.as_err().i, 2);
   }
   {
-    const auto v = Result<void, Clone>();
-    auto v2 = Result<void, Clone>();
+    const auto v = Result<void, Clone>(OkVoid());
+    auto v2 = Result<void, Clone>(OkVoid());
     sus::clone_into(v2, v);
     EXPECT_TRUE(v.is_ok());
     EXPECT_TRUE(v2.is_ok());
   }
   {
-    const auto v = Result<void, Clone>();
+    const auto v = Result<void, Clone>(OkVoid());
     auto v2 = Result<void, Clone>::with_err(Clone(2));
     sus::clone_into(v2, v);
     EXPECT_TRUE(v.is_ok());
@@ -1664,7 +1666,7 @@ TEST(Result, Clone) {
   }
   {
     const auto v = Result<void, Clone>::with_err(Clone(2));
-    auto v2 = Result<void, Clone>();
+    auto v2 = Result<void, Clone>(OkVoid());
     sus::clone_into(v2, v);
     EXPECT_EQ(v.as_err().i, 2);
     EXPECT_EQ(v2.as_err().i, 3);
@@ -1926,7 +1928,7 @@ TEST(Result, fmt) {
   EXPECT_EQ(fmt::format("{}", sus::Result<NoFormat, i32>::with_err(12345)),
             "Err(12345)");
 
-  EXPECT_EQ(fmt::format("{}", sus::Result<void, i32>()), "Ok(<void>)");
+  EXPECT_EQ(fmt::format("{}", sus::Result<void, i32>(OkVoid())), "Ok(<void>)");
   EXPECT_EQ(fmt::format("{}", sus::Result<void, i32>::with_err(12345)),
             "Err(12345)");
 }

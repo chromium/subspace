@@ -77,6 +77,9 @@ enum class State : bool {
 using State::Err;
 using State::Ok;
 
+/// A marker type for constructing Result with an Ok(void) value.
+struct OkVoid {};
+
 template <class T, class E>
 class [[nodiscard]] Result final {
   static_assert(!std::is_reference_v<E>,
@@ -87,12 +90,11 @@ class [[nodiscard]] Result final {
   static_assert(!std::is_void_v<E>,
                 "A void Error type is not supported. Use Option<T> instead.");
 
-  struct VoidType {};
   // A helper type used for `T&` references since `T` can be void which then
   // makes `T&` ill-formed. So using this allows code to compile for functions
   // that are excluded when `T` is void without templating them. Why can't
   // `void` be a type.
-  using TUnlessVoid = std::conditional_t<std::is_void_v<T>, VoidType, T>;
+  using TUnlessVoid = std::conditional_t<std::is_void_v<T>, OkVoid, T>;
 
  public:
   using OkType = T;
@@ -112,7 +114,7 @@ class [[nodiscard]] Result final {
   /// convert to a reference without constructing a temporary, use an unsafe
   /// `static_cast<const T&>()` at the callsite (and document it =)).
   /// #[doc.overloads=result.ctor.ok]
-  explicit constexpr Result() noexcept
+  explicit constexpr Result(OkVoid) noexcept
     requires(std::is_void_v<T>)
       : Result(WITH_OK) {}
   /// #[doc.overloads=ctor.ok]
@@ -1231,7 +1233,7 @@ struct sus::ops::TryImpl<::sus::result::Result<void, E>> {
   }
   // Implements sus::ops::TryDefault for `Result<void, E>`.
   constexpr static ::sus::result::Result<void, E> from_default() noexcept {
-    return ::sus::result::Result<void, E>();
+    return ::sus::result::Result<void, E>(::sus::result::OkVoid());
   }
 };
 

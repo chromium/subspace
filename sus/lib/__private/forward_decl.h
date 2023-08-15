@@ -171,6 +171,10 @@ class Option;
 }
 
 namespace sus::result {
+struct OkVoid;
+}
+
+namespace sus::result {
 template <class T, class E>
 class Result;
 }
