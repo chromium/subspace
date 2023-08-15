@@ -142,7 +142,7 @@ binary_search_by(
       // SAFETY: same as the `get_unchecked` above.
       sus_assume(::sus::marker::unsafe_fn,
                  mid.primitive_value < _len_expr.primitive_value);
-      return Result::with(mid);
+      return Result(mid);
     }
 
     size = right - left;

@@ -32,12 +32,12 @@ struct OkVoidMarker {
   // concrete type.
   template <class E>
   inline constexpr operator ::sus::result::Result<void, E>() const& noexcept {
-    return Result<void, E>::with();
+    return Result<void, E>();
   }
 
   template <class E>
   inline constexpr operator ::sus::result::Result<void, E>() && noexcept {
-    return Result<void, E>::with();
+    return Result<void, E>();
   }
 
   template <class E>
@@ -69,7 +69,7 @@ struct OkMarker {
         "must match the Result's. For example a `Result<const i32&, E>` can "
         "not be constructed from an OkMarker holding `const i16&`, but it can "
         "be constructed from `i32&&`.");
-    return Result<U, E>::with(static_cast<const T&>(value));
+    return Result<U, E>(static_cast<const T&>(value));
   }
 
   template <class U, class E>
@@ -81,7 +81,7 @@ struct OkMarker {
         "must match the Result's. For example a `Result<const i32&, E>` can "
         "not be constructed from an OkMarker holding `const i16&`, but it can "
         "be constructed from `i32&&`.");
-    return Result<U, E>::with(::sus::forward<T>(value));
+    return Result<U, E>(::sus::forward<T>(value));
   }
 
   template <class E>

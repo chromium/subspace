@@ -217,7 +217,7 @@ try_from(S s) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(s.primitive_value)));
+  return R(_self(static_cast<_primitive>(s.primitive_value)));
 }
 
 /// Try to construct a @doc.self from an unsigned integer type (u8, u16, u32,
@@ -237,7 +237,7 @@ try_from(U u) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(u.primitive_value)));
+  return R(_self(static_cast<_primitive>(u.primitive_value)));
 }
 
 /// Constructs a @doc.self from a signed primitive integer type (int, long, etc)
@@ -275,7 +275,7 @@ try_from(S s) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(s)));
+  return R(_self(static_cast<_primitive>(s)));
 }
 
 /// Constructs a @doc.self from a signed enum type (or enum class) where no bits
@@ -316,7 +316,7 @@ try_from(S s) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(s)));
+  return R(_self(static_cast<_primitive>(s)));
 }
 
 /// Constructs a @doc.self from an unsigned primitive integer type (unsigned
@@ -350,7 +350,7 @@ try_from(U u) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(u)));
+  return R(_self(static_cast<_primitive>(u)));
 }
 
 /// Constructs a @doc.self from an unsigned enum type (or enum class) where no
@@ -387,7 +387,7 @@ try_from(U u) noexcept {
       return R::with_err(::sus::num::TryFromIntError::with_out_of_bounds());
     }
   }
-  return R::with(_self(static_cast<_primitive>(u)));
+  return R(_self(static_cast<_primitive>(u)));
 }
 
 /// Constructs a @doc.self from an `Iterator` by computing the product of all
