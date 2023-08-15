@@ -959,9 +959,9 @@ sus_pure constexpr Option<_self> checked_abs() const& noexcept {
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_abs() const& noexcept {
   if (primitive_value != MIN_PRIMITIVE) [[likely]]
-    return Tuple::with(abs(), false);
+    return Tuple(abs(), false);
   else
-    return Tuple::with(MIN, true);
+    return Tuple(MIN, true);
 }
 
 /// Saturating absolute value. Computes `abs()`, returning MAX if the
@@ -1046,7 +1046,7 @@ template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_add(_self rhs) const& noexcept {
   const auto r =
       __private::add_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(r.value, r.overflow);
+  return Tuple(r.value, r.overflow);
 }
 
 /// Calculates self + rhs with an unsigned rhs
@@ -1059,7 +1059,7 @@ sus_pure constexpr Tuple overflowing_add_unsigned(
     _unsigned rhs) const& noexcept {
   const auto r = __private::add_with_overflow_unsigned(primitive_value,
                                                        rhs.primitive_value);
-  return Tuple::with(r.value, r.overflow);
+  return Tuple(r.value, r.overflow);
 }
 
 /// Saturating integer addition. Computes self + rhs, saturating at the
@@ -1131,9 +1131,9 @@ sus_pure constexpr Tuple overflowing_div(_self rhs) const& noexcept {
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
       [[unlikely]] {
-    return Tuple::with(MIN, true);
+    return Tuple(MIN, true);
   } else {
-    return Tuple::with(
+    return Tuple(
         __private::unchecked_div(primitive_value, rhs.primitive_value), false);
   }
 }
@@ -1201,7 +1201,7 @@ template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_mul(_self rhs) const& noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
+  return Tuple(out.value, out.overflow);
 }
 
 /// Saturating integer multiplication. Computes self * rhs, saturating at
@@ -1245,9 +1245,9 @@ sus_pure constexpr Option<_self> checked_neg() const& noexcept {
 template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_neg() const& noexcept {
   if (primitive_value != MIN_PRIMITIVE) [[likely]]
-    return Tuple::with(__private::unchecked_neg(primitive_value), false);
+    return Tuple(__private::unchecked_neg(primitive_value), false);
   else
-    return Tuple::with(MIN, true);
+    return Tuple(MIN, true);
 }
 
 /// Saturating integer negation. Computes -self, returning MAX if self ==
@@ -1299,9 +1299,9 @@ sus_pure constexpr Tuple overflowing_rem(_self rhs) const& noexcept {
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
       [[unlikely]] {
-    return Tuple::with(_primitive{0}, true);
+    return Tuple(_primitive{0}, true);
   } else {
-    return Tuple::with(
+    return Tuple(
         static_cast<_primitive>(primitive_value % rhs.primitive_value), false);
   }
 }
@@ -1370,9 +1370,9 @@ sus_pure constexpr Tuple overflowing_div_euclid(_self rhs) const& noexcept {
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
       [[unlikely]] {
-    return Tuple::with(MIN, true);
+    return Tuple(MIN, true);
   } else {
-    return Tuple::with(
+    return Tuple(
         __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,
                               rhs.primitive_value),
         false);
@@ -1444,9 +1444,9 @@ sus_pure constexpr Tuple overflowing_rem_euclid(_self rhs) const& noexcept {
   if (__private::div_overflows_nonzero(::sus::marker::unsafe_fn,
                                        primitive_value, rhs.primitive_value))
       [[unlikely]] {
-    return Tuple::with(_primitive{0}, true);
+    return Tuple(_primitive{0}, true);
   } else {
-    return Tuple::with(
+    return Tuple(
         __private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,
                               rhs.primitive_value),
         false);
@@ -1497,7 +1497,7 @@ template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_shl(u32 rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
+  return Tuple(out.value, out.overflow);
 }
 
 /// Panic-free bitwise shift-left; yields `*this << mask(rhs)`, where mask
@@ -1536,7 +1536,7 @@ template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_shr(u32 rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
+  return Tuple(out.value, out.overflow);
 }
 
 /// Panic-free bitwise shift-right; yields `*this >> mask(rhs)`, where mask
@@ -1584,7 +1584,7 @@ template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_sub(_self rhs) const& noexcept {
   const auto out =
       __private::sub_with_overflow(primitive_value, rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
+  return Tuple(out.value, out.overflow);
 }
 
 /// Calculates self - rhs with an unsigned rhs.
@@ -1597,7 +1597,7 @@ sus_pure constexpr Tuple overflowing_sub_unsigned(
     const _unsigned& rhs) const& noexcept {
   const auto out = __private::sub_with_overflow_unsigned(primitive_value,
                                                          rhs.primitive_value);
-  return Tuple::with(out.value, out.overflow);
+  return Tuple(out.value, out.overflow);
 }
 
 /// Saturating integer subtraction. Computes self - rhs, saturating at the
@@ -1735,7 +1735,7 @@ template <int&..., class Tuple = ::sus::tuple_type::Tuple<_self, bool>>
 sus_pure constexpr Tuple overflowing_pow(u32 exp) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, exp.primitive_value);
-  return Tuple::with(out.value, out.overflow);
+  return Tuple(out.value, out.overflow);
 }
 
 /// Wrapping (modular) exponentiation. Computes self.pow(exp), wrapping

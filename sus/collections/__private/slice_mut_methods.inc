@@ -839,7 +839,7 @@ split_at_mut_unchecked(::sus::marker::UnsafeFnMarker,
   const ::sus::num::usize rem =
       len().unchecked_sub(::sus::marker::unsafe_fn, mid);
 
-  return ::sus::Tuple<SliceMut<T>, SliceMut<T>>::with(
+  return ::sus::Tuple<SliceMut<T>, SliceMut<T>>(
       SliceMut<T>::from_raw_collection_mut(
           ::sus::marker::unsafe_fn, _iter_refs_view_expr, as_mut_ptr(), mid),
       SliceMut<T>::from_raw_collection_mut(::sus::marker::unsafe_fn,

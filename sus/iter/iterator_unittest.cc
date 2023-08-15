@@ -1556,7 +1556,7 @@ TEST(Iterator, Find) {
                     .into_iter()
                     .enumerate()
                     .find([](auto p) { return p.template at<1>() == 3; })
-                    .unwrap() == sus::Tuple<usize, i32>::with(1u, 3));
+                    .unwrap() == sus::Tuple<usize, i32>(1u, 3));
 }
 
 TEST(Iterator, FindMap) {
@@ -2975,7 +2975,7 @@ TEST(Iterator, Rfind) {
                     .into_iter()
                     .enumerate()
                     .rfind([](auto p) { return p.template at<1>() == 5; })
-                    .unwrap() == sus::Tuple<usize, i32>::with(3u, 5));
+                    .unwrap() == sus::Tuple<usize, i32>(3u, 5));
 }
 
 struct Extendable {
@@ -4273,19 +4273,19 @@ TEST(Iterator, Zip) {
         std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(5u, sus::some(5u)));
     EXPECT_EQ(it.exact_size_hint(), 5u);
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(2, 3.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(2, 3.f)));
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(4u, sus::some(4u)));
     EXPECT_EQ(it.exact_size_hint(), 4u);
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(3, 4.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(3, 4.f)));
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(4, 5.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(4, 5.f)));
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
     EXPECT_EQ(it.exact_size_hint(), 2u);
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(5, 6.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(5, 6.f)));
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
     EXPECT_EQ(it.exact_size_hint(), 1u);
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(6, 7.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(6, 7.f)));
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
     EXPECT_EQ(it.exact_size_hint(), 0u);
     EXPECT_EQ(it.next(), sus::none());
@@ -4299,10 +4299,10 @@ TEST(Iterator, Zip) {
         std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
     EXPECT_EQ(it.exact_size_hint(), 2u);
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(2, 3.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(2, 3.f)));
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
     EXPECT_EQ(it.exact_size_hint(), 1u);
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(3, 4.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(3, 4.f)));
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
     EXPECT_EQ(it.exact_size_hint(), 0u);
     EXPECT_EQ(it.next(), sus::none());  // Eats 5.f.
@@ -4324,10 +4324,10 @@ TEST(Iterator, Zip) {
     static_assert(
         std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(2u, sus::some(2u)));
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(2, 3.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(2, 3.f)));
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(1u, sus::some(1u)));
     EXPECT_EQ(it.exact_size_hint(), 1u);
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(3, 4.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(3, 4.f)));
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(0u, sus::some(0u)));
     EXPECT_EQ(it.exact_size_hint(), 0u);
     EXPECT_EQ(it.next(), sus::none());  // Eats 4.
@@ -4359,8 +4359,8 @@ TEST(Iterator, Zip) {
     auto it = sus::iter::zip(::sus::move(a), ::sus::move(b));
     static_assert(
         std::same_as<decltype(it.next()), sus::Option<sus::Tuple<i32, f32>>>);
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(2, 3.f)));
-    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>::with(3, 4.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(2, 3.f)));
+    EXPECT_EQ(it.next().unwrap(), (sus::Tuple<i32, f32>(3, 4.f)));
     EXPECT_EQ(it.next(), sus::none());
   }
 

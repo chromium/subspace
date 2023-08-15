@@ -1054,9 +1054,9 @@ class Option final {
       return Option<Tuple>();
     } else {
       // SAFETY: We have verified `*this` and `o` contain Some above.
-      return Option<Tuple>::with(Tuple::with(
-          ::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn),
-          ::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)));
+      return Option<Tuple>(
+          Tuple(::sus::move(*this).unwrap_unchecked(::sus::marker::unsafe_fn),
+                ::sus::move(o).unwrap_unchecked(::sus::marker::unsafe_fn)));
     }
   }
   template <class U, int&..., class Tuple = ::sus::tuple_type::Tuple<T, U>>
@@ -1082,12 +1082,12 @@ class Option final {
     using V = __private::IsTupleOfSizeTwo<T>::second_type;
     if (is_some()) {
       auto&& [u, v] = t_.take_and_set_none();
-      return ::sus::tuple_type::Tuple<Option<U>, Option<V>>::with(
+      return ::sus::tuple_type::Tuple<Option<U>, Option<V>>(
           Option<U>::with(::sus::forward<U>(u)),
           Option<V>::with(::sus::forward<V>(v)));
     } else {
-      return ::sus::tuple_type::Tuple<Option<U>, Option<V>>::with(Option<U>(),
-                                                                  Option<V>());
+      return ::sus::tuple_type::Tuple<Option<U>, Option<V>>(Option<U>(),
+                                                            Option<V>());
     }
   }
   constexpr auto unzip() const& noexcept

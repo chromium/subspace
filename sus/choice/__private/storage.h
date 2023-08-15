@@ -200,13 +200,13 @@ union Storage<I, ::sus::Tuple<Ts...>, Elements...> {
 
   constexpr auto as() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
+      return ::sus::Tuple<const std::remove_reference_t<Ts>&...>(
           tuple_.template at<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr auto as_mut() & {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<Ts&...>::with(tuple_.template at_mut<Is>()...);
+      return ::sus::Tuple<Ts&...>(tuple_.template at_mut<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
@@ -350,10 +350,10 @@ union Storage<I, ::sus::Tuple<T>, Elements...> {
   }
   template <class U>
   inline constexpr void construct(U&& value) {
-    std::construct_at(&tuple_, ::sus::Tuple<T>::with(::sus::forward<U>(value)));
+    std::construct_at(&tuple_, ::sus::Tuple<T>(::sus::forward<U>(value)));
   }
   inline constexpr void assign(T&& value) {
-    tuple_ = Type::with(::sus::move(value));
+    tuple_ = Type(::sus::move(value));
   }
   inline constexpr void move_construct(size_t index, Storage&& from) {
     if (index == I) {
@@ -524,13 +524,13 @@ union Storage<I, ::sus::Tuple<Ts...>> {
 
   constexpr auto as() const& {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<const std::remove_reference_t<Ts>&...>::with(
+      return ::sus::Tuple<const std::remove_reference_t<Ts>&...>(
           tuple_.template at<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   constexpr auto as_mut() & {
     return [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return ::sus::Tuple<Ts&...>::with(tuple_.template at_mut<Is>()...);
+      return ::sus::Tuple<Ts&...>(tuple_.template at_mut<Is>()...);
     }(std::make_index_sequence<sizeof...(Ts)>());
   }
   inline constexpr auto into_inner() && { return ::sus::move(tuple_); }
@@ -609,10 +609,10 @@ union Storage<I, ::sus::Tuple<T>> {
   }
   template <class U>
   inline constexpr void construct(U&& value) {
-    std::construct_at(&tuple_, ::sus::Tuple<T>::with(::sus::forward<U>(value)));
+    std::construct_at(&tuple_, ::sus::Tuple<T>(::sus::forward<U>(value)));
   }
   inline constexpr void assign(T&& value) {
-    tuple_ = Type::with(::sus::move(value));
+    tuple_ = Type(::sus::move(value));
   }
   inline constexpr void move_construct(size_t index, Storage&& from) {
     ::sus::check(index == I);
@@ -670,8 +670,7 @@ union Storage<I, ::sus::Tuple<T>> {
 
 template <size_t I, class S>
 static constexpr auto& construct_choice_storage(S& storage) {
-  return construct_choice_storage(storage,
-                                  std::integral_constant<size_t, I>());
+  return construct_choice_storage(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>
@@ -708,8 +707,7 @@ static constexpr const auto& find_choice_storage(
 
 template <size_t I, class S>
 static constexpr auto& find_choice_storage_mut(S& storage) {
-  return find_choice_storage_mut(storage,
-                                 std::integral_constant<size_t, I>());
+  return find_choice_storage_mut(storage, std::integral_constant<size_t, I>());
 }
 
 template <size_t I, class S>

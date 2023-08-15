@@ -614,7 +614,7 @@ template <class... Ts>
 [[nodiscard]] inline constexpr auto array(
     Ts&&... vs sus_lifetimebound) noexcept {
   return __private::ArrayMarker<Ts...>(
-      ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+      ::sus::tuple_type::Tuple<Ts&&...>(::sus::forward<Ts>(vs)...));
 }
 
 }  // namespace sus::collections

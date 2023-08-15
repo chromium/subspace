@@ -140,9 +140,8 @@ class Tuple final {
              (sus::construct::SafelyConstructibleFromReference<T, U &&> &&
               ... &&
               sus::construct::SafelyConstructibleFromReference<Ts, Us &&>))
-  constexpr inline static Tuple with(U&& first, Us&&... more) noexcept {
-    return Tuple(::sus::forward<U>(first), ::sus::forward<Us>(more)...);
-  }
+  explicit constexpr Tuple(U&& first, Us&&... more) noexcept
+      : storage_(::sus::forward<U>(first), ::sus::forward<Us>(more)...) {}
 
   /// sus::mem::Clone trait.
   constexpr Tuple clone() const& noexcept
@@ -150,7 +149,7 @@ class Tuple final {
              !(::sus::mem::CopyOrRef<T> && ... && ::sus::mem::CopyOrRef<Ts>))
   {
     auto f = [this]<size_t... Is>(std::index_sequence<Is...>) {
-      return Tuple::with(::sus::mem::clone_or_forward<T>(
+      return Tuple(::sus::mem::clone_or_forward<T>(
           __private::find_tuple_storage<Is>(storage_).at())...);
     };
     return f(std::make_index_sequence<1u + sizeof...(Ts)>());
@@ -269,8 +268,8 @@ class Tuple final {
   /// Satisfies sus::iter::Extend for a Tuple of collections that each satisfies
   /// Extend for its position-relative type in the iterator of tuples.
   ///
-  /// The tuple this is called on is a set of collections. The iterable passed in
-  /// as an argument yields tuples of items that will be appended to the
+  /// The tuple this is called on is a set of collections. The iterable passed
+  /// in as an argument yields tuples of items that will be appended to the
   /// collections.
   ///
   /// The item types in the argument can not be deduced, so they must be
@@ -314,10 +313,6 @@ class Tuple final {
 
   template <size_t I>
   using IthType = ::sus::choice_type::__private::PackIth<I, T, Ts...>;
-
-  template <std::convertible_to<T> U, std::convertible_to<Ts>... Us>
-  constexpr inline Tuple(U&& first, Us&&... more) noexcept
-      : storage_(::sus::forward<U>(first), ::sus::forward<Us>(more)...) {}
 
   // The use of `[[no_unique_address]]` allows the tail padding of of the
   // `storage_` to be used in structs that request to do so by putting
@@ -374,7 +369,7 @@ struct TupleMarker {
         "but it can be constructed from `i32&&, u16`.");
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          return Tuple<Us...>::with(values.template at<Is>()...);
+          return Tuple<Us...>(values.template at<Is>()...);
         };
     return make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>());
   }
@@ -388,11 +383,10 @@ struct TupleMarker {
         "type must match the Tuple's. For example a `Tuple<const i32&, u32>` "
         "can not be constructed from a TupleMarker holding `const i16&, u32`, "
         "but it can be constructed from `i32&&, u16`.");
-    auto make_tuple =
-        [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          return Tuple<Us...>::with(
-              ::sus::forward<Ts>(values.template at_mut<Is>())...);
-        };
+    auto make_tuple = [this]<size_t... Is>(
+                          std::integer_sequence<size_t, Is...>) {
+      return Tuple<Us...>(::sus::forward<Ts>(values.template at_mut<Is>())...);
+    };
     return make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>());
   }
 
@@ -421,7 +415,7 @@ template <class... Ts>
 [[nodiscard]] inline constexpr auto tuple(
     Ts&&... vs sus_lifetimebound) noexcept {
   return __private::TupleMarker<Ts...>(
-      ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+      ::sus::tuple_type::Tuple<Ts&&...>(::sus::forward<Ts>(vs)...));
 }
 
 }  // namespace sus::tuple_type

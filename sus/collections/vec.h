@@ -870,7 +870,7 @@ template <class... Ts>
 [[nodiscard]] inline constexpr auto vec(Ts&&... vs sus_lifetimebound) noexcept {
   if constexpr (sizeof...(Ts) > 0) {
     return __private::VecMarker<Ts...>(
-        ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+        ::sus::tuple_type::Tuple<Ts&&...>(::sus::forward<Ts>(vs)...));
   } else {
     return __private::VecEmptyMarker();
   }

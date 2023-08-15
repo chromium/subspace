@@ -1496,8 +1496,8 @@ constexpr Option<Item> IteratorBase<Iter, Item>::max_by_key(
   auto fold = [&fn](sus::Tuple<Key, Item>&& acc, Item&& item) {
     Key key = ::sus::fn::call_mut(fn, item);
     if (key >= acc.template at<0>())
-      return sus::Tuple<Key, Item>::with(::sus::move(key),
-                                         ::sus::forward<Item>(item));
+      return sus::Tuple<Key, Item>(::sus::move(key),
+                                   ::sus::forward<Item>(item));
     return ::sus::move(acc);
   };
 
@@ -1510,9 +1510,9 @@ constexpr Option<Item> IteratorBase<Iter, Item>::max_by_key(
   return Option<Item>::with(
       // Run fold() over a Tuple<Key, Item> to find the max Key.
       static_cast<Iter&&>(*this)
-          .fold(sus::Tuple<Key, Item>::with(first_key,
-                                            ::sus::move(first).unwrap_unchecked(
-                                                ::sus::marker::unsafe_fn)),
+          .fold(sus::Tuple<Key, Item>(first_key,
+                                      ::sus::move(first).unwrap_unchecked(
+                                          ::sus::marker::unsafe_fn)),
                 fold)
           // Pull out the Item for the max Key.
           .template into_inner<1>());
@@ -1554,8 +1554,8 @@ constexpr Option<Item> IteratorBase<Iter, Item>::min_by_key(
   auto fold = [&fn](sus::Tuple<Key, Item>&& acc, Item&& item) {
     Key key = ::sus::fn::call_mut(fn, item);
     if (key < acc.template at<0>())
-      return sus::Tuple<Key, Item>::with(::sus::move(key),
-                                         ::sus::forward<Item>(item));
+      return sus::Tuple<Key, Item>(::sus::move(key),
+                                   ::sus::forward<Item>(item));
     return ::sus::move(acc);
   };
 
@@ -1568,9 +1568,9 @@ constexpr Option<Item> IteratorBase<Iter, Item>::min_by_key(
   return Option<Item>::with(
       // Run fold() over a Tuple<Key, Item> to find the min Key.
       static_cast<Iter&&>(*this)
-          .fold(sus::Tuple<Key, Item>::with(first_key,
-                                            ::sus::move(first).unwrap_unchecked(
-                                                ::sus::marker::unsafe_fn)),
+          .fold(sus::Tuple<Key, Item>(first_key,
+                                      ::sus::move(first).unwrap_unchecked(
+                                          ::sus::marker::unsafe_fn)),
                 fold)
           // Pull out the Item for the min Key.
           .template into_inner<1>());
@@ -1650,7 +1650,7 @@ constexpr sus::Tuple<B, B> IteratorBase<Iter, Item>::partition(
   };
 
   static_cast<Iter&&>(*this).for_each(extend);
-  return sus::Tuple<B, B>::with(sus::move(left), sus::move(right));
+  return sus::tuple(sus::move(left), sus::move(right));
 }
 
 template <class Iter, class Item>
@@ -1896,8 +1896,8 @@ template <class CollectionA, class CollectionB, int&..., class ItemA,
            ::sus::construct::Default<CollectionB> &&  //
            Extend<CollectionA, ItemA> &&              //
            Extend<CollectionB, ItemB>)
-sus::Tuple<CollectionA,
-           CollectionB> constexpr IteratorBase<Iter, Item>::unzip() && noexcept {
+sus::Tuple<CollectionA, CollectionB> constexpr IteratorBase<
+    Iter, Item>::unzip() && noexcept {
   auto out = sus::Tuple<CollectionA, CollectionB>();
   out.template extend<ItemA, ItemB>(static_cast<Iter&&>(*this));
   return out;

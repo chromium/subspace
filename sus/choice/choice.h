@@ -633,7 +633,7 @@ template <auto Tag, class... Ts>
     return __private::ChoiceMarker<Tag, Ts...>(::sus::forward<Ts>(vs)...);
   } else {
     return __private::ChoiceMarker<Tag, Ts...>(
-        ::sus::tuple_type::Tuple<Ts&&...>::with(::sus::forward<Ts>(vs)...));
+        ::sus::tuple_type::Tuple<Ts&&...>(::sus::forward<Ts>(vs)...));
   }
 }
 

@@ -29,20 +29,20 @@ namespace __private {
 template <class T>
 using GetItem = typename T::Item;
 
-template <class Item, size_t N, class... T>
-inline constexpr Option<Item> nexts(auto& iters, T&&... args) {
+template <class TupleItem, size_t N, class... T>
+inline constexpr Option<TupleItem> nexts(auto& iters, T&&... args) {
   constexpr size_t I = sizeof...(T);
   if constexpr (I == N) {
     if ((... && args.is_some())) {
       // SAFETY: args.is_some() is checked above, so unwrap has a value.
-      return Option<Item>::with(Item::with(
+      return Option<TupleItem>::with(TupleItem(
           ::sus::move(args).unwrap_unchecked(::sus::marker::unsafe_fn)...));
     } else {
-      return Option<Item>();
+      return Option<TupleItem>();
     }
   } else {
-    return nexts<Item, N>(iters, ::sus::move(args)...,
-                          iters.template at_mut<I>().next());
+    return nexts<TupleItem, N>(iters, ::sus::move(args)...,
+                               iters.template at_mut<I>().next());
   }
 }
 
