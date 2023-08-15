@@ -233,7 +233,7 @@ namespace sus {
 /// by calling the [`range()`](sus::iter::IteratorBase::range) adaptor on any
 /// Subspace iterator. It will return an object that satisfies
 /// [`std::ranges::input_range`](https://en.cppreference.com/w/cpp/ranges/input_range)
-// and
+/// and
 /// [`std::ranges::viewable_range`](https://en.cppreference.com/w/cpp/ranges/viewable_range),
 /// such as with `vec.iter().range()`.
 ///
