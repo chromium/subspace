@@ -39,10 +39,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] VecIntoIter final
  public:
   using Item = ItemT;
 
-  /// Constructs `VecIntoIter` from a `Vec`.
-  static constexpr auto with(Vec<Item>&& vec) noexcept {
-    return VecIntoIter(::sus::move(vec));
-  }
+  constexpr VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
 
   // sus::mem::Clone implementation.
   constexpr VecIntoIter clone() const noexcept
@@ -89,8 +86,6 @@ struct [[nodiscard]] [[sus_trivial_abi]] VecIntoIter final
   }
 
  private:
-  // Regular ctor.
-  constexpr VecIntoIter(Vec<Item>&& vec) noexcept : vec_(::sus::move(vec)) {}
   // Ctor for Clone.
   constexpr VecIntoIter(Vec<Item>&& vec, usize front, usize back) noexcept
       : vec_(::sus::move(vec)), front_index_(front), back_index_(back) {}

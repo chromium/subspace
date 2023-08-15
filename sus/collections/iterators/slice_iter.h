@@ -50,13 +50,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   using RawItem = std::remove_const_t<std::remove_reference_t<Item>>;
 
  public:
-  static constexpr auto with(::sus::iter::IterRef ref, const RawItem* start,
-                             usize len) noexcept {
-    const RawItem* end = start + len;
+  explicit constexpr SliceIter(::sus::iter::IterRef ref, const RawItem* start,
+                               usize len) noexcept
+      : ref_(::sus::move(ref)), ptr_(start), end_(start + len) {
     // Wrap-around would be an invalid allocation and would break our distance
     // functions.
-    ::sus::check(end >= start);
-    return SliceIter(::sus::move(ref), start, end);
+    ::sus::check(end_ >= ptr_);
   }
 
   /// Returns a slice of the items left to be iterated.
@@ -87,8 +86,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
 
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const auto remaining = exact_size_hint();
-    return ::sus::iter::SizeHint(
-        remaining, ::sus::Option<::sus::num::usize>(remaining));
+    return ::sus::iter::SizeHint(remaining,
+                                 ::sus::Option<::sus::num::usize>(remaining));
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -100,10 +99,6 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
   }
 
  private:
-  constexpr SliceIter(::sus::iter::IterRef ref, const RawItem* start,
-                      const RawItem* end) noexcept
-      : ref_(::sus::move(ref)), ptr_(start), end_(end) {}
-
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   const RawItem* ptr_;
   const RawItem* end_;
@@ -133,13 +128,12 @@ struct [[sus_trivial_abi]] SliceIterMut final
   using RawItem = std::remove_reference_t<Item>;
 
  public:
-  static constexpr auto with(::sus::iter::IterRef ref, RawItem* start,
-                             usize len) noexcept {
-    RawItem* end = start + len;
+  explicit constexpr SliceIterMut(::sus::iter::IterRef ref, RawItem* start,
+                                   usize len) noexcept
+      : ref_(::sus::move(ref)), ptr_(start), end_(start + len) {
     // Wrap-around would be an invalid allocation and would break our distance
     // functions.
-    ::sus::check(end >= start);
-    return SliceIterMut(sus::move(ref), start, end);
+    ::sus::check(end_ >= ptr_);
   }
 
   /// Returns a mutable slice of the items left to be iterated, consuming the
@@ -189,10 +183,6 @@ struct [[sus_trivial_abi]] SliceIterMut final
   }
 
  private:
-  constexpr SliceIterMut(::sus::iter::IterRef ref, RawItem* start,
-                         RawItem* end) noexcept
-      : ref_(::sus::move(ref)), ptr_(start), end_(end) {}
-
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   RawItem* ptr_;
   RawItem* end_;

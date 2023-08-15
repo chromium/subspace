@@ -174,7 +174,7 @@ class [[sus_trivial_abi]] Slice final {
   /// Converts the slice into an iterator that consumes the slice and returns
   /// each element in the same order they appear in the slice.
   sus_pure constexpr SliceIter<const T&> into_iter() && noexcept {
-    return SliceIter<const T&>::with(
+    return SliceIter<const T&>(
         // This method is in Slice only, so it's a view type.
         iter_refs_.to_iter_from_view(), data_, len_);
   }
@@ -401,7 +401,7 @@ class [[sus_trivial_abi]] SliceMut final {
   /// Converts the slice into an iterator that consumes the slice and returns
   /// each element in the same order they appear in the slice.
   sus_pure constexpr SliceIterMut<T&> into_iter() && noexcept {
-    return SliceIterMut<T&>::with(
+    return SliceIterMut<T&>(
         // This method is in SliceMut only, so it's a view type.
         slice_.iter_refs_.to_iter_from_view(), slice_.data_, slice_.len_);
   }

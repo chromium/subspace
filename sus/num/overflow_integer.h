@@ -19,9 +19,9 @@
 #include "sus/iter/iterator_concept.h"
 #include "sus/macros/pure.h"
 #include "sus/marker/unsafe.h"
+#include "sus/num/transmogrify.h"
 #include "sus/option/option.h"
 #include "sus/result/result.h"
-#include "sus/num/transmogrify.h"
 
 namespace sus::num {
 
@@ -35,22 +35,21 @@ class OverflowInteger {
  public:
   // Default constructs OverflowInteger with the default value of the inner
   // integer type `I`.
-  constexpr OverflowInteger() noexcept
+  explicit constexpr OverflowInteger() noexcept
     requires(::sus::construct::Default<I>)
       : v_(Option<I>(I())) {}
 
   /// Constructs an OverflowInteger from the same subspace integer type.
   template <std::convertible_to<I> U>
-  sus_pure static constexpr OverflowInteger with(U u) noexcept {
-    return OverflowInteger(CONSTRUCT, u);
-  }
+  explicit constexpr OverflowInteger(U u) noexcept
+      : v_(Option<I>(::sus::move(u))) {}
 
   /// Satisfies `sus::construct::From<OverflowInteger<I>, U>` if the inner
   /// integer type `I` satisfies `sus::construct::From<I, U>`.
   template <class U>
     requires(::sus::construct::From<I, U>)
   sus_pure static constexpr OverflowInteger from(U u) noexcept {
-    return OverflowInteger(CONSTRUCT, ::sus::move_into(u));
+    return OverflowInteger(::sus::move_into(u));
   }
 
   /// Satisfies `sus::construct::TryFrom<OverflowInteger<I>, U>` if the inner
@@ -62,8 +61,7 @@ class OverflowInteger {
   try_from(U u) noexcept {
     // TODO: Use map() when it exists.
     if (auto r = I::try_from(u); r.is_ok()) {
-      return ::sus::result::ok(
-          OverflowInteger(CONSTRUCT, ::sus::move(r).unwrap()));
+      return ::sus::result::ok(OverflowInteger(::sus::move(r).unwrap()));
     } else {
       return ::sus::result::err(::sus::move(r).unwrap_err());
     }
@@ -84,21 +82,21 @@ class OverflowInteger {
   /// used (for integer type `T`) which will perform the product computation and
   /// return an OverflowInteger without ever panicking.
   static constexpr OverflowInteger from_product(
-      ::sus::iter::Iterator<I> auto&& it) noexcept {
-    auto p = OverflowInteger(
-        CONSTRUCT,
-        // SAFETY: This is not lossy, as all integers can hold positive 1.
-        ::sus::mog<I>(1));
+      ::sus::iter::Iterator<I> auto&& it) noexcept
+    requires(::sus::mem::IsMoveRef<decltype(it)>)
+  {
+    // SAFETY: This is not lossy, as all integers can hold positive 1.
+    auto p = OverflowInteger(::sus::mog<I>(1));
     for (I i : ::sus::move(it)) p *= i;
     return p;
   }
 
   static constexpr OverflowInteger from_product(
-      ::sus::iter::Iterator<OverflowInteger> auto&& it) noexcept {
-    auto p = OverflowInteger(
-        CONSTRUCT,
-        // SAFETY: This is not lossy, as all integers can hold positive 1.
-        ::sus::mog<I>(1));
+      ::sus::iter::Iterator<OverflowInteger> auto&& it) noexcept
+    requires(::sus::mem::IsMoveRef<decltype(it)>)
+  {
+    // SAFETY: This is not lossy, as all integers can hold positive 1.
+    auto p = OverflowInteger(::sus::mog<I>(1));
     for (OverflowInteger i : ::sus::move(it)) p *= i;
     return p;
   }
@@ -310,9 +308,6 @@ class OverflowInteger {
   }
 
  private:
-  enum Construct { CONSTRUCT };
-  explicit inline constexpr OverflowInteger(Construct, I i) noexcept
-      : v_(Option<I>(i)) {}
   enum FromOption { FROM_OPTION };
   explicit inline constexpr OverflowInteger(FromOption, Option<I> o) noexcept
       : v_(::sus::move(o)) {}

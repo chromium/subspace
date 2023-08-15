@@ -2705,61 +2705,61 @@ TEST(Option, NonZeroField) {
   int i = 3;
 
   EXPECT_EQ(Option<T>(), None);
-  EXPECT_EQ(Option<T>(T::with(i)), Some);
+  EXPECT_EQ(Option<T>(T(i)), Some);
 
   EXPECT_EQ(Option<T>(static_cast<const Option<T>&>(Option<T>())), None);
-  EXPECT_EQ(Option<T>(static_cast<const Option<T>&>(Option<T>(T::with(i)))),
+  EXPECT_EQ(Option<T>(static_cast<const Option<T>&>(Option<T>(T(i)))),
             Some);
   auto o = Option<T>();
-  o = static_cast<const Option<T>&>(Option<T>(T::with(i)));
+  o = static_cast<const Option<T>&>(Option<T>(T(i)));
   EXPECT_EQ(o, Some);
 
   EXPECT_EQ(Option<T>(Option<T>()), None);
-  EXPECT_EQ(Option<T>(Option<T>(T::with(i))), Some);
+  EXPECT_EQ(Option<T>(Option<T>(T(i))), Some);
   o = Option<T>();
   EXPECT_EQ(o, None);
 
-  o.insert(T::with(i));
+  o.insert(T(i));
   EXPECT_EQ(o, Some);
 
   o.take();
   EXPECT_EQ(o, None);
 
-  EXPECT_EQ(Option<T>(T::with(i)).unwrap().as_ref(), 3);
+  EXPECT_EQ(Option<T>(T(i)).unwrap().as_ref(), 3);
 
   EXPECT_EQ(o, None);
-  EXPECT_EQ(o.get_or_insert(T::with(i)).as_ref(), 3);
+  EXPECT_EQ(o.get_or_insert(T(i)).as_ref(), 3);
   EXPECT_EQ(o, Some);
 
   o.take();
   EXPECT_EQ(o, None);
-  EXPECT_EQ(o.get_or_insert_with([&i]() { return T::with(i); }).as_ref(), 3);
+  EXPECT_EQ(o.get_or_insert_with([&i]() { return T(i); }).as_ref(), 3);
   EXPECT_EQ(o, Some);
 
   EXPECT_EQ(o.take().unwrap().as_ref(), 3);
 
   EXPECT_EQ(o, None);
-  EXPECT_EQ(sus::move(o).and_that(Option<T>(T::with(i))), None);
+  EXPECT_EQ(sus::move(o).and_that(Option<T>(T(i))), None);
   EXPECT_EQ(o, None);
 
-  o = Option<T>(T::with(i));
-  EXPECT_EQ(sus::move(o).and_that(Option<T>(T::with(i))), Some);
+  o = Option<T>(T(i));
+  EXPECT_EQ(sus::move(o).and_that(Option<T>(T(i))), Some);
   EXPECT_EQ(o, None);
 
-  o = Option<T>(T::with(i));
-  EXPECT_EQ(sus::move(o).xor_that(Option<T>(T::with(i))), None);
+  o = Option<T>(T(i));
+  EXPECT_EQ(sus::move(o).xor_that(Option<T>(T(i))), None);
   EXPECT_EQ(o, None);
 
-  o = Option<T>(T::with(i));
+  o = Option<T>(T(i));
   EXPECT_EQ(sus::move(o).xor_that(Option<T>()), Some);
   EXPECT_EQ(o, None);
 
-  o = Option<T>(T::with(i));
-  EXPECT_EQ(sus::move(o).zip(Option<T>(T::with(i))),
-            (Option<Tuple<T, T>>(Tuple<T, T>(T::with(i), T::with(i)))));
+  o = Option<T>(T(i));
+  EXPECT_EQ(sus::move(o).zip(Option<T>(T(i))),
+            (Option<Tuple<T, T>>(Tuple<T, T>(T(i), T(i)))));
   EXPECT_EQ(o, None);
 
-  o = Option<T>(T::with(i));
+  o = Option<T>(T(i));
   EXPECT_EQ(sus::move(o).zip(Option<T>()), None);
   EXPECT_EQ(o, None);
 
@@ -2767,9 +2767,9 @@ TEST(Option, NonZeroField) {
   EXPECT_EQ(sus::move(o).zip(Option<T>()), None);
   EXPECT_EQ(o, None);
 
-  o = Option<T>(T::with(i));
+  o = Option<T>(T(i));
   int j = 4;
-  o.replace(T::with(j));
+  o.replace(T(j));
   EXPECT_EQ(o->as_ptr(), &j);
 }
 

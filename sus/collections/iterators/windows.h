@@ -92,12 +92,6 @@ class [[nodiscard]] [[sus_trivial_abi]] Windows final
   template <class ArrayItemT, size_t N>
     friend class Array;
 
-  static constexpr auto with(::sus::iter::IterRef ref,
-                             const Slice<ItemT>& values,
-                             /* TODO: NonZeroUsize*/ usize size) noexcept {
-    return Windows(::sus::move(ref), values, size);
-  }
-
   constexpr Windows(::sus::iter::IterRef ref, const Slice<ItemT>& values,
                     /* TODO: NonZeroUsize*/ usize size) noexcept
       : ref_(::sus::move(ref)), v_(values), size_(size) {}
@@ -179,12 +173,6 @@ class [[nodiscard]] [[sus_trivial_abi]] WindowsMut final
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
     friend class Array;
-
-  static constexpr auto with(::sus::iter::IterRef ref,
-                             const SliceMut<ItemT>& values,
-                             /* TODO: NonZeroUsize*/ usize size) noexcept {
-    return WindowsMut(::sus::move(ref), values, size);
-  }
 
   constexpr WindowsMut(::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
                        /* TODO: NonZeroUsize*/ usize size) noexcept
