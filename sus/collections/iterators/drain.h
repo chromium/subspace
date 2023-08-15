@@ -40,9 +40,9 @@ namespace sus::collections {
 /// it was not created from that Vec. Then on destruction, Drain will point to a
 /// destroyed Vec:
 /// ```
-/// auto v1 = Vec<i32>::with(1);
+/// auto v1 = Vec<i32>(1);
 /// auto d1 = v1.drain();  // Points at v1.
-/// auto v2 = Vec<i32>::with(1);
+/// auto v2 = Vec<i32>(1);
 /// auto d2 = v2.drain();  // Points at v2.
 /// d1 = sus::move(d2);  // Points at v2, is destroyed after v2.
 /// ```

@@ -427,11 +427,11 @@ using JoinOutputType = ::sus::collections::Vec<T>;
 ///
 /// // Join slices with a slice between.
 /// Vec<i32> v = Slice<Slice<i32>>::from(as).join(Slice<i32>::from(asep));
-/// sus::check(v == sus::Vec<i32>::with(1, 2, 10, 11, 12, 3, 4));
+/// sus::check(v == sus::Vec<i32>(1, 2, 10, 11, 12, 3, 4));
 ///
 /// // Join slices with a single item between.
 /// Vec<i32> v2 = Slice<Slice<i32>>::from(as).join(99);
-/// sus::check(v2 == sus::Vec<i32>::with(1, 2, 99, 3, 4));
+/// sus::check(v2 == sus::Vec<i32>(1, 2, 99, 3, 4));
 /// ```
 template <class Sep>
 constexpr auto join(const Sep& separator) const& noexcept
@@ -586,7 +586,7 @@ constexpr RChunksExact<T> rchunks_exact(::sus::num::usize chunk_size) && =
 /// # Examples
 ///
 /// ```
-/// auto v = sus::Vec<i32>::with(1, 2);
+/// auto v = sus::Vec<i32>(1, 2);
 /// check(v[".."_r].repeat(3) == sus::vec(1, 2, 1, 2, 1, 2).construct<i32>());
 /// ```
 constexpr ::sus::collections::Vec<T> repeat(usize n) const& noexcept

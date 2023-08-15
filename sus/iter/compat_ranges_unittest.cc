@@ -93,7 +93,7 @@ TEST(CompatRanges, InputRange) {
 
   // max() requires a `std::ranges::input_range`.
   static_assert(std::ranges::max(
-                    sus::Vec<i32>::with(1, 2, 4, 3).into_iter().range()) == 4);
+                    sus::Vec<i32>(1, 2, 4, 3).into_iter().range()) == 4);
 }
 
 TEST(CompatRanges, InputRangeConstRefs) {
@@ -105,7 +105,7 @@ TEST(CompatRanges, InputRangeConstRefs) {
 
   // max() requires a `std::ranges::input_range`.
   static_assert([]() {
-    auto vec = sus::Vec<i32>::with(1, 2, 4, 3);
+    auto vec = sus::Vec<i32>(1, 2, 4, 3);
     return std::ranges::max(vec.iter().range());
   }() == 4);
 }
@@ -119,7 +119,7 @@ TEST(CompatRanges, InputRangeMutRefs) {
 
   // max() requires a `std::ranges::input_range`.
   static_assert([]() {
-    auto vec = sus::Vec<i32>::with(1, 2, 4, 3);
+    auto vec = sus::Vec<i32>(1, 2, 4, 3);
     return std::ranges::max(vec.iter_mut().range());
   }() == 4);
 }

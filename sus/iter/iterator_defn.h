@@ -340,7 +340,7 @@ class IteratorBase {
   /// following example, which will return the last reference in the
   /// `Iterator<i32&>`.
   /// ```cpp
-  /// auto v = sus::Vec<i32>::with(1, 2, 3);
+  /// auto v = sus::Vec<i32>(1, 2, 3);
   /// i32 init;
   /// i32& out = v.iter_mut().fold<i32&>(
   ///     init, [](i32&, i32& v) -> i32& { return v; });
@@ -978,23 +978,23 @@ class IteratorBase {
   /// Successfully collecting an iterator of `Option<i32>` into
   /// `Option<Vec<i32>>`:
   /// ```
-  /// auto u = Vec<Option<i32>>::with(some(1), some(2), some(3));
+  /// auto u = Vec<Option<i32>>(some(1), some(2), some(3));
   /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
-  /// sus::check(v == some(Vec<i32>::with(1, 2, 3 )));
+  /// sus::check(v == some(Vec<i32>(1, 2, 3 )));
   /// ```
   /// Failing to collect in the same way:
   /// ```
-  /// auto u = Vec<Option<i32>>::with(some(1), some(2), none(), some(3));
+  /// auto u = Vec<Option<i32>>(some(1), some(2), none(), some(3));
   /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
   /// sus::check(v == none());
   /// ```
   /// A similar example, but with [`Result`](sus::result::Result):
   /// ```
   /// enum Error { ERROR };
-  /// auto u = Vec<Result<i32, Error>>::with(ok(1), ok(2), ok(3));
+  /// auto u = Vec<Result<i32, Error>>(ok(1), ok(2), ok(3));
   /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
-  /// sus::check(v == ok(Vec<i32>::with(1, 2, 3)));
-  /// auto w = Vec<Result<i32, Error>>::with(ok(1), ok(2), err(ERROR), ok(3));
+  /// sus::check(v == ok(Vec<i32>(1, 2, 3)));
+  /// auto w = Vec<Result<i32, Error>>(ok(1), ok(2), err(ERROR), ok(3));
   /// auto x = sus::move(w).into_iter().try_collect<Vec<i32>>();
   /// sus::check(x == err(ERROR));
   /// ```

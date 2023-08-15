@@ -168,7 +168,7 @@ namespace sus {
 /// collection.
 ///
 /// ```
-/// const auto vec = sus::Vec<i32>::with(1, 2, 3, 4);
+/// const auto vec = sus::Vec<i32>(1, 2, 3, 4);
 /// for (const auto& x: vec.iter()) {
 ///    fmt::println("vec contained {}", x);
 /// }
@@ -178,7 +178,7 @@ namespace sus {
 /// iter. This is great for mutating all the contents of the collection.
 ///
 /// ```
-/// auto vec = sus::Vec<i32>::with(1, 2, 3, 4);
+/// auto vec = sus::Vec<i32>(1, 2, 3, 4);
 /// for (auto& x: vec.iter_mut()) {
 ///    x += 1;
 /// }
@@ -195,15 +195,15 @@ namespace sus {
 /// previous section to do this as efficiently as possible.
 ///
 /// ```
-/// auto vec1 = sus::Vec<i32>::with(1, 2, 3, 4);
-/// auto vec2 = sus::Vec<i32>::with(10, 20, 30, 40);
+/// auto vec1 = sus::Vec<i32>(1, 2, 3, 4);
+/// auto vec2 = sus::Vec<i32>(10, 20, 30, 40);
 /// vec1.extend(sus::move(vec2));
 /// ```
 ///
 /// ```
 /// #include "sus/collections/vec_deque.h"
 ///
-/// auto vec = sus::Vec<i32>::with(1, 2, 3, 4);
+/// auto vec = sus::Vec<i32>(1, 2, 3, 4);
 /// auto deque = sus::move(vec).into_iter().collect<sus::VecDeque<i32>>();
 /// ```
 ///
@@ -215,7 +215,7 @@ namespace sus {
 /// reverse order.
 ///
 /// ```
-/// auto vec = sus::Vec<i32>::with(1, 2, 3, 4);
+/// auto vec = sus::Vec<i32>(1, 2, 3, 4);
 /// for (const auto& x: vec.iter().rev()) {
 ///    fmt::println("vec contained {}", x);
 /// }
