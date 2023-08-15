@@ -1,9 +1,11 @@
 body {
     font-size: 12pt;
     color: white;
-    background-color: rgb(59, 59, 59);
-    margin: 1.2em;
+    background-color: rgb(36, 36, 36);
+    margin: 1.2rem;
     font-family: Arial, Verdana, sans-serif;
+    margin-left: 8rem;
+    margin-right: 8rem;
 }
 
 pre {
@@ -38,6 +40,7 @@ pre {
 
 .description.short {
     margin: 0;
+    line-height: 1.2;
 }
 .description.short p {
     margin-block-start: 0;
@@ -47,6 +50,7 @@ pre {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
     margin-left: 1em;
+    line-height: 1.4;
 }
 .overview .description :is(h1, h2, h3, h4, h5, h6) {
     border-bottom: 1px solid rgb(184, 184, 184);
