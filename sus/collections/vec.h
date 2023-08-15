@@ -94,8 +94,25 @@ class [[sus_trivial_abi]] Vec final {
                 "applies transitively.");
 
  public:
-  // sus::construct::Default trait.
-  inline constexpr Vec() noexcept : Vec(0_usize, nullptr, 0_usize) {}
+  /// Constructs a `Vec`, which constructs objects of type `T` from the given
+  /// values.
+  ///
+  /// This constructor also satisfies `sus::construct::Default` by accepting no
+  /// arguments to create an empty `Vec`.
+  ///
+  /// The vector will be able to hold at least the elements created from the
+  /// arguments. This method is allowed to allocate for more elements than
+  /// needed. If no arguments are passed, it creates an empty `Vec` and will not
+  /// allocate.
+  template <std::convertible_to<T>... Ts>
+  explicit constexpr Vec(Ts&&... values) noexcept
+      : Vec(FROM_PARTS, sizeof...(values),
+            sizeof...(values) == 0u
+                ? nullptr
+                : std::allocator<T>().allocate(sizeof...(values)),
+            0_usize) {
+    (..., push(::sus::forward<Ts>(values)));
+  }
 
   /// Creates a Vec<T> with at least the specified capacity.
   ///
@@ -117,18 +134,11 @@ class [[sus_trivial_abi]] Vec final {
   ///
   /// # Panics
   /// Panics if the capacity exceeds `isize::MAX` bytes.
-  sus_pure static inline constexpr Vec with_capacity(usize capacity) noexcept {
+  sus_pure static constexpr Vec with_capacity(usize capacity) noexcept {
     check(::sus::mem::size_of<T>() * capacity <= ::sus::mog<usize>(isize::MAX));
-    auto v = Vec(0_usize, nullptr, 0_usize);
+    auto v = Vec(FROM_PARTS, 0_usize, nullptr, 0_usize);
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
     v.grow_to_exact(capacity);
-    return v;
-  }
-
-  template <std::convertible_to<T>... Ts>
-  static inline constexpr Vec with(Ts&&... values) noexcept {
-    auto v = Vec::with_capacity(sizeof...(Ts));
-    (..., v.push(::sus::forward<Ts>(values)));
     return v;
   }
 
@@ -156,7 +166,7 @@ class [[sus_trivial_abi]] Vec final {
   sus_pure static constexpr Vec from_raw_parts(::sus::marker::UnsafeFnMarker,
                                                T* ptr, usize length,
                                                usize capacity) noexcept {
-    return Vec(capacity, ptr, length);
+    return Vec(FROM_PARTS, capacity, ptr, length);
   }
 
   /// sus::construct::From<Slice<T>> trait.
@@ -761,7 +771,8 @@ class [[sus_trivial_abi]] Vec final {
 #include "__private/slice_mut_methods.inc"
 
  private:
-  constexpr Vec(usize cap, T* ptr, usize len)
+  enum FromParts { FROM_PARTS };
+  constexpr Vec(FromParts, usize cap, T* ptr, usize len)
       : capacity_(cap),
         iter_refs_(sus::iter::IterRefCounter::for_owner()),
         data_(ptr),
