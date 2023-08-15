@@ -15,7 +15,6 @@
 #pragma once
 
 #include "sus/assertions/check.h"
-#include "sus/ptr/subclass.h"
 #include "sus/macros/nonnull.h"
 #include "sus/marker/unsafe.h"
 #include "sus/mem/addressof.h"
@@ -24,6 +23,7 @@
 #include "sus/ops/eq.h"
 #include "sus/ops/ord.h"
 #include "sus/option/option.h"
+#include "sus/ptr/subclass.h"
 #include "sus/string/__private/format_to_stream.h"
 
 namespace sus::ptr {
@@ -42,9 +42,7 @@ template <class T>
 class [[sus_trivial_abi]] NonNull {
  public:
   /// Constructs a `NonNull<T>` from a reference to `T`.
-  static constexpr inline NonNull with(T& t) {
-    return NonNull(::sus::mem::addressof(t));
-  }
+  explicit constexpr NonNull(T& t) noexcept : ptr_(::sus::mem::addressof(t)) {}
 
   /// Constructs a `NonNull<T>` from a pointer to `T`.
   ///
@@ -54,11 +52,12 @@ class [[sus_trivial_abi]] NonNull {
   /// # Panics
   /// The method will panic if the pointer `t` is null.
   template <::sus::ptr::SameOrSubclassOf<T*> U>
-  static constexpr inline ::sus::option::Option<NonNull> with_ptr(U t) {
-    if (t) [[likely]]
-      return ::sus::option::Option<NonNull<T>>(NonNull(t));
+  static constexpr inline ::sus::option::Option<NonNull> with_ptr(
+      U t) noexcept {
+    if (t != nullptr) [[likely]]
+      return ::sus::option::Option<NonNull>(NonNull(*t));
     else
-      return ::sus::option::Option<NonNull<T>>();
+      return ::sus::option::Option<NonNull>();
   }
 
   template <class U, size_t N>
@@ -74,9 +73,10 @@ class [[sus_trivial_abi]] NonNull {
   /// This method must not be called with a null pointer, or Undefined Behaviour
   /// results.
   template <::sus::ptr::SameOrSubclassOf<T*> U>
-  static constexpr inline sus_nonnull_fn NonNull with_ptr_unchecked(
-      ::sus::marker::UnsafeFnMarker, sus_nonnull_arg U sus_nonnull_var t) {
-    return NonNull(t);
+  static constexpr inline sus_nonnull_fn NonNull
+  with_ptr_unchecked(::sus::marker::UnsafeFnMarker,
+                     sus_nonnull_arg U sus_nonnull_var t) noexcept {
+    return NonNull(*t);
   }
 
   template <class U, size_t N>
@@ -84,7 +84,7 @@ class [[sus_trivial_abi]] NonNull {
 
   /// sus::construct::From<NonNull<T>, T&> and
   /// sus::construct::From<NonNull<const T>, T&> traits.
-  static constexpr inline NonNull from(T& t) { return with(t); }
+  static constexpr inline NonNull from(T& t) noexcept { return NonNull(t); }
 
   /// sus::construct::From<NonNull<T>, T*> and
   /// sus::construct::From<NonNull<const T>, T*> traits.
@@ -98,9 +98,9 @@ class [[sus_trivial_abi]] NonNull {
   ///
   /// #[doc.overloads=1]
   template <::sus::ptr::SameOrSubclassOf<T*> U>
-  static constexpr inline NonNull from(U t) {
-    ::sus::check(t);
-    return NonNull(t);
+  static constexpr inline NonNull from(U t) noexcept {
+    ::sus::check(t != nullptr);
+    return NonNull(*t);
   }
 
   template <class U, size_t N>
@@ -115,7 +115,7 @@ class [[sus_trivial_abi]] NonNull {
   ///
   /// Mutable access is only given is NonNull is not const and the pointer
   /// within is not const.
-  const T* operator->() const { return ptr_; }
+  const T* operator->() const noexcept { return ptr_; }
   T* operator->()
     requires(!std::is_const_v<T>)
   {
@@ -123,24 +123,24 @@ class [[sus_trivial_abi]] NonNull {
   }
 
   /// Returns a const reference to the pointee.
-  constexpr inline const T& as_ref() const { return *ptr_; }
+  constexpr inline const T& as_ref() const noexcept { return *ptr_; }
 
   /// Returns a mutable reference to the pointee.
   ///
   /// This method is only callable when the pointer is not const.
-  constexpr inline T& as_mut()
+  constexpr inline T& as_mut() noexcept
     requires(!std::is_const_v<T>)
   {
     return *ptr_;
   }
 
   /// Returns a const pointer to the pointee.
-  constexpr inline const T* as_ptr() const { return ptr_; }
+  constexpr inline const T* as_ptr() const noexcept { return ptr_; }
 
   /// Returns a mutable pointer to the pointee.
   ///
   /// This method is only callable when the pointer is not const.
-  constexpr inline T* as_mut_ptr()
+  constexpr inline T* as_mut_ptr() noexcept
     requires(!std::is_const_v<T>)
   {
     return ptr_;
@@ -153,7 +153,7 @@ class [[sus_trivial_abi]] NonNull {
   /// downcast, like static_cast<U*> allows, use `downcast()`.
   template <class U>
     requires ::sus::ptr::SameOrSubclassOf<T*, U*>
-  NonNull<U> cast() const {
+  NonNull<U> cast() const noexcept {
     return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn,
                                           static_cast<U*>(ptr_));
   }
@@ -164,15 +164,12 @@ class [[sus_trivial_abi]] NonNull {
   /// # Safety
   /// The pointee must be a `U*` or this results in Undefined Behaviour.
   template <class U>
-  NonNull<U> downcast(::sus::marker::UnsafeFnMarker) const {
+  NonNull<U> downcast(::sus::marker::UnsafeFnMarker) const noexcept {
     return NonNull<U>::with_ptr_unchecked(::sus::marker::unsafe_fn,
                                           static_cast<U*>(ptr_));
   }
 
  private:
-  explicit constexpr inline NonNull(sus_nonnull_arg T* sus_nonnull_var t)
-      sus_nonnull_fn : ptr_(t) {}
-
   T* ptr_;
 
   // Declare that this type can always be trivially relocated for library

@@ -281,13 +281,13 @@ class Array final {
   /// each element.
   constexpr SliceIter<const T&> iter() const& noexcept sus_lifetimebound {
     if constexpr (N == 0) {
-      return SliceIter<const T&>::with(
+      return SliceIter<const T&>(
           sus::iter::IterRefCounter::empty_for_view().to_iter_from_view(),
           nullptr, N);
     } else {
       // TODO: Add invalidation refcounts and check them on move. Would be part
       // of composing Array from SliceMut.
-      return SliceIter<const T&>::with(storage_.iter_refs_.to_iter_from_owner(),
+      return SliceIter<const T&>(storage_.iter_refs_.to_iter_from_owner(),
                                        storage_.data_, N);
     }
   }
@@ -298,11 +298,11 @@ class Array final {
   /// each element.
   constexpr SliceIterMut<T&> iter_mut() & noexcept sus_lifetimebound {
     if constexpr (N == 0) {
-      return SliceIterMut<T&>::with(
+      return SliceIterMut<T&>(
           sus::iter::IterRefCounter::empty_for_view().to_iter_from_view(),
           nullptr, N);
     } else {
-      return SliceIterMut<T&>::with(storage_.iter_refs_.to_iter_from_owner(),
+      return SliceIterMut<T&>(storage_.iter_refs_.to_iter_from_owner(),
                                     storage_.data_, N);
     }
   }
@@ -313,7 +313,7 @@ class Array final {
   constexpr ArrayIntoIter<U, N> into_iter() && noexcept
     requires(::sus::mem::Move<T>)
   {
-    return ArrayIntoIter<T, N>::with(::sus::move(*this));
+    return ArrayIntoIter<T, N>(::sus::move(*this));
   }
 
   /// Consumes the array, and returns a new array, mapping each element of the

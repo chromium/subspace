@@ -40,9 +40,8 @@ struct [[nodiscard]] ArrayIntoIter final
  public:
   using Item = ItemT;
 
-  static constexpr auto with(Array<Item, N>&& array) noexcept {
-    return ArrayIntoIter(::sus::move(array));
-  }
+  explicit constexpr ArrayIntoIter(Array<Item, N>&& array) noexcept
+      : array_(::sus::move(array)) {}
 
   // sus::mem::Clone trait.
   constexpr ArrayIntoIter clone() const noexcept
@@ -96,9 +95,6 @@ struct [[nodiscard]] ArrayIntoIter final
   }
 
  private:
-  constexpr ArrayIntoIter(Array<Item, N>&& array) noexcept
-      : array_(::sus::move(array)) {}
-
   constexpr ArrayIntoIter(Array<Item, N>&& array, usize front,
                           usize back) noexcept
       : array_(::sus::move(array)), front_index_(front), back_index_(back) {}

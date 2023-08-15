@@ -627,7 +627,7 @@ class [[sus_trivial_abi]] Vec final {
     requires(::sus::mem::Move<T>)
   {
     check(!is_moved_from());
-    return VecIntoIter<T>::with(::sus::move(*this));
+    return VecIntoIter<T>(::sus::move(*this));
   }
 
   /// sus::ops::Eq<Vec<T>, Vec<U>> trait.

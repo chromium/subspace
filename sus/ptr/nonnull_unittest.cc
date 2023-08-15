@@ -38,7 +38,7 @@ static_assert(sizeof(sus::Option<NonNull<int>>) == sizeof(int*));
 namespace {
 
 template <class T, class From>
-concept CanConstruct = requires(From f) { NonNull<T>::with(f); };
+concept CanConstruct = requires(From f) { NonNull<T>(f); };
 template <class T, class From>
 concept CanConstructPtr = requires(From f) { NonNull<T>::with_ptr(f); };
 template <class T, class From, size_t N>
@@ -75,9 +75,9 @@ static_assert(!CanFrom<int, int (&)[2]>);
 TEST(NonNull, ConstructRef) {
   int i = 1;
   const int c = 2;
-  auto n1 = NonNull<int>::with(i);
-  auto n2 = NonNull<const int>::with(i);
-  auto c1 = NonNull<const int>::with(c);
+  auto n1 = NonNull<int>(i);
+  auto n2 = NonNull<const int>(i);
+  auto c1 = NonNull<const int>(c);
 
   EXPECT_EQ(&i, &n1.as_ref());
   EXPECT_EQ(&i, &n2.as_ref());
@@ -88,8 +88,8 @@ TEST(NonNull, AddressOf) {
   struct S {
     S* operator&() const { return nullptr; }
   } s;
-  auto n1 = NonNull<S>::with(s);
-  auto n2 = NonNull<const S>::with(s);
+  auto n1 = NonNull<S>(s);
+  auto n2 = NonNull<const S>(s);
 
   EXPECT_EQ(&s, &n1.as_ref());
   EXPECT_EQ(&s, &n2.as_ref());
@@ -170,11 +170,11 @@ TEST(NonNull, FromLvalue) {
 TEST(NonNull, AsRef) {
   int i = 1;
 
-  auto n1 = NonNull<int>::with(i);
+  auto n1 = NonNull<int>(i);
   static_assert(std::same_as<decltype(n1.as_ref()), const int&>);
   EXPECT_EQ(&i, &n1.as_ref());
 
-  auto n2 = NonNull<const int>::with(i);
+  auto n2 = NonNull<const int>(i);
   static_assert(std::same_as<decltype(n2.as_ref()), const int&>);
   EXPECT_EQ(&i, &n2.as_ref());
 }
@@ -185,23 +185,23 @@ concept AsRefMutExists = requires(T t) { t.as_mut(); };
 TEST(NonNull, AsRefMut) {
   int i = 1;
 
-  auto n1 = NonNull<int>::with(i);
+  auto n1 = NonNull<int>(i);
   static_assert(std::same_as<decltype(n1.as_mut()), int&>);
   static_assert(AsRefMutExists<decltype(n1)>);
   EXPECT_EQ(&i, &n1.as_mut());
 
-  auto n2 = NonNull<const int>::with(i);
+  auto n2 = NonNull<const int>(i);
   static_assert(!AsRefMutExists<decltype(n2)>);
 }
 
 TEST(NonNull, AsPtr) {
   int i = 1;
 
-  auto n1 = NonNull<int>::with(i);
+  auto n1 = NonNull<int>(i);
   static_assert(std::same_as<decltype(n1.as_ptr()), const int*>);
   EXPECT_EQ(&i, n1.as_ptr());
 
-  auto n2 = NonNull<const int>::with(i);
+  auto n2 = NonNull<const int>(i);
   static_assert(std::same_as<decltype(n2.as_ptr()), const int*>);
   EXPECT_EQ(&i, n2.as_ptr());
 }
@@ -212,12 +212,12 @@ concept AsPtrMutExists = requires(T t) { t.as_mut_ptr(); };
 TEST(NonNull, AsPtrMut) {
   int i = 1;
 
-  auto n1 = NonNull<int>::with(i);
+  auto n1 = NonNull<int>(i);
   static_assert(std::same_as<decltype(n1.as_mut_ptr()), int*>);
   static_assert(AsPtrMutExists<decltype(n1)>);
   EXPECT_EQ(&i, n1.as_mut_ptr());
 
-  auto n2 = NonNull<const int>::with(i);
+  auto n2 = NonNull<const int>(i);
   static_assert(!AsPtrMutExists<decltype(n2)>);
 }
 
@@ -228,7 +228,7 @@ TEST(NonNull, Cast) {
   struct Sub : public Base {};
   Sub s;
   s.i = 3_i32;
-  auto sn = NonNull<Sub>::with(s);
+  auto sn = NonNull<Sub>(s);
   auto bn = sn.cast<Base>();
   EXPECT_EQ(bn.as_ref().i, 3_i32);
 }
@@ -240,7 +240,7 @@ TEST(NonNull, Downcast) {
   struct Sub : public Base {};
   Sub s;
   s.i = 3_i32;
-  auto bn = NonNull<Base>::with(s);
+  auto bn = NonNull<Base>(s);
   auto sn = bn.downcast<Sub>(unsafe_fn);
   EXPECT_EQ(sn.as_ref().i, 3_i32);
 }
@@ -252,15 +252,15 @@ TEST(NonNull, Eq) {
 
   auto a = int();
   auto b = int();
-  EXPECT_EQ(NonNull<int>::with(a), NonNull<int>::with(a));
-  EXPECT_NE(NonNull<int>::with(a), NonNull<int>::with(b));
+  EXPECT_EQ(NonNull<int>(a), NonNull<int>(a));
+  EXPECT_NE(NonNull<int>(a), NonNull<int>(b));
 
   struct Base {};
   struct Sub : public Base {};
   auto s = Sub();
   auto s2 = Sub();
-  EXPECT_EQ(NonNull<Sub>::with(s), NonNull<Base>::with(static_cast<Base&>(s)));
-  EXPECT_NE(NonNull<Sub>::with(s), NonNull<Base>::with(static_cast<Base&>(s2)));
+  EXPECT_EQ(NonNull<Sub>(s), NonNull<Base>(static_cast<Base&>(s)));
+  EXPECT_NE(NonNull<Sub>(s), NonNull<Base>(static_cast<Base&>(s2)));
 }
 
 TEST(NonNull, StrongOrd) {
@@ -270,16 +270,16 @@ TEST(NonNull, StrongOrd) {
       static_assert(!sus::ops::StrongOrd<NonNull<int>, NonNull<NotCmp>>));
 
   int a[] = {1, 2};
-  EXPECT_LE(NonNull<int>::with(a[0]), NonNull<int>::with(a[0]));
-  EXPECT_LT(NonNull<int>::with(a[0]), NonNull<int>::with(a[1]));
+  EXPECT_LE(NonNull<int>(a[0]), NonNull<int>(a[0]));
+  EXPECT_LT(NonNull<int>(a[0]), NonNull<int>(a[1]));
 
   struct Base {};
   struct Sub : public Base {};
   Sub s[] = {Sub(), Sub()};
-  EXPECT_LE(NonNull<Sub>::with(s[0]),
-            NonNull<Base>::with(static_cast<Base&>(s[0])));
-  EXPECT_LT(NonNull<Sub>::with(s[0]),
-            NonNull<Base>::with(static_cast<Base&>(s[1])));
+  EXPECT_LE(NonNull<Sub>(s[0]),
+            NonNull<Base>(static_cast<Base&>(s[0])));
+  EXPECT_LT(NonNull<Sub>(s[0]),
+            NonNull<Base>(static_cast<Base&>(s[1])));
 }
 
 TEST(NonNull, OperatorArrow) {
@@ -289,7 +289,7 @@ TEST(NonNull, OperatorArrow) {
 
   // Mutable.
   {
-    auto n = NonNull<S>::with(s);
+    auto n = NonNull<S>(s);
     n->i += 1;
     EXPECT_EQ(n.operator->(), &s);
     EXPECT_EQ(s.i, 4);
@@ -298,7 +298,7 @@ TEST(NonNull, OperatorArrow) {
   // Const.
   {
     const S& cs = s;
-    auto n = NonNull<const S>::with(cs);
+    auto n = NonNull<const S>(cs);
     EXPECT_EQ(n.operator->(), &cs);
     EXPECT_EQ(n->i, 4);
   }
@@ -306,14 +306,14 @@ TEST(NonNull, OperatorArrow) {
 
 TEST(NonNull, fmt) {
   i32 i = 3;
-  auto nm = NonNull<i32>::with(i);
+  auto nm = NonNull<i32>(i);
 
   EXPECT_EQ(fmt::format("{}", nm), fmt::format("{}", fmt::ptr(&i)));
 }
 
 TEST(NonNull, Stream) {
   i32 i = 3;
-  auto nm = NonNull<i32>::with(i);
+  auto nm = NonNull<i32>(i);
 
   std::stringstream s;
   s << nm;
@@ -322,7 +322,7 @@ TEST(NonNull, Stream) {
 
 TEST(NonNull, GTest) {
   i32 i = 3;
-  auto nm = NonNull<i32>::with(i);
+  auto nm = NonNull<i32>(i);
 
   EXPECT_EQ(testing::PrintToString(nm), fmt::format("{}", fmt::ptr(&i)));
 }

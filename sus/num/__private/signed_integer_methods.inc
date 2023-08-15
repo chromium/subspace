@@ -403,7 +403,9 @@ try_from(U u) noexcept {
 /// # Panics
 /// This method will panic if the product of all values overflows.
 static constexpr _self from_product(
-    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+    ::sus::iter::Iterator<_self> auto&& it) noexcept
+  requires(::sus::mem::IsMoveRef<decltype(it)>)
+{
   auto p = _self(_primitive{1});
   for (_self i : ::sus::move(it)) p *= i;
   return p;
@@ -421,8 +423,9 @@ static constexpr _self from_product(
 ///
 /// # Panics
 /// This method will panic if the product of all values overflows.
-static constexpr _self from_sum(
-    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
+  requires(::sus::mem::IsMoveRef<decltype(it)>)
+{
   auto p = _self(_primitive{0});
   for (_self i : ::sus::move(it)) p += i;
   return p;
@@ -1133,8 +1136,8 @@ sus_pure constexpr Tuple overflowing_div(_self rhs) const& noexcept {
       [[unlikely]] {
     return Tuple(MIN, true);
   } else {
-    return Tuple(
-        __private::unchecked_div(primitive_value, rhs.primitive_value), false);
+    return Tuple(__private::unchecked_div(primitive_value, rhs.primitive_value),
+                 false);
   }
 }
 
@@ -1301,8 +1304,8 @@ sus_pure constexpr Tuple overflowing_rem(_self rhs) const& noexcept {
       [[unlikely]] {
     return Tuple(_primitive{0}, true);
   } else {
-    return Tuple(
-        static_cast<_primitive>(primitive_value % rhs.primitive_value), false);
+    return Tuple(static_cast<_primitive>(primitive_value % rhs.primitive_value),
+                 false);
   }
 }
 
@@ -1372,10 +1375,9 @@ sus_pure constexpr Tuple overflowing_div_euclid(_self rhs) const& noexcept {
       [[unlikely]] {
     return Tuple(MIN, true);
   } else {
-    return Tuple(
-        __private::div_euclid(::sus::marker::unsafe_fn, primitive_value,
-                              rhs.primitive_value),
-        false);
+    return Tuple(__private::div_euclid(::sus::marker::unsafe_fn,
+                                       primitive_value, rhs.primitive_value),
+                 false);
   }
 }
 
@@ -1446,10 +1448,9 @@ sus_pure constexpr Tuple overflowing_rem_euclid(_self rhs) const& noexcept {
       [[unlikely]] {
     return Tuple(_primitive{0}, true);
   } else {
-    return Tuple(
-        __private::rem_euclid(::sus::marker::unsafe_fn, primitive_value,
-                              rhs.primitive_value),
-        false);
+    return Tuple(__private::rem_euclid(::sus::marker::unsafe_fn,
+                                       primitive_value, rhs.primitive_value),
+                 false);
   }
 }
 
@@ -1754,7 +1755,7 @@ sus_pure constexpr Option<u32> checked_log2() const& noexcept {
     uint32_t zeros = __private::leading_zeros_nonzero(
         ::sus::marker::unsafe_fn, __private::into_unsigned(primitive_value));
     return Option<u32>(u32(__private::num_bits<_primitive>()) - 1_u32 -
-                             u32(zeros));
+                       u32(zeros));
   }
 }
 

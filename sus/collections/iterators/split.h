@@ -172,12 +172,6 @@ class [[nodiscard]] [[sus_trivial_abi]] Split final
     }
   }
 
-  static constexpr auto with(
-      ::sus::iter::IterRef ref, const Slice<ItemT>& values,
-      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
-    return Split(::sus::move(ref), values, ::sus::move(pred));
-  }
-
   constexpr Split(::sus::iter::IterRef ref, const Slice<ItemT>& values,
                   ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
       : ref_(::sus::move(ref)), v_(values), pred_(::sus::move(pred)) {}
@@ -404,12 +398,6 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitInclusive final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(
-      ::sus::iter::IterRef ref, const Slice<ItemT>& values,
-      ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept {
-    return SplitInclusive(::sus::move(ref), values, ::sus::move(pred));
-  }
-
   constexpr SplitInclusive(
       ::sus::iter::IterRef ref, const Slice<ItemT>& values,
       ::sus::fn::FnMutRef<bool(const ItemT&)>&& pred) noexcept
@@ -583,10 +571,6 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplit final
 
   constexpr Option<Item> finish() noexcept { return inner_.finish(); }
 
-  static constexpr auto with(Split<ItemT>&& split) noexcept {
-    return RSplit(::sus::move(split));
-  }
-
   constexpr RSplit(Split<ItemT>&& split) noexcept
       : inner_(::sus::move(split)) {}
 
@@ -633,10 +617,6 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitMut final
 
   Option<Item> finish() noexcept { return inner_.finish(); }
 
-  static constexpr auto with(SplitMut<ItemT>&& split) noexcept {
-    return RSplitMut(::sus::move(split));
-  }
-
   constexpr RSplitMut(SplitMut<ItemT>&& split) noexcept
       : inner_(::sus::move(split)) {}
 
@@ -674,10 +654,6 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitN final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(Split<ItemT>&& split, usize n) noexcept {
-    return SplitN(::sus::move(split), n);
-  }
-
   constexpr SplitN(Split<ItemT> split, usize n) noexcept
       : inner_(::sus::move(split), n) {}
 
@@ -714,10 +690,6 @@ class [[nodiscard]] [[sus_trivial_abi]] SplitNMut final
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
   friend class Array;
-
-  static constexpr auto with(SplitMut<ItemT>&& split, usize n) noexcept {
-    return SplitNMut(::sus::move(split), n);
-  }
 
   constexpr SplitNMut(SplitMut<ItemT> split, usize n) noexcept
       : inner_(::sus::move(split), n) {}
@@ -757,10 +729,6 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitN final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(RSplit<ItemT>&& split, usize n) noexcept {
-    return RSplitN(::sus::move(split), n);
-  }
-
   constexpr RSplitN(RSplit<ItemT> split, usize n) noexcept
       : inner_(::sus::move(split), n) {}
 
@@ -798,10 +766,6 @@ class [[nodiscard]] [[sus_trivial_abi]] RSplitNMut final
   friend class Vec<ItemT>;
   template <class ArrayItemT, size_t N>
   friend class Array;
-
-  static constexpr auto with(RSplitMut<ItemT>&& split, usize n) noexcept {
-    return RSplitNMut(::sus::move(split), n);
-  }
 
   constexpr RSplitNMut(RSplitMut<ItemT> split, usize n) noexcept
       : inner_(::sus::move(split), n) {}

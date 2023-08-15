@@ -450,7 +450,7 @@ try_from(U u) noexcept;
 /// # Panics
 /// This method will panic if the product of all values overflows.
 static constexpr _self from_product(
-    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+    ::sus::iter::Iterator<_self> auto&& it) noexcept requires(::sus::mem::IsMoveRef<decltype(it)>) {
   auto p = _self(_primitive{1u});
   for (_self i : ::sus::move(it)) p *= i;
   return p;
@@ -469,7 +469,7 @@ static constexpr _self from_product(
 /// # Panics
 /// This method will panic if the product of all values overflows.
 static constexpr _self from_sum(
-    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+    ::sus::iter::Iterator<_self> auto&& it) noexcept requires(::sus::mem::IsMoveRef<decltype(it)>) {
   auto p = _self(_primitive{0u});
   for (_self i : ::sus::move(it)) p += i;
   return p;

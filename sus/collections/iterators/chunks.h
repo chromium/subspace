@@ -110,16 +110,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] Chunks final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(::sus::iter::IterRef ref,
-                             const Slice<ItemT>& values,
-                             ::sus::num::usize chunk_size) noexcept {
-    ::sus::check(chunk_size > 0u);
-    return Chunks(::sus::move(ref), values, chunk_size);
-  }
-
   constexpr Chunks(::sus::iter::IterRef ref, const Slice<ItemT>& values,
                    ::sus::num::usize chunk_size) noexcept
-      : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {}
+      : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {
+    ::sus::check(chunk_size > 0u);
+  }
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
@@ -217,16 +212,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksMut final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(::sus::iter::IterRef ref,
-                             const SliceMut<ItemT>& values,
-                             ::sus::num::usize chunk_size) noexcept {
-    ::sus::check(chunk_size > 0u);
-    return ChunksMut(::sus::move(ref), values, chunk_size);
-  }
-
   constexpr ChunksMut(::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
                       ::sus::num::usize chunk_size) noexcept
-      : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {}
+      : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {
+    ::sus::check(chunk_size > 0u);
+  }
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
@@ -319,9 +309,9 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(::sus::iter::IterRef ref,
-                             const Slice<ItemT>& values,
-                             ::sus::num::usize chunk_size) noexcept {
+  static constexpr auto with_slice(::sus::iter::IterRef ref,
+                                   const Slice<ItemT>& values,
+                                   ::sus::num::usize chunk_size) noexcept {
     ::sus::check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
     // SAFETY: rem <= len() by construction above, so len() - rem is a
@@ -330,10 +320,12 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExact final
     // SAFETY: 0 <= fst_len <= values.len() by construction above.
     auto [fst, snd] =
         values.split_at_unchecked(::sus::marker::unsafe_fn, fst_len);
-    return ChunksExact(::sus::move(ref), fst, snd, chunk_size);
+    return ChunksExact(CONSTRUCT, ::sus::move(ref), fst, snd, chunk_size);
   }
 
-  constexpr ChunksExact(::sus::iter::IterRef ref, const Slice<ItemT>& values,
+  enum Construct { CONSTRUCT };
+  constexpr ChunksExact(Construct, ::sus::iter::IterRef ref,
+                        const Slice<ItemT>& values,
                         const Slice<ItemT>& remainder,
                         ::sus::num::usize chunk_size) noexcept
       : ref_(::sus::move(ref)),
@@ -431,9 +423,9 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(::sus::iter::IterRef ref,
-                             const SliceMut<ItemT>& values,
-                             ::sus::num::usize chunk_size) noexcept {
+  static constexpr auto with_slice(::sus::iter::IterRef ref,
+                                   const SliceMut<ItemT>& values,
+                                   ::sus::num::usize chunk_size) noexcept {
     ::sus::check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
     // SAFETY: rem < len() by construction above, so len() - rem is a
@@ -442,10 +434,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] ChunksExactMut final
     // SAFETY: 0 <= fst_len <= values.len() by construction above.
     auto [fst, snd] =
         values.split_at_mut_unchecked(::sus::marker::unsafe_fn, fst_len);
-    return ChunksExactMut(::sus::move(ref), fst, snd, chunk_size);
+    return ChunksExactMut(CONSTRUCT, ::sus::move(ref), fst, snd, chunk_size);
   }
 
-  constexpr ChunksExactMut(::sus::iter::IterRef ref,
+  enum Construct { CONSTRUCT };
+  constexpr ChunksExactMut(Construct, ::sus::iter::IterRef ref,
                            const SliceMut<ItemT>& values,
                            const SliceMut<ItemT>& remainder,
                            ::sus::num::usize chunk_size) noexcept
@@ -554,16 +547,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunks final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(::sus::iter::IterRef ref,
-                             const Slice<ItemT>& values,
-                             ::sus::num::usize chunk_size) noexcept {
-    ::sus::check(chunk_size > 0u);
-    return RChunks(::sus::move(ref), values, chunk_size);
-  }
-
   constexpr RChunks(::sus::iter::IterRef ref, const Slice<ItemT>& values,
                     ::sus::num::usize chunk_size) noexcept
-      : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {}
+      : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {
+    ::sus::check(chunk_size > 0u);
+  }
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   Slice<ItemT> v_;
@@ -655,16 +643,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksMut final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(::sus::iter::IterRef ref,
-                             const SliceMut<ItemT>& values,
-                             ::sus::num::usize chunk_size) noexcept {
-    ::sus::check(chunk_size > 0u);
-    return RChunksMut(::sus::move(ref), values, chunk_size);
-  }
-
   constexpr RChunksMut(::sus::iter::IterRef ref, const SliceMut<ItemT>& values,
                        ::sus::num::usize chunk_size) noexcept
-      : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {}
+      : ref_(::sus::move(ref)), v_(values), chunk_size_(chunk_size) {
+    ::sus::check(chunk_size > 0u);
+  }
 
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   SliceMut<ItemT> v_;
@@ -754,17 +737,19 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExact final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(::sus::iter::IterRef ref,
-                             const Slice<ItemT>& values,
-                             ::sus::num::usize chunk_size) noexcept {
+  static constexpr auto with_slice(::sus::iter::IterRef ref,
+                                   const Slice<ItemT>& values,
+                                   ::sus::num::usize chunk_size) noexcept {
     ::sus::check(chunk_size > 0u);
     auto rem = values.len() % chunk_size;
     // SAFETY: 0 <= rem <= values.len() by construction above.
     auto [fst, snd] = values.split_at_unchecked(::sus::marker::unsafe_fn, rem);
-    return RChunksExact(::sus::move(ref), snd, fst, chunk_size);
+    return RChunksExact(CONSTRUCT, ::sus::move(ref), snd, fst, chunk_size);
   }
 
-  constexpr RChunksExact(::sus::iter::IterRef ref, const Slice<ItemT>& values,
+  enum Construct { CONSTRUCT };
+  constexpr RChunksExact(Construct, ::sus::iter::IterRef ref,
+                         const Slice<ItemT>& values,
                          const Slice<ItemT>& remainder,
                          ::sus::num::usize chunk_size) noexcept
       : ref_(::sus::move(ref)),
@@ -858,7 +843,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] RChunksExactMut final
   template <class ArrayItemT, size_t N>
   friend class Array;
 
-  static constexpr auto with(::sus::iter::IterRef ref,
+  static constexpr auto with_slice(::sus::iter::IterRef ref,
                              const SliceMut<ItemT>& values,
                              ::sus::num::usize chunk_size) noexcept {
     ::sus::check(chunk_size > 0u);

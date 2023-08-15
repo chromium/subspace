@@ -186,8 +186,9 @@ constexpr inline _self& operator=(P v) noexcept {
 /// This method should rarely be called directly, as it is used to satisfy the
 /// `sus::iter::Sum` concept so that `Iterator::sum()` can be called for
 /// iterators over @doc.self.
-static constexpr _self from_sum(
-    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
+  requires(::sus::mem::IsMoveRef<decltype(it)>)
+{
   auto p = _self(_primitive{0u});
   for (_self i : ::sus::move(it)) p += i;
   return p;
@@ -200,7 +201,9 @@ static constexpr _self from_sum(
 /// `sus::iter::Product` concept so that `Iterator::product()` can be called for
 /// iterators over @doc.self.
 static constexpr _self from_product(
-    ::sus::iter::Iterator<_self> auto&& it) noexcept {
+    ::sus::iter::Iterator<_self> auto&& it) noexcept
+  requires(::sus::mem::IsMoveRef<decltype(it)>)
+{
   auto p = _self(_primitive{1u});
   for (_self i : ::sus::move(it)) p *= i;
   return p;
@@ -356,7 +359,8 @@ friend constexpr inline _self operator-(_self l, U r) noexcept = delete;
 /// #[doc.overloads=float.-]
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
-friend constexpr inline _self operator-(U l, _self r) noexcept = delete;/// sus::num::Mul<T> trait for floating point types. */
+friend constexpr inline _self operator-(U l, _self r) noexcept =
+    delete;  /// sus::num::Mul<T> trait for floating point types. */
 /// #[doc.overloads=float.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
@@ -411,7 +415,8 @@ friend constexpr inline _self operator/(_self l, U r) noexcept = delete;
 /// #[doc.overloads=float./]
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
-friend constexpr inline _self operator/(U l, _self r) noexcept = delete;/// sus::num::Rem<T> trait for floating point types. */
+friend constexpr inline _self operator/(U l, _self r) noexcept =
+    delete;  /// sus::num::Rem<T> trait for floating point types. */
 ///
 /// The remainder from the division of two floats.
 ///
