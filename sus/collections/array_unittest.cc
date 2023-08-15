@@ -24,10 +24,14 @@
 #include "sus/mem/move.h"
 #include "sus/mem/relocate.h"
 #include "sus/num/types.h"
+#include "sus/ops/eq.h"
+#include "sus/ops/ord.h"
 #include "sus/prelude.h"
 #include "sus/test/ensure_use.h"
 
 using sus::collections::Array;
+using sus::collections::Slice;
+using sus::collections::SliceMut;
 using sus::mem::relocate_by_memcpy;
 using sus::test::ensure_use;
 
@@ -38,8 +42,10 @@ static_assert(sus::mem::Clone<Array<i32, 3>>);
 static_assert(sus::mem::Clone<sus::collections::ArrayIntoIter<i32, 0>>);
 static_assert(sus::mem::Clone<sus::collections::ArrayIntoIter<i32, 3>>);
 
-static_assert(sus::iter::Iterator<sus::collections::ArrayIntoIter<i32, 0>, i32>);
-static_assert(sus::iter::Iterator<sus::collections::ArrayIntoIter<i32, 3>, i32>);
+static_assert(
+    sus::iter::Iterator<sus::collections::ArrayIntoIter<i32, 0>, i32>);
+static_assert(
+    sus::iter::Iterator<sus::collections::ArrayIntoIter<i32, 3>, i32>);
 static_assert(sus::iter::DoubleEndedIterator<
               sus::collections::ArrayIntoIter<i32, 0>, i32>);
 static_assert(sus::iter::DoubleEndedIterator<
@@ -231,15 +237,14 @@ TEST(Array, ConstructorFunction) {
 TEST(Array, Get) {
   {
     constexpr auto r = []() constexpr {
-      constexpr auto a =
-          Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+      constexpr auto a = Array<int, 5>(1, 2, 3, 4, 5);
       return a.get(2_usize).unwrap();
     }();
     static_assert(std::same_as<decltype(r), const int>);
     EXPECT_EQ(3, r);
   }
   {
-    auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+    auto a = Array<int, 5>(1, 2, 3, 4, 5);
     EXPECT_EQ(3, a.get(2_usize).unwrap());
   }
 }
@@ -247,15 +252,14 @@ TEST(Array, Get) {
 TEST(Array, GetUnchecked) {
   {
     constexpr auto r = []() constexpr {
-      constexpr auto a =
-          Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+      constexpr auto a = Array<int, 5>(1, 2, 3, 4, 5);
       return a.get_unchecked(unsafe_fn, 2_usize);
     }();
     static_assert(std::same_as<decltype(r), const int>);
     EXPECT_EQ(3, r);
   }
   {
-    auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+    auto a = Array<int, 5>(1, 2, 3, 4, 5);
     EXPECT_EQ(3, a.get_unchecked(unsafe_fn, 2_usize));
   }
 }
@@ -270,15 +274,14 @@ static_assert(HasGetMut<Array<i32, 3>, usize>);
 TEST(Array, GetMut) {
   {
     constexpr auto a = []() constexpr {
-      auto a =
-          Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+      auto a = Array<int, 5>(1, 2, 3, 4, 5);
       a.get_mut(0_usize).unwrap() = 101;
       return a;
     }();
     EXPECT_EQ(a[0_usize], 101);
   }
   {
-    auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+    auto a = Array<int, 5>(1, 2, 3, 4, 5);
     a.get_mut(0_usize).unwrap() = 101;
     EXPECT_EQ(a[0_usize], 101);
   }
@@ -295,33 +298,55 @@ static_assert(HasGetUncheckedMut<Array<i32, 3>, usize>);
 TEST(Array, GetUncheckedMut) {
   {
     constexpr auto a = []() constexpr {
-      auto a =
-          Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+      auto a = Array<int, 5>(1, 2, 3, 4, 5);
       a.get_unchecked_mut(unsafe_fn, 0_usize) = 101;
       return a;
     }();
     EXPECT_EQ(a[0_usize], 101);
   }
   {
-    auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+    auto a = Array<int, 5>(1, 2, 3, 4, 5);
     a.get_unchecked_mut(unsafe_fn, 0_usize) = 101;
     EXPECT_EQ(a[0_usize], 101);
   }
 }
 
 TEST(Array, AsPtr) {
-  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  auto a = Array<int, 5>(1, 2, 3, 4, 5);
   auto r = a.as_ptr();
   static_assert(std::same_as<decltype(r), const int*>);
   EXPECT_EQ(3, *(r + 2));
 }
 
 TEST(Array, AsPtrMut) {
-  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  auto a = Array<int, 5>(1, 2, 3, 4, 5);
   auto r = a.as_mut_ptr();
   static_assert(std::same_as<decltype(r), int*>);
   *(r + 2) = 101;
   EXPECT_EQ(101, *(r + 2));
+}
+
+TEST(Array, ConvertsToSlice) {
+  auto v = sus::Array<i32, 4>(1, 2, 3, 4);
+  const auto cv = sus::Array<i32, 4>(1, 2, 3, 4);
+  // Explicit construction.
+  {
+    [[maybe_unused]] Slice<i32> s2(v);
+    [[maybe_unused]] Slice<i32> s3(cv);
+    [[maybe_unused]] SliceMut<i32> sm2(v);
+  }
+  // Implicit construction.
+  {
+    [[maybe_unused]] Slice<i32> s2 = v;
+    [[maybe_unused]] Slice<i32> s3 = cv;
+    [[maybe_unused]] SliceMut<i32> sm2 = v;
+  }
+  // Function calls.
+  {
+    [](Slice<i32>) {}(v);
+    [](Slice<i32>) {}(cv);
+    [](SliceMut<i32>) {}(v);
+  }
 }
 
 TEST(Array, Eq) {
@@ -332,27 +357,50 @@ TEST(Array, Eq) {
   static_assert(!sus::ops::Eq<Array<int, 3>, Array<int, 4>>);
   static_assert(!sus::ops::Eq<Array<NotEq, 3>>);
 
-  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-  auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  static_assert(sus::ops::Eq<Array<int, 3>, Slice<int>>);
+  static_assert(!sus::ops::Eq<Array<int, 3>, Slice<NotEq>>);
+  static_assert(sus::ops::Eq<Array<int, 3>, SliceMut<int>>);
+  static_assert(!sus::ops::Eq<Array<int, 3>, SliceMut<NotEq>>);
+
+  auto a = Array<int, 5>(1, 2, 3, 4, 5);
+  auto b = Array<int, 5>(1, 2, 3, 4, 5);
   EXPECT_EQ(a, b);
-  b[3_usize] += 1;
+  EXPECT_EQ(a, b.as_slice());
+  EXPECT_EQ(a, b.as_mut_slice());
+  b[3u] += 1;
   EXPECT_NE(a, b);
+  EXPECT_NE(a, b.as_slice());
+  EXPECT_NE(a, b.as_mut_slice());
 }
 
 TEST(Array, StrongOrd) {
-  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-  auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  struct NotOrd {};
+  static_assert(!sus::ops::PartialOrd<NotOrd>);
+
+  static_assert(sus::ops::StrongOrd<Array<int, 3>, Slice<int>>);
+  static_assert(!sus::ops::StrongOrd<Array<int, 3>, Slice<NotOrd>>);
+  static_assert(sus::ops::StrongOrd<Array<int, 3>, SliceMut<int>>);
+  static_assert(!sus::ops::StrongOrd<Array<int, 3>, SliceMut<NotOrd>>);
+
+  auto a = Array<int, 5>(1, 2, 3, 4, 5);
+  auto b = Array<int, 5>(1, 2, 3, 4, 5);
   EXPECT_LE(a, b);
+  EXPECT_LE(a, b.as_slice());
+  EXPECT_LE(a, b.as_mut_slice());
   EXPECT_GE(a, b);
-  b[3_usize] += 1;
+  EXPECT_GE(a, b.as_slice());
+  EXPECT_GE(a, b.as_mut_slice());
+  b[3u] += 1;
   EXPECT_LT(a, b);
+  EXPECT_LT(a, b.as_slice());
+  EXPECT_LT(a, b.as_mut_slice());
 }
 
 TEST(Array, StrongOrder) {
-  auto a = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
-  auto b = Array<int, 5>::with_initializer([i = 0]() mutable { return ++i; });
+  auto a = Array<int, 5>(1, 2, 3, 4, 5);
+  auto b = Array<int, 5>(1, 2, 3, 4, 5);
   EXPECT_EQ(std::strong_order(a, b), std::strong_ordering::equal);
-  b[3_usize] += 1;
+  b[3u] += 1;
   EXPECT_EQ(std::strong_order(a, b), std::strong_ordering::less);
 }
 
