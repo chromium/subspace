@@ -174,12 +174,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
     original_vec_.as_mut() = ::sus::move(vec_);
   }
 
-  static constexpr auto with(Vec<Item>&& vec sus_lifetimebound,
-                             ::sus::ops::Range<usize> range) noexcept {
-    return Drain(::sus::move(vec), range);
-  }
-
-  constexpr Drain(Vec<Item>&& vec sus_lifetimebound,
+  explicit constexpr Drain(Vec<Item>&& vec sus_lifetimebound,
                   ::sus::ops::Range<usize> range) noexcept
       : tail_start_(range.finish),
         tail_len_(vec.len() - range.finish),

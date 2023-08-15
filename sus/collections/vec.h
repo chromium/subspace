@@ -297,7 +297,7 @@ class [[sus_trivial_abi]] Vec final {
     ::sus::ops::Range<usize> bounded_range =
         range.start_at(range.start_bound().unwrap_or(0u))
             .end_at(range.end_bound().unwrap_or(len()));
-    return Drain<T>::with(::sus::move(*this), bounded_range);
+    return Drain<T>(::sus::move(*this), bounded_range);
   }
 
   /// Decomposes a `Vec<T>` into its raw components.
