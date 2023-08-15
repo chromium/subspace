@@ -169,9 +169,12 @@ class [[sus_trivial_abi]] Vec final {
     return Vec(FROM_PARTS, capacity, ptr, length);
   }
 
-  /// sus::construct::From<Slice<T>> trait.
+  /// Constructs a Vec by cloning elements out of a slice.
   ///
-  /// #[doc.overloads=from.slice.const]
+  /// Satisfies `sus::construct::From<Slice<T>>`
+  /// and `sus::construct::From<SliceMut<T>>`.
+  ///
+  /// #[doc.overloads=from.slice]
   static constexpr Vec from(::sus::Slice<T> slice) noexcept
     requires(sus::mem::Clone<T>)
   {
@@ -179,10 +182,7 @@ class [[sus_trivial_abi]] Vec final {
     for (const T& t : slice) v.push(::sus::clone(t));
     return v;
   }
-
-  /// sus::construct::From<SliceMut<T>> trait.
-  ///
-  /// #[doc.overloads=from.slice.mut]
+  /// #[doc.overloads=from.slice]
   static constexpr Vec from(::sus::SliceMut<T> slice) noexcept
     requires(sus::mem::Clone<T>)
   {
@@ -215,6 +215,8 @@ class [[sus_trivial_abi]] Vec final {
     if (is_alloced()) free_storage();
   }
 
+  /// sus::mem::Move trait.
+  /// #[doc.overloads=vec.move]
   constexpr Vec(Vec&& o) noexcept
       : capacity_(::sus::mem::replace(o.capacity_, kMovedFromCapacity)),
         iter_refs_(o.iter_refs_.take_for_owner()),
@@ -223,6 +225,8 @@ class [[sus_trivial_abi]] Vec final {
     check(!is_moved_from());
     check(!has_iterators());
   }
+  /// sus::mem::Move trait.
+  /// #[doc.overloads=vec.move]
   constexpr Vec& operator=(Vec&& o) noexcept {
     check(!o.is_moved_from());
     check(!has_iterators());
