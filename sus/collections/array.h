@@ -117,9 +117,10 @@ class Array final {
   /// from the given closure.
   constexpr static Array with_initializer(
       ::sus::fn::FnMut<T()> auto f) noexcept {
-    return [&f]<size_t... Is>(std::index_sequence<Is...>) {
-      return Array(((void)Is, ::sus::fn::call_mut(f))...);
-    }(std::make_index_sequence<N>());
+    if constexpr (N == 0u)
+      return Array();
+    else
+      return Array(WITH_INITIALIZER, std::make_index_sequence<N>(), f);
   }
 
   Array(Array&&)
@@ -288,7 +289,7 @@ class Array final {
       // TODO: Add invalidation refcounts and check them on move. Would be part
       // of composing Array from SliceMut.
       return SliceIter<const T&>(storage_.iter_refs_.to_iter_from_owner(),
-                                       storage_.data_, N);
+                                 storage_.data_, N);
     }
   }
   constexpr SliceIter<const T&> iter() && = delete;
@@ -303,7 +304,7 @@ class Array final {
           nullptr, N);
     } else {
       return SliceIterMut<T&>(storage_.iter_refs_.to_iter_from_owner(),
-                                    storage_.data_, N);
+                              storage_.data_, N);
     }
   }
 
@@ -406,31 +407,42 @@ class Array final {
  private:
   enum WithDefault { WITH_DEFAULT };
   template <size_t... Is>
-    requires(N == 0)
+    requires(N == 0u)
   constexpr Array(WithDefault, std::index_sequence<Is...>) noexcept {}
   template <size_t... Is>
-    requires(N > 0)
+    requires(N > 0u)
   constexpr Array(WithDefault, std::index_sequence<Is...>) noexcept
       : storage_(::sus::iter::IterRefCounter::for_owner(),
                  {((void)Is, T())...}) {}
 
+  enum WithInitializer { WITH_INITIALIZER };
+  template <size_t... Is>
+    requires(N > 0u)
+  constexpr Array(WithInitializer, std::index_sequence<Is...>,
+                  ::sus::fn::FnMut<T()> auto& f) noexcept
+      : storage_(::sus::iter::IterRefCounter::for_owner(),
+                 // NOTE: The calls to `f` need to happen in the initialization
+                 // of the array. If they occur in funtion parameters then they
+                 // will have an arbitrary ordering.
+                 {((void)Is, ::sus::fn::call_mut(f))...}) {}
+
   enum WithMoveFromPointer { WITH_MOVE_FROM_POINTER };
   template <size_t... Is>
-    requires(N > 0)
+    requires(N > 0u)
   constexpr Array(WithMoveFromPointer, T* t, ::sus::iter::IterRefCounter refs,
                   std::index_sequence<Is...>) noexcept
       : storage_(::sus::move(refs), {::sus::move(*(t + Is))...}) {}
 
   enum WithCloneFromPointer { WITH_CLONE_FROM_POINTER };
   template <size_t... Is>
-    requires(N > 0)
+    requires(N > 0u)
   constexpr Array(WithCloneFromPointer, const T* t,
                   std::index_sequence<Is...>) noexcept
       : storage_(::sus::iter::IterRefCounter::for_owner(),
                  {::sus::clone(*(t + Is))...}) {}
 
   constexpr inline bool has_iterators() const noexcept
-    requires(N > 0)
+    requires(N > 0u)
   {
     return storage_.iter_refs_.count_from_owner() != 0u;
   }
