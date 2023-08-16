@@ -139,7 +139,9 @@
 
 // TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=110927
 // GCC does not parse dependent types in a partial specialization.
-#if defined(__GNUC__) && __GNUC__ > 0  // TODO: Update when the bug is fixed.
+// Fixed in GCC 13.3.
+#if defined(__GNUC__) && \
+    (__GNUC__ > 13 || (__GNUC__ == 13 && __GNUC_MINOR__ >= 3))
 #define sus_gcc_bug_110927(...) __VA_ARGS__
 #define sus_gcc_bug_110927_else(...)
 #define sus_gcc_bug_110927_exists
