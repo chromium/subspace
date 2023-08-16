@@ -39,7 +39,7 @@ class IteratorOverRange;
 /// iterate over references to the range's values. If the input is const, the
 /// `Iterator` will iterate over const references. To iterate over values
 /// instead, use [`Iterator::cloned`](sus-iter-IteratorBase.html#method.cloned) or
-/// [`Iterator::copied`](sus::iter::IteratorBase::copied).
+/// [`Iterator::copied`](sus-iter-IteratorBase.html#method.copied).
 ///
 /// If the input is an rvalue refernce, the `Iterator` will iterate over the
 /// moved items from the range.
