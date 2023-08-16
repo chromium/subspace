@@ -7,4 +7,5 @@ explicitly leveraging compiler optimizations without tripping over Undefined
 Behaviour. Stop spending time debugging tricky heisenbugs and start relying
 on the compiler to produce the program you wrote.
 
-Find Subspace on Github here: https://github.com/chromium/subspace
+Find Subspace on Github here:
+[https://github.com/chromium/subspace](https://github.com/chromium/subspace)
