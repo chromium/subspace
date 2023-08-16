@@ -75,15 +75,6 @@ inline std::string summarize_html(std::string_view html) {
 sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
     sus::SliceMut<std::string> lines) noexcept {
   std::ostringstream parsed;
-#define MD4C
-#if defined(MD4C)
-  std::string mdtext = [&]() {
-    std::ostringstream s;
-    for (const auto& line : lines) {
-      s << line << "\n";
-    }
-    return sus::move(s).str();
-  }();
 
   struct UserData {
     std::ostringstream& parsed;
@@ -94,109 +85,20 @@ sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
     auto& data = *reinterpret_cast<UserData*>(v);
     data.parsed << std::string_view(chars, size);
   };
+
+  std::string mdtext = [&]() {
+    std::ostringstream s;
+    for (const auto& line : lines) {
+      s << line << "\n";
+    }
+    return sus::move(s).str();
+  }();
   md_html(mdtext.c_str(), u32::try_from(mdtext.size()).unwrap(), process_output,
           &data,
           MD_FLAG_NOHTMLBLOCKS | MD_FLAG_NOHTMLSPANS | MD_FLAG_TABLES |
               MD_FLAG_STRIKETHROUGH,
           0);
 
-#else
-  while (lines.first().is_some() && lines.first().as_value().empty()) {
-    lines = lines["1.."_r];
-  }
-  while (lines.last().is_some() && lines.last().as_value().empty()) {
-    lines = lines[".."_r.end_at(lines.len() - 1u)];
-  }
-
-  if (!lines.is_empty()) {
-    parsed << "<p>";
-    bool add_space = false;
-    bool inside_pre = false;
-    bool inside_code_snippet = false;
-    for (std::string& s : lines.iter_mut()) {
-      // Quote any <>.
-      while (true) {
-        size_t pos = s.find_first_of("<>");
-        if (pos == std::string::npos) break;
-        if (s[pos] == '<')
-          s.replace(pos, 1u, "&lt;");
-        else
-          s.replace(pos, 1u, "&gt;");
-      }
-
-      if (s.empty()) {
-        // Empty line, preserve the paragraph break.
-        parsed << "</p><p>";
-        add_space = false;
-      } else if (s.starts_with("#") && !(inside_pre || inside_code_snippet)) {
-        // Markdown header.
-        if (s.starts_with("##### "))
-          parsed << "</p><h5>" << sus::move(s).substr(6) << "</h5><p>";
-        else if (s.starts_with("#### "))
-          parsed << "</p><h4>" << sus::move(s).substr(5) << "</h4><p>";
-        else if (s.starts_with("### "))
-          parsed << "</p><h3>" << sus::move(s).substr(4) << "</h3><p>";
-        else if (s.starts_with("## "))
-          parsed << "</p><h2>" << sus::move(s).substr(3) << "</h2><p>";
-        else if (s.starts_with("# "))
-          parsed << "</p><h1>" << sus::move(s).substr(2) << "</h1><p>";
-        else
-          parsed << "</p><h6>" << sus::move(s) << "</h6><p>";
-        add_space = false;
-      } else if (s.starts_with("```")) {
-        // Markdown code blocks with ``` at the start and end.
-        inside_pre = !inside_pre;
-        if (inside_pre) {
-          if (inside_code_snippet) {
-            return sus::err(ParseCommentError{
-                .message = "Invalid markdown, found ``` inside `"});
-          }
-          // TODO: After the opening ``` there can be a language for syntax
-          // highlighting...
-          parsed << "</p><pre><code>";
-        } else {
-          parsed << "</code></pre><p>";
-          add_space = false;
-        }
-      } else if (inside_pre) {
-        parsed << sus::move(s) << "\n";
-      } else {
-        // Markdown code snippets with `foo` format.
-        while (true) {
-          size_t start = s.find("`");
-          if (start == std::string::npos) break;
-          inside_code_snippet = !inside_code_snippet;
-          if (inside_code_snippet) {
-            size_t end = s.find("`", start + 1u);
-            if (end != std::string::npos) {
-              s.replace(end, 1, "</code>");
-              inside_code_snippet = false;
-            }
-            s.replace(start, 1, "<code>");
-          } else {
-            s.replace(start, 1, "</code>");
-          }
-        }
-
-        // Finally add the text!
-        if (add_space) parsed << " ";
-        parsed << sus::move(s);
-        add_space = true;
-      }
-    }
-    parsed << "</p>";
-
-    // A `snippet` was not terminated.
-    if (inside_code_snippet) {
-      return sus::err(
-          ParseCommentError{.message = "Unterminated code ` snippet"});
-    }
-    if (inside_pre) {
-      return sus::err(
-          ParseCommentError{.message = "Unterminated code ``` block"});
-    }
-  }
-#endif
   return sus::ok(sus::move(parsed).str());
 }
 
