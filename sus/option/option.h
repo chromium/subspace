@@ -76,8 +76,9 @@ constexpr auto end(const T& t) noexcept;
 }  // namespace sus::iter
 
 namespace sus {
-/// The `Option` type, and the `some()` and `none()` type deduction constructor
-/// functions.
+/// The [`Option`](sus-option-Option.html) type, and the
+/// [`some()`](sus-option-fn.some.html) and [`none()`](sus-option-fn.none.html)
+/// type deduction constructor functions.
 ///
 /// The `Option` type represents an optional value: every Option is either Some
 /// and contains a value, or None, and does not. It is similar to
@@ -92,9 +93,10 @@ namespace sus {
 ///   lvalue as empty instead of leaving a moved-from value behind as with
 ///   `std::move(optional).value()`.
 /// * A custom message can be printed when trying to unwrap an empty Option.
-/// * Subspace [Iterator](sus::iter) integration. Option can be iterated over,
-///   acting like a single-element [collection](sus::collections), which allows
-///   it to be chained together with other iterators, filtered, etc.
+/// * Subspace [Iterator](sus-iter.html) integration. Option can be iterated
+/// over,
+///   acting like a single-element [collection](sus-collections.html), which
+///   allows it to be chained together with other iterators, filtered, etc.
 ///
 /// `Option` types are very common, as they have a number of uses:
 ///
@@ -111,10 +113,10 @@ namespace sus {
 /// # Quick start
 /// When the type is known to the compiler, you can construct an Option from a
 /// value without writing the full type again, by using
-/// [`sus::some(x)`](sus::option::some) to make an `Option` holding `x` or
-/// [`sus::none()`](sus::option::none) to make an empty Option. If returning an
-/// Option from a lambda, be sure to specify the return type on the lambda to
-/// allow successful type deduction.
+/// [`sus::some(x)`](sus-option-fn.some.html) to make an `Option` holding `x` or
+/// [`sus::none()`](sus-option-fn.none.html) to make an empty Option. If
+/// returning an Option from a lambda, be sure to specify the return type on the
+/// lambda to allow successful type deduction.
 /// ```
 /// // Returns Some("power!") if the input is over 9000, or None otherwise.
 /// auto is_power = [](i32 i) -> sus::Option<std::string> {
@@ -153,7 +155,7 @@ namespace sus {
 /// size as the original type `T`:
 ///
 /// * `const T&` or `T&` (have the same size as `const T*` or `T*`)
-/// * [`ptr::NonNull<U>`](sus::ptr::NonNull)
+/// * [`ptr::NonNull<U>`](sus-ptr-NonNull.html)
 ///
 /// This is called the "NeverValueField optimization", but is also called the
 /// ["null pointer optimization" or NPO in Rust](
@@ -355,8 +357,8 @@ template <class T, ::sus::iter::Iterator<Option<T>> Iter>
 constexpr Option<T> from_sum_impl(Iter&& it) noexcept;
 }  // namespace __private
 
-/// The `Option` type. See the [namespace level documentation](sus::option) for
-/// more.
+/// The `Option` type. See the [namespace level documentation](sus-option.html)
+/// for more.
 template <class T>
 class Option final {
   // Note that `const T&` is allowed (so we don't `std::remove_reference_t<T>`)
@@ -479,8 +481,8 @@ class Option final {
   }
 
   /// Copy constructor for `Option<T>` which satisfies
-  /// [`sus::mem::Copy<Option<T>>`](sus::mem::Copy) if
-  /// [`Copy<T>`](sus::mem::Copy) is satisfied.
+  /// [`sus::mem::Copy<Option<T>>`](sus-mem-Copy.html) if
+  /// [`Copy<T>`](sus-mem-Copy.html) is satisfied.
   ///
   /// If `T` can be trivially copy-constructed, then `Option<T>` can also be
   /// trivially copy-constructed.
@@ -504,8 +506,8 @@ class Option final {
   = delete;
 
   /// Move constructor for `Option<T>` which satisfies
-  /// [`sus::mem::Move<Option<T>>`](sus::mem::Move) if
-  /// [`Move<T>`](sus::mem::Move) is satisfied.
+  /// [`sus::mem::Move<Option<T>>`](sus-mem-Move.html) if
+  /// [`Move<T>`](sus-mem-Move.html) is satisfied.
   ///
   /// If `T` can be trivially move-constructed, then `Option<T>` can also be
   /// trivially move-constructed. When trivially-moved, the `Option` is
@@ -532,8 +534,8 @@ class Option final {
   = delete;
 
   /// Copy assignment for `Option<T>` which satisfies
-  /// [`sus::mem::Copy<Option<T>>`](sus::mem::Copy) if
-  /// [`Copy<T>`](sus::mem::Copy) is satisfied.
+  /// [`sus::mem::Copy<Option<T>>`](sus-mem-Copy.html) if
+  /// [`Copy<T>`](sus-mem-Copy.html) is satisfied.
   ///
   /// If `T` can be trivially copy-assigned, then `Option<T>` can also be
   /// trivially copy-assigned.
@@ -560,8 +562,8 @@ class Option final {
   = delete;
 
   /// Move assignment for `Option<T>` which satisfies
-  /// [`sus::mem::Move<Option<T>>`](sus::mem::Move) if
-  /// [`Move<T>`](sus::mem::Move) is satisfied.
+  /// [`sus::mem::Move<Option<T>>`](sus-mem-Move.html) if
+  /// [`Move<T>`](sus-mem-Move.html) is satisfied.
   ///
   /// If `T` can be trivially move-assigned, then `Option<T>` can also be
   /// trivially move-assigned. When trivially-moved, the `Option` is

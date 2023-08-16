@@ -37,11 +37,6 @@ concept Ordering = (std::same_as<T, std::strong_ordering> ||
 /// `std::strong_ordering`). Objects that sort the same for ordering must also
 /// compare as equal.
 ///
-/// # How can I implement StrongOrd?
-/// `StrongOrd` requires that the type has `operator<=>` which returns
-/// `std::strong_ordering`. It will implicitly also be `Ord` and
-/// `PartialOrd` as a result.
-///
 /// # StrongOrd and Eq interations
 /// While `StrongOrd` can report equality, it does not imply that the type
 /// satisfies `Eq`, and a separate `operator==` is required for that concept.
@@ -65,6 +60,11 @@ concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
 /// compare as different through `operator==`. If unique identity is required,
 /// use `StrongOrd`. Otherwise, typically use `Ord` for constraining types that
 /// will be ordered.
+///
+/// # How can I implement Ord?
+/// `Ord` requires that the type has `operator<=>` which returns
+/// `std::weak_ordering` (or `std::strong_ordering`). It will implicitly also be
+/// `Ord` and `PartialOrd` as a result.
 ///
 /// # Lexicographical comparison
 /// Lexicographical comparison is an operation with the following properties:

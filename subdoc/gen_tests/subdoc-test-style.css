@@ -60,6 +60,13 @@ pre {
 .description pre {
     padding: 1em;
 }
+.description a {
+    text-decoration: none;
+    color: rgb(250, 199, 121);
+}
+.description a:hover {
+    text-decoration: underline;
+}
 
 .overview .type-signature {
     background-color: rgba(43, 43, 43, 1.0);
