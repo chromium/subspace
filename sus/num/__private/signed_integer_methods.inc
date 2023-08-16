@@ -220,6 +220,20 @@ try_from(S s) noexcept {
   return R(_self(static_cast<_primitive>(s.primitive_value)));
 }
 
+/// Constructs a @doc.self from an unsigned integer type (unsigned
+/// int, unsigned long, etc) where no bits are lost.
+///
+/// For conversions from types with a larger range use `try_from()`. For lossy
+/// conversions use the `sus::construct::Transmogrify` concept with
+/// `sus::mog<@doc.self>()`.
+///
+/// #[doc.overloads=from.unsigned]
+template <Unsigned S>
+  requires(::sus::mem::size_of<S>() < ::sus::mem::size_of<_primitive>())
+sus_pure static constexpr _self from(S s) noexcept {
+  return _self(s);
+}
+
 /// Try to construct a @doc.self from an unsigned integer type (u8, u16, u32,
 /// etc).
 ///

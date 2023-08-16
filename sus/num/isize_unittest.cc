@@ -512,8 +512,10 @@ TEST(isize, From) {
   static_assert(sus::construct::From<isize, int64_t>);
   static_assert(sus::construct::From<isize, uint8_t>);
   static_assert(sus::construct::From<isize, uint16_t>);
-  static_assert(sus::construct::From<isize, uint32_t>);
-  static_assert(!sus::construct::From<isize, uint64_t>);
+  static_assert(sizeof(isize) > sizeof(u32) ==
+                sus::construct::From<isize, uint32_t>);
+  static_assert(sizeof(isize) > sizeof(u64) ==
+                sus::construct::From<isize, uint64_t>);
   static_assert(sus::construct::TryFrom<i32, signed char>);
   static_assert(sus::construct::TryFrom<i32, size_t>);
   static_assert(sus::construct::TryFrom<i32, int8_t>);
@@ -625,10 +627,12 @@ TEST(isize, From) {
   static_assert(sus::construct::From<isize, i32>);
   static_assert(sus::construct::From<isize, i64>);
   static_assert(sus::construct::From<isize, isize>);
-  static_assert(!sus::construct::From<isize, u8>);
-  static_assert(!sus::construct::From<isize, u16>);
-  static_assert(!sus::construct::From<isize, u32>);
-  static_assert(!sus::construct::From<isize, u64>);
+  static_assert(sus::construct::From<isize, u8>);
+  static_assert(sus::construct::From<isize, u16>);
+  static_assert(sizeof(isize) > sizeof(u32) ==
+                sus::construct::From<isize, u32>);
+  static_assert(sizeof(isize) > sizeof(u64) ==
+                sus::construct::From<isize, u64>);
   static_assert(!sus::construct::From<isize, usize>);
   static_assert(!sus::construct::From<isize, uptr>);
   static_assert(sus::construct::TryFrom<i32, i8>);

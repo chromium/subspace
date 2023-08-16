@@ -569,7 +569,7 @@ TEST(i16, From) {
   static_assert(!sus::construct::From<i16, i32>);
   static_assert(!sus::construct::From<i16, i64>);
   static_assert(!sus::construct::From<i16, isize>);
-  static_assert(!sus::construct::From<i16, u8>);
+  static_assert(sus::construct::From<i16, u8>);
   static_assert(!sus::construct::From<i16, u16>);
   static_assert(!sus::construct::From<i16, u32>);
   static_assert(!sus::construct::From<i16, u64>);

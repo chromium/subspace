@@ -77,8 +77,8 @@ TEST(OverflowInteger, From) {
   static_assert(::sus::construct::Into<i16, OverflowInteger<i32>>);
   static_assert(::sus::construct::Into<i32, OverflowInteger<i32>>);
   static_assert(!::sus::construct::Into<i64, OverflowInteger<i32>>);
-  static_assert(!::sus::construct::Into<u8, OverflowInteger<i32>>);
-  static_assert(!::sus::construct::Into<u16, OverflowInteger<i32>>);
+  static_assert(::sus::construct::Into<u8, OverflowInteger<i32>>);
+  static_assert(::sus::construct::Into<u16, OverflowInteger<i32>>);
   static_assert(!::sus::construct::Into<u32, OverflowInteger<i32>>);
   static_assert(!::sus::construct::Into<u64, OverflowInteger<i32>>);
 
