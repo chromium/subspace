@@ -67,6 +67,7 @@ target_link_directories(subdoc_lib PUBLIC ${LLVM_LIBRARY_DIRS})
 target_link_libraries(subdoc_lib
     subspace::lib
     md4c
+    md4c-html
     clangAnalysis
     clangAnalysisFlowSensitive
     clangAnalysisFlowSensitiveModels
