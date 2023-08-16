@@ -23,20 +23,8 @@ pre {
     border-bottom: 1px solid;
 }
 
-.overload .function-signature {
-    /* Hides the space between `function-name` and `()`. */
-    display: flex;
-    flex-wrap: wrap;
-}
-.overload .function-signature>:not(.function-name) {
-    margin-right: 0.2em;  /* Put back the space after other elements */
-}
-.overload .function-signature>.function-params>.type-name {
-    margin-right: 0.2em;  /* Put back the space after other elements */
-}
-.overload .function-signature>.function-params>.parameter-default-eq {
-    margin-left: 0.2em;  /* Put back the space after other elements */
-    margin-right: 0.2em;  /* Put back the space after other elements */
+.overload .function-signature span {
+    margin-right: 0.4em;  /* Put back the space after other elements */
 }
 
 .description.short {

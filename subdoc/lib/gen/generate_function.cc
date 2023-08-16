@@ -62,19 +62,12 @@ void generate_return_type(HtmlWriter::OpenDiv& div,
 void generate_function_params(HtmlWriter::OpenDiv& div,
                               const FunctionOverload& overload) {
   {
-    auto params_span = div.open_span(HtmlWriter::SingleLine);
-    params_span.add_class("function-params");
-    {
-      auto open_paren = params_span.open_span(HtmlWriter::SingleLine);
-      open_paren.add_class("paren");
-      open_paren.add_class("open-paren");
-      open_paren.write_text("(");
-    }
+    div.write_text("(");
     for (const auto& [i, p] : overload.parameters.iter().enumerate()) {
-      if (i > 0u) params_span.write_text(", ");
+      if (i > 0u) div.write_text(", ");
 
       {
-        auto one_param_link = params_span.open_a();
+        auto one_param_link = div.open_a();
         one_param_link.add_class("type-name");
         one_param_link.add_title(p.type_name);
         if (p.type_element.is_some()) {
@@ -95,77 +88,28 @@ void generate_function_params(HtmlWriter::OpenDiv& div,
         one_param_link.write_text(p.short_type_name);
       }
 
-      {
-        auto name_span = params_span.open_span(HtmlWriter::SingleLine);
-        name_span.add_class("parameter-name");
-        name_span.write_text(p.parameter_name);
+      if (!p.parameter_name.empty()) {
+        div.write_text(" ");
+        div.write_text(p.parameter_name);
       }
 
       if (p.default_value.is_some()) {
-        {
-          auto default_span = params_span.open_span(HtmlWriter::SingleLine);
-          default_span.add_class("parameter-default-eq");
-          default_span.write_text("=");
-        }
-        {
-          auto default_span = params_span.open_span(HtmlWriter::SingleLine);
-          default_span.add_class("parameter-default-value");
-          default_span.write_text(p.default_value.as_value());
-        }
+        div.write_text(" = ");
+        div.write_text(p.default_value.as_value());
       }
     }
-    {
-      auto close_paren = params_span.open_span(HtmlWriter::SingleLine);
-      close_paren.add_class("paren");
-      close_paren.add_class("close-paren");
-      close_paren.write_text(")");
-    }
+    div.write_text(")");
   }
   if (overload.method.is_some()) {
-    if (overload.method->is_volatile) {
-      auto volatile_span = div.open_span(HtmlWriter::SingleLine);
-      volatile_span.add_class("volatile");
-      volatile_span.write_text("volatile");
-    }
+    if (overload.method->is_volatile) div.write_text(" volatile");
     {
       switch (overload.method->qualifier) {
-        case MethodQualifier::Const: {
-          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
-          qualifier_span.add_class("const");
-          qualifier_span.write_text("const");
-          break;
-        }
-        case MethodQualifier::ConstLValue: {
-          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
-          qualifier_span.add_class("const");
-          qualifier_span.add_class("ref");
-          qualifier_span.write_text("const&");
-          break;
-        }
-        case MethodQualifier::ConstRValue: {
-          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
-          qualifier_span.add_class("const");
-          qualifier_span.add_class("rref");
-          qualifier_span.write_text("const&&");
-          break;
-        }
-        case MethodQualifier::Mutable: {
-          break;
-        }
-        case MethodQualifier::MutableLValue: {
-          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
-          qualifier_span.add_class("mutable");
-          qualifier_span.add_class("ref");
-          qualifier_span.write_text("&");
-          break;
-        }
-        case MethodQualifier::MutableRValue: {
-          auto qualifier_span = div.open_span(HtmlWriter::SingleLine);
-          qualifier_span.add_class("mutable");
-          qualifier_span.add_class("rref");
-          qualifier_span.write_text("&&");
-          break;
-        }
+        case MethodQualifier::Const: div.write_text(" const"); break;
+        case MethodQualifier::ConstLValue: div.write_text(" const&"); break;
+        case MethodQualifier::ConstRValue: div.write_text(" const&&"); break;
+        case MethodQualifier::Mutable: break;
+        case MethodQualifier::MutableLValue: div.write_text(" &"); break;
+        case MethodQualifier::MutableRValue: div.write_text(" &&"); break;
       }
     }
   }
@@ -204,7 +148,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
                                 .unwrap_or(true);
 
     {
-      auto signature_div = overload_div.open_div();
+      auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
       signature_div.add_class("function-signature");
 
       if (style == StyleLong) {
@@ -250,11 +194,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       if (style == StyleLong) {
         generate_function_params(signature_div, overload);
         if (has_return) {
-          {
-            auto arrow_span = signature_div.open_span(HtmlWriter::SingleLine);
-            arrow_span.add_class("return-arrow");
-            arrow_span.write_text("->");
-          }
+          signature_div.write_text(" -> ");
           generate_return_type(signature_div, overload);
         }
       }
@@ -357,7 +297,7 @@ void generate_function(const FunctionElement& element,
       overload_div.add_class("overload");
 
       {
-        auto signature_div = overload_div.open_div();
+        auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
         signature_div.add_class("function-signature");
 
         {
