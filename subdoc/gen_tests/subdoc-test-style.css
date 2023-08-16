@@ -16,6 +16,7 @@ pre {
     font-size: 125%;
     margin-top: 1em;
     margin-bottom: 1em;
+    font-weight: bold;
 }
 :is(.fields, .functions, .methods, .records, .namespaces) .section-header {
     padding-bottom: 0.2em;
