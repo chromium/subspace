@@ -271,9 +271,10 @@ TEST(Choice, AsTypes) {
   }
   // Double value first, single last.
   {
-    auto u = Choice<sus_choice_types((Order::First, i8, u64),
-                                     (Order::Second, u32))>::
-        with<Order::First>(sus::Tuple<i8, u64>(1_i8, 2_u64));
+    auto u = Choice<sus_choice_types(
+        (Order::First, i8, u64),
+        (Order::Second, u32))>::with<Order::First>(sus::Tuple<i8, u64>(1_i8,
+                                                                       2_u64));
     static_assert(std::same_as<decltype(u.as<Order::First>()),
                                sus::Tuple<const i8&, const u64&>>);
     static_assert(std::same_as<decltype(u.as<Order::Second>()), const u32&>);
@@ -710,10 +711,10 @@ TEST(Choice, StrongOrder) {
 struct Weak {
   sus_clang_bug_54040(constexpr inline Weak(i32 a, i32 b) : a(a), b(b){});
 
-  constexpr auto operator==(const Weak& o) const& noexcept {
+  constexpr bool operator==(const Weak& o) const& noexcept {
     return a == o.a && b == o.b;
   }
-  constexpr auto operator<=>(const Weak& o) const& noexcept {
+  constexpr std::weak_ordering operator<=>(const Weak& o) const& noexcept {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
     return std::weak_ordering::greater;
@@ -788,13 +789,13 @@ struct NotCmp {};
 static_assert(!sus::ops::PartialOrd<NotCmp>);
 
 static_assert(::sus::ops::StrongOrd<Choice<sus_choice_types((1, int))>,
-                              Choice<sus_choice_types((1, int))>>);
+                                    Choice<sus_choice_types((1, int))>>);
 static_assert(!::sus::ops::StrongOrd<Choice<sus_choice_types((1, Weak))>,
-                               Choice<sus_choice_types((1, Weak))>>);
+                                     Choice<sus_choice_types((1, Weak))>>);
 static_assert(::sus::ops::Ord<Choice<sus_choice_types((1, Weak))>,
-                                  Choice<sus_choice_types((1, Weak))>>);
+                              Choice<sus_choice_types((1, Weak))>>);
 static_assert(!::sus::ops::Ord<Choice<sus_choice_types((1, float))>,
-                                   Choice<sus_choice_types((1, float))>>);
+                               Choice<sus_choice_types((1, float))>>);
 static_assert(::sus::ops::PartialOrd<Choice<sus_choice_types((1, float))>,
                                      Choice<sus_choice_types((1, float))>>);
 static_assert(!::sus::ops::PartialOrd<Choice<sus_choice_types((1, NotCmp))>,

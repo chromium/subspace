@@ -25,7 +25,7 @@ struct Nothing {
   friend constexpr bool operator==(const Nothing&, const Nothing&) noexcept {
     return true;
   }
-  friend constexpr auto operator<=>(const Nothing&, const Nothing&) noexcept {
+  friend constexpr std::strong_ordering operator<=>(const Nothing&, const Nothing&) noexcept {
     return std::strong_ordering::equivalent;
   }
 };

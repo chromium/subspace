@@ -197,8 +197,8 @@ constexpr inline bool operator==(const NonNull<T>& l,
 /// sus::ops::StrongOrd<NonNull<T>> trait.
 template <class T, class U>
   requires(::sus::ops::StrongOrd<const T*, const U*>)
-constexpr inline auto operator<=>(const NonNull<T>& l,
-                                  const NonNull<U>& r) noexcept {
+constexpr inline std::strong_ordering operator<=>(
+    const NonNull<T>& l, const NonNull<U>& r) noexcept {
   return l.as_ptr() <=> r.as_ptr();
 }
 

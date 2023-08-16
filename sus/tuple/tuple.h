@@ -212,9 +212,8 @@ class Tuple final {
   /// Option for comparison.
   //
   // sus::ops::StrongOrd<Tuple<U...>> trait.
-  constexpr auto operator<=>(const Tuple& r) const& noexcept
-    requires((::sus::ops::ExclusiveStrongOrd<T> && ... &&
-              ::sus::ops::ExclusiveStrongOrd<Ts>))
+  constexpr std::strong_ordering operator<=>(const Tuple& r) const& noexcept
+    requires((::sus::ops::StrongOrd<T> && ... && ::sus::ops::StrongOrd<Ts>))
   {
     return __private::storage_cmp(
         std::strong_ordering::equal, storage_, r.storage_,
@@ -222,18 +221,19 @@ class Tuple final {
   }
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
-             (::sus::ops::ExclusiveStrongOrd<T, U> && ... &&
-              ::sus::ops::ExclusiveStrongOrd<Ts, Us>))
-  constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
+             (::sus::ops::StrongOrd<T, U> && ... &&
+              ::sus::ops::StrongOrd<Ts, Us>))
+  constexpr std::strong_ordering operator<=>(
+      const Tuple<U, Us...>& r) const& noexcept {
     return __private::storage_cmp(
         std::strong_ordering::equal, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
   // sus::ops::Ord<Tuple<U...>> trait.
-  constexpr auto operator<=>(const Tuple& r) const& noexcept
-    requires((::sus::ops::ExclusiveOrd<T> && ... &&
-              ::sus::ops::ExclusiveOrd<Ts>))
+  constexpr std::weak_ordering operator<=>(const Tuple& r) const& noexcept
+    requires(!(::sus::ops::StrongOrd<T> && ... && ::sus::ops::StrongOrd<Ts>) &&
+             (::sus::ops::Ord<T> && ... && ::sus::ops::Ord<Ts>))
   {
     return __private::storage_cmp(
         std::weak_ordering::equivalent, storage_, r.storage_,
@@ -241,18 +241,20 @@ class Tuple final {
   }
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
-             (::sus::ops::ExclusiveOrd<T, U> && ... &&
-              ::sus::ops::ExclusiveOrd<Ts, Us>))
-  constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
+             !(::sus::ops::StrongOrd<T, U> && ... &&
+               ::sus::ops::StrongOrd<Ts, Us>) &&
+             (::sus::ops::Ord<T, U> && ... && ::sus::ops::Ord<Ts, Us>))
+  constexpr std::weak_ordering operator<=>(
+      const Tuple<U, Us...>& r) const& noexcept {
     return __private::storage_cmp(
         std::weak_ordering::equivalent, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
   }
 
   // sus::ops::PartialOrd<Tuple<U...>> trait.
-  constexpr auto operator<=>(const Tuple& r) const& noexcept
-    requires((::sus::ops::ExclusivePartialOrd<T> && ... &&
-              ::sus::ops::ExclusivePartialOrd<Ts>))
+  constexpr std::partial_ordering operator<=>(const Tuple& r) const& noexcept
+    requires(!(::sus::ops::Ord<T> && ... && ::sus::ops::Ord<Ts>) &&
+             (::sus::ops::PartialOrd<T> && ... && ::sus::ops::PartialOrd<Ts>))
   {
     return __private::storage_cmp(
         std::partial_ordering::equivalent, storage_, r.storage_,
@@ -260,9 +262,11 @@ class Tuple final {
   }
   template <class U, class... Us>
     requires(sizeof...(Us) == sizeof...(Ts) &&
-             (::sus::ops::ExclusivePartialOrd<T, U> && ... &&
-              ::sus::ops::ExclusivePartialOrd<Ts, Us>))
-  constexpr auto operator<=>(const Tuple<U, Us...>& r) const& noexcept {
+             !(::sus::ops::Ord<T, U> && ... && ::sus::ops::Ord<Ts, Us>) &&
+             (::sus::ops::PartialOrd<T, U> && ... &&
+              ::sus::ops::PartialOrd<Ts, Us>))
+  constexpr std::partial_ordering operator<=>(
+      const Tuple<U, Us...>& r) const& noexcept {
     return __private::storage_cmp(
         std::partial_ordering::equivalent, storage_, r.storage_,
         std::make_index_sequence<1u + sizeof...(Ts)>());
@@ -298,10 +302,9 @@ class Tuple final {
         using Items = Tuple<U, Us...>;
         // TODO: Consider adding extend_one() to the Extend concept, which can
         // take I instead of an Option<I>.
-        (...,
-         at_mut<Is>().extend(
-             ::sus::option::Option<typename Items::template IthType<Is>>(
-                 ::sus::move(item).template into_inner<Is>())));
+        (..., at_mut<Is>().extend(
+                  ::sus::option::Option<typename Items::template IthType<Is>>(
+                      ::sus::move(item).template into_inner<Is>())));
       };
       f(::sus::move(item), std::make_index_sequence<1u + sizeof...(Ts)>());
     }

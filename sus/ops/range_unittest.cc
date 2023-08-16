@@ -36,7 +36,7 @@ static_assert(sus::ops::RangeBounds<sus::ops::RangeFull<usize>, usize>);
 
 struct NoDefault {
   NoDefault(i32) {}
-  auto operator<=>(const NoDefault&) const noexcept {
+  std::strong_ordering operator<=>(const NoDefault&) const noexcept {
     return std::strong_ordering::equal;
   }
 };
@@ -298,7 +298,9 @@ TEST(Range, fmt) {
 
   struct NoFormat {
     i32 a = 0x16ae3cf2;
-    auto operator<=>(const NoFormat& rhs) const noexcept { return a <=> rhs.a; }
+    std::strong_ordering operator<=>(const NoFormat& rhs) const noexcept {
+      return a <=> rhs.a;
+    }
   };
   static_assert(sus::ops::StrongOrd<NoFormat>);
   static_assert(!fmt::is_formattable<NoFormat, char>::value);

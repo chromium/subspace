@@ -274,7 +274,8 @@ class OverflowInteger {
   }
 
   // Overflow (and underflow) is treated as positive infinity.
-  friend auto operator<=>(OverflowInteger lhs, OverflowInteger rhs) noexcept {
+  friend std::strong_ordering operator<=>(OverflowInteger lhs,
+                                          OverflowInteger rhs) noexcept {
     if (lhs.is_overflow()) {
       if (rhs.is_overflow()) {
         return std::strong_ordering::equivalent;
@@ -290,7 +291,7 @@ class OverflowInteger {
              rhs.v_.as_value_unchecked(::sus::marker::unsafe_fn);
     }
   }
-  friend auto operator<=>(OverflowInteger lhs, I rhs) noexcept {
+  friend std::strong_ordering operator<=>(OverflowInteger lhs, I rhs) noexcept {
     if (lhs.is_overflow()) {
       return std::strong_ordering::greater;
     } else {
@@ -298,7 +299,7 @@ class OverflowInteger {
       return lhs.v_.as_value_unchecked(::sus::marker::unsafe_fn) <=> rhs;
     }
   }
-  friend auto operator<=>(I lhs, OverflowInteger rhs) noexcept {
+  friend std::strong_ordering operator<=>(I lhs, OverflowInteger rhs) noexcept {
     if (rhs.is_overflow()) {
       return std::strong_ordering::less;
     } else {

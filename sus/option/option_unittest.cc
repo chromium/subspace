@@ -2368,10 +2368,10 @@ TEST(Option, StrongOrder) {
 }
 
 struct Weak {
-  auto operator==(const Weak& o) const& noexcept {
+  constexpr bool operator==(const Weak& o) const& noexcept {
     return a == o.a && b == o.b;
   }
-  auto operator<=>(const Weak& o) const& noexcept {
+  constexpr std::weak_ordering operator<=>(const Weak& o) const& noexcept {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
     return std::weak_ordering::greater;
@@ -2708,8 +2708,7 @@ TEST(Option, NonZeroField) {
   EXPECT_EQ(Option<T>(T(i)), Some);
 
   EXPECT_EQ(Option<T>(static_cast<const Option<T>&>(Option<T>())), None);
-  EXPECT_EQ(Option<T>(static_cast<const Option<T>&>(Option<T>(T(i)))),
-            Some);
+  EXPECT_EQ(Option<T>(static_cast<const Option<T>&>(Option<T>(T(i)))), Some);
   auto o = Option<T>();
   o = static_cast<const Option<T>&>(Option<T>(T(i)));
   EXPECT_EQ(o, Some);

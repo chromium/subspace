@@ -39,10 +39,10 @@ concept ChoiceIsEq =
     ChoiceIsEqHelper<TagType1, Types1, TagType2, Types2>::value;
 
 template <class TagType1, class Types1, class TagType2, class Types2>
-struct ChoiceIsOrdHelper;
+struct ChoiceIsStrongOrdHelper;
 
 template <class TagType1, class... Types1, class TagType2, class... Types2>
-struct ChoiceIsOrdHelper<TagType1, TypeList<Types1...>, TagType2,
+struct ChoiceIsStrongOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                          TypeList<Types2...>> {
   static constexpr bool value = (::sus::ops::StrongOrd<TagType1, TagType2> && ... &&
                                  ::sus::ops::StrongOrd<Types1, Types2>);
@@ -51,14 +51,14 @@ struct ChoiceIsOrdHelper<TagType1, TypeList<Types1...>, TagType2,
 // Out of line from the requires clause, and in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
 template <class TagType1, class Types1, class TagType2, class Types2>
-concept ChoiceIsOrd =
-    ChoiceIsOrdHelper<TagType1, Types1, TagType2, Types2>::value;
+concept ChoiceIsStrongOrd =
+    ChoiceIsStrongOrdHelper<TagType1, Types1, TagType2, Types2>::value;
 
 template <class TagType1, class Types1, class TagType2, class Types2>
-struct ChoiceIsWeakOrdHelper;
+struct ChoiceIsOrdHelper;
 
 template <class TagType1, class... Types1, class TagType2, class... Types2>
-struct ChoiceIsWeakOrdHelper<TagType1, TypeList<Types1...>, TagType2,
+struct ChoiceIsOrdHelper<TagType1, TypeList<Types1...>, TagType2,
                              TypeList<Types2...>> {
   // clang-format off
   static constexpr bool value =
@@ -73,8 +73,8 @@ struct ChoiceIsWeakOrdHelper<TagType1, TypeList<Types1...>, TagType2,
 // Out of line from the requires clause, in a struct, to work around
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108067.
 template <class TagType1, class Types1, class TagType2, class Types2>
-concept ChoiceIsWeakOrd =
-    ChoiceIsWeakOrdHelper<TagType1, Types1, TagType2, Types2>::value;
+concept ChoiceIsOrd =
+    ChoiceIsOrdHelper<TagType1, Types1, TagType2, Types2>::value;
 
 template <class TagType1, class Types1, class TagType2, class Types2>
 struct ChoiceIsPartialOrdHelper;

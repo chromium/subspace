@@ -477,10 +477,12 @@ struct Sortable {
   friend bool operator==(const Sortable& a, const Sortable& b) noexcept {
     return a.value == b.value && a.unique == b.unique;
   }
-  friend auto operator<=>(const Sortable& a, const Sortable& b) noexcept {
+  friend std::weak_ordering operator<=>(const Sortable& a,
+                                        const Sortable& b) noexcept {
     return a.value <=> b.value;
   }
 };
+static_assert(sus::ops::Ord<Sortable>);
 
 TEST(SliceMut, Sort) {
   {

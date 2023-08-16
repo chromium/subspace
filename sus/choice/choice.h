@@ -536,9 +536,10 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   ///
   /// #[doc.overloads=ord]
   template <class... Us, auto V, auto... Vs>
-    requires(__private::ChoiceIsOrd<TagsType, __private::TypeList<Ts...>,
-                                    decltype(V), __private::TypeList<Us...>>)
-  friend inline constexpr auto operator<=>(
+    requires(
+        __private::ChoiceIsStrongOrd<TagsType, __private::TypeList<Ts...>,
+                                     decltype(V), __private::TypeList<Us...>>)
+  friend inline constexpr std::strong_ordering operator<=>(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
@@ -554,10 +555,9 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
   ///
   /// #[doc.overloads=weakord]
   template <class... Us, auto V, auto... Vs>
-    requires(
-        __private::ChoiceIsWeakOrd<TagsType, __private::TypeList<Ts...>,
-                                   decltype(V), __private::TypeList<Us...>>)
-  friend inline constexpr auto operator<=>(
+    requires(__private::ChoiceIsOrd<TagsType, __private::TypeList<Ts...>,
+                                    decltype(V), __private::TypeList<Us...>>)
+  friend inline constexpr std::weak_ordering operator<=>(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);
@@ -576,7 +576,7 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     requires(
         __private::ChoiceIsPartialOrd<TagsType, __private::TypeList<Ts...>,
                                       decltype(V), __private::TypeList<Us...>>)
-  friend inline constexpr auto operator<=>(
+  friend inline constexpr std::partial_ordering operator<=>(
       const Choice& l,
       const Choice<__private::TypeList<Us...>, V, Vs...>& r) noexcept {
     check(l.index_ != kUseAfterMove && r.index_ != kUseAfterMove);

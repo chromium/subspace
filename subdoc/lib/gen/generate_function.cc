@@ -239,15 +239,17 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       auto signature_div = overload_div.open_div();
       signature_div.add_class("function-signature");
 
-      if (is_static) {
-        auto static_span = signature_div.open_span(HtmlWriter::SingleLine);
-        static_span.add_class("static");
-        static_span.write_text("static");
-      }
-      if (has_return) {
-        auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
-        auto_span.add_class("function-auto");
-        auto_span.write_text("auto");
+      if (style == StyleLong) {
+        if (is_static) {
+          auto static_span = signature_div.open_span(HtmlWriter::SingleLine);
+          static_span.add_class("static");
+          static_span.write_text("static");
+        }
+        if (has_return) {
+          auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
+          auto_span.add_class("function-auto");
+          auto_span.write_text("auto");
+        }
       }
       {
         auto name_anchor = signature_div.open_a();

@@ -424,8 +424,7 @@ TEST(Tuple, StrongOrd) {
   EXPECT_GT((Tuple<int, int>(3, 4)), (Tuple<int, int>(3, 3)));
   EXPECT_GE((Tuple<int, int>(3, 4)), (Tuple<int, int>(3, 3)));
   EXPECT_GE((Tuple<int, int>(3, 3)), (Tuple<int, int>(3, 3)));
-  EXPECT_GT((Tuple<int, int, int>(3, 4, 2)),
-            (Tuple<int, int, int>(3, 3, 3)));
+  EXPECT_GT((Tuple<int, int, int>(3, 4, 2)), (Tuple<int, int, int>(3, 3, 3)));
 
   int i[2];
   EXPECT_LT(Tuple<int*>(&i[0]), Tuple<int*>(&i[1]));
@@ -444,16 +443,15 @@ TEST(Tuple, StrongOrder) {
             std::strong_ordering::equivalent);
   EXPECT_EQ(std::strong_order(Tuple<int>(12), Tuple<int>(13)),
             std::strong_ordering::less);
-  EXPECT_EQ(std::strong_order(Tuple<int, int>(12, 13),
-                              Tuple<int, int>(12, 12)),
+  EXPECT_EQ(std::strong_order(Tuple<int, int>(12, 13), Tuple<int, int>(12, 12)),
             std::strong_ordering::greater);
 }
 
 struct Weak final {
-  auto operator==(const Weak& o) const& noexcept {
+  constexpr bool operator==(const Weak& o) const& noexcept {
     return a == o.a && b == o.b;
   }
-  auto operator<=>(const Weak& o) const& noexcept {
+  constexpr std::weak_ordering operator<=>(const Weak& o) const& noexcept {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
     return std::weak_ordering::greater;
@@ -465,14 +463,11 @@ struct Weak final {
 };
 
 TEST(Tuple, WeakOrder) {
-  EXPECT_EQ(std::weak_order(Tuple<Weak>(Weak(1, 2)),
-                            Tuple<Weak>(Weak(1, 2))),
+  EXPECT_EQ(std::weak_order(Tuple<Weak>(Weak(1, 2)), Tuple<Weak>(Weak(1, 2))),
             std::weak_ordering::equivalent);
-  EXPECT_EQ(std::weak_order(Tuple<Weak>(Weak(1, 2)),
-                            Tuple<Weak>(Weak(1, 3))),
+  EXPECT_EQ(std::weak_order(Tuple<Weak>(Weak(1, 2)), Tuple<Weak>(Weak(1, 3))),
             std::weak_ordering::equivalent);
-  EXPECT_EQ(std::weak_order(Tuple<Weak>(Weak(1, 2)),
-                            Tuple<Weak>(Weak(2, 3))),
+  EXPECT_EQ(std::weak_order(Tuple<Weak>(Weak(1, 2)), Tuple<Weak>(Weak(2, 3))),
             std::weak_ordering::less);
   EXPECT_EQ(std::weak_order(Tuple<Weak, Weak>(Weak(1, 2), Weak(1, 3)),
                             Tuple<Weak, Weak>(Weak(1, 1), Weak(1, 4))),
@@ -495,17 +490,13 @@ TEST(Tuple, PartialOrder) {
             std::partial_ordering::equivalent);
   EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(1.f)),
             std::partial_ordering::less);
-  EXPECT_EQ(
-      std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::NAN)),
-      std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Tuple<f32>(f32::NAN),
-                               Tuple<f32>(f32::NAN)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::NAN)),
             std::partial_ordering::unordered);
-  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f),
-                               Tuple<f32>(f32::INFINITY)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(f32::NAN), Tuple<f32>(f32::NAN)),
+            std::partial_ordering::unordered);
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::INFINITY)),
             std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f),
-                               Tuple<f32>(f32::NEG_INFINITY)),
+  EXPECT_EQ(std::partial_order(Tuple<f32>(0.f), Tuple<f32>(f32::NEG_INFINITY)),
             std::partial_ordering::greater);
 }
 

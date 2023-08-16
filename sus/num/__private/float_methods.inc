@@ -235,35 +235,35 @@ sus_pure constexpr inline operator U() const noexcept {
 
 /// sus::ops::Eq<T> trait for floating point numbers.
 /// #[doc.overloads=float.eq]
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
     _self l, _self r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
 /// #[doc.overloads=float.eq]
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
     _self l, Float auto r) noexcept {
   return (l.primitive_value <=> r.primitive_value) == 0;
 }
 /// #[doc.overloads=float.eq]
-[[nodiscard]] sus_pure friend constexpr inline bool operator==(
+[[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
     _self l, PrimitiveFloat auto r) noexcept {
   return (l.primitive_value <=> r) == 0;
 }
 
 /// sus::ops::PartialOrd<T> trait for floating point numbers.
 /// #[doc.overloads=float.partialord]
-[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
-    _self l, _self r) noexcept {
+[[nodiscard]] sus_pure_const friend constexpr inline std::partial_ordering
+operator<=>(_self l, _self r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /// #[doc.overloads=float.partialord]
-[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
-    _self l, Float auto r) noexcept {
+[[nodiscard]] sus_pure_const friend constexpr inline std::partial_ordering
+operator<=>(_self l, Float auto r) noexcept {
   return l.primitive_value <=> r.primitive_value;
 }
 /// #[doc.overloads=float.partialord]
-[[nodiscard]] sus_pure friend constexpr inline auto operator<=>(
-    _self l, PrimitiveFloat auto r) noexcept {
+[[nodiscard]] sus_pure_const friend constexpr inline std::partial_ordering
+operator<=>(_self l, PrimitiveFloat auto r) noexcept {
   return l.primitive_value <=> r;
 }
 

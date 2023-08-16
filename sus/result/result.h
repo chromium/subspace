@@ -651,8 +651,8 @@ class [[nodiscard]] Result final {
     switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
       case ResultState::IsOk: storage_.destroy_ok(); return Option<E>();
       case ResultState::IsErr:
-        return Option<E>(::sus::mem::take_and_destruct(
-            ::sus::marker::unsafe_fn, storage_.err_));
+        return Option<E>(::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                                       storage_.err_));
       case ResultState::IsMoved: break;
     }
     // SAFETY: The state_ is verified to be Ok or Err at the top of the
@@ -927,7 +927,8 @@ class [[nodiscard]] Result final {
   /// Option for comparison.
   //
   // sus::ops::StrongOrd<Result<T, E>> trait.
-  friend constexpr auto operator<=>(const Result& l, const Result& r) noexcept
+  friend constexpr std::strong_ordering operator<=>(const Result& l,
+                                                    const Result& r) noexcept
     requires(VoidOrOrd<T> && ::sus::ops::StrongOrd<E>)
   {
     ::sus::check(l.state_ != ResultState::IsMoved);
@@ -952,8 +953,8 @@ class [[nodiscard]] Result final {
   }
   template <class U, class F>
     requires(VoidOrOrd<T, U> && ::sus::ops::StrongOrd<E, F>)
-  friend constexpr auto operator<=>(const Result& l,
-                                    const Result<U, F>& r) noexcept {
+  friend constexpr std::strong_ordering operator<=>(
+      const Result& l, const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
     switch (l.state_) {
       case ResultState::IsOk:
@@ -976,7 +977,8 @@ class [[nodiscard]] Result final {
   }
 
   // sus::ops::Ord<Result<T, E>> trait.
-  friend constexpr auto operator<=>(const Result& l, const Result& r) noexcept
+  friend constexpr std::weak_ordering operator<=>(const Result& l,
+                                                  const Result& r) noexcept
     requires((!VoidOrOrd<T> || !::sus::ops::StrongOrd<E>) && VoidOrWeakOrd<T> &&
              ::sus::ops::Ord<E>)
   {
@@ -1003,8 +1005,8 @@ class [[nodiscard]] Result final {
   template <class U, class F>
     requires((!VoidOrOrd<T, U> || !::sus::ops::StrongOrd<E, F>) &&
              VoidOrWeakOrd<T, U> && ::sus::ops::Ord<E, F>)
-  friend constexpr auto operator<=>(const Result& l,
-                                    const Result<U, F>& r) noexcept {
+  friend constexpr std::weak_ordering operator<=>(
+      const Result& l, const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
     switch (l.state_) {
       case ResultState::IsOk:
@@ -1027,7 +1029,8 @@ class [[nodiscard]] Result final {
   }
 
   // sus::ops::PartialOrd<Result<T, E>> trait.
-  friend constexpr auto operator<=>(const Result& l, const Result& r) noexcept
+  friend constexpr std::partial_ordering operator<=>(const Result& l,
+                                                     const Result& r) noexcept
     requires((!VoidOrWeakOrd<T> || !::sus::ops::Ord<E>) &&
              VoidOrPartialOrd<T> && ::sus::ops::PartialOrd<E>)
   {
@@ -1054,8 +1057,8 @@ class [[nodiscard]] Result final {
   template <class U, class F>
     requires((!VoidOrWeakOrd<T, U> || !::sus::ops::Ord<E, F>) &&
              VoidOrPartialOrd<T, U> && ::sus::ops::PartialOrd<E, F>)
-  friend constexpr auto operator<=>(const Result& l,
-                                    const Result<U, F>& r) noexcept {
+  friend constexpr std::partial_ordering operator<=>(
+      const Result& l, const Result<U, F>& r) noexcept {
     ::sus::check(l.state_ != ResultState::IsMoved);
     switch (l.state_) {
       case ResultState::IsOk:

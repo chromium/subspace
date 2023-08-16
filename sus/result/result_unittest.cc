@@ -28,8 +28,8 @@
 #include "sus/test/behaviour_types.h"
 #include "sus/test/no_copy_move.h"
 
-using sus::result::Result;
 using sus::result::OkVoid;
+using sus::result::Result;
 using namespace sus::test;
 
 namespace sus::test::result {
@@ -577,13 +577,13 @@ TEST(Result, UnwrapOrDefault) {
     // Returns void, doesn't panic.
     Result<void, Error>(OkVoid()).unwrap_or_default();
     static_assert(
-        std::same_as<decltype(Result<void, Error>(OkVoid()).unwrap_or_default()),
-                     void>);
+        std::same_as<
+            decltype(Result<void, Error>(OkVoid()).unwrap_or_default()), void>);
     // Returns void, doesn't panic.
     Result<void, Error>::with_err(Error()).unwrap_or_default();
     static_assert(
-        std::same_as<decltype(Result<void, Error>(OkVoid()).unwrap_or_default()),
-                     void>);
+        std::same_as<
+            decltype(Result<void, Error>(OkVoid()).unwrap_or_default()), void>);
   }
 }
 
@@ -600,8 +600,7 @@ TEST(Result, UnwrapUnchecked) {
                    void>);
 
   auto m = NoCopyMove();
-  decltype(auto) u =
-      Result<NoCopyMove&, Error>(m).unwrap_unchecked(unsafe_fn);
+  decltype(auto) u = Result<NoCopyMove&, Error>(m).unwrap_unchecked(unsafe_fn);
   static_assert(std::same_as<decltype(u), NoCopyMove&>);
   EXPECT_EQ(&u, &m);
 
@@ -689,8 +688,8 @@ TEST(ResultDeathTest, UnwrapErrWithOk) {
 }
 
 TEST(Result, UnwrapOrElse) {
-  constexpr auto a = Result<i32, Error>(3_i32).unwrap_or_else(
-      [](Error) { return 4_i32; });
+  constexpr auto a =
+      Result<i32, Error>(3_i32).unwrap_or_else([](Error) { return 4_i32; });
   static_assert(std::same_as<decltype(a), const i32>);
   EXPECT_EQ(a, 3_i32);
 
@@ -814,8 +813,7 @@ TEST(Result, Copy) {
     EXPECT_EQ(zz.as_err(), 2);
   }
   {
-    auto z =
-        Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
+    auto z = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
     auto zz = z;
     EXPECT_EQ(&z.as_value(), &m);
     EXPECT_EQ(&zz.as_value(), &m);
@@ -842,8 +840,7 @@ TEST(Result, Copy) {
     EXPECT_EQ(&zz.as_value(), &m);
   }
   {
-    auto z =
-        Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
+    auto z = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
     auto zz = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>::
         with_err(NotTriviallyRelocatableCopyableOrMoveable(2));
     z = zz;
@@ -851,8 +848,7 @@ TEST(Result, Copy) {
     EXPECT_EQ(zz.as_err().i, 2);
   }
   {
-    auto z =
-        Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
+    auto z = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
     auto zz = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>::
         with_err(NotTriviallyRelocatableCopyableOrMoveable(2));
     zz = z;
@@ -965,8 +961,7 @@ TEST(Result, Move) {
   }
   {
     auto m = NoCopyMove();
-    auto z =
-        Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
+    auto z = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
     auto zz = sus::move(z);
     EXPECT_EQ(&zz.as_value(), &m);
     z = sus::move(zz);
@@ -988,8 +983,7 @@ TEST(Result, Move) {
   }
   {
     auto m = NoCopyMove();
-    auto z =
-        Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
+    auto z = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
     auto zz = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>::
         with_err(NotTriviallyRelocatableCopyableOrMoveable(2));
     z = sus::move(zz);
@@ -997,8 +991,7 @@ TEST(Result, Move) {
   }
   {
     auto m = NoCopyMove();
-    auto z =
-        Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
+    auto z = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>(m);
     auto zz = Result<NoCopyMove&, NotTriviallyRelocatableCopyableOrMoveable>::
         with_err(NotTriviallyRelocatableCopyableOrMoveable(2));
     zz = sus::move(z);
@@ -1512,37 +1505,34 @@ TEST(Result, FromIter) {
     TwoError,
   };
 
-  auto no_errors =
-      sus::Array<Result<usize, Error>, 5>(
-          Result<usize, Error>(1u), Result<usize, Error>(2u),
-          Result<usize, Error>(3u), Result<usize, Error>(4u),
-          Result<usize, Error>(5u))
-          .into_iter();
+  auto no_errors = sus::Array<Result<usize, Error>, 5>(
+                       Result<usize, Error>(1u), Result<usize, Error>(2u),
+                       Result<usize, Error>(3u), Result<usize, Error>(4u),
+                       Result<usize, Error>(5u))
+                       .into_iter();
 
   auto no_errors_out =
       sus::move(no_errors).collect<Result<CollectSum<usize>, Error>>();
   EXPECT_EQ(no_errors_out, sus::Ok);
   EXPECT_EQ(sus::move(no_errors_out).unwrap().sum, 1u + 2u + 3u + 4u + 5u);
 
-  auto with_error =
-      sus::Array<Result<usize, Error>, 5>(
-          Result<usize, Error>(1u), Result<usize, Error>(2u),
-          Result<usize, Error>::with_err(Error::OneError),
-          Result<usize, Error>(4u), Result<usize, Error>(5u))
-          .into_iter();
+  auto with_error = sus::Array<Result<usize, Error>, 5>(
+                        Result<usize, Error>(1u), Result<usize, Error>(2u),
+                        Result<usize, Error>::with_err(Error::OneError),
+                        Result<usize, Error>(4u), Result<usize, Error>(5u))
+                        .into_iter();
 
   auto with_error_out =
       sus::move(with_error).collect<Result<CollectSum<usize>, Error>>();
   EXPECT_EQ(with_error_out, sus::Err);
   EXPECT_EQ(sus::move(with_error_out).unwrap_err(), Error::OneError);
 
-  auto with_errors =
-      sus::Array<Result<usize, Error>, 5>(
-          Result<usize, Error>(1u), Result<usize, Error>(2u),
-          Result<usize, Error>::with_err(Error::OneError),
-          Result<usize, Error>(4u),
-          Result<usize, Error>::with_err(Error::TwoError))
-          .into_iter();
+  auto with_errors = sus::Array<Result<usize, Error>, 5>(
+                         Result<usize, Error>(1u), Result<usize, Error>(2u),
+                         Result<usize, Error>::with_err(Error::OneError),
+                         Result<usize, Error>(4u),
+                         Result<usize, Error>::with_err(Error::TwoError))
+                         .into_iter();
 
   auto with_errors_out =
       sus::move(with_errors).collect<Result<CollectSum<usize>, Error>>();
@@ -1729,8 +1719,7 @@ TEST(Result, Eq) {
   EXPECT_EQ((Result<f32, i32>(1.f)), (Result<f32, i32>(1.f)));
   EXPECT_EQ((Result<f32, i32>(0.f)), (Result<f32, i32>(-0.f)));
 
-  EXPECT_NE((Result<f32, i32>(f32::NAN)),
-            (Result<f32, i32>(f32::NAN)));
+  EXPECT_NE((Result<f32, i32>(f32::NAN)), (Result<f32, i32>(f32::NAN)));
   EXPECT_EQ((Result<i32, f32>::with_err(1.f)),
             (Result<i32, f32>::with_err(1.f)));
   EXPECT_EQ((Result<i32, f32>::with_err(0.f)),
@@ -1746,10 +1735,8 @@ TEST(Result, Eq) {
 
   auto m = NoCopyMove();
   auto m2 = NoCopyMove();
-  EXPECT_EQ((Result<NoCopyMove&, i32>(m)),
-            (Result<NoCopyMove&, i32>(m)));
-  EXPECT_NE((Result<NoCopyMove&, i32>(m)),
-            (Result<NoCopyMove&, i32>(m2)));
+  EXPECT_EQ((Result<NoCopyMove&, i32>(m)), (Result<NoCopyMove&, i32>(m)));
+  EXPECT_NE((Result<NoCopyMove&, i32>(m)), (Result<NoCopyMove&, i32>(m2)));
   EXPECT_EQ((Result<NoCopyMove&, i32>::with_err(1)),
             (Result<NoCopyMove&, i32>::with_err(1)));
   EXPECT_NE((Result<NoCopyMove&, i32>::with_err(1)),
@@ -1768,10 +1755,8 @@ TEST(Result, StrongOrd) {
   static_assert(Result<i32, i32>::with_err(1) < Result<i32, i32>(2));
 
   NoCopyMove m[2];
-  EXPECT_LE((Result<NoCopyMove&, i32>(m[0])),
-            (Result<NoCopyMove&, i32>(m[0])));
-  EXPECT_LT((Result<NoCopyMove&, i32>(m[0])),
-            (Result<NoCopyMove&, i32>(m[1])));
+  EXPECT_LE((Result<NoCopyMove&, i32>(m[0])), (Result<NoCopyMove&, i32>(m[0])));
+  EXPECT_LT((Result<NoCopyMove&, i32>(m[0])), (Result<NoCopyMove&, i32>(m[1])));
   EXPECT_LE((Result<NoCopyMove&, i32>::with_err(1)),
             (Result<NoCopyMove&, i32>::with_err(1)));
   EXPECT_LT((Result<NoCopyMove&, i32>::with_err(1)),
@@ -1779,14 +1764,11 @@ TEST(Result, StrongOrd) {
 }
 
 TEST(Result, StrongOrder) {
-  static_assert(std::strong_order(Result<i32, i32>(12),
-                                  Result<i32, i32>(12)) ==
+  static_assert(std::strong_order(Result<i32, i32>(12), Result<i32, i32>(12)) ==
                 std::strong_ordering::equal);
-  static_assert(std::strong_order(Result<i32, i32>(12),
-                                  Result<i32, i32>(13)) ==
+  static_assert(std::strong_order(Result<i32, i32>(12), Result<i32, i32>(13)) ==
                 std::strong_ordering::less);
-  static_assert(std::strong_order(Result<i32, i32>(12),
-                                  Result<i32, i32>(11)) ==
+  static_assert(std::strong_order(Result<i32, i32>(12), Result<i32, i32>(11)) ==
                 std::strong_ordering::greater);
 
   static_assert(std::strong_order(Result<i32, i32>::with_err(12),
@@ -1799,12 +1781,12 @@ TEST(Result, StrongOrder) {
                                   Result<i32, i32>::with_err(11)) ==
                 std::strong_ordering::greater);
 
-  static_assert(std::strong_order(Result<i32, i32>(12),
-                                  Result<i32, i32>::with_err(12)) ==
-                std::strong_ordering::greater);
-  static_assert(std::strong_order(Result<i32, i32>::with_err(12),
-                                  Result<i32, i32>(12)) ==
-                std::strong_ordering::less);
+  static_assert(
+      std::strong_order(Result<i32, i32>(12), Result<i32, i32>::with_err(12)) ==
+      std::strong_ordering::greater);
+  static_assert(
+      std::strong_order(Result<i32, i32>::with_err(12), Result<i32, i32>(12)) ==
+      std::strong_ordering::less);
 
   auto m = NoCopyMove();
   static_assert(std::strong_order(Result<NoCopyMove&, i32>(m),
@@ -1816,10 +1798,10 @@ TEST(Result, StrongOrder) {
 }
 
 struct Weak {
-  constexpr auto operator==(const Weak& o) const& noexcept {
+  constexpr bool operator==(const Weak& o) const& noexcept {
     return a == o.a && b == o.b;
   }
-  constexpr auto operator<=>(const Weak& o) const& noexcept {
+  constexpr std::weak_ordering operator<=>(const Weak& o) const& noexcept {
     if (a == o.a) return std::weak_ordering::equivalent;
     if (a < o.a) return std::weak_ordering::less;
     return std::weak_ordering::greater;
@@ -1866,18 +1848,18 @@ TEST(Result, PartialOrder) {
   static_assert(::sus::ops::PartialOrd<Result<i8, f32>>);
   static_assert(::sus::ops::PartialOrd<Result<f32, f32>>);
 
-  static_assert(std::partial_order(Result<f32, i8>(0.0f),
-                                   Result<f32, i8>(-0.0f)) ==
-                std::partial_ordering::equivalent);
-  static_assert(std::partial_order(Result<f32, i8>(1.0f),
-                                   Result<f32, i8>(-0.0f)) ==
-                std::partial_ordering::greater);
-  static_assert(std::partial_order(Result<f32, i8>(0.0f),
-                                   Result<f32, i8>(1.0f)) ==
-                std::partial_ordering::less);
-  EXPECT_EQ(std::partial_order(Result<f32, i8>(f32::NAN),
-                               Result<f32, i8>(f32::NAN)),
-            std::partial_ordering::unordered);
+  static_assert(
+      std::partial_order(Result<f32, i8>(0.0f), Result<f32, i8>(-0.0f)) ==
+      std::partial_ordering::equivalent);
+  static_assert(
+      std::partial_order(Result<f32, i8>(1.0f), Result<f32, i8>(-0.0f)) ==
+      std::partial_ordering::greater);
+  static_assert(
+      std::partial_order(Result<f32, i8>(0.0f), Result<f32, i8>(1.0f)) ==
+      std::partial_ordering::less);
+  EXPECT_EQ(
+      std::partial_order(Result<f32, i8>(f32::NAN), Result<f32, i8>(f32::NAN)),
+      std::partial_ordering::unordered);
 }
 
 TEST(Result, NoOrder) {
@@ -1904,9 +1886,8 @@ TEST(Result, fmt) {
             "Err(4321)");
   EXPECT_EQ(fmt::format("{:06}", sus::Result<i32, i32>::with_err(4321)),
             "Err(4321)");  // The format string is for the Ok value.
-  EXPECT_EQ(
-      fmt::format("{}", sus::Result<std::string_view, i32>("12345")),
-      "Ok(12345)");
+  EXPECT_EQ(fmt::format("{}", sus::Result<std::string_view, i32>("12345")),
+            "Ok(12345)");
   EXPECT_EQ(
       fmt::format("{}", sus::Result<i32, std::string_view>::with_err("4321")),
       "Err(4321)");
@@ -1919,8 +1900,7 @@ TEST(Result, fmt) {
   static_assert(fmt::is_formattable<Result<i32, NoFormat>, char>::value);
   static_assert(fmt::is_formattable<Result<NoFormat, NoFormat>, char>::value);
 
-  EXPECT_EQ(fmt::format("{}", sus::Result<i32, NoFormat>(12345)),
-            "Ok(12345)");
+  EXPECT_EQ(fmt::format("{}", sus::Result<i32, NoFormat>(12345)), "Ok(12345)");
   EXPECT_EQ(fmt::format("{}", sus::Result<i32, NoFormat>::with_err(NoFormat())),
             "Err(f2-3c-ae-16)");
   EXPECT_EQ(fmt::format("{}", sus::Result<NoFormat, i32>(NoFormat())),
@@ -1941,8 +1921,7 @@ TEST(Result, Stream) {
 }
 
 TEST(Result, GTest) {
-  EXPECT_EQ(testing::PrintToString(sus::Result<i32, i32>(12345)),
-            "Ok(12345)");
+  EXPECT_EQ(testing::PrintToString(sus::Result<i32, i32>(12345)), "Ok(12345)");
 }
 
 TEST(Result, FromProduct) {
@@ -1951,16 +1930,15 @@ TEST(Result, FromProduct) {
 
   // With a None.
   {
-    auto a = sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::err(ERROR),
-                                                 sus::ok(4));
+    auto a =
+        sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::err(ERROR), sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
     EXPECT_EQ(o.as_err(), ERROR);
   }
   // Without a None.
   {
-    auto a =
-        sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::ok(3), sus::ok(4));
+    auto a = sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::ok(3), sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().product();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
     EXPECT_EQ(o.as_value(), 2 * 3 * 4);
@@ -1973,16 +1951,15 @@ TEST(Result, FromSum) {
 
   // With a None.
   {
-    auto a = sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::err(ERROR),
-                                                 sus::ok(4));
+    auto a =
+        sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::err(ERROR), sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
     EXPECT_EQ(o.as_err(), ERROR);
   }
   // Without a None.
   {
-    auto a =
-        sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::ok(3), sus::ok(4));
+    auto a = sus::Array<Result<i32, E>, 3>(sus::ok(2), sus::ok(3), sus::ok(4));
     decltype(auto) o = sus::move(a).into_iter().sum();
     static_assert(std::same_as<decltype(o), sus::Result<i32, E>>);
     EXPECT_EQ(o.as_value(), 2 + 3 + 4);

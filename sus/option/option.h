@@ -1293,8 +1293,8 @@ class Option final {
   /// Option for comparison.
   //
   // sus::ops::StrongOrd<Option<U>> trait.
-  friend constexpr inline auto operator<=>(const Option& l,
-                                           const Option& r) noexcept
+  friend constexpr inline std::strong_ordering operator<=>(
+      const Option& l, const Option& r) noexcept
     requires(::sus::ops::ExclusiveStrongOrd<T>)
   {
     switch (l) {
@@ -1315,8 +1315,8 @@ class Option final {
   }
   template <class U>
     requires(::sus::ops::ExclusiveStrongOrd<T, U>)
-  friend constexpr inline auto operator<=>(const Option<T>& l,
-                                           const Option<U>& r) noexcept {
+  friend constexpr inline std::strong_ordering operator<=>(
+      const Option<T>& l, const Option<U>& r) noexcept {
     switch (l) {
       case Some:
         if (r.is_some()) {
@@ -1335,8 +1335,8 @@ class Option final {
   }
 
   // sus::ops::Ord<Option<U>> trait.
-  friend constexpr inline auto operator<=>(const Option& l,
-                                           const Option& r) noexcept
+  friend constexpr inline std::weak_ordering operator<=>(
+      const Option& l, const Option& r) noexcept
     requires(::sus::ops::ExclusiveOrd<T>)
   {
     switch (l) {
@@ -1357,8 +1357,8 @@ class Option final {
   }
   template <class U>
     requires(::sus::ops::ExclusiveOrd<T, U>)
-  friend constexpr inline auto operator<=>(const Option<T>& l,
-                                           const Option<U>& r) noexcept {
+  friend constexpr inline std::weak_ordering operator<=>(
+      const Option<T>& l, const Option<U>& r) noexcept {
     switch (l) {
       case Some:
         if (r.is_some()) {
@@ -1379,8 +1379,8 @@ class Option final {
   // sus::ops::PartialOrd<Option<U>> trait.
   template <class U>
     requires(::sus::ops::ExclusivePartialOrd<T, U>)
-  friend constexpr inline auto operator<=>(const Option<T>& l,
-                                           const Option<U>& r) noexcept {
+  friend constexpr inline std::partial_ordering operator<=>(
+      const Option<T>& l, const Option<U>& r) noexcept {
     switch (l) {
       case Some:
         if (r.is_some()) {
@@ -1397,8 +1397,8 @@ class Option final {
     }
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
-  friend constexpr inline auto operator<=>(const Option& l,
-                                           const Option& r) noexcept
+  friend constexpr inline std::partial_ordering operator<=>(
+      const Option& l, const Option& r) noexcept
     requires(::sus::ops::ExclusivePartialOrd<T>)
   {
     switch (l) {

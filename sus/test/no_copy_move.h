@@ -30,8 +30,8 @@ struct NoCopyMove {
                                    const NoCopyMove& rhs) noexcept {
     return &lhs == &rhs;
   }
-  friend constexpr auto operator<=>(const NoCopyMove& lhs,
-                                    const NoCopyMove& rhs) noexcept {
+  friend constexpr std::strong_ordering operator<=>(
+      const NoCopyMove& lhs, const NoCopyMove& rhs) noexcept {
     return &lhs <=> &rhs;
   }
 };

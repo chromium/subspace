@@ -495,24 +495,24 @@ constexpr inline auto array_cmp(sus::ops::Ordering auto equal, const auto& l,
 /// #[doc.overloads=array.cmp.array]
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusiveStrongOrd<T, U>)
-constexpr inline auto operator<=>(const Array<T, N>& l,
-                                  const Array<U, N>& r) noexcept {
+constexpr inline std::strong_ordering operator<=>(
+    const Array<T, N>& l, const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::strong_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
 }
 /// #[doc.overloads=array.cmp.array]
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusiveOrd<T, U>)
-constexpr inline auto operator<=>(const Array<T, N>& l,
-                                  const Array<U, N>& r) noexcept {
+constexpr inline std::weak_ordering operator<=>(const Array<T, N>& l,
+                                                const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::weak_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
 }
 /// #[doc.overloads=array.cmp.array]
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusivePartialOrd<T, U>)
-constexpr inline auto operator<=>(const Array<T, N>& l,
-                                  const Array<U, N>& r) noexcept {
+constexpr inline std::partial_ordering operator<=>(
+    const Array<T, N>& l, const Array<U, N>& r) noexcept {
   return __private::array_cmp(std::partial_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
 }
@@ -529,8 +529,8 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
 /// #[doc.overloads=array.cmp.slice]
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusiveStrongOrd<T, U>)
-constexpr inline auto operator<=>(const Array<T, N>& l,
-                                  const Slice<U>& r) noexcept {
+constexpr inline std::strong_ordering operator<=>(const Array<T, N>& l,
+                                                  const Slice<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
   return __private::array_cmp(std::strong_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
@@ -538,8 +538,8 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
 /// #[doc.overloads=array.cmp.slice]
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusiveOrd<T, U>)
-constexpr inline auto operator<=>(const Array<T, N>& l,
-                                  const Slice<U>& r) noexcept {
+constexpr inline std::weak_ordering operator<=>(const Array<T, N>& l,
+                                                const Slice<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
   return __private::array_cmp(std::weak_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
@@ -547,8 +547,8 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
 /// #[doc.overloads=array.cmp.slice]
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusivePartialOrd<T, U>)
-constexpr inline auto operator<=>(const Array<T, N>& l,
-                                  const Slice<U>& r) noexcept {
+constexpr inline std::partial_ordering operator<=>(const Array<T, N>& l,
+                                                   const Slice<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
   return __private::array_cmp(std::partial_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
@@ -566,8 +566,8 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
 /// #[doc.overloads=array.cmp.slicemut]
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusiveStrongOrd<T, U>)
-constexpr inline auto operator<=>(const Array<T, N>& l,
-                                  const SliceMut<U>& r) noexcept {
+constexpr inline std::strong_ordering operator<=>(
+    const Array<T, N>& l, const SliceMut<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
   return __private::array_cmp(std::strong_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
@@ -575,8 +575,8 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
 /// #[doc.overloads=array.cmp.slicemut]
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusiveOrd<T, U>)
-constexpr inline auto operator<=>(const Array<T, N>& l,
-                                  const SliceMut<U>& r) noexcept {
+constexpr inline std::weak_ordering operator<=>(const Array<T, N>& l,
+                                                const SliceMut<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
   return __private::array_cmp(std::weak_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
@@ -584,8 +584,8 @@ constexpr inline auto operator<=>(const Array<T, N>& l,
 /// #[doc.overloads=array.cmp.slicemut]
 template <class T, class U, size_t N>
   requires(::sus::ops::ExclusivePartialOrd<T, U>)
-constexpr inline auto operator<=>(const Array<T, N>& l,
-                                  const SliceMut<U>& r) noexcept {
+constexpr inline std::partial_ordering operator<=>(
+    const Array<T, N>& l, const SliceMut<U>& r) noexcept {
   if (r.len() != N) return r.len() <=> N;
   return __private::array_cmp(std::partial_ordering::equivalent, l, r,
                               std::make_index_sequence<N>());
