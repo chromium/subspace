@@ -42,6 +42,8 @@ target_sources(subdoc_lib PUBLIC
     "lib/run_options.h"
     "lib/run.cc"
     "lib/run.h"
+    "lib/stmt_to_string.cc"
+    "lib/stmt_to_string.h"
     "lib/type.h"
     "lib/unique_symbol.h"
     "lib/visit.cc"
