@@ -26,6 +26,8 @@ target_sources(subdoc_lib PUBLIC
     "lib/gen/generate_namespace.h"
     "lib/gen/generate_record.cc"
     "lib/gen/generate_record.h"
+    "lib/gen/generate_requires.cc"
+    "lib/gen/generate_requires.h"
     "lib/gen/generate.cc"
     "lib/gen/generate.h"
     "lib/gen/html_writer.h"

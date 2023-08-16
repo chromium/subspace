@@ -165,16 +165,16 @@ a.namespace-name:hover {
     text-decoration: underline;
 }
 
-.overload :is(.requires, .deleted, .virtual) {
+:is(.type-signature, .overload) :is(.requires, .deleted, .virtual) {
     margin-left: 1.5rem;
 }
-.overload .requires .requires-keyword {
+:is(.type-signature, .overload) .requires .requires-keyword {
     color: rgb(84, 194, 238)
 }
-.overload .requires .requires-paren {
+:is(.type-signature, .overload) .requires .requires-paren {
     color: rgb(180, 180, 180)
 }
-.overload .requires .requires-constaint {
+:is(.type-signature, .overload) .requires .requires-constaint {
     margin-left: 1.5rem;
     color: rgb(87, 218, 218)
 }

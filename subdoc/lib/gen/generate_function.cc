@@ -20,6 +20,7 @@
 #include "subdoc/lib/gen/files.h"
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_head.h"
+#include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
 #include "sus/prelude.h"
@@ -170,39 +171,6 @@ void generate_function_params(HtmlWriter::OpenDiv& div,
   }
 }
 
-void generate_function_requires(HtmlWriter::OpenDiv& div,
-                                const FunctionOverload& overload) {
-  if (overload.constraints.is_some() &&
-      !overload.constraints->list.is_empty()) {
-    auto requires_div = div.open_div();
-    requires_div.add_class("requires");
-    {
-      auto keyword_div = requires_div.open_span(HtmlWriter::SingleLine);
-      keyword_div.add_class("requires-keyword");
-      keyword_div.add_class("keyword");
-      keyword_div.write_text("requires");
-    }
-    for (const RequiresConstraint& constraint : overload.constraints->list) {
-      auto clause_div = requires_div.open_div(HtmlWriter::SingleLine);
-      clause_div.add_class("requires-constaint");
-      switch (constraint) {
-        using enum RequiresConstraint::Tag;
-        case Concept:
-          clause_div.write_text(constraint.as<Concept>().concept_name);
-          clause_div.write_text("<");
-          for (const auto& [i, s] :
-               constraint.as<Concept>().args.iter().enumerate()) {
-            if (i > 0u) clause_div.write_text(", ");
-            clause_div.write_text(s);
-          }
-          clause_div.write_text(">");
-          break;
-        case Text: clause_div.write_text(constraint.as<Text>()); break;
-      }
-    }
-  }
-}
-
 void generate_function_extras(HtmlWriter::OpenDiv& div,
                               const FunctionOverload& overload) noexcept {
   if (overload.is_deleted) {
@@ -293,7 +261,10 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
     }
 
     if (style == StyleLong) {
-      generate_function_requires(overload_div, overload);
+      if (overload.constraints.is_some()) {
+        generate_requires_constraints(overload_div,
+                                      overload.constraints.as_value());
+      }
       generate_function_extras(overload_div, overload);
     }
 
@@ -409,7 +380,10 @@ void generate_function(const FunctionElement& element,
         generate_return_type(signature_div, overload);
       }
 
-      generate_function_requires(overload_div, overload);
+      if (overload.constraints.is_some()) {
+        generate_requires_constraints(overload_div,
+                                      overload.constraints.as_value());
+      }
       generate_function_extras(overload_div, overload);
     }
   }

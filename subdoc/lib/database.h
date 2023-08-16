@@ -270,16 +270,25 @@ struct RecordElement : public TypeElement {
   explicit RecordElement(sus::Vec<Namespace> containing_namespaces,
                          Comment comment, std::string name,
                          sus::Vec<std::string> record_path,
-                         RecordType record_type, u32 sort_key)
+                         RecordType record_type,
+                         sus::Option<RequiresConstraints> constraints,
+                         sus::Vec<std::string> template_params, bool final,
+                         u32 sort_key)
       : TypeElement(sus::move(containing_namespaces), sus::move(comment),
                     sus::move(name), sus::move(record_path), sort_key),
-        record_type(record_type) {}
+        record_type(record_type),
+        constraints(sus::move(constraints)),
+        template_params(sus::move(template_params)),
+        final(final) {}
 
   // TODO: Template parameters and requires clause.
 
   // TODO: Link to all base classes.
 
   RecordType record_type;
+  sus::Option<RequiresConstraints> constraints;
+  sus::Vec<std::string> template_params;
+  bool final;
 
   std::unordered_map<RecordId, RecordElement, RecordId::Hash> records;
   std::unordered_map<UniqueSymbol, FieldElement> fields;

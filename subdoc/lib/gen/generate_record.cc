@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_namespace.h"
+#include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
 #include "sus/assertions/unreachable.h"
@@ -103,17 +104,32 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
   {
     auto type_sig_div = section_div.open_div();
     type_sig_div.add_class("type-signature");
+    if (!element.template_params.is_empty()) {
+      auto template_div = type_sig_div.open_div(HtmlWriter::SingleLine);
+      template_div.add_class("template");
+      template_div.write_text("template <");
+      for (const auto& [i, s] : element.template_params.iter().enumerate()) {
+        if (i > 0u) template_div.write_text(", ");
+        template_div.write_text(s);
+      }
+      template_div.write_text(">");
+    }
     {
       auto record_type_span = type_sig_div.open_span();
       std::string record_type_name =
           friendly_record_type_name(element.record_type, false);
       record_type_span.add_class(record_type_name);
       record_type_span.write_text(record_type_name);
+      {
+        auto name_span = type_sig_div.open_span();
+        name_span.add_class("type-name");
+        name_span.write_text(element.name);
+      }
+      if (element.final) record_type_span.write_text("final");
     }
-    {
-      auto name_span = type_sig_div.open_span();
-      name_span.add_class("type-name");
-      name_span.write_text(element.name);
+    if (element.constraints.is_some()) {
+      generate_requires_constraints(type_sig_div,
+                                    element.constraints.as_value());
     }
     {
       auto record_body_div = type_sig_div.open_div();
