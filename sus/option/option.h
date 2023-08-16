@@ -80,25 +80,33 @@ namespace sus {
 /// [`some()`](sus-option-fn.some.html) and [`none()`](sus-option-fn.none.html)
 /// type deduction constructor functions.
 ///
-/// The `Option` type represents an optional value: every Option is either Some
-/// and contains a value, or None, and does not. It is similar to
+/// The [`Option`](sus-option-Option.html) type represents an optional value:
+/// every [`Option`](sus-option-Option.html) is either Some and contains a
+/// value, or None, and does not. It is similar to
 /// [`std::optional`]( https://en.cppreference.com/w/cpp/utility/optional) but
 /// with some differences:
-/// * Extensive vocabulary for combining Options together.
-/// * Safe defined behaviour (a panic) when unwrapping an empty Option, with an
+/// * Extensive vocabulary for combining [`Option`](sus-option-Option.html)s
+///   together.
+/// * Safe defined behaviour (a panic) when unwrapping an empty
+///   [`Option`](sus-option-Option.html), with an
 ///   explicit unsafe backdoor (`unwrap_unchecked()`) for when it is needed.
-/// * Avoid accidental expensive copies. Supports `Copy` if the inner type is
-///   `Copy` and `Clone` if the inner type is `Clone`.
-/// * Provides `take()` to move a value out of an lvalue Option, which mark the
-///   lvalue as empty instead of leaving a moved-from value behind as with
-///   `std::move(optional).value()`.
-/// * A custom message can be printed when trying to unwrap an empty Option.
-/// * Subspace [Iterator](sus-iter.html) integration. Option can be iterated
-/// over,
-///   acting like a single-element [collection](sus-collections.html), which
-///   allows it to be chained together with other iterators, filtered, etc.
+/// * Avoid accidental expensive copies. Supports [`Copy`](sus-mem-Copy.html) if
+/// the inner type is
+///   [`Copy`](sus-mem-Copy.html) and [`Clone`](sus-mem-Clone.html) if the inner
+///   type is [`Clone`](sus-mem-Clone.html).
+/// * Provides [`take()`](sus-option-Option.html#method.take) to move a value
+///   out of an lvalue Option, which mark the lvalue as empty instead of leaving
+///   a moved-from value behind as with `std::move(optional).value()`.
+/// * A custom message can be printed when trying to unwrap an empty
+///   [`Option`](sus-option-Option.html).
+/// * Subspace [Iterator](sus-iter.html) integration.
+///   [`Option`](sus-option-Option.html) can be iterated
+///   over, acting like a single-element [collection](sus-collections.html),
+///   which allows it to be chained together with other iterators, filtered,
+///   etc.
 ///
-/// `Option` types are very common, as they have a number of uses:
+/// [`Option`](sus-option-Option.html) types are very common, as they have a
+/// number of uses:
 ///
 /// * Initial values
 /// * Return values for functions that are not defined over their entire input
@@ -111,12 +119,15 @@ namespace sus {
 /// * Returning an optional reference to a member
 ///
 /// # Quick start
-/// When the type is known to the compiler, you can construct an Option from a
-/// value without writing the full type again, by using
-/// [`sus::some(x)`](sus-option-fn.some.html) to make an `Option` holding `x` or
-/// [`sus::none()`](sus-option-fn.none.html) to make an empty Option. If
-/// returning an Option from a lambda, be sure to specify the return type on the
-/// lambda to allow successful type deduction.
+/// When the type is known to the compiler, you can construct an
+/// [`Option`](sus-option-Option.html) from a value without writing the full
+/// type again, by using
+/// [`sus::some(x)`](sus-option-fn.some.html) to make an
+/// [`Option`](sus-option-Option.html) holding `x` or
+/// [`sus::none()`](sus-option-fn.none.html) to make an empty
+/// [`Option`](sus-option-Option.html). If returning an
+/// [`Option`](sus-option-Option.html) from a lambda, be sure to specify the
+/// return type on the lambda to allow successful type deduction.
 /// ```
 /// // Returns Some("power!") if the input is over 9000, or None otherwise.
 /// auto is_power = [](i32 i) -> sus::Option<std::string> {
@@ -125,13 +136,19 @@ namespace sus {
 /// };
 /// ```
 ///
-/// Use `is_some()` and `is_none()` to see if the `Option` is holding a value.
+/// Use [`is_some()`](sus-option-Option.html#method.is_some) and
+/// [`is_none()`](sus-option-Option.html#method.is_none) to see if the `Option`
+/// is holding a value.
 ///
-/// To immediately pull the inner value out of an Option an an rvalue, use
-/// `unwrap()`. If the `Option` is an lvalue, use `as_value()` and
-/// `as_value_mut()` to access the inner value. Like `std::optional`,
-/// `operator*` and `operator->` are also available if preferred. However if
-/// doing this many times, consider doing `unwrap()` a single time up front.
+/// To immediately pull the inner value out of an
+/// [`Option`](sus-option-Option.html) an an rvalue, use `unwrap()`. If the
+/// [`Option`](sus-option-Option.html) is an lvalue, use `as_value()` and
+/// `as_value_mut()` to access the inner value. Like
+/// [`std::optional`](https://en.cppreference.com/w/cpp/utility/optional),
+/// [`operator*`](sus-option-Option.html#method.operator*) and
+/// [`operator->`](sus-option-Option.html#method.operator-%3E) are also
+/// available if preferred. However if doing this many times, consider doing
+/// `unwrap()` a single time up front.
 /// ```
 /// sus::check(is_power(9001).unwrap() == "power!");
 ///
