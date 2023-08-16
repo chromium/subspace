@@ -76,7 +76,260 @@ constexpr auto end(const T& t) noexcept;
 }  // namespace sus::iter
 
 namespace sus {
-/// The Option type, and the some() and none() type deduction functions.
+/// The `Option` type, and the `some()` and `none()` type deduction constructor
+/// functions.
+///
+/// The `Option` type represents an optional value: every Option is either Some
+/// and contains a value, or None, and does not. It is similar to
+/// [`std::optional`]( https://en.cppreference.com/w/cpp/utility/optional) but
+/// with some differences:
+/// * Extensive vocabulary for combining Options together.
+/// * Safe defined behaviour (a panic) when unwrapping an empty Option, with an
+///   explicit unsafe backdoor (`unwrap_unchecked()`) for when it is needed.
+/// * Avoid accidental expensive copies. Supports `Copy` if the inner type is
+///   `Copy` and `Clone` if the inner type is `Clone`.
+/// * Provides `take()` to move a value out of an lvalue Option, which mark the
+///   lvalue as empty instead of leaving a moved-from value behind as with
+///   `std::move(optional).value()`.
+/// * A custom message can be printed when trying to unwrap an empty Option.
+/// * Subspace [Iterator](sus::iter) integration. Option can be iterated over,
+///   acting like a single-element [collection](sus::collections), which allows
+///   it to be chained together with other iterators, filtered, etc.
+///
+/// `Option` types are very common, as they have a number of uses:
+///
+/// * Initial values
+/// * Return values for functions that are not defined over their entire input
+///   range (partial functions)
+/// * Return value for otherwise reporting simple errors, where `None` is
+/// returned
+///   on error.
+/// * Optional struct fields Struct fields that can be loaned or "taken"
+/// * Optional function arguments
+/// * Returning an optional reference to a member
+///
+/// # Quick start
+/// When the type is known to the compiler, you can construct an Option from a
+/// value without writing the full type again, by using
+/// [`sus::some(x)`](sus::option::some) to make an `Option` holding `x` or
+/// [`sus::none()`](sus::option::none) to make an empty Option. If returning an
+/// Option from a lambda, be sure to specify the return type on the lambda to
+/// allow successful type deduction.
+/// ```
+/// // Returns Some("power!") if the input is over 9000, or None otherwise.
+/// auto is_power = [](i32 i) -> sus::Option<std::string> {
+///   if (i > 9000) return sus::some("power!");
+///   return sus::none();
+/// };
+/// ```
+///
+/// Use `is_some()` and `is_none()` to see if the `Option` is holding a value.
+///
+/// To immediately pull the inner value out of an Option an an rvalue, use
+/// `unwrap()`. If the `Option` is an lvalue, use `as_value()` and
+/// `as_value_mut()` to access the inner value. Like `std::optional`,
+/// `operator*` and `operator->` are also available if preferred. However if
+/// doing this many times, consider doing `unwrap()` a single time up front.
+/// ```
+/// sus::check(is_power(9001).unwrap() == "power!");
+///
+/// if (Option<std::string> lvalue = is_power(9001); lvalue.is_some())
+///   sus::check(lvalue.as_value() == "power!");
+///
+/// sus::check(is_power(9000).unwrap_or("unlucky") == "unlucky");
+/// ```
+///
+/// `Option<const T>` for non-reference-type `T` is disallowed, as the Option
+/// owns the `T` in that case and it ensures the `Option` and the `T` are both
+/// accessed with the same constness.
+///
+/// # Representation
+///
+/// If a type `T` is a reference or satisties `sus::mem::NeverValueField`, then
+/// `Option<T>` will have the same size as T and will be internally represented
+/// as just a `T` (or `T*` in the case of a reference `T&`).
+///
+/// The following types `T`, when stored in an `Option<T>`, will have the same
+/// size as the original type `T`:
+///
+/// * `const T&` or `T&` (have the same size as `const T*` or `T*`)
+/// * [`ptr::NonNull<U>`](sus::ptr::NonNull)
+///
+/// This is called the "NeverValueField optimization", but is also called the
+/// ["null pointer optimization" or NPO in Rust](
+/// https://doc.rust-lang.org/stable/std/option/index.html#representation).
+///
+/// # Querying the variant
+/// The `is_some()` and `is_none()` methods return `true` if the `Option` is
+/// holding a value or not, respectively.
+///
+/// # Adapters for working with references
+/// The following methods allow you to create an Option that refers to the value
+/// held in an lvalue, without copying or moving from the lvalue:
+/// * `as_ref()` converts from a const lvalue `Option<T>` to an rvalue
+///   `Option<const T&>`.
+/// * `as_mut()` converts from a mutable lvalue `Option<T>` to an rvalue
+///   `Option<T&>`.
+///
+/// # Extracting the contained value
+/// These methods extract the contained value in an `Option<T>` when it is
+/// holding a value.
+///
+/// For working with the option as an lvalue:
+/// * `as_value()` returns const reference access to the inner value. It will
+///   panic with a generic message when empty.
+/// * `as_value_mut()` returns mutable reference access to the inner value. It
+///   will panic with a generic message when empty.
+/// * `operator*()` returns mutable reference access to the inner value. It will
+///   panic with a generic message when empty.
+/// * `operator->()` returns mutable pointer access to the inner value. It will
+///   panic with a generic message when empty.
+///
+/// For working with the option as an rvalue (when it returned from a function
+/// call):
+/// * `expect()` moves and returns the inner value. It will panic with a
+///   provided custom message when empty.
+/// * `unwrap()` moves and returns the inner value. It will panic with a generic
+///   message with empty.
+/// * `unwrap_or()` moves and returns the inner value. It will returns the
+///   provided default value instead when empty.
+/// * `unwrap_or_default()` moves and returns the inner value. It will return
+///   the default value of the type `T` (which must satisfy
+///   `sus::construct::Default`) when empty.
+/// * `unwrap_or_else()` moves and returns the inner value. It will return the
+///   result of evaluating the provided function when empty.
+///
+/// # Copying
+/// Most methods of Option act on an rvalue and consume the Option to transform
+/// it into a new Option with a new value. This ensures that the value inside an
+/// Option is moved while transforming it.
+///
+/// However, if `Option` is `Copy`, then the majority of methods offer an
+/// overload to be called as an lvalue, in which case the `Option` will copy
+/// itself, and its contained value, and perform the intended method on the copy
+/// instead. This can have performance implications!
+///
+/// The unwrapping methods are excluded from this, and are only available on an
+/// rvalue Option to avoid copying just to access the inner value. To do that,
+/// access the inner value as a reference through `as_value()` and
+/// `as_value_mut()` or the `*` operator.
+///
+/// # Transforming contained values
+/// These methods transform `Option` to `Result`:
+///
+/// * `ok_or()` transforms `Some(v)` to `Ok(v)`, and `None` to `Err(err)` using
+/// the provided default err value.
+/// * `ok_or_else()` transforms `Some(v)` to `Ok(v)`, and `None` to a value of
+/// `Err` using the provided function.
+/// * `transpose()` transposes an `Option` of a `Result` into a `Result` of an
+/// `Option`.
+///
+/// These methods transform an option holding a value:
+///
+/// * `filter()` calls the provided predicate function on the contained value
+/// `t` if the `Option` is `Some(t)`, and returns `Some(t)` if the function
+/// returns `true`; otherwise, returns `None`.
+/// * `flatten()` removes one level of nesting from an `Option<Option<T>>`.
+/// * `map` transforms `Option<T>` to `Option<U>` by applying the provided
+/// function to the contained value of `Some` and leaving `None` values
+/// unchanged.
+///
+/// These methods transform `Option<T>` to a value of a possibly different type
+/// `U`:
+///
+/// * `map_or()` applies the provided function to the contained value of `Some`,
+/// or returns the provided default value if the `Option` is `None`.
+/// * `map_or_else()` applies the provided function to the contained value of
+/// `Some`, or returns the result of evaluating the provided fallback function
+/// if the `Option` is `None`.
+///
+/// These methods combine the Some variants of two Option values:
+///
+/// * `zip()` returns `Some(Tuple<S, O>(s, o)))` if the `Option` is `Some(s)`
+/// and the method is called with an `Option` value of `Some(o)`; otherwise,
+/// returns `None`
+/// * TODO: `zip_with()` calls the provided function `f` and returns `Some(f(s,
+/// o))` if the `Option` is Some(s) and the method is called with an `Option`
+/// value of `Some(o)`; otherwise, returns `None`.
+///
+/// # Boolean operators
+/// These methods treat the `Option` as a boolean value, where `Some` acts like
+/// `true` and `None` acts like `false`. There are two categories of these
+/// methods: ones that take an `Option` as input, and ones that take a function
+/// as input (to be lazily evaluated).
+///
+/// The `and_that()`, `or_that()`, and `xor_that()` methods take another
+/// `Option` as input, and produce an `Option` as output. Only the `and_that()`
+/// method can produce an `Option<U>` value having a different inner type `U`
+/// than `Option<T>`.
+///
+/// | method   | self    | input     | output  |
+/// | -------- | ------- | --------- | ------- |
+/// | and_that | None    | (ignored) | None    |
+/// | and_that | Some(x) | None      | None    |
+/// | and_that | Some(x) | Some(y)   | Some(y) |
+/// | or_that  | None    | None      | None    |
+/// | or_that  | None    | Some(y)   | Some(y) |
+/// | or_that  | Some(x) | (ignored) | Some(x) |
+/// | xor_that | None    | None      | None    |
+/// | xor_that | None    | Some(y)   | Some(y) |
+/// | xor_that | Some(x) | None      | Some(x) |
+/// | xor_that | Some(x) | Some(y)   | None    |
+///
+/// The `and_then()` and `or_else()` methods take a function as input, and only
+/// evaluate the function when they need to produce a new value. Only the
+/// `and_then()` method can produce an `Option<U>` value having a different
+/// inner type `U` than `Option<T>`.
+///
+/// | method   | self    | function input | function result | output  |
+/// | -------- | ------- | -------------- | --------------- | ------- |
+/// | and_then | None	   | (not provided) |	(not evaluated) | None    |
+/// | and_then | Some(x) | x              | None            | None    |
+/// | and_then | Some(x) | x              | Some(y)         | Some(y) |
+/// | or_else  | None    | (not provided) | None            | None    |
+/// | or_else  | None    | (not provided) | Some(y)         | Some(y) |
+/// | or_else  | Some(x) | (not provided) | (not evaluated) | Some(x) |
+///
+/// This is an example of using methods like `and_then()` and `or_that()` in a
+/// pipeline of method calls. Early stages of the pipeline pass failure values
+/// (`None`) through unchanged, and continue processing on success values
+/// (`Some`). Toward the end, or substitutes an error message if it receives
+/// `None`.
+///
+/// ```
+/// auto to_string = [](u8 u) -> sus::Option<std::string> {
+///   switch (uint8_t{u}) {  // switch requires a primitive.
+///     case 20u: return sus::some("foo");
+///     case 42u: return sus::some("bar");
+///     default: return sus::none();
+///   }
+/// };
+/// auto res =
+///     sus::Vec<u8>(0_u8, 1_u8, 11_u8, 200_u8, 22_u8)
+///         .into_iter()
+///         .map([&](auto x) {
+///           // `checked_sub()` returns `None` on error.
+///           return x.checked_sub(1_u8)
+///               // same with `checked_mul()`.
+///               .and_then([](u8 x) { return x.checked_mul(2_u8); })
+///               // `to_string` returns `None` on error.
+///               .and_then([&](u8 x) { return to_string(x); })
+///               // Substitute an error message if we have `None` so far.
+///               .or_that(sus::some(std::string("error!")))
+///               // Won't panic because we unconditionally used `Some` above.
+///               .unwrap();
+///         })
+///         .collect<Vec<std::string>>();
+/// sus::check(res == sus::vec("error!", "error!", "foo", "error!", "bar"));
+/// ```
+///
+/// # Restrictions on returning references
+///
+/// Methods that return references are only callable on an rvalue Option if the
+/// Option is holding a reference. If the Option is holding a non-reference
+/// type, returning a reference from an rvalue Option would be giving a
+/// reference to a short-lived object which is a bugprone pattern in C++ leading
+/// to memory safety bugs.
 namespace option {}
 }  // namespace sus
 
@@ -102,46 +355,8 @@ template <class T, ::sus::iter::Iterator<Option<T>> Iter>
 constexpr Option<T> from_sum_impl(Iter&& it) noexcept;
 }  // namespace __private
 
-/// A type which either holds `Some` value of type `T`, or `None`.
-///
-/// To immediately pull the inner value out of an Option, use `unwrap()`. If the
-/// `Option` is an lvalue, use `operator*` and `operator->` to access the inner
-/// value. However if doing this many times, consider doing `unwrap()` a single
-/// time up front.
-///
-/// `Option<const T>` for non-reference-type `T` is disallowed, as the Option
-/// owns the `T` in that case and it ensures the `Option` and the `T` are both
-/// accessed with the same const-ness.
-///
-/// Representation
-///
-/// If a type `T` is a reference or satisties `sus::mem::NeverValueField`, then
-/// `Option<T>` will have the same size as T and will be internally represented
-/// as just a `T` (or `T*` in the case of a reference `T&`).
-///
-/// # Copying
-///
-/// Most methods of Option act on an rvalue and consume the Option to transform
-/// it into a new Option with a new value. This ensures that the value inside an
-/// Option is moved while transforming it.
-///
-/// However, if `Option` is `Copy`, then the majority of methods offer an
-/// overload to be called as an lvalue, in which case the `Option` will copy
-/// itself, and its contained value, and perform the intended method on the copy
-/// instead. This can have performance implications!
-///
-/// The unwrapping methods are excluded from this, and are only available on an
-/// rvalue Option to avoid copying just to access the inner value. To do that,
-/// access the inner value as a reference through `as_value()` and
-/// `as_value_mut()` or the `*` operator.
-///
-/// # Returning references
-///
-/// Methods that return references are only callable on an rvalue Option if the
-/// Option is holding a reference. If the Option is holding a non-reference
-/// type, returning a reference from an rvalue Option would be giving a
-/// reference to a short-lived object which is a bugprone pattern in C++ leading
-/// to memory safety bugs.
+/// The `Option` type. See the [namespace level documentation](sus::option) for
+/// more.
 template <class T>
 class Option final {
   // Note that `const T&` is allowed (so we don't `std::remove_reference_t<T>`)

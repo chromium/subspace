@@ -3021,4 +3021,47 @@ TEST(Option, Try) {
   EXPECT_EQ(sus::ops::try_is_success(Option<i32>()), false);
 }
 
+TEST(Option, QuickStart_Example) {
+  // Returns Some("power!") if the input is over 9000, or None otherwise.
+  auto is_power = [](i32 i) -> sus::Option<std::string> {
+    if (i > 9000) return sus::some("power!");
+    return sus::none();
+  };
+
+  sus::check(is_power(9001).unwrap() == "power!");
+
+  if (Option<std::string> lvalue = is_power(9001); lvalue.is_some())
+    sus::check(lvalue.as_value() == "power!");
+
+  sus::check(is_power(9000).unwrap_or("unlucky") == "unlucky");
+}
+
+TEST(Option, BooleanOperators_Example) {
+  auto to_string = [](u8 u) -> sus::Option<std::string> {
+    switch (uint8_t{u}) {  // switch requires a primitive.
+      case 20u: return sus::some("foo");
+      case 42u: return sus::some("bar");
+      default: return sus::none();
+    }
+  };
+  auto res =
+      sus::Vec<u8>(0_u8, 1_u8, 11_u8, 200_u8, 22_u8)
+          .into_iter()
+          .map([&](auto x) {
+            // `checked_sub()` returns `None` on error
+            return x
+                .checked_sub(1_u8)
+                // same with `checked_mul()`
+                .and_then([](u8 x) { return x.checked_mul(2_u8); })
+                // `get_string_for_int` returns `None` on error
+                .and_then([&](u8 x) { return to_string(x); })
+                // Substitute an error message if we have `None` so far
+                .or_that(sus::some(std::string("error!")))
+                // Won't panic because we unconditionally used `Some` above
+                .unwrap();
+          })
+          .collect<Vec<std::string>>();
+  sus::check(res == sus::vec("error!", "error!", "foo", "error!", "bar"));
+}
+
 }  // namespace
