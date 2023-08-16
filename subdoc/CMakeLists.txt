@@ -34,6 +34,7 @@ target_sources(subdoc_lib PUBLIC
     "lib/gen/options.h"
     "lib/database.h"
     "lib/friendly_names.h"
+    "lib/parse_comment.cc"
     "lib/parse_comment.h"
     "lib/path.h"
     "lib/record_type.h"
@@ -65,6 +66,7 @@ target_link_directories(subdoc_lib PUBLIC ${LLVM_LIBRARY_DIRS})
 
 target_link_libraries(subdoc_lib
     subspace::lib
+    md4c
     clangAnalysis
     clangAnalysisFlowSensitive
     clangAnalysisFlowSensitiveModels

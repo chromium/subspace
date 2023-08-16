@@ -94,5 +94,6 @@ add_subdirectory(third_party/fmt)
 add_subdirectory(sus)
 
 if (${SUBSPACE_BUILD_SUBDOC})
+    add_subdirectory(third_party/md4c)
     add_subdirectory(subdoc)
 endif()
