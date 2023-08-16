@@ -124,7 +124,6 @@ if(${SUBSPACE_BUILD_TESTS})
         "tests/include_exclude_unittest.cc"
         "tests/inherit_unittest.cc"
         "tests/macros_unittest.cc"
-        "tests/markdown_unittest.cc"
         "tests/methods_unittest.cc"
         "tests/namespaces_unittest.cc"
         "tests/records_unittest.cc"
