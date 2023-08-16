@@ -246,7 +246,7 @@ namespace sus {
 /// library, can be used to construct a Subspace iterator through
 /// [`sus::iter::from_range()`](sus::iter::from_range).
 ///
-/// # Familiarity with Rust APIs.
+/// # Familiarity with Rust APIs
 /// These collections were inspired by porting Rust
 /// [std::collections](https://doc.rust-lang.org/stable/std/collections/index.html)
 /// and traits/concepts into C++. Additional changes are minimized to aid with
