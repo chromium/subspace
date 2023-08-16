@@ -119,10 +119,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitRecordDecl(clang::RecordDecl* decl) noexcept {
+    if (!decl->getDefinition()) return true;
+    clang::CXXRecordDecl* cxxdecl = clang::dyn_cast<clang::CXXRecordDecl>(decl);
+    if (cxxdecl && cxxdecl->isLocalClass()) return true;  // Inside a function.
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    if (auto* cxxdecl = clang::dyn_cast<clang::CXXRecordDecl>(decl)) {
+    if (cxxdecl) {
       // It's a C++ class. So it may have a template decl which has the template
       // parameters. And it may be a specialization.
       // llvm::errs() << "Visiting CXX class with template, specialization
@@ -139,6 +142,38 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RecordDecl* parent_record_decl =
         clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext());
 
+    sus::Option<RequiresConstraints> constraints;
+    sus::Vec<std::string> template_params;
+    if (cxxdecl) {
+      if (clang::ClassTemplateDecl* tmpl =
+              cxxdecl->getDescribedClassTemplate()) {
+        if (clang::TemplateParameterList* params =
+                tmpl->getTemplateParameters()) {
+          for (clang::NamedDecl* n : *params) {
+            // TODO: Get the default values and the type (auto vs class).
+            if (clang::isa<clang::TemplateTypeParmDecl>(n)) {
+              template_params.push(std::string("class ") +
+                                   n->getNameAsString());
+            } else if (clang::ValueDecl* val =
+                           clang::dyn_cast<clang::ValueDecl>(n)) {
+              template_params.push(val->getType().getAsString() +
+                                   std::string(" ") + n->getNameAsString());
+            } else {
+              llvm::errs() << "WARNING: Unknown TemplateParameterList member "
+                              "on Record:\n";
+              n->dumpColor();
+            }
+          }
+        }
+        llvm::SmallVector<const clang::Expr*> c_exprs;
+        tmpl->getAssociatedConstraints(c_exprs);
+        for (const clang::Expr* e : c_exprs) {
+          requires_constraints_add_expr(constraints.get_or_insert_default(),
+                                        decl->getASTContext(), e);
+        }
+      }
+    }
+
     Comment comment = make_db_comment(decl, raw_comment, decl->getName());
     auto re = RecordElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
@@ -146,7 +181,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         iter_record_path(parent_record_decl)
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
-        type,
+        type, sus::move(constraints), sus::move(template_params),
+        decl->getDefinition()->hasAttr<clang::FinalAttr>(),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
 
@@ -578,7 +614,8 @@ class AstConsumer : public clang::ASTConsumer {
         continue;
       }
 
-      if (!Visitor(cx_, docs_db_, DiagnosticIds::with_context(decl->getASTContext()))
+      if (!Visitor(cx_, docs_db_,
+                   DiagnosticIds::with_context(decl->getASTContext()))
                .TraverseDecl(decl))
         return false;
     }
