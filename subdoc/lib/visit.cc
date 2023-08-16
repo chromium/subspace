@@ -22,6 +22,7 @@
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/requires.h"
+#include "subdoc/lib/stmt_to_string.h"
 #include "subdoc/lib/unique_symbol.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/unreachable.h"
@@ -81,8 +82,12 @@ static clang::RawComment* get_raw_comment(clang::Decl* decl) {
 
 class Visitor : public clang::RecursiveASTVisitor<Visitor> {
  public:
-  Visitor(VisitCx& cx, Database& docs_db, DiagnosticIds ids)
-      : cx_(cx), docs_db_(docs_db), diag_ids_(sus::move(ids)) {}
+  Visitor(VisitCx& cx, Database& docs_db, clang::Preprocessor& preprocessor,
+          DiagnosticIds ids)
+      : cx_(cx),
+        docs_db_(docs_db),
+        preprocessor_(preprocessor),
+        diag_ids_(sus::move(ids)) {}
   bool shouldVisitLambdaBody() const { return false; }
 
   bool VisitStaticAssertDecl(clang::StaticAssertDecl*) noexcept {
@@ -151,13 +156,31 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 tmpl->getTemplateParameters()) {
           for (clang::NamedDecl* n : *params) {
             // TODO: Get the default values and the type (auto vs class).
-            if (clang::isa<clang::TemplateTypeParmDecl>(n)) {
-              template_params.push(std::string("class ") +
-                                   n->getNameAsString());
-            } else if (clang::ValueDecl* val =
-                           clang::dyn_cast<clang::ValueDecl>(n)) {
-              template_params.push(val->getType().getAsString() +
-                                   std::string(" ") + n->getNameAsString());
+            if (auto* parm = clang::dyn_cast<clang::TemplateTypeParmDecl>(n)) {
+              std::stringstream s;
+              s << "class";
+              if (parm->isParameterPack()) s << "...";
+              s << " ";
+              s << parm->getNameAsString();
+              if (clang::TypeSourceInfo* def = parm->getDefaultArgumentInfo()) {
+                s << " = ";
+                s << def->getType().getAsString();
+              }
+              template_params.push(sus::move(s).str());
+            } else if (auto* val =
+                           clang::dyn_cast<clang::NonTypeTemplateParmDecl>(n)) {
+              std::stringstream s;
+              s << val->getType().getAsString();
+              if (val->isParameterPack()) s << "...";
+              s << " ";
+              s << val->getNameAsString();
+              if (clang::Expr* e = val->getDefaultArgument()) {
+                s << " = ";
+                // TODO: There can be types in here that need to be resolved,
+                // and can be linked to database entries.
+                s << stmt_to_string(*e, val->getASTContext(), preprocessor_);
+              }
+              template_params.push(sus::move(s).str());
             } else {
               llvm::errs() << "WARNING: Unknown TemplateParameterList member "
                               "on Record:\n";
@@ -169,7 +192,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         tmpl->getAssociatedConstraints(c_exprs);
         for (const clang::Expr* e : c_exprs) {
           requires_constraints_add_expr(constraints.get_or_insert_default(),
-                                        decl->getASTContext(), e);
+                                        decl->getASTContext(), preprocessor_,
+                                        e);
         }
       }
     }
@@ -387,17 +411,17 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         llvm::SmallVector<const clang::Expr*> assoc;
         tmpl->getAssociatedConstraints(assoc);
         for (const clang::Expr* e : assoc) {
-          if (constraints.is_none()) constraints.insert(RequiresConstraints());
-          requires_constraints_add_expr(constraints.as_value_mut(),
-                                        decl->getASTContext(), e);
+          requires_constraints_add_expr(constraints.get_or_insert_default(),
+                                        decl->getASTContext(), preprocessor_,
+                                        e);
         }
       } else {
         llvm::SmallVector<const clang::Expr*> assoc;
         decl->getAssociatedConstraints(assoc);
         for (const clang::Expr* e : assoc) {
-          if (constraints.is_none()) constraints.insert(RequiresConstraints());
-          requires_constraints_add_expr(constraints.as_value_mut(),
-                                        decl->getASTContext(), e);
+          requires_constraints_add_expr(constraints.get_or_insert_default(),
+                                        decl->getASTContext(), preprocessor_,
+                                        e);
         }
       }
 
@@ -591,11 +615,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   VisitCx& cx_;
   Database& docs_db_;
   DiagnosticIds diag_ids_;
+  clang::Preprocessor& preprocessor_;
 };
 
 class AstConsumer : public clang::ASTConsumer {
  public:
-  AstConsumer(VisitCx& cx, Database& docs_db) : cx_(cx), docs_db_(docs_db) {}
+  AstConsumer(VisitCx& cx, Database& docs_db, clang::Preprocessor& preprocessor)
+      : cx_(cx), docs_db_(docs_db), preprocessor_(preprocessor) {}
 
   bool HandleTopLevelDecl(clang::DeclGroupRef group_ref) noexcept final {
     for (clang::Decl* decl : group_ref) {
@@ -614,7 +640,7 @@ class AstConsumer : public clang::ASTConsumer {
         continue;
       }
 
-      if (!Visitor(cx_, docs_db_,
+      if (!Visitor(cx_, docs_db_, preprocessor_,
                    DiagnosticIds::with_context(decl->getASTContext()))
                .TraverseDecl(decl))
         return false;
@@ -631,6 +657,7 @@ class AstConsumer : public clang::ASTConsumer {
  private:
   VisitCx& cx_;
   Database& docs_db_;
+  clang::Preprocessor& preprocessor_;
 };
 
 std::unique_ptr<clang::FrontendAction> VisitorFactory::create() noexcept {
@@ -638,7 +665,7 @@ std::unique_ptr<clang::FrontendAction> VisitorFactory::create() noexcept {
 }
 
 std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
-    clang::CompilerInstance&, llvm::StringRef file) noexcept {
+    clang::CompilerInstance& compiler, llvm::StringRef file) noexcept {
   if (cx.options.show_progress) {
     if (std::string_view(file) != line_stats.cur_file_name) {
       llvm::outs() << "[" << line_stats.cur_file << "/" << line_stats.num_files
@@ -647,7 +674,7 @@ std::unique_ptr<clang::ASTConsumer> VisitorAction::CreateASTConsumer(
       line_stats.cur_file_name = std::string(file);
     }
   }
-  return std::make_unique<AstConsumer>(cx, docs_db);
+  return std::make_unique<AstConsumer>(cx, docs_db, compiler.getPreprocessor());
 }
 
 bool VisitCx::should_include_decl_based_on_file(clang::Decl* decl) noexcept {

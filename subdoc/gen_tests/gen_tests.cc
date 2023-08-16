@@ -34,6 +34,10 @@ TEST_F(SubDocGenTest, StructComplex) {
   EXPECT_TRUE(run_gen_test("struct-complex"));
 }
 
+TEST_F(SubDocGenTest, Templates) {
+  EXPECT_TRUE(run_gen_test("templates"));
+}
+
 TEST_F(SubDocGenTest, TypenamesAcrossPaths) {
   EXPECT_TRUE(run_gen_test("typenames-across-paths"));
 }

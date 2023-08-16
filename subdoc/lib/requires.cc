@@ -14,6 +14,7 @@
 
 #include "subdoc/lib/requires.h"
 
+#include "subdoc/lib/stmt_to_string.h"
 #include "sus/iter/compat_ranges.h"
 #include "sus/iter/iterator.h"
 
@@ -62,13 +63,16 @@ std::string template_arg_to_string(
 
 void requires_constraints_add_expr(RequiresConstraints& constaints,
                                    const clang::ASTContext& context,
+                                   clang::Preprocessor& preprocessor,
                                    const clang::Expr* e) noexcept {
   e = e->IgnoreParens();
 
-  if (auto* bin = clang::dyn_cast<clang::BinaryOperator>(e);
-      bin != nullptr && bin->getOpcode() == clang::BO_LAnd) {
-    requires_constraints_add_expr(constaints, context, bin->getLHS());
-    requires_constraints_add_expr(constaints, context, bin->getRHS());
+  if (auto* bin_and = clang::dyn_cast<clang::BinaryOperator>(e);
+      bin_and != nullptr && bin_and->getOpcode() == clang::BO_LAnd) {
+    requires_constraints_add_expr(constaints, context, preprocessor,
+                                  bin_and->getLHS());
+    requires_constraints_add_expr(constaints, context, preprocessor,
+                                  bin_and->getRHS());
   } else if (auto* c = clang::dyn_cast<clang::ConceptSpecializationExpr>(e);
              c != nullptr && c->getNamedConcept()) {
     sus::Vec<std::string> args =
@@ -91,16 +95,12 @@ void requires_constraints_add_expr(RequiresConstraints& constaints,
                 .args = sus::move(args),
             }));
   } else {
-    const clang::SourceManager& sm = context.getSourceManager();
-    const char* start = sm.getCharacterData(e->getBeginLoc());
-    const char* end = sm.getCharacterData(e->getEndLoc()) + 1;
-
-    // TODO: There can be types in here that need to be resolved, such as the
-    // macro name `_primitive` in:
+    // TODO: There can be types in here that need to be resolved and can be
+    // linked to database entries, such as the macro name `_primitive` in:
     // * `::sus::mem::size_of<S>() <= ::sus::mem::size_of<_primitive>()`
     constaints.list.push(
         RequiresConstraint::with<RequiresConstraint::Tag::Text>(
-            std::string(std::string_view(start, end - start))));
+            stmt_to_string(*e, context, preprocessor)));
   }
 }
 

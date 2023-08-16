@@ -45,6 +45,7 @@ struct RequiresConstraints {
 
 void requires_constraints_add_expr(RequiresConstraints& constaints,
                                    const clang::ASTContext& context,
+                                   clang::Preprocessor& preprocessor,
                                    const clang::Expr* e) noexcept;
 
 }  // namespace subdoc
