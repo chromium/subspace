@@ -26,23 +26,19 @@ namespace subdoc::gen {
 
 inline sus::Option<std::ofstream> open_file_for_writing(
     std::filesystem::path path) noexcept {
-  sus::Option<std::ofstream> out;
-
   std::ofstream file;
-  file.open(path.c_str());
+  file.open(path, std::ios::binary);
   if (file.is_open()) {
-    out.insert(sus::move(file));
+    return sus::some(sus::move(file));
   } else {
     llvm::errs() << "Unable to open file " << path.string() << " for writing\n";
+    return sus::none();
   }
-
-  return out;
 }
 
 inline std::filesystem::path construct_html_file_path(
     std::filesystem::path root, sus::Slice<Namespace> namespace_path,
-    sus::Slice<std::string> record_path,
-    std::string_view name) noexcept {
+    sus::Slice<std::string> record_path, std::string_view name) noexcept {
   std::filesystem::path p = sus::move(root);
 
   std::ostringstream fname;
