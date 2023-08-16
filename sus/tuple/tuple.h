@@ -55,11 +55,11 @@ namespace sus::tuple_type {
 /// differences:
 /// * It allows storing reference types.
 /// * It interacts with iterators through satisfying
-///   [`Extend`](sus::iter::Extend), allowing an iterator to `unzip()` into
+///   [`Extend`](sus-iter-Extend.html), allowing an iterator to `unzip()` into
 ///   a Tuple of collections that satisfy Extend.
 /// * It provides explicit methods for const, mutable or rvalue access to
 ///   its values.
-/// * It satisfies [`Clone`](sus::mem::Clone) if its elements all satisfy
+/// * It satisfies [`Clone`](sus-mem-Clone.html) if its elements all satisfy
 ///   `Clone`.
 ///
 /// Tuple elements can also be accessed through `get()` for code that wants to

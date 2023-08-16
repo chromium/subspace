@@ -20,7 +20,7 @@ namespace sus {
 ///
 /// The Subspace library provides implementations of common general purpose
 /// programming data structures, with rich APIs that allow for interactions with
-/// iterators, and with APIs that provide safe defaults.
+/// [Iterators](sus-iter.html), and with APIs that provide safe defaults.
 ///
 /// The collections offer similar functionality to the [C++ standard containers
 /// library](https://en.cppreference.com/w/cpp/container) but differ in some
@@ -230,7 +230,7 @@ namespace sus {
 ///
 /// # Ranges
 /// The collections in the Subspace C++ library can be used with standard ranges
-/// by calling the [`range()`](sus::iter::IteratorBase::range) adaptor on any
+/// by calling the [`range()`](sus-iter-IteratorBase.html#method.range) adaptor on any
 /// Subspace iterator. It will return an object that satisfies
 /// [`std::ranges::input_range`](https://en.cppreference.com/w/cpp/ranges/input_range)
 /// and
@@ -244,7 +244,7 @@ namespace sus {
 ///
 /// Conversely, standard ranges, such as the types in the standard containers
 /// library, can be used to construct a Subspace iterator through
-/// [`sus::iter::from_range()`](sus::iter::from_range).
+/// [`sus::iter::from_range()`](sus-iter-fn.from_range.html).
 ///
 /// # Familiarity with Rust APIs
 /// These collections were inspired by porting Rust

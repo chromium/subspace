@@ -174,9 +174,9 @@ class [[nodiscard]] Result final {
   }
 
   /// Copy constructor for `Result<T, E>` which satisfies
-  /// [`sus::mem::Copy<Result<T, E>>`](sus::mem::Copy) if
-  /// [`Copy<T>`](sus::mem::Copy) and
-  /// [`Copy<E>`](sus::mem::Copy) are satisfied.
+  /// [`sus::mem::Copy<Result<T, E>>`](sus-mem-Copy.html) if
+  /// [`Copy<T>`](sus-mem-Copy.html) and
+  /// [`Copy<E>`](sus-mem-Copy.html) are satisfied.
   ///
   /// If `T` and `E` can be trivially copy-constructed, then `Result<T, E>` can
   /// also be trivially copy-constructed.
@@ -223,9 +223,9 @@ class [[nodiscard]] Result final {
   = delete;
 
   /// Copy assignment for `Result<T, E>` which satisfies
-  /// [`sus::mem::Copy<Result<T, E>>`](sus::mem::Copy) if
-  /// [`Copy<T>`](sus::mem::Copy) and
-  /// [`Copy<E>`](sus::mem::Copy) are satisfied.
+  /// [`sus::mem::Copy<Result<T, E>>`](sus-mem-Copy.html) if
+  /// [`Copy<T>`](sus-mem-Copy.html) and
+  /// [`Copy<E>`](sus-mem-Copy.html) are satisfied.
   ///
   /// If `T` and `E` can be trivially copy-assigned, then `Result<T, E>` can
   /// also be trivially copy-assigned.
@@ -304,9 +304,9 @@ class [[nodiscard]] Result final {
   = delete;
 
   /// Move constructor for `Result<T, E>` which satisfies
-  /// [`sus::mem::Move<Result<T, E>>`](sus::mem::Move) if
-  /// [`Move<T>`](sus::mem::Move) and
-  /// [`Move<E>`](sus::mem::Move) are satisfied.
+  /// [`sus::mem::Move<Result<T, E>>`](sus-mem-Move.html) if
+  /// [`Move<T>`](sus-mem-Move.html) and
+  /// [`Move<E>`](sus-mem-Move.html) are satisfied.
   ///
   /// If `T` and `E` can be trivially move-constructed, then `Result<T, E>` can
   /// also be trivially move-constructed. When trivially-moved, the `Result` is
@@ -353,9 +353,9 @@ class [[nodiscard]] Result final {
   = delete;
 
   /// Move assignment for `Result<T, E>` which satisfies
-  /// [`sus::mem::Move<Result<T, E>>`](sus::mem::Move) if
-  /// [`Move<T>`](sus::mem::Move) and
-  /// [`Move<E>`](sus::mem::Move) are satisfied.
+  /// [`sus::mem::Move<Result<T, E>>`](sus-mem-Move.html) if
+  /// [`Move<T>`](sus-mem-Move.html) and
+  /// [`Move<E>`](sus-mem-Move.html) are satisfied.
   ///
   /// If `T` and `E` can be trivially move-assigned, then `Result<T, E>` can
   /// also be trivially move-assigned. When trivially-moved, the `Result` is

@@ -32,13 +32,13 @@ namespace sus::iter {
 template <class R, class B, class E, class ItemT>
 class IteratorOverRange;
 
-/// Constructs an [`Iterator`](sus::iter::Iterator) from a
+/// Constructs an [`Iterator`](sus-iter-Iterator.html) from a
 /// [`std::ranges::input_range`](https://en.cppreference.com/w/cpp/ranges/input_range).
 ///
 /// If the input is an lvalue reference, the `Iterator` will also
 /// iterate over references to the range's values. If the input is const, the
 /// `Iterator` will iterate over const references. To iterate over values
-/// instead, use [`Iterator::cloned`](sus::iter::IteratorBase::cloned) or
+/// instead, use [`Iterator::cloned`](sus-iter-IteratorBase.html#method.cloned) or
 /// [`Iterator::copied`](sus::iter::IteratorBase::copied).
 ///
 /// If the input is an rvalue refernce, the `Iterator` will iterate over the

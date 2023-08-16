@@ -94,7 +94,8 @@ sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
     auto& data = *reinterpret_cast<UserData*>(v);
     data.parsed << std::string_view(chars, size);
   };
-  md_html(mdtext.c_str(), sus::mog<MD_SIZE>(mdtext.size()), process_output, &data,
+  md_html(mdtext.c_str(), u32::try_from(mdtext.size()).unwrap(), process_output,
+          &data,
           MD_FLAG_NOHTMLBLOCKS | MD_FLAG_NOHTMLSPANS | MD_FLAG_TABLES |
               MD_FLAG_STRIKETHROUGH,
           0);

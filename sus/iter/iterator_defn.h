@@ -139,14 +139,14 @@ class IteratorBase {
   constexpr Iterator<std::remove_cvref_t<Item>> auto cloned() && noexcept
     requires(::sus::mem::Clone<Item>);
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// compares the elements of this `Iterator` with those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::Ord<ItemT, OtherItem>)
   constexpr std::weak_ordering cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// compares the elements of this `Iterator` with those of another with
   /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
@@ -388,7 +388,7 @@ class IteratorBase {
   Iterator<GenR> auto generate(GenFn generator_fn) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// greater than or equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -396,7 +396,7 @@ class IteratorBase {
   constexpr bool ge(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// greater than those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -436,7 +436,7 @@ class IteratorBase {
           const std::remove_reference_t<Item>&)> auto compare) noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// less than or equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -444,7 +444,7 @@ class IteratorBase {
   constexpr bool le(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// less than those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -610,7 +610,7 @@ class IteratorBase {
   constexpr Option<Item> nth_back(usize n) noexcept
     requires(DoubleEndedIterator<Iter, Item>);
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// compares the elements of this `Iterator` with those of another.
   ///
   /// The comparison works like short-circuit evaluation, returning a result
@@ -624,7 +624,7 @@ class IteratorBase {
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   constexpr std::partial_ordering partial_cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// compares the elements of this `Iterator` with those of another with
   /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
@@ -775,7 +775,7 @@ class IteratorBase {
   /// value, starting from the back.
   ///
   /// This is the reverse version of
-  /// [`Iterator::fold()`](sus::iter::IteratorBase::fold): it takes elements
+  /// [`Iterator::fold()`](sus-iter-IteratorBase.html#method.fold): it takes elements
   /// starting from the back of the iterator.
   ///
   /// `rfold()` takes two arguments: an initial value, and a closure with two
@@ -797,7 +797,7 @@ class IteratorBase {
   /// associative operators like `+`, the order the elements are combined in is
   /// not important, but for non-associative operators like `-` the order will
   /// affect the final result. For a left-associative version of `rfold()`, see
-  /// [`Iterator::fold()`](sus::iter::IteratorBase::fold).
+  /// [`Iterator::fold()`](sus-iter-IteratorBase.html#method.fold).
   template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F>
     requires(DoubleEndedIterator<Iter, ItemT> &&
              std::convertible_to<std::invoke_result_t<F&, B &&, ItemT &&>, B> &&
@@ -885,7 +885,7 @@ class IteratorBase {
   /// of 1 returns every element.
   constexpr Iterator<Item> auto step_by(usize step) && noexcept;
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// compares the elements of this `Iterator` with those of another.
   ///
   /// Strong ordering requires each item being compared that compares equal to
@@ -901,7 +901,7 @@ class IteratorBase {
     requires(::sus::ops::StrongOrd<ItemT, OtherItem>)
   constexpr std::strong_ordering strong_cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus::ops::StrongOrd#How-can-I-implement-StrongOrd?)
+  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
   /// compares the elements of this `Iterator` with those of another with
   /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
@@ -988,7 +988,7 @@ class IteratorBase {
   /// auto v = sus::move(u).into_iter().try_collect<Vec<i32>>();
   /// sus::check(v == none());
   /// ```
-  /// A similar example, but with [`Result`](sus::result::Result):
+  /// A similar example, but with [`Result`](sus-result-Result.html):
   /// ```
   /// enum Error { ERROR };
   /// auto u = Vec<Result<i32, Error>>(ok(1), ok(2), ok(3));
@@ -1025,7 +1025,7 @@ class IteratorBase {
   constexpr R try_fold(B init, F f) noexcept;
 
   /// This is the reverse version of
-  /// [`Iterator::try_fold()`](sus::iter::IteratorBase::try_fold): it takes
+  /// [`Iterator::try_fold()`](sus-iter-IteratorBase.html#method.try_fold): it takes
   /// elements starting from the back of the iterator.
   template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F, int&...,
             class R = std::invoke_result_t<F&, B&&, ItemT&&>>
