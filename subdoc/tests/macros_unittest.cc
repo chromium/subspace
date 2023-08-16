@@ -126,7 +126,7 @@ TEST_F(SubDocTest, MacroMultilineComment) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(
-      has_function_comment(db, "3:7", "<p>Comment headline Second line</p>"));
+      has_function_comment(db, "3:7", "<p>Comment headline\nSecond line</p>"));
 }
 
 TEST_F(SubDocTest, MacroUsedInExcludedFile) {

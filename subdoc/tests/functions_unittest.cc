@@ -56,9 +56,9 @@ TEST_F(SubDocTest, FunctionOverloadsNoMerge) {
   ASSERT_TRUE(result.is_ok());
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_TRUE(has_function_comment(db, "2:5",
-                                   "<p>Comment headline 1</p><p>Body 1</p>"));
+                                   "<p>Comment headline 1</p>\n<p>Body 1</p>"));
   EXPECT_TRUE(has_function_comment(db, "7:5",
-                                   "<p>Comment headline 2</p><p>Body 2</p>"));
+                                   "<p>Comment headline 2</p>\n<p>Body 2</p>"));
 }
 
 TEST_F(SubDocTest, FunctionOverloadsMerge) {
