@@ -585,8 +585,8 @@ TEST(i32, From) {
   static_assert(sus::construct::From<i32, i32>);
   static_assert(!sus::construct::From<i32, i64>);
   static_assert(!sus::construct::From<i32, isize>);
-  static_assert(!sus::construct::From<i32, u8>);
-  static_assert(!sus::construct::From<i32, u16>);
+  static_assert(sus::construct::From<i32, u8>);
+  static_assert(sus::construct::From<i32, u16>);
   static_assert(!sus::construct::From<i32, u32>);
   static_assert(!sus::construct::From<i32, u64>);
   static_assert(!sus::construct::From<i32, usize>);
