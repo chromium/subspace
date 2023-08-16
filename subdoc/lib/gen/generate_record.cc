@@ -40,10 +40,13 @@ using SortedFieldByName = sus::Tuple<std::string_view, u32, UniqueSymbol>;
 /// the `FunctionId` (which is not `Ord`).
 constexpr inline std::weak_ordering cmp_functions_by_name(
     const SortedFunctionByName& a, const SortedFunctionByName& b) noexcept {
-  auto ord0 = a.at<0>() <=> b.at<0>();
-  if (ord0 != 0) return ord0;
+  // Primary sort key comes first.
   auto ord1 = a.at<1>() <=> b.at<1>();
   if (ord1 != 0) return ord1;
+  // Then the name.
+  auto ord0 = a.at<0>() <=> b.at<0>();
+  if (ord0 != 0) return ord0;
+  // Then the item sort key (overload set).
   return a.at<2>() <=> b.at<2>();
 }
 
@@ -51,8 +54,10 @@ constexpr inline std::weak_ordering cmp_functions_by_name(
 /// the `UniqueSymbol` (which is not `Ord`).
 constexpr inline std::weak_ordering cmp_fields_by_name(
     const SortedFieldByName& a, const SortedFieldByName& b) noexcept {
+  // Name comes first.
   auto ord0 = a.at<0>() <=> b.at<0>();
   if (ord0 != 0) return ord0;
+  // Then the item sort key.
   return a.at<1>() <=> b.at<1>();
 }
 
@@ -367,7 +372,6 @@ void generate_record(const RecordElement& element,
 
   generate_record_fields(record_div, element, true,
                          sorted_static_fields.as_slice());
-  generate_record_fields(record_div, element, false, sorted_fields.as_slice());
 
   sus::Vec<SortedFunctionByName> sorted_static_methods;
   sus::Vec<SortedFunctionByName> sorted_methods;
@@ -414,6 +418,8 @@ void generate_record(const RecordElement& element,
                           sorted_conversions.as_slice());
   generate_record_methods(record_div, element, NonStaticOperators,
                           sorted_operators.as_slice());
+
+  generate_record_fields(record_div, element, false, sorted_fields.as_slice());
 
   type_ancestors.push(&element);
   for (const auto& [key, subrecord] : element.records) {
