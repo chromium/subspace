@@ -79,17 +79,11 @@ pre {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
 }
-.overview .type-signature .struct {
-    color: rgb(130, 169, 243);
-}
-.overview .type-signature .class {
+.overview .type-signature :is(.struct, .class, .union, .final) {
     color: rgb(125, 231, 235);
 }
-.overview .type-signature .union {
-    color: rgb(132, 229, 173);
-}
 .overview .type-signature .type-name {
-    color: rgb(130, 221, 135);
+    color: rgb(105, 223, 105);
 }
 
 .type .section:is(.fields, .methods) .static {

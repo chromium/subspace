@@ -125,12 +125,16 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
           friendly_record_type_name(element.record_type, false);
       record_type_span.add_class(record_type_name);
       record_type_span.write_text(record_type_name);
-      {
-        auto name_span = type_sig_div.open_span();
-        name_span.add_class("type-name");
-        name_span.write_text(element.name);
-      }
-      if (element.final) record_type_span.write_text("final");
+    }
+    {
+      auto name_span = type_sig_div.open_span();
+      name_span.add_class("type-name");
+      name_span.write_text(element.name);
+    }
+    if (element.final) {
+      auto final_span = type_sig_div.open_span();
+      final_span.add_class("final");
+      final_span.write_text("final");
     }
     if (element.constraints.is_some()) {
       generate_requires_constraints(type_sig_div,
