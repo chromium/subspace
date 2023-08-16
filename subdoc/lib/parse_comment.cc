@@ -20,6 +20,7 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4244)
+#include "third_party/md4c/src/md4c-html.h"
 #include "third_party/md4c/src/md4c.h"
 #pragma warning(pop)
 
@@ -74,6 +75,31 @@ inline std::string summarize_html(std::string_view html) {
 sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
     sus::SliceMut<std::string> lines) noexcept {
   std::ostringstream parsed;
+#define MD4C
+#if defined(MD4C)
+  std::string mdtext = [&]() {
+    std::ostringstream s;
+    for (const auto& line : lines) {
+      s << line << "\n";
+    }
+    return sus::move(s).str();
+  }();
+
+  struct UserData {
+    std::ostringstream& parsed;
+  };
+  UserData data(parsed);
+
+  auto process_output = [](const MD_CHAR* chars, MD_SIZE size, void* v) {
+    auto& data = *reinterpret_cast<UserData*>(v);
+    data.parsed << std::string_view(chars, size);
+  };
+  md_html(mdtext.c_str(), sus::mog<MD_SIZE>(mdtext.size()), process_output, &data,
+          MD_FLAG_NOHTMLBLOCKS | MD_FLAG_NOHTMLSPANS | MD_FLAG_TABLES |
+              MD_FLAG_STRIKETHROUGH,
+          0);
+
+#else
   while (lines.first().is_some() && lines.first().as_value().empty()) {
     lines = lines["1.."_r];
   }
@@ -169,6 +195,7 @@ sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
           ParseCommentError{.message = "Unterminated code ``` block"});
     }
   }
+#endif
   return sus::ok(sus::move(parsed).str());
 }
 
