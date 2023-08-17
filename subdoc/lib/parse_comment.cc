@@ -93,11 +93,12 @@ sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
     }
     return sus::move(s).str();
   }();
-  int result = md_html(mdtext.c_str(), u32::try_from(mdtext.size()).unwrap(),
-                       process_output, &data,
-                       MD_FLAG_NOHTMLBLOCKS | MD_FLAG_NOHTMLSPANS |
-                           MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH,
-                       0);
+  int result =
+      md_html(mdtext.c_str(), u32::try_from(mdtext.size()).unwrap(),
+              process_output, &data,
+              MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_NOHTMLBLOCKS |
+                  MD_FLAG_NOHTMLSPANS | MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH,
+              0);
   if (result != 0)
     return sus::err(ParseCommentError{.message = "Failed to parse markdown"});
   return sus::ok(sus::move(parsed).str());
