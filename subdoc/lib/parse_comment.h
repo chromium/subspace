@@ -23,18 +23,24 @@
 
 namespace subdoc {
 
-struct ParsedComment {
-  DocAttributes attributes;
-  std::string full_comment;
-  std::string summary;
-};
-
 struct ParseCommentError {
   std::string message;
 };
 
-sus::Result<std::string, ParseCommentError>
-parse_comment_markdown_to_html(sus::SliceMut<std::string> lines) noexcept;
+struct ParseMarkdownPageState {
+  std::unordered_map<std::string, u32> self_link_counts;
+};
+
+sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
+    std::string_view text, ParseMarkdownPageState& page_state) noexcept;
+
+/// Grabs the contents of the first non-empty html tag as the summary.
+std::string summarize_html(std::string_view html) noexcept;
+
+struct ParsedComment {
+  DocAttributes attributes;
+  std::string text;
+};
 
 sus::Result<ParsedComment, ParseCommentError> parse_comment(
     clang::ASTContext& ast_cx, const clang::RawComment& raw,

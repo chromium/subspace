@@ -25,6 +25,7 @@ void generate_namespace(const NamespaceElement& element,
                         const Options& options) noexcept;
 
 void generate_namespace_reference(HtmlWriter::OpenLi& li,
-                                  const NamespaceElement& element) noexcept;
+                                  const NamespaceElement& element,
+                                  ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen

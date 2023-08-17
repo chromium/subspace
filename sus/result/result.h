@@ -619,6 +619,51 @@ class [[nodiscard]] Result final {
     return static_cast<State>(state_);
   }
 
+  /// Calls `op` if the result is `Ok`, otherwise returns the `Err` value of
+  /// self.
+  ///
+  ///  This function can be used for control flow based on `Result` values.
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid(TUnlessVoid&&)> AndFn, int&...,
+            class R = std::invoke_result_t<AndFn, TUnlessVoid&&>,
+            class OkType = __private::IsResultType<R>::ok_type,
+            class ErrType = __private::IsResultType<R>::err_type>
+    requires(!std::is_void_v<T> &&  //
+             __private::IsResultType<R>::value)
+  constexpr Result<OkType, ErrType> and_then(AndFn&& op) && noexcept {
+    ::sus::check(state_ != ResultState::IsMoved);
+    switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
+      case ResultState::IsOk:
+        return ::sus::fn::call_once(
+            ::sus::move(op), ::sus::mem::take_and_destruct(
+                                 ::sus::marker::unsafe_fn, storage_.ok_));
+      case ResultState::IsErr:
+        return Result<OkType, ErrType>::with_err(::sus::mem::take_and_destruct(
+            ::sus::marker::unsafe_fn, storage_.err_));
+      case ResultState::IsMoved: break;
+    }
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the
+    // function.
+    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
+  template <::sus::fn::FnOnce<::sus::fn::NonVoid()> AndFn, int&...,
+            class R = std::invoke_result_t<AndFn>,
+            class OkType = __private::IsResultType<R>::ok_type,
+            class ErrType = __private::IsResultType<R>::err_type>
+    requires(std::is_void_v<T> &&  //
+             __private::IsResultType<R>::value)
+  constexpr Result<OkType, ErrType> and_then(AndFn&& op) && noexcept {
+    ::sus::check(state_ != ResultState::IsMoved);
+    switch (::sus::mem::replace(state_, ResultState::IsMoved)) {
+      case ResultState::IsOk: return ::sus::fn::call_once(::sus::move(op));
+      case ResultState::IsErr:
+        return Result<OkType, ErrType>::with_err(::sus::mem::take_and_destruct(
+            ::sus::marker::unsafe_fn, storage_.err_));
+      case ResultState::IsMoved: break;
+    }
+    // SAFETY: The state_ is verified to be Ok or Err at the top of the
+    // function.
+    sus::unreachable_unchecked(::sus::marker::unsafe_fn);
+  }
   /// Converts from `Result<T, E>` to `Option<T>`.
   ///
   /// Converts self into an `Option<T>`, consuming self, and discarding the

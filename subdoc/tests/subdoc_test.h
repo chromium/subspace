@@ -19,6 +19,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/run.h"
 #include "subdoc/tests/cpp_version.h"
 #include "sus/collections/vec.h"
@@ -74,8 +75,8 @@ class SubDocTest : public testing::Test {
   /// Returns if a ctor was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_ctor_comment(const subdoc::Database& db,
-                          std::string_view comment_loc,
-                          std::string_view comment_start) const noexcept {
+                        std::string_view comment_loc,
+                        std::string_view comment_start) const noexcept {
     return verify_comment("method", db.find_ctor_comment(comment_loc),
                           comment_loc, comment_start);
   }
@@ -83,8 +84,8 @@ class SubDocTest : public testing::Test {
   /// Returns if a ctor was found whose comment location ends with
   /// `comment_loc` and whose comment begins with `comment_start`.
   bool has_dtor_comment(const subdoc::Database& db,
-                          std::string_view comment_loc,
-                          std::string_view comment_start) const noexcept {
+                        std::string_view comment_loc,
+                        std::string_view comment_start) const noexcept {
     return verify_comment("method", db.find_dtor_comment(comment_loc),
                           comment_loc, comment_start);
   }
@@ -117,10 +118,11 @@ class SubDocTest : public testing::Test {
                     << comment_loc << "\n";
       return false;
     }
-    if (!element->comment.full().starts_with(comment_start)) {
+    std::string html = element->comment.parsed_full(page_state).unwrap();
+    if (!html.starts_with(comment_start)) {
       ADD_FAILURE() << type << " comment at " << comment_loc
                     << " does not match text. Found:\n"
-                    << element->comment.full() << "\n";
+                    << html << "\n";
       return false;
     }
     return true;
@@ -128,4 +130,5 @@ class SubDocTest : public testing::Test {
 
   subdoc::tests::SubDocCppVersion cpp_version_ =
       subdoc::tests::SubDocCppVersion::Cpp20;
+  mutable subdoc::ParseMarkdownPageState page_state;
 };

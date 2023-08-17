@@ -12,4 +12,4 @@
 	url = https://github.com/martinus/nanobench
 [submodule "third_party/md4c"]
 	path = third_party/md4c
-	url = https://github.com/mity/md4c
+	url = https://github.com/danakj/md4c

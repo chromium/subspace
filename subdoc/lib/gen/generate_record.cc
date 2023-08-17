@@ -25,6 +25,7 @@
 #include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
+#include "subdoc/lib/parse_comment.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/iter/compat_ranges.h"
 #include "sus/prelude.h"
@@ -65,6 +66,7 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
                               const RecordElement& element,
                               sus::Slice<const NamespaceElement*> namespaces,
                               sus::Slice<const RecordElement*> type_ancestors,
+                              ParseMarkdownPageState& page_state,
                               const Options& options) noexcept {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
@@ -150,13 +152,14 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    desc_div.write_html(element.comment.full());
+    desc_div.write_html(element.comment.parsed_full(page_state).unwrap());
   }
 }
 
 void generate_record_fields(HtmlWriter::OpenDiv& record_div,
                             const RecordElement& element, bool static_fields,
-                            sus::Slice<SortedFieldByName> fields) {
+                            sus::Slice<SortedFieldByName> fields,
+                            ParseMarkdownPageState& page_state) {
   if (fields.is_empty()) return;
 
   auto section_div = record_div.open_div();
@@ -237,7 +240,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
         auto desc_div = field_div.open_div();
         desc_div.add_class("description");
         desc_div.add_class("long");
-        desc_div.write_html(fe.comment.full());
+        desc_div.write_html(fe.comment.parsed_full(page_state).unwrap());
       }
     }
   }
@@ -252,7 +255,8 @@ enum MethodType {
 
 void generate_record_methods(HtmlWriter::OpenDiv& record_div,
                              const RecordElement& element, MethodType type,
-                             sus::Slice<SortedFunctionByName> methods) {
+                             sus::Slice<SortedFunctionByName> methods,
+                             ParseMarkdownPageState& page_state) {
   if (methods.is_empty()) return;
 
   auto section_div = record_div.open_div();
@@ -304,7 +308,8 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
         }
         sus::unreachable();
       }();
-      generate_function_long_reference(items_div, func, overload_set);
+      generate_function_long_reference(items_div, func, overload_set,
+                                       page_state);
     }
   }
 }
@@ -316,6 +321,8 @@ void generate_record(const RecordElement& element,
                      sus::Vec<const RecordElement*> type_ancestors,
                      const Options& options) noexcept {
   if (element.hidden()) return;
+
+  ParseMarkdownPageState page_state;
 
   const std::filesystem::path path = construct_html_file_path(
       options.output_root, element.namespace_path.as_slice(),
@@ -353,7 +360,7 @@ void generate_record(const RecordElement& element,
   record_div.add_class("record");
   record_div.add_class(friendly_record_type_name(element.record_type, false));
   generate_record_overview(record_div, element, namespaces, type_ancestors,
-                           options);
+                           page_state, options);
 
   sus::Vec<SortedFieldByName> sorted_static_fields;
   sus::Vec<SortedFieldByName> sorted_fields;
@@ -375,7 +382,7 @@ void generate_record(const RecordElement& element,
   sorted_fields.sort_unstable_by(cmp_fields_by_name);
 
   generate_record_fields(record_div, element, true,
-                         sorted_static_fields.as_slice());
+                         sorted_static_fields.as_slice(), page_state);
 
   sus::Vec<SortedFunctionByName> sorted_static_methods;
   sus::Vec<SortedFunctionByName> sorted_methods;
@@ -415,15 +422,16 @@ void generate_record(const RecordElement& element,
   sorted_operators.sort_unstable_by(cmp_functions_by_name);
 
   generate_record_methods(record_div, element, StaticMethods,
-                          sorted_static_methods.as_slice());
+                          sorted_static_methods.as_slice(), page_state);
   generate_record_methods(record_div, element, NonStaticMethods,
-                          sorted_methods.as_slice());
+                          sorted_methods.as_slice(), page_state);
   generate_record_methods(record_div, element, Conversions,
-                          sorted_conversions.as_slice());
+                          sorted_conversions.as_slice(), page_state);
   generate_record_methods(record_div, element, NonStaticOperators,
-                          sorted_operators.as_slice());
+                          sorted_operators.as_slice(), page_state);
 
-  generate_record_fields(record_div, element, false, sorted_fields.as_slice());
+  generate_record_fields(record_div, element, false, sorted_fields.as_slice(),
+                         page_state);
 
   type_ancestors.push(&element);
   for (const auto& [key, subrecord] : element.records) {
@@ -432,7 +440,8 @@ void generate_record(const RecordElement& element,
 }
 
 void generate_record_reference(HtmlWriter::OpenUl& items_list,
-                               const RecordElement& element) noexcept {
+                               const RecordElement& element,
+                               ParseMarkdownPageState& page_state) noexcept {
   auto item_li = items_list.open_li();
   item_li.add_class("section-item");
 
@@ -464,7 +473,8 @@ void generate_record_reference(HtmlWriter::OpenUl& items_list,
     auto desc_div = item_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    if (element.has_comment()) desc_div.write_html(element.comment.summary());
+    if (element.has_comment())
+      desc_div.write_html(element.comment.parsed_summary(page_state).unwrap());
   }
 }
 

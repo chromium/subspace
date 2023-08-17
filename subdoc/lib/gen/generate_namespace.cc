@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_record.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/parse_comment.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/collections/slice.h"
 #include "sus/prelude.h"
@@ -62,10 +63,11 @@ std::string namespace_display_name(
   return sus::move(out).str();
 }
 
-void generate_namespace_overview(
-    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<const NamespaceElement*> ancestors,
-    const Options& options) {
+void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
+                                 const NamespaceElement& element,
+                                 sus::Slice<const NamespaceElement*> ancestors,
+                                 ParseMarkdownPageState& page_state,
+                                 const Options& options) {
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -109,13 +111,15 @@ void generate_namespace_overview(
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    if (element.has_comment()) desc_div.write_html(element.comment.full());
+    if (element.has_comment())
+      desc_div.write_html(element.comment.parsed_full(page_state).unwrap());
   }
 }
 
-void generate_namespace_references(
-    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
-    sus::Slice<SortedNamespaceByName> namespaces) {
+void generate_namespace_references(HtmlWriter::OpenDiv& namespace_div,
+                                   const NamespaceElement& element,
+                                   sus::Slice<SortedNamespaceByName> namespaces,
+                                   ParseMarkdownPageState& page_state) {
   if (namespaces.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -137,7 +141,8 @@ void generate_namespace_references(
         auto item_li = items_list.open_li();
         item_li.add_class("section-item");
 
-        generate_namespace_reference(item_li, element.namespaces.at(id));
+        generate_namespace_reference(item_li, element.namespaces.at(id),
+                                     page_state);
       }
 
       {
@@ -161,7 +166,8 @@ void generate_namespace_references(
           item_li.add_class("nested");
           item_li.add_class("section-item");
           generate_namespace_reference(
-              item_li, element.namespaces.at(id).namespaces.at(sub_id));
+              item_li, element.namespaces.at(id).namespaces.at(sub_id),
+              page_state);
         }
       }
     }
@@ -171,7 +177,8 @@ void generate_namespace_references(
 void generate_record_references(HtmlWriter::OpenDiv& namespace_div,
                                 const NamespaceElement& element,
                                 sus::Slice<SortedRecordByName> records,
-                                RecordType record_type) {
+                                RecordType record_type,
+                                ParseMarkdownPageState& page_state) {
   if (records.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -198,7 +205,8 @@ void generate_record_references(HtmlWriter::OpenDiv& namespace_div,
     items_list.add_class("item-table");
 
     for (auto&& [name, sort_key, key] : records) {
-      generate_record_reference(items_list, element.records.at(key));
+      generate_record_reference(items_list, element.records.at(key),
+                                page_state);
     }
   }
 }
@@ -211,7 +219,8 @@ enum GenerateFunctionType {
 void generate_function_references(HtmlWriter::OpenDiv& namespace_div,
                                   const NamespaceElement& element,
                                   sus::Slice<SortedFunctionByName> functions,
-                                  GenerateFunctionType type) {
+                                  GenerateFunctionType type,
+                                  ParseMarkdownPageState& page_state) {
   if (functions.is_empty()) return;
 
   auto section_div = namespace_div.open_div();
@@ -240,7 +249,7 @@ void generate_function_references(HtmlWriter::OpenDiv& namespace_div,
         overload_set = 0u;
       prev_name = name;
       generate_function_reference(items_list, element.functions.at(function_id),
-                                  overload_set);
+                                  overload_set, page_state);
     }
   }
 }
@@ -252,6 +261,8 @@ void generate_namespace(const NamespaceElement& element,
                         const Options& options) noexcept {
   if (element.is_empty()) return;
   if (element.hidden()) return;
+
+  ParseMarkdownPageState page_state;
 
   const std::filesystem::path path =
       construct_html_file_path_for_namespace(options.output_root, element);
@@ -265,7 +276,8 @@ void generate_namespace(const NamespaceElement& element,
 
   auto namespace_div = body.open_div();
   namespace_div.add_class("namespace");
-  generate_namespace_overview(namespace_div, element, ancestors, options);
+  generate_namespace_overview(namespace_div, element, ancestors, page_state,
+                              options);
 
   {
     sus::Vec<SortedNamespaceByName> sorted;
@@ -282,7 +294,8 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_references(namespace_div, element, sorted.as_slice());
+    generate_namespace_references(namespace_div, element, sorted.as_slice(),
+                                  page_state);
   }
 
   {
@@ -315,9 +328,9 @@ void generate_namespace(const NamespaceElement& element,
         });
 
     generate_record_references(namespace_div, element, classes.as_slice(),
-                               RecordType::Class);
+                               RecordType::Class, page_state);
     generate_record_references(namespace_div, element, unions.as_slice(),
-                               RecordType::Union);
+                               RecordType::Union, page_state);
   }
 
   {
@@ -347,9 +360,9 @@ void generate_namespace(const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
     generate_function_references(namespace_div, element, sorted_functions,
-                                 GenerateFunctions);
+                                 GenerateFunctions, page_state);
     generate_function_references(namespace_div, element, sorted_operators,
-                                 GenerateOperators);
+                                 GenerateOperators, page_state);
   }
 
   // Recurse into namespaces, records and functions.
@@ -390,7 +403,8 @@ void generate_namespace(const NamespaceElement& element,
 }
 
 void generate_namespace_reference(HtmlWriter::OpenLi& open_li,
-                                  const NamespaceElement& element) noexcept {
+                                  const NamespaceElement& element,
+                                  ParseMarkdownPageState& page_state) noexcept {
   {
     auto item_div = open_li.open_div();
     item_div.add_class("item-name");
@@ -412,7 +426,8 @@ void generate_namespace_reference(HtmlWriter::OpenLi& open_li,
     auto desc_div = open_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    if (element.has_comment()) desc_div.write_html(element.comment.summary());
+    if (element.has_comment())
+      desc_div.write_html(element.comment.parsed_summary(page_state).unwrap());
   }
 }
 

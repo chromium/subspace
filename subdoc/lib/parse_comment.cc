@@ -26,10 +26,7 @@
 
 namespace subdoc {
 
-namespace {
-
-/// Grabs the contents of the first non-empty html tag as the summary.
-inline std::string summarize_html(std::string_view html) {
+std::string summarize_html(std::string_view html) noexcept {
   if (html.empty()) return std::string(html);
 
   bool inside_tag = false;
@@ -70,34 +67,68 @@ inline std::string summarize_html(std::string_view html) {
   return std::string(html);
 }
 
-}  // namespace
-
 sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
-    sus::SliceMut<std::string> lines) noexcept {
+    std::string_view text, ParseMarkdownPageState& page_state) noexcept {
   std::ostringstream parsed;
 
   struct UserData {
     std::ostringstream& parsed;
+    ParseMarkdownPageState& page_state;
   };
-  UserData data(parsed);
+  UserData data(parsed, page_state);
 
   auto process_output = [](const MD_CHAR* chars, MD_SIZE size, void* v) {
-    auto& data = *reinterpret_cast<UserData*>(v);
-    data.parsed << std::string_view(chars, size);
+    auto& userdata = *reinterpret_cast<UserData*>(v);
+    userdata.parsed << std::string_view(chars, size);
+  };
+  auto render_self_link =
+      [](const MD_CHAR* chars, MD_SIZE size, void* v, void* html,
+         void (*render)(void* html, const MD_CHAR* chars, MD_SIZE size)) {
+        auto& userdata = *reinterpret_cast<UserData*>(v);
+
+        std::string mapped(std::string_view(chars, size));
+        auto count = 0_u32;
+        if (auto it = userdata.page_state.self_link_counts.find(mapped);
+            it != userdata.page_state.self_link_counts.end()) {
+          count = it->second;
+        }
+
+        for (char& c : mapped) {
+          if (c == ' ') {
+            c = '-';
+          } else {
+            // SAFETY: The input is a char, so tolower will give a value in the
+            // range of char.
+            c = sus::mog<char>(std::tolower(c));
+          }
+        }
+
+        render(html, mapped.data(), u32::try_from(mapped.size()).unwrap());
+        if (count > 0u) {
+          render(html, "-", 1u);
+          while (count > 0u) {
+            static const char NUMS[] = "0123456789";
+            render(html, NUMS + (count % 10u), 1u);
+            count /= 10u;
+          }
+        }
+      };
+  auto record_self_link = [](const MD_CHAR* chars, MD_SIZE size, void* v) {
+    auto& userdata = *reinterpret_cast<UserData*>(v);
+    auto mapped = std::string(std::string_view(chars, size));
+    if (auto it = userdata.page_state.self_link_counts.find(mapped);
+        it != userdata.page_state.self_link_counts.end()) {
+      it->second += 1u;
+    } else {
+      userdata.page_state.self_link_counts.emplace(sus::move(mapped), 1u);
+    }
   };
 
-  std::string mdtext = [&]() {
-    std::ostringstream s;
-    for (const auto& line : lines) {
-      s << line << "\n";
-    }
-    return sus::move(s).str();
-  }();
   int result =
-      md_html(mdtext.c_str(), u32::try_from(mdtext.size()).unwrap(),
-              process_output, &data,
-              MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_NOHTMLBLOCKS |
-                  MD_FLAG_NOHTMLSPANS | MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH,
+      md_html(text.data(), u32::try_from(text.size()).unwrap(), process_output,
+              render_self_link, record_self_link, &data,
+              MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_NOHTMLSPANS |
+                  MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH,
               0);
   if (result != 0)
     return sus::err(ParseCommentError{.message = "Failed to parse markdown"});
@@ -132,11 +163,9 @@ sus::Result<ParsedComment, ParseCommentError> parse_comment(
       if (text.starts_with("////") || text.starts_with("/***")) break;
       attrs.location = raw.getBeginLoc();
 
-      std::vector<clang::RawComment::CommentLine> lines =
-          raw.getFormattedLines(src_manager, ast_cx.getDiagnostics());
-      auto parsed_lines = sus::Vec<std::string>::with_capacity(lines.size());
-
-      for (const auto& line_ref : lines) {
+      std::ostringstream stream;
+      for (const clang::RawComment::CommentLine& line_ref :
+           raw.getFormattedLines(src_manager, ast_cx.getDiagnostics())) {
         auto line = std::string(line_ref.Text);
 
         // Substitute @doc.self with the name of the type. This also gets
@@ -201,15 +230,14 @@ sus::Result<ParsedComment, ParseCommentError> parse_comment(
           return sus::err(ParseCommentError{.message = m.str()});
         } else {
           // Drop the trailing ' +\' suffix.
-          if (line.ends_with("\\")) line.pop_back();
-          while (line.ends_with(" ")) line.pop_back();
-          parsed_lines.push(sus::move(line));
+          auto v = std::string_view(line);
+          if (v.ends_with("\\")) v = v.substr(0u, v.size() - 1u);
+          while (v.ends_with(" ")) v = v.substr(0u, v.size() - 1u);
+          stream << v << "\n";
         }
       }
 
-      auto parsed = parse_comment_markdown_to_html(parsed_lines);
-      if (parsed.is_err()) return sus::err(sus::move(parsed).unwrap_err());
-      html = sus::move(parsed).unwrap();
+      html = sus::move(stream).str();
       break;
     }
     case clang::RawComment::CommentKind::RCK_OrdinaryBCPL:  // `// Foo`
@@ -221,7 +249,6 @@ sus::Result<ParsedComment, ParseCommentError> parse_comment(
     case clang::RawComment::CommentKind::RCK_Qt:  // `/*! Foo`
       return sus::err(
           ParseCommentError{.message = "Invalid comment format `/*!`"});
-      break;
     case clang::RawComment::CommentKind::RCK_BCPLExcl:  // `//! Foo`
       return sus::err(
           ParseCommentError{.message = "Invalid comment format `//!`"});
@@ -232,9 +259,7 @@ sus::Result<ParsedComment, ParseCommentError> parse_comment(
       return sus::err(ParseCommentError{.message = "Merged comment format?"});
   }
 
-  auto summary = summarize_html(html);
-  return sus::ok(
-      ParsedComment(sus::move(attrs), sus::move(html), sus::move(summary)));
+  return sus::ok(ParsedComment(sus::move(attrs), sus::move(html)));
 }
 
 }  // namespace subdoc
