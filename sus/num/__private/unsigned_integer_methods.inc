@@ -570,7 +570,7 @@ sus_pure constexpr inline _self operator~() const& noexcept {
   return _self(__private::unchecked_not(primitive_value));
 }
 
-/// sus::num::Add<T> trait for unsigned integers.
+/// `sus::num::Add<T>` trait for unsigned integers.
 ///
 /// This operation supports working with primitive unsigned integers that
 /// convert to @doc.self, as well as enums. However enum class is excluded as
