@@ -23,6 +23,7 @@
 #include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
+#include "subdoc/lib/parse_comment.h"
 #include "sus/prelude.h"
 
 namespace subdoc::gen {
@@ -36,26 +37,26 @@ enum Style {
 
 void generate_return_type(HtmlWriter::OpenDiv& div,
                           const FunctionOverload& overload) noexcept {
-  {
+  if (overload.return_type_element.is_some()) {
     auto return_type_link = div.open_a();
     return_type_link.add_class("type-name");
     return_type_link.add_title(overload.return_type_name);
-    if (overload.return_type_element.is_some()) {
-      if (!overload.return_type_element->hidden()) {
-        return_type_link.add_href(
-            construct_html_file_path(
-                std::filesystem::path(),
-                overload.return_type_element->namespace_path.as_slice(),
-                overload.return_type_element->record_path.as_slice(),
-                overload.return_type_element->name)
-                .string());
-      } else {
-        llvm::errs() << "WARNING: Reference to hidden TypeElement "
-                     << overload.return_type_element->name << " in namespace "
-                     << overload.return_type_element->namespace_path;
-      }
+    if (!overload.return_type_element->hidden()) {
+      return_type_link.add_href(
+          construct_html_file_path(
+              std::filesystem::path(),
+              overload.return_type_element->namespace_path.as_slice(),
+              overload.return_type_element->record_path.as_slice(),
+              overload.return_type_element->name)
+              .string());
+    } else {
+      llvm::errs() << "WARNING: Reference to hidden TypeElement "
+                   << overload.return_type_element->name << " in namespace "
+                   << overload.return_type_element->namespace_path;
     }
     return_type_link.write_text(overload.return_short_type_name);
+  } else {
+    div.write_text(overload.return_short_type_name);
   }
 }
 
@@ -66,26 +67,25 @@ void generate_function_params(HtmlWriter::OpenDiv& div,
     for (const auto& [i, p] : overload.parameters.iter().enumerate()) {
       if (i > 0u) div.write_text(", ");
 
-      {
+      if (p.type_element.is_some()) {
         auto one_param_link = div.open_a();
         one_param_link.add_class("type-name");
         one_param_link.add_title(p.type_name);
-        if (p.type_element.is_some()) {
-          if (!p.type_element->hidden()) {
-            one_param_link.add_href(
-                construct_html_file_path(
-                    std::filesystem::path(),
-                    p.type_element->namespace_path.as_slice(),
-                    p.type_element->record_path.as_slice(),
-                    p.type_element->name)
-                    .string());
-          } else {
-            llvm::errs() << "WARNING: Reference to hidden TypeElement "
-                         << p.type_element->name << " in namespace "
-                         << p.type_element->namespace_path;
-          }
+        if (!p.type_element->hidden()) {
+          one_param_link.add_href(construct_html_file_path(
+                                      std::filesystem::path(),
+                                      p.type_element->namespace_path.as_slice(),
+                                      p.type_element->record_path.as_slice(),
+                                      p.type_element->name)
+                                      .string());
+        } else {
+          llvm::errs() << "WARNING: Reference to hidden TypeElement "
+                       << p.type_element->name << " in namespace "
+                       << p.type_element->namespace_path;
         }
         one_param_link.write_text(p.short_type_name);
+      } else {
+        div.write_text(p.short_type_name);
       }
 
       if (!p.parameter_name.empty()) {
@@ -221,6 +221,8 @@ void generate_function(const FunctionElement& element,
                        u32 overload_set, const Options& options) noexcept {
   if (element.hidden()) return;
 
+  ParseMarkdownPageState page_state;
+
   const std::filesystem::path path = construct_html_file_path_for_function(
       options.output_root, element, overload_set);
   std::filesystem::create_directories(path.parent_path());
@@ -331,13 +333,14 @@ void generate_function(const FunctionElement& element,
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    desc_div.write_html(element.comment.full());
+    desc_div.write_html(element.comment.parsed_full(page_state).unwrap());
   }
 }
 
 void generate_function_reference(HtmlWriter::OpenUl& items_list,
                                  const FunctionElement& element,
-                                 u32 overload_set) noexcept {
+                                 u32 overload_set,
+                                 ParseMarkdownPageState& page_state) noexcept {
   auto item_li = items_list.open_li();
   item_li.add_class("section-item");
 
@@ -356,13 +359,14 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
     auto desc_div = item_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    if (element.has_comment()) desc_div.write_html(element.comment.summary());
+    if (element.has_comment())
+      desc_div.write_html(element.comment.parsed_summary(page_state).unwrap());
   }
 }
 
-void generate_function_long_reference(HtmlWriter::OpenDiv& item_div,
-                                      const FunctionElement& element,
-                                      u32 overload_set) noexcept {
+void generate_function_long_reference(
+    HtmlWriter::OpenDiv& item_div, const FunctionElement& element,
+    u32 overload_set, ParseMarkdownPageState& page_state) noexcept {
   {
     auto overload_set_div = item_div.open_div();
     overload_set_div.add_class("overload-set");
@@ -374,7 +378,8 @@ void generate_function_long_reference(HtmlWriter::OpenDiv& item_div,
     auto desc_div = item_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    if (element.has_comment()) desc_div.write_html(element.comment.full());
+    if (element.has_comment())
+      desc_div.write_html(element.comment.parsed_full(page_state).unwrap());
   }
 }
 

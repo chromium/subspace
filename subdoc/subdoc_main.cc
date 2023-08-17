@@ -157,9 +157,11 @@ int main(int argc, const char** argv) {
     auto markdown_file =
         std::ifstream(std::filesystem::path(option_project_md.getValue()));
     if (markdown_file.is_open()) {
+      std::ostringstream stream;
       std::string line;
       while (std::getline(markdown_file, line))
-        run_options.project_overview_markdown.push(sus::clone(line));
+        stream << line;
+      run_options.project_overview_text = sus::move(stream).str();
     }
   }
 

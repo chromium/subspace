@@ -19,6 +19,7 @@
 #include "subdoc/lib/doc_attributes.h"
 #include "subdoc/lib/friendly_names.h"
 #include "subdoc/lib/method_qualifier.h"
+#include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/path.h"
 #include "subdoc/lib/record_type.h"
 #include "subdoc/lib/requires.h"
@@ -35,30 +36,33 @@ namespace subdoc {
 
 struct Comment {
   Comment() = default;
-  Comment(std::string full_html, std::string summary_html,
-          std::string begin_loc, DocAttributes attrs)
-      : full_html(sus::move(full_html)),
-        summary_html(sus::move(summary_html)),
+  Comment(std::string text, std::string begin_loc, DocAttributes attrs)
+      : text(sus::move(text)),
         begin_loc(sus::move(begin_loc)),
         attrs(sus::move(attrs)) {}
 
-  std::string full_html;
-  std::string summary_html;
+  std::string text;
   std::string begin_loc;
   DocAttributes attrs;
 
   void inherit_from(const Comment& source) {
-    full_html = sus::clone(source.full_html);
-    summary_html = sus::clone(source.summary_html);
+    text = sus::clone(source.text);
     attrs = sus::clone(source.attrs);
     // location is not modified.
   }
 
-  std::string_view summary() const& { return summary_html; }
-  std::string_view summary() && = delete;
-
-  std::string_view full() const& { return full_html; }
-  std::string_view full() && = delete;
+  sus::Result<std::string, ParseCommentError> parsed_full(
+      ParseMarkdownPageState& page_state) const noexcept {
+    return parse_comment_markdown_to_html(text, page_state);
+  }
+  sus::Result<std::string, ParseCommentError> parsed_summary(
+      ParseMarkdownPageState& page_state) const noexcept {
+    return parse_comment_markdown_to_html(text, page_state)
+        .and_then(
+            [](std::string s) -> sus::Result<std::string, ParseCommentError> {
+              return sus::ok(summarize_html(sus::move(s)));
+            });
+  }
 };
 
 struct CommentElement {
@@ -78,7 +82,7 @@ struct CommentElement {
   u32 sort_key;
 
   bool has_comment() const {
-    return !comment.full_html.empty() || comment.attrs.inherit.is_some() ||
+    return !comment.text.empty() || comment.attrs.inherit.is_some() ||
            comment.attrs.hidden;
   }
   bool hidden() const { return comment.attrs.hidden; }

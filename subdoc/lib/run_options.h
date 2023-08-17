@@ -56,8 +56,9 @@ struct RunOptions {
   /// things from the AST.
   sus::Option<sus::fn::FnBox<void(clang::ASTContext&)>> on_tu_complete;
   /// The overview markdown which will be applied as the doc comment to the
-  /// global namespace/project overview page.
-  sus::Vec<std::string> project_overview_markdown;
+  /// global namespace/project overview page. This is the raw markdown text, not
+  /// parsed to html yet.
+  std::string project_overview_text;
 };
 
 }  // namespace subdoc

@@ -139,14 +139,14 @@ class IteratorBase {
   constexpr Iterator<std::remove_cvref_t<Item>> auto cloned() && noexcept
     requires(::sus::mem::Clone<Item>);
 
-  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [Lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
     requires(::sus::ops::Ord<ItemT, OtherItem>)
   constexpr std::weak_ordering cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [Lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another with
   /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
@@ -388,7 +388,7 @@ class IteratorBase {
   Iterator<GenR> auto generate(GenFn generator_fn) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// greater than or equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -396,7 +396,7 @@ class IteratorBase {
   constexpr bool ge(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// greater than those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -436,7 +436,7 @@ class IteratorBase {
           const std::remove_reference_t<Item>&)> auto compare) noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// less than or equal to those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -444,7 +444,7 @@ class IteratorBase {
   constexpr bool le(Other&& other) && noexcept;
 
   /// Determines if the elements of this Iterator are
-  /// [lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// less than those of another.
   template <IntoIteratorAny Other, int&...,
             class OtherItem = typename IntoIteratorOutputType<Other>::Item>
@@ -610,7 +610,7 @@ class IteratorBase {
   constexpr Option<Item> nth_back(usize n) noexcept
     requires(DoubleEndedIterator<Iter, Item>);
 
-  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [Lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another.
   ///
   /// The comparison works like short-circuit evaluation, returning a result
@@ -624,7 +624,7 @@ class IteratorBase {
     requires(::sus::ops::PartialOrd<ItemT, OtherItem>)
   constexpr std::partial_ordering partial_cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [Lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another with
   /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,
@@ -885,7 +885,7 @@ class IteratorBase {
   /// of 1 returns every element.
   constexpr Iterator<Item> auto step_by(usize step) && noexcept;
 
-  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [Lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another.
   ///
   /// Strong ordering requires each item being compared that compares equal to
@@ -901,7 +901,7 @@ class IteratorBase {
     requires(::sus::ops::StrongOrd<ItemT, OtherItem>)
   constexpr std::strong_ordering strong_cmp(Other&& other) && noexcept;
 
-  /// [Lexicographically](sus-ops-Ord.html#How-can-I-implement-Ord?)
+  /// [Lexicographically](sus-ops-Ord.html#how-can-i-implement-ord?)
   /// compares the elements of this `Iterator` with those of another with
   /// respect to the specified comparison function.
   template <IntoIteratorAny Other, int&...,

@@ -26,6 +26,7 @@ void generate_record(const RecordElement& element,
                      const Options& options) noexcept;
 
 void generate_record_reference(HtmlWriter::OpenUl& items_list,
-                               const RecordElement& element) noexcept;
+                               const RecordElement& element,
+                               ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen

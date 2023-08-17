@@ -17,6 +17,7 @@
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
+#include "subdoc/lib/parse_comment.h"
 
 namespace subdoc::gen {
 
@@ -25,11 +26,11 @@ void generate_function(const FunctionElement& e,
                        u32 overload_set, const Options& options) noexcept;
 
 void generate_function_reference(HtmlWriter::OpenUl& items_list,
-                                 const FunctionElement& e,
-                                 u32 overload_set) noexcept;
+                                 const FunctionElement& e, u32 overload_set,
+                                 ParseMarkdownPageState& page_state) noexcept;
 
-void generate_function_long_reference(HtmlWriter::OpenDiv& items_list,
-                                      const FunctionElement& e,
-                                      u32 overload_set) noexcept;
+void generate_function_long_reference(
+    HtmlWriter::OpenDiv& items_list, const FunctionElement& e, u32 overload_set,
+    ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen
