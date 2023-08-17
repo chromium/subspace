@@ -240,8 +240,9 @@ struct [[sus_trivial_abi]] uptr final {
 /// Adds a `usize` to a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.add.usize]
-template <class T>
-sus_pure_const constexpr inline T* operator+(T* t, usize offset) {
+template <class T, Unsigned U>
+  requires(std::constructible_from<usize, U>)
+sus_pure_const constexpr inline T* operator+(T* t, U offset) {
   return t + size_t{offset};
 }
 

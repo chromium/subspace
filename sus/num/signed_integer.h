@@ -184,8 +184,9 @@ struct [[sus_trivial_abi]] isize final {
 /// Adds a `isize` to a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.add.isize]
-template <class T>
-sus_pure_const constexpr inline T* operator+(T* t, isize offset) {
+template <class T, Signed S>
+  requires(std::constructible_from<isize, S>)
+sus_pure_const constexpr inline T* operator+(T* t, S offset) {
   return t + ptrdiff_t{offset};
 }
 

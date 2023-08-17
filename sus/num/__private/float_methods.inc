@@ -299,12 +299,12 @@ sus_pure constexpr std::strong_ordering total_cmp(_self other) const& noexcept {
                                           other.primitive_value);
 }
 
-/// sus::num::Neg<@doc.self> trait. */
+/// sus::num::Neg<@doc.self> trait.
 sus_pure constexpr inline _self operator-() const {
   return _self(-primitive_value);
 }
 
-/// sus::num::Add<T> trait for floating point types. */
+/// `sus::num::Add<T>` trait for floating point types.
 /// #[doc.overloads=float.+]
 [[nodiscard]] sus_pure friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
@@ -332,7 +332,7 @@ friend constexpr inline _self operator+(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
-/// sus::num::Sub<T> trait for floating point types. */
+/// sus::num::Sub<T> trait for floating point types.
 /// #[doc.overloads=float.-]
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
@@ -359,8 +359,8 @@ friend constexpr inline _self operator-(_self l, U r) noexcept = delete;
 /// #[doc.overloads=float.-]
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
-friend constexpr inline _self operator-(U l, _self r) noexcept =
-    delete;  /// sus::num::Mul<T> trait for floating point types. */
+friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
+/// sus::num::Mul<T> trait for floating point types.
 /// #[doc.overloads=float.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
@@ -388,7 +388,7 @@ friend constexpr inline _self operator*(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
-/// sus::num::Div<T> trait for floating point types. */
+/// sus::num::Div<T> trait for floating point types.
 /// #[doc.overloads=float./]
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
@@ -415,8 +415,8 @@ friend constexpr inline _self operator/(_self l, U r) noexcept = delete;
 /// #[doc.overloads=float./]
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
-friend constexpr inline _self operator/(U l, _self r) noexcept =
-    delete;  /// sus::num::Rem<T> trait for floating point types. */
+friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
+/// sus::num::Rem<T> trait for floating point types.
 ///
 /// The remainder from the division of two floats.
 ///
@@ -453,23 +453,23 @@ template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 
-/// sus::num::AddAssign<@doc.self> trait. */
+/// sus::num::AddAssign<@doc.self> trait.
 constexpr inline void operator+=(_self r) & noexcept {
   primitive_value += r.primitive_value;
 }
-/// sus::num::SubAssign<@doc.self> trait. */
+/// sus::num::SubAssign<@doc.self> trait.
 constexpr inline void operator-=(_self r) & noexcept {
   primitive_value -= r.primitive_value;
 }
-/// sus::num::MulAssign<@doc.self> trait. */
+/// sus::num::MulAssign<@doc.self> trait.
 constexpr inline void operator*=(_self r) & noexcept {
   primitive_value *= r.primitive_value;
 }
-/// sus::num::DivAssign<@doc.self> trait. */
+/// sus::num::DivAssign<@doc.self> trait.
 constexpr inline void operator/=(_self r) & noexcept {
   primitive_value /= r.primitive_value;
 }
-/// sus::num::RemAssign<@doc.self> trait. */
+/// sus::num::RemAssign<@doc.self> trait.
 ///
 /// Assigns the remainder from the division of two floats.
 ///
