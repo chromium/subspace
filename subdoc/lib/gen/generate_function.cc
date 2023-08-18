@@ -151,17 +151,18 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
     {
       auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
       signature_div.add_class("function-signature");
-      if (!overload.template_params.is_empty()) {
-        auto template_div = signature_div.open_div(HtmlWriter::SingleLine);
-        template_div.add_class("template");
-        template_div.write_text("template <");
-        for (const auto& [i, s] : overload.template_params.iter().enumerate()) {
-          if (i > 0u) template_div.write_text(", ");
-          template_div.write_text(s);
-        }
-        template_div.write_text(">");
-      }
       if (style == StyleLong || style == StyleLongWithConstraints) {
+        if (!overload.template_params.is_empty()) {
+          auto template_div = signature_div.open_div(HtmlWriter::SingleLine);
+          template_div.add_class("template");
+          template_div.write_text("template <");
+          for (const auto& [i, s] :
+               overload.template_params.iter().enumerate()) {
+            if (i > 0u) template_div.write_text(", ");
+            template_div.write_text(s);
+          }
+          template_div.write_text(">");
+        }
         if (is_static) {
           auto static_span = signature_div.open_span(HtmlWriter::SingleLine);
           static_span.add_class("static");
@@ -292,6 +293,8 @@ void generate_function(const FunctionElement& element,
             case CppPathNamespace: return "namespace-name";
             case CppPathRecord: return "type-name";
             case CppPathFunction: return "function-name";
+            case CppPathConcept:
+              break;  // Concept can't be an ancestor of a function.
           }
           sus::unreachable();
         }());

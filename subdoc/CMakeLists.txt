@@ -18,6 +18,8 @@ target_sources(subdoc_lib PUBLIC
     "lib/gen/files.h"
     "lib/gen/generate_cpp_path.cc"
     "lib/gen/generate_cpp_path.h"
+    "lib/gen/generate_concept.cc"
+    "lib/gen/generate_concept.h"
     "lib/gen/generate_function.cc"
     "lib/gen/generate_function.h"
     "lib/gen/generate_head.cc"
