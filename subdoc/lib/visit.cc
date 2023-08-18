@@ -298,7 +298,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
     // We only visit static data members, so the context is a record.
     auto* record_decl = clang::cast<clang::RecordDecl>(decl->getDeclContext());
-    Comment comment = make_db_comment(decl->getASTContext(), raw_comment, record_decl->getName());
+    Comment comment = make_db_comment(decl->getASTContext(), raw_comment,
+                                      record_decl->getName());
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
         std::string(decl->getName()), decl->getType(),
@@ -309,6 +310,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
         FieldElement::Static,
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
+    fe.type_element = docs_db_.find_type(decl->getType());
 
     if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
             clang::cast<clang::RecordDecl>(decl->getDeclContext()));

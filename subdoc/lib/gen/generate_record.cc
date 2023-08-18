@@ -203,26 +203,26 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
           field_type_span.add_class("volatile");
           field_type_span.write_text("volatile");
         }
-        {
+        if (fe.type_element.is_some()) {
           auto field_type_link = name_div.open_a();
           field_type_link.add_class("type-name");
           field_type_link.add_title(fe.type_name);
-          if (fe.type_element.is_some()) {
-            if (!fe.hidden()) {
-              field_type_link.add_href(
-                  construct_html_file_path(
-                      std::filesystem::path(),
-                      fe.type_element->namespace_path.as_slice(),
-                      fe.type_element->record_path.as_slice(),
-                      fe.type_element->name)
-                      .string());
-            } else {
-              llvm::errs() << "WARNING: Reference to hidden FieldElement "
-                           << fe.name << " in record " << element.name
-                           << " in namespace " << element.namespace_path;
-            }
+          if (!fe.hidden()) {
+            field_type_link.add_href(
+                construct_html_file_path(
+                    std::filesystem::path(),
+                    fe.type_element->namespace_path.as_slice(),
+                    fe.type_element->record_path.as_slice(),
+                    fe.type_element->name)
+                    .string());
+          } else {
+            llvm::errs() << "WARNING: Reference to hidden FieldElement "
+                         << fe.name << " in record " << element.name
+                         << " in namespace " << element.namespace_path;
           }
           field_type_link.write_text(fe.short_type_name);
+        } else {
+          name_div.write_text(fe.short_type_name);
         }
         {
           auto field_name_anchor = name_div.open_a();
