@@ -191,7 +191,7 @@ struct FieldElement : public CommentElement {
                         Comment comment, std::string name,
                         clang::QualType qual_type,
                         sus::Vec<std::string> record_path, StaticType is_static,
-                        u32 sort_key)
+                        sus::Vec<std::string> template_params, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
         record_path(sus::move(record_path)),
@@ -199,7 +199,8 @@ struct FieldElement : public CommentElement {
         short_type_name(friendly_short_type_name(qual_type)),
         is_const(qual_type.getQualifiers().hasConst()),
         is_volatile(qual_type.getQualifiers().hasVolatile()),
-        is_static(is_static) {}
+        is_static(is_static),
+        template_params(sus::move(template_params)) {}
 
   sus::Vec<std::string> record_path;
   sus::Option<const TypeElement&> type_element;
@@ -208,6 +209,7 @@ struct FieldElement : public CommentElement {
   bool is_const;
   bool is_volatile;
   StaticType is_static;
+  sus::Vec<std::string> template_params;
 
   bool has_any_comments() const noexcept { return has_comment(); }
 
