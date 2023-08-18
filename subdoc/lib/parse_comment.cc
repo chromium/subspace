@@ -127,8 +127,9 @@ sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
   int result =
       md_html(text.data(), u32::try_from(text.size()).unwrap(), process_output,
               render_self_link, record_self_link, &data,
-              MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_NOHTMLSPANS |
-                  MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH,
+              MD_FLAG_HEADERSELFLINKS | MD_FLAG_PERMISSIVEAUTOLINKS |
+                  MD_FLAG_NOHTMLBLOCKS | MD_FLAG_NOHTMLSPANS | MD_FLAG_TABLES |
+                  MD_FLAG_STRIKETHROUGH,
               0);
   if (result != 0)
     return sus::err(ParseCommentError{.message = "Failed to parse markdown"});
