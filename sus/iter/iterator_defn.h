@@ -126,6 +126,8 @@ class IteratorBase {
   ///
   /// `sus::iter::Once` is commonly used to adapt a single value into a chain of
   /// other kinds of iteration.
+  // TODO: Shouldn't chain() allow any iterator of *convertible to T* instead
+  // just iterator of *T*?
   template <IntoIterator<ItemT> Other>
   constexpr Iterator<Item> auto chain(Other&& other) && noexcept;
 
@@ -775,8 +777,8 @@ class IteratorBase {
   /// value, starting from the back.
   ///
   /// This is the reverse version of
-  /// [`Iterator::fold()`](sus-iter-IteratorBase.html#method.fold): it takes elements
-  /// starting from the back of the iterator.
+  /// [`Iterator::fold()`](sus-iter-IteratorBase.html#method.fold): it takes
+  /// elements starting from the back of the iterator.
   ///
   /// `rfold()` takes two arguments: an initial value, and a closure with two
   /// arguments: an "accumulator", and an element. The closure returns the value
@@ -1025,8 +1027,8 @@ class IteratorBase {
   constexpr R try_fold(B init, F f) noexcept;
 
   /// This is the reverse version of
-  /// [`Iterator::try_fold()`](sus-iter-IteratorBase.html#method.try_fold): it takes
-  /// elements starting from the back of the iterator.
+  /// [`Iterator::try_fold()`](sus-iter-IteratorBase.html#method.try_fold): it
+  /// takes elements starting from the back of the iterator.
   template <class B, ::sus::fn::FnMut<::sus::fn::NonVoid(B, ItemT)> F, int&...,
             class R = std::invoke_result_t<F&, B&&, ItemT&&>>
     requires(DoubleEndedIterator<Iter, ItemT> &&  //

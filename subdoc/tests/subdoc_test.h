@@ -114,15 +114,15 @@ class SubDocTest : public testing::Test {
                       std::string_view comment_loc,
                       std::string_view comment_start) const noexcept {
     if (element.is_none()) {
-      ADD_FAILURE() << "Unable to find " << type << " comment at "
-                    << comment_loc << "\n";
+      llvm::errs() << "Unable to find " << type << " comment at " << comment_loc
+                   << "\n";
       return false;
     }
     std::string html = element->comment.parsed_full(page_state).unwrap();
     if (!html.starts_with(comment_start)) {
-      ADD_FAILURE() << type << " comment at " << comment_loc
-                    << " does not match text. Found:\n"
-                    << html << "\n";
+      llvm::errs() << type << " comment at " << comment_loc
+                   << " does not match text. Found:\n"
+                   << html << "\n";
       return false;
     }
     return true;
