@@ -119,6 +119,8 @@ target_link_libraries(subdoc subdoc::lib)
 if(${SUBSPACE_BUILD_TESTS})
     add_executable(subdoc_unittests
         "gen_tests/gen_tests.cc"
+        "tests/access_unittest.cc"
+        "tests/cpp_version.h"
         "tests/fields_unittest.cc"
         "tests/functions_unittest.cc"
         "tests/include_exclude_unittest.cc"

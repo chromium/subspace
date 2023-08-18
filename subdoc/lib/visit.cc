@@ -26,6 +26,9 @@
 #include "subdoc/lib/unique_symbol.h"
 #include "sus/assertions/check.h"
 #include "sus/assertions/unreachable.h"
+#include "sus/iter/compat_ranges.h"
+#include "sus/iter/iterator.h"
+#include "sus/iter/once.h"
 #include "sus/mem/swap.h"
 #include "sus/ops/ord.h"
 #include "sus/prelude.h"
@@ -76,7 +79,7 @@ static bool should_skip_decl(VisitCx& cx, clang::Decl* decl) {
   return false;
 }
 
-static clang::RawComment* get_raw_comment(clang::Decl* decl) {
+static clang::RawComment* get_raw_comment(const clang::Decl* decl) {
   return decl->getASTContext().getRawCommentForDeclNoCache(decl);
 }
 
@@ -99,7 +102,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    Comment comment = make_db_comment(decl, raw_comment, "");
+    Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
     auto ne =
         NamespaceElement(iter_namespace_path(decl).collect_vec(),
                          sus::move(comment), decl->getNameAsString(),
@@ -198,7 +201,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       }
     }
 
-    Comment comment = make_db_comment(decl, raw_comment, decl->getName());
+    Comment comment =
+        make_db_comment(decl->getASTContext(), raw_comment, decl->getName());
     auto re = RecordElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
         decl->getNameAsString(),
@@ -247,14 +251,19 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitFieldDecl(clang::FieldDecl* decl) noexcept {
+    // Private data members are not shown, protected methods are not either. If
+    // they become public in a subclass they would be shown there.
+    if (decl->getAccess() == clang::AS_protected ||
+        decl->getAccess() == clang::AS_private)
+      return true;
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
     clang::RecordDecl* record_decl =
         clang::cast<clang::RecordDecl>(decl->getDeclContext());
 
-    Comment comment =
-        make_db_comment(decl, raw_comment, record_decl->getName());
+    Comment comment = make_db_comment(decl->getASTContext(), raw_comment,
+                                      record_decl->getName());
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
         std::string(decl->getName()), decl->getType(),
@@ -279,11 +288,15 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // Static data members are represented as VarDecl, not FieldDecl. So we
     // visit VarDecls but only for them.
     if (!decl->isStaticDataMember()) return true;
-
+    // Private data members are not shown, protected methods are not either. If
+    // they become public in a subclass they would be shown there.
+    if (decl->getAccess() == clang::AS_protected ||
+        decl->getAccess() == clang::AS_private)
+      return true;
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    Comment comment = make_db_comment(decl, raw_comment, "");
+    Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
     auto* record_decl = clang::cast<clang::RecordDecl>(decl->getDeclContext());
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
@@ -329,9 +342,17 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
+    // A template instantiation fills in concrete types for a templated
+    // function. For documentation, we want to show the template at its
+    // declaration, we are not interested in instantiations where it gets used.
     if (decl->isTemplateInstantiation()) return true;
+    // Private functions are not shown, protected methods either. If they become
+    // public in a subclass they would be shown there.
+    if (decl->getAccess() == clang::AS_protected ||
+        decl->getAccess() == clang::AS_private) {
+      return true;
+    }
     if (should_skip_decl(cx_, decl)) return true;
-    clang::RawComment* raw_comment = get_raw_comment(decl);
 
     // TODO: Save the linkage spec (`extern "C"`) so we can show it.
     clang::DeclContext* context = decl->getDeclContext();
@@ -393,90 +414,105 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (map_and_self_name.is_some()) {
       auto&& [map, self_name] = sus::move(map_and_self_name).unwrap();
 
-      Comment comment = make_db_comment(decl, raw_comment, self_name);
+      auto add_function_with_comment =
+          [&](const clang::RawComment* raw_comment) {
+            Comment comment =
+                make_db_comment(decl->getASTContext(), raw_comment, self_name);
 
-      auto params =
-          sus::Vec<FunctionParameter>::with_capacity(decl->parameters().size());
-      for (const clang::ParmVarDecl* v : decl->parameters()) {
-        params.emplace(docs_db_.find_type(v->getOriginalType()),
-                       sus::none(),  // TODO: `v->getDefaultArg()`
-                       friendly_type_name(v->getOriginalType()),
-                       friendly_short_type_name(v->getOriginalType()),
-                       v->getNameAsString());
+            auto params = sus::Vec<FunctionParameter>::with_capacity(
+                decl->parameters().size());
+            for (const clang::ParmVarDecl* v : decl->parameters()) {
+              params.emplace(docs_db_.find_type(v->getOriginalType()),
+                             sus::none(),  // TODO: `v->getDefaultArg()`
+                             friendly_type_name(v->getOriginalType()),
+                             friendly_short_type_name(v->getOriginalType()),
+                             v->getNameAsString());
+            }
+
+            sus::Option<RequiresConstraints> constraints;
+            if (clang::FunctionTemplateDecl* tmpl =
+                    decl->getDescribedFunctionTemplate()) {
+              llvm::SmallVector<const clang::Expr*> assoc;
+              tmpl->getAssociatedConstraints(assoc);
+              for (const clang::Expr* e : assoc) {
+                requires_constraints_add_expr(
+                    constraints.get_or_insert_default(), decl->getASTContext(),
+                    preprocessor_, e);
+              }
+            } else {
+              llvm::SmallVector<const clang::Expr*> assoc;
+              decl->getAssociatedConstraints(assoc);
+              for (const clang::Expr* e : assoc) {
+                requires_constraints_add_expr(
+                    constraints.get_or_insert_default(), decl->getASTContext(),
+                    preprocessor_, e);
+              }
+            }
+
+            auto fe = FunctionElement(
+                iter_namespace_path(decl).collect_vec(), sus::move(comment),
+                decl->getNameAsString(), decl->isOverloadedOperator(),
+                decl->getReturnType(), sus::move(constraints),
+                decl->isDeleted(), sus::move(params),
+                decl->getASTContext().getSourceManager().getFileOffset(
+                    decl->getLocation()));
+            fe.overloads[0u].return_type_element =
+                docs_db_.find_type(decl->getReturnType());
+
+            if (clang::isa<clang::CXXMethodDecl>(decl)) {
+              sus::check(clang::isa<clang::RecordDecl>(context));
+
+              // TODO: It's possible to overload a method in a base class. What
+              // should we show then? Let's show protected virtual methods just
+              // in the classes where they are public, so we need to include
+              // them in subclasses.
+
+              if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
+                      clang::cast<clang::RecordDecl>(context));
+                  parent.is_some()) {
+                auto* mdecl = clang::cast<clang::CXXMethodDecl>(decl);
+                fe.overloads[0u].method = sus::some(MethodSpecific{
+                    .is_static = mdecl->isStatic(),
+                    .is_volatile = mdecl->isVolatile(),
+                    .is_virtual = mdecl->isVirtual(),
+                    .is_ctor = clang::isa<clang::CXXConstructorDecl>(decl),
+                    .is_dtor = clang::isa<clang::CXXDestructorDecl>(decl),
+                    .is_conversion = clang::isa<clang::CXXConversionDecl>(decl),
+                    .qualifier =
+                        [mdecl]() {
+                          switch (mdecl->getRefQualifier()) {
+                            case clang::RQ_None:
+                              if (mdecl->isConst())
+                                return MethodQualifier::Const;
+                              else
+                                return MethodQualifier::Mutable;
+                            case clang::RQ_LValue:
+                              if (mdecl->isConst())
+                                return MethodQualifier::ConstLValue;
+                              else
+                                return MethodQualifier::MutableLValue;
+                            case clang::RQ_RValue:
+                              if (mdecl->isConst())
+                                return MethodQualifier::ConstRValue;
+                              else
+                                return MethodQualifier::MutableRValue;
+                          }
+                          sus::unreachable();
+                        }(),
+                });
+              }
+            }
+            add_function_overload_to_db(decl, sus::move(fe), map);
+          };
+
+      add_function_with_comment(get_raw_comment(decl));
+      // We look for comments on this function and any overridden methods.
+      if (const auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl)) {
+        for (const clang::RawComment* raw_comment :
+             sus::iter::from_range(mdecl->overridden_methods())
+                 .map(get_raw_comment))
+          add_function_with_comment(raw_comment);
       }
-
-      sus::Option<RequiresConstraints> constraints;
-      if (clang::FunctionTemplateDecl* tmpl =
-              decl->getDescribedFunctionTemplate()) {
-        llvm::SmallVector<const clang::Expr*> assoc;
-        tmpl->getAssociatedConstraints(assoc);
-        for (const clang::Expr* e : assoc) {
-          requires_constraints_add_expr(constraints.get_or_insert_default(),
-                                        decl->getASTContext(), preprocessor_,
-                                        e);
-        }
-      } else {
-        llvm::SmallVector<const clang::Expr*> assoc;
-        decl->getAssociatedConstraints(assoc);
-        for (const clang::Expr* e : assoc) {
-          requires_constraints_add_expr(constraints.get_or_insert_default(),
-                                        decl->getASTContext(), preprocessor_,
-                                        e);
-        }
-      }
-
-      auto fe = FunctionElement(
-          iter_namespace_path(decl).collect_vec(), sus::move(comment),
-          decl->getNameAsString(), decl->isOverloadedOperator(),
-          decl->getReturnType(), sus::move(constraints), decl->isDeleted(),
-          sus::move(params),
-          decl->getASTContext().getSourceManager().getFileOffset(
-              decl->getLocation()));
-      fe.overloads[0u].return_type_element =
-          docs_db_.find_type(decl->getReturnType());
-
-      if (clang::isa<clang::CXXMethodDecl>(decl)) {
-        sus::check(clang::isa<clang::RecordDecl>(context));
-
-        // TODO: It's possible to overload a method in a base class. What should
-        // we show then?
-
-        if (sus::Option<RecordElement&> parent = docs_db_.find_record_mut(
-                clang::cast<clang::RecordDecl>(context));
-            parent.is_some()) {
-          auto* mdecl = clang::cast<clang::CXXMethodDecl>(decl);
-          fe.overloads[0u].method = sus::some(MethodSpecific{
-              .is_static = mdecl->isStatic(),
-              .is_volatile = mdecl->isVolatile(),
-              .is_virtual = mdecl->isVirtual(),
-              .is_ctor = clang::isa<clang::CXXConstructorDecl>(decl),
-              .is_dtor = clang::isa<clang::CXXDestructorDecl>(decl),
-              .is_conversion = clang::isa<clang::CXXConversionDecl>(decl),
-              .qualifier =
-                  [mdecl]() {
-                    switch (mdecl->getRefQualifier()) {
-                      case clang::RQ_None:
-                        if (mdecl->isConst())
-                          return MethodQualifier::Const;
-                        else
-                          return MethodQualifier::Mutable;
-                      case clang::RQ_LValue:
-                        if (mdecl->isConst())
-                          return MethodQualifier::ConstLValue;
-                        else
-                          return MethodQualifier::MutableLValue;
-                      case clang::RQ_RValue:
-                        if (mdecl->isConst())
-                          return MethodQualifier::ConstRValue;
-                        else
-                          return MethodQualifier::MutableRValue;
-                    }
-                    sus::unreachable();
-                  }(),
-          });
-        }
-      }
-      add_function_overload_to_db(decl, sus::move(fe), map);
     }
     return true;
   }
@@ -591,16 +627,17 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
   }
 
-  Comment make_db_comment(clang::Decl* decl, const clang::RawComment* raw,
+  Comment make_db_comment(clang::ASTContext& ast_cx,
+                          const clang::RawComment* raw,
                           std::string_view self_name) noexcept {
-    auto& ast_cx = decl->getASTContext();
     auto& src_manager = ast_cx.getSourceManager();
     if (raw) {
       sus::Result<ParsedComment, ParseCommentError> comment_result =
           parse_comment(ast_cx, *raw, self_name);
       if (comment_result.is_ok()) {
         auto&& [attrs, text] = sus::move(comment_result).unwrap();
-        return Comment(sus::move(text), raw->getBeginLoc().printToString(src_manager),
+        return Comment(sus::move(text),
+                       raw->getBeginLoc().printToString(src_manager),
                        sus::move(attrs));
       }
       ast_cx.getDiagnostics()
