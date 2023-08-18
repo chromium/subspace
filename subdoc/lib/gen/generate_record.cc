@@ -228,7 +228,6 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
           auto field_name_anchor = name_div.open_a();
           std::ostringstream anchor;
           anchor << "field.";
-          anchor << (static_fields ? "static." : "");
           anchor << fe.name;
           field_name_anchor.add_name(anchor.str());
           field_name_anchor.add_href(std::string("#") + anchor.str());
