@@ -19,7 +19,7 @@ pre, pre > code {
     margin-bottom: 1em;
     font-weight: bold;
 }
-:is(.fields, .functions, .methods, .records, .namespaces) .section-header {
+:is(.fields, .functions, .methods, .records, .concepts, .namespaces) .section-header {
     padding-bottom: 0.2em;
     border-bottom: 1px solid;
 }
@@ -93,7 +93,7 @@ code {
 .overview .type-signature :is(.struct, .class, .union, .final) {
     color: rgb(125, 231, 235);
 }
-.overview .type-signature .type-name {
+.overview .type-signature :is(.type-name) {
     color: rgb(105, 223, 105);
 }
 
@@ -116,7 +116,16 @@ code {
 .overview .section-header a:hover {
     text-decoration: underline;
 }
+.overview .section-header .project-name {
+    color: rgb(207, 66, 184);
+}
+.overview .section-header .namespace-name {
+    color: rgb(142, 214, 236);
+}
 .overview .section-header .type-name {
+    color: rgb(166, 240, 176);
+}
+.overview .section-header .concept-name {
     color: rgb(166, 240, 176);
 }
 
@@ -137,6 +146,13 @@ a.function-name {
 a.function-name:hover {
     text-decoration: underline;
 }
+a.namespace-name {
+    text-decoration: none;
+    color: rgb(142, 214, 236);
+}
+a.namespace-name:hover {
+    text-decoration: underline;
+}
 a.type-name {
     text-decoration: none;
     color: rgb(142, 201, 236);
@@ -149,20 +165,6 @@ a.field-name {
     color: rgb(142, 201, 236);
 }
 a.field-name:hover {
-    text-decoration: underline;
-}
-a.project-name {
-    text-decoration: none;
-    color: rgb(207, 66, 184);
-}
-a.project-name:hover {
-    text-decoration: underline;
-}
-a.namespace-name {
-    text-decoration: none;
-    color: rgb(142, 214, 236);
-}
-a.namespace-name:hover {
     text-decoration: underline;
 }
 

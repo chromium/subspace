@@ -21,13 +21,11 @@
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
-#include "subdoc/lib/gen/generate_namespace.h"
 #include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/options.h"
 #include "subdoc/lib/parse_comment.h"
 #include "sus/assertions/unreachable.h"
-#include "sus/iter/compat_ranges.h"
 #include "sus/prelude.h"
 
 namespace subdoc::gen {
@@ -99,7 +97,8 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
             case CppPathProject: return "project-name";
             case CppPathNamespace: return "namespace-name";
             case CppPathRecord: return "type-name";
-            case CppPathFunction: sus::unreachable();
+            case CppPathFunction: break;  // Function can't be an ancesor of a record.
+            case CppPathConcept: break;  // Concept can't be an ancestor of a record.
           }
           sus::unreachable();
         }());

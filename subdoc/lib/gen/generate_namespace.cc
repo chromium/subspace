@@ -17,6 +17,7 @@
 #include <filesystem>
 
 #include "subdoc/lib/gen/files.h"
+#include "subdoc/lib/gen/generate_concept.h"
 #include "subdoc/lib/gen/generate_cpp_path.h"
 #include "subdoc/lib/gen/generate_function.h"
 #include "subdoc/lib/gen/generate_head.h"
@@ -32,6 +33,7 @@ namespace subdoc::gen {
 namespace {
 
 using SortedNamespaceByName = sus::Tuple<std::string_view, u32, NamespaceId>;
+using SortedConceptByName = sus::Tuple<std::string_view, u32, ConceptId>;
 using SortedFunctionByName = sus::Tuple<std::string_view, u32, FunctionId>;
 using SortedRecordByName = sus::Tuple<std::string_view, u32, RecordId>;
 
@@ -98,7 +100,10 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
             case CppPathProject: return "project-name";
             case CppPathNamespace: return "namespace-name";
             case CppPathRecord: return "type-name";
-            case CppPathFunction: sus::unreachable();
+            case CppPathFunction:
+              break;  // Function can't be an ancesor of a record.
+            case CppPathConcept:
+              break;  // Concept can't be an ancestor of a namespace.
           }
           sus::unreachable();
         }());
@@ -170,6 +175,33 @@ void generate_namespace_references(HtmlWriter::OpenDiv& namespace_div,
               page_state);
         }
       }
+    }
+  }
+}
+
+void generate_concept_references(HtmlWriter::OpenDiv& namespace_div,
+                                 const NamespaceElement& element,
+                                 sus::Slice<SortedConceptByName> concepts,
+                                 ParseMarkdownPageState& page_state) {
+  if (concepts.is_empty()) return;
+
+  auto section_div = namespace_div.open_div();
+  section_div.add_class("section");
+  section_div.add_class("concepts");
+
+  {
+    auto header_div = section_div.open_div();
+    header_div.add_class("section-header");
+    header_div.write_text("Concepts");
+  }
+  {
+    auto items_list = section_div.open_ul();
+    items_list.add_class("section-items");
+    items_list.add_class("item-table");
+
+    for (auto&& [name, sort_key, key] : concepts) {
+      generate_concept_reference(items_list, element.concepts.at(key),
+                                 page_state);
     }
   }
 }
@@ -365,11 +397,32 @@ void generate_namespace(const NamespaceElement& element,
                                  GenerateOperators, page_state);
   }
 
-  // Recurse into namespaces, records and functions.
+  {
+    sus::Vec<SortedConceptByName> concepts;
+    for (const auto& [key, sub_element] : element.concepts) {
+      if (sub_element.hidden()) continue;
+
+      concepts.push(sus::tuple(sub_element.name, sub_element.sort_key, key));
+    }
+    concepts.sort_unstable_by(
+        [](const SortedConceptByName& a, const SortedConceptByName& b) {
+          auto ord = a.at<0>() <=> b.at<0>();
+          if (ord != 0) return ord;
+          return a.at<1>() <=> b.at<1>();
+        });
+    generate_concept_references(namespace_div, element, concepts.as_slice(),
+                                page_state);
+  }
+
+  // Recurse into namespaces, concepts, records and functions.
   ancestors.push(&element);
   for (const auto& [u, sub_element] : element.namespaces) {
     if (sub_element.hidden()) continue;
     generate_namespace(sub_element, sus::clone(ancestors), options);
+  }
+  for (const auto& [u, sub_element] : element.concepts) {
+    if (sub_element.hidden()) continue;
+    generate_concept(sub_element, ancestors, options);
   }
   for (const auto& [u, sub_element] : element.records) {
     if (sub_element.hidden()) continue;

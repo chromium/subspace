@@ -181,6 +181,32 @@ struct FunctionElement : public CommentElement {
   void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
 };
 
+struct ConceptElement : public CommentElement {
+  explicit ConceptElement(sus::Vec<Namespace> containing_namespaces,
+                          Comment comment, std::string name,
+                          sus::Vec<std::string> template_params,
+                          RequiresConstraints constraints, u32 sort_key)
+      : CommentElement(sus::move(containing_namespaces), sus::move(comment),
+                       sus::move(name), sort_key),
+        template_params(sus::move(template_params)),
+        constraints(sus::move(constraints)) {}
+
+  sus::Vec<std::string> template_params;
+  RequiresConstraints constraints;
+
+  bool has_any_comments() const noexcept { return has_comment(); }
+
+  sus::Option<const CommentElement&> find_comment(
+      std::string_view comment_loc) const noexcept {
+    if (comment.begin_loc.ends_with(comment_loc))
+      return sus::some(*this);
+    else
+      return sus::none();
+  }
+
+  void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
+};
+
 struct FieldElement : public CommentElement {
   enum StaticType {
     Static,
@@ -222,6 +248,20 @@ struct FieldElement : public CommentElement {
   }
 
   void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
+};
+
+struct ConceptId {
+  explicit ConceptId(std::string name) : name(sus::move(name)) {}
+
+  std::string name;
+
+  bool operator==(const ConceptId&) const = default;
+
+  struct Hash {
+    std::size_t operator()(const ConceptId& k) const {
+      return std::hash<std::string>()(k.name);
+    }
+  };
 };
 
 struct NamespaceId {
@@ -425,6 +465,7 @@ struct NamespaceElement : public CommentElement {
         namespace_name(namespace_path[0u]) {}
 
   Namespace namespace_name;
+  std::unordered_map<ConceptId, ConceptElement, ConceptId::Hash> concepts;
   std::unordered_map<NamespaceId, NamespaceElement, NamespaceId::Hash>
       namespaces;
   std::unordered_map<RecordId, RecordElement, RecordId::Hash> records;
@@ -436,6 +477,9 @@ struct NamespaceElement : public CommentElement {
 
   bool has_any_comments() const noexcept {
     if (has_comment()) return true;
+    for (const auto& [u, e] : concepts) {
+      if (e.has_any_comments()) return true;
+    }
     for (const auto& [u, e] : namespaces) {
       if (e.has_any_comments()) return true;
     }
@@ -446,6 +490,20 @@ struct NamespaceElement : public CommentElement {
       if (e.has_any_comments()) return true;
     }
     return false;
+  }
+
+  sus::Option<const CommentElement&> find_concept_comment(
+      std::string_view comment_loc) const noexcept {
+    sus::Option<const CommentElement&> out;
+    for (const auto& [u, e] : concepts) {
+      out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    for (const auto& [u, e] : namespaces) {
+      out = e.find_concept_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    return out;
   }
 
   sus::Option<const CommentElement&> find_record_comment(
@@ -540,6 +598,10 @@ struct NamespaceElement : public CommentElement {
 
 inline NamespaceId key_for_namespace(clang::NamespaceDecl* decl) noexcept {
   return NamespaceId(decl->getNameAsString());
+}
+
+inline ConceptId key_for_concept(clang::ConceptDecl* decl) noexcept {
+  return ConceptId(decl->getNameAsString());
 }
 
 inline FunctionId key_for_function(clang::FunctionDecl* decl,
@@ -853,6 +915,17 @@ struct Database {
     return sus::move(ne).and_then(
         [&](NamespaceElement& e) { return find_record_mut_impl(rdecl, e); });
   }
+
+  /// Finds a comment whose location ends with the `comment_loc` suffix.
+  ///
+  /// The suffix can be used to look for the line:column and ignore the
+  /// filename in the comment location format `filename:line:col`.
+  sus::Option<const CommentElement&> find_concept_comment(
+      std::string_view comment_loc) const& noexcept {
+    return global.find_concept_comment(comment_loc);
+  }
+  sus::Option<const CommentElement&> find_concept_comment(
+      std::string_view comment_loc) && = delete;
 
   /// Finds a comment whose location ends with the `comment_loc` suffix.
   ///

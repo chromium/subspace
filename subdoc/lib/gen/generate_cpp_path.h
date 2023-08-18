@@ -26,6 +26,7 @@ enum CppPathElementType {
   CppPathProject,
   CppPathNamespace,
   CppPathRecord,
+  CppPathConcept,
   CppPathFunction,
 };
 
@@ -44,6 +45,11 @@ sus::Vec<CppPathElement> generate_cpp_path_for_type(
     const TypeElement& element,
     sus::Slice<const NamespaceElement*> namespace_ancestors,
     sus::Slice<const RecordElement*> type_ancestors,
+    const Options& options) noexcept;
+
+sus::Vec<CppPathElement> generate_cpp_path_for_concept(
+    const ConceptElement& element,
+    sus::Slice<const NamespaceElement*> namespace_ancestors,
     const Options& options) noexcept;
 
 sus::Vec<CppPathElement> generate_cpp_path_for_function(

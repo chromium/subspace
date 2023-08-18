@@ -370,9 +370,34 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
 
   bool VisitConceptDecl(clang::ConceptDecl* decl) noexcept {
     if (should_skip_decl(cx_, decl)) return true;
-    // clang::RawComment* raw_comment = get_raw_comment(decl);
+    clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    // clang::DeclContext* context = decl->getDeclContext();
+    Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
+
+    sus::Vec<std::string> template_params;
+    template_params = collect_template_params(decl, preprocessor_);
+
+    RequiresConstraints constraints;
+    requires_constraints_add_expr(constraints, decl->getASTContext(),
+                                  preprocessor_, decl->getConstraintExpr());
+
+    auto ce =
+        ConceptElement(iter_namespace_path(decl).collect_vec(),
+                       sus::move(comment), decl->getNameAsString(),
+                       sus::move(template_params), sus::move(constraints),
+                       decl->getASTContext().getSourceManager().getFileOffset(
+                           decl->getLocation()));
+    NamespaceElement& parent = [&]() -> NamespaceElement& {
+      clang::DeclContext* context = decl->getDeclContext();
+      if (clang::isa<clang::TranslationUnitDecl>(context)) {
+        return docs_db_.find_namespace_mut(nullptr).unwrap();
+      } else {
+        return docs_db_
+            .find_namespace_mut(clang::cast<clang::NamespaceDecl>(context))
+            .unwrap();
+      }
+    }();
+    add_concept_to_db(decl, sus::move(ce), parent.concepts);
     return true;
   }
 
@@ -563,22 +588,26 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
+      // The overload is added with the `db_element` as a whole.
       add_overload = false;
     } else if (!it->second.has_comment() && db_element.has_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
-    } else if (!db_element.has_comment() & it->second.has_comment()) {
+      add_overload = true;
+    } else if (!db_element.has_comment()) {
       // Leave the existing comment in place.
+      add_overload = true;
     } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
       // We already visited this thing, from another translation unit.
       add_overload = false;
     } else {
+      add_overload = true;
       auto& ast_cx = decl->getASTContext();
-      const FunctionElement& old_element = it->second;
+      const auto& old_comment_element = it->second;
       ast_cx.getDiagnostics()
           .Report(db_element.comment.attrs.location,
                   diag_ids_.superceded_comment)
-          .AddString(old_element.comment.begin_loc);
+          .AddString(old_comment_element.comment.begin_loc);
     }
 
     if (add_overload) {
@@ -596,7 +625,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
-    } else if (!it->second.has_comment()) {
+    } else if (!it->second.has_comment() && db_element.has_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
     } else if (!db_element.has_comment()) {
@@ -613,6 +642,30 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     }
   }
 
+  template <class MapT>
+  void add_concept_to_db(clang::ConceptDecl* decl, ConceptElement db_element,
+                         MapT& db_map) noexcept {
+    auto key = key_for_concept(decl);
+    auto it = db_map.find(key);
+    if (it == db_map.end()) {
+      db_map.emplace(key, std::move(db_element));
+    } else if (!it->second.has_comment() && db_element.has_comment()) {
+      // Steal the comment.
+      sus::mem::swap(db_map.at(key).comment, db_element.comment);
+    } else if (!db_element.has_comment()) {
+      // Leave the existing comment in place, do nothing.
+    } else if (db_element.comment.begin_loc == it->second.comment.begin_loc) {
+      // We already visited this thing, from another translation unit.
+    } else {
+      auto& ast_cx = decl->getASTContext();
+      const ConceptElement& old_element = it->second;
+      ast_cx.getDiagnostics()
+          .Report(db_element.comment.attrs.location,
+                  diag_ids_.superceded_comment)
+          .AddString(old_element.comment.begin_loc);
+    }
+  }
+
   template <class ElementT, class MapT>
     requires ::sus::ptr::SameOrSubclassOf<ElementT*, CommentElement*>
   void add_record_to_db(clang::RecordDecl* decl, ElementT db_element,
@@ -621,7 +674,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(key);
     if (it == db_map.end()) {
       db_map.emplace(key, std::move(db_element));
-    } else if (!it->second.has_comment()) {
+    } else if (!it->second.has_comment() && db_element.has_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(key).comment, db_element.comment);
     } else if (!db_element.has_comment()) {
@@ -645,7 +698,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto it = db_map.find(uniq);
     if (it == db_map.end()) {
       db_map.emplace(uniq, std::move(db_element));
-    } else if (!it->second.has_comment()) {
+    } else if (!it->second.has_comment() && db_element.has_comment()) {
       // Steal the comment.
       sus::mem::swap(db_map.at(uniq).comment, db_element.comment);
     } else if (!db_element.has_comment()) {
