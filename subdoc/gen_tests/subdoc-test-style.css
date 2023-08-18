@@ -9,7 +9,7 @@ body {
 }
 
 pre {
-    background-color: rgb(49, 49, 49);
+    background-color: rgb(32, 26, 34);
 }
 
 .section-header {
@@ -94,7 +94,7 @@ pre {
     color: yellowgreen;
 }
 
-.overview .overload-set {
+.overload-set {
     background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5em;
     margin-top: 0.5em;
@@ -114,8 +114,8 @@ pre {
 :is(.type-signature, .function-signature, .member-signature, .requires, .deleted, .virtual) {
     font-family: monospace;
 }
-.function-signature :is(.function-auto, .return-arrow) {
-    color:rgb(173, 173, 173);
+pre,.function-signature {
+    color:rgb(230, 230, 230);
 }
 
 a.function-name {
