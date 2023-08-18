@@ -82,8 +82,8 @@ sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
     userdata.parsed << std::string_view(chars, size);
   };
   auto render_self_link =
-      [](const MD_CHAR* chars, MD_SIZE size, void* v, void* html,
-         void (*render)(void* html, const MD_CHAR* chars, MD_SIZE size)) {
+      [](const MD_CHAR* chars, MD_SIZE size, void* v, MD_HTML* html,
+         void (*render)(MD_HTML* html, const MD_CHAR* chars, MD_SIZE size)) {
         auto& userdata = *reinterpret_cast<UserData*>(v);
 
         std::string mapped(std::string_view(chars, size));
