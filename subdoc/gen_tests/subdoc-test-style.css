@@ -105,13 +105,6 @@ pre {
     color: yellowgreen;
 }
 
-.overload-set {
-    background-color: rgba(43, 43, 43, 1.0);
-    padding: 0.5em;
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-}
-
 .overview .section-header a {
     text-decoration: none;
 }
@@ -125,7 +118,14 @@ pre {
 :is(.type-signature, .function-signature, .member-signature, .requires, .deleted, .virtual) {
     font-family: monospace;
 }
-pre,.function-signature {
+
+.type .overload-set {
+    background-color: rgba(43, 43, 43, 1.0);
+    padding: 0.5em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+pre, .type .overload-set {
     color:rgb(230, 230, 230);
 }
 
