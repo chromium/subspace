@@ -42,7 +42,8 @@
 #include "sus/tuple/__private/storage.h"
 
 namespace sus {
-/// The Tuple type, and the tuple() type deduction function.
+/// The [`Tuple`](sus-tuple_type-Tuple.html) type, and the
+/// [`tuple`](sus-tuple_type-fn.tuple.html) type-deduction function.
 namespace tuple_type {}
 }  // namespace sus
 

@@ -251,10 +251,15 @@ constexpr inline P operator>>(P l, U r) noexcept = delete;
 
 }  // namespace sus::num
 
+/// For writing [`i8`](sus-num-i8.html) literals.
 _sus__integer_literal(i8, ::sus::num::i8);
+/// For writing [`i16`](sus-num-i16.html) literals.
 _sus__integer_literal(i16, ::sus::num::i16);
+/// For writing [`i32`](sus-num-i32.html) literals.
 _sus__integer_literal(i32, ::sus::num::i32);
+/// For writing [`i64`](sus-num-i64.html) literals.
 _sus__integer_literal(i64, ::sus::num::i64);
+/// For writing [`isize`](sus-num-isize.html) literals.
 _sus__integer_literal(isize, ::sus::num::isize);
 
 // Promote signed integer types into the `sus` namespace.

@@ -97,7 +97,9 @@ struct [[sus_trivial_abi]] f64 final {
 
 }  // namespace sus::num
 
+/// For writing [`f32`](sus-num-f32.html) literals.
 _sus__float_literal(f32, ::sus::num::f32);
+/// For writing [`f64`](sus-num-f64.html) literals.
 _sus__float_literal(f64, ::sus::num::f64);
 
 // Promote floating point types into the `sus` namespace.

@@ -170,7 +170,8 @@ struct RangeLiteralDeducer {
 
 }  // namespace sus::ops
 
-/// Returns a range that satisfies the `RangeBounds<usize>` concept.
+/// Constructs a literal range that satisfies the
+/// [`RangeBounds<usize>`](sus-ops-RangeBounds.html) concept.
 ///
 /// Because `usize` is unsigned, numbers may not be negative.
 ///
@@ -200,7 +201,8 @@ constexpr auto operator""_r() {
     return ::sus::ops::Range<::sus::num::usize>(D.lower, D.upper);
 }
 
-/// Returns a range that satisfies the `RangeBounds<isize>` concept.
+/// Constructs a literal range that satisfies the
+/// [`RangeBounds<isize>`](sus-ops-RangeBounds.html) concept.
 ///
 /// Numbers may be positive or negative.
 ///
