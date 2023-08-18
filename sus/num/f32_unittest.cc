@@ -16,8 +16,8 @@
 #include <limits>
 
 #include "googletest/include/gtest/gtest.h"
-#include "sus/construct/into.h"
 #include "sus/collections/array.h"
+#include "sus/construct/into.h"
 #include "sus/num/__private/intrinsics.h"
 #include "sus/num/types.h"
 #include "sus/ops/eq.h"
@@ -188,11 +188,11 @@ concept IsImplicitlyConvertible =
 template <class From, class To>
 concept IsExplicitlyConvertible =
     std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
-     !std::is_assignable_v<To&, From>;
+    !std::is_assignable_v<To&, From>;
 template <class From, class To>
 concept NotConvertible =
     !std::constructible_from<To, From> && !std::is_convertible_v<From, To> &&
-     !std::is_assignable_v<To&, From>;
+    !std::is_assignable_v<To&, From>;
 
 TEST(f32, FromPrimitive) {
   static_assert(IsImplicitlyConvertible<float, f32>);
@@ -285,12 +285,10 @@ TEST(f32, BinaryOperators) {
 }
 
 TEST(f32, TotalCmp) {
-  // TODO: Use classify on f32.
-
   const auto quiet_nan = std::bit_cast<f32>(uint32_t{0x7fc00000});
   const auto signaling_nan = std::bit_cast<f32>(uint32_t{0x7f800001});
-  EXPECT_EQ(::fpclassify(quiet_nan.primitive_value), FP_NAN);
-  EXPECT_EQ(::fpclassify(signaling_nan.primitive_value), FP_NAN);
+  EXPECT_EQ(quiet_nan.classify(), sus::num::FpCategory::Nan);
+  EXPECT_EQ(signaling_nan.classify(), sus::num::FpCategory::Nan);
   EXPECT_TRUE(
       sus::num::__private::float_is_nan_quiet(quiet_nan.primitive_value));
   EXPECT_FALSE(
@@ -298,8 +296,8 @@ TEST(f32, TotalCmp) {
 
   const auto quiet_nan2 = std::bit_cast<f32>(uint32_t{0x7fc00001});
   const auto signaling_nan2 = std::bit_cast<f32>(uint32_t{0x7f800002});
-  EXPECT_EQ(::fpclassify(quiet_nan2.primitive_value), FP_NAN);
-  EXPECT_EQ(::fpclassify(signaling_nan2.primitive_value), FP_NAN);
+  EXPECT_EQ(quiet_nan2.classify(), sus::num::FpCategory::Nan);
+  EXPECT_EQ(signaling_nan2.classify(), sus::num::FpCategory::Nan);
   EXPECT_TRUE(
       sus::num::__private::float_is_nan_quiet(quiet_nan2.primitive_value));
   EXPECT_FALSE(
@@ -307,8 +305,8 @@ TEST(f32, TotalCmp) {
 
   const auto neg_quiet_nan = std::bit_cast<f32>(uint32_t{0xffc00000});
   const auto neg_signaling_nan = std::bit_cast<f32>(uint32_t{0xff800001});
-  EXPECT_EQ(::fpclassify(neg_quiet_nan.primitive_value), FP_NAN);
-  EXPECT_EQ(::fpclassify(neg_signaling_nan.primitive_value), FP_NAN);
+  EXPECT_EQ(neg_quiet_nan.classify(), sus::num::FpCategory::Nan);
+  EXPECT_EQ(neg_signaling_nan.classify(), sus::num::FpCategory::Nan);
   EXPECT_TRUE(
       sus::num::__private::float_is_nan_quiet(neg_quiet_nan.primitive_value));
   EXPECT_FALSE(sus::num::__private::float_is_nan_quiet(
@@ -316,8 +314,8 @@ TEST(f32, TotalCmp) {
 
   const auto neg_quiet_nan2 = std::bit_cast<f32>(uint32_t{0xffc00001});
   const auto neg_signaling_nan2 = std::bit_cast<f32>(uint32_t{0xff800002});
-  EXPECT_EQ(::fpclassify(neg_quiet_nan2.primitive_value), FP_NAN);
-  EXPECT_EQ(::fpclassify(neg_signaling_nan2.primitive_value), FP_NAN);
+  EXPECT_EQ(neg_quiet_nan2.classify(), sus::num::FpCategory::Nan);
+  EXPECT_EQ(neg_signaling_nan2.classify(), sus::num::FpCategory::Nan);
   EXPECT_TRUE(
       sus::num::__private::float_is_nan_quiet(neg_quiet_nan2.primitive_value));
   EXPECT_FALSE(sus::num::__private::float_is_nan_quiet(
@@ -325,28 +323,28 @@ TEST(f32, TotalCmp) {
 
   const auto inf = f32::INFINITY;
   const auto neg_inf = f32::NEG_INFINITY;
-  EXPECT_EQ(::fpclassify(inf.primitive_value), FP_INFINITE);
-  EXPECT_EQ(::fpclassify(neg_inf.primitive_value), FP_INFINITE);
+  EXPECT_EQ(inf.classify(), sus::num::FpCategory::Infinite);
+  EXPECT_EQ(neg_inf.classify(), sus::num::FpCategory::Infinite);
 
   const auto norm1 = 123_f32;
   const auto norm2 = 234_f32;
-  EXPECT_EQ(::fpclassify(norm1.primitive_value), FP_NORMAL);
-  EXPECT_EQ(::fpclassify(norm2.primitive_value), FP_NORMAL);
+  EXPECT_EQ(norm1.classify(), sus::num::FpCategory::Normal);
+  EXPECT_EQ(norm2.classify(), sus::num::FpCategory::Normal);
   constexpr auto neg_norm1 = -123_f32;
   constexpr auto neg_norm2 = -234_f32;
-  EXPECT_EQ(::fpclassify(neg_norm1.primitive_value), FP_NORMAL);
-  EXPECT_EQ(::fpclassify(neg_norm2.primitive_value), FP_NORMAL);
+  EXPECT_EQ(neg_norm1.classify(), sus::num::FpCategory::Normal);
+  EXPECT_EQ(neg_norm2.classify(), sus::num::FpCategory::Normal);
 
   const auto subnorm1 =
       f32(std::numeric_limits<decltype(f32::primitive_value)>::denorm_min());
   const auto subnorm2 = subnorm1 * 2_f32;
   EXPECT_NE(subnorm1.primitive_value, subnorm2.primitive_value);
-  EXPECT_EQ(::fpclassify(subnorm1.primitive_value), FP_SUBNORMAL);
-  EXPECT_EQ(::fpclassify(subnorm2.primitive_value), FP_SUBNORMAL);
+  EXPECT_EQ(subnorm1.classify(), sus::num::FpCategory::Subnormal);
+  EXPECT_EQ(subnorm2.classify(), sus::num::FpCategory::Subnormal);
   const auto neg_subnorm1 = -subnorm1;
   const auto neg_subnorm2 = -subnorm2;
-  EXPECT_EQ(::fpclassify(neg_subnorm1.primitive_value), FP_SUBNORMAL);
-  EXPECT_EQ(::fpclassify(neg_subnorm2.primitive_value), FP_SUBNORMAL);
+  EXPECT_EQ(neg_subnorm1.classify(), sus::num::FpCategory::Subnormal);
+  EXPECT_EQ(neg_subnorm2.classify(), sus::num::FpCategory::Subnormal);
 
   const auto zero = 0_f32;
   const auto neg_zero = -0_f32;
@@ -539,9 +537,9 @@ TEST(f32, Acos) {
   auto b = (1_f32).acos();
   F32_NEAR(b, 0_f32, 0.00001_f32);
   auto c = (1.1_f32).acos();
-  EXPECT_TRUE(::isnan(c.primitive_value));  // TODO: is_nan().
+  EXPECT_TRUE(c.is_nan());
   auto d = (-1.1_f32).acos();
-  EXPECT_TRUE(::isnan(d.primitive_value));  // TODO: is_nan().
+  EXPECT_TRUE(d.is_nan());
 }
 
 TEST(f32, Acosh) {
@@ -550,11 +548,11 @@ TEST(f32, Acosh) {
   auto b = (1_f32).acosh();
   F32_NEAR(b, 0_f32, 0.00001_f32);
   auto c = (0.9999999_f32).acosh();
-  EXPECT_TRUE(::isnan(c.primitive_value));  // TODO: is_nan().
+  EXPECT_TRUE(c.is_nan());
   auto d = (0_f32).acosh();
-  EXPECT_TRUE(::isnan(d.primitive_value));  // TODO: is_nan().
+  EXPECT_TRUE(d.is_nan());
   auto e = (-0.9999999_f32).acosh();
-  EXPECT_TRUE(::isnan(e.primitive_value));  // TODO: is_nan().
+  EXPECT_TRUE(e.is_nan());
 }
 
 TEST(f32, Asin) {
@@ -563,9 +561,9 @@ TEST(f32, Asin) {
   auto b = (0_f32).asin();
   F32_NEAR(b, 0_f32, 0.00001_f32);
   auto c = (1.1_f32).asin();
-  EXPECT_TRUE(::isnan(c.primitive_value));  // TODO: is_nan().
+  EXPECT_TRUE(c.is_nan());
   auto d = (-1.1_f32).asin();
-  EXPECT_TRUE(::isnan(d.primitive_value));  // TODO: is_nan().
+  EXPECT_TRUE(d.is_nan());
 }
 
 TEST(f32, Asinh) {
@@ -603,13 +601,13 @@ TEST(f32, Atan2) {
 
 TEST(f32, Atanh) {
   auto a = (2.5_f32).atanh();
-  EXPECT_TRUE(::isnan(a.primitive_value));  // TODO: is_nan().
+  EXPECT_TRUE(a.is_nan());
   auto b = (0_f32).atanh();
   F32_NEAR(b, 0_f32, 0.00001_f32);
   auto c = (0.75_f32).atanh();
   F32_NEAR(c, 0.97295507452766_f32, 0.00001_f32);
   auto d = (1_f32).atanh();
-  EXPECT_TRUE(::isinf(d.primitive_value));  // TODO: is_infinite().
+  EXPECT_EQ(d.classify(), sus::num::FpCategory::Infinite);
 }
 
 TEST(f32, Cbrt) {
@@ -636,11 +634,11 @@ TEST(f32, Copysign) {
   auto b = (0.456_f32).copysign(-1_f32);
   EXPECT_EQ(b, -0.456_f32);
   auto c = f32::NAN.copysign(-1_f32);
-  EXPECT_TRUE(::isnan(c.primitive_value));    // TODO: is_nan()
-  EXPECT_TRUE(::signbit(c.primitive_value));  // TODO: is_positive()
+  EXPECT_TRUE(c.is_nan());
+  EXPECT_TRUE(c.is_sign_negative());
   auto d = f32::NAN.copysign(1_f32);
-  EXPECT_TRUE(::isnan(d.primitive_value));     // TODO: is_nan()
-  EXPECT_TRUE(!::signbit(d.primitive_value));  // TODO: is_positive()
+  EXPECT_TRUE(d.is_nan());
+  EXPECT_TRUE(d.is_sign_positive());
 }
 
 TEST(f32, Cos) {
@@ -762,7 +760,7 @@ TEST(f32, Recip) {
   auto a = (0.456_f32).recip();
   F32_NEAR(a, 2.19298245614_f32, 0.00001_f32);
   auto b = f32::NAN.recip();
-  EXPECT_TRUE(::isnan(b.primitive_value));  // TODO: is_nan()
+  EXPECT_TRUE(b.is_nan());
 }
 
 TEST(f32, Round) {
@@ -783,7 +781,7 @@ TEST(f32, Signum) {
   EXPECT_EQ((-123_f32).signum(), -1_f32);
   EXPECT_EQ(f32::INFINITY.signum(), 1_f32);
   EXPECT_EQ(f32::NEG_INFINITY.signum(), -1_f32);
-  EXPECT_TRUE(::isnan(f32::NAN.signum().primitive_value));  // TODO: is_nan()
+  EXPECT_TRUE(f32::NAN.signum().is_nan());
 }
 
 TEST(f32, Sin) {
@@ -1067,22 +1065,21 @@ TEST(f32, ToLeBytes) {
 
 TEST(f32, ToNeBytes) {
   auto array = (12.5_f32).to_ne_bytes();
-  auto expected =
-      sus::assertions::is_big_endian()
-          ? sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8)
-          : sus::Array<u8, 4>(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
+  auto expected = sus::assertions::is_big_endian()
+                      ? sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8)
+                      : sus::Array<u8, 4>(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8);
   EXPECT_EQ(array, expected);
 }
 
 TEST(f32, FromBeBytes) {
-  auto value = f32::from_be_bytes(
-      sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8));
+  auto value =
+      f32::from_be_bytes(sus::Array<u8, 4>(0x41_u8, 0x48_u8, 0x00_u8, 0x00_u8));
   EXPECT_EQ(value, 12.5_f32);
 }
 
 TEST(f32, FromLeBytes) {
-  auto value = f32::from_le_bytes(
-      sus::Array<u8, 4>(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8));
+  auto value =
+      f32::from_le_bytes(sus::Array<u8, 4>(0x00_u8, 0x00_u8, 0x48_u8, 0x41_u8));
   EXPECT_EQ(value, 12.5_f32);
 }
 
