@@ -449,9 +449,17 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               }
             }
 
+            std::string function_name = [&] {
+              if (auto* mdecl = clang::dyn_cast<clang::CXXConstructorDecl>(decl)) {
+                return mdecl->getThisObjectType()->getAsRecordDecl()->getNameAsString();
+              } else {
+                return decl->getNameAsString();
+              }
+            }();
+
             auto fe = FunctionElement(
                 iter_namespace_path(decl).collect_vec(), sus::move(comment),
-                decl->getNameAsString(), decl->isOverloadedOperator(),
+                sus::move(function_name), decl->isOverloadedOperator(),
                 decl->getReturnType(), sus::move(constraints),
                 decl->isDeleted(), sus::move(params),
                 decl->getASTContext().getSourceManager().getFileOffset(
