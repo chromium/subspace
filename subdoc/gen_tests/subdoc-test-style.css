@@ -8,8 +8,9 @@ body {
     margin-right: 8rem;
 }
 
-pre {
+pre, pre > code {
     background-color: rgb(32, 26, 34);
+    color:rgb(230, 230, 230);
 }
 
 .section-header {
@@ -36,9 +37,9 @@ pre {
     margin-block-end: 0;
 }
 .description.long {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-    margin-left: 1em;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    margin-left: 24px;
     line-height: 1.4;
 }
 .overview .description :is(h1, h2, h3, h4, h5, h6) {
@@ -47,21 +48,25 @@ pre {
 .overview .description h1 {
     font-size: 120%;
 }
-.description h1 {
-    font-size: 100%;
-    font-weight: bold;
-    color: rgb(250, 199, 121);
+code {
+    color: rgb(124, 216, 204);
 }
-.description h2 {
+.description h1, .description h2 {
     font-size: 100%;
     font-weight: bold;
-    color: rgb(250, 199, 121);
+    color: rgb(124, 216, 204);
 }
 .description pre {
     padding: 1em;
 }
 .description a {
     text-decoration: none;
+    color: rgb(250, 199, 121);
+}
+.description a code {
+    color: rgb(250, 199, 121);
+}
+.description :is(h1, h2) a {
     color: rgb(250, 199, 121);
 }
 .description a:hover {
@@ -120,13 +125,9 @@ pre {
 }
 
 .type .overload-set {
-    background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5em;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
-}
-pre, .type .overload-set {
-    color:rgb(230, 230, 230);
 }
 
 a.function-name {
@@ -166,7 +167,7 @@ a.namespace-name:hover {
 }
 
 :is(.type-signature, .overload) :is(.requires, .deleted, .virtual) {
-    margin-left: 1.5rem;
+    margin-left: 36px;
 }
 :is(.type-signature, .overload) .requires .requires-keyword {
     color: rgb(84, 194, 238)
@@ -175,7 +176,7 @@ a.namespace-name:hover {
     color: rgb(180, 180, 180)
 }
 :is(.type-signature, .overload) .requires .requires-constaint {
-    margin-left: 1.5rem;
+    margin-left: 36px;
     color: rgb(87, 218, 218)
 }
 .overload .deleted {
