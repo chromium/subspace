@@ -341,6 +341,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     return true;
   }
 
+  bool VisitConceptDecl(clang::ConceptDecl* decl) noexcept {
+    if (should_skip_decl(cx_, decl)) return true;
+    // clang::RawComment* raw_comment = get_raw_comment(decl);
+
+    // clang::DeclContext* context = decl->getDeclContext();
+    return true;
+  }
+
   bool VisitFunctionDecl(clang::FunctionDecl* decl) noexcept {
     // A template instantiation fills in concrete types for a templated
     // function. For documentation, we want to show the template at its
@@ -450,8 +458,11 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             }
 
             std::string function_name = [&] {
-              if (auto* mdecl = clang::dyn_cast<clang::CXXConstructorDecl>(decl)) {
-                return mdecl->getThisObjectType()->getAsRecordDecl()->getNameAsString();
+              if (auto* mdecl =
+                      clang::dyn_cast<clang::CXXConstructorDecl>(decl)) {
+                return mdecl->getThisObjectType()
+                    ->getAsRecordDecl()
+                    ->getNameAsString();
               } else {
                 return decl->getNameAsString();
               }

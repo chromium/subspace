@@ -309,7 +309,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
         sus::unreachable();
       }();
       generate_function_long_reference(items_div, func, overload_set,
-                                       page_state);
+                                       /*with constraints=*/false, page_state);
     }
   }
 }

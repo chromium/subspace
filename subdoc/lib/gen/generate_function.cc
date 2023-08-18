@@ -33,6 +33,7 @@ namespace {
 enum Style {
   StyleShort,
   StyleLong,
+  StyleLongWithConstraints,
 };
 
 void generate_return_type(HtmlWriter::OpenDiv& div,
@@ -151,7 +152,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
       signature_div.add_class("function-signature");
 
-      if (style == StyleLong) {
+      if (style == StyleLong || style == StyleLongWithConstraints) {
         if (is_static) {
           auto static_span = signature_div.open_span(HtmlWriter::SingleLine);
           static_span.add_class("static");
@@ -191,7 +192,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         name_anchor.add_class("function-name");
         name_anchor.write_text(element.name);
       }
-      if (style == StyleLong) {
+      if (style == StyleLong || style == StyleLongWithConstraints) {
         generate_function_params(signature_div, overload);
         if (has_return) {
           signature_div.write_text(" -> ");
@@ -200,7 +201,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
       }
     }
 
-    if (style == StyleLong) {
+    if (style == StyleLongWithConstraints) {
       if (overload.constraints.is_some()) {
         generate_requires_constraints(overload_div,
                                       overload.constraints.as_value());
@@ -366,13 +367,16 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
 
 void generate_function_long_reference(
     HtmlWriter::OpenDiv& item_div, const FunctionElement& element,
-    u32 overload_set, ParseMarkdownPageState& page_state) noexcept {
+    u32 overload_set, bool with_constraints,
+    ParseMarkdownPageState& page_state) noexcept {
   {
     auto overload_set_div = item_div.open_div();
     overload_set_div.add_class("overload-set");
     overload_set_div.add_class("item-name");
-    generate_overload_set(overload_set_div, element, overload_set, StyleLong,
-                          /*link_to_page=*/false);
+    generate_overload_set(
+        overload_set_div, element, overload_set,
+        with_constraints ? StyleLongWithConstraints : StyleLong,
+        /*link_to_page=*/false);
   }
   {
     auto desc_div = item_div.open_div();

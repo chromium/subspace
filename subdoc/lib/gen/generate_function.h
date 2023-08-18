@@ -31,6 +31,7 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
 
 void generate_function_long_reference(
     HtmlWriter::OpenDiv& items_list, const FunctionElement& e, u32 overload_set,
+    bool with_constraints,
     ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen
