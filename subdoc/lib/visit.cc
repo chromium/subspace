@@ -450,9 +450,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 return mdecl->getThisObjectType()
                     ->getAsRecordDecl()
                     ->getNameAsString();
-              } else {
-                return decl->getNameAsString();
               }
+              if (auto* convdecl =
+                      clang::dyn_cast<clang::CXXConversionDecl>(decl)) {
+                return std::string("operator ") +
+                       friendly_short_type_name(convdecl->getReturnType());
+              }
+              return decl->getNameAsString();
             }();
 
             auto fe = FunctionElement(
