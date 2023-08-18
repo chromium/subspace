@@ -160,7 +160,7 @@ int main(int argc, const char** argv) {
       std::ostringstream stream;
       std::string line;
       while (std::getline(markdown_file, line))
-        stream << line;
+        stream << line << "\n";
       run_options.project_overview_text = sus::move(stream).str();
     }
   }
