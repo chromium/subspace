@@ -63,3 +63,15 @@ TEST_F(SubDocTest, PrivateStaticField) {
   subdoc::Database db = sus::move(result).unwrap();
   EXPECT_FALSE(db.has_any_comments());
 }
+
+TEST_F(SubDocTest, NestedField) {
+  auto result = run_code(R"(
+    struct Outer { struct S {
+      /// Comment headline
+      int f = 1;
+    }; };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_field_comment(db, "3:7", "<p>Comment headline</p>"));
+}

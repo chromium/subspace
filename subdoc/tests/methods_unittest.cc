@@ -165,3 +165,15 @@ TEST_F(SubDocTest, MethodTemplateOverloadRequiresDuplicate) {
   // under a single comment and having two is ambiguous.
   EXPECT_EQ(diags.locations[0u], "test.cc:9:7");
 }
+
+TEST_F(SubDocTest, NestedMethod) {
+  auto result = run_code(R"(
+    struct Outer { struct S {
+      /// Comment headline
+      void f() {}
+    }; };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_method_comment(db, "3:7", "<p>Comment headline</p>"));
+}

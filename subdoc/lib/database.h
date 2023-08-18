@@ -349,6 +349,10 @@ struct RecordElement : public TypeElement {
       out = e.find_comment(comment_loc);
       if (out.is_some()) return out;
     }
+    for (const auto& [u, e] : records) {
+      out = e.find_ctor_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
     return out;
   }
 
@@ -357,6 +361,10 @@ struct RecordElement : public TypeElement {
     sus::Option<const CommentElement&> out;
     for (const auto& [u, e] : dtors) {
       out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    for (const auto& [u, e] : records) {
+      out = e.find_dtor_comment(comment_loc);
       if (out.is_some()) return out;
     }
     return out;
@@ -369,6 +377,10 @@ struct RecordElement : public TypeElement {
       out = e.find_comment(comment_loc);
       if (out.is_some()) return out;
     }
+    for (const auto& [u, e] : records) {
+      out = e.find_method_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
     return out;
   }
 
@@ -377,6 +389,10 @@ struct RecordElement : public TypeElement {
     sus::Option<const CommentElement&> out;
     for (const auto& [u, e] : fields) {
       out = e.find_comment(comment_loc);
+      if (out.is_some()) return out;
+    }
+    for (const auto& [u, e] : records) {
+      out = e.find_field_comment(comment_loc);
       if (out.is_some()) return out;
     }
     return out;

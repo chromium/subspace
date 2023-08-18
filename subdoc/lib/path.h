@@ -171,8 +171,10 @@ inline bool path_is_private(clang::NamedDecl* decl) noexcept {
     return true;
   }
 
-  // Checks if the declaration itself is private.
-  if (decl->getAccess() == clang::AccessSpecifier::AS_private) {
+  // Private members are not shown, protected members either. If they become
+  // public in a subclass they would be shown there.
+  if (decl->getAccess() == clang::AccessSpecifier::AS_private ||
+      decl->getAccess() == clang::AccessSpecifier::AS_protected) {
     return true;
   }
 
@@ -181,9 +183,10 @@ inline bool path_is_private(clang::NamedDecl* decl) noexcept {
   while (cx) {
     if (auto* tdecl = clang::dyn_cast<clang::TagDecl>(cx)) {
       // TODO: getAccess() can assert if it's not determined yet due to
-      // template instatiation being incomplete..? clang-doc uses
+      // template instantiation being incomplete..? clang-doc uses
       // getAccessUnsafe() which can give the wrong answer.
-      if (tdecl->getAccess() == clang::AccessSpecifier::AS_private) {
+      if (tdecl->getAccess() == clang::AccessSpecifier::AS_private ||
+          tdecl->getAccess() == clang::AccessSpecifier::AS_protected) {
         return true;
       }
     }
