@@ -182,8 +182,7 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
           if (overload.method.is_some())
             anchor << "method.";
           else
-            anchor << "function.";
-          anchor << (is_static ? "static." : "");
+            anchor << "fn.";
           anchor << element.name;
           if (overload_set > 0u) anchor << "." << overload_set;
           name_anchor.add_name(anchor.str());
