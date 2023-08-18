@@ -67,6 +67,17 @@ pre {
 .description a:hover {
     text-decoration: underline;
 }
+.description table {
+    border: 1px solid;
+    border-collapse: collapse;
+}
+.description td,th {
+    border: 1px solid;
+    padding-left: 0.4rem;
+    padding-right: 0.4rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
 
 .overview .type-signature {
     background-color: rgba(43, 43, 43, 1.0);
