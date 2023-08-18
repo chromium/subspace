@@ -240,4 +240,92 @@ TEST_F(SubDocTest, AccessInheritedProtectedMethod_CommentOnBase) {
   EXPECT_TRUE(has_method_comment(db, "4:7", "<p>Base comment headline</p>"));
 }
 
+TEST_F(SubDocTest, AccessPublicNestedField) {
+  auto result = run_code(R"(
+    struct Outer {
+      struct S {
+        /// Comment headline
+        int f = 1;
+      };
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_field_comment(db, "4:9", "<p>Comment headline</p>"));
+}
+
+TEST_F(SubDocTest, AccessProtectedNestedField) {
+  auto result = run_code(R"(
+    struct Outer {
+    private:
+      struct S {
+        /// Comment headline
+        int f = 1;
+      };
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_FALSE(has_field_comment(db, "5:9", "<p>Comment headline</p>"));
+}
+
+TEST_F(SubDocTest, AccessPrivateNestedField) {
+  auto result = run_code(R"(
+    struct Outer {
+     private:
+      struct S {
+        /// Comment headline
+        int f = 1;
+      };
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_FALSE(has_field_comment(db, "5:9", "<p>Comment headline</p>"));
+}
+
+TEST_F(SubDocTest, AccessPublicNestedMethod) {
+  auto result = run_code(R"(
+    struct Outer {
+      struct S {
+        /// Comment headline
+        int f();
+      };
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_TRUE(has_method_comment(db, "4:9", "<p>Comment headline</p>"));
+}
+
+TEST_F(SubDocTest, AccessProtectedNestedMethod) {
+  auto result = run_code(R"(
+    struct Outer {
+    private:
+      struct S {
+        /// Comment headline
+        int f();
+      };
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_FALSE(has_method_comment(db, "5:9", "<p>Comment headline</p>"));
+}
+
+TEST_F(SubDocTest, AccessPrivateNestedMethod) {
+  auto result = run_code(R"(
+    struct Outer {
+     private:
+      struct S {
+        /// Comment headline
+        int f();
+      };
+    };
+  )");
+  ASSERT_TRUE(result.is_ok());
+  subdoc::Database db = sus::move(result).unwrap();
+  EXPECT_FALSE(has_method_comment(db, "5:9", "<p>Comment headline</p>"));
+}
+
 }  // namespace

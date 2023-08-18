@@ -251,11 +251,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
   }
 
   bool VisitFieldDecl(clang::FieldDecl* decl) noexcept {
-    // Private data members are not shown, protected methods are not either. If
-    // they become public in a subclass they would be shown there.
-    if (decl->getAccess() == clang::AS_protected ||
-        decl->getAccess() == clang::AS_private)
-      return true;
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
@@ -288,11 +283,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // Static data members are represented as VarDecl, not FieldDecl. So we
     // visit VarDecls but only for them.
     if (!decl->isStaticDataMember()) return true;
-    // Private data members are not shown, protected methods are not either. If
-    // they become public in a subclass they would be shown there.
-    if (decl->getAccess() == clang::AS_protected ||
-        decl->getAccess() == clang::AS_private)
-      return true;
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
@@ -357,12 +347,6 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     // function. For documentation, we want to show the template at its
     // declaration, we are not interested in instantiations where it gets used.
     if (decl->isTemplateInstantiation()) return true;
-    // Private functions are not shown, protected methods either. If they become
-    // public in a subclass they would be shown there.
-    if (decl->getAccess() == clang::AS_protected ||
-        decl->getAccess() == clang::AS_private) {
-      return true;
-    }
     if (should_skip_decl(cx_, decl)) return true;
 
     // TODO: Save the linkage spec (`extern "C"`) so we can show it.
