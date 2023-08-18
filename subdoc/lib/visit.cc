@@ -296,8 +296,9 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     if (should_skip_decl(cx_, decl)) return true;
     clang::RawComment* raw_comment = get_raw_comment(decl);
 
-    Comment comment = make_db_comment(decl->getASTContext(), raw_comment, "");
+    // We only visit static data members, so the context is a record.
     auto* record_decl = clang::cast<clang::RecordDecl>(decl->getDeclContext());
+    Comment comment = make_db_comment(decl->getASTContext(), raw_comment, record_decl->getName());
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
         std::string(decl->getName()), decl->getType(),

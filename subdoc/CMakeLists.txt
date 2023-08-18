@@ -131,6 +131,7 @@ if(${SUBSPACE_BUILD_TESTS})
         "tests/records_unittest.cc"
         "tests/styles_unittest.cc"
         "tests/types_unittest.cc"
+        "tests/self_name_replace_unittest.cc"
         "tests/subdoc_gen_test.h"
         "tests/subdoc_test.h"
         "tests/test_main.h"
