@@ -84,7 +84,7 @@ code {
     padding-bottom: 0.2rem;
 }
 
-.overview .type-signature {
+.overview :is(.type-signature, .function-signature) {
     background-color: rgba(43, 43, 43, 1.0);
     padding: 0.5em;
     margin-top: 0.5em;

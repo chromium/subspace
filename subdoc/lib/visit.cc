@@ -79,8 +79,76 @@ static bool should_skip_decl(VisitCx& cx, clang::Decl* decl) {
   return false;
 }
 
-static clang::RawComment* get_raw_comment(const clang::Decl* decl) {
+static clang::RawComment* get_raw_comment(const clang::Decl* decl) noexcept {
   return decl->getASTContext().getRawCommentForDeclNoCache(decl);
+}
+
+static sus::Vec<std::string> collect_template_params(
+    const clang::TemplateDecl* tmpl,
+    clang::Preprocessor& preprocessor) noexcept {
+  sus::Vec<std::string> template_params;
+  if (clang::TemplateParameterList* params = tmpl->getTemplateParameters()) {
+    for (clang::NamedDecl* n : *params) {
+      // TODO: Get the default values and the type (auto vs class).
+      if (auto* parm = clang::dyn_cast<clang::TemplateTypeParmDecl>(n)) {
+        std::stringstream s;
+        s << "class";
+        if (parm->isParameterPack()) s << "...";
+        s << " ";
+        s << parm->getNameAsString();
+        if (clang::TypeSourceInfo* def = parm->getDefaultArgumentInfo()) {
+          s << " = ";
+          s << def->getType().getAsString();
+        }
+        template_params.push(sus::move(s).str());
+      } else if (auto* val =
+                     clang::dyn_cast<clang::NonTypeTemplateParmDecl>(n)) {
+        std::stringstream s;
+        s << val->getType().getAsString();
+        if (val->isParameterPack()) s << "...";
+        s << " ";
+        s << val->getNameAsString();
+        if (clang::Expr* e = val->getDefaultArgument()) {
+          s << " = ";
+          // TODO: There can be types in here that need to be resolved,
+          // and can be linked to database entries.
+          s << stmt_to_string(*e, val->getASTContext(), preprocessor);
+        }
+        template_params.push(sus::move(s).str());
+      } else {
+        llvm::errs() << "WARNING: Unknown TemplateParameterList member "
+                        "on Record:\n";
+        n->dumpColor();
+      }
+    }
+  }
+  return template_params;
+}
+
+static sus::Option<RequiresConstraints> collect_template_constraints(
+    const clang::TemplateDecl* tmpl,
+    clang::Preprocessor& preprocessor) noexcept {
+  sus::Option<RequiresConstraints> constraints;
+  llvm::SmallVector<const clang::Expr*> c_exprs;
+  tmpl->getAssociatedConstraints(c_exprs);
+  for (const clang::Expr* e : c_exprs) {
+    requires_constraints_add_expr(constraints.get_or_insert_default(),
+                                  tmpl->getASTContext(), preprocessor, e);
+  }
+  return constraints;
+}
+
+static sus::Option<RequiresConstraints> collect_function_constraints(
+    const clang::FunctionDecl* decl,
+    clang::Preprocessor& preprocessor) noexcept {
+  sus::Option<RequiresConstraints> constraints;
+  llvm::SmallVector<const clang::Expr*> assoc;
+  decl->getAssociatedConstraints(assoc);
+  for (const clang::Expr* e : assoc) {
+    requires_constraints_add_expr(constraints.get_or_insert_default(),
+                                  decl->getASTContext(), preprocessor, e);
+  }
+  return constraints;
 }
 
 class Visitor : public clang::RecursiveASTVisitor<Visitor> {
@@ -150,54 +218,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     clang::RecordDecl* parent_record_decl =
         clang::dyn_cast<clang::RecordDecl>(decl->getDeclContext());
 
-    sus::Option<RequiresConstraints> constraints;
     sus::Vec<std::string> template_params;
+    sus::Option<RequiresConstraints> constraints;
     if (cxxdecl) {
       if (clang::ClassTemplateDecl* tmpl =
               cxxdecl->getDescribedClassTemplate()) {
-        if (clang::TemplateParameterList* params =
-                tmpl->getTemplateParameters()) {
-          for (clang::NamedDecl* n : *params) {
-            // TODO: Get the default values and the type (auto vs class).
-            if (auto* parm = clang::dyn_cast<clang::TemplateTypeParmDecl>(n)) {
-              std::stringstream s;
-              s << "class";
-              if (parm->isParameterPack()) s << "...";
-              s << " ";
-              s << parm->getNameAsString();
-              if (clang::TypeSourceInfo* def = parm->getDefaultArgumentInfo()) {
-                s << " = ";
-                s << def->getType().getAsString();
-              }
-              template_params.push(sus::move(s).str());
-            } else if (auto* val =
-                           clang::dyn_cast<clang::NonTypeTemplateParmDecl>(n)) {
-              std::stringstream s;
-              s << val->getType().getAsString();
-              if (val->isParameterPack()) s << "...";
-              s << " ";
-              s << val->getNameAsString();
-              if (clang::Expr* e = val->getDefaultArgument()) {
-                s << " = ";
-                // TODO: There can be types in here that need to be resolved,
-                // and can be linked to database entries.
-                s << stmt_to_string(*e, val->getASTContext(), preprocessor_);
-              }
-              template_params.push(sus::move(s).str());
-            } else {
-              llvm::errs() << "WARNING: Unknown TemplateParameterList member "
-                              "on Record:\n";
-              n->dumpColor();
-            }
-          }
-        }
-        llvm::SmallVector<const clang::Expr*> c_exprs;
-        tmpl->getAssociatedConstraints(c_exprs);
-        for (const clang::Expr* e : c_exprs) {
-          requires_constraints_add_expr(constraints.get_or_insert_default(),
-                                        decl->getASTContext(), preprocessor_,
-                                        e);
-        }
+        template_params = collect_template_params(tmpl, preprocessor_);
+        constraints = collect_template_constraints(tmpl, preprocessor_);
       }
     }
 
@@ -424,24 +451,14 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                              v->getNameAsString());
             }
 
+            sus::Vec<std::string> template_params;
             sus::Option<RequiresConstraints> constraints;
             if (clang::FunctionTemplateDecl* tmpl =
                     decl->getDescribedFunctionTemplate()) {
-              llvm::SmallVector<const clang::Expr*> assoc;
-              tmpl->getAssociatedConstraints(assoc);
-              for (const clang::Expr* e : assoc) {
-                requires_constraints_add_expr(
-                    constraints.get_or_insert_default(), decl->getASTContext(),
-                    preprocessor_, e);
-              }
+              template_params = collect_template_params(tmpl, preprocessor_);
+              constraints = collect_template_constraints(tmpl, preprocessor_);
             } else {
-              llvm::SmallVector<const clang::Expr*> assoc;
-              decl->getAssociatedConstraints(assoc);
-              for (const clang::Expr* e : assoc) {
-                requires_constraints_add_expr(
-                    constraints.get_or_insert_default(), decl->getASTContext(),
-                    preprocessor_, e);
-              }
+              constraints = collect_function_constraints(decl, preprocessor_);
             }
 
             std::string function_name = [&] {
@@ -463,7 +480,8 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                 iter_namespace_path(decl).collect_vec(), sus::move(comment),
                 sus::move(function_name), decl->isOverloadedOperator(),
                 decl->getReturnType(), sus::move(constraints),
-                decl->isDeleted(), sus::move(params),
+                sus::move(template_params), decl->isDeleted(),
+                sus::move(params),
                 decl->getASTContext().getSourceManager().getFileOffset(
                     decl->getLocation()));
             fe.overloads[0u].return_type_element =
