@@ -15,3 +15,6 @@ struct TemplateMethods {
   template <class U>
   operator U();
 };
+
+template <class U>
+U template_function(U);

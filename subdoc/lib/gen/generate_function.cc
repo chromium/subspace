@@ -151,7 +151,16 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
     {
       auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
       signature_div.add_class("function-signature");
-
+      if (!overload.template_params.is_empty()) {
+        auto template_div = signature_div.open_div(HtmlWriter::SingleLine);
+        template_div.add_class("template");
+        template_div.write_text("template <");
+        for (const auto& [i, s] : overload.template_params.iter().enumerate()) {
+          if (i > 0u) template_div.write_text(", ");
+          template_div.write_text(s);
+        }
+        template_div.write_text(">");
+      }
       if (style == StyleLong || style == StyleLongWithConstraints) {
         if (is_static) {
           auto static_span = signature_div.open_span(HtmlWriter::SingleLine);
@@ -301,7 +310,17 @@ void generate_function(const FunctionElement& element,
       {
         auto signature_div = overload_div.open_div(HtmlWriter::SingleLine);
         signature_div.add_class("function-signature");
-
+        if (!overload.template_params.is_empty()) {
+          auto template_div = signature_div.open_div(HtmlWriter::SingleLine);
+          template_div.add_class("template");
+          template_div.write_text("template <");
+          for (const auto& [i, s] :
+               overload.template_params.iter().enumerate()) {
+            if (i > 0u) template_div.write_text(", ");
+            template_div.write_text(s);
+          }
+          template_div.write_text(">");
+        }
         {
           auto auto_span = signature_div.open_span(HtmlWriter::SingleLine);
           auto_span.add_class("function-auto");
