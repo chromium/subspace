@@ -14,6 +14,9 @@ struct TemplateMethods {
 
   template <class U>
   operator U();
+
+  template <class U>
+  static U member;
 };
 
 template <class U>

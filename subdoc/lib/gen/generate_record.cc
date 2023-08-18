@@ -188,6 +188,16 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
         name_div.add_class("item-name");
         name_div.add_class("member-signature");
 
+        if (!fe.template_params.is_empty()) {
+          auto template_div = name_div.open_div(HtmlWriter::SingleLine);
+          template_div.add_class("template");
+          template_div.write_text("template <");
+          for (const auto& [i, s] : fe.template_params.iter().enumerate()) {
+            if (i > 0u) template_div.write_text(", ");
+            template_div.write_text(s);
+          }
+          template_div.write_text(">");
+        }
         if (static_fields) {
           auto static_span = name_div.open_span();
           static_span.add_class("static");

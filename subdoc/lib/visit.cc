@@ -294,6 +294,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .collect_vec(),
         // Static data members are found in VisitVarDecl.
         FieldElement::NonStatic,
+        sus::vec(),  // Non-static fields can't have template parameters.
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
     fe.type_element = docs_db_.find_type(decl->getType());
@@ -317,6 +318,12 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
     auto* record_decl = clang::cast<clang::RecordDecl>(decl->getDeclContext());
     Comment comment = make_db_comment(decl->getASTContext(), raw_comment,
                                       record_decl->getName());
+
+    sus::Vec<std::string> template_params;
+    if (clang::VarTemplateDecl* tmpl = decl->getDescribedVarTemplate()) {
+      template_params = collect_template_params(tmpl, preprocessor_);
+    }
+
     auto fe = FieldElement(
         iter_namespace_path(decl).collect_vec(), sus::move(comment),
         std::string(decl->getName()), decl->getType(),
@@ -324,7 +331,7 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             .map([](std::string_view&& v) { return std::string(v); })
             .collect_vec(),
         // NonStatic data members are found in VisitFieldDecl.
-        FieldElement::Static,
+        FieldElement::Static, sus::move(template_params),
         decl->getASTContext().getSourceManager().getFileOffset(
             decl->getLocation()));
     fe.type_element = docs_db_.find_type(decl->getType());
