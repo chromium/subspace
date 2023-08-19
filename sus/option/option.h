@@ -431,6 +431,7 @@ constexpr Option<T> from_sum_impl(Iter&& it) noexcept;
 }  // namespace __private
 
 /// The [`Option`](sus-option-Option.html) type.
+///
 /// See the [namespace level documentation](sus-option.html) for more.
 template <class T>
 class Option final {

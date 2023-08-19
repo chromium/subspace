@@ -36,22 +36,23 @@ _primitive primitive_value = _primitive{0.0};
 static const _primitive MIN_PRIMITIVE;
 /// Largest finite primitive value.
 static const _primitive MAX_PRIMITIVE;
-/// Smallest finite `@doc.self`.
+/// Smallest finite [`@doc.self`](sus-num-@doc.self.html).
 static const _self MIN;
-/// Largest finite `@doc.self`.
+/// Largest finite [`@doc.self`](sus-num-@doc.self.html).
 static const _self MAX;
-/// The radix or base of the internal representation of `@doc.self`.
+/// The radix or base of the internal representation of
+/// [`@doc.self`](sus-num-@doc.self.html).
 static const u32 RADIX;
 /// Approximate number of significant digits in base 2.
 static const u32 MANTISSA_DIGITS;
 /// Approximate number of significant digits in base 10.
 static const u32 DIGITS;
-/// Machine epsilon value for `@doc.self`.
+/// Machine epsilon value for [`@doc.self`](sus-num-@doc.self.html).
 ///
-/// This is the difference between `1.0` and the next larger representable
+/// This is the difference between 1.0 and the next larger representable
 /// number.
 static const _self EPSILON;
-/// Smallest positive normal `@doc.self` value.
+/// Smallest positive normal [`@doc.self`](sus-num-@doc.self.html) value.
 static const _self MIN_POSITIVE;
 /// One greater than the minimum possible normal power of 2 exponent.
 static const i32 MIN_EXP;
@@ -122,8 +123,7 @@ struct consts {
 
 /// Default constructor, which sets the value to 0.
 ///
-/// The trivial copy and move constructors are implicitly declared, as is the
-/// trivial destructor.
+/// Satisfies the [`Default`](sus-construct-Default.html) concept.
 ///
 /// #[doc.overloads=ctor.default]
 constexpr inline _self() noexcept = default;
@@ -180,12 +180,14 @@ constexpr inline _self& operator=(P v) noexcept {
   return *this;
 }
 
-/// Constructs a @doc.self from an `Iterator` by computing the sum of all
-/// elements in the iterator.
+/// Constructs a [`@doc.self `](sus-num-@doc.self.html) from an
+/// [`Iterator`](sus-iter-Iterator.html) by computing the sum of all elements in
+/// the iterator.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
-/// `sus::iter::Sum` concept so that `Iterator::sum()` can be called for
-/// iterators over @doc.self.
+/// [`Sum`](sus-iter-Sum.html) concept so that
+/// [`Iterator::sum()`](sus-iter-IteratorBase.html#method.sum) can be called for
+/// iterators over [`@doc.self `](sus-num-@doc.self.html).
 static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
   requires(::sus::mem::IsMoveRef<decltype(it)>)
 {
@@ -194,12 +196,13 @@ static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
   return p;
 }
 
-/// Constructs a @doc.self from an `Iterator` by computing the product of all
-/// elements in the iterator.
+/// Constructs a [`@doc.self `](sus-num-@doc.self.html) from an `Iterator` by
+/// computing the product of all elements in the iterator.
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
-/// `sus::iter::Product` concept so that `Iterator::product()` can be called for
-/// iterators over @doc.self.
+/// [`Product`](sus-iter-Product.html) concept so that
+/// [`Iterator::product()`](sus-iter-IteratorBase.html#method.product) can be
+/// called for iterators over [`@doc.self `](sus-num-@doc.self.html).
 static constexpr _self from_product(
     ::sus::iter::Iterator<_self> auto&& it) noexcept
   requires(::sus::mem::IsMoveRef<decltype(it)>)
@@ -212,7 +215,7 @@ static constexpr _self from_product(
 /// Conversion from the numeric type to a C++ primitive type.
 ///
 /// This converts to floating point primitives which are at least as large as
-/// the `#[@doc.self]`.
+/// the [`@doc.self`](sus-num-@doc.self.html).
 ///
 /// ```
 /// auto d = double{3_f64};  // Compiles.
@@ -225,8 +228,8 @@ static constexpr _self from_product(
 /// ```
 ///
 /// Potentially-lossy type conversions can be forced through the
-/// `sus::convert::Transmogrify` concept, such as `sus::mog<float>(3_f64)` or
-/// `sus::mog<f32>(3_f64)`.
+/// [`Transmogrify`](sus-construct-Transmogrify.html) concept, such as
+/// `sus::mog<float>(3_f64)` or `sus::mog<f32>(3_f64)`.
 template <PrimitiveFloat U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline operator U() const noexcept {
@@ -288,23 +291,32 @@ operator<=>(_self l, PrimitiveFloat auto r) noexcept {
 /// positive quiet NaN.
 ///
 /// The ordering established by this function does not always agree with the
-/// `PartialOrd` and `Eq` implementations of @doc.self. For example, they
-/// consider negative and positive zero equal, while total_cmp doesn't.
+/// [`PartialOrd`](sus-ops-PartialOrd.html) and [`Eq`](sus-ops-Eq.html)
+/// implementations of [`@doc.self`](sus-num-@doc.self.html). For example, they
+/// consider negative and positive zero equal, while
+/// [`total_cmp`](#method.total_cmp) doesn't.
 ///
 /// The interpretation of the signaling NaN bit follows the definition in the
 /// IEEE 754 standard, which may not match the interpretation by some of the
 /// older, non-conformant (e.g. MIPS) hardware implementations.
-sus_pure constexpr std::strong_ordering total_cmp(_self other) const& noexcept {
+///
+/// # Why does this method satisfy `Ord` and not `StrongOrd`?
+///
+/// This method returns
+/// [`std::weak_ordering`](https://en.cppreference.com/w/cpp/utility/compare/weak_ordering)
+/// which can be used in situations that require [`Ord`](sus-ops-Ord.html)
+/// because different NaNs will be ordered equivalently.
+sus_pure constexpr std::weak_ordering total_cmp(_self other) const& noexcept {
   return __private::float_strong_ordering(primitive_value,
                                           other.primitive_value);
 }
 
-/// sus::num::Neg<@doc.self> trait.
+/// Satisfies the [`Neg<@doc.self>`](sus-num-Neg.html) concept.
 sus_pure constexpr inline _self operator-() const {
   return _self(-primitive_value);
 }
 
-/// `sus::num::Add<T>` trait for floating point types.
+/// Satisfies the [`Add<@doc.self>`](sus-num-Add.html) concept.
 /// #[doc.overloads=float.+]
 [[nodiscard]] sus_pure friend constexpr inline _self operator+(
     _self l, _self r) noexcept {
@@ -332,7 +344,7 @@ friend constexpr inline _self operator+(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator+(U l, _self r) noexcept = delete;
-/// sus::num::Sub<T> trait for floating point types.
+/// Satisfies the [`Sub<@doc.self>`](sus-num-Sub.html) concept.
 /// #[doc.overloads=float.-]
 [[nodiscard]] sus_pure friend constexpr inline _self operator-(
     _self l, _self r) noexcept {
@@ -360,7 +372,7 @@ friend constexpr inline _self operator-(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator-(U l, _self r) noexcept = delete;
-/// sus::num::Mul<T> trait for floating point types.
+/// Satisfies the [`Mul<@doc.self>`](sus-num-Mul.html) concept.
 /// #[doc.overloads=float.*]
 [[nodiscard]] sus_pure friend constexpr inline _self operator*(
     _self l, _self r) noexcept {
@@ -388,7 +400,7 @@ friend constexpr inline _self operator*(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator*(U l, _self r) noexcept = delete;
-/// sus::num::Div<T> trait for floating point types.
+/// Satisfies the [`Div<@doc.self>`](sus-num-Div.html) concept.
 /// #[doc.overloads=float./]
 [[nodiscard]] sus_pure friend constexpr inline _self operator/(
     _self l, _self r) noexcept {
@@ -416,7 +428,7 @@ friend constexpr inline _self operator/(_self l, U r) noexcept = delete;
 template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
-/// sus::num::Rem<T> trait for floating point types.
+/// Satisfies the [`Rem<@doc.self>`](sus-num-Rem.html) concept.
 ///
 /// The remainder from the division of two floats.
 ///
@@ -453,23 +465,23 @@ template <PrimitiveFloat U>
   requires(!std::convertible_to<U, _self>)
 friend constexpr inline _self operator%(U l, _self r) noexcept = delete;
 
-/// sus::num::AddAssign<@doc.self> trait.
+/// Satisfies the [`AddAssign<@doc.self>`](sus-num-AddAssign.html) concept.
 constexpr inline void operator+=(_self r) & noexcept {
   primitive_value += r.primitive_value;
 }
-/// sus::num::SubAssign<@doc.self> trait.
+/// Satisfies the [`SubAssign<@doc.self>`](sus-num-SubAssign.html) concept.
 constexpr inline void operator-=(_self r) & noexcept {
   primitive_value -= r.primitive_value;
 }
-/// sus::num::MulAssign<@doc.self> trait.
+/// Satisfies the [`MulAssign<@doc.self>`](sus-num-MulAssign.html) concept.
 constexpr inline void operator*=(_self r) & noexcept {
   primitive_value *= r.primitive_value;
 }
-/// sus::num::DivAssign<@doc.self> trait.
+/// Satisfies the [`DivAssign<@doc.self>`](sus-num-DivAssign.html) concept.
 constexpr inline void operator/=(_self r) & noexcept {
   primitive_value /= r.primitive_value;
 }
-/// sus::num::RemAssign<@doc.self> trait.
+/// Satisfies the [`RemAssign<@doc.self>`](sus-num-RemAssign.html) concept.
 ///
 /// Assigns the remainder from the division of two floats.
 ///
@@ -683,9 +695,9 @@ sus_pure inline _self powf(_self n) const& noexcept {
 }
 /// Raises a number to an integer point power.
 ///
-/// Using this function may be faster than using `powf()`. It might have a
-/// different sequence of rounding operations than `powf()`, so the results
-/// are not guaranteed to agree.
+/// Using this function may be faster than using [`powf`](#method.powf). It
+/// might have a different sequence of rounding operations than
+/// [`powf`](#method.powf), so the results are not guaranteed to agree.
 sus_pure inline _self powi(i32 n) const& noexcept {
   // MSVC pow(float) is returning a double for some reason.
   return static_cast<_primitive>(
@@ -702,10 +714,14 @@ sus_pure inline _self round() const& noexcept {
 }
 /// Returns a number that represents the sign of self.
 ///
-/// - `1.0` if the number is positive, `+0.0` or `INFINITY`
-/// - `-1.0` if the number is negative, `-0.0` or `NEG_INFINITY`
-/// - `NaN` if the number is `NaN`
+/// * `1.0` if the number is positive, `+0.0` or [`INFINITY`](#field.INFINITY).
+/// * `-1.0` if the number is negative, `-0.0` or
+///   [`NEG_INFINITY`](#field.NEG_INFINITY).
+/// * `NaN` if the number is `NaN`. The input value is returned exactly,
+///   preserving signaling NaNs.
 sus_pure inline _self signum() const& noexcept {
+  // This method can't be constexpr and still preserve the input NaN, as they
+  // get normalized to quiet NaN.
   return __private::float_signum(primitive_value);
 }
 /// Computes the sine of a number (in radians).
@@ -888,7 +904,8 @@ sus_pure constexpr inline _self clamp(_self min, _self max) const& noexcept {
                                 min.primitive_value, max.primitive_value);
 }
 
-/// Calculates Euclidean division, the matching method for `rem_euclid`.
+/// Calculates Euclidean division, the matching method for
+/// [`rem_euclid`](#method.rem_euclid).
 ///
 /// This computes the integer `n` such that `self = n * rhs +
 /// self.rem_euclid(rhs)`. In other words, the result is `self / rhs` rounded
@@ -935,21 +952,24 @@ to_le_bytes() const& noexcept;
 /// array in native byte order.
 ///
 /// As the target platform's native endianness is used, portable code should
-/// use `to_be_bytes()` or `to_le_bytes()`, as appropriate, instead.
+/// use [`to_be_bytes`](#method.to_be_bytes) or
+/// [`to_le_bytes`](#method.to_le_bytes), as appropriate, instead.
 sus_pure constexpr ::sus::collections::Array<u8,
                                              ::sus::mem::size_of<_primitive>()>
 to_ne_bytes() const& noexcept;
 /// Create a floating point value from its representation as a byte array in
 /// big endian.
 ///
-/// See `@doc.self::from_bits()` for why this function is not constexpr.
+///  See [`from_bits`](#method.from_bits) for why this function is not
+///  constexpr.
 sus_pure static _self from_be_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
 /// Create a floating point value from its representation as a byte array in
 /// big endian.
 ///
-///  See `@doc.self::from_bits()` for why this function is not constexpr.
+///  See [`from_bits`](#method.from_bits) for why this function is not
+///  constexpr.
 sus_pure static _self from_le_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;
@@ -957,10 +977,11 @@ sus_pure static _self from_le_bytes(
 /// native endian.
 ///
 /// As the target platform's native endianness is used, portable code likely
-/// wants to use `from_be_bytes()` or `from_le_bytes()`, as appropriate
-/// instead.
+/// wants to use [`from_be_bytes`](#method.from_be_bytes) or
+/// [`from_le_bytes`](#method.from_le_bytes), as appropriate instead.
 ///
-///  See `@doc.self::from_bits()` for why this function is not constexpr.
+///  See [`from_bits`](#method.from_bits) for why this function is not
+///  constexpr.
 sus_pure static _self from_ne_bytes(
     const ::sus::collections::Array<u8, ::sus::mem::size_of<_primitive>()>&
         bytes) noexcept;

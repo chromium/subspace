@@ -1435,9 +1435,9 @@ sus_pure_const inline constexpr bool float_signbit(T x) noexcept {
 
 template <class T>
   requires(std::is_floating_point_v<T> && ::sus::mem::size_of<T>() <= 8)
-sus_pure_const inline constexpr T float_signum(T x) noexcept {
+sus_pure_const inline T float_signum(T x) noexcept {
   // TODO: Can this be done without a branch? Beware nan values in constexpr
-  // context are rewritten.
+  // context are rewritten so this function is not constexpr.
   if (float_is_nan(x)) [[unlikely]]
     return x;
   const auto signbit = unchecked_and(into_unsigned_integer(x), high_bit<T>());

@@ -47,18 +47,7 @@ namespace sus::num {
 
 /// A 32-bit unsigned integer.
 ///
-/// # Conversions
-///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] u32 final {
 #define _self u32
 #define _pointer false
@@ -74,18 +63,7 @@ struct [[sus_trivial_abi]] u32 final {
 
 /// An 8-bit unsigned integer.
 ///
-/// # Conversions
-///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] u8 final {
 #define _self u8
 #define _pointer false
@@ -101,18 +79,7 @@ struct [[sus_trivial_abi]] u8 final {
 
 /// A 16-bit unsigned integer.
 ///
-/// # Conversions
-///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] u16 final {
 #define _self u16
 #define _pointer false
@@ -128,18 +95,7 @@ struct [[sus_trivial_abi]] u16 final {
 
 /// A 64-bit unsigned integer.
 ///
-/// # Conversions
-///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] u64 final {
 #define _self u64
 #define _pointer false
@@ -156,8 +112,9 @@ struct [[sus_trivial_abi]] u64 final {
 /// An address-sized unsigned integer.
 ///
 /// This type is capable of holding any offset or (positive) distance in a
-/// single memory allocation, as allocations are bounded at `isize::MAX`. It can
-/// represent any absolute address in a linear address system.
+/// single memory allocation, as allocations are bounded at
+/// [`isize::MAX`](sus-num-isize.html#field.MAX). It can represent any absolute
+/// address in a linear address system.
 ///
 /// Note that it is possible for a pointer to be larger than an address under
 /// some architectures, with a pointer holding additional data such as
@@ -167,18 +124,8 @@ struct [[sus_trivial_abi]] u64 final {
 /// hold a pointer value without acknowledging that it is only the address part
 /// of the pointer.
 ///
-/// # Conversions
 ///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] usize final {
 #define _self usize
 #define _pointer false
@@ -195,34 +142,27 @@ struct [[sus_trivial_abi]] usize final {
 /// A pointer-sized unsigned integer.
 ///
 /// This type is capable of holding a pointer, and is convertible to and from
-/// pointers. It is typically the same size as `usize` but it can be larger when
+/// pointers. It is typically the same size as [`usize`](sus-num-usize.html) but it can be larger when
 /// pointers include additional bits that the address.
 ///
-/// # Constructing a `uptr`
+/// # Constructing a [`uptr`](sus-num-uptr.html)
 ///
-/// See `with_addr` for constructing `uptr` with an address from another `uptr`.
+/// See [`with_addr`](#method.with_addr) for constructing
+/// [`uptr`](sus-num-uptr.html) with an address from another
+/// [`uptr`](sus-num-uptr.html).
 ///
-/// If pointers contain additional metadata beyond an address, the `with_addr`
-/// method copies the metadata from the original `uptr` to the newly produced
-/// `uptr.` Otherwise, constructing a uptr() from an integer can produce a
-/// pointer with invalid (empty) metadata and dereferencing such a pointer would
-/// be invalid.
+/// If pointers contain additional metadata beyond an address, the
+/// [`with_addr`](#method.with_addr) method copies the metadata from the
+/// original `uptr` to the newly produced
+/// [`uptr`](sus-num-uptr.html). Otherwise, constructing a
+/// [`uptr`](sus-num-uptr.html) from an integer can produce a pointer with
+/// invalid (empty) metadata and dereferencing such a pointer would be invalid.
 ///
-/// To explicitly construct a `uptr` with empty metadata, use
-/// `uptr().with_addr(address)`.
+/// To explicitly construct a [`uptr`](sus-num-uptr.html) with empty metadata,
+/// use `uptr().with_addr(address)`.
 ///
-/// # Conversions
 ///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] uptr final {
 #define _self uptr
 #define _pointer true
@@ -237,7 +177,7 @@ struct [[sus_trivial_abi]] uptr final {
 
 /// sus::num::Add<T*, usize> trait.
 ///
-/// Adds a `usize` to a pointer, returning the resulting pointer.
+/// Adds a [`usize`](sus-num-usize.html) to a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T, Unsigned U>
@@ -248,7 +188,7 @@ sus_pure_const constexpr inline T* operator+(T* t, U offset) {
 
 /// sus::num::AddAssign<T*, usize> trait.
 ///
-/// Adds a `usize` to a referenced pointer, and returns the input reference.
+/// Adds a [`usize`](sus-num-usize.html) to a referenced pointer, and returns the input reference.
 ///
 /// #[doc.overloads=ptr.add.usize]
 template <class T>
@@ -259,7 +199,7 @@ constexpr inline T*& operator+=(T*& t, usize offset) {
 
 /// sus::num::Sub<T*, usize> trait.
 ///
-/// Subtracts a `usize` from a pointer, returning the resulting pointer.
+/// Subtracts a [`usize`](sus-num-usize.html) from a pointer, returning the resulting pointer.
 ///
 /// #[doc.overloads=ptr.sub.usize]
 template <class T>
@@ -269,7 +209,7 @@ sus_pure_const constexpr inline T* operator-(T* t, usize offset) {
 
 /// sus::num::SubAssign<T*, usize> trait.
 ///
-/// Subtracts a `usize` from a referenced pointer, and returns the input
+/// Subtracts a [`usize`](sus-num-usize.html) from a referenced pointer, and returns the input
 /// reference.
 ///
 /// #[doc.overloads=ptr.sub.usize]

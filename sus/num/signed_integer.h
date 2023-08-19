@@ -52,18 +52,7 @@ namespace sus::num {
 
 /// A 32-bit signed integer.
 ///
-/// # Conversions
-///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] i32 final {
 #define _self i32
 #define _primitive int32_t
@@ -76,18 +65,7 @@ struct [[sus_trivial_abi]] i32 final {
 
 /// An 8-bit signed integer.
 ///
-/// # Conversions
-///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] i8 final {
 #define _self i8
 #define _primitive int8_t
@@ -100,18 +78,7 @@ struct [[sus_trivial_abi]] i8 final {
 
 /// A 16-bit signed integer.
 ///
-/// # Conversions
-///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] i16 final {
 #define _self i16
 #define _primitive int16_t
@@ -124,18 +91,7 @@ struct [[sus_trivial_abi]] i16 final {
 
 /// A 64-bit signed integer.
 ///
-/// # Conversions
-///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] i64 final {
 #define _self i64
 #define _primitive int64_t
@@ -149,7 +105,8 @@ struct [[sus_trivial_abi]] i64 final {
 /// An address-sized signed integer.
 ///
 /// This type is capable of holding any offset or distance in a single memory
-/// allocation, since memory allocations are bounded at `isize::MAX`.
+/// allocation, since memory allocations are bounded at
+/// [`isize::MAX`](sus-num-isize.html#field.MAX).
 ///
 /// Note that it is possible for a pointer to be larger than an address under
 /// some architectures, with a pointer holding additional data such as
@@ -157,18 +114,8 @@ struct [[sus_trivial_abi]] i64 final {
 /// https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-947.pdf) for an example. So
 /// this type is not always the same size as a pointer.
 ///
-/// # Conversions
 ///
-/// To convert to and from integer values, use `sus::into()` when
-/// `sus::construct::Into<From, To>` is satisfied between the two types for
-/// lossless conversion. Otherwise use `sus::try_into()` when
-/// `sus::construct::TryInto<From, To>` is satisfied to convert and handle cases
-/// where the value can not be represented in the target type.
-///
-/// Use `sus::mog<T>()` to do a lossy type coercion (like
-/// `static_cast<T>()`) between integer and floating point types, or C++
-/// primitive integers, floating point, or enums. When converting to a larger
-/// signed integer type, the value will be sign-extended.
+/// See the [namespace level documentation](sus-num.html) for more.
 struct [[sus_trivial_abi]] isize final {
 #define _self isize
 #define _primitive ::sus::num::__private::addr_type<>::signed_type
@@ -181,7 +128,8 @@ struct [[sus_trivial_abi]] isize final {
 
 /// sus::num::Add<T*, isize> trait.
 ///
-/// Adds a `isize` to a pointer, returning the resulting pointer.
+/// Adds a [`isize`](sus-num-isize.html) to a pointer, returning the resulting
+/// pointer.
 ///
 /// #[doc.overloads=ptr.add.isize]
 template <class T, Signed S>
@@ -192,7 +140,8 @@ sus_pure_const constexpr inline T* operator+(T* t, S offset) {
 
 /// sus::num::AddAssign<T*, isize> trait.
 ///
-/// Adds a `isize` to a referenced pointer, and returns the input reference.
+/// Adds a [`isize`](sus-num-isize.html) to a referenced pointer, and returns
+/// the input reference.
 ///
 /// #[doc.overloads=ptr.add.isize]
 template <class T>
@@ -203,7 +152,8 @@ constexpr inline T*& operator+=(T*& t, isize offset) {
 
 /// sus::num::Sub<T*, isize> trait.
 ///
-/// Subtracts a `isize` from a pointer, returning the resulting pointer.
+/// Subtracts a [`isize`](sus-num-isize.html) from a pointer, returning the
+/// resulting pointer.
 ///
 /// #[doc.overloads=ptr.sub.isize]
 template <class T>
@@ -213,8 +163,8 @@ sus_pure_const constexpr inline T* operator-(T* t, isize offset) {
 
 /// sus::num::SubAssign<T*, isize> trait.
 ///
-/// Subtracts a `isize` from a referenced pointer, and returns the input
-/// reference.
+/// Subtracts a [`isize`](sus-num-isize.html) from a referenced pointer, and
+/// returns the input reference.
 ///
 /// #[doc.overloads=ptr.sub.isize]
 template <class T>
