@@ -78,12 +78,6 @@ concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
 /// * An empty sequence is lexicographically less than any non-empty sequence.
 /// * Two empty sequences are lexicographically equal.
 ///
-/// # How can I implement Ord?
-/// `Ord` requires that the type has `operator<=>` which returns
-/// `std::weak_ordering`. It will implicitly also be `PartialOrd` as a
-/// result. If the `operator<=>` returns `std::strong_ordering` then the type
-/// will satisfy `StrongOrd` which also satisfies `Ord`.
-///
 /// # Ord and Eq interations
 /// While `Ord` can report equality, it does not imply that the type satisfies
 /// `Eq`, and a separate `operator==` is required for that concept. Unlike
