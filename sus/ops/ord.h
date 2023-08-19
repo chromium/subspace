@@ -112,7 +112,7 @@ concept Ord =
     };
 
 /// Concept for types that form a partial ordering (aka
-/// `std::partial_ordering`).
+/// [`std::partial_ordering`](https://en.cppreference.com/w/cpp/utility/compare/partial_ordering)).
 ///
 /// # Determining PartialOrd strictly
 /// [`PartialOrd`](sus-ops-PartialOrd.html) will be satisfied if the types
@@ -142,8 +142,8 @@ template <class Lhs, class Rhs = Lhs>
 concept ExclusiveOrd = (!StrongOrd<Lhs, Rhs> && Ord<Lhs, Rhs>);
 
 /// Determines if the types `Lhs` and `Rhs` have a partial ordering (aka
-/// `std::partial_ordering`), and that this is the strongest ordering that
-/// exists between the types.
+/// [`std::partial_ordering`](https://en.cppreference.com/w/cpp/utility/compare/partial_ordering)),
+/// and that this is the strongest ordering that exists between the types.
 template <class Lhs, class Rhs = Lhs>
 concept ExclusivePartialOrd = (!Ord<Lhs, Rhs> && PartialOrd<Lhs, Rhs>);
 
