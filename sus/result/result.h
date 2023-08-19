@@ -709,7 +709,7 @@ class [[nodiscard]] Result final {
 
   /// Returns a const reference to the contained `Ok` value.
   ///
-  /// # Panic
+  /// # Panics
   /// Panics if the value is an `Err`.
   constexpr const std::remove_reference_t<TUnlessVoid>& as_value() const&
     requires(!std::is_void_v<T>)
@@ -721,7 +721,7 @@ class [[nodiscard]] Result final {
 
   /// Returns a mutable reference to the contained `Ok` value.
   ///
-  /// # Panic
+  /// # Panics
   /// Panics if the value is an `Err`.
   constexpr std::remove_reference_t<TUnlessVoid>& as_value_mut() &
     requires(!std::is_void_v<T>)
@@ -731,7 +731,7 @@ class [[nodiscard]] Result final {
   }
   /// Returns a const reference to the contained `Err` value.
   ///
-  /// # Panic
+  /// # Panics
   /// Panics if the value is an `Ok` or the Result is moved from.
   constexpr const std::remove_reference_t<E>& as_err() const& {
     ::sus::check(state_ == ResultState::IsErr);

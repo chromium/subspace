@@ -817,7 +817,7 @@ class Option final {
   /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
-  /// # Panic
+  /// # Panics
   ///
   /// The function will panic without a message if the option's state is
   /// currently `None`.
@@ -845,7 +845,7 @@ class Option final {
   /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
-  /// # Panic
+  /// # Panics
   ///
   /// The function will panic without a message if the option's state is
   /// currently `None`.
@@ -939,7 +939,7 @@ class Option final {
   /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
-  /// # Panic
+  /// # Panics
   ///
   /// The function will panic without a message if the option's state is
   /// currently `None`.
@@ -991,7 +991,7 @@ class Option final {
   /// an rvalue, and [`take`](sus-option-Option.html#method.take) to move the
   /// contents of an lvalue option to an rvalue.
   ///
-  /// # Panic
+  /// # Panics
   ///
   /// The function will panic without a message if the option's state is
   /// currently `None`.
