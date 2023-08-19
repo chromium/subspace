@@ -100,7 +100,7 @@ concept StrongOrd = requires(const std::remove_reference_t<Lhs>& lhs,
 /// [`Ord`](sus-ops-Ord.html) and [`Eq`](sus-ops-Eq.html).
 ///
 /// # Determining Ord strictly
-/// [`Ord`](sus-ops-Ord.html) will be also sastisfied if the types satisfy
+/// [`Ord`](sus-ops-Ord.html) will be also satisfied if the types satisfy
 /// [`StrongOrd`](sus-ops-StrongOrd.html). To determine if a
 /// [`Ord`](sus-ops-Ord.html) is the strongest type of ordering between the
 /// types, use [`ExclusiveOrd`](sus-ops-ExclusiveOrd.html).
