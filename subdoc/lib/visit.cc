@@ -508,12 +508,22 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
               return decl->getNameAsString();
             }();
 
+            sus::Vec<std::string> record_path;
+            if (clang::isa<clang::CXXMethodDecl>(decl)) {
+              record_path =
+                  iter_record_path(clang::cast<clang::RecordDecl>(context))
+                      .map([](std::string_view&& v) { return std::string(v); })
+                      .collect_vec();
+            }
+
             auto fe = FunctionElement(
                 iter_namespace_path(decl).collect_vec(), sus::move(comment),
                 sus::move(function_name), decl->isOverloadedOperator(),
                 decl->getReturnType(), sus::move(constraints),
                 sus::move(template_params), decl->isDeleted(),
                 sus::move(params),
+                sus::clone(comment.attrs.overload_set),
+                sus::move(record_path),
                 decl->getASTContext().getSourceManager().getFileOffset(
                     decl->getLocation()));
             fe.overloads[0u].return_type_element =

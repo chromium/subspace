@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
 #include "subdoc/lib/parse_comment.h"
 #include "sus/prelude.h"
@@ -44,12 +45,7 @@ void generate_return_type(HtmlWriter::OpenDiv& div,
     return_type_link.add_title(overload.return_type_name);
     if (!overload.return_type_element->hidden()) {
       return_type_link.add_href(
-          construct_html_file_path(
-              std::filesystem::path(),
-              overload.return_type_element->namespace_path.as_slice(),
-              overload.return_type_element->record_path.as_slice(),
-              overload.return_type_element->name)
-              .string());
+          construct_html_url_for_type(overload.return_type_element.as_value()));
     } else {
       llvm::errs() << "WARNING: Reference to hidden TypeElement "
                    << overload.return_type_element->name << " in namespace "
@@ -73,12 +69,8 @@ void generate_function_params(HtmlWriter::OpenDiv& div,
         one_param_link.add_class("type-name");
         one_param_link.add_title(p.type_name);
         if (!p.type_element->hidden()) {
-          one_param_link.add_href(construct_html_file_path(
-                                      std::filesystem::path(),
-                                      p.type_element->namespace_path.as_slice(),
-                                      p.type_element->record_path.as_slice(),
-                                      p.type_element->name)
-                                      .string());
+          one_param_link.add_href(
+              construct_html_url_for_type(p.type_element.as_value()));
         } else {
           llvm::errs() << "WARNING: Reference to hidden TypeElement "
                        << p.type_element->name << " in namespace "
@@ -131,8 +123,8 @@ void generate_function_extras(HtmlWriter::OpenDiv& div,
 }
 
 void generate_overload_set(HtmlWriter::OpenDiv& div,
-                           const FunctionElement& element, u32 overload_set,
-                           Style style, bool link_to_page) noexcept {
+                           const FunctionElement& element, Style style,
+                           bool link_to_page) noexcept {
   for (const FunctionOverload& overload : element.overloads) {
     auto overload_div = div.open_div();
     overload_div.add_class("overload");
@@ -178,25 +170,18 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
         auto name_anchor = signature_div.open_a();
         if (link_to_page) {
           if (!element.hidden()) {
-            name_anchor.add_href(
-                construct_html_file_path_for_function(std::filesystem::path(),
-                                                      element, overload_set)
-                    .string());
+            name_anchor.add_href(construct_html_url_for_function(element));
           } else {
             llvm::errs() << "WARNING: Reference to hidden FunctionElement "
                          << element.name << " in namespace "
                          << element.namespace_path;
           }
         } else {
-          std::ostringstream anchor;
-          if (overload.method.is_some())
-            anchor << "method.";
-          else
-            anchor << "fn.";
-          anchor << element.name;
-          if (overload_set > 0u) anchor << "." << overload_set;
-          name_anchor.add_name(anchor.str());
-          name_anchor.add_href(std::string("#") + anchor.str());
+          // Only methods are not given their own page, and are just a named
+          // anchor on the Record's page.
+          sus::check(overload.method.is_some());
+          name_anchor.add_name(construct_html_url_anchor_for_method(element));
+          name_anchor.add_href(construct_html_url_for_function(element));
         }
         name_anchor.add_class("function-name");
         name_anchor.write_text(element.name);
@@ -226,15 +211,15 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
 
 }  // namespace
 
-void generate_function(const FunctionElement& element,
+void generate_function(const Database& db, const FunctionElement& element,
                        sus::Slice<const NamespaceElement*> namespaces,
-                       u32 overload_set, const Options& options) noexcept {
+                       const Options& options) noexcept {
   if (element.hidden()) return;
 
-  ParseMarkdownPageState page_state;
+  ParseMarkdownPageState page_state(db);
 
-  const std::filesystem::path path = construct_html_file_path_for_function(
-      options.output_root, element, overload_set);
+  const std::filesystem::path path =
+      construct_html_file_path_for_function(options.output_root, element);
   std::filesystem::create_directories(path.parent_path());
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
 
@@ -355,13 +340,13 @@ void generate_function(const FunctionElement& element,
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    desc_div.write_html(element.comment.parsed_full(page_state).unwrap());
+    desc_div.write_html(
+        markdown_to_html_full(element.comment, page_state).unwrap());
   }
 }
 
 void generate_function_reference(HtmlWriter::OpenUl& items_list,
                                  const FunctionElement& element,
-                                 u32 overload_set,
                                  ParseMarkdownPageState& page_state) noexcept {
   auto item_li = items_list.open_li();
   item_li.add_class("section-item");
@@ -373,8 +358,7 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
 
     // Operator overloads can all have different parameters and return types, so
     // we display them in long form.
-    Style style = element.is_operator ? StyleLong : StyleShort;
-    generate_overload_set(overload_set_div, element, overload_set, style,
+    generate_overload_set(overload_set_div, element, StyleShort,
                           /*link_to_page=*/true);
   }
   {
@@ -382,20 +366,20 @@ void generate_function_reference(HtmlWriter::OpenUl& items_list,
     desc_div.add_class("description");
     desc_div.add_class("short");
     if (element.has_comment())
-      desc_div.write_html(element.comment.parsed_summary(page_state).unwrap());
+      desc_div.write_html(
+          markdown_to_html_summary(element.comment, page_state).unwrap());
   }
 }
 
-void generate_function_long_reference(
+void generate_function_method_reference(
     HtmlWriter::OpenDiv& item_div, const FunctionElement& element,
-    u32 overload_set, bool with_constraints,
-    ParseMarkdownPageState& page_state) noexcept {
+    bool with_constraints, ParseMarkdownPageState& page_state) noexcept {
   {
     auto overload_set_div = item_div.open_div();
     overload_set_div.add_class("overload-set");
     overload_set_div.add_class("item-name");
     generate_overload_set(
-        overload_set_div, element, overload_set,
+        overload_set_div, element,
         with_constraints ? StyleLongWithConstraints : StyleLong,
         /*link_to_page=*/false);
   }
@@ -404,7 +388,8 @@ void generate_function_long_reference(
     desc_div.add_class("description");
     desc_div.add_class("long");
     if (element.has_comment())
-      desc_div.write_html(element.comment.parsed_full(page_state).unwrap());
+      desc_div.write_html(
+          markdown_to_html_full(element.comment, page_state).unwrap());
   }
 }
 

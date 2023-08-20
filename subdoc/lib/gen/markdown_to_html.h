@@ -14,19 +14,26 @@
 
 #pragma once
 
+#include <string>
+
 #include "subdoc/lib/database.h"
-#include "subdoc/lib/gen/html_writer.h"
-#include "subdoc/lib/gen/markdown_to_html.h"
-#include "subdoc/lib/gen/options.h"
+#include "sus/result/result.h"
 
 namespace subdoc::gen {
 
-void generate_concept(const Database& db, const ConceptElement& element,
-                      sus::Slice<const NamespaceElement*> namespaces,
-                      const Options& options) noexcept;
+struct ParseMarkdownPageState {
+  const Database& db;
+  std::unordered_map<std::string, u32> self_link_counts;
+};
 
-void generate_concept_reference(HtmlWriter::OpenUl& items_list,
-                                const ConceptElement& element,
-                                ParseMarkdownPageState& page_state) noexcept;
+struct MarkdownToHtmlError {
+  std::string message;
+};
+
+sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
+    const Comment& comment, ParseMarkdownPageState& page_state) noexcept;
+
+sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_summary(
+    const Comment& comment, ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen

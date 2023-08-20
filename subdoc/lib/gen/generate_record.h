@@ -16,11 +16,12 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
 
 namespace subdoc::gen {
 
-void generate_record(const RecordElement& element,
+void generate_record(const Database& db, const RecordElement& element,
                      sus::Slice<const NamespaceElement*> namespaces,
                      sus::Vec<const RecordElement*> type_ancestors,
                      const Options& options) noexcept;

@@ -43,9 +43,7 @@ sus::Vec<CppPathElement> generate_with_ancestors(
               }
               sus::unreachable();
             }(),
-        .link_href = construct_html_file_path_for_namespace(
-                         std::filesystem::path(), ancestor)
-                         .string(),
+        .link_href = construct_html_url_for_namespace(ancestor),
         .type =
             [&]() {
               switch (ancestor.namespace_name) {
@@ -61,11 +59,7 @@ sus::Vec<CppPathElement> generate_with_ancestors(
            [](const RecordElement* e) -> const RecordElement& { return *e; })) {
     out.push(CppPathElement{
         .name = sus::clone(ancestor.name),
-        .link_href =
-            construct_html_file_path(
-                std::filesystem::path(), ancestor.namespace_path.as_slice(),
-                ancestor.record_path.as_slice(), ancestor.name)
-                .string(),
+        .link_href = construct_html_url_for_type(ancestor),
         .type = CppPathRecord,
     });
   }
