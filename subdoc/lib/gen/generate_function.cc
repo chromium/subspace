@@ -193,14 +193,14 @@ void generate_overload_set(HtmlWriter::OpenDiv& div,
           generate_return_type(signature_div, overload);
         }
       }
-    }
 
-    if (style == StyleLongWithConstraints) {
-      if (overload.constraints.is_some()) {
-        generate_requires_constraints(overload_div,
-                                      overload.constraints.as_value());
+      if (style == StyleLongWithConstraints) {
+        if (overload.constraints.is_some()) {
+          generate_requires_constraints(signature_div,
+                                        overload.constraints.as_value());
+        }
+        generate_function_extras(signature_div, overload);
       }
-      generate_function_extras(overload_div, overload);
     }
 
     if (style == StyleShort) {
@@ -321,19 +321,15 @@ void generate_function(const Database& db, const FunctionElement& element,
           name_anchor.write_text(element.name);
         }
         generate_function_params(signature_div, overload);
-        {
-          auto arrow_span = signature_div.open_span(HtmlWriter::SingleLine);
-          arrow_span.add_class("return-arrow");
-          arrow_span.write_text("->");
-        }
+        signature_div.write_text(" -> ");
         generate_return_type(signature_div, overload);
-      }
 
-      if (overload.constraints.is_some()) {
-        generate_requires_constraints(overload_div,
-                                      overload.constraints.as_value());
+        if (overload.constraints.is_some()) {
+          generate_requires_constraints(signature_div,
+                                        overload.constraints.as_value());
+        }
+        generate_function_extras(signature_div, overload);
       }
-      generate_function_extras(overload_div, overload);
     }
   }
   if (element.has_comment()) {
