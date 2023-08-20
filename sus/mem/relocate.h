@@ -44,6 +44,26 @@ struct relocatable_tag final {
   };
 };
 
+// We use a separate concept to test each `T` so that it can short-circuit when
+// `T` is a reference type to an undefined (forward-declared) type.
+// clang-format off
+template <class T>
+concept relocate_by_memcpy_impl =
+    std::is_reference_v<T>
+    || (!std::is_volatile_v<std::remove_all_extents_t<T>>
+       && sus::mem::data_size_of<std::remove_all_extents_t<std::remove_reference_t<T>>>() != size_t(-1)
+       && (__private::relocatable_tag<std::remove_all_extents_t<T>>::value(0)
+         || std::is_trivially_copyable_v<std::remove_all_extents_t<T>>
+         || (std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>> &&
+             std::is_trivially_move_assignable_v<std::remove_all_extents_t<T>> &&
+             std::is_trivially_destructible_v<std::remove_all_extents_t<T>>)
+  #if __has_extension(trivially_relocatable)
+         || __is_trivially_relocatable(std::remove_all_extents_t<T>)
+  #endif
+         )
+       );
+// clang-format on
+
 }  // namespace __private
 
 /// Tests if a variable of type T can be relocated with memcpy().
@@ -70,27 +90,8 @@ struct relocatable_tag final {
 ///
 /// Tests against `std::remove_all_extents_t<T>` so that the same answer is
 /// returned for `T` or `T[]` or `T[][][]` etc.
-//
-// clang-format off
 template <class... T>
-concept relocate_by_memcpy =
-  (... &&
-    (std::is_reference_v<T>
-    || (!std::is_volatile_v<std::remove_all_extents_t<T>>
-       && sus::mem::data_size_of<std::remove_all_extents_t<std::remove_reference_t<T>>>() != size_t(-1)
-       && (__private::relocatable_tag<std::remove_all_extents_t<T>>::value(0)
-          || std::is_trivially_copyable_v<std::remove_all_extents_t<T>>
-          || (std::is_trivially_move_constructible_v<std::remove_all_extents_t<T>> &&
-              std::is_trivially_move_assignable_v<std::remove_all_extents_t<T>> &&
-              std::is_trivially_destructible_v<std::remove_all_extents_t<T>>)
-#if __has_extension(trivially_relocatable)
-          || __is_trivially_relocatable(std::remove_all_extents_t<T>)
-#endif
-          )
-       )
-    )
-  );
-// clang-format on
+concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 
 }  // namespace sus::mem
 
