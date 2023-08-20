@@ -84,11 +84,16 @@ code {
     padding-bottom: 0.2rem;
 }
 
+.record .section-items :is(.type-signature, .function-signature) {
+    background-color: rgba(43, 43, 43, 1.0);
+    padding: 0.5rem;
+    margin-bottom: 0.2rem;
+}
+
 .overview :is(.type-signature, .function-signature) {
     background-color: rgba(43, 43, 43, 1.0);
-    padding: 0.5em;
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
+    margin-bottom: 0.2rem;
+    padding: 0.5rem;
 }
 .overview .type-signature :is(.struct, .class, .union, .final) {
     color: rgb(125, 231, 235);
