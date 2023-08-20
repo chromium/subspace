@@ -194,7 +194,9 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
                   MD_FLAG_NOHTMLSPANS | MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH |
                   // Forked extensions.
                   MD_FLAG_HEADERSELFLINKS | MD_FLAG_CODELINKS,
-              0);
+              // We enable MD_ASSERT() to catch memory safety bugs, so
+              // ensure something gets printed should a problem occur.
+              MD_HTML_FLAG_DEBUG);
   if (result != 0) {
     if (data.error_message.is_some()) {
       return sus::err(
