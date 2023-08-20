@@ -18,15 +18,18 @@
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
+#include "sus/prelude.h"
+#include "sus/result/result.h"
 
 namespace subdoc::gen {
 
-void generate_concept(const Database& db, const ConceptElement& element,
-                      sus::Slice<const NamespaceElement*> namespaces,
-                      const Options& options) noexcept;
+sus::Result<void, MarkdownToHtmlError> generate_concept(
+    const Database& db, const ConceptElement& element,
+    sus::Slice<const NamespaceElement*> namespaces,
+    const Options& options) noexcept;
 
-void generate_concept_reference(HtmlWriter::OpenUl& items_list,
-                                const ConceptElement& element,
-                                ParseMarkdownPageState& page_state) noexcept;
+sus::Result<void, MarkdownToHtmlError> generate_concept_reference(
+    HtmlWriter::OpenUl& items_list, const ConceptElement& element,
+    ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen

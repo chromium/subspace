@@ -17,16 +17,33 @@
 #include <system_error>
 
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
+#include "sus/choice/choice.h"
 #include "sus/prelude.h"
 #include "sus/result/result.h"
 
 namespace subdoc::gen {
 
+struct GenerateFileError {
+  std::string path;
+  std::error_code ec;
+};
+
+enum class GenerateErrorTag {
+  CopyFileError,
+  DeleteFileError,
+  MarkdownError,
+};
+using GenerateError = sus::Choice<sus_choice_types(
+    (GenerateErrorTag::CopyFileError, GenerateFileError),
+    (GenerateErrorTag::DeleteFileError, GenerateFileError),
+    (GenerateErrorTag::MarkdownError, MarkdownToHtmlError))>;
+
 /// Generate the html output from the database.
 ///
 /// Returns an error if generation fails.
-sus::result::Result<void, std::error_code> generate(const Database& db,
-                                                    const Options& options);
+sus::result::Result<void, GenerateError> generate(const Database& db,
+                                                  const Options& options);
 
 }  // namespace subdoc::gen

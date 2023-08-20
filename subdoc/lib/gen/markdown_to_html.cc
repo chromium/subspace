@@ -16,6 +16,7 @@
 
 #include <sstream>
 
+#include "fmt/format.h"
 #include "subdoc/lib/gen/files.h"
 #include "sus/ops/range.h"
 
@@ -80,46 +81,54 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
   struct UserData {
     std::ostringstream& parsed;
     ParseMarkdownPageState& page_state;
+    sus::Option<std::string> error_message;
   };
-  UserData data(parsed, page_state);
+  UserData data(parsed, page_state, sus::none());
 
   auto process_output = [](const MD_CHAR* chars, MD_SIZE size, void* v) {
     auto& userdata = *reinterpret_cast<UserData*>(v);
     userdata.parsed << std::string_view(chars, size);
   };
-  auto render_self_link =
-      [](const MD_CHAR* chars, MD_SIZE size, void* v, MD_HTML* html,
-         void (*render)(MD_HTML* html, const MD_CHAR* chars, MD_SIZE size)) {
-        auto& userdata = *reinterpret_cast<UserData*>(v);
+  auto render_self_link = [](const MD_CHAR* chars, MD_SIZE size, void* v,
+                             MD_HTML* html,
+                             int (*render)(MD_HTML* html, const MD_CHAR* chars,
+                                           MD_SIZE size)) -> int {
+    auto& userdata = *reinterpret_cast<UserData*>(v);
 
-        std::string mapped(std::string_view(chars, size));
-        auto count = 0_u32;
-        if (auto it = userdata.page_state.self_link_counts.find(mapped);
-            it != userdata.page_state.self_link_counts.end()) {
-          count = it->second;
-        }
+    std::string mapped(std::string_view(chars, size));
+    auto count = 0_u32;
+    if (auto it = userdata.page_state.self_link_counts.find(mapped);
+        it != userdata.page_state.self_link_counts.end()) {
+      count = it->second;
+    }
 
-        for (char& c : mapped) {
-          if (c == ' ') {
-            c = '-';
-          } else {
-            // SAFETY: The input is a char, so tolower will give a value in the
-            // range of char.
-            c = sus::mog<char>(std::tolower(c));
-          }
-        }
+    for (char& c : mapped) {
+      if (c == ' ') {
+        c = '-';
+      } else {
+        // SAFETY: The input is a char, so tolower will give a value in the
+        // range of char.
+        c = sus::mog<char>(std::tolower(c));
+      }
+    }
 
-        render(html, mapped.data(), u32::try_from(mapped.size()).unwrap());
-        if (count > 0u) {
-          render(html, "-", 1u);
-          while (count > 0u) {
-            static const char NUMS[] = "0123456789";
-            render(html, NUMS + (count % 10u), 1u);
-            count /= 10u;
-          }
-        }
-      };
-  auto record_self_link = [](const MD_CHAR* chars, MD_SIZE size, void* v) {
+    int result = 0;
+    result = render(html, mapped.data(), u32::try_from(mapped.size()).unwrap());
+    if (result != 0) return result;
+    if (count > 0u) {
+      result = render(html, "-", 1u);
+      if (result != 0) return result;
+      while (count > 0u) {
+        static const char NUMS[] = "0123456789";
+        result = render(html, NUMS + (count % 10u), 1u);
+        if (result != 0) return result;
+        count /= 10u;
+      }
+    }
+    return result;
+  };
+  auto record_self_link = [](const MD_CHAR* chars, MD_SIZE size,
+                             void* v) -> int {
     auto& userdata = *reinterpret_cast<UserData*>(v);
     auto mapped = std::string(std::string_view(chars, size));
     if (auto it = userdata.page_state.self_link_counts.find(mapped);
@@ -128,46 +137,49 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
     } else {
       userdata.page_state.self_link_counts.emplace(sus::move(mapped), 1u);
     }
+    return 0;
   };
-  auto render_code_link =
-      [](const MD_CHAR* chars, MD_SIZE size, void* v, MD_HTML* html,
-         void (*render)(MD_HTML* html, const MD_CHAR* chars, MD_SIZE size)) {
-        auto& userdata = *reinterpret_cast<UserData*>(v);
-        sus::Option<FoundName> found =
-            userdata.page_state.db.find_name(std::string_view(chars, size));
-        if (found.is_some()) {
-          std::string href;
-          switch (found.as_value()) {
-            case FoundName::Tag::Namespace:
-              href = construct_html_url_for_namespace(
-                  found.as_value().as<FoundName::Tag::Namespace>());
-              break;
-            case FoundName::Tag::Function: {
-              href = construct_html_url_for_function(
-                  found.as_value().as<FoundName::Tag::Function>());
-              break;
-            }
-            case FoundName::Tag::Type:
-              href = construct_html_url_for_type(
-                  found.as_value().as<FoundName::Tag::Type>());
-              break;
-
-            case FoundName::Tag::Concept:
-              href = construct_html_url_for_concept(
-                  found.as_value().as<FoundName::Tag::Concept>());
-              break;
-            case FoundName::Tag::Field:
-              href = construct_html_url_for_field(
-                  found.as_value().as<FoundName::Tag::Field>());
-              break;
-          }
-          render(html, href.data(), u32::try_from(href.size()).unwrap());
-        } else {
-          fmt::println("ERROR: missing code link {}",
-                       std::string_view(chars, size));
-          render(html, chars, size);
+  auto render_code_link = [](const MD_CHAR* chars, MD_SIZE size, void* v,
+                             MD_HTML* html,
+                             int (*render)(MD_HTML* html, const MD_CHAR* chars,
+                                           MD_SIZE size)) -> int {
+    auto& userdata = *reinterpret_cast<UserData*>(v);
+    sus::Option<FoundName> found =
+        userdata.page_state.db.find_name(std::string_view(chars, size));
+    if (found.is_some()) {
+      std::string href;
+      switch (found.as_value()) {
+        case FoundName::Tag::Namespace:
+          href = construct_html_url_for_namespace(
+              found.as_value().as<FoundName::Tag::Namespace>());
+          break;
+        case FoundName::Tag::Function: {
+          href = construct_html_url_for_function(
+              found.as_value().as<FoundName::Tag::Function>());
+          break;
         }
-      };
+        case FoundName::Tag::Type:
+          href = construct_html_url_for_type(
+              found.as_value().as<FoundName::Tag::Type>());
+          break;
+
+        case FoundName::Tag::Concept:
+          href = construct_html_url_for_concept(
+              found.as_value().as<FoundName::Tag::Concept>());
+          break;
+        case FoundName::Tag::Field:
+          href = construct_html_url_for_field(
+              found.as_value().as<FoundName::Tag::Field>());
+          break;
+      }
+      return render(html, href.data(), u32::try_from(href.size()).unwrap());
+    } else {
+      userdata.error_message = sus::some(
+          fmt::format("unable to resolve code link '{}' to a C++ name",
+                      std::string_view(chars, size)));
+      return -1;
+    }
+  };
 
   int result =
       md_html(comment.text.data(), u32::try_from(comment.text.size()).unwrap(),
@@ -183,8 +195,15 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
                   // Forked extensions.
                   MD_FLAG_HEADERSELFLINKS | MD_FLAG_CODELINKS,
               0);
-  if (result != 0)
-    return sus::err(MarkdownToHtmlError{.message = "Failed to parse markdown"});
+  if (result != 0) {
+    if (data.error_message.is_some()) {
+      return sus::err(
+          MarkdownToHtmlError{.message = data.error_message.take().unwrap()});
+    } else {
+      return sus::err(MarkdownToHtmlError{
+          .message = fmt::format("unknown parsing error '{}'", result)});
+    }
+  }
   return sus::ok(sus::move(parsed).str());
 }
 

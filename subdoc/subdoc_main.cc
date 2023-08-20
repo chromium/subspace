@@ -159,8 +159,7 @@ int main(int argc, const char** argv) {
     if (markdown_file.is_open()) {
       std::ostringstream stream;
       std::string line;
-      while (std::getline(markdown_file, line))
-        stream << line << "\n";
+      while (std::getline(markdown_file, line)) stream << line << "\n";
       run_options.project_overview_text = sus::move(stream).str();
     }
   }
@@ -197,6 +196,32 @@ int main(int argc, const char** argv) {
 
   llvm::outs() << "Generating into '" << gen_options.output_root.string()
                << "'\n";
-  auto r = subdoc::gen::generate(docs_db, sus::move(gen_options));
-  return r.is_ok() ? 0 : 1;
+  sus::result::Result<void, subdoc::gen::GenerateError> r =
+      subdoc::gen::generate(docs_db, sus::move(gen_options));
+  if (r.is_err()) {
+    switch (r.as_err()) {
+      using enum subdoc::gen::GenerateError::Tag;
+      case CopyFileError: {
+        subdoc::gen::GenerateFileError error =
+            sus::move(r).unwrap_err().into_inner<CopyFileError>();
+        llvm::errs() << "ERROR: Failed to copy file " << error.path << ": "
+                     << error.ec.message();
+        return 1;
+      }
+      case DeleteFileError: {
+        subdoc::gen::GenerateFileError error =
+            sus::move(r).unwrap_err().into_inner<DeleteFileError>();
+        llvm::errs() << "ERROR: Failed to delete file " << error.path << ": "
+                     << error.ec.message();
+        return 1;
+      }
+      case MarkdownError: {
+        subdoc::gen::MarkdownToHtmlError error =
+            sus::move(r).unwrap_err().into_inner<MarkdownError>();
+        llvm::errs() << "ERROR: Failed to parse markdown: " << error.message;
+        return 1;
+      }
+    }
+  }
+  return 0;
 }
