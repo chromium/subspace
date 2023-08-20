@@ -516,13 +516,16 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
                       .collect_vec();
             }
 
+            // Make a copy before moving `comment` to the contructor argument.
+            sus::Option<std::string> overload_set =
+                sus::clone(comment.attrs.overload_set);
+
             auto fe = FunctionElement(
                 iter_namespace_path(decl).collect_vec(), sus::move(comment),
                 sus::move(function_name), decl->isOverloadedOperator(),
                 decl->getReturnType(), sus::move(constraints),
                 sus::move(template_params), decl->isDeleted(),
-                sus::move(params),
-                sus::clone(comment.attrs.overload_set),
+                sus::move(params), sus::move(overload_set),
                 sus::move(record_path),
                 decl->getASTContext().getSourceManager().getFileOffset(
                     decl->getLocation()));
