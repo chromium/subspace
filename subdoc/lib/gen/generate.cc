@@ -20,8 +20,8 @@
 
 namespace subdoc::gen {
 
-sus::result::Result<void, std::error_code> generate(const Database& db,
-                                                    const Options& options) {
+sus::result::Result<void, GenerateError> generate(const Database& db,
+                                                  const Options& options) {
   if (std::filesystem::exists(options.output_root)) {
     if (std::filesystem::is_directory(options.output_root)) {
       for (auto it = std::filesystem::directory_iterator(options.output_root);
@@ -31,10 +31,12 @@ sus::result::Result<void, std::error_code> generate(const Database& db,
           std::error_code ec;
           std::filesystem::remove(*it, ec);
           if (ec) {
-            llvm::errs() << "Failed to remove "
-                         << it->path().filename().string() << ": "
-                         << ec.message() << "\n";
-            return sus::err(ec);
+            return sus::err(
+                GenerateError::with<GenerateError::Tag::DeleteFileError>(
+                    GenerateFileError{
+                        .path = it->path().filename().string(),
+                        .ec = sus::move(ec),
+                    }));
           }
         }
       }
@@ -42,13 +44,20 @@ sus::result::Result<void, std::error_code> generate(const Database& db,
       std::error_code ec;
       std::filesystem::remove(options.output_root, ec);
       if (ec) {
-        llvm::errs() << "Failed to remove " << options.output_root.string()
-                     << ": " << ec.message() << "\n";
-        return sus::err(ec);
+        return sus::err(
+            GenerateError::with<GenerateError::Tag::DeleteFileError>(
+                GenerateFileError{
+                    .path = options.output_root.string(),
+                    .ec = sus::move(ec),
+                }));
       }
     }
   }
-  generate_namespace(db, db.global, sus::vec(), options);
+  if (auto result = generate_namespace(db, db.global, sus::vec(), options);
+      result.is_err()) {
+    return sus::err(GenerateError::with<GenerateError::Tag::MarkdownError>(
+        sus::move(result).unwrap_err()));
+  }
 
   for (const std::string& s : options.copy_files) {
     if (!std::filesystem::exists(s)) {
@@ -57,9 +66,11 @@ sus::result::Result<void, std::error_code> generate(const Database& db,
       std::error_code ec;
       std::filesystem::copy(s, options.output_root, ec);
       if (ec) {
-        llvm::errs() << "Failed to copy file " << s << ": " << ec.message()
-                     << "\n";
-        return sus::err(ec);
+        return sus::err(GenerateError::with<GenerateError::Tag::CopyFileError>(
+            GenerateFileError{
+                .path = sus::clone(s),
+                .ec = sus::move(ec),
+            }));
       }
     }
   }

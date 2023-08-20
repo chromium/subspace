@@ -32,11 +32,10 @@ namespace subdoc::gen {
 
 namespace {
 
-void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
-                               const ConceptElement& element,
-                               sus::Slice<const NamespaceElement*> namespaces,
-                               ParseMarkdownPageState& page_state,
-                               const Options& options) noexcept {
+sus::Result<void, MarkdownToHtmlError> generate_concept_overview(
+    HtmlWriter::OpenDiv& record_div, const ConceptElement& element,
+    sus::Slice<const NamespaceElement*> namespaces,
+    ParseMarkdownPageState& page_state, const Options& options) noexcept {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -107,21 +106,30 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
       generate_requires_constraints(concept_body_div, element.constraints);
     }
   }
-  if (element.has_comment()) {
+  {
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    desc_div.write_html(
-        markdown_to_html_full(element.comment, page_state).unwrap());
+    if (element.has_comment()) {
+      if (auto comment_html =
+              markdown_to_html_full(element.comment, page_state);
+          comment_html.is_err()) {
+        return sus::err(sus::move(comment_html).unwrap_err());
+      } else {
+        desc_div.write_html(sus::move(comment_html).unwrap());
+      }
+    }
   }
+  return sus::ok();
 }
 
 }  // namespace
 
-void generate_concept(const Database& db, const ConceptElement& element,
-                      sus::Slice<const NamespaceElement*> namespaces,
-                      const Options& options) noexcept {
-  if (element.hidden()) return;
+sus::Result<void, MarkdownToHtmlError> generate_concept(
+    const Database& db, const ConceptElement& element,
+    sus::Slice<const NamespaceElement*> namespaces,
+    const Options& options) noexcept {
+  if (element.hidden()) return sus::ok();
 
   ParseMarkdownPageState page_state(db);
 
@@ -153,13 +161,17 @@ void generate_concept(const Database& db, const ConceptElement& element,
 
   auto record_div = body.open_div();
   record_div.add_class("concept");
-  generate_concept_overview(record_div, element, namespaces, page_state,
-                            options);
+  if (auto result = generate_concept_overview(record_div, element, namespaces,
+                                              page_state, options);
+      result.is_err()) {
+    return sus::err(sus::move(result).unwrap_err());
+  }
+  return sus::ok();
 }
 
-void generate_concept_reference(HtmlWriter::OpenUl& items_list,
-                                const ConceptElement& element,
-                                ParseMarkdownPageState& page_state) noexcept {
+sus::Result<void, MarkdownToHtmlError> generate_concept_reference(
+    HtmlWriter::OpenUl& items_list, const ConceptElement& element,
+    ParseMarkdownPageState& page_state) noexcept {
   auto item_li = items_list.open_li();
   item_li.add_class("section-item");
 
@@ -187,10 +199,18 @@ void generate_concept_reference(HtmlWriter::OpenUl& items_list,
     auto desc_div = item_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    if (element.has_comment())
-      desc_div.write_html(
-          markdown_to_html_summary(element.comment, page_state).unwrap());
+    if (element.has_comment()) {
+      if (auto comment_html =
+              markdown_to_html_summary(element.comment, page_state);
+          comment_html.is_err()) {
+        return sus::err(sus::move(comment_html).unwrap_err());
+      } else {
+        desc_div.write_html(sus::move(comment_html).unwrap());
+      }
+    }
   }
+
+  return sus::ok();
 }
 
 }  // namespace subdoc::gen

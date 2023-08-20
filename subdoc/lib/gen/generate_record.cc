@@ -61,12 +61,11 @@ constexpr inline std::weak_ordering cmp_fields_by_name(
   return a.at<1>() <=> b.at<1>();
 }
 
-void generate_record_overview(HtmlWriter::OpenDiv& record_div,
-                              const RecordElement& element,
-                              sus::Slice<const NamespaceElement*> namespaces,
-                              sus::Slice<const RecordElement*> type_ancestors,
-                              ParseMarkdownPageState& page_state,
-                              const Options& options) noexcept {
+sus::Result<void, MarkdownToHtmlError> generate_record_overview(
+    HtmlWriter::OpenDiv& record_div, const RecordElement& element,
+    sus::Slice<const NamespaceElement*> namespaces,
+    sus::Slice<const RecordElement*> type_ancestors,
+    ParseMarkdownPageState& page_state, const Options& options) noexcept {
   auto section_div = record_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -150,20 +149,28 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
       record_body_div.write_text("{ ... };");
     }
   }
-  if (element.has_comment()) {
+  {
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    desc_div.write_html(
-        markdown_to_html_full(element.comment, page_state).unwrap());
+    if (element.has_comment()) {
+      if (auto comment_html =
+              markdown_to_html_full(element.comment, page_state);
+          comment_html.is_err()) {
+        return sus::err(sus::move(comment_html).unwrap_err());
+      } else {
+        desc_div.write_html(sus::move(comment_html).unwrap());
+      }
+    }
   }
+  return sus::ok();
 }
 
-void generate_record_fields(HtmlWriter::OpenDiv& record_div,
-                            const RecordElement& element, bool static_fields,
-                            sus::Slice<SortedFieldByName> fields,
-                            ParseMarkdownPageState& page_state) {
-  if (fields.is_empty()) return;
+sus::Result<void, MarkdownToHtmlError> generate_record_fields(
+    HtmlWriter::OpenDiv& record_div, const RecordElement& element,
+    bool static_fields, sus::Slice<SortedFieldByName> fields,
+    ParseMarkdownPageState& page_state) {
+  if (fields.is_empty()) return sus::ok();
 
   auto section_div = record_div.open_div();
   section_div.add_class("section");
@@ -243,15 +250,24 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
           field_name_anchor.write_text(fe.name);
         }
       }
-      if (fe.has_comment()) {
+      {
         auto desc_div = field_div.open_div();
         desc_div.add_class("description");
         desc_div.add_class("long");
-        desc_div.write_html(
-            markdown_to_html_full(fe.comment, page_state).unwrap());
+        if (fe.has_comment()) {
+          if (auto comment_html =
+                  markdown_to_html_full(element.comment, page_state);
+              comment_html.is_err()) {
+            return sus::err(sus::move(comment_html).unwrap_err());
+          } else {
+            desc_div.write_html(sus::move(comment_html).unwrap());
+          }
+        }
       }
     }
   }
+
+  return sus::ok();
 }
 
 enum MethodType {
@@ -261,11 +277,11 @@ enum MethodType {
   NonStaticOperators,
 };
 
-void generate_record_methods(HtmlWriter::OpenDiv& record_div,
-                             const RecordElement& element, MethodType type,
-                             sus::Slice<SortedFunctionByName> methods,
-                             ParseMarkdownPageState& page_state) {
-  if (methods.is_empty()) return;
+sus::Result<void, MarkdownToHtmlError> generate_record_methods(
+    HtmlWriter::OpenDiv& record_div, const RecordElement& element,
+    MethodType type, sus::Slice<SortedFunctionByName> methods,
+    ParseMarkdownPageState& page_state) {
+  if (methods.is_empty()) return sus::ok();
 
   auto section_div = record_div.open_div();
   section_div.add_class("section");
@@ -309,19 +325,26 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
         }
         sus::unreachable();
       }();
-      generate_function_method_reference(items_div, func,
-                                       /*with constraints=*/false, page_state);
+      if (auto result = generate_function_method_reference(
+              items_div, func,
+              /*with constraints=*/false, page_state);
+          result.is_err()) {
+        return sus::err(sus::move(result).unwrap_err());
+      }
     }
   }
+
+  return sus::ok();
 }
 
 }  // namespace
 
-void generate_record(const Database& db, const RecordElement& element,
-                     sus::Slice<const NamespaceElement*> namespaces,
-                     sus::Vec<const RecordElement*> type_ancestors,
-                     const Options& options) noexcept {
-  if (element.hidden()) return;
+sus::Result<void, MarkdownToHtmlError> generate_record(
+    const Database& db, const RecordElement& element,
+    sus::Slice<const NamespaceElement*> namespaces,
+    sus::Vec<const RecordElement*> type_ancestors,
+    const Options& options) noexcept {
+  if (element.hidden()) return sus::ok();
 
   ParseMarkdownPageState page_state(db);
 
@@ -360,8 +383,11 @@ void generate_record(const Database& db, const RecordElement& element,
   record_div.add_class("type");
   record_div.add_class("record");
   record_div.add_class(friendly_record_type_name(element.record_type, false));
-  generate_record_overview(record_div, element, namespaces, type_ancestors,
-                           page_state, options);
+  if (auto result = generate_record_overview(
+          record_div, element, namespaces, type_ancestors, page_state, options);
+      result.is_err()) {
+    return sus::err(sus::move(result).unwrap_err());
+  }
 
   sus::Vec<SortedFieldByName> sorted_static_fields;
   sus::Vec<SortedFieldByName> sorted_fields;
@@ -382,8 +408,12 @@ void generate_record(const Database& db, const RecordElement& element,
   sorted_static_fields.sort_unstable_by(cmp_fields_by_name);
   sorted_fields.sort_unstable_by(cmp_fields_by_name);
 
-  generate_record_fields(record_div, element, true,
-                         sorted_static_fields.as_slice(), page_state);
+  if (auto result =
+          generate_record_fields(record_div, element, true,
+                                 sorted_static_fields.as_slice(), page_state);
+      result.is_err()) {
+    return sus::err(sus::move(result).unwrap_err());
+  }
 
   sus::Vec<SortedFunctionByName> sorted_static_methods;
   sus::Vec<SortedFunctionByName> sorted_methods;
@@ -422,28 +452,52 @@ void generate_record(const Database& db, const RecordElement& element,
   sorted_conversions.sort_unstable_by(cmp_functions_by_name);
   sorted_operators.sort_unstable_by(cmp_functions_by_name);
 
-  generate_record_methods(record_div, element, StaticMethods,
-                          sorted_static_methods.as_slice(), page_state);
-  generate_record_methods(record_div, element, NonStaticMethods,
-                          sorted_methods.as_slice(), page_state);
-  generate_record_methods(record_div, element, Conversions,
-                          sorted_conversions.as_slice(), page_state);
-  generate_record_methods(record_div, element, NonStaticOperators,
-                          sorted_operators.as_slice(), page_state);
+  if (auto result =
+          generate_record_methods(record_div, element, StaticMethods,
+                                  sorted_static_methods.as_slice(), page_state);
+      result.is_err()) {
+    return sus::err(sus::move(result).unwrap_err());
+  }
+  if (auto result =
+          generate_record_methods(record_div, element, NonStaticMethods,
+                                  sorted_methods.as_slice(), page_state);
+      result.is_err()) {
+    return sus::err(sus::move(result).unwrap_err());
+  }
+  if (auto result =
+          generate_record_methods(record_div, element, Conversions,
+                                  sorted_conversions.as_slice(), page_state);
+      result.is_err()) {
+    return sus::err(sus::move(result).unwrap_err());
+  }
+  if (auto result =
+          generate_record_methods(record_div, element, NonStaticOperators,
+                                  sorted_operators.as_slice(), page_state);
+      result.is_err()) {
+    return sus::err(sus::move(result).unwrap_err());
+  }
 
-  generate_record_fields(record_div, element, false, sorted_fields.as_slice(),
-                         page_state);
+  if (auto result = generate_record_fields(
+          record_div, element, false, sorted_fields.as_slice(), page_state);
+      result.is_err()) {
+    return sus::err(sus::move(result).unwrap_err());
+  }
 
   type_ancestors.push(&element);
   for (const auto& [key, subrecord] : element.records) {
-    generate_record(db, subrecord, namespaces, sus::clone(type_ancestors),
-                    options);
+    if (auto result = generate_record(db, subrecord, namespaces,
+                                      sus::clone(type_ancestors), options);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
+
+  return sus::ok();
 }
 
-void generate_record_reference(HtmlWriter::OpenUl& items_list,
-                               const RecordElement& element,
-                               ParseMarkdownPageState& page_state) noexcept {
+sus::Result<void, MarkdownToHtmlError> generate_record_reference(
+    HtmlWriter::OpenUl& items_list, const RecordElement& element,
+    ParseMarkdownPageState& page_state) noexcept {
   auto item_li = items_list.open_li();
   item_li.add_class("section-item");
 
@@ -471,10 +525,18 @@ void generate_record_reference(HtmlWriter::OpenUl& items_list,
     auto desc_div = item_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    if (element.has_comment())
-      desc_div.write_html(
-          markdown_to_html_summary(element.comment, page_state).unwrap());
+    if (element.has_comment()) {
+      if (auto comment_html =
+              markdown_to_html_summary(element.comment, page_state);
+          comment_html.is_err()) {
+        return sus::err(sus::move(comment_html).unwrap_err());
+      } else {
+        desc_div.write_html(sus::move(comment_html).unwrap());
+      }
+    }
   }
+
+  return sus::ok();
 }
 
 }  // namespace subdoc::gen

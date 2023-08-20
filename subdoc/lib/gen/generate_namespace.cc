@@ -66,11 +66,10 @@ std::string namespace_display_name(
   return sus::move(out).str();
 }
 
-void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
-                                 const NamespaceElement& element,
-                                 sus::Slice<const NamespaceElement*> ancestors,
-                                 ParseMarkdownPageState& page_state,
-                                 const Options& options) {
+sus::Result<void, MarkdownToHtmlError> generate_namespace_overview(
+    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
+    sus::Slice<const NamespaceElement*> ancestors,
+    ParseMarkdownPageState& page_state, const Options& options) {
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
   section_div.add_class("overview");
@@ -117,17 +116,25 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    if (element.has_comment())
-      desc_div.write_html(
-          markdown_to_html_full(element.comment, page_state).unwrap());
+    if (element.has_comment()) {
+      if (auto comment_html =
+              markdown_to_html_full(element.comment, page_state);
+          comment_html.is_err()) {
+        return sus::err(sus::move(comment_html).unwrap_err());
+      } else {
+        desc_div.write_html(sus::move(comment_html).unwrap());
+      }
+    }
   }
+
+  return sus::ok();
 }
 
-void generate_namespace_references(HtmlWriter::OpenDiv& namespace_div,
-                                   const NamespaceElement& element,
-                                   sus::Slice<SortedNamespaceByName> namespaces,
-                                   ParseMarkdownPageState& page_state) {
-  if (namespaces.is_empty()) return;
+sus::Result<void, MarkdownToHtmlError> generate_namespace_references(
+    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
+    sus::Slice<SortedNamespaceByName> namespaces,
+    ParseMarkdownPageState& page_state) {
+  if (namespaces.is_empty()) return sus::ok();
 
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
@@ -148,8 +155,11 @@ void generate_namespace_references(HtmlWriter::OpenDiv& namespace_div,
         auto item_li = items_list.open_li();
         item_li.add_class("section-item");
 
-        generate_namespace_reference(item_li, element.namespaces.at(id),
-                                     page_state);
+        if (auto result = generate_namespace_reference(
+                item_li, element.namespaces.at(id), page_state);
+            result.is_err()) {
+          return sus::err(sus::move(result).unwrap_err());
+        }
       }
 
       {
@@ -172,20 +182,25 @@ void generate_namespace_references(HtmlWriter::OpenDiv& namespace_div,
           auto item_li = items_list.open_li();
           item_li.add_class("nested");
           item_li.add_class("section-item");
-          generate_namespace_reference(
-              item_li, element.namespaces.at(id).namespaces.at(sub_id),
-              page_state);
+          if (auto result = generate_namespace_reference(
+                  item_li, element.namespaces.at(id).namespaces.at(sub_id),
+                  page_state);
+              result.is_err()) {
+            return sus::err(sus::move(result).unwrap_err());
+          }
         }
       }
     }
   }
+
+  return sus::ok();
 }
 
-void generate_concept_references(HtmlWriter::OpenDiv& namespace_div,
-                                 const NamespaceElement& element,
-                                 sus::Slice<SortedConceptByName> concepts,
-                                 ParseMarkdownPageState& page_state) {
-  if (concepts.is_empty()) return;
+sus::Result<void, MarkdownToHtmlError> generate_concept_references(
+    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
+    sus::Slice<SortedConceptByName> concepts,
+    ParseMarkdownPageState& page_state) {
+  if (concepts.is_empty()) return sus::ok();
 
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
@@ -202,18 +217,22 @@ void generate_concept_references(HtmlWriter::OpenDiv& namespace_div,
     items_list.add_class("item-table");
 
     for (auto&& [name, sort_key, key] : concepts) {
-      generate_concept_reference(items_list, element.concepts.at(key),
-                                 page_state);
+      if (auto result = generate_concept_reference(
+              items_list, element.concepts.at(key), page_state);
+          result.is_err()) {
+        return sus::err(sus::move(result).unwrap_err());
+      }
     }
   }
+
+  return sus::ok();
 }
 
-void generate_record_references(HtmlWriter::OpenDiv& namespace_div,
-                                const NamespaceElement& element,
-                                sus::Slice<SortedRecordByName> records,
-                                RecordType record_type,
-                                ParseMarkdownPageState& page_state) {
-  if (records.is_empty()) return;
+sus::Result<void, MarkdownToHtmlError> generate_record_references(
+    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
+    sus::Slice<SortedRecordByName> records, RecordType record_type,
+    ParseMarkdownPageState& page_state) {
+  if (records.is_empty()) return sus::ok();
 
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
@@ -239,10 +258,15 @@ void generate_record_references(HtmlWriter::OpenDiv& namespace_div,
     items_list.add_class("item-table");
 
     for (auto&& [name, sort_key, key] : records) {
-      generate_record_reference(items_list, element.records.at(key),
-                                page_state);
+      if (auto result = generate_record_reference(
+              items_list, element.records.at(key), page_state);
+          result.is_err()) {
+        return sus::err(sus::move(result).unwrap_err());
+      }
     }
   }
+
+  return sus::ok();
 }
 
 enum GenerateFunctionType {
@@ -250,12 +274,11 @@ enum GenerateFunctionType {
   GenerateOperators,
 };
 
-void generate_function_references(HtmlWriter::OpenDiv& namespace_div,
-                                  const NamespaceElement& element,
-                                  sus::Slice<SortedFunctionByName> functions,
-                                  GenerateFunctionType type,
-                                  ParseMarkdownPageState& page_state) {
-  if (functions.is_empty()) return;
+sus::Result<void, MarkdownToHtmlError> generate_function_references(
+    HtmlWriter::OpenDiv& namespace_div, const NamespaceElement& element,
+    sus::Slice<SortedFunctionByName> functions, GenerateFunctionType type,
+    ParseMarkdownPageState& page_state) {
+  if (functions.is_empty()) return sus::ok();
 
   auto section_div = namespace_div.open_div();
   section_div.add_class("section");
@@ -275,19 +298,24 @@ void generate_function_references(HtmlWriter::OpenDiv& namespace_div,
     items_list.add_class("item-table");
 
     for (auto&& [name, sort_key, function_id] : functions) {
-      generate_function_reference(items_list, element.functions.at(function_id),
-                                  page_state);
+      if (auto result = generate_function_reference(
+              items_list, element.functions.at(function_id), page_state);
+          result.is_err()) {
+        return sus::err(sus::move(result).unwrap_err());
+      }
     }
   }
+
+  return sus::ok();
 }
 
 }  // namespace
 
-void generate_namespace(const Database& db, const NamespaceElement& element,
-                        sus::Vec<const NamespaceElement*> ancestors,
-                        const Options& options) noexcept {
-  if (element.is_empty()) return;
-  if (element.hidden()) return;
+sus::Result<void, MarkdownToHtmlError> generate_namespace(
+    const Database& db, const NamespaceElement& element,
+    sus::Vec<const NamespaceElement*> ancestors,
+    const Options& options) noexcept {
+  if (element.hidden()) return sus::ok();
 
   ParseMarkdownPageState page_state(db);
 
@@ -303,8 +331,11 @@ void generate_namespace(const Database& db, const NamespaceElement& element,
 
   auto namespace_div = body.open_div();
   namespace_div.add_class("namespace");
-  generate_namespace_overview(namespace_div, element, ancestors, page_state,
-                              options);
+  if (auto result = generate_namespace_overview(namespace_div, element,
+                                                ancestors, page_state, options);
+      result.is_err()) {
+    return sus::err(sus::move(result).unwrap_err());
+  }
 
   {
     sus::Vec<SortedNamespaceByName> sorted;
@@ -321,8 +352,11 @@ void generate_namespace(const Database& db, const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_namespace_references(namespace_div, element, sorted.as_slice(),
-                                  page_state);
+    if (auto result = generate_namespace_references(
+            namespace_div, element, sorted.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
 
   {
@@ -354,10 +388,18 @@ void generate_namespace(const Database& db, const NamespaceElement& element,
           return a.at<1>() <=> b.at<1>();
         });
 
-    generate_record_references(namespace_div, element, classes.as_slice(),
-                               RecordType::Class, page_state);
-    generate_record_references(namespace_div, element, unions.as_slice(),
-                               RecordType::Union, page_state);
+    if (auto result = generate_record_references(namespace_div, element,
+                                                 classes.as_slice(),
+                                                 RecordType::Class, page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+    if (auto result = generate_record_references(namespace_div, element,
+                                                 unions.as_slice(),
+                                                 RecordType::Union, page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
 
   {
@@ -386,10 +428,18 @@ void generate_namespace(const Database& db, const NamespaceElement& element,
           if (ord != 0) return ord;
           return a.at<1>() <=> b.at<1>();
         });
-    generate_function_references(namespace_div, element, sorted_functions,
-                                 GenerateFunctions, page_state);
-    generate_function_references(namespace_div, element, sorted_operators,
-                                 GenerateOperators, page_state);
+    if (auto result = generate_function_references(
+            namespace_div, element, sorted_functions, GenerateFunctions,
+            page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
+    if (auto result = generate_function_references(
+            namespace_div, element, sorted_operators, GenerateOperators,
+            page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
 
   {
@@ -405,33 +455,52 @@ void generate_namespace(const Database& db, const NamespaceElement& element,
           if (ord != 0) return ord;
           return a.at<1>() <=> b.at<1>();
         });
-    generate_concept_references(namespace_div, element, concepts.as_slice(),
-                                page_state);
+    if (auto result = generate_concept_references(
+            namespace_div, element, concepts.as_slice(), page_state);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
 
   // Recurse into namespaces, concepts, records and functions.
   ancestors.push(&element);
   for (const auto& [u, sub_element] : element.namespaces) {
     if (sub_element.hidden()) continue;
-    generate_namespace(db, sub_element, sus::clone(ancestors), options);
+    if (auto result =
+            generate_namespace(db, sub_element, sus::clone(ancestors), options);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
   for (const auto& [u, sub_element] : element.concepts) {
     if (sub_element.hidden()) continue;
-    generate_concept(db, sub_element, ancestors, options);
+    if (auto result = generate_concept(db, sub_element, ancestors, options);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
   for (const auto& [u, sub_element] : element.records) {
     if (sub_element.hidden()) continue;
-    generate_record(db, sub_element, ancestors, sus::vec(), options);
+    if (auto result =
+            generate_record(db, sub_element, ancestors, sus::vec(), options);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
   for (const auto& [u, sub_element] : element.functions) {
     if (sub_element.hidden()) continue;
-    generate_function(db, sub_element, ancestors, options);
+    if (auto result = generate_function(db, sub_element, ancestors, options);
+        result.is_err()) {
+      return sus::err(sus::move(result).unwrap_err());
+    }
   }
+
+  return sus::ok();
 }
 
-void generate_namespace_reference(HtmlWriter::OpenLi& open_li,
-                                  const NamespaceElement& element,
-                                  ParseMarkdownPageState& page_state) noexcept {
+sus::Result<void, MarkdownToHtmlError> generate_namespace_reference(
+    HtmlWriter::OpenLi& open_li, const NamespaceElement& element,
+    ParseMarkdownPageState& page_state) noexcept {
   {
     auto item_div = open_li.open_div();
     item_div.add_class("item-name");
@@ -451,10 +520,18 @@ void generate_namespace_reference(HtmlWriter::OpenLi& open_li,
     auto desc_div = open_li.open_div();
     desc_div.add_class("description");
     desc_div.add_class("short");
-    if (element.has_comment())
-      desc_div.write_html(
-          markdown_to_html_summary(element.comment, page_state).unwrap());
+    if (element.has_comment()) {
+      if (auto comment_html =
+              markdown_to_html_summary(element.comment, page_state);
+          comment_html.is_err()) {
+        return sus::err(sus::move(comment_html).unwrap_err());
+      } else {
+        desc_div.write_html(sus::move(comment_html).unwrap());
+      }
+    }
   }
+
+  return sus::ok();
 }
 
 }  // namespace subdoc::gen

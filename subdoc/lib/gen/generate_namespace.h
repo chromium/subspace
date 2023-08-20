@@ -18,15 +18,18 @@
 #include "subdoc/lib/gen/html_writer.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
+#include "sus/prelude.h"
+#include "sus/result/result.h"
 
 namespace subdoc::gen {
 
-void generate_namespace(const Database& db, const NamespaceElement& element,
-                        sus::Vec<const NamespaceElement*> ancestors,
-                        const Options& options) noexcept;
+sus::Result<void, MarkdownToHtmlError> generate_namespace(
+    const Database& db, const NamespaceElement& element,
+    sus::Vec<const NamespaceElement*> ancestors,
+    const Options& options) noexcept;
 
-void generate_namespace_reference(HtmlWriter::OpenLi& li,
-                                  const NamespaceElement& element,
-                                  ParseMarkdownPageState& page_state) noexcept;
+sus::Result<void, MarkdownToHtmlError> generate_namespace_reference(
+    HtmlWriter::OpenLi& li, const NamespaceElement& element,
+    ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen

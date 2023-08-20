@@ -59,11 +59,32 @@ class SubDocGenTest : public testing::Test {
         .stylesheets = sus::vec("../subdoc-test-style.css"),
         .copy_files = sus::vec(),
     };
-    sus::result::Result<void, std::error_code> r =
+    sus::result::Result<void, subdoc::gen::GenerateError> r =
         subdoc::gen::generate(sus::move(result).unwrap(), options);
     if (r.is_err()) {
-      ADD_FAILURE() << "Failed to generate html: "
-                    << sus::move(r).unwrap_err().message();
+      switch (r.as_err()) {
+        using enum subdoc::gen::GenerateError::Tag;
+        case CopyFileError: {
+          subdoc::gen::GenerateFileError error =
+              sus::move(r).unwrap_err().into_inner<CopyFileError>();
+          ADD_FAILURE() << "Failed to copy file " << error.path << ": "
+                        << error.ec.message();
+          break;
+        }
+        case DeleteFileError: {
+          subdoc::gen::GenerateFileError error =
+              sus::move(r).unwrap_err().into_inner<DeleteFileError>();
+          ADD_FAILURE() << "Failed to delete file " << error.path << ": "
+                        << error.ec.message();
+          break;
+        }
+        case MarkdownError: {
+          subdoc::gen::MarkdownToHtmlError error =
+              sus::move(r).unwrap_err().into_inner<MarkdownError>();
+          ADD_FAILURE() << "Failed to parse markdown: " << error.message;
+          break;
+        }
+      }
       return false;
     }
 

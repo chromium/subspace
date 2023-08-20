@@ -19,18 +19,21 @@
 #include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
 #include "subdoc/lib/parse_comment.h"
+#include "sus/prelude.h"
+#include "sus/result/result.h"
 
 namespace subdoc::gen {
 
-void generate_function(const Database& db, const FunctionElement& e,
-                       sus::Slice<const NamespaceElement*> namespaces,
-                       const Options& options) noexcept;
+sus::Result<void, MarkdownToHtmlError> generate_function(
+    const Database& db, const FunctionElement& e,
+    sus::Slice<const NamespaceElement*> namespaces,
+    const Options& options) noexcept;
 
-void generate_function_reference(HtmlWriter::OpenUl& items_list,
-                                 const FunctionElement& e,
-                                 ParseMarkdownPageState& page_state) noexcept;
+sus::Result<void, MarkdownToHtmlError> generate_function_reference(
+    HtmlWriter::OpenUl& items_list, const FunctionElement& e,
+    ParseMarkdownPageState& page_state) noexcept;
 
-void generate_function_method_reference(
+sus::Result<void, MarkdownToHtmlError> generate_function_method_reference(
     HtmlWriter::OpenDiv& items_list, const FunctionElement& e,
     bool with_constraints, ParseMarkdownPageState& page_state) noexcept;
 
