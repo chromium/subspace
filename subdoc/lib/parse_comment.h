@@ -18,28 +18,17 @@
 
 #include "subdoc/lib/doc_attributes.h"
 #include "subdoc/llvm.h"
-#include "sus/ops/range.h"
 #include "sus/result/result.h"
 
 namespace subdoc {
 
-struct ParseCommentError {
-  std::string message;
-};
-
-struct ParseMarkdownPageState {
-  std::unordered_map<std::string, u32> self_link_counts;
-};
-
-sus::Result<std::string, ParseCommentError> parse_comment_markdown_to_html(
-    std::string_view text, ParseMarkdownPageState& page_state) noexcept;
-
-/// Grabs the contents of the first non-empty html tag as the summary.
-std::string summarize_html(std::string_view html) noexcept;
-
 struct ParsedComment {
   DocAttributes attributes;
   std::string text;
+};
+
+struct ParseCommentError {
+  std::string message;
 };
 
 sus::Result<ParsedComment, ParseCommentError> parse_comment(

@@ -21,6 +21,7 @@
 #include "subdoc/lib/database.h"
 #include "sus/collections/slice.h"
 #include "sus/iter/iterator.h"
+#include "sus/ops/range.h"
 
 namespace subdoc::gen {
 
@@ -64,15 +65,53 @@ inline std::filesystem::path construct_html_file_path(
   return p;
 }
 
+inline std::filesystem::path construct_html_file_path_for_concept(
+    std::filesystem::path root, const ConceptElement& element) noexcept {
+  return construct_html_file_path(sus::move(root), element.namespace_path,
+                                  sus::Slice<std::string>(), element.name);
+}
+
+inline std::string construct_html_url_for_concept(
+    const ConceptElement& element) noexcept {
+  return construct_html_file_path_for_concept(std::filesystem::path(), element)
+      .string();
+}
+
+inline std::filesystem::path construct_html_file_path_for_type(
+    std::filesystem::path root, const TypeElement& element) noexcept {
+  return construct_html_file_path(sus::move(root), element.namespace_path,
+                                  element.record_path, element.name);
+}
+
+inline std::string construct_html_url_for_type(
+    const TypeElement& element) noexcept {
+  return construct_html_file_path_for_type(std::filesystem::path(), element)
+      .string();
+}
+
+inline std::string construct_html_url_for_field(
+    const FieldElement& element) noexcept {
+  std::ostringstream p;
+  p << construct_html_file_path(
+           std::filesystem::path(), element.namespace_path,
+           element.record_path[sus::ops::range(0_usize,
+                                               element.record_path.len() - 1u)],
+           element.record_path.last().expect("Field has no record parent?"))
+           .string();
+  p << "#field.";
+  p << element.name;
+  return sus::move(p).str();
+}
+
 inline std::filesystem::path construct_html_file_path_for_function(
-    std::filesystem::path root, const FunctionElement& element,
-    u32 overload_set) noexcept {
+    std::filesystem::path root, const FunctionElement& element) noexcept {
   std::ostringstream s;
   s << "fn.";
   s << element.name;
   // TODO: Should collect all overload sets together on one html page with
-  // #anchors to each set? How can the overload be more stable over time?
-  if (overload_set > 0u) s << "." << overload_set;
+  // #anchors to each set?
+  if (element.overload_set.is_some())
+    s << "." << element.overload_set.as_value();
   std::string name = sus::move(s).str();
 
   // Escaping for operator symbols in the file name.
@@ -126,6 +165,44 @@ inline std::filesystem::path construct_html_file_path_for_function(
                                   sus::Slice<std::string>(), name);
 }
 
+inline std::string construct_html_url_anchor_for_method(
+    const FunctionElement& element) noexcept {
+  sus::check(!element.record_path.is_empty());
+  // There's no escaping that happens for anchors on the record page, unlike
+  // for file paths. So we don't use construct_html_file_path_for_function()
+  // here which escapes.
+  std::ostringstream url;
+  url << "method.";
+  url << element.name;
+  if (element.overload_set.is_some()) {
+    url << ".";
+    url << element.overload_set.as_value();
+  }
+  return sus::move(url).str();
+}
+
+inline std::string construct_html_url_for_function(
+    const FunctionElement& element) noexcept {
+  if (!element.record_path.is_empty()) {
+    // There's no escaping that happens for anchors on the record page, unlike
+    // for file paths. So we don't use construct_html_file_path_for_function()
+    // here which escapes.
+    std::ostringstream url;
+    url << construct_html_file_path(
+               std::filesystem::path(), element.namespace_path,
+               element.record_path[sus::ops::range(
+                   0_usize, element.record_path.len() - 1u)],
+               element.record_path.last().unwrap())
+               .string();
+    url << "#" << construct_html_url_anchor_for_method(element);
+    return sus::move(url).str();
+  } else {
+    return construct_html_file_path_for_function(std::filesystem::path(),
+                                                 element)
+        .string();
+  }
+}
+
 inline std::filesystem::path construct_html_file_path_for_namespace(
     std::filesystem::path root, const NamespaceElement& element) noexcept {
   // The namespace path includes the namespace element itself, so drop
@@ -148,6 +225,13 @@ inline std::filesystem::path construct_html_file_path_for_namespace(
   return construct_html_file_path(sus::move(root), short_namespace_path,
                                   sus::Slice<std::string>(),
                                   sus::move(file_name));
+}
+
+inline std::string construct_html_url_for_namespace(
+    const NamespaceElement& element) noexcept {
+  return construct_html_file_path_for_namespace(std::filesystem::path(),
+                                                element)
+      .string();
 }
 
 }  // namespace subdoc::gen

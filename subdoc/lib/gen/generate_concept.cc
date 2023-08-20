@@ -22,6 +22,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
 #include "subdoc/lib/parse_comment.h"
 #include "sus/assertions/unreachable.h"
@@ -110,22 +111,22 @@ void generate_concept_overview(HtmlWriter::OpenDiv& record_div,
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    desc_div.write_html(element.comment.parsed_full(page_state).unwrap());
+    desc_div.write_html(
+        markdown_to_html_full(element.comment, page_state).unwrap());
   }
 }
 
 }  // namespace
 
-void generate_concept(const ConceptElement& element,
+void generate_concept(const Database& db, const ConceptElement& element,
                       sus::Slice<const NamespaceElement*> namespaces,
                       const Options& options) noexcept {
   if (element.hidden()) return;
 
-  ParseMarkdownPageState page_state;
+  ParseMarkdownPageState page_state(db);
 
-  const std::filesystem::path path = construct_html_file_path(
-      options.output_root, element.namespace_path.as_slice(),
-      sus::Slice<std::string>(), element.name);
+  const std::filesystem::path path =
+      construct_html_file_path_for_concept(options.output_root, element);
   std::filesystem::create_directories(path.parent_path());
   auto html = HtmlWriter(open_file_for_writing(path).unwrap());
 
@@ -173,11 +174,7 @@ void generate_concept_reference(HtmlWriter::OpenUl& items_list,
       auto name_link = type_sig_div.open_a();
       name_link.add_class("type-name");
       if (!element.hidden()) {
-        name_link.add_href(
-            construct_html_file_path(std::filesystem::path(),
-                                     element.namespace_path.as_slice(),
-                                     sus::Slice<std::string>(), element.name)
-                .string());
+        name_link.add_href(construct_html_url_for_concept(element));
       } else {
         llvm::errs() << "WARNING: Reference to hidden ConceptElement "
                      << element.name << " in namespace "
@@ -191,7 +188,8 @@ void generate_concept_reference(HtmlWriter::OpenUl& items_list,
     desc_div.add_class("description");
     desc_div.add_class("short");
     if (element.has_comment())
-      desc_div.write_html(element.comment.parsed_summary(page_state).unwrap());
+      desc_div.write_html(
+          markdown_to_html_summary(element.comment, page_state).unwrap());
   }
 }
 

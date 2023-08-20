@@ -16,22 +16,22 @@
 
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
 #include "subdoc/lib/parse_comment.h"
 
 namespace subdoc::gen {
 
-void generate_function(const FunctionElement& e,
+void generate_function(const Database& db, const FunctionElement& e,
                        sus::Slice<const NamespaceElement*> namespaces,
-                       u32 overload_set, const Options& options) noexcept;
+                       const Options& options) noexcept;
 
 void generate_function_reference(HtmlWriter::OpenUl& items_list,
-                                 const FunctionElement& e, u32 overload_set,
+                                 const FunctionElement& e,
                                  ParseMarkdownPageState& page_state) noexcept;
 
-void generate_function_long_reference(
-    HtmlWriter::OpenDiv& items_list, const FunctionElement& e, u32 overload_set,
-    bool with_constraints,
-    ParseMarkdownPageState& page_state) noexcept;
+void generate_function_method_reference(
+    HtmlWriter::OpenDiv& items_list, const FunctionElement& e,
+    bool with_constraints, ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen

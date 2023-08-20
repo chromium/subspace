@@ -29,10 +29,31 @@
 #include "sus/assertions/check.h"
 #include "sus/choice/choice.h"
 #include "sus/fn/fn.h"
+#include "sus/iter/compat_ranges.h"
 #include "sus/option/option.h"
 #include "sus/prelude.h"
 
 namespace subdoc {
+
+struct NamespaceElement;
+struct FunctionElement;
+struct TypeElement;
+struct ConceptElement;
+struct FieldElement;
+
+enum class FoundNameTag {
+  Namespace,
+  Function,
+  Type,  // Includes Records, Typedefs, Enums.
+  Concept,
+  Field,
+};
+using FoundName = sus::Choice<sus_choice_types(
+    (FoundNameTag::Namespace, const NamespaceElement&),
+    (FoundNameTag::Function, const FunctionElement&),
+    (FoundNameTag::Type, const TypeElement&),
+    (FoundNameTag::Concept, const ConceptElement&),
+    (FoundNameTag::Field, const FieldElement&))>;
 
 struct Comment {
   Comment() = default;
@@ -49,19 +70,6 @@ struct Comment {
     text = sus::clone(source.text);
     attrs = sus::clone(source.attrs);
     // location is not modified.
-  }
-
-  sus::Result<std::string, ParseCommentError> parsed_full(
-      ParseMarkdownPageState& page_state) const noexcept {
-    return parse_comment_markdown_to_html(text, page_state);
-  }
-  sus::Result<std::string, ParseCommentError> parsed_summary(
-      ParseMarkdownPageState& page_state) const noexcept {
-    return parse_comment_markdown_to_html(text, page_state)
-        .and_then(
-            [](std::string s) -> sus::Result<std::string, ParseCommentError> {
-              return sus::ok(summarize_html(sus::move(s)));
-            });
   }
 };
 
@@ -150,10 +158,14 @@ struct FunctionElement : public CommentElement {
                            sus::Option<RequiresConstraints> constraints,
                            sus::Vec<std::string> template_params,
                            bool is_deleted,
-                           sus::Vec<FunctionParameter> parameters, u32 sort_key)
+                           sus::Vec<FunctionParameter> parameters,
+                           sus::Option<std::string> overload_set, sus::Vec<std::string> record_path,
+                           u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
-        is_operator(is_operator) {
+        is_operator(is_operator),
+        overload_set(sus::move(overload_set)),
+        record_path(sus::move(record_path)) {
     overloads.push(FunctionOverload{
         .parameters = sus::move(parameters),
         .method = sus::none(),
@@ -167,6 +179,10 @@ struct FunctionElement : public CommentElement {
 
   bool is_operator;
   sus::Vec<FunctionOverload> overloads;
+  sus::Option<std::string> overload_set;
+  // If the function is a method on a record, this holds the record and any
+  // outer records it's nested within.
+  sus::Vec<std::string> record_path;
 
   bool has_any_comments() const noexcept { return has_comment(); }
 
@@ -176,6 +192,27 @@ struct FunctionElement : public CommentElement {
       return sus::some(*this);
     else
       return sus::none();
+  }
+
+  sus::Option<FoundName> find_name(
+      const sus::Slice<std::string_view>& splits) const noexcept {
+    if (sus::Option<const std::string_view&> first = splits.first();
+        first.is_some()) {
+      std::string_view matcher = sus::move(first).unwrap();
+      auto overload_string = sus::Option<std::string_view>();
+      // What's after # matches with the #[doc.overloads=_] string.
+      if (usize pos = matcher.find('#');
+          pos != std::string_view::npos && pos + 1u < matcher.size()) {
+        overload_string = sus::some(matcher.substr(pos + 1u));
+        matcher = matcher.substr(0u, pos);
+      }
+      if (matcher == name && overload_string == overload_set) {
+        if (splits.len() == 1u) {
+          return sus::some(FoundName::with<FoundName::Tag::Function>(*this));
+        }
+      }
+    }
+    return sus::none();
   }
 
   void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
@@ -204,6 +241,16 @@ struct ConceptElement : public CommentElement {
       return sus::none();
   }
 
+  sus::Option<FoundName> find_name(
+      const sus::Slice<std::string_view>& splits) const noexcept {
+    if (!splits.is_empty() && splits[0u] == name) {
+      if (splits.len() == 1u) {
+        return sus::some(FoundName::with<FoundName::Tag::Concept>(*this));
+      }
+    }
+    return sus::none();
+  }
+
   void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
 };
 
@@ -229,6 +276,7 @@ struct FieldElement : public CommentElement {
         template_params(sus::move(template_params)) {}
 
   sus::Vec<std::string> record_path;
+  /// The field's type if it's in the database.
   sus::Option<const TypeElement&> type_element;
   std::string type_name;
   std::string short_type_name;
@@ -245,6 +293,16 @@ struct FieldElement : public CommentElement {
       return sus::some(*this);
     else
       return sus::none();
+  }
+
+  sus::Option<FoundName> find_name(
+      const sus::Slice<std::string_view>& splits) const noexcept {
+    if (!splits.is_empty() && splits[0u] == name) {
+      if (splits.len() == 1u) {
+        return sus::some(FoundName::with<FoundName::Tag::Field>(*this));
+      }
+    }
+    return sus::none();
   }
 
   void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) { fn(comment); }
@@ -296,21 +354,21 @@ struct RecordId {
 };
 
 struct FunctionId {
-  explicit FunctionId(std::string name, bool is_static, u64 overload_set)
+  explicit FunctionId(std::string name, bool is_static, std::string overload_set)
       : name(sus::move(name)),
         is_static(is_static),
-        overload_set(overload_set) {}
+        overload_set(sus::move(overload_set)) {}
 
   std::string name;
   bool is_static;
-  u64 overload_set;
+  std::string overload_set;
 
   bool operator==(const FunctionId&) const = default;
 
   struct Hash {
     std::size_t operator()(const FunctionId& k) const {
       return (std::hash<std::string>()(k.name) << size_t{k.is_static}) +
-             std::hash<u64>()(k.overload_set);
+             std::hash<std::string>()(k.overload_set);
     }
   };
 };
@@ -439,6 +497,39 @@ struct RecordElement : public TypeElement {
     for (const auto& [u, e] : records) {
       out = e.find_field_comment(comment_loc);
       if (out.is_some()) return out;
+    }
+    return out;
+  }
+
+  sus::Option<FoundName> find_name(
+      const sus::Slice<std::string_view>& splits) const noexcept {
+    sus::Option<FoundName> out;
+    if (!splits.is_empty() && splits[0u] == name) {
+      if (splits.len() == 1u) {
+        out = sus::some(FoundName::with<FoundName::Tag::Type>(*this));
+      } else {
+        for (auto& [k, e] : records) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+        for (auto& [k, e] : fields) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+        for (auto& [k, e] : deductions) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+        for (auto& [k, e] : ctors) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+        for (auto& [k, e] : dtors) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+        for (auto& [k, e] : conversions) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+        for (auto& [k, e] : methods) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+      }
     }
     return out;
   }
@@ -588,8 +679,33 @@ struct NamespaceElement : public CommentElement {
     return out;
   }
 
+  sus::Option<FoundName> find_name(
+      const sus::Slice<std::string_view>& splits) const noexcept {
+    sus::Option<FoundName> out;
+    if (!splits.is_empty() && splits[0u] == name) {
+      if (splits.len() == 1u) {
+        out = sus::some(FoundName::with<FoundName::Tag::Namespace>(*this));
+      } else {
+        for (auto& [k, e] : concepts) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+        for (auto& [k, e] : namespaces) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+        for (auto& [k, e] : records) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+        for (auto& [k, e] : functions) {
+          if (out = e.find_name(splits["1.."_r]); out.is_some()) return out;
+        }
+      }
+    }
+    return out;
+  }
+
   void for_each_comment(sus::fn::FnMutRef<void(Comment&)> fn) {
     fn(comment);
+    for (auto& [k, e] : concepts) e.for_each_comment(fn);
     for (auto& [k, e] : namespaces) e.for_each_comment(fn);
     for (auto& [k, e] : records) e.for_each_comment(fn);
     for (auto& [k, e] : functions) e.for_each_comment(fn);
@@ -605,7 +721,7 @@ inline ConceptId key_for_concept(clang::ConceptDecl* decl) noexcept {
 }
 
 inline FunctionId key_for_function(clang::FunctionDecl* decl,
-                                   sus::Option<u64> overload_set) noexcept {
+                                   sus::Option<std::string> overload_set) noexcept {
   bool is_static = [&]() {
     if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl))
       return mdecl->isStatic();
@@ -997,6 +1113,26 @@ struct Database {
   }
   sus::Option<const CommentElement&> find_field_comment(
       std::string_view comment_loc) && = delete;
+
+  /// Finds an element in the database by its fully qualified C++ name, e.g.
+  /// "sus::ops::Try".
+  ///
+  /// If there's a #, what comes after it is used as the overload set
+  /// matcher for functions, which will match with what was specified in
+  /// `#[doc.overloads=_]`.
+  sus::Option<FoundName> find_name(std::string_view full_name) const noexcept {
+    llvm::SmallVector<llvm::StringRef> splits;
+    llvm::StringRef(full_name).split(splits, "::");
+
+    auto v = sus::Vec<std::string_view>::with_capacity(splits.size() + 1u);
+    // If the symbol starts with `::` then the first element is empty and
+    // matches the global namespace; otherwise, we insert the global namespace
+    // matcher.
+    if (splits[0u] != "") v.push(std::string_view(global.name));
+    v.extend(sus::iter::from_range(splits).map(
+        [](llvm::StringRef r) { return std::string_view(r); }));
+    return global.find_name(v.as_slice());
+  }
 
  private:
   sus::Option<RecordElement&> find_record_mut_impl(clang::RecordDecl* rdecl,

@@ -23,6 +23,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_requires.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/gen/options.h"
 #include "subdoc/lib/parse_comment.h"
 #include "sus/assertions/unreachable.h"
@@ -97,8 +98,10 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
             case CppPathProject: return "project-name";
             case CppPathNamespace: return "namespace-name";
             case CppPathRecord: return "type-name";
-            case CppPathFunction: break;  // Function can't be an ancesor of a record.
-            case CppPathConcept: break;  // Concept can't be an ancestor of a record.
+            case CppPathFunction:
+              break;  // Function can't be an ancesor of a record.
+            case CppPathConcept:
+              break;  // Concept can't be an ancestor of a record.
           }
           sus::unreachable();
         }());
@@ -151,7 +154,8 @@ void generate_record_overview(HtmlWriter::OpenDiv& record_div,
     auto desc_div = section_div.open_div();
     desc_div.add_class("description");
     desc_div.add_class("long");
-    desc_div.write_html(element.comment.parsed_full(page_state).unwrap());
+    desc_div.write_html(
+        markdown_to_html_full(element.comment, page_state).unwrap());
   }
 }
 
@@ -218,12 +222,7 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
           field_type_link.add_title(fe.type_name);
           if (!fe.hidden()) {
             field_type_link.add_href(
-                construct_html_file_path(
-                    std::filesystem::path(),
-                    fe.type_element->namespace_path.as_slice(),
-                    fe.type_element->record_path.as_slice(),
-                    fe.type_element->name)
-                    .string());
+                construct_html_url_for_type(fe.type_element.as_value()));
           } else {
             llvm::errs() << "WARNING: Reference to hidden FieldElement "
                          << fe.name << " in record " << element.name
@@ -248,7 +247,8 @@ void generate_record_fields(HtmlWriter::OpenDiv& record_div,
         auto desc_div = field_div.open_div();
         desc_div.add_class("description");
         desc_div.add_class("long");
-        desc_div.write_html(fe.comment.parsed_full(page_state).unwrap());
+        desc_div.write_html(
+            markdown_to_html_full(fe.comment, page_state).unwrap());
       }
     }
   }
@@ -295,14 +295,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
     auto items_div = section_div.open_div();
     items_div.add_class("section-items");
 
-    u32 overload_set;
-    std::string_view prev_name;
     for (auto&& [name, sort_key1, sort_key2, function_id] : methods) {
-      if (name == prev_name)
-        overload_set += 1u;
-      else
-        overload_set = 0u;
-      prev_name = name;
       const FunctionElement& func = [&]() -> decltype(auto) {
         switch (type) {
           case StaticMethods: {
@@ -316,7 +309,7 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
         }
         sus::unreachable();
       }();
-      generate_function_long_reference(items_div, func, overload_set,
+      generate_function_method_reference(items_div, func,
                                        /*with constraints=*/false, page_state);
     }
   }
@@ -324,13 +317,13 @@ void generate_record_methods(HtmlWriter::OpenDiv& record_div,
 
 }  // namespace
 
-void generate_record(const RecordElement& element,
+void generate_record(const Database& db, const RecordElement& element,
                      sus::Slice<const NamespaceElement*> namespaces,
                      sus::Vec<const RecordElement*> type_ancestors,
                      const Options& options) noexcept {
   if (element.hidden()) return;
 
-  ParseMarkdownPageState page_state;
+  ParseMarkdownPageState page_state(db);
 
   const std::filesystem::path path = construct_html_file_path(
       options.output_root, element.namespace_path.as_slice(),
@@ -443,7 +436,8 @@ void generate_record(const RecordElement& element,
 
   type_ancestors.push(&element);
   for (const auto& [key, subrecord] : element.records) {
-    generate_record(subrecord, namespaces, sus::clone(type_ancestors), options);
+    generate_record(db, subrecord, namespaces, sus::clone(type_ancestors),
+                    options);
   }
 }
 
@@ -464,11 +458,7 @@ void generate_record_reference(HtmlWriter::OpenUl& items_list,
       auto name_link = type_sig_div.open_a();
       name_link.add_class("type-name");
       if (!element.hidden()) {
-        name_link.add_href(construct_html_file_path(
-                               std::filesystem::path(),
-                               element.namespace_path.as_slice(),
-                               element.record_path.as_slice(), element.name)
-                               .string());
+        name_link.add_href(construct_html_url_for_type(element));
       } else {
         llvm::errs() << "WARNING: Reference to hidden RecordElement "
                      << element.name << " in namespace "
@@ -482,7 +472,8 @@ void generate_record_reference(HtmlWriter::OpenUl& items_list,
     desc_div.add_class("description");
     desc_div.add_class("short");
     if (element.has_comment())
-      desc_div.write_html(element.comment.parsed_summary(page_state).unwrap());
+      desc_div.write_html(
+          markdown_to_html_summary(element.comment, page_state).unwrap());
   }
 }
 

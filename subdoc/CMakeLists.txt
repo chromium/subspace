@@ -33,6 +33,8 @@ target_sources(subdoc_lib PUBLIC
     "lib/gen/generate.cc"
     "lib/gen/generate.h"
     "lib/gen/html_writer.h"
+    "lib/gen/markdown_to_html.cc"
+    "lib/gen/markdown_to_html.h"
     "lib/gen/options.h"
     "lib/database.h"
     "lib/friendly_names.h"

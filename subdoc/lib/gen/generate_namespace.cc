@@ -23,6 +23,7 @@
 #include "subdoc/lib/gen/generate_head.h"
 #include "subdoc/lib/gen/generate_record.h"
 #include "subdoc/lib/gen/html_writer.h"
+#include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/parse_comment.h"
 #include "sus/assertions/unreachable.h"
 #include "sus/collections/slice.h"
@@ -117,7 +118,8 @@ void generate_namespace_overview(HtmlWriter::OpenDiv& namespace_div,
     desc_div.add_class("description");
     desc_div.add_class("long");
     if (element.has_comment())
-      desc_div.write_html(element.comment.parsed_full(page_state).unwrap());
+      desc_div.write_html(
+          markdown_to_html_full(element.comment, page_state).unwrap());
   }
 }
 
@@ -272,29 +274,22 @@ void generate_function_references(HtmlWriter::OpenDiv& namespace_div,
     items_list.add_class("section-items");
     items_list.add_class("item-table");
 
-    u32 overload_set;
-    std::string_view prev_name;
     for (auto&& [name, sort_key, function_id] : functions) {
-      if (name == prev_name)
-        overload_set += 1u;
-      else
-        overload_set = 0u;
-      prev_name = name;
       generate_function_reference(items_list, element.functions.at(function_id),
-                                  overload_set, page_state);
+                                  page_state);
     }
   }
 }
 
 }  // namespace
 
-void generate_namespace(const NamespaceElement& element,
+void generate_namespace(const Database& db, const NamespaceElement& element,
                         sus::Vec<const NamespaceElement*> ancestors,
                         const Options& options) noexcept {
   if (element.is_empty()) return;
   if (element.hidden()) return;
 
-  ParseMarkdownPageState page_state;
+  ParseMarkdownPageState page_state(db);
 
   const std::filesystem::path path =
       construct_html_file_path_for_namespace(options.output_root, element);
@@ -418,40 +413,19 @@ void generate_namespace(const NamespaceElement& element,
   ancestors.push(&element);
   for (const auto& [u, sub_element] : element.namespaces) {
     if (sub_element.hidden()) continue;
-    generate_namespace(sub_element, sus::clone(ancestors), options);
+    generate_namespace(db, sub_element, sus::clone(ancestors), options);
   }
   for (const auto& [u, sub_element] : element.concepts) {
     if (sub_element.hidden()) continue;
-    generate_concept(sub_element, ancestors, options);
+    generate_concept(db, sub_element, ancestors, options);
   }
   for (const auto& [u, sub_element] : element.records) {
     if (sub_element.hidden()) continue;
-    generate_record(sub_element, ancestors, sus::vec(), options);
+    generate_record(db, sub_element, ancestors, sus::vec(), options);
   }
-  {
-    sus::Vec<SortedFunctionByName> sorted;
-    for (const auto& [function_id, sub_element] : element.functions) {
-      if (sub_element.hidden()) continue;
-      sorted.push(
-          sus::tuple(sub_element.name, sub_element.sort_key, function_id));
-    }
-    sorted.sort_unstable_by(
-        [](const SortedFunctionByName& a, const SortedFunctionByName& b) {
-          auto ord = a.at<0>() <=> b.at<0>();
-          if (ord != 0) return ord;
-          return a.at<1>() <=> b.at<1>();
-        });
-    u32 overload_set;
-    std::string_view prev_name;
-    for (auto&& [name, sort_key, function_id] : sorted) {
-      if (name == prev_name)
-        overload_set += 1u;
-      else
-        overload_set = 0u;
-      prev_name = name;
-      generate_function(element.functions.at(function_id), ancestors,
-                        overload_set, options);
-    }
+  for (const auto& [u, sub_element] : element.functions) {
+    if (sub_element.hidden()) continue;
+    generate_function(db, sub_element, ancestors, options);
   }
 }
 
@@ -465,9 +439,7 @@ void generate_namespace_reference(HtmlWriter::OpenLi& open_li,
     auto name_link = item_div.open_a();
     name_link.add_class("namespace-name");
     if (!element.hidden()) {
-      name_link.add_href(construct_html_file_path_for_namespace(
-                             std::filesystem::path(), element)
-                             .string());
+      name_link.add_href(construct_html_url_for_namespace(element));
     } else {
       llvm::errs() << "WARNING: Reference to hidden NamespaceElement "
                    << element.name << " in namespace "
@@ -480,7 +452,8 @@ void generate_namespace_reference(HtmlWriter::OpenLi& open_li,
     desc_div.add_class("description");
     desc_div.add_class("short");
     if (element.has_comment())
-      desc_div.write_html(element.comment.parsed_summary(page_state).unwrap());
+      desc_div.write_html(
+          markdown_to_html_summary(element.comment, page_state).unwrap());
   }
 }
 

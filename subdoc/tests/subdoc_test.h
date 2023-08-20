@@ -19,6 +19,7 @@
 
 #include "googletest/include/gtest/gtest.h"
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/gen/markdown_to_html.h"
 #include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/run.h"
 #include "subdoc/tests/cpp_version.h"
@@ -49,8 +50,9 @@ class SubDocTest : public testing::Test {
   bool has_namespace_comment(const subdoc::Database& db,
                              std::string_view comment_loc,
                              std::string_view comment_start) const noexcept {
-    return verify_comment("namespace", db.find_namespace_comment(comment_loc),
-                          comment_loc, comment_start);
+    return verify_comment("namespace", db,
+                          db.find_namespace_comment(comment_loc), comment_loc,
+                          comment_start);
   }
 
   /// Returns if a record was found whose comment location ends with
@@ -58,7 +60,7 @@ class SubDocTest : public testing::Test {
   bool has_record_comment(const subdoc::Database& db,
                           std::string_view comment_loc,
                           std::string_view comment_start) const noexcept {
-    return verify_comment("record", db.find_record_comment(comment_loc),
+    return verify_comment("record", db, db.find_record_comment(comment_loc),
                           comment_loc, comment_start);
   }
 
@@ -68,7 +70,7 @@ class SubDocTest : public testing::Test {
   bool has_function_comment(const subdoc::Database& db,
                             std::string_view comment_loc,
                             std::string_view comment_start) const noexcept {
-    return verify_comment("function", db.find_function_comment(comment_loc),
+    return verify_comment("function", db, db.find_function_comment(comment_loc),
                           comment_loc, comment_start);
   }
 
@@ -77,7 +79,7 @@ class SubDocTest : public testing::Test {
   bool has_ctor_comment(const subdoc::Database& db,
                         std::string_view comment_loc,
                         std::string_view comment_start) const noexcept {
-    return verify_comment("method", db.find_ctor_comment(comment_loc),
+    return verify_comment("method", db, db.find_ctor_comment(comment_loc),
                           comment_loc, comment_start);
   }
 
@@ -86,7 +88,7 @@ class SubDocTest : public testing::Test {
   bool has_dtor_comment(const subdoc::Database& db,
                         std::string_view comment_loc,
                         std::string_view comment_start) const noexcept {
-    return verify_comment("method", db.find_dtor_comment(comment_loc),
+    return verify_comment("method", db, db.find_dtor_comment(comment_loc),
                           comment_loc, comment_start);
   }
 
@@ -95,7 +97,7 @@ class SubDocTest : public testing::Test {
   bool has_method_comment(const subdoc::Database& db,
                           std::string_view comment_loc,
                           std::string_view comment_start) const noexcept {
-    return verify_comment("method", db.find_method_comment(comment_loc),
+    return verify_comment("method", db, db.find_method_comment(comment_loc),
                           comment_loc, comment_start);
   }
 
@@ -104,12 +106,12 @@ class SubDocTest : public testing::Test {
   bool has_field_comment(const subdoc::Database& db,
                          std::string_view comment_loc,
                          std::string_view comment_start) const noexcept {
-    return verify_comment("field", db.find_field_comment(comment_loc),
+    return verify_comment("field", db, db.find_field_comment(comment_loc),
                           comment_loc, comment_start);
   }
 
  private:
-  bool verify_comment(std::string_view type,
+  bool verify_comment(std::string_view type, const subdoc::Database& db,
                       sus::Option<const subdoc::CommentElement&> element,
                       std::string_view comment_loc,
                       std::string_view comment_start) const noexcept {
@@ -118,17 +120,34 @@ class SubDocTest : public testing::Test {
                    << "\n";
       return false;
     }
-    std::string html = element->comment.parsed_full(page_state).unwrap();
-    if (!html.starts_with(comment_start)) {
+
+    auto page_state = subdoc::gen::ParseMarkdownPageState{
+        .db = db,
+        .self_link_counts = self_link_counts.take().unwrap(),
+    };
+    sus::Result<std::string, subdoc::gen::MarkdownToHtmlError> html_result =
+        markdown_to_html_full(element->comment, page_state);
+    self_link_counts = sus::some(sus::move(page_state).self_link_counts);
+
+    if (html_result.is_err()) {
       llvm::errs() << type << " comment at " << comment_loc
-                   << " does not match text. Found:\n"
-                   << html << "\n";
+                   << " had error parsing comment markdown: "
+                   << sus::move(html_result).unwrap_err().message;
       return false;
+    } else {
+      std::string html = sus::move(html_result).unwrap();
+      if (!html.starts_with(comment_start)) {
+        llvm::errs() << type << " comment at " << comment_loc
+                     << " does not match text. Found:\n"
+                     << html << "\n";
+        return false;
+      }
     }
     return true;
   }
 
   subdoc::tests::SubDocCppVersion cpp_version_ =
       subdoc::tests::SubDocCppVersion::Cpp20;
-  mutable subdoc::ParseMarkdownPageState page_state;
+  mutable sus::Option<std::unordered_map<std::string, u32>> self_link_counts =
+      sus::some(std::unordered_map<std::string, u32>());
 };
