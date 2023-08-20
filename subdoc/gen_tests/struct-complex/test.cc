@@ -7,7 +7,7 @@ struct OtherType {};
 struct S {
   /// Comment headline void_method
   void void_method() const& {}
-  /// Comment headline static_typee_method
+  /// Comment headline static_type_method
   static OtherType static_type_method() {}
   /// Comment headline type_method
   OtherType type_method() {}

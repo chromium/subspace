@@ -256,7 +256,7 @@ sus::Result<void, MarkdownToHtmlError> generate_record_fields(
         desc_div.add_class("long");
         if (fe.has_comment()) {
           if (auto comment_html =
-                  markdown_to_html_full(element.comment, page_state);
+                  markdown_to_html_full(fe.comment, page_state);
               comment_html.is_err()) {
             return sus::err(sus::move(comment_html).unwrap_err());
           } else {
