@@ -130,13 +130,13 @@ struct [[sus_trivial_abi]] usize final {
 #define _self usize
 #define _pointer false
 #define _pointer_sized
-#define _primitive size_t
+#define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<size_t>()>::unsigned_type
 #define _signed isize
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self usize
 #define _pointer false
-#define _primitive size_t
+#define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<size_t>()>::unsigned_type
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// A pointer-sized unsigned integer.
@@ -167,12 +167,12 @@ struct [[sus_trivial_abi]] uptr final {
 #define _self uptr
 #define _pointer true
 #define _pointer_sized ::sus::num::__private::ptr_type<>::pointer_sized_type
-#define _primitive uintptr_t
+#define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<uintptr_t>()>::unsigned_type
 #include "sus/num/__private/unsigned_integer_methods.inc"
 };
 #define _self uptr
 #define _pointer true
-#define _primitive uintptr_t
+#define _primitive ::sus::num::__private::ptr_type<::sus::mem::size_of<uintptr_t>()>::unsigned_type
 #include "sus/num/__private/unsigned_integer_consts.inc"
 
 /// sus::num::Add<T*, usize> trait.

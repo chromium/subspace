@@ -187,8 +187,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_add(
     _self rhs) const& noexcept {
   const auto out =
       __private::add_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
-                                                     out.overflow);
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
 #if !_pointer  // No `_signed` for uptr.
@@ -257,8 +256,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_mul(
     _self rhs) const& noexcept {
   const auto out =
       __private::mul_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
-                                                     out.overflow);
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_neg()
@@ -345,8 +343,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shl(
     u32 rhs) const& noexcept {
   const auto out =
       __private::shl_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
-                                                     out.overflow);
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_shr(
@@ -363,8 +360,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_shr(
     u32 rhs) const& noexcept {
   const auto out =
       __private::shr_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
-                                                     out.overflow);
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_sub(
@@ -381,8 +377,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_sub(
     _self rhs) const& noexcept {
   const auto out =
       __private::sub_with_overflow(primitive_value, rhs.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
-                                                     out.overflow);
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
 sus_pure constexpr ::sus::option::Option<_self> _self::checked_pow(
@@ -400,8 +395,7 @@ sus_pure constexpr ::sus::tuple_type::Tuple<_self, bool> _self::overflowing_pow(
     u32 exp) const& noexcept {
   const auto out =
       __private::pow_with_overflow(primitive_value, exp.primitive_value);
-  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value),
-                                                     out.overflow);
+  return ::sus::tuple_type::Tuple<_self, bool>(_self(out.value), out.overflow);
 }
 
 sus_pure constexpr ::sus::option::Option<u32> _self::checked_log2()
@@ -527,7 +521,8 @@ sus_pure constexpr _self _self::from_ne_bytes(
   } else {
     ::sus::ptr::copy_nonoverlapping(
         ::sus::marker::unsafe_fn, reinterpret_cast<const char*>(bytes.as_ptr()),
-        reinterpret_cast<char*>(&val.primitive_value), ::sus::mem::size_of<_primitive>());
+        reinterpret_cast<char*>(&val.primitive_value),
+        ::sus::mem::size_of<_primitive>());
   }
   return _self(val);
 }

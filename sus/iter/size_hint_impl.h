@@ -19,6 +19,7 @@
 #include "fmt/format.h"
 #include "sus/iter/size_hint.h"
 #include "sus/num/unsigned_integer_impl.h"  // For formatting usize.
+#include "sus/option/option.h"              // For formatting option.
 #include "sus/string/__private/format_to_stream.h"
 
 // fmt support.
