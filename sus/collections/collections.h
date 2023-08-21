@@ -40,10 +40,11 @@ namespace sus {
 ///   visible in the syntax of the code. This allows them to be properly
 ///   scrutinized in code review or checked for with tooling.
 /// * Providing fallible APIs for element access that hook into the rich,
-///   composable APIs of `Option` in order to clearly and easily write error
-///   handling instead of Undefined Behaviour or crashes.
+///   composable APIs of [`Option`]($sus::option::Option) in order to clearly
+///   and easily write error handling instead of Undefined Behaviour or
+///   crashes.
 /// * No accidental copies. Subspace collections (that are not view types) do
-///   not satisfy the `sus::mem::Copy` concept, and instead must be explicitly
+///   not satisfy the [`Copy`]($sus::mem::Copy) concept, and instead must be explicitly
 ///   cloned via `sus::clone(x)` to make a copy. This allows them to be passed
 ///   by value without introducing a copy at a caller that was expecting it to
 ///   be received by reference.
@@ -53,20 +54,19 @@ namespace sus {
 ///   still exists, the collection will panic and terminate the program.
 ///
 /// Subspace's collections can be grouped into four major categories:
-/// * Sequences: `Vec`, `Array` (TODO: VecDeque, LinkedList,
+/// * Sequences: [`Vec`]($sus::collections::Vec), [`Array`]($sus::collections::Array)
+///   (TODO: VecDeque, LinkedList,
 ///   [Hive](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0447r16.html))
 /// * Maps: (TODO: HashMap, BTreeMap, FlatMap)
 /// * Sets: (TODO: HashSet, BTreeSet, FlatSet)
 /// * Misc: (TODO: BinaryHeap)
 ///
-/// <a name="When-Should-You-Use-Which-Collection"></a>
-/// # [When Should You Use Which Collection](#When-Should-You-Use-Which-Collection)
+/// # When Should You Use Which Collection
 /// These are fairly high-level and quick break-downs of when each collection
 /// should be considered. Detailed discussions of strengths and weaknesses of
 /// individual collections can be found on their own documentation pages.
 ///
-/// <a name="Use-a-Vec-when:"></a>
-/// ## [Use a Vec when:](#Use-a-Vec-when:)
+/// ## Use a Vec when:
 /// * You want to collect items up to be processed or sent elsewhere later, and
 ///   don't care about any properties of the actual values being stored.
 /// * You want a sequence of elements in a particular order, and will only be
@@ -75,8 +75,7 @@ namespace sus {
 /// * You want a resizable array.
 /// * You want a heap-allocated array.
 ///
-/// <a name="Use-an-Array-when:"></a>
-/// ## [Use an Array when:](#Use-an-Array-when:)
+/// ## Use an Array when:
 /// * You want a fixed-size array of items that are all constructed up front
 ///   and share a single lifetime.
 /// * You want to store a sequence of compile-time constants.
@@ -86,23 +85,30 @@ namespace sus {
 ///
 /// TODO: Performance info/comparisons when there's more types.
 ///
-/// <a name="Slices-vs-spans"></a>
-/// # [Slices vs spans](#Slices-vs-spans)
-/// `Slice` and `SliceMut` are how the Subspace library exposes views of
+/// # Slices vs spans
+/// [`Slice`]($sus::collections::Slice) and [`SliceMut`]($sus::collections::SliceMut)
+/// are how the Subspace library exposes views of
 /// contiguous sequences of elements with O(1) random access. They provide const
 /// and mutable access to the underlying objects, respectively.
 ///
-/// `Slice<T>` is similar to `std::span<const T>` and `SliceMut<T>` is similar
-/// to `std::span<T>`. All contiguous sequence collections in this library can
-/// implicitly convert to a `Slice` (always) or to a `SliceMut` (if the
-/// container is mutable).
+/// [`Slice<T>`]($sus::collections::Slice) is similar to
+/// [`std::span<const T>`](https://en.cppreference.com/w/cpp/container/span)
+/// and [`SliceMut<T>`]($sus::collections::SliceMut) is similar
+/// to [`std::span<T>`](https://en.cppreference.com/w/cpp/container/span).
+/// All contiguous sequence collections in this library can
+/// implicitly convert to a [`Slice`]($sus::collections::Slice) (always) or
+/// to a [`SliceMut`]($sus::collections::SliceMut) (if the collection is
+/// mutable).
 ///
-/// Slices share most of the same API surface as do the owning collections like
-/// `Vec`, including methods such as `sort()`, `chunks()`, `iter()`, and
-/// `concat()`.
+/// Slices and owning contiguous collections like
+/// [`Vec`]($sus::collections::Vec) share most of the same API surface,
+/// including methods such as
+/// [`sort`]($sus::collections::SliceMut::sort),
+/// [`chunks`]($sus::collections::Slice::chunks),
+/// [`iter`]($sus::collections::Slice::iter), and
+/// [`concat`]($sus::collections::Slice::concat).
 ///
-/// <a name="Capacity-Management"></a>
-/// # [Capacity Management](#Capacity-Management)
+/// # Capacity Management
 /// Many collections provide several constructors and methods that refer to
 /// "capacity". These collections are generally built on top of an array.
 /// Optimally, this array would be exactly the right size to fit only the
@@ -148,10 +154,9 @@ namespace sus {
 /// information on demand. This can be useful for debugging purposes, or for use
 /// with the `reserve()` methods.
 ///
-/// <a name="Iterators"></a>
-/// # [Iterators](#Iterators)
-/// Iterators are a powerful and robust mechanism used throughout the Subspace
-/// C++ library. Iterators provide a sequence of values in a generic, safe,
+/// # Iterators
+/// [Iterators]($sus::iter) are a powerful and robust mechanism used throughout the Subspace
+/// C++ library. [Iterators]($sus::iter) provide a sequence of values in a generic, safe,
 /// efficient and convenient way. The contents of an iterator are usually lazily
 /// evaluated, so that only the values that are actually needed are ever
 /// actually produced, and no allocation need be done to temporarily store them.
@@ -234,10 +239,9 @@ namespace sus {
 /// can be looped over with a for loop. The iterator can also be discarded after
 /// partial use, preventing the computation of the unused items.
 ///
-/// <a name="Ranges"></a>
-/// # [Ranges](#Ranges)
+/// # Ranges
 /// The collections in the Subspace C++ library can be used with standard ranges
-/// by calling the [`range()`](sus-iter-IteratorBase.html#method.range) adaptor on any
+/// by calling the [`range()`]($sus::iter::IteratorBase::range) adaptor on any
 /// Subspace iterator. It will return an object that satisfies
 /// [`std::ranges::input_range`](https://en.cppreference.com/w/cpp/ranges/input_range)
 /// and
@@ -251,10 +255,9 @@ namespace sus {
 ///
 /// Conversely, standard ranges, such as the types in the standard containers
 /// library, can be used to construct a Subspace iterator through
-/// [`sus::iter::from_range()`](sus-iter-fn.from_range.html).
+/// [`sus::iter::from_range`]($sus::iter::from_range).
 ///
-/// <a name="Familiarity-with-Rust-APIs"></a>
-/// # [Familiarity with Rust APIs](Familiarity-with-Rust-APIs)
+/// # Familiarity with Rust APIs
 /// These collections were inspired by porting Rust
 /// [std::collections](https://doc.rust-lang.org/stable/std/collections/index.html)
 /// and traits/concepts into C++. Additional changes are minimized to aid with
