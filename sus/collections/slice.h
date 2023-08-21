@@ -65,13 +65,6 @@ namespace sus::collections {
 ///
 /// Slices are a view into a block of memory represented as a pointer and a
 /// length.
-///
-/// # Slices as function parameters
-///
-/// Receiving Slice as a const reference `const Slice<T>&` allows receiving a
-/// `Slice`, `SliceMut`, or `Vec`, without any constructor or destructor being
-/// generated at all. This is preferable to receiving them by value which would
-/// force a constructor.
 template <class T>
 class [[sus_trivial_abi]] Slice final {
  public:
@@ -301,19 +294,6 @@ class [[sus_trivial_abi]] Slice final {
 /// length.
 ///
 /// A `SliceMut<T>` can be implicitly converted to a `Slice<T>`.
-///
-/// # Slices as function parameters
-///
-/// Receiving SliceMut as a const reference `const SliceMut<T>&` allows
-/// receiving a `Slice`, `SliceMut`, or `Vec`, without any constructor or
-/// destructor being generated at all. This is preferable to receiving them by
-/// value which would force a constructor.
-///
-/// `SliceMut<T>` encodes mutability of the underlying `T` objects in its type,
-/// and it is not an owner of those `T` objects, so its constness is not
-/// important as a correctness signal, and all its operations are also available
-/// when const. This makes receiving it in function parameters as a `const
-/// SliceMut<T>&` plausible.
 template <class T>
 class [[sus_trivial_abi]] SliceMut final {
  public:
