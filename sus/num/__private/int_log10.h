@@ -16,6 +16,7 @@
 // IWYU pragma: friend "sus/.*"
 #pragma once
 
+#include <concepts>
 #include <stdint.h>
 
 #include "sus/macros/inline.h"
@@ -80,22 +81,22 @@ sus_pure_const sus_always_inline constexpr uint32_t u64(uint64_t val) noexcept {
 }
 
 sus_pure_const sus_always_inline constexpr uint32_t usize(
-    uint32_t val) noexcept {
+    std::same_as<uint32_t> auto val) noexcept {
   return u32(val);
 }
 
 sus_pure_const sus_always_inline constexpr uint32_t usize(
-    uint64_t val) noexcept {
+    std::same_as<uint64_t> auto val) noexcept {
   return u64(val);
 }
 
 sus_pure_const sus_always_inline constexpr uint32_t uptr(
-    uint32_t val) noexcept {
+    std::same_as<uint32_t> auto val) noexcept {
   return u32(val);
 }
 
 sus_pure_const sus_always_inline constexpr uint32_t uptr(
-    uint64_t val) noexcept {
+    std::same_as<uint64_t> auto val) noexcept {
   return u64(val);
 }
 
