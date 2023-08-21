@@ -467,6 +467,7 @@ constexpr void join_into(::sus::collections::Vec<T>& vec) const& noexcept
 /// for join() to append the elements in a separator Slice onto `vec`.
 ///
 /// #[doc.overloads=slice.join.sep.slice]
+/// #[doc.hidden]
 static constexpr void join_sep_into(::sus::collections::Vec<T>& vec,
                                     const Slice<T>& separator) noexcept
   requires(::sus::mem::Clone<T>)
@@ -480,6 +481,7 @@ static constexpr void join_sep_into(::sus::collections::Vec<T>& vec,
 /// for join() to append the elements in a separator Slice onto `vec`.
 ///
 /// #[doc.overloads=slice.join.sep.t]
+/// #[doc.hidden]
 static constexpr void join_sep_into(::sus::collections::Vec<T>& vec,
                                     const T& separator) noexcept
   requires(::sus::mem::Clone<T>)
