@@ -22,22 +22,26 @@
 
 namespace sus::mem {
 
-/// Returns the size of the type T.
+/// Returns the size of the type `T`.
 ///
-/// This is the number of bytes that will be allocated for a type T, and
-/// includes any tail padding. Use `data_size_of()` to exclude tail padding for
-/// the purpose of `memcpy()` or `sus::ptr::copy()`.
+/// This is the number of bytes that will be allocated for a type `T`, and
+/// includes any tail padding. Use [`data_size_of`]($sus::mem::data_size_of)
+/// to exclude tail padding for
+/// the purpose of
+/// [`memcpy`](https://en.cppreference.com/w/cpp/string/byte/memcpy) or
+/// [`sus::ptr::copy`]($sus::ptr::copy).
 ///
-/// Returns the same value as the builtin `sizeof()` operator, but disallows
-/// calls with a reference type to avoid surprises or bugs when working with
-/// references since `sizeof(T&) == sizeof(T)`.
+/// Returns the same value as the builtin
+/// [`sizeof`](https://en.cppreference.com/w/cpp/language/sizeof) operator,
+/// but disallows calls with a reference type to avoid surprises or bugs when
+/// working with references since `sizeof(T&) == sizeof(T)`.
 template <class T>
   requires(!std::is_reference_v<T>)
 sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
   return sizeof(T);
 }
 
-/// Returns the data size of the type T.
+/// Returns the data size of the type `T`.
 ///
 /// This is the number of bytes for the type excluding any tail padding, which
 /// is the number of bytes that can be memcpy'd into the type without
@@ -45,7 +49,8 @@ sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
 /// objects can be placed inside tail padding of an object in some scenarios.
 ///
 /// To get the size of an object including tail padding, such as to know the
-/// storage taken in an array or as a stack variable, use `size_of()`.
+/// storage taken in an array or as a stack variable, use
+/// [`size_of`]($sus::mem::size_of).
 ///
 /// Returns `size_t(-1)` for types where the tail padding can not be determined.
 /// In particular this is the case for union types unless and until compilers
@@ -60,7 +65,8 @@ sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
 /// ```
 ///
 /// Then there are two ways for another type to place a field inside the padding
-/// adjacent to `b` and inside area allocated for `sizeof(T)`:
+/// adjacent to `b` and inside area allocated for
+/// [`size_of<T>()`]($sus::mem::size_of):
 ///
 /// 1. A subclass of a non-POD type can insert its fields into the padding of
 /// the base class.
@@ -70,7 +76,7 @@ sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
 /// ```
 /// class S : T { i32 c; };
 /// ```
-/// In this example, `sizeof(S) == sizeof(T)` because `c` sits inside the
+/// In this example, `size_of<S>() == size_of<T>()` because `c` sits inside the
 /// trailing padding of `T`.
 ///
 /// 2. A class with a `[[no_unique_address]]` field may insert other fields
@@ -80,39 +86,40 @@ sus_pure_const consteval sus_always_inline size_t size_of() noexcept {
 /// ```
 /// class S { [[no_unique_address]] T t; i32 c; };
 /// ```
-/// In this example, `sizeof(S) == sizeof(T)` because `c` sits inside the
+/// In this example, `size_of<S>() == sizeof<T>()` because `c` sits inside the
 /// trailing padding of `T`.
 ///
-/// So the dsizeof(T) algorithm [to determine how much to memcpy safely] is
-/// something like:
+/// So the `data_size_of<T>() algorithm (to determine how much to memcpy
+/// safely) is something like:
 ///
 /// * A: find out how many bytes fit into the padding via inheritance
 ///   (`struct S : T { bytes }` for all `bytes` until
-///   `sizeof(T) != sizeof(S)`).
+///   `size_of<T>() != size_of<S>()`).
 /// * B: find out how many bytes fit into the padding via no_unique_address
 ///   (`struct S { [[no_unique_address]] T x; bytes }` for all `bytes` until
-///   `sizeof(T) != sizeof(S)`).
+///   `size_of<T>() != size_of<S>()`).
 ///
 /// ```
-/// return sizeof(T) - max(A, B)
+/// return size_of<T>() - max(A, B)
 /// ```
-///
-/// And I think on every known platform, A == B. It might even be guaranteed by
-/// the standard, but I wouldn't know how to check.
 ///
 /// From @danakj:
+///
+/// You might think that A == B however it is not required, as implementations
+/// may have different behaviour for inheritance vs `[[no_unique_address]]`.
 ///
 /// On MSVC 19, an empty class has size 1, but with the above formula:
 /// * A = 1, as the 1 byte gets reused by a subclass.
 /// * B = 0, as [[no_unique_address]] does not reuse the one byte of the empty
 ///   class.
 ///
-/// The result is that the data_size_of<T> should be 0, since the 1 byte _can_
-/// be reused.
+/// The result is that the `data_size_of<T>()` should be 0, since the 1 byte
+/// _can_ be reused.
 ///
 /// In general, [[no_unique_address]] and [[msvc::no_unique_address]] doesn't
 /// appear do anything on MSVC 19, and subclasses also do not use padding
-/// bytes of the base class, with the exception of the base class being empty.
+/// bytes of the base class, with the exception of the base class being empty
+///  This may change in future versions of the compiler.
 template <class T>
   requires(!std::is_reference_v<T>)
 sus_pure_const consteval sus_always_inline size_t data_size_of() noexcept {

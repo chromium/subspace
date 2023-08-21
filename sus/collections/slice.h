@@ -61,7 +61,8 @@ namespace sus::collections {
 ///
 /// Contiguous here means that elements are laid out so that every element is
 /// the same distance from its neighbors, where there are
-/// `sus::mem::size_of<T>()` many bytes between the start of each element.
+/// [`sus::mem::size_of<T>()`]($sus::mem::size_of) many bytes between the start
+/// of each element.
 ///
 /// Slices are a view into a block of memory represented as a pointer and a
 /// length.
@@ -288,7 +289,8 @@ class [[sus_trivial_abi]] Slice final {
 ///
 /// Contiguous here means that elements are laid out so that every element is
 /// the same distance from its neighbors, where there are
-/// `sus::mem::size_of<T>()` many bytes between the start of each element.
+/// [`sus::mem::size_of<T>()`]($sus::mem::size_of) many bytes between the start
+/// of each element.
 ///
 /// Slices are a view into a block of memory represented as a pointer and a
 /// length.
