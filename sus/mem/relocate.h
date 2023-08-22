@@ -66,30 +66,31 @@ concept relocate_by_memcpy_impl =
 
 }  // namespace __private
 
-/// Tests if a variable of type T can be relocated with memcpy().
+/// Tests if a variable of type `T` can be relocated with
+/// [`copy`]($sus::ptr::copy).
 ///
 /// Checking for trivially movable and destructible is not sufficient - this
-/// also honors the `[[trivial_abi]]` clang attribute, as types annotated with
+/// also honors the `[[trivial_abi]]` Clang attribute, as types annotated with
 /// the attribute are now considered "trivially relocatable" in
 /// https://reviews.llvm.org/D114732. References are treated like pointers, and
 /// are always trivially relocatable, as reference data members are relocatable
 /// in the same way pointers are.
 ///
-/// IMPORTANT: If a class satisfies this trait, only `sus::data_size_of<T>()`
-/// bytes should be memcpy'd or Undefine Behaviour can result, due to the
-/// possibility of overwriting data stored in the padding bytes of `T`.
-///
-/// As @ssbr has pointed out, if a type has any padding at the end which can be
-/// used by an outer type, then either:
-/// - You can't memcpy it, or
-/// - You must memcpy without including the padding bytes (i.e.
-///   `data_size_of<T>()` bytes).
+/// IMPORTANT: If a class satisfies this trait, only
+/// [`sus::mem::data_size_of<T>()`]($sus::mem::data_size_of)
+/// bytes should be copied when relocating the type, or Undefine Behaviour can
+/// result, due to the possibility of overwriting data stored in the tail
+/// padding bytes of `T`. See the docs on
+/// [`data_size_of`]($sus::mem::data_size_of) for more.
 ///
 /// Volatile types are excluded, as they can not be safely memcpy()'d
 /// byte-by-byte without introducing tearing.
 ///
-/// Tests against `std::remove_all_extents_t<T>` so that the same answer is
-/// returned for `T` or `T[]` or `T[][][]` etc.
+/// The concept tests against
+/// [`std::remove_all_extents_t<T>`](
+/// https://en.cppreference.com/w/cpp/types/remove_all_extents)
+/// so that the same answer is returned for arrays of `T`, such as for `T` or
+/// `T[]` or `T[][][]`.
 template <class... T>
 concept relocate_by_memcpy = (... && __private::relocate_by_memcpy_impl<T>);
 

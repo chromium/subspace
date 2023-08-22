@@ -28,13 +28,15 @@ namespace sus::ptr {
 /// Copies `count * size_of<T>()` bytes from `src` to `dst`. The source and
 /// destination must not overlap.
 ///
-/// For regions of memory which might overlap, use `copy()` instead.
+/// For regions of memory which might overlap, use [`copy`]($sus::ptr::copy)
+/// instead.
 ///
-/// `copy_nonoverlapping()` is semantically equivalent to `memcpy()`, but with
-/// the argument order swapped.
+/// [`copy_nonoverlapping`]($sus::ptr::copy_nonoverlapping) is semantically
+/// equivalent to
+/// [`memcpy`](https://en.cppreference.com/w/cpp/string/byte/memcpy), but with the argument order swapped.
 ///
 /// The copy is “untyped” in the sense that data may be uninitialized or
-/// otherwise violate the requirements of T. The initialization state is
+/// otherwise violate the requirements of `T`. The initialization state is
 /// preserved exactly.
 ///
 /// # Panics
@@ -51,11 +53,15 @@ namespace sus::ptr {
 /// * `dst` must not have an overlapping object in its tail padding. If `dst` is
 ///   in an array, or was heap allocated, then this will always be satisfied.
 ///
-/// Like `copy()`, `copy_nonoverlapping()` creates a bitwise copy of `T`,
-/// regardless of whether `T` is `TrivialCopy` or `relocate_by_memcpy`. If `T`
-/// is not `TrivialCopy`, using the value in `*dst` can violate memory safety.
-/// If `T` is not `relocate_by_memcpy`, using both the values in `*src` and in
+/// Like [`copy`]($sus::ptr::copy),
+/// [`copy_nonoverlapping`]($sus::ptr::copy_nonoverlapping) creates a bitwise
+/// copy of `T`,
+/// regardless of whether `T` is [`TrivialCopy`]($sus::mem::TrivialCopy)
+/// or [`relocate_by_memcpy`]($sus::mem::relocate_by_memcpy). If `T`
+/// is not [`TrivialCopy`]($sus::mem::TrivialCopy), using the value in
 /// `*dst` can violate memory safety.
+/// If `T` is not [`relocate_by_memcpy`]($sus::mem::relocate_by_memcpy),
+/// using both the values in `*src` and in `*dst` can violate memory safety.
 ///
 /// Note that even if the effectively copied size (`count * size_of<T>()`) is 0,
 /// the pointers must be non-null and properly aligned.
@@ -82,15 +88,18 @@ void copy_nonoverlapping(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
 /// Copies `count * size_of<T>()` bytes from `src` to `dst`. The source and
 /// destination may overlap.
 ///
-/// If the source and destination will never overlap, `copy_nonoverlapping()`
+/// If the source and destination will never overlap,
+/// [`copy_nonoverlapping`]($sus::ptr::copy_nonoverlapping)
 /// can be used instead.
 ///
-/// `copy()` is semantically equivalent to `memmove()`, but with the argument
-/// order swapped. Copying takes place as if the bytes were copied from `src` to
+/// [`copy`]($sus::ptr::copy) is semantically equivalent to
+/// [`memmove`](https://en.cppreference.com/w/c/string/byte/memmove), but
+/// with the argument order swapped.
+/// Copying takes place as if the bytes were copied from `src` to
 /// a temporary array and then copied from the array to `dst`.
 ///
 /// The copy is “untyped” in the sense that data may be uninitialized or
-/// otherwise violate the requirements of T. The initialization state is
+/// otherwise violate the requirements of `T`. The initialization state is
 /// preserved exactly.
 ///
 /// # Panics
@@ -101,17 +110,17 @@ void copy_nonoverlapping(::sus::marker::UnsafeFnMarker, const T* src, T* dst,
 /// Behavior is undefined if any of the following conditions are violated:
 /// * `src` must be valid for reads of `count * size_of<T>()` bytes.
 /// * `dst` must be valid for writes of `count * size_of<T>()` bytes.
-/// * Like `copy_nonoverlapping()`, `copy()` creates a bitwise copy of `T`,
-///   regardless of whether `T` is `TrivialCopy`. If `T` is not `TrivialCopy`,
-///   using the value in `*dst` can violate memory safety.
 /// * `dst` must not have an overlapping object in its tail padding. If `dst` is
 ///   in an array, or was heap allocated, then this will always be satisfied.
 ///
-/// `copy()` creates a bitwise copy of `T`, regardless of whether `T` is
-/// `TrivialCopy` or `relocate_by_memcpy`. If `T` is not `TrivialCopy`, using
+/// [`copy`]($sus::ptr::copy) creates a bitwise copy of `T`, regardless of
+/// whether `T` is
+/// [`TrivialCopy`]($sus::mem::TrivialCopy) or
+/// [`relocate_by_memcpy`]($sus::mem::relocate_by_memcpy). If `T` is not
+/// [`TrivialCopy`]($sus::mem::TrivialCopy), using
 /// the value in `*dst` can violate memory safety. If `T` is not
-/// `relocate_by_memcpy`, using both the values in `*src` and in
-/// `*dst` can violate memory safety.
+/// [`relocate_by_memcpy`]($sus::mem::relocate_by_memcpy), using both the
+/// values in `*src` and in `*dst` can violate memory safety.
 ///
 /// Note that even if the effectively copied size (`count * size_of<T>()`) is 0,
 /// the pointers must be non-null and properly aligned.
