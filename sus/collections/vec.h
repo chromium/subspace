@@ -92,6 +92,22 @@ class [[sus_trivial_abi]] Vec final {
   static_assert(!std::is_const_v<T>,
                 "`Vec<const T>` should be written `const Vec<T>`, as const "
                 "applies transitively.");
+  // TODO: Make configurable.
+  using A = std::allocator<T>;
+
+  // TODO: Represent these allocator requirements as our own concept?
+  // Vec should be trivially relocatable.
+  static_assert(::sus::mem::relocate_by_memcpy<A>);
+  // Required because otherwise move assignment is immensely complicated.
+  // See
+  // https://stackoverflow.com/questions/27471053/example-usage-of-propagate-on-container-move-assignment
+  // for how to copy/move allocators.
+  static_assert(
+      std::allocator_traits<A>::propagate_on_container_move_assignment::value);
+  // Required to have consistent behaviour between clone_from(Vec) and
+  // clone_from_slice(Slice). The latter has no allocator visible to copy.
+  static_assert(
+      !std::allocator_traits<A>::propagate_on_container_copy_assignment::value);
 
  public:
   /// Constructs a `Vec`, which constructs objects of type `T` from the given
@@ -106,11 +122,11 @@ class [[sus_trivial_abi]] Vec final {
   /// allocate.
   template <std::convertible_to<T>... Ts>
   explicit constexpr Vec(Ts&&... values) noexcept
-      : Vec(FROM_PARTS, sizeof...(values),
-            sizeof...(values) == 0u
-                ? nullptr
-                : std::allocator<T>().allocate(sizeof...(values)),
+      : Vec(FROM_PARTS, std::allocator<T>(), sizeof...(values), nullptr,
             0_usize) {
+    if constexpr (sizeof...(values) > 0u) {
+      data_ = std::allocator_traits<A>::allocate(allocator_, sizeof...(values));
+    }
     (..., push(::sus::forward<Ts>(values)));
   }
 
@@ -136,10 +152,7 @@ class [[sus_trivial_abi]] Vec final {
   /// Panics if the capacity exceeds `isize::MAX` bytes.
   sus_pure static constexpr Vec with_capacity(usize capacity) noexcept {
     check(::sus::mem::size_of<T>() * capacity <= ::sus::mog<usize>(isize::MAX));
-    auto v = Vec(FROM_PARTS, 0_usize, nullptr, 0_usize);
-    // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
-    v.grow_to_exact(capacity);
-    return v;
+    return Vec(WITH_CAPACITY, std::allocator<T>(), capacity);
   }
 
   /// Creates a Vec<T> directly from a pointer, a capacity, and a length.
@@ -166,7 +179,7 @@ class [[sus_trivial_abi]] Vec final {
   sus_pure static constexpr Vec from_raw_parts(::sus::marker::UnsafeFnMarker,
                                                T* ptr, usize length,
                                                usize capacity) noexcept {
-    return Vec(FROM_PARTS, capacity, ptr, length);
+    return Vec(FROM_PARTS, std::allocator<T>(), capacity, ptr, length);
   }
 
   /// Constructs a Vec by cloning elements out of a slice.
@@ -218,7 +231,8 @@ class [[sus_trivial_abi]] Vec final {
   /// sus::mem::Move trait.
   /// #[doc.overloads=vec.move]
   constexpr Vec(Vec&& o) noexcept
-      : capacity_(::sus::mem::replace(o.capacity_, kMovedFromCapacity)),
+      : allocator_(::sus::move(o).allocator_),
+        capacity_(::sus::mem::replace(o.capacity_, kMovedFromCapacity)),
         iter_refs_(o.iter_refs_.take_for_owner()),
         data_(::sus::mem::replace(o.data_, nullptr)),
         len_(::sus::mem::replace(o.len_, kMovedFromLen)) {
@@ -232,18 +246,26 @@ class [[sus_trivial_abi]] Vec final {
     check(!has_iterators());
     check(!o.has_iterators());
     if (is_alloced()) free_storage();
+    allocator_ = ::sus::move(o).allocator_;
+    capacity_ = ::sus::mem::replace(o.capacity_, kMovedFromCapacity);
+    iter_refs_ = o.iter_refs_.take_for_owner();
     data_ = ::sus::mem::replace(o.data_, nullptr);
     len_ = ::sus::mem::replace(o.len_, kMovedFromLen);
-    iter_refs_ = o.iter_refs_.take_for_owner();
-    capacity_ = ::sus::mem::replace(o.capacity_, kMovedFromCapacity);
     return *this;
   }
 
+  /// Satisfies [`Clone`]($sus::mem::Clone) for Vec.
   constexpr Vec clone() const& noexcept
     requires(::sus::mem::Clone<T>)
   {
     check(!is_moved_from());
-    auto v = Vec::with_capacity(capacity_);
+    auto v = Vec(
+        WITH_CAPACITY,
+        // TODO: Why do we need to do select_on_container_copy_construction()
+        // instead of just default-constructing a new allocator?
+        std::allocator_traits<A>::select_on_container_copy_construction(
+            allocator_),
+        capacity_);
     const auto self_len = len();
     for (usize i; i < self_len; i += 1u) {
       std::construct_at(
@@ -254,43 +276,25 @@ class [[sus_trivial_abi]] Vec final {
     return v;
   }
 
-  constexpr void clone_from(const Vec& source) & noexcept
-    requires(::sus::mem::Clone<T>)
+  /// An optimization to reuse the existing storage for
+  /// [`Clone`]($sus::mem::Clone).
+  ///
+  /// When `propagate_on_container_copy_assignment` is true, the allocation may
+  /// not be able to be reused when the allocators are not equal.
+  constexpr void clone_from(const Vec& source) noexcept
+    requires(!std::allocator_traits<
+             A>::propagate_on_container_copy_assignment::value)
   {
-    check(!is_moved_from());
-    check(!source.is_moved_from());
-    check(!has_iterators());
-    if (&source == this) [[unlikely]]
-      return;
-    if (source.capacity_ == 0_usize) {
-      destroy_storage_objects();
-      free_storage();
-      data_ = nullptr;
-      set_len(::sus::marker::unsafe_fn, 0_usize);
-      capacity_ = 0_usize;
-    } else {
-      grow_to_exact(source.capacity_);
+    // Drop anything in `this` that will not be overwritten.
+    truncate(source.len());
 
-      const usize self_len = len();
-      const usize source_len = source.len();
-      const usize in_place_count = sus::ops::min(self_len, source_len);
+    // len() <= source.len() due to the truncate above, so the
+    // slices here are always in-bounds.
+    auto [init, tail] = source.split_at(len());
 
-      // Replace element positions that are present in both Vec.
-      for (usize i; i < in_place_count; i += 1u) {
-        ::sus::clone_into(*(data_ + i), *(source.data_ + i));
-      }
-      // Destroy element positions in self that aren't in source.
-      for (usize i = in_place_count; i < self_len; i += 1u) {
-        std::destroy_at(as_mut_ptr() + i);
-      }
-      // Append element positions that weren't in self but are in source.
-      for (usize i = in_place_count; i < source_len; i += 1u) {
-        std::construct_at(
-            data_ + i,  //
-            ::sus::clone(source.get_unchecked(::sus::marker::unsafe_fn, i)));
-      }
-      set_len(::sus::marker::unsafe_fn, source_len);
-    }
+    // Reuse the contained values' allocations/resources.
+    clone_from_slice(init);
+    extend_from_slice(tail);
   }
 
   /// Removes the specified range from the vector in bulk, returning all
@@ -419,8 +423,8 @@ class [[sus_trivial_abi]] Vec final {
     const T* slice_ptr = s.as_ptr();
     if (is_alloced()) {
       const T* vec_ptr = data_;
-      // If this check fails, the Slice aliases with the Vec, and the reserve()
-      // call below would invalidate the Slice.
+      // If this check fails, the Slice aliases with the Vec, and the
+      // reserve() call below would invalidate the Slice.
       //
       // TODO: Should we handle aliasing with a temp buffer?
       ::sus::check(!(slice_ptr >= vec_ptr && slice_ptr <= vec_ptr + self_len));
@@ -451,21 +455,23 @@ class [[sus_trivial_abi]] Vec final {
     check(bytes <= ::sus::mog<usize>(isize::MAX));
 
     if (!is_alloced()) {
-      data_ = std::allocator<T>().allocate(cap);
+      data_ = std::allocator_traits<A>::allocate(allocator_, cap);
       capacity_ = cap;
       return;
     }
 
-    T* new_allocation = std::allocator<T>().allocate(cap);
+    T* new_allocation =
+        std::allocator_traits<std::allocator<T>>::allocate(allocator_, cap);
     T* old_t = data_;
     T* new_t = new_allocation;
     if constexpr (::sus::mem::relocate_by_memcpy<T>) {
       if (!std::is_constant_evaluated()) {
-        // SAFETY: new_t was just allocated above, so does not alias with
-        // `old_t` which was the previous allocation.
+        // SAFETY: new_t was just allocated above, so does not alias
+        // with `old_t` which was the previous allocation.
         ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, old_t, new_t,
                                         capacity_);
-        std::allocator<T>().deallocate(data_, capacity_);
+        std::allocator_traits<std::allocator<T>>::deallocate(allocator_, data_,
+                                                             capacity_);
         data_ = new_allocation;
         capacity_ = cap;
         return;
@@ -479,9 +485,47 @@ class [[sus_trivial_abi]] Vec final {
       ++old_t;
       ++new_t;
     }
-    std::allocator<T>().deallocate(data_, capacity_);
+    std::allocator_traits<std::allocator<T>>::deallocate(allocator_, data_,
+                                                         capacity_);
     data_ = new_allocation;
     capacity_ = cap;
+  }
+
+  /// Removes the last element from a vector and returns it, or None if it is
+  /// empty.
+  constexpr Option<T> pop() noexcept {
+    check(!is_moved_from());
+    check(!has_iterators());
+    const auto self_len = len();
+    if (self_len > 0u) {
+      auto o = Option<T>(sus::move(
+          get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u)));
+      std::destroy_at(as_mut_ptr() + self_len - 1u);
+      set_len(::sus::marker::unsafe_fn, self_len - 1u);
+      return o;
+    } else {
+      return Option<T>();
+    }
+  }
+
+  /// Appends an element to the back of the vector.
+  ///
+  /// # Panics
+  ///
+  /// Panics if the new capacity exceeds `isize::MAX` bytes.
+  //
+  // Avoids use of a reference, and receives by value, to sidestep the whole
+  // issue of the reference being to something inside the vector which
+  // reserve() then invalidates.
+  constexpr void push(T t) noexcept
+    requires(::sus::mem::Move<T>)
+  {
+    check(!is_moved_from());
+    check(!has_iterators());
+    reserve(1_usize);
+    const auto self_len = len();
+    std::construct_at(data_ + self_len, ::sus::move(t));
+    set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
   }
 
   /// Reserves capacity for at least `additional` more elements to be inserted
@@ -537,47 +581,30 @@ class [[sus_trivial_abi]] Vec final {
   ///   the call.
   /// * The elements at `new_len..old_len` must be destructed before or after
   ///   the call.
-  constexpr void set_len(::sus::marker::UnsafeFnMarker, usize new_len) {
+  constexpr void set_len(::sus::marker::UnsafeFnMarker,
+                         usize new_len) noexcept {
     check(!is_moved_from());
     sus_debug_check(new_len <= capacity_);
     len_ = new_len;
   }
 
-  /// Removes the last element from a vector and returns it, or None if it is
-  /// empty.
-  constexpr Option<T> pop() noexcept {
-    check(!is_moved_from());
-    check(!has_iterators());
-    const auto self_len = len();
-    if (self_len > 0u) {
-      auto o = Option<T>(sus::move(
-          get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u)));
-      std::destroy_at(as_mut_ptr() + self_len - 1u);
-      set_len(::sus::marker::unsafe_fn, self_len - 1u);
-      return o;
-    } else {
-      return Option<T>();
-    }
-  }
-
-  /// Appends an element to the back of the vector.
+  /// Shortens the vector, keeping the first `len` elements and dropping the
+  /// rest.
   ///
-  /// # Panics
+  /// If `len` is greater than the vector's current length, this has no effect.
   ///
-  /// Panics if the new capacity exceeds `isize::MAX` bytes.
-  //
-  // Avoids use of a reference, and receives by value, to sidestep the whole
-  // issue of the reference being to something inside the vector which
-  // reserve() then invalidates.
-  constexpr void push(T t) noexcept
-    requires(::sus::mem::Move<T>)
-  {
-    check(!is_moved_from());
-    check(!has_iterators());
-    reserve(1_usize);
-    const auto self_len = len();
-    std::construct_at(data_ + self_len, ::sus::move(t));
-    set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
+  /// The [`drain`]($sus::collections::Vec::drain) method can emulate
+  /// [`truncate`]($sus::collections::Vec::truncate), but causes the excess
+  /// elements to be returned instead of dropped.
+  ///
+  /// Note that this method has no effect on the allocated capacity of the
+  /// vector.
+  constexpr void truncate(usize len) noexcept {
+    if (len > len_) return;
+    auto remaining_len = len_ - len;
+    for (usize i = remaining_len; i > 0u; i -= 1u)
+      std::destroy_at(data_ + len_ - i);
+    len_ = len;
   }
 
   /// Constructs and appends an element to the back of the vector.
@@ -776,11 +803,24 @@ class [[sus_trivial_abi]] Vec final {
 
  private:
   enum FromParts { FROM_PARTS };
-  constexpr Vec(FromParts, usize cap, T* ptr, usize len)
-      : capacity_(cap),
+  constexpr Vec(FromParts, std::allocator<T> alloc, usize cap, T* ptr,
+                usize len)
+      : allocator_(::sus::move(alloc)),
+        capacity_(cap),
         iter_refs_(sus::iter::IterRefCounter::for_owner()),
         data_(ptr),
         len_(len) {}
+
+  enum WithCapacity { WITH_CAPACITY };
+  constexpr Vec(WithCapacity, std::allocator<T> alloc, usize cap)
+      : allocator_(::sus::move(alloc)),
+        capacity_(0u),
+        iter_refs_(sus::iter::IterRefCounter::for_owner()),
+        data_(nullptr),
+        len_(0u) {
+    // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
+    grow_to_exact(cap);
+  }
 
   constexpr usize apply_growth_function(usize additional) const noexcept {
     usize goal = additional + len();
@@ -804,7 +844,8 @@ class [[sus_trivial_abi]] Vec final {
 
   constexpr void free_storage() {
     destroy_storage_objects();
-    std::allocator<T>().deallocate(data_, capacity_);
+    std::allocator_traits<std::allocator<T>>::deallocate(allocator_, data_,
+                                                         capacity_);
   }
 
   /// Checks if Vec has storage allocated.
@@ -829,6 +870,7 @@ class [[sus_trivial_abi]] Vec final {
   /// signal its moved-from state.
   static constexpr usize kMovedFromCapacity = 0_usize;
 
+  [[sus_no_unique_address]] std::allocator<T> allocator_;
   usize capacity_;
   // These are in the same order as Slice/SliceMut, and come last to make it
   // easier to reuse the same stack space.
@@ -837,8 +879,9 @@ class [[sus_trivial_abi]] Vec final {
   usize len_;
 
   sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                  decltype(iter_refs_), decltype(capacity_),
-                                  decltype(data_), decltype(len_));
+                                  decltype(allocator_), decltype(iter_refs_),
+                                  decltype(capacity_), decltype(data_),
+                                  decltype(len_));
 };
 
 #define _ptr_expr data_
