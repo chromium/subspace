@@ -18,6 +18,7 @@
 #include "sus/macros/lifetimebound.h"
 #include "sus/option/option.h"
 
+namespace sus {
 /// Interfaces for working with Errors.
 ///
 /// # Error Handling With Subspace
@@ -144,6 +145,9 @@
 /// expect-as-precondition style error messages remember to focus on the word
 /// “should” as in “env variable should be set by blah” or “the given binary
 /// should be available and executable by the current user”.
+namespace error {}
+}  // namespace sus
+
 namespace sus::error {
 struct DynError;
 

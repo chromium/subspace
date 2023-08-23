@@ -152,7 +152,10 @@ void set_var(const std::string& key, const std::string& value) noexcept {
                .chain(sus::iter::from_range(value).copied())
                .chain(sus::iter::once<char>(sus::some('\0')))
                .collect<Vec<char>>();
-  sus::check_with_message(putenv(v.as_mut_ptr()) == 0, *"set_env failed");
+  // Take the pointer out of the Vec, as putenv retains ownership of it. The Vec
+  // must be using the default allocator as well as a result.
+  auto [ptr, len, cap] = sus::move(v).into_raw_parts();
+  sus::check_with_message(putenv(ptr) == 0, *"set_env failed");
 #endif
 }
 
