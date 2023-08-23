@@ -137,8 +137,8 @@ TEST(Error, Source) {
   EXPECT_EQ(sus::error::error_source(ErrorString("string here")).is_some(),
             false);
 
-  decltype(auto) source = sus::error::error_source(
-      SuperError{.source = sus::into(SuperErrorSideKick())});
+  auto super_error = SuperError{.source = sus::into(SuperErrorSideKick())};
+  decltype(auto) source = sus::error::error_source(super_error);
   static_assert(
       std::same_as<decltype(source), sus::Option<const sus::error::DynError&>>);
   EXPECT_EQ(source.is_some(), true);
