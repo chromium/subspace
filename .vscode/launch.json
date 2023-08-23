@@ -38,7 +38,7 @@
             "args": [
                 // "--gtest_filter=*"
             ],
-            "cwd": "${workspaceFolder}/out/subspace"
+            "cwd": "${workspaceFolder}/out/sus"
         },
         {
             "type": "lldb",
