@@ -24,7 +24,7 @@
 
 namespace sus::mem::__private {
 
-constexpr inline size_t min(size_t a, size_t b) { return a < b ? a : b; }
+constexpr inline size_t min_size(size_t a, size_t b) { return a < b ? a : b; }
 
 template <class T, size_t bytes>
 struct NoUnique {
@@ -52,13 +52,14 @@ constexpr inline size_t
 // An inheritable class can have its padding used by a subclass.
 template <class T, size_t bytes>
 constexpr inline size_t data_size_finder_inheritable_class =
-    sizeof(T) < min(sizeof(NoUnique<T, bytes>), sizeof(Subclass<T, bytes>))
+    sizeof(T) < min_size(sizeof(NoUnique<T, bytes>), sizeof(Subclass<T, bytes>))
         ? sizeof(T) - bytes + 1
         : data_size_finder_inheritable_class<T, bytes + 1>;
 
 template <class T>
 constexpr inline size_t
-    data_size_finder_inheritable_class<T, alignof(std::max_align_t) + 1> = size_t(-1);
+    data_size_finder_inheritable_class<T, alignof(std::max_align_t) + 1> =
+        size_t(-1);
 
 // We don't know the types inside a union, so we're unable to tell what is
 // padding. Such types should not be memcpy'd unless the types inside are
