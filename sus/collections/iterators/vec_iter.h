@@ -34,7 +34,7 @@ namespace sus::collections {
 ///
 /// This type is returned from `Vec::into_iter()`.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] VecIntoIter final
+struct [[nodiscard]] VecIntoIter final
     : public ::sus::iter::IteratorBase<VecIntoIter<ItemT>, ItemT> {
  public:
   using Item = ItemT;
@@ -76,8 +76,8 @@ struct [[nodiscard]] [[sus_trivial_abi]] VecIntoIter final
   /// sus::iter::Iterator trait.
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     const usize remaining = back_index_ - front_index_;
-    return ::sus::iter::SizeHint(
-        remaining, ::sus::Option<::sus::num::usize>(remaining));
+    return ::sus::iter::SizeHint(remaining,
+                                 ::sus::Option<::sus::num::usize>(remaining));
   }
 
   /// sus::iter::ExactSizeIterator trait.
@@ -94,9 +94,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] VecIntoIter final
   usize front_index_ = 0_usize;
   usize back_index_ = vec_.len();
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                  decltype(front_index_), decltype(back_index_),
-                                  decltype(vec_));
+  // Vec may not be trivially relocatable if its allocator is not.
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(front_index_),
+                                           decltype(back_index_),
+                                           decltype(vec_));
 };
 
 }  // namespace sus::collections

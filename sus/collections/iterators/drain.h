@@ -50,7 +50,7 @@ namespace sus::collections {
 /// While Drain is satisfies [`Move`](sus-mem-Move.html) in order to be
 /// move-constructed, it will panic on move-assignment.
 template <class ItemT>
-struct [[nodiscard]] [[sus_trivial_abi]] Drain final
+struct [[nodiscard]] Drain final
     : public ::sus::iter::IteratorBase<Drain<ItemT>, ItemT> {
  public:
   using Item = ItemT;
@@ -175,7 +175,7 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
   }
 
   explicit constexpr Drain(Vec<Item>&& vec sus_lifetimebound,
-                  ::sus::ops::Range<usize> range) noexcept
+                           ::sus::ops::Range<usize> range) noexcept
       : tail_start_(range.finish),
         tail_len_(vec.len() - range.finish),
         vec_(::sus::move(vec)),
@@ -210,9 +210,11 @@ struct [[nodiscard]] [[sus_trivial_abi]] Drain final
   /// Current remaining range to remove.
   Option<SliceIterMut<Item&>> iter_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                  decltype(tail_start_), decltype(tail_len_),
-                                  decltype(vec_), decltype(tail_start_),
-                                  decltype(original_vec_));
+  // Vec may not be trivially relocatable if its allocator is not.
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(tail_start_),
+                                           decltype(tail_len_), decltype(vec_),
+                                           decltype(tail_start_),
+                                           decltype(original_vec_));
 };
 }  // namespace sus::collections
