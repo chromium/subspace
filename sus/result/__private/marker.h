@@ -20,17 +20,14 @@
 #include "sus/lib/__private/forward_decl.h"
 #include "sus/mem/forward.h"
 #include "sus/mem/move.h"
+#include "sus/mem/remove_rvalue_reference.h"
 #include "sus/result/ok_void.h"
 
 namespace sus::result::__private {
 
-struct OkVoidMarker {
-  // If the Result's type can construct from a const ref `value` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the same.
-  //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
-  // a const&, since marker types should normally be converted quickly to the
-  // concrete type.
+struct [[nodiscard]] OkVoidMarker {
+  // Gtest macros force evaluation against a const reference.
+  // https://github.com/google/googletest/issues/4350
   template <class E>
   inline constexpr operator ::sus::result::Result<void, E>() const& noexcept {
     return Result<void, E>(::sus::result::OkVoid());
@@ -48,21 +45,30 @@ struct OkVoidMarker {
 };
 
 template <class T>
-struct OkMarker {
+struct [[nodiscard]] OkMarker {
   sus_clang_bug_54040(constexpr inline OkMarker(T&& value)
                       : value(::sus::forward<T>(value)){});
 
   T&& value;
 
-  // If the Result's type can construct from a const ref `value` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the same.
+  // Gtest macros force evaluation against a const reference.
+  // https://github.com/google/googletest/issues/4350
   //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
-  // a const&, since marker types should normally be converted quickly to the
-  // concrete type.
+  // So we allow constructing the target type from a const ref `value`. This
+  // can perform explicit conversions which isn't correct but is required in
+  // order to be able to call this method twice, because `value` itself may not
+  // be copyable (marker types are not) but construction from const is more
+  // likely.
   template <class U, class E>
-    requires(std::constructible_from<U, const T&>)
   inline constexpr operator ::sus::result::Result<U, E>() const& noexcept {
+    static_assert(
+        std::convertible_to<::sus::mem::remove_rvalue_reference<T>, U>,
+        "OkMarker(T) can't convert const T& to U for Result<U, E>. "
+        "Note that this is a test-only code path for Gtest support. "
+        "Typically the T object is consumed as an rvalue, consider using "
+        "EXPECT_TRUE(a == b) if needed.");
+    static_assert(std::convertible_to<T&&, U>,
+                  "OkMarker(T) can't convert T to U for Result<U, E>");
     static_assert(
         ::sus::construct::SafelyConstructibleFromReference<U, const T&>,
         "Unable to safely convert to a different reference type, as conversion "
@@ -70,11 +76,13 @@ struct OkMarker {
         "must match the Result's. For example a `Result<const i32&, E>` can "
         "not be constructed from an OkMarker holding `const i16&`, but it can "
         "be constructed from `i32&&`.");
-    return Result<U, E>(U(static_cast<const T&>(value)));
+    return Result<U, E>(U(value));
   }
 
   template <class U, class E>
   inline constexpr operator ::sus::result::Result<U, E>() && noexcept {
+    static_assert(std::convertible_to<T&&, U>,
+                  "OkMarker(T) can't convert T to U for Result<U, E>");
     static_assert(
         ::sus::construct::SafelyConstructibleFromReference<U, T&&>,
         "Unable to safely convert to a different reference type, as conversion "
@@ -93,36 +101,49 @@ struct OkMarker {
   }
 
   template <class U, class E>
+    requires(std::convertible_to<T &&, U>)
   inline constexpr ::sus::result::Result<U, E> construct() && noexcept {
     return ::sus::move(*this);
   }
 };
 
 template <class E>
-struct ErrMarker {
+struct [[nodiscard]] ErrMarker {
   sus_clang_bug_54040(constexpr inline ErrMarker(E&& value)
                       : value(::sus::forward<E>(value)){});
 
   E&& value;
 
-  // If the Result's type can construct from a const ref `value` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the same.
+  // Gtest macros force evaluation against a const reference.
+  // https://github.com/google/googletest/issues/4350
   //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
-  // a const&, since marker types should normally be converted quickly to the
-  // concrete type.
+  // So we allow constructing the target type from a const ref `value`. This
+  // can perform explicit conversions which isn't correct but is required in
+  // order to be able to call this method twice, because `value` itself may not
+  // be copyable (marker types are not) but construction from const is more
+  // likely.
   template <class T, class F>
-    requires(std::constructible_from<F, std::remove_reference_t<E>&>)
   inline constexpr operator ::sus::result::Result<T, F>() const& noexcept {
-    return Result<T, F>::with_err(value);
+    static_assert(
+        std::convertible_to<::sus::mem::remove_rvalue_reference<E>, F>,
+        "ErrMarker(T) can't convert const E& to F for Result<T, F>. "
+        "Note that this is a test-only code path for Gtest support. "
+        "Typically the T object is consumed as an rvalue, consider using "
+        "EXPECT_TRUE(a == b) if needed.");
+    static_assert(std::convertible_to<E&&, F>,
+                  "ErrMarker(E) can't convert E to F for Result<T, F>");
+    return Result<T, F>::with_err(F(value));
   }
 
   template <class T, class F>
   inline constexpr operator ::sus::result::Result<T, F>() && noexcept {
+    static_assert(std::convertible_to<E&&, F>,
+                  "ErrMarker(E) can't convert E to F for Result<T, F>");
     return Result<T, F>::with_err(::sus::forward<E>(value));
   }
 
   template <class T, class F = std::remove_reference_t<E>>
+    requires(std::convertible_to<E &&, F>)
   inline constexpr ::sus::result::Result<T, F> construct() && noexcept {
     return ::sus::move(*this);
   }
