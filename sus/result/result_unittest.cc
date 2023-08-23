@@ -562,6 +562,71 @@ TEST(Result, Unwrap) {
   EXPECT_EQ(&cu, &m);
 }
 
+TEST(Result, Expect) {
+  constexpr auto a = Result<i32, Error>(3_i32).expect("hello");
+  static_assert(std::same_as<decltype(a), const i32>);
+  EXPECT_EQ(a, 3_i32);
+
+  Result<void, Error>(OkVoid()).expect(
+      "hello");  // Returns void, doesn't panic.
+  static_assert(
+      std::same_as<decltype(Result<void, Error>(OkVoid()).expect("hello")),
+                   void>);
+
+  auto m = NoCopyMove();
+  decltype(auto) u = Result<NoCopyMove&, Error>(m).expect("hello");
+  static_assert(std::same_as<decltype(u), NoCopyMove&>);
+  EXPECT_EQ(&u, &m);
+
+  decltype(auto) cu = Result<const NoCopyMove&, Error>(m).expect("hello");
+  static_assert(std::same_as<decltype(cu), const NoCopyMove&>);
+  EXPECT_EQ(&cu, &m);
+}
+
+TEST(ResultDeathTest, Unwrap) {
+#if GTEST_HAS_DEATH_TEST
+  {
+    auto r = Result<i32, Error>::with_err(Error());
+    EXPECT_DEATH(r.as_value(), "PANIC! at 'Result has error state'");
+    EXPECT_DEATH(r.as_value_mut(), "PANIC! at 'Result has error state'");
+    EXPECT_DEATH(sus::move(r).unwrap(), "PANIC! at 'Result has error state'");
+  }
+  {
+    auto r = Result<i32, u32>::with_err(3u);
+    EXPECT_DEATH(r.as_value(), "PANIC! at '3'");
+    EXPECT_DEATH(r.as_value_mut(), "PANIC! at '3'");
+    EXPECT_DEATH(sus::move(r).unwrap(), "PANIC! at '3'");
+  }
+#endif
+}
+
+TEST(ResultDeathTest, UnwrapErr) {
+#if GTEST_HAS_DEATH_TEST
+  struct Unprintable {};
+  {
+    auto r = Result<Unprintable, Error>(Unprintable());
+    EXPECT_DEATH(r.as_err(), "PANIC! at 'Result has ok state'");
+    // TODO: EXPECT_DEATH(r.as_err_mut(), "PANIC! at 'Result has ok state'");
+    EXPECT_DEATH(sus::move(r).unwrap_err(), "PANIC! at 'Result has ok state'");
+  }
+  {
+    auto r = Result<i32, Error>(2);
+    EXPECT_DEATH(r.as_err(), "PANIC! at '2'");
+    // TODO: EXPECT_DEATH(r.as_err_mut(), "PANIC! at '2'");
+    EXPECT_DEATH(sus::move(r).unwrap_err(), "PANIC! at '2'");
+  }
+#endif
+}  // namespace
+
+TEST(ResultDeathTest, Expect) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH((Result<i32, Error>::with_err(Error()).expect("hello")),
+               "PANIC! at 'hello'");
+  EXPECT_DEATH((Result<i32, u32>::with_err(3u).expect("hello")),
+               "PANIC! at 'hello: 3'");
+#endif
+}
+
 TEST(Result, UnwrapOrDefault) {
   {
     constexpr auto a = Result<i32, Error>(3_i32).unwrap_or_default();

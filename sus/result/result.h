@@ -714,7 +714,17 @@ class [[nodiscard]] Result final {
   constexpr const std::remove_reference_t<TUnlessVoid>& as_value() const&
     requires(!std::is_void_v<T>)
   {
-    ::sus::check(state_ == ResultState::IsOk);
+    if (state_ != ResultState::IsOk) [[unlikely]] {
+      if (state_ == ResultState::IsErr) {
+        if constexpr (fmt::is_formattable<E>::value) {
+          panic_with_message(*fmt::to_string(storage_.err_).c_str());
+        } else {
+          panic_with_message(*"Result has error state");
+        }
+      } else {
+        panic_with_message(*"Result used after move");
+      }
+    }
     return storage_.ok_;
   }
   constexpr const std::remove_reference_t<TUnlessVoid>& as_value() && = delete;
@@ -726,7 +736,17 @@ class [[nodiscard]] Result final {
   constexpr std::remove_reference_t<TUnlessVoid>& as_value_mut() &
     requires(!std::is_void_v<T>)
   {
-    ::sus::check(state_ == ResultState::IsOk);
+    if (state_ != ResultState::IsOk) [[unlikely]] {
+      if (state_ == ResultState::IsErr) {
+        if constexpr (fmt::is_formattable<E>::value) {
+          panic_with_message(*fmt::to_string(storage_.err_).c_str());
+        } else {
+          panic_with_message(*"Result has error state");
+        }
+      } else {
+        panic_with_message(*"Result used after move");
+      }
+    }
     return storage_.ok_;
   }
   /// Returns a const reference to the contained `Err` value.
@@ -734,9 +754,24 @@ class [[nodiscard]] Result final {
   /// # Panics
   /// Panics if the value is an `Ok` or the Result is moved from.
   constexpr const std::remove_reference_t<E>& as_err() const& {
-    ::sus::check(state_ == ResultState::IsErr);
+    if (state_ != ResultState::IsErr) [[unlikely]] {
+      if (state_ == ResultState::IsOk) {
+        if constexpr (!std::is_void_v<T>) {
+          if constexpr (fmt::is_formattable<T>::value) {
+            panic_with_message(*fmt::to_string(storage_.ok_).c_str());
+          } else {
+            panic_with_message(*"Result has ok state");
+          }
+        } else {
+          panic_with_message(*"Result has ok state");
+        }
+      } else {
+        panic_with_message(*"Result used after move");
+      }
+    }
     return storage_.err_;
   }
+  constexpr const std::remove_reference_t<E>& as_err() && = delete;
 
   /// Returns the contained `Ok` value, consuming the self value.
   ///
@@ -749,9 +784,46 @@ class [[nodiscard]] Result final {
   /// Panics if the value is an `Err` or the Result is moved from.
   constexpr inline T unwrap() && noexcept {
     ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
-    check_with_message(
-        was == ResultState::IsOk,
-        *"called `Result::unwrap()` on an `Err` value or moved Result");
+    if (was != ResultState::IsOk) [[unlikely]] {
+      if (was == ResultState::IsErr) {
+        if constexpr (fmt::is_formattable<E>::value) {
+          panic_with_message(*fmt::to_string(storage_.err_).c_str());
+        } else {
+          panic_with_message(*"Result has error state");
+        }
+      } else {
+        panic_with_message(*"Result used after move");
+      }
+    }
+    if constexpr (!std::is_void_v<T>) {
+      return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
+                                           storage_.ok_);
+    }
+  }
+
+  /// Returns the contained `Ok` value, consuming the self value.
+  ///
+  /// Because this function may panic, its use is generally discouraged.
+  /// Instead, prefer to use pattern matching and handle the `Err` case
+  /// explicitly, or call `unwrap_or`, `unwrap_or_else`, or `unwrap_or_default`.
+  ///
+  /// # Panics
+  /// Panics if the value is an Err, with a panic message including the passed
+  /// message, and the content of the Err.
+  constexpr inline T expect(const char* msg) && noexcept {
+    ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
+    if (was != ResultState::IsOk) [[unlikely]] {
+      if (was == ResultState::IsErr) {
+        if constexpr (fmt::is_formattable<E>::value) {
+          panic_with_message(
+              *fmt::format("{}: {}", msg, storage_.err_).c_str());
+        } else {
+          panic_with_message(*msg);
+        }
+      } else {
+        panic_with_message(*"Result used after move");
+      }
+    }
     if constexpr (!std::is_void_v<T>) {
       return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
                                            storage_.ok_);
@@ -801,9 +873,21 @@ class [[nodiscard]] Result final {
   /// Panics if the value is an `Ok` or the Result is moved from.
   constexpr inline E unwrap_err() && noexcept {
     ResultState was = ::sus::mem::replace(state_, ResultState::IsMoved);
-    check_with_message(
-        was == ResultState::IsErr,
-        *"called `Result::unwrap_err()` on an `Ok` value or moved Result");
+    if (was != ResultState::IsErr) [[unlikely]] {
+      if (was == ResultState::IsOk) {
+        if constexpr (!std::is_void_v<T>) {
+          if constexpr (fmt::is_formattable<T>::value) {
+            panic_with_message(*fmt::to_string(storage_.ok_).c_str());
+          } else {
+            panic_with_message(*"Result has ok state");
+          }
+        } else {
+          panic_with_message(*"Result has ok state");
+        }
+      } else {
+        panic_with_message(*"Result used after move");
+      }
+    }
     return ::sus::mem::take_and_destruct(::sus::marker::unsafe_fn,
                                          storage_.err_);
   }
