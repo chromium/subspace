@@ -54,7 +54,7 @@ namespace sus {
 /// * The [`Error`]($sus::error::Error) concept (Reporting)
 /// * The [`DynError`]($sus::error::DynError) type (Reporting)
 /// * User defined types (Constructing / Representing)
-/// * [`downcast`]($sus::boxed::Box::downcast) (Reacting)
+/// * TODO: [`downcast`](https://github.com/chromium/subspace/issues/333) (Reacting)
 /// * TODO: The [`TRY`](https://github.com/chromium/subspace/issues/299) macro
 ///   (Propagating)
 /// * The [`Try`]($sus::ops::Try) concept (Propagating, Constructing)
