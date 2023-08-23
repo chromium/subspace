@@ -15,6 +15,7 @@
 #pragma once
 
 #include "fmt/core.h"
+#include "sus/macros/lifetimebound.h"
 #include "sus/option/option.h"
 
 /// Interfaces for working with Errors.
@@ -375,7 +376,7 @@ template <Error E>
     } -> std::same_as<sus::Option<const DynError&>>;
   }
 constexpr inline sus::Option<const DynError&> error_source(
-    const E& error) noexcept {
+    const E& error sus_lifetimebound) noexcept {
   return ErrorImpl<E>::source(error);
 }
 
@@ -383,7 +384,8 @@ template <Error E>
   requires(!requires(const E& e) {
     { ErrorImpl<E>::source(e) };
   })
-constexpr inline sus::Option<const DynError&> error_source(const E&) noexcept {
+constexpr inline sus::Option<const DynError&> error_source(
+    const E& sus_lifetimebound) noexcept {
   return sus::Option<const DynError&>();
 }
 
@@ -420,7 +422,7 @@ struct sus::error::ErrorImpl<::sus::error::DynError> {
     return b.display();
   }
   constexpr static sus::Option<const DynError&> source(
-      const ::sus::error::DynError& b) noexcept {
+      const ::sus::error::DynError& b sus_lifetimebound) noexcept {
     return b.source();
   }
 };
