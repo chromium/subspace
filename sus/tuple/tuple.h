@@ -33,6 +33,7 @@
 #include "sus/mem/copy.h"
 #include "sus/mem/forward.h"
 #include "sus/mem/move.h"
+#include "sus/mem/remove_rvalue_reference.h"
 #include "sus/mem/replace.h"
 #include "sus/num/num_concepts.h"
 #include "sus/ops/eq.h"
@@ -351,21 +352,30 @@ constexpr decltype(auto) get(Tuple<Ts...>&& t) noexcept {
 
 namespace __private {
 template <class... Ts>
-struct TupleMarker {
+struct [[nodiscard]] TupleMarker {
   sus_clang_bug_54040(constexpr inline TupleMarker(Tuple<Ts&&...>&& values)
                       : values(::sus::move(values)){});
 
   Tuple<Ts&&...> values;
 
-  // If the Tuple's types can construct from a const ref `value` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the same.
+  // Gtest macros force evaluation against a const reference.
+  // https://github.com/google/googletest/issues/4350
   //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
-  // a const&, since marker types should normally be converted quickly to the
-  // concrete type.
+  // So we allow constructing the target type from a const ref `value`. This
+  // can perform explicit conversions which isn't correct but is required in
+  // order to be able to call this method twice, because `value` itself may not
+  // be copyable (marker types are not) but construction from const is more
+  // likely.
   template <class... Us>
-    requires((... && std::constructible_from<Us, std::remove_reference_t<Ts>&>))
   sus_pure inline constexpr operator Tuple<Us...>() const& noexcept {
+    static_assert(
+        (... && std::convertible_to<::sus::mem::remove_rvalue_reference<Ts>, Us>),
+        "TupleMarker(T) can't convert const T& to U for Tuple<U>. "
+        "Note that this is a test-only code path for Gtest support. "
+        "Typically the T object is consumed as an rvalue, consider using "
+        "EXPECT_TRUE(a == b) if needed.");
+    static_assert((... && std::convertible_to<Ts&&, Us>),
+                  "TupleMarker(T) can't convert T to U for Tuple<U>");
     static_assert(
         (... &&
          ::sus::construct::SafelyConstructibleFromReference<Us, const Ts&>),
@@ -376,13 +386,15 @@ struct TupleMarker {
         "but it can be constructed from `i32&&, u16`.");
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          return Tuple<Us...>(values.template at<Is>()...);
+          return Tuple<Us...>(Us(values.template at<Is>())...);
         };
     return make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>());
   }
 
   template <class... Us>
   inline constexpr operator Tuple<Us...>() && noexcept {
+    static_assert((... && std::convertible_to<Ts&&, Us>),
+                  "TupleMarker(T) can't convert T to U for Tuple<U>");
     static_assert(
         (... && ::sus::construct::SafelyConstructibleFromReference<Us, Ts&&>),
         "Unable to safely convert to a different reference type, as conversion "

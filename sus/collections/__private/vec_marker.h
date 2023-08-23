@@ -24,12 +24,13 @@
 #include "sus/lib/__private/forward_decl.h"
 #include "sus/macros/__private/compiler_bugs.h"
 #include "sus/mem/move.h"
+#include "sus/mem/remove_rvalue_reference.h"
 #include "sus/tuple/tuple.h"
 
 namespace sus::collections::__private {
 
 template <class... Ts>
-struct VecEmptyMarker {
+struct [[nodiscard]] VecEmptyMarker {
   // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
   // a const&, since marker types should normally be converted quickly to the
   // concrete type.
@@ -51,52 +52,50 @@ struct VecEmptyMarker {
 };
 
 template <class... Ts>
-struct VecMarker {
+struct [[nodiscard]] VecMarker {
   sus_clang_bug_54040(
       constexpr inline VecMarker(::sus::tuple_type::Tuple<Ts&&...>&& values)
       : values(::sus::move(values)){});
 
   ::sus::tuple_type::Tuple<Ts&&...> values;
 
-  // If the Vec's type can construct from a const ref `values` (roughly, are
-  // copy-constructible, but may change types), then the marker can do the same.
+  // Gtest macros force evaluation against a const reference.
+  // https://github.com/google/googletest/issues/4350
   //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
-  // a const&, since marker types should normally be converted quickly to the
-  // concrete type.
+  // So we allow constructing the target type from a const ref `value`. This
+  // can perform explicit conversions which isn't correct but is required in
+  // order to be able to call this method twice, because `value` itself may not
+  // be copyable (marker types are not) but construction from const is more
+  // likely.
   template <class U>
-    requires((... && std::constructible_from<U, const Ts&>))
   inline constexpr operator Vec<U>() const& noexcept {
-    auto v = Vec<U>::with_capacity(sizeof...(Ts));
-
-    auto push_elements =
-        [&, this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          // This is a fold expression over the operator `,`.
-          (v.push(values.template at<Is>()), ...);
-        };
-    push_elements(std::make_integer_sequence<size_t, sizeof...(Ts)>());
-
-    return v;
+    static_assert(
+        (... && std::convertible_to<::sus::mem::remove_rvalue_reference<Ts>, U>),
+        "VecMarker(T) can't convert const T& to U for Vec<U>. "
+        "Note that this is a test-only code path for Gtest support. "
+        "Typically the T object is consumed as an rvalue, consider using "
+        "EXPECT_TRUE(a == b) if needed.");
+    static_assert((... && std::convertible_to<Ts&&, U>),
+                  "VecMarker(T) can't convert T to U for Vec<U>");
+    auto make_vec = [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
+      return Vec<U>(U(values.template at<Is>())...);
+    };
+    return make_vec(std::make_integer_sequence<size_t, sizeof...(Ts)>());
   }
 
   template <class U>
-    requires((... && std::constructible_from<U, Ts &&>))
   inline constexpr operator Vec<U>() && noexcept {
-    auto v = Vec<U>::with_capacity(sizeof...(Ts));
-
-    auto push_elements =
-        [&, this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          // This is a fold expression over the operator `,`.
-          (v.push(::sus::forward<Ts>(values.template at_mut<Is>())), ...);
-        };
-    push_elements(std::make_integer_sequence<size_t, sizeof...(Ts)>());
-
-    return v;
+    static_assert((... && std::convertible_to<Ts&&, U>),
+                  "VecMarker(T) can't convert T to U for Vec<U>");
+    auto make_vec = [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
+      return Vec<U>(::sus::forward<Ts>(values.template at_mut<Is>())...);
+    };
+    return make_vec(std::make_integer_sequence<size_t, sizeof...(Ts)>());
   }
 
   /// Constructs a `Vec<U>` for a user-specified `U`, as it can not be inferred.
   template <class U>
-    requires((... && std::constructible_from<U, Ts &&>))
+    requires((... && std::convertible_to<Ts &&, U>))
   inline constexpr Vec<U> construct() && noexcept {
     return ::sus::move(*this);
   }

@@ -53,38 +53,29 @@ struct VerifySafe;
 
 template <class To, class From>
 struct VerifySafe<To, From> {
-  static constexpr bool from_const =
-      ::sus::construct::SafelyConstructibleFromReference<To, const From&>;
-  static constexpr bool from_rvalue =
-      ::sus::construct::SafelyConstructibleFromReference<To, From&&>;
+  static constexpr bool value =
+      ::sus::construct::SafelyConstructibleFromReference<To, From>;
 };
 
 template <class... To, class... From>
   requires(sizeof...(To) > 1)
 struct VerifySafe<sus::Tuple<To...>, From...> {
-  static constexpr bool from_const =
-      (... &&
-       ::sus::construct::SafelyConstructibleFromReference<To, const From&>);
-  static constexpr bool from_rvalue =
-      (... && ::sus::construct::SafelyConstructibleFromReference<To, From&&>);
+  static constexpr bool value =
+      (... && ::sus::construct::SafelyConstructibleFromReference<To, From>);
 };
 
 template <class To, class... From>
-struct AllConvertible;
+struct AllConvertibleFrom;
 
 template <class To, class From>
-struct AllConvertible<To, From> {
-  static constexpr bool from_const = ::std::constructible_from<To, const From&>;
-  static constexpr bool from_rvalue = ::std::constructible_from<To, From&&>;
+struct AllConvertibleFrom<To, From> {
+  static constexpr bool value = ::std::convertible_to<From, To>;
 };
 
 template <class... To, class... From>
   requires(sizeof...(To) > 1)
-struct AllConvertible<::sus::Tuple<To...>, From...> {
-  static constexpr bool from_const =
-      (... && ::std::constructible_from<To, const From&>);
-  static constexpr bool from_rvalue =
-      (... && ::std::constructible_from<To, From&&>);
+struct AllConvertibleFrom<::sus::Tuple<To...>, From...> {
+  static constexpr bool value = (... && ::std::convertible_to<From, To>);
 };
 
 template <auto Tag, class... Ts>
@@ -92,9 +83,6 @@ struct ChoiceMarker;
 
 template <auto Tag>
 struct ChoiceMarkerVoid {
-  // If the Choice's type can construct from a const ref `value` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the same.
-  //
   // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
   // a const&, since marker types should normally be converted quickly to the
   // concrete type.
@@ -110,39 +98,51 @@ struct ChoiceMarkerVoid {
 };
 
 template <auto Tag, class T>
-struct ChoiceMarker<Tag, T> {
+struct [[nodiscard]] ChoiceMarker<Tag, T> {
   sus_clang_bug_54040(constexpr inline ChoiceMarker(T&& value)
                       : value(::sus::forward<T>(value)){});
 
   T&& value;
 
-  // If the Choice's type can construct from a const ref `value` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the same.
+  // Gtest macros force evaluation against a const reference.
+  // https://github.com/google/googletest/issues/4350
   //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
-  // a const&, since marker types should normally be converted quickly to the
-  // concrete type.
+  // So we allow constructing the target type from a const ref `value`. This
+  // can perform explicit conversions which isn't correct but is required in
+  // order to be able to call this method twice, because `value` itself may not
+  // be copyable (marker types are not) but construction from const is more
+  // likely.
   template <class C, auto... Vs>
-    requires(AllConvertible<StorageTypeFromChoice<Choice<C, Vs...>, Tag>,
-                            T>::from_const)
   inline constexpr operator Choice<C, Vs...>() const& noexcept {
+    using U = StorageTypeFromChoice<Choice<C, Vs...>, Tag>;
     static_assert(
-        VerifySafe<StorageTypeFromChoice<Choice<C, Vs...>, Tag>, T>::from_const,
+        AllConvertibleFrom<U, ::sus::mem::remove_rvalue_reference<T>>::value,
+        "ChoiceMarker<Tag>(T) can't convert const T& to U for "
+        "Choice::with<Tag>(U). "
+        "Note that this is a test-only code path for Gtest support. "
+        "Typically the T object is consumed as an rvalue, consider using "
+        "EXPECT_TRUE(a == b) if needed.");
+    static_assert(
+        AllConvertibleFrom<U, T&&>::value,
+        "ChoiceMarker<Tag>(T) can't convert T to U for Choice::with<Tag>(U)");
+    static_assert(
+        VerifySafe<U, T&&>::value,
         "Unable to safely convert to a different reference type, as conversion "
         "would produce a reference to a temporary. The ChoiceMarker's value "
         "type must match the Choice's. For example a `Choice holding "
         "`const u32&` can not be constructed from a ChoiceMarker holding "
         "`const i16&`, but it can be constructed from `i32&&`.");
-    return Choice<C, Vs...>::template with<Tag>(value);
+    return Choice<C, Vs...>::template with<Tag>(U(value));
   }
 
   template <class C, auto... Vs>
-    requires(AllConvertible<StorageTypeFromChoice<Choice<C, Vs...>, Tag>,
-                            T>::from_rvalue)
   inline constexpr operator Choice<C, Vs...>() && noexcept {
+    using U = StorageTypeFromChoice<Choice<C, Vs...>, Tag>;
     static_assert(
-        VerifySafe<StorageTypeFromChoice<Choice<C, Vs...>, Tag>,
-                   T>::from_rvalue,
+        AllConvertibleFrom<U, T&&>::value,
+        "ChoiceMarker<Tag>(T) can't convert T to U for Choice::with<Tag>(U)");
+    static_assert(
+        VerifySafe<U, T&&>::value,
         "Unable to safely convert to a different reference type, as conversion "
         "would produce a reference to a temporary. The ChoiceMarker's value "
         "type must match the Choice's. For example a `Choice holding "
@@ -154,27 +154,36 @@ struct ChoiceMarker<Tag, T> {
 
 template <auto Tag, class... Ts>
   requires(sizeof...(Ts) > 1)
-struct ChoiceMarker<Tag, Ts...> {
+struct [[nodiscard]] ChoiceMarker<Tag, Ts...> {
   sus_clang_bug_54040(
       constexpr inline ChoiceMarker(::sus::tuple_type::Tuple<Ts&&...>&& values)
       : values(::sus::move(values)){});
 
   ::sus::tuple_type::Tuple<Ts&&...> values;
 
-  // If the Choice's types can construct from const ref `values` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the
-  // same.
+  // Gtest macros force evaluation against a const reference.
+  // https://github.com/google/googletest/issues/4350
   //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them
-  // as a const&, since marker types should normally be converted quickly to
-  // the concrete type.
+  // So we allow constructing the target type from a const ref `value`. This
+  // can perform explicit conversions which isn't correct but is required in
+  // order to be able to call this method twice, because `value` itself may not
+  // be copyable (marker types are not) but construction from const is more
+  // likely.
   template <class C, auto... Vs>
-    requires(AllConvertible<StorageTypeFromChoice<Choice<C, Vs...>, Tag>,
-                            Ts...>::from_const)
   inline constexpr operator Choice<C, Vs...>() const& noexcept {
+    using Us = StorageTypeFromChoice<Choice<C, Vs...>, Tag>;
     static_assert(
-        VerifySafe<StorageTypeFromChoice<Choice<C, Vs...>, Tag>,
-                   Ts...>::from_const,
+        AllConvertibleFrom<Us, ::sus::mem::remove_rvalue_reference<Ts>...>::value,
+        "ChoiceMarker<Tag>(Ts...) can't convert const Ts& to Us for "
+        "Choice::with<Tag>(Us...). "
+        "Note that this is a test-only code path for Gtest support. "
+        "Typically the T object is consumed as an rvalue, consider using "
+        "EXPECT_TRUE(a == b) if needed.");
+    static_assert(AllConvertibleFrom<Us, Ts&&...>::value,
+                  "ChoiceMarker<Tag>(Ts...) can't convert Ts to Us for "
+                  "Choice::with<Tag>(Us...)");
+    static_assert(
+        VerifySafe<Us, Ts&&...>::value,
         "Unable to safely convert to a different reference type, as conversion "
         "would produce a reference to a temporary. The ChoiceMarker's value "
         "type must match the Choice's. For example a `Choice holding "
@@ -184,19 +193,22 @@ struct ChoiceMarker<Tag, Ts...> {
         decltype(std::declval<Choice<C, Vs...>&&>().template into_inner<Tag>());
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          return TupleType(values.template at<Is>()...);
+          return TupleType(typename std::tuple_element<Is, TupleType>::type(values.template at<Is>())...);
         };
     return Choice<C, Vs...>::template with<Tag>(
         make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>()));
   }
 
   template <class C, auto... Vs>
-    requires(AllConvertible<StorageTypeFromChoice<Choice<C, Vs...>, Tag>,
-                            Ts...>::from_rvalue)
   inline constexpr operator Choice<C, Vs...>() && noexcept {
     static_assert(
+        AllConvertibleFrom<StorageTypeFromChoice<Choice<C, Vs...>, Tag>,
+                           Ts&&...>::value,
+        "ChoiceMarker<Tag>(Ts...) can't convert Ts to Us for "
+        "Choice::with<Tag>(Us...)");
+    static_assert(
         VerifySafe<StorageTypeFromChoice<Choice<C, Vs...>, Tag>,
-                   Ts...>::from_rvalue,
+                   Ts&&...>::value,
         "Unable to safely convert to a different reference type, as conversion "
         "would produce a reference to a temporary. The ChoiceMarker's value "
         "type must match the Choice's. For example a `Choice holding "
@@ -206,8 +218,7 @@ struct ChoiceMarker<Tag, Ts...> {
         decltype(std::declval<Choice<C, Vs...>&&>().template into_inner<Tag>());
     auto make_tuple =
         [this]<size_t... Is>(std::integer_sequence<size_t, Is...>) {
-          return TupleType(
-              ::sus::forward<Ts>(values.template at_mut<Is>())...);
+          return TupleType(::sus::forward<Ts>(values.template at_mut<Is>())...);
         };
     return Choice<C, Vs...>::template with<Tag>(
         make_tuple(std::make_integer_sequence<size_t, sizeof...(Ts)>()));

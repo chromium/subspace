@@ -25,21 +25,30 @@
 namespace sus::option::__private {
 
 template <class T>
-struct SomeMarker {
+struct [[nodiscard]] SomeMarker {
   sus_clang_bug_54040(constexpr inline SomeMarker(T&& value)
                       : value(::sus::forward<T>(value)){});
 
   T&& value;
 
-  // If the Option's type can construct from a const ref `value` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the same.
+  // Gtest macros force evaluation against a const reference.
+  // https://github.com/google/googletest/issues/4350
   //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them as
-  // a const&, since marker types should normally be converted quickly to the
-  // concrete type.
+  // So we allow constructing the target type from a const ref `value`. This
+  // can perform explicit conversions which isn't correct but is required in
+  // order to be able to call this method twice, because `value` itself may not
+  // be copyable (marker types are not) but construction from const is more
+  // likely.
   template <class U>
-    requires(std::constructible_from<U, const T&>)
   inline constexpr operator Option<U>() const& noexcept {
+    static_assert(
+        std::convertible_to<::sus::mem::remove_rvalue_reference<T>, U>,
+        "SomeMarker(T) can't convert const T& to U for Option<U>. "
+        "Note that this is a test-only code path for Gtest support. "
+        "Typically the T object is consumed as an rvalue, consider using "
+        "EXPECT_TRUE(a == b) if needed.");
+    static_assert(std::convertible_to<T&&, U>,
+                  "SomeMarker(T) can't convert T to U for Option<U>");
     static_assert(
         ::sus::construct::SafelyConstructibleFromReference<U, const T&>,
         "Unable to safely convert to a different reference type, as conversion "
@@ -47,11 +56,13 @@ struct SomeMarker {
         "must match the Option's. For example an `Option<const i32&>` can not "
         "be constructed from a SomeMarker holding `const i16&`, but it can be "
         "constructed from `i32&&`.");
-    return Option<U>(U(static_cast<const T&>(value)));
+    return Option<U>(U(value));
   }
 
   template <class U>
   inline constexpr operator Option<U>() && noexcept {
+    static_assert(std::convertible_to<T&&, U>,
+                  "SomeMarker(T) can't convert T to U for Option<U>");
     static_assert(
         ::sus::construct::SafelyConstructibleFromReference<U, T&&>,
         "Unable to safely convert to a different reference type, as conversion "
@@ -68,14 +79,9 @@ struct SomeMarker {
   }
 };
 
-struct NoneMarker {
-  // If the Option's type can construct from a const ref `value` (roughly, is
-  // copy-constructible, but may change types), then the marker can do the
-  // same.
-  //
-  // This largely exists to support use in Gtest's EXPECT_EQ, which uses them
-  // as a const&, since marker types should normally be converted quickly to
-  // the concrete type.
+struct [[nodiscard]] NoneMarker {
+  // Gtest macros force evaluation against a const reference.
+  // https://github.com/google/googletest/issues/4350
   template <class U>
   sus_pure_const inline constexpr operator Option<U>() const& noexcept {
     return Option<U>();
