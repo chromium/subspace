@@ -22,9 +22,10 @@
 #include "sus/num/types.h"
 #include "sus/ops/range_literals.h"
 
-// Imports all the things that are pulled into the top-level namespace.
-// TODO: Make a compile-time option for this.
-
+namespace sus {
+/// Commonly used things that can be pulled into the global top level namespace.
+/// This is done by default when including the `sus/prelude.h` header.
+namespace prelude {
 using sus::collections::Vec;
 using sus::marker::unsafe_fn;
 using sus::num::f32;
@@ -40,3 +41,9 @@ using sus::num::u64;
 using sus::num::u8;
 using sus::num::uptr;
 using sus::num::usize;
+}  // namespace prelude
+}  // namespace sus
+
+// Imports all the things that are pulled into the top-level namespace.
+// TODO: Make a compile-time option for this.
+using namespace sus::prelude;
