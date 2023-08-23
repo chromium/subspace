@@ -6,4 +6,6 @@ out\subdoc\subdoc -p out --out docs ^
     --copy-file sus/index.html ^
     --project-md sus/project.md ^
     --project-name Subspace ^
-    subspace/sus/num/uptr
+    subspace/sus/num/uptr ^
+    subspace/sus/error ^
+    subspace/sus/boxed

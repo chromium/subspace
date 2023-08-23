@@ -85,7 +85,7 @@ namespace sus::collections {
 /// - A const Vec<T> contains const values, it does not give mutable access to
 ///   its contents, so the const internal type would be redundant.
 template <class T>
-class [[sus_trivial_abi]] Vec final {
+class Vec final {
   static_assert(
       !std::is_reference_v<T>,
       "Vec<T&> is invalid as Vec must hold value types. Use Vec<T*> instead.");
@@ -96,8 +96,6 @@ class [[sus_trivial_abi]] Vec final {
   using A = std::allocator<T>;
 
   // TODO: Represent these allocator requirements as our own concept?
-  // Vec should be trivially relocatable.
-  static_assert(::sus::mem::relocate_by_memcpy<A>);
   // Required because otherwise move assignment is immensely complicated.
   // See
   // https://stackoverflow.com/questions/27471053/example-usage-of-propagate-on-container-move-assignment
@@ -878,10 +876,12 @@ class [[sus_trivial_abi]] Vec final {
   T* data_;
   usize len_;
 
-  sus_class_trivially_relocatable(::sus::marker::unsafe_fn,
-                                  decltype(allocator_), decltype(iter_refs_),
-                                  decltype(capacity_), decltype(data_),
-                                  decltype(len_));
+  // The allocator is not always trivially relocatable (it's not in libstdc++).
+  sus_class_trivially_relocatable_if_types(::sus::marker::unsafe_fn,
+                                           decltype(allocator_),
+                                           decltype(iter_refs_),
+                                           decltype(capacity_), decltype(data_),
+                                           decltype(len_));
 };
 
 #define _ptr_expr data_
