@@ -63,12 +63,22 @@ jobs:
             }
 
           - {
+              name: "Ubuntu Clang-18 Debug",
+              os: ubuntu-latest,
+              build_type: "Debug",
+              cc: "clang-18",
+              cxx: "clang++-18",
+              clang_version: 18,
+              installed_clang_version: 14
+            }
+
+          - {
               name: "Ubuntu GCC",
               os: ubuntu-latest,
               build_type: "Release",
               cc: "gcc-13",
               cxx: "g++-13",
-              clang_version: 17,
+              clang_version: 18,
               installed_clang_version: 14
             }
 
@@ -240,7 +250,7 @@ jobs:
     name: Generate Subdoc
     runs-on: ubuntu-latest
     env:
-      clang_version: 17
+      clang_version: 18
       installed_clang_version: 14
 
     steps:
@@ -385,7 +395,7 @@ jobs:
     name: Benchmarks
     runs-on: ubuntu-latest
     env:
-      clang_version: 17
+      clang_version: 18
       installed_clang_version: 14
 
     steps:
