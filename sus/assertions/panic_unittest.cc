@@ -37,8 +37,8 @@ TEST(PanicDeathTest, Panic) {
 TEST(PanicDeathTest, WithMessage) {
 #if GTEST_HAS_DEATH_TEST
   EXPECT_DEATH(panic_with_message(*"hello world"),
-               "^PANIC! at .*panic_unittest.cc:" DIGIT "+:" DIGIT
-               "+: hello world\n$");
+               "^PANIC! at 'hello world', .*panic_unittest.cc:" DIGIT "+:" DIGIT
+               "+\n$");
 #endif
 }
 

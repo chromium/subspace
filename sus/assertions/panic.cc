@@ -21,9 +21,9 @@ namespace sus::assertions::__private {
 // Defined outside the header to avoid fprintf in the header.
 void print_panic_message(const char& msg,
                          const std::source_location& location) {
-  fprintf(stderr, "PANIC! at %s:%lu:%lu: %s\n", location.file_name(),
+  fprintf(stderr, "PANIC! at '%s', %s:%lu:%lu\n", &msg, location.file_name(),
           static_cast<unsigned long>(location.line()),
-          static_cast<unsigned long>(location.column()), &msg);
+          static_cast<unsigned long>(location.column()));
 }
 
 void print_panic_location(const std::source_location& location) {
