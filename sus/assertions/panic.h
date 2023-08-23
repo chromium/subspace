@@ -101,6 +101,7 @@ void print_panic_location(const std::source_location& location);
 
 #undef _sus__not_tail_called
 #undef _sus__nomerge
+#undef __sus__crash_attributes
 
 namespace sus {
 using ::sus::assertions::panic;
