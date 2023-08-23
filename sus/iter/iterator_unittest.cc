@@ -1514,7 +1514,7 @@ TEST(Iterator, Find) {
   {
     decltype(auto) s = a.iter_mut().find([](const i32& i) { return i == 3; });
     static_assert(std::same_as<decltype(s), sus::Option<i32&>>);
-    EXPECT_EQ(s, sus::some(3_i32));
+    EXPECT_EQ(s, sus::some(a[2u]));
 
     decltype(auto) n = a.iter_mut().find([](const i32& i) { return i == 0; });
     static_assert(std::same_as<decltype(n), sus::Option<i32&>>);
@@ -2918,7 +2918,7 @@ TEST(Iterator, Rfind) {
   {
     decltype(auto) s = a.iter_mut().rfind([](const i32& i) { return i == 3; });
     static_assert(std::same_as<decltype(s), sus::Option<i32&>>);
-    EXPECT_EQ(s, sus::some(3_i32));
+    EXPECT_EQ(s, sus::some(a[2u]));
 
     decltype(auto) n = a.iter_mut().rfind([](const i32& i) { return i == 0; });
     static_assert(std::same_as<decltype(n), sus::Option<i32&>>);
