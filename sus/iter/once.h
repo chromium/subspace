@@ -35,6 +35,7 @@ class Once;
 /// sus::check(o.next().unwrap() == 3_u16);
 /// ```
 template <class Item>
+// TODO: This should not receive Option. Option should make its own iterator.
 constexpr inline Once<Item> once(Option<Item> o) noexcept {
   return Once<Item>(::sus::move(o));
 }
