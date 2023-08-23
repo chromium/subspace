@@ -46,6 +46,9 @@ concept UnsignedPrimitiveInteger =
     std::same_as<size_t, T> || std::same_as<uintptr_t, T> ||
     std::same_as<bool, T> ||
     (std::is_unsigned_v<char> && std::same_as<char, T>) ||
+#if defined(WIN32)
+    std::same_as<wchar_t, T> ||
+#endif
     std::same_as<unsigned char, T> || std::same_as<unsigned short, T> ||
     std::same_as<unsigned int, T> || std::same_as<unsigned long, T> ||
     std::same_as<unsigned long long, T>;
