@@ -38,5 +38,5 @@ using sus::num::u16;
 using sus::num::u32;
 using sus::num::u64;
 using sus::num::u8;
-using sus::num::usize;
 using sus::num::uptr;
+using sus::num::usize;
