@@ -914,7 +914,7 @@ TEST(Vec, FromSlice) {
   sus::Vec<i32> original = sus::vec(1, 2, 3, 4);
   {
     sus::Slice<i32> s = original.as_slice();
-    sus::Vec<i32> from = sus::into(s);
+    sus::Vec<i32> from = sus::move_into(s);
 
     EXPECT_EQ(from.len(), original.len());
     EXPECT_EQ(from[0u], 1);
@@ -924,7 +924,7 @@ TEST(Vec, FromSlice) {
   }
   {
     sus::SliceMut<i32> mut_s = original.as_mut_slice();
-    sus::Vec<i32> from = sus::into(mut_s);
+    sus::Vec<i32> from = sus::move_into(mut_s);
 
     EXPECT_EQ(from.len(), original.len());
     EXPECT_EQ(from[0u], 1);

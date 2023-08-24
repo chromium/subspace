@@ -44,28 +44,4 @@ struct IntoRef final {
   FromType&& from_;
 };
 
-template <class FromType, size_t N>
-struct IntoRefArray final {
-  [[nodiscard]] constexpr IntoRefArray(FromType (&from)[N]) noexcept
-      : from_(from) {}
-
-  template <std::same_as<FromType (&)[N]> ToType>
-  constexpr operator ToType() && noexcept {
-    return static_cast<ToType&&>(from_);
-  }
-
-  template <::sus::construct::From<FromType (&)[N]> ToType>
-    requires(!std::same_as<FromType, ToType>)
-  constexpr operator ToType() && noexcept {
-    return ToType::template from<N>(from_);
-  }
-
-  // Doesn't copy or move. `IntoRefArray` should only be used as a temporary.
-  IntoRefArray(const IntoRefArray&) = delete;
-  IntoRefArray& operator=(const IntoRefArray&) = delete;
-
- private:
-  FromType (&from_)[N];
-};
-
 }  // namespace sus::construct::__private
