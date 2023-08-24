@@ -73,6 +73,7 @@ target_sources(subspace PUBLIC
     "env/env.h"
     "env/var.cc"
     "env/var.h"
+    "error/compat_error.h"
     "error/error.h"
     "fn/__private/callable_types.h"
     "fn/__private/fn_box_storage.h"
