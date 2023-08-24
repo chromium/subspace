@@ -182,6 +182,7 @@ target_sources(subspace PUBLIC
     "num/signed_integer.h"
     "num/signed_integer_impl.h"
     "num/try_from_int_error.h"
+    "num/try_from_int_error_impl.h"
     "num/num_concepts.h"
     "num/unsigned_integer.h"
     "num/unsigned_integer_impl.h"

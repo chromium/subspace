@@ -38,8 +38,9 @@ namespace sus {
 ///
 /// To convert between floating point types, use
 /// [`sus::into(x)`](sus-construct-fn.into.html) to losslessly promote `x` to a
-/// larger type ([`f32`](sus-num-f32.html) to [`f64`](sus-num-f32.html)) or `sus::try_into(x)` to convert `x` to a
-/// smaller type ([`f64`](sus-num-f32.html) to [`f32`](sus-num-f32.html)).
+/// larger type ([`f32`](sus-num-f32.html) to [`f64`](sus-num-f32.html)) or
+/// `sus::try_into(x)` to convert `x` to a smaller type
+/// ([`f64`](sus-num-f32.html) to [`f32`](sus-num-f32.html)).
 ///
 /// Use [`sus::mog<T>()`](sus-construct-fn.mog.html) to do a lossy type coercion
 /// (like `static_cast<T>()`) between integer and floating point types, or C++
@@ -55,6 +56,7 @@ namespace num {}
 #include "sus/num/signed_integer.h"
 #include "sus/num/signed_integer_impl.h"
 #include "sus/num/transmogrify.h"
+#include "sus/num/try_from_int_error_impl.h"
 #include "sus/num/unsigned_integer.h"
 #include "sus/num/unsigned_integer_impl.h"
 // IWYU pragma: end_exports
