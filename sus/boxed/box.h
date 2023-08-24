@@ -27,9 +27,13 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/size_of.h"
+#include "sus/string/__private/any_formatter.h"
+#include "sus/string/__private/format_to_stream.h"
 
 namespace sus::boxed {
 
+// TODO: Box has an allocator parameter in Rust but std::unique_ptr does not.
+// Which do we do?
 template <class T>
 class [[sus_trivial_abi]] Box final {
   static_assert(!std::is_reference_v<T>, "Box of a reference is not allowed.");
@@ -45,6 +49,8 @@ class [[sus_trivial_abi]] Box final {
     if (t_) delete t_;
   }
 
+  /// Returns a new box with a clone() of this box’s contents.
+  ///
   /// Satisfies the [`Clone`]($sus::mem::Clone) concept if `T` satisfies
   /// [`Clone`]($sus::mem::Clone).
   constexpr Box clone() const noexcept
@@ -54,11 +60,15 @@ class [[sus_trivial_abi]] Box final {
     return Box(::sus::clone(*t_));
   }
 
+  /// Copies `source`'s contents into the contained `T` without creating a new
+  /// allocation.
+  ///
   /// An optimization to reuse the existing storage for
-  /// [`Clone`]($sus::mem::Clone).
-  constexpr Box clone_from(const Box& rhs) const noexcept
+  /// [`clone_into`]($sus::mem::clone_into).
+  constexpr void clone_from(const Box& rhs) noexcept
     requires(::sus::mem::Clone<T>)
   {
+    ::sus::check_with_message(rhs.t_, *"Box used after move");
     ::sus::check_with_message(t_, *"Box used after move");
     ::sus::clone_into(*t_, *rhs.t_);
   }
@@ -79,6 +89,7 @@ class [[sus_trivial_abi]] Box final {
     ::sus::check_with_message(rhs.t_, *"Box used after move");
     if (t_) delete t_;
     t_ = ::sus::mem::replace(rhs.t_, nullptr);
+    return *this;
   }
 
   sus_pure constexpr const T& operator*() const {
@@ -132,19 +143,6 @@ class [[sus_trivial_abi]] Box final {
     return Box(FROM_POINTER, heap_e);
   }
 
-  /// Part of [`Error`]($sus::error::Error)
-  std::string display() const noexcept
-    requires(::sus::error::Error<T>)
-  {
-    return t_->display();
-  }
-  /// Part of [`Error`]($sus::error::Error)
-  sus::Option<::sus::error::DynError&> source() const noexcept
-    requires(::sus::error::Error<T>)
-  {
-    return t_->source();
-  }
-
  private:
   enum FromObject { FROM_OBJECT };
   Box(FromObject, T&& t) : t_(new T(::sus::move(t))) {}
@@ -169,14 +167,13 @@ class [[sus_trivial_abi]] Box final {
 // [`sus::error::Error`]($sus::error::Error) for
 // heap-allocated type-erased errors
 // [`Box`]($sus::boxed::Box)`<`[`DynError`]($sus::error::DynError)`>`.
-template <>
-struct sus::error::ErrorImpl<::sus::boxed::Box<::sus::error::DynError>> {
-  constexpr static std::string display(
-      const ::sus::boxed::Box<::sus::error::DynError>& b) noexcept {
+template <::sus::error::Error T>
+struct sus::error::ErrorImpl<::sus::boxed::Box<T>> {
+  constexpr static std::string display(const ::sus::boxed::Box<T>& b) noexcept {
     return ::sus::error::error_display(*b);
   }
   constexpr static sus::Option<const DynError&> source(
-      const ::sus::boxed::Box<::sus::error::DynError>& b) noexcept {
+      const ::sus::boxed::Box<T>& b) noexcept {
     return ::sus::error::error_source(*b);
   }
 };
@@ -198,6 +195,9 @@ struct fmt::formatter<::sus::boxed::Box<T>, Char> {
  private:
   ::sus::string::__private::AnyFormatter<T, Char> underlying_;
 };
+
+// Stream support.
+sus__format_to_stream(sus::boxed, Box, T);
 
 // Promote `Box` into the `sus` namespace.
 namespace sus {
