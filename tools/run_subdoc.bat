@@ -8,4 +8,5 @@ out\subdoc\subdoc -p out --out docs ^
     --project-name Subspace ^
     subspace/sus/num/uptr ^
     subspace/sus/error ^
-    subspace/sus/boxed
+    subspace/sus/boxed ^
+    subspace/sus/iter/compat_ranges_unittest

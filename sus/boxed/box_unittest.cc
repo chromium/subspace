@@ -167,7 +167,7 @@ TEST(Box, FromT) {
     EXPECT_EQ(*b, 3);
   }
   {
-    Box<i32> b = sus::into(i);
+    Box<i32> b = sus::into(sus::clone(i));
     EXPECT_EQ(*b, 3);
   }
 }
@@ -180,7 +180,7 @@ TEST(Box, Error) {
   static_assert(sus::error::Error<Box<sus::error::DynError>>);
 }
 
-TEST(Box, FromError) {
+TEST(BoxDynError, FromError) {
   {
     auto b = Box<sus::error::DynError>::from(MyError());
     static_assert(sus::error::Error<decltype(b)>);
@@ -192,6 +192,33 @@ TEST(Box, FromError) {
     static_assert(sus::error::Error<decltype(b)>);  // Box<DynError> is Error.
     EXPECT_EQ(sus::error::error_display(*b), "my error");
     EXPECT_EQ(sus::error::error_display(b), "my error");
+  }
+}
+
+TEST(BoxDynError, FromString) {
+  {
+    auto b = Box<sus::error::DynError>::from("error string");
+    static_assert(sus::error::Error<decltype(b)>);
+    EXPECT_EQ(sus::error::error_display(*b), "error string");
+    EXPECT_EQ(sus::error::error_display(b), "error string");
+  }
+  {
+    auto b = Box<sus::error::DynError>::from(std::string("error string"));
+    static_assert(sus::error::Error<decltype(b)>);
+    EXPECT_EQ(sus::error::error_display(*b), "error string");
+    EXPECT_EQ(sus::error::error_display(b), "error string");
+  }
+  {
+    Box<sus::error::DynError> b = sus::into("error string");
+    static_assert(sus::error::Error<decltype(b)>);  // Box<DynError> is Error.
+    EXPECT_EQ(sus::error::error_display(*b), "error string");
+    EXPECT_EQ(sus::error::error_display(b), "error string");
+  }
+  {
+    Box<sus::error::DynError> b = sus::into(std::string("error string"));
+    static_assert(sus::error::Error<decltype(b)>);  // Box<DynError> is Error.
+    EXPECT_EQ(sus::error::error_display(*b), "error string");
+    EXPECT_EQ(sus::error::error_display(b), "error string");
   }
 }
 
