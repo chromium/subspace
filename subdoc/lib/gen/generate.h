@@ -47,8 +47,8 @@ using GenerateError = sus::Choice<sus_choice_types(
 /// Generate the html output from the database.
 ///
 /// Returns an error if generation fails.
-sus::result::Result<void, GenerateError> generate(const Database& db,
-                                                  const Options& options);
+sus::result::Result<void, sus::Box<sus::error::DynError>> generate(
+    const Database& db, const Options& options);
 
 }  // namespace subdoc::gen
 
