@@ -195,7 +195,7 @@ int main(int argc, const char** argv) {
   }
 
   fmt::println("Generating into '{}'", gen_options.output_root.string());
-  sus::result::Result<void, subdoc::gen::GenerateError> r =
+  sus::result::Result<void, sus::Box<sus::error::DynError>> r =
       subdoc::gen::generate(docs_db, sus::move(gen_options));
   if (r.is_err()) {
     fmt::println(stderr, "ERROR: {}: {}", r.as_err(),

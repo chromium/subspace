@@ -59,7 +59,7 @@ class SubDocGenTest : public testing::Test {
         .stylesheets = sus::vec("../subdoc-test-style.css"),
         .copy_files = sus::vec(),
     };
-    sus::result::Result<void, subdoc::gen::GenerateError> r =
+    sus::result::Result<void, sus::Box<sus::error::DynError>> r =
         subdoc::gen::generate(sus::move(result).unwrap(), options);
     if (r.is_err()) {
       ADD_FAILURE() << fmt::to_string(r.as_err()) << ": "

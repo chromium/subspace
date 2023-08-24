@@ -21,8 +21,8 @@
 
 namespace subdoc::gen {
 
-sus::result::Result<void, GenerateError> generate(const Database& db,
-                                                  const Options& options) {
+sus::result::Result<void, sus::Box<sus::error::DynError>> generate(
+    const Database& db, const Options& options) {
   if (std::filesystem::exists(options.output_root)) {
     if (std::filesystem::is_directory(options.output_root)) {
       for (auto it = std::filesystem::directory_iterator(options.output_root);
@@ -32,12 +32,12 @@ sus::result::Result<void, GenerateError> generate(const Database& db,
           std::error_code ec;
           std::filesystem::remove(*it, ec);
           if (ec) {
-            return sus::err(
+            return sus::err(sus::into(
                 GenerateError::with<GenerateError::Tag::DeleteFileError>(
                     GenerateFileError{
                         .path = it->path().filename().string(),
                         .source = sus::move_into(ec),
-                    }));
+                    })));
           }
         }
       }
@@ -46,18 +46,19 @@ sus::result::Result<void, GenerateError> generate(const Database& db,
       std::filesystem::remove(options.output_root, ec);
       if (ec) {
         return sus::err(
-            GenerateError::with<GenerateError::Tag::DeleteFileError>(
+            sus::into(GenerateError::with<GenerateError::Tag::DeleteFileError>(
                 GenerateFileError{
                     .path = options.output_root.string(),
                     .source = sus::move_into(ec),
-                }));
+                })));
       }
     }
   }
   if (auto result = generate_namespace(db, db.global, sus::vec(), options);
       result.is_err()) {
-    return sus::err(GenerateError::with<GenerateError::Tag::MarkdownError>(
-        sus::into(sus::move(result).unwrap_err())));
+    return sus::err(
+        sus::into(GenerateError::with<GenerateError::Tag::MarkdownError>(
+            sus::into(sus::move(result).unwrap_err()))));
   }
 
   for (const std::string& s : options.copy_files) {
@@ -67,11 +68,12 @@ sus::result::Result<void, GenerateError> generate(const Database& db,
       std::error_code ec;
       std::filesystem::copy(s, options.output_root, ec);
       if (ec) {
-        return sus::err(GenerateError::with<GenerateError::Tag::CopyFileError>(
-            GenerateFileError{
-                .path = sus::clone(s),
-                .source = sus::move_into(ec),
-            }));
+        return sus::err(
+            sus::into(GenerateError::with<GenerateError::Tag::CopyFileError>(
+                GenerateFileError{
+                    .path = sus::clone(s),
+                    .source = sus::move_into(ec),
+                })));
       }
     }
   }
