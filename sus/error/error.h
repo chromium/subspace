@@ -54,7 +54,8 @@ namespace sus {
 /// * The [`Error`]($sus::error::Error) concept (Reporting)
 /// * The [`DynError`]($sus::error::DynError) type (Reporting)
 /// * User defined types (Constructing / Representing)
-/// * TODO: [`downcast`](https://github.com/chromium/subspace/issues/333) (Reacting)
+/// * TODO: [`downcast`](https://github.com/chromium/subspace/issues/333)
+///   (Reacting)
 /// * TODO: The [`TRY`](https://github.com/chromium/subspace/issues/299) macro
 ///   (Propagating)
 /// * The [`Try`]($sus::ops::Try) concept (Propagating, Constructing)
@@ -195,8 +196,8 @@ struct ErrorImpl {};
 ///   The [`Error`]($sus::error::Error) object returned by `source` must be
 ///   type-erased as an [`DynError`]($sus::error::DynError). This is typically
 ///   done by putting the error in [`Box<DynError>`]($sus::boxed::Box) via
-///   the [`from`]($sus::boxed::Box::from#from.error) constructor method
-///   satisfying [`From<Error>`]($sus::construct::From) for
+///   the [`from`]($sus::boxed::Box::from#dynerror.from.error) constructor
+///   method satisfying [`From<Error>`]($sus::construct::From) for
 ///   [`Box`]($sus::boxed::Box).
 ///
 /// # Using Error
@@ -218,7 +219,7 @@ struct ErrorImpl {};
 /// is typically created by moving the error object into a
 /// [`Box<DynError>`]($sus::boxed::Box) via
 /// [`sus::into(error)`]($sus::construct::into) or
-/// [`Box::from`]($sus::boxed::Box::from#from.error).
+/// [`Box::from`]($sus::boxed::Box::from#dynerror.from.error).
 ///
 /// Note that both [`DynError`]($sus::error::DynError) and
 /// [`Box<DynError>`]($sus::boxed::Box) satisfy the

@@ -20,6 +20,7 @@
 
 #include "sus/error/error.h"
 #include "sus/macros/no_unique_address.h"
+#include "sus/boxed/__private/string_error.h"
 #include "sus/macros/pure.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/move.h"
@@ -40,7 +41,7 @@ class [[sus_trivial_abi]] Box final {
   static_assert(sus::mem::size_of<T>() != 0u);  // Ensure that `T` is defined.
 
  public:
-  /// Constructs a Box which allocates space on the heap and moves `T` into it.s
+  /// Constructs a Box which allocates space on the heap and moves `T` into it.
   explicit constexpr Box(T t) noexcept
     requires(::sus::mem::Move<T>)
       : Box(FROM_OBJECT, ::sus::move(t)) {}
@@ -126,12 +127,13 @@ class [[sus_trivial_abi]] Box final {
     return Box(FROM_OBJECT, ::sus::move(t));
   }
 
-  /// Satisfies the [`From<E>`]($sus::construct::From) concept when `E`
-  /// satisfies [`Error`]($sus::error::Error). This conversion moves and
+  /// Satisfies the [`From<E>`]($sus::construct::From) concept for
+  /// [`Box`]($sus::boxed::Box)`<`[`DynError`]($sus::error::DynError)`>` when
+  /// `E` satisfies [`Error`]($sus::error::Error). This conversion moves and
   /// type-erases `E` into a heap-alloocated
   /// [`DynError`]($sus::error::DynError).
   ///
-  /// #[doc.overloads=from.error]
+  /// #[doc.overloads=dynerror.from.error]
   template <::sus::error::Error E>
     requires(sus::mem::Move<E>)
   constexpr static Box from(E e) noexcept
@@ -139,6 +141,21 @@ class [[sus_trivial_abi]] Box final {
   {
     using HeapError = ::sus::error::DynErrorTyped<E>;
     auto* heap_e = new HeapError(::sus::move(e));
+    // This implicitly upcasts to the DynError.
+    return Box(FROM_POINTER, heap_e);
+  }
+
+  /// Satisfies the [`From<std::string>`]($sus::construct::From) concept for
+  /// [`Box`]($sus::boxed::Box)`<`[`DynError`]($sus::error::DynError)`>`. This
+  /// conversion moves and type-erases the `std::string` into a heap-alloocated
+  /// [`DynError`]($sus::error::DynError).
+  ///
+  /// #[doc.overloads=dynerror.from.string]
+  constexpr static Box from(std::string s) noexcept
+    requires(std::same_as<T, ::sus::error::DynError>)
+  {
+    using HeapError = ::sus::error::DynErrorTyped<__private::StringError>;
+    auto* heap_e = new HeapError(__private::StringError(::sus::move(s)));
     // This implicitly upcasts to the DynError.
     return Box(FROM_POINTER, heap_e);
   }
