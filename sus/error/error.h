@@ -153,7 +153,7 @@ namespace sus::error {
 struct DynError;
 
 template <class T>
-struct ErrorImpl {};
+struct ErrorImpl;
 
 /// [`Error`]($sus::error::Error) is a concept representing the basic
 /// expectations for error values, i.e., values of type `E` in
@@ -206,6 +206,11 @@ struct ErrorImpl {};
 ///   description of the error.
 /// * [`error_source`]($sus::error::error_source) to get the next level deeper
 ///   error for debugging.
+///
+/// All [`Error`]($sus::error::Error) types are implicitly formattable with
+/// fmtlib, such as with `fmt::format("ERROR: {}", error)`. Because we can't
+/// provide a blanket implementation of `operator<<` they are not implicitly
+/// streamable, and `fmt::to_string(error)` can be used to stream `error`.
 ///
 /// Avoid instantiating `ErrorImpl<T>` yourself to call the static methods.
 ///
@@ -331,12 +336,16 @@ struct ErrorImpl {};
 template <class T>
 concept Error = requires(const T& t) {
   // Required methods.
-  { ErrorImpl<T>::display(t) } -> std::same_as<std::string>;
+  {
+    ErrorImpl<std::remove_const_t<T>>::display(t)
+  } -> std::same_as<std::string>;
   // Optional methods.
   requires requires {
-    { ErrorImpl<T>::source(t) } -> std::same_as<sus::Option<const DynError&>>;
+    {
+      ErrorImpl<std::remove_const_t<T>>::source(t)
+    } -> std::same_as<sus::Option<const DynError&>>;
   } || !requires {
-    { ErrorImpl<T>::source(t) };
+    { ErrorImpl<std::remove_const_t<T>>::source(t) };
   };
 };
 
@@ -431,6 +440,8 @@ struct sus::error::ErrorImpl<::sus::error::DynError> {
     return b.source();
   }
 };
+
+static_assert(sus::error::Error<sus::error::DynError>);
 
 // A blanket implementation of fmt::formatter for all types that satisfy
 // [`Error`]($sus::error::Error).

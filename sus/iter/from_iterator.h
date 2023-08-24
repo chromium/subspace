@@ -38,8 +38,8 @@ template <class ToType, class ItemType>
 concept FromIterator =
     requires(__private::IntoIteratorArchetype<ItemType>&& from) {
       {
-        FromIteratorImpl<ToType>::from_iter(::sus::move(from))
-      } -> std::same_as<ToType>;
+        FromIteratorImpl<std::remove_const_t<ToType>>::from_iter(::sus::move(from))
+      } -> std::same_as<std::remove_const_t<ToType>>;
     };
 
 /// Constructs `ToType` from a type that can be turned into an `Iterator` over

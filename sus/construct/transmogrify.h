@@ -115,8 +115,9 @@ struct TransmogrifyImpl<T, T> {
 template <class To, class From>
 concept Transmogrify = requires(const From& from) {
   {
-    ::sus::construct::TransmogrifyImpl<To, From>::mog_from(from)
-  } noexcept -> std::same_as<To>;
+    ::sus::construct::TransmogrifyImpl<
+        std::remove_const_t<To>, std::remove_const_t<From>>::mog_from(from)
+  } noexcept -> std::same_as<std::remove_const_t<To>>;
 };
 
 /// An infallible conversion (transmogrification) that may lose the original
