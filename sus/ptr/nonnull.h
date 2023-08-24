@@ -82,26 +82,9 @@ class [[sus_trivial_abi]] NonNull {
   template <class U, size_t N>
   static constexpr inline NonNull with_ptr_unchecked(U (&t)[N]) = delete;
 
-  /// sus::construct::From<NonNull<T>, T&> and
-  /// sus::construct::From<NonNull<const T>, T&> traits.
+  /// Satisfies the [`sus::construct::From<NonNull<T>,
+  /// T&>`]($sus::construct::From) concept.
   static constexpr inline NonNull from(T& t) noexcept { return NonNull(t); }
-
-  /// sus::construct::From<NonNull<T>, T*> and
-  /// sus::construct::From<NonNull<const T>, T*> traits.
-  ///
-  /// Does not implicitly convert from an array. Explicitly convert it to a
-  /// pointer to throw away the length of the array.
-  ///
-  /// # Panics
-  ///
-  /// The method will panic if the pointer `t` is null.
-  ///
-  /// #[doc.overloads=1]
-  template <::sus::ptr::SameOrSubclassOf<T*> U>
-  static constexpr inline NonNull from(U t) noexcept {
-    ::sus::check(t != nullptr);
-    return NonNull(*t);
-  }
 
   template <class U, size_t N>
   static constexpr inline NonNull from(U (&t)[N]) = delete;

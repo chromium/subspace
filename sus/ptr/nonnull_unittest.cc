@@ -53,7 +53,6 @@ concept CanFromArray = requires(From (&f)[N]) { NonNull<T>::from(f); };
 static_assert(CanConstruct<int, int&>);
 static_assert(CanConstructPtr<int, int*>);
 static_assert(CanFrom<int, int&>);
-static_assert(CanFrom<int, int*>);
 
 // NonNull does not erase const.
 static_assert(!CanConstruct<int, const int&>);
@@ -65,7 +64,6 @@ static_assert(!CanFrom<int, const int*>);
 static_assert(CanConstruct<const int, int&>);
 static_assert(CanConstructPtr<const int, int*>);
 static_assert(CanFrom<const int, int&>);
-static_assert(CanFrom<const int, int*>);
 
 // NonNull can't be constructed from an array directly.
 static_assert(!CanConstruct<int, int (&)[2]>);
@@ -119,47 +117,22 @@ TEST(NonNull, ConstructPtrUnchecked) {
   EXPECT_EQ(&c, &c1.as_ref());
 }
 
-TEST(NonNull, FromRvalue) {
+TEST(NonNull, From) {
   int i = 1;
   const int c = 2;
   {
-    auto n1 = NonNull<int>::from(&i);
-    auto n2 = NonNull<const int>::from(&i);
-    auto c1 = NonNull<const int>::from(&c);
+    auto n1 = NonNull<int>::from(i);
+    auto n2 = NonNull<const int>::from(i);
+    auto c1 = NonNull<const int>::from(c);
 
     EXPECT_EQ(&i, &n1.as_ref());
     EXPECT_EQ(&i, &n2.as_ref());
     EXPECT_EQ(&c, &c1.as_ref());
   }
   {
-    NonNull<int> n1 = sus::into(&i);
-    NonNull<const int> n2 = sus::into(&i);
-    NonNull<const int> c1 = sus::into(&c);
-
-    EXPECT_EQ(&i, &n1.as_ref());
-    EXPECT_EQ(&i, &n2.as_ref());
-    EXPECT_EQ(&c, &c1.as_ref());
-  }
-}
-
-TEST(NonNull, FromLvalue) {
-  int i = 1;
-  int* ip = &i;
-  const int c = 2;
-  const int* cp = &c;
-  {
-    auto n1 = NonNull<int>::from(ip);
-    auto n2 = NonNull<const int>::from(ip);
-    auto c1 = NonNull<const int>::from(cp);
-
-    EXPECT_EQ(&i, &n1.as_ref());
-    EXPECT_EQ(&i, &n2.as_ref());
-    EXPECT_EQ(&c, &c1.as_ref());
-  }
-  {
-    NonNull<int> n1 = sus::into(ip);
-    NonNull<const int> n2 = sus::into(ip);
-    NonNull<const int> c1 = sus::into(cp);
+    NonNull<int> n1 = sus::into(i);
+    NonNull<const int> n2 = sus::into(i);
+    NonNull<const int> c1 = sus::into(c);
 
     EXPECT_EQ(&i, &n1.as_ref());
     EXPECT_EQ(&i, &n2.as_ref());

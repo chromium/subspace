@@ -268,9 +268,9 @@ TEST(Slice, GetUncheckedRange) {
 
 TEST(Slice, Into) {
   i32 a[] = {1, 2, 3};
-  Slice<i32> s = sus::array_into(a);
+  Slice<i32> s = sus::into(a);
   EXPECT_EQ(s.len(), 3u);
-  SliceMut<i32> sm = sus::array_into(a);
+  SliceMut<i32> sm = sus::into(a);
   EXPECT_EQ(sm.len(), 3u);
 }
 
