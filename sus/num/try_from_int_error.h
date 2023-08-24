@@ -16,12 +16,7 @@
 // IWYU pragma: friend "sus/.*"
 #pragma once
 
-#include <string>
-
-#include "fmt/core.h"
-#include "sus/assertions/unreachable.h"
 #include "sus/macros/pure.h"
-#include "sus/marker/unsafe.h"
 
 namespace sus::num {
 
@@ -34,43 +29,19 @@ class TryFromIntError {
   };
 
   /// Constructs a TryFromIntError with kind `OutOfBounds`.
-  constexpr static TryFromIntError with_out_of_bounds() noexcept {
-    return TryFromIntError(CONSTRUCT, Kind::OutOfBounds);
-  }
+  constexpr static TryFromIntError with_out_of_bounds() noexcept;
 
   /// Gives the kind of error that occured.
-  sus_pure constexpr Kind kind() const noexcept { return kind_; }
+  sus_pure constexpr Kind kind() const noexcept;
 
   /// sus::ops::Eq trait.
-  sus_pure constexpr bool operator==(TryFromIntError rhs) const noexcept {
-    return kind_ == rhs.kind_;
-  }
+  sus_pure constexpr bool operator==(TryFromIntError rhs) const noexcept;
 
  private:
   enum Construct { CONSTRUCT };
-  constexpr inline explicit TryFromIntError(Construct, Kind k) noexcept
-      : kind_(k) {}
+  constexpr explicit TryFromIntError(Construct, Kind k) noexcept;
 
   Kind kind_;
 };
 
 }  // namespace sus::num
-
-// fmt support.
-template <class Char>
-struct fmt::formatter<::sus::num::TryFromIntError, Char> {
-  template <class ParseContext>
-  constexpr auto parse(ParseContext& ctx) {
-    return ctx.begin();
-  }
-
-  template <class FormatContext>
-  constexpr auto format(::sus::num::TryFromIntError t,
-                        FormatContext& ctx) const {
-    switch (t.kind()) {
-      using enum ::sus::num::TryFromIntError::Kind;
-      case OutOfBounds: return fmt::format_to(ctx.out(), "out of bounds");
-    }
-    ::sus::assertions::unreachable_unchecked(::sus::marker::unsafe_fn);
-  }
-};
