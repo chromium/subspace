@@ -637,12 +637,12 @@ TEST(Vec, Move) {
 
   static_assert(!::sus::mem::Copy<Move>);
   static_assert(!::sus::mem::Clone<Move>);
-  static_assert(!::sus::mem::CloneInto<Move>);
+  static_assert(!::sus::mem::CloneFrom<Move>);
   static_assert(::sus::mem::Move<Move>);
   // Vec is Move but not Copy or Clone if T is not.
   static_assert(!::sus::mem::Copy<Vec<Move>>);
   static_assert(!::sus::mem::Clone<Vec<Move>>);
-  static_assert(!::sus::mem::CloneInto<Vec<Move>>);
+  static_assert(!::sus::mem::CloneFrom<Vec<Move>>);
   static_assert(::sus::mem::Move<Vec<Move>>);
 
   static auto moves = 0_usize;
@@ -679,13 +679,13 @@ TEST(Vec, Clone) {
 
   static_assert(::sus::mem::Copy<Copy>);
   static_assert(::sus::mem::Clone<Copy>);
-  static_assert(::sus::mem::CloneInto<Copy>);
+  static_assert(::sus::mem::CloneFrom<Copy>);
   static_assert(::sus::mem::Move<Copy>);
   // Vec is always Clone (if T is Clone), but never Copy since it's expensive
   // to copy.
   static_assert(!::sus::mem::Copy<Vec<Copy>>);
   static_assert(::sus::mem::Clone<Vec<Copy>>);
-  static_assert(::sus::mem::CloneInto<Vec<Copy>>);
+  static_assert(::sus::mem::CloneFrom<Vec<Copy>>);
   static_assert(::sus::mem::Move<Vec<Copy>>);
 
   {
@@ -727,11 +727,11 @@ TEST(Vec, Clone) {
 
   static_assert(!::sus::mem::Copy<Clone>);
   static_assert(::sus::mem::Clone<Clone>);
-  static_assert(!::sus::mem::CloneInto<Clone>);
+  static_assert(!::sus::mem::CloneFrom<Clone>);
   static_assert(::sus::mem::Move<Clone>);
   static_assert(!::sus::mem::Copy<Vec<Clone>>);
   static_assert(::sus::mem::Clone<Vec<Clone>>);
-  static_assert(::sus::mem::CloneInto<Vec<Clone>>);
+  static_assert(::sus::mem::CloneFrom<Vec<Clone>>);
   static_assert(::sus::mem::Move<Vec<Clone>>);
 
   {

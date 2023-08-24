@@ -57,12 +57,12 @@ concept HasCloneFromMethod = requires(T& self, const T& source) {
 /// clone() method if the type within is (Clone && !Copy), and should implement
 /// copy constructors if the type within is Copy.
 template <class T>
-concept Clone = (Copy<T> &&
-                 !__private::HasCloneMethod<
-                     std::remove_const_t<std::remove_reference_t<T>>>) ||
-                (!Copy<T> && Move<T> &&
-                 __private::HasCloneMethod<
-                     std::remove_const_t<std::remove_reference_t<T>>>);
+concept Clone =
+    (Copy<T> && !__private::HasCloneMethod<
+                    std::remove_const_t<std::remove_reference_t<T>>>) ||
+    (!Copy<T> && Move<T> &&
+     __private::HasCloneMethod<
+         std::remove_const_t<std::remove_reference_t<T>>>);
 
 /// A `CloneOrRef` object or reference of type `T` can be cloned to construct a
 /// new `T`.
@@ -75,16 +75,21 @@ concept Clone = (Copy<T> &&
 template <class T>
 concept CloneOrRef = Clone<T> || std::is_reference_v<T>;
 
-/// A concept to verify that a Clone type has a specialization of `clone_from()`
-/// in order to optimize `::sus::clone_into()`. Mostly for testing types to
-/// ensure they're doing what you think they're doing.
+/// Determines if `T` has an optimized path `T::clone_from(const T&)` that can
+/// be used from [`clone_into`]($sus::mem::clone_into).
 ///
-/// Evaluates to true if the type is `Copy` but it is not valid to be `Copy` and
-/// also have a `clone_from()` method, as it becomes ambiguous.
+/// This is largely an implementation detail of
+/// [`clone_into`]($sus::mem::clone_into) as it can be called on all types that
+/// satisfy [`Clone`]($sus::mem::Clone). But it can be useful for verifying in
+/// a static assert that a type is written correctly and the optimization will
+/// be used.
 ///
-/// TODO: Should we make this into/from name consistent...??
+/// Evaluates to true if the type is [`Copy`]($sus::mem::Copy), as the copy
+/// assignment operator acts like `clone_from` method. It return false if the
+/// type is `Copy` and also has a `clone_from` method, as it becomes ambiguous
+/// and is thus invalid.
 template <class T>
-concept CloneInto =
+concept CloneFrom =
     Clone<T> &&
     ((Copy<T> && !__private::HasCloneFromMethod<
                      std::remove_const_t<std::remove_reference_t<T>>>) ||
@@ -134,7 +139,7 @@ template <Clone T>
 sus_always_inline constexpr void clone_into(T& dest, const T& source) noexcept {
   if constexpr (Copy<T>) {
     dest = source;
-  } else if constexpr (__private::HasCloneFromMethod<T>) {
+  } else if constexpr (CloneFrom<T>) {
     dest.clone_from(source);
   } else {
     dest = source.clone();
