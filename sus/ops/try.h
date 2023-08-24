@@ -46,34 +46,36 @@ concept Try =
       // The Try type is not a reference, conversions require concrete types.
       requires !std::is_reference_v<T>;
       // The Output success type can be converted to/from the Try type.
-      typename TryImpl<T>::Output;
+      typename TryImpl<std::remove_const_t<T>>::Output;
 #if !defined(sus_gcc_bug_110927_exists)
       // The Try type can be used to produce another Try type with a different
       // Output type but the same error type.
-      typename TryImpl<T>::template RemapOutput<typename TryImpl<T>::Output>;
+      typename TryImpl<std::remove_const_t<T>>::template RemapOutput<
+          typename TryImpl<std::remove_const_t<T>>::Output>;
 #endif
     }   //
     &&  //
     requires(const T& t, T&& tt) {
       // is_success() reports if the Try type is in a success state.
-      { TryImpl<T>::is_success(t) } -> std::same_as<bool>;
+      { TryImpl<std::remove_const_t<T>>::is_success(t) } -> std::same_as<bool>;
       // into_output() unwraps from the Try type to its success type. It may
       // assume that the input is in a success state (`is_success()` would
       // return true), as the `try_into_output()` method verifies this.
       {
-        TryImpl<T>::into_output(::sus::move(tt))
-      } -> std::same_as<typename TryImpl<T>::Output>;
+        TryImpl<std::remove_const_t<T>>::into_output(::sus::move(tt))
+      } -> std::same_as<typename TryImpl<std::remove_const_t<T>>::Output>;
     }   //
     &&  //
     // from_output() is not needed (or possible) for void Output types. To
     // construct a `T` with a void Output type, require `TryDefault` instead and
     // use `from_default()`.
-    (std::is_void_v<typename TryImpl<T>::Output> ||  //
-     requires(typename TryImpl<T>::Output&& output) {
+    (std::is_void_v<typename TryImpl<std::remove_const_t<T>>::Output> ||  //
+     requires(typename TryImpl<std::remove_const_t<T>>::Output&& output) {
        // from_output() converts a success type to the Try type.
        {
-         TryImpl<T>::from_output(
-             ::sus::forward<typename TryImpl<T>::Output>(output))
+         TryImpl<std::remove_const_t<T>>::from_output(
+             ::sus::forward<typename TryImpl<std::remove_const_t<T>>::Output>(
+                 output))
        } -> std::same_as<T>;
      });
 
@@ -87,7 +89,7 @@ template <class T>
 concept TryDefault = Try<T> && requires {
   // from_default() construct the Try type with the default value for its
   // success type.
-  { TryImpl<T>::from_default() } -> std::same_as<T>;
+  { TryImpl<std::remove_const_t<T>>::from_default() } -> std::same_as<T>;
 };
 
 /// Can be used to further constrain the relationship between two `Try` types
@@ -110,17 +112,18 @@ concept TryErrorConvertibleTo =
 
 /// A helper to get the `Output` type for a type `T` that satisfies `Try`.
 template <Try T>
-using TryOutputType = typename TryImpl<T>::Output;
+using TryOutputType = typename TryImpl<std::remove_const_t<T>>::Output;
 
 /// A helper to get the `RemapOutput` type for a type `T` that satisfies `Try`.
 template <Try T, class U>
-using TryRemapOutputType = typename TryImpl<T>::template RemapOutput<U>;
+using TryRemapOutputType =
+    typename TryImpl<std::remove_const_t<T>>::template RemapOutput<U>;
 
 /// Determines if a type `T` that satisfies `Try` represents success in its
 /// current state.
 template <Try T>
 constexpr inline bool try_is_success(const T& t) noexcept {
-  return TryImpl<T>::is_success(t);
+  return TryImpl<std::remove_cvref_t<T>>::is_success(t);
 }
 
 /// Unwraps from the Try type that is currently in its success state
@@ -135,9 +138,10 @@ constexpr inline bool try_is_success(const T& t) noexcept {
 /// the function will panic.
 template <Try T>
   requires(::sus::mem::IsMoveRef<T &&>)
-constexpr inline TryImpl<T>::Output try_into_output(T&& t) noexcept {
-  ::sus::check(TryImpl<T>::is_success(t));
-  return TryImpl<T>::into_output(::sus::move(t));
+constexpr inline TryImpl<std::remove_cvref_t<T>>::Output try_into_output(
+    T&& t) noexcept {
+  ::sus::check(TryImpl<std::remove_cvref_t<T>>::is_success(t));
+  return TryImpl<std::remove_cvref_t<T>>::into_output(::sus::move(t));
 }
 
 /// Constructs an object of type `T` that satisfies `Try` from a value that
@@ -155,7 +159,9 @@ constexpr inline TryImpl<T>::Output try_into_output(T&& t) noexcept {
 /// an output of `void`, require `T` to be `TryDefault` and use
 /// `try_from_default()`.
 template <Try T>
-  requires(!std::is_void_v<typename TryImpl<T>::Output>)
+  requires(!std::is_const_v<T> &&      //
+           !std::is_reference_v<T> &&  //
+           !std::is_void_v<typename TryImpl<T>::Output>)
 constexpr inline T try_from_output(typename TryImpl<T>::Output&& t) noexcept {
   return TryImpl<T>::from_output(
       ::sus::forward<typename TryImpl<T>::Output>(t));
@@ -171,6 +177,8 @@ constexpr inline T try_from_output(typename TryImpl<T>::Output&& t) noexcept {
 /// success state containing the default constructed value of the inner type,
 /// such as `Some(0_i32)` for `Option<i32>`.
 template <TryDefault T>
+  requires(!std::is_const_v<T> &&  //
+           !std::is_reference_v<T>)
 constexpr inline T try_from_default() noexcept {
   return TryImpl<T>::from_default();
 }
@@ -184,9 +192,11 @@ constexpr inline T try_from_default() noexcept {
 /// If the input is not in an error state (`is_success()` would return false)
 /// the function will panic.
 template <class U, TryErrorConvertibleTo<U> T>
-  requires(::sus::mem::IsMoveRef<T &&>)
+  requires(::sus::mem::IsMoveRef<T &&> &&  //
+           !std::is_const_v<U> &&          //
+           !std::is_reference_v<U>)
 constexpr inline U try_preserve_error(T&& t) noexcept {
-  ::sus::check(!TryImpl<T>::is_success(t));
+  ::sus::check(!TryImpl<std::remove_cvref_t<T>>::is_success(t));
   return TryImpl<U>::preserve_error(::sus::move(t));
 }
 
