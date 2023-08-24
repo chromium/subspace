@@ -17,6 +17,7 @@
 #include <filesystem>
 
 #include "subdoc/lib/gen/generate_namespace.h"
+#include "sus/error/compat_error.h"
 
 namespace subdoc::gen {
 
@@ -35,7 +36,7 @@ sus::result::Result<void, GenerateError> generate(const Database& db,
                 GenerateError::with<GenerateError::Tag::DeleteFileError>(
                     GenerateFileError{
                         .path = it->path().filename().string(),
-                        .ec = sus::move(ec),
+                        .source = sus::move_into(ec),
                     }));
           }
         }
@@ -48,7 +49,7 @@ sus::result::Result<void, GenerateError> generate(const Database& db,
             GenerateError::with<GenerateError::Tag::DeleteFileError>(
                 GenerateFileError{
                     .path = options.output_root.string(),
-                    .ec = sus::move(ec),
+                    .source = sus::move_into(ec),
                 }));
       }
     }
@@ -56,7 +57,7 @@ sus::result::Result<void, GenerateError> generate(const Database& db,
   if (auto result = generate_namespace(db, db.global, sus::vec(), options);
       result.is_err()) {
     return sus::err(GenerateError::with<GenerateError::Tag::MarkdownError>(
-        sus::move(result).unwrap_err()));
+        sus::into(sus::move(result).unwrap_err())));
   }
 
   for (const std::string& s : options.copy_files) {
@@ -69,7 +70,7 @@ sus::result::Result<void, GenerateError> generate(const Database& db,
         return sus::err(GenerateError::with<GenerateError::Tag::CopyFileError>(
             GenerateFileError{
                 .path = sus::clone(s),
-                .ec = sus::move(ec),
+                .source = sus::move_into(ec),
             }));
       }
     }

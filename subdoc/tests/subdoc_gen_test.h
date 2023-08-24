@@ -62,29 +62,9 @@ class SubDocGenTest : public testing::Test {
     sus::result::Result<void, subdoc::gen::GenerateError> r =
         subdoc::gen::generate(sus::move(result).unwrap(), options);
     if (r.is_err()) {
-      switch (r.as_err()) {
-        using enum subdoc::gen::GenerateError::Tag;
-        case CopyFileError: {
-          subdoc::gen::GenerateFileError error =
-              sus::move(r).unwrap_err().into_inner<CopyFileError>();
-          ADD_FAILURE() << "Failed to copy file " << error.path << ": "
-                        << error.ec.message();
-          break;
-        }
-        case DeleteFileError: {
-          subdoc::gen::GenerateFileError error =
-              sus::move(r).unwrap_err().into_inner<DeleteFileError>();
-          ADD_FAILURE() << "Failed to delete file " << error.path << ": "
-                        << error.ec.message();
-          break;
-        }
-        case MarkdownError: {
-          subdoc::gen::MarkdownToHtmlError error =
-              sus::move(r).unwrap_err().into_inner<MarkdownError>();
-          ADD_FAILURE() << "Failed to parse markdown: " << error.message;
-          break;
-        }
-      }
+      ADD_FAILURE() << fmt::to_string(r.as_err()) << ": "
+                    << fmt::to_string(
+                           sus::error::error_source(r.as_err()).unwrap());
       return false;
     }
 

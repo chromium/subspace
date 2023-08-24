@@ -17,10 +17,11 @@
 #include <string>
 
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/run_options.h"
 #include "subdoc/llvm.h"
 #include "sus/collections/vec.h"
+#include "sus/error/error.h"
 #include "sus/prelude.h"
-#include "subdoc/lib/run_options.h"
 #include "sus/result/result.h"
 
 namespace subdoc {
@@ -41,3 +42,11 @@ sus::Result<Database, DiagnosticResults> run_files(
     const RunOptions& options) noexcept;
 
 }  // namespace subdoc
+
+template <>
+struct sus::error::ErrorImpl<subdoc::DiagnosticResults> {
+  using DiagnosticResults = subdoc::DiagnosticResults;
+  static std::string display(const DiagnosticResults& e) noexcept {
+    return fmt::format("errors occured at: {}", e.locations);
+  }
+};

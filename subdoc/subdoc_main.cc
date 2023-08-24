@@ -92,7 +92,7 @@ int main(int argc, const char** argv) {
 
   std::vector<std::string> paths = options_parser->getSourcePathList();
   if (paths.empty()) {
-    llvm::errs() << "Error: no input files specified.\n";
+    fmt::println(stderr, "Error: no input files specified.");
     llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
     return 1;
   }
@@ -117,7 +117,7 @@ int main(int argc, const char** argv) {
       found = true;
     }
     if (!found) {
-      llvm::errs() << "Unknown file, not in compiledb: " << input_path << "\n";
+      fmt::println(stderr, "Unknown file, not in compiledb: {}", input_path);
       return 1;
     }
   }
@@ -168,7 +168,7 @@ int main(int argc, const char** argv) {
   auto result = subdoc::run_files(comp_db, sus::move(run_against_files),
                                   sus::move(fs), sus::move(run_options));
   if (result.is_err()) {
-    llvm::errs() << "Error occurred. Exiting.\n";
+    fmt::println(stderr, "Error occurred. Exiting.");
     return 1;
   }
 
@@ -194,34 +194,12 @@ int main(int argc, const char** argv) {
       gen_options.copy_files.push(sus::move(s));
   }
 
-  llvm::outs() << "Generating into '" << gen_options.output_root.string()
-               << "'\n";
+  fmt::println("Generating into '{}'", gen_options.output_root.string());
   sus::result::Result<void, subdoc::gen::GenerateError> r =
       subdoc::gen::generate(docs_db, sus::move(gen_options));
   if (r.is_err()) {
-    switch (r.as_err()) {
-      using enum subdoc::gen::GenerateError::Tag;
-      case CopyFileError: {
-        subdoc::gen::GenerateFileError error =
-            sus::move(r).unwrap_err().into_inner<CopyFileError>();
-        llvm::errs() << "ERROR: Failed to copy file " << error.path << ": "
-                     << error.ec.message();
-        return 1;
-      }
-      case DeleteFileError: {
-        subdoc::gen::GenerateFileError error =
-            sus::move(r).unwrap_err().into_inner<DeleteFileError>();
-        llvm::errs() << "ERROR: Failed to delete file " << error.path << ": "
-                     << error.ec.message();
-        return 1;
-      }
-      case MarkdownError: {
-        subdoc::gen::MarkdownToHtmlError error =
-            sus::move(r).unwrap_err().into_inner<MarkdownError>();
-        llvm::errs() << "ERROR: Failed to parse markdown: " << error.message;
-        return 1;
-      }
-    }
+    fmt::println(stderr, "ERROR: {}: {}", r.as_err(),
+                 sus::error::error_source(r.as_err()).unwrap());
   }
   return 0;
 }

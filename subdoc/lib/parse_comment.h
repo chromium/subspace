@@ -18,6 +18,7 @@
 
 #include "subdoc/lib/doc_attributes.h"
 #include "subdoc/llvm.h"
+#include "sus/error/error.h"
 #include "sus/result/result.h"
 
 namespace subdoc {
@@ -36,3 +37,12 @@ sus::Result<ParsedComment, ParseCommentError> parse_comment(
     std::string_view self_name) noexcept;
 
 }  // namespace subdoc
+
+// `sus::error::Error` implementation.
+template <>
+struct sus::error::ErrorImpl<subdoc::ParseCommentError> {
+  using ParseCommentError = subdoc::ParseCommentError;
+  static std::string display(const ParseCommentError& e) noexcept {
+    return fmt::format("doc comment was invalid: {}", e.message);
+  }
+};

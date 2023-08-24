@@ -17,6 +17,7 @@
 #include <string>
 
 #include "subdoc/lib/database.h"
+#include "sus/error/error.h"
 #include "sus/result/result.h"
 
 namespace subdoc::gen {
@@ -37,3 +38,12 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_summary(
     const Comment& comment, ParseMarkdownPageState& page_state) noexcept;
 
 }  // namespace subdoc::gen
+
+// `sus::error::Error` implementation.
+template <>
+struct sus::error::ErrorImpl<subdoc::gen::MarkdownToHtmlError> {
+  using MarkdownToHtmlError = subdoc::gen::MarkdownToHtmlError;
+  static std::string display(const MarkdownToHtmlError& e) noexcept {
+    return fmt::format("markdown parsing failed: {}", e.message);
+  }
+};
