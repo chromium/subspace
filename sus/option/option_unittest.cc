@@ -2842,11 +2842,11 @@ TEST(Option, Clone) {
 
   static_assert(sus::mem::Copy<Copy>);
   static_assert(sus::mem::Clone<Copy>);
-  static_assert(sus::mem::CloneInto<Copy>);
+  static_assert(sus::mem::CloneFrom<Copy>);
   static_assert(!sus::mem::Move<Copy>);
   static_assert(sus::mem::Copy<Option<Copy>>);
   static_assert(sus::mem::Clone<Option<Copy>>);
-  static_assert(sus::mem::CloneInto<Option<Copy>>);
+  static_assert(sus::mem::CloneFrom<Option<Copy>>);
   static_assert(!sus::mem::Move<Option<Copy>>);
 
   {
@@ -2882,11 +2882,11 @@ TEST(Option, Clone) {
 
   static_assert(!sus::mem::Copy<Clone>);
   static_assert(sus::mem::Clone<Clone>);
-  static_assert(!sus::mem::CloneInto<Clone>);
+  static_assert(!sus::mem::CloneFrom<Clone>);
   static_assert(sus::mem::Move<Clone>);
   static_assert(!sus::mem::Copy<Option<Clone>>);
   static_assert(sus::mem::Clone<Option<Clone>>);
-  static_assert(sus::mem::CloneInto<Option<Clone>>);
+  static_assert(sus::mem::CloneFrom<Option<Clone>>);
   static_assert(sus::mem::Move<Option<Clone>>);
 
   {
@@ -2918,6 +2918,13 @@ TEST(Option, Clone) {
     auto s2 = sus::clone(s);
     static_assert(std::same_as<decltype(s2), Option<i32&>>);
     EXPECT_EQ(&s2.as_ref().unwrap(), &i);
+  }
+
+  {
+    NoCopyMove n;
+    auto s = Option<NoCopyMove&>(n);
+    auto s2 = sus::clone(s);
+    EXPECT_EQ(&s.as_value(), &s2.as_value());
   }
 }
 

@@ -674,7 +674,7 @@ class Option final {
     requires(!::sus::mem::MoveOrRef<T>)
   = delete;
 
-  /// Satisifies the [`Clone`](sus-mem-Clone.html) concept.
+  /// Satisifies the [`Clone`]($sus::mem::Clone) concept when `Option` is not [`Copy`]($sus::mem::Copy).
   constexpr Option clone() const& noexcept
     requires(::sus::mem::Clone<T> && !::sus::mem::CopyOrRef<T>)
   {
@@ -684,7 +684,7 @@ class Option final {
       return Option();
   }
 
-  /// Satisifies the [`CloneInto`](sus-mem-CloneInto.html) concept.
+  /// Satisifies the [`CloneFrom`]($sus::mem::CloneFrom) concept.
   constexpr void clone_from(const Option& source) & noexcept
     requires(::sus::mem::Clone<T> && !::sus::mem::CopyOrRef<T>)
   {
