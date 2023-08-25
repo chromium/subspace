@@ -20,6 +20,14 @@
 
 namespace test::box {
 struct MyError {};
+
+struct SuperType {
+  virtual std::string name() { return "SuperType"; }
+};
+struct SubType : public SuperType {
+  std::string name() override { return "SubType"; }
+};
+
 }  // namespace test::box
 
 using namespace test::box;
@@ -47,6 +55,26 @@ TEST(Box, Construct) {
   {
     auto b = Box<i32>(i);
     EXPECT_EQ(*b, 3);
+  }
+  {
+    auto b = Box<SuperType>(SubType());
+    EXPECT_EQ(b->name(), "SubType");
+  }
+}
+
+TEST(Box, FromT) {
+  i32 i = 3;
+  {
+    auto b = Box<i32>::from(i);
+    EXPECT_EQ(*b, 3);
+  }
+  {
+    Box<i32> b = sus::into(i);
+    EXPECT_EQ(*b, 3);
+  }
+  {
+    Box<SuperType> b = sus::into(SubType());
+    EXPECT_EQ(b->name(), "SubType");
   }
 }
 
@@ -144,6 +172,58 @@ TEST(Box, MoveConstruct) {
   }
   EXPECT_EQ(moved, 1);
   EXPECT_EQ(destroyed, 2);
+
+  // Upcasting.
+  {
+    auto b = Box<SubType>(SubType());
+    auto c = Box<SuperType>(sus::move(b));
+    EXPECT_EQ(c->name(), "SubType");
+  }
+}
+
+TEST(Box, MoveAssign) {
+  static i32 moved;
+  static i32 destroyed;
+  struct Moveable {
+    constexpr ~Moveable() { destroyed += 1; }
+    constexpr explicit Moveable(i32 i) : i(i) {}
+    constexpr Moveable(Moveable&& r) : i(r.i) { moved += 1; }
+    constexpr Moveable& operator=(Moveable&& r) {
+      return i = r.i, moved += 1, *this;
+    }
+
+    i32 i;
+  };
+
+  {
+    auto b = Box<Moveable>(Moveable(2));
+    auto c = Box<Moveable>(Moveable(3));
+    // Moved into the heap.
+    EXPECT_EQ(moved, 2);
+    // The stack object is destroyed.
+    EXPECT_EQ(destroyed, 2);
+    c = sus::move(b);
+    // The box moved but not the Movable; it's at a pinned location on the
+    // heap.
+    EXPECT_EQ(moved, 2);
+    // The Moveable in `b` was not destroyed, but the one in `c` was.
+    EXPECT_EQ(destroyed, 3);
+    EXPECT_EQ(c->i, 2);
+
+#if GTEST_HAS_DEATH_TEST
+    EXPECT_DEATH(b->i += 1, "used after move");
+#endif
+  }
+  EXPECT_EQ(moved, 2);
+  EXPECT_EQ(destroyed, 4);
+
+  // Upcasting.
+  {
+    auto b = Box<SubType>(SubType());
+    auto c = Box<SuperType>(SuperType());
+    c = sus::move(b);
+    EXPECT_EQ(c->name(), "SubType");
+  }
 }
 
 TEST(BoxDeathTest, UseAfterMove) {
@@ -160,16 +240,15 @@ TEST(BoxDeathTest, UseAfterMove) {
 #endif
 }
 
-TEST(Box, FromT) {
-  i32 i = 3;
-  {
-    auto b = Box<i32>::from(i);
-    EXPECT_EQ(*b, 3);
-  }
-  {
-    Box<i32> b = sus::into(sus::clone(i));
-    EXPECT_EQ(*b, 3);
-  }
+TEST(Box, OperatorStar) {
+  auto b = Box<i32>(3);
+  EXPECT_EQ(*b, 3);
+  EXPECT_EQ((*b).wrapping_add(2), 5);
+}
+
+TEST(Box, OperatorArrow) {
+  auto b = Box<i32>(3);
+  EXPECT_EQ(b->wrapping_add(2), 5);
 }
 
 TEST(Box, Error) {

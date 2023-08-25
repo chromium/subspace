@@ -18,9 +18,9 @@
 #include <memory>
 #include <type_traits>
 
+#include "sus/boxed/__private/string_error.h"
 #include "sus/error/error.h"
 #include "sus/macros/no_unique_address.h"
-#include "sus/boxed/__private/string_error.h"
 #include "sus/macros/pure.h"
 #include "sus/mem/clone.h"
 #include "sus/mem/move.h"
@@ -28,6 +28,7 @@
 #include "sus/mem/relocate.h"
 #include "sus/mem/replace.h"
 #include "sus/mem/size_of.h"
+#include "sus/ptr/subclass.h"
 #include "sus/string/__private/any_formatter.h"
 #include "sus/string/__private/format_to_stream.h"
 
@@ -42,12 +43,53 @@ class [[sus_trivial_abi]] Box final {
 
  public:
   /// Constructs a Box which allocates space on the heap and moves `T` into it.
-  explicit constexpr Box(T t) noexcept
-    requires(::sus::mem::Move<T>)
-      : Box(FROM_OBJECT, ::sus::move(t)) {}
+  /// #[doc.overloads=ctor.convert]
+  template <std::convertible_to<T> U>
+    requires(!::sus::ptr::SameOrSubclassOf<U*, T*>)
+  explicit constexpr Box(U u) noexcept
+    requires(::sus::mem::Move<U>)
+      : Box(FROM_POINTER, new T(::sus::move(u))) {}
+
+  /// Constructs a Box which allocates space on the heap and moves `T` into it.
+  /// #[doc.overloads=ctor.inherit]
+  template <class U>
+    requires(::sus::ptr::SameOrSubclassOf<U*, T*>)
+  explicit constexpr Box(U u) noexcept
+    requires(::sus::mem::Move<U>)
+      : Box(FROM_POINTER, new U(::sus::move(u))) {}
 
   constexpr ~Box() noexcept {
     if (t_) delete t_;
+  }
+
+  /// Converts `U` into a [`Box<T>`]($sus::boxed::Box).
+  ///
+  /// The conversion allocates on the heap and moves `u` into it.
+  ///
+  /// Satisfies the [`From<U>`]($sus::construct::From) concept for
+  /// [`Box<T>`]($sus::boxed::Box) where `U` is convertible to `T` and is not a
+  /// subclass of `T`.
+  /// #[doc.overloads=from.convert]
+  template <std::convertible_to<T> U>
+    requires(!::sus::ptr::SameOrSubclassOf<U*, T*>)
+  constexpr static Box from(U u) noexcept
+    requires(::sus::mem::Move<U>)
+  {
+    return Box(FROM_POINTER, new T(::sus::move(u)));
+  }
+  /// Converts `U` into a [`Box<T>`]($sus::boxed::Box).
+  ///
+  /// The conversion allocates on the heap and moves `u` into it.
+  ///
+  /// Satisfies the [`From<U>`]($sus::construct::From) concept for
+  /// [`Box<T>`]($sus::boxed::Box) where U is `T` or a subclass of `T`.
+  /// #[doc.overloads=from.inherit]
+  template <class U>
+    requires(::sus::ptr::SameOrSubclassOf<U*, T*>)
+  constexpr static Box from(U u) noexcept
+    requires(::sus::mem::Move<U>)
+  {
+    return Box(FROM_POINTER, new U(::sus::move(u)));
   }
 
   /// Returns a new box with a clone() of this box’s contents.
@@ -69,9 +111,8 @@ class [[sus_trivial_abi]] Box final {
   constexpr void clone_from(const Box& rhs) noexcept
     requires(::sus::mem::Clone<T>)
   {
-    ::sus::check_with_message(rhs.t_, *"Box used after move");
     ::sus::check_with_message(t_, *"Box used after move");
-    ::sus::clone_into(*t_, *rhs.t_);
+    ::sus::clone_into(*t_, *rhs);
   }
 
   /// Satisifes the [`Move`]($sus::mem::Move) concept for
@@ -79,7 +120,13 @@ class [[sus_trivial_abi]] Box final {
   ///
   /// #[doc.overloads=move]
   constexpr Box(Box&& rhs) noexcept
-      : Box(FROM_POINTER, ::sus::mem::replace(rhs.t_, nullptr)) {
+      : Box(FROM_POINTER, ::sus::move(rhs).into_raw()) {
+    ::sus::check_with_message(t_, *"Box used after move");
+  }
+  template <class U>
+    requires(::sus::ptr::SameOrSubclassOf<U*, T*>)
+  constexpr Box(Box<U>&& rhs) noexcept
+      : Box(FROM_POINTER, ::sus::move(rhs).into_raw()) {
     ::sus::check_with_message(t_, *"Box used after move");
   }
   /// Satisifes the [`Move`]($sus::mem::Move) concept for
@@ -87,9 +134,15 @@ class [[sus_trivial_abi]] Box final {
   ///
   /// #[doc.overloads=move]
   constexpr Box& operator=(Box&& rhs) noexcept {
-    ::sus::check_with_message(rhs.t_, *"Box used after move");
     if (t_) delete t_;
-    t_ = ::sus::mem::replace(rhs.t_, nullptr);
+    t_ = ::sus::move(rhs).into_raw();
+    return *this;
+  }
+  template <class U>
+    requires(::sus::ptr::SameOrSubclassOf<U*, T*>)
+  constexpr Box& operator=(Box<U>&& rhs) noexcept {
+    if (t_) delete t_;
+    t_ = ::sus::move(rhs).into_raw();
     return *this;
   }
 
@@ -113,18 +166,6 @@ class [[sus_trivial_abi]] Box final {
   {
     ::sus::check_with_message(t_, *"Box used after move");
     return t_;
-  }
-
-  /// Converts `T` into a [`Box<T>`]($sus::boxed::Box).
-  ///
-  /// The conversion allocates on the heap and moves `t` into it.
-  ///
-  /// Satisfies the [`From<T>`]($sus::construct::From) concept for
-  /// [`Box<T>`]($sus::boxed::Box).
-  constexpr static Box from(T t) noexcept
-    requires(::sus::mem::Move<T>)
-  {
-    return Box(FROM_OBJECT, ::sus::move(t));
   }
 
   /// Satisfies the [`From<E>`]($sus::construct::From) concept for
@@ -160,9 +201,62 @@ class [[sus_trivial_abi]] Box final {
     return Box(FROM_POINTER, heap_e);
   }
 
+  /// Constructs a box from a raw pointer.
+
+  /// After calling this function, the raw pointer is owned by the resulting
+  /// Box. Specifically, the Box destructor will call the destructor of T and
+  /// free the allocated memory. For this to be safe, the memory must have been
+  /// allocated on the heap in the same way as the `Box` type, using
+  /// [`operator new`](
+  /// https://en.cppreference.com/w/cpp/memory/new/operator_new) and must not be
+  /// an array.
+  static constexpr Box from_raw(::sus::marker::UnsafeFnMarker,
+                                T* raw) noexcept {
+    return Box(FROM_POINTER, raw);
+  }
+
+  /// Consumes the `Box`, returning a wrapped raw pointer.
+  ///
+  /// The pointer will be properly aligned and non-null.
+  ///
+  /// After calling this function, the caller is responsible for the memory
+  /// previously managed by the `Box`. In particular, the caller should properly
+  /// destroy `T` and
+  /// [delete](https://en.cppreference.com/w/cpp/memory/new/operator_delete) the
+  /// memory, taking into account the alignment if any that would be passed by
+  /// `Box` to [`operator new`](
+  /// https://en.cppreference.com/w/cpp/memory/new/operator_new).  The easiest
+  /// way to do this is to convert the raw pointer back back into a `Box` with
+  /// the [`Box::from_raw`]($sus::boxed::Box::from_raw) function, allowing the
+  /// `Box` destructor to perform the cleanup.
+  ///
+  /// Note: this is a not a static function, unlike the matching Rust function
+  /// [`Box::into_raw`](https://doc.rust-lang.org/stable/std/boxed/struct.Box.html#method.into_raw),
+  /// since in C++ the `Box` can not expose the methods of the inner type
+  /// directly.
+  ///
+  /// # Examples
+  /// Converting the raw pointer back into a `Box` with
+  /// [`Box::from_raw`](#sus::boxed::Box::from_raw) for automatic cleanup:
+  ///
+  /// ```
+  /// auto x = Box<std::string>("Hello");
+  /// auto* ptr = Box<std::string>::into_raw(sus::move(x));
+  /// x = Box<std::string>::from_raw(unsafe_fn, ptr);
+  /// ```
+  /// Manual cleanup by explicitly running the destructor and deallocating the
+  /// memory:
+  /// ```
+  /// auto x = Box<std::string>("Hello");
+  /// auto* p = Box<std::string>::into_raw(sus::move(x));
+  /// delete p;
+  /// ```
+  constexpr T* into_raw() && noexcept {
+    ::sus::check_with_message(t_, *"Box used after move");
+    return ::sus::mem::replace(t_, nullptr);
+  }
+
  private:
-  enum FromObject { FROM_OBJECT };
-  Box(FromObject, T&& t) : t_(new T(::sus::move(t))) {}
   enum FromPointer { FROM_POINTER };
   Box(FromPointer, T* t) : t_(t) {}
 
