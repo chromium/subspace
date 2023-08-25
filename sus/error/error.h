@@ -140,7 +140,7 @@ namespace sus {
 /// should have been set, and we let the source error display as a clear
 /// contradiction to our expectation.
 ///
-/// *Hint*: If you’re having trouble remembering how to phrase
+/// **Hint**: If you’re having trouble remembering how to phrase
 /// expect-as-precondition style error messages remember to focus on the word
 /// “should” as in “env variable should be set by blah” or “the given binary
 /// should be available and executable by the current user”.
