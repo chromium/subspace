@@ -372,6 +372,36 @@ concept HasErrorSource = requires(const T& t) {
 ///       == "Caused by: SuperErrorSideKick is here!");
 /// }
 /// ```
+/// An example of a custom error type hierarchy, which can allow for
+/// recovering the full error type by downcasting:
+/// ```
+/// struct AnError {
+///   virtual ~AnError() = default;
+///   virtual std::string describe() const = 0;
+/// };
+/// struct Specific : public AnError {
+///   std::string describe() const override {
+///     return "specific problem has occurred";
+///   }
+/// };
+/// 
+/// template <>  // Implement `sus::error::Error` for AnError.
+/// struct sus::error::ErrorImpl<AnError> {
+///   static std::string display(const AnError& e) { return e.describe(); }
+/// };
+/// 
+/// sus::Result<void, sus::Box<AnError>> always_error() {
+///   // Deduces to Result<Box<AnError>>
+///   return sus::err(sus::into(Specific()));
+/// };
+/// 
+/// int main() {
+///   always_error().unwrap();
+///   // Prints:
+///   // PANIC! at 'specific problem has occurred',
+///   // path/to/sus/result/result.h:790:11
+/// }
+/// ```
 template <class T>
 concept Error = requires(const T& t) {
   // Required methods.
