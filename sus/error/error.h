@@ -153,6 +153,15 @@ struct DynError;
 template <class T>
 struct ErrorImpl;
 
+namespace __private {
+template <class T>
+concept HasErrorSource = requires(const T& t) {
+  {
+    ErrorImpl<std::remove_const_t<T>>::source(t)
+  } -> std::same_as<sus::Option<const DynError&>>;
+};
+}  // namespace __private
+
 /// [`Error`]($sus::error::Error) is a concept representing the basic
 /// expectations for error values, i.e., values of type `E` in
 /// [`Result<T, E>`]($sus::result::Result).
@@ -367,10 +376,12 @@ template <class T>
 concept Error = requires(const T& t) {
   // Required methods.
   {
+    // auto display(const T&) -> std::string
     ErrorImpl<std::remove_const_t<T>>::display(t)
   } -> std::same_as<std::string>;
   // Optional methods.
   requires requires {
+    // auto source(const T&) -> Option<const DynError&>
     {
       ErrorImpl<std::remove_const_t<T>>::source(t)
     } -> std::same_as<sus::Option<const DynError&>>;
@@ -414,23 +425,13 @@ constexpr inline std::string error_display(const E& error) noexcept {
 /// Gets a the source [`Error`]($sus::error::Error), type-erased as
 /// [`DynError`]($sus::error::DynError), which caused the `error` to occur.
 template <Error E>
-  requires requires(const E& error) {
-    {
-      ErrorImpl<E>::source(error)
-    } -> std::same_as<sus::Option<const DynError&>>;
-  }
 constexpr inline sus::Option<const DynError&> error_source(
     const E& error sus_lifetimebound) noexcept {
-  return ErrorImpl<E>::source(error);
-}
-
-template <Error E>
-  requires(!requires(const E& e) {
-    { ErrorImpl<E>::source(e) };
-  })
-constexpr inline sus::Option<const DynError&> error_source(
-    const E& sus_lifetimebound) noexcept {
-  return sus::Option<const DynError&>();
+  if constexpr (__private::HasErrorSource<E>) {
+    return ErrorImpl<E>::source(error);
+  } else {
+    return sus::Option<const DynError&>();
+  }
 }
 
 /// The wrapper around an [`Error`]($sus::error::Error) object that allows it
