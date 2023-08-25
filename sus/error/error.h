@@ -88,9 +88,7 @@ namespace sus {
 /// debugging the panic (“expect as precondition”).
 ///
 /// In the former case the expect message is used to describe the error that has
-/// occurred which is considered a bug. Consider the following example with an
-/// `auto read_env_var(std::string_view) -> Result<std::string, Box<DynError>>`
-/// function:
+/// occurred which is considered a bug. Consider the following example:
 ///
 /// ```
 /// // Read environment variable, panic if it is not present
@@ -159,9 +157,8 @@ struct ErrorImpl;
 /// expectations for error values, i.e., values of type `E` in
 /// [`Result<T, E>`]($sus::result::Result).
 ///
-/// Errors must describe themselves through a
-/// [`display`]($sus::error::DynError::display) method. Error messages are
-/// typically concise lowercase sentences without trailing punctuation:
+/// Errors must describe themselves through a `display` method. Error messages
+/// are typically concise lowercase sentences without trailing punctuation:
 ///
 /// ```
 /// auto err = u32::try_from(-1).unwrap_err();
@@ -170,7 +167,7 @@ struct ErrorImpl;
 ///
 /// # Implementing Error
 /// To make an [`Error`]($sus::error::Error) type, specialize `ErrorImpl<T>`
-/// for the error type `T` and implement the required methods:
+/// for the error type `T` and implement the required method:
 ///
 /// * `static auto display(const T&) -> std::string`: An error message
 ///   describing the error. fmtlib support is provided for all error types
@@ -181,7 +178,7 @@ struct ErrorImpl;
 ///   sus::check(fmt::to_string(err) == "out of bounds");
 ///   ```
 ///
-/// The following methods may optionally also be provided:
+/// The following method may optionally also be provided:
 /// * `static auto source(const T&) -> sus::Option<sus::error::DynError>`:
 ///   Optional information about the cause of the error. A simple
 ///   implementation would just return [`sus::none()`]($sus::option::none).
@@ -194,11 +191,8 @@ struct ErrorImpl;
 ///   debugging.
 ///
 ///   The [`Error`]($sus::error::Error) object returned by `source` must be
-///   type-erased as an [`DynError`]($sus::error::DynError). This is typically
-///   done by putting the error in [`Box<DynError>`]($sus::boxed::Box) via
-///   the [`from`]($sus::boxed::Box::from#dynerror.from.error) constructor
-///   method satisfying [`From<Error>`]($sus::construct::From) for
-///   [`Box`]($sus::boxed::Box).
+///   type-erased as a [`DynError`]($sus::error::DynError). See [Type
+///   erasure]($sus::error::Error#type-erasure) for more.
 ///
 /// # Using Error
 /// To use an [`Error`]($sus::error::Error) type, use:
@@ -215,29 +209,65 @@ struct ErrorImpl;
 /// Avoid instantiating `ErrorImpl<T>` yourself to call the static methods.
 ///
 /// # Type erasure
-/// The [`Error`]($sus::error::Error) concept supports type-erasure so that it
-/// is possible to work with a type satisfying [`Error`]($sus::error::Error)
-/// without requiring a template that knows the precise type. This allows
-/// [`Error`]($sus::error::Error) types to be used in virtual method
-/// signatures or dynamic library ABIs. The
-/// [`DynError`]($sus::error::DynError) represents a type-erased error, and it
-/// is typically created by moving the error object into a
-/// [`Box<DynError>`]($sus::boxed::Box) via
-/// [`sus::into(error)`]($sus::construct::into) or
-/// [`Box::from`]($sus::boxed::Box::from#dynerror.from.error).
+/// Working with [`Error`]($sus::error::Error) types directly requires templates
+/// that knows the precise type. At times this is convenient but holding
+/// different kinds of errors in a [`Result`]($sus::result::Result) requires a
+/// single type, as does passing error types through virtual methods or dylib
+/// ABI boundaries.
+///
+/// ## Opaque erasure
+/// When an application just wants to return an error without exposing the
+/// actual type behind it, use the [`DynError`]($sus::error::DynError) type.
+/// This can be useful for storing errors returned from other layers of an
+/// application or external libraries to be given as the error source. Or when
+/// you don't want or need the receivers of the error to introspect inside
+/// them.
+///
+/// To do this, return `Result<T, Box<DynError>>`. The [`Box`]($sus::boxed::Box)
+/// satisfies [`Into`]($sus::construct::Into)`<`[`Error`]($sus::error::Error)`,
+/// `[`Box`]($sus::boxed::Box)`<`[`DynError`]($sus::error::DynError)`>>` which
+/// means the result can be constructed by `sus::err(sus::into(error))` for any
+/// `error` that satisfies [`Error`]($sus::error::Error).
+///
+/// This is similar to
+/// `&dyn Error` when working with the Rust
+/// [`Error`](https://doc.rust-lang.org/stable/std/error/trait.Error.html)
+/// trait. However with `DynError`, the error type can be printed/displayed but
+/// no further information can be extracted from the error. Nonetheless this is
+/// commonly sufficient, providing even more information than the prolific
+/// `bool` return value of legacy C/C++ code.
+///
+/// To store an error in order to report it as the source of another error, the
+/// first error must be type-erased as a `DynError`, usually in `Box<DynError>`,
+/// to be returned from the `source` function in the
+/// [`Error`]($sus::error::Error) implementation.
 ///
 /// Note that both [`DynError`]($sus::error::DynError) and
 /// [`Box<DynError>`]($sus::boxed::Box) satisfy the
 /// [`Error`]($sus::error::Error) concept.
 ///
-/// Internally, [`Box`]($sus::boxed::Box) puts the error object into an
-/// [`DynErrorTyped`]($sus::error::DynErrorTyped) on the heap and then casts
-/// the pointer to the [`DynError`]($sus::error::DynError) base class to
-/// perform the type erasure.
+/// # Recovering the full error type
+/// If an application wants to be able to recover the specific type of error,
+/// and structured data from within it, there are two choices:
+/// * Make all errors a subclass of a single class which we'll call `AppError`.
+///   It should satisfy [`Error`]($sus::error::Error) and it can do so through
+///   virtual methods if needed. Then, return `Result<T, Box<AppError>>` to have
+///   the AppError subclass placed on the heap and type-erased to the base
+///   class, and [`Result`]($sus::result::Result) will display the error's
+///   description if it panics.
 ///
-/// This is similar to `&dyn Error` when working with the Rust
-/// [`Error`](https://doc.rust-lang.org/stable/std/error/trait.Error.html)
-/// trait.
+///   This restricts errors to being class (or struct) types.
+///
+///   To get at the specific error type, use runtime-type-information (RTTI) to
+///   downcast, or provide a (TODO: `Downcast`) implementation from `AppError`
+///   to its subclasses.
+/// * Place all application error types into a single sum type such as
+///   [`std::variant`](https://en.cppreference.com/w/cpp/utility/variant) or
+///   [`Choice`]($sus::choice_type::Choice). Then implement
+///   [`Error`](#sus::error::Error) for your fully resolved sum type.
+///
+///   This allows each error inside the sum type to be any type at all, and
+///   avoids type erasure, using type composition instead.
 ///
 /// # Examples
 /// An [enum](https://en.cppreference.com/w/cpp/language/enum) error type:
