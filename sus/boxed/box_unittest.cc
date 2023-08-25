@@ -73,6 +73,10 @@ TEST(Box, FromT) {
     EXPECT_EQ(*b, 3);
   }
   {
+    auto b = Box<SuperType>::from(SubType());
+    EXPECT_EQ(b->name(), "SubType");
+  }
+  {
     Box<SuperType> b = sus::into(SubType());
     EXPECT_EQ(b->name(), "SubType");
   }
@@ -336,6 +340,37 @@ TEST(Box, Example_IntoRaw) {
     auto* p = sus::move(x).into_raw();
     delete p;
   }
+}
+
+struct AnError {
+  virtual ~AnError() = default;
+  virtual std::string describe() const = 0;
+};
+struct Specific : public AnError {
+  std::string describe() const override {
+    return "specific problem has occurred";
+  }
+};
+
+}  // namespace
+
+template <>  // Implement `sus::error::Error` for AnError.
+struct sus::error::ErrorImpl<AnError> {
+  static std::string display(const AnError& e) { return e.describe(); }
+};
+
+namespace {
+
+sus::Result<void, sus::Box<AnError>> always_error() {
+  return sus::err(sus::into(Specific()));  // Deduces to Result<Box<AnError>>
+};
+
+TEST(BoxDeathTest, Example_ResultCustomHierarchy) {
+#if GTEST_HAS_DEATH_TEST
+  EXPECT_DEATH(always_error().unwrap(), "specific problem has occurred");
+// Prints:
+// PANIC! at 'specific problem has occurred', path/to/sus/result/result.h:790:11
+#endif
 }
 
 }  // namespace
