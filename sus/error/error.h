@@ -443,8 +443,12 @@ struct sus::error::ErrorImpl<::sus::error::DynError> {
 
 static_assert(sus::error::Error<sus::error::DynError>);
 
-// A blanket implementation of fmt::formatter for all types that satisfy
+// A blanket implementation of `fmt::formatter` for all types that satisfy
 // [`Error`]($sus::error::Error).
+//
+// There is no blanket implementation for `Error` to make them streamable,
+// however, as that would need to live in the namespace of each specific error
+// type.
 template <::sus::error::Error E, class Char>
 struct fmt::formatter<E, Char> {
   template <class ParseContext>
