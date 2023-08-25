@@ -51,7 +51,7 @@ struct sus::error::ErrorImpl<sus::num::TryFromIntError> {
   constexpr static std::string display(
       const sus::num::TryFromIntError& e) noexcept {
     switch (e.kind()) {
-      case sus::num::TryFromIntError::Kind::OutOfBounds: return "OutOfBounds";
+      case sus::num::TryFromIntError::Kind::OutOfBounds: return "out of bounds";
     }
     ::sus::unreachable_unchecked(::sus::marker::unsafe_fn);
   }
