@@ -60,6 +60,10 @@ class HtmlWriter {
       write_open();
       return writer_.open_ul(has_newlines_);
     }
+    auto open_pre() noexcept {
+      write_open();
+      return writer_.open_pre(has_newlines_);
+    }
     auto open_a() noexcept {
       write_open();
       return writer_.open_a(has_newlines_);
@@ -238,6 +242,32 @@ class HtmlWriter {
     }
   };
 
+  class [[nodiscard]] OpenPre : public Html {
+   public:
+    ~OpenPre() noexcept {
+      write_open();
+      writer_.write_close("pre", inside_has_newlines_, has_newlines_);
+    }
+
+   private:
+    friend HtmlWriter;
+    OpenPre(HtmlWriter& writer, bool inside_has_newlines) noexcept
+        : Html(writer) {
+      // Don't add newlines from multiple `write_text()` calls inside a <pre>,
+      // they change formatting.
+      has_newlines_ = false;
+      inside_has_newlines_ = inside_has_newlines;
+    }
+
+    void write_open() noexcept override {
+      if (!wrote_open_) {
+        writer_.write_open("pre", classes_.iter(), attributes_.iter(),
+                           inside_has_newlines_, has_newlines_);
+        wrote_open_ = true;
+      }
+    }
+  };
+
   class [[nodiscard]] OpenBody : public Html {
    public:
     ~OpenBody() noexcept {
@@ -380,6 +410,9 @@ class HtmlWriter {
   }
   OpenLi open_li(bool inside_has_newlines) noexcept {
     return OpenLi(*this, inside_has_newlines);
+  }
+  OpenPre open_pre(bool inside_has_newlines) noexcept {
+    return OpenPre(*this, inside_has_newlines);
   }
   OpenA open_a(bool inside_has_newlines) noexcept {
     return OpenA(*this, inside_has_newlines);
