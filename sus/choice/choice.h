@@ -714,7 +714,7 @@ inline StreamType& operator<<(
     StreamType& stream,
     const Choice<__private::TypeList<Ts...>, Tags...>& value) {
   return ::sus::string::__private::format_to_stream(stream,
-                                                    fmt::format("{}", value));
+                                                    fmt::to_string(value));
 }
 }  // namespace sus::choice_type
 
