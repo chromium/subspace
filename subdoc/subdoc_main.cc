@@ -198,8 +198,12 @@ int main(int argc, const char** argv) {
   sus::result::Result<void, sus::Box<sus::error::DynError>> r =
       subdoc::gen::generate(docs_db, sus::move(gen_options));
   if (r.is_err()) {
-    fmt::println(stderr, "ERROR: {}: {}", r.as_err(),
-                 sus::error::error_source(r.as_err()).unwrap());
+    fmt::println(stderr, "ERROR: {}", r.as_err());
+    for (sus::Option<const sus::error::DynError&> source =
+             sus::error::error_source(r.as_err());
+         source.is_some(); source = sus::error::error_source(source.as_value())) {
+      fmt::println(stderr, "  note: {}", source.as_value());
+    }
   }
   return 0;
 }
