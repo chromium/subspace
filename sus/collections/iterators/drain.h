@@ -28,7 +28,7 @@
 
 namespace sus::collections {
 
-/// A draining iterator for Vec<T>.
+/// A draining iterator for `Vec<T>`.
 ///
 /// This struct is created by Vec::drain. See its documentation for more.
 ///

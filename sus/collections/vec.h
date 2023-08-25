@@ -655,7 +655,7 @@ class Vec final {
     return VecIntoIter<T>(::sus::move(*this));
   }
 
-  /// sus::ops::Eq<Vec<T>, Vec<U>> trait.
+  /// Satisfies the [`Eq<Vec<T>, Vec<U>>`]($sus::ops::Eq) concept.
   ///
   /// #[doc.overloads=vec.eq.vec]
   template <class U>
@@ -668,7 +668,7 @@ class Vec final {
     requires(!::sus::ops::Eq<T, U>)
   friend constexpr bool operator==(const Vec<T>& l, const Vec<U>& r) = delete;
 
-  /// sus::ops::Eq<<Vec<T>, Slice<U>> trait.
+  /// Satisfies the [`Eq<Vec<T>, Slice<U>>`]($sus::ops::Eq) concept.
   ///
   /// #[doc.overloads=vec.eq.slice]
   template <class U>
@@ -678,7 +678,7 @@ class Vec final {
     return l.as_slice() == r;
   }
 
-  /// sus::ops::Eq<<Vec<T>, SliceMut<U>> trait.
+  /// Satisfies the [`Eq<Vec<T>, SliceMut<U>>`]($sus::ops::Eq) concept.
   ///
   /// #[doc.overloads=vec.eq.slicemut]
   template <class U>

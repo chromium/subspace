@@ -514,7 +514,10 @@ class Choice<__private::TypeList<Ts...>, Tags...> final {
     }
   }
 
-  /// sus::ops::Eq<Choice<Ts...>, Choice<Us...>> trait.
+  /// Compares two [`Choice`]($sus::choice_type::Choice)s for equality if the
+  /// types inside satisfy `Eq`.
+  ///
+  /// Satisfies the [`Eq`]($sus::ops::Eq) concept for `Choice`.
   template <class... Us, auto V, auto... Vs>
     requires(__private::ChoiceIsEq<TagsType, __private::TypeList<Ts...>,
                                    decltype(V), __private::TypeList<Us...>>)

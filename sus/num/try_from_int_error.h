@@ -34,7 +34,7 @@ class TryFromIntError {
   /// Gives the kind of error that occured.
   sus_pure constexpr Kind kind() const noexcept;
 
-  /// sus::ops::Eq trait.
+  /// Satisfies the [`Eq`]($sus::ops::Eq) concept.
   sus_pure constexpr bool operator==(TryFromIntError rhs) const noexcept;
 
  private:
