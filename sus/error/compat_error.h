@@ -18,7 +18,18 @@
 
 #include "sus/error/error.h"
 
-// Implements `sus::error:Error` for `std::error_code`.
+// Implements [`Error`]($sus::error::Error) for
+// [`std::error_code`](https://en.cppreference.com/w/cpp/error/error_code).
+//
+// `std::error_code` can also represent success, but
+// `Error` unconditionally represents an error, so it should be
+// [checked for failure](
+// https://en.cppreference.com/w/cpp/error/error_code/operator_bool)
+// before being used an an `Error`.
+//
+// When the `sus/error/compat_error.h` header is included, a
+// [`std::error_code`](https://en.cppreference.com/w/cpp/error/error_code) can
+// be used whenever an [`Error`]($sus::error::Error) is needed.
 template <>
 struct sus::error::ErrorImpl<std::error_code> {
   static std::string display(const std::error_code& e) noexcept {
@@ -27,3 +38,24 @@ struct sus::error::ErrorImpl<std::error_code> {
 };
 
 static_assert(sus::error::Error<std::error_code>);
+
+// Implements [`Error`]($sus::error::Error) for
+// [`std::error_condition`](https://en.cppreference.com/w/cpp/error/error_condition).
+//
+// `std::error_condition` can also represent success, but
+// `Error` unconditionally represents an error, so it should be
+// [checked for failure](
+// https://en.cppreference.com/w/cpp/error/error_condition/operator_bool)
+// before being used an an `Error`.
+//
+// When the `sus/error/compat_error.h` header is included, a
+// [`std::error_condition`](https://en.cppreference.com/w/cpp/error/error_condition)
+// can be used whenever an [`Error`]($sus::error::Error) is needed.
+template <>
+struct sus::error::ErrorImpl<std::error_condition> {
+  static std::string display(const std::error_condition& e) noexcept {
+    return e.message();
+  }
+};
+
+static_assert(sus::error::Error<std::error_condition>);
