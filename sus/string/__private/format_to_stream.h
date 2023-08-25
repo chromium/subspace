@@ -36,7 +36,7 @@ template <class T, class Char>
 concept StreamCanReceiveString = requires(T& t, std::basic_string<Char> s) {
   // Check ConvertibleFrom as std streams return std::basic_ostream&, which the
   // input type `T&` is convertible to. The concept ordering means we want
-  // `ConvertibleFrom<T&, ..the output type..>` to be true then.
+  // `ConvertibleFrom<..the output type.., T&>` to be true then.
   { t << s } -> ConvertibleFrom<T&>;
 };
 
