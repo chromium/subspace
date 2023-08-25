@@ -430,8 +430,8 @@ try_from(U u) noexcept {
 ///
 /// This method should rarely be called directly, as it is used to satisfy the
 /// [`Product`](sus-iter-Product.html) concept so that
-/// [`Iterator::product()`](sus-iter-IteratorBase.html#method.product) can be called for
-/// iterators over @doc.self.
+/// [`Iterator::product()`](sus-iter-IteratorBase.html#method.product) can be
+/// called for iterators over @doc.self.
 ///
 /// To handle overflow without panicing, instead of `iter.product()`, use
 /// `iter.product<OverflowInteger<@doc.self>>()`.
@@ -484,8 +484,9 @@ static constexpr _self from_sum(::sus::iter::Iterator<_self> auto&& it) noexcept
 /// ```
 ///
 /// Potentially-lossy type conversions can be forced through the
-/// [`Transmogrify`](sus-construct-Transmogrify.html) concept, such as `sus::mog<uint32_t>(3_i32)`
-/// or `sus::mog<int16_t>(3_i32)`, or even `sus::mog<u32>(3_i32)`.
+/// [`Transmogrify`](sus-construct-Transmogrify.html) concept, such as
+/// `sus::mog<uint32_t>(3_i32)` or `sus::mog<int16_t>(3_i32)`, or even
+/// `sus::mog<u32>(3_i32)`.
 template <SignedPrimitiveInteger U>
   requires(::sus::mem::size_of<U>() >= ::sus::mem::size_of<_primitive>())
 sus_pure constexpr inline operator U() const noexcept {
@@ -515,7 +516,7 @@ sus_pure constexpr _self signum() const& noexcept {
     return _primitive{primitive_value != 0};
 }
 
-/// sus::ops::Eq<T> trait for signed integers.
+/// Satisfies the [`Eq`]($sus::ops::Eq) concept for signed integers.
 /// #[doc.overloads=int.eq]
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept = default;
@@ -529,7 +530,8 @@ sus_pure constexpr _self signum() const& noexcept {
     _self l, SignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value == r;
 }
-/// sus::ops::StrongOrd<T, U> trait for signed integers.
+/// Satisfies the [`StrongOrd`]($sus::ops::StrongOrd) concept for signed
+/// integers.
 /// #[doc.overloads=int.strongord]
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     _self l, _self r) noexcept {
@@ -713,8 +715,7 @@ friend constexpr inline _self operator/(_self l, U r) noexcept = delete;
 template <class U>
   requires((PrimitiveInteger<U> || PrimitiveEnum<U>) &&
            !std::convertible_to<U, _self>)
-friend constexpr inline _self operator/(U l, _self r) noexcept =
-    delete;
+friend constexpr inline _self operator/(U l, _self r) noexcept = delete;
 /// Satisfies the [`Rem<@doc.self>`](sus-num-Rem.html) concept.
 ///
 /// This operation supports working with primitive signed or unsigned integers
@@ -940,7 +941,8 @@ constexpr inline void operator%=(_self r) & noexcept {
   primitive_value %= r.primitive_value;
 }
 
-/// Satisfies the [`BitAndAssign<@doc.self>`](sus-num-BitAndAssign.html) concept.
+/// Satisfies the [`BitAndAssign<@doc.self>`](sus-num-BitAndAssign.html)
+/// concept.
 constexpr inline void operator&=(_self r) & noexcept {
   primitive_value &= r.primitive_value;
 }
@@ -948,7 +950,8 @@ constexpr inline void operator&=(_self r) & noexcept {
 constexpr inline void operator|=(_self r) & noexcept {
   primitive_value |= r.primitive_value;
 }
-/// Satisfies the [`BitXorAssign<@doc.self>`](sus-num-BitXorAssign.html) concept.
+/// Satisfies the [`BitXorAssign<@doc.self>`](sus-num-BitXorAssign.html)
+/// concept.
 constexpr inline void operator^=(_self r) & noexcept {
   primitive_value ^= r.primitive_value;
 }

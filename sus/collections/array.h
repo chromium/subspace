@@ -331,7 +331,7 @@ class Array final {
     });
   }
 
-  /// sus::ops::Eq<Array<T, N>, Array<U, N>> trait.
+  /// Satisfies the [`Eq<Array<T, N>, Array<U, N>>`]($sus::ops::Eq) concept.
   template <class U>
     requires(::sus::ops::Eq<T, U>)
   constexpr bool operator==(const Array<U, N>& r) const& noexcept
@@ -340,7 +340,7 @@ class Array final {
     return eq_impl(r, std::make_index_sequence<N>());
   }
 
-  /// sus::ops::Eq<<Array<T, N>, Slice<U>> trait.
+  /// Satisfies the [`Eq<Array<T, N>, Slice<U>>`]($sus::ops::Eq) concept.
   ///
   /// #[doc.overloads=array.eq.slice]
   template <class U>
@@ -350,7 +350,7 @@ class Array final {
     return r.len() == N && l.eq_impl(r, std::make_index_sequence<N>());
   }
 
-  /// sus::ops::Eq<<Array<T, N>, SliceMut<U>> trait.
+  /// Satisfies the [`Eq<Array<T, N>, SliceMut<U>>`]($sus::ops::Eq) concept.
   ///
   /// #[doc.overloads=array.eq.slicemut]
   template <class U>

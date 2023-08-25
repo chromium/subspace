@@ -169,7 +169,8 @@ class [[sus_trivial_abi]] NonNull {
       : ptr_(nullptr) {}
 };
 
-/// sus::ops::Eq<NonNull<T>> trait.
+/// Satisfies the [`Eq<NonNull<T>, NonNull<U>>`]($sus::ops::Eq) concept if the
+/// pointers are comparable and thus satisfy `Eq` as well.
 template <class T, class U>
   requires(::sus::ops::Eq<const T*, const U*>)
 constexpr inline bool operator==(const NonNull<T>& l,
@@ -177,7 +178,8 @@ constexpr inline bool operator==(const NonNull<T>& l,
   return l.as_ptr() == r.as_ptr();
 }
 
-/// sus::ops::StrongOrd<NonNull<T>> trait.
+/// Satisfies the [`StrongOrd<NonNull<T>>`]($sus::ops::StrongOrd) concept if the
+/// pointers are comparable and thus satisfy `StrongOrd` as well.
 template <class T, class U>
   requires(::sus::ops::StrongOrd<const T*, const U*>)
 constexpr inline std::strong_ordering operator<=>(

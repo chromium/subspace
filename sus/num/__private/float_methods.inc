@@ -236,7 +236,7 @@ sus_pure constexpr inline operator U() const noexcept {
   return primitive_value;
 }
 
-/// sus::ops::Eq<T> trait for floating point numbers.
+/// Satisfies the [`Eq`]($sus::ops::Eq) concept for floating point numbers.
 /// #[doc.overloads=float.eq]
 [[nodiscard]] sus_pure_const friend constexpr inline bool operator==(
     _self l, _self r) noexcept {
@@ -253,7 +253,8 @@ sus_pure constexpr inline operator U() const noexcept {
   return (l.primitive_value <=> r) == 0;
 }
 
-/// sus::ops::PartialOrd<T> trait for floating point numbers.
+/// Satisfies the [`PartialOrd`]($sus::ops::PartialOrd) concept for floating
+/// point numbers.
 /// #[doc.overloads=float.partialord]
 [[nodiscard]] sus_pure_const friend constexpr inline std::partial_ordering
 operator<=>(_self l, _self r) noexcept {

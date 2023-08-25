@@ -200,8 +200,8 @@ struct FunctionElement : public CommentElement {
         first.is_some()) {
       std::string_view matcher = sus::move(first).unwrap();
       auto overload_string = sus::Option<std::string_view>();
-      // What's after # matches with the #[doc.overloads=_] string.
-      if (usize pos = matcher.find('#');
+      // What's after ! matches with the #[doc.overloads=_] string.
+      if (usize pos = matcher.find('!');
           pos != std::string_view::npos && pos + 1u < matcher.size()) {
         overload_string = sus::some(matcher.substr(pos + 1u));
         matcher = matcher.substr(0u, pos);

@@ -186,10 +186,12 @@ class Tuple final {
         .into_inner();
   }
 
-  /// sus::ops::Eq<Tuple<U...>> trait.
+  /// Satisfies the [`Eq`]($sus::ops::Eq) concept if the types inside satisfy
+  /// `Eq`.
   ///
+  /// # Implementation Note
   /// The non-template overload allows tuple() marker types to convert to
-  /// Option for comparison.
+  /// Tuple for comparison.
   constexpr bool operator==(const Tuple& r) const& noexcept
     requires((::sus::ops::Eq<T> && ... && ::sus::ops::Eq<Ts>))
   {
@@ -207,11 +209,11 @@ class Tuple final {
   /// Compares two Tuples.
   ///
   /// Satisfies sus::ops::StrongOrd<Tuple<...>> if sus::ops::StrongOrd<...>.
-  /// Satisfies sus::ops::Ord<Option<...>> if sus::ops::Ord<...>.
-  /// Satisfies sus::ops::PartialOrd<Option<...>> if sus::ops::PartialOrd<...>.
+  /// Satisfies sus::ops::Ord<Tuple<...>> if sus::ops::Ord<...>.
+  /// Satisfies sus::ops::PartialOrd<Tuple<...>> if sus::ops::PartialOrd<...>.
   ///
   /// The non-template overloads allow tuple() marker types to convert to
-  /// Option for comparison.
+  /// Tuple for comparison.
   //
   // sus::ops::StrongOrd<Tuple<U...>> trait.
   constexpr std::strong_ordering operator<=>(const Tuple& r) const& noexcept

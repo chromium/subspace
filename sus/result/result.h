@@ -1001,8 +1001,12 @@ class [[nodiscard]] Result final {
     }
   }
 
-  /// sus::ops::Eq<Result<T, E>> trait.
+  /// Compares two [`Result`]($sus::result::Result)s for equality if the types
+  /// inside satisfy `Eq`.
   ///
+  /// Satisfies the [`Eq`]($sus::ops::Eq) concept.
+  ///
+  /// # Implementation Note
   /// The non-template overload allows ok/err marker types to convert to
   /// Option for comparison.
   friend constexpr bool operator==(const Result& l, const Result& r) noexcept
@@ -1043,21 +1047,18 @@ class [[nodiscard]] Result final {
   friend constexpr bool operator==(const Result& l,
                                    const Result<U, F>& r) = delete;
 
-  /// Compares two Result.
+  /// Compares two [`Result`]($sus::result::Result)s for their ordering if the
+  /// types inside can be compared.
   ///
-  /// Satisfies sus::ops::StrongOrd<Result<T, E>> if sus::ops::StrongOrd<T> and
-  /// sus::ops::StrongOrd<E>.
+  /// Satisfies the [`StrongOrd`]($sus::ops::StrongOrd),
+  /// [`Ord`]($sus::ops::Ord), or
+  /// [`PartialOrd`]($sus::ops::PartialOrd) concept, depending on whether the
+  /// internal types do. The `Result` will satisfy the strongest possible
+  /// ordering.
   ///
-  /// Satisfies sus::ops::Ord<Result<T, E>> if sus::ops::Ord<T> and
-  /// sus::ops::Ord<E>.
-  ///
-  /// Satisfies sus::ops::PartialOrd<Result<T, E>> if sus::ops::PartialOrd<T>
-  /// and sus::ops::PartialOrd<E>.
-  ///
+  /// # Implementation Note
   /// The non-template overloads allow ok/err marker types to convert to
   /// Option for comparison.
-  //
-  // sus::ops::StrongOrd<Result<T, E>> trait.
   friend constexpr std::strong_ordering operator<=>(const Result& l,
                                                     const Result& r) noexcept
     requires(VoidOrOrd<T> && ::sus::ops::StrongOrd<E>)

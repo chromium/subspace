@@ -552,7 +552,7 @@ sus_pure constexpr inline operator U() const noexcept {
 
 #endif
 
-/// sus::ops::Eq<T> trait for unsigned integers.
+/// Satisfies the [`Eq`]($sus::ops::Eq) concept for unsigned integers.
 /// #[doc.overloads=uint.eq]
 [[nodiscard]] sus_pure friend constexpr inline bool operator==(
     _self l, _self r) noexcept = default;
@@ -566,7 +566,8 @@ sus_pure constexpr inline operator U() const noexcept {
     _self l, UnsignedPrimitiveInteger auto r) noexcept {
   return l.primitive_value == r;
 }
-/// sus::ops::StrongOrd<T> trait for unsigned integers.
+/// Satisfies the [`StrongOrd`]($sus::ops::StrongOrd) concept for unsigned
+/// integers.
 /// #[doc.overloads=uint.strongord]
 [[nodiscard]] sus_pure friend constexpr inline std::strong_ordering operator<=>(
     _self l, _self r) noexcept {
@@ -1028,7 +1029,8 @@ constexpr inline void operator%=(_pointer_sized r) & noexcept {
 }
 #endif
 
-/// Satisfies the [`BitAndAssign<@doc.self>`](sus-num-BitAndAssign.html) concept.
+/// Satisfies the [`BitAndAssign<@doc.self>`](sus-num-BitAndAssign.html)
+/// concept.
 constexpr inline void operator&=(_self r) & noexcept {
   primitive_value &= r.primitive_value;
 }
@@ -1046,7 +1048,8 @@ constexpr inline void operator|=(_pointer_sized r) & noexcept {
   *this |= _self(_primitive{r.primitive_value});
 }
 #endif
-/// Satisfies the [`BitXorAssign<@doc.self>`](sus-num-BitXorAssign.html) concept.
+/// Satisfies the [`BitXorAssign<@doc.self>`](sus-num-BitXorAssign.html)
+/// concept.
 constexpr inline void operator^=(_self r) & noexcept {
   primitive_value ^= r.primitive_value;
 }

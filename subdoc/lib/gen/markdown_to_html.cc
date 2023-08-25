@@ -144,8 +144,13 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
                              int (*render)(MD_HTML* html, const MD_CHAR* chars,
                                            MD_SIZE size)) -> int {
     auto& userdata = *reinterpret_cast<UserData*>(v);
-    sus::Option<FoundName> found =
-        userdata.page_state.db.find_name(std::string_view(chars, size));
+    auto name = std::string_view(chars, size);
+    auto anchor = std::string_view();
+    if (auto pos = name.find('#'); pos != std::string_view::npos) {
+      anchor = name.substr(pos);
+      name = name.substr(0u, pos);
+    }
+    sus::Option<FoundName> found = userdata.page_state.db.find_name(name);
     if (found.is_some()) {
       std::string href;
       switch (found.as_value()) {
@@ -172,7 +177,11 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
               found.as_value().as<FoundName::Tag::Field>());
           break;
       }
-      return render(html, href.data(), u32::try_from(href.size()).unwrap());
+      int r = render(html, href.data(), u32::try_from(href.size()).unwrap());
+      if (r != 0) return r;
+      if (anchor.size() > 0u)
+        r = render(html, anchor.data(), u32::try_from(anchor.size()).unwrap());
+      return r;
     } else {
       userdata.error_message = sus::some(
           fmt::format("unable to resolve code link '{}' to a C++ name",
@@ -190,8 +199,7 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
                   render_code_link,
               },
               &data,
-              MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_NOHTMLBLOCKS |
-                  MD_FLAG_NOHTMLSPANS | MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH |
+              MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH |
                   // Forked extensions.
                   MD_FLAG_HEADERSELFLINKS | MD_FLAG_CODELINKS,
               // We enable MD_ASSERT() to catch memory safety bugs, so

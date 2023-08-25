@@ -173,7 +173,7 @@ class [[sus_trivial_abi]] Slice final {
         iter_refs_.to_iter_from_view(), data_, len_);
   }
 
-  /// sus::ops::Eq<Slice<U>> trait.
+  /// Satisfies the [`Eq<Slice<T>, Slice<U>>`]($sus::ops::Eq) concept.
   ///
   /// #[doc.overloads=slice.eq]
   template <class U>
@@ -388,7 +388,7 @@ class [[sus_trivial_abi]] SliceMut final {
         slice_.iter_refs_.to_iter_from_view(), slice_.data_, slice_.len_);
   }
 
-  /// sus::ops::Eq<SliceMut<U>> trait.
+  /// Satisfies the [`Eq<SliceMut<T>, SliceMut<U>>`]($sus::ops::Eq) concept.
   ///
   /// #[doc.overloads=slicemut.eq]
   template <class U>
