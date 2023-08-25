@@ -369,7 +369,8 @@ struct [[nodiscard]] TupleMarker {
   template <class... Us>
   sus_pure inline constexpr operator Tuple<Us...>() const& noexcept {
     static_assert(
-        (... && std::convertible_to<::sus::mem::remove_rvalue_reference<Ts>, Us>),
+        (... &&
+         std::convertible_to<::sus::mem::remove_rvalue_reference<Ts>, Us>),
         "TupleMarker(T) can't convert const T& to U for Tuple<U>. "
         "Note that this is a test-only code path for Gtest support. "
         "Typically the T object is consumed as an rvalue, consider using "
@@ -507,7 +508,7 @@ template <class... Types,
 inline StreamType& operator<<(StreamType& stream,
                               const Tuple<Types...>& value) {
   return ::sus::string::__private::format_to_stream(stream,
-                                                    fmt::format("{}", value));
+                                                    fmt::to_string(value));
 }
 }  // namespace sus::tuple_type
 
