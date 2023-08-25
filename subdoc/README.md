@@ -74,3 +74,88 @@ For example:
 /// #[doc.hidden]
 void secret() {}
 ```
+
+# Running Subdoc
+
+```
+subdoc --project-name NAME [--include-file-pattern PATH] [--exclude-file-pattern PATH]
+    [--css PATH] [--copy-file PATH] [--project-md PATH]
+    FILES...
+```
+
+```
+--project-name NAME
+```
+The `NAME` will be inserted into the title and overview section of the generated
+HTML pages.
+
+## Include/exclude symbols
+
+Subdoc uses Clang to parse C++ code, so it sees every symbol that your 
+code sees, including the standard library, C library, etc. To avoid generating
+docs for everything, Subdoc has command line flags that control what is
+included or excluded.
+
+```
+--include-file-pattern PATH
+```
+Symbols defined in files whose path contains the `PATH` as a substring
+are included.
+
+```
+--exclude-file-pattern PATH
+```
+Symbols defined in files whose path contains the `PATH` as a substring are
+excluded. This overrides symbols that would have been included by
+`--include-file-pattern`.
+
+By default Subdoc also excludes symbols in a namespace named `__private` or
+`test`, or any namespace nested within one.
+TODO: Make this a command line flag.
+
+Subdoc also excludes symbols in an anonymous namespace, or that are marked
+protected or private.
+TODO: Make this a command line flag.
+
+```
+FILES...
+```
+Subdoc can only see the symbols from the source files that you ask it to read.
+Typically it is ideal to point Subdoc at your unit test files, for two reasons:
+* Subdoc requires build rules in the compile database to know what flags to use
+  when running Clang. The unit test files are part of the compile database.
+* Subdoc (TODO: make this happen) reads `static_assert()` statements to
+  determine if a type satisfies a concept. Those can be placed in your unit
+  test files and Subdoc can pick them up from there.
+
+## Additional files
+
+A number of other flags allow including or using files with the generated
+output.
+
+```
+--css PATH
+```
+The `PATH` is used as a path to a css file on the server, and an HTML reference
+is added to it within every page. This can be the name of a file included in the
+output with `--copy-file`.
+
+```
+--copy-file PATH
+```
+Copies the file named by `PATH` into the output directory when generating docs.
+Useful for images, css stylesheets, or anything else linked to from a doc
+comment.
+
+```
+--project-md PATH
+```
+Inserts the markdown text in the file named by `PATH` as the description of the
+global namespace. This provides a good place to write a project overview that
+links to various parts of the project's documentation.
+
+## Example execution
+
+See the
+[subdoc.yml](https://github.com/chromium/subspace/blob/8be259f818684490e161eb1e4cb0420d362e18ca/.github/workflows/subdoc.yml#L152-L162)
+file for an example of how the Subspace C++ Library documentation is generated.
