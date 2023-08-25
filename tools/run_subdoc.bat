@@ -9,4 +9,5 @@ out\subdoc\subdoc -p out --out docs ^
     subspace/sus/num/uptr ^
     subspace/sus/error ^
     subspace/sus/boxed ^
-    subspace/sus/iter/compat_ranges_unittest
+    subspace/sus/iter/compat_ranges_unittest ^
+    subspace/sus/choice 
