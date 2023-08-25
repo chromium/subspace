@@ -319,8 +319,7 @@ concept HasErrorSource = requires(const T& t) {
 /// [`Result<void, Box<DynError>>`]($sus::result::Result), allowing
 /// it to return any error type:
 /// ```
-/// auto f = [](i32 i) -> sus::result::Result<void,
-/// sus::Box<sus::error::DynError>> {
+/// auto f = [](i32 i) -> sus::result::Result<void, sus::Box<sus::error::DynError>> {
 ///   if (i > 10) return sus::err(sus::into(ErrorReason::SomeReason));
 ///   if (i < -10) return sus::err(sus::into(ErrorString("too low")));
 ///   return sus::ok();
@@ -384,17 +383,17 @@ concept HasErrorSource = requires(const T& t) {
 ///     return "specific problem has occurred";
 ///   }
 /// };
-/// 
+///
 /// template <>  // Implement `sus::error::Error` for AnError.
 /// struct sus::error::ErrorImpl<AnError> {
 ///   static std::string display(const AnError& e) { return e.describe(); }
 /// };
-/// 
+///
 /// sus::Result<void, sus::Box<AnError>> always_error() {
 ///   // Deduces to Result<Box<AnError>>
 ///   return sus::err(sus::into(Specific()));
 /// };
-/// 
+///
 /// int main() {
 ///   always_error().unwrap();
 ///   // Prints:

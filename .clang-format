@@ -3,6 +3,7 @@ Standard: Latest
 AllowShortCaseLabelsOnASingleLine: true
 DerivePointerAlignment: false
 PointerAlignment: Left
+ReflowComments: false
 
 # This would be nice but it also changes requires() and not wrapping requires clauses with () introduces clang-tidy bugs like:
 #```
