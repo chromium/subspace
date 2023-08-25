@@ -131,6 +131,10 @@ Typically it is ideal to point Subdoc at your unit test files, for two reasons:
   determine if a type satisfies a concept. Those can be placed in your unit
   test files and Subdoc can pick them up from there.
 
+The `FILES...` is a list of patterns, and every source file in the compile
+database that has one of the patterns as a substring will be included in the
+generation.
+
 ## Additional files
 
 A number of other flags allow including or using files with the generated
