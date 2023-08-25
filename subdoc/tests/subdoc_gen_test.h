@@ -62,9 +62,14 @@ class SubDocGenTest : public testing::Test {
     sus::result::Result<void, sus::Box<sus::error::DynError>> r =
         subdoc::gen::generate(sus::move(result).unwrap(), options);
     if (r.is_err()) {
-      ADD_FAILURE() << fmt::to_string(r.as_err()) << ": "
-                    << fmt::to_string(
-                           sus::error::error_source(r.as_err()).unwrap());
+      std::string fail = fmt::to_string(r.as_err());
+      for (sus::Option<const sus::error::DynError&> source =
+               sus::error::error_source(r.as_err());
+           source.is_some();
+           source = sus::error::error_source(source.as_value())) {
+        fail = fmt::format("{}: {}", fail, source.as_value());
+      }
+      ADD_FAILURE() << fail;
       return false;
     }
 
