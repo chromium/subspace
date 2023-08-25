@@ -25,13 +25,13 @@ void generate_requires_constraints(HtmlWriter::OpenDiv& div,
     auto requires_div = div.open_div();
     requires_div.add_class("requires");
     {
-      auto keyword_div = requires_div.open_span(HtmlWriter::SingleLine);
+      auto keyword_div = requires_div.open_span();
       keyword_div.add_class("requires-keyword");
       keyword_div.add_class("keyword");
       keyword_div.write_text("requires");
     }
     for (const RequiresConstraint& constraint : constraints.list) {
-      auto clause_div = requires_div.open_div(HtmlWriter::SingleLine);
+      auto clause_div = requires_div.open_div();
       clause_div.add_class("requires-constaint");
       switch (constraint) {
         using enum RequiresConstraint::Tag;
@@ -40,12 +40,27 @@ void generate_requires_constraints(HtmlWriter::OpenDiv& div,
           clause_div.write_text("<");
           for (const auto& [i, s] :
                constraint.as<Concept>().args.iter().enumerate()) {
-            if (i > 0u) clause_div.write_text(", ");
             clause_div.write_text(s);
           }
           clause_div.write_text(">");
           break;
-        case Text: clause_div.write_text(constraint.as<Text>()); break;
+        case Text: {
+          auto clause = std::string_view(constraint.as<Text>());
+          while (true) {
+            if (usize pos = clause.find('\n');
+                pos != std::string::npos && pos != clause.size() - 1u) {
+              auto clause_line_pre = clause_div.open_pre();
+              clause_line_pre.add_class("requires-constaint-line");
+              clause_line_pre.write_text(clause.substr(0u, pos));
+              clause = clause.substr(pos + 1u);
+            } else {
+              auto clause_line_pre = clause_div.open_pre();
+              clause_line_pre.add_class("requires-constaint-line");
+              clause_line_pre.write_text(clause);
+              break;
+            }
+          }
+        }
       }
     }
   }
