@@ -51,9 +51,9 @@ struct VarError {
 /// This function may return an error if the environment variable's name
 /// contains the equal sign character `'='` or the NUL character `'\0'`.
 ///
-/// TODO: Figure out a nicer way to receive unowned possibly-null-terminated
-/// strings. string_view reports a size before the null so you can't tell and
-/// you need to copy from it.
+/// TODO: [Figure out](https://github.com/chromium/subspace/issues/326) a nicer
+/// way to receive unowned possibly-null-terminated strings. string_view reports
+/// a size before the null so you can't tell and you need to copy from it.
 sus::Result<std::string, VarError> var(const std::string& key) noexcept;
 
 /// Sets the environment variable `key` to the value `value` for the currently
@@ -68,9 +68,9 @@ sus::Result<std::string, VarError> var(const std::string& key) noexcept;
 /// character), or when `value` contains the NUL character (except as the
 /// terminating character).
 ///
-/// TODO: Figure out a nicer way to receive unowned possibly-null-terminated
-/// strings. string_view reports a size before the null so you can't tell and
-/// you need to copy from it.
+/// TODO: [Figure out](https://github.com/chromium/subspace/issues/326) a nicer
+/// way to receive unowned possibly-null-terminated strings. string_view reports
+/// a size before the null so you can't tell and you need to copy from it.
 void set_var(const std::string& key, const std::string& value) noexcept;
 
 }  // namespace sus::env

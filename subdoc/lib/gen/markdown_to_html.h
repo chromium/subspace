@@ -17,6 +17,7 @@
 #include <string>
 
 #include "subdoc/lib/database.h"
+#include "subdoc/lib/gen/options.h"
 #include "sus/error/error.h"
 #include "sus/result/result.h"
 
@@ -24,6 +25,7 @@ namespace subdoc::gen {
 
 struct ParseMarkdownPageState {
   const Database& db;
+  const Options& options;
   std::unordered_map<std::string, u32> self_link_counts;
 };
 

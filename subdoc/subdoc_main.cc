@@ -80,6 +80,13 @@ int main(int argc, const char** argv) {
           "patterns."),
       llvm::cl::cat(option_category));
 
+  llvm::cl::opt<bool> option_ignore_bad_code_links(
+      "ignore-bad-code-links",
+      llvm::cl::desc("Ignore bad code links, don't generate an error. Useful "
+                     "for generating partial docs."),
+      llvm::cl::init(false),  //
+      llvm::cl::cat(option_category));
+
   llvm::Expected<clang::tooling::CommonOptionsParser> options_parser =
       clang::tooling::CommonOptionsParser::create(argc, argv, option_category,
                                                   llvm::cl::ZeroOrMore);
@@ -178,6 +185,7 @@ int main(int argc, const char** argv) {
       .output_root = std::filesystem::path(option_out.getValue()),
       .stylesheets = sus::vec(),
       .copy_files = sus::vec(),
+      .ignore_bad_code_links = option_ignore_bad_code_links.getValue()
   };
   if (option_project_name.getNumOccurrences() > 0) {
     gen_options.project_name = option_project_name.getValue();
@@ -201,7 +209,8 @@ int main(int argc, const char** argv) {
     fmt::println(stderr, "ERROR: {}", r.as_err());
     for (sus::Option<const sus::error::DynError&> source =
              sus::error::error_source(r.as_err());
-         source.is_some(); source = sus::error::error_source(source.as_value())) {
+         source.is_some();
+         source = sus::error::error_source(source.as_value())) {
       fmt::println(stderr, "  note: {}", source.as_value());
     }
   }

@@ -217,7 +217,7 @@ sus::Result<void, MarkdownToHtmlError> generate_function(
     const Options& options) noexcept {
   if (element.hidden()) return sus::ok();
 
-  ParseMarkdownPageState page_state(db);
+  ParseMarkdownPageState page_state(db, options);
 
   const std::filesystem::path path =
       construct_html_file_path_for_function(options.output_root, element);

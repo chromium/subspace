@@ -147,20 +147,25 @@ struct FunctionOverload {
   sus::Option<RequiresConstraints> constraints;
   sus::Vec<std::string> template_params;
   bool is_deleted = false;
+  // Used to look for uniqueness to avoid adding each forward decl and get
+  // multiple overloads of the same function.
+  std::string signature;
 
   // TODO: `noexcept` stuff from FunctionDecl::getExceptionSpecType().
 };
 
 struct FunctionElement : public CommentElement {
   explicit FunctionElement(sus::Vec<Namespace> containing_namespaces,
-                           Comment comment, std::string name, bool is_operator,
+                           Comment comment, std::string name, 
+                           std::string signature,
+                           bool is_operator,
                            clang::QualType return_qual_type,
                            sus::Option<RequiresConstraints> constraints,
                            sus::Vec<std::string> template_params,
                            bool is_deleted,
                            sus::Vec<FunctionParameter> parameters,
-                           sus::Option<std::string> overload_set, sus::Vec<std::string> record_path,
-                           u32 sort_key)
+                           sus::Option<std::string> overload_set,
+                           sus::Vec<std::string> record_path, u32 sort_key)
       : CommentElement(sus::move(containing_namespaces), sus::move(comment),
                        sus::move(name), sort_key),
         is_operator(is_operator),
@@ -174,6 +179,7 @@ struct FunctionElement : public CommentElement {
         .constraints = sus::move(constraints),
         .template_params = sus::move(template_params),
         .is_deleted = is_deleted,
+        .signature = sus::move(signature),
     });
   }
 
@@ -354,7 +360,8 @@ struct RecordId {
 };
 
 struct FunctionId {
-  explicit FunctionId(std::string name, bool is_static, std::string overload_set)
+  explicit FunctionId(std::string name, bool is_static,
+                      std::string overload_set)
       : name(sus::move(name)),
         is_static(is_static),
         overload_set(sus::move(overload_set)) {}
@@ -720,8 +727,8 @@ inline ConceptId key_for_concept(clang::ConceptDecl* decl) noexcept {
   return ConceptId(decl->getNameAsString());
 }
 
-inline FunctionId key_for_function(clang::FunctionDecl* decl,
-                                   sus::Option<std::string> overload_set) noexcept {
+inline FunctionId key_for_function(
+    clang::FunctionDecl* decl, sus::Option<std::string> overload_set) noexcept {
   bool is_static = [&]() {
     if (auto* mdecl = clang::dyn_cast<clang::CXXMethodDecl>(decl))
       return mdecl->isStatic();

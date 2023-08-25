@@ -58,6 +58,7 @@ class SubDocGenTest : public testing::Test {
             }(),
         .stylesheets = sus::vec("../subdoc-test-style.css"),
         .copy_files = sus::vec(),
+        .ignore_bad_code_links = false,
     };
     sus::result::Result<void, sus::Box<sus::error::DynError>> r =
         subdoc::gen::generate(sus::move(result).unwrap(), options);

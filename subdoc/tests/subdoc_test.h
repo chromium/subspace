@@ -20,6 +20,7 @@
 #include "googletest/include/gtest/gtest.h"
 #include "subdoc/lib/database.h"
 #include "subdoc/lib/gen/markdown_to_html.h"
+#include "subdoc/lib/gen/options.h"
 #include "subdoc/lib/parse_comment.h"
 #include "subdoc/lib/run.h"
 #include "subdoc/tests/cpp_version.h"
@@ -121,8 +122,10 @@ class SubDocTest : public testing::Test {
       return false;
     }
 
+    auto options = subdoc::gen::Options();
     auto page_state = subdoc::gen::ParseMarkdownPageState{
         .db = db,
+        .options = options,
         .self_link_counts = self_link_counts.take().unwrap(),
     };
     sus::Result<std::string, subdoc::gen::MarkdownToHtmlError> html_result =

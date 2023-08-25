@@ -520,12 +520,17 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
             sus::Option<std::string> overload_set =
                 sus::clone(comment.attrs.overload_set);
 
+            std::string signature;
+            for (clang::ParmVarDecl* p : decl->parameters()) {
+              signature += p->getOriginalType().getAsString();
+            }
+
             auto fe = FunctionElement(
                 iter_namespace_path(decl).collect_vec(), sus::move(comment),
-                sus::move(function_name), decl->isOverloadedOperator(),
-                decl->getReturnType(), sus::move(constraints),
-                sus::move(template_params), decl->isDeleted(),
-                sus::move(params), sus::move(overload_set),
+                sus::move(function_name), sus::move(signature),
+                decl->isOverloadedOperator(), decl->getReturnType(),
+                sus::move(constraints), sus::move(template_params),
+                decl->isDeleted(), sus::move(params), sus::move(overload_set),
                 sus::move(record_path),
                 decl->getASTContext().getSourceManager().getFileOffset(
                     decl->getLocation()));
@@ -627,7 +632,13 @@ class Visitor : public clang::RecursiveASTVisitor<Visitor> {
       ::sus::check_with_message(
           db_element.overloads.len() == 1u,
           *"Expected to add FunctionElement with 1 overload");
-      db_map.at(key).overloads.push(sus::move(db_element.overloads[0u]));
+
+      bool exists = db_map.at(key).overloads.iter().any(
+          [&db_element](const FunctionOverload& overload) {
+            return overload.signature == db_element.overloads[0u].signature;
+          });
+      if (!exists)
+        db_map.at(key).overloads.push(sus::move(db_element.overloads[0u]));
     }
   }
 

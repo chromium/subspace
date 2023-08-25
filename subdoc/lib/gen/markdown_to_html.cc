@@ -183,28 +183,34 @@ sus::Result<std::string, MarkdownToHtmlError> markdown_to_html_full(
         r = render(html, anchor.data(), u32::try_from(anchor.size()).unwrap());
       return r;
     } else {
-      userdata.error_message = sus::some(
+      std::string msg =
           fmt::format("unable to resolve code link '{}' to a C++ name",
-                      std::string_view(chars, size)));
-      return -1;
+                      std::string_view(chars, size));
+      if (userdata.page_state.options.ignore_bad_code_links) {
+        fmt::println("WARNING: {}", msg);
+        return 0;
+      } else {
+        userdata.error_message = sus::some(sus::move(msg));
+        return -1;
+      }
     }
   };
 
-  int result =
-      md_html(comment.text.data(), u32::try_from(comment.text.size()).unwrap(),
-              MD_HTML_CALLBACKS{
-                  process_output,
-                  render_self_link,
-                  record_self_link,
-                  render_code_link,
-              },
-              &data,
-              MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH |
-                  // Forked extensions.
-                  MD_FLAG_HEADERSELFLINKS | MD_FLAG_CODELINKS,
-              // We enable MD_ASSERT() to catch memory safety bugs, so
-              // ensure something gets printed should a problem occur.
-              MD_HTML_FLAG_DEBUG);
+  int result = md_html(
+      comment.text.data(), u32::try_from(comment.text.size()).unwrap(),
+      MD_HTML_CALLBACKS{
+          process_output,
+          render_self_link,
+          record_self_link,
+          render_code_link,
+      },
+      &data,
+      MD_FLAG_PERMISSIVEAUTOLINKS | MD_FLAG_TABLES | MD_FLAG_STRIKETHROUGH |
+          // Forked extensions.
+          MD_FLAG_HEADERSELFLINKS | MD_FLAG_CODELINKS,
+      // We enable MD_ASSERT() to catch memory safety bugs, so
+      // ensure something gets printed should a problem occur.
+      MD_HTML_FLAG_DEBUG);
   if (result != 0) {
     if (data.error_message.is_some()) {
       return sus::err(
