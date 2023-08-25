@@ -241,14 +241,14 @@ class [[sus_trivial_abi]] Box final {
   ///
   /// ```
   /// auto x = Box<std::string>("Hello");
-  /// auto* ptr = Box<std::string>::into_raw(sus::move(x));
+  /// auto* ptr = sus::move(x).into_raw();
   /// x = Box<std::string>::from_raw(unsafe_fn, ptr);
   /// ```
   /// Manual cleanup by explicitly running the destructor and deallocating the
   /// memory:
   /// ```
   /// auto x = Box<std::string>("Hello");
-  /// auto* p = Box<std::string>::into_raw(sus::move(x));
+  /// auto* p = sus::move(x).into_raw();
   /// delete p;
   /// ```
   constexpr T* into_raw() && noexcept {

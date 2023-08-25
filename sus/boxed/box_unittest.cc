@@ -325,4 +325,17 @@ TEST(Box, GTest) {
   EXPECT_EQ(testing::PrintToString(Box<i32>(12345)), "12345");
 }
 
+TEST(Box, Example_IntoRaw) {
+  {
+    auto x = Box<std::string>("Hello");
+    auto* ptr = sus::move(x).into_raw();
+    x = Box<std::string>::from_raw(unsafe_fn, ptr);
+  }
+  {
+    auto x = Box<std::string>("Hello");
+    auto* p = sus::move(x).into_raw();
+    delete p;
+  }
+}
+
 }  // namespace
