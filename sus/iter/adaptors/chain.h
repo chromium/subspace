@@ -111,6 +111,15 @@ class [[nodiscard]] Chain final
     }
   }
 
+  /// sus::iter::TrustedLen trait.
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(TrustedLen<InnerSizedIter> &&  //
+             TrustedLen<OtherSizedIter>)
+  {
+    return {};
+  }
+
   // No exact_size_hint() as the size of two iterators may overflow.
 
   // TODO: Implement nth(), nth_back(), etc...
@@ -121,10 +130,8 @@ class [[nodiscard]] Chain final
 
   explicit constexpr Chain(InnerSizedIter&& first_iter,
                            OtherSizedIter&& second_iter)
-      : first_iter_(
-            ::sus::Option<InnerSizedIter>(::sus::move(first_iter))),
-        second_iter_(
-            ::sus::Option<OtherSizedIter>(::sus::move(second_iter))) {}
+      : first_iter_(::sus::Option<InnerSizedIter>(::sus::move(first_iter))),
+        second_iter_(::sus::Option<OtherSizedIter>(::sus::move(second_iter))) {}
 
   // These are "fused" with `Option` so we don't need separate state to track
   // which part is already exhausted, and we get niche layout for `None` with

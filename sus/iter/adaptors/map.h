@@ -35,11 +35,11 @@ class [[nodiscard]] Map final
  public:
   using Item = ToItem;
 
-  // Type is Move and (can be) Clone.
+  /// Type is Move and (can be) Clone.
   Map(Map&&) = default;
   Map& operator=(Map&&) = default;
 
-  // sus::mem::Clone trait.
+  /// sus::mem::Clone trait.
   constexpr Map clone() const noexcept
     requires(::sus::mem::Clone<MapFn> &&  //
              ::sus::mem::Clone<InnerSizedIter>)
@@ -47,40 +47,34 @@ class [[nodiscard]] Map final
     return Map(::sus::clone(fn_), ::sus::clone(next_iter_));
   }
 
-  // sus::iter::Iterator trait.
-  constexpr Option<Item> next() noexcept {
-    Option<FromItem> item = next_iter_.next();
-    if (item.is_none()) {
-      return sus::none();
-    } else {
-      return sus::some(::sus::fn::call_mut(
-          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
-    }
-  }
+  /// sus::iter::Iterator trait.
+  constexpr Option<Item> next() noexcept { return next_iter_.next().map(fn_); }
 
   /// sus::iter::Iterator trait.
   constexpr SizeHint size_hint() const noexcept {
     return next_iter_.size_hint();
   }
 
-  // sus::iter::DoubleEndedIterator trait.
+  /// sus::iter::DoubleEndedIterator trait.
   constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, FromItem>)
   {
-    Option<FromItem> item = next_iter_.next_back();
-    if (item.is_none()) {
-      return sus::none();
-    } else {
-      return sus::some(::sus::fn::call_mut(
-          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
-    }
+    return next_iter_.next_back().map(fn_);
   }
 
-  // sus::iter::ExactSizeIterator trait.
+  /// sus::iter::ExactSizeIterator trait.
   constexpr usize exact_size_hint() const noexcept
     requires(ExactSizeIterator<InnerSizedIter, FromItem>)
   {
     return next_iter_.exact_size_hint();
+  }
+
+  /// sus::iter::TrustedLen trait.
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(TrustedLen<InnerSizedIter>)
+  {
+    return {};
   }
 
  private:

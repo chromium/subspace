@@ -34,11 +34,12 @@ namespace sus::collections {
 /// An iterator that consumes an `Array` and returns the items from it.
 ///
 /// This type is returned from `Array::into_iter()`.
-template <::sus::mem::Move ItemT, size_t N>
+template <class ItemT, size_t N>
 struct [[nodiscard]] ArrayIntoIter final
     : public ::sus::iter::IteratorBase<ArrayIntoIter<ItemT, N>, ItemT> {
  public:
   using Item = ItemT;
+  constexpr static usize Size = N;
 
   explicit constexpr ArrayIntoIter(Array<Item, N>&& array) noexcept
       : array_(::sus::move(array)) {}
@@ -69,8 +70,8 @@ struct [[nodiscard]] ArrayIntoIter final
   /// sus::iter::Iterator trait.
   constexpr ::sus::iter::SizeHint size_hint() const noexcept {
     ::sus::num::usize remaining = back_index_ - front_index_;
-    return ::sus::iter::SizeHint(
-        remaining, ::sus::Option<::sus::num::usize>(remaining));
+    return ::sus::iter::SizeHint(remaining,
+                                 ::sus::Option<::sus::num::usize>(remaining));
   }
 
   /// sus::iter::DoubleEndedIterator trait.
@@ -92,6 +93,13 @@ struct [[nodiscard]] ArrayIntoIter final
   /// sus::iter::ExactSizeIterator trait.
   constexpr ::sus::num::usize exact_size_hint() const noexcept {
     return back_index_ - front_index_;
+  }
+
+  /// sus::iter::TrustedLen trait.
+  /// #[doc.hidden]
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept {
+    return {};
   }
 
  private:

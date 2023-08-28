@@ -94,6 +94,14 @@ class [[nodiscard]] Take final
     return ::sus::ops::min(next_iter_.exact_size_hint(), n_);
   }
 
+  /// sus::iter::TrustedLen trait.
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(TrustedLen<InnerSizedIter>)
+  {
+    return {};
+  }
+
  private:
   template <class U, class V>
   friend class IteratorBase;

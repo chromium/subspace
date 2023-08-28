@@ -134,6 +134,15 @@ class IteratorOverRange final
         .unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
+  /// sus::iter::TrustedLen trait.
+  /// #[doc.hidden]
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(std::sized_sentinel_for<B, E>)
+  {
+    return {};
+  }
+
   // TODO: If std::random_access_range<B> then implement more efficient nth(),
   // nth_back().
 

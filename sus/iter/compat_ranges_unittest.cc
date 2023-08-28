@@ -131,6 +131,7 @@ TEST(CompatRanges, FromRange) {
     static_assert(sus::iter::Iterator<decltype(it), i32&>);
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32&>);
     static_assert(sus::iter::ExactSizeIterator<decltype(it), i32&>);
+    static_assert(sus::iter::TrustedLen<decltype(it)>);
     static_assert(sus::mem::Move<decltype(it)>);
     static_assert(!sus::mem::Copy<decltype(it)>);
     static_assert(sus::mem::Clone<decltype(it)>);
@@ -143,6 +144,7 @@ TEST(CompatRanges, FromRange) {
     sus::iter::Iterator<i32&> auto it = sus::iter::from_range(v);
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), i32&>);
     static_assert(sus::iter::ExactSizeIterator<decltype(it), i32&>);
+    static_assert(sus::iter::TrustedLen<decltype(it)>);
 
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);
@@ -169,6 +171,7 @@ TEST(CompatRanges, FromRange) {
     sus::iter::Iterator<const i32&> auto it = sus::iter::from_range(v);
     static_assert(sus::iter::DoubleEndedIterator<decltype(it), const i32&>);
     static_assert(sus::iter::ExactSizeIterator<decltype(it), const i32&>);
+    static_assert(sus::iter::TrustedLen<decltype(it)>);
 
     EXPECT_EQ(it.size_hint(), sus::iter::SizeHint(3u, sus::some(3u)));
     EXPECT_EQ(it.exact_size_hint(), 3u);

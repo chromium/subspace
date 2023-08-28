@@ -35,6 +35,9 @@
 #include "sus/collections/slice.h"
 #include "sus/fn/fn_concepts.h"
 #include "sus/fn/fn_ref.h"
+#include "sus/iter/adaptors/by_ref.h"
+#include "sus/iter/adaptors/enumerate.h"
+#include "sus/iter/adaptors/take.h"
 #include "sus/iter/from_iterator.h"
 #include "sus/iter/into_iterator.h"
 #include "sus/iter/iterator_ref.h"
@@ -125,7 +128,7 @@ class Vec final {
     if constexpr (sizeof...(values) > 0u) {
       data_ = std::allocator_traits<A>::allocate(allocator_, sizeof...(values));
     }
-    (..., push(::sus::forward<Ts>(values)));
+    (..., push_with_capacity_internal(::sus::forward<Ts>(values)));
   }
 
   /// Creates a Vec<T> with at least the specified capacity.
@@ -190,7 +193,7 @@ class Vec final {
     requires(sus::mem::Clone<T>)
   {
     auto v = Vec::with_capacity(slice.len());
-    for (const T& t : slice) v.push(::sus::clone(t));
+    for (const T& t : slice) v.push_with_capacity_internal(::sus::clone(t));
     return v;
   }
   /// #[doc.overloads=from.slice]
@@ -198,7 +201,7 @@ class Vec final {
     requires(sus::mem::Clone<T>)
   {
     auto v = Vec::with_capacity(slice.len());
-    for (const T& t : slice) v.push(::sus::clone(t));
+    for (const T& t : slice) v.push_with_capacity_internal(::sus::clone(t));
     return v;
   }
 
@@ -216,7 +219,7 @@ class Vec final {
     auto s = sus::Slice<C>::from(arr);
     auto v = Vec::with_capacity(N - 1);
     for (auto c : s[sus::ops::RangeTo<usize>(N - 1)])
-      v.push(sus::mog<uint8_t>(c));
+      v.push_with_capacity_internal(sus::mog<uint8_t>(c));
     ::sus::check(s[N - 1] == 0);  // Null terminated.
     return v;
   }
@@ -234,8 +237,7 @@ class Vec final {
         iter_refs_(o.iter_refs_.take_for_owner()),
         data_(::sus::mem::replace(o.data_, nullptr)),
         len_(::sus::mem::replace(o.len_, kMovedFromLen)) {
-    check(!is_moved_from());
-    check(!has_iterators());
+    check(!is_moved_from() && !has_iterators());
   }
   /// sus::mem::Move trait.
   /// #[doc.overloads=vec.move]
@@ -264,13 +266,11 @@ class Vec final {
         std::allocator_traits<A>::select_on_container_copy_construction(
             allocator_),
         capacity_);
-    const auto self_len = len();
-    for (usize i; i < self_len; i += 1u) {
-      std::construct_at(
-          v.data_ + i,  //
-          ::sus::clone(get_unchecked(::sus::marker::unsafe_fn, i)));
+    const auto self_len = len_;
+    for (usize i = self_len; i > 0u; i -= 1u) {
+      std::construct_at(v.data_ + i - 1u, ::sus::clone(*(data_ + i - 1u)));
     }
-    v.set_len(::sus::marker::unsafe_fn, self_len);
+    v.len_ = self_len;
     return v;
   }
 
@@ -283,12 +283,14 @@ class Vec final {
     requires(!std::allocator_traits<
              A>::propagate_on_container_copy_assignment::value)
   {
+    check(!is_moved_from() && !has_iterators());
+
     // Drop anything in `this` that will not be overwritten.
     truncate(source.len());
 
     // len() <= source.len() due to the truncate above, so the
     // slices here are always in-bounds.
-    auto [init, tail] = source.split_at(len());
+    auto [init, tail] = source.split_at(len_);
 
     // Reuse the contained values' allocations/resources.
     clone_from_slice(init);
@@ -308,11 +310,10 @@ class Vec final {
   /// Panics if the starting point is greater than the end point or if
   /// the end point is greater than the length of the vector.
   constexpr Drain<T> drain(::sus::ops::RangeBounds<usize> auto range) noexcept {
-    check(!is_moved_from());
-    check(!has_iterators());
+    check(!is_moved_from() && !has_iterators());
     ::sus::ops::Range<usize> bounded_range =
         range.start_at(range.start_bound().unwrap_or(0u))
-            .end_at(range.end_bound().unwrap_or(len()));
+            .end_at(range.end_bound().unwrap_or(len_));
     return Drain<T>(::sus::move(*this), bounded_range);
   }
 
@@ -329,8 +330,7 @@ class Vec final {
   /// `from_raw_parts()` function, allowing the destructor to perform the
   /// cleanup.
   constexpr ::sus::Tuple<T*, usize, usize> into_raw_parts() && noexcept {
-    check(!is_moved_from());
-    check(!has_iterators());
+    check(!is_moved_from() && !has_iterators());
     return sus::tuple(::sus::mem::replace(data_, nullptr),
                       ::sus::mem::replace(len_, kMovedFromLen),
                       ::sus::mem::replace(capacity_, kMovedFromCapacity));
@@ -350,15 +350,14 @@ class Vec final {
   /// Note that this method has no effect on the allocated capacity of the
   /// vector.
   constexpr void clear() noexcept {
-    check(!is_moved_from());
-    check(!has_iterators());
+    check(!is_moved_from() && !has_iterators());
     destroy_storage_objects();
-    set_len(::sus::marker::unsafe_fn, 0_usize);
+    len_ = 0u;
   }
 
   /// Extends the `Vec` with the contents of an iterator.
   ///
-  /// sus::iter::Extend<const T&> trait.
+  /// [`Extend<const T&>`]($sus::iter::Extend) trait.
   ///
   /// If `T` is `Clone` but not `Copy`, then the elements should be cloned
   /// explicitly by the caller (possibly through `Iterator::cloned()`). Then use
@@ -369,41 +368,120 @@ class Vec final {
     requires(sus::mem::Copy<T> &&  //
              ::sus::mem::IsMoveRef<decltype(ii)>)
   {
-    check(!is_moved_from());
-    check(!has_iterators());
+    check(!is_moved_from() && !has_iterators());
+
+    // Prevent mutation from other callers inside this method.
+    sus::iter::IterRef ref = iter_refs_.to_iter_from_owner();
+
     // TODO: There's some serious improvements we can do here when the iterator
     // is over contiguous elements. See
     // https://doc.rust-lang.org/src/alloc/vec/spec_extend.rs.html
     auto&& it = sus::move(ii).into_iter();
-    reserve(it.size_hint().lower);
-    for (const T& v : ::sus::move(it)) {
-      push(v);
+    const usize self_len = len_;
+    if constexpr (sus::iter::TrustedLen<decltype(it)>) {
+      const auto [lower, upper] = it.size_hint();
+      // If this fails there are more than usize elements in the iterator, but
+      // the max container size is isize::MAX. We can't reserve that many so
+      // panic now.
+      ::sus::check_with_message(upper.is_some(), *"capacity overflow");
+      sus_debug_check(lower == upper.as_value());
+      {
+        T* ptr = reserve_internal(lower) + self_len;
+        for (const T& t : it) {
+          std::construct_at(ptr, t);
+          ptr += 1u;
+        }
+      }
+      // Move `len_` last so the new elements are not visible before being
+      // constructed.
+      len_ = self_len + lower;
+    } else {
+      const usize lower = it.size_hint().lower;
+      if (sus::Option<const T&> first = it.next(); first.is_some()) {
+        const usize r = sus::ops::max(lower, 1_usize);
+        T* ptr = reserve_internal(r) + self_len;
+        std::construct_at(ptr, sus::move(first).unwrap());
+        // The `1u` accounts for `first` which was already appended.
+        usize inserted = 1u;
+        for (const T& t : it.by_ref().take(r - 1u)) {
+          std::construct_at(ptr + inserted, t);
+          inserted += 1u;
+        }
+        // Move `len_` last so the new elements are not visible before being
+        // constructed. Note that `reserve_allocated_internal` below needs the
+        // correct `len_` to reserve.
+        len_ = self_len + inserted;
+        for (const T& t : it) {
+          reserve_allocated_internal(1u);
+          push_with_capacity_internal(t);
+        }
+      }
     }
   }
 
   /// Extends the `Vec` with the contents of an iterator.
   ///
-  /// sus::iter::Extend<T> trait.
+  /// [`Extend<T>`]($sus::iter::Extend) trait.
   ///
   /// #[doc.overloads=vec.extend.val]
   constexpr void extend(sus::iter::IntoIterator<T> auto&& ii) noexcept
     requires(::sus::mem::IsMoveRef<decltype(ii)>)
   {
-    check(!is_moved_from());
-    check(!has_iterators());
+    check(!is_moved_from() && !has_iterators());
+
+    // Prevent mutation from other callers inside this method.
+    sus::iter::IterRef ref = iter_refs_.to_iter_from_owner();
+
     // TODO: There's some serious improvements we can do here when the iterator
     // is over contiguous elements. See
     // https://doc.rust-lang.org/src/alloc/vec/spec_extend.rs.html
     auto&& it = sus::move(ii).into_iter();
-    reserve(it.size_hint().lower);
-    for (T&& v : ::sus::move(it)) {
-      push(::sus::move(v));
+    const usize self_len = len_;
+    if constexpr (sus::iter::TrustedLen<decltype(it)>) {
+      const auto [lower, upper] = it.size_hint();
+      // If this fails there are more than usize elements in the iterator, but
+      // the max container size is isize::MAX. We can't reserve that many so
+      // panic now.
+      ::sus::check_with_message(upper.is_some(), *"capacity overflow");
+      sus_debug_check(lower == upper.as_value());
+      {
+        T* ptr = reserve_internal(lower) + self_len;
+        for (T&& t : it) {
+          std::construct_at(ptr, ::sus::move(t));
+          ptr += 1u;
+        }
+      }
+      // Move `len_` last so the new elements are not visible before being
+      // constructed.
+      len_ = self_len + lower;
+    } else {
+      const usize lower = it.size_hint().lower;
+      if (sus::Option<T> first = it.next(); first.is_some()) {
+        const usize r = sus::ops::max(lower, 1_usize);
+        T* ptr = reserve_internal(r) + self_len;
+        std::construct_at(ptr, sus::move(first).unwrap());
+        // The `1u` accounts for `first` which was already appended.
+        usize inserted = 1u;
+        for (T&& t : it.by_ref().take(r - 1u)) {
+          std::construct_at(ptr + inserted, ::sus::move(t));
+          inserted += 1u;
+        }
+        // Move `len_` last so the new elements are not visible before being
+        // constructed. Note that `reserve_allocated_internal` below needs the
+        // correct `len_` to reserve.
+        len_ = self_len + inserted;
+        for (T&& t : it) {
+          reserve_allocated_internal(1u);
+          push_with_capacity_internal(::sus::move(t));
+        }
+      }
     }
   }
 
   /// Extends the Vec by cloning the contents of a slice.
   ///
-  /// If `T` is `TrivialCopy`, then the copy is done by `memcpy()`.
+  /// If `T` is [`TrivialCopy`]($sus::mem::TrivialCopy), then the copy is done
+  /// by `memcpy`.
   ///
   /// # Panics
   /// If the Slice is non-empty and points into the Vec, the function will
@@ -411,29 +489,29 @@ class Vec final {
   constexpr void extend_from_slice(::sus::collections::Slice<T> s) noexcept
     requires(sus::mem::Clone<T>)
   {
-    check(!is_moved_from());
-    check(!has_iterators());
+    check(!is_moved_from() && !has_iterators());
     if (s.is_empty()) {
       return;
     }
-    const auto self_len = len();
+    const auto self_len = len_;
     const auto slice_len = s.len();
     const T* slice_ptr = s.as_ptr();
     if (is_alloced()) {
-      const T* vec_ptr = data_;
       // If this check fails, the Slice aliases with the Vec, and the
       // reserve() call below would invalidate the Slice.
       //
       // TODO: Should we handle aliasing with a temp buffer?
-      ::sus::check(!(slice_ptr >= vec_ptr && slice_ptr <= vec_ptr + self_len));
+      ::sus::check(!(slice_ptr >= data_ && slice_ptr <= data_ + self_len));
+      reserve_allocated_internal(slice_len);
+    } else {
+      reserve_internal(slice_len);
     }
-    reserve(slice_len);
     if constexpr (sus::mem::TrivialCopy<T>) {
       ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, slice_ptr,
                                       data_ + self_len, slice_len);
-      set_len(::sus::marker::unsafe_fn, self_len + slice_len);
+      len_ += slice_len;
     } else {
-      for (const T& t : s) push(::sus::clone(t));
+      for (const T& t : s) push_with_capacity_internal(::sus::clone(t));
     }
   }
 
@@ -441,65 +519,27 @@ class Vec final {
   /// vector can hold without requiring reallocation) to `cap`, if there is not
   /// already room. Does nothing if capacity is already sufficient.
   ///
-  /// This is similar to std::vector::reserve().
+  /// This is similar to [`std::vector::reserve()`](
+  /// https://en.cppreference.com/w/cpp/container/vector/reserve).
   ///
   /// # Panics
   /// Panics if the new capacity exceeds `isize::MAX()` bytes.
   constexpr void grow_to_exact(usize cap) noexcept {
-    check(!is_moved_from());
-    check(!has_iterators());
-    if (cap <= capacity_) return;  // Nothing to do.
-    const auto bytes = ::sus::mem::size_of<T>() * cap;
-    check(bytes <= ::sus::mog<usize>(isize::MAX));
-
-    if (!is_alloced()) {
-      data_ = std::allocator_traits<A>::allocate(allocator_, cap);
-      capacity_ = cap;
-      return;
-    }
-
-    T* new_allocation =
-        std::allocator_traits<std::allocator<T>>::allocate(allocator_, cap);
-    T* old_t = data_;
-    T* new_t = new_allocation;
-    if constexpr (::sus::mem::relocate_by_memcpy<T>) {
-      if (!std::is_constant_evaluated()) {
-        // SAFETY: new_t was just allocated above, so does not alias
-        // with `old_t` which was the previous allocation.
-        ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, old_t, new_t,
-                                        capacity_);
-        std::allocator_traits<std::allocator<T>>::deallocate(allocator_, data_,
-                                                             capacity_);
-        data_ = new_allocation;
-        capacity_ = cap;
-        return;
-      }
-    }
-
-    const ::sus::num::usize self_len = len();
-    for (::sus::num::usize i; i < self_len; i += 1u) {
-      std::construct_at(new_t, ::sus::move(*old_t));
-      std::destroy_at(old_t);
-      ++old_t;
-      ++new_t;
-    }
-    std::allocator_traits<std::allocator<T>>::deallocate(allocator_, data_,
-                                                         capacity_);
-    data_ = new_allocation;
-    capacity_ = cap;
+    check(!is_moved_from() && !has_iterators());
+    reserve_exact_internal(cap - len_);
   }
 
   /// Removes the last element from a vector and returns it, or None if it is
   /// empty.
   constexpr Option<T> pop() noexcept {
-    check(!is_moved_from());
-    check(!has_iterators());
-    const auto self_len = len();
+    check(!is_moved_from() && !has_iterators());
+    const auto self_len = len_;
     if (self_len > 0u) {
       auto o = Option<T>(sus::move(
           get_unchecked_mut(::sus::marker::unsafe_fn, self_len - 1u)));
-      std::destroy_at(as_mut_ptr() + self_len - 1u);
-      set_len(::sus::marker::unsafe_fn, self_len - 1u);
+      if constexpr (!std::is_trivially_destructible_v<T>)
+        std::destroy_at(as_mut_ptr() + self_len - 1u);
+      len_ -= 1u;
       return o;
     } else {
       return Option<T>();
@@ -518,12 +558,9 @@ class Vec final {
   constexpr void push(T t) noexcept
     requires(::sus::mem::Move<T>)
   {
-    check(!is_moved_from());
-    check(!has_iterators());
-    reserve(1_usize);
-    const auto self_len = len();
-    std::construct_at(data_ + self_len, ::sus::move(t));
-    set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
+    check(!is_moved_from() && !has_iterators());
+    reserve_internal(1_usize);
+    push_with_capacity_internal(::sus::move(t));
   }
 
   /// Reserves capacity for at least `additional` more elements to be inserted
@@ -538,19 +575,15 @@ class Vec final {
   /// # Panics
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
   constexpr void reserve(usize additional) noexcept {
-    check(!is_moved_from());
-    check(!has_iterators());
-    if (len() + additional <= capacity_) return;  // Nothing to do.
-    // TODO: Consider rounding up to nearest 2^N for some N?
-    grow_to_exact(apply_growth_function(additional));
+    check(!is_moved_from() && !has_iterators());
+    reserve_internal(additional);
   }
 
   /// Reserves the minimum capacity for at least `additional` more elements to
   /// be inserted in the given Vec<T>. Unlike reserve, this will not
   /// deliberately over-allocate to speculatively avoid frequent allocations.
-  /// After calling reserve_exact, capacity will be greater than or equal to
-  /// self.len() + additional. Does nothing if the capacity is already
-  /// sufficient.
+  /// After calling `reserve_exact`, capacity will be greater than or equal to
+  /// `len() + additional`. Does nothing if the capacity is already sufficient.
   ///
   /// Note that the allocator may give the collection more space than it
   /// requests. Therefore, capacity can not be relied upon to be precisely
@@ -559,11 +592,8 @@ class Vec final {
   /// # Panics
   /// Panics if the new capacity exceeds `isize::MAX` bytes.
   constexpr void reserve_exact(usize additional) noexcept {
-    check(!is_moved_from());
-    check(!has_iterators());
-    const usize cap = len() + additional;
-    if (cap <= capacity_) return;  // Nothing to do.
-    grow_to_exact(cap);
+    check(!is_moved_from() && !has_iterators());
+    reserve_exact_internal(additional);
   }
 
   /// Forces the length of the vector to new_len.
@@ -599,9 +629,11 @@ class Vec final {
   /// vector.
   constexpr void truncate(usize len) noexcept {
     if (len > len_) return;
-    auto remaining_len = len_ - len;
-    for (usize i = remaining_len; i > 0u; i -= 1u)
-      std::destroy_at(data_ + len_ - i);
+    const auto remaining_len = len_ - len;
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+      for (usize i = remaining_len; i > 0u; i -= 1u)
+        std::destroy_at(data_ + len + i - 1u);
+    }
     len_ = len;
   }
 
@@ -625,12 +657,10 @@ class Vec final {
              !(sizeof...(Us) == 1u &&
                (... && std::same_as<std::decay_t<T>, std::decay_t<Us>>)))
   {
-    check(!is_moved_from());
-    check(!has_iterators());
-    reserve(1_usize);
-    const auto self_len = len();
-    std::construct_at(data_ + self_len, ::sus::forward<Us>(args)...);
-    set_len(::sus::marker::unsafe_fn, self_len + 1_usize);
+    check(!is_moved_from() && !has_iterators());
+    reserve_internal(1_usize);
+    std::construct_at(data_ + len_, ::sus::forward<Us>(args)...);
+    len_ += 1u;
   }
 
   // Returns a slice that references all the elements of the vector as const
@@ -694,7 +724,7 @@ class Vec final {
   /// If the index `i` is beyond the end of the Vec, the function will panic.
   /// #[doc.overloads=vec.index.usize]
   sus_pure constexpr const T& operator[](::sus::num::usize i) const& noexcept {
-    ::sus::check(i < len());
+    ::sus::check(i < len_);
     return *(as_ptr() + i);
   }
   constexpr const T& operator[](::sus::num::usize i) && = delete;
@@ -705,7 +735,7 @@ class Vec final {
   /// If the index `i` is beyond the end of the Vec, the function will panic.
   /// #[doc.overloads=vec.index_mut.usize]
   sus_pure constexpr T& operator[](::sus::num::usize i) & noexcept {
-    check(i < len());
+    check(i < len_);
     return *(as_mut_ptr() + i);
   }
 
@@ -724,7 +754,7 @@ class Vec final {
   sus_pure constexpr Slice<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range)
       const& noexcept {
-    const ::sus::num::usize length = len();
+    const ::sus::num::usize length = len_;
     const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
     const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
     const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
@@ -753,7 +783,7 @@ class Vec final {
   /// #[doc.overloads=vec.index_mut.range]
   sus_pure constexpr SliceMut<T> operator[](
       const ::sus::ops::RangeBounds<::sus::num::usize> auto range) & noexcept {
-    const ::sus::num::usize length = len();
+    const ::sus::num::usize length = len_;
     const ::sus::num::usize rstart = range.start_bound().unwrap_or(0u);
     const ::sus::num::usize rend = range.end_bound().unwrap_or(length);
     const ::sus::num::usize rlen = rend >= rstart ? rend - rstart : 0u;
@@ -800,6 +830,8 @@ class Vec final {
 #include "__private/slice_mut_methods.inc"
 
  private:
+  friend sus::iter::FromIteratorImpl<Vec>;
+
   enum FromParts { FROM_PARTS };
   constexpr Vec(FromParts, std::allocator<T> alloc, usize cap, T* ptr,
                 usize len)
@@ -817,26 +849,22 @@ class Vec final {
         data_(nullptr),
         len_(0u) {
     // TODO: Consider rounding up to nearest 2^N for some N? A min capacity?
-    grow_to_exact(cap);
+    if (cap > 0u) alloc_internal_check_cap(cap);
   }
 
   constexpr usize apply_growth_function(usize additional) const noexcept {
-    usize goal = additional + len();
+    usize goal = additional + len_;
     usize cap = capacity_;
     // TODO: What is a good growth function? Steal from WTF::Vector?
     while (cap < goal) {
       cap = (cap + 1u) * 3u;
-      auto bytes = ::sus::mem::size_of<T>() * cap;
-      check(bytes <= ::sus::mog<usize>(isize::MAX));
     }
     return cap;
   }
 
   constexpr void destroy_storage_objects() {
     if constexpr (!std::is_trivially_destructible_v<T>) {
-      const auto self_len = len();
-      for (::sus::num::usize i; i < self_len; i += 1u)
-        std::destroy_at(data_ + i);
+      for (usize i = len_; i > 0u; i -= 1u) std::destroy_at(data_ + i - 1u);
     }
   }
 
@@ -846,6 +874,76 @@ class Vec final {
                                                          capacity_);
   }
 
+  /// Requires that there is capacity present for `t` already, and that
+  /// Vec is in a valid state to mutate.
+  constexpr void push_with_capacity_internal(const T& t) noexcept {
+    std::construct_at(data_ + len_, t);
+    len_ += 1u;
+  }
+  constexpr void push_with_capacity_internal(T&& t) noexcept {
+    std::construct_at(data_ + len_, ::sus::move(t));
+    len_ += 1u;
+  }
+
+  /// Requires that:
+  /// * Vec is in a valid state to mutate
+  constexpr T* reserve_internal(usize additional) noexcept {
+    T* new_data;
+    if (len_ + additional > capacity_) {
+      if (!is_alloced()) {
+        new_data = alloc_internal_check_cap(additional);
+      } else {
+        new_data =
+            grow_to_internal_check_cap(apply_growth_function(additional));
+      }
+    } else {
+      new_data = data_;
+    }
+    return new_data;
+  }
+
+  /// Requires that:
+  /// * Vec is in a valid state to mutate
+  constexpr T* reserve_exact_internal(usize additional) noexcept {
+    const usize cap = len_ + additional;
+    T* new_data;
+    if (cap > capacity_) {
+      if (!is_alloced())
+        new_data = alloc_internal_check_cap(cap);
+      else
+        new_data = grow_to_internal_check_cap(cap);
+    } else {
+      new_data = data_;
+    }
+    return new_data;
+  }
+
+  /// Requires that:
+  /// * Vec is already allocated.
+  /// * Vec is in a valid state to mutate
+  constexpr T* reserve_allocated_internal(usize additional) noexcept {
+    sus_debug_check(is_alloced());
+    T* new_data;
+    if (len_ + additional > capacity_) {
+      // TODO: Consider rounding up to nearest 2^N for some N?
+      new_data = grow_to_internal_check_cap(apply_growth_function(additional));
+    } else {
+      new_data = data_;
+    }
+    return new_data;
+  }
+
+  /// Requires that:
+  /// * Vec is NOT already allocated.
+  /// * Vec is in a valid state to mutate
+  constexpr T* alloc_internal_check_cap(usize cap) noexcept;
+
+  /// Requires that:
+  /// * `cap` > `capacity()`
+  /// * Vec is already allocated
+  /// * Vec is in a valid state to mutate
+  constexpr T* grow_to_internal_check_cap(usize additional) noexcept;
+
   /// Checks if Vec has storage allocated.
   constexpr inline bool is_alloced() const noexcept {
     return capacity_ > 0_usize;
@@ -853,7 +951,7 @@ class Vec final {
 
   /// Checks if Vec has been moved from.
   constexpr inline bool is_moved_from() const noexcept {
-    return len() > capacity_;
+    return len_ > capacity_;
   }
 
   constexpr inline bool has_iterators() const noexcept {
@@ -893,6 +991,49 @@ class Vec final {
 #define _self Vec<T>
 #include "__private/slice_methods_impl.inc"
 
+template <class T>
+constexpr T* Vec<T>::alloc_internal_check_cap(usize cap) noexcept {
+  sus_debug_check(!is_alloced());
+  ::sus::check(cap <= ::sus::mog<usize>(isize::MAX));
+  T* const new_data = std::allocator_traits<A>::allocate(allocator_, cap);
+  data_ = new_data;
+  capacity_ = cap;
+  return new_data;
+}
+
+template <class T>
+constexpr T* Vec<T>::grow_to_internal_check_cap(usize cap) noexcept {
+  sus_debug_check(is_alloced());
+  sus_debug_check(cap > capacity_);
+  ::sus::check(cap <= ::sus::mog<usize>(isize::MAX));
+  T* const new_data =
+      std::allocator_traits<std::allocator<T>>::allocate(allocator_, cap);
+  if constexpr (::sus::mem::relocate_by_memcpy<T>) {
+    if (!std::is_constant_evaluated()) {
+      // SAFETY: new_t was just allocated above, so does not alias
+      // with `old_t` which was the previous allocation.
+      ::sus::ptr::copy_nonoverlapping(::sus::marker::unsafe_fn, data_, new_data,
+                                      capacity_);
+      std::allocator_traits<std::allocator<T>>::deallocate(allocator_, data_,
+                                                           capacity_);
+      data_ = new_data;
+      capacity_ = cap;
+      return new_data;
+    }
+  }
+
+  for (usize i = len_; i > 0u; i -= 1u) {
+    std::construct_at(new_data + i - 1u, ::sus::move(*(data_ + i - 1u)));
+    if constexpr (!std::is_trivially_destructible_v<T>)
+      std::destroy_at(data_ + i - 1u);
+  }
+  std::allocator_traits<std::allocator<T>>::deallocate(allocator_, data_,
+                                                       capacity_);
+  data_ = new_data;
+  capacity_ = cap;
+  return new_data;
+}
+
 // Implicit for-ranged loop iteration via `Vec::iter()`.
 using ::sus::iter::__private::begin;
 using ::sus::iter::__private::end;
@@ -926,14 +1067,12 @@ template <class T>
 struct sus::iter::FromIteratorImpl<::sus::collections::Vec<T>> {
   /// Constructs a vector by taking all the elements from the iterator.
   static constexpr ::sus::collections::Vec<T> from_iter(
-      ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept
-    requires(::sus::mem::Move<T>)
+      ::sus::iter::IntoIterator<T> auto&& ii) noexcept
+    requires(::sus::mem::Move<T> &&  //
+             ::sus::mem::IsMoveRef<T &&>)
   {
-    auto&& iter = sus::move(into_iter).into_iter();
-    auto [lower, upper] = iter.size_hint();
-    auto v = ::sus::collections::Vec<T>::with_capacity(
-        ::sus::move(upper).unwrap_or(lower));
-    for (T t : iter) v.push(::sus::move(t));
+    auto v = ::sus::collections::Vec<T>();
+    v.extend(::sus::move(ii));
     return v;
   }
 };

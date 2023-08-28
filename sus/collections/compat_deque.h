@@ -26,7 +26,7 @@ struct sus::iter::FromIteratorImpl<std::deque<T, Allocator>> {
     auto&& iter = sus::move(into_iter).into_iter();
     auto [lower, upper] = iter.size_hint();
     auto v = std::deque<T, Allocator>();
-    for (T t : iter) v.push_back(::sus::move(t));
+    for (T&& t : iter) v.push_back(::sus::move(t));
     return v;
   }
 };

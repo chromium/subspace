@@ -14,6 +14,7 @@
 
 add_executable(bench
     "bench_simd_chunks.cc"
+    "bench_vec_map.cc"
 )
 
 subspace_test_default_compile_options(bench)

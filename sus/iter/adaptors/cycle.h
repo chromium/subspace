@@ -56,13 +56,13 @@ class [[nodiscard]] Cycle final
 
   /// sus::iter::Iterator trait.
   constexpr SizeHint size_hint() const noexcept {
-    SizeHint sz = original_.size_hint();
-    if (sz.lower != 0u) {
+    auto [lower, upper] = original_.size_hint();
+    if (lower != 0u) {
       // More than 0 items, so it's infinite.
       return SizeHint(usize::MAX, ::sus::Option<usize>());
     }
     // Posssibly 0 items, lower limit is 0.
-    return SizeHint(0u, ::sus::move(sz).upper.map_or_else(
+    return SizeHint(0u, ::sus::move(upper).map_or_else(
                             // No upper limit, so we have no limit either.
                             [] { return ::sus::Option<usize>(); },
                             [](usize u) {
@@ -73,6 +73,14 @@ class [[nodiscard]] Cycle final
                                 // Non-zero upper limit, will cycle forever.
                                 return ::sus::Option<usize>();
                             }));
+  }
+
+  /// sus::iter::TrustedLen trait.
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(TrustedLen<InnerSizedIter>)
+  {
+    return {};
   }
 
  private:
