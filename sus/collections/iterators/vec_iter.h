@@ -85,6 +85,13 @@ struct [[nodiscard]] VecIntoIter final
     return back_index_ - front_index_;
   }
 
+  /// sus::iter::TrustedLen trait.
+  /// #[doc.hidden]
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept {
+    return {};
+  }
+
  private:
   // Ctor for Clone.
   constexpr VecIntoIter(Vec<Item>&& vec, usize front, usize back) noexcept

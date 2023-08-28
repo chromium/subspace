@@ -98,6 +98,13 @@ struct [[nodiscard]] [[sus_trivial_abi]] SliceIter final
         .unwrap_unchecked(::sus::marker::unsafe_fn);
   }
 
+  /// sus::iter::TrustedLen trait.
+  /// #[doc.hidden]
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept {
+    return {};
+  }
+
  private:
   [[sus_no_unique_address]] ::sus::iter::IterRef ref_;
   const RawItem* ptr_;
@@ -129,7 +136,7 @@ struct [[sus_trivial_abi]] SliceIterMut final
 
  public:
   explicit constexpr SliceIterMut(::sus::iter::IterRef ref, RawItem* start,
-                                   usize len) noexcept
+                                  usize len) noexcept
       : ref_(::sus::move(ref)), ptr_(start), end_(start + len) {
     // Wrap-around would be an invalid allocation and would break our distance
     // functions.
@@ -180,6 +187,13 @@ struct [[sus_trivial_abi]] SliceIterMut final
     // not exceed isize::MAX.
     return usize::try_from(end_ - ptr_)
         .unwrap_unchecked(::sus::marker::unsafe_fn);
+  }
+
+  /// sus::iter::TrustedLen trait.
+  /// #[doc.hidden]
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept {
+    return {};
   }
 
  private:

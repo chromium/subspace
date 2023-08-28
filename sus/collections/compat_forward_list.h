@@ -29,9 +29,9 @@ struct sus::iter::FromIteratorImpl<std::forward_list<T, Allocator>> {
     constexpr bool is_double_end =
         sus::iter::DoubleEndedIterator<std::decay_t<decltype(iter)>, T>;
     if constexpr (is_double_end) {
-      for (T t : sus::move(iter).rev()) v.push_front(::sus::move(t));
+      for (T&& t : sus::move(iter).rev()) v.push_front(::sus::move(t));
     } else {
-      for (T t : sus::move(iter)) v.push_front(::sus::move(t));
+      for (T&& t : sus::move(iter)) v.push_front(::sus::move(t));
       v.reverse();
     }
     return v;

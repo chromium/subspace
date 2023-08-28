@@ -25,7 +25,7 @@ struct sus::iter::FromIteratorImpl<std::stack<T, Collection>> {
       ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept {
     auto&& iter = sus::move(into_iter).into_iter();
     auto v = std::stack<T, Collection>();
-    for (T t : iter) v.push(::sus::move(t));
+    for (T&& t : iter) v.push(::sus::move(t));
     return v;
   }
 };

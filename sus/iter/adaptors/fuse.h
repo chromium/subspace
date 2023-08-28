@@ -71,6 +71,24 @@ class [[nodiscard]] Fuse final
       return SizeHint(0u, Option<usize>(0u));
   }
 
+  /// sus::iter::ExactSizeIterator trait.
+  constexpr usize exact_size_hint() const noexcept
+    requires(ExactSizeIterator<InnerIter>)
+  {
+    if (iter_.is_some())
+      return iter_.as_value().exact_size_hint();
+    else
+      return 0u;
+  }
+
+  /// sus::iter::TrustedLen trait.
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(TrustedLen<InnerIter>)
+  {
+    return {};
+  }
+
   // sus::iter::DoubleEndedIterator trait.
   constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerIter, Item>)

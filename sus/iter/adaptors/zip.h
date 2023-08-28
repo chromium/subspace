@@ -120,6 +120,14 @@ class [[nodiscard]] Zip final
     return __private::exact_size_hints<0, sizeof...(InnerSizedIters)>(iters_);
   }
 
+  /// sus::iter::TrustedLen trait.
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires((... && TrustedLen<InnerSizedIters>))
+  {
+    return {};
+  }
+
  private:
   template <class U, class V>
   friend class IteratorBase;

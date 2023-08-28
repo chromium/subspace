@@ -65,6 +65,14 @@ class [[nodiscard]] [[sus_trivial_abi]] ByRef final
     return next_iter_->exact_size_hint();
   }
 
+  /// sus::iter::TrustedLen trait.
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(TrustedLen<RefIterator>)
+  {
+    return {};
+  }
+
   constexpr ~ByRef() noexcept {
     // TODO: Drop a refcount on the thing `next_iter_` is iterating on.
   }

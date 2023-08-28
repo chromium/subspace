@@ -102,6 +102,14 @@ class [[nodiscard]] StepBy final
     return size_hint().lower;
   }
 
+  /// sus::iter::TrustedLen trait.
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(TrustedLen<InnerSizedIter>)
+  {
+    return {};
+  }
+
   // private:
   template <class U, class V>
   friend class IteratorBase;

@@ -114,6 +114,15 @@ static_assert(
   sus::iter::DoubleEndedIterator<sus::collections::VecIntoIter<int>, int>);
 
 static_assert(
+  sus::iter::TrustedLen<sus::collections::ArrayIntoIter<int, 1>>);
+static_assert(
+  sus::iter::TrustedLen<sus::collections::SliceIter<const int&>>);
+static_assert(
+  sus::iter::TrustedLen<sus::collections::SliceIterMut<int&>>);
+static_assert(
+  sus::iter::TrustedLen<sus::collections::VecIntoIter<int>>);
+
+static_assert(
   sus::iter::IntoIterator<sus::collections::Array<int, 3u>, int>);
 static_assert(
   sus::iter::IntoIterator<sus::collections::Slice<int>, const int&>);
@@ -160,6 +169,12 @@ class ArrayIterator final : public IteratorBase<ArrayIterator<Item, N>, Item> {
     // from N with `0 <= N`. Then `front_` is incremented and `back_` is
     // decremented, but when `front_ == back_` neither is moved thereafter.
     return back_.unchecked_sub(::sus::marker::unsafe_fn, front_);
+  }
+
+  /// sus::iter::TrustedLen trait.
+  constexpr sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept {
+    return {};
   }
 
  protected:

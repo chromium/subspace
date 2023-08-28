@@ -818,7 +818,8 @@ struct Sortable {
   friend bool operator==(const Sortable& a, const Sortable& b) noexcept {
     return a.value == b.value && a.unique == b.unique;
   }
-  friend std::weak_ordering operator<=>(const Sortable& a, const Sortable& b) noexcept {
+  friend std::weak_ordering operator<=>(const Sortable& a,
+                                        const Sortable& b) noexcept {
     return a.value <=> b.value;
   }
 };
@@ -1344,8 +1345,7 @@ TEST(Vec, Stream) {
 }
 
 TEST(Vec, GTest) {
-  EXPECT_EQ(testing::PrintToString(Vec<i32>(1, 2, 3, 4, 5)),
-            "[1, 2, 3, 4, 5]");
+  EXPECT_EQ(testing::PrintToString(Vec<i32>(1, 2, 3, 4, 5)), "[1, 2, 3, 4, 5]");
 }
 
 TEST(VecDeathTest, IteratorInvalidation) {
@@ -1375,6 +1375,20 @@ TEST(Vec, SliceInvalidation) {
   EXPECT_EQ(s.len(), 2u);
   vec.push(3);
   EXPECT_EQ(s.len(), 2u);
+}
+
+TEST(Vec, Truncate) {
+  auto vec = sus::Vec<i32>(1, 2, 3, 4, 5);
+  vec.truncate(3u);
+  EXPECT_EQ(vec, sus::Slice<i32>::from({1, 2, 3}));
+
+  static_assert([]() {
+    auto v = sus::Vec<i32>(1, 2, 3, 4, 5);
+    v.truncate(3u);
+    return v;
+  }()
+                    .into_iter()
+                    .sum() == 1 + 2 + 3);
 }
 
 }  // namespace

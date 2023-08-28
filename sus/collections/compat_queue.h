@@ -25,7 +25,7 @@ struct sus::iter::FromIteratorImpl<std::queue<T, Collection>> {
       ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept {
     auto&& iter = sus::move(into_iter).into_iter();
     auto v = std::queue<T, Collection>();
-    for (T t : iter) v.push(::sus::move(t));
+    for (T&& t : iter) v.push(::sus::move(t));
     return v;
   }
 };
@@ -36,7 +36,7 @@ struct sus::iter::FromIteratorImpl<std::priority_queue<T, Collection, Compare>> 
       ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept {
     auto&& iter = sus::move(into_iter).into_iter();
     auto v = std::priority_queue<T, Collection, Compare>();
-    for (T t : iter) v.push(::sus::move(t));
+    for (T&& t : iter) v.push(::sus::move(t));
     return v;
   }
 };

@@ -69,6 +69,14 @@ class [[nodiscard]] Copied final
     return next_iter_.exact_size_hint();
   }
 
+  /// sus::iter::TrustedLen trait.
+  constexpr ::sus::iter::__private::TrustedLenMarker trusted_len()
+      const noexcept
+    requires(TrustedLen<InnerSizedIter>)
+  {
+    return {};
+  }
+
  private:
   template <class U, class V>
   friend class IteratorBase;
