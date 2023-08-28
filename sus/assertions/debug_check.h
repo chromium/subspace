@@ -29,6 +29,5 @@
 #if !defined(NDEBUG)
 #define _sus__debug_check_impl(...) ::sus::check(__VA_ARGS__)
 #else
-#define _sus__debug_check_impl(...) \
-  sus_assume(::sus::marker::unsafe_fn, __VA_ARGS__)
+#define _sus__debug_check_impl(...)
 #endif
