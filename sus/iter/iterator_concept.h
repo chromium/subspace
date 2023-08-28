@@ -19,8 +19,8 @@
 #include <concepts>
 #include <type_traits>
 
-#include "sus/ptr/subclass.h"
 #include "sus/lib/__private/forward_decl.h"
+#include "sus/ptr/subclass.h"
 
 namespace sus::iter {
 
@@ -54,19 +54,20 @@ namespace sus::iter {
 /// None` is correct for any iterator, but providing a more accurate bound can
 /// benefit performance optiomizations. Returning an incorrect bound is
 /// technically possible but is a violation of the Iterator protocol.
-template <class T, class Item>
-concept Iterator = requires(T& t, const T& c) {
-  // Has a T::Item typename.
-  requires(!std::is_void_v<typename std::decay_t<T>::Item>);
-  // The T::Item matches the concept input.
-  requires(std::same_as<typename std::decay_t<T>::Item, Item>);
-  // Subclasses from IteratorBase<T, T::Item>.
-  requires ::sus::ptr::SameOrSubclassOf<
-      std::decay_t<T>*, IteratorBase<std::decay_t<T>, Item>*>;
-  // Required methods.
-  { t.next() } noexcept -> std::same_as<::sus::option::Option<Item>>;
-  { c.size_hint() } noexcept -> std::same_as<SizeHint>;
-};
+template <class T, class Item = typename std::remove_cvref_t<T>::Item>
+concept Iterator =
+    requires(std::remove_cvref_t<T>& t, const std::remove_cvref_t<T>& c) {
+      // Has a T::Item typename.
+      requires(!std::is_void_v<typename std::remove_cvref_t<T>::Item>);
+      // The T::Item matches the concept input.
+      requires(std::same_as<typename std::remove_cvref_t<T>::Item, Item>);
+      // Subclasses from IteratorBase<T, T::Item>.
+      requires ::sus::ptr::SameOrSubclassOf<
+          std::remove_cvref_t<T>*, IteratorBase<std::remove_cvref_t<T>, Item>*>;
+      // Required methods.
+      { t.next() } noexcept -> std::same_as<::sus::option::Option<Item>>;
+      { c.size_hint() } noexcept -> std::same_as<SizeHint>;
+    };
 
 /// An `Iterator` able to yield elements from both ends.
 ///
@@ -81,10 +82,11 @@ concept Iterator = requires(T& t, const T& c) {
 /// `DoubleEndedIterator` returns `None` from a `next_back()`, calling it again
 /// may or may not ever return `Some` again. `next()` and `next_back()` are
 /// interchangeable for this purpose.
-template <class T, class Item>
-concept DoubleEndedIterator = Iterator<T, Item> && requires(T& t) {
-  { t.next_back() } noexcept -> std::same_as<::sus::option::Option<Item>>;
-};
+template <class T, class Item = typename std::remove_cvref_t<T>::Item>
+concept DoubleEndedIterator =
+    Iterator<T, Item> && requires(std::remove_cvref_t<T>& t) {
+      { t.next_back() } noexcept -> std::same_as<::sus::option::Option<Item>>;
+    };
 
 /// An iterator that knows its exact length.
 ///
@@ -102,9 +104,22 @@ concept DoubleEndedIterator = Iterator<T, Item> && requires(T& t) {
 /// (usually by calling `exact_size_hint()`).
 //
 // TODO: Rename exact_size_hint() to len()?
-template <class T, class Item>
-concept ExactSizeIterator = Iterator<T, Item> && requires(const T& t) {
-  { t.exact_size_hint() } noexcept -> std::same_as<::sus::num::usize>;
-};
+template <class T, class Item = typename std::remove_cvref_t<T>::Item>
+concept ExactSizeIterator =
+    Iterator<T, Item> && requires(const std::remove_cvref_t<T>& t) {
+      { t.exact_size_hint() } noexcept -> std::same_as<::sus::num::usize>;
+    };
+
+// TODO: Satisfy this concept for our iterator adaptors if the underlying
+// iterator is trusted.
+template <class T, class Item = typename std::remove_cvref_t<T>::Item>
+concept TrustedSizeIterator =
+    std::same_as<std::remove_cvref_t<T>, sus::collections::SliceIter<Item>> ||
+    std::same_as<std::remove_cvref_t<T>,
+                 sus::collections::SliceIterMut<Item>> ||
+    std::same_as<std::remove_cvref_t<T>, sus::collections::VecIntoIter<Item>> ||
+    std::same_as<
+        std::remove_cvref_t<T>,
+        sus::collections::ArrayIntoIter<Item, std::remove_cvref_t<T>::Size>>;
 
 }  // namespace sus::iter

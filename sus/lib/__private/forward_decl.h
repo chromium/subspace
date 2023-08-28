@@ -36,6 +36,11 @@ class Array;
 }
 
 namespace sus::collections {
+template <class T, size_t N>
+struct ArrayIntoIter;
+}
+
+namespace sus::collections {
 template <class T>
 class Slice;
 }
@@ -47,7 +52,22 @@ class SliceMut;
 
 namespace sus::collections {
 template <class T>
+struct SliceIter;
+}
+
+namespace sus::collections {
+template <class T>
+struct SliceIterMut;
+}
+
+namespace sus::collections {
+template <class T>
 class Vec;
+}
+
+namespace sus::collections {
+template <class T>
+struct VecIntoIter;
 }
 
 namespace sus::fn {

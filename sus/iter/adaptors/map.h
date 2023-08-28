@@ -49,13 +49,7 @@ class [[nodiscard]] Map final
 
   // sus::iter::Iterator trait.
   constexpr Option<Item> next() noexcept {
-    Option<FromItem> item = next_iter_.next();
-    if (item.is_none()) {
-      return sus::none();
-    } else {
-      return sus::some(::sus::fn::call_mut(
-          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
-    }
+    return next_iter_.next().map(fn_);
   }
 
   /// sus::iter::Iterator trait.
@@ -67,13 +61,7 @@ class [[nodiscard]] Map final
   constexpr Option<Item> next_back() noexcept
     requires(DoubleEndedIterator<InnerSizedIter, FromItem>)
   {
-    Option<FromItem> item = next_iter_.next_back();
-    if (item.is_none()) {
-      return sus::none();
-    } else {
-      return sus::some(::sus::fn::call_mut(
-          fn_, sus::move(item).unwrap_unchecked(::sus::marker::unsafe_fn)));
-    }
+    return next_iter_.next_back().map(fn_);
   }
 
   // sus::iter::ExactSizeIterator trait.
