@@ -18,18 +18,18 @@
 
 namespace {
 
-const char VAR_NAME[] = "subspace_test_envvar_present_42389489423423";
-const char VAR_VALUE[] = "HelLo wOrLd";
-
 TEST(EnvVar, Present) {
-    sus::env::set_var(VAR_NAME, VAR_VALUE);
-    auto value = sus::env::var(VAR_NAME).unwrap();
-    EXPECT_EQ(value, VAR_VALUE);
+  const char VAR_NAME[] = "subspace_test_envvar_present_42389489423423";
+  const char VAR_VALUE[] = "HelLo wOrLd";
+  sus::env::set_var(VAR_NAME, VAR_VALUE);
+  auto value = sus::env::var(VAR_NAME).unwrap();
+  EXPECT_EQ(value, VAR_VALUE);
 }
 
 TEST(EnvVar, Absent) {
-    auto value = sus::env::var(VAR_NAME);
-    EXPECT_EQ(value, sus::err(sus::env::VarError::NotFound));
+  const char VAR_NAME[] = "subspace_test_envvar_present_42389489423424";
+  auto value = sus::env::var(VAR_NAME);
+  EXPECT_EQ(value, sus::err(sus::env::VarError::NotFound));
 }
 
-}
+}  // namespace
