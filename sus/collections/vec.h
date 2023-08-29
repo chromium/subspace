@@ -68,12 +68,6 @@
 
 namespace sus::collections {
 
-// TODO: Invalidate/drain iterators in every mutable method.
-
-// TODO: Use after move of Vec is NOT allowed. Should we rely on clang-tidy
-// and/or compiler warnings to check for misuse? Or should we add checks(). And
-// then allow them to be disabled when you are using warnings?
-
 /// A resizeable contiguous buffer of type `T`.
 ///
 /// Vec requires Move for its items:
