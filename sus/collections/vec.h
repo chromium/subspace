@@ -42,7 +42,6 @@
 #include "sus/iter/into_iterator.h"
 #include "sus/iter/iterator_ref.h"
 #include "sus/lib/__private/forward_decl.h"
-#include "sus/macros/assume.h"
 #include "sus/macros/lifetimebound.h"
 #include "sus/marker/unsafe.h"
 #include "sus/mem/clone.h"
