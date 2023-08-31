@@ -24,9 +24,11 @@ struct sus::iter::FromIteratorImpl<std::vector<T, Allocator>> {
   static constexpr std::vector<T, Allocator> from_iter(
       ::sus::iter::IntoIterator<T> auto&& into_iter) noexcept {
     auto&& iter = sus::move(into_iter).into_iter();
-    auto [lower, upper] = iter.size_hint();
+    // TODO: In C++23, use the `std::from_range` ctor to speed up construction
+    // here. Then it should match `sus::Vec` on the BenchVecMap benchmark with
+    // `FromIterator`.
     auto v = std::vector<T, Allocator>();
-    v.reserve(lower);
+    v.reserve(iter.size_hint().lower);
     for (T&& t : iter) v.push_back(::sus::move(t));
     return v;
   }
