@@ -19,5 +19,12 @@ struct TemplateMethods {
   static U member;
 };
 
+// Returns template parameter.
 template <class U>
 U template_function(U);
+
+template <class T>
+struct S {};
+
+/// Returns template instantiation.
+S<int> return_template();
