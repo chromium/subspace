@@ -213,6 +213,7 @@ int main(int argc, const char** argv) {
          source = sus::error::error_source(source.as_value())) {
       fmt::println(stderr, "  note: {}", source.as_value());
     }
+    return 1;
   }
   return 0;
 }

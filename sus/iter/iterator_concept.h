@@ -137,7 +137,7 @@ struct TrustedLenMarker {};
 /// `size_hint` from the inner iterator has already saturated and lost that
 /// information.
 ///
-/// This is why [`Skip<I>`]($sus::containers::Skip) isn't `TrustedLen`, even
+/// This is why [`Skip<I>`]($sus::iter::Skip) isn't `TrustedLen`, even
 /// when `I` implements `TrustedLen`.
 ///
 /// # Safety
